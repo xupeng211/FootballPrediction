@@ -1,6 +1,6 @@
-# V172 文档地图
+# V173 文档地图
 
-> 最后更新: 2026-02-27
+> 最后更新: 2026-02-28
 
 ## 📁 核心文档 (必读)
 
@@ -15,9 +15,29 @@
 
 | 文档 | 说明 |
 |------|------|
+| **V173_DELIVERY_CHECKLIST.md** | V173 交付清单（网页渗透模式） |
 | **V172_DELIVERY_CHECKLIST.md** | V172 交付清单 |
-| **V172_RELEASE_ANNOUNCEMENT.md** | V172 发布公告 |
 | **V171_DELIVERY_CERTIFICATE.md** | V171 交付证书 |
+
+## 📁 核心运维组件 (严禁移除)
+
+> ⚠️ 以下组件是系统运维的核心基础设施，严禁在后续清理中移除
+
+| 组件 | 文件 | 功能 |
+|------|------|------|
+| **中央监控大屏** | `scripts/ops/monitor_dashboard.js` | 实时状态监控 (npm run watch) |
+| **资产报告器** | `scripts/ops/asset_report.js` | 数据净值统计 (npm run report) |
+| **收割器 Master** | `scripts/ops/harvest_fleet_master.js` | 装甲群收割调度 |
+| **收割器 Worker** | `scripts/ops/harvest_worker.js` | 网页渗透模式执行 |
+| **配置中心** | `config/factory_config.js` | 工厂级参数归口 |
+
+## 📁 快捷命令
+
+```bash
+npm run watch      # 启动中央监控大屏
+npm run report     # 生成资产净值报告
+npm run harvest    # 启动收割任务
+```
 
 ## 📁 架构参考
 
@@ -53,4 +73,4 @@
 
 ---
 
-*本文档地图由 V172-SPARTAN 清理流程自动生成*
+*本文档地图由 V173-SENTINEL 清理流程自动生成*

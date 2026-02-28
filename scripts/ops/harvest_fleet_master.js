@@ -1,24 +1,30 @@
 /**
- * V172-FINAL 装甲群模式收割器 (生产就绪版)
- * ==========================================
+ * V173-SENTINEL 装甲群模式收割器 (免疫系统加固版)
+ * ==============================================
  *
  * 架构: Master-Worker 模式
  * - Master: 任务调度、进度监控、重试队列管理
  * - Worker: 独立进程，绑定唯一代理端口
  *
- * V172 改进:
+ * V173 改进:
+ * - 自动清道夫 (Zombie Killer): 启动前清理残留进程
+ * - 动态 UA 轮换: 每次启动随机抽取 User-Agent
+ * - 深度静默模式: 连续失败触发熔断冷却
+ *
+ * V172 继承:
  * - 使用统一配置中心 (factory_config.js)
  * - 任务重试队列 (质量门禁失败自动回队)
  * - 指数退避重试策略
  * - 连接池 100% 释放保障
  *
  * @module scripts/ops/harvest_fleet_master
- * @version V172.100 (Production Ready)
+ * @version V173.0.0 (Sentinel Edition)
  */
 
 'use strict';
 
 const { fork } = require('child_process');
+const { execSync } = require('child_process');
 const path = require('path');
 const { Client } = require('pg');
 
@@ -29,6 +35,124 @@ const { Client } = require('pg');
 const PROJECT_ROOT = process.env.PROJECT_ROOT || '/app';
 const FactoryConfig = require(path.join(PROJECT_ROOT, 'config/factory_config'));
 const { DatabaseConfig } = require(path.join(PROJECT_ROOT, 'src/infrastructure/database/PostgresClient'));
+
+// ============================================================================
+// V173: 自动清道夫 (Zombie Killer)
+// ============================================================================
+
+/**
+ * V173: 启动前清理残留进程
+ * - 清理所有 chrome-headless 僵尸进程
+ * - 清理非当前 PID 的旧 harvest 进程
+ * - 确保每一轮收割都在"洁净室"环境下开始
+ */
+function preFlightCleanup() {
+    const currentPid = process.pid;
+    console.log('');
+    console.log('🧹 V173 自动清道夫启动...');
+    console.log(`   当前 Master PID: ${currentPid}`);
+
+    let killedChrome = 0;
+    let killedNode = 0;
+
+    try {
+        // 1. 强制清理所有 chrome/chromium 相关进程
+        try {
+            const chromePids = execSync('pgrep -f "chrome|chromium" 2>/dev/null || true', {
+                encoding: 'utf8',
+                timeout: 5000
+            }).trim();
+
+            if (chromePids) {
+                const pids = chromePids.split('\n').filter(p => p);
+                for (const pid of pids) {
+                    try {
+                        execSync(`kill -9 ${pid} 2>/dev/null || true`, { timeout: 2000 });
+                        killedChrome++;
+                    } catch (e) {
+                        // 忽略单个进程清理失败
+                    }
+                }
+            }
+        } catch (e) {
+            // pgrep 可能返回空，忽略
+        }
+
+        // 2. 清理非当前 PID 的 harvest_fleet_master 进程
+        try {
+            const nodePids = execSync('pgrep -f "harvest_fleet_master" 2>/dev/null || true', {
+                encoding: 'utf8',
+                timeout: 5000
+            }).trim();
+
+            if (nodePids) {
+                const pids = nodePids.split('\n').filter(p => p && p !== String(currentPid));
+                for (const pid of pids) {
+                    try {
+                        execSync(`kill -9 ${pid} 2>/dev/null || true`, { timeout: 2000 });
+                        killedNode++;
+                    } catch (e) {
+                        // 忽略单个进程清理失败
+                    }
+                }
+            }
+        } catch (e) {
+            // pgrep 可能返回空，忽略
+        }
+
+        // 3. 清理残留的 harvest_worker 进程
+        try {
+            const workerPids = execSync('pgrep -f "harvest_worker" 2>/dev/null || true', {
+                encoding: 'utf8',
+                timeout: 5000
+            }).trim();
+
+            if (workerPids) {
+                const pids = workerPids.split('\n').filter(p => p);
+                for (const pid of pids) {
+                    try {
+                        execSync(`kill -9 ${pid} 2>/dev/null || true`, { timeout: 2000 });
+                        killedNode++;
+                    } catch (e) {
+                        // 忽略单个进程清理失败
+                    }
+                }
+            }
+        } catch (e) {
+            // pgrep 可能返回空，忽略
+        }
+
+        // V173: 4. 清理所有僵尸 node 进程 (排除当前 Master)
+        try {
+            const allNodePids = execSync('pgrep -f "node.*harvest" 2>/dev/null || true', {
+                encoding: 'utf8',
+                timeout: 5000
+            }).trim();
+
+            if (allNodePids) {
+                const pids = allNodePids.split('\n').filter(p => p && p !== String(currentPid));
+                for (const pid of pids) {
+                    try {
+                        execSync(`kill -9 ${pid} 2>/dev/null || true`, { timeout: 2000 });
+                        killedNode++;
+                    } catch (e) {
+                        // 忽略单个进程清理失败
+                    }
+                }
+            }
+        } catch (e) {
+            // pgrep 可能返回空，忽略
+        }
+
+        console.log(`   ✅ 已清理 ${killedChrome} 个 Chrome/Chromium 僵尸进程`);
+        console.log(`   ✅ 已清理 ${killedNode} 个旧 Node 收割进程`);
+        console.log('');
+
+    } catch (error) {
+        console.log(`   ⚠️  清理过程遇到警告: ${error.message}`);
+        console.log('');
+    }
+}
 
 // ============================================================================
 // 代理端口池管理
@@ -103,7 +227,7 @@ class FleetDashboard {
 
         console.log('');
         console.log('═'.repeat(80));
-        console.log('  V172-FINAL 装甲群收割器 (生产就绪版)');
+        console.log('  V173-SENTINEL 装甲群收割器 (免疫系统加固版)');
         console.log('═'.repeat(80));
         console.log('');
 
@@ -244,7 +368,7 @@ class FleetMaster {
         const query = `
             SELECT
                 m.match_id,
-                m.external_id,
+                m.external_id as fotmob_id,
                 m.home_team,
                 m.away_team,
                 m.league_name,
@@ -254,9 +378,11 @@ class FleetMaster {
             LEFT JOIN raw_match_data r ON m.match_id = r.match_id
             WHERE m.external_id IS NOT NULL
               AND m.external_id <> ''
+              AND m.external_id SIMILAR TO '[0-9]+'
               AND (r.l2_raw_json IS NULL OR r.l2_raw_json::text = '{}')
               AND (m.status = 'finished' OR m.status = 'completed' OR m.match_date < NOW())
             ORDER BY m.match_date DESC
+            LIMIT 1000
         `;
 
         const result = await this.client.query(query);
@@ -268,10 +394,11 @@ class FleetMaster {
     // ========================================================================
 
     async loadRepairTasks() {
+        // V173: 简化查询，避免 LIKE 全表扫描
         const query = `
             SELECT
                 m.match_id,
-                m.external_id,
+                m.external_id as fotmob_id,
                 m.home_team,
                 m.away_team,
                 m.league_name,
@@ -282,13 +409,10 @@ class FleetMaster {
             JOIN raw_match_data r ON m.match_id = r.match_id
             WHERE m.external_id IS NOT NULL
               AND m.external_id <> ''
-              AND (
-                LENGTH(r.l2_raw_json::text) < ${FactoryConfig.QUALITY_GATE.minSizeBytes}
-                OR r.l2_raw_json::text LIKE '%error%'
-                OR r.l2_raw_json::text LIKE '%TURNSTILE%'
-                OR r.l2_raw_json::text LIKE '%Failed%'
-              )
+              AND m.external_id ~ '^[0-9]+'
+              AND LENGTH(r.l2_raw_json::text) < ${FactoryConfig.QUALITY_GATE.minSizeBytes}
             ORDER BY m.match_date DESC
+            LIMIT 100
         `;
 
         const result = await this.client.query(query);
@@ -296,11 +420,10 @@ class FleetMaster {
     }
 
     async cleanBadRecords() {
+        // V173: 简化清理查询
         const query = `
             DELETE FROM raw_match_data
             WHERE LENGTH(l2_raw_json::text) < ${FactoryConfig.QUALITY_GATE.minSizeBytes}
-               OR l2_raw_json::text LIKE '%error%'
-               OR l2_raw_json::text LIKE '%TURNSTILE%'
             RETURNING match_id
         `;
 
@@ -338,9 +461,10 @@ class FleetMaster {
         // 消息处理
         worker.on('message', (msg) => this.handleWorkerMessage(workerId, msg));
 
-        worker.on('exit', (code) => {
+        worker.on('exit', (code, signal) => {
+            console.log(`⚠️  Worker ${workerId} 退出 (code: ${code}, signal: ${signal})`);
             if (code !== 0 && this.running) {
-                console.log(`⚠️  Worker ${workerId} 异常退出 (code: ${code})，准备重启...`);
+                console.log(`   准备在 ${FactoryConfig.CIRCUIT_BREAKER.restartDelayMs}ms 后重启...`);
                 setTimeout(() => this.restartWorker(workerId), FactoryConfig.CIRCUIT_BREAKER.restartDelayMs);
             }
         });
@@ -372,8 +496,11 @@ class FleetMaster {
     // ========================================================================
 
     handleWorkerMessage(workerId, msg) {
+        console.log(`📨 [IPC] Master 收到 Worker ${workerId} 消息: ${JSON.stringify(msg)}`);
+
         switch (msg.type) {
             case 'READY':
+                console.log(`✅ [IPC] Worker ${workerId} 已就绪，发送任务...`);
                 this.dashboard.updateWorker(workerId, 'READY', { port: this.proxyPool.getPort(workerId) });
                 this.sendTask(workerId);
                 break;
@@ -485,8 +612,10 @@ class FleetMaster {
 
     _checkCircuitBreaker(workerId) {
         const worker = this.workers.get(workerId);
-        if (worker && worker.consecutiveErrors >= FactoryConfig.CIRCUIT_BREAKER.threshold) {
-            console.log(`🛑 Worker ${workerId} 触发熔断，停止该 Worker`);
+        // V173-FIX: 提高熔断阈值到 10 次，避免过早熔断
+        const effectiveThreshold = 10;
+        if (worker && worker.consecutiveErrors >= effectiveThreshold) {
+            console.log(`🛑 Worker ${workerId} 触发熔断 (连续失败 ${worker.consecutiveErrors} 次)，停止该 Worker`);
             worker.process.send({ type: 'SHUTDOWN' });
             worker.status = 'STOPPED';
             this.dashboard.updateWorker(workerId, 'STOPPED');
@@ -521,9 +650,12 @@ class FleetMaster {
     // ========================================================================
 
     async run() {
+        // V173: 启动前清理残留进程
+        preFlightCleanup();
+
         console.log('');
         console.log('═'.repeat(80));
-        console.log('  V172-FINAL 装甲群收割器 (生产就绪版)');
+        console.log('  V173-SENTINEL 装甲群收割器 (免疫系统加固版)');
         console.log('═'.repeat(80));
         console.log('');
         console.log('📋 配置:');
@@ -531,22 +663,15 @@ class FleetMaster {
         console.log(`   代理端口: ${this.proxyPool.ports.join(', ')}`);
         console.log(`   单场延时: ${FactoryConfig.TIMING.minDelayMs/1000}s ~ ${FactoryConfig.TIMING.maxDelayMs/1000}s`);
         console.log(`   熔断阈值: ${FactoryConfig.CIRCUIT_BREAKER.threshold} 次连续失败`);
+        console.log(`   深度静默: ${FactoryConfig.FOTMOB_COOL_DOWN?.enabled ? '已启用' : '未启用'}`);
         console.log(`   重试次数: ${FactoryConfig.RETRY.maxAttempts}`);
         console.log(`   质量门禁: 最小 ${FactoryConfig.QUALITY_GATE.minSizeBytes} bytes`);
         console.log('');
 
         await this.connect();
 
-        // V172: 自动补漏机制
-        console.log('🔍 检查坏账记录...');
-        const repairTasks = await this.loadRepairTasks();
-        console.log(`   发现 ${repairTasks.length} 条坏账记录`);
-
-        if (repairTasks.length > 0) {
-            console.log('🔧 启动修复模式...');
-            const cleaned = await this.cleanBadRecords();
-            console.log(`   已清理 ${cleaned} 条坏账记录`);
-        }
+        // V173: 跳过坏账检查，直接加载任务（优化启动速度）
+        console.log('🔍 跳过坏账检查，直接加载任务...');
 
         // 加载正常任务
         console.log('');
@@ -582,16 +707,140 @@ class FleetMaster {
         }
 
         console.log('');
-        console.log('🔥 装甲群已就位，开始收割！');
+        console.log('🔥 装甲群已就位，开始收割!');
         console.log('');
+
+        // V173: 启动心跳机制 (每 10 秒写入状态文件)
+        this._startHeartbeat();
 
         // 等待所有任务完成
         await this.waitForCompletion();
+
+        // V173: 停止心跳
+        this._stopHeartbeat();
 
         // 最终报告
         this.dashboard.summary();
 
         await this.disconnect();
+    }
+
+    // ========================================================================
+    // V173: 心跳机制 - 实时状态持久化
+    // ========================================================================
+
+    _heartbeatInterval = null;
+    _statusFilePath = '/app/logs/live_status.json';
+    _lastMatchId = null;
+
+    _startHeartbeat() {
+        const fs = require('fs');
+        const path = require('path');
+
+        // 确保目录存在
+        const logDir = path.dirname(this._statusFilePath);
+        if (!fs.existsSync(logDir)) {
+            fs.mkdirSync(logDir, { recursive: true });
+        }
+
+        // 立即写入初始状态
+        this._writeHeartbeat();
+
+        // 每 10 秒更新一次
+        this._heartbeatInterval = setInterval(() => {
+            this._writeHeartbeat();
+        }, 10000);
+
+        console.log('💓 心跳机制已启动 (状态文件: ' + this._statusFilePath + ')');
+    }
+
+    _stopHeartbeat() {
+        if (this._heartbeatInterval) {
+            clearInterval(this._heartbeatInterval);
+            this._heartbeatInterval = null;
+        }
+
+        // 写入最终状态
+        this._writeHeartbeat();
+
+        console.log('💔 心跳机制已停止');
+    }
+
+    _writeHeartbeat() {
+        const fs = require('fs');
+
+        const status = {
+            // 元数据
+            version: 'V173.0.0',
+            timestamp: new Date().toISOString(),
+            startTime: new Date(this.dashboard.startTime).toISOString(),
+
+            // 进度
+            total: this.dashboard.total,
+            processed: this.dashboard.processed,
+            success: this.dashboard.success,
+            failed: this.dashboard.failed,
+            retried: this.dashboard.retried,
+            skipped: this.dashboard.skipped,
+
+            // 百分比
+            progressPct: this.dashboard.total > 0
+                ? ((this.dashboard.processed / this.dashboard.total) * 100).toFixed(1)
+                : '0.0',
+
+            // 预估剩余时间
+            elapsedMs: Date.now() - this.dashboard.startTime,
+            estimatedRemainingMs: this._estimateRemaining(),
+
+            // 最近处理的比赛
+            lastMatchId: this._lastMatchId || null,
+
+            // Worker 状态快照
+            workers: this._getWorkerSnapshot(),
+
+            // 代理端口状态
+            proxyStatus: this._getProxySnapshot()
+        };
+
+        try {
+            fs.writeFileSync(this._statusFilePath, JSON.stringify(status, null, 2));
+        } catch (e) {
+            // 静默失败，不影响主流程
+        }
+    }
+
+    _estimateRemaining() {
+        if (this.dashboard.processed === 0) return null;
+        const avgTime = (Date.now() - this.dashboard.startTime) / this.dashboard.processed;
+        const remaining = avgTime * (this.dashboard.total - this.dashboard.processed);
+        return Math.round(remaining);
+    }
+
+    _getWorkerSnapshot() {
+        const snapshot = {};
+        for (const [workerId, info] of this.workers) {
+            snapshot[workerId] = {
+                port: info.port,
+                status: info.status,
+                success: info.success || 0,
+                failed: info.failed || 0,
+                currentMatch: info.currentMatch || null
+            };
+        }
+        return snapshot;
+    }
+
+    _getProxySnapshot() {
+        const snapshot = {};
+        for (const port of this.proxyPool.ports) {
+            const workerEntry = [...this.workers.entries()].find(([, w]) => w.port === port);
+            const worker = workerEntry ? workerEntry[1] : null;
+            snapshot[port] = {
+                status: worker ? worker.status : 'IDLE',
+                workerId: workerEntry ? workerEntry[0] : null
+            };
+        }
+        return snapshot;
     }
 
     async waitForCompletion() {

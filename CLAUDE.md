@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**当前版本**: V172.1.0 (Stable) | **最后更新**: 2026-02-27
+**当前版本**: V173.0.0 (Stable) | **最后更新**: 2026-02-28
 
-> 📖 **相关文档**: [README.md](./README.md) 包含项目概述和完整命令列表，[ARCHITECTURE.md](./ARCHITECTURE.md) 包含详细技术架构，[V172 交付清单](./docs/V172_DELIVERY_CHECKLIST.md) 包含生产部署指南。
+> 📖 **相关文档**: [README.md](./README.md) 包含项目概述和完整命令列表。
 
 ---
 
@@ -42,8 +42,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **正确示例：**
 ```bash
 # ✅ 在容器内执行
-docker-compose exec dev npm run harvest
-docker-compose exec dev python scripts/ops/backfill.py
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/backfill.py
 ```
 
 **错误示例：**
@@ -125,15 +125,15 @@ if existing and existing.is_complete():
 
 ### 📍 Step 1: 目标锁定 (URL 提取)
 ```bash
-docker-compose exec dev npm run extract-urls
+docker-compose -f docker-compose.dev.yml exec dev npm run extract-urls
 # 提取未来比赛的 OddsPortal URL Hash
 # 输出示例: ✅ Liverpool vs West Ham → KbUrxW1T
 ```
 
 ### 📍 Step 2: 全息收割 (数据采集)
 ```bash
-docker-compose exec dev npm run harvest           # 批量收割 (50 场)
-docker-compose exec dev npm run harvest:limit 10  # 限制收割 10 场
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest           # 批量收割 (50 场)
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest:limit 10  # 限制收割 10 场
 ```
 **收割内容:**
 - L2 (FotMob): xG, 控球率, 射门, 球员评分
@@ -141,7 +141,7 @@ docker-compose exec dev npm run harvest:limit 10  # 限制收割 10 场
 
 ### 📍 Step 3: 战果验收 (预测查看)
 ```bash
-docker-compose exec dev python scripts/ops/check_daily_bets.py
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/check_daily_bets.py
 # 或查询数据库:
 docker-compose exec db psql -U football_user -d football_db \
   -c "SELECT * FROM predictions WHERE final_confidence > 0.65"
@@ -159,51 +159,67 @@ docker-compose exec db psql -U football_user -d football_db \
 
 ```bash
 # === 开发环境 ===
-docker-compose -f docker-compose.dev.yml up -d   # 启动开发容器
-docker-compose exec dev bash                     # 进入开发容器 Shell
-make dev-up                                      # 启动开发环境 (Makefile 快捷方式)
+docker-compose -f docker-compose.dev.yml up -d              # 启动开发容器
+docker-compose -f docker-compose.dev.yml exec dev bash      # 进入开发容器 Shell
+make dev-up                                                 # 启动开发环境 (Makefile 快捷方式)
 
 # === 核心收割 (容器内执行) ===
-docker-compose exec dev npm run harvest           # 批量收割 (50 场)
-docker-compose exec dev npm run harvest:quick     # 快速收割测试
-docker-compose exec dev npm run harvest:limit 10  # 限制收割 10 场
-docker-compose exec dev npm run scheduler         # 启动无人值守调度器
-docker-compose exec dev npm run extract-urls      # 提取真实 OddsPortal URL Hash
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest           # 批量收割 (50 场)
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest:quick     # 快速收割测试
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest:limit 10  # 限制收割 10 场
+docker-compose -f docker-compose.dev.yml exec dev npm run scheduler         # 启动无人值守调度器
+docker-compose -f docker-compose.dev.yml exec dev npm run extract-urls      # 提取真实 OddsPortal URL Hash
 
-# === V172 装甲群收割器 (生产级) ===
-docker-compose exec dev node scripts/ops/harvest_fleet_master.js           # 装甲群收割 (Master-Worker 模式)
-docker-compose exec -e MAX_WORKERS=3 dev node scripts/ops/harvest_fleet_master.js  # 指定 Worker 数量
-docker-compose exec -e MIN_DELAY_MS=8000 -e MAX_DELAY_MS=15000 dev node scripts/ops/harvest_fleet_master.js  # 自定义延时
+# === V173 装甲群收割器 (生产级) ===
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest           # 装甲群收割 (Master-Worker 模式)
+docker-compose -f docker-compose.dev.yml exec -e MAX_WORKERS=3 dev npm run harvest  # 指定 Worker 数量
+docker-compose -f docker-compose.dev.yml exec -e MIN_DELAY_MS=8000 -e MAX_DELAY_MS=15000 dev npm run harvest  # 自定义延时
+
+# === 监控与诊断 ===
+docker-compose -f docker-compose.dev.yml exec dev npm run watch     # 启动中央监控大屏
+docker-compose -f docker-compose.dev.yml exec dev npm run report    # 生成资产报告
+docker-compose -f docker-compose.dev.yml exec dev npm run diagnose  # 运行诊断实验
 
 # === 历史回填 (Backfill) ===
-docker-compose exec dev node scripts/ops/v171_mass_backfill.js          # 批量回填
-docker-compose exec dev node scripts/ops/v171_real_backfill.js          # 真实回填
-docker-compose exec dev node scripts/ops/v171_backfill_manager.js       # 回填管理器
-docker-compose exec dev python scripts/ops/check_db_consistency.py      # 检查数据一致性
+docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/v171_mass_backfill.js          # 批量回填
+docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/v171_real_backfill.js          # 真实回填
+docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/v171_backfill_manager.js       # 回填管理器
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/check_db_consistency.py      # 检查数据一致性
 
 # === 代码质量 ===
-docker-compose exec dev npm run lint              # ESLint 检查
-docker-compose exec dev npm run lint:fix          # ESLint 自动修复
-docker-compose exec dev npm run format            # Prettier 格式化
-docker-compose exec dev npm run lint:python       # Ruff Python 检查
-docker-compose exec dev npm run qa                # 全量检查 (lint + python)
+docker-compose -f docker-compose.dev.yml exec dev npm run lint              # ESLint 检查
+docker-compose -f docker-compose.dev.yml exec dev npm run lint:fix          # ESLint 自动修复
+docker-compose -f docker-compose.dev.yml exec dev npm run format            # Prettier 格式化
+docker-compose -f docker-compose.dev.yml exec dev npm run lint:python       # Ruff Python 检查
+docker-compose -f docker-compose.dev.yml exec dev npm run qa                # 全量检查 (lint + python)
 make lint / make format / make verify             # Makefile 快捷方式
 
 # === 测试 ===
-docker-compose exec dev npm test                        # 运行所有 Node.js 测试
-docker-compose exec dev npm run test:python             # Python 测试 (pytest)
-docker-compose exec dev npm run test:v171               # V171 数据库配置测试
-docker-compose exec dev pytest tests/test_foo.py -v     # 运行单个 Python 测试
-docker-compose exec dev npm run test:coverage           # 覆盖率测试
+docker-compose -f docker-compose.dev.yml exec dev npm test                        # 运行所有 Node.js 测试
+docker-compose -f docker-compose.dev.yml exec dev npm run test:python             # Python 测试 (pytest)
+docker-compose -f docker-compose.dev.yml exec dev npm run test:v171               # V171 数据库配置测试
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_foo.py -v     # 运行单个 Python 测试
+docker-compose -f docker-compose.dev.yml exec dev npm run test:coverage           # 覆盖率测试
 
 # 测试分类:
-docker-compose exec dev pytest tests/ml/ -v             # ML 模块测试
-docker-compose exec dev pytest tests/integration/ -v    # 集成测试
-docker-compose exec dev pytest tests/unit/ -v           # 单元测试
-docker-compose exec dev pytest -k "关键词" -v           # 按关键词过滤测试
-docker-compose exec dev node --test tests/engines/      # 运行指定目录的 Node.js 测试
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/ml/ -v             # ML 模块测试
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/integration/ -v    # 集成测试
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/unit/ -v           # 单元测试
+docker-compose -f docker-compose.dev.yml exec dev pytest -k "关键词" -v           # 按关键词过滤测试
+docker-compose -f docker-compose.dev.yml exec dev node --test tests/engines/      # 运行指定目录的 Node.js 测试
+
+# 单个测试用例调试:
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_foo.py::TestClass::test_method -v  # 运行单个测试方法
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_foo.py::TestClass -v               # 运行单个测试类
+docker-compose -f docker-compose.dev.yml exec dev pytest -x --pdb                 # 首次失败时进入调试器
 
 # === Docker/数据库 ===
+# 开发环境 (推荐)
+docker-compose -f docker-compose.dev.yml up -d              # 启动开发容器 (db + redis + dev)
+docker-compose -f docker-compose.dev.yml exec dev bash       # 进入开发容器 Shell
+make dev-up                                                  # 启动开发环境 (Makefile 快捷方式)
+
+# 生产环境
 make up                         # 启动核心服务 (db + redis)
 make down                       # 停止所有服务
 make db-shell                   # 进入 PostgreSQL Shell
@@ -214,16 +230,16 @@ make clean                      # 清理垃圾文件和缓存
 make verify                     # 运行完整验证 (lint + test + security)
 
 # === 数据库迁移 (Alembic) ===
-docker-compose exec dev alembic upgrade head              # 应用所有迁移
-docker-compose exec dev alembic downgrade -1              # 回滚一个版本
-docker-compose exec dev alembic revision --autogenerate -m "描述"  # 生成新迁移
-docker-compose exec dev alembic current                   # 查看当前版本
-docker-compose exec dev alembic history                   # 查看迁移历史
+docker-compose -f docker-compose.dev.yml exec dev alembic upgrade head              # 应用所有迁移
+docker-compose -f docker-compose.dev.yml exec dev alembic downgrade -1              # 回滚一个版本
+docker-compose -f docker-compose.dev.yml exec dev alembic revision --autogenerate -m "描述"  # 生成新迁移
+docker-compose -f docker-compose.dev.yml exec dev alembic current                   # 查看当前版本
+docker-compose -f docker-compose.dev.yml exec dev alembic history                   # 查看迁移历史
 
 # === 依赖安装 (容器内) ===
-docker-compose exec dev npm install                     # 安装 Node.js 依赖
-docker-compose exec dev pip install -r requirements.txt # 安装 Python 依赖
-docker-compose exec dev npx playwright install chromium # 安装浏览器
+docker-compose -f docker-compose.dev.yml exec dev npm install                     # 安装 Node.js 依赖
+docker-compose -f docker-compose.dev.yml exec dev pip install -r requirements.txt # 安装 Python 依赖
+docker-compose -f docker-compose.dev.yml exec dev npx playwright install chromium # 安装浏览器
 ```
 
 ---
@@ -291,7 +307,12 @@ config/
 └── v26_feature_manifest.json # V26 特征清单
 
 scripts/ops/                  # 运维脚本
-├── v171_mass_harvest.js      # 批量收割
+├── harvest_fleet_master.js   # V173 装甲群收割主控 (Master-Worker)
+├── harvest_worker.js         # 收割 Worker
+├── monitor_dashboard.js      # 中央监控大屏
+├── asset_report.js           # 资产报告生成
+├── diagnostic_experiment.js  # 诊断实验
+├── v171_mass_harvest.js      # 批量收割 (兼容)
 ├── v171_scheduler.js         # 定时调度
 ├── v171_mass_backfill.js     # 批量回填
 └── *.py                      # Python 运维工具
@@ -325,8 +346,8 @@ const url = `https://oddsportal.com/${home}-${away}/`;  // 这会导致匹配失
 
 ```bash
 # 代理健康检查
-docker-compose exec dev python scripts/ops/check_proxy_latency.py
-docker-compose exec dev python scripts/ops/reset_proxy_health.py  # 重置代理状态
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/check_proxy_latency.py
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/reset_proxy_health.py  # 重置代理状态
 ```
 
 ---
@@ -357,6 +378,22 @@ API_PORT=8000
 API_WORKERS=2
 ```
 
+**V173 收割器配置 (环境变量):**
+| 变量 | 默认值 | 说明 |
+|------|--------|------|
+| `MIN_DELAY_MS` | 5000 | 最小延时 (ms) |
+| `MAX_DELAY_MS` | 12000 | 最大延时 (ms) |
+| `MIN_SIZE_BYTES` | 5000 | 质量门禁阈值 (bytes) |
+| `MAX_WORKERS` | 5 | 最大 Worker 数量 |
+| `MAX_RETRY_ATTEMPTS` | 3 | 最大重试次数 |
+| `CIRCUIT_BREAKER_THRESHOLD` | 3 | 熔断阈值 |
+| `PROXY_PORTS` | 7890-7894 | 代理端口池 |
+
+```bash
+# 示例：自定义收割器配置
+docker-compose -f docker-compose.dev.yml exec -e MIN_DELAY_MS=8000 -e MAX_DELAY_MS=15000 -e MAX_WORKERS=3 dev npm run harvest
+```
+
 ---
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -366,26 +403,26 @@ API_WORKERS=2
 ```bash
 # 代理熔断
 curl -x http://172.25.16.1:7891 https://httpbin.org/ip  # 测试代理
-docker-compose exec dev python scripts/ops/reset_proxy_health.py  # 重置代理状态
-docker-compose restart dev                              # 重置容器
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/reset_proxy_health.py  # 重置代理状态
+docker-compose -f docker-compose.dev.yml restart dev                              # 重置容器
 
 # 数据库连接超时
 docker-compose ps db && docker-compose restart db
 docker-compose exec db psql -U football_user -d football_db -c "SELECT 1"  # 测试连接
 
 # URL Hash 提取失败
-docker-compose exec dev npm run extract-urls -- --limit 50 --update-db
+docker-compose -f docker-compose.dev.yml exec dev npm run extract-urls -- --limit 50 --update-db
 
 # 队名匹配失败
-docker-compose exec dev python scripts/ops/test_cpp_fuzzy_bridge.py  # 测试模糊匹配
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/test_cpp_fuzzy_bridge.py  # 测试模糊匹配
 # 检查 config/team_mapping.json 是否有缺失映射
 
 # 数据一致性问题
-docker-compose exec dev python scripts/ops/check_db_consistency.py
-docker-compose exec dev python scripts/ops/clean_malformed_l2.py  # 清理异常数据
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/check_db_consistency.py
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/clean_malformed_l2.py  # 清理异常数据
 
 # Playwright 浏览器问题
-docker-compose exec dev npx playwright install chromium --force
+docker-compose -f docker-compose.dev.yml exec dev npx playwright install chromium --force
 ```
 
 ---
@@ -400,14 +437,14 @@ docker-compose exec db psql -U football_user -d football_db -c "SELECT COUNT(*) 
 docker-compose exec db psql -U football_user -d football_db -c "SELECT * FROM predictions ORDER BY created_at DESC LIMIT 10"
 
 # === 日志查看 ===
-docker-compose exec dev tail -f logs/harvest.log         # 实时查看收割日志
-docker-compose exec dev cat logs/error.log | tail -100   # 查看最近错误
+docker-compose -f docker-compose.dev.yml exec dev tail -f logs/harvest.log         # 实时查看收割日志
+docker-compose -f docker-compose.dev.yml exec dev cat logs/error.log | tail -100   # 查看最近错误
 
 # === Python 交互式调试 ===
-docker-compose exec dev python -i scripts/ops/debug_match.py  # 交互式调试
+docker-compose -f docker-compose.dev.yml exec dev python -i scripts/ops/debug_match.py  # 交互式调试
 
 # === 网络请求调试 ===
-docker-compose exec dev curl -v https://www.fotmob.com/api/...  # 测试 API 请求
+docker-compose -f docker-compose.dev.yml exec dev curl -v https://www.fotmob.com/api/...  # 测试 API 请求
 ```
 
 ---
@@ -436,4 +473,66 @@ def fuzzy_match_teams(
  * @returns {Promise<MatchPrediction>}
  */
 async function fetchPrediction(matchId, options = {}) { ... }
+```
+
+---
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 常见开发场景 (Common Scenarios)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+### 场景 1: 修改核心收割引擎
+```bash
+# 1. 确认当前分支
+git branch --show-current
+
+# 2. 修改代码后运行测试
+docker-compose -f docker-compose.dev.yml exec dev npm test
+docker-compose -f docker-compose.dev.yml exec dev npm run test:python
+
+# 3. 运行代码质量检查
+docker-compose -f docker-compose.dev.yml exec dev npm run qa
+
+# 4. 提交前验证
+make verify
+```
+
+### 场景 2: 添加新的队名映射
+```bash
+# 1. 编辑映射文件
+vim config/team_mapping.json
+
+# 2. 测试模糊匹配
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/test_cpp_fuzzy_bridge.py
+
+# 3. 验证 URL 提取
+docker-compose -f docker-compose.dev.yml exec dev npm run extract-urls -- --limit 5
+```
+
+### 场景 3: 调试数据库问题
+```bash
+# 1. 检查数据库状态
+docker-compose ps db
+docker-compose exec db pg_isready -U football_user
+
+# 2. 查看表结构
+docker-compose exec db psql -U football_user -d football_db -c "\d matches"
+
+# 3. 检查数据一致性
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/check_db_consistency.py
+```
+
+### 场景 4: 代理问题排查
+```bash
+# 1. 测试单个代理
+curl -x http://172.25.16.1:7891 https://httpbin.org/ip
+
+# 2. 检查代理健康状态
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/check_proxy_latency.py
+
+# 3. 重置代理状态
+docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/reset_proxy_health.py
+
+# 4. 重启开发容器
+docker-compose -f docker-compose.dev.yml restart dev
 ```
