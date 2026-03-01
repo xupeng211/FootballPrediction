@@ -1,28 +1,21 @@
 {
-  "name": "footballprediction-v173",
-  "version": "173.0.0",
-  "description": "V173 数据收割引擎 - 网页渗透模式 + 中央监控大屏",
+  "name": "footballprediction-v174",
+  "version": "175.0.0-stable",
+  "description": "V174 模块化收割引擎 - Master-Worker 架构 + 12 个独立模块",
   "private": true,
   "scripts": {
-    "start": "node scripts/ops/v171_scheduler.js",
+    "start": "node scripts/ops/harvest_fleet_master.js",
     "harvest": "node scripts/ops/harvest_fleet_master.js",
-    "harvest:quick": "node scripts/ops/v171_quick_harvest.js",
-    "harvest:limit": "node scripts/ops/v171_mass_harvest.js --limit",
-    "harvest:v173": "node scripts/ops/harvest_fleet_master.js",
+    "harvest:limit": "node scripts/ops/harvest_fleet_master.js",
     "watch": "node scripts/ops/monitor_dashboard.js",
     "report": "node scripts/ops/asset_report.js",
     "status": "node scripts/ops/monitor_dashboard.js",
-    "extract-urls": "node scripts/ops/v171_real_url_extractor.js",
-    "scheduler": "node scripts/ops/v171_scheduler.js",
-    "install-browsers": "playwright install chromium",
-    "sync": "node scripts/ops/v42_660_node_temporal_sync.js",
     "diagnose": "node scripts/ops/diagnostic_experiment.js",
+    "install-browsers": "playwright install chromium",
     "test": "node --test tests/unit/*.test.js",
     "test:unit": "node --test tests/unit/*.test.js",
     "test:integration": "node --test tests/integration/*.test.js",
     "test:coverage": "node --test --experimental-test-coverage tests/unit/*.test.js",
-    "test:v171": "node --test tests/test_v171_database_config.js",
-    "test:python": "pytest tests/test_v171_*.py -v",
     "lint": "eslint . --ext .js --ignore-pattern node_modules/",
     "lint:fix": "eslint . --ext .js --ignore-pattern node_modules/ --fix",
     "format": "prettier --write \"**/*.{js,json,md}\" --ignore-path .gitignore",
@@ -50,7 +43,6 @@
     ],
     "collectCoverageFrom": [
       "src/**/*.js",
-      "scripts/ops/*.js",
       "!**/node_modules/**"
     ],
     "coverageThreshold": {
@@ -63,6 +55,6 @@
     },
     "verbose": true
   },
-  "author": "V173 Engineering Team",
+  "author": "V174 Engineering Team",
   "license": "MIT"
 }

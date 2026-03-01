@@ -1,7 +1,7 @@
 # =============================================================================
 # FootballPrediction - 开发环境 Docker Compose
 # =============================================================================
-# 版本: V170.000-dev
+# 版本: V175-Stable
 # 用途: 全程容器化开发模式
 # 特性: 热更新、代理支持、完整开发工具链
 # =============================================================================
@@ -24,9 +24,11 @@ services:
         # 构建时代理（WSL2 访问 Windows 代理）
         HTTP_PROXY: http://172.25.16.1:7890
         HTTPS_PROXY: http://172.25.16.1:7890
-    image: footballprediction:v170.000-dev
+    image: footballprediction:v175-stable
     container_name: football_prediction_dev
     restart: unless-stopped
+    # V175: 使用 tini 作为 init 系统，自动回收僵尸进程
+    init: true
 
     # 热更新: 挂载本地代码目录
     volumes:

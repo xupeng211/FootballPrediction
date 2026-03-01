@@ -18,7 +18,7 @@
  * FLOW DIAGRAM:
  * ============================================================================
  *
- *  matches.l2_raw_json IS NULL
+ *  matches.raw_data IS NULL
  *       │
  *       ▼ [Step A: L2 Enrichment Trigger]
  *  ┌──────────────────────────────────────────────────────────────┐
@@ -313,7 +313,7 @@ function createOrchestratorPool(config = {}) {
 /**
  * V69.010 - L2 Enrichment Trigger
  *
- * Monitors matches with NULL l2_raw_json and triggers FotMob data collection.
+ * Monitors matches with NULL raw_data and triggers FotMob data collection.
  */
 class L2EnrichmentTrigger {
     /**
@@ -348,7 +348,7 @@ class L2EnrichmentTrigger {
             const query = `
                 SELECT match_id, league_name, season, home_team, away_team, match_date, league_id
                 FROM matches
-                WHERE l2_raw_json IS NULL
+                WHERE raw_data IS NULL
                   AND match_date < NOW()  -- V72.100: Only past matches (not future fixtures)
                   AND match_date >= NOW() - INTERVAL '7 days'  -- V72.100: Recent matches only
                   ${leagueFilterCondition}

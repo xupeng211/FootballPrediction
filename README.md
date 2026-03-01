@@ -1,8 +1,8 @@
-# FootballPrediction V173
+# FootballPrediction V175
 
-> **工业级足球预测平台** - 网页渗透模式 + 中央监控大屏
+> **工业级足球预测平台** - 模块化 Master-Worker 架构
 
-[![Version](https://img.shields.io/badge/version-173.0.0-blue.svg)](https://github.com/xupeng211/FootballPrediction)
+[![Version](https://img.shields.io/badge/version-175.0.0-blue.svg)](https://github.com/xupeng211/FootballPrediction)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://python.org)
@@ -11,43 +11,60 @@
 
 ## 🎯 项目简介
 
-V173 是一个**工业级足球预测平台**，通过多源数据采集、C++ 模糊匹配和 AI 多模型共识，实现高精度的比赛预测。
+V175 是一个**工业级足球预测平台**，采用模块化 Master-Worker 架构，通过多源数据采集、C++ 模糊匹配和 AI 多模型共识，实现高精度的比赛预测。
 
 ### 核心特性
 
+- 🏗️ **模块化架构**: 12 个独立模块，高内聚低耦合
+- 👷 **Master-Worker**: 分布式收割，支持 10 Worker 并发
 - 🔍 **L1 Discovery**: 自动发现未来 7 天的比赛
 - 🔗 **C++ Fuzzy Bridge**: RapidFuzz 高性能队名匹配
 - 🌐 **L2/L3 Harvest**: 多源数据采集 (FotMob + OddsPortal)
-- 🧠 **V173 Prediction**: 3 模型共识预测
+- 🧠 **Multi-Model Consensus**: 3 模型共识预测
 - 🛡️ **NetworkShield**: 22 节点代理池熔断保护
-- 🕵️ **网页渗透模式**: 绕过 API 限制，直接从网页提取数据
-- 📊 **中央监控大屏**: 实时查看收割进度和状态
+- 📊 **实时监控大屏**: 查看收割进度和状态
+- 🧹 **V175 加固**: 统一工具模块、防御性编程、万级因子数据
 
 ---
 
-## 🚀 快速收割三部曲
-
-> **3 步完成从数据采集到预测输出的完整闭环**
-
-### 📍 Step 1: 目标锁定 (URL 提取)
+## 🚀 一键部署
 
 ```bash
-# 提取未来比赛的 OddsPortal URL Hash
-npm run extract-urls
+# 1. 克隆项目
+git clone https://github.com/xupeng211/FootballPrediction.git
+cd FootballPrediction
 
-# 输出示例:
-# ✅ Liverpool vs West Ham → KbUrxW1T
-# ✅ Arsenal vs Chelsea → CE2gREmB
+# 2. 配置环境变量
+cp env.example .env
+# 编辑 .env 设置 DB_PASSWORD
+
+# 3. 启动开发环境
+docker-compose -f docker-compose.dev.yml up -d
+
+# 4. 执行收割
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest
 ```
 
-### 📍 Step 2: 全息收割 (数据采集)
+---
+
+## 📋 快速收割指南
+
+### 单 Worker 模式 (最稳定)
 
 ```bash
-# 批量收割 50 场比赛
-npm run harvest
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest
+```
 
-# 或限制数量
-npm run harvest:limit 10
+### 多 Worker 模式 (高吞吐)
+
+```bash
+docker-compose -f docker-compose.dev.yml exec -e MAX_WORKERS=2 dev npm run harvest
+```
+
+### 监控大屏
+
+```bash
+docker-compose -f docker-compose.dev.yml exec dev npm run watch
 ```
 
 **收割内容:**
