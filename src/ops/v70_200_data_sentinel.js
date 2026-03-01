@@ -124,7 +124,7 @@ class DataSentinel {
                         -- Index check
                         m.match_id IS NOT NULL as has_index,
                         -- L2 check
-                        m.l2_raw_json IS NOT NULL as has_l2,
+                        m.raw_data IS NOT NULL as has_l2,
                         -- Temporal check (cast entity_id to varchar for comparison)
                         EXISTS(
                             SELECT 1 FROM temporal_metric_records tmr
@@ -283,7 +283,7 @@ class DataSentinel {
                 golden_progress AS (
                     SELECT COUNT(*) as golden_count
                     FROM matches m
-                    WHERE m.l2_raw_json IS NOT NULL
+                    WHERE m.raw_data IS NOT NULL
                       AND EXISTS(
                           SELECT 1 FROM temporal_metric_records tmr
                           WHERE tmr.entity_id::varchar = m.match_id

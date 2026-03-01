@@ -64,9 +64,9 @@ const INCREMENTAL_TASKS = `
       AND m.match_date > NOW() - INTERVAL '1 day' * $2
       AND (
           r.match_id IS NULL
-          OR r.l2_raw_json IS NULL
-          OR r.l2_raw_json::text = '{}'
-          OR LENGTH(r.l2_raw_json::text) < $3
+          OR r.raw_data IS NULL
+          OR r.raw_data::text = '{}'
+          OR LENGTH(r.raw_data::text) < $3
       )
     ORDER BY m.match_date DESC
 `;
@@ -89,10 +89,10 @@ const REPAIR_TASKS = `
     WHERE m.external_id IS NOT NULL
       AND m.external_id <> ''
       AND (
-          LENGTH(r.l2_raw_json::text) < $1
-          OR r.l2_raw_json::text LIKE '%error%'
-          OR r.l2_raw_json::text LIKE '%TURNSTILE%'
-          OR r.l2_raw_json::text LIKE '%Failed%'
+          LENGTH(r.raw_data::text) < $1
+          OR r.raw_data::text LIKE '%error%'
+          OR r.raw_data::text LIKE '%TURNSTILE%'
+          OR r.raw_data::text LIKE '%Failed%'
       )
     ORDER BY m.match_date DESC
 `;
@@ -116,9 +116,9 @@ const FULL_TASKS = `
       AND m.external_id <> ''
       AND (
           r.match_id IS NULL
-          OR r.l2_raw_json IS NULL
-          OR r.l2_raw_json::text = '{}'
-          OR LENGTH(r.l2_raw_json::text) < $1
+          OR r.raw_data IS NULL
+          OR r.raw_data::text = '{}'
+          OR LENGTH(r.raw_data::text) < $1
       )
     ORDER BY m.match_date DESC
 `;
@@ -128,10 +128,10 @@ const FULL_TASKS = `
 // ============================================================================
 
 const INSERT_RAW_DATA = `
-    INSERT INTO raw_match_data (match_id, l2_raw_json, collected_at)
+    INSERT INTO raw_match_data (match_id, raw_data, collected_at)
     VALUES ($1, $2::jsonb, NOW())
     ON CONFLICT (match_id) DO UPDATE SET
-        l2_raw_json = EXCLUDED.l2_raw_json,
+        raw_data = EXCLUDED.raw_data,
         collected_at = NOW()
 `;
 
@@ -149,9 +149,9 @@ const UPDATE_MATCH_XG = `
 
 const CLEAN_BAD_RECORDS = `
     DELETE FROM raw_match_data
-    WHERE LENGTH(l2_raw_json::text) < $1
-       OR l2_raw_json::text LIKE '%error%'
-       OR l2_raw_json::text LIKE '%TURNSTILE%'
+    WHERE LENGTH(raw_data::text) < $1
+       OR raw_data::text LIKE '%error%'
+       OR raw_data::text LIKE '%TURNSTILE%'
     RETURNING match_id
 `;
 
@@ -163,7 +163,7 @@ const STATISTICS = {
     // 总覆盖率
     coverage: `
         SELECT
-            COUNT(*) FILTER (WHERE r.l2_raw_json IS NOT NULL AND LENGTH(r.l2_raw_json::text) >= $1) as valid_count,
+            COUNT(*) FILTER (WHERE r.raw_data IS NOT NULL AND LENGTH(r.raw_data::text) >= $1) as valid_count,
             COUNT(*) as total_count
         FROM matches m
         LEFT JOIN raw_match_data r ON m.match_id = r.match_id
@@ -175,15 +175,15 @@ const STATISTICS = {
         SELECT
             COUNT(*) as bad_count
         FROM raw_match_data
-        WHERE LENGTH(l2_raw_json::text) < $1
-           OR l2_raw_json::text LIKE '%error%'
+        WHERE LENGTH(raw_data::text) < $1
+           OR raw_data::text LIKE '%error%'
     `,
 
     // 最近收割记录
     recentHarvests: `
         SELECT
             match_id,
-            LENGTH(l2_raw_json::text) as size,
+            LENGTH(raw_data::text) as size,
             collected_at
         FROM raw_match_data
         WHERE collected_at > NOW() - INTERVAL '24 hours'
@@ -197,7 +197,7 @@ const STATISTICS = {
             m.league_name,
             COUNT(*) as total,
             COUNT(r.match_id) as harvested,
-            COUNT(*) FILTER (WHERE LENGTH(r.l2_raw_json::text) >= $1) as valid
+            COUNT(*) FILTER (WHERE LENGTH(r.raw_data::text) >= $1) as valid
         FROM matches m
         LEFT JOIN raw_match_data r ON m.match_id = r.match_id
         WHERE m.external_id IS NOT NULL

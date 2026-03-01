@@ -717,10 +717,10 @@ class MatchDetailEngine {
 
         // 存储原始 JSON
         const rawQuery = `
-            INSERT INTO raw_match_data (match_id, l2_raw_json, collected_at)
+            INSERT INTO raw_match_data (match_id, raw_data, collected_at)
             VALUES ($1, $2::jsonb, NOW())
             ON CONFLICT (match_id) DO UPDATE SET
-                l2_raw_json = EXCLUDED.l2_raw_json,
+                raw_data = EXCLUDED.raw_data,
                 collected_at = NOW()
         `;
 

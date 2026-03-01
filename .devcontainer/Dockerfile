@@ -192,7 +192,17 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD python -c "import sys; sys.exit(0)" || exit 1
 
 # -----------------------------------------------------------------------------
-# 阶段 8: 默认命令
+# 阶段 8: Tini init 系统 (V175 僵尸进程治理)
+# -----------------------------------------------------------------------------
+# 安装 tini 作为 PID 1，自动回收孤儿进程
+RUN apt-get update && apt-get install -y --no-install-recommends tini && \
+    rm -rf /var/lib/apt/lists/*
+
+# tini 作为 entrypoint，确保僵尸进程被正确回收
+ENTRYPOINT ["/usr/bin/tini", "--"]
+
+# -----------------------------------------------------------------------------
+# 阶段 9: 默认命令
 # -----------------------------------------------------------------------------
 # 开发模式：保持容器运行
 CMD ["sleep", "infinity"]

@@ -1,16 +1,17 @@
 /**
- * V173-SENTINEL 工厂级配置中心 (免疫系统加固版)
+ * V174-REFRESH 工厂级配置中心 (模块化重构版)
  * ==============================================
  *
  * 所有收割系统的魔术数字统一归口管理
  * 严禁在业务代码中硬编码任何参数
  *
- * V173 新增:
- * - 动态 UA 轮换池 (20 个主流 User-Agent)
- * - 深度静默模式 (FOTMOB_COOL_DOWN)
+ * V174 重构:
+ * - 12 个独立模块 (src/core/)
+ * - Master-Worker 架构
+ * - 薄层入口设计
  *
  * @module config/factory_config
- * @version V173.0.0 (Sentinel Edition)
+ * @version V174.0.0 (Refactor Edition)
  */
 
 'use strict';
@@ -29,6 +30,9 @@ const QUALITY_GATE = {
     /** 最小有效数据体积 (bytes) - 小于此值视为非法数据 */
     minSizeBytes: parseInt(ENV.MIN_SIZE_BYTES) || 5000,
 
+    /** 未来比赛最小数据体积 (bytes) - 对于没有 stats 的比赛使用更低阈值 */
+    minSizeBytesFuture: parseInt(ENV.MIN_SIZE_BYTES_FUTURE) || 3000,
+
     /** 最大数据体积 (bytes) - 用于异常检测 */
     maxSizeBytes: parseInt(ENV.MAX_SIZE_BYTES) || 10 * 1024 * 1024,  // 10MB
 
@@ -40,6 +44,7 @@ const QUALITY_GATE = {
 
     /**
      * 验证数据是否有效
+     * V175: 对于未来比赛（没有 stats）使用更低的阈值
      * @param {object} rawData - 原始数据
      * @returns {{valid: boolean, reason?: string, size?: number}}
      */
@@ -49,9 +54,17 @@ const QUALITY_GATE = {
         const jsonStr = JSON.stringify(rawData);
         const size = jsonStr.length;
 
+        // V175: 检查是否有 stats 数据
+        const hasStats = rawData.content &&
+            rawData.content.stats &&
+            Object.keys(rawData.content.stats).length > 0;
+
+        // 根据是否有 stats 选择不同的阈值
+        const minSize = hasStats ? this.minSizeBytes : this.minSizeBytesFuture;
+
         // 体积检查
-        if (size < this.minSizeBytes) {
-            return { valid: false, reason: 'SIZE_TOO_SMALL', size };
+        if (size < minSize) {
+            return { valid: false, reason: 'SIZE_TOO_SMALL', size, hasStats };
         }
 
         // 结构检查
@@ -76,7 +89,7 @@ const QUALITY_GATE = {
             }
         }
 
-        return { valid: true, size };
+        return { valid: true, size, hasStats };
     }
 };
 
@@ -198,8 +211,8 @@ const PROXY_CONFIG = {
     /** 默认代理端口 */
     defaultPort: parseInt(ENV.PROXY_PORT) || 7890,
 
-    /** 代理服务器地址模板 */
-    serverTemplate: ENV.PROXY_SERVER || 'http://host.docker.internal:{port}',
+    /** 代理服务器地址模板 - V174-TUNING: 使用直接 IP 地址提高稳定性 */
+    serverTemplate: ENV.PROXY_SERVER || 'http://172.25.16.1:{port}',
 
     /** 代理健康检查超时 (ms) */
     healthCheckTimeout: parseInt(ENV.PROXY_HEALTH_TIMEOUT) || 10000,
@@ -282,7 +295,7 @@ const CIRCUIT_BREAKER = {
 };
 
 // ============================================================================
-// 数据库配置 (Database)
+// 数据库配置 (Database) - V174: 优化连接池支持高并发
 // ============================================================================
 
 const DATABASE = {
@@ -292,14 +305,14 @@ const DATABASE = {
     /** 查询超时 (ms) */
     queryTimeout: parseInt(ENV.DB_QUERY_TIMEOUT) || 30000,
 
-    /** 连接池最大连接数 */
-    poolMax: parseInt(ENV.DB_POOL_MAX) || 10,
+    /** 连接池最大连接数 - V174: 20 支持高并发 */
+    poolMax: parseInt(ENV.DB_POOL_MAX) || 20,
 
     /** 连接池最小连接数 */
-    poolMin: parseInt(ENV.DB_POOL_MIN) || 2,
+    poolMin: parseInt(ENV.DB_POOL_MIN) || 5,
 
-    /** 连接空闲超时 (ms) */
-    idleTimeout: parseInt(ENV.DB_IDLE_TIMEOUT) || 30000
+    /** 连接空闲超时 (ms) - V174: 30 秒 */
+    idleTimeoutMillis: parseInt(ENV.DB_IDLE_TIMEOUT) || 30000
 };
 
 // ============================================================================
@@ -735,6 +748,6 @@ module.exports = {
     randomChoice,
 
     // 版本信息
-    VERSION: 'V173.0.0',
-    BUILD_DATE: '2026-02-28'
+    VERSION: 'V174.0.0',
+    BUILD_DATE: '2026-03-01'
 };
