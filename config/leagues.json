@@ -1,0 +1,45 @@
+{
+  "version": "V178.0.0",
+  "description": "L1 发现层联赛配置 - 单一数据源",
+  "active_leagues": [
+    {
+      "id": 47,
+      "name": "Premier League",
+      "country": "England",
+      "enabled": true
+    }
+  ],
+  "inactive_leagues": [
+    {
+      "id": 87,
+      "name": "La Liga",
+      "country": "Spain",
+      "enabled": false
+    },
+    {
+      "id": 55,
+      "name": "Serie A",
+      "country": "Italy",
+      "enabled": false
+    },
+    {
+      "id": 54,
+      "name": "Bundesliga",
+      "country": "Germany",
+      "enabled": false
+    },
+    {
+      "id": 53,
+      "name": "Ligue 1",
+      "country": "France",
+      "enabled": false
+    },
+    {
+      "id": 42,
+      "name": "Champions League",
+      "country": "Europe",
+      "enabled": false
+    }
+  ],
+  "active_seasons": ["2023/2024", "2024/2025"]
+}
