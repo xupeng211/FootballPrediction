@@ -27,7 +27,8 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 const pLimit = require('p-limit');
-const { createPool } = require('../../../scripts/ops/modules/storage');
+// V176-FIX: 移除断链引用，使用 pg.Pool 直接替代
+const { Pool: PgPool } = require('pg');
 const { EngineConfig } = require('./config/EngineConfig');
 const { TrajectoryParser } = require('./parsers/TrajectoryParser');
 const { SurgicalInteraction } = require('./services/SurgicalInteraction');
@@ -203,7 +204,15 @@ class QuantHarvester {
      */
     async init() {
         if (!this.pool) {
-            this.pool = createPool();
+            // V176-FIX: 使用 pg.Pool 替代断链的 storage.createPool
+            this.pool = new PgPool({
+                host: process.env.DB_HOST || 'localhost',
+                port: parseInt(process.env.DB_PORT || '5432'),
+                database: process.env.DB_NAME || 'football_db',
+                user: process.env.DB_USER || 'football_user',
+                password: process.env.DB_PASSWORD || '',
+                max: 20
+            });
             this.logger.info('DB Pool Initialized');
         }
 
