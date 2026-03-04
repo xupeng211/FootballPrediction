@@ -1,17 +1,16 @@
 /**
- * V174-REFRESH 工厂级配置中心 (模块化重构版)
+ * V178 工厂级配置中心 (终极强化版)
  * ==============================================
  *
  * 所有收割系统的魔术数字统一归口管理
  * 严禁在业务代码中硬编码任何参数
  *
- * V174 重构:
- * - 12 个独立模块 (src/core/)
- * - Master-Worker 架构
- * - 薄层入口设计
+ * V178 升级:
+ * - 熔断器配置升级: 5 次失败触发, 60 秒冷却
+ * - 指数退避优化: 1s -> 2s -> 4s (带 ±20% 抖动)
  *
  * @module config/factory_config
- * @version V174.0.0 (Refactor Edition)
+ * @version V178.0.0 (Ultimate Hardening Edition)
  */
 
 'use strict';
@@ -277,21 +276,24 @@ const PROXY_CONFIG = {
 };
 
 // ============================================================================
-// 熔断配置 (Circuit Breaker)
+// 熔断配置 (Circuit Breaker) - V178: 5 次 403/超时触发, 60 秒冷却
 // ============================================================================
 
 const CIRCUIT_BREAKER = {
-    /** 连续失败次数阈值 */
-    threshold: parseInt(ENV.CIRCUIT_BREAKER_THRESHOLD) || 3,
+    /** 连续失败次数阈值 - V178: 从 3 提升到 5 */
+    threshold: parseInt(ENV.CIRCUIT_BREAKER_THRESHOLD) || 5,
 
     /** Worker 重启延迟 (ms) */
     restartDelayMs: parseInt(ENV.WORKER_RESTART_DELAY_MS) || 30000,
 
-    /** 冷却期 (ms) - 熔断后的等待时间 */
+    /** 冷却期 (ms) - V178: 60 秒冷却 */
     cooldownMs: parseInt(ENV.CIRCUIT_COOLDOWN) || 60000,
 
-    /** 半开状态测试请求数 */
-    halfOpenRequests: 1
+    /** 半开状态测试请求数 - V178: 从 1 提升到 3 */
+    halfOpenRequests: 3,
+
+    /** 成功恢复阈值 - V178: 半开状态成功 1 次即恢复 */
+    successThreshold: 1
 };
 
 // ============================================================================
@@ -683,16 +685,16 @@ function getRandomDelay(range = [TIMING.minDelayMs, TIMING.maxDelayMs]) {
 }
 
 /**
- * 获取指数退避延时
- * @param {number} attempt - 当前尝试次数
+ * V178: 获取指数退避延时 (1s -> 2s -> 4s 带抖动)
+ * @param {number} attempt - 当前尝试次数 (1-based)
  * @returns {number} 退避延时 (ms)
  */
 function getExponentialBackoff(attempt) {
-    const delay = Math.min(
-        RETRY.delayRange[0] * Math.pow(RETRY.backoffBase, attempt - 1),
-        RETRY.maxBackoffMs
-    );
-    // 添加抖动 (±20%)
+    // V178: 固定退避序列 1s -> 2s -> 4s
+    const baseDelay = 1000 * Math.pow(2, attempt - 1);  // 1000, 2000, 4000
+    const delay = Math.min(baseDelay, 4000);  // 上限 4 秒
+
+    // V178: ±20% 抖动
     const jitter = delay * 0.2 * (Math.random() * 2 - 1);
     return Math.floor(delay + jitter);
 }
@@ -748,6 +750,6 @@ module.exports = {
     randomChoice,
 
     // 版本信息
-    VERSION: 'V174.0.0',
-    BUILD_DATE: '2026-03-01'
+    VERSION: 'V178.0.0',
+    BUILD_DATE: '2026-03-03'
 };

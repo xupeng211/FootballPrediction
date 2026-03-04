@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-V26.0 核心类型定义 - 零缺陷架构基础
+V178 核心类型定义 - 零缺陷架构基础
 ==========================================
 
 设计原则:
@@ -8,9 +8,13 @@ V26.0 核心类型定义 - 零缺陷架构基础
     - 不可变性: 所有值对象不可变，防止意外修改
     - 自验证: 构造时自动验证格式，fail-fast
 
+V178 升级:
+    - MatchID 支持新格式: {league_id}_{season}_{external_id}
+    - 向后兼容旧格式: {external_id}_{season}
+
 Author: Principal Architect
-Version: V26.0 (Stable)
-Date: 2025-12-27
+Version: V178.0.0 (Ultimate Hardening)
+Date: 2026-03-03
 """
 
 from dataclasses import dataclass
@@ -87,8 +91,12 @@ class MatchID:
     """
     比赛ID值对象 - 类型安全的 ID 封装
 
-    格式: {external_id}_{season}
-    示例: 4507094_2324
+    V178 升级:
+        - 支持新格式: {league_id}_{season}_{external_id}
+        - 向后兼容旧格式: {external_id}_{season}
+
+    新格式示例: EN_2324_4507094
+    旧格式示例: 4507094_2324 (向后兼容)
 
     设计原则:
         - 不可变: frozen=True 防止意外修改
@@ -96,24 +104,30 @@ class MatchID:
         - 自验证: 构造时自动验证格式
 
     使用示例:
-        # 正确用法 - 使用类型安全的构造
-        match_id = MatchID.create("4507094", "2324")
+        # V178 新格式
+        match_id = MatchID.parse("EN_2324_4507094")
+
+        # 向后兼容旧格式
         match_id = MatchID.parse("4507094_2324")
 
-        # 错误用法 - 手动拼接（严禁）
-        # match_id = f"{external_id}_{season}"  # ❌ 禁止
+        # 创建新格式
+        match_id = MatchID.create("4507094", "2324", league_id="EN")
 
         # 获取各种格式
-        str_id = str(match_id)           # "4507094_2324"
+        str_id = str(match_id)           # "EN_2324_4507094" 或 "4507094_2324"
         external = match_id.external_id  # "4507094"
         season = match_id.season         # "2324"
+        league = match_id.league_id     # "EN"
     """
 
-    external_id: str
+    league_id: str      # V178: 新增联赛代码
     season: str
+    external_id: str
 
-    # ID 格式验证正则
-    _ID_PATTERN = re.compile(r"^(\d+)_(\d{4})$")
+    # V178: 新格式正则 - league_season_external_id
+    _NEW_PATTERN = re.compile(r'^([A-Z]{2,4})_(\d{4})_(\d+)$')
+    # 旧格式正则 - external_id_season (向后兼容)
+    _LEGACY_PATTERN = re.compile(r'^(\d+)_(\d{4})$')
 
     def __post_init__(self):
         """验证 ID 格式"""
@@ -124,26 +138,31 @@ class MatchID:
             raise ValueError(f"season 必须是 4 位数字: {self.season}")
 
     @classmethod
-    def create(cls, external_id: str, season: str) -> "MatchID":
+    def create(cls, external_id: str, season: str, league_id: str = "XX") -> "MatchID":
         """
         创建 MatchID 实例（推荐使用）
 
         Args:
             external_id: 外部比赛 ID
             season: 赛季代码 (如 "2324")
+            league_id: 联赛代码 (如 "EN")，默认 "XX" 表示未知
 
         Returns:
             MatchID 实例
         """
-        return cls(external_id=external_id, season=season)
+        return cls(league_id=league_id, external_id=external_id, season=season)
 
     @classmethod
     def parse(cls, match_id_str: str) -> "MatchID":
         """
         从字符串解析 MatchID
 
+        V178: 支持双格式解析
+        - 新格式: league_season_external_id (如 EN_2324_4507094)
+        - 旧格式: external_id_season (如 4507094_2324)
+
         Args:
-            match_id_str: ID 字符串，格式 "external_id_season"
+            match_id_str: ID 字符串
 
         Returns:
             MatchID 实例
@@ -154,18 +173,27 @@ class MatchID:
         if not match_id_str:
             raise ValueError("match_id_str 不能为空")
 
-        match = cls._ID_PATTERN.match(match_id_str.strip())
-        if not match:
-            raise ValueError(
-                f"无效的 match_id 格式: {match_id_str}，期望格式: <external_id>_<season> (如 4507094_2324)"
-            )
+        # V178: 优先尝试新格式
+        new_match = cls._NEW_PATTERN.match(match_id_str.strip())
+        if new_match:
+            league_id, season, external_id = new_match.groups()
+            return cls(league_id=league_id, season=season, external_id=external_id)
 
-        external_id, season = match.groups()
-        return cls(external_id=external_id, season=season)
+        # V178: 向后兼容旧格式
+        legacy_match = cls._LEGACY_PATTERN.match(match_id_str.strip())
+        if legacy_match:
+            external_id, season = legacy_match.groups()
+            return cls(league_id="XX", season=season, external_id=external_id)
+
+        raise ValueError(
+            f"无效的 match_id 格式: {match_id_str}，"
+            f"期望新格式: <league>_<season>_<external_id> (如 EN_2324_4507094) "
+            f"或旧格式: <external_id>_<season> (如 4507094_2324)"
+        )
 
     def __str__(self) -> str:
-        """返回标准字符串格式: external_id_season"""
-        return f"{self.external_id}_{self.season}"
+        """返回标准字符串格式: league_season_external_id"""
+        return f"{self.league_id}_{self.season}_{self.external_id}"
 
     def __repr__(self) -> str:
         return f"MatchID('{self}')"
@@ -173,6 +201,10 @@ class MatchID:
     def to_int_pair(self) -> tuple[int, int]:
         """返回 (external_id_int, season_int) 元组"""
         return (int(self.external_id), int(self.season))
+
+    def to_legacy_format(self) -> str:
+        """返回旧格式字符串: external_id_season (向后兼容)"""
+        return f"{self.external_id}_{self.season}"
 
 
 class Season:
@@ -241,13 +273,15 @@ class Season:
 # ============================================================================
 
 
-def create_match_id(external_id: str, season: str) -> MatchID:
+def create_match_id(external_id: str, season: str, league_id: str = "XX") -> MatchID:
     """
     创建 MatchID 的便捷函数
 
+    V178: 新增 league_id 参数支持
+
     这是推荐的全局入口点，用于替代所有手动拼接字符串的操作。
     """
-    return MatchID.create(external_id, Season.normalize(season))
+    return MatchID.create(external_id, Season.normalize(season), league_id)
 
 
 def parse_match_id(match_id_str: str) -> MatchID:
