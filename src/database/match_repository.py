@@ -457,7 +457,7 @@ def create_match_repository(
     db_host: str = "localhost",
     db_name: str = "football_db",
     db_user: str = "football_user",
-    db_password: str = "football_pass",
+    db_password: str = "",  # V190: 移除硬编码密码，使用环境变量
 ) -> MatchRepository:
     """
     创建比赛仓储实例

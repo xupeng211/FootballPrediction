@@ -52,11 +52,11 @@ const DatabaseConfig = {
         return process.env.DB_USER || 'football_user';
     },
     get password() {
-        // 生产环境必须设置 DB_PASSWORD
+        // V190: 生产环境必须设置 DB_PASSWORD
         const password = process.env.DB_PASSWORD;
         if (!password) {
-            console.warn('⚠️ DB_PASSWORD 未设置，使用默认值 (仅限开发环境)');
-            return 'dev_password';
+            console.warn('⚠️ DB_PASSWORD 未设置，请在 .env 文件中配置');
+            return '';  // 返回空字符串而非硬编码密码
         }
         return password;
     },

@@ -49,7 +49,7 @@ class WeeklyPnLGenerator:
             "port": 5432,
             "database": "football_db",
             "user": "football_user",
-            "password": "football_pass",
+            "password": "",  # V190: 移除硬编码密码，使用环境变量
         }
 
         # 数据目录

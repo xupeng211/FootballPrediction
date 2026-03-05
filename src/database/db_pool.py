@@ -110,9 +110,11 @@ class DatabasePoolConfig:
             DatabasePoolConfig: 配置对象
         """
         if db_url is None:
+            # V190: 安全修复 - 不再硬编码密码，使用环境变量
+            db_password = os.getenv("DB_PASSWORD", "dev_password")
             db_url = os.getenv(
                 "DATABASE_URL",
-                "postgresql+asyncpg://football_user:football_pass@db:5432/football_db",
+                f"postgresql+asyncpg://football_user:{db_password}@db:5432/football_db",
             )
 
         # 解析数据库URL

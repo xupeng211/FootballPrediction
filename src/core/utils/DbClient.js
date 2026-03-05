@@ -20,7 +20,7 @@ const DB_CONFIG = {
     port: parseInt(process.env.DB_PORT) || 5432,
     database: process.env.DB_NAME || 'football_db',
     user: process.env.DB_USER || 'football_user',
-    password: process.env.DB_PASSWORD || 'football_pass',
+    password: process.env.DB_PASSWORD || '',  // V190: 移除硬编码密码
     connectionTimeoutMillis: parseInt(process.env.DB_CONNECT_TIMEOUT) || 10000,
     query_timeout: parseInt(process.env.DB_QUERY_TIMEOUT) || 30000
 };

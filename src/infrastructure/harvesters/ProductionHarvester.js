@@ -1,5 +1,5 @@
 /**
- * ProductionHarvester - V181 IRON-SHIELD 无人值守收割引擎
+ * ProductionHarvester - V186 ENTERPRISE 企业级收割引擎
  * ====================================
  *
  * 从 scripts/ops/run_production_harvest.js 提取核心业务逻辑
@@ -41,8 +41,15 @@
  * - 日志精简: 只在最终成功/失败时输出
  * - 最终扫尾: 自动多轮收割直到 100%
  *
+ * V186 升级 (ENTERPRISE-HARDENING):
+ * - 工业级日志系统: Winston + 日志轮转 + JSON 格式
+ * - 错误分类: FATAL (程序退出) vs RETRYABLE (自动重试)
+ * - 优雅停机: SIGINT/SIGTERM 信号处理 + 安全关闭
+ * - 完整 JSDoc: 所有方法添加文档注释
+ * - 日志元数据: WorkerID、ProxyPort、MatchID、Attempt
+ *
  * @module infrastructure/harvesters/ProductionHarvester
- * @version V181.0.0
+ * @version V186.0.0
  */
 
 'use strict';
@@ -65,6 +72,87 @@ const { getNetworkShield } = require('../network/NetworkShield');
 // V179: 导入 SessionManager
 const { getSessionManager } = require('../network/SessionManager');
 
+// V186: 导入企业级日志系统
+const { logger } = require('../utils/Logger');
+
+// ============================================================================
+// V186: 错误类型分类系统
+// ============================================================================
+
+/**
+ * 错误严重级别枚举
+ * @readonly
+ * @enum {string}
+ */
+const ErrorSeverity = {
+    /** 致命错误 - 程序必须退出 */
+    FATAL: 'FATAL',
+    /** 可重试错误 - 自动重试 */
+    RETRYABLE: 'RETRYABLE',
+    /** 警告 - 可忽略 */
+    WARNING: 'WARNING'
+};
+
+/**
+ * V186: 错误类型分类映射
+ * 根据错误消息判断错误严重级别
+ * @param {Error} error - 错误对象
+ * @returns {{severity: ErrorSeverity, errorType: string, reason: string}}
+ */
+function classifyError(error) {
+    const msg = error.message.toLowerCase();
+    const errorName = error.name || 'UnknownError';
+
+    // === FATAL: 程序必须退出 ===
+    const fatalPatterns = [
+        { pattern: 'authentication failed', type: 'AUTH_FAILURE', reason: '身份验证失败，请检查 Cookie/Session' },
+        { Pattern: 'invalid credentials', type: 'AUTH_FAILURE', reason: '凭证无效，需要重新登录' },
+        { pattern: 'database connection failed', type: 'DB_FAILURE', reason: '数据库连接失败' },
+        { pattern: 'econnrefused', type: 'DB_FAILURE', reason: '数据库拒绝连接' },
+        { pattern: 'out of memory', type: 'OOM', reason: '内存不足' },
+        { pattern: 'browser crashed', type: 'BROWSER_CRASH', reason: '浏览器崩溃' }
+    ];
+
+    for (const { pattern, type, reason } of fatalPatterns) {
+        if (msg.includes(pattern)) {
+            return { severity: ErrorSeverity.FATAL, errorType: type, reason };
+        }
+    }
+
+    // === RETRYABLE: 可自动重试 ===
+    const retryablePatterns = [
+        { pattern: '403', type: 'HTTP_403', reason: '被反爬拦截，切换端口重试' },
+        { Pattern: 'forbidden', type: 'HTTP_403', reason: '访问被拒绝，需要切换身份' },
+        { pattern: 'turnstile', type: 'TURNSTILE', reason: 'Turnstile 验证，切换端口' },
+        { pattern: 'cloudflare', type: 'CF_BLOCK', reason: 'Cloudflare 拦截' },
+        { pattern: 'timeout', type: 'TIMEOUT', reason: '请求超时' },
+        { pattern: 'econnreset', type: 'NETWORK', reason: '连接重置' },
+        { pattern: 'enotfound', type: 'DNS', reason: 'DNS 解析失败' },
+        { pattern: 'network error', type: 'NETWORK', reason: '网络错误' },
+        { pattern: 'socket hang up', type: 'NETWORK', reason: 'Socket 断开' },
+        { pattern: 'proxy', type: 'PROXY', reason: '代理错误' }
+    ];
+
+    for (const { pattern, type, reason } of retryablePatterns) {
+        if (msg.includes(pattern)) {
+            return { severity: ErrorSeverity.RETRYABLE, errorType: type, reason };
+        }
+    }
+
+    // === 默认: 根据错误类型判断 ===
+    if (errorName === 'TimeoutError') {
+        return { severity: ErrorSeverity.RETRYABLE, errorType: 'TIMEOUT', reason: 'Playwright 超时' };
+    }
+
+    // 数据问题不重试
+    if (msg.includes('no_data') || msg.includes('size_too_small')) {
+        return { severity: ErrorSeverity.WARNING, errorType: 'DATA_QUALITY', reason: '数据质量问题' };
+    }
+
+    // 未知错误，保守处理为可重试
+    return { severity: ErrorSeverity.RETRYABLE, errorType: 'UNKNOWN', reason: '未知错误' };
+}
+
 // V180: playwright-stealth 有兼容性问题，// 改用 Playwright 原生隐身功能 + 自定义脚本注入
 // const { stealth } = require('playwright-stealth');
 
@@ -73,30 +161,69 @@ const { getSessionManager } = require('../network/SessionManager');
 // ============================================================================
 
 /**
- * V180: 深度隐身配置 - 必须与 capture_auth.js 中的指纹完全一致
- * 包含完整的硬件信息、 WebGL 特征、字体库模拟
+ * V185: WebGL 渲染器池 - 用于指纹随机化
+ * 避免所有 Worker 使用完全相同的硬件指纹
  */
-const DEEP_STEALTH_CONFIG = {
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    viewport: { width: 1920, height: 1080 },
-    deviceScaleFactor: 1,
-    locale: 'en-US',
-    timezoneId: 'Europe/London',
-    platform: 'Win32',
-    // 模拟硬件信息
-    hardwareConcurrency: 24,
-    deviceMemory: 8,
-    // 模拟 WebGL 特征
-    webgl: {
-        vendor: 'Google Inc. (AMD)',
-        renderer: 'ANGLE (AMD, AMD Radeon(TM) Graphics (0x000013C0) Direct3D11 vs_5_0 ps_5_0, D3D11)'
-    },
-    // 模拟字体 (常用英文字体)
-    fonts: [
-        'Arial', 'Arial Unicode MS', 'Calibri', 'Cambria', 'Georgia', 'Times New Roman',
-        'Segoe UI', 'Tahoma', 'Verdana', 'Helvetica Neue', 'Helvetica', 'Helvetica Neue Cyr'
-    ]
-};
+const WEBGL_RENDERER_POOL = [
+    'ANGLE (AMD, AMD Radeon(TM) Graphics (0x000013C0) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002183) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 (0x00002503) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 (0x00001B80) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E9B) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x000049A5) Direct3D11 vs_5_0 ps_5_0, D3D11)',
+    'ANGLE (AMD, AMD Radeon RX 580 Series (0x000067DF) Direct3D11 vs_5_0 ps_5_0, D3D11)'
+];
+
+/**
+ * V185: 生成随机化的深度隐身配置
+ * 每次调用生成略微不同的硬件指纹，避免特征过于单一
+ * @param {number} workerId - Worker ID，用于确定性随机
+ * @returns {Object} 随机化的隐身配置
+ */
+function generateStealthConfig(workerId = 1) {
+    // 基于 workerId 的确定性随机种子（同一 worker 每次生成相同配置）
+    const seed = workerId * 17 + 42;
+
+    // CPU 核心数: 8-24 之间（主流配置）
+    const hardwareConcurrency = 8 + (seed % 17); // 8-24
+
+    // 内存: 4, 8, 16, 32 GB（主流配置）
+    const memoryOptions = [4, 8, 8, 16, 16, 16, 32];
+    const deviceMemory = memoryOptions[seed % memoryOptions.length];
+
+    // WebGL 渲染器
+    const renderer = WEBGL_RENDERER_POOL[seed % WEBGL_RENDERER_POOL.length];
+    const vendor = renderer.includes('NVIDIA') ? 'Google Inc. (NVIDIA)' :
+                   renderer.includes('Intel') ? 'Google Inc. (Intel)' :
+                   'Google Inc. (AMD)';
+
+    // 视口尺寸微调 (±50px)
+    const viewportWidth = 1920 + ((seed % 5) - 2) * 20; // 1880-1960
+    const viewportHeight = 1080 + ((seed % 5) - 2) * 15; // 1050-1110
+
+    return {
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        viewport: { width: viewportWidth, height: viewportHeight },
+        deviceScaleFactor: 1,
+        locale: 'en-US',
+        timezoneId: 'Europe/London',
+        platform: 'Win32',
+        hardwareConcurrency,
+        deviceMemory,
+        webgl: { vendor, renderer },
+        fonts: [
+            'Arial', 'Arial Unicode MS', 'Calibri', 'Cambria', 'Georgia', 'Times New Roman',
+            'Segoe UI', 'Tahoma', 'Verdana', 'Helvetica Neue', 'Helvetica', 'Helvetica Neue Cyr'
+        ]
+    };
+}
+
+/**
+ * V180: 深度隐身配置 (默认值，用于向后兼容)
+ * @deprecated 使用 generateStealthConfig(workerId) 替代
+ */
+const DEEP_STEALTH_CONFIG = generateStealthConfig(1);
 
 // ============================================================================
 // V179.2: 固定指纹配置 - 与 capture_auth.js 完全一致
@@ -281,8 +408,23 @@ class WorkerIdentity {
 // ============================================================================
 
 class ProductionHarvester {
+    /**
+     * V186: 创建 ProductionHarvester 实例
+     * @param {Object} [config={}] - 配置选项
+     * @param {number} [config.maxWorkers=6] - 最大 Worker 数量
+     * @param {number} [config.minDelayMs=10000] - 最小延时（毫秒）
+     * @param {number} [config.maxDelayMs=20000] - 最大延时（毫秒）
+     * @param {number} [config.batchSize=500] - 每批次任务数
+     * @param {string} [config.leagueFilter] - 联赛过滤器
+     * @param {boolean} [config.dryRun=false] - 试运行模式
+     * @param {number} [config.maxRetries=3] - 最大重试次数
+     * @param {number} [config.retryDelayMs=5000] - 重试延时（毫秒）
+     * @param {number} [config.maxSweepRounds=3] - 最大扫尾轮数
+     * @param {number} [config.targetSuccessRate=1.0] - 目标成功率
+     * @param {boolean} [config.verboseLogging=false] - 详细日志模式
+     */
     constructor(config = {}) {
-        // V181: IRON-SHIELD 配置 - 弹性重试 + 端口避障
+        // V186: ENTERPRISE 配置 - 工业级日志 + 优雅停机
         this.config = {
             maxWorkers: parseInt(process.env.MAX_WORKERS) || config.maxWorkers || 6,
             minDelayMs: parseInt(process.env.MIN_DELAY_MS) || config.minDelayMs || 10000,
@@ -297,8 +439,10 @@ class ProductionHarvester {
             // V181: 最终扫尾配置
             maxSweepRounds: parseInt(process.env.MAX_SWEEP_ROUNDS) || config.maxSweepRounds || 3,
             targetSuccessRate: parseFloat(process.env.TARGET_SUCCESS_RATE) || config.targetSuccessRate || 1.0,
-            // V181: 日志精简模式
+            // V186: 日志精简模式
             verboseLogging: process.env.VERBOSE_LOGGING === 'true' || config.verboseLogging || false,
+            // V186: 优雅停机配置
+            shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS) || config.shutdownTimeoutMs || 30000,
             ...config
         };
 
@@ -328,6 +472,127 @@ class ProductionHarvester {
 
         // V181: 可用端口池 (7890-7911)
         this.availablePorts = Array.from({ length: 22 }, (_, i) => 7890 + i);
+
+        // V186: 优雅停机状态
+        this.isShuttingDown = false;
+        this.activeWorkers = new Set();
+        this.shutdownPromise = null;
+        this.workerLogger = logger.createWorkerLogger(0, 0); // 默认日志器
+
+        // V186: 注册信号处理器
+        this._setupGracefulShutdown();
+    }
+
+    // ========================================================================
+    // V186: 优雅停机机制
+    // ========================================================================
+
+    /**
+     * V186: 设置优雅停机信号处理器
+     * 监听 SIGINT (Ctrl+C) 和 SIGTERM 信号
+     * @private
+     */
+    _setupGracefulShutdown() {
+        const handler = async (signal) => {
+            if (this.isShuttingDown) {
+                logger.warn('🔄 已在停机中，请稍候...');
+                return;
+            }
+
+            this.isShuttingDown = true;
+            const activeCount = this.activeWorkers.size;
+            logger.logGracefulShutdown(signal, activeCount);
+
+            // 设置停机超时
+            const timeoutId = setTimeout(() => {
+                logger.warn(`⏰ 停机超时 (${this.config.shutdownTimeoutMs}ms)，强制退出`);
+                process.exit(1);
+            }, this.config.shutdownTimeoutMs);
+
+            try {
+                // 等待所有活跃 Worker 完成
+                if (activeCount > 0) {
+                    logger.info(`⏳ 等待 ${activeCount} 个活跃 Worker 完成...`);
+                    await Promise.race([
+                        this._waitForWorkers(),
+                        this._delay(this.config.shutdownTimeoutMs - 1000)
+                    ]);
+                }
+
+                // 清理资源
+                await this._cleanup();
+
+                clearTimeout(timeoutId);
+                logger.logShutdownComplete(Date.now() - (this.shutdownStartTime || Date.now()), {
+                    processed: this.stats.processed,
+                    success: this.stats.success,
+                    failed: this.stats.failed
+                });
+
+                process.exit(0);
+            } catch (err) {
+                logger.error('停机过程中发生错误', err);
+                process.exit(1);
+            }
+        };
+
+        process.on('SIGINT', () => handler('SIGINT'));
+        process.on('SIGTERM', () => handler('SIGTERM'));
+    }
+
+    /**
+     * V186: 等待所有活跃 Worker 完成
+     * @private
+     * @returns {Promise<void>}
+     */
+    async _waitForWorkers() {
+        while (this.activeWorkers.size > 0) {
+            logger.debug(`等待 ${this.activeWorkers.size} 个 Worker...`);
+            await this._delay(500);
+        }
+    }
+
+    /**
+     * V186: 清理资源（浏览器、数据库连接等）
+     * @private
+     * @returns {Promise<void>}
+     */
+    async _cleanup() {
+        // 关闭浏览器
+        if (this.browser) {
+            try {
+                await this.browser.close();
+                logger.info('✅ 浏览器已关闭');
+            } catch (err) {
+                logger.warn('浏览器关闭失败', { error: err.message });
+            }
+        }
+
+        // 关闭数据库连接池
+        if (this.pool) {
+            try {
+                await this.pool.end();
+                logger.info('✅ 数据库连接池已关闭');
+            } catch (err) {
+                logger.warn('数据库连接池关闭失败', { error: err.message });
+            }
+        }
+    }
+
+    /**
+     * V186: 注册 Worker 为活跃状态
+     * @param {number} workerId - Worker ID
+     */
+    _registerWorker(workerId) {
+        this.activeWorkers.add(workerId);
+    }
+
+    /**
+     * V186: 注销 Worker 活跃状态
+     * @param {number} workerId - Worker ID
+     */
+    _unregisterWorker(workerId) {
+        this.activeWorkers.delete(workerId);
     }
 
     // ========================================================================
