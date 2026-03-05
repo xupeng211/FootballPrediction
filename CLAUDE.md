@@ -193,7 +193,12 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 | **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
 | **C++ 桥接** | `src/utils/cpp_bridge_radar.py` | - |
 
-> ⚠️ **已废弃组件 (V191.2 清理)**: `QuantHarvester.js`, `IdentityResolver.js` 已删除
+> ⚠️ **已废弃组件 (V191.5 最终清理)**:
+> - `QuantHarvester.js`, `IdentityResolver.js` - V191.2 删除
+> - `src/collectors/` 整个目录 - V191.5 删除 (废弃的 Python 采集系统)
+> - `src/ops/` 整个目录 - V191.5 删除 (废弃的 Python ops 脚本)
+> - `src/infrastructure/engines/match_engine/` - V191.5 删除
+> - `src/core/self_healing.py` - V191.5 删除
 
 **关键目录：**
 ```
