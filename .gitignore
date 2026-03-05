@@ -91,6 +91,7 @@ model_zoo/*.pt
 model_zoo/*.json
 !model_zoo/.gitkeep
 !model_zoo/registry.md
+!model_zoo/v188_iron_shield_final.model
 
 # Logs (SENSITIVE - may contain API keys)
 logs/
@@ -257,8 +258,7 @@ node_modules/
 package-lock.json
 
 # V173: Browser Profile Data (SENSITIVE)
-data/browser_profile/*.json
-data/browser_profile/*.json.*
+data/browser_profile/
 !data/browser_profile/.gitkeep
 
 # =============================================================================
