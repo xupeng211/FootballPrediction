@@ -24,7 +24,7 @@ class DBConfig:
     port: int = 5432
     name: str = "football_db"
     user: str = "football_user"
-    password: str = "football_pass"
+    password: str = ""  # V190: 移除硬编码密码，必须通过环境变量提供
 
 
 def get_db_config() -> DBConfig:
@@ -48,7 +48,7 @@ def get_db_config() -> DBConfig:
             port=int(os.getenv("DB_PORT", 5432)),
             name=os.getenv("DB_NAME", "football_db"),
             user=os.getenv("DB_USER", "football_user"),
-            password=os.getenv("DB_PASSWORD", "football_pass"),
+            password=os.getenv("DB_PASSWORD", ""),  # V190: 必须通过环境变量提供
         )
 
 

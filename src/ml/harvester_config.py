@@ -32,8 +32,8 @@ class HarvesterSettings(BaseSettings):
     )
 
     # ==================== 数据库配置 ====================
-    # V20.8 显式环境变量（容器内优先）
-    postgres_password: str = Field(default="football_pass", alias="POSTGRES_PASSWORD")
+    # V190: 移除硬编码密码，必须通过环境变量提供
+    postgres_password: str = Field(default="", alias="POSTGRES_PASSWORD")
     db_name: str = Field(default="football_db", alias="DB_NAME")
     postgres_user: str = Field(default="football_user", alias="POSTGRES_USER")
     db_host: str = Field(default="db", alias="DB_HOST")
