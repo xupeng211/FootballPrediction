@@ -183,6 +183,18 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 | **L2** | OddsPortal | 赔率数据（开盘/收盘、1X2、亚洲盘） | `l2_match_data` |
 | **L3** | 特征工程 | 12061 维特征向量 | `l3_features` |
 
+**系统核心资产地图 (V191.2 唯一化审计)：**
+| 功能模块 | 唯一指定文件 | 入口脚本 |
+|----------|-------------|---------|
+| **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `scripts/ops/seed_fixtures.js` |
+| **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` (V186) | `scripts/ops/run_production.js` |
+| **L3 Smelt** | `src/feature_engine/smelter/FeatureSmelter.js` | `scripts/ops/smelt_all.js` |
+| **身份管理** | `src/infrastructure/network/SessionManager.js` | - |
+| **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
+| **C++ 桥接** | `src/utils/cpp_bridge_radar.py` | - |
+
+> ⚠️ **已废弃组件 (V191.2 清理)**: `QuantHarvester.js`, `IdentityResolver.js` 已删除
+
 **关键目录：**
 ```
 src/
