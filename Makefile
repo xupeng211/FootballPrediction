@@ -208,8 +208,8 @@ dev-logs: ## 查看开发容器日志
 dev-build: ## 强制重建开发镜像
 	@./scripts/ops/dev_container.sh --build
 
-dev-harvest: ## 在容器中运行 QuantHarvester
-	docker-compose -f docker-compose.dev.yml exec dev node src/infrastructure/engines/QuantHarvester.js
+dev-harvest: ## 在容器中运行生产收割器
+	docker-compose -f docker-compose.dev.yml exec dev npm start
 
 dev-test: ## 在容器中运行测试
 	docker-compose -f docker-compose.dev.yml exec dev python main.py --test-proxy
