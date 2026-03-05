@@ -1,5 +1,5 @@
 {
-  "version": "V178.0.0",
+  "version": "V192.0.0",
   "description": "L1 发现层联赛配置 - 单一数据源",
   "active_leagues": [
     {
@@ -7,15 +7,15 @@
       "name": "Premier League",
       "country": "England",
       "enabled": true
-    }
-  ],
-  "inactive_leagues": [
+    },
     {
       "id": 87,
       "name": "La Liga",
       "country": "Spain",
-      "enabled": false
-    },
+      "enabled": true
+    }
+  ],
+  "inactive_leagues": [
     {
       "id": 55,
       "name": "Serie A",
