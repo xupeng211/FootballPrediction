@@ -1112,13 +1112,8 @@ class ProductionHarvester {
         const logPrefix = isRetry ? `[W${workerId}-R${attempt}]` : `[W${workerId}]`;
 
         try {
-            // 首页预热（重试时跳过以节省时间）
-            if (!isRetry) {
-                await this._warmupHomepage(page);
-            } else {
-                await page.goto('https://www.fotmob.com/', { waitUntil: 'domcontentloaded', timeout: 15000 });
-                await this._delay(2000);
-            }
+            // 首页预热（始终执行，            // V193: 重试时也需要执行预热，            const warmupConfig = isRetry ? { scrollMore: true, randomScrolls: true } : { scrollMore: false, randomScrolls: false };
+            await this._warmupHomepage(page, warmupConfig);
 
             // 请求拦截
             let capturedData = null;
