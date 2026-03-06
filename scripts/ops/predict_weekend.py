@@ -540,7 +540,7 @@ class WeekendPredictor:
         """获取 L3 特征"""
         cur = self.conn.cursor()
         cur.execute("""
-            SELECT golden_features, tactical_features
+            SELECT golden_features, tactical_features, elo_features
             FROM l3_features
             WHERE match_id = %s
         """, (match_id,))
@@ -551,7 +551,8 @@ class WeekendPredictor:
 
         return {
             'golden': row[0] or {},
-            'tactical': row[1] or {}
+            'tactical': row[1] or {},
+            'elo': row[2] or {}
         }
 
     def fetch_odds(self, match_id: str) -> Optional[Odds]:
@@ -602,9 +603,32 @@ class WeekendPredictor:
         # V3.6-DATA-RESTORE: 数据完整性检查标记
         data_quality_flags = []
 
-        # 1. 获取 Elo
-        home_elo = self._get_elo(home_team)
-        away_elo = self._get_elo(away_team)
+        # V3.9-DEEP-MINING: 先获取 L3 特征（包含 Elo）
+        l3 = self.fetch_l3_features(match_id)
+
+        # 1. 获取 Elo - V3.9 优先从 L3 elo_features 读取（兼容两种字段名）
+        home_elo = None
+        away_elo = None
+        elo_source = 'team_elo_ratings'  # 默认来源
+
+        if l3 and l3.get('elo'):
+            elo_feat = l3['elo']
+            # V3.9: 兼容两种字段名
+            # 新版: home_elo, away_elo
+            # 旧版: home_elo_pre, away_elo_pre
+            home_elo = elo_feat.get('home_elo') or elo_feat.get('home_elo_pre')
+            away_elo = elo_feat.get('away_elo') or elo_feat.get('away_elo_pre')
+            if home_elo or away_elo:
+                elo_source = 'l3_features'
+
+        # 如果 L3 没有 Elo，从 team_elo_ratings 读取
+        if home_elo is None:
+            home_elo = self._get_elo(home_team)
+        if away_elo is None:
+            away_elo = self._get_elo(away_team)
+
+        home_elo = float(home_elo) if home_elo else DEFAULT_ELO_RATING
+        away_elo = float(away_elo) if away_elo else DEFAULT_ELO_RATING
 
         # V3.6-DATA-RESTORE: 检测 Elo 是否为默认值
         is_default_elo = (abs(home_elo - DEFAULT_ELO_RATING) < 1 and abs(away_elo - DEFAULT_ELO_RATING) < 1)
@@ -619,7 +643,6 @@ class WeekendPredictor:
         probs = self._calculate_elo_probabilities(home_elo, away_elo)
 
         # 3. 获取 L3 特征并调整
-        l3 = self.fetch_l3_features(match_id)
         mv_gap = 0.0
         injury_gap = 0
 
