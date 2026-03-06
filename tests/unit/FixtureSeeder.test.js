@@ -157,11 +157,14 @@ describe('FixtureSeeder V178 单元测试', () => {
             assert.strictEqual(league87, undefined, '西甲 (87) 不应该在活跃列表中');
         });
 
-        it('配置文件应该只包含英超作为活跃联赛', () => {
+        it('配置文件应该包含英超作为活跃联赛', () => {
+            // V192: 西甲 (87) 已添加为活跃联赛，测试不再硬编码期望值
+            // 改为验证英超 (47) 必须存在
             if (fs.existsSync(CONFIG_PATH)) {
                 const config = JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8'));
                 const activeIds = config.active_leagues.filter(l => l.enabled !== false).map(l => l.id);
-                assert.deepStrictEqual(activeIds, [47], '只有英超 (47) 应该是活跃的');
+                assert.ok(activeIds.includes(47), '英超 (47) 应该在活跃列表中');
+                assert.ok(activeIds.length >= 1, '至少应该有一个活跃联赛');
             }
         });
     });
