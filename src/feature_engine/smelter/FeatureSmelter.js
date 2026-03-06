@@ -490,16 +490,19 @@ class FeatureSmelter {
                 await client.query('BEGIN');
 
                 for (const feature of features) {
+                    // V3.1-FINAL-POLISH: 修复审计建议，补全 external_id 字段
                     const query = `
                         INSERT INTO l3_features (
                             match_id,
+                            external_id,
                             golden_features,
                             tactical_features,
                             odds_movement_features,
                             elo_features,
                             computed_at
-                        ) VALUES ($1, $2, $3, $4, $5, $6)
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                         ON CONFLICT (match_id) DO UPDATE SET
+                            external_id = EXCLUDED.external_id,
                             golden_features = EXCLUDED.golden_features,
                             tactical_features = EXCLUDED.tactical_features,
                             odds_movement_features = EXCLUDED.odds_movement_features,
@@ -509,6 +512,7 @@ class FeatureSmelter {
 
                     await client.query(query, [
                         feature.match_id,
+                        feature.external_id || feature.match_id,  // 默认使用 match_id
                         JSON.stringify(feature.golden_features),
                         JSON.stringify(feature.tactical_features),
                         JSON.stringify(feature.odds_movement_features),

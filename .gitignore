@@ -312,3 +312,7 @@ src/bridge/
 # [Genesis.FinalClearance] 本地配置文件
 mypy_core.ini
 proxies.txt.example
+
+# V3.2-CLEANUP: 临时数据保护
+data/temp/
+home_*_for_avg
