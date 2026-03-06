@@ -432,15 +432,42 @@ class FeatureSmelter {
             const tacticalFeatures = extractTacticalFeatures(raw_data);
             const oddsMovementFeatures = extractOddsMovementFeatures(raw_data);
 
+            // V3.6-DATA-RESTORE: 赔率缺失警告 - 强制抛出警告而不是静默写 0
+            if (!oddsMovementFeatures.has_odds_data) {
+                this.logger.warn('⚠️ 赔率数据缺失 - OddsPortalProvider 未实现', {
+                    match_id,
+                    home_team,
+                    away_team,
+                    warning: 'ODDS_DATA_MISSING',
+                    note: 'FotMob 不提供赔率数据，需实现 OddsPortalProvider'
+                });
+                this.stats.oddsMisses = (this.stats.oddsMisses || 0) + 1;
+                // 标记特征为不完整
+                oddsMovementFeatures._data_quality = 'INCOMPLETE_ODDS';
+            } else {
+                this.stats.oddsHits = (this.stats.oddsHits || 0) + 1;
+            }
+
             // 获取 Elo 特征
             const homeElo = this.getTeamElo(home_team);
             const awayElo = this.getTeamElo(away_team);
+
+            // V3.6-DATA-RESTORE: Elo 默认值检测
+            const isDefaultElo = (homeElo === DEFAULT_ELO_RATING && awayElo === DEFAULT_ELO_RATING);
+
             const eloFeatures = {
                 home_elo: homeElo,
                 away_elo: awayElo,
                 elo_diff: homeElo - awayElo,
-                elo_expected_home: 1 / (1 + Math.pow(10, (awayElo - homeElo - 50) / 400))
+                elo_expected_home: 1 / (1 + Math.pow(10, (awayElo - homeElo - 50) / 400)),
+                _is_default: isDefaultElo
             };
+
+            if (isDefaultElo) {
+                this.stats.eloDefaults = (this.stats.eloDefaults || 0) + 1;
+            } else {
+                this.stats.eloHits = (this.stats.eloHits || 0) + 1;
+            }
 
             // 统计身价数据质量
             if (goldenFeatures.home_market_value_total > 0 || goldenFeatures.away_market_value_total > 0) {
