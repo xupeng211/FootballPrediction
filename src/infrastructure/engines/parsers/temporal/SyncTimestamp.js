@@ -89,7 +89,7 @@ class SyncTimestamp {
         }
 
         try {
-            let year = this.baseYear;
+            const year = this.baseYear;
             let month = null;
             let day = null;
             let hour = null;

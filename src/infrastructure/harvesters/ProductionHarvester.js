@@ -1527,8 +1527,8 @@ class ProductionHarvester {
         console.log('  22 节点代理池 | 6 Worker 集群 | 弹性重试 | 発能避障');
         console.log('═══════════════════════════════════════════════════════════════');
 
-        let allMatches = [];
-        let remainingMatches = [];
+        const allMatches = [];
+        const remainingMatches = [];
 
         while (true) {
             const matches = await this.getPendingMatches();
