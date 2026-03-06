@@ -147,7 +147,8 @@ docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/cle
 docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/fix_zombie_matches.py  # 修复僵尸比赛
 docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/database_detox.py  # 数据库清理
 docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/v190_odds_recovery.py  # V190 赔率恢复
-docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/v190_1_lite_recovery.py  # V190 轻量恢复
+docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/reprocess_from_local.py  # 从本地数据重处理
+docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/reset_l2_collection.py  # 重置 L2 采集状态
 docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/reprocess_failed_matches.py  # 重处理失败比赛
 docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/monitor_war_room.py  # 战情室监控
 
@@ -220,7 +221,7 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 | 层级 | 数据源 | 说明 | 存储表 |
 |------|--------|------|--------|
 | **L1** | FotMob API | 比赛发现、基础信息 | `matches` |
-| **L2** | OddsPortal | 赔率数据（开盘/收盘、1X2、亚洲盘） | `l2_match_data` |
+| **L2** | OddsPortal | 赔率数据（开盘/收盘、1X2、亚洲盘） | `raw_match_data` |
 | **L3** | 特征工程 | 12061 维特征向量 | `l3_features` |
 
 **系统核心资产地图 (V191.2 唯一化审计)：**
@@ -491,7 +492,7 @@ async function fetchPrediction(matchId, options = {}) { ... }
 | 表名 | 用途 | 数据层级 |
 |------|------|----------|
 | `matches` | 比赛基础信息 | L1 |
-| `l2_match_data` | 赔率数据 (开盘/收盘) | L2 |
+| `raw_match_data` | L2 原始数据 (JSONB 赔率) | L2 |
 | `l3_features` | 特征向量 (12061 维) | L3 |
 | `predictions` | 预测结果 | - |
 | `fundamentals` | 基本面数据 | - |

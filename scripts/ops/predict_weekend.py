@@ -201,6 +201,9 @@ class MatchPrediction:
     ev: EVResult
     odds: Optional[Odds]
 
+    # V3.6-DATA-RESTORE: 数据完整性标记
+    data_quality: str = "COMPLETE"  # COMPLETE, INCOMPLETE_ELO, INCOMPLETE_ODDS, INCOMPLETE_DATA
+
     # 元数据
     computed_at: datetime = field(default_factory=datetime.utcnow)
 
@@ -596,9 +599,21 @@ class WeekendPredictor:
         """
         match_id, home_team, away_team, league_name, match_date, season = match
 
+        # V3.6-DATA-RESTORE: 数据完整性检查标记
+        data_quality_flags = []
+
         # 1. 获取 Elo
         home_elo = self._get_elo(home_team)
         away_elo = self._get_elo(away_team)
+
+        # V3.6-DATA-RESTORE: 检测 Elo 是否为默认值
+        is_default_elo = (abs(home_elo - DEFAULT_ELO_RATING) < 1 and abs(away_elo - DEFAULT_ELO_RATING) < 1)
+        if is_default_elo:
+            data_quality_flags.append('INCOMPLETE_ELO')
+            self.logger.warn(
+                f"Elo 使用默认值: {home_team}({home_elo}) vs {away_team}({away_elo})",
+                extra={"context": {"match_id": match_id, "home_elo": home_elo, "away_elo": away_elo}}
+            )
 
         # 2. 计算 Elo 基础概率
         probs = self._calculate_elo_probabilities(home_elo, away_elo)
@@ -619,12 +634,28 @@ class WeekendPredictor:
         # 4. 获取赔率
         odds = self.fetch_odds(match_id)
 
+        # V3.6-DATA-RESTORE: 检测赔率是否缺失
+        if odds is None or not odds.is_valid():
+            data_quality_flags.append('INCOMPLETE_ODDS')
+            self.logger.warn(
+                f"赔率数据缺失或无效",
+                extra={"context": {"match_id": match_id, "odds": odds}}
+            )
+
         # 5. 计算 EV
         ev = self.ev_calculator.calculate(probs, odds)
 
         # 6. 确定预测结果
         prediction = BetOutcome(max(probs.__dict__, key=probs.__dict__.get))
         confidence = probs.get_confidence(prediction)
+
+        # V3.6-DATA-RESTORE: 确定数据完整性状态
+        if len(data_quality_flags) == 0:
+            data_quality = "COMPLETE"
+        elif len(data_quality_flags) == 2:
+            data_quality = "INCOMPLETE_DATA"
+        else:
+            data_quality = data_quality_flags[0]
 
         return MatchPrediction(
             match_id=match_id,
@@ -641,7 +672,8 @@ class WeekendPredictor:
             prediction=prediction,
             confidence=confidence,
             ev=ev,
-            odds=odds
+            odds=odds,
+            data_quality=data_quality
         )
 
     def save_prediction(self, pred: MatchPrediction) -> None:
@@ -749,6 +781,14 @@ class WeekendPredictor:
         print("   ⚠️ EV = P × Odds - 1 (负值表示不推荐投注)")
         print("=" * 80)
 
+        # V3.6-DATA-RESTORE: 统计数据完整性
+        complete_count = sum(1 for p in predictions if p.data_quality == "COMPLETE")
+        incomplete_count = len(predictions) - complete_count
+
+        if incomplete_count > 0:
+            print(f"\n   ⚠️ 数据完整性警告: {incomplete_count}/{len(predictions)} 场比赛数据不完整")
+            print("   " + "-" * 76)
+
         # 高价值投注
         high_value = [
             p for p in predictions
@@ -772,13 +812,20 @@ class WeekendPredictor:
                     outcome_str = f"客胜 ({p.away_team})"
                     odds_val = p.odds.away if p.odds else self._simulate_odds(p.probs).away
 
-                print(f"\n   [{i}] {p.home_team} vs {p.away_team}")
+                # V3.6-DATA-RESTORE: 数据完整性标记
+                quality_marker = ""
+                ev_warning = ""
+                if p.data_quality != "COMPLETE":
+                    quality_marker = f" [{p.data_quality}]"
+                    ev_warning = " ⚠️ EV 结论不可靠！"
+
+                print(f"\n   [{i}] {p.home_team} vs {p.away_team}{quality_marker}")
                 print(f"       联赛: {p.league} | 时间: {p.match_date.strftime('%m/%d %H:%M')}")
                 print(f"       Elo: {p.home_elo:.0f} vs {p.away_elo:.0f} (差 {p.elo_diff:+.0f})")
                 print(f"       身价差: {self._format_value(p.mv_gap)} 欧元 | 伤病差: {p.injury_gap:+d} 人")
                 print(f"       概率: 主 {p.probs.home:.1%} | 平 {p.probs.draw:.1%} | 客 {p.probs.away:.1%}")
                 print(f"       EV: 主 {p.ev.home:+.1%} | 平 {p.ev.draw:+.1%} | 客 {p.ev.away:+.1%}")
-                print(f"       建议: {outcome_str} @ {odds_val:.2f} (EV: {best_ev:+.1%})")
+                print(f"       建议: {outcome_str} @ {odds_val:.2f} (EV: {best_ev:+.1%}){ev_warning}")
         else:
             print(f"\n   ⚠️ 无高价值投注 (所有 EV < {self.ev_calculator.high_value_threshold:.0%})")
             print("   这表明当前场次可能没有明显的投注价值")
@@ -786,12 +833,14 @@ class WeekendPredictor:
         # 统计
         positive_ev_count = sum(1 for p in predictions if p.ev.best_outcome()[1] > 0)
         print(f"\n   统计: {len(predictions)} 场比赛, {positive_ev_count} 场有正 EV")
+        print(f"         数据完整: {complete_count} 场 | 数据不完整: {incomplete_count} 场")
 
         print("\n" + "=" * 80)
         print("   投注策略建议:")
         print(f"   1. 只投注 EV > {self.ev_calculator.high_value_threshold:.0%} 的场次")
         print("   2. 使用 Fractional Kelly 控制仓位 (建议 1/4 Kelly)")
         print("   3. ⚠️ EV < 0 表示负期望值，不应投注！")
+        print("   4. ⚠️ [INCOMPLETE_*] 标记的比赛，EV 结论不可靠！")
         print("=" * 80 + "\n")
 
     def _format_value(self, value: float) -> str:
