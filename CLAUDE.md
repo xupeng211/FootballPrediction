@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V186.0.0-stable | **最后更新**: 2026-03-05
+**系统版本**: V186.0.0-stable | **最后更新**: 2026-03-06
 
 > ⚠️ **版本说明**: 本项目采用**语义化独立版本管理**，不同组件独立迭代：
 > - 📄 **文档版本** (CLAUDE.md): V186 - 反映最新架构和功能
@@ -54,6 +54,46 @@ node scripts/ops/run_production.js
 ### 5. 幂等性
 - 所有收割任务支持重复执行
 - 已存在的完整数据应跳过
+
+---
+
+## Claude Skills 约束体系
+
+本项目采用**受约束的 AI 开发模式**，通过 Claude Skills 约束体系确保代码质量。
+
+### 核心 Skills
+
+| Skill | 用途 | 约束等级 |
+|-------|------|----------|
+| `minimal_change` | 最小修改策略，防止过度重构 | 🔴 RED |
+| `architecture_boundary` | 架构边界保护，维护层次结构 | 🔴 RED |
+| `test_guard` | 测试质量保护 | 🔴 RED |
+| `context_lock` | 核心模块冻结，保护系统基石 | 🔴 RED |
+| `change_impact` | 变更影响分析 | 🔴 RED |
+
+### 可用 Skills (`.claude/skills/`)
+
+| Skill | 触发关键词 |
+|-------|-----------|
+| `football-prediction` | "预测比赛", "XGBoost", "比赛分析" |
+| `data-collection` | "收集数据", "FotMob", "API" |
+| `report-generation` | "生成报告", "PDF", "可视化" |
+| `code-quality` | "检查代码", "lint", "质量" |
+| `performance-monitoring` | "监控", "性能", "Prometheus" |
+| `deployment-management` | "部署", "Docker", "生产" |
+| `database-operations` | "数据库", "PostgreSQL", "查询" |
+| `machine-learning-engineering` | "ML", "特征工程", "模型训练" |
+
+### MCP 服务器
+
+| MCP 服务器 | 权限 | 允许行为 |
+|-----------|------|----------|
+| **postgres** | READ-ONLY | SELECT / DESCRIBE / EXPLAIN |
+| **filesystem** | PROJECT ROOT | 读 / diff / 受控写 |
+| **git** | READ-ONLY | commit history / diff / blame |
+| **pytest** | RESTRICTED | 运行 pytest / 列出测试 |
+
+> ⚠️ **MCP 不拥有生产环境控制权**，禁止任何不可逆或高风险自动化操作。
 
 ---
 
@@ -581,4 +621,4 @@ ML Prediction (XGBoost 3-Model Consensus)
 
 ---
 
-**更新日期**: 2026-03-05
+**更新日期**: 2026-03-06
