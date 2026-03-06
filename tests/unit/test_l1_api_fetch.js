@@ -346,7 +346,7 @@ describe('幂等性验证', () => {
     describe('重复执行不应产生重复记录', () => {
         it('相同 match_id 应该更新而非插入新记录', () => {
             // 模拟第一次插入
-            let db = new Map();
+            const db = new Map();
             const match = { match_id: 'EPL_20250215_ARS_CHE', home_score: 2 };
 
             // 模拟 ON CONFLICT DO UPDATE
@@ -375,7 +375,7 @@ describe('幂等性验证', () => {
 
     describe('external_id 保留', () => {
         it('更新时不应覆盖已存在的 external_id', () => {
-            let db = new Map();
+            const db = new Map();
             db.set('EPL_20250215_ARS_CHE', {
                 match_id: 'EPL_20250215_ARS_CHE',
                 external_id: '4813550',

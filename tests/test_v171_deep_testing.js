@@ -85,8 +85,8 @@ function createMockChildProcess(options = {}) {
     proc.stdout = new EventEmitter();
     proc.stderr = new EventEmitter();
 
-    let stdoutData = stdout;
-    let stderrData = stderr;
+    const stdoutData = stdout;
+    const stderrData = stderr;
 
     proc.stdout.on = (event, handler) => {
         if (event === 'data') {
