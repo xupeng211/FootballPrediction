@@ -1,8 +1,23 @@
 """
 FootballPrediction V7.0 通用工具模块
+
+V4.25: 数据库连接统一化
+- 移除 utils/database.py，统一使用 database/db_pool.py
+- 提供向后兼容的导入接口
 """
 
-from .database import DatabaseManager, database_connection, get_db_manager
+# V4.25: 从统一的连接池模块导入
+from src.database.db_pool import (
+    SyncDatabasePool as DatabaseManager,
+    get_sync_db_pool as get_db_manager,
+)
+
+# V4.25: 兼容性别名
+def database_connection(dict_cursor: bool = True):
+    """向后兼容的数据库连接上下文管理器"""
+    pool = get_db_manager()
+    return pool.get_connection()
+
 from .logger import get_logger, setup_logger
 
 # 新增：重试装饰器
