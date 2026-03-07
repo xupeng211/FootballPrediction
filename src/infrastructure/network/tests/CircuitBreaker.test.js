@@ -18,7 +18,7 @@
 
 'use strict';
 
-const { CircuitBreaker, CircuitBreakerRegistry, CircuitState } = require('../core/CircuitBreaker');
+const { CircuitBreaker, CircuitBreakerRegistry, CircuitState } = require('../../../core/network/CircuitBreaker');
 
 // 模拟日志记录器
 class MockLogger {

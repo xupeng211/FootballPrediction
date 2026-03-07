@@ -18,8 +18,8 @@
 
 const path = require('path');
 const { NetworkShield, getNetworkShield, resetSingleton } = require('../NetworkShield');
-const { FileSystemProvider } = require('../core/AbstractFileSystem');
-const { getRegistryManager, resetSingleton: resetRegistrySingleton } = require('../core/RegistryManager');
+const { FileSystemProvider } = require('../../../core/network/AbstractFileSystem');
+const { getRegistryManager, resetSingleton: resetRegistrySingleton } = require('../../../core/network/RegistryManager');
 
 // 测试配置
 const TEST_CONFIG = {
