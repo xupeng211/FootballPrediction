@@ -1157,3 +1157,21 @@ def get_config() -> ConfigAccessor:
     if config is None:
         config = ConfigAccessor()
     return config
+
+
+@dataclass
+class StrategyConfig:
+    """V4.45: 策略配置 - 风险控制参数统一配置"""
+
+    # Kelly Criterion 参数
+    kelly_max_stake: float = 0.05           # 单注最大 5%
+    kelly_daily_limit: float = 0.20         # 日最大 20%
+    kelly_risk_alert: float = 0.03          # 风险预警 3%
+
+    # Tuner 参数
+    tuner_trials: int = 50                  # 默认优化次数
+    tuner_timeout: int = 1800               # 默认超时 30分钟
+    tuner_early_stopping: int = 15          # 早停耐心值
+    tuner_min_improvement: float = 0.01     # 最小改进阈值
+
+
