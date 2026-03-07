@@ -22,7 +22,7 @@ from typing import Any
 
 import structlog
 
-from src.processors.exceptions import ExtractionError, InsufficientFeaturesError, ValidationError
+from src.ml.feature_engine.legacy.exceptions import ExtractionError, InsufficientFeaturesError, ValidationError
 
 logger = structlog.get_logger(__name__)
 

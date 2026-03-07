@@ -13,15 +13,15 @@
       "name": "La Liga",
       "country": "Spain",
       "enabled": true
-    }
-  ],
-  "inactive_leagues": [
+    },
     {
       "id": 55,
       "name": "Serie A",
       "country": "Italy",
-      "enabled": false
-    },
+      "enabled": true
+    }
+  ],
+  "inactive_leagues": [
     {
       "id": 54,
       "name": "Bundesliga",

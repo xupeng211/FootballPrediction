@@ -298,7 +298,10 @@ class EventBus:
             harvest_script = project_root / "scripts" / "ops" / "harvest_pinnacle_concurrent.py"
 
             if not harvest_script.exists():
-                logger.warning(f"⚠️  采集脚本不存在: {harvest_script}")
+                logger.warning(
+                    f"⚠️  采集脚本不存在: {harvest_script}。"
+                    f"请使用 Node.js 收割系统 (npm start)"
+                )
                 return
 
             # 启动后台进程采集赔率
@@ -345,11 +348,19 @@ class EventBus:
         try:
             logger.info(f"🎯 触发哈希狩猎: match_id={match_id}, league={league_name}")
 
-            # 动态导入 hunt_league_hashes 模块
-            from scripts.ops.hunt_league_hashes import (
-                get_missing_matches_by_league,
-                insert_matches_mapping_batch,
-            )
+            # ⚠️ V4.13: hunt_league_hashes 模块可能不存在
+            try:
+                from scripts.ops.hunt_league_hashes import (
+                    get_missing_matches_by_league,
+                    insert_matches_mapping_batch,
+                )
+            except ImportError as e:
+                logger.warning(
+                    f"⚠️  hunt_league_hashes 模块不可用: {e}。"
+                    f"请使用 Node.js 收割系统 (scripts/ops/run_production.js)"
+                )
+                self.stats["errors"] += 1
+                return
 
             # 获取该比赛的详细信息
             matches = get_missing_matches_by_league([league_name])
@@ -364,11 +375,32 @@ class EventBus:
                 return
 
             # 调用 OddsPortalScraper.search_match_url()
+            # ⚠️ V4.13: core.scrapers.oddsportal 模块已删除
+            # 使用优雅的异常捕获，避免导入错误导致整个服务崩溃
             import asyncio
 
-            from core.scrapers.oddsportal import OddsPortalScraper
-
-            scraper = OddsPortalScraper(config_path="config/scraper_config.yaml")
+            try:
+                from core.scrapers.oddsportal import OddsPortalScraper
+                scraper = OddsPortalScraper(config_path="config/scraper_config.yaml")
+            except ImportError as e:
+                logger.warning(
+                    f"⚠️  OddsPortalScraper 模块不可用: {e}。"
+                    f"请使用 Node.js 收割系统 (scripts/ops/run_production.js)"
+                )
+                # 记录到 matches_mapping 表，标记为搜索失败
+                record = {
+                    "fotmob_id": match_id,
+                    "home_team": target_match["home_team"],
+                    "away_team": target_match["away_team"],
+                    "league_name": league_name,
+                    "match_date": target_match.get("match_date"),
+                    "oddsportal_url": None,
+                    "confidence": 0.0,
+                    "mapping_method": "semantic",
+                }
+                insert_matches_mapping_batch([record])
+                self.stats["hash_hunts_triggered"] += 1
+                return
 
             # 在新的事件循环中运行异步函数
             loop = asyncio.new_event_loop()
@@ -495,7 +527,10 @@ class EventBus:
             extract_script = project_root / "scripts" / "ml" / "extract_features_v1.py"
 
             if not extract_script.exists():
-                logger.warning(f"⚠️  特征提取脚本不存在: {extract_script}")
+                logger.warning(
+                    f"⚠️  特征提取脚本不存在: {extract_script}。"
+                    f"请使用 Node.js 熔炼系统 (npm run smelt)"
+                )
                 return
 
             # 触发特征提取

@@ -94,7 +94,7 @@ class TestV26Integration:
           3. extraction_version 为 V26.1_PROD
         """
         # 导入提取器
-        from src.processors.v25_production_extractor import V25ProductionExtractor
+        from src.ml.feature_engine.legacy.v25_production_extractor import V25ProductionExtractor
 
         # 创建提取器实例
         extractor = V25ProductionExtractor()
@@ -130,7 +130,7 @@ class TestV26Integration:
           1. 对于 100,000 维输入，剪枝率应 >90%
           2. 输出特征数显著少于输入
         """
-        from src.processors.v25_production_extractor import V25ProductionExtractor
+        from src.ml.feature_engine.legacy.v25_production_extractor import V25ProductionExtractor
 
         extractor = V25ProductionExtractor()
         result = extractor.extract(large_sparse_features)
@@ -149,7 +149,7 @@ class TestV26Integration:
 
         验证点: 多次运行相同输入，输出完全一致
         """
-        from src.processors.v25_production_extractor import V25ProductionExtractor
+        from src.ml.feature_engine.legacy.v25_production_extractor import V25ProductionExtractor
 
         extractor = V25ProductionExtractor()
 
@@ -182,7 +182,7 @@ class TestV26Integration:
           2. 返回合理的状态
           3. 系统优雅处理
         """
-        from src.processors.v25_production_extractor import V25ProductionExtractor
+        from src.ml.feature_engine.legacy.v25_production_extractor import V25ProductionExtractor
 
         extractor = V25ProductionExtractor()
 
@@ -210,7 +210,7 @@ class TestV26Integration:
         """
         import gc
 
-        from src.processors.v25_production_extractor import V25ProductionExtractor
+        from src.ml.feature_engine.legacy.v25_production_extractor import V25ProductionExtractor
 
         # 强制垃圾回收
         gc.collect()

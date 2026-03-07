@@ -28,7 +28,7 @@ from psycopg2.extras import RealDictCursor
 
 from src.config.config_loader import get_hyper_parameters_config
 from src.config_unified import get_settings
-from src.processors.base_processor import calculate_date_difference
+from src.ml.feature_engine.legacy.base_processor import calculate_date_difference
 
 logger = logging.getLogger(__name__)
 

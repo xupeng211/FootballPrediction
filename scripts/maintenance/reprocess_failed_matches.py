@@ -40,7 +40,8 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
-from src.processors.v25_production_extractor import V25ProductionExtractor
+# V4.13: 更新为 legacy 路径
+from src.ml.feature_engine.legacy.v25_production_extractor import V25ProductionExtractor
 
 
 def get_db_connection():

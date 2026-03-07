@@ -24,7 +24,8 @@ from typing import Any
 
 import pytest
 
-from src.processors.base_extractor import (
+# V4.13: 更新为 legacy 路径
+from src.ml.feature_engine.legacy.base_extractor import (
     BaseExtractor,
     ExtractionResult,
     ExtractionStatus,
@@ -32,7 +33,7 @@ from src.processors.base_extractor import (
     ValidationConfig,
     register_extractor,
 )
-from src.processors.exceptions import (
+from src.ml.feature_engine.legacy.exceptions import (
     DataParsingError,
     ExtractionError,
     InsufficientFeaturesError,
@@ -41,7 +42,7 @@ from src.processors.exceptions import (
 )
 
 # 导入 V25.1 提取器以确保注册
-from src.processors.v25_production_extractor import (
+from src.ml.feature_engine.legacy.v25_production_extractor import (
     V25ProductionExtractor,
     _fully_flatten,
     _parse_value,

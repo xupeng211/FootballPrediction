@@ -3,6 +3,13 @@
 FotMob 历史数据回填脚本 - V26.6
 =====================================
 
+⚠️  DEPRECATED (V4.13)
+======================
+此脚本依赖已删除的模块 `src.api.collectors`，已被标记为废弃。
+请使用新的 L1/L2 收割系统：
+    - L1 发现: `scripts/ops/seed_fixtures.js`
+    - L2 采集: `scripts/ops/run_production.js`
+
 核心功能：
     1. 针对新增加的联赛，自动循环抓取过去 3-5 年的历史比赛 ID
     2. 依次调用 FotMobCoreCollector 进行数据采集
@@ -20,7 +27,7 @@ Usage:
     python scripts/maintenance/fotmob_historical_backfill.py --dry-run
 
 Author: Data Engineering Expert
-Version: V26.6
+Version: V26.6 (DEPRECATED)
 Date: 2026-01-06
 """
 
@@ -37,9 +44,21 @@ import argparse
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.api.collectors.fotmob_core import FotMobCoreCollector
-from src.api.collectors.collection_sentry import CollectionSentry
-from src.config.harvest_config import get_config_manager
+# ⚠️ V4.13: 以下模块已被删除，导入会失败
+# from src.api.collectors.fotmob_core import FotMobCoreCollector
+# from src.api.collectors.collection_sentry import CollectionSentry
+# from src.config.harvest_config import get_config_manager
+
+# 占位符 - 脚本已废弃
+FotMobCoreCollector = None
+CollectionSentry = None
+
+def get_config_manager(*args, **kwargs):
+    raise NotImplementedError(
+        "此脚本已废弃。请使用新的 L1/L2 收割系统:\n"
+        "  - L1 发现: npm run seed\n"
+        "  - L2 采集: npm start"
+    )
 
 # 配置日志
 logging.basicConfig(

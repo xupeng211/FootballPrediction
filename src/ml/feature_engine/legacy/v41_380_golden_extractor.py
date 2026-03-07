@@ -13,7 +13,7 @@ V41.380 Golden Feature Extractor - The Golden Mine
 - 只使用赛前可获知的数据
 
 Usage:
-    from src.processors.v41_380_golden_extractor import GoldenFeatureExtractor
+    from src.ml.feature_engine.legacy.v41_380_golden_extractor import GoldenFeatureExtractor
 
     extractor = GoldenFeatureExtractor()
     features = extractor.extract_from_l2(l2_raw_json, match_date)

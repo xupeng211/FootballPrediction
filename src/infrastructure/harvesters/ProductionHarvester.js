@@ -1112,7 +1112,9 @@ class ProductionHarvester {
         const logPrefix = isRetry ? `[W${workerId}-R${attempt}]` : `[W${workerId}]`;
 
         try {
-            // 首页预热（始终执行，            // V193: 重试时也需要执行预热，            const warmupConfig = isRetry ? { scrollMore: true, randomScrolls: true } : { scrollMore: false, randomScrolls: false };
+            // 首页预热（始终执行）
+            // V193: 重试时也需要执行预热
+            const warmupConfig = isRetry ? { scrollMore: true, randomScrolls: true } : { scrollMore: false, randomScrolls: false };
             await this._warmupHomepage(page, warmupConfig);
 
             // 请求拦截
@@ -1430,21 +1432,46 @@ class ProductionHarvester {
      * @returns {Promise<Array>} 比赛列表
      */
     async getPendingMatches() {
-        const query = `
-            SELECT
-                m.match_id,
-                m.external_id,
-                m.home_team,
-                m.away_team,
-                m.match_date
-            FROM matches m
-            LEFT JOIN raw_match_data r ON m.match_id = r.match_id
-            WHERE r.match_id IS NULL
-            ORDER BY m.match_date DESC
-            LIMIT $1
-        `;
+        // V4.9: 支持 SERIE_A_PILOT 模式 - 只收割意甲最近 10 场已结束比赛
+        const serieAPilot = process.env.SERIE_A_PILOT === 'true';
 
-        const result = await this.pool.query(query, [this.config.batchSize || 500]);
+        let query, params;
+        if (serieAPilot) {
+            query = `
+                SELECT
+                    m.match_id,
+                    m.external_id,
+                    m.home_team,
+                    m.away_team,
+                    m.match_date
+                FROM matches m
+                LEFT JOIN raw_match_data r ON m.match_id = r.match_id
+                WHERE r.match_id IS NULL
+                    AND m.league_name = 'Serie A'
+                    AND m.status = 'finished'
+                ORDER BY m.match_date DESC
+                LIMIT 10
+            `;
+            params = [];
+            console.log('🇮🇹 SERIE-A-PILOT 模式: 只收割意甲最近 10 场已结束比赛');
+        } else {
+            query = `
+                SELECT
+                    m.match_id,
+                    m.external_id,
+                    m.home_team,
+                    m.away_team,
+                    m.match_date
+                FROM matches m
+                LEFT JOIN raw_match_data r ON m.match_id = r.match_id
+                WHERE r.match_id IS NULL
+                ORDER BY m.match_date DESC
+                LIMIT $1
+            `;
+            params = [this.config.batchSize || 500];
+        }
+
+        const result = await this.pool.query(query, params);
         return result.rows;
     }
 
