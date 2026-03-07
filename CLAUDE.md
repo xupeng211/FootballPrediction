@@ -2,10 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V4.7.0-stable | **最后更新**: 2026-03-07
+**系统版本**: V4.21-stable | **最后更新**: 2026-03-07
 
 > ⚠️ **版本说明**: 本项目采用**语义化独立版本管理**，不同组件独立迭代：
-> - 📄 **文档版本** (CLAUDE.md): V186 - 反映最新架构和功能
+> - 📄 **文档版本** (CLAUDE.md): V4.21 - 反映最新架构重组
 > - 📦 **NPM 包版本** (package.json): V178 - 反映 API 稳定性
 > - 🚀 **收割引擎** (ProductionHarvester.js): V186 - 反映引擎迭代
 > - ⚙️ **配置模块** (factory_config.js): V178 - 反映配置成熟度
@@ -234,12 +234,30 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 | **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
 | **C++ 桥接** | `src/utils/cpp_bridge_radar.py` | - |
 
-> ⚠️ **已废弃组件 (V191.5 最终清理)**:
+> ⚠️ **已废弃组件 (V4.21 最终清理)**:
 > - `QuantHarvester.js`, `IdentityResolver.js` - V191.2 删除
 > - `src/collectors/` 整个目录 - V191.5 删除 (废弃的 Python 采集系统)
 > - `src/ops/` 整个目录 - V191.5 删除 (废弃的 Python ops 脚本)
 > - `src/infrastructure/engines/match_engine/` - V191.5 删除
 > - `src/core/self_healing.py` - V191.5 删除
+> - **V4.21 死代码清理** (2026-03-07):
+>   - `src/core/behavior_simulator.py`, `ghost_protocol.py` - Ghost Protocol 残留
+>   - `src/core/browser-pool.js`, `fingerprint_manager.py` - 废弃浏览器组件
+>   - `src/core/scheduler/*`, `strategy_factory.py` - 废弃调度系统
+>   - `src/core/semantic_refiner.py` - 废弃语义处理
+>   - `src/core/ui/*` - 废弃 Dashboard
+>   - `src/core/utils/*` - 废弃工具类
+>   - `src/infrastructure/network/core/*` - 已迁移至 `src/core/network/`
+
+> 📌 **`src/core/` 定位 (V4.21 重新定义)**:
+> `src/core/` 现在仅作为**底层原子组件**目录，包含：
+> - `browser/` - 浏览器管理原子组件
+> - `ipc/` - 进程间通信原子组件
+> - `network/` - 网络原子组件 (熔断器、会话管理、代理注册)
+> - `process/` - 进程管理原子组件
+> - 独立工具模块: `circuit_breaker.py`, `exceptions.py`, `graceful_shutdown.py`, 等
+>
+> **业务逻辑层**: `src/infrastructure/` | **ML 层**: `src/ml/` | **特征层**: `src/feature_engine/`
 
 **关键目录：**
 ```
@@ -577,6 +595,33 @@ docker stats football_prediction_dev
 # ═══════════════════════════════════════════════════════════════════════════════
 # 版本历史 (Version History)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+## V4.21 CORE RESET (2026-03-07)
+
+### 核心重构
+**死代码清理**: 删除 6862 行遗留代码，重新定义 `src/core/` 边界
+
+| 删除类型 | 文件数 | 说明 |
+|---------|-------|------|
+| Ghost Protocol 残留 | 2 | `behavior_simulator.py`, `ghost_protocol.py` |
+| 废弃浏览器组件 | 2 | `browser-pool.js`, `fingerprint_manager.py` |
+| 废弃调度系统 | 4 | `scheduler/*`, `strategy_factory.py` |
+| 废弃 UI/Utils | 6 | `ui/*`, `utils/*`, `semantic_refiner.py` |
+| 重复网络组件 | 6 | `infrastructure/network/core/*` → `core/network/` |
+
+### `src/core/` 新边界
+```
+src/core/
+├── browser/      # 浏览器原子组件
+├── ipc/          # IPC 原子组件
+├── network/      # 网络原子组件 (统一位置)
+├── process/      # 进程原子组件
+└── *.py/*.js     # 独立工具模块
+```
+
+**架构原则**: `src/core/` = 底层原子组件，不含业务逻辑
+
+---
 
 ## V4.5 HONEST BACKTEST (2026-03-07)
 
