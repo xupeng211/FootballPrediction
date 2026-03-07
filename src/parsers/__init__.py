@@ -1,16 +1,14 @@
-"""V41.832: Parsers Package.
+"""V4.37: Parsers Package - 精简版
 
-数据解析模块。
+解析器模块已精简，仅保留 Node.js 侧的 NextDataParser。
+Python 侧的解析逻辑已迁移到 ProductionHarvester.js。
 
-Author: Senior Lead Data Architect
-Version: V41.832 "Production Blueprint"
+Author: Senior Data Extraction Engineer
+Version: V4.37 "Surgical Precision"
 """
 
-from src.parsers.match_parser import MatchData, MatchExtractor, TeamNameParser, TeamNames
+# Python 侧无解析器，所有解析逻辑在 Node.js 侧
+# NextDataParser: src/parsers/fotmob/NextDataParser.js
 
-__all__ = [
-    "MatchData",
-    "MatchExtractor",
-    "TeamNameParser",
-    "TeamNames",
-]
+__all__ = []
+
