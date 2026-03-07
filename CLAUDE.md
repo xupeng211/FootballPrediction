@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V186.0.0-stable | **最后更新**: 2026-03-06
+**系统版本**: V4.7.0-stable | **最后更新**: 2026-03-07
 
 > ⚠️ **版本说明**: 本项目采用**语义化独立版本管理**，不同组件独立迭代：
 > - 📄 **文档版本** (CLAUDE.md): V186 - 反映最新架构和功能
@@ -578,6 +578,25 @@ docker stats football_prediction_dev
 # 版本历史 (Version History)
 # ═══════════════════════════════════════════════════════════════════════════════
 
+## V4.5 HONEST BACKTEST (2026-03-07)
+
+### 栬ll心发现
+**数据泄露审计**: 发现修复前 93.1% 准确率完全来自赛后特征泄露
+
+| 指标 | 修复前 (虚假) | 修复后 (真实) |
+|------|-------------|-------------|
+| 总准确率 | 93.1% | 40.4% |
+| 高置信度准确率 | 100% | 51.9% |
+| Walk-Forward 准确率 | - | 48.7% |
+
+**核心工具**:
+- `scripts/ops/backtest_v45_pit.py` - 时序防火墙回测
+- `scripts/ops/walk_forward_backtest.py` - 步进式验证引擎
+
+**P0 下一步**: 实现 OddsPortal 接口获取开盘赔率数据
+
+---
+
 ## V186 ENTERPRISE (2026-03-04)
 
 ### 核心功能
@@ -619,7 +638,8 @@ ML Prediction (XGBoost 3-Model Consensus)
 | V184 | 数据洞察 | 562 场深度分析 + 投资建议 |
 | V185 | 质量加固 | 日志精简 + 错误分类 |
 | V186 | 企业级 | Winston 日志 + 优雅停机 + JSDoc |
+| V4.5 | 诚实回测 | 时序防火墙 + Walk-Forward 验证 + 泄露审计 |
 
 ---
 
-**更新日期**: 2026-03-06
+**更新日期**: 2026-03-07
