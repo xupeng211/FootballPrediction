@@ -1448,7 +1448,9 @@ class ProductionHarvester {
                 LEFT JOIN raw_match_data r ON m.match_id = r.match_id
                 WHERE r.match_id IS NULL
                     AND m.league_name = 'Serie A'
-                    AND m.status = 'finished'
+                    AND m.status = $MATCH_STATUS.FINISHED
+                    ORDER BY m.match_date DESC
+                    LIMIT 10
                 ORDER BY m.match_date DESC
                 LIMIT 10
             `;
