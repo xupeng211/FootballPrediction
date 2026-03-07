@@ -25,8 +25,15 @@ import numpy as np
 import pandas as pd
 
 # V146.1: 修复导入 - 使用绝对路径
-# 导入足球业务逻辑常量
-from src.constants import FOOTBALL, PROBABILITY, VALIDATOR, PrecisionContext
+# V4.17: 使用共享常量 + 足球业务逻辑常量
+from src.constants import (
+    FOOTBALL,
+    MATH,
+    PROBABILITY,
+    SCORING,
+    VALIDATOR,
+    PrecisionContext,
+)
 
 from .cache_manager import PredictionCache
 from .model_loader import ModelLoader
