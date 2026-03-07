@@ -31,6 +31,15 @@ const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
 
+// V4.17: 引入共享常量
+const {
+    MATCH_STATUS,
+    STATUS_FINISHED,
+    STATUS_LIVE,
+    STATUS_SCHEDULED,
+    STATUS_CANCELLED
+} = require('../../config/shared_constants');
+
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 // ============================================================================
@@ -568,17 +577,18 @@ class FixtureSeeder {
         const status = match.status;
 
         if (typeof status === 'object' && status !== null) {
-            if (status.cancelled) return 'cancelled';
-            if (status.awarded) return 'awarded';
-            if (status.finished) return 'finished';
-            if (status.started) return 'live';
+            // V4.17: 使用共享常量
+            if (status.cancelled) return STATUS_CANCELLED;
+            if (status.awarded) return 'awarded';  // 特殊状态，保持原样
+            if (status.finished) return STATUS_FINISHED;
+            if (status.started) return STATUS_LIVE;
         }
 
         if (homeScore !== null && awayScore !== null) {
-            return 'finished';
+            return STATUS_FINISHED;
         }
 
-        return 'scheduled';
+        return STATUS_SCHEDULED;
     }
 
     /**

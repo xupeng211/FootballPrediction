@@ -1,0 +1,59 @@
+{
+  "version": "V1.0.0",
+  "description": "全局共享常量 - Python/Node.js 唯一真理源",
+  "last_updated": "2026-03-07",
+
+  "match_status": {
+    "FINISHED": "finished",
+    "LIVE": "live",
+    "SCHEDULED": "scheduled",
+    "CANCELLED": "cancelled",
+    "COMPLETED": "completed",
+    "POSTPONED": "postponed",
+    "ABANDONED": "abandoned"
+  },
+
+  "match_outcome": {
+    "HOME_WIN": 2,
+    "DRAW": 1,
+    "AWAY_WIN": 0,
+    "LABELS": ["AWAY_WIN", "DRAW", "HOME_WIN"],
+    "LABEL_NAMES": {
+      "0": "AWAY_WIN",
+      "1": "DRAW",
+      "2": "HOME_WIN"
+    }
+  },
+
+  "default_probabilities": {
+    "HOME_WIN": 0.46,
+    "DRAW": 0.26,
+    "AWAY_WIN": 0.28
+  },
+
+  "football_rules": {
+    "regulation_time_minutes": 90,
+    "half_time_minutes": 45,
+    "extra_time_minutes": 30,
+    "players_per_team": 11
+  },
+
+  "odds_limits": {
+    "min_odds": 1.01,
+    "max_odds": 1000.0,
+    "min_payout": 1.02,
+    "max_payout": 1.08
+  },
+
+  "confidence_thresholds": {
+    "high": 0.70,
+    "medium": 0.55,
+    "low": 0.40
+  },
+
+  "statistical_thresholds": {
+    "min_sample_size": 10,
+    "reliable_sample_size": 30,
+    "large_sample_size": 100
+  }
+}
