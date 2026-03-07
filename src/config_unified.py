@@ -587,10 +587,10 @@ class UnifiedSettings(BaseSettings):
     oddsportal_retry_attempts: int = Field(default=3, description="OddsPortal重试次数")
 
     # === 模型配置 ===
-    # 使用 model_zoo 目录中的 V19.4 生产模型
+    # 使用 model_zoo/production 目录中的 V19.4 生产模型
     model_path: str = Field(
-        default="model_zoo/v19.4_draw_sensitivity_model.pkl",
-        description="模型文件路径（指向 model_zoo 目录）",
+        default="model_zoo/production/v19.4_draw_sensitivity_model.pkl",
+        description="模型文件路径（指向 model_zoo/production 目录）",
     )
 
     model_version: str = Field(default="xgboost_v2", description="模型版本")

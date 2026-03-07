@@ -261,6 +261,11 @@ package-lock.json
 data/browser_profile/
 !data/browser_profile/.gitkeep
 
+# V4.23: Cookie Security - Prevent session leakage
+data/browser_profile/Default/Cookies*
+data/browser_profile/Default/*/Cookies*
+data/sessions/*.json
+
 # =============================================================================
 # V41.237: Odds Sync System - Runtime Artifacts
 # =============================================================================

@@ -85,18 +85,18 @@ class Predictor:
         """获取默认模型路径"""
         # V26.8 联赛专项模型
         if model_type.startswith("v26_8_"):
-            return f"model_zoo/{model_type.replace('_', '.')}_production.pkl"
+            return f"model_zoo/production/{model_type}_production.pkl"
         if model_type == "v26_mini":
-            return "model_zoo/v26.5_mini.pkl"
+            return "model_zoo/production/v26.5_mini.pkl"
         if model_type == "v19_rolling":
-            return "model_zoo/v19.4_draw_sensitivity_model.pkl"
+            return "model_zoo/production/v19.4_draw_sensitivity_model.pkl"
         if model_type == "v26_5_production":
-            return "model_zoo/v26.5_production.pkl"
+            return "model_zoo/production/v26.5_production.pkl"
         if model_type == "v26_6_pre_match":
-            return "model_zoo/v26.6_pre_match.pkl"
+            return "model_zoo/production/v26.6_pre_match.pkl"
         if model_type == "v26_7_aligned":
-            return "model_zoo/v26.7_aligned_production.pkl"
-        return "model_zoo/v26.5_mini.pkl"
+            return "model_zoo/production/v26.7_aligned_production.pkl"
+        return "model_zoo/production/v26.5_mini.pkl"
 
     def _load_model(self, model_path: str):
         """加载模型文件"""
@@ -297,12 +297,12 @@ class ModelDispatcher:
 
     # 模型文件路径映射
     MODEL_PATHS = {
-        "v26_7_aligned": "model_zoo/v26.7_aligned_production.pkl",
-        "v26_8_epl": "model_zoo/v26.8_epl_production.pkl",
-        "v26_8_serie_a": "model_zoo/v26.8_serie_a_production.pkl",
-        "v26_8_la_liga": "model_zoo/v26.8_la_liga_production.pkl",
-        "v26_8_bund": "model_zoo/v26.8_bund_production.pkl",
-        "v26_8_ligue1": "model_zoo/v26.8_ligue1_production.pkl",
+        "v26_7_aligned": "model_zoo/production/v26.7_aligned_production.pkl",
+        "v26_8_epl": "model_zoo/production/v26.8_epl_production.pkl",
+        "v26_8_serie_a": "model_zoo/production/v26.8_serie_a_production.pkl",
+        "v26_8_la_liga": "model_zoo/production/v26.8_la_liga_production.pkl",
+        "v26_8_bund": "model_zoo/production/v26.8_bund_production.pkl",
+        "v26_8_ligue1": "model_zoo/production/v26.8_ligue1_production.pkl",
     }
 
     def __init__(self):
