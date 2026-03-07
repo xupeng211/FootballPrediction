@@ -29,13 +29,14 @@
 
 'use strict';
 
-const { getRegistryManager } = require('./core/RegistryManager');
+// V4.20: 核心网络模块迁移到 src/core/network/
+const { getRegistryManager } = require('../../core/network/RegistryManager');
 const { BatchHealthChecker } = require('./health/HealthChecker');
-const { CircuitBreakerRegistry } = require('./core/CircuitBreaker');
-const { LRUSessionManager } = require('./core/LRUSessionManager');
+const { CircuitBreakerRegistry } = require('../../core/network/CircuitBreaker');
+const { LRUSessionManager } = require('../../core/network/LRUSessionManager');
 const { RadarLogger } = require('./../engines/services/logging/RadarLogger');
-const { noProxyAvailable, NetworkShieldError } = require('./core/NetworkShieldError');
-const { FileSystemProvider } = require('./core/AbstractFileSystem');
+const { noProxyAvailable, NetworkShieldError } = require('../../core/network/NetworkShieldError');
+const { FileSystemProvider } = require('../../core/network/AbstractFileSystem');
 
 // ============================================================================
 // DEFAULT CONFIGURATION

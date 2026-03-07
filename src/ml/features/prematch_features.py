@@ -288,23 +288,16 @@ class PrematchFeatureExtractor:
 
 
 def main():
-    """测试函数"""
-    import os
-    import sys
+    """测试函数 - V4.20: 移除断裂导入"""
+    import warnings
 
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
-    from src.core.pipeline import V17ProductionPipeline
-
-    # 提取比赛数据
-    pipeline = V17ProductionPipeline()
-    df = pipeline.extract_match_data()
-
-    # 提取赛前特征
-    extractor = PrematchFeatureExtractor()
-    extractor.extract_prematch_features(df)
-
-    return 0
+    warnings.warn(
+        "此测试函数已废弃。V17ProductionPipeline 已迁移至 src/feature_engine/。"
+        "请使用 src/feature_engine/smelter/FeatureSmelter.js 替代。",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    return 1
 
 
 if __name__ == "__main__":
