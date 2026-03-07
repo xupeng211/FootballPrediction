@@ -2,10 +2,10 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V4.21-stable | **最后更新**: 2026-03-07
+**系统版本**: V4.27-stable | **最后更新**: 2026-03-07
 
 > ⚠️ **版本说明**: 本项目采用**语义化独立版本管理**，不同组件独立迭代：
-> - 📄 **文档版本** (CLAUDE.md): V4.21 - 反映最新架构重组
+> - 📄 **文档版本** (CLAUDE.md): V4.27 - 反映最新架构简化
 > - 📦 **NPM 包版本** (package.json): V178 - 反映 API 稳定性
 > - 🚀 **收割引擎** (ProductionHarvester.js): V186 - 反映引擎迭代
 > - ⚙️ **配置模块** (factory_config.js): V178 - 反映配置成熟度
@@ -595,6 +595,28 @@ docker stats football_prediction_dev
 # ═══════════════════════════════════════════════════════════════════════════════
 # 版本历史 (Version History)
 # ═══════════════════════════════════════════════════════════════════════════════
+
+## V4.27 DOMAIN PURGE (2026-03-07)
+
+### 架构简化
+**空壳清理**: 删除未实现的 `src/domain/` 空壳目录
+
+| 删除项 | 说明 |
+|-------|------|
+| `src/domain/entities/` | 空目录 (0 实现) |
+| `src/domain/services/` | 空目录 (0 实现) |
+| `src/domain/repositories/` | 空目录 (0 实现) |
+
+### 架构规范
+系统采用**扁平化驱动模式**，不再使用复杂的 DDD `domain` 层：
+
+| 功能 | 实际位置 |
+|------|---------|
+| 数据模型 | `src/database/models.py` (Pydantic) |
+| 业务逻辑 | `src/ml/feature_engine/` + `src/services/` |
+| 数据访问 | `src/database/db_pool.py` + `src/database/sql_store.py` |
+
+---
 
 ## V4.21 CORE RESET (2026-03-07)
 
