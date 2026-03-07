@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "Task(*)",
+      "NotebookEdit(*)",
+      "mcp__filesystem__directory_tree",
+      "mcp__filesystem__list_directory",
+      "mcp__filesystem__read_text_file",
+      "mcp__filesystem__get_file_info",
+      "mcp__filesystem__read_multiple_files",
+      "mcp__postgres__query"
+    ]
+  }
+}
