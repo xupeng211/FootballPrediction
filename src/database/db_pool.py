@@ -51,19 +51,26 @@ from psycopg2.extras import RealDictCursor, RealDictRow
 logger = logging.getLogger(__name__)
 
 
+# V4.25: 配置错误异常
+class ConfigError(Exception):
+    """配置缺失或无效错误"""
+    pass
+
+
 @dataclass
 class DatabasePoolConfig:
     """数据库连接池配置类
 
-    所有配置项都支持从环境变量加载，提供合理的默认值
+    V4.25: 所有敏感配置必须从环境变量加载，不提供硬编码默认值。
+    如果缺少必要配置，将抛出 ConfigError。
     """
 
     # 基本连接配置
-    # V172: 统一默认值，与 config/database.js 保持一致
+    # V4.25: 移除硬编码默认密码，强制使用环境变量
     host: str = field(default_factory=lambda: os.getenv("DB_HOST", "localhost"))
     port: int = field(default_factory=lambda: int(os.getenv("DB_PORT", "5432")))
     user: str = field(default_factory=lambda: os.getenv("DB_USER", "football_user"))
-    password: str = field(default_factory=lambda: os.getenv("DB_PASSWORD", "dev_password"))
+    password: str = field(default_factory=lambda: DatabasePoolConfig._get_required_password())
     database: str = field(default_factory=lambda: os.getenv("DB_NAME", "football_db"))
 
     # SSL 安全配置（Phase 2.9 强制安全加固）
@@ -73,16 +80,16 @@ class DatabasePoolConfig:
     ssl_key: str | None = field(default_factory=lambda: os.getenv("DB_SSL_KEY", None))
     ssl_root_cert: str | None = field(default_factory=lambda: os.getenv("DB_SSL_ROOT_CERT", None))
 
-    # 连接池配置
+    # V4.25: 连接池优化参数
     min_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MIN_SIZE", "5")))
-    max_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_SIZE", "20")))
+    max_size: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_SIZE", "10")))
     max_queries: int = field(default_factory=lambda: int(os.getenv("DB_POOL_MAX_QUERIES", "50000")))
     max_inactive_connection_lifetime: float = field(
         default_factory=lambda: float(os.getenv("DB_POOL_MAX_INACTIVE_LIFETIME", "300.0"))
     )
 
     # 超时配置
-    timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "60.0")))
+    timeout: float = field(default_factory=lambda: float(os.getenv("DB_TIMEOUT", "30.0")))
     command_timeout: float = field(
         default_factory=lambda: float(os.getenv("DB_COMMAND_TIMEOUT", "30.0"))
     )
@@ -99,33 +106,52 @@ class DatabasePoolConfig:
     max_retries: int = field(default_factory=lambda: int(os.getenv("DB_MAX_RETRIES", "3")))
     retry_delay: float = field(default_factory=lambda: float(os.getenv("DB_RETRY_DELAY", "1.0")))
 
+    @staticmethod
+    def _get_required_password() -> str:
+        """V4.25: 强制从环境变量获取密码，不提供默认值"""
+        password = os.getenv("DB_PASSWORD")
+        if not password:
+            logger.warning("⚠️ DB_PASSWORD 未设置，请在 .env 文件中配置")
+            # 开发环境允许空密码，但生产环境应拒绝
+            if os.getenv("NODE_ENV") == "production":
+                raise ConfigError("生产环境必须设置 DB_PASSWORD 环境变量")
+            return ""
+        return password
+
     @classmethod
     def from_url(cls, db_url: str | None = None) -> "DatabasePoolConfig":
         """从数据库URL创建配置对象
+
+        V4.25: 移除所有硬编码默认值，强制使用环境变量
 
         Args:
             db_url: 数据库连接URL，如果为None则从环境变量获取
 
         Returns:
             DatabasePoolConfig: 配置对象
+
+        Raises:
+            ConfigError: 缺少必要的环境变量配置
         """
         if db_url is None:
-            # V190: 安全修复 - 不再硬编码密码，使用环境变量
-            db_password = os.getenv("DB_PASSWORD", "dev_password")
-            db_url = os.getenv(
-                "DATABASE_URL",
-                f"postgresql+asyncpg://football_user:{db_password}@db:5432/football_db",
-            )
+            # V4.25: 从环境变量动态构建连接字符串
+            db_host = os.getenv("DB_HOST", "localhost")
+            db_port = os.getenv("DB_PORT", "5432")
+            db_user = os.getenv("DB_USER", "football_user")
+            db_password = os.getenv("DB_PASSWORD", "")
+            db_name = os.getenv("DB_NAME", "football_db")
+
+            db_url = f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
 
         # 解析数据库URL
         parsed = urllib.parse.urlparse(db_url.replace("postgresql+asyncpg://", "postgresql://"))
 
         return cls(
-            host=parsed.hostname or "localhost",
-            port=parsed.port or 5432,
-            user=parsed.username or "postgres",
-            password=parsed.password or "postgres",
-            database=parsed.path.lstrip("/") or "football_prediction",
+            host=parsed.hostname or os.getenv("DB_HOST", "localhost"),
+            port=parsed.port or int(os.getenv("DB_PORT", "5432")),
+            user=parsed.username or os.getenv("DB_USER", "football_user"),
+            password=parsed.password or os.getenv("DB_PASSWORD", ""),
+            database=parsed.path.lstrip("/") or os.getenv("DB_NAME", "football_db"),
         )
 
 

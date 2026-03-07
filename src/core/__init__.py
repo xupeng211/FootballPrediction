@@ -26,11 +26,12 @@ class Config:
     def _load_config(self) -> None:
         """加载配置文件 - 自动处理文件不存在或格式错误的情况"""
         if self.config_file.exists():
-            with open(self.config_file, encoding="utf-8") as f:
-                self._config = json.load(f)
-        except Exception as e:
-            # 配置文件损坏时记录警告， but not interrupt程序执行
-            logging.warning(f"配置文件加载失败: {e}")
+            try:
+                with open(self.config_file, encoding="utf-8") as f:
+                    self._config = json.load(f)
+            except Exception as e:
+                # 配置文件损坏时记录警告，但不中断程序执行
+                logging.warning(f"配置文件加载失败: {e}")
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置项 - 支持默认值，确保程序健壮性"""
