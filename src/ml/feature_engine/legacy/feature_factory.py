@@ -29,7 +29,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_settings
-from src.processors.path_resolver import PathResolver, get_path_resolver
+from src.ml.feature_engine.legacy.path_resolver import PathResolver, get_path_resolver
 
 if TYPE_CHECKING:
     from datetime import datetime

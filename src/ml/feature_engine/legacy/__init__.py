@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 """
-L2 特征提取器模块
+L2 特征提取器模块 (Legacy 兼容层)
+===================================
+
+⚠️  V4.13 声明：此模块为遗留兼容层，仅限维护脚本调用。
+新代码请使用 Node.js 特征引擎 (src/feature_engine/)
 
 提供统一的特征提取接口，支持策略模式和工厂模式。
 
 使用示例:
-    >>> from src.processors import ExtractorRegistry, BaseExtractor
+    >>> from src.ml.feature_engine.legacy import ExtractorRegistry, BaseExtractor
     >>>
     >>> # 创建提取器实例
     >>> extractor = ExtractorRegistry.create("V25.0")
@@ -17,11 +21,12 @@ L2 特征提取器模块
     >>> features = result.features
 
 Author: Architecture Team
-Version: V26.0 (Stable)
+Version: V26.0 (Legacy)
 Date: 2025-12-27
 """
 
-from src.processors.base_extractor import (
+# V4.13: 使用相对路径导入
+from .base_extractor import (
     BaseExtractor,
     ExtractionResult,
     ExtractionStatus,
@@ -29,7 +34,7 @@ from src.processors.base_extractor import (
     ValidationConfig,
     register_extractor,
 )
-from src.processors.exceptions import (
+from .exceptions import (
     CircuitBreakerOpenError,
     ConfigurationError,
     DataParsingError,
@@ -40,7 +45,7 @@ from src.processors.exceptions import (
     SchemaMismatchError,
     ValidationError,
 )
-from src.processors.integrity_guard import (
+from .integrity_guard import (
     BatchAuditor,
     GoldenShieldConfig,
     IntegrityGuard,
@@ -76,4 +81,4 @@ __all__ = [
 ]
 
 # 版本信息
-__version__ = "V26.0 (Stable)"
+__version__ = "V26.0 (Legacy)"

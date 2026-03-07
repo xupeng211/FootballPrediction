@@ -61,16 +61,16 @@ import structlog
 # ============================================================================
 # 本地模块导入
 # ============================================================================
-from src.processors.base_extractor import (
+from src.ml.feature_engine.legacy.base_extractor import (
     BaseExtractor,
     ExtractionResult,
     ExtractionStatus,
     ValidationConfig,
     register_extractor,
 )
-from src.processors.exceptions import DataParsingError, InsufficientFeaturesError
-from src.processors.extraction_decorators import safe_extract
-from src.processors.v26_sparsity_filter import apply_sparsity_filter
+from src.ml.feature_engine.legacy.exceptions import DataParsingError, InsufficientFeaturesError
+from src.ml.feature_engine.legacy.extraction_decorators import safe_extract
+from src.ml.feature_engine.legacy.v26_sparsity_filter import apply_sparsity_filter
 
 logger = structlog.get_logger(__name__)
 

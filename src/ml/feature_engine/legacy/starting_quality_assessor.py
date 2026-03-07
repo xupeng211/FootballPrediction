@@ -27,7 +27,7 @@ from typing import Any
 import yaml
 
 from src.config.config_loader import get_hyper_parameters_config
-from src.processors.injury_parser import InjuryDataExtractor
+from src.ml.feature_engine.legacy.injury_parser import InjuryDataExtractor
 
 logger = logging.getLogger(__name__)
 

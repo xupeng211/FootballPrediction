@@ -29,12 +29,12 @@ import uuid
 
 from pydantic import validate_call
 
-from src.processors.base_processor import BaseFeatureProcessor, ProcessorConfig
-from src.processors.fatigue_calculator import FatigueCalculator
-from src.processors.odds_trend_analyzer import OddsTrendAnalyzer
-from src.processors.pure_feature_filter import PureFeatureFilter
-from src.processors.starting_quality_assessor import StartingQualityAssessor
-from src.processors.technical_parser import PreMatchFeaturePlugin
+from src.ml.feature_engine.legacy.base_processor import BaseFeatureProcessor, ProcessorConfig
+from src.ml.feature_engine.legacy.fatigue_calculator import FatigueCalculator
+from src.ml.feature_engine.legacy.odds_trend_analyzer import OddsTrendAnalyzer
+from src.ml.feature_engine.legacy.pure_feature_filter import PureFeatureFilter
+from src.ml.feature_engine.legacy.starting_quality_assessor import StartingQualityAssessor
+from src.ml.feature_engine.legacy.technical_parser import PreMatchFeaturePlugin
 
 logger = logging.getLogger(__name__)
 

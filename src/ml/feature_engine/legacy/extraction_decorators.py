@@ -124,7 +124,7 @@ def safe_extract(
                 )
 
                 # 返回失败结果而不是崩溃
-                from src.processors.base_extractor import ExtractionResult, ExtractionStatus
+                from src.ml.feature_engine.legacy.base_extractor import ExtractionResult, ExtractionStatus
 
                 return ExtractionResult(
                     status=ExtractionStatus.FAILED,

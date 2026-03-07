@@ -11,7 +11,7 @@ Core capabilities:
 - Golden Shield compliance check (configurable threshold)
 
 Usage:
-    from src.processors import IntegrityGuard, GoldenShieldConfig
+    from src.ml.feature_engine.legacy import IntegrityGuard, GoldenShieldConfig
 
     # Use default config (threshold: 30)
     guard = IntegrityGuard()

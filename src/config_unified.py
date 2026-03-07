@@ -133,34 +133,14 @@ class ProxyConfig:
     wsl2_bridge_host: str = "172.25.16.1"  # WSL2 宿主机默认 IP
     auto_detect_wsl2: bool = True  # 自动检测 WSL2 环境
 
-    # V41.130: 代理池配置（从环境变量读取）
-    # 19 个活跃代理端口（2026-01-17 普查结果）
+    # V4.13: 代理池配置（与 factory_config.js 同步 - 22 个端口）
+    # 完整代理端口范围 7890-7911
     proxy_ports: list[int] = field(
-        default_factory=lambda: [
-            7890,
-            7892,
-            7893,
-            7894,
-            7895,
-            7896,
-            7897,
-            7898,
-            7899,
-            7900,
-            7901,
-            7902,
-            7903,
-            7904,
-            7905,
-            7906,
-            7907,
-            7908,
-            7909,
-        ]
+        default_factory=lambda: list(range(7890, 7912))  # 7890-7911 (22 ports)
     )
     deprecated_proxy_ports: list[int] = field(
-        default_factory=lambda: [7891, 7910]
-    )  # V41.130: 已死亡端口
+        default_factory=lambda: []  # V4.13: 所有端口均可用
+    )
 
     # 健康检查配置
     health_check_timeout: float = 2.0  # 健康检查超时时间（秒）
@@ -571,13 +551,15 @@ class UnifiedSettings(BaseSettings):
     # WSL2 桥接主机（可从环境变量 WSL2_PROXY_HOST 读取）
     proxy_wsl2_host: str = Field(default="172.25.16.1", description="WSL2 宿主机 IP")
 
-    # 代理端口列表（可从环境变量 PROXY_PORTS 读取，逗号分隔）
+    # V4.13: 代理端口列表（与 factory_config.js 同步 - 22 个端口 7890-7911）
+    # 可从环境变量 PROXY_PORTS 读取，逗号分隔
     proxy_ports: str = Field(
-        default="7892,7893,7894,7895,7896,7898,7899", description="可用代理端口列表"
+        default="7890,7891,7892,7893,7894,7895,7896,7897,7898,7899,7900,7901,7902,7903,7904,7905,7906,7907,7908,7909,7910,7911",
+        description="可用代理端口列表 (22 ports: 7890-7911)"
     )
 
-    # 已弃用的代理端口（禁止使用）
-    proxy_deprecated_ports: str = Field(default="7890,7891", description="已弃用的代理端口")
+    # V4.13: 所有端口均可用，无弃用端口
+    proxy_deprecated_ports: str = Field(default="", description="已弃用的代理端口")
 
     # 代理健康检查超时（秒）
     proxy_health_timeout: float = Field(default=2.0, description="代理健康检查超时时间")
