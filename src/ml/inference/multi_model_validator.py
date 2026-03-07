@@ -115,30 +115,30 @@ class MultiModelValidator:
     # 可用模型配置
     AVAILABLE_MODELS = {
         "v26_7_aligned": {
-            "path": "model_zoo/v26.7_aligned_production.pkl",
+            "path": "model_zoo/production/v26.7_aligned_production.pkl",
             "type": "general",
             "priority": 1
         },
         "v26_8_epl": {
-            "path": "model_zoo/v26.8_epl_production.pkl",
+            "path": "model_zoo/production/v26.8_epl_production.pkl",
             "type": "specialized",
             "leagues": ["Premier League", "EPL", "English Premier League"],
             "priority": 2
         },
         "v26_8_la_liga": {
-            "path": "model_zoo/v26.8_la_liga_production.pkl",
+            "path": "model_zoo/production/v26.8_la_liga_production.pkl",
             "type": "specialized",
             "leagues": ["La Liga", "Primera División"],
             "priority": 2
         },
         "v26_8_bund": {
-            "path": "model_zoo/v26.8_bund_production.pkl",
+            "path": "model_zoo/production/v26.8_bund_production.pkl",
             "type": "specialized",
             "leagues": ["Bundesliga", "German Bundesliga"],
             "priority": 2
         },
         "v26_8_ligue1": {
-            "path": "model_zoo/v26.8_ligue1_production.pkl",
+            "path": "model_zoo/production/v26.8_ligue1_production.pkl",
             "type": "specialized",
             "leagues": ["Ligue 1", "French Ligue 1"],
             "priority": 2
