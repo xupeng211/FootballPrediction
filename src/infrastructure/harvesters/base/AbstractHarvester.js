@@ -631,72 +631,94 @@ class AbstractHarvester {
 
     /**
      * 注入原生隐身脚本
+     * V4.46.1: 修复 platform 与 UA 不一致导致的指纹泄露
      * @param {import('playwright').Page} page - Playwright 页面对象
      */
     async _injectStealthScripts(page) {
         await page.addInitScript(() => {
+            // ═══════════════════════════════════════════════════════════════
+            // 核心指纹覆盖 - 必须与 UA 完全一致
+            // ═══════════════════════════════════════════════════════════════
+
             // 覆盖 webdriver 标志
             Object.defineProperty(navigator, 'webdriver', {
                 get: () => undefined,
                 configurable: true
             });
 
-            // 模拟 Chrome 插件数组
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [
-                    {
-                        0: 'Chrome PDF Plugin',
-                        description: 'Portable Document Format',
-                        filename: 'internal-pdf-viewer',
-                        length: 1,
-                        MimeTypes: ['application/pdf']
-                    },
-                    {
-                        0: 'Chrome PDF Viewer',
-                        description: '',
-                        filename: 'mhjfbmdg-nopdfs',
-                        length: 1,
-                        MimeTypes: ['application/pdf']
-                    },
-                    {
-                        0: 'Native Client',
-                        description: '',
-                        filename: 'internal-nacl',
-                        length: 1,
-                        MimeTypes: ['application/x-nacl', 'application/x-pnacl', 'application/x-google-chrome-tab']
-                    }
-                ],
+            // 【关键修复】覆盖 platform - 必须与 UA 中的 Windows 匹配
+            Object.defineProperty(navigator, 'platform', {
+                get: () => 'Win32',
                 configurable: true
             });
 
-            // 模拟语言
+            // 【关键修复】模拟语言 - 包含 q 值权重
             Object.defineProperty(navigator, 'languages', {
                 get: () => ['en-US', 'en'],
                 configurable: true
             });
 
-            // 模拟硬件并发
+            // 模拟硬件并发 (随机化)
             Object.defineProperty(navigator, 'hardwareConcurrency', {
-                get: () => 24,
+                get: () => 8 + (Math.floor(Math.random() * 17)),
                 configurable: true
             });
 
             // 模拟设备内存
             Object.defineProperty(navigator, 'deviceMemory', {
-                get: () => 8,
+                get: () => [4, 8, 8, 16, 16, 32][Math.floor(Math.random() * 6)],
                 configurable: true
             });
 
-            // WebGL 指纹伪装
+            // 模拟 Chrome 插件数组
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => {
+                    const plugins = [
+                        Object.create(Plugin.prototype, {
+                            name: { value: 'Chrome PDF Plugin' },
+                            description: { value: 'Portable Document Format' },
+                            filename: { value: 'internal-pdf-viewer' },
+                            length: { value: 1 }
+                        }),
+                        Object.create(Plugin.prototype, {
+                            name: { value: 'Chrome PDF Viewer' },
+                            description: { value: '' },
+                            filename: { value: 'mhjfbmdg-nopdfs' },
+                            length: { value: 1 }
+                        }),
+                        Object.create(Plugin.prototype, {
+                            name: { value: 'Native Client' },
+                            description: { value: '' },
+                            filename: { value: 'internal-nacl' },
+                            length: { value: 1 }
+                        })
+                    ];
+                    plugins.item = (i) => plugins[i] || null;
+                    plugins.namedItem = (name) => plugins.find(p => p.name === name) || null;
+                    plugins.refresh = () => {};
+                    return plugins;
+                },
+                configurable: true
+            });
+
+            // ═══════════════════════════════════════════════════════════════
+            // WebGL 指纹伪装 - 随机化
+            // ═══════════════════════════════════════════════════════════════
+            const WEBGL_RENDERERS = [
+                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (AMD)', renderer: 'ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (Intel)', renderer: 'ANGLE (Intel, Intel UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)' }
+            ];
+            const selectedRenderer = WEBGL_RENDERERS[Math.floor(Math.random() * WEBGL_RENDERERS.length)];
+
             const getParameterProxyHandler = {
                 apply: function(target, thisArg, args) {
                     const param = args[0];
-                    if (param === 37445) {
-                        return 'Google Inc. (AMD)';
-                    }
-                    if (param === 37446) {
-                        return 'ANGLE (AMD, AMD Radeon(TM) Graphics (0x000013C0) Direct3D11 vs_5_0 ps_5_0, D3D11)';
-                    }
+                    // UNMASKED_VENDOR_WEBGL
+                    if (param === 37445) return selectedRenderer.vendor;
+                    // UNMASKED_RENDERER_WEBGL
+                    if (param === 37446) return selectedRenderer.renderer;
                     return target.apply(thisArg, args);
                 }
             };
@@ -711,7 +733,53 @@ class AbstractHarvester {
                 WebGL2RenderingContext.prototype.getParameter = new Proxy(originalGetParameter2, getParameterProxyHandler);
             }
 
+            // ═══════════════════════════════════════════════════════════════
+            // Canvas 指纹噪音
+            // ═══════════════════════════════════════════════════════════════
+            const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+            HTMLCanvasElement.prototype.toDataURL = function(type) {
+                if (this.width > 0 && this.height > 0) {
+                    const ctx = this.getContext('2d');
+                    if (ctx) {
+                        // 添加微弱噪音
+                        const imageData = ctx.getImageData(0, 0, this.width, this.height);
+                        for (let i = 0; i < imageData.data.length; i += 4) {
+                            imageData.data[i] ^= (Math.random() * 2) | 0;
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                    }
+                }
+                return originalToDataURL.apply(this, arguments);
+            };
+
+            // ═══════════════════════════════════════════════════════════════
+            // 隐藏自动化标志
+            // ═══════════════════════════════════════════════════════════════
+            delete window.__webdriver_evaluate;
+            delete window.__webdriver_script_function;
+            delete window.__webdriver_script_fn;
+            delete window.__webdriver_unwrapped;
+            delete window.__selenium_evaluate;
+            delete window.__selenium_script_function;
+            delete window.__selenium_script_fn;
+            delete window.__fxdriver_evaluate;
+            delete window.__driver_evaluate;
+            delete window.__webdriver_script_fn;
+            delete window.__lastWatirAlert;
+            delete window.__lastWatirConfirm;
+            delete window.__lastWatirPrompt;
+            delete window._Selenium_IDE_Recorder;
+            delete window._selenium;
+            delete window.calledSelenium;
+
+            // 删除 window.chrome.csi 和 window.chrome.loadTimes 的自动化特征
+            if (window.chrome) {
+                window.chrome.runtime = window.chrome.runtime || {};
+            }
+
+            // ═══════════════════════════════════════════════════════════════
             // 覆盖 permissions 查询
+            // ═══════════════════════════════════════════════════════════════
             const originalQueryInterface = window.navigator.permissions?.query;
             if (originalQueryInterface) {
                 window.navigator.permissions.query = (parameters) => (
@@ -721,22 +789,35 @@ class AbstractHarvester {
                 );
             }
 
-            // 隐藏自动化标志
-            delete window.__webdriver_evaluate;
-            delete window.__webdriver_script_function;
-            delete window.__webdriver_script_fn;
-            delete window.__webdriver_unwrapped;
-
-            // 覆盖 toString
+            // ═══════════════════════════════════════════════════════════════
+            // 覆盖 toString 保持原生外观
+            // ═══════════════════════════════════════════════════════════════
             const oldToString = Function.prototype.toString;
             Function.prototype.toString = function() {
                 if (this === navigator.permissions?.query) {
-                    return 'function permissions() { [native code] }';
+                    return 'function query() { [native code] }';
+                }
+                if (this === HTMLCanvasElement.prototype.toDataURL) {
+                    return 'function toDataURL() { [native code] }';
                 }
                 return oldToString.call(this);
             };
 
-            console.log('[Stealth] 深度隐身脚本已注入');
+            // ═══════════════════════════════════════════════════════════════
+            // iframe contentWindow 检测绕过
+            // ═══════════════════════════════════════════════════════════════
+            const originalContentWindow = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'contentWindow');
+            Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
+                get: function() {
+                    const window = originalContentWindow.get.call(this);
+                    if (window) {
+                        Object.defineProperty(window.navigator, 'webdriver', { get: () => undefined });
+                    }
+                    return window;
+                }
+            });
+
+            console.log('[Stealth] V4.46.1 深度隐身脚本已注入');
         });
     }
 

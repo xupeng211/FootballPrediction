@@ -315,6 +315,77 @@ class NetworkManager {
     }
 
     // ========================================================================
+    // 端口轮询与动态分发 (TITAN-SWARM)
+    // ========================================================================
+
+    /**
+     * TITAN-SWARM: 获取轮询代理配置
+     * 每次调用返回不同的端口配置，实现 IP 轮询分发
+     * @param {number} [index] - 可选索引，用于轮询模式
+     * @returns {Object} 代理配置对象 { port, url, sessionId }
+     */
+    getRotatedConfig(index) {
+        let selectedPort;
+
+        if (index !== undefined) {
+            // 轮询模式：根据索引选择端口
+            selectedPort = this.availablePorts[index % this.availablePorts.length];
+        } else {
+            // 随机模式：随机选择健康端口
+            const healthyPorts = this.availablePorts.filter(p => !this.failedPorts.has(p));
+            const pool = healthyPorts.length > 0 ? healthyPorts : this.availablePorts;
+            selectedPort = pool[Math.floor(Math.random() * pool.length)];
+        }
+
+        const sessionId = `SWARM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+        return {
+            port: selectedPort,
+            url: `http://172.25.16.1:${selectedPort}`,
+            sessionId,
+            host: '172.25.16.1'
+        };
+    }
+
+    /**
+     * TITAN-SWARM: 为蜂群 Worker 批量生成配置
+     * 确保每个 Worker 获得不同的端口
+     * @param {number} count - Worker 数量
+     * @returns {Array<Object>} 配置数组
+     */
+    generateSwarmConfigs(count) {
+        const configs = [];
+        const usedPorts = new Set();
+
+        for (let i = 0; i < count; i++) {
+            // 优先选择未使用的端口
+            let config;
+            const availablePorts = this.availablePorts.filter(p => !usedPorts.has(p));
+
+            if (availablePorts.length > 0) {
+                // 还有未使用的端口
+                const port = availablePorts[Math.floor(Math.random() * availablePorts.length)];
+                usedPorts.add(port);
+                config = {
+                    port,
+                    url: `http://172.25.16.1:${port}`,
+                    sessionId: `SWARM-${i + 1}-${Date.now()}`,
+                    host: '172.25.16.1',
+                    workerId: i + 1
+                };
+            } else {
+                // 端口已用完，使用轮询模式
+                config = this.getRotatedConfig(i);
+                config.workerId = i + 1;
+            }
+
+            configs.push(config);
+        }
+
+        return configs;
+    }
+
+    // ========================================================================
     // 端口避障与重分配
     // ========================================================================
 
