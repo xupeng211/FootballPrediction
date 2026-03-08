@@ -1,10 +1,7 @@
-/**
- * PredictionPipeline - V200 预测流水线
- * =====================================
+﻿/**
+ * PredictionPipeline - V200 棰勬祴娴佹按绾? * =====================================
  *
- * 在 L1/L2/L3 完成后自动生成预测报告
- * 调用 Python 预测脚本并保存结果到数据库
- *
+ * 鍦?L1/L2/L3 瀹屾垚鍚庤嚜鍔ㄧ敓鎴愰娴嬫姤鍛? * 璋冪敤 Python 棰勬祴鑴氭湰骞朵繚瀛樼粨鏋滃埌鏁版嵁搴? *
  * @module scripts/ops/predict_pipeline
  * @version V200.0.0
  */
@@ -15,17 +12,17 @@ const { spawn } = require('child_process');
 const { Pool } = require('pg');
 
 // ============================================================================
-// 配置常量
+// 閰嶇疆甯搁噺
 // ============================================================================
 
 const PREDICT_CONFIG = {
-    /** Python 脚本路径 */
-    SCRIPT_PATH: '/app/scripts/ops/predict_weekend.py',
+    /** Python 鑴氭湰璺緞 */
+    SCRIPT_PATH: path.join(process.cwd(), 'scripts/ops/predict_weekend.py',
 
-    /** 预测天数 */
+    /** 棰勬祴澶╂暟 */
     PREDICT_DAYS: parseInt(process.env.PREDICT_DAYS || '4'),
 
-    /** 数据库配置 */
+    /** 鏁版嵁搴撻厤缃?*/
     db: {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
@@ -36,7 +33,7 @@ const PREDICT_CONFIG = {
 };
 
 // ============================================================================
-// 日志系统
+// 鏃ュ織绯荤粺
 // ============================================================================
 
 function timestamp() {
@@ -58,18 +55,17 @@ const log = {
     },
     success: (msg, meta = null) => {
         const metaStr = meta ? ` | ${JSON.stringify(meta)}` : '';
-        console.log(`[${timestamp()}] [SUCCESS] [PredictionPipeline] ✅ ${msg}${metaStr}`);
+        console.log(`[${timestamp()}] [SUCCESS] [PredictionPipeline] 鉁?${msg}${metaStr}`);
     }
 };
 
 // ============================================================================
-// PredictionPipeline 类
-// ============================================================================
+// PredictionPipeline 绫?// ============================================================================
 
 class PredictionPipeline {
     /**
-     * 创建 PredictionPipeline 实例
-     * @param {Object} options - 配置选项
+     * 鍒涘缓 PredictionPipeline 瀹炰緥
+     * @param {Object} options - 閰嶇疆閫夐」
      */
     constructor(options = {}) {
         this.config = { ...PREDICT_CONFIG, ...options };
@@ -77,10 +73,9 @@ class PredictionPipeline {
     }
 
     /**
-     * 初始化
-     */
+     * 鍒濆鍖?     */
     async init() {
-        log.info('🚀 初始化 PredictionPipeline V200...');
+        log.info('馃殌 鍒濆鍖?PredictionPipeline V200...');
 
         this.pool = new Pool({
             ...this.config.db,
@@ -88,38 +83,38 @@ class PredictionPipeline {
             idleTimeoutMillis: 30000
         });
 
-        // 测试连接
+        // 娴嬭瘯杩炴帴
         const client = await this.pool.connect();
         await client.query('SELECT 1');
         client.release();
-        log.info('✅ 数据库连接池已就绪');
+        log.info('鉁?鏁版嵁搴撹繛鎺ユ睜宸插氨缁?);
     }
 
     /**
-     * 运行预测
-     * @param {Object} options - 执行选项
-     * @returns {Promise<Object>} 预测结果
+     * 杩愯棰勬祴
+     * @param {Object} options - 鎵ц閫夐」
+     * @returns {Promise<Object>} 棰勬祴缁撴灉
      */
     async run(options = {}) {
         const { save = true, league = null } = options;
 
-        log.info('═══════════════════════════════════════════════════════════════');
-        log.info('  V200 预测流水线 - 执行预测');
-        log.info('═══════════════════════════════════════════════════════════════');
+        log.info('鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?);
+        log.info('  V200 棰勬祴娴佹按绾?- 鎵ц棰勬祴');
+        log.info('鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?);
 
         const startTime = Date.now();
 
         try {
-            // 调用 Python 预测脚本
+            // 璋冪敤 Python 棰勬祴鑴氭湰
             const result = await this._runPythonPredictor(save, league);
 
-            // 解析预测结果
+            // 瑙ｆ瀽棰勬祴缁撴灉
             const predictions = await this._parsePredictions(result);
 
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
-            log.success(`预测完成，耗时 ${elapsed}s，共 ${predictions.length} 场比赛`);
+            log.success(`棰勬祴瀹屾垚锛岃€楁椂 ${elapsed}s锛屽叡 ${predictions.length} 鍦烘瘮璧沗);
 
-            // 生成摘要报告
+            // 鐢熸垚鎽樿鎶ュ憡
             const summary = this._generateSummary(predictions);
             this._printSummary(summary);
 
@@ -131,7 +126,7 @@ class PredictionPipeline {
             };
 
         } catch (error) {
-            log.error('预测执行失败', error);
+            log.error('棰勬祴鎵ц澶辫触', error);
             return {
                 success: false,
                 error: error.message,
@@ -141,10 +136,10 @@ class PredictionPipeline {
     }
 
     /**
-     * 调用 Python 预测脚本
-     * @param {boolean} save - 是否保存到数据库
-     * @param {string|null} league - 指定联赛
-     * @returns {Promise<string>} 脚本输出
+     * 璋冪敤 Python 棰勬祴鑴氭湰
+     * @param {boolean} save - 鏄惁淇濆瓨鍒版暟鎹簱
+     * @param {string|null} league - 鎸囧畾鑱旇禌
+     * @returns {Promise<string>} 鑴氭湰杈撳嚭
      */
     async _runPythonPredictor(save, league) {
         return new Promise((resolve, reject) => {
@@ -161,7 +156,7 @@ class PredictionPipeline {
                 args.push('--league', league);
             }
 
-            log.info(`执行: python ${args.join(' ')}`);
+            log.info(`鎵ц: python ${args.join(' ')}`);
 
             const python = spawn('python', args, {
                 env: process.env,
@@ -181,7 +176,7 @@ class PredictionPipeline {
 
             python.on('close', (code) => {
                 if (code !== 0) {
-                    reject(new Error(`Python 脚本退出码 ${code}: ${stderr}`));
+                    reject(new Error(`Python 鑴氭湰閫€鍑虹爜 ${code}: ${stderr}`));
                 } else {
                     resolve(stdout);
                 }
@@ -194,13 +189,12 @@ class PredictionPipeline {
     }
 
     /**
-     * 解析预测输出
-     * @param {string} output - Python 脚本输出
-     * @returns {Promise<Array>} 预测列表
+     * 瑙ｆ瀽棰勬祴杈撳嚭
+     * @param {string} output - Python 鑴氭湰杈撳嚭
+     * @returns {Promise<Array>} 棰勬祴鍒楄〃
      */
     async _parsePredictions(output) {
-        // 从数据库获取最新预测
-        const query = `
+        // 浠庢暟鎹簱鑾峰彇鏈€鏂伴娴?        const query = `
             SELECT
                 p.match_id,
                 m.home_team,
@@ -228,9 +222,9 @@ class PredictionPipeline {
     }
 
     /**
-     * 生成摘要
-     * @param {Array} predictions - 预测列表
-     * @returns {Object} 摘要
+     * 鐢熸垚鎽樿
+     * @param {Array} predictions - 棰勬祴鍒楄〃
+     * @returns {Object} 鎽樿
      */
     _generateSummary(predictions) {
         const highValue = predictions.filter(p => (p.ev_home || 0) > 0.05);
@@ -252,43 +246,44 @@ class PredictionPipeline {
     }
 
     /**
-     * 打印摘要报告
-     * @param {Object} summary - 摘要
+     * 鎵撳嵃鎽樿鎶ュ憡
+     * @param {Object} summary - 鎽樿
      */
     _printSummary(summary) {
-        log.info('═══════════════════════════════════════════════════════════════');
-        log.info('  📊 预测摘要报告');
-        log.info('═══════════════════════════════════════════════════════════════');
-        log.info(`  总预测数: ${summary.total}`);
-        log.info(`  高价值投注 (EV > 5%): ${summary.highValue}`);
+        log.info('鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?);
+        log.info('  馃搳 棰勬祴鎽樿鎶ュ憡');
+        log.info('鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?);
+        log.info(`  鎬婚娴嬫暟: ${summary.total}`);
+        log.info(`  楂樹环鍊兼姇娉?(EV > 5%): ${summary.highValue}`);
 
         if (summary.topPicks.length > 0) {
-            log.info('\n  🔥 Top 5 高价值投注:');
+            log.info('\n  馃敟 Top 5 楂樹环鍊兼姇娉?');
             summary.topPicks.forEach((p, i) => {
                 const ev = p.ev_home || 0;
                 log.info(`    ${i + 1}. ${p.home_team} vs ${p.away_team} | ${p.recommended_bet || p.predicted_result} | EV: ${ev > 0 ? '+' : ''}${(ev * 100).toFixed(1)}%`);
             });
         }
 
-        log.info('═══════════════════════════════════════════════════════════════');
+        log.info('鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺愨晲鈺?);
     }
 
     /**
-     * 关闭连接
+     * 鍏抽棴杩炴帴
      */
     async close() {
         if (this.pool) {
             await this.pool.end();
-            log.info('✅ 数据库连接池已关闭');
+            log.info('鉁?鏁版嵁搴撹繛鎺ユ睜宸插叧闂?);
         }
     }
 }
 
 // ============================================================================
-// 导出
+// 瀵煎嚭
 // ============================================================================
 
 module.exports = {
     PredictionPipeline,
     PREDICT_CONFIG
 };
+

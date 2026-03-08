@@ -1,11 +1,9 @@
-#!/usr/bin/env node
+﻿#!/usr/bin/env node
 /**
- * AutonomousOrchestrator - V201.1 全自动闭环流水线
+ * AutonomousOrchestrator - V201.1 鍏ㄨ嚜鍔ㄩ棴鐜祦姘寸嚎
  * ================================================
  *
- * 中央编排器：L1 → L2 → L3 → RECALCULATE_ELO → PREDICT 五层流水线自动编排
- * 实现状态轮询、自动触发、错误隔离、自愈重试
- *
+ * 涓ぎ缂栨帓鍣細L1 鈫?L2 鈫?L3 鈫?RECALCULATE_ELO 鈫?PREDICT 浜斿眰娴佹按绾胯嚜鍔ㄧ紪鎺? * 瀹炵幇鐘舵€佽疆璇€佽嚜鍔ㄨЕ鍙戙€侀敊璇殧绂汇€佽嚜鎰堥噸璇? *
  * @module scripts/ops/autonomous_engine
  * @version V201.1.0
  */
@@ -15,38 +13,38 @@
 const { Pool } = require('pg');
 const { spawn } = require('child_process');
 
-// 导入三层模块
+// 瀵煎叆涓夊眰妯″潡
 const { FixtureSeeder } = require('../../src/infrastructure/FixtureSeeder');
 const { ProductionHarvester } = require('../../src/infrastructure/harvesters/ProductionHarvester');
 const { FeatureSmelter } = require('../../src/feature_engine/smelter/FeatureSmelter');
 
-// 导入统一注册中心
+// 瀵煎叆缁熶竴娉ㄥ唽涓績
 const Registry = require('../../config/registry');
 
 // ============================================================================
-// 配置常量
+// 閰嶇疆甯搁噺
 // ============================================================================
 
 const ORCHESTRATOR_CONFIG = {
-    /** 循环间隔 (ms) - 默认 6 小时 */
+    /** 寰幆闂撮殧 (ms) - 榛樿 6 灏忔椂 */
     LOOP_INTERVAL_MS: parseInt(process.env.LOOP_INTERVAL_MS) || 6 * 60 * 60 * 1000,
 
-    /** L2 最大重试次数 */
+    /** L2 鏈€澶ч噸璇曟鏁?*/
     L2_MAX_RETRIES: parseInt(process.env.L2_MAX_RETRIES) || 3,
 
-    /** L2 重试间隔 (ms) */
+    /** L2 閲嶈瘯闂撮殧 (ms) */
     L2_RETRY_DELAY_MS: parseInt(process.env.L2_RETRY_DELAY_MS) || 60000,
 
-    /** L3 最大重试次数 */
+    /** L3 鏈€澶ч噸璇曟鏁?*/
     L3_MAX_RETRIES: parseInt(process.env.L3_MAX_RETRIES) || 2,
 
-    /** L3 重试间隔 (ms) */
+    /** L3 閲嶈瘯闂撮殧 (ms) */
     L3_RETRY_DELAY_MS: parseInt(process.env.L3_RETRY_DELAY_MS) || 30000,
 
-    /** 预测天数 */
+    /** 棰勬祴澶╂暟 */
     PREDICT_DAYS: parseInt(process.env.PREDICT_DAYS) || 4,
 
-    /** 数据库配置 */
+    /** 鏁版嵁搴撻厤缃?*/
     db: {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
@@ -57,7 +55,7 @@ const ORCHESTRATOR_CONFIG = {
 };
 
 // ============================================================================
-// 日志系统
+// 鏃ュ織绯荤粺
 // ============================================================================
 
 function timestamp() {
@@ -79,18 +77,17 @@ const log = {
     },
     success: (msg, meta = null) => {
         const metaStr = meta ? ` | ${JSON.stringify(meta)}` : '';
-        console.log(`[${timestamp()}] [SUCCESS] [Orchestrator] ✅ ${msg}${metaStr}`);
+        console.log(`[${timestamp()}] [SUCCESS] [Orchestrator] 鉁?${msg}${metaStr}`);
     },
     section: (title) => {
-        console.log('\n' + '═'.repeat(70));
+        console.log('\n' + '鈺?.repeat(70));
         console.log(`  ${title}`);
-        console.log('═'.repeat(70));
+        console.log('鈺?.repeat(70));
     }
 };
 
 // ============================================================================
-// AutonomousOrchestrator 类
-// ============================================================================
+// AutonomousOrchestrator 绫?// ============================================================================
 
 class AutonomousOrchestrator {
     constructor(config = {}) {
@@ -101,10 +98,9 @@ class AutonomousOrchestrator {
     }
 
     /**
-     * 初始化
-     */
+     * 鍒濆鍖?     */
     async init() {
-        log.info('🚀 初始化 AutonomousOrchestrator V201.1...');
+        log.info('馃殌 鍒濆鍖?AutonomousOrchestrator V201.1...');
 
         this.pool = new Pool({
             ...this.config.db,
@@ -112,46 +108,45 @@ class AutonomousOrchestrator {
             idleTimeoutMillis: 30000
         });
 
-        // 测试连接
+        // 娴嬭瘯杩炴帴
         const client = await this.pool.connect();
         await client.query('SELECT 1');
         client.release();
 
-        log.success('数据库连接池已就绪');
+        log.success('鏁版嵁搴撹繛鎺ユ睜宸插氨缁?);
     }
 
     /**
-     * 关闭连接
+     * 鍏抽棴杩炴帴
      */
     async close() {
         if (this.pool) {
             await this.pool.end();
-            log.info('数据库连接池已关闭');
+            log.info('鏁版嵁搴撹繛鎺ユ睜宸插叧闂?);
         }
     }
 
     // ========================================================================
-    // 阶段 1: L1 Discovery (赛程播种)
+    // 闃舵 1: L1 Discovery (璧涚▼鎾)
     // ========================================================================
 
     async runL1Discovery() {
-        log.section('阶段 1/5: L1 Discovery (赛程播种)');
+        log.section('闃舵 1/5: L1 Discovery (璧涚▼鎾)');
 
         if (this.dryRun) {
-            log.info('[DRY-RUN] 跳过 L1 Discovery');
+            log.info('[DRY-RUN] 璺宠繃 L1 Discovery');
             return { success: true, skipped: true };
         }
 
         try {
-            // 从配置加载活跃联赛
-            const leagueConfig = require('../../config/leagues.json');
+            // 浠庨厤缃姞杞芥椿璺冭仈璧?            const leagueConfig = require('../../config/leagues.json');
             const activeLeagues = leagueConfig.active_leagues || [];
             const activeSeasons = leagueConfig.active_seasons || ['2024/2025'];
 
-            log.info(`活跃联赛: ${activeLeagues.map(l => l.name).join(', ')}`);
-            log.info(`活跃赛季: ${activeSeasons.join(', ')}`);
+            log.info(`娲昏穬鑱旇禌: ${activeLeagues.map(l => l.name).join(', ')}`);
+            log.info(`娲昏穬璧涘: ${activeSeasons.join(', ')}`);
 
-            // 创建 Seeder 实例
+            // 鍒涘缓 Seeder 瀹炰緥
             const seeder = new FixtureSeeder({
                 leagues: activeLeagues,
                 seasons: activeSeasons
@@ -162,38 +157,38 @@ class AutonomousOrchestrator {
             await seeder.close();
 
             const totalSeeded = stats?.total || 0;
-            log.success(`L1 Discovery 完成，共播种 ${totalSeeded} 场比赛`);
+            log.success(`L1 Discovery 瀹屾垚锛屽叡鎾 ${totalSeeded} 鍦烘瘮璧沗);
             return { success: true, seeded: totalSeeded, stats };
 
         } catch (error) {
-            log.error(`L1 Discovery 失败: ${error.message}`);
+            log.error(`L1 Discovery 澶辫触: ${error.message}`);
             return { success: false, error: error.message };
         }
     }
 
     // ========================================================================
-    // 阶段 2: L2 Harvest (赔率收割)
+    // 闃舵 2: L2 Harvest (璧旂巼鏀跺壊)
     // ========================================================================
 
     async runL2Harvest() {
-        log.section('阶段 2/5: L2 Harvest (赔率收割)');
+        log.section('闃舵 2/5: L2 Harvest (璧旂巼鏀跺壊)');
 
         if (this.dryRun) {
-            log.info('[DRY-RUN] 跳过 L2 Harvest');
+            log.info('[DRY-RUN] 璺宠繃 L2 Harvest');
             return { success: true, skipped: true };
         }
 
         try {
-            // 检查待收割数量
+            // 妫€鏌ュ緟鏀跺壊鏁伴噺
             const pending = await this._getPendingL2Count();
-            log.info(`待收割 L2 数据: ${pending} 场`);
+            log.info(`寰呮敹鍓?L2 鏁版嵁: ${pending} 鍦篳);
 
             if (pending === 0) {
-                log.success('L2 数据已全部收割完成');
+                log.success('L2 鏁版嵁宸插叏閮ㄦ敹鍓插畬鎴?);
                 return { success: true, harvested: 0 };
             }
 
-            // 执行收割
+            // 鎵ц鏀跺壊
             const harvester = new ProductionHarvester({
                 batchSize: Math.min(pending, 500),
                 maxWorkers: 1
@@ -203,38 +198,38 @@ class AutonomousOrchestrator {
             const result = await harvester.run();
             await harvester.close();
 
-            log.success(`L2 Harvest 完成，收割 ${result.success || 0} 场`);
+            log.success(`L2 Harvest 瀹屾垚锛屾敹鍓?${result.success || 0} 鍦篳);
             return { success: true, ...result };
 
         } catch (error) {
-            log.error(`L2 Harvest 失败: ${error.message}`);
+            log.error(`L2 Harvest 澶辫触: ${error.message}`);
             return { success: false, error: error.message };
         }
     }
 
     // ========================================================================
-    // 阶段 3: L3 Smelt (特征熔炼)
+    // 闃舵 3: L3 Smelt (鐗瑰緛鐔旂偧)
     // ========================================================================
 
     async runL3Smelt() {
-        log.section('阶段 3/5: L3 Smelt (特征熔炼)');
+        log.section('闃舵 3/5: L3 Smelt (鐗瑰緛鐔旂偧)');
 
         if (this.dryRun) {
-            log.info('[DRY-RUN] 跳过 L3 Smelt');
+            log.info('[DRY-RUN] 璺宠繃 L3 Smelt');
             return { success: true, skipped: true };
         }
 
         try {
-            // 检查待熔炼数量
+            // 妫€鏌ュ緟鐔旂偧鏁伴噺
             const pending = await this._getPendingL3Count();
-            log.info(`待熔炼 L3 特征: ${pending} 场`);
+            log.info(`寰呯啍鐐?L3 鐗瑰緛: ${pending} 鍦篳);
 
             if (pending === 0) {
-                log.success('L3 特征已全部熔炼完成');
+                log.success('L3 鐗瑰緛宸插叏閮ㄧ啍鐐煎畬鎴?);
                 return { success: true, smelted: 0 };
             }
 
-            // 执行熔炼
+            // 鎵ц鐔旂偧
             const smelter = new FeatureSmelter({
                 batchSize: Math.min(pending, 500)
             });
@@ -243,52 +238,50 @@ class AutonomousOrchestrator {
             const result = await smelter.run();
             await smelter.close();
 
-            log.success(`L3 Smelt 完成，熔炼 ${result.success || 0} 场`);
+            log.success(`L3 Smelt 瀹屾垚锛岀啍鐐?${result.success || 0} 鍦篳);
             return { success: true, ...result };
 
         } catch (error) {
-            log.error(`L3 Smelt 失败: ${error.message}`);
+            log.error(`L3 Smelt 澶辫触: ${error.message}`);
             return { success: false, error: error.message };
         }
     }
 
     // ========================================================================
-    // 阶段 4: Recalculate Elo (战力重算) - 关键闭环！
-    // ========================================================================
+    // 闃舵 4: Recalculate Elo (鎴樺姏閲嶇畻) - 鍏抽敭闂幆锛?    // ========================================================================
 
     async runRecalculateElo() {
-        log.section('阶段 4/5: Recalculate Elo (战力重算)');
+        log.section('闃舵 4/5: Recalculate Elo (鎴樺姏閲嶇畻)');
 
         if (this.dryRun) {
-            log.info('[DRY-RUN] 跳过 Elo 重算');
+            log.info('[DRY-RUN] 璺宠繃 Elo 閲嶇畻');
             return { success: true, skipped: true };
         }
 
         try {
-            // 检查有比分的比赛数量
-            const pendingScores = await this._getMatchesWithScoresCount();
-            log.info(`有比分的比赛: ${pendingScores} 场`);
+            // 妫€鏌ユ湁姣斿垎鐨勬瘮璧涙暟閲?            const pendingScores = await this._getMatchesWithScoresCount();
+            log.info(`鏈夋瘮鍒嗙殑姣旇禌: ${pendingScores} 鍦篳);
 
-            // 调用 Node 脚本重算 Elo
+            // 璋冪敤 Node 鑴氭湰閲嶇畻 Elo
             const result = await this._runEloRecalculation();
 
-            log.success('Elo 重算完成');
+            log.success('Elo 閲嶇畻瀹屾垚');
             return { success: true, ...result };
 
         } catch (error) {
-            log.error(`Elo 重算失败: ${error.message}`);
+            log.error(`Elo 閲嶇畻澶辫触: ${error.message}`);
             return { success: false, error: error.message };
         }
     }
 
     /**
-     * 执行 Elo 重算脚本
+     * 鎵ц Elo 閲嶇畻鑴氭湰
      */
     async _runEloRecalculation() {
         return new Promise((resolve, reject) => {
-            const args = ['/app/scripts/maintenance/recalculate_elo.js'];
+            const args = [path.join(process.cwd(), 'scripts/maintenance/recalculate_elo.js'];
 
-            log.info(`执行: node ${args.join(' ')}`);
+            log.info(`鎵ц: node ${args.join(' ')}`);
 
             const child = spawn('node', args, {
                 env: process.env,
@@ -300,7 +293,7 @@ class AutonomousOrchestrator {
                 if (code === 0) {
                     resolve({ exitCode: 0 });
                 } else {
-                    reject(new Error(`Elo 重算脚本退出码 ${code}`));
+                    reject(new Error(`Elo 閲嶇畻鑴氭湰閫€鍑虹爜 ${code}`));
                 }
             });
 
@@ -311,42 +304,42 @@ class AutonomousOrchestrator {
     }
 
     // ========================================================================
-    // 阶段 5: Predict (预测生成)
+    // 闃舵 5: Predict (棰勬祴鐢熸垚)
     // ========================================================================
 
     async runPredict() {
-        log.section('阶段 5/5: Predict (预测生成)');
+        log.section('闃舵 5/5: Predict (棰勬祴鐢熸垚)');
 
         if (this.dryRun) {
-            log.info('[DRY-RUN] 跳过预测');
+            log.info('[DRY-RUN] 璺宠繃棰勬祴');
             return { success: true, skipped: true };
         }
 
         try {
-            // 调用 Python 预测脚本
+            // 璋冪敤 Python 棰勬祴鑴氭湰
             const result = await this._runPythonPredictor();
 
-            log.success('预测生成完成');
+            log.success('棰勬祴鐢熸垚瀹屾垚');
             return { success: true, ...result };
 
         } catch (error) {
-            log.error(`预测生成失败: ${error.message}`);
+            log.error(`棰勬祴鐢熸垚澶辫触: ${error.message}`);
             return { success: false, error: error.message };
         }
     }
 
     /**
-     * 执行 Python 预测脚本
+     * 鎵ц Python 棰勬祴鑴氭湰
      */
     async _runPythonPredictor() {
         return new Promise((resolve, reject) => {
             const args = [
-                '/app/scripts/ops/predict_weekend.py',
+                path.join(process.cwd(), 'scripts/ops/predict_weekend.py',
                 '--days', String(this.config.PREDICT_DAYS),
                 '--save'
             ];
 
-            log.info(`执行: python ${args.join(' ')}`);
+            log.info(`鎵ц: python ${args.join(' ')}`);
 
             const python = spawn('python', args, {
                 env: process.env,
@@ -358,7 +351,7 @@ class AutonomousOrchestrator {
                 if (code === 0) {
                     resolve({ exitCode: 0 });
                 } else {
-                    reject(new Error(`预测脚本退出码 ${code}`));
+                    reject(new Error(`棰勬祴鑴氭湰閫€鍑虹爜 ${code}`));
                 }
             });
 
@@ -369,7 +362,7 @@ class AutonomousOrchestrator {
     }
 
     // ========================================================================
-    // 辅助方法
+    // 杈呭姪鏂规硶
     // ========================================================================
 
     async _getActiveLeagues() {
@@ -422,12 +415,10 @@ class AutonomousOrchestrator {
     }
 
     // ========================================================================
-    // 主运行方法
-    // ========================================================================
+    // 涓昏繍琛屾柟娉?    // ========================================================================
 
     /**
-     * 执行完整流水线
-     * @param {Object} options - 执行选项
+     * 鎵ц瀹屾暣娴佹按绾?     * @param {Object} options - 鎵ц閫夐」
      */
     async run(options = {}) {
         const { loop = false, dryRun = false, only = null } = options;
@@ -440,44 +431,43 @@ class AutonomousOrchestrator {
         do {
             const startTime = Date.now();
 
-            log.section('🚀 V201.1 全自动流水线启动');
-            log.info(`循环模式: ${loop}`);
-            log.info(`预览模式: ${dryRun}`);
-            log.info(`指定阶段: ${only || '全部'}`);
+            log.section('馃殌 V201.1 鍏ㄨ嚜鍔ㄦ祦姘寸嚎鍚姩');
+            log.info(`寰幆妯″紡: ${loop}`);
+            log.info(`棰勮妯″紡: ${dryRun}`);
+            log.info(`鎸囧畾闃舵: ${only || '鍏ㄩ儴'}`);
 
-            // 阶段 1: L1 Discovery
+            // 闃舵 1: L1 Discovery
             if (this._shouldRun('l1') || this._shouldRun('discovery')) {
                 results.l1 = await this.runL1Discovery();
             }
 
-            // 阶段 2: L2 Harvest
+            // 闃舵 2: L2 Harvest
             if (this._shouldRun('l2') || this._shouldRun('harvest')) {
                 results.l2 = await this.runL2Harvest();
             }
 
-            // 阶段 3: L3 Smelt
+            // 闃舵 3: L3 Smelt
             if (this._shouldRun('l3') || this._shouldRun('smelt')) {
                 results.l3 = await this.runL3Smelt();
             }
 
-            // 阶段 4: Recalculate Elo - 关键闭环！
-            if (this._shouldRun('elo') || this._shouldRun('recalculate')) {
+            // 闃舵 4: Recalculate Elo - 鍏抽敭闂幆锛?            if (this._shouldRun('elo') || this._shouldRun('recalculate')) {
                 results.elo = await this.runRecalculateElo();
             }
 
-            // 阶段 5: Predict
+            // 闃舵 5: Predict
             if (this._shouldRun('predict')) {
                 results.predict = await this.runPredict();
             }
 
             const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
 
-            log.section('📊 流水线执行完成');
-            log.success(`总耗时: ${elapsed}s`);
-            log.info(`执行结果: ${JSON.stringify(results, null, 2)}`);
+            log.section('馃搳 娴佹按绾挎墽琛屽畬鎴?);
+            log.success(`鎬昏€楁椂: ${elapsed}s`);
+            log.info(`鎵ц缁撴灉: ${JSON.stringify(results, null, 2)}`);
 
             if (loop) {
-                log.info(`等待 ${this.config.LOOP_INTERVAL_MS / 1000 / 60} 分钟后执行下一轮...`);
+                log.info(`绛夊緟 ${this.config.LOOP_INTERVAL_MS / 1000 / 60} 鍒嗛挓鍚庢墽琛屼笅涓€杞?..`);
                 await new Promise(r => setTimeout(r, this.config.LOOP_INTERVAL_MS));
             }
 
@@ -488,7 +478,7 @@ class AutonomousOrchestrator {
 }
 
 // ============================================================================
-// CLI 入口
+// CLI 鍏ュ彛
 // ============================================================================
 
 async function main() {
@@ -500,13 +490,13 @@ async function main() {
         only: null
     };
 
-    // 解析 --only 参数
+    // 瑙ｆ瀽 --only 鍙傛暟
     const onlyIdx = args.indexOf('--only');
     if (onlyIdx !== -1 && args[onlyIdx + 1]) {
         options.only = args[onlyIdx + 1];
     }
 
-    // 解析 --interval 参数
+    // 瑙ｆ瀽 --interval 鍙傛暟
     const intervalIdx = args.indexOf('--interval');
     if (intervalIdx !== -1 && args[intervalIdx + 1]) {
         ORCHESTRATOR_CONFIG.LOOP_INTERVAL_MS = parseInt(args[intervalIdx + 1]);
@@ -519,16 +509,17 @@ async function main() {
         const results = await orchestrator.run(options);
         await orchestrator.close();
 
-        // 检查是否有失败
+        // 妫€鏌ユ槸鍚︽湁澶辫触
         const hasFailure = Object.values(results).some(r => r && !r.success);
         process.exit(hasFailure ? 1 : 0);
 
     } catch (error) {
-        log.error('流水线执行失败', error);
+        log.error('娴佹按绾挎墽琛屽け璐?, error);
         await orchestrator.close();
         process.exit(1);
     }
 }
 
-// 运行
+// 杩愯
 main();
+
