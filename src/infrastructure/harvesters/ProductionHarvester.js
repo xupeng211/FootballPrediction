@@ -54,7 +54,6 @@
 
 'use strict';
 
-const pLimit = require('p-limit');
 const { chromium } = require('playwright');
 const { Pool } = require('pg');
 
@@ -63,345 +62,28 @@ const { preFlightCleanup } = require('../../core/process/ZombieKiller');
 const { transformToApiFormat } = require('../../parsers/fotmob/NextDataParser');
 
 // 导入配置
-const FactoryConfig = require('../../../config/factory_config');
 const { DatabaseConfig } = require('../database/PostgresClient');
-
-// V178.2: 导入 NetworkShield
-const { getNetworkShield } = require('../network/NetworkShield');
-
-// V179: 导入 SessionManager
-const { getSessionManager } = require('../network/SessionManager');
 
 // V186: 导入企业级日志系统
 const { logger } = require('../utils/Logger');
 
-// ============================================================================
-// V186: 错误类型分类系统
-// ============================================================================
+// V4.46: 导入 PathResolver - 统一路径管理
+const { getPathResolver } = require('../utils/PathResolver');
 
-/**
- * 错误严重级别枚举
- * @readonly
- * @enum {string}
- */
-const ErrorSeverity = {
-    /** 致命错误 - 程序必须退出 */
-    FATAL: 'FATAL',
-    /** 可重试错误 - 自动重试 */
-    RETRYABLE: 'RETRYABLE',
-    /** 警告 - 可忽略 */
-    WARNING: 'WARNING'
-};
+// V4.46: 导入 NetworkManager - 网络与会话管理
+const { getNetworkManager, WorkerIdentity } = require('../network/NetworkManager');
 
-/**
- * V186: 错误类型分类映射
- * 根据错误消息判断错误严重级别
- * @param {Error} error - 错误对象
- * @returns {{severity: ErrorSeverity, errorType: string, reason: string}}
- */
-function classifyError(error) {
-    const msg = error.message.toLowerCase();
-    const errorName = error.name || 'UnknownError';
+// V4.46: 导入 StealthFingerprint - 隐身指纹生成
+const { generateStealthHeaders } = require('../network/StealthFingerprint');
 
-    // === FATAL: 程序必须退出 ===
-    const fatalPatterns = [
-        { pattern: 'authentication failed', type: 'AUTH_FAILURE', reason: '身份验证失败，请检查 Cookie/Session' },
-        { Pattern: 'invalid credentials', type: 'AUTH_FAILURE', reason: '凭证无效，需要重新登录' },
-        { pattern: 'database connection failed', type: 'DB_FAILURE', reason: '数据库连接失败' },
-        { pattern: 'econnrefused', type: 'DB_FAILURE', reason: '数据库拒绝连接' },
-        { pattern: 'out of memory', type: 'OOM', reason: '内存不足' },
-        { pattern: 'browser crashed', type: 'BROWSER_CRASH', reason: '浏览器崩溃' }
-    ];
+// V4.46: 导入 WorkerPool - Worker 调度中心
+const { getWorkerPool } = require('./workers/WorkerPool');
 
-    for (const { pattern, type, reason } of fatalPatterns) {
-        if (msg.includes(pattern)) {
-            return { severity: ErrorSeverity.FATAL, errorType: type, reason };
-        }
-    }
+// V4.46: 隐身指纹相关常量和函数已迁移到 StealthFingerprint.js
+// 通过 require('../network/StealthFingerprint') 导入
 
-    // === RETRYABLE: 可自动重试 ===
-    const retryablePatterns = [
-        { pattern: '403', type: 'HTTP_403', reason: '被反爬拦截，切换端口重试' },
-        { Pattern: 'forbidden', type: 'HTTP_403', reason: '访问被拒绝，需要切换身份' },
-        { pattern: 'turnstile', type: 'TURNSTILE', reason: 'Turnstile 验证，切换端口' },
-        { pattern: 'cloudflare', type: 'CF_BLOCK', reason: 'Cloudflare 拦截' },
-        { pattern: 'timeout', type: 'TIMEOUT', reason: '请求超时' },
-        { pattern: 'econnreset', type: 'NETWORK', reason: '连接重置' },
-        { pattern: 'enotfound', type: 'DNS', reason: 'DNS 解析失败' },
-        { pattern: 'network error', type: 'NETWORK', reason: '网络错误' },
-        { pattern: 'socket hang up', type: 'NETWORK', reason: 'Socket 断开' },
-        { pattern: 'proxy', type: 'PROXY', reason: '代理错误' }
-    ];
-
-    for (const { pattern, type, reason } of retryablePatterns) {
-        if (msg.includes(pattern)) {
-            return { severity: ErrorSeverity.RETRYABLE, errorType: type, reason };
-        }
-    }
-
-    // === 默认: 根据错误类型判断 ===
-    if (errorName === 'TimeoutError') {
-        return { severity: ErrorSeverity.RETRYABLE, errorType: 'TIMEOUT', reason: 'Playwright 超时' };
-    }
-
-    // 数据问题不重试
-    if (msg.includes('no_data') || msg.includes('size_too_small')) {
-        return { severity: ErrorSeverity.WARNING, errorType: 'DATA_QUALITY', reason: '数据质量问题' };
-    }
-
-    // 未知错误，保守处理为可重试
-    return { severity: ErrorSeverity.RETRYABLE, errorType: 'UNKNOWN', reason: '未知错误' };
-}
-
-// V180: playwright-stealth 有兼容性问题，// 改用 Playwright 原生隐身功能 + 自定义脚本注入
-// const { stealth } = require('playwright-stealth');
-
-// ============================================================================
-// V180: 深度隐身配置 - 完整硬件指纹
-// ============================================================================
-
-/**
- * V185: WebGL 渲染器池 - 用于指纹随机化
- * 避免所有 Worker 使用完全相同的硬件指纹
- */
-const WEBGL_RENDERER_POOL = [
-    'ANGLE (AMD, AMD Radeon(TM) Graphics (0x000013C0) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-    'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 (0x00002183) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-    'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 (0x00002503) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-    'ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 (0x00002484) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-    'ANGLE (NVIDIA, NVIDIA GeForce GTX 1080 (0x00001B80) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-    'ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E9B) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-    'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics (0x000049A5) Direct3D11 vs_5_0 ps_5_0, D3D11)',
-    'ANGLE (AMD, AMD Radeon RX 580 Series (0x000067DF) Direct3D11 vs_5_0 ps_5_0, D3D11)'
-];
-
-/**
- * V185: 生成随机化的深度隐身配置
- * 每次调用生成略微不同的硬件指纹，避免特征过于单一
- * @param {number} workerId - Worker ID，用于确定性随机
- * @returns {Object} 随机化的隐身配置
- */
-function generateStealthConfig(workerId = 1) {
-    // 基于 workerId 的确定性随机种子（同一 worker 每次生成相同配置）
-    const seed = workerId * 17 + 42;
-
-    // CPU 核心数: 8-24 之间（主流配置）
-    const hardwareConcurrency = 8 + (seed % 17); // 8-24
-
-    // 内存: 4, 8, 16, 32 GB（主流配置）
-    const memoryOptions = [4, 8, 8, 16, 16, 16, 32];
-    const deviceMemory = memoryOptions[seed % memoryOptions.length];
-
-    // WebGL 渲染器
-    const renderer = WEBGL_RENDERER_POOL[seed % WEBGL_RENDERER_POOL.length];
-    const vendor = renderer.includes('NVIDIA') ? 'Google Inc. (NVIDIA)' :
-                   renderer.includes('Intel') ? 'Google Inc. (Intel)' :
-                   'Google Inc. (AMD)';
-
-    // 视口尺寸微调 (±50px)
-    const viewportWidth = 1920 + ((seed % 5) - 2) * 20; // 1880-1960
-    const viewportHeight = 1080 + ((seed % 5) - 2) * 15; // 1050-1110
-
-    return {
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        viewport: { width: viewportWidth, height: viewportHeight },
-        deviceScaleFactor: 1,
-        locale: 'en-US',
-        timezoneId: 'Europe/London',
-        platform: 'Win32',
-        hardwareConcurrency,
-        deviceMemory,
-        webgl: { vendor, renderer },
-        fonts: [
-            'Arial', 'Arial Unicode MS', 'Calibri', 'Cambria', 'Georgia', 'Times New Roman',
-            'Segoe UI', 'Tahoma', 'Verdana', 'Helvetica Neue', 'Helvetica', 'Helvetica Neue Cyr'
-        ]
-    };
-}
-
-/**
- * V180: 深度隐身配置 (默认值，用于向后兼容)
- * @deprecated 使用 generateStealthConfig(workerId) 替代
- */
-const DEEP_STEALTH_CONFIG = generateStealthConfig(1);
-
-// ============================================================================
-// V179.2: 固定指纹配置 - 与 capture_auth.js 完全一致
-// ============================================================================
-
-/**
- * V179.2: 固定指纹 - 必须与 capture_auth.js 中使用的指纹完全一致
- * 这是从宿主机浏览器捕获 Cookie 时使用的指纹
- */
-const FIXED_FINGERPRINT = {
-    userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    viewport: { width: 1920, height: 1080 },
-    deviceScaleFactor: 1,
-    locale: 'en-US',
-    timezoneId: 'Europe/London',
-    platform: 'Win32'
-};
-
-// V177: Ghost Protocol - 30+ 浏览器指纹池 (保留备用)
-const GHOST_UA_POOL = [
-    // Chrome 桌面端 (Windows)
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
-    // Chrome 桌面端 (macOS)
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    // Edge 桌面端
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0',
-    // Firefox 桌面端
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0',
-    // Safari 桌面端 (macOS)
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15'
-];
-
-const GHOST_VIEWPORTS = [
-    { width: 1920, height: 1080 },
-    { width: 1366, height: 768 },
-    { width: 1440, height: 900 },
-    { width: 1536, height: 864 },
-    { width: 1280, height: 720 },
-    { width: 1600, height: 900 },
-    { width: 2560, height: 1440 },
-    { width: 1287, height: 1271 }
-];
-
-/**
- * 获取随机 UA (备用)
- * @returns {string} 随机 User-Agent
- */
-function getRandomUA() {
-    return GHOST_UA_POOL[Math.floor(Math.random() * GHOST_UA_POOL.length)];
-}
-
-/**
- * 获取随机视口 (备用)
- * @returns {Object} 视口配置
- */
-function getRandomViewport() {
-    return GHOST_VIEWPORTS[Math.floor(Math.random() * GHOST_VIEWPORTS.length)];
-}
-
-/**
- * V179.2: 生成固定指纹 Headers - 与 capture_auth.js 一致
- * @param {boolean} useFixed - 是否使用固定指纹 (默认 true)
- * @returns {Object} 包含 userAgent, viewport, extraHTTPHeaders 的对象
- */
-function generateStealthHeaders(useFixed = true) {
-    // V179.2: 强制使用固定指纹，与 capture_auth.js 一致
-    if (useFixed) {
-        const ua = FIXED_FINGERPRINT.userAgent;
-        const viewport = FIXED_FINGERPRINT.viewport;
-
-        return {
-            userAgent: ua,
-            viewport,
-            locale: FIXED_FINGERPRINT.locale,
-            timezoneId: FIXED_FINGERPRINT.timezoneId,
-            extraHTTPHeaders: {
-                'sec-ch-ua': '"Chromium";v="131", "Google Chrome";v="131", "Not-A.Brand";v="99"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'document',
-                'sec-fetch-mode': 'navigate',
-                'sec-fetch-site': 'none',
-                'sec-fetch-user': '?1',
-                'accept-language': 'en-US,en;q=0.9',
-                'accept-encoding': 'gzip, deflate, br'
-            }
-        };
-    }
-
-    // 备用：随机指纹
-    const ua = getRandomUA();
-    const viewport = getRandomViewport();
-    const isChrome = ua.includes('Chrome') && !ua.includes('Edg');
-    const isEdge = ua.includes('Edg');
-
-    let secChUa = '';
-    if (isChrome) {
-        secChUa = '"Chromium";v="133", "Google Chrome";v="133", "Not-A.Brand";v="99"';
-    } else if (isEdge) {
-        secChUa = '"Chromium";v="133", "Microsoft Edge";v="133", "Not-A.Brand";v="99"';
-    }
-
-    return {
-        userAgent: ua,
-        viewport,
-        extraHTTPHeaders: isChrome || isEdge ? {
-            'sec-ch-ua': secChUa,
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': ua.includes('Windows') ? '"Windows"' : '"macOS"',
-            'sec-fetch-dest': 'document',
-            'sec-fetch-mode': 'navigate',
-            'sec-fetch-site': 'none',
-            'sec-fetch-user': '?1',
-            'accept-language': 'en-US,en;q=0.9',
-            'accept-encoding': 'gzip, deflate, br'
-        } : {}
-    };
-}
-
-// ============================================================================
-// V178.2: Worker 身份绑定 (Session Stickiness)
-// ============================================================================
-
-/**
- * WorkerIdentity - 每个 Worker 的身份绑定
- * 确保【代理 IP + User-Agent + 视口尺寸】在一次 Session 中保持一致
- */
-class WorkerIdentity {
-    constructor(workerId, proxy, stealth) {
-        this.workerId = workerId;
-        this.proxy = proxy;
-        this.stealth = stealth;
-        this.sessionId = `WORKER-${workerId}-${Date.now()}`;
-        this.createdAt = Date.now();
-        this.requestCount = 0;
-        this.successCount = 0;
-        this.failureCount = 0;
-    }
-
-    /**
-     * 记录请求
-     */
-    recordRequest(success) {
-        this.requestCount++;
-        if (success) {
-            this.successCount++;
-        } else {
-            this.failureCount++;
-        }
-    }
-
-    /**
-     * 获取成功率
-     * @returns {number} 成功率 (0-1)
-     */
-    getSuccessRate() {
-        if (this.requestCount === 0) return 1;
-        return this.successCount / this.requestCount;
-    }
-
-    /**
-     * 是否需要更换身份（连续失败 3 次）
-     * @returns {boolean}
-     */
-    needsReidentity() {
-        return this.failureCount >= 3 && this.getSuccessRate() < 0.5;
-    }
-}
+// V4.46: WorkerIdentity 类已迁移到 NetworkManager.js
+// 通过 require('../network/NetworkManager') 导入
 
 // ============================================================================
 // ProductionHarvester 类
@@ -458,27 +140,16 @@ class ProductionHarvester {
         };
         this.startTime = null;
 
-        // V178.2: NetworkShield 代理管理器
-        this.networkShield = null;
+        // V4.46: 使用 NetworkManager 统一管理网络和会话
+        this.networkManager = null;
 
-        // V179: SessionManager 身份管理器
-        this.sessionManager = null;
-
-        // V178.2: Worker 身份池 (Session Stickiness)
-        this.workerIdentities = new Map();
-
-        // V181: 端口避障 - 记录失败端口
-        this.failedPorts = new Set();
-
-        // V181: 可用端口池 (7890-7911)
-        this.availablePorts = Array.from({ length: 22 }, (_, i) => 7890 + i);
+        // V4.46: 使用 WorkerPool 统一管理 Worker 调度
+        this.workerPool = null;
 
         // V186: 优雅停机状态
         this.isShuttingDown = false;
-        this.activeWorkers = new Set();
         this.shutdownPromise = null;
         this.workerLogger = logger.createWorkerLogger(0, 0); // 默认日志器
-
         // V186: 注册信号处理器
         this._setupGracefulShutdown();
     }
@@ -500,7 +171,7 @@ class ProductionHarvester {
             }
 
             this.isShuttingDown = true;
-            const activeCount = this.activeWorkers.size;
+            const activeCount = this.workerPool ? this.workerPool.getActiveCount() : 0;
             logger.logGracefulShutdown(signal, activeCount);
 
             // 设置停机超时
@@ -542,13 +213,15 @@ class ProductionHarvester {
 
     /**
      * V186: 等待所有活跃 Worker 完成
+     * V4.46: 委托给 WorkerPool
      * @private
      * @returns {Promise<void>}
      */
     async _waitForWorkers() {
-        while (this.activeWorkers.size > 0) {
-            logger.debug(`等待 ${this.activeWorkers.size} 个 Worker...`);
-            await this._delay(500);
+        if (this.workerPool) {
+            await this.workerPool.waitForAll((count) => {
+                logger.debug(`等待 ${count} 个 Worker...`);
+            });
         }
     }
 
@@ -581,18 +254,24 @@ class ProductionHarvester {
 
     /**
      * V186: 注册 Worker 为活跃状态
+     * V4.46: 委托给 WorkerPool
      * @param {number} workerId - Worker ID
      */
     _registerWorker(workerId) {
-        this.activeWorkers.add(workerId);
+        if (this.workerPool) {
+            this.workerPool.register(workerId);
+        }
     }
 
     /**
      * V186: 注销 Worker 活跃状态
+     * V4.46: 委托给 WorkerPool
      * @param {number} workerId - Worker ID
      */
     _unregisterWorker(workerId) {
-        this.activeWorkers.delete(workerId);
+        if (this.workerPool) {
+            this.workerPool.unregister(workerId);
+        }
     }
 
     // ========================================================================
@@ -628,7 +307,9 @@ class ProductionHarvester {
      */
     async _loadBrowserStateCookies(context) {
         const fs = require('fs').promises;
-        const statePath = '/app/data/browser_profile/browser_state.json';
+        // V4.46: 使用 PathResolver 统一路径管理
+        const pathResolver = getPathResolver();
+        const statePath = pathResolver.getBrowserStatePath();
 
         try {
             const content = await fs.readFile(statePath, 'utf8');
@@ -670,10 +351,11 @@ class ProductionHarvester {
         const fs = require('fs').promises;
         const path = require('path');
 
+        // V4.46: 使用 PathResolver 统一路径管理
+        const pathResolver = getPathResolver();
+
         const lockDirs = [
-            '/app/data/network',
-            '/app/data/registry',
-            '/app/config',           // V179.1: Registry 锁文件位置
+            ...pathResolver.getLockDirs(),
             './data/network',
             './data/registry',
             './config'
@@ -681,7 +363,7 @@ class ProductionHarvester {
 
         // V179.1: 额外检查特定的锁文件路径
         const specificLockFiles = [
-            '/app/config/.registry.lock',
+            pathResolver.getRegistryLockPath(),
             './config/.registry.lock'
         ];
 
@@ -724,166 +406,6 @@ class ProductionHarvester {
         }
 
         return cleanedCount;
-    }
-
-    /**
-     * V178.2: 初始化 NetworkShield 代理池
-     * V179.1: 增加锁文件自愈 + 宽容启动
-     * @returns {Promise<void>}
-     */
-    async _initNetworkShield() {
-        // V179.1: 预清理残留锁文件
-        await this._preFlightCleanupNetworkLocks();
-
-        this.networkShield = getNetworkShield({
-            proxyHost: FactoryConfig.PROXY_CONFIG.serverTemplate.match(/[\d.]+/)[0] || '172.25.16.1',
-            portRange: { start: 7890, end: 7911 },
-            logLevel: 'info',
-            maxConsecutiveFailures: 3,
-            cooldownMinutes: 5
-        });
-
-        // V179.1: 宽容启动 - 捕获初始化错误
-        try {
-            await this.networkShield.initialize();
-
-            const status = this.networkShield.getStatus();
-            console.log(`📡 NetworkShield 已就绪: ${status.nodes.active}/${status.nodes.total} 节点可用`);
-        } catch (initError) {
-            console.error(`⚠️ NetworkShield 初始化失败: ${initError.message}`);
-            console.log(`📡 NetworkShield 将在降级模式下运行（使用 FactoryConfig 代理池）`);
-
-            // 不抛出错误，允许系统继续运行
-            // NetworkShield 的其他方法会处理 null 情况
-        }
-    }
-
-    /**
-     * V179: 初始化 SessionManager 身份管理器
-     * @returns {Promise<void>}
-     */
-    async _initSessionManager() {
-        this.sessionManager = getSessionManager({
-            profilePath: '/app/data/sessions',
-            sessionTtlHours: 24,
-            maxRefreshAttempts: 3,
-            headlessRefresh: false
-        });
-
-        await this.sessionManager.initialize();
-
-        const stats = this.sessionManager.getStats();
-        console.log(`🔑 SessionManager 已就绪: ${stats.cachedSessions} 个会话缓存`);
-    }
-
-    /**
-     * V178.2: 为 Worker 分配身份（代理 IP + User-Agent + 视口）
-     * 实现 Session Stickiness
-     * V179: 集成 SessionManager 自动身份管理
-     * V179.1: 增加 NetworkShield 降级模式兼容
-     * @param {number} workerId - Worker 编号
-     * @returns {Promise<WorkerIdentity>} Worker 身份
-     */
-    async _assignWorkerIdentity(workerId) {
-        // 检查是否已有身份且不需要更换
-        const existing = this.workerIdentities.get(workerId);
-        if (existing && !existing.needsReidentity()) {
-            console.log(`🔄 Worker ${workerId} 复用身份: Port ${existing.proxy.port}`);
-            return existing;
-        }
-
-        // 从 NetworkShield 获取健康代理（如果可用）
-        const sessionId = `WORKER-${workerId}`;
-        let proxyAssignment;
-
-        // V179.1: 检查 NetworkShield 是否可用
-        if (this.networkShield && typeof this.networkShield.getNextHealthyProxy === 'function') {
-            try {
-                proxyAssignment = await this.networkShield.getNextHealthyProxy(sessionId);
-            } catch (error) {
-                console.warn(`⚠️ Worker ${workerId} NetworkShield 获取代理失败: ${error.message}`);
-                // 降级：使用 FactoryConfig 的代理池
-                const port = FactoryConfig.PROXY_CONFIG.getPortByWorker(workerId);
-                proxyAssignment = {
-                    sessionId,
-                    port,
-                    url: FactoryConfig.PROXY_CONFIG.getServer(port)
-                };
-            }
-        } else {
-            // NetworkShield 不可用，直接使用 FactoryConfig
-            console.log(`📡 Worker ${workerId} 使用 FactoryConfig 代理池（NetworkShield 降级模式）`);
-            const port = FactoryConfig.PROXY_CONFIG.getPortByWorker(workerId);
-            proxyAssignment = {
-                sessionId,
-                port,
-                url: FactoryConfig.PROXY_CONFIG.getServer(port)
-            };
-        }
-
-        // V179: 尝试获取或刷新会话（自动身份管理）
-        if (this.sessionManager) {
-            try {
-                const session = await this.sessionManager.getOrRefreshSession(proxyAssignment.port, {
-                    proxyUrl: proxyAssignment.url
-                });
-                if (session) {
-                    console.log(`🔑 Worker ${workerId} 会话状态: ${session.cookies?.length || 0} Cookie, 过期于 ${new Date(session.expiresAt).toLocaleString()}`);
-                }
-            } catch (error) {
-                console.warn(`⚠️ Worker ${workerId} 会话刷新失败: ${error.message}`);
-                // 继续使用无会话模式
-            }
-        }
-
-        // 生成隐身指纹
-        const stealth = generateStealthHeaders();
-
-        // 创建 Worker 身份
-        const identity = new WorkerIdentity(workerId, proxyAssignment, stealth);
-        this.workerIdentities.set(workerId, identity);
-
-        console.log(`🆔 Worker ${workerId} 新身份绑定:`);
-        console.log(`   Proxy: ${proxyAssignment.url}`);
-        console.log(`   UA: ${stealth.userAgent.substring(0, 50)}...`);
-        console.log(`   Viewport: ${stealth.viewport.width}x${stealth.viewport.height}`);
-
-        return identity;
-    }
-
-    /**
-     * V178.2: 标记代理成功
-     * @param {number} workerId - Worker 编号
-     * @param {number} latency - 延迟（毫秒）
-     */
-    async _markProxySuccess(workerId, latency = 0) {
-        const identity = this.workerIdentities.get(workerId);
-        if (identity && identity.proxy && this.networkShield) {
-            identity.recordRequest(true);
-            await this.networkShield.markProxySuccess(identity.proxy.port, latency);
-        }
-    }
-
-    /**
-     * V178.2: 标记代理失败 + 熔断切换
-     * @param {number} workerId - Worker 编号
-     * @param {string} reason - 失败原因
-     */
-    async _markProxyFailed(workerId, reason) {
-        const identity = this.workerIdentities.get(workerId);
-        if (identity && identity.proxy && this.networkShield) {
-            identity.recordRequest(false);
-            await this.networkShield.markProxyFailed(identity.proxy.port, reason);
-
-            // V181: 记录失败端口用于避障
-            this.failedPorts.add(identity.proxy.port);
-
-            // 检查是否需要熔断切换
-            if (identity.needsReidentity()) {
-                console.log(`⚡ Worker ${workerId} 触发熔断，准备切换身份...`);
-                this.workerIdentities.delete(workerId);
-            }
-        }
     }
 
     // ========================================================================
@@ -943,54 +465,6 @@ class ProductionHarvester {
     }
 
     /**
-     * V181: 获取避障端口（随机选择非失败端口）
-     * @param {number} excludePort - 需要排除的端口
-     * @returns {number} 新端口号
-     */
-    _getAlternativePort(excludePort) {
-        // 过滤掉失败的端口
-        const healthyPorts = this.availablePorts.filter(p =>
-            p !== excludePort && !this.failedPorts.has(p)
-        );
-
-        if (healthyPorts.length === 0) {
-            // 所有端口都失败，清空失败记录重新开始
-            console.log('⚠️ 所有端口都失败，重置避障记录...');
-            this.failedPorts.clear();
-            return this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-        }
-
-        return healthyPorts[Math.floor(Math.random() * healthyPorts.length)];
-    }
-
-    /**
-     * V181: 强制更换 Worker 端口（端口避障）
-     * @param {number} workerId - Worker 编号
-     * @param {number} failedPort - 失败的端口
-     * @returns {Promise<WorkerIdentity>} 新身份
-     */
-    async _forceReassignPort(workerId, failedPort) {
-        const newPort = this._getAlternativePort(failedPort);
-
-        // 清除旧身份
-        this.workerIdentities.delete(workerId);
-
-        // 创建新身份
-        const sessionId = `WORKER-${workerId}-RETRY-${Date.now()}`;
-        const proxyAssignment = {
-            sessionId,
-            port: newPort,
-            url: `http://172.25.16.1:${newPort}`
-        };
-
-        const stealth = generateStealthHeaders();
-        const identity = new WorkerIdentity(workerId, proxyAssignment, stealth);
-        this.workerIdentities.set(workerId, identity);
-
-        return identity;
-    }
-
-    /**
      * V181: 带弹性重试的单场收割
      * @param {Object} match - 比赛信息
      * @param {number} index - 任务索引
@@ -1039,11 +513,12 @@ class ProductionHarvester {
             if (attempt < maxRetries) {
                 const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
                 const workerId = (index % this.config.maxWorkers) + 1;
-                const currentIdentity = this.workerIdentities.get(workerId);
+
+                // V4.46: 使用 NetworkManager 进行端口避障
+                const currentIdentity = this.networkManager?.getWorkerIdentity(workerId);
 
                 if (currentIdentity) {
-                    // 端口避障：切换到新端口
-                    await this._forceReassignPort(workerId, currentIdentity.proxy.port);
+                    await this.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
                     console.log(`🔄 [RETRY-${attempt + 1}] ${home_team} vs ${away_team} 切换端口避障...`);
                 }
 
@@ -1078,8 +553,8 @@ class ProductionHarvester {
         const delay = baseDelay + Math.random() * (maxDelay - baseDelay);
         await this._delay(delay);
 
-        // 获取/刷新 Worker 身份
-        const identity = await this._assignWorkerIdentity(workerId);
+        // V4.46: 使用 NetworkManager 获取/刷新 Worker 身份
+        const identity = await this.networkManager.assignWorkerIdentity(workerId);
 
         // 代理配置
         const disableProxy = process.env.DISABLE_PROXY === 'true';
@@ -1091,15 +566,15 @@ class ProductionHarvester {
             userAgent: identity.stealth.userAgent,
             extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
             proxy: proxyConfig,
-            deviceScaleFactor: DEEP_STEALTH_CONFIG.deviceScaleFactor,
-            locale: DEEP_STEALTH_CONFIG.locale,
-            timezoneId: DEEP_STEALTH_CONFIG.timezoneId
+            deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
+            locale: identity.stealth.locale || 'en-US',
+            timezoneId: identity.stealth.timezoneId || 'Europe/London'
         });
 
-        // 身份热加载
+        // V4.46: 使用 NetworkManager 身份热加载
         let cookieLoaded = false;
-        if (this.sessionManager) {
-            cookieLoaded = await this.sessionManager.loadSessionToContext(context, identity.proxy.port);
+        if (this.networkManager) {
+            cookieLoaded = await this.networkManager.loadSessionToContext(context, identity.proxy.port);
         }
         if (!cookieLoaded) {
             cookieLoaded = await this._loadBrowserStateCookies(context);
@@ -1119,6 +594,7 @@ class ProductionHarvester {
 
             // 请求拦截
             let capturedData = null;
+            let capturedUrl = null;
             await page.route('**/*', async (route) => {
                 const url = route.request().url();
                 const type = route.request().resourceType();
@@ -1129,16 +605,23 @@ class ProductionHarvester {
                 }
 
                 if (url.includes('matchfacts') || url.includes('matchDetails')) {
+                    console.log(`[DEBUG] 捕获 API 请求: ${url.slice(0, 100)}...`);
                     try {
                         const response = await route.fetch();
                         const body = await response.text();
+                        console.log(`[DEBUG] 响应状态: ${response.status()}`);
+                        console.log(`[DEBUG] 响应体大小: ${body.length} 字节`);
+                        console.log(`[DEBUG] 响应体内容: ${body}`);
                         try {
                             capturedData = JSON.parse(body);
+                            capturedUrl = url;
+                            console.log(`[DEBUG] JSON 解析成功`);
                         } catch (parseError) {
-                            // JSON 解析失败
+                            console.log(`[DEBUG] JSON 解析失败: ${parseError.message}`);
                         }
                         await route.fulfill({ response });
                     } catch (routeError) {
+                        console.log(`[DEBUG] 请求失败: ${routeError.message}`);
                         await route.continue();
                     }
                 } else {
@@ -1170,15 +653,23 @@ class ProductionHarvester {
 
             await page.waitForTimeout(isRetry ? 3000 : 5000);
 
-            // 数据解析
+            // V4.46: 使用 MatchDetailEngine 进行数据解析
             if (!capturedData) {
+                console.log(`[DEBUG] 尝试从 __NEXT_DATA__ 提取数据...`);
                 const nextData = await page.evaluate(() => {
                     const script = document.getElementById('__NEXT_DATA__');
                     return script ? JSON.parse(script.textContent) : null;
                 });
-                capturedData = transformToApiFormat(nextData);
-            }
 
+                console.log(`[DEBUG] nextData 存在: ${!!nextData}`);
+                console.log(`[DEBUG] nextData.props 存在: ${!!nextData?.props}`);
+                console.log(`[DEBUG] nextData.props.pageProps 存在: ${!!nextData?.props?.pageProps}`);
+
+                capturedData = transformToApiFormat(nextData);
+
+                console.log(`[DEBUG] capturedData 存在: ${!!capturedData}`);
+                console.log(`[DEBUG] capturedData keys: ${capturedData ? Object.keys(capturedData).join(', ') : 'N/A'}`);
+            }
             // 验证数据
             if (!capturedData) {
                 throw new Error('NO_DATA:无法获取数据');
@@ -1189,7 +680,8 @@ class ProductionHarvester {
                 throw new Error(`SIZE_TOO_SMALL:${size}`);
             }
 
-            await this._markProxySuccess(workerId);
+            // V4.46: 使用 NetworkManager 标记代理成功
+            await this.networkManager.markProxySuccess(workerId);
 
             if (this.config.dryRun) {
                 console.log(`✅ ${logPrefix} ${home_team} vs ${away_team} | ${size} bytes`);
@@ -1202,7 +694,8 @@ class ProductionHarvester {
             return { success: true, match_id, size, workerId, port: identity.proxy.port, attempt };
 
         } catch (error) {
-            await this._markProxyFailed(workerId, error.message);
+            // V4.46: 使用 NetworkManager 标记代理失败
+            await this.networkManager.markProxyFailed(workerId, error.message);
 
             // V181: 精简日志 - 只在最终失败时输出
             if (attempt >= 3 || !this._isRetryableError(error)) {
@@ -1256,11 +749,20 @@ class ProductionHarvester {
         });
         console.log('✅ 浏览器已启动');
 
-        // V178.2: 初始化 NetworkShield 代理池
-        await this._initNetworkShield();
+        // V4.46: 使用 NetworkManager 统一管理网络和会话
+        this.networkManager = getNetworkManager({
+            maxWorkers: this.config.maxWorkers,
+            stealthGenerator: generateStealthHeaders
+        });
+        await this.networkManager.initialize({
+            preFlightCleanup: () => this._preFlightCleanupNetworkLocks()
+        });
 
-        // V179: 初始化 SessionManager
-        await this._initSessionManager();
+        // V4.46: 使用 WorkerPool 统一管理 Worker 调度
+        this.workerPool = getWorkerPool({
+            maxWorkers: this.config.maxWorkers,
+            logger: (msg) => console.log(msg)
+        });
 
         console.log(`📋 配置: MAX_WORKERS=${this.config.maxWorkers}, DELAY=${this.config.minDelayMs}-${this.config.maxDelayMs}ms`);
     }
@@ -1478,76 +980,22 @@ class ProductionHarvester {
     }
 
     /**
-     * V181: 判断是否为可重试的错误（非 403 的网络错误)
-     * @param {Error} error - 错误对象
-     * @returns {boolean} 是否可重试
-     */
-    _isRetryableError(error) {
-        const msg = error.message || '';
-        const retryablePatterns = [
-            'ERR_CONNECTION_CLOSED',
-            'ERR_CONNECTION_RESET',
-            'ERR_CONNECTION_TIMED_OUT',
-            'ERR_TIMED_OUT',
-            'ETIMEDOUT',
-            'ECONNRESET',
-            'ECONNREFUSED',
-            'ENOTFOUND',
-            'net::ERR_',
-            'TIMEout',
-            'Navigation timeout'
-        ];
-
-        // 403 错误不可重试（反爬机制)
-        const nonRetryablePatterns = [
-            '403',
-            'ERR_BLOCKED',
-            'Access denied',
-            'Forbidden',
-            'Turnstile'
-        ];
-
-        // 检查是否为不可重试错误
-        for (const pattern of nonRetryablePatterns) {
-            if (msg.includes(pattern)) {
-                return false;
-            }
-        }
-
-        // 检查是否为可重试错误
-        for (const pattern of retryablePatterns) {
-            if (msg.includes(pattern)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    /**
-     * V181: 获取避障端口（随机选择一个未失败的端口)
-     * @param {number} excludePort - 要排除的端口
-     * @returns {number} 新端口
-     */
-    _getAlternativePort(excludePort) {
-        const healthyPorts = this.availablePorts.filter(p =>
-            p !== excludePort && !this.failedPorts.has(p)
-        );
-
-        if (healthyPorts.length === 0) {
-            // 所有端口都失败了，重置并返回随机端口
-            this.failedPorts.clear();
-            return this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
-        }
-
-        return healthyPorts[Math.floor(Math.random() * healthyPorts.length)];
-    }
-
-    /**
      * V181: 执行多轮收割直到 100% 成功率或达到或所有比赛完成
+     * V4.46-TITAN: 支持单场比赛收割模式
+     * @param {Object} [options={}] - 收割选项
+     * @param {string} [options.matchId] - 单场比赛 ID (可选)
+     * @param {boolean} [options.force=false] - 强制收割已收割的比赛
      * @returns {Promise<Object>} 收割结果
      */
-    async run() {
+    async run(options = {}) {
+        const { matchId, force = false } = options;
+
+        // V4.46-TITAN: 单场比赛收割模式
+        if (matchId) {
+            return this._runSingleMatch(matchId, force);
+        }
+
+        // 批量收割模式
         this.startTime = Date.now();
         this.stats.sweepRounds++;
 
@@ -1574,12 +1022,11 @@ class ProductionHarvester {
                 console.log('⚠️ DRY RUN 模式 - 不会写入数据库');
             }
 
-            // 并发收割
-            const limit = pLimit(this.config.maxWorkers);
-
-            const results = await Promise.all(matches.map((match, index) =>
-                limit(() => this._harvestWithRetry(match, index))
-            ));
+            // V4.46: 使用 WorkerPool 进行并发收割
+            const results = await this.workerPool.executeAll(
+                matches,
+                (match, index) => this._harvestWithRetry(match, index)
+            );
 
             // 统计本轮结果
             let roundSuccess = 0;
@@ -1623,214 +1070,111 @@ class ProductionHarvester {
     }
 
     /**
-     * 单场比赛收割 - V178.2: 接入 NetworkShield
-     * @param {Object} match - 比赛信息对象
-     * @param {number} index - 任务索引
+     * V4.46-TITAN: 单场比赛收割模式
+     * 支持两种模式：
+     * 1. 数据库模式：match_id 存在于 matches 表
+     * 2. 直接收割模式：使用 external_id 直接收割（当 match_id 不在数据库时）
+     * @param {string} matchId - 比赛 ID 或 external_id
+     * @param {boolean} [force=false] - 强制收割已收割的比赛
      * @returns {Promise<Object>} 收割结果
      */
-    async harvestMatch(match, index = 0) {
-        const { match_id, external_id, home_team, away_team } = match;
+    async _runSingleMatch(matchId, force = false) {
+        this.startTime = Date.now();
+        this.stats.sweepRounds = 1;
 
-        // V178.2: 计算 Worker ID (Round-Robin)
-        const workerId = (index % this.config.maxWorkers) + 1;
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log(`  V4.46-TITAN 单场比赛收割模式`);
+        console.log(`  MatchID: ${matchId} | Force: ${force}`);
+        console.log('═══════════════════════════════════════════════════════════════');
 
-        // 随机延迟
-        const delay = this.config.minDelayMs +
-            Math.random() * (this.config.maxDelayMs - this.config.minDelayMs);
-        await this._delay(delay);
+        // 尝试从数据库查询比赛信息
+        let query = `
+            SELECT
+                m.match_id,
+                m.external_id,
+                m.home_team,
+                m.away_team,
+                m.match_date
+            FROM matches m
+            WHERE m.match_id = $1 OR m.external_id = $1
+        `;
 
-        // V178.2: 获取 Worker 身份（代理 IP + UA + 视口）
-        const identity = await this._assignWorkerIdentity(workerId);
+        // 如果不强制收割，检查是否已收割
+        if (!force) {
+            query = `
+                SELECT
+                    m.match_id,
+                    m.external_id,
+                    m.home_team,
+                    m.away_team,
+                    m.match_date
+                FROM matches m
+                LEFT JOIN raw_match_data r ON m.match_id = r.match_id
+                WHERE (m.match_id = $1 OR m.external_id = $1)
+                    AND r.match_id IS NULL
+            `;
+        }
 
-        // V179.5: 实验模式 - 支持禁用代理 (直接使用本地 IP)
-        const disableProxy = process.env.DISABLE_PROXY === 'true';
-        const proxyConfig = disableProxy ? undefined : { server: identity.proxy.url };
+        const result = await this.pool.query(query, [matchId]);
 
-        // V180: 创建浏览器上下文（使用绑定身份 + 深度隐身配置）
-        // 注意: hardwareConcurrency, deviceMemory, webgl 必须通过 addInitScript 注入
-        // Playwright newContext 不支持这些参数
-        const context = await this.browser.newContext({
-            viewport: identity.stealth.viewport,
-            userAgent: identity.stealth.userAgent,
-            extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
-            proxy: proxyConfig,
-            // V180: 深度隐身配置 - Playwright 支持的参数
-            deviceScaleFactor: DEEP_STEALTH_CONFIG.deviceScaleFactor,
-            locale: DEEP_STEALTH_CONFIG.locale,
-            timezoneId: DEEP_STEALTH_CONFIG.timezoneId
-            // hardwareConcurrency, deviceMemory, webgl 通过 _injectStealthScripts 注入
-        });
+        let match;
+        if (result.rows.length === 0) {
+            // V4.46-TITAN: 直接收割模式 - 比赛不在数据库中
+            // 使用 external_id 作为 match_id 进行收割
+            console.log(`📡 比赛不在数据库中，启用直接收割模式...`);
 
-        if (disableProxy) {
-            console.log(`🔬 [W${workerId}] 实验模式: 已禁用代理，使用本地 IP`);
+            // 判断 matchId 格式并提取 external_id
+            // 格式1: 纯数字 (4803306) -> 直接使用
+            // 格式2: 复合ID (55_20242025_4803306) -> 提取最后一部分
+            let externalId;
+            if (/^\d+$/.test(matchId)) {
+                externalId = matchId;
+            } else if (matchId.includes('_')) {
+                const parts = matchId.split('_');
+                externalId = parts[parts.length - 1];
+            } else {
+                externalId = matchId;
+            }
+
+            match = {
+                match_id: matchId,
+                external_id: externalId,
+                home_team: 'Unknown',
+                away_team: 'Unknown',
+                match_date: new Date()
+            };
+
+            console.log(`📋 比赛: External ID ${match.external_id}`);
         } else {
-            console.log(`📡 [W${workerId}] 代理模式: ${identity.proxy.url}`);
+            match = result.rows[0];
+            console.log(`📋 比赛: ${match.home_team} vs ${match.away_team}`);
         }
 
-        // V179: 身份热加载 - 注入会话 Cookie
-        let cookieLoaded = false;
-        if (this.sessionManager) {
-            cookieLoaded = await this.sessionManager.loadSessionToContext(context, identity.proxy.port);
-            if (cookieLoaded) {
-                console.log(`🔑 [W${workerId}] 身份热加载成功 (SessionManager)`);
-            }
+        this.stats.total = 1;
+
+        // 执行收割
+        const harvestResult = await this._harvestWithRetry(match, 0, this.config.maxRetries);
+
+        if (harvestResult.success) {
+            this.stats.success = 1;
+            this.stats.processed = 1;
+            console.log(`✅ 收割成功: ${match.home_team} vs ${match.away_team}`);
+        } else {
+            this.stats.failed = 1;
+            this.stats.processed = 1;
+            console.error(`❌ 收割失败: ${harvestResult.error}`);
         }
 
-        // V179.1: 回退 - 直接从 browser_state.json 加载 Cookie
-        if (!cookieLoaded) {
-            cookieLoaded = await this._loadBrowserStateCookies(context);
-            if (cookieLoaded) {
-                console.log(`🔑 [W${workerId}] 身份热加载成功 (browser_state.json)`);
-            }
-        }
+        // 打印报告
+        this.printReport();
 
-        const page = await context.newPage();
-
-        // V180: 注入原生隐身脚本
-        await this._injectStealthScripts(page);
-        console.log(`🥷 [W${workerId}] 深度隐身装甲已激活`);
-
-        try {
-            console.log(`🌐 [W${workerId}] 渗透: ${home_team} vs ${away_team} | Port ${identity.proxy.port}`);
-
-            // V178: 首页预热 - 建立 Session 信任
-            await this._warmupHomepage(page);
-
-            // 设置请求拦截
-            let capturedData = null;
-
-            // eslint-disable-next-line no-loop-func
-            await page.route('**/*', async (route) => {
-                const url = route.request().url();
-                const type = route.request().resourceType();
-
-                // 屏蔽非必要资源
-                if (['image', 'media', 'font'].includes(type)) {
-                    await route.abort();
-                    return;
-                }
-
-                // 捕获目标 API
-                if (url.includes('matchfacts') || url.includes('matchDetails')) {
-                    try {
-                        const response = await route.fetch();
-                        const body = await response.text();
-                        try {
-                            capturedData = JSON.parse(body);
-                            console.log(`📡 [W${workerId}] 拦截 API: ${url.slice(0, 50)}...`);
-                        } catch (parseError) {
-                            // JSON 解析失败 - 非 JSON 响应，静默忽略
-                        }
-                        await route.fulfill({ response });
-                    } catch (routeError) {
-                        // 路由请求失败 - 网络问题，继续请求
-                        await route.continue();
-                    }
-                } else {
-                    await route.continue();
-                }
-            });
-
-            // 构建目标 URL
-            const matchUrl = `https://www.fotmob.com/match/${external_id}`;
-
-            // 导航到比赛页面
-            await page.goto(matchUrl, {
-                waitUntil: 'domcontentloaded',
-                timeout: 60000
-            });
-
-            // V178: 行为模拟 - 10-15 次鼠标位移
-            await this._simulateHumanBehavior(page);
-
-            // 等待数据
-            await page.waitForTimeout(5000);
-
-            // 如果拦截失败，使用 NextDataParser
-            if (!capturedData) {
-                // 使用 NextDataParser (document 是浏览器环境全局变量)
-                /* eslint-disable no-undef */
-                const nextData = await page.evaluate(() => {
-                    const script = document.getElementById('__NEXT_DATA__');
-                    return script ? JSON.parse(script.textContent) : null;
-                });
-                /* eslint-enable no-undef */
-                capturedData = transformToApiFormat(nextData);
-                console.log(`📄 [W${workerId}] 使用 __NEXT_DATA__ 解析`);
-            }
-
-            // 验证数据
-            if (!capturedData) {
-                throw new Error('NO_DATA:无法获取数据');
-            }
-
-            const size = JSON.stringify(capturedData).length;
-            if (size < 1000) {
-                throw new Error(`SIZE_TOO_SMALL:${size}`);
-            }
-
-            // V178.2: 标记代理成功
-            await this._markProxySuccess(workerId);
-
-            // DRY RUN 模式
-            if (this.config.dryRun) {
-                console.log(`✅ [W${workerId}] ${home_team} vs ${away_team} | ${size} bytes | DRY RUN`);
-                return { success: true, match_id, size, workerId, port: identity.proxy.port };
-            }
-
-            // 写入数据库
-            // V179.5: 检查 JSON 序列化是否有效
-            try {
-                const jsonString = JSON.stringify(capturedData);
-                console.log(`📝 [W${workerId}] JSON 序列化成功: ${jsonString.length} 字节`);
-            } catch (jsonError) {
-                throw new Error(`JSON_SERIALIZE_ERROR: ${jsonError.message}`);
-            }
-            await this.saveRawData(match_id, capturedData);
-            console.log(`✅ [W${workerId}] ${home_team} vs ${away_team} | ${size} bytes | Port ${identity.proxy.port}`);
-
-            return { success: true, match_id, size, workerId, port: identity.proxy.port };
-
-        } catch (error) {
-            // V180: 捕获 403 错误并详细记录
-            if (error.message && (
-                error.message.includes('403') ||
-                error.message.includes('net::ERR_BLOCKED') ||
-                error.message.includes('Access denied')
-            )) {
-                console.log(`🚨 [W${workerId}] 403/BLOCKED 错误! 检测到反爬虫机制`);
-                console.log(`   📊 错误详情: ${error.message}`);
-                // 尝试获取页面 HTML 进行分析
-                try {
-                    const html = await page.content();
-                    const title = await page.title();
-                    console.log(`   📄 页面标题: ${title}`);
-                    console.log(`   📏 HTML 长度: ${html.length} 字符`);
-                    // 检查是否有 Turnstile/验证相关内容
-                    if (html.includes('turnstile') || html.includes('challenge') || html.includes('cf-')) {
-                        console.log(`   🔍 检测到 Turnstile/Challenge 内容!`);
-                    }
-                    // V180: 打印响应 Headers 用于分析
-                    const headers = await page.evaluate(() => {
-                        return Object.fromEntries(
-                            ...performance.getEntriesByType('navigation').map(e => [e.name, e.value])
-                        );
-                    });
-                    console.log(`   📋 响应 Headers: ${JSON.stringify(headers, null, 2).slice(0, 500)}`);
-                } catch (htmlError) {
-                    console.log(`   ⚠ 无法获取页面信息: ${htmlError.message}`);
-                }
-            }
-
-            // V178.2: 标记代理失败 + 熔断
-            await this._markProxyFailed(workerId, error.message);
-
-            console.error(`❌ [W${workerId}] ${home_team} vs ${away_team}: ${error.message}`);
-            return { success: false, match_id, error: error.message, workerId };
-        } finally {
-            await page.close();
-            await context.close();
-        }
+        return {
+            total: 1,
+            success: this.stats.success,
+            failed: this.stats.failed,
+            matchId,
+            error: harvestResult.success ? null : harvestResult.error
+        };
     }
 
     /**
@@ -1876,12 +1220,14 @@ class ProductionHarvester {
         console.log(`  Worker 数: ${this.config.maxWorkers}`);
 
         // V178.2: 打印 Worker 身份统计
-        console.log('───────────────────────────────────────────────────────────────');
-        console.log('  Worker 身份统计:');
-        for (const [workerId, identity] of this.workerIdentities) {
-            const successRate = (identity.getSuccessRate() * 100).toFixed(0);
-            console.log(`    W${workerId}: Port ${identity.proxy.port} | ` +
-                `${identity.requestCount} 请求 | ${successRate}% 成功率`);
+        // V4.46: 打印 NetworkManager 身份统计 (防御性检查)
+        if (this.networkManager && this.networkManager.workerIdentities) {
+            for (const [workerId, identity] of this.networkManager.workerIdentities) {
+                if (identity && identity.proxy) {
+                    const successRate = (identity.getSuccessRate() * 100).toFixed(0);
+                    console.log(`    W${workerId}: Port ${identity.proxy.port} | ${identity.requestCount} 请求 | ${successRate}% 成功率`);
+                }
+            }
         }
         console.log('═══════════════════════════════════════════════════════════════');
     }
@@ -1890,22 +1236,6 @@ class ProductionHarvester {
      * 清理资源
      */
     async cleanup() {
-        // V178.2: 关闭 NetworkShield
-        if (this.networkShield) {
-            this.networkShield.shutdown();
-        }
-
-        // V179: 打印 SessionManager 统计
-        if (this.sessionManager) {
-            const stats = this.sessionManager.getStats();
-            console.log('📊 SessionManager 统计:');
-            console.log(`   总刷新: ${stats.totalRefreshes}`);
-            console.log(`   成功刷新: ${stats.successfulRefreshes}`);
-            console.log(`   失败刷新: ${stats.failedRefreshes}`);
-            console.log(`   缓存命中: ${stats.cacheHits}`);
-            console.log(`   缓存未命中: ${stats.cacheMisses}`);
-        }
-
         if (this.browser) {
             await this.browser.close();
         }
@@ -1914,6 +1244,65 @@ class ProductionHarvester {
         }
         console.log('🛹 资源已清理');
     }
+}
+
+// ============================================================================
+// CLI 启动逻辑 (V4.46-ignition)
+// ============================================================================
+
+if (require.main === module) {
+    // 使用原生 process.argv 解析参数 (不依赖 commander)
+    const args = process.argv.slice(2);
+    const options = {
+        matchId: null,
+        force: false,
+        verbose: false
+    };
+
+    for (const arg of args) {
+        if (arg.startsWith('--matchId=')) {
+            options.matchId = arg.split('=')[1];
+        } else if (arg === '--force' || arg === '-f') {
+            options.force = true;
+        } else if (arg === '--verbose' || arg === '-v') {
+            options.verbose = true;
+        }
+    }
+
+    console.log('🚀 [IGNITION] Starting ProductionHarvester in CLI mode...');
+    console.log('📊 Options:', JSON.stringify(options, null, 2));
+
+    // V4.46-TITAN: 修复入口逻辑 - 必须先 init() 再 run()
+    (async () => {
+        const harvester = new ProductionHarvester({
+            verboseLogging: options.verbose
+        });
+
+        try {
+            // 第一步：初始化 (数据库、浏览器、NetworkManager、WorkerPool)
+            console.log('🔧 [IGNITION] 初始化收割器...');
+            await harvester.init();
+
+            // 第二步：执行收割
+            console.log('🔥 [IGNITION] 开始收割...');
+            const result = await harvester.run({
+                matchId: options.matchId,
+                force: options.force
+            });
+
+            console.log('✅ [IGNITION] Harvest completed!');
+            console.log('📊 Result:', JSON.stringify(result, null, 2));
+
+            // 第三步：清理资源
+            await harvester.cleanup();
+
+            process.exit(0);
+        } catch (err) {
+            console.error('💥 [IGNITION] Fatal error:', err);
+            console.error('📊 Stack:', err.stack);
+            process.exit(1);
+        }
+    })();
 }
 
 module.exports = { ProductionHarvester };

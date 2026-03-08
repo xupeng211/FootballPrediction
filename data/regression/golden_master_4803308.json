@@ -1,0 +1,280 @@
+{
+  "version": "V4.46",
+  "createdAt": "2026-03-08T04:35:51.414Z",
+  "matchId": "4803308",
+  "source": "ProductionHarvester",
+  "metadata": {
+    "nodeVersion": "v24.13.1",
+    "platform": "linux"
+  },
+  "data": {
+    "matchId": "4803308",
+    "createdAt": "2026-03-08T04:35:51.413Z",
+    "structure": {
+      "filePath": "/home/xupeng/projects/FootballPrediction/src/infrastructure/harvesters/ProductionHarvester.js",
+      "totalLines": 1697,
+      "imports": [
+        {
+          "name": "pLimit",
+          "module": "p-limit"
+        },
+        {
+          "name": "FactoryConfig",
+          "module": "../../../config/factory_config"
+        },
+        {
+          "name": "fs",
+          "module": "fs"
+        },
+        {
+          "name": "fs",
+          "module": "fs"
+        },
+        {
+          "name": "path",
+          "module": "path"
+        }
+      ],
+      "classes": [
+        {
+          "name": "ProductionHarvester",
+          "extends": null
+        }
+      ],
+      "methods": [
+        {
+          "name": "classifyError",
+          "params": [
+            "error"
+          ]
+        },
+        {
+          "name": "constructor",
+          "params": [
+            "config = {}"
+          ]
+        },
+        {
+          "name": "_setupGracefulShutdown",
+          "params": []
+        },
+        {
+          "name": "_waitForWorkers",
+          "params": []
+        },
+        {
+          "name": "_cleanup",
+          "params": []
+        },
+        {
+          "name": "_registerWorker",
+          "params": [
+            "workerId"
+          ]
+        },
+        {
+          "name": "_unregisterWorker",
+          "params": [
+            "workerId"
+          ]
+        },
+        {
+          "name": "_delay",
+          "params": [
+            "ms"
+          ]
+        },
+        {
+          "name": "_randomInRange",
+          "params": [
+            "min",
+            "max"
+          ]
+        },
+        {
+          "name": "_loadBrowserStateCookies",
+          "params": [
+            "context"
+          ]
+        },
+        {
+          "name": "_preFlightCleanupNetworkLocks",
+          "params": []
+        },
+        {
+          "name": "_initNetworkShield",
+          "params": []
+        },
+        {
+          "name": "_initSessionManager",
+          "params": []
+        },
+        {
+          "name": "_assignWorkerIdentity",
+          "params": [
+            "workerId"
+          ]
+        },
+        {
+          "name": "_markProxySuccess",
+          "params": [
+            "workerId",
+            "latency = 0"
+          ]
+        },
+        {
+          "name": "_markProxyFailed",
+          "params": [
+            "workerId",
+            "reason"
+          ]
+        },
+        {
+          "name": "_isRetryableError",
+          "params": [
+            "error"
+          ]
+        },
+        {
+          "name": "_getAlternativePort",
+          "params": [
+            "excludePort"
+          ]
+        },
+        {
+          "name": "_forceReassignPort",
+          "params": [
+            "workerId",
+            "failedPort"
+          ]
+        },
+        {
+          "name": "_harvestWithRetry",
+          "params": [
+            "match",
+            "index",
+            "maxRetries = 3"
+          ]
+        },
+        {
+          "name": "_harvestSingleMatch",
+          "params": [
+            "match",
+            "index",
+            "attempt = 1"
+          ]
+        },
+        {
+          "name": "init",
+          "params": []
+        },
+        {
+          "name": "_warmupHomepage",
+          "params": [
+            "page"
+          ]
+        },
+        {
+          "name": "_simulateHumanBehavior",
+          "params": [
+            "page"
+          ]
+        },
+        {
+          "name": "_injectStealthScripts",
+          "params": [
+            "page"
+          ]
+        },
+        {
+          "name": "permissions",
+          "params": []
+        },
+        {
+          "name": "getPendingMatches",
+          "params": []
+        },
+        {
+          "name": "_isRetryableError",
+          "params": [
+            "error"
+          ]
+        },
+        {
+          "name": "_getAlternativePort",
+          "params": [
+            "excludePort"
+          ]
+        },
+        {
+          "name": "run",
+          "params": []
+        },
+        {
+          "name": "harvestMatch",
+          "params": [
+            "match",
+            "index = 0"
+          ]
+        },
+        {
+          "name": "saveRawData",
+          "params": [
+            "matchId",
+            "rawData"
+          ]
+        },
+        {
+          "name": "printReport",
+          "params": []
+        },
+        {
+          "name": "cleanup",
+          "params": []
+        }
+      ],
+      "constants": [],
+      "version": "V186.0.0"
+    },
+    "expectedOutput": {
+      "harvestResult": {
+        "success": "boolean",
+        "match_id": "string",
+        "size": "number",
+        "workerId": "number",
+        "port": "number",
+        "error": "string|null"
+      },
+      "rawData": {
+        "matchId": "string",
+        "homeTeam": "string",
+        "awayTeam": "string",
+        "score": "object",
+        "stats": "object",
+        "odds": "object"
+      }
+    },
+    "contract": {
+      "harvestMatch": {
+        "input": [
+          "match object",
+          "index number"
+        ],
+        "output": [
+          "success",
+          "match_id",
+          "size",
+          "workerId",
+          "port"
+        ]
+      },
+      "saveRawData": {
+        "input": [
+          "matchId string",
+          "rawData object"
+        ],
+        "output": "void"
+      }
+    }
+  }
+}
