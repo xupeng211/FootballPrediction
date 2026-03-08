@@ -29,6 +29,9 @@ const { getNetworkManager } = require('../../network/NetworkManager');
 const { generateStealthHeaders } = require('../../network/StealthFingerprint');
 const { getWorkerPool } = require('../workers/WorkerPool');
 
+// V4.46: 导入指标客户端
+const { getMetricsClient } = require('../../monitoring/MetricsClient');
+
 // ============================================================================
 // AbstractHarvester 抽象基类
 // ============================================================================
@@ -85,6 +88,9 @@ class AbstractHarvester {
         this.isShuttingDown = false;
         this.shutdownPromise = null;
         this.workerLogger = logger.createWorkerLogger(0, 0);
+
+        // V4.46: 初始化指标客户端
+        this.metricsClient = getMetricsClient();
 
         this._setupGracefulShutdown();
     }
@@ -477,6 +483,10 @@ class AbstractHarvester {
         const workerId = (index % this.config.maxWorkers) + 1;
         const isRetry = attempt > 1;
 
+        // V4.46: 记录收割开始时间
+        const harvestStartTime = Date.now();
+        this.metricsClient.recordHarvestStart(match_id, workerId);
+
         // 随机延迟
         const baseDelay = isRetry ? 3000 : this.config.minDelayMs;
         const maxDelay = isRetry ? 6000 : this.config.maxDelayMs;
@@ -565,22 +575,59 @@ class AbstractHarvester {
                 await this.saveData(match_id, capturedData);
             }
 
-            console.log(`✅ ${logPrefix} ${home_team} vs ${away_team} | ${size} bytes | Port ${identity.proxy.port}`);
+            // V4.46: 记录收割成功指标
+            const harvestDuration = Date.now() - harvestStartTime;
+            this.metricsClient.recordHarvestSuccess(
+                match_id,
+                workerId,
+                harvestDuration,
+                size,
+                identity.proxy.port
+            );
 
-            return { success: true, match_id, size, workerId, port: identity.proxy.port, attempt };
+            console.log(`✅ ${logPrefix} ${home_team} vs ${away_team} | ${size} bytes | Port ${identity.proxy.port} | ${harvestDuration}ms`);
+
+            return { success: true, match_id, size, workerId, port: identity.proxy.port, attempt, duration: harvestDuration };
 
         } catch (error) {
             await this.networkManager.markProxyFailed(workerId, error.message);
+
+            // V4.46: 记录收割失败指标
+            const harvestDuration = Date.now() - harvestStartTime;
+            const errorType = this._classifyError(error.message);
+            this.metricsClient.recordHarvestFailure(
+                match_id,
+                workerId,
+                errorType,
+                error.message,
+                identity?.proxy?.port
+            );
 
             if (attempt >= 3 || !this._isRetryableError(error)) {
                 console.error(`❌ ${logPrefix} ${home_team} vs ${away_team}: ${error.message}`);
             }
 
-            return { success: false, match_id, error: error.message, workerId, attempt };
+            return { success: false, match_id, error: error.message, workerId, attempt, errorType, duration: harvestDuration };
         } finally {
             await page.close();
             await context.close();
         }
+    }
+
+    /**
+     * V4.46: 分类错误类型
+     * @param {string} errorMessage - 错误消息
+     * @returns {string} 错误类型
+     * @private
+     */
+    _classifyError(errorMessage) {
+        const msg = (errorMessage || '').toLowerCase();
+        if (msg.includes('403') || msg.includes('forbidden')) return 'RATE_LIMITED';
+        if (msg.includes('timeout') || msg.includes('timed out')) return 'TIMEOUT';
+        if (msg.includes('no_data') || msg.includes('size_too_small')) return 'NO_DATA';
+        if (msg.includes('connection') || msg.includes('network')) return 'NETWORK_ERROR';
+        if (msg.includes('turnstile') || msg.includes('captcha')) return 'BLOCKED';
+        return 'UNKNOWN';
     }
 
     // ========================================================================

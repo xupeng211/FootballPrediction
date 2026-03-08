@@ -120,7 +120,7 @@ from src.core.circuit_breaker import (
 from src.core.graceful_shutdown import GracefulShutdownManager, graceful_shutdown
 from src.core.structured_logging import (
     ComponentLogger,
-    EventCode
+    EventCode,
     HarvestStats,
     LogContext,
     LogLevel,
@@ -138,18 +138,18 @@ __all__ += [
     "CircuitState",
     # Structured Logging
     "ComponentLogger",
-    "EventCode"
+    "EventCode",
     # Graceful Shutdown
     "GracefulShutdownManager",
     "HarvestStats",
     "LogContext",
-    "LogLevel"
+    "LogLevel",
     "api_breaker",
     "database_breaker",
-    "network_breaker"
+    "network_breaker",
     "get_logger",
     "graceful_shutdown",
     "log_context",
-    "performance_timer"
+    "performance_timer",
     "setup_structured_logging",
 ]

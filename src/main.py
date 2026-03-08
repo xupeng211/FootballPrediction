@@ -22,6 +22,27 @@ from src.api.schemas import RootResponse
 from src.core.metrics import get_metrics
 from src.database.db_pool import DatabasePool
 
+# V4.46: 激活收割监控指标
+from src.api.monitoring import (
+    metrics as harvest_metrics,
+    extraction_total,
+    extraction_duration_seconds,
+    circuit_breaker_state,
+    dead_letter_queue_size,
+)
+
+
+def setup_metrics_exporter(port: int = 9090) -> None:
+    """
+    启动 Prometheus 指标导出器
+
+    在独立端口上启动 HTTP 服务器，暴露 /metrics 端点。
+    """
+    from prometheus_client import start_http_server
+
+    start_http_server(port)
+    logger.info(f"📈 Prometheus exporter started on port {port}")
+
 # Prometheus指标通过独立模块管理，避免重复注册
 
 
@@ -57,7 +78,14 @@ async def lifespan(app: FastAPI):
         pool = await DatabasePool.get_instance()
         await pool.init_pool()
 
-        # Prometheus metrics 已在应用创建后初始化
+        # V4.46: 启动 Prometheus 指标导出器 (独立端口)
+        if os.getenv("ENABLE_METRICS", "true").lower() == "true":
+            metrics_port = int(os.getenv("METRICS_PORT", "9090"))
+            try:
+                setup_metrics_exporter(metrics_port)
+                logger.info(f"📈 Prometheus 指标导出器已启动: 端口 {metrics_port}")
+            except Exception as e:
+                logger.warning(f"⚠️ Prometheus 导出器启动失败 (端口可能被占用): {e}")
 
         logger.info("✅ 服务启动成功")
 
