@@ -22,17 +22,35 @@ const fs = require('fs');
 // 环境配置
 // ============================================================================
 
+// V4.46-TITAN: 环境常量定义
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
-const LOG_DIR = process.env.LOG_DIR || '/app/logs';
 const LOG_LEVEL = process.env.LOG_LEVEL || (IS_PRODUCTION ? 'info' : 'debug');
 
-// 确保日志目录存在
-if (!fs.existsSync(LOG_DIR)) {
+// ============================================================================
+// V4.46-TITAN: 彻底解决 WSL/Windows 路径兼容性
+// ============================================================================
+const CWD = process.cwd();
+// 检测是否处于 Windows 操作 WSL 的特殊路径
+const IS_WSL_WINDOWS_PATH = CWD.includes('\\\\wsl.localhost\\') || CWD.includes('\\wsl$\\');
+
+// 关键修复：如果是 WSL 路径，强制关闭文件日志存储，只保留控制台输出
+const FILE_LOG_ENABLED = !IS_WSL_WINDOWS_PATH && process.env.DISABLE_FILE_LOG !== 'true';
+
+const LOG_DIR = path.join(process.cwd(), 'logs');
+
+// 仅在启用文件日志且目录不存在时尝试创建
+if (FILE_LOG_ENABLED && !fs.existsSync(LOG_DIR)) {
     try {
         fs.mkdirSync(LOG_DIR, { recursive: true });
+        console.log(`[Logger] 日志目录已创建: ${LOG_DIR}`);
     } catch (err) {
-        console.warn(`[Logger] 无法创建日志目录 ${LOG_DIR}: ${err.message}`);
+        console.warn(`[Logger] 目录创建跳过: ${err.message}`);
     }
+}
+
+// WSL 路径警告
+if (IS_WSL_WINDOWS_PATH) {
+    console.warn('[Logger] 检测到 WSL 路径，文件日志已禁用，仅输出到控制台');
 }
 
 // ============================================================================
@@ -86,40 +104,93 @@ const prodFormat = winston.format.combine(
 );
 
 // ============================================================================
-// 日志轮转配置
+// 日志传输配置 (V4.46-TITAN: 支持 WSL 路径兼容)
 // ============================================================================
 
 /**
- * 按日期轮转的传输配置
- * - combined.log: 所有级别日志
- * - error.log: 仅错误日志
+ * 构建传输列表 - 根据环境动态配置
+ * @returns {Array} Winston 传输列表
  */
-const dailyRotateFile = require('winston-daily-rotate-file');
+function buildTransports() {
+    const transports = [];
 
-const combinedTransport = new dailyRotateFile({
-    filename: path.join(LOG_DIR, 'combined-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '50m',        // 单文件最大 50MB
-    maxFiles: '30d',       // 保留 30 天
-    format: IS_PRODUCTION ? prodFormat : devFormat
-});
+    // 控制台输出 - 始终启用
+    transports.push(new winston.transports.Console({
+        format: IS_PRODUCTION ? prodFormat : devFormat,
+        stderrLevels: ['error', 'warn']
+    }));
 
-const errorTransport = new dailyRotateFile({
-    filename: path.join(LOG_DIR, 'error-%DATE%.log'),
-    datePattern: 'YYYY-MM-DD',
-    zippedArchive: true,
-    maxSize: '20m',
-    maxFiles: '60d',       // 错误日志保留 60 天
-    level: 'error',
-    format: IS_PRODUCTION ? prodFormat : devFormat
-});
+    // 文件传输 - 仅在 FILE_LOG_ENABLED 时启用
+    if (FILE_LOG_ENABLED) {
+        const dailyRotateFile = require('winston-daily-rotate-file');
 
-// 控制台输出
-const consoleTransport = new winston.transports.Console({
-    format: IS_PRODUCTION ? prodFormat : devFormat,
-    stderrLevels: ['error', 'warn']
-});
+        transports.push(
+            new dailyRotateFile({
+                filename: path.join(LOG_DIR, 'combined-%DATE%.log'),
+                datePattern: 'YYYY-MM-DD',
+                zippedArchive: true,
+                maxSize: '50m',
+                maxFiles: '30d',
+                format: IS_PRODUCTION ? prodFormat : devFormat
+            }),
+            new dailyRotateFile({
+                filename: path.join(LOG_DIR, 'error-%DATE%.log'),
+                datePattern: 'YYYY-MM-DD',
+                zippedArchive: true,
+                maxSize: '20m',
+                maxFiles: '60d',
+                level: 'error',
+                format: IS_PRODUCTION ? prodFormat : devFormat
+            })
+        );
+    }
+
+    return transports;
+}
+
+/**
+ * 构建异常处理器 - 根据环境动态配置
+ * @returns {Array|undefined} Winston 异常处理器列表
+ */
+function buildExceptionHandlers() {
+    if (!FILE_LOG_ENABLED) {
+        return undefined;
+    }
+
+    const dailyRotateFile = require('winston-daily-rotate-file');
+
+    return [
+        new dailyRotateFile({
+            filename: path.join(LOG_DIR, 'exceptions-%DATE%.log'),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '30d'
+        })
+    ];
+}
+
+/**
+ * 构建拒绝处理器 - 根据环境动态配置
+ * @returns {Array|undefined} Winston 拒绝处理器列表
+ */
+function buildRejectionHandlers() {
+    if (!FILE_LOG_ENABLED) {
+        return undefined;
+    }
+
+    const dailyRotateFile = require('winston-daily-rotate-file');
+
+    return [
+        new dailyRotateFile({
+            filename: path.join(LOG_DIR, 'rejections-%DATE%.log'),
+            datePattern: 'YYYY-MM-DD',
+            zippedArchive: true,
+            maxSize: '20m',
+            maxFiles: '30d'
+        })
+    ];
+}
 
 // ============================================================================
 // 全局单例 Logger
@@ -141,31 +212,9 @@ class EnterpriseLogger {
                 version: 'V186.0.0',
                 pid: process.pid
             },
-            transports: [
-                consoleTransport,
-                combinedTransport,
-                errorTransport
-            ],
-            // 未捕获异常处理
-            exceptionHandlers: [
-                new dailyRotateFile({
-                    filename: path.join(LOG_DIR, 'exceptions-%DATE%.log'),
-                    datePattern: 'YYYY-MM-DD',
-                    zippedArchive: true,
-                    maxSize: '20m',
-                    maxFiles: '30d'
-                })
-            ],
-            // 未处理的 Promise 拒绝
-            rejectionHandlers: [
-                new dailyRotateFile({
-                    filename: path.join(LOG_DIR, 'rejections-%DATE%.log'),
-                    datePattern: 'YYYY-MM-DD',
-                    zippedArchive: true,
-                    maxSize: '20m',
-                    maxFiles: '30d'
-                })
-            ]
+            transports: buildTransports(),
+            exceptionHandlers: buildExceptionHandlers(),
+            rejectionHandlers: buildRejectionHandlers()
         });
 
         EnterpriseLogger.instance = this;

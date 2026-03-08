@@ -1,13 +1,11 @@
-/**
- * V178 工厂级配置中心 (终极强化版)
+﻿/**
+ * V178 宸ュ巶绾ч厤缃腑蹇?(缁堟瀬寮哄寲鐗?
  * ==============================================
  *
- * 所有收割系统的魔术数字统一归口管理
- * 严禁在业务代码中硬编码任何参数
- *
- * V178 升级:
- * - 熔断器配置升级: 5 次失败触发, 60 秒冷却
- * - 指数退避优化: 1s -> 2s -> 4s (带 ±20% 抖动)
+ * 鎵€鏈夋敹鍓茬郴缁熺殑榄旀湳鏁板瓧缁熶竴褰掑彛绠＄悊
+ * 涓ョ鍦ㄤ笟鍔′唬鐮佷腑纭紪鐮佷换浣曞弬鏁? *
+ * V178 鍗囩骇:
+ * - 鐔旀柇鍣ㄩ厤缃崌绾? 5 娆″け璐ヨЕ鍙? 60 绉掑喎鍗? * - 鎸囨暟閫€閬夸紭鍖? 1s -> 2s -> 4s (甯?卤20% 鎶栧姩)
  *
  * @module config/factory_config
  * @version V178.0.0 (Ultimate Hardening Edition)
@@ -16,35 +14,33 @@
 'use strict';
 
 // ============================================================================
-// 环境变量优先级
-// ============================================================================
+// 鐜鍙橀噺浼樺厛绾?// ============================================================================
 
 const ENV = process.env;
 
 // ============================================================================
-// 质量门禁配置 (Quality Gate)
+// 璐ㄩ噺闂ㄧ閰嶇疆 (Quality Gate)
 // ============================================================================
 
 const QUALITY_GATE = {
-    /** 最小有效数据体积 (bytes) - 小于此值视为非法数据 */
+    /** 鏈€灏忔湁鏁堟暟鎹綋绉?(bytes) - 灏忎簬姝ゅ€艰涓洪潪娉曟暟鎹?*/
     minSizeBytes: parseInt(ENV.MIN_SIZE_BYTES) || 5000,
 
-    /** 未来比赛最小数据体积 (bytes) - 对于没有 stats 的比赛使用更低阈值 */
+    /** 鏈潵姣旇禌鏈€灏忔暟鎹綋绉?(bytes) - 瀵逛簬娌℃湁 stats 鐨勬瘮璧涗娇鐢ㄦ洿浣庨槇鍊?*/
     minSizeBytesFuture: parseInt(ENV.MIN_SIZE_BYTES_FUTURE) || 3000,
 
-    /** 最大数据体积 (bytes) - 用于异常检测 */
+    /** 鏈€澶ф暟鎹綋绉?(bytes) - 鐢ㄤ簬寮傚父妫€娴?*/
     maxSizeBytes: parseInt(ENV.MAX_SIZE_BYTES) || 10 * 1024 * 1024,  // 10MB
 
-    /** 必须包含的 JSON 路径 */
+    /** 蹇呴』鍖呭惈鐨?JSON 璺緞 */
     requiredPaths: ['content'],
 
-    /** 禁止包含的错误关键词 - V173: 只检测明确的 API 错误响应 */
+    /** 绂佹鍖呭惈鐨勯敊璇叧閿瘝 - V173: 鍙娴嬫槑纭殑 API 閿欒鍝嶅簲 */
     errorKeywords: ['TURNSTILE_REQUIRED', 'Verification required', 'ACCESS_DENIED', 'CAPTCHA', 'cf-browser-verification', 'challenge-platform'],
 
     /**
-     * 验证数据是否有效
-     * V175: 对于未来比赛（没有 stats）使用更低的阈值
-     * @param {object} rawData - 原始数据
+     * 楠岃瘉鏁版嵁鏄惁鏈夋晥
+     * V175: 瀵逛簬鏈潵姣旇禌锛堟病鏈?stats锛変娇鐢ㄦ洿浣庣殑闃堝€?     * @param {object} rawData - 鍘熷鏁版嵁
      * @returns {{valid: boolean, reason?: string, size?: number}}
      */
     isValid(rawData) {
@@ -53,7 +49,7 @@ const QUALITY_GATE = {
         const jsonStr = JSON.stringify(rawData);
         const size = jsonStr.length;
 
-        // V175: 检查是否有 stats 数据
+        // V175: 妫€鏌ユ槸鍚︽湁 stats 鏁版嵁
         const hasStats = rawData.content &&
             rawData.content.stats &&
             Object.keys(rawData.content.stats).length > 0;
@@ -65,16 +61,16 @@ const QUALITY_GATE = {
         if (size < minSize) {
             return { valid: false, reason: 'SIZE_TOO_SMALL', size, hasStats };
         }
-
         // 结构检查
         for (const path of this.requiredPaths) {
+        // 缁撴瀯妫€鏌?        for (const path of this.requiredPaths) {
             if (!rawData[path]) {
                 return { valid: false, reason: `MISSING_${path.toUpperCase()}` };
             }
         }
 
-        // V173: 智能错误关键字检查
-        // 只检查核心数据区域，忽略翻译文本（translations）
+        // V173: 鏅鸿兘閿欒鍏抽敭瀛楁鏌?
+        // 鍙鏌ユ牳蹇冩暟鎹尯鍩燂紝蹇界暐缈昏瘧鏂囨湰锛坱ranslations锛?
         const coreData = {
             content: rawData.content,
             general: rawData.general,
@@ -93,50 +89,50 @@ const QUALITY_GATE = {
 };
 
 // ============================================================================
-// 延时配置 (Timing)
+// 寤舵椂閰嶇疆 (Timing)
 // ============================================================================
 
 const TIMING = {
-    /** 单场收割最小延时 (ms) - V173: 默认 10s 潜行频率 */
+    /** 鍗曞満鏀跺壊鏈€灏忓欢鏃?(ms) - V173: 榛樿 10s 娼滆棰戠巼 */
     minDelayMs: parseInt(ENV.MIN_DELAY_MS) || 10000,
 
-    /** 单场收割最大延时 (ms) - V173: 默认 15s 潜行频率 */
+    /** 鍗曞満鏀跺壊鏈€澶у欢鏃?(ms) - V173: 榛樿 15s 娼滆棰戠巼 */
     maxDelayMs: parseInt(ENV.MAX_DELAY_MS) || 15000,
 
-    /** 首页预热延时范围 [min, max] (ms) */
+    /** 棣栭〉棰勭儹寤舵椂鑼冨洿 [min, max] (ms) */
     preVisitDelay: [3000, 6000],
 
-    /** 页面等待延时范围 [min, max] (ms) */
+    /** 椤甸潰绛夊緟寤舵椂鑼冨洿 [min, max] (ms) */
     pageDelay: [5000, 10000],
 
-    /** 阅读延时范围 [min, max] (ms) - 模拟真人阅读 */
+    /** 闃呰寤舵椂鑼冨洿 [min, max] (ms) - 妯℃嫙鐪熶汉闃呰 */
     readDelay: [3000, 7000],
 
-    /** API 请求超时 (ms) */
+    /** API 璇锋眰瓒呮椂 (ms) */
     apiTimeout: parseInt(ENV.API_TIMEOUT) || 30000,
 
-    /** 页面加载超时 (ms) */
+    /** 椤甸潰鍔犺浇瓒呮椂 (ms) */
     pageTimeout: parseInt(ENV.PAGE_TIMEOUT) || 60000
 };
 
 // ============================================================================
-// 重试配置 (Retry)
+// 閲嶈瘯閰嶇疆 (Retry)
 // ============================================================================
 
 const RETRY = {
-    /** 最大重试次数 */
+    /** 鏈€澶ч噸璇曟鏁?*/
     maxAttempts: parseInt(ENV.MAX_RETRY_ATTEMPTS) || 3,
 
-    /** 重试延时范围 [min, max] (ms) */
+    /** 閲嶈瘯寤舵椂鑼冨洿 [min, max] (ms) */
     delayRange: [5000, 10000],
 
-    /** 指数退避基数 */
+    /** 鎸囨暟閫€閬垮熀鏁?*/
     backoffBase: parseInt(ENV.BACKOFF_BASE) || 2,
 
-    /** 最大退避时间 (ms) */
+    /** 鏈€澶ч€€閬挎椂闂?(ms) */
     maxBackoffMs: parseInt(ENV.MAX_BACKOFF_MS) || 60000,
 
-    /** 可重试的错误类型 */
+    /** 鍙噸璇曠殑閿欒绫诲瀷 */
     retryableErrors: [
         'SIZE_TOO_SMALL',
         'TURNSTILE_REQUIRED',
@@ -146,10 +142,10 @@ const RETRY = {
         'ENOTFOUND',
         'NO_NEXT_DATA',
         'DATA_TRANSFORM_FAILED',
-        'CF_BLOCK'  // V173: Cloudflare 拦截也尝试重试（会自动切换端口）
+        'CF_BLOCK'  // V173: Cloudflare 鎷︽埅涔熷皾璇曢噸璇曪紙浼氳嚜鍔ㄥ垏鎹㈢鍙ｏ級
     ],
 
-    /** 不可重试的错误类型 (永久失败) */
+    /** 涓嶅彲閲嶈瘯鐨勯敊璇被鍨?(姘镐箙澶辫触) */
     nonRetryableErrors: [
         'MATCH_NOT_FOUND',
         'INVALID_ID',
@@ -157,8 +153,7 @@ const RETRY = {
     ],
 
     /**
-     * 判断错误是否可重试
-     * @param {string} errorType - 错误类型
+     * 鍒ゆ柇閿欒鏄惁鍙噸璇?     * @param {string} errorType - 閿欒绫诲瀷
      * @returns {boolean}
      */
     isRetryable(errorType) {
@@ -169,78 +164,75 @@ const RETRY = {
 };
 
 // ============================================================================
-// 并发配置 (Concurrency)
+// 骞跺彂閰嶇疆 (Concurrency)
 // ============================================================================
 
 const CONCURRENCY = {
-    /** 最大 Worker 数量 - V173: 默认 1 (最稳模式) */
+    /** 鏈€澶?Worker 鏁伴噺 - V173: 榛樿 1 (鏈€绋虫ā寮? */
     maxWorkers: parseInt(ENV.MAX_WORKERS) || 1,
 
-    /** 每批次任务数 */
+    /** 姣忔壒娆′换鍔℃暟 */
     batchSize: parseInt(ENV.BATCH_SIZE) || 50,
 
-    /** Worker 错峰启动间隔 (ms) */
+    /** Worker 閿欏嘲鍚姩闂撮殧 (ms) */
     staggerStartMs: parseInt(ENV.STAGGER_START_MS) || 5000,
 
-    /** 监控检查间隔 (ms) */
+    /** 鐩戞帶妫€鏌ラ棿闅?(ms) */
     monitorIntervalMs: parseInt(ENV.MONITOR_INTERVAL_MS) || 1000
 };
 
 // ============================================================================
-// 代理配置 (Proxy) - V173-OVERHAUL: 22 个独立 IP 火力全开
+// 浠ｇ悊閰嶇疆 (Proxy) - V173-OVERHAUL: 22 涓嫭绔?IP 鐏姏鍏ㄥ紑
 // ============================================================================
 
 const PROXY_CONFIG = {
     /**
-     * V173-OVERHAUL: 22 个独立 IP 代理端口池
-     * 端口范围: 7890 - 7911 (共 22 个)
-     * 每个端口对应一个独立 IP 地址
+     * V173-OVERHAUL: 22 涓嫭绔?IP 浠ｇ悊绔彛姹?     * 绔彛鑼冨洿: 7890 - 7911 (鍏?22 涓?
+     * 姣忎釜绔彛瀵瑰簲涓€涓嫭绔?IP 鍦板潃
      */
     ports: (() => {
-        // 优先使用环境变量
+        // 浼樺厛浣跨敤鐜鍙橀噺
         if (ENV.PROXY_PORTS) {
             return ENV.PROXY_PORTS.split(',')
                 .map(p => parseInt(p.trim()))
                 .filter(p => !isNaN(p));
         }
-        // V173: 默认 22 个端口，火力全开！
+        // V173: Default 22 ports
         return Array.from({ length: 22 }, (_, i) => 7890 + i);
     })(),
 
-    /** 默认代理端口 */
+    /** 榛樿浠ｇ悊绔彛 */
     defaultPort: parseInt(ENV.PROXY_PORT) || 7890,
 
-    /** 代理服务器地址模板 - V174-TUNING: 使用直接 IP 地址提高稳定性 */
+    /** 浠ｇ悊鏈嶅姟鍣ㄥ湴鍧€妯℃澘 - V174-TUNING: 浣跨敤鐩存帴 IP 鍦板潃鎻愰珮绋冲畾鎬?*/
     serverTemplate: ENV.PROXY_SERVER || 'http://172.25.16.1:{port}',
 
-    /** 代理健康检查超时 (ms) */
+    /** 浠ｇ悊鍋ュ悍妫€鏌ヨ秴鏃?(ms) */
     healthCheckTimeout: parseInt(ENV.PROXY_HEALTH_TIMEOUT) || 10000,
 
     /**
-     * 获取代理服务器地址
-     * @param {number} port - 代理端口
-     * @returns {string} 代理服务器地址
+     * 鑾峰彇浠ｇ悊鏈嶅姟鍣ㄥ湴鍧€
+     * @param {number} port - 浠ｇ悊绔彛
+     * @returns {string} 浠ｇ悊鏈嶅姟鍣ㄥ湴鍧€
      */
     getServer(port = this.defaultPort) {
         return this.serverTemplate.replace('{port}', port);
     },
 
     /**
-     * V173-OVERHAUL: 根据 Worker ID 完美映射到 22 个端口
-     * @param {number} workerId - Worker 编号 (1-based)
-     * @returns {number} 代理端口
+     * V173-OVERHAUL: 鏍规嵁 Worker ID 瀹岀編鏄犲皠鍒?22 涓鍙?     * @param {number} workerId - Worker 缂栧彿 (1-based)
+     * @returns {number} 浠ｇ悊绔彛
      */
     getPortByWorker(workerId) {
-        // Worker ID 是 1-based，端口数组是 0-based
+        // Worker ID 鏄?1-based锛岀鍙ｆ暟缁勬槸 0-based
         const index = (workerId - 1) % this.ports.length;
         return this.ports[index];
     },
 
     /**
-     * V173-OVERHAUL: 获取下一个可用端口 (用于故障切换)
-     * @param {number} currentPort - 当前端口
-     * @returns {number} 下一个端口
-     */
+     * V173-OVERHAUL: 鑾峰彇涓嬩竴涓彲鐢ㄧ鍙?(鐢ㄤ簬鏁呴殰鍒囨崲)
+     * @param {number} currentPort - 褰撳墠绔彛
+     * @returns {number} 涓嬩竴涓鍙?     */
     getNextPort(currentPort) {
         const currentIndex = this.ports.indexOf(currentPort);
         const nextIndex = (currentIndex + 1) % this.ports.length;
@@ -248,16 +240,16 @@ const PROXY_CONFIG = {
     },
 
     /**
-     * V173-OVERHAUL: 获取随机端口 (用于分散压力)
-     * @returns {number} 随机端口
+     * V173-OVERHAUL: 鑾峰彇闅忔満绔彛 (鐢ㄤ簬鍒嗘暎鍘嬪姏)
+     * @returns {number} 闅忔満绔彛
      */
     getRandomPort() {
         return this.ports[Math.floor(Math.random() * this.ports.length)];
     },
 
     /**
-     * V172-STRENGTHEN: 动态扩展端口池
-     * @param {number} count - 需要的端口数量
+     * V172-STRENGTHEN: 鍔ㄦ€佹墿灞曠鍙ｆ睜
+     * @param {number} count - 闇€瑕佺殑绔彛鏁伴噺
      */
     expandPorts(count) {
         const currentMax = Math.max(...this.ports);
@@ -267,74 +259,72 @@ const PROXY_CONFIG = {
     },
 
     /**
-     * V173-OVERHAUL: 打印端口池状态
-     */
+     * V173-OVERHAUL: 鎵撳嵃绔彛姹犵姸鎬?     */
     printStatus() {
-        console.log(`📡 代理池状态: ${this.ports.length} 个独立 IP 就绪`);
-        console.log(`   端口范围: ${this.ports[0]} - ${this.ports[this.ports.length - 1]}`);
+        console.log(`馃摗 浠ｇ悊姹犵姸鎬? ${this.ports.length} 涓嫭绔?IP 灏辩华`);
+        console.log(`   绔彛鑼冨洿: ${this.ports[0]} - ${this.ports[this.ports.length - 1]}`);
     }
 };
 
 // ============================================================================
-// 熔断配置 (Circuit Breaker) - V178: 5 次 403/超时触发, 60 秒冷却
-// ============================================================================
+// 鐔旀柇閰嶇疆 (Circuit Breaker) - V178: 5 娆?403/瓒呮椂瑙﹀彂, 60 绉掑喎鍗?// ============================================================================
 
 const CIRCUIT_BREAKER = {
-    /** 连续失败次数阈值 - V178: 从 3 提升到 5 */
+    /** 杩炵画澶辫触娆℃暟闃堝€?- V178: 浠?3 鎻愬崌鍒?5 */
     threshold: parseInt(ENV.CIRCUIT_BREAKER_THRESHOLD) || 5,
 
-    /** Worker 重启延迟 (ms) */
+    /** Worker 閲嶅惎寤惰繜 (ms) */
     restartDelayMs: parseInt(ENV.WORKER_RESTART_DELAY_MS) || 30000,
 
-    /** 冷却期 (ms) - V178: 60 秒冷却 */
+    /** 鍐峰嵈鏈?(ms) - V178: 60 绉掑喎鍗?*/
     cooldownMs: parseInt(ENV.CIRCUIT_COOLDOWN) || 60000,
 
-    /** 半开状态测试请求数 - V178: 从 1 提升到 3 */
+    /** 鍗婂紑鐘舵€佹祴璇曡姹傛暟 - V178: 浠?1 鎻愬崌鍒?3 */
     halfOpenRequests: 3,
 
-    /** 成功恢复阈值 - V178: 半开状态成功 1 次即恢复 */
+    /** 鎴愬姛鎭㈠闃堝€?- V178: 鍗婂紑鐘舵€佹垚鍔?1 娆″嵆鎭㈠ */
     successThreshold: 1
 };
 
 // ============================================================================
-// 数据库配置 (Database) - V174: 优化连接池支持高并发
+// 鏁版嵁搴撻厤缃?(Database) - V174: 浼樺寲杩炴帴姹犳敮鎸侀珮骞跺彂
 // ============================================================================
 
 const DATABASE = {
-    /** 连接超时 (ms) */
+    /** 杩炴帴瓒呮椂 (ms) */
     connectTimeout: parseInt(ENV.DB_CONNECT_TIMEOUT) || 10000,
 
-    /** 查询超时 (ms) */
+    /** 鏌ヨ瓒呮椂 (ms) */
     queryTimeout: parseInt(ENV.DB_QUERY_TIMEOUT) || 30000,
 
-    /** 连接池最大连接数 - V174: 20 支持高并发 */
+    /** 杩炴帴姹犳渶澶ц繛鎺ユ暟 - V174: 20 鏀寔楂樺苟鍙?*/
     poolMax: parseInt(ENV.DB_POOL_MAX) || 20,
 
-    /** 连接池最小连接数 */
+    /** 杩炴帴姹犳渶灏忚繛鎺ユ暟 */
     poolMin: parseInt(ENV.DB_POOL_MIN) || 5,
 
-    /** 连接空闲超时 (ms) - V174: 30 秒 */
+    /** 杩炴帴绌洪棽瓒呮椂 (ms) - V174: 30 绉?*/
     idleTimeoutMillis: parseInt(ENV.DB_IDLE_TIMEOUT) || 30000
 };
 
 // ============================================================================
-// 浏览器配置 (Browser)
+// 娴忚鍣ㄩ厤缃?(Browser)
 // ============================================================================
 
 const BROWSER = {
-    /** 浏览器配置文件路径 */
-    profilePath: ENV.BROWSER_PROFILE_PATH || '/app/data/browser_profile',
+    /** 娴忚鍣ㄩ厤缃枃浠惰矾寰?*/
+    profilePath: ENV.BROWSER_PROFILE_PATH || path.join(process.cwd(), 'data/browser_profile'),
 
-    /** 浏览器状态文件名 */
+    /** 娴忚鍣ㄧ姸鎬佹枃浠跺悕 */
     stateFilename: 'browser_state.json',
 
-    /** Cookie 保存间隔 (每 N 场比赛保存一次) */
+    /** Cookie 淇濆瓨闂撮殧 (姣?N 鍦烘瘮璧涗繚瀛樹竴娆? */
     cookieSaveInterval: parseInt(ENV.COOKIE_SAVE_INTERVAL) || 3,
 
-    /** 是否无头模式 */
+    /** 鏄惁鏃犲ご妯″紡 */
     headless: ENV.HEADLESS !== 'false',
 
-    /** 浏览器启动参数 */
+    /** 娴忚鍣ㄥ惎鍔ㄥ弬鏁?*/
     launchArgs: [
         '--disable-blink-features=AutomationControlled',
         '--disable-dev-shm-usage',
@@ -349,8 +339,7 @@ const BROWSER = {
     ],
 
     /**
-     * 获取浏览器状态文件完整路径
-     * @returns {string}
+     * 鑾峰彇娴忚鍣ㄧ姸鎬佹枃浠跺畬鏁磋矾寰?     * @returns {string}
      */
     getStatePath() {
         const path = require('path');
@@ -359,35 +348,35 @@ const BROWSER = {
 };
 
 // ============================================================================
-// 行为模拟配置 (Behavior Simulation)
+// 琛屼负妯℃嫙閰嶇疆 (Behavior Simulation)
 // ============================================================================
 
 const BEHAVIOR = {
-    /** 滚动次数范围 [min, max] */
+    /** 婊氬姩娆℃暟鑼冨洿 [min, max] */
     scrollSteps: [2, 4],
 
-    /** 鼠标移动次数范围 [min, max] */
+    /** 榧犳爣绉诲姩娆℃暟鑼冨洿 [min, max] */
     mouseMoves: [3, 6],
 
-    /** 鼠标移动步数范围 [min, max] */
+    /** 榧犳爣绉诲姩姝ユ暟鑼冨洿 [min, max] */
     mouseSteps: [5, 15],
 
-    /** 滚动距离范围 [min, max] (px) */
+    /** 婊氬姩璺濈鑼冨洿 [min, max] (px) */
     scrollDistance: [100, 300],
 
-    /** 滚动间隔范围 [min, max] (ms) */
+    /** 婊氬姩闂撮殧鑼冨洿 [min, max] (ms) */
     scrollInterval: [500, 1500],
 
-    /** 鼠标移动间隔范围 [min, max] (ms) */
+    /** 榧犳爣绉诲姩闂撮殧鑼冨洿 [min, max] (ms) */
     mouseInterval: [200, 800]
 };
 
 // ============================================================================
-// 静态指纹配置 (Fingerprint)
+// 闈欐€佹寚绾归厤缃?(Fingerprint)
 // ============================================================================
 
 const FINGERPRINT = {
-    /** 静态指纹 (与会话镜像一致) */
+    /** 闈欐€佹寚绾?(涓庝細璇濋暅鍍忎竴鑷? */
     static: {
         userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36',
         viewport: { width: 1287, height: 1271 },
@@ -403,7 +392,7 @@ const FINGERPRINT = {
         }
     },
 
-    /** 随机指纹池 */
+    /** 闅忔満鎸囩汗姹?*/
     pool: [
         {
             userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
@@ -425,57 +414,54 @@ const FINGERPRINT = {
         }
     ],
 
-    /** 语言池 */
+    /** 璇█姹?*/
     languages: ['en-US,en;q=0.9', 'en-GB,en;q=0.9', 'en-US,en;q=0.9,en-GB;q=0.8'],
 
-    /** 时区池 */
+    /** 鏃跺尯姹?*/
     timezones: ['Europe/London', 'America/New_York', 'Europe/Paris'],
 
     /**
-     * V173: 动态 User-Agent 轮换池 (20 个主流 UA)
-     * 包含最新的桌面端和移动端浏览器指纹
+     * V173: 鍔ㄦ€?User-Agent 杞崲姹?(20 涓富娴?UA)
+     * 鍖呭惈鏈€鏂扮殑妗岄潰绔拰绉诲姩绔祻瑙堝櫒鎸囩汗
      */
     uaPool: [
-        // Chrome 桌面端 (Windows)
+        // Chrome 妗岄潰绔?(Windows)
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-        // Chrome 桌面端 (macOS)
+        // Chrome 妗岄潰绔?(macOS)
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        // Edge 桌面端
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
+        // Edge 妗岄潰绔?        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36 Edg/132.0.0.0',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36 Edg/133.0.0.0',
-        // Firefox 桌面端
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
+        // Firefox 妗岄潰绔?        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0',
         'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:134.0) Gecko/20100101 Firefox/134.0',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:135.0) Gecko/20100101 Firefox/135.0',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 14.0; rv:134.0) Gecko/20100101 Firefox/134.0',
-        // Safari 桌面端 (macOS)
+        // Safari 妗岄潰绔?(macOS)
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Safari/605.1.15',
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15',
-        // Chrome 移动端 (Android)
+        // Chrome 绉诲姩绔?(Android)
         'Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Mobile Safari/537.36',
         'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Mobile Safari/537.36',
-        // Safari 移动端 (iOS)
+        // Safari 绉诲姩绔?(iOS)
         'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
         'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
     ],
 
     /**
-     * V173: 获取随机 User-Agent
-     * @returns {string} 随机 UA 字符串
-     */
+     * V173: 鑾峰彇闅忔満 User-Agent
+     * @returns {string} 闅忔満 UA 瀛楃涓?     */
     getRandomUA() {
         return this.uaPool[Math.floor(Math.random() * this.uaPool.length)];
     },
 
     /**
-     * V173: 获取随机视口尺寸
-     * @returns {Object} 视口配置
+     * V173: 鑾峰彇闅忔満瑙嗗彛灏哄
+     * @returns {Object} 瑙嗗彛閰嶇疆
      */
     getRandomViewport() {
         const viewports = [
@@ -486,27 +472,27 @@ const FINGERPRINT = {
             { width: 1280, height: 720 },
             { width: 1600, height: 900 },
             { width: 2560, height: 1440 },
-            { width: 1287, height: 1271 }  // 原始会话镜像尺寸
+            { width: 1287, height: 1271 }  // 鍘熷浼氳瘽闀滃儚灏哄
         ];
         return viewports[Math.floor(Math.random() * viewports.length)];
     }
 };
 
 // ============================================================================
-// V173: FotMob 深度静默模式配置 (Cool Down)
+// V173: FotMob 娣卞害闈欓粯妯″紡閰嶇疆 (Cool Down)
 // ============================================================================
 
 const FOTMOB_COOL_DOWN = {
-    /** 是否启用深度静默模式 */
+    /** 鏄惁鍚敤娣卞害闈欓粯妯″紡 */
     enabled: ENV.ENABLE_COOL_DOWN !== 'false',
 
-    /** 触发熔断的连续失败次数 */
+    /** 瑙﹀彂鐔旀柇鐨勮繛缁け璐ユ鏁?*/
     triggerThreshold: parseInt(ENV.COOL_DOWN_THRESHOLD) || 3,
 
-    /** 冷却时间 (毫秒) - 默认 30 分钟 */
+    /** 鍐峰嵈鏃堕棿 (姣) - 榛樿 30 鍒嗛挓 */
     durationMs: parseInt(ENV.COOL_DOWN_DURATION_MS) || 30 * 60 * 1000,
 
-    /** 需要触发冷却的错误类型 */
+    /** 闇€瑕佽Е鍙戝喎鍗寸殑閿欒绫诲瀷 */
     triggerErrors: [
         'SIZE_TOO_SMALL',
         'TURNSTILE_REQUIRED',
@@ -515,13 +501,12 @@ const FOTMOB_COOL_DOWN = {
         'CAPTCHA'
     ],
 
-    /** 当前冷却状态 (运行时) */
+    /** 褰撳墠鍐峰嵈鐘舵€?(杩愯鏃? */
     _activeCoolDowns: new Map(),
 
     /**
-     * 检查是否应该触发冷却
-     * @param {string} errorType - 错误类型
-     * @param {number} consecutiveFailures - 连续失败次数
+     * 妫€鏌ユ槸鍚﹀簲璇ヨЕ鍙戝喎鍗?     * @param {string} errorType - 閿欒绫诲瀷
+     * @param {number} consecutiveFailures - 杩炵画澶辫触娆℃暟
      * @returns {boolean}
      */
     shouldTrigger(errorType, consecutiveFailures) {
@@ -532,8 +517,7 @@ const FOTMOB_COOL_DOWN = {
     },
 
     /**
-     * 进入冷却状态
-     * @param {number} workerId - Worker ID
+     * 杩涘叆鍐峰嵈鐘舵€?     * @param {number} workerId - Worker ID
      */
     enterCoolDown(workerId) {
         const endTime = Date.now() + this.durationMs;
@@ -543,12 +527,11 @@ const FOTMOB_COOL_DOWN = {
             duration: this.durationMs
         });
         const minutes = Math.round(this.durationMs / 60000);
-        console.log(`❄️ Worker ${workerId} 进入深度静默模式，冷却 ${minutes} 分钟`);
+        console.log(`鉂勶笍 Worker ${workerId} 杩涘叆娣卞害闈欓粯妯″紡锛屽喎鍗?${minutes} 鍒嗛挓`);
     },
 
     /**
-     * 检查是否在冷却中
-     * @param {number} workerId - Worker ID
+     * 妫€鏌ユ槸鍚﹀湪鍐峰嵈涓?     * @param {number} workerId - Worker ID
      * @returns {boolean}
      */
     isInCoolDown(workerId) {
@@ -563,10 +546,9 @@ const FOTMOB_COOL_DOWN = {
     },
 
     /**
-     * 获取剩余冷却时间 (毫秒)
+     * 鑾峰彇鍓╀綑鍐峰嵈鏃堕棿 (姣)
      * @param {number} workerId - Worker ID
-     * @returns {number} 剩余毫秒数，0 表示不在冷却中
-     */
+     * @returns {number} 鍓╀綑姣鏁帮紝0 琛ㄧず涓嶅湪鍐峰嵈涓?     */
     getRemainingTime(workerId) {
         const state = this._activeCoolDowns.get(workerId);
         if (!state) return 0;
@@ -575,94 +557,94 @@ const FOTMOB_COOL_DOWN = {
 };
 
 // ============================================================================
-// 路径配置 (Paths)
+// 璺緞閰嶇疆 (Paths)
 // ============================================================================
 
 const PATH_CONFIG = {
-    /** 项目根目录 */
+    /** 椤圭洰鏍圭洰褰?*/
     projectRoot: ENV.PROJECT_ROOT || '/app',
 
-    /** 数据库配置路径 */
-    databaseConfig: '/app/config/database',
+    /** 鏁版嵁搴撻厤缃矾寰?*/
+    databaseConfig: path.join(process.cwd(), 'config/database'),
 
-    /** 数据目录 */
-    dataDir: ENV.DATA_DIR || '/app/data',
+    /** 鏁版嵁鐩綍 */
+    dataDir: ENV.DATA_DIR || path.join(process.cwd(), 'data'),
 
-    /** 日志目录 */
-    logDir: ENV.LOG_DIR || '/app/logs',
+    /** 鏃ュ織鐩綍 */
+    logDir: ENV.LOG_DIR || path.join(process.cwd(), 'logs'),
 
-    /** Cookie 存储路径 */
-    cookiePath: '/app/data/browser_profile/browser_state.json',
+    /** Cookie 瀛樺偍璺緞 */
+    cookiePath: path.join(process.cwd(), 'data/browser_profile/browser_state.json'),
 
-    /** Worker 脚本路径 */
-    workerScript: '/app/scripts/ops/harvest_worker.js',
+    /** Worker 鑴氭湰璺緞 */
+    workerScript: path.join(process.cwd(), 'scripts/ops/harvest_worker.js'),
 
-    /** 核心引擎路径 */
-    enginePath: '/app/src/domain/services/harvesting/MatchDetailEngine.js',
+    /** 鏍稿績寮曟搸璺緞 */
+    enginePath: path.join(process.cwd(), 'src/domain/services/harvesting/MatchDetailEngine.js'),
 
-    /** 浏览器配置目录 */
-    browserProfile: ENV.BROWSER_PROFILE_PATH || '/app/data/browser_profile'
+    /** 娴忚鍣ㄩ厤缃洰褰?*/
+    browserProfile: ENV.BROWSER_PROFILE_PATH || path.join(process.cwd(), 'data/browser_profile')
 };
 
 // ============================================================================
-// 日志配置 (Logging)
+// 鏃ュ織閰嶇疆 (Logging)
 // ============================================================================
 
 const LOG_CONFIG = {
-    /** 日志级别 */
+    /** 鏃ュ織绾у埆 */
     level: ENV.LOG_LEVEL || 'info',
 
-    /** 日志格式 */
+    /** 鏃ュ織鏍煎紡 */
     format: 'timestamped',
 
-    /** 是否输出到文件 */
+    /** 鏄惁杈撳嚭鍒版枃浠?*/
     toFile: ENV.LOG_TO_FILE === 'true',
 
-    /** 日志文件最大大小 (bytes) */
+    /** 鏃ュ織鏂囦欢鏈€澶уぇ灏?(bytes) */
     maxFileSize: parseInt(ENV.LOG_MAX_SIZE) || 10 * 1024 * 1024,  // 10MB
 
-    /** 日志保留天数 */
+    /** 鏃ュ織淇濈暀澶╂暟 */
     retentionDays: parseInt(ENV.LOG_RETENTION_DAYS) || 7
 };
 
 // ============================================================================
-// 哨兵监控配置 (Sentinel)
+// 鍝ㄥ叺鐩戞帶閰嶇疆 (Sentinel)
 // ============================================================================
 
 const SENTINEL_CONFIG = {
-    /** 最大失败率阈值 */
+    /** 鏈€澶уけ璐ョ巼闃堝€?*/
     maxFailureRate: parseFloat(ENV.MAX_FAILURE_RATE) || 0.10,
 
-    /** 最大连续 403 错误次数 */
+    /** 鏈€澶ц繛缁?403 閿欒娆℃暟 */
     maxConsecutive403: parseInt(ENV.MAX_CONSECUTIVE_403) || 5,
 
-    /** 健康报告路径 */
-    healthReportPath: ENV.HEALTH_REPORT_PATH || '/app/logs/factory_health.json',
+    /** 鍋ュ悍鎶ュ憡璺緞 */
+    healthReportPath: ENV.HEALTH_REPORT_PATH || path.join(process.cwd(), 'logs/factory_health.json'),
 
-    /** 告警邮件 (可选) */
+    /** 鍛婅閭欢 (鍙€? */
     alertEmail: ENV.ALERT_EMAIL || null,
 
-    /** Cookie 最大年龄 (毫秒) */
-    cookieMaxAgeMs: parseInt(ENV.COOKIE_MAX_AGE_MS) || 24 * 60 * 60 * 1000  // 24 小时
+    /** Cookie 鏈€澶у勾榫?(姣) */
+    cookieMaxAgeMs: parseInt(ENV.COOKIE_MAX_AGE_MS) || 24 * 60 * 60 * 1000  // 24 灏忔椂
 };
 
 // ============================================================================
-// 增量模式配置 (Incremental)
+// 澧為噺妯″紡閰嶇疆 (Incremental)
 // ============================================================================
 
 const INCREMENTAL_CONFIG = {
-    /** 回溯天数 */
+    /** 鍥炴函澶╂暟 */
     lookbackDays: parseInt(ENV.INCREMENTAL_LOOKBACK_DAYS) || 7,
 
-    /** 目标状态列表 */
+    /** 鐩爣鐘舵€佸垪琛?*/
     targetStatuses: ['completed', 'finished'],
 
-    /** 排除的联赛 (可选) */
+    /** 鎺掗櫎鐨勮仈璧?(鍙€? */
     excludedLeagues: (ENV.EXCLUDED_LEAGUES || '').split(',').filter(Boolean)
 };
 
 // ============================================================================
-// 运行模式 (Run Modes)
+// 杩愯妯″紡 (Run Modes)
 // ============================================================================
 
 const RUN_MODES = {
@@ -672,46 +654,42 @@ const RUN_MODES = {
 };
 
 // ============================================================================
-// 辅助函数
+// 杈呭姪鍑芥暟
 // ============================================================================
 
 /**
- * 获取随机延时 (毫秒)
- * @param {number[]} range - [min, max] 范围
- * @returns {number} 随机毫秒数
- */
+ * 鑾峰彇闅忔満寤舵椂 (姣)
+ * @param {number[]} range - [min, max] 鑼冨洿
+ * @returns {number} 闅忔満姣鏁? */
 function getRandomDelay(range = [TIMING.minDelayMs, TIMING.maxDelayMs]) {
     return Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
 }
 
 /**
- * V178: 获取指数退避延时 (1s -> 2s -> 4s 带抖动)
- * @param {number} attempt - 当前尝试次数 (1-based)
- * @returns {number} 退避延时 (ms)
+ * V178: 鑾峰彇鎸囨暟閫€閬垮欢鏃?(1s -> 2s -> 4s 甯︽姈鍔?
+ * @param {number} attempt - 褰撳墠灏濊瘯娆℃暟 (1-based)
+ * @returns {number} 閫€閬垮欢鏃?(ms)
  */
 function getExponentialBackoff(attempt) {
-    // V178: 固定退避序列 1s -> 2s -> 4s
+    // V178: 鍥哄畾閫€閬垮簭鍒?1s -> 2s -> 4s
     const baseDelay = 1000 * Math.pow(2, attempt - 1);  // 1000, 2000, 4000
-    const delay = Math.min(baseDelay, 4000);  // 上限 4 秒
-
-    // V178: ±20% 抖动
+    const delay = Math.min(baseDelay, 4000);  // 涓婇檺 4 绉?
+    // V178: 卤20% 鎶栧姩
     const jitter = delay * 0.2 * (Math.random() * 2 - 1);
     return Math.floor(delay + jitter);
 }
 
 /**
- * 随机数生成 (范围)
- * @param {number} min - 最小值
- * @param {number} max - 最大值
- * @returns {number}
+ * 闅忔満鏁扮敓鎴?(鑼冨洿)
+ * @param {number} min - 鏈€灏忓€? * @param {number} max - 鏈€澶у€? * @returns {number}
  */
 function randomInRange(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 /**
- * 随机选择数组元素
- * @param {Array} arr - 数组
+ * 闅忔満閫夋嫨鏁扮粍鍏冪礌
+ * @param {Array} arr - 鏁扮粍
  * @returns {*}
  */
 function randomChoice(arr) {
@@ -719,11 +697,11 @@ function randomChoice(arr) {
 }
 
 // ============================================================================
-// 导出
+// 瀵煎嚭
 // ============================================================================
 
 module.exports = {
-    // 配置模块
+    // 閰嶇疆妯″潡
     QUALITY_GATE,
     TIMING,
     RETRY,
@@ -740,16 +718,17 @@ module.exports = {
     INCREMENTAL_CONFIG,
     RUN_MODES,
 
-    // V173: 新增配置
+    // V173: 鏂板閰嶇疆
     FOTMOB_COOL_DOWN,
 
-    // 辅助函数
+    // 杈呭姪鍑芥暟
     getRandomDelay,
     getExponentialBackoff,
     randomInRange,
     randomChoice,
 
-    // 版本信息
+    // 鐗堟湰淇℃伅
     VERSION: 'V178.0.0',
     BUILD_DATE: '2026-03-03'
 };
+
