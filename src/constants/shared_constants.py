@@ -191,12 +191,13 @@ def reload_constants() -> dict[str, Any]:
 
 
 # 导出的常量实例
-MATCH_STATUS = MatchStatus()
-MATCH_OUTCOME = MatchOutcome()
-DEFAULT_PROBABILITIES = DefaultProbabilities()
-ODDS_LIMITS = OddsLimits()
-CONFIDENCE_THRESHOLDS = ConfidenceThresholds()
-STATISTICAL_THRESHOLDS = StatisticalThresholds()
+# V4.46.2: Enum 类直接使用，dataclass 类需要实例化
+MATCH_STATUS = MatchStatus  # Enum 类，直接使用
+MATCH_OUTCOME = MatchOutcome  # Enum 类，直接使用
+DEFAULT_PROBABILITIES = DefaultProbabilities()  # dataclass，实例化
+ODDS_LIMITS = OddsLimits()  # dataclass，实例化
+CONFIDENCE_THRESHOLDS = ConfidenceThresholds()  # dataclass，实例化
+STATISTICAL_THRESHOLDS = StatisticalThresholds()  # dataclass，实例化
 
 # 向后兼容的常量值
 HOME_WIN = MatchOutcome.HOME_WIN  # 2

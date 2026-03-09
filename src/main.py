@@ -9,7 +9,7 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST
@@ -294,7 +294,7 @@ async def predict_match(request: dict) -> dict:
 
 @app.post("/predict/batch", summary="批量预测", tags=["预测"])
 @rate_limit_predict()
-async def predict_batch(requests: list[dict]) -> list[dict]:
+async def predict_batch(request: Request, batch_data: list[dict]) -> list[dict]:
     """
     批量预测接口
 
@@ -302,7 +302,7 @@ async def predict_batch(requests: list[dict]) -> list[dict]:
     """
     try:
         predictor = get_predictor()
-        results = predictor.predict_batch(requests)
+        results = predictor.predict_batch(batch_data)
         logger.info(f"批量预测完成: {len(results)} 场比赛")
         return results
     except Exception as e:

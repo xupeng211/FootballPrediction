@@ -30,9 +30,9 @@ const {
     DEFAULT_ELO_RATING,
     LOG_LEVELS,
     MARKET_VALUE_MULTIPLIER
-} = require('../../config/constants');
+} = require('../../../config/constants');
 
-const { getPool, withRetry, checkHealth, closePool, isRetryableError } = require('../../config/database');
+const { getPool, withRetry, checkHealth, closePool, isRetryableError } = require('../../../config/database');
 
 // 导入提取器（纯函数）
 const { extractGoldenFeatures } = require('../extractors/GoldenFeatureExtractor');

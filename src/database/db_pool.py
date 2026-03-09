@@ -67,11 +67,26 @@ class DatabasePoolConfig:
 
     # 基本连接配置
     # V4.25: 移除硬编码默认密码，强制使用环境变量
-    host: str = field(default_factory=lambda: os.getenv("DB_HOST", "localhost"))
+    # V4.46.2: Docker 环境自动使用 db 作为主机名
+    host: str = field(default_factory=lambda: DatabasePoolConfig._get_db_host())
     port: int = field(default_factory=lambda: int(os.getenv("DB_PORT", "5432")))
     user: str = field(default_factory=lambda: os.getenv("DB_USER", "football_user"))
     password: str = field(default_factory=lambda: DatabasePoolConfig._get_required_password())
     database: str = field(default_factory=lambda: os.getenv("DB_NAME", "football_db"))
+
+    @staticmethod
+    def _get_db_host() -> str:
+        """V4.46.2: 智能获取数据库主机名"""
+        # 检查是否在 Docker 环境中
+        docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
+        db_host = os.getenv("DB_HOST", "localhost")
+
+        # 如果在 Docker 环境中且 DB_HOST 指向 host.docker.internal，自动切换到 db
+        if docker_env and db_host == "host.docker.internal":
+            logger.info("🐳 Docker 环境：自动使用 'db' 作为数据库主机")
+            return "db"
+
+        return db_host
 
     # SSL 安全配置（Phase 2.9 强制安全加固）
     # 生产环境强制使用 SSL，开发环境可通过 DB_SSL_MODE=disable 禁用

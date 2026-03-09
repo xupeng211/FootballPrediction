@@ -99,19 +99,19 @@ const QUALITY_GATE = {
 
 const TIMING = {
     /** 鍗曞満鏀跺壊鏈€灏忓欢鏃?(ms) - V173: 榛樿 10s 娼滆棰戠巼 */
-    minDelayMs: parseInt(ENV.MIN_DELAY_MS) || 10000,
+    minDelayMs: parseInt(ENV.MIN_DELAY_MS) || 1000,  // V4.46.3 HYPER-DRIVE: 超频模式 (原 10s)
 
     /** 鍗曞満鏀跺壊鏈€澶у欢鏃?(ms) - V173: 榛樿 15s 娼滆棰戠巼 */
-    maxDelayMs: parseInt(ENV.MAX_DELAY_MS) || 15000,
+    maxDelayMs: parseInt(ENV.MAX_DELAY_MS) || 3000,   // V4.46.3 HYPER-DRIVE: 超频模式 (原 15s)
 
     /** 棣栭〉棰勭儹寤舵椂鑼冨洿 [min, max] (ms) */
-    preVisitDelay: [3000, 6000],
+    preVisitDelay: [2000, 4000],  // V4.46.3: 压缩预热延迟
 
     /** 椤甸潰绛夊緟寤舵椂鑼冨洿 [min, max] (ms) */
-    pageDelay: [5000, 10000],
+    pageDelay: [2000, 5000],      // V4.46.3: 压缩页面延迟
 
     /** 闃呰寤舵椂鑼冨洿 [min, max] (ms) - 妯℃嫙鐪熶汉闃呰 */
-    readDelay: [3000, 7000],
+    readDelay: [1500, 3500],      // V4.46.3: 压缩阅读延迟
 
     /** API 璇锋眰瓒呮椂 (ms) */
     apiTimeout: parseInt(ENV.API_TIMEOUT) || 30000,
