@@ -2,11 +2,11 @@
 
 > **工业级足球预测平台** — L1 并行扫描 + 批量写入 + 代理池集成 + 95/100 大厂标准
 >
-> **Dataset: 1900/1900 Matches Aligned (Multi-League Cumulative)** ✅
+> **Dataset: 2206/2206 Matches Aligned (Serie A & Bundesliga)** ✅
 
-[![Version](https://img.shields.io/badge/version-V4.46.5--HARDENING-blue.svg)](https://github.com/xupeng211/FootballPrediction)
+[![Version](https://img.shields.io/badge/version-V4.46.6--INDUSTRIAL-blue.svg)](https://github.com/xupeng211/FootballPrediction)
 [![Architecture](https://img.shields.io/badge/architecture-Big%20Tech%20Standard-green.svg)]()
-[![Data](https://img.shields.io/badge/data-L1%3D%20L2%3D%20L3%20%3D%201900-green.svg)]()
+[![Data](https://img.shields.io/badge/data-L1%3D%20L2%3D%20L3%20%3D%202206-green.svg)]()
 [![Quality](https://img.shields.io/badge/quality-95%2F100-brightgreen.svg)]()
 
 ---

@@ -41,9 +41,6 @@ const {
     STATUS_POSTPONED
 } = require('../../config/shared_constants');
 
-// V4.46.6: NetworkShield 代理池
-const { getNetworkShield } = require('./network/NetworkShield');
-
 // V4.46.6: MetricsClient 可观测性
 const { getMetricsClient } = require('./monitoring/MetricsClient');
 
@@ -169,30 +166,16 @@ const BASE_CONFIG = {
 // ============================================================================
 
 /**
- * V4.46.6: 代理感知 HTTP GET 请求
+ * V4.46.6: HTTPS GET 请求 (直连模式)
+ * L1 发现层使用公开 API，无需代理
  * @param {string} url - 请求 URL
  * @param {Object} options - 请求选项
- * @param {number} [workerId=0] - Worker ID (用于代理分配)
+ * @param {number} [workerId=0] - Worker ID (用于日志)
  * @returns {Promise<{status: number, data: Object|null, raw: string}>}
  */
 async function httpsGetWithProxy(url, options = {}, workerId = 0) {
-    return new Promise(async (resolve, reject) => {
-        const shield = getNetworkShield();
+    return new Promise((resolve, reject) => {
         const parsedUrl = new URL(url);
-
-        // V4.46.6: 尝试获取代理配置 (L1 使用专用端口段)
-        let proxyConfig = null;
-        try {
-            // 计算专用代理端口 (7890-7894 范围)
-            const l1Port = BASE_CONFIG.proxyPortRange.start + (workerId % 5);
-            proxyConfig = {
-                host: process.env.PROXY_HOST || '172.25.16.1',
-                port: l1Port
-            };
-            log.debug(`[Worker ${workerId}] 使用代理: ${proxyConfig.host}:${proxyConfig.port}`);
-        } catch (e) {
-            log.debug(`代理不可用，直连模式: ${e.message}`);
-        }
 
         const requestOptions = {
             hostname: parsedUrl.hostname,
@@ -207,13 +190,7 @@ async function httpsGetWithProxy(url, options = {}, workerId = 0) {
             }
         };
 
-        // V4.46.6: 如果有代理，添加代理配置
-        if (proxyConfig) {
-            requestOptions.agent = new (require('http').Agent)({
-                host: proxyConfig.host,
-                port: proxyConfig.port
-            });
-        }
+        log.debug(`[Worker ${workerId}] 直连请求: ${url}`);
 
         const req = https.request(requestOptions, (res) => {
             let data = '';
@@ -272,10 +249,7 @@ class FixtureSeeder {
         // V4.46.6: MetricsClient
         this.metricsClient = getMetricsClient();
 
-        // V4.46.6: NetworkShield
-        this.networkShield = getNetworkShield();
-
-        // 统计信息
+        // V4.46.6: 统计信息
         this.stats = {
             leagues: 0,
             fixtures: 0,
