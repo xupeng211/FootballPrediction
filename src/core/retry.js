@@ -12,6 +12,9 @@
 
 'use strict';
 
+// V4.46.5 HARDENING: 使用确定性 ID 生成器（零模拟铁律）
+const { generateDeterministicId } = require('./id_generator');
+
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
@@ -64,11 +67,12 @@ class RetryError extends Error {
 }
 
 // ============================================================================
-// TRACE ID GENERATOR
+// TRACE ID GENERATOR - V4.46.5: 使用确定性生成器
 // ============================================================================
 
+// generateTraceId 已移至 src/core/id_generator.js，此处使用别名
 function generateTraceId() {
-    return `trace_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+    return generateDeterministicId('trace');
 }
 
 // ============================================================================

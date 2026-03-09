@@ -51,6 +51,7 @@ class AbstractHarvester {
      * @param {number} [config.maxSweepRounds=3] - 最大扫尾轮数
      * @param {number} [config.targetSuccessRate=1.0] - 目标成功率
      * @param {boolean} [config.verboseLogging=false] - 详细日志模式
+     * @param {boolean} [config.skipZombieCleanup=false] - 跳过僵尸进程清理（Swarm 模式）
      */
     constructor(config = {}) {
         this.config = {
@@ -67,6 +68,7 @@ class AbstractHarvester {
             targetSuccessRate: parseFloat(process.env.TARGET_SUCCESS_RATE) || config.targetSuccessRate || 1.0,
             verboseLogging: process.env.VERBOSE_LOGGING === 'true' || config.verboseLogging || false,
             shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS) || config.shutdownTimeoutMs || 30000,
+            skipZombieCleanup: config.skipZombieCleanup || false,
             ...config
         };
 
@@ -91,6 +93,15 @@ class AbstractHarvester {
 
         // V4.46: 初始化指标客户端
         this.metricsClient = getMetricsClient();
+
+        // V4.46.3 HYPER-DRIVE: Browser Context Pooling
+        // V4.46.5 HARDENING: LRU 淘汰机制防止内存泄漏
+        this._contextPool = new Map();  // workerId -> { context, usageCount, lastPort, lastAccessTime }
+        this._contextMaxUsage = 10;     // 每个 context 最多复用 10 次
+        this._contextPoolMaxSize = 20;  // V4.46.5: 池子上限，防止无限增长
+        this._totalContextCreations = 0;
+        this._totalContextReuses = 0;
+        this._contextEvictions = 0;     // V4.46.5: 淘汰计数
 
         this._setupGracefulShutdown();
     }
@@ -154,8 +165,10 @@ class AbstractHarvester {
         client.release();
         console.log('✅ 数据库连接池已就绪');
 
-        // 清理僵尸进程
-        await preFlightCleanup();
+        // 清理僵尸进程 (Swarm 模式下跳过，由 SwarmHarvester 统一执行)
+        if (!this.config.skipZombieCleanup) {
+            await preFlightCleanup();
+        }
 
         // 启动浏览器
         this.browser = await chromium.launch({
@@ -192,6 +205,9 @@ class AbstractHarvester {
      * 清理资源
      */
     async cleanup() {
+        // V4.46.3 HYPER-DRIVE: 先清理 Context 池
+        await this._cleanupContextPool();
+
         if (this.browser) {
             await this.browser.close();
             console.log('✅ 浏览器已关闭');
@@ -399,8 +415,14 @@ class AbstractHarvester {
             }
         }
 
-        if (msg.includes('NO_DATA') || msg.includes('SIZE_TOO_SMALL')) {
+        // V4.46.3: NO_DATA 不可重试
+        if (msg.includes('NO_DATA')) {
             return false;
+        }
+
+        // V4.46.3: SIZE_TOO_SMALL 可重试（可能是 403 逃逸）
+        if (msg.includes('SIZE_TOO_SMALL')) {
+            return true;
         }
 
         return false;
@@ -416,6 +438,7 @@ class AbstractHarvester {
     async harvestWithRetry(match, index, maxRetries = 3) {
         const { match_id, home_team, away_team } = match;
         let lastError = null;
+        let consecutiveSizeTooSmall = 0;  // V4.46.3: 连续 SIZE_TOO_SMALL 计数
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
@@ -427,6 +450,16 @@ class AbstractHarvester {
                         this.stats.retries++;
                     }
                     return result;
+                }
+
+                // V4.46.3: 连续 SIZE_TOO_SMALL 检测
+                if (result.error && result.error.includes('SIZE_TOO_SMALL')) {
+                    consecutiveSizeTooSmall++;
+                    if (consecutiveSizeTooSmall >= 3) {
+                        console.log(`⏸️  [COOLDOWN] Worker 休息 30 秒 (连续 ${consecutiveSizeTooSmall} 次 SIZE_TOO_SMALL)...`);
+                        await this._delay(30000);
+                        consecutiveSizeTooSmall = 0;  // 重置计数
+                    }
                 }
 
                 if (!this._isRetryableError(new Error(result.error))) {
@@ -448,14 +481,23 @@ class AbstractHarvester {
             }
 
             if (attempt < maxRetries) {
-                const backoffMs = Math.min(1000 * Math.pow(2, attempt), 10000);
+                const backoffMs = Math.min(1000 * Math.pow(2, attempt), 8000);  // V4.46.3: 缩短退避
                 const workerId = (index % this.config.maxWorkers) + 1;
 
+                // V4.46.3: 403 逃逸策略 - 强制切换到不同端口
                 const currentIdentity = this.networkManager?.getWorkerIdentity(workerId);
 
                 if (currentIdentity) {
-                    await this.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
-                    console.log(`🔄 [RETRY-${attempt + 1}] ${home_team} vs ${away_team} 切换端口避障...`);
+                    // 强制切换到随机新端口（避障）
+                    const newPort = await this.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
+
+                    // 清理 Cookie（403 逃逸）
+                    if (this.networkManager.sessionManager) {
+                        await this.networkManager.sessionManager.clearSession(currentIdentity.proxy.port);
+                        console.log(`🧹 [RETRY-${attempt + 1}] 清理旧 Cookie...`);
+                    }
+
+                    console.log(`🔄 [RETRY-${attempt + 1}] ${home_team} vs ${away_team} 切换端口 ${currentIdentity.proxy.port} → ${newPort?.port || newPort}...`);
                 }
 
                 await this._delay(backoffMs);
@@ -487,48 +529,38 @@ class AbstractHarvester {
         const harvestStartTime = Date.now();
         this.metricsClient.recordHarvestStart(match_id, workerId);
 
-        // 随机延迟
-        const baseDelay = isRetry ? 3000 : this.config.minDelayMs;
-        const maxDelay = isRetry ? 6000 : this.config.maxDelayMs;
+        // V4.46.3 HYPER-DRIVE: 超频延迟 (1-3s)
+        const baseDelay = isRetry ? 1000 : this.config.minDelayMs;
+        const maxDelay = isRetry ? 2000 : this.config.maxDelayMs;
         const delay = baseDelay + Math.random() * (maxDelay - baseDelay);
         await this._delay(delay);
 
         // 获取 Worker 身份
         const identity = await this.networkManager.assignWorkerIdentity(workerId);
 
-        // 代理配置
-        const disableProxy = process.env.DISABLE_PROXY === 'true';
-        const proxyConfig = disableProxy ? undefined : { server: identity.proxy.url };
-
-        // 创建浏览器上下文
-        const context = await this.browser.newContext({
-            viewport: identity.stealth.viewport,
-            userAgent: identity.stealth.userAgent,
-            extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
-            proxy: proxyConfig,
-            deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
-            locale: identity.stealth.locale || 'en-US',
-            timezoneId: identity.stealth.timezoneId || 'Europe/London'
-        });
-
-        // Cookie 热加载
-        let cookieLoaded = false;
-        if (this.networkManager) {
-            cookieLoaded = await this.networkManager.loadSessionToContext(context, identity.proxy.port);
-        }
-        if (!cookieLoaded) {
-            cookieLoaded = await this._loadBrowserStateCookies(context);
+        // V4.46.3 HYPER-DRIVE: 使用 Context 池复用
+        let contextResult;
+        try {
+            contextResult = await this._getOrCreateContext(workerId, identity);
+        } catch (contextError) {
+            console.error(`❌ [W${workerId}] Context 创建失败: ${contextError.message}`);
+            return { success: false, match_id, error: contextError.message, workerId, attempt };
         }
 
-        const page = await context.newPage();
-        await this._injectStealthScripts(page);
+        const { context, isNew: isNewContext } = contextResult;
+        let page = null;
 
         const logPrefix = isRetry ? `[W${workerId}-R${attempt}]` : `[W${workerId}]`;
 
         try {
-            // 首页预热
-            const warmupConfig = isRetry ? { scrollMore: true, randomScrolls: true } : { scrollMore: false, randomScrolls: false };
-            await this._warmupHomepage(page, warmupConfig);
+            // 创建新页面（而非新 context）
+            page = await context.newPage();
+            await this._injectStealthScripts(page);
+
+            // 首页预热 - 仅在新 context 时执行完整预热
+            if (isNewContext) {
+                await this._warmupHomepage(page, { scrollMore: false, randomScrolls: false });
+            }
 
             // 导航到目标页面
             const targetUrl = this.getTargetUrl(match);
@@ -537,22 +569,18 @@ class AbstractHarvester {
                 timeout: 60000
             });
 
-            // 行为模拟
-            if (!isRetry) {
-                await this._simulateHumanBehavior(page);
-            } else {
-                const moves = this._randomInRange(3, 5);
-                for (let i = 0; i < moves; i++) {
-                    await page.mouse.move(
-                        this._randomInRange(100, 1800),
-                        this._randomInRange(100, 900),
-                        { steps: 5 }
-                    );
-                    await this._delay(200);
-                }
+            // 行为模拟 - 简化版
+            const moves = this._randomInRange(3, 5);
+            for (let i = 0; i < moves; i++) {
+                await page.mouse.move(
+                    this._randomInRange(100, 1800),
+                    this._randomInRange(100, 900),
+                    { steps: 5 }
+                );
+                await this._delay(100);
             }
 
-            await page.waitForTimeout(isRetry ? 3000 : 5000);
+            await page.waitForTimeout(isRetry ? 2000 : 3000);
 
             // 调用子类实现的数据提取逻辑
             const capturedData = await this.extractData(page, match);
@@ -564,6 +592,8 @@ class AbstractHarvester {
 
             const size = JSON.stringify(capturedData).length;
             if (size < 1000) {
+                // V4.46.3 HYPER-DRIVE: 403 逃逸 - 仅清理 cookies
+                await this._escape403(workerId);
                 throw new Error(`SIZE_TOO_SMALL:${size}`);
             }
 
@@ -609,8 +639,14 @@ class AbstractHarvester {
 
             return { success: false, match_id, error: error.message, workerId, attempt, errorType, duration: harvestDuration };
         } finally {
-            await page.close();
-            await context.close();
+            // V4.46.3 HYPER-DRIVE: 仅关闭 page，保留 context 供复用
+            if (page) {
+                try {
+                    await page.close();
+                } catch (e) {
+                    // 忽略关闭错误
+                }
+            }
         }
     }
 
@@ -622,12 +658,191 @@ class AbstractHarvester {
      */
     _classifyError(errorMessage) {
         const msg = (errorMessage || '').toLowerCase();
+        // V4.46.1: 全局熔断错误识别
+        if (msg.includes('circuit_breaker_open') || msg.includes('全局熔断') || msg.includes('所有代理节点不可用')) return 'BLOCKED';
         if (msg.includes('403') || msg.includes('forbidden')) return 'RATE_LIMITED';
         if (msg.includes('timeout') || msg.includes('timed out')) return 'TIMEOUT';
         if (msg.includes('no_data') || msg.includes('size_too_small')) return 'NO_DATA';
         if (msg.includes('connection') || msg.includes('network')) return 'NETWORK_ERROR';
         if (msg.includes('turnstile') || msg.includes('captcha')) return 'BLOCKED';
         return 'UNKNOWN';
+    }
+
+    // ========================================================================
+    // V4.46.3 HYPER-DRIVE: Browser Context Pooling
+    // ========================================================================
+
+    /**
+     * 获取或创建 BrowserContext（带复用池）
+     * V4.46.5 HARDENING: 增加 LRU 淘汰机制
+     * @param {number} workerId - Worker ID
+     * @param {Object} identity - Worker 身份信息
+     * @returns {Promise<{context: BrowserContext, isNew: boolean, poolInfo: Object}>}
+     * @private
+     */
+    async _getOrCreateContext(workerId, identity) {
+        const poolEntry = this._contextPool.get(workerId);
+        const currentPort = identity.proxy.port;
+
+        // 检查是否需要重建 context
+        let needsRebuild = false;
+        let reason = '';
+
+        if (!poolEntry) {
+            needsRebuild = true;
+            reason = 'NEW_WORKER';
+        } else if (poolEntry.usageCount >= this._contextMaxUsage) {
+            needsRebuild = true;
+            reason = `MAX_USAGE(${poolEntry.usageCount}/${this._contextMaxUsage})`;
+        } else if (poolEntry.lastPort !== currentPort) {
+            needsRebuild = true;
+            reason = `PORT_CHANGE(${poolEntry.lastPort}→${currentPort})`;
+        }
+
+        if (needsRebuild) {
+            // V4.46.5 HARDENING: 在创建新 Context 前检查池子大小
+            await this._evictLRUContext();
+
+            // 关闭旧 context
+            if (poolEntry?.context) {
+                try {
+                    await poolEntry.context.close();
+                } catch (e) {
+                    // 忽略关闭错误
+                }
+            }
+
+            // 创建新 context
+            const proxyConfig = process.env.DISABLE_PROXY === 'true' ? undefined : { server: identity.proxy.url };
+
+            const context = await this.browser.newContext({
+                viewport: identity.stealth.viewport,
+                userAgent: identity.stealth.userAgent,
+                extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
+                proxy: proxyConfig,
+                deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
+                locale: identity.stealth.locale || 'en-US',
+                timezoneId: identity.stealth.timezoneId || 'Europe/London'
+            });
+
+            // Cookie 热加载
+            let cookieLoaded = false;
+            if (this.networkManager) {
+                cookieLoaded = await this.networkManager.loadSessionToContext(context, currentPort);
+            }
+            if (!cookieLoaded) {
+                cookieLoaded = await this._loadBrowserStateCookies(context);
+            }
+
+            const now = Date.now();
+            const newEntry = {
+                context,
+                usageCount: 0,
+                lastPort: currentPort,
+                cookieLoaded,
+                createdAt: now,
+                lastAccessTime: now  // V4.46.5: LRU 时间戳
+            };
+
+            this._contextPool.set(workerId, newEntry);
+            this._totalContextCreations++;
+
+            console.log(`🔄 [W${workerId}] Context 创建: ${reason} | Port ${currentPort} | Cookie=${cookieLoaded} | Pool=${this._contextPool.size}/${this._contextPoolMaxSize}`);
+
+            return { context, isNew: true, poolInfo: newEntry };
+        }
+
+        // 复用现有 context
+        poolEntry.usageCount++;
+        poolEntry.lastAccessTime = Date.now();  // V4.46.5: 更新访问时间
+        this._totalContextReuses++;
+
+        console.log(`♻️  [W${workerId}] Context 复用: ${poolEntry.usageCount}/${this._contextMaxUsage} | Port ${currentPort}`);
+
+        return { context: poolEntry.context, isNew: false, poolInfo: poolEntry };
+    }
+
+    /**
+     * 403 逃逸：仅清理 Cookies 而非重启浏览器
+     * @param {number} workerId - Worker ID
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _escape403(workerId) {
+        const poolEntry = this._contextPool.get(workerId);
+        if (poolEntry?.context) {
+            try {
+                // 仅清理 cookies，保留 context
+                await poolEntry.context.clearCookies();
+                poolEntry.usageCount = 0;  // 重置计数
+                console.log(`🧹 [W${workerId}] 403 逃逸: Cookies 已清理`);
+            } catch (e) {
+                console.log(`⚠️  [W${workerId}] 403 逃逸失败: ${e.message}`);
+            }
+        }
+    }
+
+    /**
+     * V4.46.5 HARDENING: LRU 淘汰 - 清理最久未使用的 Context
+     * 当池子大小超过上限时自动触发
+     * @private
+     */
+    async _evictLRUContext() {
+        if (this._contextPool.size <= this._contextPoolMaxSize) {
+            return;
+        }
+
+        // 按 lastAccessTime 排序，找到最久未使用的条目
+        let oldestEntry = null;
+        let oldestWorkerId = null;
+        let oldestTime = Infinity;
+
+        for (const [workerId, entry] of this._contextPool) {
+            if (entry.lastAccessTime < oldestTime) {
+                oldestTime = entry.lastAccessTime;
+                oldestEntry = entry;
+                oldestWorkerId = workerId;
+            }
+        }
+
+        if (oldestEntry && oldestWorkerId !== null) {
+            try {
+                if (oldestEntry.context) {
+                    await oldestEntry.context.close();
+                    this._contextEvictions++;
+                    console.log(`🗑️ [LRU] 淘汰 W${oldestWorkerId} Context (空闲 ${((Date.now() - oldestTime) / 1000).toFixed(0)}s)`);
+                }
+            } catch (e) {
+                // 忽略关闭错误
+            }
+            this._contextPool.delete(oldestWorkerId);
+        }
+    }
+
+    /**
+     * 清理所有 Context 池
+     * @private
+     */
+    async _cleanupContextPool() {
+        let cleaned = 0;
+        for (const [workerId, entry] of this._contextPool) {
+            try {
+                if (entry.context) {
+                    await entry.context.close();
+                    cleaned++;
+                }
+            } catch (e) {
+                // 忽略
+            }
+        }
+        this._contextPool.clear();
+
+        if (cleaned > 0 || this._totalContextCreations > 0) {
+            const evictionRate = this._totalContextCreations > 0
+                ? ((this._contextEvictions / this._totalContextCreations) * 100).toFixed(0)
+                : '0';
+            console.log(`🧹 Context 池清理: ${cleaned} 个 | 创建=${this._totalContextCreations} | 复用=${this._totalContextReuses} | 淘汰=${this._contextEvictions} (${evictionRate}%)`);
+        }
     }
 
     // ========================================================================
@@ -948,6 +1163,13 @@ class AbstractHarvester {
         console.log(`  扫尾轮数: ${this.stats.sweepRounds}`);
         console.log(`  耗时: ${elapsed} 秒`);
         console.log(`  Worker 数: ${this.config.maxWorkers}`);
+
+        // V4.46.3 HYPER-DRIVE: Context 池统计
+        if (this._totalContextCreations > 0) {
+            const reuseRate = ((this._totalContextReuses / (this._totalContextCreations + this._totalContextReuses)) * 100).toFixed(0);
+            const evictionRate = ((this._contextEvictions / this._totalContextCreations) * 100).toFixed(0);
+            console.log(`  Context 池: 创建=${this._totalContextCreations} 复用=${this._totalContextReuses} (${reuseRate}% 复用率) 淘汰=${this._contextEvictions} (${evictionRate}%)`);
+        }
 
         if (this.networkManager && this.networkManager.workerIdentities) {
             for (const [workerId, identity] of this.networkManager.workerIdentities) {

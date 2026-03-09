@@ -33,6 +33,12 @@ const metricsStore = {
     proxyFailed: 0,
     proxyByPort: {},
 
+    // V4.46.5 HARDENING: L2 堆积量监控
+    matchesPending: 0,       // 待收割比赛数
+    matchesProcessed: 0,    // 已处理比赛数
+    l2Backlog: 0,           // L2 堆积量
+    lastBacklogUpdate: null, // 最后更新时间
+
     // 时间戳
     lastHarvestTime: null,
     startTime: Date.now(),
@@ -149,6 +155,28 @@ class MetricsClient {
     }
 
     /**
+     * V4.46.5 HARDENING: 记录待收割比赛数（L2 堆积量）
+     * 应在收割循环开始时调用
+     * @param {number} pending - 待收割比赛数
+     * @param {number} processed - 已处理比赛数
+     */
+    recordPendingMatches(pending, processed = 0) {
+        metricsStore.matchesPending = pending;
+        metricsStore.matchesProcessed = processed;
+        metricsStore.l2Backlog = pending - processed;
+        metricsStore.lastBacklogUpdate = Date.now();
+    }
+
+    /**
+     * V4.46.5 HARDENING: 更新已处理比赛数
+     * @param {number} processed - 新增已处理数
+     */
+    updateProcessedMatches(processed) {
+        metricsStore.matchesProcessed += processed;
+        metricsStore.l2Backlog = metricsStore.matchesPending - metricsStore.matchesProcessed;
+    }
+
+    /**
      * 获取 Prometheus 格式指标
      * @returns {string} Prometheus 文本格式
      */
@@ -157,71 +185,91 @@ class MetricsClient {
         const now = Date.now();
 
         // 帮助和类型声明
-        lines.push('# HELP harvest_total Total harvest attempts');
-        lines.push('# TYPE harvest_total counter');
-        lines.push(`harvest_total ${metricsStore.harvestTotal}`);
+        lines.push('# HELP titan_harvest_total Total harvest attempts');
+        lines.push('# TYPE titan_harvest_total counter');
+        lines.push(`titan_harvest_total ${metricsStore.harvestTotal}`);
 
-        lines.push('# HELP harvest_success_total Successful harvests');
-        lines.push('# TYPE harvest_success_total counter');
-        lines.push(`harvest_success_total ${metricsStore.harvestSuccess}`);
+        lines.push('# HELP titan_harvest_success_total Successful harvests');
+        lines.push('# TYPE titan_harvest_success_total counter');
+        lines.push(`titan_harvest_success_total ${metricsStore.harvestSuccess}`);
 
-        lines.push('# HELP harvest_failed_total Failed harvests');
-        lines.push('# TYPE harvest_failed_total counter');
-        lines.push(`harvest_failed_total ${metricsStore.harvestFailed}`);
+        lines.push('# HELP titan_harvest_failed_total Failed harvests');
+        lines.push('# TYPE titan_harvest_failed_total counter');
+        lines.push(`titan_harvest_failed_total ${metricsStore.harvestFailed}`);
 
         // 平均耗时
         const avgDuration = metricsStore.harvestDurationMs.length > 0
             ? metricsStore.harvestDurationMs.reduce((a, b) => a + b, 0) / metricsStore.harvestDurationMs.length
             : 0;
 
-        lines.push('# HELP harvest_duration_avg_ms Average harvest duration in milliseconds');
-        lines.push('# TYPE harvest_duration_avg_ms gauge');
-        lines.push(`harvest_duration_avg_ms ${avgDuration.toFixed(2)}`);
+        lines.push('# HELP titan_harvest_duration_avg_ms Average harvest duration in milliseconds');
+        lines.push('# TYPE titan_harvest_duration_avg_ms gauge');
+        lines.push(`titan_harvest_duration_avg_ms ${avgDuration.toFixed(2)}`);
 
         // 成功率
         const successRate = metricsStore.harvestTotal > 0
             ? (metricsStore.harvestSuccess / metricsStore.harvestTotal * 100)
             : 0;
 
-        lines.push('# HELP harvest_success_rate Harvest success rate (0-100)');
-        lines.push('# TYPE harvest_success_rate gauge');
-        lines.push(`harvest_success_rate ${successRate.toFixed(2)}`);
+        lines.push('# HELP titan_harvest_success_rate Harvest success rate (0-100)');
+        lines.push('# TYPE titan_harvest_success_rate gauge');
+        lines.push(`titan_harvest_success_rate ${successRate.toFixed(2)}`);
+
+        // V4.46.5 HARDENING: L2 堆积量指标
+        lines.push('# HELP titan_matches_pending Matches pending harvest');
+        lines.push('# TYPE titan_matches_pending gauge');
+        lines.push(`titan_matches_pending ${metricsStore.matchesPending}`);
+
+        lines.push('# HELP titan_matches_processed Matches processed');
+        lines.push('# TYPE titan_matches_processed gauge');
+        lines.push(`titan_matches_processed ${metricsStore.matchesProcessed}`);
+
+        lines.push('# HELP titan_l2_backlog L2 backlog (pending - processed)');
+        lines.push('# TYPE titan_l2_backlog gauge');
+        lines.push(`titan_l2_backlog ${metricsStore.l2Backlog}`);
+
+        if (metricsStore.lastBacklogUpdate) {
+            const backlogUpdateSecondsAgo = (now - metricsStore.lastBacklogUpdate) / 1000;
+            lines.push('# HELP titan_l2_backlog_update_seconds_ago Seconds since last backlog update');
+            lines.push('# TYPE titan_l2_backlog_update_seconds_ago gauge');
+            lines.push(`titan_l2_backlog_update_seconds_ago ${backlogUpdateSecondsAgo.toFixed(2)}`);
+        }
 
         // 代理统计
-        lines.push('# HELP proxy_requests_total Total proxy requests');
-        lines.push('# TYPE proxy_requests_total counter');
-        lines.push(`proxy_requests_total ${metricsStore.proxyRequests}`);
+        lines.push('# HELP titan_proxy_requests_total Total proxy requests');
+        lines.push('# TYPE titan_proxy_requests_total counter');
+        lines.push(`titan_proxy_requests_total ${metricsStore.proxyRequests}`);
 
-        lines.push('# HELP proxy_by_port Proxy statistics by port');
-        lines.push('# TYPE proxy_by_port gauge');
+        lines.push('# HELP titan_proxy_by_port Proxy statistics by port');
+        lines.push('# TYPE titan_proxy_by_port gauge');
 
         for (const [port, stats] of Object.entries(metricsStore.proxyByPort)) {
-            lines.push(`proxy_by_port{port="${port}",status="success"} ${stats.success}`);
-            lines.push(`proxy_by_port{port="${port}",status="failed"} ${stats.failed}`);
+            lines.push(`titan_proxy_by_port{port="${port}",status="success"} ${stats.success}`);
+            lines.push(`titan_proxy_by_port{port="${port}",status="failed"} ${stats.failed}`);
             if (stats.healthScore !== undefined) {
-                lines.push(`proxy_by_port{port="${port}",status="health"} ${stats.healthScore}`);
+                lines.push(`titan_proxy_by_port{port="${port}",status="health"} ${stats.healthScore}`);
             }
         }
 
         // 错误分类
-        lines.push('# HELP harvest_errors_by_type Harvest errors by type');
-        lines.push('# TYPE harvest_errors_by_type counter');
+        lines.push('# HELP titan_harvest_errors_by_type Harvest errors by type');
+        lines.push('# TYPE titan_harvest_errors_by_type counter');
         for (const [errorType, count] of Object.entries(metricsStore.errorsByType)) {
-            lines.push(`harvest_errors_by_type{type="${errorType}"} ${count}`);
+            lines.push(`titan_harvest_errors_by_type{type="${errorType}"} ${count}`);
         }
 
         // 运行时间
         const uptimeSeconds = (now - metricsStore.startTime) / 1000;
-        lines.push('# HELP process_uptime_seconds Process uptime in seconds');
-        lines.push('# TYPE process_uptime_seconds gauge');
-        lines.push(`process_uptime_seconds ${uptimeSeconds.toFixed(2)}`);
+        lines.push('# HELP titan_process_uptime_seconds Process uptime in seconds');
+        lines.push('# TYPE titan_process_uptime_seconds gauge');
+        lines.push(`titan_process_uptime_seconds ${uptimeSeconds.toFixed(2)}`);
 
         // 最后收割时间
         if (metricsStore.lastHarvestTime) {
             const lastHarvestSecondsAgo = (now - metricsStore.lastHarvestTime) / 1000;
-            lines.push('# HELP harvest_last_seconds_ago Seconds since last harvest');
-            lines.push('# TYPE harvest_last_seconds_ago gauge');
-            lines.push(`harvest_last_seconds_ago ${lastHarvestSecondsAgo.toFixed(2)}`);
+            lines.push('# HELP titan_harvest_last_seconds_ago Seconds since last harvest');
+            lines.push('# TYPE titan_harvest_last_seconds_ago gauge');
+            lines.push(`titan_harvest_last_seconds_ago ${lastHarvestSecondsAgo.toFixed(2)}`);
         }
 
         lines.push('');
@@ -246,6 +294,15 @@ class MetricsClient {
                     ? (metricsStore.harvestSuccess / metricsStore.harvestTotal * 100).toFixed(2) + '%'
                     : '0%',
                 avgDurationMs: avgDuration.toFixed(2),
+            },
+            // V4.46.5 HARDENING: L2 堆积量统计
+            backlog: {
+                pending: metricsStore.matchesPending,
+                processed: metricsStore.matchesProcessed,
+                backlog: metricsStore.l2Backlog,
+                lastUpdate: metricsStore.lastBacklogUpdate
+                    ? ((Date.now() - metricsStore.lastBacklogUpdate) / 1000).toFixed(0) + 's ago'
+                    : 'N/A',
             },
             proxy: {
                 requests: metricsStore.proxyRequests,
@@ -309,6 +366,11 @@ class MetricsClient {
         metricsStore.proxySuccess = 0;
         metricsStore.proxyFailed = 0;
         metricsStore.proxyByPort = {};
+        // V4.46.5 HARDENING: 重置 L2 堆积量指标
+        metricsStore.matchesPending = 0;
+        metricsStore.matchesProcessed = 0;
+        metricsStore.l2Backlog = 0;
+        metricsStore.lastBacklogUpdate = null;
         metricsStore.startTime = Date.now();
     }
 }
