@@ -5,8 +5,10 @@
  * 通过 HTTP 调用 Python API 记录收割指标
  * 支持 Prometheus 格式导出
  *
+ * V4.46.6: 新增 L1 发现层指标支持
+ *
  * @module infrastructure/monitoring/MetricsClient
- * @version V4.46.0
+ * @version V4.46.6
  */
 
 'use strict';
@@ -38,6 +40,16 @@ const metricsStore = {
     matchesProcessed: 0,    // 已处理比赛数
     l2Backlog: 0,           // L2 堆积量
     lastBacklogUpdate: null, // 最后更新时间
+
+    // V4.46.6: L1 发现层指标
+    l1DiscoveredTotal: 0,       // L1 发现总数
+    l1InsertedTotal: 0,         // L1 插入总数
+    l1UpdatedTotal: 0,          // L1 更新总数
+    l1FetchDurationMs: [],      // L1 HTTP 请求耗时
+    l1BatchWriteDurationMs: [], // L1 批量写入耗时
+    l1BatchesTotal: 0,          // L1 批量写入次数
+    l1LastRunTime: null,        // L1 最后运行时间
+    l1ByLeague: {},             // 按联赛统计
 
     // 时间戳
     lastHarvestTime: null,
@@ -176,6 +188,71 @@ class MetricsClient {
         metricsStore.l2Backlog = metricsStore.matchesPending - metricsStore.matchesProcessed;
     }
 
+    // ========================================================================
+    // V4.46.6: L1 发现层指标方法
+    // ========================================================================
+
+    /**
+     * V4.46.6: 记录 L1 发现计数
+     * @param {number} count - 发现的比赛数
+     * @param {string} [leagueName] - 联赛名称 (可选)
+     */
+    recordL1Discovery(count, leagueName = null) {
+        metricsStore.l1DiscoveredTotal += count;
+        metricsStore.l1LastRunTime = Date.now();
+
+        // 按联赛统计
+        if (leagueName) {
+            if (!metricsStore.l1ByLeague[leagueName]) {
+                metricsStore.l1ByLeague[leagueName] = { discovered: 0, inserted: 0, updated: 0 };
+            }
+            metricsStore.l1ByLeague[leagueName].discovered += count;
+        }
+    }
+
+    /**
+     * V4.46.6: 记录 L1 HTTP 请求耗时
+     * @param {number} durationMs - 耗时（毫秒）
+     */
+    recordL1FetchDuration(durationMs) {
+        metricsStore.l1FetchDurationMs.push(durationMs);
+
+        // 保留最近 100 条记录
+        if (metricsStore.l1FetchDurationMs.length > 100) {
+            metricsStore.l1FetchDurationMs.shift();
+        }
+    }
+
+    /**
+     * V4.46.6: 记录 L1 批量写入
+     * @param {number} durationMs - 耗时（毫秒）
+     * @param {number} batchSize - 批量大小
+     * @param {number} [inserted] - 插入数量
+     * @param {number} [updated] - 更新数量
+     */
+    recordL1BatchWrite(durationMs, batchSize, inserted = 0, updated = 0) {
+        metricsStore.l1BatchWriteDurationMs.push({ duration: durationMs, size: batchSize });
+        metricsStore.l1BatchesTotal++;
+        metricsStore.l1InsertedTotal += inserted;
+        metricsStore.l1UpdatedTotal += updated;
+
+        // 保留最近 50 条记录
+        if (metricsStore.l1BatchWriteDurationMs.length > 50) {
+            metricsStore.l1BatchWriteDurationMs.shift();
+        }
+    }
+
+    /**
+     * V4.46.6: 记录 L1 完成统计
+     * @param {Object} stats - 统计对象
+     */
+    recordL1Complete(stats) {
+        metricsStore.l1DiscoveredTotal = stats.fixtures || 0;
+        metricsStore.l1InsertedTotal = stats.inserted || 0;
+        metricsStore.l1UpdatedTotal = stats.updated || 0;
+        metricsStore.l1LastRunTime = Date.now();
+    }
+
     /**
      * 获取 Prometheus 格式指标
      * @returns {string} Prometheus 文本格式
@@ -233,6 +310,47 @@ class MetricsClient {
             lines.push('# HELP titan_l2_backlog_update_seconds_ago Seconds since last backlog update');
             lines.push('# TYPE titan_l2_backlog_update_seconds_ago gauge');
             lines.push(`titan_l2_backlog_update_seconds_ago ${backlogUpdateSecondsAgo.toFixed(2)}`);
+        }
+
+        // V4.46.6: L1 发现层指标
+        lines.push('# HELP titan_l1_discovered_total Total matches discovered by L1');
+        lines.push('# TYPE titan_l1_discovered_total counter');
+        lines.push(`titan_l1_discovered_total ${metricsStore.l1DiscoveredTotal}`);
+
+        lines.push('# HELP titan_l1_inserted_total Total matches inserted by L1');
+        lines.push('# TYPE titan_l1_inserted_total counter');
+        lines.push(`titan_l1_inserted_total ${metricsStore.l1InsertedTotal}`);
+
+        lines.push('# HELP titan_l1_updated_total Total matches updated by L1');
+        lines.push('# TYPE titan_l1_updated_total counter');
+        lines.push(`titan_l1_updated_total ${metricsStore.l1UpdatedTotal}`);
+
+        lines.push('# HELP titan_l1_batches_total Total L1 batch write operations');
+        lines.push('# TYPE titan_l1_batches_total counter');
+        lines.push(`titan_l1_batches_total ${metricsStore.l1BatchesTotal}`);
+
+        // L1 HTTP 请求平均耗时
+        const l1AvgFetchDuration = metricsStore.l1FetchDurationMs.length > 0
+            ? metricsStore.l1FetchDurationMs.reduce((a, b) => a + b, 0) / metricsStore.l1FetchDurationMs.length
+            : 0;
+        lines.push('# HELP titan_l1_fetch_duration_avg_ms Average L1 HTTP fetch duration in milliseconds');
+        lines.push('# TYPE titan_l1_fetch_duration_avg_ms gauge');
+        lines.push(`titan_l1_fetch_duration_avg_ms ${l1AvgFetchDuration.toFixed(2)}`);
+
+        // L1 批量写入平均耗时
+        const l1AvgBatchDuration = metricsStore.l1BatchWriteDurationMs.length > 0
+            ? metricsStore.l1BatchWriteDurationMs.reduce((a, b) => a + b.duration, 0) / metricsStore.l1BatchWriteDurationMs.length
+            : 0;
+        lines.push('# HELP titan_l1_batch_write_duration_avg_ms Average L1 batch write duration in milliseconds');
+        lines.push('# TYPE titan_l1_batch_write_duration_avg_ms gauge');
+        lines.push(`titan_l1_batch_write_duration_avg_ms ${l1AvgBatchDuration.toFixed(2)}`);
+
+        // L1 最后运行时间
+        if (metricsStore.l1LastRunTime) {
+            const l1RunSecondsAgo = (now - metricsStore.l1LastRunTime) / 1000;
+            lines.push('# HELP titan_l1_last_run_seconds_ago Seconds since last L1 run');
+            lines.push('# TYPE titan_l1_last_run_seconds_ago gauge');
+            lines.push(`titan_l1_last_run_seconds_ago ${l1RunSecondsAgo.toFixed(2)}`);
         }
 
         // 代理统计
@@ -371,6 +489,15 @@ class MetricsClient {
         metricsStore.matchesProcessed = 0;
         metricsStore.l2Backlog = 0;
         metricsStore.lastBacklogUpdate = null;
+        // V4.46.6: 重置 L1 发现层指标
+        metricsStore.l1DiscoveredTotal = 0;
+        metricsStore.l1InsertedTotal = 0;
+        metricsStore.l1UpdatedTotal = 0;
+        metricsStore.l1FetchDurationMs = [];
+        metricsStore.l1BatchWriteDurationMs = [];
+        metricsStore.l1BatchesTotal = 0;
+        metricsStore.l1LastRunTime = null;
+        metricsStore.l1ByLeague = {};
         metricsStore.startTime = Date.now();
     }
 }

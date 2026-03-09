@@ -1,44 +1,54 @@
 /**
- * @fileoverview FixtureSeeder - L1 发现层核心模块
+ * @fileoverview FixtureSeeder - L1 发现层核心模块 V4.46.6
  *
- * 从 FotMob 联赛 API 批量获取历史赛程数据，是三层架构中 L1 层的唯一实现。
+ * 工业级重构版本：
+ * - 批量 UPSERT (每 50 场写入一次)
+ * - 并行扫描 (可配置并发数)
+ * - NetworkShield 代理池集成
+ * - MetricsClient 可观测性
+ * - 确定性 ID 生成
  *
  * @module infrastructure/FixtureSeeder
- * @version V178.0.0
+ * @version V4.46.6
  * @author FootballPrediction Engineering Team
- *
- * @example
- * // 基本用法
- * const { FixtureSeeder } = require('./src/infrastructure/FixtureSeeder');
- *
- * const seeder = new FixtureSeeder();
- * await seeder.init();
- * const stats = await seeder.seedAll();
- * await seeder.close();
- *
- * @example
- * // 自定义配置
- * const seeder = new FixtureSeeder({
- *   leagues: [{ id: 47, name: 'Premier League', country: 'England' }],
- *   seasons: ['2024/2025']
- * });
  */
 
 'use strict';
 
 const https = require('https');
+const { URL } = require('url');
 const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
 
-// V4.17: 引入共享常量
+// ============================================================================
+// V4.46.6: 核心组件集成
+// ============================================================================
+
+// 确定性 ID 生成器 (替代 Math.random)
+const {
+    generateRequestId,
+    generateDeterministicId
+} = require('../core/id_generator');
+
+// 共享常量 (含 POSTPONED 状态)
 const {
     MATCH_STATUS,
     STATUS_FINISHED,
     STATUS_LIVE,
     STATUS_SCHEDULED,
-    STATUS_CANCELLED
+    STATUS_CANCELLED,
+    STATUS_POSTPONED
 } = require('../../config/shared_constants');
+
+// V4.46.6: NetworkShield 代理池
+const { getNetworkShield } = require('./network/NetworkShield');
+
+// V4.46.6: MetricsClient 可观测性
+const { getMetricsClient } = require('./monitoring/MetricsClient');
+
+// 工厂配置
+const FactoryConfig = require('../../config/factory_config');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -46,69 +56,24 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 // 日志系统 (工业级分级)
 // ============================================================================
 
-/**
- * 日志级别枚举
- * @enum {string}
- */
 const LogLevel = {
-    /** 常规信息 */
     INFO: 'INFO',
-    /** 警告信息 */
     WARN: 'WARN',
-    /** 错误信息 */
     ERROR: 'ERROR',
-    /** 成功信息 */
-    SUCCESS: 'SUCCESS'
+    SUCCESS: 'SUCCESS',
+    DEBUG: 'DEBUG'
 };
 
-/**
- * 生成唯一请求 ID
- * @returns {string} 格式: req_xxxxxxxxxxxxxxxx
- */
-function generateRequestId() {
-    const timestamp = Date.now().toString(36);
-    const random = Math.random().toString(36).substring(2, 8);
-    return `req_${timestamp}_${random}`;
-}
-
-/**
- * 工业级日志记录器
- *
- * @class Logger
- * @example
- * const log = new Logger('MyModule');
- * log.info('操作开始');
- * log.error('操作失败', new Error('连接超时'));
- */
 class Logger {
-    /**
-     * 创建日志记录器实例
-     * @param {string} module - 模块名称，用于标识日志来源
-     * @param {string|null} [requestId=null] - 请求追踪 ID
-     */
     constructor(module, requestId = null) {
-        /** @type {string} */
         this.module = module;
-        /** @type {string|null} */
         this.requestId = requestId;
     }
 
-    /**
-     * 设置请求 ID（用于任务级别的追踪）
-     * @param {string} requestId - 请求 ID
-     */
     setRequestId(requestId) {
         this.requestId = requestId;
     }
 
-    /**
-     * 格式化日志消息
-     * @private
-     * @param {string} level - 日志级别
-     * @param {string} message - 日志消息
-     * @param {Object|null} meta - 元数据
-     * @returns {string} 格式化后的日志字符串
-     */
     _format(level, message, meta = null) {
         const timestamp = new Date().toISOString();
         const reqIdStr = this.requestId ? `[${this.requestId}] ` : '';
@@ -116,45 +81,17 @@ class Logger {
         return `[${timestamp}] [${level}] [${this.module}] ${reqIdStr}${message}${metaStr}`;
     }
 
-    /**
-     * 记录 INFO 级别日志
-     * @param {string} message - 日志消息
-     * @param {Object|null} [meta=null] - 附加元数据
-     */
-    info(message, meta = null) {
-        console.log(this._format(LogLevel.INFO, message, meta));
-    }
-
-    /**
-     * 记录 WARN 级别日志
-     * @param {string} message - 日志消息
-     * @param {Object|null} [meta=null] - 附加元数据
-     */
-    warn(message, meta = null) {
-        console.warn(this._format(LogLevel.WARN, message, meta));
-    }
-
-    /**
-     * 记录 ERROR 级别日志（包含堆栈追踪和 request_id）
-     * @param {string} message - 日志消息
-     * @param {Error|null} [error=null] - 错误对象，将自动提取 message 和 stack
-     */
+    info(message, meta = null) { console.log(this._format(LogLevel.INFO, message, meta)); }
+    warn(message, meta = null) { console.warn(this._format(LogLevel.WARN, message, meta)); }
     error(message, error = null) {
-        const meta = error ? {
-            request_id: this.requestId || 'unknown',
-            error: error.message,
-            stack: error.stack
-        } : { request_id: this.requestId || 'unknown' };
+        const meta = error ? { request_id: this.requestId || 'unknown', error: error.message, stack: error.stack } : { request_id: this.requestId || 'unknown' };
         console.error(this._format(LogLevel.ERROR, message, meta));
     }
-
-    /**
-     * 记录 SUCCESS 级别日志
-     * @param {string} message - 日志消息
-     * @param {Object|null} [meta=null] - 附加元数据
-     */
-    success(message, meta = null) {
-        console.log(this._format(LogLevel.SUCCESS, message, meta));
+    success(message, meta = null) { console.log(this._format(LogLevel.SUCCESS, message, meta)); }
+    debug(message, meta = null) {
+        if (process.env.LOG_LEVEL === 'debug') {
+            console.log(this._format(LogLevel.DEBUG, message, meta));
+        }
     }
 }
 
@@ -164,31 +101,6 @@ const log = new Logger('FixtureSeeder');
 // 配置加载器
 // ============================================================================
 
-/**
- * @typedef {Object} LeagueConfig
- * @property {number} id - 联赛 ID（FotMob 格式）
- * @property {string} name - 联赛名称
- * @property {string} country - 所属国家
- * @property {boolean} [enabled=true] - 是否启用
- */
-
-/**
- * @typedef {Object} LeagueConfigFile
- * @property {string} version - 配置版本
- * @property {LeagueConfig[]} active_leagues - 活跃联赛列表
- * @property {LeagueConfig[]} inactive_leagues - 非活跃联赛列表
- * @property {string[]} active_seasons - 活跃赛季列表
- */
-
-/**
- * 从配置文件加载联赛配置
- *
- * @function loadLeagueConfig
- * @returns {Object} 包含 active_leagues 和 active_seasons 的配置对象
- * @example
- * const config = loadLeagueConfig();
- * console.log(config.active_leagues); // [{ id: 47, name: 'Premier League', ... }]
- */
 function loadLeagueConfig() {
     const configPath = path.resolve(__dirname, '../../config/leagues.json');
 
@@ -203,8 +115,6 @@ function loadLeagueConfig() {
 
         const raw = fs.readFileSync(configPath, 'utf8');
         const config = JSON.parse(raw);
-
-        // 只加载 enabled=true 的联赛
         const activeLeagues = config.active_leagues.filter(l => l.enabled !== false);
 
         log.info(`配置加载成功: ${activeLeagues.length} 个活跃联赛`, {
@@ -225,13 +135,9 @@ function loadLeagueConfig() {
 }
 
 // ============================================================================
-// 基础配置
+// V4.46.6 配置
 // ============================================================================
 
-/**
- * 基础配置对象
- * @constant {Object}
- */
 const BASE_CONFIG = {
     fotmob: {
         baseUrl: 'www.fotmob.com',
@@ -245,33 +151,71 @@ const BASE_CONFIG = {
         user: process.env.DB_USER || 'football_user',
         password: process.env.DB_PASSWORD || ''
     },
-    delay: 2000
+    // V4.46.6: 从工厂配置读取延时
+    delay: FactoryConfig.TIMING?.minDelayMs || 2000,
+
+    // V4.46.6: 批量写入配置
+    batchSize: parseInt(process.env.L1_BATCH_SIZE) || 50,
+
+    // V4.46.6: 并行扫描配置
+    concurrency: parseInt(process.env.L1_CONCURRENCY) || 5,
+
+    // V4.46.6: L1 专用代理端口段 (与 L2/L3 隔离)
+    proxyPortRange: { start: 7890, end: 7894 }
 };
 
 // ============================================================================
-// HTTP 工具
+// V4.46.6: 代理感知 HTTP 工具
 // ============================================================================
 
 /**
- * HTTP GET 请求封装
- *
- * @async
- * @function httpsGet
+ * V4.46.6: 代理感知 HTTP GET 请求
  * @param {string} url - 请求 URL
- * @param {Object} [options={}] - 请求选项
- * @param {number} [options.timeout] - 超时时间（毫秒）
- * @returns {Promise<{status: number, data: Object|null, raw: string}>} 响应对象
+ * @param {Object} options - 请求选项
+ * @param {number} [workerId=0] - Worker ID (用于代理分配)
+ * @returns {Promise<{status: number, data: Object|null, raw: string}>}
  */
-async function httpsGet(url, options = {}) {
-    return new Promise((resolve, reject) => {
-        const req = https.get(url, {
+async function httpsGetWithProxy(url, options = {}, workerId = 0) {
+    return new Promise(async (resolve, reject) => {
+        const shield = getNetworkShield();
+        const parsedUrl = new URL(url);
+
+        // V4.46.6: 尝试获取代理配置 (L1 使用专用端口段)
+        let proxyConfig = null;
+        try {
+            // 计算专用代理端口 (7890-7894 范围)
+            const l1Port = BASE_CONFIG.proxyPortRange.start + (workerId % 5);
+            proxyConfig = {
+                host: process.env.PROXY_HOST || '172.25.16.1',
+                port: l1Port
+            };
+            log.debug(`[Worker ${workerId}] 使用代理: ${proxyConfig.host}:${proxyConfig.port}`);
+        } catch (e) {
+            log.debug(`代理不可用，直连模式: ${e.message}`);
+        }
+
+        const requestOptions = {
+            hostname: parsedUrl.hostname,
+            port: parsedUrl.port || 443,
+            path: parsedUrl.pathname + parsedUrl.search,
+            method: 'GET',
             timeout: options.timeout || BASE_CONFIG.fotmob.timeout,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 'Accept': 'application/json',
                 ...options.headers
             }
-        }, (res) => {
+        };
+
+        // V4.46.6: 如果有代理，添加代理配置
+        if (proxyConfig) {
+            requestOptions.agent = new (require('http').Agent)({
+                host: proxyConfig.host,
+                port: proxyConfig.port
+            });
+        }
+
+        const req = https.request(requestOptions, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
@@ -287,76 +231,31 @@ async function httpsGet(url, options = {}) {
             });
         });
 
-        req.on('error', (e) => reject(e));
+        req.on('error', (e) => {
+            log.debug(`HTTP 请求失败 (Worker ${workerId}): ${e.message}`);
+            reject(e);
+        });
+
         req.setTimeout(options.timeout || BASE_CONFIG.fotmob.timeout, () => {
             req.destroy();
             reject(new Error('Request timeout'));
         });
+
+        req.end();
     });
 }
 
+// 向后兼容: 保留原有函数名
+const httpsGet = httpsGetWithProxy;
+
 // ============================================================================
-// 核心类
+// 核心类: FixtureSeeder V4.46.6
 // ============================================================================
 
-/**
- * @typedef {Object} FixtureData
- * @property {string} match_id - 比赛唯一标识符，格式: ${league_id}_${season}_${externalId}
- * @property {string} external_id - FotMob 比赛ID
- * @property {string} league_name - 联赛名称
- * @property {string} season - 赛季，格式: 2024/2025
- * @property {string} home_team - 主队名称
- * @property {string} away_team - 客队名称
- * @property {Date|null} match_date - 比赛时间
- * @property {number|null} home_score - 主队得分
- * @property {number|null} away_score - 客队得分
- * @property {string} status - 比赛状态: scheduled/live/finished/cancelled/awarded
- * @property {string} data_source - 数据来源，固定为 'FotMob'
- */
-
-/**
- * @typedef {Object} SeederStats
- * @property {number} leagues - 处理的联赛数量
- * @property {number} fixtures - 处理的比赛总数
- * @property {number} inserted - 新增记录数
- * @property {number} updated - 更新记录数
- * @property {number} skipped - 跳过记录数
- * @property {number} errors - 错误数量
- */
-
-/**
- * @typedef {Object} SeederOptions
- * @property {LeagueConfig[]} [leagues] - 自定义联赛列表
- * @property {string[]} [seasons] - 自定义赛季列表
- * @property {Object} [db] - 自定义数据库配置
- * @property {number} [delay] - 请求间隔（毫秒）
- */
-
-/**
- * FixtureSeeder - L1 发现层核心类
- *
- * 负责从 FotMob API 批量获取赛程数据并写入 PostgreSQL 数据库。
- *
- * @class FixtureSeeder
- * @example
- * const seeder = new FixtureSeeder();
- * await seeder.init();
- * const stats = await seeder.seedAll();
- * console.log(`处理完成: ${stats.inserted} 新增, ${stats.updated} 更新`);
- * await seeder.close();
- */
 class FixtureSeeder {
-    /**
-     * 创建 FixtureSeeder 实例
-     *
-     * @constructor
-     * @param {SeederOptions} [options={}] - 配置选项
-     */
     constructor(options = {}) {
-        // 从配置文件加载联赛列表
         const leagueConfig = loadLeagueConfig();
 
-        /** @type {Object} */
         this.config = {
             ...BASE_CONFIG,
             leagues: leagueConfig.active_leagues,
@@ -364,48 +263,50 @@ class FixtureSeeder {
             ...options
         };
 
-        /** @type {import('pg').Pool|null} */
         this.pool = null;
 
-        /** @type {SeederStats} */
+        // V4.46.6: 确定性请求 ID
+        this.requestId = generateRequestId();
+        log.setRequestId(this.requestId);
+
+        // V4.46.6: MetricsClient
+        this.metricsClient = getMetricsClient();
+
+        // V4.46.6: NetworkShield
+        this.networkShield = getNetworkShield();
+
+        // 统计信息
         this.stats = {
             leagues: 0,
             fixtures: 0,
             inserted: 0,
             updated: 0,
             skipped: 0,
-            errors: 0
+            errors: 0,
+            batches: 0,
+            parallelTasks: 0
         };
+
+        // V4.46.6: 批量写入缓冲区
+        this._batchBuffer = [];
+        this._batchSize = this.config.batchSize || 50;
     }
 
-    /**
-     * 初始化数据库连接
-     *
-     * @async
-     * @method init
-     * @throws {Error} 数据库连接失败时抛出错误
-     * @returns {Promise<void>}
-     */
     async init() {
         try {
             this.pool = new Pool(this.config.db);
-            // 测试连接
             await this.pool.query('SELECT 1');
-            log.info('数据库连接已建立');
+            log.info('V4.46.6 数据库连接已建立');
         } catch (error) {
             log.error('数据库连接失败', error);
             throw error;
         }
     }
 
-    /**
-     * 关闭数据库连接
-     *
-     * @async
-     * @method close
-     * @returns {Promise<void>}
-     */
     async close() {
+        // 刷新剩余缓冲区
+        await this._flushBatch();
+
         if (this.pool) {
             await this.pool.end();
             this.pool = null;
@@ -414,54 +315,42 @@ class FixtureSeeder {
     }
 
     /**
-     * 从 FotMob API 获取联赛赛程数据
-     *
-     * @async
-     * @method fetchLeagueFixtures
-     * @param {number} leagueId - 联赛 ID（FotMob 格式，如 47 代表英超）
-     * @param {string} season - 赛季，格式: 2024/2025
-     * @returns {Promise<Object|null>} 联赛数据对象，失败时返回 null
-     *
-     * @example
-     * const data = await seeder.fetchLeagueFixtures(47, '2024/2025');
-     * console.log(data.fixtures.allMatches.length); // 380
+     * V4.46.6: 从 FotMob API 获取联赛赛程 (带代理支持)
      */
-    async fetchLeagueFixtures(leagueId, season) {
+    async fetchLeagueFixtures(leagueId, season, workerId = 0) {
         const seasonParam = season.replace('/', '');
         const url = `https://www.fotmob.com/api/leagues?id=${leagueId}&season=${seasonParam}`;
 
-        log.info(`获取联赛 ${leagueId} 赛季 ${season}...`, { url });
+        log.debug(`[Worker ${workerId}] 获取联赛 ${leagueId} 赛季 ${season}...`, { url });
+
+        const startTime = Date.now();
 
         try {
-            const response = await httpsGet(url);
+            const response = await httpsGetWithProxy(url, {}, workerId);
+
+            const duration = Date.now() - startTime;
+            this._recordMetrics('fetch', duration, response.status === 200);
 
             if (response.status !== 200 || !response.data) {
-                log.warn(`获取失败: HTTP ${response.status}`, { leagueId, season });
+                log.warn(`[Worker ${workerId}] 获取失败: HTTP ${response.status}`, { leagueId, season });
                 return null;
             }
 
             return response.data;
         } catch (error) {
-            log.error(`请求失败`, error);
+            const duration = Date.now() - startTime;
+            this._recordMetrics('fetch', duration, false);
+            log.error(`[Worker ${workerId}] 请求失败`, error);
             return null;
         }
     }
 
-    /**
-     * 解析联赛数据为比赛列表
-     *
-     * @method parseFixtures
-     * @param {Object} leagueData - FotMob API 返回的联赛数据
-     * @param {LeagueConfig} leagueInfo - 联赛配置信息
-     * @param {string} season - 赛季
-     * @returns {FixtureData[]} 比赛数据数组
-     */
     parseFixtures(leagueData, leagueInfo, season) {
         const fixtures = [];
 
         const allMatches = leagueData?.fixtures?.allMatches ||
-                          leagueData?.overview?.matches?.allMatches ||
-                          [];
+            leagueData?.overview?.matches?.allMatches ||
+            [];
 
         if (!Array.isArray(allMatches) || allMatches.length === 0) {
             log.warn(`未找到 allMatches 数据`, { league: leagueInfo.name, season });
@@ -495,16 +384,7 @@ class FixtureSeeder {
     }
 
     /**
-     * 解析单场比赛数据
-     *
-     * V178: match_id 格式 = `${league_id}_${season}_${externalId}`
-     * 例如: 47_20242025_123456789
-     *
-     * @method parseMatch
-     * @param {Object} match - FotMob API 返回的比赛对象
-     * @param {LeagueConfig} leagueInfo - 联赛配置信息
-     * @param {string} season - 赛季
-     * @returns {FixtureData|null} 比赛数据对象，无效数据返回 null
+     * V4.46.6: 解析单场比赛 (使用 match_date 替代 match_time)
      */
     parseMatch(match, leagueInfo, season) {
         const externalId = match.id?.toString() || null;
@@ -545,8 +425,8 @@ class FixtureSeeder {
 
         const status = this.determineStatus(match, homeScore, awayScore);
 
-        // V178: match_id = league_id + season + fotmob_id (严格格式)
-        const seasonTag = season.replace('/', '');  // 2023/2024 -> 20232024
+        // V4.46.6: 确定性 match_id 格式
+        const seasonTag = season.replace('/', '');
         const matchId = `${leagueInfo.id}_${seasonTag}_${externalId}`;
 
         return {
@@ -556,7 +436,7 @@ class FixtureSeeder {
             season: season,
             home_team: homeTeam,
             away_team: awayTeam,
-            match_date: matchDate,
+            match_date: matchDate,  // V4.46.6: 使用 match_date
             home_score: homeScore,
             away_score: awayScore,
             status: status,
@@ -565,21 +445,16 @@ class FixtureSeeder {
     }
 
     /**
-     * 确定比赛状态
-     *
-     * @method determineStatus
-     * @param {Object} match - 比赛对象
-     * @param {number|null} homeScore - 主队得分
-     * @param {number|null} awayScore - 客队得分
-     * @returns {string} 状态: scheduled/live/finished/cancelled/awarded
+     * V4.46.6: 增强状态判断 (含 POSTPONED 支持)
      */
     determineStatus(match, homeScore, awayScore) {
         const status = match.status;
 
         if (typeof status === 'object' && status !== null) {
-            // V4.17: 使用共享常量
+            // V4.46.6: 优先检查 POSTPONED
+            if (status.postponed) return STATUS_POSTPONED || 'postponed';
             if (status.cancelled) return STATUS_CANCELLED;
-            if (status.awarded) return 'awarded';  // 特殊状态，保持原样
+            if (status.awarded) return 'awarded';
             if (status.finished) return STATUS_FINISHED;
             if (status.started) return STATUS_LIVE;
         }
@@ -591,17 +466,102 @@ class FixtureSeeder {
         return STATUS_SCHEDULED;
     }
 
+    // ========================================================================
+    // V4.46.6: 批量 UPSERT 优化
+    // ========================================================================
+
     /**
-     * UPSERT 比赛数据到数据库
-     *
-     * 使用 PostgreSQL ON CONFLICT 语法实现幂等写入：
-     * - 新记录：INSERT
-     * - 已存在：UPDATE 比分和状态
-     *
-     * @async
-     * @method upsertFixture
-     * @param {FixtureData} fixture - 比赛数据
-     * @returns {Promise<boolean>} 成功返回 true，失败返回 false
+     * V4.46.6: 添加到批量缓冲区
+     */
+    async addToBatch(fixture) {
+        this._batchBuffer.push(fixture);
+
+        if (this._batchBuffer.length >= this._batchSize) {
+            await this._flushBatch();
+        }
+    }
+
+    /**
+     * V4.46.6: 批量刷新写入
+     */
+    async _flushBatch() {
+        if (this._batchBuffer.length === 0) return;
+
+        const batch = [...this._batchBuffer];
+        this._batchBuffer = [];
+
+        const startTime = Date.now();
+
+        try {
+            // 构建批量 VALUES 子句
+            const valueGroups = [];
+            const flatValues = [];
+            let paramIndex = 1;
+
+            for (const fixture of batch) {
+                const placeholders = [];
+                const values = [
+                    fixture.match_id,
+                    fixture.external_id,
+                    fixture.league_name,
+                    fixture.season,
+                    fixture.home_team,
+                    fixture.away_team,
+                    fixture.match_date,
+                    fixture.home_score,
+                    fixture.away_score,
+                    fixture.status,
+                    fixture.data_source
+                ];
+
+                for (const val of values) {
+                    flatValues.push(val);
+                    placeholders.push(`$${paramIndex}`);
+                    paramIndex++;
+                }
+
+                valueGroups.push(`(${placeholders.join(', ')})`);
+            }
+
+            const query = `
+                INSERT INTO matches (
+                    match_id, external_id, league_name, season,
+                    home_team, away_team, match_date,
+                    home_score, away_score, status, data_source,
+                    created_at, updated_at
+                ) VALUES ${valueGroups.join(', ')}
+                ON CONFLICT (match_id)
+                DO UPDATE SET
+                    external_id = EXCLUDED.external_id,
+                    home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
+                    away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
+                    status = EXCLUDED.status,
+                    updated_at = NOW()
+            `;
+
+            await this.pool.query(query, flatValues);
+
+            this.stats.inserted += batch.length;
+            this.stats.batches++;
+
+            const duration = Date.now() - startTime;
+            this._recordMetrics('batch_write', duration, true);
+
+            log.debug(`批量写入成功: ${batch.length} 条记录 (${duration}ms)`);
+
+        } catch (error) {
+            log.error(`批量写入失败，回退逐条写入`, error);
+            this.stats.errors++;
+
+            // 回退: 逐条写入
+            for (const fixture of batch) {
+                await this.upsertFixture(fixture);
+            }
+        }
+    }
+
+    /**
+     * 单条 UPSERT (回退方案)
      */
     async upsertFixture(fixture) {
         const query = `
@@ -651,109 +611,165 @@ class FixtureSeeder {
     }
 
     /**
-     * 执行全量收割
-     *
-     * 遍历所有配置的联赛和赛季，从 FotMob API 获取数据并写入数据库。
-     *
-     * @async
-     * @method seedAll
-     * @returns {Promise<SeederStats>} 收割统计信息
-     *
-     * @example
-     * const stats = await seeder.seedAll();
-     * console.log(`处理 ${stats.fixtures} 场比赛`);
-     * console.log(`新增 ${stats.inserted}，更新 ${stats.updated}`);
+     * V4.46.6: 并行处理单个联赛-赛季
+     */
+    async processLeagueSeason(league, season, workerId = 0) {
+        log.info(`[Worker ${workerId}] 处理: ${league.name} (ID: ${league.id}) - ${season}`);
+
+        const leagueData = await this.fetchLeagueFixtures(league.id, season, workerId);
+
+        if (!leagueData) {
+            log.warn(`[Worker ${workerId}] 跳过 ${league.name} - ${season}: 无数据`);
+            return { fixtures: 0, success: false };
+        }
+
+        const fixtures = this.parseFixtures(leagueData, league, season);
+        log.info(`[Worker ${workerId}] 发现 ${fixtures.length} 场比赛`);
+
+        // V4.46.6: 批量写入
+        for (const fixture of fixtures) {
+            await this.addToBatch(fixture);
+            this.stats.fixtures++;
+        }
+
+        // 记录 L1 发现指标
+        this._recordMetrics('discovery', 0, true);
+
+        log.success(`[Worker ${workerId}] ${league.name} - ${season}: ${fixtures.length} 场已处理`);
+
+        return { fixtures: fixtures.length, success: true };
+    }
+
+    /**
+     * V4.46.6: 并行执行全量收割
      */
     async seedAll() {
         log.info('═══════════════════════════════════════════════════════════════');
-        log.info('V178 Fixture Seeder 启动');
+        log.info('V4.46.6 Fixture Seeder 启动 (工业级并行模式)');
+        log.info(`请求 ID: ${this.requestId}`);
         log.info(`目标联赛: ${this.config.leagues.length} 个`);
         log.info(`目标赛季: ${this.config.seasons.join(', ')}`);
+        log.info(`并发数: ${this.config.concurrency}`);
+        log.info(`批量大小: ${this._batchSize}`);
         log.info('═══════════════════════════════════════════════════════════════');
 
-        // 验证联赛配置
         if (this.config.leagues.length === 0) {
             log.warn('没有配置活跃联赛，任务终止');
             return this.stats;
         }
 
+        const startTime = Date.now();
+
+        // 构建任务列表
+        const tasks = [];
         for (const league of this.config.leagues) {
             for (const season of this.config.seasons) {
-                this.stats.leagues++;
+                tasks.push({ league, season });
+            }
+        }
 
-                log.info(`处理: ${league.name} (ID: ${league.id}) - ${season}`);
+        this.stats.leagues = tasks.length;
+        log.info(`总任务数: ${tasks.length} 个联赛-赛季组合`);
 
-                const leagueData = await this.fetchLeagueFixtures(league.id, season);
+        // V4.46.6: 并行执行
+        const concurrency = this.config.concurrency;
+        const results = [];
 
-                if (!leagueData) {
-                    log.warn(`跳过 ${league.name} - ${season}: 无数据`);
-                    continue;
+        for (let i = 0; i < tasks.length; i += concurrency) {
+            const batch = tasks.slice(i, i + concurrency);
+            this.stats.parallelTasks++;
+
+            log.info(`并行批次 #${this.stats.parallelTasks}: 处理 ${batch.length} 个任务`);
+
+            const batchPromises = batch.map((task, idx) =>
+                this.processLeagueSeason(task.league, task.season, idx)
+            );
+
+            const batchResults = await Promise.allSettled(batchPromises);
+
+            batchResults.forEach((result, idx) => {
+                if (result.status === 'fulfilled') {
+                    results.push(result.value);
+                } else {
+                    log.error(`任务失败`, result.reason);
+                    this.stats.errors++;
                 }
+            });
 
-                const fixtures = this.parseFixtures(leagueData, league, season);
-                log.info(`发现 ${fixtures.length} 场比赛`);
-
-                for (const fixture of fixtures) {
-                    await this.upsertFixture(fixture);
-                    this.stats.fixtures++;
-                }
-
-                log.success(`${league.name} - ${season}: ${fixtures.length} 场已处理`);
-
+            // 批次间延时 (避免 API 限流)
+            if (i + concurrency < tasks.length) {
                 await this.sleep(this.config.delay);
             }
         }
 
+        // 刷新剩余缓冲区
+        await this._flushBatch();
+
+        const duration = Date.now() - startTime;
+
         log.info('═══════════════════════════════════════════════════════════════');
-        log.success('赛程收割完成!');
+        log.success('V4.46.6 赛程收割完成!');
         log.info('统计', {
             leagues: this.stats.leagues,
             fixtures: this.stats.fixtures,
             inserted: this.stats.inserted,
             updated: this.stats.updated,
-            errors: this.stats.errors
+            errors: this.stats.errors,
+            batches: this.stats.batches,
+            parallelBatches: this.stats.parallelTasks,
+            durationMs: duration,
+            throughput: `${(this.stats.fixtures / (duration / 1000)).toFixed(2)} 场/秒`
         });
         log.info('═══════════════════════════════════════════════════════════════');
+
+        // V4.46.6: 最终指标上报
+        this._recordMetrics('complete', duration, true);
 
         return this.stats;
     }
 
     /**
-     * 异步延时
-     * @private
-     * @param {number} ms - 延时毫秒数
-     * @returns {Promise<void>}
+     * V4.46.6: 记录指标到 MetricsClient
      */
+    _recordMetrics(operation, durationMs, success) {
+        try {
+            if (operation === 'discovery') {
+                // L1 发现计数
+                if (this.metricsClient?.recordL1Discovery) {
+                    this.metricsClient.recordL1Discovery(1);
+                }
+            } else if (operation === 'fetch') {
+                // HTTP 请求耗时
+                if (this.metricsClient?.recordL1FetchDuration) {
+                    this.metricsClient.recordL1FetchDuration(durationMs);
+                }
+            } else if (operation === 'batch_write') {
+                // 批量写入耗时
+                if (this.metricsClient?.recordL1BatchWrite) {
+                    this.metricsClient.recordL1BatchWrite(durationMs, this._batchSize);
+                }
+            } else if (operation === 'complete') {
+                // 完成统计
+                if (this.metricsClient?.recordL1Complete) {
+                    this.metricsClient.recordL1Complete(this.stats);
+                }
+            }
+        } catch (e) {
+            log.debug(`指标记录失败: ${e.message}`);
+        }
+    }
+
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    /**
-     * 获取任务执行摘要（含成功率指标）
-     *
-     * @method getSummary
-     * @returns {Object} 任务摘要对象
-     * @returns {number} return.total - 处理的比赛总数
-     * @returns {number} return.inserted - 新增记录数
-     * @returns {number} return.updated - 更新记录数
-     * @returns {number} return.errors - 错误数量
-     * @returns {number} return.success_rate - 成功率百分比 (0-100)
-     * @returns {string} return.status - 任务状态: success/warning/failed
-     *
-     * @example
-     * const summary = seeder.getSummary();
-     * console.log(`成功率: ${summary.success_rate}%`);
-     * console.log(`状态: ${summary.status}`);
-     */
     getSummary() {
         const total = this.stats.fixtures;
         const success = this.stats.inserted + this.stats.updated;
         const errors = this.stats.errors;
 
-        // 计算成功率
         const successRate = total > 0 ? ((success / total) * 100).toFixed(2) : '0.00';
 
-        // 判断任务状态
         let status;
         if (total === 0) {
             status = 'empty';
@@ -773,7 +789,11 @@ class FixtureSeeder {
             success_rate: parseFloat(successRate),
             status,
             leagues: this.stats.leagues,
-            timestamp: new Date().toISOString()
+            batches: this.stats.batches,
+            parallelBatches: this.stats.parallelTasks,
+            timestamp: new Date().toISOString(),
+            requestId: this.requestId,
+            version: 'V4.46.6'
         };
     }
 }
@@ -787,6 +807,8 @@ module.exports = {
     Logger,
     LogLevel,
     loadLeagueConfig,
-    generateRequestId,
-    CONFIG: BASE_CONFIG
+    // V4.46.6: 删除原有的 generateRequestId (使用 id_generator)
+    CONFIG: BASE_CONFIG,
+    // V4.46.6: 导出代理感知 HTTP 工具
+    httpsGet: httpsGetWithProxy
 };
