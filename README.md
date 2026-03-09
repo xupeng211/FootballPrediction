@@ -1,6 +1,8 @@
-# FootballPrediction TITAN-V4.46.5 HARDENING
+# FootballPrediction TITAN-V4.46.5 [STABLE]
 
 > **工业级足球预测平台** — 内存硬化 + 零模拟铁律 + LRU 淘汰 + 95/100 大厂标准
+>
+> **Dataset: 1900/1900 Matches Aligned (Multi-League Cumulative)** ✅
 
 [![Version](https://img.shields.io/badge/version-V4.46.5--HARDENING-blue.svg)](https://github.com/xupeng211/FootballPrediction)
 [![Architecture](https://img.shields.io/badge/architecture-Big%20Tech%20Standard-green.svg)]()

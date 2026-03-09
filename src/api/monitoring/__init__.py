@@ -7,6 +7,18 @@ API Monitoring Module - V4.46 激活版
 
 from __future__ import annotations
 
+from fastapi import APIRouter
+
+# V4.46.2: 创建空的监控路由器
+router = APIRouter(prefix="/monitoring", tags=["monitoring"])
+
+
+@router.get("/health")
+async def monitoring_health():
+    """监控模块健康检查"""
+    return {"status": "healthy", "module": "monitoring"}
+
+
 # 从 prometheus_metrics 导出所有指标
 from src.api.monitoring.prometheus_metrics import (
     # 类
@@ -33,6 +45,8 @@ from src.api.monitoring.prometheus_metrics import (
 )
 
 __all__ = [
+    # Router
+    "router",
     # 类
     "HarvestMetrics",
     "DeadLetterQueue",

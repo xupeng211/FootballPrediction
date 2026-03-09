@@ -1,17 +1,37 @@
 /**
- * NetworkShield - V4.46 网络护盾
+ * NetworkShield - V4.46.1 网络护盾
  * ========================================
  *
  * 22 节点代理池管理、熔断保护、Session Stickiness
  *
+ * V4.46.1 修复：
+ * - 添加 MAX_GLOBAL_RETRIES 防止递归死循环
+ * - 全局熔断时抛出 CIRCUIT_BREAKER_OPEN 错误
+ *
  * @module infrastructure/network/NetworkShield
- * @version V4.46.0
+ * @version V4.46.1
  */
 
 'use strict';
 
 const { logger } = require('../utils/Logger');
 const FactoryConfig = require('../../../config/factory_config');
+
+// ============================================================================
+// V4.46.1: 全局常量 - 防止无限递归
+// ============================================================================
+
+/** 全局熔断最大重试次数 */
+const MAX_GLOBAL_RETRIES = 3;
+
+/** 自定义错误：熔断器开启 */
+class CircuitBreakerOpenError extends Error {
+    constructor(message = '所有代理节点不可用，全局熔断已开启') {
+        super(message);
+        this.name = 'CircuitBreakerOpenError';
+        this.code = 'CIRCUIT_BREAKER_OPEN';
+    }
+}
 
 /**
  * NetworkShield - 网络护盾
@@ -20,6 +40,7 @@ const FactoryConfig = require('../../../config/factory_config');
  * 1. 代理池管理 (22 节点)
  * 2. 熔断器保护
  * 3. Session Stickiness (Worker 与端口绑定)
+ * 4. V4.46.1: 全局熔断保护
  */
 class NetworkShield {
     /**
@@ -31,7 +52,12 @@ class NetworkShield {
         this.proxyNodes = config.proxyNodes || this._getDefaultProxyNodes();
         this.circuitBreaker = new Map(); // 熔断器状态
         this.portAssignments = new Map(); // Worker -> Port 绑定
-        this.logger.info('V4.46 NetworkShield 启动：22 节点代理池模式');
+
+        // V4.46.1: 全局重试计数器
+        this.globalRetryCount = 0;
+        this.lastGlobalResetTime = 0;
+
+        this.logger.info('V4.46.1 NetworkShield 启动：22 节点代理池模式 + 全局熔断保护');
     }
 
     /**
@@ -60,10 +86,13 @@ class NetworkShield {
 
     /**
      * 为 Worker 分配代理端口 (Session Stickiness)
+     * V4.46.1: 添加全局重试限制，防止无限递归
      * @param {number} workerId - Worker ID
+     * @param {number} [retryCount=0] - 内部重试计数器 (递归保护)
      * @returns {Object} 代理配置
+     * @throws {CircuitBreakerOpenError} 当全局熔断时抛出
      */
-    assignPort(workerId) {
+    assignPort(workerId, retryCount = 0) {
         // 检查是否已有绑定
         if (this.portAssignments.has(workerId)) {
             const port = this.portAssignments.get(workerId);
@@ -75,10 +104,43 @@ class NetworkShield {
 
         // 分配新端口 (轮询 + 健康检查)
         const activeNodes = this.proxyNodes.filter(n => n.status === 'active');
+
         if (activeNodes.length === 0) {
-            this.logger.warn('所有代理节点已熔断，尝试重置...');
+            // V4.46.1: 全局熔断保护 - 限制最大重试次数
+            if (retryCount >= MAX_GLOBAL_RETRIES) {
+                const error = new CircuitBreakerOpenError(
+                    `全局熔断：所有代理节点不可用 (已重试 ${retryCount} 次)`
+                );
+                this.logger.error(`🚨 ${error.message}`);
+
+                // 记录到指标系统
+                this._recordGlobalCircuitBreakerOpen();
+
+                throw error;
+            }
+
+            // V4.46.1: 检查全局冷却窗口 - 如果 60 秒内已经重置过，直接报错
+            const now = Date.now();
+            const GLOBAL_COOLDOWN_MS = 60000;
+            if (this.lastGlobalResetTime > 0 && (now - this.lastGlobalResetTime) < GLOBAL_COOLDOWN_MS) {
+                const error = new CircuitBreakerOpenError(
+                    `全局冷却中：60 秒内已重置过熔断器，拒绝重复重置`
+                );
+                this.logger.error(`🚨 ${error.message}`);
+                this._recordGlobalCircuitBreakerOpen();
+                throw error;
+            }
+
+            this.logger.warn(`所有代理节点已熔断，尝试重置 (${retryCount + 1}/${MAX_GLOBAL_RETRIES})...`);
             this._resetCircuitBreaker();
-            return this.assignPort(workerId);
+
+            // 递归调用时传递重试计数
+            return this.assignPort(workerId, retryCount + 1);
+        }
+
+        // 成功分配，重置全局重试计数器
+        if (retryCount > 0) {
+            this.globalRetryCount = 0;
         }
 
         const nodeIndex = workerId % activeNodes.length;
@@ -130,11 +192,14 @@ class NetworkShield {
 
     /**
      * 强制重新分配端口 (避障)
+     * V4.46.1: 添加全局熔断保护
      * @param {number} workerId - Worker ID
      * @param {number} oldPort - 旧端口
+     * @param {number} [retryCount=0] - 内部重试计数器 (递归保护)
      * @returns {Object} 新的代理配置
+     * @throws {CircuitBreakerOpenError} 当全局熔断时抛出
      */
-    forceReassign(workerId, oldPort) {
+    forceReassign(workerId, oldPort, retryCount = 0) {
         this.logger.warn(`Worker ${workerId} 强制切换端口 (旧端口: ${oldPort})`);
 
         // 清除旧绑定
@@ -149,8 +214,33 @@ class NetworkShield {
         );
 
         if (availableNodes.length === 0) {
+            // V4.46.1: 全局熔断保护 - 限制最大重试次数
+            if (retryCount >= MAX_GLOBAL_RETRIES) {
+                const error = new CircuitBreakerOpenError(
+                    `强制切换失败：无可用代理节点 (已重试 ${retryCount} 次)`
+                );
+                this.logger.error(`🚨 ${error.message}`);
+                this._recordGlobalCircuitBreakerOpen();
+                throw error;
+            }
+
+            // V4.46.1: 检查全局冷却窗口
+            const now = Date.now();
+            const GLOBAL_COOLDOWN_MS = 60000;
+            if (this.lastGlobalResetTime > 0 && (now - this.lastGlobalResetTime) < GLOBAL_COOLDOWN_MS) {
+                const error = new CircuitBreakerOpenError(
+                    `全局冷却中：60 秒内已重置过熔断器，拒绝重复重置`
+                );
+                this.logger.error(`🚨 ${error.message}`);
+                this._recordGlobalCircuitBreakerOpen();
+                throw error;
+            }
+
+            this.logger.warn(`无可用节点，重置熔断器 (${retryCount + 1}/${MAX_GLOBAL_RETRIES})...`);
             this._resetCircuitBreaker();
-            return this.assignPort(workerId);
+
+            // 递归调用时传递重试计数
+            return this.assignPort(workerId, retryCount + 1);
         }
 
         const nodeIndex = Math.floor(Math.random() * availableNodes.length);
@@ -172,6 +262,25 @@ class NetworkShield {
             node.status = 'active';
             node.failureCount = 0;
         }
+    }
+
+    /**
+     * 记录全局熔断开启事件
+     * V4.46.1: 供 MetricsClient 捕获
+     * @private
+     */
+    _recordGlobalCircuitBreakerOpen() {
+        this.globalRetryCount++;
+        this.lastGlobalResetTime = Date.now();
+
+        // 发送熔断事件 (供外部监听)
+        this.logger.error({
+            event: 'GLOBAL_CIRCUIT_BREAKER_OPEN',
+            code: 'CIRCUIT_BREAKER_OPEN',
+            globalRetryCount: this.globalRetryCount,
+            timestamp: new Date().toISOString(),
+            poolStatus: this.getStatus()
+        });
     }
 
     /**
