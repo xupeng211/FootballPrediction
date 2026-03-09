@@ -40,9 +40,15 @@
 
 ---
 
-## 🚀 快速启动 (5 分钟)
+## 🚀 一键起飞指南 (Quick Start)
 
-### 1. 环境准备
+### 0. 前置要求
+
+- Docker & Docker Compose
+- Node.js 20+ (容器内已包含)
+- Python 3.11+ (容器内已包含)
+
+### 1. 环境准备 (30 秒)
 
 ```bash
 # 克隆项目
@@ -51,31 +57,72 @@ cd FootballPrediction
 
 # 配置环境变量 (必填 DB_PASSWORD)
 cp .env.example .env
-nano .env  # 设置 DB_PASSWORD=your_secure_password
+# 编辑 .env 设置 DB_PASSWORD=your_secure_password
 ```
 
-### 2. 启动开发环境
+### 2. 启动基础设施 (1 分钟)
 
 ```bash
-# 启动 Docker 容器 (db + redis + dev)
-docker-compose -f docker-compose.dev.yml up -d
+# 一键启动 Docker 容器 (db + redis + dev + prometheus + grafana)
+npm run dev:up
 
 # 进入开发容器
-docker-compose -f docker-compose.dev.yml exec dev bash
+npm run dev:shell
 ```
 
-### 3. 运行收割器
+### 3. 数据收割流水线 (3 分钟)
 
 ```bash
-# 方式 A: 生产收割器 (L2/L3)
-npm start
+# Step 1: L1 赛程扫描 (发现比赛)
+npm run seed
 
-# 方式 B: Swarm 蜂群收割 (推荐)
-node scripts/ops/swarm_test.js
+# Step 2: L2 超频收割 (赔率数据) - 推荐
+npm run harvest
 
-# 方式 C: 带参数收割
-node scripts/ops/run_production.js --limit 50 --dry-run
+# Step 3: L3 特征熔炼 (生成特征向量)
+npm run smelt
 ```
+
+### 4. 查看结果 (30 秒)
+
+```bash
+# 一键查看数据状态
+npm run status
+
+# 启动监控仪表盘
+npm run monitor:up
+```
+
+### 📊 监控仪表盘
+
+| 服务 | URL | 凭据 |
+|------|-----|------|
+| **Grafana** | http://localhost:3001 | admin / titan2024 |
+| **Prometheus** | http://localhost:9090 | 无需认证 |
+| **Metrics API** | http://localhost:8000/metrics | 无需认证 |
+
+### 📱 手机监控
+
+```
+http://<YOUR_IP>:3001/d/titan-v4464-dashboard
+```
+
+---
+
+## 🎮 核心命令速查表
+
+| 命令 | 用途 | 说明 |
+|------|------|------|
+| `npm run dev:up` | 启动开发环境 | db + redis + dev |
+| `npm run dev:down` | 停止开发环境 | - |
+| `npm run dev:shell` | 进入开发容器 | - |
+| `npm run seed` | L1 赛程扫描 | 发现比赛 |
+| `npm run harvest` | L2 超频收割 | 15 并发 |
+| `npm run smelt` | L3 特征熔炼 | 生成特征 |
+| `npm run status` | 数据完整性检查 | L1=L2=L3? |
+| `npm run monitor:up` | 启动监控栈 | Prometheus + Grafana |
+| `npm run metrics` | 启动指标服务 | 端口 8000 |
+| `npm run qa` | 代码质量检查 | lint + test |
 
 ---
 
@@ -503,8 +550,8 @@ FootballPrediction/
 | 文档 | 说明 |
 |------|------|
 | [CLAUDE.md](./CLAUDE.md) | AI 助手操作指南 (工程铁律、配置系统) |
-| [COMMAND_CENTER.md](./COMMAND_CENTER.md) | 完整命令列表、环境变量 |
-| [docs/OPERATIONS_RUNBOOK.md](./docs/OPERations_RUNbook.md) | **生产运维手册** (故障-对策矩阵) |
+| [docs/EXPANSION_GUIDE.md](./docs/EXPANSION_GUIDE.md) | **联赛扩张 SOP** (如何添加新联赛) |
+| [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | **故障诊断手册** (网络/内存/数据/监控) |
 | [config/monitoring/grafana_dashboard.json](./config/monitoring/grafana_dashboard.json) | **Grafana 监控看板** |
 | [scripts/maintenance/integrity_guard.py](./scripts/maintenance/integrity_guard.py) | **数据完整性卫士** |
 
@@ -513,6 +560,7 @@ FootballPrediction/
 ## 📜 版本历史
 | 版本 | 日期 | 核心变更 |
 |------|------|----------|
+| **V4.46.6** | 2026-03-09 | **INDUSTRIAL**: 德甲闪电战 + 监控全家桶 + DevEx 审计 |
 | **V4.46.5** | 2026-03-09 | **P10 硬化**: LRU Context 淘汰 + 确定性 ID 生成 + L2 堆积监控 |
 | **V4.46.4** | 2026-03-09 | **HYPER-DRIVE 架构**: Worker 池化 + 浏览器只启动一次 + 10x 吞吐提升 |
 | V4.46.3 | 2026-03-08 | 超频模式 + 403 逃逸策略 |

@@ -1,0 +1,41 @@
+# =============================================================================
+# TITAN-V4.46.6 Prometheus 配置
+# =============================================================================
+# 每 15s 抓取一次指标，支持实时监控收割进度
+# =============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'titan-v4.46.6'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+rule_files: []
+
+scrape_configs:
+  # ===========================================================================
+  # TITAN 主应用指标 (dev 容器)
+  # ===========================================================================
+  - job_name: 'titan-harvester'
+    static_configs:
+      - targets: ['dev:8000']
+        labels:
+          service: 'titan-harvester'
+          environment: 'development'
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  # ===========================================================================
+  # Prometheus 自身监控
+  # ===========================================================================
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
