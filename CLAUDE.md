@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V4.45-stable | **最后更新**: 2026-03-08
+**系统版本**: V4.46.6-INDUSTRIAL | **最后更新**: 2026-03-09
 
 > 📋 **环境配置**: 复制 `.env.example` 到 `.env` 并填写 `DB_PASSWORD`。
 
@@ -44,7 +44,7 @@ node scripts/ops/run_production.js
 
 ---
 
-## V4.45 架构规范
+## V4.46 架构规范
 
 ### 统一标准
 - **配置唯一源**: `src/config_unified.py`
@@ -88,6 +88,28 @@ node scripts/ops/run_production.js
 
 ---
 
+## Claude Skills 约束体系
+
+项目已配置 12 个专用 Skills，详见 `.claude/README.md`。核心约束：
+
+| 约束等级 | Skill | 用途 |
+|----------|-------|------|
+| 🔴 RED | `minimal_change` | 最小修改策略，防止过度重构 |
+| 🔴 RED | `architecture_boundary` | 架构边界保护，维护层次结构 |
+| 🔴 RED | `test_guard` | 测试质量保护 |
+| 🔴 RED | `context_lock` | 核心模块冻结 |
+| 🔴 RED | `change_impact` | 变更影响分析 |
+
+**可用业务 Skills**:
+- `football-prediction`: 比赛预测分析 (67.2% 准确率)
+- `data-collection`: FotMob API 数据收集
+- `report-generation`: PDF/Word/Excel 报告生成
+- `machine-learning-engineering`: XGBoost 模型优化
+- `code-quality`: 代码质量管理 (通过 Makefile)
+- `database-operations`: PostgreSQL 运维
+
+---
+
 # ══════════════════════════════════════════════════════════════════════════════
 # 常用命令 (Commands)
 # ══════════════════════════════════════════════════════════════════════════════
@@ -106,6 +128,10 @@ make dev-shell                                              # 进入开发容器
 docker-compose -f docker-compose.dev.yml exec dev npm start                # 生产收割器
 docker-compose -f docker-compose.dev.yml exec dev npm run seed             # 赛程种子数据
 docker-compose -f docker-compose.dev.yml exec dev npm run smelt            # 特征熔炼
+
+# Swarm 蜂群收割 (推荐，多 Worker 并发)
+docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/swarm_test.js           # 默认 3 Worker
+docker-compose -f docker-compose.dev.yml exec dev env SWARM_CONCURRENCY=5 node scripts/ops/swarm_test.js  # 自定义并发
 
 # 直接调用脚本 (支持参数)
 docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/run_production.js --limit 100
@@ -162,6 +188,8 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 | `npm run lint:python` | Ruff Python 检查 |
 | `npm run qa` | 全量检查 (lint + test:unit) |
 
+**注意**: Swarm 蜂群收割需直接调用脚本 `node scripts/ops/swarm_test.js`
+
 ## Makefile 命令
 
 | 命令 | 描述 |
@@ -203,9 +231,11 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 |----------|-------------|---------|
 | **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `scripts/ops/seed_fixtures.js` |
 | **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `scripts/ops/run_production.js` |
+| **Swarm Harvest** | `src/infrastructure/harvesters/SwarmHarvester.js` | `scripts/ops/swarm_test.js` |
 | **L3 Smelt** | `src/feature_engine/smelter/FeatureSmelter.js` | `scripts/ops/smelt_all.js` |
 | **身份管理** | `src/infrastructure/network/SessionManager.js` | - |
 | **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
+| **Prometheus 监控** | `src/infrastructure/monitoring/MetricsClient.js` | - |
 | **C++ 桥接** | `src/utils/cpp_bridge_radar.py` | - |
 
 **关键目录结构：**
@@ -238,9 +268,11 @@ config/
 | 组件 | 功能 | 位置 |
 |------|------|------|
 | `ProductionHarvester` | L2/L3 数据收割主入口 | `src/infrastructure/harvesters/` |
+| `SwarmHarvester` | 多 Worker 并发收割 (3x 吞吐提升) | `src/infrastructure/harvesters/` |
 | `FixtureSeeder` | L1 赛程发现与种子 | `src/infrastructure/` |
 | `NetworkShield` | 22 节点代理池管理、熔断保护 | `src/infrastructure/network/` |
 | `SessionManager` | 无人值守身份管理、Cookie 自动注入 | `src/infrastructure/network/` |
+| `MetricsClient` | Prometheus 指标暴露 (`/metrics`) | `src/infrastructure/monitoring/` |
 | `BridgeRadarEngine` | C++ 模糊匹配桥接 | `src/utils/cpp_bridge_radar.py` |
 | `PostgresClient` | 数据库连接池 | `src/infrastructure/database/` |
 
@@ -462,4 +494,4 @@ docker stats football_prediction_dev
 
 ---
 
-**更新日期**: 2026-03-08
+**更新日期**: 2026-03-09

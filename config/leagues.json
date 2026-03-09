@@ -1,31 +1,31 @@
 {
-  "version": "V192.0.0",
-  "description": "L1 发现层联赛配置 - 单一数据源",
+  "version": "V4.46.6-BLITZ",
+  "description": "TITAN-BUNDESLIGA-BLITZ 德甲闪电战配置",
   "active_leagues": [
     {
-      "id": 47,
-      "name": "Premier League",
-      "country": "England",
-      "enabled": true
-    },
-    {
-      "id": 87,
-      "name": "La Liga",
-      "country": "Spain",
-      "enabled": true
-    },
-    {
-      "id": 55,
-      "name": "Serie A",
-      "country": "Italy",
+      "id": 54,
+      "name": "Bundesliga",
+      "country": "Germany",
       "enabled": true
     }
   ],
   "inactive_leagues": [
     {
-      "id": 54,
-      "name": "Bundesliga",
-      "country": "Germany",
+      "id": 47,
+      "name": "Premier League",
+      "country": "England",
+      "enabled": false
+    },
+    {
+      "id": 87,
+      "name": "La Liga",
+      "country": "Spain",
+      "enabled": false
+    },
+    {
+      "id": 55,
+      "name": "Serie A",
+      "country": "Italy",
       "enabled": false
     },
     {
@@ -41,5 +41,5 @@
       "enabled": false
     }
   ],
-  "active_seasons": ["2023/2024", "2024/2025"]
+  "active_seasons": ["2025/2026"]
 }
