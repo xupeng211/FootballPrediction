@@ -215,6 +215,96 @@ services:
         max-size: "5m"
         max-file: "2"
 
+  # ===========================================================================
+  # prometheus - Prometheus 监控服务
+  # ===========================================================================
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: football_prediction_prometheus
+    restart: unless-stopped
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+      - '--storage.tsdb.retention.time=7d'
+
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+
+    volumes:
+      - ./config/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ===========================================================================
+  # grafana - Grafana 可视化服务
+  # ===========================================================================
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: football_prediction_grafana
+    restart: unless-stopped
+
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-titan2024}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+      - GF_INSTALL_PLUGINS=grafana-clock-panel
+
+    ports:
+      - "${GRAFANA_PORT:-3001}:3000"
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./config/monitoring/datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 128M
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    depends_on:
+      - prometheus
+
 # =============================================================================
 # 数据卷
 # =============================================================================
@@ -238,6 +328,13 @@ volumes:
   playwright_cache:
     driver: local
     name: footballprediction_playwright_cache
+  # V4.46.6: 监控栈数据卷
+  prometheus_data:
+    driver: local
+    name: footballprediction_prometheus_data
+  grafana_data:
+    driver: local
+    name: footballprediction_grafana_data
 
 # =============================================================================
 # 网络
