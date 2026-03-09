@@ -6,7 +6,7 @@
  * 统一管理代理池、会话、Worker 身份绑定
  *
  * @module infrastructure/network/NetworkManager
- * @version V4.46.0
+ * @version V4.46.5 - HARDENING: 零模拟铁律
  */
 
 'use strict';
@@ -19,6 +19,9 @@ const { getPathResolver } = require('../utils/PathResolver');
 
 // V4.46: 导入隐身指纹生成器 (从独立模块)
 const { generateStealthHeaders } = require('./StealthFingerprint');
+
+// V4.46.5 HARDENING: 使用确定性 ID 生成器（零模拟铁律）
+const { generateSessionId } = require('../../core/id_generator');
 
 // ============================================================================
 // WorkerIdentity - Worker 身份绑定类 (从 ProductionHarvester 迁移)
@@ -321,6 +324,7 @@ class NetworkManager {
     /**
      * TITAN-SWARM: 获取轮询代理配置
      * 每次调用返回不同的端口配置，实现 IP 轮询分发
+     * V4.46.5: 使用确定性 ID 生成
      * @param {number} [index] - 可选索引，用于轮询模式
      * @returns {Object} 代理配置对象 { port, url, sessionId }
      */
@@ -331,13 +335,14 @@ class NetworkManager {
             // 轮询模式：根据索引选择端口
             selectedPort = this.availablePorts[index % this.availablePorts.length];
         } else {
-            // 随机模式：随机选择健康端口
+            // 随机模式：随机选择健康端口（注意：这里的 Math.random 用于选择，不是伪造数据）
             const healthyPorts = this.availablePorts.filter(p => !this.failedPorts.has(p));
             const pool = healthyPorts.length > 0 ? healthyPorts : this.availablePorts;
             selectedPort = pool[Math.floor(Math.random() * pool.length)];
         }
 
-        const sessionId = `SWARM-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // V4.46.5: 使用确定性 Session ID
+        const sessionId = generateSessionId(selectedPort);
 
         return {
             port: selectedPort,

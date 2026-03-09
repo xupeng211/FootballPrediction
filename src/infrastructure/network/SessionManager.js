@@ -19,6 +19,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const FactoryConfig = require('../../../config/factory_config');
 
+// V4.46.5 HARDENING: 使用确定性 ID 生成器（零模拟铁律）
+const { generateLockId } = require('../../core/id_generator');
+
 // ============================================================================
 // 默认配置
 // ============================================================================
@@ -659,7 +662,8 @@ class SessionManager {
             this._refreshLocks.delete(port);
         }
 
-        const lockId = `LOCK-${port}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+        // V4.46.5 HARDENING: 使用确定性 ID 生成器
+        const lockId = generateLockId(port);
         this._refreshLocks.set(port, {
             lockId,
             timestamp: Date.now()
