@@ -12,6 +12,9 @@
     "harvest:swarm": "node scripts/ops/swarm_test.js",
     "harvest:production": "node scripts/ops/run_production.js",
     "metrics": "node scripts/ops/metrics_server.js",
+    "train": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/train_model.py",
+    "train:fast": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/train_model.py --estimators 100 --depth 4",
+    "train:deep": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/train_model.py --estimators 500 --depth 8 --lr 0.03",
     "predict": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/predict_pipeline.py",
     "predict:dry": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/predict_pipeline.py --dry-run",
     "predict:json": "docker-compose -f docker-compose.dev.yml exec -T dev python scripts/ops/predict_pipeline.py --format json",
@@ -37,7 +40,10 @@
     "format:check": "prettier --check \"**/*.{js,json,md}\" --ignore-path .gitignore",
     "lint:python": "ruff check src/",
     "format:python": "ruff format src/",
-    "qa": "npm run lint && npm run test:unit"
+    "qa": "npm run lint && npm run test:unit",
+    "elo:recalc": "node scripts/maintenance/recalculate_elo.js",
+    "elo:recalc:dry": "node scripts/maintenance/recalculate_elo.js --dry-run",
+    "elo:incremental": "node scripts/ops/elo_incremental_update.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

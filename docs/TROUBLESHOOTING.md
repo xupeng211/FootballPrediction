@@ -1,417 +1,258 @@
-# TITAN 故障诊断手册 (Troubleshooting Guide)
+# TITAN-V4.46.6 故障排查手册
 
-> **版本**: V4.46.6 | **最后更新**: 2026-03-09
->
-> 本手册涵盖生产环境中最常见的故障场景及解决方案。
+> **版本**: V4.46.6-INDUSTRIAL | **最后更新**: 2026-03-09
 
----
-
-## 🚨 快速诊断决策树
-
-```
-问题发生
-    │
-    ├─ 网络问题? ──────────────────────→ 见 §1 网络层
-    │   ├─ 代理连接失败
-    │   ├─ Turnstile 拦截
-    │   └─ DNS 解析错误
-    │
-    ├─ 内存问题? ──────────────────────→ 见 §2 内存层
-    │   ├─ Context Eviction 过高
-    │   ├─ OOM (Out of Memory)
-    │   └─ 浏览器崩溃
-    │
-    ├─ 数据问题? ──────────────────────→ 见 §3 数据层
-    │   ├─ L1/L2/L3 不对齐
-    │   ├─ 解析器失效
-    │   └─ 数据格式异常
-    │
-    └─ 监控问题? ──────────────────────→ 见 §4 监控层
-        ├─ Prometheus 抓取失败
-        ├─ Grafana 无数据
-        └─ 指标缺失
-```
+本文档涵盖生产环境中最常见的四类故障及其解决方案。
 
 ---
 
-## §1 网络层故障
+## 目录
 
-### 1.1 代理池诊断
+1. [网络封锁 (Network Blocking)](#1-网络封锁-network-blocking)
+2. [数据库不对齐 (Data Misalignment)](#2-数据库不对齐-data-misalignment)
+3. [内存溢出 (OOM)](#3-内存溢出-oom)
+4. [监控断连 (Monitoring Disconnection)](#4-监控断连-monitoring-disconnection)
 
-**症状**: 收割成功率骤降，大量连接超时
+---
 
-**诊断命令**:
+## 1. 网络封锁 (Network Blocking)
+
+### 症状
+
+- `Playwright` 浏览器卡在 Turnstile 验证页面
+- 请求返回 403/429 状态码
+- 代理连接超时 (`ETIMEDOUT`)
+- `NetworkShield` 报告高失败率
+
+### 诊断命令
+
 ```bash
-# 检查单个代理节点
-curl -x http://172.25.16.1:7890 --connect-timeout 5 https://httpbin.org/ip
-
-# 批量检查所有 22 个节点
-for port in $(seq 7890 7911); do
-    result=$(curl -x http://172.25.16.1:$port --connect-timeout 3 -s https://httpbin.org/ip 2>/dev/null)
-    if [ -n "$result" ]; then
-        echo "✅ Port $port: OK"
-    else
-        echo "❌ Port $port: FAILED"
-    fi
+# 检查代理连通性
+for port in 7890 7891 7892; do
+  echo "Testing port $port..."
+  curl -x http://172.25.16.1:$port https://httpbin.org/ip --connect-timeout 5
 done
-```
 
-**解决方案**:
-```bash
-# 重启代理服务 (Windows 端 Clash Verge)
-# WSL2 中刷新网络
-sudo systemctl restart networking
-
-# 或重置 Docker 网络
-docker-compose -f docker-compose.dev.yml down
-docker network prune -f
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-### 1.2 NetworkShield 熔断重置
-
-**症状**: 日志显示 "Circuit Breaker TRIPPED"
-
-**诊断**:
-```bash
-# 查看熔断状态
+# 检查熔断状态
 docker-compose -f docker-compose.dev.yml exec dev cat /app/data/circuit_breaker.json 2>/dev/null || echo "无熔断记录"
 
-# 检查熔断日志
-docker-compose -f docker-compose.dev.yml exec dev grep -r "Circuit Breaker" /app/logs/ | tail -20
-```
-
-**解决方案**:
-```bash
-# 方法1: 清除熔断记录 (等待冷却期)
-rm -f /app/data/circuit_breaker.json
-
-# 方法2: 重启开发容器
-docker-compose -f docker-compose.dev.yml restart dev
-
-# 方法3: 调整熔断阈值 (config/factory_config.js)
-# CIRCUIT_BREAKER.failureThreshold: 5 → 10
-# CIRCUIT_BREAKER.cooldownMs: 60000 → 30000
-```
-
-### 1.3 Turnstile 拦截
-
-**症状**: 返回 HTML 而非 JSON，日志显示 "JSON 解析失败"
-
-**诊断**:
-```bash
 # 检查会话文件
-docker-compose -f docker-compose.dev.yml exec dev ls -la /app/data/sessions/
-
-# 检查 Cookie 有效性
-docker-compose -f docker-compose.dev.yml exec dev cat /app/data/sessions/session_port_7890.json | head -50
+ls -la /app/data/sessions/ 2>/dev/null || echo "无会话目录"
 ```
 
-**解决方案**:
+### 解决方案
+
+| 问题 | 解决方案 |
+|------|----------|
+| **代理全部熔断** | 重启容器: `docker-compose -f docker-compose.dev.yml restart dev` |
+| **Turnstile 拦截** | 宿主机手动捕获身份: `node scripts/capture_auth.js` |
+| **IP 被封** | 等待 24 小时冷却，或更换代理节点 |
+| **DNS 解析失败** | 使用静态 IP: `echo "104.26.12.88 oddsportal.com" >> /etc/hosts` |
+
+### 预防措施
+
+- 保持 22 节点代理池健康
+- 定期刷新 Session (每 4 小时)
+- 使用 `SWARM_CONCURRENCY=1` 降低请求频率
+
+---
+
+## 2. 数据库不对齐 (Data Misalignment)
+
+### 症状
+
+- L1/L2/L3 层级数量不一致
+- `match_id` 外键约束失败
+- 预测报告显示 "无待预测比赛"
+- `integrity_guard.py` 报告数据缺失
+
+### 诊断命令
+
 ```bash
-# 方法1: 宿主机手动刷新身份
-# 需要在有图形界面的环境中运行
-node scripts/capture_auth.js
+# 检查各层级数据量
+docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
+SELECT
+  'L1 (matches)' as layer, COUNT(*) as count FROM matches
+UNION ALL
+SELECT 'L2 (raw_match_data)', COUNT(*) FROM raw_match_data
+UNION ALL
+SELECT 'L3 (l3_features)', COUNT(*) FROM l3_features
+UNION ALL
+SELECT 'Predictions', COUNT(*) FROM predictions;
+"
 
-# 方法2: 使用 hyper_swarm_stealth.js (增强隐蔽模式)
-node scripts/ops/hyper_swarm_stealth.js
+# 检查孤立记录
+docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
+SELECT COUNT(*) as orphan_l2 FROM raw_match_data r
+WHERE NOT EXISTS (SELECT 1 FROM matches m WHERE m.match_id = r.match_id);
+"
 
-# 方法3: 增加行为模拟
-# 在 SessionManager 中启用更多鼠标移动和滚动
+# 检查数据完整性
+docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/integrity_guard.py
+```
+
+### 解决方案
+
+| 问题 | 解决方案 |
+|------|----------|
+| **L2 缺失** | 重新收割: `docker-compose -f docker-compose.dev.yml exec dev npm start -- --limit 100` |
+| **L3 缺失** | 重新熔炼: `docker-compose -f docker-compose.dev.yml exec dev npm run smelt` |
+| **孤立记录** | 清理: `DELETE FROM raw_match_data WHERE match_id NOT IN (SELECT match_id FROM matches)` |
+| **特征为空** | 检查 L2 JSON 完整性: `SELECT match_id, jsonb_array_length(odds_data) FROM raw_match_data WHERE odds_data IS NOT NULL LIMIT 5` |
+
+### 数据修复脚本
+
+```sql
+-- 重建 L3 特征 (针对特定比赛)
+DELETE FROM l3_features WHERE match_id = 'TARGET_MATCH_ID';
+-- 然后重新运行 smelt
+
+-- 清理过期预测
+DELETE FROM predictions WHERE created_at < NOW() - INTERVAL '30 days';
 ```
 
 ---
 
-## §2 内存层故障
+## 3. 内存溢出 (OOM)
 
-### 1.1 Context Eviction 频率过高
+### 症状
 
-**症状**: 日志频繁显示 "Context evicted from pool"
+- 容器被 OOM Killer 杀死 (`Exit Code 137`)
+- 浏览器进程崩溃
+- 系统响应极慢
+- `dmesg` 显示 `Out of memory`
 
-**诊断**:
+### 诊断命令
+
 ```bash
-# 检查当前内存使用
+# 检查容器内存使用
 docker stats football_prediction_dev --no-stream
 
-# 查看日志中的 Eviction 记录
-docker-compose -f docker-compose.dev.yml exec dev grep "Context evicted" /app/logs/*.log | wc -l
+# 检查系统内存
+free -h
+
+# 检查浏览器进程数
+docker-compose -f docker-compose.dev.yml exec dev ps aux | grep -c chromium
+
+# 检查 Python 内存使用
+docker-compose -f docker-compose.dev.yml exec dev python -c "
+import psutil
+print(f'Memory: {psutil.virtual_memory().percent}%')
+print(f'Available: {psutil.virtual_memory().available / 1024**3:.1f} GB')
+"
 ```
 
-**解决方案**:
+### 解决方案
 
-编辑 `src/infrastructure/harvesters/AbstractHarvester.js`:
-```javascript
-// 调整 Context 池大小 (默认 50)
-this._contextPoolMaxSize = 100;  // 增加到 100
+| 问题 | 解决方案 |
+|------|----------|
+| **浏览器内存泄漏** | 限制并发: `SWARM_CONCURRENCY=1` |
+| **Docker 内存不足** | 增加限制: `mem_limit: 4g` in docker-compose |
+| **Pandas 大数据集** | 使用 chunked processing |
+| **特征维度过高** | 减少 batch_size: `--batch-size 50` |
 
-// 调整 LRU 淘汰阈值
-this._contextPoolEvictionThreshold = 0.8;  // 80% 时开始淘汰
-```
+### 配置优化
 
-重启服务:
-```bash
-docker-compose -f docker-compose.dev.yml restart dev
-```
-
-### 2.2 OOM (内存溢出)
-
-**症状**: 容器被 kill，dmesg 显示 "Out of memory"
-
-**诊断**:
-```bash
-# 查看容器内存限制
-docker-compose -f docker-compose.dev.yml config | grep -A5 memory
-
-# 监控内存使用
-watch -n 5 'docker stats --no-stream'
-```
-
-**解决方案**:
-
-编辑 `docker-compose.dev.yml`:
 ```yaml
-deploy:
-  resources:
-    limits:
-      memory: 12G  # 从 8G 增加到 12G
+# docker-compose.dev.yml
+services:
+  dev:
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
 ```
 
-重启:
 ```bash
-docker-compose -f docker-compose.dev.yml up -d
-```
-
-### 2.3 浏览器崩溃
-
-**症状**: "Browser closed unexpectedly" 或 "Target closed"
-
-**诊断**:
-```bash
-# 检查僵尸进程
-docker-compose -f docker-compose.dev.yml exec dev ps aux | grep -E 'chromium|chrome' | grep defunct
-
-# 检查浏览器日志
-docker-compose -f docker-compose.dev.yml exec dev cat /app/logs/browser.log 2>/dev/null | tail -50
-```
-
-**解决方案**:
-```bash
-# 清理僵尸进程
-docker-compose -f docker-compose.dev.yml exec dev node -e "
-const { preFlightCleanup } = require('./src/core/process/ZombieKiller');
-preFlightCleanup().then(() => console.log('清理完成'));
-"
-
-# 重新安装浏览器
-docker-compose -f docker-compose.dev.yml exec dev npx playwright install chromium --force
+# 环境变量
+export NODE_OPTIONS="--max-old-space-size=4096"
+export SWARM_CONCURRENCY=1
 ```
 
 ---
 
-## §3 数据层故障
+## 4. 监控断连 (Monitoring Disconnection)
 
-### 3.1 L1/L2/L3 不对齐
+### 症状
 
-**症状**: `npm run status` 显示 L1 ≠ L2 或 L2 ≠ L3
+- Grafana 仪表盘无数据
+- Prometheus targets 显示 `DOWN`
+- `/metrics` 端点无响应
+- 告警规则不触发
 
-**诊断**:
+### 诊断命令
+
 ```bash
-# 详细对比
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-SELECT 
-    'L1 only' as type, COUNT(*) as count
-FROM matches m LEFT JOIN raw_match_data r ON m.match_id = r.match_id
-WHERE r.match_id IS NULL
-UNION ALL
-SELECT 
-    'L2 only', COUNT(*)
-FROM raw_match_data r LEFT JOIN l3_features l ON r.match_id = l.match_id
-WHERE l.match_id IS NULL;
-"
+# 检查 Prometheus 状态
+curl -s http://localhost:9090/-/healthy
+
+# 检查 targets
+curl -s http://localhost:9090/api/v1/targets | jq '.data.activeTargets[].health'
+
+# 检查 metrics 端点
+curl -s http://localhost:8000/metrics | head -20
+
+# 检查容器网络
+docker network inspect footballprediction_default | jq '.[0].Containers'
 ```
 
-**解决方案**:
+### 解决方案
 
-根据诊断结果:
+| 问题 | 解决方案 |
+|------|----------|
+| **Prometheus 无法抓取** | 检查 `prometheus.yml` 中的 targets 配置 |
+| **Grafana 数据源断开** | 重新配置: Admin → Data Sources → Prometheus |
+| **Metrics 端点无数据** | 重启 metrics 服务: `docker-compose restart dev` |
+| **网络隔离** | 确保容器在同一网络: `docker network connect` |
 
-```bash
-# L1 > L2: 有比赛未收割
-npm run harvest
+### Prometheus 配置验证
 
-# L2 > L3: 有数据未熔炼
-npm run smelt
-
-# L2 > L1: 有孤立的 raw_match_data (数据异常)
-# 需要手动清理
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-DELETE FROM raw_match_data 
-WHERE match_id NOT IN (SELECT match_id FROM matches);
-"
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: 'football-prediction'
+    static_configs:
+      - targets: ['dev:8000']  # 确保使用容器服务名
+    scrape_interval: 15s
 ```
 
-### 3.2 解析器失效
+### 快速修复
 
-**症状**: 数据体积正常但字段为空或格式错误
-
-**诊断**:
 ```bash
-# 检查最近收割的数据
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-SELECT match_id, LENGTH(raw_data::text) as size, 
-       raw_data->'odds'->>'home_open' as home_odds
-FROM raw_match_data 
-ORDER BY collected_at DESC LIMIT 5;
-"
+# 重启监控栈
+docker-compose -f docker-compose.dev.yml restart prometheus grafana
 
-# 测试解析器
-docker-compose -f docker-compose.dev.yml exec dev node -e "
-const { FotMobParser } = require('./src/parsers/FotMobParser');
-const parser = new FotMobParser();
-console.log('Parser loaded:', typeof parser.extractMatchData === 'function');
-"
-```
-
-**解决方案**:
-
-1. 检查源网站是否更新了 HTML 结构
-2. 更新解析器 `src/parsers/*.js`
-3. 运行测试验证: `npm run test:l1`
-
-### 3.3 数据格式异常
-
-**症状**: JSON 解析错误或字段类型不匹配
-
-**诊断**:
-```bash
-# 检查 JSON 有效性
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-SELECT match_id, 
-       CASE WHEN raw_data::text ~ '^\{.*\}$' THEN 'VALID' ELSE 'INVALID' END as json_status
-FROM raw_match_data 
-ORDER BY collected_at DESC LIMIT 10;
-"
-```
-
-**解决方案**:
-```bash
-# 清理无效数据
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-DELETE FROM raw_match_data 
-WHERE NOT raw_data::text ~ '^\{.*\}$';
-"
-
-# 重新收割
-npm run harvest
-```
-
----
-
-## §4 监控层故障
-
-### 4.1 Prometheus 抓取失败
-
-**症状**: Grafana 无数据，Prometheus targets 显示 DOWN
-
-**诊断**:
-```bash
-# 检查 Prometheus targets 状态
-curl -s http://localhost:9090/api/v1/targets | python3 -c "
-import sys, json
-data = json.load(sys.stdin)
-for t in data['data']['activeTargets']:
-    print(f\"{t['labels']['job']}: {t['health']} - {t.get('lastError', 'OK')}\")
-"
-
-# 检查 metrics 服务是否运行
-curl -s http://localhost:8000/metrics | head -10
-```
-
-**解决方案**:
-```bash
-# 重启 metrics 服务
-docker-compose -f docker-compose.dev.yml exec -d dev node scripts/ops/metrics_server.js
-
-# 重启 Prometheus
-docker-compose -f docker-compose.dev.yml restart prometheus
-
-# 完整重启监控栈
-npm run monitor:down
-npm run monitor:up
-```
-
-### 4.2 Grafana 无数据
-
-**症状**: Dashboard 面板显示 "No data"
-
-**诊断**:
-```bash
-# 检查数据源连接
-curl -s -u admin:titan2024 http://localhost:3001/api/datasources/proxy/1/api/v1/query?query=up | head -50
-
-# 检查 Prometheus 是否有数据
-curl -s 'http://localhost:9090/api/v1/query?query=titan_data_l1_total'
-```
-
-**解决方案**:
-```bash
-# 重新导入 Dashboard
+# 重新导入仪表盘
 ./scripts/ops/import_dashboard.sh
 
-# 检查数据源配置
-docker-compose -f docker-compose.dev.yml exec grafana cat /etc/grafana/provisioning/datasources/datasource.yml
-```
-
-### 4.3 指标缺失
-
-**症状**: 某些 `titan_*` 指标不存在
-
-**诊断**:
-```bash
-# 列出所有可用指标
-curl -s http://localhost:8000/metrics | grep '^titan_' | cut -d'{' -f1 | sort -u
-```
-
-**解决方案**:
-
-确保 metrics_server.js 和 MetricsClient.js 中的指标定义一致。如果需要添加新指标，编辑:
-- `src/infrastructure/monitoring/MetricsClient.js` (收割时记录)
-- `scripts/ops/metrics_server.js` (暴露端点)
-
----
-
-## 📞 紧急恢复命令
-
-```bash
-# 完全重置环境
-docker-compose -f docker-compose.dev.yml down -v
-docker-compose -f docker-compose.dev.yml up -d
-
-# 仅重启应用层
-docker-compose -f docker-compose.dev.yml restart dev
-
-# 仅重启监控层
-npm run monitor:down && npm run monitor:up
-
-# 数据库紧急备份
-docker-compose -f docker-compose.dev.yml exec db pg_dump -U football_user football_db > backup_$(date +%Y%m%d).sql
-
-# 清理所有日志
-docker-compose -f docker-compose.dev.yml exec dev rm -rf /app/logs/*
+# 验证数据流
+curl -s 'http://localhost:9090/api/v1/query?query=up' | jq '.data.result'
 ```
 
 ---
 
-## 🔍 日志位置
+## 快速参考卡片
 
-| 组件 | 日志路径 |
-|------|----------|
-| 收割器 | `/app/logs/harvester.log` |
-| 浏览器 | `/app/logs/browser.log` |
-| 系统 | `docker-compose logs dev` |
-| Prometheus | `docker-compose logs prometheus` |
-| Grafana | `docker-compose logs grafana` |
+| 故障类型 | 一键诊断 | 一键修复 |
+|----------|----------|----------|
+| 网络封锁 | `make test-proxy` | `docker-compose restart dev` |
+| 数据不对齐 | `npm run status:db` | `npm run smelt` |
+| 内存溢出 | `docker stats --no-stream` | `SWARM_CONCURRENCY=1 npm start` |
+| 监控断连 | `curl localhost:9090/-/healthy` | `docker-compose restart prometheus` |
 
 ---
 
-**文档维护者**: TITAN SRE Team
-**紧急联系**: GitHub Issues
+## 联系支持
+
+如遇无法解决的问题，请提供以下信息：
+
+1. 完整错误日志 (`/app/logs/`)
+2. 诊断命令输出
+3. `docker-compose logs` 输出
+4. 系统环境 (`uname -a`, `docker version`)
+
+---
+
+**最后更新**: 2026-03-09 | **维护者**: TITAN Engineering Team

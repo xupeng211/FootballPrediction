@@ -14,7 +14,7 @@
 
 'use strict';
 
-const { safeGet, is } = require('../../core/utils/SafeAccess');
+// SafeAccess 模块已移除（未使用的死代码）
 
 /**
  * Elo 系统配置

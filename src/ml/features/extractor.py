@@ -33,6 +33,7 @@ import pandas as pd
 # V146.1: 修复导入 - 使用绝对路径
 # 导入足球业务逻辑常量
 from src.constants import FOOTBALL, MATH, PROBABILITY, SCORING, STATISTICAL, VALIDATOR
+from src.constants.football_logic import PrecisionContext
 
 from .h2h_calculator import H2HCalculator
 from .venue_analyzer import VenueAnalyzer
@@ -221,11 +222,11 @@ class MatchFeatureExtractor:
 
         # 设置精度上下文
         if precision_context == "high":
-            self._decimal_ctx = MATH.PrecisionContext.high_precision()
+            self._decimal_ctx = PrecisionContext.high_precision()
         elif precision_context == "low":
-            self._decimal_ctx = MATH.PrecisionContext.low_precision()
+            self._decimal_ctx = PrecisionContext.low_precision()
         else:  # medium
-            self._decimal_ctx = MATH.PrecisionContext.medium_precision()
+            self._decimal_ctx = PrecisionContext.medium_precision()
 
         self.logger = logging.getLogger(f"{__name__}.{self.__class__.__name__}")
 
@@ -813,7 +814,7 @@ class MatchFeatureExtractor:
             return features
 
         # 使用高精度上下文
-        with MATH.PrecisionContext.high_precision():
+        with PrecisionContext.high_precision():
             weighted_features = {}
 
             for name, value in features.items():

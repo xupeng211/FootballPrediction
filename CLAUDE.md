@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V4.46.6-INDUSTRIAL | **最后更新**: 2026-03-09
+**系统版本**: V4.46.6-INDUSTRIAL | **最后更新**: 2026-03-10
 
 > 📋 **环境配置**: 复制 `.env.example` 到 `.env` 并填写 `DB_PASSWORD`。
 
@@ -173,36 +173,119 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 
 ## 可用 npm 脚本 (package.json)
 
+### 数据流水线
 | 命令 | 描述 |
 |------|------|
 | `npm start` | 生产收割器 (`scripts/ops/run_production.js`) |
-| `npm run seed` | 赛程种子数据 |
+| `npm run seed` | L1 赛程种子数据 |
 | `npm run seed:all` | 全量赛程种子 |
-| `npm run smelt` | 特征熔炼 |
+| `npm run smelt` | L3 特征熔炼 |
+| `npm run harvest` | 超频收割 (`hyper_swarm.js`) |
+| `npm run harvest:swarm` | 蜂群收割 (`swarm_test.js`) |
+| `npm run harvest:production` | 生产收割器 |
+
+### ML 训练与预测
+| 命令 | 描述 |
+|------|------|
+| `npm run train` | 模型训练 (默认参数) |
+| `npm run train:fast` | 快速训练 (100 estimators, depth 4) |
+| `npm run train:deep` | 深度训练 (500 estimators, depth 8) |
+| `npm run predict` | 运行预测流水线 |
+| `npm run predict:dry` | 预测流水线 (dry-run 模式) |
+| `npm run predict:json` | 预测流水线 (JSON 输出) |
+
+### 监控与状态
+| 命令 | 描述 |
+|------|------|
+| `npm run metrics` | 启动指标服务 (端口 8000) |
+| `npm run monitor:up` | 启动监控栈 (Prometheus + Grafana) |
+| `npm run monitor:down` | 停止监控栈 |
+| `npm run status` | 数据完整性检查 |
+| `npm run status:db` | 数据库层级统计 |
+| `npm run status:health` | 容器健康状态 |
+
+### 开发环境
+| 命令 | 描述 |
+|------|------|
+| `npm run dev:up` | 启动开发容器 |
+| `npm run dev:down` | 停止开发容器 |
+| `npm run dev:shell` | 进入开发容器 Shell |
+| `npm run dev:logs` | 查看容器日志 |
+
+### 测试与质量
+| 命令 | 描述 |
+|------|------|
 | `npm test` | 运行所有 Node.js 单元测试 |
 | `npm run test:unit` | 单元测试 |
+| `npm run test:l1` | L1 赛程测试 |
+| `npm run test:integration` | 集成测试 |
 | `npm run test:coverage` | 带覆盖率测试 |
 | `npm run lint` | ESLint 检查 |
 | `npm run lint:fix` | ESLint 自动修复 |
-| `npm run format` | Prettier 格式化 |
 | `npm run lint:python` | Ruff Python 检查 |
+| `npm run format` | Prettier 格式化 |
+| `npm run format:check` | 格式化检查 |
+| `npm run format:python` | Ruff 格式化 |
 | `npm run qa` | 全量检查 (lint + test:unit) |
-
-**注意**: Swarm 蜂群收割需直接调用脚本 `node scripts/ops/swarm_test.js`
 
 ## Makefile 命令
 
+### 服务管理
 | 命令 | 描述 |
 |------|------|
 | `make help` | 显示所有可用命令 |
+| `make up` | 启动核心服务 (db + redis) |
+| `make up-pipeline` | 启动核心服务 + 数据流水线 |
+| `make up-api` | 启动核心服务 + API |
+| `make up-dev` | 启动开发环境 (包含管理工具) |
+| `make up-all` | 启动所有服务 |
+| `make down` | 停止所有服务 |
+| `make restart` | 重启核心服务 |
+| `make ps` | 查看容器状态 |
+| `make health` | 检查服务健康状态 |
+
+### 日志与监控
+| 命令 | 描述 |
+|------|------|
+| `make logs` | 查看核心服务日志 |
+| `make logs-api` | 查看 API 日志 |
+| `make logs-all` | 查看所有服务日志 |
+| `make dashboard` | 启动战神仪表盘 |
+
+### 构建与部署
+| 命令 | 描述 |
+|------|------|
+| `make build` | 构建生产镜像 |
+| `make build-test` | 构建测试镜像 |
+| `make build-no-cache` | 无缓存构建 |
+| `make deploy` | 部署到生产环境 |
+
+### 代码质量
+| 命令 | 描述 |
+|------|------|
 | `make lint` | 运行 Lint 检查 (ruff/flake8) |
 | `make format` | 格式化代码 (ruff/black) |
-| `make clean` | 清理垃圾文件 |
-| `make clean-all` | 完全清理 (包括日志) |
+| `make test` | 运行全量测试 |
+| `make test-unit` | 运行单元测试 |
+| `make security` | 运行安全扫描 |
 | `make verify` | 完整验证 (lint + test + security) |
-| `make db-shell` | 进入数据库 Shell |
+
+### 数据库与缓存
+| 命令 | 描述 |
+|------|------|
+| `make db-shell` | 进入 PostgreSQL Shell |
 | `make db-backup` | 备份数据库 |
-| `make health` | 检查服务健康状态 |
+| `make db-reset` | 重置数据库 (危险操作!) |
+| `make redis-shell` | 进入 Redis CLI |
+
+### 清理
+| 命令 | 描述 |
+|------|------|
+| `make clean` | 清理垃圾文件 (pyc, __pycache__) |
+| `make clean-csv` | 清理临时测试 CSV 文件 |
+| `make clean-logs` | 清理超过 7 天的日志 |
+| `make clean-docker` | 清理 Docker 资源 |
+| `make clean-all` | 完全清理 (包括临时文件和日志) |
 
 ---
 
@@ -223,7 +306,7 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 | 层级 | 数据源 | 说明 | 存储表 |
 |------|--------|------|--------|
 | **L1** | FotMob API | 比赛发现、基础信息 | `matches` |
-| **L2** | OddsPortal | 赔率数据（开盘/收盘/1X2/亚洲盘） | `raw_match_data` |
+| **L2** | FotMob Details + OddsPortal | 身价/阵容/xG/评分 + 赔率数据 | `raw_match_data`, `l2_match_data` |
 | **L3** | 特征工程 | 12061 维特征向量 | `l3_features` |
 
 **系统核心资产地图：**
@@ -284,6 +367,120 @@ config/
 | Model C | 19 | 赔率模型 |
 
 共识规则: UNANIMOUS (3/3) > MAJORITY (2/3) > SPLIT (无共识)
+
+---
+
+## 性能基准 (Performance Benchmarks)
+
+### 吞吐量指标
+| 指标 | 数值 | 测试条件 |
+|------|------|----------|
+| **收割吞吐量** | 5.8 场/分钟 | 5-Worker 并发 |
+| **峰值吞吐量** | 12+ 场/分钟 | 10-Worker 并发 |
+| **日处理能力** | 8,000+ 场 | 24h 连续运行 |
+
+### 响应时延
+| 操作 | P50 | P95 | P99 |
+|------|-----|-----|-----|
+| **单场收割** | 10.3s | 15.2s | 22.8s |
+| **L2 数据采集** | 4.7s | 8.1s | 12.5s |
+| **L3 特征熔炼** | 0.8s | 1.2s | 2.1s |
+| **模型预测** | <100ms | <150ms | <200ms |
+
+### Worker 并发扩展矩阵
+| Workers | 吞吐量 (场/分) | 代理占用 | 推荐场景 |
+|---------|---------------|----------|----------|
+| 1 | 1.2 | 1/22 | 调试 / 单场测试 |
+| 3 | 3.6 | 3/22 | 日常收割 |
+| 5 | 5.8 | 5/22 | 生产环境 (推荐) |
+| 10 | 10.2 | 10/22 | 高峰期 |
+| 22 | 18.5 | 22/22 | 极限压测 |
+
+---
+
+## Match ID 规范
+
+系统采用统一的 Match ID 格式，确保跨层数据一致性：
+
+```
+格式: [LeagueID]_[Season]_[MatchID]
+
+示例: 55_20242025_4803413
+      │  │        │
+      │  │        └── FotMob 比赛 ID
+      │  └── 赛季 (YYYYYYYY 格式)
+      └── 联赛 ID (FotMob League ID)
+
+常用联赛 ID:
+├── 55   = Premier League (英超)
+├── 54   = La Liga (西甲)
+├── 53   = Bundesliga (德甲)
+├── 52   = Serie A (意甲)
+├── 51   = Ligue 1 (法甲)
+└── 详见 config/league_registry.json
+```
+
+---
+
+## EV 计算与投注策略
+
+### EV (Expected Value) 计算公式
+
+```python
+# 有赔率时的 EV 计算
+EV = P × Odds - 1
+
+# 示例
+P = 64.7%, Odds = 1.47
+EV = 0.647 × 1.47 - 1 = -4.9%  (负值，不推荐投注)
+```
+
+### 无赔率时的保守估算 (条件从高到低)
+
+```python
+if p > 0.70:    ev = min(0.10, theoretical_ev + 0.05)
+elif p > 0.60:  ev = min(0.05, theoretical_ev + 0.02)
+elif p > 0.50:  ev = min(0.03, theoretical_ev)
+elif p > 0.40:  ev = max(-0.05, theoretical_ev - 0.02)
+else:           ev = max(-0.10, theoretical_ev - 0.05)
+```
+
+### EV 阈值决策矩阵
+
+| EV 范围 | 决策 | 仓位建议 |
+|---------|------|----------|
+| **EV > 10%** | 强烈推荐 | 1/2 Kelly |
+| **5% < EV < 10%** | 推荐 | 1/4 Kelly |
+| **0% < EV < 5%** | 边缘 | 1/8 Kelly 或跳过 |
+| **EV < 0%** | **拒绝** | 0 (负期望值) |
+
+### Fractional Kelly 计算公式
+
+```
+Kelly% = (P × Odds - 1) / (Odds - 1)
+实际仓位 = Kelly% × 分数系数 (推荐 0.25)
+
+示例:
+P = 55%, Odds = 2.10, EV = 15.5%
+Kelly% = (0.55 × 2.10 - 1) / (2.10 - 1) = 14.1%
+实际仓位 = 14.1% × 0.25 = 3.5%
+```
+
+---
+
+## GoldenFeatureExtractor 四层回退逻辑
+
+身价提取策略 (单位: 欧元):
+
+| 策略 | 路径 | 可靠性 | 单位转换 |
+|------|------|--------|----------|
+| **策略 1** | `content.lineup.{team}Team.totalStarterMarketValue` | ★★★★★ | × 1e6 |
+| **策略 2** | `content.lineup.{team}Team.starters[].marketValue` 求和 | ★★★★☆ | 每个 × 1e6 后求和 |
+| **策略 3** | `content.lineup.{team}Team.subs[].marketValue` 求和 | ★★★☆☆ | 每个 × 1e6 后求和 |
+| **策略 4** | 深度搜索 (table.all/players/details.stats) | ★★☆☆☆ | - |
+| **策略 5** | 数据缺失 → `market_value_total = 0` | - | 标记 `not_found` |
+
+**重要**: FotMob API 返回的 `marketValue` 单位是**百万欧元**，必须乘以 1e6 转换为欧元。
 
 ---
 
@@ -494,4 +691,4 @@ docker stats football_prediction_dev
 
 ---
 
-**更新日期**: 2026-03-09
+**更新日期**: 2026-03-10

@@ -1,0 +1,48 @@
+{
+  "version": "V4.46.6-REAL-COMBAT",
+  "created_at": "2026-03-11T01:27:51.109760",
+  "feature_names": [
+    "home_elo_pre",
+    "away_elo_pre",
+    "elo_diff",
+    "expected_home_win",
+    "expected_away_win",
+    "log_home_squad_value",
+    "log_away_squad_value",
+    "home_mv_share",
+    "h2h_home_win_ratio",
+    "h2h_draw_ratio",
+    "h2h_avg_goal_diff"
+  ],
+  "training_params": {
+    "n_estimators": 80,
+    "max_depth": 3,
+    "learning_rate": 0.05,
+    "reg_alpha": 0.5,
+    "reg_lambda": 2.0
+  },
+  "temporal_split": {
+    "train": "<= 2025-12-31",
+    "test": ">= 2026-01-01"
+  },
+  "metrics": {
+    "test_accuracy": 0.4486301369863014,
+    "test_f1": 0.40796503169587844,
+    "test_log_loss": 1.0875428168760302,
+    "train_samples": 876,
+    "test_samples": 584
+  },
+  "feature_importance": {
+    "expected_home_win": 0.18898046016693115,
+    "elo_diff": 0.1755426675081253,
+    "expected_away_win": 0.1251523494720459,
+    "home_elo_pre": 0.0919703021645546,
+    "log_home_squad_value": 0.0762547180056572,
+    "h2h_home_win_ratio": 0.07397231459617615,
+    "home_mv_share": 0.07357040792703629,
+    "away_elo_pre": 0.0726013332605362,
+    "log_away_squad_value": 0.0676676481962204,
+    "h2h_draw_ratio": 0.05428778752684593,
+    "h2h_avg_goal_diff": 0.0
+  }
+}
