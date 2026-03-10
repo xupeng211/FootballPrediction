@@ -1064,3 +1064,150 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
+
+# ============================================================================
+# 简化版 Notifier 类 - 供 TITAN 巡航系统使用
+# ============================================================================
+
+class Notifier:
+    """
+    简化版通知器 - 供 TITAN 巡航控制器使用
+
+    初期实现：
+        - 将消息写入 logs/alerts.log
+        - 在终端打印
+
+    后续可扩展：
+        - Telegram 通知
+        - 邮件通知
+        - Webhook 通知
+    """
+
+    def __init__(self, log_file: str | None = None):
+        """
+        初始化通知器
+
+        Args:
+            log_file: 日志文件路径 (默认: logs/alerts.log)
+        """
+        from pathlib import Path
+        self.log_file = Path(log_file) if log_file else Path(__file__).parent.parent.parent / "logs" / "alerts.log"
+        self.log_file.parent.mkdir(parents=True, exist_ok=True)
+
+    def alert(self, title: str, message: str) -> bool:
+        """
+        发送告警通知
+
+        Args:
+            title: 告警标题
+            message: 告警内容
+
+        Returns:
+            bool: 是否发送成功
+        """
+        try:
+            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+            # 终端打印
+            print(f"\n🔴 [ALERT] {timestamp}")
+            print(f"   标题: {title}")
+            print(f"   内容: {message}\n")
+
+            # 写入日志文件
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] 🔴 {title}\n")
+                f.write(f"{message}\n")
+                f.write("-" * 60 + "\n")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"告警发送失败: {e}")
+            return False
+
+    def notify(self, title: str, message: str) -> bool:
+        """
+        发送普通通知
+
+        Args:
+            title: 通知标题
+            message: 通知内容
+
+        Returns:
+            bool: 是否发送成功
+        """
+        try:
+            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+            # 终端打印
+            print(f"\n🟢 [NOTIFY] {timestamp}")
+            print(f"   标题: {title}")
+            print(f"   内容: {message}\n")
+
+            # 写入日志文件
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] 🟢 {title}\n")
+                f.write(f"{message}\n")
+                f.write("-" * 60 + "\n")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"通知发送失败: {e}")
+            return False
+
+    def send_alert(self, message: str) -> bool:
+        """
+        发送告警 (兼容接口)
+
+        Args:
+            message: 告警内容
+
+        Returns:
+            bool: 是否发送成功
+        """
+        return self.alert("系统告警", message)
+
+    def send_summary(self, top_matches: list[dict[str, Any]]) -> bool:
+        """
+        发送预测摘要
+
+        Args:
+            top_matches: 高价值比赛列表
+
+        Returns:
+            bool: 是否发送成功
+        """
+        try:
+            timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+
+            # 格式化摘要
+            lines = [f"📊 预测摘要 - {timestamp}", ""]
+            for i, match in enumerate(top_matches[:10], 1):
+                home = match.get("home_team", "?")
+                away = match.get("away_team", "?")
+                pred = match.get("prediction", "?")
+                conf = match.get("confidence", 0)
+                ev = match.get("ev", 0)
+
+                lines.append(
+                    f"{i}. {home} vs {away} | {pred} ({conf:.0%}) | EV: {ev:+.1%}"
+                )
+
+            message = "\n".join(lines)
+
+            # 终端打印
+            print(f"\n{message}\n")
+
+            # 写入日志文件
+            with open(self.log_file, "a", encoding="utf-8") as f:
+                f.write(f"[{timestamp}] 📊 预测摘要\n")
+                f.write(message + "\n")
+                f.write("-" * 60 + "\n")
+
+            return True
+
+        except Exception as e:
+            logger.error(f"摘要发送失败: {e}")
+            return False

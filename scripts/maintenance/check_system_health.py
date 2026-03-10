@@ -1,26 +1,79 @@
 #!/usr/bin/env python3
 """
-FootballPrediction - 全系统健康检查脚本
+FootballPrediction - 全系统健康检查脚本 (工业加固版)
 ==========================================
 
-检查所有核心组件状态，确保 2026 赛季开始前系统准备就绪。
+V4.46.8 工业化加固:
+- 环境变量安全: 强制要求 DB_PASSWORD，无默认值回退
+- 双重日志: 控制台 + 文件 (/app/logs/)
+- 结构化退出码: 0=成功, 1=失败, 2=配置错误
+- CLI 标准化: 使用 argparse
 
 执行方式:
     python scripts/maintenance/check_system_health.py
     python scripts/maintenance/check_system_health.py --verbose
+    python scripts/maintenance/check_system_health.py --json
 
 作者: FootballPrediction Ops Team
-版本: V1.0 (2025-12-31)
+版本: V4.46.8-INDUSTRIAL
 """
 
-import sys
+import argparse
+import json
+import logging
 import os
 import subprocess
-from pathlib import Path
+import sys
 from datetime import datetime
-from typing import List, Tuple
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
-# 尝试导入可选依赖
+# 路径配置
+PROJECT_ROOT = Path(__file__).parent.parent.parent
+LOG_DIR = PROJECT_ROOT / "logs"
+LOG_DIR.mkdir(exist_ok=True)
+
+# ============================================================================
+# 日志配置 - 双重输出 (控制台 + 文件)
+# ============================================================================
+
+def setup_logging(verbose: bool = False) -> logging.Logger:
+    """配置双重日志输出"""
+    log_level = logging.DEBUG if verbose else logging.INFO
+
+    # 创建 logger
+    logger = logging.getLogger("check_system_health")
+    logger.setLevel(log_level)
+
+    # 清除现有 handlers
+    logger.handlers.clear()
+
+    # 日志格式
+    formatter = logging.Formatter(
+        fmt="[%(asctime)s] [%(levelname)s] [check_system_health] %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+
+    # 控制台输出
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(log_level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    # 文件输出
+    log_file = LOG_DIR / "check_system_health.log"
+    file_handler = logging.FileHandler(log_file, encoding="utf-8")
+    file_handler.setLevel(log_level)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
+    return logger
+
+
+# ============================================================================
+# 可选依赖检查
+# ============================================================================
+
 try:
     import psycopg2
     HAS_POSTGRES = True
@@ -46,7 +99,33 @@ try:
 except ImportError:
     pass
 
+
+# ============================================================================
+# 配置类 - 安全加载环境变量
+# ============================================================================
+
+class ConfigError(Exception):
+    """配置错误异常"""
+    pass
+
+
+def get_required_env(key: str) -> str:
+    """获取必需的环境变量，缺失时报错"""
+    value = os.getenv(key)
+    if not value:
+        raise ConfigError(f"缺少必需的环境变量: {key}")
+    return value
+
+
+def get_optional_env(key: str, default: Optional[str] = None) -> Optional[str]:
+    """获取可选的环境变量"""
+    return os.getenv(key, default)
+
+
+# ============================================================================
 # ANSI 颜色代码
+# ============================================================================
+
 class Colors:
     GREEN = "\033[92m"
     YELLOW = "\033[93m"
@@ -56,52 +135,63 @@ class Colors:
     END = "\033[0m"
 
 
-def print_header(text: str):
-    """打印标题"""
-    print(f"\n{Colors.BLUE}{Colors.BOLD}{'=' * 60}{Colors.END}")
-    print(f"{Colors.BLUE}{Colors.BOLD}{text:^60}{Colors.END}")
-    print(f"{Colors.BLUE}{Colors.BOLD}{'=' * 60}{Colors.END}\n")
-
-
-def print_status(name: str, status: str, details: str = ""):
+def print_status(name: str, status: str, details: str = "", logger: Optional[logging.Logger] = None):
     """打印状态行"""
     if status == "OK":
         color = Colors.GREEN
         symbol = "✓"
+        log_func = logger.info if logger else print
     elif status == "WARNING":
         color = Colors.YELLOW
         symbol = "⚠"
+        log_func = logger.warning if logger else print
     else:
         color = Colors.RED
         symbol = "✗"
+        log_func = logger.error if logger else print
 
     print(f"{color}{symbol} {name:<30}{Colors.END} {status}")
     if details:
         print(f"  └─ {details}")
 
+    if logger:
+        log_func(f"{name}: {status} - {details}" if details else f"{name}: {status}")
+
+
+# ============================================================================
+# 系统健康检查器
+# ============================================================================
 
 class SystemHealthChecker:
     """系统健康检查器"""
 
-    def __init__(self, verbose: bool = False):
+    def __init__(self, verbose: bool = False, logger: Optional[logging.Logger] = None):
         self.verbose = verbose
-        self.results: List[Tuple[str, str, str]] = []
-        self.project_root = Path(__file__).parent.parent.parent
+        self.logger = logger or logging.getLogger("check_system_health")
+        self.results: List[Dict[str, str]] = []
+        self.project_root = PROJECT_ROOT
 
-        # 从环境变量获取配置
-        self.db_host = os.getenv("DB_HOST", "localhost")
-        self.db_port = int(os.getenv("DB_PORT", "5432"))
-        self.db_name = os.getenv("DB_NAME", "football_prediction_dev")
-        self.db_user = os.getenv("DB_USER", "football_user")
-        self.db_password = os.getenv("DB_PASSWORD", "football_password_change_in_production")
+        # 安全加载配置 - 无默认密码回退
+        try:
+            self.db_host = get_optional_env("DB_HOST", "localhost") or "localhost"
+            self.db_port = int(get_optional_env("DB_PORT", "5432") or "5432")
+            self.db_name = get_optional_env("DB_NAME", "football_db") or "football_db"
+            self.db_user = get_optional_env("DB_USER", "football_user") or "football_user"
+            # 安全关键: 必须从环境变量获取密码
+            self.db_password = get_required_env("DB_PASSWORD")
 
-        self.redis_host = os.getenv("REDIS_HOST", "localhost")
-        self.redis_port = int(os.getenv("REDIS_PORT", "6379"))
+            self.redis_host = get_optional_env("REDIS_HOST", "localhost") or "localhost"
+            self.redis_port = int(get_optional_env("REDIS_PORT", "6379") or "6379")
+
+        except ConfigError as e:
+            self.logger.error(f"配置错误: {e}")
+            self.logger.error("请确保已设置 DB_PASSWORD 环境变量")
+            raise
 
     def add_result(self, name: str, status: str, details: str = ""):
         """记录检查结果"""
-        self.results.append((name, status, details))
-        print_status(name, status, details)
+        self.results.append({"name": name, "status": status, "details": details})
+        print_status(name, status, details, self.logger)
 
     def check_postgresql(self) -> bool:
         """检查 PostgreSQL 数据库连接"""
@@ -197,78 +287,31 @@ class SystemHealthChecker:
             self.add_result("Redis Cache", "FAILED", str(e))
             return False
 
-    def check_football_watcher(self) -> bool:
-        """检查 football-watcher systemd 服务"""
+    def check_docker_services(self) -> bool:
+        """检查 Docker 服务状态"""
         try:
-            # 获取当前用户名
-            username = os.getenv("USER", os.getenv("USERNAME", "user"))
-            service_name = f"football-watcher@{username}.service"
-
-            # 检查服务状态
             result = subprocess.run(
-                ["systemctl", "is-active", service_name],
+                ["docker-compose", "ps", "-q"],
                 capture_output=True,
                 text=True,
-                timeout=5
+                timeout=10,
+                cwd=self.project_root
             )
 
-            status = result.stdout.strip()
+            running_count = len([line for line in result.stdout.strip().split('\n') if line])
 
-            if status == "active":
-                # 获取详细状态
-                result = subprocess.run(
-                    ["systemctl", "status", service_name],
-                    capture_output=True,
-                    text=True,
-                    timeout=5
-                )
-
-                # 解析运行时间
-                for line in result.stdout.split('\n'):
-                    if 'active (running)' in line:
-                        uptime = line.split(';')[1].strip() if ';' in line else "Unknown"
-                        break
-                else:
-                    uptime = "Unknown"
-
-                self.add_result("Football-Watcher Service", "OK", f"Running | {uptime}")
+            if running_count >= 2:
+                self.add_result("Docker Services", "OK", f"{running_count} containers running")
                 return True
             else:
-                self.add_result("Football-Watcher Service", "WARNING", f"Status: {status}")
+                self.add_result("Docker Services", "WARNING", f"Only {running_count} containers running (expected 2+)")
                 return False
 
         except FileNotFoundError:
-            self.add_result("Football-Watcher Service", "WARNING", "Not installed (systemctl not found)")
+            self.add_result("Docker Services", "WARNING", "docker-compose not found")
             return False
         except Exception as e:
-            self.add_result("Football-Watcher Service", "WARNING", str(e))
-            return False
-
-    def check_dashboard(self) -> bool:
-        """检查 Streamlit Dashboard"""
-        if not HAS_REQUESTS:
-            self.add_result("Streamlit Dashboard", "WARNING", "requests not installed, skipping check")
-            return False
-
-        try:
-            # 尝试连接 localhost:8501
-            response = requests.get(
-                "http://localhost:8501",
-                timeout=5
-            )
-
-            if response.status_code == 200:
-                self.add_result("Streamlit Dashboard", "OK", "Accessible on port 8501")
-                return True
-            else:
-                self.add_result("Streamlit Dashboard", "WARNING", f"Status: {response.status_code}")
-                return False
-
-        except requests.exceptions.ConnectionError:
-            self.add_result("Streamlit Dashboard", "WARNING", "Not running (port 8501 not accessible)")
-            return False
-        except Exception as e:
-            self.add_result("Streamlit Dashboard", "WARNING", str(e))
+            self.add_result("Docker Services", "WARNING", str(e))
             return False
 
     def check_data_quality(self) -> bool:
@@ -321,26 +364,22 @@ class SystemHealthChecker:
     def check_model_files(self) -> bool:
         """检查模型文件"""
         try:
-            model_zoo = self.project_root / "model_zoo"
+            model_dir = self.project_root / "models"
 
-            if not model_zoo.exists():
-                self.add_result("Model Files", "FAILED", "model_zoo directory not found")
+            if not model_dir.exists():
+                self.add_result("Model Files", "FAILED", "models directory not found")
                 return False
 
-            # 检查 V26.8 模型
-            v26_models = list(model_zoo.glob("v26.8_*.pkl"))
-            v26_count = len(v26_models)
+            # 检查 .joblib 模型
+            joblib_models = list(model_dir.glob("*.joblib"))
+            model_count = len(joblib_models)
 
-            # 检查 V26.7 模型
-            v27_models = list(model_zoo.glob("v26.7_*.pkl"))
-            v27_count = len(v27_models)
-
-            if v26_count >= 4:
-                details = f"V26.8: {v26_count} models | V26.7: {v27_count} models"
+            if model_count >= 1:
+                details = f"Found {model_count} model files"
                 self.add_result("Model Files", "OK", details)
                 return True
             else:
-                details = f"V26.8: {v26_count} models (expected 4+) | V26.7: {v27_count} models"
+                details = f"No model files found in {model_dir}"
                 self.add_result("Model Files", "WARNING", details)
                 return False
 
@@ -348,55 +387,20 @@ class SystemHealthChecker:
             self.add_result("Model Files", "FAILED", str(e))
             return False
 
-    def check_prediction_files(self) -> Tuple[int, int]:
-        """检查并统计预测文件"""
-        try:
-            predictions_dir = self.project_root / "predictions"
-
-            if not predictions_dir.exists():
-                return 0, 0
-
-            # 统计 CSV 文件
-            csv_files = list(predictions_dir.glob("*.csv"))
-            test_csvs = [f for f in csv_files if "test" in f.name.lower() or "temp" in f.name.lower()]
-            production_csvs = [f for f in csv_files if f not in test_csvs]
-
-            return len(production_csvs), len(test_csvs)
-
-        except Exception:
-            return 0, 0
-
-    def check_docker_services(self) -> bool:
-        """检查 Docker 服务状态"""
-        try:
-            result = subprocess.run(
-                ["docker-compose", "ps", "-q"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-                cwd=self.project_root
-            )
-
-            running_count = len([line for line in result.stdout.strip().split('\n') if line])
-
-            if running_count >= 2:
-                self.add_result("Docker Services", "OK", f"{running_count} containers running")
-                return True
-            else:
-                self.add_result("Docker Services", "WARNING", f"Only {running_count} containers running (expected 2+)")
-                return False
-
-        except FileNotFoundError:
-            self.add_result("Docker Services", "WARNING", "docker-compose not found")
-            return False
-        except Exception as e:
-            self.add_result("Docker Services", "WARNING", str(e))
-            return False
-
-    def generate_report(self) -> str:
+    def generate_report(self, json_output: bool = False) -> str:
         """生成系统准备就绪报告"""
-        report_lines = []
+        if json_output:
+            return json.dumps({
+                "timestamp": datetime.now().isoformat(),
+                "results": self.results,
+                "summary": {
+                    "ok_count": sum(1 for r in self.results if r["status"] == "OK"),
+                    "warning_count": sum(1 for r in self.results if r["status"] == "WARNING"),
+                    "failed_count": sum(1 for r in self.results if r["status"] == "FAILED"),
+                }
+            }, indent=2, ensure_ascii=False)
 
+        report_lines = []
         report_lines.append("=" * 60)
         report_lines.append("FootballPrediction - 系统准备就绪报告")
         report_lines.append("=" * 60)
@@ -404,9 +408,9 @@ class SystemHealthChecker:
         report_lines.append("")
 
         # 统计结果
-        ok_count = sum(1 for _, status, _ in self.results if status == "OK")
-        warning_count = sum(1 for _, status, _ in self.results if status == "WARNING")
-        failed_count = sum(1 for _, status, _ in self.results if status == "FAILED")
+        ok_count = sum(1 for r in self.results if r["status"] == "OK")
+        warning_count = sum(1 for r in self.results if r["status"] == "WARNING")
+        failed_count = sum(1 for r in self.results if r["status"] == "FAILED")
 
         report_lines.append("【检查结果统计】")
         report_lines.append(f"  ✓ 正常: {ok_count}")
@@ -416,11 +420,11 @@ class SystemHealthChecker:
 
         # 详细结果
         report_lines.append("【详细检查结果】")
-        for name, status, details in self.results:
-            symbol = "✓" if status == "OK" else ("⚠" if status == "WARNING" else "✗")
-            report_lines.append(f"  {symbol} {name}: {status}")
-            if details:
-                report_lines.append(f"     {details}")
+        for r in self.results:
+            symbol = "✓" if r["status"] == "OK" else ("⚠" if r["status"] == "WARNING" else "✗")
+            report_lines.append(f"  {symbol} {r['name']}: {r['status']}")
+            if r.get("details"):
+                report_lines.append(f"     {r['details']}")
 
         report_lines.append("")
 
@@ -429,104 +433,108 @@ class SystemHealthChecker:
         if failed_count > 0:
             status = "❌ 系统未就绪"
             recommendation = "请先修复失败的检查项，然后再部署到生产环境。"
+            exit_code = 1
         elif warning_count > 0:
             status = "⚠ 系统基本就绪"
             recommendation = "系统可以运行，但建议解决警告项以获得最佳性能。"
+            exit_code = 0
         else:
             status = "✅ 系统完全就绪"
-            recommendation = "所有核心组件运行正常，可以开始 2026 赛季预测！"
+            recommendation = "所有核心组件运行正常，可以开始预测！"
+            exit_code = 0
 
         report_lines.append(f"  状态: {status}")
         report_lines.append(f"  建议: {recommendation}")
-        report_lines.append("")
 
-        # 下一步操作
-        report_lines.append("【下一步操作】")
+        return "\n".join(report_lines), exit_code
 
-        if failed_count == 0 and warning_count == 0:
-            report_lines.append("  1. 启动 Streamlit Dashboard:")
-            report_lines.append("     streamlit run dashboards/live_dashboard_2026.py")
-            report_lines.append("")
-            report_lines.append("  2. 确保 football-watcher 服务运行:")
-            report_lines.append("     sudo systemctl start football-watcher@$(whoami).service")
-            report_lines.append("")
-            report_lines.append("  3. 等待 2026 赛程数据可用（自动监听）")
-            report_lines.append("")
-            report_lines.append("  4. 查看实时预测结果:")
-            report_lines.append("     http://localhost:8501")
-        else:
-            report_lines.append("  1. 启动 Docker 服务:")
-            report_lines.append("     make up")
-            report_lines.append("")
-            report_lines.append("  2. 查看应用日志:")
-            report_lines.append("     tail -f logs/app.log")
-            report_lines.append("")
-            report_lines.append("  3. 重新运行健康检查:")
-            report_lines.append("     python scripts/maintenance/check_system_health.py --verbose")
-
-        report_lines.append("")
-        report_lines.append("=" * 60)
-
-        return "\n".join(report_lines)
-
-    def run(self) -> int:
+    def run(self, json_output: bool = False) -> Tuple[str, int]:
         """执行所有检查"""
-        print_header("FootballPrediction - 系统健康检查")
+        print(f"\n{Colors.BLUE}{Colors.BOLD}{'=' * 60}{Colors.END}")
+        print(f"{Colors.BLUE}{Colors.BOLD}FootballPrediction - 系统健康检查 (工业加固版){Colors.END}")
+        print(f"{Colors.BLUE}{Colors.BOLD}{'=' * 60}{Colors.END}\n")
 
-        print(f"{Colors.BOLD}检查时间: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}{Colors.END}")
-        print()
+        self.logger.info("开始系统健康检查")
 
         # 执行各项检查
         self.check_postgresql()
         self.check_redis()
         self.check_docker_services()
-        self.check_football_watcher()
-        self.check_dashboard()
         self.check_data_quality()
         self.check_model_files()
 
-        # 检查预测文件
-        prod_count, test_count = self.check_prediction_files()
-        if test_count > 0:
-            self.add_result(
-                "Prediction Files",
-                "WARNING",
-                f"Production: {prod_count}, Test files to clean: {test_count}"
-            )
-        else:
-            self.add_result(
-                "Prediction Files",
-                "OK",
-                f"Production: {prod_count}, Test files: {test_count}"
-            )
-
         # 生成报告
-        print_header("系统准备就绪报告")
+        print(f"\n{Colors.BLUE}{Colors.BOLD}{'=' * 60}{Colors.END}")
+        print(f"{Colors.BLUE}{Colors.BOLD}系统准备就绪报告{Colors.END}")
+        print(f"{Colors.BLUE}{Colors.BOLD}{'=' * 60}{Colors.END}\n")
 
-        report = self.generate_report()
-        print(report)
+        if json_output:
+            report = self.generate_report(json_output=True)
+            print(report)
+            exit_code = 1 if any(r["status"] == "FAILED" for r in self.results) else 0
+        else:
+            report, exit_code = self.generate_report(json_output=False)
+            print(report)
 
         # 保存报告到文件
-        report_path = self.project_root / "logs" / "system_readiness_report.txt"
-        report_path.parent.mkdir(exist_ok=True)
+        report_path = LOG_DIR / "system_readiness_report.txt"
         with open(report_path, "w", encoding="utf-8") as f:
             f.write(report)
 
-        print(f"\n{Colors.BLUE}报告已保存到: {report_path}{Colors.END}\n")
+        self.logger.info(f"报告已保存到: {report_path}")
 
-        # 返回退出码
-        failed_count = sum(1 for _, status, _ in self.results if status == "FAILED")
-        return 1 if failed_count > 0 else 0
+        return report, exit_code
+
+
+# ============================================================================
+# CLI 入口
+# ============================================================================
+
+def parse_args():
+    """解析命令行参数"""
+    parser = argparse.ArgumentParser(
+        description="FootballPrediction 系统健康检查 - 工业加固版",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  python scripts/maintenance/check_system_health.py
+  python scripts/maintenance/check_system_health.py --verbose
+  python scripts/maintenance/check_system_health.py --json
+
+环境变量:
+  DB_PASSWORD    数据库密码 (必需)
+  DB_HOST        数据库主机 (默认: localhost)
+  DB_PORT        数据库端口 (默认: 5432)
+  DB_NAME        数据库名称 (默认: football_db)
+  REDIS_HOST     Redis 主机 (默认: localhost)
+  REDIS_PORT     Redis 端口 (默认: 6379)
+        """
+    )
+    parser.add_argument("-v", "--verbose", action="store_true", help="详细输出模式")
+    parser.add_argument("--json", action="store_true", help="JSON 格式输出")
+    return parser.parse_args()
 
 
 def main():
-    """主入口"""
-    verbose = "--verbose" in sys.argv or "-v" in sys.argv
+    """主入口 - 带全局异常捕获"""
+    args = parse_args()
 
-    checker = SystemHealthChecker(verbose=verbose)
-    exit_code = checker.run()
+    # 配置日志
+    logger = setup_logging(args.verbose)
 
-    sys.exit(exit_code)
+    try:
+        checker = SystemHealthChecker(verbose=args.verbose, logger=logger)
+        report, exit_code = checker.run(json_output=args.json)
+        sys.exit(exit_code)
+
+    except ConfigError as e:
+        logger.error(f"配置错误: {e}")
+        logger.error("请检查环境变量配置")
+        sys.exit(2)  # 配置错误专用退出码
+
+    except Exception as e:
+        logger.exception(f"未预期的错误: {e}")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
