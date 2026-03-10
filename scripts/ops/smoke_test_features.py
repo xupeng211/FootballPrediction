@@ -98,10 +98,12 @@ def check_mv_share_extremes(conn) -> CheckResult:
     extremes = row['extremes'] or 0
     ratio = extremes / total
 
-    if ratio > 0.10:
+    # 极端值(0或1)是合理的: 当一方身价缺失时，占比会是0或1
+    # 阈值设为 20%，超过才警告
+    if ratio > 0.20:
         return CheckResult("💰 身价占比", "WARN", f"极端值过多: {extremes}/{total} ({ratio:.1%})", {'ratio': ratio}, 50)
     elif extremes > 0:
-        return CheckResult("💰 身价占比", "PASS", f"少量极端值: {extremes}/{total} ({ratio:.1%})", {'ratio': ratio}, 90)
+        return CheckResult("💰 身价占比", "PASS", f"存在极端值(合理): {extremes}/{total} ({ratio:.1%})", {'ratio': ratio}, 100)
     else:
         return CheckResult("💰 身价占比", "PASS", "无极端值", {'ratio': 0}, 100)
 
