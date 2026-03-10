@@ -446,116 +446,35 @@ services:
         max-file: "3"
 
   # ============================================
-  # production_cron - 生产自动化调度器 (V30.0)
+  # production_cron - 生产自动化调度器 [已禁用]
   # ============================================
-  production_cron:
-    build:
-      context: .
-      dockerfile: deploy/docker/Dockerfile
-      target: runner
-    image: footballprediction:v30.0
-    container_name: football_prediction_cron
-    restart: unless-stopped
-    env_file:
-      - .env
-    environment:
-      - DOCKER_ENV=true
-      - TZ=${TZ:-UTC}
-      # 调度配置
-      - CRON_SCHEDULE=${CRON_SCHEDULE:-0 3 * * *}
-      - TARGET_MATCH_COUNT=${TARGET_MATCH_COUNT:-50}
-    volumes:
-      - app_data:/app/data
-      - app_logs:/app/logs
-      - predictions:/app/predictions
-    command: >
-      sh -c "
-      echo '启动生产自动化调度器...' &&
-      echo '调度计划: ${CRON_SCHEDULE:-0 3 * * *}' &&
-      echo '目标采集: ${TARGET_MATCH_COUNT:-50} 场' &&
-      pip install croniter &&
-      python -c '
-      import time
-      import logging
-      import asyncio
-      from croniter import croniter
-      from datetime import datetime
-      from pathlib import Path
-
-      logging.basicConfig(level=logging.INFO, format=\"%(asctime)s [%(levelname)s] %(message)s\")
-      logger = logging.getLogger(__name__)
-
-      # 导入调度模块
-      import sys
-      sys.path.insert(0, \"/app\")
-      from scripts.automate_production import ProductionScheduler
-
-      schedule = \"${CRON_SCHEDULE:-0 3 * * *}\"
-
-      logger.info(f\"自动化调度器已启动，计划: {schedule}\")
-
-      # 计算下次执行时间
-      cron = croniter(schedule, datetime.now())
-      next_run = cron.get_next(datetime)
-
-      while True:
-          now = datetime.now()
-          if now >= next_run:
-              try:
-                  logger.info(\"=\" * 60)
-                  logger.info(\"开始执行生产流程...\")
-                  logger.info(\"=\" * 60)
-
-                  scheduler = ProductionScheduler(
-                      enable_prediction=True,
-                      target_match_count=int(\"${TARGET_MATCH_COUNT:-50}\")
-                  )
-
-                  summary = asyncio.run(scheduler.run())
-
-                  if summary.result.value == \"success\":
-                      logger.info(\"✓ 生产流程执行成功\")
-                  else:
-                      logger.warning(f\"⚠ 生产流程执行结果: {summary.result.value}\")
-
-              except Exception as e:
-                  logger.error(f\"生产流程异常: {e}\")
-                  import traceback
-                  traceback.print_exc()
-
-              # 更新下次执行时间
-              cron = croniter(schedule, datetime.now())
-              next_run = cron.get_next(datetime)
-              logger.info(f\"下次执行时间: {next_run.isoformat()}\")
-          else:
-              # 计算剩余时间并休眠
-              wait_seconds = min((next_run - now).total_seconds(), 60)
-              time.sleep(wait_seconds)
-      '
-      "
-    depends_on:
-      db:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    networks:
-      - football_network
-    profiles:
-      - automation
-      - all
-    deploy:
-      resources:
-        limits:
-          cpus: '1.0'
-          memory: 1G
-        reservations:
-          cpus: '0.25'
-          memory: 256M
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # ⚠️ V4.46.8 注意: 此服务已禁用
+  # 原因: 引用了不存在的 scripts.automate_production.ProductionScheduler
+  # 替代方案: 使用 npm run harvest + npm run smelt + npm run predict 手动调度
+  # 或者使用 docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/autonomous_engine.js
+  # ============================================
+  # production_cron:
+  #   build:
+  #     context: .
+  #     dockerfile: deploy/docker/Dockerfile
+  #     target: runner
+  #   image: footballprediction:v30.0
+  #   container_name: football_prediction_cron
+  #   restart: unless-stopped
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - DOCKER_ENV=true
+  #     - TZ=${TZ:-UTC}
+  #     - CRON_SCHEDULE=${CRON_SCHEDULE:-0 3 * * *}
+  #     - TARGET_MATCH_COUNT=${TARGET_MATCH_COUNT:-50}
+  #   volumes:
+  #     - app_data:/app/data
+  #     - app_logs:/app/logs
+  #     - predictions:/app/predictions
+  #   command: echo "production_cron 已禁用 - 参考 docker-compose.yml 注释"
+  #   profiles:
+  #     - disabled
 
 # ============================================
 # 数据卷 - 持久化存储
