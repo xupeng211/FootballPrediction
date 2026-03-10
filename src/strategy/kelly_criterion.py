@@ -44,6 +44,7 @@ except ImportError:
     get_settings = None  # 可选依赖，如果不需要可以不导入
 
 from src.constants import MATH  # V146.1: 添加 MATH 导入
+from src.constants.football_logic import PrecisionContext
 
 logger = logging.getLogger(__name__)
 
@@ -291,7 +292,7 @@ class KellyCriterion:
             precision_context: 精度上下文
         """
         # 设置精度上下文
-        self.precision_context = precision_context or MATH.PrecisionContext.high_precision()
+        self.precision_context = precision_context or PrecisionContext.high_precision()
 
         # 转换为Decimal
         self.initial_bankroll = Decimal(str(initial_bankroll))
