@@ -464,6 +464,9 @@ def predict_match(
 from .model_dispatcher import ModelDispatcher
 from .model_dispatcher import Predictor as UnifiedPredictor
 
+# V4.46.8: TITAN 模型专用加载器
+from .titan_loader import TitanModelLoader, get_titan_model
+
 # 保持旧兼容性接口（向后兼容）
 Predictor = UnifiedPredictor  # 使用新实现作为别名
 
@@ -482,6 +485,9 @@ __all__ = [
     "ModelDispatcher",
     "Predictor",  # 新别名，指向 UnifiedPredictor
     "UnifiedPredictor",  # 原始类名
+    # V4.46.8: TITAN 模型专用加载器
+    "TitanModelLoader",
+    "get_titan_model",
     # 兼容性接口
     "get_hot_reload_manager",
     "get_model_loader",

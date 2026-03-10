@@ -25,6 +25,7 @@ V23.0 新增:
 
 from .base import BaseProcessor, ProcessorResult
 from .engine import FeatureEngine
+from .h2h_estimator import H2HEstimator
 from .models import (
     FeatureVector,
     HomeAway,
@@ -42,6 +43,7 @@ __all__ = [
     "BaseProcessor",
     "FeatureEngine",
     "FeatureVector",
+    "H2HEstimator",
     "HomeAway",
     "LeagueTier",
     "LineupInfo",
