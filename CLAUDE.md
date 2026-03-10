@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V4.46.6-INDUSTRIAL | **最后更新**: 2026-03-10
+**系统版本**: V4.46.8-INDUSTRIAL | **最后更新**: 2026-03-11
 
 > 📋 **环境配置**: 复制 `.env.example` 到 `.env` 并填写 `DB_PASSWORD`。
 
@@ -630,25 +630,76 @@ SELECT COUNT(*) as total, COUNT(l2_harvested) as l2_done FROM matches WHERE matc
 ---
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 单独运行测试 (Running Individual Tests)
+# 测试体系 (Testing System)
 # ══════════════════════════════════════════════════════════════════════════════
+
+### 测试目录结构
+
+```
+tests/
+├── conftest.py              # 统一测试配置和 Fixtures
+├── unit/                    # Node.js 单元测试 (*.test.js)
+│   ├── test_core/           # 核心模块测试
+│   ├── mock_factories.py    # Mock 工厂
+│   └── *.test.js            # 各模块测试
+├── integration/             # 集成测试
+├── integrity/               # 数据完整性和边缘情况测试
+└── Z_LEGACY_ARCHIVE_PRE_V4.46.8/  # ⚠️ 历史归档 (pytest 已排除，请勿修改)
+```
+
+> **注意**: `Z_LEGACY_ARCHIVE_PRE_V4.46.8/` 包含 V4.46.8 之前的测试文件，已被 pytest 自动排除 (见 `pytest.ini`)。
+
+### pytest 测试标记
+
+| 标记 | 用途 | 示例 |
+|------|------|------|
+| `unit` | 单元测试 | `pytest -m unit` |
+| `integration` | 集成测试 | `pytest -m integration` |
+| `integrity` | 数据完整性测试 | `pytest -m integrity` |
+| `slow` | 慢速测试 | `pytest -m "not slow"` |
+| `network` | 需要网络的测试 | `pytest -m network` |
+| `e2e` | 端到端测试 | `pytest -m e2e` |
+| `performance` | 性能测试 | `pytest -m performance` |
+
+### 测试命令
 
 ```bash
 # Node.js 单独测试
 docker-compose -f docker-compose.dev.yml exec dev node --test tests/unit/FixtureSeeder.test.js
 
 # Python 单独测试
-docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_v171_cpp_bridge.py -v
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_core_logic.py -v
 
 # Python 带调试输出
-docker-compose -f docker-compose.dev.yml exec dev pytest tests/ml/test_backtest_engine.py -v -s
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/unit/test_ev_calculator.py -v -s
 
 # 只运行特定测试函数
-docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_parser_integrity.py::test_specific_function -v
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_core_logic.py::test_specific_function -v
 
-# 带覆盖率运行单个文件
-docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_v26_integration.py --cov=src/ml/feature_engine --cov-report=term-missing
+# 带覆盖率运行
+docker-compose -f docker-compose.dev.yml exec dev pytest tests/ --cov=src/ml --cov-report=term-missing
+
+# 按标记运行测试
+docker-compose -f docker-compose.dev.yml exec dev pytest -m unit              # 只运行单元测试
+docker-compose -f docker-compose.dev.yml exec dev pytest -m "not slow"       # 排除慢速测试
+docker-compose -f docker-compose.dev.yml exec dev pytest -m integrity        # 运行完整性测试
+
+# 异步测试 (自动检测)
+# pytest.ini 已配置 asyncio_mode = auto，无需额外配置
 ```
+
+### 测试 Fixtures (conftest.py)
+
+| Fixture | 作用域 | 用途 |
+|---------|--------|------|
+| `db_connection` | session | 数据库连接 (回归测试) |
+| `historical_match_sample` | session | 2021-2022 历史比赛样本 |
+| `recent_match_sample` | session | 2024-2025 近期比赛样本 |
+| `playwright_browser` | function | E2E 浏览器实例 |
+| `sample_match_data` | function | 标准比赛数据样本 |
+| `sample_feature_df` | function | 标准特征 DataFrame |
+| `mock_lightgbm_model` | function | Mock LightGBM 模型 |
+| `mock_config` | function | Mock 配置对象 |
 
 ---
 
@@ -691,4 +742,4 @@ docker stats football_prediction_dev
 
 ---
 
-**更新日期**: 2026-03-10
+**更新日期**: 2026-03-11
