@@ -501,8 +501,7 @@ class FixtureSeeder {
                 INSERT INTO matches (
                     match_id, external_id, league_name, season,
                     home_team, away_team, match_date,
-                    home_score, away_score, status, data_source,
-                    created_at, updated_at
+                    home_score, away_score, status, data_source
                 ) VALUES ${valueGroups.join(', ')}
                 ON CONFLICT (match_id)
                 DO UPDATE SET
