@@ -392,7 +392,11 @@ class AbstractHarvester {
             'ENOTFOUND',
             'net::ERR_',
             'TIMEOUT',
-            'Navigation timeout'
+            'Navigation timeout',
+            'NETWORK_ERROR',
+            'NO_NEXT_DATA',
+            'DATA_TRANSFORM_FAILED',
+            'CF_BLOCK'
         ];
 
         const nonRetryablePatterns = [

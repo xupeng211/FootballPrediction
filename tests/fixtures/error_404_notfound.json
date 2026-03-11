@@ -1,0 +1,9 @@
+{
+  "error": "MATCH_NOT_FOUND",
+  "statusCode": 404,
+  "message": "The requested match could not be found",
+  "requestedMatchId": "99_20242025_9999999",
+  "html": "<!DOCTYPE html><html><head><title>Match Not Found</title></head><body><h1>404 - Match Not Found</h1><p>The match you are looking for does not exist or has been removed.</p></body></html>",
+  "scenario": "invalid_match_id",
+  "description": "模拟比赛 ID 错误或不存在的场景"
+}
