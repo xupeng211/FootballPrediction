@@ -1,0 +1,251 @@
+{
+  "matchId": "55_20242025_4803413",
+  "content": {
+    "stats": {
+      "Possession": {
+        "home": "58%",
+        "away": "42%"
+      },
+      "Shots": {
+        "home": 15,
+        "away": 8
+      },
+      "ShotsOnTarget": {
+        "home": 6,
+        "away": 3
+      },
+      "xG": {
+        "home": 2.15,
+        "away": 0.85
+      }
+    },
+    "lineup": {
+      "homeTeam": {
+        "teamId": "8456",
+        "teamName": "Chelsea",
+        "totalStarterMarketValue": 450.5,
+        "starters": [
+          {
+            "playerId": "123456",
+            "playerName": "Cole Palmer",
+            "position": "FW",
+            "marketValue": 80.0,
+            "rating": 8.2
+          },
+          {
+            "playerId": "123457",
+            "playerName": "Nicolas Jackson",
+            "position": "FW",
+            "marketValue": 45.0,
+            "rating": 7.5
+          },
+          {
+            "playerId": "123458",
+            "playerName": "Enzo Fernandez",
+            "position": "MF",
+            "marketValue": 75.0,
+            "rating": 7.8
+          },
+          {
+            "playerId": "123459",
+            "playerName": "Moises Caicedo",
+            "position": "MF",
+            "marketValue": 90.0,
+            "rating": 7.6
+          },
+          {
+            "playerId": "123460",
+            "playerName": "Reece James",
+            "position": "DF",
+            "marketValue": 60.0,
+            "rating": 7.2
+          }
+        ],
+        "subs": [
+          {
+            "playerId": "123461",
+            "playerName": "Mykhailo Mudryk",
+            "position": "FW",
+            "marketValue": 35.0,
+            "rating": 6.5
+          }
+        ]
+      },
+      "awayTeam": {
+        "teamId": "8654",
+        "teamName": "Arsenal",
+        "totalStarterMarketValue": 520.8,
+        "starters": [
+          {
+            "playerId": "234567",
+            "playerName": "Bukayo Saka",
+            "position": "FW",
+            "marketValue": 140.0,
+            "rating": 8.5
+          },
+          {
+            "playerId": "234568",
+            "playerName": "Gabriel Jesus",
+            "position": "FW",
+            "marketValue": 70.0,
+            "rating": 7.3
+          },
+          {
+            "playerId": "234569",
+            "playerName": "Martin Odegaard",
+            "position": "MF",
+            "marketValue": 110.0,
+            "rating": 8.0
+          },
+          {
+            "playerId": "234570",
+            "playerName": "Declan Rice",
+            "position": "MF",
+            "marketValue": 110.0,
+            "rating": 7.9
+          },
+          {
+            "playerId": "234571",
+            "playerName": "William Saliba",
+            "position": "DF",
+            "marketValue": 80.0,
+            "rating": 7.8
+          }
+        ],
+        "subs": [
+          {
+            "playerId": "234572",
+            "playerName": "Leandro Trossard",
+            "position": "FW",
+            "marketValue": 50.0,
+            "rating": 7.0
+          }
+        ]
+      }
+    },
+    "shotmap": [
+      {
+        "id": "shot1",
+        "team": "home",
+        "player": "Cole Palmer",
+        "x": 95,
+        "y": 50,
+        "xG": 0.35,
+        "outcome": "goal",
+        "minute": 23
+      },
+      {
+        "id": "shot2",
+        "team": "away",
+        "player": "Bukayo Saka",
+        "x": 88,
+        "y": 45,
+        "xG": 0.12,
+        "outcome": "saved",
+        "minute": 35
+      },
+      {
+        "id": "shot3",
+        "team": "home",
+        "player": "Nicolas Jackson",
+        "x": 90,
+        "y": 60,
+        "xG": 0.28,
+        "outcome": "goal",
+        "minute": 67
+      }
+    ],
+    "events": [
+      {
+        "id": "event1",
+        "type": "Goal",
+        "team": "home",
+        "player": "Cole Palmer",
+        "minute": 23,
+        "score": "1-0"
+      },
+      {
+        "id": "event2",
+        "type": "Goal",
+        "team": "home",
+        "player": "Nicolas Jackson",
+        "minute": 67,
+        "score": "2-0"
+      },
+      {
+        "id": "event3",
+        "type": "YellowCard",
+        "team": "away",
+        "player": "Declan Rice",
+        "minute": 45
+      }
+    ]
+  },
+  "general": {
+    "homeTeam": {
+      "id": "8456",
+      "name": "Chelsea",
+      "shortName": "CHE"
+    },
+    "awayTeam": {
+      "id": "8654",
+      "name": "Arsenal",
+      "shortName": "ARS"
+    },
+    "league": {
+      "id": "55",
+      "name": "Premier League"
+    },
+    "season": "20242025",
+    "matchRound": 15,
+    "matchTime": "2024-12-15T17:30:00Z",
+    "status": "FINISHED",
+    "score": {
+      "home": 2,
+      "away": 0
+    }
+  },
+  "header": {
+    "matchName": "Chelsea vs Arsenal",
+    "tournament": "Premier League",
+    "venue": "Stamford Bridge"
+  },
+  "_source": "fotmob_api",
+  "_extractedAt": "2024-12-15T19:45:00Z",
+  "_meta": {
+    "hasStats": true,
+    "hasLineup": true,
+    "hasShotmap": true,
+    "hasEvents": true,
+    "dataQuality": "high",
+    "validation": {
+      "sizeBytes": 6234,
+      "minRequired": true,
+      "hasRequiredFields": true,
+      "timestamp": "2024-12-15T19:45:00Z"
+    }
+  },
+  "_extra": {
+    "description": "Additional data to ensure file size > 5000 bytes",
+    "leagueId": "55",
+    "seasonId": "20242025",
+    "round": 15,
+    "venue": "Stamford Bridge",
+    "attendance": 40173,
+    "referee": "Michael Oliver",
+    "weather": "Cloudy",
+    "temperature": "12°C",
+    "notes": "Premier League match - Chelsea vs Arsenal",
+    "broadcast": "Sky Sports",
+    "highlights": "Available on Match of the Day",
+    "ticketPrice": {
+      "min": 30,
+      "max": 150
+    },
+    "odds": {
+      "home": 1.95,
+      "draw": 3.50,
+      "away": 4.20
+    }
+  }
+}

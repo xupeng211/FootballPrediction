@@ -1,0 +1,51 @@
+{
+  "matchId": "55_20242025_4803414",
+  "content": {
+    "stats": null,
+    "lineup": {
+      "homeTeam": {
+        "teamId": "8456",
+        "teamName": "Chelsea",
+        "totalStarterMarketValue": null,
+        "starters": []
+      },
+      "awayTeam": {
+        "teamId": "8654",
+        "teamName": "Arsenal",
+        "starters": []
+      }
+    },
+    "shotmap": [],
+    "events": []
+  },
+  "general": {
+    "homeTeam": {
+      "id": "8456",
+      "name": "Chelsea"
+    },
+    "awayTeam": {
+      "id": "8654",
+      "name": "Arsenal"
+    },
+    "status": "SCHEDULED",
+    "score": null
+  },
+  "header": {},
+  "_source": "fotmob_api",
+  "_extractedAt": "2024-12-16T10:00:00Z",
+  "_meta": {
+    "hasStats": false,
+    "hasLineup": true,
+    "hasShotmap": false,
+    "isMalformed": true,
+    "issues": [
+      "Missing stats data",
+      "Missing player lineup details",
+      "Missing market values",
+      "No shotmap data",
+      "No match events"
+    ]
+  },
+  "scenario": "incomplete_future_match",
+  "description": "模拟未开始的比赛或数据源异常的场景，数据不完整"
+}

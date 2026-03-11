@@ -49,6 +49,10 @@ services:
       - ./data/browser_profile:/app/data/browser_profile
       # Playwright 浏览器缓存
       - playwright_cache:/root/.cache/ms-playwright
+      # ============================================================
+      # V4.50: 测试数据标本挂载
+      # ============================================================
+      - ./tests/fixtures:/app/tests/fixtures
 
     # 工作目录
     working_dir: /app

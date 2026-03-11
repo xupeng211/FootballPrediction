@@ -1,0 +1,28 @@
+{
+  "scenario": "network_timeout",
+  "description": "模拟网络请求超时场景",
+  "timeoutConfig": {
+    "connectTimeout": 30000,
+    "requestTimeout": 60000,
+    "simulateDelay": 65000
+  },
+  "expectedBehavior": {
+    "shouldRetry": true,
+    "maxRetries": 3,
+    "backoffStrategy": "exponential",
+    "backoffDelays": [1000, 2000, 4000]
+  },
+  "errorType": "ETIMEDOUT",
+  "errorMessage": "Connection timed out after 60000ms",
+  "mockResponse": {
+    "statusCode": null,
+    "body": null,
+    "error": {
+      "code": "ETIMEDOUT",
+      "errno": "ETIMEDOUT",
+      "syscall": "connect",
+      "address": "www.fotmob.com",
+      "port": 443
+    }
+  }
+}
