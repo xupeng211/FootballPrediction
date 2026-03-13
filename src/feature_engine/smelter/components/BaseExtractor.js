@@ -97,6 +97,9 @@ class BaseExtractor {
             avgExecutionTimeMs: 0
         };
 
+        // 初始化日志器（子类可覆盖）
+        this.logger = this._createLogger();
+
         // 初始化钩子
         this.onInitialize();
     }
@@ -140,6 +143,21 @@ class BaseExtractor {
      */
     getDefaultConfig() {
         return {};
+    }
+
+    /**
+     * 创建日志器（子类可覆盖）
+     * @private
+     * @returns {object} 日志器实例
+     */
+    _createLogger() {
+        // 默认使用简单日志器
+        return {
+            debug: () => {},
+            info: () => {},
+            warn: (msg) => console.warn(`[${this.name}] ${msg}`),
+            error: (msg) => console.error(`[${this.name}] ${msg}`)
+        };
     }
 
     // ========================================================================
