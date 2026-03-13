@@ -45,6 +45,51 @@
 | **ML Engine** | Python + XGBoost | 3-Model共识预测（67.2%准确率） |
 | **Network Shield** | Custom Proxy Pool | 熔断保护与会话管理 |
 
+---
+
+### 🧩 模块化架构 (V4.52+)
+
+TITAN V4.52 引入了三大高内聚组件，实现真正的模块化设计：
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    ProductionHarvester                          │
+│                    (轻量级调度中心 ~547行)                        │
+└──────────────┬─────────────────┬────────────────┬───────────────┘
+               │                 │                │
+       ┌───────▼──────┐  ┌──────▼──────┐  ┌──────▼──────┐
+       │ Dispatcher   │  │Persistence  │  │ErrorHandler │
+       │ 任务分派器    │  │数据持久化器  │  │错误审计器   │
+       │ 231行 100%   │  │219行 核心   │  │289行 100%   │
+       └──────────────┘  └─────────────┘  └─────────────┘
+```
+
+#### 组件职责
+
+| 组件 | 行数 | 覆盖率 | 核心功能 |
+|------|------|--------|----------|
+| **Dispatcher** | 231 | 100% | Worker ID计算、统计报告、CLI解析、批次调度 |
+| **Persistence** | 219 | 60%+ | 数据库保存、文件保存、双保险模式、错误分类 |
+| **ErrorHandler** | 289 | 100% | 错误分类、可重试性判断、审计报告、模式匹配 |
+
+#### 使用示例
+
+```javascript
+// Dispatcher - 任务分派
+const workerId = this.dispatcher.calculateWorkerId(index);
+const delay = this.dispatcher.calculateDelay(isRetry, minDelay, maxDelay);
+this.dispatcher.printReport();
+
+// Persistence - 数据持久化
+await this.persistence.dualSave(pool, matchId, rawData, metadata);
+await this.persistence.saveToFile(matchId, rawData, metadata);
+
+// ErrorHandler - 错误审计
+const type = this.errorHandler.classify(error);
+const retryable = this.errorHandler.isRetryable(error, attempt);
+this.errorHandler.audit(error, { matchId, workerId });
+```
+
 ### 数据流向
 
 ```
@@ -126,8 +171,8 @@ docker-compose -f docker-compose.dev.yml exec dev \
 | 检查项 | 工具 | 阈值 | 命令 |
 |--------|------|------|------|
 | **静态分析** | ESLint | 0 Error | `npm run lint` |
-| **单元测试** | Jest | 43+ Pass | `npm test` |
-| **代码覆盖** | Jest | 80%+ | `npm run test:coverage` |
+| **单元测试** | Node.js --test | 100+ Pass | `node --test` |
+| **代码覆盖** | c8 | 80%+ | `npx c8 --reporter=text node --test` |
 | **文档规范** | JSDoc | Required | `npm run lint` |
 | **代码格式** | Prettier | Enforced | `npm run format:check` |
 
@@ -138,9 +183,15 @@ docker-compose -f docker-compose.dev.yml exec dev \
 ```bash
 # .git/hooks/pre-commit 自动执行：
 1. ESLint 检查 (src/, scripts/)
-2. Jest 单元测试 (43+ tests)
-3. 覆盖率验证 (≥80%)
+2. Node.js 单元测试 (100+ tests)
+3. Line Coverage 验证 (≥80%)
+4. Branch Coverage 验证 (≥80%)
+5. components/ 目录扫描
 ```
+
+**覆盖率阈值**:
+- Line Coverage: **≥80%** (阻断)
+- Branch Coverage: **≥80%** (阻断)
 
 **执行结果：**
 
@@ -156,9 +207,14 @@ npm run qa
 # 分项检查
 npm run lint          # ESLint 检查
 npm run lint:fix      # 自动修复
-npm run test          # 单元测试
+npm run test          # 单元测试 (Jest)
 npm run test:coverage # 覆盖率报告
 npm run format:check  # 格式检查
+
+# Mini测试 (Node.js 内置测试，推荐)
+node --max-old-space-size=256 tests/unit/Dispatcher.test.js
+node --max-old-space-size=256 tests/unit/ErrorHandler.test.js
+node --max-old-space-size=256 tests/unit/Persistence.test.js
 ```
 
 ---
@@ -318,10 +374,52 @@ FootballPrediction/
 │   └── parsers/             # 数据解析器
 ├── tests/                     # 测试套件
 │   └── unit/                 # 单元测试
+│       ├── Dispatcher.test.js      # 任务分派器测试 (38用例)
+│       ├── ErrorHandler.test.js    # 错误审计器测试 (45用例)
+│       ├── Persistence.test.js     # 持久化器测试 (17用例)
+│       └── *_Mini.test.js          # 旧版Mini测试 (见下方)
 ├── docs/                      # 文档中心
 ├── data/                      # 数据存储
 └── models/                    # ML模型仓库
 ```
+
+---
+
+## 🧪 Mini测试详解
+
+TITAN 使用 Node.js 内置测试框架 (`node --test`) 进行单元测试，相比 Jest 更轻量、更快。
+
+### 7个核心Mini测试
+
+| 测试文件 | 测试目标 | 用例数 | 覆盖率 |
+|----------|----------|--------|--------|
+| `Dispatcher.test.js` | 任务分派器 | 38 | 100% |
+| `ErrorHandler.test.js` | 错误审计器 | 45 | 100% |
+| `Persistence.test.js` | 数据持久化器 | 17 | 60%+ |
+| `ZK_Mini.test.js` | ZombieKiller | 3 | 核心 |
+| `AA_Mini.test.js` | AutoAuthManager | 3 | 核心 |
+| `DB_Mini.test.js` | PostgresClient | 5 | 85%+ |
+| `FM_Mini.test.js` | FotMobStrategy | 5 | 核心 |
+
+### 运行Mini测试
+
+```bash
+# 内存限制模式 (推荐，256MB)
+node --max-old-space-size=256 tests/unit/Dispatcher.test.js
+node --max-old-space-size=256 tests/unit/ErrorHandler.test.js
+node --max-old-space-size=256 tests/unit/Persistence.test.js
+
+# 批量运行
+for f in tests/unit/*_Mini.test.js; do
+  node --max-old-space-size=256 "$f"
+done
+```
+
+### 测试覆盖重点
+
+- **Dispatcher**: Worker ID计算、延迟计算、统计报告、CLI解析
+- **ErrorHandler**: 8种错误类型分类、可重试性判断、审计报告
+- **Persistence**: 数据库/文件错误分类、双保险保存模式
 
 ---
 
