@@ -170,11 +170,11 @@ describe('数据完整性测试套件', () => {
         it('getField 应该正确获取嵌套字段', () => {
                 const data = {
                     content: {
-                    lineup: {
-                        homeTeam: { name: 'Team A' }
+                        lineup: {
+                            homeTeam: { name: 'Team A' }
+                        }
                     }
-                }
-            };
+                };
                 const result = fotmobStrategy.getField(data, 'content.lineup.homeTeam.name');
                 assert.strictEqual(result, 'Team A');
             });

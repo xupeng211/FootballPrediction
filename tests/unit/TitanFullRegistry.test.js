@@ -61,7 +61,7 @@ const sampleNextData = {
                     awayTeam: {
                         formation: '4-4-2',
                         starters: [
-                            { name: 'Player 3', position: 'GK', marketValue: 90000000 }
+                            { name: 'Player 3', position: 'GK', marketValue: 90000000 },
                             { name: 'Player 4', position: 'DF', marketValue: 70000000 }
                         ],
                         subs: [
@@ -75,13 +75,13 @@ const sampleNextData = {
                             leagueId: 55,
                             homeTeamId: 123,
                             awayTeamId: 456,
-                            status: 'FINISHED'
+                            status: 'FINISHED',
                             startTime: 1700000000
                         }
                     },
                     header: {
                         homeScore: 2,
-                        awayScore: 1
+                        awayScore: 1,
                         status: 'FINISHED',
                         startTime: 1700000000
                     }
