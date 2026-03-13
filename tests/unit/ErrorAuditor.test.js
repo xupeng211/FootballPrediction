@@ -187,8 +187,8 @@ describe('ErrorAuditor 测试', () => {
         it('应该正确获取统计', () => {
             const stats = auditor.getStats();
             assert.strictEqual(stats.totalErrors, 2);
-            assert.strictEqual(stats.byType[ErrorType.BLOCKED, 1);
-            assert.strictEqual(stats.byType[ErrorType.NETWORK_ERROR, 1);
+            assert.strictEqual(stats.byType[ErrorType.BLOCKED], 1);
+            assert.strictEqual(stats.byType[ErrorType.NETWORK_ERROR], 1);
         });
 
         it('应该重置统计', () => {
