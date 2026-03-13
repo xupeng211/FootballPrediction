@@ -10,7 +10,6 @@
  *   node seed_fixtures.js --league=47        # 指定联赛
  *   node seed_fixtures.js --season=2024/2025 # 指定赛季
  *   node seed_fixtures.js --all              # 全量收割
- *
  * @module scripts/ops/seed_fixtures
  * @version V178.0.0
  */
@@ -26,6 +25,9 @@ const log = new Logger('seed_fixtures');
 // 参数解析
 // ============================================================================
 
+/**
+ *
+ */
 function parseArgs() {
     const args = process.argv.slice(2);
     const options = {
@@ -55,6 +57,9 @@ function parseArgs() {
 // 主函数
 // ============================================================================
 
+/**
+ *
+ */
 async function main() {
     log.info('========================================');
     log.info('V178 赛程播种器');

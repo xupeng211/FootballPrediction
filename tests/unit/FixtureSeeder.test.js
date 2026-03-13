@@ -24,6 +24,8 @@ const CONFIG_PATH = path.resolve(__dirname, '../../config/leagues.json');
 
 /**
  * 创建模拟的 FixtureSeeder 实例（不连接数据库）
+ * @param leagues
+ * @param seasons
  */
 function createMockSeeder(leagues, seasons) {
     return {
@@ -32,6 +34,9 @@ function createMockSeeder(leagues, seasons) {
 
         /**
          * 解析单场比赛 - 核心逻辑
+         * @param match
+         * @param leagueInfo
+         * @param season
          */
         parseMatch(match, leagueInfo, season) {
             const externalId = match.id?.toString() || null;
@@ -109,6 +114,9 @@ function createMockSeeder(leagues, seasons) {
 
         /**
          * 解析赛程数据
+         * @param leagueData
+         * @param leagueInfo
+         * @param season
          */
         parseFixtures(leagueData, leagueInfo, season) {
             const fixtures = [];

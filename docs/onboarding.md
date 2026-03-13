@@ -42,6 +42,7 @@ nano .env  # 编辑 DB_PASSWORD
 ```
 
 **最小配置**：
+
 ```bash
 DB_HOST=db                  # Docker: db, WSL2: 172.25.16.1
 DB_PASSWORD=your_password
@@ -57,6 +58,7 @@ make ps              # 检查容器状态
 ```
 
 预期输出：
+
 ```
 NAME                           STATUS
 football_prediction_db          Up (healthy)
@@ -237,16 +239,19 @@ make ps                                 # 查看容器状态
 ### 常见问题
 
 **Q: 数据库连接失败？**
+
 ```bash
 make up  # 启动服务
 ```
 
 **Q: 测试失败？**
+
 ```bash
 pytest tests/ -v -s  # 查看详细错误
 ```
 
 **Q: 代码格式化失败？**
+
 ```bash
 ruff format src/ tests/
 ruff check src/ tests/ --fix

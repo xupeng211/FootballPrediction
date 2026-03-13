@@ -11,7 +11,6 @@
  * - 403 频率检测 (403 frequency detection)
  * - 动态剔除 (Dynamic filtering)
  * - IP 地址验证 (IP address verification)
- *
  * @module network/health/HealthChecker
  * @version V1.0.0
  * @since 2026-02-03
@@ -30,7 +29,7 @@ const { URL } = require('url');
 // ============================================================================
 
 /**
- * @typedef {Object} HealthCheckResult
+ * @typedef {object} HealthCheckResult
  * @property {number} port - 代理端口
  * @property {boolean} is_healthy - 是否健康
  * @property {number} response_time - 响应时间（毫秒）
@@ -43,7 +42,14 @@ const { URL } = require('url');
 // HEALTH CHECKER CLASS
 // ============================================================================
 
+/**
+ *
+ */
 class HealthChecker {
+    /**
+     *
+     * @param options
+     */
     constructor(options = {}) {
         this.proxyHost = options.proxyHost || '172.25.16.1';
         this.testUrl = options.testUrl || 'https://oddsportal.com';
@@ -208,7 +214,7 @@ class HealthChecker {
      * @param {string} proxyUrl - 代理 URL
      * @param {number} timeout - 超时时间
      * @param {boolean} fetchIP - 是否获取 IP
-     * @returns {Promise<Object>} 请求结果
+     * @returns {Promise<object>} 请求结果
      */
     async _testHttpRequest(proxyUrl, timeout, fetchIP = false) {
         return new Promise((resolve, reject) => {
@@ -309,7 +315,7 @@ class HealthChecker {
 
     /**
      * 获取错误统计
-     * @returns {Object} 错误统计
+     * @returns {object} 错误统计
      */
     getErrorStats() {
         return Object.fromEntries(this.errorCounts);
@@ -327,7 +333,14 @@ class HealthChecker {
 // BATCH HEALTH CHECKER
 // ============================================================================
 
+/**
+ *
+ */
 class BatchHealthChecker {
+    /**
+     *
+     * @param options
+     */
     constructor(options = {}) {
         this.healthChecker = new HealthChecker(options);
         this.registryManager = options.registryManager;
@@ -339,7 +352,7 @@ class BatchHealthChecker {
 
     /**
      * 执行完整的健康检查并更新注册表
-     * @returns {Promise<Object>} 健康检查摘要
+     * @returns {Promise<object>} 健康检查摘要
      */
     async runFullHealthCheck() {
         const registry = this.registryManager.getRegistry();

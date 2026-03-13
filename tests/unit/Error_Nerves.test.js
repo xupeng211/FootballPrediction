@@ -3,7 +3,6 @@
  * ==========================================
  *
  * 12 项原子级测试，验证 ErrorAuditor 对抗性报错的精准识别能力。
- *
  * @module tests/unit/Error_Nerves
  * @version V1.0.0
  */

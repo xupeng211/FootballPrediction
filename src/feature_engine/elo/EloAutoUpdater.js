@@ -9,7 +9,6 @@
  * 1. FeatureSmelter 处理完赛后数据后调用
  * 2. 定时任务定期扫描
  * 3. 手动触发
- *
  * @module feature_engine/elo/EloAutoUpdater
  * @version V1.0.0
  * @created 2026-03-11
@@ -43,7 +42,14 @@ const DEFAULT_CONFIG = {
 // EloAutoUpdater 类
 // ============================================================================
 
+/**
+ *
+ */
 class EloAutoUpdater {
+    /**
+     *
+     * @param config
+     */
     constructor(config = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
         this.pool = null;
@@ -190,6 +196,7 @@ class EloAutoUpdater {
 
     /**
      * 批量处理比赛
+     * @param matches
      * @private
      */
     async _processMatches(matches) {

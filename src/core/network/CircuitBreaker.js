@@ -15,7 +15,6 @@
  * - CLOSED: 正常状态，允许请求通过
  * - OPEN: 熔断状态，拒绝请求
  * - HALF_OPEN: 半开状态，允许测试请求
- *
  * @module network/core/CircuitBreaker
  * @version V1.1.0
  * @since 2026-02-03
@@ -31,7 +30,7 @@ const { circuitOpen, NetworkShieldError } = require('./NetworkShieldError');
 // ============================================================================
 
 /**
- * @typedef {Object} CircuitBreakerConfig
+ * @typedef {object} CircuitBreakerConfig
  * @property {number} [failureThreshold=2] - 失败阈值
  * @property {number} [cooldownMinutes=15] - 冷却时间（分钟）
  * @property {number} [halfOpenMaxCalls=1] - 半开状态最大测试请求数
@@ -77,7 +76,6 @@ function getCircuitStates() {
 
 /**
  * CircuitBreaker - 熔断器类
- *
  * @class
  * @example
  * const breaker = new CircuitBreaker(7891, {
@@ -98,10 +96,9 @@ function getCircuitStates() {
 class CircuitBreaker {
     /**
      * 创建熔断器实例
-     *
      * @param {number} port - 代理端口
-     * @param {CircuitBreakerConfig} [config={}] - 配置选项
-     * @param {Object} [logger=null] - 日志记录器（RadarLogger 兼容）
+     * @param {CircuitBreakerConfig} [config] - 配置选项
+     * @param {object} [logger] - 日志记录器（RadarLogger 兼容）
      */
     constructor(port, config = {}, logger = null) {
         /**
@@ -160,7 +157,7 @@ class CircuitBreaker {
         this._halfOpenCallCount = 0;
 
         /**
-         * @type {Object|null}
+         * @type {object | null}
          * @private
          */
         this._logger = logger || null;
@@ -172,7 +169,7 @@ class CircuitBreaker {
         this._eventListeners = new Map();
 
         /**
-         * @type {Object}
+         * @type {object}
          * @private
          */
         this._stats = {
@@ -192,11 +189,9 @@ class CircuitBreaker {
 
     /**
      * 执行请求（带熔断保护）
-     *
      * @param {Function} requestFn - 请求函数，返回 Promise
      * @returns {Promise<*>} 请求结果
      * @throws {NetworkShieldError} 熔断器已打开、请求失败
-     *
      * @example
      * const result = await breaker.execute(async () => {
      *   return await fetch(url);
@@ -236,7 +231,6 @@ class CircuitBreaker {
 
     /**
      * 记录成功
-     *
      * @public
      */
     recordSuccess() {
@@ -256,7 +250,6 @@ class CircuitBreaker {
 
     /**
      * 记录失败
-     *
      * @param {Error} [error] - 错误对象
      * @public
      */
@@ -280,7 +273,6 @@ class CircuitBreaker {
 
     /**
      * 手动重置熔断器
-     *
      * @public
      */
     reset() {
@@ -295,10 +287,8 @@ class CircuitBreaker {
 
     /**
      * 获取当前状态
-     *
      * @returns {CircuitBreakerState} 状态信息
-     *
-     * @typedef {Object} CircuitBreakerState
+     * @typedef {object} CircuitBreakerState
      * @property {number} port - 代理端口
      * @property {string} state - 熔断器状态
      * @property {number} consecutiveFailures - 连续失败次数
@@ -306,7 +296,7 @@ class CircuitBreaker {
      * @property {Date|null} lastFailureTime - 最后失败时间
      * @property {Date|null} cooldownUntil - 冷却结束时间
      * @property {boolean} canExecute - 是否可执行请求
-     * @property {Object} stats - 统计信息
+     * @property {object} stats - 统计信息
      */
     getState() {
         return {
@@ -323,7 +313,6 @@ class CircuitBreaker {
 
     /**
      * 检查熔断器是否打开
-     *
      * @returns {boolean}
      */
     isOpen() {
@@ -332,7 +321,6 @@ class CircuitBreaker {
 
     /**
      * 检查熔断器是否关闭
-     *
      * @returns {boolean}
      */
     isClosed() {
@@ -341,7 +329,6 @@ class CircuitBreaker {
 
     /**
      * 检查熔断器是否半开
-     *
      * @returns {boolean}
      */
     isHalfOpen() {
@@ -350,7 +337,6 @@ class CircuitBreaker {
 
     /**
      * 添加事件监听器
-     *
      * @param {string} event - 事件名称 ('tripped', 'recovered', 'halfOpen')
      * @param {Function} listener - 监听器函数
      * @example
@@ -367,7 +353,6 @@ class CircuitBreaker {
 
     /**
      * 移除事件监听器
-     *
      * @param {string} event - 事件名称
      * @param {Function} listener - 监听器函数
      */
@@ -382,8 +367,7 @@ class CircuitBreaker {
 
     /**
      * 获取统计信息
-     *
-     * @returns {Object}
+     * @returns {object}
      */
     getStats() {
         return {
@@ -464,7 +448,7 @@ class CircuitBreaker {
      * 触发事件
      * @private
      * @param {string} event - 事件名称
-     * @param {Object} data - 事件数据
+     * @param {object} data - 事件数据
      */
     _emit(event, data) {
         if (!this._eventListeners.has(event)) return;
@@ -542,7 +526,6 @@ class CircuitBreaker {
 
 /**
  * CircuitBreakerRegistry - 熔断器注册表
- *
  * @class
  * @example
  * const registry = new CircuitBreakerRegistry(
@@ -556,9 +539,8 @@ class CircuitBreaker {
 class CircuitBreakerRegistry {
     /**
      * 创建熔断器注册表
-     *
-     * @param {CircuitBreakerConfig} [config={}] - 全局配置
-     * @param {Object} [logger=null] - 日志记录器
+     * @param {CircuitBreakerConfig} [config] - 全局配置
+     * @param {object} [logger] - 日志记录器
      */
     constructor(config = {}, logger = null) {
         /**
@@ -574,7 +556,7 @@ class CircuitBreakerRegistry {
         this._config = config;
 
         /**
-         * @type {Object}
+         * @type {object}
          * @private
          */
         this._logger = logger;
@@ -582,7 +564,6 @@ class CircuitBreakerRegistry {
 
     /**
      * 获取或创建熔断器
-     *
      * @param {number} port - 代理端口
      * @returns {CircuitBreaker} 熔断器实例
      */
@@ -596,7 +577,6 @@ class CircuitBreakerRegistry {
 
     /**
      * 移除熔断器
-     *
      * @param {number} port - 代理端口
      * @returns {boolean} 是否成功移除
      */
@@ -606,7 +586,6 @@ class CircuitBreakerRegistry {
 
     /**
      * 获取所有熔断器状态
-     *
      * @returns {CircuitBreakerState[]} 状态列表
      */
     getAllStates() {
@@ -615,8 +594,7 @@ class CircuitBreakerRegistry {
 
     /**
      * 获取统计摘要
-     *
-     * @returns {Object}
+     * @returns {object}
      */
     getSummary() {
         const states = this.getAllStates();
@@ -672,7 +650,6 @@ class CircuitBreakerRegistry {
 
     /**
      * 获取熔断器数量
-     *
      * @returns {number}
      */
     get size() {
@@ -681,7 +658,6 @@ class CircuitBreakerRegistry {
 
     /**
      * 获取所有端口
-     *
      * @returns {number[]}
      */
     getPorts() {

@@ -3,7 +3,6 @@
  * ==============================================
  *
  * 测试生产收割器的核心逻辑
- *
  * @module tests/unit/ProductionHarvester.test
  * @version V176.0.0
  */

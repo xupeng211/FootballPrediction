@@ -6,7 +6,6 @@
  * - 所有敏感信息通过 process.env 读取
  * - 严禁硬编码密码
  * - 提供默认值仅用于开发环境
- *
  * @module config/database
  */
 
@@ -16,6 +15,9 @@ const path = require('path');
 const fs = require('fs');
 
 // 加载 .env 文件
+/**
+ *
+ */
 function loadEnvFile() {
     const envPath = path.resolve(__dirname, '../../.env');
     if (fs.existsSync(envPath)) {

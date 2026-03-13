@@ -1,5 +1,5 @@
 /**
- * @fileoverview Audit Dataset 审计系统单元测试
+ * @file Audit Dataset 审计系统单元测试
  * @description 测试物理清点、内容抽检、损坏文件识别
  * @version 1.0.0
  */
@@ -10,7 +10,14 @@ const fs = require('fs').promises;
 const path = require('path');
 
 // 模拟的 Auditor 类
+/**
+ *
+ */
 class MockAuditor {
+  /**
+   *
+   * @param dataPath
+   */
   constructor(dataPath) {
     this.dataPath = dataPath;
     this.corruptedFiles = [];
@@ -31,6 +38,7 @@ class MockAuditor {
 
   /**
    * 验证单个文件
+   * @param filePath
    */
   async validateFile(filePath) {
     try {
@@ -62,6 +70,7 @@ class MockAuditor {
 
   /**
    * 获取缺失字段
+   * @param data
    */
   _getMissingFields(data) {
     const missing = [];
@@ -73,6 +82,7 @@ class MockAuditor {
 
   /**
    * 批量抽检
+   * @param sampleSize
    */
   async sampleValidation(sampleSize = 50) {
     const files = await this.getFileList();
@@ -106,6 +116,8 @@ class MockAuditor {
 
   /**
    * 计算对齐率
+   * @param fileCount
+   * @param dbCount
    */
   calculateAlignmentRate(fileCount, dbCount) {
     if (dbCount === 0) return 0;
@@ -114,6 +126,9 @@ class MockAuditor {
 
   /**
    * 生成审计报告
+   * @param inventory
+   * @param sampling
+   * @param alignment
    */
   generateReport(inventory, sampling, alignment) {
     const passRate = parseFloat(sampling.passRate);

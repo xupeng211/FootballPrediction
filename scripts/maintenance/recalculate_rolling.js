@@ -17,7 +17,6 @@
  *   node scripts/maintenance/recalculate_rolling.js                    # 全量重算
  *   node scripts/maintenance/recalculate_rolling.js --league-id 87     # 只算西甲
  *   node scripts/maintenance/recalculate_rolling.js --dry-run          # 预览模式
- *
  * @module scripts/maintenance/recalculate_rolling
  * @version V198.1.0
  */
@@ -48,7 +47,14 @@ const CONFIG = {
 // 滚动计算器
 // ============================================================================
 
+/**
+ *
+ */
 class RollingFeatureCalculator {
+    /**
+     *
+     * @param config
+     */
     constructor(config = {}) {
         this.config = { ...CONFIG.rolling, ...config };
         // 球队历史数据: teamName -> [{ matchDate, xg, goals, conceded, isHome }, ...]
@@ -57,6 +63,7 @@ class RollingFeatureCalculator {
 
     /**
      * 添加比赛数据
+     * @param match
      */
     addMatch(match) {
         const { home_team, away_team, home_score, away_score, match_date, home_xg, away_xg } = match;
@@ -97,6 +104,9 @@ class RollingFeatureCalculator {
 
     /**
      * 计算某队在指定日期前的滚动特征
+     * @param teamName
+     * @param beforeDate
+     * @param isHome
      */
     getRollingFeatures(teamName, beforeDate, isHome) {
         const history = this.teamHistory.get(teamName) || [];
@@ -153,6 +163,9 @@ class RollingFeatureCalculator {
 // 主逻辑
 // ============================================================================
 
+/**
+ *
+ */
 async function main() {
     const args = process.argv.slice(2);
     const dryRun = args.includes('--dry-run');

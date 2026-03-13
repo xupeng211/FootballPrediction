@@ -4,7 +4,6 @@
  *
  * 统一管理错误分类和重试判断逻辑。
  * 从 AbstractHarvester 剥离的工业级组件。
- *
  * @module core/harvesters/ErrorAuditor
  * @version V1.0.0
  */
@@ -69,10 +68,13 @@ const NON_RETRYABLE_PATTERNS = [
 // ErrorAuditor - 错误审计类
 // ============================================================================
 
+/**
+ *
+ */
 class ErrorAuditor {
     /**
      * 创建 ErrorAuditor 实例
-     * @param {Object} [config={}] - 配置选项
+     * @param {object} [config] - 配置选项
      */
     constructor(config = {}) {
         this.config = {
@@ -180,7 +182,7 @@ class ErrorAuditor {
     /**
      * 记录错误（用于统计分析）
      * @param {string} errorMessage - 错误消息
-     * @param {Object} [metadata={}] - 额外元数据
+     * @param {object} [metadata] - 额外元数据
      */
     recordError(errorMessage, metadata = {}) {
         const errorType = this.classifyError(errorMessage);
@@ -201,7 +203,7 @@ class ErrorAuditor {
 
     /**
      * 获取错误统计
-     * @returns {Object} 统计数据
+     * @returns {object} 统计数据
      */
     getStats() {
         return { ...this.stats };
@@ -280,7 +282,7 @@ let _instance = null;
 
 /**
  * 获取 ErrorAuditor 单例
- * @param {Object} [config={}] - 配置选项
+ * @param {object} [config] - 配置选项
  * @returns {ErrorAuditor}
  */
 function getErrorAuditor(config = {}) {

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview 离线 Cookie 导入工具 (Manual Cookie Bridge)
+ * @file 离线 Cookie 导入工具 (Manual Cookie Bridge)
  * @description 物理穿透方案：直接导入真实浏览器 Cookie，绕过所有自动化验证
  * @version 1.0.0
  */
@@ -69,7 +69,7 @@ function parseCookieString(cookieStr) {
 /**
  * 创建标准 storageState 对象
  * @param {Array} cookies - Cookie 数组
- * @returns {Object} - 标准 storageState 格式
+ * @returns {object} - 标准 storageState 格式
  */
 function createStorageState(cookies) {
   return {
@@ -85,7 +85,7 @@ function createStorageState(cookies) {
 
 /**
  * 保存会话文件
- * @param {Object} storageState - 存储状态对象
+ * @param {object} storageState - 存储状态对象
  */
 async function saveSession(storageState) {
   const dataDir = path.join(__dirname, '..', 'data', 'sessions');
@@ -123,6 +123,8 @@ function showGuide() {
 
 /**
  * 询问用户输入
+ * @param rl
+ * @param question
  */
 function ask(rl, question) {
   return new Promise(resolve => {

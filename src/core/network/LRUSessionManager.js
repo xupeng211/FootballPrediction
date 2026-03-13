@@ -10,7 +10,6 @@
  * - 内存压力检测
  * - 会话统计与监控
  * - 错误码标准化
- *
  * @module network/core/LRUSessionManager
  * @version V1.1.0
  * @since 2026-02-03
@@ -249,7 +248,7 @@ class LRUCache {
 
     /**
      * 获取统计信息
-     * @returns {Object}
+     * @returns {object}
      */
     getStats() {
         const total = this._hits + this._misses;
@@ -381,7 +380,7 @@ class ProxySession {
         this.isActive = true;
 
         /**
-         * @type {Object}
+         * @type {object}
          */
         this.metadata = {};
 
@@ -417,7 +416,7 @@ class ProxySession {
 
     /**
      * 获取会话信息
-     * @returns {Object}
+     * @returns {object}
      */
     getInfo() {
         return {
@@ -442,11 +441,11 @@ class ProxySession {
 /**
  * LRU 会话管理器
  * @class
- * @extends {SessionBindingManager}
+ * @augments {SessionBindingManager}
  */
 class LRUSessionManager {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {number} [options.sessionTimeoutMinutes] - 会话超时时间（分钟）
      * @param {number} [options.maxSessions] - 最大会话数
      * @param {number} [options.lruMaxSize] - LRU 最大容量
@@ -455,7 +454,7 @@ class LRUSessionManager {
      * @param {boolean} [options.enableLRU] - 是否启用 LRU
      * @param {boolean} [options.enableTTL] - 是否启用 TTL
      * @param {boolean} [options.enableMemoryPressure] - 是否启用内存压力检测
-     * @param {Object} [options.logger] - 日志记录器
+     * @param {object} [options.logger] - 日志记录器
      */
     constructor(options = {}) {
         this.options = { ...DEFAULT_CONFIG, ...options };
@@ -479,7 +478,7 @@ class LRUSessionManager {
         this._nextSessionId = 1;
 
         /**
-         * @type {Object}
+         * @type {object}
          * @private
          */
         this._logger = options.logger || console;
@@ -512,9 +511,8 @@ class LRUSessionManager {
 
     /**
      * 创建新会话并分配代理端口
-     *
      * @param {number} port - 代理端口
-     * @param {Object} [metadata={}] - 会话元数据
+     * @param {object} [metadata] - 会话元数据
      * @returns {Promise<ProxySession>} 会话对象
      * @throws {NetworkShieldError} 端口已被占用、达到最大会话数
      */
@@ -564,7 +562,6 @@ class LRUSessionManager {
 
     /**
      * 获取会话
-     *
      * @param {string} sessionId - 会话 ID
      * @returns {ProxySession|null} 会话对象
      */
@@ -574,7 +571,6 @@ class LRUSessionManager {
 
     /**
      * 获取端口绑定的会话
-     *
      * @param {number} port - 代理端口
      * @returns {ProxySession|null} 会话对象
      */
@@ -585,7 +581,6 @@ class LRUSessionManager {
 
     /**
      * 刷新会话有效期
-     *
      * @param {string} sessionId - 会话 ID
      * @returns {boolean} 是否成功
      * @throws {NetworkShieldError} 会话不存在或已过期
@@ -613,7 +608,6 @@ class LRUSessionManager {
 
     /**
      * 释放会话
-     *
      * @param {string} sessionId - 会话 ID
      * @returns {boolean} 是否成功
      */
@@ -634,7 +628,6 @@ class LRUSessionManager {
 
     /**
      * 获取所有活跃会话
-     *
      * @returns {ProxySession[]} 活跃会话列表
      */
     getActiveSessions() {
@@ -650,8 +643,7 @@ class LRUSessionManager {
 
     /**
      * 获取会话统计
-     *
-     * @returns {Object} 统计信息
+     * @returns {object} 统计信息
      */
     getStatistics() {
         const activeSessions = this.getActiveSessions();
@@ -688,7 +680,6 @@ class LRUSessionManager {
 
     /**
      * 清理过期会话
-     *
      * @returns {number} 清理的会话数量
      */
     cleanupExpiredSessions() {
@@ -717,7 +708,6 @@ class LRUSessionManager {
 
     /**
      * 获取空闲的可用端口
-     *
      * @param {number[]} allPorts - 所有端口列表
      * @returns {number[]} 空闲端口列表
      */
@@ -748,7 +738,6 @@ class LRUSessionManager {
 
     /**
      * 设置 LRU 最大容量
-     *
      * @param {number} size - 新的最大容量
      */
     setLRUMaxSize(size) {

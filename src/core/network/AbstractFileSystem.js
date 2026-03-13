@@ -9,7 +9,6 @@
  * - 支持内存文件系统（测试场景）
  * - 支持原子写入操作
  * - 统一错误处理
- *
  * @module network/core/AbstractFileSystem
  * @version V1.1.0
  * @since 2026-02-03
@@ -27,7 +26,6 @@ const { filesystemError, safeExecuteSync } = require('./NetworkShieldError');
 /**
  * @interface IFileSystem
  * 文件系统抽象接口
- *
  * @description
  * 所有文件系统操作必须实现此接口。这允许在不同环境（测试、生产）
  * 中使用不同的实现，而无需修改核心业务逻辑。
@@ -37,7 +35,7 @@ class IFileSystem {
      * 读取文件内容
      * @abstract
      * @param {string} filePath - 文件路径
-     * @param {Object} [options] - 选项
+     * @param {object} [options] - 选项
      * @returns {string} 文件内容
      * @throws {NetworkShieldError}
      */
@@ -50,7 +48,7 @@ class IFileSystem {
      * @abstract
      * @param {string} filePath - 文件路径
      * @param {string} content - 文件内容
-     * @param {Object} [options] - 选项
+     * @param {object} [options] - 选项
      * @throws {NetworkShieldError}
      */
     writeFile(filePath, content, options = {}) {
@@ -148,7 +146,13 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+/**
+ *
+ */
 class NodeFileSystem extends IFileSystem {
+    /**
+     *
+     */
     constructor() {
         super();
         this._fs = fs;
@@ -302,7 +306,13 @@ class NodeFileSystem extends IFileSystem {
 // MEMORY FILESYSTEM (FOR TESTING)
 // ============================================================================
 
+/**
+ *
+ */
 class MemoryFileSystem extends IFileSystem {
+    /**
+     *
+     */
     constructor() {
         super();
         /** @type {Map<string, {content: string, mtime: Date}>} */
@@ -460,7 +470,7 @@ class MemoryFileSystem extends IFileSystem {
 class FileSystemProvider {
     /**
      * 获取默认文件系统实现
-     * @param {Object} [options] - 选项
+     * @param {object} [options] - 选项
      * @param {boolean} [options.memory] - 是否使用内存文件系统
      * @returns {IFileSystem}
      */

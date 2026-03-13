@@ -7,7 +7,6 @@
  * - 硬件并发数伪装
  * - 设备内存伪装
  * - 屏蔽自动化标志
- *
  * @module core/browser/StealthInjector
  * @version V174.0.0
  */
@@ -19,7 +18,7 @@
  */
 class StealthInjector {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {number} options.hardwareConcurrency - 伪装的 CPU 核心数
      * @param {number} options.deviceMemory - 伪装的设备内存 (GB)
      * @param {boolean} options.silent - 静默模式
@@ -32,6 +31,8 @@ class StealthInjector {
 
     /**
      * 日志输出
+     * @param level
+     * @param msg
      * @private
      */
     _log(level, msg) {
@@ -111,7 +112,7 @@ class StealthInjector {
     /**
      * 静态方法：快速注入
      * @param {import('playwright').BrowserContext} context - 浏览器上下文
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      */
     static async quickInject(context, options = {}) {
         const injector = new StealthInjector(options);

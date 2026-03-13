@@ -9,7 +9,6 @@
  * - 智能背压检测 (Smart Throttling)
  * - 异步操作计数器
  * - 动态流量整形
- *
  * @module infrastructure/harvesters/workers/WorkerPool
  * @version V4.51.0
  */
@@ -29,7 +28,7 @@ const pLimit = require('p-limit');
  */
 class WorkerPool {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {number} [options.maxWorkers] - 最大 Worker 数量
      * @param {Function} [options.logger] - 日志函数
      * @param {number} [options.maxPendingOperations] - 最大挂起异步操作数 (默认: 36 = 12 workers * 3)
@@ -200,7 +199,7 @@ class WorkerPool {
      * 执行并发任务
      * @param {Array} tasks - 任务列表
      * @param {Function} executor - 任务执行函数
-     * @param {Object} [options] - 执行选项
+     * @param {object} [options] - 执行选项
      * @returns {Promise<Array>} 执行结果
      */
     async executeAll(tasks, executor, options = {}) {
@@ -245,7 +244,7 @@ class WorkerPool {
      * 执行任务并带重试
      * @param {Array} tasks - 任务列表
      * @param {Function} executor - 任务执行函数
-     * @param {Object} retryOptions - 重试选项
+     * @param {object} retryOptions - 重试选项
      * @returns {Promise<Array>} 执行结果
      */
     async executeWithRetry(tasks, executor, retryOptions = {}) {
@@ -354,7 +353,7 @@ class WorkerPool {
 
     /**
      * 获取统计信息
-     * @returns {Object}
+     * @returns {object}
      */
     getStats() {
         return {
@@ -366,7 +365,7 @@ class WorkerPool {
 
     /**
      * V4.51: 获取背压状态报告
-     * @returns {Object}
+     * @returns {object}
      */
     getBackpressureReport() {
         return {
@@ -400,7 +399,7 @@ let instance = null;
 
 /**
  * 获取 WorkerPool 单例
- * @param {Object} [options] - 配置选项
+ * @param {object} [options] - 配置选项
  * @returns {WorkerPool}
  */
 function getWorkerPool(options) {
@@ -411,8 +410,8 @@ function getWorkerPool(options) {
 }
 
  /**
- * 重置单例 (用于测试)
- */
+  * 重置单例 (用于测试)
+  */
 function resetWorkerPool() {
     instance = null;
 }

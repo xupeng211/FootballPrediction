@@ -8,7 +8,6 @@
  * - 跨语言状态同步
  * - 错误恢复
  * - 内存泄漏测试（长时间运行）
- *
  * @module network/tests/integration.test
  * @version V1.1.0
  * @since 2026-02-03
@@ -38,6 +37,9 @@ const TEST_CONFIG = {
 };
 
 // 清理测试环境
+/**
+ *
+ */
 function cleanupTestEnvironment() {
     const fs = require('fs');
     const files = [

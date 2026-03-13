@@ -15,7 +15,6 @@
  * - 时间种子: 指纹每小时动态变化
  * - Canvas 噪声扩展: 支持常见检测尺寸
  * - Audio 噪声增强: 更自然的随机性
- *
  * @module infrastructure/network/enhanced_stealth_config
  * @version V194.3.0
  */
@@ -68,9 +67,9 @@ const WEBGL_CONFIG = {
 
 /**
  * 获取增强版隐身配置
- * @param {Object} options - 可选项
- * @param {string} [options.platform='win32'] - 平台类型
- * @returns {Object} 隐身配置
+ * @param {object} options - 可选项
+ * @param {string} [options.platform] - 平台类型
+ * @returns {object} 隐身配置
  */
 function getEnhancedStealthConfig(options = {}) {
     const platform = options.platform || 'win32';
@@ -118,8 +117,7 @@ function getEnhancedStealthConfig(options = {}) {
  * 新增功能:
  * - 时间种子: 基于 UTC 小时的确定性随机，每小时指纹自动变化
  * - Canvas 噪声扩展: 支持多种常见指纹检测尺寸
- *
- * @param {number} [workerId=1] - Worker ID，用于确定性随机
+ * @param {number} [workerId] - Worker ID，用于确定性随机
  * @returns {string} JavaScript 代码
  */
 function getAntiDetectionScripts(workerId = 1) {
@@ -341,8 +339,8 @@ function getAntiDetectionScripts(workerId = 1) {
 
 /**
  * V193.1: 获取随机 WebGL 配置
- * @param {number} [workerId=1] - Worker ID
- * @returns {Object} WebGL 配置
+ * @param {number} [workerId] - Worker ID
+ * @returns {object} WebGL 配置
  */
 function getRandomWebGLConfig(workerId = 1) {
     const seed = workerId * 17 + 42;
@@ -358,8 +356,8 @@ function getRandomWebGLConfig(workerId = 1) {
 
 /**
  * V193.1: 获取硬件配置
- * @param {number} [workerId=1] - Worker ID
- * @returns {Object} 硬件配置
+ * @param {number} [workerId] - Worker ID
+ * @returns {object} 硬件配置
  */
 function getHardwareConfig(workerId = 1) {
     const seed = workerId * 17 + 42;

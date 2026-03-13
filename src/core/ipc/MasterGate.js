@@ -6,7 +6,6 @@
  * - 监听 Worker 消息
  * - 消息路由与分发
  * - 自愈逻辑触发
- *
  * @module core/ipc/MasterGate
  * @version V174.0.0
  */
@@ -20,8 +19,8 @@ const { MessageTypes } = require('./MessageTypes');
  */
 class MasterGate {
     /**
-     * @param {Object} options - 配置选项
-     * @param {Object} options.handlers - 消息处理器映射
+     * @param {object} options - 配置选项
+     * @param {object} options.handlers - 消息处理器映射
      * @param {number} options.circuitBreakerThreshold - 熔断阈值
      */
     constructor(options = {}) {
@@ -54,7 +53,7 @@ class MasterGate {
     /**
      * 处理来自 Worker 的消息
      * @param {number} workerId - Worker ID
-     * @param {Object} msg - 消息对象
+     * @param {object} msg - 消息对象
      */
     handle(workerId, msg) {
         this.stats.messagesReceived++;
@@ -111,6 +110,8 @@ class MasterGate {
 
     /**
      * 处理 READY 信号
+     * @param workerId
+     * @param msg
      * @private
      */
     _handleReady(workerId, msg) {
@@ -126,6 +127,8 @@ class MasterGate {
 
     /**
      * 处理任务开始
+     * @param workerId
+     * @param msg
      * @private
      */
     _handleTaskStart(workerId, msg) {
@@ -140,6 +143,8 @@ class MasterGate {
 
     /**
      * 处理任务成功
+     * @param workerId
+     * @param msg
      * @private
      */
     _handleTaskSuccess(workerId, msg) {
@@ -156,6 +161,8 @@ class MasterGate {
 
     /**
      * 处理任务失败
+     * @param workerId
+     * @param msg
      * @private
      */
     _handleTaskFailed(workerId, msg) {
@@ -176,6 +183,8 @@ class MasterGate {
 
     /**
      * 处理重试请求
+     * @param workerId
+     * @param msg
      * @private
      */
     _handleTaskRetry(workerId, msg) {
@@ -190,6 +199,8 @@ class MasterGate {
 
     /**
      * 处理熔断信号
+     * @param workerId
+     * @param msg
      * @private
      */
     _handleCircuitBreak(workerId, msg) {
@@ -204,6 +215,8 @@ class MasterGate {
 
     /**
      * 处理冷却信号
+     * @param workerId
+     * @param msg
      * @private
      */
     _handleCoolDown(workerId, msg) {
@@ -217,6 +230,7 @@ class MasterGate {
 
     /**
      * 触发熔断
+     * @param workerId
      * @private
      */
     _triggerCircuitBreak(workerId) {
@@ -245,7 +259,7 @@ class MasterGate {
     /**
      * 获取 Worker 状态
      * @param {number} workerId - Worker ID
-     * @returns {Object|null}
+     * @returns {object | null}
      */
     getWorkerState(workerId) {
         return this.workerStates.get(workerId) || null;
@@ -253,7 +267,7 @@ class MasterGate {
 
     /**
      * 获取统计信息
-     * @returns {Object}
+     * @returns {object}
      */
     getStats() {
         return {
@@ -264,7 +278,7 @@ class MasterGate {
 
     /**
      * 获取所有 Worker 状态快照
-     * @returns {Object}
+     * @returns {object}
      */
     getWorkerSnapshot() {
         const snapshot = {};

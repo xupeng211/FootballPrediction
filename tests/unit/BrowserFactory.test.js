@@ -18,6 +18,9 @@ process.setMaxListeners(50);
 
 // 模拟 chromium 模块
 const MockBrowser = class {
+    /**
+     *
+     */
     static async launch() {
         return {
             newContext: () => ({
@@ -71,6 +74,10 @@ const { BrowserFactory, resetBrowserFactory } = require('/app/src/infrastructure
 // Mock Identity
 // ============================================================================
 
+/**
+ *
+ * @param port
+ */
 function createMockIdentity(port = 7890) {
     return {
         proxy: { url: `http://172.25.16.1:${port}`, port },

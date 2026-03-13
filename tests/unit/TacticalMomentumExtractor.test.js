@@ -3,7 +3,6 @@
  * ==============================================
  *
  * 验证 171 维特征提取的完整性和边界情况
- *
  * @module tests/unit/TacticalMomentumExtractor.test
  * @version V176.0.0
  */

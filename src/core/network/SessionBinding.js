@@ -11,7 +11,6 @@
  * - 超时自动释放 (Auto-release on timeout)
  * - 清理过期会话 (Cleanup expired sessions)
  * - 会话追踪 (Session tracking)
- *
  * @module network/core/SessionBinding
  * @version V1.0.0
  * @since 2026-02-03
@@ -24,6 +23,9 @@
 // SESSION CLASS
 // ============================================================================
 
+/**
+ *
+ */
 class ProxySession {
     /**
      * @param {string} sessionId - 会话 ID
@@ -65,7 +67,7 @@ class ProxySession {
 
     /**
      * 获取会话信息
-     * @returns {Object} 会话信息
+     * @returns {object} 会话信息
      */
     getInfo() {
         return {
@@ -86,7 +88,14 @@ class ProxySession {
 // SESSION BINDING MANAGER
 // ============================================================================
 
+/**
+ *
+ */
 class SessionBindingManager {
+    /**
+     *
+     * @param options
+     */
     constructor(options = {}) {
         this.sessionTimeoutMinutes = options.sessionTimeoutMinutes || 30;
         this.sessions = new Map(); // sessionId -> ProxySession
@@ -102,7 +111,7 @@ class SessionBindingManager {
     /**
      * 创建新会话并分配代理端口
      * @param {number} port - 代理端口
-     * @param {Object} metadata - 会话元数据
+     * @param {object} metadata - 会话元数据
      * @returns {ProxySession} 会话对象
      */
     async createSession(port, metadata = {}) {
@@ -202,7 +211,7 @@ class SessionBindingManager {
 
     /**
      * 获取会话统计
-     * @returns {Object} 统计信息
+     * @returns {object} 统计信息
      */
     getStatistics() {
         const activeSessions = this.getActiveSessions();

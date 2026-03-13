@@ -4,7 +4,6 @@
  *
  * 集中管理所有文件系统路径，支持容器/本地环境自动适配
  * 为"绞杀者模式"重构提供路径解耦基础
- *
  * @module infrastructure/utils/PathResolver
  * @version V4.46.0
  */
@@ -24,7 +23,7 @@ const fs = require('fs');
  */
 class PathResolver {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {string} [options.appRoot] - 应用根目录 (默认自动检测)
      * @param {boolean} [options.isContainer] - 是否容器环境 (默认自动检测)
      */
@@ -263,7 +262,7 @@ class PathResolver {
 
     /**
      * 获取路径信息摘要
-     * @returns {Object}
+     * @returns {object}
      */
     getSummary() {
         return {
@@ -286,7 +285,7 @@ let instance = null;
 
 /**
  * 获取 PathResolver 单例
- * @param {Object} [options] - 配置选项
+ * @param {object} [options] - 配置选项
  * @returns {PathResolver}
  */
 function getPathResolver(options) {

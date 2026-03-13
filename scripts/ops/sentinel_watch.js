@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview TITAN 哨兵监控系统 (Sentinel Watch)
+ * @file TITAN 哨兵监控系统 (Sentinel Watch)
  * @description 自动化满仓检测与安全停机系统
  * @version 1.0.0
  * @module scripts/ops/sentinel_watch
@@ -28,7 +28,7 @@ const CONFIG = {
 };
 
 // 动态目标管理
-let dynamicTarget = {
+const dynamicTarget = {
   value: 12000,        // 初始默认值
   lastUpdated: 0,      // 上次更新时间
   cacheValid: false    // 缓存是否有效
@@ -57,7 +57,7 @@ const COLORS = {
 };
 
 // 状态追踪
-let state = {
+const state = {
   checkCount: 0,
   consecutiveHits: 0,
   startTime: Date.now(),
@@ -68,6 +68,8 @@ let state = {
 
 /**
  * 打印带颜色的日志
+ * @param level
+ * @param message
  */
 function log(level, message) {
   const colorMap = {
@@ -84,6 +86,7 @@ function log(level, message) {
 
 /**
  * ASCII Art - VICTORY
+ * @param target
  */
 function printVictoryArt(target) {
   const art = `
@@ -106,6 +109,7 @@ ${COLORS.reset}`;
 
 /**
  * ASCII Art - FULL TANK
+ * @param target
  */
 function printFullTankArt(target) {
   const targetStr = target.toLocaleString();
@@ -201,6 +205,9 @@ async function getDynamicTarget() {
 
 /**
  * 写入胜利日志
+ * @param fileCount
+ * @param dbCount
+ * @param targetCount
  */
 async function writeVictoryLog(fileCount, dbCount, targetCount) {
   const duration = Date.now() - state.startTime;

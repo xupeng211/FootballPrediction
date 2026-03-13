@@ -6,7 +6,6 @@
  * 遵循"零模拟铁律"：不使用 Math.random() 伪造数据
  *
  * 生成算法：基于时间戳 + 进程 ID + 计数器的确定性组合
- *
  * @module core/id_generator
  * @version V4.46.5
  */
@@ -48,8 +47,7 @@ let lastTimestamp = 0;
 /**
  * 生成确定性 Trace ID
  * 格式: trace_{timestamp}_{machine}_{pid}_{counter}
- *
- * @param {string} [prefix='trace'] - ID 前缀
+ * @param {string} [prefix] - ID 前缀
  * @returns {string} 确定性唯一 ID
  */
 function generateDeterministicId(prefix = 'trace') {
@@ -72,7 +70,6 @@ function generateDeterministicId(prefix = 'trace') {
 /**
  * 生成 Session ID
  * 格式: SESSION-{type}-{timestamp}-{counter}
- *
  * @param {string} type - Session 类型（如 WORKER, SWARM, LOCK）
  * @param {number} [identifier] - 可选标识符（如 Worker ID）
  * @returns {string} Session ID
@@ -90,7 +87,6 @@ function generateSessionId(type, identifier) {
 /**
  * 生成 Lock ID
  * 格式: LOCK-{resource}-{timestamp}-{counter}
- *
  * @param {string|number} resource - 资源标识（如端口号）
  * @returns {string} Lock ID
  */
@@ -103,7 +99,6 @@ function generateLockId(resource) {
 /**
  * 生成 Request ID
  * 格式: REQ-{timestamp}-{machine}-{counter}
- *
  * @returns {string} Request ID
  */
 function generateRequestId() {
@@ -113,7 +108,6 @@ function generateRequestId() {
 /**
  * 生成短 ID（用于日志、追踪等）
  * 格式: {timestamp后6位}{counter 36进制}
- *
  * @returns {string} 短 ID
  */
 function generateShortId() {

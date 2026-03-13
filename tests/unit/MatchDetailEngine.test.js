@@ -9,7 +9,6 @@
  * 2. 空壳 JSON 质量门禁拦截
  * 3. 异常字段 NaN 容错机制
  * 4. 网络/403 异常处理
- *
  * @module tests/unit/MatchDetailEngine.test
  * @version V172.100
  */
@@ -25,6 +24,7 @@ const assert = require('node:assert');
 
 /**
  * 生成完美的 FotMob API 响应
+ * @param overrides
  */
 function createPerfectMatchData(overrides = {}) {
     return {
@@ -126,6 +126,7 @@ function createTurnstileErrorData() {
 
 /**
  * 解析比赛数据 (独立函数，便于测试)
+ * @param rawData
  */
 function parseMatchData(rawData) {
     const result = {
@@ -244,6 +245,8 @@ function parseMatchData(rawData) {
 
 /**
  * 质量门禁验证
+ * @param rawData
+ * @param minSizeBytes
  */
 function validateQualityGate(rawData, minSizeBytes = 5000) {
     if (!rawData) {
@@ -277,6 +280,7 @@ function validateQualityGate(rawData, minSizeBytes = 5000) {
 
 /**
  * 检测是否为 Turnstile 错误
+ * @param data
  */
 function isTurnstileError(data) {
     if (!data) return false;
