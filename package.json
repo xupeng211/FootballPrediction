@@ -52,7 +52,7 @@
     "elo:incremental": "node scripts/ops/elo_incremental_update.js"
   },
   "dependencies": {
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.6.1",
     "jsdom": "^27.4.0",
     "p-limit": "^3.1.0",
     "pg": "^8.20.0",
