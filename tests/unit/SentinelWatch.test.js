@@ -276,7 +276,7 @@ it('✅ 应正确计算进度百分比', async () => {
 it('✅ 超过目标时剩余应为 0', async () => {
       const result = await sentinel.checkCycle(150);
       assert.strictEqual(result.remaining, 0);
-      expect(parseFloat(result.progress)).toBeGreaterThan(100);
+      assert.ok(parseFloat(result.progress) > 100);
     });
   });
 });
