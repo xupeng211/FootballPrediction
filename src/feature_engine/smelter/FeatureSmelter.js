@@ -33,6 +33,9 @@ const {
 
 const { getPool, withRetry, checkHealth, closePool, isRetryableError } = require('../../../config/database');
 
+// V4.0: 从 utils 导入结构化日志器
+const { StructuredLogger } = require('../../utils/StructuredLogger');
+
 // 导入提取器（纯函数）
 const { extractGoldenFeatures } = require('../extractors/GoldenFeatureExtractor');
 const { extractTacticalFeatures } = require('../extractors/TacticalMomentumExtractor');
@@ -50,146 +53,6 @@ const DEFAULT_CONFIG = {
     logDir: '/app/logs/pipeline',
     enableStructuredLogging: true
 };
-
-// ============================================================================
-// 结构化日志器
-// ============================================================================
-
-/**
- * 结构化日志器 - 输出 JSON 格式，便于 ELK 采集
- */
-class StructuredLogger {
-    /**
-     * @param {object} options - 日志选项
-     * @param {string} options.component - 组件名称
-     * @param {string} options.logDir - 日志目录
-     * @param {boolean} options.enableStructured - 是否启用结构化输出
-     */
-    constructor(options = {}) {
-        this.component = options.component || 'FeatureSmelter';
-        this.logDir = options.logDir || '/app/logs/pipeline';
-        this.enableStructured = options.enableStructured !== false;
-        this.logStream = null;
-
-        this._ensureLogDirectory();
-        this._initLogStream();
-    }
-
-    /**
-     * 确保日志目录存在
-     * @private
-     */
-    _ensureLogDirectory() {
-        if (!fs.existsSync(this.logDir)) {
-            try {
-                fs.mkdirSync(this.logDir, { recursive: true });
-            } catch (error) {
-                console.warn(`[WARN] 无法创建日志目录: ${error.message}`);
-            }
-        }
-    }
-
-    /**
-     * 初始化日志文件流
-     * @private
-     */
-    _initLogStream() {
-        const logFileName = `smelter_${new Date().toISOString().slice(0, 10)}.jsonl`;
-        const logFilePath = path.join(this.logDir, logFileName);
-
-        try {
-            this.logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
-        } catch (error) {
-            console.warn(`[WARN] 无法创建日志文件: ${error.message}`);
-        }
-    }
-
-    /**
-     * 输出结构化日志
-     * @param {string} level - 日志级别 (error, warn, info, debug)
-     * @param {string} message - 日志消息
-     * @param {object} [context] - 附加上下文
-     */
-    log(level, message, context = {}) {
-        const logEntry = {
-            timestamp: new Date().toISOString(),
-            level,
-            component: this.component,
-            message,
-            ...context
-        };
-
-        // 控制台输出
-        const consoleMethod = level === 'error' ? 'error' : level === 'warn' ? 'warn' : 'log';
-        if (this.enableStructured) {
-            console[consoleMethod](JSON.stringify(logEntry));
-        } else {
-            const prefix = `[${logEntry.timestamp}] [${level.toUpperCase()}]`;
-            console[consoleMethod](`${prefix} ${message}`, Object.keys(context).length > 0 ? context : '');
-        }
-
-        // 文件输出（JSONL 格式）
-        if (this.logStream && this.logStream.writable) {
-            try {
-                this.logStream.write(JSON.stringify(logEntry) + '\n');
-            } catch (writeError) {
-                // 忽略写入错误
-            }
-        }
-    }
-
-    /**
-     *
-     * @param message
-     * @param context
-     */
-    info(message, context = {}) {
-        this.log(LOG_LEVELS.INFO, message, context);
-    }
-
-    /**
-     *
-     * @param message
-     * @param context
-     */
-    warn(message, context = {}) {
-        this.log(LOG_LEVELS.WARN, message, context);
-    }
-
-    /**
-     *
-     * @param message
-     * @param context
-     */
-    error(message, context = {}) {
-        this.log(LOG_LEVELS.ERROR, message, context);
-    }
-
-    /**
-     *
-     * @param message
-     * @param context
-     */
-    debug(message, context = {}) {
-        if (process.env.LOG_LEVEL === 'debug') {
-            this.log(LOG_LEVELS.DEBUG, message, context);
-        }
-    }
-
-    /**
-     *
-     */
-    close() {
-        if (this.logStream) {
-            try {
-                this.logStream.end();
-            } catch (error) {
-                // 忽略关闭错误
-            }
-            this.logStream = null;
-        }
-    }
-}
 
 // ============================================================================
 // FeatureSmelter 类 - V3.0-PRO 工业级实现
