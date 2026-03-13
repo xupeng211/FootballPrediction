@@ -147,7 +147,7 @@ wait_for_database() {
         attempt=$((attempt + 1))
         
         # 使用 pg_isready 检查
-        if docker-compose -f "$COMPOSE_FILE" exec -T db pg_isready -U "$DB_USER" -d "$DB_NAME" &>/dev/null; then
+        if docker-compose -f "$COMPOSE_FILE" exec db pg_isready -U "$DB_USER" -d "$DB_NAME" &>/dev/null; then
             log_success "数据库已就绪 (尝试 $attempt 次)"
             return 0
         fi
@@ -155,7 +155,7 @@ wait_for_database() {
         # 备选：使用 nc 检查端口
         if nc -z "$DB_HOST" "$DB_PORT" 2>/dev/null; then
             # 端口通了，再检查是否能查询
-            if docker-compose -f "$COMPOSE_FILE" exec -T db psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &>/dev/null; then
+            if docker-compose -f "$COMPOSE_FILE" exec db psql -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1;" &>/dev/null; then
                 log_success "数据库已就绪 (尝试 $attempt 次)"
                 return 0
             fi
@@ -168,6 +168,24 @@ wait_for_database() {
     log_error "数据库健康检查超时 (${MAX_HEALTH_CHECKS} 次尝试)"
     log_info "请检查: docker-compose -f $COMPOSE_FILE logs db"
     exit 1
+}
+
+# =============================================================================
+# 自动补包 (解决重启后 dotenv 等依赖缺失)
+# =============================================================================
+install_dependencies() {
+    log_info "检查并安装 Node.js 依赖..."
+    
+    cd "$PROJECT_ROOT"
+    
+    # 在容器内执行 npm install，确保 dotenv 等依赖存在
+    docker-compose -f "$COMPOSE_FILE" exec dev npm install --no-save
+    
+    if [[ $? -eq 0 ]]; then
+        log_success "依赖检查完成"
+    else
+        log_warn "依赖安装可能有问题，但尝试继续..."
+    fi
 }
 
 # =============================================================================
@@ -213,7 +231,7 @@ run_seed() {
     log_info "执行 L1 Discovery (赛程种子)..."
     
     cd "$PROJECT_ROOT"
-    docker-compose -f "$COMPOSE_FILE" exec -T dev npm run seed
+    docker-compose -f "$COMPOSE_FILE" exec dev npm run seed
     
     if [[ $? -eq 0 ]]; then
         log_success "赛程种子完成"
@@ -233,7 +251,7 @@ run_harvest() {
     cd "$PROJECT_ROOT"
     
     # 构建基础命令数组（避免 eval 的安全问题）
-    local cmd_args=("docker-compose" "-f" "$COMPOSE_FILE" "exec" "-T" "dev" "node" "scripts/ops/run_production.js" "--workers" "12" "--limit" "12000")
+    local cmd_args=("docker-compose" "-f" "$COMPOSE_FILE" "exec" "dev" "node" "scripts/ops/run_production.js" "--workers" "12" "--limit" "12000")
     
     if [[ -f "$SESSION_FILE" ]]; then
         cmd_args+=("--session-path" "/app/manual_session.json")
@@ -367,6 +385,9 @@ main() {
     
     # 健康检查
     wait_for_database
+    
+    # V4.51.5: 自动补包，确保 dotenv 等依赖存在
+    install_dependencies
     
     # 显示菜单
     show_menu
