@@ -5,7 +5,6 @@
  *
  * 验证 L1/L2/L3 数据管道完整性
  * 模拟完整的 Hyper-Drive 链路
- *
  * @version V4.46.5
  * @date 2026-03-09
  */
@@ -39,11 +38,17 @@ const TEST_MATCH = {
  * 集成回归测试主类
  */
 class EndToEndTest {
+    /**
+     *
+     */
     constructor() {
         this.pool = null;
         this.testMatchId = `E2E_${Date.now()}_${process.pid}`;
     }
 
+    /**
+     *
+     */
     async initialize() {
         console.log('🔌 初始化数据库连接...');
         this.pool = new Pool({
@@ -60,6 +65,9 @@ class EndToEndTest {
         console.log('✅ 数据库连接成功');
     }
 
+    /**
+     *
+     */
     async cleanup() {
         console.log('🧹 清理测试数据...');
         if (this.pool) {
@@ -101,6 +109,7 @@ class EndToEndTest {
     /**
      * 测试 L2 数据写入
      * 表结构: match_id, raw_data (jsonb), collected_at, data_hash
+     * @param matchId
      */
     async testL2Write(matchId) {
         console.log('\n📝 测试 L2 数据写入...');
@@ -132,6 +141,7 @@ class EndToEndTest {
     /**
      * 测试 L3 特征熔炼
      * 表结构: match_id, golden_features, tactical_features, elo_features, odds_features, ...
+     * @param matchId
      */
     async testL3Smelt(matchId) {
         console.log('\n🔥 测试 L3 特征熔炼...');
@@ -165,6 +175,7 @@ class EndToEndTest {
     }
     /**
      * 验证数据完整性
+     * @param matchId
      */
     async verifyIntegrity(matchId) {
         console.log('\n🔍 验证数据完整性...');
@@ -222,6 +233,9 @@ class EndToEndTest {
 }
 
 // 主入口
+/**
+ *
+ */
 async function main() {
     const test = new EndToEndTest();
     await test.run();

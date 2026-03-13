@@ -7,7 +7,6 @@
  * - 会话过期检测
  * - 指数退避
  * - 身份热加载
- *
  * @module tests/unit/SessionManager.test
  */
 
@@ -23,6 +22,7 @@ const { SessionManager, resetSingleton, DEFAULT_CONFIG } = require('../../src/in
 
 /**
  * 创建模拟的 SessionManager（不初始化文件系统）
+ * @param options
  */
 function createMockSessionManager(options = {}) {
     const manager = new SessionManager({
@@ -37,6 +37,8 @@ function createMockSessionManager(options = {}) {
 
 /**
  * 创建模拟会话对象
+ * @param port
+ * @param options
  */
 function createMockSession(port, options = {}) {
     const now = Date.now();

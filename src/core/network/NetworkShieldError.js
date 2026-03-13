@@ -14,7 +14,6 @@
  * - NS_CIRCUIT_OPEN (4007): 熔断器已打开
  * - NS_INVALID_CONFIG (4008): 配置无效
  * - NS_FILESYSTEM_ERROR (4009): 文件系统错误
- *
  * @module network/core/NetworkShieldError
  * @version V1.1.0
  * @since 2026-02-03
@@ -126,13 +125,15 @@ const ErrorCode = {
 // NETWORK SHIELD ERROR CLASS
 // ============================================================================
 
+/**
+ *
+ */
 class NetworkShieldError extends Error {
     /**
      * 创建 NetworkShield 标准错误
-     *
-     * @param {string|Object} errorCode - 错误码名称（如 'NS_PROXY_DEAD'）或错误配置对象
+     * @param {string | object} errorCode - 错误码名称（如 'NS_PROXY_DEAD'）或错误配置对象
      * @param {string} [customMessage] - 自定义消息（可选）
-     * @param {Object} [context] - 上下文信息（可选）
+     * @param {object} [context] - 上下文信息（可选）
      * @param {Error} [cause] - 原始错误（可选）
      */
     constructor(errorCode, customMessage = null, context = {}, cause = null) {
@@ -180,7 +181,7 @@ class NetworkShieldError extends Error {
         this.retryable = errorConfig.retryable;
 
         /**
-         * @type {Object} 上下文信息
+         * @type {object} 上下文信息
          */
         this.context = context;
 
@@ -202,8 +203,7 @@ class NetworkShieldError extends Error {
 
     /**
      * 转换为可序列化的对象
-     *
-     * @returns {Object} 序列化后的错误对象
+     * @returns {object} 序列化后的错误对象
      */
     toJSON() {
         return {
@@ -225,7 +225,6 @@ class NetworkShieldError extends Error {
 
     /**
      * 转换为日志字符串
-     *
      * @returns {string} 日志格式字符串
      */
     toLogString() {
@@ -237,7 +236,6 @@ class NetworkShieldError extends Error {
 
     /**
      * 检查错误是否可重试
-     *
      * @returns {boolean} 是否可重试
      */
     isRetryable() {
@@ -246,7 +244,6 @@ class NetworkShieldError extends Error {
 
     /**
      * 检查错误严重级别
-     *
      * @param {string} level - 要比较的级别
      * @returns {boolean} 是否达到或超过指定级别
      */
@@ -262,7 +259,6 @@ class NetworkShieldError extends Error {
 
 /**
  * 创建代理认证失败错误
- *
  * @param {string} proxyUrl - 代理 URL
  * @param {Error} [cause] - 原始错误
  * @returns {NetworkShieldError}
@@ -278,7 +274,6 @@ function authFail(proxyUrl, cause = null) {
 
 /**
  * 创建代理不可用错误
- *
  * @param {number} port - 代理端口
  * @param {string} reason - 失败原因
  * @returns {NetworkShieldError}
@@ -293,7 +288,6 @@ function proxyDead(port, reason) {
 
 /**
  * 创建注册表锁定错误
- *
  * @param {string} lockPath - 锁文件路径
  * @param {number} timeoutMs - 超时时间
  * @returns {NetworkShieldError}
@@ -308,7 +302,6 @@ function registryLocked(lockPath, timeoutMs) {
 
 /**
  * 创建无可用代理错误
- *
  * @param {number} totalNodes - 总节点数
  * @param {number} activeNodes - 活跃节点数
  * @returns {NetworkShieldError}
@@ -323,7 +316,6 @@ function noProxyAvailable(totalNodes, activeNodes) {
 
 /**
  * 创建会话过期错误
- *
  * @param {string} sessionId - 会话 ID
  * @returns {NetworkShieldError}
  */
@@ -337,7 +329,6 @@ function sessionExpired(sessionId) {
 
 /**
  * 创建熔断器打开错误
- *
  * @param {number} port - 代理端口
  * @param {Date} cooldownUntil - 冷却结束时间
  * @returns {NetworkShieldError}
@@ -352,7 +343,6 @@ function circuitOpen(port, cooldownUntil) {
 
 /**
  * 创建配置无效错误
- *
  * @param {string} param - 参数名
  * @param {string} reason - 原因
  * @returns {NetworkShieldError}
@@ -367,7 +357,6 @@ function invalidConfig(param, reason) {
 
 /**
  * 创建文件系统错误
- *
  * @param {string} operation - 操作类型
  * @param {string} filePath - 文件路径
  * @param {Error} [cause] - 原始错误
@@ -384,7 +373,6 @@ function filesystemError(operation, filePath, cause = null) {
 
 /**
  * 从标准 Error 创建 NetworkShieldError
- *
  * @param {Error} error - 原始错误
  * @param {string} defaultCode - 默认错误码
  * @returns {NetworkShieldError}
@@ -404,7 +392,6 @@ function fromError(error, defaultCode = 'NS_FILESYSTEM_ERROR') {
 
 /**
  * 检查错误是否为特定类型
- *
  * @param {Error} error - 错误对象
  * @param {string} errorCode - 错误码名称
  * @returns {boolean}
@@ -419,7 +406,6 @@ function isErrorType(error, errorCode) {
 
 /**
  * 安全执行函数并转换错误
- *
  * @param {Function} fn - 要执行的函数
  * @param {string} [errorCode] - 默认错误码
  * @returns {Promise<*>} 函数结果
@@ -435,7 +421,6 @@ async function safeExecute(fn, errorCode = 'NS_FILESYSTEM_ERROR') {
 
 /**
  * 安全执行同步函数并转换错误
- *
  * @param {Function} fn - 要执行的函数
  * @param {string} [errorCode] - 默认错误码
  * @returns {*} 函数结果

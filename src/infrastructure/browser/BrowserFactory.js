@@ -4,7 +4,6 @@
  *
  * 统一管理浏览器生命周期、Context 创建、隐身脚本注入和行为模拟。
  * 从 AbstractHarvester 剥离的工业级组件。
- *
  * @module infrastructure/browser/BrowserFactory
  * @version V1.0.0
  */
@@ -19,11 +18,14 @@ const { logger } = require('../utils/Logger');
 // BrowserFactory - 浏览器工厂类
 // ============================================================================
 
+/**
+ *
+ */
 class BrowserFactory {
     /**
      * 创建 BrowserFactory 实例
-     * @param {Object} [config={}] - 配置选项
-     * @param {boolean} [config.headless=true] - 是否无头模式
+     * @param {object} [config] - 配置选项
+     * @param {boolean} [config.headless] - 是否无头模式
      * @param {string} [config.profilePath] - 浏览器配置文件路径
      */
     constructor(config = {}) {
@@ -95,10 +97,10 @@ class BrowserFactory {
 
     /**
      * 创建浏览器上下文
-     * @param {Object} identity - Worker 身份信息
-     * @param {Object} identity.proxy - 代理配置
-     * @param {Object} identity.stealth - 隐身配置
-     * @param {boolean} [disableProxy=false] - 是否禁用代理
+     * @param {object} identity - Worker 身份信息
+     * @param {object} identity.proxy - 代理配置
+     * @param {object} identity.stealth - 隐身配置
+     * @param {boolean} [disableProxy] - 是否禁用代理
      * @returns {Promise<import('playwright').BrowserContext>}
      */
     async createContext(identity, disableProxy = false) {
@@ -326,9 +328,9 @@ class BrowserFactory {
     /**
      * 首页预热 - 建立 Session 信任
      * @param {import('playwright').Page} page - Playwright Page 对象
-     * @param {Object} [config={}] - 预热配置
-     * @param {boolean} [config.scrollMore=true] - 是否滚动更多
-     * @param {boolean} [config.randomScrolls=true] - 是否随机滚动
+     * @param {object} [config] - 预热配置
+     * @param {boolean} [config.scrollMore] - 是否滚动更多
+     * @param {boolean} [config.randomScrolls] - 是否随机滚动
      */
     async warmupHomepage(page, config = {}) {
         const { scrollMore = true, randomScrolls = true } = config;
@@ -372,8 +374,8 @@ class BrowserFactory {
     /**
      * 简化版鼠标移动（收割时使用）
      * @param {import('playwright').Page} page - Playwright Page 对象
-     * @param {number} [minMoves=3] - 最小移动次数
-     * @param {number} [maxMoves=5] - 最大移动次数
+     * @param {number} [minMoves] - 最小移动次数
+     * @param {number} [maxMoves] - 最大移动次数
      */
     async quickMouseMove(page, minMoves = 3, maxMoves = 5) {
         const moves = this._randomInRange(minMoves, maxMoves);
@@ -459,7 +461,7 @@ let _instance = null;
 
 /**
  * 获取 BrowserFactory 单例
- * @param {Object} [config={}] - 配置选项
+ * @param {object} [config] - 配置选项
  * @returns {BrowserFactory}
  */
 function getBrowserFactory(config = {}) {

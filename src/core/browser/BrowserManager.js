@@ -7,7 +7,6 @@
  * - 上下文创建和 Cookie 管理
  * - 资源释放和进程清理
  * - V175: ResourceShield 极致加速 (屏蔽非必要资源)
- *
  * @module core/browser/BrowserManager
  * @version V175.0.0
  */
@@ -35,7 +34,7 @@ const { StealthInjector } = require('./StealthInjector');
  */
 class ResourceShield {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {string[]} options.blockedTypes - 要屏蔽的资源类型
      * @param {string[]} options.allowedPatterns - 允许的 URL 模式
      */
@@ -105,7 +104,7 @@ class ResourceShield {
 
     /**
      * 获取统计信息
-     * @returns {Object}
+     * @returns {object}
      */
     getStats() {
         return { ...this.stats };
@@ -117,11 +116,11 @@ class ResourceShield {
  */
 class BrowserManager {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {number} options.workerId - Worker 标识符
      * @param {number} options.proxyPort - 代理端口
      * @param {boolean} options.headless - 无头模式
-     * @param {Object} options.config - 工厂配置 (FactoryConfig)
+     * @param {object} options.config - 工厂配置 (FactoryConfig)
      * @param {boolean} options.enableResourceShield - 启用资源屏蔽 (V175)
      */
     constructor(options = {}) {
@@ -152,6 +151,8 @@ class BrowserManager {
 
     /**
      * 日志输出
+     * @param level
+     * @param msg
      * @private
      */
     _log(level, msg) {
@@ -185,7 +186,7 @@ class BrowserManager {
 
     /**
      * 获取随机视口
-     * @returns {Object}
+     * @returns {object}
      */
     getRandomViewport() {
         if (this.config?.FINGERPRINT?.getRandomViewport) {
@@ -196,7 +197,7 @@ class BrowserManager {
 
     /**
      * 获取静态指纹配置
-     * @returns {Object}
+     * @returns {object}
      */
     getStaticFingerprint() {
         return this.config?.FINGERPRINT?.static ?? {
@@ -335,7 +336,7 @@ class BrowserManager {
 
     /**
      * 创建新页面
-     * @param {Object} options - 页面选项
+     * @param {object} options - 页面选项
      * @param {boolean} options.enableResourceShield - 是否启用资源屏蔽 (默认使用实例设置)
      * @returns {Promise<import('playwright').Page>}
      */
@@ -429,7 +430,7 @@ class BrowserManager {
     /**
      * V175: 获取任务级页面 (复用模式)
      * Worker 进程持有长连接 Browser，每次任务只创建新 page
-     * @param {Object} options - 页面选项
+     * @param {object} options - 页面选项
      * @returns {Promise<import('playwright').Page>}
      */
     async getTaskPage(options = {}) {
@@ -606,7 +607,7 @@ class BrowserManager {
 
     /**
      * 获取当前状态
-     * @returns {Object}
+     * @returns {object}
      */
     getStatus() {
         return {

@@ -24,6 +24,9 @@ process.setMaxListeners(50);
 
 // 模拟 chromium 模块，避免加载 Playwright
 const MockBrowser = class {
+    /**
+     *
+     */
     static async launch() {
         return {
             newContext: () => ({
@@ -95,6 +98,11 @@ describe('AbstractHarvester 完整测试套件', () => {
     });
 
     // 辅助函数：创建 harvester 并跟踪实例
+    /**
+     *
+     * @param HarvesterClass
+     * @param config
+     */
     function createHarvester(HarvesterClass, config = {}) {
         const harvester = new HarvesterClass(config);
         harvesterInstances.push(harvester);

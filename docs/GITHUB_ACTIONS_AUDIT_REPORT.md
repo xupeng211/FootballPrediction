@@ -34,14 +34,17 @@
 | 安全扫描 | ✅ | Bandit + Safety + Trivy 三层防护 |
 
 **硬编码风险**: 🔴 **发现 1 处**
+
 ```yaml
 # Line 27
 docker-compose -f docker-compose.integration.yml up -d postgres-integration redis-integration
 ```
+
 - **问题**: 使用 `docker-compose.integration.yml` 文件，但该文件可能包含本地开发配置
 - **风险**: 在 GitHub Actions 云端环境可能缺少必要的服务定义
 
 **修复建议**:
+
 ```yaml
 # 添加 Node.js 测试步骤
 - name: 🧪 Run Jest Tests
@@ -83,6 +86,7 @@ services:
 ```
 
 **严重问题**:
+
 1. **代理硬编码**: 虽然未发现 `172.25.16.1`，但脚本中使用了 `MOCK_DATABASE: "false"`，强制连接真实数据库
 2. **端口冲突**: 使用 5432/6379 标准端口，可能与宿主机服务冲突
 3. **Python 中心化**: 完全未考虑 Node.js 测试，与 TITAN 架构不符
@@ -109,6 +113,7 @@ env:
 ```
 
 **严重问题**:
+
 1. **env 重复定义**: YAML 语法错误，后定义会覆盖前定义
 2. **Node.js 缺失**: Sprint 7 号称完整 CI/CD，却未配置 Node.js 环境
 3. **服务依赖地狱**: `database-services` job 与后续 jobs 的数据库服务重复定义
@@ -139,11 +144,13 @@ env:
 ```
 
 **问题**:
+
 1. **引用不存在脚本**: `./scripts/test-automation.sh` 在仓库中不存在
 2. **覆盖率检查缺失**: 未配置 Jest 覆盖率检查
 3. **阈值不匹配**: 当前设定 25%，但 TITAN 要求 80%
 
 **修复建议**:
+
 ```yaml
 - name: 🎯 Jest Tests with Coverage
   run: |
@@ -160,12 +167,14 @@ env:
 **状态**: ✅ **可直接使用，建议微调**
 
 **优点**:
+
 - ✅ 分类清晰（Bug/Feature/Refactor）
 - ✅ 包含测试覆盖率检查项
 - ✅ 有数据库变更专项
 - ✅ 包含部署计划
 
 **建议微调**:
+
 ```markdown
 ### 🧪 测试情况
 - [ ] 所有现有测试通过 (npm test)
@@ -181,12 +190,14 @@ env:
 **状态**: ✅ **可直接使用**
 
 **优点**:
+
 - ✅ 使用 GitHub Forms 语法
 - ✅ 必填项校验
 - ✅ 环境信息收集完整
 - ✅ 检查清单防重复
 
 **建议**:
+
 - 在"环境信息"中增加 Node.js 版本字段（TITAN 是 Node + Python 双栈）
 
 ---
@@ -196,6 +207,7 @@ env:
 **状态**: ✅ **可直接使用**
 
 **优点**:
+
 - ✅ 功能类别明确
 - ✅ 用户故事模板
 - ✅ 验收标准清单
@@ -233,6 +245,7 @@ env:
 ### 4.1 推荐方案：Husky + lint-staged
 
 **安装**:
+
 ```bash
 npm install --save-dev husky lint-staged
 npx husky install
@@ -241,6 +254,7 @@ npx husky install
 **配置**:
 
 `.husky/pre-commit`:
+
 ```bash
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
@@ -261,6 +275,7 @@ echo "✅ Pre-commit checks passed!"
 ```
 
 `.husky/pre-push`:
+
 ```bash
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
@@ -282,6 +297,7 @@ echo "✅ Pre-push checks passed! Ready to merge."
 ### 4.2 备选方案：纯脚本方案（无依赖）
 
 `.git/hooks/pre-commit`:
+
 ```bash
 #!/bin/bash
 
@@ -320,6 +336,7 @@ exit 0
 ```
 
 **启用**:
+
 ```bash
 chmod +x .git/hooks/pre-commit
 ```

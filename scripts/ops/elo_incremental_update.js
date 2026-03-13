@@ -8,7 +8,6 @@
  * 用法:
  *   node scripts/ops/elo_incremental_update.js           # 增量更新
  *   node scripts/ops/elo_incremental_update.js --match 55_20242025_4803308  # 单场更新
- *
  * @module scripts/ops/elo_incremental_update
  * @version V1.0.0
  */
@@ -17,6 +16,9 @@
 
 const { EloAutoUpdater } = require('../../src/feature_engine/elo/EloAutoUpdater');
 
+/**
+ *
+ */
 async function main() {
     const args = process.argv.slice(2);
     const matchId = args.find(a => a.startsWith('--match'))?.split('=')[1] ||

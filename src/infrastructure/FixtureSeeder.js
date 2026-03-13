@@ -1,5 +1,5 @@
 /**
- * @fileoverview FixtureSeeder - L1 发现层核心模块 V4.46.6
+ * @file FixtureSeeder - L1 发现层核心模块 V4.46.6
  *
  * 工业级重构版本：
  * - 批量 UPSERT (每 50 场写入一次)
@@ -7,7 +7,6 @@
  * - NetworkShield 代理池集成
  * - MetricsClient 可观测性
  * - 确定性 ID 生成
- *
  * @module infrastructure/FixtureSeeder
  * @version V4.46.6
  * @author FootballPrediction Engineering Team
@@ -61,16 +60,34 @@ const LogLevel = {
     DEBUG: 'DEBUG'
 };
 
+/**
+ *
+ */
 class Logger {
+    /**
+     *
+     * @param module
+     * @param requestId
+     */
     constructor(module, requestId = null) {
         this.module = module;
         this.requestId = requestId;
     }
 
+    /**
+     *
+     * @param requestId
+     */
     setRequestId(requestId) {
         this.requestId = requestId;
     }
 
+    /**
+     *
+     * @param level
+     * @param message
+     * @param meta
+     */
     _format(level, message, meta = null) {
         const timestamp = new Date().toISOString();
         const reqIdStr = this.requestId ? `[${this.requestId}] ` : '';
@@ -78,13 +95,38 @@ class Logger {
         return `[${timestamp}] [${level}] [${this.module}] ${reqIdStr}${message}${metaStr}`;
     }
 
+    /**
+     *
+     * @param message
+     * @param meta
+     */
     info(message, meta = null) { console.log(this._format(LogLevel.INFO, message, meta)); }
+    /**
+     *
+     * @param message
+     * @param meta
+     */
     warn(message, meta = null) { console.warn(this._format(LogLevel.WARN, message, meta)); }
+    /**
+     *
+     * @param message
+     * @param error
+     */
     error(message, error = null) {
         const meta = error ? { request_id: this.requestId || 'unknown', error: error.message, stack: error.stack } : { request_id: this.requestId || 'unknown' };
         console.error(this._format(LogLevel.ERROR, message, meta));
     }
+    /**
+     *
+     * @param message
+     * @param meta
+     */
     success(message, meta = null) { console.log(this._format(LogLevel.SUCCESS, message, meta)); }
+    /**
+     *
+     * @param message
+     * @param meta
+     */
     debug(message, meta = null) {
         if (process.env.LOG_LEVEL === 'debug') {
             console.log(this._format(LogLevel.DEBUG, message, meta));
@@ -98,6 +140,9 @@ const log = new Logger('FixtureSeeder');
 // 配置加载器
 // ============================================================================
 
+/**
+ *
+ */
 function loadLeagueConfig() {
     const configPath = path.resolve(__dirname, '../../config/leagues.json');
 
@@ -169,9 +214,9 @@ const BASE_CONFIG = {
  * V4.46.6: HTTPS GET 请求 (直连模式)
  * L1 发现层使用公开 API，无需代理
  * @param {string} url - 请求 URL
- * @param {Object} options - 请求选项
- * @param {number} [workerId=0] - Worker ID (用于日志)
- * @returns {Promise<{status: number, data: Object|null, raw: string}>}
+ * @param {object} options - 请求选项
+ * @param {number} [workerId] - Worker ID (用于日志)
+ * @returns {Promise<{status: number, data: object | null, raw: string}>}
  */
 async function httpsGetWithProxy(url, options = {}, workerId = 0) {
     return new Promise((resolve, reject) => {
@@ -229,7 +274,14 @@ const httpsGet = httpsGetWithProxy;
 // 核心类: FixtureSeeder V4.46.6
 // ============================================================================
 
+/**
+ *
+ */
 class FixtureSeeder {
+    /**
+     *
+     * @param options
+     */
     constructor(options = {}) {
         const leagueConfig = loadLeagueConfig();
 
@@ -266,6 +318,9 @@ class FixtureSeeder {
         this._batchSize = this.config.batchSize || 50;
     }
 
+    /**
+     *
+     */
     async init() {
         try {
             this.pool = new Pool(this.config.db);
@@ -277,6 +332,9 @@ class FixtureSeeder {
         }
     }
 
+    /**
+     *
+     */
     async close() {
         // 刷新剩余缓冲区
         await this._flushBatch();
@@ -290,6 +348,9 @@ class FixtureSeeder {
 
     /**
      * V4.46.6: 从 FotMob API 获取联赛赛程 (带代理支持)
+     * @param leagueId
+     * @param season
+     * @param workerId
      */
     async fetchLeagueFixtures(leagueId, season, workerId = 0) {
         const seasonParam = season.replace('/', '');
@@ -319,6 +380,12 @@ class FixtureSeeder {
         }
     }
 
+    /**
+     *
+     * @param leagueData
+     * @param leagueInfo
+     * @param season
+     */
     parseFixtures(leagueData, leagueInfo, season) {
         const fixtures = [];
 
@@ -359,6 +426,9 @@ class FixtureSeeder {
 
     /**
      * V4.46.6: 解析单场比赛 (使用 match_date 替代 match_time)
+     * @param match
+     * @param leagueInfo
+     * @param season
      */
     parseMatch(match, leagueInfo, season) {
         const externalId = match.id?.toString() || null;
@@ -420,6 +490,9 @@ class FixtureSeeder {
 
     /**
      * V4.46.6: 增强状态判断 (含 POSTPONED 支持)
+     * @param match
+     * @param homeScore
+     * @param awayScore
      */
     determineStatus(match, homeScore, awayScore) {
         const status = match.status;
@@ -446,6 +519,7 @@ class FixtureSeeder {
 
     /**
      * V4.46.6: 添加到批量缓冲区
+     * @param fixture
      */
     async addToBatch(fixture) {
         this._batchBuffer.push(fixture);
@@ -535,6 +609,7 @@ class FixtureSeeder {
 
     /**
      * 单条 UPSERT (回退方案)
+     * @param fixture
      */
     async upsertFixture(fixture) {
         const query = `
@@ -585,6 +660,9 @@ class FixtureSeeder {
 
     /**
      * V4.46.6: 并行处理单个联赛-赛季
+     * @param league
+     * @param season
+     * @param workerId
      */
     async processLeagueSeason(league, season, workerId = 0) {
         log.info(`[Worker ${workerId}] 处理: ${league.name} (ID: ${league.id}) - ${season}`);
@@ -703,6 +781,9 @@ class FixtureSeeder {
 
     /**
      * V4.46.6: 记录指标到 MetricsClient
+     * @param operation
+     * @param durationMs
+     * @param success
      */
     _recordMetrics(operation, durationMs, success) {
         try {
@@ -732,10 +813,17 @@ class FixtureSeeder {
         }
     }
 
+    /**
+     *
+     * @param ms
+     */
     sleep(ms) {
         return new Promise(resolve => { setTimeout(resolve, ms); });
     }
 
+    /**
+     *
+     */
     getSummary() {
         const total = this.stats.fixtures;
         const success = this.stats.inserted + this.stats.updated;

@@ -12,7 +12,6 @@
  * - 输入 FotMob JSON，输出特征对象
  * - 所有常量从配置中心导入
  * - 完全可测试、可缓存
- *
  * @module feature_engine/extractors/GoldenFeatureExtractor
  * @version V3.0.0-PRO
  * @since 2026-03-06
@@ -39,8 +38,7 @@ const {
 
 /**
  * 安全获取对象属性
- *
- * @param {Object} obj - 源对象
+ * @param {object} obj - 源对象
  * @param {string} path - 属性路径 (如 'a.b.c')
  * @param {*} defaultValue - 默认值
  * @returns {*}
@@ -68,8 +66,7 @@ function safeGet(obj, path, defaultValue = undefined) {
 
 /**
  * 安全获取数组属性
- *
- * @param {Object} obj - 源对象
+ * @param {object} obj - 源对象
  * @param {string} key - 属性名
  * @param {Array} defaultValue - 默认值
  * @returns {Array}
@@ -84,7 +81,6 @@ function safeGetArray(obj, key, defaultValue = []) {
 
 /**
  * 检查是否为有效对象
- *
  * @param {*} value - 待检查值
  * @returns {boolean}
  */
@@ -94,7 +90,6 @@ function isValidObject(value) {
 
 /**
  * 检查是否为有效数字
- *
  * @param {*} value - 待检查值
  * @returns {boolean}
  */
@@ -126,10 +121,9 @@ const DEFAULT_CONFIG = {
 
 /**
  * 从原始 JSON 数据中提取黄金特征
- *
- * @param {Object} rawData - FotMob L2 原始数据 (raw_match_data.raw_data)
- * @param {Object} config - 配置选项
- * @returns {Object} 黄金特征字典
+ * @param {object} rawData - FotMob L2 原始数据 (raw_match_data.raw_data)
+ * @param {object} config - 配置选项
+ * @returns {object} 黄金特征字典
  */
 function extractGoldenFeatures(rawData, config = DEFAULT_CONFIG) {
     // 参数校验
@@ -161,10 +155,10 @@ function extractGoldenFeatures(rawData, config = DEFAULT_CONFIG) {
 
 /**
  * 提取单队特征
- * @param {Object} rawData - 原始数据
+ * @param {object} rawData - 原始数据
  * @param {string} teamType - 球队类型 ('home' 或 'away')
- * @param {Object} config - 配置
- * @returns {Object}
+ * @param {object} config - 配置
+ * @returns {object}
  */
 function extractTeamFeatures(rawData, teamType, config) {
     const prefix = teamType;
@@ -201,12 +195,11 @@ function extractTeamFeatures(rawData, teamType, config) {
  * 6. 0 (数据缺失)
  *
  * ⚠️ 重要: FotMob 返回的 marketValue 单位是"百万欧元"，需要乘以 1e6 转换为欧元
- *
- * @param {Object} rawData - 原始数据（用于多路径查找）
- * @param {Object} teamData - 球队数据
+ * @param {object} rawData - 原始数据（用于多路径查找）
+ * @param {object} teamData - 球队数据
  * @param {string} prefix - 特征前缀
- * @param {Object} config - 配置
- * @returns {Object}
+ * @param {object} config - 配置
+ * @returns {object}
  */
 function extractMarketValueFeatures(rawData, teamData, prefix, config) {
     const features = {};
@@ -319,8 +312,7 @@ function extractMarketValueFeatures(rawData, teamData, prefix, config) {
  * 2. content.players[].marketValue (球员列表)
  * 3. content.details.stats.* (统计数据)
  * 4. header.homeMarketValue/awayMarketValue (头部信息)
- *
- * @param {Object} rawData - 原始数据
+ * @param {object} rawData - 原始数据
  * @param {string} prefix - 前缀
  * @returns {number} 身价（欧元）
  */
@@ -451,10 +443,10 @@ function deepSearchMarketValue(rawData, prefix) {
 
 /**
  * 提取伤病特征
- * @param {Object} teamData - 球队数据
+ * @param {object} teamData - 球队数据
  * @param {string} prefix - 特征前缀
- * @param {Object} config - 配置
- * @returns {Object}
+ * @param {object} config - 配置
+ * @returns {object}
  */
 function extractInjuryFeatures(teamData, prefix, config) {
     const features = {};
@@ -495,10 +487,10 @@ function extractInjuryFeatures(teamData, prefix, config) {
 
 /**
  * 提取评分特征
- * @param {Object} teamData - 球队数据
+ * @param {object} teamData - 球队数据
  * @param {string} prefix - 特征前缀
- * @param {Object} config - 配置
- * @returns {Object}
+ * @param {object} config - 配置
+ * @returns {object}
  */
 function extractRatingFeatures(teamData, prefix, config) {
     const features = {};
@@ -570,8 +562,8 @@ function extractRatingFeatures(teamData, prefix, config) {
 
 /**
  * 提取对比特征
- * @param {Object} features - 已提取的特征
- * @returns {Object}
+ * @param {object} features - 已提取的特征
+ * @returns {object}
  */
 function extractComparisonFeatures(features) {
     const comparison = {};
@@ -607,7 +599,7 @@ function extractComparisonFeatures(features) {
 /**
  * 创建空特征对象
  * @param {string} reason - 原因说明
- * @returns {Object}
+ * @returns {object}
  */
 function createEmptyFeatures(reason = 'No valid raw data provided') {
     return {

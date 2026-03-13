@@ -1,5 +1,5 @@
 /**
- * @fileoverview Sentinel Watch 哨兵系统单元测试
+ * @file Sentinel Watch 哨兵系统单元测试
  * @description 测试文件计数、防抖逻辑、停机指令
  * @version 1.0.0
  */
@@ -14,7 +14,14 @@ const { promisify } = require('util');
 const execAsync = promisify(exec);
 
 // 模拟的 Sentinel 类
+/**
+ *
+ */
 class MockSentinel {
+  /**
+   *
+   * @param config
+   */
   constructor(config = {}) {
     this.targetCount = config.targetCount || 12000;
     this.debounceThreshold = config.debounceThreshold || 2;
@@ -33,6 +40,7 @@ class MockSentinel {
 
   /**
    * 获取文件数量
+   * @param dataPath
    */
   async getFileCount(dataPath) {
     try {
@@ -45,6 +53,7 @@ class MockSentinel {
 
   /**
    * 检查循环
+   * @param fileCount
    */
   async checkCycle(fileCount) {
     if (this.state.isTriggered) return { triggered: false };
@@ -88,6 +97,8 @@ class MockSentinel {
 
   /**
    * 写入胜利日志
+   * @param fileCount
+   * @param dbCount
    */
   async writeVictoryLog(fileCount, dbCount) {
     const duration = Date.now() - this.state.startTime;

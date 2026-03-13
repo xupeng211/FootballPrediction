@@ -40,6 +40,7 @@ Commands:
 ```
 
 **预期输出**:
+
 ```
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║          Football Prediction System - Control Center Status                 ║
@@ -74,6 +75,7 @@ Process Information:
 ```
 
 **健康检查输出示例**:
+
 ```json
 {
   "health_score": 95,
@@ -93,6 +95,7 @@ Process Information:
 **症状**: 哈希映射相似度 < 70%，大量记录被拒绝
 
 **诊断步骤**:
+
 ```sql
 -- 查看相似度分布
 SELECT
@@ -107,18 +110,21 @@ ORDER BY confidence;
 **处理方案**:
 
 1. **检查队名映射表**
+
    ```bash
    # 编辑映射表
    vim src/core/team_name_normalizer.py
    ```
 
 2. **调整相似度阈值**
+
    ```python
    # 在 BridgeEngine 中临时降低阈值
    SIMILARITY_THRESHOLD = 0.65  # 从 0.70 降到 0.65
    ```
 
 3. **运行修复**
+
    ```bash
    ./scripts/ops/control.sh repair --failed-only
    ```
@@ -128,6 +134,7 @@ ORDER BY confidence;
 **症状**: `integrity_score` 不在 1.02-1.08 范围内
 
 **诊断步骤**:
+
 ```sql
 -- 查看完整性分数分布
 SELECT
@@ -147,6 +154,7 @@ ORDER BY score_category;
 **处理方案**:
 
 1. **识别异常比赛**
+
    ```sql
    -- 查看异常记录详情
    SELECT
@@ -164,6 +172,7 @@ ORDER BY score_category;
    ```
 
 2. **标记为人工审核**
+
    ```sql
    -- 更新映射状态
    UPDATE matches_mapping
@@ -175,6 +184,7 @@ ORDER BY score_category;
    ```
 
 3. **重新采集赔率**
+
    ```bash
    # 对异常比赛重新采集
    python -m src.harvesters.oddsportal_archive --league "Premier League" --season "2024" --remap
@@ -185,6 +195,7 @@ ORDER BY score_category;
 **症状**: 连接池利用率 > 80%
 
 **诊断步骤**:
+
 ```bash
 # 检查活跃连接数
 docker exec football_db psql -U football_user -d football_db -c "
@@ -200,6 +211,7 @@ GROUP BY state;
 **处理方案**:
 
 1. **识别长时间运行的查询**
+
    ```sql
    SELECT
        pid,
@@ -214,6 +226,7 @@ GROUP BY state;
    ```
 
 2. **终止长时间运行的查询**
+
    ```sql
    -- 谨慎使用！
    SELECT pg_terminate_backend(pid)
@@ -222,6 +235,7 @@ GROUP BY state;
    ```
 
 3. **调整连接池配置**
+
    ```bash
    # 编辑 .env
    DB_POOL_SIZE=20        # 增加连接池大小
@@ -229,6 +243,7 @@ GROUP BY state;
    ```
 
 4. **重启服务**
+
    ```bash
    ./scripts/ops/control.sh restart
    ```
@@ -238,6 +253,7 @@ GROUP BY state;
 **症状**: 频繁出现 HTTP 429 或 403 错误
 
 **诊断步骤**:
+
 ```bash
 # 查看最近的错误日志
 grep -E "429|403|blocked|banned" logs/orchestrator.log | tail -20
@@ -246,6 +262,7 @@ grep -E "429|403|blocked|banned" logs/orchestrator.log | tail -20
 **处理方案**:
 
 1. **启用 Ghost Protocol**
+
    ```python
    # 确保使用 GhostBrowser
    from src.core.ghost_protocol import GhostBrowser
@@ -257,6 +274,7 @@ grep -E "429|403|blocked|banned" logs/orchestrator.log | tail -20
    ```
 
 2. **增加延迟**
+
    ```python
    # 在采集间隔增加随机延迟
    import asyncio
@@ -266,6 +284,7 @@ grep -E "429|403|blocked|banned" logs/orchestrator.log | tail -20
    ```
 
 3. **检查代理配置**
+
    ```bash
    # 测试代理连通性
    python -c "
@@ -276,6 +295,7 @@ grep -E "429|403|blocked|banned" logs/orchestrator.log | tail -20
    ```
 
 4. **启用熔断器保护**
+
    ```python
    # 等待熔断器自动恢复
    from src.core.circuit_breaker import CircuitBreaker
@@ -291,6 +311,7 @@ grep -E "429|403|blocked|banned" logs/orchestrator.log | tail -20
 **症状**: 系统运行一段时间后内存占用持续增长
 
 **诊断步骤**:
+
 ```bash
 # 查看 Python 进程内存
 ps aux | grep python | awk '{print $6}'
@@ -302,23 +323,27 @@ docker stats --no-stream | grep football
 **处理方案**:
 
 1. **清理 Python 缓存**
+
    ```bash
    find . -type d -name "__pycache__" -exec rm -rf {} +
    find . -name "*.pyc" -delete
    ```
 
 2. **清理浏览器进程**
+
    ```bash
    pkill -f playwright
    pkill -f chromium
    ```
 
 3. **清理 Redis 缓存**
+
    ```bash
    docker exec football_redis redis-cli FLUSHDB
    ```
 
 4. **重启服务**
+
    ```bash
    ./scripts/ops/control.sh restart
    ```
@@ -338,6 +363,7 @@ docker stats --no-stream | grep football
 ```
 
 **修复逻辑**:
+
 ```
 FAILED → DISCOVERED    (重试整个流程)
 FAILED → MAPPED       (如果已有哈希映射，跳过 Bridge)
@@ -556,6 +582,7 @@ git checkout <stable-commit-hash>
 V81.200 Discovery Radar 是系统的**标准长期能力**，用于自动补全 `matches_mapping` 表中缺失的 OddsPortal URL。
 
 **核心特性**:
+
 - **动态桥接**: 静态查表失败 → 自动触发雷达扫描
 - **RapidFuzz C++ 引擎**: 高性能模糊匹配（<50ms/次）
 - **即时回填**: 验证通过立即 UPSERT 到数据库
@@ -575,6 +602,7 @@ python3 scripts/ops/v81_200_mapping_blitz.py --dry-run
 ```
 
 **执行输出示例**:
+
 ```
 ================================================================================
 V81.200 Mapping Blitz - 暴力寻址总攻启动
@@ -665,6 +693,7 @@ LIMIT 20;
 ```
 
 **批量批准待审核记录**:
+
 ```bash
 # 批量批准所有待审核记录
 docker-compose exec -T db psql -U football_user -d football_db -c "
@@ -700,14 +729,14 @@ WHERE review_status = 'pending_review';
 
 ### 9.1 技术支持
 
-- **GitHub Issues**: https://github.com/your-repo/issues
+- **GitHub Issues**: <https://github.com/your-repo/issues>
 - **文档中心**: docs/
 - **SLA**: 99.5% 可用性
 
 ### 9.2 紧急联系
 
 - **值班电话**: +86 XXX XXXX XXXX
-- **紧急邮件**: oncall@example.com
+- **紧急邮件**: <oncall@example.com>
 
 ---
 

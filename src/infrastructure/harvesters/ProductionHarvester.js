@@ -7,7 +7,6 @@
  * - 基于 AbstractHarvester 基类
  * - 使用 Strategy 模式动态加载收割策略
  * - 零 CSS/API 硬编码，纯协调逻辑
- *
  * @module infrastructure/harvesters/ProductionHarvester
  * @version V4.46-TITAN
  */
@@ -35,8 +34,8 @@ const DEFAULT_DATA_PATH = process.env.DATA_MATCHES_PATH || 'data/matches';
 /**
  * 策略工厂 - 根据联赛名称返回对应策略
  * @param {string} league - 联赛名称
- * @param {Object} config - 配置选项
- * @returns {Object} 收割策略实例
+ * @param {object} config - 配置选项
+ * @returns {object} 收割策略实例
  */
 function createStrategy(league, config = {}) {
     // 当前仅支持 FotMob 策略
@@ -48,14 +47,17 @@ function createStrategy(league, config = {}) {
 // ProductionHarvester 类
 // ============================================================================
 
+/**
+ *
+ */
 class ProductionHarvester extends AbstractHarvester {
     /**
      * 创建 ProductionHarvester 实例
-     * @param {Object} [config={}] - 配置选项
-     * @param {number} [config.sessionRotationThreshold=20] - 会话轮换阈值
+     * @param {object} [config] - 配置选项
+     * @param {number} [config.sessionRotationThreshold] - 会话轮换阈值
      * @param {string} [config.dataMatchesPath] - 数据文件保存路径
      * @param {string} [config.sessionPath] - 浏览器会话文件路径
-     * @param {boolean} [config.dryRun=false] - 是否仅模拟运行
+     * @param {boolean} [config.dryRun] - 是否仅模拟运行
      */
     constructor(config = {}) {
         super(config);
@@ -79,11 +81,10 @@ class ProductionHarvester extends AbstractHarvester {
     /**
      * V4.50: 带会话轮换的弹性重试
      * 每收割 20 场后自动执行生产级重启，释放内存
-     *
-     * @param {Object} match - 比赛信息
+     * @param {object} match - 比赛信息
      * @param {number} index - 任务索引
      * @param {number} maxRetries - 最大重试次数
-     * @returns {Promise<Object>} 收割结果
+     * @returns {Promise<object>} 收割结果
      */
     async harvestWithRetry(match, index, maxRetries = 3) {
         const result = await super.harvestWithRetry(match, index, maxRetries);
@@ -187,7 +188,7 @@ class ProductionHarvester extends AbstractHarvester {
     /**
      * 抽象方法实现：获取目标 URL
      * 委托给 Strategy
-     * @param {Object} match - 比赛信息
+     * @param {object} match - 比赛信息
      * @returns {string} 目标 URL
      */
     getTargetUrl(match) {
@@ -198,8 +199,8 @@ class ProductionHarvester extends AbstractHarvester {
      * 抽象方法实现：数据提取逻辑
      * 委托给 Strategy 处理页面数据提取
      * @param {import('playwright').Page} page - Playwright Page 对象
-     * @param {Object} match - 比赛信息
-     * @returns {Promise<Object>} 提取的数据
+     * @param {object} match - 比赛信息
+     * @returns {Promise<object>} 提取的数据
      */
     async extractData(page, match) {
         return this.strategy.extractData(page, match, this._interceptionData);
@@ -209,7 +210,7 @@ class ProductionHarvester extends AbstractHarvester {
      * 抽象方法实现：数据保存（数据库 + 文件双保险模式）
      * @async
      * @param {string} matchId - 比赛 ID
-     * @param {Object} rawData - 原始数据对象
+     * @param {object} rawData - 原始数据对象
      * @returns {Promise<void>}
      * @throws {Error} 数据库保存失败时抛出
      */
@@ -267,7 +268,7 @@ class ProductionHarvester extends AbstractHarvester {
      * 异步保存数据到文件（双保险模式）
      * @async
      * @param {string} matchId - 比赛 ID
-     * @param {Object} rawData - 原始数据对象
+     * @param {object} rawData - 原始数据对象
      * @returns {Promise<void>}
      * @private
      */
@@ -379,10 +380,10 @@ class ProductionHarvester extends AbstractHarvester {
 
     /**
      * 重写单场收割，添加请求拦截设置
-     * @param {Object} match - 比赛信息
+     * @param {object} match - 比赛信息
      * @param {number} index - 任务索引
      * @param {number} attempt - 当前尝试次数
-     * @returns {Promise<Object>} 收割结果
+     * @returns {Promise<object>} 收割结果
      * @private
      */
     async _harvestSingleMatch(match, index, attempt = 1) {
@@ -558,10 +559,10 @@ class ProductionHarvester extends AbstractHarvester {
 
     /**
      * 执行多轮收割直到 100% 成功率
-     * @param {Object} [options={}] - 收割选项
+     * @param {object} [options] - 收割选项
      * @param {string} [options.matchId] - 单场比赛 ID
-     * @param {boolean} [options.force=false] - 强制收割已收割的比赛
-     * @returns {Promise<Object>} 收割结果
+     * @param {boolean} [options.force] - 强制收割已收割的比赛
+     * @returns {Promise<object>} 收割结果
      */
     async run(options = {}) {
         const { matchId, force = false } = options;
@@ -575,7 +576,7 @@ class ProductionHarvester extends AbstractHarvester {
 
     /**
      * 批量收割模式
-     * @returns {Promise<Object>} 收割结果
+     * @returns {Promise<object>} 收割结果
      * @private
      */
     async _runBatch() {
@@ -649,8 +650,8 @@ class ProductionHarvester extends AbstractHarvester {
     /**
      * 单场比赛收割模式
      * @param {string} matchId - 比赛 ID 或 external_id
-     * @param {boolean} [force=false] - 强制收割已收割的比赛
-     * @returns {Promise<Object>} 收割结果
+     * @param {boolean} [force] - 强制收割已收割的比赛
+     * @returns {Promise<object>} 收割结果
      * @private
      */
     async _runSingleMatch(matchId, force = false) {

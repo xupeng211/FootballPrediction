@@ -17,6 +17,7 @@ process.env.MAX_WORKERS = '2';
 global.testUtils = {
   /**
    * 创建模拟的 match 数据
+   * @param overrides
    */
   createMockMatch: (overrides = {}) => ({
     match_id: 'test_12345',
@@ -29,6 +30,7 @@ global.testUtils = {
 
   /**
    * 创建模拟的 raw_data 数据
+   * @param overrides
    */
   createMockRawData: (overrides = {}) => ({
     match_id: 'test_12345',
@@ -50,6 +52,7 @@ global.testUtils = {
 
   /**
    * 延迟函数
+   * @param ms
    */
   delay: (ms) => new Promise(resolve => { setTimeout(resolve, ms); })
 };

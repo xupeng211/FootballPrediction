@@ -10,7 +10,6 @@
  * - 线程安全模拟
  * - 半开状态超时行为
  * - 边界情况和配置
- *
  * @module network/tests/CircuitBreaker.test
  * @version V1.1.0
  * @since 2026-02-03
@@ -21,17 +20,46 @@
 const { CircuitBreaker, CircuitBreakerRegistry, CircuitState } = require('../../../core/network/CircuitBreaker');
 
 // 模拟日志记录器
+/**
+ *
+ */
 class MockLogger {
+    /**
+     *
+     */
     constructor() {
         this.logs = [];
     }
 
+    /**
+     *
+     * @param msg
+     */
     debug(msg) { this.logs.push({ level: 'debug', msg }); }
+    /**
+     *
+     * @param msg
+     */
     info(msg) { this.logs.push({ level: 'info', msg }); }
+    /**
+     *
+     * @param msg
+     */
     warn(msg) { this.logs.push({ level: 'warn', msg }); }
+    /**
+     *
+     * @param msg
+     */
     error(msg) { this.logs.push({ level: 'error', msg }); }
 
+    /**
+     *
+     */
     clear() { this.logs = []; }
+    /**
+     *
+     * @param level
+     */
     getLogs(level) { return this.logs.filter(l => l.level === level); }
 }
 

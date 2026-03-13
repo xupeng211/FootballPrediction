@@ -6,7 +6,6 @@
  * 1. Steam Strength - 临场剧烈跳水检测
  * 2. Market Consensus - 隐含概率分布
  * 3. 异常检测 - 赔率与实力模型背离
- *
  * @module feature_engine/extractors/OddsMovementExtractor
  * @version V176.0.0
  */
@@ -32,6 +31,9 @@ const DEFAULT_CONFIG = {
 
 /**
  * 安全获取数组属性
+ * @param obj
+ * @param key
+ * @param defaultValue
  */
 function safeGetArray(obj, key, defaultValue = []) {
     const value = obj?.[key];
@@ -40,11 +42,10 @@ function safeGetArray(obj, key, defaultValue = []) {
 
 /**
  * 从原始数据中提取赔率变动特征
- *
- * @param {Object} rawData - FotMob L2 原始数据
- * @param {Object} tacticalFeatures - 战术特征（用于异常检测）
- * @param {Object} config - 配置选项
- * @returns {Object} 赔率特征字典
+ * @param {object} rawData - FotMob L2 原始数据
+ * @param {object} tacticalFeatures - 战术特征（用于异常检测）
+ * @param {object} config - 配置选项
+ * @returns {object} 赔率特征字典
  */
 function extractOddsMovementFeatures(rawData, tacticalFeatures = {}, config = DEFAULT_CONFIG) {
     if (!rawData || !is.object(rawData)) {
@@ -81,6 +82,7 @@ function extractOddsMovementFeatures(rawData, tacticalFeatures = {}, config = DE
 
 /**
  * 从原始数据中提取赔率数据
+ * @param rawData
  */
 function extractOddsData(rawData) {
     const oddsData = {
@@ -139,6 +141,7 @@ function extractOddsData(rawData) {
 
 /**
  * 提取基础赔率特征
+ * @param oddsData
  */
 function extractBasicOddsFeatures(oddsData) {
     const features = {};
@@ -186,6 +189,7 @@ function extractBasicOddsFeatures(oddsData) {
 
 /**
  * 计算市场共识（隐含概率）
+ * @param oddsData
  */
 function calculateMarketConsensus(oddsData) {
     const features = {};
@@ -245,6 +249,8 @@ function calculateMarketConsensus(oddsData) {
 
 /**
  * 检测 Steam 信号（临场剧烈变动）
+ * @param oddsData
+ * @param config
  */
 function detectSteamSignals(oddsData, config) {
     const features = {
@@ -307,6 +313,9 @@ function detectSteamSignals(oddsData, config) {
 
 /**
  * 检测赔率异常（与 xG 模型对比）
+ * @param oddsFeatures
+ * @param tacticalFeatures
+ * @param config
  */
 function detectOddsAnomaly(oddsFeatures, tacticalFeatures, config) {
     const features = {

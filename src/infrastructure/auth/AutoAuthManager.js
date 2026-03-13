@@ -8,7 +8,6 @@
  * - 自动保存 Cookie 到 data/sessions/
  * - 支持多端口身份隔离
  * - V4.51.1: 支持 Session 热刷新
- *
  * @module infrastructure/auth/AutoAuthManager
  * @version V4.51.1
  */
@@ -27,13 +26,16 @@ const { logger } = require('../utils/Logger');
 
 let _instance = null;
 
+/**
+ *
+ */
 class AutoAuthManager {
     /**
      * 创建 AutoAuthManager 实例
-     * @param {Object} [config={}] - 配置选项
-     * @param {number} [config.timeout=60000] - 浏览器超时时间（毫秒）
-     * @param {boolean} [config.headless=false] - 是否无头模式（默认可见）
-     * @param {string} [config.targetUrl='https://www.fotmob.com'] - 目标 URL
+     * @param {object} [config] - 配置选项
+     * @param {number} [config.timeout] - 浏览器超时时间（毫秒）
+     * @param {boolean} [config.headless] - 是否无头模式（默认可见）
+     * @param {string} [config.targetUrl] - 目标 URL
      */
     constructor(config = {}) {
         this.config = {
@@ -51,7 +53,6 @@ class AutoAuthManager {
     /**
      * V4.51.1: 刷新指定端口的 Session
      * 尝试从磁盘重新加载已有的 Session 文件
-     *
      * @param {number} workerId - Worker ID
      * @param {number} port - 代理端口
      * @returns {Promise<{success: boolean, cookieCount: number, error?: string}>}
@@ -335,7 +336,7 @@ class AutoAuthManager {
     /**
      * 批量捕获多个端口的身份
      * @param {number[]} ports - 端口列表
-     * @returns {Promise<Object>} 捕获结果统计
+     * @returns {Promise<object>} 捕获结果统计
      */
     async captureMultiplePorts(ports) {
         console.log(`\n🎯 [AutoAuth] 批量捕获 ${ports.length} 个端口的身份\n`);
@@ -426,7 +427,7 @@ class AutoAuthManager {
 
 /**
  * 获取 AutoAuthManager 单例
- * @param {Object} [config={}] - 配置选项
+ * @param {object} [config] - 配置选项
  * @returns {AutoAuthManager}
  */
 function getAutoAuthManager(config = {}) {

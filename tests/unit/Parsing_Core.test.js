@@ -29,6 +29,7 @@ const { FotMobStrategy } = require('../../src/infrastructure/harvesters/strategi
 
 /**
  * 创建标准测试数据对象
+ * @param overrides
  */
 function createMockMatchData(overrides = {}) {
     const base = {
@@ -72,6 +73,8 @@ function createMockMatchData(overrides = {}) {
 
 /**
  * 深度合并对象
+ * @param target
+ * @param source
  */
 function deepMerge(target, source) {
     const result = { ...target };

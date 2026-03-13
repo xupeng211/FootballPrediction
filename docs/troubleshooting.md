@@ -40,6 +40,7 @@ make verify
 **原因**: 数据库未初始化
 
 **解决方案**:
+
 ```bash
 # 方案 1: 使用 Docker
 make up
@@ -56,6 +57,7 @@ psql -U postgres -c "CREATE DATABASE football_db"
 **原因**: 数据库未启动或端口配置错误
 
 **诊断步骤**:
+
 ```bash
 # 1. 检查数据库状态
 docker-compose ps db
@@ -69,6 +71,7 @@ nc -zv localhost 5432  # 或 172.25.16.1 5432 (WSL2)
 ```
 
 **解决方案**:
+
 ```bash
 # 重启数据库
 docker-compose restart db
@@ -83,6 +86,7 @@ docker-compose restart db
 **原因**: WSL2 网络配置，需要使用 Docker 桥接网关 IP
 
 **解决方案**:
+
 ```bash
 # 检查 WSL2 网络配置
 cat /etc/resolv.conf | grep nameserver
@@ -99,6 +103,7 @@ export DB_HOST=172.25.16.1
 ### 数据库查询慢
 
 **诊断步骤**:
+
 ```bash
 # 1. 检查慢查询日志
 docker-compose exec db psql -U football_user -d football_db -c "
@@ -117,6 +122,7 @@ docker-compose exec db psql -U football_user -d football_db -c "
 ```
 
 **解决方案**:
+
 ```bash
 # 1. 创建缺失的索引
 docker-compose exec db psql -U football_user -d football_db -c "
@@ -140,6 +146,7 @@ docker-compose exec db psql -U football_user -d football_db -c "
 **原因**: IP 被 API 网站封禁
 
 **诊断步骤**:
+
 ```bash
 # 1. 检查当前出口 IP
 python main.py --test-proxy
@@ -149,12 +156,14 @@ tail -f logs/v144_7_main.log | grep -E "403|429|被封"
 ```
 
 **恢复策略**:
+
 1. 等待冷却期 (6-24 小时)
 2. 降低采集频率 (延迟到 2-5 秒)
 3. 使用代理轮换
 4. 启用 Ghost Protocol
 
 **代理配置**:
+
 ```bash
 # 环境变量方式
 export HTTPS_PROXY=http://172.25.16.1:7890
@@ -173,6 +182,7 @@ python main.py --proxy-file proxies.txt
 **原因**: 网络慢或页面加载超时
 
 **解决方案**:
+
 ```bash
 # 1. 检查代理配置
 python main.py --test-proxy
@@ -194,6 +204,7 @@ ping -c 4 www.google.com
 **原因**: 特征提取失败，数据库中缺少历史数据
 
 **诊断步骤**:
+
 ```bash
 # 检查数据库中的历史数据
 docker-compose exec db psql -U football_user -d football_db -c "
@@ -202,6 +213,7 @@ docker-compose exec db psql -U football_user -d football_db -c "
 ```
 
 **解决方案**:
+
 ```bash
 # 1. 运行历史数据回填
 python scripts/maintenance/fotmob_historical_backfill.py --years 3
@@ -217,6 +229,7 @@ python scripts/ops/check_db_consistency.py
 **原因**: 数据重复
 
 **解决方案**:
+
 ```bash
 # 1. 检查重复数据
 docker-compose exec db psql -U football_user -d football_db -c "
@@ -237,6 +250,7 @@ python main.py --mode check
 **原因**: 页面加载慢或被 Cloudflare 拦截
 
 **诊断步骤**:
+
 ```bash
 # 1. 检查采集器日志
 tail -f logs/v142_0_main.log
@@ -249,6 +263,7 @@ ls -lh logs/error_screens/
 ```
 
 **解决方案**:
+
 ```bash
 # 1. 重启采集器
 pkill -f harvester
@@ -270,6 +285,7 @@ export HTTPS_PROXY=http://new_proxy:port
 **原因**: 模型文件缺失或路径错误
 
 **解决方案**:
+
 ```bash
 # 1. 检查模型文件
 ls -lh model_zoo/
@@ -288,6 +304,7 @@ cp backups/model_zoo_backup/* model_zoo/
 **原因**: 模型加载失败
 
 **诊断步骤**:
+
 ```bash
 # 1. 检查模型文件完整性
 python -c "
@@ -302,6 +319,7 @@ python -c "from src.ml.engine import ModelDispatcher; print(ModelDispatcher().le
 ```
 
 **解决方案**:
+
 ```bash
 # 1. 验证模型文件格式
 python scripts/ml/validate_model.py
@@ -317,6 +335,7 @@ python scripts/ml/train_model.py --league "Premier League"
 **原因**: 特征维度不一致或数据质量问题
 
 **诊断步骤**:
+
 ```bash
 # 1. 检查特征维度
 python scripts/ops/check_db_consistency.py
@@ -330,6 +349,7 @@ print(f'特征维度: {len(manifest.get_required_features())}')
 ```
 
 **解决方案**:
+
 ```bash
 # 1. 重新提取特征
 python scripts/maintenance/reprocess_from_local.py
@@ -345,6 +365,7 @@ python scripts/ops/lock_feature_manifest.py --validate
 ### 容器无法启动
 
 **诊断步骤**:
+
 ```bash
 # 1. 查看容器状态
 docker-compose ps
@@ -357,6 +378,7 @@ docker system df
 ```
 
 **解决方案**:
+
 ```bash
 # 1. 清理 Docker 资源
 make clean-docker
@@ -374,6 +396,7 @@ docker-compose up -d
 **原因**: Docker 网络配置问题
 
 **解决方案**:
+
 ```bash
 # Docker Desktop (Mac/Windows)
 # 使用 host.docker.internal
@@ -393,6 +416,7 @@ export DB_HOST=$(ip route | awk '/docker0/ {print $NF}')
 **原因**: Node.js 依赖未安装或浏览器未安装
 
 **解决方案**:
+
 ```bash
 cd scripts/ops
 
@@ -410,6 +434,7 @@ npm --version
 ### Jest 测试失败
 
 **解决方案**:
+
 ```bash
 cd scripts/ops
 
@@ -430,6 +455,7 @@ npm run test:coverage
 ### 采集速度慢
 
 **诊断步骤**:
+
 ```bash
 # 1. 检查采集器配置
 # 查看 logs/v142_0_main.log 中的时间戳
@@ -439,6 +465,7 @@ curl -o /dev/null -s -w "%{time_total}\n" https://api.ipify.org
 ```
 
 **解决方案**:
+
 ```bash
 # 1. 调整采集延迟
 # 编辑 src/api/services/harvester_service.py
@@ -475,7 +502,7 @@ python scripts/ops/harvest_pinnacle_concurrent.py --workers 5
 
 1. **查看日志**: `logs/` 目录下的相关日志文件
 2. **运行诊断**: `python scripts/health_check.py --verbose`
-3. **查看 GitHub Issues**: https://github.com/xupeng211/FootballPrediction/issues
+3. **查看 GitHub Issues**: <https://github.com/xupeng211/FootballPrediction/issues>
 4. **提交 Issue**: 包含完整的错误信息和复现步骤
 
 ---

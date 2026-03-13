@@ -50,6 +50,7 @@
 **问题**：FotMob API 返回的 `marketValue` 单位是**百万欧元**（如 1.5 = 1.5M = 150万欧元），原代码直接使用导致缩水 100 万倍。
 
 **修复**：
+
 ```javascript
 // GoldenFeatureExtractor.js:98
 const MARKET_VALUE_MULTIPLIER = 1e6;  // 百万欧元 -> 欧元
@@ -61,6 +62,7 @@ const convertedValue = totalMarketValue * MARKET_VALUE_MULTIPLIER;
 > ⚠️ **关键提醒**：身价数据基于 **FotMob JSON 数据结构**提取，路径为 `content.lineup.{team}Team.totalStarterMarketValue` 或 `starters[].marketValue`。如果 FotMob 接口结构发生变动（字段重命名、路径变更），需立即更新 `GoldenFeatureExtractor.js` 中的提取逻辑，否则将导致身价数据归零。
 
 **效果验证**：
+
 | 球队 | 修复前 | 修复后 |
 |------|--------|--------|
 | Real Madrid | ~3 (错误) | ~900,000,000 欧元 |
@@ -71,6 +73,7 @@ const convertedValue = totalMarketValue * MARKET_VALUE_MULTIPLIER;
 **问题**：原代码的条件分支从低到高排序，导致所有概率 >40% 都匹配第一个分支，产生虚假正 EV。
 
 **修复**：
+
 ```python
 # predict_weekend.py - EV 计算（条件从高到低）
 EV = P * Odds - 1  # 有赔率时
@@ -84,6 +87,7 @@ else:           ev = max(-0.10, theoretical_ev - 0.05)
 ```
 
 **数学验证**：
+
 ```
 P = 64.7%, Odds = 1.47
 EV = 0.647 × 1.47 - 1 = 0.951 - 1 = -4.9%  (负值，不推荐投注)
@@ -139,6 +143,7 @@ docker-compose -f docker-compose.dev.yml exec dev npm run smelt
 ```
 
 **监控要点**：
+
 ```bash
 # 实时查看收割日志
 tail -f /app/logs/harvester.log
@@ -179,6 +184,7 @@ docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/predict_wee
 | 数据来源 | `totalStarterMarketValue` 或 `starters` | `market_value_source` |
 
 **健康日志示例**：
+
 ```
 [V201.13] Real Madrid vs Barcelona
    身价差: +1.53亿欧元 | 伤病差: -2 人
@@ -200,6 +206,7 @@ docker-compose -f docker-compose.dev.yml exec dev python scripts/ops/predict_wee
 | **身价缩水** | 身价差显示"万"而非"亿" | 单位转换未生效 |
 
 **幻觉报警日志示例**：
+
 ```
 ❌ 错误示例（V201.10 Bug）：
    身价差: 0.153万   ← 缩水 100 万倍！
@@ -424,6 +431,7 @@ Kelly% = (0.55 × 2.10 - 1) / (2.10 - 1) = 0.155 / 1.10 = 14.1%
 ### 5.5 投注记录与复盘
 
 **每次投注后记录**：
+
 ```sql
 INSERT INTO bet_records (
     match_id, bet_type, odds, stake, ev_at_bet,
@@ -435,6 +443,7 @@ INSERT INTO bet_records (
 ```
 
 **每周复盘 SQL**：
+
 ```sql
 SELECT
     DATE_TRUNC('week', bet_time) as week,

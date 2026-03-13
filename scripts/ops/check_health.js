@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview TITAN 生产环境健康检查脚本
+ * @file TITAN 生产环境健康检查脚本
  * @description 自动检查：环境变量、数据库联通性、存储目录写入权限
  * @version 1.0.0
  * @module scripts/ops/check_health
@@ -52,7 +52,7 @@ function showBanner() {
 
 /**
  * 检查 1: 环境变量加载状态
- * @returns {Promise<Object>} 检查结果
+ * @returns {Promise<object>} 检查结果
  */
 async function checkEnvironmentVariables() {
   log('info', '检查环境变量...');
@@ -141,7 +141,7 @@ function maskSensitive(varName, value) {
 
 /**
  * 检查 2: 数据库联通性
- * @returns {Promise<Object>} 检查结果
+ * @returns {Promise<object>} 检查结果
  */
 async function checkDatabaseConnectivity() {
   log('info', '检查数据库联通性...');
@@ -202,7 +202,7 @@ async function checkDatabaseConnectivity() {
 
 /**
  * 检查 3: 存储目录写入权限
- * @returns {Promise<Object>} 检查结果
+ * @returns {Promise<object>} 检查结果
  */
 async function checkStoragePermissions() {
   log('info', '检查存储目录权限...');
@@ -278,7 +278,7 @@ async function checkStoragePermissions() {
 
 /**
  * 检查 4: 会话文件存在性
- * @returns {Promise<Object>} 检查结果
+ * @returns {Promise<object>} 检查结果
  */
 async function checkSessionFile() {
   log('info', '检查会话文件...');
@@ -315,7 +315,7 @@ async function checkSessionFile() {
 
 /**
  * 生成总结报告
- * @param {Object} results - 所有检查结果
+ * @param {object} results - 所有检查结果
  */
 function generateReport(results) {
   console.log('\n' + '='.repeat(60));

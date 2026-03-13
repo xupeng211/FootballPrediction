@@ -11,7 +11,6 @@
  * - 指数退避重试逻辑
  * - 结构化 JSON 日志（ELK 友好）
  * - 纯函数化的 Extractor 调用
- *
  * @module feature_engine/smelter/FeatureSmelter
  * @version V3.0.0-PRO
  * @since 2026-03-06
@@ -61,7 +60,7 @@ const DEFAULT_CONFIG = {
  */
 class StructuredLogger {
     /**
-     * @param {Object} options - 日志选项
+     * @param {object} options - 日志选项
      * @param {string} options.component - 组件名称
      * @param {string} options.logDir - 日志目录
      * @param {boolean} options.enableStructured - 是否启用结构化输出
@@ -107,10 +106,9 @@ class StructuredLogger {
 
     /**
      * 输出结构化日志
-     *
      * @param {string} level - 日志级别 (error, warn, info, debug)
      * @param {string} message - 日志消息
-     * @param {Object} [context] - 附加上下文
+     * @param {object} [context] - 附加上下文
      */
     log(level, message, context = {}) {
         const logEntry = {
@@ -140,24 +138,47 @@ class StructuredLogger {
         }
     }
 
+    /**
+     *
+     * @param message
+     * @param context
+     */
     info(message, context = {}) {
         this.log(LOG_LEVELS.INFO, message, context);
     }
 
+    /**
+     *
+     * @param message
+     * @param context
+     */
     warn(message, context = {}) {
         this.log(LOG_LEVELS.WARN, message, context);
     }
 
+    /**
+     *
+     * @param message
+     * @param context
+     */
     error(message, context = {}) {
         this.log(LOG_LEVELS.ERROR, message, context);
     }
 
+    /**
+     *
+     * @param message
+     * @param context
+     */
     debug(message, context = {}) {
         if (process.env.LOG_LEVEL === 'debug') {
             this.log(LOG_LEVELS.DEBUG, message, context);
         }
     }
 
+    /**
+     *
+     */
     close() {
         if (this.logStream) {
             try {
@@ -184,7 +205,7 @@ class StructuredLogger {
  */
 class FeatureSmelter {
     /**
-     * @param {Object} config - 配置对象
+     * @param {object} config - 配置对象
      */
     constructor(config = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
@@ -214,7 +235,6 @@ class FeatureSmelter {
 
     /**
      * 初始化数据库连接和缓存
-     *
      * @returns {Promise<FeatureSmelter>}
      * @throws {Error} 初始化失败时抛出
      */
@@ -327,7 +347,6 @@ class FeatureSmelter {
 
     /**
      * 获取球队 Elo 评分
-     *
      * @param {string} teamName - 球队名称
      * @returns {number} Elo 评分
      */
@@ -355,7 +374,6 @@ class FeatureSmelter {
 
     /**
      * 获取待处理的比赛列表（带重试）
-     *
      * @param {boolean} fullRecalculate - 是否全量重算
      * @param {number} limit - 批量大小
      * @returns {Promise<Array>}
@@ -413,9 +431,8 @@ class FeatureSmelter {
 
     /**
      * 处理单场比赛的特征提取
-     *
-     * @param {Object} match - 比赛数据
-     * @returns {Object|null} 提取的特征，失败返回 null
+     * @param {object} match - 比赛数据
+     * @returns {object | null} 提取的特征，失败返回 null
      */
     processMatch(match) {
         const { match_id, home_team, away_team, raw_data } = match;
@@ -500,7 +517,6 @@ class FeatureSmelter {
 
     /**
      * 批量保存特征到数据库（带重试）
-     *
      * @param {Array} features - 特征数组
      * @returns {Promise<number>} 成功保存的数量
      */
@@ -567,11 +583,10 @@ class FeatureSmelter {
 
     /**
      * 执行特征熔炼
-     *
-     * @param {Object} options - 执行选项
+     * @param {object} options - 执行选项
      * @param {boolean} [options.fullRecalculate] - 是否全量重算
      * @param {number} [options.limit] - 批量大小
-     * @returns {Promise<Object>} 执行统计
+     * @returns {Promise<object>} 执行统计
      */
     async run(options = {}) {
         const { fullRecalculate = false, limit = this.config.batchSize } = options;

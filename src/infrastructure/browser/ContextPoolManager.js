@@ -7,7 +7,6 @@
  *
  * V4.46.3 HYPER-DRIVE: Browser Context Pooling
  * V4.46.5 HARDENING: LRU 淘汰机制防止内存泄漏
- *
  * @module infrastructure/browser/ContextPoolManager
  * @version V1.0.0
  */
@@ -18,12 +17,15 @@
 // ContextPoolManager - Context 池管理类
 // ============================================================================
 
+/**
+ *
+ */
 class ContextPoolManager {
     /**
      * 创建 ContextPoolManager 实例
-     * @param {Object} [config={}] - 配置选项
-     * @param {number} [config.maxUsage=10] - 每个 Context 最大复用次数
-     * @param {number} [config.maxSize=20] - 池子最大容量
+     * @param {object} [config] - 配置选项
+     * @param {number} [config.maxUsage] - 每个 Context 最大复用次数
+     * @param {number} [config.maxSize] - 池子最大容量
      */
     constructor(config = {}) {
         this.config = {
@@ -50,11 +52,11 @@ class ContextPoolManager {
     /**
      * 获取或创建 BrowserContext
      * @param {number} workerId - Worker ID
-     * @param {Object} identity - Worker 身份信息
-     * @param {Object} deps - 依赖注入
-     * @param {Object} deps.browserFactory - BrowserFactory 实例
-     * @param {Object} deps.networkManager - NetworkManager 实例
-     * @returns {Promise<{context: BrowserContext, isNew: boolean, entry: Object}>}
+     * @param {object} identity - Worker 身份信息
+     * @param {object} deps - 依赖注入
+     * @param {object} deps.browserFactory - BrowserFactory 实例
+     * @param {object} deps.networkManager - NetworkManager 实例
+     * @returns {Promise<{context: BrowserContext, isNew: boolean, entry: object}>}
      */
     async getOrCreate(workerId, identity, deps) {
         const entry = this._pool.get(workerId);
@@ -73,7 +75,7 @@ class ContextPoolManager {
 
     /**
      * 判断是否需要重建 Context
-     * @param {Object} entry - 池条目
+     * @param {object} entry - 池条目
      * @param {number} currentPort - 当前端口
      * @returns {{needsRebuild: boolean, reason: string}}
      * @private
@@ -96,6 +98,11 @@ class ContextPoolManager {
 
     /**
      * 创建新 Context
+     * @param workerId
+     * @param identity
+     * @param deps
+     * @param reason
+     * @param oldEntry
      * @private
      */
     async _createNewContext(workerId, identity, deps, reason, oldEntry) {
@@ -139,6 +146,8 @@ class ContextPoolManager {
 
     /**
      * 复用现有 Context
+     * @param workerId
+     * @param currentPort
      * @private
      */
     _reuseContext(workerId, currentPort) {
@@ -220,6 +229,7 @@ class ContextPoolManager {
 
     /**
      * 安全关闭 Context
+     * @param context
      * @private
      */
     async _safeClose(context) {
@@ -275,7 +285,7 @@ class ContextPoolManager {
 
     /**
      * 获取统计数据
-     * @returns {Object}
+     * @returns {object}
      */
     getStats() {
         return {
@@ -298,7 +308,7 @@ class ContextPoolManager {
     /**
      * 获取池条目
      * @param {number} workerId
-     * @returns {Object|undefined}
+     * @returns {object | undefined}
      */
     getEntry(workerId) {
         return this._pool.get(workerId);
@@ -324,7 +334,7 @@ let _instance = null;
 
 /**
  * 获取 ContextPoolManager 单例
- * @param {Object} [config={}] - 配置选项
+ * @param {object} [config] - 配置选项
  * @returns {ContextPoolManager}
  */
 function getContextPoolManager(config = {}) {

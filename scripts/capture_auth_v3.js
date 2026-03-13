@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview 极简平民模式办证脚本 (Civilian Mode)
+ * @file 极简平民模式办证脚本 (Civilian Mode)
  * @description 像普通用户一样浏览，彻底卸载重型装甲
  * @version 3.0.0
  */
@@ -67,6 +67,8 @@ function createReadline() {
 
 /**
  * 询问用户
+ * @param rl
+ * @param question
  */
 function ask(rl, question) {
   return new Promise(resolve => {
@@ -76,6 +78,7 @@ function ask(rl, question) {
 
 /**
  * 保存会话
+ * @param storageState
  */
 async function saveSession(storageState) {
   const dataDir = path.join(__dirname, '..', 'data', 'sessions');
@@ -112,6 +115,9 @@ function showInstructions() {
 
 // ==================== 主程序 ====================
 
+/**
+ *
+ */
 async function main() {
   console.log(`${LOG_PREFIX} 启动平民模式办证脚本 v3.0`);
   console.log(`${LOG_PREFIX} 模式: 极简平民 | 窗口: 1280x1024`);

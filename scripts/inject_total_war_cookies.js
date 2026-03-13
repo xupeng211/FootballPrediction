@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview TOTAL WAR Cookie 物理注入脚本
+ * @file TOTAL WAR Cookie 物理注入脚本
  * @description 将原始 Cookie 数据直接写入 Playwright storageState 格式
  * @version 1.0.0
  */
@@ -270,6 +270,7 @@ const RAW_COOKIES = [
 
 /**
  * 转换 Cookie 格式为 Playwright storageState
+ * @param cookies
  */
 function convertToStorageState(cookies) {
   const convertedCookies = cookies.map(cookie => {

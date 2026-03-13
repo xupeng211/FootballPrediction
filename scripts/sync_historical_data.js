@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview 存量数据物理落地方案 (One-Time-Sync)
+ * @file 存量数据物理落地方案 (One-Time-Sync)
  * @description 将数据库中历史记录同步到物理文件，支持跨平台路径解析
  * @version 2.0.0
  * @status 一次性工具，即后即焚
@@ -16,7 +16,7 @@ const LOG_PREFIX = '[HISTORICAL-SYNC]';
 
 /**
  * 数据库配置 (从环境变量读取，带默认值)
- * @type {Object}
+ * @type {object}
  */
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'host.docker.internal',

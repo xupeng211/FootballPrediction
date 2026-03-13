@@ -140,6 +140,7 @@ LIMIT 5
 ```
 
 **保证**：
+
 - 只使用 `match_date` 严格早于当前比赛的历史数据
 - 避免使用未来信息（当前比赛的数据）预测当前比赛
 - 符合机器学习时间序列交叉验证原则
@@ -234,12 +235,14 @@ print(f"成功率: {report['path_success_rates']}")
 ### 输入表
 
 **`raw_match_data`** - L2 原始 JSONB 数据
+
 ```
 - match_id (TEXT, PK)
 - raw_data (JSONB) - FotMob API 原始数据
 ```
 
 **`matches`** - 比赛基础信息
+
 ```
 - match_id (BIGINT, PK)
 - match_date (DATE)
@@ -253,6 +256,7 @@ print(f"成功率: {report['path_success_rates']}")
 ### 输出表
 
 **`match_features_training`** - 特征训练表
+
 ```
 - match_id (BIGINT, PK)
 - season (TEXT)
@@ -288,6 +292,7 @@ print(f"成功率: {report['path_success_rates']}")
 ### 索引优化
 
 流水线自动创建临时表索引：
+
 ```sql
 CREATE INDEX idx_tmp_date ON tmp_l2_stats(match_date);
 CREATE INDEX idx_tmp_home ON tmp_l2_stats(home_team);

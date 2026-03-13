@@ -4,7 +4,6 @@
  *
  * 从 ProductionHarvester 剥离的隐身指纹逻辑
  * 统一管理浏览器指纹、UA池、视口配置
- *
  * @module infrastructure/network/StealthFingerprint
  * @version V4.46.0
  */
@@ -92,7 +91,7 @@ function getRandomUA() {
 
 /**
  * 获取随机视口
- * @returns {Object} 视口配置
+ * @returns {object} 视口配置
  */
 function getRandomViewport() {
     return GHOST_VIEWPORTS[Math.floor(Math.random() * GHOST_VIEWPORTS.length)];
@@ -101,7 +100,7 @@ function getRandomViewport() {
 /**
  * V185: 生成随机化的深度隐身配置
  * @param {number} workerId - Worker ID，用于确定性随机
- * @returns {Object} 随机化的隐身配置
+ * @returns {object} 随机化的隐身配置
  */
 function generateStealthConfig(workerId = 1) {
     const seed = workerId * 17 + 42;
@@ -135,7 +134,7 @@ function generateStealthConfig(workerId = 1) {
 /**
  * V179.2: 生成固定指纹 Headers - 与 capture_auth.js 一致
  * @param {boolean} useFixed - 是否使用固定指纹 (默认 true)
- * @returns {Object} 包含 userAgent, viewport, extraHTTPHeaders 的对象
+ * @returns {object} 包含 userAgent, viewport, extraHTTPHeaders 的对象
  */
 function generateStealthHeaders(useFixed = true) {
     if (useFixed) {
