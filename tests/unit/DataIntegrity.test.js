@@ -183,11 +183,10 @@ describe('数据完整性测试套件', () => {
                 const data = {
                     content: {
                         lineup: {
-                                homeTeam: { name: 'Home' },
-                                awayTeam: { name: 'Away' }
-                            },
-                            stats: { possession: 60 }
+                            homeTeam: { name: 'Home' },
+                            awayTeam: { name: 'Away' }
                         },
+                        stats: { possession: 60 },
                         header: {
                             homeScore: 2,
                             awayScore: 1

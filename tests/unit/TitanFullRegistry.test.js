@@ -40,14 +40,7 @@ const sampleNextData = {
                     homeTeam: {
                         name: 'Home Team',
                         shortName: 'HOME',
-                        id: 123
-                    },
-                    awayTeam: {
-                        name: 'Away Team',
-                        shortName: 'AWAY',
-                        id: 456
-                    },
-                    homeTeam: {
+                        id: 123,
                         formation: '4-3-3',
                         starters: [
                             { name: 'Player 1', position: 'GK', marketValue: 10000000 },
@@ -56,9 +49,12 @@ const sampleNextData = {
                         subs: [
                             { name: 'Sub 1', position: 'MF', marketValue: 50000000 }
                         ],
-                        totalStarterMarketValue: 10000000000,
+                        totalStarterMarketValue: 10000000000
                     },
                     awayTeam: {
+                        name: 'Away Team',
+                        shortName: 'AWAY',
+                        id: 456,
                         formation: '4-4-2',
                         starters: [
                             { name: 'Player 3', position: 'GK', marketValue: 90000000 },
