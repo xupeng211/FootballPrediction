@@ -13,7 +13,7 @@ class MockFotMobStrategy {
   }
 
   /**
-   * 解析 HTML 响应
+   * 解析 HTML 响应 - V4.51.2 三层解析保险
    * @param {string} html - HTML 内容
    * @returns {Object|null} 解析后的数据
    */
@@ -23,37 +23,115 @@ class MockFotMobStrategy {
     }
 
     try {
-      // 提取 JSON 数据
-      const match = html.match(/window\.__INITIAL_STATE__\s*=\s*({.+?});/);
-      if (!match) {
-        return null;
+      // 方案 1: 提取 __NEXT_DATA__ (FotMob 主方案)
+      const nextDataMatch = html.match(/id=["']__NEXT_DATA__["'][^>]*>([\s\S]+?)<\/script>/);
+      if (nextDataMatch) {
+        const data = JSON.parse(nextDataMatch[1].trim());
+        if (data.props?.pageProps?.match?.id || data.props?.pageProps?.general?.matchId) {
+          const match = data.props.pageProps.match || data.props.pageProps;
+          return this._normalizeMatchData(match);
+        }
       }
 
-      const data = JSON.parse(match[1]);
-      
-      // 验证必要字段
-      if (!data.match || !data.match.id) {
-        return null;
+      // 方案 2: 提取 window.__INITIAL_STATE__ (备用方案 A)
+      // 使用更精确的正则来处理嵌套括号和转义字符
+      const initialStateRegex = /window\.__INITIAL_STATE__\s*=\s*({[\s\S]*?});\s*<\/script>/;
+      const initialStateMatch = html.match(initialStateRegex);
+      if (initialStateMatch) {
+        try {
+          const data = JSON.parse(initialStateMatch[1]);
+          if (data.match?.id) {
+            return this._normalizeMatchData(data.match);
+          }
+        } catch (e) {
+          // JSON 解析失败，继续尝试其他方案
+        }
       }
 
-      return {
-        match_id: data.match.id,
-        home_team: {
-          name: data.match.home?.name || 'Unknown',
-          id: data.match.home?.id || 0
-        },
-        away_team: {
-          name: data.match.away?.name || 'Unknown',
-          id: data.match.away?.id || 0
-        },
-        match_info: {
-          date: data.match.date,
-          status: data.match.status,
-          score: data.match.score
-        },
-        statistics: data.match.stats || {},
-        parsed_at: new Date().toISOString()
-      };
+      // 方案 3: DOM 备用解析 (备用方案 B) - V4.51.2 新增
+      return this._parseDOMFallback(html);
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * 标准化比赛数据
+   * @private
+   */
+  _normalizeMatchData(match) {
+    // 处理 score 字段
+    let score = null;
+    if (match.score && Array.isArray(match.score)) {
+      score = match.score;
+    } else if (match.homeScore !== undefined && match.awayScore !== undefined) {
+      score = [match.homeScore, match.awayScore];
+    }
+
+    return {
+      match_id: match.id,
+      home_team: {
+        name: match.home?.name || match.homeTeam?.name || 'Unknown',
+        id: match.home?.id || match.homeTeam?.id || 0
+      },
+      away_team: {
+        name: match.away?.name || match.awayTeam?.name || 'Unknown',
+        id: match.away?.id || match.awayTeam?.id || 0
+      },
+      match_info: {
+        date: match.date || match.matchDate,
+        status: match.status || 'UNKNOWN',
+        score: score
+      },
+      statistics: match.stats || match.statistics || {},
+      _source: 'html_parse',
+      parsed_at: new Date().toISOString()
+    };
+  }
+
+  /**
+   * DOM 备用解析 - V4.51.2 新增
+   * 当所有 JSON 数据都缺失时，从 DOM 提取基础信息
+   * @private
+   */
+  _parseDOMFallback(html) {
+    try {
+      // 尝试提取标题
+      const titleMatch = html.match(/<h1[^>]*>([^<]+)<\/h1>/);
+      const title = titleMatch ? titleMatch[1] : '';
+
+      // 尝试提取队伍名称
+      const homeMatch = html.match(/class="[^"]*home[^"]*"[^>]*>([^<]+)/i);
+      const awayMatch = html.match(/class="[^"]*away[^"]*"[^>]*>([^<]+)/i);
+
+      // 尝试从 title 解析 "Team A vs Team B"
+      let teams = [];
+      if (title.includes(' vs ')) {
+        teams = title.split(' vs ').map(t => t.trim());
+      }
+
+      if ((homeMatch && awayMatch) || teams.length === 2) {
+        return {
+          match_id: 'dom_' + Date.now(),
+          home_team: {
+            name: homeMatch ? homeMatch[1].trim() : teams[0],
+            id: 0
+          },
+          away_team: {
+            name: awayMatch ? awayMatch[1].trim() : teams[1],
+            id: 0
+          },
+          match_info: {
+            status: 'UNKNOWN'
+          },
+          statistics: {},
+          _source: 'dom_fallback',
+          _domExtracted: true,
+          parsed_at: new Date().toISOString()
+        };
+      }
+
+      return null;
     } catch (error) {
       return null;
     }
@@ -185,7 +263,7 @@ describe('Strategy Parser - FotMobStrategy', () => {
           window.__INITIAL_STATE__ = {
             "match": {
               "id": "special\\\"id",
-              "home": { "name": "O\\\'Brien Team", "id": 1 },
+              "home": { "name": "O'Brien Team", "id": 1 },
               "away": { "name": "Team B", "id": 2 },
               "date": "2026-03-12",
               "status": "FINISHED"

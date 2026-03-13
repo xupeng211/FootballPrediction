@@ -37,8 +37,8 @@ class MockAuditor {
       const content = await fs.readFile(filePath, 'utf8');
       const data = JSON.parse(content);
 
-      // 检查必要字段
-      const hasMatchId = !!data.match_id;
+      // 检查必要字段（V4.51.2: 修复 match_id: 0 被误判为无效的问题）
+      const hasMatchId = data.match_id !== undefined && data.match_id !== null;
       const hasRawData = data.raw_data && Object.keys(data.raw_data).length > 0;
       const hasSavedAt = !!data.saved_at;
 
