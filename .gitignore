@@ -327,3 +327,48 @@ home_*_for_avg
 # =============================================================================
 tests/Z_LEGACY_ARCHIVE*/
 Z_LEGACY_ARCHIVE_V446/
+
+# =============================================================================
+# V4.51-TOTAL-WAR: 数据资产与凭证保护 (TITAN Final Protection)
+# =============================================================================
+
+# 环境配置文件 (含数据库密码等敏感信息)
+config/.env
+config/.env.local
+config/.env.*.local
+
+# 浏览器会话凭证 (Cookie/Session)
+manual_session.json
+*_session.json
+session_*.json
+
+# 生产数据文件 (海量JSON，不应入Git)
+data/matches/*.json
+data/matches/
+!data/matches/.gitkeep
+
+# 浏览器会话存储
+data/sessions/*.json
+data/sessions/
+!data/sessions/.gitkeep
+
+# 日志文件 (可能含API Key)
+*.log
+logs/*.log
+logs/*/
+combined-*.log
+error-*.log
+exceptions-*.log
+rejections-*.log
+
+# 调试输出
+data/debug/*.png
+data/debug/*.json
+data/debug/
+!data/debug/.gitkeep
+
+# 网络抓包数据 (可能含凭证)
+data/network/*.har
+data/network/*.json
+data/network/
+!data/network/.gitkeep

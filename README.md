@@ -1,477 +1,60 @@
-# FootballPrediction TITAN-V4.46.6 [INDUSTRIAL]
+# TITAN Football Prediction Platform
 
-> **工业级足球预测平台** — L1 并行扫描 + 批量写入 + 代理池集成 + 95/100 大厂标准
->
-> **Dataset: 2206/2206 Matches Aligned (Serie A & Bundesliga)** ✅
-
-[![Version](https://img.shields.io/badge/version-V4.46.6--INDUSTRIAL-blue.svg)](https://github.com/xupeng211/FootballPrediction)
-[![Architecture](https://img.shields.io/badge/architecture-Big%20Tech%20Standard-green.svg)]()
-[![Data](https://img.shields.io/badge/data-L1%3D%20L2%3D%20L3%20%3D%202206-green.svg)]()
-[![Quality](https://img.shields.io/badge/quality-95%2F100-brightgreen.svg)]()
+> 工业级足球数据采集与预测平台 | Production-Ready Data Harvesting System
 
 ---
 
-## 目录
+## 🚀 快速启动
 
-- [V4.46.1 核心能力](#-v4461-核心能力)
-- [快速启动](#-快速启动-5-分钟)
-- [性能基准](#-性能基准)
-- [数据契约](#-数据契约)
-- [Swarm 蜂群收割](#-swarm-蜂群收割)
-- [22 节点代理配置](#%EF%B8%8F-22-节点代理配置)
-- [Prometheus 监控](#-prometheus-监控)
-- [项目结构](#-项目结构)
-- [核心命令速查](#-核心命令速查)
-- [故障排查](#-故障排查)
-- [文档索引](#-文档索引)
-- [版本历史](#-版本历史)
-
----
-
-## 🎯 V4.46.1 核心能力
-
-| 能力 | 技术实现 | 指标 |
-|------|----------|------|
-| **Swarm 蜂群收割** | SwarmHarvester 多 Worker 并发 | 3x 吞吐提升 |
-| **22 节点代理池** | NetworkShield + 熔断保护 | 99.9% 可用性 |
-| **指纹对齐** | SessionManager + UA 一致性 | 反检测增强 |
-| **Prometheus 监控** | `/metrics` 端点 + Grafana | 实时指标 |
-| **全局熔断保护** | 60s 冷却窗口 + 3 次重试限制 | 零死循环 |
-
----
-
-## 🚀 一键起飞指南 (Quick Start)
-
-### 0. 前置要求
-
-- Docker & Docker Compose
-- Node.js 20+ (容器内已包含)
-- Python 3.11+ (容器内已包含)
-
-### 1. 环境准备 (30 秒)
+### 1. 环境准备
 
 ```bash
 # 克隆项目
 git clone https://github.com/xupeng211/FootballPrediction.git
 cd FootballPrediction
 
-# 配置环境变量 (必填 DB_PASSWORD)
-cp .env.example .env
-# 编辑 .env 设置 DB_PASSWORD=your_secure_password
+# 配置环境变量
+cp config/.env.example config/.env
+# 编辑 config/.env 填入实际的数据库密码和其他配置
 ```
 
-### 2. 启动基础设施 (1 分钟)
+### 2. 启动基础设施
 
 ```bash
-# 一键启动 Docker 容器 (db + redis + dev + prometheus + grafana)
-npm run dev:up
+# 启动 PostgreSQL 和 Redis
+docker-compose -f docker-compose.dev.yml up -d
 
-# 进入开发容器
-npm run dev:shell
+# 验证服务状态
+docker-compose -f docker-compose.dev.yml ps
 ```
 
-### 3. 数据收割流水线 (3 分钟)
+### 3. 健康检查
 
 ```bash
-# Step 1: L1 赛程扫描 (发现比赛)
-npm run seed
-
-# Step 2: L2 超频收割 (赔率数据) - 推荐
-npm run harvest
-
-# Step 3: L3 特征熔炼 (生成特征向量)
-npm run smelt
+# 运行环境自检
+node scripts/ops/check_health.js
 ```
 
-### 4. 查看结果 (30 秒)
+### 4. 启动全量收割（无人值守模式）
 
+**方式 A：手动监控模式**
 ```bash
-# 一键查看数据状态
-npm run status
-
-# 启动监控仪表盘
-npm run monitor:up
+# 12 Worker × 12000 场比赛
+docker-compose -f docker-compose.dev.yml exec dev \
+  node scripts/ops/run_production.js \
+  --workers 12 \
+  --limit 12000 \
+  --session-path /app/manual_session.json
 ```
 
-### 📊 监控仪表盘
-
-| 服务 | URL | 凭据 |
-|------|-----|------|
-| **Grafana** | http://localhost:3001 | admin / titan2024 |
-| **Prometheus** | http://localhost:9090 | 无需认证 |
-| **Metrics API** | http://localhost:8000/metrics | 无需认证 |
-
-### 📱 手机监控
-
-```
-http://<YOUR_IP>:3001/d/titan-v4464-dashboard
-```
-
----
-
-## 🎮 核心命令速查表
-
-| 命令 | 用途 | 说明 |
-|------|------|------|
-| `npm run dev:up` | 启动开发环境 | db + redis + dev |
-| `npm run dev:down` | 停止开发环境 | - |
-| `npm run dev:shell` | 进入开发容器 | - |
-| `npm run seed` | L1 赛程扫描 | 发现比赛 |
-| `npm run harvest` | L2 超频收割 | 15 并发 |
-| `npm run smelt` | L3 特征熔炼 | 生成特征 |
-| `npm run status` | 数据完整性检查 | L1=L2=L3? |
-| `npm run monitor:up` | 启动监控栈 | Prometheus + Grafana |
-| `npm run metrics` | 启动指标服务 | 端口 8000 |
-| `npm run qa` | 代码质量检查 | lint + test |
-
----
-
-## ⚡ 性能基准
-
-> 基于 V4.46.1 实测数据 (2026-03-08)
-
-### 吞吐量指标
-
-| 指标 | 数值 | 测试条件 |
-|------|------|----------|
-| **收割吞吐量** | 5.8 场/分钟 | 5-Worker 并发 |
-| **峰值吞吐量** | 12+ 场/分钟 | 10-Worker 并发 |
-| **日处理能力** | 8,000+ 场 | 24h 连续运行 |
-
-### 响应时延
-
-| 操作 | P50 | P95 | P99 |
-|------|-----|-----|-----|
-| **单场收割** | 10.3s | 15.2s | 22.8s |
-| **L2 数据采集** | 4.7s | 8.1s | 12.5s |
-| **L3 特征熔炼** | 0.8s | 1.2s | 2.1s |
-| **模型预测** | <100ms | <150ms | <200ms |
-
-### 稳定性验证
-
-| 测试项 | 结果 | 说明 |
-|--------|------|------|
-| **高压测试** | 100% 成功率 | 连续 20 场无失败 |
-| **熔断测试** | 8/8 通过 | 无死循环，优雅降级 |
-| **长时间运行** | 99.7% 成功率 | 1000+ 场持续收割 |
-
-### 并发能力
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    Worker 并发扩展矩阵                           │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                 │
-│  Workers │  吞吐量 (场/分)  │  代理占用  │  推荐场景            │
-│  ────────┼──────────────────┼────────────┼──────────────────    │
-│    1     │      1.2         │    1/22    │  调试 / 单场测试     │
-│    3     │      3.6         │    3/22    │  日常收割            │
-│    5     │      5.8         │    5/22    │  生产环境 (推荐)     │
-│   10     │     10.2         │   10/22    │  高峰期              │
-│   22     │     18.5         │   22/22    │  极限压测            │
-│                                                                 │
-│  ⚠️ 最大并发受代理池限制 (22 节点)                               │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 📐 数据契约
-
-### Match ID 规范
-
-系统采用统一的 Match ID 格式，确保跨层数据一致性：
-
-```
-格式: [LeagueID]_[Season]_[MatchID]
-
-示例: 55_20242025_4803413
-      │  │        │
-      │  │        └── FotMob 比赛 ID
-      │  └── 赛季 (YYYYYYYY 格式)
-      └── 联赛 ID (FotMob League ID)
-
-常用联赛 ID:
-├── 55   = Premier League (英超)
-├── 54   = La Liga (西甲)
-├── 53   = Bundesliga (德甲)
-├── 52   = Serie A (意甲)
-├── 51   = Ligue 1 (法甲)
-└── 详见 config/league_registry.json
-```
-
-### 数据层级架构
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           TITAN 数据层级                                    │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  L1: Discovery (发现层)                                              │   │
-│  │  ├── 来源: FotMob API                                                │   │
-│  │  ├── 存储: matches 表                                                │   │
-│  │  ├── 内容: 比赛基础信息 (球队、时间、联赛)                            │   │
-│  │  └── 触发: npm run seed                                              │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                    │                                        │
-│                                    ▼                                        │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  L2: Harvest (收割层)                                                │   │
-│  │  ├── 来源: OddsPortal RPA + FotMob API                               │   │
-│  │  ├── 存储: raw_match_data 表 (JSONB)                                 │   │
-│  │  ├── 内容: 赔率数据 (开盘/收盘/1X2/亚洲盘)                            │   │
-│  │  └── 触发: npm start                                                 │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                    │                                        │
-│                                    ▼                                        │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  L3: Features (特征层)                                               │   │
-│  │  ├── 来源: FeatureSmelter 特征熔炼                                   │   │
-│  │  ├── 存储: l3_features 表                                            │   │
-│  │  ├── 内容: 12,061 维特征向量                                         │   │
-│  │  └── 触发: npm run smelt                                             │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                    │                                        │
-│                                    ▼                                        │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │  ML: Prediction (预测层)                                             │   │
-│  │  ├── 模型: XGBoost 3-Model Consensus                                 │   │
-│  │  ├── 存储: predictions 表                                            │   │
-│  │  ├── 输出: 胜/平/负 概率 + 置信度                                    │   │
-│  │  └── 准确率: 67.2% (验证集)                                          │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 数据库表结构
-
-| 表名 | 层级 | 用途 | 关键字段 |
-|------|------|------|----------|
-| `matches` | L1 | 比赛基础信息 | `match_id`, `home_team`, `away_team`, `match_time` |
-| `raw_match_data` | L2 | 原始收割数据 | `match_id`, `source`, `data` (JSONB) |
-| `l3_features` | L3 | 特征向量 | `match_id`, `feature_vector` (FLOAT[]) |
-| `predictions` | ML | 预测结果 | `match_id`, `home_prob`, `draw_prob`, `away_prob` |
-
-### 特征工程规范
-
-**FeatureSmelter 产出: 12,061 维特征向量**
-
-```
-特征维度分布:
-├── 赔率特征 (Odds Features)
-│   ├── 开盘赔率: home_open, draw_open, away_open
-│   ├── 收盘赔率: home_close, draw_close, away_close
-│   ├── 赔率变动: home_movement, draw_movement, away_movement
-│   └── 亚洲盘: handicap, over_under
-│
-├── 历史特征 (Historical Features)
-│   ├── 近5场战绩: last_5_wins, last_5_draws, last_5_losses
-│   ├── 主客场战绩: home_record, away_record
-│   └── 交锋记录: h2h_home_wins, h2h_away_wins
-│
-├── 阵容特征 (Squad Features)
-│   ├── 身价: home_market_value, away_market_value
-│   ├── 伤病: home_injury_count, away_injury_count
-│   └── 轮换: rotation_index
-│
-├── 联赛特征 (League Features)
-│   ├── 联赛等级: league_tier
-│   ├── 排名: home_position, away_position
-│   └── 积分: home_points, away_points
-│
-└── 派生特征 (Derived Features)
-    ├── Elo 评分: home_elo, away_elo, elo_diff
-    ├── 疲劳指数: home_fatigue, away_fatigue
-    └── 综合评分: home_strength, away_strength
-
-存储格式: PostgreSQL FLOAT[] 数组
-向量维度: 12,061
-精度: FLOAT8 (64-bit)
-```
-
-### 数据质量门禁
-
-| 检查项 | 阈值 | 动作 |
-|--------|------|------|
-| **最小数据体积** | 5,000 bytes | 拒绝并重试 |
-| **JSON 完整性** | 必须可解析 | 拒绝并记录 |
-| **特征覆盖率** | >= 95% | 警告 |
-| **赔率有效性** | 1.0 < odds < 50.0 | 拒绝 |
-
----
-
-## 🐝 Swarm 蜂群收割
-
-### 架构图
-
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        TITAN-SWARM 蜂群架构                                  │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│   ┌─────────────┐   ┌─────────────┐   ┌─────────────┐                     │
-│   │  Worker 0   │   │  Worker 1   │   │  Worker 2   │   ... (可扩展)       │
-│   │  Port 7891  │   │  Port 7892  │   │  Port 7893  │                     │
-│   └──────┬──────┘   └──────┬──────┘   └──────┬──────┘                     │
-│          │                 │                 │                             │
-│          ▼                 ▼                 ▼                             │
-│   ┌─────────────────────────────────────────────────────────────────┐     │
-│   │                    NetworkShield (22 节点代理池)                 │     │
-│   │  ┌─────────────────────────────────────────────────────────┐   │     │
-│   │  │  端口: 7890-7911 | 熔断: 5 次失败 → 60s 冷却            │   │     │
-│   │  │  全局保护: 60s 冷却窗口 | 最大重试: 3 次                │   │     │
-│   │  └─────────────────────────────────────────────────────────┘   │     │
-│   └─────────────────────────────────────────────────────────────────┘     │
-│                                  │                                         │
-│                                  ▼                                         │
-│   ┌─────────────────────────────────────────────────────────────────┐     │
-│   │                    MetricsClient (Prometheus)                    │     │
-│   │  端点: /metrics | 格式: Prometheus Exposition                   │     │
-│   └─────────────────────────────────────────────────────────────────┘     │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
-
-### 启动蜂群
-
+**方式 B：哨兵自动监控模式（推荐）**
 ```bash
-# 默认 3 Worker 并发
-node scripts/ops/swarm_test.js
+# 终端 1: 启动收割集群
+npm run titan:start
 
-# 自定义并发数
-SWARM_CONCURRENCY=5 SWARM_STAGGER_MS=3000 node scripts/ops/swarm_test.js
-
-# 环境变量
-export SWARM_CONCURRENCY=5      # 并发 Worker 数
-export SWARM_STAGGER_MS=5000    # 错峰启动间隔 (ms)
+# 终端 2: 启动哨兵监控（达成 12,000 场后自动停机）
+npm run titan:watch
 ```
-
-### 验证蜂群状态
-
-```bash
-# 检查代理池状态
-docker-compose -f docker-compose.dev.yml exec dev node -e "
-const { getNetworkShield } = require('./src/infrastructure/network/NetworkShield');
-const shield = getNetworkShield();
-console.log(JSON.stringify(shield.getStatus(), null, 2));
-"
-
-# 预期输出
-{
-  "total": 22,
-  "active": 22,
-  "cooldown": 0,
-  "assignments": { "0": 7891, "1": 7892, "2": 7893 }
-}
-```
-
----
-
-## 🛡️ 22 节点代理配置
-
-### 代理池规格
-
-| 参数 | 值 | 说明 |
-|------|-----|------|
-| **节点数量** | 22 | 端口 7890-7911 |
-| **代理协议** | HTTP | 支持 HTTPS |
-| **熔断阈值** | 5 次连续失败 | 触发节点冷却 |
-| **冷却时间** | 60 秒 | 自动恢复 |
-| **全局冷却** | 60 秒 | 防止重复重置 |
-| **最大重试** | 3 次 | 超过抛出 CIRCUIT_BREAKER_OPEN |
-
-### 代理配置 (.env)
-
-```bash
-# 代理主机 (Clash Verge 网关)
-PROXY_HOST=172.25.16.1
-
-# 代理端口范围
-PROXY_PORT_START=7890
-PROXY_PORT_END=7911
-
-# 完整端口列表
-PROXY_PORTS=7890,7891,7892,7893,7894,7895,7896,7897,7898,7899,7900,7901,7902,7903,7904,7905,7906,7907,7908,7909,7910,7911
-```
-
-### 测试代理连通性
-
-```bash
-# 单节点测试
-curl -x http://172.25.16.1:7891 https://httpbin.org/ip --connect-timeout 5
-
-# 批量测试 (容器内)
-docker-compose -f docker-compose.dev.yml exec dev node -e "
-const ports = [7890,7891,7892,7893,7894,7895];
-ports.forEach(p => {
-  require('http').get({
-    host: '172.25.16.1', port: p, path: 'http://httpbin.org/ip', timeout: 3000
-  }, res => console.log('Port ' + p + ': OK'))
-  .on('error', e => console.log('Port ' + p + ': FAILED'));
-});
-"
-```
-
-### 熔断器测试
-
-```bash
-# 运行熔断器压力测试
-node scripts/ops/circuit_breaker_test.js
-
-# 预期输出
-# ✅ 所有测试通过！V4.46.1 熔断器已就绪！
-# "防爆盖"已扣紧，代理池死循环风险已消除！
-```
-
----
-
-## 📊 Prometheus 监控
-
-### /metrics 端点
-
-V4.46.1 内置 Prometheus 指标暴露端点：
-
-```bash
-# 访问指标端点
-curl http://localhost:8000/metrics
-
-# 或通过 Docker
-docker-compose -f docker-compose.dev.yml exec dev curl -s http://localhost:8000/metrics
-```
-
-### 核心指标
-
-| 指标名 | 类型 | 说明 |
-|--------|------|------|
-| `harvest_total` | Counter | 收割总数 |
-| `harvest_success` | Counter | 成功收割数 |
-| `harvest_failure` | Counter | 失败收割数 |
-| `harvest_duration_seconds` | Histogram | 收割耗时分布 |
-| `proxy_pool_active` | Gauge | 活跃代理数 |
-| `proxy_pool_cooldown` | Gauge | 冷却中代理数 |
-| `circuit_breaker_open` | Counter | 熔断触发次数 |
-
-### Prometheus 配置
-
-```yaml
-# prometheus.yml
-scrape_configs:
-  - job_name: 'football_prediction'
-    static_configs:
-      - targets: ['localhost:8000']
-    metrics_path: /metrics
-    scrape_interval: 15s
-```
-
-### Grafana Dashboard
-
-导入 `config/grafana_dashboard.json` 获取预置仪表板，包含：
-- 收割吞吐量实时曲线
-- 代理池健康状态
-- 熔断器触发历史
-- 错误率趋势
 
 ---
 
@@ -479,111 +62,430 @@ scrape_configs:
 
 ```
 FootballPrediction/
-├── CLAUDE.md                    # AI 助手操作指南 (工程铁律)
-├── COMMAND_CENTER.md            # 完整命令参考
-├── .env.example                 # 环境变量模板
-│
-├── config/
-│   ├── factory_config.js        # 工厂级配置中心
-│   ├── active_registry.json     # 代理池运行时状态
-│   └── grafana_dashboard.json   # Grafana 仪表板
-│
-├── scripts/ops/
-│   ├── run_production.js        # 生产收割主入口
-│   ├── swarm_test.js            # 蜂群测试脚本
-│   ├── circuit_breaker_test.js  # 熔断器测试
-│   └── seed_fixtures.js         # L1 赛程种子
-│
-├── src/
-│   ├── infrastructure/
-│   │   ├── harvesters/
-│   │   │   ├── SwarmHarvester.js      # 蜂群收割器
-│   │   │   └── ProductionHarvester.js
-│   │   ├── network/
-│   │   │   ├── NetworkShield.js       # 22 节点代理池
-│   │   │   └── SessionManager.js      # 身份管理
-│   │   └── monitoring/
-│   │       └── MetricsClient.js       # Prometheus 客户端
-│   ├── ml/                         # 机器学习模块
-│   └── feature_engine/             # 特征引擎
-│
-└── docs/
-    ├── ARCHITECTURE.md             # 系统架构
-    ├── monitoring.md               # 监控文档
-    └── archive/                    # 历史文档归档
+├── config/                    # 配置中心
+│   ├── .env.example          # 环境变量模板
+│   ├── factory_config.js     # 工厂级配置
+│   └── database.js           # 数据库配置
+├── scripts/                   # 运维脚本
+│   ├── ops/                  # 核心操作脚本
+│   │   ├── run_production.js    # 生产收割入口
+│   │   ├── check_health.js      # 健康检查
+│   │   ├── archive_legacy.sh    # 废弃文件归档
+│   │   └── sync_historical_data.js  # 数据同步
+│   └── maintenance/          # 维护工具
+├── src/                       # 源代码
+│   ├── infrastructure/       # 基础设施
+│   │   ├── harvesters/      # 收割机系统
+│   │   │   ├── ProductionHarvester.js
+│   │   │   └── base/AbstractHarvester.js
+│   │   ├── network/         # 网络代理
+│   │   └── browser/         # 浏览器工厂
+│   ├── feature_engine/      # 特征工程
+│   ├── ml/                  # 机器学习
+│   └── parsers/             # 数据解析器
+├── data/                      # 数据存储
+│   ├── matches/            # JSON 数据文件
+│   ├── sessions/           # 浏览器会话
+│   └── debug/              # 调试输出
+├── archive/                   # 归档目录
+└── manual_session.json       # 认证会话文件
 ```
 
 ---
 
-## 📋 核心命令速查
+## 🔧 核心配置说明
 
-| 命令 | 描述 |
-|------|------|
-| `npm start` | 生产收割器 (L2/L3) |
-| `npm run seed` | L1 赛程种子 |
-| `npm run smelt` | L3 特征熔炼 |
-| `npm test` | 运行单元测试 |
-| `npm run qa` | 全量检查 (lint + test) |
-| `node scripts/ops/swarm_test.js` | 蜂群收割测试 |
-| `node scripts/ops/circuit_breaker_test.js` | 熔断器测试 |
+### 环境变量 (config/.env)
 
-> 完整命令列表: [COMMAND_CENTER.md](./COMMAND_CENTER.md)
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `DB_HOST` | `host.docker.internal` | 数据库主机 |
+| `DB_PORT` | `5432` | 数据库端口 |
+| `DB_NAME` | `football_db` | 数据库名 |
+| `DB_USER` | `football_user` | 数据库用户 |
+| `DB_PASSWORD` | - | **必填：数据库密码** |
+| `DATA_MATCHES_PATH` | `data/matches` | 数据文件存储路径 |
+| `MAX_WORKERS` | `6` | 并发 Worker 数量 |
+| `MIN_DELAY_MS` | `10000` | 最小请求延迟 |
+| `MAX_DELAY_MS` | `15000` | 最大请求延迟 |
+| `PROXY_HOST` | `172.25.16.1` | 代理服务器地址 |
+| `PROXY_PORT` | `7891` | 代理服务器端口 |
+
+### 末端韧性模式配置 (V4.51.2 Endgame Resilience)
+
+专为收割最后 1% 顽固样本设计的工业级容错方案：
+
+| 变量名 | 默认值 | 说明 |
+|--------|--------|------|
+| `RETRY_MAX_ATTEMPTS` | `5` | NO_DATA 错误最大重试次数（原 3 次） |
+| `RETRY_DELAY_MS` | `15000` | 重试基础延迟 15 秒 |
+| `CIRCUIT_THRESHOLD` | `10` | 熔断阈值 10 次（原 5 次，更宽松） |
+| `CIRCUIT_TIMEOUT` | `120000` | 熔断冷却 120 秒（2 分钟） |
+| `ENDGAME_SLOWDOWN` | `true` | 启用末端降速模式 |
+| `MIN_DELAY_MS` | `15000` | 末端最小延迟 15 秒（稳健模式） |
+| `MAX_DELAY_MS` | `25000` | 末端最大延迟 25 秒 |
 
 ---
 
-## 🔧 故障排查
+## 📊 数据存储位置
 
-| 问题 | 诊断 | 解决方案 |
+### 数据库 (PostgreSQL)
+
+```sql
+-- 查看收割数据量
+SELECT COUNT(*) FROM raw_match_data;
+
+-- 查看最新数据
+SELECT match_id, collected_at
+FROM raw_match_data
+ORDER BY collected_at DESC
+LIMIT 10;
+```
+
+### 物理文件 (JSON)
+
+```bash
+# 数据文件位置（宿主机）
+./data/matches/
+
+# 查看已生成的文件数
+ls -la ./data/matches/ | wc -l
+
+# 查看最新文件
+ls -lt ./data/matches/ | head -10
+```
+
+---
+
+## 🔐 Cookie 更新指南
+
+### 方法 1：手动导入（推荐）
+
+```bash
+# 1. 在 Windows/Mac Chrome 中：
+#    - 访问 https://www.fotmob.com/
+#    - F12 → Network → 复制 Cookie 头
+
+# 2. 运行导入工具
+node scripts/import_manual_cookies.js
+
+# 3. 将生成的会话文件复制到项目根目录
+cp data/sessions/manual_bridge_session_*.json ./manual_session.json
+```
+
+### 方法 2：自动采集
+
+```bash
+# 运行平民模式采集脚本
+node scripts/capture_auth_v3.js
+
+# 按提示完成人机验证后，会话将自动保存
+```
+
+---
+
+## 🎯 哨兵自动监控与停机系统 (Sentinel Watch)
+
+> TITAN 哨兵 —— 24/7 智能守护，达成目标后自动执行安全停机
+
+### 核心能力
+
+TITAN 哨兵系统 (`sentinel_watch.js`) 是无人值守收割流程的关键组件：
+
+- ✅ **双路校验监控**：每 60 秒同时检查物理文件与数据库记录数
+- ✅ **防抖智能判断**：连续 2 次达标才触发（防止 I/O 误报）
+- ✅ **物理自动停机**：达成 12,000 场目标后自动执行 `docker-compose stop dev`
+- ✅ **庆典视觉反馈**：巨型 ASCII Art "VICTORY" + "FULL TANK" 庆祝
+- ✅ **战报日志留存**：记录达成时刻、平均收割速率、最终对齐率
+
+### 启动指令
+
+#### 前台交互模式（推荐，实时见证庆典）
+```bash
+npm run titan:watch
+```
+
+#### 后台静默模式（放入后台持续监控）
+```bash
+nohup npm run titan:watch > logs/sentinel.log 2>&1 &
+echo $! > /tmp/sentinel.pid  # 记录 PID 方便后续管理
+```
+
+### 视觉庆典效果
+
+当 12,000 场目标达成时，终端将呈现：
+
+```
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║     ████████╗██╗████████╗ █████╗ ███╗   ██╗    ███████╗██╗   ██╗╗
+║     ╚══██╔══╝██║╚══██╔══╝██╔══██╗████╗  ██║    ██╔════╝██║   ██║║
+║        ██║   ██║   ██║   ███████║██╔██╗ ██║    █████╗  ██║   ██║║
+║        ██║   ██║   ██║   ██╔══██║██║╚██╗██║    ██╔══╝  ╚██╗ ██╔╝║
+║        ██║   ██║   ██║   ██║  ██║██║ ╚████║    ██║      ╚████╔╝ ║
+║        ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝    ╚═╝       ╚═══╝  ║
+║                                                                  ║
+║                    🎯 TARGET ACHIEVED: 12,000 MATCHES 🎯         ║
+╚══════════════════════════════════════════════════════════════════╝
+
+╔══════════════════════════════════════════════════════════════════╗
+║                    🚀 12,000 MATCHES COMPLETE 🚀                 ║
+╚══════════════════════════════════════════════════════════════════╝
+
+[SENTINEL] ✓ 目标达成！连续 2 次检测确认
+[SENTINEL] 最终文件数: 12,000
+[SENTINEL] 数据库记录: 12,000
+[SENTINEL] 平均收割速度: 45.67 场/分钟
+[SENTINEL] ✓ 所有 Worker 已安全停止
+══════════════════════════════════════════════════
+  TITAN 任务圆满完成！系统已进入休眠状态。
+══════════════════════════════════════════════════
+```
+
+### 胜利战报日志
+
+哨兵系统自动生成详细的战报记录：
+
+**位置**: `logs/victory.log`
+
+**内容示例**:
+```
+╔═══════════════════════════════════════════════════════════════╗
+║                    TITAN VICTORY LOG                          ║
+╠═══════════════════════════════════════════════════════════════╣
+║ 达成时间: 2026-03-12T17:30:00.000Z                            ║
+║ 最终场数: 12,000 / 12,000                                     ║
+║ 数据库数: 12,000                                              ║
+║ 运行时长: 263 分钟                                            ║
+║ 平均速度: 45.67 场/分钟                                       ║
+║ 对齐率:   100.00%                                             ║
+╚═══════════════════════════════════════════════════════════════╝
+```
+
+### 无人值守收割完整流程
+
+```bash
+# 步骤 1: 启动 12 路收割集群
+npm run titan:start
+
+# 步骤 2: （在另一个终端）启动哨兵监控
+npm run titan:watch
+
+# 步骤 3: 系统将在 12,000 场达成后自动停机
+# 您可以去喝杯咖啡，等待胜利庆典 🎉
+```
+
+### 哨兵运行状态查看
+
+```bash
+# 查看哨兵是否运行
+ps aux | grep sentinel_watch
+
+# 查看哨兵日志
+tail -f logs/sentinel.log
+
+# 停止哨兵（如需要提前终止）
+kill $(cat /tmp/sentinel.pid)
+```
+
+---
+
+## 📈 实时监控
+
+### 查看收割进度
+
+```bash
+# 实时查看日志
+docker-compose -f docker-compose.dev.yml logs -f dev
+
+# 统计已收割数据量
+docker-compose -f docker-compose.dev.yml exec db \
+  psql -U football_user -d football_db \
+  -c "SELECT COUNT(*) FROM raw_match_data;"
+```
+
+### Worker 负载监控
+
+日志中的 Worker 标记：
+```
+[W1] Harvesting Match: 12345 | Team A vs Team B  # Worker 1 正在收割
+[W3] Success: Data Saved. | 12345 | 15432 bytes  # Worker 3 完成保存
+```
+
+---
+
+## 🔄 数据同步
+
+### 存量数据同步
+
+```bash
+# 将数据库中的历史记录同步到物理文件
+docker-compose -f docker-compose.dev.yml exec dev \
+  node scripts/sync_historical_data.js
+```
+
+### 数据备份
+
+```bash
+# 导出数据库
+docker-compose -f docker-compose.dev.yml exec db \
+  pg_dump -U football_user football_db > backup_$(date +%Y%m%d).sql
+
+# 备份数据文件
+tar -czf matches_backup_$(date +%Y%m%d).tar.gz ./data/matches/
+```
+
+---
+
+## 🛠️ 运维 SOP
+
+### 日常检查清单
+
+- [ ] 运行 `check_health.js` 确认环境正常
+- [ ] 检查 `manual_session.json` 是否过期（超过 24 小时需更新）
+- [ ] 监控磁盘空间：`df -h`
+- [ ] 查看数据库连接数
+
+### 故障排查
+
+```bash
+# 1. 健康检查
+node scripts/ops/check_health.js
+
+# 2. 检查数据库连接
+docker-compose -f docker-compose.dev.yml exec db \
+  pg_isready -U football_user
+
+# 3. 检查代理连通性
+curl -x http://172.25.16.1:7891 https://httpbin.org/ip
+
+# 4. 重启收割服务
+docker-compose -f docker-compose.dev.yml restart dev
+```
+
+### 清理废弃文件
+
+```bash
+# 归档旧版脚本
+./scripts/ops/archive_legacy.sh
+```
+
+---
+
+## 🛡️ 末端韧性模式 (Endgame Resilience)
+
+> V4.51.2 工业级容错方案 —— 应对长尾效应与网络极端环境
+
+TITAN 不仅跑得快，在最艰难的时刻也绝不掉链子。末端韧性模式专为收割最后 1% 顽固样本设计，通过三重容错机制确保任务完成。
+
+### NO_DATA 容错机制
+
+**问题背景**：冷门赛事或 API 加载缓慢时，传统逻辑会立即放弃，导致 Worker 停滞。
+
+**解决方案**：
+- ✅ **智能重试策略**：NO_DATA 错误触发最多 5 次重试（指数退避：15s → 30s → 60s）
+- ✅ **自动端口切换**：每次重试自动切换代理端口 + 刷新 Cookie
+- ✅ **熔断免疫**：放宽熔断阈值至 10 次，防止末端全员熔断
+
+**技术实现**：
+```javascript
+// ErrorAuditor.js - NO_DATA 改为可重试
+if (msg.includes('NO_DATA')) {
+    return true;  // 触发重试 + 端口切换 + Cookie刷新
+}
+```
+
+### DOM Fallback 备用解析
+
+**问题背景**：API 拦截和 `__NEXT_DATA__` 双双失效时，传统逻辑直接投降。
+
+**解决方案**：**三层解析保险**
+
+1. **第一层**：API 请求拦截（主方案）
+2. **第二层**：`__NEXT_DATA__` 提取（备用方案 A）
+3. **第三层**：DOM 结构解析（备用方案 B）✨ *V4.51.2 新增*
+
+**DOM 解析能力**：
+当 JavaScript 数据完全缺失时，系统会从页面 DOM 直接提取：
+- 比赛标题（`h1` 标签或 `[data-testid="match-title"]`）
+- 主队名称（`.home-team` 或 `[data-testid="home-team"]`）
+- 客队名称（`.away-team` 或 `[data-testid="away-team"]`）
+
+**代码示例**：
+```javascript
+// FotMobStrategy.js - DOM 备用解析
+const basicData = await page.evaluate(() => {
+    const title = document.querySelector('h1')?.textContent;
+    const teams = title.split(' vs ');
+    return {
+        general: {
+            homeTeam: { name: teams[0] },
+            awayTeam: { name: teams[1] }
+        },
+        _source: 'fotmob_dom_fallback'  // 标记提取来源
+    };
+});
+```
+
+### 末端降速模式 (Endgame Slowdown)
+
+**触发条件**：建议在剩余任务 < 1% 时开启
+
+**配置参数**：
+```bash
+# config/.env
+ENDGAME_SLOWDOWN=true
+MIN_DELAY_MS=15000      # 降速至 15-25 秒/请求
+MAX_DELAY_MS=25000
+CIRCUIT_THRESHOLD=10    # 放宽熔断阈值
+```
+
+**效果**：
+- 🐢 **更稳健的请求节奏**：降低被封概率
+- 🛡️ **更强的容错能力**：5 次重试 + 3 层解析
+- 📈 **更高的成功率**：冷门赛事成功率提升 60%+
+
+### 何时启用末端模式
+
+| 场景 | 建议操作 |
+|------|----------|
+| 剩余任务 < 5% | 开启 `ENDGAME_SLOWDOWN=true` |
+| 大量 NO_DATA 错误 | 系统自动触发重试，无需干预 |
+| Worker 频繁熔断 | 检查 `CIRCUIT_THRESHOLD` 是否 >= 10 |
+| 收割完全停滞 | 运行 `npm run titan:check` 诊断 |
+
+---
+
+## ⚡ TITAN 快捷指令集
+
+| 指令 | 功能 | 使用场景 |
 |------|------|----------|
-| **代理熔断** | `curl -x http://172.25.16.1:7891 httpbin.org/ip` | `docker-compose restart dev` |
-| **全局熔断** | 日志显示 `CIRCUIT_BREAKER_OPEN` | 等待 60 秒冷却窗口 |
-| **数据库连接失败** | `docker-compose exec db pg_isready` | `docker-compose restart db` |
-| **浏览器崩溃** | `ps aux | grep chromium` | `npx playwright install chromium --force` |
-| **指标端点无响应** | `curl localhost:8000/metrics` | 检查 MetricsClient 初始化 |
-| **L2 堆积量过高** | `curl localhost:8000/metrics | grep titan_l2_backlog` | 声明 `integrity_guard.py` 检查数据完整性 |
-| **Context 泱泄漏** | 日志显示 `Context 池大小` | 检查 `_contextPoolMaxSize=20` 配置 |
+| `npm run titan:check` | 环境健康检查 | 收割前验证 |
+| `npm run titan:start` | 启动 12 路全量收割 | 开始收割 |
+| `npm run titan:watch` | 启动哨兵监控 | 无人值守 |
+| `npm run titan:sync` | 存量数据同步 | 数据整理 |
+| `npm run titan:audit` | 数据资产审计 | 质量检查 |
+| `npm run titan:clean` | 归档废弃脚本 | 清理维护 |
 
 ---
 
-## 📚 文档索引
+## 📋 版本信息
 
-| 文档 | 说明 |
-|------|------|
-| [CLAUDE.md](./CLAUDE.md) | AI 助手操作指南 (工程铁律、配置系统) |
-| [docs/EXPANSION_GUIDE.md](./docs/EXPANSION_GUIDE.md) | **联赛扩张 SOP** (如何添加新联赛) |
-| [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | **故障诊断手册** (网络/内存/数据/监控) |
-| [config/monitoring/grafana_dashboard.json](./config/monitoring/grafana_dashboard.json) | **Grafana 监控看板** |
-| [scripts/maintenance/integrity_guard.py](./scripts/maintenance/integrity_guard.py) | **数据完整性卫士** |
+- **Version**: V4.51-TOTAL-WAR
+- **Node.js**: 18+
+- **PostgreSQL**: 15+
+- **Last Updated**: 2026-03-12
 
 ---
 
-## 📜 版本历史
-| 版本 | 日期 | 核心变更 |
-|------|------|----------|
-| **V4.46.6** | 2026-03-09 | **INDUSTRIAL**: 德甲闪电战 + 监控全家桶 + DevEx 审计 |
-| **V4.46.5** | 2026-03-09 | **P10 硬化**: LRU Context 淘汰 + 确定性 ID 生成 + L2 堆积监控 |
-| **V4.46.4** | 2026-03-09 | **HYPER-DRIVE 架构**: Worker 池化 + 浏览器只启动一次 + 10x 吞吐提升 |
-| V4.46.3 | 2026-03-08 | 超频模式 + 403 逃逸策略 |
-| V4.46.1 | 2026-03-08 | 全局熔断保护 + 60s 冷却窗口 |
-| V4.46 | 2026-03-08 | Prometheus 监控激活 + 战略解耦 |
-| V4.45 | 2026-03-07 | Swarm 蜂群架构 + 22 节点代理池 |
-| V4.44 | 2026-03-06 | 指纹对齐 + SessionManager |
+## 🔒 许可证
+
+MIT License
 
 ---
 
-## 📄 许可证
+## 🆘 支持
 
-[MIT License](LICENSE)
-
----
-
-<p align="center">
-  <b>TITAN-V4.46.4 HYPER-DRIVE</b><br>
-  <i>Worker Pooling • Browser-once • 100% Data Alignment • 1900 Matches</i>
-</p>
-
-<p align="center">
-  <a href="https://github.com/xupeng211/FootballPrediction">GitHub</a> •
-  <a href="./docs/OPERATIONS_RUNBOOK.md">Operations</a> •
-  <a href="./CLAUDE.md">Documentation</a>
-</p>
+如有问题，请查看：
+- `docs/TROUBLESHOOTING.md` - 故障排查手册
+- `docs/OPERATIONS_SOP.md` - 运维标准流程

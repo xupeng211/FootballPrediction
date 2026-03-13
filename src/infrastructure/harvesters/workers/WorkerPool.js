@@ -140,7 +140,10 @@ class WorkerPool {
                         return result;
                     } catch (error) {
                         this.stats.failedTasks++;
-                        throw error;
+                        // V4.51: 添加错误日志，确保异常不被吞没
+                        console.error(`❌ [WorkerPool] Worker ${workerId} 执行失败:`, error.message);
+                        // 返回失败结果而不是抛出，确保流程继续
+                        return { success: false, error: error.message, workerId };
                     } finally {
                         this.unregister(workerId);
                     }

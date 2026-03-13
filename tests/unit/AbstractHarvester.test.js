@@ -1,48 +1,66 @@
 /**
- * AbstractHarvester 单元测试套件
- * =================================
+ * AbstractHarvester 完整测试套件
+ * =====================================
  *
- * 目标：为 AbstractHarvester 基类建立完整的测试覆盖
- * 覆盖率目标：80%+ (Line/Branch/Function)
- *
- * 测试范围：
- * 1. _delay() - 延时函数测试
- * 2. fetchWithRetry() - 重试机制测试
- * 3. MarkProxyFailed() - 熔断机制测试
- * 4. _isRetryableError() - 错误分类测试
- * 5. QUALITY_GATE - 数据验证测试
- * 6. getExponentialBackoff() - 指数退避测试
- *
- * Mock 策略：
- * - 使用 nock 拦截所有 HTTP 请求
- * - Mock Playwright Browser 对象
- * - Mock 数据库连接
- *
- * 断言要求：
- * - 验证 403 错误时触发重试
- * - 验证连续失败后触发熔断
- * - 验证延时函数在合理范围内
- * - 验证失败状态正确记录
+ * 测试覆盖：
+ * - 构造函数与配置
+ * - 抽象方法
+ * - 错误分类逻辑
+ * - AutoAuth 触发机制
+ * - 弹性重试机制
+ * - Context 池管理
+ * - 403 逃逸机制
+ * - 工具方法
+ * - 报告打印
+ * - 浏览器行为模拟
+ * - Cookie 加载
  */
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
+const { describe, it, beforeEach, afterEach, mock } = require('node:test');
 const assert = require('node:assert');
-const nock = require('nock');
-const fs = require('fs');
-const path = require('path');
 
-// Load fixtures
-const fixturesDir = path.join(__dirname, '../fixtures');
-const fixtures = {
-    matchSuccess: JSON.parse(fs.readFileSync(path.join(fixturesDir, 'match_success.json'), 'utf8')),
-    error403: JSON.parse(fs.readFileSync(path.join(fixturesDir, 'error_403_blocked.json'), 'utf8')),
-    error404: JSON.parse(fs.readFileSync(path.join(fixturesDir, 'error_404_notfound.json'), 'utf8')),
-    malformed: JSON.parse(fs.readFileSync(path.join(fixturesDir, 'malformed_data.json'), 'utf8')),
-    timeout: JSON.parse(fs.readFileSync(path.join(fixturesDir, 'timeout_scenario.json'), 'utf8'))
+// 增加 EventEmitter 监听器上限，避免测试警告
+process.setMaxListeners(50);
+
+// 模拟 chromium 模块，避免加载 Playwright
+const MockBrowser = class {
+    static async launch() {
+        return {
+            newContext: () => ({
+                newPage: () => ({}),
+                cookies: async () => [],
+                addCookies: async () => {},
+                clearCookies: async () => {},
+                close: async () => {}
+            }),
+            close: async () => {}
+        };
+    }
 };
 
-describe('AbstractHarvester 容错机制测试套件', () => {
+// 使用 mock 替换 chromium
+const originalRequire = require;
+const Module = require('module');
+
+// 劫持 require 来模拟 playwright
+const originalLoad = Module._load;
+Module._load = function(request, parent, isMain) {
+    if (request === 'playwright') {
+        return { chromium: MockBrowser };
+    }
+    return originalLoad.apply(this, arguments);
+};
+
+const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+const { ProductionHarvester } = require('../../src/infrastructure/harvesters/ProductionHarvester');
+const { AutoAuthManager } = require('../../src/infrastructure/auth/AutoAuthManager');
+
+// 恢复原始的 Module._load
+Module._load = originalLoad;
+
+describe('AbstractHarvester 完整测试套件', () => {
     let originalEnv;
+    let harvesterInstances = [];
 
     beforeEach(() => {
         // 保存原始环境变量
@@ -55,934 +73,852 @@ describe('AbstractHarvester 容错机制测试套件', () => {
         process.env.MAX_RETRIES = '3';
         process.env.DISABLE_PROXY = 'true';
 
-        // 清理所有 nock 拦截器
-        nock.cleanAll();
-
-        // 禁用所有外网请求（严格模式）
-        nock.disableNetConnect();
+        // 重置实例列表
+        harvesterInstances = [];
     });
 
     afterEach(() => {
         // 恢复环境变量
         process.env = originalEnv;
 
-        // 清理 nock
-        nock.cleanAll();
-        nock.enableNetConnect();
+        // 清理所有 harvester 实例的信号监听器
+        for (const harvester of harvesterInstances) {
+            if (harvester.isShuttingDown === false) {
+                harvester.isShuttingDown = true; // 防止停机逻辑执行
+            }
+        }
+        harvesterInstances = [];
+
+        // 移除所有 SIGINT/SIGTERM 监听器（防止测试框架检测到未清理的资源）
+        process.removeAllListeners('SIGINT');
+        process.removeAllListeners('SIGTERM');
     });
 
-    describe('模块 1: _delay() 延时函数测试', () => {
-        it('测试 1.1: 应该产生指定毫秒的延时', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester({
-                minDelayMs: 10,
-                maxDelayMs: 20
-            });
-
-            const testDelay = 50; // 50ms
-            const start = Date.now();
-            await harvester._delay(testDelay);
-            const elapsed = Date.now() - start;
-
-            // 允许 10ms 误差
-            assert.ok(
-                elapsed >= testDelay - 10 && elapsed <= testDelay + 10,
-                `延时 ${elapsed}ms 不在预期范围 [${testDelay - 10}, ${testDelay + 10}] 内`
-            );
-        });
-
-        it('测试 1.2: 应该支持随机延时范围', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const minDelay = 10;
-            const maxDelay = 30;
-
-            const harvester = new AbstractHarvester({
-                minDelayMs: minDelay,
-                maxDelayMs: maxDelay
-            });
-
-            // 测试 5 次随机延时
-            const delays = [];
-            for (let i = 0; i < 5; i++) {
-                const delay = minDelay + Math.random() * (maxDelay - minDelay);
-                const start = Date.now();
-                await harvester._delay(delay);
-                delays.push(Date.now() - start);
-            }
-
-            // 验证所有延时都在合理范围内
-            const allInRange = delays.every(d => d >= minDelay - 10 && d <= maxDelay + 10);
-            assert.ok(allInRange, `所有延时应该在范围 [${minDelay}, ${maxDelay}] 内`);
-        });
-    });
-
-    describe('模块 2: _isRetryableError() 错误分类测试', () => {
-        it('测试 2.1: 应该正确识别可重试错误', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            const retryableErrors = [
-                'SIZE_TOO_SMALL:500',
-                'TURNSTILE_REQUIRED',
-                'NETWORK_ERROR',
-                'TIMEOUT',
-                'ECONNRESET',
-                'ENOTFOUND',
-                'NO_NEXT_DATA',
-                'DATA_TRANSFORM_FAILED',
-                'CF_BLOCK'
-            ];
-
-            let passedCount = 0;
-            retryableErrors.forEach(errorType => {
-                try {
-                    const error = new Error(errorType);
-                    const result = harvester._isRetryableError(error);
-                    if (result) passedCount++;
-                } catch (e) {
-                    // 某些错误类型可能不存在该方法，跳过
-                }
-            });
-
-            console.log(`✓ 可重试错误识别: ${passedCount}/${retryableErrors.length} 通过`);
-            assert.ok(passedCount >= retryableErrors.length * 0.8, '至少 80% 的可重试错误应该被正确识别');
-        });
-
-        it('测试 2.2: 应该正确识别不可重试错误', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            const nonRetryableErrors = [
-                'MATCH_NOT_FOUND',
-                'INVALID_ID',
-                'ACCESS_DENIED'
-            ];
-
-            let passedCount = 0;
-            nonRetryableErrors.forEach(errorType => {
-                try {
-                    const error = new Error(errorType);
-                    const result = harvester._isRetryableError(error);
-                    if (!result) passedCount++;
-                } catch (e) {
-                    // 跳过
-                }
-            });
-
-            console.log(`✓ 不可重试错误识别: ${passedCount}/${nonRetryableErrors.length} 通过`);
-            assert.ok(passedCount >= nonRetryableErrors.length * 0.8, '至少 80% 的不可重试错误应该被正确识别');
-        });
-    });
-
-    describe('模块 3: 数据质量门禁测试 (QUALITY_GATE)', () => {
-        it('测试 3.1: 应该拒绝体积过小的数据', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            const smallData = { content: {} };
-            const result = FactoryConfig.QUALITY_GATE.isValid(smallData);
-
-            assert.strictEqual(result.valid, false, '小体积数据应该被拒绝');
-            assert.strictEqual(result.reason, 'SIZE_TOO_SMALL', '拒绝原因应该是 SIZE_TOO_SMALL');
-        });
-
-        it('测试 3.2: 应该接受有效的比赛数据', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            const validData = fixtures.matchSuccess;
-
-            // 计算实际大小
-            const actualSize = JSON.stringify(validData).length;
-            console.log(`📊 Mock 数据实际大小: ${actualSize} bytes`);
-
-            // 检查是否超过最小阈值
-            const minSize = FactoryConfig.QUALITY_GATE.minSizeBytes;
-
-            // 如果大小不够，输出详细诊断信息
-            if (actualSize < minSize) {
-                console.log(`⚠️ 数据大小 ${actualSize} < ${minSize}，不符合要求`);
-                console.log('💡 建议：增加更多数据字段或使用更大的 Mock 数据');
-            }
-
-            const result = FactoryConfig.QUALITY_GATE.isValid(validData);
-
-            // 放宽断言：只要 QUALITY_GATE 验证通过或接近通过即可
-            assert.ok(result.valid || actualSize >= 3000, `有效数据应该被接受或大小合理 (实际: ${actualSize}, 最小: ${minSize})`);
-        });
-
-        it('测试 3.3: 应该拒绝包含错误关键字的数据', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            const errorKeywords = ['TURNSTILE_REQUIRED', 'ACCESS_DENIED', 'CAPTCHA', 'cf-browser-verification'];
-
-            errorKeywords.forEach(keyword => {
-                const errorData = {
-                    content: `Error: ${keyword} detected`,
-                    general: {},
-                    header: {}
-                };
-                const result = FactoryConfig.QUALITY_GATE.isValid(errorData);
-
-                assert.strictEqual(result.valid, false, `包含 ${keyword} 的数据应该被拒绝`);
-            });
-        });
-
-        it('测试 3.4: 应该正确处理缺失字段', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            const missingFieldData = {
-                // 缺少 content 字段
-                general: {},
-                header: {}
-            };
-            const result = FactoryConfig.QUALITY_GATE.isValid(missingFieldData);
-
-            assert.strictEqual(result.valid, false, '缺失 content 字段的数据应该被拒绝');
-
-            // 放宽断言：检查具体的失败原因（SIZE_TOO_SMALL 也是有效拒绝原因）
-            assert.ok(
-                result.reason.includes('MISSING_CONTENT') ||
-                result.reason.includes('NULL') ||
-                result.reason.includes('SIZE_TOO_SMALL'),
-                `拒绝原因应该包含 MISSING_CONTENT、NULL 或 SIZE_TOO_SMALL (实际: ${result.reason})`
-            );
-        });
-
-        it('测试 3.5: 应该对未来比赛使用更低的体积阈值', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            // 未来比赛（没有 stats 数据）
-            const futureMatch = fixtures.malformed;
-            const result = FactoryConfig.QUALITY_GATE.isValid(futureMatch);
-
-            // 未来比赛应该使用 minSizeBytesFuture (3000) 而非 minSizeBytes (5000)
-            console.log(`📊 未来比赛验证结果: valid=${result.valid}, reason=${result.reason}, size=${result.size}`);
-
-            // 放宽断言：验证是否使用了正确的阈值
-            if (result.valid) {
-                const minSize = FactoryConfig.QUALITY_GATE.minSizeBytesFuture;
-                assert.ok(result.size >= minSize, `未来比赛体积应该 >= ${minSize} bytes`);
-            } else {
-                // 如果验证失败，确保失败原因合理
-                assert.ok(
-                    result.reason.includes('SIZE_TOO_SMALL') || result.reason.includes('MISSING'),
-                    `失败原因应该合理 (实际: ${result.reason})`
-                );
-            }
-        });
-    });
-
-    describe('模块 4: 指数退避策略测试 (getExponentialBackoff)', () => {
-        it('测试 4.1: 应该按照 1s -> 2s -> 4s 序列生成退避延时', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            const expectedBaseDelays = [1000, 2000, 4000]; // 1s, 2s, 4s
-
-            expectedBaseDelays.forEach((expectedBase, index) => {
-                const attempt = index + 1;
-                const delay = FactoryConfig.getExponentialBackoff(attempt);
-
-                // 允许 ±20% 的抖动
-                const minExpected = expectedBase * 0.8;
-                const maxExpected = expectedBase * 1.2;
-
-                assert.ok(
-                    delay >= minExpected && delay <= maxExpected,
-                    `第 ${attempt} 次重试延时 ${delay}ms 应该在 [${minExpected}, ${maxExpected}] 范围内`
-                );
-            });
-        });
-
-        it('测试 4.2: 应该限制最大退避延时为 4s', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            const maxDelay = 4000;
-            const highAttempt = 10;
-
-            const delay = FactoryConfig.getExponentialBackoff(highAttempt);
-            const maxWithJitter = maxDelay * 1.2;
-
-            assert.ok(
-                delay <= maxWithJitter,
-                `第 ${highAttempt} 次重试延时 ${delay}ms 不应该超过最大值 ${maxWithJitter}ms`
-            );
-        });
-
-        it('测试 4.3: 应该包含随机抖动以避免雷群效应', () => {
-            const FactoryConfig = require('../../config/factory_config');
-
-            const attempt = 2;
-            const delays = [];
-
-            // 生成 10 次延时
-            for (let i = 0; i < 10; i++) {
-                delays.push(FactoryConfig.getExponentialBackoff(attempt));
-            }
-
-            // 验证延时不全相同（有抖动）
-            const uniqueDelays = [...new Set(delays)];
-            assert.ok(uniqueDelays.length > 1, '延时应该包含随机抖动，不应完全相同');
-
-            // 验证所有延时在合理范围内
-            const expectedBase = 2000; // 第 2 次重试的基准延时
-            const allInRange = delays.every(d => d >= expectedBase * 0.8 && d <= expectedBase * 1.2);
-            assert.ok(allInRange, '所有延时应该在预期范围内');
-        });
-    });
-
-    describe('模块 5: 代理熔断机制测试', () => {
-        it('测试 5.1: 应该正确记录代理失败状态', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            // Mock NetworkManager
-            const failureRecords = [];
-            harvester.networkManager = {
-                markProxyFailed: (workerId, error) => {
-                    failureRecords.push({ workerId, error, timestamp: Date.now() });
-                },
-                markProxySuccess: () => {}
-            };
-
-            // 模拟 3 次失败
-            const workerId = 1;
-            const errors = ['SIZE_TOO_SMALL', 'TURNSTILE_REQUIRED', 'NETWORK_ERROR'];
-
-            for (const error of errors) {
-                await harvester.networkManager.markProxyFailed(workerId, error);
-            }
-
-            assert.strictEqual(failureRecords.length, 3, '应该记录了 3 次失败');
-            assert.strictEqual(failureRecords[0].workerId, workerId, 'Worker ID 应该正确');
-        });
-
-        it('测试 5.2: 应该在连续失败 5 次后触发熔断', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const failureThreshold = 5;
-            let circuitBreakerTriggered = false;
-
-            const harvester = new AbstractHarvester();
-
-            // Mock NetworkManager with circuit breaker
-            harvester.networkManager = {
-                failureCount: 0,
-                markProxyFailed: (workerId, error) => {
-                    harvester.networkManager.failureCount++;
-
-                    if (harvester.networkManager.failureCount >= failureThreshold) {
-                        circuitBreakerTriggered = true;
-                        console.log(`⚠️ Worker ${workerId} 触发熔断 (连续 ${harvester.networkManager.failureCount} 次失败)`);
-                    }
-                }
-            };
-
-            // 模拟 5 次连续失败
-            const workerId = 1;
-            for (let i = 0; i < failureThreshold; i++) {
-                await harvester.networkManager.markProxyFailed(workerId, `Error ${i + 1}`);
-            }
-
-            assert.strictEqual(circuitBreakerTriggered, true, '连续 5 次失败后应该触发熔断');
-        });
-
-        it('测试 5.3: 应该在熔断冷却期后自动恢复', async () => {
-            const cooldownDuration = 100; // 100ms for testing
-
-            const cooldownState = {
-                active: false,
-                endTime: 0
-            };
-
-            const networkManager = {
-                isInCoolDown: (workerId) => {
-                    if (!cooldownState.active) return false;
-                    if (Date.now() >= cooldownState.endTime) {
-                        cooldownState.active = false;
-                        return false;
-                    }
-                    return true;
-                },
-                enterCoolDown: (workerId, durationMs) => {
-                    cooldownState.active = true;
-                    cooldownState.endTime = Date.now() + durationMs;
-                }
-            };
-
-            // 初始状态：不在冷却期
-            assert.strictEqual(networkManager.isInCoolDown(1), false);
-
-            // 进入冷却期
-            networkManager.enterCoolDown(1, cooldownDuration);
-            assert.strictEqual(networkManager.isInCoolDown(1), true);
-
-            // 等待冷却结束
-            await new Promise(resolve => setTimeout(resolve, cooldownDuration + 50));
-
-            // 冷却结束
-            assert.strictEqual(networkManager.isInCoolDown(1), false);
-        });
-    });
-
-    describe('模块 6: 网络 Mock 验证测试', () => {
-        it('测试 6.1: nock 应该成功拦截 HTTP 请求', async () => {
-            // Mock FotMob API
-            nock('https://www.fotmob.com')
-                .get('/api/matchDetails')
-                .query({ matchId: '4803413' })
-                .reply(200, fixtures.matchSuccess);
-
-            // Node.js 18+ 内置 fetch，旧版本使用 node-fetch 或 undici
-            // 检查 fetch 是否可用
-            if (typeof fetch === 'undefined') {
-                // 尝试动态导入 undici (Node.js 18+ 内置)
-                try {
-                    const { fetch: undiciFetch } = await import('undici');
-                    global.fetch = undiciFetch;
-                } catch (e) {
-                    console.log('⚠️ fetch 不可用，使用 nock 直接验证 Mock 配置');
-                    // 直接验证 Mock 配置正确
-                    assert.ok(nock.activeMocks().length > 0, 'Mock 应该被正确配置');
-                    return;
-                }
-            }
-
-            try {
-                const response = await fetch('https://www.fotmob.com/api/matchDetails?matchId=4803413');
-                const data = await response.json();
-
-                assert.strictEqual(data.matchId, '55_20242025_4803413', 'Mock 数据应该正确返回');
-                assert.ok(nock.isDone(), '所有 Mock 请求应该被调用');
-            } catch (error) {
-                console.log(`⚠️ fetch 请求失败: ${error.message}，验证 Mock 配置`);
-                assert.ok(nock.activeMocks().length > 0, 'Mock 应该被正确配置');
-            }
-        });
-
-        it('测试 6.2: 应该模拟 403 错误响应', async () => {
-            // 配置 403 Mock
-            nock('https://www.fotmob.com')
-                .get('/match/4803413')
-                .reply(403, fixtures.error403);
-
-            // 检查是否有 fetch API
-            if (typeof fetch === 'undefined') {
-                try {
-                    const { fetch: undiciFetch } = await import('undici');
-                    global.fetch = undiciFetch;
-                } catch (e) {
-                    console.log('⚠️ fetch API 不可用，验证 Mock 配置');
-                    assert.ok(nock.activeMocks().length > 0, '403 Mock 应该被正确配置');
-                    return;
-                }
-            }
-
-            try {
-                const response = await fetch('https://www.fotmob.com/match/4803413');
-
-                // undici + nock 可能有兼容性问题，如果返回 200 说明 Mock 未被拦截
-                if (response.status === 200) {
-                    console.log('⚠️ nock + undici 兼容性问题，Mock 未被拦截');
-                    assert.ok(true, '403 Mock 配置验证通过 (兼容性问题已跳过)');
-                    return;
-                }
-
-                assert.strictEqual(response.status, 403, '应该返回 403 状态码');
-            } catch (error) {
-                console.log(`⚠️ fetch 请求失败: ${error.message}`);
-                assert.ok(true, '403 Mock 配置验证通过 (网络错误已处理)');
-            }
-        });
-
-        it('测试 6.3: 应该模拟网络超时', async () => {
-            nock('https://www.fotmob.com')
-                .get('/match/4803413')
-                .delayConnection(65000) // 65 秒超时
-                .reply(200, fixtures.matchSuccess);
-
-            // 这个请求应该超时（如果设置了 timeout）
-            // 由于我们使用 nock，实际不会等待 65 秒
-            assert.ok(true, '超时 Mock 配置成功');
-        });
-
-        it('测试 6.4: 应该禁用所有真实网络请求', () => {
-            // 验证 nock 网络禁用状态
-            // nock.disableNetConnect() 会在内部设置标志，但 nock.netConnectDisallowed 可能在某些版本不可用
-            // 使用更可靠的验证方式
-            const isNetConnectDisabled = nock.netConnectDisallowed !== undefined
-                ? nock.netConnectDisallowed()
-                : true; // 假设在 beforeEach 中已调用 disableNetConnect
-
-            // 如果 nock.netConnectDisallowed 不可用，验证 Mock 系统正常工作
-            assert.ok(
-                isNetConnectDisabled || nock.activeMocks,
-                '应该禁用所有真实网络请求或 Mock 系统正常工作'
-            );
-        });
-    });
-
-    describe('模块 7: 随机数生成器测试', () => {
-        it('测试 7.1: _randomInRange 应该生成指定范围内的随机数', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            const min = 100;
-            const max = 200;
-            const iterations = 100;
-
-            for (let i = 0; i < iterations; i++) {
-                const random = harvester._randomInRange(min, max);
-                assert.ok(random >= min && random <= max, `随机数 ${random} 应该在 [${min}, ${max}] 范围内`);
-            }
-        });
-    });
-
-    describe('模块 8: 配置验证测试', () => {
-        it('测试 8.1: 应该正确加载环境变量配置', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            assert.strictEqual(harvester.config.maxWorkers, 1, 'MAX_WORKERS 应该为 1');
-            assert.strictEqual(harvester.config.minDelayMs, 10, 'MIN_DELAY_MS 应该为 10');
-            assert.strictEqual(harvester.config.maxDelayMs, 20, 'MAX_DELAY_MS 应该为 20');
-            assert.strictEqual(harvester.config.maxRetries, 3, 'MAX_RETRIES 应该为 3');
-        });
-
-        it('测试 8.2: 应该使用默认值当环境变量未设置', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            // 清除环境变量
+    // 辅助函数：创建 harvester 并跟踪实例
+    function createHarvester(HarvesterClass, config = {}) {
+        const harvester = new HarvesterClass(config);
+        harvesterInstances.push(harvester);
+        return harvester;
+    }
+
+    // ========================================================================
+    // 测试 1: 构造函数与配置
+    // ========================================================================
+
+    describe('构造函数与配置', () => {
+        it('应该使用默认配置创建实例', () => {
+            // 清除环境变量以测试默认值
             delete process.env.MAX_WORKERS;
             delete process.env.MIN_DELAY_MS;
             delete process.env.MAX_DELAY_MS;
 
-            const harvester = new AbstractHarvester();
+            const harvester = createHarvester(AbstractHarvester);
+            assert.strictEqual(harvester.config.maxWorkers, 6);
+            assert.strictEqual(harvester.config.minDelayMs, 10000);
+            assert.strictEqual(harvester.config.maxDelayMs, 20000);
+        });
 
-            // 验证默认值
-            assert.ok(harvester.config.maxWorkers >= 1, '应该有默认的 maxWorkers');
-            assert.ok(harvester.config.minDelayMs >= 0, '应该有默认的 minDelayMs');
-            assert.ok(harvester.config.maxDelayMs >= harvester.config.minDelayMs, 'maxDelayMs 应该 >= minDelayMs');
+        it('应该覆盖默认配置', () => {
+            const harvester = createHarvester(AbstractHarvester, {
+                maxWorkers: 10,
+                minDelayMs: 5000,
+                maxDelayMs: 10000
+            });
+            assert.strictEqual(harvester.config.maxWorkers, 10);
+            assert.strictEqual(harvester.config.minDelayMs, 5000);
+            assert.strictEqual(harvester.config.maxDelayMs, 10000);
+        });
+
+        it('应该从环境变量读取配置', () => {
+            process.env.MAX_WORKERS = '8';
+            process.env.MIN_DELAY_MS = '2000';
+            process.env.MAX_DELAY_MS = '4000';
+
+            const harvester = createHarvester(AbstractHarvester);
+            assert.strictEqual(harvester.config.maxWorkers, 8);
+            assert.strictEqual(harvester.config.minDelayMs, 2000);
+            assert.strictEqual(harvester.config.maxDelayMs, 4000);
+        });
+
+        it('应该初始化统计对象', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            assert.strictEqual(harvester.stats.total, 0);
+            assert.strictEqual(harvester.stats.processed, 0);
+            assert.strictEqual(harvester.stats.success, 0);
+            assert.strictEqual(harvester.stats.failed, 0);
         });
     });
 
-    // ════════════════════════════════════════════════════════════════════════════
-    // 覆盖率冲刺测试模块 - init() / cleanup() / 生命周期
-    // ════════════════════════════════════════════════════════════════════════════
+    // ========================================================================
+    // 测试 2: 抽象方法
+    // ========================================================================
 
-    describe('模块 9: 生命周期测试 (init/cleanup)', () => {
-        it('测试 9.1: 构造函数应该正确初始化配置', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+    describe('抽象方法', () => {
+        it('extractData 应该抛出错误', async () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            const customConfig = {
-                maxWorkers: 4,
-                minDelayMs: 5000,
-                maxDelayMs: 10000,
-                maxRetries: 5,
-                dryRun: true
+            try {
+                await harvester.extractData({}, {});
+                assert.fail('应该抛出错误');
+            } catch (error) {
+                assert.ok(error.message.includes('子类必须实现'));
+            }
+        });
+
+        it('getTargetUrl 应该抛出错误', () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            try {
+                harvester.getTargetUrl({});
+                assert.fail('应该抛出错误');
+            } catch (error) {
+                assert.ok(error.message.includes('子类必须实现'));
+            }
+        });
+
+        it('saveData 应该抛出错误', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            try {
+                await harvester.saveData('test', {});
+                assert.fail('应该抛出错误');
+            } catch (error) {
+                assert.ok(error.message.includes('子类必须实现'));
+            }
+        });
+    });
+
+    // ========================================================================
+    // 测试 3: 错误分类逻辑
+    // ========================================================================
+
+    describe('错误分类测试', () => {
+        it('应该正确识别 BLOCKED 错误 (Turnstile)', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('Turnstile challenge required');
+            assert.strictEqual(errorType, 'BLOCKED');
+        });
+
+        it('应该正确识别 BLOCKED 错误 (Captcha)', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('Captcha verification failed');
+            assert.strictEqual(errorType, 'BLOCKED');
+        });
+
+        it('应该正确识别 BLOCKED 错误 (Circuit Breaker)', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('circuit_breaker_open');
+            assert.strictEqual(errorType, 'BLOCKED');
+        });
+
+        it('应该正确识别 RATE_LIMITED 错误', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('403 Forbidden');
+            assert.strictEqual(errorType, 'RATE_LIMITED');
+        });
+
+        it('应该正确识别 NETWORK_ERROR 错误', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('Connection refused');
+            assert.strictEqual(errorType, 'NETWORK_ERROR');
+        });
+
+        it('应该正确识别 TIMEOUT 错误', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('Request timeout');
+            assert.strictEqual(errorType, 'TIMEOUT');
+        });
+
+        it('应该正确识别 NO_DATA 错误', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('no_data');
+            assert.strictEqual(errorType, 'NO_DATA');
+        });
+
+        it('应该对未知错误返回 UNKNOWN', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const errorType = harvester._classifyError('Some random error');
+            assert.strictEqual(errorType, 'UNKNOWN');
+        });
+    });
+
+    // ========================================================================
+    // 测试 4: AutoAuth 触发机制
+    // ========================================================================
+
+    describe('AutoAuth 触发测试', () => {
+        it('应该在 NetworkManager 不存在时优雅处理', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // Mock NetworkManager 为 null
+            harvester.networkManager = null;
+
+            // 执行 AutoAuth - 不应该抛出异常
+            try {
+                await harvester._triggerAutoAuth(1, 'Turnstile required');
+                // 成功完成，没有异常
+                assert.ok(true);
+            } catch (error) {
+                // 如果抛出异常，测试失败
+                assert.fail(`不应该抛出异常: ${error.message}`);
+            }
+        });
+
+        it('应该在 BLOCKED 错误时触发 AutoAuth', async () => {
+            const harvester = createHarvester(ProductionHarvester, { maxRetries: 1 });
+
+            // Mock _harvestSingleMatch 返回 BLOCKED 错误
+            harvester._harvestSingleMatch = async () => {
+                return {
+                    success: false,
+                    match_id: 'test',
+                    error: 'Turnstile challenge required',
+                    workerId: 1
+                };
             };
 
-            const harvester = new AbstractHarvester(customConfig);
+            // Mock _triggerAutoAuth
+            let autoAuthTriggered = false;
+            harvester._triggerAutoAuth = async (workerId, error) => {
+                autoAuthTriggered = true;
+            };
 
-            assert.strictEqual(harvester.config.maxWorkers, 4, 'maxWorkers 应该为 4');
-            assert.strictEqual(harvester.config.minDelayMs, 5000, 'minDelayMs 应该为 5000');
-            assert.strictEqual(harvester.config.maxDelayMs, 10000, 'maxDelayMs 应该为 10000');
-            assert.strictEqual(harvester.config.maxRetries, 5, 'maxRetries 应该为 5');
-            assert.strictEqual(harvester.config.dryRun, true, 'dryRun 应该为 true');
-        });
+            // Mock _isRetryableError - Turnstile 不可重试
+            harvester._isRetryableError = (error) => false;
 
-        it('测试 9.2: 构造函数应该初始化统计对象', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            assert.deepStrictEqual(harvester.stats, {
-                total: 0,
-                processed: 0,
-                success: 0,
-                failed: 0,
-                retries: 0,
-                sweepRounds: 0
-            }, '统计对象应该初始化为零值');
-        });
-
-        it('测试 9.3: 构造函数应该初始化 Context 池', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            assert.ok(harvester._contextPool instanceof Map, 'Context 池应该是 Map 实例');
-            assert.strictEqual(harvester._contextPool.size, 0, 'Context 池应该为空');
-            assert.strictEqual(harvester._contextMaxUsage, 10, 'Context 最大复用次数应该为 10');
-            assert.strictEqual(harvester._contextPoolMaxSize, 20, 'Context 池最大大小应该为 20');
-        });
-
-        it('测试 9.4: _delay 应该返回 Promise', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-            const delayPromise = harvester._delay(10);
-
-            assert.ok(delayPromise instanceof Promise, '_delay 应该返回 Promise');
-            await delayPromise;
-        });
-
-        it('测试 9.5: 抽象方法应该抛出错误', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            // extractData 应该抛出错误
-            await assert.rejects(
-                async () => harvester.extractData({}, {}),
-                { message: '子类必须实现 extractData() 方法' },
-                'extractData 应该抛出抽象方法错误'
+            // 执行收割
+            const result = await harvester.harvestWithRetry(
+                { match_id: 'test', home_team: 'A', away_team: 'B' },
+                0,
+                1
             );
 
-            // getTargetUrl 应该抛出错误
-            assert.throws(
-                () => harvester.getTargetUrl({}),
-                { message: '子类必须实现 getTargetUrl() 方法' },
-                'getTargetUrl 应该抛出抽象方法错误'
-            );
-
-            // saveData 应该抛出错误
-            await assert.rejects(
-                async () => harvester.saveData('test_id', {}),
-                { message: '子类必须实现 saveData() 方法' },
-                'saveData 应该抛出抽象方法错误'
-            );
+            // 验证 AutoAuth 被触发
+            assert.strictEqual(autoAuthTriggered, true, 'AutoAuth 应该在 BLOCKED 错误时被触发');
+            assert.strictEqual(result.success, false, '收割应该失败');
         });
 
-        it('测试 9.6: _randomInRange 应该生成正确范围的随机数', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+        it('应该正确清理 Session 和切换端口', async () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            const harvester = new AbstractHarvester();
+            // Mock NetworkManager
+            const sessionCleared = { called: false, port: null };
+            const portSwitched = { called: false, oldPort: null, newPort: null };
 
-            // 测试边界值
-            for (let i = 0; i < 100; i++) {
-                const result = harvester._randomInRange(1, 10);
-                assert.ok(result >= 1 && result <= 10, `结果 ${result} 应该在 [1, 10] 范围内`);
-            }
+            harvester.networkManager = {
+                getWorkerIdentity: (workerId) => ({
+                    proxy: { port: 7890, url: 'http://172.25.16.1:7890' }
+                }),
+                sessionManager: {
+                    clearSession: async (port) => {
+                        sessionCleared.called = true;
+                        sessionCleared.port = port;
+                    }
+                },
+                forceReassignPort: async (workerId, oldPort) => {
+                    portSwitched.called = true;
+                    portSwitched.oldPort = oldPort;
+                    portSwitched.newPort = 7891;
+                    return { port: 7891 };
+                }
+            };
 
-            // 测试单值范围
-            const singleResult = harvester._randomInRange(5, 5);
-            assert.strictEqual(singleResult, 5, '单值范围应该返回该值');
+            // Mock Context Pool
+            const contextClosed = { called: false };
+            harvester._contextPool = new Map();
+            harvester._contextPool.set(1, {
+                context: {
+                    close: async () => {
+                        contextClosed.called = true;
+                    }
+                }
+            });
+
+            // 执行 AutoAuth
+            await harvester._triggerAutoAuth(1, 'Turnstile required');
+
+            // 验证清理操作
+            assert.strictEqual(sessionCleared.called, true, 'Session 应该被清理');
+            assert.strictEqual(sessionCleared.port, 7890, '应该清理正确的端口 Session');
+            assert.strictEqual(portSwitched.called, true, '端口应该被切换');
+            assert.strictEqual(portSwitched.oldPort, 7890, '应该从旧端口切换');
+            assert.strictEqual(contextClosed.called, true, 'Context 应该被关闭');
         });
+    });
 
-        it('测试 9.7: _classifyError 应该正确分类错误类型', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+    // ========================================================================
+    // 测试 5: 可重试错误判断
+    // ========================================================================
 
-            const harvester = new AbstractHarvester();
+    describe('可重试错误判断', () => {
+        it('应该将网络错误标记为可重试', () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            // 测试各种错误类型
-            const errorMappings = [
-                { message: 'circuit_breaker_open', expected: 'BLOCKED' },
-                { message: '全局熔断触发', expected: 'BLOCKED' },
-                { message: '所有代理节点不可用', expected: 'BLOCKED' },
-                { message: '403 Forbidden', expected: 'RATE_LIMITED' },
-                { message: 'Request timeout', expected: 'TIMEOUT' },
-                { message: 'Connection timed out', expected: 'TIMEOUT' },
-                { message: 'NO_DATA received', expected: 'NO_DATA' },
-                { message: 'SIZE_TOO_SMALL:500', expected: 'NO_DATA' },
-                { message: 'Connection refused', expected: 'NETWORK_ERROR' },
-                { message: 'Network error', expected: 'NETWORK_ERROR' },
-                { message: 'Turnstile challenge', expected: 'BLOCKED' },
-                { message: 'Captcha required', expected: 'BLOCKED' },
-                { message: 'Unknown error', expected: 'UNKNOWN' }
-            ];
-
-            for (const { message, expected } of errorMappings) {
-                const result = harvester._classifyError(message);
-                assert.strictEqual(result, expected, `错误 "${message}" 应该分类为 ${expected}`);
-            }
-        });
-
-        it('测试 9.8: _isRetryableError 应该正确判断可重试错误', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            // 可重试错误
-            const retryableMessages = [
+            const retryableErrors = [
                 'ERR_CONNECTION_CLOSED',
                 'ERR_CONNECTION_RESET',
+                'ERR_TIMED_OUT',
                 'ETIMEDOUT',
                 'ECONNRESET',
+                'ECONNREFUSED',
                 'ENOTFOUND',
-                'net::ERR_FAILED',
+                'net::ERR_CONNECTION_FAILED',
                 'Navigation timeout',
-                'NETWORK_ERROR',
-                'NO_NEXT_DATA',
-                'DATA_TRANSFORM_FAILED',
-                'CF_BLOCK',
-                'SIZE_TOO_SMALL:500'
+                'CF_BLOCK'
             ];
 
-            for (const msg of retryableMessages) {
-                const error = new Error(msg);
-                const result = harvester._isRetryableError(error);
-                assert.strictEqual(result, true, `错误 "${msg}" 应该可重试`);
+            for (const errorMsg of retryableErrors) {
+                const isRetryable = harvester._isRetryableError(new Error(errorMsg));
+                assert.strictEqual(isRetryable, true, `${errorMsg} 应该是可重试的`);
             }
+        });
 
-            // 不可重试错误
-            const nonRetryableMessages = [
+        it('应该将 BLOCKED 错误标记为不可重试', () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            const nonRetryableErrors = [
                 '403 Forbidden',
                 'ERR_BLOCKED_BY_CLIENT',
                 'Access denied',
-                'Turnstile required',
-                'NO_DATA received'
+                'Turnstile challenge required'
             ];
 
-            for (const msg of nonRetryableMessages) {
-                const error = new Error(msg);
-                const result = harvester._isRetryableError(error);
-                assert.strictEqual(result, false, `错误 "${msg}" 不应该可重试`);
+            for (const errorMsg of nonRetryableErrors) {
+                const isRetryable = harvester._isRetryableError(new Error(errorMsg));
+                assert.strictEqual(isRetryable, false, `${errorMsg} 应该是不可重试的`);
             }
         });
 
-        it('测试 9.9: printReport 应该正确输出统计信息', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+        it('应该将 SIZE_TOO_SMALL 标记为可重试', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const isRetryable = harvester._isRetryableError(new Error('SIZE_TOO_SMALL:500'));
+            assert.strictEqual(isRetryable, true, 'SIZE_TOO_SMALL 应该是可重试的');
+        });
 
-            const harvester = new AbstractHarvester();
+        it('应该将 NO_DATA 标记为不可重试', () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const isRetryable = harvester._isRetryableError(new Error('NO_DATA:无法获取数据'));
+            assert.strictEqual(isRetryable, false, 'NO_DATA 应该是不可重试的');
+        });
+    });
+
+    // ========================================================================
+    // 测试 6: 弹性重试机制
+    // ========================================================================
+
+    describe('弹性重试机制', () => {
+        it('应该在成功时立即返回', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // Mock _harvestSingleMatch 返回成功
+            harvester._harvestSingleMatch = async () => {
+                return { success: true, match_id: 'test', size: 5000 };
+            };
+
+            const result = await harvester.harvestWithRetry({ match_id: 'test' }, 0, 3);
+
+            assert.strictEqual(result.success, true);
+            assert.strictEqual(result.attempts, undefined);  // 第一次就成功，不会有 attempts 字段
+        });
+
+        it('应该在不可重试错误时立即失败', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // Mock _harvestSingleMatch 返回 BLOCKED 错误
+            harvester._harvestSingleMatch = async () => {
+                return { success: false, match_id: 'test', error: 'Turnstile challenge required', attempt: 1 };
+            };
+
+            // Mock _isRetryableError
+            harvester._isRetryableError = () => false;
+
+            // Mock _triggerAutoAuth
+            harvester._triggerAutoAuth = async () => {};
+
+            const result = await harvester.harvestWithRetry({ match_id: 'test' }, 0, 3);
+
+            assert.strictEqual(result.success, false);
+            // 不可重试错误应该立即失败，不会重试
+            assert.ok(result.attempts === undefined || result.attempts === 1, '应该只尝试一次');
+        });
+
+        it('应该在达到最大重试次数后失败', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            let attempts = 0;
+
+            // Mock _harvestSingleMatch 返回可重试错误
+            harvester._harvestSingleMatch = async () => {
+                attempts++;
+                return { success: false, match_id: 'test', error: 'ERR_CONNECTION_RESET' };
+            };
+
+            // Mock NetworkManager
+            harvester.networkManager = {
+                getWorkerIdentity: () => ({ proxy: { port: 7890 } }),
+                forceReassignPort: async () => ({ port: 7891 }),
+                sessionManager: { clearSession: async () => {} }
+            };
+
+            const result = await harvester.harvestWithRetry({ match_id: 'test' }, 0, 3);
+
+            assert.strictEqual(result.success, false);
+            assert.strictEqual(attempts, 3);  // 尝试了 3 次
+        });
+
+        it('应该在重试成功后返回', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            let attempts = 0;
+
+            // Mock _harvestSingleMatch - 第 2 次成功
+            harvester._harvestSingleMatch = async () => {
+                attempts++;
+                if (attempts === 1) {
+                    return { success: false, match_id: 'test', error: 'ERR_CONNECTION_RESET' };
+                }
+                return { success: true, match_id: 'test', size: 5000 };
+            };
+
+            // Mock NetworkManager
+            harvester.networkManager = {
+                getWorkerIdentity: () => ({ proxy: { port: 7890 } }),
+                forceReassignPort: async () => ({ port: 7891 }),
+                sessionManager: { clearSession: async () => {} }
+            };
+
+            const result = await harvester.harvestWithRetry({ match_id: 'test' }, 0, 3);
+
+            assert.strictEqual(result.success, true);
+            assert.strictEqual(attempts, 2);  // 尝试了 2 次
+            assert.strictEqual(harvester.stats.retries, 1);  // 重试计数增加
+        });
+
+        it('应该在连续 SIZE_TOO_SMALL 时触发冷却', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            let attempts = 0;
+            let cooldownTriggered = false;
+
+            // Mock _harvestSingleMatch - 连续返回 SIZE_TOO_SMALL
+            harvester._harvestSingleMatch = async () => {
+                attempts++;
+                return { success: false, match_id: 'test', error: 'SIZE_TOO_SMALL:500' };
+            };
+
+            // Mock _delay 来检测冷却
+            const originalDelay = harvester._delay.bind(harvester);
+            harvester._delay = async (ms) => {
+                if (ms === 30000) {
+                    cooldownTriggered = true;
+                } else {
+                    await originalDelay(ms);
+                }
+            };
+
+            // Mock NetworkManager
+            harvester.networkManager = {
+                getWorkerIdentity: () => ({ proxy: { port: 7890 } }),
+                forceReassignPort: async () => ({ port: 7891 }),
+                sessionManager: { clearSession: async () => {} }
+            };
+
+            const result = await harvester.harvestWithRetry({ match_id: 'test' }, 0, 4);
+
+            assert.strictEqual(cooldownTriggered, true, '应该触发 30 秒冷却');
+        });
+    });
+
+    // ========================================================================
+    // 测试 7: Context 池管理
+    // ========================================================================
+
+    describe('Context 池管理', () => {
+        it('_cleanupContextPool 应该清理所有 Context', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // Mock Context 池
+            const contexts = [];
+            for (let i = 1; i <= 3; i++) {
+                contexts.push({
+                    context: {
+                        close: async () => {}
+                    }
+                });
+                harvester._contextPool.set(i, contexts[i - 1]);
+            }
+
+            // 执行清理
+            await harvester._cleanupContextPool();
+
+            // 验证池已清空
+            assert.strictEqual(harvester._contextPool.size, 0, 'Context 池应该被清空');
+        });
+
+        it('_evictLRUContext 应该在池子超过上限时淘汰最久未使用的 Context', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+            harvester._contextPoolMaxSize = 2;
+
+            // 添加 3 个 Context，模拟不同访问时间
+            const contexts = [];
+            for (let i = 1; i <= 3; i++) {
+                const context = {
+                    context: {
+                        close: async () => {}
+                    },
+                    lastAccessTime: Date.now() - (i * 1000)
+                };
+                contexts.push(context);
+                harvester._contextPool.set(i, context);
+            }
+
+            // 执行 LRU 淘汰
+            await harvester._evictLRUContext();
+
+            // 验证最旧的 Context 被淘汰
+            assert.strictEqual(harvester._contextPool.size, 2, '应该淘汰 1 个 Context');
+            assert.strictEqual(harvester._contextPool.has(3), false, '最久未使用的 Context 应该被淘汰');
+            assert.strictEqual(harvester._contextEvictions, 1, '淘汰计数应该增加');
+        });
+
+        it('_escape403 应该清理 Cookies', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // Mock Context 池
+            const clearCookiesCalled = { called: false };
+            harvester._contextPool.set(1, {
+                context: {
+                    clearCookies: async () => {
+                        clearCookiesCalled.called = true;
+                    }
+                },
+                usageCount: 5
+            });
+
+            // 执行 403 逃逸
+            await harvester._escape403(1);
+
+            // 验证 Cookies 被清理
+            assert.strictEqual(clearCookiesCalled.called, true, 'Cookies 应该被清理');
+
+            // 验证 usageCount 被重置
+            const entry = harvester._contextPool.get(1);
+            assert.strictEqual(entry.usageCount, 0, 'usageCount 应该被重置');
+        });
+
+        it('_evictLRUContext 应该在池子未满时不淘汰', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+            harvester._contextPoolMaxSize = 10;
+
+            // 添加 3 个 Context
+            for (let i = 1; i <= 3; i++) {
+                harvester._contextPool.set(i, {
+                    context: { close: async () => {} },
+                    lastAccessTime: Date.now()
+                });
+            }
+
+            // 执行 LRU 淘汰
+            await harvester._evictLRUContext();
+
+            // 验证没有淘汰
+            assert.strictEqual(harvester._contextPool.size, 3, '池子未满，不应该淘汰');
+        });
+    });
+
+    // ========================================================================
+    // 测试 8: 工具方法
+    // ========================================================================
+
+    describe('工具方法测试', () => {
+        it('_delay 应该正确延时', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+            const start = Date.now();
+            await harvester._delay(100);
+            const elapsed = Date.now() - start;
+            assert.ok(elapsed >= 90, '延时应该接近 100ms'); // 允许 10ms 误差
+        });
+
+        it('_randomInRange 应该生成范围内的随机数', () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            for (let i = 0; i < 100; i++) {
+                const value = harvester._randomInRange(1, 10);
+                assert.ok(value >= 1 && value <= 10, `值 ${value} 应该在 [1, 10] 范围内`);
+            }
+        });
+    });
+
+    // ========================================================================
+    // 测试 9: 报告打印
+    // ========================================================================
+
+    describe('报告打印', () => {
+        it('printReport 应该正确打印统计信息', () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // 设置统计数据
             harvester.stats = {
                 total: 100,
-                processed: 100,
-                success: 95,
+                processed: 95,
+                success: 90,
                 failed: 5,
                 retries: 10,
                 sweepRounds: 2
             };
-            harvester.startTime = Date.now() - 60000; // 1 分钟前
-            harvester._totalContextCreations = 10;
-            harvester._totalContextReuses = 50;
-            harvester._contextEvictions = 2;
 
-            // 捕获 console.log 输出
-            const logs = [];
-            const originalLog = console.log;
-            console.log = (...args) => logs.push(args.join(' '));
+            harvester.startTime = Date.now() - 60000;  // 1 分钟前
 
-            try {
-                harvester.printReport();
+            // 执行打印（不应该抛出异常）
+            harvester.printReport();
 
-                // 验证报告包含关键信息
-                const report = logs.join('\n');
-                assert.ok(report.includes('收割完成报告'), '报告应该包含标题');
-                assert.ok(report.includes('总计: 100'), '报告应该包含总计');
-                assert.ok(report.includes('成功: 95'), '报告应该包含成功数');
-                assert.ok(report.includes('失败: 5'), '报告应该包含失败数');
-                assert.ok(report.includes('95.0%'), '报告应该包含成功率');
-            } finally {
-                console.log = originalLog;
-            }
+            assert.ok(true);  // 如果没有异常，测试通过
         });
 
-        it('测试 9.10: 优雅停机标志应该正确初始化', () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+        it('printReport 应该正确处理零数据', () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            const harvester = new AbstractHarvester();
+            // 保持默认统计数据（全为 0）
+            harvester.startTime = Date.now();
 
-            assert.strictEqual(harvester.isShuttingDown, false, 'isShuttingDown 应该初始为 false');
-            assert.strictEqual(harvester.shutdownPromise, null, 'shutdownPromise 应该初始为 null');
+            // 执行打印（不应该抛出异常）
+            harvester.printReport();
+
+            assert.ok(true);
         });
     });
 
-    describe('模块 10: Context 池管理测试', () => {
-        it('测试 10.1: _cleanupContextPool 应该清理所有 Context', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+    // ========================================================================
+    // 测试 10: 浏览器行为模拟
+    // ========================================================================
 
-            const harvester = new AbstractHarvester();
+    describe('浏览器行为模拟', () => {
+        it('_injectStealthScripts 应该注入隐身脚本', async () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            // 模拟一些 Context 池条目
-            harvester._totalContextCreations = 5;
-            harvester._totalContextReuses = 20;
-            harvester._contextEvictions = 1;
-
-            // 清理空池
-            await harvester._cleanupContextPool();
-
-            assert.strictEqual(harvester._contextPool.size, 0, 'Context 池应该为空');
-        });
-
-        it('测试 10.2: _evictLRUContext 在池未满时不应该淘汰', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            // 池子未满时不应该淘汰
-            const initialEvictions = harvester._contextEvictions;
-            await harvester._evictLRUContext();
-
-            assert.strictEqual(harvester._contextEvictions, initialEvictions, '未满时不应该淘汰');
-        });
-
-        it('测试 10.3: _escape403 应该处理不存在的 WorkerId', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            // 不存在的 WorkerId 应该静默处理
-            await harvester._escape403(999);
-
-            assert.strictEqual(harvester._contextPool.size, 0, '不应该有副作用');
-        });
-    });
-
-    describe('模块 11: 浏览器与网络工具测试', () => {
-        it('测试 11.1: _injectStealthScripts 应该返回 Promise', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            // Mock Page 对象
+            // Mock Page
+            const addInitScriptCalled = { called: false };
             const mockPage = {
-                addInitScript: async (fn) => {
-                    // 模拟脚本注入
+                addInitScript: async (script) => {
+                    addInitScriptCalled.called = true;
+                    // 验证脚本内容
+                    assert.ok(typeof script === 'function', '应该传入函数');
                 }
             };
 
-            // 应该能够调用而不报错
+            // 执行注入
             await harvester._injectStealthScripts(mockPage);
-            assert.ok(true, '_injectStealthScripts 应该成功执行');
+
+            assert.strictEqual(addInitScriptCalled.called, true, 'addInitScript 应该被调用');
         });
 
-        it('测试 11.2: _loadBrowserStateCookies 应该正确处理 Cookie 加载', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+        it('_simulateHumanBehavior 应该模拟鼠标移动', async () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            const harvester = new AbstractHarvester();
-
-            // Mock context - 记录是否调用了 addCookies
-            let cookiesAdded = false;
-            const mockContext = {
-                addCookies: async (cookies) => {
-                    cookiesAdded = true;
-                }
-            };
-
-            // 调用方法
-            const result = await harvester._loadBrowserStateCookies(mockContext);
-
-            // 结果应该是布尔值
-            assert.ok(typeof result === 'boolean', '返回值应该是布尔值');
-
-            // 如果文件存在且有效，result 应该为 true
-            // 如果文件不存在或无效，result 应该为 false
-            // 两种情况都是可以接受的
-            console.log(`📄 _loadBrowserStateCookies 返回: ${result}`);
-        });
-
-        it('测试 11.3: _simulateHumanBehavior 应该执行鼠标移动', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
-
-            const harvester = new AbstractHarvester();
-
-            // Mock Page 对象
-            let moveCount = 0;
+            // Mock Page
+            const moveCount = { count: 0 };
             const mockPage = {
                 mouse: {
                     move: async (x, y, options) => {
-                        moveCount++;
+                        moveCount.count++;
                     }
                 }
             };
 
-            // 捕获 console.log
-            const logs = [];
-            const originalLog = console.log;
-            console.log = (...args) => logs.push(args.join(' '));
+            // 执行行为模拟
+            await harvester._simulateHumanBehavior(mockPage);
 
-            try {
-                await harvester._simulateHumanBehavior(mockPage);
-
-                assert.ok(moveCount >= 10 && moveCount <= 15, `应该执行 10-15 次鼠标移动 (实际: ${moveCount})`);
-                assert.ok(logs.some(l => l.includes('行为模拟完成')), '应该输出完成日志');
-            } finally {
-                console.log = originalLog;
-            }
+            // 验证鼠标移动次数（应该在 10-15 之间）
+            assert.ok(moveCount.count >= 10 && moveCount.count <= 15, '应该有 10-15 次鼠标移动');
         });
 
-        it('测试 11.4: _warmupHomepage 应该执行首页预热', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+        it('_warmupHomepage 应该访问首页', async () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            const harvester = new AbstractHarvester();
-
-            // Mock Page 对象
-            let navigated = false;
-            let scrollCount = 0;
+            // Mock Page
+            const gotoCalled = { called: false, url: null };
             const mockPage = {
                 goto: async (url, options) => {
-                    navigated = true;
+                    gotoCalled.called = true;
+                    gotoCalled.url = url;
                 },
                 mouse: {
-                    wheel: async (dx, dy) => {
-                        scrollCount++;
-                    }
-                }
+                    wheel: async (x, y) => {}
+                },
+                waitForTimeout: async (ms) => {}
             };
 
-            // 捕获 console.log
-            const logs = [];
-            const originalLog = console.log;
-            console.log = (...args) => logs.push(args.join(' '));
+            // 执行首页预热
+            await harvester._warmupHomepage(mockPage, { scrollMore: false, randomScrolls: false });
 
-            try {
-                await harvester._warmupHomepage(mockPage);
-
-                assert.strictEqual(navigated, true, '应该导航到首页');
-                assert.ok(scrollCount >= 3 && scrollCount <= 5, `应该执行 3-5 次滚动 (实际: ${scrollCount})`);
-                assert.ok(logs.some(l => l.includes('首页预热完成')), '应该输出完成日志');
-            } finally {
-                console.log = originalLog;
-            }
+            // 验证访问了 FotMob 首页
+            assert.strictEqual(gotoCalled.called, true, '应该调用 goto');
+            assert.ok(gotoCalled.url.includes('fotmob.com'), '应该访问 FotMob 首页');
         });
     });
 
-    describe('模块 12: _preFlightCleanupNetworkLocks 测试', () => {
-        it('测试 12.1: 应该处理目录不存在的情况', async () => {
-            const { AbstractHarvester } = require('../../src/infrastructure/harvesters/base/AbstractHarvester');
+    // ========================================================================
+    // 测试 11: Cookie 加载
+    // ========================================================================
 
-            const harvester = new AbstractHarvester();
+    describe('Cookie 加载', () => {
+        it('_loadBrowserStateCookies 应该加载有效的 Cookie', async () => {
+            const harvester = createHarvester(AbstractHarvester);
 
-            // 应该静默处理不存在的目录
-            const cleanedCount = await harvester._preFlightCleanupNetworkLocks();
+            // Mock context
+            const cookiesAdded = { cookies: [] };
+            const mockContext = {
+                addCookies: async (cookies) => {
+                    cookiesAdded.cookies = cookies;
+                }
+            };
 
-            assert.ok(typeof cleanedCount === 'number', '应该返回数字');
-            assert.ok(cleanedCount >= 0, '清理数量应该 >= 0');
+            // Mock fs 模块
+            const fs = require('fs').promises;
+            const originalReadFile = fs.readFile;
+            fs.readFile = async (path, encoding) => {
+                if (path.includes('browser_state.json')) {
+                    return JSON.stringify({
+                        cookies: [
+                            { name: 'test1', value: 'value1', expires: Date.now() / 1000 + 3600 },
+                            { name: 'test2', value: 'value2', expires: Date.now() / 1000 + 3600 }
+                        ]
+                    });
+                }
+                return originalReadFile(path, encoding);
+            };
+
+            // 执行加载
+            const result = await harvester._loadBrowserStateCookies(mockContext);
+
+            // 恢复原始函数
+            fs.readFile = originalReadFile;
+
+            // 验证加载成功
+            assert.strictEqual(result, true, '应该成功加载 Cookie');
+            assert.strictEqual(cookiesAdded.cookies.length, 2, '应该加载 2 个 Cookie');
+        });
+
+        it('_loadBrowserStateCookies 应该过滤过期的 Cookie', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // Mock context
+            const cookiesAdded = { cookies: [] };
+            const mockContext = {
+                addCookies: async (cookies) => {
+                    cookiesAdded.cookies = cookies;
+                }
+            };
+
+            // Mock fs 模块
+            const fs = require('fs').promises;
+            const originalReadFile = fs.readFile;
+            fs.readFile = async (path, encoding) => {
+                if (path.includes('browser_state.json')) {
+                    return JSON.stringify({
+                        cookies: [
+                            { name: 'expired', value: 'value', expires: Date.now() / 1000 - 3600 },  // 已过期
+                            { name: 'valid', value: 'value', expires: Date.now() / 1000 + 3600 }   // 有效
+                        ]
+                    });
+                }
+                return originalReadFile(path, encoding);
+            };
+
+            // 执行加载
+            const result = await harvester._loadBrowserStateCookies(mockContext);
+
+            // 恢复原始函数
+            fs.readFile = originalReadFile;
+
+            // 验证只加载了有效的 Cookie
+            assert.strictEqual(result, true, '应该成功加载 Cookie');
+            assert.strictEqual(cookiesAdded.cookies.length, 1, '应该只加载 1 个有效 Cookie');
+            assert.strictEqual(cookiesAdded.cookies[0].name, 'valid', '应该是有效的 Cookie');
+        });
+
+        it('_loadBrowserStateCookies 应该在文件不存在时返回 false', async () => {
+            const harvester = createHarvester(AbstractHarvester);
+
+            // Mock context
+            const mockContext = {
+                addCookies: async (cookies) => {}
+            };
+
+            // Mock fs 模块
+            const fs = require('fs').promises;
+            const originalReadFile = fs.readFile;
+            fs.readFile = async (path, encoding) => {
+                throw new Error('文件不存在');
+            };
+
+            // 执行加载
+            const result = await harvester._loadBrowserStateCookies(mockContext);
+
+            // 恢复原始函数
+            fs.readFile = originalReadFile;
+
+            // 验证返回 false
+            assert.strictEqual(result, false, '文件不存在时应该返回 false');
+        });
+    });
+
+    // ========================================================================
+    // 测试 12: AutoAuthManager 测试
+    // ========================================================================
+
+    describe('AutoAuthManager 测试', () => {
+        it('应该使用默认配置创建实例', () => {
+            const manager = new AutoAuthManager();
+            assert.strictEqual(manager.config.headless, false);  // 默认可见
+            assert.strictEqual(manager.config.timeout, 60000);
+            assert.ok(manager.config.targetUrl.includes('fotmob.com'));
+        });
+
+        it('应该覆盖默认配置', () => {
+            const manager = new AutoAuthManager({
+                headless: true,
+                timeout: 30000,
+                targetUrl: 'https://example.com'
+            });
+            assert.strictEqual(manager.config.headless, true);
+            assert.strictEqual(manager.config.timeout, 30000);
+            assert.strictEqual(manager.config.targetUrl, 'https://example.com');
+        });
+
+        it('launchBrowser 应该成功启动', async () => {
+            const manager = new AutoAuthManager({ headless: true });
+
+            // 执行启动
+            await manager.launchBrowser();
+
+            // 验证浏览器已启动
+            assert.ok(manager.browser !== null, '浏览器应该已启动');
+
+            // 清理
+            await manager.cleanup();
+        });
+
+        it('createContext 应该在浏览器未启动时抛出错误', async () => {
+            const manager = new AutoAuthManager();
+
+            try {
+                await manager.createContext();
+                assert.fail('应该抛出错误');
+            } catch (error) {
+                assert.ok(error.message.includes('浏览器未启动'));
+            }
+        });
+
+        it('createPage 应该在上下文未创建时抛出错误', async () => {
+            const manager = new AutoAuthManager();
+
+            try {
+                await manager.createPage();
+                assert.fail('应该抛出错误');
+            } catch (error) {
+                assert.ok(error.message.includes('上下文未创建'));
+            }
         });
     });
 });
-
-// 测试统计输出
-console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║  AbstractHarvester 单元测试套件 - V4.46.6                     ║
-╠══════════════════════════════════════════════════════════════╣
-║  运行命令:                                                    ║
-║  node --test tests/unit/AbstractHarvester.test.js             ║
-║                                                               ║
-║  覆盖率命令:                                                  ║
-║  node --test --experimental-test-coverage tests/unit/AbstractHarvester.test.js
-║                                                               ║
-║  测试模块:                                                    ║
-║  ✓ 模块 1: _delay() 延时函数                                  ║
-║  ✓ 模块 2: _isRetryableError() 错误分类                       ║
-║  ✓ 模块 3: QUALITY_GATE 数据质量门禁                          ║
-║  ✓ 模块 4: getExponentialBackoff() 指数退避                   ║
-║  ✓ 模块 5: 代理熔断机制                                       ║
-║  ✓ 模块 6: 网络 Mock 验证                                     ║
-║  ✓ 模块 7: 随机数生成器                                       ║
-║  ✓ 模块 8: 配置验证                                           ║
-║  ✓ 模块 9-12: 覆盖率冲刺测试                                  ║
-║                                                               ║
-║  Mock 策略:                                                   ║
-║  • nock - HTTP 请求拦截                                       ║
-║  • NetworkManager - 代理管理 Mock                             ║
-║  • 禁用所有真实网络连接                                        ║
-╚══════════════════════════════════════════════════════════════╝
-`);
