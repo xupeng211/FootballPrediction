@@ -1,0 +1,24 @@
+{
+  "default": true,
+  "MD013": {
+    "line_length": 120,
+    "heading_line_length": 120,
+    "code_block_line_length": 120,
+    "tables": false
+  },
+  "MD014": false,
+  "MD024": {
+    "allow_different_nesting": true
+  },
+  "MD033": {
+    "allowed_elements": [
+      "p", "br", "img", "a", "code", "pre", "table", "tr", "td", "th",
+      "tbody", "thead", "div", "span", "strong", "em", "h1", "h2", "h3"
+    ]
+  },
+  "MD040": false,
+  "MD041": false,
+  "MD046": false,
+  "MD051": false,
+  "MD060": false
+}

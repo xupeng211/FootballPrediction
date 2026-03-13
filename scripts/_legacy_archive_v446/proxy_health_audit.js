@@ -259,7 +259,7 @@ async function main() {
         );
 
         // 小延迟避免过快请求
-        await new Promise(r => setTimeout(r, 300));
+        await new Promise(r => { setTimeout(r, 300); });
     }
 
     console.log();

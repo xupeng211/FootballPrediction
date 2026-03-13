@@ -112,7 +112,7 @@ class WorkerMessenger {
                 this._log('info', 'IPC 通道已就绪');
                 return true;
             }
-            await new Promise(r => setTimeout(r, 100));
+            await new Promise(r => { setTimeout(r, 100); });
         }
         this._log('warn', `IPC 通道未就绪 (超时 ${timeoutMs}ms)`);
         return typeof process.send === 'function';

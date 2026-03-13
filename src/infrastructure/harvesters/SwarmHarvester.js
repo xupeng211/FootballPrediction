@@ -441,7 +441,7 @@ class SwarmHarvester {
      * @returns {Promise<void>}
      */
     _delay(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(resolve => { setTimeout(resolve, ms); });
     }
 
     // ========================================================================
@@ -494,7 +494,7 @@ async function swarmHarvest(matchIds, concurrency = 15, options = {}) {
         ...options
     });
 
-    return await swarm.batchRun(matchIds, concurrency);
+    return swarm.batchRun(matchIds, concurrency);
 }
 
 // ============================================================================

@@ -51,7 +51,7 @@ global.testUtils = {
   /**
    * 延迟函数
    */
-  delay: (ms) => new Promise(resolve => setTimeout(resolve, ms))
+  delay: (ms) => new Promise(resolve => { setTimeout(resolve, ms); })
 };
 
 // 测试前清理

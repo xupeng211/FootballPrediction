@@ -76,7 +76,7 @@ function levenshtein(a, b) {
  */
 function similarity(str1, str2) {
     // 容错处理：只处理 null/undefined，空字符串应返回 100% 相似度
-    if (str1 == null || str2 == null) return 0;
+    if (str1 === null || str1 === undefined || str2 === null || str2 === undefined) return 0;
     const s1 = String(str1).trim();
     const s2 = String(str2).trim();
 

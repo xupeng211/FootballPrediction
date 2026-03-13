@@ -628,7 +628,7 @@ class FeatureSmelter {
 
                 // 延时控制
                 if (this.config.delayMs > 0) {
-                    await new Promise(resolve => setTimeout(resolve, this.config.delayMs));
+                    await new Promise(resolve => { setTimeout(resolve, this.config.delayMs); });
                 }
             }
 

@@ -34,7 +34,7 @@ async function main() {
 
     // 等待 5 秒
     console.log(`${LOG_PREFIX} 页面停留 5 秒后自动关闭...`);
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise(resolve => { setTimeout(resolve, 5000); });
 
     console.log(`${LOG_PREFIX} ✓ 探测完成，正常关闭`);
 

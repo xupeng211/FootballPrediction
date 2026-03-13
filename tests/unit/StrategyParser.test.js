@@ -262,7 +262,7 @@ describe('Strategy Parser - FotMobStrategy', () => {
         <script>
           window.__INITIAL_STATE__ = {
             "match": {
-              "id": "special\\\"id",
+              "id": "special\\"id",
               "home": { "name": "O'Brien Team", "id": 1 },
               "away": { "name": "Team B", "id": 2 },
               "date": "2026-03-12",

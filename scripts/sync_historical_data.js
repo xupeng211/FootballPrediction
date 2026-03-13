@@ -161,7 +161,7 @@ async function main() {
 
       // 每 100 条暂停一下，避免过载
       if (i % 100 === 0 && i > 0) {
-        await new Promise(r => setTimeout(r, 10));
+        await new Promise(r => { setTimeout(r, 10); });
       }
     }
 

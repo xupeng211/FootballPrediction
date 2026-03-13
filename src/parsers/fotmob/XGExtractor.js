@@ -129,7 +129,7 @@ function validateXG(homeXG, awayXG) {
     let valid = true;
 
     // 处理 null/undefined
-    if (homeXG == null || awayXG == null) {
+    if (homeXG === null || homeXG === undefined || awayXG === null || awayXG === undefined) {
         warnings.push('xG 数据缺失');
         return { valid: true, warnings };
     }

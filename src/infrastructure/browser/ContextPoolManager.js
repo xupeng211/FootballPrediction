@@ -64,7 +64,7 @@ class ContextPoolManager {
         const { needsRebuild, reason } = this._shouldRebuild(entry, currentPort);
 
         if (needsRebuild) {
-            return await this._createNewContext(workerId, identity, deps, reason, entry);
+            return this._createNewContext(workerId, identity, deps, reason, entry);
         }
 
         // 复用现有 context
