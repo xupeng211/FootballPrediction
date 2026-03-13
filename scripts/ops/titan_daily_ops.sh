@@ -232,21 +232,34 @@ run_harvest() {
     
     cd "$PROJECT_ROOT"
     
-    # 构建命令
-    local cmd="docker-compose -f '$COMPOSE_FILE' exec -T dev node scripts/ops/run_production.js --workers 12 --limit 12000"
+    # 构建基础命令数组（避免 eval 的安全问题）
+    local cmd_args=("docker-compose" "-f" "$COMPOSE_FILE" "exec" "-T" "dev" "node" "scripts/ops/run_production.js" "--workers" "12" "--limit" "12000")
     
     if [[ -f "$SESSION_FILE" ]]; then
-        cmd="$cmd --session-path /app/manual_session.json"
+        cmd_args+=("--session-path" "/app/manual_session.json")
     else
         log_warn "未找到会话文件，将使用匿名模式"
     fi
     
-    log_info "执行命令: $cmd"
+    log_info "执行命令: ${cmd_args[*]}"
     echo ""
     
-    # 执行收割并捕获退出码
-    eval "$cmd"
+    # 记录开始时间
+    local start_time end_time duration
+    start_time=$(date +%s)
+    
+    # 执行收割并捕获退出码（使用 "${cmd_args[@]}" 代替 eval）
+    "${cmd_args[@]}"
     local exit_code=$?
+    
+    # 计算执行时间
+    end_time=$(date +%s)
+    duration=$((end_time - start_time))
+    
+    # 导出执行时间供其他函数使用
+    export HARVEST_DURATION=$duration
+    
+    log_info "任务执行时间: ${duration} 秒"
     
     return $exit_code
 }
@@ -295,12 +308,24 @@ generate_summary() {
 # =============================================================================
 graceful_shutdown() {
     local exit_code=$1
+    local duration=${HARVEST_DURATION:-0}
     
     echo ""
     
     if [[ $exit_code -eq 0 ]]; then
         log_success "任务执行成功"
         echo ""
+        
+        # 超时保护：如果任务在 5 秒内完成，自动跳过询问
+        if [[ $duration -lt 5 ]]; then
+            log_warn "任务快速完成 (${duration}秒)，可能是无待收割任务"
+            echo ""
+            log_info "跳过关闭询问，保持环境运行"
+            log_info "手动关闭命令: docker-compose -f $COMPOSE_FILE down"
+            return 0
+        fi
+        
+        # 正常任务询问是否关闭
         read -rp "是否关闭环境? [Y/n]: " confirm
         
         if [[ -z "$confirm" || "$confirm" =~ ^[Yy]$ ]]; then
