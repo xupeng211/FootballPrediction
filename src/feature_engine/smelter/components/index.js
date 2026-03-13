@@ -13,6 +13,8 @@
 const { BaseExtractor, ExtractorError, ValidationError, ExtractionError } = require('./BaseExtractor');
 const { GoldenExtractor, DEFAULT_CONFIG: GOLDEN_CONFIG, FEATURE_NAMES: GOLDEN_FEATURES } = require('./GoldenExtractor');
 const { TacticalExtractor, DEFAULT_CONFIG: TACTICAL_CONFIG, FEATURE_NAMES: TACTICAL_FEATURES } = require('./TacticalExtractor');
+const { DataFetcher, DEFAULT_CONFIG: DATAFETCHER_CONFIG } = require('./DataFetcher');
+const { L3Writer, DEFAULT_CONFIG: L3WRITER_CONFIG } = require('./L3Writer');
 
 module.exports = {
     // 基类
@@ -25,10 +27,16 @@ module.exports = {
     GoldenExtractor,
     TacticalExtractor,
 
+    // 数据组件
+    DataFetcher,
+    L3Writer,
+
     // 配置
     DEFAULT_CONFIGS: {
         golden: GOLDEN_CONFIG,
-        tactical: TACTICAL_CONFIG
+        tactical: TACTICAL_CONFIG,
+        dataFetcher: DATAFETCHER_CONFIG,
+        l3Writer: L3WRITER_CONFIG
     },
 
     // 特征清单
