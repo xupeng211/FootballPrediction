@@ -338,6 +338,7 @@ class ProductionHarvester extends AbstractHarvester {
                 FROM matches m
                 LEFT JOIN raw_match_data r ON m.match_id = r.match_id
                 WHERE r.match_id IS NULL
+                    AND m.is_finished = false
                     AND m.league_name = 'Serie A'
                     AND m.status = 'FINISHED'
                 ORDER BY m.match_date DESC
@@ -356,6 +357,7 @@ class ProductionHarvester extends AbstractHarvester {
                 FROM matches m
                 LEFT JOIN raw_match_data r ON m.match_id = r.match_id
                 WHERE r.match_id IS NULL
+                    AND m.is_finished = false
                 ORDER BY m.match_date DESC
                 LIMIT $1
             `;
@@ -388,13 +390,23 @@ class ProductionHarvester extends AbstractHarvester {
         const workerId = (index % this.config.maxWorkers) + 1;
         const isRetry = attempt > 1;
 
+        const logPrefix = isRetry ? `[W${workerId}-R${attempt}]` : `[W${workerId}]`;
+
+        // V4.51.4: 文件存在二次保险 - 即使数据库出错，只要硬盘有文件就跳过
+        const filePath = path.join(
+            this.config.dataMatchesPath || 'data/matches',
+            `${match_id}.json`
+        );
+        if (fs.existsSync(filePath) && attempt === 1) {
+            console.log(`${logPrefix} ⏭️  Skip: File exists | ${match_id}`);
+            return { success: true, skipped: true, match_id, reason: 'FILE_EXISTS' };
+        }
+
         // 随机延迟
         const baseDelay = isRetry ? 3000 : this.config.minDelayMs;
         const maxDelay = isRetry ? 6000 : this.config.maxDelayMs;
         const delay = baseDelay + Math.random() * (maxDelay - baseDelay);
         await this._delay(delay);
-
-        const logPrefix = isRetry ? `[W${workerId}-R${attempt}]` : `[W${workerId}]`;
 
         // V4.51: 关键业务日志 - 开始收割（移到最前面确保可见）
         console.log(`${logPrefix} Harvesting Match: ${match_id} | ${home_team} vs ${away_team}`);
