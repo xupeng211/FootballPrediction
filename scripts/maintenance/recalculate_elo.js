@@ -80,8 +80,8 @@ async function getLeagueStats(client, leagueId) {
     const query = `
         SELECT
             COUNT(*) as total_matches,
-            COUNT(CASE WHEN m.status = 'finished' THEN 1 END) as finished_matches,
-            COUNT(CASE WHEN m.status = 'finished'
+            COUNT(CASE WHEN m.status IN ('finished', 'Harvested') THEN 1 END) as finished_matches,
+            COUNT(CASE WHEN m.status IN ('finished', 'Harvested')
                        AND l.elo_features IS NOT NULL
                        AND l.elo_features != '{}'::jsonb THEN 1 END) as has_elo
         FROM matches m
@@ -175,7 +175,7 @@ async function main() {
                 split_part(m.match_id, '_', 1) as league_id
             FROM matches m
             LEFT JOIN l3_features l ON m.match_id = l.match_id
-            WHERE m.status = 'finished'
+            WHERE m.status IN ('finished', 'Harvested')
               AND m.home_score IS NOT NULL
               AND m.away_score IS NOT NULL
               AND m.home_score::text ~ '^[0-9]+$'
@@ -229,14 +229,14 @@ async function main() {
         if (!incremental) {
             console.log('  📥 加载已有 Elo 评分以保持连续性...');
             const existingRatings = await client.query(`
-                SELECT team_name, elo_rating, matches_played
+                SELECT team_name, elo_rating, matches_count
                 FROM team_elo_ratings
             `);
 
             for (const row of existingRatings.rows) {
                 eloExtractor.setTeamRating(row.team_name, parseFloat(row.elo_rating));
                 // 恢复历史记录数量（简化处理）
-                for (let i = 0; i < (row.matches_played || 0); i++) {
+                for (let i = 0; i < (row.matches_count || 0); i++) {
                     if (!eloExtractor.ratingHistory.has(row.team_name)) {
                         eloExtractor.ratingHistory.set(row.team_name, []);
                     }
@@ -375,7 +375,7 @@ async function main() {
                 CREATE TABLE IF NOT EXISTS team_elo_ratings (
                     team_name VARCHAR(255) PRIMARY KEY,
                     elo_rating DECIMAL(10, 2) NOT NULL,
-                    matches_played INTEGER DEFAULT 0,
+                    matches_count INTEGER DEFAULT 0,
                     last_updated TIMESTAMP WITH TIME ZONE DEFAULT NOW()
                 )
             `);
@@ -387,12 +387,12 @@ async function main() {
                 const matchCount = eloExtractor.ratingHistory.get(teamName)?.length || 0;
 
                 await client.query(`
-                    INSERT INTO team_elo_ratings (team_name, elo_rating, matches_played, last_updated)
+                    INSERT INTO team_elo_ratings (team_name, elo_rating, matches_count, last_updated)
                     VALUES ($1, $2, $3, NOW())
                     ON CONFLICT (team_name)
                     DO UPDATE SET
                         elo_rating = EXCLUDED.elo_rating,
-                        matches_played = EXCLUDED.matches_played,
+                        matches_count = EXCLUDED.matches_count,
                         last_updated = NOW()
                 `, [teamName, rating, matchCount]);
 

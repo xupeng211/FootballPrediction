@@ -47,16 +47,36 @@ function getPool() {
 /**
  * 带重试的数据库操作
  * @param {Function} operation - 要执行的数据库操作
- * @param {number} maxRetries - 最大重试次数
+ * @param {number|object} maxRetriesOrConfig - 最大重试次数或配置对象
  * @param {number} delayMs - 初始延迟毫秒
  * @returns {Promise<any>}
  */
-async function withRetry(operation, maxRetries = 3, delayMs = 1000) {
+async function withRetry(operation, maxRetriesOrConfig = 3, delayMs = 1000) {
+    // 支持两种调用签名:
+    // 1. withRetry(operation, maxRetries, delayMs)
+    // 2. withRetry(operation, operationName, { maxRetries, initialDelayMs })
+    let maxRetries, initialDelayMs, operationName;
+
+    if (typeof maxRetriesOrConfig === 'object' && maxRetriesOrConfig !== null) {
+        // 新签名: withRetry(operation, operationName, config)
+        maxRetries = maxRetriesOrConfig.maxRetries || 3;
+        initialDelayMs = maxRetriesOrConfig.initialDelayMs || 1000;
+    } else if (typeof maxRetriesOrConfig === 'string') {
+        // FeatureSmelter 调用方式: withRetry(operation, 'name', { config })
+        maxRetries = delayMs.maxRetries || 3;
+        initialDelayMs = delayMs.initialDelayMs || 1000;
+        operationName = maxRetriesOrConfig;
+    } else {
+        // 旧签名: withRetry(operation, maxRetries, delayMs)
+        maxRetries = maxRetriesOrConfig || 3;
+        initialDelayMs = delayMs || 1000;
+    }
+
     let lastError;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
         try {
-            return await operation();
+            return await operation(getPool());
         } catch (error) {
             lastError = error;
 
@@ -65,8 +85,9 @@ async function withRetry(operation, maxRetries = 3, delayMs = 1000) {
             }
 
             if (attempt < maxRetries) {
-                const backoffDelay = delayMs * Math.pow(2, attempt - 1);
-                console.log(`[DB] 重试 ${attempt}/${maxRetries}，等待 ${backoffDelay}ms...`);
+                const backoffDelay = initialDelayMs * Math.pow(2, attempt - 1);
+                const namePrefix = operationName ? `[${operationName}] ` : '';
+                console.log(`${namePrefix}[DB] 重试 ${attempt}/${maxRetries}，等待 ${backoffDelay}ms...`);
                 await new Promise(resolve => { setTimeout(resolve, backoffDelay); });
             }
         }
