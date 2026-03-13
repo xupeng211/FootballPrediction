@@ -112,6 +112,70 @@ class TrainingResult:
 
 
 # ============================================================================
+# V5.0 特征提取 (适配新表结构)
+# ============================================================================
+
+def extract_v5_features(elo_data, golden_features, tactical_features):
+    """
+    从 V5.0 表结构提取 11 维战斗特征
+
+    Args:
+        elo_data: Elo 特征 (JSONB)
+        golden_features: 黄金特征 (JSONB) - 包含身价数据
+        tactical_features: 战术特征 (JSONB) - 包含 H2H 数据
+
+    Returns:
+        dict: 11 维特征字典
+    """
+    import json
+    import math
+
+    # 解析 JSONB
+    elo = elo_data if isinstance(elo_data, dict) else json.loads(elo_data or '{}')
+    golden = golden_features if isinstance(golden_features, dict) else json.loads(golden_features or '{}')
+    tactical = tactical_features if isinstance(tactical_features, dict) else json.loads(tactical_features or '{}')
+
+    f = {}
+
+    # === Elo 特征 (5 维) ===
+    home_elo = float(elo.get('home_elo', elo.get('home_elo_pre', 1500)))
+    away_elo = float(elo.get('away_elo', elo.get('away_elo_pre', 1500)))
+    f['home_elo_pre'] = home_elo
+    f['away_elo_pre'] = away_elo
+    f['elo_diff'] = float(elo.get('elo_diff', home_elo - away_elo))
+    f['expected_home_win'] = float(elo.get('expected_home_win', elo.get('elo_expected_home', 0.45)))
+    f['expected_away_win'] = float(elo.get('expected_away_win', elo.get('elo_expected_away', 0.30)))
+
+    # === 身价特征 (3 维) - 从 golden_features ===
+    home_mv = float(golden.get('home_market_value_total', golden.get('home_squad_value_eur', 1e8)))
+    away_mv = float(golden.get('away_market_value_total', golden.get('away_squad_value_eur', 1e8)))
+
+    f['log_home_squad_value'] = math.log10(home_mv) if home_mv > 0 else 18.0
+    f['log_away_squad_value'] = math.log10(away_mv) if away_mv > 0 else 18.0
+    total_mv = home_mv + away_mv
+    f['home_mv_share'] = home_mv / total_mv if total_mv > 0 else 0.5
+
+    # === H2H 特征 (3 维) - 从 tactical_features 估算 ===
+    # V5.0: 如果 tactical 中有 H2H 数据则使用，否则基于 Elo 差估算
+    h2h_home_win = float(tactical.get('h2h_home_win_ratio', 0.5))
+    h2h_draw = float(tactical.get('h2h_draw_ratio', 0.3))
+
+    # 如果没有 H2H 数据，基于 Elo 差进行智能估算
+    if h2h_home_win == 0.5 and 'elo_diff' in f:
+        elo_diff = f['elo_diff']
+        # Elo 差转换为 H2H 胜率 (简化模型)
+        expected_win = 1 / (1 + 10 ** (-elo_diff / 400))
+        h2h_home_win = 0.3 + 0.4 * expected_win  # 基础 30% + Elo 贡献
+        h2h_draw = 0.25  # 默认平局率
+
+    f['h2h_home_win_ratio'] = h2h_home_win
+    f['h2h_draw_ratio'] = h2h_draw
+    f['h2h_avg_goal_diff'] = float(tactical.get('h2h_avg_goal_diff', 0.0))
+
+    return f
+
+
+# ============================================================================
 # 数据加载
 # ============================================================================
 
@@ -123,11 +187,13 @@ def load_training_data(conn, min_samples: int = 100, logger: logging.Logger = No
         logger.info("开始加载训练数据...")
 
     query = """
-        SELECT m.match_id, m.actual_result, l.elo_features, l.lineup_features, l.h2h_features
+        SELECT m.match_id, m.home_score, m.away_score, m.home_team, m.away_team,
+               l.elo_features, l.golden_features, l.tactical_features
         FROM matches m
         INNER JOIN l3_features l ON m.match_id = l.match_id
-        WHERE m.status = 'finished'
-          AND m.actual_result IN ('H', 'D', 'A')
+        WHERE m.status = 'Harvested'
+          AND m.home_score IS NOT NULL
+          AND m.away_score IS NOT NULL
           AND l.elo_features IS NOT NULL
         ORDER BY m.match_date DESC
     """
@@ -152,13 +218,24 @@ def load_training_data(conn, min_samples: int = 100, logger: logging.Logger = No
 
     for row in rows:
         try:
-            features, _ = extract_features(
+            # V5.0: 从新的表结构提取特征
+            features = extract_v5_features(
                 row["elo_features"],
-                row["lineup_features"],
-                row["h2h_features"],
+                row["golden_features"],
+                row["tactical_features"],
             )
             features_list.append(features)
-            labels.append(RESULT_MAP[row["actual_result"]])
+
+            # 从比分计算赛果
+            home_score = row.get("home_score", 0)
+            away_score = row.get("away_score", 0)
+            if home_score > away_score:
+                result = 'H'
+            elif home_score < away_score:
+                result = 'A'
+            else:
+                result = 'D'
+            labels.append(RESULT_MAP[result])
         except Exception as e:
             skipped += 1
             if logger:
@@ -211,16 +288,19 @@ def train_model(
     model = xgb.XGBClassifier(
         objective="multi:softprob",
         num_class=3,
-        max_depth=6,
+        max_depth=4,  # 限制树深度在3-5之间，防止过拟合
         learning_rate=0.05,
-        n_estimators=300,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        reg_alpha=0.1,
-        reg_lambda=1.0,
+        n_estimators=500,  # 增加最大轮数，让早停决定
+        subsample=0.7,  # 降低行采样率
+        colsample_bytree=0.7,  # 降低列采样率
+        min_child_weight=5,  # 最小叶子节点样本数，防止过拟合
+        gamma=0.3,  # 分裂惩罚，增加模型稳定性
+        reg_alpha=0.1,  # L1正则化
+        reg_lambda=1.0,  # L2正则化
         random_state=42,
         n_jobs=-1,
-        early_stopping_rounds=50,
+        early_stopping_rounds=30,  # 早停轮数
+        eval_metric="mlogloss",
     )
 
     model.fit(

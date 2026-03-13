@@ -1,0 +1,37 @@
+{
+  "version": "V4.46.8-INDUSTRIAL",
+  "created_at": "2026-03-14T01:06:15.387911",
+  "feature_names": [
+    "home_elo_pre",
+    "away_elo_pre",
+    "elo_diff",
+    "expected_home_win",
+    "expected_away_win",
+    "log_home_squad_value",
+    "log_away_squad_value",
+    "home_mv_share",
+    "h2h_home_win_ratio",
+    "h2h_draw_ratio",
+    "h2h_avg_goal_diff"
+  ],
+  "metrics": {
+    "accuracy": 0.829050279329609,
+    "f1_score": 0.8298735708000103,
+    "log_loss": 0.5469792815769124,
+    "training_samples": 7156,
+    "training_time_seconds": 0.306404
+  },
+  "feature_importance": {
+    "home_elo_pre": 0.1019996851682663,
+    "away_elo_pre": 0.09291455894708633,
+    "elo_diff": 0.16453275084495544,
+    "expected_home_win": 0.1297944337129593,
+    "expected_away_win": 0.0,
+    "log_home_squad_value": 0.10040103644132614,
+    "log_away_squad_value": 0.09672418981790543,
+    "home_mv_share": 0.09849736094474792,
+    "h2h_home_win_ratio": 0.21513597667217255,
+    "h2h_draw_ratio": 0.0,
+    "h2h_avg_goal_diff": 0.0
+  }
+}

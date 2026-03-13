@@ -22,7 +22,6 @@ import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
 
 from src.constants.model_config import (
     DEFAULT_VALUES,
@@ -72,7 +71,6 @@ def get_db_connection():
         database=os.getenv("DB_NAME", "football_db"),
         user=os.getenv("DB_USER", "football_user"),
         password=db_password,
-        cursor_factory=RealDictCursor,
     )
 
 
@@ -98,15 +96,40 @@ def safe_log10(v: Any, d: float = 18.0) -> float:
 
 
 def parse_jsonb(d: Any) -> Dict:
-    """解析 JSONB 数据"""
+    """
+    安全解析 JSONB 数据
+
+    支持类型:
+    - dict: 直接返回
+    - bytes: 安全解码后解析
+    - str: JSON解析
+    - 其他: 返回空字典
+    """
+    # 已经是字典，直接返回
+    if isinstance(d, dict):
+        return d
+
+    # 空值检查
     if not d:
         return {}
+
+    # 处理 bytes 对象
+    if isinstance(d, bytes):
+        try:
+            # 使用 errors='ignore' 安全解码
+            d = d.decode('utf-8', errors='ignore')
+        except Exception:
+            return {}
+
+    # 处理字符串
     if isinstance(d, str):
         try:
             return json.loads(d)
         except json.JSONDecodeError:
             return {}
-    return d if isinstance(d, dict) else {}
+
+    # 其他类型，返回空字典
+    return {}
 
 
 # ============================================================================
@@ -136,10 +159,11 @@ def load_pending_matches(
     """
     cur = conn.cursor()
 
-    # 核心修改: 不再强制要求 h2h_features
+    # V5.0: 使用新的表结构 golden_features, tactical_features
+    # 注意: 不使用 ::text 转换，让 psycopg2 自动处理 JSONB
     query = """
         SELECT m.match_id, m.home_team, m.away_team, m.league_name, m.match_date,
-               l.elo_features, l.lineup_features, l.h2h_features
+               l.elo_features, l.golden_features, l.tactical_features
         FROM matches m
         INNER JOIN l3_features l ON m.match_id = l.match_id
         WHERE m.match_date > NOW()
@@ -159,7 +183,21 @@ def load_pending_matches(
     cur.execute(query, params)
     rows = cur.fetchall()
     cur.close()
-    return rows
+
+    # 转换为字典列表
+    result = []
+    for row in rows:
+        result.append({
+            'match_id': row[0],
+            'home_team': row[1],
+            'away_team': row[2],
+            'league_name': row[3],
+            'match_date': row[4],
+            'elo_features': row[5],
+            'golden_features': row[6],
+            'tactical_features': row[7],
+        })
+    return result
 
 
 # ============================================================================
@@ -190,51 +228,51 @@ def get_team_avg_market_value(
     """
     cur = conn.cursor()
 
-    # 第一层: 主队身份回溯
+    # 第一层: 主队身份回溯 (V5.0: 使用 golden_features 和 home_market_value_total)
     cur.execute(
         """
         SELECT AVG(mv) as avg_mv FROM (
-            SELECT (l.lineup_features->>'home_squad_value_eur')::numeric as mv
+            SELECT (l.golden_features->>'home_market_value_total')::numeric as mv
             FROM matches m INNER JOIN l3_features l ON m.match_id = l.match_id
             WHERE m.status = 'finished' AND m.home_team = %s
-              AND (l.lineup_features->>'home_squad_value_eur')::numeric > 100000000
+              AND (l.golden_features->>'home_market_value_total')::numeric > 100000000
             ORDER BY m.match_date DESC LIMIT %s
         ) sub
     """,
         (team_name, limit),
     )
     r = cur.fetchone()
-    if r and r["avg_mv"]:
+    if r and r[0]:
         cur.close()
-        return float(r["avg_mv"])
+        return float(r[0])
 
     # 第二层: 客队身份回溯
     cur.execute(
         """
         SELECT AVG(mv) as avg_mv FROM (
-            SELECT (l.lineup_features->>'away_squad_value_eur')::numeric as mv
+            SELECT (l.golden_features->>'away_market_value_total')::numeric as mv
             FROM matches m INNER JOIN l3_features l ON m.match_id = l.match_id
             WHERE m.status = 'finished' AND m.away_team = %s
-              AND (l.lineup_features->>'away_squad_value_eur')::numeric > 100000000
+              AND (l.golden_features->>'away_market_value_total')::numeric > 100000000
             ORDER BY m.match_date DESC LIMIT %s
         ) sub
     """,
         (team_name, limit),
     )
     r = cur.fetchone()
-    if r and r["avg_mv"]:
+    if r and r[0]:
         cur.close()
-        return float(r["avg_mv"])
+        return float(r[0])
 
     # 第三层: 模糊匹配
     short_name = team_name[:6] if len(team_name) > 6 else team_name
     cur.execute(
         """
         SELECT AVG(mv) as avg_mv FROM (
-            SELECT (l.lineup_features->>'home_squad_value_eur')::numeric as mv
+            SELECT (l.golden_features->>'home_market_value_total')::numeric as mv
             FROM matches m INNER JOIN l3_features l ON m.match_id = l.match_id
             WHERE m.status = 'finished' AND m.home_team ILIKE %s
-              AND (l.lineup_features->>'home_squad_value_eur')::numeric > 100000000
+              AND (l.golden_features->>'home_market_value_total')::numeric > 100000000
             ORDER BY m.match_date DESC LIMIT %s
         ) sub
     """,
@@ -243,8 +281,8 @@ def get_team_avg_market_value(
     r = cur.fetchone()
     cur.close()
 
-    if r and r["avg_mv"]:
-        return float(r["avg_mv"])
+    if r and r[0]:
+        return float(r[0])
     return None
 
 
@@ -296,8 +334,15 @@ def extract_features(
     f["expected_away_win"] = safe_float(elo.get("expected_away_win", 0.30))
 
     # === 身价特征 (3 维) ===
-    home_mv = safe_float(lineup.get("home_squad_value_eur", 0), 0)
-    away_mv = safe_float(lineup.get("away_squad_value_eur", 0), 0)
+    # V5.0: 兼容 golden_features 字段名 (home_market_value_total)
+    home_mv = safe_float(
+        lineup.get("home_squad_value_eur") or lineup.get("home_market_value_total", 0),
+        0
+    )
+    away_mv = safe_float(
+        lineup.get("away_squad_value_eur") or lineup.get("away_market_value_total", 0),
+        0
+    )
 
     # MV-Scout: 身价回溯
     if home_mv <= 50000000 and conn and home_team:

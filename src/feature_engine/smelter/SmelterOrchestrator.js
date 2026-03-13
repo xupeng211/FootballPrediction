@@ -16,6 +16,9 @@ const { DataFetcher } = require('./components/DataFetcher');
 const { L3Writer } = require('./components/L3Writer');
 const { GoldenExtractor } = require('./components/GoldenExtractor');
 const { TacticalExtractor } = require('./components/TacticalExtractor');
+const { RollingFeatureExtractor } = require('./components/RollingFeatureExtractor');
+const { EfficiencyFeatureExtractor } = require('./components/EfficiencyFeatureExtractor');
+const { DrawPropensityExtractor } = require('./components/DrawPropensityExtractor');
 const { StructuredLogger } = require('../../utils/StructuredLogger');
 
 // 导入旧的提取器（赔率）直到迁移完成
@@ -66,6 +69,20 @@ class SmelterOrchestrator {
         this.l3Writer = new L3Writer({ pool: this.pool });
         this.goldenExtractor = new GoldenExtractor();
         this.tacticalExtractor = new TacticalExtractor();
+
+        // V5.0 新增：30维特征提取器
+        this.rollingExtractor = new RollingFeatureExtractor({
+            dbPool: this.pool,
+            config: { rollingWindow: 5, minSamples: 3 }
+        });
+        this.efficiencyExtractor = new EfficiencyFeatureExtractor({
+            dbPool: this.pool,
+            config: { rollingWindow: 5, minSamples: 3 }
+        });
+        this.drawExtractor = new DrawPropensityExtractor({
+            dbPool: this.pool,
+            config: { rollingWindow: 10, minSamples: 5 }
+        });
 
         // 状态
         this.isInitialized = false;
@@ -249,13 +266,21 @@ class SmelterOrchestrator {
         }
 
         try {
-            // 提取特征
-            const goldenFeatures = this.goldenExtractor.extract(raw_data);
-            const tacticalFeatures = this.tacticalExtractor.extract(raw_data);
-            const oddsMovementFeatures = extractOddsMovementFeatures(raw_data);
+            // 提取所有特征（5个提取器）
+            const allFeatures = await this._extractAllFeatures({
+                match_id,
+                home_team,
+                away_team,
+                ...raw_data
+            });
 
             // 获取 Elo 特征
             const eloFeatures = this.dataFetcher.getEloFeatures(home_team, away_team);
+
+            // 分离各维度特征
+            const goldenFeatures = this.goldenExtractor.extract(raw_data);
+            const tacticalFeatures = this.tacticalExtractor.extract(raw_data);
+            const oddsMovementFeatures = extractOddsMovementFeatures(raw_data);
 
             return {
                 match_id,
@@ -263,6 +288,9 @@ class SmelterOrchestrator {
                 golden_features: goldenFeatures,
                 tactical_features: tacticalFeatures,
                 odds_movement_features: oddsMovementFeatures,
+                rolling_features: allFeatures.rolling || {},
+                efficiency_features: allFeatures.efficiency || {},
+                draw_features: allFeatures.draw || {},
                 elo_features: eloFeatures,
                 computed_at: new Date().toISOString()
             };
@@ -275,6 +303,81 @@ class SmelterOrchestrator {
             this.stats.failed++;
             return null;
         }
+    }
+
+    /**
+     * 提取全部特征（V5.0 30维）
+     * @private
+     * @param {object} matchData - 比赛数据
+     * @returns {object} 完整特征集
+     */
+    async _extractAllFeatures(matchData) {
+        const { match_id, home_team, away_team, match_date } = matchData;
+
+        // 基础特征提取（同步）
+        const goldenFeatures = this.goldenExtractor.extract(matchData);
+        const tacticalFeatures = this.tacticalExtractor.extract(matchData);
+
+        // 构建基础上下文
+        const baseFeatures = {
+            ...goldenFeatures,
+            ...tacticalFeatures,
+            match_id,
+            home_team,
+            away_team,
+            match_date: match_date || new Date().toISOString()
+        };
+
+        // 获取ELO和H2H特征
+        const eloFeatures = this.dataFetcher.getEloFeatures(home_team, away_team);
+        Object.assign(baseFeatures, eloFeatures);
+
+        // V5.0 新增：异步提取历史依赖特征
+        let rollingFeatures = {};
+        let efficiencyFeatures = {};
+        let drawFeatures = {};
+
+        try {
+            // 并行提取新特征
+            const [rolling, efficiency, draw] = await Promise.allSettled([
+                this.rollingExtractor.extract(baseFeatures),
+                this.efficiencyExtractor.extract(baseFeatures),
+                this.drawExtractor.extract(baseFeatures)
+            ]);
+
+            if (rolling.status === 'fulfilled') {
+                rollingFeatures = rolling.value || {};
+            } else {
+                this.logger.warn('Rolling特征提取失败', { match_id, error: rolling.reason?.message });
+            }
+
+            if (efficiency.status === 'fulfilled') {
+                efficiencyFeatures = efficiency.value || {};
+            } else {
+                this.logger.warn('Efficiency特征提取失败', { match_id, error: efficiency.reason?.message });
+            }
+
+            if (draw.status === 'fulfilled') {
+                drawFeatures = draw.value || {};
+            } else {
+                this.logger.warn('Draw特征提取失败', { match_id, error: draw.reason?.message });
+            }
+        } catch (error) {
+            this.logger.error('新特征提取异常', { match_id, error: error.message });
+        }
+
+        // 合并所有特征（30维）
+        return {
+            ...baseFeatures,
+            ...rollingFeatures,
+            ...efficiencyFeatures,
+            ...drawFeatures,
+            rolling: rollingFeatures,
+            efficiency: efficiencyFeatures,
+            draw: drawFeatures,
+            _version: 'V5.0.0',
+            _extractedAt: new Date().toISOString()
+        };
     }
 
     /**
