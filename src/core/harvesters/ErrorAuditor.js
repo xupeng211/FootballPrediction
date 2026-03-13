@@ -172,7 +172,7 @@ class ErrorAuditor {
         }
 
         // V4.46.3: SIZE_TOO_SMALL 可重试（可能是 403 逃逸）
-        if (msg.includes('SIZE_TOO_SMALL')) {
+        if (msg.includes('size_too_small')) {
             return true;
         }
 

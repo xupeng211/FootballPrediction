@@ -6,6 +6,9 @@
 
 'use strict';
 
+const { describe, it, beforeEach } = require('node:test');
+const assert = require('node:assert');
+
 // 模拟的 FotMobStrategy 解析器
 /**
  *
@@ -185,7 +188,7 @@ describe('Strategy Parser - FotMobStrategy', () => {
   });
 
   describe('HTML 解析 - 正常场景', () => {
-    test('✅ 应正确解析完整的 HTML 响应', () => {
+it('✅ 应正确解析完整的 HTML 响应', () => {
       const html = `
         <html>
           <script>
@@ -206,14 +209,14 @@ describe('Strategy Parser - FotMobStrategy', () => {
 
       const result = strategy.parseHTML(html);
 
-      expect(result).not.toBeNull();
-      expect(result.match_id).toBe('12345');
-      expect(result.home_team.name).toBe('Arsenal');
-      expect(result.away_team.name).toBe('Chelsea');
-      expect(result.match_info.score).toEqual([2, 1]);
+      assert.ok(result);
+      assert.strictEqual(result.match_id, '12345');
+      assert.strictEqual(result.home_team.name, 'Arsenal');
+      assert.strictEqual(result.away_team.name, 'Chelsea');
+      assert.deepStrictEqual(result.match_info.score, [2, 1]);
     });
 
-    test('✅ 应处理缺失统计字段的情况', () => {
+it('✅ 应处理缺失统计字段的情况', () => {
       const html = `
         <script>
           window.__INITIAL_STATE__ = {
@@ -230,43 +233,43 @@ describe('Strategy Parser - FotMobStrategy', () => {
 
       const result = strategy.parseHTML(html);
 
-      expect(result).not.toBeNull();
-      expect(result.match_id).toBe('67890');
-      expect(result.statistics).toEqual({});
+      assert.ok(result);
+      assert.strictEqual(result.match_id, '67890');
+      assert.deepStrictEqual(result.statistics, {});
     });
   });
 
   describe('HTML 解析 - 边界条件', () => {
-    test('❌ 空 HTML 应返回 null', () => {
-      expect(strategy.parseHTML('')).toBeNull();
-      expect(strategy.parseHTML(null)).toBeNull();
-      expect(strategy.parseHTML(undefined)).toBeNull();
+    it('❌ 空 HTML 应返回 null', () => {
+      assert.strictEqual(strategy.parseHTML(''), null);
+      assert.strictEqual(strategy.parseHTML(null), null);
+      assert.strictEqual(strategy.parseHTML(undefined), null);
     });
 
-    test('❌ 不包含 INITIAL_STATE 的 HTML 应返回 null', () => {
+    it('❌ 不包含 INITIAL_STATE 的 HTML 应返回 null', () => {
       const html = '<html><body>No data here</body></html>';
-      expect(strategy.parseHTML(html)).toBeNull();
+      assert.strictEqual(strategy.parseHTML(html), null);
     });
 
-    test('❌ 无效的 JSON 应返回 null', () => {
+    it('❌ 无效的 JSON 应返回 null', () => {
       const html = `
         <script>
           window.__INITIAL_STATE__ = { invalid json };
         </script>
       `;
-      expect(strategy.parseHTML(html)).toBeNull();
+      assert.strictEqual(strategy.parseHTML(html), null);
     });
 
-    test('❌ 缺少必要字段的 JSON 应返回 null', () => {
+    it('❌ 缺少必要字段的 JSON 应返回 null', () => {
       const html = `
         <script>
           window.__INITIAL_STATE__ = { "other": "data" };
         </script>
       `;
-      expect(strategy.parseHTML(html)).toBeNull();
+      assert.strictEqual(strategy.parseHTML(html), null);
     });
 
-    test('⚠️  特殊字符和转义应正确处理', () => {
+it('⚠️  特殊字符和转义应正确处理', () => {
       const html = `
         <script>
           window.__INITIAL_STATE__ = {
@@ -282,49 +285,49 @@ describe('Strategy Parser - FotMobStrategy', () => {
       `;
 
       const result = strategy.parseHTML(html);
-      expect(result).not.toBeNull();
+      assert.ok(result);
     });
   });
 
   describe('数据验证', () => {
-    test('✅ 完整数据应通过验证', () => {
+    it('✅ 完整数据应通过验证', () => {
       const data = {
         match_id: '123',
         home_team: { name: 'A', id: 1 },
         away_team: { name: 'B', id: 2 },
         match_info: { date: '2026-03-12' }
       };
-      expect(strategy.validateData(data)).toBe(true);
+      assert.strictEqual(strategy.validateData(data), true);
     });
 
-    test('❌ 缺少字段应验证失败', () => {
-      expect(strategy.validateData(null)).toBe(false);
-      expect(strategy.validateData({})).toBe(false);
-      expect(strategy.validateData({ match_id: '123' })).toBe(false);
+    it('❌ 缺少字段应验证失败', () => {
+      assert.strictEqual(strategy.validateData(null), false);
+      assert.strictEqual(strategy.validateData({}), false);
+      assert.strictEqual(strategy.validateData({ match_id: '123' }), false);
     });
 
-    test('❌ 空对象应验证失败', () => {
-      expect(strategy.validateData({})).toBe(false);
+    it('❌ 空对象应验证失败', () => {
+      assert.strictEqual(strategy.validateData({}), false);
     });
   });
 
   describe('错误分类', () => {
-    test('✅ HTTP 状态码应正确分类', () => {
-      expect(strategy.classifyError(403)).toBe('FORBIDDEN');
-      expect(strategy.classifyError(404)).toBe('NOT_FOUND');
-      expect(strategy.classifyError(429)).toBe('RATE_LIMITED');
-      expect(strategy.classifyError(500)).toBe('SERVER_ERROR');
-      expect(strategy.classifyError(503)).toBe('SERVER_ERROR');
-      expect(strategy.classifyError(0)).toBe('NETWORK_ERROR');
-      expect(strategy.classifyError(418)).toBe('UNKNOWN_ERROR');
+    it('✅ HTTP 状态码应正确分类', () => {
+      assert.strictEqual(strategy.classifyError(403), 'FORBIDDEN');
+      assert.strictEqual(strategy.classifyError(404), 'NOT_FOUND');
+      assert.strictEqual(strategy.classifyError(429), 'RATE_LIMITED');
+      assert.strictEqual(strategy.classifyError(500), 'SERVER_ERROR');
+      assert.strictEqual(strategy.classifyError(503), 'SERVER_ERROR');
+      assert.strictEqual(strategy.classifyError(0), 'NETWORK_ERROR');
+      assert.strictEqual(strategy.classifyError(418), 'UNKNOWN_ERROR');
     });
   });
 });
 
 // 测试覆盖率报告
 describe('📊 Coverage Requirements', () => {
-  test('业务逻辑覆盖率应达到 80%', () => {
+it('业务逻辑覆盖率应达到 80%', () => {
     // 此测试用于标记覆盖率要求
-    expect(true).toBe(true);
+    assert.strictEqual(true, true);
   });
 });

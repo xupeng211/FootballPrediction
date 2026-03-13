@@ -68,7 +68,7 @@ require = function(id) {
     return originalRequire.apply(this, arguments);
 };
 
-const { BrowserFactory, resetBrowserFactory } = require('/app/src/infrastructure/browser/BrowserFactory');
+const { BrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory');
 
 // ============================================================================
 // Mock Identity
