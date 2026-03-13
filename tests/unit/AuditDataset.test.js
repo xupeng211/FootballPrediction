@@ -321,14 +321,14 @@ it('✅ 空目录应返回 0 通过率', async () => {
   });
 
   describe('对齐率计算', () => {
-it('✅ 应正确计算对齐率', () => {
-      expect(auditor.calculateAlignmentRate(100, 100)).toBe('100.00');
-      expect(auditor.calculateAlignmentRate(90, 100)).toBe('90.00');
-      expect(auditor.calculateAlignmentRate(110, 100)).toBe('110.00');
+    it('✅ 应正确计算对齐率', () => {
+      assert.strictEqual(auditor.calculateAlignmentRate(100, 100), '100.00');
+      assert.strictEqual(auditor.calculateAlignmentRate(90, 100), '90.00');
+      assert.strictEqual(auditor.calculateAlignmentRate(110, 100), '110.00');
     });
 
-it('❌ DB 为 0 时应返回 0', () => {
-      expect(auditor.calculateAlignmentRate(100, 0)).toBe(0);
+    it('❌ DB 为 0 时应返回 0', () => {
+      assert.strictEqual(auditor.calculateAlignmentRate(100, 0), 0);
     });
   });
 
