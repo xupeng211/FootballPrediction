@@ -1,6 +1,6 @@
 # FootballPrediction - AI 助手指令上下文
 
-> **系统版本**: V4.51.2-TOTAL-WAR | **最后更新**: 2026-03-13
+> **系统版本**: V4.51.2-TOTAL-WAR | **最后更新**: 2026-03-14
 >
 > 本文档为 AI 助手提供项目背景、架构理解和操作指南，用于快速上手和高效协作。
 
@@ -18,11 +18,12 @@
 |------|----------|------|
 | **L1 Discovery** | FotMob API | 自动发现未来 7 天比赛 |
 | **L2 Harvest** | FotMob Details + 22 节点代理池 | 赔率数据采集（开盘/收盘/亚洲盘） |
-| **L3 Smelt** | FeatureSmelter | 11维纯净战斗特征向量 |
+| **L3 Smelt** | FeatureSmelter V3.0-PRO | 11维纯净战斗特征向量 |
 | **ML Prediction** | XGBoost TITAN 模型 | 65.31% 准确率，<100ms 响应 |
 | **OddsFluxDetector** | V5.0 赔率背离算法 | 实时监测赔率异常波动 |
-| **Swarm Harvest** | Hyper Swarm 引擎 | 多 Worker 并发收割 |
+| **Swarm Harvest** | Hyper Swarm 引擎 | 多 Worker 并发收割，吞吐量提升 3.75x |
 | **Sentinel** | 哨兵监控系统 | 自动停机与熔断保护 |
+| **TITAN Cruise Control** | 全自动巡航控制器 | 无人值守定时任务调度 |
 
 ### 1.3 质量认证
 
@@ -30,6 +31,7 @@
 - **幂等收割**：支持重复执行，自动跳过已完成
 - **架构纯净**：无冗余模块，无废弃代码
 - **黄金准则**：80% 测试覆盖率熔断 + 0 Error 静态质量
+- **工业级部署**：Docker 全容器化，支持生产级监控
 
 ---
 
@@ -46,6 +48,7 @@
 | **ML** | XGBoost 2.0+ / scikit-learn | 预测模型 |
 | **代理** | NetworkShield | 22 节点熔断保护 |
 | **监控** | Prometheus + Grafana | 指标采集与可视化 |
+| **代码质量** | ESLint + Prettier + Ruff | 静态检查与格式化 |
 
 ---
 
@@ -61,7 +64,7 @@
 └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
      FotMob           FotMob Details     11维特征          K-Factor           EV 排序
      API              + Odds 辅助        (Elo+身价+H2H)    递归更新           TITAN 模型
-                      22 代理节点                                               3-Model 共识
+                      22 代理节点          Worker 池化                          3-Model 共识
 ```
 
 ### 3.2 数据层级
@@ -80,14 +83,16 @@
 |----------|-------------|---------|
 | **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `npm run seed` |
 | **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `npm start` |
-| **Swarm Harvest** | `src/infrastructure/harvesters/SwarmEngine.js` | `npm run harvest:swarm` |
+| **Swarm Harvest** | `src/infrastructure/harvesters/SwarmHarvester.js` | `npm run harvest:swarm` |
 | **L3 Smelt** | `src/feature_engine/smelter/FeatureSmelter.js` | `npm run smelt` |
 | **Sentinel** | `src/infrastructure/monitoring/Sentinel.js` | `npm run titan:watch` |
 | **OddsFluxDetector** | `src/analysis/OddsFluxDetector.js` | V5.0 算法模块 |
+| **TITAN Cruise** | `scripts/ops/titan_cruise_control.py` | 全自动巡航 |
 | **身份管理** | `src/infrastructure/network/SessionManager.js` | - |
 | **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
 | **TITAN 模型** | `src/ml/inference/predictor.py` | `npm run predict` |
-| **统一配置** | `src/config_unified.py` | - |
+| **统一配置** | `src/config_unified.py` / `config/factory_config.js` | - |
+| **StructuredLogger** | `src/utils/StructuredLogger.js` | V4.0 模块化日志 |
 
 ---
 
@@ -98,6 +103,7 @@ FootballPrediction/
 ├── config/                      # 配置中心
 │   ├── factory_config.js        # 工厂级配置（所有魔术数字归口）
 │   ├── constants.js             # 业务常量
+│   ├── database.js              # 数据库配置
 │   └── leagues.json             # 联赛配置
 ├── scripts/
 │   ├── ops/                     # 运维脚本
@@ -107,45 +113,70 @@ FootballPrediction/
 │   │   ├── swarm_test.js        # Swarm 蜂群收割
 │   │   ├── sentinel_watch.js    # 哨兵监控
 │   │   ├── hyper_swarm.js       # 超 Swarm 引擎
+│   │   ├── titan_cruise_control.py  # 全自动巡航控制器
 │   │   ├── check_health.js      # 健康检查
 │   │   ├── train_model.py       # 模型训练
 │   │   ├── predict_pipeline.py  # 预测管道
 │   │   └── titan_daily_ops.sh   # 一键运维脚本
-│   └── maintenance/             # 维护工具
-│       ├── integrity_guard.py   # 数据完整性守护
-│       ├── recalculate_elo.js   # ELO 重新计算
-│       └── check_system_health.py
+│   ├── maintenance/             # 维护工具
+│   │   ├── integrity_guard.py   # 数据完整性守护
+│   │   ├── recalculate_elo.js   # ELO 重新计算
+│   │   ├── check_system_health.py
+│   │   └── show_today_summary.py # 终端作战简报
+│   └── tools/                   # 工具脚本
 ├── src/
-│   ├── core/                    # 核心基础设施（Math, Database, Types）
+│   ├── core/                    # 核心基础设施
+│   │   ├── browser/             # 浏览器自动化
+│   │   ├── database/            # 数据库核心
+│   │   ├── harvesters/          # 收割引擎核心
+│   │   ├── math/                # 数学工具
+│   │   └── network/             # 网络核心
 │   ├── parsers/                 # 数据解析器
-│   ├── feature_engine/          # Node.js 特征引擎
+│   ├── feature_engine/          # 特征引擎
+│   │   ├── elo/                 # ELO 评分系统
+│   │   ├── extractors/          # 特征提取器
+│   │   └── smelter/             # 特征熔炼器
 │   ├── analysis/                # V5.0 分析算法（OddsFluxDetector）
 │   ├── strategy/                # 策略模块（Kelly准则、Tuner）
-│   ├── infrastructure/          # 基础设施（收割器、网络、数据库）
-│   │   ├── harvesters/          # 收割引擎
+│   ├── infrastructure/          # 基础设施
+│   │   ├── harvesters/          # 收割引擎（ProductionHarvester, SwarmHarvester）
 │   │   ├── network/             # 网络与代理
 │   │   ├── monitoring/          # 监控与哨兵
 │   │   └── browser/             # 浏览器自动化
 │   ├── ml/                      # 机器学习
 │   │   ├── inference/           # 模型推理
-│   │   ├── models/              # 模型定义
-│   │   ├── data/                # 数据处理
-│   │   └── feature_engine/      # Python 特征工程
+│   │   ├── feature_engine/      # Python 特征工程
+│   │   │   └── h2h_estimator.py # H2H 智能补位引擎
+│   │   └── models/              # 模型定义
 │   ├── database/                # 数据库模型（唯一真理源）
+│   │   └── repositories/        # 数据仓储层
 │   ├── schemas/                 # Pydantic Schema
 │   ├── services/                # 业务服务层
 │   ├── config/                  # 配置模块
 │   ├── constants/               # 常量定义
+│   │   └── model_config.py      # 模型配置常量唯一源
 │   ├── api/                     # API 接口
-│   ├── data/                    # 数据层
-│   └── utils/                   # 工具函数
+│   ├── utils/                   # 工具函数
+│   │   └── StructuredLogger.js  # V4.0 结构化日志器
+│   └── data/                    # 数据层
 ├── tests/                       # 测试文件
-│   ├── unit/                    # 单元测试
+│   ├── unit/                    # 单元测试（44+ 测试用例）
 │   ├── integration/             # 集成测试
+│   ├── integrity/               # 完整性测试
 │   └── fixtures/                # 测试数据
 ├── models/                      # 生产模型文件
-│   └── titan_v4466_real_combat.joblib
+│   ├── titan_v4466_real_combat.joblib
+│   ├── titan_v4466_real_combat_scaler.joblib
+│   └── titan_v4466_real_combat_metadata.json
 ├── docs/                        # 文档中心
+├── .claude/                     # Claude Skills 约束体系
+│   ├── skills/                  # 12 个专用技能
+│   ├── minimal_change.skill.md
+│   ├── architecture_boundary.skill.md
+│   ├── test_guard.skill.md
+│   ├── context_lock.skill.md
+│   └── change_impact.skill.md
+├── Makefile                     # V51.0 指挥塔
 ├── CLAUDE.md                    # AI 助手详细操作指南
 ├── COMMAND_CENTER.md            # 数字化指挥中心
 └── AGENTS.md                    # 本文件
@@ -184,12 +215,17 @@ npm start
 | `npm run seed` | L1 赛程种子 |
 | `npm run seed:all` | L1 全量赛程种子 |
 | `npm run smelt` | L3 特征熔炼 |
-| `npm run harvest:swarm` | Swarm 蜂群收割 |
+| `npm run harvest:swarm` | Swarm 蜂群收割（Worker 池化） |
 | `npm run titan:start` | TITAN 完整工作流 |
 | `npm run titan:watch` | 启动哨兵监控 |
 | `npm run titan:check` | 健康检查 |
+| `npm run titan:audit` | 数据集审计 |
+| `npm run titan:clean` | 归档历史文件 |
 | `npm run predict` | 生成预测报告 |
+| `npm run predict:dry` | 试运行模式（不写入数据库） |
 | `npm run train` | 训练 TITAN 模型 |
+| `npm run train:fast` | 快速训练（参数减少） |
+| `npm run train:deep` | 深度训练（参数增加） |
 | `npm test` | 运行单元测试 |
 | `npm run qa` | 全量检查（lint + test） |
 
@@ -201,7 +237,7 @@ npm start
 
 1. **沟通协议**：所有回复、注释、日志必须使用**中文**
 2. **容器化优先**：**禁止**在宿主机直接运行 Node/Python，所有操作在 Docker 容器内执行
-3. **分支管理**：严禁在 `main` 分支开发，分支命名：`feat/<功能>` / `lab/<实验>` / `fix/<修复>`
+3. **分支管理**：严禁在 `main` 分支开发，分支命名：`feat/<功能>` / `lab/<实验>` / `fix/<修复>` / `refactor/<重构>`
 4. **数据完整性**：**零模拟原则**，严禁使用 `Math.random()` 伪造数据
 5. **幂等性**：所有收割任务支持重复执行，已存在的完整数据应跳过
 
@@ -215,31 +251,36 @@ npm start
 - **策略模块**: `src/strategy/` (Kelly准则等)
 - **基础设施**: `src/infrastructure/`
 - **唯一数据**: `src/database/`
+- **日志系统**: `src/utils/StructuredLogger.js` (V4.0 模块化)
 
 ### 6.3 黄金准则（V4.51.2+）
 
 - **测试覆盖率**: 80% 熔断阈值
 - **静态质量**: 0 Error 容忍
 - **文档规范**: JSDoc 完整注释
+- **模块化**: 单一职责，高内聚低耦合
 
 ---
 
 ## 7. 常用开发命令
 
-### 7.1 开发环境管理
+### 7.1 开发环境管理（Makefile）
 
 ```bash
 # 启动开发环境
-docker-compose -f docker-compose.dev.yml up -d
 make dev-up
 
-# 进入开发容器
-docker-compose -f docker-compose.dev.yml exec dev bash
+# 进入开发容器 Shell
 make dev-shell
 
 # 停止开发环境
-docker-compose -f docker-compose.dev.yml down
 make dev-down
+
+# 查看开发容器日志
+make dev-logs
+
+# 在容器中运行生产收割
+make dev-harvest
 ```
 
 ### 7.2 核心收割流程
@@ -338,6 +379,9 @@ npm run titan:watch
 npm run titan:check
 npm run status:health
 make health
+
+# 启动战神仪表盘
+make dashboard
 ```
 
 ### 7.7 模型操作
@@ -539,9 +583,61 @@ const result = detector.analyze({
 });
 ```
 
+### 12.2 TITAN Cruise Control - 全自动巡航控制器
+
+**文件**: `scripts/ops/titan_cruise_control.py`
+
+实现无人值守运行，支持 cron 定时调度。
+
+**核心功能**:
+- 定时任务调度
+- 熔断保护（连续 3 次失败自动熔断，1 小时后重置）
+- 日志轮转
+- 健康检查
+
+### 12.3 H2H 智能补位引擎
+
+**文件**: `src/ml/feature_engine/h2h_estimator.py`
+
+解决 H2H 冷启动问题，基于 Elo 差值线性推演，消除 H2H 数据缺失阻塞。
+
 ---
 
-## 13. 相关文档
+## 13. 测试体系
+
+### 13.1 测试结构
+
+| 目录 | 用途 | 数量 |
+|------|------|------|
+| `tests/unit/` | 单元测试 | 44+ 测试用例 |
+| `tests/integration/` | 集成测试 | - |
+| `tests/integrity/` | 完整性测试 | - |
+| `tests/fixtures/` | 测试数据 | - |
+
+### 13.2 核心测试文件
+
+- `StructuredLogger.test.js` - 结构化日志器测试（V4.0 模块化）
+- `Smelter_Audit.test.js` - Smelter 审计测试
+- `FeatureSmelter.test.js` - 特征熔炼器测试
+- `ProductionHarvester.test.js` - 生产收割器测试
+- `SentinelWatch.test.js` - 哨兵监控测试
+
+### 13.3 测试运行
+
+```bash
+# 运行所有测试
+npm test
+
+# 运行指定测试
+node --test tests/unit/StructuredLogger.test.js
+
+# Python 测试
+pytest tests/ -v
+```
+
+---
+
+## 14. 相关文档
 
 | 文档 | 说明 |
 |------|------|
@@ -553,26 +649,27 @@ const result = detector.analyze({
 | [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | 故障排查 |
 | [docs/xgboost_optimization_guide.md](./docs/xgboost_optimization_guide.md) | XGBoost 优化指南 |
 | [docs/MODEL_V4_ANATOMY.md](./docs/MODEL_V4_ANATOMY.md) | V4 模型解剖学报告（11维特征详解） |
+| [docs/SMELTER_REFACTOR_PLAN.md](./docs/SMELTER_REFACTOR_PLAN.md) | Smelter V4.0 重构计划 |
 | [AUDIT_REPORT_V3.2.md](./AUDIT_REPORT_V3.2.md) | V3.1-STABLE 穿透审计报告 |
 
 ---
 
-## 14. 助手行为准则
+## 15. 助手行为准则
 
-### 14.1 代码修改原则
+### 15.1 代码修改原则
 
 1. **先读后改**：从不修改未读过的代码
 2. **最小变更**：只做必要的修改，不过度重构
 3. **测试验证**：修改后运行相关测试
 4. **中文优先**：所有注释、日志使用中文
 
-### 14.2 安全守则
+### 15.2 安全守则
 
 1. **绝不引入**：XSS、SQL 注入、命令注入等安全漏洞
 2. **边界校验**：只在系统边界（用户输入、外部 API）做验证
 3. **信任内部**：信任内部代码和框架保证
 
-### 14.3 禁止行为
+### 15.3 禁止行为
 
 - 不在 `main` 分支直接开发
 - 不在宿主机直接运行 Node/Python
@@ -581,9 +678,9 @@ const result = detector.analyze({
 - 不添加未请求的功能
 - 不硬编码配置参数
 
-### 14.4 Skills 约束体系
+### 15.4 Skills 约束体系
 
-项目已配置 12 个专用 Skills，详见 `.claude/README.md`。核心约束：
+项目已配置 5 个核心 RED 约束 Skills 和 12 个专用技能，详见 `.claude/README.md`。核心约束：
 
 | 约束等级 | Skill | 用途 |
 |----------|-------|------|
@@ -595,7 +692,7 @@ const result = detector.analyze({
 
 ---
 
-## 15. MCP 服务器权限
+## 16. MCP 服务器权限
 
 | MCP 服务器 | 权限 | 允许行为 |
 |-----------|------|----------|
@@ -608,6 +705,32 @@ const result = detector.analyze({
 
 ---
 
+## 17. 近期更新（V4.51.2）
+
+### 17.1 Smelter V4.0 模块化重构（进行中）
+
+**Phase 1 已完成**:
+- ✅ StructuredLogger 模块化提取
+- ✅ 独立测试套件（StructuredLogger.test.js）
+- ✅ 44 个测试用例 100% 通过
+- ✅ 覆盖率提升至 66.79%
+
+**重构目标**:
+- 将 698 行的 FeatureSmelter 拆分为高内聚、低耦合的模块
+- 测试覆盖率 80%+
+- 支持并发处理
+- 可插拔 Extractor
+
+### 17.2 Worker 池化架构（V4.46.4+）
+
+**性能提升**:
+- 浏览器启动次数减少 99%
+- Worker 初始化减少 99%
+- 单场平均耗时减少 65%
+- 吞吐量提升 3.75x
+
+---
+
 **维护者**: V174 Engineering Team  
 **许可证**: MIT License  
-**最后更新**: 2026-03-13
+**最后更新**: 2026-03-14
