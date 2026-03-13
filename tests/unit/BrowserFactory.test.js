@@ -59,6 +59,7 @@ const mockPlaywright = {
 
 // 劫持 require
 const originalRequire = require;
+// eslint-disable-next-line no-global-assign
 require = function(id) {
     if (id === 'playwright') return mockPlaywright;
     return originalRequire.apply(this, arguments);
@@ -152,7 +153,7 @@ describe('BrowserFactory', () => {
     it('应该在未启动浏览器时抛出错误', async () => {
         const identity = createMockIdentity();
         await assert.rejects(
-            async () => await factory.createContext(identity, true),
+            async () => factory.createContext(identity, true),
             { message: /浏览器未启动/ }
         );
     });

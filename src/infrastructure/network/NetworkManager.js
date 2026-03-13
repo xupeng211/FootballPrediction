@@ -454,7 +454,7 @@ class NetworkManager {
      */
     async loadSessionToContext(context, port) {
         if (this.sessionManager) {
-            return await this.sessionManager.loadSessionToContext(context, port);
+            return this.sessionManager.loadSessionToContext(context, port);
         }
         return false;
     }

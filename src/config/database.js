@@ -71,7 +71,7 @@ async function withRetry(operation, maxRetries = 3, delayMs = 1000) {
             if (attempt < maxRetries) {
                 const backoffDelay = delayMs * Math.pow(2, attempt - 1);
                 console.log(`[DB] 重试 ${attempt}/${maxRetries}，等待 ${backoffDelay}ms...`);
-                await new Promise(resolve => setTimeout(resolve, backoffDelay));
+                await new Promise(resolve => { setTimeout(resolve, backoffDelay); });
             }
         }
     }

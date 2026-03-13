@@ -586,6 +586,7 @@ class ProductionHarvester extends AbstractHarvester {
         console.log('  策略模式 | 22 节点代理池 | 6 Worker 集群 | 弹性重试');
         console.log('═══════════════════════════════════════════════════════════════');
 
+        // eslint-disable-next-line no-constant-condition
         while (true) {
             this.stats.sweepRounds++;
             const matches = await this.getPendingMatches();

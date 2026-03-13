@@ -137,7 +137,7 @@ async function main() {
             if (i < SERIE_A_MATCH_IDS.length - 1) {
                 const delay = 3000 + Math.random() * 2000;
                 console.log(`⏳ 等待 ${(delay / 1000).toFixed(1)}s 后继续...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
+                await new Promise(resolve => { setTimeout(resolve, delay); });
             }
         }
 

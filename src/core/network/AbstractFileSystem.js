@@ -275,7 +275,7 @@ class NodeFileSystem extends IFileSystem {
             } catch (error) {
                 if (error.code === 'EEXIST') {
                     // 锁文件已存在，等待后重试
-                    await new Promise(resolve => setTimeout(resolve, pollInterval));
+                    await new Promise(resolve => { setTimeout(resolve, pollInterval); });
                 } else {
                     // 其他错误，抛出
                     throw filesystemError('acquireLock', lockPath, error);
@@ -410,7 +410,7 @@ class MemoryFileSystem extends IFileSystem {
                 this._locks.add(normalizedPath);
                 return true;
             }
-            await new Promise(resolve => setTimeout(resolve, pollInterval));
+            await new Promise(resolve => { setTimeout(resolve, pollInterval); });
         }
 
         return false;

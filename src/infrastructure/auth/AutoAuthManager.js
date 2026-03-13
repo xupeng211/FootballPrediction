@@ -366,7 +366,7 @@ class AutoAuthManager {
             // 端口之间休息 5 秒
             if (ports.indexOf(port) < ports.length - 1) {
                 console.log('⏳ 等待 5 秒后继续...');
-                await new Promise(resolve => setTimeout(resolve, 5000));
+                await new Promise(resolve => { setTimeout(resolve, 5000); });
             }
         }
 

@@ -382,7 +382,7 @@ describe('NetworkShield - V1.1.0 Integration Tests', () => {
             await shield.getNextHealthyProxy('session-expire-2');
 
             // 等待会话过期
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => { setTimeout(resolve, 100); });
 
             const cleaned = shield.sessionManager.cleanupExpiredSessions();
             expect(cleaned).toBeGreaterThan(0);
@@ -568,6 +568,8 @@ describe('Cross-Language Registry Access', () => {
 });
 
 describe('Long-Running Stability', () => {
+    let shield;
+
     test('should handle rapid proxy allocation cycles', async () => {
         shield = new NetworkShield({
             proxyHost: TEST_CONFIG.proxyHost,

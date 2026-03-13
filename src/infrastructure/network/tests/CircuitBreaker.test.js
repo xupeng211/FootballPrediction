@@ -97,7 +97,7 @@ describe('CircuitBreaker - V1.1.0 Unit Tests', () => {
             expect(testBreaker.getState().state).toBe(CircuitState.OPEN);
 
             // 等待 1ms 确保冷却期已过
-            await new Promise(resolve => setTimeout(resolve, 10));
+            await new Promise(resolve => { setTimeout(resolve, 10); });
 
             // 执行请求应该触发状态评估
             try {
@@ -355,7 +355,7 @@ describe('CircuitBreaker - V1.1.0 Unit Tests', () => {
             for (let i = 0; i < 100; i++) {
                 promises.push(
                     breaker.execute(async () => {
-                        await new Promise(resolve => setTimeout(resolve, Math.random() * 10));
+                        await new Promise(resolve => { setTimeout(resolve, Math.random() * 10); });
                         if (Math.random() > 0.8) {
                             throw new Error('Random failure');
                         }
@@ -394,13 +394,13 @@ describe('CircuitBreaker - V1.1.0 Unit Tests', () => {
             // 进入 HALF_OPEN 状态
             testBreaker.recordFailure(new Error('F1'));
             testBreaker.recordFailure(new Error('F2'));
-            await new Promise(resolve => setTimeout(resolve, 10));
+            await new Promise(resolve => { setTimeout(resolve, 10); });
             testBreaker._evaluateStateTransition();
 
             expect(testBreaker.getState().state).toBe(CircuitState.HALF_OPEN);
 
             // 等待超时
-            await new Promise(resolve => setTimeout(resolve, 150));
+            await new Promise(resolve => { setTimeout(resolve, 150); });
 
             // 触发状态评估
             testBreaker._evaluateStateTransition();
@@ -421,7 +421,7 @@ describe('CircuitBreaker - V1.1.0 Unit Tests', () => {
 
             testBreaker.recordFailure(new Error('F1'));
             testBreaker.recordFailure(new Error('F2'));
-            await new Promise(resolve => setTimeout(resolve, 60));
+            await new Promise(resolve => { setTimeout(resolve, 60); });
             testBreaker._evaluateStateTransition();
 
             // 事件应该在状态评估时触发
