@@ -153,6 +153,22 @@ class NetworkShield {
     }
 
     /**
+     * V4.51: 为 NetworkManager 提供兼容接口
+     * 包装 assignPort 方法返回统一格式
+     * @param {string} sessionId - 会话ID
+     * @returns {Promise<Object>} 代理配置
+     */
+    async getNextHealthyProxy(sessionId) {
+        const workerId = parseInt(sessionId.replace('WORKER-', '')) || 1;
+        const assignment = this.assignPort(workerId);
+        return {
+            sessionId,
+            port: assignment.port,
+            url: assignment.url
+        };
+    }
+
+    /**
      * 标记代理成功
      * @param {number} port - 代理端口
      */

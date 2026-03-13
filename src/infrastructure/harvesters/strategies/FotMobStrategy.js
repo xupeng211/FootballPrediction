@@ -154,7 +154,60 @@ class FotMobStrategy {
             console.log(`[FotMobStrategy] nextData.props.pageProps 存在: ${!!nextData?.props?.pageProps}`);
         }
 
+        // V4.51.2: 备用方案 B - 从 DOM 提取基础数据
         if (!nextData) {
+            console.log('[FotMobStrategy] __NEXT_DATA__ 缺失，尝试 DOM 提取...');
+
+            const basicData = await page.evaluate(() => {
+                // 尝试多种选择器提取比赛信息
+                const title = document.querySelector('h1')?.textContent ||
+                             document.querySelector('[data-testid="match-title"]')?.textContent ||
+                             document.title || '';
+
+                // 尝试提取队伍名称
+                const homeTeam = document.querySelector('.home-team, [data-testid="home-team"]')?.textContent?.trim();
+                const awayTeam = document.querySelector('.away-team, [data-testid="away-team"]')?.textContent?.trim();
+
+                // 尝试从 title 解析 (格式: "Team A vs Team B - FotMob")
+                let teams = [];
+                if (title.includes(' vs ')) {
+                    teams = title.split(' vs ').map(t => t.trim());
+                } else if (title.includes(' - ')) {
+                    const matchPart = title.split(' - ')[0];
+                    if (matchPart.includes(' vs ')) {
+                        teams = matchPart.split(' vs ').map(t => t.trim());
+                    }
+                }
+
+                if ((homeTeam && awayTeam) || teams.length === 2) {
+                    return {
+                        general: {
+                            homeTeam: { name: homeTeam || teams[0] },
+                            awayTeam: { name: awayTeam || teams[1] },
+                            matchStatus: 'UNKNOWN'
+                        },
+                        content: {
+                            // 标记为 DOM 提取的基础数据
+                            _domExtracted: true,
+                            _extractionMethod: 'dom_fallback'
+                        },
+                        header: {
+                            title: title
+                        },
+                        _source: 'fotmob_dom_fallback',
+                        _extractedAt: new Date().toISOString()
+                    };
+                }
+
+                return null;
+            });
+
+            if (basicData) {
+                console.log('[FotMobStrategy] ✅ DOM 提取成功，返回基础数据');
+                return this._normalizeData(basicData);
+            }
+
+            // 所有方案都失败，才抛出 NO_DATA
             throw new Error('NO_DATA:无法从页面提取数据');
         }
 

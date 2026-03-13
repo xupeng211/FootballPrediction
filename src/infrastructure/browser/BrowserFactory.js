@@ -1,0 +1,483 @@
+/**
+ * BrowserFactory - 浏览器工厂
+ * ===========================
+ *
+ * 统一管理浏览器生命周期、Context 创建、隐身脚本注入和行为模拟。
+ * 从 AbstractHarvester 剥离的工业级组件。
+ *
+ * @module infrastructure/browser/BrowserFactory
+ * @version V1.0.0
+ */
+
+'use strict';
+
+const { chromium } = require('playwright');
+const { getPathResolver } = require('../utils/PathResolver');
+const { logger } = require('../utils/Logger');
+
+// ============================================================================
+// BrowserFactory - 浏览器工厂类
+// ============================================================================
+
+class BrowserFactory {
+    /**
+     * 创建 BrowserFactory 实例
+     * @param {Object} [config={}] - 配置选项
+     * @param {boolean} [config.headless=true] - 是否无头模式
+     * @param {string} [config.profilePath] - 浏览器配置文件路径
+     */
+    constructor(config = {}) {
+        this.config = {
+            headless: config.headless !== false,
+            profilePath: config.profilePath || process.env.BROWSER_PROFILE_PATH || '/app/data/browser_profile',
+            ...config
+        };
+
+        this.browser = null;
+    }
+
+    // ========================================================================
+    // 浏览器生命周期
+    // ========================================================================
+
+    /**
+     * 启动浏览器
+     * @returns {Promise<import('playwright').Browser>}
+     */
+    async launch() {
+        if (this.browser) {
+            return this.browser;
+        }
+
+        console.log('🚀 [BrowserFactory] 启动浏览器...');
+
+        this.browser = await chromium.launch({
+            headless: this.config.headless,
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-blink-features=AutomationControlled',
+                '--disable-gpu'
+            ]
+        });
+
+        console.log('✅ [BrowserFactory] 浏览器已启动');
+        return this.browser;
+    }
+
+    /**
+     * 关闭浏览器
+     */
+    async close() {
+        if (this.browser) {
+            try {
+                await this.browser.close();
+                console.log('✅ [BrowserFactory] 浏览器已关闭');
+            } catch (err) {
+                logger.warn('浏览器关闭失败', { error: err.message });
+            }
+            this.browser = null;
+        }
+    }
+
+    /**
+     * 获取浏览器实例
+     * @returns {import('playwright').Browser|null}
+     */
+    getBrowser() {
+        return this.browser;
+    }
+
+    // ========================================================================
+    // Context 创建
+    // ========================================================================
+
+    /**
+     * 创建浏览器上下文
+     * @param {Object} identity - Worker 身份信息
+     * @param {Object} identity.proxy - 代理配置
+     * @param {Object} identity.stealth - 隐身配置
+     * @param {boolean} [disableProxy=false] - 是否禁用代理
+     * @returns {Promise<import('playwright').BrowserContext>}
+     */
+    async createContext(identity, disableProxy = false) {
+        if (!this.browser) {
+            throw new Error('浏览器未启动，请先调用 launch()');
+        }
+
+        const proxyConfig = disableProxy || process.env.DISABLE_PROXY === 'true'
+            ? undefined
+            : { server: identity.proxy.url };
+
+        const context = await this.browser.newContext({
+            viewport: identity.stealth.viewport,
+            userAgent: identity.stealth.userAgent,
+            extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
+            proxy: proxyConfig,
+            deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
+            locale: identity.stealth.locale || 'en-US',
+            timezoneId: identity.stealth.timezoneId || 'Europe/London'
+        });
+
+        return context;
+    }
+
+    // ========================================================================
+    // 隐身脚本注入
+    // ========================================================================
+
+    /**
+     * 注入原生隐身脚本
+     * V4.46.1: 修复 platform 与 UA 不一致导致的指纹泄露
+     * @param {import('playwright').Page} page - Playwright 页面对象
+     */
+    async injectStealthScripts(page) {
+        await page.addInitScript(() => {
+            // ═══════════════════════════════════════════════════════════════
+            // 核心指纹覆盖 - 必须与 UA 完全一致
+            // ═══════════════════════════════════════════════════════════════
+
+            // 覆盖 webdriver 标志
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+                configurable: true
+            });
+
+            // 【关键修复】覆盖 platform - 必须与 UA 中的 Windows 匹配
+            Object.defineProperty(navigator, 'platform', {
+                get: () => 'Win32',
+                configurable: true
+            });
+
+            // 【关键修复】模拟语言 - 包含 q 值权重
+            Object.defineProperty(navigator, 'languages', {
+                get: () => ['en-US', 'en'],
+                configurable: true
+            });
+
+            // 模拟硬件并发 (随机化)
+            Object.defineProperty(navigator, 'hardwareConcurrency', {
+                get: () => 8 + (Math.floor(Math.random() * 17)),
+                configurable: true
+            });
+
+            // 模拟设备内存
+            Object.defineProperty(navigator, 'deviceMemory', {
+                get: () => [4, 8, 8, 16, 16, 32][Math.floor(Math.random() * 6)],
+                configurable: true
+            });
+
+            // 模拟 Chrome 插件数组
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => {
+                    const plugins = [
+                        Object.create(Plugin.prototype, {
+                            name: { value: 'Chrome PDF Plugin' },
+                            description: { value: 'Portable Document Format' },
+                            filename: { value: 'internal-pdf-viewer' },
+                            length: { value: 1 }
+                        }),
+                        Object.create(Plugin.prototype, {
+                            name: { value: 'Chrome PDF Viewer' },
+                            description: { value: '' },
+                            filename: { value: 'mhjfbmdg-nopdfs' },
+                            length: { value: 1 }
+                        }),
+                        Object.create(Plugin.prototype, {
+                            name: { value: 'Native Client' },
+                            description: { value: '' },
+                            filename: { value: 'internal-nacl' },
+                            length: { value: 1 }
+                        })
+                    ];
+                    plugins.item = (i) => plugins[i] || null;
+                    plugins.namedItem = (name) => plugins.find(p => p.name === name) || null;
+                    plugins.refresh = () => {};
+                    return plugins;
+                },
+                configurable: true
+            });
+
+            // ═══════════════════════════════════════════════════════════════
+            // WebGL 指纹伪装 - 随机化
+            // ═══════════════════════════════════════════════════════════════
+            const WEBGL_RENDERERS = [
+                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (AMD)', renderer: 'ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
+                { vendor: 'Google Inc. (Intel)', renderer: 'ANGLE (Intel, Intel UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)' }
+            ];
+            const selectedRenderer = WEBGL_RENDERERS[Math.floor(Math.random() * WEBGL_RENDERERS.length)];
+
+            const getParameterProxyHandler = {
+                apply: function(target, thisArg, args) {
+                    const param = args[0];
+                    // UNMASKED_VENDOR_WEBGL
+                    if (param === 37445) return selectedRenderer.vendor;
+                    // UNMASKED_RENDERER_WEBGL
+                    if (param === 37446) return selectedRenderer.renderer;
+                    return target.apply(thisArg, args);
+                }
+            };
+
+            if (typeof WebGLRenderingContext !== 'undefined') {
+                const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
+                WebGLRenderingContext.prototype.getParameter = new Proxy(originalGetParameter, getParameterProxyHandler);
+            }
+
+            if (typeof WebGL2RenderingContext !== 'undefined') {
+                const originalGetParameter2 = WebGL2RenderingContext.prototype.getParameter;
+                WebGL2RenderingContext.prototype.getParameter = new Proxy(originalGetParameter2, getParameterProxyHandler);
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // Canvas 指纹噪音
+            // ═══════════════════════════════════════════════════════════════
+            const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
+            HTMLCanvasElement.prototype.toDataURL = function(type) {
+                if (this.width > 0 && this.height > 0) {
+                    const ctx = this.getContext('2d');
+                    if (ctx) {
+                        // 添加微弱噪音
+                        const imageData = ctx.getImageData(0, 0, this.width, this.height);
+                        for (let i = 0; i < imageData.data.length; i += 4) {
+                            imageData.data[i] ^= (Math.random() * 2) | 0;
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                    }
+                }
+                return originalToDataURL.apply(this, arguments);
+            };
+
+            // ═══════════════════════════════════════════════════════════════
+            // 隐藏自动化标志
+            // ═══════════════════════════════════════════════════════════════
+            delete window.__webdriver_evaluate;
+            delete window.__webdriver_script_function;
+            delete window.__webdriver_script_fn;
+            delete window.__webdriver_unwrapped;
+            delete window.__selenium_evaluate;
+            delete window.__selenium_script_function;
+            delete window.__selenium_script_fn;
+            delete window.__fxdriver_evaluate;
+            delete window.__driver_evaluate;
+            delete window.__webdriver_script_fn;
+            delete window.__lastWatirAlert;
+            delete window.__lastWatirConfirm;
+            delete window.__lastWatirPrompt;
+            delete window._Selenium_IDE_Recorder;
+            delete window._selenium;
+            delete window.calledSelenium;
+
+            // 删除 window.chrome.csi 和 window.chrome.loadTimes 的自动化特征
+            if (window.chrome) {
+                window.chrome.runtime = window.chrome.runtime || {};
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // 覆盖 permissions 查询
+            // ═══════════════════════════════════════════════════════════════
+            const originalQueryInterface = window.navigator.permissions?.query;
+            if (originalQueryInterface) {
+                window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({ state: Notification.permission }) :
+                        originalQueryInterface(parameters)
+                );
+            }
+
+            // ═══════════════════════════════════════════════════════════════
+            // 覆盖 toString 保持原生外观
+            // ═══════════════════════════════════════════════════════════════
+            const oldToString = Function.prototype.toString;
+            Function.prototype.toString = function() {
+                if (this === navigator.permissions?.query) {
+                    return 'function query() { [native code] }';
+                }
+                if (this === HTMLCanvasElement.prototype.toDataURL) {
+                    return 'function toDataURL() { [native code] }';
+                }
+                return oldToString.call(this);
+            };
+
+            // ═══════════════════════════════════════════════════════════════
+            // iframe contentWindow 检测绕过
+            // ═══════════════════════════════════════════════════════════════
+            const originalContentWindow = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'contentWindow');
+            Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
+                get: function() {
+                    const window = originalContentWindow.get.call(this);
+                    if (window) {
+                        Object.defineProperty(window.navigator, 'webdriver', { get: () => undefined });
+                    }
+                    return window;
+                }
+            });
+
+            console.log('[Stealth] V4.46.1 深度隐身脚本已注入');
+        });
+    }
+
+    // ========================================================================
+    // 行为模拟
+    // ========================================================================
+
+    /**
+     * 首页预热 - 建立 Session 信任
+     * @param {import('playwright').Page} page - Playwright Page 对象
+     * @param {Object} [config={}] - 预热配置
+     * @param {boolean} [config.scrollMore=true] - 是否滚动更多
+     * @param {boolean} [config.randomScrolls=true] - 是否随机滚动
+     */
+    async warmupHomepage(page, config = {}) {
+        const { scrollMore = true, randomScrolls = true } = config;
+
+        console.log('🏠 [BrowserFactory] 首页预热: 访问 FotMob 首页...');
+
+        await page.goto('https://www.fotmob.com/', { waitUntil: 'domcontentloaded' });
+
+        // 随机停留 3-6 秒
+        await this._delay(this._randomInRange(3000, 6000));
+
+        // 3-5 次随机滚动
+        const scrollCount = this._randomInRange(3, 5);
+        for (let i = 0; i < scrollCount; i++) {
+            await page.mouse.wheel(0, this._randomInRange(100, 300));
+            await this._delay(this._randomInRange(500, 1500));
+        }
+
+        console.log(`✅ [BrowserFactory] 首页预热完成 (${scrollCount} 次滚动)`);
+    }
+
+    /**
+     * 人类行为模拟
+     * @param {import('playwright').Page} page - Playwright Page 对象
+     */
+    async simulateHumanBehavior(page) {
+        const moves = this._randomInRange(10, 15);
+
+        for (let i = 0; i < moves; i++) {
+            await page.mouse.move(
+                this._randomInRange(100, 1800),
+                this._randomInRange(100, 900),
+                { steps: this._randomInRange(5, 15) }
+            );
+            await this._delay(this._randomInRange(200, 800));
+        }
+
+        console.log(`🎭 [BrowserFactory] 行为模拟完成 (${moves} 次鼠标移动)`);
+    }
+
+    /**
+     * 简化版鼠标移动（收割时使用）
+     * @param {import('playwright').Page} page - Playwright Page 对象
+     * @param {number} [minMoves=3] - 最小移动次数
+     * @param {number} [maxMoves=5] - 最大移动次数
+     */
+    async quickMouseMove(page, minMoves = 3, maxMoves = 5) {
+        const moves = this._randomInRange(minMoves, maxMoves);
+        for (let i = 0; i < moves; i++) {
+            await page.mouse.move(
+                this._randomInRange(100, 1800),
+                this._randomInRange(100, 900),
+                { steps: 5 }
+            );
+            await this._delay(100);
+        }
+    }
+
+    // ========================================================================
+    // Cookie 管理
+    // ========================================================================
+
+    /**
+     * 从 browser_state.json 加载 Cookie
+     * @param {import('playwright').BrowserContext} context - Playwright 上下文
+     * @returns {Promise<boolean>} 是否成功加载
+     */
+    async loadBrowserStateCookies(context) {
+        const fs = require('fs').promises;
+        const pathResolver = getPathResolver();
+        const statePath = pathResolver.getBrowserStatePath();
+
+        try {
+            const content = await fs.readFile(statePath, 'utf8');
+            const state = JSON.parse(content);
+
+            if (state.cookies && state.cookies.length > 0) {
+                const validCookies = state.cookies.filter(c => {
+                    if (c.expires && c.expires < Date.now() / 1000) {
+                        return false;
+                    }
+                    return true;
+                });
+
+                if (validCookies.length > 0) {
+                    await context.addCookies(validCookies);
+                    console.log(`🔑 [BrowserFactory] 浏览器身份加载成功: ${validCookies.length} 个 Cookie`);
+                    return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    // ========================================================================
+    // 工具方法
+    // ========================================================================
+
+    /**
+     * 延时辅助方法
+     * @param {number} ms - 延时毫秒数
+     * @returns {Promise<void>}
+     */
+    _delay(ms) {
+        return new Promise(resolve => {
+            setTimeout(resolve, ms);
+        });
+    }
+
+    /**
+     * 生成指定范围内的随机整数
+     * @param {number} min - 最小值
+     * @param {number} max - 最大值
+     * @returns {number} 随机整数
+     */
+    _randomInRange(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+}
+
+// ============================================================================
+// 单例模式
+// ============================================================================
+
+let _instance = null;
+
+/**
+ * 获取 BrowserFactory 单例
+ * @param {Object} [config={}] - 配置选项
+ * @returns {BrowserFactory}
+ */
+function getBrowserFactory(config = {}) {
+    if (!_instance) {
+        _instance = new BrowserFactory(config);
+    }
+    return _instance;
+}
+
+/**
+ * 重置单例（用于测试）
+ */
+function resetBrowserFactory() {
+    _instance = null;
+}
+
+module.exports = {
+    BrowserFactory,
+    getBrowserFactory,
+    resetBrowserFactory
+};

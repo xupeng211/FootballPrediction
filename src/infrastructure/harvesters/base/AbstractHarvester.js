@@ -2,22 +2,26 @@
  * AbstractHarvester - 收割器抽象基类
  * ==================================
  *
- * 封装所有通用收割逻辑：
- * - 浏览器初始化与管理
- * - 代理设置与轮换
- * - 页面预热与行为模拟
+ * 封装通用收割流程调度：
+ * - 收割流程编排
  * - 弹性重试机制
- * - 异常处理与资源清理
+ * - Context 池管理
+ * - 优雅停机
+ * - 统计与报告
  *
- * 子类必须实现抽象方法：extractData()
+ * 子类必须实现抽象方法：extractData(), getTargetUrl(), saveData()
+ *
+ * 组件依赖：
+ * - BrowserFactory: 浏览器生命周期管理
+ * - ErrorAuditor: 错误分类与重试判断
+ * - NetworkManager: 代理与身份管理
  *
  * @module infrastructure/harvesters/base/AbstractHarvester
- * @version V1.0.0
+ * @version V2.0.0 (瘦身重构版)
  */
 
 'use strict';
 
-const { chromium } = require('playwright');
 const { Pool } = require('pg');
 
 // 导入核心组件
@@ -31,6 +35,11 @@ const { getWorkerPool } = require('../workers/WorkerPool');
 
 // V4.46: 导入指标客户端
 const { getMetricsClient } = require('../../monitoring/MetricsClient');
+
+// V2.0: 导入剥离的组件
+const { getBrowserFactory } = require('../../browser/BrowserFactory');
+const { getErrorAuditor, ErrorType } = require('../../../core/harvesters/ErrorAuditor');
+const { getAutoAuthManager } = require('../../auth/AutoAuthManager');
 
 // ============================================================================
 // AbstractHarvester 抽象基类
@@ -69,18 +78,24 @@ class AbstractHarvester {
             verboseLogging: process.env.VERBOSE_LOGGING === 'true' || config.verboseLogging || false,
             shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS) || config.shutdownTimeoutMs || 30000,
             skipZombieCleanup: config.skipZombieCleanup || false,
-            ...config
+            ...config,
         };
 
         this.pool = null;
-        this.browser = null;
+
+        // V2.0: 使用 BrowserFactory 单例（确保非空）
+        this.browserFactory = getBrowserFactory();
+
+        // V2.0: 在构造函数中初始化 ErrorAuditor（测试需要）
+        this.errorAuditor = getErrorAuditor();
+
         this.stats = {
             total: 0,
             processed: 0,
             success: 0,
             failed: 0,
             retries: 0,
-            sweepRounds: 0
+            sweepRounds: 0,
         };
         this.startTime = null;
 
@@ -96,12 +111,12 @@ class AbstractHarvester {
 
         // V4.46.3 HYPER-DRIVE: Browser Context Pooling
         // V4.46.5 HARDENING: LRU 淘汰机制防止内存泄漏
-        this._contextPool = new Map();  // workerId -> { context, usageCount, lastPort, lastAccessTime }
-        this._contextMaxUsage = 10;     // 每个 context 最多复用 10 次
-        this._contextPoolMaxSize = 20;  // V4.46.5: 池子上限，防止无限增长
+        this._contextPool = new Map(); // workerId -> { context, usageCount, lastPort, lastAccessTime }
+        this._contextMaxUsage = 10; // 每个 context 最多复用 10 次
+        this._contextPoolMaxSize = 20; // V4.46.5: 池子上限，防止无限增长
         this._totalContextCreations = 0;
         this._totalContextReuses = 0;
-        this._contextEvictions = 0;     // V4.46.5: 淘汰计数
+        this._contextEvictions = 0; // V4.46.5: 淘汰计数
 
         this._setupGracefulShutdown();
     }
@@ -157,7 +172,7 @@ class AbstractHarvester {
             user: DatabaseConfig.user,
             password: DatabaseConfig.password,
             max: 20,
-            idleTimeoutMillis: 30000
+            idleTimeoutMillis: 30000,
         });
 
         const client = await this.pool.connect();
@@ -170,35 +185,30 @@ class AbstractHarvester {
             await preFlightCleanup();
         }
 
-        // 启动浏览器
-        this.browser = await chromium.launch({
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-blink-features=AutomationControlled',
-                '--disable-gpu'
-            ]
-        });
-        console.log('✅ 浏览器已启动');
+        // V2.0: 使用 BrowserFactory 启动浏览器
+        await this.browserFactory.launch();
+
+        // V2.0: 使用 ErrorAuditor 管理错误分类
+        this.errorAuditor = getErrorAuditor();
 
         // 初始化 NetworkManager
         this.networkManager = getNetworkManager({
             maxWorkers: this.config.maxWorkers,
-            stealthGenerator: generateStealthHeaders
+            stealthGenerator: generateStealthHeaders,
         });
         await this.networkManager.initialize({
-            preFlightCleanup: () => this._preFlightCleanupNetworkLocks()
+            preFlightCleanup: () => this._preFlightCleanupNetworkLocks(),
         });
 
         // 初始化 WorkerPool
         this.workerPool = getWorkerPool({
             maxWorkers: this.config.maxWorkers,
-            logger: (msg) => console.log(msg)
+            logger: msg => console.log(msg),
         });
 
-        console.log(`📋 配置: MAX_WORKERS=${this.config.maxWorkers}, DELAY=${this.config.minDelayMs}-${this.config.maxDelayMs}ms`);
+        console.log(
+            `📋 配置: MAX_WORKERS=${this.config.maxWorkers}, DELAY=${this.config.minDelayMs}-${this.config.maxDelayMs}ms`
+        );
     }
 
     /**
@@ -208,10 +218,11 @@ class AbstractHarvester {
         // V4.46.3 HYPER-DRIVE: 先清理 Context 池
         await this._cleanupContextPool();
 
-        if (this.browser) {
-            await this.browser.close();
-            console.log('✅ 浏览器已关闭');
+        // V2.0: 使用 BrowserFactory 清理浏览器
+        if (this.browserFactory) {
+            await this.browserFactory.close();
         }
+
         if (this.pool) {
             await this.pool.end();
             console.log('✅ 数据库连接池已关闭');
@@ -228,7 +239,7 @@ class AbstractHarvester {
      * @private
      */
     _setupGracefulShutdown() {
-        const handler = async (signal) => {
+        const handler = async signal => {
             if (this.isShuttingDown) {
                 logger.warn('🔄 已在停机中，请稍候...');
                 return;
@@ -246,10 +257,7 @@ class AbstractHarvester {
             try {
                 if (activeCount > 0) {
                     logger.info(`⏳ 等待 ${activeCount} 个活跃 Worker 完成...`);
-                    await Promise.race([
-                        this._waitForWorkers(),
-                        this._delay(this.config.shutdownTimeoutMs - 1000)
-                    ]);
+                    await Promise.race([this._waitForWorkers(), this._delay(this.config.shutdownTimeoutMs - 1000)]);
                 }
 
                 await this._cleanup();
@@ -258,7 +266,7 @@ class AbstractHarvester {
                 logger.logShutdownComplete(Date.now() - (this.shutdownStartTime || Date.now()), {
                     processed: this.stats.processed,
                     success: this.stats.success,
-                    failed: this.stats.failed
+                    failed: this.stats.failed,
                 });
 
                 process.exit(0);
@@ -278,7 +286,7 @@ class AbstractHarvester {
      */
     async _waitForWorkers() {
         if (this.workerPool) {
-            await this.workerPool.waitForAll((count) => {
+            await this.workerPool.waitForAll(count => {
                 logger.debug(`等待 ${count} 个 Worker...`);
             });
         }
@@ -289,9 +297,9 @@ class AbstractHarvester {
      * @private
      */
     async _cleanup() {
-        if (this.browser) {
+        if (this.browserFactory) {
             try {
-                await this.browser.close();
+                await this.browserFactory.close();
             } catch (err) {
                 logger.warn('浏览器关闭失败', { error: err.message });
             }
@@ -320,17 +328,9 @@ class AbstractHarvester {
         const path = require('path');
         const pathResolver = getPathResolver();
 
-        const lockDirs = [
-            ...pathResolver.getLockDirs(),
-            './data/network',
-            './data/registry',
-            './config'
-        ];
+        const lockDirs = [...pathResolver.getLockDirs(), './data/network', './data/registry', './config'];
 
-        const specificLockFiles = [
-            pathResolver.getRegistryLockPath(),
-            './config/.registry.lock'
-        ];
+        const specificLockFiles = [pathResolver.getRegistryLockPath(), './config/.registry.lock'];
 
         let cleanedCount = 0;
 
@@ -374,62 +374,23 @@ class AbstractHarvester {
     // ========================================================================
 
     /**
-     * 判断是否为可重试的错误
+     * 判断是否为可重试的错误（委托给 ErrorAuditor）
      * @param {Error} error - 错误对象
      * @returns {boolean} 是否可重试
      * @private
      */
     _isRetryableError(error) {
-        const msg = error.message || '';
-        const retryablePatterns = [
-            'ERR_CONNECTION_CLOSED',
-            'ERR_CONNECTION_RESET',
-            'ERR_CONNECTION_TIMED_OUT',
-            'ERR_TIMED_OUT',
-            'ETIMEDOUT',
-            'ECONNRESET',
-            'ECONNREFUSED',
-            'ENOTFOUND',
-            'net::ERR_',
-            'TIMEOUT',
-            'Navigation timeout',
-            'NETWORK_ERROR',
-            'NO_NEXT_DATA',
-            'DATA_TRANSFORM_FAILED',
-            'CF_BLOCK'
-        ];
+        return this.errorAuditor.isRetryableError(error);
+    }
 
-        const nonRetryablePatterns = [
-            '403',
-            'ERR_BLOCKED',
-            'Access denied',
-            'Forbidden',
-            'Turnstile'
-        ];
-
-        for (const pattern of nonRetryablePatterns) {
-            if (msg.includes(pattern)) {
-                return false;
-            }
-        }
-
-        for (const pattern of retryablePatterns) {
-            if (msg.includes(pattern)) {
-                return true;
-            }
-        }
-
-        // V4.46.3: NO_DATA 不可重试
-        if (msg.includes('NO_DATA')) {
-            return false;
-        }
-
-        // V4.46.3: SIZE_TOO_SMALL 可重试（可能是 403 逃逸）
-        if (msg.includes('SIZE_TOO_SMALL')) {
-            return true;
-        }
-
-        return false;
+    /**
+     * 分类错误类型（委托给 ErrorAuditor）
+     * @param {string} errorMessage - 错误消息
+     * @returns {string} 错误类型
+     * @private
+     */
+    _classifyError(errorMessage) {
+        return this.errorAuditor.classifyError(errorMessage);
     }
 
     /**
@@ -441,11 +402,17 @@ class AbstractHarvester {
      */
     async harvestWithRetry(match, index, maxRetries = 3) {
         const { match_id, home_team, away_team } = match;
+        const workerId = (index % this.config.maxWorkers) + 1;
+
+        // V4.51: 调试日志 - 确认方法被调用
+        console.log(`[DEBUG] harvestWithRetry called: Match ${match_id}, Worker ${workerId}`);
+
         let lastError = null;
-        let consecutiveSizeTooSmall = 0;  // V4.46.3: 连续 SIZE_TOO_SMALL 计数
+        let consecutiveSizeTooSmall = 0; // V4.46.3: 连续 SIZE_TOO_SMALL 计数
 
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
+                console.log(`[DEBUG] Attempt ${attempt} for match ${match_id}`);
                 const result = await this._harvestSingleMatch(match, index, attempt);
 
                 if (result.success) {
@@ -460,13 +427,20 @@ class AbstractHarvester {
                 if (result.error && result.error.includes('SIZE_TOO_SMALL')) {
                     consecutiveSizeTooSmall++;
                     if (consecutiveSizeTooSmall >= 3) {
-                        console.log(`⏸️  [COOLDOWN] Worker 休息 30 秒 (连续 ${consecutiveSizeTooSmall} 次 SIZE_TOO_SMALL)...`);
+                        console.log(
+                            `⏸️  [COOLDOWN] Worker 休息 30 秒 (连续 ${consecutiveSizeTooSmall} 次 SIZE_TOO_SMALL)...`
+                        );
                         await this._delay(30000);
-                        consecutiveSizeTooSmall = 0;  // 重置计数
+                        consecutiveSizeTooSmall = 0; // 重置计数
                     }
                 }
 
                 if (!this._isRetryableError(new Error(result.error))) {
+                    // V4.51: AutoAuth 钩子 - 检测 BLOCKED 错误并触发身份刷新
+                    const errorType = this._classifyError(result.error);
+                    if (errorType === ErrorType.BLOCKED) {
+                        await this._triggerAutoAuth(index, result.error);
+                    }
                     return result;
                 }
 
@@ -479,13 +453,13 @@ class AbstractHarvester {
                         success: false,
                         match_id,
                         error: error.message,
-                        attempts: attempt
+                        attempts: attempt,
                     };
                 }
             }
 
             if (attempt < maxRetries) {
-                const backoffMs = Math.min(1000 * Math.pow(2, attempt), 8000);  // V4.46.3: 缩短退避
+                const backoffMs = Math.min(1000 * Math.pow(2, attempt), 8000); // V4.46.3: 缩短退避
                 const workerId = (index % this.config.maxWorkers) + 1;
 
                 // V4.46.3: 403 逃逸策略 - 强制切换到不同端口
@@ -501,7 +475,9 @@ class AbstractHarvester {
                         console.log(`🧹 [RETRY-${attempt + 1}] 清理旧 Cookie...`);
                     }
 
-                    console.log(`🔄 [RETRY-${attempt + 1}] ${home_team} vs ${away_team} 切换端口 ${currentIdentity.proxy.port} → ${newPort?.port || newPort}...`);
+                    console.log(
+                        `🔄 [RETRY-${attempt + 1}] ${home_team} vs ${away_team} 切换端口 ${currentIdentity.proxy.port} → ${newPort?.port || newPort}...`
+                    );
                 }
 
                 await this._delay(backoffMs);
@@ -512,7 +488,7 @@ class AbstractHarvester {
             success: false,
             match_id,
             error: `重试 ${maxRetries} 次后仍失败: ${lastError}`,
-            attempts: maxRetries
+            attempts: maxRetries,
         };
     }
 
@@ -556,33 +532,29 @@ class AbstractHarvester {
 
         const logPrefix = isRetry ? `[W${workerId}-R${attempt}]` : `[W${workerId}]`;
 
+        // V4.51: 关键业务日志 - 开始收割
+        console.log(`${logPrefix} Harvesting Match: ${match_id} | ${home_team} vs ${away_team}`);
+
         try {
             // 创建新页面（而非新 context）
             page = await context.newPage();
-            await this._injectStealthScripts(page);
+            // V2.0: 使用 BrowserFactory 注入隐身脚本
+            await this.browserFactory.injectStealthScripts(page);
 
             // 首页预热 - 仅在新 context 时执行完整预热
             if (isNewContext) {
-                await this._warmupHomepage(page, { scrollMore: false, randomScrolls: false });
+                await this.browserFactory.warmupHomepage(page, { scrollMore: false, randomScrolls: false });
             }
 
             // 导航到目标页面
             const targetUrl = this.getTargetUrl(match);
             await page.goto(targetUrl, {
                 waitUntil: 'domcontentloaded',
-                timeout: 60000
+                timeout: 60000,
             });
 
-            // 行为模拟 - 简化版
-            const moves = this._randomInRange(3, 5);
-            for (let i = 0; i < moves; i++) {
-                await page.mouse.move(
-                    this._randomInRange(100, 1800),
-                    this._randomInRange(100, 900),
-                    { steps: 5 }
-                );
-                await this._delay(100);
-            }
+            // V2.0: 使用 BrowserFactory 的简化版鼠标移动
+            await this.browserFactory.quickMouseMove(page, 3, 5);
 
             await page.waitForTimeout(isRetry ? 2000 : 3000);
 
@@ -611,18 +583,23 @@ class AbstractHarvester {
 
             // V4.46: 记录收割成功指标
             const harvestDuration = Date.now() - harvestStartTime;
-            this.metricsClient.recordHarvestSuccess(
-                match_id,
-                workerId,
-                harvestDuration,
-                size,
-                identity.proxy.port
+            this.metricsClient.recordHarvestSuccess(match_id, workerId, harvestDuration, size, identity.proxy.port);
+
+            // V4.51: 关键业务日志 - 收割成功
+            console.log(`${logPrefix} Success: Data Saved. | ${match_id} | ${size} bytes | ${harvestDuration}ms`);
+            console.log(
+                `✅ ${logPrefix} ${home_team} vs ${away_team} | Port ${identity.proxy.port}`
             );
 
-            console.log(`✅ ${logPrefix} ${home_team} vs ${away_team} | ${size} bytes | Port ${identity.proxy.port} | ${harvestDuration}ms`);
-
-            return { success: true, match_id, size, workerId, port: identity.proxy.port, attempt, duration: harvestDuration };
-
+            return {
+                success: true,
+                match_id,
+                size,
+                workerId,
+                port: identity.proxy.port,
+                attempt,
+                duration: harvestDuration,
+            };
         } catch (error) {
             await this.networkManager.markProxyFailed(workerId, error.message);
 
@@ -641,7 +618,15 @@ class AbstractHarvester {
                 console.error(`❌ ${logPrefix} ${home_team} vs ${away_team}: ${error.message}`);
             }
 
-            return { success: false, match_id, error: error.message, workerId, attempt, errorType, duration: harvestDuration };
+            return {
+                success: false,
+                match_id,
+                error: error.message,
+                workerId,
+                attempt,
+                errorType,
+                duration: harvestDuration,
+            };
         } finally {
             // V4.46.3 HYPER-DRIVE: 仅关闭 page，保留 context 供复用
             if (page) {
@@ -655,21 +640,80 @@ class AbstractHarvester {
     }
 
     /**
-     * V4.46: 分类错误类型
+     * V4.51: AutoAuth 自动鉴权触发钩子
+     * 当检测到 BLOCKED 错误（Turnstile/Captcha）时自动触发身份刷新
+     *
+     * @param {number} index - 任务索引
      * @param {string} errorMessage - 错误消息
-     * @returns {string} 错误类型
+     * @returns {Promise<void>}
      * @private
      */
-    _classifyError(errorMessage) {
-        const msg = (errorMessage || '').toLowerCase();
-        // V4.46.1: 全局熔断错误识别
-        if (msg.includes('circuit_breaker_open') || msg.includes('全局熔断') || msg.includes('所有代理节点不可用')) return 'BLOCKED';
-        if (msg.includes('403') || msg.includes('forbidden')) return 'RATE_LIMITED';
-        if (msg.includes('timeout') || msg.includes('timed out')) return 'TIMEOUT';
-        if (msg.includes('no_data') || msg.includes('size_too_small')) return 'NO_DATA';
-        if (msg.includes('connection') || msg.includes('network')) return 'NETWORK_ERROR';
-        if (msg.includes('turnstile') || msg.includes('captcha')) return 'BLOCKED';
-        return 'UNKNOWN';
+    async _triggerAutoAuth(index, errorMessage) {
+        const workerId = (index % this.config.maxWorkers) + 1;
+
+        console.log('\n');
+        console.log('═══════════════════════════════════════════════════════════════');
+        console.log(`  \x1b[33m[AUTO-AUTH]\x1b[0m 检测到 BLOCKED 错误，触发自动身份刷新...`);
+        console.log(`  错误详情: ${errorMessage}`);
+        console.log('═══════════════════════════════════════════════════════════════');
+
+        try {
+            // 1. 清理当前 Worker 的 Session
+            let currentPort = null;
+            let newPort = null;
+
+            if (this.networkManager?.sessionManager) {
+                const identity = this.networkManager.getWorkerIdentity(workerId);
+                if (identity?.proxy?.port) {
+                    currentPort = identity.proxy.port;
+                    await this.networkManager.sessionManager.clearSession(currentPort);
+                    console.log(`  🧹 [AUTO-AUTH] 已清理 Worker ${workerId} 的旧 Session (Port ${currentPort})`);
+                }
+            }
+
+            // 2. 强制切换端口
+            if (this.networkManager) {
+                const currentIdentity = this.networkManager.getWorkerIdentity(workerId);
+                if (currentIdentity?.proxy?.port) {
+                    newPort = await this.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
+                    const newPortValue = newPort?.port || newPort;
+                    console.log(
+                        `  🔄 [AUTO-AUTH] 端口切换: ${currentIdentity.proxy.port} → ${newPortValue}`
+                    );
+                    newPort = newPortValue;
+                }
+            }
+
+            // 3. V4.51.1: 调用 AutoAuthManager 刷新 Session
+            if (newPort) {
+                const autoAuthManager = getAutoAuthManager();
+                const refreshResult = await autoAuthManager.refreshSession(workerId, newPort);
+
+                if (refreshResult.success) {
+                    console.log(`  🔑 [AUTO-AUTH] Session 热刷新成功 (${refreshResult.cookieCount} cookies)`);
+                } else {
+                    console.log(`  ⚠️ [AUTO-AUTH] Session 刷新失败: ${refreshResult.error}`);
+                    console.log(`  💡 提示: 请在宿主机运行 'node scripts/capture_auth.js --port ${newPort}' 手动捕获身份`);
+                }
+            }
+
+            // 4. 清理 Context 池中的相关 Context
+            const poolEntry = this._contextPool.get(workerId);
+            if (poolEntry?.context) {
+                try {
+                    await poolEntry.context.close();
+                    this._contextPool.delete(workerId);
+                    console.log(`  🧹 [AUTO-AUTH] 已清理 Worker ${workerId} 的旧 Context`);
+                } catch (e) {
+                    // 忽略关闭错误
+                }
+            }
+
+            console.log('  ✅ [AUTO-AUTH] 身份刷新完成，下次请求将使用新身份\n');
+        } catch (error) {
+            console.error(`  ❌ [AUTO-AUTH] 身份刷新失败: ${error.message}`);
+            console.log('  ⚠️  将在下次收割时重试...\n');
+        }
     }
 
     // ========================================================================
@@ -716,18 +760,8 @@ class AbstractHarvester {
                 }
             }
 
-            // 创建新 context
-            const proxyConfig = process.env.DISABLE_PROXY === 'true' ? undefined : { server: identity.proxy.url };
-
-            const context = await this.browser.newContext({
-                viewport: identity.stealth.viewport,
-                userAgent: identity.stealth.userAgent,
-                extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
-                proxy: proxyConfig,
-                deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
-                locale: identity.stealth.locale || 'en-US',
-                timezoneId: identity.stealth.timezoneId || 'Europe/London'
-            });
+            // V2.0: 使用 BrowserFactory 创建 Context
+            const context = await this.browserFactory.createContext(identity);
 
             // Cookie 热加载
             let cookieLoaded = false;
@@ -735,7 +769,7 @@ class AbstractHarvester {
                 cookieLoaded = await this.networkManager.loadSessionToContext(context, currentPort);
             }
             if (!cookieLoaded) {
-                cookieLoaded = await this._loadBrowserStateCookies(context);
+                cookieLoaded = await this.browserFactory.loadBrowserStateCookies(context);
             }
 
             const now = Date.now();
@@ -745,23 +779,27 @@ class AbstractHarvester {
                 lastPort: currentPort,
                 cookieLoaded,
                 createdAt: now,
-                lastAccessTime: now  // V4.46.5: LRU 时间戳
+                lastAccessTime: now, // V4.46.5: LRU 时间戳
             };
 
             this._contextPool.set(workerId, newEntry);
             this._totalContextCreations++;
 
-            console.log(`🔄 [W${workerId}] Context 创建: ${reason} | Port ${currentPort} | Cookie=${cookieLoaded} | Pool=${this._contextPool.size}/${this._contextPoolMaxSize}`);
+            console.log(
+                `🔄 [W${workerId}] Context 创建: ${reason} | Port ${currentPort} | Cookie=${cookieLoaded} | Pool=${this._contextPool.size}/${this._contextPoolMaxSize}`
+            );
 
             return { context, isNew: true, poolInfo: newEntry };
         }
 
         // 复用现有 context
         poolEntry.usageCount++;
-        poolEntry.lastAccessTime = Date.now();  // V4.46.5: 更新访问时间
+        poolEntry.lastAccessTime = Date.now(); // V4.46.5: 更新访问时间
         this._totalContextReuses++;
 
-        console.log(`♻️  [W${workerId}] Context 复用: ${poolEntry.usageCount}/${this._contextMaxUsage} | Port ${currentPort}`);
+        console.log(
+            `♻️  [W${workerId}] Context 复用: ${poolEntry.usageCount}/${this._contextMaxUsage} | Port ${currentPort}`
+        );
 
         return { context: poolEntry.context, isNew: false, poolInfo: poolEntry };
     }
@@ -778,7 +816,7 @@ class AbstractHarvester {
             try {
                 // 仅清理 cookies，保留 context
                 await poolEntry.context.clearCookies();
-                poolEntry.usageCount = 0;  // 重置计数
+                poolEntry.usageCount = 0; // 重置计数
                 console.log(`🧹 [W${workerId}] 403 逃逸: Cookies 已清理`);
             } catch (e) {
                 console.log(`⚠️  [W${workerId}] 403 逃逸失败: ${e.message}`);
@@ -814,7 +852,9 @@ class AbstractHarvester {
                 if (oldestEntry.context) {
                     await oldestEntry.context.close();
                     this._contextEvictions++;
-                    console.log(`🗑️ [LRU] 淘汰 W${oldestWorkerId} Context (空闲 ${((Date.now() - oldestTime) / 1000).toFixed(0)}s)`);
+                    console.log(
+                        `🗑️ [LRU] 淘汰 W${oldestWorkerId} Context (空闲 ${((Date.now() - oldestTime) / 1000).toFixed(0)}s)`
+                    );
                 }
             } catch (e) {
                 // 忽略关闭错误
@@ -842,283 +882,13 @@ class AbstractHarvester {
         this._contextPool.clear();
 
         if (cleaned > 0 || this._totalContextCreations > 0) {
-            const evictionRate = this._totalContextCreations > 0
-                ? ((this._contextEvictions / this._totalContextCreations) * 100).toFixed(0)
-                : '0';
-            console.log(`🧹 Context 池清理: ${cleaned} 个 | 创建=${this._totalContextCreations} | 复用=${this._totalContextReuses} | 淘汰=${this._contextEvictions} (${evictionRate}%)`);
-        }
-    }
-
-    // ========================================================================
-    // 浏览器行为模拟
-    // ========================================================================
-
-    /**
-     * 首页预热 - 建立 Session 信任
-     * @param {import('playwright').Page} page - Playwright Page 对象
-     * @param {Object} [config={}] - 预热配置
-     */
-    async _warmupHomepage(page, config = {}) {
-        console.log('🏠 首页预热: 访问 FotMob 首页...');
-
-        await page.goto('https://www.fotmob.com/', { waitUntil: 'domcontentloaded' });
-
-        // 随机停留 3-6 秒
-        await this._delay(this._randomInRange(3000, 6000));
-
-        // 3-5 次随机滚动
-        const scrollCount = this._randomInRange(3, 5);
-        for (let i = 0; i < scrollCount; i++) {
-            await page.mouse.wheel(0, this._randomInRange(100, 300));
-            await this._delay(this._randomInRange(500, 1500));
-        }
-
-        console.log(`✅ 首页预热完成 (${scrollCount} 次滚动)`);
-    }
-
-    /**
-     * 人类行为模拟
-     * @param {import('playwright').Page} page - Playwright Page 对象
-     */
-    async _simulateHumanBehavior(page) {
-        const moves = this._randomInRange(10, 15);
-
-        for (let i = 0; i < moves; i++) {
-            await page.mouse.move(
-                this._randomInRange(100, 1800),
-                this._randomInRange(100, 900),
-                { steps: this._randomInRange(5, 15) }
+            const evictionRate =
+                this._totalContextCreations > 0
+                    ? ((this._contextEvictions / this._totalContextCreations) * 100).toFixed(0)
+                    : '0';
+            console.log(
+                `🧹 Context 池清理: ${cleaned} 个 | 创建=${this._totalContextCreations} | 复用=${this._totalContextReuses} | 淘汰=${this._contextEvictions} (${evictionRate}%)`
             );
-            await this._delay(this._randomInRange(200, 800));
-        }
-
-        console.log(`🎭 行为模拟完成 (${moves} 次鼠标移动)`);
-    }
-
-    /**
-     * 注入原生隐身脚本
-     * V4.46.1: 修复 platform 与 UA 不一致导致的指纹泄露
-     * @param {import('playwright').Page} page - Playwright 页面对象
-     */
-    async _injectStealthScripts(page) {
-        await page.addInitScript(() => {
-            // ═══════════════════════════════════════════════════════════════
-            // 核心指纹覆盖 - 必须与 UA 完全一致
-            // ═══════════════════════════════════════════════════════════════
-
-            // 覆盖 webdriver 标志
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined,
-                configurable: true
-            });
-
-            // 【关键修复】覆盖 platform - 必须与 UA 中的 Windows 匹配
-            Object.defineProperty(navigator, 'platform', {
-                get: () => 'Win32',
-                configurable: true
-            });
-
-            // 【关键修复】模拟语言 - 包含 q 值权重
-            Object.defineProperty(navigator, 'languages', {
-                get: () => ['en-US', 'en'],
-                configurable: true
-            });
-
-            // 模拟硬件并发 (随机化)
-            Object.defineProperty(navigator, 'hardwareConcurrency', {
-                get: () => 8 + (Math.floor(Math.random() * 17)),
-                configurable: true
-            });
-
-            // 模拟设备内存
-            Object.defineProperty(navigator, 'deviceMemory', {
-                get: () => [4, 8, 8, 16, 16, 32][Math.floor(Math.random() * 6)],
-                configurable: true
-            });
-
-            // 模拟 Chrome 插件数组
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => {
-                    const plugins = [
-                        Object.create(Plugin.prototype, {
-                            name: { value: 'Chrome PDF Plugin' },
-                            description: { value: 'Portable Document Format' },
-                            filename: { value: 'internal-pdf-viewer' },
-                            length: { value: 1 }
-                        }),
-                        Object.create(Plugin.prototype, {
-                            name: { value: 'Chrome PDF Viewer' },
-                            description: { value: '' },
-                            filename: { value: 'mhjfbmdg-nopdfs' },
-                            length: { value: 1 }
-                        }),
-                        Object.create(Plugin.prototype, {
-                            name: { value: 'Native Client' },
-                            description: { value: '' },
-                            filename: { value: 'internal-nacl' },
-                            length: { value: 1 }
-                        })
-                    ];
-                    plugins.item = (i) => plugins[i] || null;
-                    plugins.namedItem = (name) => plugins.find(p => p.name === name) || null;
-                    plugins.refresh = () => {};
-                    return plugins;
-                },
-                configurable: true
-            });
-
-            // ═══════════════════════════════════════════════════════════════
-            // WebGL 指纹伪装 - 随机化
-            // ═══════════════════════════════════════════════════════════════
-            const WEBGL_RENDERERS = [
-                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
-                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
-                { vendor: 'Google Inc. (AMD)', renderer: 'ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
-                { vendor: 'Google Inc. (Intel)', renderer: 'ANGLE (Intel, Intel UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)' }
-            ];
-            const selectedRenderer = WEBGL_RENDERERS[Math.floor(Math.random() * WEBGL_RENDERERS.length)];
-
-            const getParameterProxyHandler = {
-                apply: function(target, thisArg, args) {
-                    const param = args[0];
-                    // UNMASKED_VENDOR_WEBGL
-                    if (param === 37445) return selectedRenderer.vendor;
-                    // UNMASKED_RENDERER_WEBGL
-                    if (param === 37446) return selectedRenderer.renderer;
-                    return target.apply(thisArg, args);
-                }
-            };
-
-            if (typeof WebGLRenderingContext !== 'undefined') {
-                const originalGetParameter = WebGLRenderingContext.prototype.getParameter;
-                WebGLRenderingContext.prototype.getParameter = new Proxy(originalGetParameter, getParameterProxyHandler);
-            }
-
-            if (typeof WebGL2RenderingContext !== 'undefined') {
-                const originalGetParameter2 = WebGL2RenderingContext.prototype.getParameter;
-                WebGL2RenderingContext.prototype.getParameter = new Proxy(originalGetParameter2, getParameterProxyHandler);
-            }
-
-            // ═══════════════════════════════════════════════════════════════
-            // Canvas 指纹噪音
-            // ═══════════════════════════════════════════════════════════════
-            const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-            HTMLCanvasElement.prototype.toDataURL = function(type) {
-                if (this.width > 0 && this.height > 0) {
-                    const ctx = this.getContext('2d');
-                    if (ctx) {
-                        // 添加微弱噪音
-                        const imageData = ctx.getImageData(0, 0, this.width, this.height);
-                        for (let i = 0; i < imageData.data.length; i += 4) {
-                            imageData.data[i] ^= (Math.random() * 2) | 0;
-                        }
-                        ctx.putImageData(imageData, 0, 0);
-                    }
-                }
-                return originalToDataURL.apply(this, arguments);
-            };
-
-            // ═══════════════════════════════════════════════════════════════
-            // 隐藏自动化标志
-            // ═══════════════════════════════════════════════════════════════
-            delete window.__webdriver_evaluate;
-            delete window.__webdriver_script_function;
-            delete window.__webdriver_script_fn;
-            delete window.__webdriver_unwrapped;
-            delete window.__selenium_evaluate;
-            delete window.__selenium_script_function;
-            delete window.__selenium_script_fn;
-            delete window.__fxdriver_evaluate;
-            delete window.__driver_evaluate;
-            delete window.__webdriver_script_fn;
-            delete window.__lastWatirAlert;
-            delete window.__lastWatirConfirm;
-            delete window.__lastWatirPrompt;
-            delete window._Selenium_IDE_Recorder;
-            delete window._selenium;
-            delete window.calledSelenium;
-
-            // 删除 window.chrome.csi 和 window.chrome.loadTimes 的自动化特征
-            if (window.chrome) {
-                window.chrome.runtime = window.chrome.runtime || {};
-            }
-
-            // ═══════════════════════════════════════════════════════════════
-            // 覆盖 permissions 查询
-            // ═══════════════════════════════════════════════════════════════
-            const originalQueryInterface = window.navigator.permissions?.query;
-            if (originalQueryInterface) {
-                window.navigator.permissions.query = (parameters) => (
-                    parameters.name === 'notifications' ?
-                        Promise.resolve({ state: Notification.permission }) :
-                        originalQueryInterface(parameters)
-                );
-            }
-
-            // ═══════════════════════════════════════════════════════════════
-            // 覆盖 toString 保持原生外观
-            // ═══════════════════════════════════════════════════════════════
-            const oldToString = Function.prototype.toString;
-            Function.prototype.toString = function() {
-                if (this === navigator.permissions?.query) {
-                    return 'function query() { [native code] }';
-                }
-                if (this === HTMLCanvasElement.prototype.toDataURL) {
-                    return 'function toDataURL() { [native code] }';
-                }
-                return oldToString.call(this);
-            };
-
-            // ═══════════════════════════════════════════════════════════════
-            // iframe contentWindow 检测绕过
-            // ═══════════════════════════════════════════════════════════════
-            const originalContentWindow = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'contentWindow');
-            Object.defineProperty(HTMLIFrameElement.prototype, 'contentWindow', {
-                get: function() {
-                    const window = originalContentWindow.get.call(this);
-                    if (window) {
-                        Object.defineProperty(window.navigator, 'webdriver', { get: () => undefined });
-                    }
-                    return window;
-                }
-            });
-
-            console.log('[Stealth] V4.46.1 深度隐身脚本已注入');
-        });
-    }
-
-    /**
-     * 从 browser_state.json 加载 Cookie
-     * @param {import('playwright').BrowserContext} context - Playwright 上下文
-     * @returns {Promise<boolean>} 是否成功加载
-     * @private
-     */
-    async _loadBrowserStateCookies(context) {
-        const fs = require('fs').promises;
-        const pathResolver = getPathResolver();
-        const statePath = pathResolver.getBrowserStatePath();
-
-        try {
-            const content = await fs.readFile(statePath, 'utf8');
-            const state = JSON.parse(content);
-
-            if (state.cookies && state.cookies.length > 0) {
-                const validCookies = state.cookies.filter(c => {
-                    if (c.expires && c.expires < Date.now() / 1000) {
-                        return false;
-                    }
-                    return true;
-                });
-
-                if (validCookies.length > 0) {
-                    await context.addCookies(validCookies);
-                    console.log(`🔑 浏览器身份加载成功: ${validCookies.length} 个 Cookie`);
-                    return true;
-                }
-            }
-            return false;
-        } catch (error) {
-            return false;
         }
     }
 
@@ -1152,9 +922,7 @@ class AbstractHarvester {
      */
     printReport() {
         const elapsed = ((Date.now() - this.startTime) / 1000).toFixed(1);
-        const rate = this.stats.total > 0
-            ? ((this.stats.success / this.stats.total) * 100).toFixed(1)
-            : '0.0';
+        const rate = this.stats.total > 0 ? ((this.stats.success / this.stats.total) * 100).toFixed(1) : '0.0';
 
         console.log('═══════════════════════════════════════════════════════════════');
         console.log(`  📊 ${this.constructor.name} 收割完成报告`);
@@ -1170,16 +938,23 @@ class AbstractHarvester {
 
         // V4.46.3 HYPER-DRIVE: Context 池统计
         if (this._totalContextCreations > 0) {
-            const reuseRate = ((this._totalContextReuses / (this._totalContextCreations + this._totalContextReuses)) * 100).toFixed(0);
+            const reuseRate = (
+                (this._totalContextReuses / (this._totalContextCreations + this._totalContextReuses)) *
+                100
+            ).toFixed(0);
             const evictionRate = ((this._contextEvictions / this._totalContextCreations) * 100).toFixed(0);
-            console.log(`  Context 池: 创建=${this._totalContextCreations} 复用=${this._totalContextReuses} (${reuseRate}% 复用率) 淘汰=${this._contextEvictions} (${evictionRate}%)`);
+            console.log(
+                `  Context 池: 创建=${this._totalContextCreations} 复用=${this._totalContextReuses} (${reuseRate}% 复用率) 淘汰=${this._contextEvictions} (${evictionRate}%)`
+            );
         }
 
         if (this.networkManager && this.networkManager.workerIdentities) {
             for (const [workerId, identity] of this.networkManager.workerIdentities) {
                 if (identity && identity.proxy) {
                     const successRate = (identity.getSuccessRate() * 100).toFixed(0);
-                    console.log(`    W${workerId}: Port ${identity.proxy.port} | ${identity.requestCount} 请求 | ${successRate}% 成功率`);
+                    console.log(
+                        `    W${workerId}: Port ${identity.proxy.port} | ${identity.requestCount} 请求 | ${successRate}% 成功率`
+                    );
                 }
             }
         }
