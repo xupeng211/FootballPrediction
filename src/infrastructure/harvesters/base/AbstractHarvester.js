@@ -636,6 +636,25 @@ class AbstractHarvester {
                     // 忽略关闭错误
                 }
             }
+
+            // V4.51: 物理资源强制释放 - 如果发生对象回收错误，清理该 worker 的 context
+            const errorMessage = arguments[3]?.error || '';
+            if (errorMessage && (
+                errorMessage.includes('RETRYABLE_RESOURCE_ERROR') ||
+                errorMessage.includes('Object collected') ||
+                errorMessage.includes('target closed')
+            )) {
+                const poolEntry = this._contextPool.get(workerId);
+                if (poolEntry?.context) {
+                    try {
+                        await poolEntry.context.close();
+                        this._contextPool.delete(workerId);
+                        console.log(`  🧹 [W${workerId}] 强制清理 Context (资源回收错误)`);
+                    } catch (e) {
+                        // 忽略关闭错误
+                    }
+                }
+            }
         }
     }
 

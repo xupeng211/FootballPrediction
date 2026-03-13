@@ -53,6 +53,47 @@ class FotMobStrategy {
     }
 
     /**
+     * 检查错误是否由对象被回收导致（内存压力下的竞态条件）
+     * @param {Error} error - 错误对象
+     * @returns {boolean}
+     * @private
+     */
+    _isObjectCollectedError(error) {
+        if (!error || !error.message) return false;
+        const msg = error.message.toLowerCase();
+        return msg.includes('object collected') ||
+               msg.includes('target closed') ||
+               msg.includes('page closed') ||
+               msg.includes('context closed') ||
+               msg.includes('route is already handled') ||
+               msg.includes('protocol error');
+    }
+
+    /**
+     * 安全的 route 操作包装器
+     * 捕获对象回收错误并抛出可重试异常
+     * @param {Function} operation - route 操作函数
+     * @param {string} operationName - 操作名称（用于日志）
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _safeRouteOperation(operation, operationName = 'route') {
+        try {
+            await operation();
+        } catch (error) {
+            if (this._isObjectCollectedError(error)) {
+                // 对象已被回收，抛出可重试错误
+                const retryError = new Error(`RETRYABLE_RESOURCE_ERROR: ${operationName} failed - ${error.message}`);
+                retryError.code = 'RETRYABLE_RESOURCE_ERROR';
+                retryError.originalError = error;
+                throw retryError;
+            }
+            // 其他错误继续抛出
+            throw error;
+        }
+    }
+
+    /**
      * 设置请求拦截
      * 拦截 API 请求并捕获响应数据
      * @param {import('playwright').Page} page - Playwright Page 对象
@@ -71,7 +112,7 @@ class FotMobStrategy {
 
             // 拦截黑名单资源
             if (this.blockedResourceTypes.includes(type)) {
-                await route.abort();
+                await this._safeRouteOperation(() => route.abort(), 'abort');
                 return;
             }
 
@@ -106,15 +147,20 @@ class FotMobStrategy {
                         }
                     }
 
-                    await route.fulfill({ response });
+                    await this._safeRouteOperation(() => route.fulfill({ response }), 'fulfill');
                 } catch (routeError) {
                     if (this.config.verboseLogging) {
                         console.log(`[FotMobStrategy] 请求失败: ${routeError.message}`);
                     }
-                    await route.continue();
+                    // 如果已经是可重试错误，直接抛出
+                    if (routeError.code === 'RETRYABLE_RESOURCE_ERROR') {
+                        throw routeError;
+                    }
+                    // 否则尝试继续
+                    await this._safeRouteOperation(() => route.continue(), 'continue');
                 }
             } else {
-                await route.continue();
+                await this._safeRouteOperation(() => route.continue(), 'continue');
             }
         });
 

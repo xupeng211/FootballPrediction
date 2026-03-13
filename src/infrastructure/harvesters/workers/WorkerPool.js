@@ -1,12 +1,17 @@
 /**
- * WorkerPool - V4.46 Worker 调度中心
- * ====================================
+ * WorkerPool - V4.51 Worker 调度中心 (TITAN-INFRA-STRENGTHENING)
+ * ================================================================
  *
  * 从 ProductionHarvester 剥离的 Worker 调度逻辑
  * 统一管理 Worker 的启动、清理、任务分配、并发控制
  *
+ * V4.51 强化:
+ * - 智能背压检测 (Smart Throttling)
+ * - 异步操作计数器
+ * - 动态流量整形
+ *
  * @module infrastructure/harvesters/workers/WorkerPool
- * @version V4.46.0
+ * @version V4.51.0
  */
 
 'use strict';
@@ -20,16 +25,25 @@ const pLimit = require('p-limit');
  * 1. Worker 注册/注销管理
  * 2. 任务分配与并发控制
  * 3. Worker 统计信息
+ * 4. 智能背压检测 (V4.51)
  */
 class WorkerPool {
     /**
      * @param {Object} options - 配置选项
      * @param {number} [options.maxWorkers] - 最大 Worker 数量
      * @param {Function} [options.logger] - 日志函数
+     * @param {number} [options.maxPendingOperations] - 最大挂起异步操作数 (默认: 36 = 12 workers * 3)
+     * @param {number} [options.backpressurePollInterval] - 背压检测轮询间隔 (ms, 默认: 100)
      */
     constructor(options = {}) {
         this.maxWorkers = options.maxWorkers || 6;
         this.logger = options.logger || console;
+
+        // V4.51: 智能背压配置
+        // 高延迟环境下，每个 worker 可能同时处理多个异步操作
+        // 阈值 = maxWorkers * 3 (页面导航 + API 请求 + DOM 操作)
+        this.maxPendingOperations = options.maxPendingOperations || (this.maxWorkers * 3);
+        this.backpressurePollInterval = options.backpressurePollInterval || 100;
 
         // 活跃 Worker 集合
         this.activeWorkers = new Set();
@@ -37,14 +51,79 @@ class WorkerPool {
         // 任务队列
         this.taskQueue = [];
 
+        // V4.51: 挂起的异步操作计数器
+        this.pendingOperations = 0;
+
         // 统计信息
         this.stats = {
             totalTasks: 0,
             completedTasks: 0,
             failedTasks: 0,
             activeWorkers: 0,
-            peakConcurrency: 0
+            peakConcurrency: 0,
+            backpressureDelays: 0  // V4.51: 背压延迟次数
         };
+    }
+
+    // ===================================================================
+    // V4.51: 智能背压检测 (Smart Throttling)
+    // ===================================================================
+
+    /**
+     * 增加挂起操作计数
+     * @private
+     */
+    _incrementPending() {
+        this.pendingOperations++;
+    }
+
+    /**
+     * 减少挂起操作计数
+     * @private
+     */
+    _decrementPending() {
+        this.pendingOperations = Math.max(0, this.pendingOperations - 1);
+    }
+
+    /**
+     * 检查是否需要背压
+     * @returns {boolean}
+     * @private
+     */
+    _needsBackpressure() {
+        return this.pendingOperations >= this.maxPendingOperations;
+    }
+
+    /**
+     * 等待背压解除
+     * 微秒级轮询，直到 pendingOperations 降至阈值以下
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _waitForBackpressureRelease() {
+        let waitCycles = 0;
+        const startTime = Date.now();
+
+        while (this._needsBackpressure()) {
+            waitCycles++;
+            await this._delay(this.backpressurePollInterval);
+
+            // 每 10 轮输出一次日志
+            if (waitCycles % 10 === 0) {
+                this.logger(`[WorkerPool] 背压等待中... 挂起操作: ${this.pendingOperations}/${this.maxPendingOperations}, 已等待: ${Date.now() - startTime}ms`);
+            }
+
+            // 安全阀：最多等待 30 秒
+            if (Date.now() - startTime > 30000) {
+                this.logger(`[WorkerPool] ⚠️ 背压等待超时，强制继续 (挂起操作: ${this.pendingOperations})`);
+                break;
+            }
+        }
+
+        if (waitCycles > 0) {
+            this.stats.backpressureDelays++;
+            this.logger(`[WorkerPool] 背压解除，延迟 ${Date.now() - startTime}ms (周期: ${waitCycles})`);
+        }
     }
 
     // ========================================================================
@@ -131,8 +210,14 @@ class WorkerPool {
         const results = await Promise.all(
             tasks.map((task, index) =>
                 limit(async () => {
+                    // V4.51: 智能背压检测 - 如果挂起操作过多，等待
+                    await this._waitForBackpressureRelease();
+
                     const workerId = this.getWorkerId(index);
                     this.register(workerId);
+
+                    // 增加挂起操作计数
+                    this._incrementPending();
 
                     try {
                         const result = await executor(task, index, workerId);
@@ -146,6 +231,8 @@ class WorkerPool {
                         return { success: false, error: error.message, workerId };
                     } finally {
                         this.unregister(workerId);
+                        // 减少挂起操作计数
+                        this._decrementPending();
                     }
                 })
             )
@@ -172,11 +259,16 @@ class WorkerPool {
         const results = await Promise.all(
             tasks.map((task, index) =>
                 limit(async () => {
+                    // V4.51: 智能背压检测 - 如果挂起操作过多，等待
+                    await this._waitForBackpressureRelease();
+
                     const workerId = this.getWorkerId(index);
                     let lastError = null;
 
                     for (let attempt = 1; attempt <= maxRetries; attempt++) {
                         this.register(workerId);
+                        // 增加挂起操作计数
+                        this._incrementPending();
 
                         try {
                             const result = await executor(task, index, workerId, attempt);
@@ -209,6 +301,8 @@ class WorkerPool {
                             }
                         } finally {
                             this.unregister(workerId);
+                            // 减少挂起操作计数
+                            this._decrementPending();
                         }
 
                         // 准备重试
@@ -263,7 +357,25 @@ class WorkerPool {
      * @returns {Object}
      */
     getStats() {
-        return { ...this.stats };
+        return {
+            ...this.stats,
+            pendingOperations: this.pendingOperations,  // V4.51: 当前挂起操作数
+            maxPendingOperations: this.maxPendingOperations  // V4.51: 背压阈值
+        };
+    }
+
+    /**
+     * V4.51: 获取背压状态报告
+     * @returns {Object}
+     */
+    getBackpressureReport() {
+        return {
+            pendingOperations: this.pendingOperations,
+            maxPendingOperations: this.maxPendingOperations,
+            pressureRatio: (this.pendingOperations / this.maxPendingOperations).toFixed(2),
+            isThrottling: this._needsBackpressure(),
+            totalDelays: this.stats.backpressureDelays
+        };
     }
 
     /**
