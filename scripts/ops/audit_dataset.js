@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview TITAN 数据资产审计系统
+ * @file TITAN 数据资产审计系统
  * @description 数据质量全面体检：物理清点、内容抽检、DB对齐、质量报告
  * @version 1.0.0
  * @module scripts/ops/audit_dataset
@@ -27,6 +27,8 @@ const LOG_PREFIX = '[AUDIT]';
 
 /**
  * 打印带颜色的日志
+ * @param level
+ * @param message
  */
 function log(level, message) {
   const colorMap = {
@@ -117,6 +119,7 @@ async function physicalInventory() {
 
 /**
  * 阶段 2: 内容抽检 - 随机抽取 50 个文件验证完整性
+ * @param files
  */
 async function contentSampling(files) {
   log('header', '🔍 阶段 2: 内容抽检 (随机 50 个样本)');
@@ -228,6 +231,9 @@ async function databaseAlignment() {
 
 /**
  * 阶段 4: 生成质量报告
+ * @param inventory
+ * @param sampling
+ * @param alignment
  */
 function generateReport(inventory, sampling, alignment) {
   log('header', '📊 阶段 4: 数据质量报告');

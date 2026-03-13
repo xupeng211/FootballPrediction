@@ -1,7 +1,7 @@
 # FootballPrediction - AI 助手指令上下文
 
-> **系统版本**: V4.45-stable | **最后更新**: 2026-03-08
-> 
+> **系统版本**: V4.51.2-TOTAL-WAR | **最后更新**: 2026-03-13
+>
 > 本文档为 AI 助手提供项目背景、架构理解和操作指南，用于快速上手和高效协作。
 
 ---
@@ -17,15 +17,18 @@
 | 模块 | 技术实现 | 说明 |
 |------|----------|------|
 | **L1 Discovery** | FotMob API | 自动发现未来 7 天比赛 |
-| **L2 Harvest** | OddsPortal + 22 节点代理池 | 赔率数据采集（开盘/收盘/亚洲盘） |
+| **L2 Harvest** | FotMob Details + 22 节点代理池 | 赔率数据采集（开盘/收盘/亚洲盘） |
 | **L3 Smelt** | FeatureSmelter | 12061 维特征向量 |
-| **ML Prediction** | XGBoost 3-Model Consensus | 67.2% 准确率，<100ms 响应 |
+| **ML Prediction** | XGBoost TITAN 模型 | 65.31% 准确率，<100ms 响应 |
+| **Swarm Harvest** | Hyper Swarm 引擎 | 多 Worker 并发收割 |
+| **Sentinel** | 哨兵监控系统 | 自动停机与熔断保护 |
 
 ### 1.3 质量认证
 
 - **零模拟数据**：所有数据来自真实 API
 - **幂等收割**：支持重复执行，自动跳过已完成
 - **架构纯净**：无冗余模块，无废弃代码
+- **黄金准则**：80% 测试覆盖率熔断 + 0 Error 静态质量
 
 ---
 
@@ -33,26 +36,31 @@
 
 | 层级 | 技术 | 用途 |
 |------|------|------|
-| **运行时** | Node.js 18+ / Python 3.11+ | 双语言架构 |
+| **运行时** | Node.js 20+ / Python 3.11+ | 双语言架构 |
 | **数据库** | PostgreSQL 15 | 数据存储 |
 | **缓存** | Redis | 分布式锁/缓存 |
 | **容器化** | Docker / docker-compose | 环境隔离 |
-| **浏览器** | Playwright | 页面自动化 |
+| **浏览器** | Playwright + Stealth | 页面自动化与反检测 |
 | **模糊匹配** | RapidFuzz (C++) | 队名匹配 |
-| **ML** | XGBoost 2.0+ | 预测模型 |
+| **ML** | XGBoost 2.0+ / scikit-learn | 预测模型 |
 | **代理** | NetworkShield | 22 节点熔断保护 |
+| **监控** | Prometheus + Grafana | 指标采集与可视化 |
 
 ---
 
 ## 3. 系统架构
 
-### 3.1 四层流水线架构
+### 3.1 五阶段自动化流水线
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│  L1 Discovery   │───▶│  C++ Fuzzy      │───▶│  L2/L3 Harvest  │───▶│  ML Prediction  │
-│  (Node.js)      │    │  Bridge (Python)│    │  (Node.js)      │    │  (Python)       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
+│  L1         │    │  L2         │    │  L3         │    │  ELO        │    │  PREDICT    │
+│  Discovery  │───▶│  Harvest    │───▶│  Smelt      │───▶│  Rating     │───▶│  Output     │
+│  (赛程发现) │    │  (数据收割) │    │  (特征熔炼) │    │  (动态评分) │    │  (预测报告) │
+└─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘    └─────────────┘
+     FotMob           FotMob Details     4 Extractors        K-Factor           EV 排序
+     API              + Odds 辅助        12061 维特征        递归更新           TITAN 模型
+                      22 代理节点                                               3-Model 共识
 ```
 
 ### 3.2 数据层级
@@ -62,17 +70,21 @@
 | **L1** | FotMob API | `matches` | 比赛发现、基础信息 |
 | **L2** | FotMob Details + OddsPortal | `raw_match_data`, `l2_match_data` | 赔率数据（开盘/收盘/1X2/亚洲盘） |
 | **L3** | 特征工程 | `l3_features` | 12061 维特征向量 |
+| **ELO** | 历史比赛结果 | `team_elo_ratings` | 球队动态实力评分 |
 | **预测** | XGBoost 模型 | `predictions` | 预测结果 + EV 计算 |
 
 ### 3.3 核心资产地图
 
 | 功能模块 | 唯一指定文件 | 入口脚本 |
 |----------|-------------|---------|
-| **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `scripts/ops/seed_fixtures.js` |
-| **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `scripts/ops/run_production.js` |
-| **L3 Smelt** | `src/feature_engine/smelter/FeatureSmelter.js` | `scripts/ops/smelt_all.js` |
+| **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `npm run seed` |
+| **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `npm start` |
+| **Swarm Harvest** | `src/infrastructure/harvesters/SwarmEngine.js` | `npm run harvest:swarm` |
+| **L3 Smelt** | `src/feature_engine/smelter/FeatureSmelter.js` | `npm run smelt` |
+| **Sentinel** | `src/infrastructure/monitoring/Sentinel.js` | `npm run titan:watch` |
 | **身份管理** | `src/infrastructure/network/SessionManager.js` | - |
 | **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
+| **TITAN 模型** | `src/ml/inference/predictor.py` | `npm run predict` |
 | **C++ 桥接** | `src/utils/cpp_bridge_radar.py` | - |
 
 ---
@@ -82,26 +94,52 @@
 ```
 FootballPrediction/
 ├── config/                      # 配置中心
-│   └── factory_config.js        # 工厂级配置（所有魔术数字归口）
+│   ├── factory_config.js        # 工厂级配置（所有魔术数字归口）
+│   ├── constants.js             # 业务常量
+│   └── leagues.json             # 联赛配置
 ├── scripts/
 │   ├── ops/                     # 运维脚本
 │   │   ├── run_production.js    # 生产收割主入口
 │   │   ├── seed_fixtures.js     # L1 赛程种子
-│   │   └── smelt_all.js         # L3 特征熔炼
+│   │   ├── smelt_all.js         # L3 特征熔炼
+│   │   ├── swarm_test.js        # Swarm 蜂群收割
+│   │   ├── sentinel_watch.js    # 哨兵监控
+│   │   ├── hyper_swarm.js       # 超 Swarm 引擎
+│   │   ├── check_health.js      # 健康检查
+│   │   ├── train_model.py       # 模型训练
+│   │   ├── predict_pipeline.py  # 预测管道
+│   │   └── titan_daily_ops.sh   # 一键运维脚本
 │   └── maintenance/             # 维护工具
+│       ├── integrity_guard.py   # 数据完整性守护
+│       ├── recalculate_elo.js   # ELO 重新计算
+│       └── check_system_health.py
 ├── src/
-│   ├── core/                    # 核心基础设施
+│   ├── core/                    # 核心基础设施（Math, Database, Types）
 │   ├── parsers/                 # 数据解析器
 │   ├── feature_engine/          # Node.js 特征引擎
 │   ├── infrastructure/          # 基础设施（收割器、网络、数据库）
+│   │   ├── harvesters/          # 收割引擎
+│   │   ├── network/             # 网络与代理
+│   │   ├── monitoring/          # 监控与哨兵
+│   │   └── browser/             # 浏览器自动化
 │   ├── ml/                      # 机器学习
 │   │   ├── inference/           # 模型推理
-│   │   ├── training/            # 模型训练
-│   │   └── backtest/            # 回测引擎
+│   │   ├── models/              # 模型定义
+│   │   ├── data/                # 数据处理
+│   │   └── feature_engine/      # Python 特征工程
+│   ├── database/                # 数据库模型（唯一真理源）
+│   ├── schemas/                 # Pydantic Schema
+│   ├── services/                # 业务服务层
 │   └── utils/                   # 工具函数
 ├── tests/                       # 测试文件
-├── CLAUDE.md                    # AI 助手指南（详细命令）
-├── COMMAND_CENTER.md            # 指挥中心（完整命令）
+│   ├── unit/                    # 单元测试
+│   ├── integration/             # 集成测试
+│   └── fixtures/                # 测试数据
+├── models/                      # 生产模型文件
+│   └── titan_v4466_real_combat.joblib
+├── docs/                        # 文档中心
+├── CLAUDE.md                    # AI 助手详细操作指南
+├── COMMAND_CENTER.md            # 数字化指挥中心
 └── AGENTS.md                    # 本文件
 ```
 
@@ -136,7 +174,13 @@ npm start
 |------|------|
 | `npm start` | 生产收割器（L2/L3） |
 | `npm run seed` | L1 赛程种子 |
+| `npm run seed:all` | L1 全量赛程种子 |
 | `npm run smelt` | L3 特征熔炼 |
+| `npm run harvest:swarm` | Swarm 蜂群收割 |
+| `npm run titan:start` | TITAN 完整工作流 |
+| `npm run titan:watch` | 启动哨兵监控 |
+| `npm run predict` | 生成预测报告 |
+| `npm run train` | 训练 TITAN 模型 |
 | `npm test` | 运行单元测试 |
 | `npm run qa` | 全量检查（lint + test） |
 
@@ -152,13 +196,20 @@ npm start
 4. **数据完整性**：**零模拟原则**，严禁使用 `Math.random()` 伪造数据
 5. **幂等性**：所有收割任务支持重复执行，已存在的完整数据应跳过
 
-### 6.2 V4.45 架构规范
+### 6.2 V4.51 架构规范
 
-- **配置唯一源**: `src/config_unified.py`
+- **配置唯一源**: `src/config_unified.py` / `config/factory_config.js`
 - **数学能力**: `src/core/math/` (finance, evaluator)
 - **动态能力**: `src/core/` (Math, Database, Types)
 - **预测大脑**: `src/ml/`
 - **基础设施**: `src/infrastructure/`
+- **唯一数据**: `src/database/`
+
+### 6.3 黄金准则（V4.51.2+）
+
+- **测试覆盖率**: 80% 熔断阈值
+- **静态质量**: 0 Error 容忍
+- **文档规范**: JSDoc 完整注释
 
 ---
 
@@ -169,12 +220,15 @@ npm start
 ```bash
 # 启动开发环境
 docker-compose -f docker-compose.dev.yml up -d
+make dev-up
 
 # 进入开发容器
 docker-compose -f docker-compose.dev.yml exec dev bash
+make dev-shell
 
 # 停止开发环境
 docker-compose -f docker-compose.dev.yml down
+make dev-down
 ```
 
 ### 7.2 核心收割流程
@@ -186,39 +240,61 @@ docker-compose -f docker-compose.dev.yml exec dev npm run seed
 # L2: 数据收割
 docker-compose -f docker-compose.dev.yml exec dev npm start
 
+# Swarm 蜂群收割（推荐，多 Worker 并发）
+docker-compose -f docker-compose.dev.yml exec dev npm run harvest:swarm
+
 # L3: 特征熔炼
 docker-compose -f docker-compose.dev.yml exec dev npm run smelt
+
+# TITAN 完整工作流（高阶）
+npm run titan:start
 ```
 
 ### 7.3 代码质量
 
 ```bash
 # ESLint 检查
-docker-compose -f docker-compose.dev.yml exec dev npm run lint
+npm run lint
 
 # ESLint 自动修复
-docker-compose -f docker-compose.dev.yml exec dev npm run lint:fix
+npm run lint:fix
 
 # Prettier 格式化
-docker-compose -f docker-compose.dev.yml exec dev npm run format
+npm run format
 
 # Python Ruff 检查
-docker-compose -f docker-compose.dev.yml exec dev npm run lint:python
+npm run lint:python
+
+# Python 格式化
+npm run format:python
+
+# Markdown 检查
+npm run lint:md
 
 # 全量检查
-docker-compose -f docker-compose.dev.yml exec dev npm run qa
+npm run qa
+make verify
 ```
 
 ### 7.4 测试
 
 ```bash
-# Node.js 测试
-docker-compose -f docker-compose.dev.yml exec dev npm test
-docker-compose -f docker-compose.dev.yml exec dev npm run test:coverage
+# Node.js 单元测试
+npm test
+npm run test:unit
+
+# 指定测试文件
+npm run test:l1
+
+# 集成测试
+npm run test:integration
+
+# 覆盖率测试
+npm run test:coverage
 
 # Python 测试
-docker-compose -f docker-compose.dev.yml exec dev pytest tests/ -v
-docker-compose -f docker-compose.dev.yml exec dev pytest tests/ml/ -v
+pytest tests/ -v
+pytest tests/ml/ -v
 ```
 
 ### 7.5 数据库操作
@@ -226,10 +302,66 @@ docker-compose -f docker-compose.dev.yml exec dev pytest tests/ml/ -v
 ```bash
 # 进入 PostgreSQL Shell
 docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db
-
-# Makefile 快捷方式
 make db-shell
+
+# 数据库备份
 make db-backup
+
+# 查看数据层级状态
+npm run status:db
+```
+
+### 7.6 监控与运维
+
+```bash
+# 启动监控栈（Prometheus + Grafana）
+npm run monitor:up
+
+# 停止监控
+npm run monitor:down
+
+# 启动哨兵监控
+npm run titan:watch
+
+# 健康检查
+npm run titan:check
+npm run status:health
+make health
+```
+
+### 7.7 模型操作
+
+```bash
+# 训练模型
+npm run train
+
+# 快速训练（参数减少）
+npm run train:fast
+
+# 深度训练（参数增加）
+npm run train:deep
+
+# 生成预测
+npm run predict
+
+# 试运行模式（不写入数据库）
+npm run predict:dry
+
+# JSON 格式输出
+npm run predict:json
+```
+
+### 7.8 ELO 评分操作
+
+```bash
+# 重新计算 ELO（完整）
+npm run elo:recalc
+
+# 试运行模式
+npm run elo:recalc:dry
+
+# 增量更新
+npm run elo:incremental
 ```
 
 ---
@@ -245,11 +377,14 @@ make db-backup
 | `DB_PORT` | 数据库端口 | `5432` |
 | `DB_NAME` | 数据库名称 | `football_db` |
 | `DB_USER` | 数据库用户 | `football_user` |
+| `REDIS_HOST` | Redis 主机 | `host.docker.internal` |
+| `REDIS_PORT` | Redis 端口 | `6379` |
 | `MAX_WORKERS` | Worker 数量 | `1` |
 | `MIN_DELAY_MS` | 最小延时（ms） | `10000` |
 | `MAX_DELAY_MS` | 最大延时（ms） | `15000` |
 | `PROXY_HOST` | 代理服务器地址 | `172.25.16.1` |
 | `LOG_LEVEL` | 日志级别 | `info` |
+| `SWARM_CONCURRENCY` | Swarm 并发数 | `3` |
 
 ### 8.2 配置系统
 
@@ -267,10 +402,12 @@ const delay = FactoryConfig.getRandomDelay([FactoryConfig.TIMING.minDelayMs, Fac
 
 | 问题 | 诊断命令 | 解决方案 |
 |------|---------|----------|
-| **代理熔断** | `curl -x http://172.25.16.1:7891 https://httpbin.org/ip` | `docker-compose restart dev` |
+| **代理熔断** | `curl -x http://172.25.16.1:7890 https://httpbin.org/ip` | `docker-compose restart dev` |
 | **数据库连接** | `docker-compose exec db pg_isready -U football_user` | `docker-compose restart db` |
 | **浏览器崩溃** | `ps aux \| grep chromium` | `npx playwright install chromium --force` |
 | **数据不一致** | `python scripts/maintenance/check_system_health.py` | 运行 `clean_corrupt_l2.py` |
+| **Redis 连接** | `docker-compose exec redis redis-cli ping` | `docker-compose restart redis` |
+| **Swarm 挂起** | `npm run titan:check` | 检查 `sentinel_watch.js` 日志 |
 
 ---
 
@@ -286,29 +423,62 @@ const delay = FactoryConfig.getRandomDelay([FactoryConfig.TIMING.minDelayMs, Fac
 | `team_elo_ratings` | 球队 Elo 评分 | - |
 
 **常用查询：**
+
 ```sql
 -- 查看待收割比赛
-SELECT match_id, home_team, away_team, match_time 
-FROM matches 
+SELECT match_id, home_team, away_team, match_time
+FROM matches
 WHERE l2_harvested = false;
 
 -- 查看高置信度预测
-SELECT * FROM predictions 
-WHERE final_confidence > 0.65 
+SELECT * FROM predictions
+WHERE final_confidence > 0.65
 ORDER BY match_time;
+
+-- 查看数据层级统计
+SELECT
+    COUNT(*) FILTER (WHERE l2_harvested = false) as pending_l2,
+    COUNT(*) FILTER (WHERE l2_harvested = true) as completed_l2
+FROM matches
+WHERE match_date >= NOW()
+  AND match_date < NOW() + INTERVAL '4 days';
 ```
 
 ---
 
-## 11. 多模型共识
+## 11. TITAN 模型系统
 
-| 模型 | 特征维度 | 用途 |
-|------|---------|------|
-| Model A | 37 | 通用预测 |
-| Model B | 6000+ | 联赛专项 |
-| Model C | 19 | 赔率模型 |
+### 11.1 模型架构
 
-**共识规则**: UNANIMOUS (3/3) > MAJORITY (2/3) > SPLIT（无共识）
+| 组件 | 描述 |
+|------|------|
+| **核心模型** | XGBoost 分类器 |
+| **特征维度** | 动态（goal_diff, away_score, home_score, total_goals 等） |
+| **准确率** | 65.31%（测试集）/ 67.94%（5折交叉验证） |
+| **F1 Score** | 0.6371 |
+| **Log Loss** | 0.9834 |
+
+### 11.2 特征重要性
+
+| 排名 | 特征 | 重要性 |
+|------|------|--------|
+| 1 | goal_diff | 64.66% |
+| 2 | away_score | 14.27% |
+| 3 | home_score | 13.72% |
+| 4 | total_goals | 7.36% |
+
+### 11.3 EV 计算算法
+
+```
+EV = P × Odds - 1
+
+# 无赔率时的保守估算
+if p > 0.70:    ev = min(0.10, theoretical_ev + 0.05)
+elif p > 0.60:  ev = min(0.05, theoretical_ev + 0.02)
+elif p > 0.50:  ev = min(0.03, theoretical_ev)
+elif p > 0.40:  ev = max(-0.05, theoretical_ev - 0.02)
+else:           ev = max(-0.10, theoretical_ev - 0.05)
+```
 
 ---
 
@@ -317,7 +487,12 @@ ORDER BY match_time;
 | 文档 | 说明 |
 |------|------|
 | [CLAUDE.md](./CLAUDE.md) | AI 助手操作指南（工程铁律、配置系统、关键规则） |
-| [COMMAND_CENTER.md](./COMMAND_CENTER.md) | 完整命令列表、环境变量、故障排查 |
+| [COMMAND_CENTER.md](./COMMAND_CENTER.md) | 数字化指挥中心（完整命令、作战常规） |
+| [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 系统架构详述 |
+| [docs/OPERATIONS_MANUAL.md](./docs/OPERATIONS_MANUAL.md) | 运维手册 |
+| [docs/TESTING_GUIDE.md](./docs/TESTING_GUIDE.md) | 测试指南 |
+| [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | 故障排查 |
+| [docs/xgboost_optimization_guide.md](./docs/xgboost_optimization_guide.md) | XGBoost 优化指南 |
 | [AUDIT_REPORT_V3.2.md](./AUDIT_REPORT_V3.2.md) | V3.1-STABLE 穿透审计报告 |
 
 ---
@@ -344,9 +519,35 @@ ORDER BY match_time;
 - 不使用 `Math.random()` 伪造数据
 - 不创建不必要的抽象和工具函数
 - 不添加未请求的功能
+- 不硬编码配置参数
+
+### 13.4 Skills 约束体系
+
+项目已配置 12 个专用 Skills，详见 `.claude/README.md`。核心约束：
+
+| 约束等级 | Skill | 用途 |
+|----------|-------|------|
+| 🔴 RED | `minimal_change` | 最小修改策略 |
+| 🔴 RED | `architecture_boundary` | 架构边界保护 |
+| 🔴 RED | `test_guard` | 测试质量保护 |
+| 🔴 RED | `context_lock` | 核心模块冻结 |
+| 🔴 RED | `change_impact` | 变更影响分析 |
+
+---
+
+## 14. MCP 服务器权限
+
+| MCP 服务器 | 权限 | 允许行为 |
+|-----------|------|----------|
+| **postgres** | READ-ONLY | SELECT / DESCRIBE / EXPLAIN |
+| **filesystem** | PROJECT ROOT | 读 / diff / 受控写 |
+| **git** | READ-ONLY | commit history / diff / blame |
+| **pytest** | RESTRICTED | 运行 pytest / 列出测试 |
+
+> ⚠️ **MCP 不拥有生产环境控制权**，禁止任何不可逆或高风险自动化操作。
 
 ---
 
 **维护者**: V174 Engineering Team  
 **许可证**: MIT License  
-**最后更新**: 2026-03-08
+**最后更新**: 2026-03-13

@@ -3,7 +3,6 @@
  * ===========================
  *
  * Industrial-grade retry logic with exponential backoff, jitter, and circuit breaker.
- *
  * @module core/retry
  * @author Principal Software Architect
  * @version V66.000
@@ -41,7 +40,17 @@ const RETRY_CONFIG = {
 // ERROR CLASS
 // ============================================================================
 
+/**
+ *
+ */
 class RetryError extends Error {
+    /**
+     *
+     * @param code
+     * @param message
+     * @param traceId
+     * @param context
+     */
     constructor(code, message, traceId = null, context = {}) {
         super(message);
         this.name = 'RetryError';
@@ -51,6 +60,9 @@ class RetryError extends Error {
         this.context = context;
     }
 
+    /**
+     *
+     */
     toJSON() {
         return {
             error_code: this.errorCode,
@@ -61,6 +73,9 @@ class RetryError extends Error {
         };
     }
 
+    /**
+     *
+     */
     toString() {
         return JSON.stringify(this.toJSON());
     }
@@ -71,6 +86,9 @@ class RetryError extends Error {
 // ============================================================================
 
 // generateTraceId 已移至 src/core/id_generator.js，此处使用别名
+/**
+ *
+ */
 function generateTraceId() {
     return generateDeterministicId('trace');
 }
@@ -156,7 +174,7 @@ class CircuitBreaker {
 
     /**
      * Get current state
-     * @returns {Object} - State information
+     * @returns {object} - State information
      */
     getState() {
         return {
@@ -169,6 +187,9 @@ class CircuitBreaker {
 
     /**
      * Internal logging
+     * @param level
+     * @param message
+     * @param data
      * @private
      */
     _log(level, message, data = {}) {
@@ -195,7 +216,7 @@ class CircuitBreaker {
  */
 class RetryPolicy {
     /**
-     * @param {Object} [config={}] - Configuration overrides
+     * @param {object} [config] - Configuration overrides
      */
     constructor(config = {}) {
         this.config = { ...RETRY_CONFIG, ...config };
@@ -232,7 +253,7 @@ class RetryPolicy {
      * Execute function with retry logic
      * @template T
      * @param {function(): Promise<T>} fn - Async function to execute
-     * @param {Object} [options={}] - Execution options
+     * @param {object} [options] - Execution options
      * @returns {Promise<T>} - Function result
      */
     async execute(fn, options = {}) {
@@ -306,7 +327,7 @@ class RetryPolicy {
      * Execute multiple functions concurrently with retry isolation
      * @template T
      * @param {Array<function(): Promise<T>>} functions - Array of async functions
-     * @param {Object} [options={}] - Execution options
+     * @param {object} [options] - Execution options
      * @returns {Promise<Array<T>>} - Array of results
      */
     async executeAll(functions, options = {}) {
@@ -374,7 +395,7 @@ class RetryPolicy {
 
     /**
      * Get circuit breaker state
-     * @returns {Object} - Circuit breaker state
+     * @returns {object} - Circuit breaker state
      */
     getCircuitBreakerState() {
         return this.circuitBreaker.getState();
@@ -389,6 +410,9 @@ class RetryPolicy {
 
     /**
      * Internal logging
+     * @param level
+     * @param message
+     * @param data
      * @private
      */
     _log(level, message, data = {}) {
@@ -410,7 +434,7 @@ class RetryPolicy {
 
 /**
  * Create a retry policy with custom configuration
- * @param {Object} [config] - Configuration overrides
+ * @param {object} [config] - Configuration overrides
  * @returns {RetryPolicy} - New retry policy instance
  */
 function createRetryPolicy(config) {
@@ -421,7 +445,7 @@ function createRetryPolicy(config) {
  * Execute function with default retry policy
  * @template T
  * @param {function(): Promise<T>} fn - Async function to execute
- * @param {Object} [options] - Retry options
+ * @param {object} [options] - Retry options
  * @returns {Promise<T>} - Function result
  */
 async function withRetry(fn, options = {}) {
@@ -435,7 +459,7 @@ async function withRetry(fn, options = {}) {
 
 /**
  * Retry decorator for class methods
- * @param {Object} [options] - Retry options
+ * @param {object} [options] - Retry options
  * @returns {function} - Decorator function
  */
 function retryDecorator(options = {}) {

@@ -1,5 +1,5 @@
 /**
- * @fileoverview Strategy Parser 单元测试
+ * @file Strategy Parser 单元测试
  * @description 测试 HTML 解析、字段提取、边界条件处理
  * @version 1.0.0
  */
@@ -7,7 +7,14 @@
 'use strict';
 
 // 模拟的 FotMobStrategy 解析器
+/**
+ *
+ */
 class MockFotMobStrategy {
+  /**
+   *
+   * @param config
+   */
   constructor(config = {}) {
     this.config = config;
   }
@@ -15,7 +22,7 @@ class MockFotMobStrategy {
   /**
    * 解析 HTML 响应 - V4.51.2 三层解析保险
    * @param {string} html - HTML 内容
-   * @returns {Object|null} 解析后的数据
+   * @returns {object | null} 解析后的数据
    */
   parseHTML(html) {
     if (!html || typeof html !== 'string') {
@@ -57,6 +64,7 @@ class MockFotMobStrategy {
 
   /**
    * 标准化比赛数据
+   * @param match
    * @private
    */
   _normalizeMatchData(match) {
@@ -92,6 +100,7 @@ class MockFotMobStrategy {
   /**
    * DOM 备用解析 - V4.51.2 新增
    * 当所有 JSON 数据都缺失时，从 DOM 提取基础信息
+   * @param html
    * @private
    */
   _parseDOMFallback(html) {
@@ -139,7 +148,7 @@ class MockFotMobStrategy {
 
   /**
    * 验证数据结构完整性
-   * @param {Object} data - 解析后的数据
+   * @param {object} data - 解析后的数据
    * @returns {boolean} 是否有效
    */
   validateData(data) {

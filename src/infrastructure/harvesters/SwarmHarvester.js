@@ -9,7 +9,6 @@
  * - 零空转：Worker 空闲立即处理下一条 MatchID
  *
  * 性能提升：10x 吞吐量 (0.05 → 0.5 场/秒)
- *
  * @module infrastructure/harvesters/SwarmHarvester
  * @version V4.46.4-HYPER-DRIVE
  */
@@ -26,13 +25,16 @@ const FactoryConfig = require('../../../config/factory_config');
 // SwarmHarvester - 蜂群收割指挥官 V4.46.4
 // ============================================================================
 
+/**
+ *
+ */
 class SwarmHarvester {
     /**
      * 创建蜂群收割器实例
-     * @param {Object} [config={}] - 配置选项
-     * @param {number} [config.concurrency=15] - 并发 Worker 数量
-     * @param {number} [config.initStaggerMs=500] - Worker 初始化错峰 (ms)
-     * @param {boolean} [config.verboseLogging=true] - 详细日志
+     * @param {object} [config] - 配置选项
+     * @param {number} [config.concurrency] - 并发 Worker 数量
+     * @param {number} [config.initStaggerMs] - Worker 初始化错峰 (ms)
+     * @param {boolean} [config.verboseLogging] - 详细日志
      */
     constructor(config = {}) {
         this.config = {
@@ -73,7 +75,7 @@ class SwarmHarvester {
      * V4.46.4: Worker 池化架构 - 浏览器只启动一次
      * @param {Array<string|number>} matchIds - 比赛 ID 列表
      * @param {number} [concurrency] - 并发数（覆盖构造函数配置）
-     * @returns {Promise<Object>} 收割结果统计
+     * @returns {Promise<object>} 收割结果统计
      */
     async batchRun(matchIds, concurrency) {
         const actualConcurrency = concurrency || this.config.concurrency;
@@ -235,8 +237,8 @@ class SwarmHarvester {
      * @param {string|number} matchId - 比赛 ID
      * @param {number} workerId - Worker 编号
      * @param {ProductionHarvester} harvester - 已初始化的 Harvester
-     * @param {Object} proxyConfig - 代理配置
-     * @returns {Promise<Object>} 收割结果
+     * @param {object} proxyConfig - 代理配置
+     * @returns {Promise<object>} 收割结果
      * @private
      */
     async _pooledHarvest(matchId, workerId, harvester, proxyConfig) {
@@ -354,7 +356,7 @@ class SwarmHarvester {
      * @private
      * @param {ProductionHarvester} harvester - Harvester 实例
      * @param {number} workerId - Worker ID
-     * @param {Object} proxyConfig - 代理配置
+     * @param {object} proxyConfig - 代理配置
      */
     async _injectWorkerIdentity(harvester, workerId, proxyConfig) {
         const { WorkerIdentity } = require('../network/NetworkManager');
@@ -372,7 +374,7 @@ class SwarmHarvester {
     /**
      * 汇总结果
      * @private
-     * @param {Array<Object>} results - 结果数组
+     * @param {Array<object>} results - 结果数组
      */
     _aggregateResults(results) {
         this.stats.completed = results.length;
@@ -383,7 +385,7 @@ class SwarmHarvester {
     /**
      * 生成收割报告
      * @private
-     * @returns {Object} 报告对象
+     * @returns {object} 报告对象
      */
     _generateReport() {
         const elapsed = Date.now() - this.stats.startTime;
@@ -450,7 +452,7 @@ class SwarmHarvester {
 
     /**
      * 获取当前活跃 Worker 状态
-     * @returns {Array<Object>} 活跃 Worker 列表
+     * @returns {Array<object>} 活跃 Worker 列表
      */
     getActiveWorkers() {
         const workers = [];
@@ -466,7 +468,7 @@ class SwarmHarvester {
 
     /**
      * 获取统计信息
-     * @returns {Object} 统计对象
+     * @returns {object} 统计对象
      */
     getStats() {
         return {
@@ -484,9 +486,9 @@ class SwarmHarvester {
 /**
  * 快速启动蜂群收割
  * @param {Array<string|number>} matchIds - 比赛 ID 列表
- * @param {number} [concurrency=15] - 并发数
- * @param {Object} [options={}] - 额外配置
- * @returns {Promise<Object>} 收割结果
+ * @param {number} [concurrency] - 并发数
+ * @param {object} [options] - 额外配置
+ * @returns {Promise<object>} 收割结果
  */
 async function swarmHarvest(matchIds, concurrency = 15, options = {}) {
     const swarm = new SwarmHarvester({

@@ -132,16 +132,19 @@ raw_match_data
 ### 4.2 迁移步骤
 
 1. **备份现有 `.env` 文件**
+
    ```bash
    cp config/.env config/.env.backup
    ```
 
 2. **更新配置模板**
+
    ```bash
    cp config/.env.example config/.env
    ```
 
 3. **填入实际值**
+
    ```bash
    # 编辑 config/.env
    DB_PASSWORD=your_actual_password
@@ -149,6 +152,7 @@ raw_match_data
    ```
 
 4. **验证配置加载**
+
    ```bash
    npm run titan:check
    ```
@@ -300,6 +304,7 @@ npm install
 **建议操作**: 立即合并至主干 (`main`)
 
 **合并命令**:
+
 ```bash
 git checkout main
 git merge feat/v4.50-foundation --no-ff -m "feat(V4.51): TITAN TOTAL-WAR 终极交付"

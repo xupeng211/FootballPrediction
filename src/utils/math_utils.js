@@ -5,7 +5,6 @@
  * 提供数学算法工具函数：
  * - Levenshtein 编辑距离算法
  * - 字符串相似度计算
- *
  * @file math_utils.js
  * @version V79.100
  * @since 2026-01-25
@@ -22,11 +21,9 @@
  * Calculate Levenshtein edit distance between two strings
  *
  * V73.200 修正版：修复了 matrix[i][j-1][j-1] 索引 bug
- *
  * @param {string} a - First string
  * @param {string} b - Second string
  * @returns {number} - Levenshtein distance (minimum number of edits)
- *
  * @example
  * levenshtein('kitten', 'sitting')  // returns 3
  * levenshtein('Man Utd', 'Manchester United')  // returns 10
@@ -65,11 +62,9 @@ function levenshtein(a, b) {
 
 /**
  * Calculate normalized similarity score (0-100)
- *
  * @param {string} str1 - First string
  * @param {string} str2 - Second string
  * @returns {number} - Similarity score (0-100, where 100 is identical)
- *
  * @example
  * similarity('Man Utd', 'Manchester United')  // returns ~61.54
  * similarity('Barcelona', 'Barcelona')  // returns 100
@@ -92,7 +87,7 @@ function similarity(str1, str2) {
 // =============================================================================
 
 /**
- * @typedef {Object} StringMatchResult
+ * @typedef {object} StringMatchResult
  * @property {number} distance - Levenshtein distance
  * @property {number} similarity - Similarity score (0-100)
  * @property {boolean} isMatch - Whether strings match above threshold
@@ -100,12 +95,10 @@ function similarity(str1, str2) {
 
 /**
  * Calculate comprehensive string comparison result
- *
  * @param {string} str1 - First string
  * @param {string} str2 - Second string
- * @param {number} [threshold=70] - Minimum similarity for match
+ * @param {number} [threshold] - Minimum similarity for match
  * @returns {StringMatchResult} - Match result with distance and similarity
- *
  * @example
  * compareStrings('Real Madrid', 'R. Madrid', 85)
  * // returns { distance: 5, similarity: 37.5, isMatch: false }

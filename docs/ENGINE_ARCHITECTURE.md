@@ -1,4 +1,5 @@
 # Engine Architecture - V168.000 [Genesis.Solidify]
+
 =====================================================
 
 This document outlines the architecture of the `src/infrastructure/engines` module, focusing on the relationship between `QuantHarvester`, `SurgicalInteraction`, and specialized sub-modules.
@@ -23,47 +24,56 @@ graph TD
 ## 2. Core Modules
 
 ### 2.1 QuantHarvester (`src/infrastructure/engines/QuantHarvester.js`)
+
 **Role:** Main orchestrator for batch processing.
+
 - Manages concurrency (p-limit).
 - Handles DB transactions (Pool).
 - Implements "Fast Fail" & "Auto-Healing" logic.
 - Integrates `SignalRadar` for network interception.
 
 ### 2.2 SurgicalInteraction (`src/infrastructure/engines/services/SurgicalInteraction.js`)
+
 **Role:** Browser interaction facade.
+
 - **Responsibility:** High-level API for interacting with the page (hover, click, extract).
 - **Sub-modules:**
-    - `AntiFingerprint`: Hides bot signature (Overlay removal, CSS injection).
-    - `DOMNavigator`: Finds elements and extracting text (Modal detection, Provider mapping).
-    - `EventSimulator`: Simulates human actions (Hover, Jitter, Wait).
+  - `AntiFingerprint`: Hides bot signature (Overlay removal, CSS injection).
+  - `DOMNavigator`: Finds elements and extracting text (Modal detection, Provider mapping).
+  - `EventSimulator`: Simulates human actions (Hover, Jitter, Wait).
 
 ### 2.3 SignalRadar (`src/infrastructure/engines/services/SignalRadar.js`)
+
 **Role:** Network interception & Data extraction.
+
 - **Responsibility:** Captures WebSocket/XHR data.
-- **Features:** 
-    - `TitanHeart`: In-browser hook for data capture.
-    - `TriggerMode`: Synchronization between action and data arrival.
+- **Features:**
+  - `TitanHeart`: In-browser hook for data capture.
+  - `TriggerMode`: Synchronization between action and data arrival.
 
 ## 3. Specialized Modules (`src/infrastructure/engines/services/modules/`)
 
 ### 3.1 AntiFingerprint (`anti_fingerprint.js`)
+
 - **Purpose:** Bypass anti-bot measures.
 - **Key Methods:**
-    - `handleOverlays()`: Brute force removal of cookie banners/ads.
-    - `scrollSettle()`: Human-like scrolling behavior.
+  - `handleOverlays()`: Brute force removal of cookie banners/ads.
+  - `scrollSettle()`: Human-like scrolling behavior.
 
 ### 3.2 DOMNavigator (`dom_navigator.js`)
+
 - **Purpose:** Understanding the page structure.
 - **Key Methods:**
-    - `detectModalWithTitle()`: Finds the odds history modal.
-    - `extractProviderNameFromCell()`: Maps a cell to its bookmaker (Pinnacle, bet365, etc.).
+  - `detectModalWithTitle()`: Finds the odds history modal.
+  - `extractProviderNameFromCell()`: Maps a cell to its bookmaker (Pinnacle, bet365, etc.).
 
 ### 3.3 EventSimulator (`event_simulator.js`)
+
 - **Purpose:** Realistic user interaction.
 - **Key Methods:**
-    - `performReliableHover()`: Safe hovering with retry logic.
-    - `waitForMemoryData()`: Zero-latency check for captured data.
-    - `generatePixelJitter()`: Random mouse movement noise.
+  - `performReliableHover()`: Safe hovering with retry logic.
+  - `waitForMemoryData()`: Zero-latency check for captured data.
+  - `generatePixelJitter()`: Random mouse movement noise.
 
 ## 4. Configuration
 

@@ -93,12 +93,14 @@ SELECT * FROM proxy_health ORDER BY last_check DESC LIMIT 22;
 ### 🔴 故障 A: CIRCUIT_BREAKER_OPEN (全线熔断)
 
 **症状**:
+
 ```
 🚨 全局熔断：所有代理节点不可用 (已重试 3 次)
 CIRCUIT_BREAKER_OPEN: 所有代理节点不可用，全局熔断已开启
 ```
 
 **根因分析**:
+
 - 代理服务器宕机
 - 网络中断
 - 代理端口配置错误
@@ -127,6 +129,7 @@ docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/hyper_swarm.j
 ```
 
 **预防措施**:
+
 - 配置代理服务自动重启
 - 设置 Prometheus 告警规则
 - 定期执行代理健康检查
@@ -136,6 +139,7 @@ docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/hyper_swarm.j
 ### 🟠 故障 B: SIZE_TOO_SMALL 错误 (403 拦截)
 
 **症状**:
+
 ```
 ❌ SIZE_TOO_SMALL:160
 [FotMobStrategy] 响应状态: 403
@@ -143,6 +147,7 @@ docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/hyper_swarm.j
 ```
 
 **根因分析**:
+
 - FotMob 反爬虫检测
 - Cookie 过期
 - 单 IP 请求频率过高
@@ -185,12 +190,14 @@ const swarm = new SwarmHarvester({
 ### 🟡 故障 C: Python API 无法连接数据库
 
 **症状**:
+
 ```
 psycopg2.OperationalError: could not connect to server: Connection refused
 Is the server running on host "localhost" (127.0.0.1) and accepting TCP/IP connections on port 5432?
 ```
 
 **根因分析**:
+
 - Docker 网络配置错误
 - PostgreSQL 容器未启动
 - 防火墙阻断
@@ -234,6 +241,7 @@ DB_PASSWORD=your_secure_password
 ### 🟢 故障 D: 浏览器启动失败
 
 **症状**:
+
 ```
 Error: Failed to launch the browser process!
 [ERROR] browser: undefined
@@ -358,11 +366,12 @@ docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/hyper_swarm.j
 
 | 角色 | 联系方式 |
 |------|----------|
-| SRE On-Call | sre@titan.example.com |
-| 开发团队 | dev@titan.example.com |
+| SRE On-Call | <sre@titan.example.com> |
+| 开发团队 | <dev@titan.example.com> |
 | 紧急热线 | +86-xxx-xxxx-xxxx |
 
 ---
 
 **文档版本历史**:
+
 - V4.46.4 (2026-03-09): 初始版本，Hyper-Drive 架构

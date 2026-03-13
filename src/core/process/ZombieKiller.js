@@ -9,7 +9,6 @@
  * - defunct 进程检测 (真正意义上的僵尸)
  * - 超时进程清理 (运行超过 5 分钟的 Playwright 进程)
  * - 定期扫描模式
- *
  * @module core/process/ZombieKiller
  * @version V175.0.0
  */
@@ -23,7 +22,7 @@ const { execSync } = require('child_process');
  */
 class ZombieKiller {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {number} options.timeout - 命令超时时间 (ms)
      * @param {string[]} options.targetProcesses - 目标进程名列表
      * @param {boolean} options.silent - 静默模式
@@ -42,6 +41,8 @@ class ZombieKiller {
 
     /**
      * 日志输出
+     * @param level
+     * @param msg
      * @private
      */
     _log(level, msg) {
@@ -241,9 +242,8 @@ class ZombieKiller {
     /**
      * 执行起飞前清理 (V175 增强)
      * 在 Worker 启动前执行，确保没有残留的 Chrome/Chromium 进程
-     *
      * @param {number} workerId - Worker ID (用于日志)
-     * @returns {Object} 清理统计 { found, killed, failed, defunct, stale }
+     * @returns {object} 清理统计 { found, killed, failed, defunct, stale }
      */
     preFlightCleanup(workerId = 0) {
         const stats = {
@@ -355,9 +355,8 @@ class ZombieKiller {
     /**
      * 强制杀死浏览器进程
      * 确保即使手动停止脚本，所有浏览器进程也必须被物理强制杀死
-     *
      * @param {number} workerId - Worker ID
-     * @returns {Object} 清理统计
+     * @returns {object} 清理统计
      */
     forceKillBrowser(workerId = 0) {
         const stats = {
@@ -417,7 +416,7 @@ class ZombieKiller {
 
     /**
      * V175: 获取僵尸进程统计
-     * @returns {Object}
+     * @returns {object}
      */
     getZombieStats() {
         return {
@@ -429,7 +428,7 @@ class ZombieKiller {
 
     /**
      * 获取上次清理统计
-     * @returns {Object|null}
+     * @returns {object | null}
      */
     getLastStats() {
         return this.lastCleanupStats;
@@ -438,7 +437,7 @@ class ZombieKiller {
     /**
      * 静态方法：快速清理
      * @param {number} workerId - Worker ID
-     * @returns {Object} 清理统计
+     * @returns {object} 清理统计
      */
     static quickClean(workerId = 0) {
         const killer = new ZombieKiller();
@@ -448,7 +447,7 @@ class ZombieKiller {
     /**
      * 静态方法：强制杀死浏览器
      * @param {number} workerId - Worker ID
-     * @returns {Object} 清理统计
+     * @returns {object} 清理统计
      */
     static forceKillBrowser(workerId = 0) {
         const killer = new ZombieKiller();
@@ -457,7 +456,7 @@ class ZombieKiller {
 
     /**
      * V175: 静态方法：获取僵尸统计
-     * @returns {Object}
+     * @returns {object}
      */
     static getStats() {
         const killer = new ZombieKiller({ silent: true });
@@ -468,7 +467,7 @@ class ZombieKiller {
 /**
  * 便捷函数：起飞前清理
  * @param {number} workerId - Worker ID
- * @returns {Object} 清理统计
+ * @returns {object} 清理统计
  */
 function preFlightCleanup(workerId = 0) {
     return ZombieKiller.quickClean(workerId);
@@ -477,7 +476,7 @@ function preFlightCleanup(workerId = 0) {
 /**
  * 便捷函数：强制杀死浏览器
  * @param {number} workerId - Worker ID
- * @returns {Object} 清理统计
+ * @returns {object} 清理统计
  */
 function forceKillBrowser(workerId = 0) {
     return ZombieKiller.forceKillBrowser(workerId);
@@ -485,7 +484,7 @@ function forceKillBrowser(workerId = 0) {
 
 /**
  * V175: 便捷函数：获取僵尸统计
- * @returns {Object}
+ * @returns {object}
  */
 function getZombieStats() {
     return ZombieKiller.getStats();

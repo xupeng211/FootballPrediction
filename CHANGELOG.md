@@ -74,6 +74,7 @@ M src/utils/notifier.py
 之前的架构中，每场比赛收割都会启动和关闭一个浏览器，导致约 50% 的时间浪费在初始化/清理上。
 
 V4.46.4 彏底重构了这一模式：
+
 - 15 个 Worker 在启动时预初始化
 - 浏览器只启动一次
 - 任务分发复用已初始化的 Worker
@@ -91,28 +92,33 @@ V4.46.4 彏底重构了这一模式：
 ### ✨ 新增功能 (Features)
 
 #### 1. Worker 池化架构 (`SwarmHarvester.js`)
+
 - `_initializeWorkerPool()`: 预创建并初始化固定数量的 Worker
 - `_pooledHarvest()`: 使用池化 Worker 执行收割，无需重复初始化
 - `_cleanupWorkerPool()`: 统一销毁 Worker 池
 
 #### 2. 意甲专项收割器 (`hyper_swarm_stealth.js`)
+
 - 针对被 403 拦截的比赛
 - 低并发 (3 Worker) + 长延迟 (5-10s)
 - 成功收割 8 场难缠比赛
 
 #### 3. 数据完整性卫士 (`integrity_guard.py`)
+
 - 每日自动运行
 - 对比 L1/L2/L3 三张表的记录数
 - 自动列出缺失的 match_id
 - 生成修复建议
 
 #### 4. 运维手册 (`OPERATIONS_RUNBOOK.md`)
+
 - 完整的故障-对策矩阵
 - 4 大类故障的诊断流程
 - 紧急恢复指南
 - 日常运维检查清单
 
 #### 5. Grafana Dashboard (`grafana_dashboard.json`)
+
 - 实时吞吐量曲线
 - 采集成功率饼图
 - 代理池负载分布
@@ -121,11 +127,13 @@ V4.46.4 彏底重构了这一模式：
 ### 🔧 修复 (Fixes)
 
 #### 1. 端口切换日志 bug
+
 - 位置: `AbstractHarvester.js:497`
 - 问题: `forceReassignPort()` 返回对象而非端口号，导致日志显示 `[object Object]`
 - 修复: 使用 `newPort?.port || newPort` 正确显示端口号
 
 #### 2. 移除无效的错峰延迟
+
 - 位置: `SwarmHarvester.js:262-270`
 - 问题: `_calculateStaggerDelay` 导致批次间产生不必要的延迟
 - 修复: 在池化模式下，Worker 空闲立即处理下一条 MatchID
@@ -133,6 +141,7 @@ V4.46.4 彏底重构了这一模式：
 ### 📁 文件变更清单
 
 #### 新增文件
+
 ```
 + docs/OPERATIONS_RUNBOOK.md       # 运维手册
 + config/monitoring/grafana_dashboard.json  # Grafana 看板
@@ -141,6 +150,7 @@ V4.46.4 彏底重构了这一模式：
 ```
 
 #### 修改文件
+
 ```
 M src/infrastructure/harvesters/SwarmHarvester.js
   - 重构为 Worker 池化架构

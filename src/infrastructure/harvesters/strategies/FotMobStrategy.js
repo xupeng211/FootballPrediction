@@ -7,7 +7,6 @@
  * - __NEXT_DATA__ 提取与 API 响应解析
  * - 数据转换与字段映射
  * - CSS 选择器定位（备用方案）
- *
  * @module infrastructure/harvesters/strategies/FotMobStrategy
  * @version V1.0.0
  */
@@ -20,10 +19,13 @@ const { transformToApiFormat } = require('../../../parsers/fotmob/NextDataParser
 // FotMobStrategy 类
 // ============================================================================
 
+/**
+ *
+ */
 class FotMobStrategy {
     /**
      * 创建 FotMob 收割策略
-     * @param {Object} config - 配置选项
+     * @param {object} config - 配置选项
      */
     constructor(config = {}) {
         this.config = {
@@ -43,7 +45,7 @@ class FotMobStrategy {
 
     /**
      * 获取目标 URL
-     * @param {Object} match - 比赛信息
+     * @param {object} match - 比赛信息
      * @param {string} match.external_id - 外部比赛 ID
      * @returns {string} 目标 URL
      */
@@ -97,7 +99,7 @@ class FotMobStrategy {
      * 设置请求拦截
      * 拦截 API 请求并捕获响应数据
      * @param {import('playwright').Page} page - Playwright Page 对象
-     * @returns {Promise<Object>} 拦截控制器
+     * @returns {Promise<object>} 拦截控制器
      */
     async setupRequestInterception(page) {
         const capturedData = {
@@ -171,9 +173,9 @@ class FotMobStrategy {
      * 从页面提取数据
      * 优先从 API 拦截获取，失败则从 __NEXT_DATA__ 提取
      * @param {import('playwright').Page} page - Playwright Page 对象
-     * @param {Object} match - 比赛信息
-     * @param {Object} [interceptionData] - 请求拦截捕获的数据
-     * @returns {Promise<Object>} 提取的比赛数据
+     * @param {object} match - 比赛信息
+     * @param {object} [interceptionData] - 请求拦截捕获的数据
+     * @returns {Promise<object>} 提取的比赛数据
      */
     async extractData(page, match, interceptionData = null) {
         // 优先使用拦截数据
@@ -272,8 +274,8 @@ class FotMobStrategy {
     /**
      * 标准化数据格式
      * 确保返回的数据符合统一的 API 格式
-     * @param {Object} data - 原始数据
-     * @returns {Object} 标准化后的数据
+     * @param {object} data - 原始数据
+     * @returns {object} 标准化后的数据
      * @private
      */
     _normalizeData(data) {
@@ -305,8 +307,8 @@ class FotMobStrategy {
 
     /**
      * 验证数据完整性
-     * @param {Object} data - 提取的数据
-     * @returns {Object} 验证结果 { valid: boolean, reason?: string, size: number }
+     * @param {object} data - 提取的数据
+     * @returns {object} 验证结果 { valid: boolean, reason?: string, size: number }
      */
     validateData(data) {
         if (!data) {
@@ -335,8 +337,8 @@ class FotMobStrategy {
 
     /**
      * 获取数据质量报告
-     * @param {Object} data - 提取的数据
-     * @returns {Object} 质量报告
+     * @param {object} data - 提取的数据
+     * @returns {object} 质量报告
      */
     getDataQualityReport(data) {
         if (!data) {
@@ -381,7 +383,7 @@ class FotMobStrategy {
 
     /**
      * 提取特定字段（便捷方法）
-     * @param {Object} data - 完整数据
+     * @param {object} data - 完整数据
      * @param {string} fieldPath - 字段路径，如 'content.lineup.homeTeam'
      * @returns {any} 字段值
      */
@@ -405,8 +407,8 @@ class FotMobStrategy {
 
     /**
      * 提取比赛统计信息
-     * @param {Object} data - 比赛数据
-     * @returns {Object} 统计信息摘要
+     * @param {object} data - 比赛数据
+     * @returns {object} 统计信息摘要
      */
     extractMatchStats(data) {
         const stats = {
@@ -452,8 +454,8 @@ class FotMobStrategy {
 
     /**
      * 提取阵容与身价信息
-     * @param {Object} data - 比赛数据
-     * @returns {Object} 阵容信息
+     * @param {object} data - 比赛数据
+     * @returns {object} 阵容信息
      */
     extractLineupInfo(data) {
         const lineup = {

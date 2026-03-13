@@ -21,12 +21,14 @@
 ## 模块概述
 
 V35.0 建模模块提供工业级机器学习流水线，整合了：
+
 - **V35Trainer**: XGBoost 2.0+ 训练器 + Platt Scaling 概率校准
 - **BacktestEngine**: 生产级回测引擎
 - **ModelConfig**: 统一配置管理
 - **TrainingMetrics**: 完整评估指标体系
 
 **设计原则**:
+
 - 时间序列分割（避免数据泄漏）
 - 类别权重优化（提升平局识别）
 - 概率校准（提高预测可靠性）
@@ -162,6 +164,7 @@ calibrated_model.fit(X_test, y_test)
 ```
 
 **效果**:
+
 - 校准前：模型预测 70% 概率，实际命中可能只有 60%
 - 校准后：模型预测 70% 概率，实际命中接近 70%
 
@@ -172,43 +175,53 @@ calibrated_model.fit(X_test, y_test)
 ### 分类性能指标
 
 #### Accuracy (准确率)
+
 ```
 Accuracy = (TP + TN) / (TP + TN + FP + FN)
 ```
+
 - **定义**: 正确预测的比例
 - **目标**: ≥ 60%
 - **基线**: 65.52% (V19.4.1)
 
 #### AUC-ROC (曲线下面积)
+
 ```
 AUC = ∫ TPR(FPR⁻¹) dFPR
 ```
+
 - **定义**: ROC 曲线下的面积
 - **范围**: 0.5 (随机) ~ 1.0 (完美)
 - **目标**: ≥ 0.65
 - **说明**: Macro 平均，OVR (One-vs-Rest) 方式
 
 #### Log Loss (对数损失)
+
 ```
 Log Loss = -Σ y_true * log(y_pred_proba) / N
 ```
+
 - **定义**: 概率预测的对数损失
 - **范围**: 0 ~ ∞ (越小越好)
 - **目标**: ≤ 1.0
 - **说明**: 对错误概率预测惩罚更重
 
 #### Brier Score (布莱尔分数)
+
 ```
 Brier = Σ (y_pred_proba - y_true)² / N
 ```
+
 - **定义**: 概率预测的均方误差
 - **范围**: 0 ~ 1 (越小越好)
 - **目标**: ≤ 0.2
 
 #### F1-Macro
+
 ```
 F1 = 2 * (Precision * Recall) / (Precision + Recall)
 ```
+
 - **定义**: 精确率和召回率的调和平均
 - **Macro**: 对所有类别求平均（忽略类别不平衡）
 - **目标**: ≥ 0.50
@@ -226,33 +239,41 @@ F1 = 2 * (Precision * Recall) / (Precision + Recall)
 ### 回测指标
 
 #### ROI (投资回报率)
+
 ```
 ROI (%) = (Total Return - Total Stake) / Total Stake * 100
 ```
+
 - **定义**: 净利润占总下注金额的百分比
 - **目标**: ≥ 5% (优秀), ≥ 0% (盈利)
 - **风控线**: ROI < -5% 时应暂停策略
 
 #### Win Rate (胜率)
+
 ```
 Win Rate (%) = Winning Bets / Total Bets * 100
 ```
+
 - **定义**: 中奖下注占总下注的比例
 - **目标**: ≥ 55%
 - **注意**: 高胜率不一定高 ROI
 
 #### Sharpe Ratio (夏普比率)
+
 ```
 Sharpe = (Mean Return - Risk Free Rate) / Std Dev of Returns
 ```
+
 - **定义**: 单位风险的超额收益
 - **目标**: ≥ 1.0 (良好), ≥ 2.0 (优秀)
 - **说明**: 简化版，假设无风险利率 = 0
 
 #### Max Drawdown (最大回撤)
+
 ```
 Drawdown = (Peak - Equity) / Peak * 100
 ```
+
 - **定义**: 从峰值到谷底的最大跌幅
 - **目标**: < 20%
 - **风控线**: ≥ 25% 时应暂停策略
@@ -269,12 +290,15 @@ Drawdown = (Peak - Equity) / Peak * 100
    - 低于/高于阈值时不进行下注
 
 2. **赔率计算**
+
    ```
    隐含赔率 = 1 / (模型概率 * (1 - 利润率))
    ```
+
    - 利润率默认 5% (bookmaker margin)
 
 3. **Kelly 准则 (可选)**
+
    ```
    f* = (b * p - q) / b
 
@@ -283,6 +307,7 @@ Drawdown = (Peak - Equity) / Peak * 100
    - p = 胜率
    - q = 1 - p
    ```
+
    - 使用保守 Kelly (f/4) 限制最大下注
 
 ### 风险指标
@@ -418,6 +443,7 @@ engine = BacktestEngine(backtest_config)
 ```
 
 **解读**:
+
 - 主胜识别最准确 (20/29 = 69%)
 - 平局识别中等 (10/21 = 48%)，受权重强化影响
 - 客胜识别良好 (15/22 = 68%)
@@ -425,6 +451,7 @@ engine = BacktestEngine(backtest_config)
 ---
 
 **版本历史**:
+
 - V35.0 (2025-12-28): 初始生产版本
 - 后续版本将支持 LightGBM 集成
 

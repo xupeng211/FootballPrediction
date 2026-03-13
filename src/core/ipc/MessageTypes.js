@@ -3,7 +3,6 @@
  * ==============================================
  *
  * 定义 Worker 与 Master 之间通信的所有消息类型
- *
  * @module core/ipc/MessageTypes
  * @version V174.0.0
  */
@@ -62,8 +61,8 @@ const MessageTypes = {
 /**
  * 创建标准化的消息对象
  * @param {string} type - 消息类型
- * @param {Object} payload - 消息负载
- * @returns {Object} 标准化消息对象
+ * @param {object} payload - 消息负载
+ * @returns {object} 标准化消息对象
  */
 function createMessage(type, payload = {}) {
     return {
@@ -76,7 +75,7 @@ function createMessage(type, payload = {}) {
 /**
  * 创建任务开始消息
  * @param {string} matchId - 比赛 ID
- * @returns {Object}
+ * @returns {object}
  */
 function taskStartMessage(matchId) {
     return createMessage(MessageTypes.TASK_START, { matchId });
@@ -87,7 +86,7 @@ function taskStartMessage(matchId) {
  * @param {string} matchId - 比赛 ID
  * @param {number} responseTime - 响应时间 (ms)
  * @param {number} rawSize - 数据大小 (bytes)
- * @returns {Object}
+ * @returns {object}
  */
 function taskSuccessMessage(matchId, responseTime, rawSize) {
     return createMessage(MessageTypes.TASK_SUCCESS, { matchId, responseTime, rawSize });
@@ -97,7 +96,7 @@ function taskSuccessMessage(matchId, responseTime, rawSize) {
  * 创建任务失败消息
  * @param {string} matchId - 比赛 ID
  * @param {string} error - 错误信息
- * @returns {Object}
+ * @returns {object}
  */
 function taskFailedMessage(matchId, error) {
     return createMessage(MessageTypes.TASK_FAILED, { matchId, error });
@@ -109,7 +108,7 @@ function taskFailedMessage(matchId, error) {
  * @param {string} error - 错误信息
  * @param {number} retryCount - 重试次数
  * @param {number} backoffDelay - 退避延时 (ms)
- * @returns {Object}
+ * @returns {object}
  */
 function taskRetryMessage(matchId, error, retryCount, backoffDelay) {
     return createMessage(MessageTypes.TASK_RETRY, { matchId, error, retryCount, backoffDelay });

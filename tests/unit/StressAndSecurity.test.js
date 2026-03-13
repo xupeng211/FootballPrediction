@@ -3,7 +3,6 @@
  * =======================
  *
  * 压力测试 + 脏数据攻击测试
- *
  * @module tests/unit/StressAndSecurity.test
  * @version V172.100
  */
@@ -17,6 +16,10 @@ const assert = require('node:assert');
 // 从 MatchDetailEngine.test.js 导入共享函数
 // ============================================================================
 
+/**
+ *
+ * @param overrides
+ */
 function createPerfectMatchData(overrides = {}) {
     return {
         content: {
@@ -37,6 +40,10 @@ function createPerfectMatchData(overrides = {}) {
     };
 }
 
+/**
+ *
+ * @param rawData
+ */
 function parseMatchData(rawData) {
     const result = {
         xg_home: null,
@@ -80,6 +87,11 @@ function parseMatchData(rawData) {
     return result;
 }
 
+/**
+ *
+ * @param rawData
+ * @param minSizeBytes
+ */
 function validateQualityGate(rawData, minSizeBytes = 5000) {
     if (!rawData) return { valid: false, reason: 'NULL_DATA' };
 
@@ -109,6 +121,9 @@ function validateQualityGate(rawData, minSizeBytes = 5000) {
 // 脏数据生成器
 // ============================================================================
 
+/**
+ *
+ */
 function createGarbledJson() {
     // 生成各种类型的乱码数据
     const types = [

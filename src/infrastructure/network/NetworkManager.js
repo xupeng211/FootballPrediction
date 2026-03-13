@@ -4,7 +4,6 @@
  *
  * 从 ProductionHarvester 剥离的网络管理逻辑
  * 统一管理代理池、会话、Worker 身份绑定
- *
  * @module infrastructure/network/NetworkManager
  * @version V4.46.5 - HARDENING: 零模拟铁律
  */
@@ -34,8 +33,8 @@ const { generateSessionId } = require('../../core/id_generator');
 class WorkerIdentity {
     /**
      * @param {number} workerId - Worker ID
-     * @param {Object} proxy - 代理配置
-     * @param {Object} stealth - 隐身配置
+     * @param {object} proxy - 代理配置
+     * @param {object} stealth - 隐身配置
      */
     constructor(workerId, proxy, stealth) {
         this.workerId = workerId;
@@ -94,7 +93,7 @@ class WorkerIdentity {
  */
 class NetworkManager {
     /**
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {number} [options.maxWorkers] - 最大 Worker 数量
      * @param {Function} [options.stealthGenerator] - 隐身指纹生成函数
      */
@@ -124,7 +123,7 @@ class NetworkManager {
 
     /**
      * 初始化网络管理器
-     * @param {Object} options - 初始化选项
+     * @param {object} options - 初始化选项
      * @param {Function} [options.preFlightCleanup] - 预清理函数
      * @returns {Promise<void>}
      */
@@ -326,7 +325,7 @@ class NetworkManager {
      * 每次调用返回不同的端口配置，实现 IP 轮询分发
      * V4.46.5: 使用确定性 ID 生成
      * @param {number} [index] - 可选索引，用于轮询模式
-     * @returns {Object} 代理配置对象 { port, url, sessionId }
+     * @returns {object} 代理配置对象 { port, url, sessionId }
      */
     getRotatedConfig(index) {
         let selectedPort;
@@ -356,7 +355,7 @@ class NetworkManager {
      * TITAN-SWARM: 为蜂群 Worker 批量生成配置
      * 确保每个 Worker 获得不同的端口
      * @param {number} count - Worker 数量
-     * @returns {Array<Object>} 配置数组
+     * @returns {Array<object>} 配置数组
      */
     generateSwarmConfigs(count) {
         const configs = [];
@@ -465,7 +464,7 @@ class NetworkManager {
 
     /**
      * 获取 Worker 身份统计
-     * @returns {Array<Object>}
+     * @returns {Array<object>}
      */
     getWorkerStats() {
         const stats = [];
@@ -483,7 +482,7 @@ class NetworkManager {
 
     /**
      * 获取 SessionManager 统计
-     * @returns {Object|null}
+     * @returns {object | null}
      */
     getSessionStats() {
         if (this.sessionManager) {
@@ -522,7 +521,7 @@ let instance = null;
 
 /**
  * 获取 NetworkManager 单例
- * @param {Object} [options] - 配置选项
+ * @param {object} [options] - 配置选项
  * @returns {NetworkManager}
  */
 function getNetworkManager(options) {

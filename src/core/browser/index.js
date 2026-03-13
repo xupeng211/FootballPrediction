@@ -26,7 +26,7 @@ let globalPool = null;
 
 /**
  * 获取全局浏览器池
- * @param {Object} [config] - 配置选项
+ * @param {object} [config] - 配置选项
  * @returns {BrowserManager}
  */
 function getGlobalPool(config) {

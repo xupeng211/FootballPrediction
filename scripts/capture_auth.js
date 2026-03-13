@@ -19,11 +19,17 @@ const USER_AGENT_POOL = [
 ];
 
 // V181: 随机选择 User-Agent
+/**
+ *
+ */
 function getRandomUserAgent() {
     return USER_AGENT_POOL[Math.floor(Math.random() * USER_AGENT_POOL.length)];
 }
 
 // V181: 随机硬件参数
+/**
+ *
+ */
 function getRandomHardwareParams() {
     return {
         hardwareConcurrency: 4 + Math.floor(Math.random() * 12),
@@ -51,6 +57,9 @@ const log = {
 };
 
 // V181: 强制清除 Bot 追踪标志（保留 Cookie）
+/**
+ *
+ */
 function cleanBotTrackingFlags() {
     const profileDir = AUTH_CONFIG.userDataDir;
     if (!fs.existsSync(profileDir)) {
@@ -88,6 +97,10 @@ function cleanBotTrackingFlags() {
 }
 
 // V181: 深度隐身脚本注入 - 在 page.goto 之前执行
+/**
+ *
+ * @param page
+ */
 async function injectStealthScripts(page) {
     const hardware = getRandomHardwareParams();
 
@@ -273,6 +286,9 @@ async function injectStealthScripts(page) {
     }, hardware);
 }
 
+/**
+ *
+ */
 async function captureAuth() {
     // V181: 随机选择 User-Agent
     const selectedUA = getRandomUserAgent();
@@ -448,6 +464,9 @@ async function captureAuth() {
     console.log('='.repeat(70));
 }
 
+/**
+ *
+ */
 function waitForEnter() {
     const rl = readline.createInterface({
         input: process.stdin,

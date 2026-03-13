@@ -3,6 +3,7 @@
 ## 📋 概述
 
 增量数据工厂 (Incremental Data Factory) 是一个生产级的数据采集系统，支持：
+
 - **增量模式**：每日自动收割新结束的比赛
 - **补漏模式**：自动修复失败的采集任务
 - **全量模式**：周期性完整扫描
@@ -11,16 +12,19 @@
 ## 🚀 快速启动
 
 ### 增量模式 (推荐)
+
 ```bash
 docker exec football_prediction_dev node scripts/ops/incremental_factory.js
 ```
 
 ### 补漏模式
+
 ```bash
 docker exec -e FACTORY_MODE=repair football_prediction_dev node scripts/ops/incremental_factory.js
 ```
 
 ### 全量模式
+
 ```bash
 docker exec -e FACTORY_MODE=full football_prediction_dev node scripts/ops/incremental_factory.js
 ```
@@ -56,11 +60,13 @@ module.exports = {
 ## 📊 健康监控
 
 ### 健康报告位置
+
 ```
 /app/logs/factory_health.json
 ```
 
 ### 报告结构
+
 ```json
 {
   "version": "V173-A1",
@@ -97,10 +103,13 @@ module.exports = {
 ## 🛠️ 常见问题
 
 ### Q: 出现 `SIZE_TOO_SMALL` 错误
+
 **A**: 数据体积小于 5KB，可能是 Turnstile 拦截。检查 Cookie 是否有效。
 
 ### Q: 出现 `TURNSTILE_REQUIRED` 错误
+
 **A**: 需要重新注入 Cookie。
+
 ```bash
 # 1. 在浏览器中提取 Cookie
 # 2. 注入 Cookie
@@ -109,9 +118,11 @@ node scripts/inject_cookie.js "your_cookies"
 ```
 
 ### Q: 出现 `CONTAINS_ERROR` 错误
+
 **A**: API 返回错误信息。检查代理是否正常。
 
 ### Q: 健康状态变为 `critical`
+
 **A**: 立即更换 Cookie，否则会触发自动停止保护。
 
 ## 📅 Cron 调度
@@ -164,11 +175,13 @@ data/browser_profile/
 ## 🆘 紧急操作
 
 ### 立即停止工厂
+
 ```bash
 docker exec football_prediction_dev pkill -f incremental_factory
 ```
 
 ### 清理坏账数据
+
 ```sql
 DELETE FROM raw_match_data
 WHERE LENGTH(l2_raw_json::text) < 5000
@@ -176,6 +189,7 @@ WHERE LENGTH(l2_raw_json::text) < 5000
 ```
 
 ### 重置 Cookie
+
 ```bash
 rm /app/data/browser_profile/browser_state.json
 node scripts/inject_cookie.js "new_cookies"

@@ -126,6 +126,7 @@ cat logs/metrics_*.json
 **Purpose**: Prevent cascading failures by automatic trip on consecutive failures.
 
 **Configuration**:
+
 ```python
 CircuitBreakerConfig(
     max_consecutive_failures=10,  # Trip threshold
@@ -135,6 +136,7 @@ CircuitBreakerConfig(
 ```
 
 **State Machine**:
+
 ```
 CLOSED (normal) ─[≥10 failures]→ OPEN (blocked)
 OPEN ─[5 minutes]→ HALF_OPEN (testing)
@@ -145,18 +147,21 @@ HALF_OPEN ─[any failure]→ OPEN (trip again)
 ### 2. Pre-flight Checks (V41.152)
 
 **Checks Performed**:
+
 - ✅ Disk space ≥ 1.0 GB
 - ✅ Proxy latency ≤ 5000ms
 - ✅ Database connectivity (5s timeout)
 - ✅ Directory structure integrity
 
 **Failure Handling**:
+
 - Critical failures → Reject startup
 - Warnings → Allow with notification
 
 ### 3. Log Masking (V41.152)
 
 **Automatically Redacted**:
+
 - URL hash values (`/4A6T7YOu/` → `/[REDACTED]/`)
 - Database passwords (`password="***"`)
 - API tokens (`token="***"`)
@@ -165,6 +170,7 @@ HALF_OPEN ─[any failure]→ OPEN (trip again)
 ### 4. Health Scoring (V41.152)
 
 **Score Formula**:
+
 ```
 health_score = success_rate - (failure_rate × 5) + quality_bonus
 
@@ -199,6 +205,7 @@ PROXY_WSL2_HOST=172.25.16.1
 ### File-Based Configuration
 
 Create `config/sentinel_config.yaml`:
+
 ```yaml
 proxy:
   host: "172.25.16.1"
@@ -220,6 +227,7 @@ storage:
 ### Unit Tests (V41.153)
 
 **Test Structure**:
+
 ```
 tests/unit/
 ├── test_core/
@@ -231,6 +239,7 @@ tests/unit/
 ```
 
 **Run Tests**:
+
 ```bash
 # Unit tests only
 pytest tests/unit/ -v
@@ -382,6 +391,7 @@ python scripts/ops/v41_152_sentinel_orchestrator.py \
 ### V41.153 "铁军合龙" (Current) - 2026-01-17
 
 **Major Changes**:
+
 - ✅ Migrated `v41_141` → `src/core/scrapers/offline_parser.py`
 - ✅ Migrated `v41_143` → `src/core/database/odds_injector.py`
 - ✅ Migrated `v41_149` → `src/core/scrapers/url_recon.py`
@@ -456,6 +466,7 @@ python scripts/ops/v41_152_sentinel_orchestrator.py \
 **This codebase has been cleaned, refactored, and validated to meet Google-level production standards. All guerrilla development traces have been removed, and we are now ready for full-scale operations.**
 
 **Execute Command:**
+
 ```bash
 python scripts/ops/v41_152_sentinel_orchestrator.py --mode full --league "La Liga"
 ```

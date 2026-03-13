@@ -4,7 +4,6 @@
  *
  * 从 GoldenDataMerger.py 迁移的核心业务逻辑
  * 检测：核心球员缺阵、身价断层、赔率背离
- *
  * @module feature_engine/extractors/AnomalyDetector
  * @version V177.0.0
  */
@@ -40,19 +39,25 @@ const ANOMALY_CONFIG = {
 // AnomalyDetector 类
 // ============================================================================
 
+/**
+ *
+ */
 class AnomalyDetector {
+    /**
+     *
+     * @param config
+     */
     constructor(config = {}) {
         this.config = { ...ANOMALY_CONFIG, ...config };
     }
 
     /**
      * 执行三维异常检测
-     *
-     * @param {Object} params - 检测参数
-     * @param {Object} params.fundamentals - 基本面数据 (阵容、伤病)
-     * @param {Object} params.oddsData - 赔率数据
-     * @param {Object} params.prediction - 模型预测结果
-     * @returns {Object} 异常分析结果
+     * @param {object} params - 检测参数
+     * @param {object} params.fundamentals - 基本面数据 (阵容、伤病)
+     * @param {object} params.oddsData - 赔率数据
+     * @param {object} params.prediction - 模型预测结果
+     * @returns {object} 异常分析结果
      */
     analyze({ fundamentals, oddsData, prediction }) {
         const anomalies = [];
@@ -100,6 +105,7 @@ class AnomalyDetector {
 
     /**
      * 检测核心球员缺阵
+     * @param fundamentals
      */
     _checkKeyPlayerMissing(fundamentals) {
         if (!fundamentals) return null;
@@ -131,6 +137,7 @@ class AnomalyDetector {
 
     /**
      * 检测身价断层
+     * @param fundamentals
      */
     _checkMarketValueGap(fundamentals) {
         if (!fundamentals || fundamentals.market_value_gap === undefined) {
@@ -156,6 +163,8 @@ class AnomalyDetector {
 
     /**
      * 检测模型与市场背离
+     * @param oddsData
+     * @param prediction
      */
     _checkModelMarketDivergence(oddsData, prediction) {
         if (!prediction || !oddsData) return null;
@@ -198,6 +207,7 @@ class AnomalyDetector {
 
     /**
      * 判断是否为核心球员
+     * @param player
      */
     _isKeyPlayer(player) {
         if (!player) return false;
@@ -226,6 +236,7 @@ class AnomalyDetector {
 
     /**
      * 生成异常摘要
+     * @param anomalies
      */
     _generateSummary(anomalies) {
         const parts = [];
@@ -249,10 +260,9 @@ class AnomalyDetector {
 
     /**
      * 应用置信度调整到预测结果
-     *
-     * @param {Object} prediction - 原始预测结果
-     * @param {Object} anomalyResult - 异常检测结果
-     * @returns {Object} 调整后的预测结果
+     * @param {object} prediction - 原始预测结果
+     * @param {object} anomalyResult - 异常检测结果
+     * @returns {object} 调整后的预测结果
      */
     applyAdjustment(prediction, anomalyResult) {
         if (!anomalyResult.detected) {

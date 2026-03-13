@@ -6,7 +6,6 @@
  * - 消息发送重试机制
  * - IPC 就绪检测
  * - 标准化消息格式
- *
  * @module core/ipc/WorkerMessenger
  * @version V174.0.0
  */
@@ -28,7 +27,7 @@ const {
 class WorkerMessenger {
     /**
      * @param {number} workerId - Worker 标识符
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {number} options.maxRetries - 最大重试次数
      * @param {number} options.retryDelayBase - 重试延时基数 (ms)
      * @param {boolean} options.silent - 静默模式（不打印日志）
@@ -43,6 +42,8 @@ class WorkerMessenger {
 
     /**
      * 日志输出
+     * @param level
+     * @param msg
      * @private
      */
     _log(level, msg) {
@@ -56,8 +57,7 @@ class WorkerMessenger {
      * 安全发送消息给 Master 进程
      * - 如果 process.send 不存在（非 fork 模式），则静默忽略
      * - 增加重试机制，防止瞬时通信失败
-     *
-     * @param {Object} message - 消息对象
+     * @param {object} message - 消息对象
      * @returns {boolean} 发送是否成功
      */
     safeSend(message) {
@@ -100,7 +100,6 @@ class WorkerMessenger {
     /**
      * 等待 IPC 就绪
      * 循环检查 process.send 是否可用
-     *
      * @param {number} timeoutMs - 超时时间 (ms)
      * @returns {Promise<boolean>} 是否就绪
      */
@@ -137,7 +136,7 @@ class WorkerMessenger {
     /**
      * 通知任务成功
      * @param {string} matchId - 比赛 ID
-     * @param {Object} metrics - 性能指标
+     * @param {object} metrics - 性能指标
      * @param {number} metrics.responseTime - 响应时间 (ms)
      * @param {number} metrics.rawSize - 数据大小 (bytes)
      */
@@ -168,7 +167,7 @@ class WorkerMessenger {
 
     /**
      * 通知 Worker 熔断
-     * @param {Object} payload - 熔断信息
+     * @param {object} payload - 熔断信息
      */
     notifyCircuitBreak(payload) {
         this.safeSend({
@@ -180,7 +179,7 @@ class WorkerMessenger {
 
     /**
      * 通知 Worker 进入冷却
-     * @param {Object} payload - 冷却信息
+     * @param {object} payload - 冷却信息
      */
     notifyCoolDown(payload) {
         this.safeSend({

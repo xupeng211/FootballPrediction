@@ -9,7 +9,6 @@
  *   node smelt_all.js                     # 仅处理缺失特征的记录
  *   node smelt_all.js --full-recalculate  # 重新计算所有特征
  *   node smelt_all.js --dry-run           # 预览模式
- *
  * @module scripts/ops/smelt_all
  * @version V176.0.0
  */
@@ -18,6 +17,9 @@
 
 const { FeatureSmelter } = require('../../src/feature_engine/smelter/FeatureSmelter');
 
+/**
+ *
+ */
 async function main() {
     const fullRecalculate = process.argv.includes('--full-recalculate');
     const dryRun = process.argv.includes('--dry-run');

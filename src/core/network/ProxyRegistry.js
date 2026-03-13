@@ -6,7 +6,6 @@
  * - 22 个代理端口的分配与释放
  * - 端口健康检查
  * - 故障切换与轮换
- *
  * @module core/network/ProxyRegistry
  * @version V174.0.0
  */
@@ -18,7 +17,7 @@
  */
 class ProxyRegistry {
     /**
-     * @param {Object} config - 配置选项
+     * @param {object} config - 配置选项
      * @param {number[]} config.ports - 代理端口列表
      * @param {string} config.host - 代理服务器地址
      */
@@ -182,7 +181,7 @@ class ProxyRegistry {
 
     /**
      * 获取所有端口状态快照
-     * @returns {Object}
+     * @returns {object}
      */
     getSnapshot() {
         const snapshot = {};
@@ -204,7 +203,7 @@ class ProxyRegistry {
 
     /**
      * 获取统计信息
-     * @returns {Object}
+     * @returns {object}
      */
     getStats() {
         return {

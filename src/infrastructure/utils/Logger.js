@@ -7,7 +7,6 @@
  * - 自动归档到 /app/logs/combined.log 和 error.log
  * - 元数据：时间戳、WorkerID、ProxyPort、MatchID
  * - 日志轮转：按日期自动归档
- *
  * @module infrastructure/utils/Logger
  * @version V186.0.0
  */
@@ -200,6 +199,9 @@ function buildRejectionHandlers() {
  * EnterpriseLogger - 企业级日志器单例
  */
 class EnterpriseLogger {
+    /**
+     *
+     */
     constructor() {
         if (EnterpriseLogger.instance) {
             return EnterpriseLogger.instance;
@@ -227,7 +229,7 @@ class EnterpriseLogger {
     /**
      * 记录 INFO 级别日志
      * @param {string} message - 日志消息
-     * @param {Object} [meta] - 元数据
+     * @param {object} [meta] - 元数据
      */
     info(message, meta = {}) {
         this.logger.info(message, meta);
@@ -236,7 +238,7 @@ class EnterpriseLogger {
     /**
      * 记录 WARN 级别日志
      * @param {string} message - 日志消息
-     * @param {Object} [meta] - 元数据
+     * @param {object} [meta] - 元数据
      */
     warn(message, meta = {}) {
         this.logger.warn(message, meta);
@@ -245,8 +247,8 @@ class EnterpriseLogger {
     /**
      * 记录 ERROR 级别日志
      * @param {string} message - 日志消息
-     * @param {Error|Object} [error] - 错误对象或元数据
-     * @param {Object} [meta] - 额外元数据
+     * @param {Error | object} [error] - 错误对象或元数据
+     * @param {object} [meta] - 额外元数据
      */
     error(message, error = {}, meta = {}) {
         if (error instanceof Error) {
@@ -264,7 +266,7 @@ class EnterpriseLogger {
     /**
      * 记录 DEBUG 级别日志
      * @param {string} message - 日志消息
-     * @param {Object} [meta] - 元数据
+     * @param {object} [meta] - 元数据
      */
     debug(message, meta = {}) {
         this.logger.debug(message, meta);
@@ -273,7 +275,7 @@ class EnterpriseLogger {
     /**
      * 记录 VERBOSE 级别日志
      * @param {string} message - 日志消息
-     * @param {Object} [meta] - 元数据
+     * @param {object} [meta] - 元数据
      */
     verbose(message, meta = {}) {
         this.logger.verbose(message, meta);
@@ -287,7 +289,7 @@ class EnterpriseLogger {
      * 记录 Worker 启动日志
      * @param {number} workerId - Worker ID
      * @param {number} proxyPort - 代理端口
-     * @param {Object} [extra] - 额外信息
+     * @param {object} [extra] - 额外信息
      */
     logWorkerStart(workerId, proxyPort, extra = {}) {
         this.info(`🚀 Worker ${workerId} 启动`, {
@@ -303,7 +305,7 @@ class EnterpriseLogger {
      * @param {number} workerId - Worker ID
      * @param {string} matchId - 比赛 ID
      * @param {number} proxyPort - 代理端口
-     * @param {Object} [extra] - 额外信息
+     * @param {object} [extra] - 额外信息
      */
     logHarvestSuccess(workerId, matchId, proxyPort, extra = {}) {
         this.info(`✅ Worker ${workerId} 收割成功: ${matchId}`, {
@@ -341,7 +343,7 @@ class EnterpriseLogger {
      * V186: 记录致命错误（程序必须退出）
      * @param {string} message - 错误消息
      * @param {Error} [error] - 错误对象
-     * @param {Object} [meta] - 元数据
+     * @param {object} [meta] - 元数据
      */
     logFatal(message, error = null, meta = {}) {
         const errorMeta = error instanceof Error ? {
@@ -364,7 +366,7 @@ class EnterpriseLogger {
      * @param {string} matchId - 比赛 ID
      * @param {string} errorType - 错误类型
      * @param {string} reason - 错误原因
-     * @param {Object} [meta] - 额外元数据
+     * @param {object} [meta] - 额外元数据
      */
     logRetryableError(workerId, matchId, errorType, reason, meta = {}) {
         this.warn(`⚠️ Worker ${workerId} 可重试错误: ${errorType} - ${reason}`, {
@@ -382,7 +384,7 @@ class EnterpriseLogger {
      * 记录 WebGL 指纹随机化结果
      * @param {number} workerId - Worker ID
      * @param {string} webglRenderer - WebGL 渲染器
-     * @param {Object} [extra] - 额外信息
+     * @param {object} [extra] - 额外信息
      */
     logWebGLFingerprint(workerId, webglRenderer, extra = {}) {
         this.debug(`🎨 Worker ${workerId} WebGL 指纹: ${webglRenderer.slice(0, 50)}...`, {
@@ -409,7 +411,7 @@ class EnterpriseLogger {
     /**
      * 记录停机完成
      * @param {number} durationMs - 停机耗时（毫秒）
-     * @param {Object} [stats] - 统计信息
+     * @param {object} [stats] - 统计信息
      */
     logShutdownComplete(durationMs, stats = {}) {
         this.info(`✅ 优雅停机完成，耗时 ${durationMs}ms`, {
@@ -423,7 +425,7 @@ class EnterpriseLogger {
      * 创建带 Worker 上下文的子日志器
      * @param {number} workerId - Worker ID
      * @param {number} proxyPort - 代理端口
-     * @returns {Object} 子日志器
+     * @returns {object} 子日志器
      */
     createWorkerLogger(workerId, proxyPort) {
         const self = this;

@@ -21,6 +21,7 @@ from src.core import config
 ```
 
 **方法:**
+
 - `get(key: str, default: Any = None) -> Any`: 获取配置项
 - `set(key: str, value: Any) -> None`: 设置配置项
 - `save() -> None`: 保存配置到文件
@@ -76,6 +77,7 @@ user_dict = user.to_dict()
 ```
 
 **属性:**
+
 - `id: str`: 用户唯一标识
 - `username: str`: 用户名
 - `email: str`: 邮箱地址
@@ -100,6 +102,7 @@ content = Content(
 ```
 
 **属性:**
+
 - `id: str`: 内容唯一标识
 - `title: str`: 内容标题
 - `content_type: ContentType`: 内容类型
@@ -147,6 +150,7 @@ async def analyze_content():
 ```
 
 **主要方法:**
+
 - `analyze_content(content: Content) -> Optional[AnalysisResult]`: 分析单个内容
 - `batch_analyze(contents: List[Content]) -> List[AnalysisResult]`: 批量分析
 
@@ -166,6 +170,7 @@ async def generate_profile():
 ```
 
 **主要方法:**
+
 - `generate_profile(user: User) -> UserProfile`: 生成用户画像
 - `get_profile(user_id: str) -> Optional[UserProfile]`: 获取用户画像
 - `update_profile(user_id: str, updates: Dict) -> Optional[UserProfile]`: 更新画像

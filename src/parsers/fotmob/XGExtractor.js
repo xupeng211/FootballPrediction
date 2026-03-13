@@ -7,8 +7,8 @@
 
 /**
  * 提取 xG 数据
- * @param {Object} data - API 数据
- * @returns {Object} xG 数据 {xg_home, xg_away, hasXG}
+ * @param {object} data - API 数据
+ * @returns {object} xG 数据 {xg_home, xg_away, hasXG}
  */
 function extractXG(data) {
     if (!data || !data.content || !data.content.stats) {
@@ -53,8 +53,8 @@ function extractXG(data) {
 
 /**
  * 提取控球率数据
- * @param {Object} data - API 数据
- * @returns {Object} 控球率数据 {possession_home, possession_away, hasPossession}
+ * @param {object} data - API 数据
+ * @returns {object} 控球率数据 {possession_home, possession_away, hasPossession}
  */
 function extractPossession(data) {
     if (!data || !data.content || !data.content.stats) {
@@ -102,8 +102,8 @@ function extractPossession(data) {
 
 /**
  * 提取所有统计数据
- * @param {Object} data - API 数据
- * @returns {Object} 所有统计数据
+ * @param {object} data - API 数据
+ * @returns {object} 所有统计数据
  */
 function extractAllStats(data) {
     const xg = extractXG(data);
@@ -122,7 +122,7 @@ function extractAllStats(data) {
  * 验证 xG 数据有效性
  * @param {number} homeXG - 主队 xG
  * @param {number} awayXG - 客队 xG
- * @returns {Object} 验证结果 {valid: boolean, warnings: string[]}
+ * @returns {object} 验证结果 {valid: boolean, warnings: string[]}
  */
 function validateXG(homeXG, awayXG) {
     const warnings = [];

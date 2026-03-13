@@ -7,7 +7,6 @@
  * - 身份热加载（收割时自动注入 Cookie）
  * - 22 节点一对一绑定 (7890-7911)
  * - 异常自愈（指数退避重试）
- *
  * @module infrastructure/network/SessionManager
  * @version V179.0.0
  */
@@ -63,30 +62,57 @@ const DEFAULT_CONFIG = {
  * 简单日志器
  */
 class Logger {
+    /**
+     *
+     * @param prefix
+     */
     constructor(prefix = '[SessionManager]') {
         this.prefix = prefix;
     }
 
+    /**
+     *
+     */
     _timestamp() {
         return new Date().toISOString().slice(11, 19);
     }
 
+    /**
+     *
+     * @param msg
+     */
     info(msg) {
         console.log(`[${this._timestamp()}] ${this.prefix} ℹ️  ${msg}`);
     }
 
+    /**
+     *
+     * @param msg
+     */
     success(msg) {
         console.log(`[${this._timestamp()}] ${this.prefix} ✅ ${msg}`);
     }
 
+    /**
+     *
+     * @param msg
+     */
     warn(msg) {
         console.log(`[${this._timestamp()}] ${this.prefix} ⚠️  ${msg}`);
     }
 
+    /**
+     *
+     * @param msg
+     */
     error(msg) {
         console.log(`[${this._timestamp()}] ${this.prefix} ❌ ${msg}`);
     }
 
+    /**
+     *
+     * @param msg
+     */
     debug(msg) {
         if (process.env.LOG_LEVEL === 'debug') {
             console.log(`[${this._timestamp()}] ${this.prefix} 🔍 ${msg}`);
@@ -100,7 +126,6 @@ class Logger {
 
 /**
  * SessionManager - 无人值守身份管理器
- *
  * @class
  * @example
  * const sessionManager = new SessionManager();
@@ -118,23 +143,22 @@ class Logger {
 class SessionManager {
     /**
      * 创建 SessionManager 实例
-     *
-     * @param {Object} [options={}] - 配置选项
+     * @param {object} [options] - 配置选项
      */
     constructor(options = {}) {
-        /** @type {Object} */
+        /** @type {object} */
         this.config = { ...DEFAULT_CONFIG, ...options };
 
         /** @type {Logger} */
         this.logger = new Logger('[SessionManager]');
 
-        /** @type {Map<number, Object>} 端口 -> 刷新锁 */
+        /** @type {Map<number, object>} 端口 -> 刷新锁 */
         this._refreshLocks = new Map();
 
-        /** @type {Map<number, Object>} 端口 -> 会话缓存 */
+        /** @type {Map<number, object>} 端口 -> 会话缓存 */
         this._sessionCache = new Map();
 
-        /** @type {Object} 统计信息 */
+        /** @type {object} 统计信息 */
         this._stats = {
             totalRefreshes: 0,
             successfulRefreshes: 0,
@@ -153,7 +177,6 @@ class SessionManager {
 
     /**
      * 初始化 SessionManager
-     *
      * @returns {Promise<void>}
      */
     async initialize() {
@@ -176,12 +199,11 @@ class SessionManager {
 
     /**
      * 获取或刷新会话（主入口）
-     *
      * @param {number} port - 代理端口
-     * @param {Object} [options={}] - 选项
+     * @param {object} [options] - 选项
      * @param {string} [options.proxyUrl] - 代理 URL
      * @param {boolean} [options.forceRefresh] - 强制刷新
-     * @returns {Promise<Object|null>} 会话对象
+     * @returns {Promise<object | null>} 会话对象
      */
     async getOrRefreshSession(port, options = {}) {
         if (!this._initialized) {
@@ -218,10 +240,9 @@ class SessionManager {
 
     /**
      * 刷新指定端口的会话（自动身份捕获）
-     *
      * @param {number} port - 代理端口
      * @param {string} proxyUrl - 代理 URL
-     * @returns {Promise<Object|null>} 刷新后的会话
+     * @returns {Promise<object | null>} 刷新后的会话
      */
     async refreshSession(port, proxyUrl) {
         this._stats.totalRefreshes++;
@@ -278,7 +299,6 @@ class SessionManager {
 
     /**
      * 加载会话到浏览器上下文（身份热加载）
-     *
      * @param {import('playwright').BrowserContext} context - Playwright 上下文
      * @param {number} port - 代理端口
      * @returns {Promise<boolean>} 是否成功加载
@@ -315,7 +335,6 @@ class SessionManager {
 
     /**
      * 验证会话有效性
-     *
      * @param {number} port - 代理端口
      * @returns {Promise<boolean>} 是否有效
      */
@@ -340,8 +359,7 @@ class SessionManager {
 
     /**
      * 获取统计信息
-     *
-     * @returns {Object} 统计信息
+     * @returns {object} 统计信息
      */
     getStats() {
         return {
@@ -353,7 +371,6 @@ class SessionManager {
 
     /**
      * 清除指定端口的会话缓存
-     *
      * @param {number} port - 代理端口
      * @returns {Promise<void>}
      */
@@ -371,7 +388,6 @@ class SessionManager {
 
     /**
      * 清除所有过期会话
-     *
      * @returns {Promise<number>} 清除的会话数量
      */
     async clearExpiredSessions() {
@@ -439,7 +455,7 @@ class SessionManager {
      * @private
      * @param {number} port - 代理端口
      * @param {string} proxyUrl - 代理 URL
-     * @returns {Promise<Object>} 会话对象
+     * @returns {Promise<object>} 会话对象
      */
     async _doRefreshSession(port, proxyUrl) {
         this.logger.info(`端口 ${port} 启动可见浏览器...`);
@@ -620,7 +636,7 @@ class SessionManager {
     /**
      * 生成隐身 Headers - V180: 使用深度隐身配置
      * @private
-     * @returns {Object} 隐身配置
+     * @returns {object} 隐身配置
      */
     _generateStealthHeaders() {
         // V180: 使用与 ProductionHarvester 完全一致的深度隐身配置
@@ -705,7 +721,7 @@ class SessionManager {
     /**
      * 检查会话是否过期
      * @private
-     * @param {Object} session - 会话对象
+     * @param {object} session - 会话对象
      * @returns {boolean} 是否过期
      */
     _isSessionExpired(session) {
@@ -781,7 +797,7 @@ class SessionManager {
      * 保存会话到文件
      * @private
      * @param {number} port - 代理端口
-     * @param {Object} session - 会话对象
+     * @param {object} session - 会话对象
      */
     async _saveSessionToFile(port, session) {
         const filePath = this._getSessionFilePath(port);
@@ -793,7 +809,7 @@ class SessionManager {
      * 从文件加载会话
      * @private
      * @param {number} port - 代理端口
-     * @returns {Promise<Object|null>} 会话对象
+     * @returns {Promise<object | null>} 会话对象
      */
     async _loadSessionFromFile(port) {
         try {
@@ -814,8 +830,7 @@ let _instance = null;
 
 /**
  * 获取 SessionManager 单例
- *
- * @param {Object} [options] - 配置选项
+ * @param {object} [options] - 配置选项
  * @returns {SessionManager} SessionManager 实例
  */
 function getSessionManager(options) {

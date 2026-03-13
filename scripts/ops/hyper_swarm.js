@@ -5,7 +5,6 @@
  *
  * 15 并发 + Worker 池化 + 浏览器只启动一次
  * 预期吞吐量: 0.5 场/秒 (10x 提升)
- *
  * @module scripts/ops/hyper_swarm
  * @version V4.46.4-HYPER-DRIVE
  */
@@ -25,6 +24,9 @@ const DB_CONFIG = {
     max: 30
 };
 
+/**
+ *
+ */
 async function main() {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════════╗');
