@@ -5,7 +5,6 @@
  * 从 FotMob L2 原始数据中提取战术统计和比赛动量特征：
  * 1. 战术特征 (xG, 控球率, 射门, 角球等)
  * 2. 动量特征 (momentum 时间序列分析)
- *
  * @module feature_engine/extractors/TacticalMomentumExtractor
  * @version V176.0.0
  */
@@ -36,6 +35,9 @@ const DEFAULT_CONFIG = {
 
 /**
  * 安全获取数组属性
+ * @param obj
+ * @param key
+ * @param defaultValue
  */
 function safeGetArray(obj, key, defaultValue = []) {
     const value = obj?.[key];
@@ -44,10 +46,9 @@ function safeGetArray(obj, key, defaultValue = []) {
 
 /**
  * 从原始数据中提取战术动量特征
- *
- * @param {Object} rawData - FotMob L2 原始数据 (raw_match_data.raw_data)
- * @param {Object} config - 配置选项
- * @returns {Object} 战术动量特征字典
+ * @param {object} rawData - FotMob L2 原始数据 (raw_match_data.raw_data)
+ * @param {object} config - 配置选项
+ * @returns {object} 战术动量特征字典
  */
 function extractTacticalFeatures(rawData, config = DEFAULT_CONFIG) {
     if (!rawData || !is.object(rawData)) {
@@ -78,6 +79,8 @@ function extractTacticalFeatures(rawData, config = DEFAULT_CONFIG) {
 
 /**
  * 提取统计特征 (xG, 控球率, 射门等)
+ * @param rawData
+ * @param config
  */
 function extractStatsFeatures(rawData, config) {
     const features = {};
@@ -102,6 +105,8 @@ function extractStatsFeatures(rawData, config) {
 /**
  * 从统计数组中提取特征
  * V176: 适配 FotMob 数据格式 { title, stats: [home, away] }
+ * @param statsArray
+ * @param features
  */
 function extractStatsFromArray(statsArray, features) {
     // FotMob 统计类型映射
@@ -200,6 +205,7 @@ function extractStatsFromArray(statsArray, features) {
 
 /**
  * 解析统计值
+ * @param value
  */
 function parseStatValue(value) {
     if (value === null || value === undefined) {
@@ -227,6 +233,7 @@ function parseStatValue(value) {
 
 /**
  * 解析百分比值
+ * @param value
  */
 function parsePercentage(value) {
     if (typeof value === 'number') {
@@ -238,6 +245,7 @@ function parsePercentage(value) {
 
 /**
  * 创建默认统计特征
+ * @param features
  */
 function createDefaultStatsFeatures(features) {
     const defaults = {
@@ -263,6 +271,8 @@ function createDefaultStatsFeatures(features) {
  * - content.momentum.main.data
  * - content.momentum.data
  * - content.momentum
+ * @param rawData
+ * @param config
  */
 function extractMomentumFeatures(rawData, config) {
     const features = {
@@ -365,6 +375,9 @@ function extractMomentumFeatures(rawData, config) {
 
 /**
  * 创建降级动量特征 (基于统计数据拟合)
+ * @param features
+ * @param rawData
+ * @param config
  */
 function createFallbackMomentumFeatures(features, rawData, config) {
     features.has_momentum_data = false;
@@ -409,6 +422,8 @@ function createFallbackMomentumFeatures(features, rawData, config) {
 
 /**
  * 计算高级特征 (派生特征)
+ * @param features
+ * @param config
  */
 function calculateAdvancedFeatures(features, config) {
     const advanced = {};

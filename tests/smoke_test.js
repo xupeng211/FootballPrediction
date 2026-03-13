@@ -11,7 +11,6 @@
  *
  * 运行方式:
  * docker-compose -f docker-compose.dev.yml exec dev node tests/smoke_test.js
- *
  * @version V1.0.0
  */
 
@@ -42,6 +41,9 @@ const MODULE_PATHS = {
 // 测试 1: 模块导入链路验证
 // ============================================================================
 
+/**
+ *
+ */
 async function testModuleImports() {
     console.log('📦 [TEST 1] 模块导入链路验证...');
     console.log('───────────────────────────────────────────────────────────────────────');
@@ -85,6 +87,9 @@ async function testModuleImports() {
 // 测试 2: 组件实例化链路验证
 // ============================================================================
 
+/**
+ *
+ */
 async function testComponentInstantiation() {
     console.log('\n📦 [TEST 2] 组件实例化链路验证...');
     console.log('───────────────────────────────────────────────────────────────────────');
@@ -142,6 +147,10 @@ async function testComponentInstantiation() {
 // 测试 3: 真实浏览器点火测试
 // ============================================================================
 
+/**
+ *
+ * @param components
+ */
 async function testBrowserIgnition(components) {
     console.log('\n🔥 [TEST 3] 真实浏览器点火测试...');
     console.log('───────────────────────────────────────────────────────────────────────');
@@ -229,6 +238,10 @@ async function testBrowserIgnition(components) {
 // 测试 4: 自愈回路模拟
 // ============================================================================
 
+/**
+ *
+ * @param components
+ */
 async function testSelfHealingLoop(components) {
     console.log('\n🔄 [TEST 4] 自愈回路模拟...');
     console.log('───────────────────────────────────────────────────────────────────────');
@@ -296,6 +309,10 @@ async function testSelfHealingLoop(components) {
 // 测试 5: 错误边界测试
 // ============================================================================
 
+/**
+ *
+ * @param components
+ */
 async function testErrorBoundaries(components) {
     console.log('\n🧪 [TEST 5] 错误边界测试...');
     console.log('───────────────────────────────────────────────────────────────────────');
@@ -344,6 +361,9 @@ async function testErrorBoundaries(components) {
 // 主执行函数
 // ============================================================================
 
+/**
+ *
+ */
 async function main() {
     const results = {
         moduleImports: false,

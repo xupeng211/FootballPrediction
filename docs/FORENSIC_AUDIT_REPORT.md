@@ -12,7 +12,8 @@
 
 **坏消息**: 子弹没上膛（配置问题导致防御系统未激活）。
 
-**核心发现**: 
+**核心发现**:
+
 - 系统已有**工业级重试/熔断/退避机制**，但因一个配置决策导致 NO_DATA 被标记为"不可重试"
 - **无需写新代码**，通过修改配置即可解决末端卡顿问题
 
@@ -108,6 +109,7 @@ if (msg.includes('NO_DATA')) {
 ```
 
 **影响**:
+
 - 当 Worker 遇到 NO_DATA 错误时，**立即放弃**，不进行任何重试
 - 多个 Worker 同时遇到冷门赛事 → 同时失败 → 收割停滞
 
@@ -140,7 +142,8 @@ async extractData(page, match, interceptionData = null) {
 ```
 
 **问题**:
-- 只有 2 个数据源（API 拦截 + __NEXT_DATA__）
+
+- 只有 2 个数据源（API 拦截 + **NEXT_DATA**）
 - 没有 HTML DOM 解析作为最终备用
 - 没有针对不同赛事类型的差异化处理
 
@@ -162,6 +165,7 @@ class NetworkShield {
 ```
 
 **熔断策略**:
+
 - 单个节点失败 5 次 → 节点熔断
 - 全局重试 3 次 → 全局熔断
 - **末端收割时**：剩余比赛可能集中在少数节点，导致快速熔断
@@ -181,6 +185,7 @@ this.config = {
 ```
 
 **问题**:
+
 - 正常延迟 10-20 秒
 - **但重试延迟只有 5 秒**（应该更长以避开水印）
 - 连续 SIZE_TOO_SMALL 触发 30 秒冷却，但 NO_DATA 没有
@@ -202,6 +207,7 @@ if (msg.includes('NO_DATA')) {
 ```
 
 **配套配置**（`config/.env`）:
+
 ```bash
 # 增加 NO_DATA 专用重试次数
 MAX_RETRIES=5
@@ -273,6 +279,7 @@ if (process.env.ENDGAME_MODE === 'true') {
 ```
 
 **配套配置**:
+
 ```bash
 # 启动末端模式
 ENDGAME_MODE=true
@@ -387,6 +394,7 @@ sed -i 's/if (msg.includes('''NO_DATA''')) {/\/\/ NO_DATA 改为可重试\n     
 ```
 
 **验证修复效果**:
+
 ```bash
 npm run titan:start  # 观察是否还有大量 NO_DATA 失败
 ```

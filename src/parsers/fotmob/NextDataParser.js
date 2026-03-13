@@ -4,7 +4,6 @@
  *
  * 从 FotMob 网页中提取 __NEXT_DATA__ 并转换为 API 兼容格式
  * 纯函数设计，易于测试
- *
  * @module parsers/fotmob/NextDataParser
  * @version V174.0.0
  */
@@ -13,7 +12,6 @@
 
 /**
  * 从页面中提取 __NEXT_DATA__ JSON 数据
- *
  * @param {import('playwright').Page} page - Playwright 页面对象
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}
  */
@@ -59,7 +57,6 @@ async function extractNextData(page) {
 
 /**
  * 从 HTML 字符串中提取 __NEXT_DATA__（纯函数版本）
- *
  * @param {string} html - 页面 HTML
  * @returns {{ success: boolean, data?: object, error?: string }}
  */
@@ -114,7 +111,6 @@ function extractFromHtml(html) {
  *   pageProps.content - 核心数据 (stats, lineup, shotmap 等)
  *   pageProps.general - 比赛基本信息
  *   pageProps.header - 头部信息
- *
  * @param {object} nextData - __NEXT_DATA__ 对象
  * @param {string} matchId - 比赛标识符
  * @returns {object|null} API 兼容格式数据，失败返回 null
@@ -151,7 +147,6 @@ function transformToApiFormat(nextData, matchId) {
 
 /**
  * 验证 __NEXT_DATA__ 结构完整性
- *
  * @param {object} nextData - __NEXT_DATA__ 对象
  * @returns {{ valid: boolean, missing: string[] }}
  */
@@ -181,7 +176,6 @@ function validateNextDataStructure(nextData) {
 
 /**
  * 完整的提取和转换流程
- *
  * @param {import('playwright').Page} page - Playwright 页面对象
  * @param {string} matchId - 比赛标识符
  * @returns {Promise<{ success: boolean, data?: object, error?: string }>}

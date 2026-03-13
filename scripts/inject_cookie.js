@@ -14,7 +14,6 @@
  *   1. 打开 Chrome DevTools (F12)
  *   2. 进入 Application > Cookies > https://www.fotmob.com
  *   3. 复制所有 Cookie 或使用 EditThisCookie 扩展导出
- *
  * @module scripts/inject_cookie
  */
 
@@ -32,6 +31,10 @@ const DEFAULT_DOMAIN = '.fotmob.com';
 // 权限处理
 // ============================================================================
 
+/**
+ *
+ * @param dir
+ */
 function ensureDirectoryExists(dir) {
     if (!fs.existsSync(dir)) {
         try {
@@ -51,6 +54,11 @@ function ensureDirectoryExists(dir) {
     return dir;
 }
 
+/**
+ *
+ * @param path
+ * @param content
+ */
 function writeFile(path, content) {
     try {
         fs.writeFileSync(path, content);
@@ -75,6 +83,10 @@ function writeFile(path, content) {
 // 解析 Cookie 字符串
 // ============================================================================
 
+/**
+ *
+ * @param cookieStr
+ */
 function parseCookieString(cookieStr) {
     const cookies = [];
 
@@ -104,6 +116,9 @@ function parseCookieString(cookieStr) {
 // 主函数
 // ============================================================================
 
+/**
+ *
+ */
 function main() {
     const args = process.argv.slice(2);
 

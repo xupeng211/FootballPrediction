@@ -71,10 +71,12 @@ ${league_id}_${season}_${externalId}
 ```
 
 **示例**:
+
 - 英超 2024/25 赛季第 1 轮: `47_20242025_123456789`
 - 西甲 2023/24 赛季第 10 轮: `87_20232024_987654321`
 
 **优势**:
+
 - 跨联赛唯一性
 - 可读性强，一眼识别联赛和赛季
 - 支持数据溯源
@@ -95,6 +97,7 @@ ${league_id}_${season}_${externalId}
 ```
 
 **过滤逻辑**:
+
 1. 加载配置文件
 2. 过滤 `enabled !== false` 的联赛
 3. 只处理过滤后的联赛列表
@@ -102,18 +105,21 @@ ${league_id}_${season}_${externalId}
 ### 3.3 配置分离设计
 
 **Before (硬编码)**:
+
 ```javascript
 // ❌ 硬编码联赛 ID
 const leagues = [{ id: 47, name: 'Premier League' }];
 ```
 
 **After (配置分离)**:
+
 ```javascript
 // ✅ 从配置文件加载
 const { active_leagues } = loadLeagueConfig();
 ```
 
 **优势**:
+
 - 新增联赛只需修改配置文件
 - 不需要修改代码
 - 支持多环境配置
@@ -300,11 +306,13 @@ NODE_DEBUG=* node scripts/ops/seed_fixtures.js
 `match_id` 是 L1 层的核心契约，作为整个系统的主键关联 L2/L3 层。
 
 **格式规范**:
+
 ```
 ${league_id}_${season}_${externalId}
 ```
 
 **组成部分**:
+
 | 组件 | 来源 | 示例 |
 |------|------|------|
 | `league_id` | FotMob 联赛 ID | 47 (英超) |
@@ -312,12 +320,14 @@ ${league_id}_${season}_${externalId}
 | `externalId` | FotMob 比赛 ID | 123456789 |
 
 **完整示例**:
+
 ```
 47_20242025_123456789   # 英超 2024/25 赛季某场比赛
 87_20232024_987654321   # 西甲 2023/24 赛季某场比赛
 ```
 
 **唯一性保证**:
+
 - 跨联赛唯一
 - 跨赛季唯一
 - 跨数据源唯一（所有来源使用相同格式）
@@ -343,6 +353,7 @@ ${league_id}_${season}_${externalId}
 ```
 
 **状态定义**:
+
 | 状态 | 触发条件 | 后续操作 |
 |------|---------|----------|
 | `scheduled` | 比赛未开始 | 等待 L2 层采集赔率 |
@@ -352,6 +363,7 @@ ${league_id}_${season}_${externalId}
 | `awarded` | 判罚结果 | 特殊处理 |
 
 **状态转换规则**:
+
 1. `scheduled` → `live`: 比赛开始时间到达
 2. `live` → `finished`: 比赛结束，比分确定
 3. `scheduled` → `cancelled`: 比赛取消（不可逆）
@@ -367,6 +379,7 @@ ${league_id}_${season}_${externalId}
 | `data_source` | 固定值 | 必须为 'FotMob' |
 
 **数据验证规则**:
+
 ```javascript
 // match_id 格式验证
 const MATCH_ID_PATTERN = /^\d+_\d{8}_\d+$/;
@@ -413,6 +426,7 @@ const MATCH_ID_PATTERN = /^\d+_\d{8}_\d+$/;
 ```
 
 用于：
+
 - 错误溯源
 - 日志聚合
 - 告警关联

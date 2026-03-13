@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * @fileoverview 极简 GUI 连通性探测脚本
+ * @file 极简 GUI 连通性探测脚本
  * @description 零伪装、零代理，纯验证 Chromium 能否正常启动
  * @version 1.0.0
  */

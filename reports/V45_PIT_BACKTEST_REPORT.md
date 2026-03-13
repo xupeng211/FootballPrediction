@@ -46,6 +46,7 @@
 | 动量 | - | momentum_mean, momentum_trend |
 
 **特征数量**:
+
 - 白名单: 27 个
 - 黑名单: 34 个
 
@@ -54,6 +55,7 @@
 创建文件: `scripts/ops/walk_forward_backtest.py`
 
 **验证逻辑**:
+
 1. 按 match_date 排序所有比赛
 2. 用前 N 天数据训练，预测后 M 天
 3. 滑动窗口重复，模拟真实预测场景
@@ -129,6 +131,7 @@
 **位置**: `src/feature_engine/extractors/TacticalMomentumExtractor.js`
 
 **问题代码**:
+
 ```javascript
 // 从 FotMob 提取的 xG, shots, corners 等都是赛后数据
 features["home_xg"] = safeGet(stats, "home_xg");
@@ -142,6 +145,7 @@ features["home_shots"] = safeGet(stats, "home_shots");
 **位置**: `src/feature_engine/extractors/GoldenFeatureExtractor.js`
 
 **问题代码**:
+
 ```javascript
 // 评分是赛后给出的，只有比赛结束后才有
 features[`${prefix}_rating_avg`] = Math.round(avg * 100) / 100;
@@ -154,6 +158,7 @@ features[`${prefix}_rating_avg`] = Math.round(avg * 100) / 100;
 **位置**: `scripts/ops/backtest_v43_aligned.py`
 
 **问题代码**:
+
 ```python
 from sklearn.model_selection import cross_val_score
 scores = cross_val_score(rf, X_scaled, y, cv=5, scoring='accuracy')

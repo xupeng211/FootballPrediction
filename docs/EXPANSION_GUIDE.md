@@ -211,11 +211,13 @@ python scripts/maintenance/integrity_guard.py
 ### 问题 1: L1 扫描返回 0 场比赛
 
 **可能原因**:
+
 - 联赛 ID 错误
 - 赛季配置不正确
 - 网络连接问题
 
 **解决方案**:
+
 ```bash
 # 手动测试 API 连接
 curl "https://www.fotmob.com/api/leagues?id=47&season=2025/2026"
@@ -224,11 +226,13 @@ curl "https://www.fotmob.com/api/leagues?id=47&season=2025/2026"
 ### 问题 2: L2 收割成功率低
 
 **可能原因**:
+
 - 代理池问题
 - Turnstile 拦截
 - 队名匹配失败
 
 **解决方案**:
+
 ```bash
 # 检查代理健康
 curl -x http://172.25.16.1:7890 https://httpbin.org/ip
@@ -244,10 +248,12 @@ print(bridge.dynamic_bridge('Arsenal', 'Chelsea', 'Premier League'))
 ### 问题 3: L3 熔炼失败
 
 **可能原因**:
+
 - L2 数据格式异常
 - 特征计算依赖缺失
 
 **解决方案**:
+
 ```bash
 # 检查 L2 数据格式
 docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "

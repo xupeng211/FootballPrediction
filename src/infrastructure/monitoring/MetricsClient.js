@@ -6,7 +6,6 @@
  * 支持 Prometheus 格式导出
  *
  * V4.46.6: 新增 L1 发现层指标支持
- *
  * @module infrastructure/monitoring/MetricsClient
  * @version V4.46.6
  */
@@ -60,11 +59,14 @@ const metricsStore = {
 // MetricsClient 类
 // ============================================================================
 
+/**
+ *
+ */
 class MetricsClient {
     /**
-     * @param {Object} config - 配置选项
-     * @param {string} [config.apiHost='localhost'] - API 主机
-     * @param {number} [config.apiPort=8000] - API 端口
+     * @param {object} config - 配置选项
+     * @param {string} [config.apiHost] - API 主机
+     * @param {number} [config.apiPort] - API 端口
      */
     constructor(config = {}) {
         this.apiHost = config.apiHost || process.env.API_HOST || 'localhost';
@@ -244,7 +246,7 @@ class MetricsClient {
 
     /**
      * V4.46.6: 记录 L1 完成统计
-     * @param {Object} stats - 统计对象
+     * @param {object} stats - 统计对象
      */
     recordL1Complete(stats) {
         metricsStore.l1DiscoveredTotal = stats.fixtures || 0;
@@ -396,7 +398,7 @@ class MetricsClient {
 
     /**
      * 获取 JSON 格式统计
-     * @returns {Object} 统计对象
+     * @returns {object} 统计对象
      */
     getStats() {
         const avgDuration = metricsStore.harvestDurationMs.length > 0
@@ -435,6 +437,8 @@ class MetricsClient {
 
     /**
      * 异步通知 Python API (非阻塞)
+     * @param event
+     * @param data
      * @private
      */
     _notifyPythonAPI(event, data) {
@@ -510,7 +514,7 @@ let metricsClientInstance = null;
 
 /**
  * 获取 MetricsClient 单例
- * @param {Object} [config] - 配置选项
+ * @param {object} [config] - 配置选项
  * @returns {MetricsClient}
  */
 function getMetricsClient(config = {}) {

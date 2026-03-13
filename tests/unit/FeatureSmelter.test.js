@@ -4,7 +4,6 @@
  *
  * 测试 L3 特征熔炼引擎的核心功能
  * 确保 FotMob 格式变更时能通过测试失败第一时间发现
- *
  * @module tests/unit/FeatureSmelter.test
  * @version V197.0.0
  */

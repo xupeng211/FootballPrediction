@@ -15,7 +15,6 @@
  * - BrowserFactory: 浏览器生命周期管理
  * - ErrorAuditor: 错误分类与重试判断
  * - NetworkManager: 代理与身份管理
- *
  * @module infrastructure/harvesters/base/AbstractHarvester
  * @version V2.0.0 (瘦身重构版)
  */
@@ -45,19 +44,22 @@ const { getAutoAuthManager } = require('../../auth/AutoAuthManager');
 // AbstractHarvester 抽象基类
 // ============================================================================
 
+/**
+ *
+ */
 class AbstractHarvester {
     /**
      * 创建收割器实例
-     * @param {Object} [config={}] - 配置选项
-     * @param {number} [config.maxWorkers=6] - 最大 Worker 数量
-     * @param {number} [config.minDelayMs=10000] - 最小延时（毫秒）
-     * @param {number} [config.maxDelayMs=20000] - 最大延时（毫秒）
-     * @param {number} [config.batchSize=500] - 每批次任务数
+     * @param {object} [config] - 配置选项
+     * @param {number} [config.maxWorkers] - 最大 Worker 数量
+     * @param {number} [config.minDelayMs] - 最小延时（毫秒）
+     * @param {number} [config.maxDelayMs] - 最大延时（毫秒）
+     * @param {number} [config.batchSize] - 每批次任务数
      * @param {string} [config.leagueFilter] - 联赛过滤器
-     * @param {boolean} [config.dryRun=false] - 试运行模式
-     * @param {number} [config.maxRetries=3] - 最大重试次数
-     * @param {number} [config.retryDelayMs=5000] - 重试延时（毫秒）
-     * @param {number} [config.maxSweepRounds=3] - 最大扫尾轮数
+     * @param {boolean} [config.dryRun] - 试运行模式
+     * @param {number} [config.maxRetries] - 最大重试次数
+     * @param {number} [config.retryDelayMs] - 重试延时（毫秒）
+     * @param {number} [config.maxSweepRounds] - 最大扫尾轮数
      * @param {number} [config.targetSuccessRate=1.0] - 目标成功率
      * @param {boolean} [config.verboseLogging=false] - 详细日志模式
      * @param {boolean} [config.skipZombieCleanup=false] - 跳过僵尸进程清理（Swarm 模式）
@@ -124,8 +126,8 @@ class AbstractHarvester {
     /**
      * 抽象方法：子类必须实现数据提取逻辑
      * @param {import('playwright').Page} page - Playwright Page 对象
-     * @param {Object} match - 比赛信息
-     * @returns {Promise<Object>} 提取的数据
+     * @param {object} match - 比赛信息
+     * @returns {Promise<object>} 提取的数据
      * @abstract
      */
     async extractData(page, match) {
@@ -134,7 +136,7 @@ class AbstractHarvester {
 
     /**
      * 抽象方法：子类返回目标 URL
-     * @param {Object} match - 比赛信息
+     * @param {object} match - 比赛信息
      * @returns {string} 目标 URL
      * @abstract
      */
@@ -145,7 +147,7 @@ class AbstractHarvester {
     /**
      * 抽象方法：子类实现数据保存逻辑
      * @param {string} matchId - 比赛 ID
-     * @param {Object} data - 提取的数据
+     * @param {object} data - 提取的数据
      * @returns {Promise<void>}
      * @abstract
      */
@@ -395,10 +397,10 @@ class AbstractHarvester {
 
     /**
      * 带弹性重试的单场收割
-     * @param {Object} match - 比赛信息
+     * @param {object} match - 比赛信息
      * @param {number} index - 任务索引
      * @param {number} maxRetries - 最大重试次数
-     * @returns {Promise<Object>} 收割结果
+     * @returns {Promise<object>} 收割结果
      */
     async harvestWithRetry(match, index, maxRetries = 3) {
         const { match_id, home_team, away_team } = match;
@@ -494,10 +496,10 @@ class AbstractHarvester {
 
     /**
      * 单次收割尝试
-     * @param {Object} match - 比赛信息
+     * @param {object} match - 比赛信息
      * @param {number} index - 任务索引
      * @param {number} attempt - 当前尝试次数
-     * @returns {Promise<Object>} 收割结果
+     * @returns {Promise<object>} 收割结果
      * @private
      */
     async _harvestSingleMatch(match, index, attempt = 1) {
@@ -661,7 +663,6 @@ class AbstractHarvester {
     /**
      * V4.51: AutoAuth 自动鉴权触发钩子
      * 当检测到 BLOCKED 错误（Turnstile/Captcha）时自动触发身份刷新
-     *
      * @param {number} index - 任务索引
      * @param {string} errorMessage - 错误消息
      * @returns {Promise<void>}
@@ -743,8 +744,8 @@ class AbstractHarvester {
      * 获取或创建 BrowserContext（带复用池）
      * V4.46.5 HARDENING: 增加 LRU 淘汰机制
      * @param {number} workerId - Worker ID
-     * @param {Object} identity - Worker 身份信息
-     * @returns {Promise<{context: BrowserContext, isNew: boolean, poolInfo: Object}>}
+     * @param {object} identity - Worker 身份信息
+     * @returns {Promise<{context: BrowserContext, isNew: boolean, poolInfo: object}>}
      * @private
      */
     async _getOrCreateContext(workerId, identity) {

@@ -307,6 +307,7 @@ cut -d',' -f7 logs/alignment_failures_$(date +%Y%m%d).csv | sort | uniq -c
 **症状**: 对齐成功率 < 85%
 
 **解决方案**:
+
 1. 检查队名缩写配置 (`TEAM_ABBREVIATIONS`)
 2. 检查通用术语配置 (`generic_terms`)
 3. 降低置信度阈值 (谨慎使用)
@@ -316,6 +317,7 @@ cut -d',' -f7 logs/alignment_failures_$(date +%Y%m%d).csv | sort | uniq -c
 **症状**: 可用端口数量 < 10
 
 **解决方案**:
+
 1. 检查代理服务状态
 2. 重启代理服务
 3. 检查防火墙配置
@@ -325,6 +327,7 @@ cut -d',' -f7 logs/alignment_failures_$(date +%Y%m%d).csv | sort | uniq -c
 **症状**: `database does not exist` 或 `connection refused`
 
 **解决方案**:
+
 1. 检查 Docker 服务状态 (`make ps`)
 2. 检查数据库容器日志
 3. 验证环境变量配置

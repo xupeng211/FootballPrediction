@@ -12,7 +12,6 @@
  *   node scripts/maintenance/recalculate_elo.js                    # 全量重算（所有联赛）
  *   node scripts/maintenance/recalculate_elo.js --dry-run          # 预览模式
  *   node scripts/maintenance/recalculate_elo.js --incremental      # 增量更新（只处理无 Elo 的比赛）
- *
  * @module scripts/maintenance/recalculate_elo
  * @version V199.0.0 - 自适应全联赛版
  * @updated 2026-03-11
@@ -49,7 +48,7 @@ const CONFIG = {
 
 /**
  * 从数据库动态发现所有联赛
- * @param {Object} client - PostgreSQL 客户端
+ * @param {object} client - PostgreSQL 客户端
  * @returns {Promise<Array>} 联赛列表 [{ league_id, league_name, match_count }]
  */
 async function discoverLeagues(client) {
@@ -73,9 +72,9 @@ async function discoverLeagues(client) {
 
 /**
  * 获取联赛的已完赛比赛统计
- * @param {Object} client - PostgreSQL 客户端
+ * @param {object} client - PostgreSQL 客户端
  * @param {string} leagueId - 联赛 ID
- * @returns {Promise<Object>} 统计数据
+ * @returns {Promise<object>} 统计数据
  */
 async function getLeagueStats(client, leagueId) {
     const query = `
@@ -102,6 +101,9 @@ async function getLeagueStats(client, leagueId) {
 // 主逻辑
 // ============================================================================
 
+/**
+ *
+ */
 async function main() {
     const args = process.argv.slice(2);
     const dryRun = args.includes('--dry-run');

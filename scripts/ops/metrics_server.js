@@ -6,7 +6,6 @@
  * 独立的 Prometheus 指标暴露服务
  * 端口: 8000
  * 路径: /metrics
- * 
  * @module scripts/ops/metrics_server
  * @version V4.46.6
  */
@@ -43,6 +42,10 @@ const metricsStore = {
 };
 
 // 从数据库更新指标
+/**
+ *
+ * @param pool
+ */
 async function updateMetricsFromDB(pool) {
     try {
         // L1/L2/L3 总数
@@ -78,6 +81,9 @@ async function updateMetricsFromDB(pool) {
 }
 
 // 生成 Prometheus 格式指标
+/**
+ *
+ */
 function generatePrometheusMetrics() {
     const lines = [];
     const now = Date.now();
@@ -176,6 +182,9 @@ function generatePrometheusMetrics() {
 }
 
 // 主函数
+/**
+ *
+ */
 async function main() {
     console.log('');
     console.log('╔═══════════════════════════════════════════════════════════════╗');

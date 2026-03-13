@@ -142,11 +142,13 @@ DISCOVERED ──(Step A: L2 Enrichment)──> ENRICHED ──(Step B: Bridge)�
 ### Issue 1: Low Similarity Score in Bridge Mapping
 
 **Symptoms**:
+
 - Bridge Trigger reports "No match found"
 - Similarity score < 85.0%
 - Status stuck at `ENRICHED`
 
 **Diagnosis**:
+
 ```bash
 # Check bridge trigger logs
 ./scripts/ops/control.sh logs | grep -i "bridge"
@@ -162,12 +164,14 @@ console.log(parseUrlTeams(url));
 **Solutions**:
 
 1. **Update Known Teams List** (if team name changed):
+
    ```bash
    # Edit src/modules/url_parser.js
    # Add new team to multiWordTeams array
    ```
 
 2. **Adjust Fuzzy Threshold** (temporary):
+
    ```bash
    # Edit scripts/ops/v69_020_bridge_trigger.js
    # Change fuzzyThreshold: 85.0 to 80.0
@@ -175,6 +179,7 @@ console.log(parseUrlTeams(url));
    ```
 
 3. **Manual Mapping** (for edge cases):
+
    ```sql
    INSERT INTO matches_mapping (fotmob_id, oddsportal_url, confidence, mapping_method, review_status)
    VALUES ('<fotmob_id>', '<oddsportal_url>', 1.0, 'manual', 'approved');
@@ -183,11 +188,13 @@ console.log(parseUrlTeams(url));
 ### Issue 2: Payout Anomaly Alert
 
 **Symptoms**:
+
 - Data Sentinel reports "Payout Anomalies"
 - Payout < 80% or > 100%
 - Health score drops below 7.0
 
 **Diagnosis**:
+
 ```bash
 # Check payout anomalies
 psql -h 172.25.16.1 -U football_user -d football_db -c "
@@ -202,6 +209,7 @@ LIMIT 20;
 **Solutions**:
 
 1. **Identify Faulty Provider**:
+
    ```sql
    SELECT provider_name, COUNT(*), AVG(payout)
    FROM temporal_metric_records
@@ -210,12 +218,14 @@ LIMIT 20;
    ```
 
 2. **Disable Faulty Provider**:
+
    ```bash
    # Edit src/config/providers.json
    # Set "enabled": false for the problematic provider
    ```
 
 3. **Delete Corrupted Records**:
+
    ```sql
    DELETE FROM temporal_metric_records
    WHERE payout < 0.70 OR payout > 1.10;
@@ -224,11 +234,13 @@ LIMIT 20;
 ### Issue 3: Proxy Connection Failures
 
 **Symptoms**:
+
 - Frequent HTTP 429/403 errors
 - "Connection timeout" messages
 - Harvest rate drops to 0 MPH
 
 **Diagnosis**:
+
 ```bash
 # Check proxy status
 curl -I https://www.fotmob.com/api
@@ -241,6 +253,7 @@ curl -I https://www.oddsportal.com
 **Solutions**:
 
 1. **Update Proxy Configuration**:
+
    ```bash
    # Edit .env file
    HTTP_PROXY=http://new-proxy:port
@@ -248,12 +261,14 @@ curl -I https://www.oddsportal.com
    ```
 
 2. **Rotate User Agents** (Ghost Protocol):
+
    ```bash
    # V141.0 automatically rotates fingerprints
    # Check src/api/collectors/base_extractor.js
    ```
 
 3. **Add Cooldown Delay**:
+
    ```bash
    # Edit src/ops/v69_000_pipeline_orchestrator.js
    # Increase cooldownSeconds in l2Enrichment config
@@ -262,11 +277,13 @@ curl -I https://www.oddsportal.com
 ### Issue 4: Database Connection Pool Exhaustion
 
 **Symptoms**:
+
 - "Connection pool exhausted" errors
 - Slow query performance
 - Services becoming unresponsive
 
 **Diagnosis**:
+
 ```bash
 # Check active connections
 docker exec football_db psql -U football_user -c "
@@ -279,6 +296,7 @@ GROUP BY state;
 **Solutions**:
 
 1. **Increase Pool Size**:
+
    ```bash
    # Edit .env
    DB_POOL_SIZE=20
@@ -286,6 +304,7 @@ GROUP BY state;
    ```
 
 2. **Kill Long-Running Queries**:
+
    ```sql
    SELECT pg_terminate_backend(pid)
    FROM pg_stat_activity
@@ -294,6 +313,7 @@ GROUP BY state;
    ```
 
 3. **Restart Services**:
+
    ```bash
    ./scripts/ops/control.sh restart
    ```
@@ -493,9 +513,9 @@ SELECT status, COUNT(*) FROM match_pipeline_state GROUP BY status;
 
 | Role | Contact | Escalation |
 |------|---------|-------------|
-| **Tier-1 Ops** | ops@example.com | First-line support |
-| **Tier-2 Ops** | senior-ops@example.com | Complex issues |
-| **Tier-3 Ops** | architect@example.com | Architecture changes |
+| **Tier-1 Ops** | <ops@example.com> | First-line support |
+| **Tier-2 Ops** | <senior-ops@example.com> | Complex issues |
+| **Tier-3 Ops** | <architect@example.com> | Architecture changes |
 | **On-Call Engineer** | +1-555-0123 | Emergency (24/7) |
 
 ### Appendix D: Change History

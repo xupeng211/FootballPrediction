@@ -12,7 +12,6 @@
  * - 自动备份和恢复 (Auto backup/restore)
  * - 版本控制 (Version control)
  * - 线程安全 (Thread-safe)
- *
  * @module network/core/RegistryManager
  * @version V1.1.0
  * @since 2026-02-03
@@ -52,7 +51,6 @@ const DEFAULT_CONFIG = {
 
 /**
  * RegistryManager - 中央注册表管理器
- *
  * @class
  * @example
  * const manager = new RegistryManager({
@@ -66,8 +64,7 @@ const DEFAULT_CONFIG = {
 class RegistryManager {
     /**
      * 创建 RegistryManager 实例
-     *
-     * @param {Object} options - 配置选项
+     * @param {object} options - 配置选项
      * @param {IFileSystem} [options.fileSystem] - 文件系统实现（DI）
      * @param {string} [options.registryPath] - 注册表文件路径
      * @param {string} [options.backupPath] - 备份文件路径
@@ -86,7 +83,7 @@ class RegistryManager {
         this._fs = options.fileSystem || FileSystemProvider.getFileSystem();
 
         /**
-         * @type {Object|null} 缓存的注册表数据
+         * @type {object | null} 缓存的注册表数据
          * @private
          */
         this._cache = null;
@@ -116,10 +113,8 @@ class RegistryManager {
 
     /**
      * 获取注册表数据
-     *
-     * @returns {Object} 注册表数据
+     * @returns {object} 注册表数据
      * @throws {NetworkShieldError} 文件系统错误
-     *
      * @example
      * const registry = manager.getRegistry();
      * console.log(registry.nodes.length);
@@ -136,11 +131,9 @@ class RegistryManager {
 
     /**
      * 更新注册表数据（原子操作）
-     *
      * @param {Function} updater - 更新函数，接收当前注册表并返回更新后的注册表
-     * @returns {Promise<Object>} 更新后的注册表数据
+     * @returns {Promise<object>} 更新后的注册表数据
      * @throws {NetworkShieldError} 锁超时、文件系统错误
-     *
      * @example
      * const updated = await manager.updateRegistry(registry => {
      *   registry.last_updated = new Date().toISOString();
@@ -175,9 +168,8 @@ class RegistryManager {
 
     /**
      * 获取节点信息
-     *
      * @param {number} port - 节点端口
-     * @returns {Object|null} 节点信息，未找到返回 null
+     * @returns {object | null} 节点信息，未找到返回 null
      * @throws {NetworkShieldError} 文件系统错误
      */
     getNode(port) {
@@ -187,10 +179,9 @@ class RegistryManager {
 
     /**
      * 更新单个节点
-     *
      * @param {number} port - 节点端口
      * @param {Function} updater - 节点更新函数
-     * @returns {Promise<Object>} 更新后的节点信息
+     * @returns {Promise<object>} 更新后的节点信息
      * @throws {NetworkShieldError} 节点不存在、锁超时、文件系统错误
      */
     async updateNode(port, updater) {
@@ -214,8 +205,7 @@ class RegistryManager {
 
     /**
      * 获取可用节点列表
-     *
-     * @returns {Array<Object>} 可用节点列表（按健康分数降序）
+     * @returns {Array<object>} 可用节点列表（按健康分数降序）
      * @throws {NetworkShieldError} 文件系统错误
      */
     getAvailableNodes() {
@@ -240,11 +230,10 @@ class RegistryManager {
 
     /**
      * 标记节点失败
-     *
      * @param {number} port - 节点端口
-     * @param {string} [reason='Unknown'] - 失败原因
-     * @param {number} [cooldownMinutes=15] - 冷却时间（分钟）
-     * @returns {Promise<Object>} 更新后的节点信息
+     * @param {string} [reason] - 失败原因
+     * @param {number} [cooldownMinutes] - 冷却时间（分钟）
+     * @returns {Promise<object>} 更新后的节点信息
      * @throws {NetworkShieldError} 锁超时、文件系统错误
      */
     async markNodeFailed(port, reason = 'Unknown', cooldownMinutes = 15) {
@@ -267,10 +256,9 @@ class RegistryManager {
 
     /**
      * 标记节点成功
-     *
      * @param {number} port - 节点端口
-     * @param {number} [latency=0] - 延迟（毫秒）
-     * @returns {Promise<Object>} 更新后的节点信息
+     * @param {number} [latency] - 延迟（毫秒）
+     * @returns {Promise<object>} 更新后的节点信息
      * @throws {NetworkShieldError} 锁超时、文件系统错误
      */
     async markNodeSuccess(port, latency = 0) {
@@ -297,13 +285,12 @@ class RegistryManager {
 
     /**
      * 更新节点健康检查结果
-     *
      * @param {number} port - 节点端口
-     * @param {Object} healthResult - 健康检查结果
+     * @param {object} healthResult - 健康检查结果
      * @param {boolean} healthResult.is_healthy - 是否健康
      * @param {number} [healthResult.response_time] - 响应时间
      * @param {string} [healthResult.ip_address] - IP 地址
-     * @returns {Promise<Object>} 更新后的节点信息
+     * @returns {Promise<object>} 更新后的节点信息
      * @throws {NetworkShieldError} 锁超时、文件系统错误
      */
     async updateNodeHealth(port, healthResult) {
@@ -334,8 +321,7 @@ class RegistryManager {
 
     /**
      * 获取统计信息
-     *
-     * @returns {Object} 统计信息
+     * @returns {object} 统计信息
      * @throws {NetworkShieldError} 文件系统错误
      */
     getStatistics() {
@@ -345,7 +331,6 @@ class RegistryManager {
 
     /**
      * 创建备份
-     *
      * @returns {boolean} 是否成功
      */
     createBackup() {
@@ -366,7 +351,6 @@ class RegistryManager {
 
     /**
      * 恢复备份
-     *
      * @returns {boolean} 是否成功
      */
     restoreBackup() {
@@ -393,8 +377,7 @@ class RegistryManager {
 
     /**
      * 重置所有节点状态
-     *
-     * @returns {Promise<Object>} 重置后的注册表
+     * @returns {Promise<object>} 重置后的注册表
      * @throws {NetworkShieldError} 锁超时、文件系统错误
      */
     async resetAllNodes() {
@@ -435,7 +418,7 @@ class RegistryManager {
     /**
      * 加载注册表数据
      * @private
-     * @returns {Object} 注册表数据
+     * @returns {object} 注册表数据
      * @throws {NetworkShieldError} 文件系统错误、数据损坏
      */
     _loadRegistry() {
@@ -463,7 +446,7 @@ class RegistryManager {
     /**
      * 保存注册表数据
      * @private
-     * @param {Object} data - 注册表数据
+     * @param {object} data - 注册表数据
      * @throws {NetworkShieldError} 文件系统错误
      */
     _saveRegistry(data) {
@@ -485,7 +468,7 @@ class RegistryManager {
     /**
      * 验证注册表数据结构
      * @private
-     * @param {Object} registry - 注册表数据
+     * @param {object} registry - 注册表数据
      * @throws {NetworkShieldError} 数据结构无效
      */
     _validateRegistry(registry) {
@@ -505,7 +488,7 @@ class RegistryManager {
     /**
      * 创建默认注册表
      * @private
-     * @returns {Object} 默认注册表
+     * @returns {object} 默认注册表
      */
     _createDefaultRegistry() {
         const config = {
@@ -553,7 +536,7 @@ class RegistryManager {
     /**
      * 更新统计信息
      * @private
-     * @param {Object} registry - 注册表数据
+     * @param {object} registry - 注册表数据
      */
     _updateStatistics(registry) {
         const now = new Date().toISOString();
@@ -620,8 +603,7 @@ let _instanceOptions = null;
 
 /**
  * 获取 RegistryManager 单例
- *
- * @param {Object} [options] - 配置选项（仅在首次调用时生效）
+ * @param {object} [options] - 配置选项（仅在首次调用时生效）
  * @returns {RegistryManager} 单例实例
  */
 function getRegistryManager(options) {

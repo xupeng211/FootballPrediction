@@ -7,7 +7,6 @@
  * 核心公式：
  *   R_new = R_old + K × (Actual - Expected)
  *   Expected = 1 / (1 + 10^((R_opponent - R_self) / 400))
- *
  * @module feature_engine/extractors/EloRatingExtractor
  * @version V176.0.0
  */
@@ -42,6 +41,10 @@ const DEFAULT_CONFIG = {
  * EloRatingExtractor 类
  */
 class EloRatingExtractor {
+    /**
+     *
+     * @param config
+     */
     constructor(config = {}) {
         this.config = { ...DEFAULT_CONFIG, ...config };
 
@@ -61,6 +64,7 @@ class EloRatingExtractor {
 
     /**
      * 获取球队当前 Elo 评分
+     * @param teamId
      */
     getTeamRating(teamId) {
         if (!teamId) return this.config.initialRating;
@@ -69,6 +73,8 @@ class EloRatingExtractor {
 
     /**
      * 设置球队 Elo 评分
+     * @param teamId
+     * @param rating
      */
     setTeamRating(teamId, rating) {
         const clampedRating = Math.max(
@@ -90,6 +96,8 @@ class EloRatingExtractor {
     /**
      * 计算预期得分
      * E = 1 / (1 + 10^((R_opp - R_self) / 400))
+     * @param ratingSelf
+     * @param ratingOpponent
      */
     calculateExpectedScore(ratingSelf, ratingOpponent) {
         const diff = ratingOpponent - ratingSelf;
@@ -98,6 +106,8 @@ class EloRatingExtractor {
 
     /**
      * 计算动态 K 因子
+     * @param teamId
+     * @param matchCount
      */
     calculateKFactor(teamId, matchCount) {
         if (!this.config.enableDynamicK) {
@@ -129,9 +139,8 @@ class EloRatingExtractor {
 
     /**
      * 更新单场比赛的 Elo 评分
-     *
-     * @param {Object} match - 比赛数据 { homeTeamId, awayTeamId, homeScore, awayScore, matchDate }
-     * @returns {Object} Elo 特征
+     * @param {object} match - 比赛数据 { homeTeamId, awayTeamId, homeScore, awayScore, matchDate }
+     * @returns {object} Elo 特征
      */
     updateMatchElo(match) {
         const {
@@ -208,7 +217,6 @@ class EloRatingExtractor {
 
     /**
      * 批量计算历史比赛的 Elo（时序处理）
-     *
      * @param {Array} matches - 比赛数组（需按 matchDate 升序排列）
      * @returns {Map} matchId -> eloFeatures
      */
@@ -245,6 +253,7 @@ class EloRatingExtractor {
 
     /**
      * 导入已有评分（用于增量处理）
+     * @param ratings
      */
     importRatings(ratings) {
         if (!ratings || typeof ratings !== 'object') return;
@@ -284,10 +293,10 @@ class EloRatingExtractor {
 
 /**
  * 从历史比赛数据计算单场比赛的 Elo 特征（无状态版本）
- *
  * @param {Array} historicalMatches - 历史比赛数组
- * @param {Object} targetMatch - 目标比赛
- * @returns {Object} Elo 特征
+ * @param {object} targetMatch - 目标比赛
+ * @param config
+ * @returns {object} Elo 特征
  */
 function calculateEloFeatures(historicalMatches, targetMatch, config = {}) {
     const extractor = new EloRatingExtractor(config);

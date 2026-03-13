@@ -17,6 +17,7 @@
 ### 新增 (Added)
 
 #### 时序隔离训练框架
+
 - **文件**: `scripts/ops/TITAN_CORE_TRAIN.py`
 - **功能**: 严格的时序隔离训练
   - 训练集: `match_date <= '2025-12-31'`
@@ -32,10 +33,12 @@ WHERE m.match_date >= '2026-01-01' AND m.status = 'finished'
 ```
 
 #### H2H 除毒审计
+
 - **功能**: 自动检测测试集 H2H 数据是否包含未来比赛结果
 - **逻辑**: 比较 `h2h_avg_goal_diff` 与本场净胜球，- **告警**: 若两者一致且非零，则标记潜在泄露
 
 #### 未来比赛身价补偿机制
+
 - **文件**: `scripts/ops/combat_ready_fix.py` (已归档)
 - **功能**: 为 `scheduled` 比赛填充预估身价
 - **策略**:
@@ -53,6 +56,7 @@ WHERE m.match_date >= '2026-01-01' AND m.status = 'finished'
 | - | `home_mv_share` | 新增: 动态占比计算 |
 
 **计算公式**:
+
 ```python
 home_mv = lineup.get('home_squad_value_eur', 0)
 away_mv = lineup.get('away_squad_value_eur', 0)
@@ -65,6 +69,7 @@ home_mv_share = home_mv / total_mv if total_mv > 0 else 0.5
 **问题**: `h2h_avg_goal_diff` 全部为 0
 
 **修复**: 基于胜率反推估算
+
 ```python
 # 估算公式
 hwr = h2h.get('h2h_home_win_ratio', 0.4)
@@ -180,11 +185,13 @@ Elo 核心 (5 维)
 ## 文件变更清单
 
 ### 新增文件
+
 - `scripts/ops/TITAN_CORE_TRAIN.py` - 核心训练脚本
 - `models/titan_v4466_real_combat.joblib` - 生产模型
 - `scripts/maintenance/archives/` - 归档目录
 
 ### 归档文件
+
 - `scripts/maintenance/archives/train_titan_combat.py`
 - `scripts/maintenance/archives/combat_ready_fix.py`
 - `scripts/maintenance/archives/fix_market_value.py`

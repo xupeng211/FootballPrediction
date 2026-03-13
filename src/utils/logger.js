@@ -7,7 +7,6 @@
  * - 性能埋点 (耗时统计)
  * - 模块化前缀
  * - 可配置输出级别
- *
  * @module src/utils/logger
  * @version V172.100
  */
@@ -66,6 +65,9 @@ function timeEnd(label) {
 // Logger 类
 // ============================================================================
 
+/**
+ *
+ */
 class Logger {
     /**
      * @param {string} module - 模块名称
@@ -252,7 +254,7 @@ const PerformanceMonitor = {
     /**
      * 获取指标统计
      * @param {string} name - 指标名称
-     * @returns {Object} 统计信息
+     * @returns {object} 统计信息
      */
     getStats(name) {
         const values = this.metrics.get(name) || [];

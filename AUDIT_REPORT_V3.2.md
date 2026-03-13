@@ -53,6 +53,7 @@ home_xg_for_avg              # 空文件，临时数据缓存
 **当前位置**: 散落在 `scripts/maintenance/` 和 `scripts/ops/`
 
 **建议结构**:
+
 ```
 scripts/
 ├── tools/                    # 一次性诊断工具
@@ -71,6 +72,7 @@ scripts/
 ### B. 临时数据目录
 
 **建议添加到 `.gitignore`**:
+
 ```
 # 临时数据
 data/temp/
@@ -156,6 +158,7 @@ echo -e "\n# 临时数据\ndata/temp/\n*.tmp\nhome_*_for_avg" >> .gitignore
 **清理后预期**: 95/100
 
 **关键行动项**:
+
 1. ✅ 删除 4 个陈旧 README 文件
 2. ✅ 删除 1 个重复实现文件
 3. ✅ 创建规范的 `scripts/tools/` 目录

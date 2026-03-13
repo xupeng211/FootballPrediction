@@ -7,7 +7,6 @@
  * V4.46.1 修复：
  * - 添加 MAX_GLOBAL_RETRIES 防止递归死循环
  * - 全局熔断时抛出 CIRCUIT_BREAKER_OPEN 错误
- *
  * @module infrastructure/network/NetworkShield
  * @version V4.46.1
  */
@@ -26,6 +25,10 @@ const MAX_GLOBAL_RETRIES = 3;
 
 /** 自定义错误：熔断器开启 */
 class CircuitBreakerOpenError extends Error {
+    /**
+     *
+     * @param message
+     */
     constructor(message = '所有代理节点不可用，全局熔断已开启') {
         super(message);
         this.name = 'CircuitBreakerOpenError';
@@ -44,7 +47,7 @@ class CircuitBreakerOpenError extends Error {
  */
 class NetworkShield {
     /**
-     * @param {Object} config - 配置选项
+     * @param {object} config - 配置选项
      * @param {Array} [config.proxyNodes] - 代理节点列表
      */
     constructor(config = {}) {
@@ -88,8 +91,8 @@ class NetworkShield {
      * 为 Worker 分配代理端口 (Session Stickiness)
      * V4.46.1: 添加全局重试限制，防止无限递归
      * @param {number} workerId - Worker ID
-     * @param {number} [retryCount=0] - 内部重试计数器 (递归保护)
-     * @returns {Object} 代理配置
+     * @param {number} [retryCount] - 内部重试计数器 (递归保护)
+     * @returns {object} 代理配置
      * @throws {CircuitBreakerOpenError} 当全局熔断时抛出
      */
     assignPort(workerId, retryCount = 0) {
@@ -156,7 +159,7 @@ class NetworkShield {
      * V4.51: 为 NetworkManager 提供兼容接口
      * 包装 assignPort 方法返回统一格式
      * @param {string} sessionId - 会话ID
-     * @returns {Promise<Object>} 代理配置
+     * @returns {Promise<object>} 代理配置
      */
     async getNextHealthyProxy(sessionId) {
         const workerId = parseInt(sessionId.replace('WORKER-', '')) || 1;
@@ -211,8 +214,8 @@ class NetworkShield {
      * V4.46.1: 添加全局熔断保护
      * @param {number} workerId - Worker ID
      * @param {number} oldPort - 旧端口
-     * @param {number} [retryCount=0] - 内部重试计数器 (递归保护)
-     * @returns {Object} 新的代理配置
+     * @param {number} [retryCount] - 内部重试计数器 (递归保护)
+     * @returns {object} 新的代理配置
      * @throws {CircuitBreakerOpenError} 当全局熔断时抛出
      */
     forceReassign(workerId, oldPort, retryCount = 0) {
@@ -301,7 +304,7 @@ class NetworkShield {
 
     /**
      * 获取代理池状态
-     * @returns {Object} 代理池状态
+     * @returns {object} 代理池状态
      */
     getStatus() {
         const active = this.proxyNodes.filter(n => n.status === 'active').length;
@@ -333,7 +336,7 @@ class NetworkShield {
     /**
      * 创建受保护的浏览器上下文
      * @param {import('playwright').Browser} browser - Playwright Browser 对象
-     * @param {Object} [options] - 上下文选项
+     * @param {object} [options] - 上下文选项
      * @returns {Promise<import('playwright').BrowserContext>}
      */
     async getNewContext(browser, options = {}) {
@@ -353,7 +356,7 @@ let networkShieldInstance = null;
 
 /**
  * 获取 NetworkShield 单例
- * @param {Object} [config] - 配置选项
+ * @param {object} [config] - 配置选项
  * @returns {NetworkShield}
  */
 function getNetworkShield(config = {}) {

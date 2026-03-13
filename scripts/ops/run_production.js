@@ -43,6 +43,9 @@ function executeZombieKiller() {
     console.log('');
 }
 
+/**
+ *
+ */
 async function main() {
     // V4.50: 执行入口级清道夫
     executeZombieKiller();
