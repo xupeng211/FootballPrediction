@@ -124,7 +124,7 @@ function extractOddsData(rawData) {
             oddsData.initial.draw = odds1X2.initial.draw;
             oddsData.initial.away = odds1X2.initial.away;
         }
-        if (!oddsData.current.home && odds1X22.current) {
+        if (!oddsData.current.home && odds1X2.current) {
             oddsData.current.home = odds1X2.current.home;
             oddsData.current.draw = odds1X2.current.draw;
             oddsData.current.away = odds1X2.current.away;
