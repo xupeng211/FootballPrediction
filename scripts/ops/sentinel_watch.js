@@ -18,7 +18,6 @@ const execAsync = promisify(exec);
 
 // 配置常量
 const CONFIG = {
-  targetCount: 12000,
   checkInterval: 60000, // 60秒
   dataPath: process.env.DATA_MATCHES_PATH
     ? path.resolve(process.cwd(), process.env.DATA_MATCHES_PATH)
@@ -26,6 +25,13 @@ const CONFIG = {
   victoryLogPath: path.join(process.cwd(), 'logs', 'victory.log'),
   debounceThreshold: 2, // 连续2次达标才触发
   dockerComposeFile: 'docker-compose.dev.yml'
+};
+
+// 动态目标管理
+let dynamicTarget = {
+  value: 12000,        // 初始默认值
+  lastUpdated: 0,      // 上次更新时间
+  cacheValid: false    // 缓存是否有效
 };
 
 // 数据库配置
@@ -79,7 +85,7 @@ function log(level, message) {
 /**
  * ASCII Art - VICTORY
  */
-function printVictoryArt() {
+function printVictoryArt(target) {
   const art = `
 ${COLORS.green}${COLORS.bright}
 ╔══════════════════════════════════════════════════════════════════╗
@@ -91,7 +97,7 @@ ${COLORS.green}${COLORS.bright}
 ║        ██║   ██║   ██║   ██║  ██║██║ ╚████║    ██║      ╚████╔╝ ███████╗███████╗██║  ██║██║ ╚████║██████╔╝ ║
 ║        ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝    ╚═╝       ╚═══╝  ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝  ║
 ║                                                                  ║
-║                    🎯 TARGET ACHIEVED: 12,000 MATCHES 🎯         ║
+║                    🎯 TARGET ACHIEVED: ${target.toLocaleString().padStart(6)} MATCHES 🎯         ║
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 ${COLORS.reset}`;
@@ -101,7 +107,12 @@ ${COLORS.reset}`;
 /**
  * ASCII Art - FULL TANK
  */
-function printFullTankArt() {
+function printFullTankArt(target) {
+  const targetStr = target.toLocaleString();
+  const padding = Math.max(0, 10 - targetStr.length);
+  const leftPad = ' '.repeat(Math.floor(padding / 2));
+  const rightPad = ' '.repeat(Math.ceil(padding / 2));
+  
   const art = `
 ${COLORS.yellow}${COLORS.bright}
 ╔══════════════════════════════════════════════════════════════════╗
@@ -120,7 +131,7 @@ ${COLORS.yellow}${COLORS.bright}
 ║                 ██║   ██║  ██║██║ ╚████║██║  ██╗              ║
 ║                 ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝              ║
 ║                                                                  ║
-║                    🚀 12,000 MATCHES COMPLETE 🚀                 ║
+║                    🚀 ${leftPad}${targetStr} MATCHES COMPLETE ${rightPad}🚀                 ║
 ║                                                                  ║
 ╚══════════════════════════════════════════════════════════════════╝
 ${COLORS.reset}`;
@@ -158,9 +169,40 @@ async function getDbCount() {
 }
 
 /**
+ * 获取动态目标值（从数据库查询总比赛数）
+ * V4.51.5: 动态目标，拒绝硬编码
+ */
+async function getDynamicTarget() {
+  const pool = new Pool(DB_CONFIG);
+  try {
+    const result = await pool.query('SELECT COUNT(*) as total FROM matches');
+    const newTarget = parseInt(result.rows[0].total, 10);
+    
+    // 更新缓存
+    dynamicTarget.value = newTarget;
+    dynamicTarget.lastUpdated = Date.now();
+    dynamicTarget.cacheValid = true;
+    
+    return newTarget;
+  } catch (error) {
+    // 容错处理：数据库连接失败时使用缓存值
+    if (dynamicTarget.cacheValid) {
+      log('warning', `数据库暂不可用，使用缓存目标值: ${dynamicTarget.value}`);
+      return dynamicTarget.value;
+    }
+    
+    // 如果连缓存都没有，使用初始默认值
+    log('warning', `数据库连接失败，使用初始默认值: ${dynamicTarget.value}`);
+    return dynamicTarget.value;
+  } finally {
+    await pool.end();
+  }
+}
+
+/**
  * 写入胜利日志
  */
-async function writeVictoryLog(fileCount, dbCount) {
+async function writeVictoryLog(fileCount, dbCount, targetCount) {
   const duration = Date.now() - state.startTime;
   const durationMinutes = Math.round(duration / 60000);
   const avgSpeed = durationMinutes > 0 ? (fileCount / durationMinutes).toFixed(2) : 0;
@@ -170,7 +212,7 @@ async function writeVictoryLog(fileCount, dbCount) {
 ║                    TITAN VICTORY LOG                          ║
 ╠═══════════════════════════════════════════════════════════════╣
 ║ 达成时间: ${new Date().toISOString()}                           ║
-║ 最终场数: ${fileCount.toLocaleString()} / ${CONFIG.targetCount.toLocaleString()}                              ║
+║ 最终场数: ${fileCount.toLocaleString()} / ${targetCount.toLocaleString()}                              ║
 ║ 数据库数: ${dbCount.toLocaleString()}                              ║
 ║ 运行时长: ${durationMinutes} 分钟                                    ║
 ║ 平均速度: ${avgSpeed} 场/分钟                                     ║
@@ -219,21 +261,25 @@ async function checkCycle() {
   if (state.isTriggered) return;
 
   state.checkCount++;
+  
+  // V4.51.5: 每次循环开始时查询动态目标
+  const targetCount = await getDynamicTarget();
+  
   const fileCount = await getFileCount();
   const dbCount = await getDbCount();
 
   state.lastFileCount = fileCount;
   state.lastDbCount = dbCount;
 
-  const remaining = Math.max(0, CONFIG.targetCount - fileCount);
-  const progress = ((fileCount / CONFIG.targetCount) * 100).toFixed(1);
+  const remaining = Math.max(0, targetCount - fileCount);
+  const progress = ((fileCount / targetCount) * 100).toFixed(1);
 
   // 打印进度
   process.stdout.write('\r');
   process.stdout.write(
     `${COLORS.cyan}[SENTINEL]${COLORS.reset} ` +
     `检查 #${state.checkCount.toString().padStart(3)} | ` +
-    `文件: ${COLORS.bright}${fileCount.toLocaleString()}${COLORS.reset}/${CONFIG.targetCount.toLocaleString()} ` +
+    `文件: ${COLORS.bright}${fileCount.toLocaleString()}${COLORS.reset}/${targetCount.toLocaleString()} ` +
     `(${progress}%) | ` +
     `DB: ${dbCount.toLocaleString()} | ` +
     `剩余: ${remaining.toLocaleString()} | ` +
@@ -241,7 +287,7 @@ async function checkCycle() {
   );
 
   // 检查是否达标
-  if (fileCount >= CONFIG.targetCount) {
+  if (fileCount >= targetCount) {
     state.consecutiveHits++;
 
     if (state.consecutiveHits >= CONFIG.debounceThreshold) {
@@ -249,15 +295,15 @@ async function checkCycle() {
       state.isTriggered = true;
 
       // 触发庆典
-      printVictoryArt();
-      printFullTankArt();
+      printVictoryArt(targetCount);
+      printFullTankArt(targetCount);
 
       log('success', `🎯 目标达成！连续 ${CONFIG.debounceThreshold} 次检测确认`);
       log('info', `最终文件数: ${fileCount.toLocaleString()}`);
       log('info', `数据库记录: ${dbCount.toLocaleString()}`);
 
       // 写入日志
-      const stats = await writeVictoryLog(fileCount, dbCount);
+      const stats = await writeVictoryLog(fileCount, dbCount, targetCount);
       log('info', `平均收割速度: ${stats.avgSpeed} 场/分钟`);
 
       // 执行停机
@@ -287,7 +333,11 @@ async function main() {
   log('sentinel', '══════════════════════════════════════════════════');
   log('sentinel', '  TITAN 哨兵监控系统启动');
   log('sentinel', '══════════════════════════════════════════════════');
-  log('info', `目标场数: ${CONFIG.targetCount.toLocaleString()}`);
+  
+  // V4.51.5: 查询动态目标
+  const initialTarget = await getDynamicTarget();
+  log('info', `当前动态目标: ${initialTarget.toLocaleString()} (由数据库实时提供)`);
+  
   log('info', `检查间隔: ${CONFIG.checkInterval / 1000} 秒`);
   log('info', `数据目录: ${CONFIG.dataPath}`);
   log('info', `防抖阈值: ${CONFIG.debounceThreshold} 次连续达标`);
