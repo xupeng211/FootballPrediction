@@ -6,6 +6,8 @@
 
 'use strict';
 
+const { describe, it, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert');
 const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
@@ -146,7 +148,7 @@ describe('Sentinel Watch 哨兵系统', () => {
   });
 
   describe('文件计数', () => {
-    test('✅ 应正确统计 JSON 文件数量', async () => {
+it('✅ 应正确统计 JSON 文件数量', async () => {
       // 创建测试文件
       await fs.writeFile(path.join(tempDir, 'match1.json'), '{}');
       await fs.writeFile(path.join(tempDir, 'match2.json'), '{}');
@@ -154,126 +156,126 @@ describe('Sentinel Watch 哨兵系统', () => {
       await fs.writeFile(path.join(tempDir, 'readme.txt'), 'not json');
 
       const count = await sentinel.getFileCount(tempDir);
-      expect(count).toBe(3);
+      assert.strictEqual(count, 3);
     });
 
-    test('✅ 空目录应返回 0', async () => {
+it('✅ 空目录应返回 0', async () => {
       const count = await sentinel.getFileCount(tempDir);
-      expect(count).toBe(0);
+      assert.strictEqual(count, 0);
     });
 
-    test('✅ 不存在的目录应返回 0', async () => {
+it('✅ 不存在的目录应返回 0', async () => {
       const count = await sentinel.getFileCount('/nonexistent/path');
-      expect(count).toBe(0);
+      assert.strictEqual(count, 0);
     });
 
-    test('✅ 应忽略隐藏文件', async () => {
+it('✅ 应忽略隐藏文件', async () => {
       await fs.writeFile(path.join(tempDir, 'match.json'), '{}');
       await fs.writeFile(path.join(tempDir, '.hidden.json'), '{}');
 
       const count = await sentinel.getFileCount(tempDir);
-      expect(count).toBe(1);
+      assert.strictEqual(count, 1);
     });
   });
 
   describe('防抖逻辑', () => {
-    test('✅ 首次达标不应触发（防抖）', async () => {
+it('✅ 首次达标不应触发（防抖）', async () => {
       const result = await sentinel.checkCycle(100); // 刚好达标
 
-      expect(result.triggered).toBe(false);
-      expect(result.consecutiveHits).toBe(1);
-      expect(sentinel.state.isTriggered).toBe(false);
+      assert.strictEqual(result.triggered, false);
+      assert.strictEqual(result.consecutiveHits, 1);
+      assert.strictEqual(sentinel.state.isTriggered, false);
     });
 
-    test('✅ 连续两次达标应触发', async () => {
+it('✅ 连续两次达标应触发', async () => {
       // 第一次达标
       await sentinel.checkCycle(100);
       
       // 第二次达标
       const result = await sentinel.checkCycle(100);
 
-      expect(result.triggered).toBe(true);
-      expect(result.consecutiveHits).toBe(2);
-      expect(sentinel.state.isTriggered).toBe(true);
+      assert.strictEqual(result.triggered, true);
+      assert.strictEqual(result.consecutiveHits, 2);
+      assert.strictEqual(sentinel.state.isTriggered, true);
     });
 
-    test('✅ 达标后回落应重置计数器', async () => {
+it('✅ 达标后回落应重置计数器', async () => {
       // 第一次达标
       await sentinel.checkCycle(100);
-      expect(sentinel.state.consecutiveHits).toBe(1);
+      assert.strictEqual(sentinel.state.consecutiveHits, 1);
 
       // 回落
       await sentinel.checkCycle(99);
-      expect(sentinel.state.consecutiveHits).toBe(0);
+      assert.strictEqual(sentinel.state.consecutiveHits, 0);
 
       // 再次达标
       await sentinel.checkCycle(100);
-      expect(sentinel.state.consecutiveHits).toBe(1);
+      assert.strictEqual(sentinel.state.consecutiveHits, 1);
     });
 
-    test('✅ 触发后不应重复触发', async () => {
+it('✅ 触发后不应重复触发', async () => {
       // 连续两次达标触发
       await sentinel.checkCycle(100);
       await sentinel.checkCycle(100);
 
       // 再次检查
       const result = await sentinel.checkCycle(100);
-      expect(result.triggered).toBe(false); // 已触发过
+      assert.strictEqual(result.triggered, false); // 已触发过
     });
   });
 
   describe('停机指令', () => {
-    test('✅ 停机指令应正确执行', async () => {
+it('✅ 停机指令应正确执行', async () => {
       const result = await sentinel.executeShutdown();
       
-      expect(sentinel.shutdownCalled).toBe(true);
-      expect(result.success).toBe(true);
+      assert.strictEqual(sentinel.shutdownCalled, true);
+      assert.strictEqual(result.success, true);
     });
 
-    test('✅ 触发后应自动调用停机', async () => {
+it('✅ 触发后应自动调用停机', async () => {
       // 触发条件
       await sentinel.checkCycle(100);
       await sentinel.checkCycle(100);
 
       // 执行停机
       await sentinel.executeShutdown();
-      expect(sentinel.shutdownCalled).toBe(true);
+      assert.strictEqual(sentinel.shutdownCalled, true);
     });
   });
 
   describe('胜利日志', () => {
-    test('✅ 应正确生成日志数据', async () => {
+it('✅ 应正确生成日志数据', async () => {
       const logData = await sentinel.writeVictoryLog(100, 100);
 
-      expect(sentinel.victoryLogWritten).toBe(true);
-      expect(logData.fileCount).toBe(100);
-      expect(logData.dbCount).toBe(100);
-      expect(logData.alignmentRate).toBe('100.00');
-      expect(logData.timestamp).toBeDefined();
-      expect(logData.avgSpeed).toBeDefined();
+      assert.strictEqual(sentinel.victoryLogWritten, true);
+      assert.strictEqual(logData.fileCount, 100);
+      assert.strictEqual(logData.dbCount, 100);
+      assert.strictEqual(logData.alignmentRate, '100.00');
+      assert.ok(logData.timestamp !== undefined);
+      assert.ok(logData.avgSpeed !== undefined);
     });
 
-    test('✅ 应计算对齐率', async () => {
+it('✅ 应计算对齐率', async () => {
       const logData = await sentinel.writeVictoryLog(90, 100);
-      expect(logData.alignmentRate).toBe('90.00');
+      assert.strictEqual(logData.alignmentRate, '90.00');
     });
 
-    test('✅ 应计算平均速度', async () => {
+it('✅ 应计算平均速度', async () => {
       const logData = await sentinel.writeVictoryLog(120, 120);
-      expect(parseFloat(logData.avgSpeed)).toBeGreaterThanOrEqual(0);
+      assert.ok(parseFloat(logData.avgSpeed) >= 0);
     });
   });
 
   describe('进度计算', () => {
-    test('✅ 应正确计算进度百分比', async () => {
+it('✅ 应正确计算进度百分比', async () => {
       const result = await sentinel.checkCycle(50);
-      expect(result.progress).toBe('50.0');
-      expect(result.remaining).toBe(50);
+      assert.strictEqual(result.progress, '50.0');
+      assert.strictEqual(result.remaining, 50);
     });
 
-    test('✅ 超过目标时剩余应为 0', async () => {
+it('✅ 超过目标时剩余应为 0', async () => {
       const result = await sentinel.checkCycle(150);
-      expect(result.remaining).toBe(0);
+      assert.strictEqual(result.remaining, 0);
       expect(parseFloat(result.progress)).toBeGreaterThan(100);
     });
   });

@@ -210,7 +210,7 @@ describe('数据完整性测试套件', () => {
         let harvester;
 
         beforeEach(() => {
-                ProductionHarvester = require('/app/src/infrastructure/harvesters/ProductionHarvester');
+                ProductionHarvester = require('../../src/infrastructure/harvesters/ProductionHarvester');
                 harvester = new ProductionHarvester({
                     dryRun: true,
                     maxWorkers: 1

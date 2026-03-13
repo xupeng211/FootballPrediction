@@ -6,6 +6,8 @@
 
 'use strict';
 
+const { describe, it, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert');
 const fs = require('fs').promises;
 const path = require('path');
 
@@ -176,34 +178,34 @@ describe('Audit Dataset 审计系统', () => {
   });
 
   describe('物理清点', () => {
-    test('✅ 应正确列出所有 JSON 文件', async () => {
+it('✅ 应正确列出所有 JSON 文件', async () => {
       await fs.writeFile(path.join(tempDir, 'match1.json'), '{}');
       await fs.writeFile(path.join(tempDir, 'match2.json'), '{}');
       await fs.writeFile(path.join(tempDir, 'other.txt'), 'text');
 
       const files = await auditor.getFileList();
-      expect(files).toHaveLength(2);
-      expect(files).toContain('match1.json');
-      expect(files).toContain('match2.json');
+      assert.strictEqual(files.length, 2);
+      assert.ok(files.includes('match1.json'));
+      assert.ok(files.includes('match2.json'));
     });
 
-    test('✅ 空目录应返回空数组', async () => {
+it('✅ 空目录应返回空数组', async () => {
       const files = await auditor.getFileList();
-      expect(files).toEqual([]);
+      assert.deepStrictEqual(files, []);
     });
 
-    test('✅ 应忽略隐藏文件', async () => {
+it('✅ 应忽略隐藏文件', async () => {
       await fs.writeFile(path.join(tempDir, 'match.json'), '{}');
       await fs.writeFile(path.join(tempDir, '.hidden.json'), '{}');
 
       const files = await auditor.getFileList();
-      expect(files).toHaveLength(1);
-      expect(files[0]).toBe('match.json');
+      assert.strictEqual(files.length, 1);
+      assert.strictEqual(files[0], 'match.json');
     });
   });
 
   describe('文件验证', () => {
-    test('✅ 完整文件应验证通过', async () => {
+it('✅ 完整文件应验证通过', async () => {
       const validData = {
         match_id: '12345',
         raw_data: { home: 'Team A', away: 'Team B' },
@@ -216,10 +218,10 @@ describe('Audit Dataset 审计系统', () => {
       );
 
       const result = await auditor.validateFile(path.join(tempDir, 'valid.json'));
-      expect(result.valid).toBe(true);
+      assert.strictEqual(result.valid, true);
     });
 
-    test('❌ 缺少 match_id 应标记为损坏', async () => {
+it('❌ 缺少 match_id 应标记为损坏', async () => {
       const invalidData = {
         raw_data: { home: 'Team A' },
         saved_at: '2026-03-12T10:00:00Z'
@@ -231,11 +233,11 @@ describe('Audit Dataset 审计系统', () => {
       );
 
       const result = await auditor.validateFile(path.join(tempDir, 'invalid.json'));
-      expect(result.valid).toBe(false);
-      expect(result.missing).toContain('match_id');
+      assert.strictEqual(result.valid, false);
+      assert.ok(result.missing.includes('match_id'));
     });
 
-    test('❌ 空 raw_data 应标记为损坏', async () => {
+it('❌ 空 raw_data 应标记为损坏', async () => {
       const invalidData = {
         match_id: '12345',
         raw_data: {},
@@ -248,11 +250,11 @@ describe('Audit Dataset 审计系统', () => {
       );
 
       const result = await auditor.validateFile(path.join(tempDir, 'empty_raw.json'));
-      expect(result.valid).toBe(false);
-      expect(result.missing).toContain('raw_data');
+      assert.strictEqual(result.valid, false);
+      assert.ok(result.missing.includes('raw_data'));
     });
 
-    test('❌ 缺少 saved_at 应标记为损坏', async () => {
+it('❌ 缺少 saved_at 应标记为损坏', async () => {
       const invalidData = {
         match_id: '12345',
         raw_data: { home: 'Team A' }
@@ -264,24 +266,24 @@ describe('Audit Dataset 审计系统', () => {
       );
 
       const result = await auditor.validateFile(path.join(tempDir, 'no_time.json'));
-      expect(result.valid).toBe(false);
-      expect(result.missing).toContain('saved_at');
+      assert.strictEqual(result.valid, false);
+      assert.ok(result.missing.includes('saved_at'));
     });
 
-    test('❌ 无效 JSON 应标记为损坏', async () => {
+it('❌ 无效 JSON 应标记为损坏', async () => {
       await fs.writeFile(
         path.join(tempDir, 'corrupt.json'),
         '{ invalid json }'
       );
 
       const result = await auditor.validateFile(path.join(tempDir, 'corrupt.json'));
-      expect(result.valid).toBe(false);
-      expect(result.error).toBeDefined();
+      assert.strictEqual(result.valid, false);
+      assert.ok(result.error !== undefined);
     });
   });
 
   describe('批量抽检', () => {
-    test('✅ 应正确计算通过率', async () => {
+it('✅ 应正确计算通过率', async () => {
       // 创建 5 个文件，3 个有效，2 个损坏
       for (let i = 0; i < 3; i++) {
         await fs.writeFile(
@@ -298,70 +300,70 @@ describe('Audit Dataset 审计系统', () => {
       }
 
       const result = await auditor.sampleValidation(10);
-      expect(result.checked).toBe(5);
-      expect(result.valid).toBe(3);
-      expect(result.corrupted).toBe(2);
-      expect(parseFloat(result.passRate)).toBe(60.00);
+      assert.strictEqual(result.checked, 5);
+      assert.strictEqual(result.valid, 3);
+      assert.strictEqual(result.corrupted, 2);
+      assert.strictEqual(parseFloat(result.passRate), 60.00);
     });
 
-    test('✅ 样本数不应超过实际文件数', async () => {
+it('✅ 样本数不应超过实际文件数', async () => {
       await fs.writeFile(path.join(tempDir, 'match.json'), '{}');
 
       const result = await auditor.sampleValidation(100);
-      expect(result.checked).toBe(1);
+      assert.strictEqual(result.checked, 1);
     });
 
-    test('✅ 空目录应返回 0 通过率', async () => {
+it('✅ 空目录应返回 0 通过率', async () => {
       const result = await auditor.sampleValidation(10);
-      expect(result.checked).toBe(0);
-      expect(result.passRate).toBe(0);
+      assert.strictEqual(result.checked, 0);
+      assert.strictEqual(result.passRate, 0);
     });
   });
 
   describe('对齐率计算', () => {
-    test('✅ 应正确计算对齐率', () => {
+it('✅ 应正确计算对齐率', () => {
       expect(auditor.calculateAlignmentRate(100, 100)).toBe('100.00');
       expect(auditor.calculateAlignmentRate(90, 100)).toBe('90.00');
       expect(auditor.calculateAlignmentRate(110, 100)).toBe('110.00');
     });
 
-    test('❌ DB 为 0 时应返回 0', () => {
+it('❌ DB 为 0 时应返回 0', () => {
       expect(auditor.calculateAlignmentRate(100, 0)).toBe(0);
     });
   });
 
   describe('审计报告生成', () => {
-    test('✅ 优秀质量应正确标记', () => {
+it('✅ 优秀质量应正确标记', () => {
       const report = auditor.generateReport(
         1000,
         { checked: 50, valid: 48, corrupted: 2, passRate: '96.00', corruptedFiles: [] },
         { dbCount: 1000, alignmentRate: '100.00' }
       );
 
-      expect(report.quality).toBe('优秀');
-      expect(report.totalFiles).toBe(1000);
-      expect(report.passRate).toBe('96.00');
+      assert.strictEqual(report.quality, '优秀');
+      assert.strictEqual(report.totalFiles, 1000);
+      assert.strictEqual(report.passRate, '96.00');
     });
 
-    test('✅ 良好质量应正确标记', () => {
+it('✅ 良好质量应正确标记', () => {
       const report = auditor.generateReport(
         1000,
         { checked: 50, valid: 46, corrupted: 4, passRate: '92.00', corruptedFiles: [] },
         { dbCount: 1050, alignmentRate: '95.24' }
       );
 
-      expect(report.quality).toBe('良好');
+      assert.strictEqual(report.quality, '良好');
     });
 
-    test('⚠️  低通过率应标记为需关注', () => {
+it('⚠️  低通过率应标记为需关注', () => {
       const report = auditor.generateReport(
         1000,
         { checked: 50, valid: 40, corrupted: 10, passRate: '80.00', corruptedFiles: ['id1', 'id2'] },
         { dbCount: 1200, alignmentRate: '83.33' }
       );
 
-      expect(report.quality).toBe('需关注');
-      expect(report.corruptedFiles).toHaveLength(2);
+      assert.strictEqual(report.quality, '需关注');
+      assert.strictEqual(report.corruptedFiles.length, 2);
     });
   });
 });
