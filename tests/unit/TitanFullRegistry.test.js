@@ -21,12 +21,12 @@ const assert = require('node:assert');
 const path = require('path');
 
 // 导入核心模块
-const { NextDataParser, transformToApiFormat } = require('/app/src/parsers/fotmob/NextDataParser');
-const { FotMobStrategy } = require('/app/src/infrastructure/harvesters/strategies/FotMobStrategy');
-const { ProductionHarvester } = require('/app/src/infrastructure/harvesters/ProductionHarvester');
-const { ErrorAuditor, getErrorAuditor, resetErrorAuditor, ErrorType } = require('/app/src/core/harvesters/ErrorAuditor');
-const { BrowserFactory, getBrowserFactory, resetBrowserFactory } = require('/app/src/infrastructure/browser/BrowserFactory');
-const { ContextPool } = require('/app/src/infrastructure/browser/ContextPool');
+const { NextDataParser, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
+const { FotMobStrategy } = require('../../src/infrastructure/harvesters/strategies/FotMobStrategy');
+const { ProductionHarvester } = require('../../src/infrastructure/harvesters/ProductionHarvester');
+const { ErrorAuditor, getErrorAuditor, resetErrorAuditor, ErrorType } = require('../../src/core/harvesters/ErrorAuditor');
+const { BrowserFactory, getBrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory');
+const { ContextPool } = require('../../src/infrastructure/browser/ContextPool');
 
 // ============================================================================
 // 测试数据
@@ -40,14 +40,7 @@ const sampleNextData = {
                     homeTeam: {
                         name: 'Home Team',
                         shortName: 'HOME',
-                        id: 123
-                    },
-                    awayTeam: {
-                        name: 'Away Team',
-                        shortName: 'AWAY',
-                        id: 456
-                    },
-                    homeTeam: {
+                        id: 123,
                         formation: '4-3-3',
                         starters: [
                             { name: 'Player 1', position: 'GK', marketValue: 10000000 },
@@ -56,12 +49,15 @@ const sampleNextData = {
                         subs: [
                             { name: 'Sub 1', position: 'MF', marketValue: 50000000 }
                         ],
-                        totalStarterMarketValue: 10000000000,
+                        totalStarterMarketValue: 10000000000
                     },
                     awayTeam: {
+                        name: 'Away Team',
+                        shortName: 'AWAY',
+                        id: 456,
                         formation: '4-4-2',
                         starters: [
-                            { name: 'Player 3', position: 'GK', marketValue: 90000000 }
+                            { name: 'Player 3', position: 'GK', marketValue: 90000000 },
                             { name: 'Player 4', position: 'DF', marketValue: 70000000 }
                         ],
                         subs: [
@@ -75,13 +71,13 @@ const sampleNextData = {
                             leagueId: 55,
                             homeTeamId: 123,
                             awayTeamId: 456,
-                            status: 'FINISHED'
+                            status: 'FINISHED',
                             startTime: 1700000000
                         }
                     },
                     header: {
                         homeScore: 2,
-                        awayScore: 1
+                        awayScore: 1,
                         status: 'FINISHED',
                         startTime: 1700000000
                     }
@@ -125,8 +121,8 @@ describe('NextDataParser', () => {
     let fotmobStrategy;
 
     beforeEach(() => {
-        nextDataParser = require('/app/src/parsers/fotmob/NextDataParser');
-        fotmobStrategy = require('/app/src/infrastructure/harvesters/strategies/FotMobStrategy');
+        nextDataParser = require('../../src/parsers/fotmob/NextDataParser');
+        fotmobStrategy = require('../../src/infrastructure/harvesters/strategies/FotMobStrategy');
     });
 
     // 测试 1-5: 模块导入
@@ -355,7 +351,6 @@ describe('BrowserFactory', () => {
         await browserFactory.injectStealthScripts(page);
         // 不应抛出错误
     });
-    });
 });
 
 // ============================================================================
@@ -373,12 +368,11 @@ describe('ContextPool', () => {
         contextPool.clear();
     });
 
-    // 测试 1: getOrCreateContext 应该成功创建新 Context
-    it('应该成功创建新 Context', () => {
-        const context = await contextPool.getOrCreateContext(1);
-        assert.ok(context);
-    });
-
+            // 测试 1: getOrCreateContext 应该成功创建新 Context
+            it('应该成功创建新 Context', async () => {
+                const context = await contextPool.getOrCreateContext(1);
+                assert.ok(context);
+            });
     // 测试 2: getOrCreateContext 应该返回已有 Context
     it('应该返回已有 Context', async () => {
         const context1 = await contextPool.getOrCreateContext(1);

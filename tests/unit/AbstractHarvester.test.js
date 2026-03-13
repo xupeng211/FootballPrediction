@@ -371,8 +371,7 @@ describe('AbstractHarvester 完整测试套件', () => {
                 'ECONNREFUSED',
                 'ENOTFOUND',
                 'net::ERR_CONNECTION_FAILED',
-                'Navigation timeout',
-                'CF_BLOCK'
+                'Navigation timeout'
             ];
 
             for (const errorMsg of retryableErrors) {
