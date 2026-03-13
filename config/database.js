@@ -22,7 +22,7 @@ const DB_CONFIG = {
     database: process.env.DB_NAME || 'football_db',
     user: process.env.DB_USER || 'football_user',
     password: process.env.DB_PASSWORD,
-    max: 20,
+    max: 50,  // V5.0-TURBO: 支持12核并行Worker
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 5000
 };

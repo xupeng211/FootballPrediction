@@ -175,10 +175,11 @@ def run_prediction_pipeline(
 
     for m in matches:
         try:
+            # V5.0: 使用 golden_features 和 tactical_features
             f, h2h_est = extract_features(
                 m["elo_features"],
-                m["lineup_features"],
-                m["h2h_features"],
+                m["golden_features"],
+                m["tactical_features"],
                 m["home_team"],
                 m["away_team"],
                 m["league_name"],

@@ -26,7 +26,7 @@ const DEFAULT_CONFIG = {
     onConflict: 'upsert'      // 冲突处理: 'upsert' | 'skip' | 'error'
 };
 
-// SQL 语句
+// SQL 语句 (V5.0 - 30维特征)
 const SQL = {
     // UPSERT 单条记录
     upsertFeature: `
@@ -37,14 +37,20 @@ const SQL = {
             tactical_features,
             odds_movement_features,
             elo_features,
+            rolling_features,
+            efficiency_features,
+            draw_features,
             computed_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         ON CONFLICT (match_id) DO UPDATE SET
             external_id = EXCLUDED.external_id,
             golden_features = EXCLUDED.golden_features,
             tactical_features = EXCLUDED.tactical_features,
             odds_movement_features = EXCLUDED.odds_movement_features,
             elo_features = EXCLUDED.elo_features,
+            rolling_features = EXCLUDED.rolling_features,
+            efficiency_features = EXCLUDED.efficiency_features,
+            draw_features = EXCLUDED.draw_features,
             computed_at = EXCLUDED.computed_at
     `,
 
@@ -57,8 +63,11 @@ const SQL = {
             tactical_features,
             odds_movement_features,
             elo_features,
+            rolling_features,
+            efficiency_features,
+            draw_features,
             computed_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         ON CONFLICT (match_id) DO NOTHING
     `,
 
@@ -71,14 +80,23 @@ const SQL = {
             tactical_features,
             odds_movement_features,
             elo_features,
+            rolling_features,
+            efficiency_features,
+            draw_features,
             computed_at
-        ) SELECT * FROM UNNEST($1::text[], $2::text[], $3::jsonb[], $4::jsonb[], $5::jsonb[], $6::jsonb[], $7::timestamptz[])
+        ) SELECT * FROM UNNEST(
+            $1::text[], $2::text[], $3::jsonb[], $4::jsonb[],
+            $5::jsonb[], $6::jsonb[], $7::jsonb[], $8::jsonb[], $9::jsonb[], $10::timestamptz[]
+        )
         ON CONFLICT (match_id) DO UPDATE SET
             external_id = EXCLUDED.external_id,
             golden_features = EXCLUDED.golden_features,
             tactical_features = EXCLUDED.tactical_features,
             odds_movement_features = EXCLUDED.odds_movement_features,
             elo_features = EXCLUDED.elo_features,
+            rolling_features = EXCLUDED.rolling_features,
+            efficiency_features = EXCLUDED.efficiency_features,
+            draw_features = EXCLUDED.draw_features,
             computed_at = EXCLUDED.computed_at
     `,
 
@@ -188,6 +206,9 @@ class L3Writer extends BaseExtractor {
                 JSON.stringify(feature.tactical_features),
                 JSON.stringify(feature.odds_movement_features),
                 JSON.stringify(feature.elo_features),
+                JSON.stringify(feature.rolling_features || {}),
+                JSON.stringify(feature.efficiency_features || {}),
+                JSON.stringify(feature.draw_features || {}),
                 feature.computed_at || new Date().toISOString()
             ]);
 
@@ -305,13 +326,16 @@ class L3Writer extends BaseExtractor {
         }
 
         try {
-            // 准备 unnest 数组
+            // 准备 unnest 数组 (V5.0 - 30维特征)
             const matchIds = [];
             const externalIds = [];
             const goldenFeatures = [];
             const tacticalFeatures = [];
             const oddsFeatures = [];
             const eloFeatures = [];
+            const rollingFeatures = [];
+            const efficiencyFeatures = [];
+            const drawFeatures = [];
             const computedAts = [];
 
             for (const f of validFeatures) {
@@ -321,6 +345,9 @@ class L3Writer extends BaseExtractor {
                 tacticalFeatures.push(JSON.stringify(f.tactical_features));
                 oddsFeatures.push(JSON.stringify(f.odds_movement_features));
                 eloFeatures.push(JSON.stringify(f.elo_features));
+                rollingFeatures.push(JSON.stringify(f.rolling_features || {}));
+                efficiencyFeatures.push(JSON.stringify(f.efficiency_features || {}));
+                drawFeatures.push(JSON.stringify(f.draw_features || {}));
                 computedAts.push(f.computed_at || new Date().toISOString());
             }
 
@@ -331,6 +358,9 @@ class L3Writer extends BaseExtractor {
                 tacticalFeatures,
                 oddsFeatures,
                 eloFeatures,
+                rollingFeatures,
+                efficiencyFeatures,
+                drawFeatures,
                 computedAts
             ]);
 
@@ -384,6 +414,9 @@ class L3Writer extends BaseExtractor {
                         JSON.stringify(feature.tactical_features),
                         JSON.stringify(feature.odds_movement_features),
                         JSON.stringify(feature.elo_features),
+                        JSON.stringify(feature.rolling_features || {}),
+                        JSON.stringify(feature.efficiency_features || {}),
+                        JSON.stringify(feature.draw_features || {}),
                         feature.computed_at || new Date().toISOString()
                     ]);
 

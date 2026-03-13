@@ -34,21 +34,59 @@ RESULT_NAMES: List[str] = ["AWAY", "DRAW", "HOME"]
 RESULT_MAP_REVERSE: Dict[int, str] = {2: "H", 1: "D", 0: "A"}
 
 # ============================================================================
-# 11 维纯净特征集 (TITAN Combat Features)
+# TITAN V5.0 - 30 维纯净特征集
 # ============================================================================
 
 TITAN_COMBAT_FEATURES: List[str] = [
-    # Elo 特征 (5 维)
+    # 基础特征 (11 维) - 保留原核心特征
     "home_elo_pre",
     "away_elo_pre",
     "elo_diff",
     "expected_home_win",
     "expected_away_win",
-    # 身价特征 (3 维)
     "log_home_squad_value",
     "log_away_squad_value",
     "home_mv_share",
-    # H2H 特征 (3 维)
+    "h2h_home_win_ratio",
+    "h2h_draw_ratio",
+    "h2h_avg_goal_diff",
+
+    # 滚动统计特征 (7 维) - 关键滚动指标
+    "home_last5_xg_avg",
+    "away_last5_xg_avg",
+    "home_last5_win_rate",
+    "away_last5_win_rate",
+    "home_last5_draw_rate",
+    "away_last5_draw_rate",
+    "rest_days_diff",
+
+    # 效率特征 (5 维) - 进攻/防守效率
+    "home_shot_conversion",
+    "away_shot_conversion",
+    "home_finishing_efficiency",
+    "away_finishing_efficiency",
+    "finishing_efficiency_diff",
+
+    # 平局体质特征 (7 维) - 平局预测优化
+    "home_draw_rate",
+    "away_draw_rate",
+    "home_draw_tendency",
+    "away_draw_tendency",
+    "combined_draw_probability",
+    "match_stalemate_index",
+    "tactical_stalemate_index",
+]
+
+# 兼容旧模型的11维特征
+TITAN_COMBAT_FEATURES_LEGACY: List[str] = [
+    "home_elo_pre",
+    "away_elo_pre",
+    "elo_diff",
+    "expected_home_win",
+    "expected_away_win",
+    "log_home_squad_value",
+    "log_away_squad_value",
+    "home_mv_share",
     "h2h_home_win_ratio",
     "h2h_draw_ratio",
     "h2h_avg_goal_diff",
@@ -73,6 +111,28 @@ DEFAULT_VALUES: Dict[str, float] = {
     "h2h_home_win_ratio": 0.40,
     "h2h_draw_ratio": 0.25,
     "h2h_avg_goal_diff": 0.0,
+    # 滚动统计默认值
+    "home_last5_xg_avg": 1.2,
+    "away_last5_xg_avg": 1.2,
+    "home_last5_win_rate": 0.33,
+    "away_last5_win_rate": 0.33,
+    "home_last5_draw_rate": 0.25,
+    "away_last5_draw_rate": 0.25,
+    "rest_days_diff": 0.0,
+    # 效率特征默认值
+    "home_shot_conversion": 0.33,
+    "away_shot_conversion": 0.33,
+    "home_finishing_efficiency": 1.0,
+    "away_finishing_efficiency": 1.0,
+    "finishing_efficiency_diff": 0.0,
+    # 平局体质默认值
+    "home_draw_rate": 0.25,
+    "away_draw_rate": 0.25,
+    "home_draw_tendency": 0.0,
+    "away_draw_tendency": 0.0,
+    "combined_draw_probability": 0.25,
+    "match_stalemate_index": 0.0,
+    "tactical_stalemate_index": 1.0,
 }
 
 # ============================================================================
