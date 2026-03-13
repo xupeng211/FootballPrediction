@@ -12,7 +12,7 @@
 const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 
-const { ErrorAuditor, = require('../../src/core/harvesters/ErrorAuditor');
+const { ErrorAuditor } = require('../../src/core/harvesters/ErrorAuditor');
 const { ErrorType, RETRYABLE_PATTERNS, NON_RETRYABLE_PATTERNS } = require('../../src/core/harvesters/ErrorAuditor');
 
 describe('ErrorAuditor 测试', () => {
