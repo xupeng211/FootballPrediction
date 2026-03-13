@@ -77,11 +77,29 @@ async function main() {
         sessionPath: sessionPath
     });
 
-    await harvester.init();
-    await harvester.run();
+    try {
+        await harvester.init();
+        const result = await harvester.run();
+        
+        // V4.51.5: 确保资源正确释放，防止进程挂起
+        console.log('\n[INFO] 正在关闭资源...');
+        await harvester.cleanup();
+        console.log('[INFO] 资源已释放，任务完成');
+        
+        // 强制退出，确保不挂起
+        process.exit(0);
+    } catch (err) {
+        console.error('❌ 致命错误:', err.message);
+        try {
+            await harvester.cleanup();
+        } catch (cleanupErr) {
+            console.error('清理时出错:', cleanupErr.message);
+        }
+        process.exit(1);
+    }
 }
 
 main().catch(err => {
-    console.error('❌ 致命错误:', err.message);
+    console.error('❌ 未捕获的错误:', err.message);
     process.exit(1);
 });
