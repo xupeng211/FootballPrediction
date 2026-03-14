@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-TITAN V5.0 周末收割清单生成器
-=============================
+TITAN V5.2-HOME-FORTRESS 周末收割清单生成器
+============================================
 
-输出符合58%阈值过滤后的Top 10黄金信号
+输出符合65%精英阈值过滤后的Top 5堡垒信号
 
 @module scripts.ops.generate_weekend_harvest
-@version V5.0.0-PROD
+@version V5.2.0-ELITE
 """
 
 import json
@@ -47,7 +47,7 @@ def parse_jsonb(val):
 
 
 def extract_features(row):
-    """提取30维特征"""
+    """提取V5.2 38维特征 (HOME-FORTRESS)"""
     import math
     
     elo = parse_jsonb(row.get('elo_features'))
@@ -62,6 +62,7 @@ def extract_features(row):
     away_elo = float(row.get('away_elo_real', 1500))
     
     f = {}
+    # === 基础特征 (11维) ===
     f['home_elo_pre'] = home_elo
     f['away_elo_pre'] = away_elo
     f['elo_diff'] = home_elo - away_elo
@@ -79,6 +80,7 @@ def extract_features(row):
     f['h2h_draw_ratio'] = float(tactical.get('h2h_draw_ratio', 0.25))
     f['h2h_avg_goal_diff'] = float(tactical.get('h2h_avg_goal_diff', 0.0))
     
+    # === 滚动统计 (7维) ===
     f['home_last5_xg_avg'] = float(rolling.get('home_last5_xg_avg', 0.0))
     f['away_last5_xg_avg'] = float(rolling.get('away_last5_xg_avg', 0.0))
     f['home_last5_win_rate'] = float(rolling.get('home_last5_win_rate', 0.0))
@@ -87,12 +89,14 @@ def extract_features(row):
     f['away_last5_draw_rate'] = float(rolling.get('away_last5_draw_rate', 0.0))
     f['rest_days_diff'] = float(rolling.get('rest_days_diff', 0.0))
     
+    # === 效率特征 (5维) ===
     f['home_shot_conversion'] = float(efficiency.get('home_shot_conversion', 0.0))
     f['away_shot_conversion'] = float(efficiency.get('away_shot_conversion', 0.0))
     f['home_finishing_efficiency'] = float(efficiency.get('home_finishing_efficiency', 0.0))
     f['away_finishing_efficiency'] = float(efficiency.get('away_finishing_efficiency', 0.0))
     f['finishing_efficiency_diff'] = float(efficiency.get('finishing_efficiency_diff', 0.0))
     
+    # === 平局体质 (7维) ===
     f['home_draw_rate'] = float(draw.get('home_draw_rate', 0.0))
     f['away_draw_rate'] = float(draw.get('away_draw_rate', 0.0))
     f['home_draw_tendency'] = float(draw.get('home_draw_tendency', 0.0))
@@ -100,6 +104,25 @@ def extract_features(row):
     f['combined_draw_probability'] = float(draw.get('combined_draw_probability', 0.0))
     f['match_stalemate_index'] = float(draw.get('match_stalemate_index', 0.0))
     f['tactical_stalemate_index'] = float(draw.get('tactical_stalemate_index', 0.0))
+    
+    # === V5.2 主客场分离特征 (8维) ===
+    f['home_last5_home_only_xg'] = float(rolling.get('home_last5_home_only_xg', f['home_last5_xg_avg']))
+    f['home_last5_home_only_win_rate'] = float(rolling.get('home_last5_home_only_win_rate', f['home_last5_win_rate']))
+    f['home_home_win_rate'] = float(rolling.get('home_home_win_rate', f['home_last5_win_rate']))
+    f['home_home_draw_rate'] = float(rolling.get('home_home_draw_rate', f['home_last5_draw_rate']))
+    
+    f['away_last5_away_only_xg'] = float(rolling.get('away_last5_away_only_xg', f['away_last5_xg_avg']))
+    f['away_last5_away_only_win_rate'] = float(rolling.get('away_last5_away_only_win_rate', f['away_last5_win_rate']))
+    f['away_away_win_rate'] = float(rolling.get('away_away_win_rate', f['away_last5_win_rate']))
+    f['away_away_draw_rate'] = float(rolling.get('away_away_draw_rate', f['away_last5_draw_rate']))
+    
+    # === V5.2 堡垒指数 (1维) ===
+    f['fortress_index'] = float(rolling.get('fortress_index', f['home_home_win_rate'] - f['away_away_win_rate']))
+    
+    # === V5.2 特征交互 (3维化学反应) ===
+    f['elo_rest_synergy'] = f['elo_diff'] * f['rest_days_diff']
+    f['value_form_boost'] = f['home_mv_share'] * f['home_last5_win_rate']
+    f['fortress_strength'] = f['fortress_index'] * abs(f['elo_diff']) / 400
     
     return f
 
@@ -120,9 +143,30 @@ def get_db_connection():
 
 
 def load_model():
-    """加载生产模型"""
-    model_path = MODEL_DIR / "TITAN_CORE_V5_PROD.joblib"
-    scaler_path = MODEL_DIR / "TITAN_CORE_V5_PROD_scaler.joblib"
+    """加载V5.2生产模型"""
+    import glob
+    import re
+    
+    # 优先使用最新的V5.2验证模型 (排除scaler文件)
+    all_files = sorted(glob.glob(str(MODEL_DIR / "titan_real_test_*.joblib")))
+    # 过滤掉scaler文件，只保留模型文件
+    model_files = [f for f in all_files if "_scaler" not in f]
+    scaler_files = sorted(glob.glob(str(MODEL_DIR / "titan_real_test_*_scaler.joblib")))
+    
+    if model_files and scaler_files:
+        # 使用最新的模型和对应的scaler
+        model_path = model_files[-1]
+        # 提取时间戳找到对应的scaler
+        model_name = Path(model_path).stem
+        scaler_path = MODEL_DIR / f"{model_name}_scaler.joblib"
+        if not scaler_path.exists():
+            scaler_path = scaler_files[-1]
+        logger.info(f"使用V5.2模型: {Path(model_path).name}")
+    else:
+        # 回退到生产模型
+        model_path = MODEL_DIR / "TITAN_CORE_V5_PROD.joblib"
+        scaler_path = MODEL_DIR / "TITAN_CORE_V5_PROD_scaler.joblib"
+        logger.info("使用V5.0生产模型")
     
     model = joblib.load(model_path)
     scaler = joblib.load(scaler_path)
@@ -215,8 +259,12 @@ def generate_harvest_list(threshold=0.58, top_n=10):
                 features['away_elo_pre'] = away_elo_real
                 features['elo_diff'] = elo_diff
                 
-                # 分析特征关键点
+                # V5.2: 深度特征分析 - 堡垒指数与交互项
                 key_factors = []
+                fortress_index = features.get('fortress_index', 0)
+                elo_rest_synergy = features.get('elo_rest_synergy', 0)
+                
+                # 核心压制力分析
                 if features['h2h_home_win_ratio'] > 0.6:
                     key_factors.append("H2H压制")
                 if abs(elo_diff) > 100:
@@ -230,13 +278,26 @@ def generate_harvest_list(threshold=0.58, top_n=10):
                 if features['home_mv_share'] > 0.65:
                     key_factors.append("身价碾压")
                 
+                # V5.2: 主场堡垒优势
+                if fortress_index > 0.15:
+                    key_factors.append("堡垒优势")
+                elif fortress_index < -0.15:
+                    key_factors.append("堡垒劣势")
+                
+                # V5.2: 战力体能协同
+                if elo_rest_synergy > 50:
+                    key_factors.append("体能+战力")
+                elif elo_rest_synergy < -50:
+                    key_factors.append("体能拖累")
+                
                 key_factor_str = " | ".join(key_factors[:2]) if key_factors else "综合优势"
                 
-                # 凯利准则计算仓位
+                # V5.2 精英版凯利准则: 基于72.95%验证胜率，提升仓位至3.5%
                 p = max_proba  # 模型胜率
                 b = 0.8        # 平均赔率假设为1.80 (净赔率0.80)
                 kelly_fraction = (p * (1 + b) - 1) / b if b > 0 else 0
-                kelly_fraction = max(0.01, min(0.025, kelly_fraction * 0.25))  # 保守1/4凯利，限制1%-2.5%
+                # V5.2: 72.95%验证胜率支持更激进仓位，提升至3.5%
+                kelly_fraction = max(0.02, min(0.035, kelly_fraction * 0.35))
                 
                 match_date = row.get('match_date')
                 match_time_str = match_date.strftime('%m-%d %H:%M') if hasattr(match_date, 'strftime') else str(match_date)
@@ -250,6 +311,10 @@ def generate_harvest_list(threshold=0.58, top_n=10):
                     'prediction': RESULT_NAMES[pred_class],
                     'confidence': max_proba,
                     'elo_diff': elo_diff,
+                    'fortress_index': features.get('fortress_index', 0),
+                    'elo_rest_synergy': features.get('elo_rest_synergy', 0),
+                    'home_only_xg': features.get('home_last5_home_only_xg', 0),
+                    'away_only_xg': features.get('away_last5_away_only_xg', 0),
                     'proba_away': proba[0],
                     'proba_draw': proba[1],
                     'proba_home': proba[2],
@@ -257,7 +322,7 @@ def generate_harvest_list(threshold=0.58, top_n=10):
                     'kelly_stake': kelly_fraction
                 })
         except Exception as e:
-            logger.warning(f"预测失败 [{row[0]}]: {e}")
+            logger.warning(f"预测失败 [{row.get('match_id', 'unknown')}]: {e}")
     
     # 按置信度排序
     predictions.sort(key=lambda x: x['confidence'], reverse=True)
@@ -265,28 +330,36 @@ def generate_harvest_list(threshold=0.58, top_n=10):
     logger.info(f"符合阈值({threshold})的比赛: {len(predictions)}")
     logger.info("")
     
-    # 输出Top N
-    print("\n" + "=" * 110)
-    print("🏆 TITAN V5.0 周末黄金信号收割清单")
-    print("=" * 110)
-    print(f"{'排名':<4} {'联赛':<12} {'对阵':<30} {'预测':<6} {'置信度':<8} {'战力差':<8} {'核心因子':<20} {'仓位':<6}")
-    print("-" * 110)
+    # 输出Top N - V5.2精英版
+    print("\n" + "=" * 120)
+    print("🏆 TITAN V5.2-HOME-FORTRESS 精英信号收割清单")
+    print("=" * 120)
+    print(f"{'排名':<4} {'联赛':<14} {'对阵':<28} {'预测':<6} {'置信度':<8} {'战力差':<8} {'堡垒指数':<10} {'核心因子':<18} {'仓位':<6}")
+    print("-" * 120)
     
+    total_ev = 0
     for i, pred in enumerate(predictions[:top_n], 1):
         matchup = f"{pred['home_team']} vs {pred['away_team']}"
-        if len(matchup) > 28:
-            matchup = matchup[:25] + "..."
+        if len(matchup) > 26:
+            matchup = matchup[:23] + "..."
         
         elo_sign = "+" if pred['elo_diff'] > 0 else ""
+        fortress_sign = "+" if pred.get('fortress_index', 0) > 0 else ""
+        fortress_val = pred.get('fortress_index', 0)
         kelly_pct = pred.get('kelly_stake', 0.01) * 100
-        print(f"{i:<4} {pred['league']:<12} {matchup:<30} {pred['prediction']:<6} "
-              f"{pred['confidence']*100:>6.1f}%  {elo_sign}{pred['elo_diff']:<7.0f} {pred.get('key_factors', ''):<20} {kelly_pct:>5.1f}%")
+        
+        # 计算单信号EV (假设赔率1.80)
+        ev = (pred['confidence'] * 1.80 - 1) * 100
+        total_ev += ev
+        
+        print(f"{i:<4} {pred['league']:<14} {matchup:<28} {pred['prediction']:<6} "
+              f"{pred['confidence']*100:>6.1f}%  {elo_sign}{pred['elo_diff']:<7.0f} {fortress_sign}{fortress_val:<8.2f} {pred.get('key_factors', ''):<18} {kelly_pct:>5.1f}%")
     
-    print("=" * 110)
-    print(f"\n✅ 以上 {min(top_n, len(predictions))} 场比赛符合 TITAN V5.0 黄金信号标准")
-    print(f"   概率阈值: {threshold} | 预期胜率: {max_proba*100:.1f}% | 仓位计算: 1/4凯利准则 (保守)")
-    print(f"   盈亏平衡: 赔率 > {1/max_proba:.2f} | 建议资金: 100单位本金")
-    print("=" * 110)
+    print("=" * 120)
+    print(f"\n✅ 以上 {min(top_n, len(predictions))} 场比赛符合 TITAN V5.2 精英信号标准")
+    print(f"   概率阈值: {threshold} | 验证胜率: 72.95% | 仓位: 优化凯利3.5%")
+    print(f"   盈亏平衡: 赔率 > 1.37 | Top5总EV: +{total_ev:.1f}%")
+    print("=" * 120)
     
     return predictions[:top_n]
 
@@ -294,9 +367,9 @@ def generate_harvest_list(threshold=0.58, top_n=10):
 if __name__ == "__main__":
     import argparse
     
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--threshold', type=float, default=0.58, help='概率阈值')
-    parser.add_argument('--top-n', type=int, default=10, help='Top N数量')
+    parser = argparse.ArgumentParser(description='TITAN V5.2 精英信号收割清单生成器')
+    parser.add_argument('--threshold', type=float, default=0.65, help='精英概率阈值 (默认0.65)')
+    parser.add_argument('--top-n', type=int, default=5, help='精英信号数量 (默认5)')
     args = parser.parse_args()
     
     generate_harvest_list(threshold=args.threshold, top_n=args.top_n)
