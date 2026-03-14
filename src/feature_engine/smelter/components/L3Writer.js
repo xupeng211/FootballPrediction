@@ -28,7 +28,7 @@ const DEFAULT_CONFIG = {
 
 // SQL 语句 (V5.0 - 30维特征)
 const SQL = {
-    // UPSERT 单条记录
+    // UPSERT 单条记录 (V6.0 新增 market_sentiment)
     upsertFeature: `
         INSERT INTO l3_features (
             match_id,
@@ -40,8 +40,9 @@ const SQL = {
             rolling_features,
             efficiency_features,
             draw_features,
+            market_sentiment,
             computed_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         ON CONFLICT (match_id) DO UPDATE SET
             external_id = EXCLUDED.external_id,
             golden_features = EXCLUDED.golden_features,
@@ -51,10 +52,11 @@ const SQL = {
             rolling_features = EXCLUDED.rolling_features,
             efficiency_features = EXCLUDED.efficiency_features,
             draw_features = EXCLUDED.draw_features,
+            market_sentiment = EXCLUDED.market_sentiment,
             computed_at = EXCLUDED.computed_at
     `,
 
-    // 插入单条记录（跳过冲突）
+    // 插入单条记录（跳过冲突）(V6.0 新增 market_sentiment)
     insertFeatureSkip: `
         INSERT INTO l3_features (
             match_id,
@@ -66,12 +68,13 @@ const SQL = {
             rolling_features,
             efficiency_features,
             draw_features,
+            market_sentiment,
             computed_at
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         ON CONFLICT (match_id) DO NOTHING
     `,
 
-    // 批量插入（使用 unnest）
+    // 批量插入（使用 unnest）(V6.0 新增 market_sentiment)
     bulkInsert: `
         INSERT INTO l3_features (
             match_id,
@@ -83,10 +86,11 @@ const SQL = {
             rolling_features,
             efficiency_features,
             draw_features,
+            market_sentiment,
             computed_at
         ) SELECT * FROM UNNEST(
             $1::text[], $2::text[], $3::jsonb[], $4::jsonb[],
-            $5::jsonb[], $6::jsonb[], $7::jsonb[], $8::jsonb[], $9::jsonb[], $10::timestamptz[]
+            $5::jsonb[], $6::jsonb[], $7::jsonb[], $8::jsonb[], $9::jsonb[], $10::jsonb[], $11::timestamptz[]
         )
         ON CONFLICT (match_id) DO UPDATE SET
             external_id = EXCLUDED.external_id,
@@ -97,6 +101,7 @@ const SQL = {
             rolling_features = EXCLUDED.rolling_features,
             efficiency_features = EXCLUDED.efficiency_features,
             draw_features = EXCLUDED.draw_features,
+            market_sentiment = EXCLUDED.market_sentiment,
             computed_at = EXCLUDED.computed_at
     `,
 
@@ -326,7 +331,7 @@ class L3Writer extends BaseExtractor {
         }
 
         try {
-            // 准备 unnest 数组 (V5.0 - 30维特征)
+            // 准备 unnest 数组 (V6.0 - 新增 market_sentiment)
             const matchIds = [];
             const externalIds = [];
             const goldenFeatures = [];
@@ -336,6 +341,7 @@ class L3Writer extends BaseExtractor {
             const rollingFeatures = [];
             const efficiencyFeatures = [];
             const drawFeatures = [];
+            const marketSentiments = [];  // V6.0 新增
             const computedAts = [];
 
             for (const f of validFeatures) {
@@ -348,6 +354,7 @@ class L3Writer extends BaseExtractor {
                 rollingFeatures.push(JSON.stringify(f.rolling_features || {}));
                 efficiencyFeatures.push(JSON.stringify(f.efficiency_features || {}));
                 drawFeatures.push(JSON.stringify(f.draw_features || {}));
+                marketSentiments.push(JSON.stringify(f.market_sentiment || {}));  // V6.0 新增
                 computedAts.push(f.computed_at || new Date().toISOString());
             }
 
@@ -361,6 +368,7 @@ class L3Writer extends BaseExtractor {
                 rollingFeatures,
                 efficiencyFeatures,
                 drawFeatures,
+                marketSentiments,  // V6.0 新增
                 computedAts
             ]);
 
@@ -417,6 +425,7 @@ class L3Writer extends BaseExtractor {
                         JSON.stringify(feature.rolling_features || {}),
                         JSON.stringify(feature.efficiency_features || {}),
                         JSON.stringify(feature.draw_features || {}),
+                        JSON.stringify(feature.market_sentiment || {}),  // V6.0 新增
                         feature.computed_at || new Date().toISOString()
                     ]);
 
