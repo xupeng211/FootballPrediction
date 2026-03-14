@@ -19,6 +19,7 @@ const { TacticalExtractor } = require('./components/TacticalExtractor');
 const { RollingFeatureExtractor } = require('./components/RollingFeatureExtractor');
 const { EfficiencyFeatureExtractor } = require('./components/EfficiencyFeatureExtractor');
 const { DrawPropensityExtractor } = require('./components/DrawPropensityExtractor');
+const { MarketSentimentExtractor } = require('./components/MarketSentimentExtractor');
 const { StructuredLogger } = require('../../utils/StructuredLogger');
 
 // 导入旧的提取器（赔率）直到迁移完成
@@ -82,6 +83,12 @@ class SmelterOrchestrator {
         this.drawExtractor = new DrawPropensityExtractor({
             dbPool: this.pool,
             config: { rollingWindow: 10, minSamples: 5 }
+        });
+
+        // V6.0 新增：市场情绪提取器
+        this.marketSentimentExtractor = new MarketSentimentExtractor({
+            alignmentTimeoutMs: 10,
+            enableRapidFuzz: false  // 默认使用 JS 回退，生产环境可启用
         });
 
         // 状态
@@ -282,6 +289,33 @@ class SmelterOrchestrator {
             const tacticalFeatures = this.tacticalExtractor.extract(raw_data);
             const oddsMovementFeatures = extractOddsMovementFeatures(raw_data);
 
+            // V6.0 新增：提取市场情绪特征
+            let marketSentiment = null;
+            try {
+                const oddsData = raw_data?.odds || raw_data?.odds_data || {};
+                const sentimentResult = await this.marketSentimentExtractor.extract({
+                    matchId: match_id,
+                    oddsData: {
+                        openingOdds: oddsData.opening || oddsData.openingOdds,
+                        closingOdds: oddsData.closing || oddsData.closingOdds,
+                        homeTeam,
+                        awayTeam
+                    }
+                });
+                marketSentiment = sentimentResult.market_sentiment;
+            } catch (sentimentError) {
+                this.logger.warn('市场情绪特征提取失败，使用默认值', {
+                    match_id,
+                    error: sentimentError.message
+                });
+                // 使用默认值 (Mean Imputation)
+                marketSentiment = this.marketSentimentExtractor._getDefaultSentiment?.() || {
+                    odds_drop: 0,
+                    market_margin: 0.05,
+                    version: 'V6.0.0-DEFAULT'
+                };
+            }
+
             return {
                 match_id,
                 external_id: match.external_id || match_id,
@@ -292,6 +326,7 @@ class SmelterOrchestrator {
                 efficiency_features: allFeatures.efficiency || {},
                 draw_features: allFeatures.draw || {},
                 elo_features: eloFeatures,
+                market_sentiment: marketSentiment,  // V6.0 新增
                 computed_at: new Date().toISOString()
             };
 
