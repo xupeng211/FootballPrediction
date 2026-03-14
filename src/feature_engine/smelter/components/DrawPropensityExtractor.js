@@ -1,5 +1,5 @@
 /**
- * DrawPropensityExtractor - V4.0 平局倾向特征提取器
+ * DrawPropensityExtractor - V5.2 平局倾向特征提取器
  * ===================================================
  *
  * 专门用于解决平局预测准确率低的问题
@@ -8,11 +8,11 @@
  * - 进攻保守性 (低xG + 低失球)
  * - 比赛胶着倾向
  *
- * V4.0 模块化:
+ * V5.2 模块化:
  * - 继承 BaseExtractor
  * - 专门针对平局预测的优化
  * @module feature_engine/smelter/components/DrawPropensityExtractor
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -82,7 +82,7 @@ class DrawPropensityExtractor extends BaseExtractor {
     constructor(options = {}) {
         super({
             name: 'DrawPropensityExtractor',
-            version: 'V4.0.0-MODULAR',
+            version: 'V5.2.0-HOME-FORTRESS',
             requiredFields: [],
             config: { ...DEFAULT_CONFIG, ...(options.config || {}) }
         });

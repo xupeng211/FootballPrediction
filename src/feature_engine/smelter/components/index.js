@@ -1,10 +1,10 @@
 /**
- * Smelter Components - V4.0 模块化特征提取组件
+ * Smelter Components - V5.2 模块化特征提取组件
  * ===============================================
  *
  * 所有特征提取器的统一出口
  * @module feature_engine/smelter/components
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -46,5 +46,5 @@ module.exports = {
     },
 
     // 版本
-    VERSION: 'V4.0.0-MODULAR'
+    VERSION: 'V5.2.0-HOME-FORTRESS'
 };

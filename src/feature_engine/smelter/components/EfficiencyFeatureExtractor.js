@@ -1,5 +1,5 @@
 /**
- * EfficiencyFeatureExtractor - V4.0 效率特征提取器
+ * EfficiencyFeatureExtractor - V5.2 效率特征提取器
  * =================================================
  *
  * 计算进攻/防守效率指标，识别：
@@ -9,11 +9,11 @@
  * 效率指标 = shots_on_target / shots_total
  * 终极效率 = goals / xG
  *
- * V4.0 模块化:
+ * V5.2 模块化:
  * - 继承 BaseExtractor
  * - 完全赛前数据，无泄露风险
  * @module feature_engine/smelter/components/EfficiencyExtractor
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -81,7 +81,7 @@ class EfficiencyFeatureExtractor extends BaseExtractor {
     constructor(options = {}) {
         super({
             name: 'EfficiencyFeatureExtractor',
-            version: 'V4.0.0-MODULAR',
+            version: 'V5.2.0-HOME-FORTRESS',
             requiredFields: [],
             config: { ...DEFAULT_CONFIG, ...(options.config || {}) }
         });

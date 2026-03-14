@@ -1,12 +1,12 @@
 /**
- * BaseExtractor - V4.0 特征提取器抽象基类
+ * BaseExtractor - V5.2 特征提取器抽象基类
  * ========================================
  *
  * 建立特征提取的"行业标准"，强制规范所有特征维度的开发协议。
  * 所有具体提取器必须继承此类并实现抽象方法。
  *
  * @module feature_engine/smelter/components/BaseExtractor
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -83,7 +83,7 @@ class BaseExtractor {
         }
 
         this.name = options.name;
-        this.version = options.version || 'V4.0.0';
+        this.version = options.version || 'V5.2.0';
         this.requiredFields = options.requiredFields || [];
         this.config = { ...this.getDefaultConfig(), ...(options.config || {}) };
 

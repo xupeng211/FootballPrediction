@@ -1,18 +1,18 @@
 #!/usr/bin/env node
 /**
- * FeatureSmelter - V3.0-PRO 特征熔炼调度器
+ * FeatureSmelter - V5.2.0-HOME-FORTRESS 特征熔炼调度器
  * ==========================================
  *
  * 批量处理 raw_match_data，调用 4 个 Extractors 生成结构化特征
  * 将真实 Elo 从 team_elo_ratings 表注入到 l3_features.elo_features
  *
- * V3.0-PRO 工业级重构:
+ * V5.2.0-HOME-FORTRESS 工业级重构:
  * - 引入配置中心 (config/constants.js, config/database.js)
  * - 指数退避重试逻辑
  * - 结构化 JSON 日志（ELK 友好）
  * - 纯函数化的 Extractor 调用
  * @module feature_engine/smelter/FeatureSmelter
- * @version V3.0.0-PRO
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-06
  */
 
@@ -55,7 +55,7 @@ const DEFAULT_CONFIG = {
 };
 
 // ============================================================================
-// FeatureSmelter 类 - V3.0-PRO 工业级实现
+// FeatureSmelter 类 - V5.2.0-HOME-FORTRESS 工业级实现
 // ============================================================================
 
 /**
@@ -121,7 +121,7 @@ class FeatureSmelter {
             await this._ensureIndexes();
 
             this.isInitialized = true;
-            this.logger.info('FeatureSmelter V3.0-PRO 初始化完成', {
+            this.logger.info('FeatureSmelter V5.2.0-HOME-FORTRESS 初始化完成', {
                 eloTeams: this.eloCache.size,
                 config: {
                     batchSize: this.config.batchSize,
