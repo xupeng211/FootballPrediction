@@ -8,6 +8,8 @@
 
 'use strict';
 
+const { MATCH_STATUS } = require('./constants');
+
 /**
  * 数据库表名注册表
  */
@@ -17,7 +19,22 @@ const TABLES = {
     L2_MATCH_DATA: 'l2_match_data',
     L3_FEATURES: 'l3_features',
     PREDICTIONS: 'predictions',
-    TEAM_ELO_RATINGS: 'team_elo_ratings'
+    TEAM_ELO_RATINGS: 'team_elo_ratings',
+
+    /**
+     * 获取所有表名
+     * @returns {string[]} 表名数组
+     */
+    all() {
+        return [
+            this.MATCHES,
+            this.RAW_MATCH_DATA,
+            this.L2_MATCH_DATA,
+            this.L3_FEATURES,
+            this.PREDICTIONS,
+            this.TEAM_ELO_RATINGS
+        ];
+    }
 };
 
 /**
@@ -55,12 +72,23 @@ const LEAGUES = {
  * 代理配置注册表
  */
 const PROXIES = {
-    getAllPorts: () => [7890, 7891, 7892, 7893, 7894]
+    getAllPorts: () => [
+        7890, 7891, 7892, 7893, 7894,
+        7895, 7896, 7897, 7898, 7899,
+        7900, 7901, 7902, 7903, 7904,
+        7905, 7906, 7907, 7908, 7909,
+        7910, 7911
+    ]
 };
+
+// PROXY别名（兼容测试）
+const PROXY = PROXIES;
 
 module.exports = {
     TABLES,
     APIS,
     LEAGUES,
-    PROXIES
+    PROXIES,
+    PROXY,
+    MATCH_STATUS
 };

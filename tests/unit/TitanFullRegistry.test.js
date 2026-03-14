@@ -26,7 +26,7 @@ const { FotMobStrategy } = require('../../src/infrastructure/harvesters/strategi
 const { ProductionHarvester } = require('../../src/infrastructure/harvesters/ProductionHarvester');
 const { ErrorAuditor, getErrorAuditor, resetErrorAuditor, ErrorType } = require('../../src/core/harvesters/ErrorAuditor');
 const { BrowserFactory, getBrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory');
-const { ContextPool } = require('../../src/infrastructure/browser/ContextPool');
+const { ContextPoolManager: ContextPool } = require('../../src/infrastructure/browser/ContextPoolManager');
 
 // ============================================================================
 // 测试数据
@@ -104,13 +104,13 @@ const sampleNextData = {
 // 全局设置
 // ============================================================================
 
-beforeAll(() => {
-    // 重置所有模块实例
-    resetBrowserFactory();
-    resetErrorAuditor();
-    resetContextPool();
-    process.setMaxListeners(50);
-});
+// before(() => {
+//     // 重置所有模块实例
+//     resetBrowserFactory();
+//     resetErrorAuditor();
+//     resetContextPool();
+//     process.setMaxListeners(50);
+// });
 
 // ============================================================================
 // A. NextDataParser 测试 (15项)
