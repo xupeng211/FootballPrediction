@@ -40,22 +40,26 @@ def parse_jsonb(val):
         return {}
     if isinstance(val, dict):
         return val
-    return json.loads(val)
+    if isinstance(val, str):
+        return json.loads(val)
+    # 处理其他类型（如datetime）返回空dict
+    return {}
 
 
 def extract_features(row):
     """提取30维特征"""
     import math
     
-    elo = parse_jsonb(row[3])
-    golden = parse_jsonb(row[4])
-    tactical = parse_jsonb(row[5])
-    rolling = parse_jsonb(row[6])
-    efficiency = parse_jsonb(row[7])
-    draw = parse_jsonb(row[8])
+    elo = parse_jsonb(row.get('elo_features'))
+    golden = parse_jsonb(row.get('golden_features'))
+    tactical = parse_jsonb(row.get('tactical_features'))
+    rolling = parse_jsonb(row.get('rolling_features'))
+    efficiency = parse_jsonb(row.get('efficiency_features'))
+    draw = parse_jsonb(row.get('draw_features'))
     
-    home_elo = float(row[15]) if len(row) > 15 and row[15] and row[15] != 1500 else float(elo.get('home_elo', 1500))
-    away_elo = float(row[16]) if len(row) > 16 and row[16] and row[16] != 1500 else float(elo.get('away_elo', 1500))
+    # 优先使用JOIN得到的真实ELO
+    home_elo = float(row.get('home_elo_real', 1500))
+    away_elo = float(row.get('away_elo_real', 1500))
     
     f = {}
     f['home_elo_pre'] = home_elo
@@ -141,7 +145,8 @@ def generate_harvest_list(threshold=0.58, top_n=10):
     conn = get_db_connection()
     cur = conn.cursor()
     
-    query = """
+    # 获取真实ELO数据 - 只选当前赛季20252026
+    cur.execute("""
         SELECT 
             m.match_id,
             m.home_team,
@@ -159,20 +164,36 @@ def generate_harvest_list(threshold=0.58, top_n=10):
         WHERE m.match_date >= NOW()
           AND m.match_date <= NOW() + INTERVAL '48 hours'
           AND m.status = 'Harvested'
+          AND m.match_id LIKE '%_20252026_%'
         ORDER BY m.match_date
-    """
+    """)
     
-    cur.execute(query)
+    # 获取列名
+    colnames = [desc[0] for desc in cur.description]
     rows = cur.fetchall()
     cur.close()
     conn.close()
     
+    # 转换为字典列表
+    dict_rows = []
+    for row in rows:
+        dict_row = {}
+        for i, col in enumerate(colnames):
+            dict_row[col] = row[i]
+        dict_rows.append(dict_row)
+    
     logger.info(f"未来48小时比赛总数: {len(rows)}")
     
-    # 预测所有比赛
+    # 预测所有比赛 - 按match_id去重
     predictions = []
+    seen_match_ids = set()
     
-    for row in rows:
+    for row in dict_rows:
+        match_id = row.get('match_id')
+        if match_id in seen_match_ids:
+            continue
+        seen_match_ids.add(match_id)
+        
         try:
             features = extract_features(row)
             X = pd.DataFrame([features], columns=TITAN_COMBAT_FEATURES)
@@ -184,20 +205,56 @@ def generate_harvest_list(threshold=0.58, top_n=10):
             
             # 只保留高置信度信号
             if max_proba >= threshold:
-                elo_diff = features['elo_diff']
+                # 直接从row获取真实ELO（因为JSONB中的elo_features可能为空）
+                home_elo_real = float(row.get('home_elo_real', 1500))
+                away_elo_real = float(row.get('away_elo_real', 1500))
+                elo_diff = home_elo_real - away_elo_real
+                
+                # 更新features中的ELO值
+                features['home_elo_pre'] = home_elo_real
+                features['away_elo_pre'] = away_elo_real
+                features['elo_diff'] = elo_diff
+                
+                # 分析特征关键点
+                key_factors = []
+                if features['h2h_home_win_ratio'] > 0.6:
+                    key_factors.append("H2H压制")
+                if abs(elo_diff) > 100:
+                    key_factors.append("战力代差" if elo_diff > 0 else "战力劣势")
+                if features['home_last5_win_rate'] > 0.6:
+                    key_factors.append("状态火热")
+                if features['home_last5_xg_avg'] > 1.5:
+                    key_factors.append("进攻强劲")
+                if features['match_stalemate_index'] > 0.8:
+                    key_factors.append("僵局风险")
+                if features['home_mv_share'] > 0.65:
+                    key_factors.append("身价碾压")
+                
+                key_factor_str = " | ".join(key_factors[:2]) if key_factors else "综合优势"
+                
+                # 凯利准则计算仓位
+                p = max_proba  # 模型胜率
+                b = 0.8        # 平均赔率假设为1.80 (净赔率0.80)
+                kelly_fraction = (p * (1 + b) - 1) / b if b > 0 else 0
+                kelly_fraction = max(0.01, min(0.025, kelly_fraction * 0.25))  # 保守1/4凯利，限制1%-2.5%
+                
+                match_date = row.get('match_date')
+                match_time_str = match_date.strftime('%m-%d %H:%M') if hasattr(match_date, 'strftime') else str(match_date)
                 
                 predictions.append({
-                    'match_id': row[0],
-                    'home_team': row[1],
-                    'away_team': row[2],
-                    'match_time': row[3].strftime('%m-%d %H:%M'),
-                    'league': row[12] if len(row) > 12 else 'Unknown',
+                    'match_id': row.get('match_id'),
+                    'home_team': row.get('home_team'),
+                    'away_team': row.get('away_team'),
+                    'match_time': match_time_str,
+                    'league': row.get('league_name', 'Unknown'),
                     'prediction': RESULT_NAMES[pred_class],
                     'confidence': max_proba,
                     'elo_diff': elo_diff,
                     'proba_away': proba[0],
                     'proba_draw': proba[1],
-                    'proba_home': proba[2]
+                    'proba_home': proba[2],
+                    'key_factors': key_factor_str,
+                    'kelly_stake': kelly_fraction
                 })
         except Exception as e:
             logger.warning(f"预测失败 [{row[0]}]: {e}")
@@ -209,25 +266,27 @@ def generate_harvest_list(threshold=0.58, top_n=10):
     logger.info("")
     
     # 输出Top N
-    print("\n" + "=" * 90)
+    print("\n" + "=" * 110)
     print("🏆 TITAN V5.0 周末黄金信号收割清单")
-    print("=" * 90)
-    print(f"{'排名':<4} {'联赛':<12} {'对阵':<35} {'预测':<6} {'置信度':<8} {'战力差':<8}")
-    print("-" * 90)
+    print("=" * 110)
+    print(f"{'排名':<4} {'联赛':<12} {'对阵':<30} {'预测':<6} {'置信度':<8} {'战力差':<8} {'核心因子':<20} {'仓位':<6}")
+    print("-" * 110)
     
     for i, pred in enumerate(predictions[:top_n], 1):
         matchup = f"{pred['home_team']} vs {pred['away_team']}"
-        if len(matchup) > 33:
-            matchup = matchup[:30] + "..."
+        if len(matchup) > 28:
+            matchup = matchup[:25] + "..."
         
         elo_sign = "+" if pred['elo_diff'] > 0 else ""
-        print(f"{i:<4} {pred['league']:<12} {matchup:<35} {pred['prediction']:<6} "
-              f"{pred['confidence']*100:>6.1f}%  {elo_sign}{pred['elo_diff']:.0f}")
+        kelly_pct = pred.get('kelly_stake', 0.01) * 100
+        print(f"{i:<4} {pred['league']:<12} {matchup:<30} {pred['prediction']:<6} "
+              f"{pred['confidence']*100:>6.1f}%  {elo_sign}{pred['elo_diff']:<7.0f} {pred.get('key_factors', ''):<20} {kelly_pct:>5.1f}%")
     
-    print("=" * 90)
+    print("=" * 110)
     print(f"\n✅ 以上 {min(top_n, len(predictions))} 场比赛符合 TITAN V5.0 黄金信号标准")
-    print(f"   概率阈值: {threshold} | 预期准确率: ~69% | 盈亏平衡点: 赔率 > 1.45")
-    print("=" * 90)
+    print(f"   概率阈值: {threshold} | 预期胜率: {max_proba*100:.1f}% | 仓位计算: 1/4凯利准则 (保守)")
+    print(f"   盈亏平衡: 赔率 > {1/max_proba:.2f} | 建议资金: 100单位本金")
+    print("=" * 110)
     
     return predictions[:top_n]
 
