@@ -1,5 +1,5 @@
 /**
- * RollingFeatureExtractor - V4.0 滚动统计特征提取器
+ * RollingFeatureExtractor - V5.2-HOME-FORTRESS 主客场感知滚动特征提取器
  * ==================================================
  *
  * 从数据库历史数据中提取【赛前可用】的滚动统计特征：
@@ -7,12 +7,14 @@
  * 2. 近N场控球率均值
  * 3. 近N场胜率/平局率/输球率
  * 4. 休息天数差异
+ * 5. 【V5.2新增】主场专属特征 (home_only_xg, home_win_rate)
+ * 6. 【V5.2新增】客场专属特征 (away_only_xg)
  *
- * V4.0 模块化:
- * - 继承 BaseExtractor
- * - 完全赛前数据，无泄露风险
+ * V5.2 主客场感知:
+ * - 区分主客场数据含金量
+ * - 引入主场堡垒指数
  * @module feature_engine/smelter/components/RollingExtractor
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -47,7 +49,7 @@ const DEFAULT_CONFIG = {
     strictMode: false
 };
 
-// 特征字段名清单
+// 特征字段名清单 - V5.2 扩展至38维
 const FEATURE_NAMES = [
     // 主队滚动进攻特征 (6维)
     'home_last5_xg_avg',
@@ -78,7 +80,20 @@ const FEATURE_NAMES = [
     // 对比特征 (3维)
     'rest_days_diff',
     'form_momentum_diff',
-    'xg_diff_rolling'
+    'xg_diff_rolling',
+
+    // V5.2 主客场分离特征 (8维)
+    'home_last5_home_only_xg',        // 主队主场xG
+    'home_last5_home_only_win_rate',  // 主队主场胜率
+    'home_home_win_rate',             // 主队主场统治力
+    'home_home_draw_rate',            // 主队主场平局率
+    'away_last5_away_only_xg',        // 客队客场xG
+    'away_last5_away_only_win_rate',  // 客队客场胜率
+    'away_away_win_rate',             // 客队客场统治力
+    'away_away_draw_rate',            // 客队客场平局率
+
+    // V5.2 主场堡垒指数 (1维)
+    'fortress_index'                  // 主场统治力对比
 ];
 
 // ============================================================================
@@ -94,7 +109,7 @@ class RollingFeatureExtractor extends BaseExtractor {
     constructor(options = {}) {
         super({
             name: 'RollingFeatureExtractor',
-            version: 'V4.0.0-MODULAR',
+            version: 'V5.2.0-HOME-FORTRESS',
             requiredFields: [],
             config: { ...DEFAULT_CONFIG, ...(options.config || {}) }
         });
@@ -163,15 +178,33 @@ class RollingFeatureExtractor extends BaseExtractor {
                 away_team, match_date, 'away'
             );
 
+            // V5.2: 提取主队主场专属特征
+            const homeOnlyFeatures = await this._extractVenueSpecificFeatures(
+                home_team, match_date, 'home', 'home'
+            );
+
+            // V5.2: 提取客队客场专属特征
+            const awayOnlyFeatures = await this._extractVenueSpecificFeatures(
+                away_team, match_date, 'away', 'away'
+            );
+
             // 计算对比特征
             const comparisonFeatures = this._calculateComparisonFeatures(
                 homeFeatures, awayFeatures
             );
 
+            // V5.2: 计算主场堡垒指数
+            const fortressFeatures = this._calculateFortressFeatures(
+                homeOnlyFeatures, awayOnlyFeatures
+            );
+
             const features = {
                 ...homeFeatures,
                 ...awayFeatures,
+                ...homeOnlyFeatures,
+                ...awayOnlyFeatures,
                 ...comparisonFeatures,
+                ...fortressFeatures,
                 _extractedAt: new Date().toISOString(),
                 _version: this.version,
                 _source: 'RollingStatistics'
@@ -402,6 +435,155 @@ class RollingFeatureExtractor extends BaseExtractor {
         };
     }
 
+    /**
+     * V5.2: 提取场地特定特征（主场或客场专属统计）
+     * @private
+     * @param {string} teamName - 球队名
+     * @param {string} matchDate - 比赛日期
+     * @param {string} prefix - 特征前缀 (home/away)
+     * @param {string} venue - 场地类型 (home/away)
+     * @returns {Promise<object>}
+     */
+    async _extractVenueSpecificFeatures(teamName, matchDate, prefix, venue) {
+        const window = this.config.rollingWindow;
+        const minSamples = this.config.minSamples;
+
+        try {
+            // V5.2: 查询球队在特定场地的历史比赛
+            const venueCondition = venue === 'home'
+                ? 'm.home_team = $2'  // 主场时筛选作为主队的比赛
+                : 'm.away_team = $2'; // 客场时筛选作为客队的比赛
+
+            const query = `
+                SELECT
+                    m.match_id,
+                    m.home_team,
+                    m.away_team,
+                    m.home_score,
+                    m.away_score,
+                    m.match_date,
+                    l.tactical_features->>'home_xg' as home_xg,
+                    l.tactical_features->>'away_xg' as away_xg,
+                    l.tactical_features->>'home_possession' as home_possession,
+                    l.tactical_features->>'away_possession' as away_possession
+                FROM matches m
+                INNER JOIN l3_features l ON m.match_id = l.match_id
+                WHERE m.status = 'Harvested'
+                  AND m.home_score IS NOT NULL
+                  AND m.match_date < $1
+                  AND ${venueCondition}
+                ORDER BY m.match_date DESC
+                LIMIT $3
+            `;
+
+            const result = await this.dbPool.query(query, [matchDate, teamName, window * 2]);
+            const matches = result.rows;
+
+            if (matches.length < minSamples) {
+                this.logger.debug(`球队 ${teamName} ${venue}场历史数据不足 (${matches.length}/${minSamples})，使用默认值`);
+                return this._createDefaultVenueFeatures(prefix, venue);
+            }
+
+            // 计算场地专属滚动统计
+            const stats = this._calculateVenueRollingStats(matches, teamName, venue);
+
+            // 计算场地专属战绩
+            const record = this._calculateVenueWinDrawLoss(matches, teamName, venue);
+
+            const venueSuffix = venue === 'home' ? 'home' : 'away';
+            const featurePrefix = `${prefix}_last5_${venueSuffix}_only`;
+
+            return {
+                [`${featurePrefix}_xg`]: stats.xgAvg,
+                [`${featurePrefix}_win_rate`]: record.winRate,
+                [`${prefix}_${venueSuffix}_win_rate`]: record.winRate,
+                [`${prefix}_${venueSuffix}_draw_rate`]: record.drawRate
+            };
+
+        } catch (error) {
+            this.logger.error(`提取 ${teamName} ${venue}场特征失败`, { error: error.message });
+            return this._createDefaultVenueFeatures(prefix, venue);
+        }
+    }
+
+    /**
+     * V5.2: 计算场地专属滚动统计
+     * @private
+     */
+    _calculateVenueRollingStats(matches, teamName, venue) {
+        let xgSum = 0;
+        let count = 0;
+
+        for (const match of matches.slice(0, this.config.rollingWindow)) {
+            const isHome = match.home_team === teamName;
+            // 在主场场地取主队xG，在客场场地取客队xG
+            const xg = parseFloat(isHome ? match.home_xg : match.away_xg) || 0;
+            xgSum += xg;
+            count++;
+        }
+
+        const xgAvg = count > 0 ? xgSum / count : this.config.defaults.xgAvg;
+
+        return {
+            xgAvg: parseFloat(xgAvg.toFixed(2))
+        };
+    }
+
+    /**
+     * V5.2: 计算场地专属胜平负战绩
+     * @private
+     */
+    _calculateVenueWinDrawLoss(matches, teamName, venue) {
+        let wins = 0, draws = 0, losses = 0;
+        const window = Math.min(matches.length, this.config.rollingWindow);
+
+        for (const match of matches.slice(0, window)) {
+            const isHome = match.home_team === teamName;
+            const homeScore = parseInt(match.home_score);
+            const awayScore = parseInt(match.away_score);
+
+            if (isHome) {
+                if (homeScore > awayScore) wins++;
+                else if (homeScore === awayScore) draws++;
+                else losses++;
+            } else {
+                if (awayScore > homeScore) wins++;
+                else if (awayScore === homeScore) draws++;
+                else losses++;
+            }
+        }
+
+        const total = wins + draws + losses;
+        if (total === 0) {
+            return {
+                winRate: this.config.defaults.winRate,
+                drawRate: this.config.defaults.drawRate,
+                lossRate: this.config.defaults.lossRate
+            };
+        }
+
+        return {
+            winRate: parseFloat((wins / total).toFixed(3)),
+            drawRate: parseFloat((draws / total).toFixed(3)),
+            lossRate: parseFloat((losses / total).toFixed(3))
+        };
+    }
+
+    /**
+     * V5.2: 计算主场堡垒指数
+     * @private
+     */
+    _calculateFortressFeatures(homeOnly, awayOnly) {
+        // 主场堡垒指数 = 主队主场胜率 - 客队客场胜率
+        const homeFortress = homeOnly.home_home_win_rate || 0.33;
+        const awayFortress = awayOnly.away_away_win_rate || 0.33;
+        const fortressIndex = homeFortress - awayFortress;
+
+        return {
+            fortress_index: parseFloat(fortressIndex.toFixed(3))
+        };
+    }
+
     // ========================================================================
     // 辅助方法
     // ========================================================================
@@ -422,10 +604,27 @@ class RollingFeatureExtractor extends BaseExtractor {
         };
     }
 
+    /**
+     * V5.2: 创建默认场地特征
+     * @private
+     */
+    _createDefaultVenueFeatures(prefix, venue) {
+        const d = this.config.defaults;
+        const venueSuffix = venue === 'home' ? 'home' : 'away';
+        const featurePrefix = `${prefix}_last5_${venueSuffix}_only`;
+
+        return {
+            [`${featurePrefix}_xg`]: d.xgAvg,
+            [`${featurePrefix}_win_rate`]: d.winRate,
+            [`${prefix}_${venueSuffix}_win_rate`]: d.winRate,
+            [`${prefix}_${venueSuffix}_draw_rate`]: d.drawRate
+        };
+    }
+
     _createEmptyFeatures(reason = 'No valid data') {
         const features = {};
         FEATURE_NAMES.forEach(name => {
-            features[name] = 0;
+            features[name] = name === 'fortress_index' ? 0 : 0;
         });
         features._error = reason;
         features._extractedAt = new Date().toISOString();

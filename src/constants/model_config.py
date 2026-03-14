@@ -34,7 +34,7 @@ RESULT_NAMES: List[str] = ["AWAY", "DRAW", "HOME"]
 RESULT_MAP_REVERSE: Dict[int, str] = {2: "H", 1: "D", 0: "A"}
 
 # ============================================================================
-# TITAN V5.0 - 30 维纯净特征集
+# TITAN V5.2 HOME-FORTRESS - 38 维主客场感知特征集
 # ============================================================================
 
 TITAN_COMBAT_FEATURES: List[str] = [
@@ -75,6 +75,24 @@ TITAN_COMBAT_FEATURES: List[str] = [
     "combined_draw_probability",
     "match_stalemate_index",
     "tactical_stalemate_index",
+
+    # V5.2 主客场分离特征 (8 维) - HOME-FORTRESS
+    "home_last5_home_only_xg",
+    "home_last5_home_only_win_rate",
+    "home_home_win_rate",
+    "home_home_draw_rate",
+    "away_last5_away_only_xg",
+    "away_last5_away_only_win_rate",
+    "away_away_win_rate",
+    "away_away_draw_rate",
+
+    # V5.2 主场堡垒指数 (1 维)
+    "fortress_index",
+
+    # V5.2 特征交互 (3 维) - 化学反应
+    "elo_rest_synergy",
+    "value_form_boost",
+    "fortress_strength",
 ]
 
 # 兼容旧模型的11维特征
