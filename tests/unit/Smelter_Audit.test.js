@@ -163,7 +163,7 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
     // 初始化测试
     describe('初始化与配置', () => {
         it('应该使用默认配置初始化', async () => {
-            smelter = new FeatureSmelter();
+            smelter = new FeatureSmelter({ enableStructuredLogging: false });
             assert.strictEqual(smelter.config.batchSize, 500, '默认批次大小应为 500');
             assert.strictEqual(smelter.config.delayMs, 5, '默认延迟应为 5ms');
             assert.strictEqual(smelter.isInitialized, false, '初始状态应为未初始化');
@@ -172,6 +172,7 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
         it('应该接受自定义配置', async () => {
             smelter = new FeatureSmelter({
                 batchSize: 1000,
+                enableStructuredLogging: false,
                 delayMs: 0,
                 rollingLookback: 10
             });
@@ -180,7 +181,7 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
         });
 
         it('应该在未初始化时拒绝操作', async () => {
-            smelter = new FeatureSmelter();
+            smelter = new FeatureSmelter({ enableStructuredLogging: false });
             try {
                 await smelter.run();
                 assert.fail('应该抛出未初始化错误');
@@ -365,7 +366,7 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
     // Elo 评分测试
     describe('Elo 评分集成', () => {
         it('应该正确获取默认 Elo', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map(); // 空缓存
             
             const elo = smelter.getTeamElo('Unknown Team');
@@ -373,7 +374,7 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
         });
 
         it('应该从缓存获取 Elo', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([['Bayern München', 1869.7]]);
             
             const elo = smelter.getTeamElo('Bayern München');
@@ -381,7 +382,7 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
         });
 
         it('应该进行模糊匹配', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([['Manchester United', 1650.5]]);
             
             const elo = smelter.getTeamElo('manchester united');
@@ -474,7 +475,7 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
     // 统计与监控
     describe('统计与监控', () => {
         it('应该追踪处理统计', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             
             // 初始化统计
             smelter.stats = {
@@ -512,7 +513,7 @@ describe('🗄️ 数据库操作深度测试', () => {
             assert.strictEqual(emptyResult.length, 0, '应返回空数组');
             
             // 验证 FeatureSmelter 能正确处理空结果
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.stats = { total: 0, success: 0, failed: 0, skipped: 0 };
             smelter.stats.total = emptyResult.length;
             assert.strictEqual(smelter.stats.total, 0, '总计数应为 0');
@@ -590,7 +591,7 @@ describe('🗄️ 数据库操作深度测试', () => {
 describe('⚡ Elo 解析器深度测试', () => {
     describe('EloResolver 缓存命中场景', () => {
         it('应该命中缓存返回动态 Elo', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([
                 ['Bayern München', 1869.7],
                 ['Arsenal', 1836.6]
@@ -604,7 +605,7 @@ describe('⚡ Elo 解析器深度测试', () => {
         });
 
         it('应该计算正确的 Elo 差值', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([
                 ['Team A', 1600],
                 ['Team B', 1500]
@@ -622,7 +623,7 @@ describe('⚡ Elo 解析器深度测试', () => {
 
     describe('EloResolver 默认值场景', () => {
         it('未知球队应返回默认 Elo 1500', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map();  // 空缓存
             
             const elo = smelter.getTeamElo('Unknown Team');
@@ -630,7 +631,7 @@ describe('⚡ Elo 解析器深度测试', () => {
         });
 
         it('应该标记默认 Elo', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map();
             
             const homeElo = smelter.getTeamElo('Unknown Home');
@@ -641,7 +642,7 @@ describe('⚡ Elo 解析器深度测试', () => {
         });
 
         it('部分命中时应混合使用缓存和默认值', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([
                 ['Known Team', 1700]
             ]);
@@ -656,7 +657,7 @@ describe('⚡ Elo 解析器深度测试', () => {
 
     describe('Elo 模糊匹配场景', () => {
         it('应该进行大小写不敏感匹配', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([
                 ['Manchester United', 1650.5]
             ]);
@@ -666,7 +667,7 @@ describe('⚡ Elo 解析器深度测试', () => {
         });
 
         it('应该处理特殊字符', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([
                 ['Red Bull Bragantino', 1521.4]
             ]);
@@ -684,7 +685,7 @@ describe('⚡ Elo 解析器深度测试', () => {
 describe('🔧 FeatureSmelter 核心方法测试', () => {
     describe('processMatch 方法', () => {
         it('应该正确处理完整比赛数据', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.eloCache = new Map([
                 ['Arsenal', 1700],
                 ['Chelsea', 1650]
@@ -707,7 +708,7 @@ describe('🔧 FeatureSmelter 核心方法测试', () => {
         });
 
         it('应该正确统计处理结果', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.stats = {
                 total: 100,
                 success: 95,
@@ -722,7 +723,7 @@ describe('🔧 FeatureSmelter 核心方法测试', () => {
 
     describe('统计追踪', () => {
         it('应该追踪市场身价数据质量', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.stats = {
                 marketValueHits: 7893,
                 marketValueMisses: 4014
@@ -735,7 +736,7 @@ describe('🔧 FeatureSmelter 核心方法测试', () => {
         });
 
         it('应该追踪 Elo 数据质量', () => {
-            const smelter = new FeatureSmelter();
+            const smelter = new FeatureSmelter({ enableStructuredLogging: false });
             smelter.stats = {
                 eloHits: 11781,
                 eloDefaults: 126

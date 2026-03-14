@@ -44,8 +44,11 @@ class StructuredLogger {
         this.enableStructured = options.enableStructured !== false;
         this.logStream = null;
 
-        this._ensureLogDirectory();
-        this._initLogStream();
+        // 仅在启用结构化日志时初始化目录和文件流
+        if (this.enableStructured) {
+            this._ensureLogDirectory();
+            this._initLogStream();
+        }
     }
 
     /**
@@ -72,6 +75,11 @@ class StructuredLogger {
 
         try {
             this.logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+            // 添加错误监听防止未捕获异常
+            this.logStream.on('error', (err) => {
+                console.warn(`[WARN] 日志流错误: ${err.message}`);
+                this.logStream = null;
+            });
         } catch (error) {
             console.warn(`[WARN] 无法创建日志文件: ${error.message}`);
         }

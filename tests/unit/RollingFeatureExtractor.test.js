@@ -117,7 +117,7 @@ test('应该正确返回特征名列表', () => {
     const extractor = createExtractor(createMockDbPool());
     const featureNames = extractor.getFeatureNames();
 
-    assert.strictEqual(featureNames.length, 21);
+    assert.strictEqual(featureNames.length, 30); // V5.2: 30维特征
     assert(featureNames.includes('home_last5_xg_avg'));
     assert(featureNames.includes('away_last5_draw_rate'));
     assert(featureNames.includes('rest_days_diff'));
@@ -136,7 +136,7 @@ test('应该继承 BaseExtractor', () => {
     const extractor = createExtractor(createMockDbPool());
 
     assert.strictEqual(extractor.name, 'RollingFeatureExtractor');
-    assert.strictEqual(extractor.version, 'V4.0.0-MODULAR');
+    assert.strictEqual(extractor.version, 'V5.2.0-HOME-FORTRESS');
 });
 
 // 核心提取逻辑测试
