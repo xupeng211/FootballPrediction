@@ -53,7 +53,29 @@ const MATCH_STATUS = {
     SCHEDULED: 'scheduled',
     CANCELLED: 'cancelled',
     COMPLETED: 'completed',
-    POSTPONED: 'postponed'
+    POSTPONED: 'postponed',
+
+    /**
+     * 从FotMob状态转换为内部状态
+     * @param {object} status - FotMob状态对象
+     * @param {boolean} status.finished - 是否完场
+     * @param {boolean} status.started - 是否开始
+     * @param {boolean} status.cancelled - 是否取消
+     * @param {boolean} status.awarded - 是否判给
+     * @param {number|null} homeScore - 主队比分
+     * @param {number|null} awayScore - 客队比分
+     * @returns {string} 内部状态字符串
+     */
+    fromFotMob(status, homeScore, awayScore) {
+        if (!status) return 'scheduled';
+
+        if (status.awarded) return 'awarded';
+        if (status.cancelled) return 'cancelled';
+        if (status.finished) return 'finished';
+        if (status.started) return 'live';
+
+        return 'scheduled';
+    }
 };
 
 // ============================================================================
