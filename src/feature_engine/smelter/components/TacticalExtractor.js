@@ -1,15 +1,15 @@
 /**
- * TacticalExtractor - V4.0 战术动量特征提取器
+ * TacticalExtractor - V5.2 战术动量特征提取器
  * =============================================
  *
  * 从 FotMob L2 原始数据中提取战术统计和比赛动量特征：
  * 1. 战术特征 (xG, 控球率, 射门, 角球等)
  * 2. 动量特征 (momentum 时间序列分析)
  *
- * V4.0 模块化:
+ * V5.2 模块化:
  * - 继承 BaseExtractor，符合行业标准
  * @module feature_engine/smelter/components/TacticalExtractor
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -126,7 +126,7 @@ class TacticalExtractor extends BaseExtractor {
     constructor(config = {}) {
         super({
             name: 'TacticalExtractor',
-            version: 'V4.0.0-MODULAR',
+            version: 'V5.2.0-HOME-FORTRESS',
             requiredFields: ['content.stats'],
             config: { ...DEFAULT_CONFIG, ...config }
         });

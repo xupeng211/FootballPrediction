@@ -1,12 +1,12 @@
 /**
- * DataFetcher - V4.0 数据获取器
+ * DataFetcher - V5.2 数据获取器
  * ==============================
  *
  * 负责所有数据库查询，支持流式读取和分批读取。
  * 从数据库获取待处理比赛、Elo 评分等数据。
  *
  * @module feature_engine/smelter/components/DataFetcher
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -105,7 +105,7 @@ class DataFetcher extends BaseExtractor {
     constructor(options = {}) {
         super({
             name: 'DataFetcher',
-            version: 'V4.0.0-MODULAR',
+            version: 'V5.2.0-HOME-FORTRESS',
             requiredFields: [],
             config: { ...DEFAULT_CONFIG, ...(options.config || {}) }
         });

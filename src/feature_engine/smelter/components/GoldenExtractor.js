@@ -1,5 +1,5 @@
 /**
- * GoldenExtractor - V4.0 黄金特征提取器
+ * GoldenExtractor - V5.2 黄金特征提取器
  * =======================================
  *
  * 从 FotMob L2 原始数据中提取三大类黄金特征：
@@ -7,11 +7,11 @@
  * 2. 伤病特征 (injury_*): 核心球员缺失统计
  * 3. 评分特征 (rating_*): 球员评分走势
  *
- * V4.0 模块化:
+ * V5.2 模块化:
  * - 继承 BaseExtractor，符合行业标准
  * - 完全可测试、可监控
  * @module feature_engine/smelter/components/GoldenExtractor
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -126,7 +126,7 @@ class GoldenExtractor extends BaseExtractor {
     constructor(config = {}) {
         super({
             name: 'GoldenExtractor',
-            version: 'V4.0.0-MODULAR',
+            version: 'V5.2.0-HOME-FORTRESS',
             requiredFields: ['content.lineup'],
             config: { ...DEFAULT_CONFIG, ...config }
         });

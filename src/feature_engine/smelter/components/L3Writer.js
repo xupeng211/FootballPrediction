@@ -1,12 +1,12 @@
 /**
- * L3Writer - V4.0 L3 特征写入器
+ * L3Writer - V5.2 L3 特征写入器
  * ==============================
  *
  * 负责 l3_features 表的批量写入与冲突处理（UPSERT）。
  * 管理事务，确保特征数据的一致性。
  *
  * @module feature_engine/smelter/components/L3Writer
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-HOME-FORTRESS
  * @since 2026-03-14
  */
 
@@ -126,7 +126,7 @@ class L3Writer extends BaseExtractor {
     constructor(options = {}) {
         super({
             name: 'L3Writer',
-            version: 'V4.0.0-MODULAR',
+            version: 'V5.2.0-HOME-FORTRESS',
             requiredFields: [],
             config: { ...DEFAULT_CONFIG, ...(options.config || {}) }
         });

@@ -1,12 +1,12 @@
 /**
- * SmelterOrchestrator - V4.0 特征熔炼编排器
+ * SmelterOrchestrator - V5.2 特征熔炼编排器
  * ==========================================
  *
- * V4.0 模块化重构后的新入口。
+ * V5.2 模块化重构后的新入口。
  * 职责：调用 DataFetcher 拿数据 -> 调用 Extractors 算特征 -> 调用 L3Writer 存结果。
  *
  * @module feature_engine/smelter/SmelterOrchestrator
- * @version V4.0.0-MODULAR
+ * @version V5.2.0-MODULAR
  * @since 2026-03-14
  */
 
@@ -70,7 +70,7 @@ class SmelterOrchestrator {
         this.goldenExtractor = new GoldenExtractor();
         this.tacticalExtractor = new TacticalExtractor();
 
-        // V5.0 新增：30维特征提取器
+        // V5.2 新增：38维特征提取器
         this.rollingExtractor = new RollingFeatureExtractor({
             dbPool: this.pool,
             config: { rollingWindow: 5, minSamples: 3 }
@@ -106,7 +106,7 @@ class SmelterOrchestrator {
             await this.dataFetcher.loadEloCache();
 
             this.isInitialized = true;
-            this.logger.info('SmelterOrchestrator V4.0 初始化完成', {
+            this.logger.info('SmelterOrchestrator V5.2 初始化完成', {
                 eloTeams: this.dataFetcher.eloCache?.size || 0
             });
 
@@ -306,7 +306,7 @@ class SmelterOrchestrator {
     }
 
     /**
-     * 提取全部特征（V5.0 30维）
+     * 提取全部特征（V5.2 38维）
      * @private
      * @param {object} matchData - 比赛数据
      * @returns {object} 完整特征集
@@ -332,7 +332,7 @@ class SmelterOrchestrator {
         const eloFeatures = this.dataFetcher.getEloFeatures(home_team, away_team);
         Object.assign(baseFeatures, eloFeatures);
 
-        // V5.0 新增：异步提取历史依赖特征
+        // V5.2 新增：异步提取历史依赖特征
         let rollingFeatures = {};
         let efficiencyFeatures = {};
         let drawFeatures = {};
@@ -366,7 +366,7 @@ class SmelterOrchestrator {
             this.logger.error('新特征提取异常', { match_id, error: error.message });
         }
 
-        // 合并所有特征（30维）
+        // 合并所有特征（38维）
         return {
             ...baseFeatures,
             ...rollingFeatures,
@@ -375,7 +375,7 @@ class SmelterOrchestrator {
             rolling: rollingFeatures,
             efficiency: efficiencyFeatures,
             draw: drawFeatures,
-            _version: 'V5.0.0',
+            _version: 'V5.2.0',
             _extractedAt: new Date().toISOString()
         };
     }

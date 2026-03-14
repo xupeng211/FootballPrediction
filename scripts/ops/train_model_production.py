@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-TITAN V5.0 生产模型训练脚本
+TITAN V5.2 生产模型训练脚本
 ============================
 
 使用全量数据(2025+2026)训练最终生产模型
 输出: TITAN_CORE_V5_PROD.joblib + 元数据
 
 @module scripts.ops.train_model_production
-@version V5.0.0-PROD
+@version V5.2.0-PROD
 """
 
 import argparse
@@ -134,7 +134,7 @@ def get_db_connection():
 def train_production_model():
     """训练生产模型"""
     logger.info("=" * 70)
-    logger.info("TITAN V5.0 生产模型训练")
+    logger.info("TITAN V5.2 生产模型训练")
     logger.info("=" * 70)
     
     conn = get_db_connection()
@@ -260,7 +260,7 @@ def train_production_model():
     logger.info(f"标准化器已保存: {scaler_path}")
     logger.info(f"元数据已保存: {metadata_path}")
     logger.info("=" * 70)
-    logger.info("✅ TITAN V5.0 生产模型训练完成!")
+    logger.info("✅ TITAN V5.2 生产模型训练完成!")
     logger.info("=" * 70)
     
     return model, scaler
