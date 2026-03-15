@@ -67,6 +67,15 @@ const SQL = {
     WHERE match_id = $1
   `,
 
+  // 标记死亡（超过最大重试次数）
+  markDead: `
+    UPDATE backfill_progress
+    SET status = 'dead',
+        last_error = $2,
+        updated_at = NOW()
+    WHERE match_id = $1
+  `,
+
   // 获取统计信息
   getStats: `
     SELECT
@@ -346,6 +355,50 @@ class Checkpointer {
     console.log('='.repeat(60));
 
     return stats;
+  }
+
+  /**
+   * 获取恢复点（第一个待处理的比赛）
+   * @returns {Promise<Object|null>} 恢复点信息
+   */
+  async getResumePoint() {
+    const result = await this.pool.query(SQL.getPending, [1]);
+    return result.rows[0] || null;
+  }
+
+  /**
+   * 获取重试次数
+   * @param {string} matchId - 比赛ID
+   * @returns {Promise<number>} 重试次数
+   */
+  async getRetryCount(matchId) {
+    const result = await this.pool.query(
+      'SELECT retry_count FROM backfill_progress WHERE match_id = $1',
+      [matchId]
+    );
+    return result.rows[0]?.retry_count || 0;
+  }
+
+  /**
+   * 保存检查点（定期持久化进度）
+   */
+  async saveCheckpoint() {
+    const stats = await this.getStats();
+    this.logger.info('💾 检查点已保存', {
+      total: stats.total_count,
+      success: stats.success_count,
+      pending: stats.pending_count
+    });
+  }
+
+  /**
+   * 标记比赛为死亡（超过最大重试次数）
+   * @param {string} matchId - 比赛ID
+   * @param {string} errorMessage - 错误信息
+   */
+  async markDead(matchId, errorMessage) {
+    await this.pool.query(SQL.markDead, [matchId, errorMessage]);
+    this.logger.info('💀 比赛标记为死亡', { matchId, error: errorMessage });
   }
 }
 
