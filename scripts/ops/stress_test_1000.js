@@ -18,6 +18,7 @@
 const { Pool } = require('pg');
 const { Checkpointer } = require('../../src/infrastructure/harvesters/Checkpointer');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
+const { OddsPortalHarvester } = require('../../src/infrastructure/harvesters/OddsPortalHarvester');
 const { performance } = require('perf_hooks');
 
 // ============================================================================
@@ -293,26 +294,44 @@ class StressTestExecutor {
   async _processMatch(match, count) {
     const startTime = performance.now();
     let proxy = null;
+    let harvester = null;
     
     try {
       proxy = this.proxyRotator.getNextProxy();
       
-      // 模拟处理时间 (随机20-100ms)
-      const processingTime = 20 + Math.random() * 80;
-      await this._sleep(processingTime);
+      // 真实抓取 - 调用 OddsPortalHarvester
+      harvester = new OddsPortalHarvester({
+        proxyPort: proxy.port,
+        headless: true
+      });
       
-      // 模拟C++引擎调用
-      const cppStart = performance.now();
-      await this._simulateCppEngine();
-      const cppElapsed = performance.now() - cppStart;
-      this.monitor.recordCppEngineTiming(count, cppElapsed);
+      const harvestStart = performance.now();
+      const result = await harvester.harvest(match.oddsportal_url);
+      const harvestElapsed = performance.now() - harvestStart;
       
-      // 模拟2%失败率
-      if (Math.random() < 0.02) {
-        throw new Error('SIMULATED_ERROR: Random failure');
+      // 记录真实抓取耗时
+      this.monitor.recordCppEngineTiming(count, harvestElapsed);
+      
+      // 透明化日志
+      console.log(`[${count}/1000] ✅ ${match.home_team} vs ${match.away_team}`);
+      console.log(`       📄 URL: ${result.pageUrl || match.oddsportal_url}`);
+      console.log(`       🎯 Odds: ${JSON.stringify(result.odds || {})}`);
+      console.log(`       ⏱️  Latency: ${harvestElapsed.toFixed(0)}ms | Proxy: ${proxy.port}`);
+      
+      // 验证真实数据
+      if (!result.odds || Object.keys(result.odds).length === 0) {
+        throw new Error('未获取到真实赔率数据');
       }
       
-      await this.checkpointer.markSuccess(match.match_id);
+      // 存储真实数据到 l3_features
+      await this._storeRealData(match.match_id, result, proxy.port);
+      
+      await this.checkpointer.markSuccess(match.match_id, {
+        odds: result.odds,
+        pageUrl: result.pageUrl,
+        proxyPort: proxy.port,
+        harvestTimeMs: harvestElapsed
+      });
       this.stats.success++;
       
     } catch (error) {
@@ -326,6 +345,8 @@ class StressTestExecutor {
         }
       }
       
+      console.log(`[${count}/1000] ❌ ${match.match_id}: ${error.message}`);
+      
       const retryCount = await this.checkpointer.getRetryCount(match.match_id);
       if (retryCount < 3) {
         await this.checkpointer.markFailed(match.match_id, error.message);
@@ -333,12 +354,55 @@ class StressTestExecutor {
       } else {
         await this.checkpointer.markDead(match.match_id, error.message);
       }
+    } finally {
+      if (harvester) {
+        await harvester.close();
+      }
     }
   }
 
-  async _simulateCppEngine() {
-    // 模拟BridgeRadarEngine调用 (通常<10ms)
-    await this._sleep(2 + Math.random() * 5);
+  /**
+   * 存储真实抓取数据到数据库
+   * @private
+   */
+  async _storeRealData(matchId, harvestResult, proxyPort) {
+    const odds = harvestResult.odds || {};
+    
+    // 提取1X2赔率并计算margin
+    let odds1x2 = null;
+    if (odds['1x2'] && Array.isArray(odds['1x2']) && odds['1x2'].length === 3) {
+      odds1x2 = odds['1x2'].map(o => parseFloat(o));
+    } else if (odds.fullTime && Array.isArray(odds.fullTime) && odds.fullTime.length === 3) {
+      odds1x2 = odds.fullTime.map(o => parseFloat(o));
+    } else if (odds.home !== undefined && odds.draw !== undefined && odds.away !== undefined) {
+      odds1x2 = [parseFloat(odds.home), parseFloat(odds.draw), parseFloat(odds.away)];
+    }
+    
+    let marketMargin = null;
+    if (odds1x2) {
+      const impliedProbs = odds1x2.map(o => 1 / o);
+      marketMargin = impliedProbs.reduce((a, b) => a + b, 0) - 1;
+    }
+    
+    const marketSentiment = {
+      oddsportal_url: harvestResult.pageUrl || harvestResult.url,
+      oddsportal_hash: harvestResult.hash,
+      odds_1x2: odds1x2 ? { home: odds1x2[0], draw: odds1x2[1], away: odds1x2[2] } : null,
+      market_margin: marketMargin,
+      raw_odds: odds,
+      source: 'oddsportal',
+      scraped_at: new Date().toISOString(),
+      proxy_used: proxyPort
+    };
+    
+    const query = `
+      INSERT INTO l3_features (match_id, market_sentiment, computed_at, created_at, updated_at)
+      VALUES ($1, $2, NOW(), NOW(), NOW())
+      ON CONFLICT (match_id) DO UPDATE SET
+        market_sentiment = EXCLUDED.market_sentiment,
+        updated_at = NOW()
+    `;
+    await this.pool.query(query, [matchId, JSON.stringify(marketSentiment)]);
   }
 
   async _monitorProxyHealth(count) {

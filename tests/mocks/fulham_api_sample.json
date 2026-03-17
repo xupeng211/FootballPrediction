@@ -1,0 +1,139 @@
+{
+  "_description": "富勒姆 vs 伯恩利 - OddsPortal API响应样本",
+  "_match": "Fulham vs Burnley",
+  "_matchId": "47_20232024_4813679",
+  "_expected": {
+    "bet365": {
+      "opening": [1.54, 4.1, 6.0],
+      "closing": [1.5, 3.9, 6.5]
+    },
+    "pinnacle": {
+      "opening": [1.58, 4.2, 6.5],
+      "closing": [1.44, 4.33, 7.5]
+    }
+  },
+  "ajax": {
+    "id": "1-1-8EamNN8b-1-2",
+    "sportId": 1,
+    "eventId": "8EamNN8b",
+    "hash": "8EamNN8b",
+    "league": {
+      "id": "KKay4EE8",
+      "name": "Premier League",
+      "country": "England"
+    },
+    "homeTeam": {
+      "id": 1,
+      "name": "Fulham"
+    },
+    "awayTeam": {
+      "id": 2,
+      "name": "Burnley"
+    },
+    "odds": {
+      "1x2": {
+        "providers": [
+          {
+            "id": 16,
+            "name": "Bet365",
+            "bookieId": 16,
+            "providerId": "16",
+            "odds": {
+              "opening": {
+                "home": 1.54,
+                "draw": 4.1,
+                "away": 6.0,
+                "timestamp": "2026-03-10T10:00:00Z"
+              },
+              "current": {
+                "home": 1.5,
+                "draw": 3.9,
+                "away": 6.5,
+                "timestamp": "2026-03-16T14:30:00Z"
+              },
+              "movement": [
+                {"time": "2026-03-10T10:00:00Z", "home": 1.54, "draw": 4.1, "away": 6.0},
+                {"time": "2026-03-12T08:00:00Z", "home": 1.52, "draw": 4.0, "away": 6.2},
+                {"time": "2026-03-16T14:30:00Z", "home": 1.5, "draw": 3.9, "away": 6.5}
+              ]
+            }
+          },
+          {
+            "id": 18,
+            "name": "Pinnacle",
+            "bookieId": 18,
+            "providerId": "18",
+            "odds": {
+              "opening": {
+                "home": 1.58,
+                "draw": 4.2,
+                "away": 6.5,
+                "timestamp": "2026-03-10T10:00:00Z"
+              },
+              "current": {
+                "home": 1.44,
+                "draw": 4.33,
+                "away": 7.5,
+                "timestamp": "2026-03-16T14:30:00Z"
+              },
+              "movement": [
+                {"time": "2026-03-10T10:00:00Z", "home": 1.58, "draw": 4.2, "away": 6.5},
+                {"time": "2026-03-13T09:00:00Z", "home": 1.5, "draw": 4.25, "away": 7.0},
+                {"time": "2026-03-16T14:30:00Z", "home": 1.44, "draw": 4.33, "away": 7.5}
+              ]
+            }
+          },
+          {
+            "id": 1,
+            "name": "1xBet",
+            "bookieId": 1,
+            "odds": {
+              "current": {
+                "home": 1.52,
+                "draw": 4.15,
+                "away": 6.8
+              }
+            }
+          }
+        ],
+        "average": {
+          "home": 1.51,
+          "draw": 4.05,
+          "away": 6.6
+        }
+      }
+    },
+    "meta": {
+      "timestamp": "2026-03-16T14:30:00Z",
+      "version": "v2.1"
+    }
+  },
+  "raw": {
+    "data": {
+      "bookmakers": [
+        {
+          "bid": 16,
+          "bookie": "Bet365",
+          "label": "bet365",
+          "opening": [1.54, 4.1, 6.0],
+          "current": [1.5, 3.9, 6.5],
+          "history": [
+            {"t": "2026-03-10T10:00:00Z", "o": [1.54, 4.1, 6.0]},
+            {"t": "2026-03-16T14:30:00Z", "o": [1.5, 3.9, 6.5]}
+          ]
+        },
+        {
+          "bid": 18,
+          "bookie": "Pinnacle",
+          "label": "pinnacle",
+          "opening": [1.58, 4.2, 6.5],
+          "current": [1.44, 4.33, 7.5],
+          "history": [
+            {"t": "2026-03-10T10:00:00Z", "o": [1.58, 4.2, 6.5]},
+            {"t": "2026-03-16T14:30:00Z", "o": [1.44, 4.33, 7.5]}
+          ]
+        }
+      ]
+    }
+  }
+}
