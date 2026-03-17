@@ -252,6 +252,143 @@ class OddsAPIClientV38:
             'proxy_pool': proxy_check,
             'overall_status': 'healthy' if tls_check['valid'] and http_check['status'] == 'ok' else 'degraded'
         }
+    
+    async def save_odds_to_db(self, match_id: str, provider: str, odds_data: Dict) -> bool:
+        """
+        V6.0: 保存赔率数据到数据库（支持初赔/终赔/现赔三位一体）
+        
+        Args:
+            match_id: 比赛ID
+            provider: 博彩公司名称 (pinnacle, bet365, etc.)
+            odds_data: 包含 opening/closing/current 的赔率数据
+                {
+                    'opening': {'home': 1.5, 'draw': 4.0, 'away': 6.0, 'timestamp': '...'},
+                    'closing': {'home': 1.44, 'draw': 4.33, 'away': 7.5, 'timestamp': '...'},
+                    'current': {'home': 1.44, 'draw': 4.33, 'away': 7.5, 'timestamp': '...'}
+                }
+        
+        Returns:
+            bool: 是否保存成功
+        """
+        import psycopg2
+        from psycopg2.extras import RealDictCursor
+        
+        # 数据库连接配置
+        db_config = {
+            'host': os.getenv('DB_HOST', 'localhost'),
+            'port': os.getenv('DB_PORT', '5432'),
+            'database': os.getenv('DB_NAME', 'football_db'),
+            'user': os.getenv('DB_USER', 'football_user'),
+            'password': os.getenv('DB_PASSWORD', ''),
+        }
+        
+        try:
+            conn = psycopg2.connect(**db_config)
+            cursor = conn.cursor()
+            
+            # 提取初赔
+            opening = odds_data.get('opening', {})
+            odds_home_open = opening.get('home') if isinstance(opening, dict) else None
+            odds_draw_open = opening.get('draw') if isinstance(opening, dict) else None
+            odds_away_open = opening.get('away') if isinstance(opening, dict) else None
+            opening_at = opening.get('timestamp') if isinstance(opening, dict) else None
+            
+            # 提取终赔
+            closing = odds_data.get('closing', {})
+            odds_home_close = closing.get('home') if isinstance(closing, dict) else None
+            odds_draw_close = closing.get('draw') if isinstance(closing, dict) else None
+            odds_away_close = closing.get('away') if isinstance(closing, dict) else None
+            closing_at = closing.get('timestamp') if isinstance(closing, dict) else None
+            
+            # 提取现赔（如果没有则使用终赔）
+            current = odds_data.get('current', closing)
+            odds_home_current = current.get('home') if isinstance(current, dict) else None
+            odds_draw_current = current.get('draw') if isinstance(current, dict) else None
+            odds_away_current = current.get('away') if isinstance(current, dict) else None
+            current_at = current.get('timestamp') if isinstance(current, dict) else None
+            
+            # 计算派生指标
+            odds_drop_home = None
+            odds_drop_draw = None
+            odds_drop_away = None
+            market_margin = None
+            
+            if odds_home_open and odds_home_close:
+                odds_drop_home = round((odds_home_open - odds_home_close) / odds_home_open, 4)
+            if odds_draw_open and odds_draw_close:
+                odds_drop_draw = round((odds_draw_open - odds_draw_close) / odds_draw_open, 4)
+            if odds_away_open and odds_away_close:
+                odds_drop_away = round((odds_away_open - odds_away_close) / odds_away_open, 4)
+            
+            if odds_home_close and odds_draw_close and odds_away_close:
+                market_margin = round(
+                    (1/odds_home_close + 1/odds_draw_close + 1/odds_away_close) - 1, 
+                    4
+                )
+            
+            # V6.0 UPSERT SQL - 支持初赔+终赔+现赔三位一体
+            sql = """
+            INSERT INTO match_odds (
+                match_id, provider,
+                odds_home_open, odds_draw_open, odds_away_open, opening_at,
+                odds_home_close, odds_draw_close, odds_away_close, closing_at,
+                odds_home_current, odds_draw_current, odds_away_current, current_at,
+                odds_drop_home, odds_drop_draw, odds_drop_away, market_margin,
+                source_channel, data_quality, collected_at
+            ) VALUES (
+                %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, %s, %s,
+                %s, %s, NOW()
+            )
+            ON CONFLICT (match_id, provider) DO UPDATE SET
+                odds_home_open = EXCLUDED.odds_home_open,
+                odds_draw_open = EXCLUDED.odds_draw_open,
+                odds_away_open = EXCLUDED.odds_away_open,
+                opening_at = EXCLUDED.opening_at,
+                odds_home_close = EXCLUDED.odds_home_close,
+                odds_draw_close = EXCLUDED.odds_draw_close,
+                odds_away_close = EXCLUDED.odds_away_close,
+                closing_at = EXCLUDED.closing_at,
+                odds_home_current = EXCLUDED.odds_home_current,
+                odds_draw_current = EXCLUDED.odds_draw_current,
+                odds_away_current = EXCLUDED.odds_away_current,
+                current_at = EXCLUDED.current_at,
+                odds_drop_home = EXCLUDED.odds_drop_home,
+                odds_drop_draw = EXCLUDED.odds_drop_draw,
+                odds_drop_away = EXCLUDED.odds_drop_away,
+                market_margin = EXCLUDED.market_margin,
+                source_channel = EXCLUDED.source_channel,
+                data_quality = EXCLUDED.data_quality,
+                collected_at = NOW()
+            """
+            
+            cursor.execute(sql, (
+                match_id, provider,
+                odds_home_open, odds_draw_open, odds_away_open, opening_at,
+                odds_home_close, odds_draw_close, odds_away_close, closing_at,
+                odds_home_current, odds_draw_current, odds_away_current, current_at,
+                odds_drop_home, odds_drop_draw, odds_drop_away, market_margin,
+                'api', 'PREMIUM-GOLD' if all([odds_home_open, odds_home_close]) else 'STANDARD'
+            ))
+            
+            conn.commit()
+            cursor.close()
+            conn.close()
+            
+            print(f"✅ 已保存 {provider} 赔率到数据库:")
+            print(f"   初赔: H={odds_home_open} D={odds_draw_open} A={odds_away_open}")
+            print(f"   终赔: H={odds_home_close} D={odds_draw_close} A={odds_away_close}")
+            if odds_drop_home:
+                print(f"   主胜降幅: {odds_drop_home*100:.2f}%")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ 数据库保存失败: {e}")
+            return False
 
 
 # 便捷函数

@@ -259,7 +259,31 @@ package-lock.json
 
 # V173: Browser Profile Data (SENSITIVE)
 data/browser_profile/
+data/browser_profile_*/
 !data/browser_profile/.gitkeep
+
+# Playwright & Browser Automation Profiles
+.playwright_stealth_profile/
+.playwright/
+test-results/
+playwright-report/
+browser_cache/
+
+# Debug output files
+debug_*.html
+debug_*.json
+p2p_harvest_*.json
+real_backfill_*.json
+
+# Exception: Keep core config files
+!package.json
+!package-lock.json
+!tsconfig.json
+!.eslintrc.json
+!pyproject.toml
+!ruff.toml
+!mypy.ini
+!pytest.ini
 
 # V4.23: Cookie Security - Prevent session leakage
 data/browser_profile/Default/Cookies*
