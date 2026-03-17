@@ -311,6 +311,251 @@ function processOddsTimeline(historyPoints) {
 }
 
 /**
+ * V6.0 初赔提取器 - 多路径兼容版
+ * 支持6种不同的数据结构变体
+ * 
+ * @param {Object} bookieData - 博彩公司原始数据
+ * @param {string} bookieKey - 公司键名 (pinnacle/bet365)
+ * @returns {Object|null} { o: [h, d, a], t: timestamp, source: string }
+ */
+function extractOpeningOdds(bookieData, bookieKey) {
+  if (!bookieData || typeof bookieData !== 'object') {
+    return null;
+  }
+
+  let opening = null;
+
+  // 路径1: 标准 opening 对象格式 { opening: { home: 1.5, draw: 4.0, away: 6.0 } }
+  if (bookieData.opening && typeof bookieData.opening === 'object') {
+    const op = bookieData.opening;
+    if (op.home !== undefined && op.draw !== undefined && op.away !== undefined) {
+      const odds = [parseFloat(op.home), parseFloat(op.draw), parseFloat(op.away)];
+      if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+        opening = {
+          o: odds,
+          t: op.timestamp || op.ts || bookieData.opening_at || Date.now(),
+          source: 'opening_object'
+        };
+      }
+    }
+  }
+
+  // 路径2: opening 数组格式 { opening: [1.5, 4.0, 6.0] }
+  if (!opening && Array.isArray(bookieData.opening) && bookieData.opening.length >= 3) {
+    const odds = bookieData.opening.slice(0, 3).map(o => parseFloat(o));
+    if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+      opening = {
+        o: odds,
+        t: bookieData.opening_at || bookieData.first_seen_at || Date.now(),
+        source: 'opening_array'
+      };
+    }
+  }
+
+  // 路径3: 从 history/movement 数组提取第一个点
+  if (!opening && (bookieData.history || bookieData.movement)) {
+    const history = bookieData.history || bookieData.movement;
+    if (Array.isArray(history) && history.length > 0) {
+      const first = history[0];
+      // 格式A: { t: timestamp, o: [h, d, a] }
+      if (first.o && Array.isArray(first.o) && first.o.length >= 3) {
+        const odds = first.o.map(v => parseFloat(v));
+        if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+          opening = {
+            o: odds,
+            t: first.t || first.timestamp || first.ts || Date.now(),
+            source: 'history_first'
+          };
+        }
+      }
+      // 格式B: { timestamp: "...", home: 1.5, draw: 4.0, away: 6.0 }
+      else if (first.home !== undefined && first.draw !== undefined && first.away !== undefined) {
+        const odds = [parseFloat(first.home), parseFloat(first.draw), parseFloat(first.away)];
+        if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+          opening = {
+            o: odds,
+            t: first.timestamp || first.t || first.ts || Date.now(),
+            source: 'history_first_detailed'
+          };
+        }
+      }
+    }
+  }
+
+  // 路径4: 从 odds 嵌套对象提取 { odds: { opening: {...} } }
+  if (!opening && bookieData.odds && bookieData.odds.opening) {
+    const op = bookieData.odds.opening;
+    if (op.home !== undefined) {
+      const odds = [parseFloat(op.home), parseFloat(op.draw), parseFloat(op.away)];
+      if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+        opening = {
+          o: odds,
+          t: op.timestamp || Date.now(),
+          source: 'odds.opening'
+        };
+      }
+    }
+  }
+
+  // 路径5: 使用替代字段 { initial: [...] } 或 { start: [...] }
+  if (!opening) {
+    const altFields = ['initial', 'start', 'first', 'orig', 'original'];
+    for (const field of altFields) {
+      if (bookieData[field]) {
+        const val = bookieData[field];
+        let odds;
+        if (Array.isArray(val) && val.length >= 3) {
+          odds = val.map(n => parseFloat(n));
+        } else if (val && typeof val === 'object' && val.home !== undefined) {
+          odds = [parseFloat(val.home), parseFloat(val.draw), parseFloat(val.away)];
+        }
+        if (odds && odds.length >= 3 && odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+          opening = {
+            o: odds,
+            t: bookieData[`${field}_at`] || Date.now(),
+            source: `${field}_field`
+          };
+          break;
+        }
+      }
+    }
+  }
+
+  // 验证纯度
+  if (opening) {
+    const validation = validatePurity(opening.o, { strictMode: false });
+    if (!validation.valid) {
+      console.warn(`[${bookieKey}] 初赔纯度验证失败:`, validation.error);
+      return null;
+    }
+    opening.o = validation.normalized_odds;
+  }
+
+  return opening;
+}
+
+/**
+ * V6.0 终赔提取器 - 多路径兼容版
+ * 
+ * @param {Object} bookieData - 博彩公司原始数据
+ * @param {string} bookieKey - 公司键名
+ * @returns {Object|null} { o: [h, d, a], t: timestamp, source: string }
+ */
+function extractClosingOdds(bookieData, bookieKey) {
+  if (!bookieData || typeof bookieData !== 'object') {
+    return null;
+  }
+
+  let closing = null;
+
+  // 路径1: 标准 current/closing 对象
+  if (bookieData.current && typeof bookieData.current === 'object') {
+    const cur = bookieData.current;
+    if (cur.home !== undefined && cur.draw !== undefined && cur.away !== undefined) {
+      const odds = [parseFloat(cur.home), parseFloat(cur.draw), parseFloat(cur.away)];
+      if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+        closing = {
+          o: odds,
+          t: cur.timestamp || cur.ts || bookieData.last_changed_at || Date.now(),
+          source: 'current_object'
+        };
+      }
+    }
+  }
+
+  if (!closing && bookieData.closing && typeof bookieData.closing === 'object') {
+    const clo = bookieData.closing;
+    if (clo.home !== undefined && clo.draw !== undefined && clo.away !== undefined) {
+      const odds = [parseFloat(clo.home), parseFloat(clo.draw), parseFloat(clo.away)];
+      if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+        closing = {
+          o: odds,
+          t: clo.timestamp || clo.ts || bookieData.last_changed_at || Date.now(),
+          source: 'closing_object'
+        };
+      }
+    }
+  }
+
+  // 路径2: 数组格式
+  if (!closing && Array.isArray(bookieData.current) && bookieData.current.length >= 3) {
+    const odds = bookieData.current.slice(0, 3).map(o => parseFloat(o));
+    if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+      closing = {
+        o: odds,
+        t: bookieData.last_changed_at || Date.now(),
+        source: 'current_array'
+      };
+    }
+  }
+
+  if (!closing && Array.isArray(bookieData.closing) && bookieData.closing.length >= 3) {
+    const odds = bookieData.closing.slice(0, 3).map(o => parseFloat(o));
+    if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+      closing = {
+        o: odds,
+        t: bookieData.last_changed_at || Date.now(),
+        source: 'closing_array'
+      };
+    }
+  }
+
+  // 路径3: 从 history/movement 最后一个点
+  if (!closing && (bookieData.history || bookieData.movement)) {
+    const history = bookieData.history || bookieData.movement;
+    if (Array.isArray(history) && history.length > 0) {
+      const last = history[history.length - 1];
+      if (last.o && Array.isArray(last.o) && last.o.length >= 3) {
+        const odds = last.o.map(v => parseFloat(v));
+        if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+          closing = {
+            o: odds,
+            t: last.t || last.timestamp || last.ts || Date.now(),
+            source: 'history_last'
+          };
+        }
+      } else if (last.home !== undefined && last.draw !== undefined && last.away !== undefined) {
+        const odds = [parseFloat(last.home), parseFloat(last.draw), parseFloat(last.away)];
+        if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+          closing = {
+            o: odds,
+            t: last.timestamp || last.t || Date.now(),
+            source: 'history_last_detailed'
+          };
+        }
+      }
+    }
+  }
+
+  // 路径4: 从 odds 嵌套对象
+  if (!closing && bookieData.odds && bookieData.odds.current) {
+    const cur = bookieData.odds.current;
+    if (cur.home !== undefined) {
+      const odds = [parseFloat(cur.home), parseFloat(cur.draw), parseFloat(cur.away)];
+      if (odds.every(n => !isNaN(n) && n > 1 && n < 100)) {
+        closing = {
+          o: odds,
+          t: cur.timestamp || Date.now(),
+          source: 'odds.current'
+        };
+      }
+    }
+  }
+
+  // 验证
+  if (closing) {
+    const validation = validatePurity(closing.o, { strictMode: true });
+    if (!validation.valid) {
+      console.warn(`[${bookieKey}] 终赔纯度验证失败:`, validation.error);
+      return null;
+    }
+    closing.o = validation.normalized_odds;
+  }
+
+  return closing;
+}
+
+/**
  * 递归深度搜索对象中的所有值
  * @param {Object} obj - 要搜索的对象
  * @param {string|Array} targetKeys - 目标键名或键名列表
@@ -785,17 +1030,11 @@ function buildMarketSentiment(apiResult, domResult, options = {}) {
     let dataQuality = 'STANDARD';
     
     if (bookieData) {
-      // API数据 - 完整时序
-      if (bookieData.opening) {
-        const validation = validatePurity(bookieData.opening, { strictMode: strictValidation });
-        if (validation.valid) opening = { o: validation.normalized_odds, t: bookieData.opening_at };
-      }
+      // V6.0: 使用多路径兼容的提取器
+      opening = extractOpeningOdds(bookieData, bookieKey);
+      closing = extractClosingOdds(bookieData, bookieKey);
       
-      if (bookieData.closing) {
-        const validation = validatePurity(bookieData.closing, { strictMode: strictValidation });
-        if (validation.valid) closing = { o: validation.normalized_odds, t: bookieData.last_changed_at };
-      }
-      
+      // 构建 history 数组
       if (bookieData.history && bookieData.history.length > 0) {
         history = bookieData.history
           .filter(h => validatePurity(h.o, { strictMode: false }).valid)
@@ -804,11 +1043,37 @@ function buildMarketSentiment(apiResult, domResult, options = {}) {
             o: h.o,
             type: index === 0 ? 'OPEN' : (index === bookieData.history.length - 1 ? 'CLOSE' : 'MOVE')
           }));
+      } else if (bookieData.movement && bookieData.movement.length > 0) {
+        // 兼容 movement 字段
+        history = bookieData.movement
+          .filter(h => {
+            if (h.o && Array.isArray(h.o)) return validatePurity(h.o, { strictMode: false }).valid;
+            if (h.home !== undefined) {
+              const odds = [h.home, h.draw, h.away].map(parseFloat);
+              return odds.every(n => !isNaN(n) && n > 1 && n < 100);
+            }
+            return false;
+          })
+          .map((h, index, arr) => {
+            if (h.o && Array.isArray(h.o)) {
+              return { t: h.t || h.timestamp || h.ts, o: h.o, type: index === 0 ? 'OPEN' : (index === arr.length - 1 ? 'CLOSE' : 'MOVE') };
+            } else {
+              return { t: h.timestamp || h.t || h.ts, o: [parseFloat(h.home), parseFloat(h.draw), parseFloat(h.away)], type: index === 0 ? 'OPEN' : (index === arr.length - 1 ? 'CLOSE' : 'MOVE') };
+            }
+          });
       }
       
       sourceChannel = bookieData._detected_channel || 'api';
-      isComplete = bookieData._is_premium || false;
-      dataQuality = bookieData._is_premium ? 'PREMIUM-GOLD' : 'STANDARD';
+      isComplete = bookieData._is_premium || !!(opening && closing && opening.source !== 'history_first');
+      dataQuality = isComplete ? 'PREMIUM-GOLD' : 'STANDARD';
+      
+      // 如果提取器找到了更好的数据，记录来源
+      if (opening) {
+        console.log(`[${bookieKey}] 初赔来源: ${opening.source}`);
+      }
+      if (closing) {
+        console.log(`[${bookieKey}] 终赔来源: ${closing.source}`);
+      }
     } else if (fallbackData) {
       // DOM回退数据 - 仅终盘
       const validation = validatePurity(fallbackData, { strictMode: strictValidation });
