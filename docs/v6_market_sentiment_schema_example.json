@@ -1,0 +1,131 @@
+{
+  "_schema_version": "V6.0-ULTIMATE",
+  "_extract_timestamp": "2026-03-16T08:30:00.000Z",
+  "extract_method": "ODDS_PORTAL_API_DECRYPT_V6.0",
+  "source": "oddsportal_api_decrypt",
+  
+  "pinnacle": {
+    "bookmaker_id": 18,
+    "bookmaker_name": "Pinnacle",
+    "tier": "P0",
+    
+    "opening": {
+      "o": [2.15, 3.40, 3.60],
+      "t": 1710576000
+    },
+    
+    "closing": {
+      "o": [1.95, 3.65, 4.20],
+      "t": 1710662400
+    },
+    
+    "movement": {
+      "history": [
+        { "t": 1710576000, "o": [2.15, 3.40, 3.60], "type": "OPEN" },
+        { "t": 1710604800, "o": [2.10, 3.45, 3.70], "type": "MOVE" },
+        { "t": 1710626400, "o": [2.05, 3.50, 3.80], "type": "MOVE" },
+        { "t": 1710648000, "o": [2.00, 3.55, 3.95], "type": "MOVE" },
+        { "t": 1710655200, "o": [1.98, 3.60, 4.10], "type": "MOVE" },
+        { "t": 1710662400, "o": [1.95, 3.65, 4.20], "type": "CLOSE" }
+      ],
+      "point_count": 6,
+      "volatility_index": 2.34,
+      "max_home_movement": 0.20,
+      "max_draw_movement": 0.25,
+      "max_away_movement": 0.60
+    },
+    
+    "metadata": {
+      "purity_score": 100,
+      "source_channel": "fetch",
+      "extraction_timestamp": "2026-03-16T08:30:00.000Z",
+      "data_quality": "PREMIUM-GOLD",
+      "is_complete": true
+    }
+  },
+  
+  "bet365": {
+    "bookmaker_id": 16,
+    "bookmaker_name": "Bet365",
+    "tier": "P0",
+    
+    "opening": {
+      "o": [2.10, 3.50, 3.50],
+      "t": 1710576000
+    },
+    
+    "closing": {
+      "o": [1.90, 3.75, 4.10],
+      "t": 1710662400
+    },
+    
+    "movement": {
+      "history": [
+        { "t": 1710576000, "o": [2.10, 3.50, 3.50], "type": "OPEN" },
+        { "t": 1710615600, "o": [2.05, 3.55, 3.60], "type": "MOVE" },
+        { "t": 1710637200, "o": [2.00, 3.60, 3.75], "type": "MOVE" },
+        { "t": 1710651600, "o": [1.95, 3.70, 3.95], "type": "MOVE" },
+        { "t": 1710662400, "o": [1.90, 3.75, 4.10], "type": "CLOSE" }
+      ],
+      "point_count": 5,
+      "volatility_index": 1.89,
+      "max_home_movement": 0.20,
+      "max_draw_movement": 0.25,
+      "max_away_movement": 0.60
+    },
+    
+    "metadata": {
+      "purity_score": 100,
+      "source_channel": "websocket",
+      "extraction_timestamp": "2026-03-16T08:30:15.000Z",
+      "data_quality": "PREMIUM-GOLD",
+      "is_complete": true
+    }
+  },
+  
+  "bwin": {
+    "bookmaker_id": 1,
+    "bookmaker_name": "Bwin",
+    "tier": "P1",
+    
+    "opening": {
+      "o": [2.05, 3.45, 3.55],
+      "t": 1710576000
+    },
+    
+    "closing": {
+      "o": [1.88, 3.70, 4.25],
+      "t": 1710662400
+    },
+    
+    "movement": {
+      "history": [
+        { "t": 1710576000, "o": [2.05, 3.45, 3.55], "type": "OPEN" },
+        { "t": 1710662400, "o": [1.88, 3.70, 4.25], "type": "CLOSE" }
+      ],
+      "point_count": 2,
+      "volatility_index": 0,
+      "max_home_movement": 0.17,
+      "max_draw_movement": 0.25,
+      "max_away_movement": 0.70
+    },
+    
+    "metadata": {
+      "purity_score": 95,
+      "source_channel": "fetch",
+      "extraction_timestamp": "2026-03-16T08:30:30.000Z",
+      "data_quality": "STANDARD",
+      "is_complete": false,
+      "note": "仅捕捉开收盘，中间变盘丢失"
+    }
+  },
+  
+  "_summary": {
+    "total_bookmakers": 3,
+    "premium_gold_count": 2,
+    "standard_count": 1,
+    "overall_purity": 98.3,
+    "has_p0_data": true,
+    "data_completeness": "high"
+  }
+}

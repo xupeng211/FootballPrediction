@@ -208,12 +208,39 @@ class BackfillExecutor {
       
       console.log(`${progress} Processing ${match.match_id} | Proxy: ${proxy.port} | ${match.home_team} vs ${match.away_team}`);
       
-      // 模拟抓取逻辑（实际应调用 OddsPortalHarvester）
-      // 这里使用模拟数据代替实际 HTTP 请求
-      await this._simulateHarvest(match, proxy);
+      // 真实抓取 - 调用 OddsPortalHarvester
+      const harvestResult = await this._realHarvest(match, proxy);
+      
+      // 提取1X2赔率并计算margin
+      const odds1x2 = this._extract1x2Odds(harvestResult.odds);
+      if (!odds1x2) {
+        throw new Error('未能提取有效1X2赔率');
+      }
+      
+      const marketMargin = this._calculateMarketMargin(odds1x2);
+      
+      // 验证 Margin 在合理范围 (2% - 15%)
+      if (marketMargin < 0.02 || marketMargin > 0.15) {
+        console.warn(`       ⚠️  Margin异常: ${(marketMargin * 100).toFixed(2)}%`);
+      }
+      
+      // 存储到 l3_features
+      await this._storeToL3Features(match.match_id, {
+        oddsportal_url: harvestResult.url,
+        oddsportal_hash: harvestResult.oddsportal_hash,
+        odds_1x2: { home: odds1x2[0], draw: odds1x2[1], away: odds1x2[2] },
+        market_margin: marketMargin,
+        source: 'oddsportal',
+        scraped_at: new Date().toISOString(),
+        proxy_used: harvestResult.proxy_port
+      });
       
       // 标记成功
-      await this.checkpointer.markSuccess(match.match_id);
+      await this.checkpointer.markSuccess(match.match_id, {
+        oddsportalHash: harvestResult.oddsportal_hash,
+        odds: odds1x2,
+        marketMargin: marketMargin
+      });
       this.stats.success++;
       
       const elapsed = Date.now() - startTime;
@@ -242,29 +269,90 @@ class BackfillExecutor {
   }
 
   /**
-   * 模拟抓取（用于试运行）
+   * 真实抓取 - 调用 OddsPortalHarvester
    * @private
    */
-  async _simulateHarvest(match, proxy) {
-    // 模拟网络延迟
-    await new Promise(resolve => setTimeout(resolve, 50 + Math.random() * 100));
-    
-    // 模拟偶尔的失败（5% 概率）
-    if (Math.random() < 0.05) {
-      const errors = ['timeout', '403', 'network'];
-      const errorType = errors[Math.floor(Math.random() * errors.length)];
-      throw new Error(`Simulated ${errorType} error`);
+  async _realHarvest(match, proxy) {
+    const harvester = new OddsPortalHarvester({
+      proxyPort: proxy.port,
+      headless: true
+    });
+
+    try {
+      // 真实抓取
+      const result = await harvester.harvest(match.oddsportal_url);
+      
+      // 透明化：记录真实抓取信息
+      console.log(`       📄 Page URL: ${result.pageUrl || match.oddsportal_url}`);
+      console.log(`       🎯 Raw Odds: ${JSON.stringify(result.odds || {})}`);
+
+      // 验证有真实数据返回
+      if (!result.odds || Object.keys(result.odds).length === 0) {
+        throw new Error('未获取到真实赔率数据');
+      }
+
+      return {
+        match_id: match.match_id,
+        oddsportal_hash: result.hash || null,
+        url: match.oddsportal_url,
+        proxy_port: proxy.port,
+        odds: result.odds,
+        pageUrl: result.pageUrl,
+        rawHtml: result.rawHtml ? result.rawHtml.substring(0, 500) : null
+      };
+    } finally {
+      await harvester.close();
     }
-    
-    // 生成模拟的 OddsPortal hash
-    const hash = Math.random().toString(36).substring(2, 15);
-    
-    return {
-      match_id: match.match_id,
-      oddsportal_hash: hash,
-      url: match.oddsportal_url,
-      proxy_port: proxy.port
-    };
+  }
+
+  /**
+   * 从harvest结果中提取1X2赔率
+   * @private
+   */
+  _extract1x2Odds(odds) {
+    if (!odds) return null;
+
+    // 尝试多种可能的格式
+    if (odds['1x2'] && Array.isArray(odds['1x2']) && odds['1x2'].length === 3) {
+      return odds['1x2'].map(o => parseFloat(o));
+    }
+    if (odds.fullTime && Array.isArray(odds.fullTime) && odds.fullTime.length === 3) {
+      return odds.fullTime.map(o => parseFloat(o));
+    }
+    if (odds.home !== undefined && odds.draw !== undefined && odds.away !== undefined) {
+      return [parseFloat(odds.home), parseFloat(odds.draw), parseFloat(odds.away)];
+    }
+
+    return null;
+  }
+
+  /**
+   * 计算市场抽水率
+   * @private
+   */
+  _calculateMarketMargin(odds1x2) {
+    const impliedProbs = odds1x2.map(o => 1 / o);
+    return impliedProbs.reduce((a, b) => a + b, 0) - 1;
+  }
+
+  /**
+   * 存储market_sentiment到l3_features表
+   * @private
+   */
+  async _storeToL3Features(matchId, marketSentiment) {
+    try {
+      const query = `
+        INSERT INTO l3_features (match_id, market_sentiment, computed_at, created_at, updated_at)
+        VALUES ($1, $2, NOW(), NOW(), NOW())
+        ON CONFLICT (match_id) DO UPDATE SET
+          market_sentiment = EXCLUDED.market_sentiment,
+          updated_at = NOW()
+      `;
+      await this.pool.query(query, [matchId, JSON.stringify(marketSentiment)]);
+    } catch (error) {
+      console.error(`       ⚠️  l3_features存储失败: ${error.message}`);
+      throw error;
+    }
   }
 
   /**

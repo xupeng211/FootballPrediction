@@ -166,87 +166,144 @@ class GoldPilotExecutor {
   }
 
   async _processRealMatch(match, count) {
+    const startTime = Date.now();
     try {
-      // 从match_info解析队名 (match是数据库返回的行)
-      const matchInfo = typeof match.match_info === 'string' 
-        ? JSON.parse(match.match_info) 
-        : match.match_info || {};
-      
-      const homeTeam = matchInfo.home_team || 'Unknown';
-      const awayTeam = matchInfo.away_team || 'Unknown';
-      
+      // 直接使用match对象的字段
+      const homeTeam = match.home_team || 'Unknown';
+      const awayTeam = match.away_team || 'Unknown';
+
       // 获取代理
       const proxy = this.proxyRotator.getNextProxy();
-      
+
       // 构建OddsPortal URL
-      const url = this._buildOddsPortalUrl({ home_team: homeTeam, away_team: awayTeam });
-      
+      const url = this._buildOddsPortalUrl(homeTeam, awayTeam);
+      console.log(`[${count}/50] 🔍 抓取: ${homeTeam} vs ${awayTeam}`);
+      console.log(`       🔗 URL: ${url}`);
+
+      // 使用真实的OddsPortalHarvester进行抓取
+      const harvester = new OddsPortalHarvester({
+        proxyPort: proxy.port,
+        headless: true
+      });
+
+      // 抓取真实赔率数据
+      const harvestResult = await harvester.harvest(url);
+      const networkLatency = Date.now() - startTime;
+
+      // 透明化: 记录真实抓取信息
+      console.log(`       📄 Page URL: ${harvestResult.pageUrl || url}`);
+      console.log(`       🎯 Raw Odds: ${JSON.stringify(harvestResult.odds || {})}`);
+
+      // 提取1X2赔率
+      const odds1x2 = this._extract1x2Odds(harvestResult.odds);
+      if (!odds1x2) {
+        throw new Error('未能提取有效1X2赔率');
+      }
+
+      // 计算市场抽水率
+      const marketMargin = this._calculateMarketMargin(odds1x2);
+
+      // 验证Margin在合理范围内 (2% - 15%)
+      if (marketMargin < 0.02 || marketMargin > 0.15) {
+        console.warn(`       ⚠️  Margin异常: ${(marketMargin * 100).toFixed(2)}%`);
+      }
+
       // 解析URL获取hash
       const parsed = OddsPortalURLParser.parseMatchURL(url);
-      
-      if (!parsed) {
-        throw new Error('URL解析失败');
-      }
-      
-      // 模拟真实网络延迟 (实际生产环境这里会调用OddsPortalHarvester)
-      const networkLatency = 200 + Math.random() * 300;
-      await this._sleep(networkLatency);
-      
-      // 模拟真实赔率数据 (实际生产环境从页面提取)
-      const realOdds = this._generateRealisticOdds();
-      
-      // 计算市场抽水率
-      const marketMargin = this._calculateMarketMargin(realOdds.odds1x2);
-      
-      // 存储结果
+
+      // 构建market_sentiment数据
+      const marketSentiment = {
+        oddsportal_url: url,
+        oddsportal_hash: parsed ? parsed.match_hash : null,
+        odds_1x2: {
+          home: odds1x2[0],
+          draw: odds1x2[1],
+          away: odds1x2[2]
+        },
+        market_margin: marketMargin,
+        source: 'oddsportal',
+        scraped_at: new Date().toISOString(),
+        proxy_used: proxy.port,
+        processing_time_ms: networkLatency
+      };
+
+      // 存储结果到checkpointer
       await this.checkpointer.markSuccess(match.match_id, {
-        processingTimeMs: Math.round(networkLatency),
+        processingTimeMs: networkLatency,
         proxyPort: proxy.port,
-        oddsportalHash: parsed.match_hash,
-        odds: realOdds,
+        oddsportalHash: parsed ? parsed.match_hash : null,
+        odds: { odds1x2 },
         marketMargin: marketMargin
       });
-      
+
+      // 同时存储到l3_features表
+      await this._storeToL3Features(match.match_id, marketSentiment);
+
       this.stats.success++;
-      
+
       // 实时输出
       console.log(`[${count}/50] ✅ ${homeTeam} vs ${awayTeam}`);
-      console.log(`       🔗 Hash: ${parsed.match_hash}`);
-      console.log(`       💰 Odds: ${realOdds.odds1x2.join(' | ')}`);
+      console.log(`       🔗 Hash: ${parsed ? parsed.match_hash : 'N/A'}`);
+      console.log(`       💰 Odds: ${odds1x2.join(' | ')}`);
       console.log(`       📊 Margin: ${(marketMargin * 100).toFixed(2)}%`);
-      console.log(`       🔌 Proxy: ${proxy.port} | Latency: ${Math.round(networkLatency)}ms\n`);
-      
+      console.log(`       🔌 Proxy: ${proxy.port} | Latency: ${networkLatency}ms\n`);
+
+      // 关闭harvester
+      await harvester.close();
+
     } catch (error) {
       this.stats.failed++;
+      const networkLatency = Date.now() - startTime;
       await this.checkpointer.markFailed(match.match_id, error.message);
-      const matchInfo = typeof match.match_info === 'string' 
-        ? JSON.parse(match.match_info) 
-        : match.match_info || {};
-      console.log(`[${count}/50] ❌ ${matchInfo.home_team || 'Unknown'} vs ${matchInfo.away_team || 'Unknown'}: ${error.message}\n`);
+      const homeTeam = match.home_team || 'Unknown';
+      const awayTeam = match.away_team || 'Unknown';
+      console.log(`[${count}/50] ❌ ${homeTeam} vs ${awayTeam}: ${error.message}`);
+      console.log(`       ⏱️  Latency: ${networkLatency}ms\n`);
     }
   }
 
-  _buildOddsPortalUrl(match) {
-    const homeSlug = match.home.toLowerCase().replace(/\s+/g, '-');
-    const awaySlug = match.away.toLowerCase().replace(/\s+/g, '-');
-    return `https://www.oddsportal.com/soccer/england/premier-league/${homeSlug}-${awaySlug}/`;
+  /**
+   * 从harvest结果中提取1X2赔率
+   */
+  _extract1x2Odds(odds) {
+    if (!odds) return null;
+
+    // 尝试多种可能的格式
+    if (odds['1x2'] && Array.isArray(odds['1x2']) && odds['1x2'].length === 3) {
+      return odds['1x2'].map(o => parseFloat(o));
+    }
+    if (odds.fullTime && Array.isArray(odds.fullTime) && odds.fullTime.length === 3) {
+      return odds.fullTime.map(o => parseFloat(o));
+    }
+    if (odds.home !== undefined && odds.draw !== undefined && odds.away !== undefined) {
+      return [parseFloat(odds.home), parseFloat(odds.draw), parseFloat(odds.away)];
+    }
+
+    return null;
   }
 
-  _generateRealisticOdds() {
-    // 生成真实范围内的Pinnacle风格赔率
-    const homeOdds = 1.5 + Math.random() * 2.0;  // 1.5 - 3.5
-    const drawOdds = 3.0 + Math.random() * 1.5;  // 3.0 - 4.5
-    const awayOdds = 2.5 + Math.random() * 2.5;  // 2.5 - 5.0
-    
-    return {
-      odds1x2: [
-        Math.round(homeOdds * 100) / 100,
-        Math.round(drawOdds * 100) / 100,
-        Math.round(awayOdds * 100) / 100
-      ],
-      source: 'pinnacle',
-      timestamp: new Date().toISOString()
-    };
+  /**
+   * 存储market_sentiment到l3_features表
+   */
+  async _storeToL3Features(matchId, marketSentiment) {
+    try {
+      const query = `
+        INSERT INTO l3_features (match_id, market_sentiment, computed_at, created_at, updated_at)
+        VALUES ($1, $2, NOW(), NOW(), NOW())
+        ON CONFLICT (match_id) DO UPDATE SET
+          market_sentiment = EXCLUDED.market_sentiment,
+          updated_at = NOW()
+      `;
+      await this.pool.query(query, [matchId, JSON.stringify(marketSentiment)]);
+    } catch (error) {
+      console.error(`       ⚠️  l3_features存储失败: ${error.message}`);
+    }
+  }
+
+  _buildOddsPortalUrl(homeTeam, awayTeam) {
+    const homeSlug = homeTeam.toLowerCase().replace(/\s+/g, '-');
+    const awaySlug = awayTeam.toLowerCase().replace(/\s+/g, '-');
+    return `https://www.oddsportal.com/soccer/england/premier-league/${homeSlug}-${awaySlug}/`;
   }
 
   _calculateMarketMargin(odds1x2) {
