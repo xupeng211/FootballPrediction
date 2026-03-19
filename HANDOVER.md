@@ -1,6 +1,6 @@
-# V6.5 项目交付快速索引 (HANDOVER.md)
+# V6.6 项目交付快速索引 (HANDOVER.md)
 
-> **最后更新**: 2026-03-19 | **版本**: V6.5 | **状态**: 生产就绪
+> **最后更新**: 2026-03-20 | **版本**: V6.6 | **状态**: 生产就绪
 
 ---
 
@@ -14,6 +14,15 @@
 | **总比赛场次** | 1,900 场 | ✅ 完美 |
 | **每赛季场次** | 380 场 | ✅ 标准 |
 | **数据一致性** | 100% | ✅ V6.5 硬化 |
+
+### 🔒 L2 采集层已硬化 (V6.6)
+
+| 指标 | 数值 | 状态 |
+|------|------|------|
+| **数据库约束** | 8 道 CHECK 约束 | ✅ V6.6 硬化 |
+| **版本标记** | 全部 `data_version: 'V26.1'` | ✅ 全链路对齐 |
+| **标准化工具** | Normalizer 全层复用 | ✅ L1/L2/L3 统一 |
+| **单元测试** | 30 个测试 100% 通过 | ✅ 质量认证 |
 
 ### 📊 数据质量认证
 
@@ -119,13 +128,37 @@ UPDATE matches SET is_finished = true WHERE match_id = 'xxx';
 const season = '2324';  // 会被拒绝
 const season = '2023-2024';  // 会被拒绝
 
-// ✅ 正确做法：使用 normalizeSeason()
-const season = seeder.normalizeSeason('2324');  // 返回 '2023/2024'
+// ✅ 正确做法：使用 Normalizer.normalizeSeason()
+const season = Normalizer.normalizeSeason('2324');  // 返回 '2023/2024'
 ```
 
 **后果**:
 - 数据库报错：`violates check constraint "season_format"`
 - 插入失败
+
+#### 红线 4: 不可触碰 L2 `raw_match_data` 表约束 (V6.6 新增)
+
+**原因**: V6.6 在 L2 层添加了 8 道硬约束，确保原始数据质量
+
+```sql
+-- ❌ 危险操作：删除约束
+ALTER TABLE raw_match_data DROP CONSTRAINT match_id_format;
+ALTER TABLE raw_match_data DROP CONSTRAINT raw_data_not_empty;
+
+-- ❌ 危险操作：绕过代码层直接插入
+INSERT INTO raw_match_data (match_id, raw_data) 
+VALUES ('invalid-id', '{}');  -- 会被拒绝
+```
+
+**后果**:
+- 非标准 match_id 进入系统，导致 L3 特征提取失败
+- 空 raw_data 污染数据集
+- 下游预测模型准确性下降
+
+**正确做法**:
+- 所有原始数据采集必须通过 `ProductionHarvester`
+- 使用 `Normalizer.isValidMatchId()` 预检 match_id 格式
+- 确保 `data_version: 'V26.1'` 标记存在
 
 ---
 
@@ -135,8 +168,11 @@ const season = seeder.normalizeSeason('2324');  // 返回 '2023/2024'
 
 | 文件 | 说明 |
 |------|------|
-| `src/infrastructure/FixtureSeeder.js` | L1 核心类，V6.5 硬化版本 |
-| `scripts/ops/seed_fixtures.js` | 命令行入口 |
+| `src/infrastructure/FixtureSeeder.js` | L1 核心类，V6.6 使用 Normalizer |
+| `src/infrastructure/harvesters/ProductionHarvester.js` | L2 收割引擎，V6.6 硬化版本 |
+| `src/utils/Normalizer.js` | V6.6 共享标准化工具类 |
+| `scripts/ops/seed_fixtures.js` | L1 命令行入口 |
+| `scripts/ops/run_production.js` | L2 命令行入口 |
 | `config/leagues.json` | 联赛配置 |
 
 ### 4.2 文档
@@ -144,7 +180,9 @@ const season = seeder.normalizeSeason('2324');  // 返回 '2023/2024'
 | 文件 | 说明 |
 |------|------|
 | `docs/adr/ADR-001-Source-Level-Data-Hardening.md` | V6.5 架构决策记录 |
+| `docs/adr/ADR-002-L2-Raw-Storage-Hardening.md` | V6.6 架构决策记录 |
 | `src/infrastructure/L1_DISCOVERY_ENGINE.md` | L1 技术文档 |
+| `src/infrastructure/harvesters/L2_HARVESTING_ENGINE.md` | L2 技术文档 |
 | `CHANGELOG.md` | 版本变更历史 |
 
 ### 4.3 数据库
@@ -152,6 +190,7 @@ const season = seeder.normalizeSeason('2324');  // 返回 '2023/2024'
 | 文件 | 说明 |
 |------|------|
 | `database/migrations/V6.5__hardened_matches_schema.sql` | V6.5 迁移脚本 |
+| `database/migrations/V6.6__hardened_l2_raw_storage.sql` | V6.6 迁移脚本 |
 
 ---
 
@@ -159,10 +198,12 @@ const season = seeder.normalizeSeason('2324');  // 返回 '2023/2024'
 
 | 问题 | 诊断 | 解决方案 |
 |------|------|----------|
-| `violates check constraint "season_format"` | 赛季格式错误 | 使用 `normalizeSeason()` 转换 |
+| `violates check constraint "season_format"` | 赛季格式错误 | 使用 `Normalizer.normalizeSeason()` 转换 |
 | `violates check constraint "status_lowercase"` | 状态大小写错误 | 使用 `determineStatus()` 获取小写状态 |
+| `violates check constraint "match_id_format"` | L2 match_id 格式错误 | 使用 `Normalizer.buildMatchId()` 构建 |
+| `violates check constraint "raw_data_not_empty"` | L2 空数据插入 | 检查原始数据是否有效 |
 | `is_finished` 不同步 | 手动修改导致 | 只更新 `status`，触发器会自动同步 |
-| 数据插入失败 | 约束冲突 | 检查是否通过标准 Seeder 操作 |
+| 数据插入失败 | 约束冲突 | 检查是否通过标准 Seeder/Harvester 操作 |
 
 ---
 

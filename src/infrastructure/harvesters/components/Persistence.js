@@ -14,6 +14,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
+const { Normalizer } = require('../../../utils/Normalizer');
 
 /**
  * 数据持久化器类
@@ -30,23 +31,48 @@ class Persistence {
     }
 
     /**
-     * 保存数据到数据库
+     * 保存数据到数据库 (V6.6 硬化版本)
      * @param {object} client - 数据库连接客户端
-     * @param {string} matchId - 比赛 ID
+     * @param {string} leagueId - 联赛 ID
+     * @param {string} season - 赛季 (如 '2023/2024' 或 '2324')
+     * @param {string} externalId - 外部数据源 ID
      * @param {object} rawData - 原始数据对象
-     * @returns {Promise<void>}
-     * @throws {Error} 数据库保存失败时抛出
+     * @returns {Promise<string>} 标准化的 match_id
+     * @throws {Error} 数据库保存失败或数据验证失败时抛出
      */
-    async saveToDatabase(client, matchId, rawData) {
+    async saveToDatabase(client, leagueId, season, externalId, rawData) {
+        // V6.6: 使用 Normalizer 构建标准化 match_id
+        const normalizedSeason = Normalizer.normalizeSeason(season);
+        const matchId = Normalizer.buildMatchId(leagueId, normalizedSeason, externalId);
+
+        // V6.6: 预检 match_id 格式
+        if (!Normalizer.isValidMatchId(matchId)) {
+            throw new Error(`[VALIDATION] match_id 格式非法: ${matchId}`);
+        }
+
+        // V6.6: 预检 raw_data 非空
+        if (!rawData || Object.keys(rawData).length === 0) {
+            throw new Error(`[VALIDATION] raw_data 不能为空: ${matchId}`);
+        }
+
         const query = `
-            INSERT INTO raw_match_data (match_id, raw_data, collected_at)
-            VALUES ($1, $2, NOW())
+            INSERT INTO raw_match_data (match_id, raw_data, collected_at, data_version, external_id)
+            VALUES ($1, $2, NOW(), $3, $4)
             ON CONFLICT (match_id)
-            DO UPDATE SET raw_data = EXCLUDED.raw_data, collected_at = NOW()
+            DO UPDATE SET 
+                raw_data = EXCLUDED.raw_data, 
+                collected_at = NOW(),
+                data_version = EXCLUDED.data_version
         `;
 
         try {
-            await client.query(query, [matchId, JSON.stringify(rawData)]);
+            await client.query(query, [
+                matchId, 
+                JSON.stringify(rawData), 
+                'V26.1',  // V6.6: 固定数据版本
+                externalId
+            ]);
+            return matchId;
         } catch (dbErr) {
             const errType = this._classifyDatabaseError(dbErr);
             throw new Error(`${errType} 数据库保存失败 [${matchId}]: ${dbErr.message}`);
@@ -67,11 +93,12 @@ class Persistence {
         // 确保目录存在
         await fs.mkdir(dataDir, { recursive: true });
 
-        // 构建保存数据结构
+        // 构建保存数据结构 (V6.6: 包含 data_version)
         const dataToSave = {
             match_id: matchId,
             raw_data: rawData,
             saved_at: new Date().toISOString(),
+            data_version: 'V26.1',  // V6.6: 固定数据版本
             source: metadata.source || 'ProductionHarvester',
             worker_id: metadata.workerId || 'unknown',
             ...metadata
@@ -83,37 +110,41 @@ class Persistence {
     }
 
     /**
-     * 执行双保险保存（数据库 + 文件）
+     * 执行双保险保存（数据库 + 文件）V6.6 硬化版本
      * @param {object} pool - 数据库连接池
-     * @param {string} matchId - 比赛 ID
+     * @param {string} leagueId - 联赛 ID
+     * @param {string} season - 赛季
+     * @param {string} externalId - 外部数据源 ID
      * @param {object} rawData - 原始数据
      * @param {object} metadata - 元数据
-     * @returns {Promise<{dbSuccess: boolean, filePath: string|null}>}
+     * @returns {Promise<{dbSuccess: boolean, filePath: string|null, matchId: string}>}
      */
-    async dualSave(pool, matchId, rawData, metadata = {}) {
+    async dualSave(pool, leagueId, season, externalId, rawData, metadata = {}) {
         const result = {
             dbSuccess: false,
-            filePath: null
+            filePath: null,
+            matchId: null
         };
 
         // 1. 数据库保存（主存储，失败即抛错）
         const client = await pool.connect();
         try {
-            await this.saveToDatabase(client, matchId, rawData);
+            const matchId = await this.saveToDatabase(client, leagueId, season, externalId, rawData);
             result.dbSuccess = true;
+            result.matchId = matchId;
         } finally {
             client.release();
         }
 
         // 2. 文件保存（辅助存储，失败不阻塞）
-        this.saveToFile(matchId, rawData, metadata).then(
+        this.saveToFile(result.matchId, rawData, metadata).then(
             filePath => {
                 result.filePath = filePath;
-                console.log(`[SAVE-FILE] ✓ ${matchId}.json 已保存`);
+                console.log(`[SAVE-FILE] ✓ ${result.matchId}.json 已保存`);
             },
             err => {
                 const errorType = this._classifyFileError(err);
-                console.error(`[SAVE-FILE] ${errorType} ${matchId} 保存失败: ${err.message}`);
+                console.error(`[SAVE-FILE] ${errorType} ${result.matchId} 保存失败: ${err.message}`);
             }
         );
 

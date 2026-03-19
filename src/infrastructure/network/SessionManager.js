@@ -18,8 +18,10 @@ const fs = require('fs').promises;
 const path = require('path');
 const FactoryConfig = require('../../../config/factory_config');
 
-// V4.46.5 HARDENING: 使用确定性 ID 生成器（零模拟铁律）
-const { generateLockId } = require('../../core/id_generator');
+// V4.46.5 HARDENING: 本地确定性 ID 生成器（零模拟铁律）
+function generateLockId(port) {
+    return `lock_${port}_${Date.now()}_${process.pid}`;
+}
 
 // ============================================================================
 // 默认配置

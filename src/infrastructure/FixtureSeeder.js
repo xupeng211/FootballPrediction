@@ -19,10 +19,12 @@ const path = require('path');
 const fs = require('fs');
 
 // V5.0: 核心组件集成
-const { generateRequestId } = require('../core/id_generator');
 const { threeGatesFilter } = require('../core/validation/MatchValidator');
 const { getMetricsClient } = require('./monitoring/MetricsClient');
 const FactoryConfig = require('../../config/factory_config');
+
+// V6.6: 引入共享 Normalizer 工具类
+const { Normalizer } = require('../utils/Normalizer');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
@@ -286,44 +288,8 @@ class FixtureSeeder {
         return fixtures.filter(f => f && f.external_id);
     }
 
-    /**
-     * 赛季格式标准化 - V6.5 新增
-     * 将各种格式统一转换为 'YYYY/YYYY' 标准格式
-     * @param {string} season - 原始赛季字符串
-     * @returns {string} 标准化赛季 (如 '2023/2024')
-     */
-    normalizeSeason(season) {
-        if (!season || typeof season !== 'string') {
-            throw new Error(`Invalid season: ${season}`);
-        }
-
-        // 已经是标准格式
-        if (/^\d{4}\/\d{4}$/.test(season)) {
-            return season;
-        }
-
-        // 处理 '2324' 格式
-        if (/^\d{4}$/.test(season)) {
-            const startYear = `20${season.substring(0, 2)}`;
-            const endYear = `20${season.substring(2, 4)}`;
-            return `${startYear}/${endYear}`;
-        }
-
-        // 处理 '20242025' 格式
-        if (/^\d{8}$/.test(season)) {
-            const startYear = season.substring(0, 4);
-            const endYear = season.substring(4, 8);
-            return `${startYear}/${endYear}`;
-        }
-
-        // 处理 '2024-2025' 格式
-        if (/^\d{4}-\d{4}$/.test(season)) {
-            return season.replace('-', '/');
-        }
-
-        // 无法识别的格式，抛出错误
-        throw new Error(`Unrecognized season format: ${season}`);
-    }
+    // V6.6: normalizeSeason 方法已迁移至共享 Normalizer 工具类
+    // 使用: Normalizer.normalizeSeason(season)
 
     parseMatch(match, leagueInfo, season) {
         const externalId = match.id?.toString();
@@ -367,7 +333,7 @@ class FixtureSeeder {
         const status = this.determineStatus(match, homeScore, awayScore);
 
         // V6.5: 强制转换赛季格式为标准格式
-        const normalizedSeason = this.normalizeSeason(season);
+        const normalizedSeason = Normalizer.normalizeSeason(season);
         const seasonTag = normalizedSeason.replace('/', '');
         const matchId = `${leagueInfo.id}_${seasonTag}_${externalId}`;
 
