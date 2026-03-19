@@ -192,29 +192,348 @@ async function reconLeagueSeason(page, leagueConfig, season) {
 }
 
 /**
+ * 英超队名映射表: OddsPortal 格式 -> 数据库标准格式
+ * 【关键】必须与 matches 表中的队名完全一致！
+ */
+const TEAM_NAME_MAPPINGS = {
+  // Manchester teams
+  'man united': 'Manchester United',
+  'man utd': 'Manchester United',
+  'manchester united': 'Manchester United',
+  'man city': 'Manchester City',
+  'manchester city': 'Manchester City',
+  
+  // Newcastle
+  'newcastle utd': 'Newcastle United',
+  'newcastle united': 'Newcastle United',
+  'newcastle': 'Newcastle United',
+  
+  // Wolves
+  'wolverhampton': 'Wolverhampton Wanderers',
+  'wolves': 'Wolverhampton Wanderers',
+  'wolverhampton wanderers': 'Wolverhampton Wanderers',
+  
+  // Tottenham
+  'tottenham': 'Tottenham Hotspur',
+  'spurs': 'Tottenham Hotspur',
+  'tottenham hotspur': 'Tottenham Hotspur',
+  
+  // West Ham
+  'west ham': 'West Ham United',
+  'west ham utd': 'West Ham United',
+  'west ham united': 'West Ham United',
+  
+  // Nottingham Forest
+  'nottingham': 'Nottingham Forest',
+  'nottingham forest': 'Nottingham Forest',
+  'n forest': 'Nottingham Forest',
+  
+  // Brighton (注意数据库中的格式)
+  'brighton': 'Brighton & Hove Albion',
+  'brighton hove albion': 'Brighton & Hove Albion',
+  
+  // Sheffield United
+  'sheffield utd': 'Sheffield United',
+  'sheffield united': 'Sheffield United',
+  
+  // Luton (数据库中是 Luton)
+  'luton': 'Luton',
+  'luton town': 'Luton',
+  
+  // Bournemouth (数据库中是 AFC Bournemouth)
+  'bournemouth': 'AFC Bournemouth',
+  'afc bournemouth': 'AFC Bournemouth',
+  
+  // Standard names (数据库中就是这些)
+  'arsenal': 'Arsenal',
+  'aston villa': 'Aston Villa',
+  'brentford': 'Brentford',
+  'burnley': 'Burnley',
+  'chelsea': 'Chelsea',
+  'crystal palace': 'Crystal Palace',
+  'everton': 'Everton',
+  'fulham': 'Fulham',
+  'liverpool': 'Liverpool'
+};
+
+/**
+ * 标准化队名 - 将 OddsPortal slug 转换为数据库标准格式
+ * 例如: "manchester-united" -> "Manchester United"
+ */
+function normalizeTeamName(slug) {
+  if (!slug) return '';
+  
+  // 清理格式
+  const normalized = slug
+    .toLowerCase()
+    .replace(/-/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  
+  // 查找映射表
+  if (TEAM_NAME_MAPPINGS[normalized]) {
+    return TEAM_NAME_MAPPINGS[normalized];
+  }
+  
+  // 无映射时，首字母大写
+  return normalized
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+}
+
+/**
+ * 五大联赛常见队名词典 (OddsPortal slug 格式)
+ * 用于贪婪匹配解析形如 "brentford-newcastle-utd" 的 slug
+ */
+const COMMON_TEAM_SLUGS = [
+  // Premier League
+  'arsenal', 'aston-villa', 'bournemouth', 'brentford', 'brighton',
+  'burnley', 'chelsea', 'crystal-palace', 'everton', 'fulham',
+  'liverpool', 'luton', 'man-city', 'man-united', 'newcastle-utd',
+  'nottingham-forest', 'sheffield-utd', 'tottenham', 'west-ham', 'wolves',
+  // La Liga
+  'alaves', 'almeria', 'athletic-bilbao', 'atletico-madrid', 'barcelona',
+  'cadiz', 'celta-vigo', 'getafe', 'girona', 'granada',
+  'las-palmas', 'mallorca', 'osasuna', 'rayo-vallecano', 'real-betis',
+  'real-madrid', 'real-sociedad', 'sevilla', 'valencia', 'villarreal',
+  // Bundesliga
+  'augsburg', 'bayer-leverkusen', 'bayern-munich', 'bochum', 'darmstadt',
+  'dortmund', 'eintracht-frankfurt', 'freiburg', 'heidenheim', 'hoffenheim',
+  'koln', 'mainz', 'monchengladbach', 'rb-leipzig', 'stuttgart',
+  'union-berlin', 'werder-bremen', 'wolfsburg',
+  // Serie A
+  'atalanta', 'bologna', 'cagliari', 'empoli', 'fiorentina',
+  'frosinone', 'genoa', 'inter', 'juventus', 'lazio',
+  'lecce', 'milan', 'monza', 'napoli', 'roma',
+  'salernitana', 'sassuolo', 'torino', 'udinese', 'verona',
+  // Ligue 1
+  'brest', 'clermont', 'le-havre', 'lens', 'lille',
+  'lorient', 'lyon', 'marseille', 'metz', 'monaco',
+  'montpellier', 'nantes', 'nice', 'psg', 'reims',
+  'rennes', 'strasbourg', 'toulouse'
+];
+
+/**
+ * 从 OddsPortal URL slug 提取队名
+ * 支持格式: "arsenal-everton" / "manchester-united-chelsea" / "brentford-newcastle-utd"
+ * 算法: 贪婪匹配 - 从词典中找最长匹配作为主队，剩余部分作为客队
+ */
+function extractTeamsFromSlug(slug) {
+  if (!slug) return { homeTeam: 'Unknown', awayTeam: 'Unknown' };
+  
+  // 先尝试 -vs- 格式 (旧格式兼容)
+  const vsMatch = slug.match(/^(.+?)-vs-(.+)$/);
+  if (vsMatch) {
+    return {
+      homeTeam: normalizeTeamName(vsMatch[1]),
+      awayTeam: normalizeTeamName(vsMatch[2])
+    };
+  }
+  
+  // 贪婪匹配算法: 从 slug 开头匹配最长的可能队名
+  const parts = slug.split('-');
+  let bestHomeMatch = null;
+  let bestHomeLen = 0;
+  
+  // 遍历所有可能的队名，找最长匹配
+  for (const teamSlug of COMMON_TEAM_SLUGS) {
+    const teamParts = teamSlug.split('-');
+    
+    // 检查 slug 是否以这个队名开头
+    if (parts.length >= teamParts.length) {
+      const slugPrefix = parts.slice(0, teamParts.length).join('-');
+      if (slugPrefix === teamSlug && teamParts.length > bestHomeLen) {
+        bestHomeMatch = teamSlug;
+        bestHomeLen = teamParts.length;
+      }
+    }
+  }
+  
+  if (bestHomeMatch) {
+    // 提取客队 (剩余部分)
+    const awayParts = parts.slice(bestHomeLen);
+    const awaySlug = awayParts.join('-');
+    
+    if (awayParts.length > 0) {
+      return {
+        homeTeam: normalizeTeamName(bestHomeMatch),
+        awayTeam: normalizeTeamName(awaySlug)
+      };
+    }
+  }
+  
+  // 备用方案: 尝试 50/50 分割 (针对未知队名)
+  const mid = Math.ceil(parts.length / 2);
+  const homeGuess = parts.slice(0, mid).join('-');
+  const awayGuess = parts.slice(mid).join('-');
+  
+  return {
+    homeTeam: normalizeTeamName(homeGuess),
+    awayTeam: normalizeTeamName(awayGuess)
+  };
+}
+
+/**
+ * 模糊匹配队名 - 计算相似度
+ */
+function calculateSimilarity(name1, name2) {
+  const n1 = name1.toLowerCase().trim();
+  const n2 = name2.toLowerCase().trim();
+  
+  if (n1 === n2) return 1.0;
+  if (n1.includes(n2) || n2.includes(n1)) return 0.9;
+  
+  // 简单的词重叠计算
+  const words1 = new Set(n1.split(/\s+/));
+  const words2 = new Set(n2.split(/\s+/));
+  const intersection = new Set([...words1].filter(x => words2.has(x)));
+  const union = new Set([...words1, ...words2]);
+  
+  return intersection.size / union.size;
+}
+
+/**
+ * 转换 season 格式: 2023-2024 -> 2023/2024
+ */
+function formatSeasonForDb(season) {
+  return season.replace('-', '/');
+}
+
+/**
+ * 查找真实 FotMob match_id
+ * 策略: 标准化队名 + season 字段匹配
+ * 【修复】改用 season 字段而非日期范围，适配数据库格式
+ */
+async function findRealMatchId(pool, homeTeam, awayTeam, season) {
+  try {
+    // 转换 season 格式为数据库格式 (2023-2024 -> 2023/2024)
+    const dbSeason = formatSeasonForDb(season);
+    
+    // 1. 首先尝试精确匹配标准化队名 (忽略大小写)
+    const exactQuery = `
+      SELECT match_id, home_team, away_team, match_date
+      FROM matches
+      WHERE season = $1
+        AND (
+          (LOWER(home_team) = LOWER($2) AND LOWER(away_team) = LOWER($3))
+          OR (LOWER(home_team) = LOWER($3) AND LOWER(away_team) = LOWER($2))
+        )
+      LIMIT 1;
+    `;
+    
+    const exactResult = await pool.query(exactQuery, [
+      dbSeason, homeTeam, awayTeam
+    ]);
+    
+    if (exactResult.rows.length > 0) {
+      return {
+        matchId: exactResult.rows[0].match_id,
+        confidence: 1.0,
+        method: 'exact',
+        dbHome: exactResult.rows[0].home_team,
+        dbAway: exactResult.rows[0].away_team
+      };
+    }
+    
+    // 2. 精确匹配失败，尝试模糊匹配
+    const fuzzyQuery = `
+      SELECT match_id, home_team, away_team, match_date
+      FROM matches
+      WHERE season = $1
+      LIMIT 50;
+    `;
+    
+    const fuzzyResult = await pool.query(fuzzyQuery, [dbSeason]);
+    
+    let bestMatch = null;
+    let bestScore = 0;
+    
+    for (const row of fuzzyResult.rows) {
+      const homeScore = calculateSimilarity(homeTeam, row.home_team);
+      const awayScore = calculateSimilarity(awayTeam, row.away_team);
+      const avgScore = (homeScore + awayScore) / 2;
+      
+      // 同时检查主客场是否互换
+      const swappedHomeScore = calculateSimilarity(homeTeam, row.away_team);
+      const swappedAwayScore = calculateSimilarity(awayTeam, row.home_team);
+      const swappedScore = (swappedHomeScore + swappedAwayScore) / 2;
+      
+      const finalScore = Math.max(avgScore, swappedScore);
+      
+      if (finalScore > bestScore && finalScore >= 0.6) {
+        bestScore = finalScore;
+        bestMatch = row;
+      }
+    }
+    
+    if (bestMatch) {
+      return {
+        matchId: bestMatch.match_id,
+        confidence: bestScore,
+        method: 'fuzzy',
+        dbHome: bestMatch.home_team,
+        dbAway: bestMatch.away_team
+      };
+    }
+    
+    // 3. 未找到匹配
+    return null;
+    
+  } catch (e) {
+    console.error(`   ❌ 查找 match_id 失败: ${e.message}`);
+    return null;
+  }
+}
+
+/**
  * 保存到数据库 mapping 表
+ * 【修复后】使用真实 FotMob match_id，而不是伪造
  */
 async function saveToDatabase(pool, matches, season, leagueConfig) {
-  console.log(`\n💾 保存到数据库...`);
+  console.log(`\n💾 保存到数据库 (执行队名对齐)...`);
   
   let inserted = 0;
   let skipped = 0;
+  let unmatched = 0;
+  const unmatchedList = [];
   
   for (const match of matches) {
     try {
-      // 从 slug 解析队名
-      const teams = match.slug.split('-vs-');
-      let homeTeam = teams[0] || match.slug.split('-')[0] || 'Unknown';
-      let awayTeam = teams[1] || match.slug.split('-').slice(1).join('-') || 'Unknown';
+      // 提取并标准化队名
+      const { homeTeam, awayTeam } = extractTeamsFromSlug(match.slug);
       
-      // 生成 match_id（如果没有）
-      const matchId = `${leagueConfig.league_id}_${season.replace('-', '')}_${match.hash}`;
+      if (homeTeam === 'Unknown' || awayTeam === 'Unknown') {
+        console.log(`   ⚠️  无法解析队名: ${match.slug}`);
+        unmatched++;
+        continue;
+      }
       
+      // 【关键修复】查询真实的 FotMob match_id
+      const matchInfo = await findRealMatchId(pool, homeTeam, awayTeam, season);
+      
+      if (!matchInfo) {
+        console.log(`   ⚠️  未找到匹配: ${homeTeam} vs ${awayTeam}`);
+        unmatchedList.push({ slug: match.slug, home: homeTeam, away: awayTeam });
+        unmatched++;
+        continue;
+      }
+      
+      // 使用真实的 match_id
+      const matchId = matchInfo.match_id;
+      
+      // 插入 mapping 表
       const query = `
         INSERT INTO matches_oddsportal_mapping 
-          (match_id, oddsportal_hash, full_url, season, league_name, home_team, away_team, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending')
-        ON CONFLICT (match_id, season) DO NOTHING
+          (match_id, oddsportal_hash, full_url, season, league_name, home_team, away_team, 
+           match_confidence, mapping_method, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
+        ON CONFLICT (match_id, season) DO UPDATE SET
+          oddsportal_hash = EXCLUDED.oddsportal_hash,
+          full_url = EXCLUDED.full_url,
+          match_confidence = EXCLUDED.match_confidence,
+          mapping_method = EXCLUDED.mapping_method,
+          updated_at = NOW()
         RETURNING match_id;
       `;
       
@@ -224,23 +543,37 @@ async function saveToDatabase(pool, matches, season, leagueConfig) {
         match.url,
         season,
         leagueConfig.name,
-        homeTeam.replace(/-/g, ' '),
-        awayTeam.replace(/-/g, ' ')
+        homeTeam,
+        awayTeam,
+        matchInfo.confidence,
+        matchInfo.method
       ]);
       
       if (result.rows.length > 0) {
         inserted++;
+        if (matchInfo.method === 'fuzzy') {
+          console.log(`   🔗 模糊匹配 [${matchInfo.confidence.toFixed(2)}]: ${homeTeam} vs ${awayTeam} -> ${matchInfo.dbHome} vs ${matchInfo.dbAway}`);
+        }
       } else {
         skipped++;
       }
       
     } catch (e) {
       console.log(`   ❌ 保存失败 ${match.hash}: ${e.message}`);
+      unmatched++;
     }
   }
   
-  console.log(`   ✅ 新增: ${inserted} | ⏭️ 跳过(已存在): ${skipped}`);
-  return { inserted, skipped };
+  console.log(`\n   ✅ 成功缝合: ${inserted} | ⏭️ 已存在: ${skipped} | ❓ 未匹配: ${unmatched}`);
+  
+  if (unmatchedList.length > 0) {
+    console.log(`   ⚠️  未匹配项 (前5个):`);
+    unmatchedList.slice(0, 5).forEach(u => {
+      console.log(`      - ${u.home} vs ${u.away} (${u.slug})`);
+    });
+  }
+  
+  return { inserted, skipped, unmatched };
 }
 
 /**
