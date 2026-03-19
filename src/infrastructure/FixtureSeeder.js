@@ -1,15 +1,13 @@
 /**
- * @file FixtureSeeder - L1 发现层核心模块 V4.46.6
+ * @file FixtureSeeder - L1 发现层核心模块 V6.4
  *
  * 工业级重构版本：
  * - 批量 UPSERT (每 50 场写入一次)
  * - 并行扫描 (可配置并发数)
- * - NetworkShield 代理池集成
  * - MetricsClient 可观测性
- * - 确定性 ID 生成
+ * - V6.4: 集成 MatchValidator 三道铁门、熔断机制、连接池
  * @module infrastructure/FixtureSeeder
- * @version V4.46.6
- * @author FootballPrediction Engineering Team
+ * @version V6.4
  */
 
 'use strict';
@@ -20,224 +18,106 @@ const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
 
-// ============================================================================
-// V4.46.6: 核心组件集成
-// ============================================================================
-
-// 确定性 ID 生成器 (替代 Math.random)
-const {
-    generateRequestId,
-    generateDeterministicId
-} = require('../core/id_generator');
-
-// 共享常量 (含 POSTPONED 状态)
-const {
-    MATCH_STATUS,
-    STATUS_FINISHED,
-    STATUS_LIVE,
-    STATUS_SCHEDULED,
-    STATUS_CANCELLED,
-    STATUS_POSTPONED
-} = require('../../config/shared_constants');
-
-// V4.46.6: MetricsClient 可观测性
+// V5.0: 核心组件集成
+const { generateRequestId } = require('../core/id_generator');
+const { threeGatesFilter } = require('../core/validation/MatchValidator');
 const { getMetricsClient } = require('./monitoring/MetricsClient');
-
-// 工厂配置
 const FactoryConfig = require('../../config/factory_config');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
 // ============================================================================
-// 日志系统 (工业级分级)
+// 精简日志系统
 // ============================================================================
 
-const LogLevel = {
-    INFO: 'INFO',
-    WARN: 'WARN',
-    ERROR: 'ERROR',
-    SUCCESS: 'SUCCESS',
-    DEBUG: 'DEBUG'
-};
-
-/**
- *
- */
 class Logger {
-    /**
-     *
-     * @param module
-     * @param requestId
-     */
     constructor(module, requestId = null) {
         this.module = module;
         this.requestId = requestId;
     }
-
-    /**
-     *
-     * @param requestId
-     */
-    setRequestId(requestId) {
-        this.requestId = requestId;
-    }
-
-    /**
-     *
-     * @param level
-     * @param message
-     * @param meta
-     */
+    setRequestId(id) { this.requestId = id; }
     _format(level, message, meta = null) {
-        const timestamp = new Date().toISOString();
-        const reqIdStr = this.requestId ? `[${this.requestId}] ` : '';
-        const metaStr = meta ? ` | ${JSON.stringify(meta)}` : '';
-        return `[${timestamp}] [${level}] [${this.module}] ${reqIdStr}${message}${metaStr}`;
+        const ts = new Date().toISOString();
+        const req = this.requestId ? `[${this.requestId}] ` : '';
+        const m = meta ? ` | ${JSON.stringify(meta)}` : '';
+        return `[${ts}] [${level}] [${this.module}] ${req}${message}${m}`;
     }
-
-    /**
-     *
-     * @param message
-     * @param meta
-     */
-    info(message, meta = null) { console.log(this._format(LogLevel.INFO, message, meta)); }
-    /**
-     *
-     * @param message
-     * @param meta
-     */
-    warn(message, meta = null) { console.warn(this._format(LogLevel.WARN, message, meta)); }
-    /**
-     *
-     * @param message
-     * @param error
-     */
-    error(message, error = null) {
-        const meta = error ? { request_id: this.requestId || 'unknown', error: error.message, stack: error.stack } : { request_id: this.requestId || 'unknown' };
-        console.error(this._format(LogLevel.ERROR, message, meta));
-    }
-    /**
-     *
-     * @param message
-     * @param meta
-     */
-    success(message, meta = null) { console.log(this._format(LogLevel.SUCCESS, message, meta)); }
-    /**
-     *
-     * @param message
-     * @param meta
-     */
-    debug(message, meta = null) {
-        if (process.env.LOG_LEVEL === 'debug') {
-            console.log(this._format(LogLevel.DEBUG, message, meta));
-        }
-    }
+    info(m, meta) { console.log(this._format('INFO', m, meta)); }
+    warn(m, meta) { console.warn(this._format('WARN', m, meta)); }
+    error(m, err) { console.error(this._format('ERROR', m, err ? { error: err.message } : null)); }
+    success(m, meta) { console.log(this._format('SUCCESS', m, meta)); }
+    debug(m, meta) { if (process.env.LOG_LEVEL === 'debug') console.log(this._format('DEBUG', m, meta)); }
 }
 
 const log = new Logger('FixtureSeeder');
 
 // ============================================================================
-// 配置加载器
+// 配置加载
 // ============================================================================
 
-/**
- *
- */
 function loadLeagueConfig() {
     const configPath = path.resolve(__dirname, '../../config/leagues.json');
-
     try {
-        if (!fs.existsSync(configPath)) {
-            log.warn(`配置文件不存在: ${configPath}，使用默认配置`);
-            return {
-                active_leagues: [{ id: 47, name: 'Premier League', country: 'England', enabled: true }],
-                active_seasons: ['2023/2024', '2024/2025']
-            };
-        }
-
-        const raw = fs.readFileSync(configPath, 'utf8');
-        const config = JSON.parse(raw);
-        const activeLeagues = config.active_leagues.filter(l => l.enabled !== false);
-
-        log.info(`配置加载成功: ${activeLeagues.length} 个活跃联赛`, {
-            leagues: activeLeagues.map(l => l.name).join(', ')
-        });
-
+        if (!fs.existsSync(configPath)) throw new Error('Config not found');
+        const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
         return {
-            active_leagues: activeLeagues,
+            active_leagues: config.active_leagues.filter(l => l.enabled !== false),
             active_seasons: config.active_seasons || ['2024/2025']
         };
-    } catch (error) {
-        log.error('配置加载失败，使用默认配置', error);
+    } catch (e) {
+        log.warn('配置加载失败，使用默认配置');
         return {
-            active_leagues: [{ id: 47, name: 'Premier League', country: 'England', enabled: true }],
-            active_seasons: ['2023/2024', '2024/2025']
+            active_leagues: [{ id: 47, name: 'Premier League', enabled: true }],
+            active_seasons: ['2024/2025']
         };
     }
 }
 
-// ============================================================================
-// V4.46.6 配置
-// ============================================================================
-
 const BASE_CONFIG = {
-    fotmob: {
-        baseUrl: 'www.fotmob.com',
-        leagueEndpoint: '/api/leagues',
-        timeout: 20000
-    },
+    fotmob: { baseUrl: 'www.fotmob.com', timeout: 20000 },
     db: {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
         database: process.env.DB_NAME || 'football_db',
         user: process.env.DB_USER || 'football_user',
-        password: process.env.DB_PASSWORD || ''
+        password: process.env.DB_PASSWORD || '',
+        // V6.4: 连接池工业级保护参数
+        max: 20,                           // 最大连接数
+        idleTimeoutMillis: 30000,          // 空闲连接30秒释放
+        connectionTimeoutMillis: 5000,     // 连接超时5秒
+        application_name: 'fixture_seeder_v5'
     },
-    // V4.46.6: 从工厂配置读取延时
     delay: FactoryConfig.TIMING?.minDelayMs || 2000,
-
-    // V4.46.6: 批量写入配置
     batchSize: parseInt(process.env.L1_BATCH_SIZE) || 50,
-
-    // V4.46.6: 并行扫描配置
     concurrency: parseInt(process.env.L1_CONCURRENCY) || 5,
-
-    // V4.46.6: L1 专用代理端口段 (与 L2/L3 隔离)
-    proxyPortRange: { start: 7890, end: 7894 }
+    // V6.4: 熔断机制配置
+    circuitBreaker: {
+        failureThreshold: 5,               // 连续失败5次触发熔断
+        resetTimeoutMs: 300000             // 5分钟后尝试恢复
+    }
 };
 
 // ============================================================================
-// V4.46.6: 代理感知 HTTP 工具
+// HTTP 请求工具
 // ============================================================================
 
-/**
- * V4.46.6: HTTPS GET 请求 (直连模式)
- * L1 发现层使用公开 API，无需代理
- * @param {string} url - 请求 URL
- * @param {object} options - 请求选项
- * @param {number} [workerId] - Worker ID (用于日志)
- * @returns {Promise<{status: number, data: object | null, raw: string}>}
- */
-async function httpsGetWithProxy(url, options = {}, workerId = 0) {
+async function httpsGet(url, options = {}, workerId = 0) {
     return new Promise((resolve, reject) => {
-        const parsedUrl = new URL(url);
-
-        const requestOptions = {
-            hostname: parsedUrl.hostname,
-            port: parsedUrl.port || 443,
-            path: parsedUrl.pathname + parsedUrl.search,
+        const parsed = new URL(url);
+        const opts = {
+            hostname: parsed.hostname,
+            port: parsed.port || 443,
+            path: parsed.pathname + parsed.search,
             method: 'GET',
             timeout: options.timeout || BASE_CONFIG.fotmob.timeout,
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0.36',
                 'Accept': 'application/json',
                 ...options.headers
             }
         };
 
-        log.debug(`[Worker ${workerId}] 直连请求: ${url}`);
-
-        const req = https.request(requestOptions, (res) => {
+        const req = https.request(opts, (res) => {
             let data = '';
             res.on('data', chunk => data += chunk);
             res.on('end', () => {
@@ -248,97 +128,54 @@ async function httpsGetWithProxy(url, options = {}, workerId = 0) {
                         raw: data
                     });
                 } catch (e) {
-                    resolve({ status: res.statusCode, data: null, raw: data, error: e.message });
+                    resolve({ status: res.statusCode, data: null, raw: data });
                 }
             });
         });
 
-        req.on('error', (e) => {
-            log.debug(`HTTP 请求失败 (Worker ${workerId}): ${e.message}`);
-            reject(e);
-        });
-
-        req.setTimeout(options.timeout || BASE_CONFIG.fotmob.timeout, () => {
-            req.destroy();
-            reject(new Error('Request timeout'));
-        });
-
+        req.on('error', reject);
+        req.setTimeout(opts.timeout, () => { req.destroy(); reject(new Error('Timeout')); });
         req.end();
     });
 }
 
-// 向后兼容: 保留原有函数名
-const httpsGet = httpsGetWithProxy;
-
 // ============================================================================
-// 核心类: FixtureSeeder V4.46.6
+// 核心类: FixtureSeeder V5.0
 // ============================================================================
 
-/**
- *
- */
 class FixtureSeeder {
-    /**
-     *
-     * @param options
-     */
     constructor(options = {}) {
         const leagueConfig = loadLeagueConfig();
-
-        this.config = {
-            ...BASE_CONFIG,
-            leagues: leagueConfig.active_leagues,
-            seasons: leagueConfig.active_seasons,
-            ...options
-        };
-
+        this.config = { ...BASE_CONFIG, leagues: leagueConfig.active_leagues, seasons: leagueConfig.active_seasons, ...options };
+        this.rejectionStats = { wrongLeague: 0, outsideWindow: 0, placeholder: 0, invalidData: 0 };
+        this.strictMode = options.strictMode !== false;
         this.pool = null;
-
-        // V4.46.6: 确定性请求 ID
         this.requestId = generateRequestId();
         log.setRequestId(this.requestId);
-
-        // V4.46.6: MetricsClient
         this.metricsClient = getMetricsClient();
-
-        // V4.46.6: 统计信息
-        this.stats = {
-            leagues: 0,
-            fixtures: 0,
-            inserted: 0,
-            updated: 0,
-            skipped: 0,
-            errors: 0,
-            batches: 0,
-            parallelTasks: 0
-        };
-
-        // V4.46.6: 批量写入缓冲区
+        this.stats = { leagues: 0, fixtures: 0, inserted: 0, updated: 0, skipped: 0, errors: 0, batches: 0, parallelTasks: 0 };
         this._batchBuffer = [];
         this._batchSize = this.config.batchSize || 50;
+        
+        // V6.4: 熔断机制状态
+        this._consecutiveFailures = 0;
+        this._circuitBreakerOpen = false;
+        this._circuitBreakerOpenedAt = null;
     }
 
-    /**
-     *
-     */
     async init() {
         try {
             this.pool = new Pool(this.config.db);
             await this.pool.query('SELECT 1');
-            log.info('V4.46.6 数据库连接已建立');
+            log.info('数据库连接已建立');
         } catch (error) {
             log.error('数据库连接失败', error);
             throw error;
         }
     }
 
-    /**
-     *
-     */
     async close() {
-        // 刷新剩余缓冲区
         await this._flushBatch();
-
         if (this.pool) {
             await this.pool.end();
             this.pool = null;
@@ -346,130 +183,149 @@ class FixtureSeeder {
         }
     }
 
-    /**
-     * V4.46.6: 从 FotMob API 获取联赛赛程 (带代理支持)
-     * @param leagueId
-     * @param season
-     * @param workerId
-     */
     async fetchLeagueFixtures(leagueId, season, workerId = 0) {
-        const seasonParam = season.replace('/', '');
-        const url = `https://www.fotmob.com/api/leagues?id=${leagueId}&season=${seasonParam}`;
-
-        log.debug(`[Worker ${workerId}] 获取联赛 ${leagueId} 赛季 ${season}...`, { url });
-
-        const startTime = Date.now();
-
-        try {
-            const response = await httpsGetWithProxy(url, {}, workerId);
-
-            const duration = Date.now() - startTime;
-            this._recordMetrics('fetch', duration, response.status === 200);
-
-            if (response.status !== 200 || !response.data) {
-                log.warn(`[Worker ${workerId}] 获取失败: HTTP ${response.status}`, { leagueId, season });
-                return null;
+        // V6.4: 熔断机制检查
+        if (this._circuitBreakerOpen) {
+            const elapsed = Date.now() - this._circuitBreakerOpenedAt;
+            if (elapsed < this.config.circuitBreaker.resetTimeoutMs) {
+                const remaining = Math.ceil((this.config.circuitBreaker.resetTimeoutMs - elapsed) / 1000);
+                log.error(`🚨 CIRCUIT BREAKER TRIGGERED - API请求被熔断，${remaining}秒后恢复`);
+                throw new Error(`Circuit breaker open - retry after ${remaining}s`);
             }
-
-            return response.data;
-        } catch (error) {
-            const duration = Date.now() - startTime;
-            this._recordMetrics('fetch', duration, false);
-            log.error(`[Worker ${workerId}] 请求失败`, error);
-            return null;
+            // 超过重置时间，尝试关闭熔断器
+            log.warn(`🔄 熔断器超时，尝试恢复...`);
+            this._circuitBreakerOpen = false;
+            this._consecutiveFailures = 0;
         }
+
+        // V6.3: FotMob API 赛季参数格式适配
+        const seasonFormats = [
+            season,                    // 2024/2025 (原始格式)
+            season.replace('/', ''),   // 20242025 (无斜杠)
+            season.replace('/', '-')   // 2024-2025 (短横线)
+        ];
+
+        let lastError = null;
+        for (const seasonParam of seasonFormats) {
+            const url = `https://www.fotmob.com/api/leagues?id=${leagueId}&season=${encodeURIComponent(seasonParam)}`;
+            log.debug(`[Worker ${workerId}] 尝试获取联赛 ${leagueId} 赛季 ${seasonParam}...`);
+
+            const startTime = Date.now();
+            try {
+                const response = await httpsGet(url, {}, workerId);
+                this._recordMetrics('fetch', Date.now() - startTime, response.status === 200);
+
+                if (response.status === 200 && response.data) {
+                    // 成功，重置失败计数
+                    this._consecutiveFailures = 0;
+                    
+                    // 验证返回的数据是否匹配请求的赛季
+                    const returnedSeason = response.data.details?.season || response.data.season || seasonParam;
+                    log.info(`[Worker ${workerId}] 成功获取 ${leagueId} 数据`, {
+                        requestedSeason: season,
+                        returnedSeason: returnedSeason,
+                        matchesCount: response.data.fixtures?.allMatches?.length || 0
+                    });
+                    return response.data;
+                }
+            } catch (error) {
+                lastError = error;
+                log.debug(`[Worker ${workerId}] 格式 ${seasonParam} 失败: ${error.message}`);
+            }
+        }
+
+        // V6.4: 所有格式失败，增加失败计数
+        this._consecutiveFailures++;
+        log.error(`[Worker ${workerId}] 所有赛季格式尝试失败 (连续失败 ${this._consecutiveFailures}/${this.config.circuitBreaker.failureThreshold})`, lastError);
+
+        // 检查是否触发熔断
+        if (this._consecutiveFailures >= this.config.circuitBreaker.failureThreshold) {
+            this._circuitBreakerOpen = true;
+            this._circuitBreakerOpenedAt = Date.now();
+            log.error(`🚨 CIRCUIT BREAKER TRIGGERED - 连续 ${this._consecutiveFailures} 次API调用失败，熔断器已打开`);
+            throw new Error(`Circuit breaker triggered after ${this._consecutiveFailures} consecutive failures`);
+        }
+
+        return null;
     }
 
-    /**
-     *
-     * @param leagueData
-     * @param leagueInfo
-     * @param season
-     */
     parseFixtures(leagueData, leagueInfo, season) {
-        const fixtures = [];
-
-        const allMatches = leagueData?.fixtures?.allMatches ||
-            leagueData?.overview?.matches?.allMatches ||
-            [];
-
+        let allMatches = leagueData?.fixtures?.allMatches || leagueData?.overview?.matches?.allMatches || [];
         if (!Array.isArray(allMatches) || allMatches.length === 0) {
-            log.warn(`未找到 allMatches 数据`, { league: leagueInfo.name, season });
+            log.warn(`未找到 allMatches 数据`, { league: leagueInfo.name });
             return [];
         }
 
-        log.info(`发现 ${allMatches.length} 场比赛`, { league: leagueInfo.name });
+        log.info(`API 返回 ${allMatches.length} 场比赛`, { league: leagueInfo.name });
 
+        // V5.0: 三道铁门数据过滤
+        if (this.strictMode) {
+            log.info('🛡️ 启动三道铁门数据过滤...');
+            const beforeCount = allMatches.length;
+            allMatches = threeGatesFilter(allMatches, leagueInfo, season, this.rejectionStats, log);
+            const afterCount = allMatches.length;
+            log.info(`🛡️ 铁门过滤完成: ${beforeCount} → ${afterCount} 场 (${((afterCount/beforeCount)*100).toFixed(1)}% 通过率)`);
+            if (leagueInfo.id === 47 && Math.abs(afterCount - 380) > 20) {
+                log.warn(`⚠️ 过滤后比赛数量(${afterCount})与英超应有场数(380)偏差超过20场`);
+            }
+        }
+
+        const fixtures = [];
         let parseErrors = 0;
         for (const match of allMatches) {
             try {
                 const fixture = this.parseMatch(match, leagueInfo, season);
-                if (fixture) {
-                    fixtures.push(fixture);
-                }
+                if (fixture) fixtures.push(fixture);
             } catch (e) {
                 parseErrors++;
-                if (parseErrors <= 3) {
-                    log.warn(`解析错误: ${e.message}`, { matchId: match?.id });
-                }
+                if (parseErrors <= 3) log.warn(`解析错误: ${e.message}`);
             }
         }
-
-        if (parseErrors > 0) {
-            log.warn(`解析错误总数: ${parseErrors}`);
-        }
-
+        if (parseErrors > 0) log.warn(`解析错误总数: ${parseErrors}`);
         log.info(`成功解析: ${fixtures.length} 场`);
-
         return fixtures.filter(f => f && f.external_id);
     }
 
-    /**
-     * V4.46.6: 解析单场比赛 (使用 match_date 替代 match_time)
-     * @param match
-     * @param leagueInfo
-     * @param season
-     */
     parseMatch(match, leagueInfo, season) {
-        const externalId = match.id?.toString() || null;
-        if (!externalId) {
-            return null;
+        const externalId = match.id?.toString();
+        if (!externalId) return null;
+
+        const homeTeam = match.home?.name || match.home?.shortName;
+        const awayTeam = match.away?.name || match.away?.shortName;
+        if (!homeTeam || !awayTeam) return null;
+
+        // V6.0: 智能时间戳解析
+        let matchDate = null;
+        const rawTime = match.status?.utcTime || match.time || match.timestamp || match.status?.startTime;
+        if (rawTime) {
+            try {
+                if (typeof rawTime === 'number' || /^\d+$/.test(String(rawTime))) {
+                    const num = parseInt(rawTime, 10);
+                    matchDate = new Date(num > 1000000000000 ? num : num * 1000);
+                } else {
+                    matchDate = new Date(rawTime);
+                }
+                if (isNaN(matchDate.getTime())) matchDate = null;
+            } catch (e) {
+                matchDate = null;
+            }
         }
 
-        const homeTeam = match.home?.name || match.home?.shortName || null;
-        const awayTeam = match.away?.name || match.away?.shortName || null;
-
-        if (!homeTeam || !awayTeam) {
-            return null;
-        }
-
-        const utcTime = match.status?.utcTime || match.time || null;
-        const matchDate = utcTime ? new Date(utcTime) : null;
-
-        // 提取比分
-        let homeScore = null;
-        let awayScore = null;
-
+        let homeScore = null, awayScore = null;
         if (match.status?.scoreStr) {
             const parts = match.status.scoreStr.split(/ - /);
             if (parts.length === 2) {
                 const h = parseInt(parts[0].trim());
                 const a = parseInt(parts[1].trim());
-                if (!isNaN(h) && !isNaN(a)) {
-                    homeScore = h;
-                    awayScore = a;
-                }
+                if (!isNaN(h) && !isNaN(a)) { homeScore = h; awayScore = a; }
             }
         }
-
         if (homeScore === null && match.home?.score !== undefined) {
             homeScore = match.home.score;
             awayScore = match.away?.score ?? null;
         }
 
         const status = this.determineStatus(match, homeScore, awayScore);
-
-        // V4.46.6: 确定性 match_id 格式
         const seasonTag = season.replace('/', '');
         const matchId = `${leagueInfo.id}_${seasonTag}_${externalId}`;
 
@@ -480,7 +336,7 @@ class FixtureSeeder {
             season: season,
             home_team: homeTeam,
             away_team: awayTeam,
-            match_date: matchDate,  // V4.46.6: 使用 match_date
+            match_date: matchDate,
             home_score: homeScore,
             away_score: awayScore,
             status: status,
@@ -488,60 +344,31 @@ class FixtureSeeder {
         };
     }
 
-    /**
-     * V4.46.6: 增强状态判断 (含 POSTPONED 支持)
-     * @param match
-     * @param homeScore
-     * @param awayScore
-     */
     determineStatus(match, homeScore, awayScore) {
         const status = match.status;
-
         if (typeof status === 'object' && status !== null) {
-            // V4.46.6: 优先检查 POSTPONED
-            if (status.postponed) return STATUS_POSTPONED || 'postponed';
-            if (status.cancelled) return STATUS_CANCELLED;
+            if (status.postponed) return 'postponed';
+            if (status.cancelled) return 'cancelled';
             if (status.awarded) return 'awarded';
-            if (status.finished) return STATUS_FINISHED;
-            if (status.started) return STATUS_LIVE;
+            if (status.finished) return 'finished';
+            if (status.started) return 'live';
         }
-
-        if (homeScore !== null && awayScore !== null) {
-            return STATUS_FINISHED;
-        }
-
-        return STATUS_SCHEDULED;
+        if (homeScore !== null && awayScore !== null) return 'finished';
+        return 'scheduled';
     }
 
-    // ========================================================================
-    // V4.46.6: 批量 UPSERT 优化
-    // ========================================================================
-
-    /**
-     * V4.46.6: 添加到批量缓冲区
-     * @param fixture
-     */
     async addToBatch(fixture) {
         this._batchBuffer.push(fixture);
-
-        if (this._batchBuffer.length >= this._batchSize) {
-            await this._flushBatch();
-        }
+        if (this._batchBuffer.length >= this._batchSize) await this._flushBatch();
     }
 
-    /**
-     * V4.46.6: 批量刷新写入
-     */
     async _flushBatch() {
         if (this._batchBuffer.length === 0) return;
-
         const batch = [...this._batchBuffer];
         this._batchBuffer = [];
-
         const startTime = Date.now();
 
         try {
-            // 构建批量 VALUES 子句
             const valueGroups = [];
             const flatValues = [];
             let paramIndex = 1;
@@ -549,36 +376,22 @@ class FixtureSeeder {
             for (const fixture of batch) {
                 const placeholders = [];
                 const values = [
-                    fixture.match_id,
-                    fixture.external_id,
-                    fixture.league_name,
-                    fixture.season,
-                    fixture.home_team,
-                    fixture.away_team,
-                    fixture.match_date,
-                    fixture.home_score,
-                    fixture.away_score,
-                    fixture.status,
-                    fixture.data_source
+                    fixture.match_id, fixture.external_id, fixture.league_name, fixture.season,
+                    fixture.home_team, fixture.away_team, fixture.match_date,
+                    fixture.home_score, fixture.away_score, fixture.status, fixture.data_source
                 ];
-
                 for (const val of values) {
                     flatValues.push(val);
-                    placeholders.push(`$${paramIndex}`);
-                    paramIndex++;
+                    placeholders.push(`$${paramIndex++}`);
                 }
-
                 valueGroups.push(`(${placeholders.join(', ')})`);
             }
 
             const query = `
-                INSERT INTO matches (
-                    match_id, external_id, league_name, season,
-                    home_team, away_team, match_date,
-                    home_score, away_score, status, data_source
-                ) VALUES ${valueGroups.join(', ')}
-                ON CONFLICT (match_id)
-                DO UPDATE SET
+                INSERT INTO matches (match_id, external_id, league_name, season, home_team, away_team,
+                    match_date, home_score, away_score, status, data_source)
+                VALUES ${valueGroups.join(', ')}
+                ON CONFLICT (match_id) DO UPDATE SET
                     external_id = EXCLUDED.external_id,
                     home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
                     away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
@@ -587,40 +400,23 @@ class FixtureSeeder {
             `;
 
             await this.pool.query(query, flatValues);
-
             this.stats.inserted += batch.length;
             this.stats.batches++;
-
-            const duration = Date.now() - startTime;
-            this._recordMetrics('batch_write', duration, true);
-
-            log.debug(`批量写入成功: ${batch.length} 条记录 (${duration}ms)`);
-
+            this._recordMetrics('batch_write', Date.now() - startTime, true);
+            log.debug(`批量写入成功: ${batch.length} 条记录`);
         } catch (error) {
             log.error(`批量写入失败，回退逐条写入`, error);
             this.stats.errors++;
-
-            // 回退: 逐条写入
-            for (const fixture of batch) {
-                await this.upsertFixture(fixture);
-            }
+            for (const fixture of batch) await this.upsertFixture(fixture);
         }
     }
 
-    /**
-     * 单条 UPSERT (回退方案)
-     * @param fixture
-     */
     async upsertFixture(fixture) {
         const query = `
-            INSERT INTO matches (
-                match_id, external_id, league_name, season,
-                home_team, away_team, match_date,
-                home_score, away_score, status, data_source,
-                created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
-            ON CONFLICT (match_id)
-            DO UPDATE SET
+            INSERT INTO matches (match_id, external_id, league_name, season, home_team, away_team,
+                match_date, home_score, away_score, status, data_source, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+            ON CONFLICT (match_id) DO UPDATE SET
                 external_id = EXCLUDED.external_id,
                 home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
                 away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
@@ -628,28 +424,13 @@ class FixtureSeeder {
                 updated_at = NOW()
             RETURNING (xmax = 0) AS inserted
         `;
-
-        const values = [
-            fixture.match_id,
-            fixture.external_id,
-            fixture.league_name,
-            fixture.season,
-            fixture.home_team,
-            fixture.away_team,
-            fixture.match_date,
-            fixture.home_score,
-            fixture.away_score,
-            fixture.status,
-            fixture.data_source
-        ];
-
+        const values = [fixture.match_id, fixture.external_id, fixture.league_name, fixture.season,
+            fixture.home_team, fixture.away_team, fixture.match_date, fixture.home_score,
+            fixture.away_score, fixture.status, fixture.data_source];
         try {
             const result = await this.pool.query(query, values);
-            if (result.rows[0]?.inserted) {
-                this.stats.inserted++;
-            } else {
-                this.stats.updated++;
-            }
+            if (result.rows[0]?.inserted) this.stats.inserted++;
+            else this.stats.updated++;
             return true;
         } catch (error) {
             log.error(`UPSERT 失败: ${fixture.match_id}`, error);
@@ -658,50 +439,33 @@ class FixtureSeeder {
         }
     }
 
-    /**
-     * V4.46.6: 并行处理单个联赛-赛季
-     * @param league
-     * @param season
-     * @param workerId
-     */
     async processLeagueSeason(league, season, workerId = 0) {
-        log.info(`[Worker ${workerId}] 处理: ${league.name} (ID: ${league.id}) - ${season}`);
-
+        log.info(`[Worker ${workerId}] 处理: ${league.name} - ${season}`);
         const leagueData = await this.fetchLeagueFixtures(league.id, season, workerId);
-
         if (!leagueData) {
-            log.warn(`[Worker ${workerId}] 跳过 ${league.name} - ${season}: 无数据`);
+            log.warn(`[Worker ${workerId}] 跳过 ${league.name}: 无数据`);
             return { fixtures: 0, success: false };
         }
 
         const fixtures = this.parseFixtures(leagueData, league, season);
         log.info(`[Worker ${workerId}] 发现 ${fixtures.length} 场比赛`);
 
-        // V4.46.6: 批量写入
         for (const fixture of fixtures) {
             await this.addToBatch(fixture);
             this.stats.fixtures++;
         }
-
-        // 记录 L1 发现指标
         this._recordMetrics('discovery', 0, true);
-
-        log.success(`[Worker ${workerId}] ${league.name} - ${season}: ${fixtures.length} 场已处理`);
-
+        log.success(`[Worker ${workerId}] ${league.name}: ${fixtures.length} 场已处理`);
         return { fixtures: fixtures.length, success: true };
     }
 
-    /**
-     * V4.46.6: 并行执行全量收割
-     */
     async seedAll() {
         log.info('═══════════════════════════════════════════════════════════════');
-        log.info('V4.46.6 Fixture Seeder 启动 (工业级并行模式)');
+        log.info('V5.0 Fixture Seeder 启动');
         log.info(`请求 ID: ${this.requestId}`);
         log.info(`目标联赛: ${this.config.leagues.length} 个`);
         log.info(`目标赛季: ${this.config.seasons.join(', ')}`);
         log.info(`并发数: ${this.config.concurrency}`);
-        log.info(`批量大小: ${this._batchSize}`);
         log.info('═══════════════════════════════════════════════════════════════');
 
         if (this.config.leagues.length === 0) {
@@ -710,56 +474,38 @@ class FixtureSeeder {
         }
 
         const startTime = Date.now();
-
-        // 构建任务列表
         const tasks = [];
         for (const league of this.config.leagues) {
-            for (const season of this.config.seasons) {
-                tasks.push({ league, season });
-            }
+            for (const season of this.config.seasons) tasks.push({ league, season });
         }
-
         this.stats.leagues = tasks.length;
         log.info(`总任务数: ${tasks.length} 个联赛-赛季组合`);
 
-        // V4.46.6: 并行执行
         const concurrency = this.config.concurrency;
-        const results = [];
-
         for (let i = 0; i < tasks.length; i += concurrency) {
             const batch = tasks.slice(i, i + concurrency);
             this.stats.parallelTasks++;
-
             log.info(`并行批次 #${this.stats.parallelTasks}: 处理 ${batch.length} 个任务`);
 
             const batchPromises = batch.map((task, idx) =>
                 this.processLeagueSeason(task.league, task.season, idx)
             );
-
-            const batchResults = await Promise.allSettled(batchPromises);
-
-            batchResults.forEach((result, idx) => {
-                if (result.status === 'fulfilled') {
-                    results.push(result.value);
-                } else {
+            const results = await Promise.allSettled(batchPromises);
+            results.forEach((result) => {
+                if (result.status === 'rejected') {
                     log.error(`任务失败`, result.reason);
                     this.stats.errors++;
                 }
             });
 
-            // 批次间延时 (避免 API 限流)
-            if (i + concurrency < tasks.length) {
-                await this.sleep(this.config.delay);
-            }
+            if (i + concurrency < tasks.length) await this.sleep(this.config.delay);
         }
 
-        // 刷新剩余缓冲区
         await this._flushBatch();
-
         const duration = Date.now() - startTime;
 
         log.info('═══════════════════════════════════════════════════════════════');
-        log.success('V4.46.6 赛程收割完成!');
+        log.success('V5.0 赛程收割完成!');
         log.info('统计', {
             leagues: this.stats.leagues,
             fixtures: this.stats.fixtures,
@@ -767,109 +513,52 @@ class FixtureSeeder {
             updated: this.stats.updated,
             errors: this.stats.errors,
             batches: this.stats.batches,
-            parallelBatches: this.stats.parallelTasks,
             durationMs: duration,
             throughput: `${(this.stats.fixtures / (duration / 1000)).toFixed(2)} 场/秒`
         });
+        log.info('🛡️ 三道铁门拦截统计:', this.rejectionStats);
         log.info('═══════════════════════════════════════════════════════════════');
 
-        // V4.46.6: 最终指标上报
         this._recordMetrics('complete', duration, true);
-
         return this.stats;
     }
 
-    /**
-     * V4.46.6: 记录指标到 MetricsClient
-     * @param operation
-     * @param durationMs
-     * @param success
-     */
     _recordMetrics(operation, durationMs, success) {
         try {
-            if (operation === 'discovery') {
-                // L1 发现计数
-                if (this.metricsClient?.recordL1Discovery) {
-                    this.metricsClient.recordL1Discovery(1);
-                }
-            } else if (operation === 'fetch') {
-                // HTTP 请求耗时
-                if (this.metricsClient?.recordL1FetchDuration) {
-                    this.metricsClient.recordL1FetchDuration(durationMs);
-                }
-            } else if (operation === 'batch_write') {
-                // 批量写入耗时
-                if (this.metricsClient?.recordL1BatchWrite) {
-                    this.metricsClient.recordL1BatchWrite(durationMs, this._batchSize);
-                }
-            } else if (operation === 'complete') {
-                // 完成统计
-                if (this.metricsClient?.recordL1Complete) {
-                    this.metricsClient.recordL1Complete(this.stats);
-                }
+            if (operation === 'discovery' && this.metricsClient?.recordL1Discovery) {
+                this.metricsClient.recordL1Discovery(1);
+            } else if (operation === 'fetch' && this.metricsClient?.recordL1FetchDuration) {
+                this.metricsClient.recordL1FetchDuration(durationMs);
+            } else if (operation === 'batch_write' && this.metricsClient?.recordL1BatchWrite) {
+                this.metricsClient.recordL1BatchWrite(durationMs, this._batchSize);
+            } else if (operation === 'complete' && this.metricsClient?.recordL1Complete) {
+                this.metricsClient.recordL1Complete(this.stats);
             }
         } catch (e) {
-            log.debug(`指标记录失败: ${e.message}`);
+            // 静默失败
         }
     }
 
-    /**
-     *
-     * @param ms
-     */
     sleep(ms) {
-        return new Promise(resolve => { setTimeout(resolve, ms); });
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    /**
-     *
-     */
     getSummary() {
         const total = this.stats.fixtures;
         const success = this.stats.inserted + this.stats.updated;
-        const errors = this.stats.errors;
-
         const successRate = total > 0 ? ((success / total) * 100).toFixed(2) : '0.00';
-
-        let status;
-        if (total === 0) {
-            status = 'empty';
-        } else if (parseFloat(successRate) >= 99) {
-            status = 'success';
-        } else if (parseFloat(successRate) >= 95) {
-            status = 'warning';
-        } else {
-            status = 'failed';
-        }
-
         return {
             total,
             inserted: this.stats.inserted,
             updated: this.stats.updated,
-            errors,
+            errors: this.stats.errors,
             success_rate: parseFloat(successRate),
-            status,
-            leagues: this.stats.leagues,
-            batches: this.stats.batches,
-            parallelBatches: this.stats.parallelTasks,
+            status: parseFloat(successRate) >= 99 ? 'success' : parseFloat(successRate) >= 95 ? 'warning' : 'failed',
             timestamp: new Date().toISOString(),
             requestId: this.requestId,
-            version: 'V4.46.6'
+            version: 'V5.0'
         };
     }
 }
 
-// ============================================================================
-// 导出
-// ============================================================================
-
-module.exports = {
-    FixtureSeeder,
-    Logger,
-    LogLevel,
-    loadLeagueConfig,
-    // V4.46.6: 删除原有的 generateRequestId (使用 id_generator)
-    CONFIG: BASE_CONFIG,
-    // V4.46.6: 导出代理感知 HTTP 工具
-    httpsGet: httpsGetWithProxy
-};
+module.exports = { FixtureSeeder, Logger, loadLeagueConfig, CONFIG: BASE_CONFIG };

@@ -1,0 +1,46 @@
+{
+  "_comment": "V6.0 赛季时间窗口配置 - 用于三道铁门过滤系统",
+  "version": "V6.0-STRICT",
+  "last_updated": "2026-03-18",
+  "description": "定义各赛季的有效时间窗口，用于过滤API返回的越界数据",
+  "seasons": {
+    "2023/2024": {
+      "start": "2023-08-11",
+      "end": "2024-05-19",
+      "expected_matches": 380,
+      "leagues": [47],
+      "description": "英超23/24赛季"
+    },
+    "2024/2025": {
+      "start": "2024-08-16",
+      "end": "2025-05-25",
+      "expected_matches": 380,
+      "leagues": [47],
+      "description": "英超24/25赛季"
+    },
+    "2025/2026": {
+      "start": "2025-08-15",
+      "end": "2026-05-24",
+      "expected_matches": 380,
+      "leagues": [47],
+      "description": "英超25/26赛季（预测）"
+    }
+  },
+  "validation_rules": {
+    "buffer_days": 14,
+    "daily_match_threshold": 50,
+    "placeholder_keywords": [
+      "tbd",
+      "tbc",
+      "placeholder",
+      "winner",
+      "loser",
+      "待定",
+      "未确定",
+      "胜者",
+      "败者",
+      "team a",
+      "team b"
+    ]
+  }
+}
