@@ -151,6 +151,20 @@ class ErrorHandler {
     audit(error, context = {}) {
         this.stats.total++;
         const type = this.classify(error);
+        const code = error.code || '';
+        const message = error.message || '';
+
+        // V6.6: 增强断网保护 - 检测网络断开错误
+        const isNetworkDisconnected = ['ENOTFOUND', 'ETIMEDOUT', 'ECONNREFUSED', 'EAI_AGAIN'].includes(code) ||
+                                      /getaddrinfo|dns|network is unreachable/i.test(message);
+
+        if (isNetworkDisconnected) {
+            console.warn(`[WAITING] 网络连接中断 (${code})，系统进入等待状态，将在重试后恢复...`);
+            // 网络错误标记为可重试，避免崩溃
+            this.stats.retryable++;
+            this.stats.byType[ErrorType.NETWORK] = (this.stats.byType[ErrorType.NETWORK] || 0) + 1;
+            return ErrorType.NETWORK;
+        }
 
         // 按类型统计
         this.stats.byType[type] = (this.stats.byType[type] || 0) + 1;

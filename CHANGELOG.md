@@ -4,6 +4,129 @@
 
 ---
 
+## [V6.6] - 2026-03-20 - L2 Raw Storage Hardening
+
+### 🏗️ L2 原始数据存储层硬化 (Raw Storage Hardening)
+
+V6.6 版本实现了 L2 Harvesting Layer 的工业级硬化，确保"非标准数据无法进入 L2"。
+
+#### 新增数据库约束 (8 道防线)
+
+| 约束名 | 类型 | 作用 |
+|--------|------|------|
+| `match_id_format` | CHECK | 强制 `match_id` 必须符合 `'^\d+_\d{8}_\d+$'` 正则格式 |
+| `raw_data_not_empty` | CHECK | 强制 `raw_data` 不能为 NULL 或空 JSONB |
+| `collected_at_not_null` | CHECK | 强制 `collected_at` 采集时间不能为空 |
+
+#### 新增字段
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| `data_version` | VARCHAR(20) | 数据版本标记，固定值 `'V26.1'`，用于数据溯源 |
+| `external_id` | VARCHAR(50) | 外部数据源原始 ID，便于追溯 |
+
+#### 新增索引
+
+| 索引名 | 类型 | 用途 |
+|--------|------|------|
+| `idx_raw_data_version_collected` | BTREE | 支持按版本和时间范围查询 |
+
+#### 新增触发器
+
+| 触发器名 | 触发时机 | 功能 |
+|----------|----------|------|
+| `trg_update_raw_data_timestamp` | BEFORE UPDATE | 自动更新 `collected_at` 时间戳 |
+
+---
+
+### 🧰 Normalizer 工具类解耦 (Shared Utility)
+
+#### 新增文件
+
+| 文件 | 功能 |
+|------|------|
+| `src/utils/Normalizer.js` | 共享标准化工具类，L1/L2/L3 全层复用 |
+
+#### 核心方法
+
+| 方法 | 功能 |
+|------|------|
+| `isValidMatchId(matchId)` | 验证 match_id 格式是否符合 `'^\d+_\d{8}_\d+$'` |
+| `normalizeSeason(season)` | 将各种赛季格式统一转换为 `'YYYY/YYYY'` 标准格式 |
+| `buildMatchId(leagueId, season, externalId)` | 构建标准化的 match_id |
+| `normalizeTeamName(name)` | 标准化队名（统一大小写、去除特殊字符） |
+
+#### 代码层预检机制
+
+在 `Persistence.saveToDatabase()` 中引入双重预检：
+
+```javascript
+// 预检 1: match_id 格式
+if (!Normalizer.isValidMatchId(matchId)) {
+    throw new Error('[VALIDATION] match_id 格式非法: ${matchId}');
+}
+
+// 预检 2: raw_data 非空
+if (!rawData || Object.keys(rawData).length === 0) {
+    throw new Error('[VALIDATION] raw_data 不能为空: ${matchId}');
+}
+```
+
+**优势**:
+- 提供清晰的 `[VALIDATION]` 错误标记，便于日志筛选
+- 在数据到达数据库前拦截，减少数据库错误日志
+- 业务语义验证（如"raw_data 不能为空对象"）
+
+---
+
+### 🔄 双保险存储强化 (Dual Persistence)
+
+#### 数据库 + 文件系统冗余
+
+| 维度 | 数据库 (raw_match_data) | 文件系统 (data/matches/) |
+|------|------------------------|-------------------------|
+| **版本标记** | `data_version = 'V26.1'` | `data_version = 'V26.1'` |
+| **格式** | JSONB | JSON |
+| **失败处理** | 阻塞流程 | 记录错误，继续执行 |
+
+#### 变更文件
+
+| 文件 | 变更 |
+|------|------|
+| `src/infrastructure/harvesters/components/Persistence.js` | 重构 `saveToDatabase()` 和 `dualSave()`，引入 Normalizer 预检，强制 `data_version` |
+| `src/infrastructure/harvesters/ProductionHarvester.js` | 集成 Normalizer，`saveData()` 方法添加预检逻辑 |
+
+---
+
+### 📊 100% 数据一致性对齐 (Full Alignment)
+
+#### L1-L2 对齐验证
+
+- **match_id 格式对齐**: L1 `matches` 表与 L2 `raw_match_data` 表使用完全相同的 match_id 格式
+- **外键约束**: `raw_match_data.match_id` → `matches.match_id`，确保数据一致性
+- **赛季标准化**: 所有赛季统一为 `'YYYY/YYYY'` 格式（如 `'2024/2025'`）
+
+#### 单元测试覆盖
+
+| 测试文件 | 测试数 | 说明 |
+|----------|--------|------|
+| `tests/unit/L2_Normalizer_Persistence.test.js` | 30 | Normalizer 边界测试 + Persistence 预检测试 |
+
+**测试结果**: ✅ 30/30 全部通过
+
+---
+
+### 📚 文档与决策记录
+
+#### 新增文档
+
+| 文件 | 内容 |
+|------|------|
+| `src/infrastructure/harvesters/L2_HARVESTING_ENGINE.md` | L2 架构设计文档，包含数据流、硬化规则、版本控制策略 |
+| `docs/adr/ADR-002-L2-Raw-Storage-Hardening.md` | 架构决策记录，详述硬化决策背景、方案对比、实施计划 |
+
+---
+
 ## [V6.5] - 2026-03-19 - Data Consistency Hardening
 
 ### 🏗️ 数据库硬核加固 (Database Hardening)

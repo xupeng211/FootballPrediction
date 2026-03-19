@@ -19,8 +19,10 @@ const { getPathResolver } = require('../utils/PathResolver');
 // V4.46: 导入隐身指纹生成器 (从独立模块)
 const { generateStealthHeaders } = require('./StealthFingerprint');
 
-// V4.46.5 HARDENING: 使用确定性 ID 生成器（零模拟铁律）
-const { generateSessionId } = require('../../core/id_generator');
+// V4.46.5 HARDENING: 本地确定性 ID 生成器（零模拟铁律）
+function generateSessionId(port) {
+    return `session_${port}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
 
 // ============================================================================
 // WorkerIdentity - Worker 身份绑定类 (从 ProductionHarvester 迁移)
