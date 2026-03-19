@@ -107,15 +107,18 @@ services:
       retries: 3
       start_period: 30s
 
-    # 资源限制（开发环境宽松）
+    # V6.6: 共享内存配置 - 10 线程 Playwright/Chromium 需要充足 shm
+    shm_size: '2gb'
+
+    # 资源限制（Ryzen 9900X 优化）
     deploy:
       resources:
         limits:
-          cpus: '4.0'
-          memory: 8G
+          cpus: '12.0'
+          memory: 16G
         reservations:
-          cpus: '0.5'
-          memory: 1G
+          cpus: '2.0'
+          memory: 4G
 
     # 日志配置
     logging:

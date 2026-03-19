@@ -401,3 +401,24 @@ data/network/
 # V4.51.2: Jest 测试覆盖率产物
 # =============================================================================
 coverage/
+
+# =============================================================================
+# V6.6-SILENT-MODE: 生产级静默模式加固
+# =============================================================================
+
+# 截图文件 - 仅保留目录结构
+data/screenshots/*.png
+data/screenshots/*.jpg
+data/screenshots/*.jpeg
+data/screenshots/*.gif
+!data/screenshots/.gitkeep
+
+# 调试日志 - 仅保留目录结构
+data/logs/*.log
+data/logs/*.json
+data/logs/*.txt
+!data/logs/.gitkeep
+
+# 临时数据文件
+data/temp/*
+!data/temp/.gitkeep
