@@ -286,6 +286,45 @@ class FixtureSeeder {
         return fixtures.filter(f => f && f.external_id);
     }
 
+    /**
+     * 赛季格式标准化 - V6.5 新增
+     * 将各种格式统一转换为 'YYYY/YYYY' 标准格式
+     * @param {string} season - 原始赛季字符串
+     * @returns {string} 标准化赛季 (如 '2023/2024')
+     */
+    normalizeSeason(season) {
+        if (!season || typeof season !== 'string') {
+            throw new Error(`Invalid season: ${season}`);
+        }
+
+        // 已经是标准格式
+        if (/^\d{4}\/\d{4}$/.test(season)) {
+            return season;
+        }
+
+        // 处理 '2324' 格式
+        if (/^\d{4}$/.test(season)) {
+            const startYear = `20${season.substring(0, 2)}`;
+            const endYear = `20${season.substring(2, 4)}`;
+            return `${startYear}/${endYear}`;
+        }
+
+        // 处理 '20242025' 格式
+        if (/^\d{8}$/.test(season)) {
+            const startYear = season.substring(0, 4);
+            const endYear = season.substring(4, 8);
+            return `${startYear}/${endYear}`;
+        }
+
+        // 处理 '2024-2025' 格式
+        if (/^\d{4}-\d{4}$/.test(season)) {
+            return season.replace('-', '/');
+        }
+
+        // 无法识别的格式，抛出错误
+        throw new Error(`Unrecognized season format: ${season}`);
+    }
+
     parseMatch(match, leagueInfo, season) {
         const externalId = match.id?.toString();
         if (!externalId) return null;
@@ -326,35 +365,55 @@ class FixtureSeeder {
         }
 
         const status = this.determineStatus(match, homeScore, awayScore);
-        const seasonTag = season.replace('/', '');
+
+        // V6.5: 强制转换赛季格式为标准格式
+        const normalizedSeason = this.normalizeSeason(season);
+        const seasonTag = normalizedSeason.replace('/', '');
         const matchId = `${leagueInfo.id}_${seasonTag}_${externalId}`;
+
+        // V6.5: 同步计算 is_finished 字段
+        const isFinished = status === 'finished';
 
         return {
             match_id: matchId,
             external_id: externalId,
             league_name: leagueInfo.name,
-            season: season,
+            season: normalizedSeason,        // ✅ 使用规范化赛季
             home_team: homeTeam,
             away_team: awayTeam,
             match_date: matchDate,
             home_score: homeScore,
             away_score: awayScore,
-            status: status,
+            status: status,                  // ✅ 已小写归一化
+            is_finished: isFinished,         // ✅ V6.5 新增：与 status 同步
             data_source: 'FotMob'
         };
     }
 
+    /**
+     * 确定比赛状态 - V6.5 修复版
+     * 返回标准化的全小写状态
+     * @param {Object} match - FotMob 原始比赛对象
+     * @param {number|null} homeScore - 主队比分
+     * @param {number|null} awayScore - 客队比分
+     * @returns {string} 标准化状态 (全小写)
+     */
     determineStatus(match, homeScore, awayScore) {
         const status = match.status;
+        let result = 'scheduled';
+
         if (typeof status === 'object' && status !== null) {
-            if (status.postponed) return 'postponed';
-            if (status.cancelled) return 'cancelled';
-            if (status.awarded) return 'awarded';
-            if (status.finished) return 'finished';
-            if (status.started) return 'live';
+            if (status.postponed) result = 'postponed';
+            else if (status.cancelled) result = 'cancelled';
+            else if (status.awarded) result = 'awarded';
+            else if (status.finished) result = 'finished';
+            else if (status.started) result = 'live';
+        } else if (homeScore !== null && awayScore !== null) {
+            result = 'finished';
         }
-        if (homeScore !== null && awayScore !== null) return 'finished';
-        return 'scheduled';
+
+        // V6.5: 强制小写归一化
+        return result.toLowerCase();
     }
 
     async addToBatch(fixture) {
@@ -378,7 +437,7 @@ class FixtureSeeder {
                 const values = [
                     fixture.match_id, fixture.external_id, fixture.league_name, fixture.season,
                     fixture.home_team, fixture.away_team, fixture.match_date,
-                    fixture.home_score, fixture.away_score, fixture.status, fixture.data_source
+                    fixture.home_score, fixture.away_score, fixture.status, fixture.is_finished, fixture.data_source
                 ];
                 for (const val of values) {
                     flatValues.push(val);
@@ -389,13 +448,14 @@ class FixtureSeeder {
 
             const query = `
                 INSERT INTO matches (match_id, external_id, league_name, season, home_team, away_team,
-                    match_date, home_score, away_score, status, data_source)
+                    match_date, home_score, away_score, status, is_finished, data_source)
                 VALUES ${valueGroups.join(', ')}
                 ON CONFLICT (match_id) DO UPDATE SET
                     external_id = EXCLUDED.external_id,
                     home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
                     away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
                     status = EXCLUDED.status,
+                    is_finished = EXCLUDED.is_finished,
                     updated_at = NOW()
             `;
 
@@ -414,19 +474,20 @@ class FixtureSeeder {
     async upsertFixture(fixture) {
         const query = `
             INSERT INTO matches (match_id, external_id, league_name, season, home_team, away_team,
-                match_date, home_score, away_score, status, data_source, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW())
+                match_date, home_score, away_score, status, is_finished, data_source, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW(), NOW())
             ON CONFLICT (match_id) DO UPDATE SET
                 external_id = EXCLUDED.external_id,
                 home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
                 away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
                 status = EXCLUDED.status,
+                is_finished = EXCLUDED.is_finished,
                 updated_at = NOW()
             RETURNING (xmax = 0) AS inserted
         `;
         const values = [fixture.match_id, fixture.external_id, fixture.league_name, fixture.season,
             fixture.home_team, fixture.away_team, fixture.match_date, fixture.home_score,
-            fixture.away_score, fixture.status, fixture.data_source];
+            fixture.away_score, fixture.status, fixture.is_finished, fixture.data_source];
         try {
             const result = await this.pool.query(query, values);
             if (result.rows[0]?.inserted) this.stats.inserted++;

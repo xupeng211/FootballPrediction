@@ -1,6 +1,6 @@
 # FootballPrediction - AI 助手指令上下文
 
-> **系统版本**: V6.0.0-PRODUCTION | **最后更新**: 2026-03-17
+> **系统版本**: V4.47.0-BATTLE | **最后更新**: 2026-03-19
 >
 > 本文档为 AI 助手提供项目背景、架构理解和操作指南，用于快速上手和高效协作。
 
@@ -10,23 +10,24 @@
 
 ### 1.1 项目定位
 
-**FootballPrediction** (V4.51.2-TOTAL-WAR / V6.0.0-PRODUCTION) 是一个工业级足球预测平台，采用双语言（Node.js + Python）四层架构，通过多源数据采集、C++ 模糊匹配和 XGBoost 多模型共识，实现高精度的比赛预测。
+**FootballPrediction** (V4.47.0-BATTLE) 是一个工业级足球预测平台，采用双语言（Node.js + Python）四层架构，通过多源数据采集、C++ 模糊匹配和 XGBoost 多模型共识，实现高精度的比赛预测。
 
 ### 1.2 核心能力
 
 | 模块 | 技术实现 | 说明 |
 |------|----------|------|
-| **L1 Discovery** | FotMob API | 自动发现未来 7 天比赛 |
+| **L1 Discovery** | FotMob API + 断路器 | 自动发现未来 7 天比赛，100% 测试覆盖 |
 | **L2 Harvest** | FotMob Details + OddsPortal + 22 节点代理池 | 赔率数据采集（开盘/收盘/1X2/亚洲盘） |
 | **L3 Smelt** | FeatureSmelter V5.0-TURBO | 11维纯净战斗特征向量 |
 | **ML Prediction** | XGBoost TITAN 模型 | 65.31% 准确率，<100ms 响应 |
 | **OddsFluxDetector** | V5.0 赔率背离算法 | 实时监测赔率异常波动 |
-| **Swarm Harvest** | Hyper Swarm 引擎 | 多 Worker 并发收割，吞吐量提升 3.75x |
+| **Swarm Harvest** | Hyper Swarm 引擎 | Worker 池化架构，吞吐量提升 3.75x |
 | **V6.0 Backfill** | OddsPortal 回填系统 | 历史数据回填，22端口代理轮询 |
 | **Stealth Navigator** | Playwright Stealth 强化 | 反检测页面导航 |
 | **Session Warmer** | 智能会话预热 | 自动保持会话活性 |
 | **Sentinel** | 哨兵监控系统 | 自动停机与熔断保护 |
 | **TITAN Cruise Control** | 全自动巡航控制器 | 无人值守定时任务调度 |
+| **Recon Scanner** | L2 侦察扫描器 | 模糊匹配逻辑集成 |
 
 ### 1.3 质量认证
 
@@ -45,15 +46,16 @@
 |------|------|------|
 | **运行时** | Node.js 20+ / Python 3.11+ | 双语言架构 |
 | **数据库** | PostgreSQL 15 | 数据存储 |
-| **缓存** | Redis | 分布式锁/缓存 |
+| **缓存** | Redis 7 | 分布式锁/缓存 |
 | **容器化** | Docker / docker-compose | 环境隔离 |
 | **浏览器** | Playwright 1.57+ + Stealth | 页面自动化与反检测 |
 | **模糊匹配** | RapidFuzz (C++) | 队名匹配 |
-| **ML** | XGBoost 2.0+ / scikit-learn | 预测模型 |
+| **ML** | XGBoost 3.1+ / scikit-learn 1.8+ | 预测模型 |
 | **代理** | NetworkShield / ProxyRotator | 22 节点熔断保护 + 轮询 |
 | **监控** | Prometheus + Grafana | 指标采集与可视化 |
 | **日志** | Winston + Daily Rotate | 结构化日志与轮转 |
 | **代码质量** | ESLint + Prettier + Ruff | 静态检查与格式化 |
+| **API 框架** | FastAPI 0.124+ | 异步 API 服务 |
 
 ---
 
@@ -122,12 +124,13 @@
 | **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `npm start` |
 | **Swarm Harvest** | `src/infrastructure/harvesters/SwarmHarvester.js` | `npm run harvest:swarm` |
 | **V6.0 Backfill** | `scripts/ops/gold_pilot_50.js` | `node scripts/ops/gold_pilot_50.js` |
+| **L2 Recon** | `scripts/ops/recon_scanner.js` | `node scripts/ops/recon_scanner.js` |
 | **OddsPortal Harvester** | `src/infrastructure/harvesters/OddsPortalHarvester.js` | - |
 | **OddsPortal Parser** | `src/infrastructure/harvesters/OddsPortalParser.js` | - |
-| **ProxyRotator** | `src/infrastructure/network/ProxyRotator.js` | - |
+| **ProxyRotator** | `src/infrastructure/harvesters/ProxyRotator.js` | - |
 | **StealthNavigator** | `src/infrastructure/harvesters/StealthNavigator.js` | - |
 | **SessionWarmer** | `src/infrastructure/harvesters/SessionWarmer.js` | - |
-| **Checkpointer** | `src/infrastructure/persistence/Checkpointer.js` | - |
+| **Checkpointer** | `src/infrastructure/harvesters/Checkpointer.js` | - |
 | **L3 Smelt** | `src/feature_engine/smelter/FeatureSmelter.js` | `npm run smelt` |
 | **Sentinel** | `src/infrastructure/monitoring/Sentinel.js` | `npm run titan:watch` |
 | **OddsFluxDetector** | `src/analysis/OddsFluxDetector.js` | V5.0 算法模块 |
@@ -135,6 +138,7 @@
 | **身份管理** | `src/infrastructure/network/SessionManager.js` | - |
 | **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
 | **TITAN 模型** | `src/ml/inference/predictor.py` | `npm run predict` |
+| **H2H Estimator** | `src/ml/feature_engine/h2h_estimator.py` | H2H 智能补位 |
 | **统一配置** | `src/config_unified.py` / `config/factory_config.js` | - |
 | **StructuredLogger** | `src/utils/StructuredLogger.js` | V4.0 模块化日志 |
 
@@ -149,70 +153,26 @@ FootballPrediction/
 │   ├── constants.js             # 业务常量
 │   ├── database.js              # 数据库配置
 │   ├── registry.js              # 代理注册表（22端口配置）
+│   ├── shared_constants.js      # 共享常量定义
+│   ├── season_windows.json      # 赛季窗口配置
 │   └── leagues.json             # 联赛配置
 ├── scripts/
 │   ├── ops/                     # 运维脚本
 │   │   ├── run_production.js    # 生产收割主入口
 │   │   ├── seed_fixtures.js     # L1 赛程种子
+│   │   ├── recon_scanner.js     # L2 侦察扫描器
 │   │   ├── smelt_all.js         # L3 特征熔炼
 │   │   ├── smelt_v5_turbo.js    # V5 Turbo 熔炼
-│   │   ├── smelt_v5_worker.js   # V5 Worker 熔炼
-│   │   ├── smelt_v5_reburn.js   # V5 重熔模式
 │   │   ├── swarm_test.js        # Swarm 蜂群收割
 │   │   ├── hyper_swarm.js       # 超 Swarm 引擎
 │   │   ├── gold_pilot_50.js     # V6.0 黄金批次执行器
-│   │   ├── golden_pilot_5.js    # V6.0 5场黄金测试
-│   │   ├── titan_golden_harvest_50.js # TITAN 50场收割
-│   │   ├── pilot_3_quick.js     # 3场快速测试
-│   │   ├── pilot_3_v3_quick.js  # 3场V3快速测试
-│   │   ├── pilot_5_deep_gold.js # 5场深度黄金测试
-│   │   ├── pilot_20.js          # 20场批次测试
-│   │   ├── pilot_20_precision_lock.js # 20场精准锁定
-│   │   ├── first_gold_single.js # 单场黄金测试
-│   │   ├── first_gold_10.js     # 10场首次黄金测试
-│   │   ├── backfill_executor.js # V6.0 回填执行器核心
-│   │   ├── bulk_import_matches.js # 批量导入比赛
-│   │   ├── auto_harvest_v6.js   # V6.0 自动收割
-│   │   ├── sniffer_harvest_v6.js # V6.0 嗅探收割
-│   │   ├── assisted_harvest.js  # 辅助收割
-│   │   ├── steady_harvester.js  # 稳定收割器
-│   │   ├── host_force_harvest.js # 主机强制收割
-│   │   ├── host_force_harvest_demo.js # 主机强制演示
-│   │   ├── precision_strike.js  # 精准打击
-│   │   ├── precision_strike_v6.js # V6.0 精准打击
-│   │   ├── real_fusion_fire.js  # 真实融合火力
-│   │   ├── titan_main_harvester.js # TITAN 主收割器
-│   │   ├── titan_api_decrypt_harvester.js # API解密收割
-│   │   ├── offline_backfill_v6.js # V6.0 离线回填
-│   │   ├── bet365_ultimate_redo.js # Bet365 重做
+│   │   ├── titan_grand_backfill.js # TITAN 大回填
+│   │   ├── p2p_harvest_v38.js   # P2P 收割 v38
 │   │   ├── sentinel_watch.js    # 哨兵监控
 │   │   ├── check_health.js      # 健康检查
-│   │   ├── db_heartbeat.js      # 数据库心跳
-│   │   ├── metrics_server.js    # 指标服务器
-│   │   ├── stress_test_50.js    # 50场压力测试
-│   │   ├── stress_test_1000.js  # 1000场压力测试
-│   │   ├── omni_live_audit.js   # 全量实时审计
-│   │   ├── api_payload_audit.js # API负载审计
-│   │   ├── raw_api_dumper.js    # 原始API转储
-│   │   ├── audit_dataset.js     # 数据集审计
-│   │   ├── capture_auth.js      # 认证捕获
-│   │   ├── inject_golden_cookies.js # 注入黄金Cookie
-│   │   ├── cleanup_mock_data.js # 清理模拟数据
-│   │   ├── recon_fixtures.js    # 赛程侦察
-│   │   ├── recon_module.js      # 侦察模块
-│   │   ├── stealth_probe_diagnostic.js # 隐身探针诊断
-│   │   ├── demo_odds_timeline.js # 赔率时间线演示
-│   │   ├── demo_sniffer_mapping.js # 嗅探映射演示
-│   │   ├── demo_v6_data_convergence.py # V6数据汇聚演示
 │   │   ├── titan_cruise_control.py  # 全自动巡航控制器
-│   │   ├── titan_pipeline_demo.js # TITAN管道演示
 │   │   ├── train_model.py       # 模型训练
-│   │   ├── train_model_production.py # 生产模型训练
-│   │   ├── train_model_real_test.py # 真实测试训练
 │   │   ├── predict_pipeline.py  # 预测管道
-│   │   ├── v6_audit_demo.py     # V6审计演示
-│   │   ├── backfill_capability_report.py # 回填能力报告
-│   │   ├── generate_weekend_harvest.py # 周末收割生成
 │   │   └── titan_daily_ops.sh   # 一键运维脚本
 │   ├── maintenance/             # 维护工具
 │   │   ├── integrity_guard.py   # 数据完整性守护
@@ -231,22 +191,36 @@ FootballPrediction/
 │   ├── feature_engine/          # 特征引擎
 │   │   ├── elo/                 # ELO 评分系统
 │   │   ├── extractors/          # 特征提取器
-│   │   │   └── MarketSentimentExtractor.js  # 市场情绪提取器
+│   │   │   └── MarketSentimentExtractor.js
 │   │   └── smelter/             # 特征熔炼器
-│   ├── analysis/                # V5.0+ 分析算法（OddsFluxDetector）
-│   ├── strategy/                # 策略模块（Kelly准则、Tuner）
+│   ├── analysis/                # V5.0+ 分析算法
+│   ├── strategy/                # 策略模块（Kelly准则）
 │   ├── infrastructure/          # 基础设施
-│   │   ├── harvesters/          # 收割引擎（ProductionHarvester, SwarmHarvester, OddsPortalHarvester）
-│   │   ├── network/             # 网络与代理（NetworkShield, ProxyRotator）
+│   │   ├── harvesters/          # 收割引擎
+│   │   │   ├── base/            # 基础类
+│   │   │   ├── components/      # 组件
+│   │   │   ├── strategies/      # 策略
+│   │   │   ├── workers/         # Worker 池
+│   │   │   ├── ProductionHarvester.js
+│   │   │   ├── SwarmHarvester.js
+│   │   │   ├── OddsPortalHarvester.js
+│   │   │   ├── OddsPortalParser.js
+│   │   │   ├── ProxyRotator.js
+│   │   │   ├── StealthNavigator.js
+│   │   │   ├── SessionWarmer.js
+│   │   │   └── Checkpointer.js
+│   │   ├── network/             # 网络与代理
 │   │   ├── monitoring/          # 监控与哨兵
-│   │   ├── persistence/         # 持久化（Checkpointer）
-│   │   └── browser/             # 浏览器自动化
+│   │   ├── database/            # 数据库操作
+│   │   ├── browser/             # 浏览器自动化
+│   │   └── auth/                # 认证管理
 │   ├── ml/                      # 机器学习
 │   │   ├── inference/           # 模型推理
+│   │   │   └── titan_loader.py  # TITAN 模型加载器
 │   │   ├── feature_engine/      # Python 特征工程
 │   │   │   └── h2h_estimator.py # H2H 智能补位引擎
 │   │   └── models/              # 模型定义
-│   ├── database/                # 数据库模型（唯一真理源）
+│   ├── database/                # 数据库模型
 │   │   └── repositories/        # 数据仓储层
 │   ├── schemas/                 # Pydantic Schema
 │   ├── services/                # 业务服务层
@@ -256,14 +230,10 @@ FootballPrediction/
 │   ├── api/                     # API 接口
 │   ├── utils/                   # 工具函数
 │   │   └── StructuredLogger.js  # V4.0 结构化日志器
-│   └── data/                    # 数据层
+│   ├── data/                    # 数据层
+│   └── config_unified.py        # 统一配置入口
 ├── tests/                       # 测试文件
-│   ├── unit/                    # 单元测试（50+ 测试用例）
-│   │   ├── JSON_Integrity.test.js
-│   │   ├── BackfillFortification.test.js
-│   │   ├── BackfillResilience.test.js
-│   │   ├── OddsPortalHarvester_V55.test.js
-│   │   └── ...
+│   ├── unit/                    # 单元测试（60+ 测试用例）
 │   ├── integration/             # 集成测试
 │   ├── integrity/               # 完整性测试
 │   └── fixtures/                # 测试数据
@@ -273,10 +243,11 @@ FootballPrediction/
 │   ├── TITAN_CORE_V5_PROD_metadata.json
 │   └── archive/                 # 归档模型
 ├── docs/                        # 文档中心
-│   └── ops/                     # 运维文档
-│       └── backfill_v6_manual.md    # V6.0 回填操作手册
+│   ├── ops/                     # 运维文档
+│   ├── architecture/            # 架构文档
+│   └── harvesters/              # 收割器文档
 ├── .claude/                     # Claude Skills 约束体系
-│   ├── skills/                  # 专用技能
+│   ├── skills/                  # 专用技能（12个）
 │   ├── minimal_change.skill.md
 │   ├── architecture_boundary.skill.md
 │   ├── test_guard.skill.md
@@ -285,7 +256,8 @@ FootballPrediction/
 ├── Makefile                     # V51.0 指挥塔
 ├── CLAUDE.md                    # AI 助手详细操作指南
 ├── COMMAND_CENTER.md            # 数字化指挥中心
-└── AGENTS.md                    # 本文件
+├── AGENTS.md                    # 本文件
+└── VERSION                      # 版本锚点
 ```
 
 ---
@@ -321,7 +293,6 @@ npm start
 | `npm run seed` | L1 赛程种子 |
 | `npm run seed:all` | L1 全量赛程种子 |
 | `npm run smelt` | L3 特征熔炼 |
-| `npm run smelt:turbo` | V5 Turbo 熔炼 |
 | `npm run harvest` | Hyper Swarm 收割 |
 | `npm run harvest:swarm` | Swarm 蜂群收割（Worker 池化） |
 | `npm run titan:start` | TITAN 完整工作流 |
@@ -338,6 +309,8 @@ npm start
 | `npm run train:deep` | 深度训练（参数增加） |
 | `npm test` | 运行单元测试 |
 | `npm run qa` | 全量检查（lint + test） |
+| `npm run elo:recalc` | 重新计算 ELO |
+| `npm run elo:incremental` | 增量更新 ELO |
 
 ### 5.3 V6.0 回填命令
 
@@ -345,14 +318,43 @@ npm start
 # 运行 Gold Pilot 50 回填
 node scripts/ops/gold_pilot_50.js
 
-# 运行压力测试（1000场）
-node scripts/ops/stress_test_1000.js
+# 运行 TITAN 大回填
+node scripts/ops/titan_grand_backfill.js
+
+# 运行压力测试
+node scripts/ops/p2p_harvest_v38.js
 
 # 批量导入比赛
 node scripts/ops/bulk_import_matches.js
 
 # 查看回填进度
 docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "SELECT * FROM backfill_progress;"
+```
+
+### 5.4 Makefile 快捷命令
+
+```bash
+# 开发环境管理
+make dev-up          # 启动开发容器
+make dev-down        # 停止开发容器
+make dev-shell       # 进入开发容器 Shell
+make dev-logs        # 查看开发容器日志
+make dev-harvest     # 在容器中运行生产收割
+
+# 数据库操作
+make db-shell        # 进入 PostgreSQL Shell
+make db-backup       # 备份数据库
+
+# 质量检查
+make lint            # 运行 Lint 检查
+make format          # 格式化代码
+make test            # 运行测试
+make verify          # 运行完整验证
+make security        # 运行安全扫描
+
+# 监控
+make health          # 检查服务健康状态
+make dashboard       # 启动战神仪表盘
 ```
 
 ---
@@ -367,22 +369,22 @@ docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d footba
 4. **数据完整性**：**零模拟原则**，严禁使用 `Math.random()` 伪造数据
 5. **幂等性**：所有收割任务支持重复执行，已存在的完整数据应跳过
 
-### 6.2 V6.0 架构规范
+### 6.2 V4.47 架构规范
 
 - **配置唯一源**: `src/config_unified.py` / `config/factory_config.js` / `config/registry.js`
 - **数学能力**: `src/core/math/` (finance, evaluator)
 - **动态能力**: `src/core/` (Math, Database, Types)
 - **预测大脑**: `src/ml/`
-- **分析算法**: `src/analysis/` (V5.0+ 新增)
-- **策略模块**: `src/strategy/` (Kelly准则等)
+- **分析算法**: `src/analysis/`
+- **策略模块**: `src/strategy/`
 - **基础设施**: `src/infrastructure/`
 - **回填系统**: `scripts/ops/gold_pilot_50.js` + `src/infrastructure/harvesters/OddsPortalHarvester.js`
-- **代理轮询**: `src/infrastructure/network/ProxyRotator.js` (22端口)
-- **断点续传**: `src/infrastructure/persistence/Checkpointer.js`
+- **代理轮询**: `src/infrastructure/harvesters/ProxyRotator.js` (22端口)
+- **断点续传**: `src/infrastructure/harvesters/Checkpointer.js`
 - **唯一数据**: `src/database/`
-- **日志系统**: `src/utils/StructuredLogger.js` (V4.0 模块化)
+- **日志系统**: `src/utils/StructuredLogger.js`
 
-### 6.3 黄金准则（V6.0+）
+### 6.3 黄金准则（V4.47+）
 
 - **测试覆盖率**: 80% 熔断阈值
 - **静态质量**: 0 Error 容忍
@@ -390,30 +392,25 @@ docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d footba
 - **模块化**: 单一职责，高内聚低耦合
 - **V6.0 加固**: P0级架构，断点续传，限流控制，健康检查
 
+### 6.4 Skills 约束体系
+
+项目已配置 5 个核心 RED 约束 Skills：
+
+| 约束等级 | Skill | 用途 |
+|----------|-------|------|
+| 🔴 RED | `minimal_change` | 最小修改策略 |
+| 🔴 RED | `architecture_boundary` | 架构边界保护 |
+| 🔴 RED | `test_guard` | 测试质量保护 |
+| 🔴 RED | `context_lock` | 核心模块冻结 |
+| 🔴 RED | `change_impact` | 变更影响分析 |
+
+详细说明见 `.claude/README.md`
+
 ---
 
 ## 7. 常用开发命令
 
-### 7.1 开发环境管理（Makefile）
-
-```bash
-# 启动开发环境
-make dev-up
-
-# 进入开发容器 Shell
-make dev-shell
-
-# 停止开发环境
-make dev-down
-
-# 查看开发容器日志
-make dev-logs
-
-# 在容器中运行生产收割
-make dev-harvest
-```
-
-### 7.2 核心收割流程
+### 7.1 核心收割流程
 
 ```bash
 # L1: 赛程种子
@@ -435,7 +432,7 @@ docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/gold_pilot_50
 npm run titan:start
 ```
 
-### 7.3 代码质量
+### 7.2 代码质量
 
 ```bash
 # ESLint 检查
@@ -461,7 +458,7 @@ npm run qa
 make verify
 ```
 
-### 7.4 测试
+### 7.3 测试
 
 ```bash
 # Node.js 单元测试
@@ -482,7 +479,7 @@ pytest tests/ -v
 pytest tests/ml/ -v
 ```
 
-### 7.5 数据库操作
+### 7.4 数据库操作
 
 ```bash
 # 进入 PostgreSQL Shell
@@ -499,7 +496,7 @@ npm run status:db
 docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "SELECT match_id, status, retry_count FROM backfill_progress ORDER BY updated_at DESC LIMIT 10;"
 ```
 
-### 7.6 监控与运维
+### 7.5 监控与运维
 
 ```bash
 # 启动监控栈（Prometheus + Grafana）
@@ -520,7 +517,7 @@ make health
 make dashboard
 ```
 
-### 7.7 模型操作
+### 7.6 模型操作
 
 ```bash
 # 训练模型
@@ -540,19 +537,6 @@ npm run predict:dry
 
 # JSON 格式输出
 npm run predict:json
-```
-
-### 7.8 ELO 评分操作
-
-```bash
-# 重新计算 ELO（完整）
-npm run elo:recalc
-
-# 试运行模式
-npm run elo:recalc:dry
-
-# 增量更新
-npm run elo:incremental
 ```
 
 ---
@@ -689,11 +673,12 @@ GROUP BY market_sentiment;
 
 | 组件 | 描述 |
 |------|------|
-| **核心模型** | XGBoost 分类器 |
+| **核心模型** | XGBoost 3.1+ 分类器 |
 | **特征维度** | 11维纯净特征（Elo + 身价 + H2H）+ market_sentiment |
 | **准确率** | 65.31%（测试集）/ 67.94%（5折交叉验证） |
 | **F1 Score** | 0.6371 |
 | **Log Loss** | 0.9834 |
+| **模型加载器** | `src/ml/inference/titan_loader.py` |
 
 ### 11.2 11维特征组成
 
@@ -742,24 +727,6 @@ TITAN V5.0 首个预测算法模块，用于实时监测赔率异常波动和市
 - 凯利准则建议（Kelly criterion）
 - 价值投注识别（value bets）
 
-**使用示例**:
-```javascript
-const { OddsFluxDetector } = require('./src/analysis/OddsFluxDetector');
-
-const detector = new OddsFluxDetector({
-  deviationThreshold: 0.15,  // 偏差阈值 15%
-  minOdds: 1.5,
-  maxOdds: 10.0
-});
-
-const result = detector.analyze({
-  modelProbability: 0.65,
-  marketOdds: 2.1,
-  homeTeam: '曼城',
-  awayTeam: '利物浦'
-});
-```
-
 ### 12.2 TITAN Cruise Control - 全自动巡航控制器
 
 **文件**: `scripts/ops/titan_cruise_control.py`
@@ -784,6 +751,12 @@ const result = detector.analyze({
 
 从 OddsPortal 数据中提取市场情绪特征，用于模型输入。
 
+### 12.5 TITAN Loader（V4.47）
+
+**文件**: `src/ml/inference/titan_loader.py`
+
+TITAN 模型统一加载器，支持模型版本管理和元数据验证。
+
 ---
 
 ## 13. V6.0 回填系统
@@ -794,6 +767,7 @@ V6.0 回填系统是针对历史数据补全的专用流水线，采用 P0级架
 
 **核心组件**:
 - **Gold Pilot 50**: 批次调度执行器
+- **TITAN Grand Backfill**: 大回填执行器
 - **ProxyRotator**: 22端口代理轮询
 - **OddsPortalHarvester**: Playwright 真实页面抓取
 - **Checkpointer**: 断点续传与状态持久化
@@ -807,6 +781,7 @@ V6.0 回填系统是针对历史数据补全的专用流水线，采用 P0级架
 | **限流控制** | 防止请求过载，自适应延时 |
 | **熔断机制** | 连续失败自动冷却，保护代理池 |
 | **实时存盘** | 每场比赛状态实时持久化 |
+| **P2P Harvest** | v38 点对点收割协议 |
 
 ### 13.3 运行方式
 
@@ -814,46 +789,13 @@ V6.0 回填系统是针对历史数据补全的专用流水线，采用 P0级架
 # 标准回填（50场批次）
 node scripts/ops/gold_pilot_50.js
 
-# TITAN 黄金收割（50场）
-node scripts/ops/titan_golden_harvest_50.js
+# TITAN 大回填
+node scripts/ops/titan_grand_backfill.js
 
-# 小规模测试
-node scripts/ops/golden_pilot_5.js      # 5场
-node scripts/ops/pilot_3_quick.js       # 3场快速
-node scripts/ops/pilot_3_v3_quick.js    # 3场V3快速
-node scripts/ops/first_gold_single.js   # 单场
-node scripts/ops/first_gold_10.js       # 10场
+# P2P 收割（v38）
+node scripts/ops/p2p_harvest_v38.js
 
-# 中等规模测试
-node scripts/ops/pilot_20.js            # 20场
-node scripts/ops/pilot_20_precision_lock.js  # 20场精准锁定
-node scripts/ops/pilot_5_deep_gold.js   # 5场深度黄金
-
-# 压力测试
-node scripts/ops/stress_test_50.js      # 50场
-node scripts/ops/stress_test_1000.js    # 1000场
-
-# 批量导入
-node scripts/ops/bulk_import_matches.js
-
-# 自动收割
-node scripts/ops/auto_harvest_v6.js
-node scripts/ops/sniffer_harvest_v6.js
-node scripts/ops/assisted_harvest.js
-node scripts/ops/steady_harvester.js
-
-# 主机强制收割（开发测试）
-node scripts/ops/host_force_harvest.js
-node scripts/ops/host_force_harvest_demo.js
-
-# 精准打击
-node scripts/ops/precision_strike.js
-node scripts/ops/precision_strike_v6.js
-node scripts/ops/real_fusion_fire.js
-
-# 离线/特殊模式
-node scripts/ops/offline_backfill_v6.js
-node scripts/ops/bet365_ultimate_redo.js
+# 查看回填进度
 ```
 
 ### 13.4 监控回填状态
@@ -884,34 +826,34 @@ LIMIT 10;
 
 | 目录 | 用途 | 数量 |
 |------|------|------|
-| `tests/unit/` | 单元测试 | 55+ 测试用例 |
+| `tests/unit/` | 单元测试 | 60+ 测试用例 |
 | `tests/integration/` | 集成测试 | - |
 | `tests/integrity/` | 完整性测试 | - |
 | `tests/fixtures/` | 测试数据 | - |
 
 ### 14.2 核心测试文件
 
-- `StructuredLogger.test.js` - 结构化日志器测试（V4.0 模块化）
+- `StructuredLogger.test.js` - 结构化日志器测试
 - `Smelter_Audit.test.js` - Smelter 审计测试
 - `FeatureSmelter.test.js` - 特征熔炼器测试
 - `ProductionHarvester.test.js` - 生产收割器测试
 - `ProductionHarvester_Deep.test.js` - 生产收割器深度测试
 - `SentinelWatch.test.js` - 哨兵监控测试
-- `JSON_Integrity.test.js` - JSON 完整性测试（V6.0）
-- `BackfillFortification.test.js` - 回填加固测试（V6.0）
-- `BackfillResilience.test.js` - 回填韧性测试（V6.0）
-- `OddsPortalHarvester_V55.test.js` - OddsPortal 收割器测试（V6.0）
-- `Golden_Injection_Verify.test.js` - 黄金注入验证测试（V6.0）
-- `Local_Rendering_Integrity.test.js` - 本地渲染完整性测试（V6.0）
-- `Real_Data_Extraction.test.js` - 真实数据提取测试（V6.0）
-- `Residential_Stealth.test.js` - 住宅隐身测试（V6.0）
-- `Zero_Placeholder_Diversity.test.js` - 零占位符多样性测试（V6.0）
-- `parser_regression.test.js` - 解析器回归测试（V6.0）
-- `purity_filter.test.js` - 纯净过滤器测试（V6.0）
-- `recovery_injection.test.js` - 恢复注入测试（V6.0）
-- `schema_design_validator.test.js` - Schema设计验证器测试（V6.0）
-- `sniffer_interceptor.test.js` - 嗅探拦截器测试（V6.0）
-- `stealth_hardening.test.js` - 隐身加固测试（V6.0）
+- `JSON_Integrity.test.js` - JSON 完整性测试
+- `BackfillFortification.test.js` - 回填加固测试
+- `BackfillResilience.test.js` - 回填韧性测试
+- `OddsPortalHarvester_V55.test.js` - OddsPortal 收割器测试
+- `Golden_Injection_Verify.test.js` - 黄金注入验证测试
+- `Local_Rendering_Integrity.test.js` - 本地渲染完整性测试
+- `Real_Data_Extraction.test.js` - 真实数据提取测试
+- `Residential_Stealth.test.js` - 住宅隐身测试
+- `Zero_Placeholder_Diversity.test.js` - 零占位符多样性测试
+- `parser_regression.test.js` - 解析器回归测试
+- `purity_filter.test.js` - 纯净过滤器测试
+- `recovery_injection.test.js` - 恢复注入测试
+- `schema_design_validator.test.js` - Schema设计验证器测试
+- `sniffer_interceptor.test.js` - 嗅探拦截器测试
+- `stealth_hardening.test.js` - 隐身加固测试
 - `MarketSentimentExtractor.test.js` - 市场情绪提取器测试
 - `DrawPropensityExtractor.test.js` - 平局倾向提取器测试
 - `EfficiencyFeatureExtractor.test.js` - 效率特征提取器测试
@@ -933,6 +875,7 @@ LIMIT 10;
 - `ZombieKiller.test.js` - 僵尸进程清理测试
 - `DataIntegrity.test.js` - 数据完整性测试
 - `FixtureSeeder.test.js` - 赛程种子测试
+- `FixtureSeederV5.test.js` - V5 赛程种子测试
 - `AuditDataset.test.js` - 数据集审计测试
 - `AbstractHarvester.test.js` - 抽象收割器测试
 - `Extractors_V4.test.js` - V4提取器测试
@@ -942,6 +885,7 @@ LIMIT 10;
 - `Parsing_Core.test.js` - 解析核心测试
 - `Body_Stamina.test.js` - 身体耐力测试
 - `Error_Nerves.test.js` - 错误神经测试
+- `MatchValidator.test.js` - 比赛验证器测试
 
 ### 14.3 测试运行
 
@@ -962,16 +906,20 @@ pytest tests/ -v
 
 | 文档 | 说明 |
 |------|------|
-| [CLAUDE.md](./CLAUDE.md) | AI 助手操作指南（工程铁律、配置系统、关键规则） |
-| [COMMAND_CENTER.md](./COMMAND_CENTER.md) | 数字化指挥中心（完整命令、作战常规） |
+| [CLAUDE.md](./CLAUDE.md) | AI 助手操作指南 |
+| [COMMAND_CENTER.md](./COMMAND_CENTER.md) | 数字化指挥中心 |
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 系统架构详述 |
 | [docs/OPERATIONS_MANUAL.md](./docs/OPERATIONS_MANUAL.md) | 运维手册 |
+| [docs/OPERATIONS_RUNBOOK.md](./docs/OPERATIONS_RUNBOOK.md) | 运维运行手册 |
 | [docs/TESTING_GUIDE.md](./docs/TESTING_GUIDE.md) | 测试指南 |
 | [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | 故障排查 |
 | [docs/xgboost_optimization_guide.md](./docs/xgboost_optimization_guide.md) | XGBoost 优化指南 |
-| [docs/MODEL_V4_ANATOMY.md](./docs/MODEL_V4_ANATOMY.md) | V4 模型解剖学报告（11维特征详解） |
+| [docs/MODEL_V4_ANATOMY.md](./docs/MODEL_V4_ANATOMY.md) | V4 模型解剖学报告 |
 | [docs/SMELTER_REFACTOR_PLAN.md](./docs/SMELTER_REFACTOR_PLAN.md) | Smelter V4.0 重构计划 |
 | [docs/ops/backfill_v6_manual.md](./docs/ops/backfill_v6_manual.md) | V6.0 回填系统操作手册 |
+| [docs/TITAN_V5.2_TECHNICAL_SPEC.md](./docs/TITAN_V5.2_TECHNICAL_SPEC.md) | V5.2 技术规格 |
+| [docs/L1_DISCOVERY_ENGINE.md](./docs/L1_DISCOVERY_ENGINE.md) | L1 发现引擎文档 |
+| [docs/MCP_ARCHITECTURE.md](./docs/MCP_ARCHITECTURE.md) | MCP 架构文档 |
 | [AUDIT_REPORT_V3.2.md](./AUDIT_REPORT_V3.2.md) | V3.1-STABLE 穿透审计报告 |
 
 ---
@@ -1000,18 +948,6 @@ pytest tests/ -v
 - 不添加未请求的功能
 - 不硬编码配置参数
 
-### 16.4 Skills 约束体系
-
-项目已配置 5 个核心 RED 约束 Skills 和多个专用技能，详见 `.claude/README.md`。核心约束：
-
-| 约束等级 | Skill | 用途 |
-|----------|-------|------|
-| 🔴 RED | `minimal_change` | 最小修改策略 |
-| 🔴 RED | `architecture_boundary` | 架构边界保护 |
-| 🔴 RED | `test_guard` | 测试质量保护 |
-| 🔴 RED | `context_lock` | 核心模块冻结 |
-| 🔴 RED | `change_impact` | 变更影响分析 |
-
 ---
 
 ## 17. MCP 服务器权限
@@ -1027,53 +963,36 @@ pytest tests/ -v
 
 ---
 
-## 18. 近期更新（V6.0）
+## 18. 近期更新（V4.47.0-BATTLE）
 
-### 18.1 V6.0 回填系统（2026-03-15）
+### 18.1 V6.4 L2 侦察扫描器（2026-03-19）
+
+**核心交付**: 成功将高级模糊匹配逻辑合并到 v6.4 基础设施
+
+- ✅ `recon_scanner.js` - L2 侦察扫描器
+- ✅ 模糊匹配逻辑集成
+- ✅ 与现有 V6.0 回填流水线兼容
+
+### 18.2 V6.4 L1 发现引擎（2026-03-19）
+
+**核心交付**: 断路器保护和 100% 测试覆盖
+
+- ✅ 断路器模式实现
+- ✅ 100% 测试覆盖率
+- ✅ 自动故障恢复
+
+### 18.3 V6.0 回填系统（2026-03-15）
 
 **核心交付**: P0级架构加固的历史数据回填系统
 
 **新组件**:
 - ✅ `gold_pilot_50.js` - 批次调度执行器
+- ✅ `titan_grand_backfill.js` - 大回填执行器
 - ✅ `ProxyRotator.js` - 22端口代理轮询
 - ✅ `OddsPortalHarvester.js` - Playwright 真实抓取
 - ✅ `Checkpointer.js` - 断点续传机制
 - ✅ `backfill_progress` 表 - 回填状态跟踪
 - ✅ `MarketSentimentExtractor.js` - 市场情绪提取
-
-**能力增强**:
-- 22端口代理池轮询（7890-7911）
-- 断点续传，中断自动恢复
-- 限流控制，自适应延时
-- 熔断机制，代理健康保护
-- 实时存盘，状态持久化
-
-### 18.2 Smelter V5.0-TURBO（2026-03-11）
-
-**优化**:
-- `smelt_v5_turbo.js` - Turbo 模式熔炼
-- `smelt_v5_worker.js` - Worker 池化熔炼
-- `smelt_v5_reburn.js` - 重熔模式
-
-### 18.3 测试体系扩展
-
-**新增测试（55+）**:
-- ✅ `JSON_Integrity.test.js` - JSON完整性验证
-- ✅ `BackfillFortification.test.js` - 回填加固测试
-- ✅ `BackfillResilience.test.js` - 回填韧性测试
-- ✅ `OddsPortalHarvester_V55.test.js` - OddsPortal收割器测试
-- ✅ `Golden_Injection_Verify.test.js` - 黄金注入验证
-- ✅ `Local_Rendering_Integrity.test.js` - 本地渲染完整性
-- ✅ `Real_Data_Extraction.test.js` - 真实数据提取
-- ✅ `Residential_Stealth.test.js` - 住宅隐身测试
-- ✅ `Zero_Placeholder_Diversity.test.js` - 零占位符多样性
-- ✅ `parser_regression.test.js` - 解析器回归测试
-- ✅ `purity_filter.test.js` - 纯净过滤器测试
-- ✅ `recovery_injection.test.js` - 恢复注入测试
-- ✅ `schema_design_validator.test.js` - Schema设计验证器
-- ✅ `sniffer_interceptor.test.js` - 嗅探拦截器测试
-- ✅ `stealth_hardening.test.js` - 隐身加固测试
-- ✅ 多个 Extractor 专项测试
 
 ### 18.4 Worker 池化架构（V4.46.4+）
 
@@ -1083,64 +1002,46 @@ pytest tests/ -v
 - 单场平均耗时减少 65%
 - 吞吐量提升 3.75x
 
-### 18.5 V6.0 实战化演进（2026-03-15 至 2026-03-17）
+### 18.5 V4.46.8 工业化版本（2026-03-11）
 
-**新增组件**:
-- ✅ `StealthNavigator.js` - 隐身导航器，反检测强化
-- ✅ `SessionWarmer.js` - 会话预热器，保持会话活性
-- ✅ `OddsPortalParser.js` - 专用解析器，深度数据提取
+**核心交付**: 工业化全自动巡航系统
 
-**新增运维脚本**:
-- ✅ `golden_pilot_5.js` - 5场黄金测试
-- ✅ `pilot_3_quick.js` / `pilot_3_v3_quick.js` - 快速测试
-- ✅ `pilot_20.js` / `pilot_20_precision_lock.js` - 20场批次
-- ✅ `first_gold_single.js` / `first_gold_10.js` - 首次黄金测试
-- ✅ `auto_harvest_v6.js` / `sniffer_harvest_v6.js` - 自动收割
-- ✅ `precision_strike.js` / `precision_strike_v6.js` - 精准打击
-- ✅ `real_fusion_fire.js` - 真实融合火力
-- ✅ `titan_main_harvester.js` / `titan_api_decrypt_harvester.js`
-- ✅ `steady_harvester.js` / `assisted_harvest.js` - 稳定收割
-- ✅ `host_force_harvest.js` - 主机强制收割（开发测试）
-- ✅ `omni_live_audit.js` / `api_payload_audit.js` - 审计工具
-- ✅ `db_heartbeat.js` - 数据库心跳监控
-
-**诊断与演示**:
-- ✅ `stealth_probe_diagnostic.js` - 隐身探针诊断
-- ✅ `demo_odds_timeline.js` - 赔率时间线演示
-- ✅ `demo_sniffer_mapping.js` - 嗅探映射演示
-- ✅ `titan_pipeline_demo.js` - TITAN管道演示
+**新组件**:
+- ✅ `model_config.py` - 模型配置常量唯一源
+- ✅ `h2h_estimator.py` - H2H 智能补位引擎
+- ✅ `titan_loader.py` - TITAN 模型加载器
+- ✅ `prediction_repo.py` - 预测数据仓储层
+- ✅ `titan_cruise_control.py` - 全自动巡航控制器
+- ✅ `show_today_summary.py` - 终端作战简报
 
 ---
 
-## 19. V6.0 作战报告档案
+## 19. Claude Skills 体系
 
-以下报告记录了 V6.0 开发过程中的关键里程碑和实战成果：
+### 19.1 核心约束 Skills（5个 RED 等级）
 
-| 报告文件 | 描述 | 日期 |
-|----------|------|------|
-| `V6_ZERO_MOCK_REPORT.md` | 零模拟数据认证报告 | 2026-03 |
-| `V6_FIRST_GOLD_REPORT.md` | 首次黄金数据获取报告 | 2026-03 |
-| `V6_GOLD_INJECTION_REPORT.md` | 黄金数据注入报告 | 2026-03 |
-| `V6_20_MATCH_PILOT_REPORT.md` | 20场比赛先导测试报告 | 2026-03 |
-| `V6_REAL_FUSION_FIRE_REPORT.md` | 真实融合火力测试报告 | 2026-03 |
-| `V6_RESIDENTIAL_BREACH_REPORT.md` | 住宅代理突破报告 | 2026-03 |
-| `V6_PRECISION_STRIKE_REPORT.md` | 精准打击测试报告 | 2026-03 |
-| `V6_PRECISION_LOCK_REPORT.md` | 精准锁定测试报告 | 2026-03 |
-| `V6_STEALTH_OVERDRIVE_REPORT.md` | 隐身超频报告 | 2026-03 |
-| `V6_STEALTH_SIEGE_REPORT.md` | 隐身围攻报告 | 2026-03 |
-| `V6_SIGHT_RESTORE_REPORT.md` | 视觉恢复报告 | 2026-03 |
-| `V6_API_EXCAVATOR_REPORT.md` | API挖掘报告 | 2026-03 |
-| `V6_DEEP_PARSE_AUDIT_REPORT.md` | 深度解析审计报告 | 2026-03 |
-| `V6_TDD_VALIDATION_REPORT.md` | TDD验证报告 | 2026-03 |
-| `V6_LOCAL_OVERRIDE_REPORT.md` | 本地覆盖报告 | 2026-03 |
-| `V6_HOST_FORCE_UP_REPORT.md` | 主机强制上线报告 | 2026-03 |
-| `V6_ULTIMATE_FOCUS_REPORT.md` | 终极聚焦报告 | 2026-03 |
-| `V6_FINAL_PILOT_REPORT.md` | 最终先导测试报告 | 2026-03 |
+| Skill | 用途 | 说明 |
+|-------|------|------|
+| `minimal_change` | 最小修改策略 | 防止过度重构 |
+| `architecture_boundary` | 架构边界保护 | 维护层次结构 |
+| `test_guard` | 测试质量保护 | 确保测试价值 |
+| `context_lock` | 核心模块冻结 | 保护系统基石 |
+| `change_impact` | 变更影响分析 | 评估修改影响 |
 
-> 💡 **说明**: 这些报告是 V6.0 开发过程中的实战记录，包含详细的测试数据、性能指标和架构演进历程。
+### 19.2 专用 Skills（12个）
+
+位于 `.claude/skills/` 目录：
+
+| 类别 | Skills |
+|------|--------|
+| **核心业务** | football-prediction, report-generation, machine-learning-engineering, data-collection |
+| **运维支撑** | performance-monitoring, deployment-management, database-operations |
+| **开发工具** | code-quality, api-testing, data-engineering, docker-devops, fastapi-development |
+
+详细说明见 `.claude/README.md`
 
 ---
 
 **维护者**: V174 Engineering Team  
 **许可证**: MIT License  
-**最后更新**: 2026-03-17
+**最后更新**: 2026-03-19

@@ -20,6 +20,7 @@ const { chromium } = require('playwright');
 const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
 
 // 数据库配置
 const DB_CONFIG = {
@@ -520,7 +521,7 @@ async function saveToDatabase(pool, matches, season, leagueConfig) {
       }
       
       // 使用真实的 match_id
-      const matchId = matchInfo.match_id;
+      const matchId = matchInfo.matchId;
       
       // 插入 mapping 表
       const query = `
@@ -591,7 +592,7 @@ async function main() {
   const targetLeague = leagueIndex !== -1 ? args[leagueIndex + 1].toUpperCase() : 'EPL';
   
   console.log('\n╔══════════════════════════════════════════════════════════════════╗');
-  console.log('║     🔍 TITAN V6.0 RECON SCANNER - 历史赛季测绘 🔍              ║');
+  console.log('║     🔍 TITAN V6.4 RECON SCANNER - 历史赛季测绘 🔍              ║');
   console.log('╠══════════════════════════════════════════════════════════════════╣');
   console.log(`║     目标赛季: ${season.padEnd(45)} ║`);
   console.log(`║     目标联赛: ${(allLeaguesFlag ? '全部联赛' : LEAGUE_CONFIGS[targetLeague]?.name || targetLeague).padEnd(45)} ║`);
@@ -601,12 +602,26 @@ async function main() {
   const pool = new Pool(DB_CONFIG);
   let browser = null;
   
+  // 初始化代理轮询器
+  const proxyRotator = new ProxyRotator({ strategy: 'round-robin' });
+  const PROXY_HOST = process.env.PROXY_HOST || '172.25.16.1';
+  
   try {
+    // 获取代理
+    const proxy = proxyRotator.getNextProxy();
+    const proxyServer = `http://${PROXY_HOST}:${proxy.port}`;
+    console.log(`🔌 使用代理: ${proxyServer}`);
+    
     // 启动浏览器
     console.log('🚀 启动浏览器...');
     browser = await chromium.launch({
       headless: headlessFlag,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--window-size=1920,1080']
+      args: [
+        '--no-sandbox', 
+        '--disable-setuid-sandbox', 
+        '--window-size=1920,1080',
+        `--proxy-server=${proxyServer}`
+      ]
     });
     
     const context = await browser.newContext({
