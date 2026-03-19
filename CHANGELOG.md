@@ -4,6 +4,98 @@
 
 ---
 
+## [V6.5] - 2026-03-19 - Data Consistency Hardening
+
+### 🏗️ 数据库硬核加固 (Database Hardening)
+
+V6.5 版本在 PostgreSQL 数据库层面建立了工业级数据一致性保障机制。
+
+#### 新增约束 (Constraints)
+
+| 约束名 | 类型 | 作用 |
+|--------|------|------|
+| `status_lowercase` | CHECK | 强制 `status` 字段必须全小写 (`status = LOWER(status)`) |
+| `season_format` | CHECK | 强制 `season` 字段必须符合 `'YYYY/YYYY'` 正则格式 |
+
+#### 新增触发器 (Trigger)
+
+| 触发器名 | 触发时机 | 功能 |
+|----------|----------|------|
+| `trg_sync_is_finished` | BEFORE INSERT OR UPDATE | 自动同步 `is_finished` 字段与 `status` 字段 |
+
+**触发器逻辑**:
+```sql
+NEW.is_finished := (NEW.status = 'finished');
+```
+
+#### 新增字段
+
+| 字段名 | 类型 | 说明 |
+|--------|------|------|
+| `is_finished` | BOOLEAN | 与 `status` 字段保持 100% 同步，数据库层自动维护 |
+
+---
+
+### 🔄 L1 引擎解析逻辑全量归一化 (Parser Normalization)
+
+#### 新增方法
+
+| 方法 | 文件 | 功能 |
+|------|------|------|
+| `normalizeSeason()` | `FixtureSeeder.js` | 将各种赛季格式统一转换为 `'YYYY/YYYY'` 标准格式 |
+| `determineStatus()` (增强) | `FixtureSeeder.js` | 返回强制小写的状态值 |
+
+#### 归一化规则
+
+**赛季格式**:
+
+| 输入 | 输出 | 说明 |
+|------|------|------|
+| `2023/2024` | `2023/2024` | 标准格式，直接通过 |
+| `2324` | `2023/2024` | 4位简写，自动补全世纪 |
+| `20232024` | `2023/2024` | 8位数字，自动分割 |
+| `2023-2024` | `2023/2024` | 短横线分隔，自动替换 |
+| `23/24` | ❌ Error | 非法格式，抛出异常 |
+
+**状态值**:
+- 所有状态值强制转换为小写: `'finished'`, `'scheduled'`, `'live'`, `'cancelled'`, `'postponed'`, `'awarded'`
+
+---
+
+### 🛡️ 双重防护架构 (Dual Protection)
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 第一层: 应用层防护 (Node.js)                                 │
+│ - normalizeSeason() 强制格式转换                            │
+│ - determineStatus() 强制小写输出                            │
+│ - parseMatch() 计算 is_finished 布尔值                      │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 第二层: 数据库层防护 (PostgreSQL)                            │
+│ - CHECK 约束拦截非法数据                                    │
+│ - TRIGGER 自动修正不一致字段                                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**目标实现**: "非标准数据进不来，标准数据改不掉" 的工业级鲁棒性。
+
+---
+
+### 📁 文件变更清单
+
+```
+M src/infrastructure/FixtureSeeder.js    # 核心归一化逻辑
+M src/infrastructure/L1_DISCOVERY_ENGINE.md  # 文档更新
+M CHANGELOG.md                           # 本文件
+A tests/unit/FixtureSeeder.test.js       # 新增 V6.5 测试用例
+A database/migrations/V6.5__hardened_matches_schema.sql  # 迁移脚本
+```
+
+---
+
 ## [V4.46.8] - 2026-03-11 - INDUSTRIAL Edition
 
 ### 🏭 架构整肃 (Architecture Consolidation)

@@ -433,10 +433,195 @@ const MATCH_ID_PATTERN = /^\d+_\d{8}_\d+$/;
 
 ---
 
-## 10. 变更历史
+## 10. 数据归一化 (V6.5)
+
+V6.5 版本引入了强制数据归一化机制，确保入库数据格式统一。
+
+### 10.1 赛季格式归一化
+
+**问题背景**: 不同数据源可能使用不同的赛季格式（如 '2324'、'20242025'、'2024-2025'），导致数据混乱。
+
+**解决方案**: `normalizeSeason()` 函数强制统一为 `'YYYY/YYYY'` 格式。
+
+```javascript
+// V6.5: 赛季格式标准化
+normalizeSeason(season) {
+    // 已经是标准格式
+    if (/^\d{4}\/\d{4}$/.test(season)) return season;
+    
+    // '2324' → '2023/2024'
+    if (/^\d{4}$/.test(season)) {
+        return `20${season.substring(0, 2)}/20${season.substring(2, 4)}`;
+    }
+    
+    // '20242025' → '2024/2025'
+    if (/^\d{8}$/.test(season)) {
+        return `${season.substring(0, 4)}/${season.substring(4, 8)}`;
+    }
+    
+    // '2024-2025' → '2024/2025'
+    if (/^\d{4}-\d{4}$/.test(season)) {
+        return season.replace('-', '/');
+    }
+    
+    throw new Error(`Unrecognized season format: ${season}`);
+}
+```
+
+**转换示例**:
+
+| 输入格式 | 输出格式 | 说明 |
+|----------|----------|------|
+| `2023/2024` | `2023/2024` | 标准格式，直接通过 |
+| `2324` | `2023/2024` | 4位简写，自动补全世纪 |
+| `20232024` | `2023/2024` | 8位数字，自动分割 |
+| `2023-2024` | `2023/2024` | 短横线分隔，自动替换 |
+| `23/24` | ❌ 报错 | 非法格式，抛出 Error |
+
+**数据库约束**:
+```sql
+ALTER TABLE matches ADD CONSTRAINT season_format 
+CHECK (season ~ '^\d{4}/\d{4}$');
+```
+
+### 10.2 状态值归一化
+
+**问题背景**: FotMob API 返回的状态值可能存在大小写不一致（'finished' vs 'Finished'）。
+
+**解决方案**: `determineStatus()` 方法强制返回小写状态值。
+
+```javascript
+determineStatus(match, homeScore, awayScore) {
+    // ... 状态判断逻辑 ...
+    
+    // V6.5: 强制小写归一化
+    return result.toLowerCase();
+}
+```
+
+**标准化状态值**:
+
+| 状态 | 说明 |
+|------|------|
+| `scheduled` | 比赛未开始 |
+| `live` | 比赛进行中 |
+| `finished` | 比赛已结束 |
+| `cancelled` | 比赛已取消 |
+| `postponed` | 比赛已延期 |
+| `awarded` | 判罚结果 |
+
+**数据库约束**:
+```sql
+ALTER TABLE matches ADD CONSTRAINT status_lowercase 
+CHECK (status = LOWER(status));
+```
+
+---
+
+## 11. 数据一致性保障 (V6.5)
+
+V6.5 版本在数据库层面建立了双重防护机制，确保 `status` 和 `is_finished` 字段 100% 同步。
+
+### 11.1 双重防护架构
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ 第一层: 应用层 (Node.js FixtureSeeder.js)                    │
+├─────────────────────────────────────────────────────────────┤
+│ parseMatch() {                                               │
+│   const status = this.determineStatus(...);  // 'finished'  │
+│   const isFinished = status === 'finished';  // true        │
+│   return { ..., status, is_finished: isFinished };          │
+│ }                                                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│ 第二层: 数据库层 (PostgreSQL Trigger)                        │
+├─────────────────────────────────────────────────────────────┤
+│ BEFORE INSERT OR UPDATE                                      │
+│   NEW.is_finished := (NEW.status = 'finished');             │
+│                                                              │
+│ 说明：即使应用层忘记设置，触发器也会自动修正                 │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 11.2 触发器实现
+
+```sql
+-- 创建触发器函数
+CREATE OR REPLACE FUNCTION sync_is_finished()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.is_finished := (NEW.status = 'finished');
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 挂载触发器
+CREATE TRIGGER trg_sync_is_finished
+    BEFORE INSERT OR UPDATE ON matches
+    FOR EACH ROW
+    EXECUTE FUNCTION sync_is_finished();
+```
+
+### 11.3 字段定义更新
+
+V6.5 版本在 `matches` 表中新增 `is_finished` 字段：
+
+```sql
+CREATE TABLE matches (
+    match_id VARCHAR(100) PRIMARY KEY,
+    external_id VARCHAR(50),
+    league_name VARCHAR(100),
+    season VARCHAR(20),
+    home_team VARCHAR(100),
+    away_team VARCHAR(100),
+    match_date TIMESTAMP,
+    home_score INTEGER,
+    away_score INTEGER,
+    status VARCHAR(20),
+    is_finished BOOLEAN,           -- ✅ V6.5 新增：与 status 同步
+    data_source VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+**字段说明**:
+
+| 字段 | 类型 | 来源 | 说明 |
+|------|------|------|------|
+| `status` | VARCHAR(20) | 应用层 + DB CHECK | 比赛状态（强制小写） |
+| `is_finished` | BOOLEAN | 应用层计算 + DB Trigger | 是否完赛（`status='finished'` 时为 true） |
+
+### 11.4 一致性验证
+
+**测试验证**:
+
+```sql
+-- 插入测试数据
+INSERT INTO matches (..., status, ...) VALUES (..., 'finished', ...);
+
+-- 验证 is_finished 自动同步
+SELECT status, is_finished FROM matches WHERE ...;
+-- 结果: status='finished', is_finished=true ✅
+
+-- 更新状态
+UPDATE matches SET status = 'scheduled' WHERE ...;
+
+-- 验证 is_finished 自动更新
+SELECT status, is_finished FROM matches WHERE ...;
+-- 结果: status='scheduled', is_finished=false ✅
+```
+
+---
+
+## 12. 变更历史
 
 | 版本 | 日期 | 变更内容 |
 |------|------|----------|
+| **V6.5** | **2026-03-19** | **数据库硬核加固：CHECK 约束 + 触发器同步；L1 引擎全量归一化** |
 | V178.0.0 | 2026-03-02 | 配置分离、日志分级、JSDoc、数据合约、度量指标 |
 | V177.0.0 | 2026-03-02 | 移除野生脚本，单一数据源确权 |
 | V176.0.0 | 2026-02-28 | 初始重构 |

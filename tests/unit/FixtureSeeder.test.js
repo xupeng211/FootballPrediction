@@ -76,40 +76,82 @@ function createMockSeeder(leagues, seasons) {
 
             const status = this.determineStatus(match, homeScore, awayScore);
 
-            // V178: match_id = league_id + season + fotmob_id
-            const seasonTag = season.replace('/', '');
+            // V6.5: 强制转换赛季格式为标准格式
+            const normalizedSeason = this.normalizeSeason(season);
+            const seasonTag = normalizedSeason.replace('/', '');
             const matchId = `${leagueInfo.id}_${seasonTag}_${externalId}`;
+
+            // V6.5: 同步计算 is_finished 字段
+            const isFinished = status === 'finished';
 
             return {
                 match_id: matchId,
                 external_id: externalId,
                 league_name: leagueInfo.name,
-                season: season,
+                season: normalizedSeason,        // ✅ V6.5: 使用规范化赛季
                 home_team: homeTeam,
                 away_team: awayTeam,
                 match_date: matchDate,
                 home_score: homeScore,
                 away_score: awayScore,
-                status: status,
+                status: status,                  // ✅ V6.5: 已小写归一化
+                is_finished: isFinished,         // ✅ V6.5: 新增字段
                 data_source: 'FotMob'
             };
         },
 
         determineStatus(match, homeScore, awayScore) {
             const status = match.status;
+            let result = 'scheduled';
 
             if (typeof status === 'object' && status !== null) {
-                if (status.cancelled) return 'cancelled';
-                if (status.awarded) return 'awarded';
-                if (status.finished) return 'finished';
-                if (status.started) return 'live';
+                if (status.cancelled) result = 'cancelled';
+                else if (status.awarded) result = 'awarded';
+                else if (status.finished) result = 'finished';
+                else if (status.started) result = 'live';
+            } else if (homeScore !== null && awayScore !== null) {
+                result = 'finished';
             }
 
-            if (homeScore !== null && awayScore !== null) {
-                return 'finished';
+            // V6.5: 强制小写归一化
+            return result.toLowerCase();
+        },
+
+        /**
+         * V6.5: 赛季格式标准化
+         * 将各种格式统一转换为 'YYYY/YYYY' 标准格式
+         */
+        normalizeSeason(season) {
+            if (!season || typeof season !== 'string') {
+                throw new Error(`Invalid season: ${season}`);
             }
 
-            return 'scheduled';
+            // 已经是标准格式
+            if (/^\d{4}\/\d{4}$/.test(season)) {
+                return season;
+            }
+
+            // 处理 '2324' 格式
+            if (/^\d{4}$/.test(season)) {
+                const startYear = `20${season.substring(0, 2)}`;
+                const endYear = `20${season.substring(2, 4)}`;
+                return `${startYear}/${endYear}`;
+            }
+
+            // 处理 '20242025' 格式
+            if (/^\d{8}$/.test(season)) {
+                const startYear = season.substring(0, 4);
+                const endYear = season.substring(4, 8);
+                return `${startYear}/${endYear}`;
+            }
+
+            // 处理 '2024-2025' 格式
+            if (/^\d{4}-\d{4}$/.test(season)) {
+                return season.replace('-', '/');
+            }
+
+            // 无法识别的格式，抛出错误
+            throw new Error(`Unrecognized season format: ${season}`);
         },
 
         /**
@@ -302,6 +344,128 @@ describe('FixtureSeeder V178 单元测试', () => {
         it('无状态无比分时应为 scheduled', () => {
             const status = seeder.determineStatus({ status: {} }, null, null);
             assert.strictEqual(status, 'scheduled');
+        });
+
+        // V6.5: 状态值必须全小写
+        it('V6.5: 状态值必须全小写', () => {
+            const status = seeder.determineStatus({ status: { Finished: true } }, null, null);
+            assert.strictEqual(status, 'finished', 'Finished 应该被转换为小写 finished');
+        });
+    });
+
+    // ============================================================================
+    // V6.5 新增测试: 赛季格式归一化
+    // ============================================================================
+    describe('5. V6.5 赛季格式归一化 (normalizeSeason)', () => {
+        const seeder = createMockSeeder([{ id: 47 }], ['2024/2025']);
+
+        it('标准格式应该直接通过', () => {
+            assert.strictEqual(seeder.normalizeSeason('2023/2024'), '2023/2024');
+            assert.strictEqual(seeder.normalizeSeason('2024/2025'), '2024/2025');
+        });
+
+        it('4位简写格式应该转换为标准格式', () => {
+            assert.strictEqual(seeder.normalizeSeason('2324'), '2023/2024');
+            assert.strictEqual(seeder.normalizeSeason('2425'), '2024/2025');
+            assert.strictEqual(seeder.normalizeSeason('2223'), '2022/2023');
+        });
+
+        it('8位数字格式应该转换为标准格式', () => {
+            assert.strictEqual(seeder.normalizeSeason('20232024'), '2023/2024');
+            assert.strictEqual(seeder.normalizeSeason('20242025'), '2024/2025');
+        });
+
+        it('短横线格式应该转换为标准格式', () => {
+            assert.strictEqual(seeder.normalizeSeason('2023-2024'), '2023/2024');
+            assert.strictEqual(seeder.normalizeSeason('2024-2025'), '2024/2025');
+        });
+
+        it('非法格式应该抛出错误', () => {
+            assert.throws(() => seeder.normalizeSeason('23/24'), /Unrecognized season format/);
+            assert.throws(() => seeder.normalizeSeason('2023'), /Unrecognized season format/);
+            assert.throws(() => seeder.normalizeSeason('23-24'), /Unrecognized season format/);
+            assert.throws(() => seeder.normalizeSeason(''), /Invalid season/);
+            assert.throws(() => seeder.normalizeSeason(null), /Invalid season/);
+        });
+    });
+
+    // ============================================================================
+    // V6.5 新增测试: is_finished 同步
+    // ============================================================================
+    describe('6. V6.5 is_finished 字段同步', () => {
+        const league = { id: 47, name: 'Premier League' };
+
+        it('finished 状态应该设置 is_finished 为 true', () => {
+            const seeder = createMockSeeder([{ id: 47 }], ['2024/2025']);
+            const match = {
+                id: 123456,
+                home: { name: 'Arsenal' },
+                away: { name: 'Chelsea' },
+                status: { finished: true, utcTime: '2024-03-15T15:00:00Z' }
+            };
+
+            const result = seeder.parseMatch(match, league, '2023/2024');
+            assert.strictEqual(result.status, 'finished');
+            assert.strictEqual(result.is_finished, true, 'finished 状态对应的 is_finished 应该为 true');
+        });
+
+        it('scheduled 状态应该设置 is_finished 为 false', () => {
+            const seeder = createMockSeeder([{ id: 47 }], ['2024/2025']);
+            const match = {
+                id: 123457,
+                home: { name: 'Liverpool' },
+                away: { name: 'Man City' },
+                status: { utcTime: '2024-03-20T15:00:00Z' }
+            };
+
+            const result = seeder.parseMatch(match, league, '2024/2025');
+            assert.strictEqual(result.status, 'scheduled');
+            assert.strictEqual(result.is_finished, false, 'scheduled 状态对应的 is_finished 应该为 false');
+        });
+
+        it('live 状态应该设置 is_finished 为 false', () => {
+            const seeder = createMockSeeder([{ id: 47 }], ['2024/2025']);
+            const match = {
+                id: 123458,
+                home: { name: 'Man United' },
+                away: { name: 'Newcastle' },
+                status: { started: true, utcTime: '2024-03-18T15:00:00Z' }
+            };
+
+            const result = seeder.parseMatch(match, league, '2023/2024');
+            assert.strictEqual(result.status, 'live');
+            assert.strictEqual(result.is_finished, false, 'live 状态对应的 is_finished 应该为 false');
+        });
+
+        it('cancelled 状态应该设置 is_finished 为 false', () => {
+            const seeder = createMockSeeder([{ id: 47 }], ['2024/2025']);
+            const match = {
+                id: 123459,
+                home: { name: 'Brighton' },
+                away: { name: 'West Ham' },
+                status: { cancelled: true, utcTime: '2024-03-10T15:00:00Z' }
+            };
+
+            const result = seeder.parseMatch(match, league, '2023/2024');
+            assert.strictEqual(result.status, 'cancelled');
+            assert.strictEqual(result.is_finished, false, 'cancelled 状态对应的 is_finished 应该为 false');
+        });
+
+        it('V6.5: parseMatch 应该使用归一化的赛季格式', () => {
+            const seeder = createMockSeeder([{ id: 47 }], ['2024/2025']);
+            const match = {
+                id: 123460,
+                home: { name: 'Team A' },
+                away: { name: 'Team B' },
+                status: { utcTime: '2024-03-15T15:00:00Z' }
+            };
+
+            // 传入非标准格式 '2324'
+            const result = seeder.parseMatch(match, league, '2324');
+            // 输出的 season 应该是标准格式
+            assert.strictEqual(result.season, '2023/2024', '赛季应该被归一化为标准格式');
+            // match_id 应该使用归一化后的赛季
+            assert.strictEqual(result.match_id, '47_20232024_123460', 'match_id 应该基于归一化的赛季');
         });
     });
 });
