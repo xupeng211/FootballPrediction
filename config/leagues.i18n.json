@@ -1,0 +1,72 @@
+{
+  "version": "1.0.0",
+  "description": "TITAN 全球赛事国际化配置",
+  "locales": {
+    "zh": {
+      "leagues": {
+        "47": { "name": "英超", "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+        "87": { "name": "西甲", "emoji": "🇪🇸" },
+        "54": { "name": "德甲", "emoji": "🇩🇪" },
+        "55": { "name": "意甲", "emoji": "🇮🇹" },
+        "53": { "name": "法甲", "emoji": "🇫🇷" },
+        "42": { "name": "欧冠", "emoji": "🏆" },
+        "73": { "name": "欧联", "emoji": "🏆" },
+        "132": { "name": "足总杯", "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+        "133": { "name": "英联杯", "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+        "209": { "name": "德国杯", "emoji": "🇩🇪" },
+        "138": { "name": "国王杯", "emoji": "🇪🇸" },
+        "141": { "name": "意大利杯", "emoji": "🇮🇹" },
+        "181": { "name": "法国杯", "emoji": "🇫🇷" },
+        "10216": { "name": "欧协联", "emoji": "🏆" },
+        "74": { "name": "欧超杯", "emoji": "🏆" },
+        "48": { "name": "英冠", "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+        "140": { "name": "西乙", "emoji": "🇪🇸" },
+        "146": { "name": "德乙", "emoji": "🇩🇪" },
+        "156": { "name": "意乙", "emoji": "🇮🇹" },
+        "182": { "name": "法乙", "emoji": "🇫🇷" },
+        "268": { "name": "巴甲", "emoji": "🇧🇷" },
+        "121": { "name": "阿甲", "emoji": "🇦🇷" },
+        "57": { "name": "荷甲", "emoji": "🇳🇱" },
+        "61": { "name": "葡超", "emoji": "🇵🇹" },
+        "130": { "name": "美职联", "emoji": "🇺🇸" },
+        "120": { "name": "中超", "emoji": "🇨🇳" },
+        "223": { "name": "日职联", "emoji": "🇯🇵" },
+        "8974": { "name": "日乙", "emoji": "🇯🇵" },
+        "71": { "name": "土超", "emoji": "🇹🇷" },
+        "230": { "name": "墨超", "emoji": "🇲🇽" },
+        "77": { "name": "世界杯", "emoji": "🌍" },
+        "50": { "name": "欧洲杯", "emoji": "🇪🇺" },
+        "10148": { "name": "欧国联", "emoji": "🇪🇺" },
+        "131": { "name": "美洲杯", "emoji": "🌎" },
+        "10004": { "name": "亚洲杯", "emoji": "🏆" }
+      },
+      "tiers": {
+        "P0": "核心联赛",
+        "P1": "杯赛与欧战",
+        "P2": "次级联赛",
+        "P3": "全球联赛",
+        "P4": "国际赛事"
+      }
+    },
+    "en": {
+      "leagues": {
+        "47": { "name": "Premier League", "emoji": "🏴󠁧󠁢󠁥󠁮󠁧󠁿" },
+        "87": { "name": "La Liga", "emoji": "🇪🇸" },
+        "54": { "name": "Bundesliga", "emoji": "🇩🇪" },
+        "55": { "name": "Serie A", "emoji": "🇮🇹" },
+        "53": { "name": "Ligue 1", "emoji": "🇫🇷" },
+        "42": { "name": "Champions League", "emoji": "🏆" },
+        "73": { "name": "Europa League", "emoji": "🏆" },
+        "120": { "name": "Chinese Super League", "emoji": "🇨🇳" },
+        "223": { "name": "J1 League", "emoji": "🇯🇵" }
+      },
+      "tiers": {
+        "P0": "Core Leagues",
+        "P1": "Cups & European",
+        "P2": "Secondary Leagues",
+        "P3": "Global Leagues",
+        "P4": "International"
+      }
+    }
+  }
+}
