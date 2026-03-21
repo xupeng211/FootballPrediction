@@ -48,17 +48,15 @@ class FixtureRepository {
         try {
           for (const match of batch) {
             const upsertResult = await this._upsertMatch(client, match);
-            if (upsertResult.inserted) {
-              result.inserted++;
-            } else {
-              result.updated++;
-            }
+            if (upsertResult === 'inserted') result.inserted++;
+            else if (upsertResult === 'updated') result.updated++;
+            else result.failed++;
           }
         } finally {
           client.release();
         }
       } catch (error) {
-        this.logger.error(`[Repository] 批量写入失败: ${error.message}`);
+        this.logger.error(`[Repository] 批量持久化失败: ${error.message}`);
         result.failed += batch.length;
       }
     }
@@ -67,78 +65,59 @@ class FixtureRepository {
   }
 
   /**
-   * 单条数据 Upsert
+   * 单条 Upsert
    * @private
    */
   async _upsertMatch(client, match) {
-    const upsertQuery = `
-      INSERT INTO matches (
-        match_id, external_id, league_name, season,
-        home_team, away_team, match_date, status,
-        is_finished, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-      ON CONFLICT (match_id) DO UPDATE SET
-        external_id = EXCLUDED.external_id,
-        status = EXCLUDED.status,
-        is_finished = EXCLUDED.is_finished,
-        updated_at = EXCLUDED.updated_at
-      RETURNING (xmax = 0) AS inserted
-    `;
-
-    const values = [
-      match.match_id,
-      match.external_id,
-      match.league_name,
-      match.season,
-      match.home_team,
-      match.away_team,
-      match.match_date,
-      match.status,
-      match.is_finished,
-      match.created_at,
-      match.updated_at
-    ];
-
-    const result = await client.query(upsertQuery, values);
-    return { inserted: result.rows[0]?.inserted || false };
-  }
-
-  /**
-   * 根据 match_id 查询单条记录
-   * @param {string} matchId - 比赛 ID
-   * @returns {Promise<Object|null>}
-   */
-  async findById(matchId) {
     try {
-      const client = await this.dbPool.connect();
-      try {
-        const result = await client.query(
-          'SELECT * FROM matches WHERE match_id = $1',
-          [matchId]
-        );
-        return result.rows[0] || null;
-      } finally {
-        client.release();
-      }
+      const query = `
+        INSERT INTO matches (match_id, league_id, season, home_team, away_team, match_date, match_time, status, external_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
+        ON CONFLICT (match_id) DO UPDATE SET
+          home_team = EXCLUDED.home_team,
+          away_team = EXCLUDED.away_team,
+          match_date = EXCLUDED.match_date,
+          match_time = EXCLUDED.match_time,
+          status = EXCLUDED.status,
+          external_id = EXCLUDED.external_id,
+          updated_at = NOW()
+        RETURNING (xmax = 0) AS was_insert
+      `;
+
+      const values = [
+        match.match_id,
+        match.league_id,
+        match.season,
+        match.home_team,
+        match.away_team,
+        match.match_date,
+        match.match_time,
+        match.status,
+        match.external_id
+      ];
+
+      const result = await client.query(query, values);
+      return result.rows[0]?.was_insert ? 'inserted' : 'updated';
     } catch (error) {
-      this.logger.error(`[Repository] 查询失败: ${error.message}`);
-      return null;
+      this.logger.error(`[Repository] Upsert 失败 ${match.match_id}: ${error.message}`);
+      return 'failed';
     }
   }
 
   /**
-   * 批量查询是否存在
-   * @param {Array<string>} matchIds - 比赛 ID 数组
-   * @returns {Promise<Set<string>>} 已存在的 ID 集合
+   * 查询已存在的比赛
+   * @param {Array} matchIds - 比赛 ID 数组
+   * @returns {Promise<Set>} 已存在的 match_id 集合
    */
-  async findExistingIds(matchIds) {
+  async findExistingMatches(matchIds) {
     try {
       const client = await this.dbPool.connect();
       try {
-        const result = await client.query(
-          'SELECT match_id FROM matches WHERE match_id = ANY($1)',
-          [matchIds]
-        );
+        const query = `
+          SELECT match_id FROM matches
+          WHERE match_id = ANY($1)
+        `;
+        const result = await client.query(query, [matchIds]);
         return new Set(result.rows.map(r => r.match_id));
       } finally {
         client.release();
@@ -159,8 +138,7 @@ class FixtureRepository {
     try {
       const client = await this.dbPool.connect();
       try {
-        // 使用 match_id 前缀匹配: leagueId_season_*
-        const pattern = `${leagueId}_${season.replace(/[\/\-_]/g, '')}_%`;
+        const pattern = `${leagueId}_${season.replace(/[\/-_]/g, '')}_%`;
         const result = await client.query(
           'DELETE FROM matches WHERE match_id LIKE $1',
           [pattern]
@@ -170,6 +148,11 @@ class FixtureRepository {
       } finally {
         client.release();
       }
+    } catch (error) {
+      this.logger.error(`[Repository] 删除失败: ${error.message}`);
+      return 0;
+    }
+  }
 
   /**
    * 获取 raw_match_data 表记录总数 (V6.7: 供审计使用)
