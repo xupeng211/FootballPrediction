@@ -1,16 +1,21 @@
 #!/usr/bin/env node
 /**
- * @file TITAN 数据资产审计系统
+ * @file TITAN 数据资产审计系统 (V6.7-Refactored)
  * @description 数据质量全面体检：物理清点、内容抽检、DB对齐、质量报告
- * @version 1.0.0
+ * @version 2.0.0
  * @module scripts/ops/audit_dataset
+ * 
+ * V6.7 重构:
+ * - 移除直接 new Pool()，改用 FixtureRepository
+ * - 统一使用环境变量配置
+ * - 遵循 titan_discovery.js 的 main().catch() 结构
  */
 
 'use strict';
 
 const fs = require('fs').promises;
 const path = require('path');
-const { Pool } = require('pg');
+const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
 
 // 颜色定义
 const COLORS = {
@@ -27,8 +32,6 @@ const LOG_PREFIX = '[AUDIT]';
 
 /**
  * 打印带颜色的日志
- * @param level
- * @param message
  */
 function log(level, message) {
   const colorMap = {
@@ -47,23 +50,10 @@ function log(level, message) {
  */
 function showBanner() {
   console.log('\n' + COLORS.magenta + '='.repeat(70) + COLORS.reset);
-  console.log(COLORS.magenta + '  TITAN 数据资产审计系统 v1.0' + COLORS.reset);
+  console.log(COLORS.magenta + '  TITAN 数据资产审计系统 v2.0 (V6.7架构)' + COLORS.reset);
   console.log(COLORS.magenta + '  Data Asset Audit & Quality Assurance' + COLORS.reset);
   console.log(COLORS.magenta + '='.repeat(70) + COLORS.reset + '\n');
 }
-
-/**
- * 数据库配置
- */
-const DB_CONFIG = {
-  host: process.env.DB_HOST || 'host.docker.internal',
-  port: parseInt(process.env.DB_PORT, 10) || 5432,
-  database: process.env.DB_NAME || 'football_db',
-  user: process.env.DB_USER || 'football_user',
-  password: process.env.DB_PASSWORD || 'football_pass',
-  max: 5,
-  idleTimeoutMillis: 30000
-};
 
 /**
  * 数据目录路径
@@ -86,7 +76,7 @@ async function physicalInventory() {
     let totalSize = 0;
     const sizeDistribution = { small: 0, medium: 0, large: 0 };
     
-    for (const file of jsonFiles.slice(0, 100)) { // 抽样统计前100个
+    for (const file of jsonFiles.slice(0, 100)) {
       try {
         const stats = await fs.stat(path.join(DATA_PATH, file));
         totalSize += stats.size;
@@ -118,8 +108,7 @@ async function physicalInventory() {
 }
 
 /**
- * 阶段 2: 内容抽检 - 随机抽取 50 个文件验证完整性
- * @param files
+ * 阶段 2: 内容抽检 - 随机抽取样本验证完整性
  */
 async function contentSampling(files) {
   log('header', '🔍 阶段 2: 内容抽检 (随机 50 个样本)');
@@ -129,7 +118,6 @@ async function contentSampling(files) {
     return { checked: 0, valid: 0, corrupted: 0, details: [] };
   }
   
-  // 随机抽取 50 个
   const sampleSize = Math.min(50, files.length);
   const shuffled = [...files].sort(() => 0.5 - Math.random());
   const samples = shuffled.slice(0, sampleSize);
@@ -147,7 +135,6 @@ async function contentSampling(files) {
       const content = await fs.readFile(filePath, 'utf8');
       const data = JSON.parse(content);
       
-      // 验证结构完整性
       const hasMatchId = !!data.match_id;
       const hasRawData = data.raw_data && Object.keys(data.raw_data).length > 0;
       const hasSavedAt = !!data.saved_at;
@@ -172,7 +159,7 @@ async function contentSampling(files) {
     process.stdout.write(`\r${LOG_PREFIX} 抽检进度: ${i + 1}/${sampleSize}`);
   }
   
-  console.log(); // 换行
+  console.log();
   
   const passRate = sampleSize > 0 ? ((valid / sampleSize) * 100).toFixed(2) : 0;
   
@@ -182,58 +169,35 @@ async function contentSampling(files) {
     log('warning', `抽检完成: ${valid} 有效, ${corrupted} 损坏 (通过率: ${passRate}%)`);
   }
   
-  return {
-    checked: sampleSize,
-    valid,
-    corrupted,
-    passRate,
-    corruptedFiles,
-    details
-  };
+  return { checked: sampleSize, valid, corrupted, passRate, corruptedFiles, details };
 }
 
 /**
- * 阶段 3: DB 对齐 - 查询数据库并计算对齐率
+ * 阶段 3: DB 对齐 - 使用 FixtureRepository 查询数据库
  */
-async function databaseAlignment() {
+async function databaseAlignment(repository) {
   log('header', '🗄️  阶段 3: 数据库对齐检查');
   
-  const pool = new Pool(DB_CONFIG);
-  
   try {
-    // 查询数据库总数
-    const countResult = await pool.query('SELECT COUNT(*) as count FROM raw_match_data');
-    const dbCount = parseInt(countResult.rows[0].count, 10);
-    
-    // 查询最近更新
-    const recentResult = await pool.query(
-      'SELECT match_id, collected_at FROM raw_match_data ORDER BY collected_at DESC LIMIT 5'
-    );
+    // V6.7: 使用 Repository 而非直接 Pool
+    const dbCount = await repository.getRawMatchDataCount();
+    const recentRecords = await repository.getRecentRecords(5);
     
     log('success', `数据库记录总数: ${dbCount.toLocaleString()}`);
     log('info', '最近 5 条更新:');
-    recentResult.rows.forEach((row, i) => {
+    recentRecords.forEach((row, i) => {
       console.log(`      ${i + 1}. ${row.match_id} @ ${new Date(row.collected_at).toLocaleString()}`);
     });
     
-    await pool.end();
-    
-    return {
-      dbCount,
-      recentRecords: recentResult.rows
-    };
+    return { dbCount, recentRecords };
   } catch (error) {
     log('error', `数据库查询失败: ${error.message}`);
-    await pool.end();
     return { dbCount: 0, recentRecords: [] };
   }
 }
 
 /**
  * 阶段 4: 生成质量报告
- * @param inventory
- * @param sampling
- * @param alignment
  */
 function generateReport(inventory, sampling, alignment) {
   log('header', '📊 阶段 4: 数据质量报告');
@@ -255,7 +219,6 @@ function generateReport(inventory, sampling, alignment) {
   console.log('\n' + COLORS.white + '【数据库对齐】' + COLORS.reset);
   console.log(`  数据库记录数:     ${alignment.dbCount.toLocaleString().padStart(8)}`);
   
-  // 计算对齐率
   const alignmentRate = alignment.dbCount > 0 
     ? ((inventory.totalFiles / alignment.dbCount) * 100).toFixed(2)
     : 0;
@@ -271,7 +234,6 @@ function generateReport(inventory, sampling, alignment) {
     console.log(`  差异:             ${COLORS.yellow}DB 多 ${Math.abs(diff)} 个${COLORS.reset}`);
   }
   
-  // 总体评估
   console.log('\n' + COLORS.cyan + '【总体评估】' + COLORS.reset);
   
   const quality = sampling.passRate >= 95 && Math.abs(diff) <= 10 
@@ -282,7 +244,6 @@ function generateReport(inventory, sampling, alignment) {
   
   console.log(`  数据健康度:       ${quality.color}${quality.label}${COLORS.reset}`);
   
-  // 建议补抓列表
   if (sampling.corrupted > 0 && sampling.corruptedFiles.length > 0) {
     console.log('\n' + COLORS.red + '【建议补抓 ID 列表】' + COLORS.reset);
     sampling.corruptedFiles.slice(0, 10).forEach((id, i) => {
@@ -306,32 +267,55 @@ function generateReport(inventory, sampling, alignment) {
 }
 
 /**
- * 主函数
+ * 主函数 (V6.7: 统一入口结构)
  */
 async function main() {
   showBanner();
   
   const startTime = Date.now();
+  let repository = null;
   
   try {
+    // V6.7: 初始化 Repository 而非直接连接池
+    repository = new FixtureRepository({
+      dbPool: null, // 内部自动创建
+      logger: { info: () => {}, error: () => {} },
+      batchSize: 50
+    });
+    await repository.init();
+    
     // 执行四个阶段
     const inventory = await physicalInventory();
     const sampling = await contentSampling(inventory.files);
-    const alignment = await databaseAlignment();
+    const alignment = await databaseAlignment(repository);
     const report = generateReport(inventory, sampling, alignment);
     
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
     log('success', `审计完成，耗时 ${duration} 秒`);
     
-    // 根据质量决定退出码
-    process.exit(report.quality === '需关注' ? 1 : 0);
+    return report.quality === '需关注' ? 1 : 0;
     
   } catch (error) {
     log('error', `审计失败: ${error.message}`);
     console.error(error.stack);
-    process.exit(1);
+    return 1;
+  } finally {
+    // V6.7: 确保资源释放
+    if (repository) {
+      try {
+        await repository.close();
+      } catch (e) {
+        log('warning', `Repository 关闭警告: ${e.message}`);
+      }
+    }
   }
 }
 
-// 执行
-main();
+// V6.7: 统一退出结构
+main().then((exitCode) => {
+  process.exit(exitCode || 0);
+}).catch((error) => {
+  log('error', `未捕获的异常: ${error.message}`);
+  console.error(error.stack);
+  process.exit(1);
+});

@@ -170,9 +170,75 @@ class FixtureRepository {
       } finally {
         client.release();
       }
+
+  /**
+   * 获取 raw_match_data 表记录总数 (V6.7: 供审计使用)
+   * @returns {Promise<number>}
+   */
+  async getRawMatchDataCount() {
+    try {
+      const client = await this.dbPool.connect();
+      try {
+        const result = await client.query('SELECT COUNT(*) as count FROM raw_match_data');
+        return parseInt(result.rows[0].count, 10);
+      } finally {
+        client.release();
+      }
     } catch (error) {
-      this.logger.error(`[Repository] 删除失败: ${error.message}`);
+      this.logger.error(`[Repository] 获取记录数失败: ${error.message}`);
       return 0;
+    }
+  }
+
+  /**
+   * 获取最近记录 (V6.7: 供审计使用)
+   * @param {number} limit - 返回条数
+   * @returns {Promise<Array>}
+   */
+  async getRecentRecords(limit = 5) {
+    try {
+      const client = await this.dbPool.connect();
+      try {
+        const result = await client.query(
+          'SELECT match_id, collected_at FROM raw_match_data ORDER BY collected_at DESC LIMIT $1',
+          [limit]
+        );
+        return result.rows;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      this.logger.error(`[Repository] 获取最近记录失败: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * 初始化 (V6.7: 如果未提供 dbPool，自动创建)
+   */
+  async init() {
+    if (!this.dbPool) {
+      const { Pool } = require('pg');
+      this.dbPool = new Pool({
+        host: process.env.DB_HOST || 'localhost',
+        port: parseInt(process.env.DB_PORT || '5432'),
+        database: process.env.DB_NAME || 'football_db',
+        user: process.env.DB_USER || 'football_user',
+        password: process.env.DB_PASSWORD || 'football_pass',
+        max: 10,
+        idleTimeoutMillis: 30000
+      });
+      this.logger.info('[Repository] 已自动创建数据库连接池');
+    }
+  }
+
+  /**
+   * 关闭连接 (V6.7: 资源释放)
+   */
+  async close() {
+    if (this.dbPool) {
+      await this.dbPool.end();
+      this.logger.info('[Repository] 数据库连接池已关闭');
     }
   }
 }

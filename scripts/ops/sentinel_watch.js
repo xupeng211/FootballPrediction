@@ -1,9 +1,14 @@
 #!/usr/bin/env node
 /**
- * @file TITAN 哨兵监控系统 (Sentinel Watch)
+ * @file TITAN 哨兵监控系统 (Sentinel Watch) - V6.7 Refactored
  * @description 自动化满仓检测与安全停机系统
- * @version 1.0.0
+ * @version 2.0.0
  * @module scripts/ops/sentinel_watch
+ * 
+ * V6.7 重构:
+ * - 修复双重连接池 Bug，使用单一共享连接池
+ * - 使用 FixtureRepository 替代直接 Pool 操作
+ * - 统一 main().catch() 入口结构
  */
 
 'use strict';
@@ -12,7 +17,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const { Pool } = require('pg');
+const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
 
 const execAsync = promisify(exec);
 
@@ -29,20 +34,9 @@ const CONFIG = {
 
 // 动态目标管理
 const dynamicTarget = {
-  value: 12000,        // 初始默认值
-  lastUpdated: 0,      // 上次更新时间
-  cacheValid: false    // 缓存是否有效
-};
-
-// 数据库配置
-const DB_CONFIG = {
-  host: process.env.DB_HOST || 'host.docker.internal',
-  port: parseInt(process.env.DB_PORT, 10) || 5432,
-  database: process.env.DB_NAME || 'football_db',
-  user: process.env.DB_USER || 'football_user',
-  password: process.env.DB_PASSWORD || 'football_pass',
-  max: 2, // 最小连接数
-  idleTimeoutMillis: 30000
+  value: 12000,
+  lastUpdated: 0,
+  cacheValid: false
 };
 
 // 颜色定义
@@ -66,10 +60,11 @@ const state = {
   isTriggered: false
 };
 
+// V6.7: 共享 Repository 实例
+let repository = null;
+
 /**
  * 打印带颜色的日志
- * @param level
- * @param message
  */
 function log(level, message) {
   const colorMap = {
@@ -80,63 +75,18 @@ function log(level, message) {
     sentinel: COLORS.magenta
   };
   const color = colorMap[level] || COLORS.reset;
-  const timestamp = new Date().toISOString();
   console.log(`${color}[SENTINEL]${COLORS.reset} ${message}`);
 }
 
 /**
  * ASCII Art - VICTORY
- * @param target
  */
 function printVictoryArt(target) {
   const art = `
 ${COLORS.green}${COLORS.bright}
 ╔══════════════════════════════════════════════════════════════════╗
-║                                                                  ║
-║     ████████╗██╗████████╗ █████╗ ███╗   ██╗    ███████╗██╗   ██╗██╗     ██╗      █████╗ ███╗   ██╗██████╗  ║
-║     ╚══██╔══╝██║╚══██╔══╝██╔══██╗████╗  ██║    ██╔════╝██║   ██║██║     ██║     ██╔══██╗████╗  ██║██╔══██╗ ║
-║        ██║   ██║   ██║   ███████║██╔██╗ ██║    █████╗  ██║   ██║██║     ██║     ███████║██╔██╗ ██║██║  ██║ ║
-║        ██║   ██║   ██║   ██╔══██║██║╚██╗██║    ██╔══╝  ╚██╗ ██╔╝██║     ██║     ██╔══██║██║╚██╗██║██║  ██║ ║
-║        ██║   ██║   ██║   ██║  ██║██║ ╚████║    ██║      ╚████╔╝ ███████╗███████╗██║  ██║██║ ╚████║██████╔╝ ║
-║        ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝    ╚═╝       ╚═══╝  ╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═════╝  ║
-║                                                                  ║
-║                    🎯 TARGET ACHIEVED: ${target.toLocaleString().padStart(6)} MATCHES 🎯         ║
-║                                                                  ║
-╚══════════════════════════════════════════════════════════════════╝
-${COLORS.reset}`;
-  console.log(art);
-}
-
-/**
- * ASCII Art - FULL TANK
- * @param target
- */
-function printFullTankArt(target) {
-  const targetStr = target.toLocaleString();
-  const padding = Math.max(0, 10 - targetStr.length);
-  const leftPad = ' '.repeat(Math.floor(padding / 2));
-  const rightPad = ' '.repeat(Math.ceil(padding / 2));
-  
-  const art = `
-${COLORS.yellow}${COLORS.bright}
-╔══════════════════════════════════════════════════════════════════╗
-║                                                                  ║
-║    ████████╗██╗████████╗ █████╗ ███╗   ██╗    ███████╗██╗   ██╗██╗     ███████╗    ║
-║    ╚══██╔══╝██║╚══██╔══╝██╔══██╗████╗  ██║    ██╔════╝██║   ██║██║     ██╔════╝    ║
-║       ██║   ██║   ██║   ███████║██╔██╗ ██║    █████╗  ██║   ██║██║     ███████╗    ║
-║       ██║   ██║   ██║   ██╔══██║██║╚██╗██║    ██╔══╝  ╚██╗ ██╔╝██║     ╚════██║    ║
-║       ██║   ██║   ██║   ██║  ██║██║ ╚████║    ██║      ╚████╔╝ ███████╗███████║    ║
-║       ╚═╝   ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝    ╚═╝       ╚═══╝  ╚══════╝╚══════╝    ║
-║                                                                  ║
-║              ████████╗ █████╗ ███╗   ██╗██╗  ██╗              ║
-║              ╚══██╔══╝██╔══██╗████╗  ██║██║ ██╔╝              ║
-║                 ██║   ███████║██╔██╗ ██║█████╔╝               ║
-║                 ██║   ██╔══██║██║╚██╗██║██╔═██╗               ║
-║                 ██║   ██║  ██║██║ ╚████║██║  ██╗              ║
-║                 ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝              ║
-║                                                                  ║
-║                    🚀 ${leftPad}${targetStr} MATCHES COMPLETE ${rightPad}🚀                 ║
-║                                                                  ║
+║                    TITAN VICTORY LOG                             ║
+║                    TARGET: ${target.toLocaleString().padStart(6)} MATCHES                    ║
 ╚══════════════════════════════════════════════════════════════════╝
 ${COLORS.reset}`;
   console.log(art);
@@ -157,57 +107,48 @@ async function getFileCount() {
 }
 
 /**
- * 获取数据库记录数
+ * 获取数据库记录数 (V6.7: 使用共享 Repository)
  */
 async function getDbCount() {
-  const pool = new Pool(DB_CONFIG);
   try {
-    const result = await pool.query('SELECT COUNT(*) as count FROM raw_match_data');
-    return parseInt(result.rows[0].count, 10);
+    return await repository.getRawMatchDataCount();
   } catch (error) {
     log('error', `数据库查询失败: ${error.message}`);
     return 0;
-  } finally {
-    await pool.end();
   }
 }
 
 /**
- * 获取动态目标值（从数据库查询总比赛数）
- * V4.51.5: 动态目标，拒绝硬编码
+ * 获取动态目标值 (V6.7: 使用共享 Repository)
  */
 async function getDynamicTarget() {
-  const pool = new Pool(DB_CONFIG);
   try {
-    const result = await pool.query('SELECT COUNT(*) as total FROM matches');
-    const newTarget = parseInt(result.rows[0].total, 10);
-    
-    // 更新缓存
-    dynamicTarget.value = newTarget;
-    dynamicTarget.lastUpdated = Date.now();
-    dynamicTarget.cacheValid = true;
-    
-    return newTarget;
+    // 查询 matches 表总数
+    const client = await repository.dbPool.connect();
+    try {
+      const result = await client.query('SELECT COUNT(*) as total FROM matches');
+      const newTarget = parseInt(result.rows[0].total, 10);
+      
+      dynamicTarget.value = newTarget;
+      dynamicTarget.lastUpdated = Date.now();
+      dynamicTarget.cacheValid = true;
+      
+      return newTarget;
+    } finally {
+      client.release();
+    }
   } catch (error) {
-    // 容错处理：数据库连接失败时使用缓存值
     if (dynamicTarget.cacheValid) {
       log('warning', `数据库暂不可用，使用缓存目标值: ${dynamicTarget.value}`);
       return dynamicTarget.value;
     }
-    
-    // 如果连缓存都没有，使用初始默认值
     log('warning', `数据库连接失败，使用初始默认值: ${dynamicTarget.value}`);
     return dynamicTarget.value;
-  } finally {
-    await pool.end();
   }
 }
 
 /**
  * 写入胜利日志
- * @param fileCount
- * @param dbCount
- * @param targetCount
  */
 async function writeVictoryLog(fileCount, dbCount, targetCount) {
   const duration = Date.now() - state.startTime;
@@ -223,7 +164,6 @@ async function writeVictoryLog(fileCount, dbCount, targetCount) {
 ║ 数据库数: ${dbCount.toLocaleString()}                              ║
 ║ 运行时长: ${durationMinutes} 分钟                                    ║
 ║ 平均速度: ${avgSpeed} 场/分钟                                     ║
-║ 对齐率:   ${dbCount > 0 ? ((fileCount / dbCount) * 100).toFixed(2) : 0}%                                     ║
 ╚═══════════════════════════════════════════════════════════════╝
 `;
 
@@ -269,9 +209,7 @@ async function checkCycle() {
 
   state.checkCount++;
   
-  // V4.51.5: 每次循环开始时查询动态目标
   const targetCount = await getDynamicTarget();
-  
   const fileCount = await getFileCount();
   const dbCount = await getDbCount();
 
@@ -281,7 +219,6 @@ async function checkCycle() {
   const remaining = Math.max(0, targetCount - fileCount);
   const progress = ((fileCount / targetCount) * 100).toFixed(1);
 
-  // 打印进度
   process.stdout.write('\r');
   process.stdout.write(
     `${COLORS.cyan}[SENTINEL]${COLORS.reset} ` +
@@ -293,7 +230,6 @@ async function checkCycle() {
     `连续命中: ${state.consecutiveHits}/${CONFIG.debounceThreshold}`
   );
 
-  // 检查是否达标
   if (fileCount >= targetCount) {
     state.consecutiveHits++;
 
@@ -301,35 +237,32 @@ async function checkCycle() {
       console.log('\n');
       state.isTriggered = true;
 
-      // 触发庆典
       printVictoryArt(targetCount);
-      printFullTankArt(targetCount);
 
-      log('success', `🎯 目标达成！连续 ${CONFIG.debounceThreshold} 次检测确认`);
+      log('success', `目标达成！连续 ${CONFIG.debounceThreshold} 次检测确认`);
       log('info', `最终文件数: ${fileCount.toLocaleString()}`);
       log('info', `数据库记录: ${dbCount.toLocaleString()}`);
 
-      // 写入日志
       const stats = await writeVictoryLog(fileCount, dbCount, targetCount);
       log('info', `平均收割速度: ${stats.avgSpeed} 场/分钟`);
 
-      // 执行停机
       await executeShutdown();
 
       log('success', '══════════════════════════════════════════════════');
       log('success', '  TITAN 任务圆满完成！系统已进入休眠状态。');
       log('success', '══════════════════════════════════════════════════');
 
-      process.exit(0);
+      return true; // 触发退出
     }
   } else {
-    // 未达标，重置连续计数
     if (state.consecutiveHits > 0) {
       console.log('\n');
       log('warning', `进度回落，重置防抖计数器`);
     }
     state.consecutiveHits = 0;
   }
+  
+  return false;
 }
 
 /**
@@ -338,44 +271,60 @@ async function checkCycle() {
 async function main() {
   console.log('\n');
   log('sentinel', '══════════════════════════════════════════════════');
-  log('sentinel', '  TITAN 哨兵监控系统启动');
+  log('sentinel', '  TITAN 哨兵监控系统启动 (V6.7)');
   log('sentinel', '══════════════════════════════════════════════════');
+
+  // V6.7: 初始化 Repository
+  repository = new FixtureRepository({
+    dbPool: null,
+    logger: { info: () => {}, error: () => {} },
+    batchSize: 50
+  });
+  await repository.init();
   
-  // V4.51.5: 查询动态目标
   const initialTarget = await getDynamicTarget();
-  log('info', `当前动态目标: ${initialTarget.toLocaleString()} (由数据库实时提供)`);
-  
+  log('info', `当前动态目标: ${initialTarget.toLocaleString()}`);
   log('info', `检查间隔: ${CONFIG.checkInterval / 1000} 秒`);
-  log('info', `数据目录: ${CONFIG.dataPath}`);
   log('info', `防抖阈值: ${CONFIG.debounceThreshold} 次连续达标`);
   log('sentinel', '══════════════════════════════════════════════════\n');
 
   // 初始检查
-  await checkCycle();
+  const shouldExit = await checkCycle();
+  if (shouldExit) return 0;
 
   // 启动监控循环
-  const intervalId = setInterval(async () => {
-    await checkCycle();
-  }, CONFIG.checkInterval);
+  return new Promise((resolve) => {
+    const intervalId = setInterval(async () => {
+      const shouldExit = await checkCycle();
+      if (shouldExit) {
+        clearInterval(intervalId);
+        resolve(0);
+      }
+    }, CONFIG.checkInterval);
 
-  // 优雅退出处理
-  process.on('SIGINT', () => {
-    console.log('\n');
-    log('warning', '接收到中断信号，哨兵正在撤退...');
-    clearInterval(intervalId);
-    process.exit(0);
-  });
+    // 优雅退出处理
+    process.on('SIGINT', async () => {
+      console.log('\n');
+      log('warning', '接收到中断信号，哨兵正在撤退...');
+      clearInterval(intervalId);
+      if (repository) await repository.close();
+      resolve(0);
+    });
 
-  process.on('SIGTERM', () => {
-    console.log('\n');
-    log('warning', '接收到终止信号，哨兵正在撤退...');
-    clearInterval(intervalId);
-    process.exit(0);
+    process.on('SIGTERM', async () => {
+      console.log('\n');
+      log('warning', '接收到终止信号，哨兵正在撤退...');
+      clearInterval(intervalId);
+      if (repository) await repository.close();
+      resolve(0);
+    });
   });
 }
 
-// 执行
-main().catch(err => {
+// V6.7: 统一入口结构
+main().then((exitCode) => {
+  process.exit(exitCode || 0);
+}).catch((err) => {
   log('error', `哨兵系统异常: ${err.message}`);
   console.error(err);
   process.exit(1);
