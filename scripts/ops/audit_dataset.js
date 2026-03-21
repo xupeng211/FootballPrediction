@@ -72,6 +72,13 @@ async function physicalInventory() {
     const files = await fs.readdir(DATA_PATH);
     const jsonFiles = files.filter(f => f.endsWith('.json') && !f.startsWith('.'));
     
+    // 如果文件数为 0，打印绝对路径帮助诊断
+    if (jsonFiles.length === 0) {
+      log('warning', `未找到 JSON 文件`);
+      log('info', `扫描路径: ${path.resolve(DATA_PATH)}`);
+      log('info', `请检查 DATA_MATCHES_PATH 环境变量或 Docker 挂载配置`);
+    }
+    
     // 统计文件大小分布
     let totalSize = 0;
     const sizeDistribution = { small: 0, medium: 0, large: 0 };
@@ -103,6 +110,7 @@ async function physicalInventory() {
     };
   } catch (error) {
     log('error', `物理清点失败: ${error.message}`);
+    log('error', `尝试访问的路径: ${path.resolve(DATA_PATH)}`);
     return { totalFiles: 0, files: [], avgSize: 0, sizeDistribution: {} };
   }
 }
@@ -202,27 +210,47 @@ async function databaseAlignment(repository) {
 function generateReport(inventory, sampling, alignment) {
   log('header', '📊 阶段 4: 数据质量报告');
   
+  // 防御性处理：确保所有字段都有默认值
+  const safeInventory = {
+    totalFiles: inventory?.totalFiles ?? 0,
+    avgSize: inventory?.avgSize ?? 0,
+    files: inventory?.files ?? []
+  };
+  
+  const safeSampling = {
+    checked: sampling?.checked ?? 0,
+    valid: sampling?.valid ?? 0,
+    corrupted: sampling?.corrupted ?? 0,
+    passRate: sampling?.passRate ?? 0,
+    corruptedFiles: sampling?.corruptedFiles ?? []
+  };
+  
+  const safeAlignment = {
+    dbCount: alignment?.dbCount ?? 0,
+    recentRecords: alignment?.recentRecords ?? []
+  };
+  
   console.log('\n' + COLORS.cyan + '╔════════════════════════════════════════════════════════════════╗' + COLORS.reset);
   console.log(COLORS.cyan + '║                    TITAN 数据资产质量报告                      ║' + COLORS.reset);
   console.log(COLORS.cyan + '╚════════════════════════════════════════════════════════════════╝' + COLORS.reset);
   
   console.log('\n' + COLORS.white + '【物理资产】' + COLORS.reset);
-  console.log(`  JSON 文件总数:    ${inventory.totalFiles.toLocaleString().padStart(8)}`);
-  console.log(`  平均文件大小:     ${inventory.avgSize.toLocaleString().padStart(8)} bytes`);
+  console.log(`  JSON 文件总数:    ${safeInventory.totalFiles.toLocaleString().padStart(8)}`);
+  console.log(`  平均文件大小:     ${safeInventory.avgSize.toLocaleString().padStart(8)} bytes`);
   
   console.log('\n' + COLORS.white + '【质量抽检】' + COLORS.reset);
-  console.log(`  抽检样本数:       ${sampling.checked.toString().padStart(8)}`);
-  console.log(`  有效文件:         ${sampling.valid.toString().padStart(8)}`);
-  console.log(`  损坏/异常:        ${COLORS.red}${sampling.corrupted.toString().padStart(8)}${COLORS.reset}`);
-  console.log(`  抽检通过率:       ${sampling.passRate.toString().padStart(8)}%`);
+  console.log(`  抽检样本数:       ${(safeSampling.checked || 'N/A').toString().padStart(8)}`);
+  console.log(`  有效文件:         ${(safeSampling.valid || 'N/A').toString().padStart(8)}`);
+  console.log(`  损坏/异常:        ${COLORS.red}${(safeSampling.corrupted || 'N/A').toString().padStart(8)}${COLORS.reset}`);
+  console.log(`  抽检通过率:       ${safeSampling.checked > 0 ? safeSampling.passRate.toString() : 'N/A'}%`);
   
   console.log('\n' + COLORS.white + '【数据库对齐】' + COLORS.reset);
-  console.log(`  数据库记录数:     ${alignment.dbCount.toLocaleString().padStart(8)}`);
+  console.log(`  数据库记录数:     ${safeAlignment.dbCount.toLocaleString().padStart(8)}`);
   
-  const alignmentRate = alignment.dbCount > 0 
-    ? ((inventory.totalFiles / alignment.dbCount) * 100).toFixed(2)
-    : 0;
-  const diff = inventory.totalFiles - alignment.dbCount;
+  const alignmentRate = safeAlignment.dbCount > 0 
+    ? ((safeInventory.totalFiles / safeAlignment.dbCount) * 100).toFixed(2)
+    : '0.00';
+  const diff = safeInventory.totalFiles - safeAlignment.dbCount;
   
   console.log(`  文件/DB 对齐率:   ${alignmentRate.toString().padStart(8)}%`);
   
@@ -236,33 +264,43 @@ function generateReport(inventory, sampling, alignment) {
   
   console.log('\n' + COLORS.cyan + '【总体评估】' + COLORS.reset);
   
-  const quality = sampling.passRate >= 95 && Math.abs(diff) <= 10 
-    ? { label: '优秀', color: COLORS.green }
-    : sampling.passRate >= 90 && Math.abs(diff) <= 50
-    ? { label: '良好', color: COLORS.yellow }
-    : { label: '需关注', color: COLORS.red };
+  // 零资产情况特殊处理
+  let quality;
+  if (safeInventory.totalFiles === 0 && safeAlignment.dbCount === 0) {
+    quality = { label: '空白资产', color: COLORS.yellow };
+  } else if (safeInventory.totalFiles === 0) {
+    quality = { label: '仅DB数据', color: COLORS.yellow };
+  } else if (safeSampling.checked === 0) {
+    quality = { label: '未抽检', color: COLORS.yellow };
+  } else {
+    quality = safeSampling.passRate >= 95 && Math.abs(diff) <= 10 
+      ? { label: '优秀', color: COLORS.green }
+      : safeSampling.passRate >= 90 && Math.abs(diff) <= 50
+      ? { label: '良好', color: COLORS.yellow }
+      : { label: '需关注', color: COLORS.red };
+  }
   
   console.log(`  数据健康度:       ${quality.color}${quality.label}${COLORS.reset}`);
   
-  if (sampling.corrupted > 0 && sampling.corruptedFiles.length > 0) {
+  if (safeSampling.corrupted > 0 && safeSampling.corruptedFiles.length > 0) {
     console.log('\n' + COLORS.red + '【建议补抓 ID 列表】' + COLORS.reset);
-    sampling.corruptedFiles.slice(0, 10).forEach((id, i) => {
+    safeSampling.corruptedFiles.slice(0, 10).forEach((id, i) => {
       console.log(`  ${i + 1}. ${id}`);
     });
-    if (sampling.corruptedFiles.length > 10) {
-      console.log(`  ... 还有 ${sampling.corruptedFiles.length - 10} 个`);
+    if (safeSampling.corruptedFiles.length > 10) {
+      console.log(`  ... 还有 ${safeSampling.corruptedFiles.length - 10} 个`);
     }
   }
   
   console.log('\n' + COLORS.cyan + '='.repeat(66) + COLORS.reset + '\n');
   
   return {
-    totalFiles: inventory.totalFiles,
-    dbCount: alignment.dbCount,
+    totalFiles: safeInventory.totalFiles,
+    dbCount: safeAlignment.dbCount,
     alignmentRate,
     quality: quality.label,
-    corruptedCount: sampling.corrupted,
-    corruptedFiles: sampling.corruptedFiles
+    corruptedCount: safeSampling.corrupted,
+    corruptedFiles: safeSampling.corruptedFiles
   };
 }
 
