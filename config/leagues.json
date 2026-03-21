@@ -1,30 +1,64 @@
 {
-  "version": "V4.50.0-GLOBAL",
-  "description": "V4.50 全球基座 - 五大联赛 + 欧战 + 国内杯赛 + 超级杯 + 全球赛事",
+  "version": "V6.7-ATLAS",
+  "description": "TITAN V6.7 全球赛事图谱 - Project Atlas",
   "active_leagues": [
     { "id": 47, "name": "Premier League", "country": "England", "tier": "P0", "enabled": true },
     { "id": 87, "name": "La Liga", "country": "Spain", "tier": "P0", "enabled": true },
     { "id": 54, "name": "Bundesliga", "country": "Germany", "tier": "P0", "enabled": true },
     { "id": 55, "name": "Serie A", "country": "Italy", "tier": "P0", "enabled": true },
     { "id": 53, "name": "Ligue 1", "country": "France", "tier": "P0", "enabled": true },
-    { "id": 48, "name": "Championship", "country": "England", "tier": "P1", "enabled": true },
     { "id": 42, "name": "Champions League", "country": "Europe", "tier": "P0", "enabled": true },
     { "id": 73, "name": "Europa League", "country": "Europe", "tier": "P0", "enabled": true },
-    { "id": 10216, "name": "Conference League", "country": "Europe", "tier": "P1", "enabled": true },
-    { "id": 74, "name": "UEFA Super Cup", "country": "Europe", "tier": "P1", "enabled": true },
+
     { "id": 132, "name": "FA Cup", "country": "England", "tier": "P1", "enabled": true },
     { "id": 133, "name": "EFL Cup", "country": "England", "tier": "P1", "enabled": true },
-    { "id": 138, "name": "Copa del Rey", "country": "Spain", "tier": "P1", "enabled": true },
     { "id": 209, "name": "DFB Pokal", "country": "Germany", "tier": "P1", "enabled": true },
+    { "id": 138, "name": "Copa del Rey", "country": "Spain", "tier": "P1", "enabled": true },
     { "id": 141, "name": "Coppa Italia", "country": "Italy", "tier": "P1", "enabled": true },
-    { "id": 134, "name": "Coupe de France", "country": "France", "tier": "P1", "enabled": true },
-    { "id": 247, "name": "Community Shield", "country": "England", "tier": "P2", "enabled": true },
-    { "id": 139, "name": "Supercopa de España", "country": "Spain", "tier": "P2", "enabled": true },
-    { "id": 222, "name": "Supercoppa Italiana", "country": "Italy", "tier": "P2", "enabled": true },
-    { "id": 8924, "name": "DFL-Supercup", "country": "Germany", "tier": "P2", "enabled": true },
-    { "id": 268, "name": "Brasileirão", "country": "Brazil", "tier": "P1", "enabled": true },
-    { "id": 78, "name": "FIFA Club World Cup", "country": "World", "tier": "P1", "enabled": true }
+    { "id": 181, "name": "Coupe de France", "country": "France", "tier": "P1", "enabled": true },
+    { "id": 10216, "name": "Conference League", "country": "Europe", "tier": "P1", "enabled": true },
+    { "id": 74, "name": "UEFA Super Cup", "country": "Europe", "tier": "P1", "enabled": true },
+
+    { "id": 48, "name": "Championship", "country": "England", "tier": "P2", "enabled": true },
+    { "id": 140, "name": "Segunda División", "country": "Spain", "tier": "P2", "enabled": true },
+    { "id": 146, "name": "2. Bundesliga", "country": "Germany", "tier": "P2", "enabled": true },
+    { "id": 156, "name": "Serie B", "country": "Italy", "tier": "P2", "enabled": true },
+    { "id": 182, "name": "Ligue 2", "country": "France", "tier": "P2", "enabled": true },
+
+    { "id": 268, "name": "Brasileirão", "country": "Brazil", "tier": "P3", "enabled": true },
+    { "id": 121, "name": "Primera División", "country": "Argentina", "tier": "P3", "enabled": true },
+    { "id": 57, "name": "Eredivisie", "country": "Netherlands", "tier": "P3", "enabled": true },
+    { "id": 61, "name": "Primeira Liga", "country": "Portugal", "tier": "P3", "enabled": true },
+    { "id": 130, "name": "MLS", "country": "USA", "tier": "P3", "enabled": true },
+    { "id": 120, "name": "CSL", "country": "China", "tier": "P3", "enabled": true },
+    { "id": 223, "name": "J1 League", "country": "Japan", "tier": "P3", "enabled": true },
+    { "id": 8974, "name": "J2 League", "country": "Japan", "tier": "P3", "enabled": true },
+    { "id": 71, "name": "Süper Lig", "country": "Turkey", "tier": "P3", "enabled": true },
+    { "id": 230, "name": "Liga MX", "country": "Mexico", "tier": "P3", "enabled": true },
+
+    { "id": 77, "name": "FIFA World Cup", "country": "World", "tier": "P4", "enabled": true },
+    { "id": 50, "name": "UEFA Euro", "country": "Europe", "tier": "P4", "enabled": true },
+    { "id": 10148, "name": "UEFA Nations League", "country": "Europe", "tier": "P4", "enabled": true },
+    { "id": 131, "name": "Copa América", "country": "South America", "tier": "P4", "enabled": true },
+    { "id": 10004, "name": "AFC Asian Cup", "country": "Asia", "tier": "P4", "enabled": true }
   ],
   "inactive_leagues": [],
-  "active_seasons": ["2023/2024", "2024/2025", "2025/2026"]
+  "active_seasons": ["2023/2024", "2024/2025", "2025/2026"],
+  "metadata": {
+    "last_updated": "2026-03-20",
+    "total_leagues": 35,
+    "tier_distribution": {
+      "P0": 7,
+      "P1": 7,
+      "P2": 5,
+      "P3": 8,
+      "P4": 5
+    },
+    "coverage": {
+      "europe": "100%",
+      "south_america": "High",
+      "north_america": "Medium",
+      "asia": "Medium"
+    }
+  }
 }
