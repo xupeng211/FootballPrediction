@@ -1,6 +1,6 @@
 # FootballPrediction - AI 助手指令上下文
 
-> **系统版本**: V4.47.0-BATTLE | **最后更新**: 2026-03-19
+> **系统版本**: V4.51.2-TOTAL-WAR | **最后更新**: 2026-03-22
 >
 > 本文档为 AI 助手提供项目背景、架构理解和操作指南，用于快速上手和高效协作。
 
@@ -10,13 +10,13 @@
 
 ### 1.1 项目定位
 
-**FootballPrediction** (V4.47.0-BATTLE) 是一个工业级足球预测平台，采用双语言（Node.js + Python）四层架构，通过多源数据采集、C++ 模糊匹配和 XGBoost 多模型共识，实现高精度的比赛预测。
+**FootballPrediction** (V4.51.2-TOTAL-WAR) 是一个工业级足球预测平台，采用双语言（Node.js + Python）四层架构，通过多源数据采集、C++ 模糊匹配和 XGBoost 多模型共识，实现高精度的比赛预测。
 
 ### 1.2 核心能力
 
 | 模块 | 技术实现 | 说明 |
 |------|----------|------|
-| **L1 Discovery** | FotMob API + 断路器 | 自动发现未来 7 天比赛，100% 测试覆盖 |
+| **L1 Discovery** | FotMob API + 断路器 (Project Hound V6.7) | 自动发现未来 7 天比赛，100% 测试覆盖 |
 | **L2 Harvest** | FotMob Details + OddsPortal + 22 节点代理池 | 赔率数据采集（开盘/收盘/1X2/亚洲盘） |
 | **L3 Smelt** | FeatureSmelter V5.0-TURBO | 11维纯净战斗特征向量 |
 | **ML Prediction** | XGBoost TITAN 模型 | 65.31% 准确率，<100ms 响应 |
@@ -27,7 +27,8 @@
 | **Session Warmer** | 智能会话预热 | 自动保持会话活性 |
 | **Sentinel** | 哨兵监控系统 | 自动停机与熔断保护 |
 | **TITAN Cruise Control** | 全自动巡航控制器 | 无人值守定时任务调度 |
-| **Recon Scanner** | L2 侦察扫描器 | 模糊匹配逻辑集成 |
+| **TITAN Discovery** | V6.7 L1 发现引擎 | 工业级赛程发现与标准化 |
+| **TITAN Marathon** | 长时运行支持 | 大规模批次处理能力 |
 
 ### 1.3 质量认证
 
@@ -36,7 +37,7 @@
 - **架构纯净**：无冗余模块，无废弃代码
 - **黄金准则**：80% 测试覆盖率熔断 + 0 Error 静态质量
 - **工业级部署**：Docker 全容器化，支持生产级监控
-- **V6.0 加固**：P0级架构加固，断点续传，限流控制
+- **V6.7 加固**：L1/L2 双引擎工业化，ADR 架构决策记录
 
 ---
 
@@ -75,7 +76,31 @@
      回填系统
 ```
 
-### 3.2 V6.0 回填流水线架构
+### 3.2 V6.7 L1 发现引擎架构 (Project Hound)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         TITAN V6.7 L1 发现引擎                               │
+│                         (Project Hound 工业级重构)                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐
+   │   Discovery  │────▶│  Circuit Breaker │────▶│  L1 Normalizer   │
+   │   Service    │     │                  │     │                  │
+   │ - FotMob API │     │ - 故障检测       │     │ - 数据标准化     │
+   │ - 多源聚合   │     │ - 自动恢复       │     │ - 去重验证       │
+   │ - 实时调度   │     │ - 优雅降级       │     │ - 约束 enforcement│
+   └──────────────┘     └──────────────────┘     └──────────────────┘
+          │                                              │
+          │              ┌──────────────────┐           │
+          └─────────────▶│  ADR-001/002     │◀──────────┘
+                         │  架构决策记录     │
+                         │ - 源级数据加固    │
+                         │ - L2原始存储加固  │
+                         └──────────────────┘
+```
+
+### 3.3 V6.0 回填流水线架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -105,7 +130,7 @@
                       └──────────────────┘
 ```
 
-### 3.3 数据层级
+### 3.4 数据层级
 
 | 层级 | 数据源 | 存储表 | 说明 |
 |------|--------|--------|------|
@@ -116,17 +141,22 @@
 | **预测** | XGBoost 模型 | `predictions` | 预测结果 + EV 计算 |
 | **回填** | OddsPortal | `backfill_progress` | V6.0 回填进度跟踪 |
 
-### 3.4 核心资产地图
+### 3.5 核心资产地图
 
 | 功能模块 | 唯一指定文件 | 入口脚本 |
 |----------|-------------|---------|
 | **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `npm run seed` |
+| **L1 V6.7** | `scripts/ops/titan_discovery.js` | `node scripts/ops/titan_discovery.js` |
 | **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `npm start` |
 | **Swarm Harvest** | `src/infrastructure/harvesters/SwarmHarvester.js` | `npm run harvest:swarm` |
 | **V6.0 Backfill** | `scripts/ops/gold_pilot_50.js` | `node scripts/ops/gold_pilot_50.js` |
+| **TITAN Marathon** | `scripts/ops/titan_marathon.js` | `node scripts/ops/titan_marathon.js` |
+| **TITAN Monitor** | `scripts/ops/titan_monitor.js` | `node scripts/ops/titan_monitor.js` |
+| **TITAN Seeder** | `scripts/ops/titan_seeder.js` | `node scripts/ops/titan_seeder.js` |
 | **L2 Recon** | `scripts/ops/recon_scanner.js` | `node scripts/ops/recon_scanner.js` |
 | **OddsPortal Harvester** | `src/infrastructure/harvesters/OddsPortalHarvester.js` | - |
 | **OddsPortal Parser** | `src/infrastructure/harvesters/OddsPortalParser.js` | - |
+| **TitanSlimHarvester** | `src/infrastructure/harvesters/TitanSlimHarvester.js` | - |
 | **ProxyRotator** | `src/infrastructure/harvesters/ProxyRotator.js` | - |
 | **StealthNavigator** | `src/infrastructure/harvesters/StealthNavigator.js` | - |
 | **SessionWarmer** | `src/infrastructure/harvesters/SessionWarmer.js` | - |
@@ -160,6 +190,10 @@ FootballPrediction/
 │   ├── ops/                     # 运维脚本
 │   │   ├── run_production.js    # 生产收割主入口
 │   │   ├── seed_fixtures.js     # L1 赛程种子
+│   │   ├── titan_discovery.js   # V6.7 L1 发现引擎
+│   │   ├── titan_marathon.js    # TITAN 长时运行支持
+│   │   ├── titan_monitor.js     # TITAN 监控器
+│   │   ├── titan_seeder.js      # TITAN 种子器
 │   │   ├── recon_scanner.js     # L2 侦察扫描器
 │   │   ├── smelt_all.js         # L3 特征熔炼
 │   │   ├── smelt_v5_turbo.js    # V5 Turbo 熔炼
@@ -203,6 +237,7 @@ FootballPrediction/
 │   │   │   ├── workers/         # Worker 池
 │   │   │   ├── ProductionHarvester.js
 │   │   │   ├── SwarmHarvester.js
+│   │   │   ├── TitanSlimHarvester.js
 │   │   │   ├── OddsPortalHarvester.js
 │   │   │   ├── OddsPortalParser.js
 │   │   │   ├── ProxyRotator.js
@@ -233,7 +268,7 @@ FootballPrediction/
 │   ├── data/                    # 数据层
 │   └── config_unified.py        # 统一配置入口
 ├── tests/                       # 测试文件
-│   ├── unit/                    # 单元测试（60+ 测试用例）
+│   ├── unit/                    # 单元测试（70+ 测试用例）
 │   ├── integration/             # 集成测试
 │   ├── integrity/               # 完整性测试
 │   └── fixtures/                # 测试数据
@@ -245,6 +280,9 @@ FootballPrediction/
 ├── docs/                        # 文档中心
 │   ├── ops/                     # 运维文档
 │   ├── architecture/            # 架构文档
+│   ├── adr/                     # 架构决策记录 (ADR)
+│   │   ├── ADR-001-Source-Level-Data-Hardening.md
+│   │   └── ADR-002-L2-Raw-Storage-Hardening.md
 │   └── harvesters/              # 收割器文档
 ├── .claude/                     # Claude Skills 约束体系
 │   ├── skills/                  # 专用技能（12个）
@@ -312,7 +350,23 @@ npm start
 | `npm run elo:recalc` | 重新计算 ELO |
 | `npm run elo:incremental` | 增量更新 ELO |
 
-### 5.3 V6.0 回填命令
+### 5.3 V6.7 L1 发现引擎命令
+
+```bash
+# V6.7 L1 发现引擎（Project Hound）
+node scripts/ops/titan_discovery.js
+
+# TITAN Marathon 长时运行
+node scripts/ops/titan_marathon.js
+
+# TITAN 监控器
+node scripts/ops/titan_monitor.js
+
+# TITAN 种子器
+node scripts/ops/titan_seeder.js
+```
+
+### 5.4 V6.0 回填命令
 
 ```bash
 # 运行 Gold Pilot 50 回填
@@ -321,7 +375,7 @@ node scripts/ops/gold_pilot_50.js
 # 运行 TITAN 大回填
 node scripts/ops/titan_grand_backfill.js
 
-# 运行压力测试
+# P2P 收割（v38）
 node scripts/ops/p2p_harvest_v38.js
 
 # 批量导入比赛
@@ -331,7 +385,7 @@ node scripts/ops/bulk_import_matches.js
 docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "SELECT * FROM backfill_progress;"
 ```
 
-### 5.4 Makefile 快捷命令
+### 5.5 Makefile 快捷命令
 
 ```bash
 # 开发环境管理
@@ -365,11 +419,11 @@ make dashboard       # 启动战神仪表盘
 
 1. **沟通协议**：所有回复、注释、日志必须使用**中文**
 2. **容器化优先**：**禁止**在宿主机直接运行 Node/Python，所有操作在 Docker 容器内执行
-3. **分支管理**：严禁在 `main` 分支开发，分支命名：`feat/<功能>` / `lab/<实验>` / `fix/<修复>` / `refactor/<重构>`
+3. **分支管理**：严禁在 `main` 分支开发，分支命名：`feat/<功能>` / `lab/<实验>` / `fix/<修复>` / `refactor/<重构>` / `chore/<杂务>`
 4. **数据完整性**：**零模拟原则**，严禁使用 `Math.random()` 伪造数据
 5. **幂等性**：所有收割任务支持重复执行，已存在的完整数据应跳过
 
-### 6.2 V4.47 架构规范
+### 6.2 V4.51 架构规范
 
 - **配置唯一源**: `src/config_unified.py` / `config/factory_config.js` / `config/registry.js`
 - **数学能力**: `src/core/math/` (finance, evaluator)
@@ -383,14 +437,15 @@ make dashboard       # 启动战神仪表盘
 - **断点续传**: `src/infrastructure/harvesters/Checkpointer.js`
 - **唯一数据**: `src/database/`
 - **日志系统**: `src/utils/StructuredLogger.js`
+- **架构决策**: `docs/adr/` (ADR-001, ADR-002)
 
-### 6.3 黄金准则（V4.47+）
+### 6.3 黄金准则（V4.51+）
 
 - **测试覆盖率**: 80% 熔断阈值
 - **静态质量**: 0 Error 容忍
-- **文档规范**: JSDoc 完整注释
+- **文档规范**: JSDoc 完整注释 + ADR 架构决策记录
 - **模块化**: 单一职责，高内聚低耦合
-- **V6.0 加固**: P0级架构，断点续传，限流控制，健康检查
+- **V6.7 加固**: L1/L2 双引擎工业化，断路器保护，100% 测试覆盖
 
 ### 6.4 Skills 约束体系
 
@@ -413,8 +468,11 @@ make dashboard       # 启动战神仪表盘
 ### 7.1 核心收割流程
 
 ```bash
-# L1: 赛程种子
+# L1: 赛程种子 (V6.7 Project Hound)
 docker-compose -f docker-compose.dev.yml exec dev npm run seed
+
+# L1: V6.7 发现引擎
+docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js
 
 # L2: 数据收割
 docker-compose -f docker-compose.dev.yml exec dev npm start
@@ -476,7 +534,6 @@ npm run test:coverage
 
 # Python 测试
 pytest tests/ -v
-pytest tests/ml/ -v
 ```
 
 ### 7.4 数据库操作
@@ -611,6 +668,7 @@ from src.config_unified import DatabaseConfig
 | **Swarm 挂起** | `npm run titan:check` | 检查 `sentinel_watch.js` 日志 |
 | **回填中断** | `docker-compose exec db psql -U football_user -d football_db -c "SELECT match_id, status FROM backfill_progress WHERE status = 'failed';"` | 重新运行 `gold_pilot_50.js`，自动断点续传 |
 | **代理403错误** | 检查代理健康状态 | 等待5分钟冷却或切换代理端口 |
+| **L1 发现失败** | `npm run test:l1` | 检查断路器状态和 API 响应 |
 
 ---
 
@@ -826,7 +884,7 @@ LIMIT 10;
 
 | 目录 | 用途 | 数量 |
 |------|------|------|
-| `tests/unit/` | 单元测试 | 60+ 测试用例 |
+| `tests/unit/` | 单元测试 | 70+ 测试用例 |
 | `tests/integration/` | 集成测试 | - |
 | `tests/integrity/` | 完整性测试 | - |
 | `tests/fixtures/` | 测试数据 | - |
@@ -876,6 +934,7 @@ LIMIT 10;
 - `DataIntegrity.test.js` - 数据完整性测试
 - `FixtureSeeder.test.js` - 赛程种子测试
 - `FixtureSeederV5.test.js` - V5 赛程种子测试
+- `DiscoveryService.test.js` - 发现服务测试 (V6.7)
 - `AuditDataset.test.js` - 数据集审计测试
 - `AbstractHarvester.test.js` - 抽象收割器测试
 - `Extractors_V4.test.js` - V4提取器测试
@@ -886,6 +945,9 @@ LIMIT 10;
 - `Body_Stamina.test.js` - 身体耐力测试
 - `Error_Nerves.test.js` - 错误神经测试
 - `MatchValidator.test.js` - 比赛验证器测试
+- `TitanSlimHarvester.test.js` - TitanSlim 收割器测试
+- `Normalizer.test.js` - 标准化器测试 (V6.7)
+- `L2_Normalizer_Persistence.test.js` - L2 持久化测试 (V6.7)
 
 ### 14.3 测试运行
 
@@ -904,23 +966,59 @@ pytest tests/ -v
 
 ## 15. 相关文档
 
+### 15.1 核心文档
+
 | 文档 | 说明 |
 |------|------|
 | [CLAUDE.md](./CLAUDE.md) | AI 助手操作指南 |
 | [COMMAND_CENTER.md](./COMMAND_CENTER.md) | 数字化指挥中心 |
+| [HANDOVER.md](./HANDOVER.md) | 项目交接文档 |
+| [MIGRATION.md](./MIGRATION.md) | 迁移指南 |
+
+### 15.2 架构文档
+
+| 文档 | 说明 |
+|------|------|
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 系统架构详述 |
+| [docs/ENGINE_ARCHITECTURE.md](./docs/ENGINE_ARCHITECTURE.md) | 引擎架构 |
+| [docs/MCP_ARCHITECTURE.md](./docs/MCP_ARCHITECTURE.md) | MCP 架构文档 |
+| [docs/L1_DISCOVERY_ENGINE.md](./docs/L1_DISCOVERY_ENGINE.md) | L1 发现引擎文档 |
+| [docs/L1_INDEX_LAYER_SPEC.md](./docs/L1_INDEX_LAYER_SPEC.md) | L1 索引层规格 |
+
+### 15.3 运维文档
+
+| 文档 | 说明 |
+|------|------|
 | [docs/OPERATIONS_MANUAL.md](./docs/OPERATIONS_MANUAL.md) | 运维手册 |
 | [docs/OPERATIONS_RUNBOOK.md](./docs/OPERATIONS_RUNBOOK.md) | 运维运行手册 |
-| [docs/TESTING_GUIDE.md](./docs/TESTING_GUIDE.md) | 测试指南 |
-| [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | 故障排查 |
-| [docs/xgboost_optimization_guide.md](./docs/xgboost_optimization_guide.md) | XGBoost 优化指南 |
+| [docs/OPERATIONS_SOP.md](./docs/OPERATIONS_SOP.md) | 运维标准作业程序 |
+| [docs/ops/backfill_v6_manual.md](./docs/ops/backfill_v6_manual.md) | V6.0 回填系统操作手册 |
+| [docs/SYSTEM_STABILITY_GUIDE.md](./docs/SYSTEM_STABILITY_GUIDE.md) | 系统稳定性指南 |
+
+### 15.4 技术规格
+
+| 文档 | 说明 |
+|------|------|
+| [docs/TITAN_V5.2_TECHNICAL_SPEC.md](./docs/TITAN_V5.2_TECHNICAL_SPEC.md) | V5.2 技术规格 |
 | [docs/MODEL_V4_ANATOMY.md](./docs/MODEL_V4_ANATOMY.md) | V4 模型解剖学报告 |
 | [docs/SMELTER_REFACTOR_PLAN.md](./docs/SMELTER_REFACTOR_PLAN.md) | Smelter V4.0 重构计划 |
-| [docs/ops/backfill_v6_manual.md](./docs/ops/backfill_v6_manual.md) | V6.0 回填系统操作手册 |
-| [docs/TITAN_V5.2_TECHNICAL_SPEC.md](./docs/TITAN_V5.2_TECHNICAL_SPEC.md) | V5.2 技术规格 |
-| [docs/L1_DISCOVERY_ENGINE.md](./docs/L1_DISCOVERY_ENGINE.md) | L1 发现引擎文档 |
-| [docs/MCP_ARCHITECTURE.md](./docs/MCP_ARCHITECTURE.md) | MCP 架构文档 |
+| [docs/xgboost_optimization_guide.md](./docs/xgboost_optimization_guide.md) | XGBoost 优化指南 |
+
+### 15.5 架构决策记录 (ADR)
+
+| 文档 | 说明 |
+|------|------|
+| [docs/adr/ADR-001-Source-Level-Data-Hardening.md](./docs/adr/ADR-001-Source-Level-Data-Hardening.md) | 源级数据加固 |
+| [docs/adr/ADR-002-L2-Raw-Storage-Hardening.md](./docs/adr/ADR-002-L2-Raw-Storage-Hardening.md) | L2 原始存储加固 |
+
+### 15.6 审计与报告
+
+| 文档 | 说明 |
+|------|------|
 | [AUDIT_REPORT_V3.2.md](./AUDIT_REPORT_V3.2.md) | V3.1-STABLE 穿透审计报告 |
+| [docs/FORENSIC_AUDIT_REPORT.md](./docs/FORENSIC_AUDIT_REPORT.md) | 法医审计报告 |
+| [docs/GITHUB_ACTIONS_AUDIT_REPORT.md](./docs/GITHUB_ACTIONS_AUDIT_REPORT.md) | GitHub Actions 审计 |
+| [docs/FINGERPRINT_EXTRACTOR.md](./docs/FINGERPRINT_EXTRACTOR.md) | 指纹提取器文档 |
 
 ---
 
@@ -963,9 +1061,39 @@ pytest tests/ -v
 
 ---
 
-## 18. 近期更新（V4.47.0-BATTLE）
+## 18. 近期更新（V4.51.2-TOTAL-WAR）
 
-### 18.1 V6.4 L2 侦察扫描器（2026-03-19）
+### 18.1 V6.7 L1 发现引擎 - Project Hound（2026-03-22）
+
+**核心交付**: L1 工业级重构，断路器保护与 100% 测试覆盖
+
+**新组件**:
+- ✅ `titan_discovery.js` - V6.7 L1 发现引擎
+- ✅ `titan_seeder.js` - TITAN 种子器
+- ✅ `DiscoveryService.test.js` - 发现服务测试
+- ✅ `Normalizer.test.js` - 标准化器测试
+- ✅ `L2_Normalizer_Persistence.test.js` - L2 持久化测试
+- ✅ 断路器模式实现
+- ✅ 100% 测试覆盖率
+- ✅ 自动故障恢复
+
+### 18.2 V6.6 L2 引擎工业化加固（2026-03-20）
+
+**核心交付**: TITAN L2 引擎工业化加固
+
+- ✅ L2 收割引擎性能优化
+- ✅ 模糊匹配逻辑强化
+- ✅ 数据一致性保障
+
+### 18.3 V6.5 L1 加固完成（2026-03-19）
+
+**核心交付**: L1 层完整加固
+
+- ✅ 标准化 1900+ EPL 赛程
+- ✅ 数据库触发器/约束
+- ✅ ADR-001/002 架构决策记录注入
+
+### 18.4 V6.4 L2 侦察扫描器（2026-03-19）
 
 **核心交付**: 成功将高级模糊匹配逻辑合并到 v6.4 基础设施
 
@@ -973,15 +1101,7 @@ pytest tests/ -v
 - ✅ 模糊匹配逻辑集成
 - ✅ 与现有 V6.0 回填流水线兼容
 
-### 18.2 V6.4 L1 发现引擎（2026-03-19）
-
-**核心交付**: 断路器保护和 100% 测试覆盖
-
-- ✅ 断路器模式实现
-- ✅ 100% 测试覆盖率
-- ✅ 自动故障恢复
-
-### 18.3 V6.0 回填系统（2026-03-15）
+### 18.5 V6.0 回填系统（2026-03-15）
 
 **核心交付**: P0级架构加固的历史数据回填系统
 
@@ -994,7 +1114,7 @@ pytest tests/ -v
 - ✅ `backfill_progress` 表 - 回填状态跟踪
 - ✅ `MarketSentimentExtractor.js` - 市场情绪提取
 
-### 18.4 Worker 池化架构（V4.46.4+）
+### 18.6 Worker 池化架构（V4.46.4+）
 
 **性能提升**:
 - 浏览器启动次数减少 99%
@@ -1002,17 +1122,21 @@ pytest tests/ -v
 - 单场平均耗时减少 65%
 - 吞吐量提升 3.75x
 
-### 18.5 V4.46.8 工业化版本（2026-03-11）
+### 18.7 V5.5 EV 引擎与赔率撞表（2026-03-10）
 
-**核心交付**: 工业化全自动巡航系统
+**核心交付**: 实时估值引擎
 
-**新组件**:
-- ✅ `model_config.py` - 模型配置常量唯一源
-- ✅ `h2h_estimator.py` - H2H 智能补位引擎
-- ✅ `titan_loader.py` - TITAN 模型加载器
-- ✅ `prediction_repo.py` - 预测数据仓储层
-- ✅ `titan_cruise_control.py` - 全自动巡航控制器
-- ✅ `show_today_summary.py` - 终端作战简报
+- ✅ EV 引擎自动化
+- ✅ 赔率撞表系统
+- ✅ 价值投注识别
+
+### 18.8 V5.2 主客场感知升级（2026-03-08）
+
+**核心交付**: 主客场感知升级与特征交互
+
+- ✅ 主客场特征增强
+- ✅ 特征交互优化
+- ✅ RollingFeatureExtractor
 
 ---
 
@@ -1044,4 +1168,4 @@ pytest tests/ -v
 
 **维护者**: V174 Engineering Team  
 **许可证**: MIT License  
-**最后更新**: 2026-03-19
+**最后更新**: 2026-03-22
