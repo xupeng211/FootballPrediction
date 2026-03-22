@@ -55,6 +55,7 @@
   },
   "dependencies": {
     "dotenv": "^16.6.1",
+    "fuzzball": "^2.2.3",
     "jsdom": "^27.4.0",
     "p-limit": "^3.1.0",
     "pg": "^8.20.0",

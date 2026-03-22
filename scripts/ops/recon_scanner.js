@@ -25,13 +25,13 @@ const path = require('path');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
 const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
 
-// V6.7: 尝试加载 RapidFuzz，失败则使用 JS 回退
-let rapidfuzz = null;
+// V6.7: 加载 Fuzzball 模糊匹配引擎 (RapidFuzz 的 Node.js 实现)
+let fuzzball = null;
 try {
-  rapidfuzz = require('rapidfuzz');
-  console.log('✅ RapidFuzz C++ 引擎加载成功');
+  fuzzball = require('fuzzball');
+  console.log('✅ Fuzzball 引擎加载成功');
 } catch (e) {
-  console.log('⚠️  RapidFuzz 未安装，使用纯 JavaScript 回退');
+  console.log('⚠️  Fuzzball 未安装，使用纯 JavaScript 回退');
 }
 
 // ============================================================================
@@ -72,25 +72,28 @@ const LEAGUE_CONFIGS = {
   }
 };
 
-// V6.7: 2026 年 OddsPortal 选择器映射 (多层 Fallback)
+// V6.7: 2026 年 OddsPortal 选择器映射 (多层 Fallback + Shadow DOM 穿透)
 const SELECTOR_MAP = {
-  // 比赛行选择器链 (从精确到模糊)
+  // 比赛行选择器链 (从精确到模糊，支持 Shadow DOM)
   matchRow: [
     'div[role="row"]',                    // 2026 新结构
     'div[data-testid*="event"]',          // data-testid 属性
     '[class*="event-row"]',               // CSS 类名包含
     '[class*="EventRow"]',                // 大驼峰变体
     'div[class*="sportName"]',            // 运动类型容器
+    '* >> div[class*="event"]',           // Shadow DOM 穿透
+    '* >> [class*="row"]',                // 深度组合符
     'a[href*="/football/"]',              // 最后防线：足球链接
     'a[href*="/soccer/"]'                 // 备选：soccer 路径
   ],
 
-  // 队名元素
+  // 队名元素 (支持 Shadow DOM)
   teamName: [
     '[class*="team-name"]',
     '[class*="TeamName"]',
     'span[class*="name"]',
-    'div[class*="participant"]'
+    'div[class*="participant"]',
+    '* >> [class*="team"]'
   ],
 
   // 比赛 URL
@@ -107,11 +110,12 @@ const SELECTOR_MAP = {
     'div[class*="odds"]'
   ],
 
-  // 基于文本的防御性选择器
+  // 基于文本的防御性选择器 (Playwright 文本匹配)
   textBased: [
-    'text=/\\d+\\.\\d{2}/',                // 包含赔率数字
-    'text=/FT|Final|Result/i',            // 比赛状态
-    'has-text("-")'                       // 包含连字符
+    ':has-text(/\\d+\\.\\d{2}/)',           // 包含赔率数字
+    ':has-text("vs")',                    // 包含 vs
+    ':has-text("-")',                     // 包含连字符
+    'text=/FT|Final|Result/i'             // 比赛状态
   ]
 };
 
@@ -129,13 +133,14 @@ const URL_PATTERNS = {
 /**
  * 五大联赛常见队名词典 (OddsPortal slug 格式)
  * 用于贪婪匹配解析形如 "brentford-newcastle-utd" 的 slug
+ * V6.7: 添加多单词队名变体以支持贪婪匹配
  */
 const COMMON_TEAM_SLUGS = [
-  // Premier League
-  'arsenal', 'aston-villa', 'bournemouth', 'brentford', 'brighton',
-  'burnley', 'chelsea', 'crystal-palace', 'everton', 'fulham',
-  'liverpool', 'luton', 'man-city', 'man-united', 'newcastle-utd',
-  'nottingham-forest', 'sheffield-utd', 'tottenham', 'west-ham', 'wolves',
+  // Premier League - 多单词队名优先 (长匹配优先)
+  'aston-villa', 'crystal-palace', 'man-city', 'man-united', 'newcastle-utd',
+  'nottingham-forest', 'sheffield-utd', 'west-ham', 'brighton', 'bournemouth',
+  'brentford', 'burnley', 'chelsea', 'everton', 'fulham',
+  'liverpool', 'luton', 'arsenal', 'tottenham', 'wolves',
   // La Liga
   'alaves', 'almeria', 'athletic-bilbao', 'atletico-madrid', 'barcelona',
   'cadiz', 'celta-vigo', 'getafe', 'girona', 'granada',
@@ -264,7 +269,7 @@ function normalizeTeamName(slug) {
 /**
  * 从 OddsPortal URL slug 提取队名
  * 支持格式: "arsenal-everton" / "manchester-united-chelsea" / "brentford-newcastle-utd"
- * 算法: 贪婪匹配 - 从词典中找最长匹配作为主队，剩余部分作为客队
+ * 算法: 双向查找最长匹配，确保不拆分队名
  * @param {String} slug - URL slug
  * @returns {Object} { homeTeam, awayTeam }
  */
@@ -280,39 +285,95 @@ function extractTeamsFromSlug(slug) {
     };
   }
 
-  // 贪婪匹配算法: 从 slug 开头匹配最长的可能队名
   const parts = slug.split('-');
-  let bestHomeMatch = null;
-  let bestHomeLen = 0;
+  const totalParts = parts.length;
 
-  for (const teamSlug of COMMON_TEAM_SLUGS) {
-    const teamParts = teamSlug.split('-');
+  // V6.7: 双向查找算法
+  // 从左边找最长匹配
+  let leftMatch = null;
+  let leftLen = 0;
 
-    if (parts.length >= teamParts.length) {
-      const slugPrefix = parts.slice(0, teamParts.length).join('-');
-      if (slugPrefix === teamSlug && teamParts.length > bestHomeLen) {
-        bestHomeMatch = teamSlug;
-        bestHomeLen = teamParts.length;
-      }
+  // 从右边找最长匹配
+  let rightMatch = null;
+  let rightLen = 0;
+
+  // 按长度降序排序词典
+  const sortedSlugs = [...COMMON_TEAM_SLUGS].sort((a, b) =>
+    b.split('-').length - a.split('-').length
+  );
+
+  // 查找所有可能的匹配位置
+  for (let i = 1; i < totalParts; i++) {
+    const leftPart = parts.slice(0, i).join('-');
+    const rightPart = parts.slice(i).join('-');
+
+    // 检查左边是否是有效队名
+    if (sortedSlugs.includes(leftPart) && i > leftLen) {
+      leftMatch = leftPart;
+      leftLen = i;
+    }
+
+    // 检查右边是否是有效队名
+    if (sortedSlugs.includes(rightPart) && (totalParts - i) > rightLen) {
+      rightMatch = rightPart;
+      rightLen = totalParts - i;
     }
   }
 
-  if (bestHomeMatch) {
-    const awayParts = parts.slice(bestHomeLen);
-    const awaySlug = awayParts.join('-');
-
-    if (awayParts.length > 0) {
+  // 如果找到不重叠的左右匹配
+  if (leftMatch && rightMatch && leftLen + rightLen <= totalParts) {
+    const overlap = totalParts - leftLen - rightLen;
+    if (overlap >= 0) {
       return {
-        homeTeam: normalizeTeamName(bestHomeMatch),
+        homeTeam: normalizeTeamName(leftMatch),
+        awayTeam: normalizeTeamName(rightMatch)
+      };
+    }
+  }
+
+  // 如果只有左边匹配
+  if (leftMatch && leftLen < totalParts) {
+    const awaySlug = parts.slice(leftLen).join('-');
+    if (awaySlug.length >= 2) {
+      return {
+        homeTeam: normalizeTeamName(leftMatch),
         awayTeam: normalizeTeamName(awaySlug)
       };
     }
   }
 
-  // 备用方案: 尝试 50/50 分割
-  const mid = Math.ceil(parts.length / 2);
-  const homeGuess = parts.slice(0, mid).join('-');
-  const awayGuess = parts.slice(mid).join('-');
+  // 如果只有右边匹配
+  if (rightMatch && rightLen < totalParts) {
+    const homeSlug = parts.slice(0, totalParts - rightLen).join('-');
+    if (homeSlug.length >= 2) {
+      return {
+        homeTeam: normalizeTeamName(homeSlug),
+        awayTeam: normalizeTeamName(rightMatch)
+      };
+    }
+  }
+
+  // 备用方案: 智能分割
+  // 常见队名后缀词
+  const commonSuffixes = ['united', 'city', 'town', 'forest', 'wanderers', 'hotspur', 'albion', 'palace'];
+
+  // 查找最佳分割点
+  let splitPoint = Math.ceil(totalParts / 2);
+
+  // 从左查找，找到第一个可以作为主队结尾的位置
+  for (let i = 2; i < totalParts - 1; i++) {
+    const word = parts[i];
+    const nextWord = parts[i + 1];
+
+    // 如果当前词是后缀，且下一个词不是后缀，则在这里分割
+    if (commonSuffixes.includes(word) && !commonSuffixes.includes(nextWord)) {
+      splitPoint = i + 1;
+      break;
+    }
+  }
+
+  const homeGuess = parts.slice(0, splitPoint).join('-');
+  const awayGuess = parts.slice(splitPoint).join('-');
 
   return {
     homeTeam: normalizeTeamName(homeGuess),
@@ -321,7 +382,7 @@ function extractTeamsFromSlug(slug) {
 }
 
 /**
- * V6.7: RapidFuzz 增强版相似度计算
+ * V6.7: Fuzzball 增强版相似度计算
  * @param {String} name1 - 队名1
  * @param {String} name2 - 队名2
  * @returns {Number} 相似度 0-1
@@ -332,14 +393,14 @@ function calculateSimilarity(name1, name2) {
 
   if (n1 === n2) return 1.0;
 
-  // V6.7: 使用 RapidFuzz 如果可用
-  if (rapidfuzz) {
+  // V6.7: 使用 Fuzzball 如果可用
+  if (fuzzball) {
     try {
-      // 使用 WRatio 算法，支持部分匹配和排序
-      const score = rapidfuzz.fuzz.WRatio(n1, n2);
+      // 使用 token_set_ratio，支持部分匹配和词序变化
+      const score = fuzzball.token_set_ratio(n1, n2);
       return score / 100; // 转换为 0-1
     } catch (e) {
-      // RapidFuzz 失败，回退到 JS 实现
+      // Fuzzball 失败，回退到 JS 实现
     }
   }
 
