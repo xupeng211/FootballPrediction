@@ -216,6 +216,136 @@ class FixtureRepository {
   }
 
   /**
+   * V6.7: 根据队名查找比赛 (用于 Recon Scanner)
+   * @param {string} homeTeam - 主队名
+   * @param {string} awayTeam - 客队名
+   * @param {string} season - 赛季 (如 '2023/2024')
+   * @returns {Promise<Object|null>} { matchId, confidence, method, dbHome, dbAway }
+   */
+  async findMatchByTeams(homeTeam, awayTeam, season) {
+    try {
+      const client = await this.dbPool.connect();
+      try {
+        // 1. 首先尝试精确匹配
+        const exactQuery = `
+          SELECT match_id, home_team, away_team, match_date
+          FROM matches
+          WHERE season = $1
+            AND (
+              (LOWER(home_team) = LOWER($2) AND LOWER(away_team) = LOWER($3))
+              OR (LOWER(home_team) = LOWER($3) AND LOWER(away_team) = LOWER($2))
+            )
+          LIMIT 1;
+        `;
+
+        const exactResult = await client.query(exactQuery, [
+          season, homeTeam, awayTeam
+        ]);
+
+        if (exactResult.rows.length > 0) {
+          const row = exactResult.rows[0];
+          return {
+            matchId: row.match_id,
+            confidence: 1.0,
+            method: 'exact',
+            dbHome: row.home_team,
+            dbAway: row.away_team
+          };
+        }
+
+        // 2. 精确匹配失败，返回 null (模糊匹配在 recon_scanner 中处理)
+        return null;
+
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      this.logger.error(`[Repository] 队名查找失败: ${error.message}`);
+      return null;
+    }
+  }
+
+  /**
+   * V6.7: 保存 OddsPortal 映射
+   * @param {Object} mappingData - 映射数据
+   * @returns {Promise<Object>} { success, matchId }
+   */
+  async saveOddsPortalMapping(mappingData) {
+    try {
+      const client = await this.dbPool.connect();
+      try {
+        const query = `
+          INSERT INTO matches_oddsportal_mapping
+            (match_id, oddsportal_hash, full_url, season, league_name, home_team, away_team,
+             match_confidence, mapping_method, status, created_at, updated_at)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW())
+          ON CONFLICT (match_id, season) DO UPDATE SET
+            oddsportal_hash = EXCLUDED.oddsportal_hash,
+            full_url = EXCLUDED.full_url,
+            match_confidence = EXCLUDED.match_confidence,
+            mapping_method = EXCLUDED.mapping_method,
+            updated_at = NOW()
+          RETURNING match_id;
+        `;
+
+        const result = await client.query(query, [
+          mappingData.match_id,
+          mappingData.oddsportal_hash,
+          mappingData.full_url,
+          mappingData.season,
+          mappingData.league_name,
+          mappingData.home_team,
+          mappingData.away_team,
+          mappingData.match_confidence,
+          mappingData.mapping_method,
+          mappingData.status || 'pending'
+        ]);
+
+        return {
+          success: result.rows.length > 0,
+          matchId: result.rows[0]?.match_id
+        };
+
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      this.logger.error(`[Repository] 保存映射失败: ${error.message}`);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * V6.7: 获取映射统计
+   * @param {string} season - 赛季
+   * @returns {Promise<Object>} { total, pending, harvested }
+   */
+  async getMappingStats(season) {
+    try {
+      const client = await this.dbPool.connect();
+      try {
+        const query = `
+          SELECT
+            COUNT(*) as total,
+            COUNT(*) FILTER (WHERE status = 'pending') as pending,
+            COUNT(*) FILTER (WHERE status = 'harvested') as harvested
+          FROM matches_oddsportal_mapping
+          WHERE season = $1
+        `;
+
+        const result = await client.query(query, [season]);
+        return result.rows[0] || { total: 0, pending: 0, harvested: 0 };
+
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      this.logger.error(`[Repository] 获取统计失败: ${error.message}`);
+      return { total: 0, pending: 0, harvested: 0 };
+    }
+  }
+
+  /**
    * 关闭连接 (V6.7: 资源释放)
    */
   async close() {
