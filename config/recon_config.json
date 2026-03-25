@@ -1,0 +1,191 @@
+{
+  "version": "V6.7-INDUSTRIAL",
+  "description": "Recon Scanner 配置文件 - 工业级数据集成组件",
+  "updated_at": "2026-03-22",
+  "oddsportal": {
+    "base_url": "https://www.oddsportal.com",
+    "results_path": "/football/{country}/{league}-{start}-{end}/standings/",
+    "url_patterns": {
+      "results": "/football/[^/]+/[^/]+/results/",
+      "match": "/football/[^/]+/[^/]+/[^/]+-[a-zA-Z0-9]{8}/$",
+      "hash": "-[a-zA-Z0-9]{8}/$"
+    },
+    "selectors": {
+      "match_row": [
+        "div[role='row']",
+        "div[data-testid*='event']",
+        "[class*='event-row']",
+        "[class*='EventRow']",
+        "div[class*='sportName']",
+        "a[href*='/football/']",
+        "a[href*='/soccer/']"
+      ],
+      "team_name": [
+        "[class*='team-name']",
+        "[class*='TeamName']",
+        "span[class*='name']",
+        "div[class*='participant']"
+      ],
+      "match_url": [
+        "a[href*='/football/']",
+        "a[href*='/soccer/']"
+      ]
+    },
+    "navigation": {
+      "scroll_attempts": 10,
+      "scroll_delay_ms": 2000,
+      "scroll_distance": 1000,
+      "page_wait_ms": 5000,
+      "selector_timeout_ms": 5000
+    }
+  },
+  "leagues": {
+    "EPL": {
+      "name": "Premier League",
+      "country": "england",
+      "slug": "premier-league",
+      "league_id": 47
+    },
+    "LALIGA": {
+      "name": "La Liga",
+      "country": "spain",
+      "slug": "laliga",
+      "league_id": 87
+    },
+    "BUNDESLIGA": {
+      "name": "Bundesliga",
+      "country": "germany",
+      "slug": "bundesliga",
+      "league_id": 54
+    },
+    "SERIEA": {
+      "name": "Serie A",
+      "country": "italy",
+      "slug": "serie-a",
+      "league_id": 98
+    },
+    "LIGUE1": {
+      "name": "Ligue 1",
+      "country": "france",
+      "slug": "ligue-1",
+      "league_id": 53
+    }
+  },
+  "team_slugs": {
+    "premier_league": [
+      "aston-villa", "crystal-palace", "man-city", "man-united", "newcastle-utd",
+      "nottingham-forest", "sheffield-utd", "west-ham", "manchester-city",
+      "manchester-united", "brighton", "bournemouth", "wolverhampton-wanderers",
+      "brentford", "burnley", "chelsea", "everton", "fulham",
+      "liverpool", "luton", "arsenal", "tottenham", "wolves",
+      "ipswich", "southampton", "leicester",
+      "west-ham-united", "crystal-palace-fc", "aston-villa-fc", "man-utd", "man-city-fc"
+    ],
+    "la_liga": [
+      "alaves", "almeria", "athletic-bilbao", "atletico-madrid", "barcelona",
+      "cadiz", "celta-vigo", "getafe", "girona", "granada",
+      "las-palmas", "mallorca", "osasuna", "rayo-vallecano", "real-betis",
+      "real-madrid", "real-sociedad", "sevilla", "valencia", "villarreal"
+    ],
+    "bundesliga": [
+      "augsburg", "bayer-leverkusen", "bayern-munich", "bochum", "darmstadt",
+      "dortmund", "eintracht-frankfurt", "freiburg", "heidenheim", "hoffenheim",
+      "koln", "mainz", "monchengladbach", "rb-leipzig", "stuttgart",
+      "union-berlin", "werder-bremen", "wolfsburg"
+    ],
+    "serie_a": [
+      "atalanta", "bologna", "cagliari", "empoli", "fiorentina",
+      "frosinone", "genoa", "inter", "juventus", "lazio",
+      "lecce", "milan", "monza", "napoli", "roma",
+      "salernitana", "sassuolo", "torino", "udinese", "verona"
+    ],
+    "ligue_1": [
+      "brest", "clermont", "le-havre", "lens", "lille",
+      "lorient", "lyon", "marseille", "metz", "monaco",
+      "montpellier", "nantes", "nice", "psg", "reims",
+      "rennes", "strasbourg", "toulouse"
+    ]
+  },
+  "team_mappings": {
+    "man united": "Manchester United",
+    "man utd": "Manchester United",
+    "man-united": "Manchester United",
+    "man-utd": "Manchester United",
+    "manchester united": "Manchester United",
+    "manchester-united": "Manchester United",
+    "man city": "Manchester City",
+    "man-city": "Manchester City",
+    "manchester city": "Manchester City",
+    "manchester-city": "Manchester City",
+    "newcastle utd": "Newcastle United",
+    "newcastle-utd": "Newcastle United",
+    "newcastle united": "Newcastle United",
+    "newcastle-united": "Newcastle United",
+    "newcastle": "Newcastle United",
+    "wolverhampton": "Wolverhampton Wanderers",
+    "wolves": "Wolverhampton Wanderers",
+    "wolverhampton wanderers": "Wolverhampton Wanderers",
+    "wolverhampton-wanderers": "Wolverhampton Wanderers",
+    "tottenham": "Tottenham Hotspur",
+    "spurs": "Tottenham Hotspur",
+    "tottenham hotspur": "Tottenham Hotspur",
+    "tottenham-hotspur": "Tottenham Hotspur",
+    "west ham": "West Ham United",
+    "west-ham": "West Ham United",
+    "west ham utd": "West Ham United",
+    "west-ham-utd": "West Ham United",
+    "west ham united": "West Ham United",
+    "west-ham-united": "West Ham United",
+    "nottingham": "Nottingham Forest",
+    "nottingham forest": "Nottingham Forest",
+    "nottingham-forest": "Nottingham Forest",
+    "n forest": "Nottingham Forest",
+    "n-forest": "Nottingham Forest",
+    "brighton": "Brighton & Hove Albion",
+    "brighton hove albion": "Brighton & Hove Albion",
+    "brighton-hove-albion": "Brighton & Hove Albion",
+    "brighton and hove albion": "Brighton & Hove Albion",
+    "sheffield utd": "Sheffield United",
+    "sheffield-utd": "Sheffield United",
+    "sheffield united": "Sheffield United",
+    "sheffield-united": "Sheffield United",
+    "luton": "Luton Town",
+    "luton town": "Luton Town",
+    "luton-town": "Luton Town",
+    "bournemouth": "AFC Bournemouth",
+    "afc bournemouth": "AFC Bournemouth",
+    "afc-bournemouth": "AFC Bournemouth",
+    "arsenal": "Arsenal",
+    "aston villa": "Aston Villa",
+    "aston-villa": "Aston Villa",
+    "brentford": "Brentford",
+    "burnley": "Burnley",
+    "chelsea": "Chelsea",
+    "crystal palace": "Crystal Palace",
+    "crystal-palace": "Crystal Palace",
+    "everton": "Everton",
+    "fulham": "Fulham",
+    "liverpool": "Liverpool",
+    "ipswich": "Ipswich Town",
+    "ipswich town": "Ipswich Town",
+    "ipswich-town": "Ipswich Town",
+    "leicester": "Leicester City",
+    "leicester city": "Leicester City",
+    "leicester-city": "Leicester City",
+    "southampton": "Southampton",
+    "crystal": "Crystal Palace",
+    "palace": "Crystal Palace"
+  },
+  "matching": {
+    "fuzzy_threshold": 0.85,
+    "common_suffixes": [
+      "united", "city", "town", "forest", "wanderers", "hotspur", "albion", "palace"
+    ]
+  },
+  "logging": {
+    "component": "ReconScanner",
+    "log_dir": "/app/logs/recon",
+    "enable_structured": true,
+    "log_level": "info"
+  }
+}
