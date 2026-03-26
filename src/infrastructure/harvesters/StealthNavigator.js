@@ -10,6 +10,9 @@
 
 'use strict';
 
+const RECON_CONFIG = require('../../../config/recon_config.json');
+const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+
 /**
  * 贝塞尔曲线鼠标移动模拟
  * @param {Object} page - Playwright页面对象
@@ -76,7 +79,7 @@ async function humanLikeScrolling(page, scrollCount = 3) {
 async function contextSwitchManeuver(page, targetUrl) {
   try {
     // 访问Tennis分类
-    await page.goto('https://www.oddsportal.com/tennis/', { 
+    await page.goto(`${BASE_URL}/tennis/`, { 
       waitUntil: 'domcontentloaded', 
       timeout: 30000 
     });

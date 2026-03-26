@@ -161,12 +161,12 @@ describe('V5.5 OddsPortalHarvester TDD测试', () => {
     });
     
     it('TDD: 应定义联赛URL映射', () => {
-      // TDD断言: 联赛映射
-      assert.ok(HARVESTER_CONFIG.LEAGUE_URLS['Premier League'], '应有英超配置');
-      assert.ok(HARVESTER_CONFIG.LEAGUE_URLS['La Liga'], '应有西甲配置');
-      assert.ok(HARVESTER_CONFIG.LEAGUE_URLS['Bundesliga'], '应有德甲配置');
-      assert.ok(HARVESTER_CONFIG.LEAGUE_URLS['Serie A'], '应有意甲配置');
-      assert.ok(HARVESTER_CONFIG.LEAGUE_URLS['Ligue 1'], '应有法甲配置');
+      assert.ok(HARVESTER_CONFIG.ODDSPORTAL.baseUrl, '应从配置文件加载基础域名');
+      assert.ok(HARVESTER_CONFIG.ODDSPORTAL.leagues['Premier League'], '应有英超路由配置');
+      assert.ok(HARVESTER_CONFIG.ODDSPORTAL.leagues['La Liga'], '应有西甲路由配置');
+      assert.ok(HARVESTER_CONFIG.ODDSPORTAL.leagues['Bundesliga'], '应有德甲路由配置');
+      assert.ok(HARVESTER_CONFIG.ODDSPORTAL.leagues['Serie A'], '应有意甲路由配置');
+      assert.ok(HARVESTER_CONFIG.ODDSPORTAL.leagues['Ligue 1'], '应有法甲路由配置');
     });
   });
   

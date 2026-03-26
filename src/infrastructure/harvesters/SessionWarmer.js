@@ -16,11 +16,12 @@ const { chromium } = require('playwright');
 const fs = require('fs').promises;
 const path = require('path');
 const { ProxyRotator } = require('./ProxyRotator');
+const RECON_CONFIG = require('../../../config/recon_config.json');
 
 // 配置
 const WARMER_CONFIG = {
   SESSION_DIR: '/app/data/sessions',
-  BASE_URL: 'https://www.oddsportal.com',
+  BASE_URL: RECON_CONFIG.oddsportal.base_url,
   WARMUP_STEPS: [
     { url: '/', wait: 2000, action: 'visit_homepage' },
     { url: '/soccer/', wait: 3000, action: 'click_soccer' },

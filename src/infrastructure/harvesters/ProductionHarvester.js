@@ -160,52 +160,6 @@ class ProductionHarvester extends AbstractHarvester {
         return this.harvestWithRetry(match, 0, this.config.maxRetries);
     }
 
-    /**
-     * 数据库错误分类
-     * @param {Error} error
-     * @returns {string}
-     */
-    _classifyDatabaseError(error) {
-        const message = (error?.message || '').toLowerCase();
-
-        if (message.includes('duplicate key') || error?.code === '23505') {
-            return 'DUPLICATE_KEY';
-        }
-        if (
-            message.includes('econnrefused') ||
-            message.includes('connection') ||
-            error?.code === 'ECONNREFUSED'
-        ) {
-            return 'CONNECTION_ERROR';
-        }
-        if (
-            message.includes('timeout') ||
-            message.includes('timed out') ||
-            error?.code === 'ETIMEDOUT'
-        ) {
-            return 'TIMEOUT';
-        }
-
-        return 'UNKNOWN';
-    }
-
-    /**
-     * 文件错误分类
-     * @param {Error} error
-     * @returns {string}
-     */
-    _classifyFileError(error) {
-        const message = (error?.message || '').toLowerCase();
-
-        if (message.includes('eacces') || message.includes('permission denied')) {
-            return 'PERMISSION_DENIED';
-        }
-        if (message.includes('enospc') || message.includes('no space left on device')) {
-            return 'NO_SPACE';
-        }
-
-        return 'UNKNOWN';
-    }
 }
 
 module.exports = ProductionHarvester;

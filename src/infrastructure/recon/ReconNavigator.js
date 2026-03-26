@@ -15,6 +15,9 @@
 
 'use strict';
 
+const RECON_CONFIG = require('../../../config/recon_config.json');
+const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+
 const { chromium } = require('playwright');
 const { ReconErrorClassifier, ReconRetryStrategy, ReconCircuitBreaker } = require('./ReconResilience');
 const { ReconDecryptor } = require('./ReconDecryptor');
@@ -360,7 +363,7 @@ class ReconNavigator {
       
       let url = obj.url || obj.link || '';
       if (!url && hash) {
-        url = `https://www.oddsportal.com/football/${countrySlug}/${leagueSlug}/${slug}-${hash}/`;
+        url = `${BASE_URL}/football/${countrySlug}/${leagueSlug}/${slug}-${hash}/`;
       }
 
       if (!homeTeam || !awayTeam || !hash) return null;
@@ -523,7 +526,7 @@ class ReconNavigator {
           newRows++;
 
           matches.push({
-            url: `https://www.oddsportal.com${row.url || ''}`,
+            url: `${BASE_URL}${row.url || ''}`,
             hash: hash.toString(),
             homeTeam: row['home-name'] || row.homeName || '',
             awayTeam: row['away-name'] || row.awayName || '',

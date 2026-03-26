@@ -1,10 +1,19 @@
 {
   "version": "V6.7-INDUSTRIAL",
   "description": "Recon Scanner 配置文件 - 工业级数据集成组件",
-  "updated_at": "2026-03-22",
+  "updated_at": "2026-03-26",
   "oddsportal": {
     "base_url": "https://www.oddsportal.com",
     "results_path": "/football/{country}/{league}-{start}-{end}/standings/",
+    "harvester": {
+      "session_file": "auth_gold.json",
+      "default_referer_league": "EPL",
+      "paths": {
+        "output_dir": "/app/data/oddsportal",
+        "session_dir": "/app/data/sessions",
+        "screenshot_dir": "/app/data/screenshots"
+      }
+    },
     "url_patterns": {
       "results": "/football/[^/]+/[^/]+/results/",
       "match": "/football/[^/]+/[^/]+/[^/]+-[a-zA-Z0-9]{8}/$",
@@ -174,7 +183,20 @@
     "leicester-city": "Leicester City",
     "southampton": "Southampton",
     "crystal": "Crystal Palace",
-    "palace": "Crystal Palace"
+    "palace": "Crystal Palace",
+    "bayern munchen": "Bayern Munich",
+    "bayern munich": "Bayern Munich",
+    "rb leipzig": "RB Leipzig",
+    "m gladbach": "Borussia Monchengladbach",
+    "monchengladbach": "Borussia Monchengladbach"
+  },
+  "sql_templates": {
+    "save_mapping": "INSERT INTO matches_oddsportal_mapping ({columns}) VALUES ({values}) ON CONFLICT (match_id, season) DO UPDATE SET oddsportal_hash = EXCLUDED.oddsportal_hash, full_url = EXCLUDED.full_url, home_team = EXCLUDED.home_team, away_team = EXCLUDED.away_team, status = EXCLUDED.status, updated_at = NOW() {optional_updates} RETURNING match_id;",
+    "find_match_by_teams": "SELECT match_id, home_team, away_team, match_date FROM matches WHERE season = $1 AND ((LOWER(home_team) = LOWER($2) AND LOWER(away_team) = LOWER($3)) OR (LOWER(home_team) = LOWER($3) AND LOWER(away_team) = LOWER($2))) LIMIT 1;",
+    "find_matches_by_season": "SELECT match_id, home_team, away_team, match_date FROM matches WHERE season = $1 ORDER BY match_date;",
+    "get_unstitched_matches": "SELECT m.match_id, m.home_team, m.away_team, m.match_date FROM matches m LEFT JOIN matches_oddsportal_mapping map ON m.match_id = map.match_id AND map.season = $2 WHERE m.league_name = $1 AND m.season = $2 AND map.match_id IS NULL ORDER BY m.match_date;",
+    "get_mapping_stats": "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'harvested') as harvested FROM matches_oddsportal_mapping WHERE season = $1;",
+    "check_optional_fields": "SELECT column_name FROM information_schema.columns WHERE table_name = $1 AND column_name = ANY($2)"
   },
   "matching": {
     "fuzzy_threshold": 0.85,
