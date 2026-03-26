@@ -25,6 +25,7 @@ class ReconEngine {
     this.parser = options.parser;
     this.logger = options.logger || console;
     this.proxyRotator = options.proxyRotator;
+    this.traceId = options.traceId || null;
   }
 
   /**
@@ -220,6 +221,7 @@ class ReconEngine {
    * @returns {Promise<Object>}
    */
   async smartScan(season, leagueConfig) {
+    const dbSeason = season.replace('-', '/');
     this.logger.info('smart_scan_start', { season, league: leagueConfig.name });
 
     // 策略1: 协议档案扫描 (最快最完整)

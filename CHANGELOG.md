@@ -4,6 +4,41 @@
 
 ---
 
+## [V11.0] - 2026-03-26 - Recon Engine Industrial Release
+
+### 🚀 新特性 (Features)
+
+- 引入 V11.0 Recon 工业级链路，核心模块覆盖 `ReconNavigator`、`ReconEngine`、`ReconParser`、`ReconStitcher`
+- 建立 TraceID 全链路透传，从 `recon_scanner.js` 显式注入至 Navigator、Engine、Parser、Repository，统一日志 schema
+- 新增 `tests/unit/ReconScanner.Robustness.test.js`，覆盖 API 失败后进入 fallback 链路的稳定性
+- 将若干真实网络型验证用例迁移至 `tests/integration/`，避免污染单元测试基线
+
+### 🐛 Bug 修复 (Fixes)
+
+- 修复 `ReconEngine.smartScan()` 在 fallback 路径访问未定义 `dbSeason` 的崩溃问题
+- 修复 `FixtureRepository.batchSaveOddsPortalMappings()` 伪事务问题，改为单 `client` 真事务，保证整批写入原子性
+- 修复 DOM fallback 与解析回归链路，补齐 ajax / raw / nested 赔率结构的兼容解析
+- 修复 `MarketSentimentExtractor` 与新 `BaseExtractor` 协议不兼容的问题
+- 修复 `Normalizer.normalizeSeason()` 对非法赛季格式的过度宽容，补上连续赛季校验
+- 修复多处历史测试契约漂移，包括 `ErrorAuditor`、`FixtureSeeder`、`AbstractHarvester`、`omni_sniffer` 等套件
+
+### ⚠️ 破坏性变更 (Breaking Changes)
+
+- 真实网络 / 页面渲染 / Residential 代理相关验证用例已从 `tests/unit/` 迁移到 `tests/integration/`
+- `NO_DATA` 错误策略已统一为“可重试 + 0ms 退避”，相关历史测试和调用契约已同步调整
+- V11.0 Recon 文档与命令口径切换为容器优先，不再以宿主机直接执行作为推荐路径
+
+### 📌 已知技术债 (Known Tech Debt)
+
+- `[P1]` `src/infrastructure/harvesters/base/AbstractHarvester.js` 当前工作树实测 1026 行，已形成上帝类
+- 重构建议已登记至 `TECH_DEBT.md`，计划在 V12.0 或德甲全量收割完成后拆分为 Retry / Session / ContextPool / IO / Behavior 等独立服务
+
+### ✅ 质量门禁 (Quality Gate)
+
+- 全量单元测试结果: `tests 937, pass 937, fail 0`
+- Recon V11.0 定向回归: `56/56` 全通过
+- 发布分支: `fix/recon-scanner-tdd-v6.7`
+
 ## [V6.6] - 2026-03-20 - L2 Raw Storage Hardening
 
 ### 🏗️ L2 原始数据存储层硬化 (Raw Storage Hardening)

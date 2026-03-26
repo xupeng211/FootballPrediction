@@ -36,6 +36,7 @@ class FixtureRepository {
     this.batchSize = options.batchSize || 50;
     this.maxRetries = options.maxRetries || 3;
     this.retryDelayMs = options.retryDelayMs || 1000;
+    this.traceId = options.traceId || null;
   }
 
   /**
@@ -113,65 +114,20 @@ class FixtureRepository {
       const client = await this.dbPool.connect();
       
       try {
-        // 开始事务
         await client.query('BEGIN');
-
-        // 构建动态查询
-        let columns = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team', 'status', 'created_at', 'updated_at'];
-        let values = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()', 'NOW()'];
-        let params = [
-          mappingData.match_id,
-          mappingData.oddsportal_hash,
-          mappingData.full_url,
-          mappingData.season,
-          mappingData.league_name,
-          mappingData.home_team,
-          mappingData.away_team,
-          mappingData.status || 'pending'
-        ];
-
-        // 只在字段存在时添加可选字段
-        if (hasOptionalFields.match_confidence) {
-          columns.push('match_confidence');
-          values.push(`$${params.length + 1}`);
-          params.push(mappingData.match_confidence || 0.75);
-        }
-        
-        if (hasOptionalFields.mapping_method) {
-          columns.push('mapping_method');
-          values.push(`$${params.length + 1}`);
-          params.push(mappingData.mapping_method || 'protocol_extract');
-        }
-
-        const query = `
-          INSERT INTO matches_oddsportal_mapping (${columns.join(', ')})
-          VALUES (${values.join(', ')})
-          ON CONFLICT (match_id, season) DO UPDATE SET
-            oddsportal_hash = EXCLUDED.oddsportal_hash,
-            full_url = EXCLUDED.full_url,
-            home_team = EXCLUDED.home_team,
-            away_team = EXCLUDED.away_team,
-            status = EXCLUDED.status,
-            updated_at = NOW()
-            ${hasOptionalFields.match_confidence ? ', match_confidence = EXCLUDED.match_confidence' : ''}
-            ${hasOptionalFields.mapping_method ? ', mapping_method = EXCLUDED.mapping_method' : ''}
-          RETURNING match_id;
-        `;
-
-        const result = await client.query(query, params);
-        
-        // 提交事务
+        const result = await this._saveOddsPortalMappingWithClient(client, mappingData, hasOptionalFields);
         await client.query('COMMIT');
 
         this.logger.info('[Repository] 映射保存成功', { 
           matchId: mappingData.match_id,
-          hash: mappingData.oddsportal_hash 
+          hash: mappingData.oddsportal_hash,
+          traceId: this.traceId
         });
 
         return {
           success: true,
-          matchId: result.rows[0]?.match_id,
-          wasInsert: result.rows.length > 0
+          matchId: result.matchId,
+          wasInsert: result.wasInsert
         };
 
       } catch (error) {
@@ -212,6 +168,62 @@ class FixtureRepository {
   }
 
   /**
+   * 使用共享 client 保存映射
+   * @private
+   * @param {Object} client - PostgreSQL client
+   * @param {Object} mappingData - 映射数据
+   * @param {Object} hasOptionalFields - 可选字段存在状态
+   * @returns {Promise<{matchId: string|undefined, wasInsert: boolean}>}
+   */
+  async _saveOddsPortalMappingWithClient(client, mappingData, hasOptionalFields) {
+    let columns = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team', 'status', 'created_at', 'updated_at'];
+    let values = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()', 'NOW()'];
+    let params = [
+      mappingData.match_id,
+      mappingData.oddsportal_hash,
+      mappingData.full_url,
+      mappingData.season,
+      mappingData.league_name,
+      mappingData.home_team,
+      mappingData.away_team,
+      mappingData.status || 'pending'
+    ];
+
+    if (hasOptionalFields.match_confidence) {
+      columns.push('match_confidence');
+      values.push(`$${params.length + 1}`);
+      params.push(mappingData.match_confidence || 0.75);
+    }
+
+    if (hasOptionalFields.mapping_method) {
+      columns.push('mapping_method');
+      values.push(`$${params.length + 1}`);
+      params.push(mappingData.mapping_method || 'protocol_extract');
+    }
+
+    const query = `
+      INSERT INTO matches_oddsportal_mapping (${columns.join(', ')})
+      VALUES (${values.join(', ')})
+      ON CONFLICT (match_id, season) DO UPDATE SET
+        oddsportal_hash = EXCLUDED.oddsportal_hash,
+        full_url = EXCLUDED.full_url,
+        home_team = EXCLUDED.home_team,
+        away_team = EXCLUDED.away_team,
+        status = EXCLUDED.status,
+        updated_at = NOW()
+        ${hasOptionalFields.match_confidence ? ', match_confidence = EXCLUDED.match_confidence' : ''}
+        ${hasOptionalFields.mapping_method ? ', mapping_method = EXCLUDED.mapping_method' : ''}
+      RETURNING match_id;
+    `;
+
+    const result = await client.query(query, params);
+    return {
+      matchId: result.rows[0]?.match_id,
+      wasInsert: result.rows.length > 0
+    };
+  }
+
+  /**
    * 检查表是否存在可选字段
    * @private
    */
@@ -245,6 +257,20 @@ class FixtureRepository {
       return { success: true, inserted: 0, failed: 0, errors: [] };
     }
 
+    const requiredFields = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team'];
+    for (const mapping of mappings) {
+      const missing = requiredFields.filter(f => !mapping[f]);
+      if (missing.length > 0) {
+        throw new RepositoryError(
+          `缺少必填字段: ${missing.join(', ')}`,
+          'MISSING_REQUIRED_FIELDS'
+        );
+      }
+    }
+
+    const optionalFields = ['match_confidence', 'mapping_method'];
+    const hasOptionalFields = await this._checkOptionalFields('matches_oddsportal_mapping', optionalFields);
+
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       const results = { inserted: 0, failed: 0, errors: [] };
@@ -254,11 +280,12 @@ class FixtureRepository {
         
         for (const mapping of mappings) {
           try {
-            const result = await this.saveOddsPortalMapping(mapping);
-            if (result.success) results.inserted++;
+            await this._saveOddsPortalMappingWithClient(client, mapping, hasOptionalFields);
+            results.inserted++;
           } catch (error) {
             results.failed++;
             results.errors.push({ matchId: mapping.match_id, error: error.message });
+            throw error;
           }
         }
         
@@ -266,7 +293,16 @@ class FixtureRepository {
         return { success: true, ...results };
       } catch (error) {
         await client.query('ROLLBACK');
-        throw error;
+
+        if (error instanceof RepositoryError) {
+          throw error;
+        }
+
+        throw new RepositoryError(
+          `批量保存映射失败: ${error.message}`,
+          'BATCH_SAVE_FAILED',
+          error
+        );
       } finally {
         client.release();
       }
