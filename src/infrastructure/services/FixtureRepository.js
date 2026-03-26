@@ -14,6 +14,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const { Normalizer } = require('../../utils/Normalizer');
 
 /**
  * 加载 SQL 模板配置
@@ -360,6 +361,116 @@ class FixtureRepository {
         client.release();
       }
     }, 'batchSaveOddsPortalMappings');
+  }
+
+  /**
+   * 持久化 L1 赛程
+   * @param {Array<Object>} fixtures - 赛程列表
+   * @returns {Promise<Object>} 入库结果
+   */
+  async persist(fixtures) {
+    if (!Array.isArray(fixtures) || fixtures.length === 0) {
+      return { total: 0, inserted: 0, updated: 0, failed: 0, errors: [] };
+    }
+
+    await this.init();
+
+    const results = {
+      total: fixtures.length,
+      inserted: 0,
+      updated: 0,
+      failed: 0,
+      errors: []
+    };
+
+    for (let i = 0; i < fixtures.length; i += this.batchSize) {
+      const batch = fixtures.slice(i, i + this.batchSize).map((fixture) => ({
+        ...fixture,
+        season: Normalizer.normalizeSeason(fixture.season),
+        home_team: Normalizer.normalizeTeamName(fixture.home_team),
+        away_team: Normalizer.normalizeTeamName(fixture.away_team),
+        status: Normalizer.normalizeStatus(fixture.status),
+        is_finished: fixture.is_finished ?? Normalizer.normalizeStatus(fixture.status) === 'finished',
+        data_source: fixture.data_source || 'FotMob'
+      }));
+
+      try {
+        const batchResult = await this._persistBatch(batch);
+        results.inserted += batchResult.inserted;
+        results.updated += batchResult.updated;
+      } catch (error) {
+        results.failed += batch.length;
+        results.errors.push({
+          batchStart: i,
+          batchSize: batch.length,
+          error: error.message
+        });
+      }
+    }
+
+    return results;
+  }
+
+  /**
+   * 批量持久化单批赛程
+   * @private
+   * @param {Array<Object>} batch - 单批赛程
+   * @returns {Promise<{inserted: number, updated: number}>}
+   */
+  async _persistBatch(batch) {
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      try {
+        const values = [];
+        const rows = batch.map((fixture, index) => {
+          const offset = index * 12;
+          values.push(
+            fixture.match_id,
+            fixture.external_id,
+            fixture.league_name,
+            fixture.season,
+            fixture.home_team,
+            fixture.away_team,
+            fixture.match_date,
+            fixture.home_score ?? null,
+            fixture.away_score ?? null,
+            fixture.status,
+            fixture.is_finished,
+            fixture.data_source
+          );
+          return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12})`;
+        });
+
+        const query = `
+          INSERT INTO matches (
+            match_id, external_id, league_name, season, home_team, away_team,
+            match_date, home_score, away_score, status, is_finished, data_source
+          )
+          VALUES ${rows.join(', ')}
+          ON CONFLICT (match_id) DO UPDATE SET
+            external_id = EXCLUDED.external_id,
+            league_name = EXCLUDED.league_name,
+            season = EXCLUDED.season,
+            home_team = EXCLUDED.home_team,
+            away_team = EXCLUDED.away_team,
+            match_date = EXCLUDED.match_date,
+            home_score = EXCLUDED.home_score,
+            away_score = EXCLUDED.away_score,
+            status = EXCLUDED.status,
+            is_finished = EXCLUDED.is_finished,
+            data_source = EXCLUDED.data_source,
+            updated_at = NOW()
+          RETURNING (xmax = 0) AS inserted;
+        `;
+
+        const result = await client.query(query, values);
+        const inserted = result.rows.filter((row) => row.inserted).length;
+        const updated = result.rows.length - inserted;
+        return { inserted, updated };
+      } finally {
+        client.release();
+      }
+    }, 'persistFixtures');
   }
 
   /**
