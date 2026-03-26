@@ -13,8 +13,8 @@
 
 'use strict';
 
-const RECON_CONFIG = require('../../../config/recon_config.json');
-const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+const pLimit = require('p-limit');
+const { L1ConfigManager } = require('../services/L1ConfigManager');
 
 /**
  * 侦察引擎类
@@ -29,6 +29,96 @@ class ReconEngine {
     this.logger = options.logger || console;
     this.proxyRotator = options.proxyRotator;
     this.traceId = options.traceId || null;
+    this.configManager = options.configManager || new L1ConfigManager({ logger: this.logger });
+    this.baseUrl = options.baseUrl || options.config?.oddsportal?.base_url || 'https://www.oddsportal.com';
+    this.reconBatchSize = Math.max(1, Number(options.reconBatchSize || 25));
+    this.defaultReconConcurrency = Math.max(1, Number(options.defaultReconConcurrency || 5));
+    this.confidenceThreshold = Number(options.confidenceThreshold || 0.75);
+  }
+
+  /**
+   * 构建配置驱动的扫描目标列表
+   * @param {Object} options
+   * @returns {Promise<Array<Object>>}
+   */
+  async buildScanTargets(options = {}) {
+    const { season, tier = null, leagueIds = null } = options;
+
+    if (!season || typeof season !== 'string') {
+      throw new Error('season is required for buildScanTargets');
+    }
+
+    const allowedLeagueIds = Array.isArray(leagueIds) && leagueIds.length > 0
+      ? new Set(leagueIds.map((id) => Number(id)))
+      : null;
+
+    const leagues = this.configManager
+      .getActiveLeagues({ tier })
+      .filter((league) => league.enabled !== false)
+      .filter((league) => !allowedLeagueIds || allowedLeagueIds.has(Number(league.id)));
+
+    return leagues.map((league) => ({
+      leagueId: Number(league.id),
+      league,
+      season,
+      dbSeason: this._normalizeDbSeason(season),
+      resultsUrl: this._buildResultsUrl(league, season)
+    }));
+  }
+
+  /**
+   * Recon Matrix 批量模式
+   * @param {Object} options
+   * @returns {Promise<Object>}
+   */
+  async runReconMatrix(options = {}) {
+    const {
+      season,
+      concurrency = this.defaultReconConcurrency,
+      tier = null,
+      leagueIds = null,
+      batchSize = this.reconBatchSize,
+      confidenceThreshold = this.confidenceThreshold
+    } = options;
+
+    const targets = await this.buildScanTargets({ season, tier, leagueIds });
+    const summary = {
+      success: true,
+      season,
+      scannedLeagues: 0,
+      totalPending: 0,
+      linked: 0,
+      mismatched: 0,
+      errors: []
+    };
+
+    for (const target of targets) {
+      try {
+        const result = await this._runReconTarget(target, {
+          concurrency,
+          batchSize,
+          confidenceThreshold
+        });
+
+        summary.scannedLeagues++;
+        summary.totalPending += result.pendingTotal;
+        summary.linked += result.linked;
+        summary.mismatched += result.mismatched;
+      } catch (error) {
+        summary.success = false;
+        summary.errors.push({
+          league: target.league.name,
+          error: error.message
+        });
+        this.logger.error('recon_matrix_target_failed', {
+          league: target.league.name,
+          season,
+          error: error.message
+        });
+      }
+    }
+
+    return summary;
   }
 
   /**
@@ -54,7 +144,7 @@ class ReconEngine {
 
       // 2. 执行协议级抓取
       const oddsportalSeason = this._formatSeasonForUrl(season);
-      const resultsUrl = `${BASE_URL}/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
+      const resultsUrl = this._buildResultsUrl(leagueConfig, season);
       
       const extractResult = await this.navigator.protocolArchiveExtract(resultsUrl, {
         maxPages: 50, timeoutMs: 90000
@@ -137,7 +227,7 @@ class ReconEngine {
       for (const dateKey of dateKeys) {
         const dayMatches = dateBuckets.get(dateKey);
         const dayResult = await this.navigator.protocolArchiveExtract(
-          `${BASE_URL}/matches/football/${dateKey}/`,
+          `${this.baseUrl}/matches/football/${dateKey}/`,
           { maxPages: 20, timeoutMs: 60000 }
         );
 
@@ -284,7 +374,7 @@ class ReconEngine {
 
       // 构建 results 页面 URL
       const oddsportalSeason = this._formatSeasonForUrl(season);
-      const baseUrl = `${BASE_URL}/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
+      const baseUrl = this._buildResultsUrl(leagueConfig, season);
       
       // 导航到页面
       await this.navigator.navigate(baseUrl, { waitUntil: 'networkidle' });
@@ -323,7 +413,7 @@ class ReconEngine {
             text = text.replace(/\s+/g, ' ').trim();
             
             matches.push({
-              url: href.startsWith('http') ? href : `${BASE_URL}${href}`,
+              url: href.startsWith('http') ? href : `${this.baseUrl}${href}`,
               hash: hash,
               rawText: text,
               source: 'dom_fallback'
@@ -504,6 +594,141 @@ class ReconEngine {
     if (!season) return '';
     // 支持 2024-2025 -> 2024-2025 或 2024/2025 -> 2024-2025
     return season.replace('/', '-');
+  }
+
+  _normalizeDbSeason(season) {
+    return String(season || '').replace('-', '/');
+  }
+
+  _buildResultsUrl(leagueConfig, season) {
+    const oddsportalSeason = this._formatSeasonForUrl(season);
+    return `${this.baseUrl}/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
+  }
+
+  async _runReconTarget(target, options = {}) {
+    const {
+      concurrency = this.defaultReconConcurrency,
+      batchSize = this.reconBatchSize,
+      confidenceThreshold = this.confidenceThreshold
+    } = options;
+
+    const pendingMatches = await this.repository.getUnstitchedMatches(target.dbSeason, target.league.name);
+    if (!Array.isArray(pendingMatches) || pendingMatches.length === 0) {
+      return { pendingTotal: 0, linked: 0, mismatched: 0 };
+    }
+
+    const extractResult = await this.navigator.protocolArchiveExtract(target.resultsUrl, {
+      maxPages: 50,
+      timeoutMs: 90000
+    });
+    const candidates = Array.isArray(extractResult?.matches) ? extractResult.matches : [];
+    const limiter = pLimit(Math.max(1, Number(concurrency)));
+    const orderedPending = [...pendingMatches].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+
+    const outcomes = await Promise.all(
+      orderedPending.map((l1Match) => limiter(() =>
+        this._reconcilePendingMatch(l1Match, candidates, target, confidenceThreshold)
+      ))
+    );
+
+    const mappings = [];
+    const mismatches = [];
+
+    for (const outcome of outcomes) {
+      if (outcome?.status === 'linked' && outcome.mapping) {
+        mappings.push(outcome.mapping);
+      } else if (outcome?.status === 'mismatch' && outcome.matchId) {
+        mismatches.push(outcome.matchId);
+      }
+    }
+
+    await this._persistReconBatches(mappings, mismatches, Math.max(1, Number(batchSize)));
+
+    return {
+      pendingTotal: orderedPending.length,
+      linked: mappings.length,
+      mismatched: mismatches.length
+    };
+  }
+
+  async _persistReconBatches(mappings, mismatchIds, batchSize) {
+    const orderedMappings = [...mappings].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+    const orderedMismatchIds = [...new Set(mismatchIds.map((id) => String(id)))]
+      .sort((a, b) => a.localeCompare(b));
+
+    for (let index = 0; index < orderedMappings.length; index += batchSize) {
+      const batch = orderedMappings.slice(index, index + batchSize);
+      await this.repository.batchSaveOddsPortalMappings(batch);
+      await this.repository.batchUpdateMatchPipelineStatus(
+        batch.map((mapping) => mapping.match_id),
+        'RECON_LINKED'
+      );
+    }
+
+    for (let index = 0; index < orderedMismatchIds.length; index += batchSize) {
+      const batch = orderedMismatchIds.slice(index, index + batchSize);
+      await this.repository.batchUpdateMatchPipelineStatus(batch, 'RECON_MISMATCH');
+    }
+  }
+
+  async _reconcilePendingMatch(l1Match, candidates, target, confidenceThreshold) {
+    const candidateMatch = this._findBestCandidate(l1Match, candidates);
+
+    if (!candidateMatch || candidateMatch.confidence < confidenceThreshold) {
+      return {
+        status: 'mismatch',
+        matchId: l1Match.match_id
+      };
+    }
+
+    return {
+      status: 'linked',
+      mapping: {
+        match_id: l1Match.match_id,
+        oddsportal_hash: candidateMatch.candidate.hash,
+        full_url: candidateMatch.candidate.url,
+        season: target.dbSeason,
+        league_name: target.league.name,
+        home_team: l1Match.home_team,
+        away_team: l1Match.away_team,
+        match_confidence: candidateMatch.confidence,
+        mapping_method: candidateMatch.method || 'recon_matrix',
+        status: 'pending'
+      }
+    };
+  }
+
+  _findBestCandidate(l1Match, candidates) {
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      return null;
+    }
+
+    let best = null;
+
+    for (const candidate of candidates) {
+      if (!candidate?.homeTeam || !candidate?.awayTeam) {
+        continue;
+      }
+
+      const directHome = this._calculateSimilarity(candidate.homeTeam, l1Match.home_team);
+      const directAway = this._calculateSimilarity(candidate.awayTeam, l1Match.away_team);
+      const swappedHome = this._calculateSimilarity(candidate.homeTeam, l1Match.away_team);
+      const swappedAway = this._calculateSimilarity(candidate.awayTeam, l1Match.home_team);
+
+      const directScore = (directHome + directAway) / 2;
+      const swappedScore = (swappedHome + swappedAway) / 2;
+      const confidence = Math.max(directScore, swappedScore);
+
+      if (!best || confidence > best.confidence) {
+        best = {
+          candidate,
+          confidence,
+          method: confidence >= 0.99 ? 'exact' : 'fuzzy'
+        };
+      }
+    }
+
+    return best;
   }
 }
 
