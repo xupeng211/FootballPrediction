@@ -40,4 +40,7 @@
 
 ---
 
-## [P1] `AbstractHarvester.js` 上帝类膨胀 (DEPRECATED)
+## [RESOLVED][P1] `AbstractHarvester.js` 上帝类膨胀
+
+- 状态: **已治理并归档 (2026-03-26)**
+- 说明: 该 P1 债务已由上文“`AbstractHarvester.js` 上帝类拆解”完成治理，本条仅保留为历史映射，避免发布追踪失联。

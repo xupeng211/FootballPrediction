@@ -9,6 +9,7 @@
 const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 const fs = require('fs').promises;
+const os = require('os');
 const path = require('path');
 
 // 模拟的 Auditor 类
@@ -88,8 +89,7 @@ class MockAuditor {
    */
   async sampleValidation(sampleSize = 50) {
     const files = await this.getFileList();
-    const shuffled = [...files].sort(() => 0.5 - Math.random());
-    const samples = shuffled.slice(0, Math.min(sampleSize, files.length));
+    const samples = [...files].sort().slice(0, Math.min(sampleSize, files.length));
 
     let valid = 0;
     let corrupted = 0;
@@ -164,8 +164,7 @@ describe('Audit Dataset 审计系统', () => {
   let tempDir;
 
   beforeEach(async () => {
-    tempDir = path.join(process.cwd(), 'temp_audit_test');
-    await fs.mkdir(tempDir, { recursive: true });
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'audit-dataset-test-'));
     auditor = new MockAuditor(tempDir);
   });
 
