@@ -152,8 +152,11 @@ class Normalizer {
 
         // 清理格式
         const normalized = teamName
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
             .toLowerCase()
             .replace(/-/g, ' ')
+            .replace(/[^\p{L}\p{N}\s]/gu, ' ')
             .replace(/\s+/g, ' ')
             .trim();
 
