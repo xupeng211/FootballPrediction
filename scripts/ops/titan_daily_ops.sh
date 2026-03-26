@@ -30,6 +30,7 @@ readonly COMPOSE_FILE="${PROJECT_ROOT}/docker-compose.dev.yml"
 readonly DATA_DIR="${PROJECT_ROOT}/data/matches"
 readonly LOG_DIR="${PROJECT_ROOT}/logs"
 readonly SESSION_FILE="${PROJECT_ROOT}/manual_session.json"
+readonly CONTAINER_SESSION_FILE="manual_session.json"
 
 readonly DB_HOST="${DB_HOST:-localhost}"
 readonly DB_PORT="${DB_PORT:-5432}"
@@ -254,7 +255,7 @@ run_harvest() {
     local cmd_args=("docker-compose" "-f" "$COMPOSE_FILE" "exec" "dev" "node" "scripts/ops/run_production.js" "--workers" "12" "--limit" "12000")
     
     if [[ -f "$SESSION_FILE" ]]; then
-        cmd_args+=("--session-path" "/app/manual_session.json")
+        cmd_args+=("--session-path" "$CONTAINER_SESSION_FILE")
     else
         log_warn "未找到会话文件，将使用匿名模式"
     fi

@@ -1,4 +1,4 @@
-#!/usr/bin/env node
+#!/usr/bin/env python3
 import json
 import psycopg2
 from datetime import datetime

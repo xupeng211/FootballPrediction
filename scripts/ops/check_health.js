@@ -10,7 +10,7 @@
 
 const fs = require('fs').promises;
 const path = require('path');
-const { Pool } = require('pg');
+const { getPool, closePool, DB_CONFIG } = require('../../config/database');
 
 // 颜色定义
 const COLORS = {
@@ -146,18 +146,8 @@ function maskSensitive(varName, value) {
 async function checkDatabaseConnectivity() {
   log('info', '检查数据库联通性...');
 
-  const dbConfig = {
-    host: process.env.DB_HOST || 'host.docker.internal',
-    port: parseInt(process.env.DB_PORT, 10) || 5432,
-    database: process.env.DB_NAME || 'football_db',
-    user: process.env.DB_USER || 'football_user',
-    password: process.env.DB_PASSWORD || 'football_pass',
-    connectionTimeoutMillis: 5000
-  };
-
-  const pool = new Pool(dbConfig);
-
   try {
+    const pool = getPool();
     const client = await pool.connect();
     const result = await client.query('SELECT version(), NOW() as current_time');
     const version = result.rows[0].version.split(' ')[0];
@@ -181,9 +171,9 @@ async function checkDatabaseConnectivity() {
 
     return {
       passed: true,
-      host: dbConfig.host,
-      port: dbConfig.port,
-      database: dbConfig.database,
+      host: DB_CONFIG.host,
+      port: DB_CONFIG.port,
+      database: DB_CONFIG.database,
       version,
       currentTime,
       tableExists,
@@ -196,7 +186,7 @@ async function checkDatabaseConnectivity() {
       code: error.code
     };
   } finally {
-    await pool.end();
+    await closePool();
   }
 }
 
@@ -283,10 +273,17 @@ async function checkStoragePermissions() {
 async function checkSessionFile() {
   log('info', '检查会话文件...');
 
+  const envSessionPath = process.env.SESSION_FILE
+    ? path.resolve(process.cwd(), process.env.SESSION_FILE)
+    : null;
+  const envSessionDir = process.env.DATA_SESSIONS_PATH
+    ? path.resolve(process.cwd(), process.env.DATA_SESSIONS_PATH)
+    : path.join(process.cwd(), 'data', 'sessions');
   const sessionPaths = [
+    envSessionPath,
     path.join(process.cwd(), 'manual_session.json'),
-    path.join(process.cwd(), 'data', 'sessions', 'fotmob_session.json')
-  ];
+    path.join(envSessionDir, 'fotmob_session.json')
+  ].filter(Boolean);
 
   for (const sessionPath of sessionPaths) {
     try {
