@@ -893,88 +893,125 @@ function extractOddsArray(results) {
 }
 
 /**
- * DOM Sniper: 从页面DOM提取赔率数据
+ * DOM Sniper: 从页面DOM提取赔率数据 (V6.0 ULTIMATE版)
+ * 整合了脚本提取、表格扫描和文本狙击三种模式
+ * 
  * @param {Object} page - Playwright页面对象
- * @returns {Object} { pinnacleOdds, bet365Odds, allBookmakers }
+ * @returns {Object} 提取结果
  */
 async function extractOddsFromDOM(page) {
   return await page.evaluate(() => {
-    const results = { 
-      pinnacleOdds: null, 
-      bet365Odds: null, 
+    const results = {
+      '1x2': null,
+      pinnacleOdds: null,
+      bet365Odds: null,
       allBookmakers: [],
-      debug: {
-        bodyLength: document.body.innerText.length,
-        hasPinnacle: /Pinnacle/i.test(document.body.innerText),
-        hasBet365: /Bet365|bet365/i.test(document.body.innerText)
+      _source: 'unknown',
+      _diagnostic: {
+        title: document.title,
+        url: window.location.href,
+        bodyTextLength: document.body?.innerText?.length || 0,
+        hasBody: !!document.body,
+        timestamp: new Date().toISOString()
       }
     };
 
-    // 尝试多种选择器
-    const selectors = [
-      'table tbody tr',
-      'div[role="row"]',
-      '[class*="bookmaker"]',
-      '[class*="odds"]',
-      '.odds-table tr'
-    ];
-
-    for (const selector of selectors) {
-      const rows = document.querySelectorAll(selector);
-      
-      rows.forEach((row) => {
-        const text = row.textContent || '';
-        const isPinnacle = /Pinnacle/i.test(text);
-        const isBet365 = /Bet365|bet365/i.test(text);
-
-        const oddsPattern = /(\d+\.\d{2})/g;
-        const odds = text.match(oddsPattern);
-
-        if (odds && odds.length >= 3) {
-          const oddsValues = odds.slice(0, 3).map(o => parseFloat(o));
-
-          if (isPinnacle && !results.pinnacleOdds) {
-            results.pinnacleOdds = oddsValues;
+    // 模式1: 脚本 JSON 提取 (最高优先级)
+    try {
+      const scripts = document.querySelectorAll('script');
+      for (const script of scripts) {
+        const text = script.textContent || '';
+        if (text.includes('"odds"') || text.includes('"initialOdds"') || text.includes('"fullTime"')) {
+          const patterns = [
+            /"odds"\s*:\s*(\{[^}]+\})/,
+            /"initialOdds"\s*:\s*(\{[^}]+\})/,
+            /"fullTime"\s*:\s*(\[[^\]]+\])/
+          ];
+          
+          for (const pattern of patterns) {
+            const match = text.match(pattern);
+            if (match) {
+              try {
+                const parsed = JSON.parse(match[1]);
+                const odds = parsed['1x2'] || parsed.fullTime || parsed;
+                if (Array.isArray(odds) && odds.length === 3) {
+                  results['1x2'] = odds.map(o => typeof o === 'number' ? o.toFixed(2) : String(o));
+                  results._source = 'script_json';
+                  break;
+                }
+              } catch (e) {}
+            }
           }
-          if (isBet365 && !results.bet365Odds) {
-            results.bet365Odds = oddsValues;
-          }
+        }
+        if (results['1x2']) break;
+      }
+    } catch (e) {}
 
-          const bookieName = text.substring(0, 30).trim();
-          results.allBookmakers.push({ name: bookieName, odds: oddsValues });
+    // 模式2: DOM Sniper 狙击博彩公司行
+    if (!results.pinnacleOdds || !results.bet365Odds) {
+      const rows = document.querySelectorAll('tr, .row, .bookmaker-row, [class*="bookmaker"]');
+      const extractOddsFromText = (text) => {
+        const match = text.match(/(\d+\.\d{2,3})/g);
+        return match && match.length >= 3 ? match.slice(0, 3) : null;
+      };
+
+      rows.forEach(row => {
+        const text = row.innerText || row.textContent || '';
+        const lowerText = text.toLowerCase();
+        
+        if (lowerText.includes('pinnacle') && !results.pinnacleOdds) {
+          const odds = extractOddsFromText(text);
+          if (odds) results.pinnacleOdds = odds;
+        }
+        if ((lowerText.includes('bet365') || lowerText.includes('365')) && !results.bet365Odds) {
+          const odds = extractOddsFromText(text);
+          if (odds) results.bet365Odds = odds;
         }
       });
-
-      if (results.allBookmakers.length > 0) break;
     }
 
-    // 从完整文本匹配（备用）
-    if (!results.pinnacleOdds || !results.bet365Odds) {
-      const allText = document.body.innerText || '';
+    // 模式3: 标准表格/容器提取
+    if (!results['1x2']) {
+      const selectors = [
+        '[data-testid*="odd"]',
+        '.odds',
+        '.odds-value',
+        '.price',
+        '.flex-center.height-100',
+        '[class*="odd"]',
+        'div[title]'
+      ];
 
-      if (!results.pinnacleOdds) {
-        const pinnacleMatch = allText.match(/Pinnacle\D{0,100}(\d+\.\d{2})\s+(\d+\.\d{2})\s+(\d+\.\d{2})/i);
-        if (pinnacleMatch) {
-          results.pinnacleOdds = [
-            parseFloat(pinnacleMatch[1]),
-            parseFloat(pinnacleMatch[2]),
-            parseFloat(pinnacleMatch[3])
-          ];
-          results.debug.pinnacleSource = 'text_regex';
+      for (const selector of selectors) {
+        const elements = document.querySelectorAll(selector);
+        const values = Array.from(elements)
+          .map(el => el.textContent?.trim())
+          .filter(text => text && /^\d+\.\d+$/.test(text))
+          .map(text => parseFloat(text))
+          .filter(num => num > 1 && num < 100);
+
+        if (values.length >= 3) {
+          results['1x2'] = values.slice(0, 3).map(v => v.toFixed(2));
+          results._source = 'dom_' + selector;
+          break;
         }
       }
+    }
 
-      if (!results.bet365Odds) {
-        const bet365Match = allText.match(/Bet365\D{0,100}(\d+\.\d{2})\s+(\d+\.\d{2})\s+(\d+\.\d{2})/i);
-        if (bet365Match) {
-          results.bet365Odds = [
-            parseFloat(bet365Match[1]),
-            parseFloat(bet365Match[2]),
-            parseFloat(bet365Match[3])
-          ];
-          results.debug.bet365Source = 'text_regex';
-        }
+    // 模式4: 全文正则表达式搜索 (保底)
+    if (!results['1x2']) {
+      const bodyText = document.body?.innerText || '';
+      const matches = bodyText.match(/\b(\d+\.\d{2})\b/g);
+      if (matches && matches.length >= 3) {
+        results['1x2'] = matches.slice(0, 3);
+        results._source = 'text_extract';
       }
+    }
+
+    // 聚合 1x2 到 pinnacle/bet365 如果它们为空
+    if (results['1x2'] && !results.pinnacleOdds && !results.bet365Odds) {
+      // 如果没有具体的公司数据，但有 1x2，假设它是主要的
+      results.pinnacleOdds = results['1x2'];
     }
 
     return results;
@@ -1205,6 +1242,68 @@ function buildMarketSentiment(apiResult, domResult, options = {}) {
   return ms;
 }
 
+/**
+ * OddsPortal URL解析器与路由构建器
+ */
+class OddsPortalURLParser {
+  /**
+   * 解析比赛URL，提取hash
+   * @param {string} url - OddsPortal比赛URL
+   * @returns {Object} 解析结果 {league, season, match_hash, teams}
+   */
+  static parseMatchURL(url) {
+    try {
+      const urlObj = new URL(url);
+      const pathParts = urlObj.pathname.split('/').filter(p => p.length > 0);
+
+      if (pathParts.length < 4) {
+        return null;
+      }
+
+      const [sport, country, leaguePart, ...matchParts] = pathParts;
+      if (sport !== 'soccer') {
+        return null;
+      }
+
+      let league = leaguePart;
+      let season = null;
+      const seasonMatch = leaguePart.match(/^(.+)-(\d{4})-(\d{4})$/);
+      if (seasonMatch) {
+        league = seasonMatch[1];
+        season = `${seasonMatch[2]}/${seasonMatch[3]}`;
+      }
+
+      const matchSlug = matchParts[matchParts.length - 1] || '';
+      let home_team = null;
+      let away_team = null;
+
+      if (matchSlug.includes('-vs-')) {
+        [home_team, away_team] = matchSlug.split('-vs-');
+      } else if (matchSlug.includes('-')) {
+        const parts = matchSlug.split('-');
+        if (parts.length >= 2) {
+          home_team = parts[0];
+          away_team = parts[parts.length - 1];
+        }
+      }
+
+      // 提取 hash
+      const match_hash = matchParts[matchParts.length - 2] || matchSlug;
+
+      return {
+        league,
+        season,
+        match_hash,
+        home_team,
+        away_team,
+        full_path: urlObj.pathname
+      };
+    } catch (e) {
+      return null;
+    }
+  }
+}
+
 module.exports = {
   // V6.0 API-DECRYPT核心函数
   recursiveHistoryScanner,
@@ -1219,6 +1318,9 @@ module.exports = {
   extractOddsFromDOM,
   buildMarketSentiment,
   extractOddsArrays,
+  
+  // URL解析与构建
+  OddsPortalURLParser,
   
   // 工具函数
   findValuesByKey,
