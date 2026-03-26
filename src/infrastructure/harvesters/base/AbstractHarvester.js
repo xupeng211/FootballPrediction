@@ -42,6 +42,10 @@ const { HarvesterRetryPolicy } = require('../components/HarvesterRetryPolicy');
 const { HarvesterContextPool } = require('../components/HarvesterContextPool');
 const { HarvesterTelemetry } = require('../components/HarvesterTelemetry');
 
+const activeHarvesterInstances = new Set();
+let globalSigintListener = null;
+let globalSigtermListener = null;
+
 class AbstractHarvester {
     constructor(config = {}) {
         this.config = {
@@ -58,6 +62,7 @@ class AbstractHarvester {
             targetSuccessRate: parseFloat(process.env.TARGET_SUCCESS_RATE) || config.targetSuccessRate || 1.0,
             verboseLogging: process.env.VERBOSE_LOGGING === 'true' || config.verboseLogging || false,
             shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS) || config.shutdownTimeoutMs || 30000,
+            harvestTimeoutMs: parseInt(process.env.HARVEST_TIMEOUT_MS) || config.harvestTimeoutMs || 120000,
             skipZombieCleanup: config.skipZombieCleanup || false,
             ...config,
         };
@@ -191,6 +196,7 @@ class AbstractHarvester {
 
     async cleanup() {
         await this._cleanupContextPool();
+        this._teardownGracefulShutdown();
 
         if (this.browserFactory) {
             await this.browserFactory.close();
@@ -203,45 +209,62 @@ class AbstractHarvester {
         console.log('🛹 资源已清理');
     }
     _setupGracefulShutdown() {
-        const handler = async signal => {
-            if (this.isShuttingDown) {
-                logger.warn('🔄 已在停机中，请稍候...');
-                return;
-            }
+        activeHarvesterInstances.add(this);
 
-            this.isShuttingDown = true;
-            const activeCount = this.workerPool ? this.workerPool.getActiveCount() : 0;
-            logger.logGracefulShutdown(signal, activeCount);
-
-            const timeoutId = setTimeout(() => {
-                logger.warn(`⏰ 停机超时 (${this.config.shutdownTimeoutMs}ms)，强制退出`);
-                process.exit(1);
-            }, this.config.shutdownTimeoutMs);
-
-            try {
-                if (activeCount > 0) {
-                    logger.info(`⏳ 等待 ${activeCount} 个活跃 Worker 完成...`);
-                    await Promise.race([this._waitForWorkers(), this._delay(this.config.shutdownTimeoutMs - 1000)]);
+        if (!globalSigintListener) {
+            globalSigintListener = () => {
+                for (const instance of Array.from(activeHarvesterInstances)) {
+                    instance._handleGracefulShutdown('SIGINT');
                 }
+            };
+            process.on('SIGINT', globalSigintListener);
+        }
 
-                await this._cleanup();
+        if (!globalSigtermListener) {
+            globalSigtermListener = () => {
+                for (const instance of Array.from(activeHarvesterInstances)) {
+                    instance._handleGracefulShutdown('SIGTERM');
+                }
+            };
+            process.on('SIGTERM', globalSigtermListener);
+        }
+    }
 
-                clearTimeout(timeoutId);
-                logger.logShutdownComplete(Date.now() - (this.shutdownStartTime || Date.now()), {
-                    processed: this.stats.processed,
-                    success: this.stats.success,
-                    failed: this.stats.failed,
-                });
+    async _handleGracefulShutdown(signal) {
+        if (this.isShuttingDown) {
+            logger.warn('🔄 已在停机中，请稍候...');
+            return;
+        }
 
-                process.exit(0);
-            } catch (err) {
-                logger.error('停机过程中发生错误', err);
-                process.exit(1);
+        this.isShuttingDown = true;
+        const activeCount = this.workerPool ? this.workerPool.getActiveCount() : 0;
+        logger.logGracefulShutdown(signal, activeCount);
+
+        const timeoutId = setTimeout(() => {
+            logger.warn(`⏰ 停机超时 (${this.config.shutdownTimeoutMs}ms)，强制退出`);
+            process.exit(1);
+        }, this.config.shutdownTimeoutMs);
+
+        try {
+            if (activeCount > 0) {
+                logger.info(`⏳ 等待 ${activeCount} 个活跃 Worker 完成...`);
+                await Promise.race([this._waitForWorkers(), this._delay(this.config.shutdownTimeoutMs - 1000)]);
             }
-        };
 
-        process.on('SIGINT', () => handler('SIGINT'));
-        process.on('SIGTERM', () => handler('SIGTERM'));
+            await this._cleanup();
+
+            clearTimeout(timeoutId);
+            logger.logShutdownComplete(Date.now() - (this.shutdownStartTime || Date.now()), {
+                processed: this.stats.processed,
+                success: this.stats.success,
+                failed: this.stats.failed,
+            });
+
+            process.exit(0);
+        } catch (err) {
+            logger.error('停机过程中发生错误', err);
+            process.exit(1);
+        }
     }
 
     async _waitForWorkers() {
@@ -253,6 +276,8 @@ class AbstractHarvester {
     }
 
     async _cleanup() {
+        this._teardownGracefulShutdown();
+
         if (this.browserFactory) {
             try {
                 await this.browserFactory.close();
@@ -552,6 +577,20 @@ class AbstractHarvester {
 
     _delay(ms) {
         return new Promise(resolve => { setTimeout(resolve, ms); });
+    }
+
+    _teardownGracefulShutdown() {
+        activeHarvesterInstances.delete(this);
+
+        if (activeHarvesterInstances.size === 0 && globalSigintListener) {
+            process.removeListener('SIGINT', globalSigintListener);
+            globalSigintListener = null;
+        }
+
+        if (activeHarvesterInstances.size === 0 && globalSigtermListener) {
+            process.removeListener('SIGTERM', globalSigtermListener);
+            globalSigtermListener = null;
+        }
     }
 
     _randomInRange(min, max) {

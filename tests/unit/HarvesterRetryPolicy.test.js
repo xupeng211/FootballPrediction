@@ -194,5 +194,31 @@ describe('HarvesterRetryPolicy 单元测试', () => {
             assert.ok(harvester.delayCalls.includes(30000));
             assert.deepStrictEqual(harvester.delayCalls, [2000, 4000, 30000, 8000]);
         });
+
+        it('应在单场执行超时后触发 watchdog 并释放并发位', async () => {
+            const policy = new HarvesterRetryPolicy();
+            const closedContexts = [];
+            const harvester = createHarvesterMock({
+                config: { maxWorkers: 2, harvestTimeoutMs: 20 },
+                async _closeWorkerContext(workerId, reason) {
+                    closedContexts.push({ workerId, reason });
+                    return true;
+                },
+                async _harvestSingleMatch() {
+                    return new Promise(() => {});
+                }
+            });
+
+            const result = await policy.executeWithRetry(
+                harvester,
+                { match_id: 'm-timeout', home_team: 'A', away_team: 'B' },
+                0,
+                1
+            );
+
+            assert.strictEqual(result.success, false);
+            assert.match(result.error, /WATCHDOG_TIMEOUT/);
+            assert.deepStrictEqual(closedContexts, [{ workerId: 1, reason: 'WATCHDOG_TIMEOUT' }]);
+        });
     });
 });
