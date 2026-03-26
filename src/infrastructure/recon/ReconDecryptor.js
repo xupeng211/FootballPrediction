@@ -22,6 +22,7 @@
 class ReconDecryptor {
   constructor(options = {}) {
     this.logger = options.logger || console;
+    this.traceId = options.traceId || 'no-trace';
     this.decryptFn = null;
     this.algorithmVersion = null;
   }
@@ -264,7 +265,8 @@ class ReconDecryptor {
       const result = await this.decryptFn(cleanedData);
       return result;
     } catch (error) {
-      this.logger.error('decryption_failed', { 
+      this.logger.error('[ReconDecryptor] 解密失败', { 
+        traceId: this.traceId,
         error: error.message,
         algorithmVersion: this.algorithmVersion 
       });
