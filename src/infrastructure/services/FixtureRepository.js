@@ -384,15 +384,18 @@ class FixtureRepository {
     };
 
     for (let i = 0; i < fixtures.length; i += this.batchSize) {
-      const batch = fixtures.slice(i, i + this.batchSize).map((fixture) => ({
-        ...fixture,
-        season: Normalizer.normalizeSeason(fixture.season),
-        home_team: Normalizer.normalizeTeamName(fixture.home_team),
-        away_team: Normalizer.normalizeTeamName(fixture.away_team),
-        status: Normalizer.normalizeStatus(fixture.status),
-        is_finished: fixture.is_finished ?? Normalizer.normalizeStatus(fixture.status) === 'finished',
-        data_source: fixture.data_source || 'FotMob'
-      }));
+      const batch = fixtures
+        .slice(i, i + this.batchSize)
+        .map((fixture) => ({
+          ...this._sanitizeFixtureForPersistence(fixture),
+          season: Normalizer.normalizeSeason(fixture.season),
+          home_team: this._truncate(Normalizer.normalizeTeamName(fixture.home_team), 200),
+          away_team: this._truncate(Normalizer.normalizeTeamName(fixture.away_team), 200),
+          status: this._truncate(Normalizer.normalizeStatus(fixture.status), 50),
+          is_finished: fixture.is_finished ?? Normalizer.normalizeStatus(fixture.status) === 'finished',
+          data_source: this._truncate(fixture.data_source || 'FotMob', 50)
+        }))
+        .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
 
       try {
         const batchResult = await this._persistBatch(batch);
@@ -454,8 +457,8 @@ class FixtureRepository {
             home_team = EXCLUDED.home_team,
             away_team = EXCLUDED.away_team,
             match_date = EXCLUDED.match_date,
-            home_score = EXCLUDED.home_score,
-            away_score = EXCLUDED.away_score,
+            home_score = COALESCE(matches.home_score, EXCLUDED.home_score),
+            away_score = COALESCE(matches.away_score, EXCLUDED.away_score),
             status = EXCLUDED.status,
             is_finished = EXCLUDED.is_finished,
             data_source = EXCLUDED.data_source,
@@ -471,6 +474,29 @@ class FixtureRepository {
         client.release();
       }
     }, 'persistFixtures');
+  }
+
+  _sanitizeFixtureForPersistence(fixture) {
+    return {
+      ...fixture,
+      match_id: this._truncate(String(fixture.match_id || ''), 50),
+      external_id: this._truncate(String(fixture.external_id || ''), 100),
+      league_name: this._truncate(String(fixture.league_name || ''), 100),
+      match_date: this._safeDate(fixture.match_date)
+    };
+  }
+
+  _truncate(value, maxLength) {
+    return String(value || '').slice(0, maxLength);
+  }
+
+  _safeDate(value) {
+    if (!value) {
+      return null;
+    }
+
+    const date = value instanceof Date ? value : new Date(value);
+    return Number.isNaN(date.getTime()) ? null : date;
   }
 
   /**

@@ -1,0 +1,11 @@
+{
+  "version": "test-invalid",
+  "leagues": {
+    "BROKEN": {
+      "name": "Broken League",
+      "country": "nowhere",
+      "slug": "broken-league"
+    }
+  },
+  "team_mappings": {}
+}

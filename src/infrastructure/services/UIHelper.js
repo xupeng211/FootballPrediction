@@ -58,12 +58,14 @@ class UIHelper {
   generateReport(stats, startTime) {
     const duration = Date.now() - startTime;
     const durationSec = (duration / 1000).toFixed(1);
+    const criticalWarnings = stats.criticalWarnings || [];
 
     const report = {
       total: stats.total,
       inserted: stats.inserted,
       updated: stats.updated,
       failed: stats.failed,
+      criticalWarnings,
       duration: `${durationSec}s`,
       rate: stats.total > 0 ? (stats.total / (duration / 60000)).toFixed(1) : '0.0'
     };
@@ -75,9 +77,18 @@ class UIHelper {
     this.logger.banner(`║  ✅ 新增入库: ${report.inserted.toString().padStart(5)} 场                                  ║`);
     this.logger.banner(`║  🔄 更新现有: ${report.updated.toString().padStart(5)} 场                                  ║`);
     this.logger.banner(`║  ❌ 失败:     ${report.failed.toString().padStart(5)} 场                                  ║`);
+    if (criticalWarnings.length > 0) {
+      this.logger.banner(`║  🚨 严重告警: ${criticalWarnings.length.toString().padStart(4)} 条                                  ║`);
+    }
     this.logger.banner('╠══════════════════════════════════════════════════════════════════╣');
     this.logger.banner(`║  ⏱️  耗时: ${durationSec.padStart(6)}s | 速率: ${report.rate} 场/min                    ║`);
     this.logger.banner('╚══════════════════════════════════════════════════════════════════╝');
+
+    for (const warning of criticalWarnings) {
+      this.logger.warn(
+        `[CRITICAL WARN] ${warning.name} ${warning.season}: 实得 ${warning.actual} 场，预期 ${warning.expected} 场，缺失 ${warning.missing} 场`
+      );
+    }
 
     return report;
   }
@@ -129,6 +140,21 @@ class UIHelper {
    */
   printParsedFixtures(workerId, name, count) {
     this.logger.info(`[${workerId}] 📋 ${name}: 解析出 ${count} 场有效比赛`);
+  }
+
+  /**
+   * 打印关键缺数告警
+   * @param {string} workerId - Worker ID
+   * @param {string} name - 联赛名称
+   * @param {string} season - 赛季
+   * @param {number} actual - 实际场次
+   * @param {number} expected - 预期场次
+   */
+  printCriticalWarn(workerId, name, season, actual, expected) {
+    const missing = expected - actual;
+    this.logger.warn(
+      `[${workerId}] [CRITICAL WARN] ${name} ${season}: 实得 ${actual} 场，预期 ${expected} 场，缺失 ${missing} 场`
+    );
   }
 
   /**

@@ -217,7 +217,7 @@ async function backfillL2Data(l1Match, oddsData) {
 ### 7.1 相关文件
 
 - `src/core/validation/MatchValidator.js` - 验证逻辑
-- `src/infrastructure/FixtureSeeder.js` - 数据播种器
+- `src/infrastructure/services/DiscoveryService.js` - 数据播种协调器
 - `scripts/ops/seed_fixtures.js` - 命令行入口
 - `config/season_windows.json` - 赛季窗口配置
 

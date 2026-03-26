@@ -32,7 +32,7 @@
 
 ### 第一层：应用层防护 (Node.js)
 
-在 `FixtureSeeder.js` 中实现：
+在 L1 发现层中实现：
 
 1. **`normalizeSeason()` 方法**: 强制转换所有赛季格式为标准 `YYYY/YYYY` 格式
 2. **`determineStatus()` 方法**: 强制返回小写状态字符串
@@ -78,7 +78,7 @@
 
 ### 缓解措施
 
-- 所有数据插入**必须通过** `FixtureSeeder` 或标准化工具
+- 所有数据插入**必须通过** `DiscoveryService + FixtureRepository.persist()` 或标准化工具
 - 提供了 `normalizeSeason()` 工具方法处理格式转换
 - 数据库迁移脚本已版本化归档 (`database/migrations/`)
 
@@ -92,7 +92,7 @@
 
 ## 影响范围 (Impact)
 
-- **直接影响**: `matches` 表结构和 `FixtureSeeder.js` 逻辑
+- **直接影响**: `matches` 表结构和 L1 发现持久化逻辑
 - **间接受益**: L2 收割层、L3 特征层、预测模型层
 - **运维影响**: 数据库写入操作需遵守新规范
 
@@ -100,7 +100,7 @@
 
 - [L1_DISCOVERY_ENGINE.md](/src/infrastructure/L1_DISCOVERY_ENGINE.md) - V6.5 章节
 - [V6.5__hardened_matches_schema.sql](/database/migrations/V6.5__hardened_matches_schema.sql) - 数据库迁移脚本
-- [FixtureSeeder.test.js](/tests/unit/FixtureSeeder.test.js) - V6.5 单元测试
+- [DiscoveryService.test.js](/tests/unit/DiscoveryService.test.js) - 当前 L1 单元测试入口
 
 ## 决策记录 (Decision Log)
 

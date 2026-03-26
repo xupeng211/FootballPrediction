@@ -49,6 +49,9 @@ class NetworkInterceptor {
     
     this.capturedApis = new Map();
     this.isSetup = false;
+    this.page = null;
+    this.boundRequestHandler = null;
+    this.boundResponseHandler = null;
   }
 
   /**
@@ -107,16 +110,19 @@ class NetworkInterceptor {
     if (!page || this.isSetup) return;
     
     this.logger.info('[NetworkInterceptor] 📡 网络监听已启动');
+    this.page = page;
+    this.boundRequestHandler = (request) => {
+      this.handleRequest(request);
+    };
+    this.boundResponseHandler = async (response) => {
+      await this.handleResponse(response);
+    };
     
     // 监听所有请求
-    page.on('request', (request) => {
-      this.handleRequest(request);
-    });
+    page.on('request', this.boundRequestHandler);
     
     // 监听响应
-    page.on('response', async (response) => {
-      await this.handleResponse(response);
-    });
+    page.on('response', this.boundResponseHandler);
     
     this.isSetup = true;
   }
@@ -235,8 +241,17 @@ class NetworkInterceptor {
    * 重置拦截器状态
    */
   reset() {
+    if (this.page && this.boundRequestHandler) {
+      this.page.off('request', this.boundRequestHandler);
+    }
+    if (this.page && this.boundResponseHandler) {
+      this.page.off('response', this.boundResponseHandler);
+    }
     this.clear();
     this.isSetup = false;
+    this.page = null;
+    this.boundRequestHandler = null;
+    this.boundResponseHandler = null;
   }
 }
 
