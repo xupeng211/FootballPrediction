@@ -288,7 +288,28 @@ class ReconDecryptor {
       .replace(/\\n/g, '')
       .replace(/\\r/g, '')
       .replace(/\\t/g, '')
+      .replace(/\\/g, '')
       .trim();
+
+    // 如果数据是 JSON 字符串格式（被引号包裹），尝试解析
+    if (cleaned.startsWith('"') && cleaned.endsWith('"')) {
+      try {
+        cleaned = JSON.parse(cleaned);
+      } catch {
+        // 解析失败则保留原样
+      }
+    }
+
+    // 移除所有非 Base64 字符（保留 Base64 合法字符: A-Z, a-z, 0-9, +, /, =）
+    // 但首先检查是否是有效的 Base64
+    const base64Pattern = /^[A-Za-z0-9+/=]+$/;
+    if (!base64Pattern.test(cleaned)) {
+      // 尝试提取 Base64 部分
+      const base64Match = cleaned.match(/([A-Za-z0-9+/]{100,}={0,2})/);
+      if (base64Match) {
+        cleaned = base64Match[1];
+      }
+    }
 
     return cleaned;
   }
