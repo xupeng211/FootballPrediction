@@ -17,12 +17,17 @@ const { OddsPortalHarvester } = require('../../src/infrastructure/harvesters/Odd
 const fs = require('fs').promises;
 const path = require('path');
 
+const shouldRunLiveSuite = process.env.RUN_LIVE_ODDSPORTAL_TESTS === 'true';
+
 // 配置
 const CONFIG = {
   SESSION_FILE: '/app/data/sessions/auth_gold.json',
   TEST_URL: 'https://www.oddsportal.com/football/england/premier-league/arsenal-bournemouth-jcHwYvNG/'
 };
 
+if (!shouldRunLiveSuite) {
+  it.skip('TITAN V6.0 - 黄金会话注入验证测试', { skip: '设置 RUN_LIVE_ODDSPORTAL_TESTS=true 后执行真实黄金会话验证' }, () => {});
+} else {
 describe('TITAN V6.0 - 黄金会话注入验证测试', () => {
   let harvester;
   let sessionData;
@@ -741,3 +746,4 @@ describe('TITAN V6.0 - 黄金会话注入验证测试', () => {
     });
   });
 });
+}

@@ -180,15 +180,17 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
             assert.strictEqual(smelter.config.delayMs, 0, '应使用自定义延迟');
         });
 
-        it('应该在未初始化时拒绝操作', async () => {
+        it('数据库依赖不可用时应向上抛错', async () => {
             smelter = new FeatureSmelter({ enableStructuredLogging: false });
-            try {
-                await smelter.run();
-                assert.fail('应该抛出未初始化错误');
-            } catch (error) {
-                assert.ok(error.message.includes('未初始化') || error.message.includes('initialize'), 
-                    '应提示未初始化');
-            }
+            smelter.getPendingMatches = async () => {
+                throw new Error('database unavailable');
+            };
+
+            await assert.rejects(
+                smelter.run(),
+                /database unavailable/
+            );
+            assert.strictEqual(smelter.isInitialized, false, '失败后不应伪造初始化状态');
         });
     });
 

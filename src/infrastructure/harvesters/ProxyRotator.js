@@ -45,13 +45,14 @@ class ProxyRotator {
     this.cooldownMs = options.cooldownMs || 60000;
     this.maxFailures = options.maxFailures || 3;
 
-    // 获取22端口本地代理池
+    // 获取22端口本地代理池 (Docker 环境使用 host.docker.internal 访问宿主机代理)
+    const proxyHost = process.env.PROXY_HOST || 'host.docker.internal';
     this.localProxies = PROXY.getAllPorts().map((port, index) => ({
       id: index,
       port,
-      host: '127.0.0.1',
-      url: `http://127.0.0.1:${port}`,
-      server: `http://127.0.0.1:${port}`,
+      host: proxyHost,
+      url: `http://${proxyHost}:${port}`,
+      server: `http://${proxyHost}:${port}`,
       type: 'datacenter',
       healthy: true,
       failCount: 0,

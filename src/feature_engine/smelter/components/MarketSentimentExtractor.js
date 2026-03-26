@@ -35,9 +35,31 @@ class MarketSentimentExtractor extends BaseExtractor {
    * @param {Object} config - 配置对象
    */
   constructor(config = {}) {
-    super('MarketSentimentExtractor', { ...DEFAULT_CONFIG, ...config });
+    super({
+      name: 'MarketSentimentExtractor',
+      version: 'V6.0.0',
+      config: { ...DEFAULT_CONFIG, ...config }
+    });
     this.rapidfuzz = null;
     this._initializeEngine();
+  }
+
+  getDefaultConfig() {
+    return { ...DEFAULT_CONFIG };
+  }
+
+  getFeatureNames() {
+    return [
+      'market_sentiment',
+      'odds_drop',
+      'market_margin',
+      'odds_efficiency_score',
+      'market_implied_bias',
+      'bookie_consensus_index',
+      'market_volatility',
+      'money_flow_index',
+      'contrarian_signal'
+    ];
   }
 
   /**
@@ -279,7 +301,13 @@ class MarketSentimentExtractor extends BaseExtractor {
    * @private
    */
   _calculateConsensusIndex(oddsData) {
-    return Number((0.7 + Math.random() * 0.25).toFixed(4));
+    const { openingOdds = this.config.defaultOdds, closingOdds = this.config.defaultOdds } = oddsData;
+    const relativeMoves = openingOdds.map((opening, index) => {
+      const closing = closingOdds[index] || opening;
+      return Math.abs(closing - opening) / opening;
+    });
+    const avgMove = relativeMoves.reduce((sum, value) => sum + value, 0) / relativeMoves.length;
+    return Number(Math.max(0, Math.min(1, 1 - avgMove * 2)).toFixed(4));
   }
 
   /**
@@ -297,7 +325,10 @@ class MarketSentimentExtractor extends BaseExtractor {
    * @private
    */
   _calculateMoneyFlow(oddsData) {
-    return Number((Math.random() * 2 - 1).toFixed(4));
+    const { openingOdds = this.config.defaultOdds, closingOdds = this.config.defaultOdds } = oddsData;
+    const homeFlow = (1 / closingOdds[0]) - (1 / openingOdds[0]);
+    const awayFlow = (1 / closingOdds[2]) - (1 / openingOdds[2]);
+    return Number(Math.max(-1, Math.min(1, homeFlow - awayFlow)).toFixed(4));
   }
 
   /**
@@ -305,7 +336,9 @@ class MarketSentimentExtractor extends BaseExtractor {
    * @private
    */
   _calculateContrarianSignal(oddsData) {
-    return Number(Math.random().toFixed(4));
+    const consensus = this._calculateConsensusIndex(oddsData);
+    const moneyFlow = Math.abs(this._calculateMoneyFlow(oddsData));
+    return Number(Math.max(0, Math.min(1, moneyFlow * (1 - consensus))).toFixed(4));
   }
 
   /**

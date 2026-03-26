@@ -1,701 +1,502 @@
-#!/usr/bin/env node
 /**
- * TITAN V6.0 RECON SCANNER - 历史赛季测绘扫描器
- * =================================================
- * 
- * 支持扫描指定赛季的历史结果页，提取带Hash的真实比赛URL
- * 
+ * TITAN V11.0 RECON SCANNER - Clean Sweep Edition
+ * ================================================
+ *
+ * V11.0 变更:
+ * - 移除所有具体扫描算法（移至 ReconEngine.js）
+ * - 移除硬编码 season（'2025-2026' Bug 修复）
+ * - 仅保留 CLI 入口和任务编排
+ * - 全链路 season 动态透传
+ *
  * 用法:
- *   node scripts/ops/recon_scanner.js --season 2023-2024 --league EPL
- *   node scripts/ops/recon_scanner.js --season 2022-2023 --all-leagues
- * 
+ *   node scripts/ops/recon_scanner.js --season 2024-2025 --league BUNDESLIGA
+ *   node scripts/ops/recon_scanner.js --season 2024-2025 --all-leagues
+ *
  * @module scripts/ops/recon_scanner
- * @version V6.0-RECON-HISTORICAL
- * @date 2026-03-17
+ * @version V11.0-CLEAN-SWEEP
+ * @date 2026-03-25
  */
 
 'use strict';
 
-const { chromium } = require('playwright');
-const { Pool } = require('pg');
 const fs = require('fs');
 const path = require('path');
+const { Pool } = require('pg');
+
+// 工业级组件导入
+const { ReconNavigator, ReconParser, ReconStitcher, ReconMetrics, ReconGuardian, ReconHealthServer } = require('../../src/infrastructure/recon');
+const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
+const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
 
-// 数据库配置
-const DB_CONFIG = {
-  host: process.env.DB_HOST || '127.0.0.1',
-  port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'football_db',
-  user: process.env.DB_USER || 'football_user',
-  password: process.env.DB_PASSWORD || 'football_pass',
-};
-
-// 联赛配置 - 支持赛季参数化
-const LEAGUE_CONFIGS = {
-  'EPL': {
-    name: 'Premier League',
-    country: 'england',
-    slug: 'premier-league',
-    league_id: 47
-  },
-  'LALIGA': {
-    name: 'La Liga',
-    country: 'spain',
-    slug: 'laliga',
-    league_id: 87
-  },
-  'BUNDESLIGA': {
-    name: 'Bundesliga',
-    country: 'germany',
-    slug: 'bundesliga',
-    league_id: 54
-  },
-  'SERIEA': {
-    name: 'Serie A',
-    country: 'italy',
-    slug: 'serie-a',
-    league_id: 98
-  },
-  'LIGUE1': {
-    name: 'Ligue 1',
-    country: 'france',
-    slug: 'ligue-1',
-    league_id: 53
-  }
-};
+// 加载配置
+const RECON_CONFIG = loadConfig();
 
 /**
- * 构建历史结果页 URL
- * @param {Object} leagueConfig - 联赛配置
- * @param {String} season - 赛季格式 2023-2024
+ * 加载配置文件
  */
-function buildResultsUrl(leagueConfig, season) {
-  // OddsPortal 历史结果页格式:
-  // https://www.oddsportal.com/football/england/premier-league-2023-2024/results/
-  const [startYear, endYear] = season.split('-');
-  const url = `https://www.oddsportal.com/football/${leagueConfig.country}/${leagueConfig.slug}-${startYear}-${endYear}/results/#/`;
-  return url;
-}
-
-/**
- * 侦察单个联赛的历史结果页
- * @param {Object} page - Playwright page
- * @param {Object} leagueConfig - 联赛配置
- * @param {String} season - 赛季
- */
-async function reconLeagueSeason(page, leagueConfig, season) {
-  const resultsUrl = buildResultsUrl(leagueConfig, season);
-  console.log(`\n🔍 [RECON] 侦察 ${leagueConfig.name} ${season}赛季...`);
-  console.log(`   URL: ${resultsUrl}`);
-  
-  const matchUrls = [];
-  
+function loadConfig() {
+  const configPath = path.join(__dirname, '../../config/recon_config.json');
   try {
-    // 访问历史结果页
-    await page.goto(resultsUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
-    await page.waitForTimeout(5000);
-    
-    // 等待赛季选择器加载
-    try {
-      await page.waitForSelector('div[eventtreeid], div[contains(@class, "event")], a[href*="/football/"]', { timeout: 10000 });
-    } catch (e) {
-      console.log('   ⚠️  等待选择器超时，继续执行...');
-    }
-    
-    // 多次滚动加载更多比赛
-    console.log('   📜 滚动加载历史比赛...');
-    for (let i = 0; i < 10; i++) {
-      await page.evaluate(() => window.scrollBy(0, 1000));
-      await page.waitForTimeout(2000);
-      
-      // 每3次滚动检查一次是否加载了更多内容
-      if (i % 3 === 0) {
-        const currentCount = await page.evaluate(() => 
-          document.querySelectorAll('a[href*="/football/"]').length
-        );
-        console.log(`      滚动 ${i + 1}/10 - 发现 ${currentCount} 个链接`);
-      }
-    }
-    
-    // 提取所有比赛URL（从历史结果页）
-    const urls = await page.evaluate((leagueName) => {
-      const links = [];
-      
-      // 尝试多种选择器
-      const selectors = [
-        'a[href*="/football/"]',
-        '[eventtreeid] a',
-        '.event a',
-        'table a',
-        '[class*="event"] a'
-      ];
-      
-      let anchors = [];
-      for (const selector of selectors) {
-        anchors = document.querySelectorAll(selector);
-        if (anchors.length > 0) break;
-      }
-      
-      anchors.forEach(a => {
-        const href = a.getAttribute('href') || '';
-        
-        // 匹配格式: /football/{country}/{league}-{year-year}/{team1}-{team2}-{hash}/
-        // 或: /football/{country}/{league}/{team1}-{team2}-{hash}/
-        const match = href.match(/\/football\/[^\/]+\/[^\/]+\/([^\/]+)-([a-zA-Z0-9]{8})\/$/);
-        
-        if (match) {
-          const fullUrl = href.startsWith('http') ? href : 'https://www.oddsportal.com' + href;
-          const slug = match[1]; // e.g., "fulham-burnley"
-          const hash = match[2]; // e.g., "8EamNN8b"
-          
-          // 从页面文本提取队名和日期
-          const row = a.closest('tr, div[eventtreeid], [class*="event"]');
-          const text = row ? row.textContent : a.textContent;
-          
-          links.push({
-            url: fullUrl,
-            slug: slug,
-            hash: hash,
-            text: text?.trim() || '',
-            league: leagueName
-          });
-        }
-      });
-      
-      return links;
-    }, leagueConfig.name);
-    
-    // 去重
-    const seen = new Set();
-    urls.forEach(item => {
-      if (!seen.has(item.url)) {
-        seen.add(item.url);
-        matchUrls.push(item);
-      }
-    });
-    
-    console.log(`   ✅ 侦察到 ${matchUrls.length} 个历史比赛URL`);
-    
-    // 显示样本
-    if (matchUrls.length > 0) {
-      console.log('   📋 URL样本:');
-      matchUrls.slice(0, 3).forEach((item, i) => {
-        console.log(`      [${i+1}] ${item.slug} | Hash: ${item.hash}`);
-      });
-    }
-    
+    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    console.log('✅ 配置加载成功:', config.version);
+    return config;
   } catch (e) {
-    console.log(`   ❌ 侦察失败: ${e.message}`);
+    console.warn('⚠️  配置文件加载失败，使用默认配置');
+    return getDefaultConfig();
   }
-  
-  return matchUrls;
 }
 
 /**
- * 英超队名映射表: OddsPortal 格式 -> 数据库标准格式
- * 【关键】必须与 matches 表中的队名完全一致！
+ * 默认配置
  */
-const TEAM_NAME_MAPPINGS = {
-  // Manchester teams
-  'man united': 'Manchester United',
-  'man utd': 'Manchester United',
-  'manchester united': 'Manchester United',
-  'man city': 'Manchester City',
-  'manchester city': 'Manchester City',
-  
-  // Newcastle
-  'newcastle utd': 'Newcastle United',
-  'newcastle united': 'Newcastle United',
-  'newcastle': 'Newcastle United',
-  
-  // Wolves
-  'wolverhampton': 'Wolverhampton Wanderers',
-  'wolves': 'Wolverhampton Wanderers',
-  'wolverhampton wanderers': 'Wolverhampton Wanderers',
-  
-  // Tottenham
-  'tottenham': 'Tottenham Hotspur',
-  'spurs': 'Tottenham Hotspur',
-  'tottenham hotspur': 'Tottenham Hotspur',
-  
-  // West Ham
-  'west ham': 'West Ham United',
-  'west ham utd': 'West Ham United',
-  'west ham united': 'West Ham United',
-  
-  // Nottingham Forest
-  'nottingham': 'Nottingham Forest',
-  'nottingham forest': 'Nottingham Forest',
-  'n forest': 'Nottingham Forest',
-  
-  // Brighton (注意数据库中的格式)
-  'brighton': 'Brighton & Hove Albion',
-  'brighton hove albion': 'Brighton & Hove Albion',
-  
-  // Sheffield United
-  'sheffield utd': 'Sheffield United',
-  'sheffield united': 'Sheffield United',
-  
-  // Luton (数据库中是 Luton)
-  'luton': 'Luton',
-  'luton town': 'Luton',
-  
-  // Bournemouth (数据库中是 AFC Bournemouth)
-  'bournemouth': 'AFC Bournemouth',
-  'afc bournemouth': 'AFC Bournemouth',
-  
-  // Standard names (数据库中就是这些)
-  'arsenal': 'Arsenal',
-  'aston villa': 'Aston Villa',
-  'brentford': 'Brentford',
-  'burnley': 'Burnley',
-  'chelsea': 'Chelsea',
-  'crystal palace': 'Crystal Palace',
-  'everton': 'Everton',
-  'fulham': 'Fulham',
-  'liverpool': 'Liverpool'
-};
-
-/**
- * 标准化队名 - 将 OddsPortal slug 转换为数据库标准格式
- * 例如: "manchester-united" -> "Manchester United"
- */
-function normalizeTeamName(slug) {
-  if (!slug) return '';
-  
-  // 清理格式
-  const normalized = slug
-    .toLowerCase()
-    .replace(/-/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-  
-  // 查找映射表
-  if (TEAM_NAME_MAPPINGS[normalized]) {
-    return TEAM_NAME_MAPPINGS[normalized];
-  }
-  
-  // 无映射时，首字母大写
-  return normalized
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
-}
-
-/**
- * 五大联赛常见队名词典 (OddsPortal slug 格式)
- * 用于贪婪匹配解析形如 "brentford-newcastle-utd" 的 slug
- */
-const COMMON_TEAM_SLUGS = [
-  // Premier League
-  'arsenal', 'aston-villa', 'bournemouth', 'brentford', 'brighton',
-  'burnley', 'chelsea', 'crystal-palace', 'everton', 'fulham',
-  'liverpool', 'luton', 'man-city', 'man-united', 'newcastle-utd',
-  'nottingham-forest', 'sheffield-utd', 'tottenham', 'west-ham', 'wolves',
-  // La Liga
-  'alaves', 'almeria', 'athletic-bilbao', 'atletico-madrid', 'barcelona',
-  'cadiz', 'celta-vigo', 'getafe', 'girona', 'granada',
-  'las-palmas', 'mallorca', 'osasuna', 'rayo-vallecano', 'real-betis',
-  'real-madrid', 'real-sociedad', 'sevilla', 'valencia', 'villarreal',
-  // Bundesliga
-  'augsburg', 'bayer-leverkusen', 'bayern-munich', 'bochum', 'darmstadt',
-  'dortmund', 'eintracht-frankfurt', 'freiburg', 'heidenheim', 'hoffenheim',
-  'koln', 'mainz', 'monchengladbach', 'rb-leipzig', 'stuttgart',
-  'union-berlin', 'werder-bremen', 'wolfsburg',
-  // Serie A
-  'atalanta', 'bologna', 'cagliari', 'empoli', 'fiorentina',
-  'frosinone', 'genoa', 'inter', 'juventus', 'lazio',
-  'lecce', 'milan', 'monza', 'napoli', 'roma',
-  'salernitana', 'sassuolo', 'torino', 'udinese', 'verona',
-  // Ligue 1
-  'brest', 'clermont', 'le-havre', 'lens', 'lille',
-  'lorient', 'lyon', 'marseille', 'metz', 'monaco',
-  'montpellier', 'nantes', 'nice', 'psg', 'reims',
-  'rennes', 'strasbourg', 'toulouse'
-];
-
-/**
- * 从 OddsPortal URL slug 提取队名
- * 支持格式: "arsenal-everton" / "manchester-united-chelsea" / "brentford-newcastle-utd"
- * 算法: 贪婪匹配 - 从词典中找最长匹配作为主队，剩余部分作为客队
- */
-function extractTeamsFromSlug(slug) {
-  if (!slug) return { homeTeam: 'Unknown', awayTeam: 'Unknown' };
-  
-  // 先尝试 -vs- 格式 (旧格式兼容)
-  const vsMatch = slug.match(/^(.+?)-vs-(.+)$/);
-  if (vsMatch) {
-    return {
-      homeTeam: normalizeTeamName(vsMatch[1]),
-      awayTeam: normalizeTeamName(vsMatch[2])
-    };
-  }
-  
-  // 贪婪匹配算法: 从 slug 开头匹配最长的可能队名
-  const parts = slug.split('-');
-  let bestHomeMatch = null;
-  let bestHomeLen = 0;
-  
-  // 遍历所有可能的队名，找最长匹配
-  for (const teamSlug of COMMON_TEAM_SLUGS) {
-    const teamParts = teamSlug.split('-');
-    
-    // 检查 slug 是否以这个队名开头
-    if (parts.length >= teamParts.length) {
-      const slugPrefix = parts.slice(0, teamParts.length).join('-');
-      if (slugPrefix === teamSlug && teamParts.length > bestHomeLen) {
-        bestHomeMatch = teamSlug;
-        bestHomeLen = teamParts.length;
-      }
-    }
-  }
-  
-  if (bestHomeMatch) {
-    // 提取客队 (剩余部分)
-    const awayParts = parts.slice(bestHomeLen);
-    const awaySlug = awayParts.join('-');
-    
-    if (awayParts.length > 0) {
-      return {
-        homeTeam: normalizeTeamName(bestHomeMatch),
-        awayTeam: normalizeTeamName(awaySlug)
-      };
-    }
-  }
-  
-  // 备用方案: 尝试 50/50 分割 (针对未知队名)
-  const mid = Math.ceil(parts.length / 2);
-  const homeGuess = parts.slice(0, mid).join('-');
-  const awayGuess = parts.slice(mid).join('-');
-  
+function getDefaultConfig() {
   return {
-    homeTeam: normalizeTeamName(homeGuess),
-    awayTeam: normalizeTeamName(awayGuess)
+    version: 'V11.0-DEFAULT',
+    oddsportal: { base_url: 'https://www.oddsportal.com' },
+    matching: { fuzzy_threshold: 0.85 },
+    logging: { component: 'ReconScanner', enable_structured: false }
   };
 }
 
 /**
- * 模糊匹配队名 - 计算相似度
+ * ReconScanner - 侦察编排器 (V11.0 精简版)
  */
-function calculateSimilarity(name1, name2) {
-  const n1 = name1.toLowerCase().trim();
-  const n2 = name2.toLowerCase().trim();
-  
-  if (n1 === n2) return 1.0;
-  if (n1.includes(n2) || n2.includes(n1)) return 0.9;
-  
-  // 简单的词重叠计算
-  const words1 = new Set(n1.split(/\s+/));
-  const words2 = new Set(n2.split(/\s+/));
-  const intersection = new Set([...words1].filter(x => words2.has(x)));
-  const union = new Set([...words1, ...words2]);
-  
-  return intersection.size / union.size;
-}
+class ReconScanner {
+  constructor(dependencies = {}) {
+    this.config = dependencies.config || RECON_CONFIG;
+    this.traceId = dependencies.traceId || `recon-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    this.logger = this._createTraceLogger(
+      dependencies.logger || this._createLogger(),
+      this.traceId,
+      'ReconScanner'
+    );
+    this.navigator = dependencies.navigator;
+    this.parser = dependencies.parser;
+    this.stitcher = dependencies.stitcher;
+    this.proxyRotator = dependencies.proxyRotator;
+    this.repository = dependencies.repository;
+    this.engine = dependencies.engine;
+    this.metrics = dependencies.metrics;
+    this.guardian = dependencies.guardian;
+    this.healthServer = dependencies.healthServer;
+    this.resources = [];
 
-/**
- * 转换 season 格式: 2023-2024 -> 2023/2024
- */
-function formatSeasonForDb(season) {
-  return season.replace('-', '/');
-}
+    this.logger.info('scanner_initialized', { traceId: this.traceId, version: 'V11.0' });
+  }
 
-/**
- * 查找真实 FotMob match_id
- * 策略: 标准化队名 + season 字段匹配
- * 【修复】改用 season 字段而非日期范围，适配数据库格式
- */
-async function findRealMatchId(pool, homeTeam, awayTeam, season) {
-  try {
-    // 转换 season 格式为数据库格式 (2023-2024 -> 2023/2024)
-    const dbSeason = formatSeasonForDb(season);
-    
-    // 1. 首先尝试精确匹配标准化队名 (忽略大小写)
-    const exactQuery = `
-      SELECT match_id, home_team, away_team, match_date
-      FROM matches
-      WHERE season = $1
-        AND (
-          (LOWER(home_team) = LOWER($2) AND LOWER(away_team) = LOWER($3))
-          OR (LOWER(home_team) = LOWER($3) AND LOWER(away_team) = LOWER($2))
-        )
-      LIMIT 1;
-    `;
-    
-    const exactResult = await pool.query(exactQuery, [
-      dbSeason, homeTeam, awayTeam
-    ]);
-    
-    if (exactResult.rows.length > 0) {
+  _createLogger() {
+    return {
+      info: (event, data) => console.log(`[INFO] ${event}:`, JSON.stringify(data)),
+      warn: (event, data) => console.warn(`[WARN] ${event}:`, JSON.stringify(data)),
+      error: (event, data) => console.error(`[ERROR] ${event}:`, JSON.stringify(data)),
+      debug: (event, data) => process.env.DEBUG && console.log(`[DEBUG] ${event}:`, JSON.stringify(data))
+    };
+  }
+
+  _createTraceLogger(baseLogger, traceId, component) {
+    const wrapPayload = (data = {}) => {
+      if (data === null || data === undefined) {
+        return { traceId, component };
+      }
+
+      if (typeof data !== 'object' || Array.isArray(data)) {
+        return { traceId, component, value: data };
+      }
+
       return {
-        matchId: exactResult.rows[0].match_id,
-        confidence: 1.0,
-        method: 'exact',
-        dbHome: exactResult.rows[0].home_team,
-        dbAway: exactResult.rows[0].away_team
+        traceId,
+        component,
+        ...data
       };
+    };
+
+    const wrap = (level) => {
+      const fn = typeof baseLogger[level] === 'function'
+        ? baseLogger[level].bind(baseLogger)
+        : typeof baseLogger.info === 'function'
+          ? baseLogger.info.bind(baseLogger)
+          : () => {};
+
+      return (event, data = {}) => fn(event, wrapPayload(data));
+    };
+
+    return {
+      info: wrap('info'),
+      warn: wrap('warn'),
+      error: wrap('error'),
+      debug: wrap('debug')
+    };
+  }
+
+  _childLogger(component, existingLogger = null) {
+    return this._createTraceLogger(
+      existingLogger || this._createLogger(),
+      this.traceId,
+      component
+    );
+  }
+
+  /**
+   * 初始化组件
+   */
+  async initialize() {
+    // 初始化指标收集器
+    if (!this.metrics) {
+      this.metrics = new ReconMetrics({
+        component: 'ReconScanner',
+        logger: this._childLogger('ReconMetrics'),
+        traceId: this.traceId
+      });
     }
-    
-    // 2. 精确匹配失败，尝试模糊匹配
-    const fuzzyQuery = `
-      SELECT match_id, home_team, away_team, match_date
-      FROM matches
-      WHERE season = $1
-      LIMIT 50;
-    `;
-    
-    const fuzzyResult = await pool.query(fuzzyQuery, [dbSeason]);
-    
-    let bestMatch = null;
-    let bestScore = 0;
-    
-    for (const row of fuzzyResult.rows) {
-      const homeScore = calculateSimilarity(homeTeam, row.home_team);
-      const awayScore = calculateSimilarity(awayTeam, row.away_team);
-      const avgScore = (homeScore + awayScore) / 2;
-      
-      // 同时检查主客场是否互换
-      const swappedHomeScore = calculateSimilarity(homeTeam, row.away_team);
-      const swappedAwayScore = calculateSimilarity(awayTeam, row.home_team);
-      const swappedScore = (swappedHomeScore + swappedAwayScore) / 2;
-      
-      const finalScore = Math.max(avgScore, swappedScore);
-      
-      if (finalScore > bestScore && finalScore >= 0.6) {
-        bestScore = finalScore;
-        bestMatch = row;
+
+    // 初始化 Guardian
+    if (!this.guardian) {
+      this.guardian = new ReconGuardian({
+        checkIntervalMs: 60000,
+        logger: this._childLogger('ReconGuardian'),
+        traceId: this.traceId
+      });
+      await this.guardian.start();
+    }
+
+    // 初始化健康检查服务器 (V11.0: 默认禁用，避免端口冲突)
+    if (!this.healthServer && process.env.ENABLE_HEALTH_SERVER === 'true') {
+      this.healthServer = new ReconHealthServer({
+        port: 0,
+        metrics: this.metrics,
+        logger: this._childLogger('ReconHealthServer'),
+        traceId: this.traceId
+      });
+      await this.healthServer.start();
+    }
+
+    // 初始化代理轮询器
+    if (this.proxyRotator === undefined) {
+      this.proxyRotator = new ProxyRotator({
+        logger: this._childLogger('ProxyRotator'),
+        strategy: 'round-robin'
+      });
+    }
+
+    if (this.repository) {
+      this.repository.traceId = this.traceId;
+      this.repository.logger = this._childLogger('FixtureRepository', this.repository.logger);
+      if (typeof this.repository.init === 'function') {
+        await this.repository.init();
       }
     }
-    
-    if (bestMatch) {
-      return {
-        matchId: bestMatch.match_id,
-        confidence: bestScore,
-        method: 'fuzzy',
-        dbHome: bestMatch.home_team,
-        dbAway: bestMatch.away_team
-      };
-    }
-    
-    // 3. 未找到匹配
-    return null;
-    
-  } catch (e) {
-    console.error(`   ❌ 查找 match_id 失败: ${e.message}`);
-    return null;
-  }
-}
 
-/**
- * 保存到数据库 mapping 表
- * 【修复后】使用真实 FotMob match_id，而不是伪造
- */
-async function saveToDatabase(pool, matches, season, leagueConfig) {
-  console.log(`\n💾 保存到数据库 (执行队名对齐)...`);
-  
-  let inserted = 0;
-  let skipped = 0;
-  let unmatched = 0;
-  const unmatchedList = [];
-  
-  for (const match of matches) {
+    // 初始化解析器
+    if (!this.parser) {
+      this.parser = new ReconParser({
+        logger: this._childLogger('ReconParser'),
+        traceId: this.traceId,
+        config: { teamSlugs: this._getAllTeamSlugs(), teamMappings: this.config.team_mappings }
+      });
+    } else {
+      this.parser.traceId = this.traceId;
+      this.parser.logger = this._childLogger('ReconParser', this.parser.logger);
+    }
+
+    if (!this.stitcher && this.repository) {
+      this.stitcher = new ReconStitcher({
+        repository: this.repository,
+        parser: this.parser,
+        logger: this._childLogger('ReconStitcher')
+      });
+    } else if (this.stitcher) {
+      this.stitcher.traceId = this.traceId;
+      this.stitcher.logger = this._childLogger('ReconStitcher', this.stitcher.logger);
+    }
+
+    // 初始化引擎
+    if (!this.engine) {
+      this.engine = new ReconEngine({
+        navigator: this.navigator,
+        stitcher: this.stitcher,
+        repository: this.repository,
+        parser: this.parser,
+        logger: this._childLogger('ReconEngine'),
+        traceId: this.traceId,
+        proxyRotator: this.proxyRotator
+      });
+    } else {
+      this.engine.traceId = this.traceId;
+      this.engine.logger = this._childLogger('ReconEngine', this.engine.logger);
+    }
+
+    this.logger.info('scanner_components_initialized');
+  }
+
+  _getAllTeamSlugs() {
+    const slugs = [];
+    const teamSlugs = this.config.team_slugs || {};
+    for (const league of Object.values(teamSlugs)) {
+      if (Array.isArray(league)) slugs.push(...league);
+    }
+    return [...new Set(slugs)];
+  }
+
+  /**
+   * 构建目标 URL (向后兼容)
+   * @param {Object} leagueConfig - 联赛配置
+   * @param {string} season - 赛季
+   * @returns {string} 完整 URL
+   */
+  buildUrl(leagueConfig, season) {
+    const [startYear, endYear] = season.split('-');
+    const template = this.config.oddsportal?.results_path || '/football/{country}/{league}-{start}-{end}/standings/';
+    return `${this.config.oddsportal?.base_url || 'https://www.oddsportal.com'}${template}`
+      .replace('{country}', leagueConfig.country)
+      .replace('{league}', leagueConfig.slug)
+      .replace('{start}', startYear)
+      .replace('{end}', endYear);
+  }
+
+  /**
+   * 执行扫描 (V11.0: 委托给 ReconEngine)
+   * @param {string} season - 赛季 (动态透传，禁止硬编码)
+   * @param {Object} leagueConfig - 联赛配置
+   * @param {Object} options - 扫描选项
+   */
+  async scan(season, leagueConfig, options = {}) {
+    const startTime = Date.now();
+    
+    // V11.0 FIX: 严格验证 season 参数，禁止硬编码
+    if (!season || typeof season !== 'string') {
+      throw new Error('season parameter is required and must be a string');
+    }
+    if (season === '2025-2026') {
+      this.logger.warn('deprecated_season_detected', { season, hint: 'Use dynamic season from CLI or config' });
+    }
+
+    this.logger.info('scan_start', { season, league: leagueConfig.name, traceId: this.traceId });
+
     try {
-      // 提取并标准化队名
-      const { homeTeam, awayTeam } = extractTeamsFromSlug(match.slug);
-      
-      if (homeTeam === 'Unknown' || awayTeam === 'Unknown') {
-        console.log(`   ⚠️  无法解析队名: ${match.slug}`);
-        unmatched++;
-        continue;
-      }
-      
-      // 【关键修复】查询真实的 FotMob match_id
-      const matchInfo = await findRealMatchId(pool, homeTeam, awayTeam, season);
-      
-      if (!matchInfo) {
-        console.log(`   ⚠️  未找到匹配: ${homeTeam} vs ${awayTeam}`);
-        unmatchedList.push({ slug: match.slug, home: homeTeam, away: awayTeam });
-        unmatched++;
-        continue;
-      }
-      
-      // 使用真实的 match_id
-      const matchId = matchInfo.matchId;
-      
-      // 插入 mapping 表
-      const query = `
-        INSERT INTO matches_oddsportal_mapping 
-          (match_id, oddsportal_hash, full_url, season, league_name, home_team, away_team, 
-           match_confidence, mapping_method, status)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'pending')
-        ON CONFLICT (match_id, season) DO UPDATE SET
-          oddsportal_hash = EXCLUDED.oddsportal_hash,
-          full_url = EXCLUDED.full_url,
-          match_confidence = EXCLUDED.match_confidence,
-          mapping_method = EXCLUDED.mapping_method,
-          updated_at = NOW()
-        RETURNING match_id;
-      `;
-      
-      const result = await pool.query(query, [
-        matchId,
-        match.hash,
-        match.url,
-        season,
-        leagueConfig.name,
-        homeTeam,
-        awayTeam,
-        matchInfo.confidence,
-        matchInfo.method
-      ]);
-      
-      if (result.rows.length > 0) {
-        inserted++;
-        if (matchInfo.method === 'fuzzy') {
-          console.log(`   🔗 模糊匹配 [${matchInfo.confidence.toFixed(2)}]: ${homeTeam} vs ${awayTeam} -> ${matchInfo.dbHome} vs ${matchInfo.dbAway}`);
-        }
+      // 启动浏览器
+      const proxy = this.proxyRotator ? this.proxyRotator.getNextProxy() : null;
+      const navigator = new ReconNavigator({
+        logger: this._childLogger('ReconNavigator'),
+        traceId: this.traceId,
+        proxy,
+        headless: true,
+        scrollAttempts: this.config.oddsportal?.navigation?.scroll_attempts || 10,
+        scrollDelayMs: this.config.oddsportal?.navigation?.scroll_delay_ms || 2000
+      });
+
+      await navigator.launch();
+      this.resources.push({ type: 'navigator', instance: navigator });
+
+      // 更新引擎的 navigator
+      this.engine.navigator = navigator;
+
+      // 根据模式选择扫描策略
+      let result;
+      if (options.crossLeague) {
+        // 跨联赛扫描（处理德乙、德国杯）
+        result = await this.engine.crossLeagueScan(season, leagueConfig, options.additionalSlugs || []);
+      } else if (options.dateDriven) {
+        // 日期驱动扫描
+        result = await this.engine.dateDrivenScan(season, leagueConfig);
       } else {
-        skipped++;
+        // 智能扫描（自动选择最佳策略）
+        result = await this.engine.smartScan(season, leagueConfig);
       }
-      
-    } catch (e) {
-      console.log(`   ❌ 保存失败 ${match.hash}: ${e.message}`);
-      unmatched++;
+
+      result.durationMs = Date.now() - startTime;
+      result.traceId = this.traceId;
+
+      this.logger.info('scan_complete', result);
+      return result;
+
+    } catch (error) {
+      this.logger.error('scan_failed', { season, league: leagueConfig.name, error: error.message });
+      return { success: false, season, league: leagueConfig.name, error: error.message };
+    } finally {
+      await this.cleanup();
     }
   }
-  
-  console.log(`\n   ✅ 成功缝合: ${inserted} | ⏭️ 已存在: ${skipped} | ❓ 未匹配: ${unmatched}`);
-  
-  if (unmatchedList.length > 0) {
-    console.log(`   ⚠️  未匹配项 (前5个):`);
-    unmatchedList.slice(0, 5).forEach(u => {
-      console.log(`      - ${u.home} vs ${u.away} (${u.slug})`);
-    });
+
+  /**
+   * 资源清理
+   */
+  async cleanup() {
+    this.logger.info('cleanup_start', { resources: this.resources.length });
+
+    for (const resource of this.resources) {
+      try {
+        if (resource.type === 'navigator' && resource.instance) {
+          await resource.instance.close();
+        }
+      } catch (e) {
+        this.logger.warn('cleanup_error', { type: resource.type, error: e.message });
+      }
+    }
+
+    this.resources = [];
+    this.logger.info('cleanup_complete');
   }
-  
-  return { inserted, skipped, unmatched };
+
+  /**
+   * 关闭扫描器
+   */
+  async close() {
+    await this.cleanup();
+    if (this.guardian) await this.guardian.stop();
+    if (this.healthServer) await this.healthServer.stop();
+    this.logger.info('scanner_closed');
+  }
+}
+
+/**
+ * 解析命令行参数
+ */
+function parseArgs() {
+  const args = process.argv.slice(2);
+  const result = {
+    season: null,  // V11.0: 不再设置默认值，必须从 CLI 传入
+    league: 'EPL',
+    allLeagues: false,
+    useProxy: true,
+    dateDriven: false,
+    crossLeague: false,
+    additionalSlugs: []
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    switch (args[i]) {
+      case '--season':
+        result.season = args[++i];
+        break;
+      case '--league':
+        result.league = args[++i];
+        break;
+      case '--all-leagues':
+        result.allLeagues = true;
+        break;
+      case '--no-proxy':
+        result.useProxy = false;
+        break;
+      case '--date-driven':
+        result.dateDriven = true;
+        break;
+      case '--cross-league':
+        result.crossLeague = true;
+        break;
+      case '--with-slug':
+        result.additionalSlugs.push(args[++i]);
+        break;
+    }
+  }
+
+  // V11.0: 强制要求 season 参数
+  if (!result.season) {
+    console.error('❌ 错误: --season 参数是必需的');
+    console.error('用法: node scripts/ops/recon_scanner.js --season 2024-2025 --league BUNDESLIGA');
+    process.exit(1);
+  }
+
+  return result;
 }
 
 /**
  * 主函数
  */
 async function main() {
-  // 解析参数
-  const args = process.argv.slice(2);
-  const seasonIndex = args.indexOf('--season');
-  const leagueIndex = args.indexOf('--league');
-  const allLeaguesFlag = args.includes('--all-leagues');
-  const headlessFlag = args.includes('--headless');
-  
-  const season = seasonIndex !== -1 ? args[seasonIndex + 1] : '2023-2024';
-  const targetLeague = leagueIndex !== -1 ? args[leagueIndex + 1].toUpperCase() : 'EPL';
-  
+  const args = parseArgs();
+
   console.log('\n╔══════════════════════════════════════════════════════════════════╗');
-  console.log('║     🔍 TITAN V6.4 RECON SCANNER - 历史赛季测绘 🔍              ║');
+  console.log('║     🔍 TITAN V11.0 RECON SCANNER - Clean Sweep Edition 🔍       ║');
   console.log('╠══════════════════════════════════════════════════════════════════╣');
-  console.log(`║     目标赛季: ${season.padEnd(45)} ║`);
-  console.log(`║     目标联赛: ${(allLeaguesFlag ? '全部联赛' : LEAGUE_CONFIGS[targetLeague]?.name || targetLeague).padEnd(45)} ║`);
-  console.log(`║     模式: ${(headlessFlag ? '无头模式' : '可视化模式').padEnd(49)} ║`);
+  console.log(`║     版本: V11.0-CLEAN-SWEEP                                      ║`);
+  console.log(`║     赛季: ${args.season}                                    ║`);
+  console.log('║     架构: Navigator + Engine + Decryptor                         ║');
+  console.log('║     特性: 动态 season 透传 | 协议解密 | 零硬编码                ║');
   console.log('╚══════════════════════════════════════════════════════════════════╝\n');
+
+  // 初始化数据库连接
+  const dbPool = new Pool({
+    host: process.env.DB_HOST || 'host.docker.internal',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    database: process.env.DB_NAME || 'football_db',
+    user: process.env.DB_USER || 'football_user',
+    password: process.env.DB_PASSWORD || 'football_pass'
+  });
+
+  // 初始化 Repository
+  const repository = new FixtureRepository({ dbPool });
+
+  // 创建扫描器
+  const scanner = new ReconScanner({
+    repository,
+    proxyRotator: args.useProxy ? undefined : null
+  });
   
-  const pool = new Pool(DB_CONFIG);
-  let browser = null;
-  
-  // 初始化代理轮询器
-  const proxyRotator = new ProxyRotator({ strategy: 'round-robin' });
-  const PROXY_HOST = process.env.PROXY_HOST || '172.25.16.1';
-  
-  try {
-    // 获取代理
-    const proxy = proxyRotator.getNextProxy();
-    const proxyServer = `http://${PROXY_HOST}:${proxy.port}`;
-    console.log(`🔌 使用代理: ${proxyServer}`);
-    
-    // 启动浏览器
-    console.log('🚀 启动浏览器...');
-    browser = await chromium.launch({
-      headless: headlessFlag,
-      args: [
-        '--no-sandbox', 
-        '--disable-setuid-sandbox', 
-        '--window-size=1920,1080',
-        `--proxy-server=${proxyServer}`
-      ]
-    });
-    
-    const context = await browser.newContext({
-      viewport: { width: 1920, height: 1080 },
-      userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-    });
-    
-    const page = await context.newPage();
-    
-    // 确定要扫描的联赛
-    const leaguesToScan = allLeaguesFlag 
-      ? Object.values(LEAGUE_CONFIGS)
-      : [LEAGUE_CONFIGS[targetLeague] || LEAGUE_CONFIGS['EPL']];
-    
-    const allMatches = [];
-    
-    // 扫描每个联赛
-    for (const league of leaguesToScan) {
-      const matches = await reconLeagueSeason(page, league, season);
-      
-      if (matches.length > 0) {
-        // 保存到数据库
-        const { inserted, skipped } = await saveToDatabase(pool, matches, season, league);
-        allMatches.push(...matches);
-        
-        console.log(`   📊 ${league.name}: +${inserted} 条新记录`);
-      }
-      
-      // 联赛间延迟
-      if (league !== leaguesToScan[leaguesToScan.length - 1]) {
-        console.log('   ⏳ 等待3秒...');
-        await new Promise(r => setTimeout(r, 3000));
-      }
-    }
-    
-    // 关闭浏览器
-    await context.close();
-    await browser.close();
-    
-    // 最终统计
-    const statsResult = await pool.query(`
-      SELECT 
-        COUNT(*) as total,
-        COUNT(*) FILTER (WHERE status = 'pending') as pending,
-        COUNT(*) FILTER (WHERE status = 'harvested') as harvested
-      FROM matches_oddsportal_mapping 
-      WHERE season = $1
-    `, [season]);
-    
-    const stats = statsResult.rows[0];
-    
-    console.log('\n╔══════════════════════════════════════════════════════════════════╗');
-    console.log('║     ✅ RECON SCANNER 测绘完成 ✅                               ║');
-    console.log('╠══════════════════════════════════════════════════════════════════╣');
-    console.log(`║     本次扫描URL: ${String(allMatches.length).padStart(3)}                                        ║`);
-    console.log(`║     数据库总计: ${String(stats.total).padStart(3)} (${stats.pending} 待收割 / ${stats.harvested} 已完成)      ║`);
-    console.log(`║     赛季: ${season.padEnd(49)} ║`);
-    console.log('╚══════════════════════════════════════════════════════════════════╝\n');
-    
-    console.log('💡 下一步:');
-    console.log('   node scripts/ops/titan_grand_backfill.js --season ' + season);
-    
-  } catch (error) {
-    console.error('\n💥 测绘失败:', error.message);
-    if (browser) await browser.close();
+  await scanner.initialize();
+
+  // 确定要扫描的联赛
+  const leagues = args.allLeagues
+    ? Object.values(RECON_CONFIG.leagues || {})
+    : [RECON_CONFIG.leagues?.[args.league] || RECON_CONFIG.leagues?.EPL].filter(Boolean);
+
+  if (leagues.length === 0 || !leagues[0]) {
+    console.error(`❌ 错误: 找不到联赛配置: ${args.league}`);
+    console.error('可用联赛:', Object.keys(RECON_CONFIG.leagues || {}).join(', '));
     process.exit(1);
-  } finally {
-    await pool.end();
   }
+
+  // 执行扫描
+  const results = [];
+  for (const league of leagues) {
+    const result = await scanner.scan(args.season, league, {
+      dateDriven: args.dateDriven,
+      crossLeague: args.crossLeague,
+      additionalSlugs: args.additionalSlugs
+    });
+    results.push(result);
+  }
+
+  // 关闭资源
+  await scanner.close();
+  await repository.close();
+
+  // 输出汇总
+  console.log('\n╔══════════════════════════════════════════════════════════════════╗');
+  console.log('║                    📊 侦察任务汇总报告 📊                        ║');
+  console.log('╠══════════════════════════════════════════════════════════════════╣');
+  
+  let totalInserted = 0;
+  let totalPending = 0;
+  
+  results.forEach(r => {
+    if (r.success) {
+      totalInserted += r.inserted || 0;
+      totalPending += r.pendingTotal || 0;
+      const coverage = r.coverage || 0;
+      const status = coverage >= 95 ? '✅' : coverage >= 80 ? '⚠️' : '❌';
+      console.log(`║  ${status} ${(r.league || 'Unknown').padEnd(18)}: ${String(r.inserted || 0).padStart(3)} / ${String(r.pendingTotal || 0).padStart(3)} (${coverage.toFixed(1)}%)`);
+    } else {
+      console.log(`║  ❌ ${(r.league || 'Unknown').padEnd(18)}: 错误 - ${r.error}`);
+    }
+  });
+  
+  const totalCoverage = totalPending > 0 ? (totalInserted / totalPending * 100).toFixed(2) : '0.00';
+  console.log('╠══════════════════════════════════════════════════════════════════╣');
+  console.log(`║  总计: ${totalInserted} / ${totalPending} 场 (${totalCoverage}%)                         ║`);
+  console.log('╚══════════════════════════════════════════════════════════════════╝\n');
+
+  // 退出码
+  process.exit(totalCoverage >= 95 ? 0 : 1);
 }
 
-// 运行
+// 执行
 if (require.main === module) {
-  main().catch(console.error);
+  main().catch(error => {
+    console.error('\n💥 侦察失败:', error.message);
+    process.exit(1);
+  });
 }
 
-module.exports = { reconLeagueSeason, buildResultsUrl, LEAGUE_CONFIGS };
+// 导出供测试使用
+module.exports = { ReconScanner, loadConfig, RECON_CONFIG };

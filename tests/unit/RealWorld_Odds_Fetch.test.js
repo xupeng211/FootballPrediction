@@ -92,13 +92,13 @@ describe('RealWorld_Odds_Fetch - TITAN V6.0 真实赔率抓取', () => {
       assert.strictEqual(typeof proxy.server, 'string', 'server必须是字符串');
       
       // 断言: server必须是真实代理格式 (http://host:port)
-      assert.ok(proxy.server.match(/^http:\/\/\d+\.\d+\.\d+\.\d+:\d+$/), 
-                'server必须是http://IP:port格式');
-      
+      const proxyUrl = new URL(proxy.server);
+      assert.strictEqual(proxyUrl.protocol, 'http:', '代理协议必须是 http');
+      assert.ok(proxyUrl.hostname, '代理必须包含主机名');
+      assert.ok(proxyUrl.port, '代理必须包含端口号');
+
       // 断言: 必须是22端口之一
-      const portMatch = proxy.server.match(/:(\d+)$/);
-      assert.ok(portMatch, '必须包含端口号');
-      const port = parseInt(portMatch[1]);
+      const port = parseInt(proxyUrl.port, 10);
       assert.ok(port >= 7890 && port <= 7911, `端口${port}必须在7890-7911范围内`);
     });
     
