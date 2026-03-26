@@ -28,6 +28,7 @@ const { ReconNavigator, ReconParser, ReconStitcher, ReconMetrics, ReconGuardian,
 const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
 const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
+const { L1ConfigManager } = require('../../src/infrastructure/services/L1ConfigManager');
 
 // 加载配置
 const RECON_CONFIG = loadConfig();
@@ -80,6 +81,7 @@ class ReconScanner {
     this.metrics = dependencies.metrics;
     this.guardian = dependencies.guardian;
     this.healthServer = dependencies.healthServer;
+    this.configManager = dependencies.configManager;
     this.resources = [];
 
     this.logger.info('scanner_initialized', { traceId: this.traceId, version: 'V11.0' });
@@ -187,6 +189,12 @@ class ReconScanner {
       }
     }
 
+    if (!this.configManager) {
+      this.configManager = new L1ConfigManager({
+        logger: this._childLogger('L1ConfigManager')
+      });
+    }
+
     // 初始化解析器
     if (!this.parser) {
       this.parser = new ReconParser({
@@ -219,11 +227,15 @@ class ReconScanner {
         parser: this.parser,
         logger: this._childLogger('ReconEngine'),
         traceId: this.traceId,
-        proxyRotator: this.proxyRotator
+        proxyRotator: this.proxyRotator,
+        configManager: this.configManager,
+        baseUrl: this.config.oddsportal?.base_url
       });
     } else {
       this.engine.traceId = this.traceId;
       this.engine.logger = this._childLogger('ReconEngine', this.engine.logger);
+      this.engine.configManager = this.configManager;
+      this.engine.baseUrl = this.config.oddsportal?.base_url || this.engine.baseUrl;
     }
 
     this.logger.info('scanner_components_initialized');
@@ -436,13 +448,18 @@ async function main() {
   await scanner.initialize();
 
   // 确定要扫描的联赛
+  const activeLeagues = scanner.configManager.getActiveLeagues();
+  const selectedLeague = scanner.configManager.getLeagueByCode(args.league)
+    || scanner.configManager.getLeagueById(Number(args.league))
+    || scanner.configManager.getLeagueByCode('EPL');
+
   const leagues = args.allLeagues
-    ? Object.values(RECON_CONFIG.leagues || {})
-    : [RECON_CONFIG.leagues?.[args.league] || RECON_CONFIG.leagues?.EPL].filter(Boolean);
+    ? activeLeagues
+    : [selectedLeague].filter(Boolean);
 
   if (leagues.length === 0 || !leagues[0]) {
     console.error(`❌ 错误: 找不到联赛配置: ${args.league}`);
-    console.error('可用联赛:', Object.keys(RECON_CONFIG.leagues || {}).join(', '));
+    console.error('可用联赛:', activeLeagues.map((league) => `${league.code}(${league.id})`).join(', '));
     process.exit(1);
   }
 

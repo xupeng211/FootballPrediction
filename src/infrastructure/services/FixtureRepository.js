@@ -311,8 +311,12 @@ class FixtureRepository {
       return { success: true, inserted: 0, failed: 0, errors: [] };
     }
 
+    const orderedMappings = [...mappings].sort((a, b) =>
+      String(a.match_id).localeCompare(String(b.match_id))
+    );
+
     const requiredFields = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team'];
-    for (const mapping of mappings) {
+    for (const mapping of orderedMappings) {
       const missing = requiredFields.filter(f => !mapping[f]);
       if (missing.length > 0) {
         throw new RepositoryError(
@@ -332,7 +336,7 @@ class FixtureRepository {
       try {
         await client.query('BEGIN');
         
-        for (const mapping of mappings) {
+        for (const mapping of orderedMappings) {
           try {
             await this._saveOddsPortalMappingWithClient(client, mapping, hasOptionalFields);
             results.inserted++;
@@ -361,6 +365,65 @@ class FixtureRepository {
         client.release();
       }
     }, 'batchSaveOddsPortalMappings');
+  }
+
+  /**
+   * 批量更新比赛流水线状态
+   * @param {Array<string>} matchIds - 比赛 ID 列表
+   * @param {string} status - 新状态
+   * @returns {Promise<{success: boolean, updated: number}>}
+   */
+  async batchUpdateMatchPipelineStatus(matchIds, status) {
+    if (!Array.isArray(matchIds) || matchIds.length === 0) {
+      return { success: true, updated: 0 };
+    }
+
+    const orderedMatchIds = [...new Set(matchIds.map((id) => String(id)))]
+      .sort((a, b) => a.localeCompare(b));
+
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+
+      try {
+        await client.query('BEGIN');
+        const updated = await this._updateMatchPipelineStatusWithClient(client, orderedMatchIds, status);
+        await client.query('COMMIT');
+        return { success: true, updated };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw new RepositoryError(
+          `批量更新比赛流水线状态失败: ${error.message}`,
+          'BATCH_STATUS_UPDATE_FAILED',
+          error
+        );
+      } finally {
+        client.release();
+      }
+    }, 'batchUpdateMatchPipelineStatus');
+  }
+
+  /**
+   * 使用共享 client 批量更新比赛流水线状态
+   * @private
+   * @param {Object} client - PostgreSQL client
+   * @param {Array<string>} matchIds - 比赛 ID 列表
+   * @param {string} status - 新状态
+   * @returns {Promise<number>}
+   */
+  async _updateMatchPipelineStatusWithClient(client, matchIds, status) {
+    if (!Array.isArray(matchIds) || matchIds.length === 0) {
+      return 0;
+    }
+
+    const query = `
+      UPDATE matches
+      SET pipeline_status = $2,
+          updated_at = NOW()
+      WHERE match_id = ANY($1::text[])
+    `;
+
+    const result = await client.query(query, [matchIds, status]);
+    return result.rowCount || 0;
   }
 
   /**

@@ -448,7 +448,7 @@ class ReconStitcher {
       .replace(/[^\w\s-]/g, ' ')
       .trim();
 
-    const knownTeams = Object.values(this.parser.teamMappings || {});
+    const knownTeams = Array.isArray(this.parser.knownTeams) ? this.parser.knownTeams : [];
     const foundTeams = [];
 
     for (const team of knownTeams) {
