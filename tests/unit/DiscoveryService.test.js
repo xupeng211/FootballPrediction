@@ -111,6 +111,7 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
         getActiveSeasons: () => ['2024/2025'],
         getDefaultSeason: () => '2024/2025',
         getSingleYearLeagueIds: () => [],
+        getExpectedMatches: () => null,
         buildLeagueApiUrl: (leagueId, season) =>
           `https://www.fotmob.com/api/data/leagues?id=${leagueId}&season=${season}`
       };
@@ -205,6 +206,80 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
         assert.deepStrictEqual(persistedBatches, [parserFixtures]);
         assert.strictEqual(result.inserted, 1);
         assert.strictEqual(result.failed, 0);
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('当实得场次少于 expected_matches 时，应输出 CRITICAL WARN', async () => {
+      const warnings = [];
+
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        concurrency: 1,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [{ id: 54, code: 'BUNDESLIGA', name: 'Bundesliga', country: 'germany', tier: 'P0', enabled: true }],
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: []
+          }),
+          getLeagueById: () => ({ id: 54, code: 'BUNDESLIGA', name: 'Bundesliga', country: 'germany', tier: 'P0', enabled: true }),
+          getActiveLeagues: () => [{ id: 54, code: 'BUNDESLIGA', name: 'Bundesliga', country: 'germany', tier: 'P0', enabled: true }],
+          getDefaultSeason: () => '2025/2026',
+          getSingleYearLeagueIds: () => [],
+          getExpectedMatches: () => 306,
+          buildLeagueApiUrl: () => 'https://example.test/leagues?id=54&season=20252026'
+        },
+        parser: {
+          parse: () => Array.from({ length: 300 }, (_, index) => ({
+            match_id: `54_20252026_${index + 1}`,
+            external_id: `${index + 1}`,
+            league_name: 'Bundesliga',
+            season: '2025/2026',
+            home_team: 'Bayern Munchen',
+            away_team: 'Rb Leipzig',
+            match_date: new Date('2025-08-22T18:30:00Z'),
+            status: 'scheduled',
+            is_finished: false
+          }))
+        },
+        fixtureRepository: {
+          persist: async (fixtures) => ({ total: fixtures.length, inserted: 0, updated: fixtures.length, failed: 0 })
+        },
+        httpClient: {
+          request: async () => ({ fixtures: { allMatches: [{ id: 1 }] } })
+        },
+        seasonDiscovery: { discover: async () => '20252026' },
+        seasonStrategyFactory: {
+          format: () => '20252026',
+          isSingleYearLeague: () => false
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map() },
+        extractor: { extractFromWebpage: async () => ({}), searchViaDOM: async () => ({}) },
+        uiHelper: {
+          printBanner: () => {},
+          printTargets: () => {},
+          printScanStart: () => {},
+          printHistoricalMode: () => {},
+          printNoFixtures: () => {},
+          printParsedFixtures: () => {},
+          printProgress: () => {},
+          printScanError: () => {},
+          printCriticalWarn: (...args) => warnings.push(args),
+          generateReport: (stats) => stats
+        }
+      });
+
+      try {
+        const result = await testService.discover({ leagueId: 54, season: '2025/2026' });
+        assert.strictEqual(warnings.length, 1);
+        assert.strictEqual(warnings[0][1], 'Bundesliga');
+        assert.strictEqual(result.criticalWarnings.length, 1);
+        assert.strictEqual(result.criticalWarnings[0].missing, 6);
       } finally {
         await testService.close();
       }
@@ -354,16 +429,13 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
   });
 
   describe('配置加载容错', () => {
-    it('应在配置缺失时使用默认联赛', () => {
-      // 模拟配置加载失败
+    it('应在配置缺失时直接抛错', () => {
       const originalExists = require('fs').existsSync;
       require('fs').existsSync = () => false;
 
-      const fallbackService = new DiscoveryService({ silent: true });
-      assert.strictEqual(fallbackService.leagueConfig.active_leagues.length, 5); // 五大联赛
+      assert.throws(() => new DiscoveryService({ silent: true }), /缺少必需配置文件/);
 
       require('fs').existsSync = originalExists;
-      fallbackService.close();
     });
   });
 

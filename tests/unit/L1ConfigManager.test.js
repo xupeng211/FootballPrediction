@@ -49,14 +49,24 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(url, 'https://www.fotmob.com/api/data/leagues?id=47&season=20242025');
   });
 
-  it('配置缺失时应回退到五大联赛默认配置', () => {
-    const fallback = new L1ConfigManager({
+  it('应能读取德甲赛季的 expected_matches', () => {
+    assert.strictEqual(manager.getExpectedMatches(54, '2025/2026'), 306);
+    assert.strictEqual(manager.getExpectedMatches(47, '2025/2026'), 380);
+  });
+
+  it('配置缺失时应直接抛错，禁止静默回退', () => {
+    assert.throws(() => new L1ConfigManager({
       reconConfigPath: '/tmp/does-not-exist-recon.json',
       leaguesConfigPath: '/tmp/does-not-exist-leagues.json'
-    });
+    }), /缺少必需配置文件/);
+  });
 
-    const runtimeConfig = fallback.getRuntimeConfig();
-    assert.strictEqual(runtimeConfig.active_leagues.length, 5);
-    assert.strictEqual(fallback.getLeagueByCode('SERIEA').id, 55);
+  it('联赛缺少 league_id 时应直接抛错', () => {
+    assert.throws(() => new L1ConfigManager({
+      runtimeConfig: null,
+      reconConfigPath: path.resolve(__dirname, '../fixtures/recon_config_invalid_missing_league_id.json'),
+      leaguesConfigPath: path.resolve(__dirname, '../../config/leagues.json'),
+      seasonWindowsPath: path.resolve(__dirname, '../../config/season_windows.json')
+    }), /缺少有效 league_id/);
   });
 });
