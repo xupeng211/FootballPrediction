@@ -1,29 +1,71 @@
 {
   "_comment": "V6.0 赛季时间窗口配置 - 用于三道铁门过滤系统",
-  "version": "V6.0-STRICT",
-  "last_updated": "2026-03-18",
-  "description": "定义各赛季的有效时间窗口，用于过滤API返回的越界数据",
+  "version": "V6.1-FULL-LEAGUES",
+  "last_updated": "2026-03-26",
+  "description": "定义五大联赛各赛季的有效时间窗口，用于过滤API返回的越界数据",
   "seasons": {
     "2023/2024": {
       "start": "2023-08-11",
       "end": "2024-05-19",
       "expected_matches": 380,
-      "leagues": [47],
-      "description": "英超23/24赛季"
+      "leagues": [47, 87, 55],
+      "description": "英超/西甲/意甲 23/24赛季"
     },
     "2024/2025": {
       "start": "2024-08-16",
       "end": "2025-05-25",
       "expected_matches": 380,
-      "leagues": [47],
-      "description": "英超24/25赛季"
+      "leagues": [47, 87, 55],
+      "description": "英超/西甲/意甲 24/25赛季"
     },
     "2025/2026": {
       "start": "2025-08-15",
       "end": "2026-05-24",
       "expected_matches": 380,
-      "leagues": [47],
-      "description": "英超25/26赛季（预测）"
+      "leagues": [47, 87, 55],
+      "description": "英超/西甲/意甲 25/26赛季"
+    },
+    "2023/2024-Bundesliga": {
+      "start": "2023-08-18",
+      "end": "2024-05-18",
+      "expected_matches": 306,
+      "leagues": [54],
+      "description": "德甲 23/24赛季"
+    },
+    "2024/2025-Bundesliga": {
+      "start": "2024-08-23",
+      "end": "2025-05-17",
+      "expected_matches": 306,
+      "leagues": [54],
+      "description": "德甲 24/25赛季"
+    },
+    "2025/2026-Bundesliga": {
+      "start": "2025-08-22",
+      "end": "2026-05-16",
+      "expected_matches": 306,
+      "leagues": [54],
+      "description": "德甲 25/26赛季"
+    },
+    "2023/2024-Ligue1": {
+      "start": "2023-08-11",
+      "end": "2024-05-18",
+      "expected_matches": 306,
+      "leagues": [53],
+      "description": "法甲 23/24赛季"
+    },
+    "2024/2025-Ligue1": {
+      "start": "2024-08-16",
+      "end": "2025-05-17",
+      "expected_matches": 306,
+      "leagues": [53],
+      "description": "法甲 24/25赛季"
+    },
+    "2025/2026-Ligue1": {
+      "start": "2025-08-15",
+      "end": "2026-05-16",
+      "expected_matches": 306,
+      "leagues": [53],
+      "description": "法甲 25/26赛季"
     }
   },
   "validation_rules": {
