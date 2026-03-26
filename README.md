@@ -542,7 +542,7 @@ tail -f logs/sentinel.log
 
 ### 故障排查手册
 
-- 详见 `docs/TROUBLESHOOTING.md`
+- 详见 `archive_vault_2026/docs_legacy/TROUBLESHOOTING.md`
 - 运维 SOP: `docs/OPERATIONS_SOP.md`
 
 ---
