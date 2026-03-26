@@ -331,6 +331,13 @@ describe('AbstractHarvester 完整测试套件', () => {
                 }
             };
 
+            harvester.autoAuthManager = {
+                refreshSession: async () => ({
+                    success: true,
+                    cookieCount: 2
+                })
+            };
+
             // Mock Context Pool
             const contextClosed = { called: false };
             harvester._contextPool = new Map();
@@ -402,10 +409,10 @@ describe('AbstractHarvester 完整测试套件', () => {
             assert.strictEqual(isRetryable, true, 'SIZE_TOO_SMALL 应该是可重试的');
         });
 
-        it('应该将 NO_DATA 标记为不可重试', () => {
+        it('应该将 NO_DATA 标记为可重试', () => {
             const harvester = createHarvester(AbstractHarvester);
             const isRetryable = harvester._isRetryableError(new Error('NO_DATA:无法获取数据'));
-            assert.strictEqual(isRetryable, false, 'NO_DATA 应该是不可重试的');
+            assert.strictEqual(isRetryable, true, 'NO_DATA 应该是可重试的');
         });
     });
 

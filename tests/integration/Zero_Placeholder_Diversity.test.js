@@ -19,6 +19,8 @@ const assert = require('node:assert');
 const { OddsPortalHarvester } = require('../../src/infrastructure/harvesters/OddsPortalHarvester');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
 
+const shouldRunLiveSuite = process.env.RUN_LIVE_ODDSPORTAL_TESTS === 'true';
+
 // 三场不同的真实比赛（必须产生不同的赔率）
 const DIVERSITY_MATCHES = [
   {
@@ -41,6 +43,9 @@ const DIVERSITY_MATCHES = [
   }
 ];
 
+if (!shouldRunLiveSuite) {
+  test.skip('TITAN V6.0 - 零占位符多样性验证', { skip: '设置 RUN_LIVE_ODDSPORTAL_TESTS=true 后执行真实多样性验证' }, () => {});
+} else {
 describe('TITAN V6.0 - 零占位符多样性验证', () => {
   let harvester;
   let proxyRotator;
@@ -227,8 +232,10 @@ describe('TITAN V6.0 - 零占位符多样性验证', () => {
     console.log('\n✅ T-06 通过: HTML 内容验证完成\n');
   });
 });
+}
 
 // 测试总结
+if (shouldRunLiveSuite) {
 process.on('exit', () => {
   console.log('\n' + '='.repeat(70));
   console.log('🎯 TITAN V6.0 零占位符多样性验证 - 完成');
@@ -241,3 +248,4 @@ process.on('exit', () => {
   console.log('\n🚀 零占位符协议验证成功！');
   console.log('   系统已进入"非真即毁"模式\n');
 });
+}

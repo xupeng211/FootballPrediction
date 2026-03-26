@@ -20,6 +20,8 @@ const { SessionWarmer } = require('../../src/infrastructure/harvesters/SessionWa
 const fs = require('fs').promises;
 const path = require('path');
 
+const shouldRunLiveSuite = process.env.RUN_LIVE_ODDSPORTAL_TESTS === 'true';
+
 // 测试数据库配置
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'host.docker.internal',
@@ -58,6 +60,9 @@ let sessionWarmer;
 let harvester;
 let testResults = [];
 
+if (!shouldRunLiveSuite) {
+  it.skip('TITAN V6.0 - 住宅代理隐身验证测试', { skip: '设置 RUN_LIVE_ODDSPORTAL_TESTS=true 后执行真实住宅代理验证' }, () => {});
+} else {
 describe('TITAN V6.0 - 住宅代理隐身验证测试', () => {
   
   before(async () => {
@@ -381,3 +386,4 @@ describe('TITAN V6.0 - 住宅代理隐身验证测试', () => {
     });
   });
 });
+}

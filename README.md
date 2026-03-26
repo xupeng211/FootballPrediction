@@ -45,6 +45,78 @@
 | **ML Engine** | Python + XGBoost | 3-Model共识预测（67.2%准确率） |
 | **Network Shield** | Custom Proxy Pool | 熔断保护与会话管理 |
 
+### V11.0 Clean Sweep 架构 (Recon 侦察引擎)
+
+V11.0 引入了工业级 Recon 侦察系统，实现从 OddsPortal 高效采集历史数据：
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      V11.0 RECON 侦察引擎架构                                │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐    │
+│  │  ReconNavigator  │────▶│   ReconParser    │────▶│  ReconStitcher   │    │
+│  │   (页面导航)      │     │   (数据解析)      │     │   (数据缝合)      │    │
+│  └──────────────────┘     └──────────────────┘     └──────────────────┘    │
+│           │                       │                       │                 │
+│           ▼                       ▼                       ▼                 │
+│  ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐    │
+│  │ReconDistributed  │     │ ReconResilience  │     │  ReconMetrics    │    │
+│  │    (分布式锁)     │     │   (错误恢复)      │     │   (指标监控)      │    │
+│  └──────────────────┘     └──────────────────┘     └──────────────────┘    │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### V11.0 核心特性
+
+| 特性 | 实现 | 说明 |
+|------|------|------|
+| **TraceID 追踪** | 每笔请求唯一编号 | 全链路可观测性 |
+| **全局异常捕获** | 单点失败不影响整体 | 任务级容错 |
+| **协议解密** | ReconDecryptor | 自动处理加密响应 |
+| **熔断保护** | ReconCircuitBreaker | 连续失败自动熔断 |
+| **配置解耦** | `config/recon_config.json` | Recon 配置唯一源 |
+| **真事务映射保存** | `FixtureRepository` 单 Client 事务 | 避免批量写入伪事务 |
+| **Fallback 加固** | `smartScan()` + DOM fallback | API 失败后不再因赛季变量缺失崩溃 |
+
+#### V11.0 Release Note
+
+**新特性**
+
+- Recon TraceID 已从扫描入口显式贯穿到 Navigator、Engine、Parser、Repository
+- 新增 Recon 鲁棒性回归测试，覆盖 API 失败后自动进入 fallback 链路
+
+**Bug 修复**
+
+- 修复 `smartScan()` fallback 路径 `dbSeason` 未定义崩溃
+- 修复 `FixtureRepository` 批量映射保存的伪事务问题，改为单 `client` 真事务
+- 修复 ajax / raw / nested 赔率结构解析回归
+
+**破坏性变更**
+
+- 真实网络与浏览器型验证用例迁移至 `tests/integration/`，`npm test` 仅保留单元测试基线
+
+**已知技术债**
+
+- `AbstractHarvester.js` 当前仍为高耦合大类，已登记到根目录 `TECH_DEBT.md`，计划在 V12.0 或全量收割完成后重构
+
+#### V11.0 启动指令
+
+```bash
+# 启动 Recon 扫描器 (单赛季单联赛)
+docker-compose -f docker-compose.dev.yml exec dev \
+  node scripts/ops/recon_scanner.js --season 2025-2026 --league BUNDESLIGA
+
+# 启动 DOM Surgical Harvest (按月分段清缴)
+docker-compose -f docker-compose.dev.yml exec dev \
+  node scripts/ops/dom_surgical_harvest.js
+
+# 启动 L1 发现引擎
+docker-compose -f docker-compose.dev.yml exec dev \
+  node scripts/ops/seed_fixtures.js --season 2025/2026 --league 54
+```
+
 ---
 
 ### 🧩 模块化架构 (V4.52+)

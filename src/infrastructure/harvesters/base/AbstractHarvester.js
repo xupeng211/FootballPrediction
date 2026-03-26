@@ -706,7 +706,7 @@ class AbstractHarvester {
 
             // 3. V4.51.1: 调用 AutoAuthManager 刷新 Session
             if (newPort) {
-                const autoAuthManager = getAutoAuthManager();
+                const autoAuthManager = this.autoAuthManager || getAutoAuthManager();
                 const refreshResult = await autoAuthManager.refreshSession(workerId, newPort);
 
                 if (refreshResult.success) {
@@ -910,6 +910,47 @@ class AbstractHarvester {
                 `🧹 Context 池清理: ${cleaned} 个 | 创建=${this._totalContextCreations} | 复用=${this._totalContextReuses} | 淘汰=${this._contextEvictions} (${evictionRate}%)`
             );
         }
+    }
+
+    /**
+     * 兼容旧测试：委托 BrowserFactory 注入隐身脚本
+     * @param {import('playwright').Page} page
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _injectStealthScripts(page) {
+        await this.browserFactory.injectStealthScripts(page);
+    }
+
+    /**
+     * 兼容旧测试：委托 BrowserFactory 模拟人类行为
+     * @param {import('playwright').Page} page
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _simulateHumanBehavior(page) {
+        await this.browserFactory.simulateHumanBehavior(page);
+    }
+
+    /**
+     * 兼容旧测试：委托 BrowserFactory 首页预热
+     * @param {import('playwright').Page} page
+     * @param {object} config
+     * @returns {Promise<void>}
+     * @private
+     */
+    async _warmupHomepage(page, config = {}) {
+        await this.browserFactory.warmupHomepage(page, config);
+    }
+
+    /**
+     * 兼容旧测试：委托 BrowserFactory 加载 Cookie
+     * @param {import('playwright').BrowserContext} context
+     * @returns {Promise<boolean>}
+     * @private
+     */
+    async _loadBrowserStateCookies(context) {
+        return this.browserFactory.loadBrowserStateCookies(context);
     }
 
     // ========================================================================

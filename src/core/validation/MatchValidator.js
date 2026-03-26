@@ -41,7 +41,24 @@ const SEASON_CONFIG = loadSeasonConfig();
  * 获取配置访问器
  */
 const ValidationConfig = {
-    getSeasonWindow(season) {
+    getSeasonWindow(season, leagueId = null) {
+        // 首先尝试查找联赛特定的窗口
+        if (leagueId) {
+            const leagueSpecificKey = `${season}-${leagueId}`;
+            if (SEASON_CONFIG?.seasons?.[leagueSpecificKey]) {
+                return SEASON_CONFIG.seasons[leagueSpecificKey];
+            }
+            // 尝试常见联赛后缀
+            const leagueMap = { 54: 'Bundesliga', 53: 'Ligue1' };
+            const suffix = leagueMap[leagueId];
+            if (suffix) {
+                const suffixedKey = `${season}-${suffix}`;
+                if (SEASON_CONFIG?.seasons?.[suffixedKey]) {
+                    return SEASON_CONFIG.seasons[suffixedKey];
+                }
+            }
+        }
+        // 回退到通用赛季窗口
         return SEASON_CONFIG?.seasons?.[season] || null;
     },
     getPlaceholderKeywords() {
@@ -84,7 +101,7 @@ function threeGatesFilter(matches, leagueInfo, season, stats, log = console) {
     }
 
     const validMatches = [];
-    const seasonWindow = ValidationConfig.getSeasonWindow(season);
+    const seasonWindow = ValidationConfig.getSeasonWindow(season, leagueInfo.id);
 
     for (let i = 0; i < matches.length; i++) {
         const match = matches[i];

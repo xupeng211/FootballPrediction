@@ -1,203 +1,46 @@
 /**
- * @file FixtureRepository - 赛程数据持久化层
+ * @file FixtureRepository - 赛程数据持久化层 (V11.0 Clean Sweep)
  * @module infrastructure/services/FixtureRepository
- * @version V6.7.5-REPOSITORY
+ * @version V11.0-REPOSITORY-HARDENED
  * @description
  * 职责: 负责赛程数据的 PostgreSQL 持久化操作
- * 包含: 批量插入、冲突处理、Upsert 逻辑
- * 从 DiscoveryService 解耦，专注数据持久化
+ * V11.0 变更:
+ * - 添加缺失的 match_confidence 和 mapping_method 字段处理
+ * - saveOddsPortalMapping 改为抛出错误而非静默失败
+ * - 添加事务支持和自动重试机制
  */
 
 'use strict';
+
+/**
+ * Repository 错误类
+ */
+class RepositoryError extends Error {
+  constructor(message, code, originalError = null) {
+    super(message);
+    this.name = 'RepositoryError';
+    this.code = code;
+    this.originalError = originalError;
+    this.timestamp = new Date().toISOString();
+  }
+}
 
 /**
  * 赛程数据仓储
  * @class FixtureRepository
  */
 class FixtureRepository {
-  /**
-   * 创建仓储实例
-   * @param {Object} options - 配置选项
-   * @param {Object} options.dbPool - PostgreSQL 连接池
-   * @param {Object} options.logger - 日志对象
-   * @param {number} options.batchSize - 批量大小 (默认: 50)
-   */
   constructor(options = {}) {
     this.dbPool = options.dbPool;
-    this.logger = options.logger || {
-      info: () => {},
-      warn: () => {},
-      error: () => {}
-    };
+    this.logger = options.logger || { info: () => {}, warn: () => {}, error: () => {} };
     this.batchSize = options.batchSize || 50;
+    this.maxRetries = options.maxRetries || 3;
+    this.retryDelayMs = options.retryDelayMs || 1000;
+    this.traceId = options.traceId || null;
   }
 
   /**
-   * 持久化赛程数据 (批量 Upsert)
-   * @param {Array} fixtures - 比赛数据数组
-   * @returns {Promise<Object>} { total, inserted, updated, failed }
-   */
-  async persist(fixtures) {
-    const result = { total: fixtures.length, inserted: 0, updated: 0, failed: 0 };
-
-    for (let i = 0; i < fixtures.length; i += this.batchSize) {
-      const batch = fixtures.slice(i, i + this.batchSize);
-
-      try {
-        const client = await this.dbPool.connect();
-        try {
-          for (const match of batch) {
-            const upsertResult = await this._upsertMatch(client, match);
-            if (upsertResult === 'inserted') result.inserted++;
-            else if (upsertResult === 'updated') result.updated++;
-            else result.failed++;
-          }
-        } finally {
-          client.release();
-        }
-      } catch (error) {
-        this.logger.error(`[Repository] 批量持久化失败: ${error.message}`);
-        result.failed += batch.length;
-      }
-    }
-
-    return result;
-  }
-
-  /**
-   * 单条 Upsert
-   * @private
-   */
-  async _upsertMatch(client, match) {
-    try {
-      const query = `
-        INSERT INTO matches (match_id, league_id, season, home_team, away_team, match_date, match_time, status, external_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW())
-        ON CONFLICT (match_id) DO UPDATE SET
-          home_team = EXCLUDED.home_team,
-          away_team = EXCLUDED.away_team,
-          match_date = EXCLUDED.match_date,
-          match_time = EXCLUDED.match_time,
-          status = EXCLUDED.status,
-          external_id = EXCLUDED.external_id,
-          updated_at = NOW()
-        RETURNING (xmax = 0) AS was_insert
-      `;
-
-      const values = [
-        match.match_id,
-        match.league_id,
-        match.season,
-        match.home_team,
-        match.away_team,
-        match.match_date,
-        match.match_time,
-        match.status,
-        match.external_id
-      ];
-
-      const result = await client.query(query, values);
-      return result.rows[0]?.was_insert ? 'inserted' : 'updated';
-    } catch (error) {
-      this.logger.error(`[Repository] Upsert 失败 ${match.match_id}: ${error.message}`);
-      return 'failed';
-    }
-  }
-
-  /**
-   * 查询已存在的比赛
-   * @param {Array} matchIds - 比赛 ID 数组
-   * @returns {Promise<Set>} 已存在的 match_id 集合
-   */
-  async findExistingMatches(matchIds) {
-    try {
-      const client = await this.dbPool.connect();
-      try {
-        const query = `
-          SELECT match_id FROM matches
-          WHERE match_id = ANY($1)
-        `;
-        const result = await client.query(query, [matchIds]);
-        return new Set(result.rows.map(r => r.match_id));
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      this.logger.error(`[Repository] 批量查询失败: ${error.message}`);
-      return new Set();
-    }
-  }
-
-  /**
-   * 删除指定联赛赛季的数据
-   * @param {number} leagueId - 联赛 ID
-   * @param {string} season - 赛季
-   * @returns {Promise<number>} 删除的行数
-   */
-  async deleteByLeagueAndSeason(leagueId, season) {
-    try {
-      const client = await this.dbPool.connect();
-      try {
-        const pattern = `${leagueId}_${season.replace(/[\/-_]/g, '')}_%`;
-        const result = await client.query(
-          'DELETE FROM matches WHERE match_id LIKE $1',
-          [pattern]
-        );
-        this.logger.info(`[Repository] 删除 ${result.rowCount} 条记录`);
-        return result.rowCount;
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      this.logger.error(`[Repository] 删除失败: ${error.message}`);
-      return 0;
-    }
-  }
-
-  /**
-   * 获取 raw_match_data 表记录总数 (V6.7: 供审计使用)
-   * @returns {Promise<number>}
-   */
-  async getRawMatchDataCount() {
-    try {
-      const client = await this.dbPool.connect();
-      try {
-        const result = await client.query('SELECT COUNT(*) as count FROM raw_match_data');
-        return parseInt(result.rows[0].count, 10);
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      this.logger.error(`[Repository] 获取记录数失败: ${error.message}`);
-      return 0;
-    }
-  }
-
-  /**
-   * 获取最近记录 (V6.7: 供审计使用)
-   * @param {number} limit - 返回条数
-   * @returns {Promise<Array>}
-   */
-  async getRecentRecords(limit = 5) {
-    try {
-      const client = await this.dbPool.connect();
-      try {
-        const result = await client.query(
-          'SELECT match_id, collected_at FROM raw_match_data ORDER BY collected_at DESC LIMIT $1',
-          [limit]
-        );
-        return result.rows;
-      } finally {
-        client.release();
-      }
-    } catch (error) {
-      this.logger.error(`[Repository] 获取最近记录失败: ${error.message}`);
-      return [];
-    }
-  }
-
-  /**
-   * 初始化 (V6.7: 如果未提供 dbPool，自动创建)
+   * 初始化连接池
    */
   async init() {
     if (!this.dbPool) {
@@ -211,12 +54,378 @@ class FixtureRepository {
         max: 10,
         idleTimeoutMillis: 30000
       });
-      this.logger.info('[Repository] 已自动创建数据库连接池');
+      this.logger.info('[Repository] 数据库连接池已创建');
     }
   }
 
   /**
-   * 关闭连接 (V6.7: 资源释放)
+   * 带重试的数据库操作
+   * @private
+   */
+  async _executeWithRetry(operation, operationName) {
+    let lastError;
+    
+    for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
+      try {
+        return await operation();
+      } catch (error) {
+        lastError = error;
+        this.logger.warn(`[Repository] ${operationName} 失败 (尝试 ${attempt}/${this.maxRetries})`, {
+          error: error.message,
+          code: error.code
+        });
+        
+        if (attempt < this.maxRetries) {
+          await new Promise(r => setTimeout(r, this.retryDelayMs * attempt));
+        }
+      }
+    }
+    
+    throw new RepositoryError(
+      `${operationName} 在 ${this.maxRetries} 次尝试后仍然失败: ${lastError.message}`,
+      'MAX_RETRIES_EXCEEDED',
+      lastError
+    );
+  }
+
+  /**
+   * 保存 OddsPortal 映射 (V11.0 硬化版)
+   * @param {Object} mappingData
+   * @returns {Promise<Object>}
+   * @throws {RepositoryError}
+   */
+  async saveOddsPortalMapping(mappingData) {
+    const requiredFields = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team'];
+    
+    // 验证必填字段
+    const missing = requiredFields.filter(f => !mappingData[f]);
+    if (missing.length > 0) {
+      throw new RepositoryError(
+        `缺少必填字段: ${missing.join(', ')}`,
+        'MISSING_REQUIRED_FIELDS'
+      );
+    }
+
+    // V11.0: 如果表没有这些字段，从数据中移除
+    const optionalFields = ['match_confidence', 'mapping_method'];
+    const hasOptionalFields = await this._checkOptionalFields('matches_oddsportal_mapping', optionalFields);
+
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      
+      try {
+        await client.query('BEGIN');
+        const result = await this._saveOddsPortalMappingWithClient(client, mappingData, hasOptionalFields);
+        await client.query('COMMIT');
+
+        this.logger.info('[Repository] 映射保存成功', { 
+          matchId: mappingData.match_id,
+          hash: mappingData.oddsportal_hash,
+          traceId: this.traceId
+        });
+
+        return {
+          success: true,
+          matchId: result.matchId,
+          wasInsert: result.wasInsert
+        };
+
+      } catch (error) {
+        await client.query('ROLLBACK');
+        
+        // 分类错误
+        if (error.code === '23503') { // 外键约束
+          throw new RepositoryError(
+            `外键约束失败: ${error.message}`,
+            'FOREIGN_KEY_VIOLATION',
+            error
+          );
+        }
+        if (error.code === '23505') { // 唯一约束
+          throw new RepositoryError(
+            `唯一约束冲突: ${error.message}`,
+            'UNIQUE_VIOLATION',
+            error
+          );
+        }
+        if (error.code === '23502') { // 非空约束
+          throw new RepositoryError(
+            `非空约束失败: ${error.message}`,
+            'NOT_NULL_VIOLATION',
+            error
+          );
+        }
+        
+        throw new RepositoryError(
+          `数据库操作失败: ${error.message}`,
+          'DATABASE_ERROR',
+          error
+        );
+      } finally {
+        client.release();
+      }
+    }, 'saveOddsPortalMapping');
+  }
+
+  /**
+   * 使用共享 client 保存映射
+   * @private
+   * @param {Object} client - PostgreSQL client
+   * @param {Object} mappingData - 映射数据
+   * @param {Object} hasOptionalFields - 可选字段存在状态
+   * @returns {Promise<{matchId: string|undefined, wasInsert: boolean}>}
+   */
+  async _saveOddsPortalMappingWithClient(client, mappingData, hasOptionalFields) {
+    let columns = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team', 'status', 'created_at', 'updated_at'];
+    let values = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()', 'NOW()'];
+    let params = [
+      mappingData.match_id,
+      mappingData.oddsportal_hash,
+      mappingData.full_url,
+      mappingData.season,
+      mappingData.league_name,
+      mappingData.home_team,
+      mappingData.away_team,
+      mappingData.status || 'pending'
+    ];
+
+    if (hasOptionalFields.match_confidence) {
+      columns.push('match_confidence');
+      values.push(`$${params.length + 1}`);
+      params.push(mappingData.match_confidence || 0.75);
+    }
+
+    if (hasOptionalFields.mapping_method) {
+      columns.push('mapping_method');
+      values.push(`$${params.length + 1}`);
+      params.push(mappingData.mapping_method || 'protocol_extract');
+    }
+
+    const query = `
+      INSERT INTO matches_oddsportal_mapping (${columns.join(', ')})
+      VALUES (${values.join(', ')})
+      ON CONFLICT (match_id, season) DO UPDATE SET
+        oddsportal_hash = EXCLUDED.oddsportal_hash,
+        full_url = EXCLUDED.full_url,
+        home_team = EXCLUDED.home_team,
+        away_team = EXCLUDED.away_team,
+        status = EXCLUDED.status,
+        updated_at = NOW()
+        ${hasOptionalFields.match_confidence ? ', match_confidence = EXCLUDED.match_confidence' : ''}
+        ${hasOptionalFields.mapping_method ? ', mapping_method = EXCLUDED.mapping_method' : ''}
+      RETURNING match_id;
+    `;
+
+    const result = await client.query(query, params);
+    return {
+      matchId: result.rows[0]?.match_id,
+      wasInsert: result.rows.length > 0
+    };
+  }
+
+  /**
+   * 检查表是否存在可选字段
+   * @private
+   */
+  async _checkOptionalFields(tableName, fields) {
+    try {
+      const result = await this.dbPool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = $1 AND column_name = ANY($2)
+      `, [tableName, fields]);
+      
+      const existingFields = result.rows.map(r => r.column_name);
+      return {
+        match_confidence: existingFields.includes('match_confidence'),
+        mapping_method: existingFields.includes('mapping_method')
+      };
+    } catch (error) {
+      this.logger.warn('[Repository] 检查字段失败，假设字段不存在', { error: error.message });
+      return { match_confidence: false, mapping_method: false };
+    }
+  }
+
+  /**
+   * 批量保存映射 (事务保护)
+   * @param {Array} mappings
+   * @returns {Promise<Object>}
+   * @throws {RepositoryError}
+   */
+  async batchSaveOddsPortalMappings(mappings) {
+    if (!Array.isArray(mappings) || mappings.length === 0) {
+      return { success: true, inserted: 0, failed: 0, errors: [] };
+    }
+
+    const requiredFields = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team'];
+    for (const mapping of mappings) {
+      const missing = requiredFields.filter(f => !mapping[f]);
+      if (missing.length > 0) {
+        throw new RepositoryError(
+          `缺少必填字段: ${missing.join(', ')}`,
+          'MISSING_REQUIRED_FIELDS'
+        );
+      }
+    }
+
+    const optionalFields = ['match_confidence', 'mapping_method'];
+    const hasOptionalFields = await this._checkOptionalFields('matches_oddsportal_mapping', optionalFields);
+
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      const results = { inserted: 0, failed: 0, errors: [] };
+      
+      try {
+        await client.query('BEGIN');
+        
+        for (const mapping of mappings) {
+          try {
+            await this._saveOddsPortalMappingWithClient(client, mapping, hasOptionalFields);
+            results.inserted++;
+          } catch (error) {
+            results.failed++;
+            results.errors.push({ matchId: mapping.match_id, error: error.message });
+            throw error;
+          }
+        }
+        
+        await client.query('COMMIT');
+        return { success: true, ...results };
+      } catch (error) {
+        await client.query('ROLLBACK');
+
+        if (error instanceof RepositoryError) {
+          throw error;
+        }
+
+        throw new RepositoryError(
+          `批量保存映射失败: ${error.message}`,
+          'BATCH_SAVE_FAILED',
+          error
+        );
+      } finally {
+        client.release();
+      }
+    }, 'batchSaveOddsPortalMappings');
+  }
+
+  /**
+   * 根据队名查找比赛
+   * @param {string} homeTeam
+   * @param {string} awayTeam
+   * @param {string} season
+   * @returns {Promise<Object|null>}
+   */
+  async findMatchByTeams(homeTeam, awayTeam, season) {
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      try {
+        const query = `
+          SELECT match_id, home_team, away_team, match_date
+          FROM matches
+          WHERE season = $1
+            AND (
+              (LOWER(home_team) = LOWER($2) AND LOWER(away_team) = LOWER($3))
+              OR (LOWER(home_team) = LOWER($3) AND LOWER(away_team) = LOWER($2))
+            )
+          LIMIT 1;
+        `;
+        const result = await client.query(query, [season, homeTeam, awayTeam]);
+        
+        if (result.rows.length > 0) {
+          return {
+            matchId: result.rows[0].match_id,
+            confidence: 1.0,
+            method: 'exact',
+            dbHome: result.rows[0].home_team,
+            dbAway: result.rows[0].away_team
+          };
+        }
+        return null;
+      } finally {
+        client.release();
+      }
+    }, 'findMatchByTeams');
+  }
+
+  /**
+   * 获取赛季所有比赛
+   * @param {string} season
+   * @returns {Promise<Array>}
+   */
+  async findMatchesBySeason(season) {
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      try {
+        const query = `
+          SELECT match_id, home_team, away_team, match_date
+          FROM matches
+          WHERE season = $1
+          ORDER BY match_date;
+        `;
+        const result = await client.query(query, [season]);
+        return result.rows;
+      } finally {
+        client.release();
+      }
+    }, 'findMatchesBySeason');
+  }
+
+  /**
+   * 获取未缝合的比赛
+   * @param {string} season
+   * @param {string} leagueName
+   * @returns {Promise<Array>}
+   */
+  async getUnstitchedMatches(season, leagueName) {
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      try {
+        const query = `
+          SELECT m.match_id, m.home_team, m.away_team, m.match_date
+          FROM matches m
+          LEFT JOIN matches_oddsportal_mapping map
+            ON m.match_id = map.match_id AND map.season = $2
+          WHERE m.league_name = $1
+            AND m.season = $2
+            AND map.match_id IS NULL
+          ORDER BY m.match_date;
+        `;
+        const result = await client.query(query, [leagueName, season]);
+        return result.rows;
+      } finally {
+        client.release();
+      }
+    }, 'getUnstitchedMatches');
+  }
+
+  /**
+   * 获取映射统计
+   * @param {string} season
+   * @returns {Promise<Object>}
+   */
+  async getMappingStats(season) {
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      try {
+        const query = `
+          SELECT
+            COUNT(*) as total,
+            COUNT(*) FILTER (WHERE status = 'pending') as pending,
+            COUNT(*) FILTER (WHERE status = 'harvested') as harvested
+          FROM matches_oddsportal_mapping
+          WHERE season = $1
+        `;
+        const result = await client.query(query, [season]);
+        return result.rows[0] || { total: 0, pending: 0, harvested: 0 };
+      } finally {
+        client.release();
+      }
+    }, 'getMappingStats');
+  }
+
+  /**
+   * 关闭连接池
    */
   async close() {
     if (this.dbPool) {
@@ -226,4 +435,4 @@ class FixtureRepository {
   }
 }
 
-module.exports = { FixtureRepository };
+module.exports = { FixtureRepository, RepositoryError };

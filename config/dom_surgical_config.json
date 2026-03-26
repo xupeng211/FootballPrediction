@@ -1,0 +1,100 @@
+{
+  "version": "V11.0-FACTORY",
+  "description": "DOM Surgical Harvest 配置文件 - 德甲按月分段清缴",
+  "target": {
+    "league": "Bundesliga",
+    "season": "2025/2026",
+    "country": "germany",
+    "expectedMatches": 306
+  },
+  "months": [
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05"
+  ],
+  "urlTemplates": {
+    "base": "https://www.oddsportal.com/football/{country}/{league}-{seasonStart}-{seasonEnd}/results/",
+    "monthly": "https://www.oddsportal.com/football/{country}/{league}-{seasonStart}-{seasonEnd}/results/#/{month}/"
+  },
+  "teamNameMappings": {
+    "b. monchengladbach": "borussia mgladbach",
+    "monchengladbach": "borussia mgladbach",
+    "b. mgladbach": "borussia mgladbach",
+    "borussia monchengladbach": "borussia mgladbach",
+    "bayer leverkusen": "bayer leverkusen",
+    "leverkusen": "bayer leverkusen",
+    "bayern munich": "bayern munich",
+    "bayern munchen": "bayern munich",
+    "fc bayern": "bayern munich",
+    "borussia dortmund": "borussia dortmund",
+    "dortmund": "borussia dortmund",
+    "bvb": "borussia dortmund",
+    "eintracht frankfurt": "eintracht frankfurt",
+    "frankfurt": "eintracht frankfurt",
+    "sc freiburg": "freiburg",
+    "freiburg": "freiburg",
+    "fsv mainz 05": "mainz",
+    "mainz 05": "mainz",
+    "mainz": "mainz",
+    "fc heidenheim": "heidenheim",
+    "heidenheim": "heidenheim",
+    "tsg hoffenheim": "hoffenheim",
+    "hoffenheim": "hoffenheim",
+    "vfb stuttgart": "stuttgart",
+    "stuttgart": "stuttgart",
+    "vfl wolfsburg": "wolfsburg",
+    "wolfsburg": "wolfsburg",
+    "werder bremen": "werder bremen",
+    "bremen": "werder bremen",
+    "fc augsburg": "augsburg",
+    "augsburg": "augsburg",
+    "fc st. pauli": "st. pauli",
+    "st. pauli": "st. pauli",
+    "holstein kiel": "holstein kiel",
+    "kiel": "holstein kiel",
+    "rb leipzig": "rb leipzig",
+    "leipzig": "rb leipzig",
+    "fc union berlin": "union berlin",
+    "union berlin": "union berlin",
+    "1. fc heidenheim": "heidenheim",
+    "1. fsv mainz 05": "mainz"
+  },
+  "timing": {
+    "pageWaitMs": 8000,
+    "scrollDelayMs": 1000,
+    "loadMoreDelayMs": 1500,
+    "interMonthDelayMs": 3000,
+    "maxScrollAttempts": 15
+  },
+  "selectors": {
+    "cookieBanner": "button:has-text('Agree'), button:has-text('Accept'), button:has-text('OK'), [id*='cookie'] button",
+    "loadMoreButton": "button:has-text('Show more')",
+    "matchRow": "div[role='row'], tr, .eventRow, [data-testid*='match']",
+    "homeTeam": ".home-team, .team-home, [data-testid*='home'], td:nth-child(2) div, td:nth-child(2) a",
+    "awayTeam": ".away-team, .team-away, [data-testid*='away'], td:nth-child(4) div, td:nth-child(4) a",
+    "score": ".score, .result, [data-testid*='score'], td:nth-child(3)",
+    "date": ".date, .time, [data-testid*='date'], td:nth-child(1)",
+    "matchLink": "a[href*='/football/']"
+  },
+  "database": {
+    "table": "matches_oddsportal_mapping",
+    "upsertConflictFields": ["odds_portal_match_id", "season", "home_team", "away_team"],
+    "batchSize": 50
+  },
+  "matching": {
+    "fuzzyThreshold": 0.75,
+    "minTeamMatchScore": 0.5
+  },
+  "logging": {
+    "component": "DOMSurgicalHarvest",
+    "logLevel": "info",
+    "enableDebug": false
+  }
+}

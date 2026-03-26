@@ -1,6 +1,6 @@
 # FootballPrediction - AI 助手指令上下文
 
-> **系统版本**: V4.47.0-BATTLE | **最后更新**: 2026-03-19
+> **系统版本**: V4.51.2-TOTAL-WAR | **最后更新**: 2026-03-24
 >
 > 本文档为 AI 助手提供项目背景、架构理解和操作指南，用于快速上手和高效协作。
 
@@ -10,24 +10,26 @@
 
 ### 1.1 项目定位
 
-**FootballPrediction** (V4.47.0-BATTLE) 是一个工业级足球预测平台，采用双语言（Node.js + Python）四层架构，通过多源数据采集、C++ 模糊匹配和 XGBoost 多模型共识，实现高精度的比赛预测。
+**FootballPrediction** (V4.51.2-TOTAL-WAR) 是一个工业级足球预测平台，采用双语言（Node.js + Python）四层架构，通过多源数据采集、C++ 模糊匹配和 XGBoost 多模型共识，实现高精度的比赛预测。
 
 ### 1.2 核心能力
 
 | 模块 | 技术实现 | 说明 |
 |------|----------|------|
-| **L1 Discovery** | FotMob API + 断路器 | 自动发现未来 7 天比赛，100% 测试覆盖 |
+| **L1 Discovery** | FotMob API + 断路器 (Project Hound V6.7) | 自动发现未来 7 天比赛，100% 测试覆盖 |
 | **L2 Harvest** | FotMob Details + OddsPortal + 22 节点代理池 | 赔率数据采集（开盘/收盘/1X2/亚洲盘） |
 | **L3 Smelt** | FeatureSmelter V5.0-TURBO | 11维纯净战斗特征向量 |
 | **ML Prediction** | XGBoost TITAN 模型 | 65.31% 准确率，<100ms 响应 |
 | **OddsFluxDetector** | V5.0 赔率背离算法 | 实时监测赔率异常波动 |
 | **Swarm Harvest** | Hyper Swarm 引擎 | Worker 池化架构，吞吐量提升 3.75x |
 | **V6.0 Backfill** | OddsPortal 回填系统 | 历史数据回填，22端口代理轮询 |
+| **V6.7 Recon** | RapidFuzz + 分布式锁 + 熔断保护 | 工业级数据侦察与标准化 |
 | **Stealth Navigator** | Playwright Stealth 强化 | 反检测页面导航 |
 | **Session Warmer** | 智能会话预热 | 自动保持会话活性 |
 | **Sentinel** | 哨兵监控系统 | 自动停机与熔断保护 |
 | **TITAN Cruise Control** | 全自动巡航控制器 | 无人值守定时任务调度 |
-| **Recon Scanner** | L2 侦察扫描器 | 模糊匹配逻辑集成 |
+| **TITAN Discovery** | V6.7 L1 发现引擎 | 工业级赛程发现与标准化 |
+| **TITAN Marathon** | 长时运行支持 | 大规模批次处理能力 |
 
 ### 1.3 质量认证
 
@@ -36,7 +38,7 @@
 - **架构纯净**：无冗余模块，无废弃代码
 - **黄金准则**：80% 测试覆盖率熔断 + 0 Error 静态质量
 - **工业级部署**：Docker 全容器化，支持生产级监控
-- **V6.0 加固**：P0级架构加固，断点续传，限流控制
+- **V6.7 加固**：L1/L2/Recon 三引擎工业化，ADR 架构决策记录
 
 ---
 
@@ -75,7 +77,62 @@
      回填系统
 ```
 
-### 3.2 V6.0 回填流水线架构
+### 3.2 V6.7 L1 发现引擎架构 (Project Hound)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         TITAN V6.7 L1 发现引擎                               │
+│                         (Project Hound 工业级重构)                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐
+   │   Discovery  │────▶│  Circuit Breaker │────▶│  L1 Normalizer   │
+   │   Service    │     │                  │     │                  │
+   │ - FotMob API │     │ - 故障检测       │     │ - 数据标准化     │
+   │ - 多源聚合   │     │ - 自动恢复       │     │ - 去重验证       │
+   │ - 实时调度   │     │ - 优雅降级       │     │ - 约束 enforcement│
+   └──────────────┘     └──────────────────┘     └──────────────────┘
+          │                                              │
+          │              ┌──────────────────┐           │
+          └─────────────▶│  ADR-001/002     │◀──────────┘
+                         │  架构决策记录     │
+                         │ - 源级数据加固    │
+                         │ - L2原始存储加固  │
+                         └──────────────────┘
+```
+
+### 3.3 V6.7 Recon 侦察架构 (10.0 满分架构)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         TITAN V6.7 RECON 侦察引擎                            │
+│                    (RapidFuzz + 分布式锁 + 熔断保护)                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
+│   Recon      │────▶│   Recon      │────▶│   Recon      │────▶│   Recon      │
+│  Navigator   │     │   Parser     │     │  Stitcher    │     │   Guardian   │
+│              │     │              │     │              │     │              │
+│ - 页面导航   │     │ - 数据解析   │     │ - 数据缝合   │     │ - 进程守护   │
+│ - 智能滚动   │     │ - 队名匹配   │     │ -  fuzzy匹配 │     │ - 资源回收   │
+│ - 代理轮换   │     │ - 赔率提取   │     │ - 冲突解决   │     │ - 健康检查   │
+└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘
+        │                                                       │
+        │              ┌──────────────┐                        │
+        └─────────────▶│ ReconMetrics │◀───────────────────────┘
+                       │ + HealthSrv  │
+                       │              │
+                       │ - Prometheus │
+                       │ - 健康端点   │
+                       │ - 错误分类   │
+                       └──────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  基础设施层: ReconDistributedLock (Redis RedLock) + ReconResilience (熔断)   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 3.4 V6.0 回填流水线架构
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -105,7 +162,7 @@
                       └──────────────────┘
 ```
 
-### 3.3 数据层级
+### 3.5 数据层级
 
 | 层级 | 数据源 | 存储表 | 说明 |
 |------|--------|--------|------|
@@ -115,18 +172,25 @@
 | **ELO** | 历史比赛结果 | `team_elo_ratings` | 球队动态实力评分 |
 | **预测** | XGBoost 模型 | `predictions` | 预测结果 + EV 计算 |
 | **回填** | OddsPortal | `backfill_progress` | V6.0 回填进度跟踪 |
+| **Recon** | OddsPortal Results | `recon_standings` | V6.7 侦察数据标准化 |
 
-### 3.4 核心资产地图
+### 3.6 核心资产地图
 
 | 功能模块 | 唯一指定文件 | 入口脚本 |
 |----------|-------------|---------|
 | **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `npm run seed` |
+| **L1 V6.7** | `scripts/ops/titan_discovery.js` | `node scripts/ops/titan_discovery.js` |
 | **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `npm start` |
 | **Swarm Harvest** | `src/infrastructure/harvesters/SwarmHarvester.js` | `npm run harvest:swarm` |
 | **V6.0 Backfill** | `scripts/ops/gold_pilot_50.js` | `node scripts/ops/gold_pilot_50.js` |
+| **V6.7 Recon** | `scripts/ops/recon_scanner.js` | `node scripts/ops/recon_scanner.js` |
+| **TITAN Marathon** | `scripts/ops/titan_marathon.js` | `node scripts/ops/titan_marathon.js` |
+| **TITAN Monitor** | `scripts/ops/titan_monitor.js` | `node scripts/ops/titan_monitor.js` |
+| **TITAN Seeder** | `scripts/ops/titan_seeder.js` | `node scripts/ops/titan_seeder.js` |
 | **L2 Recon** | `scripts/ops/recon_scanner.js` | `node scripts/ops/recon_scanner.js` |
 | **OddsPortal Harvester** | `src/infrastructure/harvesters/OddsPortalHarvester.js` | - |
 | **OddsPortal Parser** | `src/infrastructure/harvesters/OddsPortalParser.js` | - |
+| **TitanSlimHarvester** | `src/infrastructure/harvesters/TitanSlimHarvester.js` | - |
 | **ProxyRotator** | `src/infrastructure/harvesters/ProxyRotator.js` | - |
 | **StealthNavigator** | `src/infrastructure/harvesters/StealthNavigator.js` | - |
 | **SessionWarmer** | `src/infrastructure/harvesters/SessionWarmer.js` | - |
@@ -139,8 +203,22 @@
 | **代理池** | `src/infrastructure/network/NetworkShield.js` | - |
 | **TITAN 模型** | `src/ml/inference/predictor.py` | `npm run predict` |
 | **H2H Estimator** | `src/ml/feature_engine/h2h_estimator.py` | H2H 智能补位 |
-| **统一配置** | `src/config_unified.py` / `config/factory_config.js` | - |
+| **统一配置** | `src/config_unified.py` / `config/factory_config.js` / `config/registry.js` | - |
 | **StructuredLogger** | `src/utils/StructuredLogger.js` | V4.0 模块化日志 |
+| **Normalizer** | `src/utils/Normalizer.js` | V6.6 标准化工具 |
+
+#### V6.7 Recon 基础设施组件
+
+| 组件 | 文件路径 | 功能 |
+|------|----------|------|
+| **ReconNavigator** | `src/infrastructure/recon/ReconNavigator.js` | 页面导航与智能滚动 |
+| **ReconParser** | `src/infrastructure/recon/ReconParser.js` | 数据解析与队名匹配 |
+| **ReconStitcher** | `src/infrastructure/recon/ReconStitcher.js` | 数据缝合与冲突解决 |
+| **ReconDistributedLock** | `src/infrastructure/recon/ReconDistributedLock.js` | Redis RedLock 分布式锁 |
+| **ReconResilience** | `src/infrastructure/recon/ReconResilience.js` | 错误分类/重试/熔断 |
+| **ReconMetrics** | `src/infrastructure/recon/ReconMetrics.js` | Prometheus 指标采集 |
+| **ReconGuardian** | `src/infrastructure/recon/ReconGuardian.js` | 进程守护与资源回收 |
+| **ReconHealthServer** | `src/infrastructure/recon/ReconHealthServer.js` | 健康检查端点 |
 
 ---
 
@@ -153,6 +231,7 @@ FootballPrediction/
 │   ├── constants.js             # 业务常量
 │   ├── database.js              # 数据库配置
 │   ├── registry.js              # 代理注册表（22端口配置）
+│   ├── recon_config.json        # V6.7 Recon 配置
 │   ├── shared_constants.js      # 共享常量定义
 │   ├── season_windows.json      # 赛季窗口配置
 │   └── leagues.json             # 联赛配置
@@ -160,7 +239,11 @@ FootballPrediction/
 │   ├── ops/                     # 运维脚本
 │   │   ├── run_production.js    # 生产收割主入口
 │   │   ├── seed_fixtures.js     # L1 赛程种子
-│   │   ├── recon_scanner.js     # L2 侦察扫描器
+│   │   ├── titan_discovery.js   # V6.7 L1 发现引擎
+│   │   ├── titan_marathon.js    # TITAN 长时运行支持
+│   │   ├── titan_monitor.js     # TITAN 监控器
+│   │   ├── titan_seeder.js      # TITAN 种子器
+│   │   ├── recon_scanner.js     # V6.7 L2 侦察扫描器
 │   │   ├── smelt_all.js         # L3 特征熔炼
 │   │   ├── smelt_v5_turbo.js    # V5 Turbo 熔炼
 │   │   ├── swarm_test.js        # Swarm 蜂群收割
@@ -203,12 +286,23 @@ FootballPrediction/
 │   │   │   ├── workers/         # Worker 池
 │   │   │   ├── ProductionHarvester.js
 │   │   │   ├── SwarmHarvester.js
+│   │   │   ├── TitanSlimHarvester.js
 │   │   │   ├── OddsPortalHarvester.js
 │   │   │   ├── OddsPortalParser.js
 │   │   │   ├── ProxyRotator.js
 │   │   │   ├── StealthNavigator.js
 │   │   │   ├── SessionWarmer.js
 │   │   │   └── Checkpointer.js
+│   │   ├── recon/               # V6.7 Recon 基础设施
+│   │   │   ├── ReconNavigator.js
+│   │   │   ├── ReconParser.js
+│   │   │   ├── ReconStitcher.js
+│   │   │   ├── ReconDistributedLock.js
+│   │   │   ├── ReconResilience.js
+│   │   │   ├── ReconMetrics.js
+│   │   │   ├── ReconGuardian.js
+│   │   │   ├── ReconHealthServer.js
+│   │   │   └── index.js
 │   │   ├── network/             # 网络与代理
 │   │   ├── monitoring/          # 监控与哨兵
 │   │   ├── database/            # 数据库操作
@@ -229,11 +323,12 @@ FootballPrediction/
 │   │   └── model_config.py      # 模型配置常量唯一源
 │   ├── api/                     # API 接口
 │   ├── utils/                   # 工具函数
-│   │   └── StructuredLogger.js  # V4.0 结构化日志器
+│   │   ├── StructuredLogger.js  # V4.0 结构化日志器
+│   │   └── Normalizer.js        # V6.6 标准化工具
 │   ├── data/                    # 数据层
 │   └── config_unified.py        # 统一配置入口
 ├── tests/                       # 测试文件
-│   ├── unit/                    # 单元测试（60+ 测试用例）
+│   ├── unit/                    # 单元测试（62+ 测试用例）
 │   ├── integration/             # 集成测试
 │   ├── integrity/               # 完整性测试
 │   └── fixtures/                # 测试数据
@@ -245,6 +340,9 @@ FootballPrediction/
 ├── docs/                        # 文档中心
 │   ├── ops/                     # 运维文档
 │   ├── architecture/            # 架构文档
+│   ├── adr/                     # 架构决策记录 (ADR)
+│   │   ├── ADR-001-Source-Level-Data-Hardening.md
+│   │   └── ADR-002-L2-Raw-Storage-Hardening.md
 │   └── harvesters/              # 收割器文档
 ├── .claude/                     # Claude Skills 约束体系
 │   ├── skills/                  # 专用技能（12个）
@@ -312,7 +410,36 @@ npm start
 | `npm run elo:recalc` | 重新计算 ELO |
 | `npm run elo:incremental` | 增量更新 ELO |
 
-### 5.3 V6.0 回填命令
+### 5.3 V6.7 L1 发现引擎命令
+
+```bash
+# V6.7 L1 发现引擎（Project Hound）
+node scripts/ops/titan_discovery.js
+
+# TITAN Marathon 长时运行
+node scripts/ops/titan_marathon.js
+
+# TITAN 监控器
+node scripts/ops/titan_monitor.js
+
+# TITAN 种子器
+node scripts/ops/titan_seeder.js
+```
+
+### 5.4 V6.7 Recon 侦察命令
+
+```bash
+# Recon Scanner - 单赛季单联赛
+node scripts/ops/recon_scanner.js --season 2024-2025 --league EPL
+
+# Recon Scanner - 全联赛
+node scripts/ops/recon_scanner.js --season 2024-2025 --all-leagues
+
+# Recon Scanner - 带调试模式
+node scripts/ops/recon_scanner.js --season 2024-2025 --league EPL --debug
+```
+
+### 5.5 V6.0 回填命令
 
 ```bash
 # 运行 Gold Pilot 50 回填
@@ -321,7 +448,7 @@ node scripts/ops/gold_pilot_50.js
 # 运行 TITAN 大回填
 node scripts/ops/titan_grand_backfill.js
 
-# 运行压力测试
+# P2P 收割（v38）
 node scripts/ops/p2p_harvest_v38.js
 
 # 批量导入比赛
@@ -331,7 +458,7 @@ node scripts/ops/bulk_import_matches.js
 docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "SELECT * FROM backfill_progress;"
 ```
 
-### 5.4 Makefile 快捷命令
+### 5.6 Makefile 快捷命令
 
 ```bash
 # 开发环境管理
@@ -365,13 +492,13 @@ make dashboard       # 启动战神仪表盘
 
 1. **沟通协议**：所有回复、注释、日志必须使用**中文**
 2. **容器化优先**：**禁止**在宿主机直接运行 Node/Python，所有操作在 Docker 容器内执行
-3. **分支管理**：严禁在 `main` 分支开发，分支命名：`feat/<功能>` / `lab/<实验>` / `fix/<修复>` / `refactor/<重构>`
+3. **分支管理**：严禁在 `main` 分支开发，分支命名：`feat/<功能>` / `lab/<实验>` / `fix/<修复>` / `refactor/<重构>` / `chore/<杂务>`
 4. **数据完整性**：**零模拟原则**，严禁使用 `Math.random()` 伪造数据
 5. **幂等性**：所有收割任务支持重复执行，已存在的完整数据应跳过
 
-### 6.2 V4.47 架构规范
+### 6.2 V4.51 架构规范
 
-- **配置唯一源**: `src/config_unified.py` / `config/factory_config.js` / `config/registry.js`
+- **配置唯一源**: `src/config_unified.py` / `config/factory_config.js` / `config/registry.js` / `config/recon_config.json`
 - **数学能力**: `src/core/math/` (finance, evaluator)
 - **动态能力**: `src/core/` (Math, Database, Types)
 - **预测大脑**: `src/ml/`
@@ -379,18 +506,21 @@ make dashboard       # 启动战神仪表盘
 - **策略模块**: `src/strategy/`
 - **基础设施**: `src/infrastructure/`
 - **回填系统**: `scripts/ops/gold_pilot_50.js` + `src/infrastructure/harvesters/OddsPortalHarvester.js`
+- **侦察系统**: `scripts/ops/recon_scanner.js` + `src/infrastructure/recon/`
 - **代理轮询**: `src/infrastructure/harvesters/ProxyRotator.js` (22端口)
 - **断点续传**: `src/infrastructure/harvesters/Checkpointer.js`
 - **唯一数据**: `src/database/`
 - **日志系统**: `src/utils/StructuredLogger.js`
+- **标准化**: `src/utils/Normalizer.js`
+- **架构决策**: `docs/adr/` (ADR-001, ADR-002)
 
-### 6.3 黄金准则（V4.47+）
+### 6.3 黄金准则（V4.51+）
 
 - **测试覆盖率**: 80% 熔断阈值
 - **静态质量**: 0 Error 容忍
-- **文档规范**: JSDoc 完整注释
+- **文档规范**: JSDoc 完整注释 + ADR 架构决策记录
 - **模块化**: 单一职责，高内聚低耦合
-- **V6.0 加固**: P0级架构，断点续传，限流控制，健康检查
+- **V6.7 加固**: L1/L2/Recon 三引擎工业化，断路器保护，100% 测试覆盖
 
 ### 6.4 Skills 约束体系
 
@@ -413,8 +543,11 @@ make dashboard       # 启动战神仪表盘
 ### 7.1 核心收割流程
 
 ```bash
-# L1: 赛程种子
+# L1: 赛程种子 (V6.7 Project Hound)
 docker-compose -f docker-compose.dev.yml exec dev npm run seed
+
+# L1: V6.7 发现引擎
+docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js
 
 # L2: 数据收割
 docker-compose -f docker-compose.dev.yml exec dev npm start
@@ -427,6 +560,9 @@ docker-compose -f docker-compose.dev.yml exec dev npm run smelt
 
 # V6.0: 历史回填
 docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/gold_pilot_50.js
+
+# V6.7: Recon 侦察
+docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/recon_scanner.js --season 2024-2025 --league EPL
 
 # TITAN 完整工作流（高阶）
 npm run titan:start
@@ -476,7 +612,6 @@ npm run test:coverage
 
 # Python 测试
 pytest tests/ -v
-pytest tests/ml/ -v
 ```
 
 ### 7.4 数据库操作
@@ -581,9 +716,25 @@ const PROXIES = {
 };
 ```
 
-### 8.3 配置系统
+### 8.3 Recon 配置（V6.7）
 
-所有配置集中在 `src/config_unified.py` / `config/factory_config.js` / `config/registry.js`，**严禁在业务代码中硬编码参数**。
+```javascript
+// config/recon_config.json
+{
+  "version": "V6.7-INDUSTRIAL",
+  "matching": {
+    "fuzzy_threshold": 0.85
+  },
+  "logging": {
+    "component": "ReconScanner",
+    "log_dir": "/app/logs/recon"
+  }
+}
+```
+
+### 8.4 配置系统
+
+所有配置集中在 `src/config_unified.py` / `config/factory_config.js` / `config/registry.js` / `config/recon_config.json`，**严禁在业务代码中硬编码参数**。
 
 ```javascript
 // Node.js 使用示例
@@ -611,6 +762,8 @@ from src.config_unified import DatabaseConfig
 | **Swarm 挂起** | `npm run titan:check` | 检查 `sentinel_watch.js` 日志 |
 | **回填中断** | `docker-compose exec db psql -U football_user -d football_db -c "SELECT match_id, status FROM backfill_progress WHERE status = 'failed';"` | 重新运行 `gold_pilot_50.js`，自动断点续传 |
 | **代理403错误** | 检查代理健康状态 | 等待5分钟冷却或切换代理端口 |
+| **L1 发现失败** | `npm run test:l1` | 检查断路器状态和 API 响应 |
+| **Recon 锁冲突** | `docker-compose exec redis redis-cli --eval unlock_script.lua` | 等待锁过期或手动释放 |
 
 ---
 
@@ -625,6 +778,7 @@ from src.config_unified import DatabaseConfig
 | `predictions` | 预测结果 | - |
 | `team_elo_ratings` | 球队 Elo 评分 | - |
 | `backfill_progress` | V6.0 回填进度跟踪 | - |
+| `recon_standings` | V6.7 侦察积分榜数据 | - |
 
 **常用查询：**
 
@@ -663,6 +817,17 @@ SELECT
 FROM l3_features
 WHERE market_sentiment IS NOT NULL
 GROUP BY market_sentiment;
+
+-- 查看 Recon 积分榜（V6.7）
+SELECT 
+    league_id,
+    season,
+    team_name,
+    position,
+    points,
+    updated_at
+FROM recon_standings
+ORDER BY league_id, position;
 ```
 
 ---
@@ -820,81 +985,130 @@ LIMIT 10;
 
 ---
 
-## 14. 测试体系
+## 14. V6.7 Recon 侦察系统
 
-### 14.1 测试结构
+### 14.1 架构概述
+
+V6.7 Recon 是工业级数据侦察与标准化系统，采用 10.0 满分架构：
+
+**核心组件**:
+- **ReconNavigator**: 页面导航与智能滚动
+- **ReconParser**: 数据解析与队名模糊匹配
+- **ReconStitcher**: 数据缝合与冲突解决
+- **ReconDistributedLock**: Redis RedLock 分布式锁
+- **ReconResilience**: 错误分类、指数退避、熔断保护
+- **ReconMetrics**: Prometheus 指标采集
+- **ReconGuardian**: 进程守护与资源回收
+- **ReconHealthServer**: 健康检查端点
+
+### 14.2 关键特性
+
+| 特性 | 说明 |
+|------|------|
+| **RapidFuzz 匹配** | C++ 级模糊匹配，队名识别准确率 >95% |
+| **分布式锁** | Redis RedLock，防止并发冲突 |
+| **熔断保护** | 错误分类 + 指数退避 + 熔断器 |
+| **可观测性** | Prometheus 指标 + 健康检查 + Guardian |
+| **零泄漏** | 资源 100% 回收，僵尸进程自动清理 |
+| **TDD 全覆盖** | 19/19 测试用例通过 |
+
+### 14.3 运行方式
+
+```bash
+# 单赛季单联赛侦察
+node scripts/ops/recon_scanner.js --season 2024-2025 --league EPL
+
+# 全联赛侦察
+node scripts/ops/recon_scanner.js --season 2024-2025 --all-leagues
+
+# 调试模式
+node scripts/ops/recon_scanner.js --season 2024-2025 --league EPL --debug
+```
+
+### 14.4 配置说明
+
+```json
+// config/recon_config.json
+{
+  "version": "V6.7-INDUSTRIAL",
+  "matching": {
+    "fuzzy_threshold": 0.85
+  },
+  "navigation": {
+    "scroll_attempts": 10,
+    "scroll_delay_ms": 2000,
+    "page_wait_ms": 5000
+  },
+  "logging": {
+    "component": "ReconScanner",
+    "log_dir": "/app/logs/recon"
+  }
+}
+```
+
+---
+
+## 15. 测试体系
+
+### 15.1 测试结构
 
 | 目录 | 用途 | 数量 |
 |------|------|------|
-| `tests/unit/` | 单元测试 | 60+ 测试用例 |
+| `tests/unit/` | 单元测试 | 62+ 测试用例 |
 | `tests/integration/` | 集成测试 | - |
 | `tests/integrity/` | 完整性测试 | - |
 | `tests/fixtures/` | 测试数据 | - |
 
-### 14.2 核心测试文件
+### 15.2 核心测试文件
 
+#### 基础组件测试
 - `StructuredLogger.test.js` - 结构化日志器测试
-- `Smelter_Audit.test.js` - Smelter 审计测试
-- `FeatureSmelter.test.js` - 特征熔炼器测试
+- `Normalizer.test.js` - 标准化器测试 (V6.6)
+- `DiscoveryService.test.js` - 发现服务测试 (V6.7)
+- `L2_Normalizer_Persistence.test.js` - L2 持久化测试 (V6.7)
+
+#### 收割器测试
 - `ProductionHarvester.test.js` - 生产收割器测试
 - `ProductionHarvester_Deep.test.js` - 生产收割器深度测试
-- `SentinelWatch.test.js` - 哨兵监控测试
-- `JSON_Integrity.test.js` - JSON 完整性测试
-- `BackfillFortification.test.js` - 回填加固测试
-- `BackfillResilience.test.js` - 回填韧性测试
-- `OddsPortalHarvester_V55.test.js` - OddsPortal 收割器测试
-- `Golden_Injection_Verify.test.js` - 黄金注入验证测试
-- `Local_Rendering_Integrity.test.js` - 本地渲染完整性测试
-- `Real_Data_Extraction.test.js` - 真实数据提取测试
-- `Residential_Stealth.test.js` - 住宅隐身测试
-- `Zero_Placeholder_Diversity.test.js` - 零占位符多样性测试
-- `parser_regression.test.js` - 解析器回归测试
-- `purity_filter.test.js` - 纯净过滤器测试
-- `recovery_injection.test.js` - 恢复注入测试
-- `schema_design_validator.test.js` - Schema设计验证器测试
-- `sniffer_interceptor.test.js` - 嗅探拦截器测试
-- `stealth_hardening.test.js` - 隐身加固测试
+- `SwarmHarvester.test.js` - Swarm 收割器测试
+- `TitanSlimHarvester.test.js` - TitanSlim 收割器测试
+
+#### Recon 测试 (V6.7)
+- `ReconScanner.test.js` - Recon 核心测试
+- `ReconScanner.Elite.test.js` - Recon 精英测试
+- `ReconScanner.Observability.test.js` - Recon 可观测性测试
+
+#### 特征工程测试
+- `FeatureSmelter.test.js` - 特征熔炼器测试
 - `MarketSentimentExtractor.test.js` - 市场情绪提取器测试
 - `DrawPropensityExtractor.test.js` - 平局倾向提取器测试
 - `EfficiencyFeatureExtractor.test.js` - 效率特征提取器测试
 - `TacticalMomentumExtractor.test.js` - 战术动量提取器测试
 - `RollingFeatureExtractor.test.js` - 滚动特征提取器测试
 - `XGExtractor.test.js` - 预期进球提取器测试
-- `EV_Calculation_Engine.test.js` - EV 计算引擎测试
-- `OddsFluxDetector.test.js` - 赔率背离检测器测试
-- `ErrorAuditor.test.js` - 错误审计器测试
-- `ErrorHandler.test.js` - 错误处理器测试
+
+#### 回填测试
+- `BackfillFortification.test.js` - 回填加固测试
+- `BackfillResilience.test.js` - 回填韧性测试
+- `OddsPortalHarvester_V55.test.js` - OddsPortal 收割器测试
+
+#### 其他核心测试
+- `SentinelWatch.test.js` - 哨兵监控测试
+- `JSON_Integrity.test.js` - JSON 完整性测试
 - `SessionManager.test.js` - 会话管理器测试
 - `BrowserFactory.test.js` - 浏览器工厂测试
-- `MatchDetailEngine.test.js` - 比赛详情引擎测试
-- `AutoAuthManager.test.js` - 自动认证管理器测试
-- `Dispatcher.test.js` - 调度器测试
-- `Persistence.test.js` - 持久化测试
-- `SafeAccess.test.js` - 安全访问测试
-- `StressAndSecurity.test.js` - 压力与安全测试
-- `ZombieKiller.test.js` - 僵尸进程清理测试
-- `DataIntegrity.test.js` - 数据完整性测试
-- `FixtureSeeder.test.js` - 赛程种子测试
-- `FixtureSeederV5.test.js` - V5 赛程种子测试
-- `AuditDataset.test.js` - 数据集审计测试
-- `AbstractHarvester.test.js` - 抽象收割器测试
-- `Extractors_V4.test.js` - V4提取器测试
-- `SmelterComponents_V4.test.js` - V4 Smelter组件测试
-- `StrategyParser.test.js` - 策略解析器测试
-- `TitanFullRegistry.test.js` - TITAN完整注册表测试
-- `Parsing_Core.test.js` - 解析核心测试
-- `Body_Stamina.test.js` - 身体耐力测试
-- `Error_Nerves.test.js` - 错误神经测试
-- `MatchValidator.test.js` - 比赛验证器测试
+- `ProxyRotator.test.js` - 代理轮询器测试
+- `EV_Calculation_Engine.test.js` - EV 计算引擎测试
+- `OddsFluxDetector.test.js` - 赔率背离检测器测试
 
-### 14.3 测试运行
+### 15.3 测试运行
 
 ```bash
 # 运行所有测试
 npm test
 
 # 运行指定测试
-node --test tests/unit/StructuredLogger.test.js
+node --test tests/unit/ReconScanner.test.js
 
 # Python 测试
 pytest tests/ -v
@@ -902,44 +1116,82 @@ pytest tests/ -v
 
 ---
 
-## 15. 相关文档
+## 16. 相关文档
+
+### 16.1 核心文档
 
 | 文档 | 说明 |
 |------|------|
 | [CLAUDE.md](./CLAUDE.md) | AI 助手操作指南 |
 | [COMMAND_CENTER.md](./COMMAND_CENTER.md) | 数字化指挥中心 |
+| [HANDOVER.md](./HANDOVER.md) | 项目交接文档 |
+| [MIGRATION.md](./MIGRATION.md) | 迁移指南 |
+| [CHANGELOG.md](./CHANGELOG.md) | 更新日志 |
+
+### 16.2 架构文档
+
+| 文档 | 说明 |
+|------|------|
 | [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md) | 系统架构详述 |
+| [docs/ENGINE_ARCHITECTURE.md](./docs/ENGINE_ARCHITECTURE.md) | 引擎架构 |
+| [docs/MCP_ARCHITECTURE.md](./docs/MCP_ARCHITECTURE.md) | MCP 架构文档 |
+| [docs/L1_DISCOVERY_ENGINE.md](./docs/L1_DISCOVERY_ENGINE.md) | L1 发现引擎文档 |
+| [docs/L1_INDEX_LAYER_SPEC.md](./docs/L1_INDEX_LAYER_SPEC.md) | L1 索引层规格 |
+
+### 16.3 运维文档
+
+| 文档 | 说明 |
+|------|------|
 | [docs/OPERATIONS_MANUAL.md](./docs/OPERATIONS_MANUAL.md) | 运维手册 |
 | [docs/OPERATIONS_RUNBOOK.md](./docs/OPERATIONS_RUNBOOK.md) | 运维运行手册 |
-| [docs/TESTING_GUIDE.md](./docs/TESTING_GUIDE.md) | 测试指南 |
-| [docs/TROUBLESHOOTING.md](./docs/TROUBLESHOOTING.md) | 故障排查 |
-| [docs/xgboost_optimization_guide.md](./docs/xgboost_optimization_guide.md) | XGBoost 优化指南 |
+| [docs/OPERATIONS_SOP.md](./docs/OPERATIONS_SOP.md) | 运维标准作业程序 |
+| [docs/ops/backfill_v6_manual.md](./docs/ops/backfill_v6_manual.md) | V6.0 回填系统操作手册 |
+| [docs/SYSTEM_STABILITY_GUIDE.md](./docs/SYSTEM_STABILITY_GUIDE.md) | 系统稳定性指南 |
+
+### 16.4 技术规格
+
+| 文档 | 说明 |
+|------|------|
+| [docs/TITAN_V5.2_TECHNICAL_SPEC.md](./docs/TITAN_V5.2_TECHNICAL_SPEC.md) | V5.2 技术规格 |
 | [docs/MODEL_V4_ANATOMY.md](./docs/MODEL_V4_ANATOMY.md) | V4 模型解剖学报告 |
 | [docs/SMELTER_REFACTOR_PLAN.md](./docs/SMELTER_REFACTOR_PLAN.md) | Smelter V4.0 重构计划 |
-| [docs/ops/backfill_v6_manual.md](./docs/ops/backfill_v6_manual.md) | V6.0 回填系统操作手册 |
-| [docs/TITAN_V5.2_TECHNICAL_SPEC.md](./docs/TITAN_V5.2_TECHNICAL_SPEC.md) | V5.2 技术规格 |
-| [docs/L1_DISCOVERY_ENGINE.md](./docs/L1_DISCOVERY_ENGINE.md) | L1 发现引擎文档 |
-| [docs/MCP_ARCHITECTURE.md](./docs/MCP_ARCHITECTURE.md) | MCP 架构文档 |
+| [docs/xgboost_optimization_guide.md](./docs/xgboost_optimization_guide.md) | XGBoost 优化指南 |
+
+### 16.5 架构决策记录 (ADR)
+
+| 文档 | 说明 |
+|------|------|
+| [docs/adr/ADR-001-Source-Level-Data-Hardening.md](./docs/adr/ADR-001-Source-Level-Data-Hardening.md) | 源级数据加固 |
+| [docs/adr/ADR-002-L2-Raw-Storage-Hardening.md](./docs/adr/ADR-002-L2-Raw-Storage-Hardening.md) | L2 原始存储加固 |
+
+### 16.6 审计与报告
+
+| 文档 | 说明 |
+|------|------|
 | [AUDIT_REPORT_V3.2.md](./AUDIT_REPORT_V3.2.md) | V3.1-STABLE 穿透审计报告 |
+| [docs/FORENSIC_AUDIT_REPORT.md](./docs/FORENSIC_AUDIT_REPORT.md) | 法医审计报告 |
+| [docs/GITHUB_ACTIONS_AUDIT_REPORT.md](./docs/GITHUB_ACTIONS_AUDIT_REPORT.md) | GitHub Actions 审计 |
+| [docs/FINGERPRINT_EXTRACTOR.md](./docs/FINGERPRINT_EXTRACTOR.md) | 指纹提取器文档 |
+| [P2P_HARVEST_REPORT_V38.md](./P2P_HARVEST_REPORT_V38.md) | P2P 收割 V38 报告 |
 
 ---
 
-## 16. 助手行为准则
+## 17. 助手行为准则
 
-### 16.1 代码修改原则
+### 17.1 代码修改原则
 
 1. **先读后改**：从不修改未读过的代码
 2. **最小变更**：只做必要的修改，不过度重构
 3. **测试验证**：修改后运行相关测试
 4. **中文优先**：所有注释、日志使用中文
 
-### 16.2 安全守则
+### 17.2 安全守则
 
 1. **绝不引入**：XSS、SQL 注入、命令注入等安全漏洞
 2. **边界校验**：只在系统边界（用户输入、外部 API）做验证
 3. **信任内部**：信任内部代码和框架保证
 
-### 16.3 禁止行为
+### 17.3 禁止行为
 
 - 不在 `main` 分支直接开发
 - 不在宿主机直接运行 Node/Python
@@ -950,7 +1202,7 @@ pytest tests/ -v
 
 ---
 
-## 17. MCP 服务器权限
+## 18. MCP 服务器权限
 
 | MCP 服务器 | 权限 | 允许行为 |
 |-----------|------|----------|
@@ -963,9 +1215,61 @@ pytest tests/ -v
 
 ---
 
-## 18. 近期更新（V4.47.0-BATTLE）
+## 19. 近期更新（V4.51.2-TOTAL-WAR）
 
-### 18.1 V6.4 L2 侦察扫描器（2026-03-19）
+### 19.1 V6.7 Recon 侦察系统 - 10.0 满分架构（2026-03-24）
+
+**核心交付**: V6.7 工业级侦察系统，RapidFuzz 模糊匹配 + 分布式锁 + 熔断保护
+
+**新组件**:
+- ✅ `recon_scanner.js` - V6.7 侦察扫描器主入口
+- ✅ `src/infrastructure/recon/` - 9 个工业级侦察组件
+- ✅ `ReconNavigator` - 页面导航与智能滚动
+- ✅ `ReconParser` - 数据解析与 RapidFuzz 队名匹配
+- ✅ `ReconStitcher` - 数据缝合与冲突解决
+- ✅ `ReconDistributedLock` - Redis RedLock 分布式锁
+- ✅ `ReconResilience` - 错误分类/重试/熔断
+- ✅ `ReconMetrics` - Prometheus 指标采集
+- ✅ `ReconGuardian` - 进程守护与资源回收
+- ✅ `ReconHealthServer` - 健康检查端点
+- ✅ `config/recon_config.json` - Recon 配置文件
+- ✅ `ReconScanner.test.js` - 19/19 TDD 测试通过
+- ✅ `ReconScanner.Elite.test.js` - 精英测试
+- ✅ `ReconScanner.Observability.test.js` - 可观测性测试
+
+### 19.2 V6.7 L1 发现引擎 - Project Hound（2026-03-22）
+
+**核心交付**: L1 工业级重构，断路器保护与 100% 测试覆盖
+
+**新组件**:
+- ✅ `titan_discovery.js` - V6.7 L1 发现引擎
+- ✅ `titan_seeder.js` - TITAN 种子器
+- ✅ `DiscoveryService.test.js` - 发现服务测试
+- ✅ `Normalizer.test.js` - 标准化器测试
+- ✅ `L2_Normalizer_Persistence.test.js` - L2 持久化测试
+- ✅ 断路器模式实现
+- ✅ 100% 测试覆盖率
+- ✅ 自动故障恢复
+
+### 19.3 V6.6 L2 引擎工业化加固（2026-03-20）
+
+**核心交付**: TITAN L2 引擎工业化加固
+
+- ✅ L2 收割引擎性能优化
+- ✅ 模糊匹配逻辑强化
+- ✅ 数据一致性保障
+- ✅ `Normalizer.js` - 共享标准化工具类
+- ✅ 8 道数据库约束防线
+
+### 19.4 V6.5 L1 加固完成（2026-03-19）
+
+**核心交付**: L1 层完整加固
+
+- ✅ 标准化 1900+ EPL 赛程
+- ✅ 数据库触发器/约束
+- ✅ ADR-001/002 架构决策记录注入
+
+### 19.5 V6.4 L2 侦察扫描器（2026-03-19）
 
 **核心交付**: 成功将高级模糊匹配逻辑合并到 v6.4 基础设施
 
@@ -973,15 +1277,7 @@ pytest tests/ -v
 - ✅ 模糊匹配逻辑集成
 - ✅ 与现有 V6.0 回填流水线兼容
 
-### 18.2 V6.4 L1 发现引擎（2026-03-19）
-
-**核心交付**: 断路器保护和 100% 测试覆盖
-
-- ✅ 断路器模式实现
-- ✅ 100% 测试覆盖率
-- ✅ 自动故障恢复
-
-### 18.3 V6.0 回填系统（2026-03-15）
+### 19.6 V6.0 回填系统（2026-03-15）
 
 **核心交付**: P0级架构加固的历史数据回填系统
 
@@ -994,7 +1290,7 @@ pytest tests/ -v
 - ✅ `backfill_progress` 表 - 回填状态跟踪
 - ✅ `MarketSentimentExtractor.js` - 市场情绪提取
 
-### 18.4 Worker 池化架构（V4.46.4+）
+### 19.7 Worker 池化架构（V4.46.4+）
 
 **性能提升**:
 - 浏览器启动次数减少 99%
@@ -1002,23 +1298,27 @@ pytest tests/ -v
 - 单场平均耗时减少 65%
 - 吞吐量提升 3.75x
 
-### 18.5 V4.46.8 工业化版本（2026-03-11）
+### 19.8 V5.5 EV 引擎与赔率撞表（2026-03-10）
 
-**核心交付**: 工业化全自动巡航系统
+**核心交付**: 实时估值引擎
 
-**新组件**:
-- ✅ `model_config.py` - 模型配置常量唯一源
-- ✅ `h2h_estimator.py` - H2H 智能补位引擎
-- ✅ `titan_loader.py` - TITAN 模型加载器
-- ✅ `prediction_repo.py` - 预测数据仓储层
-- ✅ `titan_cruise_control.py` - 全自动巡航控制器
-- ✅ `show_today_summary.py` - 终端作战简报
+- ✅ EV 引擎自动化
+- ✅ 赔率撞表系统
+- ✅ 价值投注识别
+
+### 19.9 V5.2 主客场感知升级（2026-03-08）
+
+**核心交付**: 主客场感知升级与特征交互
+
+- ✅ 主客场特征增强
+- ✅ 特征交互优化
+- ✅ RollingFeatureExtractor
 
 ---
 
-## 19. Claude Skills 体系
+## 20. Claude Skills 体系
 
-### 19.1 核心约束 Skills（5个 RED 等级）
+### 20.1 核心约束 Skills（5个 RED 等级）
 
 | Skill | 用途 | 说明 |
 |-------|------|------|
@@ -1028,7 +1328,7 @@ pytest tests/ -v
 | `context_lock` | 核心模块冻结 | 保护系统基石 |
 | `change_impact` | 变更影响分析 | 评估修改影响 |
 
-### 19.2 专用 Skills（12个）
+### 20.2 专用 Skills（12个）
 
 位于 `.claude/skills/` 目录：
 
@@ -1044,4 +1344,4 @@ pytest tests/ -v
 
 **维护者**: V174 Engineering Team  
 **许可证**: MIT License  
-**最后更新**: 2026-03-19
+**最后更新**: 2026-03-24

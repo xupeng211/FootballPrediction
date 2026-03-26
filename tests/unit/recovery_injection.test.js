@@ -13,6 +13,7 @@
 const { chromium } = require('playwright');
 const assert = require('assert');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 // 测试配置
@@ -92,11 +93,7 @@ function createTestPage() {
 </body>
 </html>`;
 
-  const testDir = path.join(__dirname, '../../data/temp');
-  if (!fs.existsSync(testDir)) {
-    fs.mkdirSync(testDir, { recursive: true });
-  }
-  
+  const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'titan-recovery-'));
   const htmlPath = path.join(testDir, 'recovery_test.html');
   fs.writeFileSync(htmlPath, html);
   
@@ -264,7 +261,7 @@ async function testProductionRecoveryPattern() {
 </body>
 </html>`;
     
-    const testDir = path.join(__dirname, '../../data/temp');
+    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'titan-recovery-'));
     const htmlPath = path.join(testDir, 'production_recovery.html');
     fs.writeFileSync(htmlPath, html);
     
@@ -400,7 +397,7 @@ async function testClickTriggeredInterception() {
 </body>
 </html>`;
     
-    const testDir = path.join(__dirname, '../../data/temp');
+    const testDir = fs.mkdtempSync(path.join(os.tmpdir(), 'titan-recovery-'));
     const htmlPath = path.join(testDir, 'click_trigger_test.html');
     fs.writeFileSync(htmlPath, html);
     

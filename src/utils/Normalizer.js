@@ -38,46 +38,68 @@ class Normalizer {
             throw new Error(`Invalid season: ${season}`);
         }
 
+        const buildSeason = (startYear, endYear) => {
+            const start = parseInt(startYear, 10);
+            const end = parseInt(endYear, 10);
+
+            if (Number.isNaN(start) || Number.isNaN(end)) {
+                throw new Error(`Unrecognized season format: ${season}`);
+            }
+
+            if (end !== start + 1) {
+                throw new Error(`Unrecognized season format: ${season}`);
+            }
+
+            return `${startYear}/${endYear}`;
+        };
+
         // 已经是标准格式
         if (/^\d{4}\/\d{4}$/.test(season)) {
-            return season;
+            const [startYear, endYear] = season.split('/');
+            return buildSeason(startYear, endYear);
         }
 
         // 处理 '2324' 格式 (4位简写)
         if (/^\d{4}$/.test(season)) {
             const startShort = parseInt(season.substring(0, 2));
             const endShort = parseInt(season.substring(2, 4));
-            
-            // 世纪边界处理
-            // 规则: 如果结束年份 < 开始年份，则结束年份进入下一个世纪 (2099->2100)
+
+            const expectedEnd = (startShort + 1) % 100;
+            if (endShort !== expectedEnd) {
+                throw new Error(`Unrecognized season format: ${season}`);
+            }
+
             const startYear = `20${season.substring(0, 2)}`;
-            const endYear = endShort < startShort 
-                ? `21${season.substring(2, 4)}`  // 跨世纪 (如 9900 -> 2099/2100)
-                : `20${season.substring(2, 4)}`; // 同世纪 (如 2324 -> 2023/2024)
-            
-            return `${startYear}/${endYear}`;
+            const endYear = endShort < startShort
+                ? `21${season.substring(2, 4)}`
+                : `20${season.substring(2, 4)}`;
+
+            return buildSeason(startYear, endYear);
         }
 
         // 处理 '20242025' 格式 (8位完整)
         if (/^\d{8}$/.test(season)) {
             const startYear = season.substring(0, 4);
             const endYear = season.substring(4, 8);
-            return `${startYear}/${endYear}`;
+            return buildSeason(startYear, endYear);
         }
 
         // 处理 '2024-2025' 格式 (横线分隔)
         if (/^\d{4}-\d{4}$/.test(season)) {
-            return season.replace('-', '/');
+            const [startYear, endYear] = season.split('-');
+            return buildSeason(startYear, endYear);
         }
 
         // 处理 '2024_2025' 格式 (下划线分隔)
         if (/^\d{4}_\d{4}$/.test(season)) {
-            return season.replace('_', '/');
+            const [startYear, endYear] = season.split('_');
+            return buildSeason(startYear, endYear);
         }
 
         // 处理 '2024 2025' 格式 (空格分隔)
         if (/^\d{4}\s+\d{4}$/.test(season)) {
-            return season.replace(/\s+/, '/');
+            const [startYear, endYear] = season.trim().split(/\s+/);
+            return buildSeason(startYear, endYear);
         }
 
         // 无法识别的格式，抛出错误

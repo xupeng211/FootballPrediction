@@ -20,6 +20,8 @@ const { Pool } = require('pg');
 const { OddsPortalHarvester, OddsPortalURLParser } = require('../../src/infrastructure/harvesters/OddsPortalHarvester');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
 
+const shouldRunLiveSuite = process.env.RUN_REAL_DATA_EXTRACTION_TESTS === 'true';
+
 // 真实历史比赛 URL (2023/2024 赛季英超)
 const REAL_HISTORICAL_MATCH = {
   match_id: 'REAL_TEST_001',
@@ -41,6 +43,9 @@ const DB_CONFIG = {
   password: process.env.DB_PASSWORD || 'football_password',
 };
 
+if (!shouldRunLiveSuite) {
+  test.skip('TITAN V6.0 - 零模拟真实数据提取测试', { skip: '设置 RUN_REAL_DATA_EXTRACTION_TESTS=true 后执行真实外网集成验证' }, () => {});
+} else {
 describe('TITAN V6.0 - 零模拟真实数据提取测试', () => {
   let pool;
   let proxyRotator;
@@ -290,8 +295,10 @@ describe('TITAN V6.0 - 零模拟真实数据提取测试', () => {
     console.log('\n✅ T-005 通过: 数据真实性审计完成\n');
   });
 });
+}
 
 // 测试套件结束后的总结
+if (shouldRunLiveSuite) {
 process.on('exit', () => {
   console.log('\n' + '='.repeat(70));
   console.log('🎯 TITAN V6.0 零模拟真实数据提取测试 - 完成');
@@ -304,3 +311,4 @@ process.on('exit', () => {
   console.log('  ✅ T-005: 数据真实性审计');
   console.log('\n🚀 所有测试通过 - 零模拟协议验证成功！\n');
 });
+}

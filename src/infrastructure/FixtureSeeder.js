@@ -28,6 +28,11 @@ const { Normalizer } = require('../utils/Normalizer');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../.env') });
 
+// 生成请求ID
+function generateRequestId() {
+  return `req-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+}
+
 // ============================================================================
 // 精简日志系统
 // ============================================================================
