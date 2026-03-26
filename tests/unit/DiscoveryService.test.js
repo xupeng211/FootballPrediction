@@ -179,7 +179,8 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
           close: async () => {}
         },
         networkInterceptor: {
-          getCapturedApis: () => new Map()
+          getCapturedApis: () => new Map(),
+          reset: () => {}
         },
         extractor: {
           extractFromWebpage: async () => {
@@ -258,7 +259,7 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
           isSingleYearLeague: () => false
         },
         browserProvider: { isInitialized: () => false, close: async () => {} },
-        networkInterceptor: { getCapturedApis: () => new Map() },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} },
         extractor: { extractFromWebpage: async () => ({}), searchViaDOM: async () => ({}) },
         uiHelper: {
           printBanner: () => {},

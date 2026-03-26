@@ -62,7 +62,7 @@ docker-compose -f docker-compose.dev.yml exec dev pytest -m integration
 |---------|---------|-----------|--------|------|
 | `AbstractHarvester.test.js` | 延时、重试、熔断、质量门禁、退避 | 22 | 31.11% | 🟡 需要补充 |
 | `ProductionHarvester.test.js` | L2 引擎核心逻辑 | 5 | 26.05% | 🟡 需要补充 |
-| `FixtureSeeder.test.js` | L1 赛程种子 | 15 | 95.18% | ✅ 优秀 |
+| `DiscoveryService.test.js` | L1 赛程种子 | 15 | 95.18% | ✅ 优秀 |
 | `SessionManager.test.js` | 会话管理 | 10 | 100% | ✅ 优秀 |
 | `FeatureSmelter.test.js` | L3 特征熔炼 | 12 | 31.87% | 🟡 需要补充 |
 | `MatchDetailEngine.test.js` | 比赛详情引擎 | 15 | 98.26% | ✅ 优秀 |

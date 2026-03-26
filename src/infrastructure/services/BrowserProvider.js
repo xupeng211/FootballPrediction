@@ -38,6 +38,7 @@ class BrowserProvider {
     
     this.browser = null;
     this.page = null;
+    this.defaultTimeoutMs = options.defaultTimeoutMs || 20000;
   }
 
   /**
@@ -161,25 +162,31 @@ class BrowserProvider {
     const fetchOptions = { ...defaultOptions, ...options };
     
     // 🔧 修复: 将多个参数封装为单个对象传递
-    return await this.page.evaluate(async ({ apiUrl, opts }) => {
-      try {
-        const response = await fetch(apiUrl, opts);
-        
-        if (!response.ok) {
-          return { error: `HTTP ${response.status}`, status: response.status };
+    const timeoutMs = options.timeout || this.defaultTimeoutMs;
+    return await Promise.race([
+      this.page.evaluate(async ({ apiUrl, opts }) => {
+        try {
+          const response = await fetch(apiUrl, opts);
+          
+          if (!response.ok) {
+            return { error: `HTTP ${response.status}`, status: response.status };
+          }
+          
+          const contentType = response.headers.get('content-type') || '';
+          if (contentType.includes('text/html')) {
+            return { error: 'Received HTML instead of JSON', isHtml: true, status: response.status };
+          }
+          
+          const data = await response.json();
+          return { success: true, data, status: response.status };
+        } catch (e) {
+          return { error: e.message };
         }
-        
-        const contentType = response.headers.get('content-type') || '';
-        if (contentType.includes('text/html')) {
-          return { error: 'Received HTML instead of JSON', isHtml: true };
-        }
-        
-        const data = await response.json();
-        return { success: true, data };
-      } catch (e) {
-        return { error: e.message };
-      }
-    }, { apiUrl: url, opts: fetchOptions });
+      }, { apiUrl: url, opts: fetchOptions }),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Browser fetch timeout after ${timeoutMs}ms`)), timeoutMs);
+      })
+    ]);
   }
 
   /**
@@ -263,7 +270,12 @@ class BrowserProvider {
    */
   async evaluate(fn, ...args) {
     if (!this.page) return null;
-    return await this.page.evaluate(fn, ...args);
+    return await Promise.race([
+      this.page.evaluate(fn, ...args),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`Browser evaluate timeout after ${this.defaultTimeoutMs}ms`)), this.defaultTimeoutMs);
+      })
+    ]);
   }
 
   /**
@@ -280,12 +292,18 @@ class BrowserProvider {
    * @returns {Promise<void>}
    */
   async close() {
-    if (this.browser) {
-      this.logger.info('[BrowserProvider] 🔒 关闭浏览器...');
+    if (!this.browser) return;
+
+    this.logger.info('[BrowserProvider] 🔒 关闭浏览器...');
+    try {
+      if (this.page) {
+        this.page.removeAllListeners();
+      }
       await this.browser.close();
+      this.logger.info('[BrowserProvider] ✅ 浏览器已关闭');
+    } finally {
       this.browser = null;
       this.page = null;
-      this.logger.info('[BrowserProvider] ✅ 浏览器已关闭');
     }
   }
 }

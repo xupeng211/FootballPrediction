@@ -99,8 +99,8 @@ ALTER TABLE matches DROP CONSTRAINT season_format;
 - 预测模型准确性下降
 
 **正确做法**: 
-- 所有数据插入必须通过 `FixtureSeeder`
-- 如需修改约束，先更新 `FixtureSeeder.normalizeSeason()` 和 `determineStatus()`
+- 所有数据插入必须通过 `DiscoveryService + FixtureRepository.persist()`
+- 如需修改约束，先更新 `Normalizer.normalizeSeason()` 与状态标准化链路
 
 #### 红线 2: 不可直接操作 `is_finished` 字段
 
@@ -168,7 +168,7 @@ VALUES ('invalid-id', '{}');  -- 会被拒绝
 
 | 文件 | 说明 |
 |------|------|
-| `src/infrastructure/FixtureSeeder.js` | L1 核心类，V6.6 使用 Normalizer |
+| `src/infrastructure/services/DiscoveryService.js` | L1 核心服务，配置驱动并通过 Repository 落库 |
 | `src/infrastructure/harvesters/ProductionHarvester.js` | L2 收割引擎，V6.6 硬化版本 |
 | `src/utils/Normalizer.js` | V6.6 共享标准化工具类 |
 | `scripts/ops/seed_fixtures.js` | L1 命令行入口 |
@@ -245,7 +245,7 @@ VALUES ('invalid-id', '{}');  -- 会被拒绝
 | 资源 | 位置 |
 |------|------|
 | 技术文档 | `docs/adr/`, `src/infrastructure/L1_DISCOVERY_ENGINE.md` |
-| 测试用例 | `tests/unit/FixtureSeeder.test.js` |
+| 测试用例 | `tests/unit/DiscoveryService.test.js` |
 | 数据库迁移 | `database/migrations/` |
 
 ---
