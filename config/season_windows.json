@@ -1,7 +1,7 @@
 {
   "_comment": "V6.0 赛季时间窗口配置 - 用于三道铁门过滤系统",
   "version": "V6.1-FULL-LEAGUES",
-  "last_updated": "2026-03-26",
+  "last_updated": "2026-03-27",
   "description": "定义五大联赛各赛季的有效时间窗口，用于过滤API返回的越界数据",
   "seasons": {
     "2023/2024": {
@@ -66,6 +66,20 @@
       "expected_matches": 306,
       "leagues": [53],
       "description": "法甲 25/26赛季"
+    },
+    "2024/2025-Championship": {
+      "start": "2024-08-09",
+      "end": "2025-05-24",
+      "expected_matches": 555,
+      "leagues": [48],
+      "description": "英冠 24/25赛季（含附加赛）"
+    },
+    "2025/2026-Championship": {
+      "start": "2025-08-08",
+      "end": "2026-05-23",
+      "expected_matches": 555,
+      "leagues": [48],
+      "description": "英冠 25/26赛季（含附加赛）"
     }
   },
   "validation_rules": {
