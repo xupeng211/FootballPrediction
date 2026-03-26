@@ -145,7 +145,17 @@ class HarvesterRetryPolicy {
         for (let attempt = 1; attempt <= maxRetries; attempt++) {
             try {
                 console.log(`[DEBUG] Attempt ${attempt} for match ${match_id}`);
-                const result = await harvester._harvestSingleMatch(match, index, attempt);
+                const result = await this._executeWithWatchdog(
+                    () => harvester._harvestSingleMatch(match, index, attempt),
+                    {
+                        timeoutMs: harvester.config.harvestTimeoutMs,
+                        matchId: match_id,
+                        workerId,
+                        onTimeout: async () => {
+                            await harvester._closeWorkerContext?.(workerId, 'WATCHDOG_TIMEOUT');
+                        }
+                    }
+                );
 
                 if (result.success) {
                     if (attempt > 1) {
@@ -303,6 +313,40 @@ class HarvesterRetryPolicy {
         } catch (error) {
             console.error(`  ❌ [AUTO-AUTH] 身份刷新失败: ${error.message}`);
             console.log('  ⚠️  将在下次收割时重试...\n');
+        }
+    }
+
+    async _executeWithWatchdog(task, options = {}) {
+        const timeoutMs = Number.isFinite(options.timeoutMs) && options.timeoutMs > 0
+            ? options.timeoutMs
+            : 120000;
+
+        let timeoutId = null;
+
+        try {
+            return await Promise.race([
+                Promise.resolve().then(task),
+                new Promise((_, reject) => {
+                    timeoutId = setTimeout(async () => {
+                        try {
+                            await options.onTimeout?.();
+                        } catch (timeoutCleanupError) {
+                            // 看门狗清理失败不应吞掉主超时错误
+                        }
+
+                        const timeoutError = new Error(
+                            `WATCHDOG_TIMEOUT: ${options.matchId || 'unknown_match'} 超过 ${timeoutMs}ms`
+                        );
+                        timeoutError.code = 'WATCHDOG_TIMEOUT';
+                        timeoutError.workerId = options.workerId;
+                        reject(timeoutError);
+                    }, timeoutMs);
+                })
+            ]);
+        } finally {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
         }
     }
 }

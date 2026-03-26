@@ -43,54 +43,82 @@ function executeZombieKiller() {
     console.log('');
 }
 
+function normalizeBulkConcurrency(requested) {
+    const parsed = parseInt(requested, 10);
+    const fallback = Number.isFinite(parsed) ? parsed : 10;
+    return Math.min(12, Math.max(8, fallback));
+}
+
+function parseCliArgs(argv = process.argv.slice(2)) {
+    let limit = null;
+    const limitIdx = argv.indexOf('--limit');
+    if (limitIdx !== -1 && argv[limitIdx + 1]) {
+        limit = parseInt(argv[limitIdx + 1], 10) || null;
+    }
+
+    let workers = parseInt(process.env.MAX_WORKERS, 10) || 10;
+    const concurrencyIdx = argv.indexOf('--concurrency');
+    const workersIdx = argv.indexOf('--workers');
+    const rawConcurrency = concurrencyIdx !== -1 ? argv[concurrencyIdx + 1] : argv[workersIdx + 1];
+    if (rawConcurrency) {
+        workers = parseInt(rawConcurrency, 10) || workers;
+    }
+
+    let sessionPath = null;
+    const sessionIdx = argv.indexOf('--session-path');
+    if (sessionIdx !== -1 && argv[sessionIdx + 1]) {
+        sessionPath = argv[sessionIdx + 1];
+    }
+
+    let progressEvery = parseInt(process.env.BULK_PROGRESS_EVERY, 10) || 100;
+    const progressIdx = argv.indexOf('--progress-every');
+    if (progressIdx !== -1 && argv[progressIdx + 1]) {
+        progressEvery = parseInt(argv[progressIdx + 1], 10) || progressEvery;
+    }
+
+    return {
+        limit,
+        concurrency: normalizeBulkConcurrency(workers),
+        dryRun: argv.includes('--dry-run'),
+        sessionPath,
+        progressEvery
+    };
+}
+
 /**
  *
  */
-async function main() {
-    // V4.50: 执行入口级清道夫
-    executeZombieKiller();
-
-    // 解析 --limit 参数
-    let limit = 500;
-    const limitIdx = process.argv.indexOf('--limit');
-    if (limitIdx !== -1 && process.argv[limitIdx + 1]) {
-        limit = parseInt(process.argv[limitIdx + 1]) || 500;
+async function main(argv = process.argv.slice(2), dependencies = {}) {
+    if (!dependencies.skipZombieKiller) {
+        executeZombieKiller();
     }
 
-    // V4.51: 解析 --workers 参数，命令行参数优先级最高
-    let workers = parseInt(process.env.MAX_WORKERS) || 2;
-    const workersIdx = process.argv.indexOf('--workers');
-    if (workersIdx !== -1 && process.argv[workersIdx + 1]) {
-        workers = parseInt(process.argv[workersIdx + 1]) || workers;
-    }
-
-    // V4.51-TOTAL-WAR: 解析 --session-path 参数
-    let sessionPath = null;
-    const sessionIdx = process.argv.indexOf('--session-path');
-    if (sessionIdx !== -1 && process.argv[sessionIdx + 1]) {
-        sessionPath = process.argv[sessionIdx + 1];
-    }
-
-    console.log(`🔧 [CONFIG] Workers: ${workers} | Limit: ${limit} | DryRun: ${process.argv.includes('--dry-run')} | Session: ${sessionPath || '默认'}`);
-
-    const harvester = new ProductionHarvester({
-        maxWorkers: workers,
-        batchSize: limit,
-        dryRun: process.argv.includes('--dry-run'),
-        sessionPath: sessionPath
+    const options = parseCliArgs(argv);
+    const harvester = dependencies.harvester || new ProductionHarvester({
+        maxWorkers: options.concurrency,
+        bulkConcurrency: options.concurrency,
+        batchSize: options.limit || 500,
+        dryRun: options.dryRun,
+        sessionPath: options.sessionPath,
+        bulkProgressEvery: options.progressEvery
     });
+
+    console.log(`🔧 [CONFIG] Concurrency: ${options.concurrency} | Limit: ${options.limit || 'ALL'} | ProgressEvery: ${options.progressEvery} | DryRun: ${options.dryRun} | Session: ${options.sessionPath || '默认'}`);
 
     try {
         await harvester.init();
-        const result = await harvester.run();
+        const result = await harvester.run({
+            limit: options.limit,
+            concurrency: options.concurrency,
+            progressEvery: options.progressEvery
+        });
+        console.log(`📦 [SUMMARY] 批量收割完成: total=${result.total} success=${result.success} failed=${result.failed} concurrency=${result.concurrency}`);
         
         // V4.51.5: 确保资源正确释放，防止进程挂起
         console.log('\n[INFO] 正在关闭资源...');
         await harvester.cleanup();
         console.log('[INFO] 资源已释放，任务完成');
-        
-        // 强制退出，确保不挂起
-        process.exit(0);
+        return result;
     } catch (err) {
         console.error('❌ 致命错误:', err.message);
         try {
@@ -98,11 +126,23 @@ async function main() {
         } catch (cleanupErr) {
             console.error('清理时出错:', cleanupErr.message);
         }
-        process.exit(1);
+        throw err;
     }
 }
 
-main().catch(err => {
-    console.error('❌ 未捕获的错误:', err.message);
-    process.exit(1);
-});
+if (require.main === module) {
+    main().then(
+        () => process.exit(0),
+        err => {
+            console.error('❌ 未捕获的错误:', err.message);
+            process.exit(1);
+        }
+    );
+}
+
+module.exports = {
+    main,
+    parseCliArgs,
+    normalizeBulkConcurrency,
+    executeZombieKiller
+};
