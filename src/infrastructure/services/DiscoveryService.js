@@ -87,7 +87,7 @@ class DiscoveryService {
     });
 
     this.limiter = pLimit(this.config.concurrency);
-    this.stats = { total: 0, inserted: 0, updated: 0, failed: 0, startTime: null };
+    this.stats = { total: 0, inserted: 0, updated: 0, failed: 0, startTime: null, criticalWarnings: [] };
     this.configManager = configManager || new L1ConfigManager({ logger: this.logger });
     this.leagueConfig = this.configManager.getRuntimeConfig();
     
@@ -191,7 +191,7 @@ class DiscoveryService {
    * 主入口: 执行发现扫描
    */
   async discover(options = {}) {
-    this.stats.startTime = Date.now();
+    this.stats = { total: 0, inserted: 0, updated: 0, failed: 0, startTime: Date.now(), criticalWarnings: [] };
     this.uiHelper.printBanner('V6.7.6-FINAL');
 
     const { leagueId, season, allLeagues = false } = options;
@@ -210,6 +210,9 @@ class DiscoveryService {
       this.stats.inserted += r.inserted;
       this.stats.updated += r.updated;
       this.stats.failed += r.failed;
+      if (Array.isArray(r.criticalWarnings) && r.criticalWarnings.length > 0) {
+        this.stats.criticalWarnings.push(...r.criticalWarnings);
+      }
     });
 
     return this.uiHelper.generateReport(this.stats, this.stats.startTime);
@@ -264,16 +267,43 @@ class DiscoveryService {
         lookbackDays: this.config.lookbackDays,
         lookaheadDays: this.config.lookaheadDays
       });
+      const expectedMatches = this.configManager.getExpectedMatches(leagueId, season);
+      const criticalWarnings = [];
 
       if (!fixtures || fixtures.length === 0) {
         this.uiHelper.printNoFixtures(`W${workerId}`, name);
-        return { total: 0, inserted: 0, updated: 0, failed: 0 };
+        if (expectedMatches && expectedMatches > 0) {
+          const warning = {
+            leagueId,
+            name,
+            season,
+            actual: 0,
+            expected: expectedMatches,
+            missing: expectedMatches
+          };
+          criticalWarnings.push(warning);
+          this.uiHelper.printCriticalWarn(`W${workerId}`, name, season, 0, expectedMatches);
+        }
+        return { total: 0, inserted: 0, updated: 0, failed: 0, criticalWarnings };
       }
 
       this.uiHelper.printParsedFixtures(`W${workerId}`, name, fixtures.length);
+      if (expectedMatches && fixtures.length < expectedMatches) {
+        const warning = {
+          leagueId,
+          name,
+          season,
+          actual: fixtures.length,
+          expected: expectedMatches,
+          missing: expectedMatches - fixtures.length
+        };
+        criticalWarnings.push(warning);
+        this.uiHelper.printCriticalWarn(`W${workerId}`, name, season, fixtures.length, expectedMatches);
+      }
 
       // V6.7.5-EXTRACTED: 使用 Repository 入库
       const result = await this.fixtureRepository.persist(fixtures);
+      result.criticalWarnings = criticalWarnings;
 
       this.uiHelper.printProgress(`W${workerId}`, name, result);
 
@@ -285,7 +315,7 @@ class DiscoveryService {
     } catch (error) {
       const failTime = Date.now() - startTime;
       this.uiHelper.printScanError(`W${workerId}`, name, error.message, failTime);
-      return { total: 0, inserted: 0, updated: 0, failed: 1, error: error.message };
+      return { total: 0, inserted: 0, updated: 0, failed: 1, error: error.message, criticalWarnings: [] };
     }
   }
 

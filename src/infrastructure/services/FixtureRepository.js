@@ -384,15 +384,18 @@ class FixtureRepository {
     };
 
     for (let i = 0; i < fixtures.length; i += this.batchSize) {
-      const batch = fixtures.slice(i, i + this.batchSize).map((fixture) => ({
-        ...fixture,
-        season: Normalizer.normalizeSeason(fixture.season),
-        home_team: Normalizer.normalizeTeamName(fixture.home_team),
-        away_team: Normalizer.normalizeTeamName(fixture.away_team),
-        status: Normalizer.normalizeStatus(fixture.status),
-        is_finished: fixture.is_finished ?? Normalizer.normalizeStatus(fixture.status) === 'finished',
-        data_source: fixture.data_source || 'FotMob'
-      }));
+      const batch = fixtures
+        .slice(i, i + this.batchSize)
+        .map((fixture) => ({
+          ...fixture,
+          season: Normalizer.normalizeSeason(fixture.season),
+          home_team: Normalizer.normalizeTeamName(fixture.home_team),
+          away_team: Normalizer.normalizeTeamName(fixture.away_team),
+          status: Normalizer.normalizeStatus(fixture.status),
+          is_finished: fixture.is_finished ?? Normalizer.normalizeStatus(fixture.status) === 'finished',
+          data_source: fixture.data_source || 'FotMob'
+        }))
+        .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
 
       try {
         const batchResult = await this._persistBatch(batch);
@@ -454,8 +457,8 @@ class FixtureRepository {
             home_team = EXCLUDED.home_team,
             away_team = EXCLUDED.away_team,
             match_date = EXCLUDED.match_date,
-            home_score = EXCLUDED.home_score,
-            away_score = EXCLUDED.away_score,
+            home_score = COALESCE(matches.home_score, EXCLUDED.home_score),
+            away_score = COALESCE(matches.away_score, EXCLUDED.away_score),
             status = EXCLUDED.status,
             is_finished = EXCLUDED.is_finished,
             data_source = EXCLUDED.data_source,

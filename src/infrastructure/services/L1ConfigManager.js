@@ -22,6 +22,7 @@ class L1ConfigManager {
 
     this.reconConfigPath = options.reconConfigPath || path.resolve(__dirname, '../../../config/recon_config.json');
     this.leaguesConfigPath = options.leaguesConfigPath || path.resolve(__dirname, '../../../config/leagues.json');
+    this.seasonWindowsPath = options.seasonWindowsPath || path.resolve(__dirname, '../../../config/season_windows.json');
     this.runtimeConfig = options.runtimeConfig || this._buildRuntimeConfig();
   }
 
@@ -62,17 +63,43 @@ class L1ConfigManager {
     return this.runtimeConfig.single_year_league_ids || [];
   }
 
+  getExpectedMatches(leagueId, season) {
+    if (!season) {
+      return null;
+    }
+
+    const seasonConfig = this.runtimeConfig.season_windows || {};
+    const direct = seasonConfig[season];
+    if (direct && Array.isArray(direct.leagues) && direct.leagues.includes(Number(leagueId))) {
+      return direct.expected_matches || null;
+    }
+
+    const league = this.getLeagueById(leagueId);
+    const suffix = league?.name ? `-${league.name.replace(/\s+/g, '')}` : null;
+    if (suffix && seasonConfig[`${season}${suffix}`]) {
+      return seasonConfig[`${season}${suffix}`].expected_matches || null;
+    }
+
+    for (const window of Object.values(seasonConfig)) {
+      if (window && Array.isArray(window.leagues) && window.leagues.includes(Number(leagueId)) && window.expected_matches) {
+        const isSameSeason = window.description?.includes(season.slice(2, 4)) || false;
+        if (isSameSeason) {
+          return window.expected_matches;
+        }
+      }
+    }
+
+    return null;
+  }
+
   buildLeagueApiUrl(leagueId, season) {
     return `https://www.fotmob.com/api/data/leagues?id=${Number(leagueId)}&season=${encodeURIComponent(season)}`;
   }
 
   _buildRuntimeConfig() {
-    const reconConfig = this._loadJson(this.reconConfigPath);
-    const leaguesConfig = this._loadJson(this.leaguesConfigPath);
-
-    if (!reconConfig && !leaguesConfig) {
-      return this._buildFallbackRuntimeConfig();
-    }
+    const reconConfig = this._loadRequiredJson(this.reconConfigPath, 'recon_config.json');
+    const leaguesConfig = this._loadRequiredJson(this.leaguesConfigPath, 'leagues.json');
+    const seasonWindows = this._loadRequiredJson(this.seasonWindowsPath, 'season_windows.json');
 
     const atlasLeagues = Array.isArray(leaguesConfig?.active_leagues) ? leaguesConfig.active_leagues : [];
     const activeSeasons = Array.isArray(leaguesConfig?.active_seasons) && leaguesConfig.active_seasons.length > 0
@@ -89,7 +116,8 @@ class L1ConfigManager {
       active_leagues: leagues,
       active_seasons: activeSeasons,
       default_season: defaultSeason,
-      single_year_league_ids: singleYearLeagueIds
+      single_year_league_ids: singleYearLeagueIds,
+      season_windows: seasonWindows.seasons || {}
     };
   }
 
@@ -100,6 +128,8 @@ class L1ConfigManager {
     const seenIds = new Set();
 
     for (const [code, reconLeague] of Object.entries(reconLeagues)) {
+      this._assertValidReconLeague(code, reconLeague);
+
       const atlasLeague = atlasById.get(Number(reconLeague.league_id)) || atlasByKey.get(this._leagueKey(reconLeague.name));
       const resolvedId = atlasLeague ? Number(atlasLeague.id) : Number(reconLeague.league_id);
 
@@ -149,34 +179,29 @@ class L1ConfigManager {
     return merged.sort((a, b) => a.id - b.id);
   }
 
-  _buildFallbackRuntimeConfig() {
-    const activeSeasons = ['2024/2025'];
-    const activeLeagues = [
-      { id: 47, code: 'EPL', name: 'Premier League', country: 'England', slug: 'premier-league', tier: 'P0', enabled: true, seasonType: 'dual_year', defaultSeason: '2024/2025', supportedSeasons: activeSeasons },
-      { id: 87, code: 'LALIGA', name: 'La Liga', country: 'Spain', slug: 'laliga', tier: 'P0', enabled: true, seasonType: 'dual_year', defaultSeason: '2024/2025', supportedSeasons: activeSeasons },
-      { id: 54, code: 'BUNDESLIGA', name: 'Bundesliga', country: 'Germany', slug: 'bundesliga', tier: 'P0', enabled: true, seasonType: 'dual_year', defaultSeason: '2024/2025', supportedSeasons: activeSeasons },
-      { id: 55, code: 'SERIEA', name: 'Serie A', country: 'Italy', slug: 'serie-a', tier: 'P0', enabled: true, seasonType: 'dual_year', defaultSeason: '2024/2025', supportedSeasons: activeSeasons },
-      { id: 53, code: 'LIGUE1', name: 'Ligue 1', country: 'France', slug: 'ligue-1', tier: 'P0', enabled: true, seasonType: 'dual_year', defaultSeason: '2024/2025', supportedSeasons: activeSeasons }
-    ];
+  _loadRequiredJson(filePath, label) {
+    if (!fs.existsSync(filePath)) {
+      throw new Error(`[L1ConfigManager] 缺少必需配置文件: ${label}`);
+    }
 
-    return {
-      active_leagues: activeLeagues,
-      active_seasons: activeSeasons,
-      default_season: '2024/2025',
-      single_year_league_ids: []
-    };
-  }
-
-  _loadJson(filePath) {
     try {
-      if (!fs.existsSync(filePath)) {
-        return null;
-      }
-
       return JSON.parse(fs.readFileSync(filePath, 'utf8'));
     } catch (error) {
-      this.logger.warn(`[L1ConfigManager] 配置加载失败: ${filePath} - ${error.message}`);
-      return null;
+      throw new Error(`[L1ConfigManager] 配置文件损坏: ${label} - ${error.message}`);
+    }
+  }
+
+  _assertValidReconLeague(code, reconLeague) {
+    if (!reconLeague || typeof reconLeague !== 'object') {
+      throw new Error(`[L1ConfigManager] 联赛配置损坏: ${code}`);
+    }
+
+    if (!Number.isFinite(Number(reconLeague.league_id))) {
+      throw new Error(`[L1ConfigManager] 联赛 ${code} 缺少有效 league_id`);
+    }
+
+    if (!reconLeague.name || typeof reconLeague.name !== 'string') {
+      throw new Error(`[L1ConfigManager] 联赛 ${code} 缺少有效 name`);
     }
   }
 
