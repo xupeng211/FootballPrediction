@@ -10,6 +10,8 @@
 
 'use strict';
 
+const pLimit = require('p-limit');
+
 const { AbstractHarvester } = require('./base/AbstractHarvester');
 const { FotMobStrategy } = require('./strategies/FotMobStrategy');
 const { Persistence } = require('./components/Persistence');
@@ -28,6 +30,24 @@ class ProductionHarvester extends AbstractHarvester {
         });
 
         this.config.dataMatchesPath = resolvedDataPath;
+        this.config.bulkConcurrency = this._resolveBulkConcurrency(
+            config.bulkConcurrency || config.maxWorkers || 10
+        );
+        this.config.bulkProgressEvery = this._resolveProgressInterval(
+            config.bulkProgressEvery || process.env.BULK_PROGRESS_EVERY || 100
+        );
+        this.config.pressureFailureThreshold = this._resolvePressureFailureThreshold(
+            config.pressureFailureThreshold || process.env.PRESSURE_FAILURE_THRESHOLD || 3
+        );
+        this.config.pressureCooldownMs = this._resolvePressureCooldownMs(
+            config.pressureCooldownMs || process.env.PRESSURE_COOLDOWN_MS || 30000
+        );
+        this.config.browserRecycleEvery = this._resolveBrowserRecycleEvery(
+            config.browserRecycleEvery || process.env.BROWSER_RECYCLE_EVERY || 200
+        );
+        this.config.browserRecycleRssBytes = this._resolveBrowserRecycleRssBytes(
+            config.browserRecycleRssBytes || process.env.BROWSER_RECYCLE_RSS_BYTES || (1.5 * 1024 * 1024 * 1024)
+        );
         this.sessionMatchCount = 0;
         this.sessionRotationThreshold = 20;
         this.strategy = new FotMobStrategy(this.config);
@@ -42,6 +62,7 @@ class ProductionHarvester extends AbstractHarvester {
     async init() {
         await super.init();
         this.db = this.pool;
+        await this.persistence.ensurePipelineStatusSchema(this.pool);
         return this;
     }
 
@@ -50,6 +71,7 @@ class ProductionHarvester extends AbstractHarvester {
      * @returns {Promise<void>}
      */
     async cleanup() {
+        await this.persistence.flushPendingWrites();
         await super.cleanup();
         this.db = null;
     }
@@ -121,21 +143,30 @@ class ProductionHarvester extends AbstractHarvester {
         }
 
         try {
+            const statusColumn = await this.persistence.ensurePipelineStatusSchema(dbHandle);
+            const pendingPredicate = statusColumn === 'pipeline_status'
+                ? `COALESCE(m.pipeline_status, 'pending') = 'pending'`
+                : `COALESCE(m.status, 'pending') != 'harvested'`;
             const result = await dbHandle.query(
                 `
-                    SELECT match_id, external_id, home_team, away_team
-                    FROM matches
-                    ORDER BY match_date ASC NULLS LAST, created_at ASC NULLS LAST
+                    SELECT
+                        m.match_id,
+                        m.external_id,
+                        m.home_team,
+                        m.away_team,
+                        m.match_date
+                    FROM matches m
+                    LEFT JOIN raw_match_data r ON m.match_id = r.match_id
+                    WHERE r.match_id IS NULL
+                      AND ${pendingPredicate}
+                    ORDER BY m.match_id ASC, m.match_date ASC NULLS LAST, m.created_at ASC NULLS LAST
                     LIMIT $1
                 `,
                 [limit]
             );
-            return result.rows || [];
+            return (result.rows || []).sort((a, b) => a.match_id.localeCompare(b.match_id));
         } catch (error) {
-            if (this.config.verboseLogging) {
-                console.warn(`[ProductionHarvester] getPendingMatches 失败: ${error.message}`);
-            }
-            return [];
+            throw new Error(`[ProductionHarvester] getPendingMatches 失败: ${error.message}`);
         }
     }
 
@@ -147,6 +178,10 @@ class ProductionHarvester extends AbstractHarvester {
      * @returns {Promise<object>}
      */
     async run(payload = {}) {
+        if (!payload.match && !payload.matchId) {
+            return this.runBulk(payload);
+        }
+
         const fallbackMatchId = payload.matchId || payload.match?.match_id || '0_20232024_0';
         const fallbackExternalId = payload.match?.external_id || String(fallbackMatchId).split('_').pop();
 
@@ -158,6 +193,283 @@ class ProductionHarvester extends AbstractHarvester {
         };
 
         return this.harvestWithRetry(match, 0, this.config.maxRetries);
+    }
+
+    /**
+     * 批量收割入口
+     * @param {object} payload
+     * @param {number} [payload.limit]
+     * @param {number} [payload.concurrency]
+     * @returns {Promise<object>}
+     */
+    async runBulk(payload = {}) {
+        const targetLimit = this._resolveTargetLimit(payload.limit);
+        const fetchSize = this._resolveBatchLimit(payload.fetchSize || this.config.batchSize);
+        const concurrency = this._resolveBulkConcurrency(
+            payload.concurrency || this.config.bulkConcurrency || this.config.maxWorkers
+        );
+        const progressEvery = this._resolveProgressInterval(
+            payload.progressEvery || this.config.bulkProgressEvery
+        );
+        const captureResults = payload.captureResults === true || this.config.captureBulkResults === true;
+
+        const state = {
+            startedAt: Date.now(),
+            total: 0,
+            success: 0,
+            failed: 0,
+            batches: 0,
+            totalDurationMs: 0,
+            progressEvery,
+            targetLimit,
+            captureResults,
+            results: captureResults ? [] : [],
+            lastBrowserRecycleAt: 0,
+            browserRecycles: 0
+        };
+
+        while (state.total < targetLimit) {
+            const remaining = Number.isFinite(targetLimit)
+                ? Math.max(0, targetLimit - state.total)
+                : fetchSize;
+
+            if (remaining === 0) {
+                break;
+            }
+
+            const recycleWindow = this._resolveRecycleWindow(fetchSize, state);
+            const batchLimit = Number.isFinite(targetLimit)
+                ? Math.min(fetchSize, remaining, recycleWindow)
+                : Math.min(fetchSize, recycleWindow);
+
+            let pendingMatches;
+            try {
+                pendingMatches = await this.getPendingMatches(batchLimit);
+            } catch (error) {
+                const wrapped = new Error(
+                    `[BULK_ABORT] 待处理比赛查询失败: batch=${state.batches + 1} processed=${state.total} message=${error.message}`
+                );
+                wrapped.code = 'PENDING_MATCH_QUERY_FAILED';
+                wrapped.cause = error;
+                throw wrapped;
+            }
+
+            if (pendingMatches.length === 0) {
+                break;
+            }
+
+            state.batches++;
+            const batchResults = await this._runConcurrentBatch(pendingMatches, concurrency, state);
+            const pressureFailures = batchResults.filter(result => this._isPressureFailure(result)).length;
+
+            if (pressureFailures >= this.config.pressureFailureThreshold) {
+                console.warn(
+                    `[BACKPRESSURE] 本批次出现 ${pressureFailures} 个限流/超时类失败，暂停 ${this.config.pressureCooldownMs}ms 后继续`
+                );
+                await this._delay(this.config.pressureCooldownMs);
+            }
+
+            if (!Number.isFinite(targetLimit) || state.total < targetLimit) {
+                await this._maybeRecycleBrowser(state);
+            }
+        }
+
+        if (state.total > 0 && state.total % progressEvery !== 0) {
+            this._logProgressSnapshot(state, { force: true });
+        }
+
+        return {
+            mode: 'bulk',
+            total: state.total,
+            success: state.success,
+            failed: state.failed,
+            concurrency,
+            batches: state.batches,
+            browserRecycles: state.browserRecycles,
+            requestedLimit: Number.isFinite(targetLimit) ? targetLimit : 'ALL',
+            results: state.results
+        };
+    }
+
+    async _runConcurrentBatch(pendingMatches, concurrency, state) {
+        const limiter = pLimit(concurrency);
+        const batchOffset = state.total;
+
+        return Promise.all(
+            pendingMatches.map((match, index) => limiter(async () => {
+                const globalIndex = batchOffset + index;
+                let result;
+
+                try {
+                    result = await this.harvestWithRetry(match, globalIndex, this.config.maxRetries);
+                } catch (error) {
+                    result = {
+                        success: false,
+                        match_id: match.match_id,
+                        error: error.message
+                    };
+                }
+
+                this._recordBulkProgress(state, result);
+                return result;
+            }))
+        );
+    }
+
+    _recordBulkProgress(state, result) {
+        state.total++;
+
+        if (result?.success) {
+            state.success++;
+        } else {
+            state.failed++;
+        }
+
+        if (typeof result?.duration === 'number' && Number.isFinite(result.duration)) {
+            state.totalDurationMs += result.duration;
+        }
+
+        if (state.captureResults) {
+            state.results.push(result);
+        }
+
+        if (state.progressEvery > 0 && state.total % state.progressEvery === 0) {
+            this._logProgressSnapshot(state);
+        }
+    }
+
+    _logProgressSnapshot(state, options = {}) {
+        const elapsedMs = Math.max(1, Date.now() - state.startedAt);
+        const elapsedSeconds = elapsedMs / 1000;
+        const throughput = state.total / elapsedSeconds;
+        const avgPerMatchSeconds = state.total > 0 ? elapsedSeconds / state.total : 0;
+        const memory = this._getProcessMemoryUsage();
+        const limitDisplay = Number.isFinite(state.targetLimit) ? state.targetLimit : '?';
+
+        let etaText = 'ETA=未知';
+        if (Number.isFinite(state.targetLimit) && throughput > 0) {
+            const remaining = Math.max(0, state.targetLimit - state.total);
+            const etaSeconds = remaining / throughput;
+            etaText = `ETA=${etaSeconds.toFixed(1)}s`;
+        }
+
+        console.log(
+            `[PROGRESS] 已完成 ${state.total}/${limitDisplay} | success=${state.success} failed=${state.failed} | ` +
+            `elapsed=${elapsedSeconds.toFixed(1)}s avg=${avgPerMatchSeconds.toFixed(2)}s | ` +
+            `rss=${this._formatMemoryMb(memory.rss)}MB heap=${this._formatMemoryMb(memory.heapUsed)}MB | ${etaText}`
+        );
+
+        if (options.force && state.total === 0) {
+            console.log('[PROGRESS] 当前没有可处理比赛');
+        }
+    }
+
+    async _maybeRecycleBrowser(state) {
+        const memory = this._getProcessMemoryUsage();
+        const reasons = [];
+        const processedSinceRecycle = state.total - state.lastBrowserRecycleAt;
+
+        if (this.config.browserRecycleEvery > 0 && processedSinceRecycle >= this.config.browserRecycleEvery) {
+            reasons.push(`processed=${processedSinceRecycle}`);
+        }
+
+        if (this.config.browserRecycleRssBytes > 0 && memory.rss >= this.config.browserRecycleRssBytes) {
+            reasons.push(`rss=${this._formatMemoryMb(memory.rss)}MB`);
+        }
+
+        if (reasons.length === 0) {
+            return false;
+        }
+
+        console.warn(`[BROWSER-RECYCLE] 触发浏览器回收: ${reasons.join(', ')}`);
+        await this._recycleBrowserFactory();
+        state.lastBrowserRecycleAt = state.total;
+        state.browserRecycles++;
+        return true;
+    }
+
+    async _recycleBrowserFactory() {
+        await this._cleanupContextPool();
+        if (this.browserFactory) {
+            await this.browserFactory.close();
+            await this.browserFactory.launch();
+        }
+    }
+
+    _resolveRecycleWindow(fetchSize, state) {
+        if (!(this.config.browserRecycleEvery > 0)) {
+            return fetchSize;
+        }
+
+        const processedSinceRecycle = state.total - state.lastBrowserRecycleAt;
+        const remainingUntilRecycle = this.config.browserRecycleEvery - processedSinceRecycle;
+        if (remainingUntilRecycle <= 0) {
+            return Math.max(1, Math.min(fetchSize, this.config.browserRecycleEvery));
+        }
+
+        return Math.max(1, Math.min(fetchSize, remainingUntilRecycle));
+    }
+
+    _isPressureFailure(result) {
+        if (!result || result.success) {
+            return false;
+        }
+
+        const signature = `${result.errorType || ''} ${result.error || ''}`.toLowerCase();
+        return /429|too many requests|blocked|turnstile|403|timeout|timed out|econnreset|econnrefused|etimedout|retryable_resource_error/.test(signature);
+    }
+
+    _resolveBatchLimit(limit) {
+        const parsed = Number.parseInt(limit, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
+    }
+
+    _resolveTargetLimit(limit) {
+        if (limit === undefined || limit === null || limit === '') {
+            return Number.POSITIVE_INFINITY;
+        }
+
+        const parsed = Number.parseInt(limit, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : Number.POSITIVE_INFINITY;
+    }
+
+    _resolveBulkConcurrency(value) {
+        const parsed = Number.parseInt(value, 10);
+        const fallback = Number.isFinite(parsed) ? parsed : 10;
+        return Math.min(12, Math.max(8, fallback));
+    }
+
+    _resolveProgressInterval(value) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 100;
+    }
+
+    _resolvePressureFailureThreshold(value) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 3;
+    }
+
+    _resolvePressureCooldownMs(value) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 30000;
+    }
+
+    _resolveBrowserRecycleEvery(value) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 200;
+    }
+
+    _resolveBrowserRecycleRssBytes(value) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : Math.floor(1.5 * 1024 * 1024 * 1024);
+    }
+
+    _getProcessMemoryUsage() {
+        return process.memoryUsage();
+    }
+
+    _formatMemoryMb(bytes) {
+        return (bytes / 1024 / 1024).toFixed(1);
     }
 
 }

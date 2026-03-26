@@ -27,7 +27,11 @@ class Persistence {
      */
     constructor(config = {}) {
         this.dataPath = config.dataPath || 'data/matches';
-        this._writePromises = [];
+        this._writePromises = new Set();
+        this.logger = config.logger || console;
+        this.autoSchemaSync = config.autoSchemaSync !== false;
+        this._matchesColumns = null;
+        this._pipelineStatusColumn = null;
     }
 
     /**
@@ -129,15 +133,25 @@ class Persistence {
         // 1. 数据库保存（主存储，失败即抛错）
         const client = await pool.connect();
         try {
+            await client.query('BEGIN');
             const matchId = await this.saveToDatabase(client, leagueId, season, externalId, rawData);
+            await this._syncMatchPipelineState(client, matchId, rawData);
+            await client.query('COMMIT');
             result.dbSuccess = true;
             result.matchId = matchId;
+        } catch (error) {
+            try {
+                await client.query('ROLLBACK');
+            } catch (rollbackError) {
+                this.logger.warn?.(`[Persistence] ROLLBACK 失败: ${rollbackError.message}`);
+            }
+            throw error;
         } finally {
-            client.release();
+            this._safeReleaseClient(client);
         }
 
         // 2. 文件保存（辅助存储，失败不阻塞）
-        this.saveToFile(result.matchId, rawData, metadata).then(
+        const writePromise = this.saveToFile(result.matchId, rawData, metadata).then(
             filePath => {
                 result.filePath = filePath;
                 console.log(`[SAVE-FILE] ✓ ${result.matchId}.json 已保存`);
@@ -146,9 +160,40 @@ class Persistence {
                 const errorType = this._classifyFileError(err);
                 console.error(`[SAVE-FILE] ${errorType} ${result.matchId} 保存失败: ${err.message}`);
             }
-        );
+        ).finally(() => {
+            this._writePromises.delete(writePromise);
+        });
+        this._writePromises.add(writePromise);
 
         return result;
+    }
+
+    async flushPendingWrites() {
+        if (this._writePromises.size === 0) {
+            return { pending: 0, settled: 0 };
+        }
+
+        const pendingWrites = Array.from(this._writePromises);
+        await Promise.allSettled(pendingWrites);
+
+        return {
+            pending: pendingWrites.length,
+            settled: pendingWrites.length
+        };
+    }
+
+    /**
+     * 确保 matches 表具备 pipeline_status 列；若无法添加则回退到 status。
+     * @param {object} dbHandle - 数据库 client 或 pool
+     * @returns {Promise<'pipeline_status'|'status'>}
+     */
+    async ensurePipelineStatusSchema(dbHandle) {
+        const { client, release } = await this._acquireClient(dbHandle);
+        try {
+            return await this._ensurePipelineStatusSchemaWithClient(client);
+        } finally {
+            release();
+        }
     }
 
     /**
@@ -242,8 +287,143 @@ class Persistence {
     getStats() {
         return {
             dataPath: this.dataPath,
-            pendingWrites: this._writePromises.length
+            pendingWrites: this._writePromises.size
         };
+    }
+
+    async _syncMatchPipelineState(client, matchId, rawData) {
+        const statusColumn = await this._ensurePipelineStatusSchemaWithClient(client);
+        const columns = await this._getMatchesColumns(client);
+
+        const assignments = [`${statusColumn} = $2`, 'updated_at = NOW()'];
+        const values = [matchId, 'harvested'];
+
+        if (columns.has('l2_collected_at')) {
+            assignments.push('l2_collected_at = NOW()');
+        }
+
+        if (columns.has('l2_data_version')) {
+            values.push('V26.1');
+            assignments.push(`l2_data_version = $${values.length}`);
+        }
+
+        if (columns.has('l2_raw_json')) {
+            values.push(JSON.stringify(rawData));
+            assignments.push(`l2_raw_json = $${values.length}::jsonb`);
+        }
+
+        await client.query(
+            `UPDATE matches SET ${assignments.join(', ')} WHERE match_id = $1`,
+            values
+        );
+    }
+
+    async _ensurePipelineStatusSchemaWithClient(client) {
+        if (this._pipelineStatusColumn) {
+            return this._pipelineStatusColumn;
+        }
+
+        let columns = await this._getMatchesColumns(client);
+        if (columns.has('pipeline_status')) {
+            this._pipelineStatusColumn = 'pipeline_status';
+            return this._pipelineStatusColumn;
+        }
+
+        if (this.autoSchemaSync) {
+            try {
+                await client.query(`
+                    ALTER TABLE matches
+                    ADD COLUMN IF NOT EXISTS pipeline_status VARCHAR(20) DEFAULT 'pending'
+                `);
+                await client.query(`
+                    CREATE INDEX IF NOT EXISTS idx_matches_pipeline_status
+                    ON matches(pipeline_status)
+                `);
+                await client.query(`
+                    UPDATE matches m
+                    SET pipeline_status = CASE
+                        WHEN r.match_id IS NOT NULL THEN 'harvested'
+                        ELSE COALESCE(m.pipeline_status, 'pending')
+                    END,
+                    updated_at = NOW()
+                    FROM (
+                        SELECT match_id
+                        FROM raw_match_data
+                    ) r
+                    WHERE m.match_id = r.match_id
+                       OR m.pipeline_status IS NULL
+                `);
+                this._matchesColumns = null;
+                columns = await this._getMatchesColumns(client, { force: true });
+                if (columns.has('pipeline_status')) {
+                    this._pipelineStatusColumn = 'pipeline_status';
+                    return this._pipelineStatusColumn;
+                }
+            } catch (error) {
+                this.logger.warn?.(`[Persistence] 自动补齐 pipeline_status 失败，回退 status: ${error.message}`);
+            }
+        }
+
+        this._pipelineStatusColumn = 'status';
+        return this._pipelineStatusColumn;
+    }
+
+    async _getMatchesColumns(client, options = {}) {
+        if (this._matchesColumns && !options.force) {
+            return this._matchesColumns;
+        }
+
+        const result = await client.query(
+            `
+                SELECT column_name
+                FROM information_schema.columns
+                WHERE table_name = $1
+                  AND column_name = ANY($2)
+                ORDER BY column_name
+            `,
+            ['matches', [
+                'status',
+                'pipeline_status',
+                'updated_at',
+                'l2_collected_at',
+                'l2_data_version',
+                'l2_raw_json'
+            ]]
+        );
+
+        this._matchesColumns = new Set(result.rows.map(row => row.column_name));
+        return this._matchesColumns;
+    }
+
+    async _acquireClient(dbHandle) {
+        if (dbHandle && typeof dbHandle.connect === 'function') {
+            const client = await dbHandle.connect();
+            return {
+                client,
+                release: () => this._safeReleaseClient(client)
+            };
+        }
+
+        if (dbHandle && typeof dbHandle.query === 'function') {
+            return {
+                client: dbHandle,
+                release: () => {}
+            };
+        }
+
+        throw new Error('[Persistence] 无法获取数据库连接');
+    }
+
+    _safeReleaseClient(client) {
+        if (!client || typeof client.release !== 'function') {
+            return;
+        }
+
+        try {
+            client.release();
+        } catch (releaseError) {
+            this.logger.warn?.(`[Persistence] 释放数据库连接失败: ${releaseError.message}`);
+        }
     }
 }
 
