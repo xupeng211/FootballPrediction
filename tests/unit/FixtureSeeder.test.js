@@ -14,6 +14,7 @@ const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
 const fs = require('fs');
+const { Normalizer } = require('../../src/utils/Normalizer');
 
 // 模拟配置文件路径
 const CONFIG_PATH = path.resolve(__dirname, '../../config/leagues.json');
@@ -107,9 +108,11 @@ function createMockSeeder(leagues, seasons) {
             if (typeof status === 'object' && status !== null) {
                 if (status.cancelled) result = 'cancelled';
                 else if (status.awarded) result = 'awarded';
-                else if (status.finished) result = 'finished';
+                else if (status.finished || status.Finished) result = 'finished';
                 else if (status.started) result = 'live';
-            } else if (homeScore !== null && awayScore !== null) {
+            }
+
+            if (result === 'scheduled' && homeScore !== null && awayScore !== null) {
                 result = 'finished';
             }
 
@@ -122,36 +125,7 @@ function createMockSeeder(leagues, seasons) {
          * 将各种格式统一转换为 'YYYY/YYYY' 标准格式
          */
         normalizeSeason(season) {
-            if (!season || typeof season !== 'string') {
-                throw new Error(`Invalid season: ${season}`);
-            }
-
-            // 已经是标准格式
-            if (/^\d{4}\/\d{4}$/.test(season)) {
-                return season;
-            }
-
-            // 处理 '2324' 格式
-            if (/^\d{4}$/.test(season)) {
-                const startYear = `20${season.substring(0, 2)}`;
-                const endYear = `20${season.substring(2, 4)}`;
-                return `${startYear}/${endYear}`;
-            }
-
-            // 处理 '20242025' 格式
-            if (/^\d{8}$/.test(season)) {
-                const startYear = season.substring(0, 4);
-                const endYear = season.substring(4, 8);
-                return `${startYear}/${endYear}`;
-            }
-
-            // 处理 '2024-2025' 格式
-            if (/^\d{4}-\d{4}$/.test(season)) {
-                return season.replace('-', '/');
-            }
-
-            // 无法识别的格式，抛出错误
-            throw new Error(`Unrecognized season format: ${season}`);
+            return Normalizer.normalizeSeason(season);
         },
 
         /**

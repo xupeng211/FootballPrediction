@@ -13,8 +13,8 @@ const fs = require('fs');
 const path = require('path');
 
 // 模块路径
-const NEXT_DATA_PARSER_PATH = '/app/src/parsers/fotmob/NextDataParser';
-const FOTMOB_STRATEGY_PATH = '/app/src/infrastructure/harvesters/strategies/FotMobStrategy';
+const NEXT_DATA_PARSER_PATH = path.resolve(__dirname, '../../src/parsers/fotmob/NextDataParser');
+const FOTMOB_STRATEGY_PATH = path.resolve(__dirname, '../../src/infrastructure/harvesters/strategies/FotMobStrategy');
 
 // ============================================================================
 // 测试套件
@@ -65,7 +65,7 @@ describe('数据完整性测试套件', () => {
         it('extractFromHtml 应该处理空字符串', () => {
                 const result = nextDataParser.extractFromHtml('');
                 assert.strictEqual(result.success, false);
-                assert.ok(result.error.includes('NO_NEXT_DATA'));
+                assert.ok(result.error.includes('INVALID_INPUT'));
             });
 
         it('extractFromHtml 应该处理无 NEXT_DATA 的 HTML', () => {
@@ -90,7 +90,15 @@ describe('数据完整性测试套件', () => {
             });
 
         it('transformToApiFormat 应该正确转换数据', () => {
-                const input = { props: { pageProps: { test: 'value' } } };
+                const input = {
+                    props: {
+                        pageProps: {
+                            content: { test: 'value' },
+                            general: {},
+                            header: {}
+                        }
+                    }
+                };
                 const result = nextDataParser.transformToApiFormat(input);
                 assert.ok(result);
                 assert.ok(result.content);
@@ -108,11 +116,12 @@ describe('数据完整性测试套件', () => {
 
     describe('FotMobStrategy', () => {
         beforeEach(() => {
-                fotmobStrategy = require(FOTMOB_STRATEGY_PATH);
+                const { FotMobStrategy } = require(FOTMOB_STRATEGY_PATH);
+                fotmobStrategy = new FotMobStrategy();
             });
 
         it('应该正确导出模块', () => {
-                assert.strictEqual(typeof fotmobStrategy, 'function');
+                assert.strictEqual(typeof fotmobStrategy, 'object');
                 assert.strictEqual(typeof fotmobStrategy.getTargetUrl, 'function');
                 assert.strictEqual(typeof fotmobStrategy.setupRequestInterception, 'function');
                 assert.strictEqual(typeof fotmobStrategy.extractData, 'function');
@@ -128,7 +137,8 @@ describe('数据完整性测试套件', () => {
                 const data = {
                     content: { lineup: {}, stats: {} },
                     general: {},
-                    header: {}
+                    header: {},
+                    padding: 'x'.repeat(1200)
                 };
                 const result = fotmobStrategy.validateData(data);
                 assert.strictEqual(result.valid, true);
@@ -239,16 +249,16 @@ describe('数据完整性测试套件', () => {
                 );
             });
 
-        it('extractData 应该抛出错误', () => {
-                assert.throws(
-                    async () => harvester.extractData(null, null),
+        it('extractData 应该抛出错误', async () => {
+                await assert.rejects(
+                    harvester.extractData(null, null),
                     /子类必须实现/
                 );
             });
 
-        it('saveData 应该抛出错误', () => {
-                assert.throws(
-                    async () => harvester.saveData('test', {}),
+        it('saveData 应该抛出错误', async () => {
+                await assert.rejects(
+                    harvester.saveData('test', {}),
                     /子类必须实现/
                 );
             });

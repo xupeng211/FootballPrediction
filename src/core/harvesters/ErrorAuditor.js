@@ -167,7 +167,7 @@ class ErrorAuditor {
         }
 
         // V4.51.2: NO_DATA 改为可重试（冷门赛事可能需要多次尝试+端口切换）
-        if (msg.includes('NO_DATA')) {
+        if (msg.includes('no_data')) {
             return true;  // 改为可重试，触发重试+端口切换+Cookie刷新
         }
 
@@ -248,12 +248,16 @@ class ErrorAuditor {
      * @returns {number} 退避时间（毫秒）
      */
     getRecommendedBackoff(errorType, attempt = 1) {
+        if (errorType === ErrorType.NO_DATA) {
+            return 0;
+        }
+
         const baseBackoff = {
             [ErrorType.BLOCKED]: 60000,      // 60 秒
             [ErrorType.RATE_LIMITED]: 30000, // 30 秒
             [ErrorType.TIMEOUT]: 10000,      // 10 秒
             [ErrorType.NETWORK_ERROR]: 5000, // 5 秒
-            [ErrorType.NO_DATA]: 0,          // 不重试
+            [ErrorType.NO_DATA]: 0,          // 立即重试
             [ErrorType.UNKNOWN]: 5000        // 5 秒
         };
 

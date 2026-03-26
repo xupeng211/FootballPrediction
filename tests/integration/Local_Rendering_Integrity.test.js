@@ -16,6 +16,8 @@ const assert = require('node:assert');
 const fs = require('fs').promises;
 const path = require('path');
 
+const shouldRunLiveSuite = process.env.RUN_LIVE_ODDSPORTAL_TESTS === 'true';
+
 // 被测系统
 let OddsPortalHarvester;
 try {
@@ -36,6 +38,9 @@ const CONFIG = {
 let harvester = null;
 let testResult = null;
 
+if (!shouldRunLiveSuite) {
+  it.skip('TITAN V6.0 - LOCAL OVERRIDE 渲染完整性验证', { skip: '设置 RUN_LIVE_ODDSPORTAL_TESTS=true 后执行真实本地渲染验证' }, () => {});
+} else {
 describe('TITAN V6.0 - LOCAL OVERRIDE 渲染完整性验证', () => {
 
   before(async () => {
@@ -222,6 +227,7 @@ describe('TITAN V6.0 - LOCAL OVERRIDE 渲染完整性验证', () => {
     console.log('='.repeat(70) + '\n');
   });
 });
+}
 
 // 测试运行入口
 if (require.main === module) {

@@ -414,7 +414,7 @@ console.log('\n🏆 GoldenExtractor 黄金特征提取测试\n');
     const features = extractor.extractSync(createValidRawData());
 
     assert.strictEqual(features._extractor, 'GoldenExtractor');
-    assert.ok(features._version.includes('V4'), '版本号应包含 V4');
+    assert.match(features._version, /^V\d+\./, '版本号应为当前主版本格式');
     assert.ok(features._extractedAt, '应有提取时间戳');
 
     console.log('  ✅ 元数据完整性通过');

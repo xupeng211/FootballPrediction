@@ -24,6 +24,7 @@ class ReconParser {
     this.logger = options.logger || console;
     this.fuzzball = options.fuzzball || null;
     this.dbPool = options.dbPool || null;
+    this.traceId = options.traceId || null;
 
     const config = options.config || {};
     this.teamSlugs = config.teamSlugs || this.getDefaultTeamSlugs();

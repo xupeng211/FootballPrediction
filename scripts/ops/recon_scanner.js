@@ -65,7 +65,12 @@ function getDefaultConfig() {
 class ReconScanner {
   constructor(dependencies = {}) {
     this.config = dependencies.config || RECON_CONFIG;
-    this.logger = dependencies.logger || this._createLogger();
+    this.traceId = dependencies.traceId || `recon-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+    this.logger = this._createTraceLogger(
+      dependencies.logger || this._createLogger(),
+      this.traceId,
+      'ReconScanner'
+    );
     this.navigator = dependencies.navigator;
     this.parser = dependencies.parser;
     this.stitcher = dependencies.stitcher;
@@ -76,7 +81,6 @@ class ReconScanner {
     this.guardian = dependencies.guardian;
     this.healthServer = dependencies.healthServer;
     this.resources = [];
-    this.traceId = `recon-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 
     this.logger.info('scanner_initialized', { traceId: this.traceId, version: 'V11.0' });
   }
@@ -90,38 +94,120 @@ class ReconScanner {
     };
   }
 
+  _createTraceLogger(baseLogger, traceId, component) {
+    const wrapPayload = (data = {}) => {
+      if (data === null || data === undefined) {
+        return { traceId, component };
+      }
+
+      if (typeof data !== 'object' || Array.isArray(data)) {
+        return { traceId, component, value: data };
+      }
+
+      return {
+        traceId,
+        component,
+        ...data
+      };
+    };
+
+    const wrap = (level) => {
+      const fn = typeof baseLogger[level] === 'function'
+        ? baseLogger[level].bind(baseLogger)
+        : typeof baseLogger.info === 'function'
+          ? baseLogger.info.bind(baseLogger)
+          : () => {};
+
+      return (event, data = {}) => fn(event, wrapPayload(data));
+    };
+
+    return {
+      info: wrap('info'),
+      warn: wrap('warn'),
+      error: wrap('error'),
+      debug: wrap('debug')
+    };
+  }
+
+  _childLogger(component, existingLogger = null) {
+    return this._createTraceLogger(
+      existingLogger || this._createLogger(),
+      this.traceId,
+      component
+    );
+  }
+
   /**
    * 初始化组件
    */
   async initialize() {
     // 初始化指标收集器
     if (!this.metrics) {
-      this.metrics = new ReconMetrics({ component: 'ReconScanner', logger: this.logger });
+      this.metrics = new ReconMetrics({
+        component: 'ReconScanner',
+        logger: this._childLogger('ReconMetrics'),
+        traceId: this.traceId
+      });
     }
 
     // 初始化 Guardian
     if (!this.guardian) {
-      this.guardian = new ReconGuardian({ checkIntervalMs: 60000, logger: this.logger });
+      this.guardian = new ReconGuardian({
+        checkIntervalMs: 60000,
+        logger: this._childLogger('ReconGuardian'),
+        traceId: this.traceId
+      });
       await this.guardian.start();
     }
 
     // 初始化健康检查服务器 (V11.0: 默认禁用，避免端口冲突)
     if (!this.healthServer && process.env.ENABLE_HEALTH_SERVER === 'true') {
-      this.healthServer = new ReconHealthServer({ port: 0, metrics: this.metrics, logger: this.logger });
+      this.healthServer = new ReconHealthServer({
+        port: 0,
+        metrics: this.metrics,
+        logger: this._childLogger('ReconHealthServer'),
+        traceId: this.traceId
+      });
       await this.healthServer.start();
     }
 
     // 初始化代理轮询器
     if (this.proxyRotator === undefined) {
-      this.proxyRotator = new ProxyRotator({ logger: this.logger, strategy: 'round-robin' });
+      this.proxyRotator = new ProxyRotator({
+        logger: this._childLogger('ProxyRotator'),
+        strategy: 'round-robin'
+      });
+    }
+
+    if (this.repository) {
+      this.repository.traceId = this.traceId;
+      this.repository.logger = this._childLogger('FixtureRepository', this.repository.logger);
+      if (typeof this.repository.init === 'function') {
+        await this.repository.init();
+      }
     }
 
     // 初始化解析器
     if (!this.parser) {
       this.parser = new ReconParser({
-        logger: this.logger,
+        logger: this._childLogger('ReconParser'),
+        traceId: this.traceId,
         config: { teamSlugs: this._getAllTeamSlugs(), teamMappings: this.config.team_mappings }
       });
+    } else {
+      this.parser.traceId = this.traceId;
+      this.parser.logger = this._childLogger('ReconParser', this.parser.logger);
+    }
+
+    if (!this.stitcher && this.repository) {
+      this.stitcher = new ReconStitcher({
+        repository: this.repository,
+        parser: this.parser,
+        logger: this._childLogger('ReconStitcher')
+      });
+    } else if (this.stitcher) {
+      this.stitcher.traceId = this.traceId;
+      this.stitcher.logger = this._childLogger('ReconStitcher', this.stitcher.logger);
     }
 
     // 初始化引擎
@@ -131,9 +217,13 @@ class ReconScanner {
         stitcher: this.stitcher,
         repository: this.repository,
         parser: this.parser,
-        logger: this.logger,
+        logger: this._childLogger('ReconEngine'),
+        traceId: this.traceId,
         proxyRotator: this.proxyRotator
       });
+    } else {
+      this.engine.traceId = this.traceId;
+      this.engine.logger = this._childLogger('ReconEngine', this.engine.logger);
     }
 
     this.logger.info('scanner_components_initialized');
@@ -187,7 +277,10 @@ class ReconScanner {
       // 启动浏览器
       const proxy = this.proxyRotator ? this.proxyRotator.getNextProxy() : null;
       const navigator = new ReconNavigator({
-        logger: this.logger, proxy, headless: true,
+        logger: this._childLogger('ReconNavigator'),
+        traceId: this.traceId,
+        proxy,
+        headless: true,
         scrollAttempts: this.config.oddsportal?.navigation?.scroll_attempts || 10,
         scrollDelayMs: this.config.oddsportal?.navigation?.scroll_delay_ms || 2000
       });
@@ -333,23 +426,10 @@ async function main() {
 
   // 初始化 Repository
   const repository = new FixtureRepository({ dbPool });
-  await repository.init();
-
-  // 初始化 Parser
-  const parser = new ReconParser({
-    logger: console,
-    config: {
-      teamSlugs: Object.values(RECON_CONFIG.team_slugs || {}).flat(),
-      teamMappings: RECON_CONFIG.team_mappings || {}
-    }
-  });
-
-  // 初始化 Stitcher
-  const stitcher = new ReconStitcher({ repository, parser, logger: console });
 
   // 创建扫描器
   const scanner = new ReconScanner({
-    stitcher, parser, repository,
+    repository,
     proxyRotator: args.useProxy ? undefined : null
   });
   

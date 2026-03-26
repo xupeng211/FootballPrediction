@@ -54,6 +54,45 @@ const ODDS_FIELD_PATTERNS = {
   TIMESTAMP: ['timestamp', 'time', 'dat_h', 'date', 't', 'updated', 'created', 'ts']
 };
 
+function normalizeTimestampValue(value) {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  const normalizeNumber = (numericValue) => {
+    if (!Number.isFinite(numericValue)) {
+      return null;
+    }
+    if (numericValue > 1000000000000) {
+      return Math.floor(numericValue / 1000);
+    }
+    if (numericValue > 1000000000) {
+      return Math.floor(numericValue);
+    }
+    return null;
+  };
+
+  if (typeof value === 'number') {
+    return normalizeNumber(value);
+  }
+
+  const textValue = String(value).trim();
+  if (!textValue) {
+    return null;
+  }
+
+  if (/^\d+$/.test(textValue)) {
+    return normalizeNumber(Number(textValue));
+  }
+
+  const parsed = Date.parse(textValue);
+  if (!Number.isNaN(parsed)) {
+    return Math.floor(parsed / 1000);
+  }
+
+  return null;
+}
+
 /**
  * V6.0 API-DECRYPT: 递归历史矿工算法
  * 扫描API响应中的时序赔率数据点 { ts: timestamp, o: [odds] }
@@ -107,16 +146,10 @@ function recursiveHistoryScanner(obj, results = [], maxDepth = 15, currentDepth 
         for (const sKey of siblingKeys) {
           const sLower = sKey.toLowerCase();
           if (ODDS_FIELD_PATTERNS.TIMESTAMP.some(ts => sLower.includes(ts.toLowerCase()))) {
-            const tsValue = obj[sKey];
-            if (typeof tsValue === 'number' && tsValue > 1000000000) {
-              timestamp = tsValue; // Unix时间戳
+            const normalizedTimestamp = normalizeTimestampValue(obj[sKey]);
+            if (normalizedTimestamp) {
+              timestamp = normalizedTimestamp;
               break;
-            } else if (typeof tsValue === 'string') {
-              const parsed = Date.parse(tsValue) / 1000;
-              if (!isNaN(parsed) && parsed > 1000000000) {
-                timestamp = parsed;
-                break;
-              }
             }
           }
         }
@@ -150,15 +183,7 @@ function recursiveHistoryScanner(obj, results = [], maxDepth = 15, currentDepth 
         const areValidOdds = odds.every(n => !isNaN(n) && n > 1 && n < 100);
 
         if (areValidOdds) {
-          let timestamp = null;
-          if (typeof tsValue === 'number' && tsValue > 1000000000) {
-            timestamp = tsValue;
-          } else if (typeof tsValue === 'string') {
-            const parsed = parseInt(tsValue);
-            if (!isNaN(parsed) && parsed > 1000000000) {
-              timestamp = parsed;
-            }
-          }
+          const timestamp = normalizeTimestampValue(tsValue);
 
           if (timestamp) {
             results.push({
@@ -201,15 +226,7 @@ function recursiveHistoryScanner(obj, results = [], maxDepth = 15, currentDepth 
               const areValid = oddsNums.every(n => !isNaN(n) && n > 1 && n < 100);
 
               if (areValid) {
-                let timestamp = null;
-                if (typeof ts === 'number' && ts > 1000000000) {
-                  timestamp = ts;
-                } else if (typeof ts === 'string') {
-                  const parsed = parseInt(ts);
-                  if (!isNaN(parsed) && parsed > 1000000000) {
-                    timestamp = parsed;
-                  }
-                }
+                const timestamp = normalizeTimestampValue(ts);
 
                 if (timestamp) {
                   results.push({
@@ -783,6 +800,7 @@ function deepParseOddsData(apiData) {
     bet365: null,
     raw: apiData,
     _apiDecrypt: true,
+    _apiExcavator: true,
     _version: 'V6.0-DECRYPT'
   };
 
@@ -790,34 +808,48 @@ function deepParseOddsData(apiData) {
     return result;
   }
 
-  // 查找Pinnacle数据
-  const pinData = findBookieById(apiData, 'pinnacle');
-  if (pinData) {
-    // 使用时序历史扫描器
-    const historyPoints = recursiveHistoryScanner(pinData);
+  const buildBookmakerPayload = (bookieData, bookieKey, bookmakerId) => {
+    if (!bookieData) {
+      return null;
+    }
+
+    const historyPoints = recursiveHistoryScanner(bookieData);
     const timeline = processOddsTimeline(historyPoints);
+    const openingFallback = extractOpeningOdds(bookieData, bookieKey);
+    const closingFallback = extractClosingOdds(bookieData, bookieKey);
 
-    result.pinnacle = {
+    const fallbackHistory = [];
+    const openingTs = normalizeTimestampValue(openingFallback?.t);
+    const closingTs = normalizeTimestampValue(closingFallback?.t);
+
+    if (openingFallback?.o) {
+      fallbackHistory.push(openingTs ? { ts: openingTs, o: openingFallback.o } : { o: openingFallback.o });
+    }
+
+    if (closingFallback?.o) {
+      const isDistinctOdds = JSON.stringify(closingFallback.o) !== JSON.stringify(openingFallback?.o);
+      const isDistinctTs = closingTs !== openingTs;
+      if (isDistinctOdds || isDistinctTs || fallbackHistory.length === 0) {
+        fallbackHistory.push(closingTs ? { ts: closingTs, o: closingFallback.o } : { o: closingFallback.o });
+      }
+    }
+
+    return {
       detected: true,
-      bookmaker_id: 18,
-      _is_premium: timeline?._is_premium || false,
-      ...timeline
+      bookmaker_id: bookmakerId,
+      opening: timeline?.opening || openingFallback?.o || null,
+      closing: timeline?.closing || closingFallback?.o || openingFallback?.o || null,
+      history: timeline?.history || fallbackHistory,
+      volatility_index: timeline?.volatility_index || 0,
+      last_changed_at: timeline?.last_changed_at || closingTs || null,
+      opening_at: timeline?.opening_at || openingTs || null,
+      _point_count: timeline?._point_count || fallbackHistory.length,
+      _is_premium: timeline?._is_premium || fallbackHistory.length >= 3
     };
-  }
+  };
 
-  // 查找Bet365数据
-  const b365Data = findBookieById(apiData, 'bet365');
-  if (b365Data) {
-    const historyPoints = recursiveHistoryScanner(b365Data);
-    const timeline = processOddsTimeline(historyPoints);
-
-    result.bet365 = {
-      detected: true,
-      bookmaker_id: 16,
-      _is_premium: timeline?._is_premium || false,
-      ...timeline
-    };
-  }
+  result.pinnacle = buildBookmakerPayload(findBookieById(apiData, 'pinnacle'), 'pinnacle', 18);
+  result.bet365 = buildBookmakerPayload(findBookieById(apiData, 'bet365'), 'bet365', 16);
 
   return result;
 }
