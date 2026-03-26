@@ -175,4 +175,44 @@ describe('Persistence - State Sync', () => {
     assert.ok(events.includes('ROLLBACK'));
     assert.strictEqual(events.at(-1), 'RELEASE');
   });
+
+  it('应能等待异步文件写入全部收口', async () => {
+    const persistence = new Persistence({ dataPath: 'data/matches' });
+
+    let resolveWrite;
+    let notifySaveStarted;
+    const saveStarted = new Promise(resolve => {
+      notifySaveStarted = resolve;
+    });
+    persistence.saveToFile = async () => new Promise(resolve => {
+      resolveWrite = () => resolve('/tmp/fake.json');
+      notifySaveStarted();
+    });
+
+    const { client } = createClient();
+    const pool = {
+      async connect() {
+        return client;
+      }
+    };
+
+    const savePromise = persistence.dualSave(
+      pool,
+      '47',
+      '2024/2025',
+      '4506266',
+      { foo: 'bar' },
+      { source: 'unit-test' }
+    );
+
+    await saveStarted;
+    const flushPromise = persistence.flushPendingWrites();
+    resolveWrite();
+
+    await savePromise;
+    const flushResult = await flushPromise;
+
+    assert.deepStrictEqual(flushResult, { pending: 1, settled: 1 });
+    assert.strictEqual(persistence.getStats().pendingWrites, 0);
+  });
 });

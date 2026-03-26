@@ -27,7 +27,7 @@ class Persistence {
      */
     constructor(config = {}) {
         this.dataPath = config.dataPath || 'data/matches';
-        this._writePromises = [];
+        this._writePromises = new Set();
         this.logger = config.logger || console;
         this.autoSchemaSync = config.autoSchemaSync !== false;
         this._matchesColumns = null;
@@ -147,11 +147,11 @@ class Persistence {
             }
             throw error;
         } finally {
-            client.release();
+            this._safeReleaseClient(client);
         }
 
         // 2. 文件保存（辅助存储，失败不阻塞）
-        this.saveToFile(result.matchId, rawData, metadata).then(
+        const writePromise = this.saveToFile(result.matchId, rawData, metadata).then(
             filePath => {
                 result.filePath = filePath;
                 console.log(`[SAVE-FILE] ✓ ${result.matchId}.json 已保存`);
@@ -160,9 +160,26 @@ class Persistence {
                 const errorType = this._classifyFileError(err);
                 console.error(`[SAVE-FILE] ${errorType} ${result.matchId} 保存失败: ${err.message}`);
             }
-        );
+        ).finally(() => {
+            this._writePromises.delete(writePromise);
+        });
+        this._writePromises.add(writePromise);
 
         return result;
+    }
+
+    async flushPendingWrites() {
+        if (this._writePromises.size === 0) {
+            return { pending: 0, settled: 0 };
+        }
+
+        const pendingWrites = Array.from(this._writePromises);
+        await Promise.allSettled(pendingWrites);
+
+        return {
+            pending: pendingWrites.length,
+            settled: pendingWrites.length
+        };
     }
 
     /**
@@ -270,7 +287,7 @@ class Persistence {
     getStats() {
         return {
             dataPath: this.dataPath,
-            pendingWrites: this._writePromises.length
+            pendingWrites: this._writePromises.size
         };
     }
 
@@ -383,7 +400,7 @@ class Persistence {
             const client = await dbHandle.connect();
             return {
                 client,
-                release: () => client.release()
+                release: () => this._safeReleaseClient(client)
             };
         }
 
@@ -395,6 +412,18 @@ class Persistence {
         }
 
         throw new Error('[Persistence] 无法获取数据库连接');
+    }
+
+    _safeReleaseClient(client) {
+        if (!client || typeof client.release !== 'function') {
+            return;
+        }
+
+        try {
+            client.release();
+        } catch (releaseError) {
+            this.logger.warn?.(`[Persistence] 释放数据库连接失败: ${releaseError.message}`);
+        }
     }
 }
 

@@ -50,10 +50,10 @@ function normalizeBulkConcurrency(requested) {
 }
 
 function parseCliArgs(argv = process.argv.slice(2)) {
-    let limit = 500;
+    let limit = null;
     const limitIdx = argv.indexOf('--limit');
     if (limitIdx !== -1 && argv[limitIdx + 1]) {
-        limit = parseInt(argv[limitIdx + 1], 10) || 500;
+        limit = parseInt(argv[limitIdx + 1], 10) || null;
     }
 
     let workers = parseInt(process.env.MAX_WORKERS, 10) || 10;
@@ -70,11 +70,18 @@ function parseCliArgs(argv = process.argv.slice(2)) {
         sessionPath = argv[sessionIdx + 1];
     }
 
+    let progressEvery = parseInt(process.env.BULK_PROGRESS_EVERY, 10) || 100;
+    const progressIdx = argv.indexOf('--progress-every');
+    if (progressIdx !== -1 && argv[progressIdx + 1]) {
+        progressEvery = parseInt(argv[progressIdx + 1], 10) || progressEvery;
+    }
+
     return {
         limit,
         concurrency: normalizeBulkConcurrency(workers),
         dryRun: argv.includes('--dry-run'),
-        sessionPath
+        sessionPath,
+        progressEvery
     };
 }
 
@@ -90,18 +97,20 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
     const harvester = dependencies.harvester || new ProductionHarvester({
         maxWorkers: options.concurrency,
         bulkConcurrency: options.concurrency,
-        batchSize: options.limit,
+        batchSize: options.limit || 500,
         dryRun: options.dryRun,
-        sessionPath: options.sessionPath
+        sessionPath: options.sessionPath,
+        bulkProgressEvery: options.progressEvery
     });
 
-    console.log(`🔧 [CONFIG] Concurrency: ${options.concurrency} | Limit: ${options.limit} | DryRun: ${options.dryRun} | Session: ${options.sessionPath || '默认'}`);
+    console.log(`🔧 [CONFIG] Concurrency: ${options.concurrency} | Limit: ${options.limit || 'ALL'} | ProgressEvery: ${options.progressEvery} | DryRun: ${options.dryRun} | Session: ${options.sessionPath || '默认'}`);
 
     try {
         await harvester.init();
         const result = await harvester.run({
             limit: options.limit,
-            concurrency: options.concurrency
+            concurrency: options.concurrency,
+            progressEvery: options.progressEvery
         });
         console.log(`📦 [SUMMARY] 批量收割完成: total=${result.total} success=${result.success} failed=${result.failed} concurrency=${result.concurrency}`);
         
