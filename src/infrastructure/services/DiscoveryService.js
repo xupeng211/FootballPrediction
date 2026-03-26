@@ -457,6 +457,9 @@ class DiscoveryService {
     // 关闭浏览器提供者
     if (this.browserProvider) {
       try {
+        if (this.networkInterceptor) {
+          this.networkInterceptor.reset();
+        }
         await this.browserProvider.close();
         this.logger.info('[DiscoveryService] 浏览器提供者已关闭');
       } catch (e) {

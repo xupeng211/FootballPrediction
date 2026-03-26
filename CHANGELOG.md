@@ -20,7 +20,7 @@
 - 修复 DOM fallback 与解析回归链路，补齐 ajax / raw / nested 赔率结构的兼容解析
 - 修复 `MarketSentimentExtractor` 与新 `BaseExtractor` 协议不兼容的问题
 - 修复 `Normalizer.normalizeSeason()` 对非法赛季格式的过度宽容，补上连续赛季校验
-- 修复多处历史测试契约漂移，包括 `ErrorAuditor`、`FixtureSeeder`、`AbstractHarvester`、`omni_sniffer` 等套件
+- 修复多处历史测试契约漂移，包括 `ErrorAuditor`、历史 L1 播种链路、`AbstractHarvester`、`omni_sniffer` 等套件
 
 ### ⚠️ 破坏性变更 (Breaking Changes)
 
@@ -200,8 +200,8 @@ NEW.is_finished := (NEW.status = 'finished');
 
 | 方法 | 文件 | 功能 |
 |------|------|------|
-| `normalizeSeason()` | `FixtureSeeder.js` | 将各种赛季格式统一转换为 `'YYYY/YYYY'` 标准格式 |
-| `determineStatus()` (增强) | `FixtureSeeder.js` | 返回强制小写的状态值 |
+| `normalizeSeason()` | 历史 L1 播种器 | 将各种赛季格式统一转换为 `'YYYY/YYYY'` 标准格式 |
+| `determineStatus()` (增强) | 历史 L1 播种器 | 返回强制小写的状态值 |
 
 #### 归一化规则
 
@@ -245,10 +245,10 @@ NEW.is_finished := (NEW.status = 'finished');
 ### 📁 文件变更清单
 
 ```
-M src/infrastructure/FixtureSeeder.js    # 核心归一化逻辑
+M src/infrastructure/services/DiscoveryService.js  # 当前 L1 核心逻辑
 M src/infrastructure/L1_DISCOVERY_ENGINE.md  # 文档更新
 M CHANGELOG.md                           # 本文件
-A tests/unit/FixtureSeeder.test.js       # 新增 V6.5 测试用例
+A tests/unit/DiscoveryService.test.js    # 新增 V6.5 测试用例
 A database/migrations/V6.5__hardened_matches_schema.sql  # 迁移脚本
 ```
 

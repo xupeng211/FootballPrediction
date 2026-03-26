@@ -210,7 +210,7 @@ CREATE TRIGGER trg_update_raw_data_timestamp BEFORE UPDATE ON raw_match_data
 
 ### Phase 2: 代码重构 (4 小时)
 
-1. **提取 Normalizer**: 将 FixtureSeeder 中的标准化逻辑提取到 `src/utils/Normalizer.js`
+1. **提取 Normalizer**: 将旧 L1 播种链路中的标准化逻辑提取到 `src/utils/Normalizer.js`
 2. **重构 Persistence**: 更新 `saveToDatabase()` 签名，引入 Normalizer 预检
 3. **重构 ProductionHarvester**: 集成 Normalizer，更新 `saveData()` 方法
 

@@ -74,7 +74,7 @@ const PLACEHOLDER_KEYWORDS = ['tbd', 'tbc', '待定', 'winner', 'runner-up'];
 
 ```javascript
 // V6.4: 自动熔断保护
-class FixtureSeeder {
+class DiscoveryService {
     constructor() {
         this._consecutiveFailures = 0;
         this._circuitBreakerOpen = false;

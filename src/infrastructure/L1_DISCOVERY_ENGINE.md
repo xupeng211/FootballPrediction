@@ -36,7 +36,7 @@ L1 Discovery Engine 是 FootballPrediction 三层架构中的第一层，负责*
 
 ```
 ┌──────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  FotMob API  │────▶│  FixtureSeeder   │────▶│   PostgreSQL    │
+│  FotMob API  │────▶│ DiscoveryService │────▶│   PostgreSQL    │
 │              │     │                  │     │   matches 表    │
 │ /api/leagues │     │  - fetchLeague() │     │                 │
 │              │     │  - parseMatch()  │     │  - match_id PK  │
@@ -48,13 +48,13 @@ L1 Discovery Engine 是 FootballPrediction 三层架构中的第一层，负责*
 
 | 组件 | 文件 | 职责 |
 |------|------|------|
-| **FixtureSeeder** | `src/infrastructure/FixtureSeeder.js` | L1 核心类，唯一数据源 |
+| **DiscoveryService** | `src/infrastructure/services/DiscoveryService.js` | L1 核心服务，统一协调发现与落库 |
 | **seed_fixtures** | `scripts/ops/seed_fixtures.js` | 命令行入口脚本 |
 | **leagues.json** | `config/leagues.json` | 联赛配置（配置分离） |
 
 ### 2.3 设计原则
 
-- **Single Source of Truth**: `FixtureSeeder` 是 L1 层的唯一实现
+- **Single Source of Truth**: `DiscoveryService + FixtureRepository.persist()` 是 L1 层的唯一实现
 - **Configuration as Code**: 联赛列表从配置文件加载，不硬编码
 - **Idempotency**: 支持重复执行，使用 UPSERT 避免重复数据
 
@@ -205,7 +205,7 @@ node scripts/ops/seed_fixtures.js --all
 
 ```bash
 # 运行单元测试
-node --test tests/unit/FixtureSeeder.test.js
+node --test tests/unit/DiscoveryService.test.js
 
 # 运行所有测试
 npm test
@@ -224,10 +224,10 @@ docker-compose -f docker-compose.dev.yml exec dev tail -100 logs/harvest.log
 ### 5.4 日志格式
 
 ```
-[2026-03-02T10:00:00.000Z] [INFO] [FixtureSeeder] 配置加载成功: 1 个活跃联赛
-[2026-03-02T10:00:01.000Z] [INFO] [FixtureSeeder] 获取联赛 47 赛季 2024/2025...
-[2026-03-02T10:00:02.000Z] [SUCCESS] [FixtureSeeder] Premier League - 2024/2025: 380 场已处理
-[2026-03-02T10:00:03.000Z] [ERROR] [FixtureSeeder] UPSERT 失败: 47_20242025_123 | {"error":"...","stack":"..."}
+[2026-03-02T10:00:00.000Z] [INFO] [DiscoveryService] 配置加载成功: 1 个活跃联赛
+[2026-03-02T10:00:01.000Z] [INFO] [DiscoveryService] 获取联赛 47 赛季 2024/2025...
+[2026-03-02T10:00:02.000Z] [SUCCESS] [DiscoveryService] Premier League - 2024/2025: 380 场已处理
+[2026-03-02T10:00:03.000Z] [ERROR] [DiscoveryService] UPSERT 失败: 47_20242025_123 | {"error":"...","stack":"..."}
 ```
 
 | 级别 | 说明 |
@@ -422,7 +422,7 @@ const MATCH_ID_PATTERN = /^\d+_\d{8}_\d+$/;
 每条 ERROR 日志携带唯一 `request_id`：
 
 ```
-[2026-03-02T10:00:00Z] [ERROR] [FixtureSeeder] [req_m5x2k9_abc123] UPSERT 失败
+[2026-03-02T10:00:00Z] [ERROR] [DiscoveryService] [req_m5x2k9_abc123] UPSERT 失败
 ```
 
 用于：
@@ -526,7 +526,7 @@ V6.5 版本在数据库层面建立了双重防护机制，确保 `status` 和 `
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│ 第一层: 应用层 (Node.js FixtureSeeder.js)                    │
+│ 第一层: 应用层 (Node.js DiscoveryService.js)                │
 ├─────────────────────────────────────────────────────────────┤
 │ parseMatch() {                                               │
 │   const status = this.determineStatus(...);  // 'finished'  │
