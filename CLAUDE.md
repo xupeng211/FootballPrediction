@@ -339,7 +339,7 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 
 | 功能模块 | 唯一指定文件 | 入口脚本 |
 |----------|-------------|---------|
-| **L1 Discovery** | `src/infrastructure/FixtureSeeder.js` | `scripts/ops/seed_fixtures.js` |
+| **L1 Discovery** | `src/infrastructure/services/DiscoveryService.js` | `scripts/ops/seed_fixtures.js` |
 | **L2 Harvest** | `src/infrastructure/harvesters/ProductionHarvester.js` | `scripts/ops/run_production.js` |
 | **Swarm Harvest** | `src/infrastructure/harvesters/SwarmHarvester.js` | `scripts/ops/swarm_test.js` |
 | **L3 Smelt** | `src/feature_engine/smelter/FeatureSmelter.js` | `scripts/ops/smelt_all.js` |
@@ -356,7 +356,7 @@ src/
 ├── parsers/                   # 数据解析器 (FotMob, NextData)
 ├── models/                    # 数据模型 Query 封装
 ├── feature_engine/            # Node.js 特征引擎 (GoldenFeature, EloRating, OddsMovement)
-├── infrastructure/            # 基础设施 (ProductionHarvester, NetworkShield, FixtureSeeder)
+├── infrastructure/            # 基础设施 (ProductionHarvester, NetworkShield, DiscoveryService)
 ├── ml/                        # 机器学习 (inference, training, features)
 │   ├── inference/             # 模型推理 (predictor, model_loader, multi_model_validator)
 │   ├── training/              # 模型训练
@@ -381,7 +381,7 @@ config/
 |------|------|------|
 | `ProductionHarvester` | L2/L3 数据收割主入口 | `src/infrastructure/harvesters/` |
 | `SwarmHarvester` | 多 Worker 并发收割 (3x 吞吐提升) | `src/infrastructure/harvesters/` |
-| `FixtureSeeder` | L1 赛程发现与种子 | `src/infrastructure/` |
+| `DiscoveryService` | L1 赛程发现与种子 | `src/infrastructure/services/` |
 | `NetworkShield` | 22 节点代理池管理、熔断保护 | `src/infrastructure/network/` |
 | `SessionManager` | 无人值守身份管理、Cookie 自动注入 | `src/infrastructure/network/` |
 | `MetricsClient` | Prometheus 指标暴露 (`/metrics`) | `src/infrastructure/monitoring/` |
@@ -715,7 +715,7 @@ tests/
 
 ```bash
 # Node.js 单独测试
-docker-compose -f docker-compose.dev.yml exec dev node --test tests/unit/FixtureSeeder.test.js
+docker-compose -f docker-compose.dev.yml exec dev node --test tests/unit/DiscoveryService.test.js
 
 # Python 单独测试
 docker-compose -f docker-compose.dev.yml exec dev pytest tests/test_core_logic.py -v

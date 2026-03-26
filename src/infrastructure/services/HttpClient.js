@@ -42,6 +42,8 @@ class HttpClient {
     this.logger = options.logger || { info: () => {}, warn: () => {}, error: () => {} };
     this.browserProvider = options.browserProvider;
     this.useStealthMode = options.useStealthMode !== false;
+    this.requestTimeoutMs = options.requestTimeoutMs || 20000;
+    this.baseBackoffMs = options.baseBackoffMs || 1000;
   }
 
   /**
@@ -142,11 +144,19 @@ class HttpClient {
       try {
         this.logger.info(`[HttpClient] 🕵️  浏览器内 fetch: ${url} (尝试 ${retryCount + 1}/${maxRetries})`);
 
-        const result = await this.browserProvider.fetch(url);
+        const result = await this.browserProvider.fetch(url, { timeout: this.requestTimeoutMs });
 
         // 检查浏览器返回结果
         if (result.error) {
-          throw new Error(`浏览器返回错误: ${result.error}`);
+          const retryable = this._isRetryableStatus(result.status);
+          const error = new HttpClientError(`浏览器返回错误: ${result.error}`, {
+            url,
+            mode: 'stealth',
+            statusCode: result.status,
+            retryCount
+          });
+          error.retryable = retryable;
+          throw error;
         }
 
         if (!result.data || Object.keys(result.data).length === 0) {
@@ -172,8 +182,11 @@ class HttpClient {
           });
         }
 
+        const backoffMs = this._computeBackoffMs(retryCount, error.statusCode);
+        this.logger.warn(`[HttpClient] ${backoffMs}ms 后重试...`);
+
         // 刷新页面重试
-        await this._sleep(2000);
+        await this._sleep(backoffMs);
         try {
           await this.browserProvider.goto('https://www.fotmob.com/', {
             waitUntil: 'domcontentloaded',
@@ -213,6 +226,14 @@ class HttpClient {
         let data = '';
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
+          if (res.statusCode < 200 || res.statusCode >= 300) {
+            return reject(new HttpClientError(`HTTP ${res.statusCode}`, {
+              url,
+              mode: 'raw',
+              statusCode: res.statusCode
+            }));
+          }
+
           try {
             const parsed = JSON.parse(data);
             resolve(parsed);
@@ -259,6 +280,15 @@ class HttpClient {
    */
   _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  _isRetryableStatus(statusCode) {
+    return statusCode === 403 || statusCode === 429 || (statusCode >= 500 && statusCode < 600);
+  }
+
+  _computeBackoffMs(retryCount, statusCode = null) {
+    const multiplier = statusCode === 429 ? 2 : 1;
+    return this.baseBackoffMs * (2 ** (retryCount - 1)) * multiplier;
   }
 }
 
