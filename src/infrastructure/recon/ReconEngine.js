@@ -13,6 +13,9 @@
 
 'use strict';
 
+const RECON_CONFIG = require('../../../config/recon_config.json');
+const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+
 /**
  * 侦察引擎类
  * @class ReconEngine
@@ -51,7 +54,7 @@ class ReconEngine {
 
       // 2. 执行协议级抓取
       const oddsportalSeason = this._formatSeasonForUrl(season);
-      const resultsUrl = `https://www.oddsportal.com/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
+      const resultsUrl = `${BASE_URL}/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
       
       const extractResult = await this.navigator.protocolArchiveExtract(resultsUrl, {
         maxPages: 50, timeoutMs: 90000
@@ -134,7 +137,7 @@ class ReconEngine {
       for (const dateKey of dateKeys) {
         const dayMatches = dateBuckets.get(dateKey);
         const dayResult = await this.navigator.protocolArchiveExtract(
-          `https://www.oddsportal.com/matches/football/${dateKey}/`,
+          `${BASE_URL}/matches/football/${dateKey}/`,
           { maxPages: 20, timeoutMs: 60000 }
         );
 
@@ -281,7 +284,7 @@ class ReconEngine {
 
       // 构建 results 页面 URL
       const oddsportalSeason = this._formatSeasonForUrl(season);
-      const baseUrl = `https://www.oddsportal.com/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
+      const baseUrl = `${BASE_URL}/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
       
       // 导航到页面
       await this.navigator.navigate(baseUrl, { waitUntil: 'networkidle' });
@@ -320,7 +323,7 @@ class ReconEngine {
             text = text.replace(/\s+/g, ' ').trim();
             
             matches.push({
-              url: href.startsWith('http') ? href : `https://www.oddsportal.com${href}`,
+              url: href.startsWith('http') ? href : `${BASE_URL}${href}`,
               hash: hash,
               rawText: text,
               source: 'dom_fallback'

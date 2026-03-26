@@ -15,6 +15,9 @@
 
 'use strict';
 
+const RECON_CONFIG = require('../../../config/recon_config.json');
+const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+
 const { ReconDistributedLock, LockAcquireFailure } = require('./ReconDistributedLock');
 
 /**
@@ -295,7 +298,7 @@ class ReconStitcher {
 
       // 尝试从 slug 提取信息生成搜索 URL
       if (match.slug) {
-        const searchUrl = `https://www.oddsportal.com/search/${encodeURIComponent(match.slug)}/`;
+        const searchUrl = `${BASE_URL}/search/${encodeURIComponent(match.slug)}/`;
         this.logger.info('sniper_attempt', { hash: match.hash, url: searchUrl });
 
         // 这里可以扩展为实际访问搜索页面并提取结果

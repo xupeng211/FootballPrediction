@@ -12,10 +12,38 @@
 
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
+
+/**
+ * 加载 SQL 模板配置
+ * @private
+ * @returns {Object} SQL 模板
+ */
+function loadSqlTemplates() {
+  try {
+    const configPath = path.join(process.cwd(), 'config/recon_config.json');
+    if (fs.existsSync(configPath)) {
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      return config.sql_templates || {};
+    }
+  } catch (e) {
+    console.error('[FixtureRepository] 警告: 无法加载 sql_templates 配置', e.message);
+  }
+  return {};
+}
+
+const SQL_TEMPLATES = loadSqlTemplates();
+
 /**
  * Repository 错误类
  */
 class RepositoryError extends Error {
+  /**
+   * @param {string} message - 错误消息
+   * @param {string} code - 错误代码
+   * @param {Error} [originalError] - 原始错误对象
+   */
   constructor(message, code, originalError = null) {
     super(message);
     this.name = 'RepositoryError';
@@ -26,10 +54,19 @@ class RepositoryError extends Error {
 }
 
 /**
- * 赛程数据仓储
+ * 赛程数据仓储 (V11.0 Clean Sweep)
  * @class FixtureRepository
  */
 class FixtureRepository {
+  /**
+   * @param {Object} [options] - 配置选项
+   * @param {Object} [options.dbPool] - 数据库连接池
+   * @param {Object} [options.logger] - 日志记录器
+   * @param {number} [options.batchSize] - 批量处理大小
+   * @param {number} [options.maxRetries] - 最大重试次数
+   * @param {number} [options.retryDelayMs] - 重试延迟（毫秒）
+   * @param {string} [options.traceId] - 追踪 ID
+   */
   constructor(options = {}) {
     this.dbPool = options.dbPool;
     this.logger = options.logger || { info: () => {}, warn: () => {}, error: () => {} };
@@ -61,6 +98,10 @@ class FixtureRepository {
   /**
    * 带重试的数据库操作
    * @private
+   * @param {Function} operation - 数据库操作函数
+   * @param {string} operationName - 操作名称（用于日志）
+   * @returns {Promise<any>} 操作结果
+   * @throws {RepositoryError} 当重试耗尽时抛出
    */
   async _executeWithRetry(operation, operationName) {
     let lastError;
@@ -90,8 +131,8 @@ class FixtureRepository {
 
   /**
    * 保存 OddsPortal 映射 (V11.0 硬化版)
-   * @param {Object} mappingData
-   * @returns {Promise<Object>}
+   * @param {Object} mappingData - 映射数据
+   * @returns {Promise<Object>} 保存结果
    * @throws {RepositoryError}
    */
   async saveOddsPortalMapping(mappingData) {
@@ -201,9 +242,10 @@ class FixtureRepository {
       params.push(mappingData.mapping_method || 'protocol_extract');
     }
 
-    const query = `
-      INSERT INTO matches_oddsportal_mapping (${columns.join(', ')})
-      VALUES (${values.join(', ')})
+    // 使用 SQL 模板
+    const template = SQL_TEMPLATES.save_mapping || `
+      INSERT INTO matches_oddsportal_mapping ({columns})
+      VALUES ({values})
       ON CONFLICT (match_id, season) DO UPDATE SET
         oddsportal_hash = EXCLUDED.oddsportal_hash,
         full_url = EXCLUDED.full_url,
@@ -211,10 +253,19 @@ class FixtureRepository {
         away_team = EXCLUDED.away_team,
         status = EXCLUDED.status,
         updated_at = NOW()
-        ${hasOptionalFields.match_confidence ? ', match_confidence = EXCLUDED.match_confidence' : ''}
-        ${hasOptionalFields.mapping_method ? ', mapping_method = EXCLUDED.mapping_method' : ''}
+        {optional_updates}
       RETURNING match_id;
     `;
+
+    const optionalUpdates = [
+      hasOptionalFields.match_confidence ? ', match_confidence = EXCLUDED.match_confidence' : '',
+      hasOptionalFields.mapping_method ? ', mapping_method = EXCLUDED.mapping_method' : ''
+    ].join('');
+
+    const query = template
+      .replace('{columns}', columns.join(', '))
+      .replace('{values}', values.join(', '))
+      .replace('{optional_updates}', optionalUpdates);
 
     const result = await client.query(query, params);
     return {
@@ -226,30 +277,32 @@ class FixtureRepository {
   /**
    * 检查表是否存在可选字段
    * @private
+   * @param {string} tableName - 表名
+   * @param {Array<string>} fields - 字段列表
+   * @returns {Promise<Object>} 字段存在状态
    */
   async _checkOptionalFields(tableName, fields) {
-    try {
-      const result = await this.dbPool.query(`
+    return this._executeWithRetry(async () => {
+      const template = SQL_TEMPLATES.check_optional_fields || `
         SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = $1 AND column_name = ANY($2)
-      `, [tableName, fields]);
+      `;
       
+      const result = await this.dbPool.query(template, [tableName, fields]);
       const existingFields = result.rows.map(r => r.column_name);
+      
       return {
         match_confidence: existingFields.includes('match_confidence'),
         mapping_method: existingFields.includes('mapping_method')
       };
-    } catch (error) {
-      this.logger.warn('[Repository] 检查字段失败，假设字段不存在', { error: error.message });
-      return { match_confidence: false, mapping_method: false };
-    }
+    }, 'checkOptionalFields');
   }
 
   /**
    * 批量保存映射 (事务保护)
-   * @param {Array} mappings
-   * @returns {Promise<Object>}
+   * @param {Array} mappings - 映射列表
+   * @returns {Promise<Object>} 批量保存结果
    * @throws {RepositoryError}
    */
   async batchSaveOddsPortalMappings(mappings) {
@@ -311,16 +364,16 @@ class FixtureRepository {
 
   /**
    * 根据队名查找比赛
-   * @param {string} homeTeam
-   * @param {string} awayTeam
-   * @param {string} season
-   * @returns {Promise<Object|null>}
+   * @param {string} homeTeam - 主队名称
+   * @param {string} awayTeam - 客队名称
+   * @param {string} season - 赛季
+   * @returns {Promise<Object|null>} 匹配的比赛结果
    */
   async findMatchByTeams(homeTeam, awayTeam, season) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       try {
-        const query = `
+        const query = SQL_TEMPLATES.find_match_by_teams || `
           SELECT match_id, home_team, away_team, match_date
           FROM matches
           WHERE season = $1
@@ -350,14 +403,14 @@ class FixtureRepository {
 
   /**
    * 获取赛季所有比赛
-   * @param {string} season
-   * @returns {Promise<Array>}
+   * @param {string} season - 赛季
+   * @returns {Promise<Array>} 比赛列表
    */
   async findMatchesBySeason(season) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       try {
-        const query = `
+        const query = SQL_TEMPLATES.find_matches_by_season || `
           SELECT match_id, home_team, away_team, match_date
           FROM matches
           WHERE season = $1
@@ -373,15 +426,15 @@ class FixtureRepository {
 
   /**
    * 获取未缝合的比赛
-   * @param {string} season
-   * @param {string} leagueName
-   * @returns {Promise<Array>}
+   * @param {string} season - 赛季
+   * @param {string} leagueName - 联赛名称
+   * @returns {Promise<Array>} 未缝合的比赛列表
    */
   async getUnstitchedMatches(season, leagueName) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       try {
-        const query = `
+        const query = SQL_TEMPLATES.get_unstitched_matches || `
           SELECT m.match_id, m.home_team, m.away_team, m.match_date
           FROM matches m
           LEFT JOIN matches_oddsportal_mapping map
@@ -401,14 +454,14 @@ class FixtureRepository {
 
   /**
    * 获取映射统计
-   * @param {string} season
-   * @returns {Promise<Object>}
+   * @param {string} season - 赛季
+   * @returns {Promise<Object>} 统计结果
    */
   async getMappingStats(season) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       try {
-        const query = `
+        const query = SQL_TEMPLATES.get_mapping_stats || `
           SELECT
             COUNT(*) as total,
             COUNT(*) FILTER (WHERE status = 'pending') as pending,
