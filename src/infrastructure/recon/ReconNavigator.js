@@ -20,6 +20,14 @@ const { ReconErrorClassifier, ReconRetryStrategy, ReconCircuitBreaker } = requir
 const { ReconDecryptor } = require('./ReconDecryptor');
 
 /**
+ * 生成 TraceID
+ * @returns {string} 唯一追踪ID
+ */
+function generateTraceId() {
+  return `trace-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+}
+
+/**
  * 导航专家类
  * @class ReconNavigator
  */
@@ -30,6 +38,10 @@ class ReconNavigator {
     this.headless = options.headless !== false;
     this.scrollAttempts = options.scrollAttempts || 10;
     this.scrollDelayMs = options.scrollDelayMs || 2000;
+
+    // V11.0: TraceID 机制 - 每笔收割请求唯一编号
+    this.traceId = options.traceId || generateTraceId();
+    this.sessionStartTime = Date.now();
 
     this.retryStrategy = new ReconRetryStrategy({
       baseDelay: 1000, maxDelay: 30000, maxRetries: 3, jitterFactor: 0.1
@@ -45,7 +57,46 @@ class ReconNavigator {
     this.isClosed = false;
     this.interceptedData = [];
     this.apiEndpoints = new Set();
-    this.decryptor = new ReconDecryptor({ logger: this.logger });
+    this.decryptor = new ReconDecryptor({ logger: this.logger, traceId: this.traceId });
+
+    // 请求统计
+    this.stats = {
+      requestsTotal: 0,
+      requestsSuccess: 0,
+      requestsFailed: 0,
+      decryptedSuccess: 0,
+      decryptedFailed: 0
+    };
+
+    this.logger.info('[ReconNavigator] 实例创建', { traceId: this.traceId, headless: this.headless });
+  }
+
+  /**
+   * 获取当前 TraceID
+   * @returns {string} TraceID
+   */
+  getTraceId() {
+    return this.traceId;
+  }
+
+  /**
+   * 获取会话耗时
+   * @returns {number} 毫秒
+   */
+  getSessionDuration() {
+    return Date.now() - this.sessionStartTime;
+  }
+
+  /**
+   * 获取统计信息
+   * @returns {Object} 统计对象
+   */
+  getStats() {
+    return {
+      ...this.stats,
+      traceId: this.traceId,
+      sessionDurationMs: this.getSessionDuration()
+    };
   }
 
   /**
@@ -66,7 +117,7 @@ class ReconNavigator {
         launchOptions.proxy = { server: `http://${this.proxy.host}:${this.proxy.port}` };
       }
 
-      this.logger.info('navigator_launch_v11', { headless: this.headless });
+      this.logger.info('[ReconNavigator] 启动浏览器', { traceId: this.traceId, headless: this.headless });
 
       try {
         this.browser = await chromium.launch(launchOptions);
@@ -98,23 +149,59 @@ class ReconNavigator {
   async _enableNetworkInterception() {
     if (!this.page) return;
 
-    this.logger.info('network_interception_enabled');
+    this.logger.info('[ReconNavigator] 网络拦截已启用', { traceId: this.traceId });
 
     this.page.on('response', async (response) => {
       try {
         const url = response.url();
         if (!this._isPotentialMatchApi(url)) return;
 
+        this.stats.requestsTotal++;
         this.apiEndpoints.add(url);
-        const body = await response.text();
-        const data = await this._parseApiResponse(body, url);
+
+        let body;
+        try {
+          body = await response.text();
+        } catch (bodyErr) {
+          this.logger.warn('[ReconNavigator] 读取响应体失败', { 
+            traceId: this.traceId, 
+            url: url.substring(0, 60),
+            error: bodyErr.message 
+          });
+          this.stats.requestsFailed++;
+          return;
+        }
+
+        let data;
+        try {
+          data = await this._parseApiResponse(body, url);
+        } catch (parseErr) {
+          this.logger.warn('[ReconNavigator] 解析响应失败', { 
+            traceId: this.traceId,
+            url: url.substring(0, 60),
+            error: parseErr.message
+          });
+          this.stats.requestsFailed++;
+          return;
+        }
         
         if (data && data.length > 0) {
           this.interceptedData.push(...data);
-          this.logger.info('data_intercepted', { url: url.substring(0, 80), count: data.length });
+          this.stats.requestsSuccess++;
+          this.logger.info('[ReconNavigator] 数据拦截成功', { 
+            traceId: this.traceId,
+            url: url.substring(0, 60), 
+            count: data.length 
+          });
         }
       } catch (e) {
-        // 忽略解析错误
+        // V11.0: 全局异常捕获 - 确保单场比赛失败不影响整体任务
+        this.logger.error('[ReconNavigator] 响应处理异常', { 
+          traceId: this.traceId,
+          error: e.message,
+          stack: e.stack?.substring(0, 200)
+        });
+        this.stats.requestsFailed++;
       }
     });
   }
@@ -135,30 +222,63 @@ class ReconNavigator {
   /**
    * 解析 API 响应 (V11.0 简化版 - 优先直接解析)
    * @private
+   * @param {string} body - 响应体
+   * @param {string} url - 请求URL
+   * @returns {Promise<Array>} 解析后的比赛数据
    */
   async _parseApiResponse(body, url = '') {
-    if (!body || typeof body !== 'string') return [];
+    if (!body || typeof body !== 'string') {
+      this.logger.debug('[ReconNavigator] 响应体为空或非字符串', { traceId: this.traceId });
+      return [];
+    }
+
     const trimmed = body.trim();
-    if (!trimmed) return [];
+    if (!trimmed) {
+      this.logger.debug('[ReconNavigator] 响应体为空', { traceId: this.traceId });
+      return [];
+    }
 
     // 标准 JSON 解析 (优先尝试)
     try {
       const json = JSON.parse(trimmed);
-      return this._extractMatchesFromJson(json);
-    } catch {
-      // 不是标准 JSON，尝试解密
+      const matches = this._extractMatchesFromJson(json);
+      this.logger.debug('[ReconNavigator] JSON直接解析成功', { 
+        traceId: this.traceId,
+        matchCount: matches.length 
+      });
+      return matches;
+    } catch (jsonErr) {
+      this.logger.debug('[ReconNavigator] 标准JSON解析失败，尝试解密', { 
+        traceId: this.traceId,
+        error: jsonErr.message 
+      });
     }
 
     // 如果是加密响应，尝试解密
     if (url.includes('/ajax-')) {
       try {
+        this.logger.debug('[ReconNavigator] 检测到加密响应，尝试解密', { traceId: this.traceId });
+
         if (!this.decryptor.getAlgorithmVersion()) {
           await this.decryptor.extractDecryptor(this.page);
         }
+
         const decrypted = await this.decryptor.decrypt(trimmed);
-        return this._extractMatchesFromJson(decrypted);
-      } catch (e) {
-        this.logger.debug('decryption_skipped', { url: url.substring(0, 50), reason: 'not_encrypted_or_failed' });
+        const matches = this._extractMatchesFromJson(decrypted);
+        this.stats.decryptedSuccess++;
+        this.logger.info('[ReconNavigator] 解密成功', { 
+          traceId: this.traceId,
+          matchCount: matches.length 
+        });
+        return matches;
+      } catch (decryptErr) {
+        this.stats.decryptedFailed++;
+        this.logger.warn('[ReconNavigator] 解密失败，返回空数组', { 
+          traceId: this.traceId,
+          url: url.substring(0, 60),
+          error: decryptErr.message
+        });
+        // V11.0: 单场比赛解密失败不影响整体任务
         return [];
       }
     }
@@ -169,6 +289,8 @@ class ReconNavigator {
   /**
    * 从 JSON 中提取比赛数据
    * @private
+   * @param {Object} json - JSON对象
+   * @returns {Array} 比赛数据数组
    */
   _extractMatchesFromJson(json) {
     const matches = [];
