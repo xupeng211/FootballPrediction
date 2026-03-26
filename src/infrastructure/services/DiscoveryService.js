@@ -19,7 +19,6 @@
 
 const { Pool } = require('pg');
 const path = require('path');
-const fs = require('fs');
 const pLimit = require('p-limit');
 
 // V6.7.6-FINAL: 引入全模块化组件
@@ -31,6 +30,7 @@ const { FotMobExtractor } = require('./FotMobExtractor');
 const { FixtureRepository } = require('./FixtureRepository');
 const { HttpClient } = require('./HttpClient');
 const { UIHelper } = require('./UIHelper');
+const { L1ConfigManager } = require('./L1ConfigManager');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -40,6 +40,21 @@ require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
  */
 class DiscoveryService {
   constructor(config = {}) {
+    const {
+      dbPool,
+      configManager,
+      parser,
+      browserProvider,
+      networkInterceptor,
+      seasonStrategyFactory,
+      seasonDiscovery,
+      extractor,
+      fixtureRepository,
+      httpClient,
+      uiHelper,
+      ...runtimeConfig
+    } = config;
+
     this.config = {
       concurrency: 5,
       delayMs: 2000,
@@ -48,7 +63,7 @@ class DiscoveryService {
       lookaheadDays: 7,
       silent: process.env.SILENT_MODE !== 'false',
       verbose: false,
-      ...config
+      ...runtimeConfig
     };
 
     this.logger = {
@@ -59,7 +74,7 @@ class DiscoveryService {
       progress: (...args) => console.log(...args)
     };
 
-    this.dbPool = new Pool({
+    this.dbPool = dbPool || new Pool({
       host: process.env.DB_HOST || 'localhost',
       port: parseInt(process.env.DB_PORT || '5432'),
       database: process.env.DB_NAME || 'football_db',
@@ -73,33 +88,34 @@ class DiscoveryService {
 
     this.limiter = pLimit(this.config.concurrency);
     this.stats = { total: 0, inserted: 0, updated: 0, failed: 0, startTime: null };
-    this.leagueConfig = this._loadLeagueConfig();
+    this.configManager = configManager || new L1ConfigManager({ logger: this.logger });
+    this.leagueConfig = this.configManager.getRuntimeConfig();
     
     // V6.7.2: 初始化解析器
-    this.parser = new DiscoveryParser(this.logger, this.leagueConfig);
+    this.parser = parser || new DiscoveryParser(this.logger, this.leagueConfig);
     
     // V6.7.4-REFACTORED: 初始化职责分离的模块
-    this.browserProvider = new BrowserProvider({
+    this.browserProvider = browserProvider || new BrowserProvider({
       logger: this.logger,
       headless: true
     });
     
-    this.networkInterceptor = new NetworkInterceptor({
+    this.networkInterceptor = networkInterceptor || new NetworkInterceptor({
       logger: this.logger
       // V6.7.5-EXTRACTED: 回调逻辑已移至 FotMobExtractor
     });
     
-    this.seasonStrategyFactory = new SeasonStrategyFactory({
-      singleYearLeagues: [120, 223, 8974, 230, 268, 121, 130]
+    this.seasonStrategyFactory = seasonStrategyFactory || new SeasonStrategyFactory({
+      singleYearLeagues: this.configManager.getSingleYearLeagueIds()
     });
     
-    this.seasonDiscovery = new SeasonDiscovery({
+    this.seasonDiscovery = seasonDiscovery || new SeasonDiscovery({
       logger: this.logger,
       apiRequest: (url) => this.httpClient.request(url)
     });
     
     // V6.7.5-EXTRACTED: 初始化数据提取器
-    this.extractor = new FotMobExtractor({
+    this.extractor = extractor || new FotMobExtractor({
       logger: this.logger,
       browserProvider: this.browserProvider,
       networkInterceptor: this.networkInterceptor,
@@ -107,21 +123,21 @@ class DiscoveryService {
     });
     
     // V6.7.5-EXTRACTED: 初始化数据仓储
-    this.fixtureRepository = new FixtureRepository({
+    this.fixtureRepository = fixtureRepository || new FixtureRepository({
       dbPool: this.dbPool,
       logger: this.logger,
       batchSize: this.config.batchSize
     });
     
     // V6.7.6-FINAL: 初始化 HTTP 客户端
-    this.httpClient = new HttpClient({
+    this.httpClient = httpClient || new HttpClient({
       logger: this.logger,
       browserProvider: this.browserProvider,
       useStealthMode: !process.env.DEBUG_RAW_HTTP
     });
     
     // V6.7.6-FINAL: 初始化 UI 辅助
-    this.uiHelper = new UIHelper({ logger: this.logger });
+    this.uiHelper = uiHelper || new UIHelper({ logger: this.logger });
   }
 
   /**
@@ -172,34 +188,6 @@ class DiscoveryService {
     }
 
   /**
-   * 加载联赛配置
-   * @private
-   */
-  _loadLeagueConfig() {
-    const configPath = path.resolve(__dirname, '../../../config/leagues.json');
-    try {
-      if (!fs.existsSync(configPath)) throw new Error('leagues.json not found');
-      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-      return {
-        active_leagues: config.active_leagues.filter(l => l.enabled !== false),
-        active_seasons: config.active_seasons || ['2024/2025']
-      };
-    } catch (e) {
-      this.logger.warn(`[HOUND] 配置加载失败: ${e.message}，使用默认配置`);
-      return {
-        active_leagues: [
-          { id: 47, name: 'Premier League', country: 'England', tier: 'P0' },
-          { id: 87, name: 'La Liga', country: 'Spain', tier: 'P0' },
-          { id: 54, name: 'Bundesliga', country: 'Germany', tier: 'P0' },
-          { id: 55, name: 'Serie A', country: 'Italy', tier: 'P0' },
-          { id: 53, name: 'Ligue 1', country: 'France', tier: 'P0' }
-        ],
-        active_seasons: ['2024/2025']
-      };
-    }
-  }
-
-  /**
    * 主入口: 执行发现扫描
    */
   async discover(options = {}) {
@@ -233,19 +221,21 @@ class DiscoveryService {
    */
   _buildTargets(leagueId, season, allLeagues) {
     if (leagueId) {
-      const league = this.leagueConfig.active_leagues.find(l => l.id === leagueId);
+      const league = this.configManager.getLeagueById(leagueId);
       if (!league) throw new Error(`联赛 ID ${leagueId} 未找到`);
-      const seasons = season ? [season] : this.leagueConfig.active_seasons;
+      const seasons = season ? [season] : [this.configManager.getDefaultSeason(leagueId)];
       return seasons.map(s => ({ ...league, season: s }));
     }
 
-    const p0Leagues = this.leagueConfig.active_leagues.filter(l => l.tier === 'P0');
-    const targetSeasons = season ? [season] : [this.leagueConfig.active_seasons[0]];
+    const targetLeagues = allLeagues
+      ? this.configManager.getActiveLeagues()
+      : this.configManager.getActiveLeagues({ tier: 'P0' });
+    const targetSeasons = season ? [season] : [this.configManager.getDefaultSeason()];
     
     if (allLeagues) {
-      return p0Leagues.flatMap(l => targetSeasons.map(s => ({ ...l, season: s })));
+      return targetLeagues.flatMap(l => targetSeasons.map(s => ({ ...l, season: s })));
     }
-    return p0Leagues.map(l => ({ ...l, season: targetSeasons[0] }));
+    return targetLeagues.map(l => ({ ...l, season: targetSeasons[0] }));
   }
 
   /**
@@ -329,9 +319,6 @@ class DiscoveryService {
    */
   async _discoverSeasonId(leagueId, targetYear) {
     this.logger.info(`[HOUND-DEBUG] 🔍 启动赛季指纹探测: ${leagueId} / ${targetYear}`);
-    // V6.7.6-FINAL: 更新 seasonDiscovery 使用 httpClient
-    const discoverUrl = `https://www.fotmob.com/api/data/leagues?id=${leagueId}`;
-    const response = await this.httpClient.request(discoverUrl);
     return await this.seasonDiscovery.discover(leagueId, targetYear);
   }
 
@@ -357,7 +344,7 @@ class DiscoveryService {
     }
     
     // 🔥 V6.7.10: 使用新的 /api/data/leagues 路径 (拦截器确认的真实频率)
-    const apiUrl = `https://www.fotmob.com/api/data/leagues?id=${leagueId}&season=${encodeURIComponent(normalizedSeason)}`;
+    const apiUrl = this.configManager.buildLeagueApiUrl(leagueId, normalizedSeason);
     
     try {
       this.logger.info(`[HOUND-API] 🎯 优先请求全量 API: ${apiUrl}`);

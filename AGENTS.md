@@ -166,7 +166,8 @@ docker-compose -f docker-compose.dev.yml exec -T dev python <script>
 
 | 模块 | 关键文件 |
 |------|----------|
-| L1 种子 | `src/infrastructure/FixtureSeeder.js` |
+| L1 种子 | `src/infrastructure/services/DiscoveryService.js` |
+| L1 配置 | `src/infrastructure/services/L1ConfigManager.js` |
 | L1 发现 | `scripts/ops/titan_discovery.js` |
 | L2 收割 | `src/infrastructure/harvesters/ProductionHarvester.js` |
 | Swarm | `src/infrastructure/harvesters/SwarmHarvester.js` |
