@@ -12,6 +12,32 @@
 
 'use strict';
 
+const path = require('path');
+const fs = require('fs');
+
+// V6.7: 集中式配置加载 (延迟加载以避免循环依赖)
+let teamMappings = null;
+
+/**
+ * 加载队名映射配置
+ * @private
+ */
+function loadTeamMappings() {
+    if (teamMappings) return teamMappings;
+    
+    try {
+        const configPath = path.join(process.cwd(), 'config/recon_config.json');
+        if (fs.existsSync(configPath)) {
+            const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+            teamMappings = config.team_mappings || {};
+        }
+    } catch (e) {
+        console.error('[Normalizer] 警告: 无法加载 team_mappings 配置，回退到基础标准化', e.message);
+        teamMappings = {};
+    }
+    return teamMappings;
+}
+
 /**
  * 标准化工具类
  */
@@ -23,15 +49,6 @@ class Normalizer {
      * @param {string} season - 原始赛季字符串
      * @returns {string} 标准化赛季 (如 '2023/2024')
      * @throws {Error} 当格式无法识别时抛出
-     *
-     * @example
-     * Normalizer.normalizeSeason('2324');        // '2023/2024'
-     * Normalizer.normalizeSeason('20232024');    // '2023/2024'
-     * Normalizer.normalizeSeason('2023-2024');   // '2023/2024'
-     * Normalizer.normalizeSeason('2023/2024');   // '2023/2024' (已是标准格式)
-     * Normalizer.normalizeSeason('2023_2024');   // '2023/2024'
-     * Normalizer.normalizeSeason('2023 2024');   // '2023/2024'
-     * Normalizer.normalizeSeason('9900');        // '2099/2100'
      */
     static normalizeSeason(season) {
         if (!season || typeof season !== 'string') {
@@ -121,8 +138,9 @@ class Normalizer {
     }
 
     /**
-     * 队名标准化
+     * 队名标准化 (V6.7 Config-Driven)
      * 处理常见变体，转换为数据库标准格式
+     * 不再硬编码队名映射，而是动态从 recon_config.json 加载
      *
      * @param {string} teamName - 原始队名
      * @returns {string} 标准化队名
@@ -139,63 +157,12 @@ class Normalizer {
             .replace(/\s+/g, ' ')
             .trim();
 
-        // 英超队名映射表
-        const TEAM_NAME_MAPPINGS = {
-            // Manchester teams
-            'man united': 'Manchester United',
-            'man utd': 'Manchester United',
-            'manchester united': 'Manchester United',
-            'man city': 'Manchester City',
-            'manchester city': 'Manchester City',
-
-            // Newcastle
-            'newcastle utd': 'Newcastle United',
-            'newcastle united': 'Newcastle United',
-            'newcastle': 'Newcastle United',
-
-            // Wolves
-            'wolverhampton': 'Wolverhampton Wanderers',
-            'wolves': 'Wolverhampton Wanderers',
-
-            // Tottenham
-            'tottenham': 'Tottenham Hotspur',
-            'spurs': 'Tottenham Hotspur',
-
-            // West Ham
-            'west ham': 'West Ham United',
-            'west ham utd': 'West Ham United',
-
-            // Nottingham Forest
-            'nottingham': 'Nottingham Forest',
-            'nottingham forest': 'Nottingham Forest',
-            'n forest': 'Nottingham Forest',
-
-            // Brighton
-            'brighton': 'Brighton & Hove Albion',
-            'brighton hove albion': 'Brighton & Hove Albion',
-
-            // Bournemouth
-            'bournemouth': 'AFC Bournemouth',
-            'afc bournemouth': 'AFC Bournemouth',
-
-            // 标准名称
-            'arsenal': 'Arsenal',
-            'aston villa': 'Aston Villa',
-            'brentford': 'Brentford',
-            'burnley': 'Burnley',
-            'chelsea': 'Chelsea',
-            'crystal palace': 'Crystal Palace',
-            'everton': 'Everton',
-            'fulham': 'Fulham',
-            'liverpool': 'Liverpool',
-            'luton': 'Luton',
-            'sheffield utd': 'Sheffield United',
-            'sheffield united': 'Sheffield United'
-        };
+        // V6.7: 从中央配置加载映射库
+        const mappings = loadTeamMappings();
 
         // 查找映射表
-        if (TEAM_NAME_MAPPINGS[normalized]) {
-            return TEAM_NAME_MAPPINGS[normalized];
+        if (mappings[normalized]) {
+            return mappings[normalized];
         }
 
         // 无映射时，首字母大写

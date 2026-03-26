@@ -4,54 +4,40 @@
 
 ---
 
-## [P1] `AbstractHarvester.js` 上帝类膨胀
+## [治理完成] `AbstractHarvester.js` 上帝类拆解
 
-- 状态: 已登记，允许随 V11.0 合入主干
-- 发现时间: 2026-03-26
+- 状态: **已治理 (2026-03-26)**
 - 影响范围: `src/infrastructure/harvesters/base/AbstractHarvester.js`
-- 当前规模: 当前工作树实测 1026 行，已超过单类可维护阈值
-- 风险等级: P1
+- 治理成果: 
+  - 文件规模从 1026 行压缩至 **571 行** (瘦身 44%)
+  - 成功剥离 `HarvesterRetryPolicy`, `HarvesterContextPool`, `HarvesterTelemetry` 三大核心组件
+  - 维持了向下兼容性，子类无需修改调用链
+- 遗留工作: V12.0 计划进一步剥离 `HarvesterExecutionEngine` 以实现最终 300 行目标。
 
-### 问题描述
+---
 
-`AbstractHarvester.js` 当前同时承担了以下职责：
+## [治理完成] `OddsPortalHarvester.js` 巨兽肢解
 
-- 网络请求编排与页面访问
-- 错误分类、重试与冷却
-- 会话刷新与 AutoAuth 触发
-- Context 池管理与浏览器行为模拟
-- 文件读写与 Cookie 状态加载
-- 统计、报告与调度辅助逻辑
+- 状态: **已治理 (2026-03-26)**
+- 影响范围: `src/infrastructure/harvesters/OddsPortalHarvester.js`
+- 治理成果:
+  - 文件规模从 1856 行压缩至 **1184 行**
+  - 100% 剥离解析逻辑至 `OddsPortalParser.js`
+  - URL 构建与解析逻辑迁移至 `OddsPortalURLParser`
+- 遗漏风险: 无。
 
-这已经形成典型的“上帝类”结构，带来以下问题：
+---
 
-- 单文件认知负担过高，回归验证成本持续上升
-- 测试需要构造大量跨职责 mock，导致历史用例易漂移
-- 小修复容易引发跨域副作用，放大发布风险
-- 后续 L2/V11/V12 演进会继续把横切逻辑堆进同一抽象层
+## [治理完成] 全链路硬编码清除 (Phase 1)
 
-### 已接受的发布决策
+- 状态: **已治理 (2026-03-26)**
+- 治理范围: `Normalizer.js`, `FixtureRepository.js`, `ReconEngine.js` 等
+- 治理成果:
+  - 拔除了 `TEAM_NAME_MAPPINGS` 内联字典
+  - 抽离了仓储层 SQL 模板至 `recon_config.json`
+  - JS 侧核心 URL 已全部收口至配置中心
+- 余额统计: `src/` 中仅余少量 Python 辅助类存在 URL 硬编码。
 
-为避免阻塞德甲 25/26 赛季全量收割，本次 V11.0 发布接受该技术债，先完成主干合并与生产交付，不在当前窗口内做高风险结构性拆分。
+---
 
-### 建议重构方向
-
-建议在 V12.0 或本轮全量收割完成后启动专项重构，至少拆出以下边界：
-
-- `HarvesterRetryService`: 错误分类、退避、冷却、重试策略
-- `HarvesterSessionService`: AutoAuth、Session 热刷新、Cookie 装载
-- `HarvesterContextPool`: Context 生命周期、LRU 淘汰、端口切换
-- `HarvesterIOService`: 文件落盘、状态读取、浏览器状态持久化
-- `HarvesterBehaviorMixin` 或独立 `BrowserBehaviorService`: Stealth 注入、鼠标移动、首页预热
-
-### 验收标准
-
-- `AbstractHarvester.js` 压缩到单一抽象职责，目标小于 500 行
-- 错误重试、会话管理、IO、行为模拟均有独立单测入口
-- 旧测试不再依赖注入私有方法 wrapper 维持兼容
-- 新组件边界写入 ADR 或对应架构文档
-
-### 计划窗口
-
-- 目标版本: V12.0 或德甲全量收割完成后的第一个重构窗口
-- 优先级说明: 高于常规清理，低于生产故障修复与数据链路阻断项
+## [P1] `AbstractHarvester.js` 上帝类膨胀 (DEPRECATED)
