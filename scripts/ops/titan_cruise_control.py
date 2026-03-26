@@ -23,7 +23,7 @@ V4.46.8 工业化巡航系统 - 无人值守运行
 
 Cron 示例:
     # 每 4 小时运行一次
-    0 */4 * * * /usr/bin/python3 /app/scripts/ops/titan_cruise_control.py >> /app/logs/cruise.log 2>&1
+    0 */4 * * * cd /path/to/FootballPrediction && python3 scripts/ops/titan_cruise_control.py >> logs/cruise.log 2>&1
 
 @module scripts.ops.titan_cruise_control
 @version V4.46.8-CRUISE-CONTROL

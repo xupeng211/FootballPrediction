@@ -3,7 +3,7 @@
  * TITAN-WAREHOUSE-IMPORT - 磁盘 JSON 全量入库
  * =============================================
  *
- * 将 /data/matches/*.json 批量导入 raw_match_data 表
+ * 将 data/matches/*.json 批量导入 raw_match_data 表
  *
  * 用法:
  *   node scripts/ops/bulk_import_matches.js
@@ -17,7 +17,9 @@ const fs = require('fs');
 const path = require('path');
 const { getPool } = require('../../config/database');
 
-const DATA_DIR = '/app/data/matches';
+const DATA_DIR = process.env.DATA_MATCHES_PATH
+    ? path.resolve(process.cwd(), process.env.DATA_MATCHES_PATH)
+    : path.join(process.cwd(), 'data', 'matches');
 const BATCH_SIZE = 500;
 
 /**
