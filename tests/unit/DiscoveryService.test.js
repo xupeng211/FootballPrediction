@@ -59,6 +59,158 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
     });
   });
 
+  describe('配置驱动发现链路', () => {
+    it('当激活英超(47)时，应从配置构造正确 API URL 并通过 Repository 入库', async () => {
+      const requestedUrls = [];
+      const persistedBatches = [];
+
+      const configManager = {
+        getRuntimeConfig: () => ({
+          active_leagues: [
+            {
+              id: 47,
+              code: 'EPL',
+              name: 'Premier League',
+              country: 'england',
+              slug: 'premier-league',
+              tier: 'P0',
+              enabled: true,
+              seasonType: 'dual_year',
+              defaultSeason: '2024/2025',
+              supportedSeasons: ['2024/2025']
+            }
+          ],
+          active_seasons: ['2024/2025'],
+          default_season: '2024/2025',
+          single_year_league_ids: []
+        }),
+        getLeagueById: (leagueId) => leagueId === 47 ? {
+          id: 47,
+          code: 'EPL',
+          name: 'Premier League',
+          country: 'england',
+          slug: 'premier-league',
+          tier: 'P0',
+          enabled: true,
+          seasonType: 'dual_year',
+          defaultSeason: '2024/2025',
+          supportedSeasons: ['2024/2025']
+        } : null,
+        getActiveLeagues: () => [{
+          id: 47,
+          code: 'EPL',
+          name: 'Premier League',
+          country: 'england',
+          slug: 'premier-league',
+          tier: 'P0',
+          enabled: true,
+          seasonType: 'dual_year',
+          defaultSeason: '2024/2025',
+          supportedSeasons: ['2024/2025']
+        }],
+        getActiveSeasons: () => ['2024/2025'],
+        getDefaultSeason: () => '2024/2025',
+        getSingleYearLeagueIds: () => [],
+        buildLeagueApiUrl: (leagueId, season) =>
+          `https://www.fotmob.com/api/data/leagues?id=${leagueId}&season=${season}`
+      };
+
+      const parserFixtures = [
+        {
+          match_id: '47_20242025_12345',
+          external_id: '12345',
+          league_name: 'Premier League',
+          season: '2024/2025',
+          home_team: 'Man United',
+          away_team: 'Liverpool',
+          match_date: new Date('2024-08-16T19:00:00Z'),
+          status: 'scheduled',
+          is_finished: false,
+          data_source: 'FotMob'
+        }
+      ];
+
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        concurrency: 1,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager,
+        parser: {
+          parse: (response, leagueId, season) => {
+            assert.strictEqual(leagueId, 47);
+            assert.strictEqual(season, '2024/2025');
+            assert.deepStrictEqual(response, { fixtures: { allMatches: [{ id: 12345 }] } });
+            return parserFixtures;
+          }
+        },
+        fixtureRepository: {
+          persist: async (fixtures) => {
+            persistedBatches.push(fixtures);
+            return { total: fixtures.length, inserted: fixtures.length, updated: 0, failed: 0 };
+          }
+        },
+        httpClient: {
+          request: async (url) => {
+            requestedUrls.push(url);
+            if (url === 'https://www.fotmob.com/api/data/leagues?id=47') {
+              return { allAvailableSeasons: ['20242025'] };
+            }
+            if (url === 'https://www.fotmob.com/api/data/leagues?id=47&season=20242025') {
+              return { fixtures: { allMatches: [{ id: 12345 }] } };
+            }
+            throw new Error(`unexpected url ${url}`);
+          }
+        },
+        seasonDiscovery: {
+          discover: async (leagueId, season) => {
+            assert.strictEqual(leagueId, 47);
+            assert.strictEqual(season, '20242025');
+            return '20242025';
+          }
+        },
+        seasonStrategyFactory: {
+          format: () => '20242025',
+          isSingleYearLeague: () => false
+        },
+        browserProvider: {
+          isInitialized: () => false,
+          close: async () => {}
+        },
+        networkInterceptor: {
+          getCapturedApis: () => new Map()
+        },
+        extractor: {
+          extractFromWebpage: async () => {
+            throw new Error('should not fallback');
+          },
+          searchViaDOM: async () => ({})
+        },
+        uiHelper: {
+          printBanner: () => {},
+          printTargets: () => {},
+          printScanStart: () => {},
+          printHistoricalMode: () => {},
+          printNoFixtures: () => {},
+          printParsedFixtures: () => {},
+          printProgress: () => {},
+          printScanError: () => {},
+          generateReport: (stats) => stats
+        }
+      });
+
+      try {
+        const result = await testService.discover({ leagueId: 47 });
+        assert.strictEqual(requestedUrls[0], 'https://www.fotmob.com/api/data/leagues?id=47&season=20242025');
+        assert.deepStrictEqual(persistedBatches, [parserFixtures]);
+        assert.strictEqual(result.inserted, 1);
+        assert.strictEqual(result.failed, 0);
+      } finally {
+        await testService.close();
+      }
+    });
+  });
+
   describe('日期范围计算 (通过 Parser 内部)', () => {
     it('Parser 应在非历史模式下过滤日期', () => {
       const pastDate = new Date();

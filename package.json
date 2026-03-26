@@ -31,7 +31,7 @@
     "install-browsers": "playwright install chromium",
     "test": "node scripts/test/run_test_suite.js default",
     "test:unit": "node scripts/test/run_test_suite.js unit",
-    "test:l1": "node --test tests/unit/FixtureSeeder.test.js",
+    "test:l1": "node --test tests/unit/L1ConfigManager.test.js tests/unit/DiscoveryService.test.js tests/unit/FixtureSeeder.test.js tests/unit/FixtureSeederV5.test.js",
     "test:integration": "node scripts/test/run_test_suite.js integration",
     "test:coverage": "node scripts/test/run_test_suite.js coverage",
     "lint": "eslint . --ext .js --cache --cache-location .eslintcache",

@@ -27,9 +27,8 @@
 'use strict';
 
 const { DiscoveryService } = require('../../src/infrastructure/services/DiscoveryService');
+const { L1ConfigManager } = require('../../src/infrastructure/services/L1ConfigManager');
 const { UIHelper } = require('../../src/infrastructure/services/UIHelper');
-const fs = require('fs');
-const path = require('path');
 
 /**
  * 解析命令行参数
@@ -104,38 +103,25 @@ function showHelp() {
 }
 
 /**
- * 加载联赛配置
- * @returns {Object} 配置对象
- */
-function loadLeagueConfig() {
-  const configPath = path.resolve(__dirname, '../../config/leagues.json');
-  try {
-    return JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  } catch (e) {
-    console.error(`\n❌ 无法读取联赛配置: ${e.message}`);
-    process.exit(1);
-  }
-}
-
-/**
  * 主函数
  */
 async function main() {
   const options = parseArgs();
+  const configManager = new L1ConfigManager();
 
   // 设置环境变量
   if (options.silent) process.env.SILENT_MODE = 'true';
 
   // --list 模式: 显示联赛列表
   if (options.list) {
-    const config = loadLeagueConfig();
     const uiHelper = new UIHelper({ silent: false });
-    uiHelper.printLeagueList(config.active_leagues || []);
+    uiHelper.printLeagueList(configManager.getActiveLeagues());
     process.exit(0);
   }
 
   // 创建服务实例
   const service = new DiscoveryService({
+    configManager,
     concurrency: options.concurrency,
     lookbackDays: options.lookback,
     lookaheadDays: options.lookahead,
@@ -164,21 +150,20 @@ async function main() {
   }
 
   // 确定扫描目标
-  const config = loadLeagueConfig();
   let targetLeagues = [];
 
   if (options.league) {
-    const league = config.active_leagues.find(l => l.id === options.league);
+    const league = configManager.getLeagueById(options.league);
     if (!league) { console.error(`\n❌ 联赛 ID ${options.league} 未找到`); process.exit(1); }
     targetLeagues = [league];
   } else if (options.tier) {
-    targetLeagues = config.active_leagues.filter(l => l.tier === options.tier);
+    targetLeagues = configManager.getActiveLeagues({ tier: options.tier });
     console.log(`\n🎯 扫描 ${options.tier} 级别: ${targetLeagues.length} 个联赛`);
   } else if (options.allTiers) {
-    targetLeagues = config.active_leagues;
+    targetLeagues = configManager.getActiveLeagues();
     console.log(`\n🌍 扫描所有级别: ${targetLeagues.length} 个联赛`);
   } else if (options.all) {
-    targetLeagues = config.active_leagues.filter(l => l.tier === 'P0');
+    targetLeagues = configManager.getActiveLeagues({ tier: 'P0' });
     console.log(`\n⭐ 扫描 P0 核心联赛: ${targetLeagues.length} 个联赛`);
   }
 
