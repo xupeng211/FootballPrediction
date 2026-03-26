@@ -10,6 +10,8 @@
 
 'use strict';
 
+const pLimit = require('p-limit');
+
 const { AbstractHarvester } = require('./base/AbstractHarvester');
 const { FotMobStrategy } = require('./strategies/FotMobStrategy');
 const { Persistence } = require('./components/Persistence');
@@ -28,6 +30,9 @@ class ProductionHarvester extends AbstractHarvester {
         });
 
         this.config.dataMatchesPath = resolvedDataPath;
+        this.config.bulkConcurrency = this._resolveBulkConcurrency(
+            config.bulkConcurrency || config.maxWorkers || 10
+        );
         this.sessionMatchCount = 0;
         this.sessionRotationThreshold = 20;
         this.strategy = new FotMobStrategy(this.config);
@@ -42,6 +47,7 @@ class ProductionHarvester extends AbstractHarvester {
     async init() {
         await super.init();
         this.db = this.pool;
+        await this.persistence.ensurePipelineStatusSchema(this.pool);
         return this;
     }
 
@@ -121,16 +127,28 @@ class ProductionHarvester extends AbstractHarvester {
         }
 
         try {
+            const statusColumn = await this.persistence.ensurePipelineStatusSchema(dbHandle);
+            const pendingPredicate = statusColumn === 'pipeline_status'
+                ? `COALESCE(m.pipeline_status, 'pending') = 'pending'`
+                : `COALESCE(m.status, 'pending') != 'harvested'`;
             const result = await dbHandle.query(
                 `
-                    SELECT match_id, external_id, home_team, away_team
-                    FROM matches
-                    ORDER BY match_date ASC NULLS LAST, created_at ASC NULLS LAST
+                    SELECT
+                        m.match_id,
+                        m.external_id,
+                        m.home_team,
+                        m.away_team,
+                        m.match_date
+                    FROM matches m
+                    LEFT JOIN raw_match_data r ON m.match_id = r.match_id
+                    WHERE r.match_id IS NULL
+                      AND ${pendingPredicate}
+                    ORDER BY m.match_id ASC, m.match_date ASC NULLS LAST, m.created_at ASC NULLS LAST
                     LIMIT $1
                 `,
                 [limit]
             );
-            return result.rows || [];
+            return (result.rows || []).sort((a, b) => a.match_id.localeCompare(b.match_id));
         } catch (error) {
             if (this.config.verboseLogging) {
                 console.warn(`[ProductionHarvester] getPendingMatches 失败: ${error.message}`);
@@ -147,6 +165,10 @@ class ProductionHarvester extends AbstractHarvester {
      * @returns {Promise<object>}
      */
     async run(payload = {}) {
+        if (!payload.match && !payload.matchId) {
+            return this.runBulk(payload);
+        }
+
         const fallbackMatchId = payload.matchId || payload.match?.match_id || '0_20232024_0';
         const fallbackExternalId = payload.match?.external_id || String(fallbackMatchId).split('_').pop();
 
@@ -158,6 +180,70 @@ class ProductionHarvester extends AbstractHarvester {
         };
 
         return this.harvestWithRetry(match, 0, this.config.maxRetries);
+    }
+
+    /**
+     * 批量收割入口
+     * @param {object} payload
+     * @param {number} [payload.limit]
+     * @param {number} [payload.concurrency]
+     * @returns {Promise<object>}
+     */
+    async runBulk(payload = {}) {
+        const limit = this._resolveBatchLimit(payload.limit || this.config.batchSize);
+        const concurrency = this._resolveBulkConcurrency(
+            payload.concurrency || this.config.bulkConcurrency || this.config.maxWorkers
+        );
+
+        const pendingMatches = await this.getPendingMatches(limit);
+        if (pendingMatches.length === 0) {
+            return {
+                mode: 'bulk',
+                total: 0,
+                success: 0,
+                failed: 0,
+                concurrency,
+                results: []
+            };
+        }
+
+        const limiter = pLimit(concurrency);
+        const results = await Promise.all(
+            pendingMatches.map((match, index) => limiter(async () => {
+                try {
+                    return await this.harvestWithRetry(match, index, this.config.maxRetries);
+                } catch (error) {
+                    return {
+                        success: false,
+                        match_id: match.match_id,
+                        error: error.message
+                    };
+                }
+            }))
+        );
+
+        const success = results.filter(result => result?.success).length;
+        const failed = results.length - success;
+
+        return {
+            mode: 'bulk',
+            total: results.length,
+            success,
+            failed,
+            concurrency,
+            results
+        };
+    }
+
+    _resolveBatchLimit(limit) {
+        const parsed = Number.parseInt(limit, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
+    }
+
+    _resolveBulkConcurrency(value) {
+        const parsed = Number.parseInt(value, 10);
+        const fallback = Number.isFinite(parsed) ? parsed : 10;
+        return Math.min(12, Math.max(8, fallback));
     }
 
 }
