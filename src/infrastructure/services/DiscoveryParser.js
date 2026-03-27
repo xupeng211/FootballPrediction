@@ -288,10 +288,11 @@ class DiscoveryParser {
   _transformMatches(rawMatches, leagueId, season, isHistorical, config) {
     const matches = [];
     const seenIds = new Set();
+    const fullSync = config.fullSync === true;
 
     // 计算日期范围 (仅用于增量模式)
     let past, future;
-    if (!isHistorical) {
+    if (!isHistorical && !fullSync) {
       const now = new Date();
       const lookbackDays = config.lookbackDays || 30;
       const lookaheadDays = config.lookaheadDays || 7;
@@ -322,7 +323,7 @@ class DiscoveryParser {
       if (!matchDate) continue;
 
       // 日期过滤 (仅当前赛季)
-      if (!isHistorical && (matchDate < past || matchDate > future)) {
+      if (!isHistorical && !fullSync && (matchDate < past || matchDate > future)) {
         continue;
       }
 

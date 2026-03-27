@@ -49,6 +49,23 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(url, 'https://www.fotmob.com/api/data/leagues?id=47&season=20242025');
   });
 
+  it('应为受保护联赛保留内部 ID，并映射到 providerId 请求 FotMob', () => {
+    const serieB = manager.getLeagueById(156);
+    const ligue2 = manager.getLeagueById(182);
+    const coupeDeFrance = manager.getLeagueById(181);
+
+    assert.ok(serieB);
+    assert.ok(ligue2);
+    assert.ok(coupeDeFrance);
+    assert.strictEqual(serieB.providerId, 86);
+    assert.strictEqual(ligue2.providerId, 110);
+    assert.strictEqual(coupeDeFrance.providerId, 134);
+    assert.strictEqual(
+      manager.buildLeagueApiUrl(156, '20252026'),
+      'https://www.fotmob.com/api/data/leagues?id=86&season=20252026'
+    );
+  });
+
   it('应能读取德甲赛季的 expected_matches', () => {
     assert.strictEqual(manager.getExpectedMatches(54, '2025/2026'), 306);
     assert.strictEqual(manager.getExpectedMatches(47, '2025/2026'), 380);
