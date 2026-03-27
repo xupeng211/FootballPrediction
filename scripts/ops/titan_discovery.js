@@ -10,11 +10,13 @@
  * 选项:
  *   --league=ID       指定联赛ID (如 47=EPL)
  *   --all             扫描所有 P0 联赛
+ *   --all-leagues     扫描所有已启用联赛
  *   --tier=TIER       扫描指定级别 (P0/P1/P2/P3/P4)
  *   --all-tiers       扫描所有级别
  *   --list            列出所有支持的联赛
  *   --search=关键词   搜索联赛实时坐标
  *   --season=YYYY/YYYY    指定赛季 (如 2024/2025)
+ *   --full-sync       绕过 recent 时间窗口，执行全赛季种子注入
  *   --concurrency=N   并发数 (默认: 5)
  *   --lookback=N      历史回看天数 (默认: 30)
  *   --lookahead=N     未来扫描天数 (默认: 7)
@@ -34,19 +36,21 @@ const { UIHelper } = require('../../src/infrastructure/services/UIHelper');
  * 解析命令行参数
  * @returns {Object} 解析后的选项
  */
-function parseArgs() {
-  const args = process.argv.slice(2);
+function parseArgs(argv = process.argv.slice(2)) {
+  const args = argv;
   const options = {
-    league: null, all: false, tier: null, allTiers: false, list: false,
+    league: null, all: false, allLeagues: false, tier: null, allTiers: false, list: false,
     search: null, season: null, concurrency: 5, lookback: 30, lookahead: 7,
-    dryRun: false, silent: false, verbose: false
+    dryRun: false, silent: false, verbose: false, fullSync: false
   };
 
   for (const arg of args) {
     if (arg === '--help' || arg === '-h') { showHelp(); process.exit(0); }
     else if (arg === '--all') options.all = true;
+    else if (arg === '--all-leagues') options.allLeagues = true;
     else if (arg === '--list') options.list = true;
     else if (arg === '--all-tiers') options.allTiers = true;
+    else if (arg === '--full-sync') options.fullSync = true;
     else if (arg === '--dry-run') options.dryRun = true;
     else if (arg === '--silent') options.silent = true;
     else if (arg === '--verbose' || arg === '-v') options.verbose = true;
@@ -60,7 +64,7 @@ function parseArgs() {
   }
 
   // 默认行为: 如果没有指定操作，扫描所有 P0
-  if (!options.league && !options.all && !options.list && !options.tier && !options.allTiers && !options.search) {
+  if (!options.league && !options.all && !options.allLeagues && !options.list && !options.tier && !options.allTiers && !options.search) {
     options.all = true;
   }
 
@@ -80,11 +84,13 @@ function showHelp() {
 选项:
   --league=ID       指定联赛ID (如 47=EPL, 87=La Liga)
   --all             扫描所有 P0 联赛 (默认)
+  --all-leagues     扫描所有已启用联赛
   --tier=TIER       扫描指定级别 (P0/P1/P2/P3/P4)
   --all-tiers       扫描所有级别
   --list            列出所有支持的联赛
   --search=关键词   搜索联赛实时坐标 (如 "J1", "中超")
   --season=YYYY/YYYY    指定赛季 (如 2024/2025)
+  --full-sync       绕过 recent 时间窗口，执行全赛季种子注入
   --concurrency=N   并发扫描数 (默认: 5)
   --lookback=N      历史回看天数 (默认: 30)
   --lookahead=N     未来扫描天数 (默认: 7)
@@ -98,6 +104,7 @@ function showHelp() {
   node scripts/ops/titan_discovery.js --search="J1"
   node scripts/ops/titan_discovery.js --league=47
   node scripts/ops/titan_discovery.js --all
+  node scripts/ops/titan_discovery.js --all-leagues --full-sync
   node scripts/ops/titan_discovery.js --tier=P1
 `);
 }
@@ -125,6 +132,7 @@ async function main() {
     concurrency: options.concurrency,
     lookbackDays: options.lookback,
     lookaheadDays: options.lookahead,
+    fullSync: options.fullSync,
     silent: options.silent,
     verbose: options.verbose
   });
@@ -156,6 +164,9 @@ async function main() {
     const league = configManager.getLeagueById(options.league);
     if (!league) { console.error(`\n❌ 联赛 ID ${options.league} 未找到`); process.exit(1); }
     targetLeagues = [league];
+  } else if (options.allLeagues) {
+    targetLeagues = configManager.getActiveLeagues();
+    console.log(`\n🌍 扫描所有已启用联赛: ${targetLeagues.length} 个联赛`);
   } else if (options.tier) {
     targetLeagues = configManager.getActiveLeagues({ tier: options.tier });
     console.log(`\n🎯 扫描 ${options.tier} 级别: ${targetLeagues.length} 个联赛`);
@@ -172,16 +183,40 @@ async function main() {
     const uiHelper = new UIHelper({ silent: options.silent });
     uiHelper.printBanner();
 
-    // V6.7.6-FINAL: 使用 DiscoveryService 的批量扫描能力
     const results = [];
-    for (const league of targetLeagues) {
-      console.log(`\n🔍 扫描: ${league.name} [${league.country}]`);
+    if (options.league) {
       const result = await service.discover({
-        leagueId: league.id,
+        leagueId: options.league,
         season: options.season,
-        allLeagues: false
+        allLeagues: false,
+        fullSync: options.fullSync
       });
       results.push(result);
+    } else if (options.allLeagues || options.allTiers) {
+      const result = await service.discover({
+        season: options.season,
+        allLeagues: true,
+        fullSync: options.fullSync
+      });
+      results.push(result);
+    } else if (options.all) {
+      const result = await service.discover({
+        season: options.season,
+        allLeagues: false,
+        fullSync: options.fullSync
+      });
+      results.push(result);
+    } else {
+      for (const league of targetLeagues) {
+        console.log(`\n🔍 扫描: ${league.name} [${league.country}]`);
+        const result = await service.discover({
+          leagueId: league.id,
+          season: options.season,
+          allLeagues: false,
+          fullSync: options.fullSync
+        });
+        results.push(result);
+      }
     }
 
     // 汇总统计
@@ -213,10 +248,16 @@ async function main() {
   }
 }
 
-// 运行主函数
-main().then(() => {
-  process.exit(0);
-}).catch((error) => {
-  console.error('\n❌ 程序执行失败:', error.message);
-  process.exit(1);
-});
+if (require.main === module) {
+  main().then(() => {
+    process.exit(0);
+  }).catch((error) => {
+    console.error('\n❌ 程序执行失败:', error.message);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  parseArgs,
+  main
+};

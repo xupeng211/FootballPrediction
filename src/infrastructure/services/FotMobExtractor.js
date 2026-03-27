@@ -40,8 +40,9 @@ class FotMobExtractor {
    * @param {string} season - 赛季
    * @returns {Promise<Object>} 提取的数据
    */
-  async extractFromWebpage(leagueId, season) {
+  async extractFromWebpage(leagueId, season, options = {}) {
     this.logger.info(`[HOUND-SOUL] 🔮 启动深耕犁模式 (强制滚动全量抽取)...`);
+    const expectedLeagueId = Number(options.expectedLeagueId || leagueId);
     
     // 🔥 V6.7.8: 访问 /fixtures/ 赛程专页
     const webpageUrl = `https://www.fotmob.com/leagues/${leagueId}/fixtures/${season}`;
@@ -161,7 +162,9 @@ class FotMobExtractor {
         if (capturedLeagueApi && this.makeStealthRequest) {
           this.logger.info(`[HOUND-INTERCEPT] 🎯 使用捕获的端点: ${capturedLeagueApi}`);
           try {
-            const interceptedData = await this.makeStealthRequest(capturedLeagueApi);
+            const interceptedData = await this.makeStealthRequest(capturedLeagueApi, {
+              expectedLeagueId
+            });
             if (interceptedData && this._countMatches(interceptedData) > matchCount) {
               const interceptedCount = this._countMatches(interceptedData);
               this.logger.info(`[HOUND-INTERCEPT] ✅ 拦截端点返回 ${interceptedCount} 场数据`);
@@ -268,7 +271,7 @@ class FotMobExtractor {
                 id: parseInt(matchId),
                 home: { name: teamNames[0].trim() },
                 away: { name: teamNames[1].trim() },
-                status: { utcTime: new Date().toISOString() }
+                status: { utcTime: null }
               });
             }
           });

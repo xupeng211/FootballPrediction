@@ -184,6 +184,12 @@ describe('Gate 2 - 时间窗口验证', () => {
             assert.strictEqual(result, true);
         });
 
+        it('fullSync 开启时应直接放行', () => {
+            const match = createMockMatch({ utcTime: '2023-01-01T00:00:00Z' });
+            const result = validateSeasonWindow(match, window, mockLog, {}, { fullSync: true });
+            assert.strictEqual(result, true);
+        });
+
         it('match 非对象时应返回false', () => {
             const result = validateSeasonWindow(null, window, mockLog, {});
             assert.strictEqual(result, false);
@@ -450,6 +456,18 @@ describe('三道铁门集成测试 (threeGatesFilter)', () => {
         ];
         threeGatesFilter(matches2, leagueInfo, season, stats2, mockLog);
         assert.strictEqual(stats2._debugLogCount, 1); // 重新计数
+    });
+
+    it('fullSync 模式下应绕过时间窗口拦截', () => {
+        const matches = [
+            createMockMatch({ id: 1, utcTime: '2023-01-01T00:00:00Z' }),
+            createMockMatch({ id: 2, utcTime: '2024-10-15T15:00:00Z' })
+        ];
+        const stats = {};
+        const result = threeGatesFilter(matches, leagueInfo, season, stats, mockLog, { fullSync: true });
+
+        assert.strictEqual(result.length, 2);
+        assert.strictEqual(stats.outsideWindow, 0);
     });
 });
 

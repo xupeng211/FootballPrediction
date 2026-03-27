@@ -61,10 +61,14 @@ class DiscoveryService {
       batchSize: 50,
       lookbackDays: 30,
       lookaheadDays: 7,
+      fullSync: false,
+      browserCooldownEveryLeagues: 5,
+      browserCooldownMs: 5000,
       silent: process.env.SILENT_MODE !== 'false',
       verbose: false,
       ...runtimeConfig
     };
+    this.useStealthMode = !process.env.DEBUG_RAW_HTTP;
 
     this.logger = {
       info: (...args) => !this.config.silent && console.log(...args),
@@ -87,6 +91,7 @@ class DiscoveryService {
     });
 
     this.limiter = pLimit(this.config.concurrency);
+    this.browserHealthPromise = null;
     this.stats = { total: 0, inserted: 0, updated: 0, failed: 0, startTime: null, criticalWarnings: [] };
     this.configManager = configManager || new L1ConfigManager({ logger: this.logger });
     this.leagueConfig = this.configManager.getRuntimeConfig();
@@ -111,7 +116,7 @@ class DiscoveryService {
     
     this.seasonDiscovery = seasonDiscovery || new SeasonDiscovery({
       logger: this.logger,
-      apiRequest: (url) => this.httpClient.request(url)
+      apiRequest: (url, requestOptions) => this.httpClient.request(url, requestOptions)
     });
     
     // V6.7.5-EXTRACTED: 初始化数据提取器
@@ -119,7 +124,7 @@ class DiscoveryService {
       logger: this.logger,
       browserProvider: this.browserProvider,
       networkInterceptor: this.networkInterceptor,
-      makeStealthRequest: (url) => this.httpClient.request(url)
+      makeStealthRequest: (url, requestOptions) => this.httpClient.request(url, requestOptions)
     });
     
     // V6.7.5-EXTRACTED: 初始化数据仓储
@@ -133,7 +138,8 @@ class DiscoveryService {
     this.httpClient = httpClient || new HttpClient({
       logger: this.logger,
       browserProvider: this.browserProvider,
-      useStealthMode: !process.env.DEBUG_RAW_HTTP
+      useStealthMode: this.useStealthMode,
+      ensureBrowserHealthy: (options) => this.ensureBrowserHealthy(options)
     });
     
     // V6.7.6-FINAL: 初始化 UI 辅助
@@ -196,14 +202,25 @@ class DiscoveryService {
 
     const { leagueId, season, allLeagues = false } = options;
     const targets = this._buildTargets(leagueId, season, allLeagues);
+    const cooldownEvery = Math.max(1, Number(this.config.browserCooldownEveryLeagues) || 5);
 
     this.uiHelper.printTargets(targets.length);
 
-    const results = await Promise.all(
-      targets.map((target, index) =>
-        this.limiter(() => this._scanLeague(target, index))
-      )
-    );
+    const results = [];
+    for (let offset = 0; offset < targets.length; offset += cooldownEvery) {
+      const batch = targets.slice(offset, offset + cooldownEvery);
+      const batchResults = await Promise.all(
+        batch.map((target, batchIndex) =>
+          this.limiter(() => this._scanLeague(target, offset + batchIndex, options))
+        )
+      );
+      results.push(...batchResults);
+
+      const hasRemaining = offset + batch.length < targets.length;
+      if (hasRemaining) {
+        await this._coolDownBrowser(offset + batch.length);
+      }
+    }
 
     results.forEach(r => {
       this.stats.total += r.total;
@@ -245,10 +262,11 @@ class DiscoveryService {
    * 扫描单个联赛
    * @private
    */
-  async _scanLeague(target, index) {
+  async _scanLeague(target, index, options = {}) {
     const { id: leagueId, name, season } = target;
     const workerId = (index % this.config.concurrency) + 1;
     const startTime = Date.now();
+    const fullSync = options.fullSync ?? this.config.fullSync;
 
     try {
       this.uiHelper.printScanStart(`W${workerId}`, name, season);
@@ -260,12 +278,13 @@ class DiscoveryService {
       }
 
       // 获取原始数据
-      const response = await this._fetchFixtures(leagueId, season);
+      const response = await this._fetchFixtures(target, season);
 
       // V6.7.2: 使用解析器
       const fixtures = this.parser.parse(response, leagueId, season, isHistorical, {
         lookbackDays: this.config.lookbackDays,
-        lookaheadDays: this.config.lookaheadDays
+        lookaheadDays: this.config.lookaheadDays,
+        fullSync
       });
       const expectedMatches = this.configManager.getExpectedMatches(leagueId, season);
       const criticalWarnings = [];
@@ -347,9 +366,9 @@ class DiscoveryService {
    * V6.7.6-FINAL: 使用 HttpClient 进行请求
    * @private
    */
-  async _discoverSeasonId(leagueId, targetYear) {
-    this.logger.info(`[HOUND-DEBUG] 🔍 启动赛季指纹探测: ${leagueId} / ${targetYear}`);
-    return await this.seasonDiscovery.discover(leagueId, targetYear);
+  async _discoverSeasonId(providerLeagueId, targetYear) {
+    this.logger.info(`[HOUND-DEBUG] 🔍 启动赛季指纹探测: ${providerLeagueId} / ${targetYear}`);
+    return await this.seasonDiscovery.discover(providerLeagueId, targetYear);
   }
 
   /**
@@ -358,27 +377,33 @@ class DiscoveryService {
    * 优先使用浏览器内 API Fetch 获取全量数据，失败时回退到网页灵魂抽取
    * @private
    */
-  async _fetchFixtures(leagueId, season) {
+  async _fetchFixtures(target, season) {
+    const internalLeagueId = Number(target?.id);
+    const providerLeagueId = Number(target?.providerId || internalLeagueId);
+
     // V6.7.4-REFACTORED: 使用策略工厂处理赛季格式
-    let normalizedSeason = this.seasonStrategyFactory.format(leagueId, season);
+    let normalizedSeason = this.seasonStrategyFactory.format(internalLeagueId, season);
     
-    if (this.seasonStrategyFactory.isSingleYearLeague(leagueId)) {
+    if (this.seasonStrategyFactory.isSingleYearLeague(internalLeagueId)) {
       this.logger.info(`[HOUND] 单年份联赛适配: ${season} -> ${normalizedSeason}`);
     }
     
     // 🔥 V6.7.7: 先探测真实赛季 ID 映射
-    const discoveredSeason = await this._discoverSeasonId(leagueId, normalizedSeason);
+    const discoveredSeason = await this._discoverSeasonId(providerLeagueId, normalizedSeason);
     if (discoveredSeason !== normalizedSeason) {
       this.logger.info(`[HOUND] 🎯 使用探测到的赛季 ID: ${normalizedSeason} -> ${discoveredSeason}`);
       normalizedSeason = discoveredSeason;
     }
     
     // 🔥 V6.7.10: 使用新的 /api/data/leagues 路径 (拦截器确认的真实频率)
-    const apiUrl = this.configManager.buildLeagueApiUrl(leagueId, normalizedSeason);
+    const apiUrl = this.configManager.buildLeagueApiUrl(internalLeagueId, normalizedSeason);
     
     try {
       this.logger.info(`[HOUND-API] 🎯 优先请求全量 API: ${apiUrl}`);
-      const response = await this.httpClient.request(apiUrl);
+      const response = await this.httpClient.request(apiUrl, {
+        expectedLeagueId: providerLeagueId
+      });
+      this._assertProviderIdentity(response, providerLeagueId, target?.name);
       
       // 检查是否获取到有效数据
       if (response && Object.keys(response).length > 0) {
@@ -394,22 +419,31 @@ class DiscoveryService {
         }
       }
     } catch (apiError) {
+      if (apiError.code === 'IDENTITY_MISMATCH') {
+        throw apiError;
+      }
       this.logger.warn(`[HOUND-API] ⚠️  API 请求失败: ${apiError.message}`);
     }
     
     // 🔥 回退: 网页灵魂抽取 (数据可能截断)
     this.logger.info(`[HOUND-SOUL] 🔮 回退到网页灵魂抽取模式...`);
     try {
-      const soulData = await this.extractor.extractFromWebpage(leagueId, normalizedSeason);
+      const soulData = await this.extractor.extractFromWebpage(providerLeagueId, normalizedSeason, {
+        expectedLeagueId: providerLeagueId
+      });
+      this._assertProviderIdentity(soulData, providerLeagueId, target?.name);
       if (soulData && Object.keys(soulData).length > 0) {
         this.logger.info(`[HOUND-SOUL] ✅ 灵魂抽取成功 (注意：数据可能截断)`);
         return soulData;
       }
     } catch (soulError) {
+      if (soulError.code === 'IDENTITY_MISMATCH') {
+        throw soulError;
+      }
       this.logger.error(`[HOUND-SOUL] ❌ 灵魂抽取失败: ${soulError.message}`);
     }
 
-    throw new Error(`无法获取联赛 ${leagueId} 赛季 ${normalizedSeason} 的数据`);
+    throw new Error(`无法获取联赛 ${internalLeagueId} 赛季 ${normalizedSeason} 的数据`);
   }
 
   /**
@@ -492,6 +526,106 @@ class DiscoveryService {
    */
   _sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  async ensureBrowserHealthy(options = {}) {
+    if (!this.useStealthMode || !this.browserProvider) {
+      return;
+    }
+
+    const forceRebuild = options.forceRebuild === true;
+    const isInitialized = typeof this.browserProvider.isInitialized === 'function'
+      ? this.browserProvider.isInitialized()
+      : Boolean(this.browserProvider.getPage?.());
+
+    if (!forceRebuild && isInitialized) {
+      return;
+    }
+
+    if (this.browserHealthPromise) {
+      await this.browserHealthPromise;
+      return;
+    }
+
+    this.browserHealthPromise = this._rebuildBrowserContext(
+      options.reason || 'health-check',
+      options.cooldownMs || 0
+    );
+
+    try {
+      await this.browserHealthPromise;
+    } finally {
+      this.browserHealthPromise = null;
+    }
+  }
+
+  async _coolDownBrowser(completedCount) {
+    if (!this.useStealthMode) {
+      return;
+    }
+
+    const cooldownMs = Math.max(0, Number(this.config.browserCooldownMs) || 0);
+    this.logger.warn(`[HOUND-COOLDOWN] 已完成 ${completedCount} 个联赛，执行浏览器冷却 ${cooldownMs}ms`);
+    await this.ensureBrowserHealthy({
+      forceRebuild: true,
+      reason: `cooldown-${completedCount}`,
+      cooldownMs
+    });
+  }
+
+  async _rebuildBrowserContext(reason, cooldownMs = 0) {
+    if (!this.browserProvider) {
+      return;
+    }
+
+    this.logger.warn(`[HOUND-SELFHEAL] 重建浏览器上下文: ${reason}`);
+
+    if (this.networkInterceptor?.reset) {
+      this.networkInterceptor.reset();
+    }
+
+    if (typeof this.browserProvider.close === 'function') {
+      await this.browserProvider.close();
+    }
+
+    if (cooldownMs > 0) {
+      await this._sleep(cooldownMs);
+    }
+
+    if (typeof this.browserProvider.initialize === 'function') {
+      const page = await this.browserProvider.initialize();
+      if (page && this.networkInterceptor?.setup) {
+        this.networkInterceptor.setup(page);
+      }
+    }
+
+    if (typeof this.browserProvider.warmup === 'function') {
+      await this.browserProvider.warmup('https://www.fotmob.com/', {
+        waitUntil: 'domcontentloaded',
+        timeout: 15000
+      });
+    }
+  }
+
+  _assertProviderIdentity(response, expectedProviderId, leagueName = 'unknown') {
+    if (!expectedProviderId) {
+      return;
+    }
+
+    const actualProviderId = Number(response?.details?.id);
+    if (!Number.isFinite(actualProviderId)) {
+      return;
+    }
+
+    if (actualProviderId !== Number(expectedProviderId)) {
+      const error = new Error(
+        `IDENTITY_MISMATCH: ${leagueName} 请求联赛 ${expectedProviderId}，响应联赛 ${actualProviderId}`
+      );
+      error.code = 'IDENTITY_MISMATCH';
+      error.expectedLeagueId = Number(expectedProviderId);
+      error.actualLeagueId = actualProviderId;
+      throw error;
+    }
   }
 }
 

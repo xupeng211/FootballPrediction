@@ -203,7 +203,9 @@ class SeasonDiscovery {
     try {
       // 请求基础 API (不带 season 参数)
       const discoverUrl = `https://www.fotmob.com/api/data/leagues?id=${leagueId}`;
-      const response = await this.apiRequest(discoverUrl);
+      const response = await this.apiRequest(discoverUrl, {
+        expectedLeagueId: Number(leagueId)
+      });
       
       if (!response || !response.allAvailableSeasons) {
         this.logger.warn('[SeasonDiscovery] ⚠️  未获取到 allAvailableSeasons');
