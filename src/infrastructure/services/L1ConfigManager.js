@@ -44,6 +44,11 @@ class L1ConfigManager {
     return this.runtimeConfig.active_leagues.find((league) => league.code === code) || null;
   }
 
+  getProviderLeagueId(leagueId) {
+    const league = this.getLeagueById(leagueId);
+    return league?.providerId || (Number.isFinite(Number(leagueId)) ? Number(leagueId) : null);
+  }
+
   getActiveSeasons() {
     return [...this.runtimeConfig.active_seasons];
   }
@@ -93,7 +98,8 @@ class L1ConfigManager {
   }
 
   buildLeagueApiUrl(leagueId, season) {
-    return `https://www.fotmob.com/api/data/leagues?id=${Number(leagueId)}&season=${encodeURIComponent(season)}`;
+    const providerLeagueId = this.getProviderLeagueId(leagueId);
+    return `https://www.fotmob.com/api/data/leagues?id=${Number(providerLeagueId)}&season=${encodeURIComponent(season)}`;
   }
 
   _buildRuntimeConfig() {
@@ -141,6 +147,7 @@ class L1ConfigManager {
 
       const league = {
         id: resolvedId,
+        providerId: this._resolveProviderId(reconLeague, atlasLeague, resolvedId),
         code,
         name: reconLeague.name || atlasLeague?.name,
         country: reconLeague.country || atlasLeague?.country || 'unknown',
@@ -164,6 +171,7 @@ class L1ConfigManager {
 
       merged.push({
         id: leagueId,
+        providerId: this._resolveProviderId(null, atlasLeague, leagueId),
         code: atlasLeague.code || this._codeFromName(atlasLeague.name),
         name: atlasLeague.name,
         country: atlasLeague.country,
@@ -203,6 +211,16 @@ class L1ConfigManager {
     if (!reconLeague.name || typeof reconLeague.name !== 'string') {
       throw new Error(`[L1ConfigManager] 联赛 ${code} 缺少有效 name`);
     }
+  }
+
+  _resolveProviderId(reconLeague, atlasLeague, fallbackId) {
+    const providerId = atlasLeague?.providerId
+      ?? atlasLeague?.provider_id
+      ?? reconLeague?.providerId
+      ?? reconLeague?.provider_id
+      ?? fallbackId;
+
+    return Number.isFinite(Number(providerId)) ? Number(providerId) : Number(fallbackId);
   }
 
   _inferSeasonType(leagueId) {

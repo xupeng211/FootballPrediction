@@ -15,15 +15,15 @@
     { "id": 209, "name": "DFB Pokal", "country": "Germany", "tier": "P1", "enabled": true },
     { "id": 138, "name": "Copa del Rey", "country": "Spain", "tier": "P1", "enabled": true },
     { "id": 141, "name": "Coppa Italia", "country": "Italy", "tier": "P1", "enabled": true },
-    { "id": 181, "name": "Coupe de France", "country": "France", "tier": "P1", "enabled": true },
+    { "id": 181, "providerId": 134, "name": "Coupe de France", "country": "France", "tier": "P1", "enabled": true },
     { "id": 10216, "name": "Conference League", "country": "Europe", "tier": "P1", "enabled": true },
     { "id": 74, "name": "UEFA Super Cup", "country": "Europe", "tier": "P1", "enabled": true },
 
     { "id": 48, "name": "Championship", "country": "England", "tier": "P2", "enabled": true },
     { "id": 140, "name": "Segunda División", "country": "Spain", "tier": "P2", "enabled": true },
     { "id": 146, "name": "2. Bundesliga", "country": "Germany", "tier": "P2", "enabled": true },
-    { "id": 156, "name": "Serie B", "country": "Italy", "tier": "P2", "enabled": true },
-    { "id": 182, "name": "Ligue 2", "country": "France", "tier": "P2", "enabled": true },
+    { "id": 156, "providerId": 86, "name": "Serie B", "country": "Italy", "tier": "P2", "enabled": true },
+    { "id": 182, "providerId": 110, "name": "Ligue 2", "country": "France", "tier": "P2", "enabled": true },
 
     { "id": 268, "name": "Brasileirão", "country": "Brazil", "tier": "P3", "enabled": true },
     { "id": 121, "name": "Primera División", "country": "Argentina", "tier": "P3", "enabled": true },

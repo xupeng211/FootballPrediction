@@ -81,7 +81,7 @@ const ValidationConfig = {
  * @param {Function} log - 日志函数
  * @returns {Array} 过滤后的比赛
  */
-function threeGatesFilter(matches, leagueInfo, season, stats, log = console) {
+function threeGatesFilter(matches, leagueInfo, season, stats, log = console, options = {}) {
     // 初始化统计
     stats = stats || {};
     stats.wrongLeague = stats.wrongLeague || 0;
@@ -120,7 +120,7 @@ function threeGatesFilter(matches, leagueInfo, season, stats, log = console) {
             }
 
             // 铁门 2: 赛季时间窗口校验
-            if (seasonWindow && !validateSeasonWindow(match, seasonWindow, log, stats)) {
+            if (!options.fullSync && seasonWindow && !validateSeasonWindow(match, seasonWindow, log, stats, options)) {
                 stats.outsideWindow++;
                 continue;
             }
@@ -176,9 +176,10 @@ function validateLeagueId(match, expectedLeagueId) {
  */
 const MAX_DEBUG_LOGS = 3;
 
-function validateSeasonWindow(match, window, log = null, stats = null) {
+function validateSeasonWindow(match, window, log = null, stats = null, options = {}) {
     if (!match || typeof match !== 'object') return false;
     if (!window) return true;
+    if (options.fullSync) return true;
 
     // V6.3: 多重路径提取（按优先级）
     let rawTime = null;
