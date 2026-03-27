@@ -36,6 +36,30 @@ class ReconEngine {
     this.confidenceThreshold = Number(options.confidenceThreshold || 0.75);
   }
 
+  _emitReconProgressSnapshot(target, progress) {
+    const processed = progress.processed || 0;
+    const total = progress.total || 0;
+    const remaining = Math.max(0, total - processed);
+    const elapsedMs = Math.max(1, Date.now() - progress.startedAt);
+    const avgMsPerMatch = processed > 0 ? elapsedMs / processed : 0;
+    const etaSeconds = remaining > 0 && avgMsPerMatch > 0
+      ? Math.max(0, Math.round((remaining * avgMsPerMatch) / 1000))
+      : 0;
+    const memoryMb = Number((process.memoryUsage().rss / 1024 / 1024).toFixed(1));
+
+    this.logger.info('recon_progress_snapshot', {
+      league: target?.league?.name || null,
+      season: target?.dbSeason || null,
+      processed,
+      total,
+      linked: progress.linked || 0,
+      mismatched: progress.mismatched || 0,
+      etaSeconds,
+      memoryMb,
+      message: `[RECON-PROGRESS] 已对齐 ${processed}/${total} | Linked=${progress.linked || 0} Mismatched=${progress.mismatched || 0} | ETA=${etaSeconds}s | Memory=${memoryMb}MB`
+    });
+  }
+
   /**
    * 构建配置驱动的扫描目标列表
    * @param {Object} options
@@ -845,10 +869,31 @@ class ReconEngine {
       confidenceThreshold,
       matchLimit
     );
+    const progress = {
+      processed: 0,
+      linked: 0,
+      mismatched: 0,
+      total: selectedPending.length,
+      startedAt: Date.now()
+    };
 
     const outcomes = await Promise.all(
       selectedPending.map((l1Match) => limiter(() =>
         this._reconcilePendingMatch(l1Match, candidates, target, confidenceThreshold)
+          .then((outcome) => {
+            progress.processed++;
+            if (outcome?.status === 'linked') {
+              progress.linked++;
+            } else if (outcome?.status === 'mismatch') {
+              progress.mismatched++;
+            }
+
+            if (progress.processed % 50 === 0 || progress.processed === progress.total) {
+              this._emitReconProgressSnapshot(target, progress);
+            }
+
+            return outcome;
+          })
       ))
     );
 

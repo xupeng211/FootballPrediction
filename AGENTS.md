@@ -137,6 +137,15 @@ docker-compose -f docker-compose.dev.yml exec -T dev python <script>
 | 监控检查 | `docker-compose -f docker-compose.dev.yml exec dev npm run titan:check` | `scripts/ops/check_health.js` |
 | 哨兵监控 | `docker-compose -f docker-compose.dev.yml exec dev npm run titan:watch` | `scripts/ops/sentinel_watch.js` |
 
+Recon 运行补充约定：
+
+- `recon_scanner.js` 默认直连运行，只有显式传入 `--use-proxy` 才启用代理。
+- L2 主状态机含义：
+  `pending` 表示等待 Detail Harvester；
+  `harvested` 表示 `raw_match_data` 已落库、等待 Recon；
+  `RECON_LINKED` 表示映射已建立且主表状态已同步；
+  `RECON_MISMATCH` 表示当前批次未达到对齐阈值。
+
 ### 5.3 ML / ELO
 
 | 能力 | 推荐入口 | 实际目标 |

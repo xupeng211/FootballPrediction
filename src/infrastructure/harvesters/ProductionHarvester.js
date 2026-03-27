@@ -135,6 +135,7 @@ class ProductionHarvester extends AbstractHarvester {
      * 获取待处理比赛
      * @param {number} [limit=500]
      * @returns {Promise<object[]>}
+     * @throws {Error} 当数据库查询失败时抛出
      */
     async getPendingMatches(limit = 500) {
         const dbHandle = this.db || this.pool;
@@ -200,7 +201,8 @@ class ProductionHarvester extends AbstractHarvester {
      * @param {object} payload
      * @param {number} [payload.limit]
      * @param {number} [payload.concurrency]
-     * @returns {Promise<object>}
+     * @returns {Promise<object>} 批量执行结果
+     * @throws {Error} 当待处理比赛查询失败时抛出 BULK_ABORT 错误
      */
     async runBulk(payload = {}) {
         const targetLimit = this._resolveTargetLimit(payload.limit);

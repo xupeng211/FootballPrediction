@@ -16,8 +16,11 @@
 
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 
-const { ReconScanner } = require('../../scripts/ops/recon_scanner');
+const { ReconScanner, parseArgs, loadConfig, computeExitCode } = require('../../scripts/ops/recon_scanner');
 const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
 const { ReconNavigator } = require('../../src/infrastructure/recon/ReconNavigator');
 const {
@@ -304,5 +307,158 @@ describe('ReconScanner Robustness - TraceID Propagation', () => {
       ReconNavigator.prototype.launch = originalLaunch;
       ReconNavigator.prototype.close = originalClose;
     }
+  });
+});
+
+describe('ReconScanner Robustness - Navigator Lifecycle', () => {
+  it('多联赛连续 scan 时不应在单联赛结束后提前关闭 Navigator', async () => {
+    let launchCount = 0;
+    let closeCount = 0;
+
+    const originalLaunch = ReconNavigator.prototype.launch;
+    const originalClose = ReconNavigator.prototype.close;
+
+    ReconNavigator.prototype.launch = async function launchStub() {
+      launchCount++;
+      this.browser = { isConnected: () => true };
+      this.context = {};
+      this.page = { isClosed: () => false, waitForTimeout: async () => {} };
+      this.isClosed = false;
+      return this.page;
+    };
+
+    ReconNavigator.prototype.close = async function closeStub() {
+      closeCount++;
+      this.browser = null;
+      this.context = null;
+      this.page = null;
+      this.isClosed = true;
+    };
+
+    try {
+      const scanner = new ReconScanner({
+        logger: { info() {}, warn() {}, error() {}, debug() {} },
+        guardian: { async start() {}, async stop() {} },
+        repository: { async init() {}, async close() {} },
+        engine: {
+          async smartScan(_season, leagueConfig) {
+            return {
+              success: true,
+              league: leagueConfig.name,
+              inserted: 0,
+              pendingTotal: 0,
+              coverage: 100
+            };
+          }
+        },
+        proxyRotator: { getNextProxy: () => null }
+      });
+
+      await scanner.initialize();
+      await scanner.scan('2025-2026', { name: 'Premier League', country: 'england', slug: 'premier-league' });
+      await scanner.scan('2025-2026', { name: 'Bundesliga', country: 'germany', slug: 'bundesliga' });
+
+      assert.strictEqual(launchCount, 1, '全局扫描期间应复用同一个 Navigator');
+      assert.strictEqual(closeCount, 0, '单联赛结束后不得提前 close Navigator');
+
+      await scanner.close();
+      assert.strictEqual(closeCount, 1, '全局任务结束后才允许关闭 Navigator');
+    } finally {
+      ReconNavigator.prototype.launch = originalLaunch;
+      ReconNavigator.prototype.close = originalClose;
+    }
+  });
+
+  it('已存在的 Navigator 不健康时，ensureNavigator 应自动重启', async () => {
+    let launchCount = 0;
+
+    const unhealthyNavigator = {
+      isHealthy: () => false,
+      async ensureBrowserHealthy() {
+        launchCount++;
+      }
+    };
+
+    const scanner = new ReconScanner({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      guardian: { async start() {}, async stop() {} },
+      repository: { async init() {}, async close() {} },
+      engine: { navigator: unhealthyNavigator },
+      proxyRotator: { getNextProxy: () => null }
+    });
+
+    await scanner.initialize();
+    const navigator = await scanner.ensureNavigator();
+
+    assert.strictEqual(navigator, unhealthyNavigator);
+    assert.strictEqual(launchCount, 1, '发现不健康 Navigator 后必须触发自愈');
+  });
+});
+
+describe('ReconScanner Robustness - CLI Defaults', () => {
+  it('默认命令行应走直连模式，只有显式传入 --use-proxy 才启用代理', () => {
+    const originalArgv = process.argv;
+
+    try {
+      process.argv = ['node', 'scripts/ops/recon_scanner.js', '--season', '2025-2026', '--league', 'EPL'];
+      const directArgs = parseArgs();
+      assert.strictEqual(directArgs.useProxy, false);
+
+      process.argv = ['node', 'scripts/ops/recon_scanner.js', '--season', '2025-2026', '--league', 'EPL', '--use-proxy'];
+      const proxiedArgs = parseArgs();
+      assert.strictEqual(proxiedArgs.useProxy, true);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('任一联赛失败时，整体退出码必须为 1', () => {
+    const exitCode = computeExitCode([
+      { success: true, league: 'Premier League', inserted: 20, pendingTotal: 20, coverage: 100 },
+      { success: false, league: 'Bundesliga', error: 'SOURCE_EMPTY' }
+    ], '100.00');
+
+    assert.strictEqual(exitCode, 1);
+  });
+});
+
+describe('ReconScanner Robustness - Strict Config', () => {
+  it('recon_config.json 解析失败时应抛出致命错误，而不是静默回退', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-config-'));
+    const badConfigPath = path.join(tempDir, 'recon_config.bad.json');
+    fs.writeFileSync(badConfigPath, '{"broken":', 'utf8');
+
+    assert.throws(
+      () => loadConfig(badConfigPath),
+      (error) => error instanceof Error && error.code === 'FATAL_CONFIG'
+    );
+  });
+});
+
+describe('ReconNavigator Robustness - Launch Mutex', () => {
+  it('并发 launch 调用应复用同一个启动 Promise', async () => {
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    let launchCalls = 0;
+    navigator.circuitBreaker = { execute: async (fn) => fn() };
+    navigator._performLaunch = async () => {
+      launchCalls++;
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      navigator.browser = { isConnected: () => true, close: async () => {} };
+      navigator.context = {};
+      navigator.page = { isClosed: () => false };
+      navigator.isClosed = false;
+      return navigator.page;
+    };
+
+    const [pageA, pageB] = await Promise.all([
+      navigator.launch({ timeout: 10 }),
+      navigator.launch({ timeout: 10 })
+    ]);
+
+    assert.strictEqual(launchCalls, 1);
+    assert.strictEqual(pageA, pageB);
   });
 });

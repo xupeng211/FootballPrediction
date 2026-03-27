@@ -30,21 +30,25 @@ const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotat
 const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
 const { L1ConfigManager } = require('../../src/infrastructure/services/L1ConfigManager');
 
+const DEFAULT_RECON_CONFIG_PATH = path.join(__dirname, '../../config/recon_config.json');
+
 // 加载配置
 const RECON_CONFIG = loadConfig();
 
 /**
  * 加载配置文件
  */
-function loadConfig() {
-  const configPath = path.join(__dirname, '../../config/recon_config.json');
+function loadConfig(configPath = DEFAULT_RECON_CONFIG_PATH) {
   try {
-    const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+    const raw = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(raw);
     console.log('✅ 配置加载成功:', config.version);
     return config;
   } catch (e) {
-    console.warn('⚠️  配置文件加载失败，使用默认配置');
-    return getDefaultConfig();
+    const fatalError = new Error(`[FATAL_CONFIG] recon_config.json 加载失败: ${e.message}`);
+    fatalError.code = 'FATAL_CONFIG';
+    fatalError.cause = e;
+    throw fatalError;
   }
 }
 
@@ -58,6 +62,14 @@ function getDefaultConfig() {
     matching: { fuzzy_threshold: 0.85 },
     logging: { component: 'ReconScanner', enable_structured: false }
   };
+}
+
+function computeExitCode(results, totalCoverage) {
+  if (Array.isArray(results) && results.some((result) => result?.success === false)) {
+    return 1;
+  }
+
+  return Number(totalCoverage) >= 95 ? 0 : 1;
 }
 
 /**
@@ -272,7 +284,20 @@ class ReconScanner {
    */
   async ensureNavigator() {
     if (this.engine?.navigator) {
-      return this.engine.navigator;
+      const navigator = this.engine.navigator;
+
+      if (typeof navigator.ensureBrowserHealthy === 'function') {
+        await navigator.ensureBrowserHealthy();
+        return navigator;
+      }
+
+      if (typeof navigator.isHealthy !== 'function' || navigator.isHealthy()) {
+        return navigator;
+      }
+
+      if (typeof navigator.close === 'function') {
+        await navigator.close().catch(() => {});
+      }
     }
 
     const proxy = this.proxyRotator ? this.proxyRotator.getNextProxy() : null;
@@ -286,6 +311,7 @@ class ReconScanner {
     });
 
     await navigator.launch();
+    this.resources = this.resources.filter((resource) => resource.type !== 'navigator');
     this.resources.push({ type: 'navigator', instance: navigator });
     this.engine.navigator = navigator;
     return navigator;
@@ -335,8 +361,6 @@ class ReconScanner {
     } catch (error) {
       this.logger.error('scan_failed', { season, league: leagueConfig.name, error: error.message });
       return { success: false, season, league: leagueConfig.name, error: error.message };
-    } finally {
-      await this.cleanup();
     }
   }
 
@@ -365,6 +389,9 @@ class ReconScanner {
    */
   async close() {
     await this.cleanup();
+    if (this.engine) {
+      this.engine.navigator = null;
+    }
     if (this.guardian) await this.guardian.stop();
     if (this.healthServer) await this.healthServer.stop();
     this.logger.info('scanner_closed');
@@ -380,7 +407,7 @@ function parseArgs() {
     season: null,  // V11.0: 不再设置默认值，必须从 CLI 传入
     league: 'EPL',
     allLeagues: false,
-    useProxy: true,
+    useProxy: false,
     dateDriven: false,
     crossLeague: false,
     additionalSlugs: [],
@@ -398,6 +425,9 @@ function parseArgs() {
         break;
       case '--all-leagues':
         result.allLeagues = true;
+        break;
+      case '--use-proxy':
+        result.useProxy = true;
         break;
       case '--no-proxy':
         result.useProxy = false;
@@ -557,7 +587,7 @@ async function main() {
   console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
   // 退出码
-  process.exit(totalCoverage >= 95 ? 0 : 1);
+  process.exit(computeExitCode(results, totalCoverage));
 }
 
 // 执行
@@ -569,4 +599,4 @@ if (require.main === module) {
 }
 
 // 导出供测试使用
-module.exports = { ReconScanner, loadConfig, RECON_CONFIG };
+module.exports = { ReconScanner, loadConfig, RECON_CONFIG, parseArgs, computeExitCode };
