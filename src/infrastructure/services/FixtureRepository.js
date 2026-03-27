@@ -136,7 +136,7 @@ class FixtureRepository {
    * @returns {Promise<Object>} 保存结果
    * @throws {RepositoryError}
    */
-  async saveOddsPortalMapping(mappingData) {
+  async saveOddsPortalMapping(mappingData, options = {}) {
     const requiredFields = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team'];
     
     // 验证必填字段
@@ -154,10 +154,21 @@ class FixtureRepository {
 
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
+      const pipelineStatus = options.pipelineStatus || null;
       
       try {
         await client.query('BEGIN');
         const result = await this._saveOddsPortalMappingWithClient(client, mappingData, hasOptionalFields);
+        let updated = 0;
+
+        if (pipelineStatus) {
+          updated = await this._updateMatchPipelineStatusWithClient(
+            client,
+            [String(mappingData.match_id)],
+            pipelineStatus
+          );
+        }
+
         await client.query('COMMIT');
 
         this.logger.info('[Repository] 映射保存成功', { 
@@ -169,7 +180,8 @@ class FixtureRepository {
         return {
           success: true,
           matchId: result.matchId,
-          wasInsert: result.wasInsert
+          wasInsert: result.wasInsert,
+          updated
         };
 
       } catch (error) {
@@ -306,13 +318,17 @@ class FixtureRepository {
    * @returns {Promise<Object>} 批量保存结果
    * @throws {RepositoryError}
    */
-  async batchSaveOddsPortalMappings(mappings) {
+  async batchSaveOddsPortalMappings(mappings, options = {}) {
     if (!Array.isArray(mappings) || mappings.length === 0) {
-      return { success: true, inserted: 0, failed: 0, errors: [] };
+      return { success: true, inserted: 0, failed: 0, errors: [], updated: 0 };
     }
 
+    const orderedMappings = [...mappings].sort((a, b) =>
+      String(a.match_id).localeCompare(String(b.match_id))
+    );
+
     const requiredFields = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team'];
-    for (const mapping of mappings) {
+    for (const mapping of orderedMappings) {
       const missing = requiredFields.filter(f => !mapping[f]);
       if (missing.length > 0) {
         throw new RepositoryError(
@@ -327,12 +343,13 @@ class FixtureRepository {
 
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
-      const results = { inserted: 0, failed: 0, errors: [] };
+      const results = { inserted: 0, failed: 0, errors: [], updated: 0 };
+      const pipelineStatus = options.pipelineStatus || null;
       
       try {
         await client.query('BEGIN');
         
-        for (const mapping of mappings) {
+        for (const mapping of orderedMappings) {
           try {
             await this._saveOddsPortalMappingWithClient(client, mapping, hasOptionalFields);
             results.inserted++;
@@ -341,6 +358,14 @@ class FixtureRepository {
             results.errors.push({ matchId: mapping.match_id, error: error.message });
             throw error;
           }
+        }
+
+        if (pipelineStatus) {
+          results.updated = await this._updateMatchPipelineStatusWithClient(
+            client,
+            orderedMappings.map((mapping) => String(mapping.match_id)),
+            pipelineStatus
+          );
         }
         
         await client.query('COMMIT');
@@ -361,6 +386,65 @@ class FixtureRepository {
         client.release();
       }
     }, 'batchSaveOddsPortalMappings');
+  }
+
+  /**
+   * 批量更新比赛流水线状态
+   * @param {Array<string>} matchIds - 比赛 ID 列表
+   * @param {string} status - 新状态
+   * @returns {Promise<{success: boolean, updated: number}>}
+   */
+  async batchUpdateMatchPipelineStatus(matchIds, status) {
+    if (!Array.isArray(matchIds) || matchIds.length === 0) {
+      return { success: true, updated: 0 };
+    }
+
+    const orderedMatchIds = [...new Set(matchIds.map((id) => String(id)))]
+      .sort((a, b) => a.localeCompare(b));
+
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+
+      try {
+        await client.query('BEGIN');
+        const updated = await this._updateMatchPipelineStatusWithClient(client, orderedMatchIds, status);
+        await client.query('COMMIT');
+        return { success: true, updated };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw new RepositoryError(
+          `批量更新比赛流水线状态失败: ${error.message}`,
+          'BATCH_STATUS_UPDATE_FAILED',
+          error
+        );
+      } finally {
+        client.release();
+      }
+    }, 'batchUpdateMatchPipelineStatus');
+  }
+
+  /**
+   * 使用共享 client 批量更新比赛流水线状态
+   * @private
+   * @param {Object} client - PostgreSQL client
+   * @param {Array<string>} matchIds - 比赛 ID 列表
+   * @param {string} status - 新状态
+   * @returns {Promise<number>}
+   */
+  async _updateMatchPipelineStatusWithClient(client, matchIds, status) {
+    if (!Array.isArray(matchIds) || matchIds.length === 0) {
+      return 0;
+    }
+
+    const query = `
+      UPDATE matches
+      SET pipeline_status = $2,
+          updated_at = NOW()
+      WHERE match_id = ANY($1::text[])
+    `;
+
+    const result = await client.query(query, [matchIds, status]);
+    return result.rowCount || 0;
   }
 
   /**
@@ -587,6 +671,46 @@ class FixtureRepository {
         client.release();
       }
     }, 'getUnstitchedMatches');
+  }
+
+  /**
+   * 获取可执行 Recon 的比赛（已完成 Harvest 且尚未建立映射）
+   * @param {string} season - 赛季
+   * @param {string} leagueName - 联赛名称
+   * @param {number|null} limit - 条数上限
+   * @returns {Promise<Array>}
+   */
+  async getReconEligibleMatches(season, leagueName, limit = null) {
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      try {
+        const params = [leagueName, season];
+        let query = `
+          SELECT m.match_id, m.home_team, m.away_team, m.match_date, m.league_name, m.season
+          FROM matches m
+          WHERE m.league_name = $1
+            AND m.season = $2
+            AND m.pipeline_status = 'harvested'
+            AND NOT EXISTS (
+              SELECT 1
+              FROM matches_oddsportal_mapping map
+              WHERE map.match_id = m.match_id
+                AND map.season = $2
+            )
+          ORDER BY m.match_date DESC, m.match_id DESC
+        `;
+
+        if (Number.isInteger(limit) && limit > 0) {
+          params.push(limit);
+          query += ` LIMIT $${params.length}`;
+        }
+
+        const result = await client.query(query, params);
+        return result.rows;
+      } finally {
+        client.release();
+      }
+    }, 'getReconEligibleMatches');
   }
 
   /**

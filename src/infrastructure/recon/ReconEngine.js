@@ -13,8 +13,8 @@
 
 'use strict';
 
-const RECON_CONFIG = require('../../../config/recon_config.json');
-const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+const pLimit = require('p-limit');
+const { L1ConfigManager } = require('../services/L1ConfigManager');
 
 /**
  * 侦察引擎类
@@ -29,6 +29,166 @@ class ReconEngine {
     this.logger = options.logger || console;
     this.proxyRotator = options.proxyRotator;
     this.traceId = options.traceId || null;
+    this.configManager = options.configManager || new L1ConfigManager({ logger: this.logger });
+    this.baseUrl = options.baseUrl || options.config?.oddsportal?.base_url || 'https://www.oddsportal.com';
+    this.reconBatchSize = Math.max(1, Number(options.reconBatchSize || 25));
+    this.defaultReconConcurrency = Math.max(1, Number(options.defaultReconConcurrency || 5));
+    this.confidenceThreshold = Number(options.confidenceThreshold || 0.75);
+  }
+
+  /**
+   * 构建配置驱动的扫描目标列表
+   * @param {Object} options
+   * @returns {Promise<Array<Object>>}
+   */
+  async buildScanTargets(options = {}) {
+    const { season, tier = null, leagueIds = null } = options;
+
+    if (!season || typeof season !== 'string') {
+      throw new Error('season is required for buildScanTargets');
+    }
+
+    const allowedLeagueIds = Array.isArray(leagueIds) && leagueIds.length > 0
+      ? new Set(leagueIds.map((id) => Number(id)))
+      : null;
+
+    const leagues = this.configManager
+      .getActiveLeagues({ tier })
+      .filter((league) => league.enabled !== false)
+      .filter((league) => !allowedLeagueIds || allowedLeagueIds.has(Number(league.id)));
+
+    return leagues.map((league) => ({
+      leagueId: Number(league.id),
+      league,
+      season,
+      dbSeason: this._normalizeDbSeason(season),
+      resultsUrl: this._buildResultsUrl(league, season)
+    }));
+  }
+
+  /**
+   * Recon Matrix 批量模式
+   * @param {Object} options
+   * @returns {Promise<Object>}
+   */
+  async runReconMatrix(options = {}) {
+    const {
+      season,
+      concurrency = this.defaultReconConcurrency,
+      tier = null,
+      leagueIds = null,
+      batchSize = this.reconBatchSize,
+      confidenceThreshold = this.confidenceThreshold,
+      limit = null
+    } = options;
+
+    const targets = await this.buildScanTargets({ season, tier, leagueIds });
+    const summary = {
+      success: true,
+      season,
+      scannedLeagues: 0,
+      totalPending: 0,
+      linked: 0,
+      mismatched: 0,
+      errors: [],
+      perLeague: []
+    };
+
+    const targetPendingMap = await this._prepareReconPendingTargets(targets, limit);
+
+    for (const { target, pendingMatches, desiredLimit = null } of targetPendingMap) {
+      try {
+        const result = await this._runReconTarget(target, {
+          concurrency,
+          batchSize,
+          confidenceThreshold,
+          pendingMatches,
+          matchLimit: desiredLimit
+        });
+
+        summary.scannedLeagues++;
+        summary.totalPending += result.pendingTotal;
+        summary.linked += result.linked;
+        summary.mismatched += result.mismatched;
+        summary.perLeague.push({
+          league: target.league.name,
+          season: target.dbSeason,
+          pendingTotal: result.pendingTotal,
+          linked: result.linked,
+          mismatched: result.mismatched,
+          sourceSeason: result.sourceSeason,
+          sourceUrl: result.sourceUrl,
+          candidateCount: result.candidateCount
+        });
+      } catch (error) {
+        summary.success = false;
+        summary.errors.push({
+          league: target.league.name,
+          error: error.message
+        });
+        this.logger.error('recon_matrix_target_failed', {
+          league: target.league.name,
+          season,
+          error: error.message
+        });
+      }
+    }
+
+    return summary;
+  }
+
+  async _prepareReconPendingTargets(targets, limit = null) {
+    const prepared = [];
+
+    for (const target of targets) {
+      const pendingMatches = await this._loadReconPendingMatches(target);
+      if (Array.isArray(pendingMatches) && pendingMatches.length > 0) {
+        prepared.push({
+          target,
+          pendingMatches: [...pendingMatches].sort((a, b) =>
+            String(a.match_id).localeCompare(String(b.match_id))
+          ),
+          desiredLimit: null
+        });
+      }
+    }
+
+    if (!Number.isInteger(limit) || limit <= 0) {
+      return prepared;
+    }
+
+    const capped = prepared.map(({ target, pendingMatches }) => ({
+      target,
+      pendingMatches,
+      desiredLimit: 0
+    }));
+
+    let selected = 0;
+    let cursor = 0;
+    const capacities = prepared.map(({ pendingMatches }) => pendingMatches.length);
+
+    while (selected < limit) {
+      let pickedInRound = false;
+
+      for (let i = 0; i < prepared.length && selected < limit; i++) {
+        const index = (cursor + i) % prepared.length;
+        if (capped[index].desiredLimit >= capacities[index]) {
+          continue;
+        }
+
+        capped[index].desiredLimit += 1;
+        selected++;
+        pickedInRound = true;
+      }
+
+      if (!pickedInRound) {
+        break;
+      }
+
+      cursor = (cursor + 1) % Math.max(prepared.length, 1);
+    }
+
+    return capped.filter(({ desiredLimit }) => desiredLimit > 0);
   }
 
   /**
@@ -47,14 +207,17 @@ class ReconEngine {
 
     try {
       // 1. 获取未缝合比赛
-      const unstitched = await this.repository.getUnstitchedMatches(dbSeason, leagueConfig.name);
+      const unstitched = await this._loadReconPendingMatches({
+        dbSeason,
+        league: leagueConfig
+      });
       if (unstitched.length === 0) {
         return { success: true, season, league: leagueConfig.name, inserted: 0, reason: 'no_pending_matches' };
       }
 
       // 2. 执行协议级抓取
       const oddsportalSeason = this._formatSeasonForUrl(season);
-      const resultsUrl = `${BASE_URL}/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
+      const resultsUrl = this._buildResultsUrl(leagueConfig, season);
       
       const extractResult = await this.navigator.protocolArchiveExtract(resultsUrl, {
         maxPages: 50, timeoutMs: 90000
@@ -116,7 +279,10 @@ class ReconEngine {
 
     try {
       // 1. 获取未缝合比赛
-      const unstitched = await this.repository.getUnstitchedMatches(dbSeason, leagueConfig.name);
+      const unstitched = await this._loadReconPendingMatches({
+        dbSeason,
+        league: leagueConfig
+      });
       if (unstitched.length === 0) {
         return { success: true, inserted: 0, reason: 'no_pending_matches' };
       }
@@ -137,7 +303,7 @@ class ReconEngine {
       for (const dateKey of dateKeys) {
         const dayMatches = dateBuckets.get(dateKey);
         const dayResult = await this.navigator.protocolArchiveExtract(
-          `${BASE_URL}/matches/football/${dateKey}/`,
+          `${this.baseUrl}/matches/football/${dateKey}/`,
           { maxPages: 20, timeoutMs: 60000 }
         );
 
@@ -248,7 +414,10 @@ class ReconEngine {
       const domResult = await this.domFallbackScan(season, leagueConfig);
       combinedInserted += domResult.inserted;
       
-      const unstitched = await this.repository.getUnstitchedMatches(dbSeason, leagueConfig.name);
+      const unstitched = await this._loadReconPendingMatches({
+        dbSeason,
+        league: leagueConfig
+      });
       coverage = unstitched.length > 0 ? (combinedInserted / unstitched.length * 100).toFixed(2) : 0;
     }
     
@@ -276,7 +445,10 @@ class ReconEngine {
 
     try {
       const dbSeason = season.replace('-', '/');
-      const unstitched = await this.repository.getUnstitchedMatches(dbSeason, leagueConfig.name);
+      const unstitched = await this._loadReconPendingMatches({
+        dbSeason,
+        league: leagueConfig
+      });
       
       if (unstitched.length === 0) {
         return { success: true, inserted: 0, reason: 'no_pending_matches' };
@@ -284,7 +456,7 @@ class ReconEngine {
 
       // 构建 results 页面 URL
       const oddsportalSeason = this._formatSeasonForUrl(season);
-      const baseUrl = `${BASE_URL}/football/${leagueConfig.country}/${leagueConfig.slug}-${oddsportalSeason}/results/`;
+      const baseUrl = this._buildResultsUrl(leagueConfig, season);
       
       // 导航到页面
       await this.navigator.navigate(baseUrl, { waitUntil: 'networkidle' });
@@ -323,7 +495,7 @@ class ReconEngine {
             text = text.replace(/\s+/g, ' ').trim();
             
             matches.push({
-              url: href.startsWith('http') ? href : `${BASE_URL}${href}`,
+              url: href.startsWith('http') ? href : `${this.baseUrl}${href}`,
               hash: hash,
               rawText: text,
               source: 'dom_fallback'
@@ -496,6 +668,23 @@ class ReconEngine {
     return `${y}${m}${day}`;
   }
 
+  _calculateDateConfidence(candidateDate, matchDate) {
+    const candidate = new Date(candidateDate);
+    const target = new Date(matchDate);
+
+    if (Number.isNaN(candidate.getTime()) || Number.isNaN(target.getTime())) {
+      return null;
+    }
+
+    const diffDays = Math.abs(candidate.getTime() - target.getTime()) / 86400000;
+
+    if (diffDays <= 0.5) return 1;
+    if (diffDays <= 1.5) return 0.92;
+    if (diffDays <= 3) return 0.8;
+    if (diffDays <= 7) return 0.55;
+    return 0;
+  }
+
   /**
    * 格式化赛季为 URL 格式
    * @private
@@ -504,6 +693,327 @@ class ReconEngine {
     if (!season) return '';
     // 支持 2024-2025 -> 2024-2025 或 2024/2025 -> 2024-2025
     return season.replace('/', '-');
+  }
+
+  _normalizeDbSeason(season) {
+    return String(season || '').replace('-', '/');
+  }
+
+  _shiftSeason(season, delta) {
+    const normalized = this._formatSeasonForUrl(season);
+    const match = normalized.match(/^(\d{4})-(\d{4})$/);
+    if (!match) {
+      return normalized;
+    }
+
+    const start = Number(match[1]) + Number(delta || 0);
+    const end = Number(match[2]) + Number(delta || 0);
+    return `${start}-${end}`;
+  }
+
+  _isCurrentSeason(season) {
+    const normalized = this._formatSeasonForUrl(season);
+    const match = normalized.match(/^(\d{4})-(\d{4})$/);
+    if (!match) {
+      return false;
+    }
+
+    const now = new Date();
+    const year = now.getUTCFullYear();
+    const month = now.getUTCMonth() + 1;
+    const seasonStartYear = month >= 7 ? year : year - 1;
+    const seasonEndYear = seasonStartYear + 1;
+
+    return Number(match[1]) === seasonStartYear && Number(match[2]) === seasonEndYear;
+  }
+
+  _buildResultsUrl(leagueConfig, season) {
+    const oddsportalSeason = this._formatSeasonForUrl(season);
+    const country = String(leagueConfig.country || '')
+      .trim()
+      .toLowerCase();
+    const slug = String(leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+
+    return `${this.baseUrl}/football/${country}/${slug}-${oddsportalSeason}/results/`;
+  }
+
+  _buildCandidateSources(target) {
+    const baseSeason = this._formatSeasonForUrl(target.season || target.dbSeason);
+    return [{
+      season: baseSeason,
+      url: this._buildResultsUrl(target.league, baseSeason)
+    }];
+  }
+
+  async _selectCandidateSource(target, pendingMatches, confidenceThreshold) {
+    const orderedPending = [...pendingMatches]
+      .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+    const sample = orderedPending.slice(0, Math.min(12, orderedPending.length));
+    const sources = this._buildCandidateSources(target);
+    let best = null;
+
+    for (const source of sources) {
+      const extractResult = await this.navigator.protocolArchiveExtract(source.url, {
+        maxPages: 50,
+        timeoutMs: 90000,
+        preferCurrentSeasonSource: this._isCurrentSeason(source.season)
+      });
+      const candidates = Array.isArray(extractResult?.matches) ? extractResult.matches : [];
+      const sampleLinked = sample.reduce((count, l1Match) => {
+        const matched = this._findBestCandidate(l1Match, candidates);
+        return matched && matched.confidence >= confidenceThreshold ? count + 1 : count;
+      }, 0);
+
+      const evaluated = {
+        source,
+        extractResult,
+        candidates,
+        sampleLinked
+      };
+
+      this.logger.info('recon_candidate_source_evaluated', {
+        league: target.league.name,
+        dbSeason: target.dbSeason,
+        requestedSeason: target.season,
+        sourceSeason: source.season,
+        sourceUrl: source.url,
+        sampleSize: sample.length,
+        sampleLinked,
+        candidateCount: candidates.length,
+        sourceState: extractResult?.sourceState || null
+      });
+
+      if (
+        !best ||
+        evaluated.sampleLinked > best.sampleLinked ||
+        (
+          evaluated.sampleLinked === best.sampleLinked &&
+          evaluated.candidates.length > best.candidates.length
+        )
+      ) {
+        best = evaluated;
+      }
+    }
+
+    return best || {
+      source: {
+        season: this._formatSeasonForUrl(target.season || target.dbSeason),
+        url: target.resultsUrl
+      },
+      extractResult: { matches: [], pagesScanned: 0, totalCandidates: 0, sourceState: 'SOURCE_EMPTY' },
+      candidates: [],
+      sampleLinked: 0
+    };
+  }
+
+  async _runReconTarget(target, options = {}) {
+    const {
+      concurrency = this.defaultReconConcurrency,
+      batchSize = this.reconBatchSize,
+      confidenceThreshold = this.confidenceThreshold,
+      pendingMatches: pendingMatchesOverride = null,
+      matchLimit = null
+    } = options;
+
+    const pendingMatches = Array.isArray(pendingMatchesOverride)
+      ? pendingMatchesOverride
+      : await this._loadReconPendingMatches(target);
+
+    if (!Array.isArray(pendingMatches) || pendingMatches.length === 0) {
+      return { pendingTotal: 0, linked: 0, mismatched: 0 };
+    }
+
+    const limiter = pLimit(Math.max(1, Number(concurrency)));
+    const orderedPending = [...pendingMatches].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+    const selectedSource = await this._selectCandidateSource(target, orderedPending, confidenceThreshold);
+    const candidates = selectedSource.candidates;
+
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      const sourceState = selectedSource?.extractResult?.sourceState || 'SOURCE_EMPTY';
+      const error = new Error(sourceState);
+      error.code = sourceState;
+      error.sourceUrl = selectedSource?.source?.url || target.resultsUrl;
+      error.sourceSeason = selectedSource?.source?.season || this._formatSeasonForUrl(target.season);
+      throw error;
+    }
+
+    const selectedPending = this._selectProcessablePendingMatches(
+      orderedPending,
+      candidates,
+      confidenceThreshold,
+      matchLimit
+    );
+
+    const outcomes = await Promise.all(
+      selectedPending.map((l1Match) => limiter(() =>
+        this._reconcilePendingMatch(l1Match, candidates, target, confidenceThreshold)
+      ))
+    );
+
+    const mappings = [];
+    const mismatches = [];
+
+    for (const outcome of outcomes) {
+      if (outcome?.status === 'linked' && outcome.mapping) {
+        mappings.push(outcome.mapping);
+      } else if (outcome?.status === 'mismatch' && outcome.matchId) {
+        mismatches.push(outcome.matchId);
+      }
+    }
+
+    await this._persistReconBatches(mappings, mismatches, Math.max(1, Number(batchSize)));
+
+    return {
+      pendingTotal: selectedPending.length,
+      linked: mappings.length,
+      mismatched: mismatches.length,
+      sourceSeason: selectedSource?.source?.season || this._formatSeasonForUrl(target.season),
+      sourceUrl: selectedSource?.source?.url || target.resultsUrl,
+      candidateCount: Array.isArray(candidates) ? candidates.length : 0
+    };
+  }
+
+  async _loadReconPendingMatches(target) {
+    if (this.repository && typeof this.repository.getReconEligibleMatches === 'function') {
+      return this.repository.getReconEligibleMatches(target.dbSeason, target.league.name);
+    }
+
+    return this.repository.getUnstitchedMatches(target.dbSeason, target.league.name);
+  }
+
+  _selectProcessablePendingMatches(pendingMatches, candidates, confidenceThreshold, matchLimit = null) {
+    const orderedPending = [...pendingMatches].sort((a, b) =>
+      String(a.match_id).localeCompare(String(b.match_id))
+    );
+
+    if (!Number.isInteger(matchLimit) || matchLimit <= 0 || orderedPending.length <= matchLimit) {
+      return orderedPending;
+    }
+
+    const ranked = orderedPending.map((match) => {
+      const candidateMatch = this._findBestCandidate(match, candidates);
+      return {
+        match,
+        confidence: candidateMatch?.confidence || 0,
+        matchDate: match.match_date || null
+      };
+    });
+
+    const linkedFirst = ranked
+      .filter((item) => item.confidence >= confidenceThreshold)
+      .sort((left, right) => {
+        if (right.confidence !== left.confidence) {
+          return right.confidence - left.confidence;
+        }
+
+        const rightDate = right.matchDate ? new Date(right.matchDate).getTime() : 0;
+        const leftDate = left.matchDate ? new Date(left.matchDate).getTime() : 0;
+        if (rightDate !== leftDate) {
+          return rightDate - leftDate;
+        }
+
+        return String(right.match.match_id).localeCompare(String(left.match.match_id));
+      })
+      .slice(0, matchLimit)
+      .map((item) => item.match);
+
+    if (linkedFirst.length >= matchLimit) {
+      return linkedFirst;
+    }
+
+    const selectedIds = new Set(linkedFirst.map((item) => item.match_id));
+    const fallbackMatches = orderedPending
+      .filter((item) => !selectedIds.has(item.match_id))
+      .slice(0, matchLimit - linkedFirst.length);
+
+    return [...linkedFirst, ...fallbackMatches];
+  }
+
+  async _persistReconBatches(mappings, mismatchIds, batchSize) {
+    const orderedMappings = [...mappings].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+    const orderedMismatchIds = [...new Set(mismatchIds.map((id) => String(id)))]
+      .sort((a, b) => a.localeCompare(b));
+
+    for (let index = 0; index < orderedMappings.length; index += batchSize) {
+      const batch = orderedMappings.slice(index, index + batchSize);
+      await this.repository.batchSaveOddsPortalMappings(batch, {
+        pipelineStatus: 'RECON_LINKED'
+      });
+    }
+
+    for (let index = 0; index < orderedMismatchIds.length; index += batchSize) {
+      const batch = orderedMismatchIds.slice(index, index + batchSize);
+      await this.repository.batchUpdateMatchPipelineStatus(batch, 'RECON_MISMATCH');
+    }
+  }
+
+  async _reconcilePendingMatch(l1Match, candidates, target, confidenceThreshold) {
+    const candidateMatch = this._findBestCandidate(l1Match, candidates);
+
+    if (!candidateMatch || candidateMatch.confidence < confidenceThreshold) {
+      return {
+        status: 'mismatch',
+        matchId: l1Match.match_id
+      };
+    }
+
+    return {
+      status: 'linked',
+      mapping: {
+        match_id: l1Match.match_id,
+        oddsportal_hash: candidateMatch.candidate.hash,
+        full_url: candidateMatch.candidate.url,
+        season: target.dbSeason,
+        league_name: target.league.name,
+        home_team: l1Match.home_team,
+        away_team: l1Match.away_team,
+        match_confidence: candidateMatch.confidence,
+        mapping_method: candidateMatch.method || 'recon_matrix',
+        status: 'pending'
+      }
+    };
+  }
+
+  _findBestCandidate(l1Match, candidates) {
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      return null;
+    }
+
+    let best = null;
+
+    for (const candidate of candidates) {
+      if (!candidate?.homeTeam || !candidate?.awayTeam) {
+        continue;
+      }
+
+      const directHome = this._calculateSimilarity(candidate.homeTeam, l1Match.home_team);
+      const directAway = this._calculateSimilarity(candidate.awayTeam, l1Match.away_team);
+      const swappedHome = this._calculateSimilarity(candidate.homeTeam, l1Match.away_team);
+      const swappedAway = this._calculateSimilarity(candidate.awayTeam, l1Match.home_team);
+
+      const directScore = (directHome + directAway) / 2;
+      const swappedScore = (swappedHome + swappedAway) / 2;
+      const teamConfidence = Math.max(directScore, swappedScore);
+      const dateConfidence = this._calculateDateConfidence(
+        candidate.matchDate || candidate.match_date,
+        l1Match.match_date
+      );
+      const confidence = dateConfidence === null
+        ? teamConfidence
+        : Math.max(0, Math.min(1, (teamConfidence * 0.85) + (dateConfidence * 0.15)));
+
+      if (!best || confidence > best.confidence) {
+        best = {
+          candidate,
+          confidence,
+          method: confidence >= 0.99 ? 'exact' : 'fuzzy'
+        };
+      }
+    }
+
+    return best;
   }
 }
 

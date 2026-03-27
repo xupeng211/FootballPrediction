@@ -217,7 +217,9 @@ class ReconNavigator {
     const patterns = [
       /\/api\/.*match/i, /\/api\/.*event/i, /ajax\/.*match/i,
       /\/feed\/.*json/i, /\/data\/.*json/i, /\/api\/v\d+\//i,
-      /\/matches\/football\/\d+/i, /ajax-sport-country-tournament-archive_/i
+      /\/matches\/football\/\d+/i,
+      /ajax-sport-country-tournament-archive_/i,
+      /ajax-sport-country-tournament_/i
     ];
     return patterns.some(p => p.test(url));
   }
@@ -386,6 +388,8 @@ class ReconNavigator {
 
     this.logger.info('navigate_start', { url });
     this.interceptedData = [];
+    this.apiEndpoints = new Set();
+    this.decryptor = new ReconDecryptor({ logger: this.logger, traceId: this.traceId });
 
     try {
       await this.page.goto(url, { timeout, waitUntil });
@@ -425,6 +429,21 @@ class ReconNavigator {
 
     const maxPages = options.maxPages || 50;
     const timeoutMs = options.timeoutMs || 90000;
+    const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
+
+    if (preferCurrentSeasonSource) {
+      this.logger.info('protocol_current_season_start', { baseUrl, maxPages });
+      const currentResult = await this._extractCurrentSeasonFromPageState(baseUrl, {
+        maxPages,
+        timeoutMs
+      });
+      this.logger.info('protocol_archive_complete', {
+        pagesScanned: currentResult.pageStats?.length || 0,
+        totalCandidates: currentResult.matches?.length || 0,
+        sourceState: currentResult.sourceState || 'SOURCE_EMPTY'
+      });
+      return currentResult;
+    }
 
     this.logger.info('protocol_archive_start', { baseUrl, maxPages });
     await this.navigate(baseUrl, { waitUntil: 'networkidle' });
@@ -452,6 +471,268 @@ class ReconNavigator {
     });
 
     return result;
+  }
+
+  _deriveLeaguePageUrl(baseUrl) {
+    const normalized = String(baseUrl || '').trim();
+    if (!normalized) return '';
+
+    const derived = normalized.replace(
+      /(\/football\/[^/]+\/)([^/]+)-\d{4}-\d{4}\/results\/?$/i,
+      '$1$2/'
+    );
+
+    return derived === normalized ? '' : derived;
+  }
+
+  _deriveCurrentResultsUrl(baseUrl) {
+    const normalized = String(baseUrl || '').trim();
+    if (!normalized) return '';
+
+    const derived = normalized.replace(
+      /(\/football\/[^/]+\/)([^/]+)-\d{4}-\d{4}\/results\/?$/i,
+      '$1$2/results/'
+    );
+
+    return derived === normalized ? normalized : derived;
+  }
+
+  _getCurrentTournamentEndpoint() {
+    const endpoints = Array.from(this.apiEndpoints)
+      .filter((url) => /ajax-sport-country-tournament_\/\d+\/[^/]+\/X/i.test(url))
+      .filter((url) => !/archive_/i.test(url));
+
+    if (endpoints.length === 0) {
+      return null;
+    }
+
+    return endpoints.sort((a, b) => this._scoreTournamentUrl(b) - this._scoreTournamentUrl(a))[0];
+  }
+
+  _scoreTournamentUrl(url) {
+    let score = 0;
+    if (/ajax-sport-country-tournament_\/\d+\/[^/]+\/X/i.test(url)) score += 10;
+    if (!/\/\d+\/\?_=/i.test(url)) score += 2;
+    score += Math.min(url.length / 100, 3);
+    return score;
+  }
+
+  async _extractCurrentSeasonFromPageState(baseUrl, options = {}) {
+    const maxPages = options.maxPages || 50;
+    const timeoutMs = options.timeoutMs || 90000;
+    const domResult = await this._extractCurrentSeasonResultsDom(baseUrl, options);
+
+    if (Array.isArray(domResult?.matches) && domResult.matches.length > 0) {
+      return {
+        ...domResult,
+        sourceState: 'CURRENT_RESULTS_DOM'
+      };
+    }
+
+    const leagueUrl = this._deriveLeaguePageUrl(baseUrl);
+
+    if (!leagueUrl) {
+      this.logger.warn('protocol_current_season_invalid_base', { baseUrl });
+      return {
+        matches: [],
+        pagesScanned: 0,
+        totalCandidates: 0,
+        pageStats: [],
+        sourceState: 'SOURCE_EMPTY'
+      };
+    }
+
+    await this.navigate(leagueUrl, { waitUntil: 'networkidle' });
+    await this.page.waitForTimeout(2000);
+
+    const tournamentApiUrl = this._getCurrentTournamentEndpoint();
+    if (!tournamentApiUrl) {
+      this.logger.warn('protocol_current_season_no_api', { leagueUrl });
+      return {
+        matches: [],
+        pagesScanned: 0,
+        totalCandidates: 0,
+        pageStats: [],
+        sourceState: 'SOURCE_EMPTY'
+      };
+    }
+
+    const result = await this._fetchCurrentTournament(tournamentApiUrl, maxPages, timeoutMs);
+    return {
+      ...result,
+      sourceState: result.matches.length > 0 ? 'CURRENT_TOURNAMENT' : 'SOURCE_EMPTY'
+    };
+  }
+
+  async _extractCurrentSeasonResultsDom(baseUrl, options = {}) {
+    if (!this.page || typeof this.page.evaluate !== 'function') {
+      return {
+        matches: [],
+        pagesScanned: 0,
+        totalCandidates: 0,
+        pageStats: []
+      };
+    }
+
+    const timeoutMs = options.timeoutMs || 90000;
+    const maxScrollRounds = Math.max(
+      6,
+      Number(options.maxScrollRounds || this.scrollAttempts || 10)
+    );
+    const currentResultsUrl = this._deriveCurrentResultsUrl(baseUrl) || baseUrl;
+
+    await this.navigate(currentResultsUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+    await this.page.waitForTimeout(2000);
+
+    let bestMatches = [];
+    let stagnantRounds = 0;
+
+    for (let round = 0; round < maxScrollRounds; round++) {
+      const candidates = await this._extractCurrentSeasonResultRows(currentResultsUrl);
+
+      if (candidates.length > bestMatches.length) {
+        bestMatches = candidates;
+        stagnantRounds = 0;
+      } else {
+        stagnantRounds++;
+      }
+
+      if (bestMatches.length >= 50 && stagnantRounds >= 2) {
+        break;
+      }
+
+      if (round < maxScrollRounds - 1) {
+        await this.page.evaluate(() => window.scrollBy(0, 1600));
+        await this.page.waitForTimeout(1000);
+      }
+    }
+
+    return {
+      matches: bestMatches,
+      pagesScanned: 1,
+      totalCandidates: bestMatches.length,
+      pageStats: [{
+        page: 1,
+        rows: bestMatches.length,
+        newRows: bestMatches.length,
+        total: bestMatches.length
+      }]
+    };
+  }
+
+  async _extractCurrentSeasonResultRows(baseUrl) {
+    if (!this.page || typeof this.page.evaluate !== 'function') {
+      return [];
+    }
+
+    let leaguePathPrefix = '';
+
+    try {
+      const parsedUrl = new URL(baseUrl);
+      leaguePathPrefix = parsedUrl.pathname
+        .replace(/-\d{4}-\d{4}\/results\/?$/i, '/')
+        .replace(/\/results\/?$/i, '/');
+    } catch (_error) {
+      leaguePathPrefix = String(baseUrl || '')
+        .replace(/^https?:\/\/[^/]+/i, '')
+        .replace(/-\d{4}-\d{4}\/results\/?$/i, '/')
+        .replace(/\/results\/?$/i, '/');
+    }
+
+    return this.page.evaluate(({ baseOrigin, leaguePathPrefix }) => {
+      const seen = new Set();
+      const pathPrefix = String(leaguePathPrefix || '').trim();
+
+      const extractNamesFromSlug = (pathname) => {
+        const cleanPath = String(pathname || '').replace(/\/+$/, '');
+        const lastSegment = cleanPath.split('/').filter(Boolean).pop() || '';
+        const slugWithHash = lastSegment.replace(/-[A-Za-z0-9]{8}$/i, '');
+        const parts = slugWithHash.split('-');
+
+        if (parts.length < 2) {
+          return { homeTeam: '', awayTeam: '' };
+        }
+
+        const midpoint = Math.ceil(parts.length / 2);
+        const toTitle = (value) => value
+          .split('-')
+          .filter(Boolean)
+          .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+          .join(' ');
+
+        return {
+          homeTeam: toTitle(parts.slice(0, midpoint).join('-')),
+          awayTeam: toTitle(parts.slice(midpoint).join('-'))
+        };
+      };
+
+      const anchors = Array.from(document.querySelectorAll('a[href]'));
+      const matches = [];
+
+      for (const anchor of anchors) {
+        const rawHref = anchor.getAttribute('href') || '';
+        const absoluteHref = new URL(rawHref, baseOrigin).href;
+        const pathname = new URL(absoluteHref).pathname;
+
+        if (pathPrefix && !pathname.startsWith(pathPrefix)) {
+          continue;
+        }
+
+        if (/\/(results|standings|outrights)\/?$/i.test(pathname)) {
+          continue;
+        }
+
+        const hashMatch = pathname.match(/-([A-Za-z0-9]{8})\/?$/);
+        if (!hashMatch) {
+          continue;
+        }
+
+        const hash = hashMatch[1];
+        if (seen.has(hash)) {
+          continue;
+        }
+
+        const participantTitles = Array.from(
+          anchor.querySelectorAll('[title]')
+        )
+          .map((node) => (node.getAttribute('title') || '').trim())
+          .filter(Boolean);
+
+        const participantAlts = Array.from(
+          anchor.querySelectorAll('img[alt]')
+        )
+          .map((node) => (node.getAttribute('alt') || '').trim())
+          .filter(Boolean);
+
+        const combinedNames = [...new Set([...participantTitles, ...participantAlts])];
+        let [homeTeam, awayTeam] = combinedNames;
+
+        if (!homeTeam || !awayTeam) {
+          const parsedNames = extractNamesFromSlug(pathname);
+          homeTeam = homeTeam || parsedNames.homeTeam;
+          awayTeam = awayTeam || parsedNames.awayTeam;
+        }
+
+        if (!homeTeam || !awayTeam) {
+          continue;
+        }
+
+        seen.add(hash);
+        matches.push({
+          url: absoluteHref,
+          hash,
+          homeTeam,
+          awayTeam,
+          matchDate: null,
+          source: 'current_results_dom'
+        });
+      }
+
+      return matches;
+    }, {
+      baseOrigin: BASE_URL,
+      leaguePathPrefix
+    });
   }
 
   /**
@@ -487,7 +768,7 @@ class ReconNavigator {
       const url = page === 1 ? `${base}/?_=${Date.now()}` : `${base}/page/${page}/?_=${Date.now()}`;
       
       try {
-        const response = await this.page.evaluate(async (fetchUrl, fetchTimeout) => {
+        const response = await this.page.evaluate(async ({ fetchUrl, fetchTimeout }) => {
           const ctrl = new AbortController();
           const timer = setTimeout(() => ctrl.abort(), fetchTimeout);
           try {
@@ -498,7 +779,7 @@ class ReconNavigator {
             clearTimeout(timer);
             return { success: false, error: e.message };
           }
-        }, url, timeoutMs);
+        }, { fetchUrl: url, fetchTimeout: timeoutMs });
 
         if (!response.success) {
           pageStats.push({ page, rows: 0, error: response.error });
@@ -510,8 +791,13 @@ class ReconNavigator {
         try {
           decoded = await this.decryptor.decrypt(response.text);
         } catch (e) {
-          pageStats.push({ page, rows: 0, error: 'decrypt_failed' });
-          break;
+          try {
+            await this.decryptor.extractDecryptor(this.page, response.text);
+            decoded = await this.decryptor.decrypt(response.text);
+          } catch (retryError) {
+            pageStats.push({ page, rows: 0, error: `decrypt_failed:${retryError.message}` });
+            break;
+          }
         }
 
         const parsed = JSON.parse(decoded);
@@ -539,6 +825,88 @@ class ReconNavigator {
         if (rows.length === 0) break;
         
         // 动态调整最大页数
+        if (total > 0) {
+          maxPages = Math.min(maxPages, Math.ceil(total / 50));
+        }
+      } catch (e) {
+        pageStats.push({ page, rows: 0, error: e.message });
+        break;
+      }
+    }
+
+    return { matches, pagesScanned: pageStats.length, totalCandidates: matches.length, pageStats };
+  }
+
+  async _fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs) {
+    const seenHashes = new Set();
+    const matches = [];
+    const pageStats = [];
+
+    if (!this.decryptor.getAlgorithmVersion()) {
+      await this.decryptor.extractDecryptor(this.page);
+    }
+
+    const base = apiBaseUrl.split('?')[0].replace(/\/\d+\/?$/, '').replace(/\/+$/, '');
+
+    for (let page = 1; page <= maxPages; page++) {
+      const url = `${base}/${page}/?_=${Date.now()}`;
+
+      try {
+        const response = await this.page.evaluate(async ({ fetchUrl, fetchTimeout }) => {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), fetchTimeout);
+          try {
+            const res = await fetch(fetchUrl, { credentials: 'include', signal: ctrl.signal });
+            clearTimeout(timer);
+            return { success: true, text: await res.text() };
+          } catch (e) {
+            clearTimeout(timer);
+            return { success: false, error: e.message };
+          }
+        }, { fetchUrl: url, fetchTimeout: timeoutMs });
+
+        if (!response.success) {
+          pageStats.push({ page, rows: 0, error: response.error });
+          break;
+        }
+
+        let decoded;
+        try {
+          decoded = await this.decryptor.decrypt(response.text);
+        } catch (e) {
+          try {
+            await this.decryptor.extractDecryptor(this.page, response.text);
+            decoded = await this.decryptor.decrypt(response.text);
+          } catch (retryError) {
+            pageStats.push({ page, rows: 0, error: `decrypt_failed:${retryError.message}` });
+            break;
+          }
+        }
+
+        const parsed = JSON.parse(decoded);
+        const rows = Array.isArray(parsed?.d?.rows) ? parsed.d.rows : [];
+        const total = Number(parsed?.d?.total) || 0;
+
+        let newRows = 0;
+        for (const row of rows) {
+          const hash = row?.encodeEventId || '';
+          if (!hash || seenHashes.has(hash)) continue;
+          seenHashes.add(hash);
+          newRows++;
+
+          matches.push({
+            url: `${BASE_URL}${row.url || ''}`,
+            hash: hash.toString(),
+            homeTeam: row['home-name'] || row.homeName || '',
+            awayTeam: row['away-name'] || row.awayName || '',
+            matchDate: row['date-start-timestamp'] ? new Date(row['date-start-timestamp'] * 1000).toISOString() : null,
+            source: 'current_tournament_api'
+          });
+        }
+
+        pageStats.push({ page, rows: rows.length, newRows, total });
+        if (rows.length === 0) break;
+
         if (total > 0) {
           maxPages = Math.min(maxPages, Math.ceil(total / 50));
         }
