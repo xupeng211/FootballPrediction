@@ -19,6 +19,7 @@ const RECON_CONFIG = require('../../../config/recon_config.json');
 const BASE_URL = RECON_CONFIG.oddsportal.base_url;
 
 const { ReconDistributedLock, LockAcquireFailure } = require('./ReconDistributedLock');
+const { Normalizer } = require('../../utils/Normalizer');
 
 /**
  * 缝合将军类
@@ -61,6 +62,120 @@ class ReconStitcher {
       return season;
     }
     return season.includes('-') ? season.replace('-', '/') : season;
+  }
+
+  _normalizeTeamName(teamName) {
+    const rawTeamName = typeof teamName === 'string' ? teamName : String(teamName || '');
+    return String(Normalizer.normalizeTeamName(rawTeamName) || rawTeamName || '')
+      .toLowerCase()
+      .trim();
+  }
+
+  _hasTextualTeamName(teamName) {
+    return typeof teamName === 'string' && /[a-z\u00c0-\u024f]/i.test(teamName);
+  }
+
+  _calculateTeamSimilarity(left, right) {
+    const normalizedLeft = this._normalizeTeamName(left);
+    const normalizedRight = this._normalizeTeamName(right);
+
+    if (normalizedLeft && normalizedRight && normalizedLeft === normalizedRight) {
+      return 1.0;
+    }
+
+    return this.parser
+      ? this.parser.calculateSimilarity(left, right)
+      : this.simpleSimilarity(left, right);
+  }
+
+  _deriveTeamsFromUrl(url, l1Matches = []) {
+    const slugMatch = String(url || '').match(/\/([^/]+)-[A-Za-z0-9]{8}\/?$/);
+    if (!slugMatch) {
+      return null;
+    }
+
+    const parts = slugMatch[1].split('-').filter(Boolean);
+    if (parts.length < 2) {
+      return null;
+    }
+
+    let bestSplit = null;
+
+    for (let index = 1; index < parts.length; index++) {
+      const left = parts.slice(0, index).join(' ');
+      const right = parts.slice(index).join(' ');
+
+      let splitScore = 0;
+      let bestL1Pair = null;
+      for (const l1Match of l1Matches) {
+        const directScore = (
+          this._calculateTeamSimilarity(left, l1Match.home_team) +
+          this._calculateTeamSimilarity(right, l1Match.away_team)
+        ) / 2;
+        const swappedScore = (
+          this._calculateTeamSimilarity(left, l1Match.away_team) +
+          this._calculateTeamSimilarity(right, l1Match.home_team)
+        ) / 2;
+
+        if (directScore >= splitScore) {
+          splitScore = directScore;
+          bestL1Pair = {
+            homeTeam: l1Match.home_team,
+            awayTeam: l1Match.away_team
+          };
+        }
+
+        if (swappedScore > splitScore) {
+          splitScore = swappedScore;
+          bestL1Pair = {
+            homeTeam: l1Match.away_team,
+            awayTeam: l1Match.home_team
+          };
+        }
+      }
+
+      if (!bestSplit || splitScore > bestSplit.score) {
+        bestSplit = { left, right, score: splitScore, bestL1Pair };
+      }
+    }
+
+    if (!bestSplit) {
+      return null;
+    }
+
+    if (bestSplit.bestL1Pair) {
+      return bestSplit.bestL1Pair;
+    }
+
+    return {
+      homeTeam: Normalizer.normalizeTeamName(bestSplit.left) || bestSplit.left,
+      awayTeam: Normalizer.normalizeTeamName(bestSplit.right) || bestSplit.right
+    };
+  }
+
+  _resolveWebMatchTeams(match, l1Matches = []) {
+    if (!match) {
+      return match;
+    }
+
+    if (this._hasTextualTeamName(match.homeTeam) && this._hasTextualTeamName(match.awayTeam)) {
+      return match;
+    }
+
+    const derivedTeams = this._deriveTeamsFromUrl(match.url, l1Matches);
+    if (!derivedTeams) {
+      return {
+        ...match,
+        homeTeam: String(match.homeTeam || ''),
+        awayTeam: String(match.awayTeam || '')
+      };
+    }
+
+    return {
+      ...match,
+      homeTeam: derivedTeams.homeTeam,
+      awayTeam: derivedTeams.awayTeam
+    };
   }
 
   /**
@@ -536,12 +651,13 @@ class ReconStitcher {
     // 建立 L1 映射
     const l1Map = new Map();
     for (const match of l1Matches) {
-      const key = `${match.home_team.toLowerCase()}_${match.away_team.toLowerCase()}`;
+      const key = `${this._normalizeTeamName(match.home_team)}_${this._normalizeTeamName(match.away_team)}`;
       l1Map.set(key, match);
     }
 
-    for (const match of interceptedMatches) {
+    for (const rawMatch of interceptedMatches) {
       try {
+        const match = this._resolveWebMatchTeams(rawMatch, l1Matches);
         if (match.hash && this.processedHashes.has(match.hash)) {
           skipped++;
           continue;
@@ -556,7 +672,7 @@ class ReconStitcher {
 
         // Hash 锁定匹配
         let targetL1 = null;
-        const exactKey = `${match.homeTeam.toLowerCase()}_${match.awayTeam.toLowerCase()}`;
+        const exactKey = `${this._normalizeTeamName(match.homeTeam)}_${this._normalizeTeamName(match.awayTeam)}`;
         targetL1 = l1Map.get(exactKey);
 
         // 模糊匹配兜底
@@ -603,7 +719,7 @@ class ReconStitcher {
           skipped++;
         }
       } catch (e) {
-        this.logger.error('hash_lock_error', { hash: match.hash, error: e.message });
+        this.logger.error('hash_lock_error', { hash: rawMatch?.hash, error: e.message });
         unmatched++;
       }
     }
