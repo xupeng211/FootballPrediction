@@ -117,6 +117,19 @@ docker-compose -f docker-compose.dev.yml exec dev \
   node scripts/ops/seed_fixtures.js --season 2025/2026 --league 54
 ```
 
+Recon 当前默认走直连模式，代理为显式开启：
+
+```bash
+docker-compose -f docker-compose.dev.yml exec dev \
+  node scripts/ops/recon_scanner.js --season 2025-2026 --league EPL --use-proxy
+```
+
+L2 状态机约定：
+- `pending`: 等待 Detail Harvester 领取
+- `harvested`: `raw_match_data` 已落库，等待 Recon 建立映射
+- `RECON_LINKED`: `matches_oddsportal_mapping` 已建立，且主表状态已原子推进
+- `RECON_MISMATCH`: 当前批次未达到对齐阈值，等待后续人工或规则修复
+
 ---
 
 ### 🧩 模块化架构 (V4.52+)

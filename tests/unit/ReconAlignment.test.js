@@ -85,4 +85,27 @@ describe('ReconAlignment - L1/L2 标准化大一统', () => {
       awayTeam: Normalizer.normalizeTeamName('Queens Park Rangers')
     });
   });
+
+  it('应在相似度计算前先走中央标准化，避免 Wolves/Spurs/Man City 被误判', () => {
+    const parser = new ReconParser({
+      logger: silentLogger,
+      config: {
+        teamSlugs: [
+          'wolverhampton-wanderers',
+          'tottenham-hotspur',
+          'manchester-city'
+        ]
+      }
+    });
+
+    assert.ok(
+      parser.calculateSimilarity('Wolves', 'Wolverhampton Wanderers') >= 0.95
+    );
+    assert.ok(
+      parser.calculateSimilarity('Spurs', 'Tottenham Hotspur') >= 0.95
+    );
+    assert.ok(
+      parser.calculateSimilarity('Man City', 'Manchester City') >= 0.95
+    );
+  });
 });

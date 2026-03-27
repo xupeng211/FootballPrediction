@@ -58,6 +58,9 @@ class ReconNavigator {
     this.context = null;
     this.page = null;
     this.isClosed = false;
+    this.lastLaunchOptions = {};
+    this._launching = null;
+    this._healing = null;
     this.interceptedData = [];
     this.apiEndpoints = new Set();
     this.decryptor = new ReconDecryptor({ logger: this.logger, traceId: this.traceId });
@@ -104,11 +107,22 @@ class ReconNavigator {
 
   /**
    * 启动浏览器并启用网络拦截
+   * @param {object} [options]
    * @returns {Promise<Page>}
+   * @throws {Error} 当浏览器启动或上下文初始化失败时抛出
    */
   async launch(options = {}) {
-    return this.circuitBreaker.execute(async () => {
+    if (this.isHealthy()) {
+      return this.page;
+    }
+
+    if (this._launching) {
+      return this._launching;
+    }
+
+    this._launching = this.circuitBreaker.execute(async () => {
       const timeout = options.timeout || 60000;
+      this.lastLaunchOptions = { ...options, timeout };
 
       const launchOptions = {
         headless: this.headless,
@@ -123,26 +137,101 @@ class ReconNavigator {
       this.logger.info('[ReconNavigator] 启动浏览器', { traceId: this.traceId, headless: this.headless });
 
       try {
-        this.browser = await chromium.launch(launchOptions);
-        this.context = await this.browser.newContext({
-          userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-          viewport: { width: 1920, height: 1080 }
-        });
-        this.page = await this.context.newPage();
-        this.isClosed = false;
-        this.interceptedData = [];
-
-        await this._enableNetworkInterception();
-        await this.page.addInitScript(() => {
-          Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-        });
-
-        return this.page;
+        return await this._performLaunch(launchOptions);
       } catch (error) {
         this.logger.error('navigator_launch_failed', { error: error.message });
         throw error;
       }
     });
+
+    try {
+      return await this._launching;
+    } finally {
+      this._launching = null;
+    }
+  }
+
+  /**
+   * 执行底层浏览器启动与页面初始化
+   * @private
+   * @param {object} launchOptions
+   * @returns {Promise<Page>}
+   */
+  async _performLaunch(launchOptions) {
+    this.browser = await chromium.launch(launchOptions);
+    this.context = await this.browser.newContext({
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      viewport: { width: 1920, height: 1080 }
+    });
+    this.page = await this.context.newPage();
+    this.isClosed = false;
+    this.interceptedData = [];
+
+    await this._enableNetworkInterception();
+    await this.page.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    });
+
+    return this.page;
+  }
+
+  /**
+   * 浏览器健康检查
+   * @returns {boolean}
+   */
+  isHealthy() {
+    try {
+      if (!this.browser || typeof this.browser.isConnected !== 'function' || !this.browser.isConnected()) {
+        return false;
+      }
+
+      if (!this.context || !this.page) {
+        return false;
+      }
+
+      if (typeof this.page.isClosed === 'function' && this.page.isClosed()) {
+        return false;
+      }
+
+      return true;
+    } catch (_error) {
+      return false;
+    }
+  }
+
+  /**
+   * 确保浏览器与页面上下文可用
+   * @returns {Promise<boolean>}
+   * @throws {Error} 当浏览器重建失败时抛出
+   */
+  async ensureBrowserHealthy() {
+    if (this.isHealthy()) {
+      return true;
+    }
+
+    if (this._healing) {
+      await this._healing;
+      return this.isHealthy();
+    }
+
+    this.logger.warn('navigator_unhealthy_relaunch', {
+      traceId: this.traceId,
+      hasBrowser: Boolean(this.browser),
+      hasContext: Boolean(this.context),
+      hasPage: Boolean(this.page)
+    });
+
+    this._healing = (async () => {
+      await this.close();
+      await this.launch(this.lastLaunchOptions || {});
+      return this.isHealthy();
+    })();
+
+    try {
+      return await this._healing;
+    } finally {
+      this._healing = null;
+    }
   }
 
   /**
@@ -378,10 +467,13 @@ class ReconNavigator {
 
   /**
    * 导航到目标 URL
+   * @param {string} url
+   * @param {object} [options]
    * @returns {Promise<boolean>}
+   * @throws {Error} 当页面导航失败时抛出
    */
   async navigate(url, options = {}) {
-    if (!this.page) throw new Error('Navigator not launched');
+    await this.ensureBrowserHealthy();
 
     const timeout = options.timeout || 60000;
     const waitUntil = options.waitUntil || 'networkidle';
@@ -422,10 +514,16 @@ class ReconNavigator {
 
   /**
    * 协议级档案抓取 (V11.0 主要数据获取方式)
+   * @param {string} baseUrl
+   * @param {object} [options]
+   * @param {number} [options.maxPages=50]
+   * @param {number} [options.timeoutMs=90000]
+   * @param {boolean} [options.preferCurrentSeasonSource=false]
    * @returns {Promise<Object>}
+   * @throws {Error} 当浏览器不可恢复或候选源抓取失败时抛出
    */
   async protocolArchiveExtract(baseUrl, options = {}) {
-    if (!this.page) throw new Error('Navigator not launched');
+    await this.ensureBrowserHealthy();
 
     const maxPages = options.maxPages || 50;
     const timeoutMs = options.timeoutMs || 90000;
@@ -520,7 +618,22 @@ class ReconNavigator {
   async _extractCurrentSeasonFromPageState(baseUrl, options = {}) {
     const maxPages = options.maxPages || 50;
     const timeoutMs = options.timeoutMs || 90000;
-    const domResult = await this._extractCurrentSeasonResultsDom(baseUrl, options);
+    const currentResultsUrl = this._deriveCurrentResultsUrl(baseUrl) || baseUrl;
+    await this.navigate(currentResultsUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+    await this.page.waitForTimeout(2000);
+
+    const repairedArchiveUrl = await this._resolveCurrentSeasonArchiveEndpoint();
+    if (repairedArchiveUrl) {
+      const archiveResult = await this._fetchAndDecrypt(repairedArchiveUrl, maxPages, timeoutMs);
+      if (Array.isArray(archiveResult?.matches) && archiveResult.matches.length > 0) {
+        return {
+          ...archiveResult,
+          sourceState: 'CURRENT_RESULTS_ARCHIVE'
+        };
+      }
+    }
+
+    const domResult = await this._collectCurrentSeasonResultsDom(currentResultsUrl, options);
 
     if (Array.isArray(domResult?.matches) && domResult.matches.length > 0) {
       return {
@@ -584,10 +697,20 @@ class ReconNavigator {
     await this.navigate(currentResultsUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
     await this.page.waitForTimeout(2000);
 
+    return this._collectCurrentSeasonResultsDom(currentResultsUrl, options);
+  }
+
+  async _collectCurrentSeasonResultsDom(currentResultsUrl, options = {}) {
+    const maxScrollRounds = Math.max(
+      6,
+      Number(options.maxScrollRounds || this.scrollAttempts || 10)
+    );
+
     let bestMatches = [];
     let stagnantRounds = 0;
 
     for (let round = 0; round < maxScrollRounds; round++) {
+      await this._wakeCurrentSeasonDom(round);
       const candidates = await this._extractCurrentSeasonResultRows(currentResultsUrl);
 
       if (candidates.length > bestMatches.length) {
@@ -597,13 +720,15 @@ class ReconNavigator {
         stagnantRounds++;
       }
 
-      if (bestMatches.length >= 50 && stagnantRounds >= 2) {
+      if (round >= 2 && stagnantRounds >= 2) {
         break;
       }
 
       if (round < maxScrollRounds - 1) {
-        await this.page.evaluate(() => window.scrollBy(0, 1600));
-        await this.page.waitForTimeout(1000);
+        await this.page.evaluate((step) => {
+          window.scrollBy(0, step);
+        }, Math.max(1600, (round + 1) * 2200));
+        await this.page.waitForTimeout(Math.min(1500, this.scrollDelayMs || 1000));
       }
     }
 
@@ -618,6 +743,82 @@ class ReconNavigator {
         total: bestMatches.length
       }]
     };
+  }
+
+  async _wakeCurrentSeasonDom(round = 0) {
+    if (!this.page) {
+      return;
+    }
+
+    try {
+      if (this.page.mouse && typeof this.page.mouse.click === 'function') {
+        await this.page.mouse.click(16, 16).catch(() => {});
+      }
+
+      await this.page.evaluate((iteration) => {
+        document.body?.dispatchEvent(new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          clientX: 16,
+          clientY: 16
+        }));
+
+        const depth = Math.min(
+          document.body?.scrollHeight || window.innerHeight,
+          window.innerHeight + ((iteration + 1) * 2400)
+        );
+
+        window.scrollTo({ top: depth, behavior: 'auto' });
+      }, round);
+    } catch (_error) {
+      // DOM 唤醒失败不应中断主流程
+    }
+  }
+
+  async _extractPageOutrightsMeta() {
+    if (!this.page || typeof this.page.evaluate !== 'function') {
+      return null;
+    }
+
+    try {
+      return await this.page.evaluate(() => {
+        const scripts = Array.from(document.scripts).map((script) => script.textContent || '');
+        const hit = scripts.find((text) => text.includes('pageOutrightsVar')) || '';
+        const match = hit.match(/pageOutrightsVar\s*=\s*'([^']+)'/);
+        if (!match) {
+          return null;
+        }
+
+        try {
+          return JSON.parse(match[1]);
+        } catch (_error) {
+          return null;
+        }
+      });
+    } catch (_error) {
+      return null;
+    }
+  }
+
+  async _resolveCurrentSeasonArchiveEndpoint() {
+    const archiveEndpoint = Array.from(this.apiEndpoints)
+      .filter((url) => /ajax-sport-country-tournament-archive_/i.test(url))
+      .sort((a, b) => this._scoreArchiveUrl(b) - this._scoreArchiveUrl(a))[0];
+
+    if (!archiveEndpoint) {
+      return null;
+    }
+
+    if (!/\/1\/\/X/i.test(archiveEndpoint)) {
+      return archiveEndpoint;
+    }
+
+    const meta = await this._extractPageOutrightsMeta();
+    if (!meta?.id) {
+      return null;
+    }
+
+    return archiveEndpoint.replace('/1//X', `/1/${meta.id}/X`);
   }
 
   async _extractCurrentSeasonResultRows(baseUrl) {
@@ -938,11 +1139,20 @@ class ReconNavigator {
    */
   async close() {
     this.isClosed = true;
+    this.apiEndpoints = new Set();
+    this.interceptedData = [];
+
     if (this.browser) {
-      await this.browser.close();
-      this.browser = null;
-      this.page = null;
+      try {
+        await this.browser.close();
+      } catch (_error) {
+        // ignore close errors during cleanup
+      }
     }
+
+    this.browser = null;
+    this.context = null;
+    this.page = null;
   }
 }
 

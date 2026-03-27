@@ -132,8 +132,11 @@ class ReconParser {
   }
 
   calculateSimilarity(name1, name2) {
-    const n1 = this._sanitizeComparable(name1);
-    const n2 = this._sanitizeComparable(name2);
+    const canonical1 = this.normalizeTeamName(name1);
+    const canonical2 = this.normalizeTeamName(name2);
+
+    const n1 = this._sanitizeComparable(canonical1 || name1);
+    const n2 = this._sanitizeComparable(canonical2 || name2);
 
     if (!n1 || !n2) return 0;
     if (n1 === n2) return 1.0;
