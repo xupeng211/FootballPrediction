@@ -267,6 +267,31 @@ class ReconScanner {
   }
 
   /**
+   * 启动并绑定 Navigator
+   * @returns {Promise<ReconNavigator>}
+   */
+  async ensureNavigator() {
+    if (this.engine?.navigator) {
+      return this.engine.navigator;
+    }
+
+    const proxy = this.proxyRotator ? this.proxyRotator.getNextProxy() : null;
+    const navigator = new ReconNavigator({
+      logger: this._childLogger('ReconNavigator'),
+      traceId: this.traceId,
+      proxy,
+      headless: true,
+      scrollAttempts: this.config.oddsportal?.navigation?.scroll_attempts || 10,
+      scrollDelayMs: this.config.oddsportal?.navigation?.scroll_delay_ms || 2000
+    });
+
+    await navigator.launch();
+    this.resources.push({ type: 'navigator', instance: navigator });
+    this.engine.navigator = navigator;
+    return navigator;
+  }
+
+  /**
    * 执行扫描 (V11.0: 委托给 ReconEngine)
    * @param {string} season - 赛季 (动态透传，禁止硬编码)
    * @param {Object} leagueConfig - 联赛配置
@@ -286,22 +311,7 @@ class ReconScanner {
     this.logger.info('scan_start', { season, league: leagueConfig.name, traceId: this.traceId });
 
     try {
-      // 启动浏览器
-      const proxy = this.proxyRotator ? this.proxyRotator.getNextProxy() : null;
-      const navigator = new ReconNavigator({
-        logger: this._childLogger('ReconNavigator'),
-        traceId: this.traceId,
-        proxy,
-        headless: true,
-        scrollAttempts: this.config.oddsportal?.navigation?.scroll_attempts || 10,
-        scrollDelayMs: this.config.oddsportal?.navigation?.scroll_delay_ms || 2000
-      });
-
-      await navigator.launch();
-      this.resources.push({ type: 'navigator', instance: navigator });
-
-      // 更新引擎的 navigator
-      this.engine.navigator = navigator;
+      await this.ensureNavigator();
 
       // 根据模式选择扫描策略
       let result;
@@ -373,7 +383,9 @@ function parseArgs() {
     useProxy: true,
     dateDriven: false,
     crossLeague: false,
-    additionalSlugs: []
+    additionalSlugs: [],
+    limit: null,
+    concurrency: 5
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -398,6 +410,12 @@ function parseArgs() {
         break;
       case '--with-slug':
         result.additionalSlugs.push(args[++i]);
+        break;
+      case '--limit':
+        result.limit = parseInt(args[++i], 10);
+        break;
+      case '--concurrency':
+        result.concurrency = parseInt(args[++i], 10);
         break;
     }
   }
@@ -424,7 +442,7 @@ async function main() {
   console.log(`║     版本: V11.0-CLEAN-SWEEP                                      ║`);
   console.log(`║     赛季: ${args.season}                                    ║`);
   console.log('║     架构: Navigator + Engine + Decryptor                         ║');
-  console.log('║     特性: 动态 season 透传 | 协议解密 | 零硬编码                ║');
+  console.log('║     特性: 动态 season 透传 | 协议解密 | Recon Matrix            ║');
   console.log('╚══════════════════════════════════════════════════════════════════╝\n');
 
   // 初始化数据库连接
@@ -463,15 +481,40 @@ async function main() {
     process.exit(1);
   }
 
+  const useReconMatrix = Number.isInteger(args.limit) && args.limit > 0;
+
   // 执行扫描
   const results = [];
-  for (const league of leagues) {
-    const result = await scanner.scan(args.season, league, {
-      dateDriven: args.dateDriven,
-      crossLeague: args.crossLeague,
-      additionalSlugs: args.additionalSlugs
+  if (useReconMatrix) {
+    await scanner.ensureNavigator();
+    const result = await scanner.engine.runReconMatrix({
+      season: args.season,
+      leagueIds: leagues.map((league) => Number(league.id)),
+      concurrency: Number.isInteger(args.concurrency) && args.concurrency > 0 ? args.concurrency : 5,
+      limit: args.limit
     });
-    results.push(result);
+    results.push({
+      success: result.success,
+      league: useReconMatrix && args.allLeagues ? 'Recon Matrix' : (leagues[0]?.name || 'Recon Matrix'),
+      inserted: result.linked || 0,
+      mismatched: result.mismatched || 0,
+      pendingTotal: result.totalPending || 0,
+      coverage: result.totalPending > 0 ? (result.linked / result.totalPending * 100) : 0,
+      perLeague: result.perLeague || [],
+      errors: result.errors || [],
+      error: Array.isArray(result.errors) && result.errors.length > 0
+        ? result.errors.map((item) => `${item.league}: ${item.error}`).join(' | ')
+        : undefined
+    });
+  } else {
+    for (const league of leagues) {
+      const result = await scanner.scan(args.season, league, {
+        dateDriven: args.dateDriven,
+        crossLeague: args.crossLeague,
+        additionalSlugs: args.additionalSlugs
+      });
+      results.push(result);
+    }
   }
 
   // 关闭资源
@@ -493,6 +536,16 @@ async function main() {
       const coverage = r.coverage || 0;
       const status = coverage >= 95 ? '✅' : coverage >= 80 ? '⚠️' : '❌';
       console.log(`║  ${status} ${(r.league || 'Unknown').padEnd(18)}: ${String(r.inserted || 0).padStart(3)} / ${String(r.pendingTotal || 0).padStart(3)} (${coverage.toFixed(1)}%)`);
+      if (Array.isArray(r.perLeague)) {
+        r.perLeague.forEach((item) => {
+          const leagueStatus = item.pendingTotal > 0 && item.linked === item.pendingTotal
+            ? '✅'
+            : item.linked > 0
+              ? '⚠️'
+              : '❌';
+          console.log(`║    ${leagueStatus} ${(item.league || 'Unknown').padEnd(16)}: ${String(item.linked || 0).padStart(3)} 链接 / ${String(item.mismatched || 0).padStart(3)} 失配`);
+        });
+      }
     } else {
       console.log(`║  ❌ ${(r.league || 'Unknown').padEnd(18)}: 错误 - ${r.error}`);
     }

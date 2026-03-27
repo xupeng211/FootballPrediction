@@ -37,6 +37,9 @@ class ReconGuardian {
     this.logger = options.logger || console;
     this.intervalMs = options.intervalMs || 60000;
     this.targetProcesses = options.targetProcesses || ['chromium', 'chrome', 'playwright'];
+    this.killResourceHogs = options.killResourceHogs === true;
+    this.cpuThreshold = Number(options.cpuThreshold || 50);
+    this.memThreshold = Number(options.memThreshold || 20);
 
     this.interval = null;
     this.isRunning = false;
@@ -46,7 +49,8 @@ class ReconGuardian {
 
     this.logger.info('guardian_initialized', {
       intervalMs: this.intervalMs,
-      targets: this.targetProcesses
+      targets: this.targetProcesses,
+      killResourceHogs: this.killResourceHogs
     });
   }
 
@@ -187,9 +191,9 @@ class ReconGuardian {
           // 检查 CPU/内存使用率异常 (长时间占用资源但无进展)
           const cpuUsage = parseFloat(cpu) || 0;
           const memUsage = parseFloat(mem) || 0;
-          const isResourceHog = cpuUsage > 50 || memUsage > 20; // CPU>50% 或内存>20%
+          const isResourceHog = cpuUsage > this.cpuThreshold || memUsage > this.memThreshold;
 
-          if (isZombie || isOrphan || isResourceHog) {
+          if (this._shouldCollectProcess({ isZombie, isOrphan, isResourceHog })) {
             zombies.push({
               pid,
               ppid,
@@ -211,6 +215,17 @@ class ReconGuardian {
     }
 
     return zombies;
+  }
+
+  /**
+   * 判断进程是否应被视为可清理目标
+   * @param {Object} flags
+   * @returns {boolean}
+   * @private
+   */
+  _shouldCollectProcess(flags = {}) {
+    const { isZombie = false, isOrphan = false, isResourceHog = false } = flags;
+    return isZombie || isOrphan || (this.killResourceHogs && isResourceHog);
   }
 
   /**

@@ -32,14 +32,14 @@ class ReconDecryptor {
    * @param {Page} page - Playwright Page 实例
    * @returns {Promise<Function>} 解密函数
    */
-  async extractDecryptor(page) {
+  async extractDecryptor(page, sampleEncryptedData = null) {
     if (!page) {
       throw new Error('Page instance required');
     }
 
     try {
       // 方法1: 尝试从 app-*.js 提取
-      const decryptFn = await this._extractFromAppScript(page);
+      const decryptFn = await this._extractFromAppScript(page, sampleEncryptedData);
       if (decryptFn) {
         this.decryptFn = decryptFn; // V11.0 FIX: 保存解密函数
         this.logger.info('decryptor_extracted', { method: 'app_script', version: this.algorithmVersion });
@@ -73,7 +73,7 @@ class ReconDecryptor {
    * 从 app-*.js 提取解密函数
    * @private
    */
-  async _extractFromAppScript(page) {
+  async _extractFromAppScript(page, sampleEncryptedData = null) {
     try {
       // 动态导入 app script
       const appScriptUrl = await page.evaluate(() => {
@@ -88,36 +88,81 @@ class ReconDecryptor {
       }
 
       // 在页面上下文中动态导入并提取解密函数
-      const decryptFn = await page.evaluate(async (url) => {
+      const decryptFn = await page.evaluate(async ({ url, sample }) => {
         try {
           const module = await import(url);
-          
-          // 动态查找解密函数（多种可能名称）
+
+          const candidates = [];
+          const seen = new Set();
           const possibleNames = ['ai', 'decrypt', 'decode', 'parse', 'unpack', 'transform'];
-          
+
+          const addCandidate = (name, type) => {
+            if (!name || seen.has(name)) return;
+            const fn = name === 'default' ? module.default : module[name];
+            if (typeof fn === 'function') {
+              seen.add(name);
+              candidates.push({ name, type });
+            }
+          };
+
           for (const name of possibleNames) {
-            if (typeof module[name] === 'function') {
-              return { found: true, name, type: 'named_export' };
-            }
+            addCandidate(name, 'named_export');
           }
-          
-          // 检查默认导出
-          if (typeof module.default === 'function') {
-            return { found: true, name: 'default', type: 'default_export' };
-          }
-          
-          // 检查第一个函数导出
+
+          addCandidate('default', 'default_export');
+
           for (const key of Object.keys(module)) {
-            if (typeof module[key] === 'function') {
-              return { found: true, name: key, type: 'auto_detected' };
+            addCandidate(key, 'auto_detected');
+          }
+
+          const isValidPayload = (value) => {
+            try {
+              const raw = typeof value === 'string' ? value : JSON.stringify(value);
+              if (!raw || typeof raw !== 'string') return false;
+
+              const trimmed = raw.trim();
+              if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+                return false;
+              }
+
+              const parsed = typeof value === 'object' && value !== null
+                ? value
+                : JSON.parse(trimmed);
+
+              return Boolean(parsed && typeof parsed === 'object' && (
+                parsed.d ||
+                parsed.rows ||
+                parsed.s !== undefined ||
+                parsed.refresh !== undefined
+              ));
+            } catch {
+              return false;
+            }
+          };
+
+          if (sample) {
+            for (const candidate of candidates) {
+              try {
+                const fn = candidate.name === 'default' ? module.default : module[candidate.name];
+                const output = await fn(sample);
+                if (isValidPayload(output)) {
+                  return { found: true, name: candidate.name, type: candidate.type, validated: true };
+                }
+              } catch {
+                // ignore and continue probing
+              }
             }
           }
-          
-          return { found: false };
+
+          if (candidates.length > 0) {
+            return { found: true, name: candidates[0].name, type: candidates[0].type, validated: false };
+          }
+
+          return { found: false, validated: false };
         } catch (e) {
           return { found: false, error: e.message };
         }
-      }, appScriptUrl);
+      }, { url: appScriptUrl, sample: sampleEncryptedData });
 
       if (!decryptFn || !decryptFn.found) {
         return null;
