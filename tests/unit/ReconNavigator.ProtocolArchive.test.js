@@ -14,7 +14,10 @@ describe('ReconNavigator - Protocol Archive', () => {
 
     const staleDecryptor = navigator.decryptor;
     navigator.apiEndpoints.add('oddsportal://stale-endpoint');
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
     navigator.page = {
+      isClosed: () => false,
       async goto() {},
       async waitForTimeout() {},
       async evaluate() {}
@@ -34,7 +37,10 @@ describe('ReconNavigator - Protocol Archive', () => {
       logger: { info() {}, warn() {}, error() {}, debug() {} }
     });
 
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
     navigator.page = {
+      isClosed: () => false,
       async evaluate(fn, payload) {
         evaluatePayloads.push(payload);
         if (!payload || typeof payload !== 'object') {
@@ -89,7 +95,10 @@ describe('ReconNavigator - Protocol Archive', () => {
       logger: { info() {}, warn() {}, error() {}, debug() {} }
     });
 
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
     navigator.page = {
+      isClosed: () => false,
       async evaluate(_fn, payload) {
         return {
           success: true,
@@ -145,8 +154,14 @@ describe('ReconNavigator - Protocol Archive', () => {
       logger: { info() {}, warn() {}, error() {}, debug() {} }
     });
 
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
     navigator.page = {
-      async waitForTimeout() {}
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async evaluate() {
+        return [];
+      }
     };
     navigator.navigate = async (url) => {
       navigatedUrls.push(url);
@@ -177,6 +192,7 @@ describe('ReconNavigator - Protocol Archive', () => {
     );
 
     assert.deepStrictEqual(navigatedUrls, [
+      'oddsportal://root/football/england/premier-league/results/',
       'oddsportal://root/football/england/premier-league/'
     ]);
     assert.deepStrictEqual(fetchCalls, [
@@ -198,7 +214,10 @@ describe('ReconNavigator - Protocol Archive', () => {
       logger: { info() {}, warn() {}, error() {}, debug() {} }
     });
 
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
     navigator.page = {
+      isClosed: () => false,
       async waitForTimeout() {},
       async evaluate(_fn, payload) {
         if (payload && payload.leaguePathPrefix) {
@@ -234,5 +253,108 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.sourceState, 'CURRENT_RESULTS_DOM');
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'dom-hash');
+  });
+
+  it('当前赛季 results 页 archive URL 缺少 tournament id 时，应通过 pageOutrightsVar 修复后再抓取', async () => {
+    const fetchedArchiveUrls = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async evaluate(fn, payload) {
+        if (payload && payload.leaguePathPrefix) {
+          return [];
+        }
+
+        if (typeof fn === 'function') {
+          return {
+            id: 'KKay4EE8',
+            sid: 1,
+            cid: 198,
+            archive: true
+          };
+        }
+
+        return null;
+      }
+    };
+    navigator.navigate = async () => {
+      navigator.apiEndpoints = new Set([
+        'oddsportal://ajax-sport-country-tournament-archive_/1//X262144/1/0/?_=1'
+      ]);
+    };
+    navigator._fetchAndDecrypt = async (url) => {
+      fetchedArchiveUrls.push(url);
+      return {
+        matches: [
+          {
+            hash: 'archive-hash',
+            url: 'oddsportal://match/archive-hash',
+            homeTeam: 'Aston Villa',
+            awayTeam: 'Newcastle United',
+            matchDate: '2025-08-16T11:30:00.000Z'
+          }
+        ],
+        pagesScanned: 4,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+    navigator._getCurrentTournamentEndpoint = () => null;
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/england/premier-league-2025-2026/results/',
+      { preferCurrentSeasonSource: true, maxPages: 8, timeoutMs: 1234 }
+    );
+
+    assert.deepStrictEqual(fetchedArchiveUrls, [
+      'oddsportal://ajax-sport-country-tournament-archive_/1/KKay4EE8/X262144/1/0/?_=1'
+    ]);
+    assert.strictEqual(result.sourceState, 'CURRENT_RESULTS_ARCHIVE');
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'archive-hash');
+  });
+
+  it('浏览器上下文丢失时，ensureBrowserHealthy 应自动重启并恢复 page', async () => {
+    let launchCount = 0;
+
+    function navigatorLaunchStub() {
+      launchCount++;
+      this.browser = { isConnected: () => true, close: async () => {} };
+      this.context = { close: async () => {} };
+      this.page = {
+        isClosed: () => false,
+        addInitScript: async () => {},
+        on() {},
+        goto: async () => {},
+        waitForTimeout: async () => {},
+        evaluate: async () => {}
+      };
+      this.isClosed = false;
+      return this.page;
+    }
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.launch = navigatorLaunchStub;
+    await navigator.launch();
+    navigator.browser = null;
+    navigator.context = null;
+    navigator.page = null;
+    navigator.isClosed = true;
+
+    await navigator.ensureBrowserHealthy();
+
+    assert.strictEqual(launchCount, 2);
+    assert.ok(navigator.page);
+    assert.strictEqual(navigator.isClosed, false);
   });
 });

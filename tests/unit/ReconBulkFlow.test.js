@@ -361,6 +361,74 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     ]);
   });
 
+  it('批量对齐时应每 50 场输出一次进度快照', async () => {
+    const pendingMatches = createPendingMatches(120);
+    const logs = [];
+
+    const engine = new ReconEngine({
+      configManager: {
+        getActiveLeagues() {
+          return [{ id: 47, name: 'Premier League', country: 'england', slug: 'premier-league', enabled: true }];
+        }
+      },
+      repository: {
+        async getUnstitchedMatches() {
+          return pendingMatches;
+        },
+        async batchSaveOddsPortalMappings(mappings) {
+          return { success: true, inserted: mappings.length };
+        },
+        async batchUpdateMatchPipelineStatus(matchIds) {
+          return { updated: matchIds.length };
+        }
+      },
+      navigator: {
+        async protocolArchiveExtract() {
+          return { matches: createWebCandidates(pendingMatches), pagesScanned: 1 };
+        }
+      },
+      parser: { calculateSimilarity: () => 1 },
+      logger: {
+        info(event, payload) {
+          logs.push({ event, payload });
+        },
+        warn() {},
+        error() {}
+      },
+      baseUrl: 'oddsportal://root'
+    });
+
+    engine._reconcilePendingMatch = async (l1Match) => ({
+      status: 'linked',
+      mapping: {
+        match_id: l1Match.match_id,
+        oddsportal_hash: `hash_${l1Match.match_id}`,
+        full_url: `oddsportal://match/${l1Match.match_id}`,
+        season: '2024/2025',
+        league_name: 'Premier League',
+        home_team: l1Match.home_team,
+        away_team: l1Match.away_team
+      }
+    });
+
+    const result = await engine.runReconMatrix({
+      season: '2024-2025',
+      concurrency: 5,
+      confidenceThreshold: 0.75
+    });
+
+    assert.strictEqual(result.linked, 120);
+    const progressLogs = logs.filter((entry) => entry.event === 'recon_progress_snapshot');
+    assert.deepStrictEqual(
+      progressLogs.map((entry) => entry.payload.processed),
+      [50, 100, 120]
+    );
+    assert.ok(
+      progressLogs.every((entry) => typeof entry.payload.memoryMb === 'number' && entry.payload.memoryMb >= 0),
+      '进度快照应包含内存占用'
+    );
+  });
+
   it('选择最佳候选时应优先同日比赛，避免被错误日期的同队名候选抢走', () => {
     const engine = new ReconEngine({
       parser: {
