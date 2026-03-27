@@ -25,6 +25,9 @@ class HttpClientError extends Error {
     this.mode = context.mode;
     this.statusCode = context.statusCode;
     this.retryCount = context.retryCount;
+    this.code = context.code || null;
+    this.expectedLeagueId = context.expectedLeagueId;
+    this.actualLeagueId = context.actualLeagueId;
     this.timestamp = new Date().toISOString();
   }
 }
@@ -44,6 +47,7 @@ class HttpClient {
     this.useStealthMode = options.useStealthMode !== false;
     this.requestTimeoutMs = options.requestTimeoutMs || 20000;
     this.baseBackoffMs = options.baseBackoffMs || 1000;
+    this.ensureBrowserHealthy = options.ensureBrowserHealthy || null;
   }
 
   /**
@@ -53,10 +57,14 @@ class HttpClient {
    * @returns {Promise<Object>} 响应数据
    * @throws {HttpClientError} 请求失败时抛出
    */
-  async request(url) {
+  async request(url, options = {}) {
+    const expectedLeagueId = Number.isFinite(Number(options.expectedLeagueId))
+      ? Number(options.expectedLeagueId)
+      : null;
+
     // 添加地区伪装参数
-    const urlWithCC = this._addCcodeParam(url);
-    this.logger.info(`[HttpClient] 请求: ${urlWithCC}`);
+    let requestUrl = this._addCcodeParam(url);
+    this.logger.info(`[HttpClient] 请求: ${requestUrl}`);
 
     let lastError = null;
     let attemptCount = 0;
@@ -65,17 +73,19 @@ class HttpClient {
     while (attemptCount < maxAttempts) {
       try {
         const response = this.useStealthMode
-          ? await this._stealthRequest(urlWithCC)
-          : await this._rawRequest(urlWithCC);
+          ? await this._stealthRequest(requestUrl)
+          : await this._rawRequest(requestUrl);
 
         // 验证响应有效性
         if (!response || typeof response !== 'object') {
           throw new HttpClientError('响应格式无效', {
-            url: urlWithCC,
+            url: requestUrl,
             mode: this.useStealthMode ? 'stealth' : 'raw',
             retryCount: attemptCount
           });
         }
+
+        this._assertLeagueIdentity(response, expectedLeagueId, requestUrl);
 
         return response;
 
@@ -89,6 +99,7 @@ class HttpClient {
           if (cleanUrl !== url) {
             this.logger.warn(`[HttpClient] 带参数请求失败，尝试纯净 URL: ${cleanUrl}`);
             url = cleanUrl;
+            requestUrl = this._addCcodeParam(url);
             continue;
           }
         }
@@ -101,10 +112,13 @@ class HttpClient {
     const enhancedError = new HttpClientError(
       `请求失败: ${lastError.message}`,
       {
-        url: urlWithCC,
+        url: requestUrl,
         mode: this.useStealthMode ? 'stealth' : 'raw',
         retryCount: attemptCount,
-        originalError: lastError.message
+        originalError: lastError.message,
+        code: lastError.code,
+        expectedLeagueId: lastError.expectedLeagueId,
+        actualLeagueId: lastError.actualLeagueId
       }
     );
 
@@ -118,6 +132,7 @@ class HttpClient {
    */
   _addCcodeParam(url) {
     if (url.includes('/search/suggest')) return url;
+    if (/[?&]ccode3=/.test(url)) return url;
     const separator = url.includes('?') ? '&' : '?';
     return `${url}${separator}ccode3=USA`;
   }
@@ -139,6 +154,10 @@ class HttpClient {
   async _stealthRequest(url) {
     let retryCount = 0;
     const maxRetries = 3;
+
+    if (typeof this.ensureBrowserHealthy === 'function') {
+      await this.ensureBrowserHealthy({ reason: 'preflight' });
+    }
 
     while (retryCount < maxRetries) {
       try {
@@ -185,8 +204,18 @@ class HttpClient {
         const backoffMs = this._computeBackoffMs(retryCount, error.statusCode);
         this.logger.warn(`[HttpClient] ${backoffMs}ms 后重试...`);
 
-        // 刷新页面重试
+        const shouldRebuildContext = this._shouldRebuildBrowserContext(error);
+
         await this._sleep(backoffMs);
+
+        if (shouldRebuildContext && typeof this.ensureBrowserHealthy === 'function') {
+          await this.ensureBrowserHealthy({
+            reason: error.message,
+            forceRebuild: true
+          });
+          continue;
+        }
+
         try {
           await this.browserProvider.goto('https://www.fotmob.com/', {
             waitUntil: 'domcontentloaded',
@@ -272,6 +301,58 @@ class HttpClient {
     } catch (e) {
       // 忽略重定向检测错误
     }
+  }
+
+  _assertLeagueIdentity(response, expectedLeagueId, url) {
+    if (!expectedLeagueId) {
+      return;
+    }
+
+    const actualLeagueId = this._extractLeagueId(response);
+    if (!actualLeagueId) {
+      return;
+    }
+
+    if (actualLeagueId !== expectedLeagueId) {
+      throw new HttpClientError(
+        `IDENTITY_MISMATCH: 请求联赛 ${expectedLeagueId}，响应联赛 ${actualLeagueId}`,
+        {
+          url,
+          mode: this.useStealthMode ? 'stealth' : 'raw',
+          code: 'IDENTITY_MISMATCH',
+          expectedLeagueId,
+          actualLeagueId
+        }
+      );
+    }
+  }
+
+  _extractLeagueId(response) {
+    const detailsId = response?.details?.id;
+    if (Number.isFinite(Number(detailsId))) {
+      return Number(detailsId);
+    }
+
+    const fallbackId = response?.id ?? response?.leagueId ?? response?.general?.leagueId;
+    return Number.isFinite(Number(fallbackId)) ? Number(fallbackId) : null;
+  }
+
+  _shouldRebuildBrowserContext(error) {
+    if (!error) {
+      return false;
+    }
+
+    if (error.code === 'IDENTITY_MISMATCH') {
+      return false;
+    }
+
+    const message = String(error.message || '').toLowerCase();
+    return message.includes('浏览器返回空数据')
+      || message.includes('received html instead of json')
+      || message.includes('browser fetch timeout')
+      || message.includes('context')
+      || message.includes('target page')
+      || message.includes('closed');
   }
 
   /**

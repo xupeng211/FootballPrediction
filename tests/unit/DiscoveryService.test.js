@@ -287,6 +287,325 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
     });
   });
 
+  describe('工业级硬化链路', () => {
+    it('内部联赛存在 providerId 映射时，应使用 providerId 请求并保留内部 ID 入库', async () => {
+      const requests = [];
+      const persisted = [];
+
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        concurrency: 1,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [{
+              id: 156,
+              providerId: 86,
+              code: 'SERIEB',
+              name: 'Serie B',
+              country: 'italy',
+              tier: 'P2',
+              enabled: true,
+              seasonType: 'dual_year',
+              defaultSeason: '2025/2026',
+              supportedSeasons: ['2025/2026']
+            }],
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: []
+          }),
+          getLeagueById: () => ({
+            id: 156,
+            providerId: 86,
+            code: 'SERIEB',
+            name: 'Serie B',
+            country: 'italy',
+            tier: 'P2',
+            enabled: true,
+            seasonType: 'dual_year',
+            defaultSeason: '2025/2026',
+            supportedSeasons: ['2025/2026']
+          }),
+          getActiveLeagues: () => [],
+          getDefaultSeason: () => '2025/2026',
+          getSingleYearLeagueIds: () => [],
+          getExpectedMatches: () => null,
+          buildLeagueApiUrl: (leagueId, season) => {
+            assert.strictEqual(leagueId, 156);
+            assert.strictEqual(season, '20252026');
+            return 'https://www.fotmob.com/api/data/leagues?id=86&season=20252026';
+          }
+        },
+        parser: {
+          parse: (response, leagueId, season) => {
+            assert.strictEqual(leagueId, 156);
+            assert.strictEqual(season, '2025/2026');
+            assert.deepStrictEqual(response.details, { id: 86 });
+            return [{
+              match_id: '156_20252026_9001',
+              external_id: '9001',
+              league_name: 'Serie B',
+              season: '2025/2026',
+              home_team: 'Sassuolo',
+              away_team: 'Palermo',
+              match_date: '2025-08-22T18:30:00.000Z',
+              status: 'scheduled',
+              is_finished: false
+            }];
+          }
+        },
+        fixtureRepository: {
+          persist: async (fixtures) => {
+            persisted.push(fixtures);
+            return { total: fixtures.length, inserted: fixtures.length, updated: 0, failed: 0 };
+          }
+        },
+        httpClient: {
+          request: async (url, options) => {
+            requests.push({ url, options });
+            return { details: { id: 86 }, fixtures: { allMatches: [{ id: 9001 }] } };
+          }
+        },
+        seasonDiscovery: {
+          discover: async (leagueId, season) => {
+            assert.strictEqual(leagueId, 86);
+            assert.strictEqual(season, '20252026');
+            return '20252026';
+          }
+        },
+        seasonStrategyFactory: {
+          format: () => '20252026',
+          isSingleYearLeague: () => false
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} },
+        extractor: { extractFromWebpage: async () => ({}), searchViaDOM: async () => ({}) },
+        uiHelper: {
+          printBanner: () => {},
+          printTargets: () => {},
+          printScanStart: () => {},
+          printHistoricalMode: () => {},
+          printNoFixtures: () => {},
+          printParsedFixtures: () => {},
+          printProgress: () => {},
+          printScanError: () => {},
+          generateReport: (stats) => stats
+        }
+      });
+
+      try {
+        const result = await testService.discover({ leagueId: 156, season: '2025/2026', fullSync: true });
+        assert.strictEqual(requests.length, 1);
+        assert.strictEqual(requests[0].url, 'https://www.fotmob.com/api/data/leagues?id=86&season=20252026');
+        assert.strictEqual(requests[0].options.expectedLeagueId, 86);
+        assert.strictEqual(persisted[0][0].match_id, '156_20252026_9001');
+        assert.strictEqual(result.inserted, 1);
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('IDENTITY_MISMATCH 时应中断该联赛且禁止回退入库', async () => {
+      let fallbackCalls = 0;
+      let persistCalls = 0;
+
+      const mismatchError = new Error('IDENTITY_MISMATCH: 请求联赛 86，响应联赛 110');
+      mismatchError.code = 'IDENTITY_MISMATCH';
+
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        concurrency: 1,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [{ id: 156, providerId: 86, code: 'SERIEB', name: 'Serie B', country: 'italy', tier: 'P2', enabled: true }],
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: []
+          }),
+          getLeagueById: () => ({ id: 156, providerId: 86, code: 'SERIEB', name: 'Serie B', country: 'italy', tier: 'P2', enabled: true }),
+          getActiveLeagues: () => [],
+          getDefaultSeason: () => '2025/2026',
+          getSingleYearLeagueIds: () => [],
+          getExpectedMatches: () => null,
+          buildLeagueApiUrl: () => 'https://www.fotmob.com/api/data/leagues?id=86&season=20252026'
+        },
+        parser: { parse: () => [] },
+        fixtureRepository: {
+          persist: async () => {
+            persistCalls += 1;
+            return { total: 0, inserted: 0, updated: 0, failed: 0 };
+          }
+        },
+        httpClient: {
+          request: async () => {
+            throw mismatchError;
+          }
+        },
+        seasonDiscovery: { discover: async () => '20252026' },
+        seasonStrategyFactory: {
+          format: () => '20252026',
+          isSingleYearLeague: () => false
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} },
+        extractor: {
+          extractFromWebpage: async () => {
+            fallbackCalls += 1;
+            return {};
+          },
+          searchViaDOM: async () => ({})
+        },
+        uiHelper: {
+          printBanner: () => {},
+          printTargets: () => {},
+          printScanStart: () => {},
+          printHistoricalMode: () => {},
+          printNoFixtures: () => {},
+          printParsedFixtures: () => {},
+          printProgress: () => {},
+          printScanError: () => {},
+          generateReport: (stats) => stats
+        }
+      });
+
+      try {
+        const result = await testService.discover({ leagueId: 156, season: '2025/2026' });
+        assert.strictEqual(result.failed, 1);
+        assert.strictEqual(fallbackCalls, 0);
+        assert.strictEqual(persistCalls, 0);
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('批量扫描时每完成 5 个联赛应触发一次冷却', async () => {
+      const cooldowns = [];
+      const leagues = Array.from({ length: 6 }, (_, index) => ({
+        id: 200 + index,
+        providerId: 200 + index,
+        code: `L${index + 1}`,
+        name: `League ${index + 1}`,
+        country: 'test',
+        tier: 'P1',
+        enabled: true,
+        seasonType: 'dual_year',
+        defaultSeason: '2025/2026',
+        supportedSeasons: ['2025/2026']
+      }));
+
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        concurrency: 2,
+        browserCooldownEveryLeagues: 5,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: leagues,
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: []
+          }),
+          getLeagueById: (leagueId) => leagues.find((league) => league.id === leagueId) || null,
+          getActiveLeagues: () => leagues,
+          getDefaultSeason: () => '2025/2026',
+          getSingleYearLeagueIds: () => [],
+          getExpectedMatches: () => null,
+          buildLeagueApiUrl: (leagueId) => `https://www.fotmob.com/api/data/leagues?id=${leagueId}&season=20252026`
+        },
+        parser: {
+          parse: (_response, leagueId) => [{
+            match_id: `${leagueId}_20252026_${leagueId}01`,
+            external_id: `${leagueId}01`,
+            league_name: `League ${leagueId}`,
+            season: '2025/2026',
+            home_team: 'Home',
+            away_team: 'Away',
+            match_date: '2025-08-16T14:00:00.000Z',
+            status: 'scheduled',
+            is_finished: false
+          }]
+        },
+        fixtureRepository: {
+          persist: async (fixtures) => ({ total: fixtures.length, inserted: fixtures.length, updated: 0, failed: 0 })
+        },
+        httpClient: {
+          request: async (_url, options) => ({ details: { id: options.expectedLeagueId }, fixtures: { allMatches: [{ id: 1 }] } })
+        },
+        seasonDiscovery: { discover: async (_leagueId, season) => season },
+        seasonStrategyFactory: {
+          format: () => '20252026',
+          isSingleYearLeague: () => false
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} },
+        extractor: { extractFromWebpage: async () => ({}), searchViaDOM: async () => ({}) },
+        uiHelper: {
+          printBanner: () => {},
+          printTargets: () => {},
+          printScanStart: () => {},
+          printHistoricalMode: () => {},
+          printNoFixtures: () => {},
+          printParsedFixtures: () => {},
+          printProgress: () => {},
+          printScanError: () => {},
+          generateReport: (stats) => stats
+        }
+      });
+
+      testService._coolDownBrowser = async (count) => {
+        cooldowns.push(count);
+      };
+
+      try {
+        const result = await testService.discover({ allLeagues: true, season: '2025/2026', fullSync: true });
+        assert.deepStrictEqual(cooldowns, [5]);
+        assert.strictEqual(result.inserted, 6);
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('并发自愈请求应复用同一次浏览器重建', async () => {
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        concurrency: 2,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        browserProvider: {
+          isInitialized: () => false,
+          close: async () => {},
+          initialize: async () => ({}),
+          warmup: async () => {}
+        },
+        networkInterceptor: {
+          reset: () => {},
+          setup: () => {},
+          getCapturedApis: () => new Map()
+        }
+      });
+
+      let rebuilds = 0;
+      testService._rebuildBrowserContext = async () => {
+        rebuilds += 1;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      };
+
+      try {
+        await Promise.all([
+          testService.ensureBrowserHealthy({ forceRebuild: true, reason: 'retry-a' }),
+          testService.ensureBrowserHealthy({ forceRebuild: true, reason: 'retry-b' })
+        ]);
+        assert.strictEqual(rebuilds, 1);
+      } finally {
+        await testService.close();
+      }
+    });
+  });
+
   describe('日期范围计算 (通过 Parser 内部)', () => {
     it('Parser 应在非历史模式下过滤日期', () => {
       const pastDate = new Date();
@@ -307,6 +626,27 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
         lookaheadDays: 7
       });
       assert.strictEqual(matches.length, 0, '应过滤过期比赛');
+    });
+
+    it('Parser 在 fullSync 模式下应绕过 recent 时间窗口', () => {
+      const farFutureDate = new Date();
+      farFutureDate.setDate(farFutureDate.getDate() + 120);
+
+      const mockResponse = {
+        matches: [{
+          id: 88,
+          home: { name: 'Aston Villa' },
+          away: { name: 'Everton' },
+          status: { utcTime: farFutureDate.toISOString() }
+        }]
+      };
+
+      const matches = parser.parse(mockResponse, 47, '2025/2026', false, {
+        lookbackDays: 30,
+        lookaheadDays: 7,
+        fullSync: true
+      });
+      assert.strictEqual(matches.length, 1, 'fullSync 应保留 recent 窗口外的已排期比赛');
     });
   });
 
