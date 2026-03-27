@@ -355,7 +355,9 @@ class ReconStitcher {
       status: 'pending'
     };
 
-    return await this.repository.saveOddsPortalMapping(mappingData);
+    return await this.repository.saveOddsPortalMapping(mappingData, {
+      pipelineStatus: 'RECON_LINKED'
+    });
   }
 
   /**
@@ -590,6 +592,8 @@ class ReconStitcher {
           match_confidence: 0.9,
           mapping_method: 'hash_lock',
           status: 'pending'
+        }, {
+          pipelineStatus: 'RECON_LINKED'
         });
 
         if (result.success) {
@@ -666,6 +670,8 @@ class ReconStitcher {
               match_confidence: bestScore,
               mapping_method: 'set_reconciliation',
               status: 'pending'
+            }, {
+              pipelineStatus: 'RECON_LINKED'
             });
 
             if (result.success) {
