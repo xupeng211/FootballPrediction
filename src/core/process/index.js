@@ -7,10 +7,12 @@
 'use strict';
 
 const { ZombieKiller, preFlightCleanup, forceKillBrowser, getZombieStats } = require('./ZombieKiller');
+const { ProcessSupervisor } = require('./ProcessSupervisor');
 
 module.exports = {
     ZombieKiller,
     preFlightCleanup,
     forceKillBrowser,
-    getZombieStats
+    getZombieStats,
+    ProcessSupervisor
 };

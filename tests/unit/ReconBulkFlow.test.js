@@ -361,7 +361,7 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     ]);
   });
 
-  it('批量对齐时应每 50 场输出一次进度快照', async () => {
+  it('批量对齐时在关闭高成功率降采样后应每 50 场输出一次进度快照', async () => {
     const pendingMatches = createPendingMatches(120);
     const logs = [];
 
@@ -395,7 +395,8 @@ describe('ReconEngine - Bulk Flow TDD', () => {
         warn() {},
         error() {}
       },
-      baseUrl: 'oddsportal://root'
+      baseUrl: 'oddsportal://root',
+      progressHighSuccessThreshold: 2
     });
 
     engine._reconcilePendingMatch = async (l1Match) => ({
@@ -599,14 +600,15 @@ describe('FixtureRepository - Recon sorting defense', () => {
       events.map((event) => event.sql),
       [
         'BEGIN',
+        'SELECT season, oddsportal_hash, match_id,',
         'INSERT INTO matches_oddsportal_mapping (match_id,',
         'INSERT INTO matches_oddsportal_mapping (match_id,',
-        'UPDATE matches SET pipeline_status',
+        'UPDATE matches m SET',
         'COMMIT',
         'RELEASE'
       ]
     );
-    assert.deepStrictEqual(events[3].params, [
+    assert.deepStrictEqual(events[4].params, [
       ['47_20252026_1001', '47_20252026_1002'],
       'RECON_LINKED'
     ]);

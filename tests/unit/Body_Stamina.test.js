@@ -14,7 +14,14 @@ const assert = require('node:assert');
 const { BrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory');
 const { ContextPoolManager, resetContextPoolManager } = require('../../src/infrastructure/browser/ContextPoolManager');
 
-describe('TITAN 体魄与续航测试 - 钢铁怪兽的 72 小时', () => {
+function setLastAccessTime(pool, workerId, lastAccessTime) {
+    const entry = pool.getEntry(workerId);
+    if (entry) {
+        entry.lastAccessTime = lastAccessTime;
+    }
+}
+
+describe('TITAN 体魄与续航测试 - 钢铁怪兽的 72 小时', { concurrency: false }, () => {
 
     beforeEach(() => {
         resetBrowserFactory();
@@ -266,19 +273,19 @@ describe('TITAN 体魄与续航测试 - 钢铁怪兽的 72 小时', () => {
 
             // 创建 2 个 context (达到 maxSize)
             await pool.getOrCreate(1, identity, { browserFactory: mockFactory, networkManager: null });
-            await new Promise(r => { setTimeout(r, 50); });
+            setLastAccessTime(pool, 1, 100);
             await pool.getOrCreate(2, identity, { browserFactory: mockFactory, networkManager: null });
+            setLastAccessTime(pool, 2, 200);
 
             // 立即访问 worker 1，让 worker 2 成为最久未使用
-            await new Promise(r => { setTimeout(r, 50); });
             await pool.getOrCreate(1, identity, { browserFactory: mockFactory, networkManager: null });
+            setLastAccessTime(pool, 1, 300);
 
             // 获取 worker 2 的 context ID（应该是最久未使用的）
             const entry2 = pool.getEntry(2);
             const context2Id = entry2.context.id;
 
             // 创建第 3 个，应该淘汰 worker 2 (最久未使用)
-            await new Promise(r => { setTimeout(r, 50); });
             await pool.getOrCreate(3, identity, { browserFactory: mockFactory, networkManager: null });
 
             // 验证最久未使用的 context 被关闭
@@ -446,8 +453,11 @@ describe('TITAN 体魄与续航测试 - 钢铁怪兽的 72 小时', () => {
             assert.strictEqual(stats.totalReuses, 2, '复用数应为 2');
             assert.ok(stats.reuseRate.includes('50'), '复用率应约为 50%');
 
+            // 显式设置访问时间，避免依赖真实计时导致全量并跑抖动
+            setLastAccessTime(pool, 1, 300);
+            setLastAccessTime(pool, 2, 100);
+
             // 第 3 个创建，触发 LRU 淘汰
-            await new Promise(r => { setTimeout(r, 50); });
             await pool.getOrCreate(3, identity, { browserFactory: mockFactory, networkManager: null });
             stats = pool.getStats();
             assert.strictEqual(stats.totalEvictions, 1, '淘汰数应为 1');

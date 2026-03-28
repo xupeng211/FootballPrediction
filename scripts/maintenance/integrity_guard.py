@@ -11,9 +11,10 @@ TITAN-V4.46.5 数据完整性卫士
 3. 生成修复建议
 
 用法:
-    docker-compose -f docker-compose.dev.yml exec dev python scripts/maintenance/integrity_guard.py
+    npm run status
+    docker-compose -f docker-compose.dev.yml exec -T dev python scripts/maintenance/integrity_guard.py
 
-添加到 crontab:
+添加到容器内 crontab:
     0 6 * * * python /app/scripts/maintenance/integrity_guard.py
 """
 

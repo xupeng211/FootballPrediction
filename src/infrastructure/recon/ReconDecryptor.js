@@ -154,10 +154,6 @@ class ReconDecryptor {
             }
           }
 
-          if (candidates.length > 0) {
-            return { found: true, name: candidates[0].name, type: candidates[0].type, validated: false };
-          }
-
           return { found: false, validated: false };
         } catch (e) {
           return { found: false, error: e.message };
@@ -165,6 +161,11 @@ class ReconDecryptor {
       }, { url: appScriptUrl, sample: sampleEncryptedData });
 
       if (!decryptFn || !decryptFn.found) {
+        if (sampleEncryptedData) {
+          this.logger.warn('app_script_candidate_rejected', {
+            reason: 'sample_validation_failed'
+          });
+        }
         return null;
       }
 
@@ -175,7 +176,7 @@ class ReconDecryptor {
         return page.evaluate(async ({ url, fnName, data }) => {
           const mod = await import(url);
           const fn = fnName === 'default' ? mod.default : mod[fnName];
-          return await fn(data);
+          return fn(data);
         }, { url: appScriptUrl, fnName: decryptFn.name, data: encryptedData });
       };
     } catch (error) {

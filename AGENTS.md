@@ -2,7 +2,7 @@
 
 > 系统版本: `V4.51.2-TOTAL-WAR`
 >
-> 最后整理: `2026-03-26`
+> 最后整理: `2026-03-29`
 >
 > 目标: 让 AI 助手先遵守约束，再高效落地，不把 `AGENTS.md` 继续膨胀成总手册。
 
@@ -98,7 +98,7 @@ docker-compose -f docker-compose.dev.yml exec dev bash
 优先使用以下两类方式：
 
 ```bash
-docker-compose -f docker-compose.dev.yml exec dev npm <script>
+docker-compose -f docker-compose.dev.yml exec dev npm run <script>
 docker-compose -f docker-compose.dev.yml exec dev node <script>
 ```
 
@@ -125,6 +125,7 @@ docker-compose -f docker-compose.dev.yml exec -T dev python <script>
 | L1 种子 | `docker-compose -f docker-compose.dev.yml exec dev npm run seed` | `scripts/ops/seed_fixtures.js` |
 | L1 发现 | `docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js` | `scripts/ops/titan_discovery.js` |
 | L2 生产收割 | `docker-compose -f docker-compose.dev.yml exec dev npm start` | `scripts/ops/run_production.js` |
+| 全自动总攻编排 | `docker-compose -f docker-compose.dev.yml exec dev npm run titan:total-war -- --season 2025/2026` | `scripts/ops/total_war_pipeline.js` |
 | L3 熔炼 | `docker-compose -f docker-compose.dev.yml exec dev npm run smelt` | `scripts/ops/smelt_all.js` |
 
 ### 5.2 Recon / Backfill / Monitor
@@ -145,6 +146,15 @@ Recon 运行补充约定：
   `harvested` 表示 `raw_match_data` 已落库、等待 Recon；
   `RECON_LINKED` 表示映射已建立且主表状态已同步；
   `RECON_MISMATCH` 表示当前批次未达到对齐阈值。
+- V11.0 Recon 服务边界：
+  `ReconNavigator` 只做浏览器流程调度；
+  `ReconEngine` 只做业务编排；
+  选择器、滚动参数、匹配阈值、协议超时必须进入 `config/recon_config.json`。
+- Recon 审计红线：
+  不允许把 `RECON_MISMATCH` 无条件回写到非 `harvested` 记录；
+  不允许在已有 mapping 的同赛季比赛上继续覆盖 `RECON_MISMATCH`；
+  `ReconHealthServer` 若启用，必须注册数据库 readiness；
+  `ReconEngine` 批量持久化日志必须带 `recon_run_id`、`batch_type`、`batch_index`、`total_batches`。
 
 ### 5.3 ML / ELO
 
@@ -153,21 +163,6 @@ Recon 运行补充约定：
 | 训练模型 | `npm run train` | 宿主机调用后进入容器执行 `scripts/ops/train_model.py` |
 | 生成预测 | `npm run predict` | 宿主机调用后进入容器执行 `scripts/ops/predict_pipeline.py` |
 | ELO 重算 | `docker-compose -f docker-compose.dev.yml exec dev npm run elo:recalc` | `scripts/maintenance/recalculate_elo.js` |
-
-### 5.4 不应作为稳定入口的脚本
-
-当前 `package.json` 中以下脚本指向缺失文件，不能在文档中当作可靠入口：
-
-- `harvest`
-- `harvest:swarm`
-- `titan:sync`
-- `titan:clean`
-- `metrics`
-- `elo:incremental`
-
-如需恢复，先补齐目标文件，再回写文档。
-
----
 
 ## 6. 核心文件地图
 
@@ -228,7 +223,11 @@ docker-compose -f docker-compose.dev.yml exec -T dev ruff check src/ scripts/ te
 ### 7.3 数据库与健康状态
 
 ```bash
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "SELECT 'L1' as layer, COUNT(*) FROM matches UNION ALL SELECT 'L2', COUNT(*) FROM raw_match_data UNION ALL SELECT 'L3', COUNT(*) FROM l3_features;"
+docker-compose -f docker-compose.dev.yml exec db \
+  psql -U football_user -d football_db \
+  -c "SELECT 'L1' as layer, COUNT(*) FROM matches \
+UNION ALL SELECT 'L2', COUNT(*) FROM raw_match_data \
+UNION ALL SELECT 'L3', COUNT(*) FROM l3_features;"
 docker-compose -f docker-compose.dev.yml exec dev npm run titan:check
 docker-compose -f docker-compose.dev.yml ps
 ```
@@ -239,6 +238,9 @@ docker-compose -f docker-compose.dev.yml ps
 - 改 Python 逻辑：至少运行相关 `pytest` 或入口脚本校验。
 - 改配置：至少验证能被目标入口成功加载。
 - 改文档：至少做一次链接、命令、路径的实际存在性检查。
+- 改 Recon 核心链路：
+  至少运行相关单测；
+  如果触碰生命周期、并发控制或批量持久化，默认补跑 `tests/unit/*.test.js` 全量。
 
 ---
 
@@ -286,6 +288,16 @@ docker-compose -f docker-compose.dev.yml ps
 - 运行最小但足够的验证。
 - 明确说明未验证的部分。
 - 如果发现仓库已有坏链路，单独指出，不把它伪装成已解决。
+
+### 9.4 Recon ELITE PASS 条件
+
+以下条件同时满足时，Recon / Total War 变更才可宣称达到 `ELITE PASS`：
+
+- `node --test tests/unit/*.test.js` 全绿
+- 浏览器、Guardian、DB Pool 的退出路径闭环
+- `RECON_MISMATCH` 更新具备条件保护，不会覆盖已建 mapping 的比赛
+- 关键运行参数全部来自 `config/recon_config.json`
+- 文档已同步到真实模块边界，而不是停留在旧的巨石结构描述
 
 ---
 
