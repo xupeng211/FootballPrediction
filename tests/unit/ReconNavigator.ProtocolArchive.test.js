@@ -4,6 +4,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert');
 
 const { ReconNavigator } = require('../../src/infrastructure/recon/ReconNavigator');
+const { ReconCircuitBreaker } = require('../../src/infrastructure/recon/ReconResilience');
 
 describe('ReconNavigator - Protocol Archive', () => {
   it('navigate 时应重置跨联赛残留的 apiEndpoints 与 decryptor', async () => {
@@ -144,6 +145,46 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(extractCalls, 1);
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'retry-hash');
+  });
+
+  it('脚本包装响应应先解包，不应误触发 decryptor', async () => {
+    let decryptCalls = 0;
+    let extractCalls = 0;
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.decryptor = {
+      getAlgorithmVersion: () => null,
+      async extractDecryptor() {
+        extractCalls++;
+        throw new Error('should_not_extract_for_script_wrapper');
+      },
+      async decrypt() {
+        decryptCalls++;
+        throw new Error('should_not_decrypt_for_script_wrapper');
+      }
+    };
+
+    const wrappedBody = [
+      "if (typeof pageVar == 'string') { pageVar = JSON.parse(pageVar); }",
+      'if (typeof pageVar != "undefined") {',
+      '  pageVar = pageOutrightsVar = Object.assign(pageVar, JSON.parse("{\\"d\\":{\\"total\\":1,\\"rows\\":[{\\"encodeEventId\\":\\"wrapped-hash\\",\\"url\\":\\"/football/europe/champions-league-2025-2026/a-b-wrapped-hash/\\",\\"home-name\\":\\"A\\",\\"away-name\\":\\"B\\",\\"date-start-timestamp\\":1748185200}]}}"));',
+      '}'
+    ].join(' ');
+
+    const matches = await navigator._parseApiResponse(
+      wrappedBody,
+      'https://www.oddsportal.com/ajax-user-data/t/champions-league-2025-2026/'
+    );
+
+    assert.strictEqual(extractCalls, 0);
+    assert.strictEqual(decryptCalls, 0);
+    assert.strictEqual(matches.length, 1);
+    assert.strictEqual(matches[0].hash, 'wrapped-hash');
+    assert.strictEqual(matches[0].homeTeam, 'A');
+    assert.strictEqual(matches[0].awayTeam, 'B');
   });
 
   it('当前赛季应改走联赛主页的 tournament 接口，而不是 results archive 接口', async () => {
@@ -356,5 +397,208 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(launchCount, 2);
     assert.ok(navigator.page);
     assert.strictEqual(navigator.isClosed, false);
+  });
+
+  it('fetchFullSeasonArchive 应识别 results 分页并聚合每页拦截结果', async () => {
+    const baseUrl = 'oddsportal://root/football/england/championship-2025-2026/results/';
+    const page2Url = 'oddsportal://root/football/england/championship-2025-2026/results/page/2/';
+    const page3Url = 'oddsportal://root/football/england/championship-2025-2026/results/page/3/';
+    const navigatedUrls = [];
+    const pageMatches = {
+      [baseUrl]: [
+        {
+          hash: 'page-1',
+          url: 'oddsportal://match/page-1',
+          homeTeam: 'Leeds United',
+          awayTeam: 'Burnley',
+          matchDate: '2025-08-12T19:00:00.000Z'
+        }
+      ],
+      [page2Url]: [
+        {
+          hash: 'page-2',
+          url: 'oddsportal://match/page-2',
+          homeTeam: 'Sunderland',
+          awayTeam: 'Coventry',
+          matchDate: '2025-08-13T19:00:00.000Z'
+        }
+      ],
+      [page3Url]: [
+        {
+          hash: 'page-3',
+          url: 'oddsportal://match/page-3',
+          homeTeam: 'Norwich',
+          awayTeam: 'Watford',
+          matchDate: '2025-08-14T19:00:00.000Z'
+        }
+      ]
+    };
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async evaluate(_fn, currentResultsUrl) {
+        return {
+          pageUrls: [
+            `${currentResultsUrl}page/2/`
+          ],
+          totalPages: 3
+        };
+      }
+    };
+    navigator.navigate = async (url) => {
+      navigatedUrls.push(url);
+      navigator.interceptedData = pageMatches[url] || [];
+      navigator.apiEndpoints = new Set([
+        `oddsportal://ajax/${navigatedUrls.length}`
+      ]);
+    };
+    navigator.protocolArchiveExtract = async () => ({
+      matches: [],
+      pagesScanned: 0,
+      totalCandidates: 0,
+      pageStats: [],
+      sourceState: 'SOURCE_EMPTY'
+    });
+
+    const result = await navigator.fetchFullSeasonArchive(baseUrl, {
+      maxPages: 10,
+      timeoutMs: 1234
+    });
+
+    assert.deepStrictEqual(navigatedUrls, [baseUrl, page2Url, page3Url]);
+    assert.deepStrictEqual(result.pageUrls, [baseUrl, page2Url, page3Url]);
+    assert.strictEqual(result.sourceState, 'FULL_SEASON_SWEEP');
+    assert.strictEqual(result.totalCandidates, 3);
+    assert.deepStrictEqual(
+      result.matches.map((item) => item.hash),
+      ['page-1', 'page-2', 'page-3']
+    );
+  });
+
+  it('fetchFullSeasonArchive 在英冠 sweep 与 archive 为空时，应走 current season 补救链路', async () => {
+    const baseUrl = 'oddsportal://root/football/england/championship-2025-2026/results/';
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+
+    navigator.domScraper.discoverSeasonResultPages = async () => ({
+      pageUrls: [baseUrl],
+      initialMatches: [],
+      initialSource: 'page_dom'
+    });
+    navigator.protocolArchiveExtract = async () => ({
+      matches: [],
+      pagesScanned: 0,
+      totalCandidates: 0,
+      pageStats: [],
+      sourceState: 'SOURCE_EMPTY'
+    });
+
+    let probedBaseUrl = null;
+    navigator.stateProber.probeCurrentSeasonFromPageState = async (inputBaseUrl) => {
+      probedBaseUrl = inputBaseUrl;
+      return {
+        matches: [
+          {
+            hash: 'championship-recovery',
+            url: 'oddsportal://match/championship-recovery',
+            homeTeam: 'Sheffield United',
+            awayTeam: 'Middlesbrough',
+            matchDate: '2025-08-15T19:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [
+          {
+            page: 1,
+            rows: 1,
+            newRows: 1,
+            total: 1,
+            source: 'CURRENT_RESULTS_ARCHIVE'
+          }
+        ],
+        sourceState: 'CURRENT_RESULTS_ARCHIVE'
+      };
+    };
+
+    const result = await navigator.fetchFullSeasonArchive(baseUrl, {
+      maxPages: 10,
+      timeoutMs: 1234,
+      preferCurrentSeasonSource: true
+    });
+
+    assert.strictEqual(probedBaseUrl, baseUrl);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'championship-recovery');
+    assert.strictEqual(result.pageStats.at(-1).source, 'CURRENT_RESULTS_ARCHIVE');
+  });
+
+  it('navigate 连续 timeout 时应触发熔断，第二次请求直接被拒绝', async () => {
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = { isClosed: () => false };
+    navigator.circuitBreaker = new ReconCircuitBreaker({
+      failureThreshold: 1,
+      resetTimeout: 60_000,
+      logger: { info() {}, warn() {}, error() {} }
+    });
+    navigator.browserContext.navigate = async () => {
+      throw new Error('Navigation timeout');
+    };
+
+    await assert.rejects(
+      () => navigator.navigate('oddsportal://timeout-1', { timeout: 10 }),
+      /Navigation timeout/
+    );
+    await assert.rejects(
+      () => navigator.navigate('oddsportal://timeout-2', { timeout: 10 }),
+      /Circuit breaker is OPEN/
+    );
+  });
+
+  it('_fetchAndDecrypt 连续失败时应受熔断器保护', async () => {
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = { isClosed: () => false };
+    navigator.circuitBreaker = new ReconCircuitBreaker({
+      failureThreshold: 1,
+      resetTimeout: 60_000,
+      logger: { info() {}, warn() {}, error() {} }
+    });
+    navigator.networkMonitor.fetchArchivePages = async () => {
+      throw new Error('503 Service Unavailable');
+    };
+
+    await assert.rejects(
+      () => navigator._fetchAndDecrypt('oddsportal://archive', 1, 100),
+      /503 Service Unavailable/
+    );
+    await assert.rejects(
+      () => navigator._fetchAndDecrypt('oddsportal://archive', 1, 100),
+      /Circuit breaker is OPEN/
+    );
   });
 });

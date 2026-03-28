@@ -174,18 +174,20 @@ describe('ReconScanner - Selector Resilience', () => {
 // ============================================================================
 
 describe('ReconScanner - RapidFuzz Integration', () => {
-  it('应使用 RapidFuzz 计算队名相似度 (旧算法应失败)', () => {
-    // 测试用例: Man Utd vs Manchester United
+  it('应使用当前缩写补强规则识别队名缩写', () => {
     const oddsPortalTeam = 'Man Utd';
     const fotmobTeam = 'Manchester United';
+    const unrelatedTeam = 'Chelsea';
 
-    // 旧算法 (简单字符串包含) 应返回低相似度
-    const oldSimilarity = calculateSimilarity(oddsPortalTeam, fotmobTeam);
-    console.log(`旧算法相似度: ${oldSimilarity}`);
+    const abbreviationScore = calculateSimilarity(oddsPortalTeam, fotmobTeam);
+    const unrelatedScore = calculateSimilarity(oddsPortalTeam, unrelatedTeam);
+    console.log(`缩写匹配相似度: ${abbreviationScore}`);
+    console.log(`无关队名相似度: ${unrelatedScore}`);
 
-    // 旧算法基于简单的词重叠，对缩写处理不佳
-    assert.ok(oldSimilarity < 0.85,
-      '旧算法对缩写队名应返回较低相似度');
+    assert.ok(abbreviationScore >= 0.95,
+      '当前算法应将缩写队名识别为高相似度');
+    assert.ok(abbreviationScore > unrelatedScore,
+      '缩写匹配得分应显著高于无关队名');
   });
 
   it('新 RapidFuzz 算法应识别队名缩写变体', () => {
