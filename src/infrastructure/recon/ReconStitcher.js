@@ -19,6 +19,7 @@ const RECON_CONFIG = require('../../../config/recon_config.json');
 const BASE_URL = RECON_CONFIG.oddsportal.base_url;
 
 const { ReconDistributedLock, LockAcquireFailure } = require('./ReconDistributedLock');
+const { Normalizer } = require('../../utils/Normalizer');
 
 /**
  * 缝合将军类
@@ -61,6 +62,150 @@ class ReconStitcher {
       return season;
     }
     return season.includes('-') ? season.replace('-', '/') : season;
+  }
+
+  _normalizeTeamName(teamName) {
+    const rawTeamName = typeof teamName === 'string' ? teamName : String(teamName || '');
+    return String(Normalizer.normalizeTeamName(rawTeamName) || rawTeamName || '')
+      .toLowerCase()
+      .trim();
+  }
+
+  _hasTextualTeamName(teamName) {
+    return typeof teamName === 'string' && /[a-z\u00c0-\u024f]/i.test(teamName);
+  }
+
+  _resolveWebMatchTeams(match, l1Matches = []) {
+    if (!match) {
+      return match;
+    }
+
+    if (this._hasTextualTeamName(match.homeTeam) && this._hasTextualTeamName(match.awayTeam)) {
+      return match;
+    }
+
+    const derivedTeams = this._deriveTeamsFromUrl(match.url, l1Matches);
+    if (!derivedTeams) {
+      return {
+        ...match,
+        homeTeam: String(match.homeTeam || ''),
+        awayTeam: String(match.awayTeam || '')
+      };
+    }
+
+    return {
+      ...match,
+      homeTeam: derivedTeams.homeTeam,
+      awayTeam: derivedTeams.awayTeam
+    };
+  }
+
+  _deriveTeamsFromUrl(url, l1Matches = []) {
+    const slugMatch = String(url || '').match(/\/([^/]+)-[A-Za-z0-9]{8}\/?$/);
+    if (!slugMatch) {
+      return null;
+    }
+
+    const parts = slugMatch[1].split('-').filter(Boolean);
+    if (parts.length < 2) {
+      return null;
+    }
+
+    let bestSplit = null;
+
+    for (let index = 1; index < parts.length; index++) {
+      const left = parts.slice(0, index).join(' ');
+      const right = parts.slice(index).join(' ');
+
+      let splitScore = 0;
+      let bestL1Pair = null;
+      for (const l1Match of l1Matches) {
+        const directScore = (
+          this._calculateTeamSimilarity(left, l1Match.home_team) +
+          this._calculateTeamSimilarity(right, l1Match.away_team)
+        ) / 2;
+        const swappedScore = (
+          this._calculateTeamSimilarity(left, l1Match.away_team) +
+          this._calculateTeamSimilarity(right, l1Match.home_team)
+        ) / 2;
+
+        if (directScore >= splitScore) {
+          splitScore = directScore;
+          bestL1Pair = {
+            homeTeam: l1Match.home_team,
+            awayTeam: l1Match.away_team
+          };
+        }
+
+        if (swappedScore > splitScore) {
+          splitScore = swappedScore;
+          bestL1Pair = {
+            homeTeam: l1Match.away_team,
+            awayTeam: l1Match.home_team
+          };
+        }
+      }
+
+      if (!bestSplit || splitScore > bestSplit.score) {
+        bestSplit = { left, right, score: splitScore, bestL1Pair };
+      }
+    }
+
+    if (!bestSplit) {
+      return null;
+    }
+
+    if (bestSplit.bestL1Pair) {
+      return bestSplit.bestL1Pair;
+    }
+
+    return {
+      homeTeam: Normalizer.normalizeTeamName(bestSplit.left) || bestSplit.left,
+      awayTeam: Normalizer.normalizeTeamName(bestSplit.right) || bestSplit.right
+    };
+  }
+
+  _calculateTeamSimilarity(left, right) {
+    const normalizedLeft = this._normalizeTeamName(left);
+    const normalizedRight = this._normalizeTeamName(right);
+
+    if (normalizedLeft && normalizedRight && normalizedLeft === normalizedRight) {
+      return 1.0;
+    }
+
+    return this.parser
+      ? this.parser.calculateSimilarity(left, right)
+      : this.simpleSimilarity(left, right);
+  }
+
+  _resolveOrientation(sourceHome, sourceAway, l1Home, l1Away) {
+    const directHome = this._calculateTeamSimilarity(sourceHome, l1Home);
+    const directAway = this._calculateTeamSimilarity(sourceAway, l1Away);
+    const swappedHome = this._calculateTeamSimilarity(sourceHome, l1Away);
+    const swappedAway = this._calculateTeamSimilarity(sourceAway, l1Home);
+    const directScore = (directHome + directAway) / 2;
+    const swappedScore = (swappedHome + swappedAway) / 2;
+
+    const directNormalized = this._normalizeTeamName(sourceHome) === this._normalizeTeamName(l1Home)
+      && this._normalizeTeamName(sourceAway) === this._normalizeTeamName(l1Away);
+    const swappedNormalized = this._normalizeTeamName(sourceHome) === this._normalizeTeamName(l1Away)
+      && this._normalizeTeamName(sourceAway) === this._normalizeTeamName(l1Home);
+
+    const directMatch = directNormalized || (directHome > 0.75 && directAway > 0.75);
+    const swappedMatch = swappedNormalized || (swappedHome > 0.75 && swappedAway > 0.75);
+    const isReversed = swappedMatch && (
+      !directMatch ||
+      swappedScore > directScore ||
+      (swappedNormalized && !directNormalized)
+    );
+
+    return {
+      directMatch,
+      swappedMatch,
+      directScore,
+      swappedScore,
+      isReversed
+    };
   }
 
   /**
@@ -186,7 +331,22 @@ class ReconStitcher {
     }
 
     // 保存映射
-    const result = await this.saveMapping(match, teams, matchInfo, season, leagueConfig);
+    let result;
+    try {
+      result = await this.saveMapping(match, teams, matchInfo, season, leagueConfig);
+    } catch (error) {
+      if (error.code === 'ORIENTATION_UNCERTAIN') {
+        this.logger.warn('orientation_uncertain', {
+          hash: match.hash,
+          season,
+          league: leagueConfig.name,
+          teams
+        });
+        return { status: 'unmatched', details: { reason: 'orientation_uncertain', teams } };
+      }
+
+      throw error;
+    }
 
     if (result.success) {
       this.processedHashes.add(match.hash);
@@ -342,20 +502,36 @@ class ReconStitcher {
    * 保存映射
    */
   async saveMapping(match, teams, matchInfo, season, leagueConfig) {
+    const l1HomeTeam = matchInfo.dbHome || teams.homeTeam;
+    const l1AwayTeam = matchInfo.dbAway || teams.awayTeam;
+    const orientation = this._resolveOrientation(
+      teams.homeTeam,
+      teams.awayTeam,
+      l1HomeTeam,
+      l1AwayTeam
+    );
+
+    if (!orientation.directMatch && !orientation.swappedMatch) {
+      const error = new Error('ORIENTATION_UNCERTAIN');
+      error.code = 'ORIENTATION_UNCERTAIN';
+      throw error;
+    }
+
     const mappingData = {
       match_id: matchInfo.matchId,
       oddsportal_hash: match.hash,
       full_url: match.url,
       season: season.replace('-', '/'),
       league_name: leagueConfig.name,
-      home_team: teams.homeTeam,
-      away_team: teams.awayTeam,
+      home_team: l1HomeTeam,
+      away_team: l1AwayTeam,
+      is_reversed: orientation.isReversed,
       match_confidence: matchInfo.confidence || 0.75,
       mapping_method: matchInfo.method || 'exact',
       status: 'pending'
     };
 
-    return await this.repository.saveOddsPortalMapping(mappingData, {
+    return this.repository.saveOddsPortalMapping(mappingData, {
       pipelineStatus: 'RECON_LINKED'
     });
   }
@@ -368,7 +544,7 @@ class ReconStitcher {
     if (matchInfo) return matchInfo;
 
     if (this.parser) {
-      return await this.findWithFuzzyMatch(homeTeam, awayTeam, season);
+      return this.findWithFuzzyMatch(homeTeam, awayTeam, season);
     }
 
     return null;
@@ -536,12 +712,13 @@ class ReconStitcher {
     // 建立 L1 映射
     const l1Map = new Map();
     for (const match of l1Matches) {
-      const key = `${match.home_team.toLowerCase()}_${match.away_team.toLowerCase()}`;
+      const key = `${this._normalizeTeamName(match.home_team)}_${this._normalizeTeamName(match.away_team)}`;
       l1Map.set(key, match);
     }
 
-    for (const match of interceptedMatches) {
+    for (const rawMatch of interceptedMatches) {
       try {
+        const match = this._resolveWebMatchTeams(rawMatch, l1Matches);
         if (match.hash && this.processedHashes.has(match.hash)) {
           skipped++;
           continue;
@@ -556,27 +733,34 @@ class ReconStitcher {
 
         // Hash 锁定匹配
         let targetL1 = null;
-        const exactKey = `${match.homeTeam.toLowerCase()}_${match.awayTeam.toLowerCase()}`;
+        let orientation = null;
+        const exactKey = `${this._normalizeTeamName(match.homeTeam)}_${this._normalizeTeamName(match.awayTeam)}`;
         targetL1 = l1Map.get(exactKey);
+        if (targetL1) {
+          orientation = this._resolveOrientation(match.homeTeam, match.awayTeam, targetL1.home_team, targetL1.away_team);
+        }
+
+        if (!targetL1) {
+          const reversedKey = `${this._normalizeTeamName(match.awayTeam)}_${this._normalizeTeamName(match.homeTeam)}`;
+          targetL1 = l1Map.get(reversedKey);
+          if (targetL1) {
+            orientation = this._resolveOrientation(match.homeTeam, match.awayTeam, targetL1.home_team, targetL1.away_team);
+          }
+        }
 
         // 模糊匹配兜底
         if (!targetL1) {
-          for (const [key, l1] of l1Map.entries()) {
-            const homeSim = this.parser
-              ? this.parser.calculateSimilarity(l1.home_team, match.homeTeam)
-              : this.simpleSimilarity(l1.home_team, match.homeTeam);
-            const awaySim = this.parser
-              ? this.parser.calculateSimilarity(l1.away_team, match.awayTeam)
-              : this.simpleSimilarity(l1.away_team, match.awayTeam);
-
-            if (homeSim > 0.6 && awaySim > 0.6) {
+          for (const [, l1] of l1Map.entries()) {
+            const candidateOrientation = this._resolveOrientation(match.homeTeam, match.awayTeam, l1.home_team, l1.away_team);
+            if (candidateOrientation.directMatch || candidateOrientation.swappedMatch) {
               targetL1 = l1;
+              orientation = candidateOrientation;
               break;
             }
           }
         }
 
-        if (!targetL1) {
+        if (!targetL1 || !orientation || (!orientation.directMatch && !orientation.swappedMatch)) {
           unmatched++;
           continue;
         }
@@ -589,6 +773,7 @@ class ReconStitcher {
           league_name: leagueConfig.name,
           home_team: targetL1.home_team,
           away_team: targetL1.away_team,
+          is_reversed: orientation.isReversed,
           match_confidence: 0.9,
           mapping_method: 'hash_lock',
           status: 'pending'
@@ -603,7 +788,7 @@ class ReconStitcher {
           skipped++;
         }
       } catch (e) {
-        this.logger.error('hash_lock_error', { hash: match.hash, error: e.message });
+        this.logger.error('hash_lock_error', { hash: rawMatch?.hash, error: e.message });
         unmatched++;
       }
     }
@@ -640,7 +825,8 @@ class ReconStitcher {
         l1: pendingL1.length
       });
 
-      for (const webMatch of pendingWeb) {
+      for (const rawWebMatch of pendingWeb) {
+        const webMatch = this._resolveWebMatchTeams(rawWebMatch, pendingL1);
         // 找到最佳 L1 匹配
         let bestMatch = null;
         let bestScore = 0;
@@ -659,6 +845,18 @@ class ReconStitcher {
 
         if (bestMatch) {
           try {
+            const orientation = this._resolveOrientation(
+              webMatch.homeTeam,
+              webMatch.awayTeam,
+              bestMatch.home_team,
+              bestMatch.away_team
+            );
+
+            if (!orientation.directMatch && !orientation.swappedMatch) {
+              unmatched++;
+              continue;
+            }
+
             const result = await this.repository.saveOddsPortalMapping({
               match_id: bestMatch.match_id,
               oddsportal_hash: webMatch.hash,
@@ -667,6 +865,7 @@ class ReconStitcher {
               league_name: leagueConfig.name,
               home_team: bestMatch.home_team,
               away_team: bestMatch.away_team,
+              is_reversed: orientation.isReversed,
               match_confidence: bestScore,
               mapping_method: 'set_reconciliation',
               status: 'pending'
@@ -717,7 +916,7 @@ class ReconStitcher {
     if (!teamName) return '';
 
     // 标准化并分词
-    const normalized = teamName
+    const normalized = String(teamName)
       .toLowerCase()
       .replace(/[^a-z\s]/g, '')
       .trim();

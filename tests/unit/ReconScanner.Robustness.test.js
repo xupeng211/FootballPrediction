@@ -29,40 +29,59 @@ const {
 } = require('../../src/infrastructure/services/FixtureRepository');
 
 describe('ReconScanner Robustness - Fallback Safety', () => {
-  it('应在 API 失败后进入 fallback 路径且不再因 dbSeason 崩溃', async () => {
-    let unstitchedCalls = 0;
-
+  it('smartScan 应直接走 season mirror，不再进入 date-driven fallback', async () => {
+    let pendingCalls = 0;
+    let domFallbackCalls = 0;
     const repository = {
       async getUnstitchedMatches() {
-        unstitchedCalls++;
+        pendingCalls++;
         return [{
           match_id: '54_20242025_001',
           home_team: 'Bayern Munich',
           away_team: 'Borussia Dortmund',
           match_date: '2024-08-10T18:30:00Z'
         }];
+      },
+      async batchSaveOddsPortalMappings(mappings) {
+        return { success: true, inserted: mappings.length };
+      },
+      async batchUpdateMatchPipelineStatus(matchIds) {
+        return { updated: matchIds.length };
       }
     };
 
     const navigator = {
-      async protocolArchiveExtract() {
-        return { matches: [], pagesScanned: 0 };
+      async fetchFullSeasonArchive() {
+        return {
+          matches: [{
+            hash: 'mirror-hash',
+            url: 'oddsportal://bundesliga/bayern-dortmund',
+            homeTeam: 'Bayern Munich',
+            awayTeam: 'Borussia Dortmund',
+            matchDate: '2024-08-10T18:30:00Z'
+          }],
+          pagesScanned: 3,
+          totalCandidates: 1,
+          sourceState: 'FULL_SEASON_SWEEP'
+        };
       }
     };
 
     const engine = new ReconEngine({
       repository,
       navigator,
-      parser: { calculateSimilarity: () => 0 },
-      stitcher: { stitchWithHashLock: async () => ({ inserted: 0 }) },
+      parser: { calculateSimilarity: () => 1 },
       logger: { info() {}, warn() {}, error() {} }
     });
 
-    engine.domFallbackScan = async () => ({
-      success: true,
-      inserted: 1,
-      durationMs: 10
-    });
+    engine.domFallbackScan = async () => {
+      domFallbackCalls++;
+      return {
+        success: true,
+        inserted: 1,
+        durationMs: 10
+      };
+    };
 
     const result = await engine.smartScan('2024-2025', {
       name: 'Bundesliga',
@@ -70,11 +89,31 @@ describe('ReconScanner Robustness - Fallback Safety', () => {
       slug: 'bundesliga'
     });
 
-    assert.strictEqual(result.success, true, 'fallback 结束后应返回成功');
-    assert.strictEqual(result.strategy, 'hybrid', '应落入 hybrid 策略');
-    assert.strictEqual(result.totalInserted, 1, 'DOM fallback 插入数应被累计');
-    assert.strictEqual(Number(result.coverage), 100, '覆盖率应基于 dbSeason 正确回算');
-    assert.strictEqual(unstitchedCalls, 3, '协议扫描、日期扫描和 fallback 回算都应访问未缝合比赛');
+    assert.strictEqual(result.success, true, 'season mirror 应直接成功');
+    assert.strictEqual(result.strategy, 'season_mirror', '不应再进入 date-driven 混合策略');
+    assert.strictEqual(result.totalInserted, 1, 'season mirror 应直接产出链接');
+    assert.strictEqual(Number(result.coverage), 100, '覆盖率应直接按 pendingTotal 回算');
+    assert.strictEqual(pendingCalls, 1, 'season mirror 只应加载一次待处理比赛');
+    assert.strictEqual(domFallbackCalls, 0, '有 season mirror 候选时不应进入 DOM fallback');
+  });
+});
+
+describe('ReconScanner Robustness - Config Fail Fast', () => {
+  it('loadConfig 遇到非法字段类型时必须抛出带字段名的 FATAL_CONFIG', () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-config-invalid-'));
+    const configPath = path.join(tempDir, 'recon_config.json');
+    const invalidConfig = structuredClone(require('../../config/recon_config.json'));
+    invalidConfig.recon_runtime.network_monitor.page_size = 'invalid';
+    fs.writeFileSync(configPath, JSON.stringify(invalidConfig), 'utf8');
+
+    assert.throws(
+      () => loadConfig(configPath),
+      (error) => {
+        assert.strictEqual(error.code, 'FATAL_CONFIG');
+        assert.match(error.message, /recon_runtime\.network_monitor\.page_size/);
+        return true;
+      }
+    );
   });
 });
 
@@ -88,7 +127,8 @@ describe('ReconScanner Robustness - Repository Transactions', () => {
         return {
           rows: [
             { column_name: 'match_confidence' },
-            { column_name: 'mapping_method' }
+            { column_name: 'mapping_method' },
+            { column_name: 'is_reversed' }
           ]
         };
       },
@@ -98,6 +138,9 @@ describe('ReconScanner Robustness - Repository Transactions', () => {
           async query(sql) {
             const normalized = sql.trim().split(/\s+/).slice(0, 4).join(' ');
             events.push(normalized);
+            if (sql.includes('SELECT season, oddsportal_hash')) {
+              return { rows: [] };
+            }
             if (sql.includes('RETURNING match_id')) {
               return { rows: [{ match_id: 'saved' }] };
             }
@@ -144,6 +187,7 @@ describe('ReconScanner Robustness - Repository Transactions', () => {
       events,
       [
         'BEGIN',
+        'SELECT season, oddsportal_hash, match_id,',
         'INSERT INTO matches_oddsportal_mapping (match_id,',
         'INSERT INTO matches_oddsportal_mapping (match_id,',
         'COMMIT',
@@ -162,7 +206,8 @@ describe('ReconScanner Robustness - Repository Transactions', () => {
         return {
           rows: [
             { column_name: 'match_confidence' },
-            { column_name: 'mapping_method' }
+            { column_name: 'mapping_method' },
+            { column_name: 'is_reversed' }
           ]
         };
       },
@@ -171,6 +216,10 @@ describe('ReconScanner Robustness - Repository Transactions', () => {
           async query(sql) {
             const normalized = sql.trim().split(/\s+/).slice(0, 4).join(' ');
             events.push(normalized);
+
+            if (sql.includes('SELECT season, oddsportal_hash')) {
+              return { rows: [] };
+            }
 
             if (sql.includes('RETURNING match_id')) {
               insertCount++;
@@ -218,13 +267,14 @@ describe('ReconScanner Robustness - Repository Transactions', () => {
           away_team: 'D'
         }
       ]),
-      (error) => error instanceof RepositoryError && error.code === 'MAX_RETRIES_EXCEEDED'
+      (error) => error instanceof RepositoryError && error.code === 'UNIQUE_VIOLATION'
     );
 
     assert.deepStrictEqual(
       events,
       [
         'BEGIN',
+        'SELECT season, oddsportal_hash, match_id,',
         'INSERT INTO matches_oddsportal_mapping (match_id,',
         'INSERT INTO matches_oddsportal_mapping (match_id,',
         'ROLLBACK',
@@ -307,6 +357,93 @@ describe('ReconScanner Robustness - TraceID Propagation', () => {
       ReconNavigator.prototype.launch = originalLaunch;
       ReconNavigator.prototype.close = originalClose;
     }
+  });
+});
+
+describe('ReconScanner Robustness - Runtime Kill Switch', () => {
+  it('ReconEngine smartScan 在 RECON_STRATEGY=legacy 时必须回退到 protocolArchive 路径', async () => {
+    const engine = new ReconEngine({
+      repository: {
+        async getUnstitchedMatches() {
+          throw new Error('legacy path should not ask getUnstitchedMatches directly');
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} },
+      reconStrategy: 'legacy',
+      taskPlanner: {
+        formatSeasonForUrl(season) {
+          return season;
+        },
+        buildResultsUrl(leagueConfig, season) {
+          return `https://example.com/${leagueConfig.slug}/${season}`;
+        }
+      }
+    });
+
+    engine.protocolArchiveScan = async () => ({
+      success: true,
+      pendingTotal: 4,
+      inserted: 3,
+      unmatched: 1,
+      coverage: 75,
+      candidatesFound: 9
+    });
+
+    const result = await engine.smartScan('2024-2025', {
+      name: 'Bundesliga',
+      slug: 'bundesliga'
+    });
+
+    assert.strictEqual(result.strategy, 'legacy_protocol_archive');
+    assert.strictEqual(result.linked, 3);
+    assert.strictEqual(result.mismatched, 1);
+    assert.strictEqual(result.candidateCount, 9);
+  });
+
+  it('ReconEngine smartScan 在禁用 DOM fallback 时遇到 SOURCE_EMPTY 必须直接失败返回', async () => {
+    let domFallbackCalls = 0;
+    const engine = new ReconEngine({
+      repository: {
+        async getUnstitchedMatches() {
+          return [{ match_id: 'm1', home_team: 'A', away_team: 'B', match_date: '2024-08-10T18:30:00Z' }];
+        }
+      },
+      taskPlanner: {
+        buildTarget() {
+          return {
+            dbSeason: '2024/2025',
+            season: '2024-2025',
+            league: { name: 'Bundesliga', slug: 'bundesliga', country: 'germany' },
+            resultsUrl: 'https://example.com/results/'
+          };
+        },
+        async loadReconPendingMatches() {
+          return [{ match_id: 'm1', home_team: 'A', away_team: 'B', match_date: '2024-08-10T18:30:00Z' }];
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} },
+      disableDomFallback: true
+    });
+
+    engine._runReconTarget = async () => {
+      const error = new Error('SOURCE_EMPTY');
+      error.code = 'SOURCE_EMPTY';
+      throw error;
+    };
+    engine.domFallbackScan = async () => {
+      domFallbackCalls++;
+      return { success: true, inserted: 1 };
+    };
+
+    const result = await engine.smartScan('2024-2025', {
+      name: 'Bundesliga',
+      slug: 'bundesliga',
+      country: 'germany'
+    });
+
+    assert.strictEqual(result.success, false);
+    assert.strictEqual(result.strategy, 'season_mirror_dom_disabled');
+    assert.strictEqual(domFallbackCalls, 0);
   });
 });
 
@@ -419,6 +556,14 @@ describe('ReconScanner Robustness - CLI Defaults', () => {
     ], '100.00');
 
     assert.strictEqual(exitCode, 1);
+  });
+
+  it('无待对齐比赛且无失败时，整体退出码必须为 0', () => {
+    const exitCode = computeExitCode([
+      { success: true, league: 'Premier League', inserted: 0, pendingTotal: 0, coverage: 0 }
+    ], '0.00');
+
+    assert.strictEqual(exitCode, 0);
   });
 });
 

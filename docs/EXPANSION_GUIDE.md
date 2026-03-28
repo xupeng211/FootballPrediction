@@ -1,320 +1,157 @@
-# TITAN 联赛扩张 SOP (Standard Operating Procedure)
+# TITAN 联赛扩张指南
 
-> **版本**: V4.46.6 | **最后更新**: 2026-03-09
+> 版本: `V11.0`
 >
-> 本文档指导如何将一个新联赛（如英超、法甲）接入 TITAN 收割系统。
+> 目标: 新增联赛时优先改配置，不改核心 Recon/Harvest 代码。
 
----
+## 1. 适用前提
 
-## 📋 快速检查清单
+这份指南适用于以下场景：
 
-```
-□ 1. 确认联赛 ID 和配置
-□ 2. 修改 leagues.json
-□ 3. 运行 L1 扫描 (seed)
-□ 4. 测试 L2 收割 (harvest)
-□ 5. 执行 L3 熔炼 (smelt)
-□ 6. 验证数据完整性
-```
+- 新增一个已经被 FotMob / OddsPortal 正常支持的联赛
+- 调整现有联赛的 OddsPortal slug、国家路径或队名映射
+- 为 Recon DOM fallback 增加 selector，而不改 `ReconNavigator` / `ReconEngine`
 
----
+如果目标站点结构发生根本变化，先评估是否需要扩展 [src/infrastructure/recon/README.md](/home/xupeng/projects/FootballPrediction/src/infrastructure/recon/README.md) 中定义的服务边界，再决定是否改代码。
 
-## 1️⃣ 确认联赛信息
+## 2. 配置唯一入口
 
-### 1.1 获取 FotMob League ID
+新增联赛时，优先修改以下配置源：
 
-访问 FotMob 网站，找到目标联赛的 URL：
+- [config/leagues.json](/home/xupeng/projects/FootballPrediction/config/leagues.json)
+  控制 L1 Discovery / Harvest 的联赛启用状态和联赛元数据。
+- [config/recon_config.json](/home/xupeng/projects/FootballPrediction/config/recon_config.json)
+  控制 Recon URL 模板、队名映射、DOM selector、超时、滚动参数和匹配阈值。
 
-```
-https://www.fotmob.com/leagues/47/overview/premier-league
-                              ↑
-                          League ID
-```
+禁止直接把以下内容写进 JS：
 
-### 1.2 常用联赛 ID 对照表
+- OddsPortal URL 模板
+- CSS selector
+- 滚动轮次、步长、等待时间
+- 相似度阈值、日期权重、熔断等待时间
 
-| 联赛 | FotMob ID | OddsPortal 名称 |
-|------|-----------|-----------------|
-| Premier League | 47 | england/premier-league |
-| La Liga | 87 | spain/laliga |
-| Bundesliga | 54 | germany/bundesliga |
-| Serie A | 55 | italy/serie-a |
-| Ligue 1 | 53 | france/ligue-1 |
-| Champions League | 42 | europe/champions-league |
+## 3. 新增联赛的标准步骤
 
----
+### 3.1 更新 `config/leagues.json`
 
-## 2️⃣ 修改配置文件
+补齐联赛的基础元数据：
 
-### 2.1 编辑 `config/leagues.json`
+- `id`
+- `name`
+- `country`
+- `slug`
+- `enabled`
 
-```json
-{
-  "version": "V4.46.6",
-  "active_leagues": [
-    {
-      "id": 47,                    // ← FotMob League ID
-      "name": "Premier League",    // ← 显示名称
-      "country": "England",        // ← 国家
-      "enabled": true              // ← 设为 true 启用
-    }
-  ],
-  "inactive_leagues": [
-    // 其他联赛设为 enabled: false
-  ],
-  "active_seasons": ["2025/2026"]
-}
-```
+### 3.2 更新 `config/recon_config.json`
 
-### 2.2 验证配置
+最少需要检查以下字段：
+
+- `leagues.<CODE>`
+  Recon 侧联赛名称、国家、slug、league_id
+- `team_slugs`
+  目标联赛常见队名 slug 列表
+- `team_mappings`
+  常见缩写、别名、历史名映射
+- `recon_runtime.dom_scraper`
+  如果该联赛页面结构特殊，补 selector 而不是改 `ReconDomScraper.js`
+- `recon_runtime.task_planner.results_path`
+  如果 URL 模板变化，先改模板
+
+### 3.3 验证配置能被系统读取
 
 ```bash
-# 进入开发容器
-docker-compose -f docker-compose.dev.yml exec dev bash
-
-# 检查配置语法
-node -e "console.log(JSON.parse(require('fs').readFileSync('config/leagues.json')))"
+docker-compose -f docker-compose.dev.yml exec -T dev node -e "const fs=require('fs'); JSON.parse(fs.readFileSync('config/recon_config.json','utf8')); JSON.parse(fs.readFileSync('config/leagues.json','utf8')); console.log('config_ok')"
 ```
 
----
+## 4. Recon 配置驱动点
 
-## 3️⃣ 执行 L1 扫描 (赛程发现)
+V11.0 之后，Recon 新服务已经全部配置驱动：
 
-### 3.1 扫描新联赛赛程
+- `ReconBrowserContext`
+  读取 `recon_runtime.browser_context`
+- `ReconNetworkMonitor`
+  读取 `recon_runtime.network_monitor`
+- `ReconDomScraper`
+  读取 `recon_runtime.dom_scraper`
+- `ReconStateProber`
+  读取 `recon_runtime.state_prober`
+- `ReconMatchEvaluator`
+  读取 `matching` 与 `recon_runtime.match_evaluator`
+- `ReconMirrorManager`
+  读取 `matching` 与 `recon_runtime.mirror_manager`
+- `ReconTaskPlanner`
+  读取 `recon_runtime.task_planner`
+- `ReconEngine`
+  读取 `recon_runtime.engine`
+
+结论很简单：如果只是扩张联赛，不应该再改这些文件。
+
+## 5. 最小验证路径
+
+### 5.1 L1 Discovery
 
 ```bash
-# 方式 A: 使用 npm script (推荐)
-npm run seed
-
-# 方式 B: 直接调用脚本
-node scripts/ops/seed_fixtures.js --league-id 47
-
-# 方式 C: 扫描所有启用联赛
-npm run seed:all
+docker-compose -f docker-compose.dev.yml exec -T dev npm run seed
 ```
 
-### 3.2 验证扫描结果
+### 5.2 Recon 单联赛验证
 
 ```bash
-# 检查数据库中的新联赛记录
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-SELECT COUNT(*) as discovered 
-FROM matches 
-WHERE league_name = 'Premier League';
-"
+docker-compose -f docker-compose.dev.yml exec -T dev \
+  node scripts/ops/recon_scanner.js --season 2025-2026 --league <LEAGUE_CODE> --limit 20 --concurrency 3
 ```
 
----
-
-## 4️⃣ 测试 L2 收割
-
-### 4.1 小规模测试 (推荐先执行)
+### 5.3 数据库状态验证
 
 ```bash
-# 测试收割 5 场比赛
-node scripts/ops/run_production.js --limit 5
-
-# 检查成功率
-npm run status
+docker-compose -f docker-compose.dev.yml exec db \
+  psql -U football_user -d football_db \
+  -c "SELECT pipeline_status, COUNT(*) FROM matches WHERE league_name = '<LEAGUE_NAME>' GROUP BY 1 ORDER BY 1;"
 ```
 
-### 4.2 全量收割
+重点看：
 
-```bash
-# 方式 A: 超频蜂群收割 (推荐，15 并发)
-npm run harvest
+- 是否能从 `harvested` 正常推进到 `RECON_LINKED`
+- 是否出现大量 `RECON_MISMATCH`
+- 是否生成 `matches_oddsportal_mapping`
 
-# 方式 B: 生产收割器 (稳定，单 Worker)
-npm run harvest:production
+## 6. 常见扩张问题
 
-# 方式 C: 自定义并发
-node scripts/ops/hyper_swarm.js
-```
+### 6.1 URL 正确但候选为空
 
-### 4.3 监控收割进度
+优先检查：
 
-```bash
-# 启动监控栈
-npm run monitor:up
+- `config/recon_config.json` 中的 `leagues.<CODE>.country`
+- `leagues.<CODE>.slug`
+- `recon_runtime.task_planner.results_path`
 
-# 访问 Grafana
-# http://localhost:3001
-# 用户名: admin
-# 密码: titan2024
-```
+### 6.2 页面有比赛但 DOM fallback 仍为空
 
----
+优先修改：
 
-## 5️⃣ 执行 L3 熔炼
+- `recon_runtime.dom_scraper.result_anchor_selectors`
+- `recon_runtime.dom_scraper.home_selectors`
+- `recon_runtime.dom_scraper.away_selectors`
+- `recon_runtime.dom_scraper.participant_selectors`
 
-### 5.1 生成特征向量
+不要直接改 [ReconDomScraper.js](/home/xupeng/projects/FootballPrediction/src/infrastructure/recon/services/ReconDomScraper.js)，除非配置已经无法表达目标结构。
 
-```bash
-# 熔炼所有 L2 数据
-npm run smelt
+### 6.3 队名别名导致大量 mismatch
 
-# 或指定联赛
-python scripts/ops/smelt_l3.py --league-id 47
-```
+优先修改：
 
-### 5.2 验证特征生成
+- `team_mappings`
+- `team_slugs`
+- `matching.common_suffixes`
 
-```bash
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-SELECT 
-    'L1' as layer, COUNT(*) as count FROM matches WHERE league_name = 'Premier League'
-UNION ALL
-SELECT 
-    'L2', COUNT(*) FROM raw_match_data r
-    JOIN matches m ON r.match_id = m.match_id
-    WHERE m.league_name = 'Premier League'
-UNION ALL
-SELECT 
-    'L3', COUNT(*) FROM l3_features l
-    JOIN matches m ON l.match_id = m.match_id
-    WHERE m.league_name = 'Premier League';
-"
-```
+不要先去改 [ReconMatchEvaluator.js](/home/xupeng/projects/FootballPrediction/src/infrastructure/recon/services/ReconMatchEvaluator.js)。
 
----
+## 7. 合并前检查
 
-## 6️⃣ 验证数据完整性
+满足以下条件才算扩张完成：
 
-### 6.1 运行完整性检查
-
-```bash
-# 运行完整性守护脚本
-npm run status
-
-# 或直接调用
-python scripts/maintenance/integrity_guard.py
-```
-
-### 6.2 预期输出
-
-```
-╔═══════════════════════════════════════════════════════════════╗
-║  🛡️ TITAN 数据完整性守护报告                                  ║
-╚═══════════════════════════════════════════════════════════════╝
-
-  L1 (matches):        XXXX 场
-  L2 (raw_match_data): XXXX 场
-  L3 (l3_features):    XXXX 场
-
-  ✅ 数据完全对齐: L1 = L2 = L3
-```
-
----
-
-## 🔧 故障排查
-
-### 问题 1: L1 扫描返回 0 场比赛
-
-**可能原因**:
-
-- 联赛 ID 错误
-- 赛季配置不正确
-- 网络连接问题
-
-**解决方案**:
-
-```bash
-# 手动测试 API 连接
-curl "https://www.fotmob.com/api/leagues?id=47&season=2025/2026"
-```
-
-### 问题 2: L2 收割成功率低
-
-**可能原因**:
-
-- 代理池问题
-- Turnstile 拦截
-- 队名匹配失败
-
-**解决方案**:
-
-```bash
-# 检查代理健康
-curl -x http://172.25.16.1:7890 https://httpbin.org/ip
-
-# 检查队名匹配
-python -c "
-from src.utils.cpp_bridge_radar import BridgeRadarEngine
-bridge = BridgeRadarEngine()
-print(bridge.dynamic_bridge('Arsenal', 'Chelsea', 'Premier League'))
-"
-```
-
-### 问题 3: L3 熔炼失败
-
-**可能原因**:
-
-- L2 数据格式异常
-- 特征计算依赖缺失
-
-**解决方案**:
-
-```bash
-# 检查 L2 数据格式
-docker-compose -f docker-compose.dev.yml exec db psql -U football_user -d football_db -c "
-SELECT match_id, jsonb_pretty(raw_data) 
-FROM raw_match_data 
-WHERE match_id LIKE '47_%' 
-LIMIT 1;
-"
-```
-
----
-
-## 📚 字段映射参考
-
-当新联赛的数据字段与现有 Strategy 不一致时，需要调整映射：
-
-### 文件位置
-
-```
-src/parsers/
-├── FotMobParser.js        # FotMob 数据解析
-├── NextDataParser.js      # __NEXT_DATA__ 解析
-└── OddsPortalParser.js    # OddsPortal 赔率解析
-```
-
-### 添加新字段映射
-
-```javascript
-// src/parsers/FotMobParser.js
-
-// 1. 在 FIELD_MAPPING 对象中添加新映射
-const FIELD_MAPPING = {
-    'homeTeam.name': 'home_team',
-    'awayTeam.name': 'away_team',
-    // 添加新字段
-    'newField.path': 'normalized_field_name'
-};
-
-// 2. 在 extractMatchData 方法中处理
-extractMatchData(rawData) {
-    return {
-        ...existingFields,
-        normalized_field_name: this._safeGet(rawData, 'newField.path')
-    };
-}
-```
-
----
-
-## ✅ 完成确认
-
-当所有步骤完成后，确认以下指标：
-
-| 指标 | 预期值 | 状态 |
-|------|--------|------|
-| L1 记录数 | > 0 | □ |
-| L2 收割率 | > 95% | □ |
-| L3 熔炼率 | 100% | □ |
-| 数据对齐 | L1=L2=L3 | □ |
-
----
-
-**文档维护者**: TITAN Engineering Team
-**反馈渠道**: GitHub Issues
+- 配置能正常加载
+- 新联赛能跑通 `recon_scanner`
+- `RECON_MISMATCH` 没有异常飙升
+- 没有为了适配联赛而把 selector / 阈值写回 service 文件
+- 文档与配置同步更新
