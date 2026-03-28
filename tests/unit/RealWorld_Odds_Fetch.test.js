@@ -18,6 +18,7 @@ const assert = require('node:assert');
 // 导入真实模块
 const { OddsPortalHarvester, OddsPortalURLParser } = require('../../src/infrastructure/harvesters/OddsPortalHarvester');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
+const { Normalizer } = require('../../src/utils/Normalizer');
 
 // ============================================================================
 // 测试配置
@@ -188,18 +189,36 @@ describe('RealWorld_Odds_Fetch - TITAN V6.0 真实赔率抓取', () => {
     
     it('断言8: 队名对齐必须准确', () => {
       const testCases = [
-        { url: 'https://www.oddsportal.com/soccer/england/premier-league/arsenal-chelsea/', home: 'arsenal', away: 'chelsea' },
-        { url: 'https://www.oddsportal.com/soccer/spain/laliga/real-madrid-barcelona/', home: 'real', away: 'madrid' } // 注意: 短横线分隔的队名可能被拆分
+        {
+          url: 'https://www.oddsportal.com/soccer/england/premier-league/arsenal-chelsea/',
+          homeTokens: ['arsenal'],
+          awayTokens: ['chelsea']
+        },
+        {
+          url: 'https://www.oddsportal.com/soccer/spain/laliga/real-madrid-barcelona/',
+          homeTokens: ['real', 'madrid'],
+          awayTokens: ['barcelona']
+        }
       ];
       
       testCases.forEach(tc => {
         const result = OddsPortalURLParser.parseMatchURL(tc.url);
+        const normalizedHome = Normalizer.normalizeTeamName(result?.home_team || '').toLowerCase();
+        const normalizedAway = Normalizer.normalizeTeamName(result?.away_team || '').toLowerCase();
         
         assert.ok(result, `必须解析 ${tc.url}`);
-        assert.ok(result.home_team.toLowerCase().includes(tc.home), 
-                  `home_team必须包含${tc.home}，实际为${result.home_team}`);
-        assert.ok(result.away_team.toLowerCase().includes(tc.away), 
-                  `away_team必须包含${tc.away}，实际为${result.away_team}`);
+        tc.homeTokens.forEach(token => {
+          assert.ok(
+            normalizedHome.includes(token),
+            `home_team必须包含${token}，实际为${result.home_team}`
+          );
+        });
+        tc.awayTokens.forEach(token => {
+          assert.ok(
+            normalizedAway.includes(token),
+            `away_team必须包含${token}，实际为${result.away_team}`
+          );
+        });
       });
     });
   });

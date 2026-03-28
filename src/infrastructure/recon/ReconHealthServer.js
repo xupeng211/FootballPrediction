@@ -334,13 +334,14 @@ class ReconHealthServer {
    */
   registerDatabaseCheck(repository) {
     this.registerCheck('database', async () => {
+      let client = null;
+
       try {
         const start = Date.now();
         // 尝试执行简单查询
         if (repository.dbPool) {
-          const client = await repository.dbPool.connect();
+          client = await repository.dbPool.connect();
           await client.query('SELECT 1');
-          client.release();
         }
         const latency = Date.now() - start;
 
@@ -353,6 +354,14 @@ class ReconHealthServer {
           ready: false,
           error: e.message
         };
+      } finally {
+        if (client && typeof client.release === 'function') {
+          try {
+            client.release();
+          } catch (_error) {
+            // 健康检查释放失败不覆盖原始结果
+          }
+        }
       }
     });
 

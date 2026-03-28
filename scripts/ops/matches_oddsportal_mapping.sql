@@ -34,6 +34,8 @@ CREATE INDEX IF NOT EXISTS idx_mapping_season ON matches_oddsportal_mapping(seas
 CREATE INDEX IF NOT EXISTS idx_mapping_status ON matches_oddsportal_mapping(status);
 CREATE INDEX IF NOT EXISTS idx_mapping_league ON matches_oddsportal_mapping(league_name);
 CREATE INDEX IF NOT EXISTS idx_mapping_hash ON matches_oddsportal_mapping(oddsportal_hash);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_mapping_season_hash_unique
+    ON matches_oddsportal_mapping(season, oddsportal_hash);
 CREATE INDEX IF NOT EXISTS idx_mapping_pending ON matches_oddsportal_mapping(status, retry_count) 
     WHERE status IN ('pending', 'failed') AND retry_count < 3;
 
