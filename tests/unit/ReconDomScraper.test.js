@@ -89,4 +89,33 @@ describe('ReconDomScraper', () => {
       'https://www.oddsportal.com/football/england/championship-2025-2026/results/page/4/'
     ]);
   });
+
+  it('应接受 canonical league path 与 resultsUrl 不同的 sponsor alias 页面', () => {
+    const scraper = new ReconDomScraper({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    const html = [
+      '<html><head>',
+      '  <link rel="canonical" href="https://www.oddsportal.com/football/brazil/serie-a-betano/" />',
+      '</head><body>',
+      '  <div class="eventRow">',
+      '    <a href="/football/brazil/serie-a-betano/athletico-pr-botafogo-rj-xUgkXiV8/">',
+      '      <span class="eventRow__home">Athletico PR</span>',
+      '      <span class="eventRow__away">Botafogo RJ</span>',
+      '    </a>',
+      '  </div>',
+      '</body></html>'
+    ].join('');
+
+    const matches = scraper.parseCurrentSeasonResultRowsFromHtml(html, {
+      currentUrl: 'https://www.oddsportal.com/football/brazil/serie-a/results/',
+      leaguePathPrefix: '/football/brazil/serie-a/'
+    });
+
+    assert.strictEqual(matches.length, 1);
+    assert.strictEqual(matches[0].hash, 'xUgkXiV8');
+    assert.strictEqual(matches[0].homeTeam, 'Athletico PR');
+    assert.strictEqual(matches[0].awayTeam, 'Botafogo RJ');
+  });
 });
