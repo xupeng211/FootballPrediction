@@ -54,13 +54,25 @@ function getDefaultConfig() {
   };
 }
 
+function isSkippedFutureFinalsResult(result) {
+  return result?.sourceState === 'SKIPPED_FUTURE_FINALS' || result?.error === 'SKIPPED_FUTURE_FINALS';
+}
+
 function computeExitCode(results, totalCoverage) {
-  if (Array.isArray(results) && results.some((result) => result?.success === false)) {
+  if (
+    Array.isArray(results) &&
+    results.some((result) => result?.success === false && !isSkippedFutureFinalsResult(result))
+  ) {
     return 1;
   }
 
   const totalPending = Array.isArray(results)
-    ? results.reduce((sum, result) => sum + Number(result?.pendingTotal || 0), 0)
+    ? results.reduce((sum, result) => {
+      if (isSkippedFutureFinalsResult(result)) {
+        return sum;
+      }
+      return sum + Number(result?.pendingTotal || 0);
+    }, 0)
     : 0;
 
   if (totalPending === 0) {
@@ -670,6 +682,11 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       let totalPending = 0;
 
       results.forEach((result) => {
+        if (isSkippedFutureFinalsResult(result)) {
+          output.log(`║  ⏭️ ${(result.league || 'Unknown').padEnd(18)}: 跳过未来正赛 (${String(result.skippedPendingTotal || 0).padStart(3)} 待处理)`);
+          return;
+        }
+
         if (result.success) {
           totalInserted += result.inserted || 0;
           totalPending += result.pendingTotal || 0;
