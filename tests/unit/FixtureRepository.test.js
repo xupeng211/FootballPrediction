@@ -748,6 +748,10 @@ test('FixtureRepository 应默认把 conflict arbiter 阈值从 recon_config.jso
     repository.conflictArbiter.sameFixtureWindowMs,
     reconConfig.repository.conflict_arbiter.same_fixture_window_ms
   );
+  assert.deepEqual(
+    repository.matchCanonicalJanitor.identityInactiveStatuses,
+    reconConfig.repository.identity_inactive_statuses
+  );
 });
 
 test('ReconMappingStore constructor 在核心依赖缺失时必须 fail-fast', () => {
@@ -761,5 +765,88 @@ test('ReconSchemaJanitor constructor 在核心依赖缺失时必须 fail-fast', 
   assert.throws(
     () => new ReconSchemaJanitor({}),
     /ReconSchemaJanitor.*getDbPool/
+  );
+});
+
+test('FixtureRepository.persist 应在入库前复用 canonical match_id，避免按同一 provider 原始 ID 重复插入', async () => {
+  let capturedBatch = null;
+
+  const repository = new FixtureRepository({
+    dbPool: { async query() {}, async connect() { return { release() {} }; } },
+    maxRetries: 1,
+    logger: { info() {}, warn() {}, error() {} },
+    matchIdentityResolver: {
+      async resolveCanonicalFixtures(fixtures) {
+        return fixtures.map((fixture) => ({
+          ...fixture,
+          match_id: '130_20252026_5025527'
+        }));
+      }
+    }
+  });
+
+  repository.init = async () => {};
+  repository._persistBatch = async (batch) => {
+    capturedBatch = batch;
+    return { inserted: 0, updated: batch.length };
+  };
+
+  const result = await repository.persist([
+    {
+      match_id: '130_20252026_4694245',
+      external_id: '5071062',
+      league_name: 'MLS',
+      season: '2025/2026',
+      home_team: 'Inter Miami Cf',
+      away_team: 'New York City Fc',
+      match_date: '2026-03-22T17:00:00.000Z',
+      status: 'finished',
+      is_finished: true,
+      data_source: 'FotMob'
+    }
+  ]);
+
+  assert.equal(result.inserted, 0);
+  assert.equal(result.updated, 1);
+  assert.equal(capturedBatch.length, 1);
+  assert.equal(capturedBatch[0].match_id, '130_20252026_5025527');
+  assert.equal(capturedBatch[0].external_id, '5071062');
+});
+
+test('FixtureRepository.persist 在 data_source 缺失时必须 fail-fast，而不是静默回退到默认 provider', async () => {
+  const repository = new FixtureRepository({
+    dbPool: { async query() {}, async connect() { return { release() {} }; } },
+    maxRetries: 1,
+    logger: { info() {}, warn() {}, error() {} },
+    matchIdentityResolver: {
+      async resolveCanonicalFixtures(fixtures) {
+        return fixtures;
+      }
+    }
+  });
+
+  repository.init = async () => {};
+
+  await assert.rejects(
+    repository.persist([
+      {
+        match_id: '130_20252026_4694245',
+        external_id: '5071062',
+        league_name: 'MLS',
+        season: '2025/2026',
+        home_team: 'Inter Miami Cf',
+        away_team: 'New York City Fc',
+        match_date: '2026-03-22T17:00:00.000Z',
+        status: 'finished',
+        is_finished: true,
+        data_source: null
+      }
+    ]),
+    (error) => {
+      assert.equal(error instanceof RepositoryError, true);
+      assert.equal(error.code, 'CANONICAL_IDENTITY_INVALID');
+      assert.equal(error.details.field, 'data_source');
+      return true;
+    }
   );
 });
