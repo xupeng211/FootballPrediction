@@ -302,14 +302,41 @@ class ReconNavigator {
 
     if (archiveEndpoints.length === 0) {
       this.logger.warn('protocol_archive_no_api');
-      return { matches: [], pagesScanned: 0, totalCandidates: 0 };
+      return this._fallbackToLeagueTournament(baseUrl, null, maxPages, timeoutMs, 'archive_api_missing');
     }
 
     // 使用评分最高的端点
     const archiveApiUrl = archiveEndpoints.sort((a, b) => this._scoreArchiveUrl(b) - this._scoreArchiveUrl(a))[0];
+    const archiveContext = archiveApiUrl.includes('/1//')
+      ? await this._resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl)
+      : { repairedArchiveUrl: archiveApiUrl, currentTournamentUrl: null, leagueUrl: null, tournamentId: null };
     
     // 执行解密抓取
-    const result = await this._fetchAndDecrypt(archiveApiUrl, maxPages, timeoutMs);
+    const result = await this._fetchAndDecrypt(
+      archiveContext.repairedArchiveUrl || archiveApiUrl,
+      maxPages,
+      timeoutMs,
+      { warmUrl: this.stateProber.deriveCurrentResultsUrl(baseUrl) || baseUrl }
+    );
+
+    if (result.matches.length === 0 && this._resultHasDecryptFailure(result)) {
+      const fallbackResult = await this._fallbackToLeagueTournament(
+        baseUrl,
+        archiveContext.repairedArchiveUrl || archiveApiUrl,
+        maxPages,
+        timeoutMs,
+        'archive_decrypt_failed'
+      );
+
+      if (fallbackResult.matches.length > 0) {
+        this.logger.info('protocol_archive_complete', {
+          pagesScanned: fallbackResult.pageStats?.length || 0,
+          totalCandidates: fallbackResult.matches?.length || 0,
+          sourceState: fallbackResult.sourceState || 'CURRENT_TOURNAMENT_FALLBACK'
+        });
+        return fallbackResult;
+      }
+    }
     
     this.logger.info('protocol_archive_complete', {
       pagesScanned: result.pageStats.length,
@@ -552,11 +579,51 @@ class ReconNavigator {
    * 获取并解密数据
    * @private
    */
-  async _fetchAndDecrypt(apiBaseUrl, maxPages, timeoutMs) {
-    return this.circuitBreaker.execute(async () => {
+  async _fetchAndDecrypt(apiBaseUrl, maxPages, timeoutMs, options = {}) {
+    return this._fetchAndDecryptWithOptions(apiBaseUrl, maxPages, timeoutMs, options);
+  }
+
+  async _fetchAndDecryptWithOptions(apiBaseUrl, maxPages, timeoutMs, options = {}) {
+    const fetchOnce = () => this.circuitBreaker.execute(async () => {
       this.networkMonitor.setPage(this.page);
       return this.networkMonitor.fetchArchivePages(apiBaseUrl, maxPages, timeoutMs);
     });
+
+    const initialResult = await fetchOnce();
+    if (!this._resultHasDecryptFailure(initialResult)) {
+      return initialResult;
+    }
+
+    if (options.allowRecovery === false) {
+      return initialResult;
+    }
+
+    this.logger.warn('navigator_relaunch_after_decrypt_failure', {
+      apiBaseUrl,
+      warmUrl: options.warmUrl || null
+    });
+
+    try {
+      await this.close();
+      await this.launch(this.lastLaunchOptions || {});
+
+      if (options.warmUrl) {
+        await this.navigate(options.warmUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+        if (this.page && typeof this.page.waitForTimeout === 'function') {
+          await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
+        }
+      }
+
+      const retriedResult = await fetchOnce();
+      retriedResult.retriedAfterRelaunch = true;
+      return retriedResult;
+    } catch (error) {
+      this.logger.warn('navigator_relaunch_after_decrypt_failure_failed', {
+        apiBaseUrl,
+        error: error.message
+      });
+      return initialResult;
+    }
   }
 
   async _fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs) {
@@ -584,6 +651,92 @@ class ReconNavigator {
     this.networkMonitor.setPage(null);
     this.domScraper.setPage(null);
     this.stateProber.setPage(null);
+  }
+
+  _resultHasDecryptFailure(result) {
+    return Array.isArray(result?.pageStats)
+      && result.pageStats.some((stat) => typeof stat?.error === 'string'
+        && stat.error.startsWith('decrypt_failed:'));
+  }
+
+  async _resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl = null) {
+    const leagueUrl = this.stateProber.deriveLeaguePageUrl(baseUrl);
+    if (!leagueUrl) {
+      return {
+        leagueUrl: null,
+        tournamentId: null,
+        repairedArchiveUrl: archiveApiUrl,
+        currentTournamentUrl: null
+      };
+    }
+
+    await this.navigate(leagueUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+    if (this.page && typeof this.page.waitForTimeout === 'function') {
+      await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
+    }
+
+    const meta = await this.stateProber.extractPageOutrightsMeta();
+    const tournamentId = typeof meta?.id === 'string' ? meta.id.trim() : '';
+    const repairedArchiveUrl = tournamentId
+      ? this._repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentId)
+      : archiveApiUrl;
+    const currentTournamentUrl = this._getCurrentTournamentEndpoint()
+      || this._buildTournamentUrlFromArchive(archiveApiUrl, tournamentId);
+
+    return {
+      leagueUrl,
+      tournamentId: tournamentId || null,
+      repairedArchiveUrl,
+      currentTournamentUrl
+    };
+  }
+
+  _repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentId) {
+    if (!archiveApiUrl || !tournamentId || !archiveApiUrl.includes('/1//X')) {
+      return archiveApiUrl;
+    }
+
+    return archiveApiUrl.replace('/1//X', `/1/${tournamentId}/X`);
+  }
+
+  _buildTournamentUrlFromArchive(archiveApiUrl, tournamentId) {
+    if (!archiveApiUrl || !tournamentId) {
+      return null;
+    }
+
+    const match = archiveApiUrl.match(/^(.*?\/ajax-sport-country-tournament)-archive_\/(\d+)\/[^/]*\/(X[^/]+)\/(\d+)\/\d+\/?/i);
+    if (!match) {
+      return null;
+    }
+
+    return `${match[1]}_/${match[2]}/${tournamentId}/${match[3]}/${match[4]}/`;
+  }
+
+  async _fallbackToLeagueTournament(baseUrl, archiveApiUrl, maxPages, timeoutMs, reason = 'fallback') {
+    const context = await this._resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl);
+    if (!context.currentTournamentUrl) {
+      return {
+        matches: [],
+        pagesScanned: 0,
+        totalCandidates: 0,
+        pageStats: [],
+        sourceState: 'SOURCE_EMPTY'
+      };
+    }
+
+    this.logger.warn('protocol_archive_fallback_current_tournament', {
+      baseUrl,
+      reason,
+      currentTournamentUrl: context.currentTournamentUrl
+    });
+
+    const result = await this._fetchCurrentTournament(context.currentTournamentUrl, maxPages, timeoutMs);
+    return {
+      ...result,
+      sourceState: Array.isArray(result?.matches) && result.matches.length > 0
+        ? 'CURRENT_TOURNAMENT_FALLBACK'
+        : 'SOURCE_EMPTY'
+    };
   }
 }
 
