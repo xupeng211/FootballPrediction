@@ -60,7 +60,15 @@
     },
     { "id": 230, "name": "Liga MX", "country": "Mexico", "tier": "P3", "enabled": true },
 
-    { "id": 77, "name": "FIFA World Cup", "country": "World", "tier": "P4", "enabled": true },
+    {
+      "id": 77,
+      "name": "FIFA World Cup",
+      "country": "World",
+      "tier": "P4",
+      "enabled": true,
+      "slug": "world-cup-2026",
+      "results_url_strategy": "seasonal"
+    },
     {
       "id": 50,
       "name": "UEFA Euro",
