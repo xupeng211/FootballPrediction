@@ -14,7 +14,7 @@ class ReconEngine {
     const engineConfig = getReconConfigSection(['recon_runtime', 'engine'], {});
     const matchingConfig = RECON_CONFIG.matching || {};
 
-    this.navigator = options.navigator;
+    this._navigator = null;
     this.stitcher = options.stitcher;
     this.repository = options.repository;
     this.parser = options.parser;
@@ -48,6 +48,19 @@ class ReconEngine {
       navigator: this.navigator, repository: this.repository, logger: this.logger, configManager: this.configManager,
       baseUrl: this.baseUrl, matchEvaluator: this.matchEvaluator, mirrorManager: this.mirrorManager
     });
+
+    this.navigator = options.navigator || this.taskPlanner?.navigator || null;
+  }
+
+  get navigator() {
+    return this._navigator;
+  }
+
+  set navigator(value) {
+    this._navigator = value || null;
+    if (this.taskPlanner) {
+      this.taskPlanner.navigator = this._navigator;
+    }
   }
 
   _createReconRunId(target) {
