@@ -95,6 +95,7 @@ async function dedupeMappings({ queryable, logger = { info() {} }, groups = null
     : await findDuplicateSeasonHashGroups(queryable);
 
   let deletedCount = 0;
+  let repairedCount = 0;
 
   for (const group of duplicateGroups) {
     if (!Array.isArray(group.removed_match_ids) || group.removed_match_ids.length === 0) {
@@ -109,6 +110,8 @@ async function dedupeMappings({ queryable, logger = { info() {} }, groups = null
     `, [group.season, group.oddsportal_hash, group.removed_match_ids]);
 
     deletedCount += result.rowCount || 0;
+    const repaired = await repairLinkedStatusesForMatchIds(queryable, group.removed_match_ids);
+    repairedCount += repaired.repairedCount;
     logger.info('[Repository][DEDUPE] 已清理历史 season/hash 重复映射', {
       season: group.season,
       oddsportal_hash: group.oddsportal_hash,
@@ -120,12 +123,53 @@ async function dedupeMappings({ queryable, logger = { info() {} }, groups = null
   return {
     deletedCount,
     groupCount: duplicateGroups.length,
-    groups: duplicateGroups
+    groups: duplicateGroups,
+    repairedCount
+  };
+}
+
+async function repairLinkedStatusesForMatchIds(queryable, matchIds = []) {
+  const uniqueMatchIds = [...new Set(matchIds.map((matchId) => String(matchId)))];
+  if (uniqueMatchIds.length === 0) {
+    return { repairedCount: 0 };
+  }
+
+  const result = await queryable.query(`
+    UPDATE matches m
+    SET pipeline_status = 'harvested',
+        updated_at = NOW()
+    WHERE m.match_id = ANY($1::text[])
+      AND m.pipeline_status = 'RECON_LINKED'
+  `, [uniqueMatchIds]);
+
+  return {
+    repairedCount: result.rowCount || 0
+  };
+}
+
+async function repairLinkedStatusesWithoutMapping(queryable) {
+  const result = await queryable.query(`
+    UPDATE matches m
+    SET pipeline_status = 'harvested',
+        updated_at = NOW()
+    WHERE m.pipeline_status = 'RECON_LINKED'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM matches_oddsportal_mapping map
+        WHERE map.match_id = m.match_id
+      )
+    RETURNING m.match_id
+  `);
+
+  return {
+    repairedCount: result.rowCount || 0,
+    matchIds: (result.rows || []).map((row) => String(row.match_id)).sort((left, right) => left.localeCompare(right))
   };
 }
 
 module.exports = {
   buildDeduplicationPlan,
   dedupeMappings,
-  findDuplicateSeasonHashGroups
+  findDuplicateSeasonHashGroups,
+  repairLinkedStatusesWithoutMapping
 };
