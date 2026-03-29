@@ -80,7 +80,14 @@
       "results_url_strategy": "seasonless"
     },
     { "id": 10148, "name": "UEFA Nations League", "country": "Europe", "tier": "P4", "enabled": true },
-    { "id": 131, "name": "Copa América", "country": "South America", "tier": "P4", "enabled": true },
+    {
+      "id": 131,
+      "name": "Copa América",
+      "country": "South America",
+      "tier": "P4",
+      "enabled": false,
+      "ops_note": "OddsPortal 仅有历史赛季页，2025-2026 页面为空壳，临时下线 Recon/L1 入口"
+    },
     { "id": 10004, "name": "AFC Asian Cup", "country": "Asia", "tier": "P4", "enabled": true }
   ],
   "inactive_leagues": [],
