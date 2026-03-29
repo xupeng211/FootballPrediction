@@ -121,6 +121,8 @@ class FixtureRepository {
       await this._ensureMappingHashUniquenessIndex();
     }
 
+    await this._repairOrphanedLinkedStatuses();
+
     this._mappingSchemaEnsured = true;
   }
 
@@ -188,12 +190,32 @@ class FixtureRepository {
         {
           reason,
           duplicate_groups: healResult.groupCount,
+          repaired_linked_count: healResult.repairedCount || 0,
           sample_groups: (healResult.groups || []).slice(0, 3)
         }
       );
     }
 
     return healResult;
+  }
+
+  async _repairOrphanedLinkedStatuses() {
+    const repairResult = await this._executeWithRetry(
+      () => this.mappingMigration.repairLinkedStatusesWithoutMapping(this.dbPool),
+      'repairLinkedStatusesWithoutMapping'
+    );
+
+    if (repairResult.repairedCount > 0) {
+      this.logger.warn(
+        `[HEAL] 检测到 ${repairResult.repairedCount} 场 RECON_LINKED 残留，已自动回退为 harvested`,
+        {
+          repaired_count: repairResult.repairedCount,
+          sample_match_ids: (repairResult.matchIds || []).slice(0, 10)
+        }
+      );
+    }
+
+    return repairResult;
   }
 
   /**

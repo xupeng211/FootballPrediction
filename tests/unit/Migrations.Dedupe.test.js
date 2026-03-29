@@ -54,6 +54,17 @@ test('dedupeMappings 应按 updated_at 保留最新映射并且不误伤正常�
         updated_at: '2026-01-03T12:00:00.000Z',
         created_at: '2026-01-01T08:00:00.000Z'
       }
+    ],
+    matches: [
+      ...normalRows.map((row, index) => ({
+        match_id: row.match_id,
+        pipeline_status: index < 10 ? 'RECON_LINKED' : 'harvested'
+      })),
+      { match_id: 'dup-a-keep', pipeline_status: 'RECON_LINKED' },
+      { match_id: 'dup-a-drop', pipeline_status: 'RECON_LINKED' },
+      { match_id: 'dup-b-keep', pipeline_status: 'RECON_LINKED' },
+      { match_id: 'dup-b-drop-1', pipeline_status: 'RECON_LINKED' },
+      { match_id: 'dup-b-drop-2', pipeline_status: 'harvested' }
     ]
   };
   const auditLogs = [];
@@ -83,6 +94,20 @@ test('dedupeMappings 应按 updated_at 保留最新映射并且不误伤正常�
         return { rowCount: before - state.rows.length };
       }
 
+      if (sql.includes('UPDATE matches m')) {
+        const [matchIds] = params;
+        let repairedCount = 0;
+
+        for (const match of state.matches) {
+          if (matchIds.includes(match.match_id) && match.pipeline_status === 'RECON_LINKED') {
+            match.pipeline_status = 'harvested';
+            repairedCount++;
+          }
+        }
+
+        return { rowCount: repairedCount };
+      }
+
       throw new Error(`unexpected_query:${sql}`);
     }
   };
@@ -98,6 +123,7 @@ test('dedupeMappings 应按 updated_at 保留最新映射并且不误伤正常�
 
   assert.equal(result.deletedCount, 3);
   assert.equal(result.groupCount, 2);
+  assert.equal(result.repairedCount, 2);
   assert.deepEqual(
     result.groups.map((group) => ({
       season: group.season,
@@ -126,12 +152,23 @@ test('dedupeMappings 应按 updated_at 保留最新映射并且不误伤正常�
   assert.equal(state.rows.some((row) => row.match_id === 'dup-b-keep'), true);
   assert.equal(state.rows.some((row) => row.match_id === 'dup-b-drop-1'), false);
   assert.equal(state.rows.some((row) => row.match_id === 'dup-b-drop-2'), false);
+  assert.equal(state.matches.find((match) => match.match_id === 'dup-a-drop')?.pipeline_status, 'harvested');
+  assert.equal(state.matches.find((match) => match.match_id === 'dup-b-drop-1')?.pipeline_status, 'harvested');
+  assert.equal(state.matches.find((match) => match.match_id === 'dup-b-drop-2')?.pipeline_status, 'harvested');
+  assert.equal(state.matches.find((match) => match.match_id === 'dup-a-keep')?.pipeline_status, 'RECON_LINKED');
 
   for (const row of normalRows) {
     assert.equal(
       state.rows.some((candidate) => candidate.match_id === row.match_id),
       true,
       `normal row should survive: ${row.match_id}`
+    );
+  }
+
+  for (const index of [0, 3, 9]) {
+    assert.equal(
+      state.matches.find((match) => match.match_id === `normal-${index + 1}`)?.pipeline_status,
+      'RECON_LINKED'
     );
   }
 
