@@ -76,6 +76,37 @@ class ReconMatchEvaluator {
       .trim();
   }
 
+  isPlaceholderToken(token) {
+    return /^\d+[a-z]+$/i.test(String(token || '').trim());
+  }
+
+  isPlaceholderTeamName(teamName) {
+    const normalized = String(teamName || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+
+    if (!normalized) {
+      return false;
+    }
+
+    if (/\bplay[\s-]?off\b/i.test(normalized)) {
+      return true;
+    }
+
+    if (/^(winner|loser)\b/i.test(normalized)) {
+      return true;
+    }
+
+    const tokens = normalized.split(' ').filter(Boolean);
+    return tokens.length > 0 && tokens.every((token) => this.isPlaceholderToken(token));
+  }
+
+  isPlaceholderFixture(l1Match) {
+    return this.isPlaceholderTeamName(l1Match?.home_team)
+      || this.isPlaceholderTeamName(l1Match?.away_team);
+  }
+
   hasTextualTeamName(teamName) {
     return typeof teamName === 'string' && /[a-z\u00c0-\u024f]/i.test(teamName);
   }
@@ -203,6 +234,10 @@ class ReconMatchEvaluator {
   }
 
   findBestCandidate(l1Match, candidates, seasonMirror = null) {
+    if (this.isPlaceholderFixture(l1Match)) {
+      return null;
+    }
+
     const mirrorMatched = this.mirrorManager?.findMirrorCandidate(l1Match, seasonMirror) || null;
     if (mirrorMatched) {
       return mirrorMatched;
@@ -246,6 +281,10 @@ class ReconMatchEvaluator {
   }
 
   isStrictMatch(candidate, l1Match) {
+    if (this.isPlaceholderFixture(l1Match)) {
+      return false;
+    }
+
     const resolvedCandidate = this.resolveCandidateTeams(candidate, l1Match);
     if (!resolvedCandidate?.homeTeam || !resolvedCandidate?.awayTeam) {
       return false;

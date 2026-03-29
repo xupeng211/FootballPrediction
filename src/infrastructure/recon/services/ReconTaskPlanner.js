@@ -129,9 +129,36 @@ class ReconTaskPlanner {
       throw new Error('ReconTaskPlanner requires a navigator with fetchFullSeasonArchive or protocolArchiveExtract');
     }
 
+    const futureFinalsWindow = this.getFutureFinalsWindow(target, pendingMatches);
+    if (futureFinalsWindow.shouldSkip) {
+      this.logger.info('skipping_future_finals', {
+        league: target.league.name,
+        dbSeason: target.dbSeason,
+        kickoffDate: futureFinalsWindow.kickoffDate,
+        pendingTotal: pendingMatches.length
+      });
+      return {
+        source: {
+          season: this.formatSeasonForUrl(target.season || target.dbSeason),
+          url: target.resultsUrl
+        },
+        extractResult: {
+          matches: [],
+          pagesScanned: 0,
+          totalCandidates: 0,
+          sourceState: 'SKIPPED_FUTURE_FINALS'
+        },
+        candidates: [],
+        seasonMirror: new Map(),
+        sampleLinked: 0
+      };
+    }
+
     const orderedPending = [...pendingMatches]
       .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
-    const sample = orderedPending.slice(0, Math.min(this.sampleSize, orderedPending.length));
+    const eligibleSamplePool = this.filterPlaceholderFixtures(orderedPending);
+    const sample = eligibleSamplePool.slice(0, Math.min(this.sampleSize, eligibleSamplePool.length));
+    const skippedPlaceholderCount = orderedPending.length - eligibleSamplePool.length;
     const sources = this.buildCandidateSources(target);
     let best = null;
 
@@ -166,6 +193,7 @@ class ReconTaskPlanner {
         sourceSeason: source.season,
         sourceUrl: source.url,
         sampleSize: sample.length,
+        skippedPlaceholderCount,
         sampleLinked,
         candidateCount: candidates.length,
         sourceState: extractResult?.sourceState || null
@@ -250,6 +278,37 @@ class ReconTaskPlanner {
 
   normalizeDbSeason(season) {
     return String(season || '').replace('-', '/');
+  }
+
+  filterPlaceholderFixtures(matches = []) {
+    if (!this.matchEvaluator || typeof this.matchEvaluator.isPlaceholderFixture !== 'function') {
+      return Array.isArray(matches) ? [...matches] : [];
+    }
+
+    return (Array.isArray(matches) ? matches : []).filter(
+      (match) => !this.matchEvaluator.isPlaceholderFixture(match)
+    );
+  }
+
+  getFutureFinalsWindow(target, pendingMatches, now = new Date()) {
+    const awaitingFinals = target?.league?.awaitingFinals === true || target?.league?.awaiting_finals === true;
+    if (!awaitingFinals) {
+      return { shouldSkip: false, kickoffDate: null };
+    }
+
+    const kickoffDate = (Array.isArray(pendingMatches) ? pendingMatches : [])
+      .map((match) => new Date(match?.match_date))
+      .filter((value) => Number.isFinite(value.getTime()))
+      .sort((left, right) => left.getTime() - right.getTime())[0];
+
+    if (!kickoffDate) {
+      return { shouldSkip: false, kickoffDate: null };
+    }
+
+    return {
+      shouldSkip: kickoffDate.getTime() > now.getTime(),
+      kickoffDate: kickoffDate.toISOString()
+    };
   }
 
   shiftSeason(season, delta) {

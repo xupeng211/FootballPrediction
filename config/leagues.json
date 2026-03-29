@@ -66,6 +66,7 @@
       "country": "World",
       "tier": "P4",
       "enabled": true,
+      "awaiting_finals": true,
       "slug": "world-cup-2026",
       "results_url_strategy": "seasonal"
     },
