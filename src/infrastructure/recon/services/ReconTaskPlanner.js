@@ -285,10 +285,16 @@ class ReconTaskPlanner {
     const country = String(leagueConfig.country || '')
       .trim()
       .toLowerCase();
-    const slug = String(leagueConfig.slug || '')
+    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+    const resultsUrlStrategy = String(leagueConfig.resultsUrlStrategy || 'seasonal')
       .trim()
       .toLowerCase();
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    if (resultsUrlStrategy === 'seasonless') {
+      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
+    }
     const normalizedPath = `${this.resultsPathTemplate}`
       .replace('{country}', country)
       .replace('{league}', slug)

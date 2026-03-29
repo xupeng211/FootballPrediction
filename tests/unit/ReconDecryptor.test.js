@@ -70,4 +70,27 @@ describe('ReconDecryptor', () => {
     assert.strictEqual(result.__bestEffort, true);
     assert.strictEqual(result.__validated, false);
   });
+
+  it('malformed payload 应在调用解密函数前 fail-fast', async () => {
+    let decryptCalls = 0;
+    const decryptor = new ReconDecryptor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    decryptor.decryptFn = async () => {
+      decryptCalls++;
+      return '{}';
+    };
+    decryptor.algorithmVersion = 'app_ai';
+
+    await assert.rejects(
+      decryptor.decrypt('URL:/ajax-sport-country-tournament-archive_/1//X/2025-2026/1/ Status: 404'),
+      (error) => {
+        assert.strictEqual(error.code, 'INVALID_ENCRYPTED_PAYLOAD');
+        return true;
+      }
+    );
+
+    assert.strictEqual(decryptCalls, 0);
+  });
 });

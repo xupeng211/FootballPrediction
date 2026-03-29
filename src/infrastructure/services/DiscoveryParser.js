@@ -21,6 +21,7 @@ class DiscoveryParser {
   constructor(logger, leagueConfig) {
     this.logger = logger;
     this.leagueConfig = leagueConfig;
+    this.dataSource = 'FotMob';
   }
 
   /**
@@ -347,6 +348,7 @@ class DiscoveryParser {
         match_date: matchDate.toISOString(), // ISO 8601 格式
         status: status, // 已转小写
         is_finished: status === 'finished',
+        data_source: this.dataSource,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
