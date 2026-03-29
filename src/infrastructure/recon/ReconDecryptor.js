@@ -339,14 +339,23 @@ class ReconDecryptor {
     }
 
     try {
-      // V11.0 FIX: 清洗 payload，修复 atob 错误
       const cleanedData = this._cleanPayload(encryptedData);
+      const payloadProbe = this._probeEncryptedPayload(cleanedData);
+      if (!payloadProbe.valid) {
+        const invalidPayloadError = new Error(payloadProbe.reason || 'INVALID_ENCRYPTED_PAYLOAD');
+        invalidPayloadError.code = 'INVALID_ENCRYPTED_PAYLOAD';
+        invalidPayloadError.payloadPreview = payloadProbe.preview || '';
+        throw invalidPayloadError;
+      }
+
       const result = await this.decryptFn(cleanedData);
       return result;
     } catch (error) {
       this.logger.error('[ReconDecryptor] 解密失败', { 
         traceId: this.traceId,
         error: error.message,
+        code: error.code || null,
+        payloadPreview: error.payloadPreview || null,
         algorithmVersion: this.algorithmVersion 
       });
       throw error;
@@ -393,6 +402,58 @@ class ReconDecryptor {
     }
 
     return cleaned;
+  }
+
+  _probeEncryptedPayload(cleanedData) {
+    if (!cleanedData || typeof cleanedData !== 'string') {
+      return {
+        valid: false,
+        reason: 'INVALID_ENCRYPTED_PAYLOAD',
+        preview: ''
+      };
+    }
+
+    const preview = cleanedData.slice(0, 120);
+    if (/^URL:|^Status:|<html|<!doctype|not found|forbidden/i.test(cleanedData)) {
+      return {
+        valid: false,
+        reason: 'INVALID_ENCRYPTED_PAYLOAD',
+        preview
+      };
+    }
+
+    try {
+      const decoded = Buffer.from(cleanedData, 'base64').toString('utf8');
+      const separatorIndex = decoded.indexOf(':');
+      if (separatorIndex <= 0 || separatorIndex >= decoded.length - 1) {
+        return {
+          valid: false,
+          reason: 'INVALID_ENCRYPTED_PAYLOAD',
+          preview
+        };
+      }
+
+      const ivSegment = decoded.slice(separatorIndex + 1).trim();
+      if (!/^[a-f0-9]+$/i.test(ivSegment) || ivSegment.length % 2 !== 0) {
+        return {
+          valid: false,
+          reason: 'INVALID_ENCRYPTED_PAYLOAD',
+          preview
+        };
+      }
+
+      return {
+        valid: true,
+        reason: null,
+        preview
+      };
+    } catch {
+      return {
+        valid: false,
+        reason: 'INVALID_ENCRYPTED_PAYLOAD',
+        preview
+      };
+    }
   }
 
   /**

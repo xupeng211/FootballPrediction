@@ -130,4 +130,21 @@ describe('ReconTaskPlanner', () => {
       }
     ]);
   });
+
+  it('seasonless 联赛应生成 canonical results URL，不得拼接双年份后缀', () => {
+    const planner = createPlanner();
+
+    const url = planner.buildResultsUrl({
+      name: 'Süper Lig',
+      country: 'turkey',
+      slug: 's-per-lig',
+      resultsSlug: 'super-lig',
+      resultsUrlStrategy: 'seasonless'
+    }, '2025-2026');
+
+    assert.strictEqual(
+      url,
+      'oddsportal://root/football/turkey/super-lig/results/'
+    );
+  });
 });

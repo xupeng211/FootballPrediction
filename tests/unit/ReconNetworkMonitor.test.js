@@ -111,4 +111,48 @@ describe('ReconNetworkMonitor', () => {
     assert.strictEqual(matches.length, 1);
     assert.strictEqual(matches[0].hash, 'wrapped-hash');
   });
+
+  it('archive fetch 遇到 HTTP 404 时不应继续走 decryptor', async () => {
+    let decryptCalls = 0;
+    let extractCalls = 0;
+
+    const monitor = new ReconNetworkMonitor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-http-404',
+      page: {
+        async evaluate() {
+          return {
+            success: false,
+            status: 404,
+            error: 'HTTP_404',
+            text: 'URL:/ajax-sport-country-tournament-archive_/1//X/2025-2026/1/ Status: 404'
+          };
+        }
+      },
+      decryptorFactory: () => ({
+        getAlgorithmVersion: () => null,
+        async decrypt() {
+          decryptCalls++;
+          throw new Error('should_not_decrypt_http_404');
+        },
+        async extractDecryptor() {
+          extractCalls++;
+          throw new Error('should_not_extract_http_404');
+        }
+      })
+    });
+
+    const result = await monitor.fetchArchivePages(
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1//X/2025-2026/1/',
+      3,
+      1000
+    );
+
+    assert.strictEqual(extractCalls, 0);
+    assert.strictEqual(decryptCalls, 0);
+    assert.deepStrictEqual(result.matches, []);
+    assert.deepStrictEqual(result.pageStats, [
+      { page: 1, rows: 0, error: 'HTTP_404' }
+    ]);
+  });
 });
