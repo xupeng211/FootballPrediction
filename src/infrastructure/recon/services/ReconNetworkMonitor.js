@@ -580,8 +580,17 @@ class ReconNetworkMonitor {
       const timer = setTimeout(() => ctrl.abort(), fetchTimeout);
       try {
         const response = await fetch(inputUrl, { credentials: 'include', signal: ctrl.signal });
+        const text = await response.text();
         clearTimeout(timer);
-        return { success: true, text: await response.text() };
+        if (!response.ok) {
+          return {
+            success: false,
+            status: response.status,
+            error: `HTTP_${response.status}`,
+            text
+          };
+        }
+        return { success: true, status: response.status, text };
       } catch (error) {
         clearTimeout(timer);
         return { success: false, error: error.message };

@@ -20,7 +20,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
-const { ReconScanner, parseArgs, loadConfig, computeExitCode } = require('../../scripts/ops/recon_scanner');
+const { ReconScanner, parseArgs, loadConfig, computeExitCode, main } = require('../../scripts/ops/recon_scanner');
 const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
 const { ReconNavigator } = require('../../src/infrastructure/recon/ReconNavigator');
 const {
@@ -114,6 +114,42 @@ describe('ReconScanner Robustness - Config Fail Fast', () => {
         return true;
       }
     );
+  });
+});
+
+describe('ReconScanner Robustness - League Selection', () => {
+  it('未知联赛代码不得静默回退到 EPL', async () => {
+    const messages = [];
+    const fakeConsole = {
+      log() {},
+      warn() {},
+      error(message, detail) {
+        messages.push([message, detail].filter(Boolean).join(' '));
+      }
+    };
+
+    const exitCode = await main(['--season', '2025-2026', '--league', 'UNKNOWN-LEAGUE'], {
+      console: fakeConsole,
+      createPool: () => ({}),
+      createRepository: () => ({}),
+      createScanner: () => ({
+        async initialize() {},
+        configManager: {
+          getActiveLeagues() {
+            return [{ id: 47, code: 'EPL', name: 'Premier League' }];
+          },
+          getLeagueByCode() {
+            return null;
+          },
+          getLeagueById() {
+            return null;
+          }
+        }
+      })
+    });
+
+    assert.strictEqual(exitCode, 1);
+    assert.ok(messages.some((line) => line.includes('找不到联赛配置: UNKNOWN-LEAGUE')));
   });
 });
 

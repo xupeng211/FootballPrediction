@@ -152,6 +152,8 @@ class L1ConfigManager {
         name: reconLeague.name || atlasLeague?.name,
         country: reconLeague.country || atlasLeague?.country || 'unknown',
         slug: reconLeague.slug || this._slugify(reconLeague.name || atlasLeague?.name || code),
+        resultsSlug: reconLeague.results_slug || atlasLeague?.results_slug || reconLeague.slug || atlasLeague?.slug || null,
+        resultsUrlStrategy: reconLeague.results_url_strategy || atlasLeague?.results_url_strategy || 'seasonal',
         tier: reconLeague.tier || atlasLeague?.tier || 'P0',
         enabled: reconLeague.enabled ?? atlasLeague?.enabled ?? true,
         seasonType: reconLeague.season_type || this._inferSeasonType(resolvedId),
@@ -176,6 +178,8 @@ class L1ConfigManager {
         name: atlasLeague.name,
         country: atlasLeague.country,
         slug: atlasLeague.slug || this._slugify(atlasLeague.name),
+        resultsSlug: atlasLeague.results_slug || atlasLeague.slug || null,
+        resultsUrlStrategy: atlasLeague.results_url_strategy || 'seasonal',
         tier: atlasLeague.tier || 'P0',
         enabled: atlasLeague.enabled !== false,
         seasonType: this._inferSeasonType(leagueId),
@@ -228,22 +232,28 @@ class L1ConfigManager {
   }
 
   _leagueKey(name) {
-    return String(name || '')
+    return this._normalizeAscii(name)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '');
   }
 
   _slugify(name) {
-    return String(name || '')
+    return this._normalizeAscii(name)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
   }
 
   _codeFromName(name) {
-    return String(name || '')
+    return this._normalizeAscii(name)
       .toUpperCase()
       .replace(/[^A-Z0-9]/g, '');
+  }
+
+  _normalizeAscii(value) {
+    return String(value || '')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '');
   }
 }
 

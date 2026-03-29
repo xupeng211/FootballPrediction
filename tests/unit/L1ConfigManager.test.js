@@ -71,6 +71,23 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(manager.getExpectedMatches(47, '2025/2026'), 380);
   });
 
+  it('seasonless 联赛应保留 canonical slug 与 URL 策略', () => {
+    const superLig = manager.getLeagueById(71);
+    const euro = manager.getLeagueById(50);
+    const superLigByCode = manager.getLeagueByCode('SUPERLIG');
+
+    assert.ok(superLig);
+    assert.ok(euro);
+    assert.ok(superLigByCode);
+    assert.strictEqual(superLig.slug, 'super-lig');
+    assert.strictEqual(superLig.resultsSlug, 'super-lig');
+    assert.strictEqual(superLig.resultsUrlStrategy, 'seasonless');
+    assert.strictEqual(superLigByCode.id, 71);
+    assert.strictEqual(euro.slug, 'euro');
+    assert.strictEqual(euro.resultsSlug, 'euro');
+    assert.strictEqual(euro.resultsUrlStrategy, 'seasonless');
+  });
+
   it('配置缺失时应直接抛错，禁止静默回退', () => {
     assert.throws(() => new L1ConfigManager({
       reconConfigPath: '/tmp/does-not-exist-recon.json',

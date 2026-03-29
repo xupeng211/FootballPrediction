@@ -986,6 +986,19 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
       assert.strictEqual(matches.length, 1);
       assert.strictEqual(matches[0].external_id, '1');
     });
+
+    it('应为 FotMob fixture 显式写入 data_source，避免 canonical identity 失配', () => {
+      const mockResponse = {
+        matches: [
+          { id: 1, home: { name: 'Valid' }, away: { name: 'Team' }, status: { utcTime: '2024-03-20T15:00:00Z' } }
+        ]
+      };
+
+      const matches = parser.parse(mockResponse, 47, '2024/2025', true);
+
+      assert.strictEqual(matches.length, 1);
+      assert.strictEqual(matches[0].data_source, 'FotMob');
+    });
   });
 });
 
