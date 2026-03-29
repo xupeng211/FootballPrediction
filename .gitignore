@@ -44,6 +44,8 @@ secrets/
 *.swo
 *.sublime-project
 *.sublime-workspace
+.eslintcache
+mcp_servers/
 .claude/mcp_servers/
 
 # Project Data - Exclude sensitive and large files

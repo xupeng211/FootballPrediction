@@ -114,6 +114,15 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(worldCup.resultsUrlStrategy, 'seasonal');
   });
 
+  it('临时下线的 Copa América 不应出现在 active league 列表中', () => {
+    const copaAmerica = manager.getLeagueById(131);
+    const activeLeagueIds = manager.getActiveLeagues().map((league) => league.id);
+
+    assert.ok(copaAmerica);
+    assert.strictEqual(copaAmerica.enabled, false);
+    assert.ok(!activeLeagueIds.includes(131));
+  });
+
   it('配置缺失时应直接抛错，禁止静默回退', () => {
     assert.throws(() => new L1ConfigManager({
       reconConfigPath: '/tmp/does-not-exist-recon.json',

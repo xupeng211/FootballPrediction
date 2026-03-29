@@ -165,6 +165,23 @@ describe('ReconTaskPlanner', () => {
     );
   });
 
+  it('多词 country 应转换为 OddsPortal 连字符路径段', () => {
+    const planner = createPlanner();
+
+    const url = planner.buildResultsUrl({
+      name: 'Copa América',
+      country: 'South America',
+      slug: 'copa-america',
+      resultsSlug: 'copa-america',
+      resultsUrlStrategy: 'seasonal'
+    }, '2025-2026');
+
+    assert.strictEqual(
+      url,
+      'oddsportal://root/football/south-america/copa-america-2025-2026/results/'
+    );
+  });
+
   it('slug 已包含年份时不得追加系统 season 后缀', () => {
     const planner = createPlanner();
 
