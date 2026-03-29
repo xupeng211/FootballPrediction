@@ -33,6 +33,17 @@
 - `services/ReconTaskPlanner.js`
   负责 target 装配、pending 队列筛选、source 评估与 fallback 路由。
 
+### 1.4 Repository 1+3 结构
+
+- `../services/FixtureRepository.js`
+  作为对外唯一仓储门面，负责连接池、重试、状态更新入口和子服务装配。
+- `../services/recon/ReconSchemaJanitor.js`
+  负责 mapping schema 对齐、`season/hash` 唯一索引固化、历史脏数据自愈。
+- `../services/recon/ReconMappingStore.js`
+  负责 mapping 写入、批量保存、hash 冲突审计和事务内重绑。
+- `../services/recon/ReconConflictArbiter.js`
+  负责队名/日期打分、冲突胜者选择和错误映射仲裁。
+
 ## 2. 运行流程
 
 1. `recon_scanner.js` 初始化 `FixtureRepository`、`ReconScanner`、`ReconEngine`。
@@ -40,7 +51,21 @@
 3. `ReconTaskPlanner.selectCandidateSource()` 调用 `ReconNavigator.fetchFullSeasonArchive()` 或 `protocolArchiveExtract()`。
 4. `ReconNavigator` 通过 `ReconBrowserContext` 驱动页面，通过 `ReconNetworkMonitor` / `ReconDomScraper` / `ReconStateProber` 收集候选。
 5. `ReconMirrorManager` 构建赛季镜像，`ReconMatchEvaluator` 给每场待对齐比赛计算最佳候选。
-6. `ReconEngine._persistReconBatches()` 分批写入 `RECON_LINKED` / `RECON_MISMATCH`，并打出 `recon_run_id` 级别日志。
+6. `ReconEngine._persistReconBatches()` 调用 `FixtureRepository`，由 Repository 薄壳把写入委托给 `ReconMappingStore`，必要时经 `ReconConflictArbiter` 仲裁并由 `ReconSchemaJanitor` 保证 schema/索引健康。
+7. 每个批次最终落库 `RECON_LINKED` / `RECON_MISMATCH`，并带 `recon_run_id` 日志收口。
+
+## 2.1 Repo-Service 协作图
+
+```text
+recon_scanner
+  -> ReconEngine
+    -> FixtureRepository
+      -> ReconSchemaJanitor
+           -> dedupeMappings / repairLinkedStatusesWithoutMapping
+      -> ReconMappingStore
+           -> ReconConflictArbiter
+           -> matches_oddsportal_mapping / matches
+```
 
 ## 3. 配置入口
 
@@ -48,6 +73,8 @@ Recon 运行时参数统一从 [config/recon_config.json](/home/xupeng/projects/
 
 - `repository.retry`
   仓储重试次数、退避间隔、最大恢复窗口。
+- `repository.conflict_arbiter`
+  hash 冲突仲裁的同场阈值与时间窗口。
 - `matching`
   置信度阈值、主客判定阈值、日期权重。
 - `recon_runtime.engine`

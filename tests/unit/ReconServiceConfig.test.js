@@ -56,6 +56,22 @@ test('ReconServiceConfig.validateConfig 在关键字段类型非法时必须 fai
   );
 });
 
+test('ReconServiceConfig.validateConfig 在 conflict arbiter 阈值类型非法时必须 fail-fast 并指出字段名', () => {
+  const invalidConfig = structuredClone(config);
+  invalidConfig.repository.conflict_arbiter.same_fixture_threshold = 'invalid';
+
+  assert.throws(
+    () => validateConfig(invalidConfig, { configPath: '/tmp/recon_config.invalid_conflict_arbiter.json' }),
+    (error) => {
+      assert.equal(error instanceof ReconConfigValidationError, true);
+      assert.equal(error.code, 'FATAL_CONFIG');
+      assert.equal(error.field, 'repository.conflict_arbiter.same_fixture_threshold');
+      assert.match(error.message, /repository\.conflict_arbiter\.same_fixture_threshold/);
+      return true;
+    }
+  );
+});
+
 test('ReconServiceConfig.validateConfig 在缺少关键配置节时必须 fail-fast', () => {
   const invalidConfig = structuredClone(config);
   delete invalidConfig.recon_runtime.browser_context;
