@@ -56,6 +56,9 @@ class ReconDomScraper {
     const document = dom.window.document;
     const currentUrl = options.currentUrl || this.baseUrl;
     const leaguePathPrefix = String(options.leaguePathPrefix || '').trim();
+    const canonicalLeaguePathPrefix = this._extractCanonicalLeaguePathPrefix(
+      document.querySelector('link[rel="canonical"]')?.href || ''
+    );
     const seen = new Set();
     const anchors = Array.from(document.querySelectorAll(RESULT_ANCHOR_SELECTORS.join(', ')));
     const matches = [];
@@ -71,7 +74,14 @@ class ReconDomScraper {
         continue;
       }
 
-      if (leaguePathPrefix && !this._matchesLeaguePath(pathname, leaguePathPrefix)) {
+      const matchesPrimaryPath = leaguePathPrefix
+        ? this._matchesLeaguePath(pathname, leaguePathPrefix)
+        : false;
+      const matchesCanonicalPath = canonicalLeaguePathPrefix
+        ? this._matchesLeaguePath(pathname, canonicalLeaguePathPrefix)
+        : false;
+
+      if ((leaguePathPrefix || canonicalLeaguePathPrefix) && !matchesPrimaryPath && !matchesCanonicalPath) {
         continue;
       }
 
@@ -239,8 +249,16 @@ class ReconDomScraper {
       };
 
       const cleanText = (value) => String(value || '').replace(/\s+/g, ' ').trim();
+      const normalizeLeaguePrefix = (value) => String(value || '')
+        .replace(/^https?:\/\/[^/]+/i, '')
+        .replace(/-\d{4}-\d{4}(?=\/)/i, '')
+        .replace(/\/(results|standings|outrights)(?:\/page\/\d+)?\/?$/i, '/')
+        .replace(/\/+$/, '/');
       const seen = new Set();
-      const pathPrefix = String(pageLeaguePathPrefix || '').trim();
+      const pathPrefix = normalizeLeaguePrefix(pageLeaguePathPrefix);
+      const canonicalPathPrefix = normalizeLeaguePrefix(
+        document.querySelector('link[rel="canonical"]')?.href || ''
+      );
       const matches = [];
 
       const extractNamesFromSlug = (pathname) => {
@@ -293,9 +311,10 @@ class ReconDomScraper {
         }
 
         const normalizedPath = String(pathname || '').replace(/-\d{4}-\d{4}(?=\/)/i, '');
-        const normalizedPrefix = String(pathPrefix || '').replace(/-\d{4}-\d{4}(?=\/)/i, '');
+        const matchesPrimaryPath = pathPrefix ? normalizedPath.startsWith(pathPrefix) : false;
+        const matchesCanonicalPath = canonicalPathPrefix ? normalizedPath.startsWith(canonicalPathPrefix) : false;
 
-        if (normalizedPrefix && !normalizedPath.startsWith(normalizedPrefix)) {
+        if ((pathPrefix || canonicalPathPrefix) && !matchesPrimaryPath && !matchesCanonicalPath) {
           continue;
         }
 
@@ -617,8 +636,20 @@ class ReconDomScraper {
 
   _matchesLeaguePath(pathname, leaguePathPrefix) {
     const normalizedPath = String(pathname || '').replace(/-\d{4}-\d{4}(?=\/)/i, '');
-    const normalizedPrefix = String(leaguePathPrefix || '').replace(/-\d{4}-\d{4}(?=\/)/i, '');
+    const normalizedPrefix = this._normalizeLeaguePathPrefix(leaguePathPrefix);
     return normalizedPrefix ? normalizedPath.startsWith(normalizedPrefix) : true;
+  }
+
+  _extractCanonicalLeaguePathPrefix(canonicalUrl) {
+    return this._normalizeLeaguePathPrefix(canonicalUrl);
+  }
+
+  _normalizeLeaguePathPrefix(value) {
+    return String(value || '')
+      .replace(/^https?:\/\/[^/]+/i, '')
+      .replace(/-\d{4}-\d{4}(?=\/)/i, '')
+      .replace(/\/(results|standings|outrights)(?:\/page\/\d+)?\/?$/i, '/')
+      .replace(/\/+$/, '/');
   }
 
   async _wait(waitForTimeout, ms) {

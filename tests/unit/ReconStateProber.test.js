@@ -59,4 +59,15 @@ describe('ReconStateProber', () => {
       'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/KKay4EE8/X262144/1/0/?_=1'
     );
   });
+
+  it('seasonless results URL 应能反推出联赛主页 URL', () => {
+    const prober = new ReconStateProber({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    assert.strictEqual(
+      prober.deriveLeaguePageUrl('https://www.oddsportal.com/football/brazil/serie-a/results/'),
+      'https://www.oddsportal.com/football/brazil/serie-a/'
+    );
+  });
 });

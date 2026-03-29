@@ -147,4 +147,21 @@ describe('ReconTaskPlanner', () => {
       'oddsportal://root/football/turkey/super-lig/results/'
     );
   });
+
+  it('巴甲应使用 seasonless 的 serie-a results URL', () => {
+    const planner = createPlanner();
+
+    const url = planner.buildResultsUrl({
+      name: 'Brasileirão',
+      country: 'brazil',
+      slug: 'brasileirao',
+      resultsSlug: 'serie-a',
+      resultsUrlStrategy: 'seasonless'
+    }, '2025-2026');
+
+    assert.strictEqual(
+      url,
+      'oddsportal://root/football/brazil/serie-a/results/'
+    );
+  });
 });
