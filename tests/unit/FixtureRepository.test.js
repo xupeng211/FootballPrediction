@@ -225,3 +225,74 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在两个 match_id 争抢同
   assert.equal(conflictLogs.length, 1);
   assert.match(conflictLogs[0].message, /批内 hash 冲突/);
 });
+
+test('FixtureRepository.ensureOddsPortalMappingSchema 在历史 hash 冲突导致建索引失败时应自动清理并重试', async () => {
+  const healLogs = [];
+  let createIndexAttempts = 0;
+  const migrationCalls = [];
+
+  const pool = {
+    async query(sql) {
+      if (sql.includes('ALTER TABLE matches_oddsportal_mapping')) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      if (sql.includes('CREATE UNIQUE INDEX IF NOT EXISTS idx_mapping_season_hash_unique')) {
+        createIndexAttempts++;
+        if (createIndexAttempts === 1) {
+          const error = new Error('could not create unique index "idx_mapping_season_hash_unique"');
+          error.code = '23505';
+          throw error;
+        }
+        return { rows: [], rowCount: 0 };
+      }
+
+      throw new Error(`unexpected_query:${sql}`);
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    mappingMigration: {
+      async findDuplicateSeasonHashGroups() {
+        migrationCalls.push('find');
+        return [];
+      },
+      async dedupeMappings() {
+        migrationCalls.push('dedupe');
+        return {
+          deletedCount: 3,
+          groupCount: 2,
+          groups: [
+            {
+              season: '2024/2025',
+              oddsportal_hash: 'dup-a',
+              kept_match_id: 'keep-a',
+              removed_match_ids: ['drop-a']
+            }
+          ]
+        };
+      }
+    },
+    logger: {
+      info() {},
+      warn(message, data) {
+        healLogs.push({ message, data });
+      },
+      error() {}
+    }
+  });
+
+  await repository.ensureOddsPortalMappingSchema();
+
+  assert.equal(createIndexAttempts, 2);
+  assert.deepEqual(migrationCalls, ['find', 'dedupe']);
+  assert.equal(repository._mappingHashUniquenessEnsured, true);
+
+  const healLog = healLogs.find((entry) => /\[HEAL\]/.test(entry.message));
+  assert.ok(healLog);
+  assert.match(healLog.message, /自动清理了 3 条脏数据以固化唯一索引/);
+  assert.equal(healLog.data.reason, 'create_index_conflict');
+  assert.equal(healLog.data.duplicate_groups, 2);
+});
