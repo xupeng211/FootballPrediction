@@ -72,6 +72,21 @@ test('ReconServiceConfig.validateConfig 在 conflict arbiter 阈值类型非法�
   );
 });
 
+test('ReconServiceConfig.validateConfig 在 identity_inactive_statuses 缺失时必须 fail-fast', () => {
+  const invalidConfig = structuredClone(config);
+  delete invalidConfig.repository.identity_inactive_statuses;
+
+  assert.throws(
+    () => validateConfig(invalidConfig, { configPath: '/tmp/recon_config.missing_identity_statuses.json' }),
+    (error) => {
+      assert.equal(error instanceof ReconConfigValidationError, true);
+      assert.equal(error.field, 'repository.identity_inactive_statuses');
+      assert.match(error.message, /repository\.identity_inactive_statuses/);
+      return true;
+    }
+  );
+});
+
 test('ReconServiceConfig.validateConfig 在缺少关键配置节时必须 fail-fast', () => {
   const invalidConfig = structuredClone(config);
   delete invalidConfig.recon_runtime.browser_context;

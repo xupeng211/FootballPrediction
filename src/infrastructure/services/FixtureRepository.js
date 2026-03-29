@@ -4,13 +4,13 @@ const { Normalizer } = require('../../utils/Normalizer');
 const { loadReconConfig } = require('../recon/services/ReconServiceConfig');
 const mappingMigration = require('./migrations/dedupeMappings');
 const { ReconConflictArbiter } = require('./recon/ReconConflictArbiter');
+const { MatchIdentityResolver } = require('./recon/MatchIdentityResolver');
+const { MatchCanonicalJanitor } = require('./recon/MatchCanonicalJanitor');
 const { ReconSchemaJanitor } = require('./recon/ReconSchemaJanitor');
 const { ReconMappingStore } = require('./recon/ReconMappingStore');
 
 function loadRepositoryConfig() {
-  try {
-    return loadReconConfig(process.env.RECON_CONFIG_PATH);
-  } catch (error) {
+  try { return loadReconConfig(process.env.RECON_CONFIG_PATH); } catch (error) {
     console.error('[FixtureRepository] 警告: 无法加载 recon 配置', error.message);
     throw error;
   }
@@ -22,6 +22,7 @@ const REPOSITORY_CONFIG = RECON_CONFIG.repository || {};
 const RETRY_CONFIG = REPOSITORY_CONFIG.retry || {};
 const POOL_CONFIG = REPOSITORY_CONFIG.pool || {};
 const CONFLICT_ARBITER_CONFIG = REPOSITORY_CONFIG.conflict_arbiter || {};
+const IDENTITY_INACTIVE_STATUSES = REPOSITORY_CONFIG.identity_inactive_statuses || [];
 
 class RepositoryError extends Error {
   constructor(message, code, originalError = null, details = null) {
@@ -61,6 +62,19 @@ class FixtureRepository {
       logger: this.logger,
       RepositoryError
     });
+    this.matchIdentityResolver = options.matchIdentityResolver || new MatchIdentityResolver({
+      getDbPool: () => this.dbPool,
+      executeWithRetry: this._executeWithRetry.bind(this),
+      logger: this.logger,
+      RepositoryError
+    });
+    this.matchCanonicalJanitor = options.matchCanonicalJanitor || new MatchCanonicalJanitor({
+      getDbPool: () => this.dbPool,
+      executeWithRetry: this._executeWithRetry.bind(this),
+      logger: this.logger,
+      RepositoryError,
+      identityInactiveStatuses: options.identityInactiveStatuses || IDENTITY_INACTIVE_STATUSES
+    });
     this.mappingStore = new ReconMappingStore({
       getDbPool: () => this.dbPool,
       logger: this.logger,
@@ -73,24 +87,17 @@ class FixtureRepository {
       sqlTemplates: SQL_TEMPLATES,
       reconConfig: RECON_CONFIG
     });
+    Object.defineProperties(this, {
+      _mappingSchemaEnsured: {
+        get: () => this.schemaJanitor.mappingSchemaEnsured,
+        set: (value) => { this.schemaJanitor.mappingSchemaEnsured = Boolean(value); }
+      },
+      _mappingHashUniquenessEnsured: {
+        get: () => this.schemaJanitor.mappingHashUniquenessEnsured,
+        set: (value) => { this.schemaJanitor.mappingHashUniquenessEnsured = Boolean(value); }
+      }
+    });
   }
-
-  get _mappingSchemaEnsured() {
-    return this.schemaJanitor.mappingSchemaEnsured;
-  }
-
-  set _mappingSchemaEnsured(value) {
-    this.schemaJanitor.mappingSchemaEnsured = Boolean(value);
-  }
-
-  get _mappingHashUniquenessEnsured() {
-    return this.schemaJanitor.mappingHashUniquenessEnsured;
-  }
-
-  set _mappingHashUniquenessEnsured(value) {
-    this.schemaJanitor.mappingHashUniquenessEnsured = Boolean(value);
-  }
-
   async init() {
     if (!this.dbPool) {
       const { Pool } = require('pg');
@@ -105,18 +112,14 @@ class FixtureRepository {
       });
       this.logger.info('[Repository] 数据库连接池已创建');
     }
-
     await this.ensureOddsPortalMappingSchema();
   }
-
-  async ensureOddsPortalMappingSchema() {
-    return this.schemaJanitor.ensureOddsPortalMappingSchema();
-  }
-
+  async ensureOddsPortalMappingSchema() { return this.schemaJanitor.ensureOddsPortalMappingSchema(); }
+  async auditCanonicalIdentityDuplicates(options = {}) { return this.matchCanonicalJanitor.auditDuplicateGroups(options); }
+  async repairCanonicalIdentity(options = {}) { return this.matchCanonicalJanitor.consolidateDuplicateGroups(options); }
   async _executeWithRetry(operation, operationName) {
     let lastError;
     const startedAt = this.now();
-
     for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
       try {
         return await operation();
@@ -124,7 +127,6 @@ class FixtureRepository {
         if (error instanceof RepositoryError && error.code !== 'DATABASE_ERROR') {
           throw error;
         }
-
         lastError = error;
         const elapsedMs = Math.max(0, this.now() - startedAt);
         this.logger.warn(`[Repository] ${operationName} 失败 (尝试 ${attempt}/${this.maxRetries})`, {
@@ -132,7 +134,6 @@ class FixtureRepository {
           code: error.code,
           elapsedMs
         });
-
         const remainingBudgetMs = Math.max(0, this.maxRetryWindowMs - elapsedMs);
         if (attempt < this.maxRetries && remainingBudgetMs > 0) {
           const plannedDelayMs = Math.round(
@@ -144,38 +145,24 @@ class FixtureRepository {
           }
           continue;
         }
-
         break;
       }
     }
-
     throw new RepositoryError(
       `${operationName} 在 ${this.maxRetries} 次尝试后仍然失败: ${lastError.message}`,
       'MAX_RETRIES_EXCEEDED',
       lastError
     );
   }
-
-  async saveOddsPortalMapping(mappingData, options = {}) {
-    return this.mappingStore.saveOddsPortalMapping(mappingData, options);
-  }
-
-  async batchSaveOddsPortalMappings(mappings, options = {}) {
-    return this.mappingStore.batchSaveOddsPortalMappings(mappings, options);
-  }
-
-  async resolveHashConflict(conflict, options = {}) {
-    return this.mappingStore.resolveHashConflict(conflict, options);
-  }
-
+  async saveOddsPortalMapping(mappingData, options = {}) { return this.mappingStore.saveOddsPortalMapping(mappingData, options); }
+  async batchSaveOddsPortalMappings(mappings, options = {}) { return this.mappingStore.batchSaveOddsPortalMappings(mappings, options); }
+  async resolveHashConflict(conflict, options = {}) { return this.mappingStore.resolveHashConflict(conflict, options); }
   async batchUpdateMatchPipelineStatus(matchIds, status, options = {}) {
     if (!Array.isArray(matchIds) || matchIds.length === 0) {
       return { success: true, updated: 0 };
     }
-
     const orderedMatchIds = [...new Set(matchIds.map((id) => String(id)))]
       .sort((left, right) => left.localeCompare(right));
-
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       try {
@@ -195,12 +182,10 @@ class FixtureRepository {
       }
     }, 'batchUpdateMatchPipelineStatus');
   }
-
   async _updateMatchPipelineStatusWithClient(client, matchIds, status, options = {}) {
     if (!Array.isArray(matchIds) || matchIds.length === 0) {
       return 0;
     }
-
     const season = options.season ? String(options.season) : null;
     const expectedCurrentStatus = options.expectedCurrentStatus || null;
     let query = `
@@ -210,7 +195,6 @@ class FixtureRepository {
       WHERE m.match_id = ANY($1::text[])
     `;
     const params = [matchIds, status];
-
     if (status === 'RECON_MISMATCH') {
       params.push(expectedCurrentStatus || 'harvested');
       query += `
@@ -232,21 +216,18 @@ class FixtureRepository {
         )
       `;
     }
-
     const result = await client.query(query, params);
     return result.rowCount || 0;
   }
-
   async persist(fixtures) {
     if (!Array.isArray(fixtures) || fixtures.length === 0) {
       return { total: 0, inserted: 0, updated: 0, failed: 0, errors: [] };
     }
-
     await this.init();
+    const canonicalFixtures = await this.matchIdentityResolver.resolveCanonicalFixtures(fixtures);
     const results = { total: fixtures.length, inserted: 0, updated: 0, failed: 0, errors: [] };
-
-    for (let index = 0; index < fixtures.length; index += this.batchSize) {
-      const batch = fixtures
+    for (let index = 0; index < canonicalFixtures.length; index += this.batchSize) {
+      const batch = canonicalFixtures
         .slice(index, index + this.batchSize)
         .map((fixture) => ({
           ...this._sanitizeFixtureForPersistence(fixture),
@@ -255,10 +236,9 @@ class FixtureRepository {
           away_team: this._truncate(Normalizer.normalizeTeamName(fixture.away_team), 200),
           status: this._truncate(Normalizer.normalizeStatus(fixture.status), 50),
           is_finished: fixture.is_finished ?? Normalizer.normalizeStatus(fixture.status) === 'finished',
-          data_source: this._truncate(fixture.data_source || 'FotMob', 50)
+          data_source: this._requireNonEmptyString(fixture, 'data_source', 50)
         }))
         .sort((left, right) => String(left.match_id).localeCompare(String(right.match_id)));
-
       try {
         const batchResult = await this._persistBatch(batch);
         results.inserted += batchResult.inserted;
@@ -272,10 +252,8 @@ class FixtureRepository {
         });
       }
     }
-
     return results;
   }
-
   async _persistBatch(batch) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
@@ -299,7 +277,6 @@ class FixtureRepository {
           );
           return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12})`;
         });
-
         const result = await client.query(`
           INSERT INTO matches (
             match_id, external_id, league_name, season, home_team, away_team,
@@ -329,29 +306,23 @@ class FixtureRepository {
       }
     }, 'persistFixtures');
   }
-
   _sanitizeFixtureForPersistence(fixture) {
-    return {
-      ...fixture,
-      match_id: this._truncate(String(fixture.match_id || ''), 50),
-      external_id: this._truncate(String(fixture.external_id || ''), 100),
-      league_name: this._truncate(String(fixture.league_name || ''), 100),
-      match_date: this._safeDate(fixture.match_date)
-    };
+    return { ...fixture, match_id: this._requireNonEmptyString(fixture, 'match_id', 50), external_id: this._requireNonEmptyString(fixture, 'external_id', 100), league_name: this._truncate(String(fixture.league_name || ''), 100), match_date: this._safeDate(fixture.match_date) };
   }
-
-  _truncate(value, maxLength) {
-    return String(value || '').slice(0, maxLength);
-  }
-
-  _safeDate(value) {
+  _requireNonEmptyString(fixture, fieldName, maxLength = 100) {
+    const value = String(fixture?.[fieldName] || '').trim();
     if (!value) {
-      return null;
+      throw new RepositoryError(
+        `比赛缺少必填 identity 字段: ${fieldName}`,
+        'CANONICAL_IDENTITY_INVALID',
+        null,
+        { field: fieldName, match_id: fixture?.match_id ? String(fixture.match_id) : null }
+      );
     }
-    const date = value instanceof Date ? value : new Date(value);
-    return Number.isNaN(date.getTime()) ? null : date;
+    return this._truncate(value, maxLength);
   }
-
+  _truncate(value, maxLength) { return String(value || '').slice(0, maxLength); }
+  _safeDate(value) { const date = value ? (value instanceof Date ? value : new Date(value)) : null; return !date || Number.isNaN(date.getTime()) ? null : date; }
   async findMatchByTeams(homeTeam, awayTeam, season) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
@@ -386,7 +357,6 @@ class FixtureRepository {
       }
     }, 'findMatchByTeams');
   }
-
   async findMatchesBySeason(season) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
@@ -406,7 +376,6 @@ class FixtureRepository {
       }
     }, 'findMatchesBySeason');
   }
-
   async getUnstitchedMatches(season, leagueName) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
@@ -430,7 +399,6 @@ class FixtureRepository {
       }
     }, 'getUnstitchedMatches');
   }
-
   async getReconEligibleMatches(season, leagueName, limit = null) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
@@ -450,12 +418,10 @@ class FixtureRepository {
             )
           ORDER BY m.match_date DESC, m.match_id DESC
         `;
-
         if (Number.isInteger(limit) && limit > 0) {
           params.push(limit);
           query += ` LIMIT $${params.length}`;
         }
-
         const result = await client.query(query, params);
         return result.rows;
       } finally {
@@ -463,7 +429,6 @@ class FixtureRepository {
       }
     }, 'getReconEligibleMatches');
   }
-
   async getMappingStats(season) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
@@ -485,13 +450,7 @@ class FixtureRepository {
       }
     }, 'getMappingStats');
   }
-
-  async close() {
-    if (this.dbPool && typeof this.dbPool.end === 'function') {
-      await this.dbPool.end();
-      this.logger.info('[Repository] 数据库连接池已关闭');
-    }
-  }
+  async close() { if (this.dbPool && typeof this.dbPool.end === 'function') { await this.dbPool.end(); this.logger.info('[Repository] 数据库连接池已关闭'); } }
 }
 
 module.exports = { FixtureRepository, RepositoryError };
