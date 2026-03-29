@@ -38,7 +38,15 @@
     { "id": 57, "name": "Eredivisie", "country": "Netherlands", "tier": "P3", "enabled": true },
     { "id": 61, "name": "Primeira Liga", "country": "Portugal", "tier": "P3", "enabled": true },
     { "id": 130, "name": "MLS", "country": "USA", "tier": "P3", "enabled": true },
-    { "id": 120, "name": "CSL", "country": "China", "tier": "P3", "enabled": true },
+    {
+      "id": 120,
+      "name": "CSL",
+      "country": "China",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "super-league",
+      "results_url_strategy": "seasonless"
+    },
     { "id": 223, "name": "J1 League", "country": "Japan", "tier": "P3", "enabled": true },
     { "id": 8974, "name": "J2 League", "country": "Japan", "tier": "P3", "enabled": true },
     {
