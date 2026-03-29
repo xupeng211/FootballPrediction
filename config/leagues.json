@@ -74,7 +74,8 @@
       "name": "UEFA Euro",
       "country": "Europe",
       "tier": "P4",
-      "enabled": true,
+      "enabled": false,
+      "ops_note": "站点重定向至 2024，暂无 2026 数据，临时下线 Recon/L1 入口",
       "slug": "euro",
       "results_url_strategy": "seasonless"
     },
