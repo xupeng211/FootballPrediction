@@ -25,6 +25,7 @@ class ReconDecryptor {
     this.traceId = options.traceId || 'no-trace';
     this.decryptFn = null;
     this.algorithmVersion = null;
+    this.allowBestEffortCandidate = options.allowBestEffortCandidate === true;
   }
 
   /**
@@ -42,7 +43,12 @@ class ReconDecryptor {
       const decryptFn = await this._extractFromAppScript(page, sampleEncryptedData);
       if (decryptFn) {
         this.decryptFn = decryptFn; // V11.0 FIX: 保存解密函数
-        this.logger.info('decryptor_extracted', { method: 'app_script', version: this.algorithmVersion });
+        this.logger.info('decryptor_extracted', {
+          method: 'app_script',
+          version: this.algorithmVersion,
+          validated: decryptFn.__validated !== false,
+          bestEffort: decryptFn.__bestEffort === true
+        });
         return decryptFn;
       }
 
@@ -88,7 +94,7 @@ class ReconDecryptor {
       }
 
       // 在页面上下文中动态导入并提取解密函数
-      const decryptFn = await page.evaluate(async ({ url, sample }) => {
+      const decryptFn = await page.evaluate(async ({ url, sample, allowBestEffort }) => {
         try {
           const module = await import(url);
 
@@ -154,11 +160,29 @@ class ReconDecryptor {
             }
           }
 
+          if (allowBestEffort && candidates.length > 0) {
+            const bestEffortCandidate = candidates.find((candidate) => candidate.name === 'ai')
+              || candidates.find((candidate) => candidate.type === 'named_export')
+              || candidates[0];
+
+            return {
+              found: true,
+              name: bestEffortCandidate.name,
+              type: bestEffortCandidate.type,
+              validated: false,
+              bestEffort: true
+            };
+          }
+
           return { found: false, validated: false };
         } catch (e) {
           return { found: false, error: e.message };
         }
-      }, { url: appScriptUrl, sample: sampleEncryptedData });
+      }, {
+        url: appScriptUrl,
+        sample: sampleEncryptedData,
+        allowBestEffort: this.allowBestEffortCandidate
+      });
 
       if (!decryptFn || !decryptFn.found) {
         if (sampleEncryptedData) {
@@ -170,15 +194,24 @@ class ReconDecryptor {
       }
 
       this.algorithmVersion = `app_${decryptFn.name}`;
+      if (decryptFn.bestEffort) {
+        this.logger.warn('app_script_best_effort_selected', {
+          candidate: decryptFn.name,
+          validated: false
+        });
+      }
       
       // 返回实际的解密函数包装器 (V11.0 FIX: 将参数包装成对象)
-      return async (encryptedData) => {
+      const wrappedDecryptFn = async (encryptedData) => {
         return page.evaluate(async ({ url, fnName, data }) => {
           const mod = await import(url);
           const fn = fnName === 'default' ? mod.default : mod[fnName];
           return fn(data);
         }, { url: appScriptUrl, fnName: decryptFn.name, data: encryptedData });
       };
+      wrappedDecryptFn.__validated = decryptFn.validated !== false;
+      wrappedDecryptFn.__bestEffort = decryptFn.bestEffort === true;
+      return wrappedDecryptFn;
     } catch (error) {
       this.logger.warn('app_script_extraction_failed', { error: error.message });
       return null;
