@@ -14,6 +14,7 @@
 
 const { Normalizer } = require('../../utils/Normalizer');
 const { loadReconConfig } = require('../recon/services/ReconServiceConfig');
+const mappingMigration = require('./migrations/dedupeMappings');
 
 function loadRepositoryConfig() {
   try {
@@ -74,6 +75,7 @@ class FixtureRepository {
     this.traceId = options.traceId || null;
     this._mappingSchemaEnsured = false;
     this._mappingHashUniquenessEnsured = false;
+    this.mappingMigration = options.mappingMigration || mappingMigration;
     this.sleep = options.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
     this.now = options.now || (() => Date.now());
   }
@@ -116,17 +118,82 @@ class FixtureRepository {
     }, 'ensureOddsPortalMappingSchema');
 
     if (!this._mappingHashUniquenessEnsured) {
-      await this._executeWithRetry(async () => {
+      await this._ensureMappingHashUniquenessIndex();
+    }
+
+    this._mappingSchemaEnsured = true;
+  }
+
+  async _ensureMappingHashUniquenessIndex() {
+    const duplicateGroups = await this._executeWithRetry(
+      () => this.mappingMigration.findDuplicateSeasonHashGroups(this.dbPool),
+      'precheckMappingHashDuplicates'
+    );
+
+    if (duplicateGroups.length > 0) {
+      await this._healMappingHashUniquenessConflicts('precheck', duplicateGroups);
+    }
+
+    try {
+      await this._createMappingHashUniquenessIndex();
+    } catch (error) {
+      if (!(error instanceof RepositoryError) || error.code !== 'HASH_INDEX_DUPLICATES') {
+        throw error;
+      }
+
+      const healResult = await this._healMappingHashUniquenessConflicts('create_index_conflict');
+      if (healResult.deletedCount <= 0) {
+        throw error;
+      }
+
+      await this._createMappingHashUniquenessIndex();
+    }
+
+    this._mappingHashUniquenessEnsured = true;
+  }
+
+  async _createMappingHashUniquenessIndex() {
+    await this._executeWithRetry(async () => {
+      try {
         await this.dbPool.query(`
           CREATE UNIQUE INDEX IF NOT EXISTS idx_mapping_season_hash_unique
           ON matches_oddsportal_mapping(season, oddsportal_hash)
         `);
-      }, 'ensureOddsPortalHashUniquenessIndex');
+      } catch (error) {
+        if (this._isCreateIndexDuplicateConflict(error)) {
+          throw new RepositoryError(
+            '历史 season/hash 重复数据阻止唯一索引创建',
+            'HASH_INDEX_DUPLICATES',
+            error
+          );
+        }
+        throw error;
+      }
+    }, 'ensureOddsPortalHashUniquenessIndex');
+  }
 
-      this._mappingHashUniquenessEnsured = true;
+  async _healMappingHashUniquenessConflicts(reason, duplicateGroups = null) {
+    const healResult = await this._executeWithRetry(
+      () => this.mappingMigration.dedupeMappings({
+        queryable: this.dbPool,
+        logger: this.logger,
+        groups: duplicateGroups
+      }),
+      'healMappingHashDuplicates'
+    );
+
+    if (healResult.deletedCount > 0) {
+      this.logger.warn(
+        `[HEAL] 检测到历史 Hash 冲突，自动清理了 ${healResult.deletedCount} 条脏数据以固化唯一索引`,
+        {
+          reason,
+          duplicate_groups: healResult.groupCount,
+          sample_groups: (healResult.groups || []).slice(0, 3)
+        }
+      );
     }
 
-    this._mappingSchemaEnsured = true;
+    return healResult;
   }
 
   /**
@@ -586,6 +653,18 @@ class FixtureRepository {
 
     return detail.includes(String(mappingData.season || ''))
       && detail.includes(String(mappingData.oddsportal_hash || ''));
+  }
+
+  _isCreateIndexDuplicateConflict(error) {
+    if (!error || error.code !== '23505') {
+      return false;
+    }
+
+    const message = String(error.message || '');
+    const detail = String(error.detail || '');
+    return message.includes('idx_mapping_season_hash_unique')
+      || message.includes('could not create unique index')
+      || detail.includes('(season, oddsportal_hash)');
   }
 
   async _auditSeasonHashConflictsWithClient(client, mappings = []) {
