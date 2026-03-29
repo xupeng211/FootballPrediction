@@ -601,6 +601,20 @@ describe('ReconScanner Robustness - CLI Defaults', () => {
 
     assert.strictEqual(exitCode, 0);
   });
+
+  it('SKIPPED_FUTURE_FINALS 必须视为成功退出，不得触发整体失败', () => {
+    const exitCode = computeExitCode([
+      {
+        success: false,
+        league: 'FIFA World Cup',
+        error: 'SKIPPED_FUTURE_FINALS',
+        sourceState: 'SKIPPED_FUTURE_FINALS',
+        skippedPendingTotal: 104
+      }
+    ], '0.00');
+
+    assert.strictEqual(exitCode, 0);
+  });
 });
 
 describe('ReconScanner Robustness - Strict Config', () => {
