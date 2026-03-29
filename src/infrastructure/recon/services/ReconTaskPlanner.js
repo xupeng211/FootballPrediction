@@ -282,9 +282,7 @@ class ReconTaskPlanner {
 
   buildResultsUrl(leagueConfig, season) {
     const oddsportalSeason = this.formatSeasonForUrl(season);
-    const country = String(leagueConfig.country || '')
-      .trim()
-      .toLowerCase();
+    const country = this.normalizePathSegment(leagueConfig.country);
     const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
       .trim()
       .toLowerCase();
@@ -310,6 +308,16 @@ class ReconTaskPlanner {
 
   slugIncludesYear(slug) {
     return /(?:^|-)(?:19|20)\d{2}(?:-|$)/.test(String(slug || '').trim().toLowerCase());
+  }
+
+  normalizePathSegment(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 }
 
