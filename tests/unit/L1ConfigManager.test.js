@@ -74,10 +74,12 @@ describe('L1ConfigManager', () => {
   it('seasonless 联赛应保留 canonical slug 与 URL 策略', () => {
     const superLig = manager.getLeagueById(71);
     const euro = manager.getLeagueById(50);
+    const brasileirao = manager.getLeagueById(268);
     const superLigByCode = manager.getLeagueByCode('SUPERLIG');
 
     assert.ok(superLig);
     assert.ok(euro);
+    assert.ok(brasileirao);
     assert.ok(superLigByCode);
     assert.strictEqual(superLig.slug, 'super-lig');
     assert.strictEqual(superLig.resultsSlug, 'super-lig');
@@ -86,6 +88,9 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(euro.slug, 'euro');
     assert.strictEqual(euro.resultsSlug, 'euro');
     assert.strictEqual(euro.resultsUrlStrategy, 'seasonless');
+    assert.strictEqual(brasileirao.slug, 'brasileirao');
+    assert.strictEqual(brasileirao.resultsSlug, 'serie-a');
+    assert.strictEqual(brasileirao.resultsUrlStrategy, 'seasonless');
   });
 
   it('配置缺失时应直接抛错，禁止静默回退', () => {
