@@ -25,7 +25,15 @@
     { "id": 156, "providerId": 86, "name": "Serie B", "country": "Italy", "tier": "P2", "enabled": true },
     { "id": 182, "providerId": 110, "name": "Ligue 2", "country": "France", "tier": "P2", "enabled": true },
 
-    { "id": 268, "name": "Brasileirão", "country": "Brazil", "tier": "P3", "enabled": true },
+    {
+      "id": 268,
+      "name": "Brasileirão",
+      "country": "Brazil",
+      "tier": "P3",
+      "enabled": true,
+      "results_slug": "serie-a",
+      "results_url_strategy": "seasonless"
+    },
     { "id": 121, "name": "Primera División", "country": "Argentina", "tier": "P3", "enabled": true },
     { "id": 57, "name": "Eredivisie", "country": "Netherlands", "tier": "P3", "enabled": true },
     { "id": 61, "name": "Primeira Liga", "country": "Portugal", "tier": "P3", "enabled": true },

@@ -25,10 +25,15 @@ class ReconStateProber {
       return '';
     }
 
-    const derived = normalized.replace(
-      /(\/football\/[^/]+\/)([^/]+)-\d{4}-\d{4}\/results(?:\/page\/\d+)?\/?$/i,
-      '$1$2/'
-    );
+    const derived = normalized
+      .replace(
+        /(\/football\/[^/]+\/)([^/]+)-\d{4}-\d{4}\/results(?:\/page\/\d+)?\/?$/i,
+        '$1$2/'
+      )
+      .replace(
+        /(\/football\/[^/]+\/[^/]+)\/results(?:\/page\/\d+)?\/?$/i,
+        '$1/'
+      );
 
     return derived === normalized ? '' : derived;
   }
