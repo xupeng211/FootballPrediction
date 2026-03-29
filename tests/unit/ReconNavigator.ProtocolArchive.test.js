@@ -362,6 +362,144 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.matches[0].hash, 'archive-hash');
   });
 
+  it('非当前赛季 archive URL 缺少 tournament id 时，应切到联赛主页补全后再抓取', async () => {
+    const navigatedUrls = [];
+    const fetchedArchiveUrls = [];
+    const resultsUrl = 'oddsportal://root/football/portugal/primeira-liga-2025-2026/results/';
+    const leagueUrl = 'oddsportal://root/football/portugal/primeira-liga/';
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator.navigate = async (url) => {
+      navigatedUrls.push(url);
+      if (url === resultsUrl) {
+        navigator.apiEndpoints = new Set([
+          'oddsportal://ajax-sport-country-tournament-archive_/1//X262144/1/0/?_=1'
+        ]);
+        return;
+      }
+
+      if (url === leagueUrl) {
+        navigator.apiEndpoints = new Set();
+      }
+    };
+    navigator.stateProber.extractPageOutrightsMeta = async () => ({
+      id: 'U1ymuRr3',
+      sid: 1,
+      cid: 155,
+      archive: false
+    });
+    navigator._fetchAndDecryptWithOptions = async (url) => {
+      fetchedArchiveUrls.push(url);
+      return {
+        matches: [
+          {
+            hash: 'archive-fixed',
+            url: 'oddsportal://match/archive-fixed',
+            homeTeam: 'Sporting CP',
+            awayTeam: 'Benfica',
+            matchDate: '2025-08-10T19:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(resultsUrl, {
+      maxPages: 8,
+      timeoutMs: 1234
+    });
+
+    assert.deepStrictEqual(navigatedUrls, [resultsUrl, leagueUrl]);
+    assert.deepStrictEqual(fetchedArchiveUrls, [
+      'oddsportal://ajax-sport-country-tournament-archive_/1/U1ymuRr3/X262144/1/0/?_=1'
+    ]);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'archive-fixed');
+  });
+
+  it('archive 解密失败时应 relaunch 浏览器并重试一次', async () => {
+    let fetchCalls = 0;
+    let closeCalls = 0;
+    let launchCalls = 0;
+    const navigatedUrls = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.close = async () => {
+      closeCalls++;
+    };
+    navigator.launch = async () => {
+      launchCalls++;
+      navigator.page = {
+        isClosed: () => false,
+        async waitForTimeout() {}
+      };
+      return navigator.page;
+    };
+    navigator.navigate = async (url) => {
+      navigatedUrls.push(url);
+    };
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator.networkMonitor.fetchArchivePages = async () => {
+      fetchCalls++;
+      if (fetchCalls === 1) {
+        return {
+          matches: [],
+          pagesScanned: 1,
+          totalCandidates: 0,
+          pageStats: [{ page: 1, rows: 0, error: 'decrypt_failed:Failed to extract decryptor from any source' }]
+        };
+      }
+
+      return {
+        matches: [
+          {
+            hash: 'after-relaunch',
+            url: 'oddsportal://match/after-relaunch',
+            homeTeam: 'A',
+            awayTeam: 'B',
+            matchDate: '2025-08-12T18:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator._fetchAndDecryptWithOptions(
+      'oddsportal://ajax-sport-country-tournament-archive_/1/U1ymuRr3/X262144/1/0/?_=1',
+      1,
+      90000,
+      { warmUrl: 'oddsportal://root/football/portugal/primeira-liga-2025-2026/results/' }
+    );
+
+    assert.strictEqual(closeCalls, 1);
+    assert.strictEqual(launchCalls, 1);
+    assert.deepStrictEqual(navigatedUrls, [
+      'oddsportal://root/football/portugal/primeira-liga-2025-2026/results/'
+    ]);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'after-relaunch');
+    assert.strictEqual(result.retriedAfterRelaunch, true);
+  });
+
   it('浏览器上下文丢失时，ensureBrowserHealthy 应自动重启并恢复 page', async () => {
     let launchCount = 0;
 

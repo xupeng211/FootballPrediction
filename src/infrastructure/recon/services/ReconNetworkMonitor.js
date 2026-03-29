@@ -48,7 +48,11 @@ class ReconNetworkMonitor {
     this.baseUrl = options.baseUrl || BASE_URL;
     this.page = options.page || null;
     this.decryptorFactory = options.decryptorFactory || (() => (
-      new ReconDecryptor({ logger: this.logger, traceId: this.traceId })
+      new ReconDecryptor({
+        logger: this.logger,
+        traceId: this.traceId,
+        allowBestEffortCandidate: true
+      })
     ));
     this.decryptor = options.decryptor || this.decryptorFactory();
     this.interceptedData = [];
