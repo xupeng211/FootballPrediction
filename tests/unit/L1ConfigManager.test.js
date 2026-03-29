@@ -93,9 +93,16 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(euro.slug, 'euro');
     assert.strictEqual(euro.resultsSlug, 'euro');
     assert.strictEqual(euro.resultsUrlStrategy, 'seasonless');
+    assert.strictEqual(euro.enabled, false);
     assert.strictEqual(brasileirao.slug, 'brasileirao');
     assert.strictEqual(brasileirao.resultsSlug, 'serie-a');
     assert.strictEqual(brasileirao.resultsUrlStrategy, 'seasonless');
+  });
+
+  it('临时下线的 UEFA Euro 不应出现在 active league 列表中', () => {
+    const activeLeagueIds = manager.getActiveLeagues().map((league) => league.id);
+
+    assert.ok(!activeLeagueIds.includes(50));
   });
 
   it('世界杯应保留 2026 专用 slug 与 seasonal URL 策略', () => {

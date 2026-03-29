@@ -164,4 +164,21 @@ describe('ReconTaskPlanner', () => {
       'oddsportal://root/football/brazil/serie-a/results/'
     );
   });
+
+  it('slug 已包含年份时不得追加系统 season 后缀', () => {
+    const planner = createPlanner();
+
+    const url = planner.buildResultsUrl({
+      name: 'FIFA World Cup',
+      country: 'world',
+      slug: 'world-cup-2026',
+      resultsSlug: 'world-cup-2026',
+      resultsUrlStrategy: 'seasonal'
+    }, '2025-2026');
+
+    assert.strictEqual(
+      url,
+      'oddsportal://root/football/world/world-cup-2026/results/'
+    );
+  });
 });

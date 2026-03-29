@@ -295,6 +295,9 @@ class ReconTaskPlanner {
     if (resultsUrlStrategy === 'seasonless') {
       return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
     }
+    if (this.slugIncludesYear(slug)) {
+      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
+    }
     const normalizedPath = `${this.resultsPathTemplate}`
       .replace('{country}', country)
       .replace('{league}', slug)
@@ -303,6 +306,10 @@ class ReconTaskPlanner {
       .replace(/^\/?/, '/');
 
     return `${normalizedBaseUrl}${normalizedPath}`;
+  }
+
+  slugIncludesYear(slug) {
+    return /(?:^|-)(?:19|20)\d{2}(?:-|$)/.test(String(slug || '').trim().toLowerCase());
   }
 }
 
