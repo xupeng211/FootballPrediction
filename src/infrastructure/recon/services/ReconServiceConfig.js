@@ -141,6 +141,18 @@ function validateConfig(config, options = {}) {
   assertFiniteNumber(assertRequired(config, ['repository', 'retry', 'retry_delay_ms'], configPath), 'repository.retry.retry_delay_ms', configPath, { integer: true, min: 0 });
   assertFiniteNumber(assertRequired(config, ['repository', 'retry', 'max_retry_window_ms'], configPath), 'repository.retry.max_retry_window_ms', configPath, { integer: true, min: 1 });
   assertFiniteNumber(assertRequired(config, ['repository', 'retry', 'backoff_multiplier'], configPath), 'repository.retry.backoff_multiplier', configPath, { min: 0 });
+  assertFiniteNumber(
+    assertRequired(config, ['repository', 'conflict_arbiter', 'same_fixture_threshold'], configPath),
+    'repository.conflict_arbiter.same_fixture_threshold',
+    configPath,
+    { min: 0, max: 2 }
+  );
+  assertFiniteNumber(
+    assertRequired(config, ['repository', 'conflict_arbiter', 'same_fixture_window_ms'], configPath),
+    'repository.conflict_arbiter.same_fixture_window_ms',
+    configPath,
+    { integer: true, min: 1 }
+  );
 
   const matching = assertRequired(config, ['matching'], configPath);
   assertObject(matching, 'matching', configPath);
