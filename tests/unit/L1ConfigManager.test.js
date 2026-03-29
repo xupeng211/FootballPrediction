@@ -98,6 +98,15 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(brasileirao.resultsUrlStrategy, 'seasonless');
   });
 
+  it('世界杯应保留 2026 专用 slug 与 seasonal URL 策略', () => {
+    const worldCup = manager.getLeagueById(77);
+
+    assert.ok(worldCup);
+    assert.strictEqual(worldCup.slug, 'world-cup-2026');
+    assert.strictEqual(worldCup.resultsSlug, 'world-cup-2026');
+    assert.strictEqual(worldCup.resultsUrlStrategy, 'seasonal');
+  });
+
   it('配置缺失时应直接抛错，禁止静默回退', () => {
     assert.throws(() => new L1ConfigManager({
       reconConfigPath: '/tmp/does-not-exist-recon.json',
