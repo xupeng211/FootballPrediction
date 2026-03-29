@@ -119,6 +119,16 @@ class ReconTaskPlanner {
   }
 
   async selectCandidateSource(target, pendingMatches, confidenceThreshold) {
+    if (
+      !this.navigator ||
+      (
+        typeof this.navigator.fetchFullSeasonArchive !== 'function' &&
+        typeof this.navigator.protocolArchiveExtract !== 'function'
+      )
+    ) {
+      throw new Error('ReconTaskPlanner requires a navigator with fetchFullSeasonArchive or protocolArchiveExtract');
+    }
+
     const orderedPending = [...pendingMatches]
       .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
     const sample = orderedPending.slice(0, Math.min(this.sampleSize, orderedPending.length));
