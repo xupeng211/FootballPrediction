@@ -1,7 +1,27 @@
 'use strict';
 
+function assertFunctionDependency(name, value) {
+  if (typeof value !== 'function') {
+    throw new TypeError(`[ReconSchemaJanitor] 缺少必需依赖: ${name}`);
+  }
+}
+
+function assertObjectDependency(name, value) {
+  if (!value || typeof value !== 'object') {
+    throw new TypeError(`[ReconSchemaJanitor] 缺少必需依赖: ${name}`);
+  }
+}
+
 class ReconSchemaJanitor {
   constructor(options = {}) {
+    assertFunctionDependency('getDbPool', options.getDbPool);
+    assertFunctionDependency('executeWithRetry', options.executeWithRetry);
+    assertObjectDependency('mappingMigration', options.mappingMigration);
+    assertFunctionDependency('mappingMigration.findDuplicateSeasonHashGroups', options.mappingMigration.findDuplicateSeasonHashGroups);
+    assertFunctionDependency('mappingMigration.dedupeMappings', options.mappingMigration.dedupeMappings);
+    assertFunctionDependency('mappingMigration.repairLinkedStatusesWithoutMapping', options.mappingMigration.repairLinkedStatusesWithoutMapping);
+    assertFunctionDependency('RepositoryError', options.RepositoryError);
+
     this.getDbPool = options.getDbPool;
     this.executeWithRetry = options.executeWithRetry;
     this.mappingMigration = options.mappingMigration;

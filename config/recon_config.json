@@ -277,6 +277,10 @@
       "retry_delay_ms": 1000,
       "max_retry_window_ms": 30000,
       "backoff_multiplier": 1
+    },
+    "conflict_arbiter": {
+      "same_fixture_threshold": 1.5,
+      "same_fixture_window_ms": 172800000
     }
   },
   "matching": {

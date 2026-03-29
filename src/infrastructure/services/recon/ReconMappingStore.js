@@ -1,7 +1,27 @@
 'use strict';
 
+function assertFunctionDependency(name, value) {
+  if (typeof value !== 'function') {
+    throw new TypeError(`[ReconMappingStore] 缺少必需依赖: ${name}`);
+  }
+}
+
+function assertObjectDependency(name, value) {
+  if (!value || typeof value !== 'object') {
+    throw new TypeError(`[ReconMappingStore] 缺少必需依赖: ${name}`);
+  }
+}
+
 class ReconMappingStore {
   constructor(options = {}) {
+    assertFunctionDependency('getDbPool', options.getDbPool);
+    assertFunctionDependency('executeWithRetry', options.executeWithRetry);
+    assertFunctionDependency('ensureSchema', options.ensureSchema);
+    assertFunctionDependency('updateMatchPipelineStatusWithClient', options.updateMatchPipelineStatusWithClient);
+    assertFunctionDependency('RepositoryError', options.RepositoryError);
+    assertObjectDependency('arbiter', options.arbiter);
+    assertFunctionDependency('arbiter.analyzeConflict', options.arbiter.analyzeConflict);
+
     this.getDbPool = options.getDbPool;
     this.logger = options.logger || { info() {}, warn() {}, error() {} };
     this.traceId = options.traceId || null;
@@ -447,6 +467,19 @@ class ReconMappingStore {
     return result.rowCount || 0;
   }
 
+  assertSuccessfulRebind(rowCount, details) {
+    if (Number(rowCount) === 1) {
+      return;
+    }
+
+    throw new this.RepositoryError(
+      'HASH_CONFLICT 重绑确认失败: 目标映射未命中唯一行',
+      'HASH_CONFLICT_REBIND_FAILED',
+      null,
+      details
+    );
+  }
+
   async resolveHashConflictWithClient(client, conflict = {}) {
     const existingMapping = conflict.existingMapping || null;
     const incomingMapping = conflict.incomingMapping || null;
@@ -480,7 +513,14 @@ class ReconMappingStore {
       const loserMatch = winner === 'existing' ? incomingMatch : existingMatch;
 
       if (winner === 'incoming') {
-        await this.rebindMappingToMatchWithClient(client, existingMapping, incomingMapping);
+        const rebindRowCount = await this.rebindMappingToMatchWithClient(client, existingMapping, incomingMapping);
+        this.assertSuccessfulRebind(rebindRowCount, {
+          season: incomingMapping.season,
+          oddsportal_hash: incomingMapping.oddsportal_hash,
+          previous_match_id: String(existingMatch.match_id),
+          rebound_match_id: String(incomingMatch.match_id),
+          resolution: 'rebind_duplicate'
+        });
         await this.setSingleMatchPipelineStatusWithClient(client, loserMatch.match_id, 'failed', {
           requireNoMapping: true
         });
@@ -511,7 +551,14 @@ class ReconMappingStore {
     }
 
     if (decision.incomingScore >= this.arbiter.sameFixtureThreshold && decision.incomingScore > decision.existingScore) {
-      await this.rebindMappingToMatchWithClient(client, existingMapping, incomingMapping);
+      const rebindRowCount = await this.rebindMappingToMatchWithClient(client, existingMapping, incomingMapping);
+      this.assertSuccessfulRebind(rebindRowCount, {
+        season: incomingMapping.season,
+        oddsportal_hash: incomingMapping.oddsportal_hash,
+        previous_match_id: String(existingMatch.match_id),
+        rebound_match_id: String(incomingMatch.match_id),
+        resolution: 'rebind_wrong_fixture'
+      });
       await this.setSingleMatchPipelineStatusWithClient(client, existingMatch.match_id, 'harvested', {
         expectedCurrentStatus: 'RECON_LINKED',
         requireNoMapping: true

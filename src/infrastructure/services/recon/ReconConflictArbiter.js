@@ -4,8 +4,8 @@ const { Normalizer } = require('../../../utils/Normalizer');
 
 class ReconConflictArbiter {
   constructor(options = {}) {
-    this.sameFixtureThreshold = Number(options.sameFixtureThreshold ?? 1.5);
-    this.sameFixtureWindowMs = Number(options.sameFixtureWindowMs ?? 48 * 60 * 60 * 1000);
+    this.sameFixtureThreshold = Number(options.sameFixtureThreshold);
+    this.sameFixtureWindowMs = Number(options.sameFixtureWindowMs);
   }
 
   normalizeTeamName(teamName) {

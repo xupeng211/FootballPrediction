@@ -21,6 +21,7 @@ const SQL_TEMPLATES = RECON_CONFIG.sql_templates || {};
 const REPOSITORY_CONFIG = RECON_CONFIG.repository || {};
 const RETRY_CONFIG = REPOSITORY_CONFIG.retry || {};
 const POOL_CONFIG = REPOSITORY_CONFIG.pool || {};
+const CONFLICT_ARBITER_CONFIG = REPOSITORY_CONFIG.conflict_arbiter || {};
 
 class RepositoryError extends Error {
   constructor(message, code, originalError = null, details = null) {
@@ -47,7 +48,12 @@ class FixtureRepository {
     this.sleep = options.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
     this.now = options.now || (() => Date.now());
 
-    this.conflictArbiter = new ReconConflictArbiter(options.conflictArbiterOptions);
+    this.conflictArbiter = new ReconConflictArbiter({
+      sameFixtureThreshold: options.conflictArbiterOptions?.sameFixtureThreshold
+        ?? CONFLICT_ARBITER_CONFIG.same_fixture_threshold,
+      sameFixtureWindowMs: options.conflictArbiterOptions?.sameFixtureWindowMs
+        ?? CONFLICT_ARBITER_CONFIG.same_fixture_window_ms
+    });
     this.schemaJanitor = new ReconSchemaJanitor({
       getDbPool: () => this.dbPool,
       executeWithRetry: this._executeWithRetry.bind(this),
