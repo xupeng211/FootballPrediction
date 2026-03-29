@@ -615,8 +615,7 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
 
       const activeLeagues = scanner.configManager.getActiveLeagues();
       const selectedLeague = scanner.configManager.getLeagueByCode(args.league)
-        || scanner.configManager.getLeagueById(Number(args.league))
-        || scanner.configManager.getLeagueByCode('EPL');
+        || scanner.configManager.getLeagueById(Number(args.league));
 
       const leagues = args.allLeagues
         ? activeLeagues

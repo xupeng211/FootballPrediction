@@ -33,11 +33,27 @@
     { "id": 120, "name": "CSL", "country": "China", "tier": "P3", "enabled": true },
     { "id": 223, "name": "J1 League", "country": "Japan", "tier": "P3", "enabled": true },
     { "id": 8974, "name": "J2 League", "country": "Japan", "tier": "P3", "enabled": true },
-    { "id": 71, "name": "Süper Lig", "country": "Turkey", "tier": "P3", "enabled": true },
+    {
+      "id": 71,
+      "name": "Süper Lig",
+      "country": "Turkey",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "super-lig",
+      "results_url_strategy": "seasonless"
+    },
     { "id": 230, "name": "Liga MX", "country": "Mexico", "tier": "P3", "enabled": true },
 
     { "id": 77, "name": "FIFA World Cup", "country": "World", "tier": "P4", "enabled": true },
-    { "id": 50, "name": "UEFA Euro", "country": "Europe", "tier": "P4", "enabled": true },
+    {
+      "id": 50,
+      "name": "UEFA Euro",
+      "country": "Europe",
+      "tier": "P4",
+      "enabled": true,
+      "slug": "euro",
+      "results_url_strategy": "seasonless"
+    },
     { "id": 10148, "name": "UEFA Nations League", "country": "Europe", "tier": "P4", "enabled": true },
     { "id": 131, "name": "Copa América", "country": "South America", "tier": "P4", "enabled": true },
     { "id": 10004, "name": "AFC Asian Cup", "country": "Asia", "tier": "P4", "enabled": true }
