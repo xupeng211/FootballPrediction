@@ -271,8 +271,13 @@ test('FixtureRepository.ensureOddsPortalMappingSchema 在历史 hash 冲突导�
               kept_match_id: 'keep-a',
               removed_match_ids: ['drop-a']
             }
-          ]
+          ],
+          repairedCount: 1
         };
+      },
+      async repairLinkedStatusesWithoutMapping() {
+        migrationCalls.push('repair');
+        return { repairedCount: 0, matchIds: [] };
       }
     },
     logger: {
@@ -287,7 +292,7 @@ test('FixtureRepository.ensureOddsPortalMappingSchema 在历史 hash 冲突导�
   await repository.ensureOddsPortalMappingSchema();
 
   assert.equal(createIndexAttempts, 2);
-  assert.deepEqual(migrationCalls, ['find', 'dedupe']);
+  assert.deepEqual(migrationCalls, ['find', 'dedupe', 'repair']);
   assert.equal(repository._mappingHashUniquenessEnsured, true);
 
   const healLog = healLogs.find((entry) => /\[HEAL\]/.test(entry.message));
@@ -295,4 +300,63 @@ test('FixtureRepository.ensureOddsPortalMappingSchema 在历史 hash 冲突导�
   assert.match(healLog.message, /自动清理了 3 条脏数据以固化唯一索引/);
   assert.equal(healLog.data.reason, 'create_index_conflict');
   assert.equal(healLog.data.duplicate_groups, 2);
+  assert.equal(healLog.data.repaired_linked_count, 1);
+});
+
+test('FixtureRepository.ensureOddsPortalMappingSchema 在存在 RECON_LINKED 残留时应自动回退为 harvested', async () => {
+  const healLogs = [];
+  const migrationCalls = [];
+
+  const pool = {
+    async query(sql) {
+      if (sql.includes('ALTER TABLE matches_oddsportal_mapping')) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      if (sql.includes('CREATE UNIQUE INDEX IF NOT EXISTS idx_mapping_season_hash_unique')) {
+        return { rows: [], rowCount: 0 };
+      }
+
+      throw new Error(`unexpected_query:${sql}`);
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    mappingMigration: {
+      async findDuplicateSeasonHashGroups() {
+        migrationCalls.push('find');
+        return [];
+      },
+      async dedupeMappings() {
+        migrationCalls.push('dedupe');
+        return { deletedCount: 0, groupCount: 0, groups: [], repairedCount: 0 };
+      },
+      async repairLinkedStatusesWithoutMapping() {
+        migrationCalls.push('repair');
+        return {
+          repairedCount: 2,
+          matchIds: ['m1', 'm2']
+        };
+      }
+    },
+    logger: {
+      info() {},
+      warn(message, data) {
+        healLogs.push({ message, data });
+      },
+      error() {}
+    }
+  });
+
+  await repository.ensureOddsPortalMappingSchema();
+
+  assert.deepEqual(migrationCalls, ['find', 'repair']);
+
+  const healLog = healLogs.find((entry) => /RECON_LINKED 残留/.test(entry.message));
+  assert.ok(healLog);
+  assert.match(healLog.message, /已自动回退为 harvested/);
+  assert.equal(healLog.data.repaired_count, 2);
+  assert.deepEqual(healLog.data.sample_match_ids, ['m1', 'm2']);
 });
