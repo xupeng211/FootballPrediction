@@ -37,12 +37,16 @@
 
 - `../services/FixtureRepository.js`
   作为对外唯一仓储门面，负责连接池、重试、状态更新入口和子服务装配。
+- `../services/recon/MatchIdentityResolver.js`
+  负责 L1/L2 热路径上的实时身份对齐。入库前按 `season + data_source + external_id(raw_match_id)` 查找 canonical winner，命中则复用既有 `match_id`，阻断重复实体继续扩散。
 - `../services/recon/ReconSchemaJanitor.js`
   负责 mapping schema 对齐、`season/hash` 唯一索引固化、历史脏数据自愈。
 - `../services/recon/ReconMappingStore.js`
   负责 mapping 写入、批量保存、hash 冲突审计和事务内重绑。
 - `../services/recon/ReconConflictArbiter.js`
   负责队名/日期打分、冲突胜者选择和错误映射仲裁。
+- `../services/recon/MatchCanonicalJanitor.js`
+  只负责离线 canonical 审计与两阶段收敛：先按 `raw_match_id` 收敛逻辑实体，再按 active `external_id` 固化唯一索引，避免线上热路径承担批量修复职责。
 
 ## 2. 运行流程
 
@@ -60,12 +64,37 @@
 recon_scanner
   -> ReconEngine
     -> FixtureRepository
+      -> MatchIdentityResolver
+           -> canonical match_id lookup by season + source_provider + raw_match_id
       -> ReconSchemaJanitor
            -> dedupeMappings / repairLinkedStatusesWithoutMapping
       -> ReconMappingStore
            -> ReconConflictArbiter
            -> matches_oddsportal_mapping / matches
+      -> MatchCanonicalJanitor
+           -> Phase 1: raw_match_id consolidation
+           -> Phase 2: active external_id consolidation
+           -> idx_matches_season_source_external_active_unique
 ```
+
+## 2.2 为什么要两阶段收敛
+
+2025/2026 赛季暴露出的根因不是 OddsPortal hash 真碰撞，而是同一个 FotMob `raw_match_id` 被写成了多个本地 `match_id`，并且部分实体的 `external_id`、`match_date`、主客方向已经漂移。单靠 `matches(home, away, date)` 无法稳定识别这类病灶。
+
+- Phase 1: `raw_match_id` 收敛
+  直接以 `raw_match_data.general.matchId` 为锚点，把指向同一原始赛事的本地实体先合成一个 canonical winner。这一步解决“同一真实比赛被写成多个本地 ID”的根病。
+- Phase 2: `external_id` 收敛
+  在 Phase 1 之后，再对 active `external_id` 做二次收敛并固化唯一索引，清掉历史上已经漂移到主表 `external_id` 的残留重复。
+
+顺序不能反过来：
+
+- 如果先固化 `external_id` 唯一索引，Phase 1 在修正 winner 的 `external_id` 时会被历史脏数据卡住。
+- 如果只做 Phase 1，不做 Phase 2，历史上已经写进 `matches.external_id` 的重复实体仍会继续制造冲突窗口。
+
+这也是当前架构把 `MatchIdentityResolver` 和 `MatchCanonicalJanitor` 分开的原因：
+
+- 热路径只负责“阻止新增污染”
+- 离线路径只负责“收敛历史污染”
 
 ## 3. 配置入口
 
