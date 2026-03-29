@@ -337,6 +337,33 @@ class ReconEngine {
         candidateCount: result.candidateCount, durationMs: Date.now() - startTime
       };
     } catch (error) {
+      if (error.code === 'SKIPPED_FUTURE_FINALS') {
+        this.logger.info('smart_scan_skipped', {
+          season,
+          league: leagueConfig.name,
+          strategy: 'season_mirror',
+          sourceState: error.code
+        });
+        return {
+          success: true,
+          skipped: true,
+          sourceState: error.code,
+          season,
+          league: leagueConfig.name,
+          strategy: 'season_mirror',
+          pendingTotal: 0,
+          skippedPendingTotal: pendingMatches.length,
+          inserted: 0,
+          linked: 0,
+          mismatched: 0,
+          totalInserted: 0,
+          coverage: 100,
+          sourceUrl: error.sourceUrl || target.resultsUrl,
+          sourceSeason: error.sourceSeason || this.taskPlanner.formatSeasonForUrl(target.season),
+          durationMs: Date.now() - startTime
+        };
+      }
+
       if (error.code === 'SOURCE_EMPTY' && this.disableDomFallback) {
         this.logger.warn('season_sweep_empty_dom_fallback_disabled', {
           season,
