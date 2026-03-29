@@ -112,6 +112,7 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(worldCup.slug, 'world-cup-2026');
     assert.strictEqual(worldCup.resultsSlug, 'world-cup-2026');
     assert.strictEqual(worldCup.resultsUrlStrategy, 'seasonal');
+    assert.strictEqual(worldCup.awaitingFinals, true);
   });
 
   it('临时下线的 Copa América 不应出现在 active league 列表中', () => {

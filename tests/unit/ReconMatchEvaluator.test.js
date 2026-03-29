@@ -68,4 +68,18 @@ describe('ReconMatchEvaluator', () => {
     assert.ok(best.confidence > 0.95, `期望加权后置信度 > 0.95，实际 ${best.confidence}`);
     assert.strictEqual(best.method, 'exact');
   });
+
+  it('应识别世界杯淘汰赛与附加赛占位符，且不误伤真实队名', () => {
+    const evaluator = new ReconMatchEvaluator({
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    assert.strictEqual(evaluator.isPlaceholderTeamName('1e'), true);
+    assert.strictEqual(evaluator.isPlaceholderTeamName('3abcdf'), true);
+    assert.strictEqual(evaluator.isPlaceholderTeamName('1b 3efgij'), true);
+    assert.strictEqual(evaluator.isPlaceholderTeamName('European Play Off D'), true);
+    assert.strictEqual(evaluator.isPlaceholderTeamName('Winner Qf 1'), true);
+    assert.strictEqual(evaluator.isPlaceholderTeamName('South Korea'), false);
+    assert.strictEqual(evaluator.isPlaceholderTeamName('1 Fc Koln'), false);
+  });
 });
