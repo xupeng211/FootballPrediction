@@ -509,9 +509,13 @@ class FixtureRepository {
       
       try {
         await client.query('BEGIN');
-        await this._auditSeasonHashConflictsWithClient(client, orderedMappings);
+        const conflictAudit = await this._auditSeasonHashConflictsWithClient(client, orderedMappings, {
+          pipelineStatus
+        });
+        const remainingMappings = conflictAudit.remainingMappings || orderedMappings;
+        results.updated += Number(conflictAudit.linkedStatusUpdated || 0);
         
-        for (const mapping of orderedMappings) {
+        for (const mapping of remainingMappings) {
           try {
             await this._saveOddsPortalMappingWithClient(client, mapping, hasOptionalFields);
             results.inserted++;
@@ -522,12 +526,12 @@ class FixtureRepository {
           }
         }
 
-        if (pipelineStatus) {
+        if (pipelineStatus && remainingMappings.length > 0) {
           results.updated = await this._updateMatchPipelineStatusWithClient(
             client,
-            orderedMappings.map((mapping) => String(mapping.match_id)),
+            remainingMappings.map((mapping) => String(mapping.match_id)),
             pipelineStatus
-          );
+          ) + results.updated;
         }
         
         await client.query('COMMIT');
@@ -568,6 +572,37 @@ class FixtureRepository {
         client.release();
       }
     }, 'batchSaveOddsPortalMappings');
+  }
+
+  async resolveHashConflict(conflict, options = {}) {
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+
+      try {
+        await client.query('BEGIN');
+        const result = await this._resolveHashConflictWithClient(client, {
+          ...conflict,
+          pipelineStatus: options.pipelineStatus || null
+        });
+
+        if (!result?.resolved) {
+          throw new RepositoryError(
+            'HASH_CONFLICT 无法自动自愈，需人工审计',
+            'HASH_CONFLICT',
+            null,
+            conflict || null
+          );
+        }
+
+        await client.query('COMMIT');
+        return result;
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw error;
+      } finally {
+        client.release();
+      }
+    }, 'resolveHashConflict');
   }
 
   /**
@@ -654,6 +689,266 @@ class FixtureRepository {
     return result.rowCount || 0;
   }
 
+  _normalizeConflictTeamName(teamName) {
+    const normalized = Normalizer.normalizeTeamName(teamName || '');
+    return String(normalized || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+      .replace(/\b(fc|afc|cf|sc|ac)\b/gu, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  _teamConflictSimilarity(left, right) {
+    const normalizedLeft = this._normalizeConflictTeamName(left);
+    const normalizedRight = this._normalizeConflictTeamName(right);
+
+    if (!normalizedLeft || !normalizedRight) {
+      return 0;
+    }
+
+    if (normalizedLeft === normalizedRight) {
+      return 1;
+    }
+
+    if (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft)) {
+      return 0.95;
+    }
+
+    const leftTokens = new Set(normalizedLeft.split(' ').filter(Boolean));
+    const rightTokens = new Set(normalizedRight.split(' ').filter(Boolean));
+    let shared = 0;
+
+    for (const token of leftTokens) {
+      if (rightTokens.has(token)) {
+        shared += 1;
+      }
+    }
+
+    return shared > 0 ? shared / Math.max(leftTokens.size, rightTokens.size) : 0;
+  }
+
+  _fixtureOrientationScore(matchRow, mappingData) {
+    if (!matchRow || !mappingData) {
+      return 0;
+    }
+
+    return this._teamConflictSimilarity(matchRow.home_team, mappingData.home_team)
+      + this._teamConflictSimilarity(matchRow.away_team, mappingData.away_team);
+  }
+
+  _fixtureDateDistanceMs(leftDate, rightDate) {
+    const left = new Date(leftDate || '').getTime();
+    const right = new Date(rightDate || '').getTime();
+    if (!Number.isFinite(left) || !Number.isFinite(right)) {
+      return Number.POSITIVE_INFINITY;
+    }
+    return Math.abs(left - right);
+  }
+
+  _selectPreferredConflictWinner(existingMatch, incomingMatch, existingMappingRow = null) {
+    if (!existingMatch || !incomingMatch) {
+      return 'existing';
+    }
+
+    const ordered = [String(existingMatch.match_id), String(incomingMatch.match_id)].sort((left, right) => left.localeCompare(right));
+    if (ordered[0] === String(existingMatch.match_id)) {
+      return 'existing';
+    }
+
+    if (ordered[0] === String(incomingMatch.match_id)) {
+      return 'incoming';
+    }
+
+    const existingUpdatedAt = new Date(existingMappingRow?.updated_at || 0).getTime();
+    return Number.isFinite(existingUpdatedAt) ? 'existing' : 'incoming';
+  }
+
+  async _fetchMatchesByIdsWithClient(client, matchIds = []) {
+    if (!Array.isArray(matchIds) || matchIds.length === 0) {
+      return new Map();
+    }
+
+    const result = await client.query(`
+      SELECT match_id, season, match_date, home_team, away_team, pipeline_status
+      FROM matches
+      WHERE match_id = ANY($1::text[])
+    `, [[...new Set(matchIds.map((matchId) => String(matchId)))]]);
+
+    return new Map((result.rows || []).map((row) => [String(row.match_id), row]));
+  }
+
+  async _setSingleMatchPipelineStatusWithClient(client, matchId, status, options = {}) {
+    const expectedCurrentStatus = options.expectedCurrentStatus || null;
+    const requireNoMapping = Boolean(options.requireNoMapping);
+    let query = `
+      UPDATE matches m
+      SET pipeline_status = $2,
+          updated_at = NOW()
+      WHERE m.match_id = $1
+    `;
+    const params = [String(matchId), status];
+
+    if (expectedCurrentStatus) {
+      params.push(expectedCurrentStatus);
+      query += `
+        AND m.pipeline_status = $3
+      `;
+    }
+
+    if (requireNoMapping) {
+      query += `
+        AND NOT EXISTS (
+          SELECT 1
+          FROM matches_oddsportal_mapping map
+          WHERE map.match_id = m.match_id
+        )
+      `;
+    }
+
+    const result = await client.query(query, params);
+    return result.rowCount || 0;
+  }
+
+  async _rebindMappingToMatchWithClient(client, existingMappingRow, incomingMapping) {
+    const result = await client.query(`
+      UPDATE matches_oddsportal_mapping
+      SET match_id = $1,
+          full_url = $2,
+          league_name = $3,
+          home_team = $4,
+          away_team = $5,
+          status = $6,
+          updated_at = NOW()
+      WHERE season = $7
+        AND oddsportal_hash = $8
+        AND match_id = $9
+    `, [
+      String(incomingMapping.match_id),
+      incomingMapping.full_url,
+      incomingMapping.league_name,
+      incomingMapping.home_team,
+      incomingMapping.away_team,
+      incomingMapping.status || 'pending',
+      incomingMapping.season,
+      incomingMapping.oddsportal_hash,
+      String(existingMappingRow.match_id)
+    ]);
+
+    return result.rowCount || 0;
+  }
+
+  async _resolveHashConflictWithClient(client, conflict = {}) {
+    const existingMappingRow = conflict.existingMapping || null;
+    const incomingMapping = conflict.incomingMapping || null;
+    const pipelineStatus = conflict.pipelineStatus || null;
+
+    if (!existingMappingRow || !incomingMapping) {
+      return { resolved: false };
+    }
+
+    const matchRows = await this._fetchMatchesByIdsWithClient(client, [
+      existingMappingRow.match_id,
+      incomingMapping.match_id
+    ]);
+    const existingMatch = matchRows.get(String(existingMappingRow.match_id));
+    const incomingMatch = matchRows.get(String(incomingMapping.match_id));
+
+    if (!existingMatch || !incomingMatch) {
+      return { resolved: false };
+    }
+
+    const existingScore = this._fixtureOrientationScore(existingMatch, incomingMapping);
+    const incomingScore = this._fixtureOrientationScore(incomingMatch, incomingMapping);
+    const sameFixture = existingScore >= 1.5
+      && incomingScore >= 1.5
+      && this._fixtureDateDistanceMs(existingMatch.match_date, incomingMatch.match_date) <= 48 * 60 * 60 * 1000;
+
+    if (sameFixture) {
+      const winner = this._selectPreferredConflictWinner(existingMatch, incomingMatch, existingMappingRow);
+      const loserMatch = winner === 'existing' ? incomingMatch : existingMatch;
+
+      if (winner === 'incoming') {
+        await this._rebindMappingToMatchWithClient(client, existingMappingRow, incomingMapping);
+        await this._setSingleMatchPipelineStatusWithClient(client, loserMatch.match_id, 'failed', {
+          requireNoMapping: true
+        });
+        if (pipelineStatus) {
+          await this._setSingleMatchPipelineStatusWithClient(client, incomingMatch.match_id, pipelineStatus, {
+            expectedCurrentStatus: incomingMatch.pipeline_status || 'harvested'
+          });
+        }
+      } else {
+        await this._setSingleMatchPipelineStatusWithClient(client, incomingMatch.match_id, 'failed', {
+          expectedCurrentStatus: incomingMatch.pipeline_status || 'harvested'
+        });
+      }
+
+      this.logger.warn('[HEAL] 检测到同场重复 ID，已自动收敛 season/hash 冲突', {
+        season: incomingMapping.season,
+        oddsportal_hash: incomingMapping.oddsportal_hash,
+        winner_match_id: winner === 'existing' ? String(existingMatch.match_id) : String(incomingMatch.match_id),
+        loser_match_id: String(loserMatch.match_id),
+        resolution: winner === 'existing' ? 'keep_existing_mark_incoming_failed' : 'rebind_to_incoming_mark_existing_failed'
+      });
+
+      return {
+        resolved: true,
+        action: winner === 'existing' ? 'keep_existing_duplicate' : 'rebind_duplicate',
+        linkedStatusUpdated: winner === 'incoming' && pipelineStatus ? 1 : 0
+      };
+    }
+
+    if (incomingScore >= 1.5 && incomingScore > existingScore) {
+      await this._rebindMappingToMatchWithClient(client, existingMappingRow, incomingMapping);
+      await this._setSingleMatchPipelineStatusWithClient(client, existingMatch.match_id, 'harvested', {
+        expectedCurrentStatus: 'RECON_LINKED',
+        requireNoMapping: true
+      });
+      if (pipelineStatus) {
+        await this._setSingleMatchPipelineStatusWithClient(client, incomingMatch.match_id, pipelineStatus, {
+          expectedCurrentStatus: incomingMatch.pipeline_status || 'harvested'
+        });
+      }
+
+      this.logger.warn('[HEAL] 检测到 season/hash 映射误绑，已自动重绑到更匹配的 match_id', {
+        season: incomingMapping.season,
+        oddsportal_hash: incomingMapping.oddsportal_hash,
+        previous_match_id: String(existingMatch.match_id),
+        rebound_match_id: String(incomingMatch.match_id),
+        previous_match: {
+          home_team: existingMatch.home_team,
+          away_team: existingMatch.away_team,
+          match_date: existingMatch.match_date
+        },
+        rebound_match: {
+          home_team: incomingMatch.home_team,
+          away_team: incomingMatch.away_team,
+          match_date: incomingMatch.match_date
+        },
+        mapping_target: {
+          home_team: incomingMapping.home_team,
+          away_team: incomingMapping.away_team,
+          full_url: incomingMapping.full_url
+        },
+        scores: {
+          existing: Number(existingScore.toFixed(3)),
+          incoming: Number(incomingScore.toFixed(3))
+        }
+      });
+
+      return {
+        resolved: true,
+        action: 'rebind_wrong_fixture',
+        linkedStatusUpdated: pipelineStatus ? 1 : 0
+      };
+    }
+
+    return { resolved: false };
+  }
+
   _isSeasonHashUniqueViolation(error, mappingData = null) {
     if (!error || error.code !== '23505') {
       return false;
@@ -689,9 +984,9 @@ class FixtureRepository {
       || detail.includes('(season, oddsportal_hash)');
   }
 
-  async _auditSeasonHashConflictsWithClient(client, mappings = []) {
+  async _auditSeasonHashConflictsWithClient(client, mappings = [], options = {}) {
     if (!Array.isArray(mappings) || mappings.length === 0) {
-      return;
+      return { remainingMappings: [], linkedStatusUpdated: 0 };
     }
 
     const uniqueMappings = new Map();
@@ -721,20 +1016,39 @@ class FixtureRepository {
       }
     }
 
+    const handledMatchIds = new Set();
+    const mappingByMatchId = new Map(mappings.map((mapping) => [String(mapping.match_id), mapping]));
     const seasons = [...new Set(mappings.map((mapping) => String(mapping.season)))];
     const hashes = [...new Set(mappings.map((mapping) => String(mapping.oddsportal_hash)))];
     const result = await client.query(`
-      SELECT season, oddsportal_hash, match_id, full_url
+      SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, updated_at
       FROM matches_oddsportal_mapping
       WHERE season = ANY($1::text[])
         AND oddsportal_hash = ANY($2::text[])
     `, [seasons, hashes]);
+    let linkedStatusUpdated = 0;
 
     for (const row of result.rows || []) {
       const key = `${row.season}::${row.oddsportal_hash}`;
       const incomingMatchIds = uniqueMappings.get(key);
       if (!incomingMatchIds || incomingMatchIds.has(String(row.match_id))) {
         continue;
+      }
+
+      if (incomingMatchIds.size === 1) {
+        const incomingMatchId = [...incomingMatchIds][0];
+        const incomingMapping = mappingByMatchId.get(incomingMatchId);
+        const resolution = await this._resolveHashConflictWithClient(client, {
+          existingMapping: row,
+          incomingMapping,
+          pipelineStatus: options.pipelineStatus || null
+        });
+
+        if (resolution?.resolved) {
+          handledMatchIds.add(String(incomingMatchId));
+          linkedStatusUpdated += Number(resolution.linkedStatusUpdated || 0);
+          continue;
+        }
       }
 
       const conflict = {
@@ -753,6 +1067,11 @@ class FixtureRepository {
         conflict
       );
     }
+
+    return {
+      remainingMappings: mappings.filter((mapping) => !handledMatchIds.has(String(mapping.match_id))),
+      linkedStatusUpdated
+    };
   }
 
   /**
