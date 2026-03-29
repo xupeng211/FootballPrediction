@@ -26,7 +26,8 @@ function createPlanner(overrides = {}) {
     logger: overrides.logger || { info() {}, warn() {}, error() {} },
     configManager: overrides.configManager || null,
     matchEvaluator: evaluator,
-    mirrorManager
+    mirrorManager,
+    sampleSize: overrides.sampleSize
   });
 }
 
@@ -197,5 +198,144 @@ describe('ReconTaskPlanner', () => {
       url,
       'oddsportal://root/football/world/world-cup-2026/results/'
     );
+  });
+
+  it('sample 评估应跳过占位符对阵，不得让其稀释 sampleLinked', async () => {
+    const planner = createPlanner({
+      sampleSize: 1,
+      navigator: {
+        async fetchFullSeasonArchive() {
+          return {
+            matches: [{
+              hash: 'real-match',
+              url: 'oddsportal://match/real',
+              homeTeam: 'Mexico',
+              awayTeam: 'South Africa',
+              matchDate: '2026-06-11T19:00:00.000Z'
+            }],
+            pagesScanned: 1,
+            totalCandidates: 1,
+            sourceState: 'FULL_SEASON_SWEEP'
+          };
+        }
+      }
+    });
+
+    const target = {
+      leagueId: 77,
+      league: { name: 'FIFA World Cup', country: 'world', slug: 'world-cup-2026' },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/world/world-cup-2026/results/'
+    };
+    const pendingMatches = [
+      {
+        match_id: '77_20252026_0001',
+        home_team: '1e',
+        away_team: '3abcdf',
+        match_date: '2026-06-29T20:30:00.000Z'
+      },
+      {
+        match_id: '77_20252026_9999',
+        home_team: 'Mexico',
+        away_team: 'South Africa',
+        match_date: '2026-06-11T19:00:00.000Z'
+      }
+    ];
+
+    const selected = await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.strictEqual(selected.sampleLinked, 1);
+    assert.strictEqual(selected.candidates.length, 1);
+  });
+
+  it('awaiting finals 联赛在开赛前应跳过 Recon 扫描', async () => {
+    let navigatorCalls = 0;
+    const logs = [];
+    const planner = createPlanner({
+      navigator: {
+        async fetchFullSeasonArchive() {
+          navigatorCalls += 1;
+          return {
+            matches: [],
+            pagesScanned: 0,
+            totalCandidates: 0,
+            sourceState: 'SOURCE_EMPTY'
+          };
+        }
+      },
+      logger: {
+        info(event, payload) {
+          logs.push({ event, payload });
+        },
+        warn() {},
+        error() {}
+      }
+    });
+
+    const target = {
+      leagueId: 77,
+      league: {
+        name: 'FIFA World Cup',
+        country: 'world',
+        slug: 'world-cup-2026',
+        awaitingFinals: true
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/world/world-cup-2026/results/'
+    };
+    const pendingMatches = [{
+      match_id: '77_20252026_5000',
+      home_team: 'Mexico',
+      away_team: 'South Africa',
+      match_date: '2099-06-11T19:00:00.000Z'
+    }];
+
+    const selected = await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.strictEqual(navigatorCalls, 0);
+    assert.strictEqual(selected.extractResult.sourceState, 'SKIPPED_FUTURE_FINALS');
+    assert.ok(logs.some((entry) => entry.event === 'skipping_future_finals'));
+  });
+
+  it('未标记 awaiting finals 的联赛不得被未来赛程跳过，中超应继续扫描', async () => {
+    let navigatorCalls = 0;
+    const planner = createPlanner({
+      navigator: {
+        async fetchFullSeasonArchive() {
+          navigatorCalls += 1;
+          return {
+            matches: [],
+            pagesScanned: 1,
+            totalCandidates: 0,
+            sourceState: 'SOURCE_EMPTY'
+          };
+        }
+      }
+    });
+
+    const target = {
+      leagueId: 120,
+      league: {
+        name: 'CSL',
+        country: 'china',
+        slug: 'super-league',
+        resultsUrlStrategy: 'seasonless'
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/china/super-league/results/'
+    };
+    const pendingMatches = [{
+      match_id: '120_20252026_5000',
+      home_team: 'Shanghai Port',
+      away_team: 'Beijing Guoan',
+      match_date: '2099-03-01T12:00:00.000Z'
+    }];
+
+    await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.strictEqual(navigatorCalls, 1);
   });
 });
