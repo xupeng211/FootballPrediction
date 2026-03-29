@@ -153,6 +153,12 @@ function validateConfig(config, options = {}) {
     configPath,
     { integer: true, min: 1 }
   );
+  assertStringArray(
+    assertRequired(config, ['repository', 'identity_inactive_statuses'], configPath),
+    'repository.identity_inactive_statuses',
+    configPath,
+    { minLength: 1 }
+  );
 
   const matching = assertRequired(config, ['matching'], configPath);
   assertObject(matching, 'matching', configPath);

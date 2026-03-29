@@ -281,7 +281,13 @@
     "conflict_arbiter": {
       "same_fixture_threshold": 1.5,
       "same_fixture_window_ms": 172800000
-    }
+    },
+    "identity_inactive_statuses": [
+      "failed",
+      "archived",
+      "duplicate",
+      "merged"
+    ]
   },
   "matching": {
     "fuzzy_threshold": 0.85,
