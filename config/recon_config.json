@@ -342,6 +342,17 @@
     "browser_context": {
       "launch_timeout_ms": 60000,
       "navigation_timeout_ms": 60000,
+      "navigation_ready_timeout_ms": 5000,
+      "navigation_ready_selectors": [
+        "div[role='row']",
+        "div[data-testid*='event']",
+        "[class*='event-row']",
+        "[class*='EventRow']",
+        ".eventRow a[href]",
+        ".pagination a[href]",
+        "main",
+        "body"
+      ],
       "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
       "viewport": {
         "width": 1920,

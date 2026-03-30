@@ -418,7 +418,7 @@ class ReconEngine {
       const leagueCountry = String(leagueConfig.country || '').toLowerCase();
       const leagueSlug = String(leagueConfig.slug || '').toLowerCase();
 
-      await this.navigator.navigate(baseUrl, { waitUntil: 'networkidle' });
+      await this.navigator.navigate(baseUrl, { waitUntil: 'domcontentloaded' });
       await this.navigator.page.waitForTimeout(this.pageSettleWaitMs);
 
       for (let index = 0; index < 5; index++) {
