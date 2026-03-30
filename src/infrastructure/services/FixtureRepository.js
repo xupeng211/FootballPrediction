@@ -224,7 +224,12 @@ class FixtureRepository {
       return { total: 0, inserted: 0, updated: 0, failed: 0, errors: [] };
     }
     await this.init();
-    const canonicalFixtures = await this.matchIdentityResolver.resolveCanonicalFixtures(fixtures);
+    const normalizedFixtures = fixtures.map((fixture) => ({
+      ...fixture,
+      home_team: Normalizer.normalizeTeamName(fixture.home_team),
+      away_team: Normalizer.normalizeTeamName(fixture.away_team)
+    }));
+    const canonicalFixtures = await this.matchIdentityResolver.resolveCanonicalFixtures(normalizedFixtures);
     const results = { total: fixtures.length, inserted: 0, updated: 0, failed: 0, errors: [] };
     for (let index = 0; index < canonicalFixtures.length; index += this.batchSize) {
       const batch = canonicalFixtures
