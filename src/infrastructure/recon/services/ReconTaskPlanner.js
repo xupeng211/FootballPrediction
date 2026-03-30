@@ -17,12 +17,18 @@ class ReconTaskPlanner {
     this.archiveMaxPages = Math.max(1, Number(options.archiveMaxPages ?? runtimeConfig.archive_max_pages));
     this.archiveTimeoutMs = Math.max(1, Number(options.archiveTimeoutMs ?? runtimeConfig.archive_timeout_ms));
     this.resultsPathTemplate = options.resultsPathTemplate || runtimeConfig.results_path;
+    this.forceDomLeagueIds = new Set(
+      (options.forceDomLeagueIds || runtimeConfig.force_dom_league_ids || [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0)
+    );
   }
 
   buildTarget(season, leagueConfig) {
     return {
       leagueId: Number(leagueConfig?.id || 0),
       league: leagueConfig,
+      readySelector: leagueConfig?.readySelector || leagueConfig?.ready_selector || null,
       season: this.formatSeasonForLeagueUrl(season, leagueConfig),
       dbSeason: this.normalizeDbSeason(season),
       resultsUrl: this.buildResultsUrl(leagueConfig, season)
@@ -204,6 +210,7 @@ class ReconTaskPlanner {
       ...target,
       pendingMatches: orderedPending
     });
+    const forceDomMode = this.forceDomLeagueIds.has(Number(target?.leagueId || target?.league?.id || 0));
     let best = null;
     const evaluatedSources = [];
 
@@ -213,15 +220,24 @@ class ReconTaskPlanner {
         timeoutMs: this.archiveTimeoutMs,
         preferCurrentSeasonSource: this.isCurrentSeason(source.season)
       };
-      const extractResult = source.mode === 'current_season'
-        ? await this.navigator.protocolArchiveExtract(source.url, {
-          maxPages: this.archiveMaxPages,
-          timeoutMs: this.archiveTimeoutMs,
-          preferCurrentSeasonSource: true
+      if (target.readySelector) {
+        extractOptions.readySelector = target.readySelector;
+      }
+      const extractResult = forceDomMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+        ? await this.navigator.fetchFullSeasonArchive(source.url, {
+          ...extractOptions,
+          preferCurrentSeasonSource: true,
+          forceDomOnly: true
         })
-        : typeof this.navigator?.fetchFullSeasonArchive === 'function'
-          ? await this.navigator.fetchFullSeasonArchive(source.url, extractOptions)
-          : await this.navigator.protocolArchiveExtract(source.url, extractOptions);
+        : source.mode === 'current_season'
+          ? await this.navigator.protocolArchiveExtract(source.url, {
+            maxPages: this.archiveMaxPages,
+            timeoutMs: this.archiveTimeoutMs,
+            preferCurrentSeasonSource: true
+          })
+          : typeof this.navigator?.fetchFullSeasonArchive === 'function'
+            ? await this.navigator.fetchFullSeasonArchive(source.url, extractOptions)
+            : await this.navigator.protocolArchiveExtract(source.url, extractOptions);
       const candidates = Array.isArray(extractResult?.matches) ? extractResult.matches : [];
       const seasonMirror = this.mirrorManager?.buildSeasonMirror(candidates) || new Map();
       const sampleLinked = sample.reduce((count, l1Match) => {
@@ -243,6 +259,7 @@ class ReconTaskPlanner {
         requestedSeason: target.season,
         sourceSeason: source.season,
         sourceUrl: source.url,
+        forceDomMode,
         sampleSize: sample.length,
         skippedPlaceholderCount,
         sampleLinked,

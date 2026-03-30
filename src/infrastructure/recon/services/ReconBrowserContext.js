@@ -11,10 +11,12 @@ const DEFAULT_READY_SELECTORS = [
   'main',
   'body'
 ];
+const DEFAULT_ACCEPT_LANGUAGE = 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7';
 
 class ReconBrowserContext {
   constructor(options = {}) {
     const runtimeConfig = getReconConfigSection(['recon_runtime', 'browser_context'], {});
+    const networkMonitorConfig = getReconConfigSection(['recon_runtime', 'network_monitor'], {});
 
     this.logger = options.logger || console;
     this.traceId = options.traceId || 'trace-unknown';
@@ -51,6 +53,22 @@ class ReconBrowserContext {
       ?? runtimeConfig.navigation_ready_timeout_ms
       ?? this.navigationTimeoutMs
     );
+    this.homeWarmupEnabled = options.homeWarmupEnabled ?? networkMonitorConfig.home_warmup_enabled ?? false;
+    this.homeWarmupUrl = String(
+      options.homeWarmupUrl
+      || networkMonitorConfig.home_warmup_url
+      || RECON_CONFIG.oddsportal?.base_url
+      || ''
+    ).trim();
+    this.homeWarmupWaitMs = Number(options.homeWarmupWaitMs ?? networkMonitorConfig.home_warmup_wait_ms ?? 5000);
+    this.acceptLanguage = String(options.acceptLanguage || runtimeConfig.accept_language || DEFAULT_ACCEPT_LANGUAGE);
+    this.locale = String(options.locale || runtimeConfig.locale || 'en-US');
+    this.timezoneId = String(options.timezoneId || runtimeConfig.timezone_id || 'Asia/Tokyo');
+    this.hardwareConcurrency = Number(options.hardwareConcurrency ?? runtimeConfig.hardware_concurrency ?? 8);
+    this.deviceMemory = Number(options.deviceMemory ?? runtimeConfig.device_memory ?? 8);
+    this.platform = String(options.platform || runtimeConfig.platform || 'MacIntel');
+    this.enableStealthFingerprint = options.enableStealthFingerprint ?? runtimeConfig.enable_stealth_fingerprint ?? false;
+    this._sessionPrimed = false;
     this.consentLabels = Array.isArray(options.consentLabels) && options.consentLabels.length > 0
       ? [...options.consentLabels]
       : Array.isArray(runtimeConfig.consent_labels) && runtimeConfig.consent_labels.length > 0
@@ -85,17 +103,45 @@ class ReconBrowserContext {
       browser = await this.chromium.launch(launchOptions);
       context = await browser.newContext({
         userAgent: this.userAgent,
-        viewport: this.viewport
+        viewport: this.viewport,
+        locale: this.locale,
+        timezoneId: this.timezoneId,
+        extraHTTPHeaders: {
+          'accept-language': this.acceptLanguage
+        }
       });
       page = await context.newPage();
-      await page.addInitScript(() => {
-        Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-      });
+      if (this.enableStealthFingerprint) {
+        const hardwareConcurrency = this.hardwareConcurrency;
+        const deviceMemory = this.deviceMemory;
+        const platform = this.platform;
+        await page.addInitScript(({ injectedHardwareConcurrency, injectedDeviceMemory, injectedPlatform }) => {
+          Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+          Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => injectedHardwareConcurrency });
+          Object.defineProperty(navigator, 'deviceMemory', { get: () => injectedDeviceMemory });
+          Object.defineProperty(navigator, 'platform', { get: () => injectedPlatform });
+          Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en', 'ja-JP', 'ja'] });
+          Object.defineProperty(navigator, 'language', { get: () => 'en-US' });
+          Object.defineProperty(navigator, 'plugins', {
+            get: () => [
+              { name: 'Chrome PDF Plugin' },
+              { name: 'Chrome PDF Viewer' },
+              { name: 'Native Client' }
+            ]
+          });
+          window.chrome = window.chrome || { runtime: {} };
+        }, {
+          injectedHardwareConcurrency: hardwareConcurrency,
+          injectedDeviceMemory: deviceMemory,
+          injectedPlatform: platform
+        });
+      }
 
       this.browser = browser;
       this.context = context;
       this.page = page;
       this.isClosed = false;
+      this._sessionPrimed = false;
 
       return this.page;
     } catch (error) {
@@ -137,10 +183,15 @@ class ReconBrowserContext {
     const waitUntil = options.waitUntil || 'domcontentloaded';
     const warmupDelayMs = options.warmupDelayMs ?? this.warmupDelayMs;
 
+    await this.primeSession(url, { timeout, waitUntil });
     await this.page.goto(url, { timeout, waitUntil });
     await this.handleConsent();
     await this.waitForNavigationReady({
       selectors: options.readySelectors,
+      timeout: options.readyTimeoutMs
+    });
+    await this.waitForKnownContent({
+      selector: options.contentReadySelector,
       timeout: options.readyTimeoutMs
     });
 
@@ -153,6 +204,54 @@ class ReconBrowserContext {
       stepPx: options.scrollStepPx || this.scrollStepPx,
       delayMs: options.scrollDelayMs || this.scrollDelayMs
     });
+  }
+
+  async primeSession(targetUrl, options = {}) {
+    if (
+      this._sessionPrimed
+      || !this.page
+      || !this.homeWarmupEnabled
+      || !this.homeWarmupUrl
+      || !targetUrl
+      || String(targetUrl).startsWith(this.homeWarmupUrl)
+    ) {
+      return;
+    }
+
+    const timeout = options.timeout || this.navigationTimeoutMs;
+    const waitUntil = options.waitUntil || 'domcontentloaded';
+
+    await this.page.goto(this.homeWarmupUrl, { timeout, waitUntil });
+    await this.handleConsent();
+    if (this.homeWarmupWaitMs > 0) {
+      await this.page.waitForTimeout(this.homeWarmupWaitMs);
+    }
+    this._sessionPrimed = true;
+  }
+
+  async waitForKnownContent(options = {}) {
+    if (!this.page || typeof this.page.waitForSelector !== 'function') {
+      return false;
+    }
+
+    const selector = typeof options.selector === 'string' ? options.selector.trim() : '';
+    if (!selector) {
+      return false;
+    }
+
+    try {
+      await this.page.waitForSelector(selector, {
+        timeout: Number(options.timeout ?? this.navigationReadyTimeoutMs),
+        state: 'visible'
+      });
+      return true;
+    } catch (_error) {
+      this.logger.warn('recon_known_content_selector_missed', {
+        traceId: this.traceId,
+        selector
+      });
+      return false;
+    }
   }
 
   async waitForNavigationReady(options = {}) {
@@ -234,6 +333,7 @@ class ReconBrowserContext {
     this.browser = null;
     this.context = null;
     this.page = null;
+    this._sessionPrimed = false;
 
     if (!browser || typeof browser.close !== 'function') {
       return;

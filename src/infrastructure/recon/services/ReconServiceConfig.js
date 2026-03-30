@@ -281,6 +281,23 @@ function validateConfig(config, options = {}) {
   assertStringArray(assertRequired(config, ['recon_runtime', 'dom_scraper', 'away_selectors'], configPath), 'recon_runtime.dom_scraper.away_selectors', configPath, { minLength: 1 });
   assertStringArray(assertRequired(config, ['recon_runtime', 'dom_scraper', 'participant_selectors'], configPath), 'recon_runtime.dom_scraper.participant_selectors', configPath, { minLength: 1 });
 
+  const enableStealthFingerprint = getNestedValue(config, ['recon_runtime', 'browser_context', 'enable_stealth_fingerprint']);
+  if (enableStealthFingerprint !== undefined) {
+    assertBoolean(enableStealthFingerprint, 'recon_runtime.browser_context.enable_stealth_fingerprint', configPath);
+  }
+  const homeWarmupEnabled = getNestedValue(config, ['recon_runtime', 'network_monitor', 'home_warmup_enabled']);
+  if (homeWarmupEnabled !== undefined) {
+    assertBoolean(homeWarmupEnabled, 'recon_runtime.network_monitor.home_warmup_enabled', configPath);
+  }
+  const homeWarmupUrl = getNestedValue(config, ['recon_runtime', 'network_monitor', 'home_warmup_url']);
+  if (homeWarmupUrl !== undefined) {
+    assertString(homeWarmupUrl, 'recon_runtime.network_monitor.home_warmup_url', configPath);
+  }
+  const homeWarmupWaitMs = getNestedValue(config, ['recon_runtime', 'network_monitor', 'home_warmup_wait_ms']);
+  if (homeWarmupWaitMs !== undefined) {
+    assertFiniteNumber(homeWarmupWaitMs, 'recon_runtime.network_monitor.home_warmup_wait_ms', configPath, { integer: true, min: 0 });
+  }
+
   const featureFlags = config.feature_flags || {};
   assertObject(featureFlags, 'feature_flags', configPath);
   assertBoolean(assertRequired(config, ['feature_flags', 'disable_dom_fallback'], configPath), 'feature_flags.disable_dom_fallback', configPath);

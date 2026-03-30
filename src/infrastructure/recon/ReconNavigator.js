@@ -32,6 +32,7 @@ class ReconNavigator {
     this.archiveTimeoutMs = Number(options.archiveTimeoutMs ?? navigatorConfig.archive_timeout_ms);
     this.postApiDiscoveryWaitMs = Number(options.postApiDiscoveryWaitMs ?? navigatorConfig.post_api_discovery_wait_ms);
     this.pageRevisitWaitMs = Number(options.pageRevisitWaitMs ?? navigatorConfig.page_revisit_wait_ms);
+    this.enableStealthFingerprint = options.enableStealthFingerprint;
 
     // V11.0: TraceID 机制 - 每笔收割请求唯一编号
     this.traceId = options.traceId || generateTraceId();
@@ -46,7 +47,8 @@ class ReconNavigator {
       logger: this.logger,
       traceId: this.traceId,
       headless: this.headless,
-      proxy: this.proxy
+      proxy: this.proxy,
+      enableStealthFingerprint: this.enableStealthFingerprint
     });
     this.stats = createDefaultStats();
     this.networkMonitor = new ReconNetworkMonitor({
@@ -237,7 +239,10 @@ class ReconNavigator {
           warmupDelayMs: this.warmupDelayMs,
           scrollIterations: this.scrollIterations,
           scrollStepPx: this.scrollStepPx,
-          scrollDelayMs: this.navigateScrollDelayMs
+          scrollDelayMs: this.navigateScrollDelayMs,
+          readySelectors: options.readySelectors,
+          readyTimeoutMs: options.readyTimeoutMs,
+          contentReadySelector: options.contentReadySelector
         });
 
         this.logger.info('navigate_complete', {
@@ -275,13 +280,15 @@ class ReconNavigator {
     const maxPages = options.maxPages ?? this.archiveMaxPages;
     const timeoutMs = options.timeoutMs ?? this.archiveTimeoutMs;
     const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
+    const readySelector = typeof options.readySelector === 'string' ? options.readySelector.trim() : '';
+    const navigateOptions = readySelector ? { contentReadySelector: readySelector } : {};
 
     if (preferCurrentSeasonSource) {
       this.logger.info('protocol_current_season_start', { baseUrl, maxPages });
       const currentResult = await this.stateProber.probeCurrentSeasonFromPageState(
         baseUrl,
-        { maxPages, timeoutMs, maxScrollRounds: this.scrollAttempts },
-        this._buildStateProbeHooks()
+        { maxPages, timeoutMs, maxScrollRounds: this.scrollAttempts, readySelector },
+        this._buildStateProbeHooks(navigateOptions)
       );
       this.logger.info('protocol_archive_complete', {
         pagesScanned: currentResult.pageStats?.length || 0,
@@ -292,7 +299,7 @@ class ReconNavigator {
     }
 
     this.logger.info('protocol_archive_start', { baseUrl, maxPages });
-    await this.navigate(baseUrl, { waitUntil: 'domcontentloaded' });
+    await this.navigate(baseUrl, { waitUntil: 'domcontentloaded', ...navigateOptions });
 
     // 等待 API 端点被发现
     await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
@@ -352,19 +359,26 @@ class ReconNavigator {
     const timeoutMs = options.timeoutMs ?? this.archiveTimeoutMs;
     const maxPages = options.maxPages ?? this.archiveMaxPages;
     const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
+    const forceDomOnly = options.forceDomOnly === true;
+    const readySelector = typeof options.readySelector === 'string' ? options.readySelector.trim() : '';
+    const navigateOptions = readySelector ? { contentReadySelector: readySelector } : {};
     const resultsUrl = this.domScraper.normalizeResultsUrl(baseUrl);
 
     this.logger.info('season_sweep_start', {
       baseUrl: resultsUrl,
       maxPages,
-      preferCurrentSeasonSource
+      preferCurrentSeasonSource,
+      forceDomOnly
     });
 
     const discovery = await this.domScraper.discoverSeasonResultPages(
       resultsUrl,
       { timeoutMs, maxPages },
       {
-        navigate: (url, navigateOptions) => this.navigate(url, navigateOptions),
+        navigate: (url, dynamicNavigateOptions) => this.navigate(url, {
+          ...dynamicNavigateOptions,
+          ...navigateOptions
+        }),
         getInterceptedData: () => this.getInterceptedData(),
         waitForTimeout: async (ms) => {
           if (this.page && typeof this.page.waitForTimeout === 'function') {
@@ -410,7 +424,7 @@ class ReconNavigator {
 
     for (let index = 1; index < discovery.pageUrls.length; index++) {
       const pageUrl = discovery.pageUrls[index];
-      await this.navigate(pageUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
+      await this.navigate(pageUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs, ...navigateOptions });
       await this.page.waitForTimeout(this.pageRevisitWaitMs);
 
       const interceptedMatches = this.getInterceptedData();
@@ -425,48 +439,51 @@ class ReconNavigator {
       appendMatches(pageMatches, index + 1, pageUrl, source);
     }
 
-    const archiveResult = await this.protocolArchiveExtract(resultsUrl, {
-      maxPages,
-      timeoutMs,
-      preferCurrentSeasonSource: false
-    });
+    if (!forceDomOnly) {
+      const archiveResult = await this.protocolArchiveExtract(resultsUrl, {
+        maxPages,
+        timeoutMs,
+        preferCurrentSeasonSource: false,
+        readySelector
+      });
 
-    let archiveNewRows = 0;
-    for (const match of Array.isArray(archiveResult?.matches) ? archiveResult.matches : []) {
-      const key = match?.hash || match?.url;
-      if (!key || seen.has(key)) {
-        continue;
+      let archiveNewRows = 0;
+      for (const match of Array.isArray(archiveResult?.matches) ? archiveResult.matches : []) {
+        const key = match?.hash || match?.url;
+        if (!key || seen.has(key)) {
+          continue;
+        }
+
+        seen.add(key);
+        matches.push(match);
+        archiveNewRows++;
       }
 
-      seen.add(key);
-      matches.push(match);
-      archiveNewRows++;
-    }
-
-    if (Array.isArray(archiveResult?.pageStats) && archiveResult.pageStats.length > 0) {
-      for (const [index, stat] of archiveResult.pageStats.entries()) {
+      if (Array.isArray(archiveResult?.pageStats) && archiveResult.pageStats.length > 0) {
+        for (const [index, stat] of archiveResult.pageStats.entries()) {
+          pageStats.push({
+            ...stat,
+            page: stat?.page || (discovery.pageUrls.length + index + 1),
+            source: stat?.source || 'archive_api'
+          });
+        }
+      } else if (Array.isArray(archiveResult?.matches) && archiveResult.matches.length > 0) {
         pageStats.push({
-          ...stat,
-          page: stat?.page || (discovery.pageUrls.length + index + 1),
-          source: stat?.source || 'archive_api'
+          page: discovery.pageUrls.length + 1,
+          url: resultsUrl,
+          rows: archiveResult.matches.length,
+          newRows: archiveNewRows,
+          total: matches.length,
+          source: 'archive_api'
         });
       }
-    } else if (Array.isArray(archiveResult?.matches) && archiveResult.matches.length > 0) {
-      pageStats.push({
-        page: discovery.pageUrls.length + 1,
-        url: resultsUrl,
-        rows: archiveResult.matches.length,
-        newRows: archiveNewRows,
-        total: matches.length,
-        source: 'archive_api'
-      });
     }
 
-    if (matches.length === 0 && preferCurrentSeasonSource) {
+    if (matches.length === 0 && preferCurrentSeasonSource && !forceDomOnly) {
       const currentSeasonResult = await this.stateProber.probeCurrentSeasonFromPageState(
         baseUrl,
-        { maxPages, timeoutMs, maxScrollRounds: this.scrollAttempts },
-        this._buildStateProbeHooks()
+        { maxPages, timeoutMs, maxScrollRounds: this.scrollAttempts, readySelector },
+        this._buildStateProbeHooks(navigateOptions)
       );
       let currentSeasonNewRows = 0;
 
@@ -516,9 +533,12 @@ class ReconNavigator {
     };
   }
 
-  _buildStateProbeHooks() {
+  _buildStateProbeHooks(defaultNavigateOptions = {}) {
     return {
-      navigate: (url, options) => this.navigate(url, options),
+      navigate: (url, options) => this.navigate(url, {
+        ...options,
+        ...defaultNavigateOptions
+      }),
       waitForTimeout: async (ms) => {
         if (this.page && typeof this.page.waitForTimeout === 'function') {
           await this.page.waitForTimeout(ms);
@@ -536,6 +556,7 @@ class ReconNavigator {
         });
       },
       getCurrentTournamentEndpoint: () => this._getCurrentTournamentEndpoint(),
+      buildCurrentTournamentUrlFromArchive: (url) => this._buildTournamentUrlFromArchive(url),
       fetchCurrentTournament: (url, maxPages, timeoutMs) => (
         this._fetchCurrentTournament(url, maxPages, timeoutMs)
       )
@@ -675,17 +696,16 @@ class ReconNavigator {
       await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
     }
 
-    const meta = await this.stateProber.extractPageOutrightsMeta();
-    const tournamentId = typeof meta?.id === 'string' ? meta.id.trim() : '';
-    const repairedArchiveUrl = tournamentId
-      ? this._repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentId)
+    const tournamentToken = await this.stateProber.extractTournamentToken();
+    const repairedArchiveUrl = tournamentToken
+      ? this._repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentToken)
       : archiveApiUrl;
     const currentTournamentUrl = this._getCurrentTournamentEndpoint()
-      || this._buildTournamentUrlFromArchive(archiveApiUrl, tournamentId);
+      || this._buildTournamentUrlFromArchive(archiveApiUrl, tournamentToken);
 
     return {
       leagueUrl,
-      tournamentId: tournamentId || null,
+      tournamentId: tournamentToken || null,
       repairedArchiveUrl,
       currentTournamentUrl
     };
@@ -700,7 +720,7 @@ class ReconNavigator {
   }
 
   _buildTournamentUrlFromArchive(archiveApiUrl, tournamentId) {
-    if (!archiveApiUrl || !tournamentId) {
+    if (!archiveApiUrl) {
       return null;
     }
 
@@ -709,7 +729,14 @@ class ReconNavigator {
       return null;
     }
 
-    return `${match[1]}_/${match[2]}/${tournamentId}/${match[3]}/${match[4]}/`;
+    const resolvedTournamentId = tournamentId || archiveApiUrl.match(
+      /\/ajax-sport-country-tournament-archive_\/\d+\/([^/]+)\/X/i
+    )?.[1];
+    if (!resolvedTournamentId) {
+      return null;
+    }
+
+    return `${match[1]}_/${match[2]}/${resolvedTournamentId}/${match[3]}/${match[4]}/`;
   }
 
   async _fallbackToLeagueTournament(baseUrl, archiveApiUrl, maxPages, timeoutMs, reason = 'fallback') {
