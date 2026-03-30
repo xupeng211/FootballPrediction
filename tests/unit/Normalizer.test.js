@@ -7,6 +7,7 @@
  * - normalizeSeason: 赛季格式标准化
  * - buildMatchId: match_id 构建
  * - isValidMatchId: match_id 格式验证
+ * - normalizeTeamName: 队名归一化
  */
 
 'use strict';
@@ -157,6 +158,38 @@ describe('Normalizer - V6.6 标准化工具类', () => {
     it('应验证多段格式为无效', () => {
       const result = Normalizer.isValidMatchId('47_20232024_3609929_extra');
       assert.strictEqual(result, false);
+    });
+  });
+
+  describe('normalizeTeamName()', () => {
+    it('应将中超别名统一到 OddsPortal 对账口径', () => {
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('Henan FC'),
+        'Henan Songshan Longmen'
+      );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('Henan Fc'),
+        'Henan Songshan Longmen'
+      );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('Shenzhen Peng City'),
+        'Shenzhen Xinpengcheng'
+      );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('Chengdu Rongcheng Fc'),
+        'Chengdu Rongcheng'
+      );
+    });
+
+    it('无显式别名时应保留常见俱乐部缩写大写格式', () => {
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('New York City Fc'),
+        'New York City FC'
+      );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('Inter Miami Cf'),
+        'Inter Miami CF'
+      );
     });
   });
 

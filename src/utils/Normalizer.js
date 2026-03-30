@@ -17,6 +17,42 @@ const fs = require('fs');
 
 // V6.7: 集中式配置加载 (延迟加载以避免循环依赖)
 let teamMappings = null;
+const ACRONYM_WORDS = new Set(['fc', 'cf', 'afc', 'sc', 'ac']);
+
+function normalizeLookupKey(value) {
+    return String(value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/-/g, ' ')
+        .replace(/[^\p{L}\p{N}\s]/gu, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function formatDisplayTeamName(normalizedValue) {
+    return String(normalizedValue || '')
+        .split(' ')
+        .filter(Boolean)
+        .map((word) => {
+            if (ACRONYM_WORDS.has(word)) {
+                return word.toUpperCase();
+            }
+            return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join(' ');
+}
+
+function mergeTeamMappings(target, source) {
+    for (const [rawKey, rawValue] of Object.entries(source || {})) {
+        const normalizedKey = normalizeLookupKey(rawKey);
+        const canonicalValue = String(rawValue || '').trim();
+        if (!normalizedKey || !canonicalValue) {
+            continue;
+        }
+        target[normalizedKey] = canonicalValue;
+    }
+}
 
 /**
  * 加载队名映射配置
@@ -24,17 +60,29 @@ let teamMappings = null;
  */
 function loadTeamMappings() {
     if (teamMappings) return teamMappings;
-    
+
+    teamMappings = {};
+
     try {
-        const configPath = path.join(process.cwd(), 'config/recon_config.json');
+        const configPath = process.env.RECON_CONFIG_PATH || path.join(process.cwd(), 'config/recon_config.json');
         if (fs.existsSync(configPath)) {
             const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-            teamMappings = config.team_mappings || {};
+            mergeTeamMappings(teamMappings, config.team_mappings || {});
         }
     } catch (e) {
-        console.error('[Normalizer] 警告: 无法加载 team_mappings 配置，回退到基础标准化', e.message);
-        teamMappings = {};
+        console.error('[Normalizer] 警告: 无法加载 recon team_mappings 配置，继续尝试 team_aliases', e.message);
     }
+
+    try {
+        const aliasPath = process.env.TEAM_ALIASES_PATH || path.join(process.cwd(), 'config/team_aliases.json');
+        if (fs.existsSync(aliasPath)) {
+            const aliasConfig = JSON.parse(fs.readFileSync(aliasPath, 'utf8'));
+            mergeTeamMappings(teamMappings, aliasConfig);
+        }
+    } catch (e) {
+        console.error('[Normalizer] 警告: 无法加载 team_aliases 配置，回退到基础标准化', e.message);
+    }
+
     return teamMappings;
 }
 
@@ -151,14 +199,7 @@ class Normalizer {
         }
 
         // 清理格式
-        const normalized = teamName
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .replace(/-/g, ' ')
-            .replace(/[^\p{L}\p{N}\s]/gu, ' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+        const normalized = normalizeLookupKey(teamName);
 
         // V6.7: 从中央配置加载映射库
         const mappings = loadTeamMappings();
@@ -169,10 +210,7 @@ class Normalizer {
         }
 
         // 无映射时，首字母大写
-        return normalized
-            .split(' ')
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(' ');
+        return formatDisplayTeamName(normalized);
     }
 
     /**
