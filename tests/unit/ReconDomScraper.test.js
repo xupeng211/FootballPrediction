@@ -118,4 +118,69 @@ describe('ReconDomScraper', () => {
     assert.strictEqual(matches[0].homeTeam, 'Athletico PR');
     assert.strictEqual(matches[0].awayTeam, 'Botafogo RJ');
   });
+
+  it('discoverSeasonResultPages 应合并首屏拦截与 DOM 结果，避免被第一页 API 截断', async () => {
+    const scraper = new ReconDomScraper({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    scraper.extractCurrentSeasonResultRows = async () => ([
+      {
+        hash: 'sharedHash',
+        url: 'https://www.oddsportal.com/shared',
+        homeTeam: 'Qingdao West Coast',
+        awayTeam: 'Henan Songshan Longmen',
+        matchDate: null
+      },
+      {
+        hash: 'domOnly1',
+        url: 'https://www.oddsportal.com/dom-1',
+        homeTeam: 'Changchun Yatai',
+        awayTeam: 'Shanghai Shenhua',
+        matchDate: null
+      },
+      {
+        hash: 'domOnly2',
+        url: 'https://www.oddsportal.com/dom-2',
+        homeTeam: 'Meizhou Hakka',
+        awayTeam: 'Tianjin Jinmen Tiger',
+        matchDate: null
+      }
+    ]);
+
+    scraper.extractPaginationMeta = async () => ({
+      pageUrls: [],
+      totalPages: 1
+    });
+
+    const result = await scraper.discoverSeasonResultPages(
+      'https://www.oddsportal.com/football/china/super-league-2025/results/',
+      { maxPages: 5, timeoutMs: 1000 },
+      {
+        navigate: async () => {},
+        waitForTimeout: async () => {},
+        getInterceptedData: () => ([
+          {
+            hash: 'sharedHash',
+            url: 'https://www.oddsportal.com/shared',
+            homeTeam: 'Qingdao West Coast',
+            awayTeam: 'Henan Songshan Longmen',
+            matchDate: '2026-04-22T11:35:00Z'
+          }
+        ])
+      }
+    );
+
+    assert.strictEqual(result.initialSource, 'page_intercept+page_dom');
+    assert.strictEqual(result.initialMatches.length, 3);
+    assert.deepStrictEqual(result.initialMatches.map((item) => item.hash), [
+      'sharedHash',
+      'domOnly1',
+      'domOnly2'
+    ]);
+    assert.strictEqual(
+      result.initialMatches.find((item) => item.hash === 'sharedHash')?.matchDate,
+      '2026-04-22T11:35:00Z'
+    );
+  });
 });
