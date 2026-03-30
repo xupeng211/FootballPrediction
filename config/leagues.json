@@ -47,7 +47,14 @@
       "slug": "super-league",
       "results_url_strategy": "seasonless"
     },
-    { "id": 223, "name": "J1 League", "country": "Japan", "tier": "P3", "enabled": true },
+    {
+      "id": 223,
+      "name": "J1 League",
+      "country": "Japan",
+      "tier": "P3",
+      "enabled": true,
+      "ready_selector": "text=Machida"
+    },
     { "id": 8974, "name": "J2 League", "country": "Japan", "tier": "P3", "enabled": true },
     {
       "id": 71,

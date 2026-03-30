@@ -27,7 +27,8 @@ function createPlanner(overrides = {}) {
     configManager: overrides.configManager || null,
     matchEvaluator: evaluator,
     mirrorManager,
-    sampleSize: overrides.sampleSize
+    sampleSize: overrides.sampleSize,
+    forceDomLeagueIds: overrides.forceDomLeagueIds
   });
 }
 
@@ -183,6 +184,59 @@ describe('ReconTaskPlanner', () => {
       target.resultsUrl,
       'oddsportal://root/football/japan/j1-league-2026/results/'
     );
+  });
+
+  it('force_dom_league_ids 命中时应跳过 protocolArchiveExtract，强制走 full season DOM sweep', async () => {
+    const calls = [];
+    const planner = createPlanner({
+      forceDomLeagueIds: [223],
+      navigator: {
+        async fetchFullSeasonArchive(url, options) {
+          calls.push({ type: 'full', url, options });
+          return {
+            matches: [],
+            pagesScanned: 1,
+            totalCandidates: 0,
+            sourceState: 'SOURCE_EMPTY'
+          };
+        },
+        async protocolArchiveExtract() {
+          calls.push({ type: 'protocol' });
+          throw new Error('should_not_call_protocol');
+        }
+      }
+    });
+
+    const target = {
+      leagueId: 223,
+      league: { id: 223, name: 'J1 League', country: 'japan', slug: 'j1-league' },
+      readySelector: 'text=Fixture Ready',
+      season: '2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/japan/j1-league-2026/results/'
+    };
+    const pendingMatches = [{
+      match_id: '223_20252026_4690937',
+      home_team: 'Machida Zelvia',
+      away_team: 'FC Tokyo',
+      match_date: '2026-02-14T05:00:00.000Z'
+    }];
+
+    await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.deepStrictEqual(calls, [
+      {
+        type: 'full',
+        url: target.resultsUrl,
+        options: {
+          maxPages: 50,
+          timeoutMs: 90000,
+          preferCurrentSeasonSource: true,
+          readySelector: 'text=Fixture Ready',
+          forceDomOnly: true
+        }
+      }
+    ]);
   });
 
   it('single_year 的四位年份应被识别为当前赛季', () => {

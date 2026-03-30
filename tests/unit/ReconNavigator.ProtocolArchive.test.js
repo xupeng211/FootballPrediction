@@ -248,6 +248,49 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.matches[0].hash, 'current-hash');
   });
 
+  it('联赛主页缺失 outright id 时应使用 otCode 修复 archive 与 tournament 接口', async () => {
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async content() {
+        return [
+          '<html><body>',
+          '<script>',
+          "pageOutrightsVar = '{\"id\":\"\",\"sid\":1,\"cid\":100,\"archive\":true}';",
+          '</script>',
+          '</body></html>'
+        ].join('');
+      },
+      async evaluate(fn) {
+        if (typeof fn === 'function') {
+          return '5fdb38ad-528a-4fb9-a576-b8c42e07565d';
+        }
+        return null;
+      }
+    };
+    navigator.navigate = async () => {};
+    navigator._getCurrentTournamentEndpoint = () => null;
+
+    const context = await navigator._resolveLeagueTournamentContext(
+      'oddsportal://root/football/japan/j1-league-2026/results/',
+      1234,
+      'oddsportal://ajax-sport-country-tournament-archive_/1//X262144/1/0/'
+    );
+
+    assert.deepStrictEqual(context, {
+      leagueUrl: 'oddsportal://root/football/japan/j1-league-2026/',
+      tournamentId: '5fdb38ad-528a-4fb9-a576-b8c42e07565d',
+      repairedArchiveUrl: 'oddsportal://ajax-sport-country-tournament-archive_/1/5fdb38ad-528a-4fb9-a576-b8c42e07565d/X262144/1/0/',
+      currentTournamentUrl: 'oddsportal://ajax-sport-country-tournament_/1/5fdb38ad-528a-4fb9-a576-b8c42e07565d/X262144/1/'
+    });
+  });
+
   it('当前赛季 results 页 DOM 出现比赛行时，应优先使用 DOM 候选而不是 archive 接口', async () => {
     const navigatedUrls = [];
 
@@ -360,6 +403,164 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.sourceState, 'CURRENT_RESULTS_ARCHIVE');
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'archive-hash');
+  });
+
+  it('当前赛季 results 页 archive 返回空时，应继续用修复后的 archive URL 反推 current tournament 接口', async () => {
+    const fetchArchiveCalls = [];
+    const fetchTournamentCalls = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async evaluate(fn, payload) {
+        if (payload && payload.leaguePathPrefix) {
+          return [];
+        }
+
+        if (typeof fn === 'function') {
+          return {
+            id: 'KKay4EE8',
+            sid: 1,
+            cid: 198,
+            archive: true
+          };
+        }
+
+        return null;
+      }
+    };
+    navigator.navigate = async () => {
+      navigator.apiEndpoints = new Set([
+        'oddsportal://ajax-sport-country-tournament-archive_/1//X262144/1/0/?_=1'
+      ]);
+    };
+    navigator._fetchAndDecrypt = async (url) => {
+      fetchArchiveCalls.push(url);
+      return {
+        matches: [],
+        pagesScanned: 1,
+        totalCandidates: 0,
+        pageStats: [{ page: 1, rows: 0, total: 0 }]
+      };
+    };
+    navigator._getCurrentTournamentEndpoint = () => null;
+    navigator._fetchCurrentTournament = async (url) => {
+      fetchTournamentCalls.push(url);
+      return {
+        matches: [
+          {
+            hash: 'archive-fallback-current',
+            url: 'oddsportal://match/archive-fallback-current',
+            homeTeam: 'Vissel Kobe',
+            awayTeam: 'Kyoto Sanga FC',
+            matchDate: '2026-02-21T05:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/japan/j1-league-2026/results/',
+      { preferCurrentSeasonSource: true, maxPages: 8, timeoutMs: 1234 }
+    );
+
+    assert.deepStrictEqual(fetchArchiveCalls, [
+      'oddsportal://ajax-sport-country-tournament-archive_/1/KKay4EE8/X262144/1/0/?_=1'
+    ]);
+    assert.deepStrictEqual(fetchTournamentCalls, [
+      'oddsportal://ajax-sport-country-tournament_/1/KKay4EE8/X262144/1/'
+    ]);
+    assert.strictEqual(result.sourceState, 'CURRENT_RESULTS_TOURNAMENT');
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'archive-fallback-current');
+  });
+
+  it('当前赛季联赛主页缺失显式 tournament 接口时，应根据修复后的 archive URL 反推 current tournament 接口', async () => {
+    const fetchCalls = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async evaluate(fn, payload) {
+        if (payload && payload.leaguePathPrefix) {
+          return [];
+        }
+
+        if (typeof fn === 'function') {
+          return '5fdb38ad-528a-4fb9-a576-b8c42e07565d';
+        }
+
+        return null;
+      },
+      async content() {
+        return [
+          '<html><body>',
+          '<script>',
+          "pageOutrightsVar = '{\"id\":\"\",\"sid\":1,\"cid\":100,\"archive\":true}';",
+          '</script>',
+          '</body></html>'
+        ].join('');
+      }
+    };
+    navigator.navigate = async (url) => {
+      if (url.endsWith('/results/')) {
+        navigator.apiEndpoints = new Set();
+        return;
+      }
+
+      navigator.apiEndpoints = new Set([
+        'oddsportal://ajax-sport-country-tournament-archive_/1//X262144/1/0/?_=1'
+      ]);
+    };
+    navigator._getCurrentTournamentEndpoint = () => null;
+    navigator._fetchCurrentTournament = async (url, maxPages, timeoutMs) => {
+      fetchCalls.push({ url, maxPages, timeoutMs });
+      return {
+        matches: [
+          {
+            hash: 'otcode-current',
+            url: 'oddsportal://match/otcode-current',
+            homeTeam: 'Machida Zelvia',
+            awayTeam: 'FC Tokyo',
+            matchDate: '2026-02-14T05:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/japan/j1-league-2026/results/',
+      { preferCurrentSeasonSource: true, maxPages: 7, timeoutMs: 1234 }
+    );
+
+    assert.deepStrictEqual(fetchCalls, [
+      {
+        url: 'oddsportal://ajax-sport-country-tournament_/1/5fdb38ad-528a-4fb9-a576-b8c42e07565d/X262144/1/',
+        maxPages: 7,
+        timeoutMs: 1234
+      }
+    ]);
+    assert.strictEqual(result.sourceState, 'CURRENT_TOURNAMENT');
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'otcode-current');
   });
 
   it('非当前赛季 archive URL 缺少 tournament id 时，应切到联赛主页补全后再抓取', async () => {
@@ -684,6 +885,42 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'championship-recovery');
     assert.strictEqual(result.pageStats.at(-1).source, 'CURRENT_RESULTS_ARCHIVE');
+  });
+
+  it('fetchFullSeasonArchive 在 forceDomOnly=true 时不得回落到 protocolArchiveExtract', async () => {
+    const baseUrl = 'oddsportal://root/football/japan/j1-league-2026/results/';
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+
+    navigator.domScraper.discoverSeasonResultPages = async () => ({
+      pageUrls: [baseUrl],
+      initialMatches: [],
+      initialSource: 'page_dom'
+    });
+    navigator.protocolArchiveExtract = async () => {
+      throw new Error('should_not_call_protocol_archive');
+    };
+    navigator.stateProber.probeCurrentSeasonFromPageState = async () => {
+      throw new Error('should_not_probe_current_season');
+    };
+
+    const result = await navigator.fetchFullSeasonArchive(baseUrl, {
+      maxPages: 10,
+      timeoutMs: 1234,
+      preferCurrentSeasonSource: true,
+      forceDomOnly: true
+    });
+
+    assert.strictEqual(result.totalCandidates, 0);
+    assert.strictEqual(result.sourceState, 'SOURCE_EMPTY');
   });
 
   it('navigate 连续 timeout 时应触发熔断，第二次请求直接被拒绝', async () => {

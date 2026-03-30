@@ -60,6 +60,40 @@ describe('ReconStateProber', () => {
     );
   });
 
+  it('缺失 outright id 时应回退到 pageVar.otCode 修复 archive endpoint', async () => {
+    const prober = new ReconStateProber({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    prober.setPage({
+      async content() {
+        return [
+          '<html><body>',
+          '<script>',
+          "pageOutrightsVar = '{\"id\":\"\",\"sid\":1,\"cid\":100,\"archive\":true}';",
+          '</script>',
+          '</body></html>'
+        ].join('');
+      },
+      async evaluate() {
+        return '5fdb38ad-528a-4fb9-a576-b8c42e07565d';
+      }
+    });
+
+    const repaired = await prober.resolveCurrentSeasonArchiveEndpoint([
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1//X262144/1/0/?_=1'
+    ], {
+      scoreArchiveUrl(url) {
+        return url.includes('/1//X') ? 1 : 10;
+      }
+    });
+
+    assert.strictEqual(
+      repaired,
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/5fdb38ad-528a-4fb9-a576-b8c42e07565d/X262144/1/0/?_=1'
+    );
+  });
+
   it('seasonless results URL 应能反推出联赛主页 URL', () => {
     const prober = new ReconStateProber({
       logger: { info() {}, warn() {}, error() {}, debug() {} }

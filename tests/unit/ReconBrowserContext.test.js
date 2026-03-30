@@ -65,11 +65,15 @@ describe('ReconBrowserContext', () => {
       type: 'newContext',
       options: {
         userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-        viewport: { width: 1920, height: 1080 }
+        viewport: { width: 1920, height: 1080 },
+        locale: 'en-US',
+        timezoneId: 'Asia/Tokyo',
+        extraHTTPHeaders: {
+          'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7'
+        }
       }
     });
     assert.strictEqual(events[2], 'newPage');
-    assert.deepStrictEqual(events[3], { type: 'addInitScript', value: 'function' });
 
     await browserContext.close();
 
@@ -77,7 +81,46 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(browserContext.context, null);
     assert.strictEqual(browserContext.page, null);
     assert.strictEqual(browserContext.isClosed, true);
-    assert.strictEqual(events[4], 'browser.close');
+    assert.strictEqual(events[3], 'browser.close');
+  });
+
+  it('启用高仿真指纹时才应注入 addInitScript', async () => {
+    const events = [];
+    const page = {
+      async addInitScript(fn) {
+        events.push({ type: 'addInitScript', value: typeof fn });
+      }
+    };
+
+    const context = {
+      async newPage() {
+        return page;
+      }
+    };
+
+    const browser = {
+      async newContext() {
+        return context;
+      },
+      async close() {}
+    };
+
+    const chromium = {
+      async launch() {
+        return browser;
+      }
+    };
+
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-browser-stealth',
+      chromium,
+      enableStealthFingerprint: true
+    });
+
+    await browserContext.launch({ timeout: 4321 });
+
+    assert.deepStrictEqual(events, [{ type: 'addInitScript', value: 'function' }]);
   });
 
   it('应独立处理 consent 按钮点击', async () => {
@@ -171,5 +214,105 @@ describe('ReconBrowserContext', () => {
         state: 'attached'
       }
     });
+  });
+
+  it('启用首页预热时应先访问首页并等待指定时长', async () => {
+    const events = [];
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-home-warmup',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      navigationReadySelectors: ['main'],
+      homeWarmupEnabled: true,
+      homeWarmupWaitMs: 5000
+    });
+
+    browserContext.page = {
+      async goto(url, options) {
+        events.push({ type: 'goto', url, options });
+      },
+      getByRole() {
+        return {
+          first() {
+            return {
+              async isVisible() {
+                return false;
+              }
+            };
+          }
+        };
+      },
+      async waitForSelector(selector, options) {
+        events.push({ type: 'waitForSelector', selector, options });
+      },
+      async waitForTimeout(ms) {
+        events.push({ type: 'waitForTimeout', ms });
+      },
+      async evaluate() {}
+    };
+
+    await browserContext.navigate('https://example.com/recon');
+
+    assert.deepStrictEqual(events[0], {
+      type: 'goto',
+      url: 'https://www.oddsportal.com',
+      options: {
+        timeout: 60000,
+        waitUntil: 'domcontentloaded'
+      }
+    });
+    assert.deepStrictEqual(events[1], { type: 'waitForTimeout', ms: 5000 });
+    assert.deepStrictEqual(events[2], {
+      type: 'goto',
+      url: 'https://example.com/recon',
+      options: {
+        timeout: 60000,
+        waitUntil: 'domcontentloaded'
+      }
+    });
+  });
+
+  it('contentReadySelector 应按联赛配置等待可见内容', async () => {
+    const events = [];
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-ready-selector',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      navigationReadySelectors: ['main']
+    });
+
+    browserContext.page = {
+      async goto(url) {
+        events.push({ type: 'goto', url });
+      },
+      getByRole() {
+        return {
+          first() {
+            return {
+              async isVisible() {
+                return false;
+              }
+            };
+          }
+        };
+      },
+      async waitForSelector(selector, options) {
+        events.push({ type: 'waitForSelector', selector, options });
+      },
+      async waitForTimeout(ms) {
+        events.push({ type: 'waitForTimeout', ms });
+      },
+      async evaluate() {}
+    };
+
+    await browserContext.navigate('https://example.com/recon', {
+      contentReadySelector: 'text=Fixture Ready'
+    });
+
+    assert.ok(events.some((event) => (
+      event.type === 'waitForSelector'
+      && event.selector === 'text=Fixture Ready'
+      && event.options?.state === 'visible'
+    )));
   });
 });
