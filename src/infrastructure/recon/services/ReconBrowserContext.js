@@ -1,9 +1,16 @@
 'use strict';
 
 const { chromium: playwrightChromium } = require('playwright');
-const { getReconConfigSection } = require('./ReconServiceConfig');
+const { RECON_CONFIG, getReconConfigSection } = require('./ReconServiceConfig');
 
 const DEFAULT_CONSENT_LABELS = ['I Accept', 'Accept All', 'Accept', 'Allow All'];
+const DEFAULT_READY_SELECTORS = [
+  ...((RECON_CONFIG.oddsportal?.selectors?.match_row) || []),
+  '.eventRow a[href]',
+  '.pagination a[href]',
+  'main',
+  'body'
+];
 
 class ReconBrowserContext {
   constructor(options = {}) {
@@ -34,6 +41,16 @@ class ReconBrowserContext {
     this.consentVisibilityTimeoutMs = Number(options.consentVisibilityTimeoutMs ?? runtimeConfig.consent_visibility_timeout_ms);
     this.consentClickTimeoutMs = Number(options.consentClickTimeoutMs ?? runtimeConfig.consent_click_timeout_ms);
     this.consentPostClickWaitMs = Number(options.consentPostClickWaitMs ?? runtimeConfig.consent_post_click_wait_ms);
+    this.navigationReadySelectors = Array.isArray(options.navigationReadySelectors) && options.navigationReadySelectors.length > 0
+      ? [...options.navigationReadySelectors]
+      : Array.isArray(runtimeConfig.navigation_ready_selectors) && runtimeConfig.navigation_ready_selectors.length > 0
+        ? [...runtimeConfig.navigation_ready_selectors]
+        : [...DEFAULT_READY_SELECTORS];
+    this.navigationReadyTimeoutMs = Number(
+      options.navigationReadyTimeoutMs
+      ?? runtimeConfig.navigation_ready_timeout_ms
+      ?? this.navigationTimeoutMs
+    );
     this.consentLabels = Array.isArray(options.consentLabels) && options.consentLabels.length > 0
       ? [...options.consentLabels]
       : Array.isArray(runtimeConfig.consent_labels) && runtimeConfig.consent_labels.length > 0
@@ -117,11 +134,15 @@ class ReconBrowserContext {
     }
 
     const timeout = options.timeout || this.navigationTimeoutMs;
-    const waitUntil = options.waitUntil || 'networkidle';
+    const waitUntil = options.waitUntil || 'domcontentloaded';
     const warmupDelayMs = options.warmupDelayMs ?? this.warmupDelayMs;
 
     await this.page.goto(url, { timeout, waitUntil });
     await this.handleConsent();
+    await this.waitForNavigationReady({
+      selectors: options.readySelectors,
+      timeout: options.readyTimeoutMs
+    });
 
     if (warmupDelayMs > 0) {
       await this.page.waitForTimeout(warmupDelayMs);
@@ -132,6 +153,41 @@ class ReconBrowserContext {
       stepPx: options.scrollStepPx || this.scrollStepPx,
       delayMs: options.scrollDelayMs || this.scrollDelayMs
     });
+  }
+
+  async waitForNavigationReady(options = {}) {
+    if (!this.page || typeof this.page.waitForSelector !== 'function') {
+      return false;
+    }
+
+    const selectors = Array.isArray(options.selectors) && options.selectors.length > 0
+      ? options.selectors
+      : this.navigationReadySelectors;
+    const timeout = Number(options.timeout ?? this.navigationReadyTimeoutMs);
+
+    for (const selector of selectors) {
+      if (!selector || typeof selector !== 'string') {
+        continue;
+      }
+
+      try {
+        await this.page.waitForSelector(selector, {
+          timeout,
+          state: 'attached'
+        });
+        return true;
+      } catch (_error) {
+        // 尝试下一组选择器，直到命中首个稳定锚点
+      }
+    }
+
+    this.logger.warn('recon_navigation_ready_selector_missed', {
+      traceId: this.traceId,
+      selectors,
+      timeout
+    });
+
+    return false;
   }
 
   async triggerDataLoading(options = {}) {
