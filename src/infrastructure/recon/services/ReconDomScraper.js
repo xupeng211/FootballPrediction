@@ -440,7 +440,7 @@ class ReconDomScraper {
     const normalizedResultsUrl = this.normalizeResultsUrl(resultsUrl);
 
     if (typeof hooks.navigate === 'function') {
-      await hooks.navigate(normalizedResultsUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+      await hooks.navigate(normalizedResultsUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     }
 
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);

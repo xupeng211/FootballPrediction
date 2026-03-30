@@ -133,7 +133,7 @@ class ReconStateProber {
     const timeoutMs = options.timeoutMs || this.timeoutMs;
     const currentResultsUrl = this.deriveCurrentResultsUrl(baseUrl) || baseUrl;
 
-    await hooks.navigate?.(currentResultsUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+    await hooks.navigate?.(currentResultsUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);
 
     const repairedArchiveUrl = await this.resolveCurrentSeasonArchiveEndpoint(
@@ -166,7 +166,7 @@ class ReconStateProber {
       return this._emptyResult();
     }
 
-    await hooks.navigate?.(leagueUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+    await hooks.navigate?.(leagueUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);
 
     const tournamentApiUrl = hooks.getCurrentTournamentEndpoint?.();

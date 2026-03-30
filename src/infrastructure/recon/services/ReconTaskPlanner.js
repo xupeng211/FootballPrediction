@@ -23,7 +23,7 @@ class ReconTaskPlanner {
     return {
       leagueId: Number(leagueConfig?.id || 0),
       league: leagueConfig,
-      season: this.formatSeasonForUrl(season),
+      season: this.formatSeasonForLeagueUrl(season, leagueConfig),
       dbSeason: this.normalizeDbSeason(season),
       resultsUrl: this.buildResultsUrl(leagueConfig, season)
     };
@@ -377,6 +377,31 @@ class ReconTaskPlanner {
     return String(season).replace('/', '-');
   }
 
+  formatSeasonForLeagueUrl(season, leagueConfig = {}) {
+    const formatted = this.formatSeasonForUrl(season);
+    const seasonType = String(
+      leagueConfig?.seasonType
+      || leagueConfig?.season_type
+      || ''
+    ).trim().toLowerCase();
+
+    if (seasonType !== 'single_year') {
+      return formatted;
+    }
+
+    const dualYearMatch = formatted.match(/^(\d{4})-(\d{4})$/);
+    if (dualYearMatch) {
+      return dualYearMatch[2];
+    }
+
+    const dbSeasonMatch = String(season || '').match(/^(\d{4})\/(\d{4})$/);
+    if (dbSeasonMatch) {
+      return dbSeasonMatch[2];
+    }
+
+    return formatted;
+  }
+
   normalizeDbSeason(season) {
     return String(season || '').replace('-', '/');
   }
@@ -448,6 +473,10 @@ class ReconTaskPlanner {
 
   isCurrentSeason(season) {
     const normalized = this.formatSeasonForUrl(season);
+    if (/^\d{4}$/.test(normalized)) {
+      return Number(normalized) === new Date().getUTCFullYear();
+    }
+
     const match = normalized.match(/^(\d{4})-(\d{4})$/);
     if (!match) {
       return false;
@@ -463,7 +492,7 @@ class ReconTaskPlanner {
   }
 
   buildResultsUrl(leagueConfig, season) {
-    const oddsportalSeason = this.formatSeasonForUrl(season);
+    const oddsportalSeason = this.formatSeasonForLeagueUrl(season, leagueConfig);
     const country = this.normalizePathSegment(leagueConfig.country);
     const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
       .trim()

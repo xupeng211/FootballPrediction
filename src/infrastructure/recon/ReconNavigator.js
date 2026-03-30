@@ -223,7 +223,7 @@ class ReconNavigator {
     await this.ensureBrowserHealthy();
 
     const timeout = options.timeout || this.navigationTimeoutMs;
-    const waitUntil = options.waitUntil || 'networkidle';
+    const waitUntil = options.waitUntil || 'domcontentloaded';
 
     return this.circuitBreaker.execute(async () => {
       this.logger.info('navigate_start', { url });
@@ -292,7 +292,7 @@ class ReconNavigator {
     }
 
     this.logger.info('protocol_archive_start', { baseUrl, maxPages });
-    await this.navigate(baseUrl, { waitUntil: 'networkidle' });
+    await this.navigate(baseUrl, { waitUntil: 'domcontentloaded' });
 
     // 等待 API 端点被发现
     await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
@@ -410,7 +410,7 @@ class ReconNavigator {
 
     for (let index = 1; index < discovery.pageUrls.length; index++) {
       const pageUrl = discovery.pageUrls[index];
-      await this.navigate(pageUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+      await this.navigate(pageUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
       await this.page.waitForTimeout(this.pageRevisitWaitMs);
 
       const interceptedMatches = this.getInterceptedData();
@@ -608,7 +608,7 @@ class ReconNavigator {
       await this.launch(this.lastLaunchOptions || {});
 
       if (options.warmUrl) {
-        await this.navigate(options.warmUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+        await this.navigate(options.warmUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
         if (this.page && typeof this.page.waitForTimeout === 'function') {
           await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
         }
@@ -670,7 +670,7 @@ class ReconNavigator {
       };
     }
 
-    await this.navigate(leagueUrl, { waitUntil: 'networkidle', timeout: timeoutMs });
+    await this.navigate(leagueUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     if (this.page && typeof this.page.waitForTimeout === 'function') {
       await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
     }
