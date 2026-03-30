@@ -112,10 +112,51 @@ class ReconTaskPlanner {
 
   buildCandidateSources(target) {
     const baseSeason = this.formatSeasonForUrl(target.season || target.dbSeason);
-    return [{
+    const strategy = this.getResultsUrlStrategy(target?.league);
+    const currentSeasonYears = this.parseSeasonYears(baseSeason);
+    const pendingYears = this.getPendingMatchYears(target?.pendingMatches);
+    const sources = [];
+    const seen = new Set();
+
+    const addSource = (source) => {
+      if (!source?.url || seen.has(source.url)) {
+        return;
+      }
+      seen.add(source.url);
+      sources.push(source);
+    };
+
+    if (strategy === 'seasonless') {
+      addSource({
+        season: currentSeasonYears?.endYear ? String(currentSeasonYears.endYear) : baseSeason,
+        url: this.buildLeagueUrl(target.league),
+        mode: 'current_season'
+      });
+
+      for (const year of pendingYears) {
+        if (
+          !Number.isInteger(year)
+          || !Number.isInteger(currentSeasonYears?.endYear)
+          || year >= currentSeasonYears.endYear
+        ) {
+          continue;
+        }
+        addSource({
+          season: String(year),
+          url: this.buildSeasonlessHistoricalResultsUrl(target.league, year),
+          mode: 'historical_results'
+        });
+      }
+
+      return sources;
+    }
+
+    addSource({
       season: baseSeason,
-      url: this.buildResultsUrl(target.league, baseSeason)
-    }];
+      url: this.buildResultsUrl(target.league, baseSeason),
+      mode: 'results_archive'
+    });
+    return sources;
   }
 
   async selectCandidateSource(target, pendingMatches, confidenceThreshold) {
@@ -159,8 +200,12 @@ class ReconTaskPlanner {
     const eligibleSamplePool = this.filterPlaceholderFixtures(orderedPending);
     const sample = eligibleSamplePool.slice(0, Math.min(this.sampleSize, eligibleSamplePool.length));
     const skippedPlaceholderCount = orderedPending.length - eligibleSamplePool.length;
-    const sources = this.buildCandidateSources(target);
+    const sources = this.buildCandidateSources({
+      ...target,
+      pendingMatches: orderedPending
+    });
     let best = null;
+    const evaluatedSources = [];
 
     for (const source of sources) {
       const extractOptions = {
@@ -168,9 +213,15 @@ class ReconTaskPlanner {
         timeoutMs: this.archiveTimeoutMs,
         preferCurrentSeasonSource: this.isCurrentSeason(source.season)
       };
-      const extractResult = typeof this.navigator?.fetchFullSeasonArchive === 'function'
-        ? await this.navigator.fetchFullSeasonArchive(source.url, extractOptions)
-        : await this.navigator.protocolArchiveExtract(source.url, extractOptions);
+      const extractResult = source.mode === 'current_season'
+        ? await this.navigator.protocolArchiveExtract(source.url, {
+          maxPages: this.archiveMaxPages,
+          timeoutMs: this.archiveTimeoutMs,
+          preferCurrentSeasonSource: true
+        })
+        : typeof this.navigator?.fetchFullSeasonArchive === 'function'
+          ? await this.navigator.fetchFullSeasonArchive(source.url, extractOptions)
+          : await this.navigator.protocolArchiveExtract(source.url, extractOptions);
       const candidates = Array.isArray(extractResult?.matches) ? extractResult.matches : [];
       const seasonMirror = this.mirrorManager?.buildSeasonMirror(candidates) || new Map();
       const sampleLinked = sample.reduce((count, l1Match) => {
@@ -199,6 +250,8 @@ class ReconTaskPlanner {
         sourceState: extractResult?.sourceState || null
       });
 
+      evaluatedSources.push(evaluated);
+
       if (
         !best ||
         evaluated.sampleLinked > best.sampleLinked ||
@@ -209,6 +262,54 @@ class ReconTaskPlanner {
       ) {
         best = evaluated;
       }
+    }
+
+    if (evaluatedSources.length > 1) {
+      const combinedCandidates = [];
+      const seenCandidateKeys = new Set();
+
+      for (const evaluated of evaluatedSources) {
+        for (const candidate of evaluated.candidates) {
+          const key = candidate?.hash || candidate?.url;
+          if (!key || seenCandidateKeys.has(key)) {
+            continue;
+          }
+          seenCandidateKeys.add(key);
+          combinedCandidates.push(candidate);
+        }
+      }
+
+      const combinedSeasonMirror = this.mirrorManager?.buildSeasonMirror(combinedCandidates) || new Map();
+      const combinedSampleLinked = sample.reduce((count, l1Match) => {
+        const matched = this.matchEvaluator?.findBestCandidate(l1Match, combinedCandidates, combinedSeasonMirror);
+        return matched && matched.confidence >= confidenceThreshold ? count + 1 : count;
+      }, 0);
+
+      this.logger.info('recon_candidate_sources_combined', {
+        league: target.league.name,
+        dbSeason: target.dbSeason,
+        sourceCount: evaluatedSources.length,
+        candidateCount: combinedCandidates.length,
+        sampleSize: sample.length,
+        sampleLinked: combinedSampleLinked
+      });
+
+      return {
+        source: {
+          season: evaluatedSources.map((item) => item.source.season).join(','),
+          url: evaluatedSources.map((item) => item.source.url).join(' | ')
+        },
+        sources: evaluatedSources.map((item) => item.source),
+        extractResult: {
+          matches: combinedCandidates,
+          pagesScanned: evaluatedSources.reduce((sum, item) => sum + Number(item.extractResult?.pagesScanned || 0), 0),
+          totalCandidates: combinedCandidates.length,
+          sourceState: combinedCandidates.length > 0 ? 'MULTI_SOURCE_SWEEP' : 'SOURCE_EMPTY'
+        },
+        candidates: combinedCandidates,
+        seasonMirror: combinedSeasonMirror,
+        sampleLinked: combinedSampleLinked
+      };
     }
 
     return best || {
@@ -323,6 +424,28 @@ class ReconTaskPlanner {
     return `${start}-${end}`;
   }
 
+  parseSeasonYears(season) {
+    const normalized = this.formatSeasonForUrl(season);
+    const match = normalized.match(/^(\d{4})-(\d{4})$/);
+    if (!match) {
+      return null;
+    }
+
+    return {
+      startYear: Number(match[1]),
+      endYear: Number(match[2])
+    };
+  }
+
+  getPendingMatchYears(pendingMatches = []) {
+    return [...new Set(
+      (Array.isArray(pendingMatches) ? pendingMatches : [])
+        .map((match) => new Date(match?.match_date))
+        .filter((date) => Number.isFinite(date.getTime()))
+        .map((date) => date.getUTCFullYear())
+    )].sort((left, right) => left - right);
+  }
+
   isCurrentSeason(season) {
     const normalized = this.formatSeasonForUrl(season);
     const match = normalized.match(/^(\d{4})-(\d{4})$/);
@@ -363,6 +486,32 @@ class ReconTaskPlanner {
       .replace(/^\/?/, '/');
 
     return `${normalizedBaseUrl}${normalizedPath}`;
+  }
+
+  getResultsUrlStrategy(leagueConfig = {}) {
+    return String(
+      leagueConfig.resultsUrlStrategy
+      || leagueConfig.results_url_strategy
+      || 'seasonal'
+    ).trim().toLowerCase();
+  }
+
+  buildLeagueUrl(leagueConfig) {
+    const country = this.normalizePathSegment(leagueConfig.country);
+    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    return `${normalizedBaseUrl}/football/${country}/${slug}/`;
+  }
+
+  buildSeasonlessHistoricalResultsUrl(leagueConfig, year) {
+    const country = this.normalizePathSegment(leagueConfig.country);
+    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    return `${normalizedBaseUrl}/football/${country}/${slug}-${year}/results/`;
   }
 
   slugIncludesYear(slug) {
