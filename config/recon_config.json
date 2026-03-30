@@ -368,6 +368,7 @@
         "Accept",
         "Allow All"
       ],
+      "enable_stealth_fingerprint": false,
       "warmup_delay_ms": 3000,
       "scroll_iterations": 3,
       "scroll_step_px": 500,
@@ -381,6 +382,9 @@
       "sample_size": 12,
       "archive_max_pages": 50,
       "archive_timeout_ms": 90000,
+      "force_dom_league_ids": [
+        223
+      ],
       "results_path": "/football/{country}/{league}-{season}/results/"
     },
     "match_evaluator": {
@@ -398,6 +402,9 @@
       "extract_max_depth": 10,
       "page_size": 50,
       "fetch_timeout_ms": 90000,
+      "home_warmup_enabled": false,
+      "home_warmup_url": "https://www.oddsportal.com",
+      "home_warmup_wait_ms": 5000,
       "match_api_patterns": [
         "/\\/api\\/.*match/i",
         "/\\/api\\/.*event/i",

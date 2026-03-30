@@ -32,6 +32,8 @@ test('Recon services 应默认从 recon_config.json 读取运行时参数', asyn
   assert.equal(taskPlanner.resultsPathTemplate, config.recon_runtime.task_planner.results_path);
   assert.equal(browserContext.warmupDelayMs, config.recon_runtime.browser_context.warmup_delay_ms);
   assert.deepEqual(browserContext.viewport, config.recon_runtime.browser_context.viewport);
+  assert.equal(browserContext.enableStealthFingerprint, config.recon_runtime.browser_context.enable_stealth_fingerprint);
+  assert.equal(browserContext.homeWarmupEnabled, config.recon_runtime.network_monitor.home_warmup_enabled);
   assert.equal(networkMonitor.scriptEvalTimeoutMs, config.recon_runtime.network_monitor.script_eval_timeout_ms);
   assert.equal(networkMonitor.fetchTimeoutMs, config.recon_runtime.network_monitor.fetch_timeout_ms);
   assert.equal(domScraper.scrollAttempts, config.recon_runtime.dom_scraper.scroll_attempts);
@@ -100,6 +102,18 @@ test('ReconServiceConfig.validateConfig 在缺少关键配置节时必须 fail-f
       return true;
     }
   );
+});
+
+test('ReconServiceConfig.validateConfig 在缺少新引入的高仿真字段时仍应使用默认保护', () => {
+  const backwardCompatibleConfig = structuredClone(config);
+  delete backwardCompatibleConfig.recon_runtime.browser_context.enable_stealth_fingerprint;
+  delete backwardCompatibleConfig.recon_runtime.network_monitor.home_warmup_enabled;
+  delete backwardCompatibleConfig.recon_runtime.network_monitor.home_warmup_url;
+  delete backwardCompatibleConfig.recon_runtime.network_monitor.home_warmup_wait_ms;
+
+  assert.doesNotThrow(() => validateConfig(backwardCompatibleConfig, {
+    configPath: '/tmp/recon_config.backward-compatible.json'
+  }));
 });
 
 test('ReconServiceConfig.resolveRuntimeFeatureFlags 应支持环境变量覆盖配置开关', () => {

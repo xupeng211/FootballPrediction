@@ -99,6 +99,13 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(brasileirao.resultsUrlStrategy, 'seasonless');
   });
 
+  it('联赛级 ready_selector 应并入运行时配置', () => {
+    const j1 = manager.getLeagueById(223);
+
+    assert.ok(j1);
+    assert.strictEqual(j1.readySelector, 'text=Machida');
+  });
+
   it('临时下线的 UEFA Euro 不应出现在 active league 列表中', () => {
     const activeLeagueIds = manager.getActiveLeagues().map((league) => league.id);
 

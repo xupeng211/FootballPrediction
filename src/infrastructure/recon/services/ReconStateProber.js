@@ -106,6 +106,29 @@ class ReconStateProber {
     }
   }
 
+  async extractTournamentToken() {
+    const meta = await this.extractPageOutrightsMeta();
+    const outrightId = typeof meta?.id === 'string' ? meta.id.trim() : '';
+    if (outrightId) {
+      return outrightId;
+    }
+
+    if (!this.page || typeof this.page.evaluate !== 'function') {
+      return '';
+    }
+
+    try {
+      const pageVarOtCode = await this.page.evaluate(() => {
+        const token = window.pageVar?.otCode;
+        return typeof token === 'string' ? token.trim() : '';
+      });
+
+      return typeof pageVarOtCode === 'string' ? pageVarOtCode.trim() : '';
+    } catch (_error) {
+      return '';
+    }
+  }
+
   async resolveCurrentSeasonArchiveEndpoint(apiEndpoints = [], options = {}) {
     const scoreArchiveUrl = options.scoreArchiveUrl || (() => 0);
     const archiveEndpoint = [...apiEndpoints]
@@ -120,12 +143,12 @@ class ReconStateProber {
       return archiveEndpoint;
     }
 
-    const meta = await this.extractPageOutrightsMeta();
-    if (!meta?.id) {
+    const tournamentToken = await this.extractTournamentToken();
+    if (!tournamentToken) {
       return null;
     }
 
-    return archiveEndpoint.replace('/1//X', `/1/${meta.id}/X`);
+    return archiveEndpoint.replace('/1//X', `/1/${tournamentToken}/X`);
   }
 
   async probeCurrentSeasonFromPageState(baseUrl, options = {}, hooks = {}) {
@@ -140,6 +163,9 @@ class ReconStateProber {
       hooks.getApiEndpoints?.() || [],
       { scoreArchiveUrl: hooks.scoreArchiveUrl }
     );
+    const derivedTournamentUrl = repairedArchiveUrl
+      ? hooks.buildCurrentTournamentUrlFromArchive?.(repairedArchiveUrl)
+      : null;
 
     if (repairedArchiveUrl) {
       const archiveResult = await hooks.fetchArchive?.(repairedArchiveUrl, maxPages, timeoutMs);
@@ -147,6 +173,16 @@ class ReconStateProber {
         return {
           ...archiveResult,
           sourceState: 'CURRENT_RESULTS_ARCHIVE'
+        };
+      }
+    }
+
+    if (derivedTournamentUrl) {
+      const tournamentResult = await hooks.fetchCurrentTournament?.(derivedTournamentUrl, maxPages, timeoutMs);
+      if (Array.isArray(tournamentResult?.matches) && tournamentResult.matches.length > 0) {
+        return {
+          ...tournamentResult,
+          sourceState: 'CURRENT_RESULTS_TOURNAMENT'
         };
       }
     }
@@ -169,7 +205,14 @@ class ReconStateProber {
     await hooks.navigate?.(leagueUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);
 
-    const tournamentApiUrl = hooks.getCurrentTournamentEndpoint?.();
+    const tournamentApiUrl = hooks.getCurrentTournamentEndpoint?.()
+      || derivedTournamentUrl
+      || hooks.buildCurrentTournamentUrlFromArchive?.(
+        await this.resolveCurrentSeasonArchiveEndpoint(
+          hooks.getApiEndpoints?.() || [],
+          { scoreArchiveUrl: hooks.scoreArchiveUrl }
+        )
+      );
     if (!tournamentApiUrl) {
       this.logger.warn('protocol_current_season_no_api', { leagueUrl });
       return this._emptyResult();
