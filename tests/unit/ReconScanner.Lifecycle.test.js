@@ -230,6 +230,66 @@ test('ReconScanner main 在 scanner.initialize 抛错时不应触发 undefined.c
   assert.equal(poolEndCalls, 1);
 });
 
+test('ReconScanner main 在 --all-leagues 顺扫时应为每个联赛创建独立 scanner', async () => {
+  const scans = [];
+  const scannerIds = [];
+  const closeCalls = [];
+  let scannerSeq = 0;
+
+  const leagues = [
+    { id: 120, code: 'CSL', name: 'CSL', country: 'china', slug: 'super-league' },
+    { id: 47, code: 'EPL', name: 'Premier League', country: 'england', slug: 'premier-league' }
+  ];
+
+  const createScanner = () => {
+    const scannerId = ++scannerSeq;
+    scannerIds.push(scannerId);
+
+    return {
+      async initialize() {},
+      async scan(season, league) {
+        scans.push({ scannerId, season, league: league.code });
+        return {
+          success: true,
+          league: league.name,
+          inserted: 0,
+          pendingTotal: 0,
+          coverage: 100
+        };
+      },
+      async close() {
+        closeCalls.push(scannerId);
+      },
+      configManager: {
+        getActiveLeagues() {
+          return leagues;
+        },
+        getLeagueByCode(code) {
+          return leagues.find((league) => league.code === code) || null;
+        },
+        getLeagueById(id) {
+          return leagues.find((league) => Number(league.id) === Number(id)) || null;
+        }
+      }
+    };
+  };
+
+  const exitCode = await main(['--season', '2025-2026', '--all-leagues'], {
+    console: { log() {}, warn() {}, error() {} },
+    createPool: () => ({ async end() {} }),
+    createRepository: () => ({ async init() {}, async close() {} }),
+    createScanner
+  });
+
+  assert.equal(exitCode, 0);
+  assert.deepEqual(scans, [
+    { scannerId: 2, season: '2025-2026', league: 'CSL' },
+    { scannerId: 3, season: '2025-2026', league: 'EPL' }
+  ]);
+  assert.deepEqual(scannerIds, [1, 2, 3]);
+  assert.deepEqual(closeCalls, [1, 2, 3]);
+});
+
 test('ReconScanner.initialize 在启用健康检查时必须注册 database readiness', async () => {
   let registeredRepository = null;
   let repositoryInitCalls = 0;

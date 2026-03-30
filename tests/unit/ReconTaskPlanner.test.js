@@ -303,7 +303,7 @@ describe('ReconTaskPlanner', () => {
     let navigatorCalls = 0;
     const planner = createPlanner({
       navigator: {
-        async fetchFullSeasonArchive() {
+        async protocolArchiveExtract() {
           navigatorCalls += 1;
           return {
             matches: [],
@@ -337,5 +337,85 @@ describe('ReconTaskPlanner', () => {
     await planner.selectCandidateSource(target, pendingMatches, 0.75);
 
     assert.strictEqual(navigatorCalls, 1);
+  });
+
+  it('seasonless 跨年联赛应组合当前赛季页与历史年份结果页', async () => {
+    const calls = [];
+    const planner = createPlanner({
+      navigator: {
+        async protocolArchiveExtract(url, options) {
+          calls.push({ type: 'protocol', url, options });
+          return {
+            matches: [{
+              hash: 'future-match',
+              url: 'oddsportal://match/future',
+              homeTeam: 'Qingdao Hainiu',
+              awayTeam: 'Henan Songshan Longmen',
+              matchDate: '2026-04-04T07:30:00.000Z'
+            }],
+            pagesScanned: 1,
+            totalCandidates: 1,
+            sourceState: 'CURRENT_TOURNAMENT'
+          };
+        },
+        async fetchFullSeasonArchive(url, options) {
+          calls.push({ type: 'archive', url, options });
+          return {
+            matches: [{
+              hash: 'past-match',
+              url: 'oddsportal://match/past',
+              homeTeam: 'Changchun Yatai',
+              awayTeam: 'Shanghai Shenhua',
+              matchDate: '2025-06-29T10:30:00.000Z'
+            }],
+            pagesScanned: 1,
+            totalCandidates: 1,
+            sourceState: 'FULL_SEASON_SWEEP'
+          };
+        }
+      }
+    });
+
+    const target = {
+      leagueId: 120,
+      league: {
+        name: 'CSL',
+        country: 'China',
+        slug: 'super-league',
+        results_url_strategy: 'seasonless'
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/china/super-league/results/'
+    };
+    const pendingMatches = [
+      {
+        match_id: '120_20252026_0001',
+        home_team: 'Changchun Yatai',
+        away_team: 'Shanghai Shenhua',
+        match_date: '2025-06-29T10:30:00.000Z'
+      },
+      {
+        match_id: '120_20252026_0002',
+        home_team: 'Qingdao Hainiu',
+        away_team: 'Henan FC',
+        match_date: '2026-04-04T07:30:00.000Z'
+      }
+    ];
+
+    const selected = await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.strictEqual(calls.length, 2);
+    assert.deepStrictEqual(
+      calls.map((call) => call.url),
+      [
+        'oddsportal://root/football/china/super-league/',
+        'oddsportal://root/football/china/super-league-2025/results/'
+      ]
+    );
+    assert.strictEqual(calls[0].type, 'protocol');
+    assert.strictEqual(calls[0].options.preferCurrentSeasonSource, true);
+    assert.strictEqual(selected.candidates.length, 2);
+    assert.strictEqual(selected.sampleLinked, 2);
   });
 });

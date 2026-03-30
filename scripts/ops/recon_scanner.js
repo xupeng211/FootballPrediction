@@ -664,13 +664,33 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
             : undefined
         });
       } else {
+        const isolatePerLeague = args.allLeagues && leagues.length > 1;
+
+        if (isolatePerLeague) {
+          await scanner.close();
+          scanner = null;
+        }
+
         for (const league of leagues) {
+          if (isolatePerLeague) {
+            scanner = createScanner({
+              repository,
+              proxyRotator: args.useProxy ? undefined : null
+            });
+            await scanner.initialize();
+          }
+
           const result = await scanner.scan(args.season, league, {
             dateDriven: args.dateDriven,
             crossLeague: args.crossLeague,
             additionalSlugs: args.additionalSlugs
           });
           results.push(result);
+
+          if (isolatePerLeague) {
+            await scanner.close();
+            scanner = null;
+          }
         }
       }
 
