@@ -448,13 +448,9 @@ class ReconDomScraper {
     const interceptedMatches = typeof hooks.getInterceptedData === 'function'
       ? hooks.getInterceptedData()
       : [];
-    let initialMatches = interceptedMatches;
-    let initialSource = 'page_intercept';
-
-    if (initialMatches.length === 0) {
-      initialMatches = await this.extractCurrentSeasonResultRows(normalizedResultsUrl);
-      initialSource = 'page_dom';
-    }
+    const domMatches = await this.extractCurrentSeasonResultRows(normalizedResultsUrl);
+    const initialMatches = this.mergeInitialMatches(interceptedMatches, domMatches);
+    const initialSource = this.describeInitialSource(interceptedMatches, domMatches);
 
     const paginationMeta = await this.extractPaginationMeta(normalizedResultsUrl);
     const pageUrls = this.normalizeResultsPageUrls(
@@ -469,6 +465,56 @@ class ReconDomScraper {
       initialMatches,
       initialSource
     };
+  }
+
+  mergeInitialMatches(interceptedMatches = [], domMatches = []) {
+    const merged = new Map();
+    const append = (matches = []) => {
+      for (const match of Array.isArray(matches) ? matches : []) {
+        const key = match?.hash || match?.url;
+        if (!key) {
+          continue;
+        }
+
+        const existing = merged.get(key);
+        if (!existing || this._scoreInitialMatch(match) > this._scoreInitialMatch(existing)) {
+          merged.set(key, match);
+        }
+      }
+    };
+
+    append(interceptedMatches);
+    append(domMatches);
+
+    return [...merged.values()];
+  }
+
+  describeInitialSource(interceptedMatches = [], domMatches = []) {
+    const hasIntercepted = Array.isArray(interceptedMatches) && interceptedMatches.length > 0;
+    const hasDom = Array.isArray(domMatches) && domMatches.length > 0;
+
+    if (hasIntercepted && hasDom) {
+      return 'page_intercept+page_dom';
+    }
+
+    if (hasIntercepted) {
+      return 'page_intercept';
+    }
+
+    if (hasDom) {
+      return 'page_dom';
+    }
+
+    return 'page_empty';
+  }
+
+  _scoreInitialMatch(match) {
+    let score = 0;
+    if (match?.matchDate) score += 4;
+    if (match?.url) score += 2;
+    if (match?.homeTeam) score += 1;
+    if (match?.awayTeam) score += 1;
+    return score;
   }
 
   async collectCurrentSeasonResults(currentResultsUrl, options = {}) {
