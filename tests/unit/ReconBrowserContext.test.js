@@ -117,4 +117,59 @@ describe('ReconBrowserContext', () => {
     assert.deepStrictEqual(clicked, ['Accept All']);
     assert.deepStrictEqual(waits, [1000]);
   });
+
+  it('navigate 默认应使用 domcontentloaded 并等待显式选择器', async () => {
+    const events = [];
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-navigate',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      navigationReadySelectors: ['.ready-selector']
+    });
+
+    browserContext.page = {
+      async goto(url, options) {
+        events.push({ type: 'goto', url, options });
+      },
+      getByRole() {
+        return {
+          first() {
+            return {
+              async isVisible() {
+                return false;
+              }
+            };
+          }
+        };
+      },
+      async waitForSelector(selector, options) {
+        events.push({ type: 'waitForSelector', selector, options });
+      },
+      async waitForTimeout(ms) {
+        events.push({ type: 'waitForTimeout', ms });
+      },
+      async evaluate(fn, amount) {
+        events.push({ type: 'evaluate', fn: typeof fn, amount });
+      }
+    };
+
+    await browserContext.navigate('https://example.com/recon');
+
+    assert.deepStrictEqual(events[0], {
+      type: 'goto',
+      url: 'https://example.com/recon',
+      options: {
+        timeout: 60000,
+        waitUntil: 'domcontentloaded'
+      }
+    });
+    assert.deepStrictEqual(events[1], {
+      type: 'waitForSelector',
+      selector: '.ready-selector',
+      options: {
+        timeout: 5000,
+        state: 'attached'
+      }
+    });
+  });
 });

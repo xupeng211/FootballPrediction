@@ -166,6 +166,33 @@ describe('ReconTaskPlanner', () => {
     );
   });
 
+  it('single_year 联赛应使用结束年份生成 results URL', () => {
+    const planner = createPlanner();
+
+    const target = planner.buildTarget('2025-2026', {
+      id: 223,
+      name: 'J1 League',
+      country: 'Japan',
+      slug: 'j1-league',
+      seasonType: 'single_year',
+      resultsUrlStrategy: 'seasonal'
+    });
+
+    assert.strictEqual(target.season, '2026');
+    assert.strictEqual(
+      target.resultsUrl,
+      'oddsportal://root/football/japan/j1-league-2026/results/'
+    );
+  });
+
+  it('single_year 的四位年份应被识别为当前赛季', () => {
+    const planner = createPlanner();
+    const currentYear = new Date().getUTCFullYear();
+
+    assert.strictEqual(planner.isCurrentSeason(String(currentYear)), true);
+    assert.strictEqual(planner.isCurrentSeason(String(currentYear - 1)), false);
+  });
+
   it('多词 country 应转换为 OddsPortal 连字符路径段', () => {
     const planner = createPlanner();
 
