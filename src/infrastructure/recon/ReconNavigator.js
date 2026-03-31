@@ -3,6 +3,7 @@
 const { ReconCircuitBreaker } = require('./ReconResilience');
 const { ReconBrowserContext } = require('./services/ReconBrowserContext');
 const { ReconDomScraper } = require('./services/ReconDomScraper');
+const { ReconEndpointHelper } = require('./services/ReconEndpointHelper');
 const { ReconNetworkMonitor, createDefaultStats } = require('./services/ReconNetworkMonitor');
 const { ReconStateProber } = require('./services/ReconStateProber');
 const { RECON_CONFIG, getReconConfigSection } = require('./services/ReconServiceConfig');
@@ -712,11 +713,7 @@ class ReconNavigator {
   }
 
   _repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentId) {
-    if (!archiveApiUrl || !tournamentId || !archiveApiUrl.includes('/1//X')) {
-      return archiveApiUrl;
-    }
-
-    return archiveApiUrl.replace('/1//X', `/1/${tournamentId}/X`);
+    return ReconEndpointHelper.repairArchiveEndpointWithTournamentToken(archiveApiUrl, tournamentId);
   }
 
   _buildTournamentUrlFromArchive(archiveApiUrl, tournamentId) {

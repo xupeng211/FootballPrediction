@@ -231,8 +231,7 @@ class ReconTaskPlanner {
         })
         : source.mode === 'current_season'
           ? await this.navigator.protocolArchiveExtract(source.url, {
-            maxPages: this.archiveMaxPages,
-            timeoutMs: this.archiveTimeoutMs,
+            ...extractOptions,
             preferCurrentSeasonSource: true
           })
           : typeof this.navigator?.fetchFullSeasonArchive === 'function'
