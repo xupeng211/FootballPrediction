@@ -1,6 +1,7 @@
 'use strict';
 
 const { JSDOM } = require('jsdom');
+const { ReconEndpointHelper } = require('./ReconEndpointHelper');
 const { getReconConfigSection } = require('./ReconServiceConfig');
 
 class ReconStateProber {
@@ -110,10 +111,23 @@ class ReconStateProber {
     const meta = await this.extractPageOutrightsMeta();
     const outrightId = typeof meta?.id === 'string' ? meta.id.trim() : '';
     if (outrightId) {
+      this.logger.debug('recon_tournament_token_resolved', {
+        traceId: this.traceId,
+        source: 'pageOutrightsVar.id'
+      });
       return outrightId;
     }
 
+    this.logger.debug('recon_tournament_token_page_outrights_missing', {
+      traceId: this.traceId,
+      hasMeta: Boolean(meta),
+      metaIdType: typeof meta?.id
+    });
+
     if (!this.page || typeof this.page.evaluate !== 'function') {
+      this.logger.warn('recon_tournament_token_page_unavailable', {
+        traceId: this.traceId
+      });
       return '';
     }
 
@@ -123,8 +137,23 @@ class ReconStateProber {
         return typeof token === 'string' ? token.trim() : '';
       });
 
-      return typeof pageVarOtCode === 'string' ? pageVarOtCode.trim() : '';
+      const normalizedToken = typeof pageVarOtCode === 'string' ? pageVarOtCode.trim() : '';
+      if (!normalizedToken) {
+        this.logger.warn('recon_tournament_token_otcode_missing', {
+          traceId: this.traceId
+        });
+        return '';
+      }
+
+      this.logger.debug('recon_tournament_token_resolved', {
+        traceId: this.traceId,
+        source: 'pageVar.otCode'
+      });
+      return normalizedToken;
     } catch (_error) {
+      this.logger.warn('recon_tournament_token_otcode_eval_failed', {
+        traceId: this.traceId
+      });
       return '';
     }
   }
@@ -148,7 +177,10 @@ class ReconStateProber {
       return null;
     }
 
-    return archiveEndpoint.replace('/1//X', `/1/${tournamentToken}/X`);
+    return ReconEndpointHelper.repairArchiveEndpointWithTournamentToken(
+      archiveEndpoint,
+      tournamentToken
+    );
   }
 
   async probeCurrentSeasonFromPageState(baseUrl, options = {}, hooks = {}) {

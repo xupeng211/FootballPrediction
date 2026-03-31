@@ -133,6 +133,58 @@ describe('ReconTaskPlanner', () => {
     ]);
   });
 
+  it('current_season 分支也应无损透传 readySelector 到 protocolArchiveExtract', async () => {
+    const calls = [];
+    const planner = createPlanner({
+      navigator: {
+        async protocolArchiveExtract(url, options) {
+          calls.push({ url, options });
+          return {
+            matches: [],
+            pagesScanned: 1,
+            totalCandidates: 0,
+            sourceState: 'SOURCE_EMPTY'
+          };
+        }
+      }
+    });
+
+    const target = {
+      leagueId: 120,
+      league: {
+        id: 120,
+        name: 'CSL',
+        country: 'china',
+        slug: 'super-league',
+        resultsUrlStrategy: 'seasonless'
+      },
+      readySelector: '[data-testid="match-row"]',
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/china/super-league/results/'
+    };
+    const pendingMatches = [{
+      match_id: '120_20252026_5000',
+      home_team: 'Shanghai Port',
+      away_team: 'Beijing Guoan',
+      match_date: '2026-03-01T12:00:00.000Z'
+    }];
+
+    await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.deepStrictEqual(calls, [
+      {
+        url: 'oddsportal://root/football/china/super-league/',
+        options: {
+          maxPages: 50,
+          timeoutMs: 90000,
+          preferCurrentSeasonSource: true,
+          readySelector: '[data-testid="match-row"]'
+        }
+      }
+    ]);
+  });
+
   it('seasonless 联赛应生成 canonical results URL，不得拼接双年份后缀', () => {
     const planner = createPlanner();
 

@@ -94,6 +94,43 @@ describe('ReconStateProber', () => {
     );
   });
 
+  it('extractTournamentToken 应记录 token 缺失阶段日志', async () => {
+    const logs = [];
+    const prober = new ReconStateProber({
+      logger: {
+        info() {},
+        error() {},
+        debug(event, payload) {
+          logs.push({ level: 'debug', event, payload });
+        },
+        warn(event, payload) {
+          logs.push({ level: 'warn', event, payload });
+        }
+      }
+    });
+
+    prober.setPage({
+      async content() {
+        return [
+          '<html><body>',
+          '<script>',
+          "pageOutrightsVar = '{\"id\":\"\",\"sid\":1,\"cid\":100,\"archive\":true}';",
+          '</script>',
+          '</body></html>'
+        ].join('');
+      },
+      async evaluate() {
+        return '';
+      }
+    });
+
+    const token = await prober.extractTournamentToken();
+
+    assert.strictEqual(token, '');
+    assert.ok(logs.some((entry) => entry.event === 'recon_tournament_token_page_outrights_missing'));
+    assert.ok(logs.some((entry) => entry.event === 'recon_tournament_token_otcode_missing'));
+  });
+
   it('seasonless results URL 应能反推出联赛主页 URL', () => {
     const prober = new ReconStateProber({
       logger: { info() {}, warn() {}, error() {}, debug() {} }
