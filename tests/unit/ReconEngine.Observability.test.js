@@ -99,6 +99,45 @@ test('ReconEngine._persistReconBatches 应输出带 recon_run_id 的批次持久
   );
 });
 
+test('ReconEngine._persistReconBatches 在 allowMismatchRetry 模式下应允许回写已存在的 RECON_MISMATCH', async () => {
+  const repositoryCalls = [];
+
+  const engine = new ReconEngine({
+    repository: {
+      async batchSaveOddsPortalMappings() {
+        return { success: true, inserted: 0, updated: 0 };
+      },
+      async batchUpdateMatchPipelineStatus(batch, status, options) {
+        repositoryCalls.push({ batch, status, options });
+        return { success: true, updated: batch.length };
+      }
+    },
+    logger: {
+      info() {},
+      warn() {},
+      error() {}
+    }
+  });
+
+  await engine._persistReconBatches([], ['mismatch-1'], 25, {
+    reconRunId: 'retry-run',
+    season: '2025/2026',
+    league: 'Premier League',
+    allowMismatchRetry: true
+  });
+
+  assert.deepEqual(repositoryCalls, [
+    {
+      batch: ['mismatch-1'],
+      status: 'RECON_MISMATCH',
+      options: {
+        season: '2025/2026',
+        expectedCurrentStatus: ['harvested', 'RECON_MISMATCH']
+      }
+    }
+  ]);
+});
+
 test('ReconEngine 在高成功率阶段应降低 RECON_PROGRESS 日志频率，但结束时仍必须落最终快照', () => {
   const logs = [];
   const engine = new ReconEngine({

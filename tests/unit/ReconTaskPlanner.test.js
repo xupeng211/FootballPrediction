@@ -472,6 +472,58 @@ describe('ReconTaskPlanner', () => {
     assert.strictEqual(navigatorCalls, 1);
   });
 
+  it('清零失配策略应降低阈值并强制启用多模式嗅探', () => {
+    const planner = createPlanner();
+    const target = {
+      leagueId: 47,
+      league: { id: 47, name: 'Premier League' },
+      reconPolicy: { allowMismatchRetry: true }
+    };
+    const pendingMatches = [{
+      match_id: '47_20252026_4813754',
+      home_team: 'West Ham United',
+      away_team: 'Leeds United',
+      match_date: '2026-05-24T15:00:00.000Z',
+      pipeline_status: 'RECON_MISMATCH'
+    }];
+
+    const policy = planner.resolveReconPolicy(target, pendingMatches, 0.5);
+
+    assert.deepStrictEqual(policy, {
+      allowMismatchRetry: true,
+      hasMismatchRetry: true,
+      effectiveConfidenceThreshold: 0.45,
+      forceMultiMode: true
+    });
+  });
+
+  it('allowMismatchRetry 开启时应向仓储请求 harvested 和 RECON_MISMATCH 目标集', async () => {
+    const calls = [];
+    const planner = createPlanner({
+      repository: {
+        async getReconEligibleMatches(season, leagueName, options) {
+          calls.push({ season, leagueName, options });
+          return [];
+        }
+      }
+    });
+
+    await planner.loadReconPendingMatches({
+      dbSeason: '2025/2026',
+      league: { name: 'Premier League' }
+    }, {
+      allowMismatchRetry: true
+    });
+
+    assert.deepStrictEqual(calls, [{
+      season: '2025/2026',
+      leagueName: 'Premier League',
+      options: {
+        allowMismatchRetry: true
+      }
+    }]);
+  });
+
   it('seasonless 跨年联赛应组合当前赛季页与历史年份结果页', async () => {
     const calls = [];
     const planner = createPlanner({

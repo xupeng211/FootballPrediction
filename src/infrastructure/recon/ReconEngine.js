@@ -147,7 +147,10 @@ class ReconEngine {
     const targets = await this.buildScanTargets({ season, tier, leagueIds });
     const summary = { success: true, season, scannedLeagues: 0, totalPending: 0, linked: 0, mismatched: 0, errors: [], perLeague: [] };
 
-    const targetPendingMap = await this.taskPlanner.prepareReconPendingTargets(targets, limit);
+    const targetPendingMap = await this.taskPlanner.prepareReconPendingTargets(targets, limit, {
+      allowMismatchRetry: true,
+      confidenceThreshold
+    });
 
     for (const { target, pendingMatches, desiredLimit = null } of targetPendingMap) {
       try {
@@ -569,7 +572,16 @@ class ReconEngine {
 
     const limiter = pLimit(Math.max(1, Number(concurrency)));
     const orderedPending = [...pendingMatches].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
-    const selectedSource = await this.taskPlanner.selectCandidateSource(target, orderedPending, confidenceThreshold);
+    const reconPolicy = this.taskPlanner.resolveReconPolicy(target, orderedPending, confidenceThreshold);
+    const effectiveThreshold = Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold);
+    const runtimeTarget = {
+      ...target,
+      reconPolicy: {
+        ...(target?.reconPolicy || {}),
+        ...reconPolicy
+      }
+    };
+    const selectedSource = await this.taskPlanner.selectCandidateSource(runtimeTarget, orderedPending, effectiveThreshold);
     const candidates = selectedSource.candidates;
     const seasonMirror = selectedSource.seasonMirror || this.mirrorManager.buildSeasonMirror(candidates);
 
@@ -585,7 +597,7 @@ class ReconEngine {
     const selectedPending = this.taskPlanner.selectProcessablePendingMatches(
       orderedPending,
       candidates,
-      confidenceThreshold,
+      effectiveThreshold,
       matchLimit,
       seasonMirror
     );
@@ -600,7 +612,7 @@ class ReconEngine {
 
     const outcomes = await Promise.all(
       selectedPending.map((l1Match) => limiter(() =>
-        this._reconcilePendingMatch(l1Match, candidates, target, confidenceThreshold, seasonMirror)
+        this._reconcilePendingMatch(l1Match, candidates, runtimeTarget, effectiveThreshold, seasonMirror)
           .then((outcome) => {
             progress.processed++;
             if (outcome?.status === 'linked') {
@@ -638,7 +650,8 @@ class ReconEngine {
         season: target.dbSeason,
         league: target.league.name,
         sourceSeason: selectedSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season),
-        sourceUrl: selectedSource?.source?.url || target.resultsUrl
+        sourceUrl: selectedSource?.source?.url || target.resultsUrl,
+        allowMismatchRetry: target?.reconPolicy?.allowMismatchRetry === true
       }
     );
 
@@ -648,7 +661,8 @@ class ReconEngine {
       mismatched: mismatches.length,
       sourceSeason: selectedSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season),
       sourceUrl: selectedSource?.source?.url || target.resultsUrl,
-      candidateCount: Array.isArray(candidates) ? candidates.length : 0
+      candidateCount: Array.isArray(candidates) ? candidates.length : 0,
+      effectiveConfidenceThreshold: effectiveThreshold
     };
   }
 
@@ -724,7 +738,9 @@ class ReconEngine {
       });
       const result = await this.repository.batchUpdateMatchPipelineStatus(batch, 'RECON_MISMATCH', {
         season: metadata.season || null,
-        expectedCurrentStatus: 'harvested'
+        expectedCurrentStatus: metadata.allowMismatchRetry === true
+          ? ['harvested', 'RECON_MISMATCH']
+          : 'harvested'
       });
       this.logger.info('recon_batch_persist_complete', {
         recon_run_id: metadata.reconRunId || null,
