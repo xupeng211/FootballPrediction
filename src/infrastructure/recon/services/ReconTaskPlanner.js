@@ -147,6 +147,7 @@ class ReconTaskPlanner {
     const baseSeason = this.formatSeasonForUrl(target.season || target.dbSeason);
     const strategy = this.getResultsUrlStrategy(target?.league);
     const currentSeasonYears = this.parseSeasonYears(baseSeason);
+    const dbSeasonYears = this.parseSeasonYears(this.formatSeasonForUrl(target?.dbSeason));
     const pendingYears = this.getPendingMatchYears(target?.pendingMatches);
     const sources = [];
     const seen = new Set();
@@ -160,20 +161,34 @@ class ReconTaskPlanner {
     };
 
     if (strategy === 'seasonless') {
+      const currentSeasonYear = currentSeasonYears?.endYear
+        || dbSeasonYears?.endYear
+        || (Number(/^\d{4}$/.test(baseSeason) ? baseSeason : NaN) || null);
+
       addSource({
-        season: currentSeasonYears?.endYear ? String(currentSeasonYears.endYear) : baseSeason,
-        url: this.buildLeagueUrl(target.league),
+        season: Number.isInteger(currentSeasonYear) ? String(currentSeasonYear) : baseSeason,
+        url: this.buildResultsUrl(target.league, target.season || target.dbSeason),
         mode: 'current_season'
       });
+
+      const historicalYears = new Set();
+
+      if (this.isSingleYearLeague(target?.league) && Number.isInteger(dbSeasonYears?.startYear)) {
+        historicalYears.add(dbSeasonYears.startYear);
+      }
 
       for (const year of pendingYears) {
         if (
           !Number.isInteger(year)
-          || !Number.isInteger(currentSeasonYears?.endYear)
-          || year >= currentSeasonYears.endYear
+          || !Number.isInteger(currentSeasonYear)
+          || year >= currentSeasonYear
         ) {
           continue;
         }
+        historicalYears.add(year);
+      }
+
+      for (const year of [...historicalYears].sort((left, right) => left - right)) {
         addSource({
           season: String(year),
           url: this.buildSeasonlessHistoricalResultsUrl(target.league, year),
@@ -455,6 +470,14 @@ class ReconTaskPlanner {
     }
 
     return formatted;
+  }
+
+  isSingleYearLeague(leagueConfig = {}) {
+    return String(
+      leagueConfig?.seasonType
+      || leagueConfig?.season_type
+      || ''
+    ).trim().toLowerCase() === 'single_year';
   }
 
   normalizeDbSeason(season) {
