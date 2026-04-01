@@ -174,7 +174,7 @@ describe('ReconTaskPlanner', () => {
 
     assert.deepStrictEqual(calls, [
       {
-        url: 'oddsportal://root/football/china/super-league/',
+        url: 'oddsportal://root/football/china/super-league/results/',
         options: {
           maxPages: 50,
           timeoutMs: 90000,
@@ -217,6 +217,56 @@ describe('ReconTaskPlanner', () => {
       url,
       'oddsportal://root/football/brazil/serie-a/results/'
     );
+  });
+
+  it('MLS 应使用 seasonless 的 canonical results URL', () => {
+    const planner = createPlanner();
+
+    const url = planner.buildResultsUrl({
+      name: 'MLS',
+      country: 'usa',
+      slug: 'mls',
+      resultsUrlStrategy: 'seasonless'
+    }, '2025-2026');
+
+    assert.strictEqual(
+      url,
+      'oddsportal://root/football/usa/mls/results/'
+    );
+  });
+
+  it('single_year 的 seasonless 联赛应补充起始年份 historical results source', () => {
+    const planner = createPlanner();
+
+    const sources = planner.buildCandidateSources({
+      league: {
+        id: 130,
+        name: 'MLS',
+        country: 'usa',
+        slug: 'mls',
+        resultsUrlStrategy: 'seasonless',
+        seasonType: 'single_year'
+      },
+      season: '2026',
+      dbSeason: '2025/2026',
+      pendingMatches: [{
+        match_id: '130_20252026_0001',
+        match_date: '2026-03-15T02:30:00.000Z'
+      }]
+    });
+
+    assert.deepStrictEqual(sources, [
+      {
+        season: '2026',
+        url: 'oddsportal://root/football/usa/mls/results/',
+        mode: 'current_season'
+      },
+      {
+        season: '2025',
+        url: 'oddsportal://root/football/usa/mls-2025/results/',
+        mode: 'historical_results'
+      }
+    ]);
   });
 
   it('single_year 联赛应使用结束年份生成 results URL', () => {
@@ -567,7 +617,7 @@ describe('ReconTaskPlanner', () => {
         name: 'CSL',
         country: 'China',
         slug: 'super-league',
-        results_url_strategy: 'seasonless'
+        resultsUrlStrategy: 'seasonless'
       },
       season: '2025-2026',
       dbSeason: '2025/2026',
@@ -594,7 +644,7 @@ describe('ReconTaskPlanner', () => {
     assert.deepStrictEqual(
       calls.map((call) => call.url),
       [
-        'oddsportal://root/football/china/super-league/',
+        'oddsportal://root/football/china/super-league/results/',
         'oddsportal://root/football/china/super-league-2025/results/'
       ]
     );

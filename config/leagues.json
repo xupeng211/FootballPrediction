@@ -37,7 +37,15 @@
     { "id": 121, "name": "Primera División", "country": "Argentina", "tier": "P3", "enabled": true },
     { "id": 57, "name": "Eredivisie", "country": "Netherlands", "tier": "P3", "enabled": true },
     { "id": 61, "name": "Primeira Liga", "country": "Portugal", "tier": "P3", "enabled": true },
-    { "id": 130, "name": "MLS", "country": "USA", "tier": "P3", "enabled": true },
+    {
+      "id": 130,
+      "name": "MLS",
+      "country": "USA",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "mls",
+      "results_url_strategy": "seasonless"
+    },
     {
       "id": 120,
       "name": "CSL",

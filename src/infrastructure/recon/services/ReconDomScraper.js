@@ -163,6 +163,46 @@ class ReconDomScraper {
     return { pageUrls, totalPages };
   }
 
+  extractSeasonNavigationUrlsFromHtml(html, currentResultsUrl) {
+    const dom = new JSDOM(String(html || ''));
+    const document = dom.window.document;
+    const currentUrl = this.normalizeResultsUrl(currentResultsUrl);
+    const leaguePathPrefix = this.buildLeaguePathPrefix(currentUrl);
+    const currentPathname = this._getPathname(currentUrl);
+    const seasonUrls = new Map();
+
+    for (const anchor of Array.from(document.querySelectorAll('a[href]'))) {
+      const absoluteHref = this._resolveHref(anchor.getAttribute('href') || '', currentUrl);
+      if (!absoluteHref) {
+        continue;
+      }
+
+      const normalizedHref = this.normalizeResultsUrl(absoluteHref);
+      const pathname = this._getPathname(normalizedHref);
+      if (!pathname || pathname === currentPathname) {
+        continue;
+      }
+
+      if (!/\/results(?:\/page\/\d+)?\/?$/i.test(pathname)) {
+        continue;
+      }
+
+      if (!leaguePathPrefix || !this._matchesLeaguePath(pathname, leaguePathPrefix)) {
+        continue;
+      }
+
+      if (!/-\d{4}\/results(?:\/page\/\d+)?\/?$/i.test(pathname)) {
+        continue;
+      }
+
+      seasonUrls.set(normalizedHref, normalizedHref);
+    }
+
+    return [...seasonUrls.values()].sort((left, right) => (
+      this._extractSeasonYearFromResultsPath(right) - this._extractSeasonYearFromResultsPath(left)
+    ));
+  }
+
   normalizeResultsPageUrls(resultsUrl, discoveredUrls = [], totalPages = 1, maxPages = null) {
     const normalizedResultsUrl = this.normalizeResultsUrl(resultsUrl);
     const pageBaseUrl = normalizedResultsUrl
@@ -203,6 +243,31 @@ class ReconDomScraper {
     return [...deduped.values()].sort((left, right) => (
       this.extractResultsPageNumber(left) - this.extractResultsPageNumber(right)
     ));
+  }
+
+  mergeSeasonNavigationUrls(baseUrls = [], seasonUrls = [], maxPages = null) {
+    const deduped = new Map();
+    const normalizedMaxPages = Math.max(1, Number(maxPages ?? this.maxPages));
+
+    for (const url of Array.isArray(baseUrls) ? baseUrls : []) {
+      const normalized = this.normalizeResultsUrl(url);
+      if (normalized) {
+        deduped.set(normalized, normalized);
+      }
+    }
+
+    for (const url of Array.isArray(seasonUrls) ? seasonUrls : []) {
+      if (deduped.size >= normalizedMaxPages) {
+        break;
+      }
+
+      const normalized = this.normalizeResultsUrl(url);
+      if (normalized && !deduped.has(normalized)) {
+        deduped.set(normalized, normalized);
+      }
+    }
+
+    return [...deduped.values()];
   }
 
   normalizeResultsUrl(url) {
@@ -434,6 +499,86 @@ class ReconDomScraper {
     }).catch(() => ({ pageUrls: [], totalPages: 1 }));
   }
 
+  async extractSeasonNavigationUrls(resultsUrl) {
+    const currentUrl = this.normalizeResultsUrl(resultsUrl);
+
+    if (this.page && typeof this.page.content === 'function') {
+      try {
+        const html = await this.page.content();
+        return this.extractSeasonNavigationUrlsFromHtml(html, currentUrl);
+      } catch (_error) {
+        // content() 失败时回退到 evaluate 探测
+      }
+    }
+
+    if (!this.page || typeof this.page.evaluate !== 'function') {
+      return [];
+    }
+
+    return this.page.evaluate(({ currentResultsUrl }) => {
+      const normalizeResultsUrl = (value) => `${String(value || '').trim().replace(/\/+$/, '')}/`;
+      const normalizeLeaguePrefix = (value) => String(value || '')
+        .replace(/^https?:\/\/[^/]+/i, '')
+        .replace(/-\d{4}-\d{4}(?=\/)/i, '/')
+        .replace(/-\d{4}(?=\/results)/i, '/')
+        .replace(/\/results(?:\/page\/\d+)?\/?$/i, '/')
+        .replace(/\/+$/, '/');
+      const resolveHref = (rawHref) => {
+        try {
+          return normalizeResultsUrl(new URL(rawHref, currentResultsUrl).href);
+        } catch (_error) {
+          return '';
+        }
+      };
+      const getPathname = (url) => {
+        try {
+          return new URL(url).pathname;
+        } catch (_error) {
+          return '';
+        }
+      };
+
+      const currentPathname = getPathname(currentResultsUrl);
+      const leaguePathPrefix = normalizeLeaguePrefix(currentResultsUrl);
+      const seasonUrls = new Map();
+
+      for (const anchor of Array.from(document.querySelectorAll('a[href]'))) {
+        const absoluteHref = resolveHref(anchor.getAttribute('href') || '');
+        if (!absoluteHref) {
+          continue;
+        }
+
+        const pathname = getPathname(absoluteHref);
+        const normalizedPath = normalizeLeaguePrefix(pathname);
+        if (!pathname || pathname === currentPathname) {
+          continue;
+        }
+        if (!/\/results(?:\/page\/\d+)?\/?$/i.test(pathname)) {
+          continue;
+        }
+        if (leaguePathPrefix && normalizedPath !== leaguePathPrefix) {
+          continue;
+        }
+        if (!/-\d{4}\/results(?:\/page\/\d+)?\/?$/i.test(pathname)) {
+          continue;
+        }
+
+        seasonUrls.set(absoluteHref, absoluteHref);
+      }
+
+      return [...seasonUrls.values()].sort((left, right) => {
+        const extractSeasonYearFromResultsPath = (url) => {
+          const match = String(url || '').match(/-(\d{4})\/results(?:\/page\/\d+)?\/?$/i);
+          return match ? Number(match[1]) : 0;
+        };
+
+        return extractSeasonYearFromResultsPath(right) - extractSeasonYearFromResultsPath(left);
+      });
+    }, {
+      currentResultsUrl: currentUrl
+    }).catch(() => []);
+  }
+
   async discoverSeasonResultPages(resultsUrl, options = {}, hooks = {}) {
     const timeoutMs = options.timeoutMs ?? this.timeoutMs;
     const maxPages = Math.max(1, Number(options.maxPages ?? this.maxPages));
@@ -453,10 +598,18 @@ class ReconDomScraper {
     const initialSource = this.describeInitialSource(interceptedMatches, domMatches);
 
     const paginationMeta = await this.extractPaginationMeta(normalizedResultsUrl);
-    const pageUrls = this.normalizeResultsPageUrls(
+    const discoveredPageUrls = this.normalizeResultsPageUrls(
       normalizedResultsUrl,
       paginationMeta.pageUrls,
       paginationMeta.totalPages,
+      maxPages
+    );
+    const seasonNavigationUrls = initialMatches.length === 0
+      ? await this.extractSeasonNavigationUrls(normalizedResultsUrl)
+      : [];
+    const pageUrls = this.mergeSeasonNavigationUrls(
+      discoveredPageUrls,
+      seasonNavigationUrls,
       maxPages
     );
 
@@ -681,7 +834,9 @@ class ReconDomScraper {
   }
 
   _matchesLeaguePath(pathname, leaguePathPrefix) {
-    const normalizedPath = String(pathname || '').replace(/-\d{4}-\d{4}(?=\/)/i, '');
+    const normalizedPath = String(pathname || '')
+      .replace(/-\d{4}-\d{4}(?=\/)/i, '')
+      .replace(/-\d{4}(?=\/results)/i, '');
     const normalizedPrefix = this._normalizeLeaguePathPrefix(leaguePathPrefix);
     return normalizedPrefix ? normalizedPath.startsWith(normalizedPrefix) : true;
   }
@@ -694,8 +849,14 @@ class ReconDomScraper {
     return String(value || '')
       .replace(/^https?:\/\/[^/]+/i, '')
       .replace(/-\d{4}-\d{4}(?=\/)/i, '')
+      .replace(/-\d{4}(?=\/results)/i, '')
       .replace(/\/(results|standings|outrights)(?:\/page\/\d+)?\/?$/i, '/')
       .replace(/\/+$/, '/');
+  }
+
+  _extractSeasonYearFromResultsPath(url) {
+    const match = String(url || '').match(/-(\d{4})\/results(?:\/page\/\d+)?\/?$/i);
+    return match ? Number(match[1]) : 0;
   }
 
   async _wait(waitForTimeout, ms) {
