@@ -404,17 +404,27 @@ class FixtureRepository {
       }
     }, 'getUnstitchedMatches');
   }
-  async getReconEligibleMatches(season, leagueName, limit = null) {
+  async getReconEligibleMatches(season, leagueName, limitOrOptions = null) {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       try {
+        const normalizedOptions = (
+          Number.isInteger(limitOrOptions) || limitOrOptions === null
+            ? { limit: limitOrOptions }
+            : (limitOrOptions || {})
+        );
+        const limit = Number.isInteger(normalizedOptions.limit) ? normalizedOptions.limit : null;
+        const allowMismatchRetry = normalizedOptions.allowMismatchRetry === true;
+        const eligibleStatuses = allowMismatchRetry
+          ? ['harvested', 'RECON_MISMATCH']
+          : ['harvested'];
         const params = [leagueName, season];
         let query = `
-          SELECT m.match_id, m.home_team, m.away_team, m.match_date, m.league_name, m.season
+          SELECT m.match_id, m.home_team, m.away_team, m.match_date, m.league_name, m.season, m.pipeline_status
           FROM matches m
           WHERE m.league_name = $1
             AND m.season = $2
-            AND m.pipeline_status = 'harvested'
+            AND m.pipeline_status = ANY($3::text[])
             AND NOT EXISTS (
               SELECT 1
               FROM matches_oddsportal_mapping map
@@ -423,6 +433,7 @@ class FixtureRepository {
             )
           ORDER BY m.match_date DESC, m.match_id DESC
         `;
+        params.push(eligibleStatuses);
         if (Number.isInteger(limit) && limit > 0) {
           params.push(limit);
           query += ` LIMIT $${params.length}`;
