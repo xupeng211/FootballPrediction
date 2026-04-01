@@ -650,7 +650,8 @@ class ReconEngine {
         season: target.dbSeason,
         league: target.league.name,
         sourceSeason: selectedSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season),
-        sourceUrl: selectedSource?.source?.url || target.resultsUrl
+        sourceUrl: selectedSource?.source?.url || target.resultsUrl,
+        allowMismatchRetry: target?.reconPolicy?.allowMismatchRetry === true
       }
     );
 
@@ -737,7 +738,9 @@ class ReconEngine {
       });
       const result = await this.repository.batchUpdateMatchPipelineStatus(batch, 'RECON_MISMATCH', {
         season: metadata.season || null,
-        expectedCurrentStatus: 'harvested'
+        expectedCurrentStatus: metadata.allowMismatchRetry === true
+          ? ['harvested', 'RECON_MISMATCH']
+          : 'harvested'
       });
       this.logger.info('recon_batch_persist_complete', {
         recon_run_id: metadata.reconRunId || null,
