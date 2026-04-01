@@ -17,6 +17,8 @@ class ReconTaskPlanner {
     this.archiveMaxPages = Math.max(1, Number(options.archiveMaxPages ?? runtimeConfig.archive_max_pages));
     this.archiveTimeoutMs = Math.max(1, Number(options.archiveTimeoutMs ?? runtimeConfig.archive_timeout_ms));
     this.resultsPathTemplate = options.resultsPathTemplate || runtimeConfig.results_path;
+    this.mismatchRetryThresholdDelta = Number(options.mismatchRetryThresholdDelta ?? runtimeConfig.mismatch_retry_threshold_delta ?? 0.05);
+    this.mismatchRetryThresholdFloor = Number(options.mismatchRetryThresholdFloor ?? runtimeConfig.mismatch_retry_threshold_floor ?? 0.45);
     this.forceDomLeagueIds = new Set(
       (options.forceDomLeagueIds || runtimeConfig.force_dom_league_ids || [])
         .map((id) => Number(id))
@@ -54,14 +56,18 @@ class ReconTaskPlanner {
     return leagues.map((league) => this.buildTarget(season, league));
   }
 
-  async prepareReconPendingTargets(targets, limit = null) {
+  async prepareReconPendingTargets(targets, limit = null, options = {}) {
     const prepared = [];
 
     for (const target of targets) {
-      const pendingMatches = await this.loadReconPendingMatches(target);
+      const pendingMatches = await this.loadReconPendingMatches(target, options);
       if (Array.isArray(pendingMatches) && pendingMatches.length > 0) {
+        const reconPolicy = this.resolveReconPolicy(target, pendingMatches, options.confidenceThreshold);
         prepared.push({
-          target,
+          target: {
+            ...target,
+            reconPolicy
+          },
           pendingMatches: [...pendingMatches].sort((a, b) =>
             String(a.match_id).localeCompare(String(b.match_id))
           ),
@@ -108,12 +114,33 @@ class ReconTaskPlanner {
     return capped.filter(({ desiredLimit }) => desiredLimit > 0);
   }
 
-  async loadReconPendingMatches(target) {
+  async loadReconPendingMatches(target, options = {}) {
     if (this.repository && typeof this.repository.getReconEligibleMatches === 'function') {
-      return this.repository.getReconEligibleMatches(target.dbSeason, target.league.name);
+      return this.repository.getReconEligibleMatches(target.dbSeason, target.league.name, {
+        allowMismatchRetry: options.allowMismatchRetry === true
+      });
     }
 
     return this.repository.getUnstitchedMatches(target.dbSeason, target.league.name);
+  }
+
+  resolveReconPolicy(target, pendingMatches, confidenceThreshold = 0.5) {
+    const configuredRetry = target?.reconPolicy?.allowMismatchRetry === true;
+    const hasMismatchRetry = (Array.isArray(pendingMatches) ? pendingMatches : [])
+      .some((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH');
+    const effectiveThreshold = configuredRetry && hasMismatchRetry
+      ? Math.max(
+        this.mismatchRetryThresholdFloor,
+        Number(confidenceThreshold || 0) - this.mismatchRetryThresholdDelta
+      )
+      : Number(confidenceThreshold || 0);
+
+    return {
+      allowMismatchRetry: configuredRetry,
+      hasMismatchRetry,
+      effectiveConfidenceThreshold: effectiveThreshold,
+      forceMultiMode: configuredRetry && hasMismatchRetry
+    };
   }
 
   buildCandidateSources(target) {
@@ -210,7 +237,10 @@ class ReconTaskPlanner {
       ...target,
       pendingMatches: orderedPending
     });
+    const reconPolicy = this.resolveReconPolicy(target, orderedPending, confidenceThreshold);
+    const effectiveConfidenceThreshold = Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold || 0);
     const forceDomMode = this.forceDomLeagueIds.has(Number(target?.leagueId || target?.league?.id || 0));
+    const forceMultiMode = reconPolicy.forceMultiMode === true;
     let best = null;
     const evaluatedSources = [];
 
@@ -229,6 +259,11 @@ class ReconTaskPlanner {
           preferCurrentSeasonSource: true,
           forceDomOnly: true
         })
+        : forceMultiMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+          ? await this.navigator.fetchFullSeasonArchive(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true
+          })
         : source.mode === 'current_season'
           ? await this.navigator.protocolArchiveExtract(source.url, {
             ...extractOptions,
@@ -241,7 +276,7 @@ class ReconTaskPlanner {
       const seasonMirror = this.mirrorManager?.buildSeasonMirror(candidates) || new Map();
       const sampleLinked = sample.reduce((count, l1Match) => {
         const matched = this.matchEvaluator?.findBestCandidate(l1Match, candidates, seasonMirror);
-        return matched && matched.confidence >= confidenceThreshold ? count + 1 : count;
+        return matched && matched.confidence >= effectiveConfidenceThreshold ? count + 1 : count;
       }, 0);
 
       const evaluated = {
@@ -259,6 +294,8 @@ class ReconTaskPlanner {
         sourceSeason: source.season,
         sourceUrl: source.url,
         forceDomMode,
+        forceMultiMode,
+        effectiveConfidenceThreshold,
         sampleSize: sample.length,
         skippedPlaceholderCount,
         sampleLinked,
@@ -298,7 +335,7 @@ class ReconTaskPlanner {
       const combinedSeasonMirror = this.mirrorManager?.buildSeasonMirror(combinedCandidates) || new Map();
       const combinedSampleLinked = sample.reduce((count, l1Match) => {
         const matched = this.matchEvaluator?.findBestCandidate(l1Match, combinedCandidates, combinedSeasonMirror);
-        return matched && matched.confidence >= confidenceThreshold ? count + 1 : count;
+        return matched && matched.confidence >= effectiveConfidenceThreshold ? count + 1 : count;
       }, 0);
 
       this.logger.info('recon_candidate_sources_combined', {
@@ -307,7 +344,9 @@ class ReconTaskPlanner {
         sourceCount: evaluatedSources.length,
         candidateCount: combinedCandidates.length,
         sampleSize: sample.length,
-        sampleLinked: combinedSampleLinked
+        sampleLinked: combinedSampleLinked,
+        effectiveConfidenceThreshold,
+        forceMultiMode
       });
 
       return {
