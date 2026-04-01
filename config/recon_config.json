@@ -368,7 +368,33 @@
         "Accept",
         "Allow All"
       ],
+      "external_session_path": "/home/xupeng/projects/FootballPrediction/11",
+      "prefer_full_chromium": true,
+      "playwright_cache_root": "/root/.cache/ms-playwright",
       "enable_stealth_fingerprint": false,
+      "force_unlock_j1": {
+        "enabled": false,
+        "url_patterns": [
+          "/football/japan/j1-league"
+        ],
+        "menu_labels": [
+          "BOOKMAKERS",
+          "Bookmakers"
+        ],
+        "select_all_labels": [
+          "Select All"
+        ],
+        "fallback_bookmakers": [
+          "Bet365",
+          "Pinnacle",
+          "1xBet",
+          "William Hill"
+        ],
+        "open_wait_ms": 1200,
+        "post_select_wait_ms": 1800,
+        "state_wait_ms": 5000,
+        "retrigger_timeout_ms": 10000
+      },
       "warmup_delay_ms": 3000,
       "scroll_iterations": 3,
       "scroll_step_px": 500,
