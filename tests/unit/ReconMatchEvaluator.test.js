@@ -82,4 +82,40 @@ describe('ReconMatchEvaluator', () => {
     assert.strictEqual(evaluator.isPlaceholderTeamName('South Korea'), false);
     assert.strictEqual(evaluator.isPlaceholderTeamName('1 Fc Koln'), false);
   });
+
+  it('应从 h2h URL 中回推出文本队名并完成匹配评分', () => {
+    const evaluator = new ReconMatchEvaluator({
+      parser: {
+        calculateSimilarity(left, right) {
+          const normalize = (value) => String(value || '')
+            .toLowerCase()
+            .replace(/\butd\b/g, 'united')
+            .trim();
+          return normalize(left) === normalize(right) ? 1 : 0;
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const l1Match = {
+      home_team: 'Manchester City',
+      away_team: 'Newcastle United',
+      match_date: '2026-02-21T20:00:00.000Z'
+    };
+    const candidate = {
+      hash: 'h2h-man-city-newcastle',
+      url: 'https://www.oddsportal.com/football/h2h/manchester-city-Wtn9Stg0/newcastle-utd-p6ahwuwJ/#QwtIRNsf',
+      homeTeam: 24480525,
+      awayTeam: 24480527,
+      matchDate: '2026-02-21T20:00:00.000Z'
+    };
+
+    const resolved = evaluator.resolveCandidateTeams(candidate, l1Match);
+    const best = evaluator.findBestCandidate(l1Match, [candidate]);
+
+    assert.equal(resolved.homeTeam, 'Manchester City');
+    assert.equal(resolved.awayTeam, 'Newcastle United');
+    assert.ok(best, '应找到 h2h URL 候选');
+    assert.ok(best.confidence > 0.45, `期望 h2h 候选分值超过 0.45，实际 ${best.confidence}`);
+  });
 });

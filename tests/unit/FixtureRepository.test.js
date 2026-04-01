@@ -32,7 +32,10 @@ test('FixtureRepository.batchUpdateMatchPipelineStatus 应在竞争更新下只�
           await Promise.resolve();
 
           const [, nextStatus, expectedCurrentStatus] = params;
-          if (state.status === expectedCurrentStatus) {
+          const allowedStatuses = Array.isArray(expectedCurrentStatus)
+            ? expectedCurrentStatus
+            : [expectedCurrentStatus];
+          if (allowedStatuses.includes(state.status)) {
             state.status = nextStatus;
             return { rowCount: 1 };
           }
@@ -106,7 +109,7 @@ test('FixtureRepository.batchUpdateMatchPipelineStatus 在同赛季已存在 map
   assert.equal(result.updated, 0);
   assert.match(capturedSql, /NOT EXISTS/);
   assert.match(capturedSql, /map\.season = \$4/);
-  assert.deepEqual(capturedParams, [['m1'], 'RECON_MISMATCH', 'harvested', '2024/2025']);
+  assert.deepEqual(capturedParams, [['m1'], 'RECON_MISMATCH', ['harvested'], '2024/2025']);
 });
 
 test('FixtureRepository._executeWithRetry 应在 30 秒窗口内持续重试并支持数据库自动恢复', async () => {
@@ -300,7 +303,12 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
 
           if (compactSql.startsWith('UPDATE matches m')) {
             const [matchId, nextStatus, expectedCurrentStatus] = params;
-            if (expectedCurrentStatus && statusByMatchId.get(matchId) !== expectedCurrentStatus) {
+            const allowedStatuses = Array.isArray(expectedCurrentStatus)
+              ? expectedCurrentStatus
+              : expectedCurrentStatus
+                ? [expectedCurrentStatus]
+                : [];
+            if (allowedStatuses.length > 0 && !allowedStatuses.includes(statusByMatchId.get(matchId))) {
               return { rows: [], rowCount: 0 };
             }
             statusByMatchId.set(matchId, nextStatus);
@@ -541,7 +549,12 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在同场重复 ID 争抢同
 
           if (compactSql.startsWith('UPDATE matches m')) {
             const [matchId, nextStatus, expectedCurrentStatus] = params;
-            if (expectedCurrentStatus && statusByMatchId.get(matchId) !== expectedCurrentStatus) {
+            const allowedStatuses = Array.isArray(expectedCurrentStatus)
+              ? expectedCurrentStatus
+              : expectedCurrentStatus
+                ? [expectedCurrentStatus]
+                : [];
+            if (allowedStatuses.length > 0 && !allowedStatuses.includes(statusByMatchId.get(matchId))) {
               return { rows: [], rowCount: 0 };
             }
             statusByMatchId.set(matchId, nextStatus);
@@ -889,4 +902,42 @@ test('FixtureRepository.persist 应在 L1 入库前统一中超别名与缩写�
   assert.equal(capturedBatch.length, 1);
   assert.equal(capturedBatch[0].home_team, 'Henan Songshan Longmen');
   assert.equal(capturedBatch[0].away_team, 'Shenzhen Xinpengcheng');
+});
+
+test('FixtureRepository.getReconEligibleMatches 开启 allowMismatchRetry 时应同时捞取 harvested 与 RECON_MISMATCH', async () => {
+  let capturedSql = '';
+  let capturedParams = [];
+
+  const pool = {
+    async connect() {
+      return {
+        async query(sql, params = []) {
+          capturedSql = sql;
+          capturedParams = params;
+          return { rows: [], rowCount: 0 };
+        },
+        release() {}
+      };
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    logger: { info() {}, warn() {}, error() {} }
+  });
+
+  await repository.getReconEligibleMatches('2025/2026', 'Premier League', {
+    allowMismatchRetry: true,
+    limit: 5
+  });
+
+  assert.match(capturedSql, /m\.pipeline_status = ANY\(\$3::text\[\]\)/);
+  assert.match(capturedSql, /LIMIT \$4/);
+  assert.deepEqual(capturedParams, [
+    'Premier League',
+    '2025/2026',
+    ['harvested', 'RECON_MISMATCH'],
+    5
+  ]);
 });

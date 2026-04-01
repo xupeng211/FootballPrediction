@@ -133,7 +133,13 @@ class ReconMatchEvaluator {
   }
 
   deriveTeamsFromCandidateUrl(url, l1Match) {
-    const match = String(url || '').match(/\/([^/]+)-[A-Za-z0-9]{8}\/?$/);
+    const pathname = this.extractCandidatePathname(url);
+    const h2hTeams = this.extractTeamsFromH2hPath(pathname);
+    if (h2hTeams) {
+      return h2hTeams;
+    }
+
+    const match = pathname.match(/\/([^/]+)-[A-Za-z0-9]{8}\/?$/);
     if (!match) {
       return null;
     }
@@ -174,6 +180,51 @@ class ReconMatchEvaluator {
       homeTeam: Normalizer.normalizeTeamName(bestSplit.left) || bestSplit.left,
       awayTeam: Normalizer.normalizeTeamName(bestSplit.right) || bestSplit.right
     };
+  }
+
+  extractCandidatePathname(url) {
+    const raw = String(url || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    try {
+      const parsed = new URL(raw);
+      return parsed.pathname || '';
+    } catch {
+      return raw.split('#')[0].split('?')[0];
+    }
+  }
+
+  extractTeamsFromH2hPath(pathname) {
+    const match = String(pathname || '').match(/\/football\/h2h\/([^/]+)\/([^/]+)\/?$/i);
+    if (!match) {
+      return null;
+    }
+
+    const left = this.decodeCandidateTeamSegment(match[1]);
+    const right = this.decodeCandidateTeamSegment(match[2]);
+    if (!left || !right) {
+      return null;
+    }
+
+    return {
+      homeTeam: left,
+      awayTeam: right
+    };
+  }
+
+  decodeCandidateTeamSegment(segment) {
+    const slug = String(segment || '')
+      .replace(/-[A-Za-z0-9]{8}$/i, '')
+      .replace(/-/g, ' ')
+      .trim();
+
+    if (!slug) {
+      return '';
+    }
+
+    return Normalizer.normalizeTeamName(slug) || slug;
   }
 
   evaluateCandidateOrientation(candidate, l1Match) {
