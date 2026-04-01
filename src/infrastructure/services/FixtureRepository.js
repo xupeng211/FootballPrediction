@@ -187,7 +187,13 @@ class FixtureRepository {
       return 0;
     }
     const season = options.season ? String(options.season) : null;
-    const expectedCurrentStatus = options.expectedCurrentStatus || null;
+    const expectedCurrentStatuses = Array.isArray(options.expectedCurrentStatus)
+      ? options.expectedCurrentStatus
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+      : options.expectedCurrentStatus
+        ? [String(options.expectedCurrentStatus).trim()]
+        : [];
     let query = `
       UPDATE matches m
       SET pipeline_status = $2,
@@ -196,9 +202,10 @@ class FixtureRepository {
     `;
     const params = [matchIds, status];
     if (status === 'RECON_MISMATCH') {
-      params.push(expectedCurrentStatus || 'harvested');
+      const allowedStatuses = expectedCurrentStatuses.length > 0 ? expectedCurrentStatuses : ['harvested'];
+      params.push(allowedStatuses);
       query += `
-        AND m.pipeline_status = $3
+        AND m.pipeline_status = ANY($3::text[])
         AND NOT EXISTS (
           SELECT 1
           FROM matches_oddsportal_mapping map
