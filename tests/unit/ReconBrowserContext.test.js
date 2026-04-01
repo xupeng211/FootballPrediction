@@ -43,7 +43,8 @@ describe('ReconBrowserContext', () => {
       traceId: 'trace-browser',
       chromium,
       headless: true,
-      proxy: { host: '127.0.0.1', port: 8899 }
+      proxy: { host: '127.0.0.1', port: 8899 },
+      preferFullChromium: false
     });
 
     const launchedPage = await browserContext.launch({ timeout: 4321 });
@@ -69,7 +70,8 @@ describe('ReconBrowserContext', () => {
         locale: 'en-US',
         timezoneId: 'Asia/Tokyo',
         extraHTTPHeaders: {
-          'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7'
+          'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7',
+          'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
         }
       }
     });
@@ -121,6 +123,112 @@ describe('ReconBrowserContext', () => {
     await browserContext.launch({ timeout: 4321 });
 
     assert.deepStrictEqual(events, [{ type: 'addInitScript', value: 'function' }]);
+  });
+
+  it('启用 preferFullChromium 时应把完整 Chromium executablePath 注入 launchOptions', async () => {
+    const events = [];
+    const page = {
+      async addInitScript() {}
+    };
+
+    const context = {
+      async newPage() {
+        return page;
+      }
+    };
+
+    const browser = {
+      async newContext() {
+        return context;
+      },
+      async close() {}
+    };
+
+    const chromium = {
+      async launch(options) {
+        events.push(options);
+        return browser;
+      }
+    };
+
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-browser-full-chromium',
+      chromium,
+      preferFullChromium: true,
+      resolvePreferredExecutablePath: () => '/tmp/playwright/chromium/chrome'
+    });
+
+    await browserContext.launch();
+
+    assert.strictEqual(events.length, 1);
+    assert.strictEqual(events[0].executablePath, '/tmp/playwright/chromium/chrome');
+  });
+
+  it('launch 后应自动注入 external session cookies，并用外部 UA 对齐 context', async () => {
+    const events = [];
+    const page = {
+      async addInitScript() {}
+    };
+
+    const context = {
+      async addCookies(cookies) {
+        events.push({ type: 'addCookies', cookies });
+      },
+      async newPage() {
+        return page;
+      }
+    };
+
+    const browser = {
+      async newContext(options) {
+        events.push({ type: 'newContext', options });
+        return context;
+      },
+      async close() {}
+    };
+
+    const chromium = {
+      async launch() {
+        return browser;
+      }
+    };
+
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-browser-external-session',
+      chromium,
+      sessionManager: {
+        load() {
+          return {
+            sourceFormat: 'json',
+            userAgent: 'External-UA/1.0',
+            extraHTTPHeaders: { 'user-agent': 'External-UA/1.0' },
+            cookies: [
+              {
+                name: 'session-cookie',
+                value: 'cookie-value',
+                domain: '.oddsportal.com',
+                path: '/',
+                expires: -1,
+                httpOnly: false,
+                secure: true,
+                sameSite: 'Lax'
+              }
+            ]
+          };
+        }
+      }
+    });
+
+    await browserContext.launch();
+
+    assert.strictEqual(events[0].type, 'newContext');
+    assert.strictEqual(events[0].options.userAgent, 'External-UA/1.0');
+    assert.strictEqual(events[0].options.extraHTTPHeaders['user-agent'], 'External-UA/1.0');
+    assert.strictEqual(events[1].type, 'addCookies');
+    assert.strictEqual(events[1].cookies.length, 1);
+    assert.strictEqual(events[1].cookies[0].name, 'session-cookie');
   });
 
   it('应独立处理 consent 按钮点击', async () => {
@@ -314,5 +422,71 @@ describe('ReconBrowserContext', () => {
       && event.selector === 'text=Fixture Ready'
       && event.options?.state === 'visible'
     )));
+  });
+
+  it('force_unlock_j1 命中且 myBookmakers 变化时应重触发 archive 请求', async () => {
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-force-unlock-j1',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      forceUnlockJ1: {
+        enabled: true,
+        url_patterns: ['/football/japan/j1-league'],
+        menu_labels: ['BOOKMAKERS'],
+        select_all_labels: ['Select All'],
+        fallback_bookmakers: ['Bet365', 'Pinnacle'],
+        open_wait_ms: 0,
+        post_select_wait_ms: 0,
+        state_wait_ms: 0,
+        retrigger_timeout_ms: 3000
+      }
+    });
+
+    browserContext.page = {
+      async waitForTimeout() {}
+    };
+
+    let readCount = 0;
+    browserContext.openBookmakerMenu = async () => true;
+    browserContext.applyBookmakerSelection = async () => ({
+      selectAllClicked: false,
+      clickedBookmakers: ['bet365']
+    });
+    browserContext.readBookmakerState = async () => {
+      readCount++;
+      if (readCount === 1) {
+        return {
+          myBookmakers: [16, 44],
+          bookiehash: 'before-hash',
+          otCode: 'token-before'
+        };
+      }
+
+      return {
+        myBookmakers: [16, 44, 500],
+        bookiehash: 'after-hash',
+        otCode: 'token-after'
+      };
+    };
+    browserContext.waitForBookmakerStateChange = async () => ({
+      myBookmakers: [16, 44, 500],
+      bookiehash: 'after-hash',
+      otCode: 'token-after'
+    });
+
+    let retriggerCalls = 0;
+    browserContext.retriggerArchiveRequest = async () => {
+      retriggerCalls++;
+      return { success: true, status: 200 };
+    };
+
+    const result = await browserContext.maybeForceUnlockJ1(
+      'https://www.oddsportal.com/football/japan/j1-league-2026/results/'
+    );
+
+    assert.strictEqual(result.applied, true);
+    assert.strictEqual(result.changed, true);
+    assert.strictEqual(retriggerCalls, 1);
+    assert.deepStrictEqual(result.after.myBookmakers, [16, 44, 500]);
   });
 });

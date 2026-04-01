@@ -269,6 +269,10 @@ function validateConfig(config, options = {}) {
   assertFiniteNumber(assertRequired(config, ['recon_runtime', 'browser_context', 'viewport', 'height'], configPath), 'recon_runtime.browser_context.viewport.height', configPath, { integer: true, min: 1 });
   assertStringArray(assertRequired(config, ['recon_runtime', 'browser_context', 'launch_args'], configPath), 'recon_runtime.browser_context.launch_args', configPath);
   assertStringArray(assertRequired(config, ['recon_runtime', 'browser_context', 'consent_labels'], configPath), 'recon_runtime.browser_context.consent_labels', configPath, { minLength: 1 });
+  const externalSessionPath = getNestedValue(config, ['recon_runtime', 'browser_context', 'external_session_path']);
+  if (externalSessionPath !== undefined) {
+    assertString(externalSessionPath, 'recon_runtime.browser_context.external_session_path', configPath, { allowEmpty: true });
+  }
   assertString(assertRequired(config, ['recon_runtime', 'task_planner', 'base_url'], configPath), 'recon_runtime.task_planner.base_url', configPath);
   assertString(assertRequired(config, ['recon_runtime', 'task_planner', 'results_path'], configPath), 'recon_runtime.task_planner.results_path', configPath);
   assertString(assertRequired(config, ['recon_runtime', 'dom_scraper', 'base_url'], configPath), 'recon_runtime.dom_scraper.base_url', configPath);
