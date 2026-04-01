@@ -183,4 +183,89 @@ describe('ReconDomScraper', () => {
       '2026-04-22T11:35:00Z'
     );
   });
+
+  it('seasonless 目录页无比赛行时应识别年份 results 链接', async () => {
+    const scraper = new ReconDomScraper({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    const html = [
+      '<html><body>',
+      '  <main>',
+      '    <a href="/football/usa/mls/results/">2026</a>',
+      '    <a href="/football/usa/mls-2025/results/">2025</a>',
+      '    <a href="/football/usa/mls-2024/results/">2024</a>',
+      '    <a href="/football/usa/mls/outrights/">Outrights</a>',
+      '  </main>',
+      '</body></html>'
+    ].join('');
+
+    scraper.extractCurrentSeasonResultRows = async () => [];
+    scraper.extractPaginationMeta = async () => ({ pageUrls: [], totalPages: 1 });
+    scraper.extractSeasonNavigationUrls = async () => (
+      scraper.extractSeasonNavigationUrlsFromHtml(
+        html,
+        'https://www.oddsportal.com/football/usa/mls/results/'
+      )
+    );
+
+    const result = await scraper.discoverSeasonResultPages(
+      'https://www.oddsportal.com/football/usa/mls/results/',
+      { maxPages: 5, timeoutMs: 1000 },
+      {
+        navigate: async () => {},
+        waitForTimeout: async () => {},
+        getInterceptedData: () => []
+      }
+    );
+
+    assert.deepStrictEqual(result.pageUrls, [
+      'https://www.oddsportal.com/football/usa/mls/results/',
+      'https://www.oddsportal.com/football/usa/mls-2025/results/',
+      'https://www.oddsportal.com/football/usa/mls-2024/results/'
+    ]);
+  });
+
+  it('seasonless 年份链接在 maxPages 限制下应优先保留最近年份', async () => {
+    const scraper = new ReconDomScraper({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    const html = [
+      '<html><body>',
+      '  <main>',
+      '    <a href="/football/usa/mls/results/">2026</a>',
+      '    <a href="/football/usa/mls-2025/results/">2025</a>',
+      '    <a href="/football/usa/mls-2024/results/">2024</a>',
+      '    <a href="/football/usa/mls-2023/results/">2023</a>',
+      '    <a href="/football/usa/mls-2022/results/">2022</a>',
+      '  </main>',
+      '</body></html>'
+    ].join('');
+
+    scraper.extractCurrentSeasonResultRows = async () => [];
+    scraper.extractPaginationMeta = async () => ({ pageUrls: [], totalPages: 1 });
+    scraper.extractSeasonNavigationUrls = async () => (
+      scraper.extractSeasonNavigationUrlsFromHtml(
+        html,
+        'https://www.oddsportal.com/football/usa/mls/results/'
+      )
+    );
+
+    const result = await scraper.discoverSeasonResultPages(
+      'https://www.oddsportal.com/football/usa/mls/results/',
+      { maxPages: 3, timeoutMs: 1000 },
+      {
+        navigate: async () => {},
+        waitForTimeout: async () => {},
+        getInterceptedData: () => []
+      }
+    );
+
+    assert.deepStrictEqual(result.pageUrls, [
+      'https://www.oddsportal.com/football/usa/mls/results/',
+      'https://www.oddsportal.com/football/usa/mls-2025/results/',
+      'https://www.oddsportal.com/football/usa/mls-2024/results/'
+    ]);
+  });
 });
