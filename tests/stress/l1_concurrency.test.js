@@ -13,12 +13,18 @@ class SimulatedLockPool {
     this.waitCount = 0;
     this.deadlocks = 0;
     this.releaseCount = 0;
+    this.connectCount = 0;
     this.queryExecutions = [];
     this.holdMs = options.holdMs || 15;
     this.acquireTimeoutMs = options.acquireTimeoutMs || 400;
   }
 
+  async query() {
+    return { rows: [] };
+  }
+
   async connect() {
+    this.connectCount += 1;
     return {
       query: async (query, values = []) => {
         if (typeof query === 'string' && query.includes('INSERT INTO matches')) {
@@ -122,6 +128,7 @@ describe('L1 并发压力 - FixtureRepository.persist', () => {
   it('应在持久化前按 match_id 排序，消除输入顺序抖动', async () => {
     const capturedOrders = [];
     const dbPool = {
+      query: async () => ({ rows: [] }),
       connect: async () => ({
         query: async (query, values = []) => {
           if (typeof query === 'string' && query.includes('INSERT INTO matches')) {
@@ -206,7 +213,7 @@ describe('L1 并发压力 - FixtureRepository.persist', () => {
     assert.ok(dbPool.waitCount > 0, '应观测到真实锁等待');
     assert.ok(dbPool.maxConcurrentQueries >= 2, '应出现并发写入');
     assert.strictEqual(dbPool.deadlocks, 0, '排序后不应触发模拟死锁');
-    assert.strictEqual(dbPool.releaseCount, workerCount, '每次 connect 都应 release');
+    assert.strictEqual(dbPool.releaseCount, dbPool.connectCount, '每次 connect 都应成对 release');
     assert.ok(durationMs < 2500, `并发压力测试耗时异常: ${durationMs}ms`);
   });
 });
