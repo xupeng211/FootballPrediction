@@ -93,14 +93,29 @@ class ReconDecryptor {
         return null;
       }
 
+      const sampleProbe = sampleEncryptedData
+        ? this._probeEncryptedPayload(this._cleanPayload(sampleEncryptedData))
+        : null;
+      const bundleSource = await this._fetchBundleSource(page, appScriptUrl);
+      const bundleCandidateNames = this._extractFromBundle(bundleSource);
+
+      if (sampleEncryptedData && sampleProbe && !sampleProbe.valid) {
+        this.logger.debug('app_script_sample_invalid_skip_best_effort', {
+          traceId: this.traceId,
+          preview: sampleProbe.preview || ''
+        });
+      }
+
       // 在页面上下文中动态导入并提取解密函数
-      const decryptFn = await page.evaluate(async ({ url, sample, allowBestEffort }) => {
+      const decryptFn = await page.evaluate(async ({ url, sample, allowBestEffort, candidateNames }) => {
         try {
           const module = await import(url);
 
           const candidates = [];
           const seen = new Set();
-          const possibleNames = ['ai', 'decrypt', 'decode', 'parse', 'unpack', 'transform'];
+          const possibleNames = Array.isArray(candidateNames) && candidateNames.length > 0
+            ? candidateNames
+            : ['ai', 'decrypt', 'decode', 'parse', 'unpack', 'transform', 'deserialize', 'unzip'];
 
           const addCandidate = (name, type) => {
             if (!name || seen.has(name)) return;
@@ -181,7 +196,8 @@ class ReconDecryptor {
       }, {
         url: appScriptUrl,
         sample: sampleEncryptedData,
-        allowBestEffort: this.allowBestEffortCandidate
+        allowBestEffort: this.allowBestEffortCandidate && (!sampleProbe || sampleProbe.valid),
+        candidateNames: bundleCandidateNames
       });
 
       if (!decryptFn || !decryptFn.found) {
@@ -216,6 +232,119 @@ class ReconDecryptor {
       this.logger.warn('app_script_extraction_failed', { error: error.message });
       return null;
     }
+  }
+
+  async _fetchBundleSource(page, appScriptUrl) {
+    if (!page || typeof page.evaluate !== 'function' || !appScriptUrl) {
+      return '';
+    }
+
+    try {
+      return await page.evaluate(async (url) => {
+        const response = await fetch(url, { credentials: 'include' });
+        if (!response.ok) {
+          return '';
+        }
+        return response.text();
+      }, appScriptUrl);
+    } catch (error) {
+      this.logger.debug('app_script_bundle_fetch_failed', {
+        traceId: this.traceId,
+        error: error.message
+      });
+      return '';
+    }
+  }
+
+  _extractFromBundle(bundleSource) {
+    const text = String(bundleSource || '');
+    if (!text) {
+      return [];
+    }
+
+    const exportMap = this._parseBundleExportMap(text);
+    if (exportMap.size === 0) {
+      return [];
+    }
+
+    const candidates = [];
+    for (const [alias, original] of exportMap.entries()) {
+      const snippet = this._findBundleSnippet(text, original);
+      const score = this._scoreBundleSnippet(alias, snippet);
+      if (score > 0) {
+        candidates.push({ alias, score });
+      }
+    }
+
+    return candidates
+      .sort((left, right) => right.score - left.score)
+      .map((candidate) => candidate.alias);
+  }
+
+  _parseBundleExportMap(bundleSource) {
+    const text = String(bundleSource || '');
+    const exportBlock = text.match(/export\{([\s\S]+)\};\s*$/);
+    if (!exportBlock) {
+      return new Map();
+    }
+
+    const entries = exportBlock[1]
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+
+    const exportMap = new Map();
+    for (const entry of entries) {
+      const match = entry.match(/^(\S+)\s+as\s+(\S+)$/);
+      if (!match) {
+        continue;
+      }
+      exportMap.set(match[2], match[1]);
+    }
+
+    return exportMap;
+  }
+
+  _findBundleSnippet(bundleSource, symbolName) {
+    if (!bundleSource || !symbolName) {
+      return '';
+    }
+
+    const markers = [
+      `function ${symbolName}`,
+      `const ${symbolName}=`,
+      `const ${symbolName} =`,
+      `let ${symbolName}=`,
+      `let ${symbolName} =`
+    ];
+
+    for (const marker of markers) {
+      const index = bundleSource.indexOf(marker);
+      if (index >= 0) {
+        return bundleSource.slice(index, index + 1600);
+      }
+    }
+
+    return '';
+  }
+
+  _scoreBundleSnippet(alias, snippet) {
+    const text = String(snippet || '');
+    if (!text) {
+      return 0;
+    }
+
+    let score = 0;
+    if (/^ai$/i.test(alias)) score += 3;
+    if (/atob\(/.test(text)) score += 5;
+    if (/crypto/.test(text)) score += 5;
+    if (/TextDecoder/.test(text)) score += 4;
+    if (/TextEncoder/.test(text)) score += 2;
+    if (/Uint8Array/.test(text)) score += 2;
+    if (/importKey|deriveKey|decrypt/.test(text)) score += 6;
+    if (/PBKDF2|AES-CBC|AES-GCM/.test(text)) score += 4;
+
+    return score >= 8 ? score : 0;
   }
 
   /**
@@ -289,7 +418,8 @@ class ReconDecryptor {
         const commonNames = [
           'decrypt', 'decode', 'parseData', 'unpack', 'transform',
           'ai', 'process', 'handle', 'convert', '__decrypt',
-          'oddsDecrypt', 'dataParser', 'responseHandler'
+          'oddsDecrypt', 'dataParser', 'responseHandler', 'deserialize',
+          'decodePayload', 'decryptPayload', 'decodeResponse'
         ];
         
         for (const name of commonNames) {
