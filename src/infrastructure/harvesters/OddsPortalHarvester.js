@@ -67,6 +67,16 @@ function resolveLeagueRoute(league) {
   return route;
 }
 
+/**
+ * 构建联赛 referer URL。
+ * @param {string} league
+ * @returns {string}
+ */
+function buildLeagueRefererUrl(league) {
+  const route = resolveLeagueRoute(league);
+  return `${ODDSPORTAL_CONFIG.base_url}/football/${route.country}/${route.slug}/results/`;
+}
+
 const HARVESTER_CONFIG = {
   MAX_WORKERS: 12,
   MAX_CONCURRENCY: 24,
@@ -498,7 +508,9 @@ class OddsPortalHarvester {
           await worker.page.close().catch(() => {});
         }
         worker.page = null;
-        await new Promise(resolve => setTimeout(resolve, backoffMs));
+        await new Promise(resolve => {
+          setTimeout(resolve, backoffMs);
+        });
       }
     }
 
@@ -850,7 +862,7 @@ class OddsPortalHarvester {
       
       // 首先检查页面是否包含目标博彩公司
       const checkBookies = async () => {
-        return await page.evaluate(() => {
+        return page.evaluate(() => {
           const pageText = document.body?.innerText || '';
           return {
             hasPinnacle: /pinnacle/i.test(pageText),

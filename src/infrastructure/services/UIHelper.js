@@ -213,7 +213,7 @@ class UIHelper {
       this.logger.banner('║  ─────────────────────────────────────────────────────────────   ║');
 
       tierLeagues.forEach(l => {
-        const cnName = LEAGUE_NAME_CN[l.id] || '';
+        const cnName = leagueNames[l.id] || '';
         const displayName = cnName ? `${l.name} (${cnName})` : l.name;
         this.logger.banner(`║  ID: ${l.id.toString().padStart(5)} | ${displayName.padEnd(32)} | ${l.country.padEnd(10)} ║`);
       });

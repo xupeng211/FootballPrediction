@@ -292,7 +292,6 @@ class TitanSlimHarvester {
         try { await context.close(); } catch (e) { /* 忽略关闭错误 */ }
       }
     }
-    }
   }
 
   /**
@@ -392,7 +391,9 @@ class TitanSlimHarvester {
    * @private
    */
   _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
   }
 }
 

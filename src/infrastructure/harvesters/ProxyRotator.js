@@ -145,7 +145,7 @@ class ProxyRotator {
         break;
 
       case 'round-robin':
-      default:
+      default: {
         // 轮询: 从当前索引开始查找下一个可用
         const startIndex = this.currentIndex;
         do {
@@ -158,6 +158,7 @@ class ProxyRotator {
           }
         } while (this.currentIndex % this.proxies.length !== startIndex % this.proxies.length);
         break;
+      }
     }
 
     if (!selected) {

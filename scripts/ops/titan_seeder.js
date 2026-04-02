@@ -368,7 +368,9 @@ class BulkSeedMarathon {
    * 延迟
    */
   _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
   }
 
   /**

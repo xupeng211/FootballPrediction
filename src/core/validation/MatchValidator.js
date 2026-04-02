@@ -331,7 +331,7 @@ function isPlaceholder(match) {
     const homeId = match?.home?.id;
     const awayId = match?.away?.id;
 
-    if (homeId == null || awayId == null) return true;
+    if (homeId === null || homeId === undefined || awayId === null || awayId === undefined) return true;
     if (homeId === 0 || awayId === 0 || homeId === '0' || awayId === '0') return true;
     if (homeId === '' || awayId === '') return true;
 
@@ -346,7 +346,7 @@ function validateBasicData(match) {
 
     // match.id 校验
     const matchId = match.id;
-    if (matchId == null || matchId === '') return false;
+    if (matchId === null || matchId === undefined || matchId === '') return false;
     if (typeof matchId !== 'number' && typeof matchId !== 'string') return false;
 
     // 球队信息校验
