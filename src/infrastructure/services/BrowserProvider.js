@@ -163,7 +163,7 @@ class BrowserProvider {
     
     // 🔧 修复: 将多个参数封装为单个对象传递
     const timeoutMs = options.timeout || this.defaultTimeoutMs;
-    return await Promise.race([
+    return Promise.race([
       this.page.evaluate(async ({ apiUrl, opts }) => {
         try {
           const response = await fetch(apiUrl, opts);
@@ -195,7 +195,7 @@ class BrowserProvider {
    */
   async getCurrentUrl() {
     if (!this.page) return '';
-    return await this.page.url();
+    return this.page.url();
   }
 
   /**
@@ -236,7 +236,7 @@ class BrowserProvider {
     }
     
     // 返回当前页面高度
-    return await this.page.evaluate(() => document.body.scrollHeight);
+    return this.page.evaluate(() => document.body.scrollHeight);
   }
 
   /**
@@ -245,7 +245,7 @@ class BrowserProvider {
    */
   async getPageHeight() {
     if (!this.page) return 0;
-    return await this.page.evaluate(() => document.body.scrollHeight);
+    return this.page.evaluate(() => document.body.scrollHeight);
   }
 
   /**
@@ -270,7 +270,7 @@ class BrowserProvider {
    */
   async evaluate(fn, ...args) {
     if (!this.page) return null;
-    return await Promise.race([
+    return Promise.race([
       this.page.evaluate(fn, ...args),
       new Promise((_, reject) => {
         setTimeout(() => reject(new Error(`Browser evaluate timeout after ${this.defaultTimeoutMs}ms`)), this.defaultTimeoutMs);
@@ -284,7 +284,9 @@ class BrowserProvider {
    * @returns {Promise<void>}
    */
   async sleep(ms) {
-    await new Promise(resolve => setTimeout(resolve, ms));
+    await new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
   }
 
   /**

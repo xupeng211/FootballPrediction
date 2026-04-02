@@ -15,19 +15,16 @@
 
 'use strict';
 
-const { describe, it, before, after } = require('node:test');
+const { describe, it } = require('node:test');
 const assert = require('node:assert');
 
 // 被测模块 - 新的工业级架构
 const {
   ReconScanner,
-  loadConfig,
   RECON_CONFIG
 } = require('../../scripts/ops/recon_scanner');
 
-const { ReconNavigator } = require('../../src/infrastructure/recon/ReconNavigator');
 const { ReconParser } = require('../../src/infrastructure/recon/ReconParser');
-const { ReconStitcher } = require('../../src/infrastructure/recon/ReconStitcher');
 
 // 为了测试兼容性，从 Parser 导出核心函数
 const parser = new ReconParser({});
@@ -53,12 +50,6 @@ describe('ReconScanner - Syntax Traps', () => {
     // 旧代码中的危险语法: 'div[contains(@class, "event")]'
     // 新代码应使用标准 CSS 选择器: '[class*="event"]'
 
-    const invalidSelectors = [
-      'div[contains(@class, "event")]',
-      'span[contains(@class, "odds")]',
-      'a[contains(@href, "/football/")]'
-    ];
-
     const validSelectors = [
       '[class*="event"]',
       'a[href*="/football/"]'
@@ -67,9 +58,7 @@ describe('ReconScanner - Syntax Traps', () => {
     // 验证 SELECTOR_MAP 中没有非标语法
     const allSelectors = Object.values(SELECTOR_MAP).flat();
     for (const selector of allSelectors) {
-      const hasInvalidSyntax = invalidSelectors.some(inv =>
-        selector.includes('contains(@')
-      );
+      const hasInvalidSyntax = selector.includes('contains(@');
       assert.strictEqual(hasInvalidSyntax, false,
         `发现非标 XPath 语法: ${selector}`);
     }
@@ -77,12 +66,12 @@ describe('ReconScanner - Syntax Traps', () => {
     // 验证有效选择器存在 (更宽松的匹配)
     for (const valid of validSelectors) {
       // 提取核心属性名和值
-      const match = valid.match(/\[(\w+)[*\^\$]?="?([^"\]]+)"?\]/);
+      const match = valid.match(/\[(\w+)[*^$]?="?([^"\]]+)"?\]/);
       if (match) {
         const [, attr, value] = match;
         const hasValid = allSelectors.some(s => {
           // 检查是否包含相同的属性和值
-          const sMatch = s.match(/\[(\w+)[*\^\$]?="?([^"\]]+)"?\]/);
+          const sMatch = s.match(/\[(\w+)[*^$]?="?([^"\]]+)"?\]/);
           if (sMatch) {
             return sMatch[1] === attr && sMatch[2].includes(value);
           }
@@ -97,7 +86,7 @@ describe('ReconScanner - Syntax Traps', () => {
   it('应使用标准 CSS 属性选择器替代 XPath 函数', () => {
     // 验证所有选择器都是有效的 CSS/Playwright 选择器
     // 支持标准 CSS 语法 + Playwright 扩展 (:has-text, text=, 正则)
-    const cssSelectorPattern = /^[a-zA-Z0-9\-_\[\]\*\^\$\|\=\'\"\(\)\s\:\.\#\>\~\+\/\\\d\w\,\!\?\{\}]*$/;
+    const cssSelectorPattern = new RegExp(String.raw`^[\w\s\-_[\]*^$|='"():.#>~+/,!?{}]*$`);
 
     const allSelectors = Object.values(SELECTOR_MAP).flat();
     for (const selector of allSelectors) {
@@ -363,13 +352,6 @@ describe('ReconScanner - Team Name Normalization', () => {
 describe('ReconScanner - Repository Pattern', () => {
   it('应移除直接的 SQL 查询字符串', () => {
     // 验证重构后的代码不再包含原始 SQL
-    const forbiddenPatterns = [
-      'INSERT INTO matches_oddsportal_mapping',
-      'SELECT match_id FROM matches',
-      'pool.query',
-      'client.query'
-    ];
-
     // 这些模式在重构后的代码中不应存在
     // 实际验证需要通过代码审查完成
     console.log('✅ Repository 模式验证: SQL 应已迁移到 FixtureRepository');
@@ -391,7 +373,7 @@ describe('ReconScanner - Integration Scenarios', () => {
     const mockUrl = 'https://www.oddsportal.com/football/england/premier-league/manchester-united-chelsea-AbCdEf12/';
 
     // 步骤 1: 提取 hash
-    const hashMatch = mockUrl.match(/\/([^\/]+)-([a-zA-Z0-9]{8})\/$/);
+    const hashMatch = mockUrl.match(/\/([^/]+)-([a-zA-Z0-9]{8})\/$/);
     assert.ok(hashMatch, '应从 URL 提取 hash');
     const hash = hashMatch[2];
     assert.strictEqual(hash.length, 8, 'hash 应为 8 位');
@@ -502,7 +484,7 @@ describe('ReconScanner - Industrial Hardening', () => {
     const maxRetries = 3;
     let circuitBroken = false;
 
-    async function executeWithCircuitBreaker(fn) {
+    async function executeWithCircuitBreaker() {
       for (let i = 0; i < maxRetries; i++) {
         try {
           retryCount++;

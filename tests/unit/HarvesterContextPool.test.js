@@ -5,9 +5,11 @@ const assert = require('node:assert');
 
 const { HarvesterContextPool } = require('../../src/infrastructure/harvesters/components/HarvesterContextPool');
 
+const silentLogger = { info() {}, log() {} };
+
 describe('HarvesterContextPool 单元测试', () => {
     it('应对同一 Worker 的并发申请进行去重', async () => {
-        const pool = new HarvesterContextPool({ maxSize: 5, maxUsage: 10 });
+        const pool = new HarvesterContextPool({ maxSize: 5, maxUsage: 10, logger: silentLogger });
         let createCount = 0;
 
         const deps = {
@@ -40,7 +42,7 @@ describe('HarvesterContextPool 单元测试', () => {
     });
 
     it('应自动回收超时 Context', async () => {
-        const pool = new HarvesterContextPool({ maxSize: 5, maxUsage: 10, idleTimeoutMs: 10 });
+        const pool = new HarvesterContextPool({ maxSize: 5, maxUsage: 10, idleTimeoutMs: 10, logger: silentLogger });
         let closed = false;
 
         const deps = {
@@ -68,7 +70,7 @@ describe('HarvesterContextPool 单元测试', () => {
     });
 
     it('应在数据库连接丢失时清空整个池', async () => {
-        const pool = new HarvesterContextPool({ maxSize: 5, maxUsage: 10 });
+        const pool = new HarvesterContextPool({ maxSize: 5, maxUsage: 10, logger: silentLogger });
         const closedContexts = [];
         let contextId = 0;
 

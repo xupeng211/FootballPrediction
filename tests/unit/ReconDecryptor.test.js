@@ -10,6 +10,28 @@ const { ReconDecryptor } = require('../../src/infrastructure/recon/ReconDecrypto
 const fixturesDir = path.resolve(__dirname, '../fixtures/recon_decryptor');
 
 describe('ReconDecryptor', () => {
+  it('页面已关闭时应快速退出，避免记录 decryptor_extraction_failed', async () => {
+    const errorEvents = [];
+
+    const decryptor = new ReconDecryptor({
+      logger: {
+        info() {},
+        warn() {},
+        debug() {},
+        error(event) {
+          errorEvents.push(event);
+        }
+      }
+    });
+
+    await assert.rejects(
+      decryptor.extractDecryptor({ isClosed: () => true }, 'encrypted-sample'),
+      (error) => error?.code === 'PAGE_CONTEXT_CLOSED'
+    );
+
+    assert.strictEqual(errorEvents.includes('decryptor_extraction_failed'), false);
+  });
+
   it('样本验证失败时不应接受 app bundle 的未验证候选函数', async () => {
     let evaluateCalls = 0;
 
@@ -59,7 +81,7 @@ describe('ReconDecryptor', () => {
           return 'https://www.oddsportal.com/build/assets/app-test.js';
         }
 
-        if (payload?.url && payload?.sample) {
+        if (payload?.url && Array.isArray(payload?.samplePool)) {
           return {
             found: true,
             name: 'ai',
@@ -79,6 +101,50 @@ describe('ReconDecryptor', () => {
     assert.strictEqual(decryptor.getAlgorithmVersion(), 'app_ai');
     assert.strictEqual(result.__bestEffort, true);
     assert.strictEqual(result.__validated, false);
+  });
+
+  it('首样本无效时应复用缓存样本做交叉验证并成功提取', async () => {
+    const validSample = Buffer.from('cipher:0011', 'utf8').toString('base64');
+
+    const decryptor = new ReconDecryptor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      allowBestEffortCandidate: false,
+      sampleCrossValidateCount: 3,
+      randomInt: () => 0
+    });
+    decryptor.rememberSample(validSample);
+
+    let evaluateCalls = 0;
+    const page = {
+      async evaluate(_fn, payload) {
+        evaluateCalls++;
+        if (evaluateCalls === 1) {
+          return 'https://www.oddsportal.com/build/assets/app-test.js';
+        }
+
+        if (evaluateCalls === 2) {
+          return '';
+        }
+
+        assert.ok(Array.isArray(payload.samplePool));
+        assert.ok(payload.samplePool.includes(validSample));
+        assert.strictEqual(payload.allowBestEffort, false);
+        return {
+          found: true,
+          name: 'ai',
+          type: 'named_export',
+          validated: true
+        };
+      }
+    };
+
+    const result = await decryptor._extractFromAppScript(
+      page,
+      'URL:/ajax-sport-country-tournament-archive_/1//X/2025-2026/1/0/ Status: 404'
+    );
+
+    assert.ok(result);
+    assert.strictEqual(decryptor.getAlgorithmVersion(), 'app_ai');
   });
 
   it('样本本身是伪 404 payload 时，不应启用 best-effort 回退', async () => {

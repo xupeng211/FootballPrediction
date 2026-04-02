@@ -329,7 +329,7 @@ class ReconMetrics {
    * @returns {string} Prometheus 格式文本
    */
   async getMetrics() {
-    return await this.register.metrics();
+    return this.register.metrics();
   }
 
   /**

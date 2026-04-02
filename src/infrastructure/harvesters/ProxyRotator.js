@@ -145,7 +145,7 @@ class ProxyRotator {
         break;
 
       case 'round-robin':
-      default:
+      default: {
         // 轮询: 从当前索引开始查找下一个可用
         const startIndex = this.currentIndex;
         do {
@@ -158,6 +158,7 @@ class ProxyRotator {
           }
         } while (this.currentIndex % this.proxies.length !== startIndex % this.proxies.length);
         break;
+      }
     }
 
     if (!selected) {
@@ -183,6 +184,16 @@ class ProxyRotator {
       userAgent: selected.userAgent,
       server: selected.url // Playwright proxy server格式
     };
+  }
+
+  rotate(options = {}) {
+    const nextProxy = this.getNextProxy();
+    this.logger.info('🔁 代理轮换', {
+      reason: options.reason || 'manual',
+      statusCode: options.statusCode || null,
+      nextPort: nextProxy?.port || null
+    });
+    return nextProxy;
   }
 
   /**

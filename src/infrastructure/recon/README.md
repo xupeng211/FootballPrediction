@@ -103,7 +103,7 @@ Recon 运行时参数统一从 [config/recon_config.json](/home/xupeng/projects/
 - `repository.retry`
   仓储重试次数、退避间隔、最大恢复窗口。
 - `repository.conflict_arbiter`
-  hash 冲突仲裁的同场阈值与时间窗口。
+  hash 冲突仲裁的同场阈值、时间窗口，以及推翻既有 `RECON_LINKED` 所需的最小日期间隔与置信度优势。
 - `matching`
   置信度阈值、主客判定阈值、日期权重。
 - `recon_runtime.engine`
@@ -123,6 +123,7 @@ Recon 运行时参数统一从 [config/recon_config.json](/home/xupeng/projects/
 
 - `ReconHealthServer` 必须注册数据库 readiness，不允许只报 liveness。
 - `ReconEngine` 的批量写入日志必须带 `recon_run_id`、`batch_type`、`batch_index`、`total_batches`。
+- `ReconEngine` 批量写入 `RECON_LINKED` 时必须开启 `preserve_linked_status`，避免在证据不足时把既有 linked 误回退。
 - `RECON_MISMATCH` 更新必须满足双重条件：
   当前状态仍是 `harvested`，且同赛季还不存在 mapping。
 - 退出路径必须保证 `browser.close()`、`guardian.stop()`、`dbPool.end()` 最终都会执行。

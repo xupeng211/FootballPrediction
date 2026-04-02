@@ -1,14 +1,16 @@
 'use strict';
 
-const { ReconCircuitBreaker } = require('./ReconResilience');
+const { ReconCircuitBreaker, ReconCircuitBreakerPool } = require('./ReconResilience');
 const { ReconBrowserContext } = require('./services/ReconBrowserContext');
 const { ReconDomScraper } = require('./services/ReconDomScraper');
-const { ReconEndpointHelper } = require('./services/ReconEndpointHelper');
 const { ReconNetworkMonitor, createDefaultStats } = require('./services/ReconNetworkMonitor');
+const { ReconProtocolHandler } = require('./services/ReconProtocolHandler');
+const { ReconRetryCoordinator } = require('./services/ReconRetryCoordinator');
 const { ReconStateProber } = require('./services/ReconStateProber');
 const { RECON_CONFIG, getReconConfigSection } = require('./services/ReconServiceConfig');
 
 const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+const HTTP_503_RETRY_DELAYS_MS = [5000, 15000, 30000];
 
 function generateTraceId() {
   return `trace-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
@@ -20,6 +22,7 @@ class ReconNavigator {
 
     this.logger = options.logger || console;
     this.proxy = options.proxy;
+    this.proxyRotator = options.proxyRotator || null;
     this.headless = options.headless !== false;
     this.scrollAttempts = options.scrollAttempts || navigatorConfig.scroll_attempts;
     this.scrollDelayMs = options.scrollDelayMs || navigatorConfig.scroll_delay_ms;
@@ -38,11 +41,20 @@ class ReconNavigator {
     // V11.0: TraceID 机制 - 每笔收割请求唯一编号
     this.traceId = options.traceId || generateTraceId();
     this.sessionStartTime = Date.now();
+    this.http503RetryDelaysMs = Array.isArray(options.http503RetryDelaysMs) && options.http503RetryDelaysMs.length > 0
+      ? [...options.http503RetryDelaysMs]
+      : [...HTTP_503_RETRY_DELAYS_MS];
 
-    this.circuitBreaker = new ReconCircuitBreaker({
+    const breakerOptions = {
       failureThreshold: navigatorConfig.circuit_breaker?.failure_threshold,
-      resetTimeout: navigatorConfig.circuit_breaker?.reset_timeout_ms
-    });
+      resetTimeout: navigatorConfig.circuit_breaker?.reset_timeout_ms,
+      maxEntries: navigatorConfig.circuit_breaker?.max_entries,
+      logger: this.logger
+    };
+
+    this._defaultCircuitBreaker = new ReconCircuitBreaker(breakerOptions);
+    this.circuitBreaker = this._defaultCircuitBreaker;
+    this.circuitBreakerPool = new ReconCircuitBreakerPool(breakerOptions);
 
     this.browserContext = new ReconBrowserContext({
       logger: this.logger,
@@ -69,6 +81,8 @@ class ReconNavigator {
       logger: this.logger,
       traceId: this.traceId
     });
+    this.retryCoordinator = new ReconRetryCoordinator(this);
+    this.protocolHandler = new ReconProtocolHandler(this);
     this.isClosed = false;
     this.lastLaunchOptions = {};
     this._launching = null;
@@ -146,6 +160,83 @@ class ReconNavigator {
     };
   }
 
+  _deriveCircuitBreakerKey(url, fallbackKey = 'default') {
+    const normalized = String(url || '').trim();
+    if (!normalized) {
+      return fallbackKey;
+    }
+
+    const pageMatch = normalized.match(/\/football\/([^/]+)\/([^/?#]+?)(?:\/results(?:\/page\/\d+)?)?\/?$/i);
+    if (pageMatch) {
+      const country = pageMatch[1];
+      const slug = pageMatch[2]
+        .replace(/-\d{4}-\d{4}$/i, '')
+        .replace(/-\d{4}$/i, '');
+      return `league:${country}/${slug}`;
+    }
+
+    return fallbackKey;
+  }
+
+  _resolveCircuitBreakerKey(url, options = {}) {
+    const explicitKey = typeof options.circuitBreakerKey === 'string'
+      ? options.circuitBreakerKey.trim()
+      : '';
+    if (explicitKey) {
+      return explicitKey;
+    }
+
+    return this._deriveCircuitBreakerKey(url, 'default');
+  }
+
+  _getCircuitBreaker(key = 'default') {
+    if (
+      this.circuitBreaker
+      && this.circuitBreaker !== this._defaultCircuitBreaker
+      && typeof this.circuitBreaker.execute === 'function'
+    ) {
+      return this.circuitBreaker;
+    }
+
+    if (this.circuitBreakerPool && typeof this.circuitBreakerPool.get === 'function') {
+      return this.circuitBreakerPool.get(key);
+    }
+
+    return this.circuitBreaker || this._defaultCircuitBreaker;
+  }
+
+  async _executeWithCircuitBreaker(key, fn, options = {}) {
+    return this._getCircuitBreaker(key).execute(fn, options);
+  }
+
+  _parseRetryAfterMs(value) {
+    return this.retryCoordinator.parseRetryAfterMs(value);
+  }
+
+  async _waitBeforeRetry(delayMs) {
+    return this.retryCoordinator.waitBeforeRetry(delayMs);
+  }
+
+  async _inspectHttpFailure(url, timeoutMs) {
+    return this.retryCoordinator.inspectHttpFailure(url, timeoutMs);
+  }
+
+  async _resolveRetryableHttpFailureFromError(error, context = {}) {
+    return this.retryCoordinator.resolveRetryableHttpFailureFromError(error, context);
+  }
+
+  _resolveRetryableHttpFailureFromResult(result) {
+    return this.retryCoordinator.resolveRetryableHttpFailureFromResult(result);
+  }
+
+  _buildRetryError(context = {}, failure = {}) {
+    return this.retryCoordinator.buildRetryError(context, failure);
+  }
+
+  async _executeWith503Retry(operation, context = {}) {
+    return this.retryCoordinator.executeWith503Retry(operation, context);
+  }
+
   async launch(options = {}) {
     if (this.isHealthy()) {
       return this.page;
@@ -155,7 +246,7 @@ class ReconNavigator {
       return this._launching;
     }
 
-    this._launching = this.circuitBreaker.execute(async () => {
+    this._launching = this._executeWithCircuitBreaker('browser:launch', async () => {
       const timeout = options.timeout || this.launchTimeoutMs;
       this.lastLaunchOptions = { ...options, timeout };
 
@@ -177,6 +268,7 @@ class ReconNavigator {
   }
 
   async _performLaunch(launchOptions) {
+    this.networkMonitor.detach?.();
     const page = await this.browserContext.launch(launchOptions);
     this.isClosed = false;
     this.networkMonitor.reset();
@@ -227,13 +319,14 @@ class ReconNavigator {
 
     const timeout = options.timeout || this.navigationTimeoutMs;
     const waitUntil = options.waitUntil || 'domcontentloaded';
+    const breakerKey = this._resolveCircuitBreakerKey(url, options);
 
-    return this.circuitBreaker.execute(async () => {
-      this.logger.info('navigate_start', { url });
-      this.networkMonitor.reset();
-      this.networkMonitor.setPage(this.page);
+    return this._executeWithCircuitBreaker(breakerKey, async () => this._executeWith503Retry(
+      async () => {
+        this.logger.info('navigate_start', { url, breakerKey });
+        this.networkMonitor.reset();
+        this.networkMonitor.setPage(this.page);
 
-      try {
         await this.browserContext.navigate(url, {
           timeout,
           waitUntil,
@@ -247,13 +340,21 @@ class ReconNavigator {
         });
 
         this.logger.info('navigate_complete', {
-          url, interceptedCount: this.interceptedData.length
+          url,
+          breakerKey,
+          interceptedCount: this.interceptedData.length
         });
         return true;
-      } catch (error) {
-        this.logger.error('navigate_error', { url, error: error.message });
-        throw error;
+      },
+      {
+        operationName: 'navigate',
+        breakerKey,
+        inspectUrl: url,
+        timeoutMs: timeout
       }
+    )).catch((error) => {
+      this.logger.error('navigate_error', { url, breakerKey, error: error.message });
+      throw error;
     });
   }
 
@@ -276,312 +377,23 @@ class ReconNavigator {
    * @throws {Error} 当浏览器不可恢复或候选源抓取失败时抛出
    */
   async protocolArchiveExtract(baseUrl, options = {}) {
-    await this.ensureBrowserHealthy();
-
-    const maxPages = options.maxPages ?? this.archiveMaxPages;
-    const timeoutMs = options.timeoutMs ?? this.archiveTimeoutMs;
-    const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
-    const readySelector = typeof options.readySelector === 'string' ? options.readySelector.trim() : '';
-    const navigateOptions = readySelector ? { contentReadySelector: readySelector } : {};
-
-    if (preferCurrentSeasonSource) {
-      this.logger.info('protocol_current_season_start', { baseUrl, maxPages });
-      const currentResult = await this.stateProber.probeCurrentSeasonFromPageState(
-        baseUrl,
-        { maxPages, timeoutMs, maxScrollRounds: this.scrollAttempts, readySelector },
-        this._buildStateProbeHooks(navigateOptions)
-      );
-      this.logger.info('protocol_archive_complete', {
-        pagesScanned: currentResult.pageStats?.length || 0,
-        totalCandidates: currentResult.matches?.length || 0,
-        sourceState: currentResult.sourceState || 'SOURCE_EMPTY'
-      });
-      return currentResult;
-    }
-
-    this.logger.info('protocol_archive_start', { baseUrl, maxPages });
-    await this.navigate(baseUrl, { waitUntil: 'domcontentloaded', ...navigateOptions });
-
-    // 等待 API 端点被发现
-    await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
-    
-    const archiveEndpoints = Array.from(this.apiEndpoints)
-      .filter(url => /ajax-sport-country-tournament-archive_/i.test(url));
-
-    if (archiveEndpoints.length === 0) {
-      this.logger.warn('protocol_archive_no_api');
-      return this._fallbackToLeagueTournament(baseUrl, null, maxPages, timeoutMs, 'archive_api_missing');
-    }
-
-    // 使用评分最高的端点
-    const archiveApiUrl = archiveEndpoints.sort((a, b) => this._scoreArchiveUrl(b) - this._scoreArchiveUrl(a))[0];
-    const archiveContext = archiveApiUrl.includes('/1//')
-      ? await this._resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl)
-      : { repairedArchiveUrl: archiveApiUrl, currentTournamentUrl: null, leagueUrl: null, tournamentId: null };
-    
-    // 执行解密抓取
-    const result = await this._fetchAndDecrypt(
-      archiveContext.repairedArchiveUrl || archiveApiUrl,
-      maxPages,
-      timeoutMs,
-      { warmUrl: this.stateProber.deriveCurrentResultsUrl(baseUrl) || baseUrl }
-    );
-
-    if (result.matches.length === 0 && this._resultHasDecryptFailure(result)) {
-      const fallbackResult = await this._fallbackToLeagueTournament(
-        baseUrl,
-        archiveContext.repairedArchiveUrl || archiveApiUrl,
-        maxPages,
-        timeoutMs,
-        'archive_decrypt_failed'
-      );
-
-      if (fallbackResult.matches.length > 0) {
-        this.logger.info('protocol_archive_complete', {
-          pagesScanned: fallbackResult.pageStats?.length || 0,
-          totalCandidates: fallbackResult.matches?.length || 0,
-          sourceState: fallbackResult.sourceState || 'CURRENT_TOURNAMENT_FALLBACK'
-        });
-        return fallbackResult;
-      }
-    }
-    
-    this.logger.info('protocol_archive_complete', {
-      pagesScanned: result.pageStats.length,
-      totalCandidates: result.matches.length
-    });
-
-    return result;
+    return this.protocolHandler.protocolArchiveExtract(baseUrl, options);
   }
 
   async fetchFullSeasonArchive(baseUrl, options = {}) {
-    await this.ensureBrowserHealthy();
-
-    const timeoutMs = options.timeoutMs ?? this.archiveTimeoutMs;
-    const maxPages = options.maxPages ?? this.archiveMaxPages;
-    const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
-    const forceDomOnly = options.forceDomOnly === true;
-    const readySelector = typeof options.readySelector === 'string' ? options.readySelector.trim() : '';
-    const navigateOptions = readySelector ? { contentReadySelector: readySelector } : {};
-    const resultsUrl = this.domScraper.normalizeResultsUrl(baseUrl);
-
-    this.logger.info('season_sweep_start', {
-      baseUrl: resultsUrl,
-      maxPages,
-      preferCurrentSeasonSource,
-      forceDomOnly
-    });
-
-    const discovery = await this.domScraper.discoverSeasonResultPages(
-      resultsUrl,
-      { timeoutMs, maxPages },
-      {
-        navigate: (url, dynamicNavigateOptions) => this.navigate(url, {
-          ...dynamicNavigateOptions,
-          ...navigateOptions
-        }),
-        getInterceptedData: () => this.getInterceptedData(),
-        waitForTimeout: async (ms) => {
-          if (this.page && typeof this.page.waitForTimeout === 'function') {
-            await this.page.waitForTimeout(ms);
-          }
-        }
-      }
-    );
-    const seen = new Set();
-    const matches = [];
-    const pageStats = [];
-
-    const appendMatches = (pageMatches, pageIndex, pageUrl, source) => {
-      let newRows = 0;
-
-      for (const match of Array.isArray(pageMatches) ? pageMatches : []) {
-        const key = match?.hash || match?.url;
-        if (!key || seen.has(key)) {
-          continue;
-        }
-
-        seen.add(key);
-        matches.push(match);
-        newRows++;
-      }
-
-      pageStats.push({
-        page: pageIndex,
-        url: pageUrl,
-        rows: Array.isArray(pageMatches) ? pageMatches.length : 0,
-        newRows,
-        total: matches.length,
-        source
-      });
-    };
-
-    appendMatches(
-      discovery.initialMatches,
-      1,
-      discovery.pageUrls[0] || resultsUrl,
-      discovery.initialSource
-    );
-
-    for (let index = 1; index < discovery.pageUrls.length; index++) {
-      const pageUrl = discovery.pageUrls[index];
-      await this.navigate(pageUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs, ...navigateOptions });
-      await this.page.waitForTimeout(this.pageRevisitWaitMs);
-
-      const interceptedMatches = this.getInterceptedData();
-      let pageMatches = interceptedMatches;
-      let source = 'page_intercept';
-
-      if (pageMatches.length === 0) {
-        pageMatches = await this.domScraper.extractCurrentSeasonResultRows(pageUrl);
-        source = 'page_dom';
-      }
-
-      appendMatches(pageMatches, index + 1, pageUrl, source);
-    }
-
-    if (!forceDomOnly) {
-      const archiveResult = await this.protocolArchiveExtract(resultsUrl, {
-        maxPages,
-        timeoutMs,
-        preferCurrentSeasonSource: false,
-        readySelector
-      });
-
-      let archiveNewRows = 0;
-      for (const match of Array.isArray(archiveResult?.matches) ? archiveResult.matches : []) {
-        const key = match?.hash || match?.url;
-        if (!key || seen.has(key)) {
-          continue;
-        }
-
-        seen.add(key);
-        matches.push(match);
-        archiveNewRows++;
-      }
-
-      if (Array.isArray(archiveResult?.pageStats) && archiveResult.pageStats.length > 0) {
-        for (const [index, stat] of archiveResult.pageStats.entries()) {
-          pageStats.push({
-            ...stat,
-            page: stat?.page || (discovery.pageUrls.length + index + 1),
-            source: stat?.source || 'archive_api'
-          });
-        }
-      } else if (Array.isArray(archiveResult?.matches) && archiveResult.matches.length > 0) {
-        pageStats.push({
-          page: discovery.pageUrls.length + 1,
-          url: resultsUrl,
-          rows: archiveResult.matches.length,
-          newRows: archiveNewRows,
-          total: matches.length,
-          source: 'archive_api'
-        });
-      }
-    }
-
-    if (matches.length === 0 && preferCurrentSeasonSource && !forceDomOnly) {
-      const currentSeasonResult = await this.stateProber.probeCurrentSeasonFromPageState(
-        baseUrl,
-        { maxPages, timeoutMs, maxScrollRounds: this.scrollAttempts, readySelector },
-        this._buildStateProbeHooks(navigateOptions)
-      );
-      let currentSeasonNewRows = 0;
-
-      for (const match of Array.isArray(currentSeasonResult?.matches) ? currentSeasonResult.matches : []) {
-        const key = match?.hash || match?.url;
-        if (!key || seen.has(key)) {
-          continue;
-        }
-
-        seen.add(key);
-        matches.push(match);
-        currentSeasonNewRows++;
-      }
-
-      if (Array.isArray(currentSeasonResult?.pageStats) && currentSeasonResult.pageStats.length > 0) {
-        for (const [index, stat] of currentSeasonResult.pageStats.entries()) {
-          pageStats.push({
-            ...stat,
-            page: stat?.page || (pageStats.length + index + 1),
-            source: stat?.source || currentSeasonResult?.sourceState || 'current_results_archive'
-          });
-        }
-      } else if (Array.isArray(currentSeasonResult?.matches) && currentSeasonResult.matches.length > 0) {
-        pageStats.push({
-          page: pageStats.length + 1,
-          url: this.stateProber.deriveCurrentResultsUrl(baseUrl) || baseUrl,
-          rows: currentSeasonResult.matches.length,
-          newRows: currentSeasonNewRows,
-          total: matches.length,
-          source: currentSeasonResult?.sourceState || 'current_results_archive'
-        });
-      }
-    }
-
-    this.logger.info('season_sweep_complete', {
-      pageCount: discovery.pageUrls.length,
-      totalCandidates: matches.length
-    });
-
-    return {
-      matches,
-      pagesScanned: pageStats.length,
-      totalCandidates: matches.length,
-      pageStats,
-      sourceState: matches.length > 0 ? 'FULL_SEASON_SWEEP' : 'SOURCE_EMPTY',
-      pageUrls: discovery.pageUrls
-    };
+    return this.protocolHandler.fetchFullSeasonArchive(baseUrl, options);
   }
 
-  _buildStateProbeHooks(defaultNavigateOptions = {}) {
-    return {
-      navigate: (url, options) => this.navigate(url, {
-        ...options,
-        ...defaultNavigateOptions
-      }),
-      waitForTimeout: async (ms) => {
-        if (this.page && typeof this.page.waitForTimeout === 'function') {
-          await this.page.waitForTimeout(ms);
-        }
-      },
-      getApiEndpoints: () => Array.from(this.apiEndpoints),
-      scoreArchiveUrl: (url) => this._scoreArchiveUrl(url),
-      fetchArchive: (url, maxPages, timeoutMs) => this._fetchAndDecrypt(url, maxPages, timeoutMs),
-      collectCurrentSeasonResultsDom: (currentResultsUrl, options = {}) => {
-        this.domScraper.setPage(this.page);
-        return this.domScraper.collectCurrentSeasonResults(currentResultsUrl, {
-          ...options,
-          maxScrollRounds: options.maxScrollRounds || this.scrollAttempts,
-          scrollDelayMs: this.scrollDelayMs
-        });
-      },
-      getCurrentTournamentEndpoint: () => this._getCurrentTournamentEndpoint(),
-      buildCurrentTournamentUrlFromArchive: (url) => this._buildTournamentUrlFromArchive(url),
-      fetchCurrentTournament: (url, maxPages, timeoutMs) => (
-        this._fetchCurrentTournament(url, maxPages, timeoutMs)
-      )
-    };
+  _buildStateProbeHooks(defaultNavigateOptions = {}, circuitBreakerKey = 'default') {
+    return this.protocolHandler._buildStateProbeHooks(defaultNavigateOptions, circuitBreakerKey);
   }
 
   _getCurrentTournamentEndpoint() {
-    const endpoints = Array.from(this.apiEndpoints)
-      .filter((url) => /ajax-sport-country-tournament_\/\d+\/[^/]+\/X/i.test(url))
-      .filter((url) => !/archive_/i.test(url));
-
-    if (endpoints.length === 0) {
-      return null;
-    }
-
-    return endpoints.sort((a, b) => this._scoreTournamentUrl(b) - this._scoreTournamentUrl(a))[0];
+    return this.protocolHandler._getCurrentTournamentEndpoint();
   }
 
   _scoreTournamentUrl(url) {
-    let score = 0;
-    if (/ajax-sport-country-tournament_\/\d+\/[^/]+\/X/i.test(url)) score += 10;
-    if (!/\/\d+\/\?_=/i.test(url)) score += 2;
-    score += Math.min(url.length / 100, 3);
-    return score;
+    return this.protocolHandler._scoreTournamentUrl(url);
   }
 
   /**
@@ -589,12 +401,7 @@ class ReconNavigator {
    * @private
    */
   _scoreArchiveUrl(url) {
-    let score = 0;
-    if (!url.includes('/1//')) score += 5;
-    if (/\/archive_\/\d+\/[^/]+\/[^/]+\/\d+\/\d+\//i.test(url)) score += 8;
-    if (/\/page\/\d+\//i.test(url)) score += 2;
-    score += Math.min(url.length / 100, 3);
-    return score;
+    return this.protocolHandler._scoreArchiveUrl(url);
   }
 
   /**
@@ -602,57 +409,15 @@ class ReconNavigator {
    * @private
    */
   async _fetchAndDecrypt(apiBaseUrl, maxPages, timeoutMs, options = {}) {
-    return this._fetchAndDecryptWithOptions(apiBaseUrl, maxPages, timeoutMs, options);
+    return this.protocolHandler._fetchAndDecrypt(apiBaseUrl, maxPages, timeoutMs, options);
   }
 
   async _fetchAndDecryptWithOptions(apiBaseUrl, maxPages, timeoutMs, options = {}) {
-    const fetchOnce = () => this.circuitBreaker.execute(async () => {
-      this.networkMonitor.setPage(this.page);
-      return this.networkMonitor.fetchArchivePages(apiBaseUrl, maxPages, timeoutMs);
-    });
-
-    const initialResult = await fetchOnce();
-    if (!this._resultHasDecryptFailure(initialResult)) {
-      return initialResult;
-    }
-
-    if (options.allowRecovery === false) {
-      return initialResult;
-    }
-
-    this.logger.warn('navigator_relaunch_after_decrypt_failure', {
-      apiBaseUrl,
-      warmUrl: options.warmUrl || null
-    });
-
-    try {
-      await this.close();
-      await this.launch(this.lastLaunchOptions || {});
-
-      if (options.warmUrl) {
-        await this.navigate(options.warmUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
-        if (this.page && typeof this.page.waitForTimeout === 'function') {
-          await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
-        }
-      }
-
-      const retriedResult = await fetchOnce();
-      retriedResult.retriedAfterRelaunch = true;
-      return retriedResult;
-    } catch (error) {
-      this.logger.warn('navigator_relaunch_after_decrypt_failure_failed', {
-        apiBaseUrl,
-        error: error.message
-      });
-      return initialResult;
-    }
+    return this.protocolHandler._fetchAndDecryptWithOptions(apiBaseUrl, maxPages, timeoutMs, options);
   }
 
-  async _fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs) {
-    return this.circuitBreaker.execute(async () => {
-      this.networkMonitor.setPage(this.page);
-      return this.networkMonitor.fetchCurrentTournamentPages(apiBaseUrl, maxPages, timeoutMs);
-    });
+  async _fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs, options = {}) {
+    return this.protocolHandler._fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs, options);
   }
 
   /**
@@ -668,6 +433,7 @@ class ReconNavigator {
    */
   async close() {
     this.isClosed = true;
+    this.networkMonitor.detach?.();
     this.networkMonitor.reset();
     await this.browserContext.close();
     this.networkMonitor.setPage(null);
@@ -676,91 +442,30 @@ class ReconNavigator {
   }
 
   _resultHasDecryptFailure(result) {
-    return Array.isArray(result?.pageStats)
-      && result.pageStats.some((stat) => typeof stat?.error === 'string'
-        && stat.error.startsWith('decrypt_failed:'));
+    return this.protocolHandler._resultHasDecryptFailure(result);
   }
 
-  async _resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl = null) {
-    const leagueUrl = this.stateProber.deriveLeaguePageUrl(baseUrl);
-    if (!leagueUrl) {
-      return {
-        leagueUrl: null,
-        tournamentId: null,
-        repairedArchiveUrl: archiveApiUrl,
-        currentTournamentUrl: null
-      };
-    }
-
-    await this.navigate(leagueUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
-    if (this.page && typeof this.page.waitForTimeout === 'function') {
-      await this.page.waitForTimeout(this.postApiDiscoveryWaitMs);
-    }
-
-    const tournamentToken = await this.stateProber.extractTournamentToken();
-    const repairedArchiveUrl = tournamentToken
-      ? this._repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentToken)
-      : archiveApiUrl;
-    const currentTournamentUrl = this._getCurrentTournamentEndpoint()
-      || this._buildTournamentUrlFromArchive(archiveApiUrl, tournamentToken);
-
-    return {
-      leagueUrl,
-      tournamentId: tournamentToken || null,
-      repairedArchiveUrl,
-      currentTournamentUrl
-    };
+  async _resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl = null, options = {}) {
+    return this.protocolHandler._resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl, options);
   }
 
   _repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentId) {
-    return ReconEndpointHelper.repairArchiveEndpointWithTournamentToken(archiveApiUrl, tournamentId);
+    return this.protocolHandler._repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentId);
   }
 
   _buildTournamentUrlFromArchive(archiveApiUrl, tournamentId) {
-    if (!archiveApiUrl) {
-      return null;
-    }
-
-    const match = archiveApiUrl.match(/^(.*?\/ajax-sport-country-tournament)-archive_\/(\d+)\/[^/]*\/(X[^/]+)\/(\d+)\/\d+\/?/i);
-    if (!match) {
-      return null;
-    }
-
-    const resolvedTournamentId = tournamentId || archiveApiUrl.match(
-      /\/ajax-sport-country-tournament-archive_\/\d+\/([^/]+)\/X/i
-    )?.[1];
-    if (!resolvedTournamentId) {
-      return null;
-    }
-
-    return `${match[1]}_/${match[2]}/${resolvedTournamentId}/${match[3]}/${match[4]}/`;
+    return this.protocolHandler._buildTournamentUrlFromArchive(archiveApiUrl, tournamentId);
   }
 
-  async _fallbackToLeagueTournament(baseUrl, archiveApiUrl, maxPages, timeoutMs, reason = 'fallback') {
-    const context = await this._resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl);
-    if (!context.currentTournamentUrl) {
-      return {
-        matches: [],
-        pagesScanned: 0,
-        totalCandidates: 0,
-        pageStats: [],
-        sourceState: 'SOURCE_EMPTY'
-      };
-    }
-
-    this.logger.warn('protocol_archive_fallback_current_tournament', {
+  async _fallbackToLeagueTournament(baseUrl, archiveApiUrl, maxPages, timeoutMs, reason = 'fallback', options = {}) {
+    return this.protocolHandler._fallbackToLeagueTournament(
       baseUrl,
+      archiveApiUrl,
+      maxPages,
+      timeoutMs,
       reason,
-      currentTournamentUrl: context.currentTournamentUrl
-    });
-
-    const result = await this._fetchCurrentTournament(context.currentTournamentUrl, maxPages, timeoutMs);
-    return {
-      ...result,
-      sourceState: Array.isArray(result?.matches) && result.matches.length > 0
-        ? 'CURRENT_TOURNAMENT_FALLBACK'
-        : 'SOURCE_EMPTY'
-    };
+      options
+    );
   }
 }
 

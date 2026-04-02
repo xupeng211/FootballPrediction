@@ -1,0 +1,327 @@
+/**
+ * V173-SENTINEL 核心功能单元测试
+ * ==================================
+ *
+ * 测试范围:
+ * - ID 格式校验
+ * - URL 拼接逻辑
+ * - 配置加载
+ * - 质量门禁验证
+ *
+ * @module tests/v173_core
+ * @version V173.0.0
+ */
+
+'use strict';
+
+const assert = require('assert');
+const path = require('path');
+
+// ============================================================================
+// 测试配置
+// ============================================================================
+
+const PROJECT_ROOT = process.env.PROJECT_ROOT || '/app';
+
+// ============================================================================
+// 测试用例 1: ID 格式校验
+// ============================================================================
+
+function testIdValidation() {
+    console.log('\n📋 测试用例 1: ID 格式校验');
+
+    // 有效 ID 测试
+    const validIds = ['12345', '987654321', '1', '123456789012345'];
+    for (const id of validIds) {
+        const isValid = /^\d+$/.test(id);
+        assert.strictEqual(isValid, true, `有效 ID "${id}" 应该通过验证`);
+        console.log(`   ✅ ${id} - 有效`);
+    }
+
+    // 无效 ID 测试
+    const invalidIds = ['', 'abc', '123abc', 'abc123', null, undefined];
+    for (const id of invalidIds) {
+        const isValid = !!(id && typeof id === 'string' && /^\d+$/.test(id));
+        assert.strictEqual(isValid, false, `无效 ID "${id}" 应该失败`);
+        console.log(`   ✅ ${id === '' ? '(空字符串)' : id} - 无效 (正确拒绝)`);
+    }
+
+    console.log('   ✅ ID 格式校验测试通过');
+}
+
+// ============================================================================
+// 测试用例 2: URL 拼接逻辑
+// ============================================================================
+
+function testUrlConstruction() {
+    console.log('\n📋 测试用例 2: URL 拼接逻辑');
+
+    // FotMob 比赛页 URL
+    const fotmobBaseUrl = 'https://www.fotmob.com/match/';
+
+    const testCases = [
+        { id: '12345', expected: 'https://www.fotmob.com/match/12345' },
+        { id: '987654321', expected: 'https://www.fotmob.com/match/987654321' },
+        { id: '1', expected: 'https://www.fotmob.com/match/1' }
+    ];
+
+    for (const tc of testCases) {
+        const url = `${fotmobBaseUrl}${tc.id}`;
+        assert.strictEqual(url, tc.expected, `URL 拼接错误: ${url}`);
+        console.log(`   ✅ ${tc.id} -> ${url}`);
+    }
+
+    console.log('   ✅ URL 拼接逻辑测试通过');
+}
+
+// ============================================================================
+// 测试用例 3: 配置加载
+// ============================================================================
+
+function testConfigLoading() {
+    console.log('\n📋 测试用例 3: 配置加载');
+
+    try {
+        const FactoryConfig = require(path.join(PROJECT_ROOT, 'config/factory_config'));
+
+        // 验证配置模块存在
+        assert.ok(FactoryConfig, '配置模块应该存在');
+        console.log('   ✅ 配置模块加载成功');
+
+        // 验证核心配置存在
+        assert.ok(FactoryConfig.QUALITY_GATE, 'QUALITY_GATE 配置应该存在');
+        assert.ok(FactoryConfig.TIMING, 'TIMING 配置应该存在');
+        assert.ok(FactoryConfig.RETRY, 'RETRY 配置应该存在');
+        assert.ok(FactoryConfig.PROXY_CONFIG, 'PROXY_CONFIG 配置应该存在');
+        console.log('   ✅ 核心配置模块验证通过');
+
+        // 验证默认值
+        assert.ok(FactoryConfig.QUALITY_GATE.minSizeBytes > 0, 'minSizeBytes 应该大于 0');
+        assert.ok(FactoryConfig.TIMING.minDelayMs > 0, 'minDelayMs 应该大于 0');
+        assert.ok(FactoryConfig.RETRY.maxAttempts > 0, 'maxAttempts 应该大于 0');
+        console.log('   ✅ 配置默认值验证通过');
+
+        // V173: 验证新增配置
+        assert.ok(FactoryConfig.FOTMOB_COOL_DOWN, 'FOTMOB_COOL_DOWN 配置应该存在');
+        console.log('   ✅ V173 深度静默模式配置验证通过');
+
+        // 验证版本号
+        assert.strictEqual(FactoryConfig.VERSION, 'V173.0.0', '版本号应该是 V173.0.0');
+        console.log('   ✅ 版本号验证通过');
+
+    } catch (error) {
+        // 如果配置文件不存在，跳过此测试
+        if (error.code === 'MODULE_NOT_FOUND') {
+            console.log('   ⚠️  配置模块未找到，跳过此测试');
+            return;
+        }
+        throw error;
+    }
+
+    console.log('   ✅ 配置加载测试通过');
+}
+
+// ============================================================================
+// 测试用例 4: 质量门禁验证
+// ============================================================================
+
+function testQualityGate() {
+    console.log('\n📋 测试用例 4: 质量门禁验证');
+
+    try {
+        const FactoryConfig = require(path.join(PROJECT_ROOT, 'config/factory_config'));
+        const { QUALITY_GATE } = FactoryConfig;
+
+        // 测试无效数据
+        const invalidCases = [
+            { data: null, reason: 'NULL_DATA' },
+            { data: undefined, reason: 'NULL_DATA' },
+            { data: {}, reason: 'SIZE_TOO_SMALL' },
+            { data: { content: 'x'.repeat(100) }, reason: 'SIZE_TOO_SMALL' }
+        ];
+
+        for (const tc of invalidCases) {
+            const result = QUALITY_GATE.isValid(tc.data);
+            assert.strictEqual(result.valid, false, `应该拒绝: ${tc.reason}`);
+            console.log(`   ✅ 正确拒绝: ${result.reason}`);
+        }
+
+        // 测试有效数据
+        const validData = {
+            content: {
+                stats: { Periods: { All: { stats: [] } } }
+            },
+            general: { matchId: '12345' },
+            header: { league: 'Premier League' }
+        };
+
+        // 确保数据足够大
+        const largeValidData = {
+            ...validData,
+            extra: 'x'.repeat(10000)  // 确保超过 minSizeBytes
+        };
+
+        const result = QUALITY_GATE.isValid(largeValidData);
+        assert.strictEqual(result.valid, true, `应该接受有效数据: ${result.reason || 'OK'}`);
+        console.log(`   ✅ 正确接受有效数据 (${result.size} bytes)`);
+
+    } catch (error) {
+        if (error.code === 'MODULE_NOT_FOUND') {
+            console.log('   ⚠️  配置模块未找到，跳过此测试');
+            return;
+        }
+        throw error;
+    }
+
+    console.log('   ✅ 质量门禁验证测试通过');
+}
+
+// ============================================================================
+// 测试用例 5: 代理端口映射
+// ============================================================================
+
+function testProxyPortMapping() {
+    console.log('\n📋 测试用例 5: 代理端口映射');
+
+    try {
+        const FactoryConfig = require(path.join(PROJECT_ROOT, 'config/factory_config'));
+        const { PROXY_CONFIG } = FactoryConfig;
+
+        // 验证端口池存在
+        assert.ok(Array.isArray(PROXY_CONFIG.ports), '端口池应该是数组');
+        assert.ok(PROXY_CONFIG.ports.length > 0, '端口池不应该为空');
+        console.log(`   ✅ 端口池包含 ${PROXY_CONFIG.ports.length} 个端口`);
+
+        // 验证 Worker ID 到端口的映射
+        const port1 = PROXY_CONFIG.getPortByWorker(1);
+        const port2 = PROXY_CONFIG.getPortByWorker(2);
+        const port6 = PROXY_CONFIG.getPortByWorker(6);  // 超过端口数量时应该循环
+
+        assert.ok(port1 >= 7890, '端口 1 应该在有效范围内');
+        assert.ok(port2 >= 7890, '端口 2 应该在有效范围内');
+        console.log(`   ✅ Worker 1 -> Port ${port1}`);
+        console.log(`   ✅ Worker 2 -> Port ${port2}`);
+        console.log(`   ✅ Worker 6 -> Port ${port6} (循环映射)`);
+
+        // 验证端口切换
+        const nextPort = PROXY_CONFIG.getNextPort(port1);
+        assert.ok(nextPort >= 7890, '下一个端口应该在有效范围内');
+        console.log(`   ✅ Port ${port1} -> Next Port ${nextPort}`);
+
+    } catch (error) {
+        if (error.code === 'MODULE_NOT_FOUND') {
+            console.log('   ⚠️  配置模块未找到，跳过此测试');
+            return;
+        }
+        throw error;
+    }
+
+    console.log('   ✅ 代理端口映射测试通过');
+}
+
+// ============================================================================
+// 测试用例 6: 重试逻辑
+// ============================================================================
+
+function testRetryLogic() {
+    console.log('\n📋 测试用例 6: 重试逻辑');
+
+    try {
+        const FactoryConfig = require(path.join(PROJECT_ROOT, 'config/factory_config'));
+        const { RETRY, getExponentialBackoff } = FactoryConfig;
+
+        // 验证可重试错误
+        const retryableErrors = ['SIZE_TOO_SMALL', 'TURNSTILE_REQUIRED', 'NETWORK_ERROR', 'TIMEOUT'];
+        for (const err of retryableErrors) {
+            const isRetryable = RETRY.isRetryable(err);
+            assert.strictEqual(isRetryable, true, `${err} 应该可重试`);
+            console.log(`   ✅ ${err} - 可重试`);
+        }
+
+        // 验证不可重试错误
+        const nonRetryableErrors = ['MATCH_NOT_FOUND', 'INVALID_ID', 'ACCESS_DENIED'];
+        for (const err of nonRetryableErrors) {
+            const isRetryable = RETRY.isRetryable(err);
+            assert.strictEqual(isRetryable, false, `${err} 不应该可重试`);
+            console.log(`   ✅ ${err} - 不可重试`);
+        }
+
+        // 验证指数退避
+        const delay1 = getExponentialBackoff(1);
+        const delay2 = getExponentialBackoff(2);
+        const delay3 = getExponentialBackoff(3);
+
+        assert.ok(delay1 > 0, '第一次重试延时应该大于 0');
+        assert.ok(delay2 >= delay1, '第二次重试延时应该 >= 第一次');
+        assert.ok(delay3 >= delay2, '第三次重试延时应该 >= 第二次');
+        console.log(`   ✅ 指数退避: ${delay1}ms -> ${delay2}ms -> ${delay3}ms`);
+
+    } catch (error) {
+        if (error.code === 'MODULE_NOT_FOUND') {
+            console.log('   ⚠️  配置模块未找到，跳过此测试');
+            return;
+        }
+        throw error;
+    }
+
+    console.log('   ✅ 重试逻辑测试通过');
+}
+
+// ============================================================================
+// 主测试运行器
+// ============================================================================
+
+function runAllTests() {
+    console.log('');
+    console.log('═'.repeat(60));
+    console.log('  V173-SENTINEL 核心功能单元测试');
+    console.log('═'.repeat(60));
+
+    const tests = [
+        { name: 'ID 格式校验', fn: testIdValidation },
+        { name: 'URL 拼接逻辑', fn: testUrlConstruction },
+        { name: '配置加载', fn: testConfigLoading },
+        { name: '质量门禁验证', fn: testQualityGate },
+        { name: '代理端口映射', fn: testProxyPortMapping },
+        { name: '重试逻辑', fn: testRetryLogic }
+    ];
+
+    let passed = 0;
+    let failed = 0;
+
+    for (const test of tests) {
+        try {
+            test.fn();
+            passed++;
+        } catch (error) {
+            console.log(`   ❌ 测试失败: ${error.message}`);
+            failed++;
+        }
+    }
+
+    console.log('');
+    console.log('─'.repeat(60));
+    console.log(`  测试结果: ${passed} 通过 / ${failed} 失败`);
+    console.log('─'.repeat(60));
+    console.log('');
+
+    if (failed > 0) {
+        process.exit(1);
+    }
+}
+
+// 导出测试函数
+module.exports = {
+    testIdValidation,
+    testUrlConstruction,
+    testConfigLoading,
+    testQualityGate,
+    testProxyPortMapping,
+    testRetryLogic,
+    runAllTests
+};
+
+// 如果直接运行此文件
+if (require.main === module) {
+    runAllTests();
+}

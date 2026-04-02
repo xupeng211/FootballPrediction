@@ -46,14 +46,24 @@ class FixtureRepository {
     this.retryBackoffMultiplier = options.retryBackoffMultiplier ?? RETRY_CONFIG.backoff_multiplier;
     this.traceId = options.traceId || null;
     this.mappingMigration = options.mappingMigration || mappingMigration;
-    this.sleep = options.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.sleep = options.sleep || ((ms) => new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    }));
     this.now = options.now || (() => Date.now());
 
     this.conflictArbiter = new ReconConflictArbiter({
       sameFixtureThreshold: options.conflictArbiterOptions?.sameFixtureThreshold
         ?? CONFLICT_ARBITER_CONFIG.same_fixture_threshold,
       sameFixtureWindowMs: options.conflictArbiterOptions?.sameFixtureWindowMs
-        ?? CONFLICT_ARBITER_CONFIG.same_fixture_window_ms
+        ?? CONFLICT_ARBITER_CONFIG.same_fixture_window_ms,
+      linkedRebindMinDateGapMs: options.conflictArbiterOptions?.linkedRebindMinDateGapMs
+        ?? CONFLICT_ARBITER_CONFIG.linked_rebind_min_date_gap_ms,
+      linkedRebindMinIncomingConfidence: options.conflictArbiterOptions?.linkedRebindMinIncomingConfidence
+        ?? CONFLICT_ARBITER_CONFIG.linked_rebind_min_incoming_confidence,
+      linkedRebindMinConfidenceDelta: options.conflictArbiterOptions?.linkedRebindMinConfidenceDelta
+        ?? CONFLICT_ARBITER_CONFIG.linked_rebind_min_confidence_delta,
+      linkedRebindMinScoreDelta: options.conflictArbiterOptions?.linkedRebindMinScoreDelta
+        ?? CONFLICT_ARBITER_CONFIG.linked_rebind_min_score_delta
     });
     this.schemaJanitor = new ReconSchemaJanitor({
       getDbPool: () => this.dbPool,
@@ -98,7 +108,7 @@ class FixtureRepository {
       }
     });
   }
-  async init() {
+  async init(options = {}) {
     if (!this.dbPool) {
       const { Pool } = require('pg');
       this.dbPool = new Pool({
@@ -112,9 +122,9 @@ class FixtureRepository {
       });
       this.logger.info('[Repository] 数据库连接池已创建');
     }
-    await this.ensureOddsPortalMappingSchema();
+    await this.ensureOddsPortalMappingSchema(options);
   }
-  async ensureOddsPortalMappingSchema() { return this.schemaJanitor.ensureOddsPortalMappingSchema(); }
+  async ensureOddsPortalMappingSchema(options = {}) { return this.schemaJanitor.ensureOddsPortalMappingSchema(options); }
   async auditCanonicalIdentityDuplicates(options = {}) { return this.matchCanonicalJanitor.auditDuplicateGroups(options); }
   async repairCanonicalIdentity(options = {}) { return this.matchCanonicalJanitor.consolidateDuplicateGroups(options); }
   async _executeWithRetry(operation, operationName) {

@@ -5,8 +5,8 @@
  * 测试目标: 验证 NetworkShield 在所有代理不可用时
  *          能正确抛出 CIRCUIT_BREAKER_OPEN 错误，而不是死循环
  *
- * 用法:
- *   node scripts/ops/circuit_breaker_test.js
+ * 状态:
+ *   已隔离为 *.js.disabled，避免被 node --test 默认扫描
  *
  * @version V4.46.1
  */

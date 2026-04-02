@@ -147,7 +147,7 @@ class HarvesterContextPool extends ContextPoolManager {
         this._pool.delete(workerId);
 
         if (reason) {
-            console.log(`🧹 [W${workerId}] Context 已关闭 (${reason})`);
+            this._logInfo(`🧹 [W${workerId}] Context 已关闭 (${reason})`);
         }
 
         return true;

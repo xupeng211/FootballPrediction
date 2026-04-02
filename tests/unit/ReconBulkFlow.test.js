@@ -6,7 +6,9 @@ const assert = require('node:assert');
 const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
 const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
 
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const delay = (ms) => new Promise((resolve) => {
+  setTimeout(resolve, ms);
+});
 
 function createPendingMatches(count, leagueName = 'Premier League', season = '2024/2025') {
   return Array.from({ length: count }, (_, index) => ({
@@ -145,8 +147,9 @@ describe('ReconEngine - Bulk Flow TDD', () => {
         url: 'oddsportal://root/football/england/premier-league-2025-2026/results/',
         options: {
           maxPages: 50,
-          timeoutMs: 90000,
-          preferCurrentSeasonSource: true
+          timeoutMs: engine.archiveTimeoutMs,
+          preferCurrentSeasonSource: true,
+          circuitBreakerKey: 'recon:47:2025/2026'
         }
       }
     ]);
@@ -261,6 +264,19 @@ describe('ReconEngine - Bulk Flow TDD', () => {
       baseUrl: 'oddsportal://root'
     });
 
+    engine._reconcilePendingMatch = async (l1Match, _candidates, target) => ({
+      status: 'linked',
+      mapping: {
+        match_id: l1Match.match_id,
+        oddsportal_hash: `hash_${l1Match.match_id}`,
+        full_url: `oddsportal://match/${l1Match.match_id}`,
+        season: target.dbSeason,
+        league_name: target.league.name,
+        home_team: l1Match.home_team,
+        away_team: l1Match.away_team
+      }
+    });
+
     const result = await engine.runReconMatrix({
       season: '2024-2025',
       concurrency: 5,
@@ -352,7 +368,8 @@ describe('ReconEngine - Bulk Flow TDD', () => {
           }
         ],
         options: {
-          pipelineStatus: 'RECON_LINKED'
+          pipelineStatus: 'RECON_LINKED',
+          preserve_linked_status: true
         }
       }
     ]);

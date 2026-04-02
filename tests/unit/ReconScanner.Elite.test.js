@@ -23,6 +23,7 @@ const {
   ReconErrorClassifier,
   ReconRetryStrategy,
   ReconCircuitBreaker,
+  ReconCircuitBreakerPool,
   ErrorTypes,
   CircuitBreakerOpenError,
   LockAcquireFailure
@@ -59,6 +60,15 @@ describe('ReconScanner Elite - Transient Error Recovery', () => {
         `${error.message} 应被识别为 TRANSIENT`);
       assert.strictEqual(classified.retryable, true, 'TRANSIENT 错误应可重试');
     }
+  });
+
+  it('应将 ERR_HTTP_RESPONSE_CODE_FAILURE 识别为瞬态错误', () => {
+    const classified = ReconErrorClassifier.classify({
+      message: 'page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE at https://example.com/results/'
+    });
+
+    assert.strictEqual(classified.type, ErrorTypes.TRANSIENT);
+    assert.strictEqual(classified.retryable, true);
   });
 
   it('应识别代理封禁错误 (403, 429)', () => {
@@ -184,7 +194,9 @@ describe('ReconScanner Elite - Circuit Breaker', () => {
     cb.trip('test trip');
     assert.strictEqual(cb.getStatus().state, 'OPEN');
     
-    await new Promise(resolve => setTimeout(resolve, 150));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 150);
+    });
     
     let enteredHalfOpen = false;
     try {
@@ -210,6 +222,42 @@ describe('ReconScanner Elite - Circuit Breaker', () => {
     
     const result = await cb.execute(async () => 'success');
     assert.strictEqual(result, 'success');
+  });
+
+  it('应支持按 key 隔离熔断状态，避免跨目标污染', async () => {
+    const pool = new ReconCircuitBreakerPool({
+      failureThreshold: 1,
+      resetTimeout: 60_000,
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    await assert.rejects(
+      () => pool.execute('league:epl', async () => {
+        throw new Error('league epl timeout');
+      }),
+      /league epl timeout/
+    );
+
+    const result = await pool.execute('league:mls', async () => 'ok');
+    assert.strictEqual(result, 'ok');
+    assert.strictEqual(pool.getStatus('league:epl').state, 'OPEN');
+    assert.strictEqual(pool.getStatus('league:mls').state, 'CLOSED');
+  });
+
+  it('熔断器池超过 maxEntries 时应淘汰最旧 key', async () => {
+    const pool = new ReconCircuitBreakerPool({
+      failureThreshold: 1,
+      maxEntries: 2,
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    pool.get('league:epl');
+    pool.get('league:mls');
+    pool.get('league:serie-a');
+
+    assert.strictEqual(pool.breakers.has('league:epl'), false);
+    assert.strictEqual(pool.breakers.has('league:mls'), true);
+    assert.strictEqual(pool.breakers.has('league:serie-a'), true);
   });
 
   it('应在遇到永久错误时立即熔断', async () => {

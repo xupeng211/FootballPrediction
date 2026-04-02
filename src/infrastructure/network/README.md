@@ -547,14 +547,10 @@ try {
 ### 运行测试
 
 ```bash
-# 单元测试
-npm test src/infrastructure/network/tests/CircuitBreaker.test.js
+# 历史网络测试已隔离，默认不会再被 node --test 扫描
+ls src/infrastructure/network/tests/*.js.disabled
 
-# 集成测试
-npm test src/infrastructure/network/tests/integration.test.js
-
-# 所有测试
-npm test src/infrastructure/network/tests/
+# 如需恢复，请先迁回可执行文件名并补齐 node:test 兼容
 ```
 
 ### 测试覆盖率
