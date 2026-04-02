@@ -10,7 +10,7 @@
 
 'use strict';
 
-const { describe, it, beforeEach, afterEach } = require('node:test');
+const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert');
 
 describe('ProductionHarvester 深度测试', () => {
@@ -26,6 +26,7 @@ describe('ProductionHarvester 深度测试', () => {
       maxRetries: 2,
       verboseLogging: false
     });
+    harvester._delay = async () => {};
   });
 
   describe('构造函数与配置', () => {

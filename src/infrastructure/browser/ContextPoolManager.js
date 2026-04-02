@@ -33,6 +33,7 @@ class ContextPoolManager {
             maxSize: config.maxSize || 20,
             ...config
         };
+        this.logger = config.logger || console;
 
         // Context 池: workerId -> { context, usageCount, lastPort, lastAccessTime, ... }
         this._pool = new Map();
@@ -139,7 +140,7 @@ class ContextPoolManager {
         this._pool.set(workerId, newEntry);
         this._stats.totalCreations++;
 
-        console.log(`🔄 [W${workerId}] Context 创建: ${reason} | Port ${identity.proxy.port} | Cookie=${cookieLoaded} | Pool=${this._pool.size}/${this.config.maxSize}`);
+        this._logInfo(`🔄 [W${workerId}] Context 创建: ${reason} | Port ${identity.proxy.port} | Cookie=${cookieLoaded} | Pool=${this._pool.size}/${this.config.maxSize}`);
 
         return { context, isNew: true, entry: newEntry };
     }
@@ -156,7 +157,7 @@ class ContextPoolManager {
         entry.lastAccessTime = Date.now();
         this._stats.totalReuses++;
 
-        console.log(`♻️  [W${workerId}] Context 复用: ${entry.usageCount}/${this.config.maxUsage} | Port ${currentPort}`);
+        this._logInfo(`♻️  [W${workerId}] Context 复用: ${entry.usageCount}/${this.config.maxUsage} | Port ${currentPort}`);
 
         return { context: entry.context, isNew: false, entry };
     }
@@ -172,10 +173,10 @@ class ContextPoolManager {
             try {
                 await entry.context.clearCookies();
                 entry.usageCount = 0;  // 重置计数
-                console.log(`🧹 [W${workerId}] 403 逃逸: Cookies 已清理`);
+                this._logInfo(`🧹 [W${workerId}] 403 逃逸: Cookies 已清理`);
                 return true;
             } catch (e) {
-                console.log(`⚠️  [W${workerId}] 403 逃逸失败: ${e.message}`);
+                this._logInfo(`⚠️  [W${workerId}] 403 逃逸失败: ${e.message}`);
                 return false;
             }
         }
@@ -223,7 +224,7 @@ class ContextPoolManager {
             this._stats.totalEvictions++;
 
             const idleSeconds = ((Date.now() - oldestTime) / 1000).toFixed(0);
-            console.log(`🗑️ [LRU] 淘汰 W${oldestWorkerId} Context (空闲 ${idleSeconds}s)`);
+            this._logInfo(`🗑️ [LRU] 淘汰 W${oldestWorkerId} Context (空闲 ${idleSeconds}s)`);
         }
     }
 
@@ -239,6 +240,16 @@ class ContextPoolManager {
             } catch (e) {
                 // 忽略关闭错误
             }
+        }
+    }
+
+    _logInfo(message) {
+        if (typeof this.logger?.info === 'function') {
+            this.logger.info(message);
+            return;
+        }
+        if (typeof this.logger?.log === 'function') {
+            this.logger.log(message);
         }
     }
 
@@ -260,7 +271,7 @@ class ContextPoolManager {
         if (cleaned > 0 || this._stats.totalCreations > 0) {
             const reuseRate = this._getReuseRate();
             const evictionRate = this._getEvictionRate();
-            console.log(`🧹 Context 池清理: ${cleaned} 个 | 创建=${this._stats.totalCreations} | 复用=${this._stats.totalReuses} (${reuseRate}% 复用率) | 淘汰=${this._stats.totalEvictions} (${evictionRate}%)`);
+            this._logInfo(`🧹 Context 池清理: ${cleaned} 个 | 创建=${this._stats.totalCreations} | 复用=${this._stats.totalReuses} (${reuseRate}% 复用率) | 淘汰=${this._stats.totalEvictions} (${evictionRate}%)`);
         }
     }
 

@@ -77,6 +77,8 @@ class ReconErrorClassifier {
         code === 'ETIMEDOUT' || 
         code === 'ECONNREFUSED' ||
         code === 'ENOTFOUND' ||
+        message.includes('err_http_response_code_failure') ||
+        message.includes('http_response_code_failure') ||
         message.includes('503') || 
         message.includes('502') || 
         message.includes('504') ||
@@ -262,7 +264,7 @@ class ReconRetryStrategy {
    * @returns {Promise<void>}
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => { setTimeout(resolve, ms); });
   }
 }
 
@@ -419,6 +421,65 @@ class ReconCircuitBreaker {
 }
 
 /**
+ * 按目标隔离的熔断器池
+ * @class ReconCircuitBreakerPool
+ */
+class ReconCircuitBreakerPool {
+  constructor(options = {}) {
+    this.logger = options.logger || console;
+    this.maxEntries = Math.max(1, Number(options.maxEntries || 100));
+    this.breakerOptions = {
+      failureThreshold: options.failureThreshold,
+      resetTimeout: options.resetTimeout,
+      halfOpenMaxCalls: options.halfOpenMaxCalls,
+      logger: this.logger
+    };
+    this.breakers = new Map();
+  }
+
+  _normalizeKey(key) {
+    const normalized = String(key || 'default').trim();
+    return normalized || 'default';
+  }
+
+  get(key = 'default') {
+    const normalizedKey = this._normalizeKey(key);
+    if (!this.breakers.has(normalizedKey)) {
+      if (this.breakers.size >= this.maxEntries) {
+        const oldestKey = this.breakers.keys().next().value;
+        if (oldestKey !== undefined) {
+          this.breakers.delete(oldestKey);
+        }
+      }
+      this.breakers.set(normalizedKey, new ReconCircuitBreaker(this.breakerOptions));
+    }
+    const breaker = this.breakers.get(normalizedKey);
+    this.breakers.delete(normalizedKey);
+    this.breakers.set(normalizedKey, breaker);
+    return breaker;
+  }
+
+  async execute(key, fn, options = {}) {
+    return this.get(key).execute(fn, options);
+  }
+
+  reset(key = null) {
+    if (key === null || key === undefined) {
+      for (const breaker of this.breakers.values()) {
+        breaker.reset();
+      }
+      return;
+    }
+
+    this.get(key).reset();
+  }
+
+  getStatus(key = 'default') {
+    return this.get(key).getStatus();
+  }
+}
+
+/**
  * 熔断器打开错误
  */
 class CircuitBreakerOpenError extends Error {
@@ -433,5 +494,6 @@ module.exports = {
   ReconErrorClassifier,
   ReconRetryStrategy,
   ReconCircuitBreaker,
+  ReconCircuitBreakerPool,
   CircuitBreakerOpenError
 };

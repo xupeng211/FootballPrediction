@@ -1,9 +1,10 @@
 'use strict';
 
-const vm = require('node:vm');
-
 const { RECON_CONFIG, getReconConfigSection } = require('./ReconServiceConfig');
 const { ReconDecryptor } = require('../ReconDecryptor');
+const { reconInterceptHandler } = require('./ReconInterceptHandler');
+const { reconResponseDecoder } = require('./ReconResponseDecoder');
+const { reconMatchExtractor } = require('./ReconMatchExtractor');
 
 const BASE_URL = RECON_CONFIG.oddsportal.base_url;
 
@@ -51,7 +52,27 @@ class ReconNetworkMonitor {
       new ReconDecryptor({
         logger: this.logger,
         traceId: this.traceId,
-        allowBestEffortCandidate: true
+        allowBestEffortCandidate: true,
+        sampleCrossValidateCount: Number(
+          options.decryptorSampleCrossValidateCount
+          ?? runtimeConfig.decryptor_sample_cross_validate_count
+          ?? 3
+        ),
+        maxCachedSamples: Number(
+          options.decryptorMaxCachedSamples
+          ?? runtimeConfig.decryptor_max_cached_samples
+          ?? 8
+        ),
+        readinessTimeoutMs: Number(
+          options.decryptorReadinessTimeoutMs
+          ?? runtimeConfig.decryptor_readiness_timeout_ms
+          ?? 12000
+        ),
+        readinessPollMs: Number(
+          options.decryptorReadinessPollMs
+          ?? runtimeConfig.decryptor_readiness_poll_ms
+          ?? 250
+        )
       })
     ));
     this.decryptor = options.decryptor || this.decryptorFactory();
@@ -66,6 +87,7 @@ class ReconNetworkMonitor {
     this.matchApiPatterns = compileRegexPatterns(options.matchApiPatterns || runtimeConfig.match_api_patterns || []);
     this.scriptWrapperPatterns = compileRegexPatterns(options.scriptWrapperPatterns || runtimeConfig.script_wrapper_patterns || []);
     this.knownErrorPatterns = compileRegexPatterns(options.knownErrorPatterns || runtimeConfig.known_error_patterns || []);
+    this._attachedPage = null;
   }
 
   setPage(page) {
@@ -76,391 +98,6 @@ class ReconNetworkMonitor {
     this.interceptedData = [];
     this.apiEndpoints = new Set();
     this.decryptor = this.decryptorFactory();
-  }
-
-  attach(page) {
-    this.page = page || this.page;
-    if (!this.page || typeof this.page.on !== 'function') {
-      return;
-    }
-
-    this._responseHandler = async (response) => this.handleResponse(response);
-    this.page.on('response', this._responseHandler);
-  }
-
-  async handleResponse(response) {
-    try {
-      const url = response.url();
-      if (!this.isPotentialMatchApi(url)) {
-        return;
-      }
-
-      this.stats.requestsTotal++;
-      this.apiEndpoints.add(url);
-
-      let body;
-      try {
-        body = await response.text();
-      } catch (error) {
-        this.logger.warn('[ReconNetworkMonitor] 读取响应体失败', {
-          traceId: this.traceId,
-          url: url.substring(0, 60),
-          error: error.message
-        });
-        this.stats.requestsFailed++;
-        return;
-      }
-
-      let data;
-      try {
-        data = await this.parseApiResponse(body, url);
-      } catch (error) {
-        this.logger.warn('[ReconNetworkMonitor] 解析响应失败', {
-          traceId: this.traceId,
-          url: url.substring(0, 60),
-          error: error.message
-        });
-        this.stats.requestsFailed++;
-        return;
-      }
-
-      if (data && data.length > 0) {
-        this.interceptedData.push(...data);
-        this.stats.requestsSuccess++;
-        this.logger.info('[ReconNetworkMonitor] 数据拦截成功', {
-          traceId: this.traceId,
-          url: url.substring(0, 60),
-          count: data.length
-        });
-      }
-    } catch (error) {
-      this.logger.error('[ReconNetworkMonitor] 响应处理异常', {
-        traceId: this.traceId,
-        error: error.message,
-        stack: error.stack?.substring(0, 200)
-      });
-      this.stats.requestsFailed++;
-    }
-  }
-
-  isPotentialMatchApi(url) {
-    return this.matchApiPatterns.some((pattern) => pattern.test(url));
-  }
-
-  async parseApiResponse(body, url = '') {
-    if (!body || typeof body !== 'string') {
-      this.logger.debug('[ReconNetworkMonitor] 响应体为空或非字符串', { traceId: this.traceId });
-      return [];
-    }
-
-    const trimmed = body.trim();
-    if (!trimmed) {
-      this.logger.debug('[ReconNetworkMonitor] 响应体为空', { traceId: this.traceId });
-      return [];
-    }
-
-    try {
-      const decoded = await this.decodeResponsePayload(trimmed, url);
-      if (!decoded?.parsed || typeof decoded.parsed !== 'object') {
-        return [];
-      }
-
-      const matches = this.extractMatchesFromJson(decoded.parsed, 'api_intercept');
-      this.logger.debug('[ReconNetworkMonitor] 响应解析成功', {
-        traceId: this.traceId,
-        source: decoded.source,
-        matchCount: matches.length
-      });
-      return matches;
-    } catch (error) {
-      if (!url.includes('/ajax-')) {
-        this.logger.debug('[ReconNetworkMonitor] 非 ajax 响应解析失败', {
-          traceId: this.traceId,
-          error: error.message
-        });
-        return [];
-      }
-
-      this.stats.decryptedFailed++;
-      this.logger.warn('[ReconNetworkMonitor] 解密失败，返回空数组', {
-        traceId: this.traceId,
-        url: url.substring(0, 60),
-        error: error.message
-      });
-      return [];
-    }
-  }
-
-  async decodeResponsePayload(body, url = '') {
-    const trimmed = typeof body === 'string' ? body.trim() : '';
-    if (!trimmed) {
-      return { parsed: null, source: 'empty' };
-    }
-
-    const directJson = this.safeJsonParse(trimmed);
-    if (directJson !== null) {
-      return { parsed: directJson, source: 'json' };
-    }
-
-    const wrappedPayload = this.parseScriptWrappedPayload(trimmed);
-    if (wrappedPayload.matched) {
-      return {
-        parsed: wrappedPayload.parsed,
-        source: wrappedPayload.source
-      };
-    }
-
-    if (this.isKnownErrorPayload(trimmed)) {
-      return { parsed: null, source: 'error_payload' };
-    }
-
-    if (!url.includes('/ajax-')) {
-      return { parsed: null, source: 'unsupported' };
-    }
-
-    this.logger.debug('[ReconNetworkMonitor] 检测到加密响应，尝试解密', { traceId: this.traceId });
-
-    let decrypted;
-    try {
-      if (!this.decryptor.getAlgorithmVersion()) {
-        await this.decryptor.extractDecryptor(this.page, trimmed);
-      }
-      decrypted = await this.decryptor.decrypt(trimmed);
-    } catch (_initialError) {
-      await this.decryptor.extractDecryptor(this.page, trimmed);
-      decrypted = await this.decryptor.decrypt(trimmed);
-    }
-
-    const parsed = typeof decrypted === 'string' ? this.safeJsonParse(decrypted.trim()) : decrypted;
-    if (!parsed || typeof parsed !== 'object') {
-      throw new Error('decrypt_result_not_json');
-    }
-
-    this.stats.decryptedSuccess++;
-    return { parsed, source: 'decrypted' };
-  }
-
-  safeJsonParse(text) {
-    try {
-      return JSON.parse(text);
-    } catch {
-      return null;
-    }
-  }
-
-  parseScriptWrappedPayload(text) {
-    const body = String(text || '').trim();
-    if (!body) {
-      return { matched: false, parsed: null, source: 'script_wrapper' };
-    }
-
-    const looksLikeWrapper = this.scriptWrapperPatterns.some((pattern) => pattern.test(body));
-    if (!looksLikeWrapper) {
-      return { matched: false, parsed: null, source: 'script_wrapper' };
-    }
-
-    const candidates = [];
-    const jsonLiteralPattern = /JSON\.parse\((['"])((?:\\.|(?!\1)[\s\S])*)\1\)/g;
-
-    for (const match of body.matchAll(jsonLiteralPattern)) {
-      const quote = match[1];
-      const literal = match[2];
-      if (!literal) {
-        continue;
-      }
-
-      try {
-        const decodedText = vm.runInNewContext(`${quote}${literal}${quote}`, Object.create(null), {
-          timeout: this.scriptEvalTimeoutMs
-        });
-        const parsed = JSON.parse(decodedText);
-        if (parsed && typeof parsed === 'object') {
-          candidates.push(parsed);
-        }
-      } catch (_error) {
-        // 当前片段无法反序列化则继续
-      }
-    }
-
-    if (candidates.length === 0) {
-      return { matched: true, parsed: {}, source: 'script_wrapper_empty' };
-    }
-
-    const payloadWithMatches = candidates.find((candidate) => (
-      this.extractMatchesFromJson(candidate, 'script_probe').length > 0
-    ));
-
-    return {
-      matched: true,
-      parsed: payloadWithMatches || this.mergeScriptPayloads(candidates),
-      source: 'script_wrapper'
-    };
-  }
-
-  mergeScriptPayloads(candidates) {
-    const merged = {};
-
-    for (const candidate of candidates) {
-      if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
-        continue;
-      }
-
-      Object.assign(merged, candidate);
-    }
-
-    return Object.keys(merged).length > 0 ? merged : candidates[0];
-  }
-
-  isKnownErrorPayload(text) {
-    const trimmed = String(text || '').trim();
-    if (!trimmed) {
-      return true;
-    }
-
-    return this.knownErrorPatterns.some((pattern) => pattern.test(trimmed));
-  }
-
-  extractMatchesFromJson(json, source = 'api_intercept') {
-    const matches = [];
-    const seen = new Set();
-    if (!json || typeof json !== 'object') {
-      return matches;
-    }
-
-    const pushMatch = (candidate) => {
-      if (!candidate) {
-        return;
-      }
-
-      const dedupeKey = candidate.hash || candidate.url || `${candidate.homeTeam}|${candidate.awayTeam}|${candidate.matchDate || ''}`;
-      if (!dedupeKey || seen.has(dedupeKey)) {
-        return;
-      }
-
-      seen.add(dedupeKey);
-      matches.push(candidate);
-    };
-
-    for (const rowMatch of this.extractStructuredRowMatches(json, source)) {
-      pushMatch(rowMatch);
-    }
-
-    const extract = (obj, depth = 0) => {
-      if (depth > this.extractMaxDepth) {
-        return;
-      }
-
-      if (Array.isArray(obj)) {
-        obj.forEach((item) => {
-          if (this.isMatchObject(item)) {
-            const match = this.normalizeMatchObject(item, source);
-            pushMatch(match);
-          } else if (typeof item === 'object') {
-            extract(item, depth + 1);
-          }
-        });
-      } else {
-        Object.values(obj).forEach((value) => {
-          if (typeof value === 'object' && value !== null) {
-            extract(value, depth + 1);
-          }
-        });
-      }
-    };
-
-    extract(json);
-    return matches;
-  }
-
-  extractStructuredRowMatches(json, source = 'api_intercept') {
-    const rowSets = [];
-
-    if (Array.isArray(json?.d?.rows)) {
-      rowSets.push(json.d.rows);
-    }
-
-    if (Array.isArray(json?.rows)) {
-      rowSets.push(json.rows);
-    }
-
-    return rowSets
-      .flat()
-      .map((row) => this.normalizeMatchObject(row, source))
-      .filter(Boolean);
-  }
-
-  isMatchObject(obj) {
-    if (!obj || typeof obj !== 'object') {
-      return false;
-    }
-
-    const indicators = [
-      'homeTeam', 'awayTeam', 'home', 'away', 'home-name', 'away-name',
-      'homeName', 'awayName', 'matchId', 'eventId', 'encodeEventId', 'hash', 'id'
-    ];
-    const keys = Object.keys(obj).map((key) => key.toLowerCase());
-    return indicators.filter((indicator) => (
-      keys.some((key) => key.includes(indicator.toLowerCase()))
-    )).length >= 2;
-  }
-
-  normalizeMatchObject(obj, source = 'api_intercept') {
-    try {
-      let homeTeam = '';
-      let awayTeam = '';
-
-      if (Array.isArray(obj.participants) && obj.participants.length >= 2) {
-        const home = obj.participants.find((participant) => participant?.side === 'home' || participant?.isHome === true)
-          || obj.participants[0];
-        const away = obj.participants.find((participant) => participant?.side === 'away' || participant?.isHome === false)
-          || obj.participants[1];
-        homeTeam = home?.name || home?.title || '';
-        awayTeam = away?.name || away?.title || '';
-      } else {
-        homeTeam = obj.homeTeam || obj.home || obj.home_team || obj.team1 || obj.homeName || obj['home-name'] || '';
-        awayTeam = obj.awayTeam || obj.away || obj.away_team || obj.team2 || obj.awayName || obj['away-name'] || '';
-      }
-
-      if (typeof homeTeam === 'object') {
-        homeTeam = homeTeam.name || homeTeam.title || '';
-      }
-      if (typeof awayTeam === 'object') {
-        awayTeam = awayTeam.name || awayTeam.title || '';
-      }
-
-      const hash = obj.hash || obj.eventHash || obj.encodeEventId || obj.id || obj.matchId || obj.eventId || '';
-      const slug = obj.slug || obj.eventSlug || '';
-      const countrySlug = obj.countrySlug || obj.country || '';
-      const leagueSlug = obj.leagueSlug || obj.competitionSlug || '';
-
-      let url = obj.url || obj.link || '';
-      if (url && url.startsWith('/')) {
-        url = `${this.baseUrl}${url}`;
-      }
-      if (!url && hash) {
-        url = `${this.baseUrl}/football/${countrySlug}/${leagueSlug}/${slug}-${hash}/`;
-      }
-
-      if (!homeTeam || !awayTeam || !hash) {
-        return null;
-      }
-
-      return {
-        url,
-        hash: hash.toString(),
-        slug,
-        homeTeam,
-        awayTeam,
-        matchDate: obj.matchDate || obj.match_date || (
-          obj['date-start-timestamp']
-            ? new Date(Number(obj['date-start-timestamp']) * 1000).toISOString()
-            : null
-        ),
-        source
-      };
-    } catch {
-      return null;
-    }
   }
 
   async fetchArchivePages(apiBaseUrl, maxPages, timeoutMs) {
@@ -493,6 +130,7 @@ class ReconNetworkMonitor {
     const seenHashes = new Set();
     const matches = [];
     const pageStats = [];
+    let httpFailure = null;
     let pageLimit = options.maxPages;
     const base = options.buildBaseUrl(options.apiBaseUrl);
 
@@ -503,7 +141,15 @@ class ReconNetworkMonitor {
         const response = await this.fetchText(url, options.timeoutMs);
 
         if (!response.success) {
-          pageStats.push({ page, rows: 0, error: response.error });
+          httpFailure = {
+            page,
+            url,
+            statusCode: Number(response.status) || null,
+            error: response.error,
+            retryAfterRaw: response.retryAfterRaw || '',
+            retryAfterMs: Number(response.retryAfterMs) || 0
+          };
+          pageStats.push({ page, rows: 0, ...httpFailure });
           break;
         }
 
@@ -564,7 +210,8 @@ class ReconNetworkMonitor {
       matches,
       pagesScanned: pageStats.length,
       totalCandidates: matches.length,
-      pageStats
+      pageStats,
+      httpFailure
     };
   }
 
@@ -581,16 +228,23 @@ class ReconNetworkMonitor {
       try {
         const response = await fetch(inputUrl, { credentials: 'include', signal: ctrl.signal });
         const text = await response.text();
+        const retryAfterRaw = response.headers.get('retry-after') || '';
         clearTimeout(timer);
         if (!response.ok) {
           return {
             success: false,
             status: response.status,
             error: `HTTP_${response.status}`,
-            text
+            text,
+            retryAfterRaw
           };
         }
-        return { success: true, status: response.status, text };
+        return {
+          success: true,
+          status: response.status,
+          text,
+          retryAfterRaw
+        };
       } catch (error) {
         clearTimeout(timer);
         return { success: false, error: error.message };
@@ -610,6 +264,13 @@ class ReconNetworkMonitor {
     });
   }
 }
+
+Object.assign(
+  ReconNetworkMonitor.prototype,
+  reconInterceptHandler,
+  reconResponseDecoder,
+  reconMatchExtractor
+);
 
 module.exports = {
   ReconNetworkMonitor,

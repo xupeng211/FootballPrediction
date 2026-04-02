@@ -40,6 +40,8 @@ class ReconGuardian {
     this.killResourceHogs = options.killResourceHogs === true;
     this.cpuThreshold = Number(options.cpuThreshold || 50);
     this.memThreshold = Number(options.memThreshold || 20);
+    this.orphanGraceSeconds = Number(options.orphanGraceSeconds || 1800);
+    this.managedProfileMarker = String(options.managedProfileMarker || 'playwright_profile_');
 
     this.interval = null;
     this.isRunning = false;
@@ -165,7 +167,7 @@ class ReconGuardian {
       try {
         // 查找目标进程
         const { stdout } = await execAsync(
-          `ps aux | grep -i "${processName}" | grep -v grep | awk '{print $2, $3, $4, $8, $11}'`
+          'ps -eo pid=,ppid=,pcpu=,pmem=,etimes=,stat=,args='
         );
 
         if (!stdout.trim()) {
@@ -175,25 +177,37 @@ class ReconGuardian {
         const lines = stdout.trim().split('\n');
 
         for (const line of lines) {
-          const parts = line.trim().split(/\s+/);
-          if (parts.length < 5) continue;
+          const parts = line.trim().match(/^(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)\s+(\S+)\s+(.+)$/);
+          if (!parts) continue;
 
-          const [pidStr, cpu, mem, stat, cmd] = parts;
+          const [, pidStr, ppidStr, cpu, mem, elapsedStr, stat, cmd] = parts;
+          if (!cmd.toLowerCase().includes(processName.toLowerCase())) {
+            continue;
+          }
           const pid = parseInt(pidStr, 10);
+          const ppid = parseInt(ppidStr, 10);
 
-          if (isNaN(pid)) continue;
+          if (isNaN(pid) || isNaN(ppid)) continue;
 
           // 检查是否为僵尸进程 (Z 状态) 或孤儿进程 (ppid = 1)
           const isZombie = stat === 'Z' || stat === 'Z+';
-          const ppid = await this.getParentPid(pid);
           const isOrphan = ppid === 1;
+          const elapsedSeconds = parseInt(elapsedStr, 10) || 0;
+          const isManagedProfile = this._isManagedBrowserProcess(cmd);
+          const isOrphanPastGrace = isOrphan && elapsedSeconds >= this.orphanGraceSeconds;
 
           // 检查 CPU/内存使用率异常 (长时间占用资源但无进展)
           const cpuUsage = parseFloat(cpu) || 0;
           const memUsage = parseFloat(mem) || 0;
           const isResourceHog = cpuUsage > this.cpuThreshold || memUsage > this.memThreshold;
 
-          if (this._shouldCollectProcess({ isZombie, isOrphan, isResourceHog })) {
+          if (this._shouldCollectProcess({
+            isZombie,
+            isOrphan,
+            isOrphanPastGrace,
+            isResourceHog,
+            isManagedProfile
+          })) {
             zombies.push({
               pid,
               ppid,
@@ -204,6 +218,8 @@ class ReconGuardian {
               cmd: cmd.substring(0, 100),
               isZombie,
               isOrphan,
+              isOrphanPastGrace,
+              isManagedProfile,
               isResourceHog
             });
           }
@@ -224,24 +240,28 @@ class ReconGuardian {
    * @private
    */
   _shouldCollectProcess(flags = {}) {
-    const { isZombie = false, isOrphan = false, isResourceHog = false } = flags;
-    return isZombie || isOrphan || (this.killResourceHogs && isResourceHog);
+    const {
+      isZombie = false,
+      isOrphan = false,
+      isOrphanPastGrace = false,
+      isManagedProfile = false,
+      isResourceHog = false
+    } = flags;
+
+    if (isZombie) {
+      return true;
+    }
+
+    if (isOrphan && isOrphanPastGrace && !isManagedProfile) {
+      return true;
+    }
+
+    return this.killResourceHogs && isResourceHog;
   }
 
-  /**
-   * 获取父进程 ID
-   * @param {number} pid - 进程 ID
-   * @returns {Promise<number|null>} 父进程 ID
-   * @private
-   */
-  async getParentPid(pid) {
-    try {
-      const { stdout } = await execAsync(`cat /proc/${pid}/stat 2>/dev/null | awk '{print $4}'`);
-      const ppid = parseInt(stdout.trim(), 10);
-      return isNaN(ppid) ? null : ppid;
-    } catch (e) {
-      return null;
-    }
+  _isManagedBrowserProcess(cmd = '') {
+    const raw = String(cmd || '');
+    return Boolean(this.managedProfileMarker && raw.includes(this.managedProfileMarker));
   }
 
   /**
@@ -251,7 +271,7 @@ class ReconGuardian {
    * @private
    */
   async killZombie(zombie) {
-    const { pid, name, isZombie, isOrphan, isResourceHog } = zombie;
+    const { pid, name, isZombie, isOrphan } = zombie;
 
     this.logger.warn('killing_zombie', {
       pid,
@@ -329,7 +349,9 @@ class ReconGuardian {
    * @private
    */
   sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
   }
 
   /**
@@ -352,7 +374,7 @@ class ReconGuardian {
    * @returns {Promise<number>} 清理的僵尸进程数
    */
   async scanNow() {
-    return await this.checkZombies();
+    return this.checkZombies();
   }
 }
 

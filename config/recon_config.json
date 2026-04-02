@@ -280,7 +280,11 @@
     },
     "conflict_arbiter": {
       "same_fixture_threshold": 1.5,
-      "same_fixture_window_ms": 172800000
+      "same_fixture_window_ms": 172800000,
+      "linked_rebind_min_date_gap_ms": 604800000,
+      "linked_rebind_min_incoming_confidence": 0.75,
+      "linked_rebind_min_confidence_delta": 0.1,
+      "linked_rebind_min_score_delta": 0.75
     },
     "identity_inactive_statuses": [
       "failed",
@@ -312,7 +316,7 @@
       "default_concurrency": 5,
       "confidence_threshold": 0.75,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 90000,
+      "archive_timeout_ms": 20000,
       "page_settle_wait_ms": 3000,
       "dom_scroll_step_px": 1000,
       "dom_scroll_delay_ms": 1500,
@@ -331,7 +335,7 @@
       "scroll_step_px": 500,
       "navigate_scroll_delay_ms": 1000,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 90000,
+      "archive_timeout_ms": 20000,
       "post_api_discovery_wait_ms": 2000,
       "page_revisit_wait_ms": 1500,
       "circuit_breaker": {
@@ -368,7 +372,8 @@
         "Accept",
         "Allow All"
       ],
-      "external_session_path": "/home/xupeng/projects/FootballPrediction/11",
+      "external_session_path": "${RECON_SESSION_PATH}",
+      "user_data_dir_root": "/tmp",
       "prefer_full_chromium": true,
       "playwright_cache_root": "/root/.cache/ms-playwright",
       "enable_stealth_fingerprint": false,
@@ -407,11 +412,17 @@
       "base_url": "https://www.oddsportal.com",
       "sample_size": 12,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 90000,
+      "archive_timeout_ms": 20000,
+      "mismatch_retry_threshold_delta": 0.3,
+      "mismatch_retry_threshold_floor": 0.3,
       "force_dom_league_ids": [
         223
       ],
       "results_path": "/football/{country}/{league}-{season}/results/"
+    },
+    "disk_sweeper": {
+      "enabled": true,
+      "max_age_ms": 3600000
     },
     "match_evaluator": {
       "orientation_similarity_threshold": 0.75,
@@ -427,7 +438,7 @@
       "script_eval_timeout_ms": 250,
       "extract_max_depth": 10,
       "page_size": 50,
-      "fetch_timeout_ms": 90000,
+      "fetch_timeout_ms": 20000,
       "home_warmup_enabled": false,
       "home_warmup_url": "https://www.oddsportal.com",
       "home_warmup_wait_ms": 5000,

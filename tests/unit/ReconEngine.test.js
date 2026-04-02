@@ -77,8 +77,9 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
     url: 'oddsportal://root/football/england/premier-league-2025-2026/results/',
     options: {
       maxPages: 50,
-      timeoutMs: 90000,
-      preferCurrentSeasonSource: true
+      timeoutMs: engine.archiveTimeoutMs,
+      preferCurrentSeasonSource: true,
+      circuitBreakerKey: 'recon:47:2025/2026'
     }
   }]);
 });
@@ -144,4 +145,58 @@ test('ReconEngine smartScan 遇到 SKIPPED_FUTURE_FINALS 时必须返回成功�
   assert.equal(result.pendingTotal, 0);
   assert.equal(result.linked, 0);
   assert.equal(result.coverage, 100);
+});
+
+test('ReconEngine runReconMatrix 遇到单联赛失败时不得清空后续队列', async () => {
+  const executed = [];
+  const engine = new ReconEngine({
+    logger: { info() {}, warn() {}, error() {} },
+    taskPlanner: {
+      async buildScanTargets() {
+        return [
+          {
+            leagueId: 47,
+            league: { name: 'Premier League' },
+            dbSeason: '2025/2026'
+          },
+          {
+            leagueId: 130,
+            league: { name: 'MLS' },
+            dbSeason: '2025/2026'
+          }
+        ];
+      },
+      async prepareReconPendingTargets(targets) {
+        return targets.map((target) => ({
+          target,
+          pendingMatches: [{ match_id: `${target.leagueId}_1` }],
+          desiredLimit: 1
+        }));
+      }
+    }
+  });
+
+  engine._runReconTarget = async (target) => {
+    executed.push(target.league.name);
+    if (target.league.name === 'Premier League') {
+      throw new Error('503 Service Unavailable');
+    }
+
+    return {
+      pendingTotal: 1,
+      linked: 1,
+      mismatched: 0,
+      sourceSeason: '2025-2026',
+      sourceUrl: 'oddsportal://mls',
+      candidateCount: 1
+    };
+  };
+
+  const result = await engine.runReconMatrix({ season: '2025-2026' });
+
+  assert.deepEqual(executed, ['Premier League', 'MLS']);
+  assert.equal(result.success, false);
+  assert.equal(result.scannedLeagues, 1);
+  assert.equal(result.linked, 1);
+  assert.deepEqual(result.errors, [{ league: 'Premier League', error: '503 Service Unavailable' }]);
 });

@@ -52,18 +52,6 @@ function loadConfig(configPath = DEFAULT_RECON_CONFIG_PATH) {
   return loadReconConfig(configPath);
 }
 
-/**
- * 默认配置
- */
-function getDefaultConfig() {
-  return {
-    version: 'V11.0-DEFAULT',
-    oddsportal: { base_url: 'https://www.oddsportal.com' },
-    matching: { fuzzy_threshold: 0.85 },
-    logging: { component: 'ReconScanner', enable_structured: false }
-  };
-}
-
 function isSkippedFutureFinalsResult(result) {
   return result?.sourceState === 'SKIPPED_FUTURE_FINALS' || result?.error === 'SKIPPED_FUTURE_FINALS';
 }
@@ -115,6 +103,7 @@ class ReconScanner {
     this.healthServer = dependencies.healthServer;
     this.configManager = dependencies.configManager;
     this.diskSweeper = dependencies.diskSweeper;
+    this.currentSeasonOnly = dependencies.currentSeasonOnly === true;
     this.resources = [];
 
     this.logger.info('scanner_initialized', { traceId: this.traceId, version: 'V11.0' });
@@ -231,7 +220,7 @@ class ReconScanner {
       this.repository.traceId = this.traceId;
       this.repository.logger = this._childLogger('FixtureRepository', this.repository.logger);
       if (typeof this.repository.init === 'function') {
-        await this.repository.init();
+        await this.repository.init({ repairOrphanedLinkedStatuses: false });
       }
       if (this.healthServer && typeof this.healthServer.registerDatabaseCheck === 'function') {
         this.healthServer.registerDatabaseCheck(this.repository);
@@ -278,13 +267,15 @@ class ReconScanner {
         traceId: this.traceId,
         proxyRotator: this.proxyRotator,
         configManager: this.configManager,
-        baseUrl: this.config.oddsportal?.base_url
+        baseUrl: this.config.oddsportal?.base_url,
+        currentSeasonOnly: this.currentSeasonOnly
       });
     } else {
       this.engine.traceId = this.traceId;
       this.engine.logger = this._childLogger('ReconEngine', this.engine.logger);
       this.engine.configManager = this.configManager;
       this.engine.baseUrl = this.config.oddsportal?.base_url || this.engine.baseUrl;
+      this.engine.currentSeasonOnly = this.currentSeasonOnly;
     }
 
     this.logger.info('scanner_components_initialized');

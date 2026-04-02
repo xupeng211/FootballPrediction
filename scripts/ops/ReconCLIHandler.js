@@ -11,7 +11,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     crossLeague: false,
     additionalSlugs: [],
     limit: null,
-    concurrency: 5
+    concurrency: 5,
+    currentSeasonOnly: false
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -45,6 +46,9 @@ function parseArgs(argv = process.argv.slice(2)) {
         break;
       case '--concurrency':
         result.concurrency = parseInt(args[++i], 10);
+        break;
+      case '--current-season-only':
+        result.currentSeasonOnly = true;
         break;
     }
   }
@@ -242,7 +246,8 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       repository = createRepository({ dbPool });
       scanner = createScanner({
         repository,
-        proxyRotator: args.useProxy ? undefined : null
+        proxyRotator: args.useProxy ? undefined : null,
+        currentSeasonOnly: args.currentSeasonOnly
       });
 
       await scanner.initialize();
@@ -267,7 +272,8 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
           season: args.season,
           leagueIds: leagues.map((league) => Number(league.id)),
           concurrency: Number.isInteger(args.concurrency) && args.concurrency > 0 ? args.concurrency : 5,
-          limit: args.limit
+          limit: args.limit,
+          currentSeasonOnly: args.currentSeasonOnly
         });
         results.push({
           success: result.success,
@@ -293,7 +299,8 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
           if (isolatePerLeague) {
             scanner = createScanner({
               repository,
-              proxyRotator: args.useProxy ? undefined : null
+              proxyRotator: args.useProxy ? undefined : null,
+              currentSeasonOnly: args.currentSeasonOnly
             });
             await scanner.initialize();
           }

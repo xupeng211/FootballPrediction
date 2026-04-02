@@ -585,6 +585,25 @@ describe('ReconScanner Robustness - CLI Defaults', () => {
     }
   });
 
+  it('显式传入 --current-season-only 时，CLI 必须开启当前赛季锁定模式', () => {
+    const originalArgv = process.argv;
+
+    try {
+      process.argv = [
+        'node',
+        'scripts/ops/recon_scanner.js',
+        '--season',
+        '2025-2026',
+        '--all-leagues',
+        '--current-season-only'
+      ];
+      const args = parseArgs();
+      assert.strictEqual(args.currentSeasonOnly, true);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
   it('任一联赛失败时，整体退出码必须为 1', () => {
     const exitCode = computeExitCode([
       { success: true, league: 'Premier League', inserted: 20, pendingTotal: 20, coverage: 100 },
@@ -640,7 +659,9 @@ describe('ReconNavigator Robustness - Launch Mutex', () => {
     navigator.circuitBreaker = { execute: async (fn) => fn() };
     navigator._performLaunch = async () => {
       launchCalls++;
-      await new Promise((resolve) => setTimeout(resolve, 5));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 5);
+      });
       navigator.browser = { isConnected: () => true, close: async () => {} };
       navigator.context = {};
       navigator.page = { isClosed: () => false };

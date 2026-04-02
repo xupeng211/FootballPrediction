@@ -185,6 +185,16 @@ class ProxyRotator {
     };
   }
 
+  rotate(options = {}) {
+    const nextProxy = this.getNextProxy();
+    this.logger.info('🔁 代理轮换', {
+      reason: options.reason || 'manual',
+      statusCode: options.statusCode || null,
+      nextPort: nextProxy?.port || null
+    });
+    return nextProxy;
+  }
+
   /**
    * 报告代理成功
    * @param {number} port - 代理端口
