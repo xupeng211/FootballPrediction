@@ -151,8 +151,92 @@ describe('ReconNetworkMonitor', () => {
     assert.strictEqual(extractCalls, 0);
     assert.strictEqual(decryptCalls, 0);
     assert.deepStrictEqual(result.matches, []);
-    assert.deepStrictEqual(result.pageStats, [
-      { page: 1, rows: 0, error: 'HTTP_404' }
-    ]);
+    assert.strictEqual(result.pageStats.length, 1);
+    assert.deepStrictEqual(
+      {
+        page: result.pageStats[0].page,
+        rows: result.pageStats[0].rows,
+        statusCode: result.pageStats[0].statusCode,
+        error: result.pageStats[0].error,
+        retryAfterRaw: result.pageStats[0].retryAfterRaw,
+        retryAfterMs: result.pageStats[0].retryAfterMs
+      },
+      {
+        page: 1,
+        rows: 0,
+        statusCode: 404,
+        error: 'HTTP_404',
+        retryAfterRaw: '',
+        retryAfterMs: 0
+      }
+    );
+    assert.match(
+      result.pageStats[0].url,
+      /^https:\/\/www\.oddsportal\.com\/ajax-sport-country-tournament-archive_\/1\/\/X\/2025-2026\/1\/\?_=\d+$/
+    );
+  });
+
+  it('archive 端点占位符响应不应误触发 decryptor', async () => {
+    let decryptCalls = 0;
+    let extractCalls = 0;
+
+    const monitor = new ReconNetworkMonitor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-archive-placeholder',
+      decryptorFactory: () => ({
+        getAlgorithmVersion: () => null,
+        async decrypt() {
+          decryptCalls++;
+          throw new Error('should_not_decrypt_placeholder');
+        },
+        async extractDecryptor() {
+          extractCalls++;
+          throw new Error('should_not_extract_placeholder');
+        }
+      })
+    });
+
+    const matches = await monitor.parseApiResponse(
+      '/1//X262144X16384X0X0X134217728X0X0X0X0X0X0X0X0X134217729X0X0X1048576X0X1024X40X0X32X0X0X0X0X0X0X0X536870912X2560X2048X0',
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1//X/2025-2026/1/0/'
+    );
+
+    assert.deepStrictEqual(matches, []);
+    assert.strictEqual(extractCalls, 0);
+    assert.strictEqual(decryptCalls, 0);
+  });
+
+  it('INVALID_ENCRYPTED_PAYLOAD 不应触发二次 extractDecryptor 重试', async () => {
+    let extractCalls = 0;
+    let decryptCalls = 0;
+
+    const monitor = new ReconNetworkMonitor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-invalid-payload',
+      page: { isClosed: () => false },
+      decryptorFactory: () => ({
+        getAlgorithmVersion: () => null,
+        async extractDecryptor() {
+          extractCalls++;
+        },
+        async decrypt() {
+          decryptCalls++;
+          const error = new Error('INVALID_ENCRYPTED_PAYLOAD');
+          error.code = 'INVALID_ENCRYPTED_PAYLOAD';
+          throw error;
+        }
+      })
+    });
+
+    await assert.rejects(
+      monitor.decodeResponsePayload(
+        'invalid-payload-not-json',
+        'https://www.oddsportal.com/ajax-user-data/t/epl/'
+      ),
+      (error) => error?.code === 'INVALID_ENCRYPTED_PAYLOAD'
+    );
+
+    assert.strictEqual(extractCalls, 1);
+    assert.strictEqual(decryptCalls, 1);
   });
 });

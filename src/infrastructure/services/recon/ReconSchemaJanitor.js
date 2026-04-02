@@ -31,7 +31,9 @@ class ReconSchemaJanitor {
     this.mappingHashUniquenessEnsured = false;
   }
 
-  async ensureOddsPortalMappingSchema() {
+  async ensureOddsPortalMappingSchema(options = {}) {
+    const repairOrphanedLinkedStatuses = options.repairOrphanedLinkedStatuses !== false;
+
     if (this.mappingSchemaEnsured) {
       return;
     }
@@ -47,7 +49,10 @@ class ReconSchemaJanitor {
       await this.ensureMappingHashUniquenessIndex();
     }
 
-    await this.repairOrphanedLinkedStatuses();
+    if (repairOrphanedLinkedStatuses) {
+      await this.repairOrphanedLinkedStatuses();
+    }
+
     this.mappingSchemaEnsured = true;
   }
 

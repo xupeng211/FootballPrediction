@@ -6,6 +6,23 @@ class ReconConflictArbiter {
   constructor(options = {}) {
     this.sameFixtureThreshold = Number(options.sameFixtureThreshold);
     this.sameFixtureWindowMs = Number(options.sameFixtureWindowMs);
+    this.linkedRebindMinDateGapMs = Number.isFinite(Number(options.linkedRebindMinDateGapMs))
+      ? Number(options.linkedRebindMinDateGapMs)
+      : this.sameFixtureWindowMs;
+    this.linkedRebindMinIncomingConfidence = Number.isFinite(Number(options.linkedRebindMinIncomingConfidence))
+      ? Number(options.linkedRebindMinIncomingConfidence)
+      : 0.75;
+    this.linkedRebindMinConfidenceDelta = Number.isFinite(Number(options.linkedRebindMinConfidenceDelta))
+      ? Number(options.linkedRebindMinConfidenceDelta)
+      : 0.1;
+    this.linkedRebindMinScoreDelta = Number.isFinite(Number(options.linkedRebindMinScoreDelta))
+      ? Number(options.linkedRebindMinScoreDelta)
+      : 0.75;
+  }
+
+  normalizeConfidence(value) {
+    const confidence = Number(value);
+    return Number.isFinite(confidence) ? confidence : 0;
   }
 
   normalizeTeamName(teamName) {
@@ -63,6 +80,34 @@ class ReconConflictArbiter {
     return Math.abs(left - right);
   }
 
+  evaluateLinkedRebindEvidence({
+    existingMatch,
+    incomingMatch,
+    existingMapping,
+    incomingMapping,
+    existingScore,
+    incomingScore
+  }) {
+    const dateDistanceMs = this.fixtureDateDistanceMs(existingMatch?.match_date, incomingMatch?.match_date);
+    const existingConfidence = this.normalizeConfidence(existingMapping?.match_confidence);
+    const incomingConfidence = this.normalizeConfidence(incomingMapping?.match_confidence);
+    const confidenceDelta = incomingConfidence - existingConfidence;
+    const scoreDelta = incomingScore - existingScore;
+
+    return {
+      dateDistanceMs,
+      existingConfidence,
+      incomingConfidence,
+      confidenceDelta,
+      scoreDelta,
+      incomingHasStrongerEvidence: Number.isFinite(dateDistanceMs)
+        && dateDistanceMs >= this.linkedRebindMinDateGapMs
+        && incomingConfidence >= this.linkedRebindMinIncomingConfidence
+        && confidenceDelta >= this.linkedRebindMinConfidenceDelta
+        && scoreDelta >= this.linkedRebindMinScoreDelta
+    };
+  }
+
   selectPreferredConflictWinner(existingMatch, incomingMatch, existingMappingRow = null) {
     if (!existingMatch || !incomingMatch) {
       return 'existing';
@@ -85,13 +130,22 @@ class ReconConflictArbiter {
   analyzeConflict({ existingMatch, incomingMatch, existingMapping, incomingMapping }) {
     const existingScore = this.fixtureOrientationScore(existingMatch, incomingMapping);
     const incomingScore = this.fixtureOrientationScore(incomingMatch, incomingMapping);
+    const evidence = this.evaluateLinkedRebindEvidence({
+      existingMatch,
+      incomingMatch,
+      existingMapping,
+      incomingMapping,
+      existingScore,
+      incomingScore
+    });
     const sameFixture = existingScore >= this.sameFixtureThreshold
       && incomingScore >= this.sameFixtureThreshold
-      && this.fixtureDateDistanceMs(existingMatch?.match_date, incomingMatch?.match_date) <= this.sameFixtureWindowMs;
+      && evidence.dateDistanceMs <= this.sameFixtureWindowMs;
 
     return {
       existingScore,
       incomingScore,
+      ...evidence,
       sameFixture,
       preferredWinner: sameFixture
         ? this.selectPreferredConflictWinner(existingMatch, incomingMatch, existingMapping)

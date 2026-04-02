@@ -34,6 +34,10 @@ class ReconMappingStore {
     this.reconConfig = options.reconConfig || {};
   }
 
+  getPreserveLinkedStatusFlag(options = {}) {
+    return options?.preserveLinkedStatus === true || options?.preserve_linked_status === true;
+  }
+
   async saveOddsPortalMapping(mappingData, options = {}) {
     this.assertRequiredFields(mappingData);
     await this.ensureSchema();
@@ -47,10 +51,14 @@ class ReconMappingStore {
     return this.executeWithRetry(async () => {
       const client = await this.getDbPool().connect();
       const pipelineStatus = options.pipelineStatus || null;
+      const preserveLinkedStatus = this.getPreserveLinkedStatusFlag(options);
 
       try {
         await client.query('BEGIN');
-        const audit = await this.auditSeasonHashConflictsWithClient(client, [mappingData], { pipelineStatus });
+        const audit = await this.auditSeasonHashConflictsWithClient(client, [mappingData], {
+          pipelineStatus,
+          preserveLinkedStatus
+        });
         const targetMapping = (audit.remainingMappings || [])[0] || null;
         const linkedStatusUpdated = Number(audit.linkedStatusUpdated || 0);
 
@@ -121,11 +129,15 @@ class ReconMappingStore {
     return this.executeWithRetry(async () => {
       const client = await this.getDbPool().connect();
       const pipelineStatus = options.pipelineStatus || null;
+      const preserveLinkedStatus = this.getPreserveLinkedStatusFlag(options);
       const results = { inserted: 0, failed: 0, errors: [], updated: 0 };
 
       try {
         await client.query('BEGIN');
-        const audit = await this.auditSeasonHashConflictsWithClient(client, orderedMappings, { pipelineStatus });
+        const audit = await this.auditSeasonHashConflictsWithClient(client, orderedMappings, {
+          pipelineStatus,
+          preserveLinkedStatus
+        });
         const remainingMappings = audit.remainingMappings || orderedMappings;
         results.updated += Number(audit.linkedStatusUpdated || 0);
 
@@ -192,7 +204,8 @@ class ReconMappingStore {
         await client.query('BEGIN');
         const result = await this.resolveHashConflictWithClient(client, {
           ...conflict,
-          pipelineStatus: options.pipelineStatus || null
+          pipelineStatus: options.pipelineStatus || null,
+          preserveLinkedStatus: this.getPreserveLinkedStatusFlag(options)
         });
 
         if (!result?.resolved) {
@@ -343,7 +356,7 @@ class ReconMappingStore {
     let linkedStatusUpdated = 0;
 
     const result = await client.query(`
-      SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, updated_at
+      SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at
       FROM matches_oddsportal_mapping
       WHERE season = ANY($1::text[])
         AND oddsportal_hash = ANY($2::text[])
@@ -358,11 +371,12 @@ class ReconMappingStore {
 
       if (incomingMatchIds.size === 1) {
         const incomingMatchId = [...incomingMatchIds][0];
-        const resolution = await this.resolveHashConflictWithClient(client, {
-          existingMapping: row,
-          incomingMapping: mappingByMatchId.get(incomingMatchId),
-          pipelineStatus: options.pipelineStatus || null
-        });
+          const resolution = await this.resolveHashConflictWithClient(client, {
+            existingMapping: row,
+            incomingMapping: mappingByMatchId.get(incomingMatchId),
+            pipelineStatus: options.pipelineStatus || null,
+            preserveLinkedStatus: Boolean(options.preserveLinkedStatus)
+          });
 
         if (resolution?.resolved) {
           handledMatchIds.add(String(incomingMatchId));
@@ -484,6 +498,7 @@ class ReconMappingStore {
     const existingMapping = conflict.existingMapping || null;
     const incomingMapping = conflict.incomingMapping || null;
     const pipelineStatus = conflict.pipelineStatus || null;
+    const preserveLinkedStatus = Boolean(conflict.preserveLinkedStatus);
 
     if (!existingMapping || !incomingMapping) {
       return { resolved: false };
@@ -506,6 +521,7 @@ class ReconMappingStore {
       existingMapping,
       incomingMapping
     });
+    const existingLinked = existingMatch.pipeline_status === 'RECON_LINKED';
 
     if (decision.sameFixture) {
       const winner = decision.preferredWinner;
@@ -550,7 +566,40 @@ class ReconMappingStore {
       };
     }
 
+    if (existingLinked && preserveLinkedStatus && !decision.incomingHasStrongerEvidence) {
+      this.logger.warn('[HEAL] 检测到 season/hash 冲突，但新证据不足以推翻既有 RECON_LINKED，已保留原绑定', {
+        season: incomingMapping.season,
+        oddsportal_hash: incomingMapping.oddsportal_hash,
+        existing_match_id: String(existingMatch.match_id),
+        incoming_match_id: String(incomingMatch.match_id),
+        preserve_linked_status: preserveLinkedStatus,
+        existing_match_date: existingMatch.match_date,
+        incoming_match_date: incomingMatch.match_date,
+        evidence: {
+          date_distance_ms: Number.isFinite(decision.dateDistanceMs)
+            ? decision.dateDistanceMs
+            : null,
+          existing_confidence: Number(decision.existingConfidence.toFixed(3)),
+          incoming_confidence: Number(decision.incomingConfidence.toFixed(3)),
+          confidence_delta: Number(decision.confidenceDelta.toFixed(3)),
+          score_delta: Number(decision.scoreDelta.toFixed(3)),
+          existing_score: Number(decision.existingScore.toFixed(3)),
+          incoming_score: Number(decision.incomingScore.toFixed(3))
+        }
+      });
+
+      return {
+        resolved: true,
+        action: 'preserve_existing_link',
+        linkedStatusUpdated: 0
+      };
+    }
+
     if (decision.incomingScore >= this.arbiter.sameFixtureThreshold && decision.incomingScore > decision.existingScore) {
+      if (existingLinked && !decision.incomingHasStrongerEvidence) {
+        return { resolved: false };
+      }
+
       const rebindRowCount = await this.rebindMappingToMatchWithClient(client, existingMapping, incomingMapping);
       this.assertSuccessfulRebind(rebindRowCount, {
         season: incomingMapping.season,
@@ -592,6 +641,15 @@ class ReconMappingStore {
         scores: {
           existing: Number(decision.existingScore.toFixed(3)),
           incoming: Number(decision.incomingScore.toFixed(3))
+        },
+        evidence: {
+          date_distance_ms: Number.isFinite(decision.dateDistanceMs)
+            ? decision.dateDistanceMs
+            : null,
+          existing_confidence: Number(decision.existingConfidence.toFixed(3)),
+          incoming_confidence: Number(decision.incomingConfidence.toFixed(3)),
+          confidence_delta: Number(decision.confidenceDelta.toFixed(3)),
+          score_delta: Number(decision.scoreDelta.toFixed(3))
         }
       });
 

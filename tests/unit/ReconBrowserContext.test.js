@@ -15,26 +15,28 @@ describe('ReconBrowserContext', () => {
     };
 
     const context = {
+      browser() {
+        return browser;
+      },
       async newPage() {
         events.push('newPage');
         return page;
+      },
+      async close() {
+        events.push('context.close');
       }
     };
 
     const browser = {
-      async newContext(options) {
-        events.push({ type: 'newContext', options });
-        return context;
-      },
       async close() {
         events.push('browser.close');
       }
     };
 
     const chromium = {
-      async launch(options) {
-        events.push({ type: 'launch', options });
-        return browser;
+      async launchPersistentContext(userDataDir, options) {
+        events.push({ type: 'launchPersistentContext', userDataDir, options });
+        return context;
       }
     };
 
@@ -54,28 +56,25 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(browserContext.context, context);
     assert.strictEqual(browserContext.page, page);
     assert.deepStrictEqual(events[0], {
-      type: 'launch',
+      type: 'launchPersistentContext',
+      userDataDir: browserContext.userDataDir,
       options: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
         timeout: 4321,
-        proxy: { server: 'http://127.0.0.1:8899' }
-      }
-    });
-    assert.deepStrictEqual(events[1], {
-      type: 'newContext',
-      options: {
         userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
         viewport: { width: 1920, height: 1080 },
         locale: 'en-US',
         timezoneId: 'Asia/Tokyo',
+        proxy: { server: 'http://127.0.0.1:8899' },
         extraHTTPHeaders: {
           'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7',
           'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
         }
       }
     });
-    assert.strictEqual(events[2], 'newPage');
+    assert.match(browserContext.userDataDir, /playwright_profile_trace-browser_/);
+    assert.strictEqual(events[1], 'newPage');
 
     await browserContext.close();
 
@@ -83,7 +82,7 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(browserContext.context, null);
     assert.strictEqual(browserContext.page, null);
     assert.strictEqual(browserContext.isClosed, true);
-    assert.strictEqual(events[3], 'browser.close');
+    assert.strictEqual(events[2], 'context.close');
   });
 
   it('启用高仿真指纹时才应注入 addInitScript', async () => {
@@ -95,21 +94,22 @@ describe('ReconBrowserContext', () => {
     };
 
     const context = {
+      browser() {
+        return browser;
+      },
       async newPage() {
         return page;
-      }
-    };
-
-    const browser = {
-      async newContext() {
-        return context;
       },
       async close() {}
     };
 
+    const browser = {
+      async close() {}
+    };
+
     const chromium = {
-      async launch() {
-        return browser;
+      async launchPersistentContext() {
+        return context;
       }
     };
 
@@ -132,22 +132,23 @@ describe('ReconBrowserContext', () => {
     };
 
     const context = {
+      browser() {
+        return browser;
+      },
       async newPage() {
         return page;
-      }
-    };
-
-    const browser = {
-      async newContext() {
-        return context;
       },
       async close() {}
     };
 
+    const browser = {
+      async close() {}
+    };
+
     const chromium = {
-      async launch(options) {
+      async launchPersistentContext(_userDataDir, options) {
         events.push(options);
-        return browser;
+        return context;
       }
     };
 
@@ -172,25 +173,26 @@ describe('ReconBrowserContext', () => {
     };
 
     const context = {
+      browser() {
+        return browser;
+      },
       async addCookies(cookies) {
         events.push({ type: 'addCookies', cookies });
       },
       async newPage() {
         return page;
-      }
-    };
-
-    const browser = {
-      async newContext(options) {
-        events.push({ type: 'newContext', options });
-        return context;
       },
       async close() {}
     };
 
+    const browser = {
+      async close() {}
+    };
+
     const chromium = {
-      async launch() {
-        return browser;
+      async launchPersistentContext(_userDataDir, options) {
+        events.push({ type: 'launchPersistentContext', options });
+        return context;
       }
     };
 
@@ -223,7 +225,7 @@ describe('ReconBrowserContext', () => {
 
     await browserContext.launch();
 
-    assert.strictEqual(events[0].type, 'newContext');
+    assert.strictEqual(events[0].type, 'launchPersistentContext');
     assert.strictEqual(events[0].options.userAgent, 'External-UA/1.0');
     assert.strictEqual(events[0].options.extraHTTPHeaders['user-agent'], 'External-UA/1.0');
     assert.strictEqual(events[1].type, 'addCookies');

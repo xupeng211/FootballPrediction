@@ -117,7 +117,9 @@ function calculateTeamMatchScore(name1, name2) {
  * 延迟函数
  * @param {number} ms - 毫秒
  */
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(resolve => {
+  setTimeout(resolve, ms);
+});
 
 /**
  * 深度滚动页面触发懒加载
@@ -254,7 +256,7 @@ async function extractMatchesFromPage(page) {
         const texts = Array.from(textElements).map(el => el.textContent?.trim()).filter(Boolean);
 
         // 查找比分模式
-        const scoreMatch = text.match(/(\d+)\s*[\-\:]\s*(\d+)/);
+        const scoreMatch = text.match(/(\d+)\s*[-:]\s*(\d+)/);
 
         if (scoreMatch && texts.length >= 2) {
           // 找到两个最长的文本作为队名（通常是队名）
@@ -292,7 +294,7 @@ async function extractMatchesFromPage(page) {
       const bodyText = document.body.innerText;
 
       // 查找所有比分模式
-      const scoreRegex = /([A-Za-z\s\.]+)\s*(\d+)\s*[\-\:]\s*(\d+)\s*([A-Za-z\s\.]+)/g;
+      const scoreRegex = /([A-Za-z\s.]+)\s*(\d+)\s*[-:]\s*(\d+)\s*([A-Za-z\s.]+)/g;
       let match;
 
       while ((match = scoreRegex.exec(bodyText)) !== null) {
@@ -346,9 +348,9 @@ async function extractMatchesWithBackupSelectors(page) {
     // 查找常见比分模式
     const patterns = [
       // 队名 vs 队名 比分
-      /([A-Z][a-zA-Z\s\.']{2,30})\s*[vV][sS]?\.?\s*([A-Z][a-zA-Z\s\.']{2,30})\s*[:\-]?\s*(\d+)\s*[\-\:]\s*(\d+)/g,
+      /([A-Z][a-zA-Z\s.']{2,30})\s*[vV][sS]?\.?\s*([A-Z][a-zA-Z\s.']{2,30})\s*[:-]?\s*(\d+)\s*[-:]\s*(\d+)/g,
       // 队名 比分 队名
-      /([A-Z][a-zA-Z\s\.']{2,30})\s*(\d+)\s*[\-\:]\s*(\d+)\s*([A-Z][a-zA-Z\s\.']{2,30})/g,
+      /([A-Z][a-zA-Z\s.']{2,30})\s*(\d+)\s*[-:]\s*(\d+)\s*([A-Z][a-zA-Z\s.']{2,30})/g,
     ];
 
     patterns.forEach(pattern => {
@@ -436,7 +438,7 @@ async function persistMatches(pool, matches, month) {
         let homeGoals = null;
         let awayGoals = null;
         if (match.score) {
-          const scoreMatch = match.score.match(/(\d+)[\-\:](\d+)/);
+          const scoreMatch = match.score.match(/(\d+)[-:](\d+)/);
           if (scoreMatch) {
             homeGoals = parseInt(scoreMatch[1]);
             awayGoals = parseInt(scoreMatch[2]);

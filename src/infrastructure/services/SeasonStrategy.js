@@ -26,7 +26,7 @@ class DualYearStrategy {
    */
   format(season) {
     // 移除所有分隔符，返回连续数字 (如 "2024/2025" -> "20242025")
-    return season.replace(/[\/\-_]/g, '');
+    return season.replace(/[/_-]/g, '');
   }
 
   /**
@@ -35,7 +35,7 @@ class DualYearStrategy {
    * @returns {boolean}
    */
   isValid(season) {
-    return /^\d{4}[\/\-_]?\d{4}$/.test(season);
+    return /^\d{4}[/_-]?\d{4}$/.test(season);
   }
 
   /**

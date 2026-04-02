@@ -4,7 +4,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert');
 
 const { ReconNavigator } = require('../../src/infrastructure/recon/ReconNavigator');
-const { ReconCircuitBreaker } = require('../../src/infrastructure/recon/ReconResilience');
+const { ReconCircuitBreakerPool } = require('../../src/infrastructure/recon/ReconResilience');
 
 describe('ReconNavigator - Protocol Archive', () => {
   it('navigate 时应重置跨联赛残留的 apiEndpoints 与 decryptor', async () => {
@@ -923,7 +923,7 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.sourceState, 'SOURCE_EMPTY');
   });
 
-  it('navigate 连续 timeout 时应触发熔断，第二次请求直接被拒绝', async () => {
+  it('navigate 的熔断应按联赛 key 隔离，不得污染其他目标', async () => {
     const navigator = new ReconNavigator({
       logger: { info() {}, warn() {}, error() {}, debug() {} }
     });
@@ -931,26 +931,153 @@ describe('ReconNavigator - Protocol Archive', () => {
     navigator.browser = { isConnected: () => true };
     navigator.context = {};
     navigator.page = { isClosed: () => false };
-    navigator.circuitBreaker = new ReconCircuitBreaker({
+    navigator.circuitBreakerPool = new ReconCircuitBreakerPool({
       failureThreshold: 1,
       resetTimeout: 60_000,
       logger: { info() {}, warn() {}, error() {} }
     });
-    navigator.browserContext.navigate = async () => {
-      throw new Error('Navigation timeout');
+    navigator.browserContext.navigate = async (_url, options) => {
+      if (options.contentReadySelector === 'fail') {
+        throw new Error('Navigation timeout');
+      }
+      return true;
     };
 
     await assert.rejects(
-      () => navigator.navigate('oddsportal://timeout-1', { timeout: 10 }),
+      () => navigator.navigate('oddsportal://timeout-1', {
+        timeout: 10,
+        circuitBreakerKey: 'league:epl',
+        contentReadySelector: 'fail'
+      }),
       /Navigation timeout/
     );
+    await assert.doesNotReject(
+      () => navigator.navigate('oddsportal://timeout-mls', {
+        timeout: 10,
+        circuitBreakerKey: 'league:mls'
+      })
+    );
     await assert.rejects(
-      () => navigator.navigate('oddsportal://timeout-2', { timeout: 10 }),
+      () => navigator.navigate('oddsportal://timeout-2', {
+        timeout: 10,
+        circuitBreakerKey: 'league:epl',
+        contentReadySelector: 'fail'
+      }),
       /Circuit breaker is OPEN/
     );
   });
 
-  it('_fetchAndDecrypt 连续失败时应受熔断器保护', async () => {
+  it('navigate 遇到 503 时应按 [5s,15s,30s] 退避重试后再成功', async () => {
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    const retryDelays = [];
+    let attempts = 0;
+    navigator._waitBeforeRetry = async (delayMs) => {
+      retryDelays.push(delayMs);
+    };
+    navigator.browserContext.navigate = async () => {
+      attempts += 1;
+      if (attempts < 3) {
+        const error = new Error('page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE');
+        error.statusCode = 503;
+        error.retryAfterMs = 1000;
+        throw error;
+      }
+      return true;
+    };
+
+    await assert.doesNotReject(
+      () => navigator.navigate('oddsportal://epl-results', {
+        timeout: 100,
+        circuitBreakerKey: 'league:epl'
+      })
+    );
+
+    assert.strictEqual(attempts, 3);
+    assert.deepStrictEqual(retryDelays, [5000, 15000]);
+  });
+
+  it('navigate 遇到 503 时应先报告代理失败并 rotate 后再 relaunch', async () => {
+    const reportedFailures = [];
+    const rotated = [];
+    const launchedProxyPorts = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      proxy: { host: 'proxy-a', port: 3101, url: 'http://proxy-a:3101', server: 'http://proxy-a:3101' },
+      proxyRotator: {
+        reportFailure(port, errorType) {
+          reportedFailures.push({ port, errorType });
+        },
+        rotate() {
+          rotated.push(true);
+          return {
+            host: 'proxy-b',
+            port: 3102,
+            url: 'http://proxy-b:3102',
+            server: 'http://proxy-b:3102'
+          };
+        }
+      }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator.browserContext.proxy = navigator.proxy;
+
+    const retryDelays = [];
+    let attempts = 0;
+    navigator._waitBeforeRetry = async (delayMs) => {
+      retryDelays.push(delayMs);
+    };
+    navigator.close = async () => {};
+    navigator.launch = async (options = {}) => {
+      launchedProxyPorts.push(options.proxy?.port || null);
+      navigator.browser = { isConnected: () => true };
+      navigator.context = {};
+      navigator.page = {
+        isClosed: () => false,
+        async waitForTimeout() {}
+      };
+      return navigator.page;
+    };
+    navigator.browserContext.navigate = async () => {
+      attempts += 1;
+      if (attempts === 1) {
+        const error = new Error('page.goto: net::ERR_HTTP_RESPONSE_CODE_FAILURE');
+        error.statusCode = 503;
+        throw error;
+      }
+      return true;
+    };
+
+    await assert.doesNotReject(
+      () => navigator.navigate('oddsportal://epl-results', {
+        timeout: 100,
+        circuitBreakerKey: 'league:epl'
+      })
+    );
+
+    assert.deepStrictEqual(reportedFailures, [{ port: 3101, errorType: '503' }]);
+    assert.strictEqual(rotated.length, 1);
+    assert.deepStrictEqual(launchedProxyPorts, [3102]);
+    assert.strictEqual(navigator.proxy.port, 3102);
+    assert.deepStrictEqual(retryDelays, [5000]);
+  });
+
+  it('_fetchAndDecrypt 遇到 HTTP_503 时应自动退避重试', async () => {
     const navigator = new ReconNavigator({
       logger: { info() {}, warn() {}, error() {}, debug() {} }
     });
@@ -958,22 +1085,60 @@ describe('ReconNavigator - Protocol Archive', () => {
     navigator.browser = { isConnected: () => true };
     navigator.context = {};
     navigator.page = { isClosed: () => false };
-    navigator.circuitBreaker = new ReconCircuitBreaker({
-      failureThreshold: 1,
-      resetTimeout: 60_000,
-      logger: { info() {}, warn() {}, error() {} }
-    });
+    const retryDelays = [];
+    let attempts = 0;
+    navigator._waitBeforeRetry = async (delayMs) => {
+      retryDelays.push(delayMs);
+    };
     navigator.networkMonitor.fetchArchivePages = async () => {
-      throw new Error('503 Service Unavailable');
+      attempts += 1;
+      if (attempts === 1) {
+        return {
+          matches: [],
+          pagesScanned: 1,
+          totalCandidates: 0,
+          pageStats: [{
+            page: 1,
+            rows: 0,
+            error: 'HTTP_503',
+            statusCode: 503,
+            retryAfterRaw: '2',
+            retryAfterMs: 2000
+          }],
+          httpFailure: {
+            page: 1,
+            url: 'oddsportal://archive/page/1',
+            error: 'HTTP_503',
+            statusCode: 503,
+            retryAfterRaw: '2',
+            retryAfterMs: 2000
+          }
+        };
+      }
+
+      return {
+        matches: [{
+          hash: 'retry-hash',
+          url: 'oddsportal://match/retry-hash',
+          homeTeam: 'A',
+          awayTeam: 'B',
+          matchDate: '2025-08-15T19:00:00.000Z'
+        }],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
     };
 
-    await assert.rejects(
-      () => navigator._fetchAndDecrypt('oddsportal://archive', 1, 100),
-      /503 Service Unavailable/
+    const result = await navigator._fetchAndDecrypt(
+      'oddsportal://archive',
+      1,
+      100,
+      { circuitBreakerKey: 'league:epl' }
     );
-    await assert.rejects(
-      () => navigator._fetchAndDecrypt('oddsportal://archive', 1, 100),
-      /Circuit breaker is OPEN/
-    );
+
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(attempts, 2);
+    assert.deepStrictEqual(retryDelays, [5000]);
   });
 });

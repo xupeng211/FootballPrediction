@@ -48,7 +48,7 @@ class ReconParser {
   }
 
   parseMatchUrl(url) {
-    const match = url.match(/\/([^\/]+)-([a-zA-Z0-9]{8})\/$/);
+    const match = url.match(/\/([^/]+)-([a-zA-Z0-9]{8})\/$/);
 
     if (!match) {
       return { hash: null, slug: null, ...UNKNOWN_TEAMS };

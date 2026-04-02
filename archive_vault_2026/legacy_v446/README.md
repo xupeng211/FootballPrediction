@@ -37,7 +37,7 @@
 
 ### 测试/调试工具
 
-- `circuit_breaker_test.js` - 熔断器测试
+- `circuit_breaker_test.js.disabled` - 熔断器测试（已隔离，避免被 node --test 默认扫描）
 - `stress_test_seriea.js` - 意甲压力测试
 - `fingerprint_check.js` - 指纹检查
 - `final_sweep.js` - 一次性清理

@@ -23,6 +23,10 @@ const fs = require('fs');
 
 // V4.46-TITAN: 环境常量定义
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+const IS_TEST_ENV = process.env.NODE_ENV === 'test' ||
+    process.argv.includes('--test') ||
+    process.argv.some(arg => /\.test\.js$/i.test(arg)) ||
+    Boolean(process.env.NODE_TEST_CONTEXT);
 const LOG_LEVEL = process.env.LOG_LEVEL || (IS_PRODUCTION ? 'info' : 'debug');
 
 // ============================================================================
@@ -33,7 +37,7 @@ const CWD = process.cwd();
 const IS_WSL_WINDOWS_PATH = CWD.includes('\\\\wsl.localhost\\') || CWD.includes('\\wsl$\\');
 
 // 关键修复：如果是 WSL 路径，强制关闭文件日志存储，只保留控制台输出
-const FILE_LOG_ENABLED = !IS_WSL_WINDOWS_PATH && process.env.DISABLE_FILE_LOG !== 'true';
+const FILE_LOG_ENABLED = !IS_TEST_ENV && !IS_WSL_WINDOWS_PATH && process.env.DISABLE_FILE_LOG !== 'true';
 
 const LOG_DIR = path.join(process.cwd(), 'logs');
 
