@@ -4,7 +4,8 @@ const {
   normalizeProvider,
   normalizeRawString,
   requireIdentityValue,
-  selectWinnerDecision
+  selectWinnerDecision,
+  toComparableTime
 } = require('./MatchIdentityResolver');
 
 function assertFunctionDependency(name, value) {

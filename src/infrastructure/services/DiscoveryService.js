@@ -368,7 +368,7 @@ class DiscoveryService {
    */
   async _discoverSeasonId(providerLeagueId, targetYear) {
     this.logger.info(`[HOUND-DEBUG] 🔍 启动赛季指纹探测: ${providerLeagueId} / ${targetYear}`);
-    return await this.seasonDiscovery.discover(providerLeagueId, targetYear);
+    return this.seasonDiscovery.discover(providerLeagueId, targetYear);
   }
 
   /**
@@ -525,7 +525,9 @@ class DiscoveryService {
    * @private
    */
   _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
   }
 
   async ensureBrowserHealthy(options = {}) {

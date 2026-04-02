@@ -1055,7 +1055,7 @@ function extractOddsArray(results) {
  * @returns {Object} 提取结果
  */
 async function extractOddsFromDOM(page) {
-  return await page.evaluate(() => {
+  return page.evaluate(() => {
     const results = {
       '1x2': null,
       pinnacleOdds: null,
@@ -1094,13 +1094,17 @@ async function extractOddsFromDOM(page) {
                   results._source = 'script_json';
                   break;
                 }
-              } catch (e) {}
+              } catch (e) {
+                // 忽略单个脚本 JSON 解析失败
+              }
             }
           }
         }
         if (results['1x2']) break;
       }
-    } catch (e) {}
+    } catch (e) {
+      // 忽略脚本扫描阶段异常
+    }
 
     // 模式2: DOM Sniper 狙击博彩公司行
     if (!results.pinnacleOdds || !results.bet365Odds) {

@@ -33,7 +33,9 @@ const DB_CONFIG = {
   connectionTimeoutMillis: 10000,
 };
 
-const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const sleep = (ms) => new Promise(resolve => {
+  setTimeout(resolve, ms);
+});
 
 /**
  * 生成标准 match_id
@@ -275,7 +277,9 @@ async function main() {
     try {
       const cookieBtn = await page.$('button:has-text("Agree"), button:has-text("Accept")');
       if (cookieBtn) await cookieBtn.click();
-    } catch (e) {}
+    } catch (e) {
+      // 忽略 Cookie 按钮不存在
+    }
 
     // 深度滚动加载所有内容
     console.log('[滚动] 深度滚动加载全部赛程...');

@@ -1114,14 +1114,18 @@ async function injectOmniSniffer(page, snifferState) {
         let isConfig = false;
         try {
           const json = JSON.parse(text);
-          isConfig = TARGET_KEYS.some(key => json.hasOwnProperty(key));
+          isConfig = TARGET_KEYS.some(key => Object.prototype.hasOwnProperty.call(json, key));
           if (isConfig) window.__titan_emit_stream({ channel: 'fetch', url, type: 'CONFIG_JSON', keys: Object.keys(json), purity: getPurityScore() });
-        } catch (e) {}
+        } catch (e) {
+          // 忽略非 JSON 响应
+        }
         
         if (!isConfig && (result.isGolden || result.reason === 'INVALID_ODDS_RANGE')) {
           window.__titan_emit_stream({ channel: 'fetch', url, type: result.isGolden ? 'GOLDEN_STREAM' : 'ODDS_RELATED', sample: text.substring(0, 300), odds: result.odds, purity: getPurityScore() });
         }
-      } catch (e) {}
+      } catch (e) {
+        // 忽略提纯阶段异常
+      }
       return response;
     };
 
@@ -1138,11 +1142,13 @@ async function injectOmniSniffer(page, snifferState) {
             
             try {
               const json = JSON.parse(text);
-              if (TARGET_KEYS.some(key => json.hasOwnProperty(key))) {
+              if (TARGET_KEYS.some(key => Object.prototype.hasOwnProperty.call(json, key))) {
                 window.__titan_emit_stream({ channel: 'xhr', url: xhr.responseURL, type: 'CONFIG_JSON', keys: Object.keys(json), purity: getPurityScore() });
                 return;
               }
-            } catch (e) {}
+            } catch (e) {
+              // 忽略非 JSON XHR 响应
+            }
             
             if (result.isGolden || result.reason === 'INVALID_ODDS_RANGE') {
               window.__titan_emit_stream({ channel: 'xhr', url: xhr.responseURL, type: result.isGolden ? 'GOLDEN_STREAM' : 'ODDS_RELATED', sample: text.substring(0, 300), odds: result.odds, purity: getPurityScore() });
@@ -1174,7 +1180,9 @@ async function waitForGoldenStream(snifferState, maxWaitMs = 30000) {
   
   while (Date.now() - startTime < maxWaitMs) {
     if (snifferState.ready) return { ready: true, elapsed: Date.now() - startTime };
-    await new Promise(resolve => setTimeout(resolve, checkInterval));
+    await new Promise(resolve => {
+      setTimeout(resolve, checkInterval);
+    });
   }
   
   return { ready: false, elapsed: Date.now() - startTime };

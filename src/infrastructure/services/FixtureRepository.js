@@ -46,7 +46,9 @@ class FixtureRepository {
     this.retryBackoffMultiplier = options.retryBackoffMultiplier ?? RETRY_CONFIG.backoff_multiplier;
     this.traceId = options.traceId || null;
     this.mappingMigration = options.mappingMigration || mappingMigration;
-    this.sleep = options.sleep || ((ms) => new Promise((resolve) => setTimeout(resolve, ms)));
+    this.sleep = options.sleep || ((ms) => new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    }));
     this.now = options.now || (() => Date.now());
 
     this.conflictArbiter = new ReconConflictArbiter({

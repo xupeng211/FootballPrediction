@@ -360,7 +360,9 @@ class HttpClient {
    * @private
    */
   _sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => {
+      setTimeout(resolve, ms);
+    });
   }
 
   _isRetryableStatus(statusCode) {

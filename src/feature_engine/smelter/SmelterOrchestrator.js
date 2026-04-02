@@ -298,8 +298,8 @@ class SmelterOrchestrator {
                     oddsData: {
                         openingOdds: oddsData.opening || oddsData.openingOdds,
                         closingOdds: oddsData.closing || oddsData.closingOdds,
-                        homeTeam,
-                        awayTeam
+                        homeTeam: home_team,
+                        awayTeam: away_team
                     }
                 });
                 marketSentiment = sentimentResult.market_sentiment;
@@ -441,7 +441,9 @@ class SmelterOrchestrator {
      * @private
      */
     _sleep(ms) {
-        return new Promise(resolve => setTimeout(resolve, ms));
+        return new Promise(resolve => {
+            setTimeout(resolve, ms);
+        });
     }
 }
 

@@ -437,7 +437,7 @@ class DiscoveryParser {
    */
   _buildMatchId(leagueId, season, externalId) {
     // 标准化赛季格式
-    const normalizedSeason = season.replace(/[\/\-_]/g, '');
+    const normalizedSeason = season.replace(/[/_-]/g, '');
     return `${leagueId}_${normalizedSeason}_${externalId}`;
   }
 }
