@@ -20,7 +20,7 @@ test('FixtureRepository.batchUpdateMatchPipelineStatus 应在竞争更新下只�
   const pool = {
     async connect() {
       return {
-        async query(sql, params = []) {
+        async query(sql, _params = []) {
           if (/^BEGIN|^COMMIT|^ROLLBACK/.test(sql.trim())) {
             return { rows: [], rowCount: 0 };
           }
@@ -31,7 +31,7 @@ test('FixtureRepository.batchUpdateMatchPipelineStatus 应在竞争更新下只�
 
           await Promise.resolve();
 
-          const [, nextStatus, expectedCurrentStatus] = params;
+          const [, nextStatus, expectedCurrentStatus] = _params;
           const allowedStatuses = Array.isArray(expectedCurrentStatus)
             ? expectedCurrentStatus
             : [expectedCurrentStatus];
@@ -81,13 +81,13 @@ test('FixtureRepository.batchUpdateMatchPipelineStatus 在同赛季已存在 map
   const pool = {
     async connect() {
       return {
-        async query(sql, params = []) {
+        async query(sql, _params = []) {
           if (/^BEGIN|^COMMIT|^ROLLBACK/.test(sql.trim())) {
             return { rows: [], rowCount: 0 };
           }
 
           capturedSql = sql;
-          capturedParams = params;
+          capturedParams = _params;
           return { rowCount: 0 };
         },
         release() {}
@@ -247,6 +247,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
     full_url: 'https://www.oddsportal.com/football/england/premier-league/bournemouth-fulham-2JX0U1gT/',
     home_team: 'Fulham',
     away_team: 'AFC Bournemouth',
+    match_confidence: 0.48,
     updated_at: '2026-03-27T05:34:32.308Z'
   };
 
@@ -262,7 +263,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
     },
     async connect() {
       return {
-        async query(sql, params = []) {
+        async query(sql, _params = []) {
           const compactSql = sql.trim().replace(/\s+/g, ' ');
           events.push(compactSql);
 
@@ -270,7 +271,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
             return { rows: [], rowCount: 0 };
           }
 
-          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, updated_at')) {
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
             return { rows: [existingMappingRow] };
           }
 
@@ -302,7 +303,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
           }
 
           if (compactSql.startsWith('UPDATE matches m')) {
-            const [matchId, nextStatus, expectedCurrentStatus] = params;
+            const [matchId, nextStatus, expectedCurrentStatus] = _params;
             const allowedStatuses = Array.isArray(expectedCurrentStatus)
               ? expectedCurrentStatus
               : expectedCurrentStatus
@@ -349,7 +350,8 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
       season: '2025/2026',
       league_name: 'Premier League',
       home_team: 'AFC Bournemouth',
-      away_team: 'Fulham'
+      away_team: 'Fulham',
+      match_confidence: 0.91
     }
   ], {
     pipelineStatus: 'RECON_LINKED'
@@ -368,12 +370,12 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
   assert.equal(healLog.data.rebound_match_id, '47_20252026_4813435');
 });
 
-test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必须抛出 HASH_CONFLICT_REBIND_FAILED 并回滚事务', async () => {
+test('FixtureRepository.batchSaveOddsPortalMappings 在 preserve_linked_status 开启且新证据不足时必须保留既有 RECON_LINKED', async () => {
+  const healLogs = [];
   const statusByMatchId = new Map([
     ['47_20252026_4813728', 'RECON_LINKED'],
     ['47_20252026_4813435', 'harvested']
   ]);
-  const events = [];
 
   const existingMappingRow = {
     season: '2025/2026',
@@ -382,6 +384,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必�
     full_url: 'https://www.oddsportal.com/football/england/premier-league/bournemouth-fulham-2JX0U1gT/',
     home_team: 'Fulham',
     away_team: 'AFC Bournemouth',
+    match_confidence: 0.88,
     updated_at: '2026-03-27T05:34:32.308Z'
   };
 
@@ -397,7 +400,245 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必�
     },
     async connect() {
       return {
-        async query(sql, params = []) {
+        async query(sql, _params = []) {
+          const compactSql = sql.trim().replace(/\s+/g, ' ');
+
+          if (/^BEGIN|^COMMIT|^ROLLBACK/.test(compactSql)) {
+            return { rows: [], rowCount: 0 };
+          }
+
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
+            return { rows: [existingMappingRow] };
+          }
+
+          if (compactSql.includes('SELECT match_id, season, match_date, home_team, away_team, pipeline_status FROM matches')) {
+            return {
+              rows: [
+                {
+                  match_id: '47_20252026_4813728',
+                  season: '2025/2026',
+                  match_date: '2026-05-09T14:00:00.000Z',
+                  home_team: 'Fulham',
+                  away_team: 'AFC Bournemouth',
+                  pipeline_status: statusByMatchId.get('47_20252026_4813728')
+                },
+                {
+                  match_id: '47_20252026_4813435',
+                  season: '2025/2026',
+                  match_date: '2025-10-03T19:00:00.000Z',
+                  home_team: 'AFC Bournemouth',
+                  away_team: 'Fulham',
+                  pipeline_status: statusByMatchId.get('47_20252026_4813435')
+                }
+              ]
+            };
+          }
+
+          if (compactSql.startsWith('UPDATE matches_oddsportal_mapping')
+            || compactSql.startsWith('UPDATE matches m')
+            || compactSql.startsWith('INSERT INTO matches_oddsportal_mapping')) {
+            throw new Error(`should_not_mutate_when_linked_status_is_preserved:${compactSql}:${JSON.stringify(_params)}`);
+          }
+
+          throw new Error(`unexpected_query:${compactSql}`);
+        },
+        release() {}
+      };
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    logger: {
+      info() {},
+      warn(message, data) {
+        healLogs.push({ message, data });
+      },
+      error() {}
+    }
+  });
+  repository._mappingSchemaEnsured = true;
+
+  const result = await repository.batchSaveOddsPortalMappings([
+    {
+      match_id: '47_20252026_4813435',
+      oddsportal_hash: '2JX0U1gT',
+      full_url: 'https://www.oddsportal.com/football/england/premier-league/bournemouth-fulham-2JX0U1gT/',
+      season: '2025/2026',
+      league_name: 'Premier League',
+      home_team: 'AFC Bournemouth',
+      away_team: 'Fulham',
+      match_confidence: 0.9
+    }
+  ], {
+    pipelineStatus: 'RECON_LINKED',
+    preserve_linked_status: true
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.inserted, 0);
+  assert.equal(result.updated, 0);
+  assert.equal(statusByMatchId.get('47_20252026_4813728'), 'RECON_LINKED');
+  assert.equal(statusByMatchId.get('47_20252026_4813435'), 'harvested');
+
+  const healLog = healLogs.find((entry) => /新证据不足以推翻既有 RECON_LINKED/.test(entry.message));
+  assert.ok(healLog);
+  assert.equal(healLog.data.existing_match_id, '47_20252026_4813728');
+  assert.equal(healLog.data.incoming_match_id, '47_20252026_4813435');
+  assert.equal(healLog.data.preserve_linked_status, true);
+});
+
+test('FixtureRepository.batchSaveOddsPortalMappings 在 preserve_linked_status 开启且 incoming 分数未超过 existing 时也必须跳过冲突而非整批失败', async () => {
+  const healLogs = [];
+  const statusByMatchId = new Map([
+    ['130_20252026_4694406', 'RECON_LINKED'],
+    ['130_20252026_4694299', 'harvested']
+  ]);
+
+  const existingMappingRow = {
+    season: '2025/2026',
+    oddsportal_hash: '8hbZloRi',
+    match_id: '130_20252026_4694406',
+    full_url: 'https://www.oddsportal.com/football/usa/mls/st-louis-city-seattle-sounders-8hbZloRi/',
+    home_team: 'Seattle Sounders Fc',
+    away_team: 'St Louis City',
+    match_confidence: 0.82,
+    updated_at: '2026-03-27T18:00:47.107Z'
+  };
+
+  const pool = {
+    async query() {
+      return {
+        rows: [
+          { column_name: 'match_confidence' },
+          { column_name: 'mapping_method' },
+          { column_name: 'is_reversed' }
+        ]
+      };
+    },
+    async connect() {
+      return {
+        async query(sql, _params = []) {
+          const compactSql = sql.trim().replace(/\s+/g, ' ');
+
+          if (/^BEGIN|^COMMIT|^ROLLBACK/.test(compactSql)) {
+            return { rows: [], rowCount: 0 };
+          }
+
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
+            return { rows: [existingMappingRow] };
+          }
+
+          if (compactSql.includes('SELECT match_id, season, match_date, home_team, away_team, pipeline_status FROM matches')) {
+            return {
+              rows: [
+                {
+                  match_id: '130_20252026_4694406',
+                  season: '2025/2026',
+                  match_date: '2026-03-08T01:30:00.000Z',
+                  home_team: 'St. Louis City',
+                  away_team: 'Seattle Sounders FC',
+                  pipeline_status: statusByMatchId.get('130_20252026_4694406')
+                },
+                {
+                  match_id: '130_20252026_4694299',
+                  season: '2025/2026',
+                  match_date: '2025-03-16T00:30:00.000Z',
+                  home_team: 'St Louis City',
+                  away_team: 'Seattle Sounders Fc',
+                  pipeline_status: statusByMatchId.get('130_20252026_4694299')
+                }
+              ]
+            };
+          }
+
+          if (compactSql.startsWith('UPDATE matches_oddsportal_mapping')
+            || compactSql.startsWith('UPDATE matches m')
+            || compactSql.startsWith('INSERT INTO matches_oddsportal_mapping')) {
+            throw new Error(`should_not_mutate_when_existing_link_must_win:${compactSql}:${JSON.stringify(_params)}`);
+          }
+
+          throw new Error(`unexpected_query:${compactSql}`);
+        },
+        release() {}
+      };
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    logger: {
+      info() {},
+      warn(message, data) {
+        healLogs.push({ message, data });
+      },
+      error() {}
+    }
+  });
+  repository._mappingSchemaEnsured = true;
+
+  const result = await repository.batchSaveOddsPortalMappings([
+    {
+      match_id: '130_20252026_4694299',
+      oddsportal_hash: '8hbZloRi',
+      full_url: 'https://www.oddsportal.com/football/usa/mls/st-louis-city-seattle-sounders-8hbZloRi/',
+      season: '2025/2026',
+      league_name: 'MLS',
+      home_team: 'St Louis City',
+      away_team: 'Seattle Sounders Fc',
+      match_confidence: 0.78
+    }
+  ], {
+    pipelineStatus: 'RECON_LINKED',
+    preserve_linked_status: true
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.inserted, 0);
+  assert.equal(result.updated, 0);
+  assert.equal(statusByMatchId.get('130_20252026_4694406'), 'RECON_LINKED');
+  assert.equal(statusByMatchId.get('130_20252026_4694299'), 'harvested');
+
+  const healLog = healLogs.find((entry) => /新证据不足以推翻既有 RECON_LINKED/.test(entry.message));
+  assert.ok(healLog);
+  assert.equal(healLog.data.existing_match_id, '130_20252026_4694406');
+  assert.equal(healLog.data.incoming_match_id, '130_20252026_4694299');
+  assert.equal(healLog.data.preserve_linked_status, true);
+});
+
+test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必须抛出 HASH_CONFLICT_REBIND_FAILED 并回滚事务', async () => {
+  const statusByMatchId = new Map([
+    ['47_20252026_4813728', 'RECON_LINKED'],
+    ['47_20252026_4813435', 'harvested']
+  ]);
+  const events = [];
+
+  const existingMappingRow = {
+    season: '2025/2026',
+    oddsportal_hash: '2JX0U1gT',
+    match_id: '47_20252026_4813728',
+    full_url: 'https://www.oddsportal.com/football/england/premier-league/bournemouth-fulham-2JX0U1gT/',
+    home_team: 'Fulham',
+    away_team: 'AFC Bournemouth',
+    match_confidence: 0.48,
+    updated_at: '2026-03-27T05:34:32.308Z'
+  };
+
+  const pool = {
+    async query() {
+      return {
+        rows: [
+          { column_name: 'match_confidence' },
+          { column_name: 'mapping_method' },
+          { column_name: 'is_reversed' }
+        ]
+      };
+    },
+    async connect() {
+      return {
+        async query(sql, _params = []) {
           const compactSql = sql.trim().replace(/\s+/g, ' ');
           events.push(compactSql);
 
@@ -405,7 +646,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必�
             return { rows: [], rowCount: 0 };
           }
 
-          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, updated_at')) {
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
             return { rows: [existingMappingRow] };
           }
 
@@ -465,7 +706,8 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必�
         season: '2025/2026',
         league_name: 'Premier League',
         home_team: 'AFC Bournemouth',
-        away_team: 'Fulham'
+        away_team: 'Fulham',
+        match_confidence: 0.91
       }
     ], {
       pipelineStatus: 'RECON_LINKED'
@@ -510,7 +752,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在同场重复 ID 争抢同
             return { rows: [], rowCount: 0 };
           }
 
-          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, updated_at')) {
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
             return {
               rows: [{
                 season: '2025/2026',
@@ -519,6 +761,7 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在同场重复 ID 争抢同
                 full_url: 'https://www.oddsportal.com/football/england/premier-league/arsenal-chelsea-dup-fixture/',
                 home_team: 'Arsenal',
                 away_team: 'Chelsea',
+                match_confidence: 0.82,
                 updated_at: '2026-03-29T12:00:00.000Z'
               }]
             };

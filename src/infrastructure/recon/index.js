@@ -21,6 +21,7 @@ const {
   ReconErrorClassifier,
   ReconRetryStrategy,
   ReconCircuitBreaker,
+  ReconCircuitBreakerPool,
   ErrorTypes,
   CircuitBreakerOpenError
 } = require('./ReconResilience');
@@ -44,6 +45,7 @@ module.exports = {
   ReconErrorClassifier,
   ReconRetryStrategy,
   ReconCircuitBreaker,
+  ReconCircuitBreakerPool,
   ErrorTypes,
   CircuitBreakerOpenError,
 

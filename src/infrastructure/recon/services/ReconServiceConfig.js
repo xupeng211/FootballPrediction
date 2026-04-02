@@ -27,7 +27,7 @@ function readConfigFile(configPath = DEFAULT_RECON_CONFIG_PATH) {
 
   try {
     const raw = fs.readFileSync(effectiveConfigPath, 'utf8');
-    return JSON.parse(raw);
+    return resolveEnvPlaceholders(JSON.parse(raw));
   } catch (error) {
     throw buildFieldError(
       null,
@@ -36,6 +36,24 @@ function readConfigFile(configPath = DEFAULT_RECON_CONFIG_PATH) {
       error
     );
   }
+}
+
+function resolveEnvPlaceholders(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => resolveEnvPlaceholders(item));
+  }
+
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value).map(([key, nestedValue]) => [key, resolveEnvPlaceholders(nestedValue)])
+    );
+  }
+
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return value.replace(/\$\{([A-Z0-9_]+)\}/g, (_match, envName) => process.env[envName] || '');
 }
 
 function getNestedValue(root, pathSegments = []) {
@@ -152,6 +170,28 @@ function validateConfig(config, options = {}) {
     'repository.conflict_arbiter.same_fixture_window_ms',
     configPath,
     { integer: true, min: 1 }
+  );
+  assertFiniteNumber(
+    assertRequired(config, ['repository', 'conflict_arbiter', 'linked_rebind_min_date_gap_ms'], configPath),
+    'repository.conflict_arbiter.linked_rebind_min_date_gap_ms',
+    configPath,
+    { integer: true, min: 1 }
+  );
+  validateThreshold(
+    assertRequired(config, ['repository', 'conflict_arbiter', 'linked_rebind_min_incoming_confidence'], configPath),
+    'repository.conflict_arbiter.linked_rebind_min_incoming_confidence',
+    configPath
+  );
+  validateThreshold(
+    assertRequired(config, ['repository', 'conflict_arbiter', 'linked_rebind_min_confidence_delta'], configPath),
+    'repository.conflict_arbiter.linked_rebind_min_confidence_delta',
+    configPath
+  );
+  assertFiniteNumber(
+    assertRequired(config, ['repository', 'conflict_arbiter', 'linked_rebind_min_score_delta'], configPath),
+    'repository.conflict_arbiter.linked_rebind_min_score_delta',
+    configPath,
+    { min: 0, max: 2 }
   );
   assertStringArray(
     assertRequired(config, ['repository', 'identity_inactive_statuses'], configPath),
@@ -394,5 +434,6 @@ module.exports = {
   loadReconConfig,
   resolveReconStrategy,
   resolveRuntimeFeatureFlags,
+  resolveEnvPlaceholders,
   validateConfig
 };

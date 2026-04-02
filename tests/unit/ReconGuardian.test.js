@@ -55,9 +55,28 @@ describe('ReconGuardian - Resource Hog Safety', () => {
       guardian._shouldCollectProcess({
         isZombie: false,
         isOrphan: true,
+        isOrphanPastGrace: true,
+        isManagedProfile: false,
         isResourceHog: false
       }),
       true
+    );
+  });
+
+  it('带托管 profile 标识的孤儿进程在宽限期后也不应被误杀', () => {
+    const guardian = new ReconGuardian({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    assert.strictEqual(
+      guardian._shouldCollectProcess({
+        isZombie: false,
+        isOrphan: true,
+        isOrphanPastGrace: true,
+        isManagedProfile: true,
+        isResourceHog: false
+      }),
+      false
     );
   });
 });

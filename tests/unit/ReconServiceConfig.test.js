@@ -6,6 +6,8 @@ const assert = require('node:assert/strict');
 const config = require('../../config/recon_config.json');
 const {
   ReconConfigValidationError,
+  loadReconConfig,
+  resolveEnvPlaceholders,
   resolveRuntimeFeatureFlags,
   validateConfig
 } = require('../../src/infrastructure/recon/services/ReconServiceConfig');
@@ -126,4 +128,32 @@ test('ReconServiceConfig.resolveRuntimeFeatureFlags 应支持环境变量覆盖�
     disableDomFallback: true,
     reconStrategy: 'legacy'
   });
+});
+
+test('ReconServiceConfig 应解析 external_session_path 环境变量占位符', () => {
+  const resolved = resolveEnvPlaceholders({
+    recon_runtime: {
+      browser_context: {
+        external_session_path: '${RECON_SESSION_PATH}'
+      }
+    }
+  });
+
+  assert.equal(resolved.recon_runtime.browser_context.external_session_path, '');
+});
+
+test('ReconServiceConfig.loadReconConfig 应使用 RECON_SESSION_PATH 覆盖 external_session_path', () => {
+  const originalPath = process.env.RECON_SESSION_PATH;
+  process.env.RECON_SESSION_PATH = '/app/runtime/session.txt';
+
+  try {
+    const loaded = loadReconConfig();
+    assert.equal(loaded.recon_runtime.browser_context.external_session_path, '/app/runtime/session.txt');
+  } finally {
+    if (originalPath === undefined) {
+      delete process.env.RECON_SESSION_PATH;
+    } else {
+      process.env.RECON_SESSION_PATH = originalPath;
+    }
+  }
 });

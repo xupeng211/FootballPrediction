@@ -33,6 +33,27 @@ function createPlanner(overrides = {}) {
 }
 
 describe('ReconTaskPlanner', () => {
+  it('allowMismatchRetry 开启时应下调阈值并启用 forceMultiMode', () => {
+    const planner = createPlanner();
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 47, league: { name: 'Premier League' } },
+      [{ match_id: 'm1', pipeline_status: 'RECON_MISMATCH' }],
+      0.75,
+      { allowMismatchRetry: true }
+    );
+
+    assert.strictEqual(policy.allowMismatchRetry, true);
+    assert.strictEqual(policy.hasMismatchRetry, true);
+    assert.strictEqual(
+      policy.effectiveConfidenceThreshold,
+      Math.max(
+        planner.mismatchRetryThresholdFloor,
+        0.75 - planner.mismatchRetryThresholdDelta
+      )
+    );
+    assert.strictEqual(policy.forceMultiMode, true);
+  });
+
   it('应在有限配额内优先调度高置信度任务', () => {
     const planner = createPlanner();
     const pendingMatches = [
@@ -85,6 +106,53 @@ describe('ReconTaskPlanner', () => {
     );
   });
 
+  it('prepareReconPendingTargets 应优先返回 harvested 积压更高的联赛', async () => {
+    const leagues = [
+      { id: 47, code: 'EPL', name: 'Premier League', country: 'england', slug: 'premier-league' },
+      { id: 130, code: 'MLS', name: 'MLS', country: 'usa', slug: 'mls', resultsUrlStrategy: 'seasonless', seasonType: 'single_year' }
+    ];
+    const planner = createPlanner({
+      configManager: {
+        getActiveLeagues() {
+          return leagues;
+        }
+      },
+      repository: {
+        async getReconEligibleMatches(dbSeason, leagueName) {
+          assert.strictEqual(dbSeason, '2025/2026');
+          if (leagueName === 'Premier League') {
+            return [
+              { match_id: '47_20252026_0001', pipeline_status: 'HARVESTED' },
+              { match_id: '47_20252026_0002', pipeline_status: 'RECON_MISMATCH' }
+            ];
+          }
+          if (leagueName === 'MLS') {
+            return [
+              { match_id: '130_20252026_0001', pipeline_status: 'HARVESTED' },
+              { match_id: '130_20252026_0002', pipeline_status: 'HARVESTED' },
+              { match_id: '130_20252026_0003', pipeline_status: 'HARVESTED' }
+            ];
+          }
+          return [];
+        }
+      }
+    });
+
+    const targets = await planner.buildScanTargets({
+      season: '2025-2026',
+      currentSeasonOnly: true
+    });
+    const prepared = await planner.prepareReconPendingTargets(targets, null, {
+      allowMismatchRetry: true,
+      confidenceThreshold: 0.75
+    });
+
+    assert.deepStrictEqual(
+      prepared.map(({ target }) => target.league.name),
+      ['MLS', 'Premier League']
+    );
+  });
+
   it('当前赛季 SOURCE_EMPTY 时应保留当前赛季 source，不得回退到上一赛季', async () => {
     const calls = [];
     const planner = createPlanner({
@@ -126,8 +194,9 @@ describe('ReconTaskPlanner', () => {
         url: target.resultsUrl,
         options: {
           maxPages: 50,
-          timeoutMs: 90000,
-          preferCurrentSeasonSource: true
+          timeoutMs: planner.archiveTimeoutMs,
+          preferCurrentSeasonSource: true,
+          circuitBreakerKey: 'recon:47:2025/2026'
         }
       }
     ]);
@@ -177,8 +246,9 @@ describe('ReconTaskPlanner', () => {
         url: 'oddsportal://root/football/china/super-league/results/',
         options: {
           maxPages: 50,
-          timeoutMs: 90000,
+          timeoutMs: planner.archiveTimeoutMs,
           preferCurrentSeasonSource: true,
+          circuitBreakerKey: 'recon:120:2025/2026',
           readySelector: '[data-testid="match-row"]'
         }
       }
@@ -269,6 +339,36 @@ describe('ReconTaskPlanner', () => {
     ]);
   });
 
+  it('currentSeasonOnly 开启时，seasonless 联赛不得回扫 historical results source', () => {
+    const planner = createPlanner();
+
+    const sources = planner.buildCandidateSources({
+      league: {
+        id: 130,
+        name: 'MLS',
+        country: 'usa',
+        slug: 'mls',
+        resultsUrlStrategy: 'seasonless',
+        seasonType: 'single_year'
+      },
+      season: '2026',
+      dbSeason: '2025/2026',
+      currentSeasonOnly: true,
+      pendingMatches: [{
+        match_id: '130_20252026_0001',
+        match_date: '2026-03-15T02:30:00.000Z'
+      }]
+    });
+
+    assert.deepStrictEqual(sources, [
+      {
+        season: '2026',
+        url: 'oddsportal://root/football/usa/mls/results/',
+        mode: 'current_season'
+      }
+    ]);
+  });
+
   it('single_year 联赛应使用结束年份生成 results URL', () => {
     const planner = createPlanner();
 
@@ -332,9 +432,10 @@ describe('ReconTaskPlanner', () => {
         url: target.resultsUrl,
         options: {
           maxPages: 50,
-          timeoutMs: 90000,
+          timeoutMs: planner.archiveTimeoutMs,
           preferCurrentSeasonSource: true,
           readySelector: 'text=Fixture Ready',
+          circuitBreakerKey: 'recon:223:2025/2026',
           forceDomOnly: true
         }
       }
@@ -542,7 +643,10 @@ describe('ReconTaskPlanner', () => {
     assert.deepStrictEqual(policy, {
       allowMismatchRetry: true,
       hasMismatchRetry: true,
-      effectiveConfidenceThreshold: 0.45,
+      effectiveConfidenceThreshold: Math.max(
+        planner.mismatchRetryThresholdFloor,
+        0.5 - planner.mismatchRetryThresholdDelta
+      ),
       forceMultiMode: true
     });
   });
