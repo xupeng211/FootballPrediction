@@ -149,7 +149,8 @@ describe('ReconEngine - Bulk Flow TDD', () => {
           maxPages: 50,
           timeoutMs: engine.archiveTimeoutMs,
           preferCurrentSeasonSource: true,
-          circuitBreakerKey: 'recon:47:2025/2026'
+          circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+          forcePureProtocol: false
         }
       }
     ]);
@@ -376,6 +377,52 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     assert.deepStrictEqual(statusCalls, [
       { matchIds: ['47_20242025_1001'], status: 'RECON_MISMATCH' }
     ]);
+  });
+
+  it('低于阈值时应保留最佳落选候选证据，便于 mismatch 归因', async () => {
+    const engine = new ReconEngine({
+      parser: { calculateSimilarity: () => 0.6 },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const outcome = await engine._reconcilePendingMatch(
+      {
+        match_id: '130_20252026_4694299',
+        home_team: 'Inter Miami CF',
+        away_team: 'New York City FC',
+        match_date: '2026-03-22T17:00:00.000Z'
+      },
+      [{
+        hash: '8hbZloRi',
+        url: 'oddsportal://match/inter-miami-nycfc',
+        homeTeam: 'Inter Miami',
+        awayTeam: 'New York City',
+        matchDate: '2026-03-22T17:00:00.000Z'
+      }],
+      {
+        dbSeason: '2025/2026',
+        league: { name: 'MLS' }
+      },
+      1.01,
+      null
+    );
+
+    assert.strictEqual(outcome.status, 'mismatch');
+    assert.strictEqual(outcome.matchId, '130_20252026_4694299');
+    assert.deepStrictEqual(outcome.evidence, {
+      match_id: '130_20252026_4694299',
+      season: '2025/2026',
+      league_name: 'MLS',
+      home_team: 'Inter Miami CF',
+      away_team: 'New York City FC',
+      full_url: 'oddsportal://match/inter-miami-nycfc',
+      candidate_name: 'Inter Miami vs New York City',
+      match_confidence: outcome.evidence.match_confidence,
+      mapping_method: 'fuzzy',
+      is_reversed: false
+    });
+    assert.ok(outcome.evidence.match_confidence > 0);
+    assert.ok(outcome.evidence.match_confidence < 1);
   });
 
   it('批量对齐时在关闭高成功率降采样后应每 50 场输出一次进度快照', async () => {
