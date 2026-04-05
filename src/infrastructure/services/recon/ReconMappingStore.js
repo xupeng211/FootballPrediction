@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 function assertFunctionDependency(name, value) {
   if (typeof value !== 'function') {
     throw new TypeError(`[ReconMappingStore] 缺少必需依赖: ${name}`);
@@ -45,7 +47,9 @@ class ReconMappingStore {
     const hasOptionalFields = await this.checkOptionalFields('matches_oddsportal_mapping', [
       'match_confidence',
       'mapping_method',
-      'is_reversed'
+      'is_reversed',
+      'candidate_name',
+      'is_evidence_only'
     ]);
 
     return this.executeWithRetry(async () => {
@@ -57,7 +61,8 @@ class ReconMappingStore {
         await client.query('BEGIN');
         const audit = await this.auditSeasonHashConflictsWithClient(client, [mappingData], {
           pipelineStatus,
-          preserveLinkedStatus
+          preserveLinkedStatus,
+          hasOptionalFields
         });
         const targetMapping = (audit.remainingMappings || [])[0] || null;
         const linkedStatusUpdated = Number(audit.linkedStatusUpdated || 0);
@@ -72,7 +77,15 @@ class ReconMappingStore {
           };
         }
 
-        const result = await this.saveOddsPortalMappingWithClient(client, targetMapping, hasOptionalFields);
+        const result = await this.saveOddsPortalMappingWithClient(
+          client,
+          targetMapping,
+          hasOptionalFields,
+          {
+            pipelineStatus,
+            preserveLinkedStatus
+          }
+        );
         let updated = linkedStatusUpdated;
 
         if (pipelineStatus) {
@@ -123,7 +136,9 @@ class ReconMappingStore {
     const hasOptionalFields = await this.checkOptionalFields('matches_oddsportal_mapping', [
       'match_confidence',
       'mapping_method',
-      'is_reversed'
+      'is_reversed',
+      'candidate_name',
+      'is_evidence_only'
     ]);
 
     return this.executeWithRetry(async () => {
@@ -136,14 +151,23 @@ class ReconMappingStore {
         await client.query('BEGIN');
         const audit = await this.auditSeasonHashConflictsWithClient(client, orderedMappings, {
           pipelineStatus,
-          preserveLinkedStatus
+          preserveLinkedStatus,
+          hasOptionalFields
         });
         const remainingMappings = audit.remainingMappings || orderedMappings;
         results.updated += Number(audit.linkedStatusUpdated || 0);
 
         for (const mapping of remainingMappings) {
           try {
-            await this.saveOddsPortalMappingWithClient(client, mapping, hasOptionalFields);
+            await this.saveOddsPortalMappingWithClient(
+              client,
+              mapping,
+              hasOptionalFields,
+              {
+                pipelineStatus,
+                preserveLinkedStatus
+              }
+            );
             results.inserted++;
           } catch (error) {
             results.failed++;
@@ -239,7 +263,149 @@ class ReconMappingStore {
     }
   }
 
-  async saveOddsPortalMappingWithClient(client, mappingData, hasOptionalFields) {
+  assertMismatchEvidenceFields(evidenceData) {
+    const requiredFields = ['match_id', 'season', 'league_name', 'home_team', 'away_team'];
+    const missing = requiredFields.filter((field) => !evidenceData[field]);
+    if (missing.length > 0) {
+      throw new this.RepositoryError(
+        `失配证据缺少必填字段: ${missing.join(', ')}`,
+        'MISMATCH_EVIDENCE_REQUIRED_FIELDS'
+      );
+    }
+  }
+
+  buildEvidenceOnlyHash(matchId) {
+    const digest = crypto.createHash('sha1').update(String(matchId || '')).digest('hex').slice(0, 7);
+    return `~${digest}`;
+  }
+
+  async batchSaveMismatchEvidence(mismatchRecords, options = {}) {
+    if (!Array.isArray(mismatchRecords) || mismatchRecords.length === 0) {
+      return { success: true, saved: 0, skipped: 0 };
+    }
+
+    await this.ensureSchema();
+    const hasOptionalFields = await this.checkOptionalFields('matches_oddsportal_mapping', [
+      'match_confidence',
+      'mapping_method',
+      'is_reversed',
+      'candidate_name',
+      'is_evidence_only'
+    ]);
+
+    const orderedRecords = [...mismatchRecords]
+      .filter(Boolean)
+      .map((record) => ({ ...record, match_id: String(record.match_id) }))
+      .sort((left, right) => String(left.match_id).localeCompare(String(right.match_id)));
+
+    orderedRecords.forEach((record) => this.assertMismatchEvidenceFields(record));
+
+    return this.executeWithRetry(async () => {
+      const client = await this.getDbPool().connect();
+      let saved = 0;
+      let skipped = 0;
+
+      try {
+        await client.query('BEGIN');
+
+        for (const record of orderedRecords) {
+          const result = await this.saveMismatchEvidenceWithClient(client, record, hasOptionalFields);
+          if (result.saved) {
+            saved++;
+          } else {
+            skipped++;
+          }
+        }
+
+        await client.query('COMMIT');
+        return { success: true, saved, skipped };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw this.classifyWriteError(error, {
+          mappingData: {
+            match_ids: orderedRecords.map((record) => record.match_id),
+            season: orderedRecords[0]?.season || null
+          },
+          defaultCode: 'DATABASE_ERROR',
+          defaultMessage: '失配证据写入失败'
+        });
+      } finally {
+        client.release();
+      }
+    }, 'batchSaveMismatchEvidence');
+  }
+
+  async saveMismatchEvidenceWithClient(client, evidenceData, hasOptionalFields) {
+    const columns = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team', 'status', 'created_at', 'updated_at'];
+    const values = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()', 'NOW()'];
+    const params = [
+      String(evidenceData.match_id),
+      this.buildEvidenceOnlyHash(evidenceData.match_id),
+      evidenceData.full_url || `evidence://recon/${encodeURIComponent(String(evidenceData.match_id))}`,
+      String(evidenceData.season),
+      String(evidenceData.league_name),
+      String(evidenceData.home_team),
+      String(evidenceData.away_team),
+      'pending'
+    ];
+
+    if (hasOptionalFields.match_confidence) {
+      columns.push('match_confidence');
+      values.push(`$${params.length + 1}`);
+      params.push(Number(evidenceData.match_confidence || 0));
+    }
+
+    if (hasOptionalFields.mapping_method) {
+      columns.push('mapping_method');
+      values.push(`$${params.length + 1}`);
+      params.push(String(evidenceData.mapping_method || 'unknown'));
+    }
+
+    if (hasOptionalFields.is_reversed) {
+      columns.push('is_reversed');
+      values.push(`$${params.length + 1}`);
+      params.push(Boolean(evidenceData.is_reversed));
+    }
+
+    if (hasOptionalFields.candidate_name) {
+      columns.push('candidate_name');
+      values.push(`$${params.length + 1}`);
+      params.push(evidenceData.candidate_name ? String(evidenceData.candidate_name) : null);
+    }
+
+    if (hasOptionalFields.is_evidence_only) {
+      columns.push('is_evidence_only');
+      values.push(`$${params.length + 1}`);
+      params.push(true);
+    }
+
+    const query = `
+      INSERT INTO matches_oddsportal_mapping (${columns.join(', ')})
+      VALUES (${values.join(', ')})
+      ON CONFLICT (match_id, season) DO UPDATE SET
+        oddsportal_hash = EXCLUDED.oddsportal_hash,
+        full_url = EXCLUDED.full_url,
+        home_team = EXCLUDED.home_team,
+        away_team = EXCLUDED.away_team,
+        status = EXCLUDED.status,
+        updated_at = NOW()
+        ${hasOptionalFields.match_confidence ? ', match_confidence = EXCLUDED.match_confidence' : ''}
+        ${hasOptionalFields.mapping_method ? ', mapping_method = EXCLUDED.mapping_method' : ''}
+        ${hasOptionalFields.is_reversed ? ', is_reversed = EXCLUDED.is_reversed' : ''}
+        ${hasOptionalFields.candidate_name ? ', candidate_name = EXCLUDED.candidate_name' : ''}
+        ${hasOptionalFields.is_evidence_only ? ', is_evidence_only = TRUE' : ''}
+      WHERE COALESCE(matches_oddsportal_mapping.is_evidence_only, FALSE) = TRUE
+      RETURNING match_id;
+    `;
+
+    const result = await client.query(query, params);
+    return {
+      matchId: result.rows[0]?.match_id || null,
+      saved: (result.rowCount || 0) > 0
+    };
+  }
+
+  async saveOddsPortalMappingWithClient(client, mappingData, hasOptionalFields, runtimeOptions = {}) {
     const columns = ['match_id', 'oddsportal_hash', 'full_url', 'season', 'league_name', 'home_team', 'away_team', 'status', 'created_at', 'updated_at'];
     const values = ['$1', '$2', '$3', '$4', '$5', '$6', '$7', '$8', 'NOW()', 'NOW()'];
     const params = [
@@ -271,6 +437,12 @@ class ReconMappingStore {
       params.push(Boolean(mappingData.is_reversed));
     }
 
+    if (hasOptionalFields.is_evidence_only) {
+      columns.push('is_evidence_only');
+      values.push(`$${params.length + 1}`);
+      params.push(false);
+    }
+
     const query = (this.sqlTemplates.save_mapping || `
       INSERT INTO matches_oddsportal_mapping ({columns})
       VALUES ({values})
@@ -289,14 +461,71 @@ class ReconMappingStore {
       .replace('{optional_updates}', [
         hasOptionalFields.match_confidence ? ', match_confidence = EXCLUDED.match_confidence' : '',
         hasOptionalFields.mapping_method ? ', mapping_method = EXCLUDED.mapping_method' : '',
-        hasOptionalFields.is_reversed ? ', is_reversed = EXCLUDED.is_reversed' : ''
+        hasOptionalFields.is_reversed ? ', is_reversed = EXCLUDED.is_reversed' : '',
+        hasOptionalFields.candidate_name ? ', candidate_name = NULL' : '',
+        hasOptionalFields.is_evidence_only ? ', is_evidence_only = FALSE' : ''
       ].join(''));
 
-    const result = await client.query(query, params);
-    return {
-      matchId: result.rows[0]?.match_id,
-      wasInsert: result.rows.length > 0
-    };
+    try {
+      const result = await client.query(query, params);
+      return {
+        matchId: result.rows[0]?.match_id,
+        wasInsert: result.rows.length > 0
+      };
+    } catch (error) {
+      if (!this.isSeasonHashUniqueViolation(error, mappingData)) {
+        throw error;
+      }
+
+      const existingMapping = await this.fetchMappingBySeasonHashWithClient(
+        client,
+        mappingData.season,
+        mappingData.oddsportal_hash
+      );
+      if (!existingMapping) {
+        throw error;
+      }
+
+      const forced = await this.forceOverwriteSeasonHashConflictWithClient(
+        client,
+        existingMapping,
+        mappingData,
+        hasOptionalFields,
+        {
+          pipelineStatus: runtimeOptions.pipelineStatus || null,
+          preserveLinkedStatus: Boolean(runtimeOptions.preserveLinkedStatus),
+          reason: 'unique_violation_fallback'
+        }
+      );
+
+      if (forced?.resolved) {
+        return {
+          matchId: forced.matchId || String(mappingData.match_id),
+          wasInsert: false,
+          forcedOverwrite: true,
+          previousMatchId: forced.previousMatchId || null
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  async fetchMappingBySeasonHashWithClient(client, season, oddsportalHash) {
+    const result = await client.query(`
+      SELECT season, oddsportal_hash, match_id, full_url, league_name, home_team, away_team,
+             status, match_confidence, mapping_method, is_reversed, candidate_name,
+             is_evidence_only, updated_at
+      FROM matches_oddsportal_mapping
+      WHERE season = $1
+        AND oddsportal_hash = $2
+      LIMIT 1
+    `, [
+      String(season),
+      String(oddsportalHash)
+    ]);
+
+    return result.rows[0] || null;
   }
 
   async checkOptionalFields(tableName, fields) {
@@ -375,7 +604,8 @@ class ReconMappingStore {
             existingMapping: row,
             incomingMapping: mappingByMatchId.get(incomingMatchId),
             pipelineStatus: options.pipelineStatus || null,
-            preserveLinkedStatus: Boolean(options.preserveLinkedStatus)
+            preserveLinkedStatus: Boolean(options.preserveLinkedStatus),
+            hasOptionalFields: options.hasOptionalFields || {}
           });
 
         if (resolution?.resolved) {
@@ -445,6 +675,7 @@ class ReconMappingStore {
           SELECT 1
           FROM matches_oddsportal_mapping map
           WHERE map.match_id = m.match_id
+            AND COALESCE(map.is_evidence_only, FALSE) = FALSE
         )
       `;
     }
@@ -479,6 +710,141 @@ class ReconMappingStore {
     ]);
 
     return result.rowCount || 0;
+  }
+
+  async deleteExistingMappingForMatchWithClient(client, incomingMapping) {
+    const result = await client.query(`
+      DELETE FROM matches_oddsportal_mapping
+      WHERE match_id = $1
+        AND season = $2
+        AND oddsportal_hash <> $3
+    `, [
+      String(incomingMapping.match_id),
+      String(incomingMapping.season),
+      String(incomingMapping.oddsportal_hash)
+    ]);
+
+    return result.rowCount || 0;
+  }
+
+  buildForceOverwriteAssignments(hasOptionalFields = {}) {
+    return [
+      'match_id = $1',
+      'full_url = $2',
+      'league_name = $3',
+      'home_team = $4',
+      'away_team = $5',
+      'status = $6',
+      'updated_at = NOW()',
+      hasOptionalFields.match_confidence ? 'match_confidence = $7' : null,
+      hasOptionalFields.mapping_method ? 'mapping_method = $8' : null,
+      hasOptionalFields.is_reversed ? 'is_reversed = $9' : null,
+      hasOptionalFields.candidate_name ? 'candidate_name = NULL' : null,
+      hasOptionalFields.is_evidence_only ? 'is_evidence_only = FALSE' : null
+    ].filter(Boolean);
+  }
+
+  async forceOverwriteSeasonHashConflictWithClient(
+    client,
+    existingMappingRow,
+    incomingMapping,
+    hasOptionalFields = {},
+    options = {}
+  ) {
+    if (!existingMappingRow || !incomingMapping) {
+      return { resolved: false };
+    }
+
+    const matchRows = await this.fetchMatchesByIdsWithClient(client, [
+      existingMappingRow.match_id,
+      incomingMapping.match_id
+    ]);
+    const existingMatch = matchRows.get(String(existingMappingRow.match_id));
+    const incomingMatch = matchRows.get(String(incomingMapping.match_id));
+    if (!existingMatch || !incomingMatch) {
+      return { resolved: false };
+    }
+
+    await this.deleteExistingMappingForMatchWithClient(client, incomingMapping);
+
+    const assignments = this.buildForceOverwriteAssignments(hasOptionalFields);
+    const params = [
+      String(incomingMapping.match_id),
+      incomingMapping.full_url,
+      incomingMapping.league_name,
+      incomingMapping.home_team,
+      incomingMapping.away_team,
+      incomingMapping.status || 'pending',
+      hasOptionalFields.match_confidence
+        ? (incomingMapping.match_confidence ?? (this.reconConfig.matching || {}).confidence_threshold)
+        : null,
+      hasOptionalFields.mapping_method
+        ? String(incomingMapping.mapping_method || 'protocol_extract')
+        : null,
+      hasOptionalFields.is_reversed
+        ? Boolean(incomingMapping.is_reversed)
+        : null,
+      String(incomingMapping.season),
+      String(incomingMapping.oddsportal_hash),
+      String(existingMappingRow.match_id)
+    ];
+
+    const result = await client.query(`
+      UPDATE matches_oddsportal_mapping
+      SET ${assignments.join(',\n          ')}
+      WHERE season = $10
+        AND oddsportal_hash = $11
+        AND match_id = $12
+      RETURNING match_id
+    `, params);
+
+    this.assertSuccessfulRebind(result.rowCount || 0, {
+      season: incomingMapping.season,
+      oddsportal_hash: incomingMapping.oddsportal_hash,
+      previous_match_id: String(existingMappingRow.match_id),
+      rebound_match_id: String(incomingMapping.match_id),
+      resolution: 'force_overwrite_hash_conflict'
+    });
+
+    let linkedStatusUpdated = 0;
+
+    if (String(existingMappingRow.match_id) !== String(incomingMapping.match_id)) {
+      await this.setSingleMatchPipelineStatusWithClient(client, existingMatch.match_id, 'harvested', {
+        expectedCurrentStatus: 'RECON_LINKED',
+        requireNoMapping: true
+      });
+    }
+
+    if (options.pipelineStatus) {
+      linkedStatusUpdated += await this.setSingleMatchPipelineStatusWithClient(
+        client,
+        incomingMatch.match_id,
+        options.pipelineStatus,
+        {
+          expectedCurrentStatus: incomingMatch.pipeline_status || 'harvested'
+        }
+      );
+    }
+
+    this.logger.warn('[HEAL] season/hash 冲突触发 SQL 强制覆盖，已用新 match_id 覆盖旧映射', {
+      season: incomingMapping.season,
+      oddsportal_hash: incomingMapping.oddsportal_hash,
+      previous_match_id: String(existingMappingRow.match_id),
+      rebound_match_id: String(incomingMapping.match_id),
+      previous_home_team: existingMappingRow.home_team || null,
+      previous_away_team: existingMappingRow.away_team || null,
+      incoming_home_team: incomingMapping.home_team,
+      incoming_away_team: incomingMapping.away_team,
+      reason: options.reason || 'force_overwrite'
+    });
+
+    return {
+      resolved: true,
+      action: 'force_overwrite_hash_conflict',
+      linkedStatusUpdated,
+      matchId: String(incomingMapping.match_id),
+      previousMatchId: String(existingMappingRow.match_id)
+    };
   }
 
   assertSuccessfulRebind(rowCount, details) {
@@ -658,6 +1024,22 @@ class ReconMappingStore {
         action: 'rebind_wrong_fixture',
         linkedStatusUpdated: pipelineStatus ? 1 : 0
       };
+    }
+
+    const forcedResolution = await this.forceOverwriteSeasonHashConflictWithClient(
+      client,
+      existingMapping,
+      incomingMapping,
+      conflict.hasOptionalFields || {},
+      {
+        pipelineStatus,
+        preserveLinkedStatus,
+        reason: 'arbiter_force_overwrite'
+      }
+    );
+
+    if (forcedResolution?.resolved) {
+      return forcedResolution;
     }
 
     return { resolved: false };
