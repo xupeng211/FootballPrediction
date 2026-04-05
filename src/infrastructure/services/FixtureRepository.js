@@ -127,6 +127,210 @@ class FixtureRepository {
   async ensureOddsPortalMappingSchema(options = {}) { return this.schemaJanitor.ensureOddsPortalMappingSchema(options); }
   async auditCanonicalIdentityDuplicates(options = {}) { return this.matchCanonicalJanitor.auditDuplicateGroups(options); }
   async repairCanonicalIdentity(options = {}) { return this.matchCanonicalJanitor.consolidateDuplicateGroups(options); }
+  async getLeagueTeamCatalog(leagueId, options = {}) {
+    await this.init({ repairOrphanedLinkedStatuses: false });
+
+    const normalizedLeagueId = Number(leagueId);
+    if (!Number.isInteger(normalizedLeagueId) || normalizedLeagueId <= 0) {
+      throw new RepositoryError(`非法 league_id: ${leagueId}`, 'INVALID_LEAGUE_ID');
+    }
+
+    const season = options?.season ? String(options.season).trim() : null;
+    const matchIdPrefix = `${normalizedLeagueId}_%`;
+
+    return this._executeWithRetry(async () => {
+      const result = await this.dbPool.query(`
+        WITH team_rows AS (
+          SELECT
+            COALESCE(r.raw_data#>>'{general,homeTeam,id}', r.raw_data#>>'{header,teams,0,id}') AS team_id,
+            COALESCE(r.raw_data#>>'{general,homeTeam,name}', r.raw_data#>>'{header,teams,0,name}') AS team_name
+          FROM raw_match_data r
+          JOIN matches m ON m.match_id = r.match_id
+          WHERE r.match_id LIKE $1
+            AND ($2::text IS NULL OR m.season = $2)
+
+          UNION ALL
+
+          SELECT
+            COALESCE(r.raw_data#>>'{general,awayTeam,id}', r.raw_data#>>'{header,teams,1,id}') AS team_id,
+            COALESCE(r.raw_data#>>'{general,awayTeam,name}', r.raw_data#>>'{header,teams,1,name}') AS team_name
+          FROM raw_match_data r
+          JOIN matches m ON m.match_id = r.match_id
+          WHERE r.match_id LIKE $1
+            AND ($2::text IS NULL OR m.season = $2)
+        ),
+        ranked AS (
+          SELECT
+            team_id,
+            team_name,
+            COUNT(*) AS appearances
+          FROM team_rows
+          WHERE team_id IS NOT NULL
+            AND team_id <> ''
+            AND team_name IS NOT NULL
+            AND team_name <> ''
+          GROUP BY team_id, team_name
+        )
+        SELECT DISTINCT ON (team_id)
+          team_id,
+          team_name,
+          appearances
+        FROM ranked
+        ORDER BY team_id, appearances DESC, LENGTH(team_name) DESC, team_name
+      `, [matchIdPrefix, season]);
+
+      return (result.rows || []).map((row) => ({
+        team_id: String(row.team_id),
+        team_name: String(row.team_name),
+        appearances: Number(row.appearances || 0)
+      }));
+    }, 'getLeagueTeamCatalog');
+  }
+
+  async getLeagueDictionaryEntries(leagueId, options = {}) {
+    await this.init({ repairOrphanedLinkedStatuses: false });
+
+    const normalizedLeagueId = Number(leagueId);
+    if (!Number.isInteger(normalizedLeagueId) || normalizedLeagueId <= 0) {
+      throw new RepositoryError(`非法 league_id: ${leagueId}`, 'INVALID_LEAGUE_ID');
+    }
+
+    const teamCatalog = await this.getLeagueTeamCatalog(normalizedLeagueId, options);
+    const teamNameById = new Map(
+      teamCatalog.map((entry) => [String(entry.team_id), String(entry.team_name)])
+    );
+
+    const season = options?.season ? String(options.season).trim() : '';
+    const normalizedSeason = season || '';
+
+    return this._executeWithRetry(async () => {
+      const result = await this.dbPool.query(`
+        SELECT DISTINCT ON (LOWER(remote_name))
+          league_id,
+          season,
+          remote_name,
+          local_team_id
+        FROM recon_league_dictionary
+        WHERE league_id = $1
+          AND (season = $2 OR season = '')
+        ORDER BY LOWER(remote_name) ASC,
+          CASE
+            WHEN season = $2 THEN 0
+            WHEN season = '' THEN 1
+            ELSE 2
+          END ASC,
+          updated_at DESC,
+          remote_name ASC
+      `, [normalizedLeagueId, normalizedSeason]);
+
+      return (result.rows || []).map((row) => ({
+        league_id: Number(row.league_id),
+        season: String(row.season || ''),
+        remote_name: String(row.remote_name),
+        local_team_id: String(row.local_team_id),
+        local_team_name: teamNameById.get(String(row.local_team_id)) || null
+      }));
+    }, 'getLeagueDictionaryEntries');
+  }
+
+  async replaceLeagueDictionaryEntries(entries = [], options = {}) {
+    await this.init({ repairOrphanedLinkedStatuses: false });
+
+    const deduped = new Map();
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      const leagueId = Number(entry?.league_id ?? options.leagueId);
+      const season = String(entry?.season ?? options.season ?? '').trim();
+      const remoteName = String(entry?.remote_name || '').trim();
+      const localTeamId = String(entry?.local_team_id || '').trim();
+
+      if (!Number.isInteger(leagueId) || leagueId <= 0 || !remoteName || !localTeamId) {
+        continue;
+      }
+
+      deduped.set(`${leagueId}::${season.toLowerCase()}::${remoteName.toLowerCase()}`, {
+        league_id: leagueId,
+        season,
+        remote_name: remoteName,
+        local_team_id: localTeamId
+      });
+    }
+
+    const normalizedEntries = [...deduped.values()].sort((left, right) => (
+      left.league_id - right.league_id
+      || left.remote_name.localeCompare(right.remote_name)
+    ));
+    const requestedLeagueId = Number(options.leagueId);
+    const requestedSeason = String(options.season ?? '').trim();
+    const scopesToReplace = Number.isInteger(requestedLeagueId) && requestedLeagueId > 0
+      ? [{ league_id: requestedLeagueId, season: requestedSeason }]
+      : [...new Map(
+        normalizedEntries.map((entry) => [
+          `${entry.league_id}::${entry.season}`,
+          { league_id: entry.league_id, season: entry.season }
+        ])
+      ).values()];
+
+    if (scopesToReplace.length === 0) {
+      return {
+        success: true,
+        replacedLeagues: 0,
+        inserted: 0
+      };
+    }
+
+    return this._executeWithRetry(async () => {
+      const client = await this.dbPool.connect();
+      try {
+        await client.query('BEGIN');
+        for (const scope of scopesToReplace) {
+          await client.query(`
+            DELETE FROM recon_league_dictionary
+            WHERE league_id = $1
+              AND season = $2
+          `, [
+            scope.league_id,
+            scope.season
+          ]);
+        }
+
+        for (const entry of normalizedEntries) {
+          await client.query(`
+            INSERT INTO recon_league_dictionary (league_id, season, remote_name, local_team_id, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, NOW(), NOW())
+            ON CONFLICT (league_id, season, remote_name) DO UPDATE SET
+              local_team_id = EXCLUDED.local_team_id,
+              updated_at = NOW()
+          `, [
+            entry.league_id,
+            entry.season,
+            entry.remote_name,
+            entry.local_team_id
+          ]);
+        }
+
+        await client.query('COMMIT');
+        return {
+          success: true,
+          replacedLeagues: scopesToReplace.length,
+          inserted: normalizedEntries.length
+        };
+      } catch (error) {
+        await client.query('ROLLBACK');
+        throw new RepositoryError(
+          `联赛字典写入失败: ${error.message}`,
+          'LEAGUE_DICTIONARY_WRITE_FAILED',
+          error,
+          {
+            scopes: scopesToReplace,
+            entry_count: normalizedEntries.length
+          }
+        );
+      } finally {
+        client.release();
+      }
+    }, 'replaceLeagueDictionaryEntries');
+  }
+
   async _executeWithRetry(operation, operationName) {
     let lastError;
     const startedAt = this.now();
@@ -166,6 +370,7 @@ class FixtureRepository {
   }
   async saveOddsPortalMapping(mappingData, options = {}) { return this.mappingStore.saveOddsPortalMapping(mappingData, options); }
   async batchSaveOddsPortalMappings(mappings, options = {}) { return this.mappingStore.batchSaveOddsPortalMappings(mappings, options); }
+  async batchSaveMismatchEvidence(mismatchRecords, options = {}) { return this.mappingStore.batchSaveMismatchEvidence(mismatchRecords, options); }
   async resolveHashConflict(conflict, options = {}) { return this.mappingStore.resolveHashConflict(conflict, options); }
   async batchUpdateMatchPipelineStatus(matchIds, status, options = {}) {
     if (!Array.isArray(matchIds) || matchIds.length === 0) {
@@ -220,6 +425,7 @@ class FixtureRepository {
           SELECT 1
           FROM matches_oddsportal_mapping map
           WHERE map.match_id = m.match_id
+            AND COALESCE(map.is_evidence_only, FALSE) = FALSE
       `;
 
       if (season) {
@@ -407,7 +613,9 @@ class FixtureRepository {
             SELECT m.match_id, m.home_team, m.away_team, m.match_date
             FROM matches m
             LEFT JOIN matches_oddsportal_mapping map
-              ON m.match_id = map.match_id AND map.season = $2
+              ON m.match_id = map.match_id
+             AND map.season = $2
+             AND COALESCE(map.is_evidence_only, FALSE) = FALSE
             WHERE m.league_name = $1
               AND m.season = $2
               AND map.match_id IS NULL
@@ -447,6 +655,7 @@ class FixtureRepository {
               FROM matches_oddsportal_mapping map
               WHERE map.match_id = m.match_id
                 AND map.season = $2
+                AND COALESCE(map.is_evidence_only, FALSE) = FALSE
             )
           ORDER BY m.match_date DESC, m.match_id DESC
         `;
@@ -474,6 +683,7 @@ class FixtureRepository {
               COUNT(*) FILTER (WHERE status = 'harvested') as harvested
             FROM matches_oddsportal_mapping
             WHERE season = $1
+              AND COALESCE(is_evidence_only, FALSE) = FALSE
           `,
           [season]
         );

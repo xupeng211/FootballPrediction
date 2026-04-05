@@ -9,7 +9,9 @@ const reconStitcherPersistence = {
           SELECT m.match_id, m.home_team, m.away_team, m.match_date
           FROM matches m
           LEFT JOIN matches_oddsportal_mapping map
-            ON m.match_id = map.match_id AND map.season = $2
+            ON m.match_id = map.match_id
+           AND map.season = $2
+           AND COALESCE(map.is_evidence_only, FALSE) = FALSE
           WHERE m.league_name = $1
             AND m.season = $2
             AND map.match_id IS NULL
