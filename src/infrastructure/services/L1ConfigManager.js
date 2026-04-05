@@ -154,6 +154,12 @@ class L1ConfigManager {
         slug: reconLeague.slug || this._slugify(reconLeague.name || atlasLeague?.name || code),
         resultsSlug: reconLeague.results_slug || atlasLeague?.results_slug || reconLeague.slug || atlasLeague?.slug || null,
         resultsUrlStrategy: reconLeague.results_url_strategy || atlasLeague?.results_url_strategy || 'seasonal',
+        additionalResultsPaths: this._normalizeStringArray(
+          reconLeague.additional_results_paths || atlasLeague?.additional_results_paths
+        ),
+        additionalHistoricalResultsPaths: this._normalizeStringArray(
+          reconLeague.additional_historical_results_paths || atlasLeague?.additional_historical_results_paths
+        ),
         readySelector: reconLeague.ready_selector || atlasLeague?.ready_selector || null,
         awaitingFinals: reconLeague.awaiting_finals === true || atlasLeague?.awaiting_finals === true,
         tier: reconLeague.tier || atlasLeague?.tier || 'P0',
@@ -182,6 +188,8 @@ class L1ConfigManager {
         slug: atlasLeague.slug || this._slugify(atlasLeague.name),
         resultsSlug: atlasLeague.results_slug || atlasLeague.slug || null,
         resultsUrlStrategy: atlasLeague.results_url_strategy || 'seasonal',
+        additionalResultsPaths: this._normalizeStringArray(atlasLeague.additional_results_paths),
+        additionalHistoricalResultsPaths: this._normalizeStringArray(atlasLeague.additional_historical_results_paths),
         readySelector: atlasLeague.ready_selector || null,
         awaitingFinals: atlasLeague.awaiting_finals === true,
         tier: atlasLeague.tier || 'P0',
@@ -229,6 +237,16 @@ class L1ConfigManager {
       ?? fallbackId;
 
     return Number.isFinite(Number(providerId)) ? Number(providerId) : Number(fallbackId);
+  }
+
+  _normalizeStringArray(value) {
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
   }
 
   _inferSeasonType(leagueId) {
