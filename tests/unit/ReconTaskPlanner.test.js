@@ -28,7 +28,8 @@ function createPlanner(overrides = {}) {
     matchEvaluator: evaluator,
     mirrorManager,
     sampleSize: overrides.sampleSize,
-    forceDomLeagueIds: overrides.forceDomLeagueIds
+    forceDomLeagueIds: overrides.forceDomLeagueIds,
+    excludeAllLeagueIds: overrides.excludeAllLeagueIds
   });
 }
 
@@ -196,7 +197,8 @@ describe('ReconTaskPlanner', () => {
           maxPages: 50,
           timeoutMs: planner.archiveTimeoutMs,
           preferCurrentSeasonSource: true,
-          circuitBreakerKey: 'recon:47:2025/2026'
+          circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+          forcePureProtocol: false
         }
       }
     ]);
@@ -248,7 +250,8 @@ describe('ReconTaskPlanner', () => {
           maxPages: 50,
           timeoutMs: planner.archiveTimeoutMs,
           preferCurrentSeasonSource: true,
-          circuitBreakerKey: 'recon:120:2025/2026',
+          circuitBreakerKey: 'recon:120:2025/2026:current_season:2026:0',
+          forcePureProtocol: false,
           readySelector: '[data-testid="match-row"]'
         }
       }
@@ -303,6 +306,34 @@ describe('ReconTaskPlanner', () => {
       url,
       'oddsportal://root/football/usa/mls/results/'
     );
+  });
+
+  it('MLS 额外结果路径应扩展为 league root，多 URL 组合抓取当前与历史赛季', () => {
+    const planner = createPlanner();
+
+    const currentUrls = planner.buildCurrentSeasonSourceUrls({
+      name: 'MLS',
+      country: 'usa',
+      slug: 'mls',
+      resultsUrlStrategy: 'seasonless',
+      additionalResultsPaths: ['/football/{country}/{league}/']
+    }, '2026');
+    const historicalUrls = planner.buildHistoricalSeasonSourceUrls({
+      name: 'MLS',
+      country: 'usa',
+      slug: 'mls',
+      resultsUrlStrategy: 'seasonless',
+      additionalHistoricalResultsPaths: ['/football/{country}/{league}-{year}/']
+    }, 2025);
+
+    assert.deepStrictEqual(currentUrls, [
+      'oddsportal://root/football/usa/mls/results/',
+      'oddsportal://root/football/usa/mls/'
+    ]);
+    assert.deepStrictEqual(historicalUrls, [
+      'oddsportal://root/football/usa/mls-2025/results/',
+      'oddsportal://root/football/usa/mls-2025/'
+    ]);
   });
 
   it('single_year 的 seasonless 联赛应补充起始年份 historical results source', () => {
@@ -367,6 +398,48 @@ describe('ReconTaskPlanner', () => {
         mode: 'current_season'
       }
     ]);
+  });
+
+  it('harvested 积压达到高水位时应强制提升 maxPages 到 100', async () => {
+    const calls = [];
+    const planner = createPlanner({
+      navigator: {
+        async protocolArchiveExtract(url, options) {
+          calls.push({ url, options });
+          return {
+            matches: [],
+            pagesScanned: 1,
+            totalCandidates: 0,
+            sourceState: 'SOURCE_EMPTY'
+          };
+        }
+      }
+    });
+
+    const target = {
+      leagueId: 268,
+      league: {
+        id: 268,
+        name: 'Brasileirão',
+        country: 'brazil',
+        slug: 'serie-a',
+        resultsUrlStrategy: 'seasonless'
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/brazil/serie-a/results/'
+    };
+    const pendingMatches = Array.from({ length: 365 }, (_, index) => ({
+      match_id: `268_20252026_${4000 + index}`,
+      home_team: `Home ${index}`,
+      away_team: `Away ${index}`,
+      match_date: '2026-03-01T12:00:00.000Z'
+    }));
+
+    await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.strictEqual(calls.length, 1);
+    assert.strictEqual(calls[0].options.maxPages, 100);
   });
 
   it('single_year 联赛应使用结束年份生成 results URL', () => {
@@ -434,12 +507,33 @@ describe('ReconTaskPlanner', () => {
           maxPages: 50,
           timeoutMs: planner.archiveTimeoutMs,
           preferCurrentSeasonSource: true,
+          forcePureProtocol: false,
           readySelector: 'text=Fixture Ready',
-          circuitBreakerKey: 'recon:223:2025/2026',
-          forceDomOnly: true
+          circuitBreakerKey: 'recon:223:2025/2026:results_archive:2026:0'
         }
       }
     ]);
+  });
+
+  it('all-leagues 构建目标时应默认排除 exclude_all_league_ids，但显式 leagueIds 仍可命中', async () => {
+    const leagues = [
+      { id: 47, code: 'EPL', name: 'Premier League', country: 'england', slug: 'premier-league' },
+      { id: 223, code: 'J1', name: 'J1 League', country: 'japan', slug: 'j1-league' }
+    ];
+    const planner = createPlanner({
+      excludeAllLeagueIds: [223],
+      configManager: {
+        getActiveLeagues() {
+          return leagues;
+        }
+      }
+    });
+
+    const defaultTargets = await planner.buildScanTargets({ season: '2025-2026' });
+    const explicitTargets = await planner.buildScanTargets({ season: '2025-2026', leagueIds: [223] });
+
+    assert.deepStrictEqual(defaultTargets.map((target) => target.leagueId), [47]);
+    assert.deepStrictEqual(explicitTargets.map((target) => target.leagueId), [223]);
   });
 
   it('single_year 的四位年份应被识别为当前赛季', () => {
@@ -756,5 +850,81 @@ describe('ReconTaskPlanner', () => {
     assert.strictEqual(calls[0].options.preferCurrentSeasonSource, true);
     assert.strictEqual(selected.candidates.length, 2);
     assert.strictEqual(selected.sampleLinked, 2);
+  });
+
+  it('MLS 首个 current source 超时后应继续回退到备用 URL', async () => {
+    const calls = [];
+    const logs = [];
+    const planner = createPlanner({
+      navigator: {
+        async protocolArchiveExtract(url, options) {
+          calls.push({ url, options });
+          if (url.endsWith('/football/usa/mls/results/')) {
+            throw new Error('page.goto: Timeout 20000ms exceeded');
+          }
+          return {
+            matches: [{
+              hash: 'mls-root-match',
+              url: 'oddsportal://match/mls-root',
+              homeTeam: 'Inter Miami',
+              awayTeam: 'LA Galaxy',
+              matchDate: '2025-08-17T23:30:00.000Z'
+            }],
+            pagesScanned: 2,
+            totalCandidates: 1,
+            sourceState: 'CURRENT_TOURNAMENT'
+          };
+        }
+      },
+      logger: {
+        info(event, payload) {
+          logs.push({ level: 'info', event, payload });
+        },
+        warn(event, payload) {
+          logs.push({ level: 'warn', event, payload });
+        },
+        error() {}
+      }
+    });
+
+    const target = {
+      leagueId: 130,
+      league: {
+        id: 130,
+        name: 'MLS',
+        country: 'usa',
+        slug: 'mls',
+        resultsUrlStrategy: 'seasonless',
+        additionalResultsPaths: ['/football/{country}/{league}/']
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/usa/mls/results/'
+    };
+    const pendingMatches = [{
+      match_id: '130_20252026_5000',
+      home_team: 'Inter Miami',
+      away_team: 'LA Galaxy',
+      match_date: '2025-08-17T23:30:00.000Z'
+    }];
+
+    const selected = await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.ok(calls.length >= 2);
+    assert.deepStrictEqual(
+      calls.slice(0, 2).map((entry) => entry.url),
+      [
+        'oddsportal://root/football/usa/mls/results/',
+        'oddsportal://root/football/usa/mls/'
+      ]
+    );
+    assert.notStrictEqual(
+      calls[0].options.circuitBreakerKey,
+      calls[1].options.circuitBreakerKey
+    );
+    assert.ok(logs.some((entry) => entry.event === 'recon_candidate_source_failed'));
+    assert.ok(selected.sampleLinked >= 1);
+    assert.strictEqual(selected.candidates.length, 1);
+    assert.ok(selected.source.url.includes('/football/usa/mls/'));
   });
 });

@@ -176,6 +176,50 @@ describe('ReconNetworkMonitor', () => {
     );
   });
 
+  it('archive fetch 遇到 HTTP 200 但 body 内嵌 Status: 503 时应上报 httpFailure', async () => {
+    let decryptCalls = 0;
+    let extractCalls = 0;
+
+    const monitor = new ReconNetworkMonitor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-embedded-503',
+      page: {
+        async evaluate() {
+          return {
+            success: true,
+            status: 200,
+            text: 'URL:/ajax-sport-country-tournament-archive_/1/abc/X/2025/1/0/ Status: 503'
+          };
+        }
+      },
+      decryptorFactory: () => ({
+        getAlgorithmVersion: () => null,
+        async decrypt() {
+          decryptCalls++;
+          throw new Error('should_not_decrypt_embedded_503');
+        },
+        async extractDecryptor() {
+          extractCalls++;
+          throw new Error('should_not_extract_embedded_503');
+        }
+      })
+    });
+
+    const result = await monitor.fetchArchivePages(
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/abc/X/2025/1/0/',
+      3,
+      1000
+    );
+
+    assert.strictEqual(extractCalls, 0);
+    assert.strictEqual(decryptCalls, 0);
+    assert.deepStrictEqual(result.matches, []);
+    assert.strictEqual(result.httpFailure?.statusCode, 503);
+    assert.strictEqual(result.pageStats[0].statusCode, 503);
+    assert.strictEqual(result.pageStats[0].error, 'EMBEDDED_HTTP_503');
+    assert.strictEqual(result.pageStats[0].bodySignal, 'archive_placeholder_status');
+  });
+
   it('archive 端点占位符响应不应误触发 decryptor', async () => {
     let decryptCalls = 0;
     let extractCalls = 0;

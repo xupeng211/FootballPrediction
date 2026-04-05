@@ -420,6 +420,10 @@ class ReconNavigator {
     return this.protocolHandler._fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs, options);
   }
 
+  async extractViaPureProtocol(target, options = {}) {
+    return this.protocolHandler._extractViaPureProtocol(target, options);
+  }
+
   /**
    * 获取拦截数据
    * @returns {Array}

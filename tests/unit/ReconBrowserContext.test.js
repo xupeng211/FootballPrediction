@@ -316,14 +316,12 @@ describe('ReconBrowserContext', () => {
         waitUntil: 'domcontentloaded'
       }
     });
-    assert.deepStrictEqual(events[1], {
-      type: 'waitForSelector',
-      selector: '.ready-selector',
-      options: {
-        timeout: 5000,
-        state: 'attached'
-      }
-    });
+    assert.ok(events.some((event) => (
+      event.type === 'waitForSelector'
+      && event.selector === '.ready-selector'
+      && event.options?.timeout === 5000
+      && event.options?.state === 'attached'
+    )));
   });
 
   it('启用首页预热时应先访问首页并等待指定时长', async () => {
@@ -380,6 +378,36 @@ describe('ReconBrowserContext', () => {
         waitUntil: 'domcontentloaded'
       }
     });
+  });
+
+  it('navigate 命中 503 Backend fetch failed 页面时应抛出显式 HTTP_503', async () => {
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-navigate-503',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      navigationReadySelectors: ['main']
+    });
+
+    browserContext.page = {
+      async goto() {
+        return {
+          status() {
+            return 200;
+          }
+        };
+      },
+      async title() {
+        return '503 Backend fetch failed';
+      },
+      async evaluate() {
+        return 'Guru Meditation';
+      }
+    };
+
+    await assert.rejects(
+      browserContext.navigate('https://example.com/recon'),
+      (error) => error?.statusCode === 503 && error?.message === 'HTTP_503 backend_fetch_failed'
+    );
   });
 
   it('contentReadySelector 应按联赛配置等待可见内容', async () => {

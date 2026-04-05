@@ -8,9 +8,14 @@ const AWAY_SELECTORS = DOM_SCRAPER_CONFIG.away_selectors || [];
 const PARTICIPANT_SELECTORS = DOM_SCRAPER_CONFIG.participant_selectors || [];
 const RESULT_ANCHOR_SELECTORS = DOM_SCRAPER_CONFIG.result_anchor_selectors || [];
 const PAGINATION_SELECTORS = DOM_SCRAPER_CONFIG.pagination_selectors || [];
+const EVENT_CONTAINER_SELECTORS = [
+  '[data-testid="event-name"]',
+  '[data-testid="events"]',
+  '[data-testid*="event"]'
+];
 
 const reconDomCollectionFlow = {
-  async extractCurrentSeasonResultRows(baseUrl) {
+  async extractCurrentSeasonResultRows(baseUrl, options = {}) {
     const currentUrl = String(baseUrl || '').trim() || this.baseUrl || RECON_CONFIG.oddsportal.base_url;
     const leaguePathPrefix = this.buildLeaguePathPrefix(baseUrl);
 
@@ -19,7 +24,8 @@ const reconDomCollectionFlow = {
         const html = await this.page.content();
         return this.parseCurrentSeasonResultRowsFromHtml(html, {
           currentUrl,
-          leaguePathPrefix
+          leaguePathPrefix,
+          forceJsonExtract: options.forceJsonExtract === true
         });
       } catch (_error) {
         // content() failure falls back to evaluate-based probing
@@ -30,7 +36,18 @@ const reconDomCollectionFlow = {
       return [];
     }
 
-    return this.page.evaluate(({ baseOrigin, pageUrl, pageLeaguePathPrefix, leaguePathPrefix, resultAnchorSelectors, homeSelectors, awaySelectors, participantSelectors }) => {
+    return this.page.evaluate(({
+      baseOrigin,
+      pageUrl,
+      pageLeaguePathPrefix,
+      leaguePathPrefix,
+      forceJsonExtract,
+      resultAnchorSelectors,
+      eventContainerSelectors,
+      homeSelectors,
+      awaySelectors,
+      participantSelectors
+    }) => {
       const resolveHref = (rawHref) => {
         try {
           return new URL(rawHref, pageUrl || baseOrigin).href;
@@ -43,6 +60,7 @@ const reconDomCollectionFlow = {
       const normalizeLeaguePrefix = (value) => String(value || '')
         .replace(/^https?:\/\/[^/]+/i, '')
         .replace(/-\d{4}-\d{4}(?=\/)/i, '')
+        .replace(/-\d{4}(?=\/results)/i, '')
         .replace(/\/(results|standings|outrights)(?:\/page\/\d+)?\/?$/i, '/')
         .replace(/\/+$/, '/');
       const seen = new Set();
@@ -50,10 +68,122 @@ const reconDomCollectionFlow = {
       const canonicalPathPrefix = normalizeLeaguePrefix(document.querySelector('link[rel="canonical"]')?.href || '');
       const matches = [];
 
+      const appendCandidate = (candidate) => {
+        if (!candidate || typeof candidate !== 'object') {
+          return;
+        }
+
+        const absoluteHref = resolveHref(candidate.url || '');
+        let pathname = '';
+        try {
+          pathname = absoluteHref ? new URL(absoluteHref).pathname : '';
+        } catch (_error) {
+          pathname = '';
+        }
+
+        const hash = cleanText(candidate.hash || extractMatchKey(pathname));
+        const homeTeam = cleanText(candidate.homeTeam);
+        const awayTeam = cleanText(candidate.awayTeam);
+        if (!hash || !homeTeam || !awayTeam || seen.has(hash)) {
+          return;
+        }
+
+        seen.add(hash);
+        matches.push({
+          url: absoluteHref || candidate.url || '',
+          hash,
+          homeTeam,
+          awayTeam,
+          matchDate: candidate.matchDate || null,
+          source: candidate.source || 'current_results_dom'
+        });
+      };
+
+      const extractMatchesFromPayload = (payload, source) => {
+        const results = [];
+        const visit = (value, depth = 0) => {
+          if (depth > 10 || value == null) {
+            return;
+          }
+
+          if (Array.isArray(value)) {
+            for (const item of value) {
+              visit(item, depth + 1);
+            }
+            return;
+          }
+
+          if (typeof value !== 'object') {
+            return;
+          }
+
+          const url = value.url || value.href || value.link || '';
+          const hash = value.encodeEventId || value.id || '';
+          const homeTeam = value['home-name'] || value.homeName || value.home_team || value.home || '';
+          const awayTeam = value['away-name'] || value.awayName || value.away_team || value.away || '';
+          const timestamp = value['date-start-timestamp'] || value.dateStartTimestamp || value.timestamp || null;
+
+          if (url && hash && homeTeam && awayTeam) {
+            const matchDate = Number.isFinite(Number(timestamp))
+              ? new Date(Number(timestamp) * 1000).toISOString()
+              : null;
+            results.push({
+              url,
+              hash,
+              homeTeam,
+              awayTeam,
+              matchDate,
+              source
+            });
+          }
+
+          for (const nested of Object.values(value)) {
+            visit(nested, depth + 1);
+          }
+        };
+
+        visit(payload, 0);
+        return results;
+      };
+
+      const nextDataNode = document.querySelector('#__NEXT_DATA__');
+      if (nextDataNode?.textContent) {
+        try {
+          const parsed = JSON.parse(nextDataNode.textContent);
+          for (const candidate of extractMatchesFromPayload(parsed, 'current_results_next_data')) {
+            appendCandidate(candidate);
+          }
+        } catch (_error) {}
+      }
+
+      for (const script of Array.from(document.scripts || [])) {
+        const text = String(script.textContent || '');
+        const payloadPattern = /JSON\.parse\("((?:\\.|[^"\\])*)"\)/g;
+        let hit;
+
+        while ((hit = payloadPattern.exec(text)) !== null) {
+          try {
+            const decoded = JSON.parse(`"${hit[1]}"`);
+            const parsed = JSON.parse(decoded);
+            for (const candidate of extractMatchesFromPayload(parsed, 'current_results_script_json')) {
+              appendCandidate(candidate);
+            }
+          } catch (_error) {
+            continue;
+          }
+        }
+      }
+
+      if (forceJsonExtract && matches.length > 0) {
+        return matches;
+      }
+
       const extractNamesFromSlug = (pathname) => {
         const cleanPath = String(pathname || '').replace(/\/+$/, '');
         const lastSegment = cleanPath.split('/').filter(Boolean).pop() || '';
-        const slugWithHash = lastSegment.replace(/-[A-Za-z0-9]{8}$/i, '');
+        const slugWithHash = /\/match\//i.test(cleanPath)
+          ? ''
+          : lastSegment.replace(/-[A-Za-z0-9]{8}$/i, '');
         const parts = slugWithHash.split('-');
 
         if (parts.length < 2) {
@@ -73,6 +203,37 @@ const reconDomCollectionFlow = {
         };
       };
 
+      const extractTeamsFromText = (value) => {
+        const cleanValue = cleanText(value);
+        if (!cleanValue) {
+          return { homeTeam: '', awayTeam: '' };
+        }
+
+        for (const separator of [/\s+vs\.?\s+/i, /\s+-\s+/]) {
+          const parts = cleanValue.split(separator).map((item) => cleanText(item)).filter(Boolean);
+          if (parts.length === 2) {
+            return { homeTeam: parts[0], awayTeam: parts[1] };
+          }
+        }
+
+        return { homeTeam: '', awayTeam: '' };
+      };
+
+      const extractMatchKey = (pathname) => {
+        const normalizedPath = String(pathname || '').replace(/\/+$/, '');
+        const hashMatch = normalizedPath.match(/-([A-Za-z0-9]{8})$/);
+        if (hashMatch) {
+          return hashMatch[1];
+        }
+
+        const matchRoute = normalizedPath.match(/\/match\/([^/?#]+)$/i);
+        if (matchRoute) {
+          return matchRoute[1];
+        }
+
+        return '';
+      };
+
       const getFirstText = (scope, selectors) => {
         for (const selector of selectors) {
           const node = scope.querySelector(selector);
@@ -84,7 +245,25 @@ const reconDomCollectionFlow = {
         return '';
       };
 
-      const anchors = Array.from(document.querySelectorAll(resultAnchorSelectors.join(', ')));
+      const configuredAnchors = Array.from(document.querySelectorAll(resultAnchorSelectors.join(', ')));
+      const containerAnchors = Array.from(document.querySelectorAll(eventContainerSelectors.join(', ')))
+        .flatMap((container) => Array.from(container.querySelectorAll('a[href]')));
+      const documentLinkAnchors = Array.from(document.links || []).filter((anchor) => {
+        const href = anchor.getAttribute('href') || anchor.href || '';
+        return /\/match\/[^/]+\/?$/i.test(href) || /-([A-Za-z0-9]{8})\/?$/i.test(href);
+      });
+      const probedAnchors = Array.from(document.querySelectorAll('a[href]')).filter((anchor) => {
+        const href = anchor.getAttribute('href') || anchor.href || '';
+        const text = cleanText(anchor.textContent);
+        return /\/match\/[^/]+\/?$/i.test(href) || /\bvs\.?\b|-/i.test(text);
+      });
+      const anchors = [...new Set([
+        ...configuredAnchors,
+        ...containerAnchors,
+        ...documentLinkAnchors,
+        ...probedAnchors
+      ])];
+
       for (const anchor of anchors) {
         const absoluteHref = resolveHref(anchor.getAttribute('href') || '');
         if (!absoluteHref) {
@@ -98,11 +277,14 @@ const reconDomCollectionFlow = {
           continue;
         }
 
-        const normalizedPath = String(pathname || '').replace(/-\d{4}-\d{4}(?=\/)/i, '');
+        const isMatchRoute = /\/match\/[^/]+\/?$/i.test(pathname);
+        const normalizedPath = String(pathname || '')
+          .replace(/-\d{4}-\d{4}(?=\/)/i, '')
+          .replace(/-\d{4}(?=\/results)/i, '');
         const matchesPrimaryPath = pathPrefix ? normalizedPath.startsWith(pathPrefix) : false;
         const matchesCanonicalPath = canonicalPathPrefix ? normalizedPath.startsWith(canonicalPathPrefix) : false;
 
-        if ((pathPrefix || canonicalPathPrefix) && !matchesPrimaryPath && !matchesCanonicalPath) {
+        if ((pathPrefix || canonicalPathPrefix) && !isMatchRoute && !matchesPrimaryPath && !matchesCanonicalPath) {
           continue;
         }
 
@@ -110,12 +292,10 @@ const reconDomCollectionFlow = {
           continue;
         }
 
-        const hashMatch = pathname.match(/-([A-Za-z0-9]{8})\/?$/);
-        if (!hashMatch) {
+        const hash = extractMatchKey(pathname);
+        if (!hash) {
           continue;
         }
-
-        const hash = hashMatch[1];
         if (seen.has(hash)) {
           continue;
         }
@@ -146,6 +326,12 @@ const reconDomCollectionFlow = {
         }
 
         if (!homeTeam || !awayTeam) {
+          const parsed = extractTeamsFromText(anchor.textContent || anchor.getAttribute('title') || '');
+          homeTeam = homeTeam || parsed.homeTeam;
+          awayTeam = awayTeam || parsed.awayTeam;
+        }
+
+        if (!homeTeam || !awayTeam) {
           continue;
         }
 
@@ -166,7 +352,9 @@ const reconDomCollectionFlow = {
       pageUrl: currentUrl,
       pageLeaguePathPrefix: leaguePathPrefix,
       leaguePathPrefix,
+      forceJsonExtract: options.forceJsonExtract === true,
       resultAnchorSelectors: RESULT_ANCHOR_SELECTORS,
+      eventContainerSelectors: EVENT_CONTAINER_SELECTORS,
       homeSelectors: HOME_SELECTORS,
       awaySelectors: AWAY_SELECTORS,
       participantSelectors: PARTICIPANT_SELECTORS
@@ -305,6 +493,7 @@ const reconDomCollectionFlow = {
   async discoverSeasonResultPages(resultsUrl, options = {}, hooks = {}) {
     const timeoutMs = options.timeoutMs ?? this.timeoutMs;
     const maxPages = Math.max(1, Number(options.maxPages ?? this.maxPages));
+    const includeSeasonNavigation = options.includeSeasonNavigation !== false;
     const normalizedResultsUrl = this.normalizeResultsUrl(resultsUrl);
 
     if (typeof hooks.navigate === 'function') {
@@ -316,7 +505,7 @@ const reconDomCollectionFlow = {
     const interceptedMatches = typeof hooks.getInterceptedData === 'function'
       ? hooks.getInterceptedData()
       : [];
-    const domMatches = await this.extractCurrentSeasonResultRows(normalizedResultsUrl);
+    const domMatches = await this.extractCurrentSeasonResultRows(normalizedResultsUrl, options);
     const initialMatches = this.mergeInitialMatches(interceptedMatches, domMatches);
     const initialSource = this.describeInitialSource(interceptedMatches, domMatches);
 
@@ -327,7 +516,7 @@ const reconDomCollectionFlow = {
       paginationMeta.totalPages,
       maxPages
     );
-    const seasonNavigationUrls = initialMatches.length === 0
+    const seasonNavigationUrls = includeSeasonNavigation && initialMatches.length === 0
       ? await this.extractSeasonNavigationUrls(normalizedResultsUrl)
       : [];
     const pageUrls = this.mergeSeasonNavigationUrls(

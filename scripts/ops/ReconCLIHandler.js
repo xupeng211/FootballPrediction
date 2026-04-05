@@ -12,7 +12,10 @@ function parseArgs(argv = process.argv.slice(2)) {
     additionalSlugs: [],
     limit: null,
     concurrency: 5,
-    currentSeasonOnly: false
+    currentSeasonOnly: false,
+    threshold: null,
+    forceJsonExtract: false,
+    forcePureProtocol: false
   };
 
   for (let i = 0; i < args.length; i++) {
@@ -49,6 +52,15 @@ function parseArgs(argv = process.argv.slice(2)) {
         break;
       case '--current-season-only':
         result.currentSeasonOnly = true;
+        break;
+      case '--threshold':
+        result.threshold = parseFloat(args[++i]);
+        break;
+      case '--force-json-extract':
+        result.forceJsonExtract = true;
+        break;
+      case '--force-pure-protocol':
+        result.forcePureProtocol = true;
         break;
     }
   }
@@ -251,6 +263,9 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       });
 
       await scanner.initialize();
+      if (Number.isFinite(args.threshold)) {
+        scanner.engine.confidenceThreshold = args.threshold;
+      }
 
       const activeLeagues = scanner.configManager.getActiveLeagues();
       const selectedLeague = scanner.configManager.getLeagueByCode(args.league)
@@ -267,13 +282,18 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       const results = [];
 
       if (useReconMatrix) {
-        await scanner.ensureNavigator();
+        await scanner.ensureNavigator({
+          launchBrowser: args.forcePureProtocol !== true
+        });
         const result = await scanner.engine.runReconMatrix({
           season: args.season,
           leagueIds: leagues.map((league) => Number(league.id)),
           concurrency: Number.isInteger(args.concurrency) && args.concurrency > 0 ? args.concurrency : 5,
           limit: args.limit,
-          currentSeasonOnly: args.currentSeasonOnly
+          confidenceThreshold: Number.isFinite(args.threshold) ? args.threshold : scanner.engine.confidenceThreshold,
+          currentSeasonOnly: args.currentSeasonOnly,
+          forceJsonExtract: args.forceJsonExtract,
+          forcePureProtocol: args.forcePureProtocol
         });
         results.push({
           success: result.success,

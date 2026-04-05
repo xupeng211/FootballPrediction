@@ -484,6 +484,66 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.matches[0].hash, 'archive-fallback-current');
   });
 
+  it('archive 拦截为空时应从 performance 资源条目补抓 archive endpoint', async () => {
+    const fetchedArchiveUrls = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async evaluate(fn, payload) {
+        if (payload && payload.leaguePathPrefix) {
+          return [];
+        }
+
+        const source = typeof fn === 'function' ? fn.toString() : '';
+        if (source.includes("performance.getEntriesByType('resource')")) {
+          return [
+            'oddsportal://ajax-sport-country-tournament-archive_/1/U1ymuRr3/X262144/1/0/?_=1'
+          ];
+        }
+
+        return null;
+      }
+    };
+    navigator.navigate = async () => {
+      navigator.apiEndpoints = new Set();
+    };
+    navigator._fetchAndDecrypt = async (url) => {
+      fetchedArchiveUrls.push(url);
+      return {
+        matches: [
+          {
+            hash: 'resource-probe-hit',
+            url: 'oddsportal://match/resource-probe-hit',
+            homeTeam: 'Leeds United',
+            awayTeam: 'Southampton',
+            matchDate: '2025-08-09T11:30:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/england/championship-2025-2026/results/',
+      { maxPages: 8, timeoutMs: 1234 }
+    );
+
+    assert.deepStrictEqual(fetchedArchiveUrls, [
+      'oddsportal://ajax-sport-country-tournament-archive_/1/U1ymuRr3/X262144/1/0/?_=1'
+    ]);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'resource-probe-hit');
+  });
+
   it('当前赛季联赛主页缺失显式 tournament 接口时，应根据修复后的 archive URL 反推 current tournament 接口', async () => {
     const fetchCalls = [];
 

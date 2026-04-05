@@ -310,9 +310,15 @@ class ReconScanner {
    * 启动并绑定 Navigator
    * @returns {Promise<ReconNavigator>}
    */
-  async ensureNavigator() {
+  async ensureNavigator(options = {}) {
+    const launchBrowser = options.launchBrowser !== false;
+
     if (this.engine?.navigator) {
       const navigator = this.engine.navigator;
+
+      if (!launchBrowser) {
+        return navigator;
+      }
 
       if (typeof navigator.ensureBrowserHealthy === 'function') {
         await navigator.ensureBrowserHealthy();
@@ -339,10 +345,14 @@ class ReconScanner {
       scrollDelayMs: this.config.oddsportal?.navigation?.scroll_delay_ms || 2000
     });
 
-    await navigator.launch();
     this.resources = this.resources.filter((resource) => resource.type !== 'navigator');
     this.resources.push({ type: 'navigator', instance: navigator });
     this.engine.navigator = navigator;
+
+    if (launchBrowser) {
+      await navigator.launch();
+    }
+
     return navigator;
   }
 

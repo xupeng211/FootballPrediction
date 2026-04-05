@@ -7,6 +7,8 @@ const { reconResponseDecoder } = require('./ReconResponseDecoder');
 const { reconMatchExtractor } = require('./ReconMatchExtractor');
 
 const BASE_URL = RECON_CONFIG.oddsportal.base_url;
+const EMBEDDED_PLACEHOLDER_STATUS_RE = /^\s*URL:[\s\S]*?\bStatus:\s*(\d{3})\b/i;
+const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
 
 function compileRegexPatterns(patterns = []) {
   return patterns
@@ -38,6 +40,33 @@ function createDefaultStats() {
     decryptedSuccess: 0,
     decryptedFailed: 0
   };
+}
+
+function detectEmbeddedHttpFailure(bodyText = '') {
+  const text = String(bodyText || '');
+  if (!text.trim()) {
+    return null;
+  }
+
+  const placeholderMatch = text.match(EMBEDDED_PLACEHOLDER_STATUS_RE);
+  if (placeholderMatch) {
+    const statusCode = Number(placeholderMatch[1]) || 503;
+    return {
+      statusCode,
+      error: `EMBEDDED_HTTP_${statusCode}`,
+      signal: 'archive_placeholder_status'
+    };
+  }
+
+  if (BACKEND_FETCH_FAILED_RE.test(text)) {
+    return {
+      statusCode: 503,
+      error: 'EMBEDDED_HTTP_503',
+      signal: 'backend_fetch_failed_page'
+    };
+  }
+
+  return null;
 }
 
 class ReconNetworkMonitor {
@@ -153,6 +182,25 @@ class ReconNetworkMonitor {
           break;
         }
 
+        const embeddedFailure = detectEmbeddedHttpFailure(response.text);
+        if (embeddedFailure) {
+          httpFailure = {
+            page,
+            url,
+            statusCode: embeddedFailure.statusCode,
+            error: embeddedFailure.error,
+            retryAfterRaw: response.retryAfterRaw || '',
+            retryAfterMs: Number(response.retryAfterMs) || 0
+          };
+          pageStats.push({
+            page,
+            rows: 0,
+            bodySignal: embeddedFailure.signal,
+            ...httpFailure
+          });
+          break;
+        }
+
         try {
           const decoded = await this.decodeResponsePayload(response.text, url);
           const parsed = decoded?.parsed;
@@ -226,7 +274,15 @@ class ReconNetworkMonitor {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), fetchTimeout);
       try {
-        const response = await fetch(inputUrl, { credentials: 'include', signal: ctrl.signal });
+        const response = await fetch(inputUrl, {
+          credentials: 'include',
+          signal: ctrl.signal,
+          referrer: window.location?.href || undefined,
+          headers: {
+            accept: '*/*',
+            'x-requested-with': 'XMLHttpRequest'
+          }
+        });
         const text = await response.text();
         const retryAfterRaw = response.headers.get('retry-after') || '';
         clearTimeout(timer);

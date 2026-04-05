@@ -17,6 +17,7 @@ const DEFAULT_READY_SELECTORS = [
   'main',
   'body'
 ];
+const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
 
 function resolveList(primary, secondary, fallback) {
   if (Array.isArray(primary) && primary.length > 0) {
@@ -29,6 +30,13 @@ function resolveList(primary, secondary, fallback) {
 }
 
 function pageClosed(page) { return !page || (typeof page.isClosed === 'function' && page.isClosed()); }
+
+function buildHttpStatusError(statusCode, message, meta = {}) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  Object.assign(error, meta);
+  return error;
+}
 
 class ReconBrowserContext {
   constructor(options = {}) {
@@ -265,7 +273,8 @@ class ReconBrowserContext {
     const timeout = options.timeout || this.navigationTimeoutMs;
     const waitUntil = options.waitUntil || 'domcontentloaded';
     await this.primeSession(url, { timeout, waitUntil });
-    await this.page.goto(url, { timeout, waitUntil });
+    const response = await this.page.goto(url, { timeout, waitUntil });
+    await this.throwIfBackendFetchFailed(response, url, 'target');
     await this.handleConsent();
     if (pageClosed(this.page)) {
       return;
@@ -323,6 +332,7 @@ class ReconBrowserContext {
       timeout: options.timeout || this.navigationTimeoutMs,
       waitUntil: options.waitUntil || 'domcontentloaded'
     });
+    await this.throwIfBackendFetchFailed(null, this.homeWarmupUrl, 'warmup');
     await this.handleConsent();
     if (this.homeWarmupWaitMs > 0) {
       await this.page.waitForTimeout(this.homeWarmupWaitMs);
@@ -382,6 +392,81 @@ class ReconBrowserContext {
       timeout
     });
     return false;
+  }
+
+  async readBackendFailureSignal() {
+    if (!this.page || pageClosed(this.page)) {
+      return null;
+    }
+
+    let title = '';
+    let bodyText = '';
+
+    try {
+      if (typeof this.page.title === 'function') {
+        title = String(await this.page.title() || '');
+      }
+    } catch (_error) {
+      title = '';
+    }
+
+    try {
+      if (typeof this.page.evaluate === 'function') {
+        bodyText = String(await this.page.evaluate(() => document.body?.innerText || '') || '');
+      }
+    } catch (_error) {
+      bodyText = '';
+    }
+
+    const combined = `${title}\n${bodyText}`.trim();
+    if (!combined || !BACKEND_FETCH_FAILED_RE.test(combined)) {
+      return null;
+    }
+
+    return {
+      statusCode: 503,
+      title,
+      snippet: combined.slice(0, 200)
+    };
+  }
+
+  async throwIfBackendFetchFailed(response, url, phase = 'target') {
+    if (response && typeof response.status === 'function') {
+      const statusCode = Number(response.status()) || 0;
+      if (statusCode >= 500) {
+        this.logger.warn('recon_navigation_http_failure', {
+          traceId: this.traceId,
+          url,
+          phase,
+          statusCode
+        });
+        throw buildHttpStatusError(statusCode, `HTTP_${statusCode}`, {
+          url,
+          phase
+        });
+      }
+    }
+
+    const embeddedFailure = await this.readBackendFailureSignal();
+    if (!embeddedFailure) {
+      return;
+    }
+
+    this.logger.warn('recon_navigation_backend_fetch_failed', {
+      traceId: this.traceId,
+      url,
+      phase,
+      title: embeddedFailure.title,
+      snippet: embeddedFailure.snippet
+    });
+    throw buildHttpStatusError(
+      embeddedFailure.statusCode,
+      `HTTP_${embeddedFailure.statusCode} backend_fetch_failed`,
+      {
+        url,
+        phase
+      }
+    );
   }
 
   async triggerDataLoading(options = {}) {

@@ -155,6 +155,74 @@ const reconTaskPlannerUrlUtils = {
     return `${normalizedBaseUrl}${normalizedPath}`;
   },
 
+  getAdditionalPathTemplates(leagueConfig = {}, fieldName, legacyFieldName = null) {
+    const value = leagueConfig?.[fieldName] ?? (legacyFieldName ? leagueConfig?.[legacyFieldName] : undefined);
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+  },
+
+  renderLeaguePathTemplate(template, leagueConfig = {}, replacements = {}) {
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    const country = this.normalizePathSegment(leagueConfig.country);
+    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+    const oddsportalSeason = this.formatSeasonForLeagueUrl(replacements.season, leagueConfig);
+    const year = replacements.year ?? replacements.season ?? '';
+    const normalizedPath = String(template || '')
+      .replace('{country}', country)
+      .replace('{league}', slug)
+      .replace('{season}', oddsportalSeason)
+      .replace('{year}', String(year))
+      .replace(/\/{2,}/g, '/')
+      .replace(/^\/?/, '/');
+
+    return `${normalizedBaseUrl}${normalizedPath}`;
+  },
+
+  buildAdditionalResultsUrls(leagueConfig, season) {
+    const templates = this.getAdditionalPathTemplates(
+      leagueConfig,
+      'additionalResultsPaths',
+      'additional_results_paths'
+    );
+
+    return templates.map((template) => this.renderLeaguePathTemplate(template, leagueConfig, { season }));
+  },
+
+  buildAdditionalHistoricalResultsUrls(leagueConfig, year) {
+    const templates = this.getAdditionalPathTemplates(
+      leagueConfig,
+      'additionalHistoricalResultsPaths',
+      'additional_historical_results_paths'
+    );
+
+    return templates.map((template) => this.renderLeaguePathTemplate(template, leagueConfig, { year }));
+  },
+
+  buildCurrentSeasonSourceUrls(leagueConfig, season) {
+    const urls = [
+      this.buildResultsUrl(leagueConfig, season),
+      ...this.buildAdditionalResultsUrls(leagueConfig, season)
+    ];
+
+    return [...new Set(urls.filter(Boolean))];
+  },
+
+  buildHistoricalSeasonSourceUrls(leagueConfig, year) {
+    const urls = [
+      this.buildSeasonlessHistoricalResultsUrl(leagueConfig, year),
+      ...this.buildAdditionalHistoricalResultsUrls(leagueConfig, year)
+    ];
+
+    return [...new Set(urls.filter(Boolean))];
+  },
+
   getResultsUrlStrategy(leagueConfig = {}) {
     return String(
       leagueConfig.resultsUrlStrategy
