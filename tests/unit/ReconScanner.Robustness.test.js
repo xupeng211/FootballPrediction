@@ -595,13 +595,107 @@ describe('ReconScanner Robustness - CLI Defaults', () => {
         '--season',
         '2025-2026',
         '--all-leagues',
-        '--current-season-only'
+        '--current-season-only',
+        '--threshold',
+        '0.3'
       ];
       const args = parseArgs();
       assert.strictEqual(args.currentSeasonOnly, true);
+      assert.strictEqual(args.threshold, 0.3);
     } finally {
       process.argv = originalArgv;
     }
+  });
+
+  it('显式传入 --force-json-extract 时，CLI 必须开启 JSON 强制抽取模式', () => {
+    const originalArgv = process.argv;
+
+    try {
+      process.argv = [
+        'node',
+        'scripts/ops/recon_scanner.js',
+        '--season',
+        '2025-2026',
+        '--league',
+        '140',
+        '--limit',
+        '100',
+        '--force-json-extract'
+      ];
+      const args = parseArgs();
+      assert.strictEqual(args.forceJsonExtract, true);
+      assert.strictEqual(args.limit, 100);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('Recon Matrix 在 --force-pure-protocol 模式下不得预启动浏览器', async () => {
+    let receivedEnsureNavigatorOptions = null;
+
+    const dbPool = {
+      async end() {}
+    };
+
+    const repository = {
+      dbPool,
+      async init() {},
+      async close() {
+        await dbPool.end();
+      }
+    };
+
+    const scanner = {
+      engine: {
+        async runReconMatrix() {
+          return {
+            success: true,
+            linked: 0,
+            mismatched: 0,
+            totalPending: 0,
+            perLeague: [],
+            errors: []
+          };
+        }
+      },
+      configManager: {
+        getActiveLeagues() {
+          return [{ id: 47, code: 'EPL', name: 'Premier League', enabled: true }];
+        },
+        getLeagueByCode(code) {
+          return code === 'EPL'
+            ? { id: 47, code: 'EPL', name: 'Premier League', enabled: true }
+            : null;
+        },
+        getLeagueById() {
+          return null;
+        }
+      },
+      async initialize() {},
+      async ensureNavigator(options = {}) {
+        receivedEnsureNavigatorOptions = options;
+        return {
+          async close() {}
+        };
+      },
+      async close() {}
+    };
+
+    const exitCode = await main([
+      '--season', '2025-2026',
+      '--league', 'EPL',
+      '--limit', '1',
+      '--threshold', '0.15',
+      '--force-pure-protocol'
+    ], {
+      console: { log() {}, warn() {}, error() {} },
+      createPool: () => dbPool,
+      createRepository: () => repository,
+      createScanner: () => scanner
+    });
+
+    assert.strictEqual(exitCode, 0);
+    assert.deepStrictEqual(receivedEnsureNavigatorOptions, { launchBrowser: false });
   });
 
   it('任一联赛失败时，整体退出码必须为 1', () => {

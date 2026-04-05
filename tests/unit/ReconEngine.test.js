@@ -79,7 +79,8 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
       maxPages: 50,
       timeoutMs: engine.archiveTimeoutMs,
       preferCurrentSeasonSource: true,
-      circuitBreakerKey: 'recon:47:2025/2026'
+      circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+      forcePureProtocol: false
     }
   }]);
 });

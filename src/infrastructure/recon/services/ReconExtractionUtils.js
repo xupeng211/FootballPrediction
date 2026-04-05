@@ -1,15 +1,23 @@
 'use strict';
 
 const { JSDOM } = require('jsdom');
+const { reconMatchExtractor } = require('./ReconMatchExtractor');
 const { RECON_CONFIG, getReconConfigSection } = require('./ReconServiceConfig');
 
 const DOM_SCRAPER_CONFIG = getReconConfigSection(['recon_runtime', 'dom_scraper'], {});
+const NETWORK_MONITOR_CONFIG = getReconConfigSection(['recon_runtime', 'network_monitor'], {});
 const BASE_URL = DOM_SCRAPER_CONFIG.base_url || RECON_CONFIG.oddsportal.base_url;
 const HOME_SELECTORS = DOM_SCRAPER_CONFIG.home_selectors || [];
 const AWAY_SELECTORS = DOM_SCRAPER_CONFIG.away_selectors || [];
 const PARTICIPANT_SELECTORS = DOM_SCRAPER_CONFIG.participant_selectors || [];
 const RESULT_ANCHOR_SELECTORS = DOM_SCRAPER_CONFIG.result_anchor_selectors || [];
 const PAGINATION_SELECTORS = DOM_SCRAPER_CONFIG.pagination_selectors || [];
+const EMBEDDED_MATCH_EXTRACT_DEPTH = Math.max(1, Number(NETWORK_MONITOR_CONFIG.extract_max_depth || 10));
+const EVENT_CONTAINER_SELECTORS = [
+  '[data-testid="event-name"]',
+  '[data-testid="events"]',
+  '[data-testid*="event"]'
+];
 
 const reconExtractionUtils = {
   buildLeaguePathPrefix(baseUrl) {
@@ -27,6 +35,7 @@ const reconExtractionUtils = {
   },
 
   parseCurrentSeasonResultRowsFromHtml(html, options = {}) {
+    const rawHtml = String(html || '');
     const dom = new JSDOM(String(html || ''));
     const document = dom.window.document;
     const currentUrl = options.currentUrl || this.baseUrl;
@@ -34,9 +43,33 @@ const reconExtractionUtils = {
     const canonicalLeaguePathPrefix = this._extractCanonicalLeaguePathPrefix(
       document.querySelector('link[rel="canonical"]')?.href || ''
     );
+    const forceJsonExtract = options.forceJsonExtract === true;
     const seen = new Set();
-    const anchors = Array.from(document.querySelectorAll(RESULT_ANCHOR_SELECTORS.join(', ')));
     const matches = [];
+    this._appendCandidateMatches(matches, seen, this._extractFromNextData(rawHtml), {
+      currentUrl,
+      leaguePathPrefix,
+      canonicalLeaguePathPrefix,
+      source: 'current_results_next_data'
+    });
+    this._appendCandidateMatches(matches, seen, this._extractFromEmbeddedJsonScripts(rawHtml), {
+      currentUrl,
+      leaguePathPrefix,
+      canonicalLeaguePathPrefix,
+      source: 'current_results_script_json'
+    });
+
+    if (forceJsonExtract && matches.length > 0) {
+      return matches;
+    }
+
+    const configuredSelector = RESULT_ANCHOR_SELECTORS.filter(Boolean).join(', ');
+    const baseAnchors = configuredSelector
+      ? Array.from(document.querySelectorAll(configuredSelector))
+      : [];
+    const fallbackAnchors = this._collectEventAnchors(document);
+    const dynamicAnchors = this._probeAnchorPatterns(document);
+    const anchors = [...new Set([...baseAnchors, ...fallbackAnchors, ...dynamicAnchors])];
 
     for (const anchor of anchors) {
       const absoluteHref = this._resolveHref(anchor.getAttribute('href') || '', currentUrl);
@@ -49,6 +82,7 @@ const reconExtractionUtils = {
         continue;
       }
 
+      const isMatchRoute = /\/match\/[^/]+\/?$/i.test(pathname);
       const matchesPrimaryPath = leaguePathPrefix
         ? this._matchesLeaguePath(pathname, leaguePathPrefix)
         : false;
@@ -56,7 +90,7 @@ const reconExtractionUtils = {
         ? this._matchesLeaguePath(pathname, canonicalLeaguePathPrefix)
         : false;
 
-      if ((leaguePathPrefix || canonicalLeaguePathPrefix) && !matchesPrimaryPath && !matchesCanonicalPath) {
+      if ((leaguePathPrefix || canonicalLeaguePathPrefix) && !isMatchRoute && !matchesPrimaryPath && !matchesCanonicalPath) {
         continue;
       }
 
@@ -64,12 +98,10 @@ const reconExtractionUtils = {
         continue;
       }
 
-      const hashMatch = pathname.match(/-([A-Za-z0-9]{8})\/?$/);
-      if (!hashMatch) {
+      const hash = this._extractMatchKey(pathname);
+      if (!hash) {
         continue;
       }
-
-      const hash = hashMatch[1];
       if (seen.has(hash)) {
         continue;
       }
@@ -84,16 +116,26 @@ const reconExtractionUtils = {
       }
 
       if (!homeTeam || !awayTeam) {
+        const parsedFromText = this._extractTeamsFromText(anchor.textContent || anchor.getAttribute('title') || '');
+        homeTeam = homeTeam || parsedFromText.homeTeam;
+        awayTeam = awayTeam || parsedFromText.awayTeam;
+      }
+
+      if (!homeTeam || !awayTeam) {
         continue;
       }
 
-      seen.add(hash);
-      matches.push({
+      this._appendCandidateMatches(matches, seen, [{
         url: absoluteHref,
         hash,
         homeTeam,
         awayTeam,
         matchDate: null,
+        source: options.source || 'current_results_dom'
+      }], {
+        currentUrl,
+        leaguePathPrefix,
+        canonicalLeaguePathPrefix,
         source: options.source || 'current_results_dom'
       });
     }
@@ -134,6 +176,52 @@ const reconExtractionUtils = {
     }
 
     return { pageUrls, totalPages };
+  },
+
+  extractTeamsFromStandings(html, options = {}) {
+    const dom = new JSDOM(String(html || ''));
+    const document = dom.window.document;
+    const currentUrl = options.currentUrl || this.baseUrl || BASE_URL;
+    const seen = new Set();
+    const teams = [];
+    const anchors = this._collectStandingsTeamAnchors(document);
+
+    for (const anchor of anchors) {
+      const absoluteHref = this._resolveHref(anchor.getAttribute('href') || anchor.href || '', currentUrl);
+      const teamRef = this._extractTeamReference(absoluteHref);
+
+      if (!teamRef) {
+        continue;
+      }
+
+      const teamName = this._cleanText(
+        anchor.textContent
+        || anchor.getAttribute('title')
+        || anchor.getAttribute('aria-label')
+        || teamRef.teamName
+      );
+
+      if (!this._looksLikeStandaloneTeamLabel(teamName)) {
+        continue;
+      }
+
+      const dedupeKey = String(teamRef.teamHash || teamRef.teamUrl || teamName)
+        .trim()
+        .toLowerCase();
+      if (!dedupeKey || seen.has(dedupeKey)) {
+        continue;
+      }
+
+      seen.add(dedupeKey);
+      teams.push({
+        teamName,
+        teamHash: teamRef.teamHash,
+        teamUrl: teamRef.teamUrl,
+        source: options.source || 'standings_dom'
+      });
+    }
+
+    return teams;
   },
 
   extractSeasonNavigationUrlsFromHtml(html, currentResultsUrl) {
@@ -284,7 +372,9 @@ const reconExtractionUtils = {
   _extractNamesFromSlug(pathname) {
     const cleanPath = String(pathname || '').replace(/\/+$/, '');
     const lastSegment = cleanPath.split('/').filter(Boolean).pop() || '';
-    const slugWithHash = lastSegment.replace(/-[A-Za-z0-9]{8}$/i, '');
+    const slugWithHash = lastSegment
+      .replace(/-[A-Za-z0-9]{8}$/i, '')
+      .replace(/^[A-Za-z0-9-]+$/, (value) => (/\/match\//i.test(cleanPath) ? '' : value));
     const parts = slugWithHash.split('-');
 
     if (parts.length < 2) {
@@ -304,6 +394,26 @@ const reconExtractionUtils = {
     };
   },
 
+  _extractTeamsFromText(value) {
+    const cleanValue = this._cleanText(value);
+    if (!cleanValue) {
+      return { homeTeam: '', awayTeam: '' };
+    }
+
+    const separators = [/\s+vs\.?\s+/i, /\s+-\s+/];
+    for (const separator of separators) {
+      const parts = cleanValue.split(separator).map((item) => this._cleanText(item)).filter(Boolean);
+      if (parts.length === 2) {
+        return {
+          homeTeam: parts[0],
+          awayTeam: parts[1]
+        };
+      }
+    }
+
+    return { homeTeam: '', awayTeam: '' };
+  },
+
   _getFirstText(scope, selectors) {
     for (const selector of selectors) {
       const node = scope.querySelector(selector);
@@ -314,6 +424,25 @@ const reconExtractionUtils = {
     }
 
     return '';
+  },
+
+  _collectStandingsTeamAnchors(document) {
+    if (!document) {
+      return [];
+    }
+
+    const selectors = [
+      'table a[href]',
+      '[role="row"] a[href]',
+      '[class*="standings"] a[href]',
+      '[data-testid*="standings"] a[href]',
+      'a[href*="/team/"]',
+      'a[href*="/teams/"]'
+    ];
+
+    return [...new Set(
+      selectors.flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+    )];
   },
 
   _resolveHref(rawHref, baseUrl) {
@@ -334,6 +463,237 @@ const reconExtractionUtils = {
 
   _cleanText(value) {
     return String(value || '').replace(/\s+/g, ' ').trim();
+  },
+
+  _looksLikeStandaloneTeamLabel(value) {
+    const label = this._cleanText(value);
+    if (!label) {
+      return false;
+    }
+
+    if (!/[a-z\u00c0-\u024f]/i.test(label)) {
+      return false;
+    }
+
+    if (/\bvs\.?\b/i.test(label)) {
+      return false;
+    }
+
+    if (/\d+\s*[-:]\s*\d+/.test(label)) {
+      return false;
+    }
+
+    return !/\b(standings?|results?|table|outrights?)\b/i.test(label);
+  },
+
+  _extractTeamReference(url) {
+    const pathname = this._getPathname(url);
+    if (!pathname) {
+      return null;
+    }
+
+    if (/\/football\/h2h\/|\/match\//i.test(pathname)) {
+      return null;
+    }
+
+    if (/\/(results|standings|outrights)(?:\/page\/\d+)?\/?$/i.test(pathname)) {
+      return null;
+    }
+
+    const segments = pathname.split('/').filter(Boolean);
+    if (segments.length === 0) {
+      return null;
+    }
+
+    const hasExplicitTeamPrefix = segments.some((segment) => /^(team|teams)$/i.test(segment));
+    if (
+      !hasExplicitTeamPrefix
+      && /^football$/i.test(segments[0] || '')
+      && segments.length >= 4
+      && /-\d{4}(?:-\d{4})?$/i.test(segments[2] || '')
+    ) {
+      return null;
+    }
+
+    const lastSegment = segments[segments.length - 1] || '';
+    const match = lastSegment.match(/^(.*)-([A-Za-z0-9]{6,12})$/);
+    if (!match) {
+      return null;
+    }
+
+    const teamSlug = match[1];
+    const teamHash = match[2];
+    const teamName = this._decodeTeamSlugToName(teamSlug);
+    if (!teamName) {
+      return null;
+    }
+
+    return {
+      teamName,
+      teamHash,
+      teamUrl: url
+    };
+  },
+
+  _decodeTeamSlugToName(teamSlug) {
+    const parts = String(teamSlug || '')
+      .split('-')
+      .map((part) => this._cleanText(part))
+      .filter(Boolean);
+
+    if (parts.length === 0) {
+      return '';
+    }
+
+    return parts
+      .map((part) => {
+        if (/^[a-z]{1,3}$/i.test(part)) {
+          return part.toUpperCase();
+        }
+
+        return part.charAt(0).toUpperCase() + part.slice(1);
+      })
+      .join(' ');
+  },
+
+  _appendCandidateMatches(target, seen, candidates, options = {}) {
+    for (const candidate of Array.isArray(candidates) ? candidates : []) {
+      if (!candidate || typeof candidate !== 'object') {
+        continue;
+      }
+
+      const resolvedUrl = this._resolveHref(candidate.url || '', options.currentUrl || this.baseUrl || BASE_URL);
+      const pathname = resolvedUrl ? this._getPathname(resolvedUrl) : '';
+
+      if (pathname && !this._isCandidateInScope(pathname, options.leaguePathPrefix, options.canonicalLeaguePathPrefix)) {
+        continue;
+      }
+
+      const hash = this._cleanText(candidate.hash || this._extractMatchKey(pathname));
+      const homeTeam = this._cleanText(candidate.homeTeam);
+      const awayTeam = this._cleanText(candidate.awayTeam);
+
+      if (!hash || !homeTeam || !awayTeam || seen.has(hash)) {
+        continue;
+      }
+
+      seen.add(hash);
+      target.push({
+        url: resolvedUrl || candidate.url || '',
+        hash,
+        homeTeam,
+        awayTeam,
+        matchDate: candidate.matchDate || null,
+        source: candidate.source || options.source || 'current_results_dom'
+      });
+    }
+  },
+
+  _extractFromNextData(html) {
+    const nextDataMatch = String(html || '').match(
+      /<script[^>]*id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i
+    );
+
+    if (!nextDataMatch) {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(nextDataMatch[1]);
+      return this._extractMatchesFromJsonPayload(parsed, 'current_results_next_data');
+    } catch (_error) {
+      return [];
+    }
+  },
+
+  _extractFromEmbeddedJsonScripts(html) {
+    const matches = [];
+    const payloadPattern = /JSON\.parse\("((?:\\.|[^"\\])*)"\)/g;
+    let hit;
+
+    while ((hit = payloadPattern.exec(String(html || ''))) !== null) {
+      try {
+        const decoded = JSON.parse(`"${hit[1]}"`);
+        const parsed = JSON.parse(decoded);
+        matches.push(...this._extractMatchesFromJsonPayload(parsed, 'current_results_script_json'));
+      } catch (_error) {
+        continue;
+      }
+    }
+
+    return matches;
+  },
+
+  _extractMatchesFromJsonPayload(payload, source) {
+    return reconMatchExtractor.extractMatchesFromJson.call({
+      baseUrl: this.baseUrl || BASE_URL,
+      extractMaxDepth: EMBEDDED_MATCH_EXTRACT_DEPTH,
+      extractStructuredRowMatches: reconMatchExtractor.extractStructuredRowMatches,
+      isMatchObject: reconMatchExtractor.isMatchObject,
+      normalizeMatchObject: reconMatchExtractor.normalizeMatchObject
+    }, payload, source);
+  },
+
+  _collectEventAnchors(document) {
+    if (!document) {
+      return [];
+    }
+
+    const containers = Array.from(document.querySelectorAll(EVENT_CONTAINER_SELECTORS.join(', ')))
+      .filter(Boolean);
+    const anchors = [];
+    for (const container of containers) {
+      anchors.push(...Array.from(container.querySelectorAll('a[href]')));
+    }
+
+    for (const anchor of Array.from(document.links || [])) {
+      const href = anchor.getAttribute('href') || anchor.href || '';
+      if (/\/match\/[^/]+\/?$/i.test(href) || /-([A-Za-z0-9]{8})\/?$/i.test(href)) {
+        anchors.push(anchor);
+      }
+    }
+
+    return anchors;
+  },
+
+  _isCandidateInScope(pathname, leaguePathPrefix, canonicalLeaguePathPrefix) {
+    const isMatchRoute = /\/match\/[^/]+\/?$/i.test(String(pathname || ''));
+    const matchesPrimaryPath = leaguePathPrefix
+      ? this._matchesLeaguePath(pathname, leaguePathPrefix)
+      : false;
+    const matchesCanonicalPath = canonicalLeaguePathPrefix
+      ? this._matchesLeaguePath(pathname, canonicalLeaguePathPrefix)
+      : false;
+
+    if (!leaguePathPrefix && !canonicalLeaguePathPrefix) {
+      return true;
+    }
+
+    return isMatchRoute || matchesPrimaryPath || matchesCanonicalPath;
+  },
+
+  _probeAnchorPatterns(document) {
+    if (!document) {
+      return [];
+    }
+
+    const anchors = [];
+    const candidates = Array.from(document.querySelectorAll('a[href]'));
+    for (const anchor of candidates) {
+      const text = this._cleanText(anchor.textContent);
+      const href = anchor.getAttribute('href') || anchor.href || '';
+      if (/\/match\/[^/]+\/?$/i.test(href)) {
+        anchors.push(anchor);
+        continue;
+      }
+      if (!text) {
+        continue;
+      }
+      if (/\bvs\.?\b|-/i.test(text)) {
+        anchors.push(anchor);
+      }
+    }
+    return anchors;
   },
 
   _matchesLeaguePath(pathname, leaguePathPrefix) {
@@ -360,6 +720,21 @@ const reconExtractionUtils = {
   _extractSeasonYearFromResultsPath(url) {
     const match = String(url || '').match(/-(\d{4})\/results(?:\/page\/\d+)?\/?$/i);
     return match ? Number(match[1]) : 0;
+  },
+
+  _extractMatchKey(pathname) {
+    const normalizedPath = String(pathname || '').replace(/\/+$/, '');
+    const hashMatch = normalizedPath.match(/-([A-Za-z0-9]{8})$/);
+    if (hashMatch) {
+      return hashMatch[1];
+    }
+
+    const matchRoute = normalizedPath.match(/\/match\/([^/?#]+)$/i);
+    if (matchRoute) {
+      return matchRoute[1];
+    }
+
+    return '';
   }
 };
 

@@ -211,8 +211,8 @@
     "mainz05": "Mainz 05",
     "st pauli": "St Pauli",
     "st. pauli": "St Pauli",
-    "vfb stuttgart": "Vfb Stuttgart",
-    "stuttgart": "Vfb Stuttgart",
+    "vfb stuttgart": "VfB Stuttgart",
+    "stuttgart": "VfB Stuttgart",
     "qpr": "Queens Park Rangers",
     "west brom": "West Bromwich Albion",
     "west bromwich": "West Bromwich Albion",
@@ -316,7 +316,7 @@
       "default_concurrency": 5,
       "confidence_threshold": 0.75,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 20000,
+      "archive_timeout_ms": 45000,
       "page_settle_wait_ms": 3000,
       "dom_scroll_step_px": 1000,
       "dom_scroll_delay_ms": 1500,
@@ -335,13 +335,16 @@
       "scroll_step_px": 500,
       "navigate_scroll_delay_ms": 1000,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 20000,
-      "post_api_discovery_wait_ms": 2000,
+      "archive_timeout_ms": 45000,
+      "post_api_discovery_wait_ms": 20000,
       "page_revisit_wait_ms": 1500,
       "circuit_breaker": {
         "failure_threshold": 5,
         "reset_timeout_ms": 60000
       }
+    },
+    "protocol_fetch": {
+      "default_bookiehash": "X262144X16384X0X0X134217728X0X0X0X0X0X0X0X0X134217729X0X0X1048576X0X1024X40X0X32X0X0X0X0X0X0X0X536870912X2560X2048X0X33554560X8519680X0X0X0X524288"
     },
     "browser_context": {
       "launch_timeout_ms": 60000,
@@ -412,10 +415,18 @@
       "base_url": "https://www.oddsportal.com",
       "sample_size": 12,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 20000,
+      "high_volume_archive_max_pages": 100,
+      "high_volume_pending_threshold": 300,
+      "archive_timeout_ms": 45000,
       "mismatch_retry_threshold_delta": 0.3,
-      "mismatch_retry_threshold_floor": 0.3,
+      "mismatch_retry_threshold_floor": 0.15,
       "force_dom_league_ids": [
+        48,
+        130,
+        223,
+        268
+      ],
+      "exclude_all_league_ids": [
         223
       ],
       "results_path": "/football/{country}/{league}-{season}/results/"

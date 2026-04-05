@@ -141,4 +141,37 @@ describe('ReconStateProber', () => {
       'https://www.oddsportal.com/football/brazil/serie-a/'
     );
   });
+
+  it('probeCurrentSeasonFromPageState 应优先返回已拦截的 current season 数据', async () => {
+    const prober = new ReconStateProber({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    const intercepted = [{
+      hash: 'championship-live-1',
+      url: 'https://www.oddsportal.com/football/england/championship-2025-2026/a-b-championship-live-1/',
+      homeTeam: 'Leeds United',
+      awayTeam: 'Burnley',
+      matchDate: '2026-01-01T00:00:00.000Z'
+    }];
+
+    const result = await prober.probeCurrentSeasonFromPageState(
+      'https://www.oddsportal.com/football/england/championship-2025-2026/results/',
+      {},
+      {
+        async navigate() {},
+        async waitForTimeout() {},
+        getInterceptedData() {
+          return intercepted;
+        },
+        getApiEndpoints() {
+          return [];
+        }
+      }
+    );
+
+    assert.strictEqual(result.sourceState, 'CURRENT_RESULTS_INTERCEPT');
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'championship-live-1');
+  });
 });

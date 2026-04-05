@@ -87,6 +87,23 @@ const reconMatchExtractor = {
 
   normalizeMatchObject(obj, source = 'api_intercept') {
     try {
+      const normalizeTeamText = (primaryValue, fallbackValue) => {
+        const pickText = (value) => {
+          if (typeof value === 'string') {
+            return value.trim();
+          }
+          if (typeof value === 'number') {
+            return '';
+          }
+          if (value && typeof value === 'object') {
+            return String(value.name || value.title || '').trim();
+          }
+          return '';
+        };
+
+        return pickText(primaryValue) || pickText(fallbackValue);
+      };
+
       let homeTeam = '';
       let awayTeam = '';
 
@@ -98,16 +115,18 @@ const reconMatchExtractor = {
         homeTeam = home?.name || home?.title || '';
         awayTeam = away?.name || away?.title || '';
       } else {
-        homeTeam = obj.homeTeam || obj.home || obj.home_team || obj.team1 || obj.homeName || obj['home-name'] || '';
-        awayTeam = obj.awayTeam || obj.away || obj.away_team || obj.team2 || obj.awayName || obj['away-name'] || '';
+        homeTeam = normalizeTeamText(
+          obj.homeTeam || obj.homeName || obj['home-name'],
+          obj.home || obj.home_team || obj.team1
+        );
+        awayTeam = normalizeTeamText(
+          obj.awayTeam || obj.awayName || obj['away-name'],
+          obj.away || obj.away_team || obj.team2
+        );
       }
 
-      if (typeof homeTeam === 'object') {
-        homeTeam = homeTeam.name || homeTeam.title || '';
-      }
-      if (typeof awayTeam === 'object') {
-        awayTeam = awayTeam.name || awayTeam.title || '';
-      }
+      homeTeam = normalizeTeamText(homeTeam, obj['home-name']);
+      awayTeam = normalizeTeamText(awayTeam, obj['away-name']);
 
       const hash = obj.hash || obj.eventHash || obj.encodeEventId || obj.id || obj.matchId || obj.eventId || '';
       const slug = obj.slug || obj.eventSlug || '';

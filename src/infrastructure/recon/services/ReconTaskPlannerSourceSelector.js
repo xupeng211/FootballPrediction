@@ -23,11 +23,14 @@ const reconTaskPlannerSourceSelector = {
         || dbSeasonYears?.endYear
         || (Number(/^\d{4}$/.test(baseSeason) ? baseSeason : NaN) || null);
 
-      addSource({
-        season: Number.isInteger(currentSeasonYear) ? String(currentSeasonYear) : baseSeason,
-        url: this.buildResultsUrl(target.league, target.season || target.dbSeason),
-        mode: 'current_season'
-      });
+      const currentSourceUrls = this.buildCurrentSeasonSourceUrls(target.league, target.season || target.dbSeason);
+      for (const url of currentSourceUrls) {
+        addSource({
+          season: Number.isInteger(currentSeasonYear) ? String(currentSeasonYear) : baseSeason,
+          url,
+          mode: 'current_season'
+        });
+      }
 
       if (target?.currentSeasonOnly === true) {
         return sources;
@@ -51,11 +54,14 @@ const reconTaskPlannerSourceSelector = {
       }
 
       for (const year of [...historicalYears].sort((left, right) => left - right)) {
-        addSource({
-          season: String(year),
-          url: this.buildSeasonlessHistoricalResultsUrl(target.league, year),
-          mode: 'historical_results'
-        });
+        const historicalSourceUrls = this.buildHistoricalSeasonSourceUrls(target.league, year);
+        for (const url of historicalSourceUrls) {
+          addSource({
+            season: String(year),
+            url,
+            mode: 'historical_results'
+          });
+        }
       }
 
       return sources;
@@ -116,42 +122,80 @@ const reconTaskPlannerSourceSelector = {
     });
     const reconPolicy = this.resolveReconPolicy(target, orderedPending, confidenceThreshold);
     const effectiveConfidenceThreshold = Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold || 0);
+    const resolvedMaxPages = this.resolveArchiveMaxPages(target, orderedPending);
     const forceDomMode = this.forceDomLeagueIds.has(Number(target?.leagueId || target?.league?.id || 0));
     const forceMultiMode = reconPolicy.forceMultiMode === true;
+    const forceJsonExtract = target?.forceJsonExtract === true;
+    const forcePureProtocol = target?.forcePureProtocol === true;
     const circuitBreakerKey = this.buildCircuitBreakerKey(target);
     let best = null;
     const evaluatedSources = [];
+    const sourceFailures = [];
 
-    for (const source of sources) {
+    for (const [sourceIndex, source] of sources.entries()) {
+      const sourceCircuitBreakerKey = `${circuitBreakerKey}:${source.mode}:${source.season}:${sourceIndex}`;
       const extractOptions = {
-        maxPages: this.archiveMaxPages,
+        maxPages: resolvedMaxPages,
         timeoutMs: this.archiveTimeoutMs,
         preferCurrentSeasonSource: this.isCurrentSeason(source.season),
-        circuitBreakerKey
+        circuitBreakerKey: sourceCircuitBreakerKey,
+        forcePureProtocol
       };
       if (target.readySelector) {
         extractOptions.readySelector = target.readySelector;
       }
 
-      const extractResult = forceDomMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
-        ? await this.navigator.fetchFullSeasonArchive(source.url, {
-          ...extractOptions,
-          preferCurrentSeasonSource: true,
-          forceDomOnly: true
-        })
-        : forceMultiMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+      let extractResult;
+      try {
+        extractResult = forcePureProtocol
+          ? await this.navigator.protocolArchiveExtract(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true,
+            forcePureProtocol: true
+          })
+          : forceJsonExtract && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+          ? await this.navigator.fetchFullSeasonArchive(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true,
+            forceDomOnly: true,
+            forceJsonExtract: true
+          })
+          : forceDomMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
           ? await this.navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true
           })
-          : source.mode === 'current_season'
-            ? await this.navigator.protocolArchiveExtract(source.url, {
+          : forceMultiMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+            ? await this.navigator.fetchFullSeasonArchive(source.url, {
               ...extractOptions,
               preferCurrentSeasonSource: true
             })
-            : typeof this.navigator?.fetchFullSeasonArchive === 'function'
-              ? await this.navigator.fetchFullSeasonArchive(source.url, extractOptions)
-              : await this.navigator.protocolArchiveExtract(source.url, extractOptions);
+            : source.mode === 'current_season'
+              ? await this.navigator.protocolArchiveExtract(source.url, {
+                ...extractOptions,
+                preferCurrentSeasonSource: true
+              })
+              : typeof this.navigator?.fetchFullSeasonArchive === 'function'
+                ? await this.navigator.fetchFullSeasonArchive(source.url, extractOptions)
+                : await this.navigator.protocolArchiveExtract(source.url, extractOptions);
+      } catch (error) {
+        sourceFailures.push({
+          source,
+          sourceIndex,
+          breakerKey: sourceCircuitBreakerKey,
+          error
+        });
+        this.logger.warn('recon_candidate_source_failed', {
+          league: target.league.name,
+          dbSeason: target.dbSeason,
+          sourceSeason: source.season,
+          sourceUrl: source.url,
+          breakerKey: sourceCircuitBreakerKey,
+          error: error.message
+        });
+        continue;
+      }
+
       const candidates = Array.isArray(extractResult?.matches) ? extractResult.matches : [];
       const seasonMirror = this.mirrorManager?.buildSeasonMirror(candidates) || new Map();
       const sampleLinked = sample.reduce((count, l1Match) => {
@@ -174,8 +218,11 @@ const reconTaskPlannerSourceSelector = {
         sourceSeason: source.season,
         sourceUrl: source.url,
         forceDomMode,
+        forceJsonExtract,
+        forcePureProtocol,
         forceMultiMode,
         effectiveConfidenceThreshold,
+        resolvedMaxPages,
         sampleSize: sample.length,
         skippedPlaceholderCount,
         sampleLinked,
@@ -195,6 +242,20 @@ const reconTaskPlannerSourceSelector = {
       ) {
         best = evaluated;
       }
+    }
+
+    if (evaluatedSources.length === 0 && sourceFailures.length > 0) {
+      const primaryFailure = sourceFailures[0];
+      const error = primaryFailure.error instanceof Error
+        ? primaryFailure.error
+        : new Error(String(primaryFailure.error || 'Recon candidate source failed'));
+      error.sourceFailures = sourceFailures.map((failure) => ({
+        sourceSeason: failure.source?.season,
+        sourceUrl: failure.source?.url,
+        breakerKey: failure.breakerKey,
+        error: failure.error instanceof Error ? failure.error.message : String(failure.error || '')
+      }));
+      throw error;
     }
 
     if (evaluatedSources.length > 1) {
@@ -226,6 +287,7 @@ const reconTaskPlannerSourceSelector = {
         sampleSize: sample.length,
         sampleLinked: combinedSampleLinked,
         effectiveConfidenceThreshold,
+        resolvedMaxPages,
         forceMultiMode
       });
 
