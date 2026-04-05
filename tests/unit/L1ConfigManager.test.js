@@ -91,6 +91,12 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(mls.slug, 'mls');
     assert.strictEqual(mls.resultsSlug, 'mls');
     assert.strictEqual(mls.resultsUrlStrategy, 'seasonless');
+    assert.deepStrictEqual(mls.additionalResultsPaths, [
+      '/football/{country}/{league}/'
+    ]);
+    assert.deepStrictEqual(mls.additionalHistoricalResultsPaths, [
+      '/football/{country}/{league}-{year}/'
+    ]);
     assert.strictEqual(superLig.slug, 'super-lig');
     assert.strictEqual(superLig.resultsSlug, 'super-lig');
     assert.strictEqual(superLig.resultsUrlStrategy, 'seasonless');

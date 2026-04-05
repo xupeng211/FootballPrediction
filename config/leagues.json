@@ -44,7 +44,13 @@
       "tier": "P3",
       "enabled": true,
       "slug": "mls",
-      "results_url_strategy": "seasonless"
+      "results_url_strategy": "seasonless",
+      "additional_results_paths": [
+        "/football/{country}/{league}/"
+      ],
+      "additional_historical_results_paths": [
+        "/football/{country}/{league}-{year}/"
+      ]
     },
     {
       "id": 120,
