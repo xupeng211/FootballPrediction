@@ -25,6 +25,24 @@ jobs:
       - name: 📥 Checkout code
         uses: actions/checkout@v4
 
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: 📦 Install Node dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+
+      - name: 🧪 Run full Node unit tests
+        run: npm test
+
+      - name: 📊 Run Node coverage gate
+        run: npm run test:coverage
+
       - name: 🐳 Start Integration Environment (P3.1)
         run: |
           echo "🚀 P3.3.1: Starting integration test environment using docker-compose.integration.yml..."
@@ -83,7 +101,7 @@ jobs:
             --junitxml=test_reports/integration_tests.xml \
             --cov=src \
             --cov-report=xml:test_reports/coverage_integration.xml \
-            --cov-append || echo "Some integration tests may have failed - continuing with analysis"
+            --cov-append
 
           echo "📊 P3.3.1: Integration test results:"
           docker-compose -f docker-compose.integration.yml exec -T app-integration ls -la test_reports/ || echo "test_reports directory not found in container"
@@ -145,15 +163,15 @@ with open('test_reports/p3_2_performance_validation.json', 'w') as f:
           docker-compose -f docker-compose.integration.yml run --rm app-integration \
             bash -c "
             echo '🔍 P3.3.1: Running Ruff linter...'
-            ruff check src/ tests/ --output-format=text || echo 'Ruff found some issues'
+            ruff check src/ tests/ --output-format=text
             echo '✅ P3.3.1: Ruff check completed'
 
             echo '🔍 P3.3.1: Running Ruff formatter check...'
-            ruff format --check src/ tests/ || echo 'Format issues found'
+            ruff format --check src/ tests/
             echo '✅ P3.3.1: Format check completed'
 
             echo '🔍 P3.3.1: Running MyPy type checking...'
-            mypy src/ --ignore-missing-imports --no-error-summary || echo 'MyPy found some type issues'
+            mypy src/ --ignore-missing-imports --no-error-summary
             echo '✅ P3.3.1: MyPy check completed'
             "
 

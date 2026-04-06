@@ -680,7 +680,9 @@ const reconProtocolFetchFlow = {
       return;
     }
 
-    await new Promise((resolve) => setTimeout(resolve, normalizedDelayMs));
+    await new Promise((resolve) => {
+      setTimeout(resolve, normalizedDelayMs);
+    });
   },
 
   async _fetchPureProtocolTextOnce(url, options = {}) {
