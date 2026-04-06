@@ -425,3 +425,6 @@ data/logs/*.txt
 # 临时数据文件
 data/temp/*
 !data/temp/.gitkeep
+
+# 临时恢复脚本（仅本地事故处置使用，不入版本库）
+scripts/ops/restore_mappings_from_raw.js

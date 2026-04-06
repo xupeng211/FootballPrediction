@@ -41,7 +41,17 @@ function restoreGlobals(snapshot) {
     if (value === Symbol.for('missing')) {
       delete globalThis[key];
     } else {
-      globalThis[key] = value;
+      const descriptor = Object.getOwnPropertyDescriptor(globalThis, key);
+      if (!descriptor || descriptor.writable || descriptor.set) {
+        globalThis[key] = value;
+      } else {
+        Object.defineProperty(globalThis, key, {
+          value,
+          configurable: true,
+          enumerable: descriptor.enumerable ?? true,
+          writable: true
+        });
+      }
     }
   }
 }
