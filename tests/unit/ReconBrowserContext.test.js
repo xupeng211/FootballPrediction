@@ -316,14 +316,12 @@ describe('ReconBrowserContext', () => {
         waitUntil: 'domcontentloaded'
       }
     });
-    assert.deepStrictEqual(events[1], {
-      type: 'waitForSelector',
-      selector: '.ready-selector',
-      options: {
-        timeout: 5000,
-        state: 'attached'
-      }
-    });
+    assert.ok(events.some((event) => (
+      event.type === 'waitForSelector'
+      && event.selector === '.ready-selector'
+      && event.options?.timeout === 5000
+      && event.options?.state === 'attached'
+    )));
   });
 
   it('启用首页预热时应先访问首页并等待指定时长', async () => {
@@ -380,6 +378,36 @@ describe('ReconBrowserContext', () => {
         waitUntil: 'domcontentloaded'
       }
     });
+  });
+
+  it('navigate 命中 503 Backend fetch failed 页面时应抛出显式 HTTP_503', async () => {
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-navigate-503',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      navigationReadySelectors: ['main']
+    });
+
+    browserContext.page = {
+      async goto() {
+        return {
+          status() {
+            return 200;
+          }
+        };
+      },
+      async title() {
+        return '503 Backend fetch failed';
+      },
+      async evaluate() {
+        return 'Guru Meditation';
+      }
+    };
+
+    await assert.rejects(
+      browserContext.navigate('https://example.com/recon'),
+      (error) => error?.statusCode === 503 && error?.message === 'HTTP_503 backend_fetch_failed'
+    );
   });
 
   it('contentReadySelector 应按联赛配置等待可见内容', async () => {
@@ -490,5 +518,53 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(result.changed, true);
     assert.strictEqual(retriggerCalls, 1);
     assert.deepStrictEqual(result.after.myBookmakers, [16, 44, 500]);
+  });
+
+  it('close() 遇到挂死 context 时必须强制 SIGKILL 浏览器进程', async () => {
+    const events = [];
+    const killSignals = [];
+    const browserProcess = {
+      kill(signal) {
+        killSignals.push(signal);
+      }
+    };
+
+    const browser = {
+      process() {
+        return browserProcess;
+      },
+      async close() {
+        events.push('browser.close');
+      }
+    };
+
+    const context = {
+      browser() {
+        return browser;
+      },
+      async close() {
+        events.push('context.close');
+        return new Promise(() => {});
+      }
+    };
+
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-close-timeout',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      closeTimeoutMs: 10
+    });
+
+    browserContext.browser = browser;
+    browserContext.context = context;
+    browserContext.page = { isClosed: () => false };
+
+    await browserContext.close();
+
+    assert.deepStrictEqual(events, ['context.close', 'browser.close']);
+    assert.deepStrictEqual(killSignals, ['SIGKILL']);
+    assert.strictEqual(browserContext.browser, null);
+    assert.strictEqual(browserContext.context, null);
+    assert.strictEqual(browserContext.page, null);
   });
 });

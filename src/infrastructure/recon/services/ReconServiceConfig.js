@@ -262,6 +262,7 @@ function validateConfig(config, options = {}) {
     ['browser_context', 'consent_visibility_timeout_ms', { integer: true, min: 0 }],
     ['browser_context', 'consent_click_timeout_ms', { integer: true, min: 0 }],
     ['browser_context', 'consent_post_click_wait_ms', { integer: true, min: 0 }],
+    ['browser_context', 'close_timeout_ms', { integer: true, min: 1 }],
     ['task_planner', 'sample_size', { integer: true, min: 1 }],
     ['task_planner', 'archive_max_pages', { integer: true, min: 1 }],
     ['task_planner', 'archive_timeout_ms', { integer: true, min: 1 }],
@@ -313,6 +314,14 @@ function validateConfig(config, options = {}) {
   if (externalSessionPath !== undefined) {
     assertString(externalSessionPath, 'recon_runtime.browser_context.external_session_path', configPath, { allowEmpty: true });
   }
+  const executablePath = getNestedValue(config, ['recon_runtime', 'browser_context', 'executable_path']);
+  if (executablePath !== undefined) {
+    assertString(executablePath, 'recon_runtime.browser_context.executable_path', configPath, { allowEmpty: true });
+  }
+  const cachePath = getNestedValue(config, ['recon_runtime', 'browser_context', 'cache_path']);
+  if (cachePath !== undefined) {
+    assertString(cachePath, 'recon_runtime.browser_context.cache_path', configPath, { allowEmpty: true });
+  }
   assertString(assertRequired(config, ['recon_runtime', 'task_planner', 'base_url'], configPath), 'recon_runtime.task_planner.base_url', configPath);
   assertString(assertRequired(config, ['recon_runtime', 'task_planner', 'results_path'], configPath), 'recon_runtime.task_planner.results_path', configPath);
   assertString(assertRequired(config, ['recon_runtime', 'dom_scraper', 'base_url'], configPath), 'recon_runtime.dom_scraper.base_url', configPath);
@@ -340,6 +349,52 @@ function validateConfig(config, options = {}) {
   const homeWarmupWaitMs = getNestedValue(config, ['recon_runtime', 'network_monitor', 'home_warmup_wait_ms']);
   if (homeWarmupWaitMs !== undefined) {
     assertFiniteNumber(homeWarmupWaitMs, 'recon_runtime.network_monitor.home_warmup_wait_ms', configPath, { integer: true, min: 0 });
+  }
+  const unlockStrategies = getNestedValue(config, ['recon_runtime', 'unlock_strategies']);
+  if (unlockStrategies !== undefined) {
+    assertObject(unlockStrategies, 'recon_runtime.unlock_strategies', configPath);
+  }
+  const forceUnlockJ1 = getNestedValue(config, ['recon_runtime', 'unlock_strategies', 'force_unlock_j1']);
+  if (forceUnlockJ1 !== undefined) {
+    assertObject(forceUnlockJ1, 'recon_runtime.unlock_strategies.force_unlock_j1', configPath);
+    const enabled = getNestedValue(config, ['recon_runtime', 'unlock_strategies', 'force_unlock_j1', 'enabled']);
+    if (enabled !== undefined) {
+      assertBoolean(enabled, 'recon_runtime.unlock_strategies.force_unlock_j1.enabled', configPath);
+    }
+    const stringArrayFields = [
+      'url_patterns',
+      'menu_labels',
+      'select_all_labels',
+      'fallback_bookmakers'
+    ];
+    for (const fieldName of stringArrayFields) {
+      const value = getNestedValue(config, ['recon_runtime', 'unlock_strategies', 'force_unlock_j1', fieldName]);
+      if (value !== undefined) {
+        assertStringArray(
+          value,
+          `recon_runtime.unlock_strategies.force_unlock_j1.${fieldName}`,
+          configPath,
+          { allowEmpty: true }
+        );
+      }
+    }
+    const timeoutFields = [
+      'open_wait_ms',
+      'post_select_wait_ms',
+      'state_wait_ms',
+      'retrigger_timeout_ms'
+    ];
+    for (const fieldName of timeoutFields) {
+      const value = getNestedValue(config, ['recon_runtime', 'unlock_strategies', 'force_unlock_j1', fieldName]);
+      if (value !== undefined) {
+        assertFiniteNumber(
+          value,
+          `recon_runtime.unlock_strategies.force_unlock_j1.${fieldName}`,
+          configPath,
+          { integer: true, min: 0 }
+        );
+      }
+    }
   }
 
   const featureFlags = config.feature_flags || {};

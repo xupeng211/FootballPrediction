@@ -22,7 +22,7 @@
       "description": "PostgreSQL MCP - 只读数据库查询 (claude_reader 用户)"
     },
     "pytest": {
-      "command": "python",
+      "command": "python3",
       "args": ["/home/xupeng/projects/FootballPrediction/mcp_servers/pytest_server.py"],
       "description": "pytest MCP - 测试执行、失败日志、覆盖率报告",
       "env": {
@@ -30,7 +30,7 @@
       }
     },
     "docker": {
-      "command": "python",
+      "command": "python3",
       "args": ["/home/xupeng/projects/FootballPrediction/mcp_servers/docker_server.py"],
       "description": "Docker MCP - 容器管理 (仅限项目 docker-compose)"
     },

@@ -157,6 +157,7 @@ async function repairLinkedStatusesWithoutMapping(queryable) {
         SELECT 1
         FROM matches_oddsportal_mapping map
         WHERE map.match_id = m.match_id
+          AND COALESCE(map.is_evidence_only, FALSE) = FALSE
       )
     RETURNING m.match_id
   `);

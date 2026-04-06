@@ -16,6 +16,11 @@ CREATE TABLE IF NOT EXISTS matches_oddsportal_mapping (
     home_team VARCHAR(100) NOT NULL,
     away_team VARCHAR(100) NOT NULL,
     status VARCHAR(20) DEFAULT 'pending',  -- pending, harvested, failed, skipped
+    match_confidence NUMERIC(6, 4),
+    mapping_method VARCHAR(50),
+    is_reversed BOOLEAN DEFAULT FALSE,
+    candidate_name VARCHAR(255),
+    is_evidence_only BOOLEAN DEFAULT FALSE,
     retry_count INTEGER DEFAULT 0,
     last_error TEXT,
     harvested_at TIMESTAMP,
@@ -26,7 +31,23 @@ CREATE TABLE IF NOT EXISTS matches_oddsportal_mapping (
     UNIQUE(match_id, season),
     
     -- 索引优化
-    CONSTRAINT valid_status CHECK (status IN ('pending', 'harvested', 'failed', 'skipped', 'processing'))
+    CONSTRAINT valid_status CHECK (status IN ('pending', 'harvested', 'failed', 'skipped', 'processing')),
+    CONSTRAINT valid_method CHECK (
+        mapping_method IN (
+            'exact',
+            'fuzzy',
+            'manual',
+            'unknown',
+            'hash_lock',
+            'set_reconciliation',
+            'recon_matrix',
+            'protocol_extract',
+            'dictionary',
+            'semantic',
+            'V5.5_HARVESTER',
+            'v41_186_auto'
+        )
+    )
 );
 
 -- 创建索引
@@ -34,6 +55,7 @@ CREATE INDEX IF NOT EXISTS idx_mapping_season ON matches_oddsportal_mapping(seas
 CREATE INDEX IF NOT EXISTS idx_mapping_status ON matches_oddsportal_mapping(status);
 CREATE INDEX IF NOT EXISTS idx_mapping_league ON matches_oddsportal_mapping(league_name);
 CREATE INDEX IF NOT EXISTS idx_mapping_hash ON matches_oddsportal_mapping(oddsportal_hash);
+CREATE INDEX IF NOT EXISTS idx_mapping_evidence_only ON matches_oddsportal_mapping(is_evidence_only);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_mapping_season_hash_unique
     ON matches_oddsportal_mapping(season, oddsportal_hash);
 CREATE INDEX IF NOT EXISTS idx_mapping_pending ON matches_oddsportal_mapping(status, retry_count) 

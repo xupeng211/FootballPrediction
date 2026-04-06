@@ -388,7 +388,7 @@ class ReconNavigator {
     return this.protocolHandler._buildStateProbeHooks(defaultNavigateOptions, circuitBreakerKey);
   }
 
-  _getCurrentTournamentEndpoint() {
+  async _getCurrentTournamentEndpoint() {
     return this.protocolHandler._getCurrentTournamentEndpoint();
   }
 
@@ -418,6 +418,10 @@ class ReconNavigator {
 
   async _fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs, options = {}) {
     return this.protocolHandler._fetchCurrentTournament(apiBaseUrl, maxPages, timeoutMs, options);
+  }
+
+  async extractViaPureProtocol(target, options = {}) {
+    return this.protocolHandler._extractViaPureProtocol(target, options);
   }
 
   /**

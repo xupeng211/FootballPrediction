@@ -124,8 +124,8 @@ describe('ReconNavigator - Protocol Archive', () => {
             total: 1,
             rows: [
               {
-                encodeEventId: 'retry-hash',
-                url: '/football/england/premier-league-2024-2025/a-b-retry-hash/',
+                encodeEventId: 'RtRyH123',
+                url: '/football/england/premier-league-2024-2025/a-b-RtRyH123/',
                 'home-name': 'A',
                 'away-name': 'B',
                 'date-start-timestamp': 1748185200
@@ -144,7 +144,7 @@ describe('ReconNavigator - Protocol Archive', () => {
 
     assert.strictEqual(extractCalls, 1);
     assert.strictEqual(result.totalCandidates, 1);
-    assert.strictEqual(result.matches[0].hash, 'retry-hash');
+    assert.strictEqual(result.matches[0].hash, 'RtRyH123');
   });
 
   it('脚本包装响应应先解包，不应误触发 decryptor', async () => {
@@ -170,7 +170,7 @@ describe('ReconNavigator - Protocol Archive', () => {
     const wrappedBody = [
       "if (typeof pageVar == 'string') { pageVar = JSON.parse(pageVar); }",
       'if (typeof pageVar != "undefined") {',
-      '  pageVar = pageOutrightsVar = Object.assign(pageVar, JSON.parse("{\\"d\\":{\\"total\\":1,\\"rows\\":[{\\"encodeEventId\\":\\"wrapped-hash\\",\\"url\\":\\"/football/europe/champions-league-2025-2026/a-b-wrapped-hash/\\",\\"home-name\\":\\"A\\",\\"away-name\\":\\"B\\",\\"date-start-timestamp\\":1748185200}]}}"));',
+      '  pageVar = pageOutrightsVar = Object.assign(pageVar, JSON.parse("{\\"d\\":{\\"total\\":1,\\"rows\\":[{\\"encodeEventId\\":\\"WrPdH456\\",\\"url\\":\\"/football/europe/champions-league-2025-2026/a-b-WrPdH456/\\",\\"home-name\\":\\"A\\",\\"away-name\\":\\"B\\",\\"date-start-timestamp\\":1748185200}]}}"));',
       '}'
     ].join(' ');
 
@@ -182,7 +182,7 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(extractCalls, 0);
     assert.strictEqual(decryptCalls, 0);
     assert.strictEqual(matches.length, 1);
-    assert.strictEqual(matches[0].hash, 'wrapped-hash');
+    assert.strictEqual(matches[0].hash, 'WrPdH456');
     assert.strictEqual(matches[0].homeTeam, 'A');
     assert.strictEqual(matches[0].awayTeam, 'B');
   });
@@ -246,6 +246,36 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.sourceState, 'CURRENT_TOURNAMENT');
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'current-hash');
+  });
+
+  it('联赛主页存在静态 oddsRequest 时，应直接从 HTML 恢复 current tournament 接口', async () => {
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      url() {
+        return 'oddsportal://root/football/japan/j1-league/';
+      },
+      async content() {
+        return [
+          '<html><body>',
+          '<tournament-component :sport-data="{&quot;oddsRequest&quot;:{&quot;url&quot;:&quot;/ajax-sport-country-tournament_/1/lv6akwBC/X262144/1/?_=1775367493&quot;}}"></tournament-component>',
+          '</body></html>'
+        ].join('');
+      }
+    };
+
+    const endpoint = await navigator._getCurrentTournamentEndpoint();
+
+    assert.strictEqual(
+      endpoint,
+      'oddsportal://root/ajax-sport-country-tournament_/1/lv6akwBC/X262144/1/?_=1775367493'
+    );
+    assert.ok(navigator.apiEndpoints.has(endpoint));
   });
 
   it('联赛主页缺失 outright id 时应使用 otCode 修复 archive 与 tournament 接口', async () => {
@@ -484,6 +514,66 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.matches[0].hash, 'archive-fallback-current');
   });
 
+  it('archive 拦截为空时应从 performance 资源条目补抓 archive endpoint', async () => {
+    const fetchedArchiveUrls = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {},
+      async evaluate(fn, payload) {
+        if (payload && payload.leaguePathPrefix) {
+          return [];
+        }
+
+        const source = typeof fn === 'function' ? fn.toString() : '';
+        if (source.includes("performance.getEntriesByType('resource')")) {
+          return [
+            'oddsportal://ajax-sport-country-tournament-archive_/1/U1ymuRr3/X262144/1/0/?_=1'
+          ];
+        }
+
+        return null;
+      }
+    };
+    navigator.navigate = async () => {
+      navigator.apiEndpoints = new Set();
+    };
+    navigator._fetchAndDecrypt = async (url) => {
+      fetchedArchiveUrls.push(url);
+      return {
+        matches: [
+          {
+            hash: 'resource-probe-hit',
+            url: 'oddsportal://match/resource-probe-hit',
+            homeTeam: 'Leeds United',
+            awayTeam: 'Southampton',
+            matchDate: '2025-08-09T11:30:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/england/championship-2025-2026/results/',
+      { maxPages: 8, timeoutMs: 1234 }
+    );
+
+    assert.deepStrictEqual(fetchedArchiveUrls, [
+      'oddsportal://ajax-sport-country-tournament-archive_/1/U1ymuRr3/X262144/1/0/?_=1'
+    ]);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'resource-probe-hit');
+  });
+
   it('当前赛季联赛主页缺失显式 tournament 接口时，应根据修复后的 archive URL 反推 current tournament 接口', async () => {
     const fetchCalls = [];
 
@@ -561,6 +651,84 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.sourceState, 'CURRENT_TOURNAMENT');
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'otcode-current');
+  });
+
+  it('forcePureProtocol 在当前赛季 archive 空源时应继续回落到 current tournament 接口', async () => {
+    const navigatedUrls = [];
+    const fetchCalls = [];
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      url() {
+        return navigatedUrls[navigatedUrls.length - 1] || 'oddsportal://root/football/japan/j1-league/';
+      },
+      async waitForTimeout() {},
+      async content() {
+        return [
+          '<html><body>',
+          '<tournament-component :sport-data="{&quot;oddsRequest&quot;:{&quot;url&quot;:&quot;/ajax-sport-country-tournament_/1/lv6akwBC/X262144/1/?_=1775367493&quot;}}"></tournament-component>',
+          '</body></html>'
+        ].join('');
+      }
+    };
+    navigator.navigate = async (url) => {
+      navigatedUrls.push(url);
+      navigator.apiEndpoints = new Set();
+    };
+    navigator._extractViaPureProtocol = async () => ({
+      matches: [],
+      pagesScanned: 1,
+      totalCandidates: 0,
+      pageStats: [{ page: 1, rows: 0, source: 'pure_protocol_archive:empty' }],
+      sourceState: 'SOURCE_EMPTY'
+    });
+    navigator._fetchCurrentTournament = async (url, maxPages, timeoutMs) => {
+      fetchCalls.push({ url, maxPages, timeoutMs });
+      return {
+        matches: [
+          {
+            hash: 'current-fallback-hash',
+            url: 'oddsportal://match/current-fallback-hash',
+            homeTeam: 'Kawasaki Frontale',
+            awayTeam: 'Urawa Reds',
+            matchDate: '2026-02-14T05:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/japan/j1-league-2026/results/',
+      {
+        forcePureProtocol: true,
+        preferCurrentSeasonSource: true,
+        maxPages: 7,
+        timeoutMs: 1234
+      }
+    );
+
+    assert.deepStrictEqual(navigatedUrls, [
+      'oddsportal://root/football/japan/j1-league-2026/'
+    ]);
+    assert.deepStrictEqual(fetchCalls, [
+      {
+        url: 'oddsportal://root/ajax-sport-country-tournament_/1/lv6akwBC/X262144/1/?_=1775367493',
+        maxPages: 7,
+        timeoutMs: 1234
+      }
+    ]);
+    assert.strictEqual(result.sourceState, 'CURRENT_TOURNAMENT_FALLBACK');
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'current-fallback-hash');
   });
 
   it('非当前赛季 archive URL 缺少 tournament id 时，应切到联赛主页补全后再抓取', async () => {

@@ -115,6 +115,39 @@ describe('ReconScanner Robustness - Config Fail Fast', () => {
       }
     );
   });
+
+  it('即使配置文件损坏，--help 也必须稳定输出并返回 0', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-config-help-'));
+    const configPath = path.join(tempDir, 'recon_config.json');
+    const originalPath = process.env.RECON_CONFIG_PATH;
+    const messages = [];
+    fs.writeFileSync(configPath, '{"recon_runtime":{"browser_context":{"launch_timeout_ms":"oops"}}}', 'utf8');
+    process.env.RECON_CONFIG_PATH = configPath;
+
+    try {
+      const exitCode = await main(['--help'], {
+        console: {
+          log(message) {
+            messages.push(String(message));
+          },
+          warn() {},
+          error(message) {
+            messages.push(String(message));
+          }
+        }
+      });
+
+      assert.strictEqual(exitCode, 0);
+      assert.ok(messages.some((line) => line.includes('--force-dom-mode')));
+      assert.ok(messages.some((line) => line.includes('用法: node scripts/ops/recon_scanner.js')));
+    } finally {
+      if (originalPath === undefined) {
+        delete process.env.RECON_CONFIG_PATH;
+      } else {
+        process.env.RECON_CONFIG_PATH = originalPath;
+      }
+    }
+  });
 });
 
 describe('ReconScanner Robustness - League Selection', () => {
@@ -595,13 +628,365 @@ describe('ReconScanner Robustness - CLI Defaults', () => {
         '--season',
         '2025-2026',
         '--all-leagues',
-        '--current-season-only'
+        '--current-season-only',
+        '--threshold',
+        '0.3'
       ];
       const args = parseArgs();
       assert.strictEqual(args.currentSeasonOnly, true);
+      assert.strictEqual(args.threshold, 0.3);
     } finally {
       process.argv = originalArgv;
     }
+  });
+
+  it('显式传入 --force-json-extract 时，CLI 必须开启 JSON 强制抽取模式', () => {
+    const originalArgv = process.argv;
+
+    try {
+      process.argv = [
+        'node',
+        'scripts/ops/recon_scanner.js',
+        '--season',
+        '2025-2026',
+        '--league',
+        '140',
+        '--limit',
+        '100',
+        '--force-json-extract'
+      ];
+      const args = parseArgs();
+      assert.strictEqual(args.forceJsonExtract, true);
+      assert.strictEqual(args.limit, 100);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('显式传入 --force-dom-mode 时，CLI 必须开启纯 DOM 扫描模式', () => {
+    const originalArgv = process.argv;
+
+    try {
+      process.argv = [
+        'node',
+        'scripts/ops/recon_scanner.js',
+        '--season',
+        '2025-2026',
+        '--league',
+        '268',
+        '--limit',
+        '500',
+        '--force-dom-mode'
+      ];
+      const args = parseArgs();
+      assert.strictEqual(args.limit, 500);
+      assert.strictEqual(args.forceDomMode, true);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('显式传入 --help 时，CLI 不得触发 season 必填校验', () => {
+    const args = parseArgs(['--help']);
+    assert.strictEqual(args.help, true);
+    assert.strictEqual(args.season, null);
+  });
+
+  it('显式传入 --mismatch-retry-only 时，CLI 必须开启 mismatch 深度重扫模式', () => {
+    const originalArgv = process.argv;
+
+    try {
+      process.argv = [
+        'node',
+        'scripts/ops/recon_scanner.js',
+        '--season',
+        '2025-2026',
+        '--league',
+        '268',
+        '--limit',
+        '150',
+        '--mismatch-retry-only'
+      ];
+      const args = parseArgs();
+      assert.strictEqual(args.limit, 150);
+      assert.strictEqual(args.mismatchRetryOnly, true);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('显式传入 --all-non-linked 时，CLI 必须开启全量非 Linked 扫描模式', () => {
+    const originalArgv = process.argv;
+
+    try {
+      process.argv = [
+        'node',
+        'scripts/ops/recon_scanner.js',
+        '--season',
+        '2025-2026',
+        '--league',
+        '131',
+        '--limit',
+        '200',
+        '--all-non-linked'
+      ];
+      const args = parseArgs();
+      assert.strictEqual(args.limit, 200);
+      assert.strictEqual(args.allNonLinked, true);
+    } finally {
+      process.argv = originalArgv;
+    }
+  });
+
+  it('Recon Matrix 在 --force-pure-protocol 模式下不得预启动浏览器', async () => {
+    let receivedEnsureNavigatorOptions = null;
+    let receivedRunReconMatrixOptions = null;
+
+    const dbPool = {
+      async end() {}
+    };
+
+    const repository = {
+      dbPool,
+      async init() {},
+      async close() {
+        await dbPool.end();
+      }
+    };
+
+    const scanner = {
+      engine: {
+        async runReconMatrix(options) {
+          receivedRunReconMatrixOptions = options;
+          return {
+            success: true,
+            linked: 0,
+            mismatched: 0,
+            totalPending: 0,
+            perLeague: [],
+            errors: []
+          };
+        }
+      },
+      configManager: {
+        getActiveLeagues() {
+          return [{ id: 47, code: 'EPL', name: 'Premier League', enabled: true }];
+        },
+        getLeagueByCode(code) {
+          return code === 'EPL'
+            ? { id: 47, code: 'EPL', name: 'Premier League', enabled: true }
+            : null;
+        },
+        getLeagueById() {
+          return null;
+        }
+      },
+      async initialize() {},
+      async ensureNavigator(options = {}) {
+        receivedEnsureNavigatorOptions = options;
+        return {
+          async close() {}
+        };
+      },
+      async close() {}
+    };
+
+    const exitCode = await main([
+      '--season', '2025-2026',
+      '--league', 'EPL',
+      '--limit', '1',
+      '--threshold', '0.15',
+      '--force-pure-protocol'
+    ], {
+      console: { log() {}, warn() {}, error() {} },
+      createPool: () => dbPool,
+      createRepository: () => repository,
+      createScanner: () => scanner
+    });
+
+    assert.strictEqual(exitCode, 0);
+    assert.deepStrictEqual(receivedEnsureNavigatorOptions, { launchBrowser: false });
+    assert.strictEqual(receivedRunReconMatrixOptions.forcePureProtocol, true);
+    assert.strictEqual(receivedRunReconMatrixOptions.mismatchRetryOnly, false);
+  });
+
+  it('Recon Matrix 在 --mismatch-retry-only 模式下必须向引擎透传深度重扫意图', async () => {
+    let receivedRunReconMatrixOptions = null;
+
+    const scanner = {
+      engine: {
+        async runReconMatrix(options) {
+          receivedRunReconMatrixOptions = options;
+          return {
+            success: true,
+            linked: 0,
+            mismatched: 0,
+            totalPending: 0,
+            perLeague: [],
+            errors: []
+          };
+        }
+      },
+      configManager: {
+        getActiveLeagues() {
+          return [{ id: 268, code: 'BRA', name: 'Brasileirão', enabled: true }];
+        },
+        getLeagueByCode() {
+          return null;
+        },
+        getLeagueById(id) {
+          return Number(id) === 268
+            ? { id: 268, code: 'BRA', name: 'Brasileirão', enabled: true }
+            : null;
+        }
+      },
+      async initialize() {},
+      async ensureNavigator() {
+        return {
+          async close() {}
+        };
+      },
+      async close() {}
+    };
+
+    const exitCode = await main([
+      '--season', '2025-2026',
+      '--league', '268',
+      '--limit', '150',
+      '--threshold', '0.15',
+      '--force-pure-protocol',
+      '--mismatch-retry-only'
+    ], {
+      console: { log() {}, warn() {}, error() {} },
+      createPool: () => ({ async end() {} }),
+      createRepository: () => ({ async init() {}, async close() {} }),
+      createScanner: () => scanner
+    });
+
+    assert.strictEqual(exitCode, 0);
+    assert.strictEqual(receivedRunReconMatrixOptions.mismatchRetryOnly, true);
+  });
+
+  it('Recon Matrix 在 --all-non-linked 模式下必须向引擎透传全量非 Linked 意图', async () => {
+    let receivedCreateScannerOptions = null;
+    let receivedRunReconMatrixOptions = null;
+
+    const scanner = {
+      engine: {
+        async runReconMatrix(options) {
+          receivedRunReconMatrixOptions = options;
+          return {
+            success: true,
+            linked: 0,
+            mismatched: 0,
+            totalPending: 0,
+            perLeague: [],
+            errors: []
+          };
+        }
+      },
+      configManager: {
+        getActiveLeagues() {
+          return [{ id: 131, code: 'CAM', name: 'Copa América', enabled: true }];
+        },
+        getLeagueByCode() {
+          return null;
+        },
+        getLeagueById(id) {
+          return Number(id) === 131
+            ? { id: 131, code: 'CAM', name: 'Copa América', enabled: true }
+            : null;
+        }
+      },
+      async initialize() {},
+      async ensureNavigator() {
+        return {
+          async close() {}
+        };
+      },
+      async close() {}
+    };
+
+    const exitCode = await main([
+      '--season', '2025-2026',
+      '--league', '131',
+      '--limit', '150',
+      '--force-pure-protocol',
+      '--all-non-linked'
+    ], {
+      console: { log() {}, warn() {}, error() {} },
+      createPool: () => ({ async end() {} }),
+      createRepository: () => ({ async init() {}, async close() {} }),
+      createScanner: (options) => {
+        receivedCreateScannerOptions = options;
+        return scanner;
+      }
+    });
+
+    assert.strictEqual(exitCode, 0);
+    assert.strictEqual(receivedCreateScannerOptions.allNonLinked, true);
+    assert.strictEqual(receivedRunReconMatrixOptions.allNonLinked, true);
+  });
+
+  it('Recon Matrix 在 --force-dom-mode 模式下必须向 Scanner 与引擎透传 DOM 强制模式', async () => {
+    let receivedCreateScannerOptions = null;
+    let receivedRunReconMatrixOptions = null;
+
+    const scanner = {
+      engine: {
+        async runReconMatrix(options) {
+          receivedRunReconMatrixOptions = options;
+          return {
+            success: true,
+            linked: 0,
+            mismatched: 0,
+            totalPending: 0,
+            perLeague: [],
+            errors: []
+          };
+        }
+      },
+      configManager: {
+        getActiveLeagues() {
+          return [{ id: 268, code: 'BRA', name: 'Brasileirão', enabled: true }];
+        },
+        getLeagueByCode() {
+          return null;
+        },
+        getLeagueById(id) {
+          return Number(id) === 268
+            ? { id: 268, code: 'BRA', name: 'Brasileirão', enabled: true }
+            : null;
+        }
+      },
+      async initialize() {},
+      async ensureNavigator() {
+        return {
+          async close() {}
+        };
+      },
+      async close() {}
+    };
+
+    const exitCode = await main([
+      '--season', '2025-2026',
+      '--league', '268',
+      '--limit', '500',
+      '--all-non-linked',
+      '--force-dom-mode'
+    ], {
+      console: { log() {}, warn() {}, error() {} },
+      createPool: () => ({ async end() {} }),
+      createRepository: () => ({ async init() {}, async close() {} }),
+      createScanner: (options) => {
+        receivedCreateScannerOptions = options;
+        return scanner;
+      }
+    });
+
+    assert.strictEqual(exitCode, 0);
+    assert.strictEqual(receivedCreateScannerOptions.forceDomMode, true);
+    assert.strictEqual(receivedRunReconMatrixOptions.forceDomMode, true);
   });
 
   it('任一联赛失败时，整体退出码必须为 1', () => {

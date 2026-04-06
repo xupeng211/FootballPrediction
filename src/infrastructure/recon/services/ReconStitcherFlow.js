@@ -1,6 +1,6 @@
 'use strict';
 
-const RECON_CONFIG = require('../../../../config/recon_config.json');
+const { RECON_CONFIG } = require('./ReconServiceConfig');
 
 const BASE_URL = RECON_CONFIG.oddsportal.base_url;
 

@@ -60,19 +60,18 @@
 │   └── init_claude_reader.sql   # PostgreSQL 只读用户创建脚本
 │
 ├── scripts/ops/
-│   ├── setup_mcp.sh             # MCP 安装脚本
-│   └── verify_mcp.sh            # MCP 验证脚本
+│   └── verify_mcp.sh            # MCP 验证与重载提示脚本
 │
 └── docker-compose.mcp.yml       # MCP Docker Compose 扩展
 ```
 
 ## 执行顺序
 
-### Step 1: 安装依赖
+### Step 1: 启动开发容器
 
 ```bash
 cd /home/xupeng/projects/FootballPrediction
-bash scripts/ops/setup_mcp.sh
+docker-compose -f docker-compose.dev.yml up -d
 ```
 
 ### Step 2: 创建 PostgreSQL 只读用户
@@ -88,11 +87,11 @@ docker-compose exec -T db psql -U football_user -d football_db < deploy/docker/i
 docker-compose exec db psql -U claude_reader -d football_db -c "SELECT current_user"
 ```
 
-### Step 3: 重启 Claude Code
+### Step 3: 重载 MCP
 
 ```bash
-# 退出当前 Claude Code 会话，重新启动
-# MCP 配置会自动加载
+# 如果修改了 .claude/mcp-config.json 或 mcp_servers/*.py，
+# 需要退出当前 Claude / Codex 会话并重新启动客户端
 ```
 
 ### Step 4: 验证配置
@@ -138,11 +137,10 @@ SELECT COUNT(*) FROM matches WHERE match_time > NOW();
 
 ### 3. pytest MCP
 
-- **工具**:
-  - `run_tests`: 运行测试
-  - `get_test_failures`: 获取失败日志
-  - `get_coverage_report`: 获取覆盖率报告
-  - `run_continuous_bugfix`: 运行持续修复
+- **实际执行方式**:
+  `docker-compose -f docker-compose.dev.yml exec -T dev python -m pytest ...`
+- **说明**:
+  统一走 `dev` 容器，避免宿主机缺失 `pandas`、`pytest` 等项目依赖。
 
 ### 4. Docker MCP
 
@@ -178,7 +176,7 @@ cat .claude/mcp-config.json
 # 检查路径是否正确
 ls -la mcp_servers/
 
-# 重启 Claude Code
+# 修改 .claude/mcp-config.json 或 mcp_servers/*.py 后，重启客户端
 ```
 
 ### PostgreSQL 连接失败
@@ -197,11 +195,10 @@ docker-compose exec -T db psql -U football_user -d football_db < deploy/docker/i
 ### pytest MCP 报错
 
 ```bash
-# 检查 MCP SDK
-pip show mcp
+# 先跑仓库内验证脚本
+bash scripts/ops/verify_mcp.sh
 
-# 重新安装
-pip install --upgrade mcp
+# 再重启客户端，重新加载 MCP 配置
 ```
 
 ### Docker MCP 报错

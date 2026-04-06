@@ -179,6 +179,14 @@ describe('Normalizer - V6.6 标准化工具类', () => {
         Normalizer.normalizeTeamName('Chengdu Rongcheng Fc'),
         'Chengdu Rongcheng'
       );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('Henan Songshan Longmen'),
+        'Henan Songshan Longmen'
+      );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('Shenzhen Xinpengcheng'),
+        'Shenzhen Xinpengcheng'
+      );
     });
 
     it('无显式别名时应保留常见俱乐部缩写大写格式', () => {
@@ -189,6 +197,21 @@ describe('Normalizer - V6.6 标准化工具类', () => {
       assert.strictEqual(
         Normalizer.normalizeTeamName('Inter Miami Cf'),
         'Inter Miami CF'
+      );
+    });
+
+    it('应统一法葡联赛常见缩写的显示格式', () => {
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('St. Etienne'),
+        'St Etienne'
+      );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('VfB Stuttgart'),
+        'VfB Stuttgart'
+      );
+      assert.strictEqual(
+        Normalizer.normalizeTeamName('CF Estrela'),
+        'CF Estrela'
       );
     });
   });

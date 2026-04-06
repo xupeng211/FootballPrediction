@@ -1,22 +1,41 @@
 'use strict';
 
+class ReconCliArgumentError extends Error {
+  constructor(message) {
+    super(message);
+    this.name = 'ReconCliArgumentError';
+    this.code = 'ARGUMENT_ERROR';
+  }
+}
+
 function parseArgs(argv = process.argv.slice(2)) {
   const args = Array.isArray(argv) ? [...argv] : [];
   const result = {
+    help: false,
     season: null,
     league: 'EPL',
     allLeagues: false,
+    allNonLinked: false,
     useProxy: false,
     dateDriven: false,
     crossLeague: false,
     additionalSlugs: [],
     limit: null,
     concurrency: 5,
-    currentSeasonOnly: false
+    currentSeasonOnly: false,
+    threshold: null,
+    forceDomMode: false,
+    forceJsonExtract: false,
+    forcePureProtocol: false,
+    mismatchRetryOnly: false
   };
 
   for (let i = 0; i < args.length; i++) {
     switch (args[i]) {
+      case '-h':
+      case '--help':
+        result.help = true;
+        break;
       case '--season':
         result.season = args[++i];
         break;
@@ -25,6 +44,9 @@ function parseArgs(argv = process.argv.slice(2)) {
         break;
       case '--all-leagues':
         result.allLeagues = true;
+        break;
+      case '--all-non-linked':
+        result.allNonLinked = true;
         break;
       case '--use-proxy':
         result.useProxy = true;
@@ -50,16 +72,57 @@ function parseArgs(argv = process.argv.slice(2)) {
       case '--current-season-only':
         result.currentSeasonOnly = true;
         break;
+      case '--threshold':
+        result.threshold = parseFloat(args[++i]);
+        break;
+      case '--force-dom-mode':
+        result.forceDomMode = true;
+        break;
+      case '--force-json-extract':
+        result.forceJsonExtract = true;
+        break;
+      case '--force-pure-protocol':
+        result.forcePureProtocol = true;
+        break;
+      case '--mismatch-retry-only':
+        result.mismatchRetryOnly = true;
+        break;
     }
   }
 
+  if (result.help) {
+    return result;
+  }
+
   if (!result.season) {
-    console.error('❌ 错误: --season 参数是必需的');
-    console.error('用法: node scripts/ops/recon_scanner.js --season 2024-2025 --league BUNDESLIGA');
-    process.exit(1);
+    throw new ReconCliArgumentError('❌ 错误: --season 参数是必需的');
   }
 
   return result;
+}
+
+function printUsage(output = console.log) {
+  const writer = typeof output === 'function'
+    ? output
+    : typeof output?.log === 'function'
+      ? output.log.bind(output)
+      : console.log;
+
+  [
+    '用法: node scripts/ops/recon_scanner.js --season 2024-2025 [选项]',
+    '  --league <联赛代码|联赛ID>    指定单联赛扫描，默认 EPL',
+    '  --all-leagues                扫描全部激活联赛',
+    '  --all-non-linked             扫描所有非 RECON_LINKED 比赛',
+    '  --limit <N>                  启用 Recon Matrix 并限制待处理场次',
+    '  --concurrency <N>            设置并发数',
+    '  --threshold <0-1>            覆盖默认置信度阈值',
+    '  --force-dom-mode             强制浏览器 DOM 抽取，禁用 pure protocol 优先',
+    '  --force-json-extract         强制 JSON 提取模式',
+    '  --force-pure-protocol        强制 pure protocol 模式',
+    '  --mismatch-retry-only        仅重扫 RECON_MISMATCH',
+    '  --current-season-only        仅处理当前赛季窗口',
+    '  -h, --help                   显示帮助'
+  ].forEach((line) => writer(line));
 }
 
 function buildDbPoolConfig() {
@@ -211,7 +274,23 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
   const isSkippedFutureFinalsResultFn = dependencies.isSkippedFutureFinalsResultFn || (() => false);
   const signalEmitter = dependencies.signalEmitter || process;
 
-  const args = parseArgsFn(argv);
+  let args;
+  try {
+    args = parseArgsFn(argv);
+  } catch (error) {
+    if (error?.code === 'ARGUMENT_ERROR') {
+      if (typeof output.error === 'function') {
+        output.error(error.message);
+      }
+      printUsage(output);
+      return 1;
+    }
+    throw error;
+  }
+  if (args.help) {
+    printUsage(output);
+    return 0;
+  }
   let dbPool = null;
   let repository = null;
   let scanner = null;
@@ -247,10 +326,15 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       scanner = createScanner({
         repository,
         proxyRotator: args.useProxy ? undefined : null,
-        currentSeasonOnly: args.currentSeasonOnly
+        currentSeasonOnly: args.currentSeasonOnly,
+        allNonLinked: args.allNonLinked,
+        forceDomMode: args.forceDomMode
       });
 
       await scanner.initialize();
+      if (Number.isFinite(args.threshold)) {
+        scanner.engine.confidenceThreshold = args.threshold;
+      }
 
       const activeLeagues = scanner.configManager.getActiveLeagues();
       const selectedLeague = scanner.configManager.getLeagueByCode(args.league)
@@ -267,13 +351,21 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       const results = [];
 
       if (useReconMatrix) {
-        await scanner.ensureNavigator();
+        await scanner.ensureNavigator({
+          launchBrowser: args.forcePureProtocol !== true
+        });
         const result = await scanner.engine.runReconMatrix({
           season: args.season,
           leagueIds: leagues.map((league) => Number(league.id)),
           concurrency: Number.isInteger(args.concurrency) && args.concurrency > 0 ? args.concurrency : 5,
           limit: args.limit,
-          currentSeasonOnly: args.currentSeasonOnly
+          confidenceThreshold: Number.isFinite(args.threshold) ? args.threshold : scanner.engine.confidenceThreshold,
+          currentSeasonOnly: args.currentSeasonOnly,
+          forceDomMode: args.forceDomMode,
+          forceJsonExtract: args.forceJsonExtract,
+          forcePureProtocol: args.forcePureProtocol,
+          mismatchRetryOnly: args.mismatchRetryOnly,
+          allNonLinked: args.allNonLinked
         });
         results.push({
           success: result.success,
@@ -300,7 +392,9 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
             scanner = createScanner({
               repository,
               proxyRotator: args.useProxy ? undefined : null,
-              currentSeasonOnly: args.currentSeasonOnly
+              currentSeasonOnly: args.currentSeasonOnly,
+              allNonLinked: args.allNonLinked,
+              forceDomMode: args.forceDomMode
             });
             await scanner.initialize();
           }
@@ -308,7 +402,8 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
           results.push(await scanner.scan(args.season, league, {
             dateDriven: args.dateDriven,
             crossLeague: args.crossLeague,
-            additionalSlugs: args.additionalSlugs
+            additionalSlugs: args.additionalSlugs,
+            forceDomMode: args.forceDomMode
           }));
 
           if (isolatePerLeague) {
@@ -353,8 +448,10 @@ class ReconCLIHandler {
 
 module.exports = {
   ReconCLIHandler,
+  ReconCliArgumentError,
   parseArgs,
   buildDbPoolConfig,
+  printUsage,
   printBanner,
   cleanupRuntime,
   createCleanupRunner,

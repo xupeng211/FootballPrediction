@@ -17,7 +17,18 @@ const fs = require('fs');
 
 // V6.7: 集中式配置加载 (延迟加载以避免循环依赖)
 let teamMappings = null;
-const ACRONYM_WORDS = new Set(['fc', 'cf', 'afc', 'sc', 'ac']);
+let canonicalInboundCounts = null;
+const DISPLAY_TOKEN_MAP = new Map([
+    ['fc', 'FC'],
+    ['cf', 'CF'],
+    ['afc', 'AFC'],
+    ['sc', 'SC'],
+    ['ac', 'AC'],
+    ['st', 'St'],
+    ['vf', 'Vf'],
+    ['vfb', 'VfB'],
+    ['vfl', 'VfL']
+]);
 
 function normalizeLookupKey(value) {
     return String(value || '')
@@ -35,8 +46,8 @@ function formatDisplayTeamName(normalizedValue) {
         .split(' ')
         .filter(Boolean)
         .map((word) => {
-            if (ACRONYM_WORDS.has(word)) {
-                return word.toUpperCase();
+            if (DISPLAY_TOKEN_MAP.has(word)) {
+                return DISPLAY_TOKEN_MAP.get(word);
             }
             return word.charAt(0).toUpperCase() + word.slice(1);
         })
@@ -51,6 +62,64 @@ function mergeTeamMappings(target, source) {
             continue;
         }
         target[normalizedKey] = canonicalValue;
+
+        const canonicalLookupKey = normalizeLookupKey(canonicalValue);
+        if (canonicalLookupKey) {
+            canonicalInboundCounts[canonicalLookupKey] = Number(canonicalInboundCounts[canonicalLookupKey] || 0) + 1;
+        }
+    }
+}
+
+function countInboundAliases(canonicalLookupKey) {
+    return Number(canonicalInboundCounts?.[canonicalLookupKey] || 0);
+}
+
+function pickPreferredCanonicalDisplayName(values = [], mappings = {}) {
+    return [...new Map(
+        values
+            .map((value) => String(value || '').trim())
+            .filter(Boolean)
+            .map((value) => [normalizeLookupKey(value), value])
+    ).values()]
+        .sort((left, right) => (
+            countInboundAliases(normalizeLookupKey(right), mappings) - countInboundAliases(normalizeLookupKey(left), mappings)
+            || right.length - left.length
+            || right.split(/\s+/).length - left.split(/\s+/).length
+            || left.localeCompare(right)
+        ))[0] || null;
+}
+
+function resolveCanonicalMappedValue(normalizedKey, mappings) {
+    if (!normalizedKey || !mappings[normalizedKey]) {
+        return null;
+    }
+
+    const visited = new Map();
+    const traversal = [];
+    let currentKey = normalizedKey;
+
+    while (mappings[currentKey]) {
+        if (visited.has(currentKey)) {
+            return pickPreferredCanonicalDisplayName(
+                traversal.slice(visited.get(currentKey)).map((entry) => entry.mappedValue),
+                mappings
+            );
+        }
+
+        const mappedValue = String(mappings[currentKey] || '').trim();
+        if (!mappedValue) {
+            return null;
+        }
+
+        visited.set(currentKey, traversal.length);
+        traversal.push({ key: currentKey, mappedValue });
+
+        const nextKey = normalizeLookupKey(mappedValue);
+        if (!nextKey || nextKey === currentKey || !mappings[nextKey]) {
+            return mappedValue;
+        }
+
+        currentKey = nextKey;
     }
 }
 
@@ -62,6 +131,7 @@ function loadTeamMappings() {
     if (teamMappings) return teamMappings;
 
     teamMappings = {};
+    canonicalInboundCounts = {};
 
     try {
         const configPath = process.env.RECON_CONFIG_PATH || path.join(process.cwd(), 'config/recon_config.json');
@@ -204,9 +274,9 @@ class Normalizer {
         // V6.7: 从中央配置加载映射库
         const mappings = loadTeamMappings();
 
-        // 查找映射表
-        if (mappings[normalized]) {
-            return mappings[normalized];
+        const canonicalMappedValue = resolveCanonicalMappedValue(normalized, mappings);
+        if (canonicalMappedValue) {
+            return canonicalMappedValue;
         }
 
         // 无映射时，首字母大写
