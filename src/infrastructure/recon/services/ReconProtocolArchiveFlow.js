@@ -1,22 +1,66 @@
 'use strict';
 
+function decodeHtmlEntities(text = '') {
+  return String(text || '')
+    .replace(/&quot;/g, '"')
+    .replace(/&#34;/g, '"')
+    .replace(/&#39;/g, '\'')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
 const reconProtocolArchiveFlow = {
+  _extractCurrentTournamentEndpointFromHtml(html) {
+    const decodedHtml = decodeHtmlEntities(String(html || ''));
+    const rawUrl = decodedHtml.match(/oddsRequest"\s*:\s*{\s*"url"\s*:\s*"([^"]*ajax-sport-country-tournament_[^"]+)"/i)?.[1]
+      || decodedHtml.match(/:odds-request\s*=\s*"\{\s*"url"\s*:\s*"([^"]*ajax-sport-country-tournament_[^"]+)"/i)?.[1]
+      || '';
+    const normalizedUrl = String(rawUrl || '').replace(/\\\//g, '/').trim();
+
+    if (!normalizedUrl || /archive_/i.test(normalizedUrl)) {
+      return null;
+    }
+
+    const pageUrl = this.page && typeof this.page.url === 'function'
+      ? String(this.page.url() || '').trim()
+      : '';
+
+    try {
+      return new URL(normalizedUrl, pageUrl || 'https://www.oddsportal.com/').href;
+    } catch {
+      return normalizedUrl;
+    }
+  },
+
   _resultHasDecryptFailure(result) {
     return Array.isArray(result?.pageStats)
       && result.pageStats.some((stat) => typeof stat?.error === 'string'
         && stat.error.startsWith('decrypt_failed:'));
   },
 
-  _getCurrentTournamentEndpoint() {
+  async _getCurrentTournamentEndpoint() {
     const endpoints = Array.from(this.navigator.apiEndpoints)
       .filter((url) => /ajax-sport-country-tournament_\/\d+\/[^/]+\/X/i.test(url))
       .filter((url) => !/archive_/i.test(url));
 
-    if (endpoints.length === 0) {
-      return null;
+    if (endpoints.length > 0) {
+      return endpoints.sort((a, b) => this._scoreTournamentUrl(b) - this._scoreTournamentUrl(a))[0];
     }
 
-    return endpoints.sort((a, b) => this._scoreTournamentUrl(b) - this._scoreTournamentUrl(a))[0];
+    if (this.page && typeof this.page.content === 'function') {
+      try {
+        const extracted = this._extractCurrentTournamentEndpointFromHtml(await this.page.content());
+        if (extracted) {
+          this.navigator.apiEndpoints.add(extracted);
+          return extracted;
+        }
+      } catch (_error) {
+        // HTML 提取失败时退回网络拦截结果
+      }
+    }
+
+    return null;
   },
 
   _scoreTournamentUrl(url) {
@@ -141,18 +185,67 @@ const reconProtocolArchiveFlow = {
 
   async protocolArchiveExtract(baseUrl, options = {}) {
     if (options.forcePureProtocol === true) {
-      const pureResult = await this._callNavigatorOverride(
-        '_extractViaPureProtocol',
-        (resolvedTarget, resolvedOptions) => this._extractViaPureProtocol(resolvedTarget, resolvedOptions),
-        { url: baseUrl, baseUrl },
-        options
-      );
+      const maxPages = options.maxPages ?? this.navigator.archiveMaxPages;
+      const timeoutMs = options.timeoutMs ?? this.navigator.archiveTimeoutMs;
+      const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
+      const circuitBreakerKey = this.navigator._resolveCircuitBreakerKey(baseUrl, options);
+      let pureResult = null;
+      let pureError = null;
+
+      try {
+        pureResult = await this._callNavigatorOverride(
+          '_extractViaPureProtocol',
+          (resolvedTarget, resolvedOptions) => this._extractViaPureProtocol(resolvedTarget, resolvedOptions),
+          { url: baseUrl, baseUrl },
+          options
+        );
+      } catch (error) {
+        pureError = error;
+      }
+
+      if (preferCurrentSeasonSource && (!pureResult || pureResult.matches?.length === 0)) {
+        const fallbackResult = await this._callNavigatorOverride(
+          '_fallbackToLeagueTournament',
+          (resolvedBaseUrl, resolvedArchiveUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedReason, resolvedOptions) => (
+            this._fallbackToLeagueTournament(
+              resolvedBaseUrl,
+              resolvedArchiveUrl,
+              resolvedMaxPages,
+              resolvedTimeoutMs,
+              resolvedReason,
+              resolvedOptions
+            )
+          ),
+          baseUrl,
+          null,
+          maxPages,
+          timeoutMs,
+          pureError ? 'pure_protocol_failed' : 'pure_protocol_source_empty',
+          { circuitBreakerKey }
+        );
+
+        if (Array.isArray(fallbackResult?.matches) && fallbackResult.matches.length > 0) {
+          this.logger.info('protocol_archive_complete', {
+            pagesScanned: fallbackResult.pageStats?.length || 0,
+            totalCandidates: fallbackResult.matches?.length || 0,
+            sourceState: fallbackResult.sourceState || 'CURRENT_TOURNAMENT_FALLBACK',
+            breakerKey: circuitBreakerKey,
+            pureProtocol: true
+          });
+
+          return fallbackResult;
+        }
+      }
+
+      if (pureError) {
+        throw pureError;
+      }
 
       this.logger.info('protocol_archive_complete', {
         pagesScanned: pureResult.pageStats?.length || 0,
         totalCandidates: pureResult.matches?.length || 0,
         sourceState: pureResult.sourceState || 'SOURCE_EMPTY',
-        breakerKey: this.navigator._resolveCircuitBreakerKey(baseUrl, options),
+        breakerKey: circuitBreakerKey,
         pureProtocol: true
       });
 

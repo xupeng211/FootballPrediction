@@ -214,6 +214,39 @@ describe('ReconDomScraper', () => {
     ]);
   });
 
+  it('新版 data-testid 容器中的 h2h 片段链接也应提取 eventId 与队名', () => {
+    const scraper = new ReconDomScraper({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    const html = [
+      '<html><body>',
+      '  <div data-testid="event-row">',
+      '    <a href="/football/h2h/kashiwa-reysol-AbCd1234/yokohama-f-marinos-EfGh5678/#QwErTy12">',
+      '      <span data-testid="home-team">Kashiwa Reysol</span>',
+      '      <span data-testid="away-team">Yokohama F.Marinos</span>',
+      '    </a>',
+      '  </div>',
+      '</body></html>'
+    ].join('');
+
+    const matches = scraper.parseCurrentSeasonResultRowsFromHtml(html, {
+      currentUrl: 'https://www.oddsportal.com/football/japan/j1-league/results/',
+      leaguePathPrefix: '/football/japan/j1-league/'
+    });
+
+    assert.deepStrictEqual(matches, [
+      {
+        url: 'https://www.oddsportal.com/football/h2h/kashiwa-reysol-AbCd1234/yokohama-f-marinos-EfGh5678/#QwErTy12',
+        hash: 'QwErTy12',
+        homeTeam: 'Kashiwa Reysol',
+        awayTeam: 'Yokohama F.Marinos',
+        matchDate: null,
+        source: 'current_results_dom'
+      }
+    ]);
+  });
+
   it('应从 __NEXT_DATA__ 脚本中直接提取比赛候选', () => {
     const scraper = new ReconDomScraper({
       logger: { info() {}, warn() {}, error() {}, debug() {} }
@@ -228,8 +261,8 @@ describe('ReconDomScraper', () => {
             d: {
               rows: [
                 {
-                  encodeEventId: 'nextData123',
-                  url: '/football/england/championship-2025-2026/leeds-united-burnley-nextData123/',
+                  encodeEventId: 'NtDt1234',
+                  url: '/football/england/championship-2025-2026/leeds-united-burnley-NtDt1234/',
                   'home-name': 'Leeds United',
                   'away-name': 'Burnley',
                   'date-start-timestamp': 1767225600
@@ -250,8 +283,8 @@ describe('ReconDomScraper', () => {
 
     assert.strictEqual(matches.length, 1);
     assert.deepStrictEqual(matches[0], {
-      url: 'https://www.oddsportal.com/football/england/championship-2025-2026/leeds-united-burnley-nextData123/',
-      hash: 'nextData123',
+      url: 'https://www.oddsportal.com/football/england/championship-2025-2026/leeds-united-burnley-NtDt1234/',
+      hash: 'NtDt1234',
       homeTeam: 'Leeds United',
       awayTeam: 'Burnley',
       matchDate: '2026-01-01T00:00:00.000Z',
@@ -273,8 +306,8 @@ describe('ReconDomScraper', () => {
             d: {
               rows: [
                 {
-                  encodeEventId: 'jsonOnly01',
-                  url: '/football/spain/segunda-division-2025-2026/levante-mirandes-jsonOnly01/',
+                  encodeEventId: 'JsnOly01',
+                  url: '/football/spain/segunda-division-2025-2026/levante-mirandes-JsnOly01/',
                   'home-name': 'Levante',
                   'away-name': 'Mirandes',
                   'date-start-timestamp': 1764547200
@@ -301,7 +334,7 @@ describe('ReconDomScraper', () => {
     });
 
     assert.strictEqual(matches.length, 1);
-    assert.strictEqual(matches[0].hash, 'jsonOnly01');
+    assert.strictEqual(matches[0].hash, 'JsnOly01');
     assert.strictEqual(matches[0].source, 'current_results_next_data');
   });
 

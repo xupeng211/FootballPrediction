@@ -3,14 +3,7 @@
     "enabled": false,
     "note": "Skills configuration disabled - auto-load mechanism not verified. See .claude/skills/ for reference documentation."
   },
-  "mcpServers": {
-    "git": {
-      "command": "python",
-      "args": ["mcp_servers/git_server.py"],
-      "cwd": "/home/user/projects/FootballPrediction",
-      "description": "Git version control (READ-ONLY LOG) for code management"
-    }
-  },
+  "mcpServers": {},
   "permissions": {
     "allow": [
       "Bash(*)",

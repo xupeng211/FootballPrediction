@@ -2,6 +2,21 @@
 
 const vm = require('node:vm');
 
+function isAjaxPayloadUrl(context, url = '') {
+  const rawUrl = String(url || '');
+  if (!rawUrl) {
+    return false;
+  }
+
+  if (rawUrl.includes('/ajax-') || rawUrl.includes('://ajax-')) {
+    return true;
+  }
+
+  return typeof context?.isPotentialMatchApi === 'function'
+    ? context.isPotentialMatchApi(rawUrl)
+    : false;
+}
+
 const reconResponseDecoder = {
   async parseApiResponse(body, url = '') {
     if (!body || typeof body !== 'string') {
@@ -36,7 +51,7 @@ const reconResponseDecoder = {
         return [];
       }
 
-      if (!url.includes('/ajax-')) {
+      if (!isAjaxPayloadUrl(this, url)) {
         this.logger.debug('[ReconNetworkMonitor] 非 ajax 响应解析失败', {
           traceId: this.traceId,
           error: error.message
@@ -81,7 +96,7 @@ const reconResponseDecoder = {
       return { parsed: null, source: 'archive_placeholder_payload' };
     }
 
-    if (!url.includes('/ajax-')) {
+    if (!isAjaxPayloadUrl(this, url)) {
       return { parsed: null, source: 'unsupported' };
     }
 

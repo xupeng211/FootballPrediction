@@ -251,9 +251,9 @@
     "save_mapping": "INSERT INTO matches_oddsportal_mapping ({columns}) VALUES ({values}) ON CONFLICT (match_id, season) DO UPDATE SET oddsportal_hash = EXCLUDED.oddsportal_hash, full_url = EXCLUDED.full_url, home_team = EXCLUDED.home_team, away_team = EXCLUDED.away_team, status = EXCLUDED.status, updated_at = NOW() {optional_updates} RETURNING match_id;",
     "find_match_by_teams": "SELECT match_id, home_team, away_team, match_date FROM matches WHERE season = $1 AND ((LOWER(home_team) = LOWER($2) AND LOWER(away_team) = LOWER($3)) OR (LOWER(home_team) = LOWER($3) AND LOWER(away_team) = LOWER($2))) LIMIT 1;",
     "find_matches_by_season": "SELECT match_id, home_team, away_team, match_date FROM matches WHERE season = $1 ORDER BY match_date;",
-    "get_unstitched_matches": "SELECT m.match_id, m.home_team, m.away_team, m.match_date FROM matches m LEFT JOIN matches_oddsportal_mapping map ON m.match_id = map.match_id AND map.season = $2 WHERE m.league_name = $1 AND m.season = $2 AND map.match_id IS NULL ORDER BY m.match_date;",
-    "get_mapping_stats": "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'harvested') as harvested FROM matches_oddsportal_mapping WHERE season = $1;",
-    "check_optional_fields": "SELECT column_name FROM information_schema.columns WHERE table_name = $1 AND column_name = ANY($2)"
+    "get_unstitched_matches": "SELECT m.match_id, m.home_team, m.away_team, m.match_date FROM matches m LEFT JOIN matches_oddsportal_mapping map ON m.match_id = map.match_id AND map.season = $2 AND COALESCE(map.is_evidence_only, FALSE) = FALSE WHERE m.league_name = $1 AND m.season = $2 AND map.match_id IS NULL ORDER BY m.match_date;",
+    "get_mapping_stats": "SELECT COUNT(*) as total, COUNT(*) FILTER (WHERE status = 'pending') as pending, COUNT(*) FILTER (WHERE status = 'harvested') as harvested FROM matches_oddsportal_mapping WHERE season = $1 AND COALESCE(is_evidence_only, FALSE) = FALSE;",
+    "check_optional_fields": "SELECT column_name FROM (SELECT table_name, column_name, FALSE AS is_evidence_only FROM information_schema.columns) schema_columns WHERE table_name = $1 AND column_name = ANY($2) AND COALESCE(is_evidence_only, FALSE) = FALSE"
   },
   "automation": {
     "total_war": {
@@ -344,7 +344,9 @@
       }
     },
     "protocol_fetch": {
-      "default_bookiehash": "X262144X16384X0X0X134217728X0X0X0X0X0X0X0X0X134217729X0X0X1048576X0X1024X40X0X32X0X0X0X0X0X0X0X536870912X2560X2048X0X33554560X8519680X0X0X0X524288"
+      "default_bookiehash": "X262144X16384X0X0X134217728X0X0X0X0X0X0X0X0X134217729X0X0X1048576X0X1024X40X0X32X0X0X0X0X0X0X0X536870912X2560X2048X0X33554560X8519680X0X0X0X524288",
+      "fetch_max_attempts": 3,
+      "fetch_retry_delay_ms": 750
     },
     "browser_context": {
       "launch_timeout_ms": 60000,
@@ -353,9 +355,15 @@
       "navigation_ready_selectors": [
         "div[role='row']",
         "div[data-testid*='event']",
+        "div[data-testid*='match']",
         "[class*='event-row']",
         "[class*='EventRow']",
-        ".eventRow a[href]",
+        "div[class*='sportName']",
+        "div[role='row'] a[href]",
+        "div[data-testid*='event'] a[href]",
+        "div[data-testid*='match'] a[href]",
+        "[class*='event-row'] a[href]",
+        "[class*='EventRow'] a[href]",
         ".pagination a[href]",
         "main",
         "body"
@@ -377,13 +385,25 @@
       ],
       "external_session_path": "${RECON_SESSION_PATH}",
       "user_data_dir_root": "/tmp",
+      "executable_path": "${PLAYWRIGHT_EXECUTABLE_PATH}",
+      "cache_path": "${PLAYWRIGHT_CACHE_PATH}",
       "prefer_full_chromium": true,
-      "playwright_cache_root": "/root/.cache/ms-playwright",
       "enable_stealth_fingerprint": false,
+      "warmup_delay_ms": 3000,
+      "scroll_iterations": 3,
+      "scroll_step_px": 500,
+      "scroll_delay_ms": 1000,
+      "consent_visibility_timeout_ms": 500,
+      "consent_click_timeout_ms": 2000,
+      "consent_post_click_wait_ms": 1000,
+      "close_timeout_ms": 5000
+    },
+    "unlock_strategies": {
       "force_unlock_j1": {
-        "enabled": false,
+        "enabled": true,
         "url_patterns": [
-          "/football/japan/j1-league"
+          "/football/japan/j1-league",
+          "/football/japan/j2-league"
         ],
         "menu_labels": [
           "BOOKMAKERS",
@@ -402,14 +422,7 @@
         "post_select_wait_ms": 1800,
         "state_wait_ms": 5000,
         "retrigger_timeout_ms": 10000
-      },
-      "warmup_delay_ms": 3000,
-      "scroll_iterations": 3,
-      "scroll_step_px": 500,
-      "scroll_delay_ms": 1000,
-      "consent_visibility_timeout_ms": 500,
-      "consent_click_timeout_ms": 2000,
-      "consent_post_click_wait_ms": 1000
+      }
     },
     "task_planner": {
       "base_url": "https://www.oddsportal.com",
@@ -420,16 +433,26 @@
       "archive_timeout_ms": 45000,
       "mismatch_retry_threshold_delta": 0.3,
       "mismatch_retry_threshold_floor": 0.15,
+      "mismatch_retry_threshold_floor_by_league_id": {
+        "131": 0.25,
+        "230": 0.25
+      },
       "force_dom_league_ids": [
         48,
         130,
         223,
         268
       ],
+      "annual_league_ids": [
+        121,
+        223,
+        268
+      ],
       "exclude_all_league_ids": [
         223
       ],
-      "results_path": "/football/{country}/{league}-{season}/results/"
+      "results_path": "/football/{country}/{league}-{season}/results/",
+      "fixtures_path": "/football/{country}/{league}-{season}/fixtures/"
     },
     "disk_sweeper": {
       "enabled": true,
@@ -439,7 +462,11 @@
       "orientation_similarity_threshold": 0.75,
       "exact_match_threshold": 0.99,
       "team_weight": 0.85,
-      "date_weight": 0.15
+      "date_weight": 0.15,
+      "dictionary_string_contains_league_ids": [
+        131
+      ],
+      "dictionary_string_contains_min_length": 5
     },
     "mirror_manager": {
       "team_weight": 0.85,
@@ -479,7 +506,12 @@
     "dom_scraper": {
       "base_url": "https://www.oddsportal.com",
       "result_anchor_selectors": [
-        ".eventRow a[href]",
+        "div[role='row'] a[href]",
+        "div[data-testid*='event'] a[href]",
+        "div[data-testid*='match'] a[href]",
+        "[class*='event-row'] a[href]",
+        "[class*='EventRow'] a[href]",
+        "div[class*='sportName'] a[href]",
         "a[href]"
       ],
       "pagination_selectors": [
@@ -487,6 +519,7 @@
         "a[href*='/results/page/']"
       ],
       "home_selectors": [
+        "[data-testid*='home']",
         ".eventRow__home",
         ".homeParticipant",
         ".eventCell__home",
@@ -494,6 +527,7 @@
         "[data-testid=\"home-team\"]"
       ],
       "away_selectors": [
+        "[data-testid*='away']",
         ".eventRow__away",
         ".awayParticipant",
         ".eventCell__away",
@@ -501,6 +535,8 @@
         "[data-testid=\"away-team\"]"
       ],
       "participant_selectors": [
+        "[data-testid*='participant']",
+        "[data-testid*='team']",
         ".participant-name",
         ".eventRow__participant",
         ".eventRowParticipant",

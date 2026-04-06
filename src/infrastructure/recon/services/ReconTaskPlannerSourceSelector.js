@@ -18,9 +18,20 @@ const reconTaskPlannerSourceSelector = {
       sources.push(source);
     };
 
+    if (this.isAnnualLeague(target?.league)) {
+      for (const source of this.buildAnnualCurrentSeasonSources(target.league, target.season || target.dbSeason)) {
+        addSource(source);
+      }
+      return sources;
+    }
+
     if (strategy === 'seasonless') {
-      const currentSeasonYear = currentSeasonYears?.endYear
-        || dbSeasonYears?.endYear
+      const currentYearBasis = this.getSeasonlessCurrentYearBasis(target?.league);
+      const currentSeasonYear = (
+        currentYearBasis === 'start'
+          ? currentSeasonYears?.startYear || dbSeasonYears?.startYear
+          : currentSeasonYears?.endYear || dbSeasonYears?.endYear
+      )
         || (Number(/^\d{4}$/.test(baseSeason) ? baseSeason : NaN) || null);
 
       const currentSourceUrls = this.buildCurrentSeasonSourceUrls(target.league, target.season || target.dbSeason);
@@ -38,7 +49,11 @@ const reconTaskPlannerSourceSelector = {
 
       const historicalYears = new Set();
 
-      if (this.isSingleYearLeague(target?.league) && Number.isInteger(dbSeasonYears?.startYear)) {
+      if (
+        currentYearBasis !== 'start'
+        && this.isSingleYearLeague(target?.league)
+        && Number.isInteger(dbSeasonYears?.startYear)
+      ) {
         historicalYears.add(dbSeasonYears.startYear);
       }
 
@@ -123,6 +138,7 @@ const reconTaskPlannerSourceSelector = {
     const reconPolicy = this.resolveReconPolicy(target, orderedPending, confidenceThreshold);
     const effectiveConfidenceThreshold = Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold || 0);
     const resolvedMaxPages = this.resolveArchiveMaxPages(target, orderedPending);
+    const forceDomOnlyMode = target?.forceDomMode === true;
     const forceDomMode = this.forceDomLeagueIds.has(Number(target?.leagueId || target?.league?.id || 0));
     const forceMultiMode = reconPolicy.forceMultiMode === true;
     const forceJsonExtract = target?.forceJsonExtract === true;
@@ -147,37 +163,66 @@ const reconTaskPlannerSourceSelector = {
 
       let extractResult;
       try {
-        extractResult = forcePureProtocol
-          ? await this.navigator.protocolArchiveExtract(source.url, {
+        if (forcePureProtocol) {
+          extractResult = await this.navigator.protocolArchiveExtract(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true,
             forcePureProtocol: true
-          })
-          : forceJsonExtract && typeof this.navigator?.fetchFullSeasonArchive === 'function'
-          ? await this.navigator.fetchFullSeasonArchive(source.url, {
+          });
+        } else if (
+          (source.mode === 'current_fixtures' || source.mode === 'current_fixtures_fallback')
+          && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+        ) {
+          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true,
+            forceDomOnly: true
+          });
+        } else if (
+          (
+            source.mode === 'current_results'
+            || source.mode === 'current_results_fallback'
+          )
+          && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+        ) {
+          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true,
+            ...(forceDomOnlyMode ? { forceDomOnly: true } : {})
+          });
+        } else if (forceJsonExtract && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
+          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true,
             forceDomOnly: true,
             forceJsonExtract: true
-          })
-          : forceDomMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
-          ? await this.navigator.fetchFullSeasonArchive(source.url, {
+          });
+        } else if (forceDomOnlyMode && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
+          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true,
+            forceDomOnly: true
+          });
+        } else if (forceDomMode && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
+          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true
-          })
-          : forceMultiMode && typeof this.navigator?.fetchFullSeasonArchive === 'function'
-            ? await this.navigator.fetchFullSeasonArchive(source.url, {
-              ...extractOptions,
-              preferCurrentSeasonSource: true
-            })
-            : source.mode === 'current_season'
-              ? await this.navigator.protocolArchiveExtract(source.url, {
-                ...extractOptions,
-                preferCurrentSeasonSource: true
-              })
-              : typeof this.navigator?.fetchFullSeasonArchive === 'function'
-                ? await this.navigator.fetchFullSeasonArchive(source.url, extractOptions)
-                : await this.navigator.protocolArchiveExtract(source.url, extractOptions);
+          });
+        } else if (forceMultiMode && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
+          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true
+          });
+        } else if (source.mode === 'current_season') {
+          extractResult = await this.navigator.protocolArchiveExtract(source.url, {
+            ...extractOptions,
+            preferCurrentSeasonSource: true
+          });
+        } else if (typeof this.navigator?.fetchFullSeasonArchive === 'function') {
+          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, extractOptions);
+        } else {
+          extractResult = await this.navigator.protocolArchiveExtract(source.url, extractOptions);
+        }
       } catch (error) {
         sourceFailures.push({
           source,
@@ -218,6 +263,7 @@ const reconTaskPlannerSourceSelector = {
         sourceSeason: source.season,
         sourceUrl: source.url,
         forceDomMode,
+        forceDomOnlyMode,
         forceJsonExtract,
         forcePureProtocol,
         forceMultiMode,
@@ -293,7 +339,7 @@ const reconTaskPlannerSourceSelector = {
 
       return {
         source: {
-          season: evaluatedSources.map((item) => item.source.season).join(','),
+          season: [...new Set(evaluatedSources.map((item) => item.source.season))].join(','),
           url: evaluatedSources.map((item) => item.source.url).join(' | ')
         },
         sources: evaluatedSources.map((item) => item.source),

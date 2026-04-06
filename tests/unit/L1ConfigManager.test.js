@@ -77,6 +77,8 @@ describe('L1ConfigManager', () => {
     const superLig = manager.getLeagueById(71);
     const euro = manager.getLeagueById(50);
     const brasileirao = manager.getLeagueById(268);
+    const j1 = manager.getLeagueById(223);
+    const j2 = manager.getLeagueById(8974);
     const superLigByCode = manager.getLeagueByCode('SUPERLIG');
 
     assert.ok(csl);
@@ -84,6 +86,8 @@ describe('L1ConfigManager', () => {
     assert.ok(superLig);
     assert.ok(euro);
     assert.ok(brasileirao);
+    assert.ok(j1);
+    assert.ok(j2);
     assert.ok(superLigByCode);
     assert.strictEqual(csl.slug, 'super-league');
     assert.strictEqual(csl.resultsSlug, 'super-league');
@@ -104,10 +108,18 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(euro.slug, 'euro');
     assert.strictEqual(euro.resultsSlug, 'euro');
     assert.strictEqual(euro.resultsUrlStrategy, 'seasonless');
-    assert.strictEqual(euro.enabled, false);
+    assert.strictEqual(euro.enabled, true);
     assert.strictEqual(brasileirao.slug, 'brasileirao');
     assert.strictEqual(brasileirao.resultsSlug, 'serie-a');
     assert.strictEqual(brasileirao.resultsUrlStrategy, 'seasonless');
+    assert.strictEqual(j1.slug, 'j1-league');
+    assert.strictEqual(j1.resultsSlug, 'j1-league');
+    assert.strictEqual(j1.resultsUrlStrategy, 'seasonless');
+    assert.strictEqual(j1.seasonlessCurrentYearBasis, 'start');
+    assert.strictEqual(j2.slug, 'j2-league');
+    assert.strictEqual(j2.resultsSlug, 'j2-league');
+    assert.strictEqual(j2.resultsUrlStrategy, 'seasonless');
+    assert.strictEqual(j2.seasonlessCurrentYearBasis, 'start');
   });
 
   it('联赛级 ready_selector 应并入运行时配置', () => {
@@ -117,10 +129,13 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(j1.readySelector, 'text=Machida');
   });
 
-  it('临时下线的 UEFA Euro 不应出现在 active league 列表中', () => {
+  it('UEFA Euro 解封后应出现在 active league 列表中', () => {
+    const euro = manager.getLeagueById(50);
     const activeLeagueIds = manager.getActiveLeagues().map((league) => league.id);
 
-    assert.ok(!activeLeagueIds.includes(50));
+    assert.ok(euro);
+    assert.strictEqual(euro.enabled, true);
+    assert.ok(activeLeagueIds.includes(50));
   });
 
   it('世界杯应保留 2026 专用 slug 与 seasonal URL 策略', () => {
@@ -133,13 +148,22 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(worldCup.awaitingFinals, true);
   });
 
-  it('临时下线的 Copa América 不应出现在 active league 列表中', () => {
+  it('Copa América 解封后应出现在 active league 列表中', () => {
     const copaAmerica = manager.getLeagueById(131);
     const activeLeagueIds = manager.getActiveLeagues().map((league) => league.id);
 
     assert.ok(copaAmerica);
-    assert.strictEqual(copaAmerica.enabled, false);
-    assert.ok(!activeLeagueIds.includes(131));
+    assert.strictEqual(copaAmerica.enabled, true);
+    assert.ok(activeLeagueIds.includes(131));
+  });
+
+  it('Primera División 应指向 Costa Rica 并保留真实 slug', () => {
+    const primeraDivision = manager.getLeagueById(121);
+
+    assert.ok(primeraDivision);
+    assert.strictEqual(primeraDivision.country, 'Costa Rica');
+    assert.strictEqual(primeraDivision.slug, 'primera-division');
+    assert.strictEqual(primeraDivision.resultsSlug, 'primera-division');
   });
 
   it('配置缺失时应直接抛错，禁止静默回退', () => {

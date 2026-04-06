@@ -154,6 +154,7 @@ class L1ConfigManager {
         slug: reconLeague.slug || this._slugify(reconLeague.name || atlasLeague?.name || code),
         resultsSlug: reconLeague.results_slug || atlasLeague?.results_slug || reconLeague.slug || atlasLeague?.slug || null,
         resultsUrlStrategy: reconLeague.results_url_strategy || atlasLeague?.results_url_strategy || 'seasonal',
+        seasonlessCurrentYearBasis: reconLeague.seasonless_current_year_basis || atlasLeague?.seasonless_current_year_basis || 'end',
         additionalResultsPaths: this._normalizeStringArray(
           reconLeague.additional_results_paths || atlasLeague?.additional_results_paths
         ),
@@ -188,6 +189,7 @@ class L1ConfigManager {
         slug: atlasLeague.slug || this._slugify(atlasLeague.name),
         resultsSlug: atlasLeague.results_slug || atlasLeague.slug || null,
         resultsUrlStrategy: atlasLeague.results_url_strategy || 'seasonal',
+        seasonlessCurrentYearBasis: atlasLeague.seasonless_current_year_basis || 'end',
         additionalResultsPaths: this._normalizeStringArray(atlasLeague.additional_results_paths),
         additionalHistoricalResultsPaths: this._normalizeStringArray(atlasLeague.additional_historical_results_paths),
         readySelector: atlasLeague.ready_selector || null,

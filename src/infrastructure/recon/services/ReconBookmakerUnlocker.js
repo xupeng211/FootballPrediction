@@ -1,10 +1,5 @@
 'use strict';
 
-const DEFAULT_FORCE_UNLOCK_J1_URL_PATTERNS = ['/football/japan/j1-league'];
-const DEFAULT_FORCE_UNLOCK_J1_MENU_LABELS = ['BOOKMAKERS', 'Bookmakers'];
-const DEFAULT_FORCE_UNLOCK_J1_SELECT_ALL_LABELS = ['Select All'];
-const DEFAULT_FORCE_UNLOCK_J1_BOOKMAKERS = ['Bet365', 'Pinnacle', '1xBet', 'William Hill'];
-
 function normalizeStringList(value, fallback) {
   return Array.isArray(value) && value.length > 0 ? [...value] : [...fallback];
 }
@@ -12,10 +7,10 @@ function normalizeStringList(value, fallback) {
 function createForceUnlockJ1Config(value = {}) {
   return {
     enabled: value.enabled === true,
-    urlPatterns: normalizeStringList(value.url_patterns, DEFAULT_FORCE_UNLOCK_J1_URL_PATTERNS),
-    menuLabels: normalizeStringList(value.menu_labels, DEFAULT_FORCE_UNLOCK_J1_MENU_LABELS),
-    selectAllLabels: normalizeStringList(value.select_all_labels, DEFAULT_FORCE_UNLOCK_J1_SELECT_ALL_LABELS),
-    fallbackBookmakers: normalizeStringList(value.fallback_bookmakers, DEFAULT_FORCE_UNLOCK_J1_BOOKMAKERS),
+    urlPatterns: normalizeStringList(value.url_patterns, []),
+    menuLabels: normalizeStringList(value.menu_labels, []),
+    selectAllLabels: normalizeStringList(value.select_all_labels, []),
+    fallbackBookmakers: normalizeStringList(value.fallback_bookmakers, []),
     openWaitMs: Number(value.open_wait_ms ?? 1200),
     postSelectWaitMs: Number(value.post_select_wait_ms ?? 1800),
     stateWaitMs: Number(value.state_wait_ms ?? 5000),

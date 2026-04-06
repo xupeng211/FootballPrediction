@@ -1,5 +1,7 @@
 'use strict';
 
+const { JSDOM } = require('jsdom');
+
 const { ReconEndpointHelper } = require('./ReconEndpointHelper');
 const { ReconPureDecryptor } = require('./ReconPureDecryptor');
 const { ReconNetworkMonitor } = require('./ReconNetworkMonitor');
@@ -7,6 +9,7 @@ const { getReconConfigSection } = require('./ReconServiceConfig');
 
 const EMBEDDED_PLACEHOLDER_STATUS_RE = /^\s*URL:[\s\S]*?\bStatus:\s*(\d{3})\b/i;
 const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
+const RETRYABLE_PURE_PROTOCOL_FETCH_ERROR_RE = /fetch failed|socket|terminated|econnreset|und_err|other side closed|networkerror|timed out|aborted/i;
 const PURE_PROTOCOL_CONFIG = getReconConfigSection(['recon_runtime', 'protocol_fetch'], {});
 
 function detectEmbeddedHttpFailure(bodyText = '') {
@@ -31,6 +34,16 @@ function detectEmbeddedHttpFailure(bodyText = '') {
   }
 
   return null;
+}
+
+function decodeHtmlEntities(text = '') {
+  return String(text || '')
+    .replace(/&quot;/g, '"')
+    .replace(/&#34;/g, '"')
+    .replace(/&#39;/g, '\'')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
 }
 
 const reconProtocolFetchFlow = {
@@ -185,8 +198,10 @@ const reconProtocolFetchFlow = {
   },
 
   _extractTournamentIdFromHtml(html) {
-    const text = String(html || '');
-    return text.match(/_tournamentId(?:&quot;|"):(\d+)/i)?.[1] || '';
+    const text = decodeHtmlEntities(html);
+    const raw = text.match(/(?:_tournamentId|tournamentId)\s*["']?\s*:\s*(?:"([^"]+)"|'([^']+)'|([A-Za-z0-9-]+))/i);
+    const token = String(raw?.[1] || raw?.[2] || raw?.[3] || '').trim();
+    return /^(?:null|undefined)$/i.test(token) ? '' : token;
   },
 
   _extractLocaleFromHtml(html) {
@@ -200,6 +215,8 @@ const reconProtocolFetchFlow = {
     const candidates = [
       options.bookmakerHash,
       options.bookiehash,
+      target?.runtimeBookmakerHash,
+      target?.pageVarBookmakerHash,
       target?.bookmakerHash,
       target?.bookiehash,
       PURE_PROTOCOL_CONFIG.default_bookiehash,
@@ -214,6 +231,277 @@ const reconProtocolFetchFlow = {
     }
 
     return '';
+  },
+
+  _extractScriptTextsFromHtml(html) {
+    try {
+      const dom = new JSDOM(String(html || ''));
+      return Array.from(dom.window.document.scripts).map((script) => String(script.textContent || ''));
+    } catch {
+      return [];
+    }
+  },
+
+  _tryParseEmbeddedJson(rawValue, options = {}) {
+    let payload = decodeHtmlEntities(String(rawValue || '')).trim();
+    if (!payload) {
+      return null;
+    }
+
+    if (options.unwrapQuotedJson === true) {
+      if (
+        (payload.startsWith('\'') && payload.endsWith('\''))
+        || (payload.startsWith('"') && payload.endsWith('"'))
+      ) {
+        payload = payload.slice(1, -1);
+      }
+    }
+
+    if (payload.endsWith(';')) {
+      payload = payload.slice(0, -1).trim();
+    }
+
+    try {
+      return JSON.parse(payload);
+    } catch {
+      return null;
+    }
+  },
+
+  _extractStructuredStatePayloads(html) {
+    const payloads = [];
+    const rawHtml = String(html || '');
+    const nextDataMatch = rawHtml.match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
+    if (nextDataMatch?.[1]) {
+      payloads.push({
+        source: '__NEXT_DATA__',
+        value: nextDataMatch[1],
+        unwrapQuotedJson: false
+      });
+    }
+
+    for (const scriptText of this._extractScriptTextsFromHtml(rawHtml)) {
+      for (const [source, pattern, unwrapQuotedJson] of [
+        ['__INITIAL_STATE__', /(?:window\.)?__INITIAL_STATE__\s*=\s*({[\s\S]*})\s*;?/i, false],
+        ['initialState', /(?:window\.)?initialState\s*=\s*({[\s\S]*})\s*;?/i, false],
+        ['pageVar:json', /(?:window\.)?pageVar\s*=\s*({[\s\S]*})\s*;?/i, false],
+        ['pageVar:string', /(?:window\.)?pageVar\s*=\s*('(?:\\'|[^'])*'|"(?:\\"|[^"])*")\s*;?/i, true]
+      ]) {
+        const match = scriptText.match(pattern);
+        if (match?.[1]) {
+          payloads.push({
+            source,
+            value: match[1],
+            unwrapQuotedJson
+          });
+        }
+      }
+    }
+
+    return payloads;
+  },
+
+  _buildPureProtocolTargetHints(target = {}, html = '') {
+    const hints = new Set();
+
+    try {
+      const pathname = new URL(target?.baseUrl || target?.url || '').pathname;
+      const segments = pathname.split('/').filter(Boolean);
+      const leagueSegment = segments.at(-2) === 'results'
+        ? segments.at(-3)
+        : segments.at(-1);
+      const normalizedLeagueSegment = String(leagueSegment || '').trim().toLowerCase();
+      if (normalizedLeagueSegment) {
+        hints.add(normalizedLeagueSegment);
+        hints.add(normalizedLeagueSegment.replace(/-\d{4}(?:-\d{4})?$/i, ''));
+        hints.add(normalizedLeagueSegment.replace(/-/g, ' '));
+      }
+    } catch {
+      // ignore invalid URL
+    }
+
+    const decodedHtml = decodeHtmlEntities(html);
+    const tournamentName = decodedHtml.match(/_tournamentName\s*["']?\s*:\s*"([^"]+)"/i)?.[1] || '';
+    if (tournamentName) {
+      hints.add(String(tournamentName).trim().toLowerCase());
+      hints.add(String(tournamentName).trim().toLowerCase().replace(/\s+/g, '-'));
+      hints.add(String(tournamentName).trim().toLowerCase().replace(/\s+\d{4}(?:\/\d{4})?$/i, ''));
+    }
+
+    return [...hints].filter(Boolean);
+  },
+
+  _objectMatchesTargetHints(node, hints = []) {
+    if (!node || typeof node !== 'object' || hints.length === 0) {
+      return false;
+    }
+
+    const comparableValues = [
+      node.name,
+      node.title,
+      node.slug,
+      node.url,
+      node.pathname,
+      node.route,
+      node.tournamentName,
+      node._tournamentName,
+      node._tournamentUrl,
+      node._tournamentLink,
+      node._tournamentLinkNoSeason
+    ]
+      .map((value) => String(value || '').trim().toLowerCase())
+      .filter(Boolean);
+
+    return comparableValues.some((value) => hints.some((hint) => value.includes(hint)));
+  },
+
+  _collectStructuredProtocolStateCandidates(node, hints = [], trail = [], state = null) {
+    const targetState = state || {
+      tournamentObjectIds: [],
+      pageVarOtCodes: [],
+      tournamentIds: [],
+      bookmakerHashes: []
+    };
+
+    if (node === null || node === undefined) {
+      return targetState;
+    }
+
+    if (Array.isArray(node)) {
+      for (const item of node) {
+        this._collectStructuredProtocolStateCandidates(item, hints, trail, targetState);
+      }
+      return targetState;
+    }
+
+    if (typeof node !== 'object') {
+      return targetState;
+    }
+
+    const addCandidate = (bucket, value) => {
+      const normalized = String(value ?? '').trim();
+      if (!normalized || /^(?:null|undefined)$/i.test(normalized)) {
+        return;
+      }
+      if (!targetState[bucket].includes(normalized)) {
+        targetState[bucket].push(normalized);
+      }
+    };
+
+    const trailText = trail.join('.').toLowerCase();
+    const keys = Object.keys(node);
+    const objectFingerprint = `${trailText} ${keys.join(' ')}`.toLowerCase();
+    const pageVarLike = objectFingerprint.includes('pagevar');
+    const tournamentLike = objectFingerprint.includes('tournament') || objectFingerprint.includes('outright');
+    const targetLike = this._objectMatchesTargetHints(node, hints);
+
+    if (pageVarLike) {
+      addCandidate('pageVarOtCodes', node.otCode);
+      addCandidate('bookmakerHashes', node.bookiehash);
+      addCandidate('bookmakerHashes', node.myot);
+    }
+
+    if (tournamentLike || targetLike) {
+      addCandidate('tournamentIds', node._tournamentId);
+      addCandidate('tournamentIds', node.tournamentId);
+      addCandidate('tournamentIds', node.tournament_id);
+      const idValue = node.outrightId ?? node.otCode ?? node.id;
+      if (/^\d+$/.test(String(idValue ?? '').trim())) {
+        addCandidate('tournamentIds', idValue);
+      } else {
+        addCandidate('tournamentObjectIds', idValue);
+      }
+    }
+
+    for (const [key, value] of Object.entries(node)) {
+      this._collectStructuredProtocolStateCandidates(value, hints, [...trail, key], targetState);
+    }
+
+    return targetState;
+  },
+
+  _extractEmbeddedProtocolStateFromHtml(html, target = {}) {
+    const hints = this._buildPureProtocolTargetHints(target, html);
+    const aggregate = {
+      outrightId: '',
+      tournamentId: '',
+      bookmakerHash: ''
+    };
+
+    const stateCandidates = {
+      tournamentObjectIds: [],
+      pageVarOtCodes: [],
+      tournamentIds: [],
+      bookmakerHashes: []
+    };
+
+    for (const payload of this._extractStructuredStatePayloads(html)) {
+      const parsed = this._tryParseEmbeddedJson(payload.value, {
+        unwrapQuotedJson: payload.unwrapQuotedJson === true
+      });
+      if (!parsed) {
+        continue;
+      }
+
+      this._collectStructuredProtocolStateCandidates(parsed, hints, [payload.source], stateCandidates);
+    }
+
+    aggregate.outrightId = stateCandidates.tournamentObjectIds[0]
+      || stateCandidates.pageVarOtCodes[0]
+      || '';
+    aggregate.tournamentId = stateCandidates.tournamentIds[0] || '';
+    aggregate.bookmakerHash = stateCandidates.bookmakerHashes[0] || '';
+
+    return aggregate;
+  },
+
+  async _resolvePureProtocolRuntimeState(context, options = {}) {
+    if (
+      !this.navigator
+      || typeof this.navigator.ensureBrowserHealthy !== 'function'
+      || typeof this.navigator.navigate !== 'function'
+      || !this.navigator.stateProber
+    ) {
+      return {
+        outrightId: '',
+        bookmakerHash: ''
+      };
+    }
+
+    try {
+      await this.navigator.ensureBrowserHealthy();
+      const warmUrl = this.navigator.stateProber.deriveCurrentResultsUrl(context.baseUrl) || context.baseUrl;
+      await this.navigator.navigate(warmUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: options.timeoutMs ?? this.navigator.archiveTimeoutMs
+      });
+      if (this.page && typeof this.page.waitForTimeout === 'function') {
+        await this.page.waitForTimeout(this.navigator.postApiDiscoveryWaitMs);
+      }
+
+      const runtimeToken = await this.navigator.stateProber.extractTournamentToken();
+      const pageVarState = this.page && typeof this.page.evaluate === 'function'
+        ? await this.page.evaluate(() => ({
+          otCode: typeof window.pageVar?.otCode === 'string' ? window.pageVar.otCode.trim() : '',
+          bookiehash: typeof window.pageVar?.bookiehash === 'string' ? window.pageVar.bookiehash.trim() : '',
+          myot: typeof window.pageVar?.myot === 'string' ? window.pageVar.myot.trim() : ''
+        }))
+        : { otCode: '', bookiehash: '', myot: '' };
+
+      return {
+        outrightId: String(runtimeToken || pageVarState?.otCode || '').trim(),
+        bookmakerHash: String(pageVarState?.bookiehash || pageVarState?.myot || '').trim()
+      };
+    } catch (error) {
+      this.logger.warn('pure_protocol_runtime_state_probe_failed', {
+        baseUrl: context.baseUrl,
+        error: error.message
+      });
+      return {
+        outrightId: '',
+        bookmakerHash: ''
+      };
+    }
   },
 
   _createPureProtocolMonitor() {
@@ -245,7 +533,157 @@ const reconProtocolFetchFlow = {
     };
   },
 
-  async _fetchPureProtocolText(url, options = {}) {
+  _normalizePureProtocolComparableUrl(url = '') {
+    const normalized = String(url || '').trim();
+    if (!normalized) {
+      return '';
+    }
+
+    try {
+      const parsed = new URL(normalized);
+      parsed.hash = '';
+      parsed.search = '';
+      return parsed.href.replace(/\/+$/, '');
+    } catch (_error) {
+      return normalized.replace(/[?#].*$/, '').replace(/\/+$/, '');
+    }
+  },
+
+  _resolvePureProtocolActivePageCandidates(baseUrl = '') {
+    const candidates = new Set();
+    const push = (value) => {
+      const normalized = this._normalizePureProtocolComparableUrl(value);
+      if (normalized) {
+        candidates.add(normalized);
+      }
+    };
+
+    push(baseUrl);
+    push(this.navigator?.stateProber?.deriveCurrentResultsUrl?.(baseUrl));
+    push(this.navigator?.stateProber?.deriveLeaguePageUrl?.(baseUrl));
+    return candidates;
+  },
+
+  async _readPureProtocolHtmlFromActivePage(baseUrl = '') {
+    if (!this.page || typeof this.page.content !== 'function') {
+      return '';
+    }
+
+    const currentUrl = typeof this.page.url === 'function' ? this.page.url() : '';
+    const candidates = this._resolvePureProtocolActivePageCandidates(baseUrl);
+    const normalizedCurrentUrl = this._normalizePureProtocolComparableUrl(currentUrl);
+
+    if (normalizedCurrentUrl && candidates.size > 0 && !candidates.has(normalizedCurrentUrl)) {
+      return '';
+    }
+
+    try {
+      return String(await this.page.content() || '');
+    } catch (_error) {
+      return '';
+    }
+  },
+
+  async _loadPureProtocolHtmlViaBrowser(baseUrl = '', options = {}) {
+    if (
+      !this.navigator
+      || typeof this.navigator.ensureBrowserHealthy !== 'function'
+      || typeof this.navigator.navigate !== 'function'
+    ) {
+      return '';
+    }
+
+    try {
+      await this.navigator.ensureBrowserHealthy();
+      const warmUrl = this.navigator.stateProber?.deriveCurrentResultsUrl?.(baseUrl) || baseUrl;
+      await this.navigator.navigate(warmUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: options.timeoutMs ?? this.navigator.archiveTimeoutMs
+      });
+      if (this.page && typeof this.page.waitForTimeout === 'function') {
+        await this.page.waitForTimeout(this.navigator.postApiDiscoveryWaitMs);
+      }
+      return this._readPureProtocolHtmlFromActivePage(baseUrl);
+    } catch (error) {
+      this.logger.warn('pure_protocol_browser_html_probe_failed', {
+        baseUrl,
+        error: error.message
+      });
+      return '';
+    }
+  },
+
+  async _resolvePureProtocolHtml(target, options = {}) {
+    const activePageHtml = await this._readPureProtocolHtmlFromActivePage(target.baseUrl);
+    if (String(activePageHtml || '').trim()) {
+      return {
+        success: true,
+        status: 200,
+        text: activePageHtml,
+        source: 'browser_active_page'
+      };
+    }
+
+    const httpResponse = await this._fetchPureProtocolText(target.baseUrl, {
+      timeoutMs: options.timeoutMs,
+      referer: target.baseUrl,
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+    });
+    if (httpResponse.success) {
+      return {
+        ...httpResponse,
+        source: 'node_fetch'
+      };
+    }
+
+    const browserHtml = await this._loadPureProtocolHtmlViaBrowser(target.baseUrl, options);
+    if (String(browserHtml || '').trim()) {
+      this.logger.warn('pure_protocol_html_fetch_http_fallback_hit', {
+        baseUrl: target.baseUrl,
+        error: httpResponse.error || '',
+        statusCode: Number(httpResponse.status) || null
+      });
+      return {
+        success: true,
+        status: 200,
+        text: browserHtml,
+        source: 'browser_navigate_fallback',
+        fallbackError: httpResponse.error || '',
+        fallbackStatus: Number(httpResponse.status) || null
+      };
+    }
+
+    return httpResponse;
+  },
+
+  _isRetryablePureProtocolFetchFailure(result = {}) {
+    const status = Number(result.status) || null;
+    if (status === 429 || status === 503 || status === 504) {
+      return true;
+    }
+
+    if (status && status >= 500) {
+      return true;
+    }
+
+    return RETRYABLE_PURE_PROTOCOL_FETCH_ERROR_RE.test(String(result.error || ''));
+  },
+
+  async _waitPureProtocolFetchRetry(delayMs = 0) {
+    const normalizedDelayMs = Math.max(0, Number(delayMs) || 0);
+    if (normalizedDelayMs <= 0) {
+      return;
+    }
+
+    if (this.navigator && typeof this.navigator._waitBeforeRetry === 'function') {
+      await this.navigator._waitBeforeRetry(normalizedDelayMs);
+      return;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, normalizedDelayMs));
+  },
+
+  async _fetchPureProtocolTextOnce(url, options = {}) {
     const controller = new AbortController();
     const timeoutMs = Number(options.timeoutMs || this.navigator?.archiveTimeoutMs || 45000);
     const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -298,13 +736,56 @@ const reconProtocolFetchFlow = {
     }
   },
 
+  async _fetchPureProtocolText(url, options = {}) {
+    const maxAttempts = Math.max(
+      1,
+      Number(options.maxAttempts || PURE_PROTOCOL_CONFIG.fetch_max_attempts || 3)
+    );
+    const retryDelayMs = Math.max(
+      0,
+      Number(options.retryDelayMs ?? PURE_PROTOCOL_CONFIG.fetch_retry_delay_ms ?? 750)
+    );
+
+    let lastResult = {
+      success: false,
+      status: null,
+      error: 'PURE_PROTOCOL_FETCH_UNINITIALIZED',
+      text: ''
+    };
+
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      const result = await this._fetchPureProtocolTextOnce(url, options);
+      if (result.success) {
+        return result;
+      }
+
+      lastResult = result;
+      if (attempt >= maxAttempts || !this._isRetryablePureProtocolFetchFailure(result)) {
+        return result;
+      }
+
+      const retryAfterMs = this.navigator && typeof this.navigator._parseRetryAfterMs === 'function'
+        ? this.navigator._parseRetryAfterMs(result.retryAfterRaw)
+        : 0;
+      const scheduledDelayMs = Math.max(retryDelayMs, retryAfterMs || 0);
+
+      this.logger.warn('pure_protocol_fetch_retrying', {
+        url,
+        attempt,
+        maxAttempts,
+        statusCode: Number(result.status) || null,
+        error: result.error || '',
+        delayMs: scheduledDelayMs
+      });
+      await this._waitPureProtocolFetchRetry(scheduledDelayMs);
+    }
+
+    return lastResult;
+  },
+
   async _resolvePureProtocolContext(target, options = {}) {
     const normalizedTarget = this._normalizePureProtocolTarget(target);
-    const htmlResponse = await this._fetchPureProtocolText(normalizedTarget.baseUrl, {
-      timeoutMs: options.timeoutMs,
-      referer: normalizedTarget.baseUrl,
-      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
-    });
+    const htmlResponse = await this._resolvePureProtocolHtml(normalizedTarget, options);
 
     if (!htmlResponse.success) {
       const error = new Error(htmlResponse.error || 'PURE_PROTOCOL_HTML_FETCH_FAILED');
@@ -315,11 +796,23 @@ const reconProtocolFetchFlow = {
 
     const html = String(htmlResponse.text || '');
     const outrightMeta = this.navigator?.stateProber?.extractPageOutrightsMetaFromHtml?.(html) || null;
-    const outrightId = typeof outrightMeta?.id === 'string' ? outrightMeta.id.trim() : '';
-    const tournamentId = this._extractTournamentIdFromHtml(html);
+    const embeddedState = this._extractEmbeddedProtocolStateFromHtml(html, normalizedTarget);
+    let outrightId = typeof outrightMeta?.id === 'string' ? outrightMeta.id.trim() : '';
+    let tournamentId = this._extractTournamentIdFromHtml(html) || embeddedState.tournamentId;
+    let runtimeBookmakerHash = embeddedState.bookmakerHash || '';
     const appBundleUrl = this._extractAppBundleUrlFromHtml(html, normalizedTarget.baseUrl);
     const seasonToken = this._extractPureProtocolSeasonToken(normalizedTarget.baseUrl, options);
     const locale = this._extractLocaleFromHtml(html);
+
+    if (!outrightId) {
+      outrightId = embeddedState.outrightId;
+    }
+
+    if (!outrightId && !tournamentId) {
+      const runtimeState = await this._resolvePureProtocolRuntimeState(normalizedTarget, options);
+      outrightId = runtimeState.outrightId || '';
+      runtimeBookmakerHash = runtimeState.bookmakerHash || runtimeBookmakerHash;
+    }
 
     return {
       ...normalizedTarget,
@@ -329,7 +822,8 @@ const reconProtocolFetchFlow = {
       tournamentId,
       appBundleUrl,
       seasonToken,
-      locale
+      locale,
+      runtimeBookmakerHash
     };
   },
 
@@ -400,6 +894,7 @@ const reconProtocolFetchFlow = {
     const matches = [];
     const pageStats = [];
     const monitor = this._createPureProtocolMonitor();
+    monitor.sourceUrl = String(referer || apiBaseUrl || '').trim();
     const base = buildBaseUrl(apiBaseUrl);
     let pageLimit = Math.max(1, Number(maxPages || 1));
     let httpFailure = null;
@@ -509,7 +1004,7 @@ const reconProtocolFetchFlow = {
         .map((token) => String(token || '').trim())
         .filter(Boolean)
     )];
-    const bookmakerHash = this._resolvePureProtocolBookmakerHash(target, options);
+    const bookmakerHash = this._resolvePureProtocolBookmakerHash(context, options);
 
     if (tokenCandidates.length === 0) {
       throw new Error('PURE_PROTOCOL_TOURNAMENT_TOKEN_MISSING');
@@ -618,7 +1113,7 @@ const reconProtocolFetchFlow = {
     const repairedArchiveUrl = tournamentToken
       ? this._repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentToken)
       : archiveApiUrl;
-    const currentTournamentUrl = this._callNavigatorOverride(
+    const currentTournamentUrl = await this._callNavigatorOverride(
       '_getCurrentTournamentEndpoint',
       () => this._getCurrentTournamentEndpoint()
     ) || this._callNavigatorOverride(

@@ -171,11 +171,11 @@ describe('ReconEngine - Bulk Flow TDD', () => {
         async getUnstitchedMatches() {
           return pendingMatches;
         },
-        async batchSaveOddsPortalMappings() {
-          return { success: true, inserted: pendingMatches.length };
+        async batchSaveOddsPortalMappings(mappings) {
+          return { success: true, inserted: mappings.length };
         },
-        async batchUpdateMatchPipelineStatus() {
-          return { updated: pendingMatches.length };
+        async batchUpdateMatchPipelineStatus(matchIds) {
+          return { updated: matchIds.length };
         }
       },
       navigator: {
@@ -423,6 +423,64 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     });
     assert.ok(outcome.evidence.match_confidence > 0);
     assert.ok(outcome.evidence.match_confidence < 1);
+  });
+
+  it('批量持久化被 Repository 跳过时 linked 统计必须按实际 applied 结果计算', async () => {
+    const pendingMatches = createPendingMatches(1, 'Brasileirão', '2025/2026').map((match) => ({
+      ...match,
+      match_id: '268_20252026_4732850',
+      home_team: 'Flamengo',
+      away_team: 'Palmeiras'
+    }));
+
+    const engine = new ReconEngine({
+      configManager: {
+        getActiveLeagues() {
+          return [
+            { id: 268, name: 'Brasileirão', country: 'brazil', slug: 'serie-a', enabled: true }
+          ];
+        }
+      },
+      repository: {
+        async getReconEligibleMatches() {
+          return pendingMatches;
+        },
+        async batchSaveOddsPortalMappings() {
+          return { success: true, inserted: 0, updated: 0, applied: 0 };
+        },
+        async batchUpdateMatchPipelineStatus() {
+          return { updated: 0 };
+        }
+      },
+      navigator: {
+        async protocolArchiveExtract() {
+          return {
+            matches: [{
+              hash: 'force123',
+              url: 'https://www.oddsportal.com/football/brazil/serie-a-betano/flamengo-palmeiras-force123/',
+              homeTeam: 'Flamengo',
+              awayTeam: 'Palmeiras',
+              source: 'pure_protocol_archive'
+            }],
+            pagesScanned: 1,
+            sourceState: 'PURE_PROTOCOL'
+          };
+        }
+      },
+      parser: { calculateSimilarity: () => 1 },
+      logger: { info() {}, warn() {}, error() {} },
+      baseUrl: 'oddsportal://root'
+    });
+
+    const result = await engine.runReconMatrix({
+      season: '2025/2026',
+      concurrency: 1,
+      confidenceThreshold: 0.75,
+      forcePureProtocol: true
+    });
+
+    assert.strictEqual(result.linked, 0);
+    assert.strictEqual(result.perLeague[0].linked, 0);
   });
 
   it('批量对齐时在关闭高成功率降采样后应每 50 场输出一次进度快照', async () => {

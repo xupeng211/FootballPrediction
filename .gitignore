@@ -45,7 +45,8 @@ secrets/
 *.sublime-project
 *.sublime-workspace
 .eslintcache
-mcp_servers/
+mcp_servers/__pycache__/
+mcp_servers/*.pyc
 .claude/mcp_servers/
 
 # Project Data - Exclude sensitive and large files

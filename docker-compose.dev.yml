@@ -21,9 +21,9 @@ services:
       dockerfile: .devcontainer/Dockerfile
       args:
         INSTALL_PLAYWRIGHT: "true"
-        # 构建时代理（WSL2 访问 Windows 代理）
-        HTTP_PROXY: http://172.25.16.1:7890
-        HTTPS_PROXY: http://172.25.16.1:7890
+        # 构建时代理（仅在显式设置 DEV_HTTP_PROXY / DEV_HTTPS_PROXY 时启用）
+        HTTP_PROXY: ${DEV_HTTP_PROXY:-}
+        HTTPS_PROXY: ${DEV_HTTPS_PROXY:-}
     image: footballprediction:v175-stable
     container_name: football_prediction_dev
     restart: unless-stopped
@@ -34,8 +34,6 @@ services:
     volumes:
       # 主代码目录 - 双向同步
       - .:/app:cached
-      # 排除虚拟环境（使用容器内的）
-      - /opt/venv
       # 排除 node_modules（使用容器内的）
       - /app/node_modules
       # 持久化缓存
@@ -73,10 +71,10 @@ services:
       # Redis 连接
       - REDIS_HOST=host.docker.internal
       - REDIS_PORT=6379
-      # 代理配置（WSL2 访问 Windows Clash Verge）
-      - HTTP_PROXY=http://172.25.16.1:7890
-      - HTTPS_PROXY=http://172.25.16.1:7890
-      - CONTAINER_PROXY=http://172.25.16.1:7890
+      # 代理配置（仅在显式设置 DEV_* 变量时启用）
+      - HTTP_PROXY=${DEV_HTTP_PROXY:-}
+      - HTTPS_PROXY=${DEV_HTTPS_PROXY:-}
+      - CONTAINER_PROXY=${DEV_CONTAINER_PROXY:-}
       - NO_PROXY=localhost,127.0.0.1,host.docker.internal
       # Python 配置
       - PYTHONUNBUFFERED=1

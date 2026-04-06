@@ -9,8 +9,9 @@
  * - 全链路 season 动态透传
  *
  * 用法:
- *   node scripts/ops/recon_scanner.js --season 2024-2025 --league BUNDESLIGA
+ *   node scripts/ops/recon_scanner.js --season 2024-2025 --league BUNDESLIGA --force-dom-mode
  *   node scripts/ops/recon_scanner.js --season 2024-2025 --all-leagues
+ *   node scripts/ops/recon_scanner.js --help
  *
  * @module scripts/ops/recon_scanner
  * @version V11.0-CLEAN-SWEEP
@@ -20,7 +21,6 @@
 'use strict';
 
 const path = require('path');
-const { Pool } = require('pg');
 const {
   parseArgs,
   buildDbPoolConfig,
@@ -30,26 +30,43 @@ const {
   signalToExitCode,
   main: cliMain
 } = require('./ReconCLIHandler');
-const { loadReconConfig } = require('../../src/infrastructure/recon/services/ReconServiceConfig');
-
-// 工业级组件导入
-const { ReconNavigator, ReconParser, ReconStitcher, ReconMetrics, ReconGuardian, ReconHealthServer } = require('../../src/infrastructure/recon');
-const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
-const { ReconDiskSweeper } = require('../../src/infrastructure/recon/services/ReconDiskSweeper');
-const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
-const { FixtureRepository } = require('../../src/infrastructure/services/FixtureRepository');
-const { L1ConfigManager } = require('../../src/infrastructure/services/L1ConfigManager');
 
 const DEFAULT_RECON_CONFIG_PATH = path.join(__dirname, '../../config/recon_config.json');
-
-// 加载配置
-const RECON_CONFIG = loadConfig();
 
 /**
  * 加载配置文件
  */
 function loadConfig(configPath = DEFAULT_RECON_CONFIG_PATH) {
+  const { loadReconConfig } = require('../../src/infrastructure/recon/services/ReconServiceConfig');
   return loadReconConfig(configPath);
+}
+
+function getReconRuntimeExports() {
+  return require('../../src/infrastructure/recon');
+}
+
+function getReconEngineClass() {
+  return require('../../src/infrastructure/recon/ReconEngine').ReconEngine;
+}
+
+function getReconDiskSweeperClass() {
+  return require('../../src/infrastructure/recon/services/ReconDiskSweeper').ReconDiskSweeper;
+}
+
+function getProxyRotatorClass() {
+  return require('../../src/infrastructure/harvesters/ProxyRotator').ProxyRotator;
+}
+
+function getFixtureRepositoryClass() {
+  return require('../../src/infrastructure/services/FixtureRepository').FixtureRepository;
+}
+
+function getL1ConfigManagerClass() {
+  return require('../../src/infrastructure/services/L1ConfigManager').L1ConfigManager;
+}
+
+function getPgPoolClass() {
+  return require('pg').Pool;
 }
 
 function isSkippedFutureFinalsResult(result) {
@@ -85,7 +102,7 @@ function computeExitCode(results, totalCoverage) {
  */
 class ReconScanner {
   constructor(dependencies = {}) {
-    this.config = dependencies.config || RECON_CONFIG;
+    this.config = dependencies.config || loadConfig();
     this.traceId = dependencies.traceId || `recon-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
     this.logger = this._createTraceLogger(
       dependencies.logger || this._createLogger(),
@@ -104,6 +121,8 @@ class ReconScanner {
     this.configManager = dependencies.configManager;
     this.diskSweeper = dependencies.diskSweeper;
     this.currentSeasonOnly = dependencies.currentSeasonOnly === true;
+    this.allNonLinked = dependencies.allNonLinked === true;
+    this.forceDomMode = dependencies.forceDomMode === true;
     this.resources = [];
 
     this.logger.info('scanner_initialized', { traceId: this.traceId, version: 'V11.0' });
@@ -165,6 +184,12 @@ class ReconScanner {
    * 初始化组件
    */
   async initialize() {
+    const { ReconParser, ReconStitcher, ReconMetrics, ReconGuardian, ReconHealthServer } = getReconRuntimeExports();
+    const ReconDiskSweeper = getReconDiskSweeperClass();
+    const ProxyRotator = getProxyRotatorClass();
+    const ReconEngine = getReconEngineClass();
+    const L1ConfigManager = getL1ConfigManagerClass();
+
     // 初始化指标收集器
     if (!this.metrics) {
       this.metrics = new ReconMetrics({
@@ -268,7 +293,9 @@ class ReconScanner {
         proxyRotator: this.proxyRotator,
         configManager: this.configManager,
         baseUrl: this.config.oddsportal?.base_url,
-        currentSeasonOnly: this.currentSeasonOnly
+        currentSeasonOnly: this.currentSeasonOnly,
+        allNonLinked: this.allNonLinked,
+        forceDomMode: this.forceDomMode
       });
     } else {
       this.engine.traceId = this.traceId;
@@ -276,6 +303,8 @@ class ReconScanner {
       this.engine.configManager = this.configManager;
       this.engine.baseUrl = this.config.oddsportal?.base_url || this.engine.baseUrl;
       this.engine.currentSeasonOnly = this.currentSeasonOnly;
+      this.engine.allNonLinked = this.allNonLinked;
+      this.engine.forceDomMode = this.forceDomMode;
     }
 
     this.logger.info('scanner_components_initialized');
@@ -311,6 +340,7 @@ class ReconScanner {
    * @returns {Promise<ReconNavigator>}
    */
   async ensureNavigator(options = {}) {
+    const { ReconNavigator } = getReconRuntimeExports();
     const launchBrowser = options.launchBrowser !== false;
 
     if (this.engine?.navigator) {
@@ -382,13 +412,19 @@ class ReconScanner {
       let result;
       if (options.crossLeague) {
         // 跨联赛扫描（处理德乙、德国杯）
-        result = await this.engine.crossLeagueScan(season, leagueConfig, options.additionalSlugs || []);
+        result = await this.engine.crossLeagueScan(season, leagueConfig, options.additionalSlugs || [], {
+          forceDomMode: options.forceDomMode === true
+        });
       } else if (options.dateDriven) {
         // 日期驱动扫描
-        result = await this.engine.dateDrivenScan(season, leagueConfig);
+        result = await this.engine.dateDrivenScan(season, leagueConfig, {
+          forceDomMode: options.forceDomMode === true
+        });
       } else {
         // 智能扫描（自动选择最佳策略）
-        result = await this.engine.smartScan(season, leagueConfig);
+        result = await this.engine.smartScan(season, leagueConfig, {
+          forceDomMode: options.forceDomMode === true
+        });
       }
 
       result.durationMs = Date.now() - startTime;
@@ -444,8 +480,8 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
     buildDbPoolConfigFn: dependencies.buildDbPoolConfigFn || buildDbPoolConfig,
     computeExitCodeFn: dependencies.computeExitCodeFn || computeExitCode,
     isSkippedFutureFinalsResultFn: dependencies.isSkippedFutureFinalsResultFn || isSkippedFutureFinalsResult,
-    createPool: dependencies.createPool || ((config) => new Pool(config)),
-    createRepository: dependencies.createRepository || ((options) => new FixtureRepository(options)),
+    createPool: dependencies.createPool || ((config) => new (getPgPoolClass())(config)),
+    createRepository: dependencies.createRepository || ((options) => new (getFixtureRepositoryClass())(options)),
     createScanner: dependencies.createScanner || ((options) => new ReconScanner(options))
   });
 }
@@ -462,10 +498,9 @@ if (require.main === module) {
 }
 
 // 导出供测试使用
-module.exports = {
+const exported = {
   ReconScanner,
   loadConfig,
-  RECON_CONFIG,
   parseArgs,
   computeExitCode,
   buildDbPoolConfig,
@@ -475,3 +510,12 @@ module.exports = {
   signalToExitCode,
   main
 };
+
+Object.defineProperty(exported, 'RECON_CONFIG', {
+  enumerable: true,
+  get() {
+    return loadConfig();
+  }
+});
+
+module.exports = exported;

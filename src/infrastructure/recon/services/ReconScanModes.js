@@ -8,7 +8,9 @@ const reconScanModes = {
     this.logger.info('protocol_archive_scan_start', { season, dbSeason, league: leagueConfig.name });
 
     try {
-      const unstitched = await this.taskPlanner.loadReconPendingMatches({ dbSeason, league: leagueConfig });
+      const unstitched = await this.taskPlanner.loadReconPendingMatches({ dbSeason, league: leagueConfig }, {
+        allNonLinked: this.allNonLinked === true
+      });
       if (unstitched.length === 0) {
         return { success: true, season, league: leagueConfig.name, inserted: 0, reason: 'no_pending_matches' };
       }
@@ -69,26 +71,26 @@ const reconScanModes = {
     }
   },
 
-  async dateDrivenScan(season, leagueConfig) {
+  async dateDrivenScan(season, leagueConfig, options = {}) {
     this.logger.warn('date_driven_scan_deprecated', {
       season,
       league: leagueConfig?.name || null,
       fallback: 'season_mirror'
     });
-    return this.smartScan(season, leagueConfig);
+    return this.smartScan(season, leagueConfig, options);
   },
 
-  async crossLeagueScan(season, leagueConfig, additionalSlugs = []) {
+  async crossLeagueScan(season, leagueConfig, additionalSlugs = [], options = {}) {
     const startTime = Date.now();
     this.logger.info('cross_league_scan_start', { season, league: leagueConfig.name, additionalSlugs });
 
     const allResults = [];
-    const mainResult = await this.smartScan(season, leagueConfig);
+    const mainResult = await this.smartScan(season, leagueConfig, options);
     allResults.push({ slug: leagueConfig.slug, ...mainResult });
 
     for (const slug of additionalSlugs) {
       const slugConfig = { ...leagueConfig, slug };
-      const slugResult = await this.smartScan(season, slugConfig);
+      const slugResult = await this.smartScan(season, slugConfig, options);
       allResults.push({ slug, ...slugResult });
     }
 
@@ -107,7 +109,7 @@ const reconScanModes = {
     };
   },
 
-  async smartScan(season, leagueConfig) {
+  async smartScan(season, leagueConfig, options = {}) {
     const startTime = Date.now();
 
     if (this.reconStrategy === 'legacy') {
@@ -155,7 +157,9 @@ const reconScanModes = {
       disableDomFallback: this.disableDomFallback
     });
 
-    const pendingMatches = await this.taskPlanner.loadReconPendingMatches(target);
+    const pendingMatches = await this.taskPlanner.loadReconPendingMatches(target, {
+      allNonLinked: this.allNonLinked === true
+    });
     if (!Array.isArray(pendingMatches) || pendingMatches.length === 0) {
       return {
         success: true,
@@ -177,6 +181,7 @@ const reconScanModes = {
         concurrency: this.defaultReconConcurrency,
         batchSize: this.reconBatchSize,
         confidenceThreshold: this.confidenceThreshold,
+        forceDomMode: options.forceDomMode ?? this.forceDomMode,
         pendingMatches
       });
       const coverage = result.pendingTotal > 0
@@ -292,7 +297,9 @@ const reconScanModes = {
 
     try {
       const dbSeason = this.taskPlanner.normalizeDbSeason(season);
-      const unstitched = await this.taskPlanner.loadReconPendingMatches({ dbSeason, league: leagueConfig });
+      const unstitched = await this.taskPlanner.loadReconPendingMatches({ dbSeason, league: leagueConfig }, {
+        allNonLinked: this.allNonLinked === true
+      });
 
       if (unstitched.length === 0) {
         return { success: true, inserted: 0, reason: 'no_pending_matches' };
@@ -321,7 +328,7 @@ const reconScanModes = {
 
           if (match && href.includes(leagueCountry) && href.includes(leagueSlug)) {
             const hash = match[1];
-            const parent = link.closest('div[class*="event"], tr, .eventRow');
+            const parent = link.closest('div[role="row"], div[data-testid*="event"], div[data-testid*="match"], div[class*="event"], div[class*="sportName"], tr');
             let text = '';
 
             if (parent) {

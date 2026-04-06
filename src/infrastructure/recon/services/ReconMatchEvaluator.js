@@ -40,6 +40,21 @@ class ReconMatchEvaluator {
       ? Number(options.activeLeagueId)
       : null;
     this.activeLeagueDictionary = new Map();
+    this.dictionaryStringContainsLeagueIds = new Set(
+      (options.dictionaryStringContainsLeagueIds
+        ?? runtimeConfig.dictionary_string_contains_league_ids
+        ?? [])
+        .map((leagueId) => Number(leagueId))
+        .filter((leagueId) => Number.isInteger(leagueId) && leagueId > 0)
+    );
+    this.dictionaryStringContainsMinLength = Math.max(
+      1,
+      Number(
+        options.dictionaryStringContainsMinLength
+        ?? runtimeConfig.dictionary_string_contains_min_length
+        ?? 5
+      )
+    );
 
     if (Array.isArray(options.leagueDictionaryEntries)) {
       this.setLeagueDictionaryEntries(this.activeLeagueId, options.leagueDictionaryEntries);
@@ -84,6 +99,50 @@ class ReconMatchEvaluator {
     this.activeLeagueId = null;
     this.activeLeagueDictionary = new Map();
     return this;
+  }
+
+  shouldAllowDictionaryStringContains() {
+    return Number.isInteger(this.activeLeagueId)
+      && this.activeLeagueId > 0
+      && this.dictionaryStringContainsLeagueIds.has(this.activeLeagueId);
+  }
+
+  normalizeDictionaryComparableName(teamName) {
+    const raw = String(teamName || '')
+      .replace(/\([^)]*\)/g, ' ')
+      .replace(/\[[^\]]*\]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return this.normalizeTeamName(raw);
+  }
+
+  isComparableNameEquivalent(left, right) {
+    const normalizedLeft = this.normalizeTeamName(left);
+    const normalizedRight = this.normalizeTeamName(right);
+    if (normalizedLeft && normalizedRight && normalizedLeft === normalizedRight) {
+      return true;
+    }
+
+    const simplifiedLeft = this.normalizeDictionaryComparableName(left);
+    const simplifiedRight = this.normalizeDictionaryComparableName(right);
+    if (simplifiedLeft && simplifiedRight && simplifiedLeft === simplifiedRight) {
+      return true;
+    }
+
+    if (!this.shouldAllowDictionaryStringContains() || !simplifiedLeft || !simplifiedRight) {
+      return false;
+    }
+
+    const shorter = simplifiedLeft.length <= simplifiedRight.length
+      ? simplifiedLeft
+      : simplifiedRight;
+    const longer = shorter === simplifiedLeft
+      ? simplifiedRight
+      : simplifiedLeft;
+
+    return shorter.length >= this.dictionaryStringContainsMinLength
+      && longer.includes(shorter);
   }
 
   calculateSimilarity(left, right) {
@@ -184,7 +243,7 @@ class ReconMatchEvaluator {
       return false;
     }
 
-    return this.normalizeTeamName(comparable.value) === this.normalizeTeamName(localTeamName);
+    return this.isComparableNameEquivalent(comparable.value, localTeamName);
   }
 
   isPlaceholderToken(token) {
@@ -357,10 +416,10 @@ class ReconMatchEvaluator {
     const directScore = (directHome + directAway) / 2;
     const swappedScore = (swappedHome + swappedAway) / 2;
 
-    const directNormalized = this.normalizeTeamName(comparableCandidateHome) === this.normalizeTeamName(l1Home)
-      && this.normalizeTeamName(comparableCandidateAway) === this.normalizeTeamName(l1Away);
-    const swappedNormalized = this.normalizeTeamName(comparableCandidateHome) === this.normalizeTeamName(l1Away)
-      && this.normalizeTeamName(comparableCandidateAway) === this.normalizeTeamName(l1Home);
+    const directNormalized = this.isComparableNameEquivalent(comparableCandidateHome, l1Home)
+      && this.isComparableNameEquivalent(comparableCandidateAway, l1Away);
+    const swappedNormalized = this.isComparableNameEquivalent(comparableCandidateHome, l1Away)
+      && this.isComparableNameEquivalent(comparableCandidateAway, l1Home);
     const directMatch = directDictionaryMatch || directNormalized || (
       directHome > this.orientationSimilarityThreshold && directAway > this.orientationSimilarityThreshold
     );
