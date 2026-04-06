@@ -1,5 +1,20 @@
 'use strict';
 
+const ALLOWED_MAPPING_METHODS = [
+  'exact',
+  'fuzzy',
+  'manual',
+  'unknown',
+  'hash_lock',
+  'set_reconciliation',
+  'recon_matrix',
+  'protocol_extract',
+  'dictionary',
+  'semantic',
+  'V5.5_HARVESTER',
+  'v41_186_auto'
+];
+
 function assertFunctionDependency(name, value) {
   if (typeof value !== 'function') {
     throw new TypeError(`[ReconSchemaJanitor] 缺少必需依赖: ${name}`);
@@ -29,6 +44,7 @@ class ReconSchemaJanitor {
     this.RepositoryError = options.RepositoryError;
     this.mappingSchemaEnsured = false;
     this.mappingHashUniquenessEnsured = false;
+    this.leagueDictionarySchemaEnsured = false;
   }
 
   async ensureOddsPortalMappingSchema(options = {}) {
@@ -43,7 +59,29 @@ class ReconSchemaJanitor {
         ALTER TABLE matches_oddsportal_mapping
         ADD COLUMN IF NOT EXISTS is_reversed BOOLEAN DEFAULT FALSE
       `);
+      await this.getDbPool().query(`
+        ALTER TABLE matches_oddsportal_mapping
+        ADD COLUMN IF NOT EXISTS candidate_name VARCHAR(255)
+      `);
+      await this.getDbPool().query(`
+        ALTER TABLE matches_oddsportal_mapping
+        ADD COLUMN IF NOT EXISTS is_evidence_only BOOLEAN DEFAULT FALSE
+      `);
+      await this.getDbPool().query(`
+        ALTER TABLE matches_oddsportal_mapping
+        DROP CONSTRAINT IF EXISTS valid_method
+      `);
+      await this.getDbPool().query(`
+        ALTER TABLE matches_oddsportal_mapping
+        ADD CONSTRAINT valid_method CHECK (
+          mapping_method::text = ANY (ARRAY[${ALLOWED_MAPPING_METHODS.map((method) => `'${method}'::text`).join(', ')}])
+        )
+      `);
     }, 'ensureOddsPortalMappingSchema');
+
+    if (!this.leagueDictionarySchemaEnsured) {
+      await this.ensureLeagueDictionarySchema();
+    }
 
     if (!this.mappingHashUniquenessEnsured) {
       await this.ensureMappingHashUniquenessIndex();
@@ -54,6 +92,42 @@ class ReconSchemaJanitor {
     }
 
     this.mappingSchemaEnsured = true;
+  }
+
+  async ensureLeagueDictionarySchema() {
+    await this.executeWithRetry(async () => {
+      await this.getDbPool().query(`
+        CREATE TABLE IF NOT EXISTS recon_league_dictionary (
+          id SERIAL PRIMARY KEY,
+          league_id INTEGER NOT NULL,
+          season VARCHAR(16) NOT NULL DEFAULT '',
+          remote_name VARCHAR(255) NOT NULL,
+          local_team_id VARCHAR(64) NOT NULL,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `);
+      await this.getDbPool().query(`
+        ALTER TABLE recon_league_dictionary
+        ADD COLUMN IF NOT EXISTS season VARCHAR(16) NOT NULL DEFAULT ''
+      `);
+      await this.getDbPool().query(`
+        DROP INDEX IF EXISTS idx_recon_league_dictionary_unique
+      `);
+      await this.getDbPool().query(`
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_recon_league_dictionary_unique
+        ON recon_league_dictionary(league_id, season, remote_name)
+      `);
+      await this.getDbPool().query(`
+        DROP INDEX IF EXISTS idx_recon_league_dictionary_team
+      `);
+      await this.getDbPool().query(`
+        CREATE INDEX IF NOT EXISTS idx_recon_league_dictionary_team
+        ON recon_league_dictionary(league_id, season, local_team_id)
+      `);
+    }, 'ensureLeagueDictionarySchema');
+
+    this.leagueDictionarySchemaEnsured = true;
   }
 
   async ensureMappingHashUniquenessIndex() {

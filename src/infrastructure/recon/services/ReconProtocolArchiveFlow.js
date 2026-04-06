@@ -1,22 +1,66 @@
 'use strict';
 
+function decodeHtmlEntities(text = '') {
+  return String(text || '')
+    .replace(/&quot;/g, '"')
+    .replace(/&#34;/g, '"')
+    .replace(/&#39;/g, '\'')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>');
+}
+
 const reconProtocolArchiveFlow = {
+  _extractCurrentTournamentEndpointFromHtml(html) {
+    const decodedHtml = decodeHtmlEntities(String(html || ''));
+    const rawUrl = decodedHtml.match(/oddsRequest"\s*:\s*{\s*"url"\s*:\s*"([^"]*ajax-sport-country-tournament_[^"]+)"/i)?.[1]
+      || decodedHtml.match(/:odds-request\s*=\s*"\{\s*"url"\s*:\s*"([^"]*ajax-sport-country-tournament_[^"]+)"/i)?.[1]
+      || '';
+    const normalizedUrl = String(rawUrl || '').replace(/\\\//g, '/').trim();
+
+    if (!normalizedUrl || /archive_/i.test(normalizedUrl)) {
+      return null;
+    }
+
+    const pageUrl = this.page && typeof this.page.url === 'function'
+      ? String(this.page.url() || '').trim()
+      : '';
+
+    try {
+      return new URL(normalizedUrl, pageUrl || 'https://www.oddsportal.com/').href;
+    } catch {
+      return normalizedUrl;
+    }
+  },
+
   _resultHasDecryptFailure(result) {
     return Array.isArray(result?.pageStats)
       && result.pageStats.some((stat) => typeof stat?.error === 'string'
         && stat.error.startsWith('decrypt_failed:'));
   },
 
-  _getCurrentTournamentEndpoint() {
+  async _getCurrentTournamentEndpoint() {
     const endpoints = Array.from(this.navigator.apiEndpoints)
       .filter((url) => /ajax-sport-country-tournament_\/\d+\/[^/]+\/X/i.test(url))
       .filter((url) => !/archive_/i.test(url));
 
-    if (endpoints.length === 0) {
-      return null;
+    if (endpoints.length > 0) {
+      return endpoints.sort((a, b) => this._scoreTournamentUrl(b) - this._scoreTournamentUrl(a))[0];
     }
 
-    return endpoints.sort((a, b) => this._scoreTournamentUrl(b) - this._scoreTournamentUrl(a))[0];
+    if (this.page && typeof this.page.content === 'function') {
+      try {
+        const extracted = this._extractCurrentTournamentEndpointFromHtml(await this.page.content());
+        if (extracted) {
+          this.navigator.apiEndpoints.add(extracted);
+          return extracted;
+        }
+      } catch (_error) {
+        // HTML 提取失败时退回网络拦截结果
+      }
+    }
+
+    return null;
   },
 
   _scoreTournamentUrl(url) {
@@ -47,6 +91,7 @@ const reconProtocolArchiveFlow = {
           await this.page.waitForTimeout(ms);
         }
       },
+      getInterceptedData: () => this.navigator.getInterceptedData(),
       getApiEndpoints: () => Array.from(this.navigator.apiEndpoints),
       scoreArchiveUrl: (url) => this._callNavigatorOverride(
         '_scoreArchiveUrl',
@@ -95,7 +140,118 @@ const reconProtocolArchiveFlow = {
     };
   },
 
+  async _discoverArchiveEndpointsFromPageResources() {
+    if (!this.page || typeof this.page.evaluate !== 'function') {
+      return [];
+    }
+
+    try {
+      const endpoints = await this.page.evaluate(() => {
+        const resourceEntries = Array.isArray(performance.getEntriesByType('resource'))
+          ? performance.getEntriesByType('resource')
+          : [];
+        const discovered = new Set();
+
+        for (const entry of resourceEntries) {
+          if (!entry?.name || typeof entry.name !== 'string') {
+            continue;
+          }
+          if (/ajax-sport-country-tournament-archive_/i.test(entry.name)) {
+            discovered.add(entry.name.trim());
+          }
+        }
+
+        return [...discovered];
+      });
+
+      const normalized = Array.isArray(endpoints)
+        ? endpoints.map((url) => String(url || '').trim()).filter(Boolean)
+        : [];
+
+      for (const endpoint of normalized) {
+        this.navigator.apiEndpoints.add(endpoint);
+      }
+
+      return normalized;
+    } catch (error) {
+      if (typeof this.logger?.debug === 'function') {
+        this.logger.debug('protocol_archive_resource_probe_failed', {
+          error: error.message
+        });
+      }
+      return [];
+    }
+  },
+
   async protocolArchiveExtract(baseUrl, options = {}) {
+    if (options.forcePureProtocol === true) {
+      const maxPages = options.maxPages ?? this.navigator.archiveMaxPages;
+      const timeoutMs = options.timeoutMs ?? this.navigator.archiveTimeoutMs;
+      const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
+      const circuitBreakerKey = this.navigator._resolveCircuitBreakerKey(baseUrl, options);
+      let pureResult = null;
+      let pureError = null;
+
+      try {
+        pureResult = await this._callNavigatorOverride(
+          '_extractViaPureProtocol',
+          (resolvedTarget, resolvedOptions) => this._extractViaPureProtocol(resolvedTarget, resolvedOptions),
+          { url: baseUrl, baseUrl },
+          options
+        );
+      } catch (error) {
+        pureError = error;
+      }
+
+      if (preferCurrentSeasonSource && (!pureResult || pureResult.matches?.length === 0)) {
+        const fallbackResult = await this._callNavigatorOverride(
+          '_fallbackToLeagueTournament',
+          (resolvedBaseUrl, resolvedArchiveUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedReason, resolvedOptions) => (
+            this._fallbackToLeagueTournament(
+              resolvedBaseUrl,
+              resolvedArchiveUrl,
+              resolvedMaxPages,
+              resolvedTimeoutMs,
+              resolvedReason,
+              resolvedOptions
+            )
+          ),
+          baseUrl,
+          null,
+          maxPages,
+          timeoutMs,
+          pureError ? 'pure_protocol_failed' : 'pure_protocol_source_empty',
+          { circuitBreakerKey }
+        );
+
+        if (Array.isArray(fallbackResult?.matches) && fallbackResult.matches.length > 0) {
+          this.logger.info('protocol_archive_complete', {
+            pagesScanned: fallbackResult.pageStats?.length || 0,
+            totalCandidates: fallbackResult.matches?.length || 0,
+            sourceState: fallbackResult.sourceState || 'CURRENT_TOURNAMENT_FALLBACK',
+            breakerKey: circuitBreakerKey,
+            pureProtocol: true
+          });
+
+          return fallbackResult;
+        }
+      }
+
+      if (pureError) {
+        throw pureError;
+      }
+
+      this.logger.info('protocol_archive_complete', {
+        pagesScanned: pureResult.pageStats?.length || 0,
+        totalCandidates: pureResult.matches?.length || 0,
+        sourceState: pureResult.sourceState || 'SOURCE_EMPTY',
+        breakerKey: circuitBreakerKey,
+        pureProtocol: true
+      });
+
+      return pureResult;
+    }
+
     await this.navigator.ensureBrowserHealthy();
 
     const maxPages = options.maxPages ?? this.navigator.archiveMaxPages;
@@ -133,8 +289,20 @@ const reconProtocolArchiveFlow = {
     await this.navigator.navigate(baseUrl, { waitUntil: 'domcontentloaded', ...navigateOptions });
     await this.page.waitForTimeout(this.navigator.postApiDiscoveryWaitMs);
 
-    const archiveEndpoints = Array.from(this.navigator.apiEndpoints)
+    let archiveEndpoints = Array.from(this.navigator.apiEndpoints)
       .filter((url) => /ajax-sport-country-tournament-archive_/i.test(url));
+
+    if (archiveEndpoints.length === 0) {
+      const resourceEndpoints = await this._discoverArchiveEndpointsFromPageResources();
+      archiveEndpoints = resourceEndpoints.filter((url) => /ajax-sport-country-tournament-archive_/i.test(url));
+
+      if (archiveEndpoints.length > 0) {
+        this.logger.info('protocol_archive_resource_probe_hit', {
+          endpointCount: archiveEndpoints.length,
+          breakerKey: circuitBreakerKey
+        });
+      }
+    }
 
     if (archiveEndpoints.length === 0) {
       this.logger.warn('protocol_archive_no_api');

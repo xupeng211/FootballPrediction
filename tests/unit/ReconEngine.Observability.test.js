@@ -138,6 +138,71 @@ test('ReconEngine._persistReconBatches 在 allowMismatchRetry 模式下应允许
   ]);
 });
 
+test('ReconEngine._persistReconBatches 应先持久化 mismatch 证据，再回写 RECON_MISMATCH', async () => {
+  const repositoryCalls = [];
+
+  const engine = new ReconEngine({
+    repository: {
+      async batchSaveOddsPortalMappings() {
+        return { success: true, inserted: 0, updated: 0 };
+      },
+      async batchSaveMismatchEvidence(batch) {
+        repositoryCalls.push({ type: 'evidence', batch });
+        return { success: true, saved: batch.length };
+      },
+      async batchUpdateMatchPipelineStatus(batch, status, options) {
+        repositoryCalls.push({ type: 'status', batch, status, options });
+        return { success: true, updated: batch.length };
+      }
+    },
+    logger: {
+      info() {},
+      warn() {},
+      error() {}
+    }
+  });
+
+  await engine._persistReconBatches([], [{
+    match_id: 'mismatch-1',
+    evidence: {
+      match_id: 'mismatch-1',
+      season: '2025/2026',
+      league_name: 'MLS',
+      home_team: 'Inter Miami CF',
+      away_team: 'New York City FC',
+      candidate_name: 'Inter Miami CF vs New York City FC',
+      match_confidence: 0.44
+    }
+  }], 25, {
+    season: '2025/2026',
+    league: 'MLS'
+  });
+
+  assert.deepEqual(repositoryCalls, [
+    {
+      type: 'evidence',
+      batch: [{
+        match_id: 'mismatch-1',
+        season: '2025/2026',
+        league_name: 'MLS',
+        home_team: 'Inter Miami CF',
+        away_team: 'New York City FC',
+        candidate_name: 'Inter Miami CF vs New York City FC',
+        match_confidence: 0.44
+      }]
+    },
+    {
+      type: 'status',
+      batch: ['mismatch-1'],
+      status: 'RECON_MISMATCH',
+      options: {
+        season: '2025/2026',
+        expectedCurrentStatus: 'harvested'
+      }
+    }
+  ]);
+});
+
 test('ReconEngine 在高成功率阶段应降低 RECON_PROGRESS 日志频率，但结束时仍必须落最终快照', () => {
   const logs = [];
   const engine = new ReconEngine({
@@ -268,4 +333,178 @@ test('ReconEngine 应在入库前按 season/hash 去重映射，避免批内 HAS
     ['m2', 'm3']
   );
   assert.deepEqual(result.droppedMatchIds, ['m1']);
+});
+
+test('ReconEngine 在 pending season/hash 冲突时应保留不同 match_id 交给仓储层仲裁', () => {
+  const engine = new ReconEngine({
+    logger: { info() {}, warn() {}, error() {} }
+  });
+
+  const result = engine._dedupeMappingsBySeasonHash([
+    {
+      match_id: 'm1',
+      season: '2025/2026',
+      oddsportal_hash: 'hash-x',
+      match_confidence: 0.61,
+      status: 'pending'
+    },
+    {
+      match_id: 'm2',
+      season: '2025/2026',
+      oddsportal_hash: 'hash-x',
+      match_confidence: 0.84,
+      status: 'pending'
+    },
+    {
+      match_id: 'm3',
+      season: '2025/2026',
+      oddsportal_hash: 'hash-y',
+      match_confidence: 0.73
+    }
+  ]);
+
+  assert.deepEqual(
+    result.mappings.map((item) => item.match_id).sort(),
+    ['m1', 'm2', 'm3']
+  );
+  assert.deepEqual(result.droppedMatchIds, []);
+  assert.deepEqual(result.bypassedMatchIds, ['m1', 'm2']);
+  assert.deepEqual(result.bypassedHashKeys, ['2025/2026::hash-x']);
+});
+
+test('ReconEngine._persistReconBatches 在 pending season/hash 冲突时应拆成单条 linked batch', async () => {
+  const repositoryCalls = [];
+  const logs = [];
+
+  const engine = new ReconEngine({
+    repository: {
+      async batchSaveOddsPortalMappings(batch) {
+        repositoryCalls.push(batch.map((mapping) => mapping.match_id));
+        return { success: true, inserted: batch.length, updated: 0 };
+      },
+      async batchUpdateMatchPipelineStatus() {
+        return { success: true, updated: 0 };
+      }
+    },
+    logger: {
+      info(event, data) {
+        logs.push({ level: 'info', event, data });
+      },
+      warn(event, data) {
+        logs.push({ level: 'warn', event, data });
+      },
+      error() {}
+    }
+  });
+
+  await engine._persistReconBatches(
+    [
+      { match_id: 'm2', season: '2025/2026', oddsportal_hash: 'hash-x', status: 'pending' },
+      { match_id: 'm1', season: '2025/2026', oddsportal_hash: 'hash-x', status: 'pending' },
+      { match_id: 'm3', season: '2025/2026', oddsportal_hash: 'hash-y', status: 'pending' }
+    ],
+    [],
+    25,
+    {
+      reconRunId: 'recon-run-bypass',
+      season: '2025/2026',
+      league: 'Championship'
+    }
+  );
+
+  assert.deepEqual(repositoryCalls, [['m1'], ['m2'], ['m3']]);
+
+  const linkedStartLogs = logs.filter((entry) => entry.event === 'recon_batch_persist_start');
+  assert.deepEqual(
+    linkedStartLogs.map((entry) => ({
+      batch_index: entry.data.batch_index,
+      hash_bypass: entry.data.hash_bypass,
+      season_hash_key: entry.data.season_hash_key,
+      match_ids: entry.data.match_ids
+    })),
+    [
+      {
+        batch_index: 1,
+        hash_bypass: true,
+        season_hash_key: '2025/2026::hash-x',
+        match_ids: { count: 1, preview: ['m1'], first: 'm1', last: 'm1', truncated: false }
+      },
+      {
+        batch_index: 2,
+        hash_bypass: true,
+        season_hash_key: '2025/2026::hash-x',
+        match_ids: { count: 1, preview: ['m2'], first: 'm2', last: 'm2', truncated: false }
+      },
+      {
+        batch_index: 3,
+        hash_bypass: false,
+        season_hash_key: null,
+        match_ids: { count: 1, preview: ['m3'], first: 'm3', last: 'm3', truncated: false }
+      }
+    ]
+  );
+});
+
+test('ReconEngine._persistReconBatches 在 hash bypass 单条批次遇到 HASH_CONFLICT 时应记录并继续', async () => {
+  const logs = [];
+  const repositoryCalls = [];
+
+  const engine = new ReconEngine({
+    repository: {
+      async batchSaveOddsPortalMappings(batch) {
+        repositoryCalls.push(batch.map((mapping) => mapping.match_id));
+        if (batch[0].match_id === 'm1') {
+          const error = new Error('season/hash conflict');
+          error.code = 'HASH_CONFLICT';
+          error.details = {
+            season: '2025/2026',
+            oddsportal_hash: 'hash-x',
+            existing_match_id: 'existing-1'
+          };
+          throw error;
+        }
+
+        return { success: true, inserted: batch.length, updated: 0 };
+      },
+      async batchUpdateMatchPipelineStatus() {
+        return { success: true, updated: 0 };
+      }
+    },
+    logger: {
+      info(event, data) {
+        logs.push({ level: 'info', event, data });
+      },
+      warn(event, data) {
+        logs.push({ level: 'warn', event, data });
+      },
+      error() {}
+    }
+  });
+
+  await engine._persistReconBatches(
+    [
+      { match_id: 'm1', season: '2025/2026', oddsportal_hash: 'hash-x', status: 'pending' },
+      { match_id: 'm2', season: '2025/2026', oddsportal_hash: 'hash-x', status: 'pending' },
+      { match_id: 'm3', season: '2025/2026', oddsportal_hash: 'hash-y', status: 'pending' }
+    ],
+    [],
+    25,
+    {
+      reconRunId: 'recon-run-bypass-skip',
+      season: '2025/2026',
+      league: 'MLS'
+    }
+  );
+
+  assert.deepEqual(repositoryCalls, [['m1'], ['m2'], ['m3']]);
+  const skipLog = logs.find((entry) => entry.event === 'recon_batch_hash_bypass_conflict_skipped');
+  assert.ok(skipLog);
+  assert.equal(skipLog.data.season_hash_key, '2025/2026::hash-x');
+  assert.deepEqual(skipLog.data.match_ids, {
+    count: 1,
+    preview: ['m1'],
+    first: 'm1',
+    last: 'm1',
+    truncated: false
+  });
 });

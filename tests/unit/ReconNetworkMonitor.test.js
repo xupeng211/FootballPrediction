@@ -28,8 +28,8 @@ describe('ReconNetworkMonitor', () => {
             total: 1,
             rows: [
               {
-                encodeEventId: 'hash-1',
-                url: '/football/england/premier-league-2025-2026/a-b-hash-1/',
+                encodeEventId: 'Hsh10001',
+                url: '/football/england/premier-league-2025-2026/a-b-Hsh10001/',
                 'home-name': 'A',
                 'away-name': 'B',
                 'date-start-timestamp': 1748185200
@@ -68,7 +68,7 @@ describe('ReconNetworkMonitor', () => {
     assert.deepStrictEqual(decryptCalls, ['encrypted-payload', 'encrypted-payload']);
     assert.strictEqual(monitor.apiEndpoints.size, 1);
     assert.strictEqual(monitor.getInterceptedData().length, 1);
-    assert.strictEqual(monitor.getInterceptedData()[0].hash, 'hash-1');
+    assert.strictEqual(monitor.getInterceptedData()[0].hash, 'Hsh10001');
     assert.strictEqual(monitor.stats.requestsTotal, 2);
     assert.strictEqual(monitor.stats.requestsSuccess, 2);
     assert.strictEqual(monitor.stats.decryptedSuccess, 2);
@@ -97,7 +97,7 @@ describe('ReconNetworkMonitor', () => {
     const wrappedBody = [
       "if (typeof pageVar == 'string') { pageVar = JSON.parse(pageVar); }",
       'if (typeof pageVar != "undefined") {',
-      '  pageVar = pageOutrightsVar = Object.assign(pageVar, JSON.parse("{\\"d\\":{\\"total\\":1,\\"rows\\":[{\\"encodeEventId\\":\\"wrapped-hash\\",\\"url\\":\\"/football/europe/champions-league-2025-2026/a-b-wrapped-hash/\\",\\"home-name\\":\\"A\\",\\"away-name\\":\\"B\\",\\"date-start-timestamp\\":1748185200}]}}"));',
+      '  pageVar = pageOutrightsVar = Object.assign(pageVar, JSON.parse("{\\"d\\":{\\"total\\":1,\\"rows\\":[{\\"encodeEventId\\":\\"WrPdH456\\",\\"url\\":\\"/football/europe/champions-league-2025-2026/a-b-WrPdH456/\\",\\"home-name\\":\\"A\\",\\"away-name\\":\\"B\\",\\"date-start-timestamp\\":1748185200}]}}"));',
       '}'
     ].join(' ');
 
@@ -109,7 +109,7 @@ describe('ReconNetworkMonitor', () => {
     assert.strictEqual(extractCalls, 0);
     assert.strictEqual(decryptCalls, 0);
     assert.strictEqual(matches.length, 1);
-    assert.strictEqual(matches[0].hash, 'wrapped-hash');
+    assert.strictEqual(matches[0].hash, 'WrPdH456');
   });
 
   it('archive fetch 遇到 HTTP 404 时不应继续走 decryptor', async () => {
@@ -174,6 +174,50 @@ describe('ReconNetworkMonitor', () => {
       result.pageStats[0].url,
       /^https:\/\/www\.oddsportal\.com\/ajax-sport-country-tournament-archive_\/1\/\/X\/2025-2026\/1\/\?_=\d+$/
     );
+  });
+
+  it('archive fetch 遇到 HTTP 200 但 body 内嵌 Status: 503 时应上报 httpFailure', async () => {
+    let decryptCalls = 0;
+    let extractCalls = 0;
+
+    const monitor = new ReconNetworkMonitor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-embedded-503',
+      page: {
+        async evaluate() {
+          return {
+            success: true,
+            status: 200,
+            text: 'URL:/ajax-sport-country-tournament-archive_/1/abc/X/2025/1/0/ Status: 503'
+          };
+        }
+      },
+      decryptorFactory: () => ({
+        getAlgorithmVersion: () => null,
+        async decrypt() {
+          decryptCalls++;
+          throw new Error('should_not_decrypt_embedded_503');
+        },
+        async extractDecryptor() {
+          extractCalls++;
+          throw new Error('should_not_extract_embedded_503');
+        }
+      })
+    });
+
+    const result = await monitor.fetchArchivePages(
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/abc/X/2025/1/0/',
+      3,
+      1000
+    );
+
+    assert.strictEqual(extractCalls, 0);
+    assert.strictEqual(decryptCalls, 0);
+    assert.deepStrictEqual(result.matches, []);
+    assert.strictEqual(result.httpFailure?.statusCode, 503);
+    assert.strictEqual(result.pageStats[0].statusCode, 503);
+    assert.strictEqual(result.pageStats[0].error, 'EMBEDDED_HTTP_503');
+    assert.strictEqual(result.pageStats[0].bodySignal, 'archive_placeholder_status');
   });
 
   it('archive 端点占位符响应不应误触发 decryptor', async () => {

@@ -463,6 +463,7 @@ class MatchCanonicalJanitor {
       SELECT match_id, season, oddsportal_hash, full_url, home_team, away_team, status, created_at, updated_at
       FROM matches_oddsportal_mapping
       WHERE match_id = ANY($1::text[])
+        AND COALESCE(is_evidence_only, FALSE) = FALSE
       ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, match_id
     `, [[...new Set(matchIds.map((matchId) => String(matchId)))]]); 
 

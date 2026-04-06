@@ -25,7 +25,7 @@ const reconProtocolSeasonSweep = {
 
     const discovery = await this.navigator.domScraper.discoverSeasonResultPages(
       resultsUrl,
-      { timeoutMs, maxPages },
+      { timeoutMs, maxPages, includeSeasonNavigation: false },
       {
         navigate: (url, dynamicNavigateOptions) => this.navigator.navigate(url, {
           ...dynamicNavigateOptions,
@@ -74,7 +74,7 @@ const reconProtocolSeasonSweep = {
       let pageMatches = this.navigator.getInterceptedData();
       let source = 'page_intercept';
       if (pageMatches.length === 0) {
-        pageMatches = await this.navigator.domScraper.extractCurrentSeasonResultRows(pageUrl);
+        pageMatches = await this.navigator.domScraper.extractCurrentSeasonResultRows(pageUrl, options);
         source = 'page_dom';
       }
 

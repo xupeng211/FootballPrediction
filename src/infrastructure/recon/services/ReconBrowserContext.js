@@ -12,11 +12,17 @@ const { ReconSessionManager } = require('./ReconSessionManager');
 
 const DEFAULT_READY_SELECTORS = [
   ...((RECON_CONFIG.oddsportal?.selectors?.match_row) || []),
-  '.eventRow a[href]',
+  'div[role="row"] a[href]',
+  'div[data-testid*="event"] a[href]',
+  'div[data-testid*="match"] a[href]',
+  '[class*="event-row"] a[href]',
+  '[class*="EventRow"] a[href]',
+  'div[class*="sportName"] a[href]',
   '.pagination a[href]',
   'main',
   'body'
 ];
+const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
 
 function resolveList(primary, secondary, fallback) {
   if (Array.isArray(primary) && primary.length > 0) {
@@ -30,10 +36,18 @@ function resolveList(primary, secondary, fallback) {
 
 function pageClosed(page) { return !page || (typeof page.isClosed === 'function' && page.isClosed()); }
 
+function buildHttpStatusError(statusCode, message, meta = {}) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  Object.assign(error, meta);
+  return error;
+}
+
 class ReconBrowserContext {
   constructor(options = {}) {
     const runtimeConfig = getReconConfigSection(['recon_runtime', 'browser_context'], {});
     const networkMonitorConfig = getReconConfigSection(['recon_runtime', 'network_monitor'], {});
+    const unlockStrategiesConfig = getReconConfigSection(['recon_runtime', 'unlock_strategies'], {});
 
     this.logger = options.logger || console;
     this.traceId = options.traceId || 'trace-unknown';
@@ -60,6 +74,7 @@ class ReconBrowserContext {
     this.consentVisibilityTimeoutMs = Number(options.consentVisibilityTimeoutMs ?? runtimeConfig.consent_visibility_timeout_ms);
     this.consentClickTimeoutMs = Number(options.consentClickTimeoutMs ?? runtimeConfig.consent_click_timeout_ms);
     this.consentPostClickWaitMs = Number(options.consentPostClickWaitMs ?? runtimeConfig.consent_post_click_wait_ms);
+    this.closeTimeoutMs = Number(options.closeTimeoutMs ?? runtimeConfig.close_timeout_ms ?? 5000);
     this.navigationReadySelectors = resolveList(
       options.navigationReadySelectors,
       runtimeConfig.navigation_ready_selectors,
@@ -88,7 +103,20 @@ class ReconBrowserContext {
     this.externalSessionPath = String(options.externalSessionPath || runtimeConfig.external_session_path || '');
     this.preferFullChromium = options.preferFullChromium ?? runtimeConfig.prefer_full_chromium ?? false;
     this.persistentProfileEnabled = options.persistentProfileEnabled ?? runtimeConfig.persistent_profile_enabled ?? true;
-    this.playwrightCacheRoot = String(options.playwrightCacheRoot || runtimeConfig.playwright_cache_root || '/root/.cache/ms-playwright');
+    this.explicitExecutablePath = String(
+      options.executablePath
+      || runtimeConfig.executable_path
+      || process.env.PLAYWRIGHT_EXECUTABLE_PATH
+      || ''
+    ).trim();
+    this.playwrightCacheRoot = String(
+      options.cachePath
+      || options.playwrightCacheRoot
+      || runtimeConfig.cache_path
+      || runtimeConfig.playwright_cache_root
+      || process.env.PLAYWRIGHT_CACHE_PATH
+      || ''
+    ).trim();
     this.userDataDirRoot = String(options.userDataDirRoot || runtimeConfig.user_data_dir_root || '');
     this.stealthProvider = options.stealthProvider || new ReconStealthProvider({
       logger: this.logger,
@@ -97,7 +125,7 @@ class ReconBrowserContext {
       deviceMemory: this.deviceMemory,
       platform: this.platform,
       userDataDirRoot: this.userDataDirRoot,
-      playwrightCacheRoot: this.playwrightCacheRoot
+      cachePath: this.playwrightCacheRoot
     });
     this.resolvePreferredExecutablePath = options.resolvePreferredExecutablePath
       || (() => this.stealthProvider.resolvePreferredExecutablePath());
@@ -111,7 +139,7 @@ class ReconBrowserContext {
     this.bookmakerUnlocker = options.bookmakerUnlocker || new ReconBookmakerUnlocker({
       logger: this.logger,
       traceId: this.traceId,
-      forceUnlockJ1: options.forceUnlockJ1 || runtimeConfig.force_unlock_j1 || {}
+      forceUnlockJ1: options.forceUnlockJ1 || unlockStrategiesConfig.force_unlock_j1 || runtimeConfig.force_unlock_j1 || {}
     });
     this.forceUnlockJ1 = this.bookmakerUnlocker.config;
     this._sessionPrimed = false;
@@ -129,7 +157,10 @@ class ReconBrowserContext {
       launchOptions.proxy = { server: `http://${this.proxy.host}:${this.proxy.port}` };
     }
 
-    if (!options.executablePath && this.preferFullChromium) {
+    const explicitExecutablePath = String(options.executablePath || this.explicitExecutablePath || '').trim();
+    if (explicitExecutablePath) {
+      launchOptions.executablePath = explicitExecutablePath;
+    } else if (this.preferFullChromium) {
       const executablePath = this.resolvePreferredExecutablePath();
       if (executablePath) {
         launchOptions.executablePath = executablePath;
@@ -137,7 +168,7 @@ class ReconBrowserContext {
           traceId: this.traceId,
           executablePath
         });
-      } else {
+      } else if (typeof this.logger.debug === 'function') {
         this.logger.debug('recon_browser_full_chromium_unavailable', {
           traceId: this.traceId,
           cacheRoot: this.playwrightCacheRoot
@@ -265,7 +296,8 @@ class ReconBrowserContext {
     const timeout = options.timeout || this.navigationTimeoutMs;
     const waitUntil = options.waitUntil || 'domcontentloaded';
     await this.primeSession(url, { timeout, waitUntil });
-    await this.page.goto(url, { timeout, waitUntil });
+    const response = await this.page.goto(url, { timeout, waitUntil });
+    await this.throwIfBackendFetchFailed(response, url, 'target');
     await this.handleConsent();
     if (pageClosed(this.page)) {
       return;
@@ -323,6 +355,7 @@ class ReconBrowserContext {
       timeout: options.timeout || this.navigationTimeoutMs,
       waitUntil: options.waitUntil || 'domcontentloaded'
     });
+    await this.throwIfBackendFetchFailed(null, this.homeWarmupUrl, 'warmup');
     await this.handleConsent();
     if (this.homeWarmupWaitMs > 0) {
       await this.page.waitForTimeout(this.homeWarmupWaitMs);
@@ -382,6 +415,81 @@ class ReconBrowserContext {
       timeout
     });
     return false;
+  }
+
+  async readBackendFailureSignal() {
+    if (!this.page || pageClosed(this.page)) {
+      return null;
+    }
+
+    let title = '';
+    let bodyText = '';
+
+    try {
+      if (typeof this.page.title === 'function') {
+        title = String(await this.page.title() || '');
+      }
+    } catch (_error) {
+      title = '';
+    }
+
+    try {
+      if (typeof this.page.evaluate === 'function') {
+        bodyText = String(await this.page.evaluate(() => document.body?.innerText || '') || '');
+      }
+    } catch (_error) {
+      bodyText = '';
+    }
+
+    const combined = `${title}\n${bodyText}`.trim();
+    if (!combined || !BACKEND_FETCH_FAILED_RE.test(combined)) {
+      return null;
+    }
+
+    return {
+      statusCode: 503,
+      title,
+      snippet: combined.slice(0, 200)
+    };
+  }
+
+  async throwIfBackendFetchFailed(response, url, phase = 'target') {
+    if (response && typeof response.status === 'function') {
+      const statusCode = Number(response.status()) || 0;
+      if (statusCode >= 500) {
+        this.logger.warn('recon_navigation_http_failure', {
+          traceId: this.traceId,
+          url,
+          phase,
+          statusCode
+        });
+        throw buildHttpStatusError(statusCode, `HTTP_${statusCode}`, {
+          url,
+          phase
+        });
+      }
+    }
+
+    const embeddedFailure = await this.readBackendFailureSignal();
+    if (!embeddedFailure) {
+      return;
+    }
+
+    this.logger.warn('recon_navigation_backend_fetch_failed', {
+      traceId: this.traceId,
+      url,
+      phase,
+      title: embeddedFailure.title,
+      snippet: embeddedFailure.snippet
+    });
+    throw buildHttpStatusError(
+      embeddedFailure.statusCode,
+      `HTTP_${embeddedFailure.statusCode} backend_fetch_failed`,
+      {
+        url,
+        phase
+      }
+    );
   }
 
   async triggerDataLoading(options = {}) {
@@ -454,29 +562,93 @@ class ReconBrowserContext {
     this.userDataDir = null;
     this._sessionPrimed = false;
 
-    if (context && typeof context.close === 'function') {
-      try {
-        await context.close();
-      } catch (error) {
-        this.logger.warn('recon_browser_context_close_failed', {
-          traceId: this.traceId,
-          error: error.message
-        });
-      }
-    }
+    let forceKillRequired = false;
+    forceKillRequired = await this._closeTargetWithTimeout('context', context) || forceKillRequired;
+    forceKillRequired = await this._closeTargetWithTimeout('browser', browser, { skipWhenSameAsContext: browser === context }) || forceKillRequired;
 
-    if (browser && browser !== context && typeof browser.close === 'function') {
-      try {
-        await browser.close();
-      } catch (error) {
-        this.logger.warn('recon_browser_context_close_failed', {
-          traceId: this.traceId,
-          error: error.message
-        });
-      }
+    if (forceKillRequired) {
+      await this._forceKillBrowserProcess(browser, context);
     }
 
     await this.stealthProvider.cleanupUserDataDir(userDataDir);
+  }
+
+  async _closeTargetWithTimeout(label, target, options = {}) {
+    if (!target || typeof target.close !== 'function' || options.skipWhenSameAsContext) {
+      return false;
+    }
+
+    const timeoutMs = Math.max(1, Number(this.closeTimeoutMs) || 5000);
+    let timedOut = false;
+    let timer = null;
+
+    try {
+      await Promise.race([
+        Promise.resolve().then(() => target.close()),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            timedOut = true;
+            reject(new Error(`${label}_close_timeout`));
+          }, timeoutMs);
+        })
+      ]);
+      return false;
+    } catch (error) {
+      this.logger.warn('recon_browser_context_close_failed', {
+        traceId: this.traceId,
+        target: label,
+        timeoutMs,
+        timedOut,
+        error: error.message
+      });
+      return true;
+    } finally {
+      if (timer) {
+        clearTimeout(timer);
+      }
+    }
+  }
+
+  async _forceKillBrowserProcess(browser, context) {
+    const processHandle = this._resolveBrowserProcessHandle(browser, context);
+    if (!processHandle || typeof processHandle.kill !== 'function') {
+      return false;
+    }
+
+    try {
+      processHandle.kill('SIGKILL');
+      this.logger.warn('recon_browser_context_process_killed', {
+        traceId: this.traceId,
+        signal: 'SIGKILL'
+      });
+      return true;
+    } catch (error) {
+      this.logger.warn('recon_browser_context_process_kill_failed', {
+        traceId: this.traceId,
+        error: error.message
+      });
+      return false;
+    }
+  }
+
+  _resolveBrowserProcessHandle(browser, context) {
+    const candidates = [
+      browser,
+      context && typeof context.browser === 'function' ? context.browser() : null
+    ];
+
+    for (const candidate of candidates) {
+      if (!candidate || typeof candidate.process !== 'function') {
+        continue;
+      }
+
+      const processHandle = candidate.process();
+      if (processHandle) {
+        return processHandle;
+      }
+    }
+
+    return null;
   }
 
   async _cleanupPartialLaunch(browser, context, page) {

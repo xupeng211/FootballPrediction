@@ -36,6 +36,29 @@ class ReconMatchEvaluator {
       : Array.isArray(matchingConfig.date_confidence_bands)
         ? matchingConfig.date_confidence_bands
         : [];
+    this.activeLeagueId = Number.isInteger(Number(options.activeLeagueId))
+      ? Number(options.activeLeagueId)
+      : null;
+    this.activeLeagueDictionary = new Map();
+    this.dictionaryStringContainsLeagueIds = new Set(
+      (options.dictionaryStringContainsLeagueIds
+        ?? runtimeConfig.dictionary_string_contains_league_ids
+        ?? [])
+        .map((leagueId) => Number(leagueId))
+        .filter((leagueId) => Number.isInteger(leagueId) && leagueId > 0)
+    );
+    this.dictionaryStringContainsMinLength = Math.max(
+      1,
+      Number(
+        options.dictionaryStringContainsMinLength
+        ?? runtimeConfig.dictionary_string_contains_min_length
+        ?? 5
+      )
+    );
+
+    if (Array.isArray(options.leagueDictionaryEntries)) {
+      this.setLeagueDictionaryEntries(this.activeLeagueId, options.leagueDictionaryEntries);
+    }
   }
 
   setMirrorManager(mirrorManager) {
@@ -43,13 +66,92 @@ class ReconMatchEvaluator {
     return this;
   }
 
+  setLeagueDictionaryEntries(leagueId, entries = []) {
+    const normalizedLeagueId = Number(leagueId);
+    this.activeLeagueId = Number.isInteger(normalizedLeagueId) && normalizedLeagueId > 0
+      ? normalizedLeagueId
+      : null;
+    this.activeLeagueDictionary = new Map();
+
+    for (const entry of Array.isArray(entries) ? entries : []) {
+      const remoteName = String(entry?.remote_name || entry?.remoteName || '').trim();
+      const localTeamId = String(entry?.local_team_id || entry?.localTeamId || '').trim();
+      const localTeamName = String(entry?.local_team_name || entry?.localTeamName || '').trim();
+      const key = this.normalizeTeamName(remoteName);
+
+      if (!key || !localTeamId) {
+        continue;
+      }
+
+      this.activeLeagueDictionary.set(key, {
+        leagueId: this.activeLeagueId,
+        remoteName,
+        localTeamId,
+        localTeamName: localTeamName || null,
+        normalizedLocalTeamName: localTeamName ? this.normalizeTeamName(localTeamName) : null
+      });
+    }
+
+    return this;
+  }
+
+  clearLeagueDictionary() {
+    this.activeLeagueId = null;
+    this.activeLeagueDictionary = new Map();
+    return this;
+  }
+
+  shouldAllowDictionaryStringContains() {
+    return Number.isInteger(this.activeLeagueId)
+      && this.activeLeagueId > 0
+      && this.dictionaryStringContainsLeagueIds.has(this.activeLeagueId);
+  }
+
+  normalizeDictionaryComparableName(teamName) {
+    const raw = String(teamName || '')
+      .replace(/\([^)]*\)/g, ' ')
+      .replace(/\[[^\]]*\]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return this.normalizeTeamName(raw);
+  }
+
+  isComparableNameEquivalent(left, right) {
+    const normalizedLeft = this.normalizeTeamName(left);
+    const normalizedRight = this.normalizeTeamName(right);
+    if (normalizedLeft && normalizedRight && normalizedLeft === normalizedRight) {
+      return true;
+    }
+
+    const simplifiedLeft = this.normalizeDictionaryComparableName(left);
+    const simplifiedRight = this.normalizeDictionaryComparableName(right);
+    if (simplifiedLeft && simplifiedRight && simplifiedLeft === simplifiedRight) {
+      return true;
+    }
+
+    if (!this.shouldAllowDictionaryStringContains() || !simplifiedLeft || !simplifiedRight) {
+      return false;
+    }
+
+    const shorter = simplifiedLeft.length <= simplifiedRight.length
+      ? simplifiedLeft
+      : simplifiedRight;
+    const longer = shorter === simplifiedLeft
+      ? simplifiedRight
+      : simplifiedLeft;
+
+    return shorter.length >= this.dictionaryStringContainsMinLength
+      && longer.includes(shorter);
+  }
+
   calculateSimilarity(left, right) {
     if (!left || !right) {
       return 0;
     }
 
-    const normalizedLeft = this.normalizeTeamName(left);
-    const normalizedRight = this.normalizeTeamName(right);
+    const normalizedLeft = this.normalizeTeamName(this.resolveComparableTeamName(left));
+    const normalizedRight = this.normalizeTeamName(this.resolveComparableTeamName(right));
 
     if (normalizedLeft && normalizedRight && normalizedLeft === normalizedRight) {
       return 1.0;
@@ -70,10 +172,78 @@ class ReconMatchEvaluator {
     return 0;
   }
 
+  resolveComparableTeamName(teamName) {
+    const dictionaryComparable = this.resolveDictionaryComparableTeamName(teamName);
+    if (dictionaryComparable?.value) {
+      return dictionaryComparable.value;
+    }
+
+    return teamName;
+  }
+
   normalizeTeamName(teamName) {
-    return String(Normalizer.normalizeTeamName(teamName || '') || '')
+    const raw = String(teamName || '')
+      .replace(/[\\/]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return String(Normalizer.normalizeTeamName(raw) || raw || '')
       .toLowerCase()
       .trim();
+  }
+
+  resolveLeagueDictionaryEntry(teamName) {
+    const key = this.normalizeTeamName(teamName);
+    if (!key || !(this.activeLeagueDictionary instanceof Map)) {
+      return null;
+    }
+
+    return this.activeLeagueDictionary.get(key) || null;
+  }
+
+  splitCompositeTeamName(teamName) {
+    return String(teamName || '')
+      .split(/[\\/]+/)
+      .map((segment) => String(segment || '').trim())
+      .filter(Boolean);
+  }
+
+  resolveDictionaryComparableTeamName(teamName) {
+    const directEntry = this.resolveLeagueDictionaryEntry(teamName);
+    if (directEntry?.localTeamName) {
+      return {
+        value: directEntry.localTeamName,
+        usedDictionary: true
+      };
+    }
+
+    const segments = this.splitCompositeTeamName(teamName);
+    if (segments.length <= 1) {
+      return null;
+    }
+
+    const localSegments = [];
+    for (const segment of segments) {
+      const entry = this.resolveLeagueDictionaryEntry(segment);
+      if (!entry?.localTeamName) {
+        return null;
+      }
+      localSegments.push(entry.localTeamName);
+    }
+
+    return {
+      value: localSegments.join(' '),
+      usedDictionary: true
+    };
+  }
+
+  isDictionaryExactMatch(remoteTeamName, localTeamName) {
+    const comparable = this.resolveDictionaryComparableTeamName(remoteTeamName);
+    if (!comparable?.value) {
+      return false;
+    }
+
+    return this.isComparableNameEquivalent(comparable.value, localTeamName);
   }
 
   isPlaceholderToken(token) {
@@ -230,6 +400,8 @@ class ReconMatchEvaluator {
   evaluateCandidateOrientation(candidate, l1Match) {
     const candidateHome = candidate?.homeTeam || '';
     const candidateAway = candidate?.awayTeam || '';
+    const comparableCandidateHome = this.resolveComparableTeamName(candidateHome);
+    const comparableCandidateAway = this.resolveComparableTeamName(candidateAway);
     const l1Home = l1Match?.home_team || '';
     const l1Away = l1Match?.away_team || '';
 
@@ -237,22 +409,27 @@ class ReconMatchEvaluator {
     const directAway = this.calculateSimilarity(candidateAway, l1Away);
     const swappedHome = this.calculateSimilarity(candidateHome, l1Away);
     const swappedAway = this.calculateSimilarity(candidateAway, l1Home);
+    const directDictionaryMatch = this.isDictionaryExactMatch(candidateHome, l1Home)
+      && this.isDictionaryExactMatch(candidateAway, l1Away);
+    const swappedDictionaryMatch = this.isDictionaryExactMatch(candidateHome, l1Away)
+      && this.isDictionaryExactMatch(candidateAway, l1Home);
     const directScore = (directHome + directAway) / 2;
     const swappedScore = (swappedHome + swappedAway) / 2;
 
-    const directNormalized = this.normalizeTeamName(candidateHome) === this.normalizeTeamName(l1Home)
-      && this.normalizeTeamName(candidateAway) === this.normalizeTeamName(l1Away);
-    const swappedNormalized = this.normalizeTeamName(candidateHome) === this.normalizeTeamName(l1Away)
-      && this.normalizeTeamName(candidateAway) === this.normalizeTeamName(l1Home);
-    const directMatch = directNormalized || (
+    const directNormalized = this.isComparableNameEquivalent(comparableCandidateHome, l1Home)
+      && this.isComparableNameEquivalent(comparableCandidateAway, l1Away);
+    const swappedNormalized = this.isComparableNameEquivalent(comparableCandidateHome, l1Away)
+      && this.isComparableNameEquivalent(comparableCandidateAway, l1Home);
+    const directMatch = directDictionaryMatch || directNormalized || (
       directHome > this.orientationSimilarityThreshold && directAway > this.orientationSimilarityThreshold
     );
-    const swappedMatch = swappedNormalized || (
+    const swappedMatch = swappedDictionaryMatch || swappedNormalized || (
       swappedHome > this.orientationSimilarityThreshold && swappedAway > this.orientationSimilarityThreshold
     );
     const isReversed = swappedMatch && (
       !directMatch ||
       swappedScore > directScore ||
+      (swappedDictionaryMatch && !directDictionaryMatch) ||
       (swappedNormalized && !directNormalized)
     );
 
@@ -261,7 +438,10 @@ class ReconMatchEvaluator {
       swappedMatch,
       directScore,
       swappedScore,
-      isReversed
+      directNormalized,
+      swappedNormalized,
+      isReversed,
+      dictionaryLocked: directDictionaryMatch || swappedDictionaryMatch
     };
   }
 
@@ -285,11 +465,11 @@ class ReconMatchEvaluator {
   }
 
   findBestCandidate(l1Match, candidates, seasonMirror = null) {
-    if (this.isPlaceholderFixture(l1Match)) {
-      return null;
-    }
+    const placeholderFixture = this.isPlaceholderFixture(l1Match);
 
-    const mirrorMatched = this.mirrorManager?.findMirrorCandidate(l1Match, seasonMirror) || null;
+    const mirrorMatched = placeholderFixture
+      ? null
+      : this.mirrorManager?.findMirrorCandidate(l1Match, seasonMirror) || null;
     if (mirrorMatched) {
       return mirrorMatched;
     }
@@ -307,6 +487,9 @@ class ReconMatchEvaluator {
       }
 
       const orientation = this.evaluateCandidateOrientation(resolvedCandidate, l1Match);
+      if (placeholderFixture && !(orientation.directNormalized || orientation.swappedNormalized)) {
+        continue;
+      }
       const teamConfidence = orientation.isReversed
         ? orientation.swappedScore
         : Math.max(orientation.directScore, orientation.swappedScore);
@@ -314,7 +497,11 @@ class ReconMatchEvaluator {
         candidate.matchDate || candidate.match_date,
         l1Match.match_date
       );
-      const confidence = dateConfidence === null
+      const confidence = placeholderFixture && (orientation.directNormalized || orientation.swappedNormalized)
+        ? 1.0
+        : orientation.dictionaryLocked
+        ? 1.0
+        : dateConfidence === null
         ? teamConfidence
         : Math.max(0, Math.min(1, (teamConfidence * this.teamWeight) + (dateConfidence * this.dateWeight)));
 
@@ -322,7 +509,11 @@ class ReconMatchEvaluator {
         best = {
           candidate: resolvedCandidate,
           confidence,
-          method: confidence >= this.exactMatchThreshold ? 'exact' : 'fuzzy',
+          method: orientation.dictionaryLocked
+            ? 'dictionary'
+            : confidence >= this.exactMatchThreshold
+              ? 'exact'
+              : 'fuzzy',
           isReversed: orientation.isReversed
         };
       }
@@ -332,16 +523,15 @@ class ReconMatchEvaluator {
   }
 
   isStrictMatch(candidate, l1Match) {
-    if (this.isPlaceholderFixture(l1Match)) {
-      return false;
-    }
-
     const resolvedCandidate = this.resolveCandidateTeams(candidate, l1Match);
     if (!resolvedCandidate?.homeTeam || !resolvedCandidate?.awayTeam) {
       return false;
     }
 
     const orientation = this.evaluateCandidateOrientation(resolvedCandidate, l1Match);
+    if (this.isPlaceholderFixture(l1Match)) {
+      return orientation.directNormalized || orientation.swappedNormalized;
+    }
     return orientation.directMatch || orientation.swappedMatch;
   }
 }

@@ -118,4 +118,105 @@ describe('ReconMatchEvaluator', () => {
     assert.ok(best, '应找到 h2h URL 候选');
     assert.ok(best.confidence > 0.45, `期望 h2h 候选分值超过 0.45，实际 ${best.confidence}`);
   });
+
+  it('应在联赛字典命中时将短名候选直接锁定为 1.0', () => {
+    const evaluator = new ReconMatchEvaluator({
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    evaluator.setLeagueDictionaryEntries(140, [
+      {
+        remote_name: 'Dep La Coruna',
+        local_team_id: '9783',
+        local_team_name: 'Deportivo La Coruna'
+      },
+      {
+        remote_name: 'Gijon',
+        local_team_id: '9869',
+        local_team_name: 'Sporting Gijon'
+      }
+    ]);
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'Deportivo La Coruna',
+      away_team: 'Sporting Gijon',
+      match_date: '2026-04-05T18:00:00.000Z'
+    }, [
+      {
+        hash: 'dict-lock',
+        url: 'https://www.oddsportal.com/football/h2h/dep-la-coruna-Q51ZzMS6/gijon-69w4Rb2d/#23spHYrm',
+        homeTeam: 'Dep La Coruna',
+        awayTeam: 'Gijon',
+        matchDate: '2026-01-01T00:00:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应命中字典候选');
+    assert.equal(best.method, 'dictionary');
+    assert.equal(best.confidence, 1);
+    assert.equal(best.isReversed, false);
+  });
+
+  it('应允许占位赛程在主客完全一致时完成本地精确匹配', () => {
+    const evaluator = new ReconMatchEvaluator({
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'Winner Sf 1',
+      away_team: 'Winner Sf 2',
+      match_date: '2026-05-10T18:00:00.000Z'
+    }, [
+      {
+        hash: 'winner-placeholder',
+        url: 'dictionary://recon/141/2025%2F2026/Winner%20Sf%201/Winner%20Sf%202/141_20252026_4935324',
+        homeTeam: 'Winner SF 1',
+        awayTeam: 'Winner SF 2',
+        matchDate: '2026-05-10T18:00:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应命中占位赛程候选');
+    assert.equal(best.method, 'exact');
+    assert.equal(best.confidence, 1);
+    assert.equal(best.isReversed, false);
+  });
+
+  it('131 联赛开启 dictionary string_contains 后应将 Argentina 与 Argentina (C) 锁定为 1.0', () => {
+    const evaluator = new ReconMatchEvaluator({
+      logger: { info() {}, warn() {}, error() {} },
+      dictionaryStringContainsLeagueIds: [131]
+    });
+
+    evaluator.setLeagueDictionaryEntries(131, [
+      {
+        remote_name: 'Argentina',
+        local_team_id: '6706',
+        local_team_name: 'Argentina (C)'
+      },
+      {
+        remote_name: 'Brazil',
+        local_team_id: '8256',
+        local_team_name: 'Brazil (C)'
+      }
+    ]);
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'Argentina',
+      away_team: 'Brazil',
+      match_date: '2026-06-10T18:00:00.000Z'
+    }, [
+      {
+        hash: 'copa-contains-lock',
+        url: 'https://www.oddsportal.com/football/south-america/copa-america-2025-2026/argentina-brazil-copa-contains-lock/',
+        homeTeam: 'Argentina',
+        awayTeam: 'Brazil',
+        matchDate: '2026-06-10T18:00:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应命中字典候选');
+    assert.equal(best.method, 'dictionary');
+    assert.equal(best.confidence, 1);
+  });
 });

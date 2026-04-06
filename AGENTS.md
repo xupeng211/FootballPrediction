@@ -2,7 +2,7 @@
 
 > 系统版本: `V4.51.2-TOTAL-WAR`
 >
-> 最后整理: `2026-03-29`
+> 最后整理: `2026-04-03`
 >
 > 目标: 让 AI 助手先遵守约束，再高效落地，不把 `AGENTS.md` 继续膨胀成总手册。
 
@@ -92,6 +92,15 @@
 docker-compose -f docker-compose.dev.yml up -d
 docker-compose -f docker-compose.dev.yml exec dev bash
 ```
+
+如果修改了 `.devcontainer/Dockerfile`、`requirements.txt` 或 `package.json`，应改用：
+
+```bash
+docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+如果当前机器需要代理，显式设置 `DEV_HTTP_PROXY`、`DEV_HTTPS_PROXY`、`DEV_CONTAINER_PROXY`，
+不要依赖宿主机全局 `HTTP_PROXY` / `HTTPS_PROXY` 自动透传。
 
 ### 4.2 命令约定
 

@@ -427,6 +427,7 @@ To add a new skill:
 
 - 主配置：`.claude/mcp-config.json`
 - 实现文件：`mcp_servers/` 目录
+- 修改 `.claude/mcp-config.json` 或 `mcp_servers/*.py` 后，需要退出并重启当前客户端会话
 - 严格与 Claude Skills 约束兼容
 
 ---

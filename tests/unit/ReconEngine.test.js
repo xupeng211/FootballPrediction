@@ -48,8 +48,8 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
       protocolCalls.push({ url, options });
       return {
         matches: [{
-          hash: 'hash_5000',
-          url: 'oddsportal://match/5000',
+          hash: 'AbCd1234',
+          url: 'oddsportal://root/football/england/premier-league-2025-2026/arsenal-chelsea-AbCd1234/',
           homeTeam: 'Arsenal',
           awayTeam: 'Chelsea',
           matchDate: '2025-08-01T19:00:00.000Z'
@@ -79,7 +79,8 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
       maxPages: 50,
       timeoutMs: engine.archiveTimeoutMs,
       preferCurrentSeasonSource: true,
-      circuitBreakerKey: 'recon:47:2025/2026'
+      circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+      forcePureProtocol: false
     }
   }]);
 });

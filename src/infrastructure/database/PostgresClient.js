@@ -78,10 +78,10 @@ const ProxyConfig = {
         return process.env.PROXY_HOST || '127.0.0.1';
     },
     get portStart() {
-        return parseInt(process.env.PROXY_PORT_START || '7891', 10);
+        return parseInt(process.env.PROXY_PORT_START || '7890', 10);
     },
     get portEnd() {
-        return parseInt(process.env.PROXY_PORT_END || '7912', 10);
+        return parseInt(process.env.PROXY_PORT_END || '7911', 10);
     },
     get protocol() {
         return process.env.PROXY_PROTOCOL || 'http';

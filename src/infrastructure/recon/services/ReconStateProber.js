@@ -191,6 +191,11 @@ class ReconStateProber {
     await hooks.navigate?.(currentResultsUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);
 
+    const currentIntercepted = await this._awaitInterceptedData(hooks);
+    if (Array.isArray(currentIntercepted) && currentIntercepted.length > 0) {
+      return this._buildInterceptResult(currentIntercepted, currentResultsUrl, 'CURRENT_RESULTS_INTERCEPT');
+    }
+
     const repairedArchiveUrl = await this.resolveCurrentSeasonArchiveEndpoint(
       hooks.getApiEndpoints?.() || [],
       { scoreArchiveUrl: hooks.scoreArchiveUrl }
@@ -237,7 +242,12 @@ class ReconStateProber {
     await hooks.navigate?.(leagueUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);
 
-    const tournamentApiUrl = hooks.getCurrentTournamentEndpoint?.()
+    const leagueIntercepted = await this._awaitInterceptedData(hooks);
+    if (Array.isArray(leagueIntercepted) && leagueIntercepted.length > 0) {
+      return this._buildInterceptResult(leagueIntercepted, leagueUrl, 'CURRENT_TOURNAMENT_INTERCEPT');
+    }
+
+    const tournamentApiUrl = await hooks.getCurrentTournamentEndpoint?.()
       || derivedTournamentUrl
       || hooks.buildCurrentTournamentUrlFromArchive?.(
         await this.resolveCurrentSeasonArchiveEndpoint(
@@ -257,6 +267,40 @@ class ReconStateProber {
         ? 'CURRENT_TOURNAMENT'
         : 'SOURCE_EMPTY'
     };
+  }
+
+  _buildInterceptResult(matches, url, sourceState) {
+    const safeMatches = Array.isArray(matches) ? matches : [];
+    return {
+      matches: safeMatches,
+      pagesScanned: 1,
+      totalCandidates: safeMatches.length,
+      pageStats: [{
+        page: 1,
+        url,
+        rows: safeMatches.length,
+        newRows: safeMatches.length,
+        total: safeMatches.length,
+        source: sourceState
+      }],
+      sourceState
+    };
+  }
+
+  async _awaitInterceptedData(hooks = {}, maxWaitMs = 15000) {
+    const read = () => {
+      const hits = hooks.getInterceptedData?.() || [];
+      return Array.isArray(hits) ? hits : [];
+    };
+
+    let hits = read();
+    const deadline = Date.now() + Math.max(0, Number(maxWaitMs) || 0);
+    while (hits.length === 0 && Date.now() < deadline) {
+      await this._wait(hooks.waitForTimeout, Math.min(1000, Math.max(0, deadline - Date.now())));
+      hits = read();
+    }
+
+    return hits;
   }
 
   _emptyResult() {

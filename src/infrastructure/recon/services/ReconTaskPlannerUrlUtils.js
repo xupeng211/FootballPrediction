@@ -6,7 +6,26 @@ const reconTaskPlannerUrlUtils = {
     return String(season).replace('/', '-');
   },
 
+  formatSeasonForAnnualLeagueUrl(season) {
+    const formatted = this.formatSeasonForUrl(season);
+    const dualYearMatch = formatted.match(/^(\d{4})-(\d{4})$/);
+    if (dualYearMatch) {
+      return dualYearMatch[2];
+    }
+
+    const dbSeasonMatch = String(season || '').match(/^(\d{4})\/(\d{4})$/);
+    if (dbSeasonMatch) {
+      return dbSeasonMatch[2];
+    }
+
+    return formatted;
+  },
+
   formatSeasonForLeagueUrl(season, leagueConfig = {}) {
+    if (this.isAnnualLeague(leagueConfig)) {
+      return this.formatSeasonForAnnualLeagueUrl(season);
+    }
+
     const formatted = this.formatSeasonForUrl(season);
     const seasonType = String(
       leagueConfig?.seasonType
@@ -37,6 +56,13 @@ const reconTaskPlannerUrlUtils = {
       || leagueConfig?.season_type
       || ''
     ).trim().toLowerCase() === 'single_year';
+  },
+
+  isAnnualLeague(leagueConfig = {}) {
+    const leagueId = Number(leagueConfig?.id || 0);
+    return Number.isInteger(leagueId) && this.annualLeagueIds instanceof Set
+      ? this.annualLeagueIds.has(leagueId)
+      : false;
   },
 
   normalizeDbSeason(season) {
@@ -128,24 +154,14 @@ const reconTaskPlannerUrlUtils = {
     return Number(match[1]) === seasonStartYear && Number(match[2]) === seasonEndYear;
   },
 
-  buildResultsUrl(leagueConfig, season) {
-    const oddsportalSeason = this.formatSeasonForLeagueUrl(season, leagueConfig);
+  renderSeasonPathUrl(template, leagueConfig, season) {
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
     const country = this.normalizePathSegment(leagueConfig.country);
     const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
       .trim()
       .toLowerCase();
-    const resultsUrlStrategy = String(leagueConfig.resultsUrlStrategy || 'seasonal')
-      .trim()
-      .toLowerCase();
-    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
-    if (resultsUrlStrategy === 'seasonless') {
-      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
-    }
-    if (this.slugIncludesYear(slug)) {
-      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
-    }
-
-    const normalizedPath = `${this.resultsPathTemplate}`
+    const oddsportalSeason = this.formatSeasonForLeagueUrl(season, leagueConfig);
+    const normalizedPath = String(template || '')
       .replace('{country}', country)
       .replace('{league}', slug)
       .replace('{season}', oddsportalSeason)
@@ -155,11 +171,175 @@ const reconTaskPlannerUrlUtils = {
     return `${normalizedBaseUrl}${normalizedPath}`;
   },
 
+  buildResultsUrl(leagueConfig, season) {
+    const country = this.normalizePathSegment(leagueConfig.country);
+    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+    const resultsUrlStrategy = this.getResultsUrlStrategy(leagueConfig);
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    if (this.isAnnualLeague(leagueConfig)) {
+      return this.renderSeasonPathUrl(this.resultsPathTemplate, leagueConfig, season);
+    }
+    if (resultsUrlStrategy === 'seasonless') {
+      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
+    }
+    if (this.slugIncludesYear(slug)) {
+      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
+    }
+
+    return this.renderSeasonPathUrl(this.resultsPathTemplate, leagueConfig, season);
+  },
+
+  buildFixturesUrl(leagueConfig, season) {
+    if (!this.fixturesPathTemplate) {
+      return null;
+    }
+
+    return this.renderSeasonPathUrl(this.fixturesPathTemplate, leagueConfig, season);
+  },
+
+  buildSeasonlessSubpageUrl(leagueConfig, subpage) {
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    const country = this.normalizePathSegment(leagueConfig.country);
+    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+    const normalizedSubpage = String(subpage || '')
+      .trim()
+      .replace(/^\/+|\/+$/g, '');
+
+    if (!normalizedSubpage) {
+      return `${normalizedBaseUrl}/football/${country}/${slug}/`;
+    }
+
+    return `${normalizedBaseUrl}/football/${country}/${slug}/${normalizedSubpage}/`;
+  },
+
+  buildSeasonlessResultsUrl(leagueConfig) {
+    return this.buildSeasonlessSubpageUrl(leagueConfig, 'results');
+  },
+
+  buildSeasonlessFixturesUrl(leagueConfig) {
+    return this.buildSeasonlessSubpageUrl(leagueConfig, 'fixtures');
+  },
+
+  getAdditionalPathTemplates(leagueConfig = {}, fieldName, legacyFieldName = null) {
+    const value = leagueConfig?.[fieldName] ?? (legacyFieldName ? leagueConfig?.[legacyFieldName] : undefined);
+    if (!Array.isArray(value)) {
+      return [];
+    }
+
+    return value
+      .map((item) => String(item || '').trim())
+      .filter(Boolean);
+  },
+
+  renderLeaguePathTemplate(template, leagueConfig = {}, replacements = {}) {
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    const country = this.normalizePathSegment(leagueConfig.country);
+    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+    const oddsportalSeason = this.formatSeasonForLeagueUrl(replacements.season, leagueConfig);
+    const year = replacements.year ?? replacements.season ?? '';
+    const normalizedPath = String(template || '')
+      .replace('{country}', country)
+      .replace('{league}', slug)
+      .replace('{season}', oddsportalSeason)
+      .replace('{year}', String(year))
+      .replace(/\/{2,}/g, '/')
+      .replace(/^\/?/, '/');
+
+    return `${normalizedBaseUrl}${normalizedPath}`;
+  },
+
+  buildAdditionalResultsUrls(leagueConfig, season) {
+    const templates = this.getAdditionalPathTemplates(
+      leagueConfig,
+      'additionalResultsPaths',
+      'additional_results_paths'
+    );
+
+    return templates.map((template) => this.renderLeaguePathTemplate(template, leagueConfig, { season }));
+  },
+
+  buildAdditionalHistoricalResultsUrls(leagueConfig, year) {
+    const templates = this.getAdditionalPathTemplates(
+      leagueConfig,
+      'additionalHistoricalResultsPaths',
+      'additional_historical_results_paths'
+    );
+
+    return templates.map((template) => this.renderLeaguePathTemplate(template, leagueConfig, { year }));
+  },
+
+  buildCurrentSeasonSourceUrls(leagueConfig, season) {
+    const urls = [
+      this.buildResultsUrl(leagueConfig, season),
+      ...this.buildAdditionalResultsUrls(leagueConfig, season)
+    ];
+
+    return [...new Set(urls.filter(Boolean))];
+  },
+
+  buildAnnualCurrentSeasonSources(leagueConfig, season) {
+    const annualSeason = this.formatSeasonForAnnualLeagueUrl(season);
+    const sources = [
+      {
+        season: annualSeason,
+        url: this.buildFixturesUrl(leagueConfig, annualSeason),
+        mode: 'current_fixtures'
+      },
+      {
+        season: annualSeason,
+        url: this.buildSeasonlessFixturesUrl(leagueConfig),
+        mode: 'current_fixtures_fallback'
+      },
+      {
+        season: annualSeason,
+        url: this.buildResultsUrl(leagueConfig, annualSeason),
+        mode: 'current_results'
+      },
+      {
+        season: annualSeason,
+        url: this.buildSeasonlessResultsUrl(leagueConfig),
+        mode: 'current_results_fallback'
+      }
+    ].filter((source) => Boolean(source.url));
+
+    const seen = new Set();
+    return sources.filter((source) => {
+      if (seen.has(source.url)) {
+        return false;
+      }
+      seen.add(source.url);
+      return true;
+    });
+  },
+
+  buildHistoricalSeasonSourceUrls(leagueConfig, year) {
+    const urls = [
+      this.buildSeasonlessHistoricalResultsUrl(leagueConfig, year),
+      ...this.buildAdditionalHistoricalResultsUrls(leagueConfig, year)
+    ];
+
+    return [...new Set(urls.filter(Boolean))];
+  },
+
   getResultsUrlStrategy(leagueConfig = {}) {
     return String(
       leagueConfig.resultsUrlStrategy
       || leagueConfig.results_url_strategy
       || 'seasonal'
+    ).trim().toLowerCase();
+  },
+
+  getSeasonlessCurrentYearBasis(leagueConfig = {}) {
+    return String(
+      leagueConfig.seasonlessCurrentYearBasis
+      || leagueConfig.seasonless_current_year_basis
+      || 'end'
     ).trim().toLowerCase();
   },
 
