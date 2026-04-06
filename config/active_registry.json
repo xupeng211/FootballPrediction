@@ -7,8 +7,8 @@
   "registry_config": {
     "proxy_host": "172.25.16.1",
     "port_range": {
-      "start": 7891,
-      "end": 7912
+      "start": 7890,
+      "end": 7911
     },
     "protocol": "http",
     "health_check_interval_seconds": 60,
@@ -19,8 +19,8 @@
   },
   "nodes": [
     {
-      "id": "NODE-7891",
-      "port": 7891,
+      "id": "NODE-7890",
+      "port": 7890,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 276,
@@ -38,8 +38,8 @@
       }
     },
     {
-      "id": "NODE-7892",
-      "port": 7892,
+      "id": "NODE-7891",
+      "port": 7891,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 259,
@@ -57,8 +57,8 @@
       }
     },
     {
-      "id": "NODE-7893",
-      "port": 7893,
+      "id": "NODE-7892",
+      "port": 7892,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 259,
@@ -76,8 +76,8 @@
       }
     },
     {
-      "id": "NODE-7894",
-      "port": 7894,
+      "id": "NODE-7893",
+      "port": 7893,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 274,
@@ -95,8 +95,8 @@
       }
     },
     {
-      "id": "NODE-7895",
-      "port": 7895,
+      "id": "NODE-7894",
+      "port": 7894,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 263,
@@ -114,8 +114,8 @@
       }
     },
     {
-      "id": "NODE-7896",
-      "port": 7896,
+      "id": "NODE-7895",
+      "port": 7895,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 256,
@@ -133,8 +133,8 @@
       }
     },
     {
-      "id": "NODE-7897",
-      "port": 7897,
+      "id": "NODE-7896",
+      "port": 7896,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 254,
@@ -152,8 +152,8 @@
       }
     },
     {
-      "id": "NODE-7898",
-      "port": 7898,
+      "id": "NODE-7897",
+      "port": 7897,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 256,
@@ -171,8 +171,8 @@
       }
     },
     {
-      "id": "NODE-7899",
-      "port": 7899,
+      "id": "NODE-7898",
+      "port": 7898,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 251,
@@ -190,8 +190,8 @@
       }
     },
     {
-      "id": "NODE-7900",
-      "port": 7900,
+      "id": "NODE-7899",
+      "port": 7899,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 244,
@@ -209,8 +209,8 @@
       }
     },
     {
-      "id": "NODE-7901",
-      "port": 7901,
+      "id": "NODE-7900",
+      "port": 7900,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 148,
@@ -228,8 +228,8 @@
       }
     },
     {
-      "id": "NODE-7902",
-      "port": 7902,
+      "id": "NODE-7901",
+      "port": 7901,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 441,
@@ -247,8 +247,8 @@
       }
     },
     {
-      "id": "NODE-7903",
-      "port": 7903,
+      "id": "NODE-7902",
+      "port": 7902,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 414,
@@ -266,8 +266,8 @@
       }
     },
     {
-      "id": "NODE-7904",
-      "port": 7904,
+      "id": "NODE-7903",
+      "port": 7903,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 366,
@@ -285,8 +285,8 @@
       }
     },
     {
-      "id": "NODE-7905",
-      "port": 7905,
+      "id": "NODE-7904",
+      "port": 7904,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 330,
@@ -304,8 +304,8 @@
       }
     },
     {
-      "id": "NODE-7906",
-      "port": 7906,
+      "id": "NODE-7905",
+      "port": 7905,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 325,
@@ -323,8 +323,8 @@
       }
     },
     {
-      "id": "NODE-7907",
-      "port": 7907,
+      "id": "NODE-7906",
+      "port": 7906,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 294,
@@ -342,8 +342,8 @@
       }
     },
     {
-      "id": "NODE-7908",
-      "port": 7908,
+      "id": "NODE-7907",
+      "port": 7907,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 285,
@@ -361,8 +361,8 @@
       }
     },
     {
-      "id": "NODE-7909",
-      "port": 7909,
+      "id": "NODE-7908",
+      "port": 7908,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 275,
@@ -380,8 +380,8 @@
       }
     },
     {
-      "id": "NODE-7910",
-      "port": 7910,
+      "id": "NODE-7909",
+      "port": 7909,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 286,
@@ -399,8 +399,8 @@
       }
     },
     {
-      "id": "NODE-7911",
-      "port": 7911,
+      "id": "NODE-7910",
+      "port": 7910,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 260,
@@ -418,8 +418,8 @@
       }
     },
     {
-      "id": "NODE-7912",
-      "port": 7912,
+      "id": "NODE-7911",
+      "port": 7911,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 256,

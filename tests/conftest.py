@@ -29,6 +29,9 @@ project_root = Path(__file__).parent.parent
 env_file = project_root / ".env"
 load_dotenv(env_file, override=True)
 
+# 历史归档测试不参与当前默认 pytest 收集。
+collect_ignore = ["Z_LEGACY_ARCHIVE_PRE_V4.46.8"]
+
 
 # ============================================================================
 # V119.0: 回归测试 Fixtures

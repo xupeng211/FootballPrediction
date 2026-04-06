@@ -23,6 +23,8 @@ const RETRY_CONFIG = REPOSITORY_CONFIG.retry || {};
 const POOL_CONFIG = REPOSITORY_CONFIG.pool || {};
 const CONFLICT_ARBITER_CONFIG = REPOSITORY_CONFIG.conflict_arbiter || {};
 const IDENTITY_INACTIVE_STATUSES = REPOSITORY_CONFIG.identity_inactive_statuses || [];
+const ALL_NON_LINKED_TERMINAL_STATUSES = IDENTITY_INACTIVE_STATUSES
+  .filter((status) => String(status || '').trim().toLowerCase() !== 'failed');
 
 class RepositoryError extends Error {
   constructor(message, code, originalError = null, details = null) {
@@ -640,16 +642,49 @@ class FixtureRepository {
         );
         const limit = Number.isInteger(normalizedOptions.limit) ? normalizedOptions.limit : null;
         const allowMismatchRetry = normalizedOptions.allowMismatchRetry === true;
-        const eligibleStatuses = allowMismatchRetry
-          ? ['harvested', 'RECON_MISMATCH']
-          : ['harvested'];
+        const allNonLinked = normalizedOptions.allNonLinked === true;
+        const eligibleStatuses = allNonLinked
+          ? []
+          : (allowMismatchRetry
+            ? ['harvested', 'RECON_MISMATCH']
+            : ['harvested']);
         const params = [leagueName, season];
         let query = `
           SELECT m.match_id, m.home_team, m.away_team, m.match_date, m.league_name, m.season, m.pipeline_status
           FROM matches m
           WHERE m.league_name = $1
             AND m.season = $2
+        `;
+
+        if (allNonLinked) {
+          params.push(ALL_NON_LINKED_TERMINAL_STATUSES);
+          params.push(IDENTITY_INACTIVE_STATUSES);
+          query += `
+            AND m.pipeline_status IS DISTINCT FROM 'RECON_LINKED'
+            AND NOT (m.pipeline_status = ANY($3::text[]))
+            AND NOT (
+              m.pipeline_status = 'failed'
+              AND m.external_id IS NOT NULL
+              AND EXISTS (
+                SELECT 1
+                FROM matches canonical
+                WHERE canonical.season = m.season
+                  AND canonical.data_source = m.data_source
+                  AND canonical.external_id = m.external_id
+                  AND canonical.match_id <> m.match_id
+                  AND canonical.external_id IS NOT NULL
+                  AND NOT (canonical.pipeline_status = ANY($4::text[]))
+              )
+            )
+          `;
+        } else {
+          params.push(eligibleStatuses);
+          query += `
             AND m.pipeline_status = ANY($3::text[])
+          `;
+        }
+
+        query += `
             AND NOT EXISTS (
               SELECT 1
               FROM matches_oddsportal_mapping map
@@ -659,7 +694,6 @@ class FixtureRepository {
             )
           ORDER BY m.match_date DESC, m.match_id DESC
         `;
-        params.push(eligibleStatuses);
         if (Number.isInteger(limit) && limit > 0) {
           params.push(limit);
           query += ` LIMIT $${params.length}`;

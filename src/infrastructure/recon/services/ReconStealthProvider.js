@@ -15,7 +15,12 @@ class ReconStealthProvider {
     this.deviceMemory = Number(options.deviceMemory ?? 8);
     this.platform = String(options.platform || 'MacIntel');
     this.userDataDirRoot = String(options.userDataDirRoot || os.tmpdir());
-    this.playwrightCacheRoot = String(options.playwrightCacheRoot || '/root/.cache/ms-playwright');
+    this.playwrightCacheRoot = String(
+      options.cachePath
+      || options.playwrightCacheRoot
+      || process.env.PLAYWRIGHT_CACHE_PATH
+      || ''
+    );
   }
 
   sanitizeTraceId(value) {

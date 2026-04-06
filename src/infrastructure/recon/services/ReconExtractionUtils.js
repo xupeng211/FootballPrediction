@@ -14,10 +14,19 @@ const RESULT_ANCHOR_SELECTORS = DOM_SCRAPER_CONFIG.result_anchor_selectors || []
 const PAGINATION_SELECTORS = DOM_SCRAPER_CONFIG.pagination_selectors || [];
 const EMBEDDED_MATCH_EXTRACT_DEPTH = Math.max(1, Number(NETWORK_MONITOR_CONFIG.extract_max_depth || 10));
 const EVENT_CONTAINER_SELECTORS = [
+  'div[role="row"]',
   '[data-testid="event-name"]',
   '[data-testid="events"]',
-  '[data-testid*="event"]'
+  '[data-testid*="event"]',
+  '[data-testid*="match"]',
+  '[class*="event-row"]',
+  '[class*="EventRow"]',
+  'div[class*="sportName"]'
 ];
+const EVENT_SCOPE_SELECTORS = [...new Set([
+  ...EVENT_CONTAINER_SELECTORS,
+  'tr'
+])];
 
 const reconExtractionUtils = {
   buildLeaguePathPrefix(baseUrl) {
@@ -83,6 +92,7 @@ const reconExtractionUtils = {
       }
 
       const isMatchRoute = /\/match\/[^/]+\/?$/i.test(pathname);
+      const isH2hRoute = /\/football\/h2h\/[^/]+\/[^/]+\/?$/iu.test(pathname);
       const matchesPrimaryPath = leaguePathPrefix
         ? this._matchesLeaguePath(pathname, leaguePathPrefix)
         : false;
@@ -90,7 +100,7 @@ const reconExtractionUtils = {
         ? this._matchesLeaguePath(pathname, canonicalLeaguePathPrefix)
         : false;
 
-      if ((leaguePathPrefix || canonicalLeaguePathPrefix) && !isMatchRoute && !matchesPrimaryPath && !matchesCanonicalPath) {
+      if ((leaguePathPrefix || canonicalLeaguePathPrefix) && !isMatchRoute && !isH2hRoute && !matchesPrimaryPath && !matchesCanonicalPath) {
         continue;
       }
 
@@ -98,7 +108,7 @@ const reconExtractionUtils = {
         continue;
       }
 
-      const hash = this._extractMatchKey(pathname);
+      const hash = this._extractMatchKey(absoluteHref) || this._extractMatchKey(pathname);
       if (!hash) {
         continue;
       }
@@ -106,8 +116,14 @@ const reconExtractionUtils = {
         continue;
       }
 
-      const scope = anchor.closest('.eventRow') || anchor;
+      const scope = anchor.closest(EVENT_SCOPE_SELECTORS.join(', ')) || anchor;
       let { homeTeam, awayTeam } = this._extractTeamsFromScope(scope);
+
+      if (!homeTeam || !awayTeam) {
+        const parsedH2hNames = this._extractTeamsFromH2hPath(pathname);
+        homeTeam = homeTeam || parsedH2hNames.homeTeam;
+        awayTeam = awayTeam || parsedH2hNames.awayTeam;
+      }
 
       if (!homeTeam || !awayTeam) {
         const parsedNames = this._extractNamesFromSlug(pathname);
@@ -394,6 +410,24 @@ const reconExtractionUtils = {
     };
   },
 
+  _extractTeamsFromH2hPath(pathname) {
+    const match = String(pathname || '').match(/\/football\/h2h\/([^/]+)\/([^/]+)\/?$/iu);
+    if (!match) {
+      return { homeTeam: '', awayTeam: '' };
+    }
+
+    const decodeTeam = (segment) => String(segment || '')
+      .replace(/-[A-Za-z0-9]{8}$/u, '')
+      .replace(/-/g, ' ')
+      .trim()
+      .replace(/\s+/g, ' ');
+
+    return {
+      homeTeam: decodeTeam(match[1]),
+      awayTeam: decodeTeam(match[2])
+    };
+  },
+
   _extractTeamsFromText(value) {
     const cleanValue = this._cleanText(value);
     if (!cleanValue) {
@@ -569,7 +603,7 @@ const reconExtractionUtils = {
         continue;
       }
 
-      const hash = this._cleanText(candidate.hash || this._extractMatchKey(pathname));
+      const hash = this._cleanText(candidate.hash || this._extractMatchKey(resolvedUrl || pathname));
       const homeTeam = this._cleanText(candidate.homeTeam);
       const awayTeam = this._cleanText(candidate.awayTeam);
 
@@ -648,7 +682,11 @@ const reconExtractionUtils = {
 
     for (const anchor of Array.from(document.links || [])) {
       const href = anchor.getAttribute('href') || anchor.href || '';
-      if (/\/match\/[^/]+\/?$/i.test(href) || /-([A-Za-z0-9]{8})\/?$/i.test(href)) {
+      if (
+        /\/match\/[^/]+\/?$/i.test(href)
+        || /-([A-Za-z0-9]{8})\/?$/i.test(href)
+        || /\/football\/h2h\/[^/]+\/[^/]+\/?#?[A-Za-z0-9]*$/iu.test(href)
+      ) {
         anchors.push(anchor);
       }
     }
@@ -658,6 +696,7 @@ const reconExtractionUtils = {
 
   _isCandidateInScope(pathname, leaguePathPrefix, canonicalLeaguePathPrefix) {
     const isMatchRoute = /\/match\/[^/]+\/?$/i.test(String(pathname || ''));
+    const isH2hRoute = /\/football\/h2h\/[^/]+\/[^/]+\/?$/iu.test(String(pathname || ''));
     const matchesPrimaryPath = leaguePathPrefix
       ? this._matchesLeaguePath(pathname, leaguePathPrefix)
       : false;
@@ -669,7 +708,7 @@ const reconExtractionUtils = {
       return true;
     }
 
-    return isMatchRoute || matchesPrimaryPath || matchesCanonicalPath;
+    return isMatchRoute || isH2hRoute || matchesPrimaryPath || matchesCanonicalPath;
   },
 
   _probeAnchorPatterns(document) {
@@ -683,6 +722,10 @@ const reconExtractionUtils = {
       const text = this._cleanText(anchor.textContent);
       const href = anchor.getAttribute('href') || anchor.href || '';
       if (/\/match\/[^/]+\/?$/i.test(href)) {
+        anchors.push(anchor);
+        continue;
+      }
+      if (/\/football\/h2h\/[^/]+\/[^/]+\/?#?[A-Za-z0-9]*$/iu.test(href)) {
         anchors.push(anchor);
         continue;
       }
@@ -723,7 +766,21 @@ const reconExtractionUtils = {
   },
 
   _extractMatchKey(pathname) {
-    const normalizedPath = String(pathname || '').replace(/\/+$/, '');
+    const raw = String(pathname || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    const fragmentMatch = raw.match(/#([A-Za-z0-9]{8})(?:[/?#]|$)/u);
+    if (fragmentMatch) {
+      return fragmentMatch[1];
+    }
+
+    const normalizedPath = raw
+      .replace(/^https?:\/\/[^/]+/iu, '')
+      .split('#')[0]
+      .split('?')[0]
+      .replace(/\/+$/, '');
     const hashMatch = normalizedPath.match(/-([A-Za-z0-9]{8})$/);
     if (hashMatch) {
       return hashMatch[1];

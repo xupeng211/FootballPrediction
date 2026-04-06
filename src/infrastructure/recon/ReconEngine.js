@@ -4,6 +4,7 @@
 
 const { L1ConfigManager } = require('../services/L1ConfigManager');
 const { ReconMatchEvaluator } = require('./services/ReconMatchEvaluator');
+const { reconMatchExtractor } = require('./services/ReconMatchExtractor');
 const { ReconMirrorManager } = require('./services/ReconMirrorManager');
 const { ReconTaskPlanner } = require('./services/ReconTaskPlanner');
 const { RECON_CONFIG, getReconConfigSection, resolveRuntimeFeatureFlags } = require('./services/ReconServiceConfig');
@@ -40,6 +41,9 @@ class ReconEngine {
     this.reconStrategy = options.reconStrategy || this.featureFlags.reconStrategy;
     this.disableDomFallback = options.disableDomFallback ?? this.featureFlags.disableDomFallback;
     this.currentSeasonOnly = options.currentSeasonOnly === true;
+    this.allNonLinked = options.allNonLinked === true;
+    this.forceDomMode = options.forceDomMode === true;
+    this.matchExtractor = options.matchExtractor || reconMatchExtractor;
 
     this.matchEvaluator = options.matchEvaluator || new ReconMatchEvaluator({ parser: this.parser, logger: this.logger });
     this.mirrorManager = options.mirrorManager || new ReconMirrorManager({ evaluator: this.matchEvaluator });

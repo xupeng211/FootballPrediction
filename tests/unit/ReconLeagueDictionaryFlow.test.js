@@ -6,7 +6,7 @@ const assert = require('node:assert');
 const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
 
 describe('Recon League Dictionary Flow', () => {
-  it('应在 runReconMatrix 前预热联赛字典并将短名候选提升为 RECON_LINKED', async () => {
+  it('应在 runReconMatrix 前预热联赛字典并将短名 h2h 候选洗白后提升为 RECON_LINKED', async () => {
     const savedMappings = [];
 
     const engine = new ReconEngine({
@@ -63,7 +63,7 @@ describe('Recon League Dictionary Flow', () => {
           return {
             matches: [
               {
-                hash: 'dictBoost01',
+                hash: '23spHYrm',
                 url: 'https://www.oddsportal.com/football/h2h/gijon-69w4Rb2d/dep-la-coruna-Q51ZzMS6/#23spHYrm',
                 homeTeam: 'Gijon',
                 awayTeam: 'Dep La Coruna',
@@ -95,11 +95,13 @@ describe('Recon League Dictionary Flow', () => {
     assert.equal(result.mismatched, 0);
     assert.equal(savedMappings.length, 1);
     assert.equal(savedMappings[0].match_id, '140_20252026_4837844');
-    assert.equal(savedMappings[0].oddsportal_hash, 'dictBoost01');
+    assert.equal(savedMappings[0].oddsportal_hash, '23spHYrm');
     assert.equal(savedMappings[0].match_confidence, 1);
+    assert.doesNotMatch(savedMappings[0].full_url, /\/h2h\//);
+    assert.match(savedMappings[0].full_url, /-23spHYrm\/$/);
   });
 
-  it('SOURCE_EMPTY 且仅剩 RECON_MISMATCH 时应走本地字典自愈并直接提升为 RECON_LINKED', async () => {
+  it('SOURCE_EMPTY 且仅剩 RECON_MISMATCH 时也应先回源一次，再走本地字典自愈', async () => {
     const savedMappings = [];
     let navigatorCalls = 0;
 
@@ -181,7 +183,7 @@ describe('Recon League Dictionary Flow', () => {
     assert.equal(result.success, true);
     assert.equal(result.linked, 1);
     assert.equal(result.mismatched, 0);
-    assert.equal(navigatorCalls, 0);
+    assert.equal(navigatorCalls, 1);
     assert.equal(savedMappings.length, 1);
     assert.equal(savedMappings[0].mapping_method, 'dictionary');
     assert.equal(savedMappings[0].match_confidence, 1);
@@ -189,7 +191,7 @@ describe('Recon League Dictionary Flow', () => {
     assert.match(savedMappings[0].full_url, /^dictionary:\/\/recon\/140\/2025%2F2026\//);
   });
 
-  it('应支持组合对阵与占位赛程通过本地字典候选完成自愈', async () => {
+  it('应支持组合对阵与占位赛程在先回源后通过本地字典候选完成自愈', async () => {
     const savedMappings = [];
     let navigatorCalls = 0;
 
@@ -292,7 +294,7 @@ describe('Recon League Dictionary Flow', () => {
     assert.equal(result.success, true);
     assert.equal(result.linked, 2);
     assert.equal(result.mismatched, 0);
-    assert.equal(navigatorCalls, 0);
+    assert.equal(navigatorCalls, 1);
     assert.equal(savedMappings.length, 2);
     assert.equal(savedMappings[0].mapping_method, 'dictionary');
     assert.equal(savedMappings[0].match_confidence, 1);

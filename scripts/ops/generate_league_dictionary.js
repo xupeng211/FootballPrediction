@@ -79,9 +79,20 @@ function buildStandingsUrl(league, season) {
   const slug = String(league?.resultsSlug || league?.slug || '')
     .trim()
     .toLowerCase();
-  const normalizedSeason = String(season || '').replace('/', '-');
+  const normalizedSeason = String(season || '').trim();
+  const seasonType = String(league?.seasonType || '').trim().toLowerCase();
+  const resultsUrlStrategy = String(league?.resultsUrlStrategy || '').trim().toLowerCase();
 
-  return `${BASE_URL}/football/${country}/${slug}-${normalizedSeason}/standings/`;
+  if (resultsUrlStrategy === 'seasonless') {
+    return `${BASE_URL}/football/${country}/${slug}/standings/`;
+  }
+
+  if (seasonType === 'single_year') {
+    const singleYear = normalizedSeason.match(/(\d{4})$/)?.[1] || normalizedSeason;
+    return `${BASE_URL}/football/${country}/${slug}-${singleYear}/standings/`;
+  }
+
+  return `${BASE_URL}/football/${country}/${slug}-${normalizedSeason.replace('/', '-')}/standings/`;
 }
 
 function fetchText(url, redirectCount = 0) {

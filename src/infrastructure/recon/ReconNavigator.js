@@ -388,7 +388,7 @@ class ReconNavigator {
     return this.protocolHandler._buildStateProbeHooks(defaultNavigateOptions, circuitBreakerKey);
   }
 
-  _getCurrentTournamentEndpoint() {
+  async _getCurrentTournamentEndpoint() {
     return this.protocolHandler._getCurrentTournamentEndpoint();
   }
 

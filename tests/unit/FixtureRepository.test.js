@@ -525,6 +525,10 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在既有 hash 被错误绑�
             };
           }
 
+          if (compactSql.startsWith('DELETE FROM matches_oddsportal_mapping')) {
+            return { rows: [], rowCount: 0 };
+          }
+
           if (compactSql.startsWith('UPDATE matches_oddsportal_mapping')) {
             return { rows: [], rowCount: 1 };
           }
@@ -835,6 +839,147 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在 preserve_linked_status �
   assert.equal(healLog.data.preserve_linked_status, true);
 });
 
+test('FixtureRepository.batchSaveOddsPortalMappings 在旧 h2h 证据明显可疑时应允许协议映射覆写 preserve_linked_status', async () => {
+  const healLogs = [];
+  const statusByMatchId = new Map([
+    ['268_20252026_old', 'RECON_LINKED'],
+    ['268_20252026_new', 'harvested']
+  ]);
+
+  const existingMappingRow = {
+    season: '2025/2026',
+    oddsportal_hash: 'force123',
+    match_id: '268_20252026_old',
+    full_url: 'https://www.oddsportal.com/football/h2h/athletico-pr-UoAxb1Tq/bahia-UeD7XtzM/#force123',
+    home_team: 'Atletico MG',
+    away_team: 'Bahia',
+    match_confidence: 0.84,
+    updated_at: '2026-04-05T05:34:32.308Z'
+  };
+
+  const events = [];
+  const pool = {
+    async query() {
+      return {
+        rows: [
+          { column_name: 'match_confidence' },
+          { column_name: 'mapping_method' },
+          { column_name: 'is_reversed' }
+        ]
+      };
+    },
+    async connect() {
+      return {
+        async query(sql, params = []) {
+          const compactSql = sql.trim().replace(/\s+/g, ' ');
+          events.push({ sql: compactSql, params });
+
+          if (/^BEGIN|^COMMIT|^ROLLBACK/.test(compactSql)) {
+            return { rows: [], rowCount: 0 };
+          }
+
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
+            return { rows: [existingMappingRow] };
+          }
+
+          if (compactSql.includes('SELECT match_id, season, match_date, home_team, away_team, pipeline_status FROM matches')) {
+            return {
+              rows: [
+                {
+                  match_id: '268_20252026_old',
+                  season: '2025/2026',
+                  match_date: '2026-02-02T22:00:00.000Z',
+                  home_team: 'Atletico MG',
+                  away_team: 'Bahia',
+                  pipeline_status: statusByMatchId.get('268_20252026_old')
+                },
+                {
+                  match_id: '268_20252026_new',
+                  season: '2025/2026',
+                  match_date: '2025-10-19T19:00:00.000Z',
+                  home_team: 'Flamengo',
+                  away_team: 'Palmeiras',
+                  pipeline_status: statusByMatchId.get('268_20252026_new')
+                }
+              ]
+            };
+          }
+
+          if (compactSql.startsWith('DELETE FROM matches_oddsportal_mapping')) {
+            return { rows: [], rowCount: 0 };
+          }
+
+          if (compactSql.startsWith('UPDATE matches_oddsportal_mapping SET match_id = $1')) {
+            assert.match(compactSql, /match_confidence = \$\d+/);
+            assert.match(compactSql, /mapping_method = \$\d+/);
+            assert.match(compactSql, /is_reversed = \$\d+/);
+            assert.equal(params.includes(0.78), true);
+            assert.equal(params.includes('protocol_extract'), true);
+            assert.equal(params.includes(false), true);
+            return { rowCount: 1, rows: [{ match_id: '268_20252026_new' }] };
+          }
+
+          if (compactSql.startsWith('UPDATE matches m')) {
+            const [matchId, nextStatus] = params;
+            statusByMatchId.set(String(matchId), String(nextStatus));
+            return { rowCount: 1, rows: [] };
+          }
+
+          if (compactSql.startsWith('INSERT INTO matches_oddsportal_mapping')) {
+            throw new Error(`unexpected_insert:${compactSql}`);
+          }
+
+          throw new Error(`unexpected_query:${compactSql}`);
+        },
+        release() {}
+      };
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    logger: {
+      info() {},
+      warn(message, data) {
+        healLogs.push({ message, data });
+      },
+      error() {}
+    }
+  });
+  repository._mappingSchemaEnsured = true;
+
+  const result = await repository.batchSaveOddsPortalMappings([
+    {
+      match_id: '268_20252026_new',
+      oddsportal_hash: 'force123',
+      full_url: 'https://www.oddsportal.com/football/brazil/serie-a-betano/flamengo-palmeiras-force123/',
+      season: '2025/2026',
+      league_name: 'Brasileirão',
+      home_team: 'Flamengo',
+      away_team: 'Palmeiras',
+      match_confidence: 0.78,
+      mapping_method: 'protocol_extract'
+    }
+  ], {
+    pipelineStatus: 'RECON_LINKED',
+    preserve_linked_status: true
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.applied, 1);
+  assert.equal(result.updated, 1);
+  assert.equal(statusByMatchId.get('268_20252026_old'), 'harvested');
+  assert.equal(statusByMatchId.get('268_20252026_new'), 'RECON_LINKED');
+  assert.equal(events.some((entry) => entry.sql.startsWith('UPDATE matches_oddsportal_mapping SET match_id = $1')), true);
+
+  const healLog = healLogs.find((entry) => /season\/hash 映射误绑/.test(entry.message));
+  assert.ok(healLog);
+  assert.equal(healLog.data.previous_match_id, '268_20252026_old');
+  assert.equal(healLog.data.rebound_match_id, '268_20252026_new');
+  assert.equal(healLog.data.preserve_linked_override, true);
+});
+
 test('FixtureRepository.saveOddsPortalMapping 在 season/hash 冲突无法仲裁时必须强制覆盖既有映射并切换到新 match_id', async () => {
   const healLogs = [];
   const statusByMatchId = new Map([
@@ -978,6 +1123,149 @@ test('FixtureRepository.saveOddsPortalMapping 在 season/hash 冲突无法仲裁
   assert.equal(healLog.data.rebound_match_id, '140_20252026_new');
 });
 
+test('FixtureRepository.batchSaveOddsPortalMappings 在重绑到新 match_id 前必须先释放 incoming 的 evidence_only 占位行', async () => {
+  const healLogs = [];
+  const statusByMatchId = new Map([
+    ['268_20252026_old', 'RECON_LINKED'],
+    ['268_20252026_new', 'harvested']
+  ]);
+  const existingMappingRow = {
+    season: '2025/2026',
+    oddsportal_hash: 'force123',
+    match_id: '268_20252026_old',
+    full_url: 'https://www.oddsportal.com/football/h2h/athletico-pr-UoAxb1Tq/bahia-UeD7XtzM/#force123',
+    home_team: 'Atletico MG',
+    away_team: 'Bahia',
+    match_confidence: 0.84,
+    updated_at: '2026-04-05T05:34:32.308Z'
+  };
+
+  const events = [];
+  const pool = {
+    async query() {
+      return {
+        rows: [
+          { column_name: 'match_confidence' },
+          { column_name: 'mapping_method' },
+          { column_name: 'is_reversed' },
+          { column_name: 'is_evidence_only' }
+        ]
+      };
+    },
+    async connect() {
+      return {
+        async query(sql, params = []) {
+          const compactSql = sql.trim().replace(/\s+/g, ' ');
+          events.push({ sql: compactSql, params });
+
+          if (/^BEGIN|^COMMIT|^ROLLBACK/.test(compactSql)) {
+            return { rows: [], rowCount: 0 };
+          }
+
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
+            return { rows: [existingMappingRow] };
+          }
+
+          if (compactSql.includes('SELECT match_id, season, match_date, home_team, away_team, pipeline_status FROM matches')) {
+            return {
+              rows: [
+                {
+                  match_id: '268_20252026_old',
+                  season: '2025/2026',
+                  match_date: '2026-02-02T22:00:00.000Z',
+                  home_team: 'Atletico MG',
+                  away_team: 'Bahia',
+                  pipeline_status: statusByMatchId.get('268_20252026_old')
+                },
+                {
+                  match_id: '268_20252026_new',
+                  season: '2025/2026',
+                  match_date: '2025-10-19T19:00:00.000Z',
+                  home_team: 'Flamengo',
+                  away_team: 'Palmeiras',
+                  pipeline_status: statusByMatchId.get('268_20252026_new')
+                }
+              ]
+            };
+          }
+
+          if (compactSql.startsWith('DELETE FROM matches_oddsportal_mapping')) {
+            assert.equal(params[0], '268_20252026_new');
+            assert.equal(params[1], '2025/2026');
+            assert.equal(params[2], 'force123');
+            return { rows: [], rowCount: 1 };
+          }
+
+          if (compactSql.startsWith('UPDATE matches_oddsportal_mapping SET match_id = $1')) {
+            assert.match(compactSql, /is_evidence_only = FALSE/);
+            return { rowCount: 1, rows: [{ match_id: '268_20252026_new' }] };
+          }
+
+          if (compactSql.startsWith('UPDATE matches m')) {
+            const [matchId, nextStatus] = params;
+            statusByMatchId.set(String(matchId), String(nextStatus));
+            return { rowCount: 1, rows: [] };
+          }
+
+          if (compactSql.startsWith('INSERT INTO matches_oddsportal_mapping')) {
+            throw new Error(`unexpected_insert:${compactSql}`);
+          }
+
+          throw new Error(`unexpected_query:${compactSql}`);
+        },
+        release() {}
+      };
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    logger: {
+      info() {},
+      warn(message, data) {
+        healLogs.push({ message, data });
+      },
+      error() {}
+    }
+  });
+  repository._mappingSchemaEnsured = true;
+
+  const result = await repository.batchSaveOddsPortalMappings([
+    {
+      match_id: '268_20252026_new',
+      oddsportal_hash: 'force123',
+      full_url: 'https://www.oddsportal.com/football/brazil/serie-a/flamengo-palmeiras-force123/',
+      season: '2025/2026',
+      league_name: 'Brasileirão',
+      home_team: 'Flamengo',
+      away_team: 'Palmeiras',
+      match_confidence: 0.78,
+      mapping_method: 'protocol_extract'
+    }
+  ], {
+    pipelineStatus: 'RECON_LINKED',
+    preserve_linked_status: true
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.applied, 1);
+  assert.equal(result.updated, 1);
+  assert.equal(statusByMatchId.get('268_20252026_old'), 'harvested');
+  assert.equal(statusByMatchId.get('268_20252026_new'), 'RECON_LINKED');
+
+  const deleteIndex = events.findIndex((entry) => entry.sql.startsWith('DELETE FROM matches_oddsportal_mapping'));
+  const updateIndex = events.findIndex((entry) => entry.sql.startsWith('UPDATE matches_oddsportal_mapping SET match_id = $1'));
+  assert.notEqual(deleteIndex, -1);
+  assert.notEqual(updateIndex, -1);
+  assert.ok(deleteIndex < updateIndex);
+
+  const healLog = healLogs.find((entry) => /season\/hash 映射误绑/.test(entry.message));
+  assert.ok(healLog);
+  assert.equal(healLog.data.previous_match_id, '268_20252026_old');
+  assert.equal(healLog.data.rebound_match_id, '268_20252026_new');
+});
+
 test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必须抛出 HASH_CONFLICT_REBIND_FAILED 并回滚事务', async () => {
   const statusByMatchId = new Map([
     ['47_20252026_4813728', 'RECON_LINKED'],
@@ -1041,6 +1329,10 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在重绑命中 0 行时必�
                 }
               ]
             };
+          }
+
+          if (compactSql.startsWith('DELETE FROM matches_oddsportal_mapping')) {
+            return { rows: [], rowCount: 0 };
           }
 
           if (compactSql.startsWith('UPDATE matches_oddsportal_mapping')) {
@@ -1617,5 +1909,49 @@ test('FixtureRepository.getReconEligibleMatches 开启 allowMismatchRetry 时应
     '2025/2026',
     ['harvested', 'RECON_MISMATCH'],
     5
+  ]);
+});
+
+test('FixtureRepository.getReconEligibleMatches 开启 allNonLinked 时应捞取所有非 RECON_LINKED 且无 formal mapping 的目标', async () => {
+  let capturedSql = '';
+  let capturedParams = [];
+
+  const pool = {
+    async connect() {
+      return {
+        async query(sql, params = []) {
+          capturedSql = sql;
+          capturedParams = params;
+          return { rows: [], rowCount: 0 };
+        },
+        release() {}
+      };
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    logger: { info() {}, warn() {}, error() {} }
+  });
+
+  await repository.getReconEligibleMatches('2025/2026', 'Premier League', {
+    allNonLinked: true,
+    limit: 7
+  });
+
+  assert.match(capturedSql, /m\.pipeline_status IS DISTINCT FROM 'RECON_LINKED'/);
+  assert.match(capturedSql, /NOT \(m\.pipeline_status = ANY\(\$3::text\[\]\)\)/);
+  assert.match(capturedSql, /m\.pipeline_status = 'failed'/);
+  assert.match(capturedSql, /canonical\.external_id = m\.external_id/);
+  assert.match(capturedSql, /NOT \(canonical\.pipeline_status = ANY\(\$4::text\[\]\)\)/);
+  assert.match(capturedSql, /COALESCE\(map\.is_evidence_only, FALSE\) = FALSE/);
+  assert.match(capturedSql, /LIMIT \$5/);
+  assert.deepEqual(capturedParams, [
+    'Premier League',
+    '2025/2026',
+    ['archived', 'duplicate', 'merged'],
+    ['failed', 'archived', 'duplicate', 'merged'],
+    7
   ]);
 });

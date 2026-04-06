@@ -34,7 +34,15 @@
       "results_slug": "serie-a",
       "results_url_strategy": "seasonless"
     },
-    { "id": 121, "name": "Primera División", "country": "Argentina", "tier": "P3", "enabled": true },
+    {
+      "id": 121,
+      "name": "Primera División",
+      "country": "Costa Rica",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "primera-division",
+      "results_slug": "primera-division"
+    },
     { "id": 57, "name": "Eredivisie", "country": "Netherlands", "tier": "P3", "enabled": true },
     { "id": 61, "name": "Primeira Liga", "country": "Portugal", "tier": "P3", "enabled": true },
     {
@@ -67,9 +75,23 @@
       "country": "Japan",
       "tier": "P3",
       "enabled": true,
+      "slug": "j1-league",
+      "results_slug": "j1-league",
+      "results_url_strategy": "seasonless",
+      "seasonless_current_year_basis": "start",
       "ready_selector": "text=Machida"
     },
-    { "id": 8974, "name": "J2 League", "country": "Japan", "tier": "P3", "enabled": true },
+    {
+      "id": 8974,
+      "name": "J2 League",
+      "country": "Japan",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "j2-league",
+      "results_slug": "j2-league",
+      "results_url_strategy": "seasonless",
+      "seasonless_current_year_basis": "start"
+    },
     {
       "id": 71,
       "name": "Süper Lig",
@@ -96,8 +118,7 @@
       "name": "UEFA Euro",
       "country": "Europe",
       "tier": "P4",
-      "enabled": false,
-      "ops_note": "站点重定向至 2024，暂无 2026 数据，临时下线 Recon/L1 入口",
+      "enabled": true,
       "slug": "euro",
       "results_url_strategy": "seasonless"
     },
@@ -107,8 +128,7 @@
       "name": "Copa América",
       "country": "South America",
       "tier": "P4",
-      "enabled": false,
-      "ops_note": "OddsPortal 仅有历史赛季页，2025-2026 页面为空壳，临时下线 Recon/L1 入口"
+      "enabled": true
     },
     { "id": 10004, "name": "AFC Asian Cup", "country": "Asia", "tier": "P4", "enabled": true }
   ],

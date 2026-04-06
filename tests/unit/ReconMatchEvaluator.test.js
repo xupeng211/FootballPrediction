@@ -181,4 +181,42 @@ describe('ReconMatchEvaluator', () => {
     assert.equal(best.confidence, 1);
     assert.equal(best.isReversed, false);
   });
+
+  it('131 联赛开启 dictionary string_contains 后应将 Argentina 与 Argentina (C) 锁定为 1.0', () => {
+    const evaluator = new ReconMatchEvaluator({
+      logger: { info() {}, warn() {}, error() {} },
+      dictionaryStringContainsLeagueIds: [131]
+    });
+
+    evaluator.setLeagueDictionaryEntries(131, [
+      {
+        remote_name: 'Argentina',
+        local_team_id: '6706',
+        local_team_name: 'Argentina (C)'
+      },
+      {
+        remote_name: 'Brazil',
+        local_team_id: '8256',
+        local_team_name: 'Brazil (C)'
+      }
+    ]);
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'Argentina',
+      away_team: 'Brazil',
+      match_date: '2026-06-10T18:00:00.000Z'
+    }, [
+      {
+        hash: 'copa-contains-lock',
+        url: 'https://www.oddsportal.com/football/south-america/copa-america-2025-2026/argentina-brazil-copa-contains-lock/',
+        homeTeam: 'Argentina',
+        awayTeam: 'Brazil',
+        matchDate: '2026-06-10T18:00:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应命中字典候选');
+    assert.equal(best.method, 'dictionary');
+    assert.equal(best.confidence, 1);
+  });
 });

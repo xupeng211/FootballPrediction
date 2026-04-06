@@ -50,8 +50,3 @@ ignore_missing_imports = true
 [tool.black]
 line-length = 120
 target-version = ["py311"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-addopts = "-v --tb=short"

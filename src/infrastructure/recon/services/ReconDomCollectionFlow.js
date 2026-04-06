@@ -9,10 +9,19 @@ const PARTICIPANT_SELECTORS = DOM_SCRAPER_CONFIG.participant_selectors || [];
 const RESULT_ANCHOR_SELECTORS = DOM_SCRAPER_CONFIG.result_anchor_selectors || [];
 const PAGINATION_SELECTORS = DOM_SCRAPER_CONFIG.pagination_selectors || [];
 const EVENT_CONTAINER_SELECTORS = [
+  'div[role="row"]',
   '[data-testid="event-name"]',
   '[data-testid="events"]',
-  '[data-testid*="event"]'
+  '[data-testid*="event"]',
+  '[data-testid*="match"]',
+  '[class*="event-row"]',
+  '[class*="EventRow"]',
+  'div[class*="sportName"]'
 ];
+const EVENT_SCOPE_SELECTORS = [...new Set([
+  ...EVENT_CONTAINER_SELECTORS,
+  'tr'
+])];
 
 const reconDomCollectionFlow = {
   async extractCurrentSeasonResultRows(baseUrl, options = {}) {
@@ -44,10 +53,15 @@ const reconDomCollectionFlow = {
       forceJsonExtract,
       resultAnchorSelectors,
       eventContainerSelectors,
+      eventScopeSelectors,
       homeSelectors,
       awaySelectors,
       participantSelectors
     }) => {
+      const eventScopeSelector = Array.isArray(eventScopeSelectors)
+        ? [...new Set(eventScopeSelectors)].join(', ')
+        : 'tr';
+
       const resolveHref = (rawHref) => {
         try {
           return new URL(rawHref, pageUrl || baseOrigin).href;
@@ -118,7 +132,7 @@ const reconDomCollectionFlow = {
           }
 
           const url = value.url || value.href || value.link || '';
-          const hash = value.encodeEventId || value.id || '';
+          const hash = value.hash || value.eventHash || value.encodeEventId || value.matchId || value.eventId || value.id || '';
           const homeTeam = value['home-name'] || value.homeName || value.home_team || value.home || '';
           const awayTeam = value['away-name'] || value.awayName || value.away_team || value.away || '';
           const timestamp = value['date-start-timestamp'] || value.dateStartTimestamp || value.timestamp || null;
@@ -220,7 +234,21 @@ const reconDomCollectionFlow = {
       };
 
       const extractMatchKey = (pathname) => {
-        const normalizedPath = String(pathname || '').replace(/\/+$/, '');
+        const raw = String(pathname || '').trim();
+        if (!raw) {
+          return '';
+        }
+
+        const fragmentMatch = raw.match(/#([A-Za-z0-9]{8})(?:[/?#]|$)/);
+        if (fragmentMatch) {
+          return fragmentMatch[1];
+        }
+
+        const normalizedPath = raw
+          .replace(/^https?:\/\/[^/]+/i, '')
+          .split('#')[0]
+          .split('?')[0]
+          .replace(/\/+$/, '');
         const hashMatch = normalizedPath.match(/-([A-Za-z0-9]{8})$/);
         if (hashMatch) {
           return hashMatch[1];
@@ -232,6 +260,24 @@ const reconDomCollectionFlow = {
         }
 
         return '';
+      };
+
+      const extractTeamsFromH2hPath = (pathname) => {
+        const match = String(pathname || '').match(/\/football\/h2h\/([^/]+)\/([^/]+)\/?$/i);
+        if (!match) {
+          return { homeTeam: '', awayTeam: '' };
+        }
+
+        const decodeTeam = (segment) => String(segment || '')
+          .replace(/-[A-Za-z0-9]{8}$/i, '')
+          .replace(/-/g, ' ')
+          .trim()
+          .replace(/\s+/g, ' ');
+
+        return {
+          homeTeam: decodeTeam(match[1]),
+          awayTeam: decodeTeam(match[2])
+        };
       };
 
       const getFirstText = (scope, selectors) => {
@@ -250,12 +296,16 @@ const reconDomCollectionFlow = {
         .flatMap((container) => Array.from(container.querySelectorAll('a[href]')));
       const documentLinkAnchors = Array.from(document.links || []).filter((anchor) => {
         const href = anchor.getAttribute('href') || anchor.href || '';
-        return /\/match\/[^/]+\/?$/i.test(href) || /-([A-Za-z0-9]{8})\/?$/i.test(href);
+        return /\/match\/[^/]+\/?$/i.test(href)
+          || /-([A-Za-z0-9]{8})\/?$/i.test(href)
+          || /\/football\/h2h\/[^/]+\/[^/]+\/?#?[A-Za-z0-9]*$/i.test(href);
       });
       const probedAnchors = Array.from(document.querySelectorAll('a[href]')).filter((anchor) => {
         const href = anchor.getAttribute('href') || anchor.href || '';
         const text = cleanText(anchor.textContent);
-        return /\/match\/[^/]+\/?$/i.test(href) || /\bvs\.?\b|-/i.test(text);
+        return /\/match\/[^/]+\/?$/i.test(href)
+          || /\/football\/h2h\/[^/]+\/[^/]+\/?#?[A-Za-z0-9]*$/i.test(href)
+          || /\bvs\.?\b|-/i.test(text);
       });
       const anchors = [...new Set([
         ...configuredAnchors,
@@ -278,13 +328,14 @@ const reconDomCollectionFlow = {
         }
 
         const isMatchRoute = /\/match\/[^/]+\/?$/i.test(pathname);
+        const isH2hRoute = /\/football\/h2h\/[^/]+\/[^/]+\/?$/i.test(pathname);
         const normalizedPath = String(pathname || '')
           .replace(/-\d{4}-\d{4}(?=\/)/i, '')
           .replace(/-\d{4}(?=\/results)/i, '');
         const matchesPrimaryPath = pathPrefix ? normalizedPath.startsWith(pathPrefix) : false;
         const matchesCanonicalPath = canonicalPathPrefix ? normalizedPath.startsWith(canonicalPathPrefix) : false;
 
-        if ((pathPrefix || canonicalPathPrefix) && !isMatchRoute && !matchesPrimaryPath && !matchesCanonicalPath) {
+        if ((pathPrefix || canonicalPathPrefix) && !isMatchRoute && !isH2hRoute && !matchesPrimaryPath && !matchesCanonicalPath) {
           continue;
         }
 
@@ -292,7 +343,7 @@ const reconDomCollectionFlow = {
           continue;
         }
 
-        const hash = extractMatchKey(pathname);
+        const hash = extractMatchKey(absoluteHref) || extractMatchKey(pathname);
         if (!hash) {
           continue;
         }
@@ -300,7 +351,7 @@ const reconDomCollectionFlow = {
           continue;
         }
 
-        const scope = anchor.closest('.eventRow') || anchor;
+        const scope = anchor.closest(eventScopeSelector) || anchor;
         let homeTeam = getFirstText(scope, homeSelectors);
         let awayTeam = getFirstText(scope, awaySelectors);
 
@@ -317,6 +368,12 @@ const reconDomCollectionFlow = {
           const combined = [...new Set([...participantTitles, ...participantAlts, ...participantTexts])];
           homeTeam = homeTeam || combined[0] || '';
           awayTeam = awayTeam || combined[1] || '';
+        }
+
+        if (!homeTeam || !awayTeam) {
+          const parsedH2h = extractTeamsFromH2hPath(pathname);
+          homeTeam = homeTeam || parsedH2h.homeTeam;
+          awayTeam = awayTeam || parsedH2h.awayTeam;
         }
 
         if (!homeTeam || !awayTeam) {
@@ -355,6 +412,7 @@ const reconDomCollectionFlow = {
       forceJsonExtract: options.forceJsonExtract === true,
       resultAnchorSelectors: RESULT_ANCHOR_SELECTORS,
       eventContainerSelectors: EVENT_CONTAINER_SELECTORS,
+      eventScopeSelectors: EVENT_SCOPE_SELECTORS,
       homeSelectors: HOME_SELECTORS,
       awaySelectors: AWAY_SELECTORS,
       participantSelectors: PARTICIPANT_SELECTORS

@@ -519,4 +519,52 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(retriggerCalls, 1);
     assert.deepStrictEqual(result.after.myBookmakers, [16, 44, 500]);
   });
+
+  it('close() 遇到挂死 context 时必须强制 SIGKILL 浏览器进程', async () => {
+    const events = [];
+    const killSignals = [];
+    const browserProcess = {
+      kill(signal) {
+        killSignals.push(signal);
+      }
+    };
+
+    const browser = {
+      process() {
+        return browserProcess;
+      },
+      async close() {
+        events.push('browser.close');
+      }
+    };
+
+    const context = {
+      browser() {
+        return browser;
+      },
+      async close() {
+        events.push('context.close');
+        return new Promise(() => {});
+      }
+    };
+
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {} },
+      traceId: 'trace-close-timeout',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      closeTimeoutMs: 10
+    });
+
+    browserContext.browser = browser;
+    browserContext.context = context;
+    browserContext.page = { isClosed: () => false };
+
+    await browserContext.close();
+
+    assert.deepStrictEqual(events, ['context.close', 'browser.close']);
+    assert.deepStrictEqual(killSignals, ['SIGKILL']);
+    assert.strictEqual(browserContext.browser, null);
+    assert.strictEqual(browserContext.context, null);
+    assert.strictEqual(browserContext.page, null);
+  });
 });

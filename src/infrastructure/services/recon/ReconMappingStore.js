@@ -40,6 +40,88 @@ class ReconMappingStore {
     return options?.preserveLinkedStatus === true || options?.preserve_linked_status === true;
   }
 
+  decodeUrlSlugName(slug) {
+    return String(slug || '')
+      .replace(/-[A-Za-z0-9]{8}$/u, '')
+      .split('-')
+      .filter(Boolean)
+      .join(' ')
+      .trim();
+  }
+
+  scoreUrlAgainstMatch(url, matchRow) {
+    if (!url || !matchRow) {
+      return 0;
+    }
+
+    let pathname = '';
+    try {
+      pathname = new URL(String(url)).pathname;
+    } catch {
+      return 0;
+    }
+
+    const directScore = (leftTeam, rightTeam) => (
+      this.arbiter.teamSimilarity(matchRow.home_team, leftTeam)
+      + this.arbiter.teamSimilarity(matchRow.away_team, rightTeam)
+    );
+    const reverseScore = (leftTeam, rightTeam) => (
+      this.arbiter.teamSimilarity(matchRow.home_team, rightTeam)
+      + this.arbiter.teamSimilarity(matchRow.away_team, leftTeam)
+    );
+
+    const h2hMatch = pathname.match(/\/football\/h2h\/([^/]+)\/([^/]+)\/?$/iu);
+    if (h2hMatch) {
+      const leftTeam = this.decodeUrlSlugName(h2hMatch[1]);
+      const rightTeam = this.decodeUrlSlugName(h2hMatch[2]);
+      return Math.max(directScore(leftTeam, rightTeam), reverseScore(leftTeam, rightTeam));
+    }
+
+    const lastSegment = pathname.split('/').filter(Boolean).pop() || '';
+    const standardMatch = lastSegment.match(/^(.*)-([A-Za-z0-9]{8})$/u);
+    if (!standardMatch) {
+      return 0;
+    }
+
+    const slugParts = String(standardMatch[1] || '').split('-').filter(Boolean);
+    if (slugParts.length < 2) {
+      return 0;
+    }
+
+    let bestScore = 0;
+    for (let index = 1; index < slugParts.length; index++) {
+      const leftTeam = slugParts.slice(0, index).join(' ');
+      const rightTeam = slugParts.slice(index).join(' ');
+      bestScore = Math.max(bestScore, directScore(leftTeam, rightTeam), reverseScore(leftTeam, rightTeam));
+    }
+
+    return bestScore;
+  }
+
+  shouldPreferIncomingProtocolOverwrite(existingMatch, incomingMatch, existingMapping, incomingMapping, decision = {}) {
+    const existingUrl = String(existingMapping?.full_url || '').trim();
+    if (!existingUrl || !/\/football\/h2h\//iu.test(existingUrl)) {
+      return false;
+    }
+
+    const incomingMethod = String(incomingMapping?.mapping_method || '').trim().toLowerCase();
+    const incomingUrl = String(incomingMapping?.full_url || '').trim();
+    const incomingLooksProtocol = incomingMethod === 'protocol_extract'
+      || (incomingUrl && !/\/football\/h2h\//iu.test(incomingUrl));
+    if (!incomingLooksProtocol) {
+      return false;
+    }
+
+    const existingUrlScore = this.scoreUrlAgainstMatch(existingUrl, existingMatch);
+    const incomingUrlScore = this.scoreUrlAgainstMatch(incomingUrl, incomingMatch);
+    const incomingEvidenceScore = Math.max(Number(decision?.incomingScore || 0), incomingUrlScore);
+
+    return existingUrlScore < this.arbiter.sameFixtureThreshold
+      && Number(decision?.incomingScore || 0) >= this.arbiter.sameFixtureThreshold
+      && Number(decision?.incomingScore || 0) > Number(decision?.existingScore || 0)
+      && incomingEvidenceScore > existingUrlScore;
+  }
+
   async saveOddsPortalMapping(mappingData, options = {}) {
     this.assertRequiredFields(mappingData);
     await this.ensureSchema();
@@ -73,7 +155,8 @@ class ReconMappingStore {
             success: true,
             matchId: String(mappingData.match_id),
             wasInsert: false,
-            updated: linkedStatusUpdated
+            updated: linkedStatusUpdated,
+            applied: Number(audit.appliedMappings || 0)
           };
         }
 
@@ -107,7 +190,8 @@ class ReconMappingStore {
           success: true,
           matchId: result.matchId,
           wasInsert: result.wasInsert,
-          updated
+          updated,
+          applied: Number(audit.appliedMappings || 0) + Number(result?.applied || 0)
         };
       } catch (error) {
         await client.query('ROLLBACK');
@@ -124,7 +208,7 @@ class ReconMappingStore {
 
   async batchSaveOddsPortalMappings(mappings, options = {}) {
     if (!Array.isArray(mappings) || mappings.length === 0) {
-      return { success: true, inserted: 0, failed: 0, errors: [], updated: 0 };
+      return { success: true, inserted: 0, failed: 0, errors: [], updated: 0, applied: 0 };
     }
 
     const orderedMappings = [...mappings].sort((left, right) =>
@@ -145,7 +229,7 @@ class ReconMappingStore {
       const client = await this.getDbPool().connect();
       const pipelineStatus = options.pipelineStatus || null;
       const preserveLinkedStatus = this.getPreserveLinkedStatusFlag(options);
-      const results = { inserted: 0, failed: 0, errors: [], updated: 0 };
+      const results = { inserted: 0, failed: 0, errors: [], updated: 0, applied: 0 };
 
       try {
         await client.query('BEGIN');
@@ -156,10 +240,11 @@ class ReconMappingStore {
         });
         const remainingMappings = audit.remainingMappings || orderedMappings;
         results.updated += Number(audit.linkedStatusUpdated || 0);
+        results.applied += Number(audit.appliedMappings || 0);
 
         for (const mapping of remainingMappings) {
           try {
-            await this.saveOddsPortalMappingWithClient(
+            const saveResult = await this.saveOddsPortalMappingWithClient(
               client,
               mapping,
               hasOptionalFields,
@@ -169,6 +254,7 @@ class ReconMappingStore {
               }
             );
             results.inserted++;
+            results.applied += Number(saveResult?.applied || 0);
           } catch (error) {
             results.failed++;
             results.errors.push({ matchId: mapping.match_id, error: error.message });
@@ -470,7 +556,8 @@ class ReconMappingStore {
       const result = await client.query(query, params);
       return {
         matchId: result.rows[0]?.match_id,
-        wasInsert: result.rows.length > 0
+        wasInsert: result.rows.length > 0,
+        applied: (result.rowCount || 0) > 0 ? 1 : 0
       };
     } catch (error) {
       if (!this.isSeasonHashUniqueViolation(error, mappingData)) {
@@ -503,7 +590,8 @@ class ReconMappingStore {
           matchId: forced.matchId || String(mappingData.match_id),
           wasInsert: false,
           forcedOverwrite: true,
-          previousMatchId: forced.previousMatchId || null
+          previousMatchId: forced.previousMatchId || null,
+          applied: Number(forced.mappingApplied || 0)
         };
       }
 
@@ -583,6 +671,7 @@ class ReconMappingStore {
     const mappingByMatchId = new Map(mappings.map((mapping) => [String(mapping.match_id), mapping]));
     const handledMatchIds = new Set();
     let linkedStatusUpdated = 0;
+    let appliedMappings = 0;
 
     const result = await client.query(`
       SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at
@@ -611,6 +700,7 @@ class ReconMappingStore {
         if (resolution?.resolved) {
           handledMatchIds.add(String(incomingMatchId));
           linkedStatusUpdated += Number(resolution.linkedStatusUpdated || 0);
+          appliedMappings += Number(resolution.mappingApplied || 0);
           continue;
         }
       }
@@ -633,7 +723,8 @@ class ReconMappingStore {
 
     return {
       remainingMappings: mappings.filter((mapping) => !handledMatchIds.has(String(mapping.match_id))),
-      linkedStatusUpdated
+      linkedStatusUpdated,
+      appliedMappings
     };
   }
 
@@ -684,30 +775,72 @@ class ReconMappingStore {
     return result.rowCount || 0;
   }
 
-  async rebindMappingToMatchWithClient(client, existingMappingRow, incomingMapping) {
-    const result = await client.query(`
-      UPDATE matches_oddsportal_mapping
-      SET match_id = $1,
-          full_url = $2,
-          league_name = $3,
-          home_team = $4,
-          away_team = $5,
-          status = $6,
-          updated_at = NOW()
-      WHERE season = $7
-        AND oddsportal_hash = $8
-        AND match_id = $9
-    `, [
+  async rebindMappingToMatchWithClient(client, existingMappingRow, incomingMapping, hasOptionalFields = {}) {
+    if (String(existingMappingRow?.match_id || '') !== String(incomingMapping?.match_id || '')) {
+      await this.deleteExistingMappingForMatchWithClient(client, incomingMapping);
+    }
+
+    const assignments = [
+      'match_id = $1',
+      'full_url = $2',
+      'league_name = $3',
+      'home_team = $4',
+      'away_team = $5',
+      'status = $6',
+      'updated_at = NOW()'
+    ];
+    const params = [
       String(incomingMapping.match_id),
       incomingMapping.full_url,
       incomingMapping.league_name,
       incomingMapping.home_team,
       incomingMapping.away_team,
-      incomingMapping.status || 'pending',
-      incomingMapping.season,
-      incomingMapping.oddsportal_hash,
-      String(existingMappingRow.match_id)
-    ]);
+      incomingMapping.status || 'pending'
+    ];
+    let nextParamIndex = params.length + 1;
+
+    if (hasOptionalFields.match_confidence) {
+      assignments.push(`match_confidence = $${nextParamIndex}`);
+      params.push(incomingMapping.match_confidence ?? (this.reconConfig.matching || {}).confidence_threshold);
+      nextParamIndex += 1;
+    }
+
+    if (hasOptionalFields.mapping_method) {
+      assignments.push(`mapping_method = $${nextParamIndex}`);
+      params.push(String(incomingMapping.mapping_method || 'protocol_extract'));
+      nextParamIndex += 1;
+    }
+
+    if (hasOptionalFields.is_reversed) {
+      assignments.push(`is_reversed = $${nextParamIndex}`);
+      params.push(Boolean(incomingMapping.is_reversed));
+      nextParamIndex += 1;
+    }
+
+    if (hasOptionalFields.candidate_name) {
+      assignments.push('candidate_name = NULL');
+    }
+
+    if (hasOptionalFields.is_evidence_only) {
+      assignments.push('is_evidence_only = FALSE');
+    }
+
+    const seasonParamIndex = nextParamIndex;
+    params.push(incomingMapping.season);
+    nextParamIndex += 1;
+    const hashParamIndex = nextParamIndex;
+    params.push(incomingMapping.oddsportal_hash);
+    nextParamIndex += 1;
+    const matchIdParamIndex = nextParamIndex;
+    params.push(String(existingMappingRow.match_id));
+
+    const result = await client.query(`
+      UPDATE matches_oddsportal_mapping
+      SET ${assignments.join(',\n          ')}
+      WHERE season = $${seasonParamIndex}
+        AND oddsportal_hash = $${hashParamIndex}
+        AND match_id = $${matchIdParamIndex}
+    `, params);
 
     return result.rowCount || 0;
   }
@@ -841,6 +974,7 @@ class ReconMappingStore {
     return {
       resolved: true,
       action: 'force_overwrite_hash_conflict',
+      mappingApplied: 1,
       linkedStatusUpdated,
       matchId: String(incomingMapping.match_id),
       previousMatchId: String(existingMappingRow.match_id)
@@ -888,6 +1022,15 @@ class ReconMappingStore {
       incomingMapping
     });
     const existingLinked = existingMatch.pipeline_status === 'RECON_LINKED';
+    const protocolOverwritePreferred = existingLinked && preserveLinkedStatus
+      ? this.shouldPreferIncomingProtocolOverwrite(
+        existingMatch,
+        incomingMatch,
+        existingMapping,
+        incomingMapping,
+        decision
+      )
+      : false;
 
     if (decision.sameFixture) {
       const winner = decision.preferredWinner;
@@ -895,7 +1038,12 @@ class ReconMappingStore {
       const loserMatch = winner === 'existing' ? incomingMatch : existingMatch;
 
       if (winner === 'incoming') {
-        const rebindRowCount = await this.rebindMappingToMatchWithClient(client, existingMapping, incomingMapping);
+        const rebindRowCount = await this.rebindMappingToMatchWithClient(
+          client,
+          existingMapping,
+          incomingMapping,
+          conflict.hasOptionalFields || {}
+        );
         this.assertSuccessfulRebind(rebindRowCount, {
           season: incomingMapping.season,
           oddsportal_hash: incomingMapping.oddsportal_hash,
@@ -928,11 +1076,12 @@ class ReconMappingStore {
       return {
         resolved: true,
         action: winner === 'existing' ? 'keep_existing_duplicate' : 'rebind_duplicate',
-        linkedStatusUpdated: winner === 'incoming' && pipelineStatus ? 1 : 0
+        linkedStatusUpdated: winner === 'incoming' && pipelineStatus ? 1 : 0,
+        mappingApplied: winner === 'incoming' ? 1 : 0
       };
     }
 
-    if (existingLinked && preserveLinkedStatus && !decision.incomingHasStrongerEvidence) {
+    if (existingLinked && preserveLinkedStatus && !decision.incomingHasStrongerEvidence && !protocolOverwritePreferred) {
       this.logger.warn('[HEAL] 检测到 season/hash 冲突，但新证据不足以推翻既有 RECON_LINKED，已保留原绑定', {
         season: incomingMapping.season,
         oddsportal_hash: incomingMapping.oddsportal_hash,
@@ -957,16 +1106,22 @@ class ReconMappingStore {
       return {
         resolved: true,
         action: 'preserve_existing_link',
-        linkedStatusUpdated: 0
+        linkedStatusUpdated: 0,
+        mappingApplied: 0
       };
     }
 
     if (decision.incomingScore >= this.arbiter.sameFixtureThreshold && decision.incomingScore > decision.existingScore) {
-      if (existingLinked && !decision.incomingHasStrongerEvidence) {
+      if (existingLinked && !decision.incomingHasStrongerEvidence && !protocolOverwritePreferred) {
         return { resolved: false };
       }
 
-      const rebindRowCount = await this.rebindMappingToMatchWithClient(client, existingMapping, incomingMapping);
+      const rebindRowCount = await this.rebindMappingToMatchWithClient(
+        client,
+        existingMapping,
+        incomingMapping,
+        conflict.hasOptionalFields || {}
+      );
       this.assertSuccessfulRebind(rebindRowCount, {
         season: incomingMapping.season,
         oddsportal_hash: incomingMapping.oddsportal_hash,
@@ -1008,6 +1163,7 @@ class ReconMappingStore {
           existing: Number(decision.existingScore.toFixed(3)),
           incoming: Number(decision.incomingScore.toFixed(3))
         },
+        preserve_linked_override: protocolOverwritePreferred,
         evidence: {
           date_distance_ms: Number.isFinite(decision.dateDistanceMs)
             ? decision.dateDistanceMs
@@ -1022,7 +1178,8 @@ class ReconMappingStore {
       return {
         resolved: true,
         action: 'rebind_wrong_fixture',
-        linkedStatusUpdated: pipelineStatus ? 1 : 0
+        linkedStatusUpdated: pipelineStatus ? 1 : 0,
+        mappingApplied: 1
       };
     }
 

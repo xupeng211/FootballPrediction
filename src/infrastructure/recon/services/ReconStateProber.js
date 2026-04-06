@@ -247,7 +247,7 @@ class ReconStateProber {
       return this._buildInterceptResult(leagueIntercepted, leagueUrl, 'CURRENT_TOURNAMENT_INTERCEPT');
     }
 
-    const tournamentApiUrl = hooks.getCurrentTournamentEndpoint?.()
+    const tournamentApiUrl = await hooks.getCurrentTournamentEndpoint?.()
       || derivedTournamentUrl
       || hooks.buildCurrentTournamentUrlFromArchive?.(
         await this.resolveCurrentSeasonArchiveEndpoint(
