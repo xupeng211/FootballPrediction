@@ -89,9 +89,11 @@ fi
 
 cat <<'EOF'
 
-== MCP 重载步骤 ==
-1. 如果修改了 .claude/mcp-config.json 或 mcp_servers/*.py，当前 Claude/Codex 会话不会热加载。
-2. 退出当前客户端会话。
-3. 在仓库根目录重新启动客户端。
-4. 重新运行 bash scripts/ops/verify_mcp.sh 确认变更已生效。
+== MCP 重载提示 ==
+1. Claude Code 读取 .claude/mcp-config.json；Codex CLI 读取 ~/.codex/config.toml。
+2. 如果修改了上述配置或 mcp_servers/*.py，当前 Claude/Codex 会话不会热加载。
+3. 如果 npx 型 MCP 启动慢，可在 ~/.codex/config.toml 为 filesystem / postgres / playwright 增加 startup_timeout_sec。
+4. 本脚本只验证仓库内配置、Python 入口和容器依赖，不检查 ~/.codex/config.toml 是否已被 Codex CLI 加载。
+5. 退出当前客户端会话。
+6. 重新启动对应客户端后，如仍需排查 Codex CLI，请手动检查 ~/.codex/config.toml。
 EOF
