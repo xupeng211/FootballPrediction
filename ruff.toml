@@ -40,6 +40,7 @@ select = [
     "PERF",   # Perflint
     "RUF",    # Ruff-specific rules
 ]
+extend-select = ["PLR0915"]  # 显式阻断过长函数
 
 # 忽略的规则
 ignore = [
@@ -79,6 +80,9 @@ convention = "google"
 [lint.pep8-naming]
 # Allow common naming patterns
 classmethod-decorators = ["classmethod"]
+
+[lint.pylint]
+max-statements = 50
 
 [format]
 # 使用双引号

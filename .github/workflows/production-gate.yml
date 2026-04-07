@@ -8,11 +8,20 @@ concurrency:
   group: production-gate-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DEV_CONTAINER_CPU_LIMIT: "2.0"
+  DEV_CONTAINER_CPU_RESERVATION: "0.5"
+  DEV_NODE_MODULES_MOUNT: "${{ github.workspace }}/.cache/node_modules:/app/node_modules"
+  DEV_CACHE_MOUNT: "${{ github.workspace }}/.cache/dev_root_cache:/root/.cache"
+  DEV_NPM_MOUNT: "${{ github.workspace }}/.cache/npm:/root/.npm"
+  DEV_GITCONFIG_MOUNT: "${{ github.workspace }}/.cache/gitconfig:/root/.config/git"
+  PLAYWRIGHT_CACHE_MOUNT: "${{ github.workspace }}/.cache/playwright:/root/.cache/ms-playwright"
+
 jobs:
   production-gate:
     name: Environment / Proxy / Static / Unit Gate
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -20,13 +29,68 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Prepare CI cache directories
+        run: |
+          mkdir -p \
+            .cache/node_modules \
+            .cache/npm \
+            .cache/dev_root_cache/pip \
+            .cache/playwright \
+            .cache/gitconfig \
+            .cache/buildx \
+            .cache/buildx-new
+
+      - name: Restore dependency cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            .cache/node_modules
+            .cache/npm
+            .cache/dev_root_cache/pip
+            .cache/playwright
+          key: production-gate-deps-${{ runner.os }}-${{ hashFiles('package-lock.json', 'requirements.txt', 'pyproject.toml') }}
+          restore-keys: |
+            production-gate-deps-${{ runner.os }}-
+
+      - name: Restore Docker layer cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/buildx
+          key: production-gate-buildx-${{ runner.os }}-${{ hashFiles('.devcontainer/Dockerfile', 'docker-compose.dev.yml', 'package-lock.json', 'requirements.txt', 'pyproject.toml') }}
+          restore-keys: |
+            production-gate-buildx-${{ runner.os }}-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Warm dev image cache
+        run: |
+          docker buildx build \
+            --load \
+            --tag footballprediction:v175-stable \
+            --file .devcontainer/Dockerfile \
+            --build-arg INSTALL_PLAYWRIGHT=false \
+            --cache-from type=local,src=.cache/buildx \
+            --cache-to type=local,dest=.cache/buildx-new,mode=max \
+            .
+
+      - name: Rotate Docker layer cache
+        if: always()
+        run: |
+          rm -rf .cache/buildx
+          if [ -d .cache/buildx-new ]; then
+            mv .cache/buildx-new .cache/buildx
+          fi
+
       - name: Run authority gatekeeper in container
-        run: GATEKEEPER_BUILD=1 bash scripts/devops/gatekeeper.sh --mode=push
+        env:
+          GATEKEEPER_BUILD: "0"
+        run: bash scripts/devops/gatekeeper.sh --mode=push
 
   docker-build:
     name: Docker Build Validation
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 30
     needs: production-gate
 
     steps:
@@ -35,5 +99,34 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Prepare Docker cache directories
+        run: mkdir -p .cache/docker-buildx .cache/docker-buildx-new
+
+      - name: Restore production Docker cache
+        uses: actions/cache@v4
+        with:
+          path: .cache/docker-buildx
+          key: production-image-buildx-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package-lock.json', 'requirements.txt', 'pyproject.toml') }}
+          restore-keys: |
+            production-image-buildx-${{ runner.os }}-
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build production image
-        run: docker build -f Dockerfile -t footballprediction:production-gate .
+        run: |
+          docker buildx build \
+            --load \
+            --tag footballprediction:production-gate \
+            --file Dockerfile \
+            --cache-from type=local,src=.cache/docker-buildx \
+            --cache-to type=local,dest=.cache/docker-buildx-new,mode=max \
+            .
+
+      - name: Rotate production Docker cache
+        if: always()
+        run: |
+          rm -rf .cache/docker-buildx
+          if [ -d .cache/docker-buildx-new ]; then
+            mv .cache/docker-buildx-new .cache/docker-buildx
+          fi
