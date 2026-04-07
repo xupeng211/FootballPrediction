@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""兼容层：保留旧导入路径 `src.utils.team_alias`。"""
+"""队名别名引擎包。"""
 
 from __future__ import annotations
 
-from src.utils.teams import (
+from .constants import (
     COMMON_EPL_TEAMS,
     CONFIDENCE_THRESHOLD,
     MULTI_WORD_TEAMS,
@@ -12,22 +12,17 @@ from src.utils.teams import (
     TEAM_ABBREVIATIONS,
     TEAM_PREFIXES,
     TEAM_SUFFIXES,
-    MatchResult,
-    TeamAliasMatch,
-    _TeamAliasTests,
+)
+from .harness import _TeamAliasTests, run_module_tests
+from .matching import calculate_similarity, expand_team_name, match_teams, semantic_match
+from .models import MatchResult, TeamAliasMatch
+from .normalization import denoise_team_name, extract_place_name, normalize_team_name
+from .url_tools import (
     batch_normalize_team_names,
-    calculate_similarity,
-    denoise_team_name,
     determine_tier,
-    expand_team_name,
-    extract_place_name,
     extract_team_names_from_url,
     get_team_aliases,
     is_safe_confidence,
-    match_teams,
-    normalize_team_name,
-    run_module_tests,
-    semantic_match,
 )
 
 __all__ = [
@@ -53,9 +48,6 @@ __all__ = [
     "is_safe_confidence",
     "match_teams",
     "normalize_team_name",
+    "run_module_tests",
     "semantic_match",
 ]
-
-
-if __name__ == "__main__":
-    raise SystemExit(run_module_tests())
