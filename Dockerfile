@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # 复制依赖文件
 COPY requirements.txt .
+COPY mcp_servers/requirements.txt ./mcp_servers-requirements.txt
 COPY pyproject.toml .
 COPY ruff.toml .
 COPY mypy.ini .
@@ -30,7 +31,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # 升级 pip 并安装依赖
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt -r mcp_servers-requirements.txt
 
 # 预编译 Python 字节码（减少运行时启动时间）
 RUN python -m compileall -q /opt/venv/lib/python3.11/site-packages

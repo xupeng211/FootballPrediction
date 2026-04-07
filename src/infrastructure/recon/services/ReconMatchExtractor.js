@@ -398,4 +398,4 @@ const reconMatchExtractor = {
   }
 };
 
-module.exports = { reconMatchExtractor };
+module.exports = { reconMatchExtractor, isTrustedOddsPortalUrl };

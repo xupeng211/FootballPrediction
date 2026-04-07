@@ -352,11 +352,12 @@ class ReconMetrics {
    * 获取指标统计摘要
    * @returns {Object} 指标摘要
    */
-  getSummary() {
+  async getSummary() {
+    const metrics = await this.register.getMetricsAsJSON();
     return {
-      counters: this.register.getMetricsAsJSON().filter(m => m.type === 'counter').length,
-      histograms: this.register.getMetricsAsJSON().filter(m => m.type === 'histogram').length,
-      gauges: this.register.getMetricsAsJSON().filter(m => m.type === 'gauge').length
+      counters: metrics.filter(m => m.type === 'counter').length,
+      histograms: metrics.filter(m => m.type === 'histogram').length,
+      gauges: metrics.filter(m => m.type === 'gauge').length
     };
   }
 }

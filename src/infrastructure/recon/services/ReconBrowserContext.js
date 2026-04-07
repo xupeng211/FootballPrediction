@@ -562,15 +562,19 @@ class ReconBrowserContext {
     this.userDataDir = null;
     this._sessionPrimed = false;
 
-    let forceKillRequired = false;
-    forceKillRequired = await this._closeTargetWithTimeout('context', context) || forceKillRequired;
-    forceKillRequired = await this._closeTargetWithTimeout('browser', browser, { skipWhenSameAsContext: browser === context }) || forceKillRequired;
+    try {
+      let forceKillRequired = false;
+      forceKillRequired = await this._closeTargetWithTimeout('context', context) || forceKillRequired;
+      forceKillRequired = await this._closeTargetWithTimeout('browser', browser, {
+        skipWhenSameAsContext: browser === context
+      }) || forceKillRequired;
 
-    if (forceKillRequired) {
-      await this._forceKillBrowserProcess(browser, context);
+      if (forceKillRequired) {
+        await this._forceKillBrowserProcess(browser, context);
+      }
+    } finally {
+      await this.stealthProvider.cleanupUserDataDir(userDataDir);
     }
-
-    await this.stealthProvider.cleanupUserDataDir(userDataDir);
   }
 
   async _closeTargetWithTimeout(label, target, options = {}) {

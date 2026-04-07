@@ -225,34 +225,64 @@ describe('V172-GOLD 高级测试', () => {
         it('应优雅处理乱码 JSON 而不崩溃', () => {
             let crashCount = 0;
             let errorCount = 0;
+            const originalRandom = Math.random;
+            const forcedRandomValues = [
+                0 / 11,
+                1 / 11,
+                2 / 11,
+                3 / 11,
+                4 / 11,
+                5 / 11,
+                6 / 11,
+                7 / 11,
+                8 / 11,
+                9 / 11,
+                10 / 11,
+                0 / 11,
+                1 / 11,
+                2 / 11,
+                3 / 11,
+                4 / 11,
+                5 / 11,
+                6 / 11,
+                7 / 11,
+                8 / 11
+            ];
+            let randomCursor = 0;
 
-            for (let i = 0; i < 20; i++) {
-                const garbled = createGarbledJson();
+            Math.random = () => forcedRandomValues[randomCursor++ % forcedRandomValues.length];
 
-                try {
-                    // 尝试解析乱码数据
-                    let parsed = garbled;
-                    if (typeof garbled === 'string') {
-                        try {
-                            parsed = JSON.parse(garbled);
-                        } catch (e) {
-                            // JSON 解析失败是预期的
-                            errorCount++;
-                            continue;
+            try {
+                for (let i = 0; i < 20; i++) {
+                    const garbled = createGarbledJson();
+
+                    try {
+                        // 尝试解析乱码数据
+                        let parsed = garbled;
+                        if (typeof garbled === 'string') {
+                            try {
+                                parsed = JSON.parse(garbled);
+                            } catch (e) {
+                                // JSON 解析失败是预期的
+                                errorCount++;
+                                continue;
+                            }
                         }
+
+                        // 即使解析成功，引擎也应优雅处理
+                        const result = parseMatchData(parsed);
+
+                        // 验证结果结构正确（即使值为 null）
+                        assert.ok(typeof result === 'object', '应返回对象');
+                        assert.ok('xg_home' in result, '应包含 xg_home 字段');
+
+                    } catch (e) {
+                        // 捕获未预期的崩溃
+                        crashCount++;
                     }
-
-                    // 即使解析成功，引擎也应优雅处理
-                    const result = parseMatchData(parsed);
-
-                    // 验证结果结构正确（即使值为 null）
-                    assert.ok(typeof result === 'object', '应返回对象');
-                    assert.ok('xg_home' in result, '应包含 xg_home 字段');
-
-                } catch (e) {
-                    // 捕获未预期的崩溃
-                    crashCount++;
                 }
+            } finally {
+                Math.random = originalRandom;
             }
 
             // 允许 JSON 解析错误，但不允许引擎崩溃
