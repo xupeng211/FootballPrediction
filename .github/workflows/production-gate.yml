@@ -15,7 +15,6 @@ env:
   DEV_CACHE_MOUNT: "${{ github.workspace }}/.cache/dev_root_cache:/root/.cache"
   DEV_NPM_MOUNT: "${{ github.workspace }}/.cache/npm:/root/.npm"
   DEV_GITCONFIG_MOUNT: "${{ github.workspace }}/.cache/gitconfig:/root/.config/git"
-  PLAYWRIGHT_CACHE_MOUNT: "${{ github.workspace }}/.cache/playwright:/root/.cache/ms-playwright"
 
 jobs:
   production-gate:
@@ -35,7 +34,6 @@ jobs:
             .cache/node_modules \
             .cache/npm \
             .cache/dev_root_cache/pip \
-            .cache/playwright \
             .cache/gitconfig \
             .cache/buildx \
             .cache/buildx-new
@@ -47,7 +45,6 @@ jobs:
             .cache/node_modules
             .cache/npm
             .cache/dev_root_cache/pip
-            .cache/playwright
           key: production-gate-deps-${{ runner.os }}-${{ hashFiles('package-lock.json', 'requirements.txt', 'pyproject.toml') }}
           restore-keys: |
             production-gate-deps-${{ runner.os }}-
