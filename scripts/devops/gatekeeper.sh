@@ -65,6 +65,7 @@ readonly MODE
 readonly PORT_REGEX='7890|7891|7892|7893|7894|7895|7896|7897|7898|7899|7900|7901|7902|7903|7904|7905|7906|7907|7908|7909|7910|7911'
 readonly LEAK_REGEX="172\\.25\\.16\\.1|\\b(${PORT_REGEX})\\b"
 readonly CONTRACT_REGEX='require\(["'"'"'](axios|node-fetch|got|http|https|node:http|node:https|http-proxy-agent|https-proxy-agent)["'"'"']\)|from ["'"'"'](axios|node-fetch|got|undici)["'"'"']'
+readonly PYTHON_FILE_LINE_LIMIT=800
 
 path_is_leak_allowlisted() {
   local file="$1"
@@ -312,23 +313,107 @@ NODE
 
   python <<'PY'
 import json
+import os
 from pathlib import Path
+import re
 
-from src.config_unified import get_settings, get_shared_proxy_pool_config
+CONFIG_PATH = Path("config/proxy_pool.json")
 
-pool = get_shared_proxy_pool_config()
-settings = get_settings()
+
+def parse_ports(value):
+    if isinstance(value, list):
+        candidates = value
+    elif isinstance(value, str):
+        candidates = value.split(",")
+    else:
+        return []
+
+    ports = []
+    for candidate in candidates:
+        try:
+            port = int(str(candidate).strip())
+        except (TypeError, ValueError):
+            continue
+
+        if port > 0:
+            ports.append(port)
+
+    return ports
+
+
+def expand_port_range(start, end):
+    try:
+        range_start = int(start)
+        range_end = int(end)
+    except (TypeError, ValueError):
+        return []
+
+    if range_end < range_start:
+        return []
+
+    return list(range(range_start, range_end + 1))
+
+
+def extract_proxy_host(server_template):
+    if not server_template:
+        return None
+
+    match = re.match(r"^https?://([^/:]+)", str(server_template))
+    return match.group(1) if match else None
+
+
+file_config = {}
+if CONFIG_PATH.exists():
+    file_config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+
+protocol = os.environ.get("PROXY_PROTOCOL") or file_config.get("protocol") or "http"
+server_template = os.environ.get("PROXY_SERVER") or file_config.get("serverTemplate") or ""
+
+ports = parse_ports(os.environ.get("PROXY_PORTS"))
+if not ports:
+    ports = expand_port_range(
+        os.environ.get("PROXY_PORT_START"),
+        os.environ.get("PROXY_PORT_END"),
+    )
+if not ports:
+    ports = parse_ports(file_config.get("ports"))
+
+host = (
+    os.environ.get("WSL2_PROXY_HOST")
+    or os.environ.get("PROXY_HOST")
+    or extract_proxy_host(server_template)
+    or file_config.get("host")
+    or "127.0.0.1"
+)
+
+try:
+    default_port = int(
+        os.environ.get("PROXY_PORT")
+        or file_config.get("defaultPort")
+        or (ports[0] if ports else 0)
+    )
+except (TypeError, ValueError):
+    default_port = ports[0] if ports else 0
+
+if not ports and default_port:
+    ports = [default_port]
+
+if not server_template:
+    if "{port}" in str(file_config.get("serverTemplate") or ""):
+        server_template = str(file_config["serverTemplate"])
+    else:
+        server_template = f"{protocol}://{host}:{{port}}"
 
 payload = {
-    "host": pool["host"],
-    "ports": pool["ports"],
-    "defaultPort": pool["default_port"],
-    "protocol": pool["protocol"],
-    "serverTemplate": pool["server_template"],
-    "settingsHost": settings.proxy_wsl2_host,
-    "settingsPorts": [int(port.strip()) for port in settings.proxy_ports.split(",") if port.strip()],
-    "settingsProtocol": settings.proxy_protocol,
-    "settingsServerTemplate": settings.proxy_server_template,
+    "host": host,
+    "ports": ports,
+    "defaultPort": default_port,
+    "protocol": protocol,
+    "serverTemplate": server_template,
+    "settingsHost": host,
+    "settingsPorts": ports,
+    "settingsProtocol": protocol,
+    "settingsServerTemplate": server_template,
 }
 Path("/tmp/gatekeeper-python-proxy.json").write_text(
     json.dumps(payload, ensure_ascii=False, indent=2),
@@ -462,7 +547,7 @@ run_python_proxy_contract_check() {
       continue
     fi
 
-    if grep -qE 'from src\.config_unified import|get_settings|get_shared_proxy_pool_config|proxy_server_template|proxy_ports|proxy_wsl2_host' "$file"; then
+    if grep -qE 'from src\.config import|import src\.config|get_settings|get_shared_proxy_pool_config|proxy_server_template|proxy_ports|proxy_wsl2_host' "$file"; then
       continue
     fi
 
@@ -474,7 +559,41 @@ run_python_proxy_contract_check() {
   if [[ "${#findings[@]}" -gt 0 ]]; then
     printf '[Gatekeeper] 命中未接入统一代理配置的 Python 底层网络调用:\n' >&2
     printf '  %s\n' "${findings[@]}" >&2
-    fail '发现 Python 侧绕过 config_unified / ProxyProvider 的网络依赖，请先接入统一代理配置。'
+    fail '发现 Python 侧绕过 src.config / ProxyProvider 的网络依赖，请先接入统一代理配置。'
+  fi
+}
+
+run_python_architecture_guard() {
+  log '执行 Python 架构体量检查。'
+
+  mapfile -t python_targets < <(resolve_python_quality_targets)
+  if [[ "${#python_targets[@]}" -eq 0 ]]; then
+    log '未检测到本次变更涉及 Python 目标文件，跳过巨石文件检查。'
+    return 0
+  fi
+
+  local findings=()
+  local file
+  local line_count
+
+  for file in "${python_targets[@]}"; do
+    [[ -f "$file" ]] || continue
+    line_count="$(wc -l < "$file" | tr -d '[:space:]')"
+    if (( line_count <= PYTHON_FILE_LINE_LIMIT )); then
+      continue
+    fi
+
+    if [[ "$file" == src/config/*.py ]]; then
+      fail "检测到‘巨石文件’，请先进行模块化拆分再提交：${file} 当前 ${line_count} 行，已超过 ${PYTHON_FILE_LINE_LIMIT} 行上限。"
+    fi
+
+    findings+=("${file}:${line_count}")
+  done
+
+  if [[ "${#findings[@]}" -gt 0 ]]; then
+    printf '[Gatekeeper] 命中超长 Python 文件（>%s 行）:\n' "$PYTHON_FILE_LINE_LIMIT" >&2
+    printf '  %s\n' "${findings[@]}" >&2
+    fail '检测到超长 Python 文件，请先拆分模块后再提交。'
   fi
 }
 
@@ -535,6 +654,7 @@ main() {
   run_secret_ip_leak_check
   run_proxy_contract_check
   run_python_proxy_contract_check
+  run_python_architecture_guard
   run_static_quality_checks
   run_proxyprovider_smoke_test
 

@@ -91,7 +91,7 @@ FootballPrediction/
 │   ├── api/                   # 数据采集层
 │   ├── ml/                    # ML 引擎
 │   ├── processors/            # 特征提取
-│   └── config_unified.py      # 配置管理
+│   └── config/                # Python 配置管理
 ├── scripts/                   # 运维脚本
 ├── tests/                     # 测试
 └── model_zoo/                 # 模型文件
@@ -102,7 +102,7 @@ FootballPrediction/
 | 文件 | 作用 | 何时修改 |
 |------|------|----------|
 | `main.py` | 命令入口 | 很少改 |
-| `src/config_unified.py` | 配置管理 | 添加新配置 |
+| `src/config/__init__.py` | 配置入口 | 需要新增或读取统一配置 |
 | `src/api/collectors/` | 数据采集 | 添加新数据源 |
 | `src/ml/engine.py` | 预测引擎 | 修改模型 |
 | `Makefile` | 快捷命令 | 添加新命令 |

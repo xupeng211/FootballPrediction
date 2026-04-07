@@ -13,10 +13,13 @@ FROM python:3.11-slim-bookworm
 # -----------------------------------------------------------------------------
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
+ARG APT_MIRROR_HOST=mirrors.aliyun.com
 
-# 替换为阿里云 Debian 镜像源
-RUN sed -i 's/deb.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources && \
-    sed -i 's/security.debian.org/mirrors.aliyun.com/g' /etc/apt/sources.list.d/debian.sources
+# 默认替换为国内镜像源；CI 可显式传入 deb.debian.org 保持官方源
+RUN if [ "$APT_MIRROR_HOST" != "deb.debian.org" ]; then \
+        sed -i "s/deb.debian.org/${APT_MIRROR_HOST}/g" /etc/apt/sources.list.d/debian.sources && \
+        sed -i "s/security.debian.org/${APT_MIRROR_HOST}/g" /etc/apt/sources.list.d/debian.sources; \
+    fi
 
 # 安装系统依赖（编译环境、Git、vim、网络工具）
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -99,7 +102,8 @@ RUN set -eux; \
     rm -rf /var/lib/apt/lists/*
 
 # 配置 npm 使用淘宝镜像
-RUN npm config set registry https://registry.npmmirror.com
+ARG NPM_REGISTRY=https://registry.npmmirror.com
+RUN npm config set registry "${NPM_REGISTRY}"
 
 # 安装全局开发工具
 RUN npm install -g \
@@ -127,8 +131,10 @@ COPY requirements.txt pyproject.toml /tmp/python-deps/
 COPY mcp_servers/requirements.txt /tmp/python-deps/mcp_servers-requirements.txt
 
 # 配置 pip 使用阿里云镜像
-RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
-    pip config set install.trusted-host mirrors.aliyun.com
+ARG PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple/
+ARG PIP_TRUSTED_HOST=mirrors.aliyun.com
+RUN pip config set global.index-url "${PIP_INDEX_URL}" && \
+    pip config set install.trusted-host "${PIP_TRUSTED_HOST}"
 
 # 安装项目依赖和额外开发工具
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \

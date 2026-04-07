@@ -58,8 +58,10 @@ CREATE INDEX IF NOT EXISTS idx_matches_finished ON matches(is_finished) WHERE is
 CREATE TABLE IF NOT EXISTS raw_match_data (
     id BIGSERIAL PRIMARY KEY,
     match_id VARCHAR(50) NOT NULL REFERENCES matches(match_id) ON DELETE CASCADE,
+    external_id VARCHAR(100),
     raw_data JSONB NOT NULL,
     collected_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    data_version VARCHAR(20) DEFAULT 'V26.1',
     data_hash VARCHAR(64),  -- SHA256 校验
     UNIQUE(match_id)
 );
@@ -137,7 +139,7 @@ CREATE INDEX IF NOT EXISTS idx_features_adaptive_gin ON match_features_training 
 CREATE TABLE IF NOT EXISTS league_config (
     league_id SERIAL PRIMARY KEY,
     league_name VARCHAR(100) UNIQUE NOT NULL,
-    league_code VARCHAR(20) UNIQUE,
+    league_code VARCHAR(64) UNIQUE,
     fotmob_id VARCHAR(50),
     country VARCHAR(100),
     season_mapping JSONB,  -- {"2324": "23/24", "2223": "22/23"}
