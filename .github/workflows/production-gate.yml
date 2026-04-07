@@ -69,7 +69,11 @@ jobs:
             --load \
             --tag footballprediction:v175-stable \
             --file .devcontainer/Dockerfile \
+            --build-arg APT_MIRROR_HOST=deb.debian.org \
             --build-arg INSTALL_PLAYWRIGHT=false \
+            --build-arg NPM_REGISTRY=https://registry.npmjs.org \
+            --build-arg PIP_INDEX_URL=https://pypi.org/simple \
+            --build-arg PIP_TRUSTED_HOST=pypi.org \
             --cache-from type=local,src=.cache/buildx \
             --cache-to type=local,dest=.cache/buildx-new,mode=max \
             .
