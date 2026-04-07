@@ -53,7 +53,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .cache/buildx
-          key: production-gate-buildx-${{ runner.os }}-${{ hashFiles('.devcontainer/Dockerfile', 'docker-compose.dev.yml', 'package-lock.json', 'requirements.txt', 'pyproject.toml') }}
+          key: production-gate-buildx-${{ runner.os }}-${{ hashFiles('.devcontainer/Dockerfile', 'requirements.txt', 'mcp_servers/requirements.txt', 'pyproject.toml') }}
           restore-keys: |
             production-gate-buildx-${{ runner.os }}-
 
@@ -71,7 +71,7 @@ jobs:
             --build-arg PIP_INDEX_URL=https://pypi.org/simple \
             --build-arg PIP_TRUSTED_HOST=pypi.org \
             --cache-from type=local,src=.cache/buildx \
-            --cache-to type=local,dest=.cache/buildx-new,mode=max \
+            --cache-to type=local,dest=.cache/buildx-new,mode=min \
             .
 
       - name: Rotate Docker layer cache
@@ -106,7 +106,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .cache/docker-buildx
-          key: production-image-buildx-${{ runner.os }}-${{ hashFiles('Dockerfile', 'package-lock.json', 'requirements.txt', 'pyproject.toml') }}
+          key: production-image-buildx-${{ runner.os }}-${{ hashFiles('Dockerfile', 'requirements.txt', 'mcp_servers/requirements.txt', 'pyproject.toml', 'ruff.toml', 'mypy.ini') }}
           restore-keys: |
             production-image-buildx-${{ runner.os }}-
 
@@ -120,7 +120,7 @@ jobs:
             --tag footballprediction:production-gate \
             --file Dockerfile \
             --cache-from type=local,src=.cache/docker-buildx \
-            --cache-to type=local,dest=.cache/docker-buildx-new,mode=max \
+            --cache-to type=local,dest=.cache/docker-buildx-new,mode=min \
             .
 
       - name: Rotate production Docker cache
