@@ -114,6 +114,15 @@ describe('Normalizer - V6.6 标准化工具类', () => {
     });
   });
 
+  describe('normalizeStatus()', () => {
+    it('应统一状态大小写并在非法输入时回退 scheduled', () => {
+      assert.strictEqual(Normalizer.normalizeStatus(' FINISHED '), 'finished');
+      assert.strictEqual(Normalizer.normalizeStatus('Live'), 'live');
+      assert.strictEqual(Normalizer.normalizeStatus(null), 'scheduled');
+      assert.strictEqual(Normalizer.normalizeStatus({}), 'scheduled');
+    });
+  });
+
   describe('isValidMatchId()', () => {
     it('应验证标准格式为有效', () => {
       const result = Normalizer.isValidMatchId('47_20232024_3609929');
@@ -158,6 +167,21 @@ describe('Normalizer - V6.6 标准化工具类', () => {
     it('应验证多段格式为无效', () => {
       const result = Normalizer.isValidMatchId('47_20232024_3609929_extra');
       assert.strictEqual(result, false);
+    });
+  });
+
+  describe('parseMatchId()', () => {
+    it('应解析合法 match_id 并在非法输入时返回 null', () => {
+      assert.deepStrictEqual(
+        Normalizer.parseMatchId('47_20232024_3609929'),
+        {
+          leagueId: '47',
+          seasonTag: '20232024',
+          externalId: '3609929'
+        }
+      );
+      assert.strictEqual(Normalizer.parseMatchId('47_2023_3609929'), null);
+      assert.strictEqual(Normalizer.parseMatchId(null), null);
     });
   });
 

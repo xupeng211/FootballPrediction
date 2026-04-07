@@ -455,6 +455,20 @@ const reconPureDecryptorRuntime = {
 
   _installBrowserLikeGlobals(globals = {}) {
     const runtimeGlobals = this._createDefaultRuntimeGlobals(globals);
+    const installGlobal = (key, value) => {
+      const descriptor = Object.getOwnPropertyDescriptor(globalThis, key);
+      if (!descriptor || descriptor.writable || descriptor.set) {
+        globalThis[key] = value;
+        return;
+      }
+
+      Object.defineProperty(globalThis, key, {
+        value,
+        configurable: true,
+        enumerable: descriptor.enumerable ?? true,
+        writable: true
+      });
+    };
 
     if (!globalThis.crypto) {
       globalThis.crypto = webcrypto;
@@ -472,13 +486,13 @@ const reconPureDecryptorRuntime = {
       globalThis.sessionStorage = createStorageStub();
     }
 
-    globalThis.navigator = runtimeGlobals.navigator;
-    globalThis.location = runtimeGlobals.location;
-    globalThis.document = runtimeGlobals.document;
-    globalThis.history = runtimeGlobals.history;
-    globalThis.performance = runtimeGlobals.performance;
-    globalThis.pageVar = runtimeGlobals.pageVar;
-    globalThis.pageOutrightsVar = runtimeGlobals.pageOutrightsVar;
+    installGlobal('navigator', runtimeGlobals.navigator);
+    installGlobal('location', runtimeGlobals.location);
+    installGlobal('document', runtimeGlobals.document);
+    installGlobal('history', runtimeGlobals.history);
+    installGlobal('performance', runtimeGlobals.performance);
+    installGlobal('pageVar', runtimeGlobals.pageVar);
+    installGlobal('pageOutrightsVar', runtimeGlobals.pageOutrightsVar);
 
     globalThis.window.document = globalThis.document;
     globalThis.window.location = globalThis.location;

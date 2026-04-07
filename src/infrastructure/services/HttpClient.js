@@ -114,6 +114,7 @@ class HttpClient {
       {
         url: requestUrl,
         mode: this.useStealthMode ? 'stealth' : 'raw',
+        statusCode: lastError.statusCode,
         retryCount: attemptCount,
         originalError: lastError.message,
         code: lastError.code,
