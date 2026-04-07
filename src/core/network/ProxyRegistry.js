@@ -12,6 +12,8 @@
 
 'use strict';
 
+const { ProxyProvider } = require('../../infrastructure/network/ProxyProvider');
+
 /**
  * ProxyRegistry - 代理端口注册表
  */
@@ -22,8 +24,8 @@ class ProxyRegistry {
      * @param {string} config.host - 代理服务器地址
      */
     constructor(config = {}) {
-        this.ports = config.ports || Array.from({ length: 22 }, (_, i) => 7890 + i);
-        this.host = config.host || '172.25.16.1';
+        this.ports = config.ports || ProxyProvider.resolvePorts();
+        this.host = config.host || ProxyProvider.resolveHost();
 
         // 状态
         this.assignments = new Map();   // workerId -> port

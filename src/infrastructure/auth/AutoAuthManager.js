@@ -19,6 +19,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const { getPathResolver } = require('../utils/PathResolver');
 const { logger } = require('../utils/Logger');
+const { ProxyProvider } = require('../network/ProxyProvider');
 
 // ============================================================================
 // 单例模式
@@ -163,7 +164,7 @@ class AutoAuthManager {
         // 如果指定了代理端口，配置代理
         if (port) {
             contextOptions.proxy = {
-                server: `http://172.25.16.1:${port}`
+                server: ProxyProvider.buildServer(port)
             };
             console.log(`🌐 [AutoAuth] 使用代理端口: ${port}`);
         }

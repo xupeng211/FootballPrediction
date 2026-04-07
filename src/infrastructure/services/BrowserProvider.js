@@ -39,6 +39,10 @@ class BrowserProvider {
     this.browser = null;
     this.page = null;
     this.defaultTimeoutMs = options.defaultTimeoutMs || 20000;
+    this.proxyProvider = options.proxyProvider || null;
+    this.proxyConsumer = options.proxyConsumer || 'l1-discovery-browser';
+    this.proxySessionKey = options.proxySessionKey || 'main-browser';
+    this.proxyLease = null;
   }
 
   /**
@@ -61,8 +65,10 @@ class BrowserProvider {
     this.logger.info('[BrowserProvider] 🕵️  启动影子浏览器 (闪击模式)...');
     
     try {
+      const proxyLease = await this.ensureProxyLease('browser-launch');
       this.browser = await chromium.launch({
         headless: this.config.headless,
+        ...(proxyLease ? { proxy: { server: proxyLease.proxy.server } } : {}),
         args: [
           '--disable-dev-shm-usage',
           '--disable-gpu',
@@ -86,10 +92,17 @@ class BrowserProvider {
         userAgent: this.config.userAgent
       });
       
-      this.logger.info('[BrowserProvider] ✅ 浏览器实例创建成功');
+      this.logger.info(
+        `[BrowserProvider] ✅ 浏览器实例创建成功${proxyLease ? ` | Port ${proxyLease.proxy.port}` : ''}`
+      );
       return this.page;
       
     } catch (error) {
+      await this.reportProxyFailure({
+        reason: error.message,
+        statusCode: error.statusCode || null
+      });
+      await this.releaseProxyLease();
       this.logger.error(`[BrowserProvider] ❌ 浏览器启动失败: ${error.message}`);
       throw error;
     }
@@ -109,13 +122,22 @@ class BrowserProvider {
     this.logger.info('[BrowserProvider] 🍪 获取初始 Cookies (轻量模式)...');
     
     try {
+      const startTime = Date.now();
       await this.page.goto(url, {
         waitUntil: options.waitUntil || 'domcontentloaded',
         timeout: options.timeout || 15000
       });
       
+      await this.reportProxySuccess({
+        latencyMs: Date.now() - startTime,
+        statusCode: 200
+      });
       this.logger.info('[BrowserProvider] ✅ 页面预热完成');
     } catch (error) {
+      await this.reportProxyFailure({
+        reason: error.message,
+        statusCode: error.statusCode || null
+      });
       // 宽容模式: 即使主页加载失败，也可能已获取到 Cookie
       this.logger.warn(`[BrowserProvider] ⚠️  页面预热警告: ${error.message}`);
       this.logger.warn('[BrowserProvider] 💡 继续执行 (Cookie 可能已获取)');
@@ -209,10 +231,23 @@ class BrowserProvider {
       await this.initialize();
     }
     
-    await this.page.goto(url, {
-      waitUntil: options.waitUntil || 'domcontentloaded',
-      timeout: options.timeout || 20000
-    });
+    const startTime = Date.now();
+    try {
+      await this.page.goto(url, {
+        waitUntil: options.waitUntil || 'domcontentloaded',
+        timeout: options.timeout || 20000
+      });
+      await this.reportProxySuccess({
+        latencyMs: Date.now() - startTime,
+        statusCode: 200
+      });
+    } catch (error) {
+      await this.reportProxyFailure({
+        reason: error.message,
+        statusCode: error.statusCode || null
+      });
+      throw error;
+    }
   }
 
   /**
@@ -294,10 +329,12 @@ class BrowserProvider {
    * @returns {Promise<void>}
    */
   async close() {
-    if (!this.browser) return;
-
-    this.logger.info('[BrowserProvider] 🔒 关闭浏览器...');
     try {
+      if (!this.browser) {
+        return;
+      }
+
+      this.logger.info('[BrowserProvider] 🔒 关闭浏览器...');
       if (this.page) {
         this.page.removeAllListeners();
       }
@@ -306,7 +343,57 @@ class BrowserProvider {
     } finally {
       this.browser = null;
       this.page = null;
+      await this.releaseProxyLease();
     }
+  }
+
+  async ensureProxyLease(reason = 'browser') {
+    if (!this.proxyProvider) {
+      return null;
+    }
+
+    if (this.proxyLease) {
+      return this.proxyLease;
+    }
+
+    this.proxyLease = await this.proxyProvider.acquire({
+      consumer: this.proxyConsumer,
+      sessionKey: this.proxySessionKey,
+      sticky: true,
+      metadata: { reason }
+    });
+
+    return this.proxyLease;
+  }
+
+  getCurrentProxyLease() {
+    return this.proxyLease;
+  }
+
+  async reportProxySuccess(metadata = {}) {
+    if (!this.proxyProvider || !this.proxyLease) {
+      return;
+    }
+
+    await this.proxyProvider.reportSuccess(this.proxyLease.id, metadata);
+  }
+
+  async reportProxyFailure(metadata = {}) {
+    if (!this.proxyProvider || !this.proxyLease) {
+      return;
+    }
+
+    await this.proxyProvider.reportFailure(this.proxyLease.id, metadata);
+  }
+
+  async releaseProxyLease() {
+    if (!this.proxyProvider || !this.proxyLease) {
+      return;
+    }
+
+    const lease = this.proxyLease;
+    this.proxyLease = null;
+    await this.proxyProvider.release(lease.id);
   }
 }
 

@@ -1,0 +1,743 @@
+'use strict';
+
+const { EventEmitter } = require('node:events');
+const http = require('node:http');
+const https = require('node:https');
+const net = require('node:net');
+const { URL } = require('node:url');
+const { HttpProxyAgent } = require('http-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+const { buildProxyServer, resolveProxyPoolConfig } = require('../../../config/proxy_pool');
+
+const DEFAULT_PROTOCOL = 'http';
+const DEFAULT_TARGET_LATENCY_MS = 1500;
+const DEFAULT_SUCCESS_RATE = 0.95;
+const DEFAULT_HEARTBEAT_URL = 'https://httpbin.org/ip';
+
+function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
+
+function ewma(previous, next, alpha) {
+  return previous === null || previous === undefined
+    ? next
+    : (previous * (1 - alpha)) + (next * alpha);
+}
+
+function extractStatusCode(reason = '') {
+  const message = String(reason || '');
+  const match = message.match(/\b(4\d{2}|5\d{2})\b/);
+  return match ? Number(match[1]) : null;
+}
+
+class ProxyProvider extends EventEmitter {
+  constructor(options = {}) {
+    super();
+
+    this.logger = options.logger || console;
+    this.now = options.now || (() => Date.now());
+    this.probes = {
+      tcp: options.probes?.tcp || ((node, config) => this._probeTcp(node, config)),
+      http: options.probes?.http || ((node, config) => this._probeHttp(node, config))
+    };
+
+    this.config = this._buildConfig(options);
+    this.nodes = this.config.ports.map(port => this._createNode(port));
+    this.nodeByPort = new Map(this.nodes.map(node => [node.port, node]));
+    this.leases = new Map();
+    this.stickyLeases = new Map();
+    this.sequence = 0;
+    this.healthTimer = null;
+    this.started = false;
+  }
+
+  _buildConfig(options = {}) {
+    const protocol = options.protocol || ProxyProvider.resolveProtocol();
+    const host = options.host || ProxyProvider.resolveHost();
+    const ports = Array.isArray(options.ports) && options.ports.length > 0
+      ? [...options.ports]
+      : ProxyProvider.resolvePorts();
+
+    return {
+      protocol,
+      host,
+      ports,
+      targetLatencyMs: Number(options.targetLatencyMs) || DEFAULT_TARGET_LATENCY_MS,
+      healthCheckIntervalMs: Number(options.healthCheckIntervalMs) || 30000,
+      tcpTimeoutMs: Number(options.tcpTimeoutMs) || 1500,
+      httpTimeoutMs: Number(options.httpTimeoutMs) || 4000,
+      heartbeatUrl: String(options.heartbeatUrl || process.env.PROXY_HEARTBEAT_URL || DEFAULT_HEARTBEAT_URL),
+      rateLimitIsolationMs: Number(options.rateLimitIsolationMs) || 300000,
+      failureCooldownMs: Number(options.failureCooldownMs) || 3000,
+      heartbeatFailureCooldownMs: Number(options.heartbeatFailureCooldownMs) || 5000,
+      failureThreshold: Number(options.failureThreshold) || 2,
+      successEwmaAlpha: Number(options.successEwmaAlpha) || 0.25,
+      latencyEwmaAlpha: Number(options.latencyEwmaAlpha) || 0.2,
+      baseWeight: Number(options.baseWeight) || 1
+    };
+  }
+
+  _createNode(port) {
+    const server = `${this.config.protocol}://${this.config.host}:${port}`;
+    return {
+      port,
+      host: this.config.host,
+      server,
+      url: server,
+      baseWeight: this.config.baseWeight,
+      leaseCount: 0,
+      totalLeases: 0,
+      totalRequests: 0,
+      successCount: 0,
+      failureCount: 0,
+      successRateEwma: DEFAULT_SUCCESS_RATE,
+      latencyEwmaMs: this.config.targetLatencyMs,
+      probeHealthy: true,
+      lastHeartbeatAt: 0,
+      lastUsedAt: 0,
+      lastStatusCode: null,
+      lastError: null,
+      lastConsumer: null,
+      consecutiveFailures: 0,
+      cooldownUntil: 0,
+      isolatedUntil: 0
+    };
+  }
+
+  static resolveHost() {
+    return resolveProxyPoolConfig().host;
+  }
+
+  static resolvePorts() {
+    return [...resolveProxyPoolConfig().ports];
+  }
+
+  static resolveProtocol() {
+    return resolveProxyPoolConfig().protocol || DEFAULT_PROTOCOL;
+  }
+
+  static buildServer(port, options = {}) {
+    return buildProxyServer(port, {
+      config: {
+        ...resolveProxyPoolConfig(),
+        protocol: options.protocol || ProxyProvider.resolveProtocol(),
+        host: options.host || ProxyProvider.resolveHost()
+      },
+      protocol: options.protocol,
+      host: options.host,
+      serverTemplate: options.serverTemplate
+    });
+  }
+
+  static buildAssignment(port, options = {}) {
+    const host = options.host || ProxyProvider.resolveHost();
+    const server = ProxyProvider.buildServer(port, {
+      protocol: options.protocol,
+      host
+    });
+
+    return {
+      host,
+      port: Number(port),
+      server,
+      url: server
+    };
+  }
+
+  getPorts() {
+    return [...this.config.ports];
+  }
+
+  getHost() {
+    return this.config.host;
+  }
+
+  getServer(port) {
+    return ProxyProvider.buildServer(port, {
+      protocol: this.config.protocol,
+      host: this.config.host
+    });
+  }
+
+  buildAssignment(port) {
+    return ProxyProvider.buildAssignment(port, {
+      protocol: this.config.protocol,
+      host: this.config.host
+    });
+  }
+
+  start() {
+    if (this.started || this.config.healthCheckIntervalMs <= 0) {
+      return this;
+    }
+
+    this.started = true;
+    this.healthTimer = setInterval(() => {
+      void this.runHealthCheck();
+    }, this.config.healthCheckIntervalMs);
+
+    if (typeof this.healthTimer.unref === 'function') {
+      this.healthTimer.unref();
+    }
+
+    return this;
+  }
+
+  stop() {
+    if (this.healthTimer) {
+      clearInterval(this.healthTimer);
+      this.healthTimer = null;
+    }
+
+    this.started = false;
+  }
+
+  acquireSync(options = {}) {
+    const consumer = String(options.consumer || '').trim();
+    if (!consumer) {
+      throw new Error('ProxyProvider.acquire requires consumer');
+    }
+
+    this.start();
+
+    const sticky = options.sticky !== false;
+    const sessionKey = options.sessionKey ? `${consumer}:${String(options.sessionKey)}` : null;
+    if (sticky && sessionKey) {
+      const existingLeaseId = this.stickyLeases.get(sessionKey);
+      if (existingLeaseId && this.leases.has(existingLeaseId)) {
+        const existing = this.leases.get(existingLeaseId);
+        existing.refCount += 1;
+        existing.lastUsedAt = this.now();
+        return this._cloneLease(existing);
+      }
+    }
+
+    const node = this._selectNode({
+      preferredPort: options.preferredPort,
+      excludePorts: options.excludePorts
+    });
+
+    if (!node) {
+      throw new Error('NO_AVAILABLE_PROXY: no healthy proxy node is available');
+    }
+
+    const lease = {
+      id: `LEASE-${++this.sequence}`,
+      consumer,
+      sessionKey,
+      sticky,
+      refCount: 1,
+      createdAt: this.now(),
+      lastUsedAt: this.now(),
+      proxy: {
+        host: node.host,
+        port: node.port,
+        server: node.server,
+        url: node.url
+      },
+      metadata: { ...(options.metadata || {}) }
+    };
+
+    this.leases.set(lease.id, lease);
+    if (sticky && sessionKey) {
+      this.stickyLeases.set(sessionKey, lease.id);
+    }
+
+    node.leaseCount += 1;
+    node.totalLeases += 1;
+    node.lastUsedAt = this.now();
+    node.lastConsumer = consumer;
+
+    return this._cloneLease(lease);
+  }
+
+  async acquire(options = {}) {
+    return this.acquireSync(options);
+  }
+
+  releaseSync(leaseOrId) {
+    const lease = this._resolveLease(leaseOrId);
+    if (!lease) {
+      return false;
+    }
+
+    if (lease.refCount > 1) {
+      lease.refCount -= 1;
+      return true;
+    }
+
+    const node = this.nodeByPort.get(lease.proxy.port);
+    if (node) {
+      node.leaseCount = Math.max(0, node.leaseCount - 1);
+    }
+
+    if (lease.sessionKey) {
+      this.stickyLeases.delete(lease.sessionKey);
+    }
+
+    this.leases.delete(lease.id);
+    return true;
+  }
+
+  async release(leaseOrId) {
+    return this.releaseSync(leaseOrId);
+  }
+
+  async reportSuccess(leaseOrId, metadata = {}) {
+    const lease = this._resolveLease(leaseOrId);
+    const node = this._resolveNode(lease, metadata);
+    if (!node) {
+      return false;
+    }
+
+    const latencyMs = Number(metadata.latencyMs);
+    node.totalRequests += 1;
+    node.successCount += 1;
+    node.lastStatusCode = Number(metadata.statusCode) || 200;
+    node.lastError = null;
+    node.consecutiveFailures = 0;
+    node.probeHealthy = true;
+    node.successRateEwma = ewma(
+      node.successRateEwma,
+      1,
+      this.config.successEwmaAlpha
+    );
+
+    if (Number.isFinite(latencyMs) && latencyMs > 0) {
+      node.latencyEwmaMs = ewma(
+        node.latencyEwmaMs,
+        latencyMs,
+        this.config.latencyEwmaAlpha
+      );
+    }
+
+    return true;
+  }
+
+  async reportFailure(leaseOrId, metadata = {}) {
+    const lease = this._resolveLease(leaseOrId);
+    const node = this._resolveNode(lease, metadata);
+    if (!node) {
+      return false;
+    }
+
+    const statusCode = Number(metadata.statusCode) || extractStatusCode(metadata.reason);
+    const reason = String(metadata.reason || metadata.error || 'unknown');
+    const now = this.now();
+
+    node.totalRequests += 1;
+    node.failureCount += 1;
+    node.consecutiveFailures += 1;
+    node.lastStatusCode = statusCode || null;
+    node.lastError = reason;
+    node.successRateEwma = ewma(
+      node.successRateEwma,
+      0,
+      this.config.successEwmaAlpha
+    );
+
+    if (statusCode === 429) {
+      node.isolatedUntil = now + this.config.rateLimitIsolationMs;
+      this._emitAlert('rate_limit_isolation', node, {
+        statusCode,
+        reason,
+        isolatedUntil: node.isolatedUntil
+      });
+      return true;
+    }
+
+    if (statusCode === 403 || statusCode >= 500 || node.consecutiveFailures >= this.config.failureThreshold) {
+      node.cooldownUntil = now + this.config.failureCooldownMs;
+      this._emitAlert('proxy_cooled_down', node, {
+        statusCode,
+        reason,
+        cooldownUntil: node.cooldownUntil,
+        consecutiveFailures: node.consecutiveFailures
+      });
+    }
+
+    return true;
+  }
+
+  getStats() {
+    const now = this.now();
+    const healthy = this.nodes.filter(node => node.probeHealthy).length;
+    const isolated = this.nodes.filter(node => node.isolatedUntil > now).length;
+    const cooling = this.nodes.filter(node => node.cooldownUntil > now).length;
+    const available = this.nodes.filter(node => this._isNodeAvailable(node, now)).length;
+
+    return {
+      host: this.config.host,
+      total: this.nodes.length,
+      healthy,
+      isolated,
+      cooling,
+      available,
+      activeLeases: this.leases.size
+    };
+  }
+
+  getNodeStates() {
+    const now = this.now();
+    return this.nodes.map(node => ({
+      port: node.port,
+      host: node.host,
+      server: node.server,
+      leaseCount: node.leaseCount,
+      successRateEwma: Number(node.successRateEwma.toFixed(4)),
+      latencyEwmaMs: Math.round(node.latencyEwmaMs),
+      probeHealthy: node.probeHealthy,
+      isolated: node.isolatedUntil > now,
+      cooling: node.cooldownUntil > now,
+      dynamicWeight: Number(this._computeDynamicWeight(node).toFixed(4)),
+      successCount: node.successCount,
+      failureCount: node.failureCount,
+      totalRequests: node.totalRequests,
+      totalLeases: node.totalLeases,
+      consecutiveFailures: node.consecutiveFailures,
+      lastStatusCode: node.lastStatusCode,
+      lastError: node.lastError,
+      lastUsedAt: node.lastUsedAt
+    }));
+  }
+
+  toPlaywrightProxy(leaseOrId) {
+    const lease = this._resolveLease(leaseOrId);
+    if (!lease) {
+      return null;
+    }
+
+    return { server: lease.proxy.server };
+  }
+
+  async acquireAssignment(options = {}) {
+    const lease = await this.acquire(options);
+    return {
+      lease,
+      assignment: {
+        host: lease.proxy.host,
+        port: lease.proxy.port,
+        url: lease.proxy.url,
+        server: lease.proxy.server,
+        sessionId: lease.id
+      }
+    };
+  }
+
+  acquireAssignmentSync(options = {}) {
+    const lease = this.acquireSync(options);
+    return {
+      lease,
+      assignment: {
+        host: lease.proxy.host,
+        port: lease.proxy.port,
+        url: lease.proxy.url,
+        server: lease.proxy.server,
+        sessionId: lease.id
+      }
+    };
+  }
+
+  async reportPortSuccess(port, metadata = {}) {
+    return this.reportSuccess(null, { ...metadata, port });
+  }
+
+  async reportPortFailure(port, metadata = {}) {
+    return this.reportFailure(null, { ...metadata, port });
+  }
+
+  async runHealthCheck() {
+    const results = await Promise.allSettled(
+      this.nodes.map(node => this._checkNodeHealth(node))
+    );
+
+    const summary = {
+      checked: this.nodes.length,
+      healthy: 0,
+      unhealthy: 0
+    };
+
+    results.forEach(result => {
+      if (result.status === 'fulfilled' && result.value?.ok) {
+        summary.healthy += 1;
+      } else {
+        summary.unhealthy += 1;
+      }
+    });
+
+    return summary;
+  }
+
+  resetPort(port) {
+    const node = this.nodeByPort.get(Number(port));
+    if (!node) {
+      return false;
+    }
+
+    node.failureCount = 0;
+    node.successCount = 0;
+    node.totalRequests = 0;
+    node.consecutiveFailures = 0;
+    node.lastStatusCode = null;
+    node.lastError = null;
+    node.cooldownUntil = 0;
+    node.isolatedUntil = 0;
+    node.probeHealthy = true;
+    node.successRateEwma = DEFAULT_SUCCESS_RATE;
+    node.latencyEwmaMs = this.config.targetLatencyMs;
+    return true;
+  }
+
+  resetAll() {
+    this.nodes.forEach(node => {
+      this.resetPort(node.port);
+    });
+    return true;
+  }
+
+  _resolveLease(leaseOrId) {
+    if (!leaseOrId) {
+      return null;
+    }
+
+    if (typeof leaseOrId === 'string') {
+      return this.leases.get(leaseOrId) || null;
+    }
+
+    if (typeof leaseOrId === 'object' && leaseOrId.id) {
+      return this.leases.get(leaseOrId.id) || null;
+    }
+
+    return null;
+  }
+
+  _resolveNode(lease, metadata = {}) {
+    if (lease?.proxy?.port) {
+      return this.nodeByPort.get(lease.proxy.port) || null;
+    }
+
+    if (metadata.port) {
+      return this.nodeByPort.get(Number(metadata.port)) || null;
+    }
+
+    return null;
+  }
+
+  _cloneLease(lease) {
+    return {
+      ...lease,
+      proxy: { ...lease.proxy },
+      metadata: { ...(lease.metadata || {}) }
+    };
+  }
+
+  _isNodeAvailable(node, now = this.now()) {
+    return node.probeHealthy
+      && node.isolatedUntil <= now
+      && node.cooldownUntil <= now;
+  }
+
+  _computeDynamicWeight(node) {
+    const successWeight = clamp(node.successRateEwma, 0.1, 1.5);
+    const latencyWeight = clamp(
+      this.config.targetLatencyMs / Math.max(node.latencyEwmaMs, 1),
+      0.25,
+      2.5
+    );
+    const healthWeight = node.probeHealthy ? 1 : 0.1;
+
+    return node.baseWeight * successWeight * latencyWeight * healthWeight;
+  }
+
+  _selectNode(options = {}) {
+    const now = this.now();
+    const exclude = new Set((options.excludePorts || []).map(Number));
+    const preferredPort = Number(options.preferredPort);
+
+    if (Number.isFinite(preferredPort)) {
+      const preferred = this.nodeByPort.get(preferredPort);
+      if (preferred && !exclude.has(preferred.port) && this._isNodeAvailable(preferred, now)) {
+        return preferred;
+      }
+    }
+
+    const candidates = this.nodes
+      .filter(node => !exclude.has(node.port))
+      .filter(node => this._isNodeAvailable(node, now))
+      .sort((left, right) => {
+        const leftScore = (left.leaseCount + 1) / this._computeDynamicWeight(left);
+        const rightScore = (right.leaseCount + 1) / this._computeDynamicWeight(right);
+
+        if (leftScore !== rightScore) {
+          return leftScore - rightScore;
+        }
+
+        if (left.successRateEwma !== right.successRateEwma) {
+          return right.successRateEwma - left.successRateEwma;
+        }
+
+        if (left.latencyEwmaMs !== right.latencyEwmaMs) {
+          return left.latencyEwmaMs - right.latencyEwmaMs;
+        }
+
+        if (left.lastUsedAt !== right.lastUsedAt) {
+          return left.lastUsedAt - right.lastUsedAt;
+        }
+
+        return left.port - right.port;
+      });
+
+    return candidates[0] || null;
+  }
+
+  async _checkNodeHealth(node) {
+    const now = this.now();
+    const tcpResult = await this.probes.tcp(node, this.config);
+    if (!tcpResult?.ok) {
+      node.probeHealthy = false;
+      node.lastHeartbeatAt = now;
+      node.lastError = tcpResult?.error || 'tcp_failed';
+      node.cooldownUntil = Math.max(node.cooldownUntil, now + this.config.heartbeatFailureCooldownMs);
+      return { ok: false, port: node.port, stage: 'tcp' };
+    }
+
+    const httpResult = await this.probes.http(node, this.config);
+    node.lastHeartbeatAt = now;
+    if (!httpResult?.ok) {
+      node.probeHealthy = false;
+      node.lastError = httpResult?.error || 'http_failed';
+      if (Number(httpResult?.statusCode) === 429) {
+        node.isolatedUntil = now + this.config.rateLimitIsolationMs;
+      } else {
+        node.cooldownUntil = Math.max(node.cooldownUntil, now + this.config.heartbeatFailureCooldownMs);
+      }
+      return { ok: false, port: node.port, stage: 'http' };
+    }
+
+    node.probeHealthy = true;
+    node.lastError = null;
+    node.successRateEwma = ewma(
+      node.successRateEwma,
+      1,
+      this.config.successEwmaAlpha
+    );
+
+    if (Number.isFinite(httpResult.latencyMs) && httpResult.latencyMs > 0) {
+      node.latencyEwmaMs = ewma(
+        node.latencyEwmaMs,
+        httpResult.latencyMs,
+        this.config.latencyEwmaAlpha
+      );
+    }
+
+    return { ok: true, port: node.port };
+  }
+
+  _probeTcp(node, config) {
+    return new Promise(resolve => {
+      const socket = new net.Socket();
+      let settled = false;
+
+      const finish = (ok, error = null) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        socket.destroy();
+        resolve({ ok, error });
+      };
+
+      socket.setTimeout(config.tcpTimeoutMs);
+      socket.once('connect', () => finish(true));
+      socket.once('timeout', () => finish(false, 'tcp_timeout'));
+      socket.once('error', error => finish(false, error.message));
+      socket.connect(node.port, node.host);
+    });
+  }
+
+  _probeHttp(node, config) {
+    return new Promise(resolve => {
+      const startedAt = this.now();
+      const target = new URL(config.heartbeatUrl);
+      const requestLib = target.protocol === 'https:' ? https : http;
+      const agent = target.protocol === 'https:'
+        ? new HttpsProxyAgent(node.server)
+        : new HttpProxyAgent(node.server);
+
+      const request = requestLib.request({
+        hostname: target.hostname,
+        port: target.port || (target.protocol === 'https:' ? 443 : 80),
+        path: `${target.pathname}${target.search}`,
+        method: 'HEAD',
+        timeout: config.httpTimeoutMs,
+        agent,
+        headers: {
+          'User-Agent': 'ProxyProvider/1.0',
+          'Accept': '*/*'
+        }
+      }, response => {
+        response.resume();
+        const latencyMs = this.now() - startedAt;
+        const ok = Number(response.statusCode) >= 200 && Number(response.statusCode) < 500;
+        resolve({
+          ok,
+          latencyMs,
+          statusCode: response.statusCode,
+          error: ok ? null : `HTTP_${response.statusCode}`
+        });
+      });
+
+      request.once('timeout', () => {
+        request.destroy(new Error('http_timeout'));
+      });
+
+      request.once('error', error => {
+        resolve({ ok: false, latencyMs: this.now() - startedAt, error: error.message });
+      });
+
+      request.end();
+    });
+  }
+
+  _emitAlert(type, node, details = {}) {
+    const payload = {
+      type,
+      port: node.port,
+      host: node.host,
+      server: node.server,
+      timestamp: new Date(this.now()).toISOString(),
+      ...details
+    };
+
+    if (typeof this.logger.warn === 'function') {
+      this.logger.warn(`[ProxyProvider] ${type}`, payload);
+    }
+
+    this.emit('alert', payload);
+  }
+}
+
+let singleton = null;
+
+function getProxyProvider(options = {}) {
+  if (!singleton) {
+    singleton = new ProxyProvider(options);
+  }
+
+  return singleton;
+}
+
+function resetProxyProvider() {
+  if (singleton) {
+    singleton.stop();
+    singleton.removeAllListeners();
+  }
+
+  singleton = null;
+}
+
+module.exports = {
+  ProxyProvider,
+  getProxyProvider,
+  resetProxyProvider
+};

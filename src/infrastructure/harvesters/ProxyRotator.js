@@ -1,21 +1,24 @@
 /**
- * ProxyRotator - V6.0 P0 代理轮换模块
- * ===================================
+ * ProxyRotator - ProxyProvider 兼容包装层
+ * ======================================
  *
- * NetworkShield 22端口防御阵列管理器
- * 提供轮询、随机选择、健康检查、冷却恢复等功能
+ * 保留 Recon / Backfill 旧接口：
+ * - getNextProxy()
+ * - rotate()
+ * - getPlaywrightProxy()
+ * - reportSuccess()
+ * - reportFailure()
+ * - getHealthStatus()
+ * - getStats()
  *
- * @module infrastructure/harvesters/ProxyRotator
- * @version V6.0.0-FORTIFY
- * @since 2026-03-15
+ * 22 端口本地代理的真实状态统一委托给 ProxyProvider。
  */
 
 'use strict';
 
 const { StructuredLogger } = require('../../utils/StructuredLogger');
-const { PROXY } = require('../../../config/registry');
+const { getProxyProvider } = require('../network/ProxyProvider');
 
-// User-Agent 池 (用于隐身)
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -29,40 +32,24 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0'
 ];
 
-/**
- * ProxyRotator 类 - V6.0 住宅代理增强版
- */
 class ProxyRotator {
-  /**
-   * @param {object} options - 配置选项
-   * @param {string} options.strategy - 轮换策略: 'round-robin' | 'random' | 'least-used' | 'residential-priority'
-   * @param {number} options.cooldownMs - 代理冷却时间 (默认60秒)
-   * @param {number} options.maxFailures - 最大失败次数 (默认3)
-   * @param {Array} options.residentialProxies - 住宅代理列表 [{host, port, username, password}]
-   */
   constructor(options = {}) {
     this.strategy = options.strategy || 'round-robin';
     this.cooldownMs = options.cooldownMs || 60000;
     this.maxFailures = options.maxFailures || 3;
+    this.consumer = options.consumer || 'recon-engine';
+    this.proxyProvider = options.proxyProvider || getProxyProvider();
+    this.sequence = 0;
+    this.currentIndex = 0;
+    this.localProxyStats = new Map();
 
-    // 获取22端口本地代理池 (Docker 环境使用 host.docker.internal 访问宿主机代理)
-    const proxyHost = process.env.PROXY_HOST || 'host.docker.internal';
-    this.localProxies = PROXY.getAllPorts().map((port, index) => ({
+    this.localProxies = this.proxyProvider.getPorts().map((port, index) => ({
       id: index,
-      port,
-      host: proxyHost,
-      url: `http://${proxyHost}:${port}`,
-      server: `http://${proxyHost}:${port}`,
+      ...this.proxyProvider.buildAssignment(port),
       type: 'datacenter',
-      healthy: true,
-      failCount: 0,
-      useCount: 0,
-      lastUsed: null,
-      cooldownUntil: null,
       userAgent: USER_AGENTS[index % USER_AGENTS.length]
     }));
 
-    // 住宅代理池 (高优先级)
     this.residentialProxies = (options.residentialProxies || []).map((proxy, index) => ({
       id: `res_${index}`,
       host: proxy.host,
@@ -78,219 +65,187 @@ class ProxyRotator {
       lastUsed: null,
       cooldownUntil: null,
       userAgent: USER_AGENTS[index % USER_AGENTS.length],
-      cost: proxy.cost || 0.1 // 每请求成本(美元)
+      cost: proxy.cost || 0.1
     }));
 
-    // 合并代理池 (住宅代理优先)
     this.proxies = [...this.residentialProxies, ...this.localProxies];
-    
-    // 住宅代理使用统计
     this.residentialStats = {
       totalCost: 0,
       sessionEstablishCount: 0
     };
 
-    this.currentIndex = 0;
-
-    this.logger = new StructuredLogger({
+    this.logger = options.logger || new StructuredLogger({
       component: 'ProxyRotator',
       logDir: '/app/logs/pipeline',
       enableStructured: true
     });
 
-    this.logger.info('✅ ProxyRotator V6.0 初始化完成', {
+    this.logger.info('ProxyRotator 已切换为 ProxyProvider 兼容层', {
       localProxyCount: this.localProxies.length,
       residentialProxyCount: this.residentialProxies.length,
-      strategy: this.strategy
+      strategy: this.strategy,
+      host: this.proxyProvider.getHost()
     });
   }
 
-  /**
-   * 获取下一个可用代理
-   * @returns {object|null} 代理配置或null
-   */
-  getNextProxy() {
-    const now = Date.now();
+  getNextProxy(options = {}) {
+    let selected = null;
 
-    // 获取可用代理列表
-    const available = this.proxies.filter(p => {
-      // 检查是否健康
-      if (!p.healthy) return false;
-      // 检查是否在冷却期
-      if (p.cooldownUntil && now < p.cooldownUntil) return false;
-      // 检查失败次数
-      if (p.failCount >= this.maxFailures) return false;
-      return true;
-    });
-
-    if (available.length === 0) {
-      this.logger.warn('⚠️  无可用代理', {
-        total: this.proxies.length,
-        healthy: this.proxies.filter(p => p.healthy).length
-      });
-      return null;
-    }
-
-    let selected;
-
-    switch (this.strategy) {
-      case 'random':
-        selected = available[Math.floor(Math.random() * available.length)];
-        break;
-
-      case 'least-used':
-        selected = available.reduce((min, p) =>
-          p.useCount < min.useCount ? p : min
-        , available[0]);
-        break;
-
-      case 'round-robin':
-      default: {
-        // 轮询: 从当前索引开始查找下一个可用
-        const startIndex = this.currentIndex;
-        do {
-          const proxy = this.proxies[this.currentIndex % this.proxies.length];
-          this.currentIndex++;
-
-          if (available.includes(proxy)) {
-            selected = proxy;
-            break;
-          }
-        } while (this.currentIndex % this.proxies.length !== startIndex % this.proxies.length);
-        break;
-      }
+    if (options.forceResidential || this.strategy === 'residential-priority') {
+      selected = this._selectResidentialProxy();
     }
 
     if (!selected) {
-      selected = available[0];
+      const available = this._getAvailableLocalProxies();
+      if (available.length === 0) {
+        this.logger.warn('⚠️  无可用代理', {
+          total: this.localProxies.length,
+          healthy: this.getHealthStatus().healthy
+        });
+        return null;
+      }
+
+      selected = this._selectLocalProxy(available);
     }
 
-    // 更新代理状态
-    selected.useCount++;
-    selected.lastUsed = now;
+    if (selected.type === 'residential') {
+      this._recordResidentialUsage(selected);
+      return {
+        id: selected.id,
+        host: selected.host,
+        port: selected.port,
+        url: selected.url,
+        server: selected.server,
+        userAgent: selected.userAgent,
+        type: selected.type,
+        username: selected.username,
+        password: selected.password
+      };
+    }
+
+    const { lease, assignment } = this.proxyProvider.acquireAssignmentSync({
+      consumer: this.consumer,
+      sessionKey: `${this.consumer}:${++this.sequence}`,
+      sticky: false,
+      preferredPort: selected.port,
+      excludePorts: options.excludePorts || []
+    });
+    this.proxyProvider.releaseSync(lease.id);
+    this._recordLocalUsage(assignment.port);
+    const proxyMeta = this.localProxies.find(proxy => proxy.port === assignment.port) || selected;
+    const localStat = this._getLocalStat(assignment.port);
 
     this.logger.debug('🔄 选择代理', {
-      port: selected.port,
+      port: assignment.port,
       strategy: this.strategy,
-      useCount: selected.useCount,
-      availableCount: available.length
+      useCount: localStat.useCount
     });
 
     return {
-      id: selected.id,
-      port: selected.port,
-      host: selected.host,
-      url: selected.url,
-      userAgent: selected.userAgent,
-      server: selected.url // Playwright proxy server格式
+      id: proxyMeta.id,
+      host: assignment.host,
+      port: assignment.port,
+      url: assignment.url,
+      server: assignment.server,
+      userAgent: proxyMeta.userAgent,
+      type: proxyMeta.type,
+      sessionId: lease.id
     };
   }
 
   rotate(options = {}) {
-    const nextProxy = this.getNextProxy();
+    const excludePorts = [];
+    if (options.currentPort) {
+      excludePorts.push(options.currentPort);
+    }
+
+    const nextProxy = this.getNextProxy({
+      excludePorts,
+      forceResidential: options.forceResidential
+    });
+
     this.logger.info('🔁 代理轮换', {
       reason: options.reason || 'manual',
       statusCode: options.statusCode || null,
+      currentPort: options.currentPort || null,
       nextPort: nextProxy?.port || null
     });
+
     return nextProxy;
   }
 
-  /**
-   * 报告代理成功
-   * @param {number} port - 代理端口
-   */
   reportSuccess(port) {
-    const proxy = this.proxies.find(p => p.port === port);
-    if (proxy) {
-      // 重置失败计数
-      proxy.failCount = 0;
-      proxy.healthy = true;
-
+    if (this.localProxies.some(proxy => proxy.port === port)) {
+      void this.proxyProvider.reportPortSuccess(port, { statusCode: 200 });
       this.logger.debug('✅ 代理报告成功', { port });
+      return;
+    }
+
+    const residential = this.residentialProxies.find(proxy => proxy.port === port);
+    if (residential) {
+      residential.failCount = 0;
+      residential.healthy = true;
+      this.logger.debug('✅ 住宅代理报告成功', { port });
     }
   }
 
-  /**
-   * 报告代理失败
-   * @param {number} port - 代理端口
-   * @param {string} errorType - 错误类型: 'timeout' | '403' | 'network' | 'other'
-   */
   reportFailure(port, errorType = 'other') {
-    const proxy = this.proxies.find(p => p.port === port);
-    if (!proxy) return;
-
-    proxy.failCount++;
-
-    // 根据错误类型处理
-    if (errorType === '403' || proxy.failCount >= this.maxFailures) {
-      // 403错误或连续失败: 进入冷却
-      proxy.cooldownUntil = Date.now() + this.cooldownMs;
-      this.logger.warn('❌ 代理进入冷却', {
-        port,
-        failCount: proxy.failCount,
-        cooldownMs: this.cooldownMs,
+    if (this.localProxies.some(proxy => proxy.port === port)) {
+      void this.proxyProvider.reportPortFailure(port, {
+        statusCode: this._mapErrorTypeToStatusCode(errorType),
         reason: errorType
       });
+
+      const node = this._getProviderNode(port);
+      const failCount = node?.failureCount || 0;
+      if (this._isCoolingNode(node, failCount)) {
+        this.logger.warn('❌ 代理进入冷却', {
+          port,
+          failCount,
+          cooldownMs: this.cooldownMs,
+          reason: errorType
+        });
+      }
+      if (failCount >= this.maxFailures) {
+        this.logger.error('💀 代理标记为死亡', { port, failCount });
+      }
+      return;
     }
 
-    if (proxy.failCount >= this.maxFailures * 2) {
-      // 超过2倍阈值: 标记为不健康
-      proxy.healthy = false;
-      this.logger.error('💀 代理标记为死亡', {
-        port,
-        failCount: proxy.failCount
-      });
+    const residential = this.residentialProxies.find(proxy => proxy.port === port);
+    if (!residential) {
+      return;
+    }
+
+    residential.failCount++;
+    if (String(errorType) === '403' || residential.failCount >= this.maxFailures) {
+      residential.cooldownUntil = Date.now() + this.cooldownMs;
+    }
+    if (residential.failCount >= this.maxFailures * 2) {
+      residential.healthy = false;
     }
   }
 
-  /**
-   * 获取Playwright代理配置
-   * @param {object} options - 选项
-   * @param {boolean} options.forceResidential - 强制使用住宅代理
-   * @returns {object|null} Playwright代理配置
-   */
   getPlaywrightProxy(options = {}) {
-    let proxy;
-    
-    // 如果需要强制使用住宅代理
-    if (options.forceResidential && this.residentialProxies.length > 0) {
-      const availableResidential = this.residentialProxies.filter(p => {
-        if (!p.healthy) return false;
-        if (p.cooldownUntil && Date.now() < p.cooldownUntil) return false;
-        if (p.failCount >= this.maxFailures) return false;
-        return true;
-      });
-      
-      if (availableResidential.length > 0) {
-        proxy = availableResidential[0];
-        this.logger.info('🏠 使用住宅代理', { proxy: proxy.id });
-      }
-    }
-    
-    // 如果没有强制要求或住宅代理不可用，使用普通代理
-    if (!proxy) {
-      proxy = this.getNextProxy();
-    }
-    
-    if (!proxy) return null;
+    const proxy = this.getNextProxy({
+      forceResidential: options.forceResidential
+    });
 
-    // 构建Playwright代理配置
+    if (!proxy) {
+      return null;
+    }
+
     const config = {
       server: proxy.server,
       bypass: undefined
     };
 
-    // 住宅代理需要认证
     if (proxy.type === 'residential' && proxy.username) {
       config.username = proxy.username;
       config.password = proxy.password;
-      
-      // 记录成本
       this.residentialStats.totalCost += proxy.cost || 0.1;
       this.residentialStats.sessionEstablishCount++;
-      
-      this.logger.info('💰 住宅代理认证使用', { 
+      this.logger.info('💰 住宅代理认证使用', {
         proxy: proxy.id,
         accumulatedCost: this.residentialStats.totalCost.toFixed(2)
       });
@@ -299,43 +254,29 @@ class ProxyRotator {
     return config;
   }
 
-  /**
-   * 获取住宅代理状态统计
-   * @returns {object} 统计信息
-   */
   getResidentialStats() {
     return {
       ...this.residentialStats,
-      availableCount: this.residentialProxies.filter(p => p.healthy).length,
+      availableCount: this.residentialProxies.filter(proxy => this._isResidentialAvailable(proxy)).length,
       totalCount: this.residentialProxies.length
     };
   }
 
-  /**
-   * 报告住宅代理成功建立会话
-   * @param {string} proxyId - 代理ID
-   */
   reportResidentialSessionSuccess(proxyId) {
-    const proxy = this.residentialProxies.find(p => p.id === proxyId);
-    if (proxy) {
-      proxy.useCount++;
-      proxy.lastUsed = Date.now();
-      this.logger.info('✅ 住宅代理会话建立成功', { proxy: proxyId });
+    const proxy = this.residentialProxies.find(item => item.id === proxyId);
+    if (!proxy) {
+      return;
     }
+
+    proxy.useCount++;
+    proxy.lastUsed = Date.now();
+    this.logger.info('✅ 住宅代理会话建立成功', { proxy: proxyId });
   }
 
-  /**
-   * 获取随机User-Agent
-   * @returns {string} User-Agent字符串
-   */
   getRandomUserAgent() {
     return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
   }
 
-  /**
-   * 获取请求头 (含随机UA)
-   * @returns {object} 请求头对象
-   */
   getRequestHeaders() {
     return {
       'User-Agent': this.getRandomUserAgent(),
@@ -352,53 +293,56 @@ class ProxyRotator {
     };
   }
 
-  /**
-   * 获取代理健康状态
-   * @returns {object} 健康状态统计
-   */
   getHealthStatus() {
-    const now = Date.now();
-
-    const healthy = this.proxies.filter(p => p.healthy).length;
-    const cooling = this.proxies.filter(p =>
-      p.cooldownUntil && now < p.cooldownUntil
-    ).length;
-    const dead = this.proxies.filter(p =>
-      !p.healthy || p.failCount >= this.maxFailures * 2
-    ).length;
+    const nodeStates = this.proxyProvider.getNodeStates();
+    const residentialAvailable = this.residentialProxies.filter(proxy => this._isResidentialAvailable(proxy)).length;
+    const healthy = nodeStates.filter(node => node.probeHealthy && node.failureCount < this.maxFailures).length + residentialAvailable;
+    const cooling = nodeStates.filter(node => node.cooling || node.isolated).length
+      + this.residentialProxies.filter(proxy => proxy.cooldownUntil && Date.now() < proxy.cooldownUntil).length;
+    const dead = nodeStates.filter(node => !node.probeHealthy || node.failureCount >= this.maxFailures).length
+      + this.residentialProxies.filter(proxy => !proxy.healthy || proxy.failCount >= this.maxFailures * 2).length;
+    const utilization = Array.from(this.localProxyStats.values())
+      .reduce((sum, stat) => sum + stat.useCount, 0)
+      + this.residentialProxies.reduce((sum, proxy) => sum + proxy.useCount, 0);
 
     return {
-      total: this.proxies.length,
+      total: nodeStates.length + this.residentialProxies.length,
       healthy,
       cooling,
       dead,
-      available: healthy - cooling,
-      utilization: this.proxies.reduce((sum, p) => sum + p.useCount, 0)
+      available: Math.max(0, healthy - cooling),
+      utilization
     };
   }
 
-  /**
-   * 重置所有代理状态
-   */
+  getStats() {
+    return {
+      ...this.getHealthStatus(),
+      host: this.proxyProvider.getHost()
+    };
+  }
+
   resetAll() {
-    this.proxies.forEach(p => {
-      p.healthy = true;
-      p.failCount = 0;
-      p.cooldownUntil = null;
+    this.proxyProvider.resetAll();
+    this.localProxyStats.clear();
+
+    this.residentialProxies.forEach(proxy => {
+      proxy.healthy = true;
+      proxy.failCount = 0;
+      proxy.useCount = 0;
+      proxy.lastUsed = null;
+      proxy.cooldownUntil = null;
     });
 
     this.logger.info('🔄 所有代理状态已重置');
   }
 
-  /**
-   * 打印代理状态报告
-   */
   printStatusReport() {
     const status = this.getHealthStatus();
     const resStats = this.getResidentialStats();
 
     console.log('\n' + '='.repeat(60));
-    console.log('🛡️  NetworkShield V6.0 代理状态报告');
+    console.log('🛡️  ProxyProvider 统一代理状态报告');
     console.log('='.repeat(60));
     console.log(`本地代理: ${this.localProxies.length} | 住宅代理: ${this.residentialProxies.length}`);
     console.log(`健康可用: ${status.healthy} ✅`);
@@ -406,41 +350,149 @@ class ProxyRotator {
     console.log(`已死亡:   ${status.dead} 💀`);
     console.log(`立即可用: ${status.available} 🟢`);
     console.log(`总请求数: ${status.utilization}`);
-    
-    // 住宅代理成本统计
+
     if (this.residentialProxies.length > 0) {
       console.log('\n💰 住宅代理成本:');
       console.log(`  累计成本: $${resStats.totalCost.toFixed(2)} USD`);
       console.log(`  会话建立: ${resStats.sessionEstablishCount} 次`);
       console.log(`  平均成本: $${resStats.sessionEstablishCount > 0 ? (resStats.totalCost / resStats.sessionEstablishCount).toFixed(3) : '0.000'}/请求`);
     }
-    
+
     console.log('='.repeat(60));
 
-    // 打印住宅代理详情
     if (this.residentialProxies.length > 0) {
       console.log('\n🏠 住宅代理详情:');
-      this.residentialProxies.forEach(p => {
+      this.residentialProxies.forEach(proxy => {
         let statusIcon = '✅';
-        if (!p.healthy) statusIcon = '💀';
-        else if (p.cooldownUntil && Date.now() < p.cooldownUntil) statusIcon = '⏳';
-        
-        console.log(`  ${statusIcon} ${p.host}:${p.port}: 使用${p.useCount}次 成本$${(p.useCount * p.cost).toFixed(2)}`);
+        if (!proxy.healthy) statusIcon = '💀';
+        else if (proxy.cooldownUntil && Date.now() < proxy.cooldownUntil) statusIcon = '⏳';
+
+        console.log(`  ${statusIcon} ${proxy.host}:${proxy.port}: 使用${proxy.useCount}次 成本$${(proxy.useCount * proxy.cost).toFixed(2)}`);
       });
     }
 
-    // 打印本地代理详情
     console.log('\n🌐 本地代理详情:');
-    this.localProxies.forEach(p => {
+    this.proxyProvider.getNodeStates().forEach(node => {
+      const stat = this._getLocalStat(node.port);
       let statusIcon = '✅';
-      if (!p.healthy) statusIcon = '💀';
-      else if (p.cooldownUntil && Date.now() < p.cooldownUntil) statusIcon = '⏳';
-      else if (p.failCount > 0) statusIcon = '⚠️';
+      if (node.failureCount >= this.maxFailures || !node.probeHealthy) statusIcon = '💀';
+      else if (node.cooling || node.isolated) statusIcon = '⏳';
+      else if (node.failureCount > 0) statusIcon = '⚠️';
 
-      console.log(`  ${statusIcon} Port ${p.port}: 使用${p.useCount}次 失败${p.failCount}次`);
+      console.log(`  ${statusIcon} Port ${node.port}: 使用${stat.useCount}次 失败${node.failureCount}次`);
     });
 
     return status;
+  }
+
+  _selectResidentialProxy() {
+    const available = this.residentialProxies.filter(proxy => this._isResidentialAvailable(proxy));
+    return available[0] || null;
+  }
+
+  _selectLocalProxy(available) {
+    switch (this.strategy) {
+      case 'random':
+        return available[Math.floor(Math.random() * available.length)];
+
+      case 'least-used':
+        return available.reduce((best, current) => (
+          this._getLocalStat(current.port).useCount < this._getLocalStat(best.port).useCount ? current : best
+        ), available[0]);
+
+      case 'round-robin':
+      case 'residential-priority':
+      default:
+        return this._selectRoundRobin(available);
+    }
+  }
+
+  _selectRoundRobin(available) {
+    const availablePorts = new Set(available.map(proxy => proxy.port));
+    for (let attempts = 0; attempts < this.localProxies.length; attempts++) {
+      const proxy = this.localProxies[this.currentIndex % this.localProxies.length];
+      this.currentIndex++;
+      if (availablePorts.has(proxy.port)) {
+        return proxy;
+      }
+    }
+    return available[0];
+  }
+
+  _getAvailableLocalProxies() {
+    const nodeStates = new Map(
+      this.proxyProvider.getNodeStates().map(node => [node.port, node])
+    );
+
+    return this.localProxies.filter(proxy => {
+      const node = nodeStates.get(proxy.port);
+      if (!node) {
+        return false;
+      }
+
+      return node.probeHealthy
+        && !node.cooling
+        && !node.isolated
+        && node.failureCount < this.maxFailures;
+    });
+  }
+
+  _recordLocalUsage(port) {
+    const stat = this._getLocalStat(port);
+    stat.useCount++;
+    stat.lastUsed = Date.now();
+  }
+
+  _recordResidentialUsage(proxy) {
+    proxy.useCount++;
+    proxy.lastUsed = Date.now();
+  }
+
+  _getLocalStat(port) {
+    if (!this.localProxyStats.has(port)) {
+      this.localProxyStats.set(port, {
+        useCount: 0,
+        lastUsed: null
+      });
+    }
+
+    return this.localProxyStats.get(port);
+  }
+
+  _getProviderNode(port) {
+    return this.proxyProvider.getNodeStates().find(node => node.port === port) || null;
+  }
+
+  _isCoolingNode(node, failCount) {
+    if (!node) {
+      return false;
+    }
+
+    return node.cooling || node.isolated || failCount >= this.maxFailures;
+  }
+
+  _isResidentialAvailable(proxy) {
+    if (!proxy.healthy) {
+      return false;
+    }
+    if (proxy.cooldownUntil && Date.now() < proxy.cooldownUntil) {
+      return false;
+    }
+    return proxy.failCount < this.maxFailures;
+  }
+
+  _mapErrorTypeToStatusCode(errorType) {
+    switch (String(errorType || '').toLowerCase()) {
+      case '403':
+        return 403;
+      case '429':
+      case 'rate_limited':
+        return 429;
+      case '503':
+        return 503;
+      default:
+        return null;
+    }
   }
 }
 

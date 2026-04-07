@@ -51,6 +51,7 @@ ignore = [
     "S101",   # use of assert detected
     "ANN",    # type annotations (handled by mypy)
     "D",      # docstrings (handled separately)
+    "RUF001", # Chinese string punctuation (中文字符串合法)
     "RUF002", # ambiguous Chinese characters (中文文档字符串合法)
     "RUF003", # Chinese comment punctuation (中文注释合法)
 ]

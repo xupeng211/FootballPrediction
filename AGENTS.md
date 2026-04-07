@@ -33,7 +33,7 @@
 
 1. 所有回复、注释、日志优先使用中文。
 2. 容器化优先。禁止直接在宿主机运行 Node.js 或 Python 业务命令。
-3. 不在 `main` 分支直接开发。
+3. 不在 `main` 分支直接开发。若当前位于 `main`，先创建或切换到工作分支，再进行任何写操作；若无法切分支，先停止并说明原因。
 4. 零模拟原则。禁止用 `Math.random()` 或伪造数据补真实链路。
 5. 变更必须尽量幂等。重复执行任务时，应优先跳过已完成数据。
 6. 先读后改。没有读过的文件，不直接修改。
@@ -44,6 +44,7 @@
 
 - 代码、脚本、测试默认在 `dev` 容器内执行。
 - 数据库操作默认通过容器内 `psql` 执行。
+- 开始修改前先确认当前 Git 分支；如果是 `main`，先切出工作分支。
 - 如果命令已经封装为 `npm script`，优先使用脚本入口。
 - 如果 `npm script` 指向缺失文件，先修正文档或脚本，再继续依赖该入口。
 
@@ -86,38 +87,45 @@
 
 ## 4. 容器工作流
 
-### 4.1 进入方式
+### 4.1 前置检查
+
+- 当前终端必须能正常执行 `docker compose` 或 `docker-compose`。
+- 本文后续统一写作 `<compose>`，表示优先使用 `docker compose`；若本机只提供旧版命令，再替换为 `docker-compose`。
+- 如果 `docker` / Compose 当前不可用，先修复 Docker Desktop / WSL 集成，再继续执行仓库命令。
+- 运行时服务名以 `docker-compose.dev.yml` 为准：开发容器 `dev`、数据库 `db`、缓存 `redis`。
+
+### 4.2 进入方式
 
 ```bash
-docker-compose -f docker-compose.dev.yml up -d
-docker-compose -f docker-compose.dev.yml exec dev bash
+<compose> -f docker-compose.dev.yml up -d
+<compose> -f docker-compose.dev.yml exec dev bash
 ```
 
 如果修改了 `.devcontainer/Dockerfile`、`requirements.txt` 或 `package.json`，应改用：
 
 ```bash
-docker-compose -f docker-compose.dev.yml up -d --build
+<compose> -f docker-compose.dev.yml up -d --build
 ```
 
 如果当前机器需要代理，显式设置 `DEV_HTTP_PROXY`、`DEV_HTTPS_PROXY`、`DEV_CONTAINER_PROXY`，
 不要依赖宿主机全局 `HTTP_PROXY` / `HTTPS_PROXY` 自动透传。
 
-### 4.2 命令约定
+### 4.3 命令约定
 
 优先使用以下两类方式：
 
 ```bash
-docker-compose -f docker-compose.dev.yml exec dev npm run <script>
-docker-compose -f docker-compose.dev.yml exec dev node <script>
+<compose> -f docker-compose.dev.yml exec dev npm run <script>
+<compose> -f docker-compose.dev.yml exec dev node <script>
 ```
 
 Python 脚本同理：
 
 ```bash
-docker-compose -f docker-compose.dev.yml exec -T dev python <script>
+<compose> -f docker-compose.dev.yml exec -T dev python <script>
 ```
 
-### 4.3 例外说明
+### 4.4 例外说明
 
 仓库中有少量 `npm script` 内部已经封装了 `docker-compose exec ...`。这类脚本可以在宿主机调用 `npm run <script>`，但本质仍然是进入容器执行，不视为违反“容器化优先”。
 
@@ -131,21 +139,21 @@ docker-compose -f docker-compose.dev.yml exec -T dev python <script>
 
 | 能力 | 推荐入口 | 实际目标 |
 |------|----------|----------|
-| L1 种子 | `docker-compose -f docker-compose.dev.yml exec dev npm run seed` | `scripts/ops/seed_fixtures.js` |
-| L1 发现 | `docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js` | `scripts/ops/titan_discovery.js` |
-| L2 生产收割 | `docker-compose -f docker-compose.dev.yml exec dev npm start` | `scripts/ops/run_production.js` |
-| 全自动总攻编排 | `docker-compose -f docker-compose.dev.yml exec dev npm run titan:total-war -- --season 2025/2026` | `scripts/ops/total_war_pipeline.js` |
-| L3 熔炼 | `docker-compose -f docker-compose.dev.yml exec dev npm run smelt` | `scripts/ops/smelt_all.js` |
+| L1 种子 | `<compose> -f docker-compose.dev.yml exec dev npm run seed` | `scripts/ops/seed_fixtures.js` |
+| L1 发现 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js` | `scripts/ops/titan_discovery.js` |
+| L2 生产收割 | `<compose> -f docker-compose.dev.yml exec dev npm start` | `scripts/ops/run_production.js` |
+| 全自动总攻编排 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:total-war -- --season <season>` | `scripts/ops/total_war_pipeline.js` |
+| L3 熔炼 | `<compose> -f docker-compose.dev.yml exec dev npm run smelt` | `scripts/ops/smelt_all.js` |
 
 ### 5.2 Recon / Backfill / Monitor
 
 | 能力 | 推荐入口 | 实际目标 |
 |------|----------|----------|
-| Recon 扫描 | `docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/recon_scanner.js --season 2024-2025 --league EPL` | `scripts/ops/recon_scanner.js` |
-| 回填 | `docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/gold_pilot_50.js` | `scripts/ops/gold_pilot_50.js` |
-| 长时运行 | `docker-compose -f docker-compose.dev.yml exec dev node scripts/ops/titan_marathon.js` | `scripts/ops/titan_marathon.js` |
-| 监控检查 | `docker-compose -f docker-compose.dev.yml exec dev npm run titan:check` | `scripts/ops/check_health.js` |
-| 哨兵监控 | `docker-compose -f docker-compose.dev.yml exec dev npm run titan:watch` | `scripts/ops/sentinel_watch.js` |
+| Recon 扫描 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/recon_scanner.js --season <season> --league <league>` | `scripts/ops/recon_scanner.js` |
+| 回填 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/gold_pilot_50.js` | `scripts/ops/gold_pilot_50.js` |
+| 长时运行 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_marathon.js` | `scripts/ops/titan_marathon.js` |
+| 监控检查 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:check` | `scripts/ops/check_health.js` |
+| 哨兵监控 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:watch` | `scripts/ops/sentinel_watch.js` |
 
 Recon 运行补充约定：
 
@@ -171,7 +179,7 @@ Recon 运行补充约定：
 |------|----------|----------|
 | 训练模型 | `npm run train` | 宿主机调用后进入容器执行 `scripts/ops/train_model.py` |
 | 生成预测 | `npm run predict` | 宿主机调用后进入容器执行 `scripts/ops/predict_pipeline.py` |
-| ELO 重算 | `docker-compose -f docker-compose.dev.yml exec dev npm run elo:recalc` | `scripts/maintenance/recalculate_elo.js` |
+| ELO 重算 | `<compose> -f docker-compose.dev.yml exec dev npm run elo:recalc` | `scripts/maintenance/recalculate_elo.js` |
 
 ## 6. 核心文件地图
 
@@ -211,11 +219,11 @@ Recon 运行补充约定：
 ### 7.1 JavaScript / Markdown
 
 ```bash
-docker-compose -f docker-compose.dev.yml exec dev npm run lint
-docker-compose -f docker-compose.dev.yml exec dev npm run format:check
-docker-compose -f docker-compose.dev.yml exec dev npm run test:unit
-docker-compose -f docker-compose.dev.yml exec dev npm run test:l1
-docker-compose -f docker-compose.dev.yml exec dev npm run test:integration
+<compose> -f docker-compose.dev.yml exec dev npm run lint
+<compose> -f docker-compose.dev.yml exec dev npm run format:check
+<compose> -f docker-compose.dev.yml exec dev npm run test:unit
+<compose> -f docker-compose.dev.yml exec dev npm run test:l1
+<compose> -f docker-compose.dev.yml exec dev npm run test:integration
 ```
 
 ### 7.2 Python
@@ -225,20 +233,20 @@ docker-compose -f docker-compose.dev.yml exec dev npm run test:integration
 示例：
 
 ```bash
-docker-compose -f docker-compose.dev.yml exec -T dev python -m pytest tests/ -v
-docker-compose -f docker-compose.dev.yml exec -T dev ruff check src/ scripts/ tests/
+<compose> -f docker-compose.dev.yml exec -T dev python -m pytest tests/ -v
+<compose> -f docker-compose.dev.yml exec -T dev ruff check src/ scripts/ tests/
 ```
 
 ### 7.3 数据库与健康状态
 
 ```bash
-docker-compose -f docker-compose.dev.yml exec db \
+<compose> -f docker-compose.dev.yml exec db \
   psql -U football_user -d football_db \
   -c "SELECT 'L1' as layer, COUNT(*) FROM matches \
 UNION ALL SELECT 'L2', COUNT(*) FROM raw_match_data \
 UNION ALL SELECT 'L3', COUNT(*) FROM l3_features;"
-docker-compose -f docker-compose.dev.yml exec dev npm run titan:check
-docker-compose -f docker-compose.dev.yml ps
+<compose> -f docker-compose.dev.yml exec dev npm run titan:check
+<compose> -f docker-compose.dev.yml ps
 ```
 
 ### 7.4 变更后的最低验证要求
@@ -249,7 +257,7 @@ docker-compose -f docker-compose.dev.yml ps
 - 改文档：至少做一次链接、命令、路径的实际存在性检查。
 - 改 Recon 核心链路：
   至少运行相关单测；
-  如果触碰生命周期、并发控制或批量持久化，默认补跑 `tests/unit/*.test.js` 全量。
+  如果触碰生命周期、并发控制或批量持久化，默认补跑 `<compose> -f docker-compose.dev.yml exec dev npm run test:unit` 全量。
 
 ---
 
@@ -281,6 +289,7 @@ docker-compose -f docker-compose.dev.yml ps
 
 ### 9.1 修改前
 
+- 先确认当前 Git 分支；如果在 `main`，先切到工作分支再继续。
 - 先确认目标文件和依赖文件。
 - 先确认入口命令是否真实存在。
 - 先确认改动是否触碰配置唯一源、数据库边界或核心基础设施。
@@ -302,7 +311,7 @@ docker-compose -f docker-compose.dev.yml ps
 
 以下条件同时满足时，Recon / Total War 变更才可宣称达到 `ELITE PASS`：
 
-- `node --test tests/unit/*.test.js` 全绿
+- `<compose> -f docker-compose.dev.yml exec dev npm run test:unit` 全绿
 - 浏览器、Guardian、DB Pool 的退出路径闭环
 - `RECON_MISMATCH` 更新具备条件保护，不会覆盖已建 mapping 的比赛
 - 关键运行参数全部来自 `config/recon_config.json`

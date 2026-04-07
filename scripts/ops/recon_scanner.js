@@ -241,6 +241,10 @@ class ReconScanner {
       });
     }
 
+    if (this.healthServer && this.proxyRotator && typeof this.healthServer.registerProxyPoolCheck === 'function') {
+      this.healthServer.registerProxyPoolCheck(this.proxyRotator);
+    }
+
     if (this.repository) {
       this.repository.traceId = this.traceId;
       this.repository.logger = this._childLogger('FixtureRepository', this.repository.logger);
