@@ -200,6 +200,63 @@ describe('src/infrastructure/services/BrowserProvider', () => {
     assert.ok(evaluateCalls.length >= 5);
   });
 
+  test('接入 ProxyProvider 后应携带代理启动并在关闭时释放租约', async () => {
+    const acquireCalls = [];
+    const releaseCalls = [];
+    let launchProxy = null;
+
+    const fakeProxyProvider = {
+      async acquire(options) {
+        acquireCalls.push(options);
+        return {
+          id: 'LEASE-1',
+          proxy: {
+            host: '172.25.16.1',
+            port: 7890,
+            server: 'http://172.25.16.1:7890',
+          },
+        };
+      },
+      async release(leaseId) {
+        releaseCalls.push(leaseId);
+      },
+      async reportSuccess() {},
+      async reportFailure() {},
+    };
+
+    const fakeBrowser = {
+      async newPage() {
+        return {
+          removeAllListeners() {},
+        };
+      },
+      async close() {},
+    };
+
+    const { BrowserProvider } = loadBrowserProvider({
+      async launch(options) {
+        launchProxy = options.proxy;
+        return fakeBrowser;
+      },
+    });
+
+    const provider = new BrowserProvider({
+      proxyProvider: fakeProxyProvider,
+      proxyConsumer: 'l1-browser',
+      proxySessionKey: 'worker-1',
+    });
+
+    await provider.initialize();
+    await provider.close();
+
+    assert.strictEqual(acquireCalls.length, 1);
+    assert.strictEqual(acquireCalls[0].consumer, 'l1-browser');
+    assert.deepStrictEqual(launchProxy, {
+      server: 'http://172.25.16.1:7890',
+    });
+    assert.deepStrictEqual(releaseCalls, ['LEASE-1']);
+  });
+
   test('初始化失败与页面预热失败时应记录错误/告警', async () => {
     const infoLogs = [];
     const warnLogs = [];

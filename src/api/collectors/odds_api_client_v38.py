@@ -1,332 +1,287 @@
 """
 V38.0 "特种渗透版" Odds API 客户端
 ==================================
-基于 stealth_client 的重构实现，补齐 TLS/JA3 指纹伪装
+基于 StealthClient 的重构实现，补齐 TLS/JA3 指纹伪装。
 
 核心改进:
 1. 使用 curl_cffi (AsyncSession) 替代 aiohttp
 2. 强制启用 impersonate="chrome131"
 3. 完整的 sec-ch-ua 请求头序列
 4. 集成 TeamAliasResolver 进行队名对齐
-5. 智能代理轮换 + 指纹绑定
-
-@module api.collectors.odds_api_client_v38
-@version V38.0-STEALTH
-@date 2026-03-17
+5. 代理池默认从统一配置系统加载
 """
 
-import asyncio
-import json
-from typing import Dict, List, Optional, Any
-from datetime import datetime
-import importlib.util
-import os
+from __future__ import annotations
 
-# V38.0: 使用 stealth_client 替代 aiohttp
-# 使用直接文件导入避免包依赖问题
-def _load_module(module_name, file_path):
-    spec = importlib.util.spec_from_file_location(module_name, file_path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+from datetime import UTC, datetime
+import logging
+from typing import TYPE_CHECKING, Any, cast
 
-_base_path = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import psycopg2
 
-_stealth_module = _load_module(
-    'stealth_client',
-    os.path.join(_base_path, 'infrastructure/network/stealth_client.py')
-)
-_resolver_module = _load_module(
-    'team_alias_resolver',
-    os.path.join(_base_path, 'core/matching/team_alias_resolver.py')
-)
+from src.config_unified import get_settings
+from src.core.matching.team_alias_resolver import TeamAliasResolver, get_resolver
+from src.infrastructure.network.stealth_client import StealthClient, get_stealth_client
 
-StealthClient = _stealth_module.StealthClient
-get_stealth_client = _stealth_module.get_stealth_client
-TeamAliasResolver = _resolver_module.TeamAliasResolver
-get_resolver = _resolver_module.get_resolver
+if TYPE_CHECKING:
+    from types import TracebackType
+
+logger = logging.getLogger(__name__)
+
+HTTP_OK = 200
+ODDSPORTAL_MATCH_URL_TEMPLATE = "https://www.oddsportal.com/soccer/match/{match_id}/"
+ODDSPORTAL_REFERER = "https://www.oddsportal.com/soccer/"
+MATCH_LIST_URL_TEMPLATE = "https://api.example.com/matches?league={league}&date={date}"
+TLS_FINGERPRINT_URL = "https://tls.browserleaks.com/json"
+HTTPBIN_GET_URL = "https://httpbin.org/get"
+PREMIUM_DATA_QUALITY = "PREMIUM-GOLD"
+STANDARD_DATA_QUALITY = "STANDARD"
+SOURCE_CHANNEL_API = "api"
+
+
+def _utc_now_iso() -> str:
+    """返回 UTC ISO 时间戳。"""
+    return datetime.now(UTC).isoformat()
+
+
+def _build_default_proxy_pool() -> list[str]:
+    """从统一配置系统构造代理池。"""
+    settings = get_settings()
+    ports = [int(port.strip()) for port in settings.proxy_ports.split(",") if port.strip()]
+    template = settings.proxy_server_template
+    return [template.format(port=port) for port in ports]
+
+
+def _safe_response_json(response: Any) -> dict[str, Any]:
+    """尽量把响应转换为 JSON 字典。"""
+    payload = response.json()
+    if isinstance(payload, dict):
+        return cast("dict[str, Any]", payload)
+    return {}
 
 
 class OddsAPIClientV38:
-    """
-    V38.0 特种渗透版 API 客户端
-    
-    使用 stealth_client 突破服务器防御:
-    - JA3/TLS 指纹伪装
-    - HTTP/2 头顺序控制
-    - 智能队名映射
-    """
-    
-    def __init__(self, proxy_pool: Optional[List[str]] = None):
-        """
-        初始化 V38 客户端
-        
-        Args:
-            proxy_pool: 代理池列表 (e.g., ["http://127.0.0.1:7890", ...])
-        """
-        self.stealth_client: StealthClient = None
-        self.team_resolver: TeamAliasResolver = None
-        self.proxy_pool = proxy_pool or []
+    """V38.0 特种渗透版 Odds API 客户端。"""
+
+    def __init__(self, proxy_pool: list[str] | None = None) -> None:
+        self.stealth_client: StealthClient | None = None
+        self.team_resolver: TeamAliasResolver | None = None
+        self.proxy_pool = proxy_pool or _build_default_proxy_pool()
         self.proxy_index = 0
-        
-    async def __aenter__(self):
-        """异步上下文管理器入口"""
+
+    async def __aenter__(self) -> OddsAPIClientV38:
         self.stealth_client = await get_stealth_client()
         self.team_resolver = get_resolver()
         return self
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """异步上下文管理器出口"""
-        if self.stealth_client:
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        if self.stealth_client is not None:
             await self.stealth_client.close()
-    
-    def _get_next_proxy(self) -> Optional[str]:
-        """轮询获取下一个代理"""
+
+    def _require_client(self) -> StealthClient:
+        if self.stealth_client is None:
+            raise RuntimeError("StealthClient 尚未初始化，请使用 async with 上下文。")
+        return self.stealth_client
+
+    def _require_resolver(self) -> TeamAliasResolver:
+        if self.team_resolver is None:
+            raise RuntimeError("TeamAliasResolver 尚未初始化，请使用 async with 上下文。")
+        return self.team_resolver
+
+    def _get_next_proxy(self) -> str | None:
         if not self.proxy_pool:
             return None
         proxy = self.proxy_pool[self.proxy_index]
         self.proxy_index = (self.proxy_index + 1) % len(self.proxy_pool)
         return proxy
-    
-    async def fetch_odds(self, match_id: str, source: str = "oddsportal") -> Optional[Dict]:
-        """
-        获取比赛赔率数据
-        
-        Args:
-            match_id: 比赛 ID
-            source: 数据源 (oddsportal, bet365, etc.)
-            
-        Returns:
-            赔率数据字典，或 None（如果失败）
-        """
-        # 构造请求 URL
-        url = f"https://www.oddsportal.com/soccer/match/{match_id}/"
-        
-        # 使用 stealth_client 发起请求（自动携带 Chrome 131 指纹）
+
+    async def fetch_odds(self, match_id: str, source: str = "oddsportal") -> dict[str, Any] | None:
+        """获取比赛赔率数据。"""
+        client = self._require_client()
         proxy = self._get_next_proxy()
-        
+        url = ODDSPORTAL_MATCH_URL_TEMPLATE.format(match_id=match_id)
+
         try:
-            response = await self.stealth_client.fetch(
+            response = await client.fetch(
                 url,
                 proxy=proxy,
                 headers={
-                    # 额外的特定请求头
-                    'referer': 'https://www.oddsportal.com/soccer/',
-                    'accept': 'application/json, text/plain, */*'
-                }
+                    "referer": ODDSPORTAL_REFERER,
+                    "accept": "application/json, text/plain, */*",
+                },
             )
-            
-            if response.status_code != 200:
-                print(f"⚠️  请求失败: {response.status_code}")
+
+            if response.status_code != HTTP_OK:
+                logger.warning(
+                    "获取赔率失败: match_id=%s status=%s", match_id, response.status_code
+                )
                 return None
-            
-            # 解析响应
-            data = response.json() if 'json' in response.headers.get('content-type', '') else {}
-            
+
+            content_type = str(response.headers.get("content-type", ""))
+            data = _safe_response_json(response) if "json" in content_type else {}
+
             return {
-                'match_id': match_id,
-                'source': source,
-                'data': data,
-                'fetched_at': datetime.now().isoformat(),
-                'proxy_used': proxy
+                "match_id": match_id,
+                "source": source,
+                "data": data,
+                "fetched_at": _utc_now_iso(),
+                "proxy_used": proxy,
             }
-            
-        except Exception as e:
-            print(f"❌ 获取赔率失败: {e}")
+        except Exception:
+            logger.exception("获取赔率异常: match_id=%s source=%s", match_id, source)
             return None
-    
-    async def fetch_match_list(self, league: str, date: str) -> List[Dict]:
-        """
-        获取比赛列表
-        
-        Args:
-            league: 联赛名称 (标准化后的)
-            date: 日期 (YYYY-MM-DD)
-            
-        Returns:
-            比赛列表
-        """
-        # 使用队名解析器确保联赛名正确
-        standard_league = self.team_resolver.resolve(league) or league
-        
-        # 构造 API URL
-        url = f"https://api.example.com/matches?league={standard_league}&date={date}"
-        
+
+    async def fetch_match_list(self, league: str, date: str) -> list[dict[str, Any]]:
+        """获取比赛列表。"""
+        client = self._require_client()
+        resolver = self._require_resolver()
+        standard_league = resolver.resolve(league) or league
+        url = MATCH_LIST_URL_TEMPLATE.format(league=standard_league, date=date)
+
         try:
-            response = await self.stealth_client.fetch(url)
-            
-            if response.status_code == 200:
-                data = response.json()
-                matches = data.get('matches', [])
-                
-                # 标准化所有队名
-                for match in matches:
-                    match['home_team_std'] = self.team_resolver.resolve(
-                        match.get('home_team', '')
-                    )
-                    match['away_team_std'] = self.team_resolver.resolve(
-                        match.get('away_team', '')
-                    )
-                
-                return matches
-            else:
-                print(f"⚠️  获取比赛列表失败: {response.status_code}")
+            response = await client.fetch(url, proxy=self._get_next_proxy())
+            if response.status_code != HTTP_OK:
+                logger.warning(
+                    "获取比赛列表失败: league=%s date=%s status=%s",
+                    standard_league,
+                    date,
+                    response.status_code,
+                )
                 return []
-                
-        except Exception as e:
-            print(f"❌ 获取比赛列表异常: {e}")
+
+            payload = _safe_response_json(response)
+            raw_matches = payload.get("matches")
+            matches = (
+                cast("list[dict[str, Any]]", raw_matches) if isinstance(raw_matches, list) else []
+            )
+
+            for match in matches:
+                home_team = str(match.get("home_team", ""))
+                away_team = str(match.get("away_team", ""))
+                match["home_team_std"] = resolver.resolve(home_team)
+                match["away_team_std"] = resolver.resolve(away_team)
+
+        except Exception:
+            logger.exception("获取比赛列表异常: league=%s date=%s", standard_league, date)
             return []
-    
-    async def validate_tls_fingerprint(self) -> Dict[str, Any]:
-        """
-        验证当前 TLS 指纹是否与 Chrome 131 一致
-        
-        Returns:
-            指纹验证结果
-        """
-        result = await self.stealth_client.verify_fingerprint()
-        
-        expected_ja3 = "aa56c057ad164ec4fdcb7a5a283be9fc"
-        actual_ja3 = result.get('ja3n_hash', 'unknown')
-        
+        else:
+            return matches
+
+    async def validate_tls_fingerprint(self) -> dict[str, Any]:
+        """验证当前 TLS 指纹是否与 Chrome 131 一致。"""
+        result = await self._require_client().verify_fingerprint()
+        expected_ja3 = StealthClient.CHROME_131_JA3_HASH
+        actual_ja3 = str(result.get("ja3n_hash", "unknown"))
+
         return {
-            'valid': actual_ja3 == expected_ja3,
-            'expected_ja3': expected_ja3,
-            'actual_ja3': actual_ja3,
-            'tls_version': result.get('tls_version'),
-            'user_agent': result.get('user_agent'),
-            'timestamp': datetime.now().isoformat()
+            "valid": actual_ja3 == expected_ja3,
+            "expected_ja3": expected_ja3,
+            "actual_ja3": actual_ja3,
+            "tls_version": result.get("tls_version"),
+            "user_agent": result.get("user_agent"),
+            "timestamp": _utc_now_iso(),
         }
-    
-    async def stealth_health_check(self) -> Dict[str, Any]:
-        """
-        执行全面的隐身健康检查
-        
-        检查项目:
-        1. TLS 指纹匹配
-        2. HTTP 连通性
-        3. 队名解析器状态
-        4. 代理池状态
-        
-        Returns:
-            健康检查报告
-        """
-        print("🔍 执行 V38 隐身健康检查...")
-        
-        # 1. TLS 指纹检查
+
+    async def stealth_health_check(self) -> dict[str, Any]:
+        """执行全面的隐身健康检查。"""
+        client = self._require_client()
+        resolver = self._require_resolver()
         tls_check = await self.validate_tls_fingerprint()
-        print(f"   {'✅' if tls_check['valid'] else '❌'} TLS 指纹: {tls_check['actual_ja3'][:16]}...")
-        
-        # 2. HTTP 连通性检查
-        http_check = {'status': 'unknown'}
+
         try:
-            response = await self.stealth_client.fetch('https://httpbin.org/get')
+            response = await client.fetch(HTTPBIN_GET_URL, proxy=self._get_next_proxy())
+            latency_raw = getattr(response, "elapsed", 0)
+            latency_ms = int(latency_raw) if isinstance(latency_raw, (int, float)) else 0
             http_check = {
-                'status': 'ok',
-                'status_code': response.status_code,
-                'latency_ms': getattr(response, 'elapsed', 0)
+                "status": "ok",
+                "status_code": response.status_code,
+                "latency_ms": latency_ms,
             }
-            print(f"   ✅ HTTP 连通性: {response.status_code}")
-        except Exception as e:
-            http_check = {'status': 'error', 'error': str(e)}
-            print(f"   ❌ HTTP 连通性: {e}")
-        
-        # 3. 队名解析器检查
+        except Exception as exc:
+            logger.exception("隐身健康检查 HTTP 连通性异常")
+            http_check = {"status": "error", "error": str(exc)}
+
         resolver_check = {
-            'teams_count': len(self.team_resolver.get_all_teams()),
-            'test_match': self.team_resolver.resolve('Man Utd')
+            "teams_count": len(resolver.get_all_teams()),
+            "test_match": resolver.resolve("Man Utd"),
         }
-        print(f"   ✅ 队名解析器: {resolver_check['teams_count']} 支球队")
-        
-        # 4. 代理池检查
-        proxy_check = {
-            'pool_size': len(self.proxy_pool),
-            'current_index': self.proxy_index
-        }
-        print(f"   ✅ 代理池: {proxy_check['pool_size']} 个节点")
-        
+        proxy_check = {"pool_size": len(self.proxy_pool), "current_index": self.proxy_index}
+
+        logger.info(
+            "V38 健康检查: tls=%s http=%s proxy_pool=%s",
+            tls_check["valid"],
+            http_check["status"],
+            proxy_check["pool_size"],
+        )
+
         return {
-            'tls_fingerprint': tls_check,
-            'http_connectivity': http_check,
-            'resolver': resolver_check,
-            'proxy_pool': proxy_check,
-            'overall_status': 'healthy' if tls_check['valid'] and http_check['status'] == 'ok' else 'degraded'
+            "tls_fingerprint": tls_check,
+            "http_connectivity": http_check,
+            "resolver": resolver_check,
+            "proxy_pool": proxy_check,
+            "overall_status": "healthy"
+            if tls_check["valid"] and http_check["status"] == "ok"
+            else "degraded",
         }
-    
-    async def save_odds_to_db(self, match_id: str, provider: str, odds_data: Dict) -> bool:
-        """
-        V6.0: 保存赔率数据到数据库（支持初赔/终赔/现赔三位一体）
-        
-        Args:
-            match_id: 比赛ID
-            provider: 博彩公司名称 (pinnacle, bet365, etc.)
-            odds_data: 包含 opening/closing/current 的赔率数据
-                {
-                    'opening': {'home': 1.5, 'draw': 4.0, 'away': 6.0, 'timestamp': '...'},
-                    'closing': {'home': 1.44, 'draw': 4.33, 'away': 7.5, 'timestamp': '...'},
-                    'current': {'home': 1.44, 'draw': 4.33, 'away': 7.5, 'timestamp': '...'}
-                }
-        
-        Returns:
-            bool: 是否保存成功
-        """
-        import psycopg2
-        from psycopg2.extras import RealDictCursor
-        
-        # 数据库连接配置
+
+    async def save_odds_to_db(
+        self, match_id: str, provider: str, odds_data: dict[str, Any]
+    ) -> bool:
+        """保存赔率数据到数据库。"""
+        settings = get_settings()
         db_config = {
-            'host': os.getenv('DB_HOST', 'localhost'),
-            'port': os.getenv('DB_PORT', '5432'),
-            'database': os.getenv('DB_NAME', 'football_db'),
-            'user': os.getenv('DB_USER', 'football_user'),
-            'password': os.getenv('DB_PASSWORD', ''),
+            "host": settings.db_host,
+            "port": settings.db_port,
+            "database": settings.db_name,
+            "user": settings.db_user,
+            "password": settings.db_password.get_secret_value(),
         }
-        
+
         try:
             conn = psycopg2.connect(**db_config)
             cursor = conn.cursor()
-            
-            # 提取初赔
-            opening = odds_data.get('opening', {})
-            odds_home_open = opening.get('home') if isinstance(opening, dict) else None
-            odds_draw_open = opening.get('draw') if isinstance(opening, dict) else None
-            odds_away_open = opening.get('away') if isinstance(opening, dict) else None
-            opening_at = opening.get('timestamp') if isinstance(opening, dict) else None
-            
-            # 提取终赔
-            closing = odds_data.get('closing', {})
-            odds_home_close = closing.get('home') if isinstance(closing, dict) else None
-            odds_draw_close = closing.get('draw') if isinstance(closing, dict) else None
-            odds_away_close = closing.get('away') if isinstance(closing, dict) else None
-            closing_at = closing.get('timestamp') if isinstance(closing, dict) else None
-            
-            # 提取现赔（如果没有则使用终赔）
-            current = odds_data.get('current', closing)
-            odds_home_current = current.get('home') if isinstance(current, dict) else None
-            odds_draw_current = current.get('draw') if isinstance(current, dict) else None
-            odds_away_current = current.get('away') if isinstance(current, dict) else None
-            current_at = current.get('timestamp') if isinstance(current, dict) else None
-            
-            # 计算派生指标
+
+            opening = odds_data.get("opening", {})
+            closing = odds_data.get("closing", {})
+            current = odds_data.get("current", closing)
+
+            odds_home_open = opening.get("home") if isinstance(opening, dict) else None
+            odds_draw_open = opening.get("draw") if isinstance(opening, dict) else None
+            odds_away_open = opening.get("away") if isinstance(opening, dict) else None
+            opening_at = opening.get("timestamp") if isinstance(opening, dict) else None
+
+            odds_home_close = closing.get("home") if isinstance(closing, dict) else None
+            odds_draw_close = closing.get("draw") if isinstance(closing, dict) else None
+            odds_away_close = closing.get("away") if isinstance(closing, dict) else None
+            closing_at = closing.get("timestamp") if isinstance(closing, dict) else None
+
+            odds_home_current = current.get("home") if isinstance(current, dict) else None
+            odds_draw_current = current.get("draw") if isinstance(current, dict) else None
+            odds_away_current = current.get("away") if isinstance(current, dict) else None
+            current_at = current.get("timestamp") if isinstance(current, dict) else None
+
             odds_drop_home = None
             odds_drop_draw = None
             odds_drop_away = None
             market_margin = None
-            
+
             if odds_home_open and odds_home_close:
                 odds_drop_home = round((odds_home_open - odds_home_close) / odds_home_open, 4)
             if odds_draw_open and odds_draw_close:
                 odds_drop_draw = round((odds_draw_open - odds_draw_close) / odds_draw_open, 4)
             if odds_away_open and odds_away_close:
                 odds_drop_away = round((odds_away_open - odds_away_close) / odds_away_open, 4)
-            
             if odds_home_close and odds_draw_close and odds_away_close:
                 market_margin = round(
-                    (1/odds_home_close + 1/odds_draw_close + 1/odds_away_close) - 1, 
-                    4
+                    (1 / odds_home_close + 1 / odds_draw_close + 1 / odds_away_close) - 1,
+                    4,
                 )
-            
-            # V6.0 UPSERT SQL - 支持初赔+终赔+现赔三位一体
+
             sql = """
             INSERT INTO match_odds (
                 match_id, provider,
@@ -364,70 +319,96 @@ class OddsAPIClientV38:
                 data_quality = EXCLUDED.data_quality,
                 collected_at = NOW()
             """
-            
-            cursor.execute(sql, (
-                match_id, provider,
-                odds_home_open, odds_draw_open, odds_away_open, opening_at,
-                odds_home_close, odds_draw_close, odds_away_close, closing_at,
-                odds_home_current, odds_draw_current, odds_away_current, current_at,
-                odds_drop_home, odds_drop_draw, odds_drop_away, market_margin,
-                'api', 'PREMIUM-GOLD' if all([odds_home_open, odds_home_close]) else 'STANDARD'
-            ))
-            
+
+            cursor.execute(
+                sql,
+                (
+                    match_id,
+                    provider,
+                    odds_home_open,
+                    odds_draw_open,
+                    odds_away_open,
+                    opening_at,
+                    odds_home_close,
+                    odds_draw_close,
+                    odds_away_close,
+                    closing_at,
+                    odds_home_current,
+                    odds_draw_current,
+                    odds_away_current,
+                    current_at,
+                    odds_drop_home,
+                    odds_drop_draw,
+                    odds_drop_away,
+                    market_margin,
+                    SOURCE_CHANNEL_API,
+                    PREMIUM_DATA_QUALITY
+                    if odds_home_open is not None and odds_home_close is not None
+                    else STANDARD_DATA_QUALITY,
+                ),
+            )
+
             conn.commit()
-            cursor.close()
-            conn.close()
-            
-            print(f"✅ 已保存 {provider} 赔率到数据库:")
-            print(f"   初赔: H={odds_home_open} D={odds_draw_open} A={odds_away_open}")
-            print(f"   终赔: H={odds_home_close} D={odds_draw_close} A={odds_away_close}")
-            if odds_drop_home:
-                print(f"   主胜降幅: {odds_drop_home*100:.2f}%")
-            
-            return True
-            
-        except Exception as e:
-            print(f"❌ 数据库保存失败: {e}")
+            logger.info(
+                "赔率已落库: match_id=%s provider=%s current=(%s,%s,%s)",
+                match_id,
+                provider,
+                odds_home_current,
+                odds_draw_current,
+                odds_away_current,
+            )
+        except Exception:
+            logger.exception("数据库保存失败: match_id=%s provider=%s", match_id, provider)
             return False
+        else:
+            return True
+        finally:
+            if "cursor" in locals():
+                cursor.close()
+            if "conn" in locals():
+                conn.close()
 
 
-# 便捷函数
-async def fetch_odds_v38(match_id: str, proxy: Optional[str] = None) -> Optional[Dict]:
-    """快捷函数：使用 V38 客户端获取赔率"""
-    async with OddsAPIClientV38(proxy_pool=[proxy] if proxy else []) as client:
+async def fetch_odds_v38(match_id: str, proxy: str | None = None) -> dict[str, Any] | None:
+    """快捷函数：使用 V38 客户端获取赔率。"""
+    async with OddsAPIClientV38(proxy_pool=[proxy] if proxy else None) as client:
         return await client.fetch_odds(match_id)
 
 
-async def health_check_v38() -> Dict[str, Any]:
-    """快捷函数：执行 V38 健康检查"""
+async def health_check_v38() -> dict[str, Any]:
+    """快捷函数：执行 V38 健康检查。"""
     async with OddsAPIClientV38() as client:
         return await client.stealth_health_check()
 
 
-# 向后兼容：旧版 OddsAPIClient 的替代方案
 class OddsAPIClient:
-    """
-    向后兼容包装器
-    
-    将旧版 OddsAPIClient 调用转发到 V38 实现
-    """
-    
-    def __init__(self, *args, **kwargs):
-        self._v38 = None
+    """向后兼容包装器，将旧接口转发到 V38 实现。"""
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self._v38: OddsAPIClientV38 | None = None
         self._args = args
         self._kwargs = kwargs
-    
-    async def __aenter__(self):
-        self._v38 = await OddsAPIClientV38(*self._args, **self._kwargs).__aenter__()
+
+    async def __aenter__(self) -> OddsAPIClient:
+        self._v38 = OddsAPIClientV38(*self._args, **self._kwargs)
+        await self._v38.__aenter__()
         return self
-    
-    async def __aexit__(self, *args):
-        return await self._v38.__aexit__(*args)
-    
-    async def fetch_odds(self, *args, **kwargs):
-        """转发到 V38 实现"""
+
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
+    ) -> None:
+        if self._v38 is not None:
+            await self._v38.__aexit__(exc_type, exc_val, exc_tb)
+
+    async def fetch_odds(self, *args: Any, **kwargs: Any) -> dict[str, Any] | None:
+        if self._v38 is None:
+            raise RuntimeError("OddsAPIClient 尚未初始化，请使用 async with 上下文。")
         return await self._v38.fetch_odds(*args, **kwargs)
-    
-    async def fetch_match_list(self, *args, **kwargs):
-        """转发到 V38 实现"""
+
+    async def fetch_match_list(self, *args: Any, **kwargs: Any) -> list[dict[str, Any]]:
+        if self._v38 is None:
+            raise RuntimeError("OddsAPIClient 尚未初始化，请使用 async with 上下文。")
         return await self._v38.fetch_match_list(*args, **kwargs)

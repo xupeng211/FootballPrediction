@@ -78,7 +78,8 @@ function getCircuitStates() {
  * CircuitBreaker - 熔断器类
  * @class
  * @example
- * const breaker = new CircuitBreaker(7891, {
+ * const samplePort = DEFAULT_PROXY_PORT;
+ * const breaker = new CircuitBreaker(samplePort, {
  *   failureThreshold: 2,
  *   cooldownMinutes: 15
  * }, logger);
@@ -533,7 +534,7 @@ class CircuitBreaker {
  *   logger
  * );
  *
- * const breaker = registry.getBreaker(7891);
+ * const breaker = registry.getBreaker(samplePort);
  * await breaker.execute(async () => { ... });
  */
 class CircuitBreakerRegistry {

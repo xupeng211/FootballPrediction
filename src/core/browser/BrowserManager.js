@@ -17,6 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const { chromium } = require('playwright');
 const { StealthInjector } = require('./StealthInjector');
+const { ProxyProvider } = require('../../infrastructure/network/ProxyProvider');
 
 // ============================================================================
 // ResourceShield - 资源屏蔽器 (V175 极致加速)
@@ -124,8 +125,9 @@ class BrowserManager {
      * @param {boolean} options.enableResourceShield - 启用资源屏蔽 (V175)
      */
     constructor(options = {}) {
+        const [defaultProxyPort] = ProxyProvider.resolvePorts();
         this.workerId = options.workerId ?? 1;
-        this.proxyPort = options.proxyPort ?? 7890;
+        this.proxyPort = options.proxyPort ?? defaultProxyPort;
         this.headless = options.headless ?? true;
         this.config = options.config ?? {};
 
@@ -170,7 +172,7 @@ class BrowserManager {
         if (this.config?.PROXY_CONFIG?.getServer) {
             return this.config.PROXY_CONFIG.getServer(this.currentProxyPort);
         }
-        return `http://172.25.16.1:${this.currentProxyPort}`;
+        return ProxyProvider.buildServer(this.currentProxyPort);
     }
 
     /**
@@ -505,8 +507,7 @@ class BrowserManager {
         if (this.config?.PROXY_CONFIG?.getNextPort) {
             return this.config.PROXY_CONFIG.getNextPort(this.currentProxyPort);
         }
-        // 默认轮换 22 个端口
-        const ports = Array.from({ length: 22 }, (_, i) => 7890 + i);
+        const ports = ProxyProvider.resolvePorts();
         const currentIndex = ports.indexOf(this.currentProxyPort);
         return ports[(currentIndex + 1) % ports.length];
     }

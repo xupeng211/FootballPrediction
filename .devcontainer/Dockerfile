@@ -138,7 +138,9 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     ipython \
     ipdb \
     bandit \
-    pre-commit
+    pre-commit \
+    ruff \
+    mypy
 
 # -----------------------------------------------------------------------------
 # 阶段 4: 环境变量配置
