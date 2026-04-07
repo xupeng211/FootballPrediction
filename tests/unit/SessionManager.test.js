@@ -14,6 +14,10 @@
 
 const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+const { chromium } = require('playwright');
 const { SessionManager, resetSingleton, DEFAULT_CONFIG } = require('../../src/infrastructure/network/SessionManager');
 
 // ============================================================================
@@ -59,11 +63,15 @@ function createMockSession(port, options = {}) {
 // ============================================================================
 
 describe('SessionManager', () => {
+    const originalChromiumLaunch = chromium.launch;
+    const originalMathRandom = Math.random;
     beforeEach(() => {
         resetSingleton();
     });
 
     afterEach(() => {
+        chromium.launch = originalChromiumLaunch;
+        Math.random = originalMathRandom;
         resetSingleton();
     });
 
@@ -97,6 +105,615 @@ describe('SessionManager', () => {
             assert.ok(manager._refreshLocks instanceof Map);
             assert.ok(manager._sessionCache instanceof Map);
             assert.strictEqual(manager._initialized, false);
+        });
+
+        it('Logger.debug 在 LOG_LEVEL=debug 时应输出日志', () => {
+            const manager = new SessionManager();
+            const originalLogLevel = process.env.LOG_LEVEL;
+            const originalConsoleLog = console.log;
+            const outputs = [];
+
+            process.env.LOG_LEVEL = 'debug';
+            console.log = (...args) => {
+                outputs.push(args.join(' '));
+            };
+
+            manager.logger.debug('debug message');
+
+            console.log = originalConsoleLog;
+            if (typeof originalLogLevel === 'undefined') {
+                delete process.env.LOG_LEVEL;
+            } else {
+                process.env.LOG_LEVEL = originalLogLevel;
+            }
+
+            assert.ok(outputs.some(line => line.includes('debug message')));
+        });
+    });
+
+    describe('initialize / getOrRefreshSession', () => {
+        it('initialize 应确保目录、加载缓存并在重复调用时短路', async () => {
+            const manager = createMockSessionManager();
+            const calls = [];
+            const warnings = [];
+
+            manager.logger = {
+                info() {},
+                success() {},
+                warn(message) {
+                    warnings.push(message);
+                },
+                error() {},
+                debug() {}
+            };
+            manager._ensureSessionDirectory = async () => {
+                calls.push('ensureDir');
+            };
+            manager._loadExistingSessions = async () => {
+                calls.push('loadExisting');
+                manager._sessionCache.set(7890, createMockSession(7890));
+            };
+
+            await manager.initialize();
+            await manager.initialize();
+
+            assert.strictEqual(manager._initialized, true);
+            assert.deepStrictEqual(calls, ['ensureDir', 'loadExisting']);
+            assert.ok(warnings.some(message => message.includes('已经初始化')));
+        });
+
+        it('getOrRefreshSession 应命中缓存、在无显示服务时返回 null，并在需要刷新时调用 refreshSession', async () => {
+            const manager = createMockSessionManager();
+            manager._initialized = true;
+
+            const cached = createMockSession(7890, {
+                expiresAt: Date.now() + 10_000
+            });
+            manager._sessionCache.set(7890, cached);
+
+            const cachedResult = await manager.getOrRefreshSession(7890);
+            assert.strictEqual(cachedResult, cached);
+            assert.strictEqual(manager._stats.cacheHits, 1);
+
+            manager._sessionCache.clear();
+            manager._hasDisplayServer = () => false;
+            const skipped = await manager.getOrRefreshSession(7891);
+            assert.strictEqual(skipped, null);
+
+            manager.config.skipHeadlessRefreshInContainer = false;
+            let refreshArgs = null;
+            manager.refreshSession = async (port, proxyUrl) => {
+                refreshArgs = { port, proxyUrl };
+                return { port, proxyUrl };
+            };
+
+            const refreshed = await manager.getOrRefreshSession(7892, {
+                proxyUrl: 'http://proxy.local:7892',
+                forceRefresh: true
+            });
+
+            assert.deepStrictEqual(refreshed, { port: 7892, proxyUrl: 'http://proxy.local:7892' });
+            assert.deepStrictEqual(refreshArgs, { port: 7892, proxyUrl: 'http://proxy.local:7892' });
+            assert.strictEqual(manager._stats.cacheMisses, 1);
+        });
+
+        it('getOrRefreshSession 在未初始化时应先调用 initialize', async () => {
+            const manager = createMockSessionManager();
+            let initializeCalls = 0;
+
+            manager.initialize = async () => {
+                initializeCalls += 1;
+                manager._initialized = true;
+            };
+            manager._hasDisplayServer = () => false;
+
+            await manager.getOrRefreshSession(7890);
+            assert.strictEqual(initializeCalls, 1);
+        });
+    });
+
+    describe('refreshSession', () => {
+        it('锁被占用时应等待释放后返回现有缓存', async () => {
+            const manager = createMockSessionManager();
+            const cached = createMockSession(7890);
+            manager._sessionCache.set(7890, cached);
+
+            let waitedPort = null;
+            manager._acquireRefreshLock = () => null;
+            manager._waitForLockRelease = async (port) => {
+                waitedPort = port;
+            };
+
+            const session = await manager.refreshSession(7890, 'http://proxy:7890');
+
+            assert.strictEqual(waitedPort, 7890);
+            assert.strictEqual(session, cached);
+        });
+
+        it('应在重试后刷新成功并保存缓存，失败时释放锁', async () => {
+            const manager = createMockSessionManager({ maxRefreshAttempts: 2 });
+            const saved = [];
+            const delays = [];
+            const released = [];
+            let attempts = 0;
+
+            manager._acquireRefreshLock = () => 'lock-1';
+            manager._releaseRefreshLock = (port, lockId) => {
+                released.push([port, lockId]);
+            };
+            manager._doRefreshSession = async () => {
+                attempts += 1;
+                if (attempts === 1) {
+                    throw new Error('first failed');
+                }
+                return createMockSession(7890);
+            };
+            manager._saveSessionToFile = async (port, session) => {
+                saved.push([port, session.port]);
+            };
+            manager._delay = async (ms) => {
+                delays.push(ms);
+            };
+            manager._exponentialBackoff = () => 123;
+
+            const session = await manager.refreshSession(7890, 'http://proxy:7890');
+
+            assert.strictEqual(session.port, 7890);
+            assert.strictEqual(manager._sessionCache.get(7890).port, 7890);
+            assert.deepStrictEqual(saved, [[7890, 7890]]);
+            assert.deepStrictEqual(delays, [123]);
+            assert.deepStrictEqual(released, [[7890, 'lock-1']]);
+            assert.strictEqual(manager._stats.successfulRefreshes, 1);
+        });
+    });
+
+    describe('会话加载与验证', () => {
+        it('loadSessionToContext 应覆盖成功、无文件、无 Cookie 和异常路径', async () => {
+            const manager = createMockSessionManager();
+            const cookiesAdded = [];
+            const context = {
+                async addCookies(cookies) {
+                    cookiesAdded.push(cookies);
+                }
+            };
+
+            manager._loadSessionFromFile = async () => createMockSession(7890);
+            assert.strictEqual(await manager.loadSessionToContext(context, 7890), true);
+            assert.strictEqual(cookiesAdded.length, 1);
+
+            manager._loadSessionFromFile = async () => null;
+            assert.strictEqual(await manager.loadSessionToContext(context, 7891), false);
+
+            manager._loadSessionFromFile = async () => createMockSession(7892, { cookies: [] });
+            assert.strictEqual(await manager.loadSessionToContext(context, 7892), false);
+
+            manager._loadSessionFromFile = async () => {
+                throw new Error('broken');
+            };
+            assert.strictEqual(await manager.loadSessionToContext(context, 7893), false);
+        });
+
+        it('loadSessionToContext 在会话过期时应返回 false', async () => {
+            const manager = createMockSessionManager();
+            manager._loadSessionFromFile = async () => createMockSession(7894, {
+                expiresAt: Date.now() - 1
+            });
+
+            assert.strictEqual(await manager.loadSessionToContext({ async addCookies() {} }, 7894), false);
+        });
+
+        it('validateSession 应正确判断缺失、过期与有效 FotMob Cookie', async () => {
+            const manager = createMockSessionManager();
+
+            manager._loadSessionFromFile = async () => null;
+            assert.strictEqual(await manager.validateSession(7890), false);
+
+            manager._loadSessionFromFile = async () => createMockSession(7891, {
+                expiresAt: Date.now() - 1
+            });
+            assert.strictEqual(await manager.validateSession(7891), false);
+
+            manager._loadSessionFromFile = async () => createMockSession(7892, {
+                cookies: [{ name: 'x', value: '1', domain: '.fotmob.com' }]
+            });
+            assert.strictEqual(await manager.validateSession(7892), true);
+        });
+    });
+
+    describe('文件系统与环境工具', () => {
+        it('应清理过期会话、持久化文件并检测显示服务器环境', async () => {
+            const profilePath = await fs.mkdtemp(path.join(os.tmpdir(), 'session-manager-'));
+            const manager = createMockSessionManager({ profilePath });
+            const originalDisplay = process.env.DISPLAY;
+            const originalWayland = process.env.WAYLAND_DISPLAY;
+            const originalWsl = process.env.WSL_INTEROP;
+
+            try {
+                manager._sessionCache.set(7890, createMockSession(7890, {
+                    expiresAt: Date.now() - 1
+                }));
+                manager._sessionCache.set(7891, createMockSession(7891, {
+                    expiresAt: Date.now() + 10_000
+                }));
+
+                const cleared = await manager.clearExpiredSessions();
+                assert.strictEqual(cleared, 1);
+                assert.strictEqual(manager._sessionCache.has(7890), false);
+                assert.strictEqual(manager._sessionCache.has(7891), true);
+
+                const session = createMockSession(7892);
+                await manager._ensureSessionDirectory();
+                await manager._saveSessionToFile(7892, session);
+                const loaded = await manager._loadSessionFromFile(7892);
+                assert.strictEqual(loaded.port, 7892);
+
+                await fs.writeFile(path.join(profilePath, 'session_port_7893.json'), JSON.stringify(createMockSession(7893)), 'utf8');
+                await manager._loadExistingSessions();
+                assert.strictEqual(manager._sessionCache.has(7893), true);
+
+                delete process.env.DISPLAY;
+                delete process.env.WAYLAND_DISPLAY;
+                delete process.env.WSL_INTEROP;
+                assert.strictEqual(manager._hasDisplayServer(), false);
+                process.env.DISPLAY = ':0';
+                assert.strictEqual(manager._hasDisplayServer(), true);
+                delete process.env.DISPLAY;
+                process.env.WAYLAND_DISPLAY = 'wayland-0';
+                assert.strictEqual(manager._hasDisplayServer(), true);
+                delete process.env.WAYLAND_DISPLAY;
+                process.env.WSL_INTEROP = '/tmp/wsl';
+                assert.strictEqual(manager._hasDisplayServer(), true);
+            } finally {
+                if (typeof originalDisplay === 'undefined') {
+                    delete process.env.DISPLAY;
+                } else {
+                    process.env.DISPLAY = originalDisplay;
+                }
+                if (typeof originalWayland === 'undefined') {
+                    delete process.env.WAYLAND_DISPLAY;
+                } else {
+                    process.env.WAYLAND_DISPLAY = originalWayland;
+                }
+                if (typeof originalWsl === 'undefined') {
+                    delete process.env.WSL_INTEROP;
+                } else {
+                    process.env.WSL_INTEROP = originalWsl;
+                }
+                await fs.rm(profilePath, { recursive: true, force: true });
+            }
+        });
+
+        it('_ensureSessionDirectory 与 _loadExistingSessions 应覆盖失败容错分支', async () => {
+            const manager = createMockSessionManager();
+            const originalMkdir = fs.mkdir;
+            const originalReaddir = fs.readdir;
+            const warnings = [];
+            const errors = [];
+
+            manager.logger = {
+                info() {},
+                success() {},
+                warn(message) {
+                    warnings.push(message);
+                },
+                error(message) {
+                    errors.push(message);
+                },
+                debug() {}
+            };
+
+            fs.mkdir = async () => {
+                throw new Error('mkdir failed');
+            };
+            await assert.rejects(
+                manager._ensureSessionDirectory(),
+                /mkdir failed/
+            );
+
+            fs.mkdir = originalMkdir;
+            fs.readdir = async () => {
+                throw new Error('readdir failed');
+            };
+            await manager._loadExistingSessions();
+
+            fs.readdir = originalReaddir;
+            assert.ok(errors.some(message => message.includes('mkdir failed')));
+            assert.ok(warnings.some(message => message.includes('readdir failed')));
+        });
+    });
+
+    describe('浏览器刷新内部链路', () => {
+        it('应在达到最大重试次数后抛出最后一个错误', async () => {
+            const manager = createMockSessionManager({ maxRefreshAttempts: 2 });
+            manager._acquireRefreshLock = () => 'lock-err';
+            manager._releaseRefreshLock = () => {};
+            manager._doRefreshSession = async () => {
+                throw new Error('still failing');
+            };
+            manager._delay = async () => {};
+            manager._exponentialBackoff = () => 1;
+
+            await assert.rejects(
+                manager.refreshSession(7890, 'http://proxy:7890'),
+                /still failing/
+            );
+            assert.strictEqual(manager._stats.failedRefreshes, 1);
+        });
+
+        it('_waitForTurnstile / _simulateHumanBehavior / _injectStealthScripts 应执行预期交互', async () => {
+            const manager = createMockSessionManager({ turnstileTimeout: 2500 });
+            const originalNow = Date.now;
+            const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
+            const originalWebGL = Object.getOwnPropertyDescriptor(globalThis, 'WebGLRenderingContext');
+            const originalWebGL2 = Object.getOwnPropertyDescriptor(globalThis, 'WebGL2RenderingContext');
+            let now = 0;
+            Date.now = () => now;
+            Math.random = () => 0;
+
+            const wheelCalls = [];
+            const moveCalls = [];
+            const delays = [];
+            manager._delay = async (ms) => {
+                delays.push(ms);
+                now += ms;
+            };
+
+            let contentCalls = 0;
+            await manager._waitForTurnstile({
+                async content() {
+                    contentCalls += 1;
+                    return contentCalls === 1 ? 'Turnstile challenge' : 'match stats ready';
+                },
+                mouse: {
+                    async wheel(x, y) {
+                        wheelCalls.push([x, y]);
+                    }
+                }
+            }, 7890);
+
+            await manager._simulateHumanBehavior({
+                mouse: {
+                    async wheel(x, y) {
+                        wheelCalls.push([x, y]);
+                    },
+                    async move(x, y, options) {
+                        moveCalls.push([x, y, options.steps]);
+                    }
+                }
+            });
+
+            const initScripts = [];
+            await manager._injectStealthScripts({
+                async addInitScript(script) {
+                    initScripts.push(script);
+                }
+            });
+
+            Object.defineProperty(globalThis, 'navigator', {
+                value: {},
+                configurable: true,
+                writable: true
+            });
+            function WebGLRenderingContextMock() {}
+            WebGLRenderingContextMock.prototype.getParameter = function(p) {
+                return `fallback:${p}`;
+            };
+            function WebGL2RenderingContextMock() {}
+            WebGL2RenderingContextMock.prototype.getParameter = function(p) {
+                return `fallback2:${p}`;
+            };
+            Object.defineProperty(globalThis, 'WebGLRenderingContext', {
+                value: WebGLRenderingContextMock,
+                configurable: true,
+                writable: true
+            });
+            Object.defineProperty(globalThis, 'WebGL2RenderingContext', {
+                value: WebGL2RenderingContextMock,
+                configurable: true,
+                writable: true
+            });
+            initScripts[0]();
+            const patchedNavigator = globalThis.navigator;
+            const webglVendor = new globalThis.WebGLRenderingContext().getParameter(37445);
+            const webglRenderer = new globalThis.WebGLRenderingContext().getParameter(37446);
+            const webglFallback = new globalThis.WebGLRenderingContext().getParameter(1);
+            const webgl2Renderer = new globalThis.WebGL2RenderingContext().getParameter(37446);
+            const webgl2Fallback = new globalThis.WebGL2RenderingContext().getParameter(2);
+
+            Date.now = originalNow;
+            if (originalNavigator) {
+                Object.defineProperty(globalThis, 'navigator', originalNavigator);
+            } else {
+                delete globalThis.navigator;
+            }
+            if (originalWebGL) {
+                Object.defineProperty(globalThis, 'WebGLRenderingContext', originalWebGL);
+            } else {
+                delete globalThis.WebGLRenderingContext;
+            }
+            if (originalWebGL2) {
+                Object.defineProperty(globalThis, 'WebGL2RenderingContext', originalWebGL2);
+            } else {
+                delete globalThis.WebGL2RenderingContext;
+            }
+
+            assert.ok(wheelCalls.length >= 4);
+            assert.ok(moveCalls.length >= 5);
+            assert.ok(delays.length >= 9);
+            assert.strictEqual(typeof initScripts[0], 'function');
+            assert.strictEqual(patchedNavigator.webdriver, undefined);
+            assert.strictEqual(patchedNavigator.hardwareConcurrency, 8);
+            assert.strictEqual(patchedNavigator.deviceMemory, 8);
+            assert.strictEqual(webglVendor, 'Google Inc. (NVIDIA)');
+            assert.match(webglRenderer, /ANGLE/);
+            assert.strictEqual(webglFallback, 'fallback:1');
+            assert.match(webgl2Renderer, /ANGLE/);
+            assert.strictEqual(webgl2Fallback, 'fallback2:2');
+        });
+
+        it('_waitForTurnstile 超时与 _waitForLockRelease 提前释放应走到对应分支', async () => {
+            const manager = createMockSessionManager({ turnstileTimeout: 1500 });
+            const originalNow = Date.now;
+            const warnings = [];
+            let now = 0;
+            Date.now = () => now;
+            manager.logger = {
+                info() {},
+                success() {},
+                warn(message) {
+                    warnings.push(message);
+                },
+                error() {},
+                debug() {}
+            };
+            manager._delay = async (ms) => {
+                now += ms;
+                manager._refreshLocks.delete(7890);
+            };
+
+            await manager._waitForTurnstile({
+                async content() {
+                    return 'challenge only';
+                },
+                mouse: {
+                    async wheel() {}
+                }
+            }, 7890);
+
+            manager._refreshLocks.set(7890, { lockId: 'lock', timestamp: 0 });
+            await manager._waitForLockRelease(7890);
+
+            Date.now = originalNow;
+            assert.ok(warnings.some(message => message.includes('Turnstile 等待超时')));
+        });
+
+        it('_doRefreshSession 应通过浏览器上下文生成会话并在 finally 中关闭浏览器', async () => {
+            const manager = createMockSessionManager();
+            const browserClosed = [];
+            const gotoCalls = [];
+            const initScripts = [];
+
+            manager._waitForTurnstile = async () => {};
+            manager._simulateHumanBehavior = async () => {};
+            manager._delay = async () => {};
+
+            chromium.launch = async (options) => {
+                assert.strictEqual(options.headless, false);
+                return {
+                    async newContext(contextOptions) {
+                        assert.strictEqual(contextOptions.proxy.server, 'http://proxy:7890');
+                        return {
+                            async addInitScript(script) {
+                                initScripts.push(script);
+                            },
+                            async newPage() {
+                                return {
+                                    async goto(url) {
+                                        gotoCalls.push(url);
+                                    },
+                                    async content() {
+                                        return 'Expected stats xG';
+                                    }
+                                };
+                            },
+                            async storageState() {
+                                return {
+                                    cookies: [{ name: 'session', value: 'ok', domain: '.fotmob.com' }],
+                                    origins: []
+                                };
+                            }
+                        };
+                    },
+                    async close() {
+                        browserClosed.push(true);
+                    }
+                };
+            };
+
+            const session = await manager._doRefreshSession(7890, 'http://proxy:7890');
+
+            assert.strictEqual(session.port, 7890);
+            assert.strictEqual(session.cookies.length, 1);
+            assert.deepStrictEqual(gotoCalls, [manager.config.targetUrl, manager.config.testUrl]);
+            assert.strictEqual(typeof initScripts[0], 'function');
+            assert.strictEqual(browserClosed.length, 1);
+        });
+
+        it('_doRefreshSession 应覆盖验证失败与无比赛数据告警分支', async () => {
+            const manager = createMockSessionManager();
+            const originalLaunch = chromium.launch;
+            const warnings = [];
+
+            manager.logger = {
+                info() {},
+                success() {},
+                warn(message) {
+                    warnings.push(message);
+                },
+                error() {},
+                debug() {}
+            };
+            manager._waitForTurnstile = async () => {};
+            manager._simulateHumanBehavior = async () => {};
+            manager._delay = async () => {};
+
+            const createBrowser = (content) => ({
+                async newContext() {
+                    return {
+                        async addInitScript() {},
+                        async newPage() {
+                            return {
+                                async goto() {},
+                                async content() {
+                                    return content;
+                                }
+                            };
+                        },
+                        async storageState() {
+                            return { cookies: [], origins: [] };
+                        }
+                    };
+                },
+                async close() {}
+            });
+
+            chromium.launch = async () => createBrowser('challenge only');
+            await assert.rejects(
+                manager._doRefreshSession(7890, 'http://proxy:7890'),
+                /Turnstile 验证未通过/
+            );
+
+            chromium.launch = async () => createBrowser('plain html without useful markers');
+            const session = await manager._doRefreshSession(7890, 'http://proxy:7890');
+
+            chromium.launch = originalLaunch;
+            assert.strictEqual(session.port, 7890);
+            assert.ok(warnings.some(message => message.includes('未检测到比赛数据')));
+        });
+
+        it('_waitForLockRelease、clearSession 和 _loadSessionFromFile 应覆盖超时/成功/失败分支', async () => {
+            const manager = createMockSessionManager();
+            const originalNow = Date.now;
+            let now = 0;
+            Date.now = () => now;
+
+            manager._refreshLocks.set(7890, { lockId: 'lock', timestamp: 0 });
+            manager.config.lockTimeout = 2500;
+            manager._delay = async (ms) => {
+                now += ms;
+            };
+            await manager._waitForLockRelease(7890);
+            assert.strictEqual(manager._refreshLocks.has(7890), true);
+
+            const profilePath = await fs.mkdtemp(path.join(os.tmpdir(), 'session-clear-'));
+            manager.config.profilePath = profilePath;
+            const sessionPath = manager._getSessionFilePath(7891);
+            await fs.writeFile(sessionPath, JSON.stringify(createMockSession(7891)), 'utf8');
+            await manager.clearSession(7891);
+            assert.strictEqual(await manager._loadSessionFromFile(7891), null);
+
+            Date.now = originalNow;
+            await fs.rm(profilePath, { recursive: true, force: true });
         });
     });
 

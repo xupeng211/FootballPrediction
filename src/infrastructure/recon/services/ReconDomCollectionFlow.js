@@ -116,7 +116,7 @@ const reconDomCollectionFlow = {
       const extractMatchesFromPayload = (payload, source) => {
         const results = [];
         const visit = (value, depth = 0) => {
-          if (depth > 10 || value == null) {
+          if (depth > 10 || value === null || value === undefined) {
             return;
           }
 
@@ -167,7 +167,9 @@ const reconDomCollectionFlow = {
           for (const candidate of extractMatchesFromPayload(parsed, 'current_results_next_data')) {
             appendCandidate(candidate);
           }
-        } catch (_error) {}
+        } catch (_error) {
+          // 忽略损坏的 __NEXT_DATA__，继续走其他 DOM / script 提取路径。
+        }
       }
 
       for (const script of Array.from(document.scripts || [])) {

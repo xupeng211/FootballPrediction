@@ -3,7 +3,10 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
 
-const { reconMatchExtractor } = require('../../src/infrastructure/recon/services/ReconMatchExtractor');
+const {
+  reconMatchExtractor,
+  isTrustedOddsPortalUrl
+} = require('../../src/infrastructure/recon/services/ReconMatchExtractor');
 
 describe('ReconMatchExtractor', () => {
   const annualLeagueIds = new Set([121, 223, 268]);
@@ -265,5 +268,24 @@ describe('ReconMatchExtractor', () => {
     }, 'zero_trust_probe');
 
     assert.strictEqual(match, null);
+  });
+
+  it('isTrustedOddsPortalUrl 应拒绝非 https 协议与非法 host 伪装', () => {
+    const validUrl = 'https://www.oddsportal.com/football/england/premier-league/arsenal-chelsea-Ab12Cd34/';
+
+    assert.strictEqual(isTrustedOddsPortalUrl(validUrl, 'Ab12Cd34'), true);
+    assert.strictEqual(isTrustedOddsPortalUrl(validUrl, 'Zz99Yy88'), false);
+    assert.strictEqual(isTrustedOddsPortalUrl(
+      'ftp://www.oddsportal.com/football/england/premier-league/arsenal-chelsea-Ab12Cd34/'
+    ), false);
+    assert.strictEqual(isTrustedOddsPortalUrl(
+      'http://www.oddsportal.com/football/england/premier-league/arsenal-chelsea-Ab12Cd34/'
+    ), false);
+    assert.strictEqual(isTrustedOddsPortalUrl(
+      'https://www.oddsportal.com.evil.example/football/england/premier-league/arsenal-chelsea-Ab12Cd34/'
+    ), false);
+    assert.strictEqual(isTrustedOddsPortalUrl(
+      'https://www.oddsportal.com@evil.example/football/england/premier-league/arsenal-chelsea-Ab12Cd34/'
+    ), false);
   });
 });

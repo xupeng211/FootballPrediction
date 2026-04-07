@@ -44,6 +44,62 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
       assert.ok(service.leagueConfig);
     });
 
+    it('默认 logger、capturedApis getter 与注入回调应可直接执行', async () => {
+      const originalLog = console.log;
+      const originalWarn = console.warn;
+      const originalError = console.error;
+      const logCalls = [];
+      const warnCalls = [];
+      const errorCalls = [];
+
+      console.log = (...args) => {
+        logCalls.push(args.join(' '));
+      };
+      console.warn = (...args) => {
+        warnCalls.push(args.join(' '));
+      };
+      console.error = (...args) => {
+        errorCalls.push(args.join(' '));
+      };
+
+      try {
+        service.config.silent = false;
+        service.networkInterceptor = {
+          getCapturedApis: () => new Map([['probe', { url: 'https://api.test' }]]),
+          reset: () => {}
+        };
+        service.httpClient.request = async (url, requestOptions) => ({ url, requestOptions });
+        service.ensureBrowserHealthy = async (options) => ({ ok: true, options });
+
+        assert.doesNotThrow(() => service.logger.info('info-message'));
+        assert.doesNotThrow(() => service.logger.warn('warn-message'));
+        assert.doesNotThrow(() => service.logger.error('error-message'));
+        assert.doesNotThrow(() => service.logger.banner('banner-message'));
+        assert.doesNotThrow(() => service.logger.progress('progress-message'));
+        assert.strictEqual(service.capturedApis.size, 1);
+        assert.deepStrictEqual(
+          await service.seasonDiscovery.apiRequest('https://api.test/league', { expectedLeagueId: 47 }),
+          { url: 'https://api.test/league', requestOptions: { expectedLeagueId: 47 } }
+        );
+        assert.deepStrictEqual(
+          await service.extractor.makeStealthRequest('https://api.test/intercept', { probe: true }),
+          { url: 'https://api.test/intercept', requestOptions: { probe: true } }
+        );
+        assert.deepStrictEqual(
+          await service.httpClient.ensureBrowserHealthy({ reason: 'probe' }),
+          { ok: true, options: { reason: 'probe' } }
+        );
+        assert.ok(logCalls.some((entry) => entry.includes('banner-message')));
+        assert.ok(logCalls.some((entry) => entry.includes('progress-message')));
+        assert.ok(warnCalls.some((entry) => entry.includes('warn-message')));
+        assert.ok(errorCalls.some((entry) => entry.includes('error-message')));
+      } finally {
+        console.log = originalLog;
+        console.warn = originalWarn;
+        console.error = originalError;
+      }
+    });
+
     it('应使用默认配置', () => {
       assert.strictEqual(service.config.concurrency, 2);
       assert.strictEqual(service.config.delayMs, 0);
@@ -56,6 +112,43 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
       assert.ok(service.leagueConfig.active_leagues);
       assert.ok(service.leagueConfig.active_leagues.length > 0);
       assert.ok(service.leagueConfig.active_seasons);
+    });
+
+    it('_buildTargets 应覆盖单联赛、全量与 P0 映射分支', () => {
+      service.configManager = {
+        getLeagueById: (leagueId) => leagueId === 1
+          ? { id: 1, name: 'Alpha League', code: 'ALPHA' }
+          : null,
+        getDefaultSeason: (leagueId = null) => leagueId ? '2024/2025' : '2025/2026',
+        getActiveLeagues: (filters = {}) => {
+          if (filters.tier === 'P0') {
+            return [
+              { id: 10, name: 'Premier A', code: 'PA' },
+              { id: 20, name: 'Premier B', code: 'PB' }
+            ];
+          }
+
+          return [
+            { id: 10, name: 'Premier A', code: 'PA' },
+            { id: 20, name: 'Premier B', code: 'PB' },
+            { id: 30, name: 'Tier One', code: 'T1' }
+          ];
+        }
+      };
+
+      assert.deepStrictEqual(service._buildTargets(1, null, false), [
+        { id: 1, name: 'Alpha League', code: 'ALPHA', season: '2024/2025' }
+      ]);
+      assert.deepStrictEqual(service._buildTargets(null, '2023/2024', true), [
+        { id: 10, name: 'Premier A', code: 'PA', season: '2023/2024' },
+        { id: 20, name: 'Premier B', code: 'PB', season: '2023/2024' },
+        { id: 30, name: 'Tier One', code: 'T1', season: '2023/2024' }
+      ]);
+      assert.deepStrictEqual(service._buildTargets(null, null, false), [
+        { id: 10, name: 'Premier A', code: 'PA', season: '2025/2026' },
+        { id: 20, name: 'Premier B', code: 'PB', season: '2025/2026' }
+      ]);
+      assert.throws(() => service._buildTargets(999, null, false), /联赛 ID 999 未找到/);
     });
   });
 
@@ -601,6 +694,523 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
         ]);
         assert.strictEqual(rebuilds, 1);
       } finally {
+        await testService.close();
+      }
+    });
+
+    it('_initBrowser 与浏览器冷却/重建链路应按顺序执行', async () => {
+      const calls = [];
+      const sleeps = [];
+      const page = { id: 'page-1' };
+      const browserProvider = {
+        initialized: false,
+        isInitialized() {
+          return this.initialized;
+        },
+        async initialize() {
+          this.initialized = true;
+          calls.push('initialize');
+          return page;
+        },
+        async warmup(url, options) {
+          calls.push(['warmup', url, options.timeout]);
+        },
+        async close() {
+          this.initialized = false;
+          calls.push('close');
+        }
+      };
+      const networkInterceptor = {
+        setup(currentPage) {
+          calls.push(['setup', currentPage.id]);
+        },
+        reset() {
+          calls.push('reset');
+        },
+        getCapturedApis: () => new Map()
+      };
+
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        browserCooldownMs: 17,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        browserProvider,
+        networkInterceptor
+      });
+      testService._sleep = async (ms) => {
+        sleeps.push(ms);
+      };
+
+      try {
+        await testService._initBrowser();
+        await testService._coolDownBrowser(3);
+
+        assert.deepStrictEqual(calls, [
+          'initialize',
+          ['setup', 'page-1'],
+          ['warmup', 'https://www.fotmob.com/', 15000],
+          'reset',
+          'close',
+          'initialize',
+          ['setup', 'page-1'],
+          ['warmup', 'https://www.fotmob.com/', 15000]
+        ]);
+        assert.deepStrictEqual(sleeps, [17]);
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('_initBrowser 在预热失败时应记录宽容告警而不抛错', async () => {
+      const warnings = [];
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        browserProvider: {
+          isInitialized: () => false,
+          initialize: async () => ({}),
+          warmup: async () => {
+            throw new Error('warmup boom');
+          },
+          close: async () => {}
+        },
+        networkInterceptor: {
+          setup: () => {},
+          getCapturedApis: () => new Map(),
+          reset: () => {}
+        }
+      });
+      testService.logger.warn = (message) => warnings.push(message);
+
+      try {
+        await testService._initBrowser();
+        assert.ok(warnings.some((message) => message.includes('主页加载警告: warmup boom')));
+        assert.ok(warnings.some((message) => message.includes('继续尝试 API 请求')));
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('search 应覆盖 J1 提示、DOM 成功和 API 回退路径', async () => {
+      const logs = [];
+      const apiCalls = [];
+      let domShouldFail = false;
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        extractor: {
+          async searchViaDOM(term) {
+            if (domShouldFail) {
+              throw new Error(`dom failed: ${term}`);
+            }
+            return { source: 'dom', term };
+          },
+          extractFromWebpage: async () => ({})
+        },
+        httpClient: {
+          async request(url) {
+            apiCalls.push(url);
+            return { source: 'api', url };
+          }
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} }
+      });
+      testService.logger.info = (message) => logs.push(message);
+
+      try {
+        const domResponse = await testService.search('J1 League');
+        domShouldFail = true;
+        const apiResponse = await testService.search('Serie B');
+
+        assert.deepStrictEqual(domResponse, { source: 'dom', term: 'J1 League' });
+        assert.strictEqual(apiResponse.source, 'api');
+        assert.ok(apiCalls[0].includes('https://www.fotmob.com/api/search/suggest?term=Serie%20B'));
+        assert.ok(logs.some((message) => message.includes('侦察建议')));
+        assert.ok(logs.some((message) => message.includes('DOM 搜索失败')));
+        assert.ok(logs.some((message) => message.includes('回退到 API 搜索')));
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('_fetchFixtures 应覆盖单年份赛季映射、API 无赛程回退与最终失败分支', async () => {
+      const infos = [];
+      const warns = [];
+      const errors = [];
+      let apiMode = 'empty';
+      let soulMode = 'success';
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [],
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: [120]
+          }),
+          getLeagueById: () => null,
+          getActiveLeagues: () => [],
+          getDefaultSeason: () => '2025/2026',
+          getSingleYearLeagueIds: () => [120],
+          getExpectedMatches: () => null,
+          buildLeagueApiUrl: (leagueId, season) => {
+            assert.strictEqual(leagueId, 120);
+            return `https://api.test/leagues?id=${leagueId}&season=${season}`;
+          }
+        },
+        seasonStrategyFactory: {
+          format: () => '2025',
+          isSingleYearLeague: () => true
+        },
+        seasonDiscovery: {
+          discover: async () => '2026'
+        },
+        httpClient: {
+          request: async () => {
+            if (apiMode === 'throw') {
+              throw new Error('api down');
+            }
+            return { details: { id: 555 }, overview: {} };
+          }
+        },
+        extractor: {
+          extractFromWebpage: async () => {
+            if (soulMode === 'throw') {
+              throw new Error('soul down');
+            }
+            return { details: { id: 555 }, fixtures: { allMatches: [{ id: 1 }] } };
+          },
+          searchViaDOM: async () => ({})
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} }
+      });
+      testService.logger.info = (message) => infos.push(message);
+      testService.logger.warn = (message) => warns.push(message);
+      testService.logger.error = (message) => errors.push(message);
+      testService._assertProviderIdentity = () => {};
+
+      try {
+        const fallbackResult = await testService._fetchFixtures({ id: 120, providerId: 555, name: 'CSL' }, '2025/2026');
+        assert.deepStrictEqual(fallbackResult, { details: { id: 555 }, fixtures: { allMatches: [{ id: 1 }] } });
+        assert.ok(infos.some((message) => message.includes('单年份联赛适配')));
+        assert.ok(infos.some((message) => message.includes('使用探测到的赛季 ID')));
+        assert.ok(warns.some((message) => message.includes('API 返回数据但不含赛程')));
+
+        apiMode = 'throw';
+        soulMode = 'throw';
+        await assert.rejects(
+          testService._fetchFixtures({ id: 120, providerId: 555, name: 'CSL' }, '2025/2026'),
+          /无法获取联赛 120 赛季 2026 的数据/
+        );
+        assert.ok(warns.some((message) => message.includes('API 请求失败: api down')));
+        assert.ok(errors.some((message) => message.includes('灵魂抽取失败: soul down')));
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('_buildTargets / _assertProviderIdentity / close 应覆盖异常聚合分支', async () => {
+      let resetCalled = 0;
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: {
+          async end() {
+            throw new Error('db broken');
+          },
+          connect: async () => ({ release: () => {} })
+        },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [
+              { id: 47, name: 'Premier League', tier: 'P0', enabled: true },
+              { id: 120, name: 'CSL', tier: 'P3', enabled: true }
+            ],
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: []
+          }),
+          getLeagueById: (leagueId) => leagueId === 47 ? { id: 47, name: 'Premier League', tier: 'P0', enabled: true } : null,
+          getActiveLeagues: (options) => options?.tier === 'P0'
+            ? [{ id: 47, name: 'Premier League', tier: 'P0', enabled: true }]
+            : [
+              { id: 47, name: 'Premier League', tier: 'P0', enabled: true },
+              { id: 120, name: 'CSL', tier: 'P3', enabled: true }
+            ],
+          getDefaultSeason: (leagueId) => leagueId ? '2024/2025' : '2025/2026',
+          getSingleYearLeagueIds: () => [],
+          getExpectedMatches: () => null,
+          buildLeagueApiUrl: () => ''
+        },
+        browserProvider: {
+          isInitialized: () => false,
+          async close() {
+            throw new Error('browser broken');
+          }
+        },
+        networkInterceptor: {
+          reset() {
+            resetCalled += 1;
+          },
+          getCapturedApis: () => new Map()
+        }
+      });
+
+      try {
+        assert.deepStrictEqual(testService._buildTargets(null, '2025/2026', false), [
+          { id: 47, name: 'Premier League', tier: 'P0', enabled: true, season: '2025/2026' }
+        ]);
+        assert.deepStrictEqual(testService._buildTargets(null, '2025/2026', true), [
+          { id: 47, name: 'Premier League', tier: 'P0', enabled: true, season: '2025/2026' },
+          { id: 120, name: 'CSL', tier: 'P3', enabled: true, season: '2025/2026' }
+        ]);
+        assert.deepStrictEqual(testService._buildTargets(47), [
+          { id: 47, name: 'Premier League', tier: 'P0', enabled: true, season: '2024/2025' }
+        ]);
+        assert.throws(() => testService._buildTargets(999), /联赛 ID 999 未找到/);
+
+        assert.doesNotThrow(() => testService._assertProviderIdentity({}, null, 'Unknown'));
+        assert.doesNotThrow(() => testService._assertProviderIdentity({ details: {} }, 47, 'Unknown'));
+        assert.throws(
+          () => testService._assertProviderIdentity({ details: { id: 48 } }, 47, 'Premier League'),
+          (error) => error.code === 'IDENTITY_MISMATCH'
+            && error.expectedLeagueId === 47
+            && error.actualLeagueId === 48,
+        );
+
+        await assert.rejects(
+          testService.close(),
+          /browserProvider: browser broken; dbPool: db broken/
+        );
+        assert.strictEqual(resetCalled, 1);
+      } finally {
+        testService.browserProvider.close = async () => {};
+        testService.dbPool.end = async () => {};
+        await testService.close();
+      }
+    });
+
+    it('_scanLeague 在无赛程和延迟模式下应分别覆盖告警与 sleep 分支', async () => {
+      const uiCalls = [];
+      const sleepCalls = [];
+      const parserState = { fixtures: [] };
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 12,
+        concurrency: 1,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [],
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: []
+          }),
+          getLeagueById: () => null,
+          getActiveLeagues: () => [],
+          getDefaultSeason: () => '2025/2026',
+          getSingleYearLeagueIds: () => [],
+          getExpectedMatches: () => 2,
+          buildLeagueApiUrl: () => ''
+        },
+        parser: {
+          parse: () => parserState.fixtures
+        },
+        fixtureRepository: {
+          persist: async (fixtures) => ({ total: fixtures.length, inserted: 1, updated: 0, failed: 0 })
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} },
+        extractor: { extractFromWebpage: async () => ({}), searchViaDOM: async () => ({}) },
+        uiHelper: {
+          printScanStart: (...args) => uiCalls.push(['start', args]),
+          printHistoricalMode: (...args) => uiCalls.push(['historical', args]),
+          printNoFixtures: (...args) => uiCalls.push(['noFixtures', args]),
+          printCriticalWarn: (...args) => uiCalls.push(['critical', args]),
+          printParsedFixtures: (...args) => uiCalls.push(['parsed', args]),
+          printProgress: (...args) => uiCalls.push(['progress', args]),
+          printScanError: (...args) => uiCalls.push(['error', args]),
+          printBanner: () => {},
+          printTargets: () => {},
+          generateReport: (stats) => stats
+        }
+      });
+      testService._fetchFixtures = async () => ({});
+      testService._sleep = async (ms) => {
+        sleepCalls.push(ms);
+      };
+      testService._isHistoricalSeason = () => false;
+
+      try {
+        const emptyResult = await testService._scanLeague(
+          { id: 47, name: 'Premier League', season: '2025/2026' },
+          0,
+          {}
+        );
+        assert.deepStrictEqual(emptyResult.criticalWarnings, [{
+          leagueId: 47,
+          name: 'Premier League',
+          season: '2025/2026',
+          actual: 0,
+          expected: 2,
+          missing: 2
+        }]);
+
+        parserState.fixtures = [{
+          match_id: '47_20252026_1',
+          external_id: '1',
+          league_name: 'Premier League',
+          season: '2025/2026',
+          home_team: 'A',
+          away_team: 'B',
+          match_date: '2025-08-16T14:00:00.000Z',
+          status: 'scheduled',
+          is_finished: false
+        }];
+        const successResult = await testService._scanLeague(
+          { id: 47, name: 'Premier League', season: '2025/2026' },
+          1,
+          {}
+        );
+
+        assert.strictEqual(successResult.inserted, 1);
+        assert.deepStrictEqual(sleepCalls, [12]);
+        assert.ok(uiCalls.some(([type]) => type === 'noFixtures'));
+        assert.ok(uiCalls.some(([type]) => type === 'critical'));
+        assert.ok(uiCalls.some(([type]) => type === 'parsed'));
+        assert.ok(uiCalls.some(([type]) => type === 'progress'));
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('_fetchFixtures 在 soul 层出现 IDENTITY_MISMATCH 时应原样抛出', async () => {
+      const mismatchError = new Error('IDENTITY_MISMATCH');
+      mismatchError.code = 'IDENTITY_MISMATCH';
+
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [],
+            active_seasons: ['2025/2026'],
+            default_season: '2025/2026',
+            single_year_league_ids: []
+          }),
+          getLeagueById: () => null,
+          getActiveLeagues: () => [],
+          getDefaultSeason: () => '2025/2026',
+          getSingleYearLeagueIds: () => [],
+          getExpectedMatches: () => null,
+          buildLeagueApiUrl: () => 'https://api.test/leagues?id=47&season=20252026'
+        },
+        seasonStrategyFactory: {
+          format: () => '20252026',
+          isSingleYearLeague: () => false
+        },
+        seasonDiscovery: {
+          discover: async () => '20252026'
+        },
+        httpClient: {
+          request: async () => {
+            throw new Error('api down');
+          }
+        },
+        extractor: {
+          extractFromWebpage: async () => {
+            throw mismatchError;
+          },
+          searchViaDOM: async () => ({})
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} }
+      });
+      testService._assertProviderIdentity = () => {};
+
+      try {
+        await assert.rejects(
+          testService._fetchFixtures({ id: 47, providerId: 47, name: 'Premier League' }, '2025/2026'),
+          (error) => error === mismatchError,
+        );
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('ensureBrowserHealthy / _coolDownBrowser / _rebuildBrowserContext 的早退分支应无副作用', async () => {
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        browserProvider: { isInitialized: () => true, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} }
+      });
+
+      let rebuildCalls = 0;
+      let ensureCalls = 0;
+      testService._rebuildBrowserContext = async () => {
+        rebuildCalls += 1;
+      };
+      testService.ensureBrowserHealthy = async () => {
+        ensureCalls += 1;
+      };
+
+      try {
+        const earlyReturnService = new DiscoveryService({
+          silent: true,
+          delayMs: 0,
+          dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) }
+        });
+        earlyReturnService.browserProvider = null;
+        await earlyReturnService.ensureBrowserHealthy();
+        await earlyReturnService._rebuildBrowserContext('no-browser');
+        earlyReturnService.useStealthMode = false;
+        await earlyReturnService._coolDownBrowser(2);
+        await earlyReturnService.close();
+
+        testService.useStealthMode = true;
+        await DiscoveryService.prototype.ensureBrowserHealthy.call(testService, {});
+        assert.strictEqual(rebuildCalls, 0);
+
+        testService.useStealthMode = false;
+        await DiscoveryService.prototype._coolDownBrowser.call(testService, 9);
+        assert.strictEqual(ensureCalls, 0);
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('_sleep 应通过 setTimeout 完成异步等待', async () => {
+      const originalSetTimeout = global.setTimeout;
+      const scheduled = [];
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} }
+      });
+
+      global.setTimeout = (callback, ms) => {
+        scheduled.push(ms);
+        callback();
+        return 1;
+      };
+
+      try {
+        await testService._sleep(33);
+        assert.deepStrictEqual(scheduled, [33]);
+      } finally {
+        global.setTimeout = originalSetTimeout;
         await testService.close();
       }
     });
