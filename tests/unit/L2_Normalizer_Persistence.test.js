@@ -117,8 +117,8 @@ describe('V6.6 L2 硬化架构测试套件', () => {
         let persistence;
 
         before(() => {
-            // V6.6: 自动探测环境，如果 DB 不可用则使用 Mock
-            const useMock = process.env.DB_HOST === 'db' || !process.env.DB_HOST;
+            // 单元测试默认使用 Mock，避免依赖运行时数据库 schema 漂移。
+            const useMock = process.env.PERSISTENCE_TEST_USE_REAL_DB !== '1';
 
             if (useMock) {
                 console.log('[TEST-MOCK] 使用 Mock 数据库连接池以通过门禁验证');
