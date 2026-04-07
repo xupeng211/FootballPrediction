@@ -53,7 +53,7 @@ node scripts/ops/run_production.js
 
 ### 统一标准
 
-- **配置唯一源**: `src/config_unified.py`
+- **配置唯一源**: `src/config/__init__.py`
 - **数学能力**: `src/core/math/` (finance, evaluator)
 - **动态能力**: `src/core/` (Math, Database, Types)
 - **预测大脑**: `src/ml/`

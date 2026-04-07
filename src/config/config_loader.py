@@ -4,7 +4,7 @@ V79.100 Configuration Loader - Legacy 兼容层
 =============================================
 
 ⚠️ V4.15 声明: 此模块仅被 legacy 代码使用。
-新代码请使用 src/config_unified.py 作为配置源。
+新代码请使用 src/config/__init__.py 作为配置源。
 
 提供从外部化配置文件加载配置的功能：
 1. team_aliases.json - 队名映射
@@ -18,11 +18,12 @@ Date: 2026-01-25
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from functools import lru_cache
 import json
 import logging
 from pathlib import Path
 
-import yaml
+import yaml  # type: ignore[import-untyped]
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ HYPER_PARAMETERS_PATH = Path(__file__).parent / "hyper_parameters.yaml"
 # Team Aliases Configuration
 # =============================================================================
 
+
 @dataclass
 class TeamAliasesConfig:
     """队名映射配置"""
@@ -54,10 +56,10 @@ class TeamAliasesConfig:
     def from_json(cls, json_path: Path = TEAM_ALIASES_PATH) -> TeamAliasesConfig:
         """从 JSON 文件加载配置"""
         if not json_path.exists():
-            logger.warning(f"Team aliases file not found: {json_path}, using defaults")
+            logger.warning("Team aliases file not found: %s, using defaults", json_path)
             return cls()
 
-        with open(json_path, encoding="utf-8") as f:
+        with json_path.open(encoding="utf-8") as f:
             data = json.load(f)
 
         team_data = data.get("team_name_mappings", {})
@@ -80,6 +82,7 @@ class TeamAliasesConfig:
 # =============================================================================
 # Hyper-Parameters Configuration
 # =============================================================================
+
 
 @dataclass
 class HyperParametersConfig:
@@ -117,10 +120,10 @@ class HyperParametersConfig:
     def from_yaml(cls, yaml_path: Path = HYPER_PARAMETERS_PATH) -> HyperParametersConfig:
         """从 YAML 文件加载配置"""
         if not yaml_path.exists():
-            logger.warning(f"Hyper parameters file not found: {yaml_path}, using defaults")
+            logger.warning("Hyper parameters file not found: %s, using defaults", yaml_path)
             return cls()
 
-        with open(yaml_path, encoding="utf-8") as f:
+        with yaml_path.open(encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         fatigue_data = data.get("fatigue", {})
@@ -154,28 +157,16 @@ class HyperParametersConfig:
         )
 
 
-# =============================================================================
-# Singleton Instances
-# =============================================================================
-
-_team_aliases_config: TeamAliasesConfig | None = None
-_hyper_parameters_config: HyperParametersConfig | None = None
-
-
+@lru_cache(maxsize=1)
 def get_team_aliases_config() -> TeamAliasesConfig:
     """获取队名映射配置单例"""
-    global _team_aliases_config
-    if _team_aliases_config is None:
-        _team_aliases_config = TeamAliasesConfig.from_json()
-    return _team_aliases_config
+    return TeamAliasesConfig.from_json()
 
 
+@lru_cache(maxsize=1)
 def get_hyper_parameters_config() -> HyperParametersConfig:
     """获取超参数配置单例"""
-    global _hyper_parameters_config
-    if _hyper_parameters_config is None:
-        _hyper_parameters_config = HyperParametersConfig.from_yaml()
-    return _hyper_parameters_config
+    return HyperParametersConfig.from_yaml()
 
 
 # 版本标识

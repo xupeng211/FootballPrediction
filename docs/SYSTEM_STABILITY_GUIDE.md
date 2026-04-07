@@ -16,15 +16,17 @@
 
 ### 1. 联赛配置
 
-在 `src/config_unified.py` 中添加联赛配置：
+在 `src/config/ml_settings.py` 中调整 `supported_leagues` 默认配置：
 
 ```python
 # 示例：添加葡超（Liga Portugal）
-LEAGUES = {
-    "Liga Portugal": {
+supported_leagues = {
+    "liga_portugal": {
         "country": "Portugal",
-        "season_format": "2023/2024",
-        "fotmob_league_id": 62,  # FotMob League ID
+        "id": 155,
+        "name": "Liga Portugal",
+        "active": True,
+        "priority": 4,
     },
 }
 ```
@@ -150,7 +152,7 @@ done
 系统启动时自动检测本地 PostgreSQL 冲突：
 
 ```python
-# config_unified.py
+# src/config/ml_settings.py
 _validate_database_environment(_settings_instance)
 ```
 
