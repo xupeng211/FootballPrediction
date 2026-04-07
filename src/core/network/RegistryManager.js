@@ -22,6 +22,7 @@
 
 const path = require('path');
 const { FileSystemProvider } = require('./AbstractFileSystem');
+const { ProxyProvider } = require('../../infrastructure/network/ProxyProvider');
 const {
     NetworkShieldError,
     registryLocked,
@@ -496,8 +497,11 @@ class RegistryManager {
             version: 'V1.1.0',
             last_updated: new Date().toISOString(),
             registry_config: {
-                proxy_host: '172.25.16.1',
-                port_range: { start: 7891, end: 7912 },
+                proxy_host: ProxyProvider.resolveHost(),
+                port_range: {
+                    start: Math.min(...ProxyProvider.resolvePorts()),
+                    end: Math.max(...ProxyProvider.resolvePorts())
+                },
                 protocol: 'http',
                 cooldown_minutes: 15,
                 max_consecutive_failures: 2
@@ -508,7 +512,7 @@ class RegistryManager {
         };
 
         // 生成 22 个节点
-        for (let port = 7891; port <= 7912; port++) {
+        for (const port of ProxyProvider.resolvePorts()) {
             config.nodes.push({
                 id: `NODE-${port}`,
                 port,

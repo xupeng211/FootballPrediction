@@ -15,6 +15,7 @@
 
 const { logger } = require('../utils/Logger');
 const FactoryConfig = require('../../../config/factory_config');
+const { ProxyProvider } = require('./ProxyProvider');
 
 // ============================================================================
 // V4.46.1: 全局常量 - 防止无限递归
@@ -69,15 +70,14 @@ class NetworkShield {
      * @private
      */
     _getDefaultProxyNodes() {
-        const host = process.env.PROXY_HOST || '172.25.16.1';
+        const host = ProxyProvider.resolveHost();
         const nodes = [];
 
-        // 22 个代理节点 (端口 7890-7911)
-        for (let port = 7890; port <= 7911; port++) {
+        for (const port of ProxyProvider.resolvePorts()) {
             nodes.push({
                 host,
                 port,
-                url: `http://${host}:${port}`,
+                url: ProxyProvider.buildServer(port, { host }),
                 status: 'active',
                 failureCount: 0,
                 lastFailure: null

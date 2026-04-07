@@ -9,6 +9,7 @@
 'use strict';
 
 const { MATCH_STATUS } = require('./constants');
+const { resolveProxyPoolConfig } = require('./proxy_pool');
 
 /**
  * 数据库表名注册表
@@ -72,13 +73,7 @@ const LEAGUES = {
  * 代理配置注册表
  */
 const PROXIES = {
-    getAllPorts: () => [
-        7890, 7891, 7892, 7893, 7894,
-        7895, 7896, 7897, 7898, 7899,
-        7900, 7901, 7902, 7903, 7904,
-        7905, 7906, 7907, 7908, 7909,
-        7910, 7911
-    ]
+    getAllPorts: () => [...resolveProxyPoolConfig().ports]
 };
 
 // PROXY别名（兼容测试）

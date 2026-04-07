@@ -23,6 +23,7 @@ const http = require('http');
 const https = require('https');
 const net = require('net');
 const { URL } = require('url');
+const { ProxyProvider } = require('../ProxyProvider');
 
 // ============================================================================
 // HEALTH CHECK RESULT
@@ -51,7 +52,7 @@ class HealthChecker {
      * @param options
      */
     constructor(options = {}) {
-        this.proxyHost = options.proxyHost || '172.25.16.1';
+        this.proxyHost = options.proxyHost || ProxyProvider.resolveHost();
         this.testUrl = options.testUrl || 'https://oddsportal.com';
         this.timeout = options.timeout || 5000;
         this.maxConcurrent = options.maxConcurrent || 10;
@@ -103,7 +104,7 @@ class HealthChecker {
      */
     async checkPort(port) {
         const startTime = Date.now();
-        const proxyUrl = `http://${this.proxyHost}:${port}`;
+        const proxyUrl = ProxyProvider.buildServer(port, { host: this.proxyHost });
 
         try {
             // 步骤 1: TCP 连接测试
@@ -149,7 +150,7 @@ class HealthChecker {
      * @returns {Promise<string|null>} IP 地址
      */
     async getProxyIP(port) {
-        const proxyUrl = `http://${this.proxyHost}:${port}`;
+        const proxyUrl = ProxyProvider.buildServer(port, { host: this.proxyHost });
 
         try {
             const result = await this._testHttpRequest(proxyUrl, this.timeout, true);

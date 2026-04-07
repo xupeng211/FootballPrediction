@@ -44,9 +44,11 @@ class DatabaseConfigurationError(DatabaseError):
     用于数据库配置错误、环境冲突等情况。
 
     Examples:
-        >>> raise DatabaseConfigurationError("数据库配置错误", details={"db_name": "wrong_db"})
+        >>> raise DatabaseConfigurationError(
+        ...     "数据库配置错误",
+        ...     details={"db_name": "wrong_db"},
+        ... )
     """
-
 
 
 class ModelError(BaseApplicationError):
@@ -157,7 +159,6 @@ class NetworkError(BaseApplicationError):
     """
 
 
-
 class DataAlignmentError(BaseApplicationError):
     """
     数据对齐异常 (V41.80)
@@ -167,7 +168,6 @@ class DataAlignmentError(BaseApplicationError):
     Examples:
         >>> raise DataAlignmentError("数据对齐失败")
     """
-
 
 
 class URLParsingError(DataAlignmentError):
@@ -181,7 +181,6 @@ class URLParsingError(DataAlignmentError):
     """
 
 
-
 class TeamMatchingError(DataAlignmentError):
     """
     队名匹配异常 (V41.80)
@@ -191,7 +190,6 @@ class TeamMatchingError(DataAlignmentError):
     Examples:
         >>> raise TeamMatchingError("队名匹配失败", details={"team": "Unknown Team"})
     """
-
 
 
 class HashExtractionError(DataAlignmentError):
@@ -205,7 +203,6 @@ class HashExtractionError(DataAlignmentError):
     """
 
 
-
 class ProxyError(BaseApplicationError):
     """
     代理相关异常 (V41.80)
@@ -217,7 +214,6 @@ class ProxyError(BaseApplicationError):
     """
 
 
-
 class ProxyConnectionError(ProxyError):
     """
     代理连接异常 (V41.80)
@@ -225,9 +221,11 @@ class ProxyConnectionError(ProxyError):
     用于代理连接失败的情况。
 
     Examples:
-        >>> raise ProxyConnectionError("代理连接失败", details={"host": "127.0.0.1", "port": 7891})
+        >>> raise ProxyConnectionError(
+        ...     "代理连接失败",
+        ...     details={"host": "proxy.local", "port": "PORT_A"},
+        ... )
     """
-
 
 
 class ProxyHealthError(ProxyError):
@@ -237,6 +235,5 @@ class ProxyHealthError(ProxyError):
     用于代理健康检查失败的情况。
 
     Examples:
-        >>> raise ProxyHealthError("代理不健康", details={"port": 7891, "failures": 3})
+        >>> raise ProxyHealthError("代理不健康", details={"port": "PORT_A", "failures": 3})
     """
-

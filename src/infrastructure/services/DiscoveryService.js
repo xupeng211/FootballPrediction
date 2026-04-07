@@ -31,6 +31,7 @@ const { FixtureRepository } = require('./FixtureRepository');
 const { HttpClient } = require('./HttpClient');
 const { UIHelper } = require('./UIHelper');
 const { L1ConfigManager } = require('./L1ConfigManager');
+const { getProxyProvider } = require('../network/ProxyProvider');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
 
@@ -52,6 +53,7 @@ class DiscoveryService {
       fixtureRepository,
       httpClient,
       uiHelper,
+      proxyProvider,
       ...runtimeConfig
     } = config;
 
@@ -95,6 +97,10 @@ class DiscoveryService {
     this.stats = { total: 0, inserted: 0, updated: 0, failed: 0, startTime: null, criticalWarnings: [] };
     this.configManager = configManager || new L1ConfigManager({ logger: this.logger });
     this.leagueConfig = this.configManager.getRuntimeConfig();
+    this.proxyProvider = proxyProvider
+      || browserProvider?.proxyProvider
+      || httpClient?.proxyProvider
+      || getProxyProvider();
     
     // V6.7.2: 初始化解析器
     this.parser = parser || new DiscoveryParser(this.logger, this.leagueConfig);
@@ -102,7 +108,10 @@ class DiscoveryService {
     // V6.7.4-REFACTORED: 初始化职责分离的模块
     this.browserProvider = browserProvider || new BrowserProvider({
       logger: this.logger,
-      headless: true
+      headless: true,
+      proxyProvider: this.proxyProvider,
+      proxyConsumer: 'l1-discovery-browser',
+      proxySessionKey: 'discovery-browser'
     });
     
     this.networkInterceptor = networkInterceptor || new NetworkInterceptor({
@@ -139,7 +148,10 @@ class DiscoveryService {
       logger: this.logger,
       browserProvider: this.browserProvider,
       useStealthMode: this.useStealthMode,
-      ensureBrowserHealthy: (options) => this.ensureBrowserHealthy(options)
+      ensureBrowserHealthy: (options) => this.ensureBrowserHealthy(options),
+      proxyProvider: this.proxyProvider,
+      proxyConsumer: 'l1-discovery-http',
+      proxySessionKey: 'discovery-http'
     });
     
     // V6.7.6-FINAL: 初始化 UI 辅助
@@ -487,6 +499,16 @@ class DiscoveryService {
    */
   async close() {
     const errors = [];
+
+    if (this.httpClient?.close) {
+      try {
+        await this.httpClient.close();
+        this.logger.info('[DiscoveryService] HTTP 客户端已关闭');
+      } catch (e) {
+        errors.push({ component: 'httpClient', error: e.message });
+        this.logger.error(`[DiscoveryService] HTTP 客户端关闭失败: ${e.message}`);
+      }
+    }
 
     // 关闭浏览器提供者
     if (this.browserProvider) {

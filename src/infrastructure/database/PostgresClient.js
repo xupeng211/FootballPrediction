@@ -11,6 +11,8 @@
 
 'use strict';
 
+const { resolveProxyPoolConfig } = require('../../../config/proxy_pool');
+
 const path = require('path');
 const fs = require('fs');
 
@@ -75,16 +77,18 @@ const ProxyConfig = {
         return process.env.ENABLE_PROXY_ROTATION === 'true';
     },
     get host() {
-        return process.env.PROXY_HOST || '127.0.0.1';
+        return resolveProxyPoolConfig().host;
     },
     get portStart() {
-        return parseInt(process.env.PROXY_PORT_START || '7890', 10);
+        const ports = resolveProxyPoolConfig().ports;
+        return ports[0] || 0;
     },
     get portEnd() {
-        return parseInt(process.env.PROXY_PORT_END || '7911', 10);
+        const ports = resolveProxyPoolConfig().ports;
+        return ports[ports.length - 1] || 0;
     },
     get protocol() {
-        return process.env.PROXY_PROTOCOL || 'http';
+        return resolveProxyPoolConfig().protocol;
     }
 };
 

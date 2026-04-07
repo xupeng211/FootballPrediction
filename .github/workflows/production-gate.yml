@@ -1,0 +1,39 @@
+name: Production Gate
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: production-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  production-gate:
+    name: Environment / Proxy / Static / Unit Gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run authority gatekeeper in container
+        run: GATEKEEPER_BUILD=1 bash scripts/devops/gatekeeper.sh --mode=push
+
+  docker-build:
+    name: Docker Build Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    needs: production-gate
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build production image
+        run: docker build -f Dockerfile -t footballprediction:production-gate .

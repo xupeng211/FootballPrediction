@@ -5,7 +5,7 @@
  * 为 ProductionHarvester 提供全自动的身份支持，实现：
  * - 自动身份捕获（打开可见浏览器过 Turnstile 验证）
  * - 身份热加载（收割时自动注入 Cookie）
- * - 22 节点一对一绑定 (7890-7911)
+ * - 22 节点一对一绑定（完整端口池来自 ProxyProvider.resolvePorts()）
  * - 异常自愈（指数退避重试）
  * @module infrastructure/network/SessionManager
  * @version V179.0.0
@@ -17,6 +17,7 @@ const { chromium } = require('playwright');
 const fs = require('fs').promises;
 const path = require('path');
 const FactoryConfig = require('../../../config/factory_config');
+const { ProxyProvider } = require('./ProxyProvider');
 
 // V4.46.5 HARDENING: 本地确定性 ID 生成器（零模拟铁律）
 function generateLockId(port) {
@@ -134,13 +135,14 @@ class Logger {
  * await sessionManager.initialize();
  *
  * // 刷新指定端口的会话
- * await sessionManager.refreshSession(7890, 'http://172.25.16.1:7890');
+ * const samplePort = ProxyProvider.resolvePorts()[0];
+ * await sessionManager.refreshSession(samplePort, ProxyProvider.buildServer(samplePort));
  *
  * // 获取或刷新会话
- * const session = await sessionManager.getOrRefreshSession(7890);
+ * const session = await sessionManager.getOrRefreshSession(samplePort);
  *
  * // 加载会话到浏览器上下文
- * await sessionManager.loadSessionToContext(context, 7890);
+ * await sessionManager.loadSessionToContext(context, samplePort);
  */
 class SessionManager {
     /**
@@ -236,7 +238,7 @@ class SessionManager {
         // 需要刷新
         this.logger.info(`端口 ${port} 需要刷新会话...`);
 
-        const finalProxyUrl = proxyUrl || `http://172.25.16.1:${port}`;
+        const finalProxyUrl = proxyUrl || ProxyProvider.buildServer(port);
         return this.refreshSession(port, finalProxyUrl);
     }
 
