@@ -64,7 +64,7 @@ docker-compose ps db
 docker-compose exec db pg_isready -U football_user -d football_db
 
 # 2. 检查配置
-python -c "from src.config_unified import get_settings; print(get_settings().database)"
+python -c "from src.config import get_settings; print(get_settings().database)"
 
 # 3. 测试连接
 nc -zv localhost 5432  # 或 172.25.16.1 5432 (WSL2)

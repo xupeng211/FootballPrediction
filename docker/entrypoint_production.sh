@@ -155,9 +155,9 @@ async def init_production():
         print('🚀 启动 Football Prediction System v2.3-production')
         print('=' * 60)
 
-        # 1. 初始化配置 (使用新的config_unified)
+        # 1. 初始化配置（使用新的 src.config 配置包）
         try:
-            from src.config_unified import get_settings
+            from src.config import get_settings
             settings = get_settings()
             print(f'📋 应用: Football Prediction System v2.3-production')
             print(f'🌍 环境: {settings.environment}')
@@ -169,10 +169,10 @@ async def init_production():
         # 2. 验证核心模块导入
         print('\\n🔍 验证核心模块:')
 
-        # 验证 config_unified
+        # 验证统一配置包
         try:
-            from src.config_unified import UnifiedSettings
-            print('  ✅ 配置模块 (config_unified)')
+            from src.config import UnifiedSettings
+            print('  ✅ 配置模块 (src.config)')
         except Exception as e:
             print(f'  ❌ 配置模块失败: {e}')
             return False
@@ -261,7 +261,7 @@ sys.path.insert(0, '/app/src')
 async def check_health():
     try:
         # 检查配置模块
-        from src.config_unified import get_settings
+        from src.config import get_settings
         settings = get_settings()
         print('✅ 配置模块正常')
 

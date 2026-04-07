@@ -203,7 +203,9 @@ Recon 运行补充约定：
 
 配置优先看以下位置：
 
-- `src/config_unified.py`
+- `src/config/__init__.py`
+- `src/config/settings.py`
+- `src/config/proxy_settings.py`
 - `config/factory_config.js`
 - `config/registry.js`
 - `config/recon_config.json`

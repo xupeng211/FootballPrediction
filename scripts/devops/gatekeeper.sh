@@ -547,7 +547,7 @@ run_python_proxy_contract_check() {
       continue
     fi
 
-    if grep -qE 'from src\.config_unified import|get_settings|get_shared_proxy_pool_config|proxy_server_template|proxy_ports|proxy_wsl2_host' "$file"; then
+    if grep -qE 'from src\.config import|import src\.config|get_settings|get_shared_proxy_pool_config|proxy_server_template|proxy_ports|proxy_wsl2_host' "$file"; then
       continue
     fi
 
@@ -559,7 +559,7 @@ run_python_proxy_contract_check() {
   if [[ "${#findings[@]}" -gt 0 ]]; then
     printf '[Gatekeeper] 命中未接入统一代理配置的 Python 底层网络调用:\n' >&2
     printf '  %s\n' "${findings[@]}" >&2
-    fail '发现 Python 侧绕过 config_unified / ProxyProvider 的网络依赖，请先接入统一代理配置。'
+    fail '发现 Python 侧绕过 src.config / ProxyProvider 的网络依赖，请先接入统一代理配置。'
   fi
 }
 
@@ -583,7 +583,7 @@ run_python_architecture_guard() {
       continue
     fi
 
-    if [[ "$file" == "src/config_unified.py" ]]; then
+    if [[ "$file" == src/config/*.py ]]; then
       fail "检测到‘巨石文件’，请先进行模块化拆分再提交：${file} 当前 ${line_count} 行，已超过 ${PYTHON_FILE_LINE_LIMIT} 行上限。"
     fi
 
