@@ -313,23 +313,107 @@ NODE
 
   python <<'PY'
 import json
+import os
 from pathlib import Path
+import re
 
-from src.config_unified import get_settings, get_shared_proxy_pool_config
+CONFIG_PATH = Path("config/proxy_pool.json")
 
-pool = get_shared_proxy_pool_config()
-settings = get_settings()
+
+def parse_ports(value):
+    if isinstance(value, list):
+        candidates = value
+    elif isinstance(value, str):
+        candidates = value.split(",")
+    else:
+        return []
+
+    ports = []
+    for candidate in candidates:
+        try:
+            port = int(str(candidate).strip())
+        except (TypeError, ValueError):
+            continue
+
+        if port > 0:
+            ports.append(port)
+
+    return ports
+
+
+def expand_port_range(start, end):
+    try:
+        range_start = int(start)
+        range_end = int(end)
+    except (TypeError, ValueError):
+        return []
+
+    if range_end < range_start:
+        return []
+
+    return list(range(range_start, range_end + 1))
+
+
+def extract_proxy_host(server_template):
+    if not server_template:
+        return None
+
+    match = re.match(r"^https?://([^/:]+)", str(server_template))
+    return match.group(1) if match else None
+
+
+file_config = {}
+if CONFIG_PATH.exists():
+    file_config = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+
+protocol = os.environ.get("PROXY_PROTOCOL") or file_config.get("protocol") or "http"
+server_template = os.environ.get("PROXY_SERVER") or file_config.get("serverTemplate") or ""
+
+ports = parse_ports(os.environ.get("PROXY_PORTS"))
+if not ports:
+    ports = expand_port_range(
+        os.environ.get("PROXY_PORT_START"),
+        os.environ.get("PROXY_PORT_END"),
+    )
+if not ports:
+    ports = parse_ports(file_config.get("ports"))
+
+host = (
+    os.environ.get("WSL2_PROXY_HOST")
+    or os.environ.get("PROXY_HOST")
+    or extract_proxy_host(server_template)
+    or file_config.get("host")
+    or "127.0.0.1"
+)
+
+try:
+    default_port = int(
+        os.environ.get("PROXY_PORT")
+        or file_config.get("defaultPort")
+        or (ports[0] if ports else 0)
+    )
+except (TypeError, ValueError):
+    default_port = ports[0] if ports else 0
+
+if not ports and default_port:
+    ports = [default_port]
+
+if not server_template:
+    if "{port}" in str(file_config.get("serverTemplate") or ""):
+        server_template = str(file_config["serverTemplate"])
+    else:
+        server_template = f"{protocol}://{host}:{{port}}"
 
 payload = {
-    "host": pool["host"],
-    "ports": pool["ports"],
-    "defaultPort": pool["default_port"],
-    "protocol": pool["protocol"],
-    "serverTemplate": pool["server_template"],
-    "settingsHost": settings.proxy_wsl2_host,
-    "settingsPorts": [int(port.strip()) for port in settings.proxy_ports.split(",") if port.strip()],
-    "settingsProtocol": settings.proxy_protocol,
-    "settingsServerTemplate": settings.proxy_server_template,
+    "host": host,
+    "ports": ports,
+    "defaultPort": default_port,
+    "protocol": protocol,
+    "serverTemplate": server_template,
+    "settingsHost": host,
+    "settingsPorts": ports,
+    "settingsProtocol": protocol,
+    "settingsServerTemplate": server_template,
 }
 Path("/tmp/gatekeeper-python-proxy.json").write_text(
     json.dumps(payload, ensure_ascii=False, indent=2),
