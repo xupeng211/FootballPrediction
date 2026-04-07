@@ -21,11 +21,15 @@ Version: V26.0 (Stable)
 5. External API Settings (外部API设置)
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from enum import Enum
+from functools import lru_cache
+import json
 import logging
 import os
 from pathlib import Path
+import re
 from typing import Any
 
 from pydantic import Field, SecretStr, ValidationInfo, field_validator
@@ -34,7 +38,201 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # V41.80: 使用统一的异常体系
 from src.core.exceptions import DatabaseConfigurationError
 
+LoadDotenvFunc = Callable[[], bool]
+EnvironmentDetectorFunc = Callable[[], Any]
+OptimalDbHostFunc = Callable[[str | None, str | None], str]
+ValidatorFunc = Callable[..., None]
+
+_load_dotenv: LoadDotenvFunc | None
+EnvironmentType: Any
+detect_environment: EnvironmentDetectorFunc | None
+get_optimal_db_host: OptimalDbHostFunc | None
+_validate_database_environment_impl: ValidatorFunc | None
+validate_no_local_postgres_conflict: ValidatorFunc | None
+
+try:
+    from dotenv import load_dotenv as _load_dotenv
+except ImportError:
+    _load_dotenv = None
+
+try:
+    from src.core.environment_detector import (
+        EnvironmentType,
+        detect_environment,
+        get_optimal_db_host,
+    )
+except ImportError:
+    EnvironmentType = None
+    detect_environment = None
+    get_optimal_db_host = None
+
+try:
+    from src.core.environment_validator import (
+        validate_database_environment as _validate_database_environment_impl,
+    )
+    from src.core.environment_validator import validate_no_local_postgres_conflict
+except ImportError:
+    _validate_database_environment_impl = None
+    validate_no_local_postgres_conflict = None
+
 logger = logging.getLogger(__name__)
+
+PROXY_POOL_CONFIG_PATH = Path(__file__).resolve().parents[1] / "config" / "proxy_pool.json"
+ALLOWED_DB_NAME = "football_db"
+MIN_PORT = 1
+MAX_PORT = 65535
+MIN_SECRET_KEY_LENGTH = 32
+MAX_BATCH_SIZE_LIMIT = 1000
+
+
+def _read_proxy_pool_file() -> dict[str, Any]:
+    """读取共享代理池配置文件。"""
+    try:
+        with PROXY_POOL_CONFIG_PATH.open("r", encoding="utf-8") as file:
+            data = json.load(file)
+            if isinstance(data, dict):
+                return data
+    except FileNotFoundError:
+        logger.warning("共享代理池配置不存在: %s", PROXY_POOL_CONFIG_PATH)
+    except json.JSONDecodeError as exc:
+        logger.warning("共享代理池配置解析失败: %s", exc)
+
+    return {}
+
+
+def _parse_proxy_ports(value: Any) -> list[int]:
+    """解析逗号分隔或数组形式的代理端口。"""
+    if isinstance(value, list):
+        candidates = value
+    elif isinstance(value, str):
+        candidates = value.split(",")
+    else:
+        return []
+
+    ports: list[int] = []
+    for candidate in candidates:
+        try:
+            port = int(str(candidate).strip())
+        except (TypeError, ValueError):
+            continue
+
+        if port > 0:
+            ports.append(port)
+
+    return ports
+
+
+def _expand_proxy_port_range(start: Any, end: Any) -> list[int]:
+    """根据起止端口展开端口列表。"""
+    try:
+        range_start = int(start)
+        range_end = int(end)
+    except (TypeError, ValueError):
+        return []
+
+    if range_end < range_start:
+        return []
+
+    return list(range(range_start, range_end + 1))
+
+
+def _extract_proxy_host(server_template: str | None) -> str | None:
+    """从 serverTemplate 中提取主机名。"""
+    if not server_template:
+        return None
+
+    match = re.match(r"^https?://([^/:]+)", str(server_template))
+    return match.group(1) if match else None
+
+
+def resolve_shared_proxy_pool_config() -> dict[str, Any]:
+    """解析跨语言共享的代理池配置。"""
+    file_config = _read_proxy_pool_file()
+    protocol = os.environ.get("PROXY_PROTOCOL") or file_config.get("protocol") or "http"
+    server_template = os.environ.get("PROXY_SERVER") or file_config.get("serverTemplate") or ""
+
+    ports = _parse_proxy_ports(os.environ.get("PROXY_PORTS"))
+    if not ports:
+        ports = _expand_proxy_port_range(
+            os.environ.get("PROXY_PORT_START"),
+            os.environ.get("PROXY_PORT_END"),
+        )
+    if not ports:
+        ports = _parse_proxy_ports(file_config.get("ports"))
+
+    host = (
+        os.environ.get("WSL2_PROXY_HOST")
+        or os.environ.get("PROXY_HOST")
+        or _extract_proxy_host(server_template)
+        or file_config.get("host")
+        or "127.0.0.1"
+    )
+
+    try:
+        default_port = int(
+            os.environ.get("PROXY_PORT")
+            or file_config.get("defaultPort")
+            or (ports[0] if ports else 0)
+        )
+    except (TypeError, ValueError):
+        default_port = ports[0] if ports else 0
+
+    if not ports and default_port:
+        ports = [default_port]
+
+    resolved_template = server_template or f"{protocol}://{host}:{{port}}"
+
+    return {
+        "protocol": protocol,
+        "host": host,
+        "ports": ports,
+        "default_port": default_port,
+        "server_template": resolved_template,
+        "config_path": str(PROXY_POOL_CONFIG_PATH),
+    }
+
+
+def get_shared_proxy_pool_config() -> dict[str, Any]:
+    """公开的共享代理池配置访问器。"""
+    return resolve_shared_proxy_pool_config().copy()
+
+
+def _default_proxy_host() -> str:
+    return str(resolve_shared_proxy_pool_config()["host"])
+
+
+def _default_proxy_ports() -> list[int]:
+    return list(resolve_shared_proxy_pool_config()["ports"])
+
+
+def _default_proxy_ports_csv() -> str:
+    return ",".join(str(port) for port in _default_proxy_ports())
+
+
+def _default_proxy_protocol() -> str:
+    return str(resolve_shared_proxy_pool_config()["protocol"])
+
+
+def _default_proxy_server_template() -> str:
+    return str(resolve_shared_proxy_pool_config()["server_template"])
+
+
+def _env_flag(name: str) -> bool:
+    """解析布尔型环境变量。"""
+    return os.getenv(name, "").lower() in ("true", "1", "yes")
+
+
+def _env_int(name: str, default: int) -> int:
+    """解析整型环境变量，失败时回退到默认值。"""
+    raw_value = os.getenv(name)
+    if raw_value is None or raw_value == "":
+        return default
+
+    try:
+        return int(raw_value)
+    except ValueError:
+        logger.warning("环境变量 %s=%r 不是有效整数，回退为 %s", name, raw_value, default)
+        return default
 
 
 class Environment(str, Enum):
@@ -129,17 +327,16 @@ class ProxyConfig:
     - 代理池管理和健康检查配置
     """
 
-    # WSL2 配置
-    wsl2_bridge_host: str = "172.25.16.1"  # WSL2 宿主机默认 IP
+    # 共享代理池配置
+    wsl2_bridge_host: str = field(default_factory=_default_proxy_host)
+    protocol: str = field(default_factory=_default_proxy_protocol)
+    server_template: str = field(default_factory=_default_proxy_server_template)
     auto_detect_wsl2: bool = True  # 自动检测 WSL2 环境
 
-    # V4.13: 代理池配置（与 factory_config.js 同步 - 22 个端口）
-    # 完整代理端口范围 7890-7911
-    proxy_ports: list[int] = field(
-        default_factory=lambda: list(range(7890, 7912))  # 7890-7911 (22 ports)
-    )
+    # 代理池配置（与 factory_config.js / ProxyProvider.js 同步）
+    proxy_ports: list[int] = field(default_factory=_default_proxy_ports)
     deprecated_proxy_ports: list[int] = field(
-        default_factory=lambda: []  # V4.13: 所有端口均可用
+        default_factory=list  # V4.13: 所有端口均可用
     )
 
     # 健康检查配置
@@ -154,18 +351,15 @@ class ProxyConfig:
 
     def __post_init__(self) -> None:
         """初始化后处理"""
-        # 尝试从环境变量读取代理端口
-        env_proxy_ports = os.environ.get("PROXY_PORTS", "")
-        if env_proxy_ports:
-            try:
-                self.proxy_ports = [int(p.strip()) for p in env_proxy_ports.split(",")]
-            except ValueError:
-                logger.warning(f"PROXY_PORTS 格式错误: {env_proxy_ports}，使用默认值")
-
-        # 尝试从环境变量读取 WSL2 主机
-        env_wsl2_host = os.environ.get("WSL2_PROXY_HOST")
-        if env_wsl2_host:
-            self.wsl2_bridge_host = env_wsl2_host
+        resolved = resolve_shared_proxy_pool_config()
+        if not self.wsl2_bridge_host:
+            self.wsl2_bridge_host = resolved["host"]
+        if not self.protocol:
+            self.protocol = resolved["protocol"]
+        if not self.server_template:
+            self.server_template = resolved["server_template"]
+        if not self.proxy_ports:
+            self.proxy_ports = list(resolved["ports"])
 
     def get_proxy_url(self, port: int | None = None) -> str | None:
         """获取代理 URL
@@ -182,11 +376,18 @@ class ProxyConfig:
         if port is None:
             return None
 
-        return f"http://{self.wsl2_bridge_host}:{port}"
+        if self.server_template and "{port}" in self.server_template:
+            return self.server_template.replace("{port}", str(port))
+
+        return f"{self.protocol}://{self.wsl2_bridge_host}:{port}"
 
     def get_all_proxy_urls(self) -> list[str]:
         """获取所有代理 URL"""
-        return [self.get_proxy_url(port) for port in self.proxy_ports]
+        return [
+            proxy_url
+            for port in self.proxy_ports
+            if (proxy_url := self.get_proxy_url(port)) is not None
+        ]
 
     def is_port_deprecated(self, port: int) -> bool:
         """检查端口是否已弃用"""
@@ -318,7 +519,7 @@ class FotMobAPIConfig:
         """标准化赛季格式（转换为完整格式 YYYY/YYYY）"""
         return self.SEASON_MAPPING.get(season, season)
 
-    def build_url(self, endpoint: str, **params) -> str:
+    def build_url(self, endpoint: str, **params: Any) -> str:
         """构建API URL"""
         endpoint_path = self.ENDPOINTS.get(endpoint, endpoint)
         url = f"{self.base_url}/{endpoint_path}"
@@ -343,38 +544,36 @@ class UnifiedSettings(BaseSettings):
     def auto_inject_env_vars(cls) -> dict[str, Any]:
         """V41.59: 自动注入环境变量（增强环境检测）"""
         env_config = {}
+        docker_env = False
 
         # V41.59: 首先加载 .env 文件（确保环境变量可用）
-        try:
-            from dotenv import load_dotenv
-
-            load_dotenv()
-        except ImportError:
+        if _load_dotenv is not None:
+            _load_dotenv()
+        else:
             logger.debug("python-dotenv 未安装，跳过 .env 文件加载")
 
         # V41.59: 使用智能环境检测器
-        try:
-            from src.core.environment_detector import (
-                EnvironmentType,
-                detect_environment,
-                get_optimal_db_host,
-            )
-
+        if (
+            EnvironmentType is not None
+            and detect_environment is not None
+            and get_optimal_db_host is not None
+        ):
             current_env = detect_environment()
-            monitoring_mode = os.getenv("MONITORING_MODE", "").lower() in ("true", "1", "yes")
+            monitoring_mode = _env_flag("MONITORING_MODE")
 
             # 根据环境自动配置
             if current_env == EnvironmentType.DOCKER:
+                docker_env = True
                 logger.info("🐳 V41.59: Docker 环境自动配置")
                 env_config.update(
                     {
                         "db_host": "db",
-                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_port": _env_int("DB_PORT", 5432),
                         "db_name": os.getenv("DB_NAME", "football_db"),
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": os.getenv("DB_PASSWORD", "change-me-in-production"),
                         "redis_host": os.getenv("REDIS_HOST", "redis"),
-                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "redis_port": _env_int("REDIS_PORT", 6379),
                         "environment": "monitoring" if monitoring_mode else "production",
                     }
                 )
@@ -383,19 +582,19 @@ class UnifiedSettings(BaseSettings):
                 logger.info("🟡 V41.59: WSL2 环境自动配置")
                 # 获取最优主机（检测端口冲突）
                 optimal_host = get_optimal_db_host(
-                    preferred_host=os.getenv("DB_HOST"),
-                    env_var_host=os.getenv("PGHOST"),  # 支持 PGHOST 环境变量
+                    os.getenv("DB_HOST"),
+                    os.getenv("PGHOST"),  # 支持 PGHOST 环境变量
                 )
                 env_config.update(
                     {
                         "db_host": optimal_host,
-                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_port": _env_int("DB_PORT", 5432),
                         "db_name": os.getenv("DB_NAME", "football_db"),
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": os.getenv("DB_PASSWORD")
                         or os.getenv("PGPASSWORD", "change-me-in-production"),
                         "redis_host": os.getenv("REDIS_HOST", "localhost"),
-                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "redis_port": _env_int("REDIS_PORT", 6379),
                         "environment": "development",
                     }
                 )
@@ -405,22 +604,22 @@ class UnifiedSettings(BaseSettings):
                 env_config.update(
                     {
                         "db_host": os.getenv("DB_HOST", "localhost"),
-                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_port": _env_int("DB_PORT", 5432),
                         "db_name": os.getenv("DB_NAME", "football_db"),
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": os.getenv("DB_PASSWORD")
                         or os.getenv("PGPASSWORD", "change-me-in-production"),
                         "redis_host": os.getenv("REDIS_HOST", "localhost"),
-                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "redis_port": _env_int("REDIS_PORT", 6379),
                         "environment": "development",
                     }
                 )
 
-        except ImportError:
+        else:
             # 回退到旧逻辑（兼容性）
             logger.warning("⚠️  环境检测器未找到，使用旧版配置逻辑")
-            docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
-            monitoring_mode = os.getenv("MONITORING_MODE", "").lower() in ("true", "1", "yes")
+            docker_env = _env_flag("DOCKER_ENV")
+            monitoring_mode = _env_flag("MONITORING_MODE")
 
             if docker_env:
                 db_password = os.getenv("DB_PASSWORD")
@@ -430,12 +629,12 @@ class UnifiedSettings(BaseSettings):
                 env_config.update(
                     {
                         "db_host": "db",
-                        "db_port": int(os.getenv("DB_PORT", 5432)),
+                        "db_port": _env_int("DB_PORT", 5432),
                         "db_name": os.getenv("DB_NAME", "football_db"),
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": db_password or "change-me-in-production",
                         "redis_host": os.getenv("REDIS_HOST", "redis"),
-                        "redis_port": int(os.getenv("REDIS_PORT", 6379)),
+                        "redis_port": _env_int("REDIS_PORT", 6379),
                         "environment": "monitoring" if monitoring_mode else "production",
                     }
                 )
@@ -451,13 +650,10 @@ class UnifiedSettings(BaseSettings):
 
         return env_config
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         # V41.51: 数据库大一统 - 强制只允许 football_db
         # 物理消除环境偏差，确保所有连接指向同一个真实数据库
         raw_env_db_name = os.environ.get("DB_NAME")
-
-        # V41.51: 单数据库准则 - 强制只允许 football_db
-        ALLOWED_DB_NAME = "football_db"
 
         # 如果设置了 DB_NAME，必须是 football_db
         if raw_env_db_name and raw_env_db_name != ALLOWED_DB_NAME:
@@ -548,14 +744,17 @@ class UnifiedSettings(BaseSettings):
     redis_password: SecretStr | None = Field(default=None, description="Redis密码")
 
     # === V41.121 代理配置 ===
-    # WSL2 桥接主机（可从环境变量 WSL2_PROXY_HOST 读取）
-    proxy_wsl2_host: str = Field(default="172.25.16.1", description="WSL2 宿主机 IP")
+    proxy_wsl2_host: str = Field(default_factory=_default_proxy_host, description="代理主机")
 
-    # V4.13: 代理端口列表（与 factory_config.js 同步 - 22 个端口 7890-7911）
-    # 可从环境变量 PROXY_PORTS 读取，逗号分隔
+    proxy_protocol: str = Field(default_factory=_default_proxy_protocol, description="代理协议")
+
     proxy_ports: str = Field(
-        default="7890,7891,7892,7893,7894,7895,7896,7897,7898,7899,7900,7901,7902,7903,7904,7905,7906,7907,7908,7909,7910,7911",
-        description="可用代理端口列表 (22 ports: 7890-7911)"
+        default_factory=_default_proxy_ports_csv,
+        description="可用代理端口列表（来自共享 proxy_pool.json 或环境变量）",
+    )
+
+    proxy_server_template: str = Field(
+        default_factory=_default_proxy_server_template, description="代理地址模板"
     )
 
     # V4.13: 所有端口均可用，无弃用端口
@@ -659,7 +858,7 @@ class UnifiedSettings(BaseSettings):
     )
 
     # === V26.0 流水线配置 (标准化参数) ===
-    # 比赛状态常量 (统一大小写处理)
+    # 比赛状态枚举字段
     match_status_finished: str = Field(default="FINISHED", description="比赛完成状态")
     match_status_scheduled: str = Field(default="SCHEDULED", description="比赛计划状态")
     match_status_live: str = Field(default="LIVE", description="比赛进行中状态")
@@ -692,7 +891,7 @@ class UnifiedSettings(BaseSettings):
     @classmethod
     def validate_port(cls, v: int) -> int:
         """验证端口范围"""
-        if not 1 <= v <= 65535:
+        if not MIN_PORT <= v <= MAX_PORT:
             raise ValueError("端口必须在1-65535范围内")
         return v
 
@@ -709,7 +908,7 @@ class UnifiedSettings(BaseSettings):
     def validate_secret_key(cls, v: SecretStr) -> SecretStr:
         """验证密钥强度"""
         secret = v.get_secret_value()
-        if len(secret) < 32:
+        if len(secret) < MIN_SECRET_KEY_LENGTH:
             raise ValueError("密钥长度必须至少32个字符")
         return v
 
@@ -721,21 +920,45 @@ class UnifiedSettings(BaseSettings):
             raise ValueError("置信度阈值必须在0.0-1.0之间")
         return v
 
+    @field_validator("proxy_wsl2_host", mode="before")
+    @classmethod
+    def normalize_proxy_wsl2_host(cls, _: Any) -> str:
+        """代理主机始终以共享配置解析结果为准。"""
+        return _default_proxy_host()
+
+    @field_validator("proxy_protocol", mode="before")
+    @classmethod
+    def normalize_proxy_protocol(cls, _: Any) -> str:
+        """代理协议始终以共享配置解析结果为准。"""
+        return _default_proxy_protocol()
+
+    @field_validator("proxy_ports", mode="before")
+    @classmethod
+    def normalize_proxy_ports(cls, _: Any) -> str:
+        """代理端口列表始终以共享配置解析结果为准。"""
+        return _default_proxy_ports_csv()
+
+    @field_validator("proxy_server_template", mode="before")
+    @classmethod
+    def normalize_proxy_server_template(cls, _: Any) -> str:
+        """代理模板始终以共享配置解析结果为准。"""
+        return _default_proxy_server_template()
+
     @field_validator("max_batch_size")
     @classmethod
     def validate_batch_size(cls, v: int) -> int:
         """验证批量大小"""
-        if not 1 <= v <= 1000:
+        if not 1 <= v <= MAX_BATCH_SIZE_LIMIT:
             raise ValueError("批量大小必须在1-1000之间")
         return v
 
     @field_validator("db_host")
     @classmethod
-    def validate_db_host(cls, v: str, info: ValidationInfo) -> str:
+    def validate_db_host(cls, v: str, info: ValidationInfo[Any]) -> str:
         """自动适配Docker环境的数据库主机"""
         # 检查是否在Docker环境中
-        docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
-        environment = info.data.get("environment", "development")
+        docker_env = _env_flag("DOCKER_ENV")
+        environment = (info.data or {}).get("environment", "development")
 
         # 如果明确设置了DOCKER_ENV=true，自动使用db作为主机名
         if docker_env:
@@ -752,11 +975,11 @@ class UnifiedSettings(BaseSettings):
 
     @field_validator("redis_host")
     @classmethod
-    def validate_redis_host(cls, v: str, info: ValidationInfo) -> str:
+    def validate_redis_host(cls, v: str, info: ValidationInfo[Any]) -> str:
         """自动适配Docker环境的Redis主机"""
         # 检查是否在Docker环境中
-        docker_env = os.getenv("DOCKER_ENV", "").lower() in ("true", "1", "yes")
-        environment = info.data.get("environment", "development")
+        docker_env = _env_flag("DOCKER_ENV")
+        environment = (info.data or {}).get("environment", "development")
 
         # 如果明确设置了DOCKER_ENV=true，自动使用redis作为主机名
         if docker_env:
@@ -779,8 +1002,6 @@ class UnifiedSettings(BaseSettings):
         物理消除环境偏差，确保所有连接指向同一个真实数据库
         """
         # V41.51: 单数据库准则 - 强制只允许 football_db
-        ALLOWED_DB_NAME = "football_db"
-
         if v != ALLOWED_DB_NAME:
             raise DatabaseConfigurationError(
                 f"🚨 V41.51 数据库大一统：非法数据库名称\n"
@@ -948,7 +1169,7 @@ class UnifiedSettings(BaseSettings):
 
         # === 生产环境特殊检查 ===
         if self.is_production:
-            if len(self.secret_key.get_secret_value()) < 32:
+            if len(self.secret_key.get_secret_value()) < MIN_SECRET_KEY_LENGTH:
                 issues.append("生产环境 SECRET_KEY 必须至少 32 字符")
 
             if self.db_password.get_secret_value() in ["football_pass", "password", "123456"]:
@@ -986,49 +1207,41 @@ class UnifiedSettings(BaseSettings):
         }
 
 
-# === 全局设置实例 ===
-_settings_instance: UnifiedSettings | None = None
+@lru_cache(maxsize=1)
+def _build_settings() -> UnifiedSettings:
+    """构建并缓存全局设置实例。"""
+    try:
+        settings = UnifiedSettings()
+        errors = settings.validate_integrity()
+        if errors:
+            logger.warning("配置验证警告: %s", "; ".join(errors))
+
+        _validate_database_environment(settings)
+
+    except DatabaseConfigurationError:
+        raise
+    except Exception as exc:
+        logger.warning("配置初始化警告: %s", exc)
+        raw_db_name = os.getenv("DB_NAME", ALLOWED_DB_NAME)
+        if raw_db_name != ALLOWED_DB_NAME:
+            raise DatabaseConfigurationError(
+                f"🚨 非法数据库配置！\n"
+                f"   系统只允许连接 '{ALLOWED_DB_NAME}'，检测到: '{raw_db_name}'\n"
+                f"   请检查 .env 文件和环境变量，确保 DB_NAME={ALLOWED_DB_NAME}"
+            ) from exc
+
+        return UnifiedSettings(
+            environment=Environment.DEVELOPMENT,
+            debug=True,
+            secret_key=SecretStr("dev-secret-key-please-change-in-production"),
+        )
+    else:
+        return settings
 
 
 def get_settings() -> UnifiedSettings:
-    """获取全局设置实例（单例模式）"""
-    global _settings_instance
-    if _settings_instance is None:
-        # V36.6: 单数据库准则 - 强制执行硬红线检测
-        # 即使创建最小配置时也必须检查数据库配置
-        try:
-            _settings_instance = UnifiedSettings()
-
-            # 验证配置完整性
-            errors = _settings_instance.validate_integrity()
-            if errors:
-                logger.warning(f"配置验证警告: {'; '.join(errors)}")
-
-            # V41.77: 数据库隔离检测
-            _validate_database_environment(_settings_instance)
-
-        except DatabaseConfigurationError:
-            # V36.6: 硬红线违规 - 必须失败，不允许绕过
-            raise
-        except Exception as e:
-            logger.warning(f"配置初始化警告: {e}")
-            # V36.6: 即使创建最小配置时也必须检查数据库配置
-            # 先检查环境变量中的数据库名称
-            raw_db_name = os.getenv("DB_NAME", "football_db")
-            if raw_db_name != "football_db":
-                raise DatabaseConfigurationError(
-                    f"🚨 非法数据库配置！\n"
-                    f"   系统只允许连接 'football_db'，检测到: '{raw_db_name}'\n"
-                    f"   请检查 .env 文件和环境变量，确保 DB_NAME=football_db"
-                )
-            # 创建最小可用配置（只有在数据库配置正确时）
-            _settings_instance = UnifiedSettings(
-                environment=Environment.DEVELOPMENT,
-                debug=True,
-                secret_key=SecretStr("dev-secret-key-please-change-in-production"),
-            )
-
-    return _settings_instance
+    """获取全局设置实例（单例模式）。"""
+    return _build_settings()
 
 
 def _validate_database_environment(settings: UnifiedSettings) -> None:
@@ -1042,18 +1255,17 @@ def _validate_database_environment(settings: UnifiedSettings) -> None:
         DatabaseConfigurationError: 环境验证失败时
     """
     # 检查环境变量是否禁用了环境检测
-    skip_validation = os.getenv("SKIP_ENV_VALIDATION", "").lower() in ("1", "true", "yes")
+    skip_validation = _env_flag("SKIP_ENV_VALIDATION")
 
     if skip_validation:
         logger.warning("⚠️  环境检测已跳过 (SKIP_ENV_VALIDATION=1)")
         return
 
-    try:
-        from src.core.environment_validator import (
-            validate_database_environment,
-            validate_no_local_postgres_conflict,
-        )
+    if _validate_database_environment_impl is None or validate_no_local_postgres_conflict is None:
+        logger.warning("⚠️  环境检测模块不可用，跳过验证")
+        return
 
+    try:
         db_port = settings.database.port
 
         # 检查本地 PostgreSQL 冲突
@@ -1061,24 +1273,22 @@ def _validate_database_environment(settings: UnifiedSettings) -> None:
 
         # 验证数据库环境
         db_host = settings.database.host
-        validate_database_environment(
+        _validate_database_environment_impl(
             db_host=db_host, db_port=db_port, allow_docker=True, allow_local=False
         )
 
         logger.info("✅ V41.77: 数据库环境验证通过")
 
-    except ImportError:
-        logger.warning("⚠️  环境检测模块不可用，跳过验证")
-    except Exception as e:
+    except Exception as exc:
         raise DatabaseConfigurationError(
-            f"🚨 V41.77: 数据库环境验证失败\n   错误: {e}\n   请确保数据库环境正确配置"
-        )
+            f"🚨 V41.77: 数据库环境验证失败\n   错误: {exc}\n   请确保数据库环境正确配置"
+        ) from exc
 
 
 def reload_settings() -> UnifiedSettings:
     """重新加载设置"""
-    global _settings_instance
-    _settings_instance = None
+    _build_settings.cache_clear()
+    _build_config_accessor.cache_clear()
     return get_settings()
 
 
@@ -1128,14 +1338,13 @@ class ConfigAccessor:
     @property
     def proxy(self) -> ProxyConfig:
         """V41.121: 获取代理配置"""
-        # 解析代理端口列表
-        proxy_ports = [int(p.strip()) for p in self._settings.proxy_ports.split(",")]
-        deprecated_ports = [
-            int(p.strip()) for p in self._settings.proxy_deprecated_ports.split(",")
-        ]
+        proxy_ports = _parse_proxy_ports(self._settings.proxy_ports)
+        deprecated_ports = _parse_proxy_ports(self._settings.proxy_deprecated_ports)
 
         return ProxyConfig(
             wsl2_bridge_host=self._settings.proxy_wsl2_host,
+            protocol=self._settings.proxy_protocol,
+            server_template=self._settings.proxy_server_template,
             proxy_ports=proxy_ports,
             deprecated_proxy_ports=deprecated_ports,
             health_check_timeout=self._settings.proxy_health_timeout,
@@ -1147,16 +1356,15 @@ class ConfigAccessor:
         self._settings = reload_settings()
 
 
-# 全局配置访问器（延迟初始化）
-config = None
+@lru_cache(maxsize=1)
+def _build_config_accessor() -> ConfigAccessor:
+    """构建并缓存配置访问器。"""
+    return ConfigAccessor()
 
 
 def get_config() -> ConfigAccessor:
     """获取配置访问器（延迟初始化）"""
-    global config
-    if config is None:
-        config = ConfigAccessor()
-    return config
+    return _build_config_accessor()
 
 
 @dataclass
@@ -1164,14 +1372,12 @@ class StrategyConfig:
     """V4.45: 策略配置 - 风险控制参数统一配置"""
 
     # Kelly Criterion 参数
-    kelly_max_stake: float = 0.05           # 单注最大 5%
-    kelly_daily_limit: float = 0.20         # 日最大 20%
-    kelly_risk_alert: float = 0.03          # 风险预警 3%
+    kelly_max_stake: float = 0.05  # 单注最大 5%
+    kelly_daily_limit: float = 0.20  # 日最大 20%
+    kelly_risk_alert: float = 0.03  # 风险预警 3%
 
     # Tuner 参数
-    tuner_trials: int = 50                  # 默认优化次数
-    tuner_timeout: int = 1800               # 默认超时 30分钟
-    tuner_early_stopping: int = 15          # 早停耐心值
-    tuner_min_improvement: float = 0.01     # 最小改进阈值
-
-
+    tuner_trials: int = 50  # 默认优化次数
+    tuner_timeout: int = 1800  # 默认超时 30分钟
+    tuner_early_stopping: int = 15  # 早停耐心值
+    tuner_min_improvement: float = 0.01  # 最小改进阈值

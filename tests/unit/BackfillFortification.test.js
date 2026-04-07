@@ -8,7 +8,12 @@
  */
 
 const assert = require('node:assert');
-const { describe, it, beforeEach } = require('node:test');
+const { describe, it, beforeEach, afterEach } = require('node:test');
+const { resetProxyProvider } = require('../../src/infrastructure/network/ProxyProvider');
+
+afterEach(() => {
+  resetProxyProvider();
+});
 
 // 模拟依赖
 class MockPool {

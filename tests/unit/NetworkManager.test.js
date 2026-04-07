@@ -10,6 +10,8 @@ const SHIELD_ID = path.resolve(__dirname, '../../src/infrastructure/network/Netw
 const SESSION_ID = path.resolve(__dirname, '../../src/infrastructure/network/SessionManager.js');
 const PATH_RESOLVER_ID = path.resolve(__dirname, '../../src/infrastructure/utils/PathResolver.js');
 const FINGERPRINT_ID = path.resolve(__dirname, '../../src/infrastructure/network/StealthFingerprint.js');
+const { BrowserProvider } = require('../../src/infrastructure/services/BrowserProvider');
+const { getProxyProvider, resetProxyProvider } = require('../../src/infrastructure/network/ProxyProvider');
 
 function overrideModule(moduleId, exportsValue) {
   const previous = require.cache[moduleId];
@@ -155,6 +157,129 @@ function loadNetworkManagerModule(overrides = {}) {
   };
 }
 
+function createProxyProvider(options = {}) {
+  const ports = options.ports || Array.from({ length: 22 }, (_, index) => 7890 + index);
+  const host = options.host || '172.25.16.1';
+  const state = {
+    acquireCalls: [],
+    releaseCalls: [],
+    reportSuccessCalls: [],
+    reportFailureCalls: [],
+    reportPortSuccessCalls: [],
+    reportPortFailureCalls: [],
+  };
+  const sequence = [...(options.portSequence || [])];
+  const nodeStates = options.nodeStates || (() => ports.map((port) => ({
+    port,
+    host,
+    server: `http://${host}:${port}`,
+    probeHealthy: true,
+    cooling: false,
+    isolated: false,
+    failureCount: 0,
+  })));
+
+  function buildAssignment(port) {
+    return {
+      host,
+      port,
+      url: `http://${host}:${port}`,
+      server: `http://${host}:${port}`,
+    };
+  }
+
+  function buildLease(port) {
+    const proxy = buildAssignment(port);
+    return {
+      id: `LEASE-${port}-${state.acquireCalls.length}`,
+      proxy,
+    };
+  }
+
+  function resolvePort(request = {}) {
+    if (options.acquireError) {
+      throw options.acquireError;
+    }
+    if (Number.isFinite(Number(request.preferredPort))) {
+      return Number(request.preferredPort);
+    }
+    if (sequence.length > 0) {
+      return sequence.shift();
+    }
+    return options.defaultPort || ports[0];
+  }
+
+  const provider = {
+    state,
+    getPorts() {
+      return [...ports];
+    },
+    getHost() {
+      return host;
+    },
+    getStats() {
+      return {
+        host,
+        total: ports.length,
+        healthy: ports.length,
+        cooling: 0,
+        isolated: 0,
+        available: ports.length,
+        activeLeases: Math.max(0, state.acquireCalls.length - state.releaseCalls.length),
+      };
+    },
+    getNodeStates() {
+      return nodeStates();
+    },
+    buildAssignment,
+    acquireSync(request = {}) {
+      state.acquireCalls.push(request);
+      return buildLease(resolvePort(request));
+    },
+    async acquire(request = {}) {
+      return this.acquireSync(request);
+    },
+    acquireAssignmentSync(request = {}) {
+      const lease = this.acquireSync(request);
+      return {
+        lease,
+        assignment: {
+          ...lease.proxy,
+          sessionId: lease.id,
+        },
+      };
+    },
+    async acquireAssignment(request = {}) {
+      return this.acquireAssignmentSync(request);
+    },
+    releaseSync(leaseId) {
+      state.releaseCalls.push(leaseId);
+      return true;
+    },
+    async release(leaseId) {
+      return this.releaseSync(leaseId);
+    },
+    async reportSuccess(leaseId, metadata = {}) {
+      state.reportSuccessCalls.push({ leaseId, metadata });
+      return true;
+    },
+    async reportFailure(leaseId, metadata = {}) {
+      state.reportFailureCalls.push({ leaseId, metadata });
+      return true;
+    },
+    async reportPortSuccess(port, metadata = {}) {
+      state.reportPortSuccessCalls.push({ port, metadata });
+      return true;
+    },
+    async reportPortFailure(port, metadata = {}) {
+      state.reportPortFailureCalls.push({ port, metadata });
+      return true;
+    },
+  };
+
+  return provider;
+}
+
 describe('src/infrastructure/network/NetworkManager', () => {
   const originalDateNow = Date.now;
   const originalRandom = Math.random;
@@ -163,6 +288,7 @@ describe('src/infrastructure/network/NetworkManager', () => {
     Date.now = originalDateNow;
     Math.random = originalRandom;
     delete require.cache[MODULE_PATH];
+    resetProxyProvider();
   });
 
   test('WorkerIdentity 应计算成功率并在连续失败时触发重建', () => {
@@ -193,7 +319,8 @@ describe('src/infrastructure/network/NetworkManager', () => {
     let preFlightCalled = false;
     const loaded = loadNetworkManagerModule();
     try {
-      const manager = new loaded.NetworkManager();
+      const proxyProvider = createProxyProvider();
+      const manager = new loaded.NetworkManager({ proxyProvider });
 
       await manager.initialize({
         async preFlightCleanup() {
@@ -202,18 +329,18 @@ describe('src/infrastructure/network/NetworkManager', () => {
       });
 
       assert.strictEqual(preFlightCalled, true);
-      assert.strictEqual(loaded.state.shieldConfigs.length, 1);
       assert.strictEqual(loaded.state.sessionConfigs.length, 1);
-      assert.strictEqual(manager.networkShield, loaded.shield);
+      assert.ok(manager.networkShield);
       assert.strictEqual(manager.sessionManager, loaded.sessionManager);
       assert.ok(loaded.state.consoleLogs.some(message => message.includes('NetworkShield 已就绪')));
       assert.ok(loaded.state.consoleLogs.some(message => message.includes('SessionManager 已就绪')));
 
-      const degraded = loadNetworkManagerModule({
-        getNetworkShieldError: new Error('shield boot failed'),
-      });
+      const degraded = loadNetworkManagerModule();
       try {
-        const degradedManager = new degraded.NetworkManager();
+        const degradedManager = new degraded.NetworkManager({ proxyProvider });
+        degradedManager._createNetworkShieldAdapter = () => {
+          throw new Error('shield boot failed');
+        };
         await degradedManager._initNetworkShield();
 
         assert.strictEqual(degradedManager.networkShield, null);
@@ -236,8 +363,10 @@ describe('src/infrastructure/network/NetworkManager', () => {
       }),
     });
     try {
-      const manager = new loaded.NetworkManager();
-      manager.networkShield = loaded.shield;
+      const proxyProvider = createProxyProvider({
+        defaultPort: 7891
+      });
+      const manager = new loaded.NetworkManager({ proxyProvider });
       manager.sessionManager = loaded.sessionManager;
 
       const identity = await manager.assignWorkerIdentity(2);
@@ -270,31 +399,28 @@ describe('src/infrastructure/network/NetworkManager', () => {
             };
           },
         },
-        shield: {
-          async getNextHealthyProxy() {
-            throw new Error('all proxies down');
-          },
-          markSuccess() {},
-          markFailed() {},
-          shutdown() {},
-        },
       });
       try {
-        const fallbackManager = new fallbackLoaded.NetworkManager();
-        fallbackManager.networkShield = fallbackLoaded.shield;
+        const failingProvider = createProxyProvider({
+          acquireError: new Error('all proxies down')
+        });
+        const fallbackManager = new fallbackLoaded.NetworkManager({ proxyProvider: failingProvider });
         fallbackManager.sessionManager = fallbackLoaded.sessionManager;
 
         const fallbackIdentity = await fallbackManager.assignWorkerIdentity(3);
         assert.strictEqual(fallbackIdentity.proxy.port, 7903);
-        assert.ok(fallbackLoaded.state.consoleWarns.some(message => message.includes('获取代理失败')));
+        assert.ok(fallbackLoaded.state.consoleWarns.some(message => message.includes('ProxyProvider 获取代理失败')));
         assert.ok(fallbackLoaded.state.consoleWarns.some(message => message.includes('会话刷新失败')));
 
-        const degradedManager = new fallbackLoaded.NetworkManager();
+        const degradedManager = new fallbackLoaded.NetworkManager({
+          proxyProvider: createProxyProvider({
+            acquireError: new Error('all proxies down')
+          })
+        });
         degradedManager.networkShield = null;
         degradedManager.sessionManager = null;
         const degradedIdentity = await degradedManager.assignWorkerIdentity(4);
         assert.strictEqual(degradedIdentity.proxy.port, 7904);
-        assert.ok(fallbackLoaded.state.consoleLogs.some(message => message.includes('降级模式')));
       } finally {
         fallbackLoaded.restore();
       }
@@ -307,28 +433,7 @@ describe('src/infrastructure/network/NetworkManager', () => {
     Date.now = () => 1700000002000;
     Math.random = () => 0;
 
-    const successCalls = [];
-    const failedCalls = [];
     const loaded = loadNetworkManagerModule({
-      shield: {
-        getStatus: () => ({ active: 22, total: 22 }),
-        async getNextHealthyProxy(sessionId) {
-          return {
-            sessionId,
-            port: 7895,
-            url: 'http://172.25.16.1:7895',
-          };
-        },
-        markSuccess(port) {
-          successCalls.push(port);
-        },
-        markFailed(port, reason) {
-          failedCalls.push({ port, reason });
-        },
-        shutdown() {
-          failedCalls.push({ shutdown: true });
-        },
-      },
       sessionManager: {
         async initialize() {},
         async getOrRefreshSession() {
@@ -350,19 +455,24 @@ describe('src/infrastructure/network/NetworkManager', () => {
       },
     });
     try {
-      const manager = new loaded.NetworkManager();
-      manager.networkShield = loaded.shield;
+      const proxyProvider = createProxyProvider({
+        defaultPort: 7895,
+        portSequence: [7895, 7892]
+      });
+      const manager = new loaded.NetworkManager({ proxyProvider });
       manager.sessionManager = loaded.sessionManager;
 
       const identity = await manager.assignWorkerIdentity(5);
       await manager.markProxySuccess(5);
-      assert.deepStrictEqual(successCalls, [7895]);
+      assert.strictEqual(proxyProvider.state.reportSuccessCalls.length, 1);
+      assert.strictEqual(proxyProvider.state.reportSuccessCalls[0].metadata.workerId, 5);
 
       identity.failureCount = 2;
       identity.requestCount = 2;
       identity.successCount = 0;
       await manager.markProxyFailed(5, 'timeout');
-      assert.deepStrictEqual(failedCalls[0], { port: 7895, reason: 'timeout' });
+      assert.strictEqual(proxyProvider.state.reportFailureCalls.length, 1);
+      assert.strictEqual(proxyProvider.state.reportFailureCalls[0].metadata.port, 7895);
       assert.strictEqual(manager.getWorkerIdentity(5), undefined);
 
       const indexedConfig = manager.getRotatedConfig(2);
@@ -412,8 +522,45 @@ describe('src/infrastructure/network/NetworkManager', () => {
       assert.deepStrictEqual(manager.getSessionStats(), loaded.sessionManager.getStats());
 
       manager.shutdown();
-      assert.ok(failedCalls.some(call => call.shutdown === true));
       assert.ok(loaded.state.consoleLogs.some(message => message.includes('SessionManager 统计')));
+      assert.ok(loaded.state.consoleLogs.some(message => message.includes('ProxyProvider 统计')));
+    } finally {
+      loaded.restore();
+    }
+  });
+
+  test('L2 触发封禁后，L1 应立刻避开同一端口', async () => {
+    resetProxyProvider();
+    const provider = getProxyProvider({
+      healthCheckIntervalMs: 0,
+      rateLimitIsolationMs: 60000
+    });
+    const loaded = loadNetworkManagerModule();
+
+    try {
+      const manager = new loaded.NetworkManager({
+        proxyProvider: provider
+      });
+      manager.sessionManager = {
+        async getOrRefreshSession() {
+          return null;
+        }
+      };
+
+      const l2Identity = await manager.assignWorkerIdentity(1);
+      assert.strictEqual(l2Identity.proxy.port, 7890);
+
+      await manager.markProxyFailed(1, 'HTTP 429');
+
+      const browserProvider = new BrowserProvider({
+        proxyProvider: provider,
+        proxyConsumer: 'l1-discovery-browser',
+        proxySessionKey: 'cross-layer'
+      });
+
+      const l1Lease = await browserProvider.ensureProxyLease('cross-layer-check');
+      assert.notStrictEqual(l1Lease.proxy.port, 7890);
+      await browserProvider.releaseProxyLease();
     } finally {
       loaded.restore();
     }

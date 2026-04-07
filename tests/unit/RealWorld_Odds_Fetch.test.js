@@ -12,13 +12,18 @@
 
 'use strict';
 
-const { describe, it } = require('node:test');
+const { describe, it, afterEach } = require('node:test');
 const assert = require('node:assert');
 
 // 导入真实模块
 const { OddsPortalHarvester, OddsPortalURLParser } = require('../../src/infrastructure/harvesters/OddsPortalHarvester');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
+const { resetProxyProvider } = require('../../src/infrastructure/network/ProxyProvider');
 const { Normalizer } = require('../../src/utils/Normalizer');
+
+afterEach(() => {
+  resetProxyProvider();
+});
 
 // ============================================================================
 // 测试配置

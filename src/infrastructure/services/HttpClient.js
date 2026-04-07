@@ -10,8 +10,17 @@
 
 'use strict';
 
+const http = require('http');
 const https = require('https');
 const { URL } = require('url');
+const { HttpProxyAgent } = require('http-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
+
+function extractStatusCode(reason = '') {
+  const message = String(reason || '');
+  const match = message.match(/\b(4\d{2}|5\d{2})\b/);
+  return match ? Number(match[1]) : null;
+}
 
 /**
  * HTTP 客户端错误类
@@ -48,6 +57,10 @@ class HttpClient {
     this.requestTimeoutMs = options.requestTimeoutMs || 20000;
     this.baseBackoffMs = options.baseBackoffMs || 1000;
     this.ensureBrowserHealthy = options.ensureBrowserHealthy || null;
+    this.proxyProvider = options.proxyProvider || null;
+    this.proxyConsumer = options.proxyConsumer || 'l1-discovery-http';
+    this.proxySessionKey = options.proxySessionKey || 'raw-http';
+    this.rawProxyLease = null;
   }
 
   /**
@@ -86,7 +99,6 @@ class HttpClient {
         }
 
         this._assertLeagueIdentity(response, expectedLeagueId, requestUrl);
-
         return response;
 
       } catch (error) {
@@ -163,6 +175,7 @@ class HttpClient {
     while (retryCount < maxRetries) {
       try {
         this.logger.info(`[HttpClient] 🕵️  浏览器内 fetch: ${url} (尝试 ${retryCount + 1}/${maxRetries})`);
+        const startedAt = Date.now();
 
         const result = await this.browserProvider.fetch(url, { timeout: this.requestTimeoutMs });
 
@@ -183,6 +196,10 @@ class HttpClient {
           throw new Error('浏览器返回空数据');
         }
 
+        await this._reportProxySuccess({
+          latencyMs: Date.now() - startedAt,
+          statusCode: result.status || 200
+        });
         this.logger.info(`[HttpClient] ✅ 浏览器请求成功`);
 
         // 重定向检测 (非阻塞)
@@ -192,6 +209,11 @@ class HttpClient {
 
       } catch (error) {
         retryCount++;
+        await this._reportProxyFailure({
+          statusCode: error.statusCode || extractStatusCode(error.message),
+          reason: error.message,
+          rotateProxy: Boolean(error.statusCode === 429 || this._shouldRebuildBrowserContext(error))
+        });
         this.logger.warn(`[HttpClient] 尝试 ${retryCount} 失败: ${error.message}`);
 
         if (retryCount >= maxRetries) {
@@ -239,50 +261,92 @@ class HttpClient {
     this.logger.info(`[HttpClient] 原生HTTP模式: ${url}`);
 
     return new Promise((resolve, reject) => {
-      const options = new URL(url);
-      const req = https.request({
-        hostname: options.hostname,
-        path: options.pathname + options.search,
-        method: 'GET',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'application/json, text/plain, */*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Referer': 'https://www.fotmob.com/',
-          'Origin': 'https://www.fotmob.com'
-        },
-        timeout: 20000
-      }, (res) => {
-        let data = '';
-        res.on('data', chunk => data += chunk);
-        res.on('end', () => {
-          if (res.statusCode < 200 || res.statusCode >= 300) {
-            return reject(new HttpClientError(`HTTP ${res.statusCode}`, {
-              url,
-              mode: 'raw',
-              statusCode: res.statusCode
-            }));
-          }
+      const requestUrl = new URL(url);
+      const requestLib = requestUrl.protocol === 'https:' ? https : http;
+      const startedAt = Date.now();
 
-          try {
-            const parsed = JSON.parse(data);
-            resolve(parsed);
-          } catch (e) {
-            reject(new HttpClientError(`JSON 解析失败: ${e.message}`, { url, mode: 'raw' }));
-          }
+      const finalizeProxyFailure = (reason, statusCode = null) => {
+        void this._reportProxyFailure({
+          reason,
+          statusCode,
+          rotateProxy: Boolean(statusCode === 429 || statusCode >= 500)
         });
-      });
+      };
 
-      req.on('error', (e) => {
-        reject(new HttpClientError(`请求失败: ${e.message}`, { url, mode: 'raw' }));
-      });
+      const finalizeProxySuccess = (statusCode = 200) => {
+        void this._reportProxySuccess({
+          statusCode,
+          latencyMs: Date.now() - startedAt
+        });
+      };
 
-      req.on('timeout', () => {
-        req.destroy();
-        reject(new HttpClientError('请求超时', { url, mode: 'raw' }));
-      });
+      const buildRequest = async () => {
+        const proxyLease = await this._ensureRawProxyLease('raw-request');
+        return {
+          hostname: requestUrl.hostname,
+          port: requestUrl.port || (requestUrl.protocol === 'https:' ? 443 : 80),
+          path: requestUrl.pathname + requestUrl.search,
+          protocol: requestUrl.protocol,
+          agent: proxyLease
+            ? (requestUrl.protocol === 'https:'
+              ? new HttpsProxyAgent(proxyLease.proxy.server)
+              : new HttpProxyAgent(proxyLease.proxy.server))
+            : undefined
+        };
+      };
 
-      req.end();
+      void buildRequest().then((requestConfig) => {
+        const req = requestLib.request({
+          hostname: requestConfig.hostname,
+          port: requestConfig.port,
+          path: requestConfig.path,
+          protocol: requestConfig.protocol,
+          agent: requestConfig.agent,
+          method: 'GET',
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'en-US,en;q=0.9',
+            'Referer': 'https://www.fotmob.com/',
+            'Origin': 'https://www.fotmob.com'
+          },
+          timeout: this.requestTimeoutMs
+        }, (res) => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => {
+            if (res.statusCode < 200 || res.statusCode >= 300) {
+              finalizeProxyFailure(`HTTP ${res.statusCode}`, res.statusCode);
+              return reject(new HttpClientError(`HTTP ${res.statusCode}`, {
+                url,
+                mode: 'raw',
+                statusCode: res.statusCode
+              }));
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              finalizeProxySuccess(res.statusCode);
+              resolve(parsed);
+            } catch (e) {
+              reject(new HttpClientError(`JSON 解析失败: ${e.message}`, { url, mode: 'raw' }));
+            }
+          });
+        });
+
+        req.on('error', (e) => {
+          finalizeProxyFailure(`请求失败: ${e.message}`);
+          reject(new HttpClientError(`请求失败: ${e.message}`, { url, mode: 'raw' }));
+        });
+
+        req.on('timeout', () => {
+          req.destroy();
+          finalizeProxyFailure('请求超时');
+          reject(new HttpClientError('请求超时', { url, mode: 'raw' }));
+        });
+
+        req.end();
+      }).catch(reject);
     });
   }
 
@@ -373,6 +437,83 @@ class HttpClient {
   _computeBackoffMs(retryCount, statusCode = null) {
     const multiplier = statusCode === 429 ? 2 : 1;
     return this.baseBackoffMs * (2 ** (retryCount - 1)) * multiplier;
+  }
+
+  async close() {
+    await this._releaseRawProxyLease();
+  }
+
+  async _ensureRawProxyLease(reason = 'raw-http') {
+    if (!this.proxyProvider) {
+      return null;
+    }
+
+    if (this.rawProxyLease) {
+      return this.rawProxyLease;
+    }
+
+    this.rawProxyLease = await this.proxyProvider.acquire({
+      consumer: this.proxyConsumer,
+      sessionKey: this.proxySessionKey,
+      sticky: true,
+      metadata: { reason }
+    });
+
+    return this.rawProxyLease;
+  }
+
+  async _releaseRawProxyLease() {
+    if (!this.proxyProvider || !this.rawProxyLease) {
+      return;
+    }
+
+    const lease = this.rawProxyLease;
+    this.rawProxyLease = null;
+    await this.proxyProvider.release(lease.id);
+  }
+
+  async _reportProxySuccess(metadata = {}) {
+    if (this.useStealthMode && this.browserProvider?.reportProxySuccess) {
+      await this.browserProvider.reportProxySuccess(metadata);
+      return;
+    }
+
+    if (!this.proxyProvider) {
+      return;
+    }
+
+    const lease = await this._ensureRawProxyLease('raw-report-success');
+    if (lease) {
+      await this.proxyProvider.reportSuccess(lease.id, metadata);
+    }
+  }
+
+  async _reportProxyFailure(metadata = {}) {
+    if (this.useStealthMode && this.browserProvider?.reportProxyFailure) {
+      await this.browserProvider.reportProxyFailure(metadata);
+      if (metadata.rotateProxy && this.ensureBrowserHealthy) {
+        await this.ensureBrowserHealthy({
+          forceRebuild: true,
+          reason: metadata.reason || 'proxy_failure'
+        });
+      }
+      return;
+    }
+
+    if (!this.proxyProvider) {
+      return;
+    }
+
+    const lease = await this._ensureRawProxyLease('raw-report-failure');
+    if (!lease) {
+      return;
+    }
+
+    await this.proxyProvider.reportFailure(lease.id, metadata);
+
+    if (metadata.rotateProxy) {
+      await this._releaseRawProxyLease();
+    }
   }
 }
 

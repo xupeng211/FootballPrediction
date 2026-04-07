@@ -108,6 +108,39 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
       assert.strictEqual(service.config.lookaheadDays, 7);
     });
 
+    it('默认应将统一 ProxyProvider 注入 L1 浏览器与 HTTP 客户端', async () => {
+      const fakeProxyProvider = {
+        async acquire() {
+          return {
+            id: 'LEASE-1',
+            proxy: {
+              host: '172.25.16.1',
+              port: 7890,
+              server: 'http://172.25.16.1:7890',
+              url: 'http://172.25.16.1:7890',
+            }
+          };
+        },
+        async release() {},
+        async reportSuccess() {},
+        async reportFailure() {}
+      };
+
+      const testService = new DiscoveryService({
+        silent: true,
+        dbPool: { async end() {} },
+        proxyProvider: fakeProxyProvider
+      });
+
+      try {
+        assert.strictEqual(testService.proxyProvider, fakeProxyProvider);
+        assert.strictEqual(testService.browserProvider.proxyProvider, fakeProxyProvider);
+        assert.strictEqual(testService.httpClient.proxyProvider, fakeProxyProvider);
+      } finally {
+        await testService.close();
+      }
+    });
+
     it('应加载联赛配置', () => {
       assert.ok(service.leagueConfig.active_leagues);
       assert.ok(service.leagueConfig.active_leagues.length > 0);

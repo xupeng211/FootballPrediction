@@ -12,9 +12,9 @@
 
 // V4.46: 配置 (从 FactoryConfig 统一管理)
 const FactoryConfig = require('../../../config/factory_config');
-const { getNetworkShield } = require('./NetworkShield');
 const { getSessionManager } = require('./SessionManager');
 const { getPathResolver } = require('../utils/PathResolver');
+const { ProxyProvider, getProxyProvider } = require('./ProxyProvider');
 
 // V4.46: 导入隐身指纹生成器 (从独立模块)
 const { generateStealthHeaders } = require('./StealthFingerprint');
@@ -102,6 +102,8 @@ class NetworkManager {
     constructor(options = {}) {
         this.maxWorkers = options.maxWorkers || 6;
         this.stealthGenerator = options.stealthGenerator || generateStealthHeaders;
+        this.proxyProvider = options.proxyProvider || getProxyProvider();
+        this.proxyConsumer = options.proxyConsumer || 'l2-harvest';
 
         // NetworkShield 代理管理器
         this.networkShield = null;
@@ -115,8 +117,8 @@ class NetworkManager {
         // 端口避障 - 记录失败端口
         this.failedPorts = new Set();
 
-        // 可用端口池 (7890-7911)
-        this.availablePorts = Array.from({ length: 22 }, (_, i) => 7890 + i);
+        // 可用端口池（统一来自 ProxyProvider）
+        this.availablePorts = this.proxyProvider.getPorts();
     }
 
     // ========================================================================
@@ -150,12 +152,7 @@ class NetworkManager {
      */
     async _initNetworkShield() {
         try {
-            this.networkShield = getNetworkShield({
-                proxyHost: FactoryConfig.PROXY_CONFIG.serverTemplate.match(/[\d.]+/)?.[0] || '172.25.16.1',
-                portRange: { start: 7890, end: 7911 }
-            });
-
-            // V4.46-TITAN: NetworkShield 没有 initialize 方法，直接获取状态
+            this.networkShield = this._createNetworkShieldAdapter();
             const status = this.networkShield.getStatus();
             console.log(`📡 NetworkShield 已就绪: ${status.active}/${status.total} 节点可用`);
         } catch (initError) {
@@ -206,34 +203,23 @@ class NetworkManager {
             return existing;
         }
 
-        // 从 NetworkShield 获取健康代理（如果可用）
-        const sessionId = `WORKER-${workerId}`;
-        let proxyAssignment;
+        if (existing?.proxyLeaseId) {
+            this.proxyProvider.releaseSync(existing.proxyLeaseId);
+        }
 
-        // V179.1: 检查 NetworkShield 是否可用
-        if (this.networkShield && typeof this.networkShield.getNextHealthyProxy === 'function') {
-            try {
-                proxyAssignment = await this.networkShield.getNextHealthyProxy(sessionId);
-            } catch (error) {
-                console.warn(`⚠️ Worker ${workerId} NetworkShield 获取代理失败: ${error.message}`);
-                // 降级：使用 FactoryConfig 的代理池
-                const port = FactoryConfig.PROXY_CONFIG.getPortByWorker(workerId);
-                proxyAssignment = {
-                    sessionId,
-                    port,
-                    url: FactoryConfig.PROXY_CONFIG.getServer(port)
-                };
-            }
-        } else {
-            // NetworkShield 不可用，直接使用 FactoryConfig
-            console.log(`📡 Worker ${workerId} 使用 FactoryConfig 代理池（NetworkShield 降级模式）`);
+        let lease;
+        try {
+            lease = await this._acquireWorkerLease(workerId);
+        } catch (error) {
+            console.warn(`⚠️ Worker ${workerId} ProxyProvider 获取代理失败: ${error.message}`);
             const port = FactoryConfig.PROXY_CONFIG.getPortByWorker(workerId);
-            proxyAssignment = {
-                sessionId,
-                port,
-                url: FactoryConfig.PROXY_CONFIG.getServer(port)
+            lease = {
+                id: `LEASE-FALLBACK-${workerId}-${Date.now()}`,
+                proxy: ProxyProvider.buildAssignment(port)
             };
         }
+
+        const proxyAssignment = this._buildProxyAssignment(workerId, lease);
 
         // V179: 尝试获取或刷新会话（自动身份管理）
         if (this.sessionManager) {
@@ -254,6 +240,7 @@ class NetworkManager {
 
         // 创建 Worker 身份
         const identity = new WorkerIdentity(workerId, proxyAssignment, stealth);
+        identity.proxyLeaseId = lease.id;
         this.workerIdentities.set(workerId, identity);
 
         console.log(`🆔 Worker ${workerId} 新身份绑定:`);
@@ -286,9 +273,13 @@ class NetworkManager {
         const identity = this.workerIdentities.get(workerId);
         if (identity && identity.proxy) {
             identity.recordRequest(true);
-            // V4.46-TITAN: 使用 NetworkShield 的新 API
-            if (this.networkShield && typeof this.networkShield.markSuccess === 'function') {
-                this.networkShield.markSuccess(identity.proxy.port);
+            if (identity.proxyLeaseId) {
+                await this.proxyProvider.reportSuccess(identity.proxyLeaseId, {
+                    latencyMs: latency,
+                    statusCode: 200,
+                    workerId,
+                    consumer: this.proxyConsumer
+                });
             }
         }
     }
@@ -302,9 +293,14 @@ class NetworkManager {
         const identity = this.workerIdentities.get(workerId);
         if (identity && identity.proxy) {
             identity.recordRequest(false);
-            // V4.46-TITAN: 使用 NetworkShield 的新 API
-            if (this.networkShield && typeof this.networkShield.markFailed === 'function') {
-                this.networkShield.markFailed(identity.proxy.port, reason);
+            if (identity.proxyLeaseId) {
+                await this.proxyProvider.reportFailure(identity.proxyLeaseId, {
+                    workerId,
+                    consumer: this.proxyConsumer,
+                    port: identity.proxy.port,
+                    reason,
+                    statusCode: this._extractStatusCode(reason)
+                });
             }
 
             // V181: 记录失败端口用于避障
@@ -313,6 +309,9 @@ class NetworkManager {
             // 检查是否需要熔断切换
             if (identity.needsReidentity()) {
                 console.log(`⚡ Worker ${workerId} 触发熔断，准备切换身份...`);
+                if (identity.proxyLeaseId) {
+                    this.proxyProvider.releaseSync(identity.proxyLeaseId);
+                }
                 this.workerIdentities.delete(workerId);
             }
         }
@@ -336,20 +335,25 @@ class NetworkManager {
             // 轮询模式：根据索引选择端口
             selectedPort = this.availablePorts[index % this.availablePorts.length];
         } else {
-            // 随机模式：随机选择健康端口（注意：这里的 Math.random 用于选择，不是伪造数据）
             const healthyPorts = this.availablePorts.filter(p => !this.failedPorts.has(p));
             const pool = healthyPorts.length > 0 ? healthyPorts : this.availablePorts;
-            selectedPort = pool[Math.floor(Math.random() * pool.length)];
+            [selectedPort] = pool;
         }
 
-        // V4.46.5: 使用确定性 Session ID
-        const sessionId = generateSessionId(selectedPort);
+        const { lease, assignment } = this.proxyProvider.acquireAssignmentSync({
+            consumer: `${this.proxyConsumer}-rotation`,
+            sessionKey: `rotation-${index ?? 'default'}`,
+            sticky: false,
+            preferredPort: selectedPort,
+            excludePorts: [...this.failedPorts]
+        });
+        this.proxyProvider.releaseSync(lease.id);
 
         return {
-            port: selectedPort,
-            url: `http://172.25.16.1:${selectedPort}`,
-            sessionId,
-            host: '172.25.16.1'
+            port: assignment.port,
+            url: assignment.url,
+            sessionId: generateSessionId(assignment.port),
+            host: assignment.host
         };
     }
 
@@ -364,28 +368,23 @@ class NetworkManager {
         const usedPorts = new Set();
 
         for (let i = 0; i < count; i++) {
-            // 优先选择未使用的端口
-            let config;
-            const availablePorts = this.availablePorts.filter(p => !usedPorts.has(p));
-
-            if (availablePorts.length > 0) {
-                // 还有未使用的端口
-                const port = availablePorts[Math.floor(Math.random() * availablePorts.length)];
-                usedPorts.add(port);
-                config = {
-                    port,
-                    url: `http://172.25.16.1:${port}`,
-                    sessionId: `SWARM-${i + 1}-${Date.now()}`,
-                    host: '172.25.16.1',
-                    workerId: i + 1
-                };
-            } else {
-                // 端口已用完，使用轮询模式
-                config = this.getRotatedConfig(i);
-                config.workerId = i + 1;
-            }
-
-            configs.push(config);
+            const preferredPort = this.availablePorts.find(port => !usedPorts.has(port))
+                || this.availablePorts[i % this.availablePorts.length];
+            const { lease, assignment } = this.proxyProvider.acquireAssignmentSync({
+                consumer: `${this.proxyConsumer}-swarm`,
+                sessionKey: `swarm-${i + 1}`,
+                sticky: false,
+                preferredPort
+            });
+            this.proxyProvider.releaseSync(lease.id);
+            usedPorts.add(assignment.port);
+            configs.push({
+                port: assignment.port,
+                url: assignment.url,
+                sessionId: `SWARM-${i + 1}-${Date.now()}`,
+                host: assignment.host,
+                workerId: i + 1
+            });
         }
 
         return configs;
@@ -401,19 +400,20 @@ class NetworkManager {
      * @returns {number} 新端口号
      */
     getAlternativePort(excludePort) {
-        // 过滤掉失败的端口
-        const healthyPorts = this.availablePorts.filter(p =>
-            p !== excludePort && !this.failedPorts.has(p)
-        );
+        const healthyPorts = this.proxyProvider
+            .getNodeStates()
+            .filter(node => this.availablePorts.includes(node.port))
+            .filter(node => node.port !== excludePort && !this.failedPorts.has(node.port))
+            .filter(node => !node.cooling && !node.isolated && node.probeHealthy)
+            .map(node => node.port);
 
         if (healthyPorts.length === 0) {
-            // 所有端口都失败，清空失败记录重新开始
             console.log('⚠️ 所有端口都失败，重置避障记录...');
             this.failedPorts.clear();
-            return this.availablePorts[Math.floor(Math.random() * this.availablePorts.length)];
+            return this.availablePorts[0];
         }
 
-        return healthyPorts[Math.floor(Math.random() * healthyPorts.length)];
+        return healthyPorts[0];
     }
 
     /**
@@ -423,21 +423,37 @@ class NetworkManager {
      * @returns {Promise<WorkerIdentity>} 新身份
      */
     async forceReassignPort(workerId, failedPort) {
+        this.failedPorts.add(failedPort);
+
+        const currentIdentity = this.workerIdentities.get(workerId);
+        if (currentIdentity?.proxyLeaseId) {
+            await this.proxyProvider.reportFailure(currentIdentity.proxyLeaseId, {
+                workerId,
+                consumer: this.proxyConsumer,
+                port: failedPort,
+                reason: `force_reassign:${failedPort}`
+            });
+            this.proxyProvider.releaseSync(currentIdentity.proxyLeaseId);
+        }
+
         const newPort = this.getAlternativePort(failedPort);
 
         // 清除旧身份
         this.workerIdentities.delete(workerId);
 
         // 创建新身份
-        const sessionId = `WORKER-${workerId}-RETRY-${Date.now()}`;
-        const proxyAssignment = {
-            sessionId,
-            port: newPort,
-            url: `http://172.25.16.1:${newPort}`
-        };
+        const lease = await this.proxyProvider.acquire({
+            consumer: this.proxyConsumer,
+            sessionKey: `worker-${workerId}`,
+            sticky: true,
+            preferredPort: newPort,
+            excludePorts: [...this.failedPorts]
+        });
+        const proxyAssignment = this._buildProxyAssignment(workerId, lease, 'RETRY');
 
         const stealth = this.stealthGenerator();
         const identity = new WorkerIdentity(workerId, proxyAssignment, stealth);
+        identity.proxyLeaseId = lease.id;
         this.workerIdentities.set(workerId, identity);
 
         return identity;
@@ -497,6 +513,13 @@ class NetworkManager {
      * 关闭网络管理器
      */
     shutdown() {
+        for (const identity of this.workerIdentities.values()) {
+            if (identity?.proxyLeaseId) {
+                this.proxyProvider.releaseSync(identity.proxyLeaseId);
+            }
+        }
+        this.workerIdentities.clear();
+
         // 关闭 NetworkShield
         if (this.networkShield) {
             this.networkShield.shutdown();
@@ -512,6 +535,95 @@ class NetworkManager {
             console.log(`   缓存命中: ${stats.cacheHits}`);
             console.log(`   缓存未命中: ${stats.cacheMisses}`);
         }
+
+        const proxyStats = this.proxyProvider.getStats();
+        console.log('📡 ProxyProvider 统计:');
+        console.log(`   Host: ${proxyStats.host}`);
+        console.log(`   总节点: ${proxyStats.total}`);
+        console.log(`   可用节点: ${proxyStats.available}`);
+        console.log(`   活跃租约: ${proxyStats.activeLeases}`);
+    }
+
+    _buildProxyAssignment(workerId, lease, suffix = '') {
+        const sessionLabel = suffix ? `WORKER-${workerId}-${suffix}` : `WORKER-${workerId}`;
+        return {
+            sessionId: sessionLabel,
+            leaseId: lease.id,
+            port: lease.proxy.port,
+            url: lease.proxy.url,
+            host: lease.proxy.host,
+            server: lease.proxy.server
+        };
+    }
+
+    async _acquireWorkerLease(workerId, options = {}) {
+        const excludePorts = options.excludePorts || [...this.failedPorts];
+        try {
+            return await this.proxyProvider.acquire({
+                consumer: this.proxyConsumer,
+                sessionKey: `worker-${workerId}`,
+                sticky: true,
+                excludePorts,
+                metadata: { workerId }
+            });
+        } catch (error) {
+            if (excludePorts.length > 0) {
+                this.failedPorts.clear();
+                return this.proxyProvider.acquire({
+                    consumer: this.proxyConsumer,
+                    sessionKey: `worker-${workerId}`,
+                    sticky: true,
+                    metadata: { workerId, retriedAfterReset: true }
+                });
+            }
+            throw error;
+        }
+    }
+
+    _extractStatusCode(reason = '') {
+        const message = String(reason || '');
+        const match = message.match(/\b(4\d{2}|5\d{2})\b/);
+        return match ? Number(match[1]) : null;
+    }
+
+    _createNetworkShieldAdapter() {
+        return {
+            getStatus: () => {
+                const stats = this.proxyProvider.getStats();
+                return {
+                    active: stats.available,
+                    total: stats.total,
+                    healthy: stats.healthy,
+                    cooling: stats.cooling,
+                    isolated: stats.isolated
+                };
+            },
+            getNextHealthyProxy: async (sessionId) => {
+                const { assignment } = await this.proxyProvider.acquireAssignment({
+                    consumer: this.proxyConsumer,
+                    sessionKey: sessionId,
+                    sticky: true
+                });
+                return {
+                    sessionId,
+                    port: assignment.port,
+                    url: assignment.url,
+                    host: assignment.host,
+                    server: assignment.server
+                };
+            },
+            markSuccess: (port, metadata = {}) => {
+                void this.proxyProvider.reportPortSuccess(port, metadata);
+            },
+            markFailed: (port, reason, metadata = {}) => {
+                void this.proxyProvider.reportPortFailure(port, {
+                    ...metadata,
+                    reason,
+                    statusCode: this._extractStatusCode(reason)
+                });
+            },
+            shutdown: () => {}
+        };
     }
 }
 

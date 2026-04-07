@@ -17,11 +17,13 @@
 // ============================================================================
 
 const path = require('path');
+const { resolveProxyPoolConfig } = require('./proxy_pool');
 
 // ============================================================================
 // 鐜鍙橀噺浼樺厛绾?// ============================================================================
 
 const ENV = process.env;
+const proxyPoolConfig = resolveProxyPoolConfig(ENV);
 
 // ============================================================================
 // 璐ㄩ噺闂ㄧ閰嶇疆 (Quality Gate)
@@ -192,25 +194,16 @@ const CONCURRENCY = {
 
 const PROXY_CONFIG = {
     /**
-     * V173-OVERHAUL: 22 涓嫭绔?IP 浠ｇ悊绔彛姹?     * 绔彛鑼冨洿: 7890 - 7911 (鍏?22 涓?
+     * V173-OVERHAUL: 22 涓嫭绔?IP 浠ｇ悊绔彛姹?     * 绔彛鑼冨洿来自共享 proxy_pool 配置
      * 姣忎釜绔彛瀵瑰簲涓€涓嫭绔?IP 鍦板潃
      */
-    ports: (() => {
-        // 浼樺厛浣跨敤鐜鍙橀噺
-        if (ENV.PROXY_PORTS) {
-            return ENV.PROXY_PORTS.split(',')
-                .map(p => parseInt(p.trim()))
-                .filter(p => !isNaN(p));
-        }
-        // V173: Default 22 ports
-        return Array.from({ length: 22 }, (_, i) => 7890 + i);
-    })(),
+    ports: [...proxyPoolConfig.ports],
 
     /** 榛樿浠ｇ悊绔彛 */
-    defaultPort: parseInt(ENV.PROXY_PORT) || 7890,
+    defaultPort: proxyPoolConfig.defaultPort,
 
     /** 浠ｇ悊鏈嶅姟鍣ㄥ湴鍧€妯℃澘 - V174-TUNING: 浣跨敤鐩存帴 IP 鍦板潃鎻愰珮绋冲畾鎬?*/
-    serverTemplate: ENV.PROXY_SERVER || 'http://172.25.16.1:{port}',
+    serverTemplate: proxyPoolConfig.serverTemplate,
 
     /** 浠ｇ悊鍋ュ悍妫€鏌ヨ秴鏃?(ms) */
     healthCheckTimeout: parseInt(ENV.PROXY_HEALTH_TIMEOUT) || 10000,
@@ -736,4 +729,3 @@ module.exports = {
     VERSION: 'V178.0.0',
     BUILD_DATE: '2026-03-03'
 };
-
