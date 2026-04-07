@@ -43,12 +43,18 @@
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
+说明:
+
+- 上图以 Claude Code 为例展示仓库内 MCP 配置流
+- Codex CLI 使用本机 `~/.codex/config.toml`，不读取仓库内 `.claude/mcp-config.json`
+- 仓库内脚本只能验证仓库配置和依赖，不能代替 Codex CLI 对本机配置的实际加载结果
+
 ## 目录结构
 
 ```
 /home/xupeng/projects/FootballPrediction/
 ├── .claude/
-│   ├── mcp-config.json          # MCP 配置文件 (主配置)
+│   ├── mcp-config.json          # Claude Code MCP 配置
 │   ├── settings.json            # Claude Code 设置
 │   └── settings.local.json      # 本地设置
 │
@@ -90,13 +96,34 @@ docker-compose exec db psql -U claude_reader -d football_db -c "SELECT current_u
 ### Step 3: 重载 MCP
 
 ```bash
-# 如果修改了 .claude/mcp-config.json 或 mcp_servers/*.py，
-# 需要退出当前 Claude / Codex 会话并重新启动客户端
+# 如果修改了 .claude/mcp-config.json、~/.codex/config.toml
+# 或 mcp_servers/*.py，需要退出当前 Claude / Codex 会话并重新启动客户端
+```
+
+补充说明:
+
+- Claude Code 读取仓库内 `.claude/mcp-config.json`
+- Codex CLI 读取本机 `~/.codex/config.toml`
+- 如果 `filesystem`、`postgres`、`playwright` 通过 `npx` 启动，且当前机器网络或代理较慢，建议在 `~/.codex/config.toml` 中显式设置更长的 `startup_timeout_sec`
+- `bash scripts/ops/verify_mcp.sh` 只验证仓库内配置与依赖，不检查 `~/.codex/config.toml` 是否已被 Codex CLI 实际加载
+
+示例:
+
+```toml
+[mcp_servers.filesystem]
+startup_timeout_sec = 180
+
+[mcp_servers.postgres]
+startup_timeout_sec = 180
+
+[mcp_servers.playwright]
+startup_timeout_sec = 180
 ```
 
 ### Step 4: 验证配置
 
 ```bash
+# 说明: 该脚本只验证仓库内配置与依赖，不验证 Codex CLI 本机配置是否已生效
 bash scripts/ops/verify_mcp.sh
 ```
 
@@ -118,7 +145,7 @@ bash scripts/ops/verify_mcp.sh
 
 - **功能**: 读写项目文件
 - **范围**: 仅限 `/home/xupeng/projects/FootballPrediction`
-- **命令**: 自动通过 Claude Code 调用
+- **命令**: 自动通过当前 MCP 客户端调用
 
 ### 2. PostgreSQL MCP
 
@@ -170,13 +197,17 @@ SELECT COUNT(*) FROM matches WHERE match_time > NOW();
 ### MCP 服务未加载
 
 ```bash
-# 检查配置文件
+# 检查 Claude Code 配置文件
 cat .claude/mcp-config.json
+
+# 如果使用 Codex CLI，手动检查本机配置
+sed -n '1,160p' ~/.codex/config.toml
 
 # 检查路径是否正确
 ls -la mcp_servers/
 
-# 修改 .claude/mcp-config.json 或 mcp_servers/*.py 后，重启客户端
+# 修改 .claude/mcp-config.json、~/.codex/config.toml
+# 或 mcp_servers/*.py 后，重启对应客户端
 ```
 
 ### PostgreSQL 连接失败
@@ -199,6 +230,7 @@ docker-compose exec -T db psql -U football_user -d football_db < deploy/docker/i
 bash scripts/ops/verify_mcp.sh
 
 # 再重启客户端，重新加载 MCP 配置
+# 如果是 Codex CLI 启动超时，手动检查 ~/.codex/config.toml 中对应 MCP 的 startup_timeout_sec
 ```
 
 ### Docker MCP 报错
