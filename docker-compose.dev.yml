@@ -35,18 +35,18 @@ services:
       # 主代码目录 - 双向同步
       - .:/app:cached
       # 排除 node_modules（使用容器内的）
-      - /app/node_modules
+      - "${DEV_NODE_MODULES_MOUNT:-/app/node_modules}"
       # 持久化缓存
-      - dev_cache:/root/.cache
-      - dev_npm:/root/.npm
+      - "${DEV_CACHE_MOUNT:-dev_cache:/root/.cache}"
+      - "${DEV_NPM_MOUNT:-dev_npm:/root/.npm}"
       # Git 配置持久化
-      - dev_gitconfig:/root/.config/git
+      - "${DEV_GITCONFIG_MOUNT:-dev_gitconfig:/root/.config/git}"
       # ============================================================
       # V172-L2-04: 浏览器身份持久化 (Turnstile 绕过)
       # ============================================================
       - ./data/browser_profile:/app/data/browser_profile
       # Playwright 浏览器缓存
-      - playwright_cache:/root/.cache/ms-playwright
+      - "${PLAYWRIGHT_CACHE_MOUNT:-playwright_cache:/root/.cache/ms-playwright}"
       # ============================================================
       # V4.50: 测试数据标本挂载
       # ============================================================
@@ -112,10 +112,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '12.0'
+          cpus: "${DEV_CONTAINER_CPU_LIMIT:-12.0}"
           memory: 16G
         reservations:
-          cpus: '2.0'
+          cpus: "${DEV_CONTAINER_CPU_RESERVATION:-2.0}"
           memory: 4G
 
     # 日志配置

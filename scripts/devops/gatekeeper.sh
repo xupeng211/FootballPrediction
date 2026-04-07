@@ -65,6 +65,7 @@ readonly MODE
 readonly PORT_REGEX='7890|7891|7892|7893|7894|7895|7896|7897|7898|7899|7900|7901|7902|7903|7904|7905|7906|7907|7908|7909|7910|7911'
 readonly LEAK_REGEX="172\\.25\\.16\\.1|\\b(${PORT_REGEX})\\b"
 readonly CONTRACT_REGEX='require\(["'"'"'](axios|node-fetch|got|http|https|node:http|node:https|http-proxy-agent|https-proxy-agent)["'"'"']\)|from ["'"'"'](axios|node-fetch|got|undici)["'"'"']'
+readonly PYTHON_FILE_LINE_LIMIT=800
 
 path_is_leak_allowlisted() {
   local file="$1"
@@ -478,6 +479,40 @@ run_python_proxy_contract_check() {
   fi
 }
 
+run_python_architecture_guard() {
+  log '执行 Python 架构体量检查。'
+
+  mapfile -t python_targets < <(resolve_python_quality_targets)
+  if [[ "${#python_targets[@]}" -eq 0 ]]; then
+    log '未检测到本次变更涉及 Python 目标文件，跳过巨石文件检查。'
+    return 0
+  fi
+
+  local findings=()
+  local file
+  local line_count
+
+  for file in "${python_targets[@]}"; do
+    [[ -f "$file" ]] || continue
+    line_count="$(wc -l < "$file" | tr -d '[:space:]')"
+    if (( line_count <= PYTHON_FILE_LINE_LIMIT )); then
+      continue
+    fi
+
+    if [[ "$file" == "src/config_unified.py" ]]; then
+      fail "检测到‘巨石文件’，请先进行模块化拆分再提交：${file} 当前 ${line_count} 行，已超过 ${PYTHON_FILE_LINE_LIMIT} 行上限。"
+    fi
+
+    findings+=("${file}:${line_count}")
+  done
+
+  if [[ "${#findings[@]}" -gt 0 ]]; then
+    printf '[Gatekeeper] 命中超长 Python 文件（>%s 行）:\n' "$PYTHON_FILE_LINE_LIMIT" >&2
+    printf '  %s\n' "${findings[@]}" >&2
+    fail '检测到超长 Python 文件，请先拆分模块后再提交。'
+  fi
+}
+
 run_static_quality_checks() {
   log '执行静态质量检查。'
   local python_targets=()
@@ -535,6 +570,7 @@ main() {
   run_secret_ip_leak_check
   run_proxy_contract_check
   run_python_proxy_contract_check
+  run_python_architecture_guard
   run_static_quality_checks
   run_proxyprovider_smoke_test
 
