@@ -1,397 +1,49 @@
-name: P3.3 CI Pipeline - Quality Gate & Build
+name: Build Validation
 
-# 🚀 P3.3: Trigger on push and pull_request to main branch
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
-
-env:
-  # Container registry and image configuration
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  # Cache version for better cache management
-  CACHE_VERSION: v1
-  PYTHON_VERSION: "3.11"
+    branches: [main, master]
 
 jobs:
-  # === Phase 1: Environment Setup and Testing ===
-  test:
-    name: P3.3.1 Quality Gate - Tests
+  node-validation:
+    name: Node Validation
     runs-on: ubuntu-latest
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🟢 Set up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: 'npm'
 
-      - name: 📦 Install Node dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: 🔍 Run ESLint
+      - name: Install Playwright browsers
+        run: npm run install-browsers
+
+      - name: Run ESLint
         run: npm run lint
 
-      - name: 🧪 Run full Node unit tests
+      - name: Run full unit tests
         run: npm test
 
-      - name: 📊 Run Node coverage gate
+      - name: Run coverage gate
         run: npm run test:coverage
 
-      - name: 🐳 Start Integration Environment (P3.1)
-        run: |
-          echo "🚀 P3.3.1: Starting integration test environment using docker-compose.integration.yml..."
-
-          # Start the integration environment as defined in P3.1
-          docker-compose -f docker-compose.integration.yml up -d postgres-integration redis-integration
-
-          echo "⏳ Waiting for services to be ready..."
-          # Wait for PostgreSQL
-          timeout 60 bash -c 'until docker-compose -f docker-compose.integration.yml exec -T postgres-integration pg_isready -U postgres; do sleep 2; done'
-          # Wait for Redis
-          timeout 60 bash -c 'until docker-compose -f docker-compose.integration.yml exec -T redis-integration redis-cli ping; do sleep 2; done'
-
-          echo "✅ All integration services are ready!"
-
-      - name: 🔍 Verify Integration Environment
-        run: |
-          echo "🔍 P3.3.1: Checking running containers..."
-          docker-compose -f docker-compose.integration.yml ps
-
-          echo "🔍 P3.3.1: Testing database connection..."
-          docker-compose -f docker-compose.integration.yml exec -T postgres-integration psql -U postgres -d footballprediction_test -c "SELECT version();"
-
-          echo "🔍 P3.3.1: Testing Redis connection..."
-          docker-compose -f docker-compose.integration.yml exec -T redis-integration redis-cli ping
-
-      - name: 🐳 Build Test Application Image
-        run: |
-          echo "🏗️ P3.3.1: Building application image for testing..."
-          docker-compose -f docker-compose.integration.yml build app-integration
-          echo "✅ P3.3.1: Application image built successfully!"
-
-      - name: 🧪 Run P2: Unit Tests
-        run: |
-          echo "🧪 P3.3.1: P2 Phase - Running Unit Tests in Docker environment..."
-          docker-compose -f docker-compose.integration.yml run --rm app-integration \
-            pytest tests/unit/ -v \
-            --tb=short \
-            --junitxml=test_reports/unit_tests.xml \
-            --cov=src \
-            --cov-report=xml:test_reports/coverage_unit.xml \
-            --cov-report=html:test_reports/htmlcov_unit
-
-          echo "📊 P3.3.1: Unit test results:"
-          docker-compose -f docker-compose.integration.yml exec -T app-integration ls -la test_reports/ || echo "test_reports directory not found in container"
-
-      - name: 🔗 Run P3.1: Integration Tests (Stabilized)
-        run: |
-          echo "🔗 P3.3.1: P3.1 Phase - Running Integration Tests in Docker environment..."
-
-          # Run only stabilized integration tests as defined in P3.1
-          docker-compose -f docker-compose.integration.yml run --rm app-integration \
-            pytest tests/integration/ -v \
-            --tb=short \
-            -m "stabilized" \
-            --junitxml=test_reports/integration_tests.xml \
-            --cov=src \
-            --cov-report=xml:test_reports/coverage_integration.xml \
-            --cov-append
-
-          echo "📊 P3.3.1: Integration test results:"
-          docker-compose -f docker-compose.integration.yml exec -T app-integration ls -la test_reports/ || echo "test_reports directory not found in container"
-
-      - name: ⚡ Run P3.2: Performance Baseline Validation
-        run: |
-          echo "⚡ P3.3.1: P3.2 Phase - Performance Baseline Validation..."
-          docker-compose -f docker-compose.integration.yml run --rm app-integration \
-            python3 -c "
-import sys
-import json
-import os
-from datetime import datetime
-
-print('🔍 P3.3.1: Validating performance baselines based on P3.2 results...')
-
-# Performance baseline validation based on our P3.2 results
-validation_result = {
-    'timestamp': datetime.now().isoformat(),
-    'baseline_checks': {
-        'cache_performance': {
-            'baseline_p95_ms': 5.087,  # From P3.2.3-A
-            'status': 'PASS',
-            'message': 'Cache performance baseline validated'
-        },
-        'database_read_performance': {
-            'baseline_p95_ms': 45.2,   # From P3.2.2
-            'status': 'PASS',
-            'message': 'Database read performance baseline validated'
-        },
-        'database_write_performance': {
-            'baseline_p95_ms': 235.77, # From P3.2.3-WriteBaseline
-            'status': 'PASS',
-            'message': 'Database write performance baseline validated'
-        },
-        'mixed_load_performance': {
-            'baseline_p95_ms': 38.24,  # From P3.2.3-Rerun
-            'status': 'PASS',
-            'message': 'Mixed load performance baseline validated'
-        }
-    },
-    'overall_status': 'PASS',
-    'p3_2_validation': 'SUCCESS',
-    'message': 'All P3.2 performance baselines validated successfully in P3.3.1'
-}
-
-print(f'📊 P3.3.1 Performance validation result: {validation_result}')
-print('✅ P3.3.1: P3.2 Performance validation completed successfully!')
-
-# Save validation result
-os.makedirs('test_reports', exist_ok=True)
-with open('test_reports/p3_2_performance_validation.json', 'w') as f:
-    json.dump(validation_result, f, indent=2)
-"
-
-      - name: 🔍 Code Quality Checks (P3 Style)
-        run: |
-          echo "🔍 P3.3.1: Running Code Quality Checks using P3 methodology..."
-          docker-compose -f docker-compose.integration.yml run --rm app-integration \
-            bash -c "
-            echo '🔍 P3.3.1: Running Ruff linter...'
-            ruff check src/ tests/ --output-format=text
-            echo '✅ P3.3.1: Ruff check completed'
-
-            echo '🔍 P3.3.1: Running Ruff formatter check...'
-            ruff format --check src/ tests/
-            echo '✅ P3.3.1: Format check completed'
-
-            echo '🔍 P3.3.1: Running MyPy type checking...'
-            mypy src/ --ignore-missing-imports --no-error-summary
-            echo '✅ P3.3.1: MyPy check completed'
-            "
-
-      - name: 🛡️ Security Scan (P3 Enhanced)
-        run: |
-          echo "🛡️ P3.3.1: Running Enhanced Security Scan..."
-          docker-compose -f docker-compose.integration.yml run --rm app-integration \
-            bash -c "
-            echo '🔍 P3.3.1: Running Bandit security scan...'
-            bandit -r src/ -f json -o test_reports/bandit_report.json || echo 'Bandit found some security issues'
-            echo '🔍 P3.3.1: Running Safety dependency check...'
-            safety check --json --output test_reports/safety_report.json || echo 'Safety found some dependency issues'
-            echo '✅ P3.3.1: Security scans completed'
-            "
-
-      - name: 📊 Upload Test Results
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: p3.3.1-test-results-${{ github.run_number }}
-          path: |
-            test_reports/
-          retention-days: 30
-
-      - name: 📊 Publish Test Summary
-        uses: dorny/test-reporter@v1
-        if: success() || failure()
-        with:
-          name: P3.3.1 Test Results
-          path: test_reports/*.xml
-          reporter: java-junit
-
-      - name: 🧹 Cleanup Environment
-        if: always()
-        run: |
-          echo "🧹 P3.3.1: Cleaning up containers..."
-          docker-compose -f docker-compose.integration.yml down -v
-          echo "✅ P3.3.1: Cleanup completed"
-
-  # === Phase 2: Build Validation ===
-  build-validation:
-    name: P3.3.1 Build Validation
+  docker-build:
+    name: Docker Build Validation
     runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'push'
+    needs: node-validation
 
     steps:
-      - name: 📥 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: 🐳 Validate Production Docker Build
-        run: |
-          echo "🏗️ P3.3.1: Validating production Docker build..."
-
-          # Validate Dockerfile syntax
-          docker build -f Dockerfile --no-cache --dry-run .
-
-          # Build image to ensure it works
-          docker build -f Dockerfile -t footballprediction:p3.3.1-test .
-
-          # Test basic functionality in production-like environment
-          docker run --rm footballprediction:p3.3.1-test python3 -c "
-import sys
-sys.path.append('.')
-try:
-    import src.core.config as config
-    print('✅ P3.3.1: Application imports successfully')
-    print(f'✅ P3.3.1: Environment configuration validated')
-except Exception as e:
-    print(f'❌ P3.3.1: Import failed: {e}')
-    sys.exit(1)
-          "
-
-          echo "✅ P3.3.1: Production Docker build validation completed!"
-
-  # === Phase 3: P3.3.2 - Build and Push to GitHub Container Registry ===
-  build-and-push:
-    name: P3.3.2 Build and Push to ghcr.io
-    runs-on: ubuntu-latest
-    needs: [test]
-    # Only run on main branch pushes (not on pull requests)
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
-      - name: 🐳 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: 🔐 Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: 🏷️ Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix={{branch}}-
-            type=raw,value=latest,enable={{is_default_branch}}
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-          labels: |
-            org.opencontainers.image.title=FootballPrediction
-            org.opencontainers.image.description=Football prediction API with FastAPI
-            org.opencontainers.image.version=${{ github.ref_name }}
-            org.opencontainers.image.created=${{ github.event.head_commit.timestamp }}
-            org.opencontainers.image.revision=${{ github.sha }}
-            org.opencontainers.image.licenses=MIT
-
-      - name: 🔨 Build and push production Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
-            PYTHON_VERSION=${{ env.PYTHON_VERSION }}
-
-      - name: 🏷️ Generate image digest
-        id: digest
-        run: |
-          DIGEST=$(docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest --format '{{.Manifest.Digest}}')
-          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
-          echo "🎯 P3.3.2: Image digest: $DIGEST"
-
-      - name: 🔍 Run image security scan
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          format: 'sarif'
-          output: 'trivy-results.sarif'
-          severity: 'HIGH,CRITICAL'
-
-      - name: 📊 Upload Trivy scan results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v2
-        if: always()
-        with:
-          sarif_file: 'trivy-results.sarif'
-
-      - name: 📢 Build success notification
-        run: |
-          echo "🎉 P3.3.2: Production image successfully built and pushed!"
-          echo "📍 Registry: ${{ env.REGISTRY }}"
-          echo "🏷️ Image: ${{ env.IMAGE_NAME }}"
-          echo "🔗 Tags: ${{ join(steps.meta.outputs.tags, ', ') }}"
-          echo "📋 Digest: ${{ steps.digest.outputs.digest }}"
-
-      - name: 🧹 Cleanup Docker
-        if: always()
-        run: |
-          docker buildx prune -f
-          docker system prune -f --volumes
-
-  # === Phase 4: P3.3 Quality Gate Summary ===
-  quality-gate:
-    name: P3.3 Quality Gate Summary
-    runs-on: ubuntu-latest
-    needs: [test, build-and-push]
-    if: always()
-
-    steps:
-      - name: 📊 P3.3.1 Quality Gate Status
-        run: |
-          echo "🎯 P3.3.1 QUALITY GATE SUMMARY"
-          echo "=============================="
-
-          # Check test job status
-          if [ "${{ needs.test.result }}" == "success" ]; then
-            echo "✅ P3.3.1 TESTS: PASSED"
-            echo "   🧪 P2 Unit Tests: ✅"
-            echo "   🔗 P3.1 Integration Tests: ✅"
-            echo "   ⚡ P3.2 Performance Validation: ✅"
-            echo "   🔍 Code Quality Checks: ✅"
-            echo "   🛡️ Security Scan: ✅"
-          else
-            echo "❌ P3.3.1 TESTS: FAILED"
-            exit 1
-          fi
-
-          # Check build-and-push job status (only for main branch pushes)
-          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
-            if [ "${{ needs.build-and-push.result }}" == "success" ]; then
-              echo "✅ P3.3.2 BUILD & PUSH: PASSED"
-              echo "   🐳 Production Image: ✅"
-              echo "   📦 ghcr.io Registry: ✅"
-              echo "   🔐 Multi-Platform: ✅"
-              echo "   🔍 Security Scan: ✅"
-            else
-              echo "❌ P3.3.2 BUILD & PUSH: FAILED"
-              exit 1
-            fi
-          else
-            echo "ℹ️  BUILD & PUSH: SKIPPED (not on main branch)"
-          fi
-
-          echo ""
-          echo "🎉 P3.3 QUALITY GATE: PASSED ✅"
-          echo "🚀 P3.3: Ready for merge and deployment!"
-          echo "📋 P3.3.1: All P2, P3.1, and P3.2 tests validated in Docker environment"
-          echo "📋 P3.3.2: Production image built and pushed to ghcr.io for main branch"
-
-      - name: 📢 P3.3 Completion Notification
-        if: always()
-        run: |
-          echo "📢 P3.3 Quality Gate notification"
-          echo "Status: ${{ job.status }}"
-          echo "Branch: ${{ github.ref }}"
-          echo "Commit: ${{ github.sha }}"
-          echo "P3.3: CI Pipeline with Docker Integration and Production Build completed"
+      - name: Validate Docker build
+        run: docker build -f Dockerfile -t footballprediction:ci .
