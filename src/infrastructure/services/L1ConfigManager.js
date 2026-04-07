@@ -30,6 +30,34 @@ class L1ConfigManager {
     return this.runtimeConfig;
   }
 
+  get(keyPath, defaultValue = null, expectedType = null) {
+    if (typeof keyPath !== 'string' || !keyPath.trim()) {
+      return defaultValue;
+    }
+
+    const value = keyPath
+      .split('.')
+      .filter(Boolean)
+      .reduce((current, segment) => {
+        if (!current || typeof current !== 'object' || !(segment in current)) {
+          return undefined;
+        }
+
+        return current[segment];
+      }, this.runtimeConfig);
+
+    if (value === undefined) {
+      return defaultValue;
+    }
+
+    if (expectedType && !this._matchesExpectedType(value, expectedType)) {
+      this.logger.warn(`[L1ConfigManager] 配置 ${keyPath} 类型无效，期望 ${expectedType}`);
+      return defaultValue;
+    }
+
+    return value;
+  }
+
   getActiveLeagues(filters = {}) {
     const { tier = null } = filters;
     const leagues = this.runtimeConfig.active_leagues.filter((league) => league.enabled !== false);
@@ -249,6 +277,18 @@ class L1ConfigManager {
     return value
       .map((item) => String(item || '').trim())
       .filter(Boolean);
+  }
+
+  _matchesExpectedType(value, expectedType) {
+    if (expectedType === 'array') {
+      return Array.isArray(value);
+    }
+
+    if (expectedType === 'number') {
+      return Number.isFinite(value);
+    }
+
+    return typeof value === expectedType;
   }
 
   _inferSeasonType(leagueId) {

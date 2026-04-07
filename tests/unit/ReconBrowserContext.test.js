@@ -8,11 +8,7 @@ const { ReconBrowserContext } = require('../../src/infrastructure/recon/services
 describe('ReconBrowserContext', () => {
   it('应独立完成 launch 与 close 生命周期', async () => {
     const events = [];
-    const page = {
-      async addInitScript(fn) {
-        events.push({ type: 'addInitScript', value: typeof fn });
-      }
-    };
+    const page = {};
 
     const context = {
       browser() {
@@ -484,18 +480,10 @@ describe('ReconBrowserContext', () => {
     });
     browserContext.readBookmakerState = async () => {
       readCount++;
-      if (readCount === 1) {
-        return {
-          myBookmakers: [16, 44],
-          bookiehash: 'before-hash',
-          otCode: 'token-before'
-        };
-      }
-
       return {
-        myBookmakers: [16, 44, 500],
-        bookiehash: 'after-hash',
-        otCode: 'token-after'
+        myBookmakers: [16, 44],
+        bookiehash: 'before-hash',
+        otCode: 'token-before'
       };
     };
     browserContext.waitForBookmakerStateChange = async () => ({
@@ -516,6 +504,7 @@ describe('ReconBrowserContext', () => {
 
     assert.strictEqual(result.applied, true);
     assert.strictEqual(result.changed, true);
+    assert.strictEqual(readCount, 1);
     assert.strictEqual(retriggerCalls, 1);
     assert.deepStrictEqual(result.after.myBookmakers, [16, 44, 500]);
   });
@@ -566,5 +555,70 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(browserContext.browser, null);
     assert.strictEqual(browserContext.context, null);
     assert.strictEqual(browserContext.page, null);
+  });
+
+  it('close() 遇到 SIGKILL 权限错误时也必须继续 cleanupUserDataDir', async () => {
+    const events = [];
+    const browserProcess = {
+      kill() {
+        const error = new Error('operation not permitted');
+        error.code = 'EPERM';
+        throw error;
+      }
+    };
+
+    const browser = {
+      process() {
+        return browserProcess;
+      },
+      async close() {
+        events.push('browser.close');
+      }
+    };
+
+    const context = {
+      browser() {
+        return browser;
+      },
+      async close() {
+        events.push('context.close');
+        return new Promise(() => {});
+      }
+    };
+
+    let cleanedUserDataDir = null;
+    const warnings = [];
+    const browserContext = new ReconBrowserContext({
+      logger: {
+        info() {},
+        warn(eventName, payload) {
+          warnings.push({ eventName, payload });
+        },
+        error() {}
+      },
+      traceId: 'trace-close-kill-error',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      closeTimeoutMs: 10,
+      stealthProvider: {
+        async applyStealthFingerprint() {},
+        async cleanupUserDataDir(userDataDir) {
+          cleanedUserDataDir = userDataDir;
+        },
+      }
+    });
+
+    browserContext.browser = browser;
+    browserContext.context = context;
+    browserContext.page = { isClosed: () => false };
+    browserContext.userDataDir = '/tmp/recon-browser-context-test';
+
+    await assert.doesNotReject(browserContext.close());
+
+    assert.deepStrictEqual(events, ['context.close', 'browser.close']);
+    assert.strictEqual(cleanedUserDataDir, '/tmp/recon-browser-context-test');
+    assert.ok(warnings.some((entry) => (
+      entry.eventName === 'recon_browser_context_process_kill_failed'
+      && entry.payload?.error === 'operation not permitted'
+    )));
   });
 });

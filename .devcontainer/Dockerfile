@@ -124,6 +124,7 @@ ENV PATH="/opt/venv/bin:$PATH"
 
 # 复制 Python 依赖清单，确保 docker-compose 开发容器也具备项目运行依赖
 COPY requirements.txt pyproject.toml /tmp/python-deps/
+COPY mcp_servers/requirements.txt /tmp/python-deps/mcp_servers-requirements.txt
 
 # 配置 pip 使用阿里云镜像
 RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
@@ -133,6 +134,7 @@ RUN pip config set global.index-url https://mirrors.aliyun.com/pypi/simple/ && \
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
     pip install --no-cache-dir \
     -r /tmp/python-deps/requirements.txt \
+    -r /tmp/python-deps/mcp_servers-requirements.txt \
     ipython \
     ipdb \
     bandit \
