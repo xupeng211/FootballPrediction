@@ -40,7 +40,7 @@ select = [
     "PERF",   # Perflint
     "RUF",    # Ruff-specific rules
 ]
-extend-select = ["PLR0915"]  # 显式阻断过长函数
+extend-select = ["PLR0915", "C901", "D101", "D102", "D103"]  # 显式阻断过长函数、复杂度和公开 API 无文档
 
 # 忽略的规则
 ignore = [
@@ -51,7 +51,6 @@ ignore = [
     "EM102",  # f-string in exception
     "S101",   # use of assert detected
     "ANN",    # type annotations (handled by mypy)
-    "D",      # docstrings (handled separately)
     "RUF001", # Chinese string punctuation (中文字符串合法)
     "RUF002", # ambiguous Chinese characters (中文文档字符串合法)
     "RUF003", # Chinese comment punctuation (中文注释合法)
@@ -64,6 +63,8 @@ unfixable = []
 [lint.per-file-ignores]
 "tests/*" = ["S101"]  # 允许测试中使用 assert
 "scripts/*" = ["T20"]  # 允许脚本中使用 print
+"tests/**/*.py" = ["S101", "D101", "D102", "D103"]
+"tests/*.py" = ["S101", "D101", "D102", "D103"]
 "__init__.py" = ["F401"]  # 允许未使用的导入
 
 [lint.isort]
@@ -83,6 +84,9 @@ classmethod-decorators = ["classmethod"]
 
 [lint.pylint]
 max-statements = 50
+
+[lint.mccabe]
+max-complexity = 10
 
 [format]
 # 使用双引号

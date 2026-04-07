@@ -66,6 +66,10 @@ readonly PORT_REGEX='7890|7891|7892|7893|7894|7895|7896|7897|7898|7899|7900|7901
 readonly LEAK_REGEX="172\\.25\\.16\\.1|\\b(${PORT_REGEX})\\b"
 readonly CONTRACT_REGEX='require\(["'"'"'](axios|node-fetch|got|http|https|node:http|node:https|http-proxy-agent|https-proxy-agent)["'"'"']\)|from ["'"'"'](axios|node-fetch|got|undici)["'"'"']'
 readonly PYTHON_FILE_LINE_LIMIT=800
+readonly COVERAGE_THRESHOLD=70
+readonly COVERAGE_DIR='reports/coverage'
+readonly NODE_COVERAGE_SUMMARY="${COVERAGE_DIR}/node/coverage-summary.json"
+readonly PYTHON_COVERAGE_JSON="${COVERAGE_DIR}/python/coverage.json"
 
 path_is_leak_allowlisted() {
   local file="$1"
@@ -212,14 +216,16 @@ resolve_python_quality_targets() {
 }
 
 bootstrap_node_dependencies() {
-  if [[ ! -x node_modules/.bin/eslint ]]; then
+  if [[ ! -x node_modules/.bin/eslint || ! -x node_modules/.bin/c8 ]]; then
     log 'Node 依赖缺失，执行 npm install 补齐开发工具链。'
     npm install --no-fund --no-audit >/dev/null
   fi
 }
 
 bootstrap_python_dependencies() {
-  if ! python -m mypy --version >/dev/null 2>&1 || ! python -m ruff --version >/dev/null 2>&1; then
+  if ! python -m mypy --version >/dev/null 2>&1 \
+    || ! python -m ruff --version >/dev/null 2>&1 \
+    || ! python -c 'import pytest_cov' >/dev/null 2>&1; then
     log 'Python QA 依赖缺失，执行 pip install -r requirements.txt。'
     pip install --no-cache-dir -r requirements.txt >/dev/null
   fi
@@ -249,9 +255,12 @@ run_optional_grep() {
 assert_quality_tooling() {
   command -v node >/dev/null 2>&1 || fail '容器内缺少 node。'
   command -v npm >/dev/null 2>&1 || fail '容器内缺少 npm。'
+  command -v pytest >/dev/null 2>&1 || fail '容器内缺少 pytest。'
   python -m mypy --version >/dev/null 2>&1 || fail '容器内缺少 mypy，请先重建开发镜像。'
   python -m ruff --version >/dev/null 2>&1 || fail '容器内缺少 ruff，请先重建开发镜像。'
+  python -c 'import pytest_cov' >/dev/null 2>&1 || fail '容器内缺少 pytest-cov，请先重建开发镜像。'
   [[ -x node_modules/.bin/eslint ]] || fail '项目依赖中缺少 eslint。'
+  [[ -x node_modules/.bin/c8 ]] || fail '项目依赖中缺少 c8。'
 }
 
 validate_proxy_pool_file() {
@@ -597,6 +606,31 @@ run_python_architecture_guard() {
   fi
 }
 
+run_config_compat_guard() {
+  log '执行 src.config_unified 兼容壳收口检查。'
+
+  mapfile -t changed_files < <(collect_changed_files | sed '/^$/d' | sort -u)
+  local findings=()
+  local file
+
+  for file in "${changed_files[@]}"; do
+    [[ -f "$file" ]] || continue
+    case "$file" in
+      src/*.py|src/**/*.py)
+        if grep -nE '(^|[[:space:]])(from|import)[[:space:]]+src\.config_unified([[:space:]]|$|\.)' "$file" >/dev/null 2>&1; then
+          findings+=("$file")
+        fi
+        ;;
+    esac
+  done
+
+  if [[ "${#findings[@]}" -gt 0 ]]; then
+    printf '[Gatekeeper] 命中内部兼容壳引用:\n' >&2
+    printf '  %s\n' "${findings[@]}" >&2
+    fail 'src/ 内部 Python 模块禁止继续引用 src.config_unified，请直接改用 src.config。'
+  fi
+}
+
 run_static_quality_checks() {
   log '执行静态质量检查。'
   local python_targets=()
@@ -636,9 +670,153 @@ run_proxyprovider_smoke_test() {
   node --test tests/unit/ProxyProvider.test.js
 }
 
-run_full_unit_suite() {
-  log '执行容器内全量单测。'
-  npm run test:unit
+run_coverage_report() {
+  python <<'PY'
+import json
+from pathlib import Path
+
+node_summary_path = Path("reports/coverage/node/coverage-summary.json")
+python_summary_path = Path("reports/coverage/python/coverage.json")
+
+def read_node_summary() -> tuple[dict, list[str]]:
+    if not node_summary_path.exists():
+        return {}, []
+
+    payload = json.loads(node_summary_path.read_text(encoding="utf-8"))
+    total = payload.get("total", {})
+    bare = []
+    for file_path, summary in payload.items():
+        if file_path == "total":
+            continue
+        lines = summary.get("lines", {})
+        if float(lines.get("pct", 0.0) or 0.0) == 0.0:
+            bare.append(file_path.replace("/app/", ""))
+
+    return total, sorted(bare)
+
+def read_python_summary() -> tuple[dict, list[str]]:
+    if not python_summary_path.exists():
+        return {}, []
+
+    payload = json.loads(python_summary_path.read_text(encoding="utf-8"))
+    total = payload.get("totals", {})
+    bare = []
+    for file_path, summary in payload.get("files", {}).items():
+        summary_block = summary.get("summary", {})
+        percent = float(summary_block.get("percent_covered", 0.0) or 0.0)
+        if percent == 0.0:
+            bare.append(file_path.replace("/app/", ""))
+
+    return total, sorted(bare)
+
+def pct(value: float | int | None) -> str:
+    if value is None:
+        return "  N/A"
+    return f"{float(value):5.1f}%"
+
+node_total, node_bare = read_node_summary()
+python_total, python_bare = read_python_summary()
+
+node_lines_total = float(node_total.get("lines", {}).get("total", 0.0) or 0.0)
+node_lines_covered = float(node_total.get("lines", {}).get("covered", 0.0) or 0.0)
+python_lines_total = float(python_total.get("num_statements", 0.0) or 0.0)
+python_lines_covered = float(python_total.get("covered_lines", 0.0) or 0.0)
+combined_total = node_lines_total + python_lines_total
+combined_pct = ((node_lines_covered + python_lines_covered) / combined_total * 100.0) if combined_total else 0.0
+
+rows = [
+    (
+        "Node",
+        pct(node_total.get("lines", {}).get("pct")),
+        pct(node_total.get("branches", {}).get("pct")),
+        pct(node_total.get("functions", {}).get("pct")),
+    ),
+    (
+        "Python",
+        pct(python_total.get("percent_covered")),
+        "  N/A",
+        "  N/A",
+    ),
+    (
+        "Combined",
+        f"{combined_pct:5.1f}%",
+        "  N/A",
+        "  N/A",
+    ),
+]
+
+border = "┌──────────┬────────┬──────────┬──────────┐"
+separator = "├──────────┼────────┼──────────┼──────────┤"
+footer = "└──────────┴────────┴──────────┴──────────┘"
+
+print("[Gatekeeper] 覆盖率汇总:")
+print(border)
+print("│ Scope    │ Lines  │ Branches │ Functions│")
+print(separator)
+for scope, lines, branches, functions in rows:
+    print(f"│ {scope:<8} │ {lines:>6} │ {branches:>8} │ {functions:>8}│")
+print(footer)
+
+if node_bare:
+    print("[Gatekeeper] JS 裸奔文件（0%）:")
+    for file_path in node_bare[:10]:
+        print(f"  - {file_path}")
+    if len(node_bare) > 10:
+        print(f"  - ... 还有 {len(node_bare) - 10} 个")
+
+if python_bare:
+    print("[Gatekeeper] Python 裸奔文件（0%）:")
+    for file_path in python_bare[:10]:
+        print(f"  - {file_path}")
+    if len(python_bare) > 10:
+        print(f"  - ... 还有 {len(python_bare) - 10} 个")
+PY
+}
+
+run_js_coverage_guard() {
+  log "执行 Node 覆盖率门禁（阈值 ${COVERAGE_THRESHOLD}%）。"
+  rm -rf "${COVERAGE_DIR}/node"
+  mkdir -p "${COVERAGE_DIR}/node"
+  npm run test:coverage
+}
+
+run_python_coverage_guard() {
+  log "执行 Python 覆盖率门禁（阈值 ${COVERAGE_THRESHOLD}%）。"
+  rm -rf "${COVERAGE_DIR}/python"
+  mkdir -p "${COVERAGE_DIR}/python"
+  python -m pytest \
+    tests/unit/config_package_test.py \
+    --cov=src/config \
+    --cov-report=term-missing:skip-covered \
+    --cov-report="json:${PYTHON_COVERAGE_JSON}"
+
+  python <<'PY'
+import json
+import os
+import sys
+from pathlib import Path
+
+threshold = float(os.environ.get("GATEKEEPER_COVERAGE_THRESHOLD", "70"))
+summary_path = Path("reports/coverage/python/coverage.json")
+payload = json.loads(summary_path.read_text(encoding="utf-8"))
+coverage = float(payload["totals"]["percent_covered"])
+
+if coverage < threshold:
+    print(
+        f"[Gatekeeper] ERROR: Python 覆盖率 {coverage:.1f}% 低于阈值 {threshold:.1f}%",
+        file=sys.stderr,
+    )
+    sys.exit(1)
+
+print(f"[Gatekeeper] Python 覆盖率达标: {coverage:.1f}%")
+PY
+}
+
+run_coverage_guards() {
+  export GATEKEEPER_COVERAGE_THRESHOLD="${COVERAGE_THRESHOLD}"
+  run_js_coverage_guard
+  run_python_coverage_guard
+  run_coverage_report
 }
 
 main() {
@@ -654,12 +832,13 @@ main() {
   run_secret_ip_leak_check
   run_proxy_contract_check
   run_python_proxy_contract_check
+  run_config_compat_guard
   run_python_architecture_guard
   run_static_quality_checks
   run_proxyprovider_smoke_test
 
   if [[ "$MODE" == "push" ]]; then
-    run_full_unit_suite
+    run_coverage_guards
   fi
 
   log "门禁通过（mode=${MODE}）。"
