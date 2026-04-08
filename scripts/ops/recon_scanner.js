@@ -9,4 +9,16 @@
 
 'use strict';
 
-module.exports = require('./recon_scanner_impl');
+const impl = require('./recon_scanner_impl');
+
+module.exports = impl;
+
+if (require.main === module) {
+  impl.main().then(
+    (exitCode) => process.exit(exitCode),
+    (error) => {
+      console.error('\n💥 侦察失败:', error.message);
+      process.exit(1);
+    }
+  );
+}
