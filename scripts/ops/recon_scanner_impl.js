@@ -57,6 +57,10 @@ function getProxyRotatorClass() {
   return require('../../src/infrastructure/harvesters/ProxyRotator').ProxyRotator;
 }
 
+function getProxyProviderSingleton() {
+  return require('../../src/infrastructure/network/ProxyProvider').getProxyProvider();
+}
+
 function getFixtureRepositoryClass() {
   return require('../../src/infrastructure/services/FixtureRepository').FixtureRepository;
 }
@@ -123,6 +127,8 @@ class ReconScanner {
     this.currentSeasonOnly = dependencies.currentSeasonOnly === true;
     this.allNonLinked = dependencies.allNonLinked === true;
     this.forceDomMode = dependencies.forceDomMode === true;
+    this.navigatorFactory = dependencies.navigatorFactory || null;
+    this.navigatorSequence = 0;
     this.resources = [];
 
     this.logger.info('scanner_initialized', { traceId: this.traceId, version: 'V11.0' });
@@ -295,6 +301,11 @@ class ReconScanner {
         logger: this._childLogger('ReconEngine'),
         traceId: this.traceId,
         proxyRotator: this.proxyRotator,
+        navigatorFactory: async (factoryOptions = {}) => this._createNavigatorHandle({
+          ...factoryOptions,
+          component: 'ReconNavigator',
+          consumer: 'recon-matrix'
+        }),
         configManager: this.configManager,
         baseUrl: this.config.oddsportal?.base_url,
         currentSeasonOnly: this.currentSeasonOnly,
@@ -309,6 +320,11 @@ class ReconScanner {
       this.engine.currentSeasonOnly = this.currentSeasonOnly;
       this.engine.allNonLinked = this.allNonLinked;
       this.engine.forceDomMode = this.forceDomMode;
+      this.engine.navigatorFactory = async (factoryOptions = {}) => this._createNavigatorHandle({
+        ...factoryOptions,
+        component: 'ReconNavigator',
+        consumer: 'recon-matrix'
+      });
     }
 
     this.logger.info('scanner_components_initialized');
@@ -344,7 +360,6 @@ class ReconScanner {
    * @returns {Promise<ReconNavigator>}
    */
   async ensureNavigator(options = {}) {
-    const { ReconNavigator } = getReconRuntimeExports();
     const launchBrowser = options.launchBrowser !== false;
 
     if (this.engine?.navigator) {
@@ -368,26 +383,93 @@ class ReconScanner {
       }
     }
 
+    const handle = await this._createNavigatorHandle({
+      launchBrowser,
+      component: 'ReconNavigator',
+      consumer: 'recon-shared',
+      shared: true
+    });
+
+    this.resources = this.resources.filter((resource) => resource.type !== 'navigator');
+    this.resources.push({ type: 'navigator', instance: handle.navigator });
+    this.engine.navigator = handle.navigator;
+
+    return handle.navigator;
+  }
+
+  _acquireProxyAssignment(consumer, sequence) {
+    if (!this.proxyRotator) {
+      return {
+        proxyProvider: null,
+        proxyLease: null,
+        proxy: null
+      };
+    }
+
+    const proxyProvider = this.proxyRotator.proxyProvider || getProxyProviderSingleton();
+    if (proxyProvider && typeof proxyProvider.acquireAssignmentSync === 'function') {
+      const { lease, assignment } = proxyProvider.acquireAssignmentSync({
+        consumer,
+        sessionKey: `${consumer}:${sequence}`,
+        sticky: false
+      });
+
+      return {
+        proxyProvider,
+        proxyLease: lease,
+        proxy: {
+          host: assignment.host,
+          port: assignment.port,
+          url: assignment.url,
+          server: assignment.server
+        }
+      };
+    }
+
     const proxy = this.proxyRotator ? this.proxyRotator.getNextProxy() : null;
+    return {
+      proxyProvider: null,
+      proxyLease: null,
+      proxy
+    };
+  }
+
+  async _createNavigatorHandle(options = {}) {
+    const { ReconNavigator } = getReconRuntimeExports();
+    const launchBrowser = options.launchBrowser !== false;
+    const component = String(options.component || 'ReconNavigator');
+    const consumer = String(options.consumer || `recon-${component.toLowerCase()}`);
+    const sequence = ++this.navigatorSequence;
+    const assignment = this._acquireProxyAssignment(consumer, sequence);
+    const navigatorTraceId = options.shared
+      ? this.traceId
+      : `${this.traceId}-${component.toLowerCase()}-${sequence}`;
     const navigator = new ReconNavigator({
-      logger: this._childLogger('ReconNavigator'),
-      traceId: this.traceId,
-      proxy,
+      logger: this._childLogger(component),
+      traceId: navigatorTraceId,
+      proxy: assignment.proxy,
       proxyRotator: this.proxyRotator,
+      proxyProvider: assignment.proxyProvider,
+      proxyLease: assignment.proxyLease,
       headless: true,
       scrollAttempts: this.config.oddsportal?.navigation?.scroll_attempts || 10,
       scrollDelayMs: this.config.oddsportal?.navigation?.scroll_delay_ms || 2000
     });
 
-    this.resources = this.resources.filter((resource) => resource.type !== 'navigator');
-    this.resources.push({ type: 'navigator', instance: navigator });
-    this.engine.navigator = navigator;
+    if (!options.shared) {
+      this.resources.push({ type: 'navigator', instance: navigator });
+    }
 
     if (launchBrowser) {
       await navigator.launch();
     }
 
-    return navigator;
+    return {
+      navigator,
+      ownsNavigator: true,
+      proxyPort: assignment.proxy?.port || null,
+      proxyLeaseId: assignment.proxyLease?.id || null
+    };
   }
 
   /**

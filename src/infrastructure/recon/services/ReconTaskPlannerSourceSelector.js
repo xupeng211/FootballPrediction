@@ -90,12 +90,13 @@ const reconTaskPlannerSourceSelector = {
     return sources;
   },
 
-  async selectCandidateSource(target, pendingMatches, confidenceThreshold) {
+  async selectCandidateSource(target, pendingMatches, confidenceThreshold, options = {}) {
+    const navigator = options.navigator || this.navigator;
     if (
-      !this.navigator ||
+      !navigator ||
       (
-        typeof this.navigator.fetchFullSeasonArchive !== 'function'
-        && typeof this.navigator.protocolArchiveExtract !== 'function'
+        typeof navigator.fetchFullSeasonArchive !== 'function'
+        && typeof navigator.protocolArchiveExtract !== 'function'
       )
     ) {
       throw new Error('ReconTaskPlanner requires a navigator with fetchFullSeasonArchive or protocolArchiveExtract');
@@ -164,16 +165,16 @@ const reconTaskPlannerSourceSelector = {
       let extractResult;
       try {
         if (forcePureProtocol) {
-          extractResult = await this.navigator.protocolArchiveExtract(source.url, {
+          extractResult = await navigator.protocolArchiveExtract(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true,
             forcePureProtocol: true
           });
         } else if (
           (source.mode === 'current_fixtures' || source.mode === 'current_fixtures_fallback')
-          && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+          && typeof navigator.fetchFullSeasonArchive === 'function'
         ) {
-          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+          extractResult = await navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true,
             forceDomOnly: true
@@ -183,45 +184,45 @@ const reconTaskPlannerSourceSelector = {
             source.mode === 'current_results'
             || source.mode === 'current_results_fallback'
           )
-          && typeof this.navigator?.fetchFullSeasonArchive === 'function'
+          && typeof navigator.fetchFullSeasonArchive === 'function'
         ) {
-          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+          extractResult = await navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true,
             ...(forceDomOnlyMode ? { forceDomOnly: true } : {})
           });
-        } else if (forceJsonExtract && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
-          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+        } else if (forceJsonExtract && typeof navigator.fetchFullSeasonArchive === 'function') {
+          extractResult = await navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true,
             forceDomOnly: true,
             forceJsonExtract: true
           });
-        } else if (forceDomOnlyMode && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
-          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+        } else if (forceDomOnlyMode && typeof navigator.fetchFullSeasonArchive === 'function') {
+          extractResult = await navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true,
             forceDomOnly: true
           });
-        } else if (forceDomMode && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
-          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+        } else if (forceDomMode && typeof navigator.fetchFullSeasonArchive === 'function') {
+          extractResult = await navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true
           });
-        } else if (forceMultiMode && typeof this.navigator?.fetchFullSeasonArchive === 'function') {
-          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, {
+        } else if (forceMultiMode && typeof navigator.fetchFullSeasonArchive === 'function') {
+          extractResult = await navigator.fetchFullSeasonArchive(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true
           });
         } else if (source.mode === 'current_season') {
-          extractResult = await this.navigator.protocolArchiveExtract(source.url, {
+          extractResult = await navigator.protocolArchiveExtract(source.url, {
             ...extractOptions,
             preferCurrentSeasonSource: true
           });
-        } else if (typeof this.navigator?.fetchFullSeasonArchive === 'function') {
-          extractResult = await this.navigator.fetchFullSeasonArchive(source.url, extractOptions);
+        } else if (typeof navigator.fetchFullSeasonArchive === 'function') {
+          extractResult = await navigator.fetchFullSeasonArchive(source.url, extractOptions);
         } else {
-          extractResult = await this.navigator.protocolArchiveExtract(source.url, extractOptions);
+          extractResult = await navigator.protocolArchiveExtract(source.url, extractOptions);
         }
       } catch (error) {
         sourceFailures.push({
@@ -267,6 +268,8 @@ const reconTaskPlannerSourceSelector = {
         forceJsonExtract,
         forcePureProtocol,
         forceMultiMode,
+        sourceMode: source.mode,
+        proxyPort: Number(navigator?.proxy?.port || 0) || null,
         effectiveConfidenceThreshold,
         resolvedMaxPages,
         sampleSize: sample.length,
@@ -304,7 +307,7 @@ const reconTaskPlannerSourceSelector = {
       throw error;
     }
 
-    if (evaluatedSources.length > 1) {
+    if (forceMultiMode && evaluatedSources.length > 1) {
       const combinedCandidates = [];
       const seenCandidateKeys = new Set();
 

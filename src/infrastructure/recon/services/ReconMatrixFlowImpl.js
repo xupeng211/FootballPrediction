@@ -30,6 +30,7 @@ const reconMatrixFlow = {
     const {
       season,
       concurrency = this.defaultReconConcurrency,
+      leagueConcurrency = this.leagueParallelism || concurrency,
       tier = null,
       leagueIds = null,
       batchSize = this.reconBatchSize,
@@ -52,41 +53,138 @@ const reconMatrixFlow = {
       allNonLinked
     });
 
-    for (const { target, pendingMatches, desiredLimit = null } of targetPendingMap) {
-      try {
-        const result = await this._runReconTarget(target, {
-          concurrency,
-          batchSize,
-          confidenceThreshold,
-          forceDomMode,
-          forceJsonExtract,
-          forcePureProtocol,
-          pendingMatches,
-          matchLimit: desiredLimit
-        });
+    const leagueLimiter = pLimit(Math.max(1, Number(leagueConcurrency)));
+    const outcomes = await Promise.all(
+      targetPendingMap.map(({ target, pendingMatches, desiredLimit = null }) => leagueLimiter(async () => {
+        let navigatorHandle = null;
+        let proxyPort = null;
 
-        summary.scannedLeagues++;
-        summary.totalPending += result.pendingTotal;
-        summary.linked += result.linked;
-        summary.mismatched += result.mismatched;
-        summary.perLeague.push({
-          league: target.league.name,
-          season: target.dbSeason,
-          pendingTotal: result.pendingTotal,
-          linked: result.linked,
-          mismatched: result.mismatched,
-          sourceSeason: result.sourceSeason,
-          sourceUrl: result.sourceUrl,
-          candidateCount: result.candidateCount
-        });
-      } catch (error) {
+        try {
+          navigatorHandle = await this._acquireTargetNavigator(target, {
+            launchBrowser: forcePureProtocol !== true
+          });
+          proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
+
+          this.logger.info('recon_league_worker_start', {
+            league: target.league.name,
+            season: target.dbSeason,
+            pendingTotal: pendingMatches.length,
+            desiredLimit,
+            proxyPort,
+            leagueConcurrency: Math.max(1, Number(leagueConcurrency)),
+            matchConcurrency: Math.max(1, Number(concurrency))
+          });
+
+          const result = await this._runReconTarget(target, {
+            concurrency,
+            batchSize,
+            confidenceThreshold,
+            forceDomMode,
+            forceJsonExtract,
+            forcePureProtocol,
+            pendingMatches,
+            matchLimit: desiredLimit,
+            navigator: navigatorHandle?.navigator || null
+          });
+
+          this.logger.info('recon_league_worker_complete', {
+            league: target.league.name,
+            season: target.dbSeason,
+            proxyPort,
+            linked: result.linked,
+            mismatched: result.mismatched,
+            pendingTotal: result.pendingTotal
+          });
+
+          return { target, result };
+        } catch (error) {
+          this.logger.error('recon_matrix_target_failed', {
+            league: target.league.name,
+            season,
+            proxyPort,
+            error: error.message
+          });
+          return { target, error };
+        } finally {
+          await this._releaseTargetNavigator(navigatorHandle);
+        }
+      }))
+    );
+
+    for (const outcome of outcomes) {
+      if (outcome?.error) {
         summary.success = false;
-        summary.errors.push({ league: target.league.name, error: error.message });
-        this.logger.error('recon_matrix_target_failed', { league: target.league.name, season, error: error.message });
+        summary.errors.push({ league: outcome.target.league.name, error: outcome.error.message });
+        continue;
       }
+
+      const { target, result } = outcome;
+      summary.scannedLeagues++;
+      summary.totalPending += result.pendingTotal;
+      summary.linked += result.linked;
+      summary.mismatched += result.mismatched;
+      summary.perLeague.push({
+        league: target.league.name,
+        season: target.dbSeason,
+        pendingTotal: result.pendingTotal,
+        linked: result.linked,
+        mismatched: result.mismatched,
+        sourceSeason: result.sourceSeason,
+        sourceUrl: result.sourceUrl,
+        candidateCount: result.candidateCount
+      });
     }
 
     return summary;
+  },
+
+  async _acquireTargetNavigator(_target, options = {}) {
+    const launchBrowser = options.launchBrowser !== false;
+
+    if (typeof this.navigatorFactory === 'function') {
+      const created = await this.navigatorFactory({ launchBrowser });
+      const handle = created?.navigator
+        ? created
+        : { navigator: created, ownsNavigator: true };
+
+      if (
+        launchBrowser
+        && handle?.navigator
+        && typeof handle.navigator.ensureBrowserHealthy === 'function'
+      ) {
+        await handle.navigator.ensureBrowserHealthy();
+      }
+
+      return {
+        ...handle,
+        ownsNavigator: handle?.ownsNavigator !== false,
+        proxyPort: handle?.proxyPort ?? handle?.navigator?.proxy?.port ?? null
+      };
+    }
+
+    if (
+      launchBrowser
+      && this.navigator
+      && typeof this.navigator.ensureBrowserHealthy === 'function'
+    ) {
+      await this.navigator.ensureBrowserHealthy();
+    }
+
+    return {
+      navigator: this.navigator || null,
+      ownsNavigator: false,
+      proxyPort: this.navigator?.proxy?.port || null
+    };
+  },
+
+  async _releaseTargetNavigator(handle = null) {
+    if (!handle?.navigator || handle.ownsNavigator === false) {
+      return;
+    }
+
+    if (typeof handle.navigator.close === 'function') {
+      await handle.navigator.close();
+    }
   },
 
   async _runReconTarget(target, options = {}) {
@@ -98,7 +196,8 @@ const reconMatrixFlow = {
       forceJsonExtract = false,
       forcePureProtocol = false,
       pendingMatches: pendingMatchesOverride = null,
-      matchLimit = null
+      matchLimit = null,
+      navigator = this.navigator || null
     } = options;
 
     const pendingMatches = Array.isArray(pendingMatchesOverride)
@@ -114,7 +213,10 @@ const reconMatrixFlow = {
     const limiter = pLimit(Math.max(1, Number(concurrency)));
     const orderedPending = [...pendingMatches].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
     const reconPolicy = this.taskPlanner.resolveReconPolicy(target, orderedPending, confidenceThreshold);
-    const effectiveThreshold = Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold);
+    const effectiveThreshold = Math.max(
+      Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold || 0),
+      Number(this.minimumConfidenceThreshold || 0)
+    );
     const runtimeTarget = {
       ...target,
       forceDomMode,
@@ -136,7 +238,8 @@ const reconMatrixFlow = {
     const selectedSource = await this._selectCandidateSourceWithLocalFallback(
       runtimeTarget,
       remainingPending,
-      effectiveThreshold
+      effectiveThreshold,
+      navigator
     );
     const candidates = selectedSource.candidates;
     const seasonMirror = selectedSource.seasonMirror || this.mirrorManager.buildSeasonMirror(candidates);
@@ -514,9 +617,14 @@ const reconMatrixFlow = {
     return this.matchEvaluator.findBestCandidate(l1Match, candidates, seasonMirror);
   },
 
-  async _selectCandidateSourceWithLocalFallback(target, pendingMatches, confidenceThreshold) {
+  async _selectCandidateSourceWithLocalFallback(target, pendingMatches, confidenceThreshold, navigator = null) {
     try {
-      const selectedSource = await this.taskPlanner.selectCandidateSource(target, pendingMatches, confidenceThreshold);
+      const selectedSource = await this.taskPlanner.selectCandidateSource(
+        target,
+        pendingMatches,
+        confidenceThreshold,
+        { navigator: navigator || this.navigator || null }
+      );
       const hasCandidates = Array.isArray(selectedSource?.candidates) && selectedSource.candidates.length > 0;
       if (hasCandidates || !this._canUseLocalDictionaryFallback(target, pendingMatches)) {
         return selectedSource;

@@ -288,16 +288,6 @@ const reconTaskPlannerUrlUtils = {
     const sources = [
       {
         season: annualSeason,
-        url: this.buildFixturesUrl(leagueConfig, annualSeason),
-        mode: 'current_fixtures'
-      },
-      {
-        season: annualSeason,
-        url: this.buildSeasonlessFixturesUrl(leagueConfig),
-        mode: 'current_fixtures_fallback'
-      },
-      {
-        season: annualSeason,
         url: this.buildResultsUrl(leagueConfig, annualSeason),
         mode: 'current_results'
       },
@@ -305,6 +295,16 @@ const reconTaskPlannerUrlUtils = {
         season: annualSeason,
         url: this.buildSeasonlessResultsUrl(leagueConfig),
         mode: 'current_results_fallback'
+      },
+      {
+        season: annualSeason,
+        url: this.buildFixturesUrl(leagueConfig, annualSeason),
+        mode: 'current_fixtures'
+      },
+      {
+        season: annualSeason,
+        url: this.buildSeasonlessFixturesUrl(leagueConfig),
+        mode: 'current_fixtures_fallback'
       }
     ].filter((source) => Boolean(source.url));
 

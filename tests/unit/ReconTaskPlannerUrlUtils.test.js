@@ -175,13 +175,13 @@ describe('ReconTaskPlannerUrlUtils', () => {
       [
         {
           season: '2026',
-          url: 'oddsportal://root/football/usa/mls/fixtures/',
-          mode: 'current_fixtures'
+          url: 'oddsportal://root/football/usa/mls/results/',
+          mode: 'current_results'
         },
         {
           season: '2026',
-          url: 'oddsportal://root/football/usa/mls/results/',
-          mode: 'current_results'
+          url: 'oddsportal://root/football/usa/mls/fixtures/',
+          mode: 'current_fixtures'
         }
       ]
     );
