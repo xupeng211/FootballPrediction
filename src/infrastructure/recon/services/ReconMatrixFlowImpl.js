@@ -27,10 +27,16 @@ const reconMatrixFlow = {
   },
 
   async runReconMatrix(options = {}) {
+    const requestedConcurrency = Number.isInteger(options.concurrency) && options.concurrency > 0
+      ? options.concurrency
+      : this.defaultReconConcurrency;
+    const requestedLeagueConcurrency = Number.isInteger(options.leagueConcurrency) && options.leagueConcurrency > 0
+      ? options.leagueConcurrency
+      : requestedConcurrency;
     const {
       season,
-      concurrency = this.defaultReconConcurrency,
-      leagueConcurrency = this.leagueParallelism || concurrency,
+      concurrency = requestedConcurrency,
+      leagueConcurrency = requestedLeagueConcurrency,
       tier = null,
       leagueIds = null,
       batchSize = this.reconBatchSize,
