@@ -99,34 +99,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Prepare Docker cache directories
-        run: mkdir -p .cache/docker-buildx .cache/docker-buildx-new
-
-      - name: Restore production Docker cache
-        uses: actions/cache@v4
-        with:
-          path: .cache/docker-buildx
-          key: production-image-buildx-${{ runner.os }}-${{ hashFiles('Dockerfile', 'requirements.txt', 'mcp_servers/requirements.txt', 'pyproject.toml', 'ruff.toml', 'mypy.ini') }}
-          restore-keys: |
-            production-image-buildx-${{ runner.os }}-
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Build production image
         run: |
           docker buildx build \
-            --load \
-            --tag footballprediction:production-gate \
             --file Dockerfile \
-            --cache-from type=local,src=.cache/docker-buildx \
-            --cache-to type=local,dest=.cache/docker-buildx-new,mode=min \
+            --cache-from type=gha,scope=production-image-buildx \
+            --cache-to type=gha,scope=production-image-buildx,mode=min \
             .
-
-      - name: Rotate production Docker cache
-        if: always()
-        run: |
-          rm -rf .cache/docker-buildx
-          if [ -d .cache/docker-buildx-new ]; then
-            mv .cache/docker-buildx-new .cache/docker-buildx
-          fi
