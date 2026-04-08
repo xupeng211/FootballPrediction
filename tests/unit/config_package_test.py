@@ -66,7 +66,6 @@ VALID_INT_VALUE = 12
 MISSING_INT_DEFAULT = 9
 INVALID_INT_DEFAULT = 7
 TEMPLATE_PORT = 8123
-DEFAULT_POOL_FIRST_PORT = 7890
 BUSY_WEEK_THRESHOLD = 5
 CORE_PLAYER_THRESHOLD = 0.8
 EXCELLENT_CONFIDENCE_MIN = 97
@@ -130,7 +129,7 @@ def test_proxy_pool_resolution_prefers_environment(monkeypatch, tmp_path):
 
 
 def test_proxy_pool_resolution_supports_server_template(monkeypatch, tmp_path):
-    """serverTemplate 应能反推出主机与默认端口。"""
+    """serverTemplate 应能反推出主机与默认端口且不污染端口池。"""
     pool_file = tmp_path / "proxy_pool.json"
     pool_file.write_text(
         json.dumps(
@@ -148,12 +147,14 @@ def test_proxy_pool_resolution_supports_server_template(monkeypatch, tmp_path):
     monkeypatch.delenv("PROXY_HOST", raising=False)
     monkeypatch.setenv("PROXY_SERVER", "https://template.local:{port}")
     monkeypatch.delenv("PROXY_PORTS", raising=False)
+    monkeypatch.delenv("PROXY_PORT_START", raising=False)
+    monkeypatch.delenv("PROXY_PORT_END", raising=False)
     monkeypatch.setenv("PROXY_PORT", str(TEMPLATE_PORT))
 
     resolved = proxy_settings.resolve_shared_proxy_pool_config()
     assert resolved["host"] == "template.local"
     assert resolved["default_port"] == TEMPLATE_PORT
-    assert resolved["ports"][0] == DEFAULT_POOL_FIRST_PORT
+    assert resolved["ports"] == [9000]
     assert TEMPLATE_PORT not in resolved["ports"]
 
 
