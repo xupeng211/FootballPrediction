@@ -139,6 +139,24 @@ describe('ReconDomCollectionFlow', () => {
     ]);
   });
 
+  it('extractSeasonNavigationUrls 应过滤跨联赛与无赛季编号链接', async () => {
+    const flow = createFlowWithEvaluateHtml([
+      '<html><body>',
+      '  <a href="/football/mexico/liga-mx-2024/results/">cross-league</a>',
+      '  <a href="/football/usa/mls/results/page/2/">current-pagination</a>',
+      '  <a href="/football/usa/mls-2024/results/">valid-season</a>',
+      '</body></html>'
+    ].join(''));
+
+    const seasonUrls = await flow.extractSeasonNavigationUrls(
+      'https://www.oddsportal.com/football/usa/mls/results/'
+    );
+
+    assert.deepStrictEqual(seasonUrls, [
+      'https://www.oddsportal.com/football/usa/mls-2024/results/'
+    ]);
+  });
+
   it('应按信息密度合并首屏候选并准确描述来源', () => {
     const flow = {
       ...reconDomCollectionFlow
@@ -182,6 +200,26 @@ describe('ReconDomCollectionFlow', () => {
     assert.strictEqual(flow.describeInitialSource([{ hash: 'x' }], []), 'page_intercept');
     assert.strictEqual(flow.describeInitialSource([], [{ hash: 'y' }]), 'page_dom');
     assert.strictEqual(flow.describeInitialSource([], []), 'page_empty');
+  });
+
+  it('mergeInitialMatches 应忽略缺失 hash/url 的候选', () => {
+    const flow = {
+      ...reconDomCollectionFlow
+    };
+
+    const merged = flow.mergeInitialMatches(
+      [
+        { homeTeam: 'NoKey FC', awayTeam: 'Ghost FC' },
+        { hash: 'stable', url: 'https://a.test', homeTeam: 'A' }
+      ],
+      [
+        { hash: 'stable', url: 'https://a.test', homeTeam: 'A', awayTeam: 'B' }
+      ]
+    );
+
+    assert.deepStrictEqual(merged, [
+      { hash: 'stable', url: 'https://a.test', homeTeam: 'A', awayTeam: 'B' }
+    ]);
   });
 
   it('collectCurrentSeasonResults 应在停滞后停止滚动并返回最佳结果', async () => {
@@ -237,6 +275,53 @@ describe('ReconDomCollectionFlow', () => {
     }]);
   });
 
+  it('collectCurrentSeasonResults 应执行页面滚动 evaluate 回调', async () => {
+    const scrollByCalls = [];
+    const waits = [];
+    const flow = {
+      ...reconDomCollectionFlow,
+      minScrollRounds: 1,
+      scrollAttempts: 2,
+      stagnantRoundsThreshold: 99,
+      pageScrollFloorPx: 100,
+      pageScrollStepBasePx: 20,
+      pageScrollWaitCapMs: 120,
+      pageScrollWaitMs: 20,
+      scrollDelayMs: 80,
+      page: {
+        async evaluate(handler, step) {
+          Object.defineProperty(globalThis, 'window', {
+            value: {
+              scrollBy(x, y) {
+                scrollByCalls.push([x, y]);
+              }
+            },
+            configurable: true,
+            writable: true
+          });
+
+          return handler(step);
+        }
+      },
+      async wakeCurrentSeasonDom() {},
+      async extractCurrentSeasonResultRows() {
+        return [];
+      },
+      async _wait(_hook, ms) {
+        waits.push(ms);
+      }
+    };
+
+    const summary = await flow.collectCurrentSeasonResults(
+      'https://www.oddsportal.com/football/usa/mls/results/',
+      { maxScrollRounds: 2, scrollDelayMs: 80 }
+    );
+
+    assert.deepStrictEqual(scrollByCalls, [[0, 100]]);
+    assert.deepStrictEqual(waits, [80]);
+    assert.strictEqual(summary.totalCandidates, 0);
+  });
+
   it('wakeCurrentSeasonDom 与 _wait 应覆盖异常与双分支等待路径', async () => {
     const waits = [];
     let clickCount = 0;
@@ -269,5 +354,78 @@ describe('ReconDomCollectionFlow', () => {
 
     assert.strictEqual(clickCount, 1);
     assert.deepStrictEqual(waits, ['hook:25', 'page:40']);
+  });
+
+  it('wakeCurrentSeasonDom 在无 page 时应直接返回', async () => {
+    const flow = {
+      ...reconDomCollectionFlow,
+      page: null
+    };
+
+    await assert.doesNotReject(flow.wakeCurrentSeasonDom(1));
+  });
+
+  it('wakeCurrentSeasonDom 应执行 evaluate 回调内的 DOM 唤醒逻辑', async () => {
+    const dispatchedEvents = [];
+    const scrollToCalls = [];
+    let clickCount = 0;
+
+    class FakeMouseEvent {
+      constructor(type, options) {
+        this.type = type;
+        this.options = options;
+      }
+    }
+
+    Object.defineProperty(globalThis, 'window', {
+      value: {
+        innerHeight: 500,
+        scrollTo(payload) {
+          scrollToCalls.push(payload);
+        }
+      },
+      configurable: true,
+      writable: true
+    });
+    Object.defineProperty(globalThis, 'document', {
+      value: {
+        body: {
+          scrollHeight: 1200,
+          dispatchEvent(event) {
+            dispatchedEvents.push(event);
+          }
+        }
+      },
+      configurable: true,
+      writable: true
+    });
+    Object.defineProperty(globalThis, 'MouseEvent', {
+      value: FakeMouseEvent,
+      configurable: true,
+      writable: true
+    });
+
+    const flow = {
+      ...reconDomCollectionFlow,
+      wakeMouseX: 33,
+      wakeMouseY: 44,
+      wakeScrollStepPx: 150,
+      page: {
+        mouse: {
+          async click() {
+            clickCount += 1;
+          }
+        },
+        async evaluate(handler, payload) {
+          return handler(payload);
+        }
+      }
+    };
+
+    await assert.doesNotReject(flow.wakeCurrentSeasonDom(1));
+    assert.strictEqual(clickCount, 1);
+    assert.strictEqual(dispatchedEvents.length, 1);
+    assert.strictEqual(dispatchedEvents[0].type, 'click');
+    assert.deepStrictEqual(scrollToCalls, [{ top: 800, behavior: 'auto' }]);
   });
 });

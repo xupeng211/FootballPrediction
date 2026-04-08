@@ -128,6 +128,37 @@
         "jsdoc/require-returns": "off",
         "jsdoc/no-undefined-types": "off"
       }
+    },
+    {
+      "files": [
+        "scripts/ops/recon_scanner.js",
+        "src/infrastructure/recon/ReconEngine.js",
+        "src/infrastructure/recon/services/ReconMatrixFlow.js",
+        "src/infrastructure/recon/services/ReconTaskPlanner.js",
+        "src/infrastructure/recon/services/ReconMatchEvaluator.js",
+        "src/infrastructure/recon/services/ReconDomCollectionFlow.js",
+        "src/infrastructure/services/recon/ReconMappingStore.js"
+      ],
+      "rules": {
+        "complexity": ["error", 10],
+        "jsdoc/require-jsdoc": [
+          "error",
+          {
+            "require": {
+              "FunctionDeclaration": true,
+              "MethodDefinition": true,
+              "ClassDeclaration": true,
+              "ArrowFunctionExpression": false,
+              "FunctionExpression": false
+            }
+          }
+        ],
+        "jsdoc/require-param": "error",
+        "jsdoc/require-returns": "error",
+        "jsdoc/require-param-description": "error",
+        "jsdoc/require-returns-description": "error",
+        "jsdoc/require-returns-check": "error"
+      }
     }
   ]
 }
