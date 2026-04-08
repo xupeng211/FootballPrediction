@@ -364,6 +364,7 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
           season: args.season,
           leagueIds: leagues.map((league) => Number(league.id)),
           concurrency: Number.isInteger(args.concurrency) && args.concurrency > 0 ? args.concurrency : 5,
+          leagueConcurrency: Number.isInteger(args.concurrency) && args.concurrency > 0 ? args.concurrency : 5,
           limit: args.limit,
           confidenceThreshold: Number.isFinite(args.threshold) ? args.threshold : scanner.engine.confidenceThreshold,
           currentSeasonOnly: args.currentSeasonOnly,
