@@ -312,4 +312,64 @@ describe('ReconMatrixFlow', () => {
     assert.equal(result.scannedLeagues, 3);
     assert.equal(result.linked, 3);
   });
+
+  it('未显式传入 leagueConcurrency 时，应默认复用请求的 concurrency 而不是退回配置值', async () => {
+    let active = 0;
+    let maxActive = 0;
+
+    const preparedTargets = Array.from({ length: 6 }, (_, index) => ({
+      target: {
+        leagueId: index + 1,
+        league: { id: index + 1, name: `League-${index + 1}` },
+        dbSeason: '2025/2026'
+      },
+      pendingMatches: [{ match_id: `${index + 1}` }],
+      desiredLimit: 1
+    }));
+
+    const flow = {
+      ...reconMatrixFlow,
+      defaultReconConcurrency: 5,
+      leagueParallelism: 2,
+      reconBatchSize: 25,
+      confidenceThreshold: 0.75,
+      logger: { info() {}, warn() {}, error() {} },
+      navigatorFactory: async () => ({
+        proxyPort: null,
+        ownsNavigator: true,
+        navigator: {
+          async ensureBrowserHealthy() {},
+          async close() {}
+        }
+      }),
+      buildScanTargets: async () => preparedTargets.map((item) => item.target),
+      taskPlanner: {
+        prepareReconPendingTargets: async () => preparedTargets
+      },
+      _runReconTarget: async () => {
+        active++;
+        maxActive = Math.max(maxActive, active);
+        await new Promise((resolve) => {
+          setTimeout(resolve, 25);
+        });
+        active--;
+        return {
+          pendingTotal: 1,
+          linked: 1,
+          mismatched: 0,
+          sourceSeason: '2025/2026',
+          sourceUrl: 'oddsportal://results/',
+          candidateCount: 1
+        };
+      }
+    };
+
+    await flow.runReconMatrix({
+      season: '2025/2026',
+      concurrency: 6,
+      limit: 6
+    });
+
+    assert.equal(maxActive, 6);
+  });
 });
