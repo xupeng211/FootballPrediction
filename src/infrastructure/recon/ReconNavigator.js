@@ -23,6 +23,8 @@ class ReconNavigator {
     this.logger = options.logger || console;
     this.proxy = options.proxy;
     this.proxyRotator = options.proxyRotator || null;
+    this.proxyProvider = options.proxyProvider || null;
+    this.proxyLease = options.proxyLease || null;
     this.headless = options.headless !== false;
     this.scrollAttempts = options.scrollAttempts || navigatorConfig.scroll_attempts;
     this.scrollDelayMs = options.scrollDelayMs || navigatorConfig.scroll_delay_ms;
@@ -88,7 +90,12 @@ class ReconNavigator {
     this._launching = null;
     this._healing = null;
 
-    this.logger.info('[ReconNavigator] 实例创建', { traceId: this.traceId, headless: this.headless });
+    this.logger.info('[ReconNavigator] 实例创建', {
+      traceId: this.traceId,
+      headless: this.headless,
+      proxyPort: Number(this.proxy?.port || this.proxyLease?.proxy?.port || 0) || null,
+      proxyLeaseId: this.proxyLease?.id || null
+    });
   }
 
   get browser() {
@@ -439,10 +446,31 @@ class ReconNavigator {
     this.isClosed = true;
     this.networkMonitor.detach?.();
     this.networkMonitor.reset();
-    await this.browserContext.close();
-    this.networkMonitor.setPage(null);
-    this.domScraper.setPage(null);
-    this.stateProber.setPage(null);
+    try {
+      await this.browserContext.close();
+    } finally {
+      this.networkMonitor.setPage(null);
+      this.domScraper.setPage(null);
+      this.stateProber.setPage(null);
+
+      if (this.proxyProvider && this.proxyLease) {
+        await this.proxyProvider.release(this.proxyLease).catch((error) => {
+          this.logger.warn('navigator_proxy_release_failed', {
+            traceId: this.traceId,
+            proxyPort: Number(this.proxyLease?.proxy?.port || 0) || null,
+            proxyLeaseId: this.proxyLease?.id || null,
+            error: error.message
+          });
+        });
+
+        this.logger.info('navigator_proxy_released', {
+          traceId: this.traceId,
+          proxyPort: Number(this.proxyLease?.proxy?.port || 0) || null,
+          proxyLeaseId: this.proxyLease?.id || null
+        });
+        this.proxyLease = null;
+      }
+    }
   }
 
   _resultHasDecryptFailure(result) {

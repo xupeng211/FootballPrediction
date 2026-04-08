@@ -1,11 +1,12 @@
 'use strict';
 
-const { getReconConfigSection } = require('./ReconServiceConfig');
+const { RECON_CONFIG, getReconConfigSection } = require('./ReconServiceConfig');
 const { reconTaskPlannerSourceSelector } = require('./ReconTaskPlannerSourceSelector');
 const { reconTaskPlannerUrlUtils } = require('./ReconTaskPlannerUrlUtils');
 
 class ReconTaskPlanner {
   constructor(options = {}) {
+    const matchingConfig = RECON_CONFIG.matching || {};
     const runtimeConfig = getReconConfigSection(['recon_runtime', 'task_planner'], {});
 
     this.navigator = options.navigator || null;
@@ -30,6 +31,12 @@ class ReconTaskPlanner {
     this.fixturesPathTemplate = options.fixturesPathTemplate || runtimeConfig.fixtures_path;
     this.mismatchRetryThresholdDelta = Number(options.mismatchRetryThresholdDelta ?? runtimeConfig.mismatch_retry_threshold_delta ?? 0.05);
     this.mismatchRetryThresholdFloor = Number(options.mismatchRetryThresholdFloor ?? runtimeConfig.mismatch_retry_threshold_floor ?? 0.45);
+    this.minimumConfidenceThreshold = Number(
+      options.minimumConfidenceThreshold
+      ?? runtimeConfig.minimum_confidence_threshold
+      ?? matchingConfig.confidence_threshold
+      ?? 0.75
+    );
     this.mismatchRetryThresholdFloorByLeagueId = new Map(
       Object.entries(
         options.mismatchRetryThresholdFloorByLeagueId
@@ -206,6 +213,9 @@ class ReconTaskPlanner {
   }
 
   resolveReconPolicy(target, pendingMatches, confidenceThreshold = 0.5, options = {}) {
+    const requestedThreshold = Number.isFinite(Number(confidenceThreshold))
+      ? Number(confidenceThreshold)
+      : 0;
     const configuredRetry = options.allowMismatchRetry === true
       || target?.reconPolicy?.allowMismatchRetry === true;
     const hasMismatchRetry = (Array.isArray(pendingMatches) ? pendingMatches : [])
@@ -213,10 +223,12 @@ class ReconTaskPlanner {
     const thresholdFloor = this.resolveMismatchRetryThresholdFloor(target);
     const effectiveThreshold = configuredRetry && hasMismatchRetry
       ? Math.max(
+        requestedThreshold,
+        this.minimumConfidenceThreshold,
         thresholdFloor,
-        Number(confidenceThreshold || 0) - this.mismatchRetryThresholdDelta
+        requestedThreshold - this.mismatchRetryThresholdDelta
       )
-      : Number(confidenceThreshold || 0);
+      : Math.max(requestedThreshold, this.minimumConfidenceThreshold);
 
     return {
       allowMismatchRetry: configuredRetry,

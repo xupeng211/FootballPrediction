@@ -22,13 +22,24 @@ class ReconEngine {
     this.parser = options.parser;
     this.logger = options.logger || console;
     this.proxyRotator = options.proxyRotator;
+    this.navigatorFactory = options.navigatorFactory || null;
     this.traceId = options.traceId || null;
     this.configManager = options.configManager || new L1ConfigManager({ logger: this.logger });
     this.baseUrl = options.baseUrl || options.config?.oddsportal?.base_url || 'https://www.oddsportal.com';
     this.engineConfig = engineConfig;
     this.reconBatchSize = Math.max(1, Number(options.reconBatchSize ?? engineConfig.recon_batch_size));
     this.defaultReconConcurrency = Math.max(1, Number(options.defaultReconConcurrency ?? engineConfig.default_concurrency));
+    this.leagueParallelism = Math.max(
+      1,
+      Number(options.leagueParallelism ?? engineConfig.league_parallelism ?? this.defaultReconConcurrency)
+    );
     this.confidenceThreshold = Number(options.confidenceThreshold ?? engineConfig.confidence_threshold ?? matchingConfig.confidence_threshold);
+    this.minimumConfidenceThreshold = Number(
+      options.minimumConfidenceThreshold
+      ?? engineConfig.minimum_confidence_threshold
+      ?? matchingConfig.confidence_threshold
+      ?? 0.75
+    );
     this.archiveMaxPages = Math.max(1, Number(options.archiveMaxPages ?? engineConfig.archive_max_pages));
     this.archiveTimeoutMs = Math.max(1, Number(options.archiveTimeoutMs ?? engineConfig.archive_timeout_ms));
     this.pageSettleWaitMs = Math.max(0, Number(options.pageSettleWaitMs ?? engineConfig.page_settle_wait_ms));
@@ -57,7 +68,8 @@ class ReconEngine {
       configManager: this.configManager,
       baseUrl: this.baseUrl,
       matchEvaluator: this.matchEvaluator,
-      mirrorManager: this.mirrorManager
+      mirrorManager: this.mirrorManager,
+      minimumConfidenceThreshold: this.minimumConfidenceThreshold
     });
 
     this.navigator = options.navigator || this.taskPlanner?.navigator || null;
