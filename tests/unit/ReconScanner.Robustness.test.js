@@ -805,7 +805,7 @@ describe('ReconScanner Robustness - CLI Defaults', () => {
     });
 
     assert.strictEqual(exitCode, 0);
-    assert.deepStrictEqual(receivedEnsureNavigatorOptions, { launchBrowser: false });
+    assert.strictEqual(receivedEnsureNavigatorOptions, null);
     assert.strictEqual(receivedRunReconMatrixOptions.forcePureProtocol, true);
     assert.strictEqual(receivedRunReconMatrixOptions.mismatchRetryOnly, false);
   });

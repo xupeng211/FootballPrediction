@@ -123,6 +123,7 @@ test('ReconScanner main 收到 SIGINT 时必须触发 cleanupRuntime，并关闭
     engine: {
       navigator: null,
       async runReconMatrix() {
+        await this.navigatorFactory({ consumer: 'test-matrix-worker', launchBrowser: true });
         runReconMatrixStarted();
         return new Promise(() => {});
       }
@@ -130,7 +131,7 @@ test('ReconScanner main 收到 SIGINT 时必须触发 cleanupRuntime，并关闭
     proxyRotator: null
   });
 
-  scanner.ensureNavigator = async () => {
+  scanner._createNavigatorHandle = async () => {
     const navigator = {
       async close() {
         browserCloseCalls++;
@@ -142,8 +143,12 @@ test('ReconScanner main 收到 SIGINT 时必须触发 cleanupRuntime，并关闭
     };
 
     scanner.resources = [{ type: 'navigator', instance: navigator }];
-    scanner.engine.navigator = navigator;
-    return navigator;
+    return {
+      navigator,
+      ownsNavigator: true,
+      proxyPort: null,
+      proxyLeaseId: null
+    };
   };
 
   const exitCodePromise = main(['--season', '2025-2026', '--league', 'EPL', '--limit', '1'], {

@@ -38,7 +38,7 @@ function createPlanner(overrides = {}) {
 }
 
 describe('ReconTaskPlanner', () => {
-  it('allowMismatchRetry 开启时应下调阈值并启用 forceMultiMode', () => {
+  it('allowMismatchRetry 开启时仍不得低于 0.75 硬门槛，并启用 forceMultiMode', () => {
     const planner = createPlanner();
     const policy = planner.resolveReconPolicy(
       { leagueId: 47, league: { name: 'Premier League' } },
@@ -49,17 +49,11 @@ describe('ReconTaskPlanner', () => {
 
     assert.strictEqual(policy.allowMismatchRetry, true);
     assert.strictEqual(policy.hasMismatchRetry, true);
-    assert.strictEqual(
-      policy.effectiveConfidenceThreshold,
-      Math.max(
-        planner.mismatchRetryThresholdFloor,
-        0.75 - planner.mismatchRetryThresholdDelta
-      )
-    );
+    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.75);
     assert.strictEqual(policy.forceMultiMode, true);
   });
 
-  it('应允许按联赛覆盖 mismatch_retry_threshold_floor', () => {
+  it('即使联赛覆盖了 mismatch_retry_threshold_floor，也不得跌破全局 0.75 门槛', () => {
     const planner = createPlanner({
       mismatchRetryThresholdFloorByLeagueId: {
         131: 0.25
@@ -73,7 +67,7 @@ describe('ReconTaskPlanner', () => {
       { allowMismatchRetry: true }
     );
 
-    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.25);
+    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.75);
   });
 
   it('应在有限配额内优先调度高置信度任务', () => {
@@ -487,16 +481,6 @@ describe('ReconTaskPlanner', () => {
     assert.deepStrictEqual(sources, [
       {
         season: '2026',
-        url: 'oddsportal://root/football/argentina/primera-division-2026/fixtures/',
-        mode: 'current_fixtures'
-      },
-      {
-        season: '2026',
-        url: 'oddsportal://root/football/argentina/primera-division/fixtures/',
-        mode: 'current_fixtures_fallback'
-      },
-      {
-        season: '2026',
         url: 'oddsportal://root/football/argentina/primera-division-2026/results/',
         mode: 'current_results'
       },
@@ -504,6 +488,16 @@ describe('ReconTaskPlanner', () => {
         season: '2026',
         url: 'oddsportal://root/football/argentina/primera-division/results/',
         mode: 'current_results_fallback'
+      },
+      {
+        season: '2026',
+        url: 'oddsportal://root/football/argentina/primera-division-2026/fixtures/',
+        mode: 'current_fixtures'
+      },
+      {
+        season: '2026',
+        url: 'oddsportal://root/football/argentina/primera-division/fixtures/',
+        mode: 'current_fixtures_fallback'
       }
     ]);
   });
@@ -548,13 +542,13 @@ describe('ReconTaskPlanner', () => {
 
     assert.strictEqual(calls.length, 4);
     assert.strictEqual(calls[0].options.maxPages, 100);
-    assert.strictEqual(calls[0].url, 'oddsportal://root/football/brazil/serie-a-2026/fixtures/');
+    assert.strictEqual(calls[0].url, 'oddsportal://root/football/brazil/serie-a-2026/results/');
     assert.strictEqual(calls[1].options.maxPages, 100);
-    assert.strictEqual(calls[1].url, 'oddsportal://root/football/brazil/serie-a/fixtures/');
+    assert.strictEqual(calls[1].url, 'oddsportal://root/football/brazil/serie-a/results/');
     assert.strictEqual(calls[2].options.maxPages, 100);
-    assert.strictEqual(calls[2].url, 'oddsportal://root/football/brazil/serie-a-2026/results/');
+    assert.strictEqual(calls[2].url, 'oddsportal://root/football/brazil/serie-a-2026/fixtures/');
     assert.strictEqual(calls[3].options.maxPages, 100);
-    assert.strictEqual(calls[3].url, 'oddsportal://root/football/brazil/serie-a/results/');
+    assert.strictEqual(calls[3].url, 'oddsportal://root/football/brazil/serie-a/fixtures/');
   });
 
   it('single_year 联赛应使用结束年份生成 results URL', () => {
@@ -686,6 +680,30 @@ describe('ReconTaskPlanner', () => {
     assert.deepStrictEqual(calls, [
       {
         type: 'full',
+        url: target.resultsUrl,
+        options: {
+          maxPages: 50,
+          timeoutMs: planner.archiveTimeoutMs,
+          preferCurrentSeasonSource: true,
+          forcePureProtocol: false,
+          readySelector: 'text=Fixture Ready',
+          circuitBreakerKey: 'recon:223:2025/2026:current_results:2026:0'
+        }
+      },
+      {
+        type: 'full',
+        url: 'oddsportal://root/football/japan/j1-league/results/',
+        options: {
+          maxPages: 50,
+          timeoutMs: planner.archiveTimeoutMs,
+          preferCurrentSeasonSource: true,
+          forcePureProtocol: false,
+          readySelector: 'text=Fixture Ready',
+          circuitBreakerKey: 'recon:223:2025/2026:current_results_fallback:2026:1'
+        }
+      },
+      {
+        type: 'full',
         url: 'oddsportal://root/football/japan/j1-league-2026/fixtures/',
         options: {
           maxPages: 50,
@@ -694,7 +712,7 @@ describe('ReconTaskPlanner', () => {
           forceDomOnly: true,
           forcePureProtocol: false,
           readySelector: 'text=Fixture Ready',
-          circuitBreakerKey: 'recon:223:2025/2026:current_fixtures:2026:0'
+          circuitBreakerKey: 'recon:223:2025/2026:current_fixtures:2026:2'
         }
       },
       {
@@ -707,31 +725,7 @@ describe('ReconTaskPlanner', () => {
           forceDomOnly: true,
           forcePureProtocol: false,
           readySelector: 'text=Fixture Ready',
-          circuitBreakerKey: 'recon:223:2025/2026:current_fixtures_fallback:2026:1'
-        }
-      },
-      {
-        type: 'full',
-        url: target.resultsUrl,
-        options: {
-          maxPages: 50,
-          timeoutMs: planner.archiveTimeoutMs,
-          preferCurrentSeasonSource: true,
-          forcePureProtocol: false,
-          readySelector: 'text=Fixture Ready',
-          circuitBreakerKey: 'recon:223:2025/2026:current_results:2026:2'
-        }
-      },
-      {
-        type: 'full',
-        url: 'oddsportal://root/football/japan/j1-league/results/',
-        options: {
-          maxPages: 50,
-          timeoutMs: planner.archiveTimeoutMs,
-          preferCurrentSeasonSource: true,
-          forcePureProtocol: false,
-          readySelector: 'text=Fixture Ready',
-          circuitBreakerKey: 'recon:223:2025/2026:current_results_fallback:2026:3'
+          circuitBreakerKey: 'recon:223:2025/2026:current_fixtures_fallback:2026:3'
         }
       }
     ]);
@@ -939,7 +933,7 @@ describe('ReconTaskPlanner', () => {
     assert.strictEqual(navigatorCalls, 1);
   });
 
-  it('清零失配策略应降低阈值并强制启用多模式嗅探', () => {
+  it('清零失配策略不得突破 0.75 硬门槛，但仍应强制启用多模式嗅探', () => {
     const planner = createPlanner();
     const target = {
       leagueId: 47,
@@ -959,10 +953,7 @@ describe('ReconTaskPlanner', () => {
     assert.deepStrictEqual(policy, {
       allowMismatchRetry: true,
       hasMismatchRetry: true,
-      effectiveConfidenceThreshold: Math.max(
-        planner.mismatchRetryThresholdFloor,
-        0.5 - planner.mismatchRetryThresholdDelta
-      ),
+      effectiveConfidenceThreshold: 0.75,
       forceMultiMode: true
     });
   });
@@ -1099,8 +1090,9 @@ describe('ReconTaskPlanner', () => {
     );
     assert.strictEqual(calls[0].type, 'protocol');
     assert.strictEqual(calls[0].options.preferCurrentSeasonSource, true);
-    assert.strictEqual(selected.candidates.length, 2);
-    assert.strictEqual(selected.sampleLinked, 2);
+    assert.strictEqual(selected.source.url, 'oddsportal://root/football/china/super-league/results/');
+    assert.strictEqual(selected.candidates.length, 1);
+    assert.strictEqual(selected.sampleLinked, 1);
   });
 
   it('MLS 首个 current source 超时后应继续回退到备用 URL', async () => {
