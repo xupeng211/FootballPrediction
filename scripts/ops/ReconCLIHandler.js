@@ -351,9 +351,15 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       const results = [];
 
       if (useReconMatrix) {
-        await scanner.ensureNavigator({
-          launchBrowser: args.forcePureProtocol !== true
-        });
+        const requiresSharedNavigator = (
+          args.forcePureProtocol !== true
+          && typeof scanner.engine?.navigatorFactory !== 'function'
+        );
+        if (requiresSharedNavigator) {
+          await scanner.ensureNavigator({
+            launchBrowser: true
+          });
+        }
         const result = await scanner.engine.runReconMatrix({
           season: args.season,
           leagueIds: leagues.map((league) => Number(league.id)),

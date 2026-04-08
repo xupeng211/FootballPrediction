@@ -214,6 +214,53 @@ describe('ReconTaskPlannerSourceSelector', () => {
     assert.equal(calls[3].options.preferCurrentSeasonSource, true);
   });
 
+  it('非 forceMultiMode 下应返回最佳 results source，而不是盲目合并所有候选', async () => {
+    const calls = [];
+    const context = createContext({
+      navigator: {
+        async fetchFullSeasonArchive(url) {
+          calls.push(url);
+          if (url === 'oddsportal://results-primary') {
+            return {
+              matches: [{ match_id: '47_20252026_0001', hash: 'h1', url, confidence: 1 }],
+              pagesScanned: 1,
+              totalCandidates: 1,
+              sourceState: 'SOURCE_READY'
+            };
+          }
+
+          return {
+            matches: [{ match_id: 'noise-only', hash: 'h2', url, confidence: 0.1 }],
+            pagesScanned: 1,
+            totalCandidates: 1,
+            sourceState: 'SOURCE_READY'
+          };
+        }
+      },
+      buildCandidateSources() {
+        return [
+          { season: '2025-2026', url: 'oddsportal://results-primary', mode: 'results_archive' },
+          { season: '2025-2026', url: 'oddsportal://results-secondary', mode: 'historical_results' }
+        ];
+      }
+    });
+
+    const result = await context.selectCandidateSource({
+      leagueId: 47,
+      league: { id: 47, name: 'Premier League' },
+      dbSeason: '2025/2026',
+      season: '2025-2026',
+      resultsUrl: 'oddsportal://root/results/'
+    }, [{
+      match_id: '47_20252026_0001'
+    }], 0.75);
+
+    assert.deepEqual(calls, ['oddsportal://results-primary', 'oddsportal://results-secondary']);
+    assert.equal(result.source.url, 'oddsportal://results-primary');
+    assert.equal(result.candidates.length, 1);
+    assert.equal(result.sampleLinked, 1);
+  });
+
   it('所有 source 均失败时应聚合 sourceFailures 并抛出首个错误', async () => {
     const context = createContext({
       navigator: {

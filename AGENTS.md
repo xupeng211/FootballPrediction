@@ -149,7 +149,7 @@ Python 脚本同理：
 
 | 能力 | 推荐入口 | 实际目标 |
 |------|----------|----------|
-| Recon 扫描 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/recon_scanner.js --season <season> --league <league>` | `scripts/ops/recon_scanner.js` |
+| Recon 扫描（唯一入口） | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/recon_scanner.js --season <season> --league <league>` | `scripts/ops/recon_scanner.js` |
 | 回填 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/gold_pilot_50.js` | `scripts/ops/gold_pilot_50.js` |
 | 长时运行 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_marathon.js` | `scripts/ops/titan_marathon.js` |
 | 监控检查 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:check` | `scripts/ops/check_health.js` |
@@ -157,6 +157,7 @@ Python 脚本同理：
 
 Recon 运行补充约定：
 
+- Recon 缝合唯一入口是 `scripts/ops/recon_scanner.js`，禁止在主干保留并行实验缝合脚本（如 `recon_index_surgical_stitch.js`、`recon_proxy_smoke.js`）。
 - `recon_scanner.js` 默认直连运行，只有显式传入 `--use-proxy` 才启用代理。
 - L2 主状态机含义：
   `pending` 表示等待 Detail Harvester；

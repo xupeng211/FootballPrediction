@@ -234,4 +234,82 @@ describe('ReconMatrixFlow', () => {
       'https://www.oddsportal.com/football/japan/j1-league/kashiwa-reysol-yokohama-f-marinos-QwErTy12/'
     );
   });
+
+  it('runReconMatrix 应在联赛级扇出中分配独立 navigator 端口并受 p-limit 限流', async () => {
+    const workerStarts = [];
+    let active = 0;
+    let maxActive = 0;
+    let nextPort = 7890;
+
+    const preparedTargets = ['Premier League', 'Serie A', 'Bundesliga'].map((leagueName, index) => ({
+      target: {
+        leagueId: index + 1,
+        league: { id: index + 1, name: leagueName },
+        dbSeason: '2025/2026'
+      },
+      pendingMatches: [{ match_id: `${index + 1}` }],
+      desiredLimit: 1
+    }));
+
+    const flow = {
+      ...reconMatrixFlow,
+      defaultReconConcurrency: 22,
+      leagueParallelism: 22,
+      reconBatchSize: 25,
+      confidenceThreshold: 0.75,
+      logger: { info() {}, warn() {}, error() {} },
+      navigatorFactory: async () => {
+        const port = nextPort++;
+        return {
+          proxyPort: port,
+          ownsNavigator: true,
+          navigator: {
+            proxy: { port },
+            async ensureBrowserHealthy() {},
+            async close() {}
+          }
+        };
+      },
+      buildScanTargets: async () => preparedTargets.map((item) => item.target),
+      taskPlanner: {
+        prepareReconPendingTargets: async () => preparedTargets
+      },
+      _runReconTarget: async (target, options = {}) => {
+        active++;
+        maxActive = Math.max(maxActive, active);
+        workerStarts.push({
+          league: target.league.name,
+          port: options.navigator?.proxy?.port || null
+        });
+        await new Promise((resolve) => {
+          setTimeout(resolve, 25);
+        });
+        active--;
+        return {
+          pendingTotal: 1,
+          linked: 1,
+          mismatched: 0,
+          sourceSeason: '2025/2026',
+          sourceUrl: 'oddsportal://results/',
+          candidateCount: 1
+        };
+      }
+    };
+
+    const result = await flow.runReconMatrix({
+      season: '2025/2026',
+      concurrency: 1,
+      leagueConcurrency: 2,
+      limit: 3
+    });
+
+    assert.equal(maxActive, 2);
+    assert.deepStrictEqual(workerStarts, [
+      { league: 'Premier League', port: 7890 },
+      { league: 'Serie A', port: 7891 },
+      { league: 'Bundesliga', port: 7892 }
+    ]);
+    assert.equal(result.scannedLeagues, 3);
+    assert.equal(result.linked, 3);
+  });
 });
