@@ -2,25 +2,65 @@
 
 from __future__ import annotations
 
+import importlib
+import importlib.util
 import json
+from pathlib import Path
+import sys
+import types
 
 from pydantic import SecretStr
 
-from src.config import (
-    ConfigAccessor,
-    ProxyConfig,
-    common,
-    config_loader,
-    db_settings,
-    get_config,
-    get_database_url,
-    get_redis_url,
-    get_settings,
-    get_shared_proxy_pool_config,
-    proxy_settings,
-    reload_settings,
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SRC_ROOT = REPO_ROOT / "src"
+
+
+def _seed_namespace_package(name: str, package_path: Path) -> None:
+    """为 CI 提供轻量命名空间包，避免导入根包副作用。"""
+    if name in sys.modules:
+        return
+
+    module = types.ModuleType(name)
+    module.__path__ = [str(package_path)]  # type: ignore[attr-defined]
+    sys.modules[name] = module
+
+
+def _load_package_module(name: str, init_path: Path, package_path: Path):
+    """按文件路径加载包入口，绕过 src/__init__.py 的全量导入。"""
+    spec = importlib.util.spec_from_file_location(
+        name,
+        init_path,
+        submodule_search_locations=[str(package_path)],
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"无法加载包模块: {name}")
+
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+_seed_namespace_package("src", SRC_ROOT)
+_seed_namespace_package("src.core", SRC_ROOT / "core")
+config_package = _load_package_module(
+    "src.config", SRC_ROOT / "config" / "__init__.py", SRC_ROOT / "config"
 )
-from src.config import settings as settings_module
+
+common = importlib.import_module("src.config.common")
+config_loader = importlib.import_module("src.config.config_loader")
+db_settings = importlib.import_module("src.config.db_settings")
+proxy_settings = importlib.import_module("src.config.proxy_settings")
+settings_module = importlib.import_module("src.config.settings")
+
+ConfigAccessor = config_package.ConfigAccessor
+ProxyConfig = config_package.ProxyConfig
+get_config = config_package.get_config
+get_database_url = config_package.get_database_url
+get_redis_url = config_package.get_redis_url
+get_settings = config_package.get_settings
+get_shared_proxy_pool_config = config_package.get_shared_proxy_pool_config
+reload_settings = config_package.reload_settings
 
 VALID_INT_VALUE = 12
 MISSING_INT_DEFAULT = 9
