@@ -186,4 +186,37 @@ describe('ReconTaskPlannerUrlUtils', () => {
       ]
     );
   });
+
+  it('应为 SOURCE_EMPTY 问题联赛补 canonical fallback URL', () => {
+    const context = createContext();
+
+    assert.deepEqual(
+      context.buildSeasonalSourceUrls({
+        id: 140,
+        country: 'Spain',
+        slug: 'segunda-division',
+        seasonType: 'dual_year'
+      }, '2025/2026', { dbSeason: '2025/2026' }),
+      [
+        'oddsportal://root/football/spain/segunda-division-2025-2026/results/',
+        'oddsportal://root/football/spain/laliga2-2025-2026/results/',
+        'oddsportal://root/football/spain/laliga2/results/'
+      ]
+    );
+
+    assert.deepEqual(
+      context.buildSeasonalSourceUrls({
+        id: 230,
+        country: 'Mexico',
+        slug: 'liga-mx',
+        seasonType: 'single_year'
+      }, '2026', { dbSeason: '2025/2026' }),
+      [
+        'oddsportal://root/football/mexico/liga-mx-2026/results/',
+        'oddsportal://root/football/mexico/liga-mx/results/',
+        'oddsportal://root/football/mexico/liga-mx/',
+        'oddsportal://root/football/mexico/liga-mx-2025-2026/results/'
+      ]
+    );
+  });
 });

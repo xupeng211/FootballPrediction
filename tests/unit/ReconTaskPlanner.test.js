@@ -570,7 +570,7 @@ describe('ReconTaskPlanner', () => {
     );
   });
 
-  it('J1 当前赛季应使用 2026 results URL，J2 仍保持 seasonless results URL', () => {
+  it('J1 与 J2 当前赛季都应使用年度制 results URL', () => {
     const planner = createPlanner();
 
     const j1Target = planner.buildTarget('2025-2026', {
@@ -598,11 +598,11 @@ describe('ReconTaskPlanner', () => {
     assert.strictEqual(j2Target.season, '2026');
     assert.strictEqual(
       j2Target.resultsUrl,
-      'oddsportal://root/football/japan/j2-league/results/'
+      'oddsportal://root/football/japan/j2-league-2026/results/'
     );
   });
 
-  it('J1/J2 的 seasonless 当前赛季应按起始年份解释，不得重复回扫同年历史页', () => {
+  it('J2 应升级为年度制 source，优先尝试 2026 results 与 fixtures 回退', () => {
     const planner = createPlanner();
 
     const sources = planner.buildCandidateSources({
@@ -625,9 +625,63 @@ describe('ReconTaskPlanner', () => {
 
     assert.deepStrictEqual(sources, [
       {
-        season: '2025',
+        season: '2026',
+        url: 'oddsportal://root/football/japan/j2-league-2026/results/',
+        mode: 'current_results'
+      },
+      {
+        season: '2026',
         url: 'oddsportal://root/football/japan/j2-league/results/',
-        mode: 'current_season'
+        mode: 'current_results_fallback'
+      },
+      {
+        season: '2026',
+        url: 'oddsportal://root/football/japan/j2-league-2026/fixtures/',
+        mode: 'current_fixtures'
+      },
+      {
+        season: '2026',
+        url: 'oddsportal://root/football/japan/j2-league/fixtures/',
+        mode: 'current_fixtures_fallback'
+      }
+    ]);
+  });
+
+  it('seasonal SOURCE_EMPTY 联赛应追加 canonical fallback URL', () => {
+    const planner = createPlanner();
+
+    const sources = planner.buildCandidateSources({
+      league: {
+        id: 140,
+        name: 'Segunda División',
+        country: 'spain',
+        slug: 'segunda-division',
+        resultsUrlStrategy: 'seasonal',
+        seasonType: 'dual_year'
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      pendingMatches: [{
+        match_id: '140_20252026_0001',
+        match_date: '2026-03-01T05:00:00.000Z'
+      }]
+    });
+
+    assert.deepStrictEqual(sources, [
+      {
+        season: '2025-2026',
+        url: 'oddsportal://root/football/spain/segunda-division-2025-2026/results/',
+        mode: 'results_archive'
+      },
+      {
+        season: '2025-2026',
+        url: 'oddsportal://root/football/spain/laliga2-2025-2026/results/',
+        mode: 'results_archive_fallback'
+      },
+      {
+        season: '2025-2026',
+        url: 'oddsportal://root/football/spain/laliga2/results/',
+        mode: 'results_archive_fallback'
       }
     ]);
   });

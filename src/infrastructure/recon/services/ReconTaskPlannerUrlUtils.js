@@ -1,6 +1,32 @@
 'use strict';
 
+const SPECIAL_URL_RULES_BY_LEAGUE_ID = new Map([
+  [42, { seasonlessResults: true }],
+  [53, { seasonlessResults: true }],
+  [57, { seasonlessResults: true }],
+  [77, { rootPage: true, allowFutureFixturesSweep: true }],
+  [140, { canonicalResultsSlug: 'laliga2', canonicalSeasonalResults: true, seasonlessResults: true }],
+  [181, { seasonlessResults: true }],
+  [209, { seasonlessResults: true }],
+  [230, { seasonlessResults: true, rootPage: true }],
+  [8974, { annualLike: true, seasonlessResults: true }]
+]);
+
 const reconTaskPlannerUrlUtils = {
+  getLeagueId(leagueConfig = {}) {
+    const leagueId = Number(leagueConfig?.id || 0);
+    return Number.isInteger(leagueId) && leagueId > 0 ? leagueId : null;
+  },
+
+  getSpecialUrlRule(leagueConfig = {}) {
+    const leagueId = this.getLeagueId(leagueConfig);
+    if (!leagueId) {
+      return null;
+    }
+
+    return SPECIAL_URL_RULES_BY_LEAGUE_ID.get(leagueId) || null;
+  },
+
   formatSeasonForUrl(season) {
     if (!season) return '';
     return String(season).replace('/', '-');
@@ -59,8 +85,17 @@ const reconTaskPlannerUrlUtils = {
   },
 
   isAnnualLeague(leagueConfig = {}) {
-    const leagueId = Number(leagueConfig?.id || 0);
-    return Number.isInteger(leagueId) && this.annualLeagueIds instanceof Set
+    const leagueId = this.getLeagueId(leagueConfig);
+    if (!leagueId) {
+      return false;
+    }
+
+    const specialRule = this.getSpecialUrlRule(leagueConfig);
+    if (specialRule?.annualLike === true) {
+      return true;
+    }
+
+    return this.annualLeagueIds instanceof Set
       ? this.annualLeagueIds.has(leagueId)
       : false;
   },
@@ -82,6 +117,11 @@ const reconTaskPlannerUrlUtils = {
   getFutureFinalsWindow(target, pendingMatches, now = new Date()) {
     const awaitingFinals = target?.league?.awaitingFinals === true || target?.league?.awaiting_finals === true;
     if (!awaitingFinals) {
+      return { shouldSkip: false, kickoffDate: null };
+    }
+
+    const specialRule = this.getSpecialUrlRule(target?.league || {});
+    if (specialRule?.allowFutureFixturesSweep === true) {
       return { shouldSkip: false, kickoffDate: null };
     }
 
@@ -157,9 +197,7 @@ const reconTaskPlannerUrlUtils = {
   renderSeasonPathUrl(template, leagueConfig, season) {
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
     const country = this.normalizePathSegment(leagueConfig.country);
-    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
-      .trim()
-      .toLowerCase();
+    const slug = this.getResultsSlug(leagueConfig);
     const oddsportalSeason = this.formatSeasonForLeagueUrl(season, leagueConfig);
     const normalizedPath = String(template || '')
       .replace('{country}', country)
@@ -171,11 +209,23 @@ const reconTaskPlannerUrlUtils = {
     return `${normalizedBaseUrl}${normalizedPath}`;
   },
 
+  renderExplicitSeasonPathUrl(template, leagueConfig, season) {
+    const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    const country = this.normalizePathSegment(leagueConfig.country);
+    const slug = this.getResultsSlug(leagueConfig);
+    const normalizedPath = String(template || '')
+      .replace('{country}', country)
+      .replace('{league}', slug)
+      .replace('{season}', this.formatSeasonForUrl(season))
+      .replace(/\/{2,}/g, '/')
+      .replace(/^\/?/, '/');
+
+    return `${normalizedBaseUrl}${normalizedPath}`;
+  },
+
   buildResultsUrl(leagueConfig, season) {
     const country = this.normalizePathSegment(leagueConfig.country);
-    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
-      .trim()
-      .toLowerCase();
+    const slug = this.getResultsSlug(leagueConfig);
     const resultsUrlStrategy = this.getResultsUrlStrategy(leagueConfig);
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
     if (this.isAnnualLeague(leagueConfig)) {
@@ -202,9 +252,7 @@ const reconTaskPlannerUrlUtils = {
   buildSeasonlessSubpageUrl(leagueConfig, subpage) {
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
     const country = this.normalizePathSegment(leagueConfig.country);
-    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
-      .trim()
-      .toLowerCase();
+    const slug = this.getResultsSlug(leagueConfig);
     const normalizedSubpage = String(subpage || '')
       .trim()
       .replace(/^\/+|\/+$/g, '');
@@ -238,9 +286,7 @@ const reconTaskPlannerUrlUtils = {
   renderLeaguePathTemplate(template, leagueConfig = {}, replacements = {}) {
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
     const country = this.normalizePathSegment(leagueConfig.country);
-    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
-      .trim()
-      .toLowerCase();
+    const slug = this.getResultsSlug(leagueConfig);
     const oddsportalSeason = this.formatSeasonForLeagueUrl(replacements.season, leagueConfig);
     const year = replacements.year ?? replacements.season ?? '';
     const normalizedPath = String(template || '')
@@ -281,6 +327,16 @@ const reconTaskPlannerUrlUtils = {
     ];
 
     return [...new Set(urls.filter(Boolean))];
+  },
+
+  buildSeasonalSourceUrls(leagueConfig, season, options = {}) {
+    const baseUrls = [
+      this.buildResultsUrl(leagueConfig, season),
+      ...this.buildAdditionalResultsUrls(leagueConfig, season),
+      ...this.buildSeasonalFallbackResultsUrls(leagueConfig, season, options)
+    ];
+
+    return [...new Set(baseUrls.filter(Boolean))];
   },
 
   buildAnnualCurrentSeasonSources(leagueConfig, season) {
@@ -345,20 +401,72 @@ const reconTaskPlannerUrlUtils = {
 
   buildLeagueUrl(leagueConfig) {
     const country = this.normalizePathSegment(leagueConfig.country);
-    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
-      .trim()
-      .toLowerCase();
+    const slug = this.getResultsSlug(leagueConfig);
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
     return `${normalizedBaseUrl}/football/${country}/${slug}/`;
   },
 
   buildSeasonlessHistoricalResultsUrl(leagueConfig, year) {
     const country = this.normalizePathSegment(leagueConfig.country);
-    const slug = String(leagueConfig.resultsSlug || leagueConfig.slug || '')
-      .trim()
-      .toLowerCase();
+    const slug = this.getResultsSlug(leagueConfig);
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
     return `${normalizedBaseUrl}/football/${country}/${slug}-${year}/results/`;
+  },
+
+  getResultsSlug(leagueConfig = {}) {
+    return String(leagueConfig.resultsSlug || leagueConfig.slug || '')
+      .trim()
+      .toLowerCase();
+  },
+
+  getCanonicalResultsSlug(leagueConfig = {}) {
+    const specialRule = this.getSpecialUrlRule(leagueConfig);
+    const fallbackSlug = this.getResultsSlug(leagueConfig);
+    return String(specialRule?.canonicalResultsSlug || fallbackSlug)
+      .trim()
+      .toLowerCase();
+  },
+
+  buildCanonicalLeagueConfig(leagueConfig = {}) {
+    const canonicalSlug = this.getCanonicalResultsSlug(leagueConfig);
+    if (!canonicalSlug || canonicalSlug === this.getResultsSlug(leagueConfig)) {
+      return leagueConfig;
+    }
+
+    return {
+      ...leagueConfig,
+      slug: canonicalSlug,
+      resultsSlug: canonicalSlug
+    };
+  },
+
+  buildSeasonalFallbackResultsUrls(leagueConfig = {}, season, options = {}) {
+    const specialRule = this.getSpecialUrlRule(leagueConfig);
+    if (!specialRule) {
+      return [];
+    }
+
+    const urls = [];
+    const canonicalLeague = this.buildCanonicalLeagueConfig(leagueConfig);
+    const dbSeason = options.dbSeason || season;
+
+    if (specialRule.canonicalSeasonalResults === true) {
+      urls.push(this.renderSeasonPathUrl(this.resultsPathTemplate, canonicalLeague, season));
+    }
+
+    if (specialRule.seasonlessResults === true) {
+      urls.push(this.buildSeasonlessResultsUrl(canonicalLeague));
+    }
+
+    if (specialRule.rootPage === true) {
+      urls.push(this.buildLeagueUrl(canonicalLeague));
+    }
+
+    if (Number(this.getLeagueId(leagueConfig)) === 230) {
+      urls.push(this.renderExplicitSeasonPathUrl(this.resultsPathTemplate, canonicalLeague, dbSeason));
+    }
+
+    return [...new Set(urls.filter(Boolean))];
   },
 
   slugIncludesYear(slug) {
