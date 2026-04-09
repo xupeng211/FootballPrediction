@@ -89,6 +89,64 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     assert.strictEqual(node.cooling, false);
   });
 
+  test('403 应立即触发 30 分钟关键冷却并跌破健康分租用阈值', async () => {
+    let now = 10_000;
+    const provider = new ProxyProvider({
+      now: () => now,
+      healthCheckIntervalMs: 0,
+      criticalErrorCooldownMs: 1_800_000,
+      minHealthScore: 60
+    });
+
+    const lease = await provider.acquire({
+      consumer: 'recon',
+      sessionKey: 'critical-403',
+      sticky: false
+    });
+
+    await provider.reportFailure(lease.id, { statusCode: 403, reason: 'Forbidden' });
+
+    let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, true);
+    assert.ok(node.healthScore < 60);
+    assert.strictEqual(provider.getStats().available, 21);
+
+    now += 1_799_999;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, true);
+
+    now += 2;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, false);
+  });
+
+  test('健康分低于 60 的端口不得再次被租用', async () => {
+    const provider = new ProxyProvider({
+      healthCheckIntervalMs: 0,
+      minHealthScore: 60,
+      criticalErrorCooldownMs: 1_800_000
+    });
+
+    const lease = await provider.acquire({
+      consumer: 'recon',
+      sessionKey: 'health-gate',
+      sticky: false
+    });
+    const blockedPort = lease.proxy.port;
+
+    await provider.reportFailure(lease.id, { statusCode: 403, reason: 'Forbidden' });
+    await provider.release(lease.id);
+
+    const nextLease = await provider.acquire({
+      consumer: 'recon',
+      sessionKey: 'health-gate-next',
+      sticky: false
+    });
+
+    assert.notStrictEqual(nextLease.proxy.port, blockedPort);
+    assert.ok(provider.getNodeStates().find(item => item.port === blockedPort).healthScore < 60);
+  });
+
   test('WSL2 默认主机应统一解析为 172.25.16.1', () => {
     const provider = getProxyProvider({
       healthCheckIntervalMs: 0

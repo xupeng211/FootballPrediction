@@ -57,8 +57,8 @@ function getProxyRotatorClass() {
   return require('../../src/infrastructure/harvesters/ProxyRotator').ProxyRotator;
 }
 
-function getProxyProviderSingleton() {
-  return require('../../src/infrastructure/network/ProxyProvider').getProxyProvider();
+function getProxyProviderSingleton(options = {}) {
+  return require('../../src/infrastructure/network/ProxyProvider').getProxyProvider(options);
 }
 
 function getFixtureRepositoryClass() {
@@ -241,9 +241,14 @@ class ReconScanner {
 
     // 初始化代理轮询器
     if (this.proxyRotator === undefined) {
+      const proxyProviderOptions = {
+        minHealthScore: this.config.recon_runtime?.engine?.proxy_min_health_score,
+        criticalErrorCooldownMs: this.config.recon_runtime?.engine?.proxy_critical_error_cooldown_ms
+      };
       this.proxyRotator = new ProxyRotator({
         logger: this._childLogger('ProxyRotator'),
-        strategy: 'round-robin'
+        strategy: 'round-robin',
+        proxyProvider: getProxyProviderSingleton(proxyProviderOptions)
       });
     }
 

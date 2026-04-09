@@ -17,6 +17,10 @@ const DEFAULT_FAILURE_COOLDOWN_MS = 60000;
 const DEFAULT_HTTP_503_COOLDOWN_MS = 90000;
 const DEFAULT_FAILURE_THRESHOLD = 6;
 const DEFAULT_HTTP_503_OBSERVATION_THRESHOLD = 3;
+const DEFAULT_CRITICAL_ERROR_COOLDOWN_MS = 1800000;
+const DEFAULT_MIN_HEALTH_SCORE = 60;
+const DEFAULT_SUCCESS_HEALTH_REWARD = 4;
+const DEFAULT_FAILURE_HEALTH_PENALTY = 10;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -37,6 +41,32 @@ function extractStatusCode(reason = '') {
 function positiveNumber(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function isTimeoutLike(reason = '') {
+  const message = String(reason || '').toLowerCase();
+  return message.includes('timeout')
+    || message.includes('timed out')
+    || message.includes('etimedout');
+}
+
+function resolveHealthPenalty(statusCode, reason = '') {
+  if (statusCode === 403) {
+    return 45;
+  }
+  if (statusCode === 429) {
+    return 30;
+  }
+  if (statusCode === 503) {
+    return 20;
+  }
+  if (statusCode >= 500) {
+    return 18;
+  }
+  if (isTimeoutLike(reason)) {
+    return 25;
+  }
+  return DEFAULT_FAILURE_HEALTH_PENALTY;
 }
 
 class ProxyProvider extends EventEmitter {
@@ -80,8 +110,22 @@ class ProxyProvider extends EventEmitter {
       rateLimitIsolationMs: Number(options.rateLimitIsolationMs) || 300000,
       failureCooldownMs: positiveNumber(options.failureCooldownMs, DEFAULT_FAILURE_COOLDOWN_MS),
       http503CooldownMs: positiveNumber(options.http503CooldownMs, DEFAULT_HTTP_503_COOLDOWN_MS),
+      criticalErrorCooldownMs: positiveNumber(
+        options.criticalErrorCooldownMs,
+        DEFAULT_CRITICAL_ERROR_COOLDOWN_MS
+      ),
       heartbeatFailureCooldownMs: positiveNumber(options.heartbeatFailureCooldownMs, 5000),
       failureThreshold,
+      minHealthScore: clamp(
+        Number(options.minHealthScore) || DEFAULT_MIN_HEALTH_SCORE,
+        1,
+        100
+      ),
+      successHealthReward: clamp(
+        Number(options.successHealthReward) || DEFAULT_SUCCESS_HEALTH_REWARD,
+        1,
+        20
+      ),
       http503ObservationThreshold: positiveNumber(
         options.http503ObservationThreshold,
         Math.max(DEFAULT_HTTP_503_OBSERVATION_THRESHOLD, Math.ceil(failureThreshold / 2))
@@ -114,6 +158,7 @@ class ProxyProvider extends EventEmitter {
       lastError: null,
       lastConsumer: null,
       consecutiveFailures: 0,
+      healthScore: 100,
       cooldownUntil: 0,
       isolatedUntil: 0
     };
@@ -229,7 +274,8 @@ class ProxyProvider extends EventEmitter {
 
     const node = this._selectNode({
       preferredPort: options.preferredPort,
-      excludePorts: options.excludePorts
+      excludePorts: options.excludePorts,
+      minHealthScore: options.minHealthScore
     });
 
     if (!node) {
@@ -312,6 +358,11 @@ class ProxyProvider extends EventEmitter {
     node.lastError = null;
     node.consecutiveFailures = 0;
     node.probeHealthy = true;
+    node.healthScore = clamp(
+      node.healthScore + this.config.successHealthReward,
+      0,
+      100
+    );
     node.successRateEwma = ewma(
       node.successRateEwma,
       1,
@@ -345,6 +396,11 @@ class ProxyProvider extends EventEmitter {
     node.consecutiveFailures += 1;
     node.lastStatusCode = statusCode || null;
     node.lastError = reason;
+    node.healthScore = clamp(
+      node.healthScore - resolveHealthPenalty(statusCode, reason),
+      0,
+      100
+    );
     node.successRateEwma = ewma(
       node.successRateEwma,
       0,
@@ -386,6 +442,15 @@ class ProxyProvider extends EventEmitter {
       });
     }
 
+    if (node.healthScore < this.config.minHealthScore) {
+      this._emitAlert('proxy_health_score_blocked', node, {
+        statusCode,
+        reason,
+        healthScore: node.healthScore,
+        minHealthScore: this.config.minHealthScore
+      });
+    }
+
     return true;
   }
 
@@ -403,6 +468,9 @@ class ProxyProvider extends EventEmitter {
   }
 
   _resolveFailureCooldownMs(statusCode) {
+    if (statusCode === 403) {
+      return this.config.criticalErrorCooldownMs;
+    }
     return statusCode === 503
       ? this.config.http503CooldownMs
       : this.config.failureCooldownMs;
@@ -410,7 +478,10 @@ class ProxyProvider extends EventEmitter {
 
   getStats() {
     const now = this.now();
-    const healthy = this.nodes.filter(node => node.probeHealthy).length;
+    const healthy = this.nodes.filter(node => (
+      node.probeHealthy
+      && node.healthScore >= this.config.minHealthScore
+    )).length;
     const isolated = this.nodes.filter(node => node.isolatedUntil > now).length;
     const cooling = this.nodes.filter(node => node.cooldownUntil > now).length;
     const available = this.nodes.filter(node => this._isNodeAvailable(node, now)).length;
@@ -435,9 +506,11 @@ class ProxyProvider extends EventEmitter {
       leaseCount: node.leaseCount,
       successRateEwma: Number(node.successRateEwma.toFixed(4)),
       latencyEwmaMs: Math.round(node.latencyEwmaMs),
+      healthScore: Number(node.healthScore.toFixed(1)),
       probeHealthy: node.probeHealthy,
       isolated: node.isolatedUntil > now,
       cooling: node.cooldownUntil > now,
+      eligibleForLease: this._isNodeAvailable(node, now),
       dynamicWeight: Number(this._computeDynamicWeight(node).toFixed(4)),
       successCount: node.successCount,
       failureCount: node.failureCount,
@@ -532,6 +605,7 @@ class ProxyProvider extends EventEmitter {
     node.cooldownUntil = 0;
     node.isolatedUntil = 0;
     node.probeHealthy = true;
+    node.healthScore = 100;
     node.successRateEwma = DEFAULT_SUCCESS_RATE;
     node.latencyEwmaMs = this.config.targetLatencyMs;
     return true;
@@ -580,10 +654,11 @@ class ProxyProvider extends EventEmitter {
     };
   }
 
-  _isNodeAvailable(node, now = this.now()) {
+  _isNodeAvailable(node, now = this.now(), minHealthScore = this.config.minHealthScore) {
     return node.probeHealthy
       && node.isolatedUntil <= now
-      && node.cooldownUntil <= now;
+      && node.cooldownUntil <= now
+      && node.healthScore >= minHealthScore;
   }
 
   _computeDynamicWeight(node) {
@@ -602,17 +677,22 @@ class ProxyProvider extends EventEmitter {
     const now = this.now();
     const exclude = new Set((options.excludePorts || []).map(Number));
     const preferredPort = Number(options.preferredPort);
+    const minHealthScore = clamp(
+      Number(options.minHealthScore) || this.config.minHealthScore,
+      1,
+      100
+    );
 
     if (Number.isFinite(preferredPort)) {
       const preferred = this.nodeByPort.get(preferredPort);
-      if (preferred && !exclude.has(preferred.port) && this._isNodeAvailable(preferred, now)) {
+      if (preferred && !exclude.has(preferred.port) && this._isNodeAvailable(preferred, now, minHealthScore)) {
         return preferred;
       }
     }
 
     const candidates = this.nodes
       .filter(node => !exclude.has(node.port))
-      .filter(node => this._isNodeAvailable(node, now))
+      .filter(node => this._isNodeAvailable(node, now, minHealthScore))
       .sort((left, right) => {
         const leftScore = (left.leaseCount + 1) / this._computeDynamicWeight(left);
         const rightScore = (right.leaseCount + 1) / this._computeDynamicWeight(right);
@@ -646,6 +726,11 @@ class ProxyProvider extends EventEmitter {
       node.probeHealthy = false;
       node.lastHeartbeatAt = now;
       node.lastError = tcpResult?.error || 'tcp_failed';
+      node.healthScore = clamp(
+        node.healthScore - resolveHealthPenalty(null, tcpResult?.error || 'tcp_failed'),
+        0,
+        100
+      );
       node.cooldownUntil = Math.max(node.cooldownUntil, now + this.config.heartbeatFailureCooldownMs);
       return { ok: false, port: node.port, stage: 'tcp' };
     }
@@ -655,6 +740,11 @@ class ProxyProvider extends EventEmitter {
     if (!httpResult?.ok) {
       node.probeHealthy = false;
       node.lastError = httpResult?.error || 'http_failed';
+      node.healthScore = clamp(
+        node.healthScore - resolveHealthPenalty(Number(httpResult?.statusCode) || null, httpResult?.error || 'http_failed'),
+        0,
+        100
+      );
       if (Number(httpResult?.statusCode) === 429) {
         node.isolatedUntil = now + this.config.rateLimitIsolationMs;
       } else {
@@ -665,6 +755,11 @@ class ProxyProvider extends EventEmitter {
 
     node.probeHealthy = true;
     node.lastError = null;
+    node.healthScore = clamp(
+      node.healthScore + 1,
+      0,
+      100
+    );
     node.successRateEwma = ewma(
       node.successRateEwma,
       1,
