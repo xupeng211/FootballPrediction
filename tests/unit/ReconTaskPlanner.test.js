@@ -31,6 +31,8 @@ function createPlanner(overrides = {}) {
     resultsPathTemplate: overrides.resultsPathTemplate,
     fixturesPathTemplate: overrides.fixturesPathTemplate,
     mismatchRetryThresholdFloorByLeagueId: overrides.mismatchRetryThresholdFloorByLeagueId,
+    confidenceThresholdOverrideByLeagueId: overrides.confidenceThresholdOverrideByLeagueId,
+    forceMultiModeLeagueIds: overrides.forceMultiModeLeagueIds,
     annualLeagueIds: overrides.annualLeagueIds,
     forceDomLeagueIds: overrides.forceDomLeagueIds,
     excludeAllLeagueIds: overrides.excludeAllLeagueIds
@@ -68,6 +70,36 @@ describe('ReconTaskPlanner', () => {
     );
 
     assert.strictEqual(policy.effectiveConfidenceThreshold, 0.75);
+  });
+
+  it('法国杯配置阈值覆写后应允许以 0.70 作为收口观察线', () => {
+    const planner = createPlanner({
+      confidenceThresholdOverrideByLeagueId: {
+        181: 0.7
+      }
+    });
+
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 181, league: { id: 181, name: 'Coupe de France' } },
+      [{ match_id: '181_20252026_0001', pipeline_status: 'harvested' }],
+      0.75
+    );
+
+    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.7);
+  });
+
+  it('法国杯应允许通过联赛级策略强制启用 forceMultiMode', () => {
+    const planner = createPlanner({
+      forceMultiModeLeagueIds: [181]
+    });
+
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 181, league: { id: 181, name: 'Coupe de France' } },
+      [{ match_id: '181_20252026_0001', pipeline_status: 'harvested' }],
+      0.75
+    );
+
+    assert.strictEqual(policy.forceMultiMode, true);
   });
 
   it('应在有限配额内优先调度高置信度任务', () => {
@@ -570,7 +602,7 @@ describe('ReconTaskPlanner', () => {
     );
   });
 
-  it('J1 当前赛季应使用 2026 results URL，J2 仍保持 seasonless results URL', () => {
+  it('J1 保持年度制 results URL，J2 则应回退到可用的 seasonless primary', () => {
     const planner = createPlanner();
 
     const j1Target = planner.buildTarget('2025-2026', {
@@ -602,7 +634,7 @@ describe('ReconTaskPlanner', () => {
     );
   });
 
-  it('J1/J2 的 seasonless 当前赛季应按起始年份解释，不得重复回扫同年历史页', () => {
+  it('J2 应直接使用 seasonless results source，并移除稳定失效的 fixtures sweep', () => {
     const planner = createPlanner();
 
     const sources = planner.buildCandidateSources({
@@ -625,9 +657,48 @@ describe('ReconTaskPlanner', () => {
 
     assert.deepStrictEqual(sources, [
       {
-        season: '2025',
+        season: '2026',
         url: 'oddsportal://root/football/japan/j2-league/results/',
-        mode: 'current_season'
+        mode: 'current_results'
+      }
+    ]);
+  });
+
+  it('seasonal SOURCE_EMPTY 联赛应追加 canonical fallback URL', () => {
+    const planner = createPlanner();
+
+    const sources = planner.buildCandidateSources({
+      league: {
+        id: 140,
+        name: 'Segunda División',
+        country: 'spain',
+        slug: 'segunda-division',
+        resultsUrlStrategy: 'seasonal',
+        seasonType: 'dual_year'
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      pendingMatches: [{
+        match_id: '140_20252026_0001',
+        match_date: '2026-03-01T05:00:00.000Z'
+      }]
+    });
+
+    assert.deepStrictEqual(sources, [
+      {
+        season: '2025-2026',
+        url: 'oddsportal://root/football/spain/segunda-division-2025-2026/results/',
+        mode: 'results_archive'
+      },
+      {
+        season: '2025-2026',
+        url: 'oddsportal://root/football/spain/laliga2-2025-2026/results/',
+        mode: 'results_archive_fallback'
+      },
+      {
+        season: '2025-2026',
+        url: 'oddsportal://root/football/spain/laliga2/results/',
+        mode: 'results_archive_fallback'
       }
     ]);
   });

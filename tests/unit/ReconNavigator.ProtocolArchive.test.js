@@ -1055,6 +1055,98 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.pageStats.at(-1).source, 'CURRENT_RESULTS_ARCHIVE');
   });
 
+  it('fetchFullSeasonArchive 在当前赛季结果候选过少时，应补跑 current season 补救链路', async () => {
+    const baseUrl = 'oddsportal://root/football/japan/j2-league/results/';
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+
+    navigator.domScraper.discoverSeasonResultPages = async () => ({
+      pageUrls: [baseUrl],
+      initialMatches: [
+        {
+          hash: 'dom-1',
+          url: 'oddsportal://match/dom-1',
+          homeTeam: 'Vegalta Sendai',
+          awayTeam: 'Mito HollyHock',
+          matchDate: '2025-08-15T10:00:00.000Z'
+        },
+        {
+          hash: 'dom-2',
+          url: 'oddsportal://match/dom-2',
+          homeTeam: 'Oita Trinita',
+          awayTeam: 'Montedio Yamagata',
+          matchDate: '2025-08-16T10:00:00.000Z'
+        }
+      ],
+      initialSource: 'page_dom'
+    });
+    navigator.protocolArchiveExtract = async () => ({
+      matches: [],
+      pagesScanned: 0,
+      totalCandidates: 0,
+      pageStats: [],
+      sourceState: 'SOURCE_EMPTY'
+    });
+
+    let probedBaseUrl = null;
+    navigator.stateProber.probeCurrentSeasonFromPageState = async (inputBaseUrl) => {
+      probedBaseUrl = inputBaseUrl;
+      return {
+        matches: [
+          {
+            hash: 'state-1',
+            url: 'oddsportal://match/state-1',
+            homeTeam: 'Jubilo Iwata',
+            awayTeam: 'Sagan Tosu',
+            matchDate: '2025-08-17T10:00:00.000Z'
+          },
+          {
+            hash: 'state-2',
+            url: 'oddsportal://match/state-2',
+            homeTeam: 'Ventforet Kofu',
+            awayTeam: 'Ehime',
+            matchDate: '2025-08-18T10:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 2,
+        pageStats: [
+          {
+            page: 1,
+            rows: 2,
+            newRows: 2,
+            total: 4,
+            source: 'CURRENT_RESULTS_ARCHIVE'
+          }
+        ],
+        sourceState: 'CURRENT_RESULTS_ARCHIVE'
+      };
+    };
+
+    const result = await navigator.fetchFullSeasonArchive(baseUrl, {
+      maxPages: 10,
+      timeoutMs: 1234,
+      preferCurrentSeasonSource: true,
+      minCandidatesForStateProbe: 3
+    });
+
+    assert.strictEqual(probedBaseUrl, baseUrl);
+    assert.strictEqual(result.totalCandidates, 4);
+    assert.deepStrictEqual(
+      result.matches.map((item) => item.hash),
+      ['dom-1', 'dom-2', 'state-1', 'state-2']
+    );
+    assert.strictEqual(result.pageStats.at(-1).source, 'CURRENT_RESULTS_ARCHIVE');
+  });
+
   it('fetchFullSeasonArchive 在 forceDomOnly=true 时不得回落到 protocolArchiveExtract', async () => {
     const baseUrl = 'oddsportal://root/football/japan/j1-league-2026/results/';
     const navigator = new ReconNavigator({

@@ -46,8 +46,22 @@ class ReconTaskPlanner {
         .map(([leagueId, floor]) => [Number(leagueId), Number(floor)])
         .filter(([leagueId, floor]) => Number.isInteger(leagueId) && leagueId > 0 && Number.isFinite(floor))
     );
+    this.confidenceThresholdOverrideByLeagueId = new Map(
+      Object.entries(
+        options.confidenceThresholdOverrideByLeagueId
+        ?? runtimeConfig.confidence_threshold_override_by_league_id
+        ?? {}
+      )
+        .map(([leagueId, threshold]) => [Number(leagueId), Number(threshold)])
+        .filter(([leagueId, threshold]) => Number.isInteger(leagueId) && leagueId > 0 && Number.isFinite(threshold))
+    );
     this.forceDomLeagueIds = new Set(
       (options.forceDomLeagueIds || runtimeConfig.force_dom_league_ids || [])
+        .map((id) => Number(id))
+        .filter((id) => Number.isInteger(id) && id > 0)
+    );
+    this.forceMultiModeLeagueIds = new Set(
+      (options.forceMultiModeLeagueIds || runtimeConfig.force_multi_mode_league_ids || [])
         .map((id) => Number(id))
         .filter((id) => Number.isInteger(id) && id > 0)
     );
@@ -212,29 +226,42 @@ class ReconTaskPlanner {
     return Number(this.mismatchRetryThresholdFloor);
   }
 
+  resolveConfidenceThresholdOverride(target) {
+    const leagueId = Number(target?.leagueId || target?.league?.id || 0);
+    if (Number.isInteger(leagueId) && this.confidenceThresholdOverrideByLeagueId.has(leagueId)) {
+      return Number(this.confidenceThresholdOverrideByLeagueId.get(leagueId));
+    }
+
+    return null;
+  }
+
   resolveReconPolicy(target, pendingMatches, confidenceThreshold = 0.5, options = {}) {
     const requestedThreshold = Number.isFinite(Number(confidenceThreshold))
       ? Number(confidenceThreshold)
       : 0;
     const configuredRetry = options.allowMismatchRetry === true
       || target?.reconPolicy?.allowMismatchRetry === true;
+    const leagueId = Number(target?.leagueId || target?.league?.id || 0);
     const hasMismatchRetry = (Array.isArray(pendingMatches) ? pendingMatches : [])
       .some((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH');
     const thresholdFloor = this.resolveMismatchRetryThresholdFloor(target);
+    const thresholdOverride = this.resolveConfidenceThresholdOverride(target);
+    const baselineThreshold = Number.isFinite(thresholdOverride)
+      ? Number(thresholdOverride)
+      : Math.max(requestedThreshold, this.minimumConfidenceThreshold);
     const effectiveThreshold = configuredRetry && hasMismatchRetry
       ? Math.max(
-        requestedThreshold,
-        this.minimumConfidenceThreshold,
+        baselineThreshold,
         thresholdFloor,
         requestedThreshold - this.mismatchRetryThresholdDelta
       )
-      : Math.max(requestedThreshold, this.minimumConfidenceThreshold);
+      : baselineThreshold;
 
     return {
       allowMismatchRetry: configuredRetry,
       hasMismatchRetry,
       effectiveConfidenceThreshold: effectiveThreshold,
-      forceMultiMode: configuredRetry && hasMismatchRetry
+      forceMultiMode: this.forceMultiModeLeagueIds.has(leagueId) || (configuredRetry && hasMismatchRetry)
     };
   }
 
