@@ -69,6 +69,40 @@ describe('ReconMatchEvaluator', () => {
     assert.strictEqual(best.method, 'exact');
   });
 
+  it('应对青年队与成年队身份冲突执行一票否决', () => {
+    const evaluator = new ReconMatchEvaluator({
+      parser: {
+        calculateSimilarity() {
+          return 0.99;
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const l1Match = {
+      home_team: 'Barcelona',
+      away_team: 'Real Madrid',
+      match_date: '2026-04-05T18:00:00.000Z'
+    };
+    const candidate = {
+      hash: 'identity-conflict',
+      url: 'https://www.oddsportal.com/football/spain/test/barcelona-u19-real-madrid-identity-conflict/',
+      homeTeam: 'Barcelona U19',
+      awayTeam: 'Real Madrid',
+      matchDate: '2026-04-05T18:00:00.000Z'
+    };
+
+    const orientation = evaluator.evaluateCandidateOrientation(candidate, l1Match);
+    const best = evaluator.findBestCandidate(l1Match, [candidate]);
+
+    assert.equal(orientation.directIdentityConflict, true);
+    assert.equal(orientation.directScore, 0);
+    assert.equal(orientation.directMatch, false);
+    assert.ok(best, '应仍返回候选以保留证据');
+    assert.equal(best.confidence, 0);
+    assert.equal(evaluator.isStrictMatch(candidate, l1Match), false);
+  });
+
   it('应识别世界杯淘汰赛与附加赛占位符，且不误伤真实队名', () => {
     const evaluator = new ReconMatchEvaluator({
       logger: { info() {}, warn() {}, error() {} }

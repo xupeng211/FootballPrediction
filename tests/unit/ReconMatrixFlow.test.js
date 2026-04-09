@@ -248,6 +248,158 @@ describe('ReconMatrixFlow', () => {
         );
     });
 
+    it('应将 results、fixtures、search 三路候选合并为统一候选池', async () => {
+        const flow = {
+            ...reconMatrixFlow,
+            logger: { info() {}, warn() {}, error() {} },
+            taskPlanner: {
+                sampleSize: 2,
+                filterPlaceholderFixtures(matches) {
+                    return matches;
+                },
+                async selectCandidateSource() {
+                    return {
+                        source: {
+                            season: '2025/2026',
+                            url: 'oddsportal://results'
+                        },
+                        extractResult: {
+                            matches: [{ match_id: 'm1', hash: 'hash-results', url: 'oddsportal://results/m1' }],
+                            pagesScanned: 1,
+                            totalCandidates: 1,
+                            sourceState: 'SOURCE_READY'
+                        },
+                        candidates: [{ match_id: 'm1', hash: 'hash-results', url: 'oddsportal://results/m1' }],
+                        seasonMirror: new Map(),
+                        sampleLinked: 1
+                    };
+                }
+            },
+            mirrorManager: {
+                buildSeasonMirror() {
+                    return new Map();
+                }
+            },
+            matchEvaluator: {
+                findBestCandidate(match, candidates) {
+                    const candidate = candidates.find((item) => item.match_id === match.match_id);
+                    return candidate ? { candidate, confidence: 1 } : null;
+                }
+            },
+            _probeFixturesCandidateSource: async () => ({
+                routeKind: 'fixtures',
+                source: {
+                    season: '2025/2026',
+                    url: 'oddsportal://fixtures'
+                },
+                extractResult: {
+                    matches: [{ match_id: 'm2', hash: 'hash-fixtures', url: 'oddsportal://fixtures/m2' }],
+                    pagesScanned: 1,
+                    totalCandidates: 1,
+                    sourceState: 'FIXTURES_SWEEP_READY'
+                },
+                candidates: [{ match_id: 'm2', hash: 'hash-fixtures', url: 'oddsportal://fixtures/m2' }],
+                seasonMirror: new Map(),
+                sampleLinked: 1
+            }),
+            _probeSearchCandidateSource: async () => ({
+                routeKind: 'search',
+                source: {
+                    season: '2025/2026',
+                    url: 'oddsportal://search'
+                },
+                extractResult: {
+                    matches: [{ match_id: 'm3', hash: 'hash-search', url: 'oddsportal://search/m3' }],
+                    pagesScanned: 1,
+                    totalCandidates: 1,
+                    sourceState: 'SEARCH_SWEEP_READY'
+                },
+                candidates: [{ match_id: 'm3', hash: 'hash-search', url: 'oddsportal://search/m3' }],
+                seasonMirror: new Map(),
+                sampleLinked: 0
+            }),
+            _canUseLocalDictionaryFallback: () => false
+        };
+
+        const selectedSource = await flow._selectCandidateSourceWithLocalFallback(
+            {
+                dbSeason: '2025/2026',
+                resultsUrl: 'oddsportal://results',
+                league: { name: 'Test League' }
+            },
+            [
+                { match_id: 'm1' },
+                { match_id: 'm2' }
+            ],
+            0.75
+        );
+
+        assert.deepStrictEqual(selectedSource.routeKinds, ['results', 'fixtures', 'search']);
+        assert.strictEqual(selectedSource.extractResult.sourceState, 'MULTI_ROUTE_SWEEP');
+        assert.strictEqual(selectedSource.candidates.length, 3);
+        assert.strictEqual(selectedSource.sampleLinked, 2);
+    });
+
+    it('perpetualReconMode 开启后只要仍有 pending 且代理可用就应继续下一轮', async () => {
+        let prepareCalls = 0;
+        const target = {
+            leagueId: 1,
+            league: { id: 1, name: 'Premier League' },
+            dbSeason: '2025/2026',
+        };
+        const flow = {
+            ...reconMatrixFlow,
+            perpetualReconMode: true,
+            perpetualReconPassDelayMs: 0,
+            defaultReconConcurrency: 1,
+            reconBatchSize: 25,
+            confidenceThreshold: 0.75,
+            logger: { info() {}, warn() {}, error() {} },
+            buildScanTargets: async () => [target],
+            taskPlanner: {
+                async prepareReconPendingTargets() {
+                    prepareCalls += 1;
+                    if (prepareCalls === 1) {
+                        return [{ target, pendingMatches: [{ match_id: 'm1' }], desiredLimit: 1 }];
+                    }
+                    if (prepareCalls === 2) {
+                        return [{ target, pendingMatches: [{ match_id: 'm2' }], desiredLimit: 1 }];
+                    }
+                    return [];
+                }
+            },
+            _runAdaptiveLeagueWorkers: async (targetPendingMap) => targetPendingMap.map(({ target: itemTarget, pendingMatches }) => ({
+                target: itemTarget,
+                result: {
+                    pendingTotal: pendingMatches.length,
+                    linked: pendingMatches.length,
+                    mismatched: 0,
+                    sourceSeason: '2025/2026',
+                    sourceUrl: 'oddsportal://results/',
+                    candidateCount: 1
+                }
+            })),
+            _resolveAvailableProxyCount: () => 1,
+            shouldContinuePerpetualRecon(remainingPending, options = {}) {
+                return remainingPending > 0 && Number(options.availableProxyCount || 0) > 0;
+            }
+        };
+
+        const result = await flow.runReconMatrix({
+            season: '2025/2026',
+            leagueStartupStaggerMs: 0,
+            perpetualReconMode: true,
+            perpetualReconPassDelayMs: 0
+        });
+
+        assert.strictEqual(prepareCalls, 3);
+        assert.strictEqual(result.passes, 2);
+        assert.strictEqual(result.linked, 2);
+        assert.strictEqual(result.remainingPending, 0);
+        assert.strictEqual(result.perLeague.length, 1);
+        assert.strictEqual(result.perLeague[0].passes, 2);
+    });
+
     it('runReconMatrix 应在联赛级扇出中分配独立 navigator 端口并受 p-limit 限流', async () => {
         const workerStarts = [];
         let active = 0;

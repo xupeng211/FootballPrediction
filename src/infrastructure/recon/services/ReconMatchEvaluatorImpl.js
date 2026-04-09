@@ -442,6 +442,67 @@ class ReconMatchEvaluator {
     return Normalizer.normalizeTeamName(slug) || slug;
   }
 
+  tokenizeIdentityName(teamName) {
+    return String(teamName || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+  }
+
+  extractIdentityMarkers(teamName) {
+    const tokens = this.tokenizeIdentityName(teamName);
+    const tokenSet = new Set(tokens);
+    const markers = [];
+    const ageToken = tokens.find((token) => /^u\d{1,2}$/.test(token));
+
+    if (ageToken) {
+      markers.push(ageToken.toUpperCase());
+    }
+
+    if (
+      tokenSet.has('youth')
+      || tokenSet.has('juvenil')
+      || tokenSet.has('academy')
+    ) {
+      markers.push('YOUTH');
+    }
+
+    if (
+      tokenSet.has('reserve')
+      || tokenSet.has('reserves')
+    ) {
+      markers.push('RESERVE');
+    }
+
+    if (
+      (tokenSet.has('b') && tokens.length > 1)
+      || (tokenSet.has('team') && tokenSet.has('b'))
+    ) {
+      markers.push('B_TEAM');
+    }
+
+    if (
+      (tokenSet.has('ii') && tokens.length > 1)
+      || tokenSet.has('castilla')
+      || (tokenSet.has('next') && tokenSet.has('gen'))
+    ) {
+      markers.push('SECOND_TEAM');
+    }
+
+    return [...new Set(markers)];
+  }
+
+  hasIdentityHardConflict(leftTeamName, rightTeamName) {
+    const leftMarkers = this.extractIdentityMarkers(leftTeamName);
+    const rightMarkers = this.extractIdentityMarkers(rightTeamName);
+
+    return leftMarkers.length > 0 !== rightMarkers.length > 0;
+  }
+
   evaluateCandidateOrientation(candidate, l1Match) {
     const candidateHome = candidate?.homeTeam || '';
     const candidateAway = candidate?.awayTeam || '';
@@ -450,20 +511,28 @@ class ReconMatchEvaluator {
     const l1Home = l1Match?.home_team || '';
     const l1Away = l1Match?.away_team || '';
 
-    const directHome = this.calculateSimilarity(candidateHome, l1Home);
-    const directAway = this.calculateSimilarity(candidateAway, l1Away);
-    const swappedHome = this.calculateSimilarity(candidateHome, l1Away);
-    const swappedAway = this.calculateSimilarity(candidateAway, l1Home);
-    const directDictionaryMatch = this.isDictionaryExactMatch(candidateHome, l1Home)
+    const directIdentityConflict = this.hasIdentityHardConflict(candidateHome, l1Home)
+      || this.hasIdentityHardConflict(candidateAway, l1Away);
+    const swappedIdentityConflict = this.hasIdentityHardConflict(candidateHome, l1Away)
+      || this.hasIdentityHardConflict(candidateAway, l1Home);
+    const directHome = directIdentityConflict ? 0 : this.calculateSimilarity(candidateHome, l1Home);
+    const directAway = directIdentityConflict ? 0 : this.calculateSimilarity(candidateAway, l1Away);
+    const swappedHome = swappedIdentityConflict ? 0 : this.calculateSimilarity(candidateHome, l1Away);
+    const swappedAway = swappedIdentityConflict ? 0 : this.calculateSimilarity(candidateAway, l1Home);
+    const directDictionaryMatch = !directIdentityConflict
+      && this.isDictionaryExactMatch(candidateHome, l1Home)
       && this.isDictionaryExactMatch(candidateAway, l1Away);
-    const swappedDictionaryMatch = this.isDictionaryExactMatch(candidateHome, l1Away)
+    const swappedDictionaryMatch = !swappedIdentityConflict
+      && this.isDictionaryExactMatch(candidateHome, l1Away)
       && this.isDictionaryExactMatch(candidateAway, l1Home);
     const directScore = (directHome + directAway) / 2;
     const swappedScore = (swappedHome + swappedAway) / 2;
 
-    const directNormalized = this.isComparableNameEquivalent(comparableCandidateHome, l1Home)
+    const directNormalized = !directIdentityConflict
+      && this.isComparableNameEquivalent(comparableCandidateHome, l1Home)
       && this.isComparableNameEquivalent(comparableCandidateAway, l1Away);
-    const swappedNormalized = this.isComparableNameEquivalent(comparableCandidateHome, l1Away)
+    const swappedNormalized = !swappedIdentityConflict
+      && this.isComparableNameEquivalent(comparableCandidateHome, l1Away)
       && this.isComparableNameEquivalent(comparableCandidateAway, l1Home);
     const directMatch = directDictionaryMatch || directNormalized || (
       directHome > this.orientationSimilarityThreshold && directAway > this.orientationSimilarityThreshold
@@ -485,6 +554,8 @@ class ReconMatchEvaluator {
       swappedScore,
       directNormalized,
       swappedNormalized,
+      directIdentityConflict,
+      swappedIdentityConflict,
       isReversed,
       dictionaryLocked: directDictionaryMatch || swappedDictionaryMatch
     };
@@ -535,6 +606,11 @@ class ReconMatchEvaluator {
       if (placeholderFixture && !(orientation.directNormalized || orientation.swappedNormalized)) {
         continue;
       }
+      const selectedIdentityConflict = orientation.isReversed
+        ? orientation.swappedIdentityConflict
+        : orientation.directScore >= orientation.swappedScore
+          ? orientation.directIdentityConflict
+          : orientation.swappedIdentityConflict;
       const teamConfidence = orientation.isReversed
         ? orientation.swappedScore
         : Math.max(orientation.directScore, orientation.swappedScore);
@@ -542,7 +618,9 @@ class ReconMatchEvaluator {
         candidate.matchDate || candidate.match_date,
         l1Match.match_date
       );
-      const confidence = placeholderFixture && (orientation.directNormalized || orientation.swappedNormalized)
+      const confidence = selectedIdentityConflict
+        ? 0
+        : placeholderFixture && (orientation.directNormalized || orientation.swappedNormalized)
         ? 1.0
         : orientation.dictionaryLocked
         ? 1.0
