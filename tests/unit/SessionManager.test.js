@@ -906,12 +906,12 @@ describe('SessionManager', () => {
     describe('_delay', () => {
         it('应该正确延时', async () => {
             const manager = createMockSessionManager();
-            const start = Date.now();
+            const start = performance.now();
 
             await manager._delay(100);
 
-            const elapsed = Date.now() - start;
-            // V6.7: 容忍系统时钟漂移，只要不报错即可，某些环境下 Date.now() 可能出现非预期回退
+            const elapsed = performance.now() - start;
+            // 使用单调时钟避免容器环境下 Date.now() 偶发回退导致的假阴性
             assert.ok(elapsed >= 0, `延时应该 >= 0ms，实际 ${elapsed}ms`);
         });
     });
