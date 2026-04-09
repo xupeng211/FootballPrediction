@@ -56,16 +56,35 @@ describe('ReconBrowserContext', () => {
       userDataDir: browserContext.userDataDir,
       options: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-blink-features=AutomationControlled',
+          '--disable-dev-shm-usage',
+          '--window-size=1920,1080',
+          '--lang=en-US'
+        ],
         timeout: 4321,
-        userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         viewport: { width: 1920, height: 1080 },
         locale: 'en-US',
-        timezoneId: 'Asia/Tokyo',
+        timezoneId: 'Europe/London',
+        deviceScaleFactor: 1,
+        screen: { width: 1920, height: 1080 },
+        hasTouch: false,
+        isMobile: false,
         proxy: { server: 'http://127.0.0.1:8899' },
         extraHTTPHeaders: {
-          'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7',
-          'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+          'sec-ch-ua': '"Chromium";v="131", "Google Chrome";v="131", "Not-A.Brand";v="99"',
+          'sec-ch-ua-mobile': '?0',
+          'sec-ch-ua-platform': '"Windows"',
+          'sec-fetch-dest': 'document',
+          'sec-fetch-mode': 'navigate',
+          'sec-fetch-site': 'none',
+          'sec-fetch-user': '?1',
+          'accept-language': 'en-US,en;q=0.9',
+          'accept-encoding': 'gzip, deflate, br',
+          'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
         }
       }
     });
@@ -81,7 +100,7 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(events[2], 'context.close');
   });
 
-  it('启用高仿真指纹时才应注入 addInitScript', async () => {
+  it('应同时注入基础 stealth 指纹与增强反检测脚本', async () => {
     const events = [];
     const page = {
       async addInitScript(fn) {
@@ -118,7 +137,10 @@ describe('ReconBrowserContext', () => {
 
     await browserContext.launch({ timeout: 4321 });
 
-    assert.deepStrictEqual(events, [{ type: 'addInitScript', value: 'function' }]);
+    assert.deepStrictEqual(events, [
+      { type: 'addInitScript', value: 'function' },
+      { type: 'addInitScript', value: 'string' }
+    ]);
   });
 
   it('启用 preferFullChromium 时应把完整 Chromium executablePath 注入 launchOptions', async () => {
@@ -162,7 +184,7 @@ describe('ReconBrowserContext', () => {
     assert.strictEqual(events[0].executablePath, '/tmp/playwright/chromium/chrome');
   });
 
-  it('launch 后应自动注入 external session cookies，并用外部 UA 对齐 context', async () => {
+  it('launch 后应自动注入 external session cookies，并保持 Chrome 131 stealth UA', async () => {
     const events = [];
     const page = {
       async addInitScript() {}
@@ -222,8 +244,14 @@ describe('ReconBrowserContext', () => {
     await browserContext.launch();
 
     assert.strictEqual(events[0].type, 'launchPersistentContext');
-    assert.strictEqual(events[0].options.userAgent, 'External-UA/1.0');
-    assert.strictEqual(events[0].options.extraHTTPHeaders['user-agent'], 'External-UA/1.0');
+    assert.strictEqual(
+      events[0].options.userAgent,
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    );
+    assert.strictEqual(
+      events[0].options.extraHTTPHeaders['user-agent'],
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
+    );
     assert.strictEqual(events[1].type, 'addCookies');
     assert.strictEqual(events[1].cookies.length, 1);
     assert.strictEqual(events[1].cookies[0].name, 'session-cookie');

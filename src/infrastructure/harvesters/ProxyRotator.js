@@ -35,8 +35,12 @@ const USER_AGENTS = [
 class ProxyRotator {
   constructor(options = {}) {
     this.strategy = options.strategy || 'round-robin';
-    this.cooldownMs = options.cooldownMs || 60000;
-    this.maxFailures = options.maxFailures || 3;
+    this.cooldownMs = Number.isFinite(Number(options.cooldownMs)) && Number(options.cooldownMs) > 0
+      ? Number(options.cooldownMs)
+      : 90000;
+    this.maxFailures = Number.isFinite(Number(options.maxFailures)) && Number(options.maxFailures) > 0
+      ? Number(options.maxFailures)
+      : 8;
     this.consumer = options.consumer || 'recon-engine';
     this.proxyProvider = options.proxyProvider || getProxyProvider();
     this.sequence = 0;
@@ -198,6 +202,14 @@ class ProxyRotator {
 
       const node = this._getProviderNode(port);
       const failCount = node?.failureCount || 0;
+      if (String(errorType) === '503' && !node?.cooling && failCount < this.maxFailures) {
+        this.logger.warn('👀 代理进入 503 观察期', {
+          port,
+          failCount,
+          observationThreshold: this.maxFailures,
+          reason: errorType
+        });
+      }
       if (this._isCoolingNode(node, failCount)) {
         this.logger.warn('❌ 代理进入冷却', {
           port,
