@@ -98,6 +98,74 @@ class ReconMappingStore {
     return bestScore;
   }
 
+  scoreFixturePair(matchRow, candidateMatch) {
+    if (!matchRow || !candidateMatch) {
+      return {
+        directScore: 0,
+        reverseScore: 0,
+        bestScore: 0,
+        isReversed: false
+      };
+    }
+
+    const directScore = (
+      this.arbiter.teamSimilarity(matchRow.home_team, candidateMatch.home_team)
+      + this.arbiter.teamSimilarity(matchRow.away_team, candidateMatch.away_team)
+    );
+    const reverseScore = (
+      this.arbiter.teamSimilarity(matchRow.home_team, candidateMatch.away_team)
+      + this.arbiter.teamSimilarity(matchRow.away_team, candidateMatch.home_team)
+    );
+
+    return {
+      directScore,
+      reverseScore,
+      bestScore: Math.max(directScore, reverseScore),
+      isReversed: reverseScore > directScore
+    };
+  }
+
+  shouldForceOverwriteEvidenceOnlyConflict(existingMapping, incomingMapping) {
+    return existingMapping?.is_evidence_only === true
+      && incomingMapping?.is_evidence_only !== true;
+  }
+
+  shouldPreferIncomingSequentialHashOverwrite(
+    existingMatch,
+    incomingMatch,
+    existingMapping,
+    incomingMapping,
+    decision = {}
+  ) {
+    if (!existingMatch || !incomingMatch || !existingMapping || !incomingMapping) {
+      return false;
+    }
+
+    const existingTimestamp = new Date(existingMatch.match_date || '').getTime();
+    const incomingTimestamp = new Date(incomingMatch.match_date || '').getTime();
+    if (!Number.isFinite(existingTimestamp) || !Number.isFinite(incomingTimestamp) || incomingTimestamp <= existingTimestamp) {
+      return false;
+    }
+
+    const existingUrl = String(existingMapping.full_url || '').trim();
+    const incomingUrl = String(incomingMapping.full_url || '').trim();
+    if (!existingUrl || !incomingUrl || /\/football\/h2h\//iu.test(existingUrl) || /\/football\/h2h\//iu.test(incomingUrl)) {
+      return false;
+    }
+
+    const incomingConfidence = Number(incomingMapping.match_confidence || 0);
+    const existingConfidence = Number(existingMapping.match_confidence || 0);
+    if (incomingConfidence < Math.max(existingConfidence, 0.75)) {
+      return false;
+    }
+
+    const pairScore = this.scoreFixturePair(existingMatch, incomingMatch);
+    return decision.sameFixture !== true
+      && pairScore.bestScore >= this.arbiter.sameFixtureThreshold
+      && Number.isFinite(decision?.dateDistanceMs)
+      && decision.dateDistanceMs > this.arbiter.sameFixtureWindowMs;
+  }
+
   shouldPreferIncomingProtocolOverwrite(existingMatch, incomingMatch, existingMapping, incomingMapping, decision = {}) {
     const existingUrl = String(existingMapping?.full_url || '').trim();
     if (!existingUrl || !/\/football\/h2h\//iu.test(existingUrl)) {
@@ -674,7 +742,8 @@ class ReconMappingStore {
     let appliedMappings = 0;
 
     const result = await client.query(`
-      SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at
+      SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at,
+             is_evidence_only
       FROM matches_oddsportal_mapping
       WHERE season = ANY($1::text[])
         AND oddsportal_hash = ANY($2::text[])
@@ -1031,6 +1100,39 @@ class ReconMappingStore {
         decision
       )
       : false;
+    const evidenceOnlyOverwritePreferred = this.shouldForceOverwriteEvidenceOnlyConflict(
+      existingMapping,
+      incomingMapping
+    );
+    const sequentialHashOverwritePreferred = existingLinked && preserveLinkedStatus
+      ? this.shouldPreferIncomingSequentialHashOverwrite(
+        existingMatch,
+        incomingMatch,
+        existingMapping,
+        incomingMapping,
+        decision
+      )
+      : false;
+
+    if (evidenceOnlyOverwritePreferred || sequentialHashOverwritePreferred) {
+      const forcedResolution = await this.forceOverwriteSeasonHashConflictWithClient(
+        client,
+        existingMapping,
+        incomingMapping,
+        conflict.hasOptionalFields || {},
+        {
+          pipelineStatus,
+          preserveLinkedStatus,
+          reason: evidenceOnlyOverwritePreferred
+            ? 'replace_evidence_only_conflict'
+            : 'sequential_hash_rollover'
+        }
+      );
+
+      if (forcedResolution?.resolved) {
+        return forcedResolution;
+      }
+    }
 
     if (decision.sameFixture) {
       const winner = decision.preferredWinner;

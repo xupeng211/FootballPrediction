@@ -31,6 +31,8 @@ function createPlanner(overrides = {}) {
     resultsPathTemplate: overrides.resultsPathTemplate,
     fixturesPathTemplate: overrides.fixturesPathTemplate,
     mismatchRetryThresholdFloorByLeagueId: overrides.mismatchRetryThresholdFloorByLeagueId,
+    confidenceThresholdOverrideByLeagueId: overrides.confidenceThresholdOverrideByLeagueId,
+    forceMultiModeLeagueIds: overrides.forceMultiModeLeagueIds,
     annualLeagueIds: overrides.annualLeagueIds,
     forceDomLeagueIds: overrides.forceDomLeagueIds,
     excludeAllLeagueIds: overrides.excludeAllLeagueIds
@@ -68,6 +70,36 @@ describe('ReconTaskPlanner', () => {
     );
 
     assert.strictEqual(policy.effectiveConfidenceThreshold, 0.75);
+  });
+
+  it('法国杯配置阈值覆写后应允许以 0.70 作为收口观察线', () => {
+    const planner = createPlanner({
+      confidenceThresholdOverrideByLeagueId: {
+        181: 0.7
+      }
+    });
+
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 181, league: { id: 181, name: 'Coupe de France' } },
+      [{ match_id: '181_20252026_0001', pipeline_status: 'harvested' }],
+      0.75
+    );
+
+    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.7);
+  });
+
+  it('法国杯应允许通过联赛级策略强制启用 forceMultiMode', () => {
+    const planner = createPlanner({
+      forceMultiModeLeagueIds: [181]
+    });
+
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 181, league: { id: 181, name: 'Coupe de France' } },
+      [{ match_id: '181_20252026_0001', pipeline_status: 'harvested' }],
+      0.75
+    );
+
+    assert.strictEqual(policy.forceMultiMode, true);
   });
 
   it('应在有限配额内优先调度高置信度任务', () => {
@@ -570,7 +602,7 @@ describe('ReconTaskPlanner', () => {
     );
   });
 
-  it('J1 与 J2 当前赛季都应使用年度制 results URL', () => {
+  it('J1 保持年度制 results URL，J2 则应回退到可用的 seasonless primary', () => {
     const planner = createPlanner();
 
     const j1Target = planner.buildTarget('2025-2026', {
@@ -598,11 +630,11 @@ describe('ReconTaskPlanner', () => {
     assert.strictEqual(j2Target.season, '2026');
     assert.strictEqual(
       j2Target.resultsUrl,
-      'oddsportal://root/football/japan/j2-league-2026/results/'
+      'oddsportal://root/football/japan/j2-league/results/'
     );
   });
 
-  it('J2 应升级为年度制 source，优先尝试 2026 results 与 fixtures 回退', () => {
+  it('J2 应直接使用 seasonless results source，并移除稳定失效的 fixtures sweep', () => {
     const planner = createPlanner();
 
     const sources = planner.buildCandidateSources({
@@ -626,23 +658,8 @@ describe('ReconTaskPlanner', () => {
     assert.deepStrictEqual(sources, [
       {
         season: '2026',
-        url: 'oddsportal://root/football/japan/j2-league-2026/results/',
-        mode: 'current_results'
-      },
-      {
-        season: '2026',
         url: 'oddsportal://root/football/japan/j2-league/results/',
-        mode: 'current_results_fallback'
-      },
-      {
-        season: '2026',
-        url: 'oddsportal://root/football/japan/j2-league-2026/fixtures/',
-        mode: 'current_fixtures'
-      },
-      {
-        season: '2026',
-        url: 'oddsportal://root/football/japan/j2-league/fixtures/',
-        mode: 'current_fixtures_fallback'
+        mode: 'current_results'
       }
     ]);
   });

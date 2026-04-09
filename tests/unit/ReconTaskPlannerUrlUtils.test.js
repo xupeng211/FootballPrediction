@@ -187,6 +187,26 @@ describe('ReconTaskPlannerUrlUtils', () => {
     );
   });
 
+  it('J2 League 应将 seasonless results 提升为 primary，并跳过稳定 404 的 fixtures sweep', () => {
+    const context = createContext();
+
+    assert.deepEqual(
+      context.buildAnnualCurrentSeasonSources({
+        id: 8974,
+        country: 'Japan',
+        slug: 'j2-league',
+        seasonType: 'single_year'
+      }, '2025/2026'),
+      [
+        {
+          season: '2026',
+          url: 'oddsportal://root/football/japan/j2-league/results/',
+          mode: 'current_results'
+        }
+      ]
+    );
+  });
+
   it('应为 SOURCE_EMPTY 问题联赛补 canonical fallback URL', () => {
     const context = createContext();
 
@@ -212,10 +232,45 @@ describe('ReconTaskPlannerUrlUtils', () => {
         seasonType: 'single_year'
       }, '2026', { dbSeason: '2025/2026' }),
       [
-        'oddsportal://root/football/mexico/liga-mx-2026/results/',
         'oddsportal://root/football/mexico/liga-mx/results/',
         'oddsportal://root/football/mexico/liga-mx/',
         'oddsportal://root/football/mexico/liga-mx-2025-2026/results/'
+      ]
+    );
+  });
+
+  it('欧冠应补 league root fallback，以便补抓次回合与当前页数据', () => {
+    const context = createContext();
+
+    assert.deepEqual(
+      context.buildSeasonalSourceUrls({
+        id: 42,
+        country: 'Europe',
+        slug: 'champions-league',
+        seasonType: 'dual_year'
+      }, '2025/2026'),
+      [
+        'oddsportal://root/football/europe/champions-league-2025-2026/results/',
+        'oddsportal://root/football/europe/champions-league/results/',
+        'oddsportal://root/football/europe/champions-league/'
+      ]
+    );
+  });
+
+  it('法国杯应补 league root fallback，以便补抓业余轮次当前页数据', () => {
+    const context = createContext();
+
+    assert.deepEqual(
+      context.buildSeasonalSourceUrls({
+        id: 181,
+        country: 'France',
+        slug: 'coupe-de-france',
+        seasonType: 'dual_year'
+      }, '2025/2026'),
+      [
+        'oddsportal://root/football/france/coupe-de-france-2025-2026/results/',
+        'oddsportal://root/football/france/coupe-de-france/results/',
+        'oddsportal://root/football/france/coupe-de-france/'
       ]
     );
   });
