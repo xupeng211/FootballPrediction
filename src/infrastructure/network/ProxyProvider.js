@@ -13,6 +13,10 @@ const DEFAULT_PROTOCOL = 'http';
 const DEFAULT_TARGET_LATENCY_MS = 1500;
 const DEFAULT_SUCCESS_RATE = 0.95;
 const DEFAULT_HEARTBEAT_URL = 'https://httpbin.org/ip';
+const DEFAULT_FAILURE_COOLDOWN_MS = 60000;
+const DEFAULT_HTTP_503_COOLDOWN_MS = 90000;
+const DEFAULT_FAILURE_THRESHOLD = 6;
+const DEFAULT_HTTP_503_OBSERVATION_THRESHOLD = 3;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -28,6 +32,11 @@ function extractStatusCode(reason = '') {
   const message = String(reason || '');
   const match = message.match(/\b(4\d{2}|5\d{2})\b/);
   return match ? Number(match[1]) : null;
+}
+
+function positiveNumber(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
 class ProxyProvider extends EventEmitter {
@@ -57,6 +66,7 @@ class ProxyProvider extends EventEmitter {
     const ports = Array.isArray(options.ports) && options.ports.length > 0
       ? [...options.ports]
       : ProxyProvider.resolvePorts();
+    const failureThreshold = positiveNumber(options.failureThreshold, DEFAULT_FAILURE_THRESHOLD);
 
     return {
       protocol,
@@ -68,9 +78,14 @@ class ProxyProvider extends EventEmitter {
       httpTimeoutMs: Number(options.httpTimeoutMs) || 4000,
       heartbeatUrl: String(options.heartbeatUrl || process.env.PROXY_HEARTBEAT_URL || DEFAULT_HEARTBEAT_URL),
       rateLimitIsolationMs: Number(options.rateLimitIsolationMs) || 300000,
-      failureCooldownMs: Number(options.failureCooldownMs) || 3000,
-      heartbeatFailureCooldownMs: Number(options.heartbeatFailureCooldownMs) || 5000,
-      failureThreshold: Number(options.failureThreshold) || 2,
+      failureCooldownMs: positiveNumber(options.failureCooldownMs, DEFAULT_FAILURE_COOLDOWN_MS),
+      http503CooldownMs: positiveNumber(options.http503CooldownMs, DEFAULT_HTTP_503_COOLDOWN_MS),
+      heartbeatFailureCooldownMs: positiveNumber(options.heartbeatFailureCooldownMs, 5000),
+      failureThreshold,
+      http503ObservationThreshold: positiveNumber(
+        options.http503ObservationThreshold,
+        Math.max(DEFAULT_HTTP_503_OBSERVATION_THRESHOLD, Math.ceil(failureThreshold / 2))
+      ),
       successEwmaAlpha: Number(options.successEwmaAlpha) || 0.25,
       latencyEwmaAlpha: Number(options.latencyEwmaAlpha) || 0.2,
       baseWeight: Number(options.baseWeight) || 1
@@ -346,17 +361,51 @@ class ProxyProvider extends EventEmitter {
       return true;
     }
 
-    if (statusCode === 403 || statusCode >= 500 || node.consecutiveFailures >= this.config.failureThreshold) {
-      node.cooldownUntil = now + this.config.failureCooldownMs;
+    if (
+      statusCode === 503
+      && node.consecutiveFailures < this.config.http503ObservationThreshold
+    ) {
+      this._emitAlert('proxy_under_observation', node, {
+        statusCode,
+        reason,
+        consecutiveFailures: node.consecutiveFailures,
+        observationThreshold: this.config.http503ObservationThreshold
+      });
+      return true;
+    }
+
+    if (this._shouldCooldownNode(statusCode, node)) {
+      const cooldownMs = this._resolveFailureCooldownMs(statusCode);
+      node.cooldownUntil = now + cooldownMs;
       this._emitAlert('proxy_cooled_down', node, {
         statusCode,
         reason,
         cooldownUntil: node.cooldownUntil,
+        cooldownMs,
         consecutiveFailures: node.consecutiveFailures
       });
     }
 
     return true;
+  }
+
+  _shouldCooldownNode(statusCode, node) {
+    if (statusCode === 403) {
+      return true;
+    }
+    if (statusCode === 503) {
+      return node.consecutiveFailures >= this.config.http503ObservationThreshold;
+    }
+    if (statusCode >= 500) {
+      return true;
+    }
+    return node.consecutiveFailures >= this.config.failureThreshold;
+  }
+
+  _resolveFailureCooldownMs(statusCode) {
+    return statusCode === 503
+      ? this.config.http503CooldownMs
+      : this.config.failureCooldownMs;
   }
 
   getStats() {

@@ -1,6 +1,14 @@
 'use strict';
 
 const { chromium: playwrightChromium } = require('playwright');
+const {
+  getAntiDetectionScripts,
+  getEnhancedStealthConfig
+} = require('../../network/enhanced_stealth_config');
+const {
+  FIXED_FINGERPRINT,
+  generateStealthHeaders
+} = require('../../network/StealthFingerprint');
 const { ReconBookmakerUnlocker } = require('./ReconBookmakerUnlocker');
 const {
   ReconStealthProvider,
@@ -23,6 +31,57 @@ const DEFAULT_READY_SELECTORS = [
   'body'
 ];
 const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
+const MODERN_CHROME_UA_RE = /\bChrome\/(13[1-9]|\d{3,})\b/;
+
+function deriveStealthWorkerId(traceId = '', proxy = null) {
+  const port = Number(proxy?.port || 0);
+  if (Number.isInteger(port) && port > 0) {
+    return port;
+  }
+
+  let hash = 0;
+  for (const character of String(traceId || 'recon-stealth')) {
+    hash = ((hash * 31) + character.charCodeAt(0)) % 10000;
+  }
+  return hash + 1;
+}
+
+function buildStealthIdentity(traceId = '', proxy = null) {
+  const workerId = deriveStealthWorkerId(traceId, proxy);
+  const enhancedConfig = getEnhancedStealthConfig({ platform: 'win32' });
+  const fixedHeaders = generateStealthHeaders(true);
+
+  return {
+    workerId,
+    userAgent: String(fixedHeaders.userAgent || enhancedConfig.userAgent || FIXED_FINGERPRINT.userAgent),
+    viewport: enhancedConfig.viewport || fixedHeaders.viewport || FIXED_FINGERPRINT.viewport,
+    locale: FIXED_FINGERPRINT.locale || 'en-US',
+    timezoneId: FIXED_FINGERPRINT.timezoneId || 'Europe/London',
+    platform: enhancedConfig.platform || FIXED_FINGERPRINT.platform || 'Win32',
+    deviceScaleFactor: Number(enhancedConfig.deviceScaleFactor ?? FIXED_FINGERPRINT.deviceScaleFactor ?? 1) || 1,
+    hasTouch: enhancedConfig.hasTouch === true,
+    isMobile: enhancedConfig.isMobile === true,
+    extraHTTPHeaders: {
+      ...(fixedHeaders.extraHTTPHeaders || {})
+    },
+    antiDetectionScript: getAntiDetectionScripts(workerId)
+  };
+}
+
+function buildStealthLaunchArgs(baseArgs = [], viewport = FIXED_FINGERPRINT.viewport, locale = 'en-US') {
+  return Array.from(new Set([
+    ...baseArgs,
+    '--disable-blink-features=AutomationControlled',
+    '--disable-dev-shm-usage',
+    `--window-size=${viewport.width},${viewport.height}`,
+    `--lang=${String(locale || 'en-US').split(',')[0]}`
+  ]));
+}
+
+function resolveContextUserAgent(candidate, fallback) {
+  const value = String(candidate || '').trim();
+  return MODERN_CHROME_UA_RE.test(value) ? value : fallback;
+}
 
 function resolveList(primary, secondary, fallback) {
   if (Array.isArray(primary) && primary.length > 0) {
@@ -48,6 +107,7 @@ class ReconBrowserContext {
     const runtimeConfig = getReconConfigSection(['recon_runtime', 'browser_context'], {});
     const networkMonitorConfig = getReconConfigSection(['recon_runtime', 'network_monitor'], {});
     const unlockStrategiesConfig = getReconConfigSection(['recon_runtime', 'unlock_strategies'], {});
+    const stealthIdentity = buildStealthIdentity(options.traceId, options.proxy);
 
     this.logger = options.logger || console;
     this.traceId = options.traceId || 'trace-unknown';
@@ -60,13 +120,21 @@ class ReconBrowserContext {
     this.isClosed = false;
     this.launchTimeoutMs = Number(options.launchTimeoutMs ?? runtimeConfig.launch_timeout_ms);
     this.navigationTimeoutMs = Number(options.navigationTimeoutMs ?? runtimeConfig.navigation_timeout_ms);
-    this.userAgent = options.userAgent || runtimeConfig.user_agent;
-    this.viewport = options.viewport || runtimeConfig.viewport;
-    this.launchArgs = Array.isArray(options.launchArgs)
+    this.stealthIdentity = stealthIdentity;
+    this.userAgent = resolveContextUserAgent(
+      options.userAgent || runtimeConfig.user_agent,
+      this.stealthIdentity.userAgent
+    );
+    this.viewport = options.viewport || this.stealthIdentity.viewport || runtimeConfig.viewport;
+    this.launchArgs = buildStealthLaunchArgs(
+      Array.isArray(options.launchArgs)
       ? options.launchArgs
       : Array.isArray(runtimeConfig.launch_args)
         ? runtimeConfig.launch_args
-        : [];
+        : [],
+      this.viewport,
+      options.locale || this.stealthIdentity.locale || runtimeConfig.locale || 'en-US'
+    );
     this.warmupDelayMs = Number(options.warmupDelayMs ?? runtimeConfig.warmup_delay_ms);
     this.scrollIterations = Number(options.scrollIterations ?? runtimeConfig.scroll_iterations);
     this.scrollStepPx = Number(options.scrollStepPx ?? runtimeConfig.scroll_step_px);
@@ -93,13 +161,30 @@ class ReconBrowserContext {
       || ''
     ).trim();
     this.homeWarmupWaitMs = Number(options.homeWarmupWaitMs ?? networkMonitorConfig.home_warmup_wait_ms ?? 5000);
-    this.acceptLanguage = String(options.acceptLanguage || runtimeConfig.accept_language || DEFAULT_ACCEPT_LANGUAGE);
-    this.locale = String(options.locale || runtimeConfig.locale || 'en-US');
-    this.timezoneId = String(options.timezoneId || runtimeConfig.timezone_id || 'Asia/Tokyo');
+    this.acceptLanguage = String(
+      options.acceptLanguage
+      || this.stealthIdentity.extraHTTPHeaders['accept-language']
+      || runtimeConfig.accept_language
+      || DEFAULT_ACCEPT_LANGUAGE
+    );
+    this.locale = String(options.locale || this.stealthIdentity.locale || runtimeConfig.locale || 'en-US');
+    this.timezoneId = String(
+      options.timezoneId
+      || this.stealthIdentity.timezoneId
+      || runtimeConfig.timezone_id
+      || 'Europe/London'
+    );
     this.hardwareConcurrency = Number(options.hardwareConcurrency ?? runtimeConfig.hardware_concurrency ?? 8);
     this.deviceMemory = Number(options.deviceMemory ?? runtimeConfig.device_memory ?? 8);
-    this.platform = String(options.platform || runtimeConfig.platform || 'MacIntel');
-    this.enableStealthFingerprint = options.enableStealthFingerprint ?? runtimeConfig.enable_stealth_fingerprint ?? false;
+    this.platform = String(options.platform || this.stealthIdentity.platform || runtimeConfig.platform || 'Win32');
+    this.deviceScaleFactor = Number(options.deviceScaleFactor ?? this.stealthIdentity.deviceScaleFactor ?? 1) || 1;
+    this.hasTouch = options.hasTouch ?? this.stealthIdentity.hasTouch ?? false;
+    this.isMobile = options.isMobile ?? this.stealthIdentity.isMobile ?? false;
+    this.stealthExtraHTTPHeaders = {
+      ...this.stealthIdentity.extraHTTPHeaders
+    };
+    this.antiDetectionScript = String(this.stealthIdentity.antiDetectionScript || '');
+    this.enableStealthFingerprint = true;
     this.externalSessionPath = String(options.externalSessionPath || runtimeConfig.external_session_path || '');
     this.preferFullChromium = options.preferFullChromium ?? runtimeConfig.prefer_full_chromium ?? false;
     this.persistentProfileEnabled = options.persistentProfileEnabled ?? runtimeConfig.persistent_profile_enabled ?? true;
@@ -183,8 +268,8 @@ class ReconBrowserContext {
     const launchOptions = options.launchOptions || this.buildLaunchOptions(options);
     const externalSession = this.sessionManager.load();
     const sessionHeaders = externalSession?.extraHTTPHeaders || {};
-    const contextUserAgent = externalSession?.userAgent || this.userAgent;
-    const acceptLanguage = sessionHeaders['accept-language'] || this.acceptLanguage;
+    const contextUserAgent = resolveContextUserAgent(externalSession?.userAgent, this.userAgent);
+    const acceptLanguage = this.acceptLanguage;
 
     let browser = null;
     let context = null;
@@ -197,8 +282,13 @@ class ReconBrowserContext {
         viewport: this.viewport,
         locale: this.locale,
         timezoneId: this.timezoneId,
+        deviceScaleFactor: this.deviceScaleFactor,
+        screen: this.viewport,
+        hasTouch: this.hasTouch,
+        isMobile: this.isMobile,
         extraHTTPHeaders: {
           ...sessionHeaders,
+          ...this.stealthExtraHTTPHeaders,
           'accept-language': acceptLanguage,
           ...(contextUserAgent ? { 'user-agent': contextUserAgent } : {})
         }
@@ -224,6 +314,9 @@ class ReconBrowserContext {
       await this.injectExternalSession(context, externalSession);
       page = await context.newPage();
       await this.stealthProvider.applyStealthFingerprint(page, this.enableStealthFingerprint);
+      if (this.antiDetectionScript && typeof page.addInitScript === 'function') {
+        await page.addInitScript(this.antiDetectionScript);
+      }
 
       this.browser = browser;
       this.context = context;
