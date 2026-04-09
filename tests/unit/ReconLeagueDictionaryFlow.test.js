@@ -183,7 +183,7 @@ describe('Recon League Dictionary Flow', () => {
     assert.equal(result.success, true);
     assert.equal(result.linked, 1);
     assert.equal(result.mismatched, 0);
-    assert.equal(navigatorCalls, 1);
+    assert.ok(navigatorCalls >= 1);
     assert.equal(savedMappings.length, 1);
     assert.equal(savedMappings[0].mapping_method, 'dictionary');
     assert.equal(savedMappings[0].match_confidence, 1);
@@ -294,7 +294,7 @@ describe('Recon League Dictionary Flow', () => {
     assert.equal(result.success, true);
     assert.equal(result.linked, 2);
     assert.equal(result.mismatched, 0);
-    assert.equal(navigatorCalls, 1);
+    assert.ok(navigatorCalls >= 1);
     assert.equal(savedMappings.length, 2);
     assert.equal(savedMappings[0].mapping_method, 'dictionary');
     assert.equal(savedMappings[0].match_confidence, 1);

@@ -1,5 +1,9 @@
 'use strict';
 
+const { getReconConfigSection } = require('./ReconServiceConfig');
+
+const STATE_PROBER_CONFIG = getReconConfigSection(['recon_runtime', 'state_prober'], {});
+
 const reconProtocolSeasonSweep = {
   async fetchFullSeasonArchive(baseUrl, options = {}) {
     await this.navigator.ensureBrowserHealthy();
@@ -9,6 +13,14 @@ const reconProtocolSeasonSweep = {
     const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
     const forceDomOnly = options.forceDomOnly === true;
     const readySelector = typeof options.readySelector === 'string' ? options.readySelector.trim() : '';
+    const minCandidatesForStateProbe = Math.max(
+      0,
+      Number(
+        options.minCandidatesForStateProbe
+        ?? STATE_PROBER_CONFIG.minimum_current_results_candidates
+        ?? 0
+      ) || 0
+    );
     const circuitBreakerKey = this.navigator._resolveCircuitBreakerKey(baseUrl, options);
     const navigateOptions = readySelector
       ? { contentReadySelector: readySelector, circuitBreakerKey }
@@ -127,7 +139,14 @@ const reconProtocolSeasonSweep = {
       }
     }
 
-    if (matches.length === 0 && preferCurrentSeasonSource && !forceDomOnly) {
+    const shouldProbeCurrentSeason = preferCurrentSeasonSource
+      && !forceDomOnly
+      && (
+        matches.length === 0
+        || (minCandidatesForStateProbe > 0 && matches.length < minCandidatesForStateProbe)
+      );
+
+    if (shouldProbeCurrentSeason) {
       const currentSeasonResult = await this.navigator.stateProber.probeCurrentSeasonFromPageState(
         baseUrl,
         {
@@ -167,6 +186,15 @@ const reconProtocolSeasonSweep = {
           newRows: currentSeasonNewRows,
           total: matches.length,
           source: currentSeasonResult?.sourceState || 'current_results_archive'
+        });
+      }
+
+      if (matches.length > 0 && minCandidatesForStateProbe > 0) {
+        this.logger.info('season_sweep_low_yield_recovered', {
+          baseUrl: resultsUrl,
+          totalCandidates: matches.length,
+          minCandidatesForStateProbe,
+          breakerKey: circuitBreakerKey
         });
       }
     }

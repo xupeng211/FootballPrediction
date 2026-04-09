@@ -82,10 +82,16 @@ const reconTaskPlannerSourceSelector = {
       return sources;
     }
 
-    addSource({
-      season: baseSeason,
-      url: this.buildResultsUrl(target.league, baseSeason),
-      mode: 'results_archive'
+    const seasonalSourceUrls = typeof this.buildSeasonalSourceUrls === 'function'
+      ? this.buildSeasonalSourceUrls(target.league, baseSeason, { dbSeason: target?.dbSeason })
+      : [this.buildResultsUrl(target.league, baseSeason)];
+
+    seasonalSourceUrls.forEach((url, index) => {
+      addSource({
+        season: baseSeason,
+        url,
+        mode: index === 0 ? 'results_archive' : 'results_archive_fallback'
+      });
     });
     return sources;
   },

@@ -55,6 +55,13 @@ class ReconMatchEvaluator {
         ?? 5
       )
     );
+    this.placeNameEquivalentLeagueIds = new Set(
+      (options.placeNameEquivalentLeagueIds
+        ?? runtimeConfig.place_name_equivalent_league_ids
+        ?? [])
+        .map((leagueId) => Number(leagueId))
+        .filter((leagueId) => Number.isInteger(leagueId) && leagueId > 0)
+    );
 
     if (Array.isArray(options.leagueDictionaryEntries)) {
       this.setLeagueDictionaryEntries(this.activeLeagueId, options.leagueDictionaryEntries);
@@ -107,10 +114,32 @@ class ReconMatchEvaluator {
       && this.dictionaryStringContainsLeagueIds.has(this.activeLeagueId);
   }
 
+  shouldAllowPlaceNameEquivalence() {
+    return Number.isInteger(this.activeLeagueId)
+      && this.activeLeagueId > 0
+      && this.placeNameEquivalentLeagueIds.has(this.activeLeagueId);
+  }
+
   normalizeDictionaryComparableName(teamName) {
     const raw = String(teamName || '')
       .replace(/\([^)]*\)/g, ' ')
       .replace(/\[[^\]]*\]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    return this.normalizeTeamName(raw);
+  }
+
+  normalizeLeaguePlaceComparableName(teamName) {
+    const raw = String(teamName || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\([^)]*\)/g, ' ')
+      .replace(/\[[^\]]*\]/g, ' ')
+      .replace(/\bst[.\s-]+/giu, 'saint ')
+      .replace(/[\\/]+/g, ' ')
+      .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
+      .replace(/\b(as|us|usr|es|sc|rc|fc|ac|cs|ca|olympique|etoile|club)\b/giu, ' ')
       .replace(/\s+/g, ' ')
       .trim();
 
@@ -128,6 +157,14 @@ class ReconMatchEvaluator {
     const simplifiedRight = this.normalizeDictionaryComparableName(right);
     if (simplifiedLeft && simplifiedRight && simplifiedLeft === simplifiedRight) {
       return true;
+    }
+
+    if (this.shouldAllowPlaceNameEquivalence()) {
+      const placeComparableLeft = this.normalizeLeaguePlaceComparableName(left);
+      const placeComparableRight = this.normalizeLeaguePlaceComparableName(right);
+      if (placeComparableLeft && placeComparableRight && placeComparableLeft === placeComparableRight) {
+        return true;
+      }
     }
 
     if (!this.shouldAllowDictionaryStringContains() || !simplifiedLeft || !simplifiedRight) {
@@ -148,6 +185,14 @@ class ReconMatchEvaluator {
   calculateSimilarity(left, right) {
     if (!left || !right) {
       return 0;
+    }
+
+    if (this.shouldAllowPlaceNameEquivalence()) {
+      const placeComparableLeft = this.normalizeLeaguePlaceComparableName(left);
+      const placeComparableRight = this.normalizeLeaguePlaceComparableName(right);
+      if (placeComparableLeft && placeComparableRight && placeComparableLeft === placeComparableRight) {
+        return 1.0;
+      }
     }
 
     const normalizedLeft = this.normalizeTeamName(this.resolveComparableTeamName(left));
