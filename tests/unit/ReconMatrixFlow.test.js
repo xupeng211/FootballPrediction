@@ -300,6 +300,7 @@ describe('ReconMatrixFlow', () => {
       season: '2025/2026',
       concurrency: 1,
       leagueConcurrency: 2,
+      leagueStartupStaggerMs: 0,
       limit: 3
     });
 
@@ -367,9 +368,64 @@ describe('ReconMatrixFlow', () => {
     await flow.runReconMatrix({
       season: '2025/2026',
       concurrency: 6,
+      leagueStartupStaggerMs: 0,
       limit: 6
     });
 
     assert.equal(maxActive, 6);
+  });
+
+  it('runReconMatrix 应按 index * 2000ms 对联赛 worker 启动错峰', async () => {
+    const delays = [];
+    const preparedTargets = ['Premier League', 'Serie A', 'Bundesliga'].map((leagueName, index) => ({
+      target: {
+        leagueId: index + 1,
+        league: { id: index + 1, name: leagueName },
+        dbSeason: '2025/2026'
+      },
+      pendingMatches: [{ match_id: `${index + 1}` }],
+      desiredLimit: 1
+    }));
+
+    const flow = {
+      ...reconMatrixFlow,
+      defaultReconConcurrency: 22,
+      reconBatchSize: 25,
+      confidenceThreshold: 0.75,
+      logger: { info() {}, warn() {}, error() {} },
+      _sleep: async (delayMs) => {
+        delays.push(delayMs);
+      },
+      navigatorFactory: async () => ({
+        proxyPort: 7890,
+        ownsNavigator: true,
+        navigator: {
+          proxy: { port: 7890 },
+          async ensureBrowserHealthy() {},
+          async close() {}
+        }
+      }),
+      buildScanTargets: async () => preparedTargets.map((item) => item.target),
+      taskPlanner: {
+        prepareReconPendingTargets: async () => preparedTargets
+      },
+      _runReconTarget: async () => ({
+        pendingTotal: 1,
+        linked: 1,
+        mismatched: 0,
+        sourceSeason: '2025/2026',
+        sourceUrl: 'oddsportal://results/',
+        candidateCount: 1
+      })
+    };
+
+    await flow.runReconMatrix({
+      season: '2025/2026',
+      concurrency: 1,
+      leagueConcurrency: 3,
+      limit: 3
+    });
+
+    assert.deepStrictEqual(delays, [2000, 4000]);
   });
 });
