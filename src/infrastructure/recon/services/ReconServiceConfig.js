@@ -230,6 +230,12 @@ function validateConfig(config, options = {}) {
   const runtimeNumberFields = [
     ['engine', 'recon_batch_size', { integer: true, min: 1 }],
     ['engine', 'default_concurrency', { integer: true, min: 1 }],
+    ['engine', 'adaptive_concurrency_initial', { integer: true, min: 1 }],
+    ['engine', 'adaptive_concurrency_success_window', { integer: true, min: 1 }],
+    ['engine', 'suspend_proxy_threshold', { integer: true, min: 1 }],
+    ['engine', 'suspend_poll_interval_ms', { integer: true, min: 1 }],
+    ['engine', 'proxy_min_health_score', { integer: true, min: 1, max: 100 }],
+    ['engine', 'proxy_critical_error_cooldown_ms', { integer: true, min: 1 }],
     ['engine', 'confidence_threshold', { min: 0, max: 1 }],
     ['engine', 'archive_max_pages', { integer: true, min: 1 }],
     ['engine', 'archive_timeout_ms', { integer: true, min: 1 }],

@@ -333,6 +333,12 @@
     "engine": {
       "recon_batch_size": 25,
       "default_concurrency": 5,
+      "adaptive_concurrency_initial": 5,
+      "adaptive_concurrency_success_window": 3,
+      "suspend_proxy_threshold": 2,
+      "suspend_poll_interval_ms": 5000,
+      "proxy_min_health_score": 60,
+      "proxy_critical_error_cooldown_ms": 1800000,
       "confidence_threshold": 0.75,
       "archive_max_pages": 50,
       "archive_timeout_ms": 45000,
