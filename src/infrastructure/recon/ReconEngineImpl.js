@@ -48,6 +48,26 @@ class ReconEngine {
     this.progressLogEvery = Math.max(1, Number(options.progressLogEvery ?? engineConfig.progress_log_every));
     this.progressHighSuccessThreshold = Number(options.progressHighSuccessThreshold ?? engineConfig.progress_high_success_threshold ?? 1);
     this.progressSampleMultiplier = Math.max(1, Number(options.progressSampleMultiplier ?? engineConfig.progress_sample_multiplier ?? 1));
+    this.dynamicConcurrencyInitial = Math.max(
+      1,
+      Number(options.dynamicConcurrencyInitial ?? engineConfig.adaptive_concurrency_initial ?? 5)
+    );
+    this.dynamicConcurrencySuccessWindow = Math.max(
+      1,
+      Number(options.dynamicConcurrencySuccessWindow ?? engineConfig.adaptive_concurrency_success_window ?? 3)
+    );
+    this.minimumReadyProxyCount = Math.max(
+      1,
+      Number(options.minimumReadyProxyCount ?? engineConfig.suspend_proxy_threshold ?? 2)
+    );
+    this.suspendPollIntervalMs = Math.max(
+      250,
+      Number(options.suspendPollIntervalMs ?? engineConfig.suspend_poll_interval_ms ?? 5000)
+    );
+    this.proxyHealthMinScore = Math.max(
+      1,
+      Number(options.proxyHealthMinScore ?? engineConfig.proxy_min_health_score ?? 60)
+    );
     this.featureFlags = options.featureFlags || resolveRuntimeFeatureFlags();
     this.reconStrategy = options.reconStrategy || this.featureFlags.reconStrategy;
     this.disableDomFallback = options.disableDomFallback ?? this.featureFlags.disableDomFallback;
@@ -55,6 +75,10 @@ class ReconEngine {
     this.allNonLinked = options.allNonLinked === true;
     this.forceDomMode = options.forceDomMode === true;
     this.matchExtractor = options.matchExtractor || reconMatchExtractor;
+    this.runtimeState = 'RUNNING';
+    this.suspendReason = null;
+    this.suspendedAt = null;
+    this.lastSuspendHeartbeatAt = null;
 
     this.matchEvaluator = options.matchEvaluator || new ReconMatchEvaluator({ parser: this.parser, logger: this.logger });
     this.mirrorManager = options.mirrorManager || new ReconMirrorManager({ evaluator: this.matchEvaluator });
@@ -150,6 +174,145 @@ class ReconEngine {
       last: ordered[ordered.length - 1] || null,
       truncated: ordered.length > 5
     };
+  }
+
+  getRuntimeState() {
+    return {
+      status: this.runtimeState,
+      suspendReason: this.suspendReason,
+      suspendedAt: this.suspendedAt,
+      lastSuspendHeartbeatAt: this.lastSuspendHeartbeatAt
+    };
+  }
+
+  _sleep(delayMs) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, delayMs);
+    });
+  }
+
+  _getProxyPoolSnapshot() {
+    if (!this.proxyRotator) {
+      return null;
+    }
+
+    const stats = typeof this.proxyRotator.getHealthStatus === 'function'
+      ? this.proxyRotator.getHealthStatus()
+      : typeof this.proxyRotator.getStats === 'function'
+        ? this.proxyRotator.getStats()
+        : null;
+
+    if (!stats || typeof stats !== 'object') {
+      return null;
+    }
+
+    return {
+      total: Math.max(0, Number(stats.total || 0)),
+      healthy: Math.max(0, Number(stats.healthy || 0)),
+      cooling: Math.max(0, Number(stats.cooling || 0)),
+      dead: Math.max(0, Number(stats.dead || 0)),
+      available: Math.max(0, Number(stats.available ?? stats.healthy ?? 0))
+    };
+  }
+
+  async _runProxyPoolHeartbeat() {
+    const provider = this.proxyRotator?.proxyProvider;
+    if (provider && typeof provider.runHealthCheck === 'function') {
+      try {
+        await provider.runHealthCheck();
+      } catch (error) {
+        this.logger.warn('recon_engine_suspend_health_check_failed', {
+          error: error.message
+        });
+      }
+    }
+  }
+
+  _enterSuspendState(reason, details = {}) {
+    if (this.runtimeState === 'SUSPEND' && this.suspendReason === reason) {
+      return;
+    }
+
+    this.runtimeState = 'SUSPEND';
+    this.suspendReason = reason;
+    this.suspendedAt = new Date().toISOString();
+    this.logger.warn('recon_engine_suspended', {
+      reason,
+      suspendedAt: this.suspendedAt,
+      ...details
+    });
+  }
+
+  _emitSuspendHeartbeat(reason, details = {}) {
+    this.lastSuspendHeartbeatAt = new Date().toISOString();
+    this.logger.info('recon_engine_suspend_heartbeat', {
+      reason,
+      suspendedAt: this.suspendedAt,
+      heartbeatAt: this.lastSuspendHeartbeatAt,
+      ...details
+    });
+  }
+
+  _resumeFromSuspend(details = {}) {
+    if (this.runtimeState !== 'SUSPEND') {
+      return;
+    }
+
+    const suspendedAt = this.suspendedAt;
+    this.runtimeState = 'RUNNING';
+    this.suspendReason = null;
+    this.suspendedAt = null;
+    this.lastSuspendHeartbeatAt = null;
+    this.logger.info('recon_engine_resumed', {
+      resumedAt: new Date().toISOString(),
+      previousSuspendedAt: suspendedAt,
+      ...details
+    });
+  }
+
+  async ensureProxyPoolCapacity(options = {}) {
+    if (!this.proxyRotator) {
+      return null;
+    }
+
+    const minimumAvailable = Math.max(
+      1,
+      Number(options.minimumAvailable ?? this.minimumReadyProxyCount)
+    );
+    const context = options.context || 'recon_engine';
+
+    await this._runProxyPoolHeartbeat();
+    let snapshot = this._getProxyPoolSnapshot();
+    while (snapshot && snapshot.available < minimumAvailable) {
+      this._enterSuspendState('INSUFFICIENT_PROXY_CAPACITY', {
+        context,
+        minimumAvailable,
+        available: snapshot.available,
+        total: snapshot.total,
+        cooling: snapshot.cooling,
+        dead: snapshot.dead
+      });
+      this._emitSuspendHeartbeat('INSUFFICIENT_PROXY_CAPACITY', {
+        context,
+        minimumAvailable,
+        available: snapshot.available,
+        total: snapshot.total,
+        cooling: snapshot.cooling,
+        dead: snapshot.dead
+      });
+      await this._sleep(this.suspendPollIntervalMs);
+      await this._runProxyPoolHeartbeat();
+      snapshot = this._getProxyPoolSnapshot();
+    }
+
+    this._resumeFromSuspend({
+      context,
+      minimumAvailable,
+      available: snapshot?.available ?? null,
+      total: snapshot?.total ?? null
+    });
+
+    return snapshot;
   }
 }
 

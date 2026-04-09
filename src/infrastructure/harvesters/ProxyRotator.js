@@ -42,7 +42,8 @@ class ProxyRotator {
       ? Number(options.maxFailures)
       : 8;
     this.consumer = options.consumer || 'recon-engine';
-    this.proxyProvider = options.proxyProvider || getProxyProvider();
+    this.proxyProviderOptions = options.proxyProviderOptions || {};
+    this.proxyProvider = options.proxyProvider || getProxyProvider(this.proxyProviderOptions);
     this.sequence = 0;
     this.currentIndex = 0;
     this.localProxyStats = new Map();
@@ -104,7 +105,8 @@ class ProxyRotator {
       if (available.length === 0) {
         this.logger.warn('⚠️  无可用代理', {
           total: this.localProxies.length,
-          healthy: this.getHealthStatus().healthy
+          healthy: this.getHealthStatus().healthy,
+          available: this.getHealthStatus().available
         });
         return null;
       }
@@ -307,11 +309,19 @@ class ProxyRotator {
 
   getHealthStatus() {
     const nodeStates = this.proxyProvider.getNodeStates();
+    const minHealthScore = Number(this.proxyProvider?.config?.minHealthScore || 0);
     const residentialAvailable = this.residentialProxies.filter(proxy => this._isResidentialAvailable(proxy)).length;
-    const healthy = nodeStates.filter(node => node.probeHealthy && node.failureCount < this.maxFailures).length + residentialAvailable;
+    const healthy = nodeStates.filter(node => (
+      node.eligibleForLease
+      && node.failureCount < this.maxFailures
+    )).length + residentialAvailable;
     const cooling = nodeStates.filter(node => node.cooling || node.isolated).length
       + this.residentialProxies.filter(proxy => proxy.cooldownUntil && Date.now() < proxy.cooldownUntil).length;
-    const dead = nodeStates.filter(node => !node.probeHealthy || node.failureCount >= this.maxFailures).length
+    const dead = nodeStates.filter(node => (
+      (!node.probeHealthy || node.failureCount >= this.maxFailures || node.healthScore < minHealthScore)
+      && !node.cooling
+      && !node.isolated
+    )).length
       + this.residentialProxies.filter(proxy => !proxy.healthy || proxy.failCount >= this.maxFailures * 2).length;
     const utilization = Array.from(this.localProxyStats.values())
       .reduce((sum, stat) => sum + stat.useCount, 0)
@@ -322,7 +332,7 @@ class ProxyRotator {
       healthy,
       cooling,
       dead,
-      available: Math.max(0, healthy - cooling),
+      available: healthy,
       utilization
     };
   }
@@ -384,14 +394,15 @@ class ProxyRotator {
     }
 
     console.log('\n🌐 本地代理详情:');
+    const minHealthScore = Number(this.proxyProvider?.config?.minHealthScore || 0);
     this.proxyProvider.getNodeStates().forEach(node => {
       const stat = this._getLocalStat(node.port);
       let statusIcon = '✅';
-      if (node.failureCount >= this.maxFailures || !node.probeHealthy) statusIcon = '💀';
+      if (node.failureCount >= this.maxFailures || !node.probeHealthy || node.healthScore < minHealthScore) statusIcon = '💀';
       else if (node.cooling || node.isolated) statusIcon = '⏳';
       else if (node.failureCount > 0) statusIcon = '⚠️';
 
-      console.log(`  ${statusIcon} Port ${node.port}: 使用${stat.useCount}次 失败${node.failureCount}次`);
+      console.log(`  ${statusIcon} Port ${node.port}: 使用${stat.useCount}次 失败${node.failureCount}次 健康分${node.healthScore}`);
     });
 
     return status;
@@ -443,6 +454,7 @@ class ProxyRotator {
       }
 
       return node.probeHealthy
+        && node.eligibleForLease
         && !node.cooling
         && !node.isolated
         && node.failureCount < this.maxFailures;
