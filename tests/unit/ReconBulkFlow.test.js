@@ -152,8 +152,22 @@ describe('ReconEngine - Bulk Flow TDD', () => {
           circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
           forcePureProtocol: false
         }
+      },
+      {
+        url: 'oddsportal://root/football/england/premier-league-2025-2026/fixtures/',
+        options: {
+          maxPages: 50,
+          timeoutMs: engine.archiveTimeoutMs,
+          preferCurrentSeasonSource: true,
+          circuitBreakerKey: 'recon:47:2025/2026:fixtures:2025/2026',
+          forceDomOnly: true
+        }
       }
     ]);
+    assert.ok(
+      protocolCalls.every((call) => !call.url.includes('2024-2025')),
+      'SOURCE_EMPTY 时仍不得回退到上一赛季 URL'
+    );
   });
 
   it('应在 50 场待对齐比赛上严格执行 5 并发限制', async () => {

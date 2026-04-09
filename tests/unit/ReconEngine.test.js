@@ -73,16 +73,32 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
   assert.equal(result.linked, 1);
   assert.equal(result.totalInserted, 1);
   assert.deepEqual(batchCalls, [{ type: 'linked', size: 1 }]);
-  assert.deepEqual(protocolCalls, [{
-    url: 'oddsportal://root/football/england/premier-league-2025-2026/results/',
-    options: {
-      maxPages: 50,
-      timeoutMs: engine.archiveTimeoutMs,
-      preferCurrentSeasonSource: true,
-      circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
-      forcePureProtocol: false
+  assert.deepEqual(protocolCalls, [
+    {
+      url: 'oddsportal://root/football/england/premier-league-2025-2026/results/',
+      options: {
+        maxPages: 50,
+        timeoutMs: engine.archiveTimeoutMs,
+        preferCurrentSeasonSource: true,
+        circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+        forcePureProtocol: false
+      }
+    },
+    {
+      url: 'oddsportal://root/football/england/premier-league-2025-2026/fixtures/',
+      options: {
+        maxPages: 50,
+        timeoutMs: engine.archiveTimeoutMs,
+        preferCurrentSeasonSource: true,
+        circuitBreakerKey: 'recon:47:2025/2026:fixtures:2025/2026',
+        forceDomOnly: true
+      }
     }
-  }]);
+  ]);
+  assert.ok(
+    protocolCalls.every((call) => !call.url.includes('2024-2025')),
+    'navigator 后置注入后仍不得回退到上一赛季 URL'
+  );
 });
 
 test('ReconEngine smartScan 遇到 SKIPPED_FUTURE_FINALS 时必须返回成功态，避免误判为失败', async () => {
