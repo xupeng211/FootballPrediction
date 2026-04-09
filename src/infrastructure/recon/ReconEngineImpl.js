@@ -68,6 +68,12 @@ class ReconEngine {
       1,
       Number(options.proxyHealthMinScore ?? engineConfig.proxy_min_health_score ?? 60)
     );
+    this.perpetualReconMode = options.perpetualReconMode === true
+      || engineConfig.perpetual_recon_mode === true;
+    this.perpetualReconPassDelayMs = Math.max(
+      0,
+      Number(options.perpetualReconPassDelayMs ?? engineConfig.perpetual_recon_pass_delay_ms ?? this.suspendPollIntervalMs)
+    );
     this.featureFlags = options.featureFlags || resolveRuntimeFeatureFlags();
     this.reconStrategy = options.reconStrategy || this.featureFlags.reconStrategy;
     this.disableDomFallback = options.disableDomFallback ?? this.featureFlags.disableDomFallback;
@@ -213,6 +219,28 @@ class ReconEngine {
       dead: Math.max(0, Number(stats.dead || 0)),
       available: Math.max(0, Number(stats.available ?? stats.healthy ?? 0))
     };
+  }
+
+  getAvailableProxyCount() {
+    const snapshot = this._getProxyPoolSnapshot();
+    if (snapshot) {
+      return snapshot.available;
+    }
+
+    return this.proxyRotator ? 0 : 1;
+  }
+
+  shouldContinuePerpetualRecon(remainingPending = 0, options = {}) {
+    const perpetualReconMode = options.perpetualReconMode === true
+      || (options.perpetualReconMode !== false && this.perpetualReconMode === true);
+    const normalizedPending = Math.max(0, Number(remainingPending) || 0);
+    const availableProxyCount = Number.isFinite(Number(options.availableProxyCount))
+      ? Number(options.availableProxyCount)
+      : this.getAvailableProxyCount();
+
+    return perpetualReconMode
+      && normalizedPending > 0
+      && availableProxyCount > 0;
   }
 
   async _runProxyPoolHeartbeat() {
