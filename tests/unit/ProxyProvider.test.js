@@ -46,14 +46,16 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     assert.strictEqual(provider.getStats().activeLeases, 0);
   });
 
-  test('连续 503 应在 3 秒冷却窗内剔除节点并触发告警', async () => {
+  test('连续 503 应在观察窗后进入 90 秒冷却并触发告警', async () => {
     let now = 1_000;
     const alerts = [];
     const provider = new ProxyProvider({
       now: () => now,
       healthCheckIntervalMs: 0,
-      failureCooldownMs: 3000,
-      failureThreshold: 2
+      failureCooldownMs: 60000,
+      http503CooldownMs: 90000,
+      failureThreshold: 6,
+      http503ObservationThreshold: 3
     });
 
     provider.on('alert', payload => {
@@ -70,10 +72,19 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     await provider.reportFailure(lease.id, { statusCode: 503, reason: 'HTTP 503' });
 
     let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, false);
+    assert.ok(alerts.some(item => item.type === 'proxy_under_observation' && item.port === lease.proxy.port));
+
+    await provider.reportFailure(lease.id, { statusCode: 503, reason: 'HTTP 503' });
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
     assert.strictEqual(node.cooling, true);
     assert.ok(alerts.some(item => item.type === 'proxy_cooled_down' && item.port === lease.proxy.port));
 
-    now += 3001;
+    now += 89_999;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, true);
+
+    now += 2;
     node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
     assert.strictEqual(node.cooling, false);
   });

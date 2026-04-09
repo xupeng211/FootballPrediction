@@ -3,6 +3,8 @@
 const crypto = require('crypto');
 const pLimit = require('p-limit');
 
+const DEFAULT_LEAGUE_STARTUP_STAGGER_MS = 2000;
+
 const ALLOWED_MAPPING_METHODS = new Set([
   'exact',
   'fuzzy',
@@ -17,6 +19,12 @@ const ALLOWED_MAPPING_METHODS = new Set([
   'V5.5_HARVESTER',
   'v41_186_auto'
 ]);
+
+function sleep(delayMs) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, delayMs);
+  });
+}
 
 const reconMatrixFlow = {
   async buildScanTargets(options = {}) {
@@ -37,6 +45,7 @@ const reconMatrixFlow = {
       season,
       concurrency = requestedConcurrency,
       leagueConcurrency = requestedLeagueConcurrency,
+      leagueStartupStaggerMs = this.leagueStartupStaggerMs ?? DEFAULT_LEAGUE_STARTUP_STAGGER_MS,
       tier = null,
       leagueIds = null,
       batchSize = this.reconBatchSize,
@@ -61,60 +70,64 @@ const reconMatrixFlow = {
 
     const leagueLimiter = pLimit(Math.max(1, Number(leagueConcurrency)));
     const outcomes = await Promise.all(
-      targetPendingMap.map(({ target, pendingMatches, desiredLimit = null }) => leagueLimiter(async () => {
-        let navigatorHandle = null;
-        let proxyPort = null;
+      targetPendingMap.map(({ target, pendingMatches, desiredLimit = null }, index) => (async () => {
+        await this._delayLeagueWorkerStart(target, index, { leagueStartupStaggerMs });
+        return leagueLimiter(async () => {
+          let navigatorHandle = null;
+          let proxyPort = null;
 
-        try {
-          navigatorHandle = await this._acquireTargetNavigator(target, {
-            launchBrowser: forcePureProtocol !== true
-          });
-          proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
+          try {
+            navigatorHandle = await this._acquireTargetNavigator(target, {
+              launchBrowser: forcePureProtocol !== true
+            });
+            proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
 
-          this.logger.info('recon_league_worker_start', {
-            league: target.league.name,
-            season: target.dbSeason,
-            pendingTotal: pendingMatches.length,
-            desiredLimit,
-            proxyPort,
-            leagueConcurrency: Math.max(1, Number(leagueConcurrency)),
-            matchConcurrency: Math.max(1, Number(concurrency))
-          });
+            this.logger.info('recon_league_worker_start', {
+              league: target.league.name,
+              season: target.dbSeason,
+              pendingTotal: pendingMatches.length,
+              desiredLimit,
+              proxyPort,
+              leagueConcurrency: Math.max(1, Number(leagueConcurrency)),
+              leagueStartupStaggerMs: Math.max(0, Number(leagueStartupStaggerMs) || 0),
+              matchConcurrency: Math.max(1, Number(concurrency))
+            });
 
-          const result = await this._runReconTarget(target, {
-            concurrency,
-            batchSize,
-            confidenceThreshold,
-            forceDomMode,
-            forceJsonExtract,
-            forcePureProtocol,
-            pendingMatches,
-            matchLimit: desiredLimit,
-            navigator: navigatorHandle?.navigator || null
-          });
+            const result = await this._runReconTarget(target, {
+              concurrency,
+              batchSize,
+              confidenceThreshold,
+              forceDomMode,
+              forceJsonExtract,
+              forcePureProtocol,
+              pendingMatches,
+              matchLimit: desiredLimit,
+              navigator: navigatorHandle?.navigator || null
+            });
 
-          this.logger.info('recon_league_worker_complete', {
-            league: target.league.name,
-            season: target.dbSeason,
-            proxyPort,
-            linked: result.linked,
-            mismatched: result.mismatched,
-            pendingTotal: result.pendingTotal
-          });
+            this.logger.info('recon_league_worker_complete', {
+              league: target.league.name,
+              season: target.dbSeason,
+              proxyPort,
+              linked: result.linked,
+              mismatched: result.mismatched,
+              pendingTotal: result.pendingTotal
+            });
 
-          return { target, result };
-        } catch (error) {
-          this.logger.error('recon_matrix_target_failed', {
-            league: target.league.name,
-            season,
-            proxyPort,
-            error: error.message
-          });
-          return { target, error };
-        } finally {
-          await this._releaseTargetNavigator(navigatorHandle);
-        }
-      }))
+            return { target, result };
+          } catch (error) {
+            this.logger.error('recon_matrix_target_failed', {
+              league: target.league.name,
+              season,
+              proxyPort,
+              error: error.message
+            });
+            return { target, error };
+          } finally {
+            await this._releaseTargetNavigator(navigatorHandle);
+          }
+        });
+      })())
     );
 
     for (const outcome of outcomes) {
@@ -191,6 +204,33 @@ const reconMatrixFlow = {
     if (typeof handle.navigator.close === 'function') {
       await handle.navigator.close();
     }
+  },
+
+  _resolveLeagueWorkerStartupDelay(index, options = {}) {
+    const stepMs = Number(options.leagueStartupStaggerMs);
+    const normalizedStep = Number.isFinite(stepMs) && stepMs >= 0
+      ? stepMs
+      : DEFAULT_LEAGUE_STARTUP_STAGGER_MS;
+    return Math.max(0, Number(index) || 0) * normalizedStep;
+  },
+
+  async _delayLeagueWorkerStart(target, index, options = {}) {
+    const delayMs = this._resolveLeagueWorkerStartupDelay(index, options);
+    if (delayMs <= 0) {
+      return 0;
+    }
+
+    this.logger.info('recon_league_worker_stagger', {
+      league: target?.league?.name || null,
+      workerIndex: Number(index) || 0,
+      delayMs
+    });
+    await this._sleep(delayMs);
+    return delayMs;
+  },
+
+  async _sleep(delayMs) {
+    await sleep(delayMs);
   },
 
   async _runReconTarget(target, options = {}) {

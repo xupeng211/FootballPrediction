@@ -19,7 +19,7 @@ const { ReconNetworkMonitor } = require('../../src/infrastructure/recon/services
 const { ReconDomScraper } = require('../../src/infrastructure/recon/services/ReconDomScraper');
 const { ReconStateProber } = require('../../src/infrastructure/recon/services/ReconStateProber');
 
-test('Recon services 应默认从 recon_config.json 读取运行时参数', async () => {
+test('Recon services 应默认从 recon_config.json 读取运行时参数，并对 BrowserContext 注入工业 stealth 基线', async () => {
   const mirrorManager = new ReconMirrorManager();
   const matchEvaluator = new ReconMatchEvaluator();
   const taskPlanner = new ReconTaskPlanner();
@@ -34,7 +34,10 @@ test('Recon services 应默认从 recon_config.json 读取运行时参数', asyn
   assert.equal(taskPlanner.resultsPathTemplate, config.recon_runtime.task_planner.results_path);
   assert.equal(browserContext.warmupDelayMs, config.recon_runtime.browser_context.warmup_delay_ms);
   assert.deepEqual(browserContext.viewport, config.recon_runtime.browser_context.viewport);
-  assert.equal(browserContext.enableStealthFingerprint, config.recon_runtime.browser_context.enable_stealth_fingerprint);
+  assert.equal(browserContext.enableStealthFingerprint, true);
+  assert.match(browserContext.userAgent, /Chrome\/131\.0\.0\.0/);
+  assert.equal(browserContext.locale, 'en-US');
+  assert.equal(browserContext.timezoneId, 'Europe/London');
   assert.equal(browserContext.homeWarmupEnabled, config.recon_runtime.network_monitor.home_warmup_enabled);
   assert.equal(networkMonitor.scriptEvalTimeoutMs, config.recon_runtime.network_monitor.script_eval_timeout_ms);
   assert.equal(networkMonitor.fetchTimeoutMs, config.recon_runtime.network_monitor.fetch_timeout_ms);
