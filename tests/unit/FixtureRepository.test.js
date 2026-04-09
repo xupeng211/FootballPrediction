@@ -839,6 +839,150 @@ test('FixtureRepository.batchSaveOddsPortalMappings 在 preserve_linked_status �
   assert.equal(healLog.data.preserve_linked_status, true);
 });
 
+test('FixtureRepository.batchSaveOddsPortalMappings 在 season/hash 被 evidence_only 占位时应让正式 mapping 抢占', async () => {
+  const healLogs = [];
+  const statusByMatchId = new Map([
+    ['42_20252026_old', 'RECON_MISMATCH'],
+    ['42_20252026_new', 'harvested']
+  ]);
+
+  const existingMappingRow = {
+    season: '2025/2026',
+    oddsportal_hash: 'samehash',
+    match_id: '42_20252026_old',
+    full_url: 'https://www.oddsportal.com/football/europe/champions-league/old-noise-samehash/',
+    home_team: 'Old Noise Home',
+    away_team: 'Old Noise Away',
+    match_confidence: 0.33,
+    updated_at: '2026-04-08T11:00:00.000Z',
+    is_evidence_only: true
+  };
+
+  const pool = {
+    async query() {
+      return {
+        rows: [
+          { column_name: 'match_confidence' },
+          { column_name: 'mapping_method' },
+          { column_name: 'is_reversed' },
+          { column_name: 'is_evidence_only' }
+        ]
+      };
+    },
+    async connect() {
+      return {
+        async query(sql, params = []) {
+          const compactSql = sql.trim().replace(/\s+/g, ' ');
+
+          if (/^BEGIN|^COMMIT|^ROLLBACK/.test(compactSql)) {
+            return { rows: [], rowCount: 0 };
+          }
+
+          if (compactSql.includes('SELECT season, oddsportal_hash, match_id, full_url, home_team, away_team, match_confidence, updated_at')) {
+            return { rows: [existingMappingRow] };
+          }
+
+          if (compactSql.includes('SELECT match_id, season, match_date, home_team, away_team, pipeline_status FROM matches')) {
+            return {
+              rows: [
+                {
+                  match_id: '42_20252026_old',
+                  season: '2025/2026',
+                  match_date: '2025-10-01T19:00:00.000Z',
+                  home_team: 'Old Noise Home',
+                  away_team: 'Old Noise Away',
+                  pipeline_status: statusByMatchId.get('42_20252026_old')
+                },
+                {
+                  match_id: '42_20252026_new',
+                  season: '2025/2026',
+                  match_date: '2026-03-18T20:00:00.000Z',
+                  home_team: 'Paris Saint Germain',
+                  away_team: 'Liverpool',
+                  pipeline_status: statusByMatchId.get('42_20252026_new')
+                }
+              ]
+            };
+          }
+
+          if (compactSql.startsWith('DELETE FROM matches_oddsportal_mapping')) {
+            return { rows: [], rowCount: 0 };
+          }
+
+          if (compactSql.startsWith('UPDATE matches_oddsportal_mapping SET match_id = $1')) {
+            assert.equal(params[0], '42_20252026_new');
+            assert.match(compactSql, /is_evidence_only = FALSE/);
+            return { rows: [{ match_id: '42_20252026_new' }], rowCount: 1 };
+          }
+
+          if (compactSql.startsWith('UPDATE matches m')) {
+            const [matchId, nextStatus, expectedCurrentStatus] = params;
+            const allowedStatuses = Array.isArray(expectedCurrentStatus)
+              ? expectedCurrentStatus
+              : expectedCurrentStatus
+                ? [expectedCurrentStatus]
+                : [];
+            if (allowedStatuses.length > 0 && !allowedStatuses.includes(statusByMatchId.get(matchId))) {
+              return { rows: [], rowCount: 0 };
+            }
+            statusByMatchId.set(String(matchId), String(nextStatus));
+            return { rows: [], rowCount: 1 };
+          }
+
+          if (compactSql.startsWith('INSERT INTO matches_oddsportal_mapping')) {
+            throw new Error(`unexpected_insert:${compactSql}`);
+          }
+
+          throw new Error(`unexpected_query:${compactSql}`);
+        },
+        release() {}
+      };
+    }
+  };
+
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    maxRetries: 1,
+    logger: {
+      info() {},
+      warn(message, data) {
+        healLogs.push({ message, data });
+      },
+      error() {}
+    }
+  });
+  repository._mappingSchemaEnsured = true;
+
+  const result = await repository.batchSaveOddsPortalMappings([
+    {
+      match_id: '42_20252026_new',
+      oddsportal_hash: 'samehash',
+      full_url: 'https://www.oddsportal.com/football/europe/champions-league/paris-saint-germain-liverpool-samehash/',
+      season: '2025/2026',
+      league_name: 'Champions League',
+      home_team: 'Paris Saint Germain',
+      away_team: 'Liverpool',
+      match_confidence: 1.0,
+      mapping_method: 'exact'
+    }
+  ], {
+    pipelineStatus: 'RECON_LINKED',
+    preserve_linked_status: true
+  });
+
+  assert.equal(result.success, true);
+  assert.equal(result.inserted, 0);
+  assert.equal(result.updated, 1);
+  assert.equal(result.applied, 1);
+  assert.equal(statusByMatchId.get('42_20252026_new'), 'RECON_LINKED');
+
+  const healLog = healLogs.find((entry) => /SQL 强制覆盖/.test(entry.message));
+  assert.ok(healLog);
+  assert.equal(healLog.data.previous_match_id, '42_20252026_old');
+  assert.equal(healLog.data.rebound_match_id, '42_20252026_new');
+  assert.equal(healLog.data.reason, 'replace_evidence_only_conflict');
+});
+
 test('FixtureRepository.batchSaveOddsPortalMappings 在旧 h2h 证据明显可疑时应允许协议映射覆写 preserve_linked_status', async () => {
   const healLogs = [];
   const statusByMatchId = new Map([

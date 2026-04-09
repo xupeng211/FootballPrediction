@@ -1,15 +1,15 @@
 'use strict';
 
 const SPECIAL_URL_RULES_BY_LEAGUE_ID = new Map([
-  [42, { seasonlessResults: true }],
+  [42, { seasonlessResults: true, rootPage: true }],
   [53, { seasonlessResults: true }],
   [57, { seasonlessResults: true }],
   [77, { rootPage: true, allowFutureFixturesSweep: true }],
   [140, { canonicalResultsSlug: 'laliga2', canonicalSeasonalResults: true, seasonlessResults: true }],
-  [181, { seasonlessResults: true }],
+  [181, { seasonlessResults: true, rootPage: true }],
   [209, { seasonlessResults: true }],
-  [230, { seasonlessResults: true, rootPage: true }],
-  [8974, { annualLike: true, seasonlessResults: true }]
+  [230, { seasonlessResults: true, seasonlessPrimary: true, rootPage: true }],
+  [8974, { annualLike: true, seasonlessResults: true, seasonlessPrimary: true, disableFixturesSweep: true }]
 ]);
 
 const reconTaskPlannerUrlUtils = {
@@ -226,8 +226,12 @@ const reconTaskPlannerUrlUtils = {
   buildResultsUrl(leagueConfig, season) {
     const country = this.normalizePathSegment(leagueConfig.country);
     const slug = this.getResultsSlug(leagueConfig);
+    const specialRule = this.getSpecialUrlRule(leagueConfig);
     const resultsUrlStrategy = this.getResultsUrlStrategy(leagueConfig);
     const normalizedBaseUrl = String(this.baseUrl || '').replace(/\/+$/, '');
+    if (specialRule?.seasonlessPrimary === true) {
+      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
+    }
     if (this.isAnnualLeague(leagueConfig)) {
       return this.renderSeasonPathUrl(this.resultsPathTemplate, leagueConfig, season);
     }
@@ -243,6 +247,11 @@ const reconTaskPlannerUrlUtils = {
 
   buildFixturesUrl(leagueConfig, season) {
     if (!this.fixturesPathTemplate) {
+      return null;
+    }
+
+    const specialRule = this.getSpecialUrlRule(leagueConfig);
+    if (specialRule?.disableFixturesSweep === true) {
       return null;
     }
 
@@ -341,6 +350,7 @@ const reconTaskPlannerUrlUtils = {
 
   buildAnnualCurrentSeasonSources(leagueConfig, season) {
     const annualSeason = this.formatSeasonForAnnualLeagueUrl(season);
+    const specialRule = this.getSpecialUrlRule(leagueConfig);
     const sources = [
       {
         season: annualSeason,
@@ -352,16 +362,20 @@ const reconTaskPlannerUrlUtils = {
         url: this.buildSeasonlessResultsUrl(leagueConfig),
         mode: 'current_results_fallback'
       },
-      {
-        season: annualSeason,
-        url: this.buildFixturesUrl(leagueConfig, annualSeason),
-        mode: 'current_fixtures'
-      },
-      {
-        season: annualSeason,
-        url: this.buildSeasonlessFixturesUrl(leagueConfig),
-        mode: 'current_fixtures_fallback'
-      }
+      ...(specialRule?.disableFixturesSweep === true
+        ? []
+        : [
+          {
+            season: annualSeason,
+            url: this.buildFixturesUrl(leagueConfig, annualSeason),
+            mode: 'current_fixtures'
+          },
+          {
+            season: annualSeason,
+            url: this.buildSeasonlessFixturesUrl(leagueConfig),
+            mode: 'current_fixtures_fallback'
+          }
+        ])
     ].filter((source) => Boolean(source.url));
 
     const seen = new Set();

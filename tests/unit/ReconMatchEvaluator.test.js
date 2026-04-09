@@ -219,4 +219,31 @@ describe('ReconMatchEvaluator', () => {
     assert.equal(best.method, 'dictionary');
     assert.equal(best.confidence, 1);
   });
+
+  it('181 联赛应将地名简称与俱乐部前缀视为同队', () => {
+    const evaluator = new ReconMatchEvaluator({
+      logger: { info() {}, warn() {}, error() {} },
+      placeNameEquivalentLeagueIds: [181]
+    });
+
+    evaluator.setLeagueDictionaryEntries(181, []);
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'AS Saint-Priest',
+      away_team: 'FC Saint Etienne',
+      match_date: '2025-10-25T17:00:00.000Z'
+    }, [
+      {
+        hash: 'coupe-place-lock',
+        url: 'https://www.oddsportal.com/football/france/coupe-de-france/saint-priest-st-etienne-coupe-place-lock/',
+        homeTeam: 'Saint-Priest',
+        awayTeam: 'St Etienne',
+        matchDate: '2025-10-25T17:00:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应命中法国杯简称候选');
+    assert.equal(best.method, 'exact');
+    assert.equal(best.confidence, 1);
+  });
 });

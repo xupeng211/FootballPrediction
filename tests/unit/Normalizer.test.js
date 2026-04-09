@@ -227,7 +227,7 @@ describe('Normalizer - V6.6 标准化工具类', () => {
     it('应统一法葡联赛常见缩写的显示格式', () => {
       assert.strictEqual(
         Normalizer.normalizeTeamName('St. Etienne'),
-        'St Etienne'
+        'FC Saint Etienne'
       );
       assert.strictEqual(
         Normalizer.normalizeTeamName('VfB Stuttgart'),

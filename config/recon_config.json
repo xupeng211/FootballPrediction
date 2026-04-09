@@ -209,6 +209,25 @@
     "hamburger-sv": "Hamburger Sv",
     "mainz": "Mainz 05",
     "mainz05": "Mainz 05",
+    "st etienne": "FC Saint Etienne",
+    "st-etienne": "FC Saint Etienne",
+    "saint etienne": "FC Saint Etienne",
+    "saint-etienne": "FC Saint Etienne",
+    "saint priest": "AS Saint-Priest",
+    "saint-priest": "AS Saint-Priest",
+    "st priest": "AS Saint-Priest",
+    "st-priest": "AS Saint-Priest",
+    "andrezieux": "Andrezieux Boutheon",
+    "andrezieux-boutheon": "Andrezieux Boutheon",
+    "frejus saint raphael": "Etoile Frejus Saint Raphael",
+    "frejus-saint-raphael": "Etoile Frejus Saint Raphael",
+    "ecotay moingt": "Us Ecotay Moingt",
+    "pays de grasse": "Rc Pays De Grasse",
+    "fosseenne": "Es Fosseenne",
+    "pertuis": "Usr Pertuis",
+    "aubagne air bel": "SC Aubagne Air Bel",
+    "chavanay": "As Chavanay",
+    "valence": "Olympique De Valence",
     "st pauli": "St Pauli",
     "st. pauli": "St Pauli",
     "vfb stuttgart": "VfB Stuttgart",
@@ -437,6 +456,12 @@
         "131": 0.25,
         "230": 0.25
       },
+      "confidence_threshold_override_by_league_id": {
+        "181": 0.7
+      },
+      "force_multi_mode_league_ids": [
+        181
+      ],
       "force_dom_league_ids": [
         48,
         130,
@@ -464,9 +489,13 @@
       "team_weight": 0.85,
       "date_weight": 0.15,
       "dictionary_string_contains_league_ids": [
-        131
+        131,
+        181
       ],
-      "dictionary_string_contains_min_length": 5
+      "dictionary_string_contains_min_length": 5,
+      "place_name_equivalent_league_ids": [
+        181
+      ]
     },
     "mirror_manager": {
       "team_weight": 0.85,
@@ -561,7 +590,8 @@
     "state_prober": {
       "timeout_ms": 90000,
       "max_pages": 50,
-      "post_navigation_wait_ms": 2000
+      "post_navigation_wait_ms": 2000,
+      "minimum_current_results_candidates": 10
     }
   },
   "logging": {
