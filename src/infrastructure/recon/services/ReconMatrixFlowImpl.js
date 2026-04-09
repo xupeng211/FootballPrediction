@@ -2,6 +2,7 @@
 
 const crypto = require('crypto');
 const pLimit = require('p-limit');
+const { DynamicConcurrencyManager } = require('./DynamicConcurrencyManager');
 
 const DEFAULT_LEAGUE_STARTUP_STAGGER_MS = 2000;
 
@@ -67,68 +68,29 @@ const reconMatrixFlow = {
       mismatchRetryOnly,
       allNonLinked
     });
+    const normalizedLeagueConcurrency = Math.max(1, Number(leagueConcurrency));
+    const adaptiveConcurrencyManager = this._createDynamicConcurrencyManager({
+      floor: 1,
+      initialConcurrency: Math.min(
+        normalizedLeagueConcurrency,
+        Math.max(1, Number(this.dynamicConcurrencyInitial || 5))
+      ),
+      maxConcurrency: normalizedLeagueConcurrency,
+      successWindow: Math.max(1, Number(this.dynamicConcurrencySuccessWindow || 3))
+    });
 
-    const leagueLimiter = pLimit(Math.max(1, Number(leagueConcurrency)));
-    const outcomes = await Promise.all(
-      targetPendingMap.map(({ target, pendingMatches, desiredLimit = null }, index) => (async () => {
-        await this._delayLeagueWorkerStart(target, index, { leagueStartupStaggerMs });
-        return leagueLimiter(async () => {
-          let navigatorHandle = null;
-          let proxyPort = null;
-
-          try {
-            navigatorHandle = await this._acquireTargetNavigator(target, {
-              launchBrowser: forcePureProtocol !== true
-            });
-            proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
-
-            this.logger.info('recon_league_worker_start', {
-              league: target.league.name,
-              season: target.dbSeason,
-              pendingTotal: pendingMatches.length,
-              desiredLimit,
-              proxyPort,
-              leagueConcurrency: Math.max(1, Number(leagueConcurrency)),
-              leagueStartupStaggerMs: Math.max(0, Number(leagueStartupStaggerMs) || 0),
-              matchConcurrency: Math.max(1, Number(concurrency))
-            });
-
-            const result = await this._runReconTarget(target, {
-              concurrency,
-              batchSize,
-              confidenceThreshold,
-              forceDomMode,
-              forceJsonExtract,
-              forcePureProtocol,
-              pendingMatches,
-              matchLimit: desiredLimit,
-              navigator: navigatorHandle?.navigator || null
-            });
-
-            this.logger.info('recon_league_worker_complete', {
-              league: target.league.name,
-              season: target.dbSeason,
-              proxyPort,
-              linked: result.linked,
-              mismatched: result.mismatched,
-              pendingTotal: result.pendingTotal
-            });
-
-            return { target, result };
-          } catch (error) {
-            this.logger.error('recon_matrix_target_failed', {
-              league: target.league.name,
-              season,
-              proxyPort,
-              error: error.message
-            });
-            return { target, error };
-          } finally {
-            await this._releaseTargetNavigator(navigatorHandle);
-          }
-        });
-      })())
-    );
+    const outcomes = await this._runAdaptiveLeagueWorkers(targetPendingMap, {
+      season,
+      concurrency,
+      batchSize,
+      confidenceThreshold,
+      forceDomMode,
+      forceJsonExtract,
+      forcePureProtocol,
+      leagueStartupStaggerMs,
+      requestedLeagueConcurrency: normalizedLeagueConcurrency,
+      adaptiveConcurrencyManager
+    });
 
     for (const outcome of outcomes) {
       if (outcome?.error) {
@@ -157,8 +119,225 @@ const reconMatrixFlow = {
     return summary;
   },
 
+  _createDynamicConcurrencyManager(options = {}) {
+    return new DynamicConcurrencyManager({
+      logger: this.logger,
+      ...options
+    });
+  },
+
+  _getProxyPoolSnapshot() {
+    if (!this.proxyRotator) {
+      return null;
+    }
+
+    const stats = typeof this.proxyRotator.getHealthStatus === 'function'
+      ? this.proxyRotator.getHealthStatus()
+      : typeof this.proxyRotator.getStats === 'function'
+        ? this.proxyRotator.getStats()
+        : null;
+
+    if (!stats || typeof stats !== 'object') {
+      return null;
+    }
+
+    return {
+      total: Math.max(0, Number(stats.total || 0)),
+      healthy: Math.max(0, Number(stats.healthy || 0)),
+      cooling: Math.max(0, Number(stats.cooling || 0)),
+      dead: Math.max(0, Number(stats.dead || 0)),
+      available: Math.max(0, Number(stats.available ?? stats.healthy ?? 0))
+    };
+  },
+
+  _applyProxyFeedbackToConcurrency(manager, requestedLeagueConcurrency, metadata = {}) {
+    const snapshot = this._getProxyPoolSnapshot();
+    if (!snapshot) {
+      return null;
+    }
+
+    const normalizedConcurrency = Math.max(1, Number(requestedLeagueConcurrency) || 1);
+    const nextCeiling = Math.max(
+      1,
+      Math.min(
+        normalizedConcurrency,
+        snapshot.available > 0 ? snapshot.available : 1
+      )
+    );
+
+    manager.setCeiling(nextCeiling, {
+      proxyTotal: snapshot.total,
+      proxyHealthy: snapshot.healthy,
+      proxyCooling: snapshot.cooling,
+      proxyDead: snapshot.dead,
+      proxyAvailable: snapshot.available,
+      ...metadata
+    });
+
+    return snapshot;
+  },
+
+  async _runAdaptiveLeagueWorkers(targetPendingMap, options = {}) {
+    const outcomes = [];
+    const running = new Map();
+    const adaptiveConcurrencyManager = options.adaptiveConcurrencyManager || this._createDynamicConcurrencyManager();
+    const requestedLeagueConcurrency = Math.max(1, Number(options.requestedLeagueConcurrency) || 1);
+    let nextIndex = 0;
+
+    this._applyProxyFeedbackToConcurrency(adaptiveConcurrencyManager, requestedLeagueConcurrency, {
+      phase: 'initial',
+      queueRemaining: targetPendingMap.length,
+      activeLeagueWorkers: 0
+    });
+
+    while (nextIndex < targetPendingMap.length || running.size > 0) {
+      this._applyProxyFeedbackToConcurrency(adaptiveConcurrencyManager, requestedLeagueConcurrency, {
+        phase: 'dispatch',
+        queueRemaining: Math.max(0, targetPendingMap.length - nextIndex),
+        activeLeagueWorkers: running.size
+      });
+
+      while (
+        nextIndex < targetPendingMap.length
+        && running.size < adaptiveConcurrencyManager.getMaxActiveWorkers()
+      ) {
+        const currentIndex = nextIndex++;
+        const workerPromise = this._executeLeagueWorker(targetPendingMap[currentIndex], currentIndex, {
+          ...options,
+          allowedLeagueWorkers: adaptiveConcurrencyManager.getMaxActiveWorkers(),
+          activeWorkersAtStart: running.size + 1
+        }).then((outcome) => ({ index: currentIndex, outcome }));
+
+        running.set(currentIndex, workerPromise);
+      }
+
+      if (running.size === 0) {
+        continue;
+      }
+
+      const { index, outcome } = await Promise.race(running.values());
+      running.delete(index);
+      outcomes[index] = outcome;
+
+      const proxySnapshot = this._applyProxyFeedbackToConcurrency(adaptiveConcurrencyManager, requestedLeagueConcurrency, {
+        phase: 'feedback',
+        queueRemaining: Math.max(0, targetPendingMap.length - nextIndex),
+        activeLeagueWorkers: running.size
+      });
+
+      if (outcome?.error) {
+        adaptiveConcurrencyManager.recordFailure(outcome.error, {
+          phase: 'feedback',
+          league: outcome.target?.league?.name || null,
+          season: outcome.target?.dbSeason || null,
+          proxyPort: outcome.proxyPort || null,
+          activeLeagueWorkers: running.size,
+          proxyAvailable: proxySnapshot?.available ?? null,
+          proxyTotal: proxySnapshot?.total ?? null
+        });
+      } else {
+        adaptiveConcurrencyManager.recordSuccess({
+          phase: 'feedback',
+          league: outcome.target?.league?.name || null,
+          season: outcome.target?.dbSeason || null,
+          proxyPort: outcome.proxyPort || null,
+          activeLeagueWorkers: running.size,
+          proxyAvailable: proxySnapshot?.available ?? null,
+          proxyTotal: proxySnapshot?.total ?? null
+        });
+      }
+    }
+
+    return outcomes.filter(Boolean);
+  },
+
+  async _executeLeagueWorker({ target, pendingMatches, desiredLimit = null }, index, options = {}) {
+    const {
+      season,
+      concurrency,
+      batchSize,
+      confidenceThreshold,
+      forceDomMode,
+      forceJsonExtract,
+      forcePureProtocol,
+      leagueStartupStaggerMs,
+      allowedLeagueWorkers = 1,
+      activeWorkersAtStart = 1
+    } = options;
+    let navigatorHandle = null;
+    let proxyPort = null;
+
+    try {
+      await this._delayLeagueWorkerStart(target, index, { leagueStartupStaggerMs });
+      navigatorHandle = await this._acquireTargetNavigator(target, {
+        launchBrowser: forcePureProtocol !== true
+      });
+      proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
+      const proxySnapshot = this._getProxyPoolSnapshot();
+
+      this.logger.info('recon_league_worker_start', {
+        league: target.league.name,
+        season: target.dbSeason,
+        pendingTotal: pendingMatches.length,
+        desiredLimit,
+        proxyPort,
+        activeLeagueWorkers: activeWorkersAtStart,
+        allowedLeagueWorkers,
+        leagueStartupStaggerMs: Math.max(0, Number(leagueStartupStaggerMs) || 0),
+        matchConcurrency: Math.max(1, Number(concurrency)),
+        proxyAvailable: proxySnapshot?.available ?? null,
+        proxyTotal: proxySnapshot?.total ?? null
+      });
+
+      const result = await this._runReconTarget(target, {
+        concurrency,
+        batchSize,
+        confidenceThreshold,
+        forceDomMode,
+        forceJsonExtract,
+        forcePureProtocol,
+        pendingMatches,
+        matchLimit: desiredLimit,
+        navigator: navigatorHandle?.navigator || null
+      });
+
+      this.logger.info('recon_league_worker_complete', {
+        league: target.league.name,
+        season: target.dbSeason,
+        proxyPort,
+        activeLeagueWorkers: activeWorkersAtStart,
+        allowedLeagueWorkers,
+        linked: result.linked,
+        mismatched: result.mismatched,
+        pendingTotal: result.pendingTotal
+      });
+
+      return { target, result, proxyPort };
+    } catch (error) {
+      this.logger.error('recon_matrix_target_failed', {
+        league: target.league.name,
+        season,
+        proxyPort,
+        activeLeagueWorkers: activeWorkersAtStart,
+        allowedLeagueWorkers,
+        error: error.message,
+        statusCode: Number(error?.statusCode || 0) || null
+      });
+      return { target, error, proxyPort };
+    } finally {
+      await this._releaseTargetNavigator(navigatorHandle);
+    }
+  },
+
   async _acquireTargetNavigator(_target, options = {}) {
     const launchBrowser = options.launchBrowser !== false;
+
+    if (typeof this.ensureProxyPoolCapacity === 'function') {
+      await this.ensureProxyPoolCapacity({
+        minimumAvailable: this.minimumReadyProxyCount,
+        context: launchBrowser ? 'recon_matrix_navigator_acquire' : 'recon_matrix_protocol_acquire'
+      });
+    }
 
     if (typeof this.navigatorFactory === 'function') {
       const created = await this.navigatorFactory({ launchBrowser });
