@@ -5,6 +5,12 @@ const pLimit = require('p-limit');
 const { DynamicConcurrencyManager } = require('./DynamicConcurrencyManager');
 
 const DEFAULT_LEAGUE_STARTUP_STAGGER_MS = 2000;
+const DEFAULT_PROBE_TIMEOUT_MS = 20000;
+const DEFAULT_LOW_SUCCESS_RATE_THRESHOLD = 0.5;
+const DEFAULT_LOW_SUCCESS_RATE_LEAGUE_CAP = 3;
+const DEFAULT_LOW_SUCCESS_RATE_MIN_COMPLETED_LEAGUES = 2;
+const DEFAULT_TIMEOUT_DEGRADE_THRESHOLD = 2;
+const SEARCH_BLOCKING_DEGRADED_ROUTES = new Set(['results', 'fixtures']);
 
 const ALLOWED_MAPPING_METHODS = new Set([
   'exact',
@@ -59,6 +65,7 @@ const reconMatrixFlow = {
       allNonLinked = this.allNonLinked === true
     } = options;
 
+    this._resetRouteDegradeRegistry();
     const targets = await this.buildScanTargets({ season, tier, leagueIds });
     const summary = {
       success: true,
@@ -220,6 +227,48 @@ const reconMatrixFlow = {
     });
   },
 
+  _resolveLowSuccessRateGuardState(requestedLeagueConcurrency, aggregateStats = null) {
+    const normalizedConcurrency = Math.max(1, Number(requestedLeagueConcurrency) || 1);
+    const processedPending = Math.max(0, Number(aggregateStats?.processedPending || 0));
+    const linked = Math.max(0, Number(aggregateStats?.linked || 0));
+    const completedLeagues = Math.max(0, Number(aggregateStats?.completedLeagues || 0));
+    const thresholdRaw = Number(this.lowSuccessRateThreshold ?? DEFAULT_LOW_SUCCESS_RATE_THRESHOLD);
+    const threshold = Number.isFinite(thresholdRaw)
+      ? Math.min(1, Math.max(0, thresholdRaw))
+      : DEFAULT_LOW_SUCCESS_RATE_THRESHOLD;
+    const minCompletedLeagues = Math.max(
+      1,
+      Number(this.lowSuccessRateMinCompletedLeagues ?? DEFAULT_LOW_SUCCESS_RATE_MIN_COMPLETED_LEAGUES)
+        || DEFAULT_LOW_SUCCESS_RATE_MIN_COMPLETED_LEAGUES
+    );
+    const cappedConcurrency = Math.max(
+      1,
+      Math.min(
+        normalizedConcurrency,
+        Number(this.lowSuccessRateLeagueCap ?? DEFAULT_LOW_SUCCESS_RATE_LEAGUE_CAP) || DEFAULT_LOW_SUCCESS_RATE_LEAGUE_CAP
+      )
+    );
+
+    if (processedPending <= 0 || completedLeagues < minCompletedLeagues) {
+      return {
+        successRate: null,
+        active: false,
+        cap: normalizedConcurrency,
+        threshold
+      };
+    }
+
+    const successRate = linked / processedPending;
+    const active = successRate < threshold;
+
+    return {
+      successRate,
+      active,
+      cap: active ? cappedConcurrency : normalizedConcurrency,
+      threshold
+    };
+  },
+
   _getProxyPoolSnapshot() {
     if (!this.proxyRotator) {
       return null;
@@ -246,25 +295,35 @@ const reconMatrixFlow = {
 
   _applyProxyFeedbackToConcurrency(manager, requestedLeagueConcurrency, metadata = {}) {
     const snapshot = this._getProxyPoolSnapshot();
-    if (!snapshot) {
-      return null;
-    }
-
     const normalizedConcurrency = Math.max(1, Number(requestedLeagueConcurrency) || 1);
+    const successRateGuard = this._resolveLowSuccessRateGuardState(
+      normalizedConcurrency,
+      metadata.aggregateStats
+    );
+    const proxyCap = snapshot
+      ? Math.max(1, snapshot.available > 0 ? snapshot.available : 1)
+      : normalizedConcurrency;
     const nextCeiling = Math.max(
       1,
       Math.min(
         normalizedConcurrency,
-        snapshot.available > 0 ? snapshot.available : 1
+        proxyCap,
+        successRateGuard.cap
       )
     );
 
     manager.setCeiling(nextCeiling, {
-      proxyTotal: snapshot.total,
-      proxyHealthy: snapshot.healthy,
-      proxyCooling: snapshot.cooling,
-      proxyDead: snapshot.dead,
-      proxyAvailable: snapshot.available,
+      proxyTotal: snapshot?.total ?? null,
+      proxyHealthy: snapshot?.healthy ?? null,
+      proxyCooling: snapshot?.cooling ?? null,
+      proxyDead: snapshot?.dead ?? null,
+      proxyAvailable: snapshot?.available ?? null,
+      successRate: successRateGuard.successRate !== null
+        ? Number(successRateGuard.successRate.toFixed(4))
+        : null,
+      lowSuccessRateGuardActive: successRateGuard.active,
+      lowSuccessRateCap: successRateGuard.active ? successRateGuard.cap : null,
+      lowSuccessRateThreshold: successRateGuard.threshold,
       ...metadata
     });
 
@@ -276,19 +335,26 @@ const reconMatrixFlow = {
     const running = new Map();
     const adaptiveConcurrencyManager = options.adaptiveConcurrencyManager || this._createDynamicConcurrencyManager();
     const requestedLeagueConcurrency = Math.max(1, Number(options.requestedLeagueConcurrency) || 1);
+    const aggregateStats = {
+      processedPending: 0,
+      linked: 0,
+      completedLeagues: 0
+    };
     let nextIndex = 0;
 
     this._applyProxyFeedbackToConcurrency(adaptiveConcurrencyManager, requestedLeagueConcurrency, {
       phase: 'initial',
       queueRemaining: targetPendingMap.length,
-      activeLeagueWorkers: 0
+      activeLeagueWorkers: 0,
+      aggregateStats
     });
 
     while (nextIndex < targetPendingMap.length || running.size > 0) {
       this._applyProxyFeedbackToConcurrency(adaptiveConcurrencyManager, requestedLeagueConcurrency, {
         phase: 'dispatch',
         queueRemaining: Math.max(0, targetPendingMap.length - nextIndex),
-        activeLeagueWorkers: running.size
+        activeLeagueWorkers: running.size,
+        aggregateStats
       });
 
       while (
@@ -312,12 +378,24 @@ const reconMatrixFlow = {
       const { index, outcome } = await Promise.race(running.values());
       running.delete(index);
       outcomes[index] = outcome;
+      const rawOutcomePendingTotal = outcome?.result?.pendingTotal
+        ?? outcome?.pendingTotal
+        ?? targetPendingMap[index]?.pendingMatches?.length
+        ?? 0;
+      const outcomePendingTotal = Math.max(0, Number(rawOutcomePendingTotal) || 0);
+      const outcomeLinked = Math.max(0, Number(outcome?.result?.linked || 0));
+
+      aggregateStats.processedPending += outcomePendingTotal;
+      aggregateStats.linked += outcomeLinked;
+      aggregateStats.completedLeagues += 1;
 
       const proxySnapshot = this._applyProxyFeedbackToConcurrency(adaptiveConcurrencyManager, requestedLeagueConcurrency, {
         phase: 'feedback',
         queueRemaining: Math.max(0, targetPendingMap.length - nextIndex),
-        activeLeagueWorkers: running.size
+        activeLeagueWorkers: running.size,
+        aggregateStats
       });
+      const successRateGuard = this._resolveLowSuccessRateGuardState(requestedLeagueConcurrency, aggregateStats);
 
       if (outcome?.error) {
         adaptiveConcurrencyManager.recordFailure(outcome.error, {
@@ -327,7 +405,12 @@ const reconMatrixFlow = {
           proxyPort: outcome.proxyPort || null,
           activeLeagueWorkers: running.size,
           proxyAvailable: proxySnapshot?.available ?? null,
-          proxyTotal: proxySnapshot?.total ?? null
+          proxyTotal: proxySnapshot?.total ?? null,
+          successRate: successRateGuard.successRate !== null
+            ? Number(successRateGuard.successRate.toFixed(4))
+            : null,
+          lowSuccessRateGuardActive: successRateGuard.active,
+          lowSuccessRateCap: successRateGuard.active ? successRateGuard.cap : null
         });
       } else {
         adaptiveConcurrencyManager.recordSuccess({
@@ -337,7 +420,12 @@ const reconMatrixFlow = {
           proxyPort: outcome.proxyPort || null,
           activeLeagueWorkers: running.size,
           proxyAvailable: proxySnapshot?.available ?? null,
-          proxyTotal: proxySnapshot?.total ?? null
+          proxyTotal: proxySnapshot?.total ?? null,
+          successRate: successRateGuard.successRate !== null
+            ? Number(successRateGuard.successRate.toFixed(4))
+            : null,
+          lowSuccessRateGuardActive: successRateGuard.active,
+          lowSuccessRateCap: successRateGuard.active ? successRateGuard.cap : null
         });
       }
     }
@@ -417,7 +505,7 @@ const reconMatrixFlow = {
         error: error.message,
         statusCode: Number(error?.statusCode || 0) || null
       });
-      return { target, error, proxyPort };
+      return { target, error, proxyPort, pendingTotal: pendingMatches.length };
     } finally {
       await this._releaseTargetNavigator(navigatorHandle);
     }
@@ -1165,6 +1253,163 @@ const reconMatrixFlow = {
     };
   },
 
+  _resetRouteDegradeRegistry() {
+    this.routeDegradeRegistry = new Map();
+  },
+
+  _getRouteDegradeRegistry() {
+    if (!(this.routeDegradeRegistry instanceof Map)) {
+      this.routeDegradeRegistry = new Map();
+    }
+
+    return this.routeDegradeRegistry;
+  },
+
+  _buildRouteDegradeKey(target) {
+    return [
+      String(target?.leagueId ?? target?.league?.id ?? target?.league?.name ?? 'unknown'),
+      String(target?.dbSeason || target?.season || 'unknown')
+    ].join('::');
+  },
+
+  _getRouteDegradeState(target) {
+    const registry = this._getRouteDegradeRegistry();
+    const key = this._buildRouteDegradeKey(target);
+    if (!registry.has(key)) {
+      registry.set(key, {
+        degradedRoutes: new Set(),
+        timeoutStreaks: Object.create(null),
+        searchBlocked: false,
+        lastReason: null
+      });
+    }
+
+    return registry.get(key);
+  },
+
+  _resetRouteFailureStreak(target, routeKind) {
+    const state = this._getRouteDegradeState(target);
+    state.timeoutStreaks[routeKind] = 0;
+    return state;
+  },
+
+  _extractProbeFailureSignals(error) {
+    const items = [
+      error,
+      ...(Array.isArray(error?.sourceFailures) ? error.sourceFailures : [])
+    ];
+    let has503 = false;
+    let timeoutHits = 0;
+
+    for (const item of items) {
+      const statusCode = Number(item?.statusCode || item?.cause?.statusCode || 0) || null;
+      const message = String(item?.message || item?.error || '').toLowerCase();
+
+      if (
+        statusCode === 503
+        || message.includes('http_503')
+        || message.includes('503')
+        || message.includes('service unavailable')
+      ) {
+        has503 = true;
+      }
+
+      if (
+        message.includes('timeout')
+        || message.includes('timed out')
+        || message.includes('page.goto')
+        || message.includes('aborted')
+      ) {
+        timeoutHits += 1;
+      }
+    }
+
+    return {
+      has503,
+      hasTimeout: timeoutHits > 0,
+      timeoutHits
+    };
+  },
+
+  _resolveRouteProbeTimeoutMs(_routeKind, _target = null) {
+    const configuredTimeout = Math.max(
+      1,
+      Number(this.probeArchiveTimeoutMs || DEFAULT_PROBE_TIMEOUT_MS)
+    );
+    const archiveTimeout = Math.max(
+      1,
+      Number(this.archiveTimeoutMs || configuredTimeout)
+    );
+
+    return Math.min(archiveTimeout, configuredTimeout);
+  },
+
+  _recordRouteProbeFailure(target, routeKind, error, metadata = {}) {
+    const state = this._getRouteDegradeState(target);
+    const signals = this._extractProbeFailureSignals(error);
+    const timeoutThreshold = Math.max(
+      1,
+      Number(this.fastFailTimeoutStreak || DEFAULT_TIMEOUT_DEGRADE_THRESHOLD)
+    );
+
+    state.timeoutStreaks[routeKind] = signals.hasTimeout
+      ? Number(state.timeoutStreaks[routeKind] || 0) + Math.max(1, signals.timeoutHits)
+      : 0;
+
+    const shouldDegrade = signals.has503 || state.timeoutStreaks[routeKind] >= timeoutThreshold;
+    const sourceState = signals.has503
+      ? 'ROUTE_DEGRADED_503_FAST_FAIL'
+      : 'ROUTE_DEGRADED_TIMEOUT_FAST_FAIL';
+
+    if (shouldDegrade) {
+      state.degradedRoutes.add(routeKind);
+      state.searchBlocked = state.searchBlocked || SEARCH_BLOCKING_DEGRADED_ROUTES.has(routeKind);
+      state.lastReason = signals.has503 ? 'HTTP_503' : 'TIMEOUT_STREAK';
+
+      this.logger.warn('recon_route_degraded', {
+        league: target?.league?.name || null,
+        season: target?.dbSeason || null,
+        routeKind,
+        reason: state.lastReason,
+        timeoutStreak: Number(state.timeoutStreaks[routeKind] || 0),
+        timeoutThreshold,
+        timeoutMs: Number(metadata.timeoutMs || 0) || null,
+        searchBlocked: state.searchBlocked === true,
+        error: error?.message || null
+      });
+    }
+
+    return {
+      shouldDegrade,
+      searchBlocked: state.searchBlocked === true,
+      timeoutStreak: Number(state.timeoutStreaks[routeKind] || 0),
+      signals,
+      sourceState
+    };
+  },
+
+  _isSearchProbeBlocked(target) {
+    if (this.searchDisabledOnDegradedLeague !== true) {
+      return false;
+    }
+
+    const state = this._getRouteDegradeState(target);
+    return state.searchBlocked === true || state.degradedRoutes.size > 0;
+  },
+
+  _buildDegradedRouteSource(routeKind, target, sourceState, error = null, metadata = {}) {
+    this.logger.warn('recon_route_fast_fail', {
+      league: target?.league?.name || null,
+      season: target?.dbSeason || null,
+      routeKind,
+      sourceState,
+      timeoutMs: Number(metadata.timeoutMs || 0) || null,
+      searchBlocked: metadata.searchBlocked === true,
+      error: error?.message || null
+    });
+    return this._buildEmptyRouteSource(routeKind, target, sourceState);
+  },
+
   _combineCandidateRouteSources(routeSources = [], target, pendingMatches, confidenceThreshold) {
     const successfulRoutes = (Array.isArray(routeSources) ? routeSources : [])
       .filter((route) => route && typeof route === 'object');
@@ -1295,12 +1540,35 @@ const reconMatrixFlow = {
   },
 
   async _probeResultsCandidateSource(target, pendingMatches, confidenceThreshold, navigator = null) {
-    const selectedSource = await this.taskPlanner.selectCandidateSource(
-      target,
-      pendingMatches,
-      confidenceThreshold,
-      { navigator: navigator || this.navigator || null }
-    );
+    const timeoutMs = this._resolveRouteProbeTimeoutMs('results', target);
+    let selectedSource;
+    try {
+      selectedSource = await this.taskPlanner.selectCandidateSource(
+        target,
+        pendingMatches,
+        confidenceThreshold,
+        {
+          navigator: navigator || this.navigator || null,
+          timeoutMs
+        }
+      );
+      this._resetRouteFailureStreak(target, 'results');
+    } catch (error) {
+      const failure = this._recordRouteProbeFailure(target, 'results', error, { timeoutMs });
+      if (failure.shouldDegrade) {
+        return this._buildDegradedRouteSource(
+          'results',
+          target,
+          failure.sourceState,
+          error,
+          {
+            timeoutMs,
+            searchBlocked: failure.searchBlocked
+          }
+        );
+      }
+      throw error;
+    }
 
     return {
       ...selectedSource,
@@ -1316,37 +1584,57 @@ const reconMatrixFlow = {
       return null;
     }
 
-    return this._executeRouteProbeWithNavigator(
-      target,
-      navigator,
-      {
-        routeKind: 'fixtures',
-        launchBrowser: true,
-        useDedicatedNavigator: options.useDedicatedNavigator === true
-      },
-      async (activeNavigator) => {
-        const extractResult = await this._fetchCandidateRouteArchive('fixtures', fixturesUrl, target, pendingMatches, activeNavigator);
-        const candidates = this._dedupeCandidatesByIdentity(extractResult?.matches || []);
-        const seasonMirror = this._buildSeasonMirror(candidates);
-
-        return {
+    const timeoutMs = this._resolveRouteProbeTimeoutMs('fixtures', target);
+    try {
+      const routeSource = await this._executeRouteProbeWithNavigator(
+        target,
+        navigator,
+        {
           routeKind: 'fixtures',
-          source: {
-            season: target?.dbSeason || null,
-            url: fixturesUrl
-          },
-          extractResult: {
-            ...extractResult,
-            matches: candidates,
-            totalCandidates: candidates.length,
-            sourceState: extractResult?.sourceState || (candidates.length > 0 ? 'FIXTURES_SWEEP_READY' : 'SOURCE_EMPTY')
-          },
-          candidates,
-          seasonMirror,
-          sampleLinked: this._scoreCandidatePoolSample(pendingMatches, candidates, confidenceThreshold, seasonMirror)
-        };
+          launchBrowser: true,
+          useDedicatedNavigator: options.useDedicatedNavigator === true
+        },
+        async (activeNavigator) => {
+          const extractResult = await this._fetchCandidateRouteArchive('fixtures', fixturesUrl, target, pendingMatches, activeNavigator);
+          const candidates = this._dedupeCandidatesByIdentity(extractResult?.matches || []);
+          const seasonMirror = this._buildSeasonMirror(candidates);
+
+          return {
+            routeKind: 'fixtures',
+            source: {
+              season: target?.dbSeason || null,
+              url: fixturesUrl
+            },
+            extractResult: {
+              ...extractResult,
+              matches: candidates,
+              totalCandidates: candidates.length,
+              sourceState: extractResult?.sourceState || (candidates.length > 0 ? 'FIXTURES_SWEEP_READY' : 'SOURCE_EMPTY')
+            },
+            candidates,
+            seasonMirror,
+            sampleLinked: this._scoreCandidatePoolSample(pendingMatches, candidates, confidenceThreshold, seasonMirror)
+          };
+        }
+      );
+      this._resetRouteFailureStreak(target, 'fixtures');
+      return routeSource;
+    } catch (error) {
+      const failure = this._recordRouteProbeFailure(target, 'fixtures', error, { timeoutMs });
+      if (failure.shouldDegrade) {
+        return this._buildDegradedRouteSource(
+          'fixtures',
+          target,
+          failure.sourceState,
+          error,
+          {
+            timeoutMs,
+            searchBlocked: failure.searchBlocked
+          }
+        );
       }
-    );
+      throw error;
+    }
   },
 
   async _probeSearchCandidateSource(target, pendingMatches, confidenceThreshold, navigator = null, options = {}) {
@@ -1354,37 +1642,75 @@ const reconMatrixFlow = {
       return null;
     }
 
-    return this._executeRouteProbeWithNavigator(
-      target,
-      navigator,
-      {
-        routeKind: 'search',
-        launchBrowser: true,
-        useDedicatedNavigator: options.useDedicatedNavigator === true
-      },
-      async (activeNavigator) => {
-        const searchResult = await this._collectSearchCandidatesForPendingMatches(target, pendingMatches, activeNavigator);
-        const candidates = this._dedupeCandidatesByIdentity(searchResult?.matches || []);
-        const seasonMirror = this._buildSeasonMirror(candidates);
+    if (this._isSearchProbeBlocked(target)) {
+      return this._buildDegradedRouteSource(
+        'search',
+        target,
+        'ROUTE_SKIPPED_DEGRADED_LEAGUE',
+        null,
+        {
+          timeoutMs: this._resolveRouteProbeTimeoutMs('search', target),
+          searchBlocked: true
+        }
+      );
+    }
 
-        return {
+    const timeoutMs = this._resolveRouteProbeTimeoutMs('search', target);
+    try {
+      const routeSource = await this._executeRouteProbeWithNavigator(
+        target,
+        navigator,
+        {
           routeKind: 'search',
-          source: {
-            season: target?.dbSeason || null,
-            url: (searchResult?.sourceUrls || []).join(' | ')
-          },
-          extractResult: {
-            matches: candidates,
-            pagesScanned: Number(searchResult?.pagesScanned || 0),
-            totalCandidates: candidates.length,
-            sourceState: candidates.length > 0 ? 'SEARCH_SWEEP_READY' : 'SOURCE_EMPTY'
-          },
-          candidates,
-          seasonMirror,
-          sampleLinked: this._scoreCandidatePoolSample(pendingMatches, candidates, confidenceThreshold, seasonMirror)
-        };
+          launchBrowser: true,
+          useDedicatedNavigator: options.useDedicatedNavigator === true
+        },
+        async (activeNavigator) => {
+          const searchResult = await this._collectSearchCandidatesForPendingMatches(
+            target,
+            pendingMatches,
+            activeNavigator,
+            { timeoutMs }
+          );
+          const candidates = this._dedupeCandidatesByIdentity(searchResult?.matches || []);
+          const seasonMirror = this._buildSeasonMirror(candidates);
+
+          return {
+            routeKind: 'search',
+            source: {
+              season: target?.dbSeason || null,
+              url: (searchResult?.sourceUrls || []).join(' | ')
+            },
+            extractResult: {
+              matches: candidates,
+              pagesScanned: Number(searchResult?.pagesScanned || 0),
+              totalCandidates: candidates.length,
+              sourceState: candidates.length > 0 ? 'SEARCH_SWEEP_READY' : 'SOURCE_EMPTY'
+            },
+            candidates,
+            seasonMirror,
+            sampleLinked: this._scoreCandidatePoolSample(pendingMatches, candidates, confidenceThreshold, seasonMirror)
+          };
+        }
+      );
+      this._resetRouteFailureStreak(target, 'search');
+      return routeSource;
+    } catch (error) {
+      const failure = this._recordRouteProbeFailure(target, 'search', error, { timeoutMs });
+      if (failure.shouldDegrade || failure.signals.has503 || failure.signals.hasTimeout) {
+        return this._buildDegradedRouteSource(
+          'search',
+          target,
+          failure.sourceState,
+          error,
+          {
+            timeoutMs,
+            searchBlocked: true
+          }
+        );
       }
-    );
+      throw error;
+    }
   },
 
   async _executeRouteProbeWithNavigator(target, navigator, options = {}, probe) {
@@ -1420,7 +1746,7 @@ const reconMatrixFlow = {
       : `recon:${routeKind}:${target?.dbSeason || 'unknown'}`;
     const extractOptions = {
       maxPages: this.taskPlanner?.resolveArchiveMaxPages?.(target, pendingMatches) || this.archiveMaxPages || 50,
-      timeoutMs: this.archiveTimeoutMs,
+      timeoutMs: this._resolveRouteProbeTimeoutMs(routeKind, target),
       preferCurrentSeasonSource: true,
       circuitBreakerKey,
       forceDomOnly: routeKind === 'fixtures'
@@ -1437,7 +1763,7 @@ const reconMatrixFlow = {
     return { matches: [], pagesScanned: 0, totalCandidates: 0, sourceState: 'ROUTE_SKIPPED_NO_ARCHIVE_HANDLER' };
   },
 
-  async _collectSearchCandidatesForPendingMatches(target, pendingMatches, navigator) {
+  async _collectSearchCandidatesForPendingMatches(target, pendingMatches, navigator, options = {}) {
     if (!navigator || typeof navigator.navigate !== 'function' || !navigator.page) {
       return { matches: [], pagesScanned: 0, sourceUrls: [] };
     }
@@ -1459,7 +1785,7 @@ const reconMatrixFlow = {
       }
 
       sourceUrls.push(searchUrl);
-      const searchCandidates = await this._collectSearchCandidatesFromUrl(searchUrl, navigator, target);
+      const searchCandidates = await this._collectSearchCandidatesFromUrl(searchUrl, navigator, target, options);
       for (const candidate of searchCandidates) {
         const candidateKey = String(candidate?.hash || candidate?.url || '').trim();
         if (!candidateKey || seenCandidateKeys.has(candidateKey)) {
@@ -1487,8 +1813,11 @@ const reconMatrixFlow = {
     return `${this._resolveTrustedOddsPortalBaseUrl()}/search/${encodeURIComponent(slug)}/`;
   },
 
-  async _collectSearchCandidatesFromUrl(searchUrl, navigator, _target) {
-    await navigator.navigate(searchUrl, { waitUntil: 'domcontentloaded' });
+  async _collectSearchCandidatesFromUrl(searchUrl, navigator, target, options = {}) {
+    await navigator.navigate(searchUrl, {
+      waitUntil: 'domcontentloaded',
+      timeout: Number(options.timeoutMs || this._resolveRouteProbeTimeoutMs('search', target))
+    });
     if (typeof navigator.page?.waitForTimeout === 'function') {
       await navigator.page.waitForTimeout(this.pageSettleWaitMs);
     }

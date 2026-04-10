@@ -353,6 +353,77 @@ describe('ReconMatrixFlow', () => {
         assert.strictEqual(result.mismatched, 0);
     });
 
+    it('results 命中 503 快速熔断后应阻断 search，并把 probe timeout 压到 20 秒', async () => {
+        const target = {
+            leagueId: 1,
+            dbSeason: '2025/2026',
+            season: '2025/2026',
+            resultsUrl: 'oddsportal://results',
+            league: { id: 1, name: 'Test League' },
+        };
+        const pendingMatches = [{ match_id: 'm1', pipeline_status: 'harvested' }];
+        const flow = {
+            ...reconMatrixFlow,
+            archiveTimeoutMs: 45000,
+            probeArchiveTimeoutMs: 20000,
+            fastFailTimeoutStreak: 2,
+            searchDisabledOnDegradedLeague: true,
+            logger: { info() {}, warn() {}, error() {} },
+            taskPlanner: {
+                archiveTimeoutMs: 45000,
+                async selectCandidateSource(_target, _pending, _threshold, options = {}) {
+                    assert.strictEqual(options.timeoutMs, 20000);
+                    const error = new Error('HTTP_503');
+                    error.statusCode = 503;
+                    throw error;
+                },
+                formatSeasonForUrl: (season) => season,
+            },
+        };
+
+        const resultsSource = await flow._probeResultsCandidateSource(target, pendingMatches, 0.75);
+        const searchSource = await flow._probeSearchCandidateSource(target, pendingMatches, 0.75);
+
+        assert.strictEqual(resultsSource.extractResult.sourceState, 'ROUTE_DEGRADED_503_FAST_FAIL');
+        assert.strictEqual(searchSource.extractResult.sourceState, 'ROUTE_SKIPPED_DEGRADED_LEAGUE');
+    });
+
+    it('results 连续 timeout 两次后应把联赛标记为 DEGRADED，并禁止 search 探测', async () => {
+        const target = {
+            leagueId: 2,
+            dbSeason: '2025/2026',
+            season: '2025/2026',
+            resultsUrl: 'oddsportal://results',
+            league: { id: 2, name: 'Timeout League' },
+        };
+        const pendingMatches = [{ match_id: 'm1', pipeline_status: 'harvested' }];
+        const flow = {
+            ...reconMatrixFlow,
+            archiveTimeoutMs: 45000,
+            probeArchiveTimeoutMs: 20000,
+            fastFailTimeoutStreak: 2,
+            searchDisabledOnDegradedLeague: true,
+            logger: { info() {}, warn() {}, error() {} },
+            taskPlanner: {
+                async selectCandidateSource() {
+                    throw new Error('page.goto: Timeout 20000ms exceeded');
+                },
+                formatSeasonForUrl: (season) => season,
+            },
+        };
+
+        await assert.rejects(
+            flow._probeResultsCandidateSource(target, pendingMatches, 0.75),
+            /Timeout 20000ms exceeded/
+        );
+
+        const secondProbe = await flow._probeResultsCandidateSource(target, pendingMatches, 0.75);
+        const searchSource = await flow._probeSearchCandidateSource(target, pendingMatches, 0.75);
+
+        assert.strictEqual(secondProbe.extractResult.sourceState, 'ROUTE_DEGRADED_TIMEOUT_FAST_FAIL');
+        assert.strictEqual(searchSource.extractResult.sourceState, 'ROUTE_SKIPPED_DEGRADED_LEAGUE');
+    });
+
     it('linked 前应先把 h2h 候选洗白为 canonical URL', async () => {
         const flow = {
             ...reconMatrixFlow,
@@ -860,6 +931,90 @@ describe('ReconMatrixFlow', () => {
 
         assert.ok(postBackoffStarts.length > 0);
         assert.ok(postBackoffStarts.every(entry => entry.payload.allowedLeagueWorkers <= 2));
+    });
+
+    it('整体成功率低于 50% 时，应将 allowedLeagueWorkers 锁定在 3 个以内', async () => {
+        const events = [];
+        const preparedTargets = Array.from({ length: 10 }, (_, index) => ({
+            target: {
+                leagueId: index + 1,
+                league: { id: index + 1, name: `League-${index + 1}` },
+                dbSeason: '2025/2026',
+            },
+            pendingMatches: [{ match_id: `${index + 1}` }, { match_id: `${index + 1}-b` }],
+            desiredLimit: 2,
+        }));
+
+        const flow = {
+            ...reconMatrixFlow,
+            dynamicConcurrencyInitial: 5,
+            dynamicConcurrencySuccessWindow: 5,
+            lowSuccessRateThreshold: 0.5,
+            lowSuccessRateLeagueCap: 3,
+            defaultReconConcurrency: 10,
+            reconBatchSize: 25,
+            confidenceThreshold: 0.75,
+            logger: {
+                info(event, payload) {
+                    events.push({ level: 'info', event, payload });
+                },
+                warn(event, payload) {
+                    events.push({ level: 'warn', event, payload });
+                },
+                error(event, payload) {
+                    events.push({ level: 'error', event, payload });
+                },
+            },
+            navigatorFactory: async () => ({
+                proxyPort: 7890,
+                ownsNavigator: true,
+                navigator: {
+                    proxy: { port: 7890 },
+                    async ensureBrowserHealthy() {},
+                    async close() {},
+                },
+            }),
+            buildScanTargets: async () => preparedTargets.map(item => item.target),
+            taskPlanner: {
+                prepareReconPendingTargets: async () => preparedTargets,
+            },
+            _runReconTarget: async target => {
+                await new Promise(resolve => {
+                    setTimeout(resolve, target.league.id <= 3 ? 5 : 40);
+                });
+                return {
+                    pendingTotal: 2,
+                    linked: target.league.id === 1 ? 1 : 0,
+                    mismatched: target.league.id === 1 ? 1 : 2,
+                    sourceSeason: '2025/2026',
+                    sourceUrl: 'oddsportal://results/',
+                    candidateCount: target.league.id === 1 ? 1 : 0,
+                };
+            },
+        };
+
+        await flow.runReconMatrix({
+            season: '2025/2026',
+            concurrency: 1,
+            leagueConcurrency: 10,
+            leagueStartupStaggerMs: 0,
+            limit: 10,
+        });
+
+        const guardIndex = events.findIndex(
+            entry =>
+                entry.event === 'recon_dynamic_concurrency_adjusted'
+                && entry.payload.lowSuccessRateGuardActive === true
+                && entry.payload.lowSuccessRateCap === 3
+        );
+        assert.ok(guardIndex >= 0);
+
+        const postGuardStarts = events
+            .slice(guardIndex + 1)
+            .filter(entry => entry.event === 'recon_league_worker_start');
+
+        assert.ok(postGuardStarts.length > 0);
+        assert.ok(postGuardStarts.every(entry => entry.payload.allowedLeagueWorkers <= 3));
     });
 
     it('22-IP 绿灯数下降时应把 MatrixFlow 的联赛并发夹到可用代理数', async () => {
