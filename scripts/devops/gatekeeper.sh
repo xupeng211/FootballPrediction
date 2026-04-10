@@ -5,6 +5,8 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 COMPOSE_FILE="${GATEKEEPER_COMPOSE_FILE:-docker-compose.dev.yml}"
 DEV_SERVICE="${GATEKEEPER_DEV_SERVICE:-dev}"
 MODE="${GATEKEEPER_MODE:-push}"
+WORKSPACE_ROOT="${GATEKEEPER_WORKSPACE_ROOT:-/app}"
+CONTAINER_GATEKEEPER_PATH="${WORKSPACE_ROOT%/}/scripts/devops/gatekeeper.sh"
 
 for arg in "$@"; do
   case "$arg" in
@@ -41,6 +43,18 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
     fail '未找到 docker compose 或 docker-compose，无法启动容器门禁。'
   }
 
+  ensure_container_gatekeeper() {
+    if "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" exec -T "$DEV_SERVICE" test -f "$CONTAINER_GATEKEEPER_PATH"; then
+      return 0
+    fi
+
+    log "容器内未找到 ${CONTAINER_GATEKEEPER_PATH}，强制重建 ${DEV_SERVICE} 后重试。"
+    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" up -d --force-recreate "$DEV_SERVICE" db redis >/dev/null
+
+    "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" exec -T "$DEV_SERVICE" test -f "$CONTAINER_GATEKEEPER_PATH" \
+      || fail "容器内仍缺少 ${CONTAINER_GATEKEEPER_PATH}，请检查 docker-compose 挂载。"
+  }
+
   resolve_compose
   cd "$ROOT_DIR"
 
@@ -52,17 +66,21 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
   log "准备开发容器（mode=${MODE}）..."
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" up "${UP_ARGS[@]}" "$DEV_SERVICE" db redis >/dev/null
 
+  ensure_container_gatekeeper
+
   log '切入 dev 容器执行门禁。'
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" exec -T "$DEV_SERVICE" \
-    env GATEKEEPER_IN_CONTAINER=1 GATEKEEPER_MODE="$MODE" \
-    bash "/app/scripts/devops/gatekeeper.sh"
+    env GATEKEEPER_IN_CONTAINER=1 GATEKEEPER_MODE="$MODE" GATEKEEPER_WORKSPACE_ROOT="$WORKSPACE_ROOT" \
+    bash "$CONTAINER_GATEKEEPER_PATH"
   exit $?
 fi
 
-cd /app
+cd "$WORKSPACE_ROOT" || fail "容器工作目录不存在: ${WORKSPACE_ROOT}"
 
 readonly MODE
-readonly PORT_REGEX='7890|7891|7892|7893|7894|7895|7896|7897|7898|7899|7900|7901|7902|7903|7904|7905|7906|7907|7908|7909|7910|7911'
+readonly WORKSPACE_ROOT
+readonly CONTAINER_GATEKEEPER_PATH
+readonly PORT_REGEX='7890|7891|7892|7893|7894|7895|7896|7897|7898|7899|7900|7901|7902|7903|7904|7905|7906|7907|7908|7909|7910|7911|7912'
 readonly LEAK_REGEX="172\\.25\\.16\\.1|\\b(${PORT_REGEX})\\b"
 readonly CONTRACT_REGEX='require\(["'"'"'](axios|node-fetch|got|http|https|node:http|node:https|http-proxy-agent|https-proxy-agent)["'"'"']\)|from ["'"'"'](axios|node-fetch|got|undici)["'"'"']'
 readonly PYTHON_FILE_LINE_LIMIT=800
@@ -233,7 +251,7 @@ bootstrap_python_dependencies() {
 
 ensure_git_context() {
   if command -v git >/dev/null 2>&1; then
-    if ! git config --global --add safe.directory /app >/dev/null 2>&1; then
+    if ! git config --global --add safe.directory "$WORKSPACE_ROOT" >/dev/null 2>&1; then
       log 'safe.directory 注入失败，继续执行当前门禁。'
     fi
   fi
@@ -673,10 +691,18 @@ run_proxyprovider_smoke_test() {
 run_coverage_report() {
   python <<'PY'
 import json
+import os
 from pathlib import Path
 
 node_summary_path = Path("reports/coverage/node/coverage-summary.json")
 python_summary_path = Path("reports/coverage/python/coverage.json")
+workspace_root = os.environ.get("GATEKEEPER_WORKSPACE_ROOT", "/app").rstrip("/")
+workspace_prefix = f"{workspace_root}/" if workspace_root else ""
+
+def normalize_path(file_path: str) -> str:
+    if workspace_prefix and file_path.startswith(workspace_prefix):
+        return file_path[len(workspace_prefix):]
+    return file_path
 
 def read_node_summary() -> tuple[dict, list[str]]:
     if not node_summary_path.exists():
@@ -690,7 +716,7 @@ def read_node_summary() -> tuple[dict, list[str]]:
             continue
         lines = summary.get("lines", {})
         if float(lines.get("pct", 0.0) or 0.0) == 0.0:
-            bare.append(file_path.replace("/app/", ""))
+            bare.append(normalize_path(file_path))
 
     return total, sorted(bare)
 
@@ -705,7 +731,7 @@ def read_python_summary() -> tuple[dict, list[str]]:
         summary_block = summary.get("summary", {})
         percent = float(summary_block.get("percent_covered", 0.0) or 0.0)
         if percent == 0.0:
-            bare.append(file_path.replace("/app/", ""))
+            bare.append(normalize_path(file_path))
 
     return total, sorted(bare)
 
