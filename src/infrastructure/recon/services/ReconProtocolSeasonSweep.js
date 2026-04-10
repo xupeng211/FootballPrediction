@@ -6,7 +6,13 @@ const STATE_PROBER_CONFIG = getReconConfigSection(['recon_runtime', 'state_probe
 
 const reconProtocolSeasonSweep = {
   async fetchFullSeasonArchive(baseUrl, options = {}) {
-    await this.navigator.ensureBrowserHealthy();
+    if (typeof this.navigator.resetContextPerBatch === 'function') {
+      await this.navigator.resetContextPerBatch({
+        reason: 'fetch_full_season_archive'
+      });
+    } else {
+      await this.navigator.ensureBrowserHealthy();
+    }
 
     const timeoutMs = options.timeoutMs ?? this.navigator.archiveTimeoutMs;
     const maxPages = options.maxPages ?? this.navigator.archiveMaxPages;

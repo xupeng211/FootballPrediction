@@ -39,6 +39,8 @@ class ReconNavigator {
     this.postApiDiscoveryWaitMs = Number(options.postApiDiscoveryWaitMs ?? navigatorConfig.post_api_discovery_wait_ms);
     this.pageRevisitWaitMs = Number(options.pageRevisitWaitMs ?? navigatorConfig.page_revisit_wait_ms);
     this.enableStealthFingerprint = options.enableStealthFingerprint;
+    this.resetContextPerBatchEnabled = options.resetContextPerBatch !== false;
+    this.enableFingerprintRotation = options.enableFingerprintRotation !== false;
 
     // V11.0: TraceID 机制 - 每笔收割请求唯一编号
     this.traceId = options.traceId || generateTraceId();
@@ -63,7 +65,9 @@ class ReconNavigator {
       traceId: this.traceId,
       headless: this.headless,
       proxy: this.proxy,
-      enableStealthFingerprint: this.enableStealthFingerprint
+      enableStealthFingerprint: this.enableStealthFingerprint,
+      resetContextPerBatch: this.resetContextPerBatchEnabled,
+      enableFingerprintRotation: this.enableFingerprintRotation
     });
     this.stats = createDefaultStats();
     this.networkMonitor = new ReconNetworkMonitor({
@@ -89,12 +93,15 @@ class ReconNavigator {
     this.lastLaunchOptions = {};
     this._launching = null;
     this._healing = null;
+    this._contextResetting = null;
 
     this.logger.info('[ReconNavigator] 实例创建', {
       traceId: this.traceId,
       headless: this.headless,
       proxyPort: Number(this.proxy?.port || this.proxyLease?.proxy?.port || 0) || null,
-      proxyLeaseId: this.proxyLease?.id || null
+      proxyLeaseId: this.proxyLease?.id || null,
+      resetContextPerBatch: this.resetContextPerBatchEnabled,
+      enableFingerprintRotation: this.enableFingerprintRotation
     });
   }
 
@@ -318,6 +325,53 @@ class ReconNavigator {
       return await this._healing;
     } finally {
       this._healing = null;
+    }
+  }
+
+  async resetContextPerBatch(metadata = {}) {
+    if (this.resetContextPerBatchEnabled !== true) {
+      await this.ensureBrowserHealthy();
+      return this.page;
+    }
+
+    if (this._contextResetting) {
+      return this._contextResetting;
+    }
+
+    this._contextResetting = (async () => {
+      await this.ensureBrowserHealthy();
+
+      const reason = String(metadata.reason || 'batch_start');
+      this.logger.info('navigator_context_reset_batch_start', {
+        traceId: this.traceId,
+        reason,
+        proxyPort: Number(this.proxy?.port || this.proxyLease?.proxy?.port || 0) || null,
+        batchIndex: Number(metadata.batchIndex || 0) || null,
+        totalBatches: Number(metadata.totalBatches || 0) || null
+      });
+
+      this.networkMonitor.detach?.();
+      this.networkMonitor.reset();
+      const page = await this.browserContext.resetContext({
+        reason,
+        launchOptions: this.lastLaunchOptions || {}
+      });
+      this.page = page;
+      this.networkMonitor.attach(page);
+      this.isClosed = false;
+
+      this.logger.info('navigator_context_reset_batch_complete', {
+        traceId: this.traceId,
+        reason,
+        fingerprint: this.browserContext.getFingerprintSummary?.() || null
+      });
+      return page;
+    })();
+
+    try {
+      return await this._contextResetting;
+    } finally {
+      this._contextResetting = null;
     }
   }
 
