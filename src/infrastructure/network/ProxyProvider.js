@@ -22,6 +22,7 @@ const DEFAULT_CRITICAL_ERROR_COOLDOWN_MS = 1800000;
 const DEFAULT_MIN_HEALTH_SCORE = 60;
 const DEFAULT_SUCCESS_HEALTH_REWARD = 4;
 const DEFAULT_FAILURE_HEALTH_PENALTY = 10;
+const DEFAULT_GATEWAY_PREFLIGHT_TIMEOUT_MS = 1500;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -97,6 +98,8 @@ class ProxyProvider extends EventEmitter {
     this.sequence = 0;
     this.healthTimer = null;
     this.started = false;
+    this.initialized = false;
+    this.initializationPromise = null;
   }
 
   _buildConfig(options = {}) {
@@ -111,6 +114,7 @@ class ProxyProvider extends EventEmitter {
       protocol,
       host,
       ports,
+      defaultPort: Number(options.defaultPort) || resolveProxyPoolConfig().defaultPort || ports[0] || 0,
       targetLatencyMs: Number(options.targetLatencyMs) || DEFAULT_TARGET_LATENCY_MS,
       healthCheckIntervalMs: Number(options.healthCheckIntervalMs) || 30000,
       tcpTimeoutMs: Number(options.tcpTimeoutMs) || 1500,
@@ -238,6 +242,31 @@ class ProxyProvider extends EventEmitter {
     });
   }
 
+  async initialize() {
+    if (this.initialized) {
+      return {
+        ok: true,
+        host: this.config.host,
+        port: this._resolvePreflightPort()
+      };
+    }
+
+    if (!this.initializationPromise) {
+      this.initializationPromise = this._runGatewayPreflight()
+        .then((result) => {
+          this.initialized = true;
+          this.start();
+          return result;
+        })
+        .catch((error) => {
+          this.initializationPromise = null;
+          throw error;
+        });
+    }
+
+    return this.initializationPromise;
+  }
+
   start() {
     if (this.started || this.config.healthCheckIntervalMs <= 0) {
       return this;
@@ -253,6 +282,72 @@ class ProxyProvider extends EventEmitter {
     }
 
     return this;
+  }
+
+  _resolvePreflightPort() {
+    const preferredPort = Number(this.config.defaultPort);
+    if (Number.isInteger(preferredPort) && preferredPort > 0) {
+      return preferredPort;
+    }
+
+    return this.config.ports[0] || 0;
+  }
+
+  async _runGatewayPreflight() {
+    const port = this._resolvePreflightPort();
+    if (!Number.isInteger(port) || port <= 0) {
+      return {
+        ok: true,
+        skipped: true,
+        host: this.config.host,
+        port: 0
+      };
+    }
+
+    const result = await this.probes.tcp({
+      port,
+      host: this.config.host
+    }, {
+      ...this.config,
+      tcpTimeoutMs: positiveNumber(this.config.tcpTimeoutMs, DEFAULT_GATEWAY_PREFLIGHT_TIMEOUT_MS)
+    });
+
+    if (result?.ok) {
+      if (typeof this.logger.info === 'function') {
+        this.logger.info('[ProxyProvider] gateway_preflight_passed', {
+          host: this.config.host,
+          port,
+          latencyMs: result.latencyMs
+        });
+      }
+
+      return {
+        ok: true,
+        host: this.config.host,
+        port,
+        latencyMs: result.latencyMs
+      };
+    }
+
+    const reason = String(result?.error || 'tcp_preflight_failed');
+    const error = new Error(
+      `PROXY_GATEWAY_UNREACHABLE: ${this.config.host}:${port} (${reason}). `
+      + '代理网关无法连接，请检查 host.docker.internal 是否可用，或通过 PROXY_HOST 指定正确的宿主机地址'
+    );
+    error.code = 'PROXY_GATEWAY_UNREACHABLE';
+    error.host = this.config.host;
+    error.port = port;
+    error.reason = reason;
+
+    if (typeof this.logger.warn === 'function') {
+      this.logger.warn('[ProxyProvider] gateway_preflight_failed', {
+        host: this.config.host,
+        port,
+        reason
+      });
+    }
+
+    throw error;
   }
 
   stop() {

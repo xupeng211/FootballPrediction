@@ -1,6 +1,6 @@
 {
   "protocol": "http",
-  "host": "172.25.16.1",
+  "host": "host.docker.internal",
   "defaultPort": 7891,
   "ports": [
     7891,

@@ -5,7 +5,7 @@
   "registry_id": "REG-CLASH-22",
   "description": "[Genesis.NetworkShield] Active Proxy Registry - 22-Node Clash Verge Integration",
   "registry_config": {
-    "proxy_host": "172.25.16.1",
+    "proxy_host": "host.docker.internal",
     "port_range": {
       "start": 7890,
       "end": 7911
