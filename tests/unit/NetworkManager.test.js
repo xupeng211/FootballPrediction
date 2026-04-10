@@ -548,7 +548,8 @@ describe('src/infrastructure/network/NetworkManager', () => {
       };
 
       const l2Identity = await manager.assignWorkerIdentity(1);
-      assert.strictEqual(l2Identity.proxy.port, 7890);
+      const l2Port = l2Identity.proxy.port;
+      assert.ok(Number.isInteger(l2Port), 'L2 应拿到有效代理端口');
 
       await manager.markProxyFailed(1, 'HTTP 429');
 
@@ -559,7 +560,7 @@ describe('src/infrastructure/network/NetworkManager', () => {
       });
 
       const l1Lease = await browserProvider.ensureProxyLease('cross-layer-check');
-      assert.notStrictEqual(l1Lease.proxy.port, 7890);
+      assert.notStrictEqual(l1Lease.proxy.port, l2Port);
       await browserProvider.releaseProxyLease();
     } finally {
       loaded.restore();

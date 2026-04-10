@@ -401,10 +401,13 @@ describe('Registry 集成测试', () => {
         const ports = Registry.PROXY.getAllPorts();
         assert.ok(Array.isArray(ports), '端口列表应该是数组');
         assert.ok(ports.length === 22, '应该有 22 个代理端口');
+        assert.strictEqual(new Set(ports).size, ports.length, '代理端口不应该重复');
+        assert.strictEqual(Math.min(...ports), 7891, '代理端口起点应为 7891');
+        assert.strictEqual(Math.max(...ports), 7912, '代理端口终点应为 7912');
 
-        // 验证端口范围
-        ports.forEach(port => {
-            assert.ok(port >= 7890 && port <= 7911, `端口 ${port} 应该在 7890-7911 范围内`);
+        // 验证端口范围与连续性
+        ports.forEach((port, index) => {
+            assert.strictEqual(port, 7891 + index, `端口 ${port} 应该与共享代理池保持连续`);
         });
     });
 });
