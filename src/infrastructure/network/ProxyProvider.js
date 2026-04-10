@@ -17,6 +17,7 @@ const DEFAULT_FAILURE_COOLDOWN_MS = 60000;
 const DEFAULT_HTTP_503_COOLDOWN_MS = 90000;
 const DEFAULT_FAILURE_THRESHOLD = 6;
 const DEFAULT_HTTP_503_OBSERVATION_THRESHOLD = 3;
+const DEFAULT_HEALTH_PROBE_MODE = 'tcp_authoritative';
 const DEFAULT_CRITICAL_ERROR_COOLDOWN_MS = 1800000;
 const DEFAULT_MIN_HEALTH_SCORE = 60;
 const DEFAULT_SUCCESS_HEALTH_REWARD = 4;
@@ -41,6 +42,14 @@ function extractStatusCode(reason = '') {
 function positiveNumber(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function normalizeHealthProbeMode(value) {
+  const normalized = String(value || '').trim().toLowerCase();
+  if (normalized === 'tcp_only' || normalized === 'tcp_authoritative' || normalized === 'tcp_then_http') {
+    return normalized;
+  }
+  return DEFAULT_HEALTH_PROBE_MODE;
 }
 
 function isTimeoutLike(reason = '') {
@@ -107,6 +116,9 @@ class ProxyProvider extends EventEmitter {
       tcpTimeoutMs: Number(options.tcpTimeoutMs) || 1500,
       httpTimeoutMs: Number(options.httpTimeoutMs) || 4000,
       heartbeatUrl: String(options.heartbeatUrl || process.env.PROXY_HEARTBEAT_URL || DEFAULT_HEARTBEAT_URL),
+      healthProbeMode: normalizeHealthProbeMode(
+        options.healthProbeMode || process.env.PROXY_HEALTH_PROBE_MODE
+      ),
       rateLimitIsolationMs: Number(options.rateLimitIsolationMs) || 300000,
       failureCooldownMs: positiveNumber(options.failureCooldownMs, DEFAULT_FAILURE_COOLDOWN_MS),
       http503CooldownMs: positiveNumber(options.http503CooldownMs, DEFAULT_HTTP_503_COOLDOWN_MS),
@@ -722,9 +734,9 @@ class ProxyProvider extends EventEmitter {
   async _checkNodeHealth(node) {
     const now = this.now();
     const tcpResult = await this.probes.tcp(node, this.config);
+    node.lastHeartbeatAt = now;
     if (!tcpResult?.ok) {
       node.probeHealthy = false;
-      node.lastHeartbeatAt = now;
       node.lastError = tcpResult?.error || 'tcp_failed';
       node.healthScore = clamp(
         node.healthScore - resolveHealthPenalty(null, tcpResult?.error || 'tcp_failed'),
@@ -735,9 +747,26 @@ class ProxyProvider extends EventEmitter {
       return { ok: false, port: node.port, stage: 'tcp' };
     }
 
+    const tcpLatencyMs = Number(tcpResult?.latencyMs);
+    if (this.config.healthProbeMode === 'tcp_only') {
+      return this._markNodeHealthyFromHeartbeat(node, {
+        latencyMs: tcpLatencyMs,
+        statusCode: 200,
+        stage: 'tcp'
+      });
+    }
+
     const httpResult = await this.probes.http(node, this.config);
-    node.lastHeartbeatAt = now;
     if (!httpResult?.ok) {
+      if (this.config.healthProbeMode === 'tcp_authoritative') {
+        return this._markNodeHealthyFromHeartbeat(node, {
+          latencyMs: tcpLatencyMs,
+          statusCode: Number(httpResult?.statusCode) || 200,
+          stage: 'tcp_authoritative',
+          degradedReason: httpResult?.error || null
+        });
+      }
+
       node.probeHealthy = false;
       node.lastError = httpResult?.error || 'http_failed';
       node.healthScore = clamp(
@@ -753,8 +782,17 @@ class ProxyProvider extends EventEmitter {
       return { ok: false, port: node.port, stage: 'http' };
     }
 
+    return this._markNodeHealthyFromHeartbeat(node, {
+      latencyMs: Number(httpResult?.latencyMs),
+      statusCode: Number(httpResult?.statusCode) || 200,
+      stage: 'http'
+    });
+  }
+
+  _markNodeHealthyFromHeartbeat(node, details = {}) {
     node.probeHealthy = true;
-    node.lastError = null;
+    node.lastError = details.degradedReason ? `heartbeat_degraded:${details.degradedReason}` : null;
+    node.lastStatusCode = Number(details.statusCode) || 200;
     node.healthScore = clamp(
       node.healthScore + 1,
       0,
@@ -766,21 +804,27 @@ class ProxyProvider extends EventEmitter {
       this.config.successEwmaAlpha
     );
 
-    if (Number.isFinite(httpResult.latencyMs) && httpResult.latencyMs > 0) {
+    if (Number.isFinite(details.latencyMs) && details.latencyMs > 0) {
       node.latencyEwmaMs = ewma(
         node.latencyEwmaMs,
-        httpResult.latencyMs,
+        details.latencyMs,
         this.config.latencyEwmaAlpha
       );
     }
 
-    return { ok: true, port: node.port };
+    return {
+      ok: true,
+      port: node.port,
+      stage: details.stage || 'http',
+      degraded: Boolean(details.degradedReason)
+    };
   }
 
   _probeTcp(node, config) {
     return new Promise(resolve => {
       const socket = new net.Socket();
       let settled = false;
+      const startedAt = this.now();
 
       const finish = (ok, error = null) => {
         if (settled) {
@@ -788,7 +832,11 @@ class ProxyProvider extends EventEmitter {
         }
         settled = true;
         socket.destroy();
-        resolve({ ok, error });
+        resolve({
+          ok,
+          error,
+          latencyMs: this.now() - startedAt
+        });
       };
 
       socket.setTimeout(config.tcpTimeoutMs);

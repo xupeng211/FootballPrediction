@@ -85,18 +85,26 @@ class ReconStealthProvider {
     return '';
   }
 
-  async applyStealthFingerprint(page, enabled = false) {
+  async applyStealthFingerprint(page, enabled = false, fingerprint = {}) {
     if (!enabled || !page || typeof page.addInitScript !== 'function') {
       return false;
     }
 
-    await page.addInitScript(({ injectedHardwareConcurrency, injectedDeviceMemory, injectedPlatform }) => {
+    await page.addInitScript(({
+      injectedHardwareConcurrency,
+      injectedDeviceMemory,
+      injectedPlatform,
+      injectedLanguage,
+      injectedLanguages,
+      injectedFingerprintSeed,
+      injectedWebgl
+    }) => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
       Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => injectedHardwareConcurrency });
       Object.defineProperty(navigator, 'deviceMemory', { get: () => injectedDeviceMemory });
       Object.defineProperty(navigator, 'platform', { get: () => injectedPlatform });
-      Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en', 'ja-JP', 'ja'] });
-      Object.defineProperty(navigator, 'language', { get: () => 'en-US' });
+      Object.defineProperty(navigator, 'languages', { get: () => injectedLanguages });
+      Object.defineProperty(navigator, 'language', { get: () => injectedLanguage });
       Object.defineProperty(navigator, 'plugins', {
         get: () => [
           { name: 'Chrome PDF Plugin' },
@@ -105,10 +113,23 @@ class ReconStealthProvider {
         ]
       });
       window.chrome = window.chrome || { runtime: {} };
+      Object.defineProperty(window, '__reconContextFingerprint', {
+        value: {
+          seed: injectedFingerprintSeed,
+          webgl: injectedWebgl
+        },
+        configurable: true
+      });
     }, {
-      injectedHardwareConcurrency: this.hardwareConcurrency,
-      injectedDeviceMemory: this.deviceMemory,
-      injectedPlatform: this.platform
+      injectedHardwareConcurrency: Number(fingerprint.hardwareConcurrency ?? this.hardwareConcurrency),
+      injectedDeviceMemory: Number(fingerprint.deviceMemory ?? this.deviceMemory),
+      injectedPlatform: String(fingerprint.platform || this.platform),
+      injectedLanguage: String(fingerprint.language || 'en-US'),
+      injectedLanguages: Array.isArray(fingerprint.languages) && fingerprint.languages.length > 0
+        ? fingerprint.languages
+        : ['en-US', 'en', 'ja-JP', 'ja'],
+      injectedFingerprintSeed: String(fingerprint.fingerprintSeed || ''),
+      injectedWebgl: fingerprint.webgl || null
     });
 
     return true;
