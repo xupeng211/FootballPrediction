@@ -1,5 +1,6 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const { chromium: playwrightChromium } = require('playwright');
 const {
   getAntiDetectionScripts,
@@ -31,7 +32,93 @@ const DEFAULT_READY_SELECTORS = [
   'body'
 ];
 const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
-const MODERN_CHROME_UA_RE = /\bChrome\/(13[1-9]|\d{3,})\b/;
+const SUPPORTED_STEALTH_UA_RE = /(?:Chrome\/(?:130|131|132)\.0\.0\.0|Edg\/(?:130|131)\.0\.0\.0|Version\/18(?:\.0)?\b)/;
+const ROTATING_BROWSER_PROFILES = [
+  {
+    family: 'chrome',
+    platform: 'Win32',
+    locale: 'en-US',
+    timezoneId: 'Europe/London',
+    deviceScaleFactor: 1,
+    hasTouch: false,
+    isMobile: false,
+    acceptLanguage: 'en-US,en;q=0.9',
+    secChPlatform: '"Windows"',
+    viewportBase: { width: 1920, height: 1080 },
+    versions: [130, 131, 132],
+    createUserAgent(version) {
+      return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${version}.0.0.0 Safari/537.36`;
+    }
+  },
+  {
+    family: 'edge',
+    platform: 'Win32',
+    locale: 'en-US',
+    timezoneId: 'Europe/London',
+    deviceScaleFactor: 1,
+    hasTouch: false,
+    isMobile: false,
+    acceptLanguage: 'en-US,en;q=0.9',
+    secChPlatform: '"Windows"',
+    viewportBase: { width: 1920, height: 1080 },
+    versions: [130, 131],
+    createUserAgent(version) {
+      return `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${version}.0.0.0 Safari/537.36 Edg/${version}.0.0.0`;
+    }
+  },
+  {
+    family: 'safari',
+    platform: 'MacIntel',
+    locale: 'en-US',
+    timezoneId: 'Europe/London',
+    deviceScaleFactor: 2,
+    hasTouch: false,
+    isMobile: false,
+    acceptLanguage: 'en-US,en;q=0.9',
+    secChPlatform: '"macOS"',
+    viewportBase: { width: 1728, height: 972 },
+    versions: [18],
+    createUserAgent() {
+      return 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_6_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15';
+    }
+  }
+];
+const ROTATING_VIEWPORT_PRESETS = [
+  { width: 1366, height: 768 },
+  { width: 1440, height: 900 },
+  { width: 1536, height: 864 },
+  { width: 1600, height: 900 },
+  { width: 1728, height: 972 },
+  { width: 1792, height: 1008 },
+  { width: 1920, height: 1080 }
+];
+const ROTATING_WEBGL_PROFILES = [
+  {
+    vendor: 'Google Inc. (NVIDIA)',
+    renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)'
+  },
+  {
+    vendor: 'Google Inc. (NVIDIA)',
+    renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3070 Direct3D11 vs_5_0 ps_5_0, D3D11)'
+  },
+  {
+    vendor: 'Google Inc. (AMD)',
+    renderer: 'ANGLE (AMD, AMD Radeon RX 580 Series Direct3D11 vs_5_0 ps_5_0, D3D11)'
+  },
+  {
+    vendor: 'Google Inc. (Intel)',
+    renderer: 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)'
+  },
+  {
+    vendor: 'Google Inc. (Intel)',
+    renderer: 'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11 vs_5_0 ps_5_0, D3D11)'
+  }
+];
+const HARDWARE_CONCURRENCY_POOL = [8, 10, 12, 16, 20, 24];
+const DEVICE_MEMORY_POOL = [4, 8, 8, 16, 16, 32];
+const WEBGL_TEXTURE_SIZE_POOL = [8192, 12288, 16384];
+const WEBGL_RENDERBUFFER_SIZE_POOL = [8192, 16384];
+const WEBGL_MAX_SAMPLES_POOL = [4, 8];
 
 function deriveStealthWorkerId(traceId = '', proxy = null) {
   const port = Number(proxy?.port || 0);
@@ -46,10 +133,79 @@ function deriveStealthWorkerId(traceId = '', proxy = null) {
   return hash + 1;
 }
 
-function buildStealthIdentity(traceId = '', proxy = null) {
+function secureRandomInt(min, max) {
+  const normalizedMin = Math.ceil(Number(min) || 0);
+  const normalizedMax = Math.floor(Number(max) || 0);
+  if (normalizedMax <= normalizedMin) {
+    return normalizedMin;
+  }
+
+  return crypto.randomInt(normalizedMin, normalizedMax + 1);
+}
+
+function secureSample(items = []) {
+  if (!Array.isArray(items) || items.length === 0) {
+    return null;
+  }
+
+  return items[secureRandomInt(0, items.length - 1)];
+}
+
+function clampValue(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function buildRotatingViewport(baseViewport = FIXED_FINGERPRINT.viewport) {
+  const preset = secureSample(ROTATING_VIEWPORT_PRESETS) || baseViewport;
+  const width = clampValue(
+    preset.width + secureRandomInt(-18, 18),
+    1366,
+    1920
+  );
+  const height = clampValue(
+    preset.height + secureRandomInt(-14, 14),
+    768,
+    1080
+  );
+
+  return {
+    width,
+    height
+  };
+}
+
+function buildStealthHeadersForProfile(profile, version) {
+  const acceptLanguage = profile?.acceptLanguage || 'en-US,en;q=0.9';
+  const extraHTTPHeaders = {
+    'accept-language': acceptLanguage,
+    'accept-encoding': 'gzip, deflate, br',
+    'sec-fetch-dest': 'document',
+    'sec-fetch-mode': 'navigate',
+    'sec-fetch-site': 'none',
+    'sec-fetch-user': '?1'
+  };
+
+  if (profile?.family === 'chrome') {
+    extraHTTPHeaders['sec-ch-ua'] = `"Chromium";v="${version}", "Google Chrome";v="${version}", "Not_A Brand";v="24"`;
+    extraHTTPHeaders['sec-ch-ua-mobile'] = '?0';
+    extraHTTPHeaders['sec-ch-ua-platform'] = profile.secChPlatform;
+  } else if (profile?.family === 'edge') {
+    extraHTTPHeaders['sec-ch-ua'] = `"Chromium";v="${version}", "Microsoft Edge";v="${version}", "Not_A Brand";v="24"`;
+    extraHTTPHeaders['sec-ch-ua-mobile'] = '?0';
+    extraHTTPHeaders['sec-ch-ua-platform'] = profile.secChPlatform;
+  }
+
+  return extraHTTPHeaders;
+}
+
+function buildFixedStealthIdentity(traceId = '', proxy = null) {
   const workerId = deriveStealthWorkerId(traceId, proxy);
   const enhancedConfig = getEnhancedStealthConfig({ platform: 'win32' });
   const fixedHeaders = generateStealthHeaders(true);
+  const fixedFingerprintSeed = crypto
+    .createHash('sha256')
+    .update(`${traceId}:${workerId}:fixed`)
+    .digest('hex');
 
   return {
     workerId,
@@ -64,8 +220,102 @@ function buildStealthIdentity(traceId = '', proxy = null) {
     extraHTTPHeaders: {
       ...(fixedHeaders.extraHTTPHeaders || {})
     },
-    antiDetectionScript: getAntiDetectionScripts(workerId)
+    hardwareConcurrency: 8,
+    deviceMemory: 8,
+    webgl: {
+      vendor: 'Google Inc. (Intel)',
+      renderer: 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)',
+      maxTextureSize: 8192,
+      maxRenderbufferSize: 16384,
+      maxSamples: 4
+    },
+    fingerprintSeed: fixedFingerprintSeed,
+    canvasSalt: fixedFingerprintSeed.slice(0, 16),
+    audioSalt: fixedFingerprintSeed.slice(16, 32),
+    webglSalt: fixedFingerprintSeed.slice(32, 48),
+    antiDetectionScript: getAntiDetectionScripts({
+      workerId,
+      fingerprintSeed: fixedFingerprintSeed,
+      webglVendor: 'Google Inc. (Intel)',
+      webglRenderer: 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)',
+      hardwareConcurrency: 8,
+      deviceMemory: 8,
+      platform: enhancedConfig.platform || FIXED_FINGERPRINT.platform || 'Win32',
+      canvasSalt: fixedFingerprintSeed.slice(0, 16),
+      audioSalt: fixedFingerprintSeed.slice(16, 32),
+      webglSalt: fixedFingerprintSeed.slice(32, 48),
+      maxTextureSize: 8192,
+      maxRenderbufferSize: 16384,
+      maxSamples: 4
+    })
   };
+}
+
+function buildRotatingStealthIdentity(traceId = '', proxy = null, options = {}) {
+  const workerId = deriveStealthWorkerId(traceId, proxy);
+  const profile = secureSample(ROTATING_BROWSER_PROFILES) || ROTATING_BROWSER_PROFILES[0];
+  const version = secureSample(profile.versions) || profile.versions[0];
+  const userAgent = profile.createUserAgent(version);
+  const webgl = secureSample(ROTATING_WEBGL_PROFILES) || ROTATING_WEBGL_PROFILES[0];
+  const viewport = buildRotatingViewport(profile.viewportBase);
+  const fingerprintSeed = crypto.randomUUID();
+  const entropy = crypto
+    .createHash('sha256')
+    .update(`${traceId}:${workerId}:${options.generation || 0}:${fingerprintSeed}`)
+    .digest('hex');
+  const hardwareConcurrency = secureSample(HARDWARE_CONCURRENCY_POOL) || 8;
+  const deviceMemory = secureSample(DEVICE_MEMORY_POOL) || 8;
+  const maxTextureSize = secureSample(WEBGL_TEXTURE_SIZE_POOL) || 8192;
+  const maxRenderbufferSize = secureSample(WEBGL_RENDERBUFFER_SIZE_POOL) || 16384;
+  const maxSamples = secureSample(WEBGL_MAX_SAMPLES_POOL) || 4;
+
+  return {
+    workerId,
+    userAgent,
+    viewport,
+    locale: profile.locale,
+    timezoneId: profile.timezoneId,
+    platform: profile.platform,
+    deviceScaleFactor: Number(profile.deviceScaleFactor ?? 1) || 1,
+    hasTouch: profile.hasTouch === true,
+    isMobile: profile.isMobile === true,
+    extraHTTPHeaders: buildStealthHeadersForProfile(profile, version),
+    hardwareConcurrency,
+    deviceMemory,
+    webgl: {
+      ...webgl,
+      maxTextureSize,
+      maxRenderbufferSize,
+      maxSamples
+    },
+    fingerprintSeed,
+    canvasSalt: entropy.slice(0, 16),
+    audioSalt: entropy.slice(16, 32),
+    webglSalt: entropy.slice(32, 48),
+    antiDetectionScript: getAntiDetectionScripts({
+      workerId,
+      fingerprintSeed,
+      webglVendor: webgl.vendor,
+      webglRenderer: webgl.renderer,
+      hardwareConcurrency,
+      deviceMemory,
+      platform: profile.platform,
+      canvasSalt: entropy.slice(0, 16),
+      audioSalt: entropy.slice(16, 32),
+      webglSalt: entropy.slice(32, 48),
+      maxTextureSize,
+      maxRenderbufferSize,
+      maxSamples
+    })
+  };
+}
+
+function buildStealthIdentity(traceId = '', proxy = null, options = {}) {
+  if (options.enableFingerprintRotation === true) {
+    return buildRotatingStealthIdentity(traceId, proxy, options);
+  }
+
+  return buildFixedStealthIdentity(traceId, proxy);
 }
 
 function buildStealthLaunchArgs(baseArgs = [], viewport = FIXED_FINGERPRINT.viewport, locale = 'en-US') {
@@ -80,7 +330,7 @@ function buildStealthLaunchArgs(baseArgs = [], viewport = FIXED_FINGERPRINT.view
 
 function resolveContextUserAgent(candidate, fallback) {
   const value = String(candidate || '').trim();
-  return MODERN_CHROME_UA_RE.test(value) ? value : fallback;
+  return SUPPORTED_STEALTH_UA_RE.test(value) ? value : fallback;
 }
 
 function resolveList(primary, secondary, fallback) {
@@ -107,7 +357,12 @@ class ReconBrowserContext {
     const runtimeConfig = getReconConfigSection(['recon_runtime', 'browser_context'], {});
     const networkMonitorConfig = getReconConfigSection(['recon_runtime', 'network_monitor'], {});
     const unlockStrategiesConfig = getReconConfigSection(['recon_runtime', 'unlock_strategies'], {});
-    const stealthIdentity = buildStealthIdentity(options.traceId, options.proxy);
+    const enableFingerprintRotation = options.enableFingerprintRotation === true;
+    const resetContextPerBatch = options.resetContextPerBatch === true;
+    const stealthIdentity = buildStealthIdentity(options.traceId, options.proxy, {
+      enableFingerprintRotation,
+      generation: 1
+    });
 
     this.logger = options.logger || console;
     this.traceId = options.traceId || 'trace-unknown';
@@ -120,21 +375,26 @@ class ReconBrowserContext {
     this.isClosed = false;
     this.launchTimeoutMs = Number(options.launchTimeoutMs ?? runtimeConfig.launch_timeout_ms);
     this.navigationTimeoutMs = Number(options.navigationTimeoutMs ?? runtimeConfig.navigation_timeout_ms);
-    this.stealthIdentity = stealthIdentity;
-    this.userAgent = resolveContextUserAgent(
-      options.userAgent || runtimeConfig.user_agent,
-      this.stealthIdentity.userAgent
-    );
-    this.viewport = options.viewport || this.stealthIdentity.viewport || runtimeConfig.viewport;
-    this.launchArgs = buildStealthLaunchArgs(
-      Array.isArray(options.launchArgs)
-      ? options.launchArgs
+    this.runtimeConfig = runtimeConfig;
+    this.enableFingerprintRotation = enableFingerprintRotation;
+    this.resetContextPerBatchEnabled = resetContextPerBatch;
+    this.userAgentOverride = options.userAgent || runtimeConfig.user_agent;
+    this.viewportOverride = options.viewport || null;
+    this.localeOverride = options.locale || runtimeConfig.locale || '';
+    this.timezoneOverride = options.timezoneId || runtimeConfig.timezone_id || '';
+    this.hardwareConcurrencyOverride = options.hardwareConcurrency;
+    this.deviceMemoryOverride = options.deviceMemory;
+    this.platformOverride = options.platform || runtimeConfig.platform || '';
+    this.deviceScaleFactorOverride = options.deviceScaleFactor;
+    this.hasTouchOverride = options.hasTouch;
+    this.isMobileOverride = options.isMobile;
+    this.acceptLanguageOverride = options.acceptLanguage || runtimeConfig.accept_language || '';
+    this.baseLaunchArgs = Array.isArray(options.launchArgs)
+      ? [...options.launchArgs]
       : Array.isArray(runtimeConfig.launch_args)
-        ? runtimeConfig.launch_args
-        : [],
-      this.viewport,
-      options.locale || this.stealthIdentity.locale || runtimeConfig.locale || 'en-US'
-    );
+        ? [...runtimeConfig.launch_args]
+        : [];
+    this.contextGeneration = 0;
     this.warmupDelayMs = Number(options.warmupDelayMs ?? runtimeConfig.warmup_delay_ms);
     this.scrollIterations = Number(options.scrollIterations ?? runtimeConfig.scroll_iterations);
     this.scrollStepPx = Number(options.scrollStepPx ?? runtimeConfig.scroll_step_px);
@@ -161,33 +421,14 @@ class ReconBrowserContext {
       || ''
     ).trim();
     this.homeWarmupWaitMs = Number(options.homeWarmupWaitMs ?? networkMonitorConfig.home_warmup_wait_ms ?? 5000);
-    this.acceptLanguage = String(
-      options.acceptLanguage
-      || this.stealthIdentity.extraHTTPHeaders['accept-language']
-      || runtimeConfig.accept_language
-      || DEFAULT_ACCEPT_LANGUAGE
-    );
-    this.locale = String(options.locale || this.stealthIdentity.locale || runtimeConfig.locale || 'en-US');
-    this.timezoneId = String(
-      options.timezoneId
-      || this.stealthIdentity.timezoneId
-      || runtimeConfig.timezone_id
-      || 'Europe/London'
-    );
-    this.hardwareConcurrency = Number(options.hardwareConcurrency ?? runtimeConfig.hardware_concurrency ?? 8);
-    this.deviceMemory = Number(options.deviceMemory ?? runtimeConfig.device_memory ?? 8);
-    this.platform = String(options.platform || this.stealthIdentity.platform || runtimeConfig.platform || 'Win32');
-    this.deviceScaleFactor = Number(options.deviceScaleFactor ?? this.stealthIdentity.deviceScaleFactor ?? 1) || 1;
-    this.hasTouch = options.hasTouch ?? this.stealthIdentity.hasTouch ?? false;
-    this.isMobile = options.isMobile ?? this.stealthIdentity.isMobile ?? false;
-    this.stealthExtraHTTPHeaders = {
-      ...this.stealthIdentity.extraHTTPHeaders
-    };
-    this.antiDetectionScript = String(this.stealthIdentity.antiDetectionScript || '');
     this.enableStealthFingerprint = true;
     this.externalSessionPath = String(options.externalSessionPath || runtimeConfig.external_session_path || '');
     this.preferFullChromium = options.preferFullChromium ?? runtimeConfig.prefer_full_chromium ?? false;
-    this.persistentProfileEnabled = options.persistentProfileEnabled ?? runtimeConfig.persistent_profile_enabled ?? true;
+    this.persistentProfileEnabled = (
+      options.persistentProfileEnabled
+      ?? runtimeConfig.persistent_profile_enabled
+      ?? true
+    ) && this.resetContextPerBatchEnabled !== true;
     this.explicitExecutablePath = String(
       options.executablePath
       || runtimeConfig.executable_path
@@ -203,6 +444,7 @@ class ReconBrowserContext {
       || ''
     ).trim();
     this.userDataDirRoot = String(options.userDataDirRoot || runtimeConfig.user_data_dir_root || '');
+    this._applyStealthIdentity(stealthIdentity);
     this.stealthProvider = options.stealthProvider || new ReconStealthProvider({
       logger: this.logger,
       traceId: this.traceId,
@@ -229,6 +471,72 @@ class ReconBrowserContext {
     this.forceUnlockJ1 = this.bookmakerUnlocker.config;
     this._sessionPrimed = false;
     this.consentLabels = resolveList(options.consentLabels, runtimeConfig.consent_labels, DEFAULT_CONSENT_LABELS);
+    this._syncStealthProviderProfile();
+  }
+
+  _buildStealthIdentity() {
+    return buildStealthIdentity(this.traceId, this.proxy, {
+      enableFingerprintRotation: this.enableFingerprintRotation,
+      generation: this.contextGeneration + 1
+    });
+  }
+
+  _applyStealthIdentity(stealthIdentity) {
+    this.stealthIdentity = stealthIdentity || buildFixedStealthIdentity(this.traceId, this.proxy);
+    this.contextGeneration += 1;
+    this.userAgent = resolveContextUserAgent(
+      this.userAgentOverride,
+      this.stealthIdentity.userAgent
+    );
+    this.viewport = this.viewportOverride || this.stealthIdentity.viewport || this.runtimeConfig.viewport;
+    this.locale = String(this.localeOverride || this.stealthIdentity.locale || this.runtimeConfig.locale || 'en-US');
+    this.timezoneId = String(
+      this.timezoneOverride
+      || this.stealthIdentity.timezoneId
+      || this.runtimeConfig.timezone_id
+      || 'Europe/London'
+    );
+    this.hardwareConcurrency = Number(
+      this.hardwareConcurrencyOverride
+      ?? this.stealthIdentity.hardwareConcurrency
+      ?? this.runtimeConfig.hardware_concurrency
+      ?? 8
+    );
+    this.deviceMemory = Number(
+      this.deviceMemoryOverride
+      ?? this.stealthIdentity.deviceMemory
+      ?? this.runtimeConfig.device_memory
+      ?? 8
+    );
+    this.platform = String(this.platformOverride || this.stealthIdentity.platform || this.runtimeConfig.platform || 'Win32');
+    this.deviceScaleFactor = Number(
+      this.deviceScaleFactorOverride
+      ?? this.stealthIdentity.deviceScaleFactor
+      ?? 1
+    ) || 1;
+    this.hasTouch = this.hasTouchOverride ?? this.stealthIdentity.hasTouch ?? false;
+    this.isMobile = this.isMobileOverride ?? this.stealthIdentity.isMobile ?? false;
+    this.acceptLanguage = String(
+      this.acceptLanguageOverride
+      || this.stealthIdentity.extraHTTPHeaders?.['accept-language']
+      || DEFAULT_ACCEPT_LANGUAGE
+    );
+    this.stealthExtraHTTPHeaders = {
+      ...(this.stealthIdentity.extraHTTPHeaders || {})
+    };
+    this.antiDetectionScript = String(this.stealthIdentity.antiDetectionScript || '');
+    this.launchArgs = buildStealthLaunchArgs(this.baseLaunchArgs, this.viewport, this.locale);
+    this._syncStealthProviderProfile();
+  }
+
+  _syncStealthProviderProfile() {
+    if (!this.stealthProvider) {
+      return;
+    }
+
+    this.stealthProvider.hardwareConcurrency = this.hardwareConcurrency;
+    this.stealthProvider.deviceMemory = this.deviceMemory;
+    this.stealthProvider.platform = this.platform;
   }
 
   buildLaunchOptions(options = {}) {
@@ -264,12 +572,79 @@ class ReconBrowserContext {
     return launchOptions;
   }
 
-  async launch(options = {}) {
-    const launchOptions = options.launchOptions || this.buildLaunchOptions(options);
-    const externalSession = this.sessionManager.load();
+  _buildContextOptions(externalSession = null) {
     const sessionHeaders = externalSession?.extraHTTPHeaders || {};
     const contextUserAgent = resolveContextUserAgent(externalSession?.userAgent, this.userAgent);
-    const acceptLanguage = this.acceptLanguage;
+
+    return {
+      userAgent: contextUserAgent,
+      viewport: this.viewport,
+      locale: this.locale,
+      timezoneId: this.timezoneId,
+      deviceScaleFactor: this.deviceScaleFactor,
+      screen: this.viewport,
+      hasTouch: this.hasTouch,
+      isMobile: this.isMobile,
+      extraHTTPHeaders: {
+        ...sessionHeaders,
+        ...this.stealthExtraHTTPHeaders,
+        'accept-language': this.acceptLanguage,
+        ...(contextUserAgent ? { 'user-agent': contextUserAgent } : {})
+      }
+    };
+  }
+
+  async _initializeFreshPage(context, externalSession = null) {
+    await this.injectExternalSession(context, externalSession);
+    const page = await context.newPage();
+    await this.stealthProvider.applyStealthFingerprint(page, this.enableStealthFingerprint, {
+      fingerprintSeed: this.stealthIdentity?.fingerprintSeed || '',
+      hardwareConcurrency: this.hardwareConcurrency,
+      deviceMemory: this.deviceMemory,
+      platform: this.platform,
+      language: this.locale,
+      languages: [this.locale, 'en', 'en-GB'],
+      webgl: this.stealthIdentity?.webgl || null,
+      canvasSalt: this.stealthIdentity?.canvasSalt || '',
+      webglSalt: this.stealthIdentity?.webglSalt || ''
+    });
+    if (this.antiDetectionScript && typeof page.addInitScript === 'function') {
+      await page.addInitScript(this.antiDetectionScript);
+    }
+
+    return page;
+  }
+
+  async _closeActiveContext() {
+    const context = this.context;
+    const page = this.page;
+    this.context = null;
+    this.page = null;
+    this._sessionPrimed = false;
+
+    if (page && typeof page.close === 'function' && !pageClosed(page)) {
+      try {
+        await page.close();
+      } catch (_error) {
+        // 页面已挂时允许继续关闭 context
+      }
+    }
+
+    return this._closeTargetWithTimeout('context', context);
+  }
+
+  async launch(options = {}) {
+    if (
+      this.enableFingerprintRotation === true
+      && this.contextGeneration > 0
+      && this.isClosed === true
+      && options.skipAutoRotate !== true
+    ) {
+      this._applyStealthIdentity(this._buildStealthIdentity());
+    }
+
+    const launchOptions = options.launchOptions || this.buildLaunchOptions(options);
+    const externalSession = this.sessionManager.load();
 
     let browser = null;
     let context = null;
@@ -277,22 +652,7 @@ class ReconBrowserContext {
     let userDataDir = null;
 
     try {
-      const contextOptions = {
-        userAgent: contextUserAgent,
-        viewport: this.viewport,
-        locale: this.locale,
-        timezoneId: this.timezoneId,
-        deviceScaleFactor: this.deviceScaleFactor,
-        screen: this.viewport,
-        hasTouch: this.hasTouch,
-        isMobile: this.isMobile,
-        extraHTTPHeaders: {
-          ...sessionHeaders,
-          ...this.stealthExtraHTTPHeaders,
-          'accept-language': acceptLanguage,
-          ...(contextUserAgent ? { 'user-agent': contextUserAgent } : {})
-        }
-      };
+      const contextOptions = this._buildContextOptions(externalSession);
 
       if (this.persistentProfileEnabled && typeof this.chromium.launchPersistentContext === 'function') {
         userDataDir = await this.stealthProvider.createUserDataDir();
@@ -311,12 +671,7 @@ class ReconBrowserContext {
         context = await browser.newContext(contextOptions);
       }
 
-      await this.injectExternalSession(context, externalSession);
-      page = await context.newPage();
-      await this.stealthProvider.applyStealthFingerprint(page, this.enableStealthFingerprint);
-      if (this.antiDetectionScript && typeof page.addInitScript === 'function') {
-        await page.addInitScript(this.antiDetectionScript);
-      }
+      page = await this._initializeFreshPage(context, externalSession);
 
       this.browser = browser;
       this.context = context;
@@ -336,6 +691,65 @@ class ReconBrowserContext {
       this.isClosed = true;
       throw error;
     }
+  }
+
+  getFingerprintSummary() {
+    return {
+      contextGeneration: this.contextGeneration,
+      fingerprintSeed: this.stealthIdentity?.fingerprintSeed || null,
+      userAgent: this.userAgent,
+      viewport: this.viewport,
+      platform: this.platform,
+      hardwareConcurrency: this.hardwareConcurrency,
+      deviceMemory: this.deviceMemory
+    };
+  }
+
+  async resetContext(options = {}) {
+    this._applyStealthIdentity(this._buildStealthIdentity());
+
+    if (
+      !this.browser
+      || this.persistentProfileEnabled === true
+      || (typeof this.browser.isConnected === 'function' && !this.browser.isConnected())
+    ) {
+      await this.close();
+      return this.launch({
+        ...options,
+        reason: options.reason || 'batch_reset',
+        skipAutoRotate: true
+      });
+    }
+
+    if (typeof this.browser.newContext !== 'function') {
+      this.logger.warn('recon_browser_context_batch_reset_skipped', {
+        traceId: this.traceId,
+        reason: options.reason || 'batch_reset',
+        hasBrowser: Boolean(this.browser),
+        hasContext: Boolean(this.context)
+      });
+      return this.page;
+    }
+
+    const contextCloseTimedOut = await this._closeActiveContext();
+    if (contextCloseTimedOut) {
+      await this.close();
+      return this.launch({
+        ...options,
+        reason: options.reason || 'batch_reset',
+        skipAutoRotate: true
+      });
+    }
+
+    const externalSession = this.sessionManager.load();
+    const contextOptions = this._buildContextOptions(externalSession);
+    const context = await this.browser.newContext(contextOptions);
+    const page = await this._initializeFreshPage(context, externalSession);
+
+    this.context = context;
+    this.page = page;
+    this.isClosed = false;
+    return page;
   }
 
   async injectExternalSession(context = this.context, sessionSnapshot = null) {
