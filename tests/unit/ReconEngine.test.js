@@ -83,18 +83,13 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
         circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
         forcePureProtocol: false
       }
-    },
-    {
-      url: 'oddsportal://root/football/england/premier-league-2025-2026/fixtures/',
-      options: {
-        maxPages: 50,
-        timeoutMs: engine.archiveTimeoutMs,
-        preferCurrentSeasonSource: true,
-        circuitBreakerKey: 'recon:47:2025/2026:fixtures:2025/2026',
-        forceDomOnly: true
-      }
     }
   ]);
+  assert.equal(
+    protocolCalls.some((call) => call.url.includes('/fixtures/')),
+    false,
+    'Results 命中并完成即时入库后，不应再继续探测 fixtures fallback'
+  );
   assert.ok(
     protocolCalls.every((call) => !call.url.includes('2024-2025')),
     'navigator 后置注入后仍不得回退到上一赛季 URL'
