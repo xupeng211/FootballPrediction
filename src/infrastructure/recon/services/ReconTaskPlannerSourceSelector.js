@@ -98,6 +98,7 @@ const reconTaskPlannerSourceSelector = {
 
   async selectCandidateSource(target, pendingMatches, confidenceThreshold, options = {}) {
     const navigator = options.navigator || this.navigator;
+    const timeoutMs = Math.max(1, Number(options.timeoutMs || this.archiveTimeoutMs));
     if (
       !navigator ||
       (
@@ -159,7 +160,7 @@ const reconTaskPlannerSourceSelector = {
       const sourceCircuitBreakerKey = `${circuitBreakerKey}:${source.mode}:${source.season}:${sourceIndex}`;
       const extractOptions = {
         maxPages: resolvedMaxPages,
-        timeoutMs: this.archiveTimeoutMs,
+        timeoutMs,
         preferCurrentSeasonSource: this.isCurrentSeason(source.season),
         circuitBreakerKey: sourceCircuitBreakerKey,
         forcePureProtocol

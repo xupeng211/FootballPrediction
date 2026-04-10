@@ -599,6 +599,45 @@ describe('ReconScanner Robustness - Navigator Lifecycle', () => {
     assert.strictEqual(navigator, unhealthyNavigator);
     assert.strictEqual(launchCount, 1, '发现不健康 Navigator 后必须触发自愈');
   });
+
+  it('initialize 应为 ReconEngine 注入韧性运行时策略', async () => {
+    const engine = {
+      archiveTimeoutMs: 45000,
+      dynamicConcurrencySuccessWindow: 3,
+      logger: { info() {}, warn() {}, error() {} },
+    };
+
+    const scanner = new ReconScanner({
+      config: {
+        team_slugs: {},
+        team_mappings: {},
+        oddsportal: {},
+        recon_runtime: {
+          browser_context: {},
+          disk_sweeper: {},
+          engine: {},
+        },
+      },
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      guardian: { async start() {}, async stop() {} },
+      repository: { async init() {}, async close() {} },
+      parser: {},
+      stitcher: {},
+      engine,
+      proxyRotator: null,
+      configManager: {},
+      diskSweeper: { async sweep() {} },
+    });
+
+    await scanner.initialize();
+
+    assert.strictEqual(engine.probeArchiveTimeoutMs, 20000);
+    assert.strictEqual(engine.fastFailTimeoutStreak, 2);
+    assert.strictEqual(engine.searchDisabledOnDegradedLeague, true);
+    assert.strictEqual(engine.lowSuccessRateThreshold, 0.5);
+    assert.strictEqual(engine.lowSuccessRateLeagueCap, 3);
+    assert.strictEqual(engine.dynamicConcurrencySuccessWindow, 5);
+  });
 });
 
 describe('ReconScanner Robustness - CLI Defaults', () => {
