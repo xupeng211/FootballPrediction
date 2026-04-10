@@ -12,6 +12,10 @@ from pydantic import BaseModel, Field, field_validator
 from src.config.common import logger
 
 PROXY_POOL_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "proxy_pool.json"
+DEFAULT_PREFERRED_PROXY_HOST = "host.docker.internal"
+IPV4_OCTET_COUNT = 4
+IPV4_OCTET_MAX = 255
+LEGACY_BRIDGE_PROXY_OCTETS = (172, 25, 16, 1)
 
 
 def _read_proxy_pool_file() -> dict[str, Any]:
@@ -74,11 +78,43 @@ def _extract_proxy_host(server_template: str | None) -> str | None:
     return match.group(1) if match else None
 
 
+def _normalize_proxy_host(host: str | None) -> str | None:
+    """清洗代理主机字符串。"""
+    if host is None:
+        return None
+
+    normalized = str(host).strip()
+    return normalized or None
+
+
+def _is_legacy_bridge_proxy_host(host: str | None) -> bool:
+    """识别历史 WSL 网桥地址，避免继续回退到旧桥接 IP。"""
+    normalized = _normalize_proxy_host(host)
+    if not normalized:
+        return False
+
+    parts = normalized.split(".")
+    if len(parts) != IPV4_OCTET_COUNT:
+        return False
+
+    try:
+        octets = [int(part) for part in parts]
+    except ValueError:
+        return False
+
+    return (
+        all(0 <= octet <= IPV4_OCTET_MAX for octet in octets)
+        and tuple(octets) == LEGACY_BRIDGE_PROXY_OCTETS
+    )
+
+
 def resolve_shared_proxy_pool_config() -> dict[str, Any]:
     """解析跨语言共享的代理池配置。"""
     file_config = _read_proxy_pool_file()
     protocol = os.environ.get("PROXY_PROTOCOL") or file_config.get("protocol") or "http"
-    server_template = os.environ.get("PROXY_SERVER") or file_config.get("serverTemplate") or ""
+    explicit_server_template = (os.environ.get("PROXY_SERVER") or "").strip()
+    file_server_template = str(file_config.get("serverTemplate") or "").strip()
+    server_template = explicit_server_template or file_server_template
 
     ports = parse_proxy_ports(os.environ.get("PROXY_PORTS"))
     if not ports:
@@ -89,12 +125,13 @@ def resolve_shared_proxy_pool_config() -> dict[str, Any]:
     if not ports:
         ports = parse_proxy_ports(file_config.get("ports"))
 
+    file_host = _normalize_proxy_host(file_config.get("host"))
     host = (
-        os.environ.get("WSL2_PROXY_HOST")
-        or os.environ.get("PROXY_HOST")
-        or _extract_proxy_host(server_template)
-        or file_config.get("host")
-        or "127.0.0.1"
+        _normalize_proxy_host(os.environ.get("WSL2_PROXY_HOST"))
+        or _normalize_proxy_host(os.environ.get("PROXY_HOST"))
+        or _normalize_proxy_host(_extract_proxy_host(explicit_server_template))
+        or (None if _is_legacy_bridge_proxy_host(file_host) else file_host)
+        or DEFAULT_PREFERRED_PROXY_HOST
     )
 
     try:
@@ -109,7 +146,13 @@ def resolve_shared_proxy_pool_config() -> dict[str, Any]:
     if not ports and default_port:
         ports = [default_port]
 
-    resolved_template = server_template or f"{protocol}://{host}:{{port}}"
+    resolved_template = (
+        server_template
+        if server_template
+        and not os.environ.get("WSL2_PROXY_HOST")
+        and not os.environ.get("PROXY_HOST")
+        else f"{protocol}://{host}:{{port}}"
+    )
 
     return {
         "protocol": protocol,
@@ -127,22 +170,27 @@ def get_shared_proxy_pool_config() -> dict[str, Any]:
 
 
 def default_proxy_host() -> str:
+    """返回默认代理主机。"""
     return str(resolve_shared_proxy_pool_config()["host"])
 
 
 def default_proxy_ports() -> list[int]:
+    """返回默认代理端口列表。"""
     return list(resolve_shared_proxy_pool_config()["ports"])
 
 
 def default_proxy_ports_csv() -> str:
+    """返回默认代理端口 CSV。"""
     return ",".join(str(port) for port in default_proxy_ports())
 
 
 def default_proxy_protocol() -> str:
+    """返回默认代理协议。"""
     return str(resolve_shared_proxy_pool_config()["protocol"])
 
 
 def default_proxy_server_template() -> str:
+    """返回默认代理地址模板。"""
     return str(resolve_shared_proxy_pool_config()["server_template"])
 
 
@@ -194,9 +242,11 @@ class ProxyConfig:
         ]
 
     def is_port_deprecated(self, port: int) -> bool:
+        """判断端口是否已弃用。"""
         return port in self.deprecated_proxy_ports
 
     def validate_port(self, port: int) -> bool:
+        """验证端口是否仍可被使用。"""
         return not self.is_port_deprecated(port) and port in self.proxy_ports
 
 
@@ -220,21 +270,25 @@ class ProxySettingsMixin(BaseModel):
     @field_validator("proxy_wsl2_host", mode="before")
     @classmethod
     def normalize_proxy_wsl2_host(cls, _: Any) -> str:
+        """统一回填共享代理主机。"""
         return default_proxy_host()
 
     @field_validator("proxy_protocol", mode="before")
     @classmethod
     def normalize_proxy_protocol(cls, _: Any) -> str:
+        """统一回填共享代理协议。"""
         return default_proxy_protocol()
 
     @field_validator("proxy_ports", mode="before")
     @classmethod
     def normalize_proxy_ports(cls, _: Any) -> str:
+        """统一回填共享代理端口列表。"""
         return default_proxy_ports_csv()
 
     @field_validator("proxy_server_template", mode="before")
     @classmethod
     def normalize_proxy_server_template(cls, _: Any) -> str:
+        """统一回填共享代理模板。"""
         return default_proxy_server_template()
 
     def build_proxy_config(self) -> ProxyConfig:

@@ -554,147 +554,308 @@ const reconMatrixFlow = {
       return { pendingTotal: 0, linked: 0, mismatched: 0 };
     }
 
-    const selectedSource = await this._selectCandidateSourceWithLocalFallback(
+    const reconRunId = this._createReconRunId(target);
+    const persistLimiter = pLimit(1);
+    const resultsSource = await this._probeResultsCandidateSource(
       runtimeTarget,
       remainingPending,
       effectiveThreshold,
       navigator
     );
-    const candidates = selectedSource.candidates;
-    const seasonMirror = selectedSource.seasonMirror || this.mirrorManager.buildSeasonMirror(candidates);
+    const resultsCandidates = Array.isArray(resultsSource?.candidates) ? resultsSource.candidates : [];
+    const resultsSeasonMirror = resultsSource?.seasonMirror
+      || this.mirrorManager.buildSeasonMirror(resultsCandidates);
+    const scopedPending = this._resolveScopedPendingMatches(
+      remainingPending,
+      remainingMatchLimit,
+      resultsCandidates,
+      effectiveThreshold,
+      resultsSeasonMirror
+    );
 
-    if (!Array.isArray(candidates) || candidates.length === 0) {
-      if (this._canUseLocalDictionaryFallback(runtimeTarget, orderedPending)) {
-        const fallbackPending = Number.isInteger(remainingMatchLimit) && remainingMatchLimit > 0
-          ? remainingPending.slice(0, Math.min(remainingMatchLimit, remainingPending.length))
-          : remainingPending;
-
-        return this._runLocalDictionaryOnlyTarget(runtimeTarget, fallbackPending, {
-          batchSize,
-          confidenceThreshold: effectiveThreshold,
-          sourceSeason: selectedSource?.source?.season || runtimeTarget.dbSeason,
-          sourceUrl: selectedSource?.source?.url || this._buildLocalDictionarySourceUrl(runtimeTarget)
-        });
-      }
-
-      const sourceState = selectedSource?.extractResult?.sourceState || 'SOURCE_EMPTY';
-      const error = new Error(sourceState);
-      error.code = sourceState;
-      error.sourceUrl = selectedSource?.source?.url || target.resultsUrl;
-      error.sourceSeason = selectedSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season);
-      throw error;
+    if (!Array.isArray(scopedPending) || scopedPending.length === 0) {
+      return { pendingTotal: 0, linked: 0, mismatched: 0 };
     }
 
-    const selectedPending = this.taskPlanner.selectProcessablePendingMatches(
-      remainingPending,
-      candidates,
-      effectiveThreshold,
-      remainingMatchLimit,
-      seasonMirror
-    );
-    const runtimeTargetWithSource = {
-      ...runtimeTarget,
-      reconSourceUrl: selectedSource?.source?.url || target.resultsUrl,
-      reconSourceSeason: selectedSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season)
-    };
-    const reconRunId = this._createReconRunId(target);
     const progress = {
       processed: 0,
       linked: 0,
       mismatched: 0,
-      total: selectedPending.length,
+      total: scopedPending.length,
       startedAt: Date.now()
     };
+    const routeMetadata = {
+      reconRunId,
+      season: target.dbSeason,
+      league: target.league.name,
+      allowMismatchRetry: target?.reconPolicy?.allowMismatchRetry === true
+    };
+    let remainingRoutePending = scopedPending;
+    let totalLinked = 0;
+    let totalMismatched = 0;
+    let totalCandidateCount = 0;
+    let finalSourceSeason = null;
+    let finalSourceUrl = null;
+    let lastSourceState = resultsSource?.extractResult?.sourceState || 'SOURCE_EMPTY';
 
-    const outcomes = await Promise.all(
-      selectedPending.map((l1Match) => limiter(() =>
-        this._reconcilePendingMatch(l1Match, candidates, runtimeTargetWithSource, effectiveThreshold, seasonMirror)
-          .then((outcome) => {
+    const applyRouteResult = (routeResult, routeSource) => {
+      totalLinked += Number(routeResult?.linked || 0);
+      totalMismatched += Number(routeResult?.mismatched || 0);
+      totalCandidateCount += Number(routeSource?.localFallbackCandidateCount || routeSource?.candidates?.length || 0);
+      remainingRoutePending = Array.isArray(routeResult?.remainingPending)
+        ? routeResult.remainingPending
+        : [];
+      finalSourceSeason = routeSource?.source?.season || finalSourceSeason;
+      finalSourceUrl = routeSource?.source?.url || finalSourceUrl;
+      lastSourceState = routeSource?.extractResult?.sourceState || lastSourceState;
+    };
+
+    const processRoute = async (routeKind, routeSource, options = {}) => {
+      const normalizedRouteSource = routeSource || this._buildEmptyRouteSource(routeKind, runtimeTarget, 'SOURCE_EMPTY');
+      const routeResult = await this._processPendingMatchesWithShortCircuit(
+        routeKind,
+        normalizedRouteSource,
+        remainingRoutePending,
+        runtimeTarget,
+        {
+          confidenceThreshold: effectiveThreshold,
+          limiter,
+          persistLimiter,
+          progress,
+          metadata: routeMetadata,
+          finalPass: options.finalPass === true,
+          forceProcessWithoutCandidates: options.forceProcessWithoutCandidates === true
+        }
+      );
+      applyRouteResult(routeResult, normalizedRouteSource);
+    };
+
+    await processRoute('results', resultsSource);
+
+    if (remainingRoutePending.length > 0) {
+      const fixturesSource = await this._probeFixturesCandidateSource(
+        runtimeTarget,
+        remainingRoutePending,
+        effectiveThreshold,
+        navigator,
+        { useDedicatedNavigator: false }
+      );
+      await processRoute('fixtures', fixturesSource || this._buildEmptyRouteSource('fixtures', runtimeTarget, 'ROUTE_SKIPPED_NO_FIXTURES_URL'));
+    }
+
+    const canUseLocalDictionaryFallback = remainingRoutePending.length > 0
+      && this._canUseLocalDictionaryFallback(runtimeTarget, remainingRoutePending);
+
+    if (remainingRoutePending.length > 0) {
+      const searchSource = await this._probeSearchCandidateSource(
+        runtimeTarget,
+        remainingRoutePending,
+        effectiveThreshold,
+        navigator,
+        { useDedicatedNavigator: false }
+      );
+      const searchHasCandidates = Array.isArray(searchSource?.candidates) && searchSource.candidates.length > 0;
+      await processRoute('search', searchSource, {
+        finalPass: canUseLocalDictionaryFallback !== true && (totalCandidateCount > 0 || searchHasCandidates)
+      });
+    }
+
+    if (remainingRoutePending.length > 0 && canUseLocalDictionaryFallback) {
+      await processRoute(
+        'local_dictionary',
+        this._buildLocalDictionarySelectedSource(runtimeTarget, remainingRoutePending, 'LOCAL_DICTIONARY_FALLBACK'),
+        {
+          finalPass: true,
+          forceProcessWithoutCandidates: true
+        }
+      );
+    }
+
+    if (remainingRoutePending.length > 0) {
+      const error = new Error(lastSourceState || 'SOURCE_EMPTY');
+      error.code = lastSourceState || 'SOURCE_EMPTY';
+      error.sourceUrl = finalSourceUrl || target.resultsUrl;
+      error.sourceSeason = finalSourceSeason || this.taskPlanner.formatSeasonForUrl(target.season);
+      throw error;
+    }
+
+    return {
+      pendingTotal: scopedPending.length,
+      linked: totalLinked,
+      mismatched: totalMismatched,
+      sourceSeason: finalSourceSeason || this.taskPlanner.formatSeasonForUrl(target.season),
+      sourceUrl: finalSourceUrl || target.resultsUrl,
+      candidateCount: totalCandidateCount,
+      effectiveConfidenceThreshold: effectiveThreshold
+    };
+  },
+
+  _resolveScopedPendingMatches(pendingMatches, matchLimit, candidates, confidenceThreshold, seasonMirror = null) {
+    const orderedPending = [...(Array.isArray(pendingMatches) ? pendingMatches : [])]
+      .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+
+    if (!Number.isInteger(matchLimit) || matchLimit <= 0 || orderedPending.length <= matchLimit) {
+      return orderedPending;
+    }
+
+    if (Array.isArray(candidates) && candidates.length > 0) {
+      return this.taskPlanner.selectProcessablePendingMatches(
+        orderedPending,
+        candidates,
+        confidenceThreshold,
+        matchLimit,
+        seasonMirror
+      );
+    }
+
+    return orderedPending.slice(0, Math.min(matchLimit, orderedPending.length));
+  },
+
+  async _processPendingMatchesWithShortCircuit(routeKind, routeSource, pendingMatches, target, options = {}) {
+    const {
+      confidenceThreshold = this.confidenceThreshold,
+      limiter = pLimit(1),
+      persistLimiter = pLimit(1),
+      progress = null,
+      metadata = {},
+      finalPass = false,
+      forceProcessWithoutCandidates = false
+    } = options;
+
+    const candidates = Array.isArray(routeSource?.candidates) ? routeSource.candidates : [];
+    const canProcessMatches = candidates.length > 0 || forceProcessWithoutCandidates === true || finalPass === true;
+    if (!canProcessMatches) {
+      this.logger.info('recon_route_short_circuit', {
+        league: target?.league?.name || null,
+        season: target?.dbSeason || null,
+        routeKind,
+        pendingTotal: pendingMatches.length,
+        linked: 0,
+        mismatched: 0,
+        remainingPending: pendingMatches.length,
+        sourceState: routeSource?.extractResult?.sourceState || 'SOURCE_EMPTY',
+        finalPass
+      });
+      return {
+        linked: 0,
+        mismatched: 0,
+        remainingPending: [...pendingMatches]
+      };
+    }
+
+    const seasonMirror = routeSource?.seasonMirror || this.mirrorManager.buildSeasonMirror(candidates);
+    const runtimeTargetWithSource = {
+      ...target,
+      reconSourceUrl: routeSource?.source?.url || target.resultsUrl,
+      reconSourceSeason: routeSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season)
+    };
+    const unresolvedMatches = [];
+    let linked = 0;
+    let mismatched = 0;
+
+    await Promise.all(
+      pendingMatches.map((l1Match) => limiter(async () => {
+        const outcome = await this._reconcilePendingMatch(
+          l1Match,
+          candidates,
+          runtimeTargetWithSource,
+          confidenceThreshold,
+          seasonMirror
+        );
+
+        if (outcome?.status === 'linked' && outcome.mapping) {
+          const persistResult = await persistLimiter(() => this._persistReconOutcomeImmediately(outcome, {
+            ...metadata,
+            sourceSeason: runtimeTargetWithSource.reconSourceSeason,
+            sourceUrl: runtimeTargetWithSource.reconSourceUrl
+          }));
+          linked += Number(persistResult?.linked || 0);
+          if (progress) {
             progress.processed++;
-            if (outcome?.status === 'linked') {
-              progress.linked++;
-            } else if (outcome?.status === 'mismatch') {
-              progress.mismatched++;
-            }
-
+            progress.linked += Number(persistResult?.linked || 0);
             if (this._shouldEmitReconProgressSnapshot(progress)) {
               this._emitReconProgressSnapshot(target, progress);
             }
-
-            return outcome;
-          })
-      ))
-    );
-
-    const mappings = [];
-    const mismatches = [];
-
-    for (const outcome of outcomes) {
-      if (outcome?.status === 'linked' && outcome.mapping) {
-        mappings.push(outcome.mapping);
-      } else if (outcome?.status === 'mismatch' && outcome.matchId) {
-        mismatches.push({
-          match_id: String(outcome.matchId),
-          evidence: outcome.evidence || null
-        });
-      }
-    }
-
-    const deduped = this._dedupeMappingsBySeasonHash(mappings);
-    if (deduped.droppedMatchIds.length > 0) {
-      for (const droppedMatchId of deduped.droppedMatchIds) {
-        if (!mismatches.some((item) => String(item?.match_id || item) === String(droppedMatchId))) {
-          mismatches.push({
-            match_id: String(droppedMatchId),
-            evidence: null
-          });
+          }
+          return;
         }
-      }
 
-      this.logger.warn('recon_mapping_hash_dedup', {
-        season: target.dbSeason,
-        league: target.league.name,
-        droppedCount: deduped.droppedMatchIds.length,
-        droppedMatchIds: deduped.droppedMatchIds.slice(0, 10),
-        truncated: deduped.droppedMatchIds.length > 10
-      });
-    }
+        if (finalPass) {
+          const persistResult = await persistLimiter(() => this._persistReconOutcomeImmediately(outcome, {
+            ...metadata,
+            sourceSeason: runtimeTargetWithSource.reconSourceSeason,
+            sourceUrl: runtimeTargetWithSource.reconSourceUrl
+          }));
+          mismatched += Number(persistResult?.mismatched || 0);
+          if (progress) {
+            progress.processed++;
+            progress.mismatched += Number(persistResult?.mismatched || 0);
+            if (this._shouldEmitReconProgressSnapshot(progress)) {
+              this._emitReconProgressSnapshot(target, progress);
+            }
+          }
+          return;
+        }
 
-    if (deduped.bypassedMatchIds.length > 0) {
-      this.logger.warn('recon_mapping_hash_bypass', {
-        season: target.dbSeason,
-        league: target.league.name,
-        bypassedCount: deduped.bypassedMatchIds.length,
-        bypassedMatchIds: deduped.bypassedMatchIds.slice(0, 10),
-        bypassedHashKeys: deduped.bypassedHashKeys.slice(0, 5),
-        truncated: deduped.bypassedMatchIds.length > 10 || deduped.bypassedHashKeys.length > 5
-      });
-    }
-
-    const persistedMappings = deduped.mappings;
-
-    const persistResult = await this._persistReconBatches(
-      persistedMappings,
-      mismatches,
-      Math.max(1, Number(batchSize)),
-      {
-        reconRunId,
-        season: target.dbSeason,
-        league: target.league.name,
-        sourceSeason: selectedSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season),
-        sourceUrl: selectedSource?.source?.url || target.resultsUrl,
-        allowMismatchRetry: target?.reconPolicy?.allowMismatchRetry === true
-      }
+        unresolvedMatches.push(l1Match);
+      }))
     );
+
+    const orderedRemainingPending = unresolvedMatches
+      .sort((left, right) => String(left?.match_id || '').localeCompare(String(right?.match_id || '')));
+
+    this.logger.info('recon_route_short_circuit', {
+      league: target?.league?.name || null,
+      season: target?.dbSeason || null,
+      routeKind,
+      pendingTotal: pendingMatches.length,
+      linked,
+      mismatched,
+      remainingPending: orderedRemainingPending.length,
+      sourceState: routeSource?.extractResult?.sourceState || 'SOURCE_EMPTY',
+      finalPass
+    });
 
     return {
-      pendingTotal: selectedPending.length,
-      linked: Number(persistResult?.linkedApplied || 0),
-      mismatched: Number(persistResult?.mismatchUpdated || 0),
-      sourceSeason: selectedSource?.source?.season || this.taskPlanner.formatSeasonForUrl(target.season),
-      sourceUrl: selectedSource?.source?.url || target.resultsUrl,
-      candidateCount: Number(selectedSource?.localFallbackCandidateCount || (Array.isArray(candidates) ? candidates.length : 0)),
-      effectiveConfidenceThreshold: effectiveThreshold
+      linked,
+      mismatched,
+      remainingPending: orderedRemainingPending
+    };
+  },
+
+  async _persistReconOutcomeImmediately(outcome, metadata = {}) {
+    if (outcome?.status === 'linked' && outcome.mapping) {
+      const persistResult = await this._persistReconBatches(
+        [outcome.mapping],
+        [],
+        1,
+        metadata
+      );
+      return {
+        linked: Number(persistResult?.linkedApplied || 0),
+        mismatched: 0
+      };
+    }
+
+    if (outcome?.matchId) {
+      const persistResult = await this._persistReconBatches(
+        [],
+        [{
+          match_id: String(outcome.matchId),
+          evidence: outcome.evidence || null
+        }],
+        1,
+        metadata
+      );
+      return {
+        linked: 0,
+        mismatched: Number(persistResult?.mismatchUpdated || 0)
+      };
+    }
+
+    return {
+      linked: 0,
+      mismatched: 0
     };
   },
 

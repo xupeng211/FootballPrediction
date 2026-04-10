@@ -5,7 +5,29 @@ const path = require('node:path');
 
 const PROXY_POOL_PATH = path.resolve(__dirname, 'proxy_pool.json');
 const DEFAULT_PROTOCOL = 'http';
-const DEFAULT_HOST = '127.0.0.1';
+const DEFAULT_PREFERRED_HOST = 'host.docker.internal';
+const DEFAULT_HOST = DEFAULT_PREFERRED_HOST;
+
+function normalizeHost(value) {
+    return typeof value === 'string' && value.trim() !== ''
+        ? value.trim()
+        : '';
+}
+
+function isLegacyBridgeHost(value) {
+    const host = normalizeHost(value);
+    if (!host) {
+        return false;
+    }
+
+    const parts = host.split('.').map(part => Number(part));
+    return parts.length === 4
+        && parts.every(part => Number.isInteger(part) && part >= 0 && part <= 255)
+        && parts[0] === 172
+        && parts[1] === 25
+        && parts[2] === 16
+        && parts[3] === 1;
+}
 
 function parseProxyPorts(value) {
     if (Array.isArray(value)) {
@@ -56,6 +78,9 @@ function readProxyPoolFile() {
 function resolveProxyPoolConfig(env = process.env) {
     const fileConfig = readProxyPoolFile();
     const protocol = env.PROXY_PROTOCOL || fileConfig.protocol || DEFAULT_PROTOCOL;
+    const explicitServerTemplate = typeof env.PROXY_SERVER === 'string' && env.PROXY_SERVER.trim() !== ''
+        ? env.PROXY_SERVER.trim()
+        : '';
 
     const envPorts = parseProxyPorts(env.PROXY_PORTS);
     const rangePorts = envPorts.length === 0
@@ -69,11 +94,13 @@ function resolveProxyPoolConfig(env = process.env) {
     const fileServerTemplate = typeof fileConfig.serverTemplate === 'string'
         ? fileConfig.serverTemplate
         : '';
-    const configuredServerTemplate = env.PROXY_SERVER || fileServerTemplate;
-    const host = env.WSL2_PROXY_HOST
-        || env.PROXY_HOST
-        || extractHost(configuredServerTemplate)
-        || fileConfig.host
+    const configuredServerTemplate = explicitServerTemplate || fileServerTemplate;
+    const fileHost = normalizeHost(fileConfig.host);
+    const host = normalizeHost(env.WSL2_PROXY_HOST)
+        || normalizeHost(env.PROXY_HOST)
+        || normalizeHost(extractHost(explicitServerTemplate))
+        || (isLegacyBridgeHost(fileHost) ? '' : fileHost)
+        || DEFAULT_PREFERRED_HOST
         || DEFAULT_HOST;
 
     const defaultPortCandidate = Number(
@@ -88,7 +115,10 @@ function resolveProxyPoolConfig(env = process.env) {
     const ports = candidatePorts.length > 0
         ? [...candidatePorts]
         : (defaultPort > 0 ? [defaultPort] : []);
-    const serverTemplate = configuredServerTemplate || `${protocol}://${host}:{port}`;
+    const hasExplicitHost = normalizeHost(env.WSL2_PROXY_HOST) || normalizeHost(env.PROXY_HOST);
+    const serverTemplate = configuredServerTemplate && !hasExplicitHost
+        ? configuredServerTemplate
+        : `${protocol}://${host}:{port}`;
 
     return {
         protocol,
@@ -119,6 +149,7 @@ module.exports = {
     PROXY_POOL_PATH,
     buildProxyServer,
     extractHost,
+    isLegacyBridgeHost,
     parseProxyPorts,
     readProxyPoolFile,
     resolveProxyPoolConfig
