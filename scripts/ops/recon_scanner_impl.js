@@ -338,7 +338,61 @@ class ReconScanner {
       });
     }
 
+    this._applyResilienceRuntimeTuning();
+
     this.logger.info('scanner_components_initialized');
+  }
+
+  _applyResilienceRuntimeTuning() {
+    if (!this.engine) {
+      return;
+    }
+
+    const engineConfig = this.config?.recon_runtime?.engine || {};
+    const probeArchiveTimeoutMs = Math.max(
+      1,
+      Number(engineConfig.probe_archive_timeout_ms ?? 20000)
+    );
+    const lowSuccessRateThresholdRaw = Number(
+      engineConfig.low_success_rate_threshold ?? 0.5
+    );
+    const lowSuccessRateThreshold = Number.isFinite(lowSuccessRateThresholdRaw)
+      ? Math.min(1, Math.max(0, lowSuccessRateThresholdRaw))
+      : 0.5;
+    const lowSuccessRateLeagueCap = Math.max(
+      1,
+      Number(engineConfig.low_success_rate_league_cap ?? 3)
+    );
+    const timeoutDegradeThreshold = Math.max(
+      1,
+      Number(engineConfig.timeout_degrade_threshold ?? 2)
+    );
+    const successWindowSlowPath = Math.max(
+      1,
+      Number(engineConfig.adaptive_concurrency_success_window_slow_path ?? 5)
+    );
+
+    this.engine.probeArchiveTimeoutMs = Math.min(
+      Math.max(1, Number(this.engine.archiveTimeoutMs || probeArchiveTimeoutMs)),
+      probeArchiveTimeoutMs
+    );
+    this.engine.fastFailTimeoutStreak = timeoutDegradeThreshold;
+    this.engine.searchDisabledOnDegradedLeague = true;
+    this.engine.lowSuccessRateThreshold = lowSuccessRateThreshold;
+    this.engine.lowSuccessRateLeagueCap = lowSuccessRateLeagueCap;
+    this.engine.dynamicConcurrencySuccessWindow = Math.max(
+      1,
+      Math.max(Number(this.engine.dynamicConcurrencySuccessWindow || 0), successWindowSlowPath)
+    );
+
+    this.logger.info('scanner_resilience_tuned', {
+      probeArchiveTimeoutMs: this.engine.probeArchiveTimeoutMs,
+      timeoutDegradeThreshold: this.engine.fastFailTimeoutStreak,
+      searchDisabledOnDegradedLeague: this.engine.searchDisabledOnDegradedLeague,
+      lowSuccessRateThreshold: this.engine.lowSuccessRateThreshold,
+      lowSuccessRateLeagueCap: this.engine.lowSuccessRateLeagueCap,
+      dynamicConcurrencySuccessWindow: this.engine.dynamicConcurrencySuccessWindow
+    });
   }
 
   _getAllTeamSlugs() {
