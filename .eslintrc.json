@@ -50,6 +50,15 @@
     "no-console": "off",
     "prefer-const": "off",
     "no-var": "error",
+    "max-lines": [
+      "error",
+      {
+        "max": 800,
+        "skipBlankLines": true,
+        "skipComments": true
+      }
+    ],
+    "complexity": ["error", 15],
     "eqeqeq": ["error", "always"],
     "curly": ["error", "multi-line"],
     "no-throw-literal": "error",

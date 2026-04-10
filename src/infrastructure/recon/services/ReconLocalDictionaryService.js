@@ -1,0 +1,222 @@
+'use strict';
+
+const crypto = require('crypto');
+
+const reconLocalDictionaryService = {
+  async _primeLeagueDictionary(target) {
+    if (!this.matchEvaluator || typeof this.matchEvaluator.setLeagueDictionaryEntries !== 'function') {
+      return [];
+    }
+
+    const leagueId = Number(target?.leagueId || target?.league?.id || 0);
+    if (!Number.isInteger(leagueId) || leagueId <= 0) {
+      this.matchEvaluator.clearLeagueDictionary?.();
+      return [];
+    }
+
+    if (!this.repository || typeof this.repository.getLeagueDictionaryEntries !== 'function') {
+      this.matchEvaluator.clearLeagueDictionary?.();
+      return [];
+    }
+
+    const entries = await this.repository.getLeagueDictionaryEntries(leagueId, {
+      season: target?.dbSeason || null
+    });
+
+    this.matchEvaluator.setLeagueDictionaryEntries(leagueId, entries);
+    return entries;
+  },
+
+  _shouldUseLocalDictionaryOnly(_target, _pendingMatches = []) {
+    return false;
+  },
+
+  _canUseLocalDictionaryFallback(target, pendingMatches = []) {
+    const entries = Array.isArray(target?.leagueDictionaryEntries) ? target.leagueDictionaryEntries : [];
+    if (entries.length === 0) {
+      return false;
+    }
+
+    return pendingMatches.some((match) => Boolean(this._buildLocalDictionaryCandidate(match, target)));
+  },
+
+  _buildLocalDictionarySelectedSource(target, pendingMatches = [], sourceState = 'LOCAL_DICTIONARY_FALLBACK') {
+    return {
+      source: {
+        season: target?.dbSeason || null,
+        url: this._buildLocalDictionarySourceUrl(target)
+      },
+      extractResult: {
+        matches: [],
+        pagesScanned: 0,
+        totalCandidates: pendingMatches.length,
+        sourceState
+      },
+      candidates: [],
+      seasonMirror: new Map(),
+      sampleLinked: 0,
+      localFallbackCandidateCount: pendingMatches.length
+    };
+  },
+
+  _buildLocalDictionarySourceUrl(target) {
+    const leagueId = Number(target?.leagueId || target?.league?.id || 0);
+    const season = encodeURIComponent(String(target?.dbSeason || 'unknown'));
+    return `dictionary://recon/${leagueId || 0}/${season}`;
+  },
+
+  _buildLocalDictionaryIndex(target) {
+    if (target?.localDictionaryIndex instanceof Map) {
+      return target.localDictionaryIndex;
+    }
+
+    const index = new Map();
+    for (const entry of Array.isArray(target?.leagueDictionaryEntries) ? target.leagueDictionaryEntries : []) {
+      const key = this._normalizeLocalDictionaryTeamName(entry?.local_team_name);
+      if (!key || index.has(key)) {
+        continue;
+      }
+
+      index.set(key, entry);
+    }
+
+    target.localDictionaryIndex = index;
+    return index;
+  },
+
+  _normalizeLocalDictionaryTeamName(teamName) {
+    if (this.matchEvaluator && typeof this.matchEvaluator.normalizeTeamName === 'function') {
+      return this.matchEvaluator.normalizeTeamName(teamName);
+    }
+
+    return String(teamName || '').toLowerCase().trim();
+  },
+
+  _resolveLocalDictionaryRemoteName(teamName, index) {
+    const normalizedTeamName = this._normalizeLocalDictionaryTeamName(teamName);
+    const directEntry = index.get(normalizedTeamName) || null;
+    if (directEntry?.remote_name) {
+      return String(directEntry.remote_name);
+    }
+
+    const slashSegments = String(teamName || '')
+      .split(/\s*\/\s*/)
+      .map((segment) => String(segment || '').trim())
+      .filter(Boolean);
+    if (slashSegments.length > 1) {
+      const resolvedSlashSegments = slashSegments.map((segment) => {
+        const entry = index.get(this._normalizeLocalDictionaryTeamName(segment)) || null;
+        return entry?.remote_name ? String(entry.remote_name) : null;
+      });
+      return resolvedSlashSegments.every(Boolean) ? resolvedSlashSegments.join('/') : null;
+    }
+
+    const tokens = normalizedTeamName.split(' ').filter(Boolean);
+    for (let splitIndex = 1; splitIndex < tokens.length; splitIndex++) {
+      const leftKey = tokens.slice(0, splitIndex).join(' ');
+      const rightKey = tokens.slice(splitIndex).join(' ');
+      const leftEntry = index.get(leftKey) || null;
+      const rightEntry = index.get(rightKey) || null;
+
+      if (leftEntry?.remote_name && rightEntry?.remote_name) {
+        return `${leftEntry.remote_name}/${rightEntry.remote_name}`;
+      }
+    }
+
+    if (this.matchEvaluator?.isPlaceholderTeamName?.(teamName)) {
+      return String(teamName || '')
+        .trim()
+        .replace(/\s+/g, ' ');
+    }
+
+    return null;
+  },
+
+  _buildLocalDictionaryCandidate(l1Match, target) {
+    const index = this._buildLocalDictionaryIndex(target);
+    if (!(index instanceof Map) || index.size === 0) {
+      return null;
+    }
+
+    const homeRemoteName = this._resolveLocalDictionaryRemoteName(l1Match?.home_team || '', index);
+    const awayRemoteName = this._resolveLocalDictionaryRemoteName(l1Match?.away_team || '', index);
+    if (!homeRemoteName || !awayRemoteName) {
+      return null;
+    }
+
+    const hashSeed = [
+      target?.leagueId || target?.league?.id || 0,
+      target?.dbSeason || '',
+      l1Match?.match_id || '',
+      homeRemoteName,
+      awayRemoteName
+    ].join('::');
+
+    return {
+      hash: `~${crypto.createHash('sha1').update(hashSeed).digest('hex').slice(0, 7)}`,
+      url: [
+        this._buildLocalDictionarySourceUrl(target),
+        encodeURIComponent(String(homeRemoteName)),
+        encodeURIComponent(String(awayRemoteName)),
+        encodeURIComponent(String(l1Match?.match_id || ''))
+      ].join('/'),
+      homeTeam: String(homeRemoteName),
+      awayTeam: String(awayRemoteName),
+      matchDate: l1Match?.match_date || null,
+      source: 'local_dictionary'
+    };
+  },
+
+  async _runLocalDictionaryOnlyTarget(target, pendingMatches, options = {}) {
+    const {
+      batchSize = this.reconBatchSize,
+      confidenceThreshold = this.confidenceThreshold,
+      sourceSeason = target?.dbSeason || null,
+      sourceUrl = this._buildLocalDictionarySourceUrl(target)
+    } = options;
+
+    const outcomes = [];
+    for (const l1Match of pendingMatches) {
+      outcomes.push(await this._reconcilePendingMatch(l1Match, [], target, confidenceThreshold, null));
+    }
+
+    const mappings = [];
+    const mismatches = [];
+    for (const outcome of outcomes) {
+      if (outcome?.status === 'linked' && outcome.mapping) {
+        mappings.push(outcome.mapping);
+      } else if (outcome?.status === 'mismatch' && outcome.matchId) {
+        mismatches.push({
+          match_id: String(outcome.matchId),
+          evidence: outcome.evidence || null
+        });
+      }
+    }
+
+    const persistResult = await this._persistReconBatches(
+      mappings,
+      mismatches,
+      Math.max(1, Number(batchSize)),
+      {
+        reconRunId: this._createReconRunId(target),
+        season: target.dbSeason,
+        league: target.league.name,
+        sourceSeason,
+        sourceUrl,
+        allowMismatchRetry: target?.reconPolicy?.allowMismatchRetry === true
+      }
+    );
+
+    return {
+      pendingTotal: pendingMatches.length,
+      linked: Number(persistResult?.linkedApplied || 0),
+      mismatched: Number(persistResult?.mismatchUpdated || 0),
+      sourceSeason,
+      sourceUrl,
+      candidateCount: pendingMatches.length,
+      effectiveConfidenceThreshold: confidenceThreshold
+    };
+  }
+};
+
+module.exports = { reconLocalDictionaryService };
