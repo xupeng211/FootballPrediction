@@ -143,6 +143,166 @@ describe('ReconBrowserContext', () => {
     ]);
   });
 
+  it('resetContext 应在批次切换时销毁旧 context 并注入全新指纹', async () => {
+    const lifecycleEvents = [];
+    const contextOptions = [];
+    const initScripts = [];
+    const pageA = {
+      isClosed() {
+        return false;
+      },
+      async close() {
+        lifecycleEvents.push('pageA.close');
+      },
+      async addInitScript(value) {
+        initScripts.push({ page: 'A', value: typeof value });
+      }
+    };
+    const pageB = {
+      isClosed() {
+        return false;
+      },
+      async addInitScript(value) {
+        initScripts.push({ page: 'B', value: typeof value });
+      }
+    };
+    const contextA = {
+      async newPage() {
+        lifecycleEvents.push('contextA.newPage');
+        return pageA;
+      },
+      async close() {
+        lifecycleEvents.push('contextA.close');
+      }
+    };
+    const contextB = {
+      async newPage() {
+        lifecycleEvents.push('contextB.newPage');
+        return pageB;
+      },
+      async close() {
+        lifecycleEvents.push('contextB.close');
+      }
+    };
+    const browser = {
+      isConnected() {
+        return true;
+      },
+      async newContext(options) {
+        contextOptions.push(options);
+        return contextOptions.length === 1 ? contextA : contextB;
+      },
+      async close() {
+        lifecycleEvents.push('browser.close');
+      }
+    };
+    const chromium = {
+      async launch(options) {
+        lifecycleEvents.push({ type: 'launch', options });
+        return browser;
+      }
+    };
+    const identities = [
+      {
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+        viewport: { width: 1366, height: 768 },
+        locale: 'en-US',
+        timezoneId: 'Europe/London',
+        platform: 'Win32',
+        deviceScaleFactor: 1,
+        hasTouch: false,
+        isMobile: false,
+        extraHTTPHeaders: { 'accept-language': 'en-US,en;q=0.9' },
+        hardwareConcurrency: 8,
+        deviceMemory: 8,
+        webgl: {
+          vendor: 'Google Inc. (Intel)',
+          renderer: 'ANGLE (Intel, Intel(R) UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)'
+        },
+        fingerprintSeed: 'seed-a',
+        canvasSalt: 'canvas-a',
+        audioSalt: 'audio-a',
+        webglSalt: 'webgl-a',
+        antiDetectionScript: 'script-a'
+      },
+      {
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0',
+        viewport: { width: 1912, height: 1072 },
+        locale: 'en-US',
+        timezoneId: 'Europe/London',
+        platform: 'Win32',
+        deviceScaleFactor: 1,
+        hasTouch: false,
+        isMobile: false,
+        extraHTTPHeaders: {
+          'accept-language': 'en-US,en;q=0.9',
+          'sec-ch-ua': '"Chromium";v="131", "Microsoft Edge";v="131", "Not_A Brand";v="24"'
+        },
+        hardwareConcurrency: 16,
+        deviceMemory: 16,
+        webgl: {
+          vendor: 'Google Inc. (NVIDIA)',
+          renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)'
+        },
+        fingerprintSeed: 'seed-b',
+        canvasSalt: 'canvas-b',
+        audioSalt: 'audio-b',
+        webglSalt: 'webgl-b',
+        antiDetectionScript: 'script-b'
+      }
+    ];
+
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-browser-rotate',
+      chromium,
+      persistentProfileEnabled: false
+    });
+    browserContext.enableFingerprintRotation = true;
+    browserContext.resetContextPerBatchEnabled = true;
+    browserContext.contextGeneration = 0;
+    browserContext._buildStealthIdentity = () => identities.shift();
+    browserContext._applyStealthIdentity(browserContext._buildStealthIdentity());
+
+    await browserContext.launch();
+    await browserContext.resetContext({ reason: 'batch_reset' });
+
+    assert.strictEqual(contextOptions.length, 2);
+    assert.strictEqual(contextOptions[0].userAgent, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36');
+    assert.strictEqual(contextOptions[1].userAgent, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36 Edg/131.0.0.0');
+    assert.deepStrictEqual(contextOptions[0].viewport, { width: 1366, height: 768 });
+    assert.deepStrictEqual(contextOptions[1].viewport, { width: 1912, height: 1072 });
+    assert.deepStrictEqual(lifecycleEvents.slice(0, 5), [
+      {
+        type: 'launch',
+        options: {
+          headless: true,
+          args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-dev-shm-usage',
+            '--window-size=1366,768',
+            '--lang=en-US'
+          ],
+          timeout: 60000
+        }
+      },
+      'contextA.newPage',
+      'pageA.close',
+      'contextA.close',
+      'contextB.newPage'
+    ]);
+    assert.deepStrictEqual(initScripts, [
+      { page: 'A', value: 'function' },
+      { page: 'A', value: 'string' },
+      { page: 'B', value: 'function' },
+      { page: 'B', value: 'string' }
+    ]);
+    assert.strictEqual(browserContext.page, pageB);
+    assert.strictEqual(browserContext.getFingerprintSummary().fingerprintSeed, 'seed-b');
+  });
+
   it('启用 preferFullChromium 时应把完整 Chromium executablePath 注入 launchOptions', async () => {
     const events = [];
     const page = {

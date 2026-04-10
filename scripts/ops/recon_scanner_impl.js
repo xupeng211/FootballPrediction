@@ -243,7 +243,8 @@ class ReconScanner {
     if (this.proxyRotator === undefined) {
       const proxyProviderOptions = {
         minHealthScore: this.config.recon_runtime?.engine?.proxy_min_health_score,
-        criticalErrorCooldownMs: this.config.recon_runtime?.engine?.proxy_critical_error_cooldown_ms
+        criticalErrorCooldownMs: this.config.recon_runtime?.engine?.proxy_critical_error_cooldown_ms,
+        healthProbeMode: this.config.recon_runtime?.engine?.proxy_health_probe_mode
       };
       this.proxyRotator = new ProxyRotator({
         logger: this._childLogger('ProxyRotator'),

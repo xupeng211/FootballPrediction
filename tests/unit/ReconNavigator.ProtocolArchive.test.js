@@ -31,6 +31,98 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(navigator.decryptor.traceId, 'trace-reset');
   });
 
+  it('resetContextPerBatch 应重建 page 并重新挂载网络拦截', async () => {
+    const attachedPages = [];
+    const statePages = [];
+    let detachCount = 0;
+    let resetCount = 0;
+    const rotatedPage = {
+      isClosed: () => false
+    };
+
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-batch-reset'
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false
+    };
+    navigator.networkMonitor.detach = () => {
+      detachCount += 1;
+    };
+    navigator.networkMonitor.reset = () => {
+      resetCount += 1;
+    };
+    navigator.networkMonitor.attach = (page) => {
+      attachedPages.push(page);
+    };
+    navigator.domScraper.setPage = (page) => {
+      statePages.push({ type: 'dom', page });
+    };
+    navigator.stateProber.setPage = (page) => {
+      statePages.push({ type: 'state', page });
+    };
+    navigator.browserContext.resetContext = async () => rotatedPage;
+    navigator.browserContext.getFingerprintSummary = () => ({ fingerprintSeed: 'seed-rotated' });
+
+    const page = await navigator.resetContextPerBatch({ reason: 'unit_batch' });
+
+    assert.strictEqual(page, rotatedPage);
+    assert.strictEqual(navigator.page, rotatedPage);
+    assert.strictEqual(detachCount, 1);
+    assert.strictEqual(resetCount, 1);
+    assert.deepStrictEqual(attachedPages, [rotatedPage]);
+    assert.deepStrictEqual(statePages, [
+      { type: 'dom', page: rotatedPage },
+      { type: 'state', page: rotatedPage }
+    ]);
+  });
+
+  it('protocolArchiveExtract 应在档案批次开始前触发 context reset', async () => {
+    let resetCalls = 0;
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-protocol-reset'
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator.resetContextPerBatch = async () => {
+      resetCalls += 1;
+      return navigator.page;
+    };
+    navigator.navigate = async () => {};
+    navigator.apiEndpoints.add('oddsportal://ajax-sport-country-tournament-archive_/1/foo/bar/2/1/');
+    navigator._fetchAndDecrypt = async () => ({
+      matches: [
+        {
+          hash: 'archive-hash',
+          url: 'oddsportal://match/archive-hash',
+          homeTeam: 'A',
+          awayTeam: 'B',
+          matchDate: '2025-08-15T19:00:00.000Z'
+        }
+      ],
+      pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+    });
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/england/premier-league-2025-2026/results/',
+      { preferCurrentSeasonSource: false, maxPages: 3, timeoutMs: 1500 }
+    );
+
+    assert.strictEqual(resetCalls, 1);
+    assert.strictEqual(result.matches.length, 1);
+    assert.strictEqual(result.matches[0].hash, 'archive-hash');
+  });
+
   it('应通过单一 payload 对象向 page.evaluate 传递 fetchUrl 与 timeout', async () => {
     const evaluatePayloads = [];
 

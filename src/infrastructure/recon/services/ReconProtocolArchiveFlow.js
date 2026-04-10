@@ -252,7 +252,13 @@ const reconProtocolArchiveFlow = {
       return pureResult;
     }
 
-    await this.navigator.ensureBrowserHealthy();
+    if (typeof this.navigator.resetContextPerBatch === 'function') {
+      await this.navigator.resetContextPerBatch({
+        reason: 'protocol_archive_extract'
+      });
+    } else {
+      await this.navigator.ensureBrowserHealthy();
+    }
 
     const maxPages = options.maxPages ?? this.navigator.archiveMaxPages;
     const timeoutMs = options.timeoutMs ?? this.navigator.archiveTimeoutMs;

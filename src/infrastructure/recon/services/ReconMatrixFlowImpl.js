@@ -1281,6 +1281,12 @@ const reconMatrixFlow = {
       return { matches: [], pagesScanned: 0, sourceUrls: [] };
     }
 
+    if (typeof navigator.resetContextPerBatch === 'function') {
+      await navigator.resetContextPerBatch({
+        reason: 'search_candidate_batch'
+      });
+    }
+
     const matches = [];
     const sourceUrls = [];
     const seenCandidateKeys = new Set();
