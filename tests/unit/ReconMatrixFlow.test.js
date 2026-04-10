@@ -35,7 +35,7 @@ describe('ReconMatrixFlow', () => {
         const captured = [];
         const flow = {
             ...reconMatrixFlow,
-            defaultReconConcurrency: 2,
+            defaultReconConcurrency: 1,
             reconBatchSize: 25,
             confidenceThreshold: 0.75,
             logger: { info() {}, warn() {}, error() {} },
@@ -45,11 +45,12 @@ describe('ReconMatrixFlow', () => {
                 selectProcessablePendingMatches: () => {
                     throw new Error('不应进入 selectProcessablePendingMatches');
                 },
+                formatSeasonForUrl: (season) => season,
             },
             _primeLeagueDictionary: async () => [{ remote_name: 'Alpha', local_team_name: 'Alpha' }],
             _canUseLocalDictionaryFallback: () => true,
             _shouldUseLocalDictionaryOnly: () => false,
-            _selectCandidateSourceWithLocalFallback: async () => ({
+            _probeResultsCandidateSource: async () => ({
                 candidates: [],
                 source: {
                     season: '2025/2026',
@@ -58,20 +59,38 @@ describe('ReconMatrixFlow', () => {
                 extractResult: {
                     sourceState: 'SOURCE_EMPTY',
                 },
+                seasonMirror: new Map(),
             }),
-            _runLocalDictionaryOnlyTarget: async (_target, pendingMatches) => {
-                captured.push(pendingMatches.map(match => match.match_id));
+            _probeFixturesCandidateSource: async () => null,
+            _probeSearchCandidateSource: async () => ({
+                candidates: [],
+                source: {
+                    season: '2025/2026',
+                    url: 'https://example.com/search/',
+                },
+                extractResult: {
+                    sourceState: 'SOURCE_EMPTY',
+                },
+                seasonMirror: new Map(),
+            }),
+            _buildLocalDictionarySourceUrl: () => 'dictionary://recon/1/2025%2F2026',
+            _reconcilePendingMatch: async (match, _candidates, target) => {
+                if (String(target?.reconSourceUrl || '').startsWith('dictionary://')) {
+                    captured.push(match.match_id);
+                }
                 return {
-                    pendingTotal: pendingMatches.length,
-                    linked: 0,
-                    mismatched: pendingMatches.length,
-                    sourceSeason: '2025/2026',
-                    sourceUrl: 'dictionary://recon/1/2025%2F2026',
-                    candidateCount: pendingMatches.length,
-                    effectiveConfidenceThreshold: 0.75,
+                    status: 'mismatch',
+                    matchId: match.match_id,
+                    evidence: null,
                 };
             },
-            _buildLocalDictionarySourceUrl: () => 'dictionary://recon/1/2025%2F2026',
+            _persistReconOutcomeImmediately: async () => ({
+                linked: 0,
+                mismatched: 1,
+            }),
+            _createReconRunId: () => 'run-dictionary-limit',
+            _shouldEmitReconProgressSnapshot: () => false,
+            _emitReconProgressSnapshot() {},
         };
 
         const result = await flow._runReconTarget(
@@ -91,7 +110,7 @@ describe('ReconMatrixFlow', () => {
             }
         );
 
-        assert.deepStrictEqual(captured, [['m1', 'm2']]);
+        assert.deepStrictEqual(captured, ['m1', 'm2']);
         assert.strictEqual(result.pendingTotal, 2);
         assert.strictEqual(result.mismatched, 2);
     });
@@ -113,14 +132,12 @@ describe('ReconMatrixFlow', () => {
                     Number.isInteger(matchLimit) && matchLimit > 0
                         ? pendingMatches.slice(0, matchLimit)
                         : pendingMatches,
+                formatSeasonForUrl: (season) => season,
             },
             matchExtractor: reconMatchExtractor,
             _primeLeagueDictionary: async () => [{ remote_name: 'Alpha', local_team_name: 'Alpha' }],
             _canUseLocalDictionaryFallback: () => true,
-            _runLocalDictionaryOnlyTarget: async () => {
-                throw new Error('不应在全量 mismatch 时直接短路到本地字典');
-            },
-            _selectCandidateSourceWithLocalFallback: async (_target, pendingMatches) => {
+            _probeResultsCandidateSource: async (_target, pendingMatches) => {
                 selectedCalls.push(pendingMatches.map(match => match.match_id));
                 return {
                     candidates: [
@@ -140,6 +157,12 @@ describe('ReconMatrixFlow', () => {
                     seasonMirror: new Map(),
                 };
             },
+            _probeFixturesCandidateSource: async () => {
+                throw new Error('results 已命中 limit 后不应继续探测 fixtures');
+            },
+            _probeSearchCandidateSource: async () => {
+                throw new Error('results 已命中 limit 后不应继续探测 search');
+            },
             _findBestCandidate: () => ({
                 candidate: {
                     hash: 'AbCd1234',
@@ -156,12 +179,9 @@ describe('ReconMatrixFlow', () => {
             _createReconRunId: () => 'run-remote-first',
             _shouldEmitReconProgressSnapshot: () => false,
             _emitReconProgressSnapshot() {},
-            _persistReconBatches: async (mappings, mismatches) => {
-                persisted.push({ mappings, mismatches });
-                return {
-                    linkedApplied: mappings.length,
-                    mismatchUpdated: mismatches.length,
-                };
+            _persistReconOutcomeImmediately: async (outcome) => {
+                persisted.push(outcome);
+                return { linked: 1, mismatched: 0 };
             },
         };
 
@@ -196,9 +216,141 @@ describe('ReconMatrixFlow', () => {
 
         assert.deepStrictEqual(selectedCalls, [['m1', 'm2']]);
         assert.strictEqual(persisted.length, 1);
-        assert.strictEqual(persisted[0].mappings.length, 1);
+        assert.strictEqual(persisted[0].mapping.match_id, 'm1');
         assert.strictEqual(result.pendingTotal, 1);
         assert.strictEqual(result.linked, 1);
+    });
+
+    it('results 已缝上的比赛不应再进入 search 路径', async () => {
+        const searchCalls = [];
+        const persisted = [];
+        const flow = {
+            ...reconMatrixFlow,
+            defaultReconConcurrency: 1,
+            reconBatchSize: 25,
+            confidenceThreshold: 0.75,
+            logger: { info() {}, warn() {}, error() {} },
+            mirrorManager: { buildSeasonMirror: () => new Map() },
+            taskPlanner: {
+                resolveReconPolicy: () => ({ effectiveConfidenceThreshold: 0.75 }),
+                formatSeasonForUrl: (season) => season,
+            },
+            _primeLeagueDictionary: async () => [],
+            _canUseLocalDictionaryFallback: () => false,
+            _probeResultsCandidateSource: async () => ({
+                routeKind: 'results',
+                source: {
+                    season: '2025/2026',
+                    url: 'oddsportal://results',
+                },
+                extractResult: {
+                    sourceState: 'SOURCE_READY',
+                },
+                candidates: [{ match_id: 'm1' }],
+                seasonMirror: new Map(),
+            }),
+            _probeFixturesCandidateSource: async () => ({
+                routeKind: 'fixtures',
+                source: {
+                    season: '2025/2026',
+                    url: 'oddsportal://fixtures',
+                },
+                extractResult: {
+                    sourceState: 'SOURCE_EMPTY',
+                },
+                candidates: [],
+                seasonMirror: new Map(),
+            }),
+            _probeSearchCandidateSource: async (_target, pendingMatches) => {
+                searchCalls.push(pendingMatches.map(match => match.match_id));
+                return {
+                    routeKind: 'search',
+                    source: {
+                        season: '2025/2026',
+                        url: 'oddsportal://search',
+                    },
+                    extractResult: {
+                        sourceState: 'SEARCH_SWEEP_READY',
+                    },
+                    candidates: [{ match_id: 'm2' }],
+                    seasonMirror: new Map(),
+                };
+            },
+            _reconcilePendingMatch: async (match, _candidates, target) => {
+                if (target.reconSourceUrl === 'oddsportal://results' && match.match_id === 'm1') {
+                    return {
+                        status: 'linked',
+                        mapping: {
+                            match_id: 'm1',
+                            oddsportal_hash: 'hash-results',
+                            full_url: 'oddsportal://results/m1',
+                            season: '2025/2026',
+                            league_name: 'Test League',
+                            home_team: 'A',
+                            away_team: 'B',
+                        },
+                    };
+                }
+
+                if (target.reconSourceUrl === 'oddsportal://search' && match.match_id === 'm2') {
+                    return {
+                        status: 'linked',
+                        mapping: {
+                            match_id: 'm2',
+                            oddsportal_hash: 'hash-search',
+                            full_url: 'oddsportal://search/m2',
+                            season: '2025/2026',
+                            league_name: 'Test League',
+                            home_team: 'C',
+                            away_team: 'D',
+                        },
+                    };
+                }
+
+                return {
+                    status: 'mismatch',
+                    matchId: match.match_id,
+                    evidence: null,
+                };
+            },
+            _persistReconOutcomeImmediately: async (outcome, metadata) => {
+                persisted.push({
+                    matchId: outcome.mapping?.match_id || outcome.matchId,
+                    sourceUrl: metadata.sourceUrl,
+                });
+                return {
+                    linked: outcome.status === 'linked' ? 1 : 0,
+                    mismatched: outcome.status === 'mismatch' ? 1 : 0,
+                };
+            },
+            _createReconRunId: () => 'run-short-circuit',
+            _shouldEmitReconProgressSnapshot: () => false,
+            _emitReconProgressSnapshot() {},
+        };
+
+        const result = await flow._runReconTarget(
+            {
+                leagueId: 1,
+                dbSeason: '2025/2026',
+                season: '2025/2026',
+                resultsUrl: 'oddsportal://results',
+                league: { id: 1, name: 'Test League' },
+            },
+            {
+                pendingMatches: [
+                    { match_id: 'm1', pipeline_status: 'harvested' },
+                    { match_id: 'm2', pipeline_status: 'harvested' },
+                ],
+            }
+        );
+
+        assert.deepStrictEqual(searchCalls, [['m2']]);
+        assert.deepStrictEqual(persisted, [
+            { matchId: 'm1', sourceUrl: 'oddsportal://results' },
+            { matchId: 'm2', sourceUrl: 'oddsportal://search' },
+        ]);
+        assert.strictEqual(result.linked, 2);
+        assert.strictEqual(result.mismatched, 0);
     });
 
     it('linked 前应先把 h2h 候选洗白为 canonical URL', async () => {

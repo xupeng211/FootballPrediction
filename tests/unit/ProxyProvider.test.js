@@ -147,7 +147,7 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     assert.ok(provider.getNodeStates().find(item => item.port === blockedPort).healthScore < 60);
   });
 
-  test('WSL2 默认主机应统一解析为 172.25.16.1', () => {
+  test('默认主机应统一解析为 host.docker.internal', () => {
     const provider = getProxyProvider({
       healthCheckIntervalMs: 0
     });
@@ -155,7 +155,53 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     const stats = provider.getStats();
     const nodes = provider.getNodeStates();
 
-    assert.strictEqual(stats.host, '172.25.16.1');
-    assert.ok(nodes.every(node => node.host === '172.25.16.1'));
+    assert.strictEqual(stats.host, 'host.docker.internal');
+    assert.ok(nodes.every(node => node.host === 'host.docker.internal'));
+  });
+
+  test('初始化时应先完成代理网关 TCP 预检', async () => {
+    let tcpProbeCalls = 0;
+    const provider = new ProxyProvider({
+      host: 'host.docker.internal',
+      ports: [7891, 7892],
+      defaultPort: 7891,
+      healthCheckIntervalMs: 0,
+      probes: {
+        tcp: async (node) => {
+          tcpProbeCalls += 1;
+          assert.strictEqual(node.host, 'host.docker.internal');
+          assert.strictEqual(node.port, 7891);
+          return { ok: true, latencyMs: 12 };
+        },
+        http: async () => ({ ok: true, statusCode: 200, latencyMs: 12 })
+      }
+    });
+
+    const result = await provider.initialize();
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.host, 'host.docker.internal');
+    assert.strictEqual(result.port, 7891);
+    assert.strictEqual(tcpProbeCalls, 1);
+
+    await provider.initialize();
+    assert.strictEqual(tcpProbeCalls, 1);
+  });
+
+  test('代理网关 TCP 预检失败时应抛出清晰错误', async () => {
+    const provider = new ProxyProvider({
+      host: 'host.docker.internal',
+      ports: [7891],
+      defaultPort: 7891,
+      healthCheckIntervalMs: 0,
+      probes: {
+        tcp: async () => ({ ok: false, error: 'connect ECONNREFUSED' }),
+        http: async () => ({ ok: true, statusCode: 200, latencyMs: 8 })
+      }
+    });
+
+    await assert.rejects(
+      provider.initialize(),
+      /代理网关无法连接，请检查 host\.docker\.internal 是否可用/
+    );
   });
 });

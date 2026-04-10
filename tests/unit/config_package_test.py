@@ -113,16 +113,16 @@ def test_proxy_pool_resolution_prefers_environment(monkeypatch, tmp_path):
     assert resolved["host"] == "proxy.local"
     assert resolved["ports"] == [8100, 8101]
     assert resolved["protocol"] == "https"
-    assert resolved["server_template"] == "http://172.25.16.1:{port}"
+    assert resolved["server_template"] == "https://proxy.local:{port}"
 
     snapshot = get_shared_proxy_pool_config()
     assert snapshot["host"] == "proxy.local"
 
     proxy = ProxyConfig(proxy_ports=[8100, 8101], deprecated_proxy_ports=[8101])
-    assert proxy.get_proxy_url(8100) == "http://172.25.16.1:8100"
+    assert proxy.get_proxy_url(8100) == "https://proxy.local:8100"
     assert proxy.get_all_proxy_urls() == [
-        "http://172.25.16.1:8100",
-        "http://172.25.16.1:8101",
+        "https://proxy.local:8100",
+        "https://proxy.local:8101",
     ]
     assert proxy.validate_port(8100) is True
     assert proxy.validate_port(8101) is False
@@ -306,3 +306,30 @@ def test_unified_settings_urls_and_accessors(monkeypatch, tmp_path):
     assert ConfigAccessor().proxy.get_proxy_url(7891) == "http://172.25.16.1:7891"
     accessor.reload()
     assert accessor.database.name == "football_db"
+
+
+def test_proxy_pool_default_host_prefers_host_docker_internal(monkeypatch, tmp_path):
+    """未显式指定 PROXY_HOST 时，应优先回退到 host.docker.internal。"""
+    pool_file = tmp_path / "proxy_pool.json"
+    pool_file.write_text(
+        json.dumps(
+            {
+                "host": "172.25.16.1",
+                "protocol": "http",
+                "ports": [7891, 7892],
+                "defaultPort": 7891,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(proxy_settings, "PROXY_POOL_CONFIG_PATH", pool_file)
+    monkeypatch.delenv("WSL2_PROXY_HOST", raising=False)
+    monkeypatch.delenv("PROXY_HOST", raising=False)
+    monkeypatch.delenv("PROXY_SERVER", raising=False)
+    monkeypatch.delenv("PROXY_PORTS", raising=False)
+    monkeypatch.delenv("PROXY_PORT", raising=False)
+
+    resolved = proxy_settings.resolve_shared_proxy_pool_config()
+    assert resolved["host"] == "host.docker.internal"
+    assert resolved["server_template"] == "http://host.docker.internal:{port}"

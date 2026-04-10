@@ -253,6 +253,11 @@ class ReconScanner {
       });
     }
 
+    const proxyProvider = this.proxyRotator?.proxyProvider;
+    if (proxyProvider && typeof proxyProvider.initialize === 'function') {
+      await proxyProvider.initialize();
+    }
+
     if (this.healthServer && this.proxyRotator && typeof this.healthServer.registerProxyPoolCheck === 'function') {
       this.healthServer.registerProxyPoolCheck(this.proxyRotator);
     }
