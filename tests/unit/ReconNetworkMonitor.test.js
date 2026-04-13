@@ -283,4 +283,68 @@ describe('ReconNetworkMonitor', () => {
     assert.strictEqual(extractCalls, 1);
     assert.strictEqual(decryptCalls, 1);
   });
+
+  it('初次 extractDecryptor 失败时不应重复抽取同一 decryptor', async () => {
+    let extractCalls = 0;
+    let decryptCalls = 0;
+
+    const monitor = new ReconNetworkMonitor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-extract-failed-once',
+      page: { isClosed: () => false },
+      decryptorFactory: () => ({
+        getAlgorithmVersion: () => null,
+        async extractDecryptor() {
+          extractCalls++;
+          throw new Error('Failed to extract decryptor from any source');
+        },
+        async decrypt() {
+          decryptCalls++;
+          return '{}';
+        }
+      })
+    });
+
+    await assert.rejects(
+      monitor.decodeResponsePayload(
+        'still-encrypted-payload',
+        'https://www.oddsportal.com/ajax-sport-country-tournament_/1/'
+      ),
+      /Failed to extract decryptor from any source/
+    );
+
+    assert.strictEqual(extractCalls, 1);
+    assert.strictEqual(decryptCalls, 0);
+  });
+
+  it('解密器超过超时阈值时应抛出明确 DECRYPTOR_TIMEOUT 错误', async () => {
+    const monitor = new ReconNetworkMonitor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-decryptor-timeout',
+      page: { isClosed: () => false },
+      decryptTimeoutMs: 20,
+      decryptorFactory: () => ({
+        getAlgorithmVersion: () => null,
+        async extractDecryptor() {
+          return new Promise(() => {});
+        },
+        async decrypt() {
+          return '{}';
+        }
+      })
+    });
+
+    await assert.rejects(
+      monitor.decodeResponsePayload(
+        'still-encrypted-payload',
+        'https://www.oddsportal.com/ajax-sport-country-tournament_/1/'
+      ),
+      (error) => {
+        assert.strictEqual(error?.code, 'DECRYPTOR_TIMEOUT');
+        assert.strictEqual(error?.phase, 'extract');
+        assert.strictEqual(error?.timeoutMs, 20);
+        return true;
+      }
+    );
+  });
 });

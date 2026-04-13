@@ -37,7 +37,153 @@ async function prepareSamplePool(extractor, page, sampleInput, options = {}) {
   };
 }
 
-function inspectModuleCandidatesInPage({ url, samplePool, allowBestEffort, candidateNames }) {
+function buildAppScriptImportUrls(appScriptUrl = '') {
+  const urls = [];
+  const pushUnique = (value) => {
+    const normalized = String(value || '').trim();
+    if (normalized && !urls.includes(normalized)) {
+      urls.push(normalized);
+    }
+  };
+
+  pushUnique(appScriptUrl);
+  try {
+    pushUnique(new URL(appScriptUrl).pathname);
+  } catch {
+    // keep original absolute URL only
+  }
+
+  return urls;
+}
+
+function normalizeSerializableState(value) {
+  if (value && typeof value === 'object') {
+    return value;
+  }
+  if (typeof value === 'string' && value.trim()) {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function pushUniqueTrimmed(bucket, value) {
+  const normalized = String(value || '').trim();
+  if (!normalized || bucket.includes(normalized)) {
+    return;
+  }
+  bucket.push(normalized);
+}
+
+function collectReplayEndpoints() {
+  const endpoints = [];
+  const resourceEntries = Array.isArray(performance.getEntriesByType('resource'))
+    ? performance.getEntriesByType('resource')
+    : [];
+
+  for (const entry of resourceEntries) {
+    if (
+      typeof entry?.name === 'string'
+      && /ajax-sport-country-tournament(?:-archive)?_/i.test(entry.name)
+    ) {
+      pushUniqueTrimmed(endpoints, entry.name);
+    }
+  }
+
+  return endpoints;
+}
+
+function collectSeasonTokensFromDom(pathname, documentRef) {
+  const seasonTokens = [];
+  const pathMatches = String(pathname || '').match(/(\d{4}(?:-\d{4})?)/g) || [];
+  for (const match of pathMatches) {
+    pushUniqueTrimmed(seasonTokens, match);
+  }
+
+  const linkedSeasons = Array.from(
+    documentRef.querySelectorAll('a[href*="/results/"], a[href*="/fixtures/"]')
+  )
+    .map((node) => String(node.getAttribute('href') || ''))
+    .flatMap((href) => href.match(/-(\d{4}(?:-\d{4})?)(?:\/|$)/g) || [])
+    .map((token) => token.replace(/^-/, '').replace(/\/$/, '').trim());
+
+  for (const token of linkedSeasons) {
+    pushUniqueTrimmed(seasonTokens, token);
+    if (/^\d{4}$/.test(token)) {
+      pushUniqueTrimmed(seasonTokens, String(Number(token) + 1));
+      pushUniqueTrimmed(seasonTokens, `${token}-${Number(token) + 1}`);
+    }
+  }
+
+  return seasonTokens;
+}
+
+function collectCandidateHashes(pageVar) {
+  const candidateHashes = [];
+  if (typeof pageVar?.bookiehash === 'string' && pageVar.bookiehash.trim()) {
+    pushUniqueTrimmed(candidateHashes, pageVar.bookiehash);
+  }
+  if (typeof pageVar?.myot === 'string' && pageVar.myot.trim()) {
+    pushUniqueTrimmed(candidateHashes, pageVar.myot);
+  }
+  pushUniqueTrimmed(candidateHashes, 'X');
+  return candidateHashes;
+}
+
+function buildTournamentEndpoints(otCode, candidateHashes, seasonTokens) {
+  if (!otCode) {
+    return [];
+  }
+
+  const endpoints = [];
+  const cacheBust = Date.now();
+  for (const hash of candidateHashes) {
+    pushUniqueTrimmed(
+      endpoints,
+      `https://www.oddsportal.com/ajax-sport-country-tournament_/1/${otCode}/${hash}/1/?_=${cacheBust}`
+    );
+  }
+  for (const seasonToken of seasonTokens) {
+    for (const hash of candidateHashes) {
+      pushUniqueTrimmed(
+        endpoints,
+        `https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/${otCode}/${hash}/${seasonToken}/1/0/?_=${cacheBust}`
+      );
+    }
+  }
+
+  return endpoints;
+}
+
+function inspectModuleCandidatesInPage({ urls, samplePool, allowBestEffort, candidateNames }) {
+  const normalizeSerializableStateInPage = (value) => {
+    if (value && typeof value === 'object') {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+
+  const normalizeWindowState = () => {
+    const pageVar = normalizeSerializableStateInPage(window.pageVar);
+    const pageOutrightsVar = normalizeSerializableStateInPage(window.pageOutrightsVar);
+    if (pageVar && typeof window.pageVar === 'string') {
+      window.pageVar = pageVar;
+    }
+    if (pageOutrightsVar && typeof window.pageOutrightsVar === 'string') {
+      window.pageOutrightsVar = pageOutrightsVar;
+    }
+  };
+
   const collectCandidates = (module, names) => {
     const candidates = [];
     const seen = new Set();
@@ -121,30 +267,52 @@ function inspectModuleCandidatesInPage({ url, samplePool, allowBestEffort, candi
   };
 
   return (async () => {
+    normalizeWindowState();
+    let lastImportError = '';
+    let lastCandidates = [];
     try {
-      const module = await import(url);
       const possibleNames = Array.isArray(candidateNames) && candidateNames.length > 0
         ? candidateNames
         : ['ai', 'decrypt', 'decode', 'parse', 'unpack', 'transform', 'deserialize', 'unzip'];
-      const candidates = collectCandidates(module, possibleNames);
+      const importUrls = Array.isArray(urls) && urls.length > 0 ? urls : [];
 
-      if (Array.isArray(samplePool) && samplePool.length > 0) {
-        for (const candidate of candidates) {
-          const validatedSamples = await validateCandidateSamples(module, candidate, samplePool);
-          if (validatedSamples > 0) {
-            return {
-              found: true,
-              name: candidate.name,
-              type: candidate.type,
-              validated: true,
-              validatedSamples,
-              sampleCount: samplePool.length
-            };
+      for (const importUrl of importUrls) {
+        try {
+          const module = await import(importUrl);
+          const candidates = collectCandidates(module, possibleNames);
+          lastCandidates = candidates;
+
+          if (Array.isArray(samplePool) && samplePool.length > 0) {
+            for (const candidate of candidates) {
+              const validatedSamples = await validateCandidateSamples(module, candidate, samplePool);
+              if (validatedSamples > 0) {
+                return {
+                  found: true,
+                  name: candidate.name,
+                  type: candidate.type,
+                  validated: true,
+                  validatedSamples,
+                  sampleCount: samplePool.length
+                };
+              }
+            }
           }
+
+          if (allowBestEffort) {
+            const bestEffort = selectBestEffortCandidate(candidates);
+            if (bestEffort.found) {
+              return bestEffort;
+            }
+          }
+        } catch (error) {
+          lastImportError = error.message;
         }
       }
 
-      return allowBestEffort ? selectBestEffortCandidate(candidates) : { found: false, validated: false };
+      return {
+        ...(allowBestEffort ? selectBestEffortCandidate(lastCandidates) : { found: false, validated: false }),
+        error: lastImportError
+      };
     } catch (error) {
       return { found: false, error: error.message };
     }
@@ -152,8 +320,10 @@ function inspectModuleCandidatesInPage({ url, samplePool, allowBestEffort, candi
 }
 
 async function probeAppScriptCandidate(extractor, page, appScriptUrl, sampleState, candidateNames) {
+  const importUrls = buildAppScriptImportUrls(appScriptUrl);
   return page.evaluate(inspectModuleCandidatesInPage, {
-    url: appScriptUrl,
+    url: importUrls[0] || String(appScriptUrl || ''),
+    urls: importUrls,
     samplePool: sampleState.samplePool,
     allowBestEffort: extractor.allowBestEffortCandidate && (!sampleState.hasPrimarySample || sampleState.hasValidPrimarySample),
     candidateNames
@@ -198,7 +368,7 @@ async function extractFromAppScript(page, sampleInput = null, options = {}) {
     await this._waitForDecryptorReady(page);
 
     const appScriptUrl = await page.evaluate(() => {
-      const script = Array.from(document.querySelectorAll('script[src*="/build/assets/app-"]'))
+      const script = Array.from(document.querySelectorAll('script[src*="/build/assets/app"]'))
         .map((item) => item.src)
         .find(Boolean);
       return script;
@@ -218,10 +388,19 @@ async function extractFromAppScript(page, sampleInput = null, options = {}) {
     logInvalidPrimarySample(this, sampleState);
 
     if (!decryptFn || !decryptFn.found) {
+      const pureRuntimeDecryptFn = typeof this._extractFromPureRuntime === 'function'
+        ? await this._extractFromPureRuntime(page, appScriptUrl, sampleState)
+        : null;
+      if (pureRuntimeDecryptFn) {
+        this.algorithmVersion = pureRuntimeDecryptFn.__algorithmVersion || this.algorithmVersion;
+        return pureRuntimeDecryptFn;
+      }
+
       if (sampleState.samplePool.length > 0) {
         this.logger.warn('app_script_candidate_rejected', {
           reason: 'sample_validation_failed',
-          samplePoolSize: sampleState.samplePool.length
+          samplePoolSize: sampleState.samplePool.length,
+          error: decryptFn?.error || null
         });
       }
       return null;
@@ -253,7 +432,102 @@ async function extractFromAppScript(page, sampleInput = null, options = {}) {
 function collectCrossSamplesInPage({ sampleLimit }) {
   const collected = [];
   const seen = new Set();
-  const endpoints = [];
+  const normalizeSerializableStateInPage = (value) => {
+    if (value && typeof value === 'object') {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  };
+  const pushUniqueTrimmedInPage = (bucket, value) => {
+    const normalized = String(value || '').trim();
+    if (!normalized || bucket.includes(normalized)) {
+      return;
+    }
+    bucket.push(normalized);
+  };
+  const collectReplayEndpointsInPage = () => {
+    const endpoints = [];
+    const resourceEntries = Array.isArray(performance.getEntriesByType('resource'))
+      ? performance.getEntriesByType('resource')
+      : [];
+
+    for (const entry of resourceEntries) {
+      if (
+        typeof entry?.name === 'string'
+        && /ajax-sport-country-tournament(?:-archive)?_/i.test(entry.name)
+      ) {
+        pushUniqueTrimmedInPage(endpoints, entry.name);
+      }
+    }
+
+    return endpoints;
+  };
+  const collectSeasonTokensFromDomInPage = (pathname, documentRef) => {
+    const seasonTokens = [];
+    const pathMatches = String(pathname || '').match(/(\d{4}(?:-\d{4})?)/g) || [];
+    for (const match of pathMatches) {
+      pushUniqueTrimmedInPage(seasonTokens, match);
+    }
+
+    const linkedSeasons = Array.from(
+      documentRef.querySelectorAll('a[href*="/results/"], a[href*="/fixtures/"]')
+    )
+      .map((node) => String(node.getAttribute('href') || ''))
+      .flatMap((href) => href.match(/-(\d{4}(?:-\d{4})?)(?:\/|$)/g) || [])
+      .map((token) => token.replace(/^-/, '').replace(/\/$/, '').trim());
+
+    for (const token of linkedSeasons) {
+      pushUniqueTrimmedInPage(seasonTokens, token);
+      if (/^\d{4}$/.test(token)) {
+        pushUniqueTrimmedInPage(seasonTokens, String(Number(token) + 1));
+        pushUniqueTrimmedInPage(seasonTokens, `${token}-${Number(token) + 1}`);
+      }
+    }
+
+    return seasonTokens;
+  };
+  const collectCandidateHashesInPage = (pageVar) => {
+    const candidateHashes = [];
+    if (typeof pageVar?.bookiehash === 'string' && pageVar.bookiehash.trim()) {
+      pushUniqueTrimmedInPage(candidateHashes, pageVar.bookiehash);
+    }
+    if (typeof pageVar?.myot === 'string' && pageVar.myot.trim()) {
+      pushUniqueTrimmedInPage(candidateHashes, pageVar.myot);
+    }
+    pushUniqueTrimmedInPage(candidateHashes, 'X');
+    return candidateHashes;
+  };
+  const buildTournamentEndpointsInPage = (otCode, candidateHashes, seasonTokens) => {
+    if (!otCode) {
+      return [];
+    }
+
+    const endpoints = [];
+    const cacheBust = Date.now();
+    for (const hash of candidateHashes) {
+      pushUniqueTrimmedInPage(
+        endpoints,
+        `https://www.oddsportal.com/ajax-sport-country-tournament_/1/${otCode}/${hash}/1/?_=${cacheBust}`
+      );
+    }
+    for (const seasonToken of seasonTokens) {
+      for (const hash of candidateHashes) {
+        pushUniqueTrimmedInPage(
+          endpoints,
+          `https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/${otCode}/${hash}/${seasonToken}/1/0/?_=${cacheBust}`
+        );
+      }
+    }
+
+    return endpoints;
+  };
   const pushSample = (value) => {
     if (typeof value !== 'string') {
       return;
@@ -267,44 +541,17 @@ function collectCrossSamplesInPage({ sampleLimit }) {
     seen.add(trimmed);
     collected.push(trimmed);
   };
-  const addEndpoint = (url) => {
-    if (!url || typeof url !== 'string') {
-      return;
-    }
-
-    const normalized = url.trim();
-    if (!normalized || endpoints.includes(normalized)) {
-      return;
-    }
-
-    endpoints.push(normalized);
-  };
-
-  const resourceEntries = Array.isArray(performance.getEntriesByType('resource'))
-    ? performance.getEntriesByType('resource')
-    : [];
-  for (const entry of resourceEntries) {
-    if (typeof entry?.name === 'string' && /ajax-sport-country-tournament-archive_/i.test(entry.name)) {
-      addEndpoint(entry.name);
-    }
-  }
-
-  const otCode = typeof window.pageVar?.otCode === 'string'
-    ? window.pageVar.otCode.trim()
-    : (typeof window.pageOutrightsVar?.id === 'string' ? window.pageOutrightsVar.id.trim() : '');
-  const seasonMatch = String(window.location?.pathname || '').match(/(\d{4}-\d{4})/);
-  const season = seasonMatch ? seasonMatch[1] : '';
-  const candidateHashes = [];
-  if (typeof window.pageVar?.bookiehash === 'string' && window.pageVar.bookiehash.trim()) {
-    candidateHashes.push(window.pageVar.bookiehash.trim());
-  }
-  candidateHashes.push('X');
-
-  if (otCode && season) {
-    for (const hash of candidateHashes) {
-      addEndpoint(`https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/${otCode}/${hash}/${season}/1/0/?_=${Date.now()}`);
-    }
-  }
+  const pageVar = normalizeSerializableStateInPage(window.pageVar);
+  const pageOutrightsVar = normalizeSerializableStateInPage(window.pageOutrightsVar);
+  const otCode = typeof pageVar?.otCode === 'string'
+    ? pageVar.otCode.trim()
+    : (typeof pageOutrightsVar?.id === 'string' ? pageOutrightsVar.id.trim() : '');
+  const seasonTokens = collectSeasonTokensFromDomInPage(window.location?.pathname || '', document);
+  const candidateHashes = collectCandidateHashesInPage(pageVar);
+  const endpoints = [
+    ...collectReplayEndpointsInPage(),
+    ...buildTournamentEndpointsInPage(otCode, candidateHashes, seasonTokens)
+  ];
 
   return (async () => {
     for (const endpoint of endpoints) {

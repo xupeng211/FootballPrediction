@@ -5,6 +5,29 @@ const fs = require('node:fs/promises');
 const path = require('node:path');
 const { webcrypto } = require('node:crypto');
 const { performance: nodePerformance } = require('node:perf_hooks');
+const { JSDOM } = require('jsdom');
+
+const {
+  extractAppBundleUrlFromHtml,
+  extractEmbeddedProtocolStateFromHtml,
+  extractLocaleFromHtml
+} = require('../../shared/helpers/reconProtocolStateHelpers');
+
+function findHeaderKey(headers = {}, name = '') {
+  const normalizedName = String(name || '').trim().toLowerCase();
+  return Object.keys(headers || {}).find((key) => key.toLowerCase() === normalizedName) || '';
+}
+
+function normalizeHeaders(headers = {}) {
+  const normalized = {};
+  for (const [key, value] of Object.entries(headers || {})) {
+    if (value === undefined || value === null || value === '') {
+      continue;
+    }
+    normalized[key] = value;
+  }
+  return normalized;
+}
 
 function createStorageStub() {
   const store = new Map();
@@ -371,6 +394,181 @@ function createDocumentStub(locationUrl) {
 }
 
 const reconPureDecryptorRuntime = {
+  _resolveBundleUrlFromHtml(bundleUrl, options = {}) {
+    if (bundleUrl && typeof bundleUrl === 'string') {
+      return bundleUrl;
+    }
+
+    const html = String(options.html || options.entryHtml || '');
+    if (!html) {
+      return '';
+    }
+
+    const baseUrl = String(
+      options?.globals?.location?.href
+      || this.entryUrl
+      || 'https://www.oddsportal.com/'
+    );
+    const regexResolved = extractAppBundleUrlFromHtml(html, baseUrl);
+    if (regexResolved) {
+      return regexResolved;
+    }
+
+    try {
+      const dom = new JSDOM(html);
+      const assetNode = dom.window.document.querySelector(
+        'script[src*="/build/assets/app"], link[rel="modulepreload"][href*="/build/assets/app"]'
+      );
+      const rawUrl = String(
+        assetNode?.getAttribute('src')
+        || assetNode?.getAttribute('href')
+        || ''
+      ).trim();
+      return rawUrl ? new URL(rawUrl, baseUrl).href : '';
+    } catch {
+      return '';
+    }
+  },
+
+  _extractDomHintsFromHtml(html = '', baseUrl = '') {
+    const hints = {
+      bundleUrl: '',
+      outrightId: '',
+      bookmakerHash: '',
+      locale: ''
+    };
+    if (!html) {
+      return hints;
+    }
+
+    try {
+      const dom = new JSDOM(String(html || ''));
+      const document = dom.window.document;
+      const assetNode = document.querySelector(
+        'script[src*="/build/assets/app"], link[rel="modulepreload"][href*="/build/assets/app"]'
+      );
+      const rawUrl = String(
+        assetNode?.getAttribute('src')
+        || assetNode?.getAttribute('href')
+        || ''
+      ).trim();
+      if (rawUrl) {
+        hints.bundleUrl = new URL(rawUrl, baseUrl || 'https://www.oddsportal.com/').href;
+      }
+      hints.locale = String(document.documentElement?.getAttribute('lang') || '').trim();
+
+      const inlineScripts = Array.from(document.scripts)
+        .map((script) => String(script.textContent || ''))
+        .join('\n');
+      const outrightMatch = inlineScripts.match(/otCode["']?\s*[:=]\s*["']([^"']+)["']/i);
+      const hashMatch = inlineScripts.match(/(?:bookiehash|myot)["']?\s*[:=]\s*["']([^"']+)["']/i);
+      hints.outrightId = String(outrightMatch?.[1] || '').trim();
+      hints.bookmakerHash = String(hashMatch?.[1] || '').trim();
+    } catch {
+      return hints;
+    }
+
+    return hints;
+  },
+
+  _resolveRuntimeGlobals(globals = {}, html = '', bundleUrl = '') {
+    const baseUrl = String(
+      globals?.location?.href
+      || this.entryUrl
+      || bundleUrl
+      || 'https://www.oddsportal.com/'
+    );
+    const embeddedState = html
+      ? extractEmbeddedProtocolStateFromHtml(html, { baseUrl })
+      : { outrightId: '', bookmakerHash: '' };
+    const domHints = this._extractDomHintsFromHtml(html, baseUrl);
+    const locale = String(
+      globals?.pageVar?.locale
+      || extractLocaleFromHtml(html)
+      || domHints.locale
+      || 'en'
+    ).trim() || 'en';
+    const outrightId = String(
+      globals?.pageVar?.otCode
+      || globals?.pageOutrightsVar?.id
+      || embeddedState.outrightId
+      || domHints.outrightId
+      || ''
+    ).trim();
+    const bookmakerHash = String(
+      globals?.pageVar?.bookiehash
+      || globals?.pageVar?.myot
+      || embeddedState.bookmakerHash
+      || domHints.bookmakerHash
+      || 'X'
+    ).trim() || 'X';
+
+    return {
+      ...globals,
+      location: globals.location || { href: baseUrl },
+      pageVar: {
+        locale,
+        otCode: outrightId,
+        myot: bookmakerHash,
+        bookiehash: bookmakerHash,
+        myBookmakers: [],
+        userData: { myBookmakers: [] },
+        ...(globals.pageVar || {})
+      },
+      pageOutrightsVar: {
+        id: outrightId,
+        sid: 1,
+        cid: 0,
+        archive: true,
+        ...(globals.pageOutrightsVar || {})
+      }
+    };
+  },
+
+  _resolveFetchReferer(url, headers = {}, options = {}) {
+    const explicitKey = findHeaderKey(headers, 'referer');
+    if (explicitKey) {
+      return String(headers[explicitKey] || '').trim();
+    }
+    if (options.referer) {
+      return String(options.referer || '').trim();
+    }
+
+    const candidate = String(
+      this.entryUrl
+      || options.entryUrl
+      || options.baseUrl
+      || url
+      || ''
+    ).trim();
+    if (!candidate) {
+      return '';
+    }
+
+    try {
+      const parsed = new URL(candidate);
+      return /\/build\/assets\//i.test(parsed.pathname)
+        ? `${parsed.origin}/`
+        : parsed.href;
+    } catch {
+      return '';
+    }
+  },
+
+  _buildFetchHeaders(url, headers = {}, options = {}) {
+    const normalized = normalizeHeaders(headers);
+    if (
+      /^https:\/\/www\.oddsportal\.com\//i.test(String(url || ''))
+      && !findHeaderKey(normalized, 'referer')
+    ) {
+      const referer = this._resolveFetchReferer(url, normalized, options);
+      if (referer) {
+        normalized.referer = referer;
+      }
+    }
+    return normalized;
+  },
+
   _createDefaultRuntimeGlobals(globals = {}) {
     const locationHref = String(
       globals?.location?.href
@@ -709,10 +907,30 @@ const reconPureDecryptorRuntime = {
   },
 
   async _materializeModuleTree(entryUrl, headers = {}) {
+    const normalizedOptions = (
+      headers && typeof headers === 'object' && (
+        Object.prototype.hasOwnProperty.call(headers, 'headers')
+        || Object.prototype.hasOwnProperty.call(headers, 'bundleSource')
+        || Object.prototype.hasOwnProperty.call(headers, 'sourceLoader')
+        || Object.prototype.hasOwnProperty.call(headers, 'referer')
+        || Object.prototype.hasOwnProperty.call(headers, 'html')
+      )
+        ? {
+            ...headers,
+            headers: normalizeHeaders(headers.headers || {}),
+            entryUrl: headers.entryUrl || entryUrl,
+            sourceCache: headers.sourceCache || new Map()
+          }
+        : {
+            entryUrl,
+            headers: normalizeHeaders(headers || {}),
+            sourceCache: new Map()
+          }
+    );
     const visited = new Map();
     await fs.mkdir(this.moduleRoot, { recursive: true });
     const rootDir = await fs.mkdtemp(path.join(this.moduleRoot, 'bundle-'));
-    await this._downloadModuleRecursive(entryUrl, rootDir, headers, visited);
+    await this._downloadModuleRecursive(entryUrl, rootDir, normalizedOptions, visited);
     await this._ensureLanguageFallbackModules(rootDir);
 
     const localEntry = visited.get(entryUrl);
@@ -728,9 +946,48 @@ const reconPureDecryptorRuntime = {
       return visited.get(moduleUrl);
     }
 
-    const source = await this._fetchText(moduleUrl, headers);
+    const normalizedOptions = (
+      headers && typeof headers === 'object' && (
+        Object.prototype.hasOwnProperty.call(headers, 'headers')
+        || Object.prototype.hasOwnProperty.call(headers, 'bundleSource')
+        || Object.prototype.hasOwnProperty.call(headers, 'sourceLoader')
+        || Object.prototype.hasOwnProperty.call(headers, 'referer')
+        || Object.prototype.hasOwnProperty.call(headers, 'html')
+        || Object.prototype.hasOwnProperty.call(headers, 'entryUrl')
+        || Object.prototype.hasOwnProperty.call(headers, 'sourceCache')
+      )
+        ? {
+            ...headers,
+            headers: normalizeHeaders(headers.headers || {}),
+            entryUrl: headers.entryUrl || moduleUrl,
+            sourceCache: headers.sourceCache || new Map()
+          }
+        : {
+            entryUrl: moduleUrl,
+            headers: normalizeHeaders(headers || {}),
+            sourceCache: new Map()
+          }
+    );
+    let source = '';
+    if (
+      moduleUrl === normalizedOptions.entryUrl
+      && typeof normalizedOptions.bundleSource === 'string'
+      && normalizedOptions.bundleSource.trim()
+    ) {
+      source = normalizedOptions.bundleSource;
+    } else if (normalizedOptions.sourceCache.has(moduleUrl)) {
+      source = normalizedOptions.sourceCache.get(moduleUrl);
+    } else if (typeof normalizedOptions.sourceLoader === 'function') {
+      source = await normalizedOptions.sourceLoader(moduleUrl);
+    } else {
+      source = await this._fetchText(moduleUrl, normalizedOptions.headers, {
+        referer: normalizedOptions.referer,
+        entryUrl: normalizedOptions.entryUrl
+      });
+    }
     const localPath = this._resolveLocalModulePath(rootDir, moduleUrl);
     visited.set(moduleUrl, localPath);
+    normalizedOptions.sourceCache.set(moduleUrl, source);
 
     await fs.mkdir(path.dirname(localPath), { recursive: true });
     await fs.writeFile(localPath, source, 'utf8');
@@ -746,7 +1003,7 @@ const reconPureDecryptorRuntime = {
       }
 
       const childUrl = new URL(specifier, moduleUrl).href;
-      await this._downloadModuleRecursive(childUrl, rootDir, headers, visited);
+      await this._downloadModuleRecursive(childUrl, rootDir, normalizedOptions, visited);
     }
 
     return localPath;
@@ -763,7 +1020,8 @@ const reconPureDecryptorRuntime = {
     const specifiers = new Set();
     const patterns = [
       /\bfrom\s*["']([^"']+)["']/g,
-      /\bimport\s*["']([^"']+)["']/g
+      /\bimport\s*["']([^"']+)["']/g,
+      /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g
     ];
 
     for (const pattern of patterns) {
@@ -777,13 +1035,14 @@ const reconPureDecryptorRuntime = {
     return [...specifiers.values()];
   },
 
-  async _fetchText(url, headers = {}) {
+  async _fetchText(url, headers = {}, options = {}) {
     let lastError = null;
 
     for (let attempt = 1; attempt <= this.fetchRetries; attempt++) {
       try {
+        const resolvedHeaders = this._buildFetchHeaders(url, headers, options);
         const response = await this.fetchImpl(url, {
-          headers,
+          headers: resolvedHeaders,
           redirect: 'follow'
         });
 

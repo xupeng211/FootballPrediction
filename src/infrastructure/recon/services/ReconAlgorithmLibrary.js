@@ -28,7 +28,8 @@ const reconAlgorithmLibrary = {
 
   _parseBundleExportMap(bundleSource) {
     const text = String(bundleSource || '');
-    const exportBlock = text.match(/export\{([\s\S]+)\};\s*$/);
+    const exportBlocks = [...text.matchAll(/export\s*\{([\s\S]*?)\}\s*;?/g)];
+    const exportBlock = exportBlocks.length > 0 ? exportBlocks.at(-1) : null;
     if (!exportBlock) {
       return new Map();
     }
@@ -57,10 +58,17 @@ const reconAlgorithmLibrary = {
 
     const markers = [
       `function ${symbolName}`,
+      `async function ${symbolName}`,
       `const ${symbolName}=`,
       `const ${symbolName} =`,
       `let ${symbolName}=`,
-      `let ${symbolName} =`
+      `let ${symbolName} =`,
+      `var ${symbolName}=`,
+      `var ${symbolName} =`,
+      `${symbolName}=async`,
+      `${symbolName} = async`,
+      `${symbolName}=(`,
+      `${symbolName} = (`
     ];
 
     for (const marker of markers) {

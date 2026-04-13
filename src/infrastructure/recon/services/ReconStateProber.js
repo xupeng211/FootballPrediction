@@ -15,6 +15,7 @@ class ReconStateProber {
     this.timeoutMs = Number(options.timeoutMs ?? runtimeConfig.timeout_ms);
     this.maxPages = Number(options.maxPages ?? runtimeConfig.max_pages);
     this.postNavigationWaitMs = Number(options.postNavigationWaitMs ?? runtimeConfig.post_navigation_wait_ms);
+    this.interceptWaitMs = Number(options.interceptWaitMs ?? runtimeConfig.intercept_wait_ms ?? 3000);
   }
 
   setPage(page) {
@@ -192,7 +193,7 @@ class ReconStateProber {
     await hooks.navigate?.(currentResultsUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);
 
-    const currentIntercepted = await this._awaitInterceptedData(hooks);
+    const currentIntercepted = await this._awaitInterceptedData(hooks, this.interceptWaitMs);
     if (Array.isArray(currentIntercepted) && currentIntercepted.length > 0) {
       return this._buildInterceptResult(currentIntercepted, currentResultsUrl, 'CURRENT_RESULTS_INTERCEPT');
     }
@@ -243,9 +244,17 @@ class ReconStateProber {
     await hooks.navigate?.(leagueUrl, { waitUntil: 'domcontentloaded', timeout: timeoutMs });
     await this._wait(hooks.waitForTimeout, this.postNavigationWaitMs);
 
-    const leagueIntercepted = await this._awaitInterceptedData(hooks);
+    const leagueIntercepted = await this._awaitInterceptedData(hooks, this.interceptWaitMs);
     if (Array.isArray(leagueIntercepted) && leagueIntercepted.length > 0) {
       return this._buildInterceptResult(leagueIntercepted, leagueUrl, 'CURRENT_TOURNAMENT_INTERCEPT');
+    }
+
+    const leagueDomResult = await hooks.collectCurrentSeasonResultsDom?.(leagueUrl, options);
+    if (Array.isArray(leagueDomResult?.matches) && leagueDomResult.matches.length > 0) {
+      return {
+        ...leagueDomResult,
+        sourceState: 'CURRENT_TOURNAMENT_DOM'
+      };
     }
 
     const tournamentApiUrl = await hooks.getCurrentTournamentEndpoint?.()

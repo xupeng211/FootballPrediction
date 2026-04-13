@@ -60,7 +60,7 @@ class ReconDecryptor {
     }
 
     this._storeDecryptor(decryptFn);
-    this._logExtractedDecryptor('app_script', {
+    this._logExtractedDecryptor(decryptFn.__extractMethod || 'app_script', {
       validated: this.decryptFn.__validated !== false,
       bestEffort: this.decryptFn.__bestEffort === true
     });
@@ -82,7 +82,7 @@ class ReconDecryptor {
 
     this._storeDecryptor(decryptFn);
     this.logger.warn('decryptor_extracted_without_primary_sample', {
-      method: 'app_script',
+      method: decryptFn.__extractMethod || 'app_script',
       version: this.algorithmVersion
     });
     return this.decryptFn;

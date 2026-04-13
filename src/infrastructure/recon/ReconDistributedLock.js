@@ -12,7 +12,9 @@
 
 'use strict';
 
-const RedLock = require('redlock');
+const redlockModule = require('redlock');
+const RedLock = redlockModule.default || redlockModule;
+const { ResourceLockedError, ExecutionError } = redlockModule;
 
 /**
  * 分布式锁管理器类
@@ -29,6 +31,10 @@ class ReconDistributedLock {
    * @param {number} options.retryJitter - 抖动范围 ms (默认: 200)
    */
   constructor(redisClient, options = {}) {
+    if (!redisClient) {
+      throw new Error('ReconDistributedLock requires a redis client');
+    }
+
     this.redis = redisClient;
     this.redlock = new RedLock([redisClient], {
       driftFactor: options.driftFactor || 0.01,
@@ -36,9 +42,62 @@ class ReconDistributedLock {
       retryDelay: options.retryDelay || 200,
       retryJitter: options.retryJitter || 200
     });
-    
+
     this.logger = options.logger || console;
     this.locks = new Map(); // 追踪当前持有的锁
+
+    if (typeof this.redlock.on === 'function') {
+      this.redlock.on('error', (error) => {
+        this.logger.warn('redlock_client_error', {
+          error: error?.message || String(error || ''),
+          name: error?.name || 'Error'
+        });
+      });
+    }
+  }
+
+  _extractAttemptErrors(attempts = []) {
+    const errors = [];
+
+    for (const attempt of attempts) {
+      const votesAgainst = attempt?.votesAgainst;
+      if (votesAgainst instanceof Map) {
+        for (const vote of votesAgainst.values()) {
+          if (vote?.error) {
+            errors.push(vote.error);
+          } else if (vote instanceof Error) {
+            errors.push(vote);
+          }
+        }
+      } else if (Array.isArray(votesAgainst)) {
+        for (const vote of votesAgainst) {
+          if (vote?.error) {
+            errors.push(vote.error);
+          } else if (vote instanceof Error) {
+            errors.push(vote);
+          }
+        }
+      }
+    }
+
+    return errors;
+  }
+
+  _isContentionError(error) {
+    if (error instanceof ResourceLockedError || error?.name === 'ResourceLockedError') {
+      return true;
+    }
+
+    if (!(error instanceof ExecutionError) && error?.name !== 'ExecutionError') {
+      return /ResourceLockedError|unable to achieve a quorum/i.test(String(error?.message || ''));
+    }
+
+    const attemptErrors = this._extractAttemptErrors(error?.attempts || []);
+    return attemptErrors.length > 0
+      && attemptErrors.every((attemptError) => (
+        attemptError instanceof ResourceLockedError
+        || attemptError?.name === 'ResourceLockedError'
+      ));
   }
 
   /**
@@ -52,9 +111,10 @@ class ReconDistributedLock {
     const lockKey = `recon:lock:${hash}`;
     
     try {
-      this.logger.debug('acquiring_lock', { hash, lockKey, ttl });
-      
-      const lock = await this.redlock.acquire(lockKey, ttl);
+      const normalizedTtl = Math.max(1, Math.floor(Number(ttl) || 5000));
+      this.logger.debug('acquire_lock_attempt', { hash, lockKey, ttl: normalizedTtl });
+
+      const lock = await this.redlock.acquire([lockKey], normalizedTtl);
       
       // 追踪锁
       this.locks.set(hash, {
@@ -62,9 +122,10 @@ class ReconDistributedLock {
         acquiredAt: Date.now(),
         key: lockKey
       });
-      
+
+      this.logger.info('acquire_lock', { hash, lockKey, ttl: normalizedTtl, backend: 'redis' });
       this.logger.info('lock_acquired', { hash, lockKey });
-      
+
       // 包装 release 方法以更新追踪状态
       const originalRelease = lock.release.bind(lock);
       lock.release = async () => {
@@ -80,8 +141,15 @@ class ReconDistributedLock {
       
       return lock;
     } catch (e) {
-      this.logger.warn('lock_acquire_failed', { hash, lockKey, error: e.message });
-      throw new LockAcquireFailure(`Failed to acquire lock for hash ${hash}: ${e.message}`);
+      const isContention = this._isContentionError(e);
+      const code = isContention ? 'LOCK_CONTENDED' : 'LOCK_BACKEND_ERROR';
+      this.logger.warn(isContention ? 'acquire_lock_contended' : 'lock_acquire_failed', {
+        hash,
+        lockKey,
+        error: e.message,
+        code
+      });
+      throw new LockAcquireFailure(`Failed to acquire lock for hash ${hash}: ${e.message}`, code, e);
     }
   }
 
@@ -205,9 +273,11 @@ class ReconDistributedLock {
  * 锁获取失败错误
  */
 class LockAcquireFailure extends Error {
-  constructor(message) {
+  constructor(message, code = 'LOCK_ACQUIRE_FAILED', cause = null) {
     super(message);
     this.name = 'LockAcquireFailure';
+    this.code = code;
+    this.cause = cause || null;
   }
 }
 

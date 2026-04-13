@@ -31,15 +31,33 @@ function loadReconDistributedLock(behavior = {}) {
     acquireCalls: [],
   };
 
+  class FakeResourceLockedError extends Error {
+    constructor(message) {
+      super(message);
+      this.name = 'ResourceLockedError';
+    }
+  }
+
+  class FakeExecutionError extends Error {
+    constructor(message, attempts = []) {
+      super(message);
+      this.name = 'ExecutionError';
+      this.attempts = attempts;
+    }
+  }
+
   class FakeRedLock {
     constructor(clients, options) {
       state.constructorArgs.push({ clients, options });
     }
 
-    async acquire(lockKey, ttl) {
-      state.acquireCalls.push({ lockKey, ttl });
+    async acquire(resources, ttl) {
+      state.acquireCalls.push({ resources, ttl });
       if (behavior.onAcquire) {
-        return behavior.onAcquire(lockKey, ttl);
+        return behavior.onAcquire(resources, ttl, {
+          ResourceLockedError: FakeResourceLockedError,
+          ExecutionError: FakeExecutionError
+        });
       }
 
       return {
@@ -48,7 +66,11 @@ function loadReconDistributedLock(behavior = {}) {
     }
   }
 
-  const restoreRedlock = overrideModule(REDLOCK_ID, FakeRedLock);
+  const restoreRedlock = overrideModule(REDLOCK_ID, {
+    default: FakeRedLock,
+    ResourceLockedError: FakeResourceLockedError,
+    ExecutionError: FakeExecutionError
+  });
   delete require.cache[MODULE_PATH];
 
   try {
@@ -70,9 +92,9 @@ describe('src/infrastructure/recon/ReconDistributedLock', () => {
     const logs = [];
     let releaseShouldFail = false;
     const loaded = loadReconDistributedLock({
-      onAcquire(lockKey, ttl) {
+      onAcquire(resources, ttl) {
         return {
-          lockKey,
+          lockKey: resources[0],
           ttl,
           async release() {
             if (releaseShouldFail) {
@@ -114,6 +136,7 @@ describe('src/infrastructure/recon/ReconDistributedLock', () => {
 
     await lock.release();
     assert.strictEqual(lockManager.hasLock('hash-1'), false);
+    assert.ok(logs.some(([level, event]) => level === 'info' && event === 'acquire_lock'));
     assert.ok(logs.some(([level, event]) => level === 'info' && event === 'lock_released'));
 
     releaseShouldFail = true;
@@ -131,7 +154,8 @@ describe('src/infrastructure/recon/ReconDistributedLock', () => {
     Date.now = () => now;
 
     const loaded = loadReconDistributedLock({
-      onAcquire(lockKey) {
+      onAcquire(resources) {
+        const lockKey = resources[0];
         if (lockKey.endsWith('b')) {
           throw new Error('b failed');
         }
@@ -152,13 +176,14 @@ describe('src/infrastructure/recon/ReconDistributedLock', () => {
       /b failed/,
     );
     assert.deepStrictEqual(
-      loaded.state.acquireCalls.map(call => call.lockKey),
+      loaded.state.acquireCalls.map(call => call.resources[0]),
       ['recon:lock:a', 'recon:lock:b'],
     );
     assert.deepStrictEqual(releaseLog, ['recon:lock:a']);
 
     const timeoutLoaded = loadReconDistributedLock({
-      onAcquire(lockKey) {
+      onAcquire(resources) {
+        const lockKey = resources[0];
         now += 60;
         return {
           async release() {
@@ -181,8 +206,12 @@ describe('src/infrastructure/recon/ReconDistributedLock', () => {
   test('应处理批量释放、强制释放全部锁、断开连接与获取失败包装', async () => {
     const warnings = [];
     const loaded = loadReconDistributedLock({
-      onAcquire() {
-        throw new Error('redis unavailable');
+      onAcquire(_resources, _ttl, errors) {
+        throw new errors.ExecutionError('quorum failed', [{
+          votesAgainst: new Map([
+            ['redis-1', { error: new errors.ResourceLockedError('busy') }]
+          ])
+        }]);
       },
     });
     const redis = {
@@ -203,7 +232,11 @@ describe('src/infrastructure/recon/ReconDistributedLock', () => {
 
     await assert.rejects(
       manager.acquireRowLock('hash-fail'),
-      error => error instanceof loaded.LockAcquireFailure && error.message.includes('hash-fail'),
+      error => (
+        error instanceof loaded.LockAcquireFailure
+        && error.message.includes('hash-fail')
+        && error.code === 'LOCK_CONTENDED'
+      ),
     );
 
     const batchLocks = new Map([
