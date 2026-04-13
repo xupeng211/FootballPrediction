@@ -362,7 +362,8 @@ const reconProtocolAdapter = {
     await decryptor.loadFromBundleUrl(context.appBundleUrl, {
       sampleEncryptedData,
       headers: this._buildPureProtocolHeaders(context.baseUrl),
-      globals: this._buildPureProtocolRuntimeGlobals(context, token, bookmakerHash)
+      globals: this._buildPureProtocolRuntimeGlobals(context, token, bookmakerHash),
+      html: context.html
     });
 
     return decryptor;

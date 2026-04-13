@@ -54,19 +54,71 @@ const reconResponseDecoder = {
     }
   },
 
-  async decryptPayloadText(trimmed) {
+  async _runDecryptorOperation(operation, phase) {
+    const timeoutMs = Number(this.decryptTimeoutMs) > 0 ? Number(this.decryptTimeoutMs) : 30000;
+    let timeoutHandle = null;
+
     try {
-      if (!this.decryptor.getAlgorithmVersion()) {
-        await this.decryptor.extractDecryptor(this.page, trimmed);
+      return await Promise.race([
+        Promise.resolve().then(() => operation()),
+        new Promise((_, reject) => {
+          timeoutHandle = setTimeout(() => {
+            const error = new Error(`DECRYPTOR_TIMEOUT:${phase}:${timeoutMs}ms`);
+            error.code = 'DECRYPTOR_TIMEOUT';
+            error.phase = phase;
+            error.timeoutMs = timeoutMs;
+            this.logger.warn('decryptor_timeout', {
+              traceId: this.traceId,
+              phase,
+              timeoutMs
+            });
+            reject(error);
+          }, timeoutMs);
+        })
+      ]);
+    } catch (error) {
+      if (error?.code === 'DECRYPTOR_TIMEOUT' && phase.includes('extract') && this.decryptor) {
+        this.decryptor._extractPromise = null;
       }
-      return await this.decryptor.decrypt(trimmed);
+      throw error;
+    } finally {
+      if (timeoutHandle) {
+        clearTimeout(timeoutHandle);
+      }
+    }
+  },
+
+  async decryptPayloadText(trimmed) {
+    if (!this.decryptor.getAlgorithmVersion()) {
+      await this._runDecryptorOperation(
+        () => this.decryptor.extractDecryptor(this.page, trimmed),
+        'extract'
+      );
+    }
+
+    try {
+      return await this._runDecryptorOperation(
+        () => this.decryptor.decrypt(trimmed),
+        'decrypt'
+      );
     } catch (initialError) {
-      if (initialError?.code === 'INVALID_ENCRYPTED_PAYLOAD' || this._isPageContextClosedError(initialError)) {
+      if (
+        initialError?.code === 'INVALID_ENCRYPTED_PAYLOAD'
+        || initialError?.code === 'DECRYPTOR_TIMEOUT'
+        || this._isPageContextClosedError(initialError)
+        || !this.decryptor.getAlgorithmVersion()
+      ) {
         throw initialError;
       }
 
-      await this.decryptor.extractDecryptor(this.page, trimmed);
-      return this.decryptor.decrypt(trimmed);
+      await this._runDecryptorOperation(
+        () => this.decryptor.extractDecryptor(this.page, trimmed),
+        'reextract'
+      );
+      return this._runDecryptorOperation(
+        () => this.decryptor.decrypt(trimmed),
+        'decrypt_retry'
+      );
     }
   },
 

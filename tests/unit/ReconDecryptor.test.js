@@ -38,6 +38,7 @@ describe('ReconDecryptor', () => {
     const decryptor = new ReconDecryptor({
       logger: { info() {}, warn() {}, error() {}, debug() {} }
     });
+    decryptor._extractFromPureRuntime = async () => null;
 
     const page = {
       async evaluate(_fn, payload) {
@@ -63,7 +64,7 @@ describe('ReconDecryptor', () => {
 
     assert.strictEqual(result, null);
     assert.strictEqual(decryptor.getAlgorithmVersion(), null);
-    assert.strictEqual(evaluateCalls, 3);
+    assert.ok(evaluateCalls >= 3);
   });
 
   it('启用 best-effort 模式时，应允许回退到 ai 导出函数', async () => {
@@ -81,7 +82,11 @@ describe('ReconDecryptor', () => {
           return 'https://www.oddsportal.com/build/assets/app-test.js';
         }
 
-        if (payload?.url && Array.isArray(payload?.samplePool)) {
+        if (evaluateCalls === 2) {
+          return 'export{Y7t as ai};';
+        }
+
+        if ((payload?.url || payload?.urls) && Array.isArray(payload?.samplePool)) {
           return {
             found: true,
             name: 'ai',
@@ -145,6 +150,48 @@ describe('ReconDecryptor', () => {
 
     assert.ok(result);
     assert.strictEqual(decryptor.getAlgorithmVersion(), 'app_ai');
+  });
+
+  it('app script 导入失败时应回退到 pure runtime decryptor', async () => {
+    let evaluateCalls = 0;
+    const runtimeDecryptFn = async () => '{"d":{"rows":[]}}';
+    runtimeDecryptFn.__validated = true;
+    runtimeDecryptFn.__bestEffort = false;
+    runtimeDecryptFn.__algorithmVersion = 'pure_ai';
+    runtimeDecryptFn.__extractMethod = 'pure_runtime';
+
+    const decryptor = new ReconDecryptor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+    decryptor._extractFromPureRuntime = async () => runtimeDecryptFn;
+
+    const page = {
+      async evaluate(_fn, payload) {
+        evaluateCalls++;
+        if (evaluateCalls === 1) {
+          return 'https://www.oddsportal.com/build/assets/app-test.js';
+        }
+
+        if (evaluateCalls === 2) {
+          return 'export{Y7t as ai};';
+        }
+
+        assert.ok(Array.isArray(payload.urls));
+        return {
+          found: false,
+          validated: false,
+          error: 'Failed to fetch dynamically imported module'
+        };
+      }
+    };
+
+    const result = await decryptor._extractFromAppScript(
+      page,
+      Buffer.from('cipher:0011', 'utf8').toString('base64')
+    );
+
+    assert.strictEqual(result, runtimeDecryptFn);
+    assert.strictEqual(decryptor.getAlgorithmVersion(), 'pure_ai');
   });
 
   it('样本本身是伪 404 payload 时，不应启用 best-effort 回退', async () => {

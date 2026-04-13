@@ -105,7 +105,8 @@ function resolveMonitorThresholds(options, runtimeConfig) {
     scriptEvalTimeoutMs: Number(options.scriptEvalTimeoutMs ?? runtimeConfig.script_eval_timeout_ms),
     extractMaxDepth: Number(options.extractMaxDepth ?? runtimeConfig.extract_max_depth),
     pageSize: Number(options.pageSize ?? runtimeConfig.page_size),
-    fetchTimeoutMs: Number(options.fetchTimeoutMs ?? runtimeConfig.fetch_timeout_ms)
+    fetchTimeoutMs: Number(options.fetchTimeoutMs ?? runtimeConfig.fetch_timeout_ms),
+    decryptTimeoutMs: Number(options.decryptTimeoutMs ?? runtimeConfig.decrypt_timeout_ms ?? 30000)
   };
 }
 

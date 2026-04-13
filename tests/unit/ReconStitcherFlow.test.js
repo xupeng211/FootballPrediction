@@ -208,7 +208,9 @@ test('ReconStitcher 应在 hash 锁争用时跳过当前缝合而非继续写库
     enableLocking: true,
     lockManager: {
       async acquireRowLock() {
-        throw new Error('redis_busy');
+        const error = new Error('redis_busy');
+        error.code = 'LOCK_CONTENDED';
+        throw error;
       }
     }
   });
@@ -223,4 +225,145 @@ test('ReconStitcher 应在 hash 锁争用时跳过当前缝合而非继续写库
   assert.equal(result.status, 'skipped');
   assert.deepEqual(result.details, { reason: 'lock_contended' });
   assert.equal(repositoryTouched, false);
+});
+
+test('ReconStitcher 应在锁后端故障时 fail-fast 而非伪装成锁争用', async () => {
+  const stitcher = new ReconStitcher({
+    repository: {
+      async findMappingByHash() {
+        return null;
+      }
+    },
+    parser: createParser({
+      homeTeam: 'Arsenal',
+      awayTeam: 'Chelsea'
+    }),
+    logger: silentLogger,
+    enableLocking: true,
+    lockManager: {
+      async acquireRowLock() {
+        const error = new Error('redis_down');
+        error.code = 'LOCK_BACKEND_ERROR';
+        throw error;
+      }
+    }
+  });
+
+  await assert.rejects(
+    () => stitcher.stitchSingle({
+      hash: 'lock-backend-down',
+      slug: 'arsenal-chelsea-lock-backend-down',
+      url: 'oddsportal://lock-backend-down',
+      date: '2025-08-18T19:00:00.000Z'
+    }, '2025-2026', { name: 'Premier League' }),
+    /redis_down/
+  );
+});
+
+test('ReconStitcher 应在成功写库后记录 stitch_success 观测日志', async () => {
+  const infoLogs = [];
+
+  const stitcher = new ReconStitcher({
+    repository: {
+      async findMatchesByTeams() {
+        return [{
+          match_id: '130_20252026_9001',
+          home_team: 'Inter Miami',
+          away_team: 'Los Angeles FC',
+          match_date: '2025-08-31T00:30:00.000Z'
+        }];
+      },
+      async findMappingByHash() {
+        return null;
+      },
+      async findMappingByMatchIdAndSeason() {
+        return null;
+      },
+      async saveOddsPortalMapping(mapping) {
+        return { success: true, matchId: mapping.match_id };
+      }
+    },
+    parser: createParser({
+      homeTeam: 'Inter Miami',
+      awayTeam: 'Los Angeles FC'
+    }),
+    logger: {
+      ...silentLogger,
+      info(message, payload) {
+        infoLogs.push({ message, payload });
+      }
+    },
+    enableLocking: false
+  });
+
+  const result = await stitcher.stitchSingle({
+    hash: 'mls-success-hash',
+    slug: 'inter-miami-los-angeles-fc-mls-success-hash',
+    url: 'oddsportal://mls-success-hash',
+    date: '2025-08-31T00:30:00.000Z'
+  }, '2025-2026', { name: 'MLS' });
+
+  assert.equal(result.status, 'inserted');
+  assert.ok(infoLogs.some((entry) => (
+    entry.message === 'stitch_success'
+      && entry.payload?.hash === 'mls-success-hash'
+      && entry.payload?.matchId === '130_20252026_9001'
+      && entry.payload?.league === 'MLS'
+  )));
+});
+
+test('ReconStitcher 应在 slug 解析失败时回退到结构化 homeTeam/awayTeam', async () => {
+  const savedMappings = [];
+
+  const stitcher = new ReconStitcher({
+    repository: {
+      async findMatchesByTeams() {
+        return [{
+          match_id: '130_20252026_9010',
+          home_team: 'Austin FC',
+          away_team: 'Toronto FC',
+          match_date: '2025-06-15T00:30:00.000Z'
+        }];
+      },
+      async findMappingByHash() {
+        return null;
+      },
+      async findMappingByMatchIdAndSeason() {
+        return null;
+      },
+      async saveOddsPortalMapping(mapping) {
+        savedMappings.push(mapping);
+        return { success: true, matchId: mapping.match_id };
+      }
+    },
+    parser: {
+      extractTeamsFromSlug() {
+        return { homeTeam: 'Unknown', awayTeam: 'Unknown' };
+      },
+      normalizeTeamName(value) {
+        return normalizeName(value)
+          .split(' ')
+          .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+          .join(' ');
+      },
+      calculateSimilarity(left, right) {
+        return normalizeName(left) === normalizeName(right) ? 1 : 0;
+      }
+    },
+    logger: silentLogger,
+    enableLocking: false
+  });
+
+  const result = await stitcher.stitchSingle({
+    hash: 'mls-structured-teams',
+    slug: 'unknown-slug',
+    url: 'oddsportal://mls-structured-teams',
+    date: '2025-06-15T00:30:00.000Z',
+    homeTeam: 'austin fc',
+    awayTeam: 'toronto fc'
+  }, '2025-2026', { name: 'MLS' });
+
+  assert.equal(result.status, 'inserted');
+  assert.equal(savedMappings.length, 1);
+  assert.equal(savedMappings[0].match_id, '130_20252026_9010');
 });
