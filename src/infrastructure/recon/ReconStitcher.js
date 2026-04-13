@@ -1,6 +1,7 @@
 'use strict';
 
 const { ReconDistributedLock } = require('./ReconDistributedLock');
+const { ReconArbitrationStrategy } = require('./services/ReconArbitrationStrategy');
 const { reconMatchValidator } = require('./services/ReconMatchValidator');
 const { reconStitcherPersistence } = require('./services/ReconStitcherPersistence');
 const { reconStitcherFlow } = require('./services/ReconStitcherFlow');
@@ -27,6 +28,9 @@ class ReconStitcher {
       }
     }
 
+    this.arbitrationStrategy = options.arbitrationStrategy || new ReconArbitrationStrategy({
+      logger: this.logger
+    });
     this.processedHashes = new Set();
     this.unmatchedCache = [];
   }
