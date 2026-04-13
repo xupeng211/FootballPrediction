@@ -20,6 +20,7 @@ const reconStitcherFlow = {
    */
   async stitch(matches, season, leagueConfig) {
     const dbSeason = this.formatSeasonForDb(season);
+    const fixtureLookup = await this.createFixtureLookupContext(dbSeason);
     this.logger.info('stitch_start', {
       matchCount: matches.length,
       season: dbSeason,
@@ -32,7 +33,9 @@ const reconStitcherFlow = {
     this.unmatchedCache = [];
 
     for (const match of matches) {
-      const result = await this.stitchSingle(match, dbSeason, leagueConfig);
+      const result = await this.stitchSingle(match, dbSeason, leagueConfig, {
+        fixtureLookup
+      });
       if (result.status === 'inserted') inserted++;
       else if (result.status === 'skipped') skipped++;
       else {
@@ -102,9 +105,10 @@ const reconStitcherFlow = {
    * @param {Object} match
    * @param {string} season
    * @param {Object} leagueConfig
+   * @param {Object} [runtimeContext]
    * @returns {Promise<Object>}
    */
-  async stitchSingle(match, season, leagueConfig) {
+  async stitchSingle(match, season, leagueConfig, runtimeContext = {}) {
     const dbSeason = this.formatSeasonForDb(season);
     const lock = await this.acquireHashGuard(match?.hash, {
       leagueName: leagueConfig?.name,
@@ -157,7 +161,10 @@ const reconStitcherFlow = {
           teams.homeTeam,
           match.date || match.matchDate || match.match_date || null,
           dbSeason,
-          leagueConfig.name
+          leagueConfig.name,
+          {
+            fixtureLookup: runtimeContext.fixtureLookup || null
+          }
         );
         if (dateMatch) {
           teams.awayTeam = dateMatch.awayTeam;
@@ -172,7 +179,8 @@ const reconStitcherFlow = {
         match: {
           ...match,
           matchDate: match.date || match.matchDate || match.match_date || null
-        }
+        },
+        fixtureLookup: runtimeContext.fixtureLookup || null
       });
 
       if (!matchInfo) {
@@ -325,6 +333,276 @@ const reconStitcherFlow = {
     return { inserted };
   },
 
+  _buildHashLockL1Index(l1Matches = []) {
+    const l1Index = new Map();
+
+    for (const l1Match of Array.isArray(l1Matches) ? l1Matches : []) {
+      const key = `${this._normalizeTeamName(l1Match.home_team)}_${this._normalizeTeamName(l1Match.away_team)}`;
+      if (!l1Index.has(key)) {
+        l1Index.set(key, []);
+      }
+      l1Index.get(key).push(l1Match);
+    }
+
+    return l1Index;
+  },
+
+  _resolveHashLockTargetMatch(match, l1Matches = [], l1Index = new Map()) {
+    const exactKey = `${this._normalizeTeamName(match.homeTeam)}_${this._normalizeTeamName(match.awayTeam)}`;
+    const reversedKey = `${this._normalizeTeamName(match.awayTeam)}_${this._normalizeTeamName(match.homeTeam)}`;
+    const indexedCandidates = [
+      ...(l1Index.get(exactKey) || []),
+      ...(l1Index.get(reversedKey) || [])
+    ];
+
+    for (const candidate of indexedCandidates) {
+      const orientation = this._resolveOrientation(
+        match.homeTeam,
+        match.awayTeam,
+        candidate.home_team,
+        candidate.away_team
+      );
+      if (orientation.directMatch || orientation.swappedMatch) {
+        return { targetL1: candidate, orientation };
+      }
+    }
+
+    for (const l1Match of Array.isArray(l1Matches) ? l1Matches : []) {
+      const orientation = this._resolveOrientation(
+        match.homeTeam,
+        match.awayTeam,
+        l1Match.home_team,
+        l1Match.away_team
+      );
+      if (orientation.directMatch || orientation.swappedMatch) {
+        return { targetL1: l1Match, orientation };
+      }
+    }
+
+    return { targetL1: null, orientation: null };
+  },
+
+  async _persistPreparedMappings(preparedMappings, season, leagueConfig) {
+    if (!Array.isArray(preparedMappings) || preparedMappings.length === 0) {
+      return { inserted: 0, skipped: 0, unmatched: 0 };
+    }
+
+    if (typeof this.repository.batchSaveOddsPortalMappings === 'function') {
+      const result = await this.repository.batchSaveOddsPortalMappings(
+        preparedMappings.map((entry) => entry.mappingData),
+        {
+          pipelineStatus: 'RECON_LINKED',
+          preserve_linked_status: true
+        }
+      );
+      const inserted = Number(result?.applied ?? result?.inserted ?? 0);
+
+      for (const entry of preparedMappings) {
+        this.processedHashes.add(entry.match.hash);
+        this.logStitchSuccess(entry.match, entry.matchId, season, leagueConfig?.name, {
+          mappingMethod: entry.decision?.mappingMethod || 'hash_lock',
+          phase: 'hash_lock_batch'
+        });
+      }
+
+      return {
+        inserted,
+        skipped: Math.max(0, preparedMappings.length - inserted),
+        unmatched: 0
+      };
+    }
+
+    let inserted = 0;
+    let skipped = 0;
+    let unmatched = 0;
+
+    for (const entry of preparedMappings) {
+      try {
+        const result = await this.repository.saveOddsPortalMapping(entry.mappingData, {
+          pipelineStatus: 'RECON_LINKED'
+        });
+        if (result?.success) {
+          this.processedHashes.add(entry.match.hash);
+          this.logStitchSuccess(entry.match, entry.matchId, season, leagueConfig?.name, {
+            mappingMethod: entry.decision?.mappingMethod || 'hash_lock',
+            phase: 'hash_lock_batch'
+          });
+          inserted++;
+        } else {
+          skipped++;
+        }
+      } catch (error) {
+        this.logger.error('hash_lock_batch_save_error', {
+          hash: entry.match?.hash || null,
+          matchId: String(entry.matchId || ''),
+          error: error.message
+        });
+        unmatched++;
+      }
+    }
+
+    return { inserted, skipped, unmatched };
+  },
+
+  /**
+   * Bulk stitch pre-matched source/L1 pairs with a single persistence phase.
+   *
+   * High-risk area:
+   * This method deliberately holds per-hash locks across batch persistence to
+   * trade small lock lifetimes for far fewer DB round-trips.
+   *
+   * @param {Object[]} matchPairs
+   * @param {string} season
+   * @param {Object} leagueConfig
+   * @param {Object} [runtimeContext]
+   * @returns {Promise<{inserted: number, skipped: number, unmatched: number}>}
+   */
+  async stitchBatch(matchPairs, season, leagueConfig, runtimeContext = {}) {
+    const dbSeason = this.formatSeasonForDb(season);
+    const normalizedPairs = Array.isArray(matchPairs) ? matchPairs : [];
+    const l1Matches = runtimeContext.l1Matches || normalizedPairs
+      .map((pair) => pair?.l1Match)
+      .filter(Boolean);
+    const l1Index = runtimeContext.l1Index || this._buildHashLockL1Index(l1Matches);
+    const existingByHash = await this.findExistingMappingsByHashes(
+      normalizedPairs.map((pair) => pair?.rawMatch?.hash || pair?.match?.hash).filter(Boolean),
+      dbSeason
+    );
+    const existingByMatchId = await this.findExistingMappingsByMatchIds(
+      normalizedPairs.map((pair) => pair?.l1Match?.match_id).filter(Boolean),
+      dbSeason
+    );
+    const heldGuards = [];
+    const queuedHashes = new Set();
+    const preparedMappings = [];
+    let skipped = 0;
+    let unmatched = 0;
+
+    this.logger.info('stitch_batch_start', {
+      season: dbSeason,
+      league: leagueConfig?.name || null,
+      pairCount: normalizedPairs.length
+    });
+
+    try {
+      for (const pair of normalizedPairs) {
+        const rawMatch = pair?.rawMatch || pair?.match || null;
+        if (!rawMatch) {
+          unmatched++;
+          continue;
+        }
+
+        let targetL1 = pair?.l1Match || null;
+        const resolvedMatch = pair?.match || this._resolveWebMatchTeams(rawMatch, targetL1 ? [targetL1] : l1Matches);
+        let orientation = pair?.orientation || null;
+
+        if (!targetL1 || !orientation) {
+          const resolvedTarget = this._resolveHashLockTargetMatch(resolvedMatch, l1Matches, l1Index);
+          targetL1 = targetL1 || resolvedTarget.targetL1;
+          orientation = orientation || resolvedTarget.orientation;
+        }
+
+        if (!targetL1 || !orientation || (!orientation.directMatch && !orientation.swappedMatch)) {
+          unmatched++;
+          continue;
+        }
+
+        const guard = await this.acquireHashGuard(resolvedMatch?.hash, {
+          leagueName: leagueConfig?.name,
+          season: dbSeason
+        });
+        if (guard?.contended) {
+          skipped++;
+          continue;
+        }
+
+        let keepGuard = false;
+        try {
+          const hashKey = String(resolvedMatch?.hash || '').trim();
+          if (!hashKey) {
+            unmatched++;
+            continue;
+          }
+
+          if (this.processedHashes.has(hashKey) || queuedHashes.has(hashKey)) {
+            skipped++;
+            continue;
+          }
+
+          if (existingByHash.has(hashKey)) {
+            this.processedHashes.add(hashKey);
+            skipped++;
+            continue;
+          }
+
+          const prepared = this.buildMappingPayload(
+            resolvedMatch,
+            {
+              homeTeam: resolvedMatch.homeTeam,
+              awayTeam: resolvedMatch.awayTeam
+            },
+            {
+              matchId: targetL1.match_id,
+              dbHome: targetL1.home_team,
+              dbAway: targetL1.away_team,
+              matchDate: targetL1.match_date || null,
+              confidence: pair?.confidence ?? 0.9,
+              method: pair?.method || 'hash_lock'
+            },
+            dbSeason,
+            leagueConfig,
+            {
+              existingMapping: existingByMatchId.get(String(targetL1.match_id)) || null
+            }
+          );
+
+          preparedMappings.push({
+            ...prepared,
+            match: resolvedMatch,
+            matchId: String(targetL1.match_id)
+          });
+          queuedHashes.add(hashKey);
+          keepGuard = true;
+          heldGuards.push({ hash: hashKey, guard });
+        } catch (error) {
+          if (error.code === 'ORIENTATION_UNCERTAIN') {
+            this.logger.warn('orientation_uncertain', {
+              hash: resolvedMatch?.hash || null,
+              season: dbSeason,
+              league: leagueConfig?.name || null,
+              teams: {
+                homeTeam: resolvedMatch?.homeTeam || null,
+                awayTeam: resolvedMatch?.awayTeam || null
+              }
+            });
+          } else {
+            this.logger.error('hash_lock_prepare_error', {
+              hash: resolvedMatch?.hash || null,
+              matchId: String(targetL1?.match_id || ''),
+              error: error.message
+            });
+          }
+          unmatched++;
+        } finally {
+          if (!keepGuard) {
+            await this.releaseHashGuard(guard, resolvedMatch?.hash);
+          }
+        }
+      }
+
+      const persisted = await this._persistPreparedMappings(preparedMappings, dbSeason, leagueConfig);
+      return {
+        inserted: persisted.inserted,
+        skipped: skipped + Number(persisted.skipped || 0),
+        unmatched: unmatched + Number(persisted.unmatched || 0)
+      };
+    } finally {
+      for (const { hash, guard } of heldGuards) {
+        await this.releaseHashGuard(guard, hash);
+      }
+    }
+  },
+
   /**
    * Hash-oriented fast path for already-resolved web matches.
    *
@@ -344,108 +622,43 @@ const reconStitcherFlow = {
       l1Total: l1Matches.length
     });
 
-    let inserted = 0;
-    let skipped = 0;
     let unmatched = 0;
-    const dbSeason = this.formatSeasonForDb(season);
-
-    const l1Map = new Map();
-    for (const match of l1Matches) {
-      const key = `${this._normalizeTeamName(match.home_team)}_${this._normalizeTeamName(match.away_team)}`;
-      l1Map.set(key, match);
-    }
+    const l1Index = this._buildHashLockL1Index(l1Matches);
+    const matchPairs = [];
 
     for (const rawMatch of interceptedMatches) {
-      const lock = await this.acquireHashGuard(rawMatch?.hash, {
-        leagueName: leagueConfig?.name,
-        season: dbSeason
-      });
-      if (lock?.contended) {
-        skipped++;
-        continue;
-      }
-
       try {
         const match = this._resolveWebMatchTeams(rawMatch, l1Matches);
-        if (match.hash && this.processedHashes.has(match.hash)) {
-          skipped++;
-          continue;
-        }
-
-        const existing = await this.checkExistingMapping(match.hash, dbSeason);
-        if (existing) {
-          this.processedHashes.add(match.hash);
-          skipped++;
-          continue;
-        }
-
-        let targetL1 = null;
-        let orientation = null;
-        const exactKey = `${this._normalizeTeamName(match.homeTeam)}_${this._normalizeTeamName(match.awayTeam)}`;
-        targetL1 = l1Map.get(exactKey);
-        if (targetL1) {
-          orientation = this._resolveOrientation(match.homeTeam, match.awayTeam, targetL1.home_team, targetL1.away_team);
-        }
-
-        if (!targetL1) {
-          const reversedKey = `${this._normalizeTeamName(match.awayTeam)}_${this._normalizeTeamName(match.homeTeam)}`;
-          targetL1 = l1Map.get(reversedKey);
-          if (targetL1) {
-            orientation = this._resolveOrientation(match.homeTeam, match.awayTeam, targetL1.home_team, targetL1.away_team);
-          }
-        }
-
-        if (!targetL1) {
-          for (const [, l1] of l1Map.entries()) {
-            const candidateOrientation = this._resolveOrientation(match.homeTeam, match.awayTeam, l1.home_team, l1.away_team);
-            if (candidateOrientation.directMatch || candidateOrientation.swappedMatch) {
-              targetL1 = l1;
-              orientation = candidateOrientation;
-              break;
-            }
-          }
-        }
-
-        if (!targetL1 || !orientation || (!orientation.directMatch && !orientation.swappedMatch)) {
+        const resolvedTarget = this._resolveHashLockTargetMatch(match, l1Matches, l1Index);
+        if (!resolvedTarget.targetL1) {
           unmatched++;
           continue;
         }
 
-        const result = await this.repository.saveOddsPortalMapping({
-          match_id: targetL1.match_id,
-          oddsportal_hash: match.hash,
-          full_url: match.url,
-          season: dbSeason,
-          league_name: leagueConfig.name,
-          home_team: targetL1.home_team,
-          away_team: targetL1.away_team,
-          is_reversed: orientation.isReversed,
-          match_confidence: 0.9,
-          mapping_method: 'hash_lock',
-          status: 'pending'
-        }, {
-          pipelineStatus: 'RECON_LINKED'
+        matchPairs.push({
+          rawMatch,
+          match,
+          l1Match: resolvedTarget.targetL1,
+          orientation: resolvedTarget.orientation,
+          method: 'hash_lock',
+          confidence: 0.9
         });
-
-        if (result.success) {
-          this.processedHashes.add(match.hash);
-          this.logStitchSuccess(match, targetL1.match_id, dbSeason, leagueConfig?.name, {
-            mappingMethod: 'hash_lock',
-            phase: 'hash_lock'
-          });
-          inserted++;
-        } else {
-          skipped++;
-        }
       } catch (error) {
         this.logger.error('hash_lock_error', { hash: rawMatch?.hash, error: error.message });
         unmatched++;
-      } finally {
-        await this.releaseHashGuard(lock, rawMatch?.hash);
       }
     }
 
-    return { inserted, skipped, unmatched };
+    const stitched = await this.stitchBatch(matchPairs, season, leagueConfig, {
+      l1Matches,
+      l1Index
+    });
+
+    return {
+      inserted: stitched.inserted,
+      skipped: stitched.skipped,
+      unmatched: unmatched + stitched.unmatched
+    };
   },
 
   /**

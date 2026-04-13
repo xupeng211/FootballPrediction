@@ -11,6 +11,12 @@
 
 'use strict';
 
+const {
+  buildDomScanPayload,
+  dedupeById,
+  extractPrimaryLeagueData
+} = require('../shared/helpers/fotMobExtractionHelpers');
+
 /**
  * FotMob 数据提取器
  * @class FotMobExtractor
@@ -120,38 +126,13 @@ class FotMobExtractor {
         throw new Error(`JSON 解析错误: ${nextData.error}`);
       }
       
-      // 🔥 数据提取逻辑
-      const pageProps = nextData.props?.pageProps;
-      let extractedData = null;
-      let matchCount = 0;
-      
-      // 路径 1: fallback 中的联赛数据
-      const fallback = pageProps?.fallback;
-      if (fallback && typeof fallback === 'object') {
-        const leagueKey = Object.keys(fallback).find(key => 
-          key.includes('/api/leagues') || key.includes('leagues')
-        );
-        
-        if (leagueKey && fallback[leagueKey]) {
-          extractedData = fallback[leagueKey];
-          matchCount = this._countMatches(extractedData);
-          this.logger.info(`[HOUND-SOUL] ✅ 从 fallback["${leagueKey}"] 提取 ${matchCount} 场数据`);
-        }
-      }
-      
-      // 路径 2: 直接从 pageProps 提取
-      if (!extractedData && pageProps) {
-        if (pageProps.fixtures || pageProps.allMatches) {
-          extractedData = {
-            fixtures: pageProps.fixtures || pageProps.allMatches,
-            leagueId: leagueId,
-            season: season,
-            ...pageProps
-          };
-          matchCount = this._countMatches(extractedData);
-          this.logger.info(`[HOUND-SOUL] ✅ 从 pageProps 提取 ${matchCount} 场数据`);
-        }
-      }
+      const { data: extractedData, matchCount } = extractPrimaryLeagueData(
+        nextData.props?.pageProps,
+        leagueId,
+        season,
+        (data) => this._countMatches(data),
+        this.logger
+      );
       
       // 🔥 V6.7.9: 如果数据量不足，尝试使用捕获的真实 API 端点
       if (!extractedData || matchCount < 200) {
@@ -182,12 +163,7 @@ class FotMobExtractor {
         
         if (domData && domData.length > matchCount) {
           this.logger.info(`[HOUND-SOUL] ✅ DOM 扫描发现 ${domData.length} 场，覆盖原有数据`);
-          return {
-            fixtures: { allMatches: domData },
-            leagueId: leagueId,
-            season: season,
-            _source: 'dom_scan'
-          };
+          return buildDomScanPayload(domData, leagueId, season);
         }
       }
       
@@ -368,24 +344,8 @@ class FotMobExtractor {
       return data;
     });
 
-    // 去重
-    const uniqueLeagues = [];
-    const seenLeagues = new Set();
-    results.leagues.forEach(l => {
-      if (!seenLeagues.has(l.id)) {
-        seenLeagues.add(l.id);
-        uniqueLeagues.push(l);
-      }
-    });
-
-    const uniqueTeams = [];
-    const seenTeams = new Set();
-    results.teams.forEach(t => {
-      if (!seenTeams.has(t.id)) {
-        seenTeams.add(t.id);
-        uniqueTeams.push(t);
-      }
-    });
+    const uniqueLeagues = dedupeById(results.leagues);
+    const uniqueTeams = dedupeById(results.teams);
 
     if (uniqueLeagues.length === 0 && uniqueTeams.length === 0) {
       throw new Error('DOM 搜索未返回结果');
