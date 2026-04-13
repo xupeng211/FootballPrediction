@@ -367,3 +367,151 @@ test('ReconStitcher 应在 slug 解析失败时回退到结构化 homeTeam/awayT
   assert.equal(savedMappings.length, 1);
   assert.equal(savedMappings[0].match_id, '130_20252026_9010');
 });
+
+test('ReconStitcher.stitch 应只预热一次赛季 fixture lookup 并复用到整批缝合', async () => {
+  const savedMappings = [];
+  let seasonLookupLoads = 0;
+
+  const stitcher = new ReconStitcher({
+    repository: {
+      async findMatchesBySeason() {
+        seasonLookupLoads++;
+        return [
+          {
+            match_id: '47_20252026_1000',
+            home_team: 'Arsenal',
+            away_team: 'Chelsea',
+            match_date: '2025-08-16T14:00:00.000Z'
+          },
+          {
+            match_id: '47_20252026_1001',
+            home_team: 'Liverpool',
+            away_team: 'Everton',
+            match_date: '2025-08-17T14:00:00.000Z'
+          }
+        ];
+      },
+      async findMappingByHash() {
+        return null;
+      },
+      async findMappingByMatchIdAndSeason() {
+        return null;
+      },
+      async saveOddsPortalMapping(mapping) {
+        savedMappings.push(mapping);
+        return { success: true, matchId: mapping.match_id };
+      }
+    },
+    parser: {
+      extractTeamsFromSlug() {
+        return { homeTeam: 'Unknown', awayTeam: 'Unknown' };
+      },
+      normalizeTeamName(value) {
+        return String(value || '').trim();
+      },
+      calculateSimilarity(left, right) {
+        return normalizeName(left) === normalizeName(right) ? 1 : 0;
+      }
+    },
+    logger: silentLogger,
+    enableLocking: false
+  });
+
+  const result = await stitcher.stitch([
+    {
+      hash: 'batch-stitch-hash-1',
+      slug: 'arsenal-chelsea',
+      url: 'oddsportal://arsenal-chelsea',
+      homeTeam: 'Arsenal',
+      awayTeam: 'Chelsea',
+      date: '2025-08-16T14:00:00.000Z'
+    },
+    {
+      hash: 'batch-stitch-hash-2',
+      slug: 'liverpool-everton',
+      url: 'oddsportal://liverpool-everton',
+      homeTeam: 'Liverpool',
+      awayTeam: 'Everton',
+      date: '2025-08-17T14:00:00.000Z'
+    }
+  ], '2025-2026', { name: 'Premier League' });
+
+  assert.equal(result.inserted, 2);
+  assert.equal(savedMappings.length, 2);
+  assert.equal(seasonLookupLoads, 1);
+});
+
+test('ReconStitcher.stitchBatch 应把多场命中压缩为一次 batchSaveOddsPortalMappings', async () => {
+  const batchCalls = [];
+  let singleSaveCalls = 0;
+
+  const stitcher = new ReconStitcher({
+    repository: {
+      async findMappingByHash() {
+        return null;
+      },
+      async findMappingByMatchIdAndSeason() {
+        return null;
+      },
+      async batchSaveOddsPortalMappings(mappings, options) {
+        batchCalls.push({ mappings, options });
+        return {
+          success: true,
+          inserted: mappings.length,
+          applied: mappings.length
+        };
+      },
+      async saveOddsPortalMapping() {
+        singleSaveCalls++;
+        return { success: true };
+      }
+    },
+    parser: createParser({
+      homeTeam: 'Arsenal',
+      awayTeam: 'Chelsea'
+    }),
+    logger: silentLogger,
+    enableLocking: false
+  });
+
+  const result = await stitcher.stitchBatch([
+    {
+      rawMatch: {
+        hash: 'bulk-hash-1',
+        url: 'oddsportal://bulk-1',
+        homeTeam: 'Arsenal',
+        awayTeam: 'Chelsea'
+      },
+      l1Match: {
+        match_id: '47_20252026_1000',
+        home_team: 'Arsenal',
+        away_team: 'Chelsea',
+        match_date: '2025-08-16T14:00:00.000Z'
+      }
+    },
+    {
+      rawMatch: {
+        hash: 'bulk-hash-2',
+        url: 'oddsportal://bulk-2',
+        homeTeam: 'Liverpool',
+        awayTeam: 'Everton'
+      },
+      l1Match: {
+        match_id: '47_20252026_1001',
+        home_team: 'Liverpool',
+        away_team: 'Everton',
+        match_date: '2025-08-17T14:00:00.000Z'
+      }
+    }
+  ], '2025-2026', { name: 'Premier League' });
+
+  assert.equal(result.inserted, 2);
+  assert.equal(result.unmatched, 0);
+  assert.equal(batchCalls.length, 1);
+  assert.equal(batchCalls[0].mappings.length, 2);
+  assert.deepEqual(batchCalls[0].options, {
+    pipelineStatus: 'RECON_LINKED',
+    preserve_linked_status: true
+  });
+  assert.equal(singleSaveCalls, 0);
+});

@@ -194,10 +194,13 @@ describe('ReconScanner Elite - Circuit Breaker', () => {
     cb.trip('test trip');
     assert.strictEqual(cb.getStatus().state, 'OPEN');
     
-    await new Promise((resolve) => {
-      setTimeout(resolve, 150);
-    });
-    
+    const deadline = Date.now() + 500;
+    while (cb.getStatus().state === 'OPEN' && Date.now() < deadline) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 20);
+      });
+    }
+
     let enteredHalfOpen = false;
     try {
       await cb.execute(async () => {

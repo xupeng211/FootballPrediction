@@ -11,6 +11,24 @@ const reconConfig = require('../../config/recon_config.json');
 const { ReconMappingStore } = require('../../src/infrastructure/services/recon/ReconMappingStore');
 const { ReconSchemaJanitor } = require('../../src/infrastructure/services/recon/ReconSchemaJanitor');
 
+test('FixtureRepository.close 应关闭连接池并将 dbPool 置空', async () => {
+  let endCalls = 0;
+  const pool = {
+    async end() {
+      endCalls += 1;
+    }
+  };
+  const repository = new FixtureRepository({
+    dbPool: pool,
+    logger: { info() {}, warn() {}, error() {} }
+  });
+
+  await repository.close();
+
+  assert.equal(endCalls, 1);
+  assert.equal(repository.dbPool, null);
+});
+
 test('FixtureRepository.batchUpdateMatchPipelineStatus 应在竞争更新下只允许一个任务将 harvested 改为 RECON_MISMATCH', async () => {
   const state = {
     status: 'harvested',
