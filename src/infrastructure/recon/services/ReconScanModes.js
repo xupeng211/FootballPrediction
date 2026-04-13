@@ -359,7 +359,8 @@ const reconScanModes = {
 
       this.logger.info('dom_extract_complete', { candidates: domMatches.length });
 
-      let inserted = 0;
+      const matchPairs = [];
+      let unmatched = 0;
       for (const l1Match of unstitched) {
         const matched = domMatches.find((domMatch) => {
           const text = domMatch.rawText.toLowerCase();
@@ -367,25 +368,30 @@ const reconScanModes = {
         });
 
         if (matched && this.stitcher) {
-          try {
-            const result = await this.stitcher.stitchWithHashLock(
-              [{
-                ...matched,
-                homeTeam: l1Match.home_team,
-                awayTeam: l1Match.away_team
-              }],
-              [l1Match],
-              dbSeason,
-              leagueConfig
-            );
-            inserted += result.inserted || 0;
-          } catch (error) {
-            this.logger.warn('dom_stitch_failed', { matchId: l1Match.match_id, error: error.message });
-          }
+          matchPairs.push({
+            rawMatch: {
+              ...matched,
+              homeTeam: l1Match.home_team,
+              awayTeam: l1Match.away_team
+            },
+            l1Match,
+            method: 'hash_lock',
+            confidence: 0.9
+          });
+        } else {
+          unmatched++;
         }
       }
 
-      this.logger.info('dom_fallback_scan_complete', { inserted, candidates: domMatches.length });
+      const result = matchPairs.length > 0 && this.stitcher
+        ? await this.stitcher.stitchBatch(matchPairs, dbSeason, leagueConfig, {
+          l1Matches: unstitched
+        })
+        : { inserted: 0, unmatched: 0 };
+      const inserted = Number(result?.inserted || 0);
+      unmatched += Number(result?.unmatched || 0);
+
+      this.logger.info('dom_fallback_scan_complete', { inserted, unmatched, candidates: domMatches.length });
 
       return {
         success: true,
@@ -402,7 +408,7 @@ const reconScanModes = {
   },
 
   async _matchAndStitch(candidates, l1Matches, season, leagueConfig) {
-    let inserted = 0;
+    const matchedPairs = [];
     let unmatched = 0;
     const usedCandidates = new Set();
 
@@ -423,24 +429,49 @@ const reconScanModes = {
       }
 
       if (matched && this.stitcher) {
-        try {
-          const result = await this.stitcher.stitchWithHashLock(
-            [matched],
-            [l1Match],
-            season,
-            leagueConfig
-          );
-          inserted += result.inserted || 0;
-        } catch (error) {
-          this.logger.error('stitch_failed', { matchId: l1Match.match_id, error: error.message });
-          unmatched++;
-        }
+        matchedPairs.push({
+          rawMatch: matched,
+          l1Match,
+          method: 'hash_lock',
+          confidence: 0.9
+        });
       } else {
         unmatched++;
       }
     }
 
-    return { inserted, unmatched };
+    if (!this.stitcher || matchedPairs.length === 0) {
+      return { inserted: 0, unmatched };
+    }
+
+    try {
+      const result = typeof this.stitcher.stitchBatch === 'function'
+        ? await this.stitcher.stitchBatch(matchedPairs, season, leagueConfig, {
+          l1Matches
+        })
+        : await this.stitcher.stitchWithHashLock(
+          matchedPairs.map((pair) => pair.rawMatch),
+          l1Matches,
+          season,
+          leagueConfig
+        );
+
+      return {
+        inserted: Number(result?.inserted || 0),
+        unmatched: unmatched + Number(result?.unmatched || 0)
+      };
+    } catch (error) {
+      this.logger.error('stitch_batch_failed', {
+        league: leagueConfig?.name || null,
+        season,
+        pairCount: matchedPairs.length,
+        error: error.message
+      });
+      return {
+        inserted: 0,
+        unmatched: unmatched + matchedPairs.length
+      };
+    }
   },
 
   _isStrictMatch(candidate, l1Match) {

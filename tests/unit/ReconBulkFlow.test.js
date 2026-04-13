@@ -393,6 +393,40 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     ]);
   });
 
+  it('严格匹配热路径应聚合同联赛命中并只调用一次 stitchBatch', async () => {
+    const l1Matches = createPendingMatches(3);
+    const candidates = createWebCandidates(l1Matches);
+    const stitchBatchCalls = [];
+
+    const engine = new ReconEngine({
+      matchEvaluator: {
+        isStrictMatch(candidate, l1Match) {
+          return candidate.homeTeam === l1Match.home_team && candidate.awayTeam === l1Match.away_team;
+        }
+      },
+      stitcher: {
+        async stitchBatch(matchPairs, season, leagueConfig, runtimeContext) {
+          stitchBatchCalls.push({ matchPairs, season, leagueConfig, runtimeContext });
+          return { inserted: matchPairs.length, skipped: 0, unmatched: 0 };
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const result = await engine._matchAndStitch(
+      candidates,
+      l1Matches,
+      '2024/2025',
+      { name: 'Premier League' }
+    );
+
+    assert.equal(result.inserted, 3);
+    assert.equal(result.unmatched, 0);
+    assert.equal(stitchBatchCalls.length, 1);
+    assert.equal(stitchBatchCalls[0].matchPairs.length, 3);
+    assert.equal(stitchBatchCalls[0].season, '2024/2025');
+  });
+
   it('低于阈值时应保留最佳落选候选证据，便于 mismatch 归因', async () => {
     const engine = new ReconEngine({
       parser: { calculateSimilarity: () => 0.6 },
