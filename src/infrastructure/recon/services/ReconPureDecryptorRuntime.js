@@ -1020,8 +1020,7 @@ const reconPureDecryptorRuntime = {
     const specifiers = new Set();
     const patterns = [
       /\bfrom\s*["']([^"']+)["']/g,
-      /\bimport\s*["']([^"']+)["']/g,
-      /\bimport\s*\(\s*["']([^"']+)["']\s*\)/g
+      /\bimport\s*["']([^"']+)["']/g
     ];
 
     for (const pattern of patterns) {

@@ -228,4 +228,47 @@ describe('ReconStateProber', () => {
     assert.strictEqual(result.sourceState, 'CURRENT_TOURNAMENT_DOM');
     assert.strictEqual(result.matches[0].hash, 'mls-dom-hash');
   });
+
+  it('disableTournamentFallback 开启时应在 current results 探测失败后直接返回空结果', async () => {
+    const prober = new ReconStateProber({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+    prober._awaitInterceptedData = async () => [];
+
+    const navigatedUrls = [];
+    let tournamentFetchCalled = false;
+
+    const result = await prober.probeCurrentSeasonFromPageState(
+      'https://www.oddsportal.com/football/usa/mls-2025-2026/results/',
+      {
+        disableTournamentFallback: true
+      },
+      {
+        async navigate(url) {
+          navigatedUrls.push(url);
+        },
+        async waitForTimeout() {},
+        getInterceptedData() {
+          return [];
+        },
+        getApiEndpoints() {
+          return [];
+        },
+        async collectCurrentSeasonResultsDom() {
+          return { matches: [], totalCandidates: 0, pagesScanned: 1, pageStats: [] };
+        },
+        async fetchCurrentTournament() {
+          tournamentFetchCalled = true;
+          throw new Error('should_not_fetch_current_tournament_when_disabled');
+        }
+      }
+    );
+
+    assert.deepStrictEqual(navigatedUrls, [
+      'https://www.oddsportal.com/football/usa/mls/results/'
+    ]);
+    assert.strictEqual(tournamentFetchCalled, false);
+    assert.strictEqual(result.sourceState, 'SOURCE_EMPTY');
+    assert.deepStrictEqual(result.matches, []);
+  });
 });

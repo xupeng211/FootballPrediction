@@ -123,6 +123,238 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.matches[0].hash, 'archive-hash');
   });
 
+  it('protocolArchiveExtract 在联赛预算耗尽时应抛出 LEAGUE_TIMEOUT', async () => {
+    let navigateCalls = 0;
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-protocol-timeout'
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      url: () => 'oddsportal://root/football/england/premier-league-2025-2026/results/',
+      async waitForTimeout() {}
+    };
+    navigator.resetContextPerBatch = async () => navigator.page;
+    navigator.navigate = async () => {
+      navigateCalls += 1;
+    };
+
+    await assert.rejects(
+      navigator.protocolArchiveExtract(
+        'oddsportal://root/football/england/premier-league-2025-2026/results/',
+        {
+          preferCurrentSeasonSource: false,
+          maxPages: 3,
+          timeoutMs: 1500,
+          leagueDeadlineAt: Date.now() - 1
+        }
+      ),
+      (error) => {
+        assert.strictEqual(error.code, 'LEAGUE_TIMEOUT');
+        return true;
+      }
+    );
+
+    assert.strictEqual(navigateCalls, 0);
+  });
+
+  it('protocolArchiveExtract 命中 seedArchiveEndpoints 时应复用上下文并跳过二次进场', async () => {
+    let resetCalls = 0;
+    let navigateCalls = 0;
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-protocol-seeded'
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      url: () => 'oddsportal://root/football/england/premier-league-2025-2026/results/',
+      async waitForTimeout() {}
+    };
+    navigator.resetContextPerBatch = async () => {
+      resetCalls += 1;
+      return navigator.page;
+    };
+    navigator.navigate = async () => {
+      navigateCalls += 1;
+    };
+    navigator._fetchAndDecrypt = async (url) => ({
+      matches: [
+        {
+          hash: 'seeded-archive-hash',
+          url: 'oddsportal://match/seeded-archive-hash',
+          homeTeam: 'A',
+          awayTeam: 'B',
+          matchDate: '2025-08-15T19:00:00.000Z'
+        }
+      ],
+      pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }],
+      sourceState: 'SOURCE_READY',
+      fetchedUrl: url
+    });
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/england/premier-league-2025-2026/results/',
+      {
+        maxPages: 3,
+        timeoutMs: 1500,
+        seedArchiveEndpoints: [
+          'oddsportal://ajax-sport-country-tournament-archive_/1/foo/X262144/1/0/'
+        ],
+        skipContextReset: true
+      }
+    );
+
+    assert.strictEqual(resetCalls, 0);
+    assert.strictEqual(navigateCalls, 0);
+    assert.strictEqual(result.matches.length, 1);
+    assert.strictEqual(result.matches[0].hash, 'seeded-archive-hash');
+  });
+
+  it('当前赛季 results 页命中路径缓存时应先走 blind archive，并跳过 DOM 探测', async () => {
+    let resetCalls = 0;
+    let fetchCalls = 0;
+    const baseUrl = 'oddsportal://root/football/japan/j1-league-2026/results/';
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-protocol-blind-cache'
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator._protocolRouteCache = new Map([[
+      'league:japan/j1-league',
+      {
+        archiveEndpoints: [
+          'oddsportal://ajax-sport-country-tournament-archive_/1/cached-token/X262144/1/0/'
+        ],
+        leagueContext: {
+          leagueUrl: 'oddsportal://root/football/japan/j1-league-2026/',
+          tournamentId: 'cached-token',
+          repairedArchiveUrl: 'oddsportal://ajax-sport-country-tournament-archive_/1/cached-token/X262144/1/0/',
+          currentTournamentUrl: 'oddsportal://ajax-sport-country-tournament_/1/cached-token/X262144/1/'
+        }
+      }
+    ]]);
+    navigator.resetContextPerBatch = async () => {
+      resetCalls += 1;
+      return navigator.page;
+    };
+    navigator.ensureBrowserHealthy = async () => navigator.page;
+    navigator.navigate = async () => {
+      throw new Error('should_not_navigate');
+    };
+    navigator.stateProber.probeCurrentSeasonFromPageState = async () => {
+      throw new Error('should_not_probe_current_season');
+    };
+    navigator._fetchAndDecrypt = async (url) => {
+      fetchCalls += 1;
+      assert.strictEqual(url, 'oddsportal://ajax-sport-country-tournament-archive_/1/cached-token/X262144/1/0/');
+      return {
+        matches: [
+          {
+            hash: 'blind-cache-hit',
+            url: 'oddsportal://match/blind-cache-hit',
+            homeTeam: 'Vissel Kobe',
+            awayTeam: 'Cerezo Osaka',
+            matchDate: '2026-02-21T05:00:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(baseUrl, {
+      preferCurrentSeasonSource: true,
+      maxPages: 6,
+      timeoutMs: 1234,
+      circuitBreakerKey: 'league:japan/j1-league'
+    });
+
+    assert.strictEqual(resetCalls, 0);
+    assert.strictEqual(fetchCalls, 1);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'blind-cache-hit');
+  });
+
+  it('当前赛季 results 页在无缓存时应先尝试 blind pure protocol，并禁止浏览器回退', async () => {
+    let resetCalls = 0;
+    let capturedOptions = null;
+    const baseUrl = 'oddsportal://root/football/usa/mls/results/';
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-protocol-blind-pure'
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator.resetContextPerBatch = async () => {
+      resetCalls += 1;
+      return navigator.page;
+    };
+    navigator.navigate = async () => {
+      throw new Error('should_not_navigate');
+    };
+    navigator.stateProber.probeCurrentSeasonFromPageState = async () => {
+      throw new Error('should_not_probe_current_season');
+    };
+    navigator._extractViaPureProtocol = async (_target, options = {}) => {
+      capturedOptions = options;
+      return {
+        matches: [
+          {
+            hash: 'blind-pure-hit',
+            url: 'oddsportal://match/blind-pure-hit',
+            homeTeam: 'Inter Miami',
+            awayTeam: 'LA Galaxy',
+            matchDate: '2026-03-15T00:30:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }],
+        sourceState: 'PURE_PROTOCOL',
+        pureProtocolMeta: {
+          baseUrl,
+          tournamentId: 'mls-token',
+          bookmakerHash: 'X262144'
+        }
+      };
+    };
+
+    const result = await navigator.protocolArchiveExtract(baseUrl, {
+      preferCurrentSeasonSource: true,
+      maxPages: 6,
+      timeoutMs: 1234,
+      circuitBreakerKey: 'league:usa/mls'
+    });
+
+    assert.strictEqual(resetCalls, 0);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.strictEqual(result.matches[0].hash, 'blind-pure-hit');
+    assert.strictEqual(capturedOptions.allowBrowserHtmlFallback, false);
+    assert.strictEqual(capturedOptions.allowRuntimeStateProbe, false);
+    assert.deepStrictEqual(
+      navigator._protocolRouteCache.get('league:usa/mls')?.archiveEndpoints,
+      ['https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/mls-token/X262144/1/0/']
+    );
+  });
+
   it('应通过单一 payload 对象向 page.evaluate 传递 fetchUrl 与 timeout', async () => {
     const evaluatePayloads = [];
 
@@ -410,6 +642,50 @@ describe('ReconNavigator - Protocol Archive', () => {
       tournamentId: '5fdb38ad-528a-4fb9-a576-b8c42e07565d',
       repairedArchiveUrl: 'oddsportal://ajax-sport-country-tournament-archive_/1/5fdb38ad-528a-4fb9-a576-b8c42e07565d/X262144/1/0/',
       currentTournamentUrl: 'oddsportal://ajax-sport-country-tournament_/1/5fdb38ad-528a-4fb9-a576-b8c42e07565d/X262144/1/'
+    });
+  });
+
+  it('_resolveLeagueTournamentContext 命中路径缓存时不应再次导航联赛主页', async () => {
+    let navigateCalls = 0;
+    const baseUrl = 'oddsportal://root/football/japan/j1-league-2026/results/';
+    const archiveUrl = 'oddsportal://ajax-sport-country-tournament-archive_/1//X262144/1/0/';
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator._protocolRouteCache = new Map([[
+      'league:japan/j1-league',
+      {
+        leagueContext: {
+          leagueUrl: 'oddsportal://root/football/japan/j1-league-2026/',
+          tournamentId: 'cached-token',
+          currentTournamentUrl: 'oddsportal://ajax-sport-country-tournament_/1/cached-token/X262144/1/'
+        }
+      }
+    ]]);
+    navigator.navigate = async () => {
+      navigateCalls += 1;
+    };
+
+    const context = await navigator._resolveLeagueTournamentContext(
+      baseUrl,
+      1234,
+      archiveUrl,
+      { circuitBreakerKey: 'league:japan/j1-league' }
+    );
+
+    assert.strictEqual(navigateCalls, 0);
+    assert.deepStrictEqual(context, {
+      leagueUrl: 'oddsportal://root/football/japan/j1-league-2026/',
+      tournamentId: 'cached-token',
+      repairedArchiveUrl: 'oddsportal://ajax-sport-country-tournament-archive_/1/cached-token/X262144/1/0/',
+      currentTournamentUrl: 'oddsportal://ajax-sport-country-tournament_/1/cached-token/X262144/1/'
     });
   });
 
@@ -821,6 +1097,47 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.sourceState, 'CURRENT_TOURNAMENT_FALLBACK');
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'current-fallback-hash');
+  });
+
+  it('disableTournamentFallback 开启时应跳过 forcePureProtocol 的 current tournament 回退', async () => {
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator.navigate = async () => {
+      navigator.apiEndpoints = new Set();
+    };
+    navigator._extractViaPureProtocol = async () => ({
+      matches: [],
+      pagesScanned: 1,
+      totalCandidates: 0,
+      pageStats: [{ page: 1, rows: 0, source: 'pure_protocol_archive:empty' }],
+      sourceState: 'SOURCE_EMPTY'
+    });
+    navigator._fetchCurrentTournament = async () => {
+      throw new Error('should_not_fetch_current_tournament_when_disabled');
+    };
+
+    const result = await navigator.protocolArchiveExtract(
+      'oddsportal://root/football/japan/j1-league-2026/results/',
+      {
+        forcePureProtocol: true,
+        preferCurrentSeasonSource: true,
+        disableTournamentFallback: true,
+        maxPages: 7,
+        timeoutMs: 1234
+      }
+    );
+
+    assert.strictEqual(result.sourceState, 'SOURCE_EMPTY');
+    assert.strictEqual(result.totalCandidates, 0);
+    assert.deepStrictEqual(result.matches, []);
   });
 
   it('非当前赛季 archive URL 缺少 tournament id 时，应切到联赛主页补全后再抓取', async () => {
@@ -1239,6 +1556,61 @@ describe('ReconNavigator - Protocol Archive', () => {
     assert.strictEqual(result.pageStats.at(-1).source, 'CURRENT_RESULTS_ARCHIVE');
   });
 
+  it('fetchFullSeasonArchive 命中 blind protocol 时应直接返回并跳过 season discovery', async () => {
+    let resetCalls = 0;
+    let blindCalls = 0;
+    const baseUrl = 'oddsportal://root/football/usa/mls/results/';
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+    navigator.resetContextPerBatch = async () => {
+      resetCalls += 1;
+      return navigator.page;
+    };
+    navigator._tryBlindProtocolArchiveExtract = async (url, options = {}) => {
+      blindCalls += 1;
+      assert.strictEqual(url, baseUrl);
+      assert.strictEqual(options.preferCurrentSeasonSource, true);
+      return {
+        matches: [
+          {
+            hash: 'season-blind-hit',
+            url: 'oddsportal://match/season-blind-hit',
+            homeTeam: 'Seattle Sounders',
+            awayTeam: 'Austin FC',
+            matchDate: '2026-04-02T02:30:00.000Z'
+          }
+        ],
+        pagesScanned: 1,
+        totalCandidates: 1,
+        pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }],
+        sourceState: 'PURE_PROTOCOL'
+      };
+    };
+    navigator.domScraper.discoverSeasonResultPages = async () => {
+      throw new Error('should_not_discover_season_pages');
+    };
+
+    const result = await navigator.fetchFullSeasonArchive(baseUrl, {
+      maxPages: 10,
+      timeoutMs: 1234,
+      preferCurrentSeasonSource: true
+    });
+
+    assert.strictEqual(blindCalls, 1);
+    assert.strictEqual(resetCalls, 0);
+    assert.strictEqual(result.totalCandidates, 1);
+    assert.deepStrictEqual(result.pageUrls, [baseUrl]);
+    assert.strictEqual(result.matches[0].hash, 'season-blind-hit');
+  });
+
   it('fetchFullSeasonArchive 在 forceDomOnly=true 时不得回落到 protocolArchiveExtract', async () => {
     const baseUrl = 'oddsportal://root/football/japan/j1-league-2026/results/';
     const navigator = new ReconNavigator({
@@ -1271,6 +1643,56 @@ describe('ReconNavigator - Protocol Archive', () => {
       forceDomOnly: true
     });
 
+    assert.strictEqual(result.totalCandidates, 0);
+    assert.strictEqual(result.sourceState, 'SOURCE_EMPTY');
+  });
+
+  it('fetchFullSeasonArchive 在禁用 tournament fallback 时应把标记透传到 archive merge 阶段', async () => {
+    const baseUrl = 'oddsportal://root/football/usa/mls/results/';
+    const protocolArchiveCalls = [];
+    const navigator = new ReconNavigator({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+
+    navigator.browser = { isConnected: () => true };
+    navigator.context = {};
+    navigator.page = {
+      isClosed: () => false,
+      async waitForTimeout() {}
+    };
+
+    navigator.domScraper.discoverSeasonResultPages = async () => ({
+      pageUrls: [baseUrl],
+      initialMatches: [],
+      initialSource: 'page_dom'
+    });
+    navigator.protocolArchiveExtract = async (_url, options = {}) => {
+      protocolArchiveCalls.push(options);
+      return {
+        matches: [],
+        pagesScanned: 0,
+        totalCandidates: 0,
+        pageStats: [],
+        sourceState: 'SOURCE_EMPTY'
+      };
+    };
+    navigator.stateProber.probeCurrentSeasonFromPageState = async () => ({
+      matches: [],
+      pagesScanned: 0,
+      totalCandidates: 0,
+      pageStats: [],
+      sourceState: 'SOURCE_EMPTY'
+    });
+
+    const result = await navigator.fetchFullSeasonArchive(baseUrl, {
+      maxPages: 10,
+      timeoutMs: 1234,
+      preferCurrentSeasonSource: true,
+      disableTournamentFallback: true
+    });
+
+    assert.strictEqual(protocolArchiveCalls.length, 1);
+    assert.strictEqual(protocolArchiveCalls[0].disableTournamentFallback, true);
     assert.strictEqual(result.totalCandidates, 0);
     assert.strictEqual(result.sourceState, 'SOURCE_EMPTY');
   });

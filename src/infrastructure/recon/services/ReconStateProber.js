@@ -205,6 +205,7 @@ class ReconStateProber {
     const derivedTournamentUrl = repairedArchiveUrl
       ? hooks.buildCurrentTournamentUrlFromArchive?.(repairedArchiveUrl)
       : null;
+    const disableTournamentFallback = options.disableTournamentFallback === true;
 
     if (repairedArchiveUrl) {
       const archiveResult = await hooks.fetchArchive?.(repairedArchiveUrl, maxPages, timeoutMs);
@@ -216,7 +217,7 @@ class ReconStateProber {
       }
     }
 
-    if (derivedTournamentUrl) {
+    if (!disableTournamentFallback && derivedTournamentUrl) {
       const tournamentResult = await hooks.fetchCurrentTournament?.(derivedTournamentUrl, maxPages, timeoutMs);
       if (Array.isArray(tournamentResult?.matches) && tournamentResult.matches.length > 0) {
         return {
@@ -233,6 +234,10 @@ class ReconStateProber {
         ...domResult,
         sourceState: 'CURRENT_RESULTS_DOM'
       };
+    }
+
+    if (disableTournamentFallback) {
+      return this._emptyResult();
     }
 
     const leagueUrl = this.deriveLeaguePageUrl(baseUrl);

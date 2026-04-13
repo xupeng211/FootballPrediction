@@ -73,7 +73,7 @@ const reconResultStitcher = {
     } = options;
 
     const candidates = Array.isArray(routeSource?.candidates) ? routeSource.candidates : [];
-    const canProcessMatches = candidates.length > 0 || forceProcessWithoutCandidates === true || finalPass === true;
+    const canProcessMatches = candidates.length > 0 || forceProcessWithoutCandidates === true;
     if (!canProcessMatches) {
       this.logger.info('recon_route_short_circuit', {
         league: target?.league?.name || null,

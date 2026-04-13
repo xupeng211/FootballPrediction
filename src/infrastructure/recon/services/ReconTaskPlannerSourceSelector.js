@@ -1,7 +1,96 @@
 /* eslint-disable complexity, max-lines */
 'use strict';
 
+function resolveMatrixModePruning(target, options = {}) {
+  return options.matrixModePruning === true || target?.matrixModePruning === true;
+}
+
+function resolveMatrixShortCircuitRatio(target, options = {}) {
+  const rawRatio = Number(
+    options.matrixModeShortCircuitRatio
+    ?? target?.matrixModeShortCircuitRatio
+    ?? 0.5
+  );
+
+  if (!Number.isFinite(rawRatio)) {
+    return 0.5;
+  }
+
+  return Math.min(1, Math.max(0, rawRatio));
+}
+
+function resolveSeasonlessSourceYear(source = {}) {
+  const normalizedSeason = String(source?.season || '').trim();
+  if (!/^\d{4}$/.test(normalizedSeason)) {
+    return null;
+  }
+
+  const year = Number(normalizedSeason);
+  return Number.isInteger(year) ? year : null;
+}
+
+function resolvePureProtocolLimitedMaxPages(maxPages, matchLimit) {
+  if (!Number.isInteger(matchLimit) || matchLimit <= 0) {
+    return maxPages;
+  }
+
+  return Math.min(maxPages, Math.max(3, matchLimit * 5));
+}
+
 const reconTaskPlannerSourceSelector = {
+  _shouldAllowPureProtocolLimitShortCircuit(target, pendingMatches, source) {
+    if (this.getResultsUrlStrategy(target?.league) !== 'seasonless') {
+      return true;
+    }
+
+    const pendingYears = this.getPendingMatchYears(pendingMatches);
+    if (pendingYears.length === 0) {
+      return true;
+    }
+
+    const sourceYear = resolveSeasonlessSourceYear(source);
+    if (!Number.isInteger(sourceYear)) {
+      return true;
+    }
+
+    return pendingYears.includes(sourceYear);
+  },
+
+  _prioritizePureProtocolLimitSources(target, pendingMatches, sources = [], options = {}) {
+    if (!(options.forcePureProtocol && options.matchLimit)) {
+      return sources;
+    }
+
+    if (this.getResultsUrlStrategy(target?.league) !== 'seasonless') {
+      return sources;
+    }
+
+    const pendingYears = this.getPendingMatchYears(pendingMatches);
+    if (pendingYears.length === 0) {
+      return sources;
+    }
+
+    const pendingYearSet = new Set(pendingYears);
+    const ranked = sources.map((source, index) => ({
+      source,
+      index,
+      aligned: pendingYearSet.has(resolveSeasonlessSourceYear(source))
+    }));
+    if (!ranked.some((item) => item.aligned)) {
+      return sources;
+    }
+
+    return ranked
+      .sort((left, right) => {
+        if (left.aligned !== right.aligned) {
+          return Number(right.aligned) - Number(left.aligned);
+        }
+
+        return left.index - right.index;
+      })
+      .map((item) => item.source);
+  },
+
   buildCandidateSources(target) {
     const baseSeason = this.formatSeasonForUrl(target.season || target.dbSeason);
     const strategy = this.getResultsUrlStrategy(target?.league);
@@ -100,6 +189,8 @@ const reconTaskPlannerSourceSelector = {
   async selectCandidateSource(target, pendingMatches, confidenceThreshold, options = {}) {
     const navigator = options.navigator || this.navigator;
     const timeoutMs = Math.max(1, Number(options.timeoutMs || this.archiveTimeoutMs));
+    const disableTournamentFallback = options.disableTournamentFallback === true;
+    const matrixModePruning = resolveMatrixModePruning(target, options);
     if (
       !navigator ||
       (
@@ -139,19 +230,33 @@ const reconTaskPlannerSourceSelector = {
       .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
     const eligibleSamplePool = this.filterPlaceholderFixtures(orderedPending);
     const sample = eligibleSamplePool.slice(0, Math.min(this.sampleSize, eligibleSamplePool.length));
+    const sampleTarget = sample.length;
+    const sampleLinkedThreshold = matrixModePruning && sampleTarget > 0
+      ? Math.max(1, Math.ceil(sampleTarget * resolveMatrixShortCircuitRatio(target, options)))
+      : sampleTarget;
     const skippedPlaceholderCount = orderedPending.length - eligibleSamplePool.length;
-    const sources = this.buildCandidateSources({
+    let sources = this.buildCandidateSources({
       ...target,
       pendingMatches: orderedPending
     });
     const reconPolicy = this.resolveReconPolicy(target, orderedPending, confidenceThreshold);
     const effectiveConfidenceThreshold = Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold || 0);
-    const resolvedMaxPages = this.resolveArchiveMaxPages(target, orderedPending);
     const forceDomOnlyMode = target?.forceDomMode === true;
     const forceDomMode = this.forceDomLeagueIds.has(Number(target?.leagueId || target?.league?.id || 0));
     const forceMultiMode = reconPolicy.forceMultiMode === true;
     const forceJsonExtract = target?.forceJsonExtract === true;
     const forcePureProtocol = target?.forcePureProtocol === true;
+    const matchLimit = Number.isInteger(target?.matchLimit) && target.matchLimit > 0
+      ? target.matchLimit
+      : null;
+    const resolvedMaxPages = resolvePureProtocolLimitedMaxPages(
+      this.resolveArchiveMaxPages(target, orderedPending),
+      forcePureProtocol ? matchLimit : null
+    );
+    sources = this._prioritizePureProtocolLimitSources(target, orderedPending, sources, {
+      forcePureProtocol,
+      matchLimit
+    });
     const circuitBreakerKey = this.buildCircuitBreakerKey(target);
     let best = null;
     const evaluatedSources = [];
@@ -166,6 +271,16 @@ const reconTaskPlannerSourceSelector = {
         circuitBreakerKey: sourceCircuitBreakerKey,
         forcePureProtocol
       };
+      if (disableTournamentFallback) {
+        extractOptions.disableTournamentFallback = true;
+      }
+      const rawLeagueDeadlineAt = target?.leagueDeadlineAt ?? options.leagueDeadlineAt;
+      const leagueDeadlineAt = rawLeagueDeadlineAt === null || rawLeagueDeadlineAt === undefined
+        ? null
+        : Number(rawLeagueDeadlineAt);
+      if (Number.isFinite(leagueDeadlineAt)) {
+        extractOptions.leagueDeadlineAt = leagueDeadlineAt;
+      }
       if (target.readySelector) {
         extractOptions.readySelector = target.readySelector;
       }
@@ -247,6 +362,9 @@ const reconTaskPlannerSourceSelector = {
           breakerKey: sourceCircuitBreakerKey,
           error: error.message
         });
+        if (error?.code === 'LEAGUE_TIMEOUT') {
+          throw error;
+        }
         continue;
       }
 
@@ -298,6 +416,72 @@ const reconTaskPlannerSourceSelector = {
         )
       ) {
         best = evaluated;
+      }
+
+      if (
+        matrixModePruning
+        && sourceIndex === 0
+        && evaluated.candidates.length === 0
+      ) {
+        this.logger.info('recon_candidate_source_matrix_empty_short_circuit', {
+          league: target.league.name,
+          dbSeason: target.dbSeason,
+          sourceSeason: source.season,
+          sourceUrl: source.url,
+          sourceMode: source.mode,
+          sourceState: extractResult?.sourceState || 'SOURCE_EMPTY',
+          skippedSources: Math.max(0, sources.length - evaluatedSources.length)
+        });
+        break;
+      }
+
+      if (
+        forcePureProtocol
+        && matchLimit
+        && sourceIndex === 0
+        && evaluated.candidates.length > 0
+      ) {
+        if (!this._shouldAllowPureProtocolLimitShortCircuit(target, orderedPending, source)) {
+          this.logger.info('recon_candidate_source_limit_short_circuit_deferred', {
+            league: target.league.name,
+            dbSeason: target.dbSeason,
+            sourceSeason: source.season,
+            sourceUrl: source.url,
+            sourceMode: source.mode,
+            matchLimit,
+            candidateCount: evaluated.candidates.length,
+            pendingYears: this.getPendingMatchYears(orderedPending)
+          });
+          continue;
+        }
+
+        this.logger.info('recon_candidate_source_limit_short_circuit', {
+          league: target.league.name,
+          dbSeason: target.dbSeason,
+          sourceSeason: source.season,
+          sourceUrl: source.url,
+          sourceMode: source.mode,
+          matchLimit,
+          candidateCount: evaluated.candidates.length,
+          sampleLinked: evaluated.sampleLinked
+        });
+        break;
+      }
+
+      if (sampleLinkedThreshold > 0 && best?.sampleLinked >= sampleLinkedThreshold) {
+        this.logger.info('recon_candidate_source_short_circuit', {
+          league: target.league.name,
+          dbSeason: target.dbSeason,
+          sourceSeason: source.season,
+          sourceUrl: source.url,
+          sourceMode: source.mode,
+          sampleSize: sampleTarget,
+          sampleLinked: best.sampleLinked,
+          sampleLinkedThreshold,
+          matrixModePruning,
+          evaluatedSources: evaluatedSources.length
+        });
+        break;
       }
     }
 
