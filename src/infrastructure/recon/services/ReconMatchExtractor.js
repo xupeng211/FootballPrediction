@@ -319,6 +319,12 @@ const reconMatchExtractor = {
       const sourceUrlContext = extractLeagueContextFromUrl(
         this.sourceUrl || this.resultsUrl || this.leagueUrl || ''
       );
+      const breadcrumbCountryContext = extractLeagueContextFromUrl(
+        obj?.breadcrumbs?.country?.url || ''
+      );
+      const breadcrumbTournamentContext = extractLeagueContextFromUrl(
+        obj?.breadcrumbs?.tournament?.url || ''
+      );
       const rawUrlLooksLikeH2H = /\/football\/h2h\//i.test(rawUrl);
       const rawUrlLooksLikeMatchRoute = /\/match\/[^/]+\/?$/iu.test(rawUrl);
       const resolvedCountryContext = rawUrlLooksLikeH2H
@@ -328,10 +334,18 @@ const reconMatchExtractor = {
         ? (sourceUrlContext.leagueSlug || urlContext.leagueSlug)
         : (urlContext.leagueSlug || sourceUrlContext.leagueSlug);
       const countrySlug = normalizeSlugToken(
-        obj.countrySlug || obj.country || resolvedCountryContext
+        obj.countrySlug
+        || obj.country
+        || breadcrumbTournamentContext.countrySlug
+        || breadcrumbCountryContext.countrySlug
+        || resolvedCountryContext
       );
       const leagueSlug = normalizeSlugToken(
-        obj.leagueSlug || obj.competitionSlug || resolvedLeagueContext
+        obj.leagueSlug
+        || obj['tournament-url']
+        || obj.competitionSlug
+        || breadcrumbTournamentContext.leagueSlug
+        || resolvedLeagueContext
       );
       const matchId = String(obj.match_id || obj.matchId || obj.localMatchId || '').trim();
       const matchDate = obj.matchDate || obj.match_date || (
@@ -352,16 +366,29 @@ const reconMatchExtractor = {
       if (fallbackSlug && exceedsSafeLength(fallbackSlug, MAX_SLUG_LENGTH)) {
         return null;
       }
+      const hasTournamentBreadcrumbContext = Boolean(
+        obj['tournament-url']
+        || obj?.breadcrumbs?.tournament?.url
+        || (breadcrumbTournamentContext.countrySlug && breadcrumbTournamentContext.leagueSlug)
+      );
       const shouldPromoteFallbackSlug = !payloadSlug
         && fallbackSlug
-        && isAnnualLeague
-        && Boolean(
-          matchId
-          || matchDate
-          || rawUrlLooksLikeH2H
-          || rawUrlLooksLikeMatchRoute
-          || sourceUrlContext.countrySlug
-          || sourceUrlContext.leagueSlug
+        && (
+          (
+            isAnnualLeague
+            && Boolean(
+              matchId
+              || matchDate
+              || rawUrlLooksLikeH2H
+              || rawUrlLooksLikeMatchRoute
+              || sourceUrlContext.countrySlug
+              || sourceUrlContext.leagueSlug
+            )
+          )
+          || (
+            hasTournamentBreadcrumbContext
+            && (rawUrlLooksLikeH2H || rawUrlLooksLikeMatchRoute)
+          )
         );
       const slug = payloadSlug || (shouldPromoteFallbackSlug ? fallbackSlug : '');
       const canonicalCountrySlug = isBrazilSerieA ? 'brazil' : countrySlug;

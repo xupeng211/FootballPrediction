@@ -53,7 +53,7 @@ const reconMatrixRuntime = {
     });
   },
 
-  async runReconMatrix(options = {}) {
+  _resolveRunReconMatrixOptions(options = {}) {
     const requestedConcurrency = Number.isInteger(options.concurrency) && options.concurrency > 0
       ? options.concurrency
       : this.defaultReconConcurrency;
@@ -74,8 +74,111 @@ const reconMatrixRuntime = {
       forceJsonExtract = false,
       forcePureProtocol = false,
       mismatchRetryOnly = false,
-      allNonLinked = this.allNonLinked === true
+      allNonLinked = this.allNonLinked === true,
+      disableSearchRoute = options.disableSearchRoute ?? this.disableSearchRouteInMatrix ?? true,
+      matrixModePruning = options.matrixModePruning ?? this.matrixModePruning ?? true,
+      matrixModeShortCircuitRatio = Number(
+        options.matrixModeShortCircuitRatio
+        ?? this.matrixModeShortCircuitRatio
+        ?? 0.5
+      ),
+      leagueTimeBudgetMs = Math.max(
+        1,
+        Number(options.leagueTimeBudgetMs ?? this.matrixLeagueTimeBudgetMs ?? this.archiveTimeoutMs ?? 45000)
+      )
     } = options;
+
+    return {
+      season,
+      concurrency,
+      leagueConcurrency,
+      leagueStartupStaggerMs,
+      tier,
+      leagueIds,
+      batchSize,
+      confidenceThreshold,
+      limit,
+      forceDomMode,
+      forceJsonExtract,
+      forcePureProtocol,
+      mismatchRetryOnly,
+      allNonLinked,
+      disableSearchRoute,
+      matrixModePruning,
+      matrixModeShortCircuitRatio,
+      leagueTimeBudgetMs
+    };
+  },
+
+  async _refreshReconMatrixPendingSnapshot(targets, summary, options = {}) {
+    const targetPendingMap = await this._loadReconPendingTargets(targets, options.limit, {
+      confidenceThreshold: options.confidenceThreshold,
+      mismatchRetryOnly: options.mismatchRetryOnly,
+      allNonLinked: options.allNonLinked
+    });
+    summary.remainingPending = this._countPendingMatches(targetPendingMap);
+    summary.availableProxies = this._resolveAvailableProxyCount();
+    return targetPendingMap;
+  },
+
+  _mergeReconMatrixOutcomes(summary, leagueSummaryMap, outcomes = []) {
+    for (const outcome of outcomes) {
+      if (outcome?.error) {
+        summary.success = false;
+        summary.errors.push({ league: outcome.target.league.name, error: outcome.error.message });
+        continue;
+      }
+
+      const { target, result } = outcome;
+      summary.totalPending += result.pendingTotal;
+      summary.linked += result.linked;
+      summary.mismatched += result.mismatched;
+      this._mergeLeagueOutcomeIntoSummary(leagueSummaryMap, target, result);
+    }
+  },
+
+  async _runReconMatrixPasses(targets, summary, leagueSummaryMap, options = {}, adaptiveConcurrencyManager) {
+    let targetPendingMap = await this._refreshReconMatrixPendingSnapshot(targets, summary, options);
+
+    while (Array.isArray(targetPendingMap) && targetPendingMap.length > 0) {
+      summary.passes += 1;
+
+      const outcomes = await this._runAdaptiveLeagueWorkers(targetPendingMap, {
+        season: options.season,
+        concurrency: options.concurrency,
+        batchSize: options.batchSize,
+        confidenceThreshold: options.confidenceThreshold,
+        forceDomMode: options.forceDomMode,
+        forceJsonExtract: options.forceJsonExtract,
+        forcePureProtocol: options.forcePureProtocol,
+        leagueStartupStaggerMs: options.leagueStartupStaggerMs,
+        disableSearchRoute: options.disableSearchRoute,
+        matrixModePruning: options.matrixModePruning,
+        matrixModeShortCircuitRatio: options.matrixModeShortCircuitRatio,
+        leagueTimeBudgetMs: options.leagueTimeBudgetMs,
+        requestedLeagueConcurrency: options.normalizedLeagueConcurrency,
+        adaptiveConcurrencyManager,
+        passIndex: summary.passes
+      });
+
+      this._mergeReconMatrixOutcomes(summary, leagueSummaryMap, outcomes);
+      targetPendingMap = await this._refreshReconMatrixPendingSnapshot(targets, summary, options);
+
+      if (!(await this._handlePerpetualReconContinuation(summary, options.rawOptions, options.normalizedLeagueConcurrency))) {
+        break;
+      }
+    }
+  },
+
+  async runReconMatrix(options = {}) {
+    const runOptions = this._resolveRunReconMatrixOptions(options);
+    const {
+      season,
+      tier,
+      leagueIds,
+      leagueConcurrency,
+      concurrency
+    } = runOptions;
 
     this._resetRouteDegradeRegistry();
     const targets = await this.buildScanTargets({ season, tier, leagueIds });
@@ -91,58 +194,12 @@ const reconMatrixRuntime = {
       successWindow: Math.max(1, Number(this.dynamicConcurrencySuccessWindow || 3))
     });
     const leagueSummaryMap = new Map();
-
-    let targetPendingMap = await this._loadReconPendingTargets(targets, limit, {
-      confidenceThreshold,
-      mismatchRetryOnly,
-      allNonLinked
-    });
-    summary.remainingPending = this._countPendingMatches(targetPendingMap);
-    summary.availableProxies = this._resolveAvailableProxyCount();
-
-    while (Array.isArray(targetPendingMap) && targetPendingMap.length > 0) {
-      summary.passes += 1;
-
-      const outcomes = await this._runAdaptiveLeagueWorkers(targetPendingMap, {
-        season,
-        concurrency,
-        batchSize,
-        confidenceThreshold,
-        forceDomMode,
-        forceJsonExtract,
-        forcePureProtocol,
-        leagueStartupStaggerMs,
-        requestedLeagueConcurrency: normalizedLeagueConcurrency,
-        adaptiveConcurrencyManager,
-        passIndex: summary.passes
-      });
-
-      for (const outcome of outcomes) {
-        if (outcome?.error) {
-          summary.success = false;
-          summary.errors.push({ league: outcome.target.league.name, error: outcome.error.message });
-          continue;
-        }
-
-        const { target, result } = outcome;
-        summary.totalPending += result.pendingTotal;
-        summary.linked += result.linked;
-        summary.mismatched += result.mismatched;
-        this._mergeLeagueOutcomeIntoSummary(leagueSummaryMap, target, result);
-      }
-
-      targetPendingMap = await this._loadReconPendingTargets(targets, limit, {
-        confidenceThreshold,
-        mismatchRetryOnly,
-        allNonLinked
-      });
-      summary.remainingPending = this._countPendingMatches(targetPendingMap);
-      summary.availableProxies = this._resolveAvailableProxyCount();
-
-      if (!(await this._handlePerpetualReconContinuation(summary, options, normalizedLeagueConcurrency))) {
-        break;
-      }
-    }
+    await this._runReconMatrixPasses(targets, summary, leagueSummaryMap, {
+      ...runOptions,
+      concurrency,
+      normalizedLeagueConcurrency,
+      rawOptions: options
+    }, adaptiveConcurrencyManager);
 
     summary.perLeague = [...leagueSummaryMap.values()];
     summary.scannedLeagues = summary.perLeague.length;
@@ -280,6 +337,10 @@ const reconMatrixRuntime = {
       forceJsonExtract,
       forcePureProtocol,
       leagueStartupStaggerMs,
+      disableSearchRoute,
+      matrixModePruning,
+      matrixModeShortCircuitRatio,
+      leagueTimeBudgetMs,
       allowedLeagueWorkers = 1,
       activeWorkersAtStart = 1
     } = options;
@@ -293,6 +354,9 @@ const reconMatrixRuntime = {
       });
       proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
       const proxySnapshot = this._getProxyPoolSnapshot();
+      const leagueDeadlineAt = Number.isFinite(Number(leagueTimeBudgetMs)) && Number(leagueTimeBudgetMs) > 0
+        ? Date.now() + Number(leagueTimeBudgetMs)
+        : null;
 
       this.logger.info('recon_league_worker_start', {
         league: target.league.name,
@@ -304,6 +368,10 @@ const reconMatrixRuntime = {
         allowedLeagueWorkers,
         leagueStartupStaggerMs: Math.max(0, Number(leagueStartupStaggerMs) || 0),
         matchConcurrency: Math.max(1, Number(concurrency)),
+        disableSearchRoute,
+        matrixModePruning,
+        matrixModeShortCircuitRatio,
+        leagueTimeBudgetMs: Number(leagueTimeBudgetMs) || null,
         proxyAvailable: proxySnapshot?.available ?? null,
         proxyTotal: proxySnapshot?.total ?? null
       });
@@ -317,7 +385,11 @@ const reconMatrixRuntime = {
         forcePureProtocol,
         pendingMatches,
         matchLimit: desiredLimit,
-        navigator: navigatorHandle?.navigator || null
+        navigator: navigatorHandle?.navigator || null,
+        disableSearchRoute,
+        matrixModePruning,
+        matrixModeShortCircuitRatio,
+        leagueDeadlineAt
       });
 
       this.logger.info('recon_league_worker_complete', {

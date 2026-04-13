@@ -34,6 +34,163 @@ function resolvePureProtocolPageSummary(parsed, pageMatches = []) {
   return { rowCount, total };
 }
 
+function resolveWarmCachedDecryptor(handler) {
+  const candidate = handler.navigator?.decryptor || handler.navigator?.networkMonitor?.decryptor || null;
+  if (!candidate || typeof candidate.decrypt !== 'function') {
+    return null;
+  }
+
+  if (typeof candidate.decryptFn !== 'function') {
+    return null;
+  }
+
+  return {
+    async decrypt(encryptedData) {
+      return candidate.decrypt(encryptedData);
+    },
+    getAlgorithmVersion() {
+      return typeof candidate.getAlgorithmVersion === 'function'
+        ? candidate.getAlgorithmVersion()
+        : null;
+    }
+  };
+}
+
+async function resolvePureProtocolSample(handler, context, tokenCandidates = [], bookmakerHash = '', options = {}) {
+  let samplePayload = '';
+  let sampleToken = tokenCandidates[0] || '';
+
+  for (const token of tokenCandidates) {
+    const sampleArchiveUrl = `https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/${token}/${bookmakerHash}/1/0/`;
+    const sampleResponse = await handler._fetchPureProtocolText(
+      handler._buildArchivePageUrl(sampleArchiveUrl.replace(/\/+$/, ''), 1),
+      {
+        timeoutMs: options.timeoutMs,
+        referer: context.baseUrl
+      }
+    );
+    if (sampleResponse.success && String(sampleResponse.text || '').trim()) {
+      samplePayload = sampleResponse.text;
+      sampleToken = token;
+      break;
+    }
+  }
+
+  return { samplePayload, sampleToken };
+}
+
+async function resolvePureProtocolDecryptor(handler, context, samplePayload, sampleToken, bookmakerHash) {
+  const cachedDecryptor = resolveWarmCachedDecryptor(handler);
+  if (cachedDecryptor) {
+    handler.logger.info('pure_protocol_cached_decryptor_hit', {
+      baseUrl: context.baseUrl,
+      algorithmVersion: cachedDecryptor.getAlgorithmVersion?.() || null
+    });
+    return cachedDecryptor;
+  }
+
+  if (!context.appBundleUrl) {
+    throw new Error('PURE_PROTOCOL_APP_BUNDLE_MISSING');
+  }
+
+  return handler._createPureProtocolDecryptor(context, samplePayload, sampleToken, bookmakerHash);
+}
+
+function getProtocolRouteCache(handler) {
+  if (!(handler.navigator._protocolRouteCache instanceof Map)) {
+    handler.navigator._protocolRouteCache = new Map();
+  }
+
+  return handler.navigator._protocolRouteCache;
+}
+
+function readProtocolRouteCacheEntry(handler, cacheKey) {
+  if (!cacheKey) {
+    return {};
+  }
+
+  return getProtocolRouteCache(handler).get(cacheKey) || {};
+}
+
+function writeProtocolRouteCacheEntry(handler, cacheKey, patch = {}) {
+  if (!cacheKey) {
+    return {};
+  }
+
+  const cache = getProtocolRouteCache(handler);
+  const current = cache.get(cacheKey) || {};
+  const next = {
+    ...current,
+    ...patch,
+    updatedAt: Date.now()
+  };
+
+  if (current.leagueContext || patch.leagueContext) {
+    next.leagueContext = {
+      ...(current.leagueContext || {}),
+      ...(patch.leagueContext || {})
+    };
+  }
+
+  cache.set(cacheKey, next);
+  return next;
+}
+
+function resolveAdaptiveDiscoveryBudget(handler) {
+  const configuredMaxWaitMs = Number(handler.navigator.postApiDiscoveryWaitMs || 5000);
+  const maxWaitMs = Math.min(5000, Math.max(3000, configuredMaxWaitMs || 5000));
+
+  return {
+    minWaitMs: Math.min(3000, maxWaitMs),
+    maxWaitMs,
+    probeIntervalMs: 250
+  };
+}
+
+async function waitForTournamentContextSignals(handler, archiveApiUrl) {
+  const budget = resolveAdaptiveDiscoveryBudget(handler);
+  const startedAt = Date.now();
+  let tournamentToken = '';
+  let currentTournamentUrl = null;
+
+  while (Date.now() - startedAt <= budget.maxWaitMs) {
+    tournamentToken = await handler.navigator.stateProber.extractTournamentToken();
+    currentTournamentUrl = await handler._callNavigatorOverride(
+      '_getCurrentTournamentEndpoint',
+      () => handler._getCurrentTournamentEndpoint()
+    ) || handler._callNavigatorOverride(
+      '_buildTournamentUrlFromArchive',
+      (resolvedArchiveUrl, resolvedTournamentToken) => handler._buildTournamentUrlFromArchive(
+        resolvedArchiveUrl,
+        resolvedTournamentToken
+      ),
+      archiveApiUrl,
+      tournamentToken
+    );
+
+    const waitedMs = Date.now() - startedAt;
+    if (((tournamentToken || currentTournamentUrl) && waitedMs >= budget.minWaitMs) || waitedMs >= budget.maxWaitMs) {
+      handler.logger.info('protocol_tournament_context_budget_complete', {
+        breakerKey: handler.navigator._resolveCircuitBreakerKey(archiveApiUrl || currentTournamentUrl || '', {}),
+        waitedMs,
+        hasTournamentToken: Boolean(tournamentToken),
+        hasCurrentTournamentUrl: Boolean(currentTournamentUrl)
+      });
+      return {
+        tournamentToken,
+        currentTournamentUrl: currentTournamentUrl || null
+      };
+    }
+
+    await waitForDelay(handler.page, Math.min(budget.probeIntervalMs, budget.maxWaitMs - waitedMs));
+  }
+
+  return {
+    tournamentToken,
+    currentTournamentUrl: currentTournamentUrl || null
+  };
+}
+
 async function processPureProtocolPage(handler, monitor, config, state, page) {
   const pageUrl = config.buildPageUrl(state.base, page);
   const response = await handler._fetchPureProtocolText(pageUrl, {
@@ -146,7 +303,7 @@ const reconFetchCoordinator = {
           timeout: timeoutMs,
           circuitBreakerKey: breakerKey
         });
-        await waitForDelay(this.page, this.navigator.postApiDiscoveryWaitMs);
+        await waitForDelay(this.page, Math.min(this.navigator.postApiDiscoveryWaitMs, 5000));
       }
 
       const retriedResult = await fetchOnce();
@@ -230,10 +387,6 @@ const reconFetchCoordinator = {
 
   async _extractViaPureProtocol(target, options = {}) {
     const context = await this._resolvePureProtocolContext(target, options);
-    if (!context.appBundleUrl) {
-      throw new Error('PURE_PROTOCOL_APP_BUNDLE_MISSING');
-    }
-
     const tokenCandidates = [...new Set([context.outrightId, context.tournamentId].map((token) => String(token || '').trim()).filter(Boolean))];
     const bookmakerHash = this._resolvePureProtocolBookmakerHash(context, options);
     if (tokenCandidates.length === 0) {
@@ -243,26 +396,24 @@ const reconFetchCoordinator = {
       throw new Error('PURE_PROTOCOL_BOOKMAKER_HASH_MISSING');
     }
 
-    let samplePayload = '';
-    let sampleToken = tokenCandidates[0];
-    for (const token of tokenCandidates) {
-      const sampleArchiveUrl = `https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/${token}/${bookmakerHash}/1/0/`;
-      const sampleResponse = await this._fetchPureProtocolText(this._buildArchivePageUrl(sampleArchiveUrl.replace(/\/+$/, ''), 1), {
-        timeoutMs: options.timeoutMs,
-        referer: context.baseUrl
-      });
-      if (sampleResponse.success && String(sampleResponse.text || '').trim()) {
-        samplePayload = sampleResponse.text;
-        sampleToken = token;
-        break;
-      }
-    }
-
+    const { samplePayload, sampleToken } = await resolvePureProtocolSample(
+      this,
+      context,
+      tokenCandidates,
+      bookmakerHash,
+      options
+    );
     if (!samplePayload) {
       throw new Error('PURE_PROTOCOL_SAMPLE_PAYLOAD_MISSING');
     }
 
-    const decryptor = await this._createPureProtocolDecryptor(context, samplePayload, sampleToken, bookmakerHash);
+    const decryptor = await resolvePureProtocolDecryptor(
+      this,
+      context,
+      samplePayload,
+      sampleToken,
+      bookmakerHash
+    );
     const combinedMatches = [];
     const combinedPageStats = [];
     const seen = new Set();
@@ -312,36 +463,41 @@ const reconFetchCoordinator = {
       };
     }
 
+    const cachedContext = readProtocolRouteCacheEntry(this, circuitBreakerKey).leagueContext || null;
+    if (cachedContext?.tournamentId || cachedContext?.currentTournamentUrl) {
+      return {
+        leagueUrl: cachedContext.leagueUrl || leagueUrl,
+        tournamentId: cachedContext.tournamentId || null,
+        repairedArchiveUrl: cachedContext.tournamentId
+          ? this._repairArchiveEndpointWithTournamentId(archiveApiUrl, cachedContext.tournamentId)
+          : archiveApiUrl,
+        currentTournamentUrl: cachedContext.currentTournamentUrl || null
+      };
+    }
+
     await this.navigator.navigate(leagueUrl, {
       waitUntil: 'domcontentloaded',
       timeout: timeoutMs,
       circuitBreakerKey
     });
-    await waitForDelay(this.page, this.navigator.postApiDiscoveryWaitMs);
-
-    const tournamentToken = await this.navigator.stateProber.extractTournamentToken();
+    const discoveredContext = await waitForTournamentContextSignals(this, archiveApiUrl);
+    const tournamentToken = String(discoveredContext.tournamentToken || '').trim();
     const repairedArchiveUrl = tournamentToken
       ? this._repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentToken)
       : archiveApiUrl;
-    const currentTournamentUrl = await this._callNavigatorOverride(
-      '_getCurrentTournamentEndpoint',
-      () => this._getCurrentTournamentEndpoint()
-    ) || this._callNavigatorOverride(
-      '_buildTournamentUrlFromArchive',
-      (resolvedArchiveUrl, resolvedTournamentToken) => this._buildTournamentUrlFromArchive(
-        resolvedArchiveUrl,
-        resolvedTournamentToken
-      ),
-      archiveApiUrl,
-      tournamentToken
-    );
-
-    return {
+    const resolvedContext = {
       leagueUrl,
       tournamentId: tournamentToken || null,
       repairedArchiveUrl,
-      currentTournamentUrl
+      currentTournamentUrl: discoveredContext.currentTournamentUrl || null
     };
+
+    writeProtocolRouteCacheEntry(this, circuitBreakerKey, {
+      baseUrl,
+      leagueContext: resolvedContext
+    });
+
+    return resolvedContext;
   },
 
   _repairArchiveEndpointWithTournamentId(archiveApiUrl, tournamentId) {

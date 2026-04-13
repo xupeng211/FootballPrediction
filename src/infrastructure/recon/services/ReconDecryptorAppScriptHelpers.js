@@ -377,11 +377,15 @@ async function extractFromAppScript(page, sampleInput = null, options = {}) {
       return null;
     }
 
-    const bundleSource = await this._fetchBundleSource(page, appScriptUrl);
+    const appScriptResolution = typeof this._resolveLiveAppScript === 'function'
+      ? await this._resolveLiveAppScript(page, appScriptUrl)
+      : { appScriptUrl, bundleSource: '' };
+    const resolvedAppScriptUrl = appScriptResolution.appScriptUrl || appScriptUrl;
+    const bundleSource = appScriptResolution.bundleSource || await this._fetchBundleSource(page, resolvedAppScriptUrl);
     const decryptFn = await probeAppScriptCandidate(
       this,
       page,
-      appScriptUrl,
+      resolvedAppScriptUrl,
       sampleState,
       this._extractFromBundle(bundleSource)
     );
@@ -389,7 +393,7 @@ async function extractFromAppScript(page, sampleInput = null, options = {}) {
 
     if (!decryptFn || !decryptFn.found) {
       const pureRuntimeDecryptFn = typeof this._extractFromPureRuntime === 'function'
-        ? await this._extractFromPureRuntime(page, appScriptUrl, sampleState)
+        ? await this._extractFromPureRuntime(page, resolvedAppScriptUrl, sampleState)
         : null;
       if (pureRuntimeDecryptFn) {
         this.algorithmVersion = pureRuntimeDecryptFn.__algorithmVersion || this.algorithmVersion;
@@ -415,7 +419,7 @@ async function extractFromAppScript(page, sampleInput = null, options = {}) {
       });
     }
 
-    return wrapDecryptFunction(page, appScriptUrl, decryptFn, algorithmVersion);
+    return wrapDecryptFunction(page, resolvedAppScriptUrl, decryptFn, algorithmVersion);
   } catch (error) {
     if (this._isPageContextClosedError(error)) {
       this.logger.debug('app_script_extraction_skipped_page_closed', {

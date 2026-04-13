@@ -12,6 +12,7 @@ const {
 } = require('../../shared/helpers/reconProtocolStateHelpers');
 const { ReconNetworkMonitor } = require('./ReconNetworkMonitor');
 const { ReconPureDecryptor } = require('./ReconPureDecryptor');
+const { findLatestAppScript } = require('./ReconDecryptorSourceExtractor');
 const { getReconConfigSection } = require('./ReconServiceConfig');
 
 const RETRYABLE_PURE_PROTOCOL_FETCH_ERROR_RE = /fetch failed|socket|terminated|econnreset|und_err|other side closed|networkerror|timed out|aborted/i;
@@ -48,6 +49,10 @@ const reconProtocolAdapter = {
   },
 
   async _resolvePureProtocolRuntimeState(context, options = {}) {
+    if (options.allowRuntimeStateProbe === false) {
+      return { outrightId: '', bookmakerHash: '' };
+    }
+
     if (
       !this.navigator
       || typeof this.navigator.ensureBrowserHealthy !== 'function'
@@ -106,15 +111,102 @@ const reconProtocolAdapter = {
     });
   },
 
-  _buildPureProtocolHeaders(referer = '', accept = 'application/json, text/plain, */*') {
-    return {
+  _resolvePureProtocolUserAgent(options = {}) {
+    return String(
+      options.userAgent
+      || this.navigator?.browserContext?.getFingerprintSummary?.()?.userAgent
+      || this.navigator?.browserContext?.userAgent
+      || PURE_PROTOCOL_CONFIG.user_agent
+      || 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36'
+    ).trim();
+  },
+
+  // eslint-disable-next-line complexity
+  async _resolvePureProtocolCookieHeader(baseUrl = '', options = {}) {
+    const explicitCookie = String(options.cookieHeader || options.cookie || '').trim();
+    if (explicitCookie) {
+      return explicitCookie;
+    }
+
+    const currentUrl = typeof this.page?.url === 'function' ? String(this.page.url() || '') : '';
+    const normalizedBaseUrl = normalizePureProtocolComparableUrl(baseUrl);
+    const normalizedCurrentUrl = normalizePureProtocolComparableUrl(currentUrl);
+    if (
+      normalizedBaseUrl
+      && normalizedCurrentUrl
+      && normalizedBaseUrl === normalizedCurrentUrl
+      && this.page
+      && typeof this.page.evaluate === 'function'
+    ) {
+      try {
+        const cookieHeader = String(await this.page.evaluate(() => String(document.cookie || '')) || '').trim();
+        if (cookieHeader) {
+          return cookieHeader;
+        }
+      } catch {
+        // ignore page cookie read failure
+      }
+    }
+
+    const context = this.navigator?.context;
+    if (context && typeof context.cookies === 'function') {
+      try {
+        const cookies = await context.cookies(baseUrl ? [baseUrl] : undefined);
+        const cookieHeader = (Array.isArray(cookies) ? cookies : [])
+          .filter((cookie) => cookie?.name && cookie?.value)
+          .map((cookie) => `${cookie.name}=${cookie.value}`)
+          .join('; ');
+        if (cookieHeader) {
+          return cookieHeader;
+        }
+      } catch {
+        // ignore browser context cookie read failure
+      }
+    }
+
+    return '';
+  },
+
+  _buildPureProtocolHeaders(referer = '', accept = 'application/json, text/plain, */*', options = {}) {
+    const resolvedReferer = referer || 'https://www.oddsportal.com/';
+    let resolvedOrigin = '';
+    try {
+      resolvedOrigin = new URL(resolvedReferer).origin;
+    } catch {
+      resolvedOrigin = 'https://www.oddsportal.com';
+    }
+
+    const headers = {
       accept,
       'accept-language': 'en-US,en;q=0.9,ja-JP;q=0.8,ja;q=0.7',
-      'content-type': 'application/json',
-      referer: referer || 'https://www.oddsportal.com/',
-      'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-      'x-requested-with': 'XMLHttpRequest'
+      referer: resolvedReferer,
+      origin: options.origin || resolvedOrigin,
+      'user-agent': this._resolvePureProtocolUserAgent(options),
+      'sec-fetch-site': 'same-origin',
+      'sec-fetch-mode': options.fetchMode || 'cors',
+      'sec-fetch-dest': options.fetchDest || 'empty'
     };
+
+    if (options.includeContentType !== false) {
+      headers['content-type'] = options.contentType || 'application/json';
+    }
+    if (options.includeXRequestedWith !== false) {
+      headers['x-requested-with'] = 'XMLHttpRequest';
+    }
+    if (options.cookieHeader) {
+      headers.cookie = options.cookieHeader;
+    }
+
+    return headers;
+  },
+
+  async _resolveLatestPureProtocolAppScript(baseUrl = '', options = {}) {
+    return findLatestAppScript(baseUrl, {
+      allowRootFallback: true,
+      logger: this.logger,
+      traceId: this.navigator?.traceId || 'trace-pure-protocol',
+      ...options
+    });
   },
 
   _resolvePureProtocolActivePageCandidates(baseUrl = '') {
@@ -181,13 +273,23 @@ const reconProtocolAdapter = {
       return { success: true, status: 200, text: activePageHtml, source: 'browser_active_page' };
     }
 
+    const cookieHeader = await this._resolvePureProtocolCookieHeader(target.baseUrl, options);
     const httpResponse = await this._fetchPureProtocolText(target.baseUrl, {
       timeoutMs: options.timeoutMs,
       referer: target.baseUrl,
-      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+      accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      cookieHeader,
+      includeXRequestedWith: false,
+      includeContentType: false,
+      fetchDest: 'document',
+      fetchMode: 'navigate'
     });
     if (httpResponse.success) {
       return { ...httpResponse, source: 'node_fetch' };
+    }
+
+    if (options.allowBrowserHtmlFallback === false) {
+      return httpResponse;
     }
 
     const browserHtml = await this._loadPureProtocolHtmlViaBrowser(target.baseUrl, options);
@@ -233,8 +335,15 @@ const reconProtocolAdapter = {
     const timer = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
+      const cookieHeader = await this._resolvePureProtocolCookieHeader(
+        options.referer || options.baseUrl || url,
+        options
+      );
       const response = await fetch(url, {
-        headers: this._buildPureProtocolHeaders(options.referer, options.accept),
+        headers: this._buildPureProtocolHeaders(options.referer, options.accept, {
+          ...options,
+          cookieHeader: cookieHeader || options.cookieHeader || ''
+        }),
         redirect: 'follow',
         signal: controller.signal
       });
@@ -291,6 +400,7 @@ const reconProtocolAdapter = {
     return lastResult;
   },
 
+  // eslint-disable-next-line complexity
   async _resolvePureProtocolContext(target, options = {}) {
     const normalizedTarget = this._normalizePureProtocolTarget(target);
     const htmlResponse = await this._resolvePureProtocolHtml(normalizedTarget, options);
@@ -306,6 +416,7 @@ const reconProtocolAdapter = {
     const outrightMeta = this.navigator?.stateProber?.extractPageOutrightsMetaFromHtml?.(html) || null;
     let outrightId = typeof outrightMeta?.id === 'string' ? outrightMeta.id.trim() : '';
     let runtimeBookmakerHash = embeddedState.bookmakerHash || '';
+    const cookieHeader = await this._resolvePureProtocolCookieHeader(normalizedTarget.baseUrl, options);
 
     if (!outrightId) {
       outrightId = embeddedState.outrightId;
@@ -318,16 +429,33 @@ const reconProtocolAdapter = {
       runtimeBookmakerHash = runtimeState.bookmakerHash || runtimeBookmakerHash;
     }
 
+    const appScriptResolution = await this._resolveLatestPureProtocolAppScript(normalizedTarget.baseUrl, {
+      html,
+      headers: this._buildPureProtocolHeaders(normalizedTarget.baseUrl, 'text/javascript,application/javascript,*/*;q=0.1', {
+        ...options,
+        cookieHeader,
+        includeXRequestedWith: false,
+        includeContentType: false,
+        fetchDest: 'script',
+        fetchMode: 'cors'
+      }),
+      cookieHeader
+    });
+
     return {
       ...normalizedTarget,
       html,
       outrightMeta,
       outrightId,
       tournamentId,
-      appBundleUrl: extractAppBundleUrlFromHtml(html, normalizedTarget.baseUrl),
+      appBundleUrl: appScriptResolution.appScriptUrl || extractAppBundleUrlFromHtml(html, normalizedTarget.baseUrl),
+      appBundleSource: appScriptResolution.bundleSource || '',
+      appScriptDiscoverySource: appScriptResolution.discoverySource || '',
+      appScriptManifestMap: appScriptResolution.manifestAssetMap || new Map(),
       seasonToken: extractPureProtocolSeasonToken(normalizedTarget.baseUrl, options),
       locale: extractLocaleFromHtml(html),
-      runtimeBookmakerHash
+      runtimeBookmakerHash,
+      cookieHeader
     };
   },
 
@@ -353,6 +481,107 @@ const reconProtocolAdapter = {
     };
   },
 
+  _buildPureProtocolScriptHeaders(context = {}, options = {}) {
+    return this._buildPureProtocolHeaders(
+      options.referer || context.baseUrl || context.appBundleUrl || 'https://www.oddsportal.com/',
+      options.accept || 'text/javascript,application/javascript,*/*;q=0.1',
+      {
+        ...options,
+        cookieHeader: options.cookieHeader || context.cookieHeader || '',
+        includeXRequestedWith: false,
+        includeContentType: false,
+        fetchDest: 'script',
+        fetchMode: 'cors'
+      }
+    );
+  },
+
+  // eslint-disable-next-line complexity
+  _resolvePureProtocolManifestRemapUrl(context = {}, targetUrl = '') {
+    const manifestAssetMap = context?.appScriptManifestMap instanceof Map
+      ? context.appScriptManifestMap
+      : null;
+    if (!String(targetUrl || '').trim()) {
+      return '';
+    }
+
+    try {
+      const absoluteUrl = new URL(
+        String(targetUrl || ''),
+        context.appBundleUrl || context.baseUrl || 'https://www.oddsportal.com/'
+      ).href;
+      if (
+        /\/build\/assets\/app-[^/]+\.js(?:[?#].*)?$/i.test(absoluteUrl)
+        && String(context.appBundleUrl || '').trim()
+        && absoluteUrl !== context.appBundleUrl
+      ) {
+        return context.appBundleUrl;
+      }
+
+      if (!manifestAssetMap || manifestAssetMap.size === 0) {
+        return '';
+      }
+
+      const fileName = absoluteUrl.split('/').pop() || '';
+      const fileStem = fileName.replace(/\.[^.]+$/u, '');
+      const normalizedStem = fileStem.replace(/-[A-Za-z0-9_-]{6,}$/u, '');
+      return manifestAssetMap.get(fileStem) || manifestAssetMap.get(normalizedStem) || '';
+    } catch {
+      return '';
+    }
+  },
+
+  async _fetchPureProtocolScriptText(targetUrl, context = {}, options = {}) {
+    if (typeof fetch !== 'function') {
+      throw new Error('PURE_PROTOCOL_FETCH_UNAVAILABLE');
+    }
+
+    const resolvedUrl = new URL(
+      String(targetUrl || ''),
+      context.appBundleUrl || context.baseUrl || 'https://www.oddsportal.com/'
+    ).href;
+    const response = await fetch(resolvedUrl, {
+      headers: this._buildPureProtocolScriptHeaders(context, options),
+      redirect: 'follow'
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP_${response.status}:${resolvedUrl}`);
+    }
+
+    return response.text();
+  },
+
+  _createPureProtocolSourceLoader(context = {}) {
+    return async (targetUrl) => {
+      const requestedUrl = new URL(
+        String(targetUrl || ''),
+        context.appBundleUrl || context.baseUrl || 'https://www.oddsportal.com/'
+      ).href;
+
+      try {
+        return await this._fetchPureProtocolScriptText(requestedUrl, context, {
+          referer: context.baseUrl || requestedUrl
+        });
+      } catch (error) {
+        const remappedUrl = this._resolvePureProtocolManifestRemapUrl(context, requestedUrl);
+        if (!remappedUrl || remappedUrl === requestedUrl) {
+          throw error;
+        }
+
+        const remappedSource = await this._fetchPureProtocolScriptText(remappedUrl, context, {
+          referer: context.baseUrl || requestedUrl
+        });
+        this.logger.info('app_script_manifest_remap_hit', {
+          traceId: this.navigator?.traceId || 'trace-pure-protocol',
+          requestedUrl,
+          remappedUrl,
+          source: 'pure_protocol'
+        });
+        return remappedSource;
+      }
+    };
+  },
+
   async _createPureProtocolDecryptor(context, sampleEncryptedData = '', token = '', bookmakerHash = '') {
     const decryptor = new ReconPureDecryptor({
       logger: this.logger,
@@ -361,7 +590,9 @@ const reconProtocolAdapter = {
 
     await decryptor.loadFromBundleUrl(context.appBundleUrl, {
       sampleEncryptedData,
-      headers: this._buildPureProtocolHeaders(context.baseUrl),
+      bundleSource: context.appBundleSource || '',
+      sourceLoader: this._createPureProtocolSourceLoader(context),
+      headers: this._buildPureProtocolScriptHeaders(context),
       globals: this._buildPureProtocolRuntimeGlobals(context, token, bookmakerHash),
       html: context.html
     });
