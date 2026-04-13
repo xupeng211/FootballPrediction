@@ -81,6 +81,17 @@ const reconStitcherFlow = {
     };
   },
 
+  logStitchSuccess(match, matchId, season, leagueName, metadata = {}) {
+    this.logger.info('stitch_success', {
+      hash: match?.hash || null,
+      matchId: matchId ? String(matchId) : null,
+      season: season || null,
+      league: leagueName || null,
+      url: match?.url || null,
+      ...metadata
+    });
+  },
+
   /**
    * Stitch a single source match into one canonical match_id.
    *
@@ -117,6 +128,23 @@ const reconStitcherFlow = {
 
       if (this.parser) {
         teams = this.parser.extractTeamsFromSlug(match.slug);
+      }
+
+      if (
+        (!teams || teams.homeTeam === 'Unknown' || teams.awayTeam === 'Unknown')
+        && (match.homeTeam || match.home_team)
+        && (match.awayTeam || match.away_team)
+      ) {
+        const incomingHomeTeam = match.homeTeam || match.home_team;
+        const incomingAwayTeam = match.awayTeam || match.away_team;
+        teams = {
+          homeTeam: this.parser?.normalizeTeamName
+            ? this.parser.normalizeTeamName(incomingHomeTeam)
+            : incomingHomeTeam,
+          awayTeam: this.parser?.normalizeTeamName
+            ? this.parser.normalizeTeamName(incomingAwayTeam)
+            : incomingAwayTeam
+        };
       }
 
       if ((!teams || teams.awayTeam === 'Unknown') && match.rawText) {
@@ -170,6 +198,10 @@ const reconStitcherFlow = {
 
       if (result.success) {
         this.processedHashes.add(match.hash);
+        this.logStitchSuccess(match, result.matchId || matchInfo.matchId, dbSeason, leagueConfig?.name, {
+          mappingMethod: result.mappingMethod || null,
+          phase: 'primary'
+        });
         return { status: 'inserted', details: { matchId: result.matchId } };
       }
 
@@ -244,6 +276,10 @@ const reconStitcherFlow = {
             if (result.success) {
               inserted++;
               this.processedHashes.add(match.hash);
+              this.logStitchSuccess(match, result.matchId || matchInfo.matchId, season, leagueConfig?.name, {
+                mappingMethod: result.mappingMethod || 'set_closure',
+                phase: 'set_closure'
+              });
 
               const unmatchedIndex = this.unmatchedCache.indexOf(pageItem);
               if (unmatchedIndex > -1) this.unmatchedCache.splice(unmatchedIndex, 1);
@@ -393,6 +429,10 @@ const reconStitcherFlow = {
 
         if (result.success) {
           this.processedHashes.add(match.hash);
+          this.logStitchSuccess(match, targetL1.match_id, dbSeason, leagueConfig?.name, {
+            mappingMethod: 'hash_lock',
+            phase: 'hash_lock'
+          });
           inserted++;
         } else {
           skipped++;
@@ -484,6 +524,10 @@ const reconStitcherFlow = {
 
             if (result.success) {
               this.processedHashes.add(webMatch.hash);
+              this.logStitchSuccess(webMatch, bestMatch.match_id, dbSeason, leagueConfig?.name, {
+                mappingMethod: 'set_reconciliation',
+                phase: 'set_reconciliation'
+              });
               inserted++;
 
               const pendingIndex = pendingL1.indexOf(bestMatch);
@@ -531,6 +575,17 @@ const reconStitcherFlow = {
       const lock = await this.lockManager.acquireRowLock(hash);
       return { lock, contended: false };
     } catch (error) {
+      if (error?.code && error.code !== 'LOCK_CONTENDED') {
+        this.logger.error('stitch_hash_lock_error', {
+          hash,
+          season: context.season || null,
+          league: context.leagueName || null,
+          error: error.message,
+          code: error.code
+        });
+        throw error;
+      }
+
       this.logger.warn('stitch_hash_lock_contended', {
         hash,
         season: context.season || null,

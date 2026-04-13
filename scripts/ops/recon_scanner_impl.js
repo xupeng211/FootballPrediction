@@ -21,6 +21,7 @@
 
 'use strict';
 
+const fs = require('fs');
 const path = require('path');
 const {
   parseArgs,
@@ -72,6 +73,10 @@ function getL1ConfigManagerClass() {
 
 function getPgPoolClass() {
   return require('pg').Pool;
+}
+
+function getRedisClientClass() {
+  return require('ioredis');
 }
 
 function isSkippedFutureFinalsResult(result) {
@@ -129,6 +134,10 @@ class ReconScanner {
     this.allNonLinked = dependencies.allNonLinked === true;
     this.forceDomMode = dependencies.forceDomMode === true;
     this.navigatorFactory = dependencies.navigatorFactory || null;
+    this.redisClient = dependencies.redisClient || null;
+    this.ownsRedisClient = false;
+    this.enforceDistributedLocking = dependencies.enforceDistributedLocking === true;
+    this._redisHealthCheckRegistered = false;
     this.navigatorSequence = 0;
     this.resources = [];
 
@@ -185,6 +194,115 @@ class ReconScanner {
       this.traceId,
       component
     );
+  }
+
+  _resolveRedisConnectionOptions() {
+    const inDocker = fs.existsSync('/.dockerenv');
+    const host = process.env.REDIS_HOST || (inDocker ? 'redis' : '127.0.0.1');
+    const port = Number.parseInt(process.env.REDIS_PORT || '6379', 10);
+    const db = Number.parseInt(process.env.REDIS_DB || '0', 10);
+    const password = process.env.REDIS_PASSWORD || undefined;
+    const url = process.env.REDIS_URL || '';
+
+    return {
+      url: url.trim(),
+      host,
+      port: Number.isInteger(port) ? port : 6379,
+      db: Number.isInteger(db) ? db : 0,
+      password
+    };
+  }
+
+  _registerRedisHealthCheck(redisClient) {
+    if (
+      this._redisHealthCheckRegistered
+      || !this.healthServer
+      || typeof this.healthServer.registerRedisCheck !== 'function'
+      || !redisClient
+    ) {
+      return;
+    }
+
+    this.healthServer.registerRedisCheck(redisClient);
+    this._redisHealthCheckRegistered = true;
+  }
+
+  async _initializeRedisClient() {
+    const existingClient = this.redisClient;
+    if (existingClient) {
+      if (typeof existingClient.connect === 'function' && existingClient.status === 'wait') {
+        await existingClient.connect();
+      }
+      if (typeof existingClient.ping === 'function') {
+        await existingClient.ping();
+      }
+      this._registerRedisHealthCheck(existingClient);
+      return existingClient;
+    }
+
+    const Redis = getRedisClientClass();
+    const options = this._resolveRedisConnectionOptions();
+    const client = options.url
+      ? new Redis(options.url, {
+          lazyConnect: true,
+          maxRetriesPerRequest: 1,
+          enableOfflineQueue: false,
+          connectTimeout: 2000
+        })
+      : new Redis({
+          host: options.host,
+          port: options.port,
+          db: options.db,
+          password: options.password,
+          lazyConnect: true,
+          maxRetriesPerRequest: 1,
+          enableOfflineQueue: false,
+          connectTimeout: 2000
+        });
+
+    try {
+      await client.connect();
+      await client.ping();
+    } catch (error) {
+      try {
+        client.disconnect();
+      } catch {
+        // best effort
+      }
+      throw new Error(`REDIS_LOCK_UNAVAILABLE: ${error.message}`);
+    }
+
+    this.redisClient = client;
+    this.ownsRedisClient = true;
+    this._registerRedisHealthCheck(client);
+    this.logger.info('redis_lock_client_ready', {
+      host: options.url ? null : options.host,
+      port: options.url ? null : options.port,
+      db: options.url ? null : options.db,
+      source: options.url ? 'url' : 'host_port'
+    });
+    return client;
+  }
+
+  async _cleanupRedisLocking() {
+    if (!this.ownsRedisClient || !this.redisClient) {
+      return;
+    }
+
+    try {
+      if (this.stitcher?.lockManager && typeof this.stitcher.lockManager.disconnect === 'function') {
+        await this.stitcher.lockManager.disconnect();
+      } else if (typeof this.redisClient.quit === 'function') {
+        await this.redisClient.quit();
+      } else if (typeof this.redisClient.disconnect === 'function') {
+        this.redisClient.disconnect();
+      }
+    } catch (error) {
+      this.logger.warn('cleanup_error', { type: 'redis', error: error.message });
+    } finally {
+      this.redisClient = null;
+      this.ownsRedisClient = false;
+    }
   }
 
   /**
@@ -293,14 +411,26 @@ class ReconScanner {
     }
 
     if (!this.stitcher && this.repository) {
-      this.stitcher = new ReconStitcher({
+      const stitcherOptions = {
         repository: this.repository,
         parser: this.parser,
         logger: this._childLogger('ReconStitcher')
+      };
+      if (this.enforceDistributedLocking) {
+        stitcherOptions.redisClient = await this._initializeRedisClient();
+      } else {
+        stitcherOptions.enableLocking = false;
+      }
+
+      this.stitcher = new ReconStitcher({
+        ...stitcherOptions
       });
     } else if (this.stitcher) {
       this.stitcher.traceId = this.traceId;
       this.stitcher.logger = this._childLogger('ReconStitcher', this.stitcher.logger);
+      if (this.enforceDistributedLocking && !this.stitcher.lockManager?.acquireRowLock) {
+        throw new Error('ReconScanner requires stitcher distributed locking to be enabled');
+      }
     }
 
     // 初始化引擎
@@ -607,6 +737,7 @@ class ReconScanner {
       }
     }
 
+    await this._cleanupRedisLocking();
     this.resources = [];
     this.logger.info('cleanup_complete');
   }

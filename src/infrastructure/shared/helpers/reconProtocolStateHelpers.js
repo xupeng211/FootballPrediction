@@ -254,16 +254,23 @@ function extractPureProtocolSeasonToken(baseUrl, options = {}) {
 }
 
 function extractAppBundleUrlFromHtml(html, baseUrl) {
-  const text = String(html || '');
-  const relativeUrl = text.match(/<script[^>]+type="module"[^>]+src="([^"]*\/build\/assets\/app-[^"]+\.js[^"]*)"/i)?.[1]
-    || text.match(/<link[^>]+rel="modulepreload"[^>]+href="([^"]*\/build\/assets\/app-[^"]+\.js[^"]*)"/i)?.[1]
-    || '';
-
-  if (!relativeUrl) {
+  if (!html) {
     return '';
   }
 
   try {
+    const dom = new JSDOM(String(html || ''));
+    const assetNode = dom.window.document.querySelector(
+      'script[src*="/build/assets/app"], link[rel="modulepreload"][href*="/build/assets/app"]'
+    );
+    const relativeUrl = String(
+      assetNode?.getAttribute('src')
+      || assetNode?.getAttribute('href')
+      || ''
+    ).trim();
+    if (!/\/build\/assets\/app(?:-[^/]+)?\.js(?:[?#].*)?$/i.test(relativeUrl)) {
+      return '';
+    }
     return new URL(relativeUrl, baseUrl).href;
   } catch {
     return '';

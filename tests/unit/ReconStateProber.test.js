@@ -174,4 +174,58 @@ describe('ReconStateProber', () => {
     assert.strictEqual(result.totalCandidates, 1);
     assert.strictEqual(result.matches[0].hash, 'championship-live-1');
   });
+
+  it('results 页为空时应优先使用联赛页 DOM 结果而不是继续请求 current tournament API', async () => {
+    const prober = new ReconStateProber({
+      logger: { info() {}, warn() {}, error() {}, debug() {} }
+    });
+    prober._awaitInterceptedData = async () => [];
+
+    const navigatedUrls = [];
+    let tournamentFetchCalled = false;
+
+    const result = await prober.probeCurrentSeasonFromPageState(
+      'https://www.oddsportal.com/football/usa/mls-2025-2026/results/',
+      {},
+      {
+        async navigate(url) {
+          navigatedUrls.push(url);
+        },
+        async waitForTimeout() {},
+        getInterceptedData() {
+          return [];
+        },
+        getApiEndpoints() {
+          return [];
+        },
+        async collectCurrentSeasonResultsDom(url) {
+          if (url.endsWith('/results/')) {
+            return { matches: [], totalCandidates: 0, pagesScanned: 1, pageStats: [] };
+          }
+
+          return {
+            matches: [{
+              hash: 'mls-dom-hash',
+              url: 'https://www.oddsportal.com/football/h2h/inter-miami-fc-los-angeles-fc/#mls-dom-hash'
+            }],
+            totalCandidates: 1,
+            pagesScanned: 1,
+            pageStats: [{ page: 1, rows: 1, newRows: 1, total: 1 }]
+          };
+        },
+        async fetchCurrentTournament() {
+          tournamentFetchCalled = true;
+          throw new Error('should_not_fetch_current_tournament_when_league_dom_ready');
+        }
+      }
+    );
+
+    assert.deepStrictEqual(navigatedUrls, [
+      'https://www.oddsportal.com/football/usa/mls/results/',
+      'https://www.oddsportal.com/football/usa/mls/'
+    ]);
+    assert.strictEqual(tournamentFetchCalled, false);
+    assert.strictEqual(result.sourceState, 'CURRENT_TOURNAMENT_DOM');
+    assert.strictEqual(result.matches[0].hash, 'mls-dom-hash');
+  });
 });

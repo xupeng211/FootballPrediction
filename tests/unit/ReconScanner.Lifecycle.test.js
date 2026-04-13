@@ -327,3 +327,57 @@ test('ReconScanner.initialize 在启用健康检查时必须注册 database read
   assert.equal(repositoryInitCalls, 1);
   assert.equal(registeredRepository, repository);
 });
+
+test('ReconScanner.initialize 在 CLI 强制锁模式下必须为 stitcher 注入 Redis 分布式锁', async () => {
+  let repositoryInitCalls = 0;
+  let redisPingCalls = 0;
+  let redisQuitCalls = 0;
+  let registeredRedis = null;
+
+  const redisClient = {
+    status: 'ready',
+    async ping() {
+      redisPingCalls++;
+      return 'PONG';
+    },
+    async quit() {
+      redisQuitCalls++;
+    }
+  };
+
+  const repository = {
+    logger: { info() {}, warn() {}, error() {} },
+    async init() {
+      repositoryInitCalls++;
+    }
+  };
+
+  const scanner = new ReconScanner({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    guardian: { async start() {}, async stop() {} },
+    repository,
+    redisClient,
+    enforceDistributedLocking: true,
+    healthServer: {
+      registerDatabaseCheck() {},
+      registerRedisCheck(targetRedis) {
+        registeredRedis = targetRedis;
+      },
+      async stop() {}
+    },
+    configManager: createLeagueConfigManager(),
+    parser: { logger: { info() {}, warn() {}, error() {}, debug() {} } },
+    engine: { logger: { info() {}, warn() {}, error() {}, debug() {} } },
+    proxyRotator: null
+  });
+
+  await scanner.initialize();
+
+  assert.equal(repositoryInitCalls, 1);
+  assert.equal(redisPingCalls, 1);
+  assert.equal(registeredRedis, redisClient);
+  assert.equal(typeof scanner.stitcher.lockManager.acquireRowLock, 'function');
+
+  await scanner.close();
+  assert.equal(redisQuitCalls, 0);
+});
