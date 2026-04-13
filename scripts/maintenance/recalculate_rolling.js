@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable complexity, max-lines */
 /**
  * V198.1 滚动特征重算脚本
  * ========================

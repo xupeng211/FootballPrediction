@@ -1,5 +1,7 @@
 'use strict';
 
+const { waitForDelay } = require('../../shared/helpers/browserUtils');
+
 function decodeHtmlEntities(text = '') {
   return String(text || '')
     .replace(/&quot;/g, '"')
@@ -10,6 +12,188 @@ function decodeHtmlEntities(text = '') {
     .replace(/&gt;/g, '>');
 }
 
+function buildArchiveFlowContext(handler, baseUrl, options = {}) {
+  const maxPages = options.maxPages ?? handler.navigator.archiveMaxPages;
+  const timeoutMs = options.timeoutMs ?? handler.navigator.archiveTimeoutMs;
+  const readySelector = typeof options.readySelector === 'string' ? options.readySelector.trim() : '';
+  const circuitBreakerKey = handler.navigator._resolveCircuitBreakerKey(baseUrl, options);
+
+  return {
+    maxPages,
+    timeoutMs,
+    readySelector,
+    preferCurrentSeasonSource: options.preferCurrentSeasonSource === true,
+    circuitBreakerKey,
+    navigateOptions: readySelector
+      ? { contentReadySelector: readySelector, circuitBreakerKey }
+      : { circuitBreakerKey }
+  };
+}
+
+function logArchiveCompletion(handler, result, context, extra = {}) {
+  handler.logger.info('protocol_archive_complete', {
+    pagesScanned: result.pageStats?.length || 0,
+    totalCandidates: result.matches?.length || 0,
+    sourceState: result.sourceState || extra.defaultSourceState,
+    breakerKey: context.circuitBreakerKey,
+    ...extra.meta
+  });
+}
+
+async function fallbackToLeagueTournament(handler, baseUrl, archiveApiUrl, context, reason) {
+  return handler._callNavigatorOverride(
+    '_fallbackToLeagueTournament',
+    (resolvedBaseUrl, resolvedArchiveUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedReason, resolvedOptions) => (
+      handler._fallbackToLeagueTournament(
+        resolvedBaseUrl,
+        resolvedArchiveUrl,
+        resolvedMaxPages,
+        resolvedTimeoutMs,
+        resolvedReason,
+        resolvedOptions
+      )
+    ),
+    baseUrl,
+    archiveApiUrl,
+    context.maxPages,
+    context.timeoutMs,
+    reason,
+    { circuitBreakerKey: context.circuitBreakerKey }
+  );
+}
+
+function chooseArchiveEndpoint(handler, endpoints = []) {
+  return [...endpoints].sort((left, right) => handler._scoreArchiveUrl(right) - handler._scoreArchiveUrl(left))[0] || null;
+}
+
+async function discoverArchiveEndpoints(handler, context) {
+  let archiveEndpoints = Array.from(handler.navigator.apiEndpoints)
+    .filter((url) => /ajax-sport-country-tournament-archive_/i.test(url));
+
+  if (archiveEndpoints.length > 0) {
+    return archiveEndpoints;
+  }
+
+  const resourceEndpoints = await handler._discoverArchiveEndpointsFromPageResources();
+  archiveEndpoints = resourceEndpoints.filter((url) => /ajax-sport-country-tournament-archive_/i.test(url));
+
+  if (archiveEndpoints.length > 0) {
+    handler.logger.info('protocol_archive_resource_probe_hit', {
+      endpointCount: archiveEndpoints.length,
+      breakerKey: context.circuitBreakerKey
+    });
+  }
+
+  return archiveEndpoints;
+}
+
+async function fetchForcedPureProtocol(handler, baseUrl, options, context) {
+  let pureResult = null;
+  let pureError = null;
+
+  try {
+    pureResult = await handler._callNavigatorOverride(
+      '_extractViaPureProtocol',
+      (resolvedTarget, resolvedOptions) => handler._extractViaPureProtocol(resolvedTarget, resolvedOptions),
+      { url: baseUrl, baseUrl },
+      options
+    );
+  } catch (error) {
+    pureError = error;
+  }
+
+  if (context.preferCurrentSeasonSource && (!pureResult || pureResult.matches?.length === 0)) {
+    const fallbackResult = await fallbackToLeagueTournament(
+      handler,
+      baseUrl,
+      null,
+      context,
+      pureError ? 'pure_protocol_failed' : 'pure_protocol_source_empty'
+    );
+    if (Array.isArray(fallbackResult?.matches) && fallbackResult.matches.length > 0) {
+      logArchiveCompletion(handler, fallbackResult, context, {
+        defaultSourceState: 'CURRENT_TOURNAMENT_FALLBACK',
+        meta: { pureProtocol: true }
+      });
+      return fallbackResult;
+    }
+  }
+
+  if (pureError) {
+    throw pureError;
+  }
+
+  logArchiveCompletion(handler, pureResult, context, {
+    defaultSourceState: 'SOURCE_EMPTY',
+    meta: { pureProtocol: true }
+  });
+  return pureResult;
+}
+
+async function fetchPreferredCurrentSeason(handler, baseUrl, context) {
+  handler.logger.info('protocol_current_season_start', {
+    baseUrl,
+    maxPages: context.maxPages,
+    breakerKey: context.circuitBreakerKey
+  });
+
+  const currentResult = await handler.navigator.stateProber.probeCurrentSeasonFromPageState(
+    baseUrl,
+    {
+      maxPages: context.maxPages,
+      timeoutMs: context.timeoutMs,
+      maxScrollRounds: handler.navigator.scrollAttempts,
+      readySelector: context.readySelector,
+      circuitBreakerKey: context.circuitBreakerKey
+    },
+    handler._buildStateProbeHooks(context.navigateOptions, context.circuitBreakerKey)
+  );
+
+  logArchiveCompletion(handler, currentResult, context, { defaultSourceState: 'SOURCE_EMPTY' });
+  return currentResult;
+}
+
+async function fetchArchiveApiResult(handler, baseUrl, context, archiveApiUrl) {
+  const archiveContext = archiveApiUrl.includes('/1//')
+    ? await handler._resolveLeagueTournamentContext(baseUrl, context.timeoutMs, archiveApiUrl, {
+      circuitBreakerKey: context.circuitBreakerKey
+    })
+    : { repairedArchiveUrl: archiveApiUrl, currentTournamentUrl: null, leagueUrl: null, tournamentId: null };
+
+  const result = await handler._callNavigatorOverride(
+    '_fetchAndDecrypt',
+    (resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions) => (
+      handler._fetchAndDecrypt(resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions)
+    ),
+    archiveContext.repairedArchiveUrl || archiveApiUrl,
+    context.maxPages,
+    context.timeoutMs,
+    {
+      warmUrl: handler.navigator.stateProber.deriveCurrentResultsUrl(baseUrl) || baseUrl,
+      circuitBreakerKey: context.circuitBreakerKey
+    }
+  );
+
+  if (result.matches.length === 0 && handler._resultHasDecryptFailure(result)) {
+    const fallbackResult = await fallbackToLeagueTournament(
+      handler,
+      baseUrl,
+      archiveContext.repairedArchiveUrl || archiveApiUrl,
+      context,
+      'archive_decrypt_failed'
+    );
+    if (fallbackResult.matches.length > 0) {
+      logArchiveCompletion(handler, fallbackResult, context, {
+        defaultSourceState: 'CURRENT_TOURNAMENT_FALLBACK'
+      });
+      return fallbackResult;
+    }
+  }
+
+  logArchiveCompletion(handler, result, context);
+  return result;
+}
+
 const reconProtocolArchiveFlow = {
   _extractCurrentTournamentEndpointFromHtml(html) {
     const decodedHtml = decodeHtmlEntities(String(html || ''));
@@ -17,7 +201,6 @@ const reconProtocolArchiveFlow = {
       || decodedHtml.match(/:odds-request\s*=\s*"\{\s*"url"\s*:\s*"([^"]*ajax-sport-country-tournament_[^"]+)"/i)?.[1]
       || '';
     const normalizedUrl = String(rawUrl || '').replace(/\\\//g, '/').trim();
-
     if (!normalizedUrl || /archive_/i.test(normalizedUrl)) {
       return null;
     }
@@ -35,8 +218,7 @@ const reconProtocolArchiveFlow = {
 
   _resultHasDecryptFailure(result) {
     return Array.isArray(result?.pageStats)
-      && result.pageStats.some((stat) => typeof stat?.error === 'string'
-        && stat.error.startsWith('decrypt_failed:'));
+      && result.pageStats.some((stat) => typeof stat?.error === 'string' && stat.error.startsWith('decrypt_failed:'));
   },
 
   async _getCurrentTournamentEndpoint() {
@@ -45,22 +227,22 @@ const reconProtocolArchiveFlow = {
       .filter((url) => !/archive_/i.test(url));
 
     if (endpoints.length > 0) {
-      return endpoints.sort((a, b) => this._scoreTournamentUrl(b) - this._scoreTournamentUrl(a))[0];
+      return endpoints.sort((left, right) => this._scoreTournamentUrl(right) - this._scoreTournamentUrl(left))[0];
     }
 
-    if (this.page && typeof this.page.content === 'function') {
-      try {
-        const extracted = this._extractCurrentTournamentEndpointFromHtml(await this.page.content());
-        if (extracted) {
-          this.navigator.apiEndpoints.add(extracted);
-          return extracted;
-        }
-      } catch (_error) {
-        // HTML 提取失败时退回网络拦截结果
+    if (!this.page || typeof this.page.content !== 'function') {
+      return null;
+    }
+
+    try {
+      const extracted = this._extractCurrentTournamentEndpointFromHtml(await this.page.content());
+      if (extracted) {
+        this.navigator.apiEndpoints.add(extracted);
       }
+      return extracted;
+    } catch {
+      return null;
     }
-
-    return null;
   },
 
   _scoreTournamentUrl(url) {
@@ -82,22 +264,11 @@ const reconProtocolArchiveFlow = {
 
   _buildStateProbeHooks(defaultNavigateOptions = {}, circuitBreakerKey = 'default') {
     return {
-      navigate: (url, options) => this.navigator.navigate(url, {
-        ...options,
-        ...defaultNavigateOptions
-      }),
-      waitForTimeout: async (ms) => {
-        if (this.page && typeof this.page.waitForTimeout === 'function') {
-          await this.page.waitForTimeout(ms);
-        }
-      },
+      navigate: (url, options) => this.navigator.navigate(url, { ...options, ...defaultNavigateOptions }),
+      waitForTimeout: async (ms) => waitForDelay(this.page, ms),
       getInterceptedData: () => this.navigator.getInterceptedData(),
       getApiEndpoints: () => Array.from(this.navigator.apiEndpoints),
-      scoreArchiveUrl: (url) => this._callNavigatorOverride(
-        '_scoreArchiveUrl',
-        (resolvedUrl) => this._scoreArchiveUrl(resolvedUrl),
-        url
-      ),
+      scoreArchiveUrl: (url) => this._callNavigatorOverride('_scoreArchiveUrl', (resolvedUrl) => this._scoreArchiveUrl(resolvedUrl), url),
       fetchArchive: (url, maxPages, timeoutMs) => this._callNavigatorOverride(
         '_fetchAndDecrypt',
         (resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions) => (
@@ -116,26 +287,21 @@ const reconProtocolArchiveFlow = {
           scrollDelayMs: this.navigator.scrollDelayMs
         });
       },
-      getCurrentTournamentEndpoint: () => this._callNavigatorOverride(
-        '_getCurrentTournamentEndpoint',
-        () => this._getCurrentTournamentEndpoint()
-      ),
+      getCurrentTournamentEndpoint: () => this._callNavigatorOverride('_getCurrentTournamentEndpoint', () => this._getCurrentTournamentEndpoint()),
       buildCurrentTournamentUrlFromArchive: (url) => this._callNavigatorOverride(
         '_buildTournamentUrlFromArchive',
         (resolvedUrl) => this._buildTournamentUrlFromArchive(resolvedUrl),
         url
       ),
-      fetchCurrentTournament: (url, maxPages, timeoutMs) => (
-        this._callNavigatorOverride(
-          '_fetchCurrentTournament',
-          (resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions) => (
-            this._fetchCurrentTournament(resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions)
-          ),
-          url,
-          maxPages,
-          timeoutMs,
-          { circuitBreakerKey }
-        )
+      fetchCurrentTournament: (url, maxPages, timeoutMs) => this._callNavigatorOverride(
+        '_fetchCurrentTournament',
+        (resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions) => (
+          this._fetchCurrentTournament(resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions)
+        ),
+        url,
+        maxPages,
+        timeoutMs,
+        { circuitBreakerKey }
       )
     };
   },
@@ -153,10 +319,7 @@ const reconProtocolArchiveFlow = {
         const discovered = new Set();
 
         for (const entry of resourceEntries) {
-          if (!entry?.name || typeof entry.name !== 'string') {
-            continue;
-          }
-          if (/ajax-sport-country-tournament-archive_/i.test(entry.name)) {
+          if (entry?.name && typeof entry.name === 'string' && /ajax-sport-country-tournament-archive_/i.test(entry.name)) {
             discovered.add(entry.name.trim());
           }
         }
@@ -167,232 +330,51 @@ const reconProtocolArchiveFlow = {
       const normalized = Array.isArray(endpoints)
         ? endpoints.map((url) => String(url || '').trim()).filter(Boolean)
         : [];
-
       for (const endpoint of normalized) {
         this.navigator.apiEndpoints.add(endpoint);
       }
-
       return normalized;
     } catch (error) {
       if (typeof this.logger?.debug === 'function') {
-        this.logger.debug('protocol_archive_resource_probe_failed', {
-          error: error.message
-        });
+        this.logger.debug('protocol_archive_resource_probe_failed', { error: error.message });
       }
       return [];
     }
   },
 
   async protocolArchiveExtract(baseUrl, options = {}) {
+    const context = buildArchiveFlowContext(this, baseUrl, options);
+
     if (options.forcePureProtocol === true) {
-      const maxPages = options.maxPages ?? this.navigator.archiveMaxPages;
-      const timeoutMs = options.timeoutMs ?? this.navigator.archiveTimeoutMs;
-      const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
-      const circuitBreakerKey = this.navigator._resolveCircuitBreakerKey(baseUrl, options);
-      let pureResult = null;
-      let pureError = null;
-
-      try {
-        pureResult = await this._callNavigatorOverride(
-          '_extractViaPureProtocol',
-          (resolvedTarget, resolvedOptions) => this._extractViaPureProtocol(resolvedTarget, resolvedOptions),
-          { url: baseUrl, baseUrl },
-          options
-        );
-      } catch (error) {
-        pureError = error;
-      }
-
-      if (preferCurrentSeasonSource && (!pureResult || pureResult.matches?.length === 0)) {
-        const fallbackResult = await this._callNavigatorOverride(
-          '_fallbackToLeagueTournament',
-          (resolvedBaseUrl, resolvedArchiveUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedReason, resolvedOptions) => (
-            this._fallbackToLeagueTournament(
-              resolvedBaseUrl,
-              resolvedArchiveUrl,
-              resolvedMaxPages,
-              resolvedTimeoutMs,
-              resolvedReason,
-              resolvedOptions
-            )
-          ),
-          baseUrl,
-          null,
-          maxPages,
-          timeoutMs,
-          pureError ? 'pure_protocol_failed' : 'pure_protocol_source_empty',
-          { circuitBreakerKey }
-        );
-
-        if (Array.isArray(fallbackResult?.matches) && fallbackResult.matches.length > 0) {
-          this.logger.info('protocol_archive_complete', {
-            pagesScanned: fallbackResult.pageStats?.length || 0,
-            totalCandidates: fallbackResult.matches?.length || 0,
-            sourceState: fallbackResult.sourceState || 'CURRENT_TOURNAMENT_FALLBACK',
-            breakerKey: circuitBreakerKey,
-            pureProtocol: true
-          });
-
-          return fallbackResult;
-        }
-      }
-
-      if (pureError) {
-        throw pureError;
-      }
-
-      this.logger.info('protocol_archive_complete', {
-        pagesScanned: pureResult.pageStats?.length || 0,
-        totalCandidates: pureResult.matches?.length || 0,
-        sourceState: pureResult.sourceState || 'SOURCE_EMPTY',
-        breakerKey: circuitBreakerKey,
-        pureProtocol: true
-      });
-
-      return pureResult;
+      return fetchForcedPureProtocol(this, baseUrl, options, context);
     }
 
     if (typeof this.navigator.resetContextPerBatch === 'function') {
-      await this.navigator.resetContextPerBatch({
-        reason: 'protocol_archive_extract'
-      });
+      await this.navigator.resetContextPerBatch({ reason: 'protocol_archive_extract' });
     } else {
       await this.navigator.ensureBrowserHealthy();
     }
 
-    const maxPages = options.maxPages ?? this.navigator.archiveMaxPages;
-    const timeoutMs = options.timeoutMs ?? this.navigator.archiveTimeoutMs;
-    const preferCurrentSeasonSource = options.preferCurrentSeasonSource === true;
-    const readySelector = typeof options.readySelector === 'string' ? options.readySelector.trim() : '';
-    const circuitBreakerKey = this.navigator._resolveCircuitBreakerKey(baseUrl, options);
-    const navigateOptions = readySelector
-      ? { contentReadySelector: readySelector, circuitBreakerKey }
-      : { circuitBreakerKey };
-
-    if (preferCurrentSeasonSource) {
-      this.logger.info('protocol_current_season_start', { baseUrl, maxPages, breakerKey: circuitBreakerKey });
-      const currentResult = await this.navigator.stateProber.probeCurrentSeasonFromPageState(
-        baseUrl,
-        {
-          maxPages,
-          timeoutMs,
-          maxScrollRounds: this.navigator.scrollAttempts,
-          readySelector,
-          circuitBreakerKey
-        },
-        this._buildStateProbeHooks(navigateOptions, circuitBreakerKey)
-      );
-      this.logger.info('protocol_archive_complete', {
-        pagesScanned: currentResult.pageStats?.length || 0,
-        totalCandidates: currentResult.matches?.length || 0,
-        sourceState: currentResult.sourceState || 'SOURCE_EMPTY',
-        breakerKey: circuitBreakerKey
-      });
-      return currentResult;
+    if (context.preferCurrentSeasonSource) {
+      return fetchPreferredCurrentSeason(this, baseUrl, context);
     }
 
-    this.logger.info('protocol_archive_start', { baseUrl, maxPages, breakerKey: circuitBreakerKey });
-    await this.navigator.navigate(baseUrl, { waitUntil: 'domcontentloaded', ...navigateOptions });
-    await this.page.waitForTimeout(this.navigator.postApiDiscoveryWaitMs);
-
-    let archiveEndpoints = Array.from(this.navigator.apiEndpoints)
-      .filter((url) => /ajax-sport-country-tournament-archive_/i.test(url));
-
-    if (archiveEndpoints.length === 0) {
-      const resourceEndpoints = await this._discoverArchiveEndpointsFromPageResources();
-      archiveEndpoints = resourceEndpoints.filter((url) => /ajax-sport-country-tournament-archive_/i.test(url));
-
-      if (archiveEndpoints.length > 0) {
-        this.logger.info('protocol_archive_resource_probe_hit', {
-          endpointCount: archiveEndpoints.length,
-          breakerKey: circuitBreakerKey
-        });
-      }
-    }
-
-    if (archiveEndpoints.length === 0) {
-      this.logger.warn('protocol_archive_no_api');
-      return this._callNavigatorOverride(
-        '_fallbackToLeagueTournament',
-        (resolvedBaseUrl, resolvedArchiveUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedReason, resolvedOptions) => (
-          this._fallbackToLeagueTournament(
-            resolvedBaseUrl,
-            resolvedArchiveUrl,
-            resolvedMaxPages,
-            resolvedTimeoutMs,
-            resolvedReason,
-            resolvedOptions
-          )
-        ),
-        baseUrl,
-        null,
-        maxPages,
-        timeoutMs,
-        'archive_api_missing',
-        { circuitBreakerKey }
-      );
-    }
-
-    const archiveApiUrl = archiveEndpoints.sort((a, b) => this._scoreArchiveUrl(b) - this._scoreArchiveUrl(a))[0];
-    const archiveContext = archiveApiUrl.includes('/1//')
-      ? await this._resolveLeagueTournamentContext(baseUrl, timeoutMs, archiveApiUrl, {
-        circuitBreakerKey
-      })
-      : { repairedArchiveUrl: archiveApiUrl, currentTournamentUrl: null, leagueUrl: null, tournamentId: null };
-
-    const result = await this._callNavigatorOverride(
-      '_fetchAndDecrypt',
-      (resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions) => (
-        this._fetchAndDecrypt(resolvedUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedOptions)
-      ),
-      archiveContext.repairedArchiveUrl || archiveApiUrl,
-      maxPages,
-      timeoutMs,
-      {
-        warmUrl: this.navigator.stateProber.deriveCurrentResultsUrl(baseUrl) || baseUrl,
-        circuitBreakerKey
-      }
-    );
-
-    if (result.matches.length === 0 && this._resultHasDecryptFailure(result)) {
-      const fallbackResult = await this._callNavigatorOverride(
-        '_fallbackToLeagueTournament',
-        (resolvedBaseUrl, resolvedArchiveUrl, resolvedMaxPages, resolvedTimeoutMs, resolvedReason, resolvedOptions) => (
-          this._fallbackToLeagueTournament(
-            resolvedBaseUrl,
-            resolvedArchiveUrl,
-            resolvedMaxPages,
-            resolvedTimeoutMs,
-            resolvedReason,
-            resolvedOptions
-          )
-        ),
-        baseUrl,
-        archiveContext.repairedArchiveUrl || archiveApiUrl,
-        maxPages,
-        timeoutMs,
-        'archive_decrypt_failed',
-        { circuitBreakerKey }
-      );
-
-      if (fallbackResult.matches.length > 0) {
-        this.logger.info('protocol_archive_complete', {
-          pagesScanned: fallbackResult.pageStats?.length || 0,
-          totalCandidates: fallbackResult.matches?.length || 0,
-          sourceState: fallbackResult.sourceState || 'CURRENT_TOURNAMENT_FALLBACK',
-          breakerKey: circuitBreakerKey
-        });
-        return fallbackResult;
-      }
-    }
-
-    this.logger.info('protocol_archive_complete', {
-      pagesScanned: result.pageStats.length,
-      totalCandidates: result.matches.length,
-      breakerKey: circuitBreakerKey
+    this.logger.info('protocol_archive_start', {
+      baseUrl,
+      maxPages: context.maxPages,
+      breakerKey: context.circuitBreakerKey
     });
 
-    return result;
+    await this.navigator.navigate(baseUrl, { waitUntil: 'domcontentloaded', ...context.navigateOptions });
+    await waitForDelay(this.page, this.navigator.postApiDiscoveryWaitMs);
+
+    const archiveEndpoints = await discoverArchiveEndpoints(this, context);
+    if (archiveEndpoints.length === 0) {
+      this.logger.warn('protocol_archive_no_api');
+      return fallbackToLeagueTournament(this, baseUrl, null, context, 'archive_api_missing');
+    }
+
+    return fetchArchiveApiResult(this, baseUrl, context, chooseArchiveEndpoint(this, archiveEndpoints));
   }
 };
 

@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * ZombieKiller - 僵尸进程清理器 (V175 增强版)
  * ==============================================

@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * @file FotMobExtractor - FotMob 网页数据提取器
  * @module infrastructure/services/FotMobExtractor

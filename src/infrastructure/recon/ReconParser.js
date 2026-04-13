@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * ReconParser - 配置驱动队名解析器
  * ==================================

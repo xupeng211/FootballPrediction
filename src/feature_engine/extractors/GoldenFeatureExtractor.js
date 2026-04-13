@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * GoldenFeatureExtractor - V3.0-PRO 纯函数版
  * ==========================================

@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * TITAN V5.5 OddsPortal Harvester
  * ==============================

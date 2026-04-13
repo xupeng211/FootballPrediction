@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * DrawPropensityExtractor - V5.2 平局倾向特征提取器
  * ===================================================

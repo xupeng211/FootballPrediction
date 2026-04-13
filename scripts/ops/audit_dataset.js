@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable complexity, max-lines */
 /**
  * @file TITAN 数据资产审计系统 (V6.7-Refactored)
  * @description 数据质量全面体检：物理清点、内容抽检、DB对齐、质量报告

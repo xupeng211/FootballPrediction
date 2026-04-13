@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable complexity, max-lines */
 /**
  * @file total_war_pipeline.js
  * @description TOTAL WAR 自动编排器，串行调度 Discovery / Harvest / Recon

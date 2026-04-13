@@ -88,43 +88,55 @@ class ReconRetryCoordinator {
     }
   }
 
-  async resolveRetryableHttpFailureFromError(error, context = {}) {
+  extractFailureFromError(error, context = {}) {
     const message = String(error?.message || '');
     const normalizedMessage = message.toLowerCase();
-    let statusCode = Number(error?.statusCode) || null;
-    let retryAfterMs = Number(error?.retryAfterMs) || 0;
-    let retryAfterRaw = error?.retryAfterRaw || '';
+    const statusMatch = normalizedMessage.match(/\b(5\d{2})\b/);
     const isResponseCodeFailure = normalizedMessage.includes('err_http_response_code_failure')
       || normalizedMessage.includes('http_response_code_failure');
-    const statusMatch = normalizedMessage.match(/\b(5\d{2})\b/);
-
-    if (!statusCode && statusMatch) {
-      statusCode = Number(statusMatch[1]);
-    }
-
-    if ((!statusCode || retryAfterMs <= 0) && context.inspectUrl) {
-      const inspectedFailure = await this.inspectHttpFailure(context.inspectUrl, context.timeoutMs);
-      if (inspectedFailure?.statusCode) {
-        statusCode = inspectedFailure.statusCode;
-      }
-      if (inspectedFailure?.retryAfterMs > 0) {
-        retryAfterMs = inspectedFailure.retryAfterMs;
-      }
-      if (inspectedFailure?.retryAfterRaw) {
-        retryAfterRaw = inspectedFailure.retryAfterRaw;
-      }
-    }
-
-    const retryable = statusCode === 503
-      || normalizedMessage.includes('503')
-      || normalizedMessage.includes('service unavailable')
-      || isResponseCodeFailure;
 
     return {
-      retryable,
-      statusCode: statusCode || (isResponseCodeFailure ? 503 : null),
-      retryAfterMs,
-      retryAfterRaw
+      normalizedMessage,
+      retryable: false,
+      isResponseCodeFailure,
+      statusCode: Number(error?.statusCode) || (statusMatch ? Number(statusMatch[1]) : null),
+      retryAfterMs: Number(error?.retryAfterMs) || 0,
+      retryAfterRaw: error?.retryAfterRaw || '',
+      inspectUrl: context.inspectUrl
+    };
+  }
+
+  mergeInspectedFailure(failure, inspectedFailure) {
+    if (inspectedFailure?.statusCode) {
+      failure.statusCode = inspectedFailure.statusCode;
+    }
+    if (inspectedFailure?.retryAfterMs > 0) {
+      failure.retryAfterMs = inspectedFailure.retryAfterMs;
+    }
+    if (inspectedFailure?.retryAfterRaw) {
+      failure.retryAfterRaw = inspectedFailure.retryAfterRaw;
+    }
+  }
+
+  isRetryableFailure(failure) {
+    return failure.statusCode === 503
+      || failure.normalizedMessage.includes('503')
+      || failure.normalizedMessage.includes('service unavailable')
+      || failure.isResponseCodeFailure;
+  }
+
+  async resolveRetryableHttpFailureFromError(error, context = {}) {
+    const failure = this.extractFailureFromError(error, context);
+    if ((!failure.statusCode || failure.retryAfterMs <= 0) && failure.inspectUrl) {
+      const inspectedFailure = await this.inspectHttpFailure(context.inspectUrl, context.timeoutMs);
+      this.mergeInspectedFailure(failure, inspectedFailure);
+    }
+
+    return {
+      retryable: this.isRetryableFailure(failure),
+      statusCode: failure.statusCode || (failure.isResponseCodeFailure ? 503 : null),
+      retryAfterMs: failure.retryAfterMs,
+      retryAfterRaw: failure.retryAfterRaw
     };
   }
 
@@ -157,18 +169,8 @@ class ReconRetryCoordinator {
     return error;
   }
 
-  async rotateProxyForRetry(failure, context = {}, attempt = 0) {
-    const rotator = this.navigator.proxyRotator;
-    if (!rotator || typeof rotator.rotate !== 'function') {
-      return null;
-    }
-
-    const currentProxy = this.navigator.proxy || this.navigator.browserContext?.proxy || null;
-    if (currentProxy?.port && typeof rotator.reportFailure === 'function') {
-      rotator.reportFailure(currentProxy.port, failure?.statusCode === 503 ? '503' : 'other');
-    }
-
-    const nextProxy = rotator.rotate({
+  buildRotationPayload(failure, context = {}, attempt = 0, currentProxy = null) {
+    return {
       attempt: attempt + 1,
       breakerKey: context.breakerKey || 'default',
       currentPort: currentProxy?.port || null,
@@ -176,19 +178,54 @@ class ReconRetryCoordinator {
       reason: context.operationName || 'retry_after_503',
       statusCode: failure?.statusCode || 503,
       url: context.inspectUrl || null
-    });
+    };
+  }
 
-    if (!nextProxy) {
-      return null;
+  async relaunchAfterProxyRotation(context = {}) {
+    await this.navigator.close();
+    await this.navigator.launch(this.navigator.lastLaunchOptions || {});
+
+    if (!context.retryNavigateUrl) {
+      return;
     }
 
+    await this.navigator.browserContext.navigate(context.retryNavigateUrl, {
+      timeout: context.timeoutMs || this.navigator.navigationTimeoutMs,
+      waitUntil: 'domcontentloaded',
+      contentReadySelector: context.retryReadySelector || ''
+    });
+    if (this.navigator.page && typeof this.navigator.page.waitForTimeout === 'function') {
+      await this.navigator.page.waitForTimeout(this.navigator.postApiDiscoveryWaitMs);
+    }
+  }
+
+  getProxyRotator() {
+    const rotator = this.navigator.proxyRotator;
+    return rotator && typeof rotator.rotate === 'function' ? rotator : null;
+  }
+
+  getCurrentProxy() {
+    return this.navigator.proxy || this.navigator.browserContext?.proxy || null;
+  }
+
+  reportProxyFailure(rotator, currentProxy, failure) {
+    if (!currentProxy?.port || typeof rotator?.reportFailure !== 'function') {
+      return;
+    }
+
+    rotator.reportFailure(currentProxy.port, failure?.statusCode === 503 ? '503' : 'other');
+  }
+
+  applyRotatedProxy(nextProxy) {
     this.navigator.proxy = nextProxy;
     this.navigator.browserContext.proxy = nextProxy;
     this.navigator.lastLaunchOptions = {
       ...(this.navigator.lastLaunchOptions || {}),
       proxy: nextProxy
     };
+  }
 
+  logProxyRotation(context, attempt, currentProxy, nextProxy) {
     this.logger.warn('navigator_proxy_rotated_for_503', {
       traceId: this.traceId,
       breakerKey: context.breakerKey || 'default',
@@ -197,31 +234,70 @@ class ReconRetryCoordinator {
       previousProxyPort: currentProxy?.port || null,
       nextProxyPort: nextProxy.port || null
     });
+  }
+
+  logProxyRotationFailure(context, error) {
+    this.logger.warn('navigator_proxy_rotation_failed', {
+      traceId: this.traceId,
+      breakerKey: context.breakerKey || 'default',
+      operation: context.operationName || 'unknown',
+      error: error.message
+    });
+  }
+
+  async rotateProxyForRetry(failure, context = {}, attempt = 0) {
+    const rotator = this.getProxyRotator();
+    if (!rotator) {
+      return null;
+    }
+
+    const currentProxy = this.getCurrentProxy();
+    this.reportProxyFailure(rotator, currentProxy, failure);
+    const nextProxy = rotator.rotate(this.buildRotationPayload(failure, context, attempt, currentProxy));
+    if (!nextProxy) {
+      return null;
+    }
+
+    this.applyRotatedProxy(nextProxy);
+    this.logProxyRotation(context, attempt, currentProxy, nextProxy);
 
     try {
-      await this.navigator.close();
-      await this.navigator.launch(this.navigator.lastLaunchOptions || {});
-
-      if (context.retryNavigateUrl) {
-        await this.navigator.browserContext.navigate(context.retryNavigateUrl, {
-          timeout: context.timeoutMs || this.navigator.navigationTimeoutMs,
-          waitUntil: 'domcontentloaded',
-          contentReadySelector: context.retryReadySelector || ''
-        });
-        if (this.navigator.page && typeof this.navigator.page.waitForTimeout === 'function') {
-          await this.navigator.page.waitForTimeout(this.navigator.postApiDiscoveryWaitMs);
-        }
-      }
+      await this.relaunchAfterProxyRotation(context);
     } catch (error) {
-      this.logger.warn('navigator_proxy_rotation_failed', {
-        traceId: this.traceId,
-        breakerKey: context.breakerKey || 'default',
-        operation: context.operationName || 'unknown',
-        error: error.message
-      });
+      this.logProxyRotationFailure(context, error);
     }
 
     return nextProxy;
+  }
+
+  async scheduleRetry(failure, context, attempt, error = null) {
+    await this.rotateProxyForRetry(failure, context, attempt);
+    const scheduledDelayMs = Math.max(this.http503RetryDelaysMs[attempt], failure.retryAfterMs || 0);
+    this.logger.warn('navigator_http_503_retry_scheduled', {
+      traceId: this.traceId,
+      operation: context.operationName || 'unknown',
+      breakerKey: context.breakerKey || 'default',
+      url: context.inspectUrl || null,
+      attempt: attempt + 1,
+      maxRetries: this.http503RetryDelaysMs.length,
+      statusCode: failure.statusCode || 503,
+      retryAfterMs: failure.retryAfterMs || 0,
+      delayMs: scheduledDelayMs,
+      ...(error ? { error: error.message } : {})
+    });
+    await this.navigator._waitBeforeRetry(scheduledDelayMs);
+  }
+
+  decorateRetryError(error, failure) {
+    if (failure.statusCode) {
+      error.statusCode = failure.statusCode;
+    }
+    if (failure.retryAfterMs) {
+      error.retryAfterMs = failure.retryAfterMs;
+    }
+    if (failure.retryAfterRaw) {
+      error.retryAfterRaw = failure.retryAfterRaw;
+    }
   }
 
   async executeWith503Retry(operation, context = {}) {
@@ -239,51 +315,16 @@ class ReconRetryCoordinator {
           throw this.buildRetryError(context, failure);
         }
 
-        await this.rotateProxyForRetry(failure, context, attempt);
-        const scheduledDelayMs = Math.max(retryDelays[attempt], failure.retryAfterMs || 0);
-        this.logger.warn('navigator_http_503_retry_scheduled', {
-          traceId: this.traceId,
-          operation: context.operationName || 'unknown',
-          breakerKey: context.breakerKey || 'default',
-          url: context.inspectUrl || null,
-          attempt: attempt + 1,
-          maxRetries: retryDelays.length,
-          statusCode: failure.statusCode,
-          retryAfterMs: failure.retryAfterMs || 0,
-          delayMs: scheduledDelayMs
-        });
-        await this.navigator._waitBeforeRetry(scheduledDelayMs);
+        await this.scheduleRetry(failure, context, attempt);
         continue;
       } catch (error) {
         const failure = await this.resolveRetryableHttpFailureFromError(error, context);
         if (!failure.retryable || attempt >= retryDelays.length) {
-          if (failure.statusCode) {
-            error.statusCode = failure.statusCode;
-          }
-          if (failure.retryAfterMs) {
-            error.retryAfterMs = failure.retryAfterMs;
-          }
-          if (failure.retryAfterRaw) {
-            error.retryAfterRaw = failure.retryAfterRaw;
-          }
+          this.decorateRetryError(error, failure);
           throw error;
         }
 
-        await this.rotateProxyForRetry(failure, context, attempt);
-        const scheduledDelayMs = Math.max(retryDelays[attempt], failure.retryAfterMs || 0);
-        this.logger.warn('navigator_http_503_retry_scheduled', {
-          traceId: this.traceId,
-          operation: context.operationName || 'unknown',
-          breakerKey: context.breakerKey || 'default',
-          url: context.inspectUrl || null,
-          attempt: attempt + 1,
-          maxRetries: retryDelays.length,
-          statusCode: failure.statusCode || 503,
-          retryAfterMs: failure.retryAfterMs || 0,
-          delayMs: scheduledDelayMs,
-          error: error.message
-        });
-        await this.navigator._waitBeforeRetry(scheduledDelayMs);
+        await this.scheduleRetry(failure, context, attempt, error);
       }
     }
 

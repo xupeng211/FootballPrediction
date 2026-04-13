@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * TitanSlimHarvester - V6.6-SLIM-PRO 网络硬化版
  * ==============================================

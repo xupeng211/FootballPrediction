@@ -20,6 +20,27 @@ const { MarathonService } = require('../../src/infrastructure/services/MarathonS
  * 解析命令行参数
  * @returns {Object} 配置对象
  */
+const NUMERIC_FLAG_PARSERS = new Map([
+  ['--workers=', { key: 'workers', fallback: 22 }],
+  ['--limit=', { key: 'limit', fallback: 10000 }],
+  ['--stagger=', { key: 'stagger', fallback: 800 }],
+  ['--restart=', { key: 'restart', fallback: 500 }],
+  ['--rounds=', { key: 'maxRounds', fallback: 5 }]
+]);
+
+function applyNumericArg(args, arg) {
+  for (const [prefix, config] of NUMERIC_FLAG_PARSERS.entries()) {
+    if (!arg.startsWith(prefix)) {
+      continue;
+    }
+
+    args[config.key] = parseInt(arg.split('=')[1]) || config.fallback;
+    return true;
+  }
+
+  return false;
+}
+
 function parseArgs() {
   const args = {
     workers: 22,
@@ -33,18 +54,11 @@ function parseArgs() {
 
   for (let i = 2; i < process.argv.length; i++) {
     const arg = process.argv[i];
-    
-    if (arg.startsWith('--workers=')) {
-      args.workers = parseInt(arg.split('=')[1]) || 22;
-    } else if (arg.startsWith('--limit=')) {
-      args.limit = parseInt(arg.split('=')[1]) || 10000;
-    } else if (arg.startsWith('--stagger=')) {
-      args.stagger = parseInt(arg.split('=')[1]) || 800;
-    } else if (arg.startsWith('--restart=')) {
-      args.restart = parseInt(arg.split('=')[1]) || 500;
-    } else if (arg.startsWith('--rounds=')) {
-      args.maxRounds = parseInt(arg.split('=')[1]) || 5;
-    } else if (arg === '--verbose' || arg === '-v') {
+    if (applyNumericArg(args, arg)) {
+      continue;
+    }
+
+    if (arg === '--verbose' || arg === '-v') {
       args.verbose = true;
     } else if (arg === '--dry-run') {
       args.dryRun = true;

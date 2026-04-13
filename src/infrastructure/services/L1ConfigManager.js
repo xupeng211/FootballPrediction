@@ -100,29 +100,7 @@ class L1ConfigManager {
     if (!season) {
       return null;
     }
-
-    const seasonConfig = this.runtimeConfig.season_windows || {};
-    const direct = seasonConfig[season];
-    if (direct && Array.isArray(direct.leagues) && direct.leagues.includes(Number(leagueId))) {
-      return direct.expected_matches || null;
-    }
-
-    const league = this.getLeagueById(leagueId);
-    const suffix = league?.name ? `-${league.name.replace(/\s+/g, '')}` : null;
-    if (suffix && seasonConfig[`${season}${suffix}`]) {
-      return seasonConfig[`${season}${suffix}`].expected_matches || null;
-    }
-
-    for (const window of Object.values(seasonConfig)) {
-      if (window && Array.isArray(window.leagues) && window.leagues.includes(Number(leagueId)) && window.expected_matches) {
-        const isSameSeason = window.description?.includes(season.slice(2, 4)) || false;
-        if (isSameSeason) {
-          return window.expected_matches;
-        }
-      }
-    }
-
-    return null;
+    return this._resolveExpectedMatches(this.runtimeConfig.season_windows || {}, Number(leagueId), season);
   }
 
   buildLeagueApiUrl(leagueId, season) {
@@ -162,42 +140,7 @@ class L1ConfigManager {
     const seenIds = new Set();
 
     for (const [code, reconLeague] of Object.entries(reconLeagues)) {
-      this._assertValidReconLeague(code, reconLeague);
-
-      const atlasLeague = atlasById.get(Number(reconLeague.league_id)) || atlasByKey.get(this._leagueKey(reconLeague.name));
-      const resolvedId = atlasLeague ? Number(atlasLeague.id) : Number(reconLeague.league_id);
-
-      if (atlasLeague && Number(reconLeague.league_id) !== Number(atlasLeague.id)) {
-        this.logger.warn(
-          `[L1ConfigManager] 联赛 ID 冲突已自动修正: ${reconLeague.name} recon=${reconLeague.league_id} atlas=${atlasLeague.id}`
-        );
-      }
-
-      const league = {
-        id: resolvedId,
-        providerId: this._resolveProviderId(reconLeague, atlasLeague, resolvedId),
-        code,
-        name: reconLeague.name || atlasLeague?.name,
-        country: reconLeague.country || atlasLeague?.country || 'unknown',
-        slug: reconLeague.slug || this._slugify(reconLeague.name || atlasLeague?.name || code),
-        resultsSlug: reconLeague.results_slug || atlasLeague?.results_slug || reconLeague.slug || atlasLeague?.slug || null,
-        resultsUrlStrategy: reconLeague.results_url_strategy || atlasLeague?.results_url_strategy || 'seasonal',
-        seasonlessCurrentYearBasis: reconLeague.seasonless_current_year_basis || atlasLeague?.seasonless_current_year_basis || 'end',
-        additionalResultsPaths: this._normalizeStringArray(
-          reconLeague.additional_results_paths || atlasLeague?.additional_results_paths
-        ),
-        additionalHistoricalResultsPaths: this._normalizeStringArray(
-          reconLeague.additional_historical_results_paths || atlasLeague?.additional_historical_results_paths
-        ),
-        readySelector: reconLeague.ready_selector || atlasLeague?.ready_selector || null,
-        awaitingFinals: reconLeague.awaiting_finals === true || atlasLeague?.awaiting_finals === true,
-        tier: reconLeague.tier || atlasLeague?.tier || 'P0',
-        enabled: reconLeague.enabled ?? atlasLeague?.enabled ?? true,
-        seasonType: reconLeague.season_type || this._inferSeasonType(resolvedId),
-        defaultSeason: reconLeague.default_season || activeSeasons[activeSeasons.length - 1] || activeSeasons[0] || null,
-        supportedSeasons: reconLeague.supported_seasons || activeSeasons
-      };
-
+      const league = this._buildReconLeagueEntry(code, reconLeague, atlasById, atlasByKey, activeSeasons);
       merged.push(league);
       seenIds.add(league.id);
     }
@@ -208,29 +151,140 @@ class L1ConfigManager {
         continue;
       }
 
-      merged.push({
-        id: leagueId,
-        providerId: this._resolveProviderId(null, atlasLeague, leagueId),
-        code: atlasLeague.code || this._codeFromName(atlasLeague.name),
-        name: atlasLeague.name,
-        country: atlasLeague.country,
-        slug: atlasLeague.slug || this._slugify(atlasLeague.name),
-        resultsSlug: atlasLeague.results_slug || atlasLeague.slug || null,
-        resultsUrlStrategy: atlasLeague.results_url_strategy || 'seasonal',
-        seasonlessCurrentYearBasis: atlasLeague.seasonless_current_year_basis || 'end',
-        additionalResultsPaths: this._normalizeStringArray(atlasLeague.additional_results_paths),
-        additionalHistoricalResultsPaths: this._normalizeStringArray(atlasLeague.additional_historical_results_paths),
-        readySelector: atlasLeague.ready_selector || null,
-        awaitingFinals: atlasLeague.awaiting_finals === true,
-        tier: atlasLeague.tier || 'P0',
-        enabled: atlasLeague.enabled !== false,
-        seasonType: this._inferSeasonType(leagueId),
-        defaultSeason: activeSeasons[activeSeasons.length - 1] || activeSeasons[0] || null,
-        supportedSeasons: activeSeasons
-      });
+      merged.push(this._buildAtlasLeagueEntry(atlasLeague, activeSeasons));
     }
 
     return merged.sort((a, b) => a.id - b.id);
+  }
+
+  _resolveExpectedMatches(seasonConfig, leagueId, season) {
+    const candidates = [
+      this._findSeasonWindowByLeague(seasonConfig[season], leagueId),
+      this._findSeasonWindowBySuffix(seasonConfig, leagueId, season),
+      ...Object.values(seasonConfig).filter((window) => this._isSeasonWindowMatch(window, leagueId, season))
+    ];
+    return candidates.find((window) => Number.isFinite(Number(window?.expected_matches)))?.expected_matches || null;
+  }
+
+  _findSeasonWindowByLeague(window, leagueId) {
+    return window && Array.isArray(window.leagues) && window.leagues.includes(leagueId) ? window : null;
+  }
+
+  _findSeasonWindowBySuffix(seasonConfig, leagueId, season) {
+    const league = this.getLeagueById(leagueId);
+    const suffix = league?.name ? `-${league.name.replace(/\s+/g, '')}` : null;
+    return suffix ? seasonConfig[`${season}${suffix}`] || null : null;
+  }
+
+  _isSeasonWindowMatch(window, leagueId, season) {
+    return Boolean(window)
+      && Array.isArray(window.leagues)
+      && window.leagues.includes(leagueId)
+      && Number.isFinite(Number(window.expected_matches))
+      && Boolean(window.description?.includes(season.slice(2, 4)));
+  }
+
+  _buildReconLeagueEntry(code, reconLeague, atlasById, atlasByKey, activeSeasons) {
+    this._assertValidReconLeague(code, reconLeague);
+    const atlasLeague = atlasById.get(Number(reconLeague.league_id)) || atlasByKey.get(this._leagueKey(reconLeague.name));
+    const resolvedId = atlasLeague ? Number(atlasLeague.id) : Number(reconLeague.league_id);
+    this._warnOnLeagueConflict(reconLeague, atlasLeague);
+    const name = this._resolveLeagueName(reconLeague, atlasLeague, code);
+    const resultsConfig = this._resolveResultsConfig(reconLeague, atlasLeague, name, code);
+    const seasonConfig = this._resolveSeasonConfig(reconLeague, activeSeasons, resolvedId);
+    const runtimeConfig = this._resolveRuntimeLeagueConfig(reconLeague, atlasLeague);
+
+    return {
+      id: resolvedId,
+      providerId: this._resolveProviderId(reconLeague, atlasLeague, resolvedId),
+      code,
+      name,
+      country: this._resolveLeagueCountry(reconLeague, atlasLeague),
+      slug: resultsConfig.slug,
+      resultsSlug: resultsConfig.resultsSlug,
+      resultsUrlStrategy: resultsConfig.resultsUrlStrategy,
+      seasonlessCurrentYearBasis: resultsConfig.seasonlessCurrentYearBasis,
+      additionalResultsPaths: resultsConfig.additionalResultsPaths,
+      additionalHistoricalResultsPaths: resultsConfig.additionalHistoricalResultsPaths,
+      readySelector: runtimeConfig.readySelector,
+      awaitingFinals: runtimeConfig.awaitingFinals,
+      tier: runtimeConfig.tier,
+      enabled: runtimeConfig.enabled,
+      seasonType: seasonConfig.seasonType,
+      defaultSeason: seasonConfig.defaultSeason,
+      supportedSeasons: seasonConfig.supportedSeasons
+    };
+  }
+
+  _resolveLeagueName(reconLeague, atlasLeague, fallbackCode) {
+    return reconLeague.name || atlasLeague?.name || fallbackCode;
+  }
+
+  _resolveLeagueCountry(reconLeague, atlasLeague) {
+    return reconLeague.country || atlasLeague?.country || 'unknown';
+  }
+
+  _resolveResultsConfig(reconLeague, atlasLeague, leagueName, fallbackCode) {
+    const slug = reconLeague.slug || atlasLeague?.slug || this._slugify(leagueName || fallbackCode);
+    return {
+      slug,
+      resultsSlug: reconLeague.results_slug || atlasLeague?.results_slug || slug || null,
+      resultsUrlStrategy: reconLeague.results_url_strategy || atlasLeague?.results_url_strategy || 'seasonal',
+      seasonlessCurrentYearBasis: reconLeague.seasonless_current_year_basis || atlasLeague?.seasonless_current_year_basis || 'end',
+      additionalResultsPaths: this._normalizeStringArray(reconLeague.additional_results_paths || atlasLeague?.additional_results_paths),
+      additionalHistoricalResultsPaths: this._normalizeStringArray(
+        reconLeague.additional_historical_results_paths || atlasLeague?.additional_historical_results_paths
+      )
+    };
+  }
+
+  _resolveRuntimeLeagueConfig(reconLeague, atlasLeague) {
+    return {
+      readySelector: reconLeague.ready_selector || atlasLeague?.ready_selector || null,
+      awaitingFinals: reconLeague.awaiting_finals === true || atlasLeague?.awaiting_finals === true,
+      tier: reconLeague.tier || atlasLeague?.tier || 'P0',
+      enabled: reconLeague.enabled ?? atlasLeague?.enabled ?? true
+    };
+  }
+
+  _resolveSeasonConfig(reconLeague, activeSeasons, resolvedId) {
+    return {
+      seasonType: reconLeague.season_type || this._inferSeasonType(resolvedId),
+      defaultSeason: reconLeague.default_season || activeSeasons[activeSeasons.length - 1] || activeSeasons[0] || null,
+      supportedSeasons: reconLeague.supported_seasons || activeSeasons
+    };
+  }
+
+  _warnOnLeagueConflict(reconLeague, atlasLeague) {
+    if (atlasLeague && Number(reconLeague.league_id) !== Number(atlasLeague.id)) {
+      this.logger.warn(
+        `[L1ConfigManager] 联赛 ID 冲突已自动修正: ${reconLeague.name} recon=${reconLeague.league_id} atlas=${atlasLeague.id}`
+      );
+    }
+  }
+
+  _buildAtlasLeagueEntry(atlasLeague, activeSeasons) {
+    const leagueId = Number(atlasLeague.id);
+    return {
+      id: leagueId,
+      providerId: this._resolveProviderId(null, atlasLeague, leagueId),
+      code: atlasLeague.code || this._codeFromName(atlasLeague.name),
+      name: atlasLeague.name,
+      country: atlasLeague.country,
+      slug: atlasLeague.slug || this._slugify(atlasLeague.name),
+      resultsSlug: atlasLeague.results_slug || atlasLeague.slug || null,
+      resultsUrlStrategy: atlasLeague.results_url_strategy || 'seasonal',
+      seasonlessCurrentYearBasis: atlasLeague.seasonless_current_year_basis || 'end',
+      additionalResultsPaths: this._normalizeStringArray(atlasLeague.additional_results_paths),
+      additionalHistoricalResultsPaths: this._normalizeStringArray(atlasLeague.additional_historical_results_paths),
+      readySelector: atlasLeague.ready_selector || null,
+      awaitingFinals: atlasLeague.awaiting_finals === true,
+      tier: atlasLeague.tier || 'P0',
+      enabled: atlasLeague.enabled !== false,
+      seasonType: this._inferSeasonType(leagueId),
+      defaultSeason: activeSeasons[activeSeasons.length - 1] || activeSeasons[0] || null,
+      supportedSeasons: activeSeasons
+    };
   }
 
   _loadRequiredJson(filePath, label) {

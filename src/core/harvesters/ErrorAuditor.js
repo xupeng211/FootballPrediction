@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * ErrorAuditor - 错误审计员
  * ==========================

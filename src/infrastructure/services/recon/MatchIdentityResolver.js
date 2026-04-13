@@ -44,31 +44,20 @@ function buildIdentityKey({ season, sourceProvider, rawMatchId }, RepositoryErro
   )}::${requireIdentityValue(rawMatchId, 'external_id', RepositoryError, details)}`;
 }
 
+function comparePriority(left, right) {
+  return right - left;
+}
+
 function compareWinnerCandidates(left, right, rawMatchId = null) {
-  const leftLinked = left?.pipeline_status === 'RECON_LINKED' ? 1 : 0;
-  const rightLinked = right?.pipeline_status === 'RECON_LINKED' ? 1 : 0;
-  if (leftLinked !== rightLinked) {
-    return rightLinked - leftLinked;
-  }
+  const comparisons = [
+    comparePriority(left?.pipeline_status === 'RECON_LINKED' ? 1 : 0, right?.pipeline_status === 'RECON_LINKED' ? 1 : 0),
+    comparePriority(String(left?.external_id || '') === String(rawMatchId || '') ? 1 : 0, String(right?.external_id || '') === String(rawMatchId || '') ? 1 : 0),
+    comparePriority(left?.pipeline_status !== 'failed' ? 1 : 0, right?.pipeline_status !== 'failed' ? 1 : 0),
+    toComparableTime(left?.created_at) - toComparableTime(right?.created_at),
+    String(left?.match_id || '').localeCompare(String(right?.match_id || ''))
+  ];
 
-  const leftExact = String(left?.external_id || '') === String(rawMatchId || '') ? 1 : 0;
-  const rightExact = String(right?.external_id || '') === String(rawMatchId || '') ? 1 : 0;
-  if (leftExact !== rightExact) {
-    return rightExact - leftExact;
-  }
-
-  const leftActive = left?.pipeline_status !== 'failed' ? 1 : 0;
-  const rightActive = right?.pipeline_status !== 'failed' ? 1 : 0;
-  if (leftActive !== rightActive) {
-    return rightActive - leftActive;
-  }
-
-  const createdAtDiff = toComparableTime(left?.created_at) - toComparableTime(right?.created_at);
-  if (createdAtDiff !== 0) {
-    return createdAtDiff;
-  }
-
-  return String(left?.match_id || '').localeCompare(String(right?.match_id || ''));
+  return comparisons.find((value) => value !== 0) || 0;
 }
 
 function determineDecisionReason(rows, winner, rawMatchId = null) {
