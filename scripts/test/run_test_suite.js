@@ -95,14 +95,7 @@ function formatDuration(durationMs) {
  * @param {string} text
  * @returns {{ title: string, location: string|null, error: string|null } | null}
  */
-function extractFailureSummary(text) {
-  const lines = text.split(/\r?\n/);
-  const failureIndex = lines.findIndex(line => /^\s*not ok \d+ - /.test(line));
-  if (failureIndex === -1) {
-    return null;
-  }
-
-  const testName = lines[failureIndex].replace(/^\s*not ok \d+ - /, '').trim();
+function collectSubtestTrail(lines, failureIndex) {
   const subtests = [];
   const failureIndent = (lines[failureIndex].match(/^(\s*)/) || ['', ''])[1].length;
   let maxIndent = failureIndent;
@@ -120,13 +113,10 @@ function extractFailureSummary(text) {
     }
   }
 
-  const titleParts = [];
-  for (const part of [...subtests.slice(-3), testName]) {
-    if (part && titleParts[titleParts.length - 1] !== part) {
-      titleParts.push(part);
-    }
-  }
+  return subtests;
+}
 
+function extractFailureDetails(lines, failureIndex) {
   let location = null;
   let error = null;
 
@@ -137,22 +127,44 @@ function extractFailureSummary(text) {
     }
 
     const errorMatch = lines[index].match(/error:\s*(.+)$/);
-    if (errorMatch && !error) {
-      const raw = errorMatch[1].trim();
-      if (raw && !['|-', '|', '>-', '>'].includes(raw)) {
-        error = raw.replace(/^['"]|['"]$/g, '');
-        continue;
-      }
+    if (!errorMatch || error) {
+      continue;
+    }
 
-      for (let detailIndex = index + 1; detailIndex < Math.min(lines.length, index + 6); detailIndex += 1) {
-        const detail = lines[detailIndex].trim();
-        if (detail && detail !== '---' && !detail.startsWith('stack:')) {
-          error = detail;
-          break;
-        }
+    const raw = errorMatch[1].trim();
+    if (raw && !['|-', '|', '>-', '>'].includes(raw)) {
+      error = raw.replace(/^['"]|['"]$/g, '');
+      continue;
+    }
+
+    for (let detailIndex = index + 1; detailIndex < Math.min(lines.length, index + 6); detailIndex += 1) {
+      const detail = lines[detailIndex].trim();
+      if (detail && detail !== '---' && !detail.startsWith('stack:')) {
+        error = detail;
+        break;
       }
     }
   }
+
+  return { error, location };
+}
+
+function extractFailureSummary(text) {
+  const lines = text.split(/\r?\n/);
+  const failureIndex = lines.findIndex(line => /^\s*not ok \d+ - /.test(line));
+  if (failureIndex === -1) {
+    return null;
+  }
+
+  const testName = lines[failureIndex].replace(/^\s*not ok \d+ - /, '').trim();
+  const subtests = collectSubtestTrail(lines, failureIndex);
+  const titleParts = [];
+  for (const part of [...subtests.slice(-3), testName]) {
+    if (part && titleParts[titleParts.length - 1] !== part) {
+      titleParts.push(part);
+    }
+  }
+  const { location, error } = extractFailureDetails(lines, failureIndex);
 
   return {
     title: titleParts.join(' > '),

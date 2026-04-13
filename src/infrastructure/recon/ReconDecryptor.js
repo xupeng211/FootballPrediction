@@ -29,15 +29,98 @@ class ReconDecryptor {
     this._recentSamples = [];
   }
 
+  _createPageClosedError() {
+    const pageClosedError = new Error('PAGE_CONTEXT_CLOSED');
+    pageClosedError.code = 'PAGE_CONTEXT_CLOSED';
+    return pageClosedError;
+  }
+
+  _storeDecryptor(decryptFn) {
+    this.decryptFn = decryptFn;
+    if (!this.algorithmVersion && decryptFn?.__algorithmVersion) {
+      this.algorithmVersion = decryptFn.__algorithmVersion;
+    }
+    return decryptFn;
+  }
+
+  _logExtractedDecryptor(method, payload = {}, level = 'info') {
+    this.logger[level]('decryptor_extracted', {
+      method,
+      version: this.algorithmVersion,
+      ...payload
+    });
+  }
+
+  async _tryPrimaryAppScript(page, sampleEncryptedData, samplePool) {
+    const decryptFn = await this._extractFromAppScript(page, samplePool, {
+      hasPrimarySample: typeof sampleEncryptedData === 'string' && sampleEncryptedData.trim().length > 0
+    });
+    if (!decryptFn) {
+      return null;
+    }
+
+    this._storeDecryptor(decryptFn);
+    this._logExtractedDecryptor('app_script', {
+      validated: this.decryptFn.__validated !== false,
+      bestEffort: this.decryptFn.__bestEffort === true
+    });
+    return this.decryptFn;
+  }
+
+  async _tryFallbackAppScript(page, sampleEncryptedData, samplePool) {
+    const hasPrimarySample = typeof sampleEncryptedData === 'string' && sampleEncryptedData.trim().length > 0;
+    if (!hasPrimarySample || samplePool.length > 0) {
+      return null;
+    }
+
+    const decryptFn = await this._extractFromAppScript(page, null, {
+      hasPrimarySample: false
+    });
+    if (!decryptFn) {
+      return null;
+    }
+
+    this._storeDecryptor(decryptFn);
+    this.logger.warn('decryptor_extracted_without_primary_sample', {
+      method: 'app_script',
+      version: this.algorithmVersion
+    });
+    return this.decryptFn;
+  }
+
+  async _trySecondarySources(page) {
+    const attempts = [
+      ['inline_script', this._extractFromInlineScripts.bind(this)],
+      ['global_scope', this._extractFromGlobalScope.bind(this)]
+    ];
+
+    for (const [method, extractor] of attempts) {
+      const decryptFn = await extractor(page);
+      if (!decryptFn) {
+        continue;
+      }
+
+      this._storeDecryptor(decryptFn);
+      this._logExtractedDecryptor(method);
+      return decryptFn;
+    }
+
+    return null;
+  }
+
+  async _extractWithFallbackStrategies(page, sampleEncryptedData, samplePool) {
+    return this._tryPrimaryAppScript(page, sampleEncryptedData, samplePool)
+      || this._tryFallbackAppScript(page, sampleEncryptedData, samplePool)
+      || this._trySecondarySources(page);
+  }
+
   async extractDecryptor(page, sampleEncryptedData = null) {
     if (!page) {
       throw new Error('Page instance required');
     }
 
     if (this._isPageUnavailable(page)) {
-      const pageClosedError = new Error('PAGE_CONTEXT_CLOSED');
-      pageClosedError.code = 'PAGE_CONTEXT_CLOSED';
-      throw pageClosedError;
+      throw this._createPageClosedError();
     }
 
     if (typeof this.decryptFn === 'function' && this.algorithmVersion) {
@@ -53,59 +136,12 @@ class ReconDecryptor {
 
     this._extractPromise = (async () => {
       try {
-        const appScriptDecryptFn = await this._extractFromAppScript(page, samplePool, {
-          hasPrimarySample: typeof sampleEncryptedData === 'string' && sampleEncryptedData.trim().length > 0
-        });
-        if (appScriptDecryptFn) {
-          this.decryptFn = appScriptDecryptFn;
-          if (!this.algorithmVersion && appScriptDecryptFn.__algorithmVersion) {
-            this.algorithmVersion = appScriptDecryptFn.__algorithmVersion;
-          }
-          this.logger.info('decryptor_extracted', {
-            method: 'app_script',
-            version: this.algorithmVersion,
-            validated: this.decryptFn.__validated !== false,
-            bestEffort: this.decryptFn.__bestEffort === true
-          });
-          return this.decryptFn;
+        const decryptFn = await this._extractWithFallbackStrategies(page, sampleEncryptedData, samplePool);
+        if (decryptFn) {
+          return decryptFn;
         }
-
-        const hasPrimarySample = typeof sampleEncryptedData === 'string' && sampleEncryptedData.trim().length > 0;
-        if (hasPrimarySample && samplePool.length === 0) {
-          const fallbackDecryptFn = await this._extractFromAppScript(page, null, {
-            hasPrimarySample: false
-          });
-          if (fallbackDecryptFn) {
-            this.decryptFn = fallbackDecryptFn;
-            if (!this.algorithmVersion && fallbackDecryptFn.__algorithmVersion) {
-              this.algorithmVersion = fallbackDecryptFn.__algorithmVersion;
-            }
-            this.logger.warn('decryptor_extracted_without_primary_sample', {
-              method: 'app_script',
-              version: this.algorithmVersion
-            });
-            return this.decryptFn;
-          }
-        }
-
-        const inlineFn = await this._extractFromInlineScripts(page);
-        if (inlineFn) {
-          this.decryptFn = inlineFn;
-          this.logger.info('decryptor_extracted', { method: 'inline_script', version: this.algorithmVersion });
-          return inlineFn;
-        }
-
-        const globalFn = await this._extractFromGlobalScope(page);
-        if (globalFn) {
-          this.decryptFn = globalFn;
-          this.logger.info('decryptor_extracted', { method: 'global_scope', version: this.algorithmVersion });
-          return globalFn;
-        }
-
         if (this._isPageUnavailable(page)) {
-          const pageClosedError = new Error('PAGE_CONTEXT_CLOSED');
-          pageClosedError.code = 'PAGE_CONTEXT_CLOSED';
-          throw pageClosedError;
+          throw this._createPageClosedError();
         }
 
         throw new Error('Failed to extract decryptor from any source');

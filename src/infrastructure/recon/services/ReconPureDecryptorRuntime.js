@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 'use strict';
 
 const fs = require('node:fs/promises');

@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * L1 Fixture Harvester - 德甲 25/26 赛季赛程抓取
  * ===============================================

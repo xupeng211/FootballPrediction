@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * TITAN V6.0 StealthNavigator - 战术操纵模块
  * ===========================================

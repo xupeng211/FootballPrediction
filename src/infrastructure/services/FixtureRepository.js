@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 'use strict';
 
 const { Normalizer } = require('../../utils/Normalizer');

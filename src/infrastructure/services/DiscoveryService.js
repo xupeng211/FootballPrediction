@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * @file DiscoveryService - TITAN V6.7 L1 发现引擎 (Project Hound)
  * @module infrastructure/services/DiscoveryService

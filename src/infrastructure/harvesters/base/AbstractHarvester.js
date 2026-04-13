@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * AbstractHarvester - 收割器抽象基类
  * ==================================

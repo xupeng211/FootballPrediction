@@ -18,6 +18,58 @@ function isAjaxPayloadUrl(context, url = '') {
 }
 
 const reconResponseDecoder = {
+  resolveDecodedPayload(trimmed, url = '') {
+    const directJson = this.safeJsonParse(trimmed);
+    if (directJson !== null) {
+      return { parsed: directJson, source: 'json' };
+    }
+
+    const wrappedPayload = this.parseScriptWrappedPayload(trimmed);
+    if (wrappedPayload.matched) {
+      return {
+        parsed: wrappedPayload.parsed,
+        source: wrappedPayload.source
+      };
+    }
+
+    if (this.isKnownErrorPayload(trimmed)) {
+      return { parsed: null, source: 'error_payload' };
+    }
+    if (this.isArchivePlaceholderPayload(trimmed)) {
+      return { parsed: null, source: 'archive_placeholder_payload' };
+    }
+    if (!isAjaxPayloadUrl(this, url)) {
+      return { parsed: null, source: 'unsupported' };
+    }
+    if (this.isPageUnavailable()) {
+      return { parsed: null, source: 'page_unavailable' };
+    }
+
+    return null;
+  },
+
+  rememberEncryptedSample(trimmed) {
+    if (typeof this.decryptor.rememberSample === 'function') {
+      this.decryptor.rememberSample(trimmed);
+    }
+  },
+
+  async decryptPayloadText(trimmed) {
+    try {
+      if (!this.decryptor.getAlgorithmVersion()) {
+        await this.decryptor.extractDecryptor(this.page, trimmed);
+      }
+      return await this.decryptor.decrypt(trimmed);
+    } catch (initialError) {
+      if (initialError?.code === 'INVALID_ENCRYPTED_PAYLOAD' || this._isPageContextClosedError(initialError)) {
+        throw initialError;
+      }
+
+      await this.decryptor.extractDecryptor(this.page, trimmed);
+      return this.decryptor.decrypt(trimmed);
+    }
+  },
+
   async parseApiResponse(body, url = '') {
     if (!body || typeof body !== 'string') {
       this.logger.debug('[ReconNetworkMonitor] 响应体为空或非字符串', { traceId: this.traceId });
@@ -75,59 +127,14 @@ const reconResponseDecoder = {
       return { parsed: null, source: 'empty' };
     }
 
-    const directJson = this.safeJsonParse(trimmed);
-    if (directJson !== null) {
-      return { parsed: directJson, source: 'json' };
+    const resolvedPayload = this.resolveDecodedPayload(trimmed, url);
+    if (resolvedPayload) {
+      return resolvedPayload;
     }
 
-    const wrappedPayload = this.parseScriptWrappedPayload(trimmed);
-    if (wrappedPayload.matched) {
-      return {
-        parsed: wrappedPayload.parsed,
-        source: wrappedPayload.source
-      };
-    }
-
-    if (this.isKnownErrorPayload(trimmed)) {
-      return { parsed: null, source: 'error_payload' };
-    }
-
-    if (this.isArchivePlaceholderPayload(trimmed)) {
-      return { parsed: null, source: 'archive_placeholder_payload' };
-    }
-
-    if (!isAjaxPayloadUrl(this, url)) {
-      return { parsed: null, source: 'unsupported' };
-    }
-
-    if (this.isPageUnavailable()) {
-      return { parsed: null, source: 'page_unavailable' };
-    }
-
-    if (typeof this.decryptor.rememberSample === 'function') {
-      this.decryptor.rememberSample(trimmed);
-    }
-
+    this.rememberEncryptedSample(trimmed);
     this.logger.debug('[ReconNetworkMonitor] 检测到加密响应，尝试解密', { traceId: this.traceId });
-
-    let decrypted;
-    try {
-      if (!this.decryptor.getAlgorithmVersion()) {
-        await this.decryptor.extractDecryptor(this.page, trimmed);
-      }
-      decrypted = await this.decryptor.decrypt(trimmed);
-    } catch (initialError) {
-      if (
-        initialError?.code === 'INVALID_ENCRYPTED_PAYLOAD'
-        || this._isPageContextClosedError(initialError)
-      ) {
-        throw initialError;
-      }
-
-      await this.decryptor.extractDecryptor(this.page, trimmed);
-      decrypted = await this.decryptor.decrypt(trimmed);
-    }
-
+    const decrypted = await this.decryptPayloadText(trimmed);
     const parsed = typeof decrypted === 'string' ? this.safeJsonParse(decrypted.trim()) : decrypted;
     if (!parsed || typeof parsed !== 'object') {
       throw new Error('decrypt_result_not_json');

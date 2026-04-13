@@ -51,50 +51,45 @@ function extractXG(data) {
     return { xg_home: null, xg_away: null, hasXG: false };
 }
 
+function getPeriodStats(data) {
+    return data?.content?.stats?.Periods?.All?.stats || null;
+}
+
+function parsePossessionValue(value) {
+    if (typeof value === 'string' && value.includes('%')) {
+        return parseFloat(value) / 100;
+    }
+
+    return parseFloat(value);
+}
+
+function buildPossessionResult(stats = []) {
+    return {
+        possession_home: parsePossessionValue(stats[0]),
+        possession_away: parsePossessionValue(stats[1]),
+        hasPossession: true
+    };
+}
+
 /**
  * 提取控球率数据
  * @param {object} data - API 数据
  * @returns {object} 控球率数据 {possession_home, possession_away, hasPossession}
  */
 function extractPossession(data) {
-    if (!data || !data.content || !data.content.stats) {
+    const stats = getPeriodStats(data);
+    if (!stats) {
         return { possession_home: null, possession_away: null, hasPossession: false };
     }
-
-    const stats = data.content.stats;
     
-    if (stats.Periods && stats.Periods.All && stats.Periods.All.stats) {
-        // 方式1: Ball possession 百分比格式
-        const posStat = stats.Periods.All.stats.find(
-            s => s.title === 'Ball possession' || s.title === 'Possession'
-        );
-        if (posStat && posStat.stats) {
-            const posData = posStat.stats.find(
-                s => s.key === 'possession' || s.key === 'ball_possession'
-            );
-            if (posData && posData.stats && posData.stats.length >= 2) {
-                let home = posData.stats[0];
-                let away = posData.stats[1];
-                
-                // 处理百分比字符串 (如 "65%")
-                if (typeof home === 'string' && home.includes('%')) {
-                    home = parseFloat(home) / 100;
-                } else {
-                    home = parseFloat(home);
-                }
-                if (typeof away === 'string' && away.includes('%')) {
-                    away = parseFloat(away) / 100;
-                } else {
-                    away = parseFloat(away);
-                }
-                
-                return {
-                    possession_home: home,
-                    possession_away: away,
-                    hasPossession: true
-                };
-            }
-        }
+    const posStat = stats.find(
+        s => s.title === 'Ball possession' || s.title === 'Possession'
+    );
+    const posData = posStat?.stats?.find(
+        s => s.key === 'possession' || s.key === 'ball_possession'
+    );
+    if (posData?.stats?.length >= 2) {
+        return buildPossessionResult(posData.stats);
     }
 
     return { possession_home: null, possession_away: null, hasPossession: false };

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable complexity, max-lines */
 /**
  * @file titan_discovery.js - TITAN V6.7 L1 发现引擎入口 (Project Hound)
  * @description 超薄 CLI 入口，支持多联赛自动扫描

@@ -161,76 +161,58 @@ class ReconGuardian {
    * @private
    */
   async findZombieProcesses() {
-    const zombies = [];
-
-    for (const processName of this.targetProcesses) {
-      try {
-        // 查找目标进程
-        const { stdout } = await execAsync(
-          'ps -eo pid=,ppid=,pcpu=,pmem=,etimes=,stat=,args='
-        );
-
-        if (!stdout.trim()) {
-          continue;
-        }
-
-        const lines = stdout.trim().split('\n');
-
-        for (const line of lines) {
-          const parts = line.trim().match(/^(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)\s+(\S+)\s+(.+)$/);
-          if (!parts) continue;
-
-          const [, pidStr, ppidStr, cpu, mem, elapsedStr, stat, cmd] = parts;
-          if (!cmd.toLowerCase().includes(processName.toLowerCase())) {
-            continue;
-          }
-          const pid = parseInt(pidStr, 10);
-          const ppid = parseInt(ppidStr, 10);
-
-          if (isNaN(pid) || isNaN(ppid)) continue;
-
-          // 检查是否为僵尸进程 (Z 状态) 或孤儿进程 (ppid = 1)
-          const isZombie = stat === 'Z' || stat === 'Z+';
-          const isOrphan = ppid === 1;
-          const elapsedSeconds = parseInt(elapsedStr, 10) || 0;
-          const isManagedProfile = this._isManagedBrowserProcess(cmd);
-          const isOrphanPastGrace = isOrphan && elapsedSeconds >= this.orphanGraceSeconds;
-
-          // 检查 CPU/内存使用率异常 (长时间占用资源但无进展)
-          const cpuUsage = parseFloat(cpu) || 0;
-          const memUsage = parseFloat(mem) || 0;
-          const isResourceHog = cpuUsage > this.cpuThreshold || memUsage > this.memThreshold;
-
-          if (this._shouldCollectProcess({
-            isZombie,
-            isOrphan,
-            isOrphanPastGrace,
-            isResourceHog,
-            isManagedProfile
-          })) {
-            zombies.push({
-              pid,
-              ppid,
-              name: processName,
-              cpu: cpuUsage,
-              mem: memUsage,
-              stat,
-              cmd: cmd.substring(0, 100),
-              isZombie,
-              isOrphan,
-              isOrphanPastGrace,
-              isManagedProfile,
-              isResourceHog
-            });
-          }
-        }
-      } catch (e) {
-        // ps 命令可能失败，记录但继续
-        this.logger.debug('process_check_error', { process: processName, error: e.message });
+    try {
+      const { stdout } = await execAsync('ps -eo pid=,ppid=,pcpu=,pmem=,etimes=,stat=,args=');
+      if (!stdout.trim()) {
+        return [];
       }
+
+      return stdout.trim().split('\n')
+        .map((line) => this._buildCollectableProcess(line))
+        .filter(Boolean);
+    } catch (e) {
+      this.logger.debug('process_check_error', { error: e.message });
+      return [];
+    }
+  }
+
+  _buildCollectableProcess(line) {
+    const parts = line.trim().match(/^(\d+)\s+(\d+)\s+([\d.]+)\s+([\d.]+)\s+(\d+)\s+(\S+)\s+(.+)$/);
+    if (!parts) {
+      return null;
     }
 
-    return zombies;
+    const [, pidStr, ppidStr, cpu, mem, elapsedStr, stat, cmd] = parts;
+    const processName = this.targetProcesses.find((name) => cmd.toLowerCase().includes(name.toLowerCase()));
+    const pid = parseInt(pidStr, 10);
+    const ppid = parseInt(ppidStr, 10);
+    if (!processName || isNaN(pid) || isNaN(ppid)) {
+      return null;
+    }
+
+    const cpuUsage = parseFloat(cpu) || 0;
+    const memUsage = parseFloat(mem) || 0;
+    const flags = {
+      isZombie: stat === 'Z' || stat === 'Z+',
+      isOrphan: ppid === 1,
+      isManagedProfile: this._isManagedBrowserProcess(cmd),
+      isResourceHog: cpuUsage > this.cpuThreshold || memUsage > this.memThreshold
+    };
+    flags.isOrphanPastGrace = flags.isOrphan && (parseInt(elapsedStr, 10) || 0) >= this.orphanGraceSeconds;
+    if (!this._shouldCollectProcess(flags)) {
+      return null;
+    }
+
+    return {
+      pid,
+      ppid,
+      name: processName,
+      cpu: cpuUsage,
+      mem: memUsage,
+      stat,
+      cmd: cmd.substring(0, 100),
+      ...flags
+    };
   }
 
   /**

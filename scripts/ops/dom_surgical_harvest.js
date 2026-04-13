@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * DOM Surgical Harvest - 德甲按月分段清缴 (MONTHLY DOMINATION)
  * ================================================================

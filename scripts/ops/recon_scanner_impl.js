@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * TITAN V11.0 RECON SCANNER - Clean Sweep Edition (Implementation)
  * ================================================

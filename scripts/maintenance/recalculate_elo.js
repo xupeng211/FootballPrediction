@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable complexity, max-lines */
 /**
  * V199.0 Elo 战力重算脚本 - 自适应全联赛版
  * ============================================

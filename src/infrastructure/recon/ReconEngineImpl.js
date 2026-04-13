@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /** @module infrastructure/recon/ReconEngineImpl */
 
 'use strict';

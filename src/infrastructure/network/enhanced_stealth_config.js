@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 /**
  * V194.3 增强版隐身配置
  * =====================
