@@ -99,19 +99,34 @@ class ReconStealthProvider {
       injectedFingerprintSeed,
       injectedWebgl
     }) => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-      Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => injectedHardwareConcurrency });
-      Object.defineProperty(navigator, 'deviceMemory', { get: () => injectedDeviceMemory });
-      Object.defineProperty(navigator, 'platform', { get: () => injectedPlatform });
-      Object.defineProperty(navigator, 'languages', { get: () => injectedLanguages });
-      Object.defineProperty(navigator, 'language', { get: () => injectedLanguage });
-      Object.defineProperty(navigator, 'plugins', {
-        get: () => [
-          { name: 'Chrome PDF Plugin' },
-          { name: 'Chrome PDF Viewer' },
-          { name: 'Native Client' }
-        ]
-      });
+      const safeDefineReadonly = (target, property, getter) => {
+        if (!target) {
+          return false;
+        }
+
+        const descriptor = Object.getOwnPropertyDescriptor(target, property);
+        if (descriptor && descriptor.configurable === false) {
+          return false;
+        }
+
+        Object.defineProperty(target, property, {
+          get: getter,
+          configurable: true
+        });
+        return true;
+      };
+
+      safeDefineReadonly(navigator, 'webdriver', () => undefined);
+      safeDefineReadonly(navigator, 'hardwareConcurrency', () => injectedHardwareConcurrency);
+      safeDefineReadonly(navigator, 'deviceMemory', () => injectedDeviceMemory);
+      safeDefineReadonly(navigator, 'platform', () => injectedPlatform);
+      safeDefineReadonly(navigator, 'languages', () => injectedLanguages);
+      safeDefineReadonly(navigator, 'language', () => injectedLanguage);
+      safeDefineReadonly(navigator, 'plugins', () => [
+        { name: 'Chrome PDF Plugin' },
+        { name: 'Chrome PDF Viewer' },
+        { name: 'Native Client' }
+      ]);
       window.chrome = window.chrome || { runtime: {} };
       Object.defineProperty(window, '__reconContextFingerprint', {
         value: {
