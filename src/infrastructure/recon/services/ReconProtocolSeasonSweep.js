@@ -20,6 +20,7 @@ function buildSeasonSweepContext(handler, baseUrl, options = {}) {
     circuitBreakerKey,
     preferCurrentSeasonSource: options.preferCurrentSeasonSource === true,
     forceDomOnly: options.forceDomOnly === true,
+    leagueDeadlineAt: normalizeLeagueDeadlineAt(options.leagueDeadlineAt),
     minCandidatesForStateProbe: Math.max(
       0,
       Number(options.minCandidatesForStateProbe ?? STATE_PROBER_CONFIG.minimum_current_results_candidates ?? 0) || 0
@@ -28,6 +29,56 @@ function buildSeasonSweepContext(handler, baseUrl, options = {}) {
       ? { contentReadySelector: readySelector, circuitBreakerKey }
       : { circuitBreakerKey }
   };
+}
+
+function normalizeLeagueDeadlineAt(deadlineAt) {
+  const normalized = Number(deadlineAt);
+  return Number.isFinite(normalized) && normalized > 0 ? normalized : null;
+}
+
+function buildLeagueTimeoutError(context, stage = 'season_sweep_timeout') {
+  const error = new Error('LEAGUE_TIMEOUT');
+  error.code = 'LEAGUE_TIMEOUT';
+  error.stage = stage;
+  error.sourceUrl = context.resultsUrl;
+  error.sourceSeason = null;
+  return error;
+}
+
+function resolveRemainingLeagueBudgetMs(context) {
+  if (!Number.isFinite(context?.leagueDeadlineAt)) {
+    return null;
+  }
+
+  return Number(context.leagueDeadlineAt) - Date.now();
+}
+
+function assertLeagueBudget(handler, context, stage) {
+  const remainingBudgetMs = resolveRemainingLeagueBudgetMs(context);
+  if (remainingBudgetMs === null || remainingBudgetMs > 0) {
+    return remainingBudgetMs;
+  }
+
+  handler.logger.warn('season_sweep_league_timeout', {
+    baseUrl: context.resultsUrl,
+    breakerKey: context.circuitBreakerKey,
+    stage
+  });
+  throw buildLeagueTimeoutError(context, stage);
+}
+
+function resolveOperationTimeoutMs(handler, context, stage, fallbackTimeoutMs = null) {
+  const remainingBudgetMs = assertLeagueBudget(handler, context, stage);
+  const normalizedFallbackTimeoutMs = Math.max(
+    1,
+    Number(fallbackTimeoutMs ?? context.timeoutMs ?? handler.navigator.archiveTimeoutMs) || 1
+  );
+
+  if (remainingBudgetMs === null) {
+    return normalizedFallbackTimeoutMs;
+  }
+
+  return Math.max(1, Math.min(normalizedFallbackTimeoutMs, remainingBudgetMs));
 }
 
 function createSeasonSweepAccumulator() {
@@ -85,12 +136,19 @@ async function collectSeasonPages(handler, discovery, context, accumulator, opti
 
   for (let index = 1; index < discovery.pageUrls.length; index++) {
     const pageUrl = discovery.pageUrls[index];
+    const timeoutMs = resolveOperationTimeoutMs(handler, context, 'season_page_navigate');
     await handler.navigator.navigate(pageUrl, {
       waitUntil: 'domcontentloaded',
-      timeout: context.timeoutMs,
+      timeout: timeoutMs,
       ...context.navigateOptions
     });
-    await waitForDelay(handler.page, handler.navigator.pageRevisitWaitMs);
+    await waitForDelay(
+      handler.page,
+      Math.min(
+        handler.navigator.pageRevisitWaitMs,
+        resolveOperationTimeoutMs(handler, context, 'season_page_revisit_wait', handler.navigator.pageRevisitWaitMs)
+      )
+    );
 
     let pageMatches = handler.navigator.getInterceptedData();
     let source = 'page_intercept';
@@ -103,17 +161,22 @@ async function collectSeasonPages(handler, discovery, context, accumulator, opti
   }
 }
 
-async function mergeArchiveMatches(handler, context, accumulator) {
+async function mergeArchiveMatches(handler, context, accumulator, options = {}) {
   const archiveResult = await handler._callNavigatorOverride(
     'protocolArchiveExtract',
     (resolvedBaseUrl, resolvedOptions) => handler.protocolArchiveExtract(resolvedBaseUrl, resolvedOptions),
     context.resultsUrl,
     {
       maxPages: context.maxPages,
-      timeoutMs: context.timeoutMs,
+      timeoutMs: resolveOperationTimeoutMs(handler, context, 'season_archive_merge'),
       preferCurrentSeasonSource: false,
       readySelector: context.readySelector,
-      circuitBreakerKey: context.circuitBreakerKey
+      circuitBreakerKey: context.circuitBreakerKey,
+      seedArchiveEndpoints: options.seedArchiveEndpoints || [],
+      skipContextReset: options.skipContextReset === true,
+      reuseCurrentPage: options.reuseCurrentPage === true,
+      disableTournamentFallback: options.disableTournamentFallback === true,
+      leagueDeadlineAt: context.leagueDeadlineAt
     }
   );
 
@@ -127,18 +190,20 @@ async function mergeArchiveMatches(handler, context, accumulator) {
   }
 }
 
-async function mergeCurrentSeasonProbe(handler, context, accumulator) {
-  const currentSeasonResult = await handler.navigator.stateProber.probeCurrentSeasonFromPageState(
-    context.baseUrl,
-    {
-      maxPages: context.maxPages,
-      timeoutMs: context.timeoutMs,
-      maxScrollRounds: handler.navigator.scrollAttempts,
-      readySelector: context.readySelector,
-      circuitBreakerKey: context.circuitBreakerKey
-    },
-    handler._buildStateProbeHooks(context.navigateOptions, context.circuitBreakerKey)
-  );
+async function mergeCurrentSeasonProbe(handler, context, accumulator, options = {}) {
+    const timeoutMs = resolveOperationTimeoutMs(handler, context, 'season_current_probe');
+    const currentSeasonResult = await handler.navigator.stateProber.probeCurrentSeasonFromPageState(
+      context.baseUrl,
+      {
+        maxPages: context.maxPages,
+        timeoutMs,
+        maxScrollRounds: handler.navigator.scrollAttempts,
+        readySelector: context.readySelector,
+        disableTournamentFallback: options.disableTournamentFallback === true,
+        circuitBreakerKey: context.circuitBreakerKey
+      },
+      handler._buildStateProbeHooks(context.navigateOptions, context.circuitBreakerKey)
+    );
 
   const beforeCount = accumulator.matches.length;
   accumulator.append(
@@ -169,13 +234,8 @@ async function mergeCurrentSeasonProbe(handler, context, accumulator) {
 
 const reconProtocolSeasonSweep = {
   async fetchFullSeasonArchive(baseUrl, options = {}) {
-    if (typeof this.navigator.resetContextPerBatch === 'function') {
-      await this.navigator.resetContextPerBatch({ reason: 'fetch_full_season_archive' });
-    } else {
-      await this.navigator.ensureBrowserHealthy();
-    }
-
     const context = buildSeasonSweepContext(this, baseUrl, options);
+    assertLeagueBudget(this, context, 'season_sweep_start');
     this.logger.info('season_sweep_start', {
       baseUrl: context.resultsUrl,
       maxPages: context.maxPages,
@@ -184,9 +244,50 @@ const reconProtocolSeasonSweep = {
       breakerKey: context.circuitBreakerKey
     });
 
+    if (context.preferCurrentSeasonSource && !context.forceDomOnly) {
+      const blindResult = await this._callNavigatorOverride(
+        '_tryBlindProtocolArchiveExtract',
+        (resolvedBaseUrl, resolvedOptions) => this._tryBlindProtocolArchiveExtract(resolvedBaseUrl, resolvedOptions),
+        context.resultsUrl,
+        {
+          ...options,
+          maxPages: context.maxPages,
+          timeoutMs: resolveOperationTimeoutMs(this, context, 'season_blind_protocol'),
+          readySelector: context.readySelector,
+          preferCurrentSeasonSource: true,
+          circuitBreakerKey: context.circuitBreakerKey,
+          leagueDeadlineAt: context.leagueDeadlineAt,
+          disableTournamentFallback: options.disableTournamentFallback === true
+        }
+      );
+
+      if (Array.isArray(blindResult?.matches) && blindResult.matches.length > 0) {
+        this.logger.info('season_sweep_blind_hit', {
+          baseUrl: context.resultsUrl,
+          totalCandidates: blindResult.matches.length,
+          sourceState: blindResult.sourceState || 'SOURCE_EMPTY',
+          breakerKey: context.circuitBreakerKey
+        });
+        return {
+          ...blindResult,
+          pageUrls: [context.resultsUrl]
+        };
+      }
+    }
+
+    if (typeof this.navigator.resetContextPerBatch === 'function') {
+      await this.navigator.resetContextPerBatch({ reason: 'fetch_full_season_archive' });
+    } else {
+      await this.navigator.ensureBrowserHealthy();
+    }
+
     const discovery = await this.navigator.domScraper.discoverSeasonResultPages(
       context.resultsUrl,
-      { timeoutMs: context.timeoutMs, maxPages: context.maxPages, includeSeasonNavigation: false },
+      {
+        timeoutMs: resolveOperationTimeoutMs(this, context, 'season_discovery'),
+        maxPages: context.maxPages,
+        includeSeasonNavigation: false
+      },
       {
         navigate: (url, dynamicNavigateOptions) => this.navigator.navigate(url, {
           ...dynamicNavigateOptions,
@@ -196,16 +297,22 @@ const reconProtocolSeasonSweep = {
         waitForTimeout: async (ms) => waitForDelay(this.page, ms)
       }
     );
+    const seedArchiveEndpoints = Array.from(this.navigator.apiEndpoints);
 
     const accumulator = createSeasonSweepAccumulator();
     await collectSeasonPages(this, discovery, context, accumulator, options);
 
     if (!context.forceDomOnly) {
-      await mergeArchiveMatches(this, context, accumulator);
+      await mergeArchiveMatches(this, context, accumulator, {
+        seedArchiveEndpoints,
+        skipContextReset: seedArchiveEndpoints.length > 0 || discovery.pageUrls.length <= 1,
+        reuseCurrentPage: discovery.pageUrls.length <= 1,
+        disableTournamentFallback: options.disableTournamentFallback === true
+      });
     }
 
     if (shouldProbeCurrentSeason(context, accumulator.matches.length)) {
-      await mergeCurrentSeasonProbe(this, context, accumulator);
+      await mergeCurrentSeasonProbe(this, context, accumulator, options);
     }
 
     this.logger.info('season_sweep_complete', {

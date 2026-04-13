@@ -73,18 +73,29 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
   assert.equal(result.linked, 1);
   assert.equal(result.totalInserted, 1);
   assert.deepEqual(batchCalls, [{ type: 'linked', size: 1 }]);
-  assert.deepEqual(protocolCalls, [
+  assert.equal(protocolCalls.length, 1);
+  assert.equal(
+    protocolCalls[0].url,
+    'oddsportal://root/football/england/premier-league-2025-2026/results/'
+  );
+  assert.deepEqual(
     {
-      url: 'oddsportal://root/football/england/premier-league-2025-2026/results/',
-      options: {
-        maxPages: 50,
-        timeoutMs: engine.archiveTimeoutMs,
-        preferCurrentSeasonSource: true,
-        circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
-        forcePureProtocol: false
-      }
+      maxPages: protocolCalls[0].options.maxPages,
+      timeoutMs: protocolCalls[0].options.timeoutMs,
+      preferCurrentSeasonSource: protocolCalls[0].options.preferCurrentSeasonSource,
+      circuitBreakerKey: protocolCalls[0].options.circuitBreakerKey,
+      forcePureProtocol: protocolCalls[0].options.forcePureProtocol,
+      disableTournamentFallback: protocolCalls[0].options.disableTournamentFallback
+    },
+    {
+      maxPages: 50,
+      timeoutMs: engine.archiveTimeoutMs,
+      preferCurrentSeasonSource: true,
+      circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+      forcePureProtocol: false,
+      disableTournamentFallback: true
     }
-  ]);
+  );
   assert.equal(
     protocolCalls.some((call) => call.url.includes('/fixtures/')),
     false,

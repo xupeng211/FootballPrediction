@@ -142,28 +142,30 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     assert.strictEqual(result.linked, 0);
     assert.strictEqual(result.errors.length, 1);
     assert.strictEqual(result.errors[0].error, 'SOURCE_EMPTY');
-    assert.deepStrictEqual(protocolCalls, [
+    assert.strictEqual(protocolCalls.length, 1);
+    assert.strictEqual(
+      protocolCalls[0].url,
+      'oddsportal://root/football/england/premier-league-2025-2026/results/'
+    );
+    assert.deepStrictEqual(
       {
-        url: 'oddsportal://root/football/england/premier-league-2025-2026/results/',
-        options: {
-          maxPages: 50,
-          timeoutMs: engine.archiveTimeoutMs,
-          preferCurrentSeasonSource: true,
-          circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
-          forcePureProtocol: false
-        }
+        maxPages: protocolCalls[0].options.maxPages,
+        timeoutMs: protocolCalls[0].options.timeoutMs,
+        preferCurrentSeasonSource: protocolCalls[0].options.preferCurrentSeasonSource,
+        circuitBreakerKey: protocolCalls[0].options.circuitBreakerKey,
+        forcePureProtocol: protocolCalls[0].options.forcePureProtocol,
+        disableTournamentFallback: protocolCalls[0].options.disableTournamentFallback
       },
       {
-        url: 'oddsportal://root/football/england/premier-league-2025-2026/fixtures/',
-        options: {
-          maxPages: 50,
-          timeoutMs: engine.archiveTimeoutMs,
-          preferCurrentSeasonSource: true,
-          circuitBreakerKey: 'recon:47:2025/2026:fixtures:2025/2026',
-          forceDomOnly: true
-        }
+        maxPages: 50,
+        timeoutMs: engine.archiveTimeoutMs,
+        preferCurrentSeasonSource: true,
+        circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+        forcePureProtocol: false,
+        disableTournamentFallback: true
       }
-    ]);
+    );
+    assert.strictEqual(typeof protocolCalls[0].options.leagueDeadlineAt, 'number');
     assert.ok(
       protocolCalls.every((call) => !call.url.includes('2024-2025')),
       'SOURCE_EMPTY 时仍不得回退到上一赛季 URL'

@@ -648,6 +648,7 @@ describe('ReconPureDecryptorRuntime', () => {
       'import helper from "./helper.js";',
       'import "./side-effect.js";',
       'const value = await import("./helper.js");',
+      'const lazyOnly = await import("./lazy-only.js");',
       'import data from "../lang/en.json";'
     ].join('\n'));
     const localPath = decryptor._resolveLocalModulePath(

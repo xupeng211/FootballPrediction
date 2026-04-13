@@ -51,21 +51,34 @@ class StealthInjector {
         const deviceMemory = this.deviceMemory;
 
         return () => {
+            const safeDefineReadonly = (target, property, getter) => {
+                if (!target) {
+                    return false;
+                }
+
+                const descriptor = Object.getOwnPropertyDescriptor(target, property);
+                if (descriptor && descriptor.configurable === false) {
+                    return false;
+                }
+
+                Object.defineProperty(target, property, {
+                    get: getter,
+                    configurable: true
+                });
+                return true;
+            };
+
             // 禁用 navigator.webdriver
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            safeDefineReadonly(navigator, 'webdriver', () => undefined);
 
             // 硬件并发数伪装
-            Object.defineProperty(navigator, 'hardwareConcurrency', {
-                get: () => hardwareConcurrency
-            });
+            safeDefineReadonly(navigator, 'hardwareConcurrency', () => hardwareConcurrency);
 
             // 设备内存伪装
-            Object.defineProperty(navigator, 'deviceMemory', {
-                get: () => deviceMemory
-            });
+            safeDefineReadonly(navigator, 'deviceMemory', () => deviceMemory);
 
             // 屏蔽自动化标志
-            window.chrome = { runtime: {} };
+            window.chrome = window.chrome || { runtime: {} };
 
             // 覆盖 permissions API
             const originalQuery = window.navigator.permissions?.query;
@@ -78,14 +91,10 @@ class StealthInjector {
             }
 
             // 覆盖 plugins 长度
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [1, 2, 3, 4, 5]
-            });
+            safeDefineReadonly(navigator, 'plugins', () => [1, 2, 3, 4, 5]);
 
             // 覆盖 languages
-            Object.defineProperty(navigator, 'languages', {
-                get: () => ['zh-CN', 'zh', 'en']
-            });
+            safeDefineReadonly(navigator, 'languages', () => ['zh-CN', 'zh', 'en']);
         };
     }
 

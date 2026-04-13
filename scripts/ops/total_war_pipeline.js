@@ -595,6 +595,7 @@ class TotalWarPipeline {
     }
 
     if (taskName === 'recon') {
+      const reconLimit = Math.max(1, Number(this.options.reconThreshold) || 0);
       return {
         task: taskName,
         command,
@@ -603,6 +604,8 @@ class TotalWarPipeline {
           '--season',
           this.options.reconSeason,
           '--all-leagues',
+          '--limit',
+          String(reconLimit),
           '--concurrency',
           String(this.options.reconConcurrency)
         ]

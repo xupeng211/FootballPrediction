@@ -16,7 +16,9 @@ function buildReconTargetState(target, runtimeTarget, scopedPending, effectiveTh
     totalCandidateCount: 0,
     finalSourceSeason: null,
     finalSourceUrl: null,
-    lastSourceState: resultsSource?.extractResult?.sourceState || 'SOURCE_EMPTY'
+    lastSourceState: resultsSource?.extractResult?.sourceState || 'SOURCE_EMPTY',
+    routeSampleTarget: 0,
+    routeShortCircuitThreshold: 0
   };
 }
 
@@ -30,7 +32,11 @@ const reconMatrixTargetRunner = {
       forcePureProtocol = false,
       pendingMatches: pendingMatchesOverride = null,
       matchLimit = null,
-      navigator = this.navigator || null
+      navigator = this.navigator || null,
+      disableSearchRoute = false,
+      matrixModePruning = false,
+      matrixModeShortCircuitRatio = 0.5,
+      leagueDeadlineAt = null
     } = options;
 
     const pendingMatches = Array.isArray(pendingMatchesOverride)
@@ -54,6 +60,11 @@ const reconMatrixTargetRunner = {
       forceDomMode,
       forceJsonExtract,
       forcePureProtocol,
+      matchLimit,
+      disableSearchRoute,
+      matrixModePruning,
+      matrixModeShortCircuitRatio,
+      leagueDeadlineAt,
       reconPolicy: {
         ...(target?.reconPolicy || {}),
         ...reconPolicy
@@ -61,6 +72,7 @@ const reconMatrixTargetRunner = {
     };
     runtimeTarget.leagueDictionaryEntries = await this._primeLeagueDictionary(runtimeTarget);
 
+    this._assertLeagueBudget(runtimeTarget, null, 'prepare_results_source');
     const resultsSource = await this._probeResultsCandidateSource(
       runtimeTarget,
       orderedPending,
@@ -81,6 +93,7 @@ const reconMatrixTargetRunner = {
     if (!Array.isArray(scopedPending) || scopedPending.length === 0) {
       return null;
     }
+    this._assertLeagueBudget(runtimeTarget, null, 'prepare_scoped_pending');
 
     const reconRunId = this._createReconRunId(target);
     const routeMetadata = {
@@ -107,10 +120,170 @@ const reconMatrixTargetRunner = {
         progress,
         resultsSource
       ),
+      routeSampleTarget: typeof this._buildRouteProbeSample === 'function'
+        ? this._buildRouteProbeSample(scopedPending).length
+        : 0,
+      routeShortCircuitThreshold: this._resolveRouteShortCircuitThreshold(scopedPending, runtimeTarget),
       limiter: pLimit(Math.max(1, Number(concurrency))),
       persistLimiter: pLimit(1),
       navigator
     };
+  },
+
+  _resolveRouteShortCircuitThreshold(pendingMatches, runtimeTarget = {}) {
+    const sampleTarget = typeof this._buildRouteProbeSample === 'function'
+      ? this._buildRouteProbeSample(pendingMatches).length
+      : 0;
+    if (sampleTarget <= 0) {
+      return 0;
+    }
+
+    if (runtimeTarget?.matrixModePruning !== true) {
+      return sampleTarget;
+    }
+
+    const rawRatio = Number(runtimeTarget?.matrixModeShortCircuitRatio ?? 0.5);
+    const ratio = Number.isFinite(rawRatio)
+      ? Math.min(1, Math.max(0, rawRatio))
+      : 0.5;
+
+    return Math.max(1, Math.ceil(sampleTarget * ratio));
+  },
+
+  _buildLeagueTimeoutError(target, routeState = null, stage = 'league_timeout') {
+    const error = new Error('LEAGUE_TIMEOUT');
+    error.code = 'LEAGUE_TIMEOUT';
+    error.stage = stage;
+    error.sourceUrl = routeState?.finalSourceUrl
+      || routeState?.runtimeTarget?.resultsUrl
+      || target?.resultsUrl
+      || null;
+    error.sourceSeason = routeState?.finalSourceSeason
+      || routeState?.runtimeTarget?.dbSeason
+      || target?.dbSeason
+      || null;
+    return error;
+  },
+
+  _assertLeagueBudget(target, routeState = null, stage = 'league_budget_check') {
+    const deadlineAt = Number(target?.leagueDeadlineAt || routeState?.runtimeTarget?.leagueDeadlineAt || 0);
+    if (!Number.isFinite(deadlineAt) || deadlineAt <= 0 || Date.now() < deadlineAt) {
+      return false;
+    }
+
+    this.logger.warn('recon_league_timeout', {
+      league: target?.league?.name || routeState?.target?.league?.name || null,
+      season: target?.dbSeason || routeState?.target?.dbSeason || null,
+      stage,
+      linked: Number(routeState?.totalLinked || 0),
+      remainingPending: Number(routeState?.remainingRoutePending?.length || 0)
+    });
+
+    if (Number(routeState?.totalLinked || 0) > 0) {
+      return true;
+    }
+
+    throw this._buildLeagueTimeoutError(target, routeState, stage);
+  },
+
+  _shouldFinalizeAfterResults(routeState) {
+    if (routeState.remainingRoutePending.length === 0 || routeState.runtimeTarget?.matrixModePruning !== true) {
+      return false;
+    }
+
+    const resultsCandidateCount = Array.isArray(routeState.resultsSource?.candidates)
+      ? routeState.resultsSource.candidates.length
+      : 0;
+    if (resultsCandidateCount === 0) {
+      return true;
+    }
+
+    return routeState.routeShortCircuitThreshold > 0
+      && Number(routeState.resultsSource?.sampleLinked || 0) >= routeState.routeShortCircuitThreshold;
+  },
+
+  async _finalizeRemainingPending(routeState) {
+    if (routeState.remainingRoutePending.length === 0) {
+      return;
+    }
+
+    await this._processReconRoute(
+      routeState,
+      'results_terminal',
+      routeState.resultsSource,
+      { finalPass: true }
+    );
+  },
+
+  async _finalizeRemainingPendingWithLocalDictionary(routeState) {
+    const canUseLocalDictionaryFallback = this._shouldUseLocalDictionaryRoute(routeState);
+    if (canUseLocalDictionaryFallback) {
+      await this._runReconLocalDictionaryRoute(routeState);
+      return true;
+    }
+
+    await this._finalizeRemainingPending(routeState);
+    return true;
+  },
+
+  async _finalizeIfBudgetExhausted(routeState, stage) {
+    if (!this._assertLeagueBudget(routeState.runtimeTarget, routeState, stage)) {
+      return false;
+    }
+
+    await this._finalizeRemainingPending(routeState);
+    return true;
+  },
+
+  async _handlePostResultsFlow(routeState) {
+    if (routeState.remainingRoutePending.length === 0) {
+      return true;
+    }
+
+    if (await this._finalizeIfBudgetExhausted(routeState, 'after_results')) {
+      return true;
+    }
+
+    if (this._shouldFinalizeAfterResults(routeState)) {
+      await this._finalizeRemainingPendingWithLocalDictionary(routeState);
+      return true;
+    }
+
+    return false;
+  },
+
+  async _runPostResultsFallbackRoutes(routeState) {
+    if (routeState.remainingRoutePending.length > 0) {
+      if (await this._finalizeIfBudgetExhausted(routeState, 'before_fixtures')) {
+        return;
+      }
+      await this._runReconFixturesRoute(routeState);
+    }
+
+    const canUseLocalDictionaryFallback = this._shouldUseLocalDictionaryRoute(routeState);
+    if (routeState.remainingRoutePending.length > 0 && routeState.runtimeTarget?.disableSearchRoute !== true) {
+      if (await this._finalizeIfBudgetExhausted(routeState, 'before_search')) {
+        return;
+      }
+      await this._runReconSearchRoute(routeState, canUseLocalDictionaryFallback);
+    }
+
+    if (routeState.remainingRoutePending.length > 0 && canUseLocalDictionaryFallback) {
+      if (await this._finalizeIfBudgetExhausted(routeState, 'before_local_dictionary')) {
+        return;
+      }
+      await this._runReconLocalDictionaryRoute(routeState);
+      return;
+    }
+
+    if (routeState.remainingRoutePending.length > 0 && routeState.runtimeTarget?.disableSearchRoute === true) {
+      this.logger.info('recon_search_route_skipped', {
+        league: routeState.target?.league?.name || null,
+        season: routeState.target?.dbSeason || null,
+        remainingPending: routeState.remainingRoutePending.length
+      });
+      await this._finalizeRemainingPending(routeState);
+    }
   },
 
   _applyReconRouteResult(routeState, routeResult, routeSource) {
@@ -208,19 +381,11 @@ const reconMatrixTargetRunner = {
 
   async _runReconTargetRoutes(routeState) {
     await this._processReconRoute(routeState, 'results', routeState.resultsSource);
-
-    if (routeState.remainingRoutePending.length > 0) {
-      await this._runReconFixturesRoute(routeState);
+    if (await this._handlePostResultsFlow(routeState)) {
+      return;
     }
 
-    const canUseLocalDictionaryFallback = this._shouldUseLocalDictionaryRoute(routeState);
-    if (routeState.remainingRoutePending.length > 0) {
-      await this._runReconSearchRoute(routeState, canUseLocalDictionaryFallback);
-    }
-
-    if (routeState.remainingRoutePending.length > 0 && canUseLocalDictionaryFallback) {
-      await this._runReconLocalDictionaryRoute(routeState);
-    }
+    await this._runPostResultsFallbackRoutes(routeState);
   },
 
   _assertReconTargetResolved(routeState, target) {
