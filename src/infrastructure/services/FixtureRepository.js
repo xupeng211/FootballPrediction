@@ -728,7 +728,15 @@ class FixtureRepository {
       }
     }, 'getMappingStats');
   }
-  async close() { if (this.dbPool && typeof this.dbPool.end === 'function') { await this.dbPool.end(); this.logger.info('[Repository] 数据库连接池已关闭'); } }
+  async close() {
+    const pool = this.dbPool;
+    this.dbPool = null;
+
+    if (pool && typeof pool.end === 'function') {
+      await pool.end();
+      this.logger.info('[Repository] 数据库连接池已关闭');
+    }
+  }
 }
 
 module.exports = { FixtureRepository, RepositoryError };
