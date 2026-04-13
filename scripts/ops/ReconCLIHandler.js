@@ -104,7 +104,8 @@ function createScannerOptions(args) {
     proxyRotator: args.useProxy ? undefined : null,
     currentSeasonOnly: args.currentSeasonOnly,
     allNonLinked: args.allNonLinked,
-    forceDomMode: args.forceDomMode
+    forceDomMode: args.forceDomMode,
+    enforceDistributedLocking: true
   };
 }
 

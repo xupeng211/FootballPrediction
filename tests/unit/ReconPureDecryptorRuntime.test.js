@@ -546,6 +546,51 @@ describe('ReconPureDecryptorRuntime', () => {
     });
   });
 
+  it('应支持通过 bundleSource/sourceLoader 与 DOM fallback 解析入口模块', async () => {
+    const rootDir = await fs.mkdtemp(path.join(os.tmpdir(), 'recon-pure-dom-load-'));
+    const entrySource = [
+      'import helper from "./helper.js";',
+      'export async function ai(payload) {',
+      '  return JSON.stringify({ rows: [helper(payload)] });',
+      '}'
+    ].join('\n');
+    const responses = new Map([
+      ['https://www.oddsportal.com/build/assets/helper.js', [
+        'export default function helper(payload) {',
+        '  return { hash: String(payload || "").slice(0, 8) || "fallback2" };',
+        '}'
+      ].join('\n')]
+    ]);
+
+    const decryptor = new ReconPureDecryptor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      moduleRoot: rootDir,
+      fetchImpl: async () => {
+        throw new Error('unexpected fetch');
+      }
+    });
+
+    const decryptFn = await decryptor.loadFromBundleUrl('', {
+      html: '<html lang="en"><head><script type=module src=/build/assets/app.js></script></head></html>',
+      bundleSource: entrySource,
+      sourceLoader: async (url) => {
+        if (!responses.has(url)) {
+          throw new Error(`missing:${url}`);
+        }
+        return responses.get(url);
+      },
+      sampleEncryptedData: Buffer.from('cipher:0022', 'utf8').toString('base64')
+    });
+
+    assert.strictEqual(typeof decryptFn, 'function');
+    assert.strictEqual(decryptor.getAlgorithmVersion(), 'pure_ai');
+    const decrypted = await decryptor.decrypt(Buffer.from('cipher:0022', 'utf8').toString('base64'));
+
+    assert.deepStrictEqual(decrypted, {
+      rows: [{ hash: 'Y2lwaGVy' }]
+    });
+  });
+
   it('候选导出选择应跳过异常函数并在无样本时回退首个候选', async () => {
     const decryptor = new ReconPureDecryptor({
       logger: { info() {}, warn() {}, error() {}, debug() {} }
@@ -621,6 +666,33 @@ describe('ReconPureDecryptorRuntime', () => {
     assert.deepStrictEqual(seenRequests[0].options.headers, {
       Authorization: 'Bearer token'
     });
+  });
+
+  it('fetchText 请求 OddsPortal bundle 时应自动补 referer', async () => {
+    let observedHeaders = null;
+    const decryptor = new ReconPureDecryptor({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      fetchImpl: async (_url, options) => {
+        observedHeaders = options.headers;
+        return {
+          ok: true,
+          status: 200,
+          async text() {
+            return 'payload';
+          }
+        };
+      }
+    });
+    decryptor.entryUrl = 'https://www.oddsportal.com/football/usa/mls/results/';
+
+    const payload = await decryptor._fetchText(
+      'https://www.oddsportal.com/build/assets/app.js',
+      { 'user-agent': 'Mozilla/5.0' }
+    );
+
+    assert.strictEqual(payload, 'payload');
+    assert.strictEqual(observedHeaders.referer, 'https://www.oddsportal.com/football/usa/mls/results/');
+    assert.strictEqual(observedHeaders['user-agent'], 'Mozilla/5.0');
   });
 
   it('materialize/download 应处理入口缺失、visited 命中与非 JS specifier 跳过', async () => {

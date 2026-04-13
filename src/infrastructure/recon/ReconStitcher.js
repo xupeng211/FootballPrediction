@@ -23,9 +23,12 @@ class ReconStitcher {
       } else if (options.redisClient) {
         this.lockManager = new ReconDistributedLock(options.redisClient, { logger: this.logger });
       } else {
-        this.logger.warn('distributed_lock_disabled');
-        this.enableLocking = false;
+        throw new Error('ReconStitcher requires lockManager or redisClient when locking is enabled');
       }
+
+      this.logger.info('distributed_lock_enabled', {
+        backend: options.lockManager ? 'custom' : 'redis'
+      });
     }
 
     this.arbitrationStrategy = options.arbitrationStrategy || new ReconArbitrationStrategy({

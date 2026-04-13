@@ -20,7 +20,8 @@ class ReconPureDecryptor {
   }
 
   async loadFromBundleUrl(bundleUrl, options = {}) {
-    if (!bundleUrl || typeof bundleUrl !== 'string') {
+    const resolvedBundleUrl = this._resolveBundleUrlFromHtml(bundleUrl, options);
+    if (!resolvedBundleUrl || typeof resolvedBundleUrl !== 'string') {
       throw new Error('bundleUrl is required');
     }
 
@@ -29,11 +30,26 @@ class ReconPureDecryptor {
     }
 
     const headers = options.headers || {};
-    const bundleSource = await this._fetchText(bundleUrl, headers);
+    const runtimeGlobals = this._resolveRuntimeGlobals(
+      options.globals || {},
+      options.html || options.entryHtml || '',
+      resolvedBundleUrl
+    );
+    const bundleSource = typeof options.bundleSource === 'string' && options.bundleSource.trim()
+      ? options.bundleSource
+      : await this._fetchText(resolvedBundleUrl, headers, {
+          referer: runtimeGlobals?.location?.href || ''
+        });
     const candidateNames = this._extractFromBundle(bundleSource);
-    const localEntry = await this._materializeModuleTree(bundleUrl, headers);
+    const localEntry = await this._materializeModuleTree(resolvedBundleUrl, {
+      headers,
+      bundleSource,
+      sourceLoader: options.sourceLoader,
+      referer: runtimeGlobals?.location?.href || '',
+      html: options.html || options.entryHtml || ''
+    });
 
-    this._installBrowserLikeGlobals(options.globals || {});
+    this._installBrowserLikeGlobals(runtimeGlobals);
 
     const moduleUrl = `${pathToFileURL(localEntry).href}?t=${Date.now()}`;
     const moduleNamespace = await import(moduleUrl);
@@ -44,12 +60,13 @@ class ReconPureDecryptor {
     }
 
     this.decryptFn = selected.fn;
+    this.selectedCandidate = selected;
     this.algorithmVersion = `pure_${selected.name}`;
-    this.entryUrl = bundleUrl;
+    this.entryUrl = resolvedBundleUrl;
 
     this.logger.info('pure_decryptor_loaded', {
       traceId: this.traceId,
-      bundleUrl,
+      bundleUrl: resolvedBundleUrl,
       candidate: selected.name,
       validated: selected.validated
     });
