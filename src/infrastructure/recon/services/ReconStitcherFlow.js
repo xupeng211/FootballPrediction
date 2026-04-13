@@ -6,10 +6,23 @@ const { RECON_CONFIG } = require('./ReconServiceConfig');
 const BASE_URL = RECON_CONFIG.oddsportal.base_url;
 
 const reconStitcherFlow = {
+  /**
+   * Run the legacy stitcher over a page candidate set.
+   *
+   * High-risk area:
+   * This method orchestrates all fallback passes. If counters drift here, the
+   * follow-up set-closure and sniper phases receive corrupted unmatched state.
+   *
+   * @param {Object[]} matches
+   * @param {string} season
+   * @param {Object} leagueConfig
+   * @returns {Promise<Object>}
+   */
   async stitch(matches, season, leagueConfig) {
+    const dbSeason = this.formatSeasonForDb(season);
     this.logger.info('stitch_start', {
       matchCount: matches.length,
-      season,
+      season: dbSeason,
       league: leagueConfig.name
     });
 
@@ -19,7 +32,7 @@ const reconStitcherFlow = {
     this.unmatchedCache = [];
 
     for (const match of matches) {
-      const result = await this.stitchSingle(match, season, leagueConfig);
+      const result = await this.stitchSingle(match, dbSeason, leagueConfig);
       if (result.status === 'inserted') inserted++;
       else if (result.status === 'skipped') skipped++;
       else {
@@ -33,7 +46,7 @@ const reconStitcherFlow = {
         unmatchedCount: this.unmatchedCache.length
       });
 
-      const closureResult = await this.performSetClosure(season, leagueConfig);
+      const closureResult = await this.performSetClosure(dbSeason, leagueConfig);
       inserted += closureResult.inserted;
       unmatched -= closureResult.inserted;
     }
@@ -41,7 +54,7 @@ const reconStitcherFlow = {
     if (this.unmatchedCache.length > 0) {
       this.logger.info('starting_sniper_fill', { remaining: this.unmatchedCache.length });
 
-      const sniperResult = await this.sniperFill(season, leagueConfig);
+      const sniperResult = await this.sniperFill(dbSeason, leagueConfig);
       inserted += sniperResult.inserted;
       unmatched -= sniperResult.inserted;
     }
@@ -51,7 +64,7 @@ const reconStitcherFlow = {
       : '0%';
 
     this.logger.info('stitch_complete', {
-      season,
+      season: dbSeason,
       league: leagueConfig.name,
       inserted,
       skipped,
@@ -68,71 +81,111 @@ const reconStitcherFlow = {
     };
   },
 
+  /**
+   * Stitch a single source match into one canonical match_id.
+   *
+   * High-risk area:
+   * This is the only place where source parsing, idempotency, kickoff-aware DB
+   * selection and persistence all meet. A silent fallback here causes wrong links.
+   *
+   * @param {Object} match
+   * @param {string} season
+   * @param {Object} leagueConfig
+   * @returns {Promise<Object>}
+   */
   async stitchSingle(match, season, leagueConfig) {
-    if (match.hash && this.processedHashes.has(match.hash)) {
-      return { status: 'skipped', details: { reason: 'idempotent_cache' } };
+    const dbSeason = this.formatSeasonForDb(season);
+    const lock = await this.acquireHashGuard(match?.hash, {
+      leagueName: leagueConfig?.name,
+      season: dbSeason
+    });
+    if (lock?.contended) {
+      return { status: 'skipped', details: { reason: 'lock_contended' } };
     }
 
-    const existing = await this.checkExistingMapping(match.hash, season);
-    if (existing) {
-      return { status: 'skipped', details: { reason: 'already_exists' } };
-    }
-
-    let teams = null;
-
-    if (this.parser) {
-      teams = this.parser.extractTeamsFromSlug(match.slug);
-    }
-
-    if ((!teams || teams.awayTeam === 'Unknown') && match.rawText) {
-      const textTeams = this.extractTeamsFromText(match.rawText);
-      if (textTeams) teams = textTeams;
-    }
-
-    if (teams && teams.homeTeam !== 'Unknown' && teams.awayTeam === 'Unknown') {
-      const dateMatch = await this.findMatchByHomeAndDate(
-        teams.homeTeam, match.date, season, leagueConfig.name
-      );
-      if (dateMatch) {
-        teams.awayTeam = dateMatch.awayTeam;
-      }
-    }
-
-    if (!teams || teams.homeTeam === 'Unknown' || teams.awayTeam === 'Unknown') {
-      return { status: 'unmatched', details: { reason: 'parse_failed', teams } };
-    }
-
-    const matchInfo = await this.findMatchInDb(teams.homeTeam, teams.awayTeam, season);
-
-    if (!matchInfo) {
-      return { status: 'unmatched', details: { reason: 'db_not_found', teams } };
-    }
-
-    let result;
     try {
-      result = await this.saveMapping(match, teams, matchInfo, season, leagueConfig);
-    } catch (error) {
-      if (error.code === 'ORIENTATION_UNCERTAIN') {
-        this.logger.warn('orientation_uncertain', {
-          hash: match.hash,
-          season,
-          league: leagueConfig.name,
-          teams
-        });
-        return { status: 'unmatched', details: { reason: 'orientation_uncertain', teams } };
+      if (match.hash && this.processedHashes.has(match.hash)) {
+        return { status: 'skipped', details: { reason: 'idempotent_cache' } };
       }
 
-      throw error;
-    }
+      const existing = await this.checkExistingMapping(match.hash, dbSeason);
+      if (existing) {
+        return { status: 'skipped', details: { reason: 'already_exists' } };
+      }
 
-    if (result.success) {
-      this.processedHashes.add(match.hash);
-      return { status: 'inserted', details: { matchId: result.matchId } };
-    }
+      let teams = null;
 
-    return { status: 'skipped', details: { reason: 'save_failed' } };
+      if (this.parser) {
+        teams = this.parser.extractTeamsFromSlug(match.slug);
+      }
+
+      if ((!teams || teams.awayTeam === 'Unknown') && match.rawText) {
+        const textTeams = this.extractTeamsFromText(match.rawText);
+        if (textTeams) teams = textTeams;
+      }
+
+      if (teams && teams.homeTeam !== 'Unknown' && teams.awayTeam === 'Unknown') {
+        const dateMatch = await this.findMatchByHomeAndDate(
+          teams.homeTeam,
+          match.date || match.matchDate || match.match_date || null,
+          dbSeason,
+          leagueConfig.name
+        );
+        if (dateMatch) {
+          teams.awayTeam = dateMatch.awayTeam;
+        }
+      }
+
+      if (!teams || teams.homeTeam === 'Unknown' || teams.awayTeam === 'Unknown') {
+        return { status: 'unmatched', details: { reason: 'parse_failed', teams } };
+      }
+
+      const matchInfo = await this.findMatchInDb(teams.homeTeam, teams.awayTeam, dbSeason, {
+        match: {
+          ...match,
+          matchDate: match.date || match.matchDate || match.match_date || null
+        }
+      });
+
+      if (!matchInfo) {
+        return { status: 'unmatched', details: { reason: 'db_not_found', teams } };
+      }
+
+      let result;
+      try {
+        result = await this.saveMapping(match, teams, matchInfo, dbSeason, leagueConfig);
+      } catch (error) {
+        if (error.code === 'ORIENTATION_UNCERTAIN') {
+          this.logger.warn('orientation_uncertain', {
+            hash: match.hash,
+            season: dbSeason,
+            league: leagueConfig.name,
+            teams
+          });
+          return { status: 'unmatched', details: { reason: 'orientation_uncertain', teams } };
+        }
+
+        throw error;
+      }
+
+      if (result.success) {
+        this.processedHashes.add(match.hash);
+        return { status: 'inserted', details: { matchId: result.matchId } };
+      }
+
+      return { status: 'skipped', details: { reason: 'save_failed' } };
+    } finally {
+      await this.releaseHashGuard(lock, match?.hash);
+    }
   },
 
+  /**
+   * Secondary pass that reconciles page leftovers with the DB unmatched set.
+   *
+   * @param {string} season
+   * @param {Object} leagueConfig
+   * @returns {Promise<{inserted: number}>}
+   */
   async performSetClosure(season, leagueConfig) {
     let inserted = 0;
 
@@ -180,7 +233,10 @@ const reconStitcherFlow = {
             const matchInfo = {
               matchId: dbMatch.match_id,
               confidence: 0.75,
-              method: 'set_closure'
+              method: 'set_closure',
+              dbHome: dbMatch.home_team,
+              dbAway: dbMatch.away_team,
+              matchDate: dbMatch.match_date || null
             };
 
             const result = await this.saveMapping(match, teams, matchInfo, season, leagueConfig);
@@ -211,6 +267,13 @@ const reconStitcherFlow = {
     return { inserted };
   },
 
+  /**
+   * Placeholder for search-based recovery of still-unmatched fixtures.
+   *
+   * @param {string} _season
+   * @param {Object} _leagueConfig
+   * @returns {Promise<{inserted: number}>}
+   */
   async sniperFill(_season, _leagueConfig) {
     const inserted = 0;
 
@@ -226,6 +289,19 @@ const reconStitcherFlow = {
     return { inserted };
   },
 
+  /**
+   * Hash-oriented fast path for already-resolved web matches.
+   *
+   * High-risk area:
+   * The method name promises locking. Without a real guard this path degenerates
+   * into concurrent upsert contention, so each hash now attempts row-level gating.
+   *
+   * @param {Object[]} interceptedMatches
+   * @param {Object[]} l1Matches
+   * @param {string} season
+   * @param {Object} leagueConfig
+   * @returns {Promise<{inserted: number, skipped: number, unmatched: number}>}
+   */
   async stitchWithHashLock(interceptedMatches, l1Matches, season, leagueConfig) {
     this.logger.info('hash_lock_start', {
       intercepted: interceptedMatches.length,
@@ -244,6 +320,15 @@ const reconStitcherFlow = {
     }
 
     for (const rawMatch of interceptedMatches) {
+      const lock = await this.acquireHashGuard(rawMatch?.hash, {
+        leagueName: leagueConfig?.name,
+        season: dbSeason
+      });
+      if (lock?.contended) {
+        skipped++;
+        continue;
+      }
+
       try {
         const match = this._resolveWebMatchTeams(rawMatch, l1Matches);
         if (match.hash && this.processedHashes.has(match.hash)) {
@@ -251,7 +336,7 @@ const reconStitcherFlow = {
           continue;
         }
 
-        const existing = await this.checkExistingMapping(match.hash, season);
+        const existing = await this.checkExistingMapping(match.hash, dbSeason);
         if (existing) {
           this.processedHashes.add(match.hash);
           skipped++;
@@ -315,12 +400,23 @@ const reconStitcherFlow = {
       } catch (error) {
         this.logger.error('hash_lock_error', { hash: rawMatch?.hash, error: error.message });
         unmatched++;
+      } finally {
+        await this.releaseHashGuard(lock, rawMatch?.hash);
       }
     }
 
     return { inserted, skipped, unmatched };
   },
 
+  /**
+   * Cardinality-based reconciliation fallback for near-complete sets.
+   *
+   * @param {Object[]} webMatches
+   * @param {Object[]} l1Matches
+   * @param {string} season
+   * @param {Object} leagueConfig
+   * @returns {Promise<{inserted: number, unmatched: number}>}
+   */
   async setReconciliation(webMatches, l1Matches, season, leagueConfig) {
     this.logger.info('set_reconciliation_start', {
       webCount: webMatches.length,
@@ -329,6 +425,7 @@ const reconStitcherFlow = {
 
     let inserted = 0;
     let unmatched = 0;
+    const dbSeason = this.formatSeasonForDb(season);
 
     const pendingWeb = webMatches.filter((match) => !this.processedHashes.has(match.hash));
     const pendingL1 = l1Matches.filter((match) => !this.processedHashes.has(match.match_id));
@@ -373,7 +470,7 @@ const reconStitcherFlow = {
               match_id: bestMatch.match_id,
               oddsportal_hash: webMatch.hash,
               full_url: webMatch.url,
-              season: season.replace('-', '/'),
+              season: dbSeason,
               league_name: leagueConfig.name,
               home_team: bestMatch.home_team,
               away_team: bestMatch.away_team,
@@ -416,6 +513,54 @@ const reconStitcherFlow = {
     }
 
     return { inserted, unmatched };
+  },
+
+  /**
+   * Acquire a best-effort per-hash distributed guard.
+   *
+   * @param {string|null} hash
+   * @param {Object} context
+   * @returns {Promise<{lock: Object|null, contended: boolean}>}
+   */
+  async acquireHashGuard(hash, context = {}) {
+    if (!hash || !this.enableLocking || !this.lockManager?.acquireRowLock) {
+      return { lock: null, contended: false };
+    }
+
+    try {
+      const lock = await this.lockManager.acquireRowLock(hash);
+      return { lock, contended: false };
+    } catch (error) {
+      this.logger.warn('stitch_hash_lock_contended', {
+        hash,
+        season: context.season || null,
+        league: context.leagueName || null,
+        error: error.message
+      });
+      return { lock: null, contended: true };
+    }
+  },
+
+  /**
+   * Release the distributed guard acquired for a hash.
+   *
+   * @param {{lock: Object|null, contended: boolean}|null} guard
+   * @param {string|null} hash
+   * @returns {Promise<void>}
+   */
+  async releaseHashGuard(guard, hash) {
+    if (!guard?.lock?.release) {
+      return;
+    }
+
+    try {
+      await guard.lock.release();
+    } catch (error) {
+      this.logger.warn('stitch_hash_lock_release_failed', {
+        hash: hash || null,
+        error: error.message
+      });
+    }
   }
 };
 
