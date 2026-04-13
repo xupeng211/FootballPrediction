@@ -498,6 +498,18 @@ class ReconScanner {
       1,
       Number(engineConfig.timeout_degrade_threshold ?? 2)
     );
+    const matrixModePruning = engineConfig.matrix_mode_pruning !== false;
+    const matrixModeShortCircuitRatioRaw = Number(
+      engineConfig.matrix_short_circuit_ratio ?? 0.5
+    );
+    const matrixModeShortCircuitRatio = Number.isFinite(matrixModeShortCircuitRatioRaw)
+      ? Math.min(1, Math.max(0, matrixModeShortCircuitRatioRaw))
+      : 0.5;
+    const disableSearchRouteInMatrix = engineConfig.matrix_disable_search_route !== false;
+    const matrixLeagueTimeBudgetMs = Math.max(
+      1,
+      Number(engineConfig.matrix_league_time_budget_ms ?? this.engine.archiveTimeoutMs ?? 45000)
+    );
     const successWindowSlowPath = Math.max(
       1,
       Number(engineConfig.adaptive_concurrency_success_window_slow_path ?? 5)
@@ -509,6 +521,10 @@ class ReconScanner {
     );
     this.engine.fastFailTimeoutStreak = timeoutDegradeThreshold;
     this.engine.searchDisabledOnDegradedLeague = true;
+    this.engine.matrixModePruning = matrixModePruning;
+    this.engine.matrixModeShortCircuitRatio = matrixModeShortCircuitRatio;
+    this.engine.disableSearchRouteInMatrix = disableSearchRouteInMatrix;
+    this.engine.matrixLeagueTimeBudgetMs = matrixLeagueTimeBudgetMs;
     this.engine.lowSuccessRateThreshold = lowSuccessRateThreshold;
     this.engine.lowSuccessRateLeagueCap = lowSuccessRateLeagueCap;
     this.engine.dynamicConcurrencySuccessWindow = Math.max(
@@ -520,6 +536,10 @@ class ReconScanner {
       probeArchiveTimeoutMs: this.engine.probeArchiveTimeoutMs,
       timeoutDegradeThreshold: this.engine.fastFailTimeoutStreak,
       searchDisabledOnDegradedLeague: this.engine.searchDisabledOnDegradedLeague,
+      matrixModePruning: this.engine.matrixModePruning,
+      matrixModeShortCircuitRatio: this.engine.matrixModeShortCircuitRatio,
+      disableSearchRouteInMatrix: this.engine.disableSearchRouteInMatrix,
+      matrixLeagueTimeBudgetMs: this.engine.matrixLeagueTimeBudgetMs,
       lowSuccessRateThreshold: this.engine.lowSuccessRateThreshold,
       lowSuccessRateLeagueCap: this.engine.lowSuccessRateLeagueCap,
       dynamicConcurrencySuccessWindow: this.engine.dynamicConcurrencySuccessWindow

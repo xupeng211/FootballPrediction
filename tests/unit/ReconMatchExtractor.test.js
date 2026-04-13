@@ -209,6 +209,33 @@ describe('ReconMatchExtractor', () => {
     );
   });
 
+  it('非年度制联赛若 payload 自带 tournament breadcrumb 上下文，也应洗白 h2h URL', () => {
+    const extractor = {
+      baseUrl: 'https://www.oddsportal.com',
+      annualLeagueIds,
+      extractMaxDepth: 5,
+      ...reconMatchExtractor
+    };
+
+    const match = extractor.normalizeMatchObject({
+      'home-name': 'Columbus Crew',
+      'away-name': 'Orlando City',
+      encodeEventId: 'f3LkpxbD',
+      'tournament-url': 'mls',
+      breadcrumbs: {
+        country: { url: '/football/usa/' },
+        tournament: { url: '/football/usa/mls/' }
+      },
+      url: '/football/h2h/columbus-crew-pQ8rarA7/orlando-city-rsHkUNCo/#f3LkpxbD'
+    }, 'pure_protocol_archive:mls-current');
+
+    assert.ok(match);
+    assert.strictEqual(
+      match.url,
+      'https://www.oddsportal.com/football/usa/mls/columbus-crew-orlando-city-f3LkpxbD/'
+    );
+  });
+
   it('遇到畸形 URL 时必须返回 null', () => {
     const extractor = {
       baseUrl: 'https://www.oddsportal.com',

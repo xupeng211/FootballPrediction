@@ -1,5 +1,34 @@
 'use strict';
 
+function isMatrixModePruningEnabled(target = {}) {
+  return target?.matrixModePruning === true;
+}
+
+function resolveMatrixShortCircuitRatio(target = {}) {
+  const rawRatio = Number(target?.matrixModeShortCircuitRatio ?? 0.5);
+  if (!Number.isFinite(rawRatio)) {
+    return 0.5;
+  }
+
+  return Math.min(1, Math.max(0, rawRatio));
+}
+
+function resolveSampleLinkedThreshold(sampleTarget, target = {}) {
+  if (!Number.isInteger(sampleTarget) || sampleTarget <= 0) {
+    return 0;
+  }
+
+  if (!isMatrixModePruningEnabled(target)) {
+    return sampleTarget;
+  }
+
+  return Math.max(1, Math.ceil(sampleTarget * resolveMatrixShortCircuitRatio(target)));
+}
+
+function getCandidateCount(routeSource = null) {
+  return Array.isArray(routeSource?.candidates) ? routeSource.candidates.length : 0;
+}
+
 const reconSourceProber = {
   _dedupeCandidatesByIdentity(candidates = []) {
     const deduped = [];
@@ -28,22 +57,15 @@ const reconSourceProber = {
   },
 
   _combineCandidateRouteSources(routeSources = [], target, pendingMatches, confidenceThreshold) {
-    const successfulRoutes = (Array.isArray(routeSources) ? routeSources : [])
-      .filter((route) => route && typeof route === 'object');
+    const combinedRouteState = this._buildCandidateRouteState(
+      routeSources,
+      pendingMatches,
+      confidenceThreshold
+    );
+    const { successfulRoutes, combinedCandidates, combinedSeasonMirror, combinedSampleLinked } = combinedRouteState;
     if (successfulRoutes.length === 0) {
       return this._buildEmptyRouteSource('results', target, 'SOURCE_EMPTY');
     }
-
-    const combinedCandidates = this._dedupeCandidatesByIdentity(
-      successfulRoutes.flatMap((route) => Array.isArray(route.candidates) ? route.candidates : [])
-    );
-    const combinedSeasonMirror = this._buildSeasonMirror(combinedCandidates);
-    const combinedSampleLinked = this._scoreCandidatePoolSample(
-      pendingMatches,
-      combinedCandidates,
-      confidenceThreshold,
-      combinedSeasonMirror
-    );
     const combinedSourceUrls = [...new Set(
       successfulRoutes
         .map((route) => String(route?.source?.url || '').trim())
@@ -93,29 +115,101 @@ const reconSourceProber = {
     };
   },
 
+  _buildCandidateRouteState(routeSources = [], pendingMatches, confidenceThreshold) {
+    const successfulRoutes = (Array.isArray(routeSources) ? routeSources : [])
+      .filter((route) => route && typeof route === 'object');
+    const combinedCandidates = this._dedupeCandidatesByIdentity(
+      successfulRoutes.flatMap((route) => Array.isArray(route.candidates) ? route.candidates : [])
+    );
+    const combinedSeasonMirror = this._buildSeasonMirror(combinedCandidates);
+    const combinedSampleLinked = this._scoreCandidatePoolSample(
+      pendingMatches,
+      combinedCandidates,
+      confidenceThreshold,
+      combinedSeasonMirror
+    );
+
+    return {
+      successfulRoutes,
+      combinedCandidates,
+      combinedSeasonMirror,
+      combinedSampleLinked
+    };
+  },
+
+  // eslint-disable-next-line complexity
   async _probeCandidateRoutes(target, pendingMatches, confidenceThreshold, navigator = null) {
     const sharedNavigator = navigator || this.navigator || null;
-    const runInParallel = this._canRunParallelRouteProbes();
-    const routeProbes = [
-      () => this._probeResultsCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator),
-      () => this._probeFixturesCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator, {
-        useDedicatedNavigator: runInParallel
-      }),
-      () => this._probeSearchCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator, {
-        useDedicatedNavigator: runInParallel
-      })
-    ];
+    const matrixModePruning = isMatrixModePruningEnabled(target);
+    const runInParallel = matrixModePruning ? false : this._canRunParallelRouteProbes();
+    const sampleTarget = typeof this._buildRouteProbeSample === 'function'
+      ? this._buildRouteProbeSample(pendingMatches).length
+      : 0;
+    const sampleLinkedThreshold = resolveSampleLinkedThreshold(sampleTarget, target);
     const settled = [];
 
     if (runInParallel) {
-      const parallelResults = await Promise.allSettled(routeProbes.map((probe) => probe()));
+      const parallelResults = await Promise.allSettled([
+        this._probeResultsCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator),
+        this._probeFixturesCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator, {
+          useDedicatedNavigator: true
+        })
+      ]);
       settled.push(...parallelResults);
     } else {
-      for (const probe of routeProbes) {
+      try {
+        const resultsRoute = await this._probeResultsCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator);
+        settled.push({
+          status: 'fulfilled',
+          value: resultsRoute
+        });
+      } catch (error) {
+        settled.push({
+          status: 'rejected',
+          reason: error
+        });
+      }
+
+      const resultsOnlyState = this._buildCandidateRouteState(
+        settled
+          .filter((item) => item.status === 'fulfilled')
+          .map((item) => item.value),
+        pendingMatches,
+        confidenceThreshold
+      );
+      const resultsRoute = settled.find((item) => item.status === 'fulfilled')?.value || null;
+      const shouldShortCircuitOnEmptyResults = matrixModePruning
+        && resultsRoute
+        && getCandidateCount(resultsRoute) === 0;
+
+      if (shouldShortCircuitOnEmptyResults || (
+        sampleLinkedThreshold > 0
+        && resultsOnlyState.combinedSampleLinked >= sampleLinkedThreshold
+      )) {
+        this.logger.info('recon_candidate_routes_short_circuit', {
+          league: target?.league?.name || null,
+          season: target?.dbSeason || null,
+          sampleSize: sampleTarget,
+          sampleLinked: resultsOnlyState.combinedSampleLinked,
+          sampleLinkedThreshold,
+          matrixModePruning,
+          skippedRoutes: ['fixtures', 'search']
+        });
+        return this._combineCandidateRouteSources(
+          settled
+            .filter((item) => item.status === 'fulfilled')
+            .map((item) => item.value),
+          target,
+          pendingMatches,
+          confidenceThreshold
+        );
+      } else {
         try {
           settled.push({
             status: 'fulfilled',
-            value: await probe()
+            value: await this._probeFixturesCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator, {
+              useDedicatedNavigator: false
+            })
           });
         } catch (error) {
           settled.push({
@@ -148,6 +242,43 @@ const reconSourceProber = {
       throw primaryError;
     }
 
+    const preSearchState = this._buildCandidateRouteState(
+      successfulRoutes,
+      pendingMatches,
+      confidenceThreshold
+    );
+    if (
+      sampleLinkedThreshold > 0
+      && preSearchState.combinedSampleLinked >= sampleLinkedThreshold
+    ) {
+      this.logger.info('recon_candidate_routes_short_circuit', {
+        league: target?.league?.name || null,
+        season: target?.dbSeason || null,
+        sampleSize: sampleTarget,
+        sampleLinked: preSearchState.combinedSampleLinked,
+        sampleLinkedThreshold,
+        matrixModePruning,
+        skippedRoutes: ['search']
+      });
+      return this._combineCandidateRouteSources(
+        successfulRoutes,
+        target,
+        pendingMatches,
+        confidenceThreshold
+      );
+    }
+
+    try {
+      const searchRoute = await this._probeSearchCandidateSource(target, pendingMatches, confidenceThreshold, sharedNavigator, {
+        useDedicatedNavigator: runInParallel
+      });
+      if (searchRoute) {
+        successfulRoutes.push(searchRoute);
+      }
+    } catch (error) {
+      routeFailures.push(error);
+    }
+
     return this._combineCandidateRouteSources(
       successfulRoutes,
       target,
@@ -158,6 +289,7 @@ const reconSourceProber = {
 
   async _probeResultsCandidateSource(target, pendingMatches, confidenceThreshold, navigator = null) {
     const timeoutMs = this._resolveRouteProbeTimeoutMs('results', target);
+    const matrixModePruning = isMatrixModePruningEnabled(target);
     let selectedSource;
     try {
       selectedSource = await this.taskPlanner.selectCandidateSource(
@@ -166,11 +298,18 @@ const reconSourceProber = {
         confidenceThreshold,
         {
           navigator: navigator || this.navigator || null,
-          timeoutMs
+          timeoutMs,
+          disableTournamentFallback: true,
+          matrixModePruning,
+          matrixModeShortCircuitRatio: target?.matrixModeShortCircuitRatio,
+          leagueDeadlineAt: target?.leagueDeadlineAt ?? null
         }
       );
       this._resetRouteFailureStreak(target, 'results');
     } catch (error) {
+      if (error?.code === 'LEAGUE_TIMEOUT') {
+        throw error;
+      }
       const failure = this._recordRouteProbeFailure(target, 'results', error, { timeoutMs });
       if (failure.shouldDegrade) {
         return this._buildDegradedRouteSource(
@@ -237,6 +376,9 @@ const reconSourceProber = {
       this._resetRouteFailureStreak(target, 'fixtures');
       return routeSource;
     } catch (error) {
+      if (error?.code === 'LEAGUE_TIMEOUT') {
+        throw error;
+      }
       const failure = this._recordRouteProbeFailure(target, 'fixtures', error, { timeoutMs });
       if (failure.shouldDegrade) {
         return this._buildDegradedRouteSource(
@@ -259,6 +401,20 @@ const reconSourceProber = {
       return null;
     }
 
+    const timeoutMs = this._resolveRouteProbeTimeoutMs('search', target);
+    if (target?.disableSearchRoute === true) {
+      return this._buildDegradedRouteSource(
+        'search',
+        target,
+        'ROUTE_SKIPPED_SEARCH_DISABLED',
+        null,
+        {
+          timeoutMs,
+          searchBlocked: true
+        }
+      );
+    }
+
     if (this._isSearchProbeBlocked(target)) {
       return this._buildDegradedRouteSource(
         'search',
@@ -266,13 +422,12 @@ const reconSourceProber = {
         'ROUTE_SKIPPED_DEGRADED_LEAGUE',
         null,
         {
-          timeoutMs: this._resolveRouteProbeTimeoutMs('search', target),
+          timeoutMs,
           searchBlocked: true
         }
       );
     }
 
-    const timeoutMs = this._resolveRouteProbeTimeoutMs('search', target);
     try {
       const routeSource = await this._executeRouteProbeWithNavigator(
         target,
@@ -313,6 +468,9 @@ const reconSourceProber = {
       this._resetRouteFailureStreak(target, 'search');
       return routeSource;
     } catch (error) {
+      if (error?.code === 'LEAGUE_TIMEOUT') {
+        throw error;
+      }
       const failure = this._recordRouteProbeFailure(target, 'search', error, { timeoutMs });
       if (failure.shouldDegrade || failure.signals.has503 || failure.signals.hasTimeout) {
         return this._buildDegradedRouteSource(
@@ -366,7 +524,9 @@ const reconSourceProber = {
       timeoutMs: this._resolveRouteProbeTimeoutMs(routeKind, target),
       preferCurrentSeasonSource: true,
       circuitBreakerKey,
-      forceDomOnly: routeKind === 'fixtures'
+      disableTournamentFallback: true,
+      forceDomOnly: routeKind === 'fixtures',
+      leagueDeadlineAt: target?.leagueDeadlineAt ?? null
     };
 
     if (typeof navigator.fetchFullSeasonArchive === 'function') {

@@ -631,8 +631,14 @@ class SessionManager {
             }
 
             // 硬件伪装
-            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => 8 });
-            Object.defineProperty(navigator, 'deviceMemory', { get: () => 8 });
+            Object.defineProperty(navigator, 'hardwareConcurrency', {
+                get: () => 8,
+                configurable: true
+            });
+            Object.defineProperty(navigator, 'deviceMemory', {
+                get: () => 8,
+                configurable: true
+            });
             /* eslint-enable no-undef */
         });
     }

@@ -70,6 +70,31 @@ test('当 pending=0 且 harvested>0 时，编排器应强制进入 recon', () =>
   assert.equal(reconTask, 'recon');
 });
 
+test('Recon 子任务应透传 --limit 以强制进入 Matrix 模式', () => {
+  const pipeline = new TotalWarPipeline(parseArgs([
+    '--season',
+    '2025/2026',
+    '--once',
+    '--recon-threshold',
+    '200',
+    '--recon-concurrency',
+    '15'
+  ]));
+
+  const task = pipeline.buildTaskCommand('recon');
+
+  assert.equal(task.args[0].endsWith(path.join('scripts', 'ops', 'recon_scanner.js')), true);
+  assert.deepStrictEqual(task.args.slice(1), [
+    '--season',
+    '2025-2026',
+    '--all-leagues',
+    '--limit',
+    '200',
+    '--concurrency',
+    '15'
+  ]);
+});
+
 test('Logger 在日志文件超过阈值时必须执行轮转并保留最新内容', () => {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'total-war-log-'));
   const logPath = path.join(tempDir, 'pipeline.log');

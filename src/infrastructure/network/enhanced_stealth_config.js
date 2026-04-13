@@ -184,6 +184,23 @@ function getAntiDetectionScripts(workerIdOrOptions = 1) {
             return modulus > 0 ? normalized % modulus : normalized;
         };
 
+        const safeDefineReadonly = (target, property, getter) => {
+            if (!target) {
+                return false;
+            }
+
+            const descriptor = Object.getOwnPropertyDescriptor(target, property);
+            if (descriptor && descriptor.configurable === false) {
+                return false;
+            }
+
+            Object.defineProperty(target, property, {
+                get: getter,
+                configurable: true
+            });
+            return true;
+        };
+
         const getParameterProxyHandler = {
             apply: function(target, thisArg, args) {
                 const param = args[0];
@@ -230,20 +247,13 @@ function getAntiDetectionScripts(workerIdOrOptions = 1) {
         }
 
         // 2. 硬件并发伪装
-        Object.defineProperty(navigator, 'hardwareConcurrency', {
-            get: () => ${hardwareConcurrency},
-            configurable: true
-        });
+        safeDefineReadonly(navigator, 'hardwareConcurrency', () => ${hardwareConcurrency});
 
         // 3. 设备内存伪装
-        Object.defineProperty(navigator, 'deviceMemory', {
-            get: () => ${deviceMemory},
-            configurable: true
-        });
+        safeDefineReadonly(navigator, 'deviceMemory', () => ${deviceMemory});
 
         // 4. 插件检测规避
-        Object.defineProperty(navigator, 'plugins', {
-            get: () => [
+        safeDefineReadonly(navigator, 'plugins', () => [
                 {
                     0: { type: 'application/pdf' },
                     description: 'Portable Document Format',
@@ -266,38 +276,21 @@ function getAntiDetectionScripts(workerIdOrOptions = 1) {
                     length: 2,
                     name: 'Native Client'
                 }
-            ],
-            configurable: true
-        });
+            ]);
 
         // 5. 语言伪装
-        Object.defineProperty(navigator, 'languages', {
-            get: () => ['en-US', 'en', 'en-GB'],
-            configurable: true
-        });
+        safeDefineReadonly(navigator, 'languages', () => ['en-US', 'en', 'en-GB']);
 
         // 6. 平台伪装
-        Object.defineProperty(navigator, 'platform', {
-            get: () => '${platform}',
-            configurable: true
-        });
+        safeDefineReadonly(navigator, 'platform', () => '${platform}');
 
         // 7. webdriver 标志移除
-        Object.defineProperty(navigator, 'webdriver', {
-            get: () => undefined,
-            configurable: true
-        });
+        safeDefineReadonly(navigator, 'webdriver', () => undefined);
 
         // 8. 连接信息伪装
         if (navigator.connection) {
-            Object.defineProperty(navigator.connection, 'effectiveType', {
-                get: () => '4g',
-                configurable: true
-            });
-            Object.defineProperty(navigator.connection, 'downlink', {
-                get: () => 10,
-                configurable: true
-            });
+            safeDefineReadonly(navigator.connection, 'effectiveType', () => '4g');
+            safeDefineReadonly(navigator.connection, 'downlink', () => 10);
         }
 
         // 9. Canvas 指纹噪声 - V194.3: 扩展到常见检测尺寸
