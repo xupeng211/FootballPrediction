@@ -16,6 +16,9 @@ for arg in "$@"; do
     --mode=pr)
       MODE="pr"
       ;;
+    --mode=auto)
+      MODE="auto"
+      ;;
     --mode=push|--mode=full)
       MODE="push"
       ;;
@@ -29,6 +32,36 @@ log() {
 fail() {
   printf '[Gatekeeper] ERROR: %s\n' "$*" >&2
   exit 1
+}
+
+resolve_auto_mode() {
+  local branch=''
+
+  if [[ -n "${GITHUB_EVENT_NAME:-}" ]]; then
+    if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+      printf 'pr\n'
+      return 0
+    fi
+
+    printf 'push\n'
+    return 0
+  fi
+
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+    case "$branch" in
+      main|master|release/*|hotfix/*)
+        printf 'push\n'
+        return 0
+        ;;
+      *)
+        printf 'pr\n'
+        return 0
+        ;;
+    esac
+  fi
+
+  printf 'push\n'
 }
 
 if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
@@ -61,6 +94,11 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
   resolve_compose
   cd "$ROOT_DIR"
 
+  if [[ "$MODE" == "auto" ]]; then
+    MODE="$(resolve_auto_mode)"
+    log "自动选择门禁模式: ${MODE}"
+  fi
+
   UP_ARGS=(-d)
   if [[ "${GATEKEEPER_BUILD:-0}" == "1" ]]; then
     UP_ARGS=(-d --build)
@@ -79,6 +117,11 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
 fi
 
 cd "$WORKSPACE_ROOT" || fail "容器工作目录不存在: ${WORKSPACE_ROOT}"
+
+if [[ "$MODE" == "auto" ]]; then
+  MODE="$(resolve_auto_mode)"
+  log "自动选择门禁模式: ${MODE}"
+fi
 
 readonly MODE
 readonly WORKSPACE_ROOT
