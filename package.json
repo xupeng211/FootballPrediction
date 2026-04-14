@@ -56,7 +56,7 @@
         "lint:md:fix": "markdownlint '**/*.md' --ignore node_modules --ignore archive --ignore venv --ignore 'tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/**' --ignore 'tests/unit/TEST_SUMMARY.md' --ignore CHANGELOG.md --ignore CLAUDE.md --ignore COMMAND_CENTER.md --ignore 'docs/**' --ignore 'src/**/*.md' --ignore MIGRATION.md --ignore MERGE_READY.md --fix",
         "qa": "bash scripts/devops/gatekeeper.sh --mode=push",
         "precommit": "bash scripts/devops/gatekeeper.sh --mode=commit",
-        "prepush": "bash scripts/devops/gatekeeper.sh --mode=push",
+        "prepush": "bash scripts/devops/gatekeeper.sh --mode=auto",
         "elo:recalc": "node scripts/maintenance/recalculate_elo.js",
         "elo:recalc:dry": "node scripts/maintenance/recalculate_elo.js --dry-run",
         "prepare": "bash scripts/devops/install_git_hooks.sh"
