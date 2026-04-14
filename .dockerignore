@@ -30,7 +30,6 @@ ENV/
 # Data directories
 data/
 *.csv
-*.json
 *.db
 *.sqlite
 
@@ -61,6 +60,9 @@ logs/
 .coverage
 .pytest_cache/
 htmlcov/
+tests/
+reports/
+.eslintcache
 
 # Documentation
 docs/_build/

@@ -8,9 +8,11 @@ const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const TEST_ROOT = path.join(PROJECT_ROOT, 'tests');
 const UNIT_DIR = path.join(TEST_ROOT, 'unit');
 const INTEGRATION_DIR = path.join(TEST_ROOT, 'integration');
+const STRESS_DIR = path.join(TEST_ROOT, 'stress');
 const DEFAULT_MAX_BUFFER = 1024 * 1024 * 100;
 
 const mode = process.argv[2] || 'default';
+const modeArgs = process.argv.slice(3);
 const COVERAGE_THRESHOLDS = Object.freeze({
   lines: 80,
   functions: 80,
@@ -22,7 +24,33 @@ const CRITICAL_SMOKE_TESTS = Object.freeze([
   'tests/unit/DatabaseConfig.test.js',
   'tests/unit/ReconBrowserContext.test.js',
 ]);
+const RECON_CORE_TESTS = Object.freeze([
+  'tests/unit/ReconDecryptor.test.js',
+  'tests/unit/ReconDecryptorSourceExtractor.test.js',
+  'tests/unit/ReconPureDecryptorRuntime.test.js',
+  'tests/unit/ReconDistributedLock.test.js',
+  'tests/unit/ReconSourceProber.test.js',
+  'tests/unit/ReconMatrixFlow.test.js',
+  'tests/unit/ReconMatrixTargetRunner.test.js',
+]);
+const PROJECT_JS_ROOTS = Object.freeze([
+  path.join(PROJECT_ROOT, 'src'),
+  path.join(PROJECT_ROOT, 'config'),
+  path.join(PROJECT_ROOT, 'scripts'),
+  UNIT_DIR,
+  INTEGRATION_DIR,
+  STRESS_DIR,
+]);
 let nativeCoverageThresholdSupport = null;
+let dependencyGraphCache = null;
+
+function safeReadDir(dir) {
+  try {
+    return fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+}
 
 /**
  * 收集测试文件。
@@ -34,11 +62,219 @@ function collectTestFiles(dir) {
     return [];
   }
 
-  return fs
-    .readdirSync(dir)
-    .filter(name => name.endsWith('.test.js'))
-    .map(name => path.join(dir, name))
+  return safeReadDir(dir)
+    .filter(entry => entry.isFile() && entry.name.endsWith('.test.js'))
+    .map(entry => path.join(dir, entry.name))
     .sort();
+}
+
+function walkJsFiles(dir, files = []) {
+  if (!fs.existsSync(dir)) {
+    return files;
+  }
+
+  for (const entry of safeReadDir(dir)) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      walkJsFiles(fullPath, files);
+      continue;
+    }
+
+    if (entry.isFile() && entry.name.endsWith('.js')) {
+      files.push(fullPath);
+    }
+  }
+
+  return files;
+}
+
+function collectProjectJsFiles() {
+  return [...new Set(
+    PROJECT_JS_ROOTS.flatMap(root => walkJsFiles(root))
+  )].sort();
+}
+
+function normalizeProjectPath(filePath) {
+  if (!filePath) {
+    return '';
+  }
+
+  return path.resolve(PROJECT_ROOT, filePath);
+}
+
+function resolveLocalModulePath(fromFile, specifier) {
+  if (!specifier) {
+    return null;
+  }
+
+  const rawSpecifier = String(specifier).trim();
+  if (!rawSpecifier.startsWith('.') && !path.isAbsolute(rawSpecifier)) {
+    return null;
+  }
+
+  const basePath = path.isAbsolute(rawSpecifier)
+    ? rawSpecifier
+    : path.resolve(path.dirname(fromFile), rawSpecifier);
+  const candidates = [
+    basePath,
+    `${basePath}.js`,
+    `${basePath}.json`,
+    path.join(basePath, 'index.js'),
+    path.join(basePath, 'index.json'),
+  ];
+
+  for (const candidate of candidates) {
+    if (!candidate.startsWith(PROJECT_ROOT)) {
+      continue;
+    }
+    if (fs.existsSync(candidate) && fs.statSync(candidate).isFile()) {
+      return candidate;
+    }
+  }
+
+  return null;
+}
+
+function collectDependencySpecifiers(sourceText) {
+  const specifiers = new Set();
+  const patterns = [
+    /\brequire\(\s*['"]([^'"]+)['"]\s*\)/g,
+    /\bimport(?:[^'"]*from\s*)?['"]([^'"]+)['"]/g,
+    /\bimport\(\s*['"]([^'"]+)['"]\s*\)/g,
+  ];
+
+  for (const pattern of patterns) {
+    let match = pattern.exec(sourceText);
+    while (match) {
+      specifiers.add(match[1]);
+      match = pattern.exec(sourceText);
+    }
+  }
+
+  return [...specifiers];
+}
+
+function buildDependencyGraph() {
+  if (dependencyGraphCache) {
+    return dependencyGraphCache;
+  }
+
+  const graph = new Map();
+  for (const file of collectProjectJsFiles()) {
+    let sourceText = '';
+    try {
+      sourceText = fs.readFileSync(file, 'utf8');
+    } catch {
+      graph.set(file, new Set());
+      continue;
+    }
+
+    const deps = new Set();
+    for (const specifier of collectDependencySpecifiers(sourceText)) {
+      const resolved = resolveLocalModulePath(file, specifier);
+      if (resolved) {
+        deps.add(resolved);
+      }
+    }
+
+    graph.set(file, deps);
+  }
+
+  dependencyGraphCache = graph;
+  return graph;
+}
+
+function collectDependencyClosure(entryFile, graph, cache = new Map()) {
+  if (cache.has(entryFile)) {
+    return cache.get(entryFile);
+  }
+
+  const closure = new Set([entryFile]);
+  const queue = [entryFile];
+
+  while (queue.length > 0) {
+    const current = queue.pop();
+    for (const dependency of graph.get(current) || []) {
+      if (closure.has(dependency)) {
+        continue;
+      }
+
+      closure.add(dependency);
+      queue.push(dependency);
+    }
+  }
+
+  cache.set(entryFile, closure);
+  return closure;
+}
+
+function resolveOrderedFiles(relativeFiles, availableFiles) {
+  const fileMap = new Map(
+    availableFiles.map(file => [path.relative(PROJECT_ROOT, file), file])
+  );
+
+  return relativeFiles
+    .map(relativeFile => fileMap.get(relativeFile))
+    .filter(Boolean);
+}
+
+function dedupeFiles(files) {
+  const ordered = [];
+  const seen = new Set();
+
+  for (const file of files) {
+    if (!file || seen.has(file)) {
+      continue;
+    }
+
+    seen.add(file);
+    ordered.push(file);
+  }
+
+  return ordered;
+}
+
+function resolveAffectedTestFiles(changedFiles, allTestFiles) {
+  const normalizedChangedFiles = dedupeFiles(
+    changedFiles
+      .map(file => normalizeProjectPath(file))
+      .filter(Boolean)
+  );
+  if (normalizedChangedFiles.length === 0) {
+    return [];
+  }
+
+  const graph = buildDependencyGraph();
+  const closureCache = new Map();
+  const affected = [];
+  const changedSet = new Set(normalizedChangedFiles);
+  const hasReconChange = normalizedChangedFiles.some(file =>
+    file.startsWith(path.join(PROJECT_ROOT, 'src', 'infrastructure', 'recon'))
+    || file.startsWith(path.join(PROJECT_ROOT, 'tests', 'unit', 'Recon'))
+  );
+
+  for (const testFile of allTestFiles) {
+    if (changedSet.has(testFile)) {
+      affected.push(testFile);
+      continue;
+    }
+
+    const closure = collectDependencyClosure(testFile, graph, closureCache);
+    if (normalizedChangedFiles.some(file => closure.has(file))) {
+      affected.push(testFile);
+    }
+  }
+
+  const smokeFiles = resolveCriticalSmokeFiles(allTestFiles);
+  const reconCoreFiles = hasReconChange
+    ? resolveOrderedFiles(RECON_CORE_TESTS, allTestFiles)
+    : [];
+
+  return dedupeFiles([
+    ...smokeFiles,
+    ...reconCoreFiles,
+    ...affected,
+  ]);
 }
 
 /**
@@ -92,8 +328,9 @@ function formatDuration(durationMs) {
 
 /**
  * 从 TAP 输出中提取首个失败摘要。
- * @param {string} text
- * @returns {{ title: string, location: string|null, error: string|null } | null}
+ * @param {string[]} lines
+ * @param {number} failureIndex
+ * @returns {string[]}
  */
 function collectSubtestTrail(lines, failureIndex) {
   const subtests = [];
@@ -325,6 +562,12 @@ function runNodeTests(files, options = {}) {
 
 const unitFiles = collectTestFiles(UNIT_DIR);
 const integrationFiles = collectTestFiles(INTEGRATION_DIR);
+const stressFiles = collectTestFiles(STRESS_DIR);
+const allTestFiles = dedupeFiles([
+  ...unitFiles,
+  ...integrationFiles,
+  ...stressFiles,
+]);
 
 if (mode === 'default' || mode === 'unit') {
   console.log('[TEST-GATE] 默认门禁执行: 关键烟雾测试 + 全量单元测试。');
@@ -341,6 +584,18 @@ if (mode === 'default' || mode === 'unit') {
   process.exit(runNodeTests(remainingUnitFiles, { label: '全量单元测试' }));
 }
 
+if (mode === 'affected') {
+  const affectedFiles = resolveAffectedTestFiles(modeArgs, allTestFiles);
+  const selectedFiles = affectedFiles.length > 0
+    ? affectedFiles
+    : resolveCriticalSmokeFiles(allTestFiles);
+
+  console.log(
+    `[TEST-GATE] 增量门禁执行: 变更文件 ${modeArgs.length} 个，命中测试 ${selectedFiles.length} 个。`
+  );
+  process.exit(runNodeTests(selectedFiles, { label: '增量 JS 测试' }));
+}
+
 if (mode === 'integration') {
   process.exit(runNodeTests(integrationFiles, { label: '集成测试' }));
 }
@@ -351,6 +606,11 @@ if (mode === 'coverage') {
     + `functions>=${COVERAGE_THRESHOLDS.functions}, branches>=${COVERAGE_THRESHOLDS.branches}`,
   );
   process.exit(runNodeTests(unitFiles, { coverage: true, label: '覆盖率测试' }));
+}
+
+if (mode === 'recon-core') {
+  const reconCoreFiles = resolveOrderedFiles(RECON_CORE_TESTS, allTestFiles);
+  process.exit(runNodeTests(reconCoreFiles, { label: 'Recon 核心测试' }));
 }
 
 console.error(`[TEST-GATE] 未知模式: ${mode}`);
