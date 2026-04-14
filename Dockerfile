@@ -1,86 +1,116 @@
-# Dockerfile - V106.0 多阶段生产级构建
-# ==========================================
-# Build 阶段：构建依赖和字节码
-# Runtime 阶段：最小化运行时镜像
+# =============================================================================
+# FootballPrediction - 生产同构镜像
+# =============================================================================
+# 目标:
+# 1. 保持 Python API 运行时
+# 2. 补齐 Node.js / Playwright / Chromium 运行时
+# 3. 让 CI、开发容器与生产收割环境具备更高一致性
+# =============================================================================
 
-# ============================================================================
-# Stage 1: Builder - 构建依赖
-# ============================================================================
-FROM python:3.11-slim AS builder
+FROM node:20-bookworm-slim AS node-builder
 
-# 设置工作目录
 WORKDIR /build
 
-# 安装构建依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --omit=dev --ignore-scripts \
+    && npx playwright install chromium \
+    && npm cache clean --force
+
+
+FROM python:3.11-slim-bookworm AS python-builder
+
+WORKDIR /build
+
+RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 update \
+    && apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 install -y --no-install-recommends \
     gcc \
     g++ \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
-COPY requirements.txt .
+COPY requirements.txt pyproject.toml ./
 COPY mcp_servers/requirements.txt ./mcp_servers-requirements.txt
-COPY pyproject.toml .
-COPY ruff.toml .
-COPY mypy.ini .
 
-# 创建虚拟环境并安装依赖
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
-# 升级 pip 并安装依赖
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
-    pip install --no-cache-dir -r requirements.txt -r mcp_servers-requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
+    && pip install --no-cache-dir -r requirements.txt -r mcp_servers-requirements.txt \
+    && python -m compileall -q /opt/venv/lib/python3.11/site-packages
 
-# 预编译 Python 字节码（减少运行时启动时间）
-RUN python -m compileall -q /opt/venv/lib/python3.11/site-packages
 
-# ============================================================================
-# Stage 2: Runtime - 最小化运行时
-# ============================================================================
-FROM python:3.11-slim AS runtime
+FROM python:3.11-slim-bookworm AS runtime
 
-# 创建非特权用户
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
-# 设置工作目录
 WORKDIR /app
 
-# 仅安装运行时依赖
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-# 从 builder 阶段复制虚拟环境
-COPY --from=builder /opt/venv /opt/venv
-
-# 设置环境变量
 ENV PATH="/opt/venv/bin:$PATH" \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONHASHSEED=random \
     PIP_NO_CACHE_DIR=1 \
-    DOCKER_ENV=true
+    NODE_ENV=production \
+    DOCKER_ENV=true \
+    TZ=Asia/Shanghai
 
-# 复制应用代码
+RUN apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 update \
+    && apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    tini \
+    ca-certificates \
+    fonts-liberation \
+    fonts-noto-cjk \
+    fonts-noto-color-emoji \
+    fonts-dejavu-core \
+    fonts-freefont-ttf \
+    fontconfig \
+    libnss3 \
+    libnss3-tools \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libpango-1.0-0 \
+    libcairo2 \
+    libgl1 \
+    libglx0 \
+    libegl1 \
+    && rm -rf /var/lib/apt/lists/* \
+    && apt-get clean \
+    && fc-cache -fv
+
+COPY --from=python-builder --chown=appuser:appuser /opt/venv /opt/venv
+COPY --from=node-builder /usr/local/bin/node /usr/local/bin/node
+COPY --from=node-builder /usr/local/bin/npm /usr/local/bin/npm
+COPY --from=node-builder /usr/local/bin/npx /usr/local/bin/npx
+COPY --from=node-builder /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=node-builder --chown=appuser:appuser /build/node_modules /app/node_modules
+COPY --from=node-builder --chown=appuser:appuser /ms-playwright /ms-playwright
+
 COPY --chown=appuser:appuser . .
 
-# 创建必要的目录
-RUN mkdir -p /app/logs /app/model_zoo /app/data && \
-    chown -R appuser:appuser /app
+RUN install -d -o appuser -g appuser /app/logs /app/model_zoo /app/data
 
-# 切换到非特权用户
 USER appuser
 
-# 健康检查
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health || exit 1
 
-# 暴露端口
 EXPOSE 8000
 
-# 默认命令
+ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
