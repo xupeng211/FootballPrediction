@@ -13,6 +13,12 @@ for arg in "$@"; do
     --mode=commit)
       MODE="commit"
       ;;
+    --mode=pr)
+      MODE="pr"
+      ;;
+    --mode=auto)
+      MODE="auto"
+      ;;
     --mode=push|--mode=full)
       MODE="push"
       ;;
@@ -26,6 +32,36 @@ log() {
 fail() {
   printf '[Gatekeeper] ERROR: %s\n' "$*" >&2
   exit 1
+}
+
+resolve_auto_mode() {
+  local branch=''
+
+  if [[ -n "${GITHUB_EVENT_NAME:-}" ]]; then
+    if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+      printf 'pr\n'
+      return 0
+    fi
+
+    printf 'push\n'
+    return 0
+  fi
+
+  if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+    case "$branch" in
+      main|master|release/*|hotfix/*)
+        printf 'push\n'
+        return 0
+        ;;
+      *)
+        printf 'pr\n'
+        return 0
+        ;;
+    esac
+  fi
+
+  printf 'push\n'
 }
 
 if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
@@ -58,6 +94,11 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
   resolve_compose
   cd "$ROOT_DIR"
 
+  if [[ "$MODE" == "auto" ]]; then
+    MODE="$(resolve_auto_mode)"
+    log "自动选择门禁模式: ${MODE}"
+  fi
+
   UP_ARGS=(-d)
   if [[ "${GATEKEEPER_BUILD:-0}" == "1" ]]; then
     UP_ARGS=(-d --build)
@@ -77,6 +118,11 @@ fi
 
 cd "$WORKSPACE_ROOT" || fail "容器工作目录不存在: ${WORKSPACE_ROOT}"
 
+if [[ "$MODE" == "auto" ]]; then
+  MODE="$(resolve_auto_mode)"
+  log "自动选择门禁模式: ${MODE}"
+fi
+
 readonly MODE
 readonly WORKSPACE_ROOT
 readonly CONTAINER_GATEKEEPER_PATH
@@ -84,7 +130,7 @@ readonly PORT_REGEX='7890|7891|7892|7893|7894|7895|7896|7897|7898|7899|7900|7901
 readonly LEAK_REGEX="172\\.25\\.16\\.1|\\b(${PORT_REGEX})\\b"
 readonly CONTRACT_REGEX='require\(["'"'"'](axios|node-fetch|got|http|https|node:http|node:https|http-proxy-agent|https-proxy-agent)["'"'"']\)|from ["'"'"'](axios|node-fetch|got|undici)["'"'"']'
 readonly PYTHON_FILE_LINE_LIMIT=800
-readonly COVERAGE_THRESHOLD=70
+readonly COVERAGE_THRESHOLD=80
 readonly COVERAGE_DIR='reports/coverage'
 readonly NODE_COVERAGE_SUMMARY="${COVERAGE_DIR}/node/coverage-summary.json"
 readonly PYTHON_COVERAGE_JSON="${COVERAGE_DIR}/python/coverage.json"
@@ -688,6 +734,20 @@ run_proxyprovider_smoke_test() {
   node --test tests/unit/ProxyProvider.test.js
 }
 
+run_js_incremental_gate() {
+  log '执行增量 JS 测试门禁。'
+  local changed_files=()
+
+  mapfile -t changed_files < <(collect_changed_files | sed '/^$/d' | sort -u)
+  if [[ "${#changed_files[@]}" -eq 0 ]]; then
+    log '未检测到显式变更文件，回退到关键烟雾测试。'
+    node scripts/test/run_test_suite.js affected
+    return 0
+  fi
+
+  node scripts/test/run_test_suite.js affected "${changed_files[@]}"
+}
+
 run_coverage_report() {
   python <<'PY'
 import json
@@ -845,6 +905,11 @@ run_coverage_guards() {
   run_coverage_report
 }
 
+run_recon_core_coverage_guard() {
+  log '执行 Recon 核心独立覆盖率门禁（行覆盖率 >= 90%）。'
+  npm run test:coverage:recon-core
+}
+
 main() {
   log "进入门禁容器执行阶段（mode=${MODE}）。"
 
@@ -863,8 +928,14 @@ main() {
   run_static_quality_checks
   run_proxyprovider_smoke_test
 
+  if [[ "$MODE" == "pr" ]]; then
+    run_js_incremental_gate
+    run_recon_core_coverage_guard
+  fi
+
   if [[ "$MODE" == "push" ]]; then
     run_coverage_guards
+    run_recon_core_coverage_guard
   fi
 
   log "门禁通过（mode=${MODE}）。"
