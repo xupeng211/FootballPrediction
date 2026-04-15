@@ -307,7 +307,7 @@ const reconSourceProber = {
       );
       this._resetRouteFailureStreak(target, 'results');
     } catch (error) {
-      if (error?.code === 'LEAGUE_TIMEOUT') {
+      if (error?.code === 'LEAGUE_TIMEOUT' || error?.code === 'RECON_SOURCE_INCOMPLETE') {
         throw error;
       }
       const failure = this._recordRouteProbeFailure(target, 'results', error, { timeoutMs });

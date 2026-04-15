@@ -5,6 +5,16 @@ const { RECON_CONFIG, getReconConfigSection } = require('./ReconServiceConfig');
 const { reconTaskPlannerSourceSelector } = require('./ReconTaskPlannerSourceSelector');
 const { reconTaskPlannerUrlUtils } = require('./ReconTaskPlannerUrlUtils');
 
+function resolveMatchDateTimestamp(match = null) {
+  const rawMatchDate = match?.match_date || match?.matchDate || null;
+  if (!rawMatchDate) {
+    return 0;
+  }
+
+  const timestamp = new Date(rawMatchDate).getTime();
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
 class ReconTaskPlanner {
   constructor(options = {}) {
     const matchingConfig = RECON_CONFIG.matching || {};
@@ -123,9 +133,16 @@ class ReconTaskPlanner {
 
   async prepareReconPendingTargets(targets, limit = null, options = {}) {
     const prepared = [];
+    const lightweightSingleMatchMode = Number.isInteger(limit)
+      && limit === 1
+      && options.mismatchRetryOnly !== true
+      && options.allNonLinked !== true;
 
     for (const target of targets) {
-      const allPendingMatches = await this.loadReconPendingMatches(target, options);
+      const allPendingMatches = await this.loadReconPendingMatches(target, {
+        ...options,
+        limit: lightweightSingleMatchMode ? 1 : options.limit
+      });
       const pendingMatches = options.mismatchRetryOnly === true
         ? (Array.isArray(allPendingMatches)
           ? allPendingMatches.filter((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH')
@@ -138,6 +155,10 @@ class ReconTaskPlanner {
         const mismatchCount = pendingMatches
           .filter((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH')
           .length;
+        const latestMatchDateTs = pendingMatches.reduce(
+          (maxValue, match) => Math.max(maxValue, resolveMatchDateTimestamp(match)),
+          0
+        );
         const reconPolicy = this.resolveReconPolicy(
           target,
           pendingMatches,
@@ -155,6 +176,7 @@ class ReconTaskPlanner {
           priority: {
             harvestedCount,
             mismatchCount,
+            latestMatchDateTs,
             totalPending: pendingMatches.length
           },
           desiredLimit: null
@@ -165,6 +187,7 @@ class ReconTaskPlanner {
     prepared.sort((left, right) =>
       Number(right?.priority?.harvestedCount || 0) - Number(left?.priority?.harvestedCount || 0)
       || Number(right?.priority?.mismatchCount || 0) - Number(left?.priority?.mismatchCount || 0)
+      || Number(right?.priority?.latestMatchDateTs || 0) - Number(left?.priority?.latestMatchDateTs || 0)
       || Number(right?.priority?.totalPending || 0) - Number(left?.priority?.totalPending || 0)
       || String(left?.target?.league?.name || '').localeCompare(String(right?.target?.league?.name || ''))
     );
@@ -210,6 +233,7 @@ class ReconTaskPlanner {
   async loadReconPendingMatches(target, options = {}) {
     if (this.repository && typeof this.repository.getReconEligibleMatches === 'function') {
       return this.repository.getReconEligibleMatches(target.dbSeason, target.league.name, {
+        limit: Number.isInteger(options.limit) && options.limit > 0 ? options.limit : null,
         allowMismatchRetry: options.allowMismatchRetry === true,
         allNonLinked: options.allNonLinked === true
       });

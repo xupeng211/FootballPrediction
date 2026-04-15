@@ -505,6 +505,7 @@ class ReconScanner {
     const matrixModeShortCircuitRatio = Number.isFinite(matrixModeShortCircuitRatioRaw)
       ? Math.min(1, Math.max(0, matrixModeShortCircuitRatioRaw))
       : 0.5;
+    const matrixResultsOnlyMode = engineConfig.matrix_results_only_mode === true;
     const disableSearchRouteInMatrix = engineConfig.matrix_disable_search_route !== false;
     const matrixLeagueTimeBudgetMs = Math.max(
       1,
@@ -523,6 +524,7 @@ class ReconScanner {
     this.engine.searchDisabledOnDegradedLeague = true;
     this.engine.matrixModePruning = matrixModePruning;
     this.engine.matrixModeShortCircuitRatio = matrixModeShortCircuitRatio;
+    this.engine.matrixResultsOnlyMode = matrixResultsOnlyMode;
     this.engine.disableSearchRouteInMatrix = disableSearchRouteInMatrix;
     this.engine.matrixLeagueTimeBudgetMs = matrixLeagueTimeBudgetMs;
     this.engine.lowSuccessRateThreshold = lowSuccessRateThreshold;
@@ -538,6 +540,7 @@ class ReconScanner {
       searchDisabledOnDegradedLeague: this.engine.searchDisabledOnDegradedLeague,
       matrixModePruning: this.engine.matrixModePruning,
       matrixModeShortCircuitRatio: this.engine.matrixModeShortCircuitRatio,
+      matrixResultsOnlyMode: this.engine.matrixResultsOnlyMode,
       disableSearchRouteInMatrix: this.engine.disableSearchRouteInMatrix,
       matrixLeagueTimeBudgetMs: this.engine.matrixLeagueTimeBudgetMs,
       lowSuccessRateThreshold: this.engine.lowSuccessRateThreshold,

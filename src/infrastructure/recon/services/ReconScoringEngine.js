@@ -17,6 +17,7 @@ function buildOrientationFrame(teamSimilarity, candidateHome, candidateAway, l1H
     homeScore,
     awayScore,
     identityConflict,
+    minScore: Math.min(homeScore, awayScore),
     normalizedMatch: !identityConflict
       && teamSimilarity.isComparableNameEquivalent(comparableHome, homeTarget)
       && teamSimilarity.isComparableNameEquivalent(comparableAway, awayTarget),
@@ -49,8 +50,10 @@ function buildOrientationResult(teamSimilarity, candidate, l1Match, threshold) {
   return {
     directMatch,
     swappedMatch,
+    directMinScore: direct.minScore,
     directScore: direct.score,
     swappedScore: swapped.score,
+    swappedMinScore: swapped.minScore,
     directNormalized: direct.normalizedMatch,
     swappedNormalized: swapped.normalizedMatch,
     directIdentityConflict: direct.identityConflict,
@@ -70,18 +73,52 @@ function selectIdentityConflict(orientation) {
     : orientation.swappedIdentityConflict;
 }
 
-function selectTeamConfidence(orientation) {
-  return orientation.isReversed
-    ? orientation.swappedScore
-    : Math.max(orientation.directScore, orientation.swappedScore);
+function resolveSelectedOrientation(orientation) {
+  if (orientation.isReversed) {
+    return {
+      averageScore: orientation.swappedScore,
+      minScore: orientation.swappedMinScore,
+      identityConflict: orientation.swappedIdentityConflict
+    };
+  }
+
+  if (orientation.directScore >= orientation.swappedScore) {
+    return {
+      averageScore: orientation.directScore,
+      minScore: orientation.directMinScore,
+      identityConflict: orientation.directIdentityConflict
+    };
+  }
+
+  return {
+    averageScore: orientation.swappedScore,
+    minScore: orientation.swappedMinScore,
+    identityConflict: orientation.swappedIdentityConflict
+  };
+}
+
+function calculateTeamConfidence(orientation, teamBalanceWeight) {
+  const selected = resolveSelectedOrientation(orientation);
+  return clampConfidence(
+    (selected.averageScore * (1 - teamBalanceWeight))
+    + (selected.minScore * teamBalanceWeight)
+  );
 }
 
 function clampConfidence(value) {
   return Math.max(0, Math.min(1, value));
 }
 
-function calculateConfidence({ dateConfidence, dateWeight, orientation, placeholderFixture, teamWeight }) {
-  const selectedIdentityConflict = selectIdentityConflict(orientation);
+function calculateConfidence({
+  dateConfidence,
+  dateWeight,
+  orientation,
+  placeholderFixture,
+  teamBalanceWeight,
+  teamWeight
+}) {
+  const selected = resolveSelectedOrientation(orientation);
+  const selectedIdentityConflict = selected.identityConflict ?? selectIdentityConflict(orientation);
   if (selectedIdentityConflict) {
     return 0;
   }
@@ -94,7 +131,7 @@ function calculateConfidence({ dateConfidence, dateWeight, orientation, placehol
     return 1.0;
   }
 
-  const teamConfidence = selectTeamConfidence(orientation);
+  const teamConfidence = calculateTeamConfidence(orientation, teamBalanceWeight);
   return dateConfidence === null
     ? teamConfidence
     : clampConfidence((teamConfidence * teamWeight) + (dateConfidence * dateWeight));
@@ -106,6 +143,17 @@ function resolveMatchMethod(confidence, dictionaryLocked, exactMatchThreshold) {
   }
 
   return confidence >= exactMatchThreshold ? 'exact' : 'fuzzy';
+}
+
+function resolveDateDeltaMs(candidateDate, matchDate) {
+  const candidate = new Date(candidateDate);
+  const target = new Date(matchDate);
+
+  if (Number.isNaN(candidate.getTime()) || Number.isNaN(target.getTime())) {
+    return null;
+  }
+
+  return Math.abs(candidate.getTime() - target.getTime());
 }
 
 function evaluateCandidateScore(engine, candidate, l1Match, placeholderFixture) {
@@ -123,19 +171,33 @@ function evaluateCandidateScore(engine, candidate, l1Match, placeholderFixture) 
     candidate.matchDate || candidate.match_date,
     l1Match.match_date
   );
+  const dateDeltaMs = engine.calculateKickoffDeltaMs(
+    candidate.matchDate || candidate.match_date,
+    l1Match.match_date
+  );
+  const selectedOrientation = resolveSelectedOrientation(orientation);
+  const teamConfidence = calculateTeamConfidence(orientation, engine.teamBalanceWeight);
   const confidence = calculateConfidence({
     dateConfidence,
     dateWeight: engine.dateWeight,
     orientation,
     placeholderFixture,
+    teamBalanceWeight: engine.teamBalanceWeight,
     teamWeight: engine.teamWeight
   });
 
   return {
     candidate: resolvedCandidate,
     confidence,
+    dateConfidence,
+    dateDeltaMs,
     method: resolveMatchMethod(confidence, orientation.dictionaryLocked, engine.exactMatchThreshold),
-    isReversed: orientation.isReversed
+    orientation,
+    isReversed: orientation.isReversed,
+    selectedAverageScore: selectedOrientation.averageScore,
+    selectedIdentityConflict: selectedOrientation.identityConflict,
+    selectedMinScore: selectedOrientation.minScore,
+    teamConfidence
   };
 }
 
@@ -147,6 +209,12 @@ class ReconScoringEngine {
     this.exactMatchThreshold = Number(options.exactMatchThreshold);
     this.teamWeight = Number(options.teamWeight);
     this.dateWeight = Number(options.dateWeight);
+    this.teamBalanceWeight = Number.isFinite(Number(options.teamBalanceWeight))
+      ? Number(options.teamBalanceWeight)
+      : 0.5;
+    this.perfectKickoffWindowMs = Number.isFinite(Number(options.perfectKickoffWindowMs))
+      ? Number(options.perfectKickoffWindowMs)
+      : 2 * 60 * 60 * 1000;
     this.dateConfidenceBands = Array.isArray(options.dateConfidenceBands)
       ? options.dateConfidenceBands
       : [];
@@ -166,15 +234,26 @@ class ReconScoringEngine {
     );
   }
 
-  calculateDateConfidence(candidateDate, matchDate) {
-    const candidate = new Date(candidateDate);
-    const target = new Date(matchDate);
+  evaluateCandidate(candidate, l1Match) {
+    const placeholderFixture = this.teamSimilarity.isPlaceholderFixture(l1Match);
+    return evaluateCandidateScore(this, candidate, l1Match, placeholderFixture);
+  }
 
-    if (Number.isNaN(candidate.getTime()) || Number.isNaN(target.getTime())) {
+  calculateKickoffDeltaMs(candidateDate, matchDate) {
+    return resolveDateDeltaMs(candidateDate, matchDate);
+  }
+
+  calculateDateConfidence(candidateDate, matchDate) {
+    const diffMs = this.calculateKickoffDeltaMs(candidateDate, matchDate);
+    if (diffMs === null) {
       return null;
     }
 
-    const diffDays = Math.abs(candidate.getTime() - target.getTime()) / 86400000;
+    if (diffMs <= this.perfectKickoffWindowMs) {
+      return 1;
+    }
+
+    const diffDays = diffMs / 86400000;
     for (const band of this.dateConfidenceBands) {
       if (diffDays <= Number(band?.max_diff_days)) {
         return Number(band?.score || 0);
@@ -199,7 +278,7 @@ class ReconScoringEngine {
 
     let best = null;
     for (const candidate of candidates) {
-      const evaluation = evaluateCandidateScore(this, candidate, l1Match, placeholderFixture);
+      const evaluation = this.evaluateCandidate(candidate, l1Match);
       if (evaluation && (!best || evaluation.confidence > best.confidence)) {
         best = evaluation;
       }

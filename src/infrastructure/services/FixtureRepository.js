@@ -693,7 +693,14 @@ class FixtureRepository {
                 AND map.season = $2
                 AND COALESCE(map.is_evidence_only, FALSE) = FALSE
             )
-          ORDER BY m.match_date DESC, m.match_id DESC
+          ORDER BY
+            CASE
+              WHEN m.pipeline_status = 'harvested' THEN 0
+              WHEN m.pipeline_status = 'RECON_MISMATCH' THEN 1
+              ELSE 2
+            END ASC,
+            m.match_date DESC,
+            m.match_id DESC
         `;
         if (Number.isInteger(limit) && limit > 0) {
           params.push(limit);

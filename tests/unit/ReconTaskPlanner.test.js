@@ -244,6 +244,69 @@ describe('ReconTaskPlanner', () => {
     assert.equal(prepared[0].priority.mismatchCount, 2);
   });
 
+  it('单场 Matrix 模式应以 limit=1 轻量加载并优先挑选最新 harvested 比赛', async () => {
+    const calls = [];
+    const planner = createPlanner({
+      configManager: {
+        getActiveLeagues() {
+          return [
+            { id: 47, code: 'EPL', name: 'Premier League', country: 'england', slug: 'premier-league' },
+            { id: 130, code: 'MLS', name: 'MLS', country: 'usa', slug: 'mls', resultsUrlStrategy: 'seasonless', seasonType: 'single_year' }
+          ];
+        }
+      },
+      repository: {
+        async getReconEligibleMatches(dbSeason, leagueName, options) {
+          calls.push({ dbSeason, leagueName, options });
+          if (leagueName === 'Premier League') {
+            return [{
+              match_id: '47_20252026_0001',
+              pipeline_status: 'HARVESTED',
+              match_date: '2025-08-10T15:00:00.000Z'
+            }];
+          }
+          if (leagueName === 'MLS') {
+            return [{
+              match_id: '130_20252026_0001',
+              pipeline_status: 'HARVESTED',
+              match_date: '2025-08-20T15:00:00.000Z'
+            }];
+          }
+          return [];
+        }
+      }
+    });
+
+    const targets = await planner.buildScanTargets({
+      season: '2025-2026',
+      leagueIds: [47, 130]
+    });
+    const prepared = await planner.prepareReconPendingTargets(targets, 1, {
+      allowMismatchRetry: true,
+      confidenceThreshold: 0.75
+    });
+
+    assert.deepStrictEqual(calls, [
+      {
+        dbSeason: '2025/2026',
+        leagueName: 'Premier League',
+        options: { limit: 1, allowMismatchRetry: true, allNonLinked: false }
+      },
+      {
+        dbSeason: '2025/2026',
+        leagueName: 'MLS',
+        options: { limit: 1, allowMismatchRetry: true, allNonLinked: false }
+      }
+    ]);
+    assert.equal(prepared.length, 1);
+    assert.equal(prepared[0].target.league.name, 'MLS');
+    assert.equal(prepared[0].desiredLimit, 1);
+    assert.deepStrictEqual(
+      prepared[0].pendingMatches.map((match) => match.match_id),
+      ['130_20252026_0001']
+    );
+  });
+
   it('当前赛季 SOURCE_EMPTY 时应保留当前赛季 source，不得回退到上一赛季', async () => {
     const calls = [];
     const planner = createPlanner({
@@ -1051,6 +1114,7 @@ describe('ReconTaskPlanner', () => {
       season: '2025/2026',
       leagueName: 'Premier League',
       options: {
+        limit: null,
         allowMismatchRetry: true,
         allNonLinked: false
       }
@@ -1079,6 +1143,7 @@ describe('ReconTaskPlanner', () => {
       season: '2025/2026',
       leagueName: 'Premier League',
       options: {
+        limit: null,
         allowMismatchRetry: false,
         allNonLinked: true
       }

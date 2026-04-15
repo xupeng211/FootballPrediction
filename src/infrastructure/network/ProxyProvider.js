@@ -24,6 +24,9 @@ const DEFAULT_MIN_HEALTH_SCORE = 60;
 const DEFAULT_SUCCESS_HEALTH_REWARD = 4;
 const DEFAULT_FAILURE_HEALTH_PENALTY = 10;
 const DEFAULT_GATEWAY_PREFLIGHT_TIMEOUT_MS = 1500;
+const DEFAULT_TRANSIENT_CONTEXT_COOLDOWN_MS = 3000;
+const DEFAULT_UPSTREAM_BLOCK_BASE_COOLDOWN_MS = 5000;
+const DEFAULT_UPSTREAM_BLOCK_MAX_COOLDOWN_MS = 15000;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -61,7 +64,37 @@ function isTimeoutLike(reason = '') {
     || message.includes('etimedout');
 }
 
-function resolveHealthPenalty(statusCode, reason = '') {
+function normalizeFailureClass(failureClass, statusCode, reason = '') {
+  const normalized = String(failureClass || '').trim().toLowerCase();
+  if (normalized) {
+    return normalized;
+  }
+
+  const message = String(reason || '').toLowerCase();
+  if (statusCode === 429) {
+    return 'rate_limit';
+  }
+  if (message.includes('err_empty_response') || message.includes('empty_response')) {
+    return 'upstream_block';
+  }
+  if (
+    message.includes('execution context was destroyed')
+    || message.includes('target closed')
+    || message.includes('target page')
+    || message.includes('page crashed')
+  ) {
+    return 'browser_context_transient';
+  }
+  return 'hard_proxy_failure';
+}
+
+function resolveHealthPenalty(statusCode, reason = '', failureClass = 'hard_proxy_failure') {
+  if (failureClass === 'browser_context_transient') {
+    return 2;
+  }
+  if (failureClass === 'upstream_block') {
+    return 4;
+  }
   if (statusCode === 403) {
     return 45;
   }
@@ -130,6 +163,18 @@ class ProxyProvider extends EventEmitter {
       criticalErrorCooldownMs: positiveNumber(
         options.criticalErrorCooldownMs,
         DEFAULT_CRITICAL_ERROR_COOLDOWN_MS
+      ),
+      transientContextCooldownMs: positiveNumber(
+        options.transientContextCooldownMs,
+        DEFAULT_TRANSIENT_CONTEXT_COOLDOWN_MS
+      ),
+      upstreamBlockBaseCooldownMs: positiveNumber(
+        options.upstreamBlockBaseCooldownMs,
+        DEFAULT_UPSTREAM_BLOCK_BASE_COOLDOWN_MS
+      ),
+      upstreamBlockMaxCooldownMs: positiveNumber(
+        options.upstreamBlockMaxCooldownMs,
+        DEFAULT_UPSTREAM_BLOCK_MAX_COOLDOWN_MS
       ),
       heartbeatFailureCooldownMs: positiveNumber(options.heartbeatFailureCooldownMs, 5000),
       failureThreshold,
@@ -497,6 +542,7 @@ class ProxyProvider extends EventEmitter {
 
     const statusCode = Number(metadata.statusCode) || extractStatusCode(metadata.reason);
     const reason = String(metadata.reason || metadata.error || 'unknown');
+    const failureClass = normalizeFailureClass(metadata.failureClass, statusCode, reason);
     const now = this.now();
 
     node.totalRequests += 1;
@@ -505,10 +551,15 @@ class ProxyProvider extends EventEmitter {
     node.lastStatusCode = statusCode || null;
     node.lastError = reason;
     node.healthScore = clamp(
-      node.healthScore - resolveHealthPenalty(statusCode, reason),
+      node.healthScore - resolveHealthPenalty(statusCode, reason, failureClass),
       0,
       100
     );
+
+    if (failureClass === 'browser_context_transient' || failureClass === 'upstream_block') {
+      node.healthScore = Math.max(node.healthScore, this.config.minHealthScore);
+    }
+
     node.successRateEwma = ewma(
       node.successRateEwma,
       0,
@@ -525,6 +576,23 @@ class ProxyProvider extends EventEmitter {
       return true;
     }
 
+    if (failureClass === 'browser_context_transient' || failureClass === 'upstream_block') {
+      const cooldownMs = this._resolveSoftFailureCooldownMs(failureClass, node);
+      if (cooldownMs > 0) {
+        node.cooldownUntil = now + cooldownMs;
+        this._emitAlert('proxy_soft_backoff', node, {
+          statusCode,
+          reason,
+          failureClass,
+          cooldownUntil: node.cooldownUntil,
+          cooldownMs,
+          consecutiveFailures: node.consecutiveFailures
+        });
+      }
+
+      return true;
+    }
+
     if (
       statusCode === 503
       && node.consecutiveFailures < this.config.http503ObservationThreshold
@@ -538,8 +606,8 @@ class ProxyProvider extends EventEmitter {
       return true;
     }
 
-    if (this._shouldCooldownNode(statusCode, node)) {
-      const cooldownMs = this._resolveFailureCooldownMs(statusCode);
+    if (this._shouldCooldownNode(statusCode, node, failureClass)) {
+      const cooldownMs = this._resolveFailureCooldownMs(statusCode, failureClass);
       node.cooldownUntil = now + cooldownMs;
       this._emitAlert('proxy_cooled_down', node, {
         statusCode,
@@ -562,7 +630,10 @@ class ProxyProvider extends EventEmitter {
     return true;
   }
 
-  _shouldCooldownNode(statusCode, node) {
+  _shouldCooldownNode(statusCode, node, failureClass = 'hard_proxy_failure') {
+    if (failureClass === 'browser_context_transient' || failureClass === 'upstream_block') {
+      return false;
+    }
     if (statusCode === 403) {
       return true;
     }
@@ -575,13 +646,35 @@ class ProxyProvider extends EventEmitter {
     return node.consecutiveFailures >= this.config.failureThreshold;
   }
 
-  _resolveFailureCooldownMs(statusCode) {
+  _resolveFailureCooldownMs(statusCode, failureClass = 'hard_proxy_failure') {
+    if (failureClass === 'browser_context_transient' || failureClass === 'upstream_block') {
+      return this._resolveSoftFailureCooldownMs(failureClass, { consecutiveFailures: 1 });
+    }
     if (statusCode === 403) {
       return this.config.criticalErrorCooldownMs;
     }
     return statusCode === 503
       ? this.config.http503CooldownMs
       : this.config.failureCooldownMs;
+  }
+
+  _resolveSoftFailureCooldownMs(failureClass, node) {
+    if (failureClass === 'browser_context_transient') {
+      return Math.min(
+        this.config.upstreamBlockMaxCooldownMs,
+        this.config.transientContextCooldownMs * Math.max(1, Number(node?.consecutiveFailures) || 1)
+      );
+    }
+
+    if (failureClass === 'upstream_block') {
+      const exponent = Math.max(0, (Number(node?.consecutiveFailures) || 1) - 1);
+      return Math.min(
+        this.config.upstreamBlockMaxCooldownMs,
+        this.config.upstreamBlockBaseCooldownMs * (2 ** exponent)
+      );
+    }
+
+    return 0;
   }
 
   getStats() {

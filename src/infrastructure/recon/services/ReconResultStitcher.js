@@ -1,4 +1,7 @@
+/* eslint-disable complexity */
 'use strict';
+
+const { getReconConfigSection } = require('./ReconServiceConfig');
 
 const ALLOWED_MAPPING_METHODS = new Set([
   'exact',
@@ -14,6 +17,17 @@ const ALLOWED_MAPPING_METHODS = new Set([
   'V5.5_HARVESTER',
   'v41_186_auto'
 ]);
+
+function resolveFiniteNumber(...values) {
+  for (const value of values) {
+    const normalized = Number(value);
+    if (Number.isFinite(normalized)) {
+      return normalized;
+    }
+  }
+
+  return null;
+}
 
 function buildCandidateNormalizationPayload(candidate, l1Match, target, rawUrl, fallbackSlug) {
   const matchDate = candidate.matchDate || candidate.match_date || l1Match?.match_date || null;
@@ -175,10 +189,20 @@ const reconResultStitcher = {
 
   async _reconcilePendingMatch(l1Match, candidates, target, confidenceThreshold, seasonMirror = null) {
     let candidateMatch = this._findBestCandidate(l1Match, candidates, seasonMirror);
-    if (
-      (!candidateMatch || candidateMatch.confidence < confidenceThreshold)
-      && String(l1Match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH'
-    ) {
+    const mismatchRetryMode = String(l1Match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH';
+    if ((!candidateMatch || candidateMatch.confidence < confidenceThreshold) && mismatchRetryMode) {
+      const fuzzyRetryCandidate = this._findBestMismatchRetryCandidate(l1Match, candidates);
+      if (
+        fuzzyRetryCandidate
+        && (
+          !candidateMatch
+          || !this._isMismatchRetryCandidateEligible(candidateMatch)
+          || fuzzyRetryCandidate.confidence > candidateMatch.confidence
+        )
+      ) {
+        candidateMatch = fuzzyRetryCandidate;
+      }
+
       const localDictionaryCandidate = this._buildLocalDictionaryCandidate(l1Match, target);
       if (localDictionaryCandidate) {
         const localDictionaryMatch = this._findBestCandidate(l1Match, [localDictionaryCandidate], null);
@@ -188,12 +212,25 @@ const reconResultStitcher = {
       }
     }
 
-    if (!candidateMatch || candidateMatch.confidence < confidenceThreshold) {
+    const mismatchRetryPromoted = this._isMismatchRetryCandidateEligible(candidateMatch);
+    if (!candidateMatch || (candidateMatch.confidence < confidenceThreshold && !mismatchRetryPromoted)) {
       return {
         status: 'mismatch',
         matchId: l1Match.match_id,
         evidence: this._buildMismatchEvidence(l1Match, candidateMatch, target)
       };
+    }
+
+    if (mismatchRetryMode && mismatchRetryPromoted && candidateMatch.confidence < confidenceThreshold) {
+      this.logger.info('recon_mismatch_retry_promoted', {
+        match_id: String(l1Match?.match_id || ''),
+        league: target?.league?.name || null,
+        season: target?.dbSeason || null,
+        confidence: Number(candidateMatch.confidence || 0),
+        confidenceThreshold,
+        selectedMinScore: Number(candidateMatch.selectedMinScore || 0),
+        dateDeltaMs: Number.isFinite(Number(candidateMatch.dateDeltaMs)) ? Number(candidateMatch.dateDeltaMs) : null
+      });
     }
 
     const normalizedCandidateMatch = this._normalizeCandidateMatchForLink(candidateMatch, l1Match, target);
@@ -222,6 +259,84 @@ const reconResultStitcher = {
         status: 'pending'
       }
     };
+  },
+
+  _getMismatchRetrySettings() {
+    const runtimeConfig = getReconConfigSection(['recon_runtime', 'match_evaluator'], {});
+    return {
+      fuzzyConfidenceFloor: resolveFiniteNumber(
+        this.mismatchRetryFuzzyConfidenceFloor,
+        runtimeConfig.mismatch_retry_fuzzy_confidence_floor,
+        0.7
+      ),
+      maxTeamScoreGap: Math.max(0, resolveFiniteNumber(
+        this.mismatchRetryMaxTeamScoreGap,
+        runtimeConfig.mismatch_retry_max_team_score_gap,
+        0.08
+      )),
+      maxKickoffDeltaMs: Math.max(0, resolveFiniteNumber(
+        this.mismatchRetryMaxKickoffDeltaMs,
+        runtimeConfig.mismatch_retry_max_kickoff_delta_ms,
+        2 * 60 * 60 * 1000
+      )),
+      teamSimilarityFloor: resolveFiniteNumber(
+        this.mismatchRetryTeamSimilarityFloor,
+        runtimeConfig.mismatch_retry_team_similarity_floor,
+        0.68
+      )
+    };
+  },
+
+  _isMismatchRetryCandidateEligible(candidateMatch) {
+    if (!candidateMatch) {
+      return false;
+    }
+
+    const settings = this._getMismatchRetrySettings();
+    const confidence = Number(candidateMatch.confidence || 0);
+    const selectedAverageScore = Number(candidateMatch.selectedAverageScore || 0);
+    const selectedMinScore = Number(candidateMatch.selectedMinScore || 0);
+    const dateDeltaMs = resolveFiniteNumber(candidateMatch.dateDeltaMs);
+
+    if (confidence < settings.fuzzyConfidenceFloor) {
+      return false;
+    }
+
+    if (selectedMinScore < settings.teamSimilarityFloor) {
+      return false;
+    }
+
+    if ((selectedAverageScore - selectedMinScore) > settings.maxTeamScoreGap) {
+      return false;
+    }
+
+    if (dateDeltaMs === null) {
+      return false;
+    }
+
+    return dateDeltaMs <= settings.maxKickoffDeltaMs;
+  },
+
+  _findBestMismatchRetryCandidate(l1Match, candidates = []) {
+    if (!Array.isArray(candidates) || candidates.length === 0) {
+      return null;
+    }
+
+    let best = null;
+    for (const candidate of candidates) {
+      const evaluation = typeof this.matchEvaluator?.evaluateCandidate === 'function'
+        ? this.matchEvaluator.evaluateCandidate(candidate, l1Match)
+        : null;
+      if (!this._isMismatchRetryCandidateEligible(evaluation)) {
+        continue;
+      }
+
+      if (!best || evaluation.confidence > best.confidence) {
+        best = evaluation;
+      }
+    }
+
+    return best;
   },
 
   _buildMismatchEvidence(l1Match, candidateMatch, target) {

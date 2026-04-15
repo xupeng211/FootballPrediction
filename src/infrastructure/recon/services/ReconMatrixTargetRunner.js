@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 'use strict';
 
 const pLimit = require('p-limit');
@@ -23,6 +24,115 @@ function buildReconTargetState(target, runtimeTarget, scopedPending, effectiveTh
 }
 
 const reconMatrixTargetRunner = {
+  _shouldUseTargetDrivenSingleMatch(runtimeTarget = {}, pendingMatches = [], candidates = []) {
+    return Number.isInteger(runtimeTarget?.matchLimit)
+      && runtimeTarget.matchLimit === 1
+      && Array.isArray(pendingMatches)
+      && pendingMatches.length === 1
+      && Array.isArray(candidates)
+      && candidates.length > 0;
+  },
+
+  _buildTargetDrivenResultsSource(resultsSource = null, scopedPending = [], effectiveThreshold = 0) {
+    const targetMatch = Array.isArray(scopedPending) ? scopedPending[0] : null;
+    const matchId = String(targetMatch?.match_id || '');
+    if (!resultsSource || !targetMatch || !matchId) {
+      return resultsSource;
+    }
+
+    const preselectedCandidates = resultsSource?.targetDrivenCandidateMap instanceof Map
+      ? (resultsSource.targetDrivenCandidateMap.get(matchId) || [])
+      : [];
+    const selectedCandidates = Array.isArray(preselectedCandidates) && preselectedCandidates.length > 0
+      ? preselectedCandidates
+      : [];
+    const matched = selectedCandidates.length > 0
+      ? {
+        candidate: selectedCandidates[0],
+        confidence: Number(resultsSource?.targetDrivenBestMatch?.confidence || 0)
+      }
+      : this.matchEvaluator?.findBestCandidate(targetMatch, resultsSource?.candidates || [], null) || null;
+    const narrowedCandidates = selectedCandidates.length > 0
+      ? selectedCandidates
+      : matched?.candidate
+        ? [matched.candidate]
+        : [];
+
+    if (narrowedCandidates.length === 0) {
+      return resultsSource;
+    }
+
+    this.logger.info('recon_target_driven_single_match_ready', {
+      league: resultsSource?.source?.league || null,
+      sourceUrl: resultsSource?.source?.url || null,
+      matchId,
+      originalCandidateCount: Array.isArray(resultsSource?.candidates) ? resultsSource.candidates.length : 0,
+      narrowedCandidateCount: narrowedCandidates.length,
+      confidence: Number(matched?.confidence || 0),
+      effectiveThreshold: Number(effectiveThreshold || 0),
+      candidateHash: narrowedCandidates[0]?.hash || null,
+      candidateUrl: narrowedCandidates[0]?.url || null
+    });
+
+    return {
+      ...resultsSource,
+      candidates: narrowedCandidates,
+      seasonMirror: new Map(),
+      originalCandidateCount: Array.isArray(resultsSource?.candidates) ? resultsSource.candidates.length : 0,
+      targetDrivenSingleMatch: true,
+      targetDrivenBestMatch: {
+        matchId,
+        confidence: Number(matched?.confidence || 0),
+        candidateHash: narrowedCandidates[0]?.hash || null,
+        candidateUrl: narrowedCandidates[0]?.url || null
+      }
+    };
+  },
+
+  _shouldAllowPrepareScopedPendingBudgetGrace(runtimeTarget = {}, scopedPending = [], resultsSource = null) {
+    return Number.isInteger(runtimeTarget?.matchLimit)
+      && runtimeTarget.matchLimit === 1
+      && Array.isArray(scopedPending)
+      && scopedPending.length === 1
+      && resultsSource?.targetDrivenSingleMatch === true
+      && Array.isArray(resultsSource?.candidates)
+      && resultsSource.candidates.length > 0;
+  },
+
+  _isResultsSourceIncomplete(routeState = null) {
+    return routeState?.resultsSource?.sourceHealth?.incomplete === true
+      || routeState?.resultsSource?.extractResult?.sourceIncomplete === true;
+  },
+
+  _buildIncompleteResultsSourceError(routeState = null, stage = 'results_source_incomplete') {
+    const sourceHealth = routeState?.resultsSource?.sourceHealth
+      || routeState?.resultsSource?.extractResult?.sourceHealth
+      || {};
+    const error = new Error('RECON_SOURCE_INCOMPLETE');
+    error.code = 'RECON_SOURCE_INCOMPLETE';
+    error.stage = stage;
+    error.retryable = true;
+    error.shouldSwitchProxy = true;
+    error.sourceUrl = routeState?.resultsSource?.source?.url
+      || routeState?.finalSourceUrl
+      || routeState?.runtimeTarget?.resultsUrl
+      || routeState?.target?.resultsUrl
+      || null;
+    error.sourceSeason = routeState?.resultsSource?.source?.season
+      || routeState?.finalSourceSeason
+      || routeState?.runtimeTarget?.dbSeason
+      || routeState?.target?.dbSeason
+      || null;
+    error.incompleteReasons = [...(sourceHealth?.incompleteReasons || [])];
+    error.pageFailureCount = Number(sourceHealth?.pageFailureCount || 0);
+    error.expectedPages = Number(sourceHealth?.expectedPages || 0);
+    error.observedPages = Number(sourceHealth?.observedPages || 0);
+    error.requiredCandidateFloor = Number(sourceHealth?.requiredCandidateFloor || 0);
+    error.candidateCount = Number(sourceHealth?.candidateCount || 0);
+    error.candidateShortfall = Number(sourceHealth?.candidateShortfall || 0);
+    return error;
+  },
+
   async _prepareReconTargetState(target, options = {}) {
     const {
       concurrency = this.defaultReconConcurrency,
@@ -33,6 +143,7 @@ const reconMatrixTargetRunner = {
       pendingMatches: pendingMatchesOverride = null,
       matchLimit = null,
       navigator = this.navigator || null,
+      resultsOnlyMode = false,
       disableSearchRoute = false,
       matrixModePruning = false,
       matrixModeShortCircuitRatio = 0.5,
@@ -61,6 +172,7 @@ const reconMatrixTargetRunner = {
       forceJsonExtract,
       forcePureProtocol,
       matchLimit,
+      resultsOnlyMode,
       disableSearchRoute,
       matrixModePruning,
       matrixModeShortCircuitRatio,
@@ -80,8 +192,14 @@ const reconMatrixTargetRunner = {
       navigator
     );
     const resultsCandidates = Array.isArray(resultsSource?.candidates) ? resultsSource.candidates : [];
-    const resultsSeasonMirror = resultsSource?.seasonMirror
-      || this.mirrorManager.buildSeasonMirror(resultsCandidates);
+    const targetDrivenSingleMatch = this._shouldUseTargetDrivenSingleMatch(
+      runtimeTarget,
+      orderedPending,
+      resultsCandidates
+    );
+    const resultsSeasonMirror = targetDrivenSingleMatch
+      ? new Map()
+      : resultsSource?.seasonMirror || this.mirrorManager.buildSeasonMirror(resultsCandidates);
     const scopedPending = this._resolveScopedPendingMatches(
       orderedPending,
       matchLimit,
@@ -89,11 +207,28 @@ const reconMatrixTargetRunner = {
       effectiveThreshold,
       resultsSeasonMirror
     );
+    const preparedResultsSource = targetDrivenSingleMatch
+      ? this._buildTargetDrivenResultsSource(resultsSource, scopedPending, effectiveThreshold)
+      : resultsSource;
 
     if (!Array.isArray(scopedPending) || scopedPending.length === 0) {
       return null;
     }
-    this._assertLeagueBudget(runtimeTarget, null, 'prepare_scoped_pending');
+    if (!this._shouldAllowPrepareScopedPendingBudgetGrace(runtimeTarget, scopedPending, preparedResultsSource)) {
+      this._assertLeagueBudget(runtimeTarget, null, 'prepare_scoped_pending');
+    } else {
+      const deadlineAt = Number(runtimeTarget?.leagueDeadlineAt || 0);
+      if (Number.isFinite(deadlineAt) && deadlineAt > 0 && Date.now() >= deadlineAt) {
+        this.logger.warn('recon_prepare_scoped_pending_budget_grace', {
+          league: runtimeTarget?.league?.name || null,
+          season: runtimeTarget?.dbSeason || null,
+          matchId: scopedPending[0]?.match_id || null,
+          originalCandidateCount: Number(preparedResultsSource?.originalCandidateCount || resultsCandidates.length || 0),
+          narrowedCandidateCount: Number(preparedResultsSource?.candidates?.length || 0),
+          sourceUrl: preparedResultsSource?.source?.url || runtimeTarget?.resultsUrl || null
+        });
+      }
+    }
 
     const reconRunId = this._createReconRunId(target);
     const routeMetadata = {
@@ -118,7 +253,7 @@ const reconMatrixTargetRunner = {
         effectiveThreshold,
         routeMetadata,
         progress,
-        resultsSource
+        preparedResultsSource
       ),
       routeSampleTarget: typeof this._buildRouteProbeSample === 'function'
         ? this._buildRouteProbeSample(scopedPending).length
@@ -191,6 +326,10 @@ const reconMatrixTargetRunner = {
       return false;
     }
 
+    if (this._isResultsSourceIncomplete(routeState)) {
+      return false;
+    }
+
     const resultsCandidateCount = Array.isArray(routeState.resultsSource?.candidates)
       ? routeState.resultsSource.candidates.length
       : 0;
@@ -253,6 +392,32 @@ const reconMatrixTargetRunner = {
   },
 
   async _runPostResultsFallbackRoutes(routeState) {
+    if (routeState.remainingRoutePending.length > 0 && routeState.runtimeTarget?.resultsOnlyMode === true) {
+      if (this._isResultsSourceIncomplete(routeState)) {
+        this.logger.warn('recon_results_only_incomplete_source_retry', {
+          league: routeState.target?.league?.name || null,
+          season: routeState.target?.dbSeason || null,
+          sourceUrl: routeState.resultsSource?.source?.url || null,
+          sourceSeason: routeState.resultsSource?.source?.season || null,
+          sourceState: routeState.resultsSource?.extractResult?.sourceState || 'SOURCE_EMPTY',
+          incompleteReasons: routeState.resultsSource?.sourceHealth?.incompleteReasons
+            || routeState.resultsSource?.extractResult?.sourceHealth?.incompleteReasons
+            || [],
+          remainingPending: routeState.remainingRoutePending.length
+        });
+        throw this._buildIncompleteResultsSourceError(routeState, 'results_only_incomplete_source');
+      }
+
+      this.logger.info('recon_results_only_finalize', {
+        league: routeState.target?.league?.name || null,
+        season: routeState.target?.dbSeason || null,
+        remainingPending: routeState.remainingRoutePending.length,
+        skippedRoutes: ['fixtures', 'search', 'local_dictionary']
+      });
+      await this._finalizeRemainingPending(routeState);
+      return;
+    }
+
     if (routeState.remainingRoutePending.length > 0) {
       if (await this._finalizeIfBudgetExhausted(routeState, 'before_fixtures')) {
         return;
@@ -290,7 +455,7 @@ const reconMatrixTargetRunner = {
     routeState.totalLinked += Number(routeResult?.linked || 0);
     routeState.totalMismatched += Number(routeResult?.mismatched || 0);
     routeState.totalCandidateCount += Number(
-      routeSource?.localFallbackCandidateCount || routeSource?.candidates?.length || 0
+      routeSource?.originalCandidateCount || routeSource?.localFallbackCandidateCount || routeSource?.candidates?.length || 0
     );
     routeState.remainingRoutePending = Array.isArray(routeResult?.remainingPending)
       ? routeResult.remainingPending
