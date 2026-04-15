@@ -6,7 +6,12 @@ const path = require('node:path');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 
-const { parseArgs, getDefaultReconThreshold, getTotalWarLogSettings } = require('../../scripts/ops/total_war_pipeline');
+const {
+  parseArgs,
+  getDefaultReconLimit,
+  getDefaultReconThreshold,
+  getTotalWarLogSettings
+} = require('../../scripts/ops/total_war_pipeline');
 
 test('TotalWarPipeline 默认 reconThreshold 应优先读取环境变量 RECON_THRESHOLD', () => {
   const originalThreshold = process.env.RECON_THRESHOLD;
@@ -50,6 +55,48 @@ test('TotalWarPipeline 默认 reconThreshold 应在无环境变量时回退到 r
       delete process.env.RECON_THRESHOLD;
     } else {
       process.env.RECON_THRESHOLD = originalThreshold;
+    }
+
+    if (originalConfigPath === undefined) {
+      delete process.env.RECON_CONFIG_PATH;
+    } else {
+      process.env.RECON_CONFIG_PATH = originalConfigPath;
+    }
+  }
+});
+
+test('TotalWarPipeline 默认 reconLimit 应优先读取环境变量 RECON_LIMIT，并在缺省时回退到 recon_config.json', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'total-war-limit-config-'));
+  const configPath = path.join(tempDir, 'recon_config.json');
+  const originalLimit = process.env.RECON_LIMIT;
+  const originalConfigPath = process.env.RECON_CONFIG_PATH;
+
+  fs.writeFileSync(configPath, JSON.stringify({
+    automation: {
+      total_war: {
+        recon_limit: 8000
+      }
+    }
+  }), 'utf8');
+
+  try {
+    delete process.env.RECON_LIMIT;
+    process.env.RECON_CONFIG_PATH = configPath;
+    assert.equal(getDefaultReconLimit(), 8000);
+
+    const options = parseArgs(['--season', '2025/2026', '--once']);
+    assert.equal(options.reconLimit, 8000);
+
+    process.env.RECON_LIMIT = '3200';
+    assert.equal(getDefaultReconLimit(), 3200);
+
+    const overridden = parseArgs(['--season', '2025/2026', '--once']);
+    assert.equal(overridden.reconLimit, 3200);
+  } finally {
+    if (originalLimit === undefined) {
+      delete process.env.RECON_LIMIT;
+    } else {
+      process.env.RECON_LIMIT = originalLimit;
     }
 
     if (originalConfigPath === undefined) {

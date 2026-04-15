@@ -22,6 +22,100 @@ function extractStatusCode(reason = '') {
   return match ? Number(match[1]) : null;
 }
 
+function includesAny(message, patterns) {
+  return patterns.some(pattern => message.includes(pattern));
+}
+
+function buildStealthFailure({
+  failureClass,
+  rotateProxy = false,
+  rebuildBrowserContext = false,
+  recoverPage = false
+}) {
+  return {
+    failureClass,
+    rotateProxy,
+    rebuildBrowserContext,
+    recoverPage
+  };
+}
+
+function resolveStealthStatusFailure(statusCode) {
+  if (statusCode === 429) {
+    return buildStealthFailure({
+      failureClass: 'rate_limit',
+      rotateProxy: true
+    });
+  }
+
+  if (statusCode === 403) {
+    return buildStealthFailure({
+      failureClass: 'proxy_blocked',
+      rotateProxy: true
+    });
+  }
+
+  if (statusCode >= 500) {
+    return buildStealthFailure({
+      failureClass: 'upstream_block'
+    });
+  }
+
+  return null;
+}
+
+function classifyStealthFailure(error) {
+  const message = String(error?.message || '').toLowerCase();
+  const statusCode = Number(error?.statusCode) || extractStatusCode(error?.message);
+  const statusFailure = resolveStealthStatusFailure(statusCode);
+
+  if (statusFailure) {
+    return statusFailure;
+  }
+
+  if (includesAny(message, ['err_empty_response', 'empty_response'])) {
+    return buildStealthFailure({
+      failureClass: 'upstream_block',
+      recoverPage: true
+    });
+  }
+
+  if (message.includes('failed to fetch')) {
+    return buildStealthFailure({
+      failureClass: 'upstream_block',
+      recoverPage: true
+    });
+  }
+
+  if (includesAny(message, [
+    'execution context was destroyed',
+    'target closed',
+    'target page',
+    'page crashed'
+  ])) {
+    return buildStealthFailure({
+      failureClass: 'browser_context_transient',
+      recoverPage: true
+    });
+  }
+
+  if (includesAny(message, [
+    '浏览器返回空数据',
+    'received html instead of json',
+    'browser fetch timeout',
+    'browser has been closed'
+  ])) {
+    return buildStealthFailure({
+      failureClass: 'browser_context_transient',
+      rebuildBrowserContext: true
+    });
+  }
+
+  return buildStealthFailure({
+    failureClass: 'proxy_transport'
+  });
+}
+
 /**
  * HTTP 客户端错误类
  * @class HttpClientError
@@ -61,6 +155,7 @@ class HttpClient {
     this.proxyConsumer = options.proxyConsumer || 'l1-discovery-http';
     this.proxySessionKey = options.proxySessionKey || 'raw-http';
     this.rawProxyLease = null;
+    this.stealthRequestTail = Promise.resolve();
   }
 
   /**
@@ -165,6 +260,10 @@ class HttpClient {
    * @private
    */
   async _stealthRequest(url) {
+    return this._runSerializedStealthRequest(() => this._stealthRequestInternal(url));
+  }
+
+  async _stealthRequestInternal(url) {
     let retryCount = 0;
     const maxRetries = 3;
 
@@ -209,48 +308,73 @@ class HttpClient {
 
       } catch (error) {
         retryCount++;
-        await this._reportProxyFailure({
-          statusCode: error.statusCode || extractStatusCode(error.message),
-          reason: error.message,
-          rotateProxy: Boolean(error.statusCode === 429 || this._shouldRebuildBrowserContext(error))
-        });
-        this.logger.warn(`[HttpClient] 尝试 ${retryCount} 失败: ${error.message}`);
-
-        if (retryCount >= maxRetries) {
-          throw new HttpClientError(`浏览器模式请求失败: ${error.message}`, {
-            url,
-            mode: 'stealth',
-            retryCount
-          });
-        }
-
-        const backoffMs = this._computeBackoffMs(retryCount, error.statusCode);
-        this.logger.warn(`[HttpClient] ${backoffMs}ms 后重试...`);
-
-        const shouldRebuildContext = this._shouldRebuildBrowserContext(error);
-
-        await this._sleep(backoffMs);
-
-        if (shouldRebuildContext && typeof this.ensureBrowserHealthy === 'function') {
-          await this.ensureBrowserHealthy({
-            reason: error.message,
-            forceRebuild: true
-          });
-          continue;
-        }
-
-        try {
-          await this.browserProvider.goto('https://www.fotmob.com/', {
-            waitUntil: 'domcontentloaded',
-            timeout: 15000
-          });
-        } catch (refreshErr) {
-          this.logger.warn(`[HttpClient] 刷新页面警告: ${refreshErr.message}`);
-        }
+        await this._handleStealthFailure(url, error, retryCount, maxRetries);
       }
     }
 
     throw new HttpClientError('浏览器模式重试耗尽', { url, mode: 'stealth', retryCount });
+  }
+
+  async _handleStealthFailure(url, error, retryCount, maxRetries) {
+    const failureMetadata = {
+      statusCode: error.statusCode || extractStatusCode(error.message),
+      reason: error.message,
+      ...classifyStealthFailure(error)
+    };
+    await this._reportProxyFailure(failureMetadata);
+    this.logger.warn(`[HttpClient] 尝试 ${retryCount} 失败: ${error.message}`);
+
+    if (retryCount >= maxRetries) {
+      throw new HttpClientError(`浏览器模式请求失败: ${error.message}`, {
+        url,
+        mode: 'stealth',
+        retryCount
+      });
+    }
+
+    const backoffMs = this._computeBackoffMs(retryCount, error.statusCode);
+    this.logger.warn(`[HttpClient] ${backoffMs}ms 后重试...`);
+    await this._sleep(backoffMs);
+
+    const shouldRotateSoftBlockedProxy = failureMetadata.recoverPage === true
+      && retryCount >= 2
+      && typeof this.ensureBrowserHealthy === 'function';
+
+    if (shouldRotateSoftBlockedProxy) {
+      await this.ensureBrowserHealthy({
+        reason: error.message,
+        forceRebuild: true
+      });
+      return;
+    }
+
+    if (failureMetadata.recoverPage === true && typeof this.ensureBrowserHealthy === 'function') {
+      await this.ensureBrowserHealthy({
+        reason: error.message,
+        recoverPage: true
+      });
+      return;
+    }
+
+    if (
+      (failureMetadata.rebuildBrowserContext === true || this._shouldRebuildBrowserContext(error))
+      && typeof this.ensureBrowserHealthy === 'function'
+    ) {
+      await this.ensureBrowserHealthy({
+        reason: error.message,
+        forceRebuild: true
+      });
+      return;
+    }
+
+    try {
+      await this.browserProvider.goto('https://www.fotmob.com/', {
+        waitUntil: 'domcontentloaded',
+        timeout: 15000
+      });
+    } catch (refreshErr) {
+      this.logger.warn(`[HttpClient] 刷新页面警告: ${refreshErr.message}`);
+    }
   }
 
   /**
@@ -415,9 +539,7 @@ class HttpClient {
     return message.includes('浏览器返回空数据')
       || message.includes('received html instead of json')
       || message.includes('browser fetch timeout')
-      || message.includes('context')
-      || message.includes('target page')
-      || message.includes('closed');
+      || message.includes('browser has been closed');
   }
 
   /**
@@ -513,6 +635,22 @@ class HttpClient {
 
     if (metadata.rotateProxy) {
       await this._releaseRawProxyLease();
+    }
+  }
+
+  async _runSerializedStealthRequest(task) {
+    const previousRequest = this.stealthRequestTail;
+    let releaseCurrent = null;
+    this.stealthRequestTail = new Promise(resolve => {
+      releaseCurrent = resolve;
+    });
+
+    await previousRequest.catch(() => {});
+
+    try {
+      return await task();
+    } finally {
+      releaseCurrent();
     }
   }
 }

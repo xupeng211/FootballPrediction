@@ -249,6 +249,172 @@ describe('HttpClient', () => {
     assert.strictEqual(rebuilds[2].forceRebuild, true);
   });
 
+  it('ERR_EMPTY_RESPONSE 应触发页面级恢复而不是整 Context 重建', async () => {
+    const sleeps = [];
+    const browserFailures = [];
+    const healthChecks = [];
+    let calls = 0;
+
+    const client = new HttpClient({
+      browserProvider: {
+        fetch: async () => {
+          calls += 1;
+          if (calls === 1) {
+            throw new Error('page.goto: net::ERR_EMPTY_RESPONSE');
+          }
+          return { success: true, status: 200, data: { ok: true } };
+        },
+        goto: async () => {
+          throw new Error('soft recovery should not fallback to goto refresh');
+        },
+        getCurrentUrl: async () => '',
+        reportProxyFailure: async (metadata) => {
+          browserFailures.push(metadata);
+        },
+        reportProxySuccess: async () => {}
+      },
+      ensureBrowserHealthy: async (options = {}) => {
+        healthChecks.push(options);
+      },
+      baseBackoffMs: 10
+    });
+
+    client._sleep = async (ms) => {
+      sleeps.push(ms);
+    };
+
+    const result = await client.request('https://www.fotmob.com/api/data/leagues?season=20252026');
+
+    assert.deepStrictEqual(result, { ok: true });
+    assert.strictEqual(calls, 2);
+    assert.deepStrictEqual(sleeps, [10]);
+    assert.strictEqual(browserFailures[0].failureClass, 'upstream_block');
+    assert.strictEqual(browserFailures[0].rotateProxy, false);
+    assert.strictEqual(healthChecks.length, 2);
+    assert.strictEqual(healthChecks[0].reason, 'preflight');
+    assert.strictEqual(healthChecks[1].recoverPage, true);
+    assert.strictEqual(healthChecks[1].forceRebuild, undefined);
+  });
+
+  it('Failed to fetch 应视为上游阻断并触发页面级恢复', async () => {
+    const browserFailures = [];
+    const healthChecks = [];
+    let calls = 0;
+
+    const client = new HttpClient({
+      browserProvider: {
+        fetch: async () => {
+          calls += 1;
+          if (calls === 1) {
+            return { error: 'Failed to fetch', status: null };
+          }
+          return { success: true, status: 200, data: { ok: true } };
+        },
+        goto: async () => {
+          throw new Error('Failed to fetch should recover page before goto refresh');
+        },
+        getCurrentUrl: async () => '',
+        reportProxyFailure: async (metadata) => {
+          browserFailures.push(metadata);
+        },
+        reportProxySuccess: async () => {}
+      },
+      ensureBrowserHealthy: async (options = {}) => {
+        healthChecks.push(options);
+      },
+      baseBackoffMs: 1
+    });
+
+    client._sleep = async () => {};
+
+    const result = await client.request('https://www.fotmob.com/api/data/leagues?season=20252026');
+
+    assert.deepStrictEqual(result, { ok: true });
+    assert.strictEqual(browserFailures[0].failureClass, 'upstream_block');
+    assert.strictEqual(browserFailures[0].rotateProxy, false);
+    assert.strictEqual(healthChecks[1].recoverPage, true);
+  });
+
+  it('连续软故障第二次起应升级为整 Context 重建以便换代理', async () => {
+    const healthChecks = [];
+    let calls = 0;
+
+    const client = new HttpClient({
+      browserProvider: {
+        fetch: async () => {
+          calls += 1;
+          if (calls < 3) {
+            throw new Error('page.evaluate: Execution context was destroyed');
+          }
+          return { success: true, status: 200, data: { ok: true } };
+        },
+        goto: async () => {
+          throw new Error('soft failures should heal before refresh goto');
+        },
+        getCurrentUrl: async () => '',
+        reportProxyFailure: async () => {},
+        reportProxySuccess: async () => {}
+      },
+      ensureBrowserHealthy: async (options = {}) => {
+        healthChecks.push(options);
+      },
+      baseBackoffMs: 1
+    });
+
+    client._sleep = async () => {};
+
+    const result = await client.request('https://www.fotmob.com/api/data/leagues?season=20252026');
+
+    assert.deepStrictEqual(result, { ok: true });
+    assert.strictEqual(healthChecks[1].recoverPage, true);
+    assert.strictEqual(healthChecks[2].forceRebuild, true);
+  });
+
+  it('并发 stealth 请求应串行执行整个重试与自愈周期', async () => {
+    let activeRequests = 0;
+    let maxConcurrent = 0;
+    const callOrder = [];
+
+    const client = new HttpClient({
+      browserProvider: {
+        fetch: async (url) => {
+          activeRequests += 1;
+          maxConcurrent = Math.max(maxConcurrent, activeRequests);
+          callOrder.push(`start:${url}`);
+          await new Promise(resolve => setTimeout(resolve, 5));
+          callOrder.push(`end:${url}`);
+          activeRequests -= 1;
+          return { success: true, status: 200, data: { url } };
+        },
+        goto: async () => {},
+        getCurrentUrl: async () => '',
+        reportProxyFailure: async () => {},
+        reportProxySuccess: async () => {}
+      },
+      ensureBrowserHealthy: async () => {},
+      baseBackoffMs: 1
+    });
+
+    const [a, b, c] = await Promise.all([
+      client.request('https://www.fotmob.com/api/data/leagues?id=42&season=20252026'),
+      client.request('https://www.fotmob.com/api/data/leagues?id=47&season=20252026'),
+      client.request('https://www.fotmob.com/api/data/leagues?id=53&season=20252026')
+    ]);
+
+    assert.strictEqual(maxConcurrent, 1);
+    assert.deepStrictEqual(a, { url: 'https://www.fotmob.com/api/data/leagues?id=42&season=20252026&ccode3=USA' });
+    assert.deepStrictEqual(b, { url: 'https://www.fotmob.com/api/data/leagues?id=47&season=20252026&ccode3=USA' });
+    assert.deepStrictEqual(c, { url: 'https://www.fotmob.com/api/data/leagues?id=53&season=20252026&ccode3=USA' });
+    assert.deepStrictEqual(callOrder, [
+      'start:https://www.fotmob.com/api/data/leagues?id=42&season=20252026&ccode3=USA',
+      'end:https://www.fotmob.com/api/data/leagues?id=42&season=20252026&ccode3=USA',
+      'start:https://www.fotmob.com/api/data/leagues?id=47&season=20252026&ccode3=USA',
+      'end:https://www.fotmob.com/api/data/leagues?id=47&season=20252026&ccode3=USA',
+      'start:https://www.fotmob.com/api/data/leagues?id=53&season=20252026&ccode3=USA',
+      'end:https://www.fotmob.com/api/data/leagues?id=53&season=20252026&ccode3=USA'
+    ]);
+  });
+
   it('内部 helper 应覆盖 redirect、fallback leagueId、retryable 与 sleep 分支', async () => {
     const errors = [];
     const warnings = [];
@@ -298,7 +464,8 @@ describe('HttpClient', () => {
     assert.doesNotThrow(() => client._assertLeagueIdentity({ details: { id: null } }, 47, 'https://api.test'));
     assert.strictEqual(client._shouldRebuildBrowserContext(null), false);
     assert.strictEqual(client._shouldRebuildBrowserContext({ code: 'IDENTITY_MISMATCH', message: 'mismatch' }), false);
-    assert.strictEqual(client._shouldRebuildBrowserContext({ message: 'Target page closed unexpectedly' }), true);
+    assert.strictEqual(client._shouldRebuildBrowserContext({ message: 'Target page closed unexpectedly' }), false);
+    assert.strictEqual(client._shouldRebuildBrowserContext({ message: 'Execution context was destroyed' }), false);
     assert.strictEqual(client._isRetryableStatus(503), true);
     assert.strictEqual(client._isRetryableStatus(404), false);
     assert.strictEqual(client._computeBackoffMs(2, 429), 40);

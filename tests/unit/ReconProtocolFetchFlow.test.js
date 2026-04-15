@@ -134,6 +134,141 @@ describe('ReconProtocolFetchFlow', () => {
     assert.strictEqual(context.runtimeBookmakerHash, 'X1024');
   });
 
+  it('应从组件 sport-data 属性中提取 encodedTurnamentId 与 tournamentId', async () => {
+    const fakeHandler = {
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      navigator: {
+        traceId: 'trace-pure-protocol',
+        archiveMaxPages: 3,
+        archiveTimeoutMs: 1234,
+        stateProber: {
+          extractPageOutrightsMetaFromHtml() {
+            return {
+              id: '',
+              sid: 1,
+              cid: 198,
+              archive: true
+            };
+          }
+        }
+      }
+    };
+
+    attachProtocolAdapterStubs(fakeHandler);
+    fakeHandler._fetchPureProtocolText = async function _fetchPureProtocolText() {
+      return {
+        success: true,
+        status: 200,
+        text: [
+          '<html lang="en"><head>',
+          '<script type="module" src="/build/assets/app-HnniEWV5.js"></script>',
+          '</head><body>',
+          '<star-component :sport-data="{&quot;oddsRequest&quot;:{&quot;url&quot;:&quot;/ajax-sport-country-tournament-archive_/1/KKay4EE8/&quot;},&quot;tournamentId&quot;:91201,&quot;encodedTurnamentId&quot;:&quot;KKay4EE8&quot;}"></star-component>',
+          '</body></html>'
+        ].join('')
+      };
+    };
+
+    const context = await fakeHandler._resolvePureProtocolContext(
+      'https://www.oddsportal.com/football/england/premier-league/results/',
+      {}
+    );
+
+    assert.strictEqual(context.outrightId, 'KKay4EE8');
+    assert.strictEqual(context.tournamentId, '91201');
+  });
+
+  it('season URL 为空壳时应回探 current results URL 提取 token', async () => {
+    const requestedUrl = 'https://www.oddsportal.com/football/england/premier-league-2025-2026/results/';
+    const currentResultsUrl = 'https://www.oddsportal.com/football/england/premier-league/results/';
+    const requests = [];
+    const infoLogs = [];
+    const fakeHandler = {
+      logger: {
+        info(event, payload) {
+          infoLogs.push({ event, payload });
+        },
+        warn() {},
+        error() {},
+        debug() {}
+      },
+      navigator: {
+        traceId: 'trace-pure-protocol',
+        archiveMaxPages: 3,
+        archiveTimeoutMs: 1234,
+        stateProber: {
+          deriveCurrentResultsUrl(url) {
+            return url.replace('-2025-2026/results/', '/results/');
+          },
+          deriveLeaguePageUrl(url) {
+            return url.replace(/\/results\/?$/i, '/');
+          },
+          extractPageOutrightsMetaFromHtml(html) {
+            return html.includes('"id":"KKay4EE8"')
+              ? {
+                id: 'KKay4EE8',
+                sid: 1,
+                cid: 198,
+                archive: true
+              }
+              : {
+                id: '',
+                sid: 1,
+                cid: 198,
+                archive: true
+              };
+          }
+        }
+      }
+    };
+
+    attachProtocolAdapterStubs(fakeHandler);
+    fakeHandler._fetchPureProtocolText = async function _fetchPureProtocolText(url) {
+      requests.push(url);
+      if (url === requestedUrl) {
+        return {
+          success: true,
+          status: 200,
+          text: [
+            '<html lang="en"><head>',
+            '<script>var pageOutrightsVar = \'{"id":"","sid":1,"cid":198,"archive":true}\';</script>',
+            '<script type="module" src="/build/assets/app-HnniEWV5.js"></script>',
+            '</head><body>',
+            '<star-component :sport-data="{&quot;oddsRequest&quot;:{&quot;url&quot;:&quot;/ajax-sport-country-tournament-archive_/1//&quot;},&quot;tournamentId&quot;:null,&quot;encodedTurnamentId&quot;:&quot;&quot;}"></star-component>',
+            '</body></html>'
+          ].join('')
+        };
+      }
+
+      if (url === currentResultsUrl) {
+        return {
+          success: true,
+          status: 200,
+          text: [
+            '<html lang="en"><head>',
+            '<script>var pageOutrightsVar = \'{"id":"KKay4EE8","sid":1,"cid":198,"archive":true}\';</script>',
+            '<script type="module" src="/build/assets/app-HnniEWV5.js"></script>',
+            '</head><body>',
+            '<star-component :sport-data="{&quot;oddsRequest&quot;:{&quot;url&quot;:&quot;/ajax-sport-country-tournament-archive_/1/KKay4EE8/&quot;},&quot;tournamentId&quot;:91201,&quot;encodedTurnamentId&quot;:&quot;KKay4EE8&quot;}"></star-component>',
+            '</body></html>'
+          ].join('')
+        };
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    };
+
+    const context = await fakeHandler._resolvePureProtocolContext(requestedUrl, {});
+
+    assert.deepStrictEqual(requests, [requestedUrl, currentResultsUrl]);
+    assert.strictEqual(context.requestedBaseUrl, requestedUrl);
+    assert.strictEqual(context.baseUrl, currentResultsUrl);
+    assert.strictEqual(context.contextSource, 'current_results');
+    assert.strictEqual(context.outrightId, 'KKay4EE8');
+    assert.strictEqual(context.tournamentId, '91201');
+    assert.ok(infoLogs.some((entry) => entry.event === 'pure_protocol_context_fallback_source_selected'));
+  });
+
   it('HTML 缺失 token 时应回退到 runtime pageVar.otCode', async () => {
     const fakeHandler = {
       logger: { info() {}, warn() {}, error() {}, debug() {} },
@@ -541,5 +676,154 @@ describe('ReconProtocolFetchFlow', () => {
     } finally {
       global.fetch = originalFetch;
     }
+  });
+
+  it('sample payload 遇到 503 时应局部切换代理并复用新 lease 拉取分页', async () => {
+    const infoLogs = [];
+    const warnLogs = [];
+    const acquired = [];
+    const released = [];
+    const failures = [];
+    const successes = [];
+    const sampleAttempts = [];
+    const pageFetchPorts = [];
+    const fakeHandler = {
+      logger: {
+        info(event, payload) {
+          infoLogs.push({ event, payload });
+        },
+        warn(event, payload) {
+          warnLogs.push({ event, payload });
+        },
+        error() {},
+        debug() {}
+      },
+      navigator: {
+        traceId: 'trace-pure-protocol',
+        archiveMaxPages: 3,
+        archiveTimeoutMs: 1234,
+        proxyLease: {
+          id: 'LEASE-7890',
+          proxy: {
+            server: 'http://host.docker.internal:7890',
+            port: 7890
+          }
+        },
+        proxyProvider: {
+          async acquire(options = {}) {
+            acquired.push(options);
+            return {
+              id: 'LEASE-7911',
+              proxy: {
+                server: 'http://host.docker.internal:7911',
+                port: 7911
+              }
+            };
+          },
+          async release(leaseOrId) {
+            released.push(leaseOrId);
+            return true;
+          },
+          async reportFailure(leaseOrId, metadata = {}) {
+            failures.push({ leaseOrId, metadata });
+            return true;
+          },
+          async reportSuccess(leaseOrId, metadata = {}) {
+            successes.push({ leaseOrId, metadata });
+            return true;
+          }
+        }
+      }
+    };
+
+    attachProtocolAdapterStubs(fakeHandler);
+    fakeHandler._waitPureProtocolFetchRetry = async function _waitPureProtocolFetchRetry() {};
+    fakeHandler._resolvePureProtocolContext = async function _resolvePureProtocolContext() {
+      return {
+        baseUrl: 'https://www.oddsportal.com/football/england/premier-league/results/',
+        outrightId: 'KKay4EE8',
+        tournamentId: '91201',
+        appBundleUrl: 'https://www.oddsportal.com/build/assets/app-HnniEWV5.js',
+        seasonToken: '2025-2026',
+        locale: 'en'
+      };
+    };
+    fakeHandler._fetchPureProtocolText = async function _fetchPureProtocolText(url, options = {}) {
+      const port = Number(options.proxyLease?.proxy?.port || options.proxyPort || 0) || null;
+      if (url.includes('/ajax-sport-country-tournament-archive_/')) {
+        sampleAttempts.push({ url, port });
+        if (options.maxAttempts !== 1) {
+          pageFetchPorts.push(port);
+          return {
+            success: true,
+            status: 200,
+            text: '{"d":{"rows":[],"total":0}}'
+          };
+        }
+
+        if (url.includes('/1/0/?_=')) {
+          if (port === 7890) {
+            return {
+              success: false,
+              status: 503,
+              error: 'EMBEDDED_HTTP_503',
+              text: ''
+            };
+          }
+
+          return {
+            success: true,
+            status: 200,
+            text: 'encrypted-sample'
+          };
+        }
+
+        throw new Error(`Unexpected archive URL: ${url}`);
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    };
+    fakeHandler._createPureProtocolDecryptor = async function _createPureProtocolDecryptor() {
+      return {
+        async decrypt() {
+          return {
+            d: {
+              rows: [],
+              total: 0
+            }
+          };
+        },
+        getAlgorithmVersion() {
+          return 'unit-test';
+        }
+      };
+    };
+
+    const result = await fakeHandler._extractViaPureProtocol(
+      {
+        url: 'https://www.oddsportal.com/football/england/premier-league-2025-2026/results/'
+      },
+      {}
+    );
+
+    assert.strictEqual(result.sourceState, 'SOURCE_EMPTY');
+    assert.ok(sampleAttempts.some((entry) => entry.port === 7890));
+    assert.ok(sampleAttempts.some((entry) => entry.port === 7911));
+    assert.deepStrictEqual(pageFetchPorts, [7911]);
+    assert.strictEqual(failures.length, 1);
+    assert.strictEqual(failures[0].leaseOrId, 'LEASE-7890');
+    assert.strictEqual(failures[0].metadata.port, 7890);
+    assert.strictEqual(successes.length, 1);
+    assert.strictEqual(successes[0].leaseOrId, 'LEASE-7911');
+    assert.strictEqual(successes[0].metadata.port, 7911);
+    assert.strictEqual(acquired.length, 1);
+    assert.deepStrictEqual(acquired[0].excludePorts, [7890]);
+    const archivePreflightLogs = infoLogs.filter((entry) => entry.event === 'pure_protocol_archive_request_preflight');
+    assert.strictEqual(archivePreflightLogs.length, 1);
+    assert.strictEqual(archivePreflightLogs[0].payload.archiveToken, 'KKay4EE8');
+    assert.ok(warnLogs.some((entry) => entry.event === 'pure_protocol_sample_proxy_switching'));
+    assert.ok(warnLogs.some((entry) => entry.event === 'pure_protocol_archive_zero_candidate_payload'));
+    assert.strictEqual(released.length, 1);
+    assert.strictEqual(released[0].id || released[0], 'LEASE-7911');
   });
 });

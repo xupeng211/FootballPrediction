@@ -559,11 +559,12 @@ class DiscoveryService {
     }
 
     const forceRebuild = options.forceRebuild === true;
+    const recoverPage = options.recoverPage === true;
     const isInitialized = typeof this.browserProvider.isInitialized === 'function'
       ? this.browserProvider.isInitialized()
       : Boolean(this.browserProvider.getPage?.());
 
-    if (!forceRebuild && isInitialized) {
+    if (!forceRebuild && !recoverPage && isInitialized) {
       return;
     }
 
@@ -572,10 +573,12 @@ class DiscoveryService {
       return;
     }
 
-    this.browserHealthPromise = this._rebuildBrowserContext(
-      options.reason || 'health-check',
-      options.cooldownMs || 0
-    );
+    this.browserHealthPromise = recoverPage
+      ? this._recoverBrowserPage(options.reason || 'page-recovery')
+      : this._rebuildBrowserContext(
+        options.reason || 'health-check',
+        options.cooldownMs || 0
+      );
 
     try {
       await this.browserHealthPromise;
@@ -596,6 +599,41 @@ class DiscoveryService {
       reason: `cooldown-${completedCount}`,
       cooldownMs
     });
+  }
+
+  async _recoverBrowserPage(reason) {
+    if (!this.browserProvider) {
+      return;
+    }
+
+    this.logger.warn(`[HOUND-SELFHEAL] 恢复浏览器页面: ${reason}`);
+
+    if (this.networkInterceptor?.reset) {
+      this.networkInterceptor.reset();
+    }
+
+    let page = null;
+    if (typeof this.browserProvider.recoverPage === 'function') {
+      page = await this.browserProvider.recoverPage(reason);
+    } else {
+      if (typeof this.browserProvider.close === 'function') {
+        await this.browserProvider.close();
+      }
+      if (typeof this.browserProvider.initialize === 'function') {
+        page = await this.browserProvider.initialize();
+      }
+    }
+
+    if (page && this.networkInterceptor?.setup) {
+      this.networkInterceptor.setup(page);
+    }
+
+    if (typeof this.browserProvider.warmup === 'function') {
+      await this.browserProvider.warmup('https://www.fotmob.com/', {
+        waitUntil: 'domcontentloaded',
+        timeout: 15000
+      });
+    }
   }
 
   async _rebuildBrowserContext(reason, cooldownMs = 0) {

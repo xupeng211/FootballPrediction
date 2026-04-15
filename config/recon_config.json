@@ -276,6 +276,7 @@
   },
   "automation": {
     "total_war": {
+      "recon_limit": 8000,
       "recon_threshold": 50,
       "log_max_bytes": 104857600,
       "log_retained_files": 5
@@ -320,7 +321,8 @@
     "team_weight": 0.85,
     "date_weight": 0.15,
     "date_confidence_bands": [
-      { "max_diff_days": 0.5, "score": 1 },
+      { "max_diff_days": 0.0833333333, "score": 1 },
+      { "max_diff_days": 0.5, "score": 0.98 },
       { "max_diff_days": 1.5, "score": 0.92 },
       { "max_diff_days": 3, "score": 0.8 },
       { "max_diff_days": 7, "score": 0.55 }
@@ -335,7 +337,7 @@
       "default_concurrency": 5,
       "adaptive_concurrency_initial": 5,
       "adaptive_concurrency_success_window": 3,
-      "suspend_proxy_threshold": 2,
+      "suspend_proxy_threshold": 1,
       "suspend_poll_interval_ms": 5000,
       "proxy_min_health_score": 60,
       "proxy_critical_error_cooldown_ms": 1800000,
@@ -344,8 +346,9 @@
       "archive_timeout_ms": 45000,
       "matrix_mode_pruning": true,
       "matrix_short_circuit_ratio": 0.5,
+      "matrix_results_only_mode": true,
       "matrix_disable_search_route": true,
-      "matrix_league_time_budget_ms": 45000,
+      "matrix_league_time_budget_ms": 120000,
       "page_settle_wait_ms": 3000,
       "dom_scroll_step_px": 1000,
       "dom_scroll_delay_ms": 1500,
@@ -375,7 +378,10 @@
     "protocol_fetch": {
       "default_bookiehash": "X262144X16384X0X0X134217728X0X0X0X0X0X0X0X0X134217729X0X0X1048576X0X1024X40X0X32X0X0X0X0X0X0X0X536870912X2560X2048X0X33554560X8519680X0X0X0X524288",
       "fetch_max_attempts": 3,
-      "fetch_retry_delay_ms": 750
+      "fetch_retry_delay_ms": 750,
+      "sample_proxy_failover_max_attempts": 3,
+      "sample_proxy_failover_retry_delay_ms": 250,
+      "sample_fetch_attempts_per_proxy": 1
     },
     "browser_context": {
       "launch_timeout_ms": 60000,
@@ -498,6 +504,12 @@
       "exact_match_threshold": 0.99,
       "team_weight": 0.85,
       "date_weight": 0.15,
+      "team_balance_weight": 0.5,
+      "perfect_kickoff_window_ms": 7200000,
+      "mismatch_retry_fuzzy_confidence_floor": 0.7,
+      "mismatch_retry_team_similarity_floor": 0.68,
+      "mismatch_retry_max_team_score_gap": 0.08,
+      "mismatch_retry_max_kickoff_delta_ms": 7200000,
       "dictionary_string_contains_league_ids": [
         131,
         181

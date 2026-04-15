@@ -286,6 +286,69 @@ describe('ReconMatrixTargetRunner', () => {
     assert.equal(runner.__events.info[0].event, 'recon_search_route_skipped');
   });
 
+  it('_runPostResultsFallbackRoutes 在 results-only 模式时应跳过全部慢速路径', async () => {
+    const calls = [];
+    const runner = createRunner({
+      async _runReconFixturesRoute() {
+        calls.push('fixtures');
+      },
+      async _runReconSearchRoute() {
+        calls.push('search');
+      },
+      async _runReconLocalDictionaryRoute() {
+        calls.push('local_dictionary');
+      },
+      async _finalizeRemainingPending(routeState) {
+        calls.push(`finalize:${routeState.remainingRoutePending.length}`);
+      },
+    });
+
+    await runner._runPostResultsFallbackRoutes({
+      target: { league: { name: 'MLS' }, dbSeason: '2025/2026' },
+      runtimeTarget: { resultsOnlyMode: true, disableSearchRoute: true },
+      remainingRoutePending: [{ match_id: 'm2' }, { match_id: 'm3' }],
+    });
+
+    assert.deepEqual(calls, ['finalize:2']);
+    assert.equal(runner.__events.info[0].event, 'recon_results_only_finalize');
+  });
+
+  it('_runPostResultsFallbackRoutes 在 results-only 模式遇到残缺 results source 时应抛错重试', async () => {
+    const calls = [];
+    const runner = createRunner({
+      async _finalizeRemainingPending() {
+        calls.push('finalize');
+      },
+    });
+
+    await assert.rejects(
+      runner._runPostResultsFallbackRoutes({
+        target: { league: { name: 'Premier League' }, dbSeason: '2025/2026' },
+        runtimeTarget: { resultsOnlyMode: true, disableSearchRoute: true },
+        remainingRoutePending: [{ match_id: 'm2' }, { match_id: 'm3' }],
+        resultsSource: {
+          source: { season: '2025/2026', url: 'results://premier-league' },
+          extractResult: {
+            sourceState: 'PURE_PROTOCOL',
+            sourceIncomplete: true
+          },
+          sourceHealth: {
+            incomplete: true,
+            incompleteReasons: ['page_failure']
+          }
+        }
+      }),
+      (error) => {
+        assert.equal(error.code, 'RECON_SOURCE_INCOMPLETE');
+        assert.deepEqual(error.incompleteReasons, ['page_failure']);
+        return true;
+      }
+    );
+
+    assert.deepEqual(calls, []);
+    assert.equal(runner.__events.warn[0].event, 'recon_results_only_incomplete_source_retry');
+  });
+
   it('_applyReconRouteResult 应累计 route 结果并刷新最终源信息', () => {
     const runner = createRunner();
     const routeState = {
