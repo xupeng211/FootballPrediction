@@ -70,11 +70,13 @@ test('当 pending=0 且 harvested>0 时，编排器应强制进入 recon', () =>
   assert.equal(reconTask, 'recon');
 });
 
-test('Recon 子任务应透传 --limit 以强制进入 Matrix 模式', () => {
+test('Recon 子任务应透传 reconLimit 以强制进入 Matrix 模式', () => {
   const pipeline = new TotalWarPipeline(parseArgs([
     '--season',
     '2025/2026',
     '--once',
+    '--recon-limit',
+    '8000',
     '--recon-threshold',
     '200',
     '--recon-concurrency',
@@ -89,9 +91,50 @@ test('Recon 子任务应透传 --limit 以强制进入 Matrix 模式', () => {
     '2025-2026',
     '--all-leagues',
     '--limit',
-    '200',
+    '8000',
     '--concurrency',
     '15'
+  ]);
+});
+
+test('Recon 子任务应按需透传代理与 pure protocol 开关', () => {
+  const pipeline = new TotalWarPipeline(parseArgs([
+    '--season',
+    '2025/2026',
+    '--once',
+    '--recon-threshold',
+    '200',
+    '--recon-concurrency',
+    '15',
+    '--use-proxy',
+    '--force-pure-protocol'
+  ]));
+
+  const task = pipeline.buildTaskCommand('recon');
+
+  assert.deepStrictEqual(task.args.slice(-2), [
+    '--use-proxy',
+    '--force-pure-protocol'
+  ]);
+});
+
+test('Discovery 子任务应显式透传安全并发，避免依赖脚本默认值', () => {
+  const pipeline = new TotalWarPipeline(parseArgs([
+    '--season',
+    '2025/2026',
+    '--once',
+    '--discovery-concurrency',
+    '5'
+  ]));
+
+  const task = pipeline.buildTaskCommand('discovery');
+
+  assert.equal(task.args[0].endsWith(path.join('scripts', 'ops', 'titan_discovery.js')), true);
+  assert.deepStrictEqual(task.args.slice(1), [
+    '--all-leagues',
+    '--season=2025/2026',
+    '--concurrency',
+    '5'
   ]);
 });
 

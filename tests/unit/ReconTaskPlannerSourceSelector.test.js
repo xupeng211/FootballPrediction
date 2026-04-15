@@ -422,6 +422,76 @@ describe('ReconTaskPlannerSourceSelector', () => {
     assert.equal(calls[0].options.maxPages, 5);
   });
 
+  it('forcePureProtocol 首个 source 残缺时不应短路，应继续探测后续健康 source', async () => {
+    const calls = [];
+    const context = createContext({
+      navigator: {
+        async protocolArchiveExtract(url) {
+          calls.push(url);
+          if (url === 'oddsportal://results-primary') {
+            return {
+              matches: [{
+                match_id: '47_20252026_0001',
+                hash: 'broken-hash',
+                url,
+                confidence: 1
+              }],
+              pagesScanned: 2,
+              totalCandidates: 1,
+              pageStats: [
+                { page: 1, rows: 50, total: 50, source: 'PURE_PROTOCOL' },
+                { page: 2, rows: 0, error: 'HTTP_503' }
+              ],
+              sourceState: 'PURE_PROTOCOL'
+            };
+          }
+
+          return {
+            matches: [{
+              match_id: '47_20252026_0001',
+              hash: 'healthy-hash',
+              url,
+              confidence: 1
+            }],
+            pagesScanned: 1,
+            totalCandidates: 1,
+            pageStats: [
+              { page: 1, rows: 1, total: 1, source: 'PURE_PROTOCOL' }
+            ],
+            sourceState: 'PURE_PROTOCOL'
+          };
+        }
+      },
+      buildCandidateSources() {
+        return [
+          { season: '2025-2026', url: 'oddsportal://results-primary', mode: 'results_archive' },
+          { season: '2024-2025', url: 'oddsportal://results-secondary', mode: 'historical_results' }
+        ];
+      }
+    });
+
+    const result = await context.selectCandidateSource({
+      leagueId: 47,
+      league: { id: 47, name: 'Premier League' },
+      dbSeason: '2025/2026',
+      season: '2025-2026',
+      resultsUrl: 'oddsportal://root/results/',
+      forcePureProtocol: true,
+      matchLimit: 1
+    }, [{
+      match_id: '47_20252026_0001'
+    }], 0.75);
+
+    assert.deepEqual(calls, ['oddsportal://results-primary', 'oddsportal://results-secondary']);
+    assert.equal(result.source.url, 'oddsportal://results-secondary');
+    assert.ok(
+      context.__events.warn.some(({ event }) => event === 'recon_candidate_source_incomplete')
+    );
+    assert.ok(
+      context.__events.info.every(({ event }) => event !== 'recon_candidate_source_limit_short_circuit')
+    );
+  });
+
   it('seasonless 联赛在 pending 年份与首个 sourceSeason 不对齐时，不应提前短路', async () => {
     const calls = [];
     const context = createContext({

@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 'use strict';
 
 const { JSDOM } = require('jsdom');
@@ -78,6 +79,46 @@ function extractStructuredStatePayloads(html) {
     }
   }
 
+  try {
+    const dom = new JSDOM(rawHtml);
+    const elements = Array.from(dom.window.document.querySelectorAll('*'));
+
+    for (const element of elements) {
+      const attributes = Array.from(element.attributes || []);
+      for (const attribute of attributes) {
+        const name = String(attribute?.name || '').trim().toLowerCase();
+        const value = String(attribute?.value || '').trim();
+        if (!name || !value) {
+          continue;
+        }
+
+        const looksStructuredValue = value.startsWith('{')
+          || value.startsWith('[')
+          || value.includes('&quot;')
+          || value.includes('"tournamentId"')
+          || value.includes('"encodedTurnamentId"')
+          || value.includes('"oddsRequest"');
+        const shouldProbeAttribute = name.startsWith(':')
+          || name.startsWith('v-bind:')
+          || name === 'data-json'
+          || name.includes('sport-data')
+          || name.includes('odds-request');
+
+        if (!looksStructuredValue || !shouldProbeAttribute) {
+          continue;
+        }
+
+        payloads.push({
+          source: `attr:${name}`,
+          value,
+          unwrapQuotedJson: false
+        });
+      }
+    }
+  } catch {
+    // ignore malformed HTML attribute extraction
+  }
+
   return payloads;
 }
 
@@ -151,7 +192,18 @@ function collectTournamentCandidates(node, targetState, tournamentLike) {
   addProtocolCandidate('tournamentIds', node._tournamentId, targetState);
   addProtocolCandidate('tournamentIds', node.tournamentId, targetState);
   addProtocolCandidate('tournamentIds', node.tournament_id, targetState);
-  const idValue = node.outrightId ?? node.otCode ?? node.id;
+  const oddsRequestUrl = typeof node?.oddsRequest?.url === 'string'
+    ? node.oddsRequest.url
+    : node?.oddsRequest?.url;
+  const archiveTokenFromUrl = String(oddsRequestUrl || '').match(
+    /ajax-sport-country-tournament-archive_\/\d+\/([^/]+)\/?/i
+  )?.[1];
+  const idValue = node.encodedTurnamentId
+    ?? node.encodedTournamentId
+    ?? archiveTokenFromUrl
+    ?? node.outrightId
+    ?? node.otCode
+    ?? node.id;
   if (/^\d+$/.test(String(idValue ?? '').trim())) {
     addProtocolCandidate('tournamentIds', idValue, targetState);
     return;

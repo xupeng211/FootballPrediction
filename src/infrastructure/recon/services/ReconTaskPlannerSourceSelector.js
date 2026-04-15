@@ -1,6 +1,9 @@
 /* eslint-disable complexity, max-lines */
 'use strict';
 
+const DEFAULT_PROTOCOL_PAGE_SIZE = 50;
+const INCOMPLETE_SOURCE_ERROR_CODE = 'RECON_SOURCE_INCOMPLETE';
+
 function resolveMatrixModePruning(target, options = {}) {
   return options.matrixModePruning === true || target?.matrixModePruning === true;
 }
@@ -37,7 +40,133 @@ function resolvePureProtocolLimitedMaxPages(maxPages, matchLimit) {
   return Math.min(maxPages, Math.max(3, matchLimit * 5));
 }
 
+function resolveRequiredCandidateFloor(pendingMatches = [], matchLimit = null) {
+  const pendingTotal = Array.isArray(pendingMatches) ? pendingMatches.length : 0;
+  if (!Number.isInteger(matchLimit) || matchLimit <= 0) {
+    return pendingTotal;
+  }
+
+  return pendingTotal > 0
+    ? Math.min(matchLimit, pendingTotal)
+    : matchLimit;
+}
+
+function hasCandidateSourcePageFailure(stat = {}) {
+  return Boolean(
+    stat?.error
+    || stat?.bodySignal
+    || (Number(stat?.statusCode || 0) >= 400)
+  );
+}
+
+function shouldUseTargetDrivenSingleMatch(matchLimit, orderedPending = [], sample = []) {
+  return Number.isInteger(matchLimit)
+    && matchLimit === 1
+    && Array.isArray(orderedPending)
+    && orderedPending.length === 1
+    && Array.isArray(sample)
+    && sample.length === 1;
+}
+
+function buildTargetDrivenSingleMatchSelection(context, sampleMatch, candidates, effectiveConfidenceThreshold) {
+  const matched = context.matchEvaluator?.findBestCandidate(sampleMatch, candidates, null) || null;
+  const targetDrivenCandidates = matched?.candidate ? [matched.candidate] : [];
+  const targetDrivenCandidateMap = new Map();
+  if (targetDrivenCandidates.length > 0 && sampleMatch?.match_id) {
+    targetDrivenCandidateMap.set(String(sampleMatch.match_id), targetDrivenCandidates);
+  }
+
+  return {
+    seasonMirror: new Map(),
+    sampleLinked: matched && matched.confidence >= effectiveConfidenceThreshold ? 1 : 0,
+    targetDrivenCandidateMap,
+    targetDrivenBestMatch: matched
+      ? {
+        matchId: String(sampleMatch?.match_id || ''),
+        confidence: Number(matched.confidence || 0),
+        candidateHash: matched.candidate?.hash || null,
+        candidateUrl: matched.candidate?.url || null
+      }
+      : null
+  };
+}
+
 const reconTaskPlannerSourceSelector = {
+  _resolveCandidateSourceHealth(extractResult, pendingMatches = [], options = {}) {
+    const pageStats = Array.isArray(extractResult?.pageStats) ? extractResult.pageStats : [];
+    const pageFailureCount = pageStats.reduce(
+      (count, stat) => count + (hasCandidateSourcePageFailure(stat) ? 1 : 0),
+      0
+    );
+    const candidateCount = Array.isArray(extractResult?.matches)
+      ? extractResult.matches.length
+      : Math.max(0, Number(extractResult?.totalCandidates || 0) || 0);
+    const requiredCandidateFloor = resolveRequiredCandidateFloor(pendingMatches, options.matchLimit);
+    const candidateShortfall = requiredCandidateFloor > 0
+      ? Math.max(0, requiredCandidateFloor - candidateCount)
+      : 0;
+    const observedPages = Math.max(
+      pageStats.length,
+      Math.max(0, Number(extractResult?.pagesScanned || 0) || 0)
+    );
+    const maxObservedTotal = pageStats.reduce(
+      (maxTotal, stat) => Math.max(maxTotal, Math.max(0, Number(stat?.total || 0) || 0)),
+      Math.max(0, Number(extractResult?.totalCandidates || 0) || 0)
+    );
+    const pageSize = Math.max(1, Number(options.pageSize || DEFAULT_PROTOCOL_PAGE_SIZE) || DEFAULT_PROTOCOL_PAGE_SIZE);
+    const expectedPages = maxObservedTotal > 0
+      ? Math.ceil(maxObservedTotal / pageSize)
+      : 0;
+    const incompleteReasons = [];
+
+    if (pageFailureCount > 0) {
+      incompleteReasons.push('page_failure');
+    }
+    if (
+      options.forcePureProtocol === true
+      && Number.isInteger(options.matchLimit)
+      && options.matchLimit > 0
+      && candidateShortfall > 0
+    ) {
+      incompleteReasons.push('candidate_shortfall');
+    }
+    if (pageFailureCount > 0 && expectedPages > 0 && observedPages < expectedPages) {
+      incompleteReasons.push('expected_pages_unmet');
+    }
+
+    return {
+      incomplete: incompleteReasons.length > 0,
+      incompleteReasons,
+      pageFailureCount,
+      observedPages,
+      expectedPages,
+      maxObservedTotal,
+      requiredCandidateFloor,
+      candidateShortfall,
+      candidateCount
+    };
+  },
+
+  _buildIncompleteSourceError(target, source, sourceHealth, breakerKey) {
+    const error = new Error(INCOMPLETE_SOURCE_ERROR_CODE);
+    error.code = INCOMPLETE_SOURCE_ERROR_CODE;
+    error.retryable = true;
+    error.shouldSwitchProxy = true;
+    error.league = target?.league?.name || null;
+    error.season = target?.dbSeason || null;
+    error.sourceSeason = source?.season || null;
+    error.sourceUrl = source?.url || null;
+    error.breakerKey = breakerKey || null;
+    error.incompleteReasons = [...(sourceHealth?.incompleteReasons || [])];
+    error.pageFailureCount = Number(sourceHealth?.pageFailureCount || 0);
+    error.expectedPages = Number(sourceHealth?.expectedPages || 0);
+    error.observedPages = Number(sourceHealth?.observedPages || 0);
+    error.requiredCandidateFloor = Number(sourceHealth?.requiredCandidateFloor || 0);
+    error.candidateCount = Number(sourceHealth?.candidateCount || 0);
+    error.candidateShortfall = Number(sourceHealth?.candidateShortfall || 0);
+    return error;
+  },
+
   _shouldAllowPureProtocolLimitShortCircuit(target, pendingMatches, source) {
     if (this.getResultsUrlStrategy(target?.league) !== 'seasonless') {
       return true;
@@ -369,18 +498,39 @@ const reconTaskPlannerSourceSelector = {
       }
 
       const candidates = Array.isArray(extractResult?.matches) ? extractResult.matches : [];
-      const seasonMirror = this.mirrorManager?.buildSeasonMirror(candidates) || new Map();
-      const sampleLinked = sample.reduce((count, l1Match) => {
-        const matched = this.matchEvaluator?.findBestCandidate(l1Match, candidates, seasonMirror);
-        return matched && matched.confidence >= effectiveConfidenceThreshold ? count + 1 : count;
-      }, 0);
+      const targetDrivenSingleMatch = shouldUseTargetDrivenSingleMatch(matchLimit, orderedPending, sample);
+      const targetDrivenSelection = targetDrivenSingleMatch
+        ? buildTargetDrivenSingleMatchSelection(this, sample[0], candidates, effectiveConfidenceThreshold)
+        : null;
+      const seasonMirror = targetDrivenSelection?.seasonMirror
+        || this.mirrorManager?.buildSeasonMirror(candidates)
+        || new Map();
+      const sampleLinked = targetDrivenSelection
+        ? targetDrivenSelection.sampleLinked
+        : sample.reduce((count, l1Match) => {
+          const matched = this.matchEvaluator?.findBestCandidate(l1Match, candidates, seasonMirror);
+          return matched && matched.confidence >= effectiveConfidenceThreshold ? count + 1 : count;
+        }, 0);
+      const sourceHealth = this._resolveCandidateSourceHealth(extractResult, orderedPending, {
+        forcePureProtocol,
+        matchLimit
+      });
+
+      if (extractResult && typeof extractResult === 'object') {
+        extractResult.sourceIncomplete = sourceHealth.incomplete;
+        extractResult.sourceHealth = sourceHealth;
+      }
 
       const evaluated = {
         source,
         extractResult,
         candidates,
         seasonMirror,
-        sampleLinked
+        sampleLinked,
+        sourceHealth,
+        targetDrivenSingleMatch,
+        targetDrivenCandidateMap: targetDrivenSelection?.targetDrivenCandidateMap || new Map(),
+        targetDrivenBestMatch: targetDrivenSelection?.targetDrivenBestMatch || null
       };
 
       this.logger.info('recon_candidate_source_evaluated', {
@@ -402,8 +552,48 @@ const reconTaskPlannerSourceSelector = {
         skippedPlaceholderCount,
         sampleLinked,
         candidateCount: candidates.length,
-        sourceState: extractResult?.sourceState || null
+        sourceState: extractResult?.sourceState || null,
+        sourceIncomplete: sourceHealth.incomplete,
+        incompleteReasons: sourceHealth.incompleteReasons,
+        pageFailureCount: sourceHealth.pageFailureCount,
+        observedPages: sourceHealth.observedPages,
+        expectedPages: sourceHealth.expectedPages,
+        requiredCandidateFloor: sourceHealth.requiredCandidateFloor,
+        candidateShortfall: sourceHealth.candidateShortfall,
+        targetDrivenSingleMatch
       });
+
+      if (sourceHealth.incomplete) {
+        const incompleteError = this._buildIncompleteSourceError(
+          target,
+          source,
+          sourceHealth,
+          sourceCircuitBreakerKey
+        );
+        sourceFailures.push({
+          source,
+          sourceIndex,
+          breakerKey: sourceCircuitBreakerKey,
+          error: incompleteError
+        });
+        this.logger.warn('recon_candidate_source_incomplete', {
+          league: target.league.name,
+          dbSeason: target.dbSeason,
+          sourceSeason: source.season,
+          sourceUrl: source.url,
+          breakerKey: sourceCircuitBreakerKey,
+          sourceMode: source.mode,
+          sourceState: extractResult?.sourceState || null,
+          incompleteReasons: sourceHealth.incompleteReasons,
+          pageFailureCount: sourceHealth.pageFailureCount,
+          observedPages: sourceHealth.observedPages,
+          expectedPages: sourceHealth.expectedPages,
+          requiredCandidateFloor: sourceHealth.requiredCandidateFloor,
+          candidateCount: sourceHealth.candidateCount,
+          candidateShortfall: sourceHealth.candidateShortfall
+        });
+        continue;
+      }
 
       evaluatedSources.push(evaluated);
 

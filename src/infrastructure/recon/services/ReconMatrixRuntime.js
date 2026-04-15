@@ -1,3 +1,4 @@
+/* eslint-disable complexity */
 'use strict';
 
 const DEFAULT_LEAGUE_STARTUP_STAGGER_MS = 2000;
@@ -46,6 +47,11 @@ function buildAdaptiveFeedbackPayload(outcome, runningSize, proxySnapshot, succe
 }
 
 const reconMatrixRuntime = {
+  _shouldRetryLeagueWorkerError(error, attempt, maxAttempts) {
+    return error?.code === 'RECON_SOURCE_INCOMPLETE'
+      && attempt < maxAttempts;
+  },
+
   async buildScanTargets(options = {}) {
     return this.taskPlanner.buildScanTargets({
       ...options,
@@ -75,6 +81,7 @@ const reconMatrixRuntime = {
       forcePureProtocol = false,
       mismatchRetryOnly = false,
       allNonLinked = this.allNonLinked === true,
+      resultsOnlyMode = options.resultsOnlyMode ?? this.matrixResultsOnlyMode === true,
       disableSearchRoute = options.disableSearchRoute ?? this.disableSearchRouteInMatrix ?? true,
       matrixModePruning = options.matrixModePruning ?? this.matrixModePruning ?? true,
       matrixModeShortCircuitRatio = Number(
@@ -103,6 +110,7 @@ const reconMatrixRuntime = {
       forcePureProtocol,
       mismatchRetryOnly,
       allNonLinked,
+      resultsOnlyMode,
       disableSearchRoute,
       matrixModePruning,
       matrixModeShortCircuitRatio,
@@ -151,6 +159,7 @@ const reconMatrixRuntime = {
         forceDomMode: options.forceDomMode,
         forceJsonExtract: options.forceJsonExtract,
         forcePureProtocol: options.forcePureProtocol,
+        resultsOnlyMode: options.resultsOnlyMode,
         leagueStartupStaggerMs: options.leagueStartupStaggerMs,
         disableSearchRoute: options.disableSearchRoute,
         matrixModePruning: options.matrixModePruning,
@@ -336,6 +345,7 @@ const reconMatrixRuntime = {
       forceDomMode,
       forceJsonExtract,
       forcePureProtocol,
+      resultsOnlyMode,
       leagueStartupStaggerMs,
       disableSearchRoute,
       matrixModePruning,
@@ -344,80 +354,119 @@ const reconMatrixRuntime = {
       allowedLeagueWorkers = 1,
       activeWorkersAtStart = 1
     } = options;
-    let navigatorHandle = null;
-    let proxyPort = null;
+    const maxAttempts = forcePureProtocol === true ? 2 : 1;
+    let lastError = null;
+    let lastProxyPort = null;
 
-    try {
-      await this._delayLeagueWorkerStart(target, index, { leagueStartupStaggerMs });
-      navigatorHandle = await this._acquireTargetNavigator(target, {
-        launchBrowser: forcePureProtocol !== true
-      });
-      proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
-      const proxySnapshot = this._getProxyPoolSnapshot();
-      const leagueDeadlineAt = Number.isFinite(Number(leagueTimeBudgetMs)) && Number(leagueTimeBudgetMs) > 0
-        ? Date.now() + Number(leagueTimeBudgetMs)
-        : null;
+    await this._delayLeagueWorkerStart(target, index, { leagueStartupStaggerMs });
 
-      this.logger.info('recon_league_worker_start', {
-        league: target.league.name,
-        season: target.dbSeason,
-        pendingTotal: pendingMatches.length,
-        desiredLimit,
-        proxyPort,
-        activeLeagueWorkers: activeWorkersAtStart,
-        allowedLeagueWorkers,
-        leagueStartupStaggerMs: Math.max(0, Number(leagueStartupStaggerMs) || 0),
-        matchConcurrency: Math.max(1, Number(concurrency)),
-        disableSearchRoute,
-        matrixModePruning,
-        matrixModeShortCircuitRatio,
-        leagueTimeBudgetMs: Number(leagueTimeBudgetMs) || null,
-        proxyAvailable: proxySnapshot?.available ?? null,
-        proxyTotal: proxySnapshot?.total ?? null
-      });
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      let navigatorHandle = null;
+      let proxyPort = null;
 
-      const result = await this._runReconTarget(target, {
-        concurrency,
-        batchSize,
-        confidenceThreshold,
-        forceDomMode,
-        forceJsonExtract,
-        forcePureProtocol,
-        pendingMatches,
-        matchLimit: desiredLimit,
-        navigator: navigatorHandle?.navigator || null,
-        disableSearchRoute,
-        matrixModePruning,
-        matrixModeShortCircuitRatio,
-        leagueDeadlineAt
-      });
+      try {
+        navigatorHandle = await this._acquireTargetNavigator(target, {
+          launchBrowser: forcePureProtocol !== true
+        });
+        proxyPort = Number(navigatorHandle?.proxyPort || navigatorHandle?.navigator?.proxy?.port || 0) || null;
+        lastProxyPort = proxyPort;
+        const proxySnapshot = this._getProxyPoolSnapshot();
+        const leagueDeadlineAt = Number.isFinite(Number(leagueTimeBudgetMs)) && Number(leagueTimeBudgetMs) > 0
+          ? Date.now() + Number(leagueTimeBudgetMs)
+          : null;
 
-      this.logger.info('recon_league_worker_complete', {
-        league: target.league.name,
-        season: target.dbSeason,
-        proxyPort,
-        activeLeagueWorkers: activeWorkersAtStart,
-        allowedLeagueWorkers,
-        linked: result.linked,
-        mismatched: result.mismatched,
-        pendingTotal: result.pendingTotal
-      });
+        this.logger.info('recon_league_worker_start', {
+          league: target.league.name,
+          season: target.dbSeason,
+          pendingTotal: pendingMatches.length,
+          desiredLimit,
+          proxyPort,
+          attempt,
+          maxAttempts,
+          activeLeagueWorkers: activeWorkersAtStart,
+          allowedLeagueWorkers,
+          leagueStartupStaggerMs: Math.max(0, Number(leagueStartupStaggerMs) || 0),
+          matchConcurrency: Math.max(1, Number(concurrency)),
+          resultsOnlyMode,
+          disableSearchRoute,
+          matrixModePruning,
+          matrixModeShortCircuitRatio,
+          leagueTimeBudgetMs: Number(leagueTimeBudgetMs) || null,
+          proxyAvailable: proxySnapshot?.available ?? null,
+          proxyTotal: proxySnapshot?.total ?? null
+        });
 
-      return { target, result, proxyPort };
-    } catch (error) {
-      this.logger.error('recon_matrix_target_failed', {
-        league: target.league.name,
-        season,
-        proxyPort,
-        activeLeagueWorkers: activeWorkersAtStart,
-        allowedLeagueWorkers,
-        error: error.message,
-        statusCode: Number(error?.statusCode || 0) || null
-      });
-      return { target, error, proxyPort, pendingTotal: pendingMatches.length };
-    } finally {
-      await this._releaseTargetNavigator(navigatorHandle);
+        const result = await this._runReconTarget(target, {
+          concurrency,
+          batchSize,
+          confidenceThreshold,
+          forceDomMode,
+          forceJsonExtract,
+          forcePureProtocol,
+          pendingMatches,
+          matchLimit: desiredLimit,
+          navigator: navigatorHandle?.navigator || null,
+          resultsOnlyMode,
+          disableSearchRoute,
+          matrixModePruning,
+          matrixModeShortCircuitRatio,
+          leagueDeadlineAt
+        });
+
+        this.logger.info('recon_league_worker_complete', {
+          league: target.league.name,
+          season: target.dbSeason,
+          proxyPort,
+          attempt,
+          maxAttempts,
+          activeLeagueWorkers: activeWorkersAtStart,
+          allowedLeagueWorkers,
+          linked: result.linked,
+          mismatched: result.mismatched,
+          pendingTotal: result.pendingTotal
+        });
+
+        return { target, result, proxyPort };
+      } catch (error) {
+        lastError = error;
+        if (this._shouldRetryLeagueWorkerError(error, attempt, maxAttempts)) {
+          this.logger.warn('recon_league_worker_retry_scheduled', {
+            league: target.league.name,
+            season: target.dbSeason,
+            proxyPort,
+            attempt,
+            nextAttempt: attempt + 1,
+            reason: error.code,
+            stage: error.stage || null,
+            sourceUrl: error.sourceUrl || null,
+            incompleteReasons: Array.isArray(error.incompleteReasons) ? error.incompleteReasons : []
+          });
+          continue;
+        }
+
+        this.logger.error('recon_matrix_target_failed', {
+          league: target.league.name,
+          season,
+          proxyPort,
+          attempt,
+          maxAttempts,
+          activeLeagueWorkers: activeWorkersAtStart,
+          allowedLeagueWorkers,
+          error: error.message,
+          statusCode: Number(error?.statusCode || 0) || null
+        });
+        return { target, error, proxyPort, pendingTotal: pendingMatches.length };
+      } finally {
+        await this._releaseTargetNavigator(navigatorHandle);
+      }
     }
+
+    return {
+      target,
+      error: lastError || new Error('recon_league_worker_failed'),
+      proxyPort: lastProxyPort,
+      pendingTotal: pendingMatches.length
+    };
   },
 
   async _acquireTargetNavigator(_target, options = {}) {

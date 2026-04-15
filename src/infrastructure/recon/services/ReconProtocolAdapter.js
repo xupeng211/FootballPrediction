@@ -1,5 +1,11 @@
 'use strict';
 
+// Low-level agents here are only instantiated from ProxyProvider-issued leases.
+const http = require('node:http');
+const https = require('node:https');
+const { URL } = require('node:url');
+const { HttpProxyAgent } = require('http-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 const { waitForDelay } = require('../../shared/helpers/browserUtils');
 const {
   detectEmbeddedHttpFailure,
@@ -26,6 +32,43 @@ const reconProtocolAdapter = {
 
     const url = String(target?.url || target?.baseUrl || target?.resultsUrl || '').trim();
     return { ...(target || {}), url, baseUrl: url };
+  },
+
+  _buildPureProtocolContextProbeTargets(target = {}) {
+    const targets = [];
+    const seen = new Set();
+    const addTarget = (baseUrl, source) => {
+      const normalizedBaseUrl = String(baseUrl || '').trim();
+      if (!normalizedBaseUrl || seen.has(normalizedBaseUrl)) {
+        return;
+      }
+      seen.add(normalizedBaseUrl);
+      targets.push({
+        ...target,
+        url: normalizedBaseUrl,
+        baseUrl: normalizedBaseUrl,
+        contextSource: source
+      });
+    };
+
+    addTarget(target?.baseUrl || target?.url || '', 'requested');
+    addTarget(this.navigator?.stateProber?.deriveCurrentResultsUrl?.(target?.baseUrl || target?.url || ''), 'current_results');
+    addTarget(this.navigator?.stateProber?.deriveLeaguePageUrl?.(target?.baseUrl || target?.url || ''), 'league_page');
+
+    return targets;
+  },
+
+  _extractPureProtocolContextSignals(target = {}, html = '') {
+    const embeddedState = extractEmbeddedProtocolStateFromHtml(html, target);
+    const outrightMeta = this.navigator?.stateProber?.extractPageOutrightsMetaFromHtml?.(html) || null;
+    return {
+      embeddedState,
+      outrightMeta,
+      outrightId: typeof outrightMeta?.id === 'string' && outrightMeta.id.trim()
+        ? outrightMeta.id.trim()
+        : embeddedState.outrightId,
+      tournamentId: extractTournamentIdFromHtml(html) || embeddedState.tournamentId
+    };
   },
 
   _resolvePureProtocolBookmakerHash(target = {}, options = {}) {
@@ -329,6 +372,127 @@ const reconProtocolAdapter = {
     await waitForDelay(null, delayMs);
   },
 
+  _resolvePureProtocolRequestProxy(options = {}) {
+    const explicitLease = options.proxyLease?.proxy?.server
+      ? options.proxyLease
+      : options.requestProxyLease?.proxy?.server
+        ? options.requestProxyLease
+        : null;
+    if (explicitLease) {
+      return {
+        lease: explicitLease,
+        server: explicitLease.proxy.server,
+        port: Number(explicitLease.proxy.port || 0) || null
+      };
+    }
+
+    const explicitProxy = options.proxy?.server
+      ? options.proxy
+      : options.requestProxy?.server
+        ? options.requestProxy
+        : null;
+    if (explicitProxy?.server) {
+      return {
+        lease: null,
+        server: explicitProxy.server,
+        port: Number(explicitProxy.port || 0) || null
+      };
+    }
+
+    if (typeof options.proxyServer === 'string' && options.proxyServer.trim()) {
+      return {
+        lease: null,
+        server: options.proxyServer.trim(),
+        port: Number(options.proxyPort || 0) || null
+      };
+    }
+
+    return null;
+  },
+
+  async _fetchPureProtocolTextViaProxyRequest(url, options = {}, redirectCount = 0) {
+    const resolvedProxy = this._resolvePureProtocolRequestProxy(options);
+    if (!resolvedProxy?.server) {
+      throw new Error('PURE_PROTOCOL_PROXY_SERVER_MISSING');
+    }
+
+    const timeoutMs = Math.max(1, Number(options.timeoutMs || this.navigator?.archiveTimeoutMs || 45000));
+    const requestUrl = new URL(url);
+    const requestLib = requestUrl.protocol === 'https:' ? https : http;
+    const requestHeaders = this._buildPureProtocolHeaders(options.referer, options.accept, options);
+    const agent = requestUrl.protocol === 'https:'
+      ? new HttpsProxyAgent(resolvedProxy.server)
+      : new HttpProxyAgent(resolvedProxy.server);
+
+    return new Promise((resolve) => {
+      const req = requestLib.request({
+        hostname: requestUrl.hostname,
+        port: requestUrl.port || (requestUrl.protocol === 'https:' ? 443 : 80),
+        path: `${requestUrl.pathname}${requestUrl.search}`,
+        protocol: requestUrl.protocol,
+        method: 'GET',
+        headers: requestHeaders,
+        agent
+      }, (response) => {
+        const chunks = [];
+        response.on('data', chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
+        response.on('end', async () => {
+          const text = Buffer.concat(chunks).toString('utf8');
+          const retryAfterRaw = response.headers['retry-after'] || '';
+          const statusCode = Number(response.statusCode) || null;
+          const location = String(response.headers.location || '').trim();
+
+          if (
+            statusCode
+            && statusCode >= 300
+            && statusCode < 400
+            && location
+            && redirectCount < 5
+          ) {
+            try {
+              const redirectedUrl = new URL(location, requestUrl).href;
+              resolve(await this._fetchPureProtocolTextViaProxyRequest(
+                redirectedUrl,
+                options,
+                redirectCount + 1
+              ));
+              return;
+            } catch (error) {
+              resolve({ success: false, status: null, error: error.message, text: '' });
+              return;
+            }
+          }
+
+          if (!statusCode || statusCode < 200 || statusCode >= 300) {
+            resolve({
+              success: false,
+              status: statusCode,
+              error: statusCode ? `HTTP_${statusCode}` : 'HTTP_REQUEST_FAILED',
+              text,
+              retryAfterRaw
+            });
+            return;
+          }
+
+          const embeddedFailure = detectEmbeddedHttpFailure(text);
+          resolve(embeddedFailure
+            ? { success: false, status: embeddedFailure.statusCode, error: embeddedFailure.error, text, retryAfterRaw }
+            : { success: true, status: statusCode, text, retryAfterRaw });
+        });
+      });
+
+      req.setTimeout(timeoutMs, () => {
+        req.destroy(new Error('This operation was aborted'));
+      });
+
+      req.on('error', (error) => {
+        resolve({ success: false, status: null, error: error.message, text: '' });
+      });
+
+      req.end();
+    });
+  },
+
   async _fetchPureProtocolTextOnce(url, options = {}) {
     const controller = new AbortController();
     const timeoutMs = Number(options.timeoutMs || this.navigator?.archiveTimeoutMs || 45000);
@@ -339,11 +503,15 @@ const reconProtocolAdapter = {
         options.referer || options.baseUrl || url,
         options
       );
+      const resolvedOptions = {
+        ...options,
+        cookieHeader: cookieHeader || options.cookieHeader || ''
+      };
+      if (this._resolvePureProtocolRequestProxy(resolvedOptions)?.server) {
+        return this._fetchPureProtocolTextViaProxyRequest(url, resolvedOptions);
+      }
       const response = await fetch(url, {
-        headers: this._buildPureProtocolHeaders(options.referer, options.accept, {
-          ...options,
-          cookieHeader: cookieHeader || options.cookieHeader || ''
-        }),
+        headers: this._buildPureProtocolHeaders(options.referer, options.accept, resolvedOptions),
         redirect: 'follow',
         signal: controller.signal
       });
@@ -403,35 +571,83 @@ const reconProtocolAdapter = {
   // eslint-disable-next-line complexity
   async _resolvePureProtocolContext(target, options = {}) {
     const normalizedTarget = this._normalizePureProtocolTarget(target);
-    const htmlResponse = await this._resolvePureProtocolHtml(normalizedTarget, options);
-    if (!htmlResponse.success) {
-      const error = new Error(htmlResponse.error || 'PURE_PROTOCOL_HTML_FETCH_FAILED');
-      error.statusCode = Number(htmlResponse.status) || null;
-      error.url = normalizedTarget.baseUrl;
+    const requestedBaseUrl = normalizedTarget.baseUrl;
+    const probeTargets = this._buildPureProtocolContextProbeTargets(normalizedTarget);
+    let selectedHtmlContext = null;
+    let lastHtmlFailure = null;
+
+    for (const probeTarget of probeTargets) {
+      const htmlResponse = await this._resolvePureProtocolHtml(probeTarget, options);
+      if (!htmlResponse.success) {
+        lastHtmlFailure = {
+          probeTarget,
+          htmlResponse
+        };
+        continue;
+      }
+
+      const html = String(htmlResponse.text || '');
+      const extractedSignals = this._extractPureProtocolContextSignals(probeTarget, html);
+      if (!selectedHtmlContext) {
+        selectedHtmlContext = {
+          probeTarget,
+          htmlResponse,
+          html,
+          ...extractedSignals
+        };
+      }
+
+      const hasStrongToken = Boolean(extractedSignals.outrightId);
+      const hasAnyToken = hasStrongToken || Boolean(extractedSignals.tournamentId);
+      if (hasAnyToken) {
+        selectedHtmlContext = {
+          probeTarget,
+          htmlResponse,
+          html,
+          ...extractedSignals
+        };
+        if (probeTarget.baseUrl !== requestedBaseUrl) {
+          this.logger.info('pure_protocol_context_fallback_source_selected', {
+            requestedBaseUrl,
+            resolvedBaseUrl: probeTarget.baseUrl,
+            contextSource: probeTarget.contextSource,
+            outrightId: extractedSignals.outrightId || null,
+            tournamentId: extractedSignals.tournamentId || null
+          });
+        }
+        if (hasStrongToken) {
+          break;
+        }
+      }
+    }
+
+    if (!selectedHtmlContext) {
+      const error = new Error(lastHtmlFailure?.htmlResponse?.error || 'PURE_PROTOCOL_HTML_FETCH_FAILED');
+      error.statusCode = Number(lastHtmlFailure?.htmlResponse?.status) || null;
+      error.url = lastHtmlFailure?.probeTarget?.baseUrl || requestedBaseUrl;
       throw error;
     }
 
-    const html = String(htmlResponse.text || '');
-    const embeddedState = extractEmbeddedProtocolStateFromHtml(html, normalizedTarget);
-    const outrightMeta = this.navigator?.stateProber?.extractPageOutrightsMetaFromHtml?.(html) || null;
-    let outrightId = typeof outrightMeta?.id === 'string' ? outrightMeta.id.trim() : '';
+    const {
+      probeTarget: resolvedTarget,
+      html,
+      embeddedState,
+      outrightMeta
+    } = selectedHtmlContext;
+    let outrightId = selectedHtmlContext.outrightId || '';
+    let tournamentId = selectedHtmlContext.tournamentId || '';
     let runtimeBookmakerHash = embeddedState.bookmakerHash || '';
-    const cookieHeader = await this._resolvePureProtocolCookieHeader(normalizedTarget.baseUrl, options);
+    const cookieHeader = await this._resolvePureProtocolCookieHeader(resolvedTarget.baseUrl, options);
 
-    if (!outrightId) {
-      outrightId = embeddedState.outrightId;
-    }
-
-    const tournamentId = extractTournamentIdFromHtml(html) || embeddedState.tournamentId;
     if (!outrightId && !tournamentId) {
-      const runtimeState = await this._resolvePureProtocolRuntimeState(normalizedTarget, options);
+      const runtimeState = await this._resolvePureProtocolRuntimeState(resolvedTarget, options);
       outrightId = runtimeState.outrightId || '';
       runtimeBookmakerHash = runtimeState.bookmakerHash || runtimeBookmakerHash;
     }
 
-    const appScriptResolution = await this._resolveLatestPureProtocolAppScript(normalizedTarget.baseUrl, {
+    const appScriptResolution = await this._resolveLatestPureProtocolAppScript(resolvedTarget.baseUrl, {
       html,
-      headers: this._buildPureProtocolHeaders(normalizedTarget.baseUrl, 'text/javascript,application/javascript,*/*;q=0.1', {
+      headers: this._buildPureProtocolHeaders(resolvedTarget.baseUrl, 'text/javascript,application/javascript,*/*;q=0.1', {
         ...options,
         cookieHeader,
         includeXRequestedWith: false,
@@ -444,15 +660,19 @@ const reconProtocolAdapter = {
 
     return {
       ...normalizedTarget,
+      url: resolvedTarget.baseUrl,
+      baseUrl: resolvedTarget.baseUrl,
+      requestedBaseUrl,
+      contextSource: resolvedTarget.contextSource || 'requested',
       html,
       outrightMeta,
       outrightId,
       tournamentId,
-      appBundleUrl: appScriptResolution.appScriptUrl || extractAppBundleUrlFromHtml(html, normalizedTarget.baseUrl),
+      appBundleUrl: appScriptResolution.appScriptUrl || extractAppBundleUrlFromHtml(html, resolvedTarget.baseUrl),
       appBundleSource: appScriptResolution.bundleSource || '',
       appScriptDiscoverySource: appScriptResolution.discoverySource || '',
       appScriptManifestMap: appScriptResolution.manifestAssetMap || new Map(),
-      seasonToken: extractPureProtocolSeasonToken(normalizedTarget.baseUrl, options),
+      seasonToken: extractPureProtocolSeasonToken(requestedBaseUrl, { ...normalizedTarget, ...options }),
       locale: extractLocaleFromHtml(html),
       runtimeBookmakerHash,
       cookieHeader

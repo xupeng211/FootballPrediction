@@ -32,6 +32,7 @@ const TEAM_SIMILARITY_METHODS = [
 ];
 
 const SCORING_METHODS = [
+  'evaluateCandidate',
   'evaluateCandidateOrientation',
   'calculateDateConfidence',
   'findBestCandidate',
@@ -117,6 +118,20 @@ class ReconMatchEvaluator {
         matchingConfig,
         'dateWeight',
         'date_weight'
+      ),
+      teamBalanceWeight: resolveNumericOption(
+        options,
+        runtimeConfig,
+        matchingConfig,
+        'teamBalanceWeight',
+        'team_balance_weight'
+      ),
+      perfectKickoffWindowMs: resolveNumericOption(
+        options,
+        runtimeConfig,
+        matchingConfig,
+        'perfectKickoffWindowMs',
+        'perfect_kickoff_window_ms'
       ),
       dateConfidenceBands: resolveDateConfidenceBands(options, matchingConfig)
     });
