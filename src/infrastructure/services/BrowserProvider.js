@@ -11,6 +11,52 @@
 
 const { chromium } = require('playwright');
 
+function classifyBrowserFailure(reason = '') {
+  const message = String(reason || '').toLowerCase();
+
+  if (message.includes('err_empty_response') || message.includes('empty response')) {
+    return {
+      failureClass: 'upstream_block',
+      rotateProxy: false
+    };
+  }
+
+  if (
+    message.includes('execution context was destroyed')
+    || message.includes('target closed')
+    || message.includes('target page')
+    || message.includes('page crashed')
+  ) {
+    return {
+      failureClass: 'browser_context_transient',
+      rotateProxy: false
+    };
+  }
+
+  if (message.includes('timeout')) {
+    return {
+      failureClass: 'browser_context_transient',
+      rotateProxy: false
+    };
+  }
+
+  return {
+    failureClass: 'proxy_transport',
+    rotateProxy: false
+  };
+}
+
+function isClosedLifecycleError(error) {
+  const message = String(error?.message || '').toLowerCase();
+  return (
+    message.includes('target page, context or browser has been closed')
+    || message.includes('browser has been closed')
+    || message.includes('target closed')
+    || message.includes('context closed')
+    || message.includes('page closed')
+  );
+}
+
 /**
  * 浏览器提供者
  * @class BrowserProvider
@@ -43,6 +89,11 @@ class BrowserProvider {
     this.proxyConsumer = options.proxyConsumer || 'l1-discovery-browser';
     this.proxySessionKey = options.proxySessionKey || 'main-browser';
     this.proxyLease = null;
+    this.browserLaunchPromise = null;
+    this.pageRecoveryPromise = null;
+    this.closePromise = null;
+    this.isClosing = false;
+    this.pageOperationTail = Promise.resolve();
   }
 
   /**
@@ -50,7 +101,7 @@ class BrowserProvider {
    * @returns {boolean}
    */
   isInitialized() {
-    return this.browser !== null && this.page !== null;
+    return this._hasLiveBrowser() && this._hasLivePage();
   }
 
   /**
@@ -60,6 +111,38 @@ class BrowserProvider {
   async initialize() {
     if (this.isInitialized()) {
       return this.page;
+    }
+
+    if (this.pageRecoveryPromise) {
+      return this.pageRecoveryPromise;
+    }
+
+    if (this.browserLaunchPromise) {
+      return this.browserLaunchPromise;
+    }
+
+    this.browserLaunchPromise = this._initializeInternal();
+
+    try {
+      return await this.browserLaunchPromise;
+    } finally {
+      this.browserLaunchPromise = null;
+    }
+  }
+
+  async _initializeInternal() {
+    await this._waitForCloseIfNeeded();
+
+    if (this.page && !this._hasLivePage()) {
+      this.page = null;
+    }
+
+    if (this.browser && !this._hasLiveBrowser()) {
+      await this._disposeStaleBrowser('initialize-stale-browser');
+    }
+
+    if (this._hasLiveBrowser() && !this.page) {
+      return this.recoverPage('initialize-page-recovery');
     }
     
     this.logger.info('[BrowserProvider] 🕵️  启动影子浏览器 (闪击模式)...');
@@ -87,10 +170,7 @@ class BrowserProvider {
         ]
       });
       
-      this.page = await this.browser.newPage({
-        viewport: this.config.viewport,
-        userAgent: this.config.userAgent
-      });
+      this.page = await this._createFreshPage('initialize-launch');
       
       this.logger.info(
         `[BrowserProvider] ✅ 浏览器实例创建成功${proxyLease ? ` | Port ${proxyLease.proxy.port}` : ''}`
@@ -100,7 +180,8 @@ class BrowserProvider {
     } catch (error) {
       await this.reportProxyFailure({
         reason: error.message,
-        statusCode: error.statusCode || null
+        statusCode: error.statusCode || null,
+        ...classifyBrowserFailure(error.message)
       });
       await this.releaseProxyLease();
       this.logger.error(`[BrowserProvider] ❌ 浏览器启动失败: ${error.message}`);
@@ -119,29 +200,35 @@ class BrowserProvider {
       await this.initialize();
     }
     
-    this.logger.info('[BrowserProvider] 🍪 获取初始 Cookies (轻量模式)...');
-    
-    try {
-      const startTime = Date.now();
-      await this.page.goto(url, {
-        waitUntil: options.waitUntil || 'domcontentloaded',
-        timeout: options.timeout || 15000
-      });
+    return this._runPageOperation(async () => {
+      this.logger.info('[BrowserProvider] 🍪 获取初始 Cookies (轻量模式)...');
       
-      await this.reportProxySuccess({
-        latencyMs: Date.now() - startTime,
-        statusCode: 200
-      });
-      this.logger.info('[BrowserProvider] ✅ 页面预热完成');
-    } catch (error) {
-      await this.reportProxyFailure({
-        reason: error.message,
-        statusCode: error.statusCode || null
-      });
-      // 宽容模式: 即使主页加载失败，也可能已获取到 Cookie
-      this.logger.warn(`[BrowserProvider] ⚠️  页面预热警告: ${error.message}`);
-      this.logger.warn('[BrowserProvider] 💡 继续执行 (Cookie 可能已获取)');
-    }
+      try {
+        const startTime = Date.now();
+        await this.page.goto(url, {
+          waitUntil: options.waitUntil || 'domcontentloaded',
+          timeout: options.timeout || 15000
+        });
+        
+        await this.reportProxySuccess({
+          latencyMs: Date.now() - startTime,
+          statusCode: 200
+        });
+        this.logger.info('[BrowserProvider] ✅ 页面预热完成');
+      } catch (error) {
+        await this.reportProxyFailure({
+          reason: error.message,
+          statusCode: error.statusCode || null,
+          ...classifyBrowserFailure(error.message)
+        });
+        // 宽容模式: 即使主页加载失败，也可能已获取到 Cookie
+        this.logger.warn(`[BrowserProvider] ⚠️  页面预热警告: ${error.message}`);
+        this.logger.warn('[BrowserProvider] 💡 继续执行 (Cookie 可能已获取)');
+        if (this._shouldResetPageAfterWarmupFailure(error)) {
+          await this._resetPageAfterWarmupFailure(`warmup-failed:${error.message}`);
+        }
+      }
+    }, 'warmup');
   }
 
   /**
@@ -185,7 +272,7 @@ class BrowserProvider {
     
     // 🔧 修复: 将多个参数封装为单个对象传递
     const timeoutMs = options.timeout || this.defaultTimeoutMs;
-    return Promise.race([
+    return this._runPageOperation(() => Promise.race([
       this.page.evaluate(async ({ apiUrl, opts }) => {
         try {
           const response = await fetch(apiUrl, opts);
@@ -208,7 +295,7 @@ class BrowserProvider {
       new Promise((_, reject) => {
         setTimeout(() => reject(new Error(`Browser fetch timeout after ${timeoutMs}ms`)), timeoutMs);
       })
-    ]);
+    ]), 'fetch');
   }
 
   /**
@@ -217,7 +304,7 @@ class BrowserProvider {
    */
   async getCurrentUrl() {
     if (!this.page) return '';
-    return this.page.url();
+    return this._runPageOperation(() => this.page.url(), 'getCurrentUrl');
   }
 
   /**
@@ -231,23 +318,26 @@ class BrowserProvider {
       await this.initialize();
     }
     
-    const startTime = Date.now();
-    try {
-      await this.page.goto(url, {
-        waitUntil: options.waitUntil || 'domcontentloaded',
-        timeout: options.timeout || 20000
-      });
-      await this.reportProxySuccess({
-        latencyMs: Date.now() - startTime,
-        statusCode: 200
-      });
-    } catch (error) {
-      await this.reportProxyFailure({
-        reason: error.message,
-        statusCode: error.statusCode || null
-      });
-      throw error;
-    }
+    return this._runPageOperation(async () => {
+      const startTime = Date.now();
+      try {
+        await this.page.goto(url, {
+          waitUntil: options.waitUntil || 'domcontentloaded',
+          timeout: options.timeout || 20000
+        });
+        await this.reportProxySuccess({
+          latencyMs: Date.now() - startTime,
+          statusCode: 200
+        });
+      } catch (error) {
+        await this.reportProxyFailure({
+          reason: error.message,
+          statusCode: error.statusCode || null,
+          ...classifyBrowserFailure(error.message)
+        });
+        throw error;
+      }
+    }, 'goto');
   }
 
   /**
@@ -260,18 +350,20 @@ class BrowserProvider {
     
     const scrollTo = options.to || 'bottom';
     
-    if (scrollTo === 'bottom') {
-      await this.page.evaluate(() => {
-        window.scrollTo(0, document.body.scrollHeight);
-      });
-    } else if (scrollTo === 'top') {
-      await this.page.evaluate(() => {
-        window.scrollTo(0, 0);
-      });
-    }
-    
-    // 返回当前页面高度
-    return this.page.evaluate(() => document.body.scrollHeight);
+    return this._runPageOperation(async () => {
+      if (scrollTo === 'bottom') {
+        await this.page.evaluate(() => {
+          window.scrollTo(0, document.body.scrollHeight);
+        });
+      } else if (scrollTo === 'top') {
+        await this.page.evaluate(() => {
+          window.scrollTo(0, 0);
+        });
+      }
+      
+      // 返回当前页面高度
+      return this.page.evaluate(() => document.body.scrollHeight);
+    }, 'scroll');
   }
 
   /**
@@ -280,7 +372,7 @@ class BrowserProvider {
    */
   async getPageHeight() {
     if (!this.page) return 0;
-    return this.page.evaluate(() => document.body.scrollHeight);
+    return this._runPageOperation(() => this.page.evaluate(() => document.body.scrollHeight), 'getPageHeight');
   }
 
   /**
@@ -291,10 +383,10 @@ class BrowserProvider {
    */
   async waitForSelector(selector, options = {}) {
     if (!this.page) return;
-    await this.page.waitForSelector(selector, {
+    await this._runPageOperation(() => this.page.waitForSelector(selector, {
       state: options.state || 'attached',
       timeout: options.timeout || 10000
-    });
+    }), 'waitForSelector');
   }
 
   /**
@@ -305,12 +397,12 @@ class BrowserProvider {
    */
   async evaluate(fn, ...args) {
     if (!this.page) return null;
-    return Promise.race([
+    return this._runPageOperation(() => Promise.race([
       this.page.evaluate(fn, ...args),
       new Promise((_, reject) => {
         setTimeout(() => reject(new Error(`Browser evaluate timeout after ${this.defaultTimeoutMs}ms`)), this.defaultTimeoutMs);
       })
-    ]);
+    ]), 'evaluate');
   }
 
   /**
@@ -329,21 +421,251 @@ class BrowserProvider {
    * @returns {Promise<void>}
    */
   async close() {
+    if (this.closePromise) {
+      return this.closePromise;
+    }
+
+    this.isClosing = true;
+    const browser = this.browser;
+    const page = this.page;
+
+    this.closePromise = this._runPageOperation(async () => {
+      try {
+        if (!browser) {
+          return;
+        }
+
+        this.logger.info('[BrowserProvider] 🔒 关闭浏览器...');
+        if (page && typeof page.removeAllListeners === 'function') {
+          page.removeAllListeners();
+        }
+        await browser.close();
+        this.logger.info('[BrowserProvider] ✅ 浏览器已关闭');
+      } finally {
+        this.browser = null;
+        this.page = null;
+        await this.releaseProxyLease();
+      }
+    }, 'close');
+
     try {
-      if (!this.browser) {
-        return;
+      await this.closePromise;
+    } finally {
+      this.closePromise = null;
+      this.isClosing = false;
+    }
+  }
+
+  async recoverPage(reason = 'page-recovery') {
+    if (this.pageRecoveryPromise) {
+      return this.pageRecoveryPromise;
+    }
+
+    if (this.browserLaunchPromise && !this._hasLiveBrowser()) {
+      return this.browserLaunchPromise;
+    }
+
+    this.pageRecoveryPromise = this._recoverPageInternal(reason);
+
+    try {
+      return await this.pageRecoveryPromise;
+    } finally {
+      this.pageRecoveryPromise = null;
+    }
+  }
+
+  async _recoverPageInternal(reason) {
+    return this._runPageOperation(async () => {
+      await this._waitForCloseIfNeeded();
+
+      if (!this._hasLiveBrowser()) {
+        this.logger.warn(
+          `[BrowserProvider] 🧯 阻断僵尸 newPage，改为重建 Browser: ${reason} | state=${this._describeLifecycleState()}`
+        );
+        await this._disposeStaleBrowser(`${reason}:stale-browser`);
+        return this._initializeInternal();
       }
 
-      this.logger.info('[BrowserProvider] 🔒 关闭浏览器...');
-      if (this.page) {
-        this.page.removeAllListeners();
-      }
-      await this.browser.close();
-      this.logger.info('[BrowserProvider] ✅ 浏览器已关闭');
-    } finally {
-      this.browser = null;
+      const previousPage = this.page;
       this.page = null;
-      await this.releaseProxyLease();
+
+      if (previousPage && typeof previousPage.removeAllListeners === 'function') {
+        previousPage.removeAllListeners();
+      }
+
+      if (previousPage && typeof previousPage.close === 'function') {
+        try {
+          await previousPage.close();
+        } catch (_error) {
+          // 页面可能已经被底层浏览器回收，忽略即可
+        }
+      }
+
+      try {
+        this.page = await this._createFreshPage(reason);
+        this.logger.warn(`[BrowserProvider] ♻️ 页面已恢复: ${reason}`);
+        return this.page;
+      } catch (error) {
+        if (!isClosedLifecycleError(error) && this._hasLiveBrowser()) {
+          throw error;
+        }
+
+        this.logger.warn(
+          `[BrowserProvider] 🧯 newPage 命中关闭竞态，改为重建 Browser: ${reason} | ${error.message}`
+        );
+        await this._disposeStaleBrowser(`${reason}:target-closed`);
+        return this._initializeInternal();
+      }
+    }, 'recoverPage');
+  }
+
+  async _createFreshPage(reason = 'page-create') {
+    if (!this._hasLiveBrowser()) {
+      throw new Error(`browser.newPage blocked: browser is ${this._describeLifecycleState()} (${reason})`);
+    }
+
+    return this.browser.newPage({
+      viewport: this.config.viewport,
+      userAgent: this.config.userAgent
+    });
+  }
+
+  async _waitForCloseIfNeeded() {
+    if (this.closePromise) {
+      await this.closePromise;
+    }
+  }
+
+  _hasLiveBrowser() {
+    if (!this.browser || this.isClosing) {
+      return false;
+    }
+
+    if (typeof this.browser.isConnected === 'function' && !this.browser.isConnected()) {
+      return false;
+    }
+
+    return typeof this.browser.newPage === 'function';
+  }
+
+  _hasLivePage() {
+    if (!this.page) {
+      return false;
+    }
+
+    if (typeof this.page.isClosed === 'function' && this.page.isClosed()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  _describeLifecycleState() {
+    if (this.isClosing) {
+      return 'closing';
+    }
+
+    if (!this.browser) {
+      return 'browser-missing';
+    }
+
+    if (typeof this.browser.isConnected === 'function' && !this.browser.isConnected()) {
+      return 'browser-disconnected';
+    }
+
+    if (!this.page) {
+      return 'page-missing';
+    }
+
+    if (typeof this.page.isClosed === 'function' && this.page.isClosed()) {
+      return 'page-closed';
+    }
+
+    return 'ready';
+  }
+
+  async _disposeStaleBrowser(reason = 'stale-browser') {
+    const staleBrowser = this.browser;
+    const stalePage = this.page;
+
+    this.browser = null;
+    this.page = null;
+
+    if (stalePage && typeof stalePage.removeAllListeners === 'function') {
+      stalePage.removeAllListeners();
+    }
+
+    if (stalePage && typeof stalePage.close === 'function') {
+      try {
+        await stalePage.close();
+      } catch (_error) {
+        // 页面已僵死时允许静默回收
+      }
+    }
+
+    if (!staleBrowser || typeof staleBrowser.close !== 'function') {
+      return;
+    }
+
+    try {
+      await staleBrowser.close();
+    } catch (error) {
+      this.logger.warn(`[BrowserProvider] ⚠️  僵尸浏览器回收失败 (${reason}): ${error.message}`);
+    }
+  }
+
+  _shouldResetPageAfterWarmupFailure(error) {
+    const message = String(error?.message || '').toLowerCase();
+    return (
+      isClosedLifecycleError(error)
+      || message.includes('err_empty_response')
+      || message.includes('err_aborted')
+      || message.includes('failed to fetch')
+    );
+  }
+
+  async _resetPageAfterWarmupFailure(reason = 'warmup-failed') {
+    if (!this._hasLiveBrowser()) {
+      return;
+    }
+
+    const failedPage = this.page;
+    this.page = null;
+
+    if (failedPage && typeof failedPage.removeAllListeners === 'function') {
+      failedPage.removeAllListeners();
+    }
+
+    if (failedPage && typeof failedPage.close === 'function') {
+      try {
+        await failedPage.close();
+      } catch (_error) {
+        // 预热失败页可能已进入失活态，忽略即可
+      }
+    }
+
+    try {
+      this.page = await this._createFreshPage(reason);
+      this.logger.warn(`[BrowserProvider] ♻️ 预热失败后已重置页面: ${reason}`);
+    } catch (error) {
+      this.logger.warn(`[BrowserProvider] ⚠️ 预热失败后重置页面失败: ${error.message}`);
+      await this._disposeStaleBrowser(`${reason}:reset-failed`);
+    }
+  }
+
+  async _runPageOperation(task, _label = 'page-op') {
+    const previousOperation = this.pageOperationTail;
+    let releaseCurrent = null;
+    this.pageOperationTail = new Promise(resolve => {
+      releaseCurrent = resolve;
+    });
+
+    await previousOperation.catch(() => {});
+
+    try {
+      return await task();
+    } finally {
+      releaseCurrent();
     }
   }
 

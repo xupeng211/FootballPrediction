@@ -45,10 +45,14 @@ TOTAL WAR PIPELINE - 24 小时自动编排器
   --season=SEASON            赛季，支持 2025/2026 或 2025-2026
   --loop-ms=N                主循环间隔，默认 60000
   --discovery-interval-ms=N  Discovery 间隔，默认 3600000
+  --discovery-concurrency=N  Discovery 并发，默认 5
   --harvest-concurrency=N    Harvest 并发，默认 10
   --harvest-limit=N          Harvest 单批上限，默认 500
   --recon-concurrency=N      Recon 并发，默认 5
+  --recon-limit=N            Recon 单批上限，默认读取配置
   --recon-threshold=N        触发 Recon 的新增 raw 阈值，默认 50
+  --use-proxy                Recon 子任务显式启用代理
+  --force-pure-protocol      Recon 子任务强制 pure protocol
   --failure-limit=N          连续失败熔断阈值，默认 3
   --failure-cooldown-ms=N    失败熔断冷却时间，默认 1800000
   --once                     只执行一个调度周期
@@ -74,6 +78,21 @@ function getDefaultReconThreshold() {
   }
 
   return 50;
+}
+
+function getDefaultReconLimit() {
+  const config = readReconConfigFile();
+  const envLimit = parseInt(process.env.RECON_LIMIT || '', 10);
+  if (Number.isInteger(envLimit) && envLimit > 0) {
+    return envLimit;
+  }
+
+  const configLimit = Number(config?.automation?.total_war?.recon_limit);
+  if (Number.isInteger(configLimit) && configLimit > 0) {
+    return configLimit;
+  }
+
+  return getDefaultReconThreshold();
 }
 
 function readReconConfigFile() {
@@ -118,10 +137,14 @@ function parseArgs(argv = process.argv.slice(2)) {
     seasonInput: null,
     loopMs: 60_000,
     discoveryIntervalMs: 60 * 60 * 1000,
+    discoveryConcurrency: 5,
     harvestConcurrency: 10,
     harvestLimit: 500,
     reconConcurrency: 5,
+    reconLimit: getDefaultReconLimit(),
     reconThreshold: getDefaultReconThreshold(),
+    useProxy: false,
+    forcePureProtocol: false,
     maxRuntimeMs: parseInt(process.env.TOTAL_WAR_MAX_RUNTIME_MS || '0', 10) || 0,
     killGraceMs: parseInt(process.env.TOTAL_WAR_KILL_GRACE_MS || '5000', 10) || 5000,
     failureLimit: 3,
@@ -168,6 +191,11 @@ function parseArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--discovery-interval-ms') {
       options.discoveryIntervalMs = readNumericValue(index, '--discovery-interval-ms', options.discoveryIntervalMs);
       index++;
+    } else if (arg.startsWith('--discovery-concurrency=')) {
+      options.discoveryConcurrency = parseInt(arg.split('=')[1], 10) || options.discoveryConcurrency;
+    } else if (arg === '--discovery-concurrency') {
+      options.discoveryConcurrency = readNumericValue(index, '--discovery-concurrency', options.discoveryConcurrency);
+      index++;
     } else if (arg.startsWith('--harvest-concurrency=')) {
       options.harvestConcurrency = parseInt(arg.split('=')[1], 10) || options.harvestConcurrency;
     } else if (arg === '--harvest-concurrency') {
@@ -183,11 +211,20 @@ function parseArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--recon-concurrency') {
       options.reconConcurrency = readNumericValue(index, '--recon-concurrency', options.reconConcurrency);
       index++;
+    } else if (arg.startsWith('--recon-limit=')) {
+      options.reconLimit = parseInt(arg.split('=')[1], 10) || options.reconLimit;
+    } else if (arg === '--recon-limit') {
+      options.reconLimit = readNumericValue(index, '--recon-limit', options.reconLimit);
+      index++;
     } else if (arg.startsWith('--recon-threshold=')) {
       options.reconThreshold = parseInt(arg.split('=')[1], 10) || options.reconThreshold;
     } else if (arg === '--recon-threshold') {
       options.reconThreshold = readNumericValue(index, '--recon-threshold', options.reconThreshold);
       index++;
+    } else if (arg === '--use-proxy') {
+      options.useProxy = true;
+    } else if (arg === '--force-pure-protocol') {
+      options.forcePureProtocol = true;
     } else if (arg.startsWith('--failure-limit=')) {
       options.failureLimit = parseInt(arg.split('=')[1], 10) || options.failureLimit;
     } else if (arg === '--failure-limit') {
@@ -575,7 +612,9 @@ class TotalWarPipeline {
         args: [
           path.join(ROOT_DIR, 'scripts/ops/titan_discovery.js'),
           '--all-leagues',
-          `--season=${this.options.dbSeason}`
+          `--season=${this.options.dbSeason}`,
+          '--concurrency',
+          String(this.options.discoveryConcurrency)
         ]
       };
     }
@@ -595,20 +634,27 @@ class TotalWarPipeline {
     }
 
     if (taskName === 'recon') {
-      const reconLimit = Math.max(1, Number(this.options.reconThreshold) || 0);
+      const reconLimit = Math.max(1, Number(this.options.reconLimit) || 0);
+      const args = [
+        path.join(ROOT_DIR, 'scripts/ops/recon_scanner.js'),
+        '--season',
+        this.options.reconSeason,
+        '--all-leagues',
+        '--limit',
+        String(reconLimit),
+        '--concurrency',
+        String(this.options.reconConcurrency)
+      ];
+      if (this.options.useProxy) {
+        args.push('--use-proxy');
+      }
+      if (this.options.forcePureProtocol) {
+        args.push('--force-pure-protocol');
+      }
       return {
         task: taskName,
         command,
-        args: [
-          path.join(ROOT_DIR, 'scripts/ops/recon_scanner.js'),
-          '--season',
-          this.options.reconSeason,
-          '--all-leagues',
-          '--limit',
-          String(reconLimit),
-          '--concurrency',
-          String(this.options.reconConcurrency)
-        ]
+        args
       };
     }
 
@@ -823,6 +869,7 @@ module.exports = {
   TotalWarPipeline,
   parseArgs,
   sleep,
+  getDefaultReconLimit,
   getDefaultReconThreshold,
   getTotalWarLogSettings
 };

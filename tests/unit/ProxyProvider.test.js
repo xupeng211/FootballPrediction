@@ -17,10 +17,11 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     delete process.env.WSL2_PROXY_HOST;
   });
 
-  test('100 次并发租约应在 22 个端口间近似均衡分布', async () => {
+  test('100 次并发租约应在当前可用端口间近似均衡分布', async () => {
     const provider = new ProxyProvider({
       healthCheckIntervalMs: 0
     });
+    const totalPorts = provider.getNodeStates().length;
 
     const leases = await Promise.all(
       Array.from({ length: 100 }, (_, index) => provider.acquire({
@@ -39,7 +40,7 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     const min = Math.min(...allocations);
     const max = Math.max(...allocations);
 
-    assert.strictEqual(counts.size, 22);
+    assert.strictEqual(counts.size, totalPorts);
     assert.ok(max - min <= 1);
 
     await Promise.all(leases.map((lease) => provider.release(lease.id)));
@@ -97,6 +98,7 @@ describe('src/infrastructure/network/ProxyProvider', () => {
       criticalErrorCooldownMs: 1_800_000,
       minHealthScore: 60
     });
+    const totalPorts = provider.getNodeStates().length;
 
     const lease = await provider.acquire({
       consumer: 'recon',
@@ -109,7 +111,7 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
     assert.strictEqual(node.cooling, true);
     assert.ok(node.healthScore < 60);
-    assert.strictEqual(provider.getStats().available, 21);
+    assert.strictEqual(provider.getStats().available, totalPorts - 1);
 
     now += 1_799_999;
     node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
@@ -157,6 +159,79 @@ describe('src/infrastructure/network/ProxyProvider', () => {
 
     assert.strictEqual(stats.host, 'host.docker.internal');
     assert.ok(nodes.every(node => node.host === 'host.docker.internal'));
+  });
+
+  test('ERR_EMPTY_RESPONSE 应触发软退避而不是判定代理物理死亡', async () => {
+    let now = 5_000;
+    const alerts = [];
+    const provider = new ProxyProvider({
+      now: () => now,
+      healthCheckIntervalMs: 0,
+      minHealthScore: 60,
+      upstreamBlockBaseCooldownMs: 5_000,
+      upstreamBlockMaxCooldownMs: 20_000
+    });
+    const totalPorts = provider.getNodeStates().length;
+
+    provider.on('alert', payload => {
+      alerts.push(payload);
+    });
+
+    const lease = await provider.acquire({
+      consumer: 'discovery',
+      sessionKey: 'soft-upstream',
+      sticky: false
+    });
+
+    await provider.reportFailure(lease.id, {
+      reason: 'page.goto: net::ERR_EMPTY_RESPONSE',
+      failureClass: 'upstream_block'
+    });
+
+    let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, true);
+    assert.ok(node.healthScore >= 96);
+    assert.ok(alerts.some(item => item.type === 'proxy_soft_backoff' && item.port === lease.proxy.port));
+
+    now += 5_001;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, false);
+    assert.strictEqual(provider.getStats().available, totalPorts);
+  });
+
+  test('软故障连续出现时不得将节点健康分打穿到不可租用', async () => {
+    let now = 8_000;
+    const provider = new ProxyProvider({
+      now: () => now,
+      healthCheckIntervalMs: 0,
+      minHealthScore: 60,
+      transientContextCooldownMs: 1_000,
+      upstreamBlockBaseCooldownMs: 1_000,
+      upstreamBlockMaxCooldownMs: 3_000
+    });
+    const totalPorts = provider.getNodeStates().length;
+
+    const lease = await provider.acquire({
+      consumer: 'discovery',
+      sessionKey: 'soft-floor',
+      sticky: false
+    });
+
+    for (let index = 0; index < 8; index++) {
+      await provider.reportFailure(lease.id, {
+        reason: 'page.evaluate: Execution context was destroyed',
+        failureClass: 'browser_context_transient'
+      });
+      now += 1_100;
+    }
+
+    let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.ok(node.healthScore >= 60);
+
+    now += 3_100;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, false);
+    assert.strictEqual(provider.getStats().available, totalPorts);
   });
 
   test('初始化时应先完成代理网关 TCP 预检', async () => {

@@ -69,6 +69,82 @@ describe('ReconMatchEvaluator', () => {
     assert.strictEqual(best.method, 'exact');
   });
 
+  it('应将 ±2 小时内的开球抖动视为满分时间窗口', () => {
+    const evaluator = new ReconMatchEvaluator({
+      parser: {
+        calculateSimilarity(left, right) {
+          return String(left || '').toLowerCase().trim() === String(right || '').toLowerCase().trim() ? 1 : 0;
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'Arsenal',
+      away_team: 'Chelsea',
+      match_date: '2025-08-22T18:30:00.000Z'
+    }, [
+      {
+        hash: 'kickoff-buffer',
+        url: 'oddsportal://kickoff-buffer',
+        homeTeam: 'Arsenal',
+        awayTeam: 'Chelsea',
+        matchDate: '2025-08-22T20:15:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应找到候选');
+    assert.equal(best.dateConfidence, 1);
+    assert.equal(best.dateDeltaMs, 105 * 60 * 1000);
+    assert.ok(best.confidence > 0.95, `期望时间抖动 2 小时内仍保持高置信度，实际 ${best.confidence}`);
+  });
+
+  it('应压低单边队名相似但另一边错误的假高分候选', () => {
+    const evaluator = new ReconMatchEvaluator({
+      parser: {
+        calculateSimilarity(left, right) {
+          const normalize = (value) => String(value || '')
+            .toLowerCase()
+            .replace(/\butd\b/g, 'united')
+            .replace(/[^a-z]+/g, ' ')
+            .trim();
+          const normalizedLeft = normalize(left);
+          const normalizedRight = normalize(right);
+          if (normalizedLeft === normalizedRight) {
+            return 1;
+          }
+          if (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft)) {
+            return 0.8;
+          }
+          if (normalizedLeft.startsWith('manchester') && normalizedRight.startsWith('manchester')) {
+            return 0.6;
+          }
+          return 0;
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'Newcastle United',
+      away_team: 'Manchester City',
+      match_date: '2025-11-22T17:30:00.000Z'
+    }, [
+      {
+        hash: 'false-positive',
+        url: 'oddsportal://false-positive',
+        homeTeam: 'Newcastle Utd',
+        awayTeam: 'Manchester Utd',
+        matchDate: '2025-11-22T17:30:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应返回最佳候选以便记录证据');
+    assert.ok(best.selectedAverageScore >= 0.79, `期望平均分仍暴露“像”，实际 ${best.selectedAverageScore}`);
+    assert.ok(best.selectedMinScore < 0.7, `期望弱侧队名分数被识别，实际 ${best.selectedMinScore}`);
+    assert.ok(best.confidence < 0.75, `期望候选被压到阈值下方，实际 ${best.confidence}`);
+  });
+
   it('应对青年队与成年队身份冲突执行一票否决', () => {
     const evaluator = new ReconMatchEvaluator({
       parser: {

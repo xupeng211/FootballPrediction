@@ -475,6 +475,105 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     assert.ok(outcome.evidence.match_confidence < 1);
   });
 
+  it('RECON_MISMATCH 重试时应允许双方队名高相似且开球在 2 小时内的候选直接转正', async () => {
+    const engine = new ReconEngine({
+      parser: {
+        calculateSimilarity(left, right) {
+          const normalize = (value) => String(value || '').toLowerCase().replace(/[^a-z]+/g, ' ').trim();
+          const normalizedLeft = normalize(left);
+          const normalizedRight = normalize(right);
+          if (normalizedLeft === normalizedRight) {
+            return 1;
+          }
+          if (normalizedLeft.includes(normalizedRight) || normalizedRight.includes(normalizedLeft)) {
+            return 0.7;
+          }
+          return 0;
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const outcome = await engine._reconcilePendingMatch(
+      {
+        match_id: '47_20252026_retry',
+        pipeline_status: 'RECON_MISMATCH',
+        home_team: 'Inter Miami CF',
+        away_team: 'New York City FC',
+        match_date: '2026-03-22T17:00:00.000Z'
+      },
+      [{
+        hash: 'retry-pass',
+        url: 'https://www.oddsportal.com/football/usa/mls/inter-miami-new-york-city-retry-pass/',
+        homeTeam: 'Inter Miami',
+        awayTeam: 'New York City',
+        matchDate: '2026-03-22T18:30:00.000Z'
+      }],
+      {
+        dbSeason: '2025/2026',
+        league: { id: 130, name: 'MLS' }
+      },
+      0.75,
+      null
+    );
+
+    assert.strictEqual(outcome.status, 'linked');
+    assert.strictEqual(outcome.mapping.match_id, '47_20252026_retry');
+    assert.strictEqual(outcome.mapping.oddsportal_hash, 'retry-pass');
+    assert.ok(outcome.mapping.match_confidence < 0.75, '应通过 fuzzy retry 而非全局阈值直通');
+  });
+
+  it('RECON_MISMATCH 重试不得放过单边队名相似的错误候选', async () => {
+    const engine = new ReconEngine({
+      parser: {
+        calculateSimilarity(left, right) {
+          const normalize = (value) => String(value || '')
+            .toLowerCase()
+            .replace(/\butd\b/g, 'united')
+            .replace(/[^a-z]+/g, ' ')
+            .trim();
+          const normalizedLeft = normalize(left);
+          const normalizedRight = normalize(right);
+          if (normalizedLeft === normalizedRight) {
+            return 1;
+          }
+          if (normalizedLeft.startsWith('manchester') && normalizedRight.startsWith('manchester')) {
+            return 0.6;
+          }
+          return 0;
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const outcome = await engine._reconcilePendingMatch(
+      {
+        match_id: '47_20252026_retry_fail',
+        pipeline_status: 'RECON_MISMATCH',
+        home_team: 'Newcastle United',
+        away_team: 'Manchester City',
+        match_date: '2025-11-22T17:30:00.000Z'
+      },
+      [{
+        hash: 'retry-blocked',
+        url: 'https://www.oddsportal.com/football/england/premier-league/newcastle-manchester-utd-retry-blocked/',
+        homeTeam: 'Newcastle Utd',
+        awayTeam: 'Manchester Utd',
+        matchDate: '2025-11-22T17:30:00.000Z'
+      }],
+      {
+        dbSeason: '2025/2026',
+        league: { id: 47, name: 'Premier League' }
+      },
+      0.75,
+      null
+    );
+
+    assert.strictEqual(outcome.status, 'mismatch');
+    assert.ok(outcome.evidence, '应保留证据');
+    assert.ok(outcome.evidence.match_confidence < 0.75);
+  });
+
   it('批量持久化被 Repository 跳过时 linked 统计必须按实际 applied 结果计算', async () => {
     const pendingMatches = createPendingMatches(1, 'Brasileirão', '2025/2026').map((match) => ({
       ...match,
