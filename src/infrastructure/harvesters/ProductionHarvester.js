@@ -439,7 +439,7 @@ class ProductionHarvester extends AbstractHarvester {
     _resolveBulkConcurrency(value) {
         const parsed = Number.parseInt(value, 10);
         const fallback = Number.isFinite(parsed) ? parsed : 10;
-        return Math.min(12, Math.max(8, fallback));
+        return Math.min(15, Math.max(8, fallback));
     }
 
     _resolveProgressInterval(value) {

@@ -15,21 +15,23 @@ class ReconSessionManager {
     this.defaultDomain = String(options.defaultDomain || DEFAULT_DOMAIN);
     this.defaultSourceUrl = String(options.defaultSourceUrl || DEFAULT_SOURCE_URL);
     this.excludeNames = Array.isArray(options.excludeNames) ? [...options.excludeNames] : [...DEFAULT_EXCLUDE_NAMES];
+    this.runtimeSnapshot = null;
   }
 
   load(options = {}) {
     const resolvedSessionPath = this._resolveSessionPath();
     const excludeNames = this._normalizeNames(options.excludeNames ?? this.excludeNames);
     const includeNames = this._normalizeNames(options.includeNames ?? []);
+    const mergeRuntimeSnapshot = (snapshot) => this._mergeRuntimeSnapshot(snapshot, { excludeNames, includeNames });
     if (!resolvedSessionPath) {
-      return {
+      return mergeRuntimeSnapshot({
         cookies: [],
         userAgent: '',
         extraHTTPHeaders: {},
         sourceFormat: 'disabled',
         excludeNames,
         includeNames
-      };
+      });
     }
 
     let raw = '';
@@ -41,34 +43,61 @@ class ReconSessionManager {
         sessionPath: this.sessionPath,
         error: error.message
       });
-      return {
+      return mergeRuntimeSnapshot({
         cookies: [],
         userAgent: '',
         extraHTTPHeaders: {},
         sourceFormat: 'unavailable',
         excludeNames,
         includeNames
-      };
+      });
     }
 
     const trimmed = String(raw || '').trim();
     if (!trimmed) {
-      return {
+      return mergeRuntimeSnapshot({
         cookies: [],
         userAgent: '',
         extraHTTPHeaders: {},
         sourceFormat: 'empty',
         excludeNames,
         includeNames
-      };
+      });
     }
 
     const jsonPayload = this._tryParseJson(trimmed);
     if (jsonPayload !== null) {
-      return this._parseJsonPayload(jsonPayload, { excludeNames, includeNames });
+      return mergeRuntimeSnapshot(this._parseJsonPayload(jsonPayload, { excludeNames, includeNames }));
     }
 
-    return this._parseHeaderPayload(trimmed, { excludeNames, includeNames });
+    return mergeRuntimeSnapshot(this._parseHeaderPayload(trimmed, { excludeNames, includeNames }));
+  }
+
+  setRuntimeSnapshot(snapshot = {}) {
+    const normalized = this._normalizeRuntimeSnapshot(snapshot);
+    if (!normalized) {
+      return {
+        applied: false,
+        cookies: 0,
+        sourceFormat: 'runtime_empty'
+      };
+    }
+
+    this.runtimeSnapshot = normalized;
+    this.logger.info('recon_runtime_session_snapshot_updated', {
+      traceId: this.traceId,
+      cookies: normalized.cookies.length,
+      hasUserAgent: Boolean(normalized.userAgent)
+    });
+    return {
+      applied: true,
+      cookies: normalized.cookies.length,
+      sourceFormat: normalized.sourceFormat
+    };
+  }
+
+  clearRuntimeSnapshot() {
+    this.runtimeSnapshot = null;
   }
 
   _resolveSessionPath() {
@@ -289,6 +318,95 @@ class ReconSessionManager {
     } catch {
       return '';
     }
+  }
+
+  _normalizeRuntimeSnapshot(snapshot = {}) {
+    if (!snapshot || typeof snapshot !== 'object') {
+      return null;
+    }
+
+    const cookies = (Array.isArray(snapshot.cookies) ? snapshot.cookies : [])
+      .map((cookie) => this._normalizeJsonCookie(cookie))
+      .filter(Boolean);
+    const userAgent = typeof snapshot.userAgent === 'string' && snapshot.userAgent.trim()
+      ? snapshot.userAgent.trim()
+      : '';
+    const extraHTTPHeaders = {};
+    if (userAgent) {
+      extraHTTPHeaders['user-agent'] = userAgent;
+    }
+
+    const acceptLanguage = typeof snapshot.extraHTTPHeaders?.['accept-language'] === 'string'
+      ? snapshot.extraHTTPHeaders['accept-language'].trim()
+      : '';
+    if (acceptLanguage) {
+      extraHTTPHeaders['accept-language'] = acceptLanguage;
+    }
+
+    if (cookies.length === 0 && !userAgent && Object.keys(extraHTTPHeaders).length === 0) {
+      return null;
+    }
+
+    return {
+      cookies,
+      userAgent,
+      extraHTTPHeaders,
+      sourceFormat: 'runtime'
+    };
+  }
+
+  _mergeRuntimeSnapshot(snapshot, filters = {}) {
+    const runtimeSnapshot = this._normalizeRuntimeSnapshot(this.runtimeSnapshot);
+    if (!runtimeSnapshot) {
+      return snapshot;
+    }
+
+    const includeNames = this._normalizeNames(filters.includeNames);
+    const excludeNames = this._normalizeNames(filters.excludeNames);
+    const runtimeCookies = runtimeSnapshot.cookies
+      .filter((cookie) => this._shouldKeepCookie(cookie?.name, includeNames, excludeNames));
+    const mergedCookies = this._mergeCookies(snapshot?.cookies, runtimeCookies);
+    const userAgent = runtimeSnapshot.userAgent || snapshot?.userAgent || '';
+    const extraHTTPHeaders = {
+      ...(snapshot?.extraHTTPHeaders || {}),
+      ...(runtimeSnapshot.extraHTTPHeaders || {})
+    };
+
+    return {
+      ...(snapshot || {}),
+      cookies: mergedCookies,
+      userAgent,
+      extraHTTPHeaders,
+      sourceFormat: this._mergeSourceFormats(snapshot?.sourceFormat, runtimeSnapshot.sourceFormat),
+      excludeNames,
+      includeNames
+    };
+  }
+
+  _mergeCookies(baseCookies = [], runtimeCookies = []) {
+    const merged = new Map();
+    const append = (cookies) => {
+      for (const cookie of Array.isArray(cookies) ? cookies : []) {
+        const name = String(cookie?.name || '').trim();
+        if (!name) {
+          continue;
+        }
+        const domain = String(cookie?.domain || this.defaultDomain).trim();
+        const path = String(cookie?.path || '/').trim() || '/';
+        merged.set(`${name}|${domain}|${path}`, cookie);
+      }
+    };
+
+    append(baseCookies);
+    append(runtimeCookies);
+    return [...merged.values()];
+  }
+
+  _mergeSourceFormats(primary = '', secondary = '') {
+    const parts = [primary, secondary]
+      .map((value) => String(value || '').trim())
+      .filter(Boolean);
+    return parts.length > 0 ? [...new Set(parts)].join('+') : 'runtime';
   }
 }
 

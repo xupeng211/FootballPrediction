@@ -142,3 +142,69 @@ test('TotalWarPipeline.close 在存在 activeChild 时必须触发终止信号',
   assert.equal(stateSaved, 1);
   assert.equal(lockReleased, 1);
 });
+
+test('TotalWarPipeline.retry-failed-only 模式应优先推进 harvest，并跳过 discovery', () => {
+  const pipeline = new TotalWarPipeline(parseArgs(['--season', '2025/2026', '--once', '--retry-failed-only']));
+  const metrics = {
+    pendingCount: 12,
+    harvestedCount: 200,
+    mismatchCount: 50,
+    failedCount: 0,
+    linkedCount: 0,
+    rawCount: 0,
+    rawDeltaSinceRecon: 0
+  };
+
+  assert.equal(pipeline.decideNextTask(metrics), 'harvest');
+});
+
+test('TotalWarPipeline.parseArgs 应支持 --concurrency 作为 Harvest/Recon 并发别名', () => {
+  const options = parseArgs(['--season', '2025-2026', '--concurrency', '15']);
+
+  assert.equal(options.harvestConcurrency, 15);
+  assert.equal(options.reconConcurrency, 15);
+  assert.equal(options.discoveryConcurrency, 5);
+});
+
+test('TotalWarPipeline.runManagedTask 在 Recon LEAGUE_TIMEOUT 时应标记 deferred', async () => {
+  const warnLogs = [];
+  const pipeline = new TotalWarPipeline(parseArgs([
+    '--season', '2025/2026',
+    '--once',
+    '--recon-defer-cooldown-ms', '20'
+  ]), {
+    logger: {
+      info() {},
+      warn(event, payload) {
+        warnLogs.push({ event, payload });
+      },
+      error() {}
+    }
+  });
+
+  pipeline.stateStore = {
+    save() {}
+  };
+  pipeline.runChild = async () => {
+    pipeline.lastChildTrace = {
+      task: 'recon',
+      lines: ['{"error":"LEAGUE_TIMEOUT"}']
+    };
+    return 1;
+  };
+
+  await pipeline.runManagedTask('recon', {
+    pendingCount: 0,
+    harvestedCount: 20,
+    mismatchCount: 5,
+    failedCount: 0,
+    linkedCount: 0,
+    rawCount: 100,
+    rawDeltaSinceRecon: 10
+  });
+
+  assert.equal(pipeline.state.tasks.recon.consecutiveFailures, 0);
+  assert.equal(pipeline.state.tasks.recon.lastDeferredReason, 'LEAGUE_TIMEOUT');
+  assert.ok(pipeline.state.tasks.recon.deferredUntil);
+  assert.ok(warnLogs.some((entry) => entry.event === 'task_deferred'));
+});

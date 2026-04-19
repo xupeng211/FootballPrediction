@@ -26,6 +26,12 @@ test('parseArgs 应兼容 --season 2025/2026', () => {
   assert.equal(result.dryRun, true);
 });
 
+test('parseArgs 应支持 --task-stage recon', () => {
+  const result = parseArgs(['--season', '2025/2026', '--task-stage', 'recon', '--once']);
+
+  assert.equal(result.taskStage, 'recon');
+});
+
 test('parseArgs 应能容忍原始 process.argv 前缀', () => {
   const result = parseArgs([
     '/usr/local/bin/node',
@@ -93,7 +99,9 @@ test('Recon 子任务应透传 reconLimit 以强制进入 Matrix 模式', () => 
     '--limit',
     '8000',
     '--concurrency',
-    '15'
+    '15',
+    '--skip-leagues',
+    'J1 League'
   ]);
 });
 
@@ -116,6 +124,52 @@ test('Recon 子任务应按需透传代理与 pure protocol 开关', () => {
     '--use-proxy',
     '--force-pure-protocol'
   ]);
+});
+
+test('task-stage=recon 时应跳过 pending 优先级并直接推进 recon', () => {
+  const pipeline = new TotalWarPipeline(parseArgs([
+    '--season',
+    '2025/2026',
+    '--once',
+    '--task-stage',
+    'recon',
+    '--retry-failed-only'
+  ]));
+
+  const task = pipeline.decideNextTask({
+    pendingCount: 2187,
+    harvestedCount: 2391,
+    mismatchCount: 293,
+    failedCount: 0,
+    linkedCount: 3712,
+    rawCount: 4005,
+    rawDeltaSinceRecon: 0
+  });
+
+  assert.equal(task, 'recon');
+});
+
+test('task-stage=harvest 时应禁止 recon 抢占调度', () => {
+  const pipeline = new TotalWarPipeline(parseArgs([
+    '--season',
+    '2025/2026',
+    '--once',
+    '--task-stage',
+    'harvest',
+    '--retry-failed-only'
+  ]));
+
+  const task = pipeline.decideNextTask({
+    pendingCount: 15,
+    harvestedCount: 2391,
+    mismatchCount: 293,
+    failedCount: 0,
+    linkedCount: 3712,
+    rawCount: 4005,
+    rawDeltaSinceRecon: 0
+  });
+
+  assert.equal(task, 'harvest');
 });
 
 test('Discovery 子任务应显式透传安全并发，避免依赖脚本默认值', () => {

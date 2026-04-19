@@ -91,6 +91,39 @@ describe('ReconTaskPlannerSourceSelector', () => {
     ]);
   });
 
+  it('future-only pending 应从 results source 中剔除 current_results 与 historical_results', () => {
+    const context = createContext({
+      getResultsUrlStrategy() {
+        return 'seasonless';
+      },
+      getSeasonlessCurrentYearBasis() {
+        return 'end';
+      },
+      buildCurrentSeasonSourceUrls() {
+        return ['oddsportal://current-results'];
+      },
+      buildHistoricalSeasonSourceUrls() {
+        return ['oddsportal://historical-results'];
+      }
+    });
+
+    const sources = context.buildCandidateSources({
+      league: { id: 121, name: 'Primera División', seasonType: 'single_year' },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      pendingMatches: [{
+        match_id: '121_20252026_5086403',
+        match_date: '2099-04-19T23:00:00.000Z'
+      }]
+    });
+
+    assert.deepEqual(sources, []);
+    assert.equal(
+      context.__events.info.some(({ event }) => event === 'recon_future_match_results_sources_filtered'),
+      true
+    );
+  });
+
   it('selectCandidateSource 在 navigator 缺失时应直接抛错', async () => {
     const context = createContext({ navigator: null });
 
@@ -590,6 +623,63 @@ describe('ReconTaskPlannerSourceSelector', () => {
     assert.deepEqual(calls, ['oddsportal://results-primary']);
     assert.equal(result.source.url, 'oddsportal://results-primary');
     assert.equal(result.candidates.length, 0);
+  });
+
+  it('Matrix mode 下首个 current_results 为空时应继续尝试同赛季 fallback source', async () => {
+    const calls = [];
+    const context = createContext({
+      navigator: {
+        async fetchFullSeasonArchive(url) {
+          calls.push(url);
+          if (url === 'oddsportal://results-primary') {
+            return {
+              matches: [],
+              pagesScanned: 1,
+              totalCandidates: 0,
+              sourceState: 'SOURCE_EMPTY'
+            };
+          }
+
+          return {
+            matches: [{
+              match_id: '121_20252026_0001',
+              hash: `hash:${url}`,
+              url,
+              confidence: 1
+            }],
+            pagesScanned: 1,
+            totalCandidates: 1,
+            sourceState: 'SOURCE_READY'
+          };
+        }
+      },
+      buildCandidateSources() {
+        return [
+          { season: '2026', url: 'oddsportal://results-primary', mode: 'current_results' },
+          { season: '2026', url: 'oddsportal://results-fallback', mode: 'current_results_fallback' },
+          { season: '2026', url: 'oddsportal://fixtures-primary', mode: 'current_fixtures' }
+        ];
+      }
+    });
+
+    const result = await context.selectCandidateSource({
+      leagueId: 121,
+      league: { id: 121, name: 'Primera División' },
+      dbSeason: '2025/2026',
+      season: '2025-2026',
+      resultsUrl: 'oddsportal://root/results/'
+    }, [{
+      match_id: '121_20252026_0001'
+    }], 0.75, {
+      matrixModePruning: true
+    });
+
+    assert.deepEqual(calls, ['oddsportal://results-primary', 'oddsportal://results-fallback']);
+    assert.equal(result.source.url, 'oddsportal://results-fallback');
+    assert.equal(result.candidates.length, 1);
+    assert.ok(
+      context.__events.info.some(({ event }) => event === 'recon_candidate_source_matrix_empty_short_circuit_deferred')
+    );
   });
 
   it('Matrix mode 下命中 50% sample 即应停止后续 source 探测', async () => {

@@ -88,6 +88,22 @@ describe('ReconTaskPlanner', () => {
     assert.strictEqual(policy.effectiveConfidenceThreshold, 0.7);
   });
 
+  it('121 联赛应允许通过联赛级策略把阈值下调到 0.73', () => {
+    const planner = createPlanner({
+      confidenceThresholdOverrideByLeagueId: {
+        121: 0.73
+      }
+    });
+
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 121, league: { id: 121, name: 'Primera División' } },
+      [{ match_id: '121_20252026_0001', pipeline_status: 'harvested' }],
+      0.75
+    );
+
+    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.73);
+  });
+
   it('法国杯应允许通过联赛级策略强制启用 forceMultiMode', () => {
     const planner = createPlanner({
       forceMultiModeLeagueIds: [181]
@@ -555,12 +571,14 @@ describe('ReconTaskPlanner', () => {
   });
 
   it('年度制联赛应优先生成带年份与根路径回退的四门 source', () => {
-    const planner = createPlanner();
+    const planner = createPlanner({
+      annualLeagueIds: [999]
+    });
 
     const sources = planner.buildCandidateSources({
       league: {
-        id: 121,
-        name: 'Primera División',
+        id: 999,
+        name: 'Superliga',
         country: 'argentina',
         slug: 'primera-division',
         resultsUrlStrategy: 'seasonal'
@@ -568,7 +586,7 @@ describe('ReconTaskPlanner', () => {
       season: '2025-2026',
       dbSeason: '2025/2026',
       pendingMatches: [{
-        match_id: '121_20252026_0001',
+        match_id: '999_20252026_0001',
         match_date: '2026-02-11T00:00:00.000Z'
       }]
     });

@@ -26,6 +26,13 @@ const VALUE_SETTERS = new Map([
   }],
   ['--threshold', (result, value) => {
     result.threshold = parseFloat(value);
+  }],
+  ['--skip-leagues', (result, value) => {
+    const skipLeagues = String(value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    result.skipLeagues = [...new Set([...result.skipLeagues, ...skipLeagues])];
   }]
 ]);
 
@@ -90,7 +97,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     forceDomMode: false,
     forceJsonExtract: false,
     forcePureProtocol: false,
-    mismatchRetryOnly: false
+    mismatchRetryOnly: false,
+    skipLeagues: []
   };
 
   for (let index = 0; index < args.length; index++) {
@@ -133,6 +141,7 @@ function printUsage(output = console.log) {
     '  --force-json-extract         强制 JSON 提取模式',
     '  --force-pure-protocol        强制 pure protocol 模式',
     '  --mismatch-retry-only        仅重扫 RECON_MISMATCH',
+    '  --skip-leagues <A,B,...>     跳过指定联赛（按名称/代码/ID）',
     '  --current-season-only        仅处理当前赛季窗口',
     '  -h, --help                   显示帮助'
   ].forEach((line) => writer(line));

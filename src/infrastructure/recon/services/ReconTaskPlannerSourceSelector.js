@@ -3,6 +3,35 @@
 
 const DEFAULT_PROTOCOL_PAGE_SIZE = 50;
 const INCOMPLETE_SOURCE_ERROR_CODE = 'RECON_SOURCE_INCOMPLETE';
+const RESULTS_RESTRICTED_SOURCE_MODES = new Set([
+  'current_season',
+  'current_results',
+  'current_results_fallback',
+  'historical_results',
+  'results_archive',
+  'results_archive_fallback'
+]);
+
+function resolvePendingMatchTimestamp(match = null) {
+  const timestamp = new Date(match?.match_date || match?.matchDate || '').getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function isFuturePendingMatch(match = null, now = new Date()) {
+  const kickoffAt = resolvePendingMatchTimestamp(match);
+  return kickoffAt !== null && kickoffAt > now.getTime();
+}
+
+function filterResultsRestrictedSourcesForFutureOnlyPending(sources = [], pendingMatches = [], now = new Date()) {
+  const matches = Array.isArray(pendingMatches) ? pendingMatches : [];
+  if (matches.length === 0 || !matches.every((match) => isFuturePendingMatch(match, now))) {
+    return sources;
+  }
+
+  return (Array.isArray(sources) ? sources : []).filter((source) => (
+    !RESULTS_RESTRICTED_SOURCE_MODES.has(String(source?.mode || '').trim())
+  ));
+}
 
 function resolveMatrixModePruning(target, options = {}) {
   return options.matrixModePruning === true || target?.matrixModePruning === true;
@@ -66,6 +95,25 @@ function shouldUseTargetDrivenSingleMatch(matchLimit, orderedPending = [], sampl
     && orderedPending.length === 1
     && Array.isArray(sample)
     && sample.length === 1;
+}
+
+function shouldDeferMatrixEmptyShortCircuit(sources = [], sourceIndex = 0, source = {}) {
+  const currentSeason = String(source?.season || '').trim();
+  if (!currentSeason) {
+    return false;
+  }
+
+  return sources.slice(sourceIndex + 1).some((candidateSource) => {
+    if (!candidateSource || typeof candidateSource !== 'object') {
+      return false;
+    }
+
+    if (String(candidateSource.season || '').trim() !== currentSeason) {
+      return false;
+    }
+
+    return String(candidateSource.mode || '').trim().startsWith('current_');
+  });
 }
 
 function buildTargetDrivenSingleMatchSelection(context, sampleMatch, candidates, effectiveConfidenceThreshold) {
@@ -241,7 +289,22 @@ const reconTaskPlannerSourceSelector = {
       for (const source of this.buildAnnualCurrentSeasonSources(target.league, target.season || target.dbSeason)) {
         addSource(source);
       }
-      return sources;
+      const filteredSources = filterResultsRestrictedSourcesForFutureOnlyPending(
+        sources,
+        target?.pendingMatches,
+        new Date()
+      );
+      if (filteredSources.length !== sources.length) {
+        this.logger?.info?.('recon_future_match_results_sources_filtered', {
+          league: target?.league?.name || null,
+          dbSeason: target?.dbSeason || null,
+          pendingTotal: Array.isArray(target?.pendingMatches) ? target.pendingMatches.length : 0,
+          removedModes: sources
+            .filter((source) => !filteredSources.includes(source))
+            .map((source) => source?.mode)
+        });
+      }
+      return filteredSources;
     }
 
     if (strategy === 'seasonless') {
@@ -298,7 +361,22 @@ const reconTaskPlannerSourceSelector = {
         }
       }
 
-      return sources;
+      const filteredSources = filterResultsRestrictedSourcesForFutureOnlyPending(
+        sources,
+        target?.pendingMatches,
+        new Date()
+      );
+      if (filteredSources.length !== sources.length) {
+        this.logger?.info?.('recon_future_match_results_sources_filtered', {
+          league: target?.league?.name || null,
+          dbSeason: target?.dbSeason || null,
+          pendingTotal: Array.isArray(target?.pendingMatches) ? target.pendingMatches.length : 0,
+          removedModes: sources
+            .filter((source) => !filteredSources.includes(source))
+            .map((source) => source?.mode)
+        });
+      }
+      return filteredSources;
     }
 
     const seasonalSourceUrls = typeof this.buildSeasonalSourceUrls === 'function'
@@ -312,7 +390,22 @@ const reconTaskPlannerSourceSelector = {
         mode: index === 0 ? 'results_archive' : 'results_archive_fallback'
       });
     });
-    return sources;
+    const filteredSources = filterResultsRestrictedSourcesForFutureOnlyPending(
+      sources,
+      target?.pendingMatches,
+      new Date()
+    );
+    if (filteredSources.length !== sources.length) {
+      this.logger?.info?.('recon_future_match_results_sources_filtered', {
+        league: target?.league?.name || null,
+        dbSeason: target?.dbSeason || null,
+        pendingTotal: Array.isArray(target?.pendingMatches) ? target.pendingMatches.length : 0,
+        removedModes: sources
+          .filter((source) => !filteredSources.includes(source))
+          .map((source) => source?.mode)
+      });
+    }
+    return filteredSources;
   },
 
   async selectCandidateSource(target, pendingMatches, confidenceThreshold, options = {}) {
@@ -613,6 +706,25 @@ const reconTaskPlannerSourceSelector = {
         && sourceIndex === 0
         && evaluated.candidates.length === 0
       ) {
+        if (shouldDeferMatrixEmptyShortCircuit(sources, sourceIndex, source)) {
+          this.logger.info('recon_candidate_source_matrix_empty_short_circuit_deferred', {
+            league: target.league.name,
+            dbSeason: target.dbSeason,
+            sourceSeason: source.season,
+            sourceUrl: source.url,
+            sourceMode: source.mode,
+            sourceState: extractResult?.sourceState || 'SOURCE_EMPTY',
+            deferredSources: sources.slice(sourceIndex + 1)
+              .filter((candidateSource) => String(candidateSource?.season || '').trim() === String(source.season || '').trim())
+              .map((candidateSource) => ({
+                season: candidateSource.season,
+                url: candidateSource.url,
+                mode: candidateSource.mode
+              }))
+          });
+          continue;
+        }
+
         this.logger.info('recon_candidate_source_matrix_empty_short_circuit', {
           league: target.league.name,
           dbSeason: target.dbSeason,

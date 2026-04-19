@@ -148,7 +148,11 @@ const browserManager = {
 
     const browser = this.browser;
     const context = this.context;
+    const page = this.page;
     const userDataDir = this.userDataDir;
+    if (typeof this.refreshRuntimeSessionSnapshot === 'function') {
+      await this.refreshRuntimeSessionSnapshot(typeof page?.url === 'function' ? page.url() : '');
+    }
     this.browser = null;
     this.context = null;
     this.page = null;

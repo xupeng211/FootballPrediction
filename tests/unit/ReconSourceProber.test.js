@@ -4,6 +4,7 @@ const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { reconSourceProber } = require('../../src/infrastructure/recon/services/ReconSourceProber');
+const { Normalizer } = require('../../src/utils/Normalizer');
 
 function createLogger() {
   const events = {
@@ -150,7 +151,15 @@ function createProber(overrides = {}) {
       };
     },
     _buildFallbackEventSlug(homeTeam, awayTeam) {
-      return `${homeTeam || ''}-${awayTeam || ''}`.trim().toLowerCase();
+      const slugify = (value) => String(Normalizer.normalizeTeamName(value) || value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const homeSlug = slugify(homeTeam);
+      const awaySlug = slugify(awayTeam);
+      return homeSlug && awaySlug ? `${homeSlug}-${awaySlug}` : '';
     },
     _resolveTrustedOddsPortalBaseUrl() {
       return 'https://www.oddsportal.com';
@@ -485,7 +494,7 @@ describe('ReconSourceProber', () => {
     });
     const success = await successProber._probeSearchCandidateSource(
       { dbSeason: '2025/2026', league: { name: 'MLS' } },
-      [{ match_id: 'm1' }],
+      [{ match_id: 'm1', home_team: 'Alpha', away_team: 'Beta' }],
       0.75
     );
     assert.equal(success.extractResult.sourceState, 'SEARCH_SWEEP_READY');
@@ -735,6 +744,18 @@ describe('ReconSourceProber', () => {
     assert.equal(sparseResult.pagesScanned, 1);
     assert.equal(sparseResult.matches.length, 0);
     assert.equal(prober._buildSearchUrlForMatch({ home_team: '', away_team: '' }), '');
+  });
+
+  it('_buildSearchUrlForMatch 应使用标准化别名生成搜索 slug', () => {
+    const prober = createProber();
+
+    assert.equal(
+      prober._buildSearchUrlForMatch({
+        home_team: 'Ld Alajuelense',
+        away_team: 'Club Sport Herediano'
+      }),
+      'https://www.oddsportal.com/search/alajuelense-herediano/'
+    );
   });
 
   it('_selectCandidateSourceWithLocalFallback 在远端为空时应切换到本地字典', async () => {

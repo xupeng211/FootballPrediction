@@ -209,7 +209,7 @@ const reconLocalDictionaryService = {
 
     return {
       pendingTotal: pendingMatches.length,
-      linked: Number(persistResult?.linkedApplied || 0),
+      linked: Number(persistResult?.linkedStatusUpdated || 0),
       mismatched: Number(persistResult?.mismatchUpdated || 0),
       sourceSeason,
       sourceUrl,

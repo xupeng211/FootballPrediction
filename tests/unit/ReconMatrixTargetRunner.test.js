@@ -151,6 +151,44 @@ describe('ReconMatrixTargetRunner', () => {
     assert.ok(typeof state.limiter === 'function');
   });
 
+  it('_prepareReconTargetState 遇到 future pending 时应放开 fixtures/search fallback', async () => {
+    const runner = createRunner({
+      taskPlanner: {
+        async loadReconPendingMatches() {
+          return [
+            { match_id: 'm-future', pipeline_status: 'pending', match_date: '2099-04-19T23:00:00.000Z' }
+          ];
+        },
+        resolveReconPolicy() {
+          return {
+            effectiveConfidenceThreshold: 0.82,
+            allowMismatchRetry: true
+          };
+        },
+        formatSeasonForUrl(season) {
+          return `fmt:${season}`;
+        }
+      }
+    });
+
+    const state = await runner._prepareReconTargetState(
+      {
+        season: '2025/2026',
+        dbSeason: '2025/2026',
+        resultsUrl: 'results://mls',
+        league: { name: 'MLS' }
+      },
+      {
+        resultsOnlyMode: true,
+        disableSearchRoute: true
+      }
+    );
+
+    assert.equal(state.runtimeTarget.resultsOnlyMode, false);
+    assert.equal(state.runtimeTarget.disableSearchRoute, false);
+    assert.equal(state.runtimeTarget.allowFutureSlowRoutes, true);
+  });
+
   it('_prepareReconTargetState 在无待处理或 scopedPending 为空时应返回 null', async () => {
     const emptyRunner = createRunner({
       taskPlanner: {
@@ -311,6 +349,69 @@ describe('ReconMatrixTargetRunner', () => {
 
     assert.deepEqual(calls, ['finalize:2']);
     assert.equal(runner.__events.info[0].event, 'recon_results_only_finalize');
+  });
+
+  it('_processReconRoute 在 results 路径上应跳过 future pending，交由慢速 fallback 处理', async () => {
+    const captured = [];
+    const runner = createRunner({
+      async _processPendingMatchesWithShortCircuit(routeKind, routeSource, pendingMatches) {
+        captured.push({
+          routeKind,
+          routeSource,
+          pendingMatches: pendingMatches.map((match) => match.match_id)
+        });
+        return {
+          linked: 1,
+          mismatched: 0,
+          remainingPending: []
+        };
+      }
+    });
+
+    const routeState = {
+      runtimeTarget: {
+        dbSeason: '2025/2026',
+        league: { name: 'MLS' }
+      },
+      remainingRoutePending: [
+        { match_id: 'm-past', match_date: '2026-04-01T00:00:00.000Z' },
+        { match_id: 'm-future', match_date: '2099-04-19T23:00:00.000Z' }
+      ],
+      effectiveThreshold: 0.82,
+      limiter: () => {},
+      persistLimiter: () => {},
+      progress: { total: 2 },
+      routeMetadata: { reconRunId: 'recon-run-1' },
+      totalLinked: 0,
+      totalMismatched: 0,
+      totalCandidateCount: 0,
+      finalSourceSeason: null,
+      finalSourceUrl: null,
+      lastSourceState: 'SOURCE_EMPTY'
+    };
+
+    await runner._processReconRoute(routeState, 'results', {
+      source: { season: '2025/2026', url: 'results://mls', mode: 'current_results' },
+      extractResult: { sourceState: 'PURE_PROTOCOL' },
+      candidates: []
+    });
+
+    assert.deepEqual(captured[0].pendingMatches, ['m-past']);
+    assert.deepEqual(routeState.remainingRoutePending.map((match) => match.match_id), ['m-future']);
+  });
+
+  it('_shouldFinalizeAfterResults 在 future pending 存在时不应提前收口', () => {
+    const runner = createRunner();
+
+    assert.equal(runner._shouldFinalizeAfterResults({
+      remainingRoutePending: [{ match_id: 'm-future', match_date: '2099-04-19T23:00:00.000Z' }],
+      runtimeTarget: { matrixModePruning: true, allowFutureSlowRoutes: true },
+      resultsSource: {
+        candidates: [],
+        sampleLinked: 1
+      },
+      routeShortCircuitThreshold: 1
+    }), false);
   });
 
   it('_runPostResultsFallbackRoutes 在 results-only 模式遇到残缺 results source 时应抛错重试', async () => {

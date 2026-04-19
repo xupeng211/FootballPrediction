@@ -3,6 +3,67 @@
 
 const pLimit = require('p-limit');
 
+function resolvePendingMatchTimestamp(match = null) {
+  const timestamp = new Date(match?.match_date || match?.matchDate || '').getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function isFuturePendingMatch(match = null, now = new Date()) {
+  const kickoffAt = resolvePendingMatchTimestamp(match);
+  return kickoffAt !== null && kickoffAt > now.getTime();
+}
+
+function hasFuturePendingMatches(pendingMatches = [], now = new Date()) {
+  return (Array.isArray(pendingMatches) ? pendingMatches : [])
+    .some((match) => isFuturePendingMatch(match, now));
+}
+
+function shouldDeferFuturePendingFromResults(routeKind, routeSource = null) {
+  if (routeKind !== 'results' && routeKind !== 'results_terminal') {
+    return false;
+  }
+
+  const sourceMode = String(routeSource?.source?.mode || '').trim();
+  return sourceMode !== 'current_fixtures' && sourceMode !== 'current_fixtures_fallback';
+}
+
+function splitDeferredFuturePendingMatches(pendingMatches = [], routeKind, routeSource = null, now = new Date()) {
+  if (!shouldDeferFuturePendingFromResults(routeKind, routeSource)) {
+    return {
+      eligiblePending: Array.isArray(pendingMatches) ? [...pendingMatches] : [],
+      deferredPending: []
+    };
+  }
+
+  const eligiblePending = [];
+  const deferredPending = [];
+  for (const match of (Array.isArray(pendingMatches) ? pendingMatches : [])) {
+    if (isFuturePendingMatch(match, now)) {
+      deferredPending.push(match);
+      continue;
+    }
+    eligiblePending.push(match);
+  }
+
+  return { eligiblePending, deferredPending };
+}
+
+function mergeDeferredPendingMatches(originalPending = [], deferredPending = [], routeRemainingPending = []) {
+  const orderedIds = (Array.isArray(originalPending) ? originalPending : [])
+    .map((match) => String(match?.match_id || ''))
+    .filter(Boolean);
+  const byId = new Map(
+    [...(Array.isArray(deferredPending) ? deferredPending : []), ...(Array.isArray(routeRemainingPending) ? routeRemainingPending : [])]
+      .map((match) => [String(match?.match_id || ''), match])
+      .filter(([matchId]) => Boolean(matchId))
+  );
+
+  return orderedIds
+    .filter((matchId, index) => orderedIds.indexOf(matchId) === index)
+    .map((matchId) => byId.get(matchId))
+    .filter(Boolean);
+}
+
 function buildReconTargetState(target, runtimeTarget, scopedPending, effectiveThreshold, routeMetadata, progress, resultsSource) {
   return {
     target,
@@ -210,10 +271,14 @@ const reconMatrixTargetRunner = {
     const preparedResultsSource = targetDrivenSingleMatch
       ? this._buildTargetDrivenResultsSource(resultsSource, scopedPending, effectiveThreshold)
       : resultsSource;
+    const hasFuturePending = hasFuturePendingMatches(scopedPending);
 
     if (!Array.isArray(scopedPending) || scopedPending.length === 0) {
       return null;
     }
+    runtimeTarget.resultsOnlyMode = hasFuturePending ? false : resultsOnlyMode;
+    runtimeTarget.disableSearchRoute = hasFuturePending ? false : disableSearchRoute;
+    runtimeTarget.allowFutureSlowRoutes = hasFuturePending;
     if (!this._shouldAllowPrepareScopedPendingBudgetGrace(runtimeTarget, scopedPending, preparedResultsSource)) {
       this._assertLeagueBudget(runtimeTarget, null, 'prepare_scoped_pending');
     } else {
@@ -326,6 +391,13 @@ const reconMatrixTargetRunner = {
       return false;
     }
 
+    if (
+      routeState.runtimeTarget?.allowFutureSlowRoutes === true
+      && hasFuturePendingMatches(routeState.remainingRoutePending)
+    ) {
+      return false;
+    }
+
     if (this._isResultsSourceIncomplete(routeState)) {
       return false;
     }
@@ -392,7 +464,14 @@ const reconMatrixTargetRunner = {
   },
 
   async _runPostResultsFallbackRoutes(routeState) {
-    if (routeState.remainingRoutePending.length > 0 && routeState.runtimeTarget?.resultsOnlyMode === true) {
+    if (
+      routeState.remainingRoutePending.length > 0
+      && routeState.runtimeTarget?.resultsOnlyMode === true
+      && !(
+        routeState.runtimeTarget?.allowFutureSlowRoutes === true
+        && hasFuturePendingMatches(routeState.remainingRoutePending)
+      )
+    ) {
       if (this._isResultsSourceIncomplete(routeState)) {
         this.logger.warn('recon_results_only_incomplete_source_retry', {
           league: routeState.target?.league?.name || null,
@@ -416,6 +495,18 @@ const reconMatrixTargetRunner = {
       });
       await this._finalizeRemainingPending(routeState);
       return;
+    }
+
+    if (
+      routeState.remainingRoutePending.length > 0
+      && routeState.runtimeTarget?.allowFutureSlowRoutes === true
+      && hasFuturePendingMatches(routeState.remainingRoutePending)
+    ) {
+      this.logger.info('recon_results_only_bypassed_for_future_pending', {
+        league: routeState.target?.league?.name || null,
+        season: routeState.target?.dbSeason || null,
+        remainingPending: routeState.remainingRoutePending.length
+      });
     }
 
     if (routeState.remainingRoutePending.length > 0) {
@@ -468,20 +559,48 @@ const reconMatrixTargetRunner = {
   async _processReconRoute(routeState, routeKind, routeSource, routeOptions = {}) {
     const normalizedRouteSource = routeSource
       || this._buildEmptyRouteSource(routeKind, routeState.runtimeTarget, 'SOURCE_EMPTY');
-    const routeResult = await this._processPendingMatchesWithShortCircuit(
+    const { eligiblePending, deferredPending } = splitDeferredFuturePendingMatches(
+      routeState.remainingRoutePending,
       routeKind,
       normalizedRouteSource,
+      new Date()
+    );
+    let routeResult;
+
+    if (eligiblePending.length === 0 && deferredPending.length > 0) {
+      this.logger.info('recon_future_pending_deferred_from_results', {
+        league: routeState.runtimeTarget?.league?.name || null,
+        season: routeState.runtimeTarget?.dbSeason || null,
+        routeKind,
+        deferredPending: deferredPending.length
+      });
+      routeResult = {
+        linked: 0,
+        mismatched: 0,
+        remainingPending: []
+      };
+    } else {
+      routeResult = await this._processPendingMatchesWithShortCircuit(
+        routeKind,
+        normalizedRouteSource,
+        eligiblePending,
+        routeState.runtimeTarget,
+        {
+          confidenceThreshold: routeState.effectiveThreshold,
+          limiter: routeState.limiter,
+          persistLimiter: routeState.persistLimiter,
+          progress: routeState.progress,
+          metadata: routeState.routeMetadata,
+          finalPass: routeOptions.finalPass === true,
+          forceProcessWithoutCandidates: routeOptions.forceProcessWithoutCandidates === true
+        }
+      );
+    }
+
+    routeResult.remainingPending = mergeDeferredPendingMatches(
       routeState.remainingRoutePending,
-      routeState.runtimeTarget,
-      {
-        confidenceThreshold: routeState.effectiveThreshold,
-        limiter: routeState.limiter,
-        persistLimiter: routeState.persistLimiter,
-        progress: routeState.progress,
-        metadata: routeState.routeMetadata,
-        finalPass: routeOptions.finalPass === true,
-        forceProcessWithoutCandidates: routeOptions.forceProcessWithoutCandidates === true
-      }
+      deferredPending,
+      routeResult?.remainingPending
     );
 
     this._applyReconRouteResult(routeState, routeResult, normalizedRouteSource);

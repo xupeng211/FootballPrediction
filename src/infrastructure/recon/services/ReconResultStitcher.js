@@ -1,6 +1,7 @@
 /* eslint-disable complexity */
 'use strict';
 
+const { Normalizer } = require('../../../utils/Normalizer');
 const { getReconConfigSection } = require('./ReconServiceConfig');
 
 const ALLOWED_MAPPING_METHODS = new Set([
@@ -521,7 +522,7 @@ const reconResultStitcher = {
   },
 
   _buildFallbackEventSlug(homeTeam, awayTeam) {
-    const slugify = (value) => String(value || '')
+    const slugify = (value) => String(Normalizer.normalizeTeamName(value) || value || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()

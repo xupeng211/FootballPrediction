@@ -417,6 +417,7 @@ class FixtureRepository {
       SET pipeline_status = $2,
           updated_at = NOW()
       WHERE m.match_id = ANY($1::text[])
+        AND m.pipeline_status IS DISTINCT FROM $2
     `;
     const params = [matchIds, status];
     if (status === 'RECON_MISMATCH') {

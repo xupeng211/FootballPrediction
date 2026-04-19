@@ -46,11 +46,16 @@ TOTAL WAR PIPELINE - 24 小时自动编排器
   --loop-ms=N                主循环间隔，默认 60000
   --discovery-interval-ms=N  Discovery 间隔，默认 3600000
   --discovery-concurrency=N  Discovery 并发，默认 5
+  --concurrency=N            主任务并发别名，同时设置 Harvest/Recon 并发
   --harvest-concurrency=N    Harvest 并发，默认 10
   --harvest-limit=N          Harvest 单批上限，默认 500
   --recon-concurrency=N      Recon 并发，默认 5
   --recon-limit=N            Recon 单批上限，默认读取配置
   --recon-threshold=N        触发 Recon 的新增 raw 阈值，默认 50
+  --task-stage=STAGE         指定阶段: auto|discovery|harvest|recon，默认 auto
+  --skip-leagues=LIST        Recon 跳过联赛（逗号分隔，可重复）
+  --retry-failed-only        仅执行 pending/harvested/mismatch 收尾，不再触发 Discovery
+  --recon-defer-cooldown-ms  Recon 因 LEAGUE_TIMEOUT 延迟重试时长，默认 600000ms
   --use-proxy                Recon 子任务显式启用代理
   --force-pure-protocol      Recon 子任务强制 pure protocol
   --failure-limit=N          连续失败熔断阈值，默认 3
@@ -63,6 +68,40 @@ TOTAL WAR PIPELINE - 24 小时自动编排器
   node scripts/ops/total_war_pipeline.js --season 2025/2026
   node scripts/ops/total_war_pipeline.js --season 2025/2026 --once --dry-run
 `);
+}
+
+function parseCommaSeparatedList(value) {
+  if (!value) {
+    return [];
+  }
+
+  return String(value)
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
+
+function mergeLeagueLists(...lists) {
+  const merged = [];
+  for (const list of lists) {
+    for (const item of Array.isArray(list) ? list : []) {
+      const normalized = String(item || '').trim();
+      if (!normalized || merged.includes(normalized)) {
+        continue;
+      }
+      merged.push(normalized);
+    }
+  }
+  return merged;
+}
+
+function normalizeTaskStage(value) {
+  const normalized = String(value || 'auto').trim().toLowerCase();
+  const allowedStages = new Set(['auto', 'discovery', 'harvest', 'recon']);
+  if (allowedStages.has(normalized)) {
+    return normalized;
+  }
+  throw new Error(`不支持的 --task-stage: ${value}`);
 }
 
 function getDefaultReconThreshold() {
@@ -93,6 +132,21 @@ function getDefaultReconLimit() {
   }
 
   return getDefaultReconThreshold();
+}
+
+function getDefaultReconDeferCooldownMs() {
+  const config = readReconConfigFile();
+  const configCooldown = Number(config?.automation?.total_war?.recon_defer_cooldown_ms);
+  if (Number.isInteger(configCooldown) && configCooldown > 0) {
+    return configCooldown;
+  }
+
+  return 10 * 60 * 1000;
+}
+
+function getDefaultSkipLeagues() {
+  const config = readReconConfigFile();
+  return mergeLeagueLists(config?.automation?.total_war?.skip_list || []);
 }
 
 function readReconConfigFile() {
@@ -143,6 +197,10 @@ function parseArgs(argv = process.argv.slice(2)) {
     reconConcurrency: 5,
     reconLimit: getDefaultReconLimit(),
     reconThreshold: getDefaultReconThreshold(),
+    reconDeferCooldownMs: getDefaultReconDeferCooldownMs(),
+    taskStage: 'auto',
+    skipLeagues: getDefaultSkipLeagues(),
+    retryFailedOnly: false,
     useProxy: false,
     forcePureProtocol: false,
     maxRuntimeMs: parseInt(process.env.TOTAL_WAR_MAX_RUNTIME_MS || '0', 10) || 0,
@@ -167,6 +225,15 @@ function parseArgs(argv = process.argv.slice(2)) {
     return Number.isNaN(parsed) ? fallback : parsed;
   };
 
+  const setPrimaryConcurrency = (value) => {
+    const parsed = parseInt(String(value), 10);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      return;
+    }
+    options.harvestConcurrency = parsed;
+    options.reconConcurrency = parsed;
+  };
+
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--help' || arg === '-h') {
@@ -176,6 +243,8 @@ function parseArgs(argv = process.argv.slice(2)) {
       options.once = true;
     } else if (arg === '--dry-run') {
       options.dryRun = true;
+    } else if (arg === '--retry-failed-only') {
+      options.retryFailedOnly = true;
     } else if (arg.startsWith('--season=')) {
       options.seasonInput = arg.split('=')[1];
     } else if (arg === '--season') {
@@ -195,6 +264,11 @@ function parseArgs(argv = process.argv.slice(2)) {
       options.discoveryConcurrency = parseInt(arg.split('=')[1], 10) || options.discoveryConcurrency;
     } else if (arg === '--discovery-concurrency') {
       options.discoveryConcurrency = readNumericValue(index, '--discovery-concurrency', options.discoveryConcurrency);
+      index++;
+    } else if (arg.startsWith('--concurrency=')) {
+      setPrimaryConcurrency(arg.split('=')[1]);
+    } else if (arg === '--concurrency') {
+      setPrimaryConcurrency(readNextValue(index, '--concurrency'));
       index++;
     } else if (arg.startsWith('--harvest-concurrency=')) {
       options.harvestConcurrency = parseInt(arg.split('=')[1], 10) || options.harvestConcurrency;
@@ -220,6 +294,25 @@ function parseArgs(argv = process.argv.slice(2)) {
       options.reconThreshold = parseInt(arg.split('=')[1], 10) || options.reconThreshold;
     } else if (arg === '--recon-threshold') {
       options.reconThreshold = readNumericValue(index, '--recon-threshold', options.reconThreshold);
+      index++;
+    } else if (arg.startsWith('--task-stage=')) {
+      options.taskStage = normalizeTaskStage(arg.split('=')[1]);
+    } else if (arg === '--task-stage') {
+      options.taskStage = normalizeTaskStage(readNextValue(index, '--task-stage'));
+      index++;
+    } else if (arg.startsWith('--skip-leagues=')) {
+      options.skipLeagues = mergeLeagueLists(options.skipLeagues, parseCommaSeparatedList(arg.split('=')[1]));
+    } else if (arg === '--skip-leagues') {
+      options.skipLeagues = mergeLeagueLists(options.skipLeagues, parseCommaSeparatedList(readNextValue(index, '--skip-leagues')));
+      index++;
+    } else if (arg.startsWith('--recon-defer-cooldown-ms=')) {
+      options.reconDeferCooldownMs = parseInt(arg.split('=')[1], 10) || options.reconDeferCooldownMs;
+    } else if (arg === '--recon-defer-cooldown-ms') {
+      options.reconDeferCooldownMs = readNumericValue(
+        index,
+        '--recon-defer-cooldown-ms',
+        options.reconDeferCooldownMs
+      );
       index++;
     } else if (arg === '--use-proxy') {
       options.useProxy = true;
@@ -428,7 +521,10 @@ class TotalWarPipeline {
       consecutiveFailures: 0,
       lastFailureAt: null,
       lastSuccessAt: null,
-      cooldownUntil: null
+      cooldownUntil: null,
+      deferredUntil: null,
+      lastDeferredAt: null,
+      lastDeferredReason: null
     };
   }
 
@@ -462,6 +558,9 @@ class TotalWarPipeline {
     this.logger.info('pipeline_initialized', {
       dbSeason: this.options.dbSeason,
       reconSeason: this.options.reconSeason,
+      taskStage: this.options.taskStage,
+      retryFailedOnly: this.options.retryFailedOnly,
+      skipLeagues: this.options.skipLeagues,
       dryRun: this.options.dryRun,
       once: this.options.once
     });
@@ -522,15 +621,19 @@ class TotalWarPipeline {
     const candidates = [
       {
         name: 'discovery',
-        enabled: this._isDiscoveryDue()
-      },
-      {
-        name: 'recon',
-        enabled: this._isReconDue(metrics)
+        enabled: this._isTaskStageAllowed('discovery')
+          && !this.options.retryFailedOnly
+          && this._isDiscoveryDue()
       },
       {
         name: 'harvest',
-        enabled: metrics.pendingCount > 0
+        enabled: this._isTaskStageAllowed('harvest')
+          && metrics.pendingCount > 0
+      },
+      {
+        name: 'recon',
+        enabled: this._isTaskStageAllowed('recon')
+          && this._isReconDue(metrics)
       }
     ];
 
@@ -540,7 +643,7 @@ class TotalWarPipeline {
       }
 
       if (this._isTaskCoolingDown(candidate.name)) {
-        const cooldownUntil = this.state.tasks[candidate.name].cooldownUntil;
+        const cooldownUntil = this._resolveTaskBlockedUntil(this.state.tasks[candidate.name]);
         this.logger.warn('task_in_cooldown', {
           task: candidate.name,
           cooldownUntil
@@ -554,6 +657,11 @@ class TotalWarPipeline {
     return null;
   }
 
+  _isTaskStageAllowed(taskName) {
+    const taskStage = this.options.taskStage || 'auto';
+    return taskStage === 'auto' || taskStage === taskName;
+  }
+
   _isDiscoveryDue() {
     if (!this.state.lastDiscoveryAt) {
       return true;
@@ -562,8 +670,17 @@ class TotalWarPipeline {
   }
 
   _isReconDue(metrics) {
+    const hasReconBacklog = metrics.harvestedCount > 0 || metrics.mismatchCount > 0;
+    if (!hasReconBacklog) {
+      return false;
+    }
+
+    if (this.options.retryFailedOnly) {
+      return true;
+    }
+
     const rawDelta = Math.max(0, metrics.rawCount - (this.state.lastReconRawCount || 0));
-    if (metrics.pendingCount === 0 && metrics.harvestedCount > 0) {
+    if (metrics.pendingCount === 0) {
       return true;
     }
     return rawDelta >= this.options.reconThreshold;
@@ -571,14 +688,31 @@ class TotalWarPipeline {
 
   _isTaskCoolingDown(taskName) {
     const taskState = this.state.tasks[taskName];
-    if (!taskState?.cooldownUntil) {
+    const blockedUntil = this._resolveTaskBlockedUntil(taskState);
+    if (!blockedUntil) {
       return false;
     }
-    return Date.now() < new Date(taskState.cooldownUntil).getTime();
+    return Date.now() < new Date(blockedUntil).getTime();
+  }
+
+  _resolveTaskBlockedUntil(taskState) {
+    if (!taskState) {
+      return null;
+    }
+
+    const blockedAtList = [taskState.cooldownUntil, taskState.deferredUntil]
+      .filter(Boolean)
+      .map((value) => new Date(value).getTime())
+      .filter((value) => Number.isFinite(value));
+    if (blockedAtList.length === 0) {
+      return null;
+    }
+
+    return new Date(Math.max(...blockedAtList)).toISOString();
   }
 
   async runManagedTask(taskName, metrics) {
-    const taskConfig = this.buildTaskCommand(taskName);
+    const taskConfig = this.buildTaskCommand(taskName, metrics);
     this.logger.info('task_start', {
       task: taskName,
       command: taskConfig.command,
@@ -590,6 +724,14 @@ class TotalWarPipeline {
     if (exitCode === 0) {
       this.markTaskSuccess(taskName, metrics);
       this.logger.info('task_success', { task: taskName, exitCode });
+    } else if (taskName === 'recon' && this._shouldDeferReconAfterFailure()) {
+      this.markTaskDeferred(taskName, 'LEAGUE_TIMEOUT');
+      this.logger.warn('task_deferred', {
+        task: taskName,
+        reason: 'LEAGUE_TIMEOUT',
+        exitCode,
+        deferredUntil: this.state.tasks[taskName].deferredUntil
+      });
     } else {
       this.markTaskFailure(taskName);
       this.logger.warn('task_failure', {
@@ -602,7 +744,18 @@ class TotalWarPipeline {
     this.stateStore.save(this.state);
   }
 
-  buildTaskCommand(taskName) {
+  _shouldDeferReconAfterFailure() {
+    const lines = Array.isArray(this.lastChildTrace?.lines)
+      ? this.lastChildTrace.lines
+      : [];
+    if (lines.length === 0) {
+      return false;
+    }
+
+    return lines.some((line) => /LEAGUE_TIMEOUT|recon_league_timeout/i.test(String(line)));
+  }
+
+  buildTaskCommand(taskName, metrics = {}) {
     const command = process.execPath;
 
     if (taskName === 'discovery') {
@@ -645,6 +798,16 @@ class TotalWarPipeline {
         '--concurrency',
         String(this.options.reconConcurrency)
       ];
+      if (this.options.retryFailedOnly) {
+        const harvestedCount = Number(metrics.harvestedCount || 0);
+        const mismatchCount = Number(metrics.mismatchCount || 0);
+        if (harvestedCount === 0 && mismatchCount > 0) {
+          args.push('--mismatch-retry-only');
+        }
+      }
+      if (Array.isArray(this.options.skipLeagues) && this.options.skipLeagues.length > 0) {
+        args.push('--skip-leagues', this.options.skipLeagues.join(','));
+      }
       if (this.options.useProxy) {
         args.push('--use-proxy');
       }
@@ -689,6 +852,10 @@ class TotalWarPipeline {
 
   runChild(taskConfig) {
     return new Promise((resolve, reject) => {
+      this.lastChildTrace = {
+        task: taskConfig.task,
+        lines: []
+      };
       const spawnOptions = {
         cwd: ROOT_DIR,
         env: process.env,
@@ -710,6 +877,10 @@ class TotalWarPipeline {
           for (const line of String(chunk).split(/\r?\n/)) {
             if (!line.trim()) {
               continue;
+            }
+            this.lastChildTrace.lines.push(line);
+            if (this.lastChildTrace.lines.length > 200) {
+              this.lastChildTrace.lines.shift();
             }
             this.logger[level](`child_${taskConfig.task}`, { line });
           }
@@ -735,6 +906,9 @@ class TotalWarPipeline {
     taskState.consecutiveFailures = 0;
     taskState.lastSuccessAt = new Date().toISOString();
     taskState.cooldownUntil = null;
+    taskState.deferredUntil = null;
+    taskState.lastDeferredAt = null;
+    taskState.lastDeferredReason = null;
 
     if (taskName === 'discovery') {
       this.state.lastDiscoveryAt = taskState.lastSuccessAt;
@@ -761,11 +935,22 @@ class TotalWarPipeline {
     }
   }
 
+  markTaskDeferred(taskName, reason = 'DEFERRED') {
+    const taskState = this.state.tasks[taskName];
+    taskState.consecutiveFailures = 0;
+    taskState.lastDeferredAt = new Date().toISOString();
+    taskState.lastDeferredReason = reason;
+    taskState.deferredUntil = new Date(
+      Date.now() + Math.max(1, Number(this.options.reconDeferCooldownMs) || 0)
+    ).toISOString();
+  }
+
   async collectMetrics() {
     const countsQuery = `
       SELECT
         COUNT(*) FILTER (WHERE pipeline_status = 'pending') AS pending_count,
         COUNT(*) FILTER (WHERE pipeline_status = 'harvested') AS harvested_count,
+        COUNT(*) FILTER (WHERE pipeline_status = 'RECON_MISMATCH') AS mismatch_count,
         COUNT(*) FILTER (WHERE pipeline_status = 'failed') AS failed_count,
         COUNT(*) FILTER (WHERE pipeline_status = 'RECON_LINKED') AS linked_count
       FROM matches
@@ -791,6 +976,7 @@ class TotalWarPipeline {
     return {
       pendingCount: parseInt(counts.pending_count || 0, 10),
       harvestedCount: parseInt(counts.harvested_count || 0, 10),
+      mismatchCount: parseInt(counts.mismatch_count || 0, 10),
       failedCount: parseInt(counts.failed_count || 0, 10),
       linkedCount: parseInt(counts.linked_count || 0, 10),
       rawCount,

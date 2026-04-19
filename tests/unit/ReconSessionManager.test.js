@@ -281,3 +281,62 @@ test('ReconSessionManager 应解析 JSON 包装 payload 并在 header 无效时�
   assert.equal(headerResult.cookies[0].domain, '.fallback.test');
   assert.deepEqual(headerResult.extraHTTPHeaders, {});
 });
+
+test('ReconSessionManager 应合并运行期快照并优先使用最新 cookie/header', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-runtime-merge-'));
+  const sessionPath = path.join(tempDir, 'session.json');
+  fs.writeFileSync(sessionPath, JSON.stringify({
+    cookies: [
+      {
+        name: 'keep',
+        value: 'external',
+        domain: '.oddsportal.com',
+        path: '/'
+      },
+      {
+        name: 'external_only',
+        value: '1',
+        domain: '.oddsportal.com',
+        path: '/'
+      }
+    ],
+    userAgent: 'External-UA/1.0'
+  }), 'utf8');
+
+  const manager = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-runtime-merge',
+    sessionPath
+  });
+
+  manager.setRuntimeSnapshot({
+    cookies: [
+      {
+        name: 'keep',
+        value: 'runtime',
+        domain: '.oddsportal.com',
+        path: '/'
+      },
+      {
+        name: 'runtime_only',
+        value: '2',
+        domain: '.oddsportal.com',
+        path: '/'
+      }
+    ],
+    userAgent: 'Runtime-UA/2.0',
+    extraHTTPHeaders: {
+      'accept-language': 'en-US,en;q=0.9'
+    }
+  });
+
+  const result = manager.load();
+  const keepCookie = result.cookies.find((cookie) => cookie.name === 'keep');
+
+  assert.equal(result.sourceFormat, 'json+runtime');
+  assert.equal(result.userAgent, 'Runtime-UA/2.0');
+  assert.equal(result.extraHTTPHeaders['accept-language'], 'en-US,en;q=0.9');
+  assert.equal(keepCookie.value, 'runtime');
+  assert.ok(result.cookies.some((cookie) => cookie.name === 'external_only'));
+  assert.ok(result.cookies.some((cookie) => cookie.name === 'runtime_only'));
+});

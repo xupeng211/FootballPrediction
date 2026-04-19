@@ -14,12 +14,13 @@ const DEFAULT_PROTOCOL = 'http';
 const DEFAULT_TARGET_LATENCY_MS = 1500;
 const DEFAULT_SUCCESS_RATE = 0.95;
 const DEFAULT_HEARTBEAT_URL = 'https://httpbin.org/ip';
-const DEFAULT_FAILURE_COOLDOWN_MS = 60000;
-const DEFAULT_HTTP_503_COOLDOWN_MS = 90000;
+const DEFAULT_FAILURE_COOLDOWN_MS = 300000;
+const DEFAULT_HTTP_503_COOLDOWN_MS = 300000;
 const DEFAULT_FAILURE_THRESHOLD = 6;
 const DEFAULT_HTTP_503_OBSERVATION_THRESHOLD = 3;
 const DEFAULT_HEALTH_PROBE_MODE = 'tcp_authoritative';
 const DEFAULT_CRITICAL_ERROR_COOLDOWN_MS = 1800000;
+const DEFAULT_HEARTBEAT_FAILURE_COOLDOWN_MS = 300000;
 const DEFAULT_MIN_HEALTH_SCORE = 60;
 const DEFAULT_SUCCESS_HEALTH_REWARD = 4;
 const DEFAULT_FAILURE_HEALTH_PENALTY = 10;
@@ -137,32 +138,56 @@ class ProxyProvider extends EventEmitter {
   }
 
   _buildConfig(options = {}) {
-    const protocol = options.protocol || ProxyProvider.resolveProtocol();
-    const host = options.host || ProxyProvider.resolveHost();
+    const resolvedPoolConfig = resolveProxyPoolConfig();
+    const protocol = options.protocol || resolvedPoolConfig.protocol || ProxyProvider.resolveProtocol();
+    const host = options.host || resolvedPoolConfig.host || ProxyProvider.resolveHost();
     const ports = Array.isArray(options.ports) && options.ports.length > 0
       ? [...options.ports]
-      : ProxyProvider.resolvePorts();
-    const failureThreshold = positiveNumber(options.failureThreshold, DEFAULT_FAILURE_THRESHOLD);
+      : Array.isArray(resolvedPoolConfig.ports) && resolvedPoolConfig.ports.length > 0
+        ? [...resolvedPoolConfig.ports]
+        : ProxyProvider.resolvePorts();
+    const failureThreshold = positiveNumber(
+      options.failureThreshold,
+      positiveNumber(resolvedPoolConfig.failureThreshold, DEFAULT_FAILURE_THRESHOLD)
+    );
+    const http503ObservationThreshold = positiveNumber(
+      options.http503ObservationThreshold,
+      positiveNumber(
+        resolvedPoolConfig.http503ObservationThreshold,
+        Math.max(DEFAULT_HTTP_503_OBSERVATION_THRESHOLD, Math.ceil(failureThreshold / 2))
+      )
+    );
 
     return {
       protocol,
       host,
       ports,
-      defaultPort: Number(options.defaultPort) || resolveProxyPoolConfig().defaultPort || ports[0] || 0,
+      defaultPort: Number(options.defaultPort) || resolvedPoolConfig.defaultPort || ports[0] || 0,
       targetLatencyMs: Number(options.targetLatencyMs) || DEFAULT_TARGET_LATENCY_MS,
-      healthCheckIntervalMs: Number(options.healthCheckIntervalMs) || 30000,
+      healthCheckIntervalMs: Number(options.healthCheckIntervalMs)
+        || resolvedPoolConfig.healthCheckIntervalMs
+        || 30000,
       tcpTimeoutMs: Number(options.tcpTimeoutMs) || 1500,
       httpTimeoutMs: Number(options.httpTimeoutMs) || 4000,
       heartbeatUrl: String(options.heartbeatUrl || process.env.PROXY_HEARTBEAT_URL || DEFAULT_HEARTBEAT_URL),
       healthProbeMode: normalizeHealthProbeMode(
-        options.healthProbeMode || process.env.PROXY_HEALTH_PROBE_MODE
+        options.healthProbeMode || process.env.PROXY_HEALTH_PROBE_MODE || resolvedPoolConfig.healthProbeMode
       ),
-      rateLimitIsolationMs: Number(options.rateLimitIsolationMs) || 300000,
-      failureCooldownMs: positiveNumber(options.failureCooldownMs, DEFAULT_FAILURE_COOLDOWN_MS),
-      http503CooldownMs: positiveNumber(options.http503CooldownMs, DEFAULT_HTTP_503_COOLDOWN_MS),
+      rateLimitIsolationMs: positiveNumber(
+        options.rateLimitIsolationMs,
+        positiveNumber(resolvedPoolConfig.rateLimitIsolationMs, 300000)
+      ),
+      failureCooldownMs: positiveNumber(
+        options.failureCooldownMs,
+        positiveNumber(resolvedPoolConfig.failureCooldownMs, DEFAULT_FAILURE_COOLDOWN_MS)
+      ),
+      http503CooldownMs: positiveNumber(
+        options.http503CooldownMs,
+        positiveNumber(resolvedPoolConfig.http503CooldownMs, DEFAULT_HTTP_503_COOLDOWN_MS)
+      ),
       criticalErrorCooldownMs: positiveNumber(
         options.criticalErrorCooldownMs,
-        DEFAULT_CRITICAL_ERROR_COOLDOWN_MS
+        positiveNumber(resolvedPoolConfig.criticalErrorCooldownMs, DEFAULT_CRITICAL_ERROR_COOLDOWN_MS)
       ),
       transientContextCooldownMs: positiveNumber(
         options.transientContextCooldownMs,
@@ -176,10 +201,13 @@ class ProxyProvider extends EventEmitter {
         options.upstreamBlockMaxCooldownMs,
         DEFAULT_UPSTREAM_BLOCK_MAX_COOLDOWN_MS
       ),
-      heartbeatFailureCooldownMs: positiveNumber(options.heartbeatFailureCooldownMs, 5000),
+      heartbeatFailureCooldownMs: positiveNumber(
+        options.heartbeatFailureCooldownMs,
+        positiveNumber(resolvedPoolConfig.heartbeatFailureCooldownMs, DEFAULT_HEARTBEAT_FAILURE_COOLDOWN_MS)
+      ),
       failureThreshold,
       minHealthScore: clamp(
-        Number(options.minHealthScore) || DEFAULT_MIN_HEALTH_SCORE,
+        Number(options.minHealthScore) || resolvedPoolConfig.minHealthScore || DEFAULT_MIN_HEALTH_SCORE,
         1,
         100
       ),
@@ -188,10 +216,7 @@ class ProxyProvider extends EventEmitter {
         1,
         20
       ),
-      http503ObservationThreshold: positiveNumber(
-        options.http503ObservationThreshold,
-        Math.max(DEFAULT_HTTP_503_OBSERVATION_THRESHOLD, Math.ceil(failureThreshold / 2))
-      ),
+      http503ObservationThreshold,
       successEwmaAlpha: Number(options.successEwmaAlpha) || 0.25,
       latencyEwmaAlpha: Number(options.latencyEwmaAlpha) || 0.2,
       baseWeight: Number(options.baseWeight) || 1

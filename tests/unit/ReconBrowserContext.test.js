@@ -496,7 +496,7 @@ describe('ReconBrowserContext', () => {
       type: 'goto',
       url: 'https://example.com/recon',
       options: {
-        timeout: 60000,
+        timeout: browserContext.navigationTimeoutMs,
         waitUntil: 'domcontentloaded'
       }
     });
@@ -549,7 +549,7 @@ describe('ReconBrowserContext', () => {
       type: 'goto',
       url: 'https://www.oddsportal.com',
       options: {
-        timeout: 60000,
+        timeout: browserContext.navigationTimeoutMs,
         waitUntil: 'domcontentloaded'
       }
     });
@@ -558,10 +558,89 @@ describe('ReconBrowserContext', () => {
       type: 'goto',
       url: 'https://example.com/recon',
       options: {
-        timeout: 60000,
+        timeout: browserContext.navigationTimeoutMs,
         waitUntil: 'domcontentloaded'
       }
     });
+  });
+
+  it('navigate 成功后应刷新运行期会话快照，供后续 context 复用', async () => {
+    const snapshots = [];
+    const browserContext = new ReconBrowserContext({
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      traceId: 'trace-runtime-session',
+      chromium: { async launch() { throw new Error('not_used'); } },
+      navigationReadySelectors: ['main']
+    });
+
+    browserContext.sessionManager = {
+      load() {
+        return {
+          cookies: [],
+          userAgent: '',
+          extraHTTPHeaders: {},
+          sourceFormat: 'disabled'
+        };
+      },
+      setRuntimeSnapshot(snapshot) {
+        snapshots.push(snapshot);
+        return {
+          applied: true,
+          cookies: snapshot.cookies.length,
+          sourceFormat: 'runtime'
+        };
+      }
+    };
+    browserContext.context = {
+      async cookies() {
+        return [
+          {
+            name: 'runtime_cookie',
+            value: '1',
+            domain: '.oddsportal.com',
+            path: '/'
+          }
+        ];
+      }
+    };
+    browserContext.page = {
+      isClosed() {
+        return false;
+      },
+      url() {
+        return 'https://example.com/recon';
+      },
+      async goto() {
+        return {
+          status() {
+            return 200;
+          }
+        };
+      },
+      getByRole() {
+        return {
+          first() {
+            return {
+              async isVisible() {
+                return false;
+              }
+            };
+          }
+        };
+      },
+      async waitForSelector() {},
+      async waitForTimeout() {},
+      async evaluate() {
+        return '';
+      }
+    };
+
+    await browserContext.navigate('https://example.com/recon');
+
+    assert.strictEqual(snapshots.length, 1);
+    assert.strictEqual(snapshots[0].cookies[0].name, 'runtime_cookie');
+    assert.strictEqual(snapshots[0].userAgent, browserContext.userAgent);
+    assert.strictEqual(snapshots[0].extraHTTPHeaders['accept-language'], browserContext.acceptLanguage);
   });
 
   it('navigate 命中 503 Backend fetch failed 页面时应抛出显式 HTTP_503', async () => {
