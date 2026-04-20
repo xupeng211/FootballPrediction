@@ -4,6 +4,7 @@ const SPECIAL_URL_RULES_BY_LEAGUE_ID = new Map([
   [42, { seasonlessResults: true, rootPage: true }],
   [53, { seasonlessResults: true }],
   [57, { seasonlessResults: true }],
+  [121, { seasonlessCurrentOnly: true }],
   [77, { rootPage: true, allowFutureFixturesSweep: true }],
   [140, { canonicalResultsSlug: 'laliga2', canonicalSeasonalResults: true, seasonlessResults: true }],
   [181, { seasonlessResults: true, rootPage: true }],
@@ -232,6 +233,9 @@ const reconTaskPlannerUrlUtils = {
     if (specialRule?.seasonlessPrimary === true) {
       return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
     }
+    if (specialRule?.seasonlessCurrentOnly === true && this.isCurrentSeason(season)) {
+      return `${normalizedBaseUrl}/football/${country}/${slug}/results/`;
+    }
     if (this.isAnnualLeague(leagueConfig)) {
       return this.renderSeasonPathUrl(this.resultsPathTemplate, leagueConfig, season);
     }
@@ -351,15 +355,22 @@ const reconTaskPlannerUrlUtils = {
   buildAnnualCurrentSeasonSources(leagueConfig, season) {
     const annualSeason = this.formatSeasonForAnnualLeagueUrl(season);
     const specialRule = this.getSpecialUrlRule(leagueConfig);
+    const preferSeasonlessCurrent = specialRule?.seasonlessCurrentOnly === true && this.isCurrentSeason(season);
+    const currentResultsUrl = preferSeasonlessCurrent
+      ? this.buildSeasonlessResultsUrl(leagueConfig)
+      : this.buildResultsUrl(leagueConfig, annualSeason);
+    const currentResultsFallbackUrl = preferSeasonlessCurrent
+      ? this.renderSeasonPathUrl(this.resultsPathTemplate, leagueConfig, annualSeason)
+      : this.buildSeasonlessResultsUrl(leagueConfig);
     const sources = [
       {
         season: annualSeason,
-        url: this.buildResultsUrl(leagueConfig, annualSeason),
+        url: currentResultsUrl,
         mode: 'current_results'
       },
       {
         season: annualSeason,
-        url: this.buildSeasonlessResultsUrl(leagueConfig),
+        url: currentResultsFallbackUrl,
         mode: 'current_results_fallback'
       },
       ...(specialRule?.disableFixturesSweep === true

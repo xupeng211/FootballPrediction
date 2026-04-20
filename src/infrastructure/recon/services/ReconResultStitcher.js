@@ -1,6 +1,7 @@
 /* eslint-disable complexity */
 'use strict';
 
+const { Normalizer } = require('../../../utils/Normalizer');
 const { getReconConfigSection } = require('./ReconServiceConfig');
 
 const ALLOWED_MAPPING_METHODS = new Set([
@@ -55,8 +56,10 @@ function buildCandidateNormalizationPayload(candidate, l1Match, target, rawUrl, 
 
 const reconResultStitcher = {
   _resolveScopedPendingMatches(pendingMatches, matchLimit, candidates, confidenceThreshold, seasonMirror = null) {
-    const orderedPending = [...(Array.isArray(pendingMatches) ? pendingMatches : [])]
-      .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+    const orderedPending = typeof this.taskPlanner?.orderPendingMatchesForProcessing === 'function'
+      ? this.taskPlanner.orderPendingMatchesForProcessing(pendingMatches)
+      : [...(Array.isArray(pendingMatches) ? pendingMatches : [])]
+        .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
 
     if (!Number.isInteger(matchLimit) || matchLimit <= 0 || orderedPending.length <= matchLimit) {
       return orderedPending;
@@ -521,7 +524,7 @@ const reconResultStitcher = {
   },
 
   _buildFallbackEventSlug(homeTeam, awayTeam) {
-    const slugify = (value) => String(value || '')
+    const slugify = (value) => String(Normalizer.normalizeTeamName(value) || value || '')
       .normalize('NFD')
       .replace(/[\u0300-\u036f]/g, '')
       .toLowerCase()

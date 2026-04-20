@@ -80,6 +80,7 @@ function buildStatusUpdateStatement(matchId, status, options = {}) {
     SET pipeline_status = $2,
         updated_at = NOW()
     WHERE m.match_id = $1
+      AND m.pipeline_status IS DISTINCT FROM $2
   `;
   const params = [String(matchId), status];
 

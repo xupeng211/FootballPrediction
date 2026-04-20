@@ -119,6 +119,34 @@ class ReconMatchEvaluator {
         'dateWeight',
         'date_weight'
       ),
+      hardDateMismatchWindowMs: resolveNumericOption(
+        options,
+        runtimeConfig,
+        matchingConfig,
+        'hardDateMismatchWindowMs',
+        'hard_date_mismatch_window_ms'
+      ),
+      hardDateMismatchConfidenceCap: resolveNumericOption(
+        options,
+        runtimeConfig,
+        matchingConfig,
+        'hardDateMismatchConfidenceCap',
+        'hard_date_mismatch_confidence_cap'
+      ),
+      weakSideTeamSimilarityFloor: resolveNumericOption(
+        options,
+        runtimeConfig,
+        matchingConfig,
+        'weakSideTeamSimilarityFloor',
+        'mismatch_retry_team_similarity_floor'
+      ),
+      weakSideMaxTeamScoreGap: resolveNumericOption(
+        options,
+        runtimeConfig,
+        matchingConfig,
+        'weakSideMaxTeamScoreGap',
+        'mismatch_retry_max_team_score_gap'
+      ),
       teamBalanceWeight: resolveNumericOption(
         options,
         runtimeConfig,

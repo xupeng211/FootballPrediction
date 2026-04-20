@@ -129,8 +129,14 @@ describe('TITAN 体魄与续航测试 - 钢铁怪兽的 72 小时', { concurrenc
                 'viewport 必须匹配');
             assert.strictEqual(capturedConfig.userAgent, identity.stealth.userAgent,
                 'userAgent 必须匹配');
-            assert.deepStrictEqual(capturedConfig.extraHTTPHeaders, identity.stealth.extraHTTPHeaders,
-                'extraHTTPHeaders 必须匹配');
+            assert.strictEqual(capturedConfig.extraHTTPHeaders['accept-language'], 'en-US,en;q=0.9',
+                'accept-language 必须匹配');
+            assert.strictEqual(capturedConfig.extraHTTPHeaders['user-agent'], identity.stealth.userAgent,
+                'user-agent 必须匹配');
+            assert.strictEqual(capturedConfig.extraHTTPHeaders['sec-ch-ua'], '"Chromium";v="120", "Google Chrome";v="120", "Not-A.Brand";v="99"',
+                'sec-ch-ua 必须根据 UA 版本派生');
+            assert.strictEqual(capturedConfig.extraHTTPHeaders['sec-fetch-mode'], 'navigate',
+                'sec-fetch-mode 必须存在');
             assert.strictEqual(capturedConfig.deviceScaleFactor, identity.stealth.deviceScaleFactor,
                 'deviceScaleFactor 必须匹配');
             assert.strictEqual(capturedConfig.locale, identity.stealth.locale,
@@ -141,40 +147,25 @@ describe('TITAN 体魄与续航测试 - 钢铁怪兽的 72 小时', { concurrenc
                 'proxy 必须匹配');
         });
 
-        it('A4: warmupHomepage 必须执行 3-5 次随机滚动', async () => {
+        it('A4: warmupHomepage 默认应硬跳过首页访问', async () => {
             const factory = new BrowserFactory();
-            const wheels = [];
             let gotoCalled = false;
 
             // Mock page 对象
             const mockPage = {
-                goto: async (url, options) => {
+                goto: async () => {
                     gotoCalled = true;
-                    assert.strictEqual(url, 'https://www.fotmob.com/',
-                        '必须访问 FotMob 首页');
-                },
-                mouse: {
-                    wheel: async (x, y) => {
-                        wheels.push({ x, y });
-                    }
                 }
             };
 
-            // Mock _delay 避免实际等待
-            factory._delay = async () => {};
+            const result = await factory.warmupHomepage(mockPage);
 
-            await factory.warmupHomepage(mockPage);
-
-            assert.strictEqual(gotoCalled, true, 'goto 必须被调用');
-            assert.ok(wheels.length >= 3 && wheels.length <= 5,
-                `滚动次数 ${wheels.length} 应在 3-5 之间`);
-
-            // 验证滚动方向正确
-            for (const wheel of wheels) {
-                assert.strictEqual(wheel.x, 0, '水平滚动应为 0');
-                assert.ok(wheel.y >= 100 && wheel.y <= 300,
-                    `垂直滚动 ${wheel.y} 应在 100-300 之间`);
-            }
+            assert.strictEqual(gotoCalled, false, '默认应跳过首页预热');
+            assert.deepStrictEqual(result, {
+                skipped: true,
+                pageAttached: true,
+                hasConfig: false
+            });
         });
 
         it('A5: simulateHumanBehavior 必须执行随机鼠标移动', async () => {

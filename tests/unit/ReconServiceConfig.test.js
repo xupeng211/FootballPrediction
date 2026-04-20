@@ -41,6 +41,7 @@ test('Recon services 应默认从 recon_config.json 读取运行时参数，并�
   assert.equal(browserContext.homeWarmupEnabled, config.recon_runtime.network_monitor.home_warmup_enabled);
   assert.equal(networkMonitor.scriptEvalTimeoutMs, config.recon_runtime.network_monitor.script_eval_timeout_ms);
   assert.equal(networkMonitor.fetchTimeoutMs, config.recon_runtime.network_monitor.fetch_timeout_ms);
+  assert.equal(networkMonitor.decryptTimeoutMs, config.recon_runtime.network_monitor.decrypt_timeout_ms);
   assert.equal(domScraper.scrollAttempts, config.recon_runtime.dom_scraper.scroll_attempts);
   assert.equal(domScraper.postNavigationWaitMs, config.recon_runtime.dom_scraper.post_navigation_wait_ms);
   assert.equal(stateProber.timeoutMs, config.recon_runtime.state_prober.timeout_ms);

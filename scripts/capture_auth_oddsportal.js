@@ -126,13 +126,17 @@ async function main() {
       console.log(`${LOG_PREFIX} ✓ 页面加载完成`);
       
       // 等待几秒让用户看到页面
-      await new Promise(r => setTimeout(r, 3000));
-      
+      await new Promise((resolve) => {
+        setTimeout(resolve, 3000);
+      });
+
       // 尝试关闭可能的弹窗
       try {
         const closeBtn = await page.$('button[aria-label="Close"], .modal-close, .popup-close');
         if (closeBtn) await closeBtn.click();
-      } catch (e) {}
+      } catch (e) {
+        // 弹窗关闭失败时静默忽略
+      }
       
     } catch (navErr) {
       console.warn(`${LOG_PREFIX} 导航警告: ${navErr.message}`);
@@ -150,7 +154,9 @@ async function main() {
     console.log('\n验证登录状态...');
     const testUrl = 'https://www.oddsportal.com/football/england/premier-league/fulham-burnley-8EamNN8b/';
     await page.goto(testUrl, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await new Promise(r => setTimeout(r, 5000));
+    await new Promise((resolve) => {
+      setTimeout(resolve, 5000);
+    });
     
     const title = await page.title();
     console.log(`${LOG_PREFIX} 验证页面标题: ${title}`);

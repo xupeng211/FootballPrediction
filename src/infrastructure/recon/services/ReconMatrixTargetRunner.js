@@ -3,6 +3,90 @@
 
 const pLimit = require('p-limit');
 
+const RESULTS_SEARCH_SHORT_CIRCUIT_TIMEOUT_MS = 20000;
+const SEARCH_SHORT_CIRCUIT_LEAGUES = new Set([
+  'j1 league',
+  'brasileirao'
+]);
+
+function resolvePendingMatchTimestamp(match = null) {
+  const timestamp = new Date(match?.match_date || match?.matchDate || '').getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function isFuturePendingMatch(match = null, now = new Date()) {
+  const kickoffAt = resolvePendingMatchTimestamp(match);
+  return kickoffAt !== null && kickoffAt > now.getTime();
+}
+
+function hasFuturePendingMatches(pendingMatches = [], now = new Date()) {
+  return (Array.isArray(pendingMatches) ? pendingMatches : [])
+    .some((match) => isFuturePendingMatch(match, now));
+}
+
+function shouldDeferFuturePendingFromResults(routeKind, routeSource = null) {
+  if (routeKind !== 'results' && routeKind !== 'results_terminal') {
+    return false;
+  }
+
+  const sourceMode = String(routeSource?.source?.mode || '').trim();
+  return sourceMode !== 'current_fixtures' && sourceMode !== 'current_fixtures_fallback';
+}
+
+function splitDeferredFuturePendingMatches(pendingMatches = [], routeKind, routeSource = null, now = new Date()) {
+  if (!shouldDeferFuturePendingFromResults(routeKind, routeSource)) {
+    return {
+      eligiblePending: Array.isArray(pendingMatches) ? [...pendingMatches] : [],
+      deferredPending: []
+    };
+  }
+
+  const eligiblePending = [];
+  const deferredPending = [];
+  for (const match of (Array.isArray(pendingMatches) ? pendingMatches : [])) {
+    if (isFuturePendingMatch(match, now)) {
+      deferredPending.push(match);
+      continue;
+    }
+    eligiblePending.push(match);
+  }
+
+  return { eligiblePending, deferredPending };
+}
+
+function mergeDeferredPendingMatches(originalPending = [], deferredPending = [], routeRemainingPending = []) {
+  const orderedIds = (Array.isArray(originalPending) ? originalPending : [])
+    .map((match) => String(match?.match_id || ''))
+    .filter(Boolean);
+  const byId = new Map(
+    [...(Array.isArray(deferredPending) ? deferredPending : []), ...(Array.isArray(routeRemainingPending) ? routeRemainingPending : [])]
+      .map((match) => [String(match?.match_id || ''), match])
+      .filter(([matchId]) => Boolean(matchId))
+  );
+
+  return orderedIds
+    .filter((matchId, index) => orderedIds.indexOf(matchId) === index)
+    .map((matchId) => byId.get(matchId))
+    .filter(Boolean);
+}
+
+function normalizeLeagueName(value) {
+  return String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/gi, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function getRouteCandidateCount(routeSource = null) {
+  return Array.isArray(routeSource?.candidates) ? routeSource.candidates.length : 0;
+}
+
+function shouldPreferSearchShortCircuit(target = {}) {
+  return SEARCH_SHORT_CIRCUIT_LEAGUES.has(normalizeLeagueName(target?.league?.name));
+}
+
 function buildReconTargetState(target, runtimeTarget, scopedPending, effectiveThreshold, routeMetadata, progress, resultsSource) {
   return {
     target,
@@ -18,6 +102,7 @@ function buildReconTargetState(target, runtimeTarget, scopedPending, effectiveTh
     finalSourceSeason: null,
     finalSourceUrl: null,
     lastSourceState: resultsSource?.extractResult?.sourceState || 'SOURCE_EMPTY',
+    resultsProbeDurationMs: Number(resultsSource?.probeDurationMs || 0),
     routeSampleTarget: 0,
     routeShortCircuitThreshold: 0
   };
@@ -160,12 +245,17 @@ const reconMatrixTargetRunner = {
       return null;
     }
 
-    const orderedPending = [...pendingMatches].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+    const orderedPending = typeof this.taskPlanner?.orderPendingMatchesForProcessing === 'function'
+      ? this.taskPlanner.orderPendingMatchesForProcessing(pendingMatches)
+      : [...pendingMatches].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
     const reconPolicy = this.taskPlanner.resolveReconPolicy(target, orderedPending, confidenceThreshold);
-    const effectiveThreshold = Math.max(
-      Number(reconPolicy.effectiveConfidenceThreshold || confidenceThreshold || 0),
-      Number(this.minimumConfidenceThreshold || 0)
-    );
+    const resolvedPolicyThreshold = Number(reconPolicy.effectiveConfidenceThreshold);
+    const effectiveThreshold = Number.isFinite(resolvedPolicyThreshold)
+      ? resolvedPolicyThreshold
+      : Math.max(
+        Number(confidenceThreshold || 0),
+        Number(this.minimumConfidenceThreshold || 0)
+      );
     const runtimeTarget = {
       ...target,
       forceDomMode,
@@ -185,12 +275,14 @@ const reconMatrixTargetRunner = {
     runtimeTarget.leagueDictionaryEntries = await this._primeLeagueDictionary(runtimeTarget);
 
     this._assertLeagueBudget(runtimeTarget, null, 'prepare_results_source');
+    const resultsProbeStartedAt = Date.now();
     const resultsSource = await this._probeResultsCandidateSource(
       runtimeTarget,
       orderedPending,
       effectiveThreshold,
       navigator
     );
+    const resultsProbeDurationMs = Math.max(0, Date.now() - resultsProbeStartedAt);
     const resultsCandidates = Array.isArray(resultsSource?.candidates) ? resultsSource.candidates : [];
     const targetDrivenSingleMatch = this._shouldUseTargetDrivenSingleMatch(
       runtimeTarget,
@@ -210,10 +302,20 @@ const reconMatrixTargetRunner = {
     const preparedResultsSource = targetDrivenSingleMatch
       ? this._buildTargetDrivenResultsSource(resultsSource, scopedPending, effectiveThreshold)
       : resultsSource;
+    const preparedResultsSourceWithMetrics = preparedResultsSource
+      ? {
+        ...preparedResultsSource,
+        probeDurationMs: Number(preparedResultsSource?.probeDurationMs || resultsProbeDurationMs)
+      }
+      : preparedResultsSource;
+    const hasFuturePending = hasFuturePendingMatches(scopedPending);
 
     if (!Array.isArray(scopedPending) || scopedPending.length === 0) {
       return null;
     }
+    runtimeTarget.resultsOnlyMode = hasFuturePending ? false : resultsOnlyMode;
+    runtimeTarget.disableSearchRoute = hasFuturePending ? false : disableSearchRoute;
+    runtimeTarget.allowFutureSlowRoutes = hasFuturePending;
     if (!this._shouldAllowPrepareScopedPendingBudgetGrace(runtimeTarget, scopedPending, preparedResultsSource)) {
       this._assertLeagueBudget(runtimeTarget, null, 'prepare_scoped_pending');
     } else {
@@ -253,7 +355,7 @@ const reconMatrixTargetRunner = {
         effectiveThreshold,
         routeMetadata,
         progress,
-        preparedResultsSource
+        preparedResultsSourceWithMetrics
       ),
       routeSampleTarget: typeof this._buildRouteProbeSample === 'function'
         ? this._buildRouteProbeSample(scopedPending).length
@@ -326,6 +428,13 @@ const reconMatrixTargetRunner = {
       return false;
     }
 
+    if (
+      routeState.runtimeTarget?.allowFutureSlowRoutes === true
+      && hasFuturePendingMatches(routeState.remainingRoutePending)
+    ) {
+      return false;
+    }
+
     if (this._isResultsSourceIncomplete(routeState)) {
       return false;
     }
@@ -334,7 +443,7 @@ const reconMatrixTargetRunner = {
       ? routeState.resultsSource.candidates.length
       : 0;
     if (resultsCandidateCount === 0) {
-      return true;
+      return !this._shouldShortCircuitResultsToSearch(routeState);
     }
 
     return routeState.routeShortCircuitThreshold > 0
@@ -391,8 +500,44 @@ const reconMatrixTargetRunner = {
     return false;
   },
 
+  _shouldShortCircuitResultsToSearch(routeState = null) {
+    if (!routeState || routeState.runtimeTarget?.disableSearchRoute === true) {
+      return false;
+    }
+
+    if (!shouldPreferSearchShortCircuit(routeState.runtimeTarget || routeState.target || {})) {
+      return false;
+    }
+
+    if (!Array.isArray(routeState.remainingRoutePending) || routeState.remainingRoutePending.length === 0) {
+      return false;
+    }
+
+    if (getRouteCandidateCount(routeState.resultsSource) > 0) {
+      return false;
+    }
+
+    if (routeState.resultsSource?.forceSearchShortCircuit === true) {
+      return true;
+    }
+
+    const probeDurationMs = Number(
+      routeState.resultsProbeDurationMs
+      || routeState.resultsSource?.probeDurationMs
+      || 0
+    );
+    return probeDurationMs >= RESULTS_SEARCH_SHORT_CIRCUIT_TIMEOUT_MS;
+  },
+
   async _runPostResultsFallbackRoutes(routeState) {
-    if (routeState.remainingRoutePending.length > 0 && routeState.runtimeTarget?.resultsOnlyMode === true) {
+    if (
+      routeState.remainingRoutePending.length > 0
+      && routeState.runtimeTarget?.resultsOnlyMode === true
+      && !(
+        routeState.runtimeTarget?.allowFutureSlowRoutes === true
+        && hasFuturePendingMatches(routeState.remainingRoutePending)
+      )
+    ) {
       if (this._isResultsSourceIncomplete(routeState)) {
         this.logger.warn('recon_results_only_incomplete_source_retry', {
           league: routeState.target?.league?.name || null,
@@ -415,6 +560,45 @@ const reconMatrixTargetRunner = {
         skippedRoutes: ['fixtures', 'search', 'local_dictionary']
       });
       await this._finalizeRemainingPending(routeState);
+      return;
+    }
+
+    if (
+      routeState.remainingRoutePending.length > 0
+      && routeState.runtimeTarget?.allowFutureSlowRoutes === true
+      && hasFuturePendingMatches(routeState.remainingRoutePending)
+    ) {
+      this.logger.info('recon_results_only_bypassed_for_future_pending', {
+        league: routeState.target?.league?.name || null,
+        season: routeState.target?.dbSeason || null,
+        remainingPending: routeState.remainingRoutePending.length
+      });
+    }
+
+    if (routeState.remainingRoutePending.length > 0 && this._shouldShortCircuitResultsToSearch(routeState)) {
+      const canUseLocalDictionaryFallback = this._shouldUseLocalDictionaryRoute(routeState);
+      this.logger.info('recon_results_search_short_circuit', {
+        league: routeState.target?.league?.name || null,
+        season: routeState.target?.dbSeason || null,
+        remainingPending: routeState.remainingRoutePending.length,
+        resultsProbeDurationMs: Number(
+          routeState.resultsProbeDurationMs
+          || routeState.resultsSource?.probeDurationMs
+          || 0
+        ),
+        sourceState: routeState.resultsSource?.extractResult?.sourceState || 'SOURCE_EMPTY',
+        skippedRoutes: ['fixtures']
+      });
+      if (await this._finalizeIfBudgetExhausted(routeState, 'before_search_short_circuit')) {
+        return;
+      }
+      await this._runReconSearchRoute(routeState, canUseLocalDictionaryFallback);
+      if (routeState.remainingRoutePending.length > 0 && canUseLocalDictionaryFallback) {
+        if (await this._finalizeIfBudgetExhausted(routeState, 'before_local_dictionary')) {
+          return;
+        }
+        await this._runReconLocalDictionaryRoute(routeState);
+      }
       return;
     }
 
@@ -468,20 +652,48 @@ const reconMatrixTargetRunner = {
   async _processReconRoute(routeState, routeKind, routeSource, routeOptions = {}) {
     const normalizedRouteSource = routeSource
       || this._buildEmptyRouteSource(routeKind, routeState.runtimeTarget, 'SOURCE_EMPTY');
-    const routeResult = await this._processPendingMatchesWithShortCircuit(
+    const { eligiblePending, deferredPending } = splitDeferredFuturePendingMatches(
+      routeState.remainingRoutePending,
       routeKind,
       normalizedRouteSource,
+      new Date()
+    );
+    let routeResult;
+
+    if (eligiblePending.length === 0 && deferredPending.length > 0) {
+      this.logger.info('recon_future_pending_deferred_from_results', {
+        league: routeState.runtimeTarget?.league?.name || null,
+        season: routeState.runtimeTarget?.dbSeason || null,
+        routeKind,
+        deferredPending: deferredPending.length
+      });
+      routeResult = {
+        linked: 0,
+        mismatched: 0,
+        remainingPending: []
+      };
+    } else {
+      routeResult = await this._processPendingMatchesWithShortCircuit(
+        routeKind,
+        normalizedRouteSource,
+        eligiblePending,
+        routeState.runtimeTarget,
+        {
+          confidenceThreshold: routeState.effectiveThreshold,
+          limiter: routeState.limiter,
+          persistLimiter: routeState.persistLimiter,
+          progress: routeState.progress,
+          metadata: routeState.routeMetadata,
+          finalPass: routeOptions.finalPass === true,
+          forceProcessWithoutCandidates: routeOptions.forceProcessWithoutCandidates === true
+        }
+      );
+    }
+
+    routeResult.remainingPending = mergeDeferredPendingMatches(
       routeState.remainingRoutePending,
-      routeState.runtimeTarget,
-      {
-        confidenceThreshold: routeState.effectiveThreshold,
-        limiter: routeState.limiter,
-        persistLimiter: routeState.persistLimiter,
-        progress: routeState.progress,
-        metadata: routeState.routeMetadata,
-        finalPass: routeOptions.finalPass === true,
-        forceProcessWithoutCandidates: routeOptions.forceProcessWithoutCandidates === true
-      }
+      deferredPending,
+      routeResult?.remainingPending
     );
 
     this._applyReconRouteResult(routeState, routeResult, normalizedRouteSource);

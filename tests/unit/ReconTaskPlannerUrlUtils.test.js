@@ -207,6 +207,60 @@ describe('ReconTaskPlannerUrlUtils', () => {
     );
   });
 
+  it('Costa Rica 当前赛季应以 seasonless results 作为 primary，并保留年份页 fallback', () => {
+    const context = createContext({
+      annualLeagueIds: new Set([81, 121])
+    });
+    const now = new Date();
+    const currentSeason = now.getUTCMonth() + 1 >= 7
+      ? `${now.getUTCFullYear()}/${now.getUTCFullYear() + 1}`
+      : `${now.getUTCFullYear() - 1}/${now.getUTCFullYear()}`;
+    const previousSeason = now.getUTCMonth() + 1 >= 7
+      ? `${now.getUTCFullYear() - 1}/${now.getUTCFullYear()}`
+      : `${now.getUTCFullYear() - 2}/${now.getUTCFullYear() - 1}`;
+    const league = {
+      id: 121,
+      country: 'Costa Rica',
+      slug: 'primera-division',
+      resultsSlug: 'primera-division',
+      seasonType: 'single_year'
+    };
+
+    assert.equal(
+      context.buildResultsUrl(league, currentSeason),
+      'oddsportal://root/football/costa-rica/primera-division/results/'
+    );
+    assert.equal(
+      context.buildResultsUrl(league, previousSeason),
+      `oddsportal://root/football/costa-rica/primera-division-${context.formatSeasonForAnnualLeagueUrl(previousSeason)}/results/`
+    );
+    assert.deepEqual(
+      context.buildAnnualCurrentSeasonSources(league, currentSeason),
+      [
+        {
+          season: context.formatSeasonForAnnualLeagueUrl(currentSeason),
+          url: 'oddsportal://root/football/costa-rica/primera-division/results/',
+          mode: 'current_results'
+        },
+        {
+          season: context.formatSeasonForAnnualLeagueUrl(currentSeason),
+          url: `oddsportal://root/football/costa-rica/primera-division-${context.formatSeasonForAnnualLeagueUrl(currentSeason)}/results/`,
+          mode: 'current_results_fallback'
+        },
+        {
+          season: context.formatSeasonForAnnualLeagueUrl(currentSeason),
+          url: `oddsportal://root/football/costa-rica/primera-division-${context.formatSeasonForAnnualLeagueUrl(currentSeason)}/fixtures/`,
+          mode: 'current_fixtures'
+        },
+        {
+          season: context.formatSeasonForAnnualLeagueUrl(currentSeason),
+          url: 'oddsportal://root/football/costa-rica/primera-division/fixtures/',
+          mode: 'current_fixtures_fallback'
+        }
+      ]
+    );
+  });
+
   it('应为 SOURCE_EMPTY 问题联赛补 canonical fallback URL', () => {
     const context = createContext();
 

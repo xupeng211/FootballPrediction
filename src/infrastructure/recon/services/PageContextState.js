@@ -12,6 +12,7 @@ const {
   resolveList,
   syncStealthProviderProfile
 } = require('./BrowserContextConfigFactory');
+const { mergeContextExtraHTTPHeaders } = require('../../shared/helpers/browserHeaderUtils');
 
 const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
 
@@ -42,12 +43,13 @@ const pageContextState = {
       screen: this.viewport,
       hasTouch: this.hasTouch,
       isMobile: this.isMobile,
-      extraHTTPHeaders: {
-        ...(externalSession?.extraHTTPHeaders || {}),
-        ...this.stealthExtraHTTPHeaders,
-        'accept-language': this.acceptLanguage,
-        ...(contextUserAgent ? { 'user-agent': contextUserAgent } : {})
-      }
+      extraHTTPHeaders: mergeContextExtraHTTPHeaders({
+        baseHeaders: externalSession?.extraHTTPHeaders || {},
+        extraHeaders: this.stealthExtraHTTPHeaders,
+        userAgent: contextUserAgent,
+        acceptLanguage: this.acceptLanguage,
+        platform: this.platform
+      })
     };
   },
 
@@ -74,6 +76,7 @@ const pageContextState = {
   async _closeActiveContext() {
     const context = this.context;
     const page = this.page;
+    await this.refreshRuntimeSessionSnapshot(typeof page?.url === 'function' ? page.url() : '');
     this.context = null;
     this.page = null;
     this._sessionPrimed = false;
@@ -119,6 +122,47 @@ const pageContextState = {
       cookies: cookies.length
     });
     return { applied: true, cookies: cookies.length, sourceFormat: snapshot?.sourceFormat || 'unknown' };
+  },
+
+  async refreshRuntimeSessionSnapshot(url = '') {
+    if (!this.sessionManager || !this.context || typeof this.context.cookies !== 'function') {
+      return { applied: false, cookies: 0, sourceFormat: 'runtime_unavailable' };
+    }
+
+    const candidateUrls = [...new Set(
+      [url, this.homeWarmupUrl]
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+    )];
+
+    try {
+      let cookies = [];
+      for (const candidateUrl of candidateUrls) {
+        const scopedCookies = await this.context.cookies([candidateUrl]);
+        if (Array.isArray(scopedCookies) && scopedCookies.length > cookies.length) {
+          cookies = scopedCookies;
+        }
+      }
+
+      if (cookies.length === 0) {
+        cookies = await this.context.cookies();
+      }
+
+      return this.sessionManager.setRuntimeSnapshot({
+        cookies,
+        userAgent: this.userAgent,
+        extraHTTPHeaders: {
+          'accept-language': this.acceptLanguage,
+          ...(this.userAgent ? { 'user-agent': this.userAgent } : {})
+        }
+      });
+    } catch (error) {
+      this.logger.debug?.('recon_runtime_session_snapshot_refresh_failed', {
+        traceId: this.traceId,
+        error: error.message
+      });
+      return { applied: false, cookies: 0, sourceFormat: 'runtime_error' };
+    }
   },
 
   isHealthy() {
@@ -177,6 +221,7 @@ const pageContextState = {
     }
 
     await this.maybeForceUnlockJ1(url);
+    await this.refreshRuntimeSessionSnapshot(url);
   },
 
   async primeSession(targetUrl, options = {}) {
@@ -198,6 +243,7 @@ const pageContextState = {
     await this.throwIfBackendFetchFailed(null, this.homeWarmupUrl, 'warmup');
     await this.handleConsent();
     await waitForDelay(this.page, this.homeWarmupWaitMs);
+    await this.refreshRuntimeSessionSnapshot(this.homeWarmupUrl);
     this._sessionPrimed = true;
   },
 

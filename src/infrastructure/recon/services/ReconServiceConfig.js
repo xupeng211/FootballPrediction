@@ -288,6 +288,7 @@ function validateConfig(config, options = {}) {
     ['network_monitor', 'extract_max_depth', { integer: true, min: 1 }],
     ['network_monitor', 'page_size', { integer: true, min: 1 }],
     ['network_monitor', 'fetch_timeout_ms', { integer: true, min: 1 }],
+    ['network_monitor', 'decrypt_timeout_ms', { integer: true, min: 1 }],
     ['dom_scraper', 'timeout_ms', { integer: true, min: 1 }],
     ['dom_scraper', 'max_pages', { integer: true, min: 1 }],
     ['dom_scraper', 'post_navigation_wait_ms', { integer: true, min: 0 }],

@@ -26,6 +26,13 @@ const VALUE_SETTERS = new Map([
   }],
   ['--threshold', (result, value) => {
     result.threshold = parseFloat(value);
+  }],
+  ['--skip-leagues', (result, value) => {
+    const skipLeagues = String(value || '')
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+    result.skipLeagues = [...new Set([...result.skipLeagues, ...skipLeagues])];
   }]
 ]);
 
@@ -90,7 +97,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     forceDomMode: false,
     forceJsonExtract: false,
     forcePureProtocol: false,
-    mismatchRetryOnly: false
+    mismatchRetryOnly: false,
+    skipLeagues: []
   };
 
   for (let index = 0; index < args.length; index++) {
@@ -123,7 +131,7 @@ function printUsage(output = console.log) {
 
   [
     '用法: node scripts/ops/recon_scanner.js --season 2024-2025 [选项]',
-    '  --league <联赛代码|联赛ID>    指定单联赛扫描，默认 EPL',
+    '  --league <联赛代码|联赛ID[,...]> 指定一个或多个联赛扫描，默认 EPL',
     '  --all-leagues                扫描全部激活联赛',
     '  --all-non-linked             扫描所有非 RECON_LINKED 比赛',
     '  --limit <N>                  启用 Recon Matrix 并限制待处理场次',
@@ -133,6 +141,7 @@ function printUsage(output = console.log) {
     '  --force-json-extract         强制 JSON 提取模式',
     '  --force-pure-protocol        强制 pure protocol 模式',
     '  --mismatch-retry-only        仅重扫 RECON_MISMATCH',
+    '  --skip-leagues <A,B,...>     跳过指定联赛（按名称/代码/ID）',
     '  --current-season-only        仅处理当前赛季窗口',
     '  -h, --help                   显示帮助'
   ].forEach((line) => writer(line));

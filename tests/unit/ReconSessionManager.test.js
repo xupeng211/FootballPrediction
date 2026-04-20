@@ -281,3 +281,197 @@ test('ReconSessionManager 应解析 JSON 包装 payload 并在 header 无效时�
   assert.equal(headerResult.cookies[0].domain, '.fallback.test');
   assert.deepEqual(headerResult.extraHTTPHeaders, {});
 });
+
+test('ReconSessionManager 应合并运行期快照并优先使用最新 cookie/header', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-runtime-merge-'));
+  const sessionPath = path.join(tempDir, 'session.json');
+  fs.writeFileSync(sessionPath, JSON.stringify({
+    cookies: [
+      {
+        name: 'keep',
+        value: 'external',
+        domain: '.oddsportal.com',
+        path: '/'
+      },
+      {
+        name: 'external_only',
+        value: '1',
+        domain: '.oddsportal.com',
+        path: '/'
+      }
+    ],
+    userAgent: 'External-UA/1.0'
+  }), 'utf8');
+
+  const manager = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-runtime-merge',
+    sessionPath
+  });
+
+  manager.setRuntimeSnapshot({
+    cookies: [
+      {
+        name: 'keep',
+        value: 'runtime',
+        domain: '.oddsportal.com',
+        path: '/'
+      },
+      {
+        name: 'runtime_only',
+        value: '2',
+        domain: '.oddsportal.com',
+        path: '/'
+      }
+    ],
+    userAgent: 'Runtime-UA/2.0',
+    extraHTTPHeaders: {
+      'accept-language': 'en-US,en;q=0.9'
+    }
+  });
+
+  const result = manager.load();
+  const keepCookie = result.cookies.find((cookie) => cookie.name === 'keep');
+
+  assert.equal(result.sourceFormat, 'json+runtime');
+  assert.equal(result.userAgent, 'Runtime-UA/2.0');
+  assert.equal(result.extraHTTPHeaders['accept-language'], 'en-US,en;q=0.9');
+  assert.equal(keepCookie.value, 'runtime');
+  assert.ok(result.cookies.some((cookie) => cookie.name === 'external_only'));
+  assert.ok(result.cookies.some((cookie) => cookie.name === 'runtime_only'));
+});
+
+test('ReconSessionManager 应把 preflight 快照写入 GOLDEN_SNAPSHOT 并供 worker 继承', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-buffer-pool-'));
+  const bufferPoolPath = path.join(tempDir, 'session-buffer.json');
+  const goldenCookie = {
+    name: 'op_user_hash',
+    value: 'golden-cookie',
+    domain: '.oddsportal.com',
+    path: '/',
+    secure: true,
+    sameSite: 'Lax'
+  };
+
+  const preflightManager = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-preflight',
+    sessionPath: '',
+    bufferPoolPath,
+    bufferPoolRole: 'preflight',
+    proxyPort: 7901
+  });
+  const writeResult = preflightManager.setRuntimeSnapshot({
+    cookies: [goldenCookie],
+    userAgent: 'Golden-UA/1.0',
+    extraHTTPHeaders: {
+      'accept-language': 'en-US,en;q=0.9'
+    }
+  });
+
+  const workerManager = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-worker',
+    sessionPath: '',
+    bufferPoolPath,
+    proxyPort: 7911
+  });
+  const result = workerManager.load();
+  const bufferState = workerManager.inspectBufferPool();
+
+  assert.equal(writeResult.snapshotKind, 'GOLDEN_SNAPSHOT');
+  assert.equal(bufferState.hasGoldenSnapshot, true);
+  assert.equal(bufferState.needsRefresh, false);
+  assert.match(result.sourceFormat, /session_buffer_golden/);
+  assert.equal(result.cookies.length, 1);
+  assert.equal(result.cookies[0].value, 'golden-cookie');
+  assert.equal(result.userAgent, 'Golden-UA/1.0');
+  assert.equal(result.extraHTTPHeaders['accept-language'], 'en-US,en;q=0.9');
+});
+
+test('ReconSessionManager ContextTTL 过期时应触发单点 refresh lease，而不是全员重置', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-buffer-ttl-'));
+  const bufferPoolPath = path.join(tempDir, 'session-buffer.json');
+  const manager = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-buffer-ttl',
+    sessionPath: '',
+    bufferPoolPath,
+    bufferPoolRole: 'preflight',
+    bufferPoolTtlMs: 1000
+  });
+
+  manager.setRuntimeSnapshot({
+    cookies: [{
+      name: 'seed',
+      value: '1',
+      domain: '.oddsportal.com',
+      path: '/'
+    }],
+    userAgent: 'Golden-UA/TTL'
+  });
+
+  const stored = JSON.parse(fs.readFileSync(bufferPoolPath, 'utf8'));
+  stored.goldenSnapshot.updatedAt = new Date(Date.now() - 2000).toISOString();
+  fs.writeFileSync(bufferPoolPath, JSON.stringify(stored, null, 2), 'utf8');
+
+  const workerA = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-worker-a',
+    sessionPath: '',
+    bufferPoolPath,
+    bufferPoolTtlMs: 1000
+  });
+  const workerB = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-worker-b',
+    sessionPath: '',
+    bufferPoolPath,
+    bufferPoolTtlMs: 1000
+  });
+
+  assert.equal(workerA.shouldRefreshGoldenSnapshot(), true);
+  const leaseA = workerA.acquireGoldenRefreshLease();
+  const leaseB = workerB.acquireGoldenRefreshLease();
+
+  assert.equal(leaseA.acquired, true);
+  assert.equal(leaseB.acquired, false);
+  assert.equal(leaseB.reason, 'busy');
+  assert.equal(workerA.releaseGoldenRefreshLease(leaseA.lease), true);
+});
+
+test('ReconSessionManager 应为同一代理端口稳定持久化 JA3 节点身份', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-ja3-'));
+  const bufferPoolPath = path.join(tempDir, 'session-buffer.json');
+  const managerA = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-ja3-a',
+    sessionPath: '',
+    bufferPoolPath,
+    proxyPort: 7911
+  });
+  const managerB = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-ja3-b',
+    sessionPath: '',
+    bufferPoolPath,
+    proxyPort: 7911
+  });
+
+  const identityA = managerA.resolveProtocolIdentity({
+    proxyPort: 7911,
+    ciphersCount: 3,
+    sigalgsCount: 2
+  });
+  const identityB = managerB.resolveProtocolIdentity({
+    proxyPort: 7911,
+    ciphersCount: 3,
+    sigalgsCount: 2
+  });
+
+  assert.equal(identityA.lineageKey, 'proxy:7911');
+  assert.equal(identityA.cipherIdx, 0);
+  assert.equal(identityA.sigalgIdx, 0);
+  assert.equal(identityA.ja3ProfileId, identityB.ja3ProfileId);
+  assert.equal(identityB.source, 'session_buffer_pool');
+});

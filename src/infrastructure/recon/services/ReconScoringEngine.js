@@ -109,11 +109,69 @@ function clampConfidence(value) {
   return Math.max(0, Math.min(1, value));
 }
 
+function applyHardDateMismatchCap(confidence, dateDeltaMs, hardDateMismatchWindowMs, hardDateMismatchConfidenceCap) {
+  if (!Number.isFinite(dateDeltaMs)) {
+    return confidence;
+  }
+
+  if (!Number.isFinite(hardDateMismatchWindowMs) || hardDateMismatchWindowMs <= 0) {
+    return confidence;
+  }
+
+  if (dateDeltaMs <= hardDateMismatchWindowMs) {
+    return confidence;
+  }
+
+  const cap = Number.isFinite(hardDateMismatchConfidenceCap)
+    ? hardDateMismatchConfidenceCap
+    : 0.49;
+  return Math.min(confidence, clampConfidence(cap));
+}
+
+function applyWeakTeamAlignmentCap(
+  confidence,
+  teamConfidence,
+  orientation,
+  weakSideTeamSimilarityFloor,
+  weakSideMaxTeamScoreGap
+) {
+  if (
+    orientation?.dictionaryLocked
+    || orientation?.directNormalized
+    || orientation?.swappedNormalized
+  ) {
+    return confidence;
+  }
+
+  const selected = resolveSelectedOrientation(orientation);
+  const minScore = Number(selected?.minScore);
+  const averageScore = Number(selected?.averageScore);
+  const hasWeakSideFloor = Number.isFinite(weakSideTeamSimilarityFloor) && weakSideTeamSimilarityFloor >= 0;
+  const hasMaxGap = Number.isFinite(weakSideMaxTeamScoreGap) && weakSideMaxTeamScoreGap >= 0;
+  const scoreGap = Number.isFinite(averageScore) && Number.isFinite(minScore)
+    ? averageScore - minScore
+    : null;
+  const shouldCap =
+    (hasWeakSideFloor && Number.isFinite(minScore) && minScore < weakSideTeamSimilarityFloor)
+    || (hasMaxGap && Number.isFinite(scoreGap) && scoreGap > weakSideMaxTeamScoreGap);
+
+  if (!shouldCap) {
+    return confidence;
+  }
+
+  return Math.min(confidence, clampConfidence(teamConfidence));
+}
+
 function calculateConfidence({
+  dateDeltaMs,
   dateConfidence,
   dateWeight,
+  hardDateMismatchConfidenceCap,
+  hardDateMismatchWindowMs,
   orientation,
   placeholderFixture,
+  weakSideMaxTeamScoreGap,
+  weakSideTeamSimilarityFloor,
   teamBalanceWeight,
   teamWeight
 }) {
@@ -128,13 +186,31 @@ function calculateConfidence({
   }
 
   if (orientation.dictionaryLocked) {
-    return 1.0;
+    return applyHardDateMismatchCap(
+      1.0,
+      dateDeltaMs,
+      hardDateMismatchWindowMs,
+      hardDateMismatchConfidenceCap
+    );
   }
 
   const teamConfidence = calculateTeamConfidence(orientation, teamBalanceWeight);
-  return dateConfidence === null
+  const rawConfidence = dateConfidence === null
     ? teamConfidence
     : clampConfidence((teamConfidence * teamWeight) + (dateConfidence * dateWeight));
+  const weakTeamCappedConfidence = applyWeakTeamAlignmentCap(
+    rawConfidence,
+    teamConfidence,
+    orientation,
+    weakSideTeamSimilarityFloor,
+    weakSideMaxTeamScoreGap
+  );
+  return applyHardDateMismatchCap(
+    weakTeamCappedConfidence,
+    dateDeltaMs,
+    hardDateMismatchWindowMs,
+    hardDateMismatchConfidenceCap
+  );
 }
 
 function resolveMatchMethod(confidence, dictionaryLocked, exactMatchThreshold) {
@@ -178,10 +254,15 @@ function evaluateCandidateScore(engine, candidate, l1Match, placeholderFixture) 
   const selectedOrientation = resolveSelectedOrientation(orientation);
   const teamConfidence = calculateTeamConfidence(orientation, engine.teamBalanceWeight);
   const confidence = calculateConfidence({
+    dateDeltaMs,
     dateConfidence,
     dateWeight: engine.dateWeight,
+    hardDateMismatchConfidenceCap: engine.hardDateMismatchConfidenceCap,
+    hardDateMismatchWindowMs: engine.hardDateMismatchWindowMs,
     orientation,
     placeholderFixture,
+    weakSideMaxTeamScoreGap: engine.weakSideMaxTeamScoreGap,
+    weakSideTeamSimilarityFloor: engine.weakSideTeamSimilarityFloor,
     teamBalanceWeight: engine.teamBalanceWeight,
     teamWeight: engine.teamWeight
   });
@@ -212,6 +293,18 @@ class ReconScoringEngine {
     this.teamBalanceWeight = Number.isFinite(Number(options.teamBalanceWeight))
       ? Number(options.teamBalanceWeight)
       : 0.5;
+    this.hardDateMismatchWindowMs = Number.isFinite(Number(options.hardDateMismatchWindowMs))
+      ? Number(options.hardDateMismatchWindowMs)
+      : 48 * 60 * 60 * 1000;
+    this.hardDateMismatchConfidenceCap = Number.isFinite(Number(options.hardDateMismatchConfidenceCap))
+      ? Number(options.hardDateMismatchConfidenceCap)
+      : 0.49;
+    this.weakSideTeamSimilarityFloor = Number.isFinite(Number(options.weakSideTeamSimilarityFloor))
+      ? Number(options.weakSideTeamSimilarityFloor)
+      : 0.68;
+    this.weakSideMaxTeamScoreGap = Number.isFinite(Number(options.weakSideMaxTeamScoreGap))
+      ? Number(options.weakSideMaxTeamScoreGap)
+      : 0.08;
     this.perfectKickoffWindowMs = Number.isFinite(Number(options.perfectKickoffWindowMs))
       ? Number(options.perfectKickoffWindowMs)
       : 2 * 60 * 60 * 1000;

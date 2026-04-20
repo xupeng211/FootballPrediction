@@ -99,6 +99,35 @@ describe('ReconMatchEvaluator', () => {
     assert.ok(best.confidence > 0.95, `期望时间抖动 2 小时内仍保持高置信度，实际 ${best.confidence}`);
   });
 
+  it('应将超过 48 小时的日期失配候选硬压到阈值下方', () => {
+    const evaluator = new ReconMatchEvaluator({
+      parser: {
+        calculateSimilarity(left, right) {
+          return String(left || '').toLowerCase().trim() === String(right || '').toLowerCase().trim() ? 1 : 0;
+        }
+      },
+      logger: { info() {}, warn() {}, error() {} }
+    });
+
+    const best = evaluator.findBestCandidate({
+      home_team: 'Ld Alajuelense',
+      away_team: 'Deportivo Saprissa',
+      match_date: '2026-04-19T23:00:00.000Z'
+    }, [
+      {
+        hash: 'old-h2h',
+        url: 'oddsportal://old-h2h',
+        homeTeam: 'Saprissa',
+        awayTeam: 'Alajuelense',
+        matchDate: '2026-02-22T02:00:00.000Z'
+      }
+    ]);
+
+    assert.ok(best, '应保留候选以便审计');
+    assert.ok(best.dateDeltaMs > 48 * 60 * 60 * 1000);
+    assert.ok(best.confidence < 0.5, `期望日期硬惩罚后分值 < 0.5，实际 ${best.confidence}`);
+  });
+
   it('应压低单边队名相似但另一边错误的假高分候选', () => {
     const evaluator = new ReconMatchEvaluator({
       parser: {
@@ -257,7 +286,7 @@ describe('ReconMatchEvaluator', () => {
         url: 'https://www.oddsportal.com/football/h2h/dep-la-coruna-Q51ZzMS6/gijon-69w4Rb2d/#23spHYrm',
         homeTeam: 'Dep La Coruna',
         awayTeam: 'Gijon',
-        matchDate: '2026-01-01T00:00:00.000Z'
+        matchDate: '2026-04-05T18:00:00.000Z'
       }
     ]);
 

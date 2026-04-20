@@ -1,9 +1,11 @@
+/* eslint-disable max-lines */
 'use strict';
 
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 
 const { reconSourceProber } = require('../../src/infrastructure/recon/services/ReconSourceProber');
+const { Normalizer } = require('../../src/utils/Normalizer');
 
 function createLogger() {
   const events = {
@@ -150,7 +152,15 @@ function createProber(overrides = {}) {
       };
     },
     _buildFallbackEventSlug(homeTeam, awayTeam) {
-      return `${homeTeam || ''}-${awayTeam || ''}`.trim().toLowerCase();
+      const slugify = (value) => String(Normalizer.normalizeTeamName(value) || value || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      const homeSlug = slugify(homeTeam);
+      const awaySlug = slugify(awayTeam);
+      return homeSlug && awaySlug ? `${homeSlug}-${awaySlug}` : '';
     },
     _resolveTrustedOddsPortalBaseUrl() {
       return 'https://www.oddsportal.com';
@@ -262,6 +272,45 @@ describe('ReconSourceProber', () => {
     assert.equal(prober.__events.info[0].event, 'recon_candidate_routes_short_circuit');
   });
 
+  it('_probeCandidateRoutes 在前移短路标记命中时应跳过 fixtures 并继续 search', async () => {
+    const prober = createProber({
+      _probeResultsCandidateSource: async () => ({
+        routeKind: 'results',
+        source: { season: '2025/2026', url: 'results://j1' },
+        extractResult: { pagesScanned: 1, totalCandidates: 0, sourceState: 'SOURCE_EMPTY' },
+        candidates: [],
+        seasonMirror: new Map(),
+        sampleLinked: 0,
+        forceSearchShortCircuit: true,
+        probeDurationMs: 20000,
+        shortCircuitTimeoutMs: 20000,
+      }),
+      _probeFixturesCandidateSource: async () => {
+        throw new Error('fixtures should be skipped');
+      },
+      _probeSearchCandidateSource: async () => ({
+        routeKind: 'search',
+        source: { season: '2025/2026', url: 'search://j1' },
+        extractResult: { pagesScanned: 1, totalCandidates: 1, sourceState: 'SEARCH_SWEEP_READY' },
+        candidates: [{ match_id: 'm1', hash: 'AAAA1111' }],
+        seasonMirror: new Map(),
+        sampleLinked: 1,
+      }),
+    });
+
+    const combined = await prober._probeCandidateRoutes(
+      { league: { name: 'J1 League' }, dbSeason: '2025/2026', matrixModePruning: true },
+      [{ match_id: 'm1' }],
+      0.75
+    );
+
+    assert.deepEqual(combined.routeKinds, ['results', 'search']);
+    assert.equal(combined.extractResult.totalCandidates, 1);
+    assert.ok(
+      prober.__events.info.some(({ event }) => event === 'recon_results_probe_search_short_circuit')
+    );
+  });
+
   it('_probeCandidateRoutes 在样本已满足阈值时应跳过 search', async () => {
     const prober = createProber({
       _canRunParallelRouteProbes: () => true,
@@ -368,6 +417,84 @@ describe('ReconSourceProber', () => {
       prober._probeResultsCandidateSource({ dbSeason: '2025/2026', league: { name: 'MLS' } }, [], 0.75),
       error => error === timeoutError
     );
+  });
+
+  it('_probeResultsCandidateSource 在 J1 results probe 超时后应返回强制 search 空源', async () => {
+    const originalNow = Date.now;
+    const navigatorOptions = [];
+    const plannerCalls = [];
+    Date.now = () => 1000;
+
+    try {
+      const prober = createProber({
+        _resolveRouteProbeTimeoutMs: () => 25000,
+        taskPlanner: {
+          async selectCandidateSource(target, _pendingMatches, _confidenceThreshold, options) {
+            plannerCalls.push({ target, options });
+            const error = new Error('LEAGUE_TIMEOUT');
+            error.code = 'LEAGUE_TIMEOUT';
+            throw error;
+          },
+        },
+        async _executeRouteProbeWithNavigator(_target, _navigator, options, probe) {
+          navigatorOptions.push(options);
+          return probe({ id: 'dedicated-nav' });
+        },
+      });
+
+      const routeSource = await prober._probeResultsCandidateSource(
+        { league: { name: 'J1 League' }, dbSeason: '2025/2026', resultsUrl: 'results://j1' },
+        [{ match_id: 'm1' }],
+        0.75
+      );
+
+      assert.equal(routeSource.routeKind, 'results');
+      assert.equal(routeSource.forceSearchShortCircuit, true);
+      assert.equal(routeSource.shortCircuitTimeoutMs, 20000);
+      assert.equal(routeSource.extractResult.sourceState, 'SOURCE_EMPTY');
+      assert.equal(navigatorOptions[0].useDedicatedNavigator, true);
+      assert.equal(plannerCalls[0].target.leagueDeadlineAt, 21000);
+      assert.equal(plannerCalls[0].options.leagueDeadlineAt, 21000);
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
+  it('_probeResultsCandidateSource 在真实联赛预算先到期时不应伪装成 search 短路', async () => {
+    const originalNow = Date.now;
+    Date.now = () => 1000;
+
+    try {
+      const prober = createProber({
+        _resolveRouteProbeTimeoutMs: () => 25000,
+        taskPlanner: {
+          async selectCandidateSource() {
+            const error = new Error('LEAGUE_TIMEOUT');
+            error.code = 'LEAGUE_TIMEOUT';
+            throw error;
+          }
+        },
+        async _executeRouteProbeWithNavigator(_target, _navigator, _options, probe) {
+          return probe({ id: 'dedicated-nav' });
+        }
+      });
+
+      await assert.rejects(
+        () => prober._probeResultsCandidateSource(
+          {
+            league: { name: 'J1 League' },
+            dbSeason: '2025/2026',
+            resultsUrl: 'results://j1',
+            leagueDeadlineAt: 5000
+          },
+          [{ match_id: 'm1' }],
+          0.75
+        ),
+        (error) => error?.code === 'LEAGUE_TIMEOUT'
+      );
+    } finally {
+      Date.now = originalNow;
+    }
   });
 
   it('_probeFixturesCandidateSource 缺少 fixturesUrl 时应直接返回 null', async () => {
@@ -485,7 +612,7 @@ describe('ReconSourceProber', () => {
     });
     const success = await successProber._probeSearchCandidateSource(
       { dbSeason: '2025/2026', league: { name: 'MLS' } },
-      [{ match_id: 'm1' }],
+      [{ match_id: 'm1', home_team: 'Alpha', away_team: 'Beta' }],
       0.75
     );
     assert.equal(success.extractResult.sourceState, 'SEARCH_SWEEP_READY');
@@ -676,9 +803,11 @@ describe('ReconSourceProber', () => {
       { timeoutMs: 700 }
     );
 
-    assert.equal(searchResult.pagesScanned, 2);
+    assert.equal(searchResult.pagesScanned, 1);
     assert.equal(searchResult.matches.length, 1);
     assert.equal(searchResult.matches[0].hash, 'AbCd1234');
+    assert.equal(searchResult.sourceUrls.length, 1);
+    assert.equal(searchResult.emptySearchSamples.length, 0);
     assert.equal(waitCalls[0], 3);
     assert.equal(navigationCalls[0].reset, 'search_candidate_batch');
     assert.equal(
@@ -732,9 +861,373 @@ describe('ReconSourceProber', () => {
       { timeoutMs: 500 }
     );
 
-    assert.equal(sparseResult.pagesScanned, 1);
+    assert.equal(sparseResult.pagesScanned, 2);
     assert.equal(sparseResult.matches.length, 0);
     assert.equal(prober._buildSearchUrlForMatch({ home_team: '', away_team: '' }), '');
+  });
+
+  it('_collectSearchCandidatesForPendingMatches 在 J1 search URL 超时时应审计并继续后续搜索', async () => {
+    const prober = createProber();
+    const resetReasons = [];
+    const navigationCalls = [];
+    const navigator = {
+      proxy: { port: 7897 },
+      async resetContextPerBatch(payload) {
+        resetReasons.push(payload.reason);
+      },
+      async navigate(url, options) {
+        navigationCalls.push({ url, options });
+        if (url.includes('/search/alpha-beta/')) {
+          throw new Error('page.goto: Timeout 20000ms exceeded.');
+        }
+      },
+      page: {
+        async waitForTimeout() {},
+        async evaluate(fn, payload) {
+          if (!payload.sourceUrl.includes('/search/gamma-delta/')) {
+            return [];
+          }
+
+          const originalDocument = globalThis.document;
+          globalThis.document = {
+            querySelectorAll() {
+              return [{
+                getAttribute(name) {
+                  return name === 'href'
+                    ? '/football/japan/j1-league/gamma-delta-AbCd1234/'
+                    : '';
+                }
+              }];
+            }
+          };
+
+          try {
+            return await fn(payload);
+          } finally {
+            globalThis.document = originalDocument;
+          }
+        }
+      }
+    };
+
+    const searchResult = await prober._collectSearchCandidatesForPendingMatches(
+      { league: { name: 'J1 League' }, dbSeason: '2025/2026' },
+      [
+        { match_id: 'm1', home_team: 'Alpha', away_team: 'Beta' },
+        { match_id: 'm2', home_team: 'Gamma', away_team: 'Delta' }
+      ],
+      navigator,
+      { timeoutMs: 20000 }
+    );
+
+    assert.equal(searchResult.matches.length, 1);
+    assert.equal(searchResult.matches[0].hash, 'AbCd1234');
+    assert.equal(searchResult.failedSearchSamples.length, 1);
+    assert.equal(searchResult.failedSearchSamples[0].matchId, 'm1');
+    assert.equal(searchResult.failedSearchSamples[0].proxyPort, 7897);
+    assert.equal(searchResult.failedSearchSamples[0].timeoutMs, 20000);
+    assert.equal(searchResult.emptySearchSamples.length, 1);
+    assert.deepEqual(resetReasons, ['search_candidate_batch', 'search_candidate_timeout_recover']);
+    assert.equal(navigationCalls[0].options.timeout, 20000);
+    assert.equal(navigationCalls[1].options.timeout, 20000);
+    assert.equal(navigationCalls[2].options.timeout, 20000);
+    assert.equal(navigationCalls[2].url, 'https://www.oddsportal.com/search/alpha/');
+  });
+
+  it('_collectSearchCandidatesForPendingMatches 在 exact search 全空时应级联触发 fuzzy_prefix', async () => {
+    const prober = createProber();
+    const navigationCalls = [];
+    const navigator = {
+      async resetContextPerBatch() {},
+      async navigate(url) {
+        navigationCalls.push(url);
+      },
+      page: {
+        async waitForTimeout() {},
+        async evaluate(fn, payload) {
+          if (!payload.sourceUrl.includes('/search/yokohama-f/')) {
+            return [];
+          }
+
+          const originalDocument = globalThis.document;
+          globalThis.document = {
+            querySelectorAll() {
+              return [{
+                getAttribute(name) {
+                  return name === 'href'
+                    ? '/football/japan/j1-league/yokohama-f-marinos-vissel-kobe-AbCd1234/'
+                    : '';
+                }
+              }];
+            }
+          };
+
+          try {
+            return await fn(payload);
+          } finally {
+            globalThis.document = originalDocument;
+          }
+        }
+      }
+    };
+
+    const searchResult = await prober._collectSearchCandidatesForPendingMatches(
+      { league: { name: 'J1 League' }, dbSeason: '2025/2026' },
+      [{ match_id: 'm1', home_team: 'Yokohama F.Marinos', away_team: 'Vissel Kobe' }],
+      navigator,
+      { timeoutMs: 20000 }
+    );
+
+    assert.equal(searchResult.matches.length, 1);
+    assert.equal(searchResult.matches[0].hash, 'AbCd1234');
+    assert.deepEqual(navigationCalls, [
+      'https://www.oddsportal.com/search/yokohama-f-marinos-vissel-kobe/',
+      'https://www.oddsportal.com/search/vissel-kobe-yokohama-f-marinos/',
+      'https://www.oddsportal.com/search/yokohama-f/'
+    ]);
+  });
+
+  it('_collectSearchCandidatesForPendingMatches 在 exact search 已命中时不应触发 fuzzy_prefix', async () => {
+    const prober = createProber();
+    const navigationCalls = [];
+    const navigator = {
+      async resetContextPerBatch() {},
+      async navigate(url) {
+        navigationCalls.push(url);
+      },
+      page: {
+        async waitForTimeout() {},
+        async evaluate(fn, payload) {
+          if (!payload.sourceUrl.includes('/search/alpha-united-beta/')) {
+            return [];
+          }
+
+          const originalDocument = globalThis.document;
+          globalThis.document = {
+            querySelectorAll() {
+              return [{
+                getAttribute(name) {
+                  return name === 'href'
+                    ? '/football/japan/j1-league/alpha-united-beta-AbCd1234/'
+                    : '';
+                }
+              }];
+            }
+          };
+
+          try {
+            return await fn(payload);
+          } finally {
+            globalThis.document = originalDocument;
+          }
+        }
+      }
+    };
+
+    const searchResult = await prober._collectSearchCandidatesForPendingMatches(
+      { league: { name: 'J1 League' }, dbSeason: '2025/2026' },
+      [{ match_id: 'm1', home_team: 'Alpha United', away_team: 'Beta' }],
+      navigator,
+      { timeoutMs: 20000 }
+    );
+
+    assert.equal(searchResult.matches.length, 1);
+    assert.ok(
+      navigationCalls.includes('https://www.oddsportal.com/search/alpha-united-beta/')
+    );
+    assert.ok(
+      navigationCalls.includes('https://www.oddsportal.com/search/beta-alpha-united/')
+    );
+    assert.ok(
+      !navigationCalls.includes('https://www.oddsportal.com/search/alpha-united/')
+    );
+  });
+
+  it('_collectSearchCandidatesForPendingMatches 在联赛预算耗尽时应短路 search 循环', async () => {
+    const prober = createProber();
+    const navigationCalls = [];
+    const originalNow = Date.now;
+    let nowCallCount = 0;
+    Date.now = () => {
+      nowCallCount += 1;
+      return nowCallCount >= 3 ? 5000 : 1000;
+    };
+
+    try {
+      const searchResult = await prober._collectSearchCandidatesForPendingMatches(
+        {
+          league: { name: 'J1 League' },
+          dbSeason: '2025/2026',
+          leagueDeadlineAt: 4000
+        },
+        [
+          { match_id: 'm1', home_team: 'Alpha', away_team: 'Beta' },
+          { match_id: 'm2', home_team: 'Gamma', away_team: 'Delta' }
+        ],
+        {
+          async resetContextPerBatch() {},
+          async navigate(url) {
+            navigationCalls.push(url);
+          },
+          page: {
+            async waitForTimeout() {},
+            async evaluate() {
+              return [];
+            }
+          }
+        },
+        { timeoutMs: 20000 }
+      );
+
+      assert.equal(searchResult.matches.length, 0);
+      assert.equal(searchResult.pagesScanned, 1);
+      assert.equal(searchResult.emptySearchSamples.length, 0);
+      assert.equal(navigationCalls.length, 1);
+      assert.ok(
+        prober.__events.warn.some(({ event }) => event === 'recon_search_budget_short_circuit')
+      );
+    } finally {
+      Date.now = originalNow;
+    }
+  });
+
+  it('_probeSearchCandidateSource 在容错 search 超时样本存在时应输出审计日志而非整路由失败', async () => {
+    const prober = createProber({
+      async _executeRouteProbeWithNavigator(_target, _navigator, _options, probe) {
+        return probe({
+          async resetContextPerBatch() {},
+          async navigate(url) {
+            if (url.includes('/search/alpha-beta/')) {
+              throw new Error('page.goto: Timeout 20000ms exceeded.');
+            }
+          },
+          page: {
+            async waitForTimeout() {},
+            async evaluate() {
+              return [];
+            }
+          }
+        });
+      }
+    });
+
+    const routeSource = await prober._probeSearchCandidateSource(
+      { dbSeason: '2025/2026', league: { name: 'J1 League' } },
+      [{ match_id: 'm1', home_team: 'Alpha', away_team: 'Beta' }],
+      0.75
+    );
+
+    assert.equal(routeSource.extractResult.sourceState, 'SOURCE_EMPTY');
+    assert.ok(
+      prober.__events.warn.some(({ event }) => event === 'recon_search_navigation_failure_audit')
+    );
+  });
+
+  it('_probeSearchCandidateSource 在所有变体都跑空时应输出 deep audit', async () => {
+    const prober = createProber({
+      async _executeRouteProbeWithNavigator(_target, _navigator, _options, probe) {
+        return probe({
+          async resetContextPerBatch() {},
+          async navigate() {},
+          page: {
+            async waitForTimeout() {},
+            async evaluate() {
+              return [];
+            }
+          }
+        });
+      }
+    });
+
+    const routeSource = await prober._probeSearchCandidateSource(
+      { dbSeason: '2025/2026', league: { name: 'J1 League' } },
+      [{ match_id: 'm1', home_team: 'Yokohama F.Marinos', away_team: 'Vissel Kobe' }],
+      0.75
+    );
+
+    assert.equal(routeSource.extractResult.sourceState, 'SOURCE_EMPTY');
+    const deepAuditEvent = prober.__events.warn.find(({ event }) => event === 'recon_search_source_empty_deep_audit');
+    assert.ok(deepAuditEvent);
+    assert.deepEqual(deepAuditEvent.payload, {
+      league: 'J1 League',
+      season: '2025/2026',
+      target_match_id: 'm1',
+      home_team_raw: 'Yokohama F.Marinos',
+      away_team_raw: 'Vissel Kobe',
+      attempted_slugs: [
+        'yokohama-f-marinos-vissel-kobe',
+        'vissel-kobe-yokohama-f-marinos',
+        'yokohama-f'
+      ]
+    });
+  });
+
+  it('_buildSearchUrlForMatch 应使用标准化别名生成搜索 slug', () => {
+    const prober = createProber();
+
+    assert.equal(
+      prober._buildSearchUrlForMatch({
+        home_team: 'Ld Alajuelense',
+        away_team: 'Club Sport Herediano'
+      }),
+      'https://www.oddsportal.com/search/alajuelense-herediano/'
+    );
+  });
+
+  it('_buildSearchDescriptorsForMatch 在高噪联赛应补充反向、字典与 fuzzy_prefix 搜索变体', () => {
+    const prober = createProber({
+      matchEvaluator: {
+        normalizeTeamName(teamName) {
+          return String(teamName || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/gi, ' ')
+            .trim()
+            .toLowerCase();
+        }
+      },
+      _buildLocalDictionaryIndex() {
+        return new Map([
+          ['flamengo', { remote_name: 'Flamengo RJ' }],
+          ['internacional', { remote_name: 'Internacional' }]
+        ]);
+      },
+      _resolveLocalDictionaryRemoteName(teamName, index) {
+        return index.get(this._normalizeLocalDictionaryTeamName(teamName))?.remote_name || null;
+      },
+      _normalizeLocalDictionaryTeamName(teamName) {
+        return this.matchEvaluator.normalizeTeamName(teamName);
+      }
+    });
+
+    const descriptors = prober._buildSearchDescriptorsForMatch(
+      {
+        home_team: 'Flamengo',
+        away_team: 'Internacional'
+      },
+      {
+        league: { name: 'Brasileirão' }
+      }
+    );
+
+    assert.deepEqual(
+      descriptors.map((descriptor) => descriptor.origin),
+      ['raw', 'raw_reversed', 'dictionary_remote', 'dictionary_remote_reversed', 'fuzzy_prefix']
+    );
+    assert.deepEqual(
+      descriptors.map((descriptor) => descriptor.cascadeStage),
+      ['exact', 'exact', 'exact', 'exact', 'fuzzy']
+    );
+    assert.deepEqual(
+      descriptors.map((descriptor) => descriptor.searchSlug),
+      [
+        'flamengo-internacional',
+        'internacional-flamengo',
+        'flamengo-rj-internacional',
+        'internacional-flamengo-rj',
+        'flamengo'
+      ]
+    );
   });
 
   it('_selectCandidateSourceWithLocalFallback 在远端为空时应切换到本地字典', async () => {

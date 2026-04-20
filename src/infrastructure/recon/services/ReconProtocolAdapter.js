@@ -1,3 +1,4 @@
+/* eslint-disable complexity, max-lines */
 'use strict';
 
 // Low-level agents here are only instantiated from ProxyProvider-issued leases.
@@ -23,6 +24,26 @@ const { getReconConfigSection } = require('./ReconServiceConfig');
 
 const RETRYABLE_PURE_PROTOCOL_FETCH_ERROR_RE = /fetch failed|socket|terminated|econnreset|und_err|other side closed|networkerror|timed out|aborted/i;
 const PURE_PROTOCOL_CONFIG = getReconConfigSection(['recon_runtime', 'protocol_fetch'], {});
+const JA3_CIPHER_SUITES = [
+  'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305',
+  'TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305',
+  'TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384',
+  'TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305',
+  'TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305',
+  'TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305',
+  'TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256:ECDHE-RSA-CHACHA20-POLY1305:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-AES256-GCM-SHA384',
+  'TLS_AES_256_GCM_SHA384:TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305'
+];
+const JA3_SIGALGS = [
+  'ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256:rsa_pkcs1_sha256:ecdsa_secp384r1_sha384:rsa_pss_rsae_sha384:rsa_pkcs1_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha512',
+  'rsa_pss_rsae_sha256:ecdsa_secp256r1_sha256:rsa_pkcs1_sha256:rsa_pss_rsae_sha384:ecdsa_secp384r1_sha384:rsa_pkcs1_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha512',
+  'ecdsa_secp384r1_sha384:ecdsa_secp256r1_sha256:rsa_pss_rsae_sha384:rsa_pss_rsae_sha256:rsa_pkcs1_sha384:rsa_pkcs1_sha256:rsa_pss_rsae_sha512:rsa_pkcs1_sha512',
+  'rsa_pss_rsae_sha384:rsa_pss_rsae_sha256:ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:rsa_pkcs1_sha384:rsa_pkcs1_sha256:rsa_pss_rsae_sha512:rsa_pkcs1_sha512',
+  'ecdsa_secp256r1_sha256:ecdsa_secp384r1_sha384:rsa_pss_rsae_sha256:rsa_pss_rsae_sha384:rsa_pkcs1_sha256:rsa_pkcs1_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha512',
+  'rsa_pkcs1_sha256:rsa_pss_rsae_sha256:ecdsa_secp256r1_sha256:rsa_pkcs1_sha384:rsa_pss_rsae_sha384:ecdsa_secp384r1_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha512',
+  'ecdsa_secp384r1_sha384:rsa_pss_rsae_sha384:rsa_pkcs1_sha384:ecdsa_secp256r1_sha256:rsa_pss_rsae_sha256:rsa_pkcs1_sha256:rsa_pss_rsae_sha512:rsa_pkcs1_sha512',
+  'rsa_pss_rsae_sha256:rsa_pkcs1_sha256:ecdsa_secp256r1_sha256:rsa_pss_rsae_sha384:rsa_pkcs1_sha384:ecdsa_secp384r1_sha384:rsa_pss_rsae_sha512:rsa_pkcs1_sha512'
+];
 
 const reconProtocolAdapter = {
   _normalizePureProtocolTarget(target) {
@@ -372,6 +393,16 @@ const reconProtocolAdapter = {
     await waitForDelay(null, delayMs);
   },
 
+  _hasExplicitPureProtocolRequestProxy(options = {}) {
+    return Boolean(
+      options.proxyLease?.proxy?.server
+      || options.requestProxyLease?.proxy?.server
+      || options.proxy?.server
+      || options.requestProxy?.server
+      || (typeof options.proxyServer === 'string' && options.proxyServer.trim())
+    );
+  },
+
   _resolvePureProtocolRequestProxy(options = {}) {
     const explicitLease = options.proxyLease?.proxy?.server
       ? options.proxyLease
@@ -382,7 +413,8 @@ const reconProtocolAdapter = {
       return {
         lease: explicitLease,
         server: explicitLease.proxy.server,
-        port: Number(explicitLease.proxy.port || 0) || null
+        port: Number(explicitLease.proxy.port || 0) || null,
+        source: 'request_lease'
       };
     }
 
@@ -395,7 +427,8 @@ const reconProtocolAdapter = {
       return {
         lease: null,
         server: explicitProxy.server,
-        port: Number(explicitProxy.port || 0) || null
+        port: Number(explicitProxy.port || 0) || null,
+        source: 'request_proxy'
       };
     }
 
@@ -403,11 +436,308 @@ const reconProtocolAdapter = {
       return {
         lease: null,
         server: options.proxyServer.trim(),
-        port: Number(options.proxyPort || 0) || null
+        port: Number(options.proxyPort || 0) || null,
+        source: 'request_server'
+      };
+    }
+
+    const navigatorLease = this.navigator?.proxyLease?.proxy?.server
+      ? this.navigator.proxyLease
+      : null;
+    if (navigatorLease) {
+      return {
+        lease: navigatorLease,
+        server: navigatorLease.proxy.server,
+        port: Number(navigatorLease.proxy.port || 0) || null,
+        source: 'navigator_lease'
+      };
+    }
+
+    const navigatorProxy = this.navigator?.proxy?.server
+      ? this.navigator.proxy
+      : null;
+    if (navigatorProxy?.server) {
+      return {
+        lease: null,
+        server: navigatorProxy.server,
+        port: Number(navigatorProxy.port || 0) || null,
+        source: 'navigator_proxy'
       };
     }
 
     return null;
+  },
+
+  _isPureProtocolNavigatorManagedProxy(resolvedProxy = null) {
+    if (!resolvedProxy?.server) {
+      return false;
+    }
+
+    const navigatorLease = this.navigator?.proxyLease?.id
+      ? this.navigator.proxyLease
+      : null;
+    if (resolvedProxy.lease?.id && navigatorLease?.id && resolvedProxy.lease.id === navigatorLease.id) {
+      return true;
+    }
+
+    const navigatorPort = Number(this.navigator?.proxy?.port || navigatorLease?.proxy?.port || 0) || null;
+    return Boolean(navigatorPort && navigatorPort === (Number(resolvedProxy.port || 0) || null));
+  },
+
+  _buildPureProtocolRetryContext(url = '', options = {}) {
+    const inspectUrl = String(url || '').trim();
+    const retryNavigateUrl = String(options.referer || options.baseUrl || '').trim() || null;
+    const breakerKey = this.navigator && typeof this.navigator._resolveCircuitBreakerKey === 'function'
+      ? this.navigator._resolveCircuitBreakerKey(retryNavigateUrl || inspectUrl, {})
+      : 'default';
+
+    return {
+      operationName: 'pure_protocol_fetch',
+      breakerKey: breakerKey || 'default',
+      inspectUrl: inspectUrl || null,
+      retryNavigateUrl,
+      retryReadySelector: '',
+      timeoutMs: Number(options.timeoutMs || this.navigator?.archiveTimeoutMs || 0) || undefined
+    };
+  },
+
+  async _reportPureProtocolFetchFailure(result = {}, url = '', options = {}, resolvedProxy = null) {
+    const provider = this.navigator?.proxyProvider || null;
+    if (!provider || typeof provider.reportFailure !== 'function') {
+      return false;
+    }
+
+    const targetLeaseId = resolvedProxy?.lease?.id || null;
+    const port = Number(resolvedProxy?.port || 0) || null;
+    if (!targetLeaseId && !port) {
+      return false;
+    }
+
+    const statusCode = Number(result.status) || null;
+    const reason = String(result.error || (statusCode ? `HTTP_${statusCode}` : 'PURE_PROTOCOL_FETCH_FAILED'));
+    try {
+      await provider.reportFailure(targetLeaseId, {
+        ...(port ? { port } : {}),
+        statusCode,
+        reason,
+        failureClass: statusCode === 429 ? 'rate_limit' : 'hard_proxy_failure',
+        url,
+        stage: 'pure_protocol_fetch'
+      });
+      return true;
+    } catch (error) {
+      this.logger.debug?.('pure_protocol_proxy_failure_report_failed', {
+        traceId: this.navigator?.traceId || 'trace-pure-protocol',
+        url,
+        proxyPort: port,
+        statusCode,
+        error: error.message
+      });
+      return false;
+    }
+  },
+
+  async _rotatePureProtocolRequestProxy(result = {}, url = '', options = {}, attempt = 0, resolvedProxy = null) {
+    const statusCode = Number(result.status) || null;
+    if (statusCode !== 429 && statusCode !== 503) {
+      return options;
+    }
+
+    const retryContext = this._buildPureProtocolRetryContext(url, options);
+    const failure = {
+      statusCode,
+      retryAfterMs: this.navigator && typeof this.navigator._parseRetryAfterMs === 'function'
+        ? this.navigator._parseRetryAfterMs(result.retryAfterRaw)
+        : 0,
+      retryAfterRaw: result.retryAfterRaw || '',
+      reason: result.error || ''
+    };
+
+    if (this._isPureProtocolNavigatorManagedProxy(resolvedProxy)) {
+      const nextProxy = this.navigator && typeof this.navigator.rotateProxyForRetry === 'function'
+        ? await this.navigator.rotateProxyForRetry(failure, retryContext, attempt)
+        : null;
+      const navigatorLease = this.navigator?.proxyLease || null;
+      const navigatorProxy = this.navigator?.proxy || null;
+      const nextServer = String(navigatorProxy?.server || navigatorLease?.proxy?.server || '').trim();
+      const nextPort = Number(navigatorProxy?.port || navigatorLease?.proxy?.port || 0) || null;
+
+      return nextProxy || nextServer
+        ? {
+          ...options,
+          proxyLease: navigatorLease || undefined,
+          requestProxyLease: navigatorLease || undefined,
+          proxy: navigatorProxy || undefined,
+          requestProxy: navigatorProxy || undefined,
+          proxyServer: nextServer || undefined,
+          requestProxyServer: nextServer || undefined,
+          proxyPort: nextPort || undefined,
+          requestProxyPort: nextPort || undefined
+        }
+        : options;
+    }
+
+    const provider = this.navigator?.proxyProvider || null;
+    if (!provider || typeof provider.acquire !== 'function') {
+      return options;
+    }
+
+    try {
+      const failedPort = Number(resolvedProxy?.port || 0) || null;
+      const replacementLease = await provider.acquire({
+        consumer: 'recon-pure-protocol-request',
+        sessionKey: `${this.navigator?.traceId || 'trace-pure-protocol'}:protocol:${attempt + 1}`,
+        sticky: false,
+        excludePorts: failedPort ? [failedPort] : [],
+        metadata: {
+          reason: 'pure_protocol_fetch_retry',
+          traceId: this.navigator?.traceId || 'trace-pure-protocol'
+        }
+      });
+
+      if (!replacementLease?.proxy?.server) {
+        return options;
+      }
+
+      if (
+        resolvedProxy?.lease?.id
+        && resolvedProxy.lease.id !== replacementLease.id
+        && typeof provider.release === 'function'
+      ) {
+        await provider.release(resolvedProxy.lease).catch((error) => {
+          this.logger.warn('pure_protocol_request_proxy_release_failed', {
+            traceId: this.navigator?.traceId || 'trace-pure-protocol',
+            proxyPort: Number(resolvedProxy?.port || 0) || null,
+            proxyLeaseId: resolvedProxy.lease.id,
+            error: error.message
+          });
+        });
+      }
+
+      this.logger.warn('pure_protocol_request_proxy_rotated', {
+        traceId: this.navigator?.traceId || 'trace-pure-protocol',
+        url,
+        attempt: attempt + 1,
+        statusCode,
+        previousProxyPort: Number(resolvedProxy?.port || 0) || null,
+        nextProxyPort: Number(replacementLease.proxy.port || 0) || null
+      });
+
+      return {
+        ...options,
+        proxyLease: replacementLease,
+        requestProxyLease: replacementLease,
+        proxy: undefined,
+        requestProxy: undefined,
+        proxyServer: replacementLease.proxy.server,
+        requestProxyServer: replacementLease.proxy.server,
+        proxyPort: Number(replacementLease.proxy.port || 0) || undefined,
+        requestProxyPort: Number(replacementLease.proxy.port || 0) || undefined
+      };
+    } catch (error) {
+      this.logger.warn('pure_protocol_request_proxy_rotation_failed', {
+        traceId: this.navigator?.traceId || 'trace-pure-protocol',
+        url,
+        attempt: attempt + 1,
+        statusCode,
+        error: error.message
+      });
+      return options;
+    }
+  },
+
+  _decoratePureProtocolFetchResult(result = {}, options = {}) {
+    const resolvedProxy = this._resolvePureProtocolRequestProxy(options);
+    const activeJa3Profile = resolvedProxy?.port
+      ? this._resolveNodeSpecificJa3Profile(resolvedProxy.port)
+      : null;
+    const activeProxyState = {
+      lease: resolvedProxy?.lease || null,
+      server: String(resolvedProxy?.server || '').trim(),
+      port: Number(resolvedProxy?.port || 0) || null,
+      lineageKey: activeJa3Profile?.lineageKey || null,
+      ja3ProfileId: activeJa3Profile?.ja3ProfileId || null,
+      ja3Source: activeJa3Profile?.source || null
+    };
+
+    return {
+      ...result,
+      activeProxyState,
+      requestProxyLease: activeProxyState.lease,
+      requestProxyServer: activeProxyState.server,
+      requestProxyPort: activeProxyState.port
+    };
+  },
+
+  _resolveNodeSpecificJa3Profile(proxyPort = 0) {
+    const normalizedProxyPort = Number(proxyPort || 0);
+    const sessionManager = this.navigator?.browserContext?.sessionManager || null;
+    if (sessionManager && typeof sessionManager.resolveProtocolIdentity === 'function') {
+      const resolvedIdentity = sessionManager.resolveProtocolIdentity({
+        proxyPort: normalizedProxyPort,
+        ciphersCount: JA3_CIPHER_SUITES.length,
+        sigalgsCount: JA3_SIGALGS.length
+      });
+      return {
+        cipherIdx: Number.isInteger(resolvedIdentity?.cipherIdx)
+          ? resolvedIdentity.cipherIdx
+          : normalizedProxyPort % JA3_CIPHER_SUITES.length,
+        sigalgIdx: Number.isInteger(resolvedIdentity?.sigalgIdx)
+          ? resolvedIdentity.sigalgIdx
+          : (normalizedProxyPort + 1) % JA3_SIGALGS.length,
+        lineageKey: resolvedIdentity?.lineageKey || null,
+        ja3ProfileId: resolvedIdentity?.ja3ProfileId || null,
+        source: resolvedIdentity?.source || 'session_buffer_pool'
+      };
+    }
+
+    return {
+      cipherIdx: normalizedProxyPort % JA3_CIPHER_SUITES.length,
+      sigalgIdx: (normalizedProxyPort + 1) % JA3_SIGALGS.length,
+      lineageKey: null,
+      ja3ProfileId: null,
+      source: 'derived'
+    };
+  },
+
+  _resolvePureProtocolSessionSourceFormat(options = {}) {
+    for (const candidate of [options.sourceFormat, options.sessionSourceFormat]) {
+      const sourceFormat = String(candidate || '').trim();
+      if (sourceFormat) {
+        return sourceFormat;
+      }
+    }
+
+    const sessionManager = this.navigator?.browserContext?.sessionManager || null;
+    if (sessionManager && typeof sessionManager.load === 'function') {
+      const snapshot = sessionManager.load();
+      const sourceFormat = String(snapshot?.sourceFormat || '').trim();
+      if (sourceFormat) {
+        return sourceFormat;
+      }
+    }
+
+    return 'unknown';
+  },
+
+  _auditPureProtocol503Profile(result = {}, options = {}, resolvedProxy = null) {
+    const statusCode = Number(result.status) || null;
+    if (statusCode !== 503) {
+      return;
+    }
+
+    const proxyPort = Number(resolvedProxy?.port || 0) || null;
+    const ja3Profile = proxyPort ? this._resolveNodeSpecificJa3Profile(proxyPort) : null;
+
+    this.logger.warn('navigator_http_503_profile_audit', {
+      traceId: this.navigator?.traceId || 'trace-pure-protocol',
+      proxyPort,
+      ja3ProfileId: ja3Profile?.ja3ProfileId || null,
+      statusCode,
+      sourceFormat: this._resolvePureProtocolSessionSourceFormat(options),
+      lineageKey: ja3Profile?.lineageKey || null,
+      ja3Source: ja3Profile?.source || null
+    });
   },
 
   async _fetchPureProtocolTextViaProxyRequest(url, options = {}, redirectCount = 0) {
@@ -423,6 +753,8 @@ const reconProtocolAdapter = {
     const agent = requestUrl.protocol === 'https:'
       ? new HttpsProxyAgent(resolvedProxy.server)
       : new HttpProxyAgent(resolvedProxy.server);
+    const proxyPort = resolvedProxy.port || 0;
+    const ja3Profile = this._resolveNodeSpecificJa3Profile(proxyPort);
 
     return new Promise((resolve) => {
       const req = requestLib.request({
@@ -432,7 +764,11 @@ const reconProtocolAdapter = {
         protocol: requestUrl.protocol,
         method: 'GET',
         headers: requestHeaders,
-        agent
+        agent,
+        ciphers: JA3_CIPHER_SUITES[ja3Profile.cipherIdx],
+        sigalgs: JA3_SIGALGS[ja3Profile.sigalgIdx],
+        minVersion: 'TLSv1.2',
+        maxVersion: 'TLSv1.3'
       }, (response) => {
         const chunks = [];
         response.on('data', chunk => chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)));
@@ -537,16 +873,39 @@ const reconProtocolAdapter = {
     const maxAttempts = Math.max(1, Number(options.maxAttempts || PURE_PROTOCOL_CONFIG.fetch_max_attempts || 3));
     const retryDelayMs = Math.max(0, Number(options.retryDelayMs ?? PURE_PROTOCOL_CONFIG.fetch_retry_delay_ms ?? 750));
     let lastResult = { success: false, status: null, error: 'PURE_PROTOCOL_FETCH_UNINITIALIZED', text: '' };
+    let activeOptions = { ...options };
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-      const result = await this._fetchPureProtocolTextOnce(url, options);
+      const result = await this._fetchPureProtocolTextOnce(url, activeOptions);
       if (result.success) {
-        return result;
+        return this._decoratePureProtocolFetchResult(result, activeOptions);
       }
 
       lastResult = result;
+      const statusCode = Number(result.status) || null;
+      const shouldReportProxyFailure = statusCode === 429 || statusCode === 503;
+      const resolvedProxy = shouldReportProxyFailure
+        ? this._resolvePureProtocolRequestProxy(activeOptions)
+        : null;
+      if (statusCode === 503) {
+        this._auditPureProtocol503Profile(result, activeOptions, resolvedProxy);
+      }
+      if (shouldReportProxyFailure) {
+        await this._reportPureProtocolFetchFailure(result, url, activeOptions, resolvedProxy);
+      }
+
       if (attempt >= maxAttempts || !this._isRetryablePureProtocolFetchFailure(result)) {
-        return result;
+        return this._decoratePureProtocolFetchResult(result, activeOptions);
+      }
+
+      if (shouldReportProxyFailure) {
+        activeOptions = await this._rotatePureProtocolRequestProxy(
+          result,
+          url,
+          activeOptions,
+          attempt - 1,
+          resolvedProxy
+        );
       }
 
       const retryAfterMs = this.navigator && typeof this.navigator._parseRetryAfterMs === 'function'
@@ -558,14 +917,15 @@ const reconProtocolAdapter = {
         url,
         attempt,
         maxAttempts,
-        statusCode: Number(result.status) || null,
+        statusCode,
         error: result.error || '',
+        proxyPort: Number(this._resolvePureProtocolRequestProxy(activeOptions)?.port || 0) || null,
         delayMs: scheduledDelayMs
       });
       await this._waitPureProtocolFetchRetry(scheduledDelayMs);
     }
 
-    return lastResult;
+    return this._decoratePureProtocolFetchResult(lastResult, activeOptions);
   },
 
   // eslint-disable-next-line complexity
@@ -822,5 +1182,7 @@ const reconProtocolAdapter = {
 };
 
 module.exports = {
-  reconProtocolAdapter
+  reconProtocolAdapter,
+  JA3_CIPHER_SUITES,
+  JA3_SIGALGS
 };

@@ -188,7 +188,12 @@ describe('ReconEngine - Bulk Flow TDD', () => {
           return pendingMatches;
         },
         async batchSaveOddsPortalMappings(mappings) {
-          return { success: true, inserted: mappings.length };
+          return {
+            success: true,
+            inserted: mappings.length,
+            updated: mappings.length,
+            applied: mappings.length
+          };
         },
         async batchUpdateMatchPipelineStatus(matchIds) {
           return { updated: matchIds.length };
@@ -260,7 +265,12 @@ describe('ReconEngine - Bulk Flow TDD', () => {
           return leagueName === 'Championship' ? championshipMatches : eplMatches;
         },
         async batchSaveOddsPortalMappings(mappings) {
-          return { success: true, inserted: mappings.length };
+          return {
+            success: true,
+            inserted: mappings.length,
+            updated: mappings.length,
+            applied: mappings.length
+          };
         },
         async batchUpdateMatchPipelineStatus(matchIds) {
           return { updated: matchIds.length };
@@ -323,7 +333,12 @@ describe('ReconEngine - Bulk Flow TDD', () => {
         },
         async batchSaveOddsPortalMappings(mappings, options) {
           savedBatches.push({ mappings, options });
-          return { success: true, inserted: mappings.length };
+          return {
+            success: true,
+            inserted: mappings.length,
+            updated: mappings.length,
+            applied: mappings.length
+          };
         },
         async batchUpdateMatchPipelineStatus(matchIds, status) {
           statusCalls.push({ matchIds, status });
@@ -520,7 +535,9 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     assert.strictEqual(outcome.status, 'linked');
     assert.strictEqual(outcome.mapping.match_id, '47_20252026_retry');
     assert.strictEqual(outcome.mapping.oddsportal_hash, 'retry-pass');
-    assert.ok(outcome.mapping.match_confidence < 0.75, '应通过 fuzzy retry 而非全局阈值直通');
+    assert.strictEqual(outcome.mapping.mapping_method, 'fuzzy');
+    assert.ok(outcome.mapping.match_confidence >= 0.75, '当前评分会叠加开球时间权重');
+    assert.ok(outcome.mapping.match_confidence < 0.99, '仍应保持 fuzzy，而非 exact');
   });
 
   it('RECON_MISMATCH 重试不得放过单边队名相似的错误候选', async () => {
@@ -647,7 +664,12 @@ describe('ReconEngine - Bulk Flow TDD', () => {
           return pendingMatches;
         },
         async batchSaveOddsPortalMappings(mappings) {
-          return { success: true, inserted: mappings.length };
+          return {
+            success: true,
+            inserted: mappings.length,
+            updated: mappings.length,
+            applied: mappings.length
+          };
         },
         async batchUpdateMatchPipelineStatus(matchIds) {
           return { updated: matchIds.length };

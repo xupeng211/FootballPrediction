@@ -46,7 +46,7 @@ function executeZombieKiller() {
 function normalizeBulkConcurrency(requested) {
     const parsed = parseInt(requested, 10);
     const fallback = Number.isFinite(parsed) ? parsed : 10;
-    return Math.min(12, Math.max(8, fallback));
+    return Math.min(15, Math.max(8, fallback));
 }
 
 function parseCliArgs(argv = process.argv.slice(2)) {
