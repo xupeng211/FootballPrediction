@@ -9,6 +9,7 @@ const TEST_ROOT = path.join(PROJECT_ROOT, 'tests');
 const UNIT_DIR = path.join(TEST_ROOT, 'unit');
 const INTEGRATION_DIR = path.join(TEST_ROOT, 'integration');
 const STRESS_DIR = path.join(TEST_ROOT, 'stress');
+const COVERAGE_REPORT_DIR = path.join(PROJECT_ROOT, 'reports', 'coverage', 'node');
 const DEFAULT_MAX_BUFFER = 1024 * 1024 * 100;
 
 const mode = process.argv[2] || 'default';
@@ -495,6 +496,47 @@ function enforceCoverageThresholds(summary) {
   return 0;
 }
 
+function writeCoverageSummary(summary) {
+  if (!summary) {
+    return;
+  }
+
+  fs.mkdirSync(COVERAGE_REPORT_DIR, { recursive: true });
+  const payload = {
+    total: {
+      lines: {
+        total: 0,
+        covered: 0,
+        skipped: 0,
+        pct: summary.lines,
+      },
+      statements: {
+        total: 0,
+        covered: 0,
+        skipped: 0,
+        pct: summary.lines,
+      },
+      functions: {
+        total: 0,
+        covered: 0,
+        skipped: 0,
+        pct: summary.functions,
+      },
+      branches: {
+        total: 0,
+        covered: 0,
+        skipped: 0,
+        pct: summary.branches,
+      },
+    },
+  };
+  fs.writeFileSync(
+    path.join(COVERAGE_REPORT_DIR, 'coverage-summary.json'),
+    JSON.stringify(payload, null, 2),
+    'utf8',
+  );
+}
+
 /**
  * 执行 node --test。
  * @param {string[]} files
@@ -549,6 +591,7 @@ function runNodeTests(files, options = {}) {
 
   if (coverage && !supportsNativeCoverageThresholds()) {
     const summary = parseCoverageSummary(combinedOutput);
+    writeCoverageSummary(summary);
     const coverageExitCode = enforceCoverageThresholds(summary);
     if (coverageExitCode !== 0) {
       console.error(`[TEST-GATE] ${label}已完成，但覆盖率门禁失败。`);
