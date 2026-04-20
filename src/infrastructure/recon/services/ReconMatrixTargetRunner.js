@@ -113,6 +113,8 @@ function buildReconTargetState(target, runtimeTarget, scopedPending, effectiveTh
   };
 }
 
+module.exports.hasOnlyFuturePendingMatches = hasOnlyFuturePendingMatches;
+
 const reconMatrixTargetRunner = {
   _shouldUseTargetDrivenSingleMatch(runtimeTarget = {}, pendingMatches = [], candidates = []) {
     return Number.isInteger(runtimeTarget?.matchLimit)
@@ -818,4 +820,4 @@ const reconMatrixTargetRunner = {
   }
 };
 
-module.exports = { reconMatrixTargetRunner };
+module.exports = { reconMatrixTargetRunner, hasOnlyFuturePendingMatches };

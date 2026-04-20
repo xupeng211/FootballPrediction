@@ -521,6 +521,23 @@ describe('ReconMatrixTargetRunner', () => {
     }), false);
   });
 
+  it('hasOnlyFuturePendingMatches 应正确识别全部为未来比赛的场景', () => {
+    const { hasOnlyFuturePendingMatches } = require('../../src/infrastructure/recon/services/ReconMatrixTargetRunner');
+
+    assert.equal(hasOnlyFuturePendingMatches([
+      { match_id: 'm1', match_date: '2099-04-19T23:00:00.000Z' },
+      { match_id: 'm2', match_date: '2099-04-20T23:00:00.000Z' }
+    ]), true);
+
+    assert.equal(hasOnlyFuturePendingMatches([
+      { match_id: 'm1', match_date: '2026-04-01T00:00:00.000Z' },
+      { match_id: 'm2', match_date: '2099-04-20T23:00:00.000Z' }
+    ]), false);
+
+    assert.equal(hasOnlyFuturePendingMatches([]), false);
+    assert.equal(hasOnlyFuturePendingMatches(null), false);
+  });
+
   it('_runPostResultsFallbackRoutes 在 results-only 模式遇到残缺 results source 时应抛错重试', async () => {
     const calls = [];
     const runner = createRunner({
