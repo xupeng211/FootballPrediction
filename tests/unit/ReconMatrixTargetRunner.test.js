@@ -786,6 +786,23 @@ describe('ReconMatrixTargetRunner', () => {
       (error) => error?.code === 'SOURCE_EMPTY' && error?.sourceUrl === 'results://mls'
     );
 
+    const futurePendingRunner = createRunner();
+    assert.doesNotThrow(() => futurePendingRunner._assertReconTargetResolved({
+      target: { league: { name: 'MLS' }, dbSeason: '2025/2026' },
+      runtimeTarget: { allowFutureSlowRoutes: true },
+      remainingRoutePending: [{ match_id: 'm-future', match_date: '2099-04-19T23:00:00.000Z' }],
+      lastSourceState: 'SOURCE_EMPTY',
+      finalSourceUrl: null,
+      finalSourceSeason: null
+    }, {
+      resultsUrl: 'results://mls',
+      season: '2025/2026'
+    }));
+    assert.equal(
+      futurePendingRunner.__events.info.some((entry) => entry.event === 'recon_future_pending_unresolved_deferred'),
+      true
+    );
+
     assert.deepEqual(
       unresolvedRunner._buildReconTargetResult({
         progress: { total: 1 },

@@ -24,6 +24,11 @@ function hasFuturePendingMatches(pendingMatches = [], now = new Date()) {
     .some((match) => isFuturePendingMatch(match, now));
 }
 
+function hasOnlyFuturePendingMatches(pendingMatches = [], now = new Date()) {
+  const matches = Array.isArray(pendingMatches) ? pendingMatches : [];
+  return matches.length > 0 && matches.every((match) => isFuturePendingMatch(match, now));
+}
+
 function shouldDeferFuturePendingFromResults(routeKind, routeSource = null) {
   if (routeKind !== 'results' && routeKind !== 'results_terminal') {
     return false;
@@ -767,6 +772,18 @@ const reconMatrixTargetRunner = {
 
   _assertReconTargetResolved(routeState, target) {
     if (routeState.remainingRoutePending.length === 0) {
+      return;
+    }
+
+    if (
+      routeState.runtimeTarget?.allowFutureSlowRoutes === true
+      && hasOnlyFuturePendingMatches(routeState.remainingRoutePending)
+    ) {
+      this.logger.info('recon_future_pending_unresolved_deferred', {
+        league: routeState.target?.league?.name || null,
+        season: routeState.target?.dbSeason || null,
+        remainingPending: routeState.remainingRoutePending.length
+      });
       return;
     }
 
