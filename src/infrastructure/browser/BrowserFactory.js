@@ -13,6 +13,7 @@
 const { chromium } = require('playwright');
 const { getPathResolver } = require('../utils/PathResolver');
 const { logger } = require('../utils/Logger');
+const { mergeContextExtraHTTPHeaders } = require('../shared/helpers/browserHeaderUtils');
 
 // ============================================================================
 // BrowserFactory - 浏览器工厂类
@@ -113,10 +114,21 @@ class BrowserFactory {
             ? undefined
             : { server: identity.proxy.url };
 
+        const extraHTTPHeaders = mergeContextExtraHTTPHeaders({
+            extraHeaders: identity.stealth.extraHTTPHeaders || {},
+            userAgent: identity.stealth.userAgent,
+            acceptLanguage: identity.stealth.locale === 'en-US'
+                ? 'en-US,en;q=0.9'
+                : identity.stealth.extraHTTPHeaders?.['accept-language']
+                    || identity.stealth.extraHTTPHeaders?.['Accept-Language']
+                    || 'en-US,en;q=0.9',
+            platform: identity.stealth.platform || 'Win32'
+        });
+
         const context = await this.browser.newContext({
             viewport: identity.stealth.viewport,
             userAgent: identity.stealth.userAgent,
-            extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
+            extraHTTPHeaders: extraHTTPHeaders,
             proxy: proxyConfig,
             deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
             locale: identity.stealth.locale || 'en-US',

@@ -448,8 +448,9 @@ const reconTaskPlannerSourceSelector = {
       };
     }
 
-    const orderedPending = [...pendingMatches]
-      .sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
+    const orderedPending = typeof this.orderPendingMatchesForProcessing === 'function'
+      ? this.orderPendingMatchesForProcessing(pendingMatches)
+      : [...pendingMatches].sort((a, b) => String(a.match_id).localeCompare(String(b.match_id)));
     const eligibleSamplePool = this.filterPlaceholderFixtures(orderedPending);
     const sample = eligibleSamplePool.slice(0, Math.min(this.sampleSize, eligibleSamplePool.length));
     const sampleTarget = sample.length;
@@ -585,6 +586,24 @@ const reconTaskPlannerSourceSelector = {
           error: error.message
         });
         if (error?.code === 'LEAGUE_TIMEOUT') {
+          const bestHasUsableCandidates = Array.isArray(best?.candidates)
+            && best.candidates.length > 0
+            && best?.sourceHealth?.incomplete !== true;
+          if (bestHasUsableCandidates) {
+            this.logger.warn('recon_candidate_source_timeout_tolerated', {
+              league: target.league.name,
+              dbSeason: target.dbSeason,
+              sourceSeason: source.season,
+              sourceUrl: source.url,
+              breakerKey: sourceCircuitBreakerKey,
+              fallbackError: error.message,
+              toleratedSourceUrl: best?.source?.url || null,
+              toleratedSourceSeason: best?.source?.season || null,
+              toleratedCandidateCount: best.candidates.length,
+              toleratedSampleLinked: Number(best?.sampleLinked || 0)
+            });
+            break;
+          }
           throw error;
         }
         continue;

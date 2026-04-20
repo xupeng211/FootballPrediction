@@ -1,6 +1,43 @@
 'use strict';
 
 const crypto = require('crypto');
+const fs = require('node:fs');
+const path = require('node:path');
+
+const DEFAULT_TEAM_MAPPINGS_PATH = path.resolve(__dirname, '../../../../config/recon_team_mappings.json');
+let cachedConfigTeamMappings = null;
+
+function normalizeTeamMappings(payload) {
+  const rawMappings = Array.isArray(payload)
+    ? payload
+    : Array.isArray(payload?.mappings)
+      ? payload.mappings
+      : [];
+
+  return Object.freeze(rawMappings
+    .map((entry) => ({
+      local_team_name: String(entry?.local_team_name || '').trim(),
+      remote_name: String(entry?.remote_name || '').trim()
+    }))
+    .filter((entry) => entry.local_team_name && entry.remote_name)
+    .map((entry) => Object.freeze(entry)));
+}
+
+function loadConfigTeamMappings() {
+  if (cachedConfigTeamMappings) {
+    return cachedConfigTeamMappings;
+  }
+
+  const mappingsPath = process.env.RECON_TEAM_MAPPINGS_PATH || DEFAULT_TEAM_MAPPINGS_PATH;
+  try {
+    const payload = JSON.parse(fs.readFileSync(mappingsPath, 'utf8'));
+    cachedConfigTeamMappings = normalizeTeamMappings(payload);
+  } catch (_error) {
+    cachedConfigTeamMappings = Object.freeze([]);
+  }
+
+  return cachedConfigTeamMappings;
+}
 
 const reconLocalDictionaryService = {
   async _primeLeagueDictionary(target) {
@@ -78,6 +115,18 @@ const reconLocalDictionaryService = {
       }
 
       index.set(key, entry);
+    }
+
+    for (const entry of loadConfigTeamMappings()) {
+      const key = this._normalizeLocalDictionaryTeamName(entry?.local_team_name);
+      if (!key) {
+        continue;
+      }
+
+      index.set(key, {
+        ...entry,
+        source: 'config_alias_override'
+      });
     }
 
     target.localDictionaryIndex = index;

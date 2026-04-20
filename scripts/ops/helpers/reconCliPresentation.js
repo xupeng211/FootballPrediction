@@ -131,7 +131,7 @@ function printUsage(output = console.log) {
 
   [
     '用法: node scripts/ops/recon_scanner.js --season 2024-2025 [选项]',
-    '  --league <联赛代码|联赛ID>    指定单联赛扫描，默认 EPL',
+    '  --league <联赛代码|联赛ID[,...]> 指定一个或多个联赛扫描，默认 EPL',
     '  --all-leagues                扫描全部激活联赛',
     '  --all-non-linked             扫描所有非 RECON_LINKED 比赛',
     '  --limit <N>                  启用 Recon Matrix 并限制待处理场次',

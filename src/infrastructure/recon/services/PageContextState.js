@@ -12,6 +12,7 @@ const {
   resolveList,
   syncStealthProviderProfile
 } = require('./BrowserContextConfigFactory');
+const { mergeContextExtraHTTPHeaders } = require('../../shared/helpers/browserHeaderUtils');
 
 const BACKEND_FETCH_FAILED_RE = /backend fetch failed|guru meditation/i;
 
@@ -42,12 +43,13 @@ const pageContextState = {
       screen: this.viewport,
       hasTouch: this.hasTouch,
       isMobile: this.isMobile,
-      extraHTTPHeaders: {
-        ...(externalSession?.extraHTTPHeaders || {}),
-        ...this.stealthExtraHTTPHeaders,
-        'accept-language': this.acceptLanguage,
-        ...(contextUserAgent ? { 'user-agent': contextUserAgent } : {})
-      }
+      extraHTTPHeaders: mergeContextExtraHTTPHeaders({
+        baseHeaders: externalSession?.extraHTTPHeaders || {},
+        extraHeaders: this.stealthExtraHTTPHeaders,
+        userAgent: contextUserAgent,
+        acceptLanguage: this.acceptLanguage,
+        platform: this.platform
+      })
     };
   },
 

@@ -252,6 +252,14 @@ class ReconNavigator {
     return this.retryCoordinator.executeWith503Retry(operation, context);
   }
 
+  async rotateProxyForRetry(failure = {}, context = {}, attempt = 0) {
+    return this.retryCoordinator.rotateProxyForRetry(failure, context, attempt);
+  }
+
+  auditBrowserNavigationFailure(failure = {}, context = {}, error = null) {
+    return this.retryCoordinator.auditBrowserNavigationFailure(failure, context, error);
+  }
+
   async launch(options = {}) {
     if (this.isHealthy()) {
       return this.page;
@@ -415,6 +423,17 @@ class ReconNavigator {
         timeoutMs: timeout
       }
     )).catch((error) => {
+      this.auditBrowserNavigationFailure(
+        { statusCode: Number(error?.statusCode) || null },
+        {
+          operationName: 'navigate',
+          breakerKey,
+          inspectUrl: url,
+          timeoutMs: timeout,
+          stage: 'navigate_catch'
+        },
+        error
+      );
       this.logger.error('navigate_error', { url, breakerKey, error: error.message });
       throw error;
     });

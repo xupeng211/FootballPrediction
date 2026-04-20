@@ -1,0 +1,11 @@
+{
+  "mappings": [
+    { "local_team_name": "Yokohama F.Marinos", "remote_name": "Yokohama Marinos" },
+    { "local_team_name": "Gremio", "remote_name": "Grêmio" },
+    { "local_team_name": "Atletico Mg", "remote_name": "Atlético Mineiro" },
+    { "local_team_name": "Flamengo", "remote_name": "Flamengo RJ" },
+    { "local_team_name": "Vasco Da Gama", "remote_name": "Vasco" },
+    { "local_team_name": "Santos FC", "remote_name": "Santos" },
+    { "local_team_name": "Real Zaragoza", "remote_name": "Zaragoza" }
+  ]
+}

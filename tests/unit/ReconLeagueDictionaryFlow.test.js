@@ -49,7 +49,12 @@ describe('Recon League Dictionary Flow', () => {
         },
         async batchSaveOddsPortalMappings(mappings) {
           savedMappings.push(...mappings);
-          return { success: true, inserted: mappings.length, updated: 0 };
+          return {
+            success: true,
+            inserted: mappings.length,
+            updated: mappings.length,
+            applied: mappings.length
+          };
         },
         async batchUpdateMatchPipelineStatus(matchIds) {
           return { updated: matchIds.length };
@@ -67,7 +72,7 @@ describe('Recon League Dictionary Flow', () => {
                 url: 'https://www.oddsportal.com/football/h2h/gijon-69w4Rb2d/dep-la-coruna-Q51ZzMS6/#23spHYrm',
                 homeTeam: 'Gijon',
                 awayTeam: 'Dep La Coruna',
-                matchDate: '2026-01-01T00:00:00.000Z'
+                matchDate: '2026-04-05T18:00:00.000Z'
               }
             ],
             pagesScanned: 1,
@@ -145,7 +150,12 @@ describe('Recon League Dictionary Flow', () => {
         },
         async batchSaveOddsPortalMappings(mappings) {
           savedMappings.push(...mappings);
-          return { success: true, inserted: mappings.length, updated: 0 };
+          return {
+            success: true,
+            inserted: mappings.length,
+            updated: mappings.length,
+            applied: mappings.length
+          };
         },
         async batchUpdateMatchPipelineStatus(matchIds) {
           return { updated: matchIds.length };
@@ -256,7 +266,12 @@ describe('Recon League Dictionary Flow', () => {
         },
         async batchSaveOddsPortalMappings(mappings) {
           savedMappings.push(...mappings);
-          return { success: true, inserted: mappings.length, updated: 0 };
+          return {
+            success: true,
+            inserted: mappings.length,
+            updated: mappings.length,
+            applied: mappings.length
+          };
         },
         async batchUpdateMatchPipelineStatus(matchIds) {
           return { updated: matchIds.length };

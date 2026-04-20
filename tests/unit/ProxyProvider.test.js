@@ -90,6 +90,82 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     assert.strictEqual(node.cooling, false);
   });
 
+  test('429 应在首次命中后立即隔离并进入 20 分钟冷却', async () => {
+    let now = 20_000;
+    const alerts = [];
+    const provider = new ProxyProvider({
+      now: () => now,
+      healthCheckIntervalMs: 0,
+      rateLimitIsolationMs: 1_200_000,
+      minHealthScore: 60
+    });
+    const totalPorts = provider.getNodeStates().length;
+
+    provider.on('alert', payload => {
+      alerts.push(payload);
+    });
+
+    const lease = await provider.acquire({
+      consumer: 'recon',
+      sessionKey: 'rate-limit-429',
+      sticky: false
+    });
+
+    await provider.reportFailure(lease.id, { statusCode: 429, reason: 'Too Many Requests' });
+
+    let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.isolated, true);
+    assert.strictEqual(node.cooling, true);
+    assert.strictEqual(provider.getStats().available, totalPorts - 1);
+    assert.ok(alerts.some(item => item.type === 'rate_limit_isolation' && item.port === lease.proxy.port));
+    assert.ok(alerts.some(item => item.type === 'proxy_cooled_down' && item.port === lease.proxy.port));
+
+    now += 1_199_999;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.isolated, true);
+    assert.strictEqual(node.cooling, true);
+
+    now += 2;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.isolated, false);
+    assert.strictEqual(node.cooling, false);
+  });
+
+  test('503 在 observationThreshold=1 时应首次命中立即进入 20 分钟冷却', async () => {
+    let now = 30_000;
+    const alerts = [];
+    const provider = new ProxyProvider({
+      now: () => now,
+      healthCheckIntervalMs: 0,
+      http503CooldownMs: 1_200_000,
+      http503ObservationThreshold: 1
+    });
+
+    provider.on('alert', payload => {
+      alerts.push(payload);
+    });
+
+    const lease = await provider.acquire({
+      consumer: 'recon',
+      sessionKey: 'aggressive-503',
+      sticky: false
+    });
+
+    await provider.reportFailure(lease.id, { statusCode: 503, reason: 'HTTP 503' });
+
+    let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, true);
+    assert.ok(alerts.some(item => item.type === 'proxy_cooled_down' && item.port === lease.proxy.port));
+
+    now += 1_199_999;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, true);
+
+    now += 2;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, false);
+  });
+
   test('403 应立即触发 30 分钟关键冷却并跌破健康分租用阈值', async () => {
     let now = 10_000;
     const provider = new ProxyProvider({

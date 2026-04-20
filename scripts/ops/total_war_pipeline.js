@@ -14,15 +14,19 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { Pool } = require('pg');
 const { ProcessSupervisor } = require('../../src/core/process/ProcessSupervisor');
+const { ReconSessionManager } = require('../../src/infrastructure/recon/services/ReconSessionManager');
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
 const RUNTIME_DIR = path.join(ROOT_DIR, 'tmp', 'total_war_pipeline');
 const STATE_PATH = path.join(RUNTIME_DIR, 'state.json');
 const LOCK_PATH = path.join(RUNTIME_DIR, 'pipeline.lock');
 const LOG_PATH = path.join(RUNTIME_DIR, 'pipeline.log');
+const RECON_SESSION_BUFFER_PATH = path.join(RUNTIME_DIR, 'recon_session_buffer_pool.json');
 const DEFAULT_RECON_CONFIG_PATH = path.join(ROOT_DIR, 'config', 'recon_config.json');
 const DEFAULT_LOG_MAX_BYTES = 100 * 1024 * 1024;
 const DEFAULT_LOG_RETAINED_FILES = 5;
+const DEFAULT_RECON_PREFLIGHT_WAIT_MS = 2000;
+const DEFAULT_RECON_SESSION_BUFFER_TTL_MS = 30 * 60 * 1000;
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -52,9 +56,12 @@ TOTAL WAR PIPELINE - 24 小时自动编排器
   --recon-concurrency=N      Recon 并发，默认 5
   --recon-limit=N            Recon 单批上限，默认读取配置
   --recon-threshold=N        触发 Recon 的新增 raw 阈值，默认 50
+  --threshold=0.X            Recon 匹配置信度阈值，透传给 recon_scanner
   --task-stage=STAGE         指定阶段: auto|discovery|harvest|recon，默认 auto
   --skip-leagues=LIST        Recon 跳过联赛（逗号分隔，可重复）
+  --include-all-leagues      Recon 忽略默认 skip_list，显式纳入全部联赛
   --retry-failed-only        仅执行 pending/harvested/mismatch 收尾，不再触发 Discovery
+  --mismatch-retry-only      Recon 仅重扫 RECON_MISMATCH
   --recon-defer-cooldown-ms  Recon 因 LEAGUE_TIMEOUT 延迟重试时长，默认 600000ms
   --use-proxy                Recon 子任务显式启用代理
   --force-pure-protocol      Recon 子任务强制 pure protocol
@@ -144,6 +151,36 @@ function getDefaultReconDeferCooldownMs() {
   return 10 * 60 * 1000;
 }
 
+function getDefaultReconSessionBufferTtlMs() {
+  const config = readReconConfigFile();
+  const envTtl = parseInt(process.env.RECON_SESSION_BUFFER_TTL_MS || '', 10);
+  if (Number.isInteger(envTtl) && envTtl > 0) {
+    return envTtl;
+  }
+
+  const configTtl = Number(config?.automation?.total_war?.recon_session_buffer_ttl_ms);
+  if (Number.isInteger(configTtl) && configTtl > 0) {
+    return configTtl;
+  }
+
+  return DEFAULT_RECON_SESSION_BUFFER_TTL_MS;
+}
+
+function getDefaultReconPreflightWaitMs() {
+  const config = readReconConfigFile();
+  const envWaitMs = parseInt(process.env.RECON_PREFLIGHT_WAIT_MS || '', 10);
+  if (Number.isInteger(envWaitMs) && envWaitMs >= 0) {
+    return envWaitMs;
+  }
+
+  const configWaitMs = Number(config?.automation?.total_war?.recon_preflight_wait_ms);
+  if (Number.isInteger(configWaitMs) && configWaitMs >= 0) {
+    return configWaitMs;
+  }
+
+  return DEFAULT_RECON_PREFLIGHT_WAIT_MS;
+}
+
 function getDefaultSkipLeagues() {
   const config = readReconConfigFile();
   return mergeLeagueLists(config?.automation?.total_war?.skip_list || []);
@@ -197,10 +234,16 @@ function parseArgs(argv = process.argv.slice(2)) {
     reconConcurrency: 5,
     reconLimit: getDefaultReconLimit(),
     reconThreshold: getDefaultReconThreshold(),
+    threshold: null,
     reconDeferCooldownMs: getDefaultReconDeferCooldownMs(),
+    reconSessionBufferPath: String(process.env.RECON_SESSION_BUFFER_PATH || RECON_SESSION_BUFFER_PATH),
+    reconSessionBufferTtlMs: getDefaultReconSessionBufferTtlMs(),
+    reconPreflightWaitMs: getDefaultReconPreflightWaitMs(),
     taskStage: 'auto',
     skipLeagues: getDefaultSkipLeagues(),
+    includeAllLeagues: false,
     retryFailedOnly: false,
+    mismatchRetryOnly: false,
     useProxy: false,
     forcePureProtocol: false,
     maxRuntimeMs: parseInt(process.env.TOTAL_WAR_MAX_RUNTIME_MS || '0', 10) || 0,
@@ -225,6 +268,12 @@ function parseArgs(argv = process.argv.slice(2)) {
     return Number.isNaN(parsed) ? fallback : parsed;
   };
 
+  const readFloatValue = (index, flagName, fallback) => {
+    const rawValue = readNextValue(index, flagName);
+    const parsed = parseFloat(rawValue);
+    return Number.isFinite(parsed) ? parsed : fallback;
+  };
+
   const setPrimaryConcurrency = (value) => {
     const parsed = parseInt(String(value), 10);
     if (!Number.isInteger(parsed) || parsed <= 0) {
@@ -245,6 +294,8 @@ function parseArgs(argv = process.argv.slice(2)) {
       options.dryRun = true;
     } else if (arg === '--retry-failed-only') {
       options.retryFailedOnly = true;
+    } else if (arg === '--mismatch-retry-only') {
+      options.mismatchRetryOnly = true;
     } else if (arg.startsWith('--season=')) {
       options.seasonInput = arg.split('=')[1];
     } else if (arg === '--season') {
@@ -295,6 +346,14 @@ function parseArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--recon-threshold') {
       options.reconThreshold = readNumericValue(index, '--recon-threshold', options.reconThreshold);
       index++;
+    } else if (arg.startsWith('--threshold=')) {
+      options.threshold = Number.parseFloat(arg.split('=')[1]);
+      if (!Number.isFinite(options.threshold)) {
+        options.threshold = null;
+      }
+    } else if (arg === '--threshold') {
+      options.threshold = readFloatValue(index, '--threshold', options.threshold);
+      index++;
     } else if (arg.startsWith('--task-stage=')) {
       options.taskStage = normalizeTaskStage(arg.split('=')[1]);
     } else if (arg === '--task-stage') {
@@ -305,6 +364,9 @@ function parseArgs(argv = process.argv.slice(2)) {
     } else if (arg === '--skip-leagues') {
       options.skipLeagues = mergeLeagueLists(options.skipLeagues, parseCommaSeparatedList(readNextValue(index, '--skip-leagues')));
       index++;
+    } else if (arg === '--include-all-leagues') {
+      options.includeAllLeagues = true;
+      options.skipLeagues = [];
     } else if (arg.startsWith('--recon-defer-cooldown-ms=')) {
       options.reconDeferCooldownMs = parseInt(arg.split('=')[1], 10) || options.reconDeferCooldownMs;
     } else if (arg === '--recon-defer-cooldown-ms') {
@@ -712,6 +774,32 @@ class TotalWarPipeline {
   }
 
   async runManagedTask(taskName, metrics) {
+    if (taskName === 'recon') {
+      const preflightResult = await this.ensureReconGoldenSnapshot(metrics);
+      if (preflightResult.exitCode !== 0) {
+        if (this._shouldDeferReconAfterFailure()) {
+          this.markTaskDeferred(taskName, 'LEAGUE_TIMEOUT');
+          this.logger.warn('task_deferred', {
+            task: taskName,
+            reason: 'LEAGUE_TIMEOUT',
+            exitCode: preflightResult.exitCode,
+            deferredUntil: this.state.tasks[taskName].deferredUntil
+          });
+        } else {
+          this.markTaskFailure(taskName);
+          this.logger.warn('task_failure', {
+            task: taskName,
+            exitCode: preflightResult.exitCode,
+            consecutiveFailures: this.state.tasks[taskName].consecutiveFailures,
+            phase: 'preflight'
+          });
+        }
+
+        this.stateStore.save(this.state);
+        return;
+      }
+    }
+
     const taskConfig = this.buildTaskCommand(taskName, metrics);
     this.logger.info('task_start', {
       task: taskName,
@@ -755,7 +843,124 @@ class TotalWarPipeline {
     return lines.some((line) => /LEAGUE_TIMEOUT|recon_league_timeout/i.test(String(line)));
   }
 
-  buildTaskCommand(taskName, metrics = {}) {
+  _createReconSessionManager(bufferPoolRole = 'worker') {
+    return new ReconSessionManager({
+      logger: this.logger,
+      traceId: `total-war-${bufferPoolRole}`,
+      defaultSourceUrl: 'https://www.oddsportal.com/',
+      bufferPoolPath: this.options.reconSessionBufferPath,
+      bufferPoolTtlMs: this.options.reconSessionBufferTtlMs,
+      bufferPoolRole
+    });
+  }
+
+  buildTaskEnv(taskName, options = {}) {
+    const env = { ...process.env };
+    if (taskName !== 'recon') {
+      return env;
+    }
+
+    const phase = String(options.phase || 'cluster').trim().toLowerCase();
+    env.RECON_SESSION_BUFFER_PATH = this.options.reconSessionBufferPath;
+    env.RECON_SESSION_BUFFER_TTL_MS = String(this.options.reconSessionBufferTtlMs);
+    env.RECON_SESSION_BUFFER_ROLE = phase === 'preflight' ? 'preflight' : 'worker';
+    env.RECON_SESSION_SNAPSHOT_ROLE = phase === 'preflight' ? 'golden' : 'lineage';
+    env.RECON_SESSION_BUFFER_PHASE = phase;
+    if (options.forceGoldenRefresh === true) {
+      env.RECON_SESSION_FORCE_REFRESH = 'true';
+    }
+    return env;
+  }
+
+  async ensureReconGoldenSnapshot(metrics = {}) {
+    const sessionManager = this._createReconSessionManager('preflight');
+    const bufferState = sessionManager.inspectBufferPool();
+    if (bufferState.needsRefresh !== true) {
+      this.logger.info('recon_session_preflight_skipped', {
+        bufferPoolPath: bufferState.path,
+        goldenUpdatedAt: bufferState.goldenUpdatedAt,
+        goldenAgeMs: bufferState.goldenAgeMs,
+        ttlMs: bufferState.ttlMs
+      });
+      return {
+        exitCode: 0,
+        skipped: true,
+        bufferState
+      };
+    }
+
+    const refreshLeaseResult = sessionManager.acquireGoldenRefreshLease();
+    if (refreshLeaseResult.acquired !== true) {
+      this.logger.warn('recon_session_preflight_refresh_busy', {
+        bufferPoolPath: this.options.reconSessionBufferPath,
+        activeLease: refreshLeaseResult.lease || null
+      });
+      return {
+        exitCode: 0,
+        skipped: true,
+        bufferState,
+        leaseBusy: true
+      };
+    }
+
+    try {
+      this.logger.info('recon_session_preflight_start', {
+        bufferPoolPath: this.options.reconSessionBufferPath,
+        ttlMs: this.options.reconSessionBufferTtlMs,
+        goldenAgeMs: bufferState.goldenAgeMs
+      });
+      const preflightConfig = this.buildTaskCommand('recon', metrics, {
+        phase: 'preflight',
+        concurrency: 1,
+        reconLimit: 1,
+        forceGoldenRefresh: true
+      });
+      const exitCode = await this.runChild(preflightConfig);
+      const refreshedState = sessionManager.inspectBufferPool();
+      const hasGoldenSnapshot = refreshedState.hasGoldenSnapshot === true;
+      const toleratedFailure = exitCode !== 0
+        && hasGoldenSnapshot
+        && !this._shouldDeferReconAfterFailure();
+      const effectiveExitCode = exitCode === 0 && hasGoldenSnapshot !== true
+        ? 1
+        : (toleratedFailure ? 0 : exitCode);
+      if (exitCode === 0 && effectiveExitCode !== 0) {
+        this.logger.error('recon_session_preflight_missing_golden_snapshot', {
+          bufferPoolPath: this.options.reconSessionBufferPath
+        });
+      }
+      if (toleratedFailure) {
+        this.logger.warn('recon_session_preflight_tolerated_failure', {
+          exitCode,
+          bufferPoolPath: this.options.reconSessionBufferPath,
+          goldenUpdatedAt: refreshedState.goldenUpdatedAt
+        });
+      }
+      this.logger.info('recon_session_preflight_complete', {
+        exitCode: effectiveExitCode,
+        bufferPoolPath: this.options.reconSessionBufferPath,
+        goldenUpdatedAt: refreshedState.goldenUpdatedAt,
+        goldenAgeMs: refreshedState.goldenAgeMs,
+        hasGoldenSnapshot,
+        toleratedFailure
+      });
+
+      if (effectiveExitCode === 0 && this.options.reconPreflightWaitMs > 0) {
+        await sleep(this.options.reconPreflightWaitMs);
+      }
+
+      return {
+        exitCode: effectiveExitCode,
+        skipped: false,
+        bufferStateBefore: bufferState,
+        bufferStateAfter: refreshedState
+      };
+    } finally {
+      sessionManager.releaseGoldenRefreshLease(refreshLeaseResult.lease);
+    }
+  }
+
+  buildTaskCommand(taskName, metrics = {}, options = {}) {
     const command = process.execPath;
 
     if (taskName === 'discovery') {
@@ -787,7 +992,11 @@ class TotalWarPipeline {
     }
 
     if (taskName === 'recon') {
-      const reconLimit = Math.max(1, Number(this.options.reconLimit) || 0);
+      const reconLimit = Math.max(1, Number(options.reconLimit ?? options.limit ?? this.options.reconLimit) || 0);
+      const reconConcurrency = Math.max(
+        1,
+        Number(options.reconConcurrency ?? options.concurrency ?? this.options.reconConcurrency) || 0
+      );
       const args = [
         path.join(ROOT_DIR, 'scripts/ops/recon_scanner.js'),
         '--season',
@@ -796,9 +1005,14 @@ class TotalWarPipeline {
         '--limit',
         String(reconLimit),
         '--concurrency',
-        String(this.options.reconConcurrency)
+        String(reconConcurrency)
       ];
-      if (this.options.retryFailedOnly) {
+      if (Number.isFinite(this.options.threshold)) {
+        args.push('--threshold', String(this.options.threshold));
+      }
+      if (this.options.mismatchRetryOnly) {
+        args.push('--mismatch-retry-only');
+      } else if (this.options.retryFailedOnly) {
         const harvestedCount = Number(metrics.harvestedCount || 0);
         const mismatchCount = Number(metrics.mismatchCount || 0);
         if (harvestedCount === 0 && mismatchCount > 0) {
@@ -817,7 +1031,11 @@ class TotalWarPipeline {
       return {
         task: taskName,
         command,
-        args
+        args,
+        env: this.buildTaskEnv(taskName, {
+          phase: options.phase || 'cluster',
+          forceGoldenRefresh: options.forceGoldenRefresh === true
+        })
       };
     }
 
@@ -858,7 +1076,7 @@ class TotalWarPipeline {
       };
       const spawnOptions = {
         cwd: ROOT_DIR,
-        env: process.env,
+        env: taskConfig.env || process.env,
         stdio: ['ignore', 'pipe', 'pipe']
       };
       const child = this.processSupervisor && typeof this.processSupervisor.spawnChild === 'function'

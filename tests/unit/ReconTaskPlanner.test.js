@@ -55,7 +55,7 @@ describe('ReconTaskPlanner', () => {
     assert.strictEqual(policy.forceMultiMode, true);
   });
 
-  it('即使联赛覆盖了 mismatch_retry_threshold_floor，也不得跌破全局 0.75 门槛', () => {
+  it('RECON_MISMATCH 显式降阈值时应允许下探到请求值', () => {
     const planner = createPlanner({
       mismatchRetryThresholdFloorByLeagueId: {
         131: 0.25
@@ -65,7 +65,36 @@ describe('ReconTaskPlanner', () => {
     const policy = planner.resolveReconPolicy(
       { leagueId: 131, league: { id: 131, name: 'Copa América' } },
       [{ match_id: '131_20252026_0001', pipeline_status: 'RECON_MISMATCH' }],
+      0.6,
+      { allowMismatchRetry: true }
+    );
+
+    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.6);
+  });
+
+  it('RECON_MISMATCH 显式降阈值时仍不得跌破联赛级 floor', () => {
+    const planner = createPlanner();
+
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 131, league: { id: 131, name: 'Copa América' } },
+      [{ match_id: '131_20252026_0001', pipeline_status: 'RECON_MISMATCH' }],
       0.4,
+      { allowMismatchRetry: true }
+    );
+
+    assert.strictEqual(policy.effectiveConfidenceThreshold, 0.4);
+  });
+
+  it('混合 harvested 与 RECON_MISMATCH 时，显式降阈值不得拉低整批门槛', () => {
+    const planner = createPlanner();
+
+    const policy = planner.resolveReconPolicy(
+      { leagueId: 47, league: { id: 47, name: 'Premier League' } },
+      [
+        { match_id: '47_20252026_0001', pipeline_status: 'harvested' },
+        { match_id: '47_20252026_0002', pipeline_status: 'RECON_MISMATCH' }
+      ],
+      0.6,
       { allowMismatchRetry: true }
     );
 
@@ -260,14 +289,13 @@ describe('ReconTaskPlanner', () => {
     assert.equal(prepared[0].priority.mismatchCount, 2);
   });
 
-  it('单场 Matrix 模式应以 limit=1 轻量加载并优先挑选最新 harvested 比赛', async () => {
+  it('单场 Matrix 模式应在本地优先挑选已开球的最新 harvested 比赛', async () => {
     const calls = [];
     const planner = createPlanner({
       configManager: {
         getActiveLeagues() {
           return [
-            { id: 47, code: 'EPL', name: 'Premier League', country: 'england', slug: 'premier-league' },
-            { id: 130, code: 'MLS', name: 'MLS', country: 'usa', slug: 'mls', resultsUrlStrategy: 'seasonless', seasonType: 'single_year' }
+            { id: 47, code: 'EPL', name: 'Premier League', country: 'england', slug: 'premier-league' }
           ];
         }
       },
@@ -275,18 +303,23 @@ describe('ReconTaskPlanner', () => {
         async getReconEligibleMatches(dbSeason, leagueName, options) {
           calls.push({ dbSeason, leagueName, options });
           if (leagueName === 'Premier League') {
-            return [{
-              match_id: '47_20252026_0001',
-              pipeline_status: 'HARVESTED',
-              match_date: '2025-08-10T15:00:00.000Z'
-            }];
-          }
-          if (leagueName === 'MLS') {
-            return [{
-              match_id: '130_20252026_0001',
-              pipeline_status: 'HARVESTED',
-              match_date: '2025-08-20T15:00:00.000Z'
-            }];
+            return [
+              {
+                match_id: '47_20252026_0999',
+                pipeline_status: 'RECON_MISMATCH',
+                match_date: '2099-05-24T15:00:00.000Z'
+              },
+              {
+                match_id: '47_20252026_0002',
+                pipeline_status: 'HARVESTED',
+                match_date: '2026-04-12T15:30:00.000Z'
+              },
+              {
+                match_id: '47_20252026_0001',
+                pipeline_status: 'HARVESTED',
+                match_date: '2026-04-03T14:00:00.000Z'
+              }
+            ];
           }
           return [];
         }
@@ -295,7 +328,7 @@ describe('ReconTaskPlanner', () => {
 
     const targets = await planner.buildScanTargets({
       season: '2025-2026',
-      leagueIds: [47, 130]
+      leagueIds: [47]
     });
     const prepared = await planner.prepareReconPendingTargets(targets, 1, {
       allowMismatchRetry: true,
@@ -306,20 +339,15 @@ describe('ReconTaskPlanner', () => {
       {
         dbSeason: '2025/2026',
         leagueName: 'Premier League',
-        options: { limit: 1, allowMismatchRetry: true, allNonLinked: false }
-      },
-      {
-        dbSeason: '2025/2026',
-        leagueName: 'MLS',
-        options: { limit: 1, allowMismatchRetry: true, allNonLinked: false }
+        options: { limit: null, allowMismatchRetry: true, allNonLinked: false }
       }
     ]);
     assert.equal(prepared.length, 1);
-    assert.equal(prepared[0].target.league.name, 'MLS');
+    assert.equal(prepared[0].target.league.name, 'Premier League');
     assert.equal(prepared[0].desiredLimit, 1);
     assert.deepStrictEqual(
       prepared[0].pendingMatches.map((match) => match.match_id),
-      ['130_20252026_0001']
+      ['47_20252026_0002', '47_20252026_0001', '47_20252026_0999']
     );
   });
 
@@ -957,7 +985,7 @@ describe('ReconTaskPlanner', () => {
               url: 'oddsportal://match/real',
               homeTeam: 'Mexico',
               awayTeam: 'South Africa',
-              matchDate: '2026-06-11T19:00:00.000Z'
+              matchDate: '2025-06-11T19:00:00.000Z'
             }],
             pagesScanned: 1,
             totalCandidates: 1,
@@ -979,13 +1007,13 @@ describe('ReconTaskPlanner', () => {
         match_id: '77_20252026_0001',
         home_team: '1e',
         away_team: '3abcdf',
-        match_date: '2026-06-29T20:30:00.000Z'
+        match_date: '2025-06-29T20:30:00.000Z'
       },
       {
         match_id: '77_20252026_9999',
         home_team: 'Mexico',
         away_team: 'South Africa',
-        match_date: '2026-06-11T19:00:00.000Z'
+        match_date: '2025-06-11T19:00:00.000Z'
       }
     ];
 
@@ -1045,7 +1073,7 @@ describe('ReconTaskPlanner', () => {
     assert.ok(logs.some((entry) => entry.event === 'skipping_future_finals'));
   });
 
-  it('未标记 awaiting finals 的联赛不得被未来赛程跳过，中超应继续扫描', async () => {
+  it('未标记 awaiting finals 的未来中超赛程应在 results source 返回 SOURCE_EMPTY，由后续慢路由接管', async () => {
     let navigatorCalls = 0;
     const planner = createPlanner({
       navigator: {
@@ -1080,12 +1108,13 @@ describe('ReconTaskPlanner', () => {
       match_date: '2099-03-01T12:00:00.000Z'
     }];
 
-    await planner.selectCandidateSource(target, pendingMatches, 0.75);
+    const selected = await planner.selectCandidateSource(target, pendingMatches, 0.75);
 
-    assert.strictEqual(navigatorCalls, 1);
+    assert.strictEqual(navigatorCalls, 0);
+    assert.strictEqual(selected.extractResult.sourceState, 'SOURCE_EMPTY');
   });
 
-  it('清零失配策略不得突破 0.75 硬门槛，但仍应强制启用多模式嗅探', () => {
+  it('清零失配策略在 mismatch-only 模式下应允许显式阈值下探，并强制启用多模式嗅探', () => {
     const planner = createPlanner();
     const target = {
       leagueId: 47,
@@ -1105,7 +1134,7 @@ describe('ReconTaskPlanner', () => {
     assert.deepStrictEqual(policy, {
       allowMismatchRetry: true,
       hasMismatchRetry: true,
-      effectiveConfidenceThreshold: 0.75,
+      effectiveConfidenceThreshold: 0.5,
       forceMultiMode: true
     });
   });
@@ -1323,5 +1352,78 @@ describe('ReconTaskPlanner', () => {
     assert.ok(selected.sampleLinked >= 1);
     assert.strictEqual(selected.candidates.length, 1);
     assert.ok(selected.source.url.includes('/football/usa/mls/'));
+  });
+
+  it('已命中主 source 后，后续 fallback 的 LEAGUE_TIMEOUT 不应打断已可用结果', async () => {
+    const logs = [];
+    const planner = createPlanner({
+      logger: {
+        info(event, payload) {
+          logs.push({ level: 'info', event, payload });
+        },
+        warn(event, payload) {
+          logs.push({ level: 'warn', event, payload });
+        },
+        error() {}
+      },
+      navigator: {
+        async fetchFullSeasonArchive(url) {
+          if (url.includes('/segunda-division-2025-2026/results/')) {
+            return {
+              matches: [{
+                hash: 'seg-1',
+                url: 'oddsportal://match/seg-1',
+                homeTeam: 'Almeria',
+                awayTeam: 'Malaga',
+                matchDate: '2026-04-19T19:00:00.000Z'
+              }],
+              pagesScanned: 8,
+              totalCandidates: 396,
+              sourceState: 'PURE_PROTOCOL'
+            };
+          }
+
+          const error = new Error('LEAGUE_TIMEOUT');
+          error.code = 'LEAGUE_TIMEOUT';
+          throw error;
+        }
+      },
+      forceMultiModeLeagueIds: [140]
+    });
+
+    const target = {
+      leagueId: 140,
+      league: {
+        id: 140,
+        name: 'Segunda División',
+        country: 'spain',
+        slug: 'segunda-division',
+        resultsUrlStrategy: 'seasonal',
+        seasonType: 'dual_year'
+      },
+      season: '2025-2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'oddsportal://root/football/spain/segunda-division-2025-2026/results/'
+    };
+    const pendingMatches = [{
+      match_id: '140_20252026_4837884',
+      home_team: 'Almeria',
+      away_team: 'Malaga',
+      match_date: '2026-04-19T19:00:00.000Z',
+      pipeline_status: 'HARVESTED'
+    }, {
+      match_id: '140_20252026_4837881',
+      home_team: 'Albacete',
+      away_team: 'Granada',
+      match_date: '2026-04-19T16:30:00.000Z',
+      pipeline_status: 'HARVESTED'
+    }];
+
+    const selected = await planner.selectCandidateSource(target, pendingMatches, 0.75);
+
+    assert.equal(selected.candidates.length, 1);
+    assert.equal(selected.sampleLinked, 1);
+    assert.ok(selected.source.url.includes('/segunda-division-2025-2026/results/'));
+    assert.ok(logs.some((entry) => entry.event === 'recon_candidate_source_timeout_tolerated'));
   });
 });

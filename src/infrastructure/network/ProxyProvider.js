@@ -592,12 +592,31 @@ class ProxyProvider extends EventEmitter {
     );
 
     if (statusCode === 429) {
-      node.isolatedUntil = now + this.config.rateLimitIsolationMs;
+      const cooldownMs = this._resolveFailureCooldownMs(statusCode, failureClass);
+      node.isolatedUntil = now + cooldownMs;
+      node.cooldownUntil = Math.max(node.cooldownUntil, now + cooldownMs);
       this._emitAlert('rate_limit_isolation', node, {
         statusCode,
         reason,
-        isolatedUntil: node.isolatedUntil
+        isolatedUntil: node.isolatedUntil,
+        cooldownUntil: node.cooldownUntil,
+        cooldownMs
       });
+      this._emitAlert('proxy_cooled_down', node, {
+        statusCode,
+        reason,
+        cooldownUntil: node.cooldownUntil,
+        cooldownMs,
+        consecutiveFailures: node.consecutiveFailures
+      });
+      if (node.healthScore < this.config.minHealthScore) {
+        this._emitAlert('proxy_health_score_blocked', node, {
+          statusCode,
+          reason,
+          healthScore: node.healthScore,
+          minHealthScore: this.config.minHealthScore
+        });
+      }
       return true;
     }
 
@@ -677,6 +696,9 @@ class ProxyProvider extends EventEmitter {
     }
     if (statusCode === 403) {
       return this.config.criticalErrorCooldownMs;
+    }
+    if (statusCode === 429) {
+      return this.config.rateLimitIsolationMs;
     }
     return statusCode === 503
       ? this.config.http503CooldownMs

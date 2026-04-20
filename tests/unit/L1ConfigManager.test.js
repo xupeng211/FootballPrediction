@@ -127,7 +127,7 @@ describe('L1ConfigManager', () => {
     const j1 = manager.getLeagueById(223);
 
     assert.ok(j1);
-    assert.strictEqual(j1.readySelector, 'text=Machida');
+    assert.strictEqual(j1.readySelector, "div[role='row']");
   });
 
   it('UEFA Euro 解封后应出现在 active league 列表中', () => {

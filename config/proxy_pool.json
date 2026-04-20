@@ -81,10 +81,10 @@
   "healthCheckIntervalMs": 30000,
   "failureThreshold": 6,
   "failureCooldownMs": 300000,
-  "http503ObservationThreshold": 3,
-  "http503CooldownMs": 300000,
+  "http503ObservationThreshold": 1,
+  "http503CooldownMs": 1200000,
   "heartbeatFailureCooldownMs": 300000,
   "criticalErrorCooldownMs": 1800000,
-  "rateLimitIsolationMs": 300000,
+  "rateLimitIsolationMs": 1200000,
   "minHealthScore": 60
 }

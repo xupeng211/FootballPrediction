@@ -1,3 +1,4 @@
+/* eslint-disable max-lines */
 'use strict';
 
 const { describe, it } = require('node:test');
@@ -506,6 +507,198 @@ describe('ReconProtocolFetchFlow', () => {
     }
   });
 
+  it('pure protocol 429 应上报 navigator 主代理故障并切到新端口重试', async () => {
+    const failures = [];
+    const rotations = [];
+    const attemptPorts = [];
+    const fakeHandler = {
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      navigator: {
+        traceId: 'trace-pure-protocol',
+        archiveTimeoutMs: 1234,
+        proxy: {
+          server: 'http://host.docker.internal:7890',
+          port: 7890
+        },
+        proxyLease: {
+          id: 'LEASE-7890',
+          proxy: {
+            server: 'http://host.docker.internal:7890',
+            port: 7890
+          }
+        },
+        proxyProvider: {
+          async reportFailure(leaseOrId, metadata = {}) {
+            failures.push({ leaseOrId, metadata });
+            return true;
+          }
+        },
+        async rotateProxyForRetry(failure = {}, context = {}, attempt = 0) {
+          rotations.push({ failure, context, attempt });
+          this.proxyLease = null;
+          this.proxy = {
+            server: 'http://host.docker.internal:7911',
+            port: 7911
+          };
+          return this.proxy;
+        }
+      }
+    };
+
+    attachProtocolAdapterStubs(fakeHandler);
+    fakeHandler._waitPureProtocolFetchRetry = async function _waitPureProtocolFetchRetry() {};
+    fakeHandler._fetchPureProtocolTextOnce = async function _fetchPureProtocolTextOnce(url, options = {}) {
+      const proxy = this._resolvePureProtocolRequestProxy(options);
+      attemptPorts.push(proxy?.port || null);
+      if (attemptPorts.length === 1) {
+        return {
+          success: false,
+          status: 429,
+          error: 'HTTP_429',
+          text: '',
+          retryAfterRaw: ''
+        };
+      }
+
+      return {
+        success: true,
+        status: 200,
+        text: '{"ok":true}'
+      };
+    };
+
+    const response = await fakeHandler._fetchPureProtocolText(
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/tUfctlzI/X262144/1/0/',
+      {
+        referer: 'https://www.oddsportal.com/football/usa/mls-2025/results/',
+        maxAttempts: 2,
+        retryDelayMs: 0
+      }
+    );
+
+    assert.deepStrictEqual(attemptPorts, [7890, 7911]);
+    assert.strictEqual(response.success, true);
+    assert.strictEqual(response.requestProxyPort, 7911);
+    assert.strictEqual(failures.length, 1);
+    assert.strictEqual(failures[0].leaseOrId, 'LEASE-7890');
+    assert.strictEqual(failures[0].metadata.port, 7890);
+    assert.strictEqual(failures[0].metadata.statusCode, 429);
+    assert.strictEqual(rotations.length, 1);
+    assert.strictEqual(rotations[0].failure.statusCode, 429);
+    assert.strictEqual(rotations[0].context.operationName, 'pure_protocol_fetch');
+  });
+
+  it('应从 session buffer pool 解析节点级 JA3 指纹槽位', () => {
+    const fakeHandler = {
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      navigator: {
+        browserContext: {
+          sessionManager: {
+            resolveProtocolIdentity({ proxyPort, ciphersCount, sigalgsCount }) {
+              assert.strictEqual(proxyPort, 7911);
+              assert.strictEqual(ciphersCount, 8);
+              assert.strictEqual(sigalgsCount, 8);
+              return {
+                lineageKey: 'proxy:7911',
+                ja3ProfileId: 'proxy:7911:2:1',
+                cipherIdx: 2,
+                sigalgIdx: 1,
+                source: 'session_buffer_pool'
+              };
+            }
+          }
+        }
+      }
+    };
+
+    attachProtocolAdapterStubs(fakeHandler);
+    const profile = fakeHandler._resolveNodeSpecificJa3Profile(7911);
+
+    assert.strictEqual(profile.cipherIdx, 2);
+    assert.strictEqual(profile.sigalgIdx, 1);
+    assert.strictEqual(profile.lineageKey, 'proxy:7911');
+    assert.strictEqual(profile.ja3ProfileId, 'proxy:7911:2:1');
+    assert.strictEqual(profile.source, 'session_buffer_pool');
+  });
+
+  it('pure protocol 503 应记录 JA3 指纹审计日志', async () => {
+    const failures = [];
+    const warnLogs = [];
+    const fakeHandler = {
+      logger: {
+        info() {},
+        warn(event, payload) {
+          warnLogs.push({ event, payload });
+        },
+        error() {},
+        debug() {}
+      },
+      navigator: {
+        traceId: 'trace-pure-protocol',
+        archiveTimeoutMs: 1234,
+        proxyLease: {
+          id: 'LEASE-7911',
+          proxy: {
+            server: 'http://host.docker.internal:7911',
+            port: 7911
+          }
+        },
+        proxyProvider: {
+          async reportFailure(leaseOrId, metadata = {}) {
+            failures.push({ leaseOrId, metadata });
+            return true;
+          }
+        },
+        browserContext: {
+          sessionManager: {
+            load() {
+              return { sourceFormat: 'session_buffer_golden' };
+            },
+            resolveProtocolIdentity() {
+              return {
+                lineageKey: 'proxy:7911',
+                ja3ProfileId: 'proxy:7911:3:4',
+                cipherIdx: 3,
+                sigalgIdx: 4,
+                source: 'session_buffer_pool'
+              };
+            }
+          }
+        }
+      }
+    };
+
+    attachProtocolAdapterStubs(fakeHandler);
+    fakeHandler._fetchPureProtocolTextOnce = async function _fetchPureProtocolTextOnce() {
+      return {
+        success: false,
+        status: 503,
+        error: 'HTTP_503',
+        text: '',
+        retryAfterRaw: ''
+      };
+    };
+
+    const response = await fakeHandler._fetchPureProtocolText(
+      'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/tUfctlzI/X262144/1/0/',
+      {
+        referer: 'https://www.oddsportal.com/football/japan/j1-league/results/',
+        maxAttempts: 1,
+        retryDelayMs: 0
+      }
+    );
+
+    assert.strictEqual(response.success, false);
+    assert.strictEqual(failures.length, 1);
+    assert.strictEqual(failures[0].leaseOrId, 'LEASE-7911');
+    const auditLog = warnLogs.find((entry) => entry.event === 'navigator_http_503_profile_audit');
+    assert.ok(auditLog);
+    assert.strictEqual(auditLog.payload.proxyPort, 7911);
+    assert.strictEqual(auditLog.payload.ja3ProfileId, 'proxy:7911:3:4');
+    assert.strictEqual(auditLog.payload.statusCode, 503);
+    assert.strictEqual(auditLog.payload.sourceFormat, 'session_buffer_golden');
+  });
+
   it('pure protocol 请求应携带 referer、x-requested-with 与 cookie', async () => {
     const originalFetch = global.fetch;
     const requests = [];
@@ -825,5 +1018,133 @@ describe('ReconProtocolFetchFlow', () => {
     assert.ok(warnLogs.some((entry) => entry.event === 'pure_protocol_archive_zero_candidate_payload'));
     assert.strictEqual(released.length, 1);
     assert.strictEqual(released[0].id || released[0], 'LEASE-7911');
+  });
+
+  it('pure protocol 分页抓取遇到 429 后应继承轮换后的 request lease', async () => {
+    const failures = [];
+    const acquired = [];
+    const released = [];
+    const pageFetches = [];
+    const initialLease = {
+      id: 'LEASE-7890',
+      proxy: {
+        server: 'http://host.docker.internal:7890',
+        port: 7890
+      }
+    };
+    const replacementLease = {
+      id: 'LEASE-7911',
+      proxy: {
+        server: 'http://host.docker.internal:7911',
+        port: 7911
+      }
+    };
+    const fakeHandler = {
+      logger: { info() {}, warn() {}, error() {}, debug() {} },
+      navigator: {
+        traceId: 'trace-pure-protocol',
+        archiveTimeoutMs: 1234,
+        proxy: null,
+        proxyLease: null,
+        proxyProvider: {
+          async reportFailure(leaseOrId, metadata = {}) {
+            failures.push({ leaseOrId, metadata });
+            return true;
+          },
+          async acquire(options = {}) {
+            acquired.push(options);
+            return replacementLease;
+          },
+          async release(leaseOrId) {
+            released.push(leaseOrId);
+            return true;
+          }
+        }
+      }
+    };
+
+    attachProtocolAdapterStubs(fakeHandler);
+    fakeHandler._waitPureProtocolFetchRetry = async function _waitPureProtocolFetchRetry() {};
+    fakeHandler._createPureProtocolMonitor = function _createPureProtocolMonitor() {
+      return {
+        sourceUrl: '',
+        pageSize: 1,
+        extractMatchesFromJson(parsed) {
+          return Array.isArray(parsed?.d?.rows) ? parsed.d.rows : [];
+        }
+      };
+    };
+    fakeHandler._fetchPureProtocolTextOnce = async function _fetchPureProtocolTextOnce(url, options = {}) {
+      const proxy = this._resolvePureProtocolRequestProxy(options);
+      const page = url.includes('/page/2/') ? 2 : 1;
+      const port = proxy?.port || null;
+      pageFetches.push({ page, port });
+
+      if (page === 1 && port === 7890) {
+        return {
+          success: false,
+          status: 429,
+          error: 'HTTP_429',
+          text: '',
+          retryAfterRaw: ''
+        };
+      }
+
+      if (page === 1 && port === 7911) {
+        return {
+          success: true,
+          status: 200,
+          text: '{"d":{"rows":[{"hash":"match-1"}],"total":2}}'
+        };
+      }
+
+      if (page === 2 && port === 7911) {
+        return {
+          success: true,
+          status: 200,
+          text: '{"d":{"rows":[],"total":2}}'
+        };
+      }
+
+      throw new Error(`Unexpected page fetch: page=${page} port=${port}`);
+    };
+
+    const result = await fakeHandler._fetchPureProtocolPaginatedPages({
+      apiBaseUrl: 'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1/KKay4EE8/X262144/1/0/',
+      maxPages: 2,
+      timeoutMs: 1234,
+      source: 'pure_protocol_archive:KKay4EE8',
+      referer: 'https://www.oddsportal.com/football/england/premier-league/results/',
+      decryptor: {
+        async decrypt(text) {
+          return JSON.parse(text);
+        }
+      },
+      requestProxyLease: initialLease,
+      requestProxyServer: initialLease.proxy.server,
+      requestProxyPort: initialLease.proxy.port,
+      buildBaseUrl: (url) => url.split('?')[0].replace(/\/page\/\d+\/?$/, '').replace(/\/+$/, ''),
+      buildPageUrl: (base, page) => (
+        page === 1
+          ? `${base}/?_=1`
+          : `${base}/page/${page}/?_=1`
+      )
+    });
+
+    assert.deepStrictEqual(
+      pageFetches.map((entry) => entry.port),
+      [7890, 7911, 7911]
+    );
+    assert.strictEqual(failures.length, 1);
+    assert.strictEqual(failures[0].leaseOrId, 'LEASE-7890');
+    assert.strictEqual(failures[0].metadata.port, 7890);
+    assert.strictEqual(failures[0].metadata.statusCode, 429);
+    assert.strictEqual(acquired.length, 1);
+    assert.deepStrictEqual(acquired[0].excludePorts, [7890]);
+    assert.strictEqual(released.length, 1);
+    assert.strictEqual(released[0].id || released[0], 'LEASE-7890');
+    assert.strictEqual(result.requestProxyLease.id, 'LEASE-7911');
+    assert.strictEqual(result.requestProxyPort, 7911);
+    assert.strictEqual(result.pagesScanned, 2);
   });
 });
