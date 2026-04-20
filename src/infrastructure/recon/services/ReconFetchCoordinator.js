@@ -98,6 +98,39 @@ function buildPureProtocolArchiveAudit(handler, config = {}, pageUrl = '') {
   };
 }
 
+function normalizePureProtocolActiveProxyState(navigator, response = {}) {
+  const responseState = response?.activeProxyState || {};
+  const lease = responseState.lease?.proxy?.server
+    ? responseState.lease
+    : response?.requestProxyLease?.proxy?.server
+      ? response.requestProxyLease
+      : null;
+  const server = String(responseState.server || response?.requestProxyServer || lease?.proxy?.server || '').trim();
+  const port = Number(responseState.port || response?.requestProxyPort || lease?.proxy?.port || 0) || null;
+
+  return {
+    lease,
+    server,
+    port,
+    temporary: Boolean(lease?.id && lease.id !== navigator?.proxyLease?.id)
+  };
+}
+
+function applyPureProtocolActiveProxyState(target, navigator, response = {}) {
+  const nextState = normalizePureProtocolActiveProxyState(navigator, response);
+  if (!target) {
+    return nextState;
+  }
+
+  if (nextState.lease || nextState.server || nextState.port) {
+    target.requestProxyLease = nextState.lease || null;
+    target.requestProxyServer = nextState.server || '';
+    target.requestProxyPort = nextState.port || null;
+  }
+
+  return nextState;
+}
+
 function logPureProtocolArchiveRawPayload(handler, eventName, config, page, pageUrl, response = {}, extra = {}) {
   const rawPayload = String(response?.text || '');
   handler.logger.warn(eventName, {
@@ -344,6 +377,10 @@ async function resolvePureProtocolSample(handler, context, tokenCandidates = [],
             proxyPort: activeProxyState.port || undefined
           }
         );
+        const responseProxyState = applyPureProtocolActiveProxyState(null, handler.navigator, sampleResponse);
+        if (responseProxyState.lease || responseProxyState.server || responseProxyState.port) {
+          activeProxyState = responseProxyState;
+        }
 
         if (sampleResponse.success && String(sampleResponse.text || '').trim()) {
           samplePayload = sampleResponse.text;
@@ -556,6 +593,7 @@ async function processPureProtocolPage(handler, monitor, config, state, page) {
     proxyServer: config.requestProxyServer || undefined,
     proxyPort: config.requestProxyPort || undefined
   });
+  applyPureProtocolActiveProxyState(config, handler.navigator, response);
 
   if (!response.success) {
     const httpFailure = {
@@ -797,7 +835,10 @@ const reconFetchCoordinator = {
       pagesScanned: state.pageStats.length,
       totalCandidates: state.matches.length,
       pageStats: state.pageStats,
-      httpFailure
+      httpFailure,
+      requestProxyLease: config.requestProxyLease || null,
+      requestProxyServer: config.requestProxyServer || '',
+      requestProxyPort: config.requestProxyPort || null
     };
   },
 
@@ -829,6 +870,10 @@ const reconFetchCoordinator = {
       throw new Error('PURE_PROTOCOL_SAMPLE_PAYLOAD_MISSING');
     }
 
+    let activeRequestProxyLease = requestProxyLease;
+    let activeRequestProxyServer = requestProxyServer;
+    let activeRequestProxyPort = requestProxyPort;
+
     try {
       const decryptor = await resolvePureProtocolDecryptor(
         this,
@@ -853,7 +898,7 @@ const reconFetchCoordinator = {
           tournamentId: context.tournamentId || null,
           bookmakerHash,
           archiveApiUrl,
-          proxyPort: requestProxyPort || Number(this.navigator?.proxyLease?.proxy?.port || this.navigator?.proxy?.port || 0) || null,
+          proxyPort: activeRequestProxyPort || Number(this.navigator?.proxyLease?.proxy?.port || this.navigator?.proxy?.port || 0) || null,
           cookiePresent: Boolean(context.cookieHeader),
           cookieLength: String(context.cookieHeader || '').length,
           referer: context.baseUrl
@@ -866,9 +911,9 @@ const reconFetchCoordinator = {
           source: `pure_protocol_archive:${token}`,
           referer: context.baseUrl,
           decryptor,
-          requestProxyLease,
-          requestProxyServer,
-          requestProxyPort,
+          requestProxyLease: activeRequestProxyLease,
+          requestProxyServer: activeRequestProxyServer,
+          requestProxyPort: activeRequestProxyPort,
           requestCookieHeader: context.cookieHeader || '',
           requestedBaseUrl: context.requestedBaseUrl || context.baseUrl,
           resolvedBaseUrl: context.baseUrl,
@@ -882,6 +927,9 @@ const reconFetchCoordinator = {
           buildBaseUrl: (url) => url.split('?')[0].replace(/\/page\/\d+\/?$/, '').replace(/\/+$/, ''),
           buildPageUrl: (base, page) => this._buildArchivePageUrl(base, page)
         });
+        activeRequestProxyLease = archiveResult.requestProxyLease || null;
+        activeRequestProxyServer = archiveResult.requestProxyServer || '';
+        activeRequestProxyPort = archiveResult.requestProxyPort || null;
 
         const archiveFirstTotal = archiveResult?.pageStats?.reduce((maxTotal, stat) => (
           Math.max(maxTotal, Math.max(0, Number(stat?.total || 0) || 0))
@@ -895,7 +943,7 @@ const reconFetchCoordinator = {
             sampleToken,
             outrightId: context.outrightId || null,
             tournamentId: context.tournamentId || null,
-            proxyPort: requestProxyPort || Number(this.navigator?.proxyLease?.proxy?.port || this.navigator?.proxy?.port || 0) || null,
+            proxyPort: activeRequestProxyPort || Number(this.navigator?.proxyLease?.proxy?.port || this.navigator?.proxy?.port || 0) || null,
             sourceState: archiveResult?.sourceState || 'SOURCE_EMPTY',
             pagesScanned: Number(archiveResult?.pagesScanned || archiveResult?.pageStats?.length || 0),
             totalCandidates: Number(archiveResult?.totalCandidates || archiveResult?.matches?.length || 0)
@@ -921,21 +969,24 @@ const reconFetchCoordinator = {
           bookmakerHash,
           seasonToken: context.seasonToken,
           locale: context.locale
-        }
+        },
+        requestProxyLease: activeRequestProxyLease || null,
+        requestProxyServer: activeRequestProxyServer || '',
+        requestProxyPort: activeRequestProxyPort || null
       };
     } finally {
       if (
-        requestProxyLease
-        && requestProxyLease.id
-        && requestProxyLease.id !== this.navigator?.proxyLease?.id
+        activeRequestProxyLease
+        && activeRequestProxyLease.id
+        && activeRequestProxyLease.id !== this.navigator?.proxyLease?.id
         && this.navigator?.proxyProvider
         && typeof this.navigator.proxyProvider.release === 'function'
       ) {
-        await this.navigator.proxyProvider.release(requestProxyLease).catch((error) => {
+        await this.navigator.proxyProvider.release(activeRequestProxyLease).catch((error) => {
           this.logger.warn('pure_protocol_sample_proxy_release_failed', {
             traceId: this.navigator?.traceId || 'trace-pure-protocol',
-            proxyPort: Number(requestProxyLease?.proxy?.port || 0) || null,
-            proxyLeaseId: requestProxyLease.id,
+            proxyPort: Number(activeRequestProxyLease?.proxy?.port || 0) || null,
+            proxyLeaseId: activeRequestProxyLease.id,
             error: error.message
           });
         });

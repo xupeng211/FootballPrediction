@@ -240,6 +240,24 @@ describe('BrowserFactory', () => {
         assert.strictEqual(typeof factory.warmupHomepage, 'function');
     });
 
+    it('warmupHomepage 默认应硬跳过首页访问', async () => {
+        let gotoCalls = 0;
+        const page = {
+            goto: async () => {
+                gotoCalls++;
+            }
+        };
+
+        const result = await factory.warmupHomepage(page, { scrollMore: false, randomScrolls: false });
+
+        assert.strictEqual(gotoCalls, 0, '预热被停用后不应访问 FotMob 首页');
+        assert.deepStrictEqual(result, {
+            skipped: true,
+            pageAttached: true,
+            hasConfig: true
+        });
+    });
+
     it('simulateHumanBehavior 应该是一个函数', () => {
         assert.strictEqual(typeof factory.simulateHumanBehavior, 'function');
     });

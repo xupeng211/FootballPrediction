@@ -84,16 +84,61 @@ function signalToExitCode(signal) {
   return 1;
 }
 
+function resolveLeagueSelectors(rawLeague = '') {
+  return String(rawLeague || '')
+    .split(',')
+    .map((entry) => String(entry || '').trim())
+    .filter(Boolean);
+}
+
 function resolveLeagues(output, configManager, args) {
   const activeLeagues = configManager.getActiveLeagues();
-  const selectedLeague = configManager.getLeagueByCode(args.league)
-    || configManager.getLeagueById(Number(args.league));
-  const leagues = args.allLeagues ? activeLeagues : [selectedLeague].filter(Boolean);
+  const requestedLeagueSelectors = resolveLeagueSelectors(args.league);
+  let leagues = activeLeagues;
+
+  if (!args.allLeagues) {
+    const resolvedLeagues = requestedLeagueSelectors
+      .map((selector) =>
+        configManager.getLeagueByCode(selector)
+        || configManager.getLeagueById(Number(selector))
+      )
+      .filter(Boolean);
+    const uniqueResolvedLeagues = [...new Map(
+      resolvedLeagues.map((league) => [Number(league.id), league])
+    ).values()];
+    const missingSelectors = requestedLeagueSelectors
+      .filter((selector) => !uniqueResolvedLeagues.some((league) => (
+        String(league?.code || '').trim().toLowerCase() === selector.toLowerCase()
+        || String(league?.id || '').trim() === selector
+      )));
+    if (uniqueResolvedLeagues.length === 0 || missingSelectors.length > 0) {
+      output.error(`❌ 错误: 找不到联赛配置: ${missingSelectors.join(',') || args.league}`);
+      output.error('可用联赛:', activeLeagues.map((league) => `${league.code}(${league.id})`).join(', '));
+      return null;
+    }
+    leagues = uniqueResolvedLeagues;
+  }
 
   if (leagues.length === 0 || !leagues[0]) {
     output.error(`❌ 错误: 找不到联赛配置: ${args.league}`);
     output.error('可用联赛:', activeLeagues.map((league) => `${league.code}(${league.id})`).join(', '));
     return null;
+  }
+
+  const skipSet = new Set(
+    (Array.isArray(args.skipLeagues) ? args.skipLeagues : [])
+      .map((entry) => String(entry || '').trim().toLowerCase())
+      .filter(Boolean)
+  );
+  if (skipSet.size > 0) {
+    leagues = leagues.filter((league) => {
+      const candidates = [
+        String(league?.name || '').trim().toLowerCase(),
+        String(league?.code || '').trim().toLowerCase(),
+        String(league?.id || '').trim().toLowerCase()
+      ].filter(Boolean);
+      return !candidates.some((token) => skipSet.has(token));
+    });
   }
 
   return leagues;
@@ -129,7 +174,7 @@ function buildReconMatrixRunOptions(scanner, args, leagues) {
 function formatReconMatrixResult(args, leagues, result) {
   return {
     success: result.success,
-    league: args.allLeagues ? 'Recon Matrix' : (leagues[0]?.name || 'Recon Matrix'),
+    league: args.allLeagues || leagues.length > 1 ? 'Recon Matrix' : (leagues[0]?.name || 'Recon Matrix'),
     inserted: result.linked || 0,
     mismatched: result.mismatched || 0,
     pendingTotal: result.totalPending || 0,
@@ -155,7 +200,7 @@ async function runReconMatrixMode(scanner, args, leagues) {
 
 async function runPerLeagueMode(runtime, args, leagues) {
   const results = [];
-  const isolatePerLeague = args.allLeagues && leagues.length > 1;
+  const isolatePerLeague = leagues.length > 1;
 
   if (isolatePerLeague) {
     await runtime.scanner.close();
@@ -203,6 +248,10 @@ async function executeScannerWork(args, runtime) {
   const leagues = resolveLeagues(runtime.output, runtime.scanner.configManager, args);
   if (!leagues) {
     return 1;
+  }
+  if (leagues.length === 0) {
+    runtime.output.warn?.('[recon] 联赛全部命中 skip-leagues，本轮跳过');
+    return 0;
   }
 
   const results = Number.isInteger(args.limit) && args.limit > 0

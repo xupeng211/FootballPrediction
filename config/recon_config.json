@@ -116,6 +116,14 @@
     ]
   },
   "team_mappings": {
+    "ad municipal liberia": "Liberia",
+    "alajuelense": "Alajuelense",
+    "c s cartagines": "Cartagines",
+    "cartagines": "Cartagines",
+    "club sport herediano": "Herediano",
+    "deportiva san carlos": "San Carlos",
+    "deportivo saprissa": "Saprissa",
+    "guadalupe fc": "Guadalupe",
     "man united": "Manchester United",
     "man utd": "Manchester United",
     "man-united": "Manchester United",
@@ -172,12 +180,20 @@
     "chelsea": "Chelsea",
     "crystal palace": "Crystal Palace",
     "crystal-palace": "Crystal Palace",
+    "ld alajuelense": "Alajuelense",
+    "liberia": "Liberia",
     "everton": "Everton",
     "fulham": "Fulham",
     "liverpool": "Liverpool",
     "ipswich": "Ipswich Town",
     "ipswich town": "Ipswich Town",
     "ipswich-town": "Ipswich Town",
+    "municipal perez zeledon": "Perez Zeledon",
+    "municipal liberia": "Liberia",
+    "perez zeledon": "Perez Zeledon",
+    "puntarenas fc": "Puntarenas",
+    "san carlos": "San Carlos",
+    "sporting fc": "Sporting FC",
     "leicester": "Leicester City",
     "leicester city": "Leicester City",
     "leicester-city": "Leicester City",
@@ -278,6 +294,10 @@
     "total_war": {
       "recon_limit": 8000,
       "recon_threshold": 50,
+      "recon_defer_cooldown_ms": 600000,
+      "skip_list": [
+        "J1 League"
+      ],
       "log_max_bytes": 104857600,
       "log_retained_files": 5
     }
@@ -318,8 +338,10 @@
     "confidence_threshold": 0.75,
     "orientation_similarity_threshold": 0.75,
     "exact_match_threshold": 0.99,
-    "team_weight": 0.85,
-    "date_weight": 0.15,
+    "team_weight": 0.6,
+    "date_weight": 0.4,
+    "hard_date_mismatch_window_ms": 172800000,
+    "hard_date_mismatch_confidence_cap": 0.49,
     "date_confidence_bands": [
       { "max_diff_days": 0.0833333333, "score": 1 },
       { "max_diff_days": 0.5, "score": 0.98 },
@@ -343,12 +365,12 @@
       "proxy_critical_error_cooldown_ms": 1800000,
       "confidence_threshold": 0.75,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 45000,
+      "archive_timeout_ms": 67500,
       "matrix_mode_pruning": true,
       "matrix_short_circuit_ratio": 0.5,
-      "matrix_results_only_mode": true,
-      "matrix_disable_search_route": true,
-      "matrix_league_time_budget_ms": 120000,
+      "matrix_results_only_mode": false,
+      "matrix_disable_search_route": false,
+      "matrix_league_time_budget_ms": 180000,
       "page_settle_wait_ms": 3000,
       "dom_scroll_step_px": 1000,
       "dom_scroll_delay_ms": 1500,
@@ -361,13 +383,13 @@
       "scroll_attempts": 10,
       "scroll_delay_ms": 2000,
       "launch_timeout_ms": 60000,
-      "navigation_timeout_ms": 60000,
+      "navigation_timeout_ms": 90000,
       "warmup_delay_ms": 3000,
       "scroll_iterations": 3,
       "scroll_step_px": 500,
       "navigate_scroll_delay_ms": 1000,
       "archive_max_pages": 50,
-      "archive_timeout_ms": 45000,
+      "archive_timeout_ms": 67500,
       "post_api_discovery_wait_ms": 5000,
       "page_revisit_wait_ms": 1500,
       "circuit_breaker": {
@@ -385,7 +407,7 @@
     },
     "browser_context": {
       "launch_timeout_ms": 60000,
-      "navigation_timeout_ms": 60000,
+      "navigation_timeout_ms": 90000,
       "navigation_ready_timeout_ms": 5000,
       "navigation_ready_selectors": [
         "div[role='row']",
@@ -473,6 +495,7 @@
         "230": 0.25
       },
       "confidence_threshold_override_by_league_id": {
+        "121": 0.73,
         "181": 0.7
       },
       "force_multi_mode_league_ids": [
@@ -502,8 +525,8 @@
     "match_evaluator": {
       "orientation_similarity_threshold": 0.75,
       "exact_match_threshold": 0.99,
-      "team_weight": 0.85,
-      "date_weight": 0.15,
+      "team_weight": 0.6,
+      "date_weight": 0.4,
       "team_balance_weight": 0.5,
       "perfect_kickoff_window_ms": 7200000,
       "mismatch_retry_fuzzy_confidence_floor": 0.7,
@@ -520,14 +543,15 @@
       ]
     },
     "mirror_manager": {
-      "team_weight": 0.85,
-      "date_weight": 0.15
+      "team_weight": 0.6,
+      "date_weight": 0.4
     },
     "network_monitor": {
       "script_eval_timeout_ms": 250,
       "extract_max_depth": 10,
       "page_size": 50,
-      "fetch_timeout_ms": 20000,
+      "fetch_timeout_ms": 30000,
+      "decrypt_timeout_ms": 5000,
       "home_warmup_enabled": false,
       "home_warmup_url": "https://www.oddsportal.com",
       "home_warmup_wait_ms": 5000,
@@ -594,7 +618,7 @@
         ".table-participant",
         "[data-testid=\"participant-name\"]"
       ],
-      "timeout_ms": 90000,
+      "timeout_ms": 135000,
       "max_pages": 50,
       "post_navigation_wait_ms": 1500,
       "scroll_attempts": 10,
@@ -610,7 +634,7 @@
       "wake_scroll_step_px": 2400
     },
     "state_prober": {
-      "timeout_ms": 90000,
+      "timeout_ms": 135000,
       "max_pages": 50,
       "post_navigation_wait_ms": 2000,
       "minimum_current_results_candidates": 10

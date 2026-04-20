@@ -272,7 +272,8 @@ function attachRuntimeCollaborators(state, options, runtimeConfig, unlockStrateg
     logger: state.logger,
     traceId: state.traceId,
     sessionPath: state.externalSessionPath,
-    defaultSourceUrl: RECON_CONFIG.oddsportal?.base_url
+    defaultSourceUrl: RECON_CONFIG.oddsportal?.base_url,
+    proxyPort: state.proxy?.port
   });
   state.bookmakerUnlocker = options.bookmakerUnlocker || new ReconBookmakerUnlocker({
     logger: state.logger,

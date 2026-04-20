@@ -151,6 +151,80 @@ describe('ReconMatrixTargetRunner', () => {
     assert.ok(typeof state.limiter === 'function');
   });
 
+  it('_prepareReconTargetState 遇到 future pending 时应放开 fixtures/search fallback', async () => {
+    const runner = createRunner({
+      taskPlanner: {
+        async loadReconPendingMatches() {
+          return [
+            { match_id: 'm-future', pipeline_status: 'pending', match_date: '2099-04-19T23:00:00.000Z' }
+          ];
+        },
+        resolveReconPolicy() {
+          return {
+            effectiveConfidenceThreshold: 0.82,
+            allowMismatchRetry: true
+          };
+        },
+        formatSeasonForUrl(season) {
+          return `fmt:${season}`;
+        }
+      }
+    });
+
+    const state = await runner._prepareReconTargetState(
+      {
+        season: '2025/2026',
+        dbSeason: '2025/2026',
+        resultsUrl: 'results://mls',
+        league: { name: 'MLS' }
+      },
+      {
+        resultsOnlyMode: true,
+        disableSearchRoute: true
+      }
+    );
+
+    assert.equal(state.runtimeTarget.resultsOnlyMode, false);
+    assert.equal(state.runtimeTarget.disableSearchRoute, false);
+    assert.equal(state.runtimeTarget.allowFutureSlowRoutes, true);
+  });
+
+  it('_prepareReconTargetState 应尊重 MISMATCH 重试路径下探后的有效阈值', async () => {
+    const runner = createRunner({
+      minimumConfidenceThreshold: 0.75,
+      taskPlanner: {
+        async loadReconPendingMatches() {
+          return [
+            { match_id: 'm1', pipeline_status: 'RECON_MISMATCH' }
+          ];
+        },
+        resolveReconPolicy() {
+          return {
+            effectiveConfidenceThreshold: 0.6,
+            allowMismatchRetry: true
+          };
+        },
+        formatSeasonForUrl(season) {
+          return `fmt:${season}`;
+        }
+      }
+    });
+
+    const state = await runner._prepareReconTargetState(
+      {
+        season: '2025/2026',
+        dbSeason: '2025/2026',
+        resultsUrl: 'results://j1',
+        league: { name: 'J1 League' }
+      },
+      {
+        confidenceThreshold: 0.6
+      }
+    );
+
+    assert.equal(state.effectiveThreshold, 0.6);
+  });
+
   it('_prepareReconTargetState 在无待处理或 scopedPending 为空时应返回 null', async () => {
     const emptyRunner = createRunner({
       taskPlanner: {
@@ -241,6 +315,18 @@ describe('ReconMatrixTargetRunner', () => {
       },
       routeShortCircuitThreshold: 2,
     }), true);
+
+    assert.equal(runner._shouldFinalizeAfterResults({
+      remainingRoutePending: [{ match_id: 'm2' }],
+      runtimeTarget: { matrixModePruning: true, league: { name: 'J1 League' } },
+      resultsSource: {
+        candidates: [],
+        sampleLinked: 0,
+        probeDurationMs: 20000,
+      },
+      resultsProbeDurationMs: 20000,
+      routeShortCircuitThreshold: 1,
+    }), false);
   });
 
   it('_handlePostResultsFlow 在预算耗尽时应立即 finalize', async () => {
@@ -311,6 +397,128 @@ describe('ReconMatrixTargetRunner', () => {
 
     assert.deepEqual(calls, ['finalize:2']);
     assert.equal(runner.__events.info[0].event, 'recon_results_only_finalize');
+  });
+
+  it('_shouldShortCircuitResultsToSearch 应识别 J1 与带重音的 Brasileirão', () => {
+    const runner = createRunner();
+
+    assert.equal(runner._shouldShortCircuitResultsToSearch({
+      runtimeTarget: { league: { name: 'J1 League' } },
+      remainingRoutePending: [{ match_id: 'm1' }],
+      resultsSource: { candidates: [] },
+      resultsProbeDurationMs: 20000
+    }), true);
+
+    assert.equal(runner._shouldShortCircuitResultsToSearch({
+      runtimeTarget: { league: { name: 'Brasileirão' } },
+      remainingRoutePending: [{ match_id: 'm1' }],
+      resultsSource: { candidates: [] },
+      resultsProbeDurationMs: 21000
+    }), true);
+
+    assert.equal(runner._shouldShortCircuitResultsToSearch({
+      runtimeTarget: { league: { name: 'MLS' } },
+      remainingRoutePending: [{ match_id: 'm1' }],
+      resultsSource: { candidates: [] },
+      resultsProbeDurationMs: 25000
+    }), false);
+
+    assert.equal(runner._shouldShortCircuitResultsToSearch({
+      runtimeTarget: { league: { name: 'J1 League' } },
+      remainingRoutePending: [{ match_id: 'm1' }],
+      resultsSource: { candidates: [], forceSearchShortCircuit: true },
+      resultsProbeDurationMs: 0
+    }), true);
+  });
+
+  it('_runPostResultsFallbackRoutes 对 J1 results 超时空源应跳过 fixtures 直切 search', async () => {
+    const calls = [];
+    const runner = createRunner({
+      async _runReconFixturesRoute() {
+        calls.push('fixtures');
+      },
+      async _runReconSearchRoute(routeState, canUseLocalDictionaryFallback) {
+        calls.push(`search:${canUseLocalDictionaryFallback}`);
+        routeState.remainingRoutePending = [];
+      }
+    });
+
+    await runner._runPostResultsFallbackRoutes({
+      target: { league: { name: 'J1 League' }, dbSeason: '2025/2026' },
+      runtimeTarget: { league: { name: 'J1 League' }, dbSeason: '2025/2026' },
+      remainingRoutePending: [{ match_id: 'm2' }],
+      resultsSource: {
+        extractResult: { sourceState: 'SOURCE_EMPTY' },
+        candidates: []
+      },
+      resultsProbeDurationMs: 20000
+    });
+
+    assert.deepEqual(calls, ['search:false']);
+    assert.equal(runner.__events.info[0].event, 'recon_results_search_short_circuit');
+  });
+
+  it('_processReconRoute 在 results 路径上应跳过 future pending，交由慢速 fallback 处理', async () => {
+    const captured = [];
+    const runner = createRunner({
+      async _processPendingMatchesWithShortCircuit(routeKind, routeSource, pendingMatches) {
+        captured.push({
+          routeKind,
+          routeSource,
+          pendingMatches: pendingMatches.map((match) => match.match_id)
+        });
+        return {
+          linked: 1,
+          mismatched: 0,
+          remainingPending: []
+        };
+      }
+    });
+
+    const routeState = {
+      runtimeTarget: {
+        dbSeason: '2025/2026',
+        league: { name: 'MLS' }
+      },
+      remainingRoutePending: [
+        { match_id: 'm-past', match_date: '2026-04-01T00:00:00.000Z' },
+        { match_id: 'm-future', match_date: '2099-04-19T23:00:00.000Z' }
+      ],
+      effectiveThreshold: 0.82,
+      limiter: () => {},
+      persistLimiter: () => {},
+      progress: { total: 2 },
+      routeMetadata: { reconRunId: 'recon-run-1' },
+      totalLinked: 0,
+      totalMismatched: 0,
+      totalCandidateCount: 0,
+      finalSourceSeason: null,
+      finalSourceUrl: null,
+      lastSourceState: 'SOURCE_EMPTY'
+    };
+
+    await runner._processReconRoute(routeState, 'results', {
+      source: { season: '2025/2026', url: 'results://mls', mode: 'current_results' },
+      extractResult: { sourceState: 'PURE_PROTOCOL' },
+      candidates: []
+    });
+
+    assert.deepEqual(captured[0].pendingMatches, ['m-past']);
+    assert.deepEqual(routeState.remainingRoutePending.map((match) => match.match_id), ['m-future']);
+  });
+
+  it('_shouldFinalizeAfterResults 在 future pending 存在时不应提前收口', () => {
+    const runner = createRunner();
+
+    assert.equal(runner._shouldFinalizeAfterResults({
+      remainingRoutePending: [{ match_id: 'm-future', match_date: '2099-04-19T23:00:00.000Z' }],
+      runtimeTarget: { matrixModePruning: true, allowFutureSlowRoutes: true },
+      resultsSource: {
+        candidates: [],
+        sampleLinked: 1
+      },
+      routeShortCircuitThreshold: 1
+    }), false);
   });
 
   it('_runPostResultsFallbackRoutes 在 results-only 模式遇到残缺 results source 时应抛错重试', async () => {

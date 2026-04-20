@@ -43,7 +43,12 @@ describe('ReconScanner Robustness - Fallback Safety', () => {
         }];
       },
       async batchSaveOddsPortalMappings(mappings) {
-        return { success: true, inserted: mappings.length };
+        return {
+          success: true,
+          inserted: mappings.length,
+          updated: mappings.length,
+          applied: mappings.length
+        };
       },
       async batchUpdateMatchPipelineStatus(matchIds) {
         return { updated: matchIds.length };

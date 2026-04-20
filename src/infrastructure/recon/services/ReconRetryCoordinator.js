@@ -1,5 +1,9 @@
 'use strict';
 
+const { JA3_CIPHER_SUITES, JA3_SIGALGS } = require('./ReconProtocolAdapter');
+
+const BROWSER_TLS_DISCONNECT_ERROR_RE = /err_connection_closed|secure tls connection was established|econnreset|socket hang up|proxy connection ended before receiving connect response/i;
+
 class ReconRetryCoordinator {
   constructor(navigator) {
     this.navigator = navigator;
@@ -23,6 +27,18 @@ class ReconRetryCoordinator {
 
   get http503RetryDelaysMs() {
     return this.navigator.http503RetryDelaysMs;
+  }
+
+  get proxyProvider() {
+    return this.navigator.proxyProvider;
+  }
+
+  get proxyLease() {
+    return this.navigator.proxyLease;
+  }
+
+  get sessionManager() {
+    return this.navigator.browserContext?.sessionManager || null;
   }
 
   parseRetryAfterMs(value) {
@@ -119,10 +135,14 @@ class ReconRetryCoordinator {
   }
 
   isRetryableFailure(failure) {
-    return failure.statusCode === 503
-      || failure.normalizedMessage.includes('503')
+    if (failure.statusCode === 429 || failure.statusCode === 502 || failure.statusCode === 503 || failure.statusCode === 504) {
+      return true;
+    }
+
+    return failure.normalizedMessage.includes('503')
+      || failure.normalizedMessage.includes('429')
       || failure.normalizedMessage.includes('service unavailable')
-      || failure.isResponseCodeFailure;
+      || (failure.isResponseCodeFailure && failure.statusCode >= 500);
   }
 
   async resolveRetryableHttpFailureFromError(error, context = {}) {
@@ -150,7 +170,7 @@ class ReconRetryCoordinator {
     const retryAfterMs = Number(failure.retryAfterMs) || this.parseRetryAfterMs(retryAfterRaw);
     const statusCode = Number(failure.statusCode) || null;
     return {
-      retryable: statusCode === 503,
+      retryable: statusCode === 429 || statusCode === 502 || statusCode === 503 || statusCode === 504,
       statusCode,
       retryAfterMs,
       retryAfterRaw
@@ -170,15 +190,49 @@ class ReconRetryCoordinator {
   }
 
   buildRotationPayload(failure, context = {}, attempt = 0, currentProxy = null) {
+    const statusCode = Number(failure?.statusCode) || 503;
     return {
       attempt: attempt + 1,
       breakerKey: context.breakerKey || 'default',
       currentPort: currentProxy?.port || null,
-      errorType: failure?.statusCode === 503 ? '503' : 'other',
-      reason: context.operationName || 'retry_after_503',
-      statusCode: failure?.statusCode || 503,
+      errorType: statusCode === 429 ? '429' : (statusCode === 503 ? '503' : 'other'),
+      reason: context.operationName || 'retry_after_http_failure',
+      statusCode,
       url: context.inspectUrl || null
     };
+  }
+
+  shouldRotateProxy(failure = {}) {
+    const statusCode = Number(failure?.statusCode) || 0;
+    return statusCode === 429 || statusCode === 503;
+  }
+
+  async reportCurrentProxyFailure(failure = {}, context = {}) {
+    if (!this.proxyProvider || typeof this.proxyProvider.reportFailure !== 'function') {
+      return false;
+    }
+
+    const lease = this.proxyLease;
+    const currentProxy = this.getCurrentProxy();
+    const target = lease?.id ? lease.id : null;
+    const port = Number(lease?.proxy?.port || currentProxy?.port || 0) || null;
+
+    try {
+      await this.proxyProvider.reportFailure(target, {
+        ...(port ? { port } : {}),
+        statusCode: failure?.statusCode || null,
+        reason: context.operationName || `HTTP_${failure?.statusCode || 'failure'}`
+      });
+      return true;
+    } catch (error) {
+      this.logger.debug?.('navigator_proxy_failure_report_failed', {
+        traceId: this.traceId,
+        breakerKey: context.breakerKey || 'default',
+        port,
+        error: error.message
+      });
+      return false;
+    }
   }
 
   async relaunchAfterProxyRotation(context = {}) {
@@ -213,7 +267,8 @@ class ReconRetryCoordinator {
       return;
     }
 
-    rotator.reportFailure(currentProxy.port, failure?.statusCode === 503 ? '503' : 'other');
+    const statusCode = Number(failure?.statusCode) || 0;
+    rotator.reportFailure(currentProxy.port, statusCode === 429 ? '429' : (statusCode === 503 ? '503' : 'other'));
   }
 
   applyRotatedProxy(nextProxy) {
@@ -225,14 +280,19 @@ class ReconRetryCoordinator {
     };
   }
 
-  logProxyRotation(context, attempt, currentProxy, nextProxy) {
-    this.logger.warn('navigator_proxy_rotated_for_503', {
+  logProxyRotation(context, attempt, currentProxy, nextProxy, failure = {}) {
+    const statusCode = Number(failure?.statusCode) || 503;
+    const eventName = statusCode === 429
+      ? 'navigator_proxy_rotated_for_429'
+      : 'navigator_proxy_rotated_for_503';
+    this.logger.warn(eventName, {
       traceId: this.traceId,
       breakerKey: context.breakerKey || 'default',
       operation: context.operationName || 'unknown',
       attempt: attempt + 1,
       previousProxyPort: currentProxy?.port || null,
-      nextProxyPort: nextProxy.port || null
+      nextProxyPort: nextProxy.port || null,
+      statusCode
     });
   }
 
@@ -245,7 +305,145 @@ class ReconRetryCoordinator {
     });
   }
 
+  _normalizeCookieCount(cookies) {
+    return Array.isArray(cookies)
+      ? cookies.filter((cookie) => cookie && typeof cookie === 'object' && String(cookie.name || '').trim()).length
+      : 0;
+  }
+
+  async log503CookieState(failure = {}, context = {}) {
+    if (Number(failure?.statusCode) !== 503) {
+      return;
+    }
+
+    const runtimeSnapshotCookies = this._normalizeCookieCount(this.sessionManager?.runtimeSnapshot?.cookies);
+    let contextCookies = null;
+    let contextCookieReadError = '';
+
+    if (this.context && typeof this.context.cookies === 'function') {
+      try {
+        contextCookies = this._normalizeCookieCount(await this.context.cookies());
+      } catch (error) {
+        contextCookieReadError = error.message;
+      }
+    }
+
+    this.logger.warn('navigator_http_503_cookie_state', {
+      traceId: this.traceId,
+      breakerKey: context.breakerKey || 'default',
+      operation: context.operationName || 'unknown',
+      url: context.inspectUrl || null,
+      proxyPort: Number(this.proxyLease?.proxy?.port || this.getCurrentProxy()?.port || 0) || null,
+      contextCookies,
+      hasContextCookies: Number(contextCookies) > 0,
+      runtimeSnapshotCookies,
+      hasRuntimeSnapshotCookies: runtimeSnapshotCookies > 0,
+      ...(contextCookieReadError ? { contextCookieReadError } : {})
+    });
+  }
+
+  resolveSessionSourceFormat() {
+    const sourceFormat = String(this.sessionManager?.load?.()?.sourceFormat || '').trim();
+    return sourceFormat || 'unknown';
+  }
+
+  resolveCurrentJa3Identity(proxyPort = null) {
+    const normalizedProxyPort = Number(proxyPort || this.proxyLease?.proxy?.port || this.getCurrentProxy()?.port || 0) || null;
+    if (!normalizedProxyPort || !this.sessionManager || typeof this.sessionManager.resolveProtocolIdentity !== 'function') {
+      return null;
+    }
+
+    return this.sessionManager.resolveProtocolIdentity({
+      proxyPort: normalizedProxyPort,
+      ciphersCount: JA3_CIPHER_SUITES.length,
+      sigalgsCount: JA3_SIGALGS.length
+    });
+  }
+
+  _extractBrowserNavigationFailureMeta(failure = {}, error = null) {
+    const statusCode = Number(failure?.statusCode || error?.statusCode) || null;
+    const errorMessage = String(
+      error?.message
+      || failure?.reason
+      || failure?.normalizedMessage
+      || ''
+    ).trim();
+    const normalizedError = errorMessage.toLowerCase();
+    const tlsDisconnect = BROWSER_TLS_DISCONNECT_ERROR_RE.test(normalizedError);
+
+    return {
+      statusCode,
+      errorMessage,
+      tlsDisconnect,
+      shouldAudit: statusCode === 429
+        || statusCode === 503
+        || normalizedError.includes('503')
+        || tlsDisconnect
+    };
+  }
+
+  _markBrowserFailureAudited(error = null) {
+    if (!error || typeof error !== 'object') {
+      return;
+    }
+
+    try {
+      error._browserFailureProfileAudited = true;
+    } catch (_error) {
+      // Error 对象不可扩展时静默跳过，避免影响主链路
+    }
+  }
+
+  // eslint-disable-next-line complexity
+  auditBrowserNavigationFailure(failure = {}, context = {}, error = null) {
+    if (String(context.operationName || '').trim() !== 'navigate') {
+      return false;
+    }
+
+    if (error && error._browserFailureProfileAudited === true) {
+      return false;
+    }
+
+    const {
+      statusCode,
+      errorMessage,
+      tlsDisconnect,
+      shouldAudit
+    } = this._extractBrowserNavigationFailureMeta(failure, error);
+
+    if (!shouldAudit) {
+      return false;
+    }
+
+    const proxyPort = Number(this.proxyLease?.proxy?.port || this.getCurrentProxy()?.port || 0) || null;
+    const ja3Identity = this.resolveCurrentJa3Identity(proxyPort);
+
+    this.logger.warn('navigator_http_503_profile_audit', {
+      traceId: this.traceId,
+      breakerKey: context.breakerKey || 'default',
+      operation: context.operationName || 'unknown',
+      stage: context.stage || 'page_goto',
+      url: context.inspectUrl || null,
+      proxyPort,
+      ja3ProfileId: ja3Identity?.ja3ProfileId || null,
+      lineageKey: ja3Identity?.lineageKey || null,
+      ja3Source: ja3Identity?.source || null,
+      statusCode,
+      tlsDisconnect,
+      sourceFormat: this.resolveSessionSourceFormat(),
+      ...(errorMessage ? { error: errorMessage } : {})
+    });
+
+    this._markBrowserFailureAudited(error);
+
+    return true;
+  }
+
   async rotateProxyForRetry(failure, context = {}, attempt = 0) {
+    if (!this.shouldRotateProxy(failure)) {
+      return null;
+    }
+
     const rotator = this.getProxyRotator();
     if (!rotator) {
       return null;
@@ -259,7 +457,7 @@ class ReconRetryCoordinator {
     }
 
     this.applyRotatedProxy(nextProxy);
-    this.logProxyRotation(context, attempt, currentProxy, nextProxy);
+    this.logProxyRotation(context, attempt, currentProxy, nextProxy, failure);
 
     try {
       await this.relaunchAfterProxyRotation(context);
@@ -271,9 +469,12 @@ class ReconRetryCoordinator {
   }
 
   async scheduleRetry(failure, context, attempt, error = null) {
+    this.auditBrowserNavigationFailure(failure, context, error);
+    await this.log503CookieState(failure, context);
+    await this.reportCurrentProxyFailure(failure, context);
     await this.rotateProxyForRetry(failure, context, attempt);
     const scheduledDelayMs = Math.max(this.http503RetryDelaysMs[attempt], failure.retryAfterMs || 0);
-    this.logger.warn('navigator_http_503_retry_scheduled', {
+    this.logger.warn('navigator_http_retry_scheduled', {
       traceId: this.traceId,
       operation: context.operationName || 'unknown',
       breakerKey: context.breakerKey || 'default',
@@ -312,7 +513,9 @@ class ReconRetryCoordinator {
         }
 
         if (attempt >= retryDelays.length) {
-          throw this.buildRetryError(context, failure);
+          const retryError = this.buildRetryError(context, failure);
+          this.auditBrowserNavigationFailure(failure, context, retryError);
+          throw retryError;
         }
 
         await this.scheduleRetry(failure, context, attempt);
@@ -320,6 +523,7 @@ class ReconRetryCoordinator {
       } catch (error) {
         const failure = await this.resolveRetryableHttpFailureFromError(error, context);
         if (!failure.retryable || attempt >= retryDelays.length) {
+          this.auditBrowserNavigationFailure(failure, context, error);
           this.decorateRetryError(error, failure);
           throw error;
         }

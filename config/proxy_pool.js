@@ -63,6 +63,11 @@ function extractHost(serverTemplate = '') {
     return match?.[1] || null;
 }
 
+function parsePositiveNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+}
+
 function readProxyPoolFile() {
     try {
         const raw = fs.readFileSync(PROXY_POOL_PATH, 'utf8');
@@ -87,7 +92,10 @@ function resolveProxyPoolConfig(env = process.env) {
     const rangePorts = envPorts.length === 0
         ? expandPortRange(env.PROXY_PORT_START, env.PROXY_PORT_END)
         : [];
-    const filePorts = parseProxyPorts(fileConfig.ports);
+    const fileActivePorts = parseProxyPorts(fileConfig.active_ports);
+    const filePorts = fileActivePorts.length > 0
+        ? fileActivePorts
+        : parseProxyPorts(fileConfig.ports);
     const candidatePorts = envPorts.length > 0
         ? envPorts
         : (rangePorts.length > 0 ? rangePorts : filePorts);
@@ -125,9 +133,22 @@ function resolveProxyPoolConfig(env = process.env) {
         protocol,
         host,
         ports,
+        activePorts: ports,
         defaultPort: defaultPort || ports[0] || 0,
         serverTemplate,
-        configPath: PROXY_POOL_PATH
+        configPath: PROXY_POOL_PATH,
+        healthCheckIntervalMs: parsePositiveNumber(fileConfig.healthCheckIntervalMs),
+        failureThreshold: parsePositiveNumber(fileConfig.failureThreshold),
+        failureCooldownMs: parsePositiveNumber(fileConfig.failureCooldownMs),
+        http503ObservationThreshold: parsePositiveNumber(fileConfig.http503ObservationThreshold),
+        http503CooldownMs: parsePositiveNumber(fileConfig.http503CooldownMs),
+        heartbeatFailureCooldownMs: parsePositiveNumber(fileConfig.heartbeatFailureCooldownMs),
+        criticalErrorCooldownMs: parsePositiveNumber(fileConfig.criticalErrorCooldownMs),
+        rateLimitIsolationMs: parsePositiveNumber(fileConfig.rateLimitIsolationMs),
+        minHealthScore: parsePositiveNumber(fileConfig.minHealthScore),
+        healthProbeMode: typeof fileConfig.healthProbeMode === 'string'
+            ? fileConfig.healthProbeMode
+            : undefined
     };
 }
 

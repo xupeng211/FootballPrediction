@@ -746,7 +746,7 @@ describe('AbstractHarvester 完整测试套件', () => {
             assert.ok(moveCount.count >= 10 && moveCount.count <= 15, '应该有 10-15 次鼠标移动');
         });
 
-        it('_warmupHomepage 应该访问首页', async () => {
+        it('_warmupHomepage 默认应硬跳过首页访问', async () => {
             const harvester = createHarvester(AbstractHarvester);
 
             // Mock Page
@@ -765,9 +765,7 @@ describe('AbstractHarvester 完整测试套件', () => {
             // 执行首页预热
             await harvester._warmupHomepage(mockPage, { scrollMore: false, randomScrolls: false });
 
-            // 验证访问了 FotMob 首页
-            assert.strictEqual(gotoCalled.called, true, '应该调用 goto');
-            assert.ok(gotoCalled.url.includes('fotmob.com'), '应该访问 FotMob 首页');
+            assert.strictEqual(gotoCalled.called, false, '默认不应调用 goto');
         });
     });
 

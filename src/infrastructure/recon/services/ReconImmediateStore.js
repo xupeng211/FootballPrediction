@@ -62,7 +62,7 @@ const reconImmediateStore = {
         metadata
       );
       return {
-        linked: Number(persistResult?.linkedApplied || 0),
+        linked: Number(persistResult?.linkedStatusUpdated || 0),
         mismatched: 0
       };
     }
@@ -95,11 +95,11 @@ const reconImmediateStore = {
     const linkedBatches = this._buildLinkedPersistBatches(orderedMappings, batchSize, metadata);
     const linkedTotalBatches = Math.max(1, linkedBatches.length || 0);
     const mismatchTotalBatches = Math.max(1, Math.ceil(orderedMismatchRecords.length / batchSize) || 0);
-    let linkedApplied = 0;
+    let linkedStatusUpdated = 0;
     let mismatchUpdated = 0;
 
     for (let index = 0; index < linkedBatches.length; index++) {
-      linkedApplied += await this._persistLinkedBatch(
+      linkedStatusUpdated += await this._persistLinkedBatch(
         linkedBatches[index],
         index + 1,
         linkedTotalBatches,
@@ -118,7 +118,7 @@ const reconImmediateStore = {
     }
 
     return {
-      linkedApplied,
+      linkedStatusUpdated,
       mismatchUpdated
     };
   },
@@ -212,7 +212,7 @@ const reconImmediateStore = {
       })
     );
 
-    return Number(result?.applied ?? result?.inserted ?? 0);
+    return Number(result?.updated || 0);
   },
 
   async _persistMismatchBatch(batchRecords, batchIndex, totalBatches, metadata = {}) {

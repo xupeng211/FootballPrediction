@@ -79,7 +79,7 @@
       "results_slug": "j1-league",
       "results_url_strategy": "seasonless",
       "seasonless_current_year_basis": "start",
-      "ready_selector": "text=Machida"
+      "ready_selector": "div[role='row']"
     },
     {
       "id": 8974,

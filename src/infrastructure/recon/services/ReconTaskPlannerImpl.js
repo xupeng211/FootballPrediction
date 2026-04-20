@@ -5,6 +5,11 @@ const { RECON_CONFIG, getReconConfigSection } = require('./ReconServiceConfig');
 const { reconTaskPlannerSourceSelector } = require('./ReconTaskPlannerSourceSelector');
 const { reconTaskPlannerUrlUtils } = require('./ReconTaskPlannerUrlUtils');
 
+const PENDING_STATUS_PRIORITY = new Map([
+  ['HARVESTED', 0],
+  ['RECON_MISMATCH', 1]
+]);
+
 function resolveMatchDateTimestamp(match = null) {
   const rawMatchDate = match?.match_date || match?.matchDate || null;
   if (!rawMatchDate) {
@@ -13,6 +18,40 @@ function resolveMatchDateTimestamp(match = null) {
 
   const timestamp = new Date(rawMatchDate).getTime();
   return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function normalizePendingPipelineStatus(match = null) {
+  return String(match?.pipeline_status || '').trim().toUpperCase();
+}
+
+function isFuturePendingMatch(match = null, now = new Date()) {
+  const kickoffAt = resolveMatchDateTimestamp(match);
+  return kickoffAt > 0 && kickoffAt > now.getTime();
+}
+
+function comparePendingMatchesForProcessing(left, right, now = new Date()) {
+  const leftTimestamp = resolveMatchDateTimestamp(left);
+  const rightTimestamp = resolveMatchDateTimestamp(right);
+  const leftIsFuture = isFuturePendingMatch(left, now);
+  const rightIsFuture = isFuturePendingMatch(right, now);
+
+  if (leftIsFuture !== rightIsFuture) {
+    return leftIsFuture ? 1 : -1;
+  }
+
+  const leftStatusPriority = PENDING_STATUS_PRIORITY.get(normalizePendingPipelineStatus(left)) ?? 2;
+  const rightStatusPriority = PENDING_STATUS_PRIORITY.get(normalizePendingPipelineStatus(right)) ?? 2;
+  if (leftStatusPriority !== rightStatusPriority) {
+    return leftStatusPriority - rightStatusPriority;
+  }
+
+  if (leftTimestamp !== rightTimestamp) {
+    return leftIsFuture
+      ? leftTimestamp - rightTimestamp
+      : rightTimestamp - leftTimestamp;
+  }
+
+  return String(left?.match_id || '').localeCompare(String(right?.match_id || ''));
 }
 
 class ReconTaskPlanner {
@@ -111,6 +150,11 @@ class ReconTaskPlanner {
     return `recon:${leagueId || leagueName}:${dbSeason}`;
   }
 
+  orderPendingMatchesForProcessing(pendingMatches = [], now = new Date()) {
+    return [...(Array.isArray(pendingMatches) ? pendingMatches : [])]
+      .sort((left, right) => comparePendingMatchesForProcessing(left, right, now));
+  }
+
   async buildScanTargets(options = {}) {
     const { season, tier = null, leagueIds = null, currentSeasonOnly = false } = options;
 
@@ -141,7 +185,7 @@ class ReconTaskPlanner {
     for (const target of targets) {
       const allPendingMatches = await this.loadReconPendingMatches(target, {
         ...options,
-        limit: lightweightSingleMatchMode ? 1 : options.limit
+        limit: lightweightSingleMatchMode ? null : options.limit
       });
       const pendingMatches = options.mismatchRetryOnly === true
         ? (Array.isArray(allPendingMatches)
@@ -149,19 +193,20 @@ class ReconTaskPlanner {
           : [])
         : allPendingMatches;
       if (Array.isArray(pendingMatches) && pendingMatches.length > 0) {
-        const harvestedCount = pendingMatches
+        const orderedPendingMatches = this.orderPendingMatchesForProcessing(pendingMatches);
+        const harvestedCount = orderedPendingMatches
           .filter((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'HARVESTED')
           .length;
-        const mismatchCount = pendingMatches
+        const mismatchCount = orderedPendingMatches
           .filter((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH')
           .length;
-        const latestMatchDateTs = pendingMatches.reduce(
+        const latestMatchDateTs = orderedPendingMatches.reduce(
           (maxValue, match) => Math.max(maxValue, resolveMatchDateTimestamp(match)),
           0
         );
         const reconPolicy = this.resolveReconPolicy(
           target,
-          pendingMatches,
+          orderedPendingMatches,
           options.confidenceThreshold,
           { allowMismatchRetry: options.allowMismatchRetry === true }
         );
@@ -170,14 +215,12 @@ class ReconTaskPlanner {
             ...target,
             reconPolicy
           },
-          pendingMatches: [...pendingMatches].sort((a, b) =>
-            String(a.match_id).localeCompare(String(b.match_id))
-          ),
+          pendingMatches: orderedPendingMatches,
           priority: {
             harvestedCount,
             mismatchCount,
             latestMatchDateTs,
-            totalPending: pendingMatches.length
+            totalPending: orderedPendingMatches.length
           },
           desiredLimit: null
         });
@@ -267,11 +310,20 @@ class ReconTaskPlanner {
     const configuredRetry = options.allowMismatchRetry === true
       || target?.reconPolicy?.allowMismatchRetry === true;
     const leagueId = Number(target?.leagueId || target?.league?.id || 0);
-    const hasMismatchRetry = (Array.isArray(pendingMatches) ? pendingMatches : [])
+    const normalizedPendingMatches = Array.isArray(pendingMatches) ? pendingMatches : [];
+    const hasMismatchRetry = normalizedPendingMatches
       .some((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH');
+    const mismatchOnly = normalizedPendingMatches.length > 0
+      && normalizedPendingMatches.every((match) => String(match?.pipeline_status || '').trim().toUpperCase() === 'RECON_MISMATCH');
     const thresholdFloor = this.resolveMismatchRetryThresholdFloor(target);
     const thresholdOverride = this.resolveConfidenceThresholdOverride(target);
-    const baselineThreshold = Number.isFinite(thresholdOverride)
+    const allowExplicitLowerThreshold = configuredRetry
+      && mismatchOnly
+      && requestedThreshold > 0
+      && requestedThreshold < this.minimumConfidenceThreshold;
+    const baselineThreshold = allowExplicitLowerThreshold
+      ? Math.max(requestedThreshold, thresholdFloor)
+      : Number.isFinite(thresholdOverride)
       ? Number(thresholdOverride)
       : Math.max(requestedThreshold, this.minimumConfidenceThreshold);
     const effectiveThreshold = configuredRetry && hasMismatchRetry
@@ -300,9 +352,7 @@ class ReconTaskPlanner {
   }
 
   selectProcessablePendingMatches(pendingMatches, candidates, confidenceThreshold, matchLimit = null, seasonMirror = null) {
-    const orderedPending = [...pendingMatches].sort((a, b) =>
-      String(a.match_id).localeCompare(String(b.match_id))
-    );
+    const orderedPending = this.orderPendingMatchesForProcessing(pendingMatches);
 
     if (!Number.isInteger(matchLimit) || matchLimit <= 0 || orderedPending.length <= matchLimit) {
       return orderedPending;

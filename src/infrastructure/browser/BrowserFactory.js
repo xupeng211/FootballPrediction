@@ -13,6 +13,7 @@
 const { chromium } = require('playwright');
 const { getPathResolver } = require('../utils/PathResolver');
 const { logger } = require('../utils/Logger');
+const { mergeContextExtraHTTPHeaders } = require('../shared/helpers/browserHeaderUtils');
 
 // ============================================================================
 // BrowserFactory - 浏览器工厂类
@@ -32,6 +33,7 @@ class BrowserFactory {
         this.config = {
             headless: config.headless !== false,
             profilePath: config.profilePath || process.env.BROWSER_PROFILE_PATH || '/app/data/browser_profile',
+            disableHomepageWarmup: true,
             ...config
         };
 
@@ -112,10 +114,21 @@ class BrowserFactory {
             ? undefined
             : { server: identity.proxy.url };
 
+        const extraHTTPHeaders = mergeContextExtraHTTPHeaders({
+            extraHeaders: identity.stealth.extraHTTPHeaders || {},
+            userAgent: identity.stealth.userAgent,
+            acceptLanguage: identity.stealth.locale === 'en-US'
+                ? 'en-US,en;q=0.9'
+                : identity.stealth.extraHTTPHeaders?.['accept-language']
+                    || identity.stealth.extraHTTPHeaders?.['Accept-Language']
+                    || 'en-US,en;q=0.9',
+            platform: identity.stealth.platform || 'Win32'
+        });
+
         const context = await this.browser.newContext({
             viewport: identity.stealth.viewport,
             userAgent: identity.stealth.userAgent,
-            extraHTTPHeaders: identity.stealth.extraHTTPHeaders,
+            extraHTTPHeaders: extraHTTPHeaders,
             proxy: proxyConfig,
             deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
             locale: identity.stealth.locale || 'en-US',
@@ -333,7 +346,16 @@ class BrowserFactory {
      * @param {boolean} [config.randomScrolls] - 是否随机滚动
      */
     async warmupHomepage(page, config = {}) {
-        const { scrollMore = true, randomScrolls = true } = config;
+        const warmupDisabled = this.config.disableHomepageWarmup !== false;
+
+        if (warmupDisabled) {
+            console.log('⏭️  [BrowserFactory] 首页预热已停用，直接进入目标详情页');
+            return {
+                skipped: true,
+                pageAttached: Boolean(page),
+                hasConfig: Boolean(config && Object.keys(config).length > 0)
+            };
+        }
 
         console.log('🏠 [BrowserFactory] 首页预热: 访问 FotMob 首页...');
 
@@ -350,6 +372,10 @@ class BrowserFactory {
         }
 
         console.log(`✅ [BrowserFactory] 首页预热完成 (${scrollCount} 次滚动)`);
+        return {
+            skipped: false,
+            scrollCount
+        };
     }
 
     /**

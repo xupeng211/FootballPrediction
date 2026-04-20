@@ -1,5 +1,8 @@
 'use strict';
 
+const MENU_VISIBILITY_TIMEOUT_MS = 250;
+const MENU_CLICK_TIMEOUT_MS = 1000;
+
 function normalizeStringList(value, fallback) {
   return Array.isArray(value) && value.length > 0 ? [...value] : [...fallback];
 }
@@ -118,6 +121,63 @@ class ReconBookmakerUnlocker {
       return false;
     }
 
+    if (typeof page.evaluate === 'function') {
+      const domClicked = await page.evaluate(({ menuLabels }) => {
+        const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const labels = menuLabels.map((item) => normalize(item)).filter(Boolean);
+        const isVisible = (element) => {
+          if (!element) {
+            return false;
+          }
+
+          const style = window.getComputedStyle?.(element);
+          return element.isConnected !== false
+            && style?.display !== 'none'
+            && style?.visibility !== 'hidden'
+            && style?.opacity !== '0'
+            && (element.getClientRects?.().length || 0) > 0;
+        };
+        const elements = Array.from(document.querySelectorAll(
+          [
+            'button',
+            'a',
+            '[role="button"]',
+            '[role="link"]',
+            '[data-testid*="bookmaker"]',
+            '[data-test*="bookmaker"]',
+            '[aria-controls*="bookmaker"]'
+          ].join(',')
+        ));
+        const candidate = elements.find((element) => {
+          const text = normalize(element.textContent);
+          const aria = normalize(element.getAttribute?.('aria-label'));
+          const title = normalize(element.getAttribute?.('title'));
+          const dataTestId = normalize(element.getAttribute?.('data-testid'));
+          const dataTest = normalize(element.getAttribute?.('data-test'));
+          const href = String(element.getAttribute?.('href') || '').trim();
+          const explicitBookmakerTrigger = dataTestId.includes('bookmaker')
+            || dataTest.includes('bookmaker')
+            || title.includes('bookmaker');
+          const matchedByLabel = labels.includes(text) || labels.includes(aria) || labels.includes(title);
+          return isVisible(element)
+            && !/\/bookmakers\/?$/i.test(href)
+            && (explicitBookmakerTrigger || matchedByLabel);
+        });
+
+        if (!candidate) {
+          return false;
+        }
+
+        (candidate.closest('button,a,[role="button"],[role="link"]') || candidate).click();
+        return true;
+      }, {
+        menuLabels: this.config.menuLabels
+      });
+      if (domClicked) {
+        return true;
+      }
+    }
+
     if (typeof page.getByRole === 'function') {
       for (const label of this.config.menuLabels) {
         for (const role of ['link', 'button']) {
@@ -129,41 +189,18 @@ class ReconBookmakerUnlocker {
             if (typeof href === 'string' && /\/bookmakers\/?$/i.test(href.trim())) {
               continue;
             }
-            if (await target.isVisible({ timeout: 1000 })) {
-              await target.click({ timeout: 2000 });
+            if (await target.isVisible({ timeout: MENU_VISIBILITY_TIMEOUT_MS })) {
+              await target.click({ timeout: MENU_CLICK_TIMEOUT_MS });
               return true;
             }
           } catch (_error) {
-            // fall through to DOM click
+            // 继续尝试下一组 role/name 组合
           }
         }
       }
     }
 
-    if (typeof page.evaluate !== 'function') {
-      return false;
-    }
-
-    return page.evaluate(({ menuLabels }) => {
-      const normalize = (value) => String(value || '').replace(/\s+/g, ' ').trim().toLowerCase();
-      const labels = menuLabels.map((item) => normalize(item)).filter(Boolean);
-      const elements = Array.from(document.querySelectorAll('a,button,[role="button"],[role="link"]'));
-      const candidate = elements.find((element) => {
-        const text = normalize(element.textContent);
-        const aria = normalize(element.getAttribute('aria-label'));
-        const href = String(element.getAttribute('href') || '').trim();
-        return !/\/bookmakers\/?$/i.test(href) && (labels.includes(text) || labels.includes(aria));
-      });
-
-      if (!candidate) {
-        return false;
-      }
-
-      candidate.click();
-      return true;
-    }, {
-      menuLabels: this.config.menuLabels
-    });
+    return false;
   }
 
   async applyBookmakerSelection(page) {
