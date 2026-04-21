@@ -13,9 +13,10 @@ describe('TitanConfig', () => {
   });
 
   it('应该验证必填配置', () => {
-    const config = new TitanConfig();
     const originalPassword = process.env.DB_PASSWORD;
     delete process.env.DB_PASSWORD;
+
+    const config = new TitanConfig();
 
     assert.throws(() => {
       config.validateConfig();
