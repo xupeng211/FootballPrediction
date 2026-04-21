@@ -538,6 +538,47 @@ describe('ReconMatrixTargetRunner', () => {
     assert.equal(hasOnlyFuturePendingMatches(null), false);
   });
 
+  it('工具函数应正确处理边界情况', () => {
+    const {
+      resolvePendingMatchTimestamp,
+      isFuturePendingMatch,
+      shouldDeferFuturePendingFromResults,
+      splitDeferredFuturePendingMatches,
+      mergeDeferredPendingMatches,
+      normalizeLeagueName
+    } = require('../../src/infrastructure/recon/services/ReconMatrixTargetRunner');
+
+    assert.equal(resolvePendingMatchTimestamp(null), null);
+    assert.equal(resolvePendingMatchTimestamp({ match_date: 'invalid' }), null);
+    assert.ok(resolvePendingMatchTimestamp({ match_date: '2026-04-20T00:00:00.000Z' }) > 0);
+
+    assert.equal(isFuturePendingMatch(null), false);
+    assert.equal(isFuturePendingMatch({ match_date: '2026-04-01T00:00:00.000Z' }), false);
+
+    assert.equal(shouldDeferFuturePendingFromResults('fixtures'), false);
+    assert.equal(shouldDeferFuturePendingFromResults('results', { source: { mode: 'current_fixtures' } }), false);
+    assert.equal(shouldDeferFuturePendingFromResults('results', { source: { mode: 'historical' } }), true);
+
+    const split = splitDeferredFuturePendingMatches([
+      { match_id: 'm1', match_date: '2026-04-01T00:00:00.000Z' },
+      { match_id: 'm2', match_date: '2099-04-20T00:00:00.000Z' }
+    ], 'results', { source: { mode: 'historical' } });
+    assert.equal(split.eligiblePending.length, 1);
+    assert.equal(split.deferredPending.length, 1);
+
+    const merged = mergeDeferredPendingMatches(
+      [{ match_id: 'm1' }, { match_id: 'm2' }],
+      [{ match_id: 'm1', data: 'deferred' }],
+      [{ match_id: 'm2', data: 'remaining' }]
+    );
+    assert.equal(merged.length, 2);
+    assert.equal(merged[0].data, 'deferred');
+
+    assert.equal(normalizeLeagueName('Brasileirão'), 'brasileirao');
+    assert.equal(normalizeLeagueName('J1 League'), 'j1 league');
+    assert.equal(normalizeLeagueName(null), '');
+  });
+
   it('_runPostResultsFallbackRoutes 在 results-only 模式遇到残缺 results source 时应抛错重试', async () => {
     const calls = [];
     const runner = createRunner({
