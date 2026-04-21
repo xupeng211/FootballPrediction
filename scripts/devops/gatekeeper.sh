@@ -728,6 +728,24 @@ run_static_quality_checks() {
   fi
 }
 
+run_cold_start_integrity_guard() {
+  log '执行 [GATE-COLD-START] 冷启动蓝图校验。'
+
+  node <<'NODE'
+const { runColdStartBlueprintCheck } = require('./scripts/ops/helpers/dbBlueprint');
+
+(async () => {
+  const result = await runColdStartBlueprintCheck();
+  console.log(
+    `[GATE-COLD-START] PASS - 空库回放成功 - 临时库 ${result.databaseName}，蓝图 ${result.appliedFiles.length} 个文件`
+  );
+})().catch((error) => {
+  console.error(`[GATE-COLD-START] FAIL - ${error.message}`);
+  process.exit(1);
+});
+NODE
+}
+
 run_proxyprovider_smoke_test() {
   log '执行 ProxyProvider 契约单测。'
   [[ -f tests/unit/ProxyProvider.test.js ]] || fail '缺少 tests/unit/ProxyProvider.test.js。'
@@ -926,6 +944,7 @@ main() {
   run_config_compat_guard
   run_python_architecture_guard
   run_static_quality_checks
+  run_cold_start_integrity_guard
   run_proxyprovider_smoke_test
 
   if [[ "$MODE" == "pr" ]]; then
