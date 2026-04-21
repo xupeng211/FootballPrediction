@@ -1,0 +1,5 @@
+match_id,external_id,league_name,season,home_team,away_team,match_date,status,bookmaker_name,market_type,open_home,open_draw,open_away,close_home,close_draw,close_away,home_score,away_score
+47_20242025_900001,900001,EPL,2024-2025,Man Utd,Liverpool,2024-08-16T19:00:00Z,scheduled,Bet365,1x2,2.10,3.40,3.30,2.05,3.50,3.45,,
+47_20242025_900001,900001,EPL,2024-2025,Man Utd,Liverpool,2024-08-16T19:00:00Z,scheduled,Pinnacle,1x2,2.12,3.38,3.28,2.08,3.46,3.40,,
+47_20242025_900002,900002,Segunda,2024_2025,Burgos,Oviedo,2024-08-17T17:30:00Z,finished,Bet365,1x2,2.45,2.95,3.05,2.38,3.02,3.12,1,0
+47_20242025_900003,900003,EPL,2024-2025,Spurs,Arsenal,not-a-date,scheduled,Bet365,1x2,2.80,3.30,2.40,2.75,3.25,2.45,,

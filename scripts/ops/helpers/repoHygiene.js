@@ -21,6 +21,7 @@ const DATA_ALLOWLIST_FILES = new Set([
   'data/.gitkeep',
   'data/manual_html/.gitkeep',
   'data/manual_html/test_sample.html',
+  'data/mock/sample_history.csv',
   'data/processed/.gitkeep',
   'data/snapshots/.gitkeep'
 ]);
