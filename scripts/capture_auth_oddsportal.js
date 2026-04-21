@@ -175,7 +175,7 @@ async function main() {
     console.log(`🔑 Cookie 预览: ${cookieStr.substring(0, 100)}${cookieStr.length > 100 ? '...' : ''}`);
     console.log(`📊 Cookie 数量: ${storageState.cookies?.length || 0}`);
     console.log('='.repeat(60));
-    console.log('\n💡 提示: 现在可以运行 p2p_harvest_v38.js 进行带证收割！');
+    console.log('\n💡 提示: 会话已保存，请按当前仓库主流程在容器内执行 Recon / Backfill 入口。');
 
   } catch (error) {
     console.error(`${LOG_PREFIX} ✗ 错误:`, error.message);

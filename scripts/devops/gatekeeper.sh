@@ -746,6 +746,11 @@ const { runColdStartBlueprintCheck } = require('./scripts/ops/helpers/dbBlueprin
 NODE
 }
 
+run_repo_hygiene_guard() {
+  log '执行仓库卫生扫描。'
+  node scripts/ops/helpers/repoHygiene.js
+}
+
 run_proxyprovider_smoke_test() {
   log '执行 ProxyProvider 契约单测。'
   [[ -f tests/unit/ProxyProvider.test.js ]] || fail '缺少 tests/unit/ProxyProvider.test.js。'
@@ -945,6 +950,7 @@ main() {
   run_python_architecture_guard
   run_static_quality_checks
   run_cold_start_integrity_guard
+  run_repo_hygiene_guard
   run_proxyprovider_smoke_test
 
   if [[ "$MODE" == "pr" ]]; then
