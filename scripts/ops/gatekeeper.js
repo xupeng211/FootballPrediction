@@ -5,8 +5,9 @@
  *
  * 职责: 自动化质量准入标准验证
  * - 单元测试通过率 100%
- * - 代码覆盖率 ≥ 80% (Lines/Branches)
+ * - 代码覆盖率 ≥ 80% (Lines) / 81% (Branches)
  * - ESLint 零错误
+ * - 冷启动蓝图可回放
  * - 架构边界检查
  *
  * @module scripts/ops/gatekeeper
@@ -19,6 +20,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { TitanLogger } = require('../../src/infrastructure/utils/TitanLogger');
+const { runColdStartBlueprintCheck } = require('./helpers/dbBlueprint');
 
 function writeToStream(stream, message = '') {
   const normalizedMessage = String(message);
@@ -66,6 +68,7 @@ class Gatekeeper {
       tests: { passed: false, message: '' },
       coverage: { passed: false, message: '', metrics: {} },
       lint: { passed: false, message: '' },
+      coldStart: { passed: false, message: '' },
       architecture: { passed: false, message: '' }
     };
     this.exitCode = 0;
@@ -106,7 +109,7 @@ class Gatekeeper {
   }
 
   async checkTests() {
-    this.log('info', '【门禁 1/4】执行单元测试...');
+    this.log('info', '【门禁 1/5】执行单元测试...');
 
     const result = this.exec('npm run test:unit', { silent: false });
 
@@ -123,7 +126,7 @@ class Gatekeeper {
   }
 
   async checkCoverage() {
-    this.log('info', '【门禁 2/4】验证代码覆盖率...');
+    this.log('info', '【门禁 2/5】验证代码覆盖率...');
 
     const coverageCandidates = [
       path.join(process.cwd(), 'reports/coverage/node/coverage-summary.json'),
@@ -183,7 +186,7 @@ class Gatekeeper {
   }
 
   async checkLint() {
-    this.log('info', '【门禁 3/4】执行 ESLint 检查...');
+    this.log('info', '【门禁 3/5】执行 ESLint 检查...');
 
     const result = this.exec('npm run lint', { silent: true });
 
@@ -200,8 +203,24 @@ class Gatekeeper {
     }
   }
 
+  async checkColdStart() {
+    this.log('info', '【门禁 4/5】执行 [GATE-COLD-START] 冷启动蓝图校验...');
+
+    try {
+      const result = await runColdStartBlueprintCheck();
+      this.results.coldStart.passed = true;
+      this.results.coldStart.message = `空库回放成功 - 临时库 ${result.databaseName}，蓝图 ${result.appliedFiles.length} 个文件`;
+      this.log('success', `[GATE-COLD-START] PASS - ${this.results.coldStart.message}`);
+    } catch (error) {
+      this.results.coldStart.passed = false;
+      this.results.coldStart.message = `冷启动蓝图失败: ${error.message}`;
+      this.log('error', `[GATE-COLD-START] FAIL - ${this.results.coldStart.message}`);
+      this.exitCode = 1;
+    }
+  }
+
   async checkArchitecture() {
-    this.log('info', '【门禁 4/4】验证架构边界...');
+    this.log('info', '【门禁 5/5】验证架构边界...');
 
     const violations = [];
 
@@ -245,6 +264,7 @@ class Gatekeeper {
       { name: '单元测试', result: this.results.tests },
       { name: '代码覆盖率', result: this.results.coverage },
       { name: 'ESLint', result: this.results.lint },
+      { name: '冷启动蓝图', result: this.results.coldStart },
       { name: '架构边界', result: this.results.architecture }
     ];
 
@@ -273,6 +293,7 @@ class Gatekeeper {
     await this.checkTests();
     await this.checkCoverage();
     await this.checkLint();
+    await this.checkColdStart();
     await this.checkArchitecture();
 
     const exitCode = this.printSummary();

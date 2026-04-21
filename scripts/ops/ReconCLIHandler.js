@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+const { spawnSync } = require('child_process');
 const {
   ReconCliArgumentError,
   parseArgs,
@@ -187,6 +189,73 @@ function formatReconMatrixResult(args, leagues, result) {
   };
 }
 
+function summarizeResults(results = [], isSkippedFutureFinalsResultFn = () => false) {
+  return (Array.isArray(results) ? results : []).reduce((summary, result) => {
+    if (isSkippedFutureFinalsResultFn(result)) {
+      return summary;
+    }
+
+    summary.linked += Number(result?.inserted || result?.linked || 0);
+    summary.pending += Number(result?.pendingTotal || 0);
+    return summary;
+  }, { linked: 0, pending: 0 });
+}
+
+function triggerDbVaultBackup({ reason = 'recon_auto', linkedCount = 0, output = console } = {}) {
+  if (process.env.RECON_AUTO_DB_VAULT === 'false') {
+    return { skipped: true, reason: 'disabled_by_env' };
+  }
+
+  const scriptPath = path.join(__dirname, 'db_vault.js');
+  const result = spawnSync(process.execPath, [scriptPath, 'backup', '--reason', reason], {
+    cwd: path.resolve(__dirname, '../..'),
+    encoding: 'utf8',
+    env: process.env
+  });
+
+  const stdout = String(result.stdout || '').trim();
+  const stderr = String(result.stderr || '').trim();
+  if (stdout && typeof output.log === 'function') {
+    output.log(stdout);
+  }
+  if (stderr && typeof output.warn === 'function') {
+    output.warn(stderr);
+  }
+
+  if (result.status !== 0) {
+    throw new Error(`Recon 自动备份失败 (linked=${linkedCount}): ${stderr || stdout || 'unknown error'}`);
+  }
+
+  return {
+    skipped: false,
+    status: result.status
+  };
+}
+
+function finalizeSuccessfulReconRun({
+  exitCode,
+  results,
+  isSkippedFutureFinalsResultFn = () => false,
+  output = console
+} = {}) {
+  const summary = summarizeResults(results, isSkippedFutureFinalsResultFn);
+  if (exitCode !== 0 || summary.linked <= 0) {
+    return summary;
+  }
+
+  output.log(`[DB-VAULT] Recon 成功，linked=${summary.linked}，触发自动快照备份...`);
+  try {
+    triggerDbVaultBackup({
+      linkedCount: summary.linked,
+      output
+    });
+  } catch (error) {
+    output.warn(`[DB-VAULT] 自动备份失败: ${error.message}`);
+  }
+
+  return summary;
+}
+
 async function runReconMatrixMode(scanner, args, leagues) {
   const requiresSharedNavigator = args.forcePureProtocol !== true
     && typeof scanner.engine?.navigatorFactory !== 'function';
@@ -258,6 +327,8 @@ async function executeScannerWork(args, runtime) {
     ? await runReconMatrixMode(runtime.scanner, args, leagues)
     : await runPerLeagueMode(runtime, args, leagues);
   const totalCoverage = printResultsSummary(runtime.output, results, runtime.isSkippedFutureFinalsResultFn);
+  runtime.lastResults = results;
+  runtime.lastTotalCoverage = totalCoverage;
   return runtime.computeExitCodeFn(results, totalCoverage);
 }
 
@@ -339,6 +410,12 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
       return signalToExitCode(raceResult.signal);
     }
 
+    finalizeSuccessfulReconRun({
+      exitCode: raceResult,
+      results: runtime.lastResults,
+      isSkippedFutureFinalsResultFn: runtime.isSkippedFutureFinalsResultFn,
+      output
+    });
     return raceResult;
   } finally {
     unregisterSignalHandlers();
@@ -367,5 +444,8 @@ module.exports = {
   createCleanupRunner,
   registerSignalHandlers,
   signalToExitCode,
+  summarizeResults,
+  triggerDbVaultBackup,
+  finalizeSuccessfulReconRun,
   main
 };
