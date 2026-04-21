@@ -21,6 +21,7 @@ const fs = require('fs');
 const path = require('path');
 const { TitanLogger } = require('../../src/infrastructure/utils/TitanLogger');
 const { runColdStartBlueprintCheck } = require('./helpers/dbBlueprint');
+const { runRepoHygieneCheck } = require('./helpers/repoHygiene');
 
 function writeToStream(stream, message = '') {
   const normalizedMessage = String(message);
@@ -219,16 +220,17 @@ class Gatekeeper {
     }
   }
 
-  async checkArchitecture() {
-    this.log('info', '【门禁 5/5】验证架构边界...');
+  async checkRepoHygiene() {
+    this.log('info', '【门禁 5/5】验证架构边界与仓库卫生...');
 
-    const violations = [];
+    const failures = [];
+    const warnings = [];
 
     const reconEngineImpl = path.join(process.cwd(), 'src/infrastructure/recon/ReconEngineImpl.js');
     if (fs.existsSync(reconEngineImpl)) {
       const content = fs.readFileSync(reconEngineImpl, 'utf8');
       if (content.includes("require('../services/L1ConfigManager')")) {
-        violations.push('ReconEngineImpl 直接依赖 L1ConfigManager (跨层依赖)');
+        failures.push('ReconEngineImpl 直接依赖 L1ConfigManager (跨层依赖)');
       }
     }
 
@@ -241,17 +243,28 @@ class Gatekeeper {
     ), 0);
 
     if (consoleLogCount > 0) {
-      violations.push(`关键路径仍存在 ${consoleLogCount} 处 console 输出`);
+      failures.push(`关键路径仍存在 ${consoleLogCount} 处 console 输出`);
     }
 
-    if (violations.length > 0) {
+    const hygiene = runRepoHygieneCheck({ emit: false });
+    warnings.push(...hygiene.warnings);
+    failures.push(...hygiene.failures);
+
+    warnings.forEach((message) => {
+      this.log('warn', `[REPO-HYGIENE] WARN - ${message}`);
+    });
+
+    if (failures.length > 0) {
       this.results.architecture.passed = false;
-      this.results.architecture.message = violations.join('; ');
-      this.log('warn', `架构检查: WARN - ${this.results.architecture.message}`);
+      this.results.architecture.message = failures.join('; ');
+      this.log('error', `架构/卫生检查: FAIL - ${this.results.architecture.message}`);
+      this.exitCode = 1;
     } else {
       this.results.architecture.passed = true;
-      this.results.architecture.message = '架构边界检查通过';
-      this.log('success', '架构检查: PASS');
+      this.results.architecture.message = warnings.length > 0
+        ? `架构/卫生检查通过（${warnings.length} 项警告）`
+        : '架构/卫生检查通过';
+      this.log('success', `架构/卫生检查: PASS - ${this.results.architecture.message}`);
     }
   }
 
@@ -265,7 +278,7 @@ class Gatekeeper {
       { name: '代码覆盖率', result: this.results.coverage },
       { name: 'ESLint', result: this.results.lint },
       { name: '冷启动蓝图', result: this.results.coldStart },
-      { name: '架构边界', result: this.results.architecture }
+      { name: '架构/卫生', result: this.results.architecture }
     ];
 
     checks.forEach(({ name, result }) => {
@@ -294,7 +307,7 @@ class Gatekeeper {
     await this.checkCoverage();
     await this.checkLint();
     await this.checkColdStart();
-    await this.checkArchitecture();
+    await this.checkRepoHygiene();
 
     const exitCode = this.printSummary();
     process.exit(exitCode);
