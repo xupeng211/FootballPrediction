@@ -9,6 +9,7 @@
         "seed:all": "node scripts/ops/seed_fixtures.js --all",
         "etl:local-dom": "node scripts/ops/local_dom_ingestor.js",
         "etl:csv-bulk": "node scripts/ops/csv_bulk_loader.js",
+        "etl:fetch-epl": "node scripts/ops/fetch_and_adapt_epl.js",
         "smelt": "node scripts/ops/smelt_all.js",
         "harvest:production": "node scripts/ops/run_production.js",
         "titan:total-war": "node scripts/ops/total_war_pipeline.js",

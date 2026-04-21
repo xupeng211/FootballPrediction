@@ -3,6 +3,8 @@
 const { Normalizer } = require('../../utils/Normalizer');
 const { L1ConfigManager } = require('../services/L1ConfigManager');
 
+const WARNING_LOW_QUALITY_SOURCE = 'WARNING_LOW_QUALITY_SOURCE';
+
 function normalizeLookupKey(value) {
   return String(value || '')
     .normalize('NFD')
@@ -57,6 +59,14 @@ class EntityMapper {
     return matchedLeague?.name || raw;
   }
 
+  buildSourceQualityFlags(options = {}) {
+    const flags = [];
+    if (options.hasOpenOdds === false) {
+      flags.push(WARNING_LOW_QUALITY_SOURCE);
+    }
+    return flags;
+  }
+
   _registerAlias(store, rawValue, canonicalValue) {
     const lookupKey = normalizeLookupKey(rawValue);
     const canonical = String(canonicalValue || '').trim();
@@ -72,6 +82,9 @@ class EntityMapper {
       QPR: 'Queens Park Rangers',
       'Man Utd': 'Manchester United',
       'Man City': 'Manchester City',
+      "Nott'm Forest": 'Nottingham Forest',
+      'Nott M Forest': 'Nottingham Forest',
+      'Nottm Forest': 'Nottingham Forest',
       Spurs: 'Tottenham Hotspur',
       'Burgos': 'Burgos CF'
     };
@@ -113,5 +126,6 @@ class EntityMapper {
 
 module.exports = {
   EntityMapper,
+  WARNING_LOW_QUALITY_SOURCE,
   normalizeLookupKey
 };
