@@ -3,7 +3,6 @@
 
 'use strict';
 
-const { L1ConfigManager } = require('../services/L1ConfigManager');
 const { ReconMatchEvaluator } = require('./services/ReconMatchEvaluator');
 const { reconMatchExtractor } = require('./services/ReconMatchExtractor');
 const { ReconMirrorManager } = require('./services/ReconMirrorManager');
@@ -25,7 +24,7 @@ class ReconEngine {
     this.proxyRotator = options.proxyRotator;
     this.navigatorFactory = options.navigatorFactory || null;
     this.traceId = options.traceId || null;
-    this.configManager = options.configManager || new L1ConfigManager({ logger: this.logger });
+    this.configManager = options.configManager;
     this.baseUrl = options.baseUrl || options.config?.oddsportal?.base_url || 'https://www.oddsportal.com';
     this.engineConfig = engineConfig;
     this.reconBatchSize = Math.max(1, Number(options.reconBatchSize ?? engineConfig.recon_batch_size));
