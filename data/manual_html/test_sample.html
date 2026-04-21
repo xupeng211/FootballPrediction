@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <title>OddsPortal Offline Sample</title>
+  </head>
+  <body>
+    <main class="op-match-page" data-match-id="140_20252026_4837496">
+      <section class="event-header">
+        <span class="league-name">Segunda</span>
+        <time class="kickoff" datetime="2026-05-24T17:00:00Z">2026-05-24 17:00 UTC</time>
+        <div class="participants">
+          <span class="participant participant--home">
+            <span class="participant__name">Cultural Leonesa</span>
+          </span>
+          <span class="participant participant--away">
+            <span class="participant__name">Burgos CF</span>
+          </span>
+        </div>
+      </section>
+
+      <table class="odds-table">
+        <tbody>
+          <tr
+            class="bookmaker-row"
+            data-market-type="1x2"
+            data-open='{"home":2.10,"draw":3.20,"away":3.55}'
+            data-close='{"home":2.00,"draw":3.30,"away":3.80}'
+            data-trajectory='[
+              {"captured_at":"2026-05-23T08:00:00Z","home":2.10,"draw":3.20,"away":3.55},
+              {"captured_at":"2026-05-24T16:30:00Z","home":2.00,"draw":3.30,"away":3.80}
+            ]'
+          >
+            <td class="bookmaker-name">Bet365</td>
+          </tr>
+
+          <tr class="bookmaker-row" data-market-type="Asian Handicap">
+            <td class="bookmaker-name">Pinnacle</td>
+            <td class="open-line">-0.25</td>
+            <td class="open-home">1.92</td>
+            <td class="open-away">1.96</td>
+            <td class="close-line">0</td>
+            <td class="close-home">1.84</td>
+            <td class="close-away">2.05</td>
+            <script type="application/json" class="movement-trajectory">
+              [
+                {"captured_at":"2026-05-23T09:15:00Z","line":"-0.25","home":1.92,"away":1.96},
+                {"captured_at":"2026-05-24T15:45:00Z","line":"0","home":1.84,"away":2.05}
+              ]
+            </script>
+          </tr>
+        </tbody>
+      </table>
+    </main>
+  </body>
+</html>
