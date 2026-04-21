@@ -990,4 +990,229 @@ describe('ReconMatrixTargetRunner', () => {
       error => error?.code === 'SOURCE_READY' && error?.sourceUrl === 'results://mls'
     );
   });
+
+  it('_buildTargetDrivenResultsSource 应优先缩窄单场候选并保留最佳匹配信息', () => {
+    const runner = createRunner({
+      matchEvaluator: {
+        findBestCandidate() {
+          return {
+            candidate: { hash: 'candidate-2', url: 'https://op.com/m2' },
+            confidence: 0.93
+          };
+        }
+      }
+    });
+
+    const narrowed = runner._buildTargetDrivenResultsSource({
+      source: { league: 'MLS', url: 'results://mls' },
+      candidates: [
+        { hash: 'candidate-1', url: 'https://op.com/m1' },
+        { hash: 'candidate-2', url: 'https://op.com/m2' }
+      ]
+    }, [{ match_id: 'm2' }], 0.82);
+
+    assert.equal(narrowed.targetDrivenSingleMatch, true);
+    assert.equal(narrowed.candidates.length, 1);
+    assert.equal(narrowed.targetDrivenBestMatch.matchId, 'm2');
+    assert.equal(narrowed.targetDrivenBestMatch.candidateHash, 'candidate-2');
+  });
+
+  it('_prepareReconTargetState 在单场剪枝且预算超时下应启用 budget grace 告警', async () => {
+    const runner = createRunner({
+      _assertLeagueBudget(target, routeState, stage) {
+        if (stage === 'prepare_results_source') {
+          return false;
+        }
+        return reconMatrixTargetRunner._assertLeagueBudget.call(this, target, routeState, stage);
+      },
+      taskPlanner: {
+        async loadReconPendingMatches() {
+          return [{ match_id: 'm1', pipeline_status: 'pending' }];
+        },
+        resolveReconPolicy() {
+          return {
+            effectiveConfidenceThreshold: 0.82,
+            allowMismatchRetry: true
+          };
+        },
+        formatSeasonForUrl(season) {
+          return `fmt:${season}`;
+        }
+      },
+      _probeResultsCandidateSource() {
+        return {
+          source: { season: '2025/2026', url: 'results://mls' },
+          candidates: [{ hash: 'candidate-1', url: 'https://op.com/m1' }],
+          targetDrivenCandidateMap: new Map([['m1', [{ hash: 'candidate-1', url: 'https://op.com/m1' }]]]),
+          targetDrivenBestMatch: { confidence: 0.88 },
+          extractResult: { sourceState: 'SOURCE_READY' }
+        };
+      },
+      _resolveScopedPendingMatches(pendingMatches) {
+        return pendingMatches;
+      }
+    });
+
+    const state = await runner._prepareReconTargetState({
+      season: '2025/2026',
+      dbSeason: '2025/2026',
+      resultsUrl: 'results://mls',
+      league: { name: 'MLS' }
+    }, {
+      matchLimit: 1,
+      matrixModePruning: true,
+      leagueDeadlineAt: Date.now() - 10
+    });
+
+    assert.equal(state.routeShortCircuitThreshold, 1);
+    assert.equal(state.runtimeTarget.matchLimit, 1);
+    assert.equal(
+      runner.__events.warn.some((entry) => entry.event === 'recon_prepare_scoped_pending_budget_grace'),
+      true
+    );
+  });
+
+  it('_finalizeRemainingPending 与 _runReconFixturesRoute 应覆盖空 pending 与空 fixtures 兜底', async () => {
+    const calls = [];
+    const runner = createRunner({
+      _buildEmptyRouteSource(routeKind, target, sourceState) {
+        return {
+          source: { season: target?.dbSeason || null, url: `empty://${routeKind}` },
+          extractResult: { sourceState },
+          candidates: []
+        };
+      },
+      async _processReconRoute(routeState, routeKind, routeSource, options = {}) {
+        calls.push({ routeKind, routeSource, options, pending: routeState.remainingRoutePending.length });
+      },
+      async _probeFixturesCandidateSource() {
+        return null;
+      }
+    });
+
+    await runner._finalizeRemainingPending({
+      remainingRoutePending: []
+    });
+
+    await runner._finalizeRemainingPending({
+      remainingRoutePending: [{ match_id: 'm1' }],
+      resultsSource: { source: { url: 'results://mls' } }
+    });
+
+    await runner._runReconFixturesRoute({
+      runtimeTarget: { dbSeason: '2025/2026' },
+      remainingRoutePending: [{ match_id: 'm2' }],
+      effectiveThreshold: 0.82,
+      navigator: { id: 'shared' }
+    });
+
+    assert.deepEqual(calls, [
+      {
+        routeKind: 'results_terminal',
+        routeSource: { source: { url: 'results://mls' } },
+        options: { finalPass: true },
+        pending: 1
+      },
+      {
+        routeKind: 'fixtures',
+        routeSource: {
+          source: { season: '2025/2026', url: 'empty://fixtures' },
+          extractResult: { sourceState: 'ROUTE_SKIPPED_NO_FIXTURES_URL' },
+          candidates: []
+        },
+        options: {},
+        pending: 1
+      }
+    ]);
+  });
+
+  it('_processReconRoute 在 results 路由仅剩 future pending 时应延后并保持待处理集合', async () => {
+    const runner = createRunner({
+      async _processPendingMatchesWithShortCircuit() {
+        throw new Error('should not process future-only pending');
+      }
+    });
+
+    const routeState = {
+      runtimeTarget: { league: { name: 'MLS' }, dbSeason: '2025/2026' },
+      remainingRoutePending: [{ match_id: 'm-future', match_date: '2099-04-19T23:00:00.000Z' }],
+      effectiveThreshold: 0.82,
+      limiter: () => {},
+      persistLimiter: () => {},
+      progress: { total: 1 },
+      routeMetadata: { reconRunId: 'recon-run-1' },
+      totalLinked: 0,
+      totalMismatched: 0,
+      totalCandidateCount: 0,
+      finalSourceSeason: null,
+      finalSourceUrl: null,
+      lastSourceState: 'SOURCE_EMPTY'
+    };
+
+    await runner._processReconRoute(routeState, 'results', {
+      source: { mode: 'results', url: 'results://mls' },
+      extractResult: { sourceState: 'SOURCE_READY' },
+      candidates: []
+    });
+
+    assert.equal(routeState.remainingRoutePending.length, 1);
+    assert.equal(routeState.totalLinked, 0);
+    assert.equal(
+      runner.__events.info.some((entry) => entry.event === 'recon_future_pending_deferred_from_results'),
+      true
+    );
+  });
+
+  it('_runPostResultsFallbackRoutes 应覆盖 incomplete source 与短路 search/local-dictionary 路径', async () => {
+    const throwingRunner = createRunner();
+
+    await assert.rejects(
+      () => throwingRunner._runPostResultsFallbackRoutes({
+        target: { league: { name: 'MLS' }, dbSeason: '2025/2026' },
+        runtimeTarget: { resultsOnlyMode: true, disableSearchRoute: true },
+        remainingRoutePending: [{ match_id: 'm1' }],
+        resultsSource: {
+          source: { url: 'results://mls', season: '2025/2026' },
+          extractResult: {
+            sourceState: 'SOURCE_INCOMPLETE',
+            sourceHealth: { incompleteReasons: ['missing_page'] }
+          },
+          sourceHealth: { incomplete: true, incompleteReasons: ['missing_page'] }
+        }
+      }),
+      (error) => error?.code === 'RECON_SOURCE_INCOMPLETE' && error?.stage === 'results_only_incomplete_source'
+    );
+
+    const routeCalls = [];
+    const shortCircuitRunner = createRunner({
+      _shouldUseLocalDictionaryRoute() {
+        return true;
+      },
+      async _runReconSearchRoute(routeState, canUseLocalDictionaryFallback) {
+        routeCalls.push(`search:${canUseLocalDictionaryFallback}`);
+        routeState.remainingRoutePending = [{ match_id: 'm2' }];
+      },
+      async _runReconLocalDictionaryRoute(routeState) {
+        routeCalls.push(`local:${routeState.remainingRoutePending.length}`);
+        routeState.remainingRoutePending = [];
+      }
+    });
+
+    await shortCircuitRunner._runPostResultsFallbackRoutes({
+      target: { league: { name: 'J1 League' }, dbSeason: '2025/2026' },
+      runtimeTarget: { league: { name: 'J1 League' } },
+      remainingRoutePending: [{ match_id: 'm1' }, { match_id: 'm2' }],
+      resultsProbeDurationMs: 21000,
+      resultsSource: {
+        candidates: [],
+        extractResult: { sourceState: 'SOURCE_READY' }
+      }
+    });
+
+    assert.deepEqual(routeCalls, ['search:true', 'local:1']);
+    assert.equal(
+      shortCircuitRunner.__events.info.some((entry) => entry.event === 'recon_results_search_short_circuit'),
+      true
+    );
+  });
 });

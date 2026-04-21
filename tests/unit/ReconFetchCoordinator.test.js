@@ -329,6 +329,209 @@ describe('ReconFetchCoordinator mixin', () => {
       });
       assert.ok(result);
     });
+
+    it('HTTP 失败时应返回 httpFailure 并记录首屏失败统计', async () => {
+      const warns = [];
+      const handler = makeHandler({}, {
+        logger: { warn: (event, payload) => warns.push({ event, payload }), info: () => {}, debug: () => {} },
+        _createPureProtocolMonitor: () => ({
+          pageSize: 25,
+          sourceUrl: '',
+          extractMatchesFromJson: () => []
+        }),
+        _fetchPureProtocolText: async () => ({
+          success: false,
+          status: 503,
+          error: 'HTTP_503',
+          retryAfterRaw: '5',
+          text: 'blocked'
+        })
+      });
+
+      const result = await handler._fetchPureProtocolPaginatedPages({
+        apiBaseUrl: 'https://op.com/api/',
+        maxPages: 1,
+        timeoutMs: 1000,
+        source: 'test',
+        referer: 'https://op.com/',
+        decryptor: { decrypt: async (value) => value },
+        buildBaseUrl: (url) => url,
+        buildPageUrl: (base, page) => `${base}/${page}/`
+      });
+
+      assert.deepStrictEqual(result.httpFailure, {
+        page: 1,
+        url: 'https://op.com/api//1/',
+        statusCode: 503,
+        error: 'HTTP_503',
+        retryAfterRaw: '5',
+        retryAfterMs: 0
+      });
+      assert.deepStrictEqual(result.pageStats, [{
+        page: 1,
+        url: 'https://op.com/api//1/',
+        rows: 0,
+        statusCode: 503,
+        error: 'HTTP_503',
+        retryAfterRaw: '5',
+        retryAfterMs: 0
+      }]);
+      assert.ok(warns.some((entry) => entry.event === 'pure_protocol_archive_http_failure_payload'));
+    });
+
+    it('空 payload 时应记录 empty pageStats 并结束分页', async () => {
+      const warns = [];
+      const handler = makeHandler({}, {
+        logger: { warn: (event, payload) => warns.push({ event, payload }), info: () => {}, debug: () => {} },
+        _createPureProtocolMonitor: () => ({
+          pageSize: 25,
+          sourceUrl: '',
+          extractMatchesFromJson: () => []
+        }),
+        _fetchPureProtocolText: async () => ({
+          success: true,
+          status: 200,
+          text: ''
+        })
+      });
+
+      const result = await handler._fetchPureProtocolPaginatedPages({
+        apiBaseUrl: 'https://op.com/api/',
+        maxPages: 1,
+        timeoutMs: 1000,
+        source: 'test',
+        referer: 'https://op.com/',
+        decryptor: { decrypt: async (value) => value },
+        buildBaseUrl: (url) => url,
+        buildPageUrl: (base, page) => `${base}/${page}/`
+      });
+
+      assert.deepStrictEqual(result.pageStats, [{
+        page: 1,
+        url: 'https://op.com/api//1/',
+        rows: 0,
+        total: 0,
+        source: 'test:empty'
+      }]);
+      assert.strictEqual(result.httpFailure, null);
+      assert.ok(warns.some((entry) => entry.event === 'pure_protocol_archive_blank_payload'));
+    });
+
+    it('解密成功时应分页去重、收敛 pageLimit 并同步 active proxy state', async () => {
+      let fetchCount = 0;
+      const handler = makeHandler({}, {
+        _createPureProtocolMonitor: () => ({
+          pageSize: 1,
+          sourceUrl: '',
+          extractMatchesFromJson(parsed) {
+            return (parsed?.d?.rows || []).map((row) => row.match);
+          }
+        }),
+        _fetchPureProtocolText: async () => {
+          fetchCount += 1;
+          if (fetchCount === 1) {
+            return {
+              success: true,
+              status: 200,
+              text: 'page-1',
+              activeProxyState: {
+                lease: {
+                  id: 'lease-new',
+                  proxy: { server: 'http://proxy-new', port: 7902 }
+                },
+                server: 'http://proxy-new',
+                port: 7902
+              }
+            };
+          }
+          return {
+            success: true,
+            status: 200,
+            text: 'page-2'
+          };
+        }
+      });
+
+      const result = await handler._fetchPureProtocolPaginatedPages({
+        apiBaseUrl: 'https://op.com/api/',
+        maxPages: 3,
+        timeoutMs: 1000,
+        source: 'test',
+        referer: 'https://op.com/',
+        decryptor: {
+          async decrypt(text) {
+            return text === 'page-1'
+              ? {
+                d: {
+                  rows: [
+                    { match: { hash: 'hash-1', url: 'https://op.com/match/1' } },
+                    { match: { hash: 'hash-1', url: 'https://op.com/match/1' } }
+                  ],
+                  total: 2
+                }
+              }
+              : {
+                d: {
+                  rows: [
+                    { match: { hash: 'hash-2', url: 'https://op.com/match/2' } }
+                  ],
+                  total: 2
+                }
+              };
+          }
+        },
+        buildBaseUrl: (url) => url,
+        buildPageUrl: (base, page) => `${base}/${page}/`
+      });
+
+      assert.deepStrictEqual(result.matches, [
+        { hash: 'hash-1', url: 'https://op.com/match/1' },
+        { hash: 'hash-2', url: 'https://op.com/match/2' }
+      ]);
+      assert.strictEqual(result.pagesScanned, 2);
+      assert.strictEqual(result.requestProxyLease.id, 'lease-new');
+      assert.strictEqual(result.requestProxyPort, 7902);
+    });
+
+    it('首屏 decrypt failed 时应记录 payload 告警', async () => {
+      const warns = [];
+      const handler = makeHandler({}, {
+        logger: { warn: (event, payload) => warns.push({ event, payload }), info: () => {}, debug: () => {} },
+        _createPureProtocolMonitor: () => ({
+          pageSize: 25,
+          sourceUrl: '',
+          extractMatchesFromJson: () => []
+        }),
+        _fetchPureProtocolText: async () => ({
+          success: true,
+          status: 200,
+          text: 'encrypted-blob'
+        })
+      });
+
+      const result = await handler._fetchPureProtocolPaginatedPages({
+        apiBaseUrl: 'https://op.com/api/',
+        maxPages: 1,
+        timeoutMs: 1000,
+        source: 'test',
+        referer: 'https://op.com/',
+        decryptor: {
+          async decrypt() {
+            throw new Error('bad decrypt');
+          }
+        },
+        buildBaseUrl: (url) => url,
+        buildPageUrl: (base, page) => `${base}/${page}/`
+      });
+
+      assert.deepStrictEqual(result.pageStats, [{
+        page: 1,
+        url: 'https://op.com/api//1/',
+        rows: 0,
+        error: 'decrypt_failed:bad decrypt'
+      }]);
+      assert.ok(warns.some((entry) => entry.event === 'pure_protocol_archive_decrypt_failed_payload'));
+    });
   });
 
   describe('_resolveLeagueTournamentContext', () => {
@@ -344,6 +547,350 @@ describe('ReconFetchCoordinator mixin', () => {
       const result = await handler._resolveLeagueTournamentContext('https://op.com/', 5000, null, {});
       assert.ok(result);
       assert.strictEqual(result.tournamentId, null);
+    });
+
+    it('命中缓存的 league context 时应跳过 navigate 并修复 archive URL', async () => {
+      const breakerKey = 'breaker://cached';
+      const navigations = [];
+      const handler = makeHandler({
+        _protocolRouteCache: new Map([[
+          breakerKey,
+          {
+            leagueContext: {
+              leagueUrl: 'https://op.com/league/',
+              tournamentId: 'tid-cached',
+              currentTournamentUrl: 'https://op.com/current/'
+            }
+          }
+        ]]),
+        stateProber: {
+          deriveLeaguePageUrl: () => 'https://op.com/league/'
+        },
+        _resolveCircuitBreakerKey: () => breakerKey,
+        navigate: async (url) => {
+          navigations.push(url);
+        }
+      });
+
+      const result = await handler._resolveLeagueTournamentContext(
+        'https://op.com/results/',
+        5000,
+        'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1//X2X3/1/0/'
+      );
+
+      assert.equal(navigations.length, 0);
+      assert.equal(result.leagueUrl, 'https://op.com/league/');
+      assert.equal(result.tournamentId, 'tid-cached');
+      assert.equal(result.currentTournamentUrl, 'https://op.com/current/');
+      assert.match(result.repairedArchiveUrl, /tid-cached/);
+    });
+
+    it('未命中缓存时应导航发现 tournament token 并回写缓存', { concurrency: false }, async () => {
+      const originalNow = Date.now;
+      const timeMarks = [1000, 1001, 4101, 4200, 4300];
+      const handler = makeHandler({
+        _protocolRouteCache: new Map(),
+        postApiDiscoveryWaitMs: 100,
+        stateProber: {
+          deriveLeaguePageUrl: () => 'https://op.com/league/',
+          extractTournamentToken: async () => 'tid-live'
+        },
+        _resolveCircuitBreakerKey: () => 'breaker://live',
+        navigateCalls: [],
+        navigate: async (url, options) => {
+          handler.navigator.navigateCalls.push({ url, options });
+        }
+      }, {
+        _getCurrentTournamentEndpoint: () => 'https://op.com/current/live/',
+        _buildTournamentUrlFromArchive: () => 'https://op.com/current/live/'
+      });
+
+      Date.now = () => timeMarks.shift() ?? 4300;
+
+      try {
+        const result = await handler._resolveLeagueTournamentContext(
+          'https://op.com/results/',
+          5000,
+          'https://www.oddsportal.com/ajax-sport-country-tournament-archive_/1//X2X3/1/0/'
+        );
+
+        assert.equal(handler.navigator.navigateCalls.length, 1);
+        assert.equal(result.tournamentId, 'tid-live');
+        assert.equal(result.currentTournamentUrl, 'https://op.com/current/live/');
+        assert.match(result.repairedArchiveUrl, /tid-live/);
+        assert.equal(
+          handler.navigator._protocolRouteCache.get('breaker://live').leagueContext.tournamentId,
+          'tid-live'
+        );
+      } finally {
+        Date.now = originalNow;
+      }
+    });
+
+  });
+
+  describe('_extractViaPureProtocol', () => {
+    it('缺少 tournament token 时应抛出 PURE_PROTOCOL_TOURNAMENT_TOKEN_MISSING', async () => {
+      const handler = makeHandler({}, {
+        _resolvePureProtocolContext: async () => ({
+          baseUrl: 'https://op.com/results/',
+          outrightId: '',
+          tournamentId: ''
+        }),
+        _resolvePureProtocolBookmakerHash: () => 'X2X3'
+      });
+
+      await assert.rejects(
+        () => handler._extractViaPureProtocol({ baseUrl: 'https://op.com/results/' }),
+        /PURE_PROTOCOL_TOURNAMENT_TOKEN_MISSING/
+      );
+    });
+
+    it('sample 503 时应切换代理、恢复抓取并释放临时 lease', async () => {
+      const events = [];
+      let fetchCount = 0;
+      const handler = makeHandler({
+        traceId: 'trace-pure',
+        archiveMaxPages: 2,
+        archiveTimeoutMs: 1500,
+        proxyLease: {
+          id: 'lease-old',
+          proxy: { server: 'http://proxy-old', port: 7891 }
+        },
+        proxyProvider: {
+          async acquire(options) {
+            events.push({ type: 'acquire', options });
+            return {
+              id: 'lease-new',
+              proxy: { server: 'http://proxy-new', port: 7902 }
+            };
+          },
+          async release(lease) {
+            events.push({ type: 'release', leaseId: lease.id });
+          },
+          async reportFailure(leaseId, metadata) {
+            events.push({ type: 'reportFailure', leaseId, metadata });
+          },
+          async reportSuccess(leaseId, metadata) {
+            events.push({ type: 'reportSuccess', leaseId, metadata });
+          }
+        }
+      }, {
+        logger: {
+          warn: (event, payload) => events.push({ type: 'warn', event, payload }),
+          info: (event, payload) => events.push({ type: 'info', event, payload }),
+          debug: () => {}
+        },
+        _resolvePureProtocolContext: async () => ({
+          baseUrl: 'https://op.com/results/',
+          requestedBaseUrl: 'https://op.com/results/',
+          contextSource: 'requested',
+          outrightId: 'ot-1',
+          tournamentId: '',
+          cookieHeader: 'session=abc',
+          appBundleUrl: 'https://op.com/assets/app.js',
+          seasonToken: '2025',
+          locale: 'en'
+        }),
+        _resolvePureProtocolBookmakerHash: () => 'X2X3',
+        _isRetryablePureProtocolFetchFailure: (result) => Number(result?.status) === 503,
+        _waitPureProtocolFetchRetry: async (delayMs) => {
+          events.push({ type: 'wait', delayMs });
+        },
+        _createPureProtocolMonitor: () => ({
+          pageSize: 25,
+          sourceUrl: '',
+          extractMatchesFromJson(parsed, source) {
+            events.push({ type: 'extract', source });
+            return (parsed?.d?.rows || []).map((row) => row.match);
+          }
+        }),
+        _createPureProtocolDecryptor: async (_context, samplePayload, sampleToken, bookmakerHash) => {
+          events.push({ type: 'decryptor', samplePayload, sampleToken, bookmakerHash });
+          return {
+            async decrypt(text) {
+              if (text === 'archive-encrypted') {
+                return {
+                  d: {
+                    rows: [{ match: { hash: 'hash-1', url: 'https://op.com/match/1' } }],
+                    total: 1
+                  }
+                };
+              }
+              return { d: { rows: [], total: 0 } };
+            }
+          };
+        },
+        _fetchPureProtocolText: async (_url, options = {}) => {
+          fetchCount += 1;
+          events.push({ type: 'fetch', fetchCount, proxyPort: options.proxyPort || null });
+          if (fetchCount === 1) {
+            return {
+              success: false,
+              status: 503,
+              error: 'HTTP_503',
+              text: 'blocked'
+            };
+          }
+          if (fetchCount === 2) {
+            return {
+              success: true,
+              status: 200,
+              text: 'sample-encrypted'
+            };
+          }
+          return {
+            success: true,
+            status: 200,
+            text: 'archive-encrypted'
+          };
+        }
+      });
+
+      const result = await handler._extractViaPureProtocol({ baseUrl: 'https://op.com/results/' }, {
+        maxPages: 2,
+        timeoutMs: 1500
+      });
+
+      assert.equal(result.sourceState, 'PURE_PROTOCOL');
+      assert.deepStrictEqual(result.matches, [{
+        hash: 'hash-1',
+        url: 'https://op.com/match/1'
+      }]);
+      assert.equal(events.filter((entry) => entry.type === 'fetch').length, 3);
+      assert.equal(events.find((entry) => entry.type === 'fetch')?.proxyPort, 7891);
+      assert.ok(events.some((entry) => entry.type === 'acquire' && entry.options.excludePorts.includes(7891)));
+      assert.ok(events.some((entry) => entry.type === 'reportFailure' && entry.leaseId === 'lease-old'));
+      assert.ok(events.some((entry) => entry.type === 'reportSuccess' && entry.leaseId === 'lease-new'));
+      assert.ok(events.some((entry) => entry.type === 'release' && entry.leaseId === 'lease-new'));
+      assert.ok(events.some((entry) => entry.type === 'warn' && entry.event === 'pure_protocol_sample_proxy_switching'));
+    });
+
+    it('缺少 bookmaker hash 时应抛出 PURE_PROTOCOL_BOOKMAKER_HASH_MISSING', async () => {
+      const handler = makeHandler({}, {
+        _resolvePureProtocolContext: async () => ({
+          baseUrl: 'https://op.com/results/',
+          outrightId: 'ot-1',
+          tournamentId: ''
+        }),
+        _resolvePureProtocolBookmakerHash: () => ''
+      });
+
+      await assert.rejects(
+        () => handler._extractViaPureProtocol({ baseUrl: 'https://op.com/results/' }),
+        /PURE_PROTOCOL_BOOKMAKER_HASH_MISSING/
+      );
+    });
+
+    it('sample payload 缺失时应抛出 PURE_PROTOCOL_SAMPLE_PAYLOAD_MISSING', async () => {
+      const handler = makeHandler({}, {
+        _resolvePureProtocolContext: async () => ({
+          baseUrl: 'https://op.com/results/',
+          outrightId: 'ot-1',
+          tournamentId: '',
+          appBundleUrl: 'https://op.com/assets/app.js'
+        }),
+        _resolvePureProtocolBookmakerHash: () => 'X2X3',
+        _isRetryablePureProtocolFetchFailure: () => false,
+        _fetchPureProtocolText: async () => ({
+          success: true,
+          status: 200,
+          text: ''
+        })
+      });
+
+      await assert.rejects(
+        () => handler._extractViaPureProtocol({ baseUrl: 'https://op.com/results/' }),
+        /PURE_PROTOCOL_SAMPLE_PAYLOAD_MISSING/
+      );
+    });
+
+    it('命中 warm cached decryptor 且释放代理失败时应记录日志', async () => {
+      const logs = [];
+      let fetchCount = 0;
+      const handler = makeHandler({
+        traceId: 'trace-warm',
+        proxyLease: {
+          id: 'lease-navigator',
+          proxy: { server: 'http://proxy-nav', port: 7891 }
+        },
+        decryptor: {
+          decryptFn() {},
+          async decrypt(text) {
+            if (text === 'archive-encrypted') {
+              return {
+                d: {
+                  rows: [{ match: { hash: 'hash-1', url: 'https://op.com/match/1' } }],
+                  total: 1
+                }
+              };
+            }
+            return { d: { rows: [], total: 0 } };
+          },
+          getAlgorithmVersion() {
+            return 'alg-v1';
+          }
+        },
+        proxyProvider: {
+          async release() {
+            throw new Error('release failed');
+          }
+        }
+      }, {
+        logger: {
+          warn: (event, payload) => logs.push({ level: 'warn', event, payload }),
+          info: (event, payload) => logs.push({ level: 'info', event, payload }),
+          debug: () => {}
+        },
+        _resolvePureProtocolContext: async () => ({
+          baseUrl: 'https://op.com/results/',
+          requestedBaseUrl: 'https://op.com/results/',
+          contextSource: 'requested',
+          outrightId: 'ot-1',
+          tournamentId: '',
+          cookieHeader: '',
+          appBundleUrl: 'https://op.com/assets/app.js',
+          seasonToken: '2025',
+          locale: 'en'
+        }),
+        _resolvePureProtocolBookmakerHash: () => 'X2X3',
+        _createPureProtocolMonitor: () => ({
+          pageSize: 25,
+          sourceUrl: '',
+          extractMatchesFromJson(parsed) {
+            return (parsed?.d?.rows || []).map((row) => row.match);
+          }
+        }),
+        _fetchPureProtocolText: async () => {
+          fetchCount += 1;
+          return fetchCount === 1
+            ? {
+              success: true,
+              status: 200,
+              text: 'sample-encrypted'
+            }
+            : {
+              success: true,
+              status: 200,
+              text: 'archive-encrypted'
+            };
+        }
+      });
+
+      const result = await handler._extractViaPureProtocol({ baseUrl: 'https://op.com/results/' }, {
+        requestProxyLease: {
+          id: 'lease-temp',
+          proxy: { server: 'http://proxy-temp', port: 7902 }
+        }
+      });
+
+      assert.equal(result.sourceState, 'PURE_PROTOCOL');
+      assert.deepStrictEqual(result.matches, [{
+        hash: 'hash-1',
+        url: 'https://op.com/match/1'
+      }]);
+      assert.ok(logs.some((entry) => entry.event === 'pure_protocol_cached_decryptor_hit'));
+      assert.ok(logs.some((entry) => entry.event === 'pure_protocol_sample_proxy_release_failed'));
     });
   });
 });

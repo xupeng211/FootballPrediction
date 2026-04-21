@@ -227,3 +227,302 @@ test('ReconRetryCoordinator 在 page.goto TLS 断连时记录代理与 JA3 审�
   assert.strictEqual(auditEvent.payload.sourceFormat, 'session_buffer_golden');
   assert.strictEqual(auditEvent.payload.operation, 'navigate');
 });
+
+test('ReconRetryCoordinator helper 应覆盖 Retry-After、waitBeforeRetry 与 inspectHttpFailure 分支', async () => {
+  const debugEvents = [];
+  const waitCalls = [];
+  const navigator = {
+    logger: {
+      info() {},
+      warn() {},
+      error() {},
+      debug(event, payload) {
+        debugEvents.push({ event, payload });
+      }
+    },
+    traceId: 'trace-retry-helpers',
+    page: {
+      isClosed() {
+        return false;
+      },
+      async waitForTimeout(ms) {
+        waitCalls.push(ms);
+      }
+    },
+    context: {
+      request: {
+        async get(url, options) {
+          assert.strictEqual(url, 'https://www.oddsportal.com/archive/');
+          assert.strictEqual(options.failOnStatusCode, false);
+          assert.strictEqual(options.timeout, 15000);
+          return {
+            async allHeaders() {
+              return { 'Retry-After': '2' };
+            },
+            status() {
+              return 503;
+            }
+          };
+        }
+      }
+    },
+    browserContext: {},
+    http503RetryDelaysMs: [25],
+    navigationTimeoutMs: 20000,
+    postApiDiscoveryWaitMs: 0,
+    proxyProvider: null,
+    proxyRotator: null,
+    async close() {},
+    async launch() {},
+    async _waitBeforeRetry() {}
+  };
+
+  const coordinator = new ReconRetryCoordinator(navigator);
+  assert.strictEqual(coordinator.parseRetryAfterMs('2'), 2000);
+  assert.strictEqual(coordinator.parseRetryAfterMs('not-a-date'), 0);
+  assert.ok(coordinator.parseRetryAfterMs(new Date(Date.now() + 1200).toUTCString()) > 0);
+
+  await coordinator.waitBeforeRetry('7');
+  assert.deepStrictEqual(waitCalls, [7]);
+
+  const inspected = await coordinator.inspectHttpFailure('https://www.oddsportal.com/archive/', 50000);
+  assert.deepStrictEqual(inspected, {
+    statusCode: 503,
+    retryAfterRaw: '2',
+    retryAfterMs: 2000
+  });
+
+  const originalSetTimeout = global.setTimeout;
+  let fallbackDelay = null;
+  navigator.page = {
+    isClosed() {
+      return true;
+    }
+  };
+  global.setTimeout = (handler, delay) => {
+    fallbackDelay = delay;
+    handler();
+    return 1;
+  };
+  try {
+    await coordinator.waitBeforeRetry(11);
+  } finally {
+    global.setTimeout = originalSetTimeout;
+  }
+  assert.strictEqual(fallbackDelay, 11);
+
+  navigator.context.request.get = async () => {
+    throw new Error('inspect_failed');
+  };
+  assert.strictEqual(await coordinator.inspectHttpFailure('https://www.oddsportal.com/archive/', 100), null);
+  assert.ok(debugEvents.some((entry) => entry.event === 'navigator_http_failure_inspect_failed'));
+});
+
+test('ReconRetryCoordinator 应覆盖失败提取、proxy failure 上报与 rotation 失败链路', async () => {
+  const warnEvents = [];
+  const debugEvents = [];
+  const reportedRotatorFailures = [];
+  const rotationPayloads = [];
+  const launchedProxyPorts = [];
+  const navigator = {
+    logger: {
+      info() {},
+      error() {},
+      warn(event, payload) {
+        warnEvents.push({ event, payload });
+      },
+      debug(event, payload) {
+        debugEvents.push({ event, payload });
+      }
+    },
+    traceId: 'trace-retry-rotation',
+    page: {
+      async waitForTimeout() {}
+    },
+    context: {
+      request: {
+        async get() {
+          return {
+            async allHeaders() {
+              return { 'retry-after': '1' };
+            },
+            status() {
+              return 429;
+            }
+          };
+        }
+      }
+    },
+    browserContext: {
+      proxy: { port: 7901 },
+      sessionManager: {
+        load() {
+          return { sourceFormat: 'json' };
+        },
+        resolveProtocolIdentity() {
+          return {
+            lineageKey: 'proxy:7901',
+            ja3ProfileId: 'proxy:7901:1:1',
+            source: 'session_buffer_pool'
+          };
+        }
+      },
+      async navigate() {
+        throw new Error('navigate_failed');
+      }
+    },
+    proxy: { port: 7901 },
+    proxyLease: null,
+    proxyProvider: {
+      async reportFailure() {
+        throw new Error('provider_failed');
+      }
+    },
+    proxyRotator: {
+      reportFailure(port, errorType) {
+        reportedRotatorFailures.push({ port, errorType });
+      },
+      rotate(payload) {
+        rotationPayloads.push(payload);
+        return { port: 7902 };
+      }
+    },
+    lastLaunchOptions: {},
+    http503RetryDelaysMs: [10],
+    navigationTimeoutMs: 100,
+    postApiDiscoveryWaitMs: 0,
+    async close() {},
+    async launch(options = {}) {
+      launchedProxyPorts.push(options.proxy?.port || null);
+    },
+    async _waitBeforeRetry() {}
+  };
+
+  const coordinator = new ReconRetryCoordinator(navigator);
+  const extracted = coordinator.extractFailureFromError(
+    new Error('ERR_HTTP_RESPONSE_CODE_FAILURE 503'),
+    { inspectUrl: 'https://www.oddsportal.com/retry/' }
+  );
+  assert.strictEqual(extracted.isResponseCodeFailure, true);
+  assert.strictEqual(extracted.statusCode, 503);
+  assert.strictEqual(extracted.inspectUrl, 'https://www.oddsportal.com/retry/');
+
+  const resolved = await coordinator.resolveRetryableHttpFailureFromError(
+    new Error('generic failure'),
+    { inspectUrl: 'https://www.oddsportal.com/retry/', timeoutMs: 80 }
+  );
+  assert.deepStrictEqual(resolved, {
+    retryable: true,
+    statusCode: 429,
+    retryAfterMs: 1000,
+    retryAfterRaw: '1'
+  });
+
+  assert.strictEqual(
+    await coordinator.reportCurrentProxyFailure({ statusCode: 429 }, { operationName: 'navigate', breakerKey: 'league:a' }),
+    false
+  );
+  assert.ok(debugEvents.some((entry) => entry.event === 'navigator_proxy_failure_report_failed'));
+
+  const nextProxy = await coordinator.rotateProxyForRetry(
+    { statusCode: 429, retryAfterMs: 1000, retryAfterRaw: '1' },
+    {
+      operationName: 'navigate',
+      breakerKey: 'league:a',
+      inspectUrl: 'https://www.oddsportal.com/retry/',
+      retryNavigateUrl: 'https://www.oddsportal.com/retry/',
+      retryReadySelector: '#ready',
+      timeoutMs: 33
+    },
+    0
+  );
+
+  assert.deepStrictEqual(nextProxy, { port: 7902 });
+  assert.deepStrictEqual(reportedRotatorFailures, [{ port: 7901, errorType: '429' }]);
+  assert.strictEqual(rotationPayloads[0].statusCode, 429);
+  assert.strictEqual(rotationPayloads[0].currentPort, 7901);
+  assert.deepStrictEqual(launchedProxyPorts, [7902]);
+  assert.strictEqual(navigator.proxy.port, 7902);
+  assert.ok(warnEvents.some((entry) => entry.event === 'navigator_proxy_rotated_for_429'));
+  assert.ok(warnEvents.some((entry) => entry.event === 'navigator_proxy_rotation_failed'));
+
+  const auditedError = new Error('503 service unavailable');
+  assert.strictEqual(
+    coordinator.auditBrowserNavigationFailure({ statusCode: 503 }, { operationName: 'navigate', breakerKey: 'league:b' }, auditedError),
+    true
+  );
+  assert.strictEqual(
+    coordinator.auditBrowserNavigationFailure({ statusCode: 503 }, { operationName: 'navigate', breakerKey: 'league:b' }, auditedError),
+    false
+  );
+
+  const sealedError = new Error('503 service unavailable');
+  Object.preventExtensions(sealedError);
+  assert.strictEqual(
+    coordinator.auditBrowserNavigationFailure({ statusCode: 503 }, { operationName: 'navigate', breakerKey: 'league:c' }, sealedError),
+    true
+  );
+  assert.strictEqual(
+    coordinator.auditBrowserNavigationFailure({ statusCode: 404 }, { operationName: 'fetch', breakerKey: 'league:d' }, new Error('404')),
+    false
+  );
+});
+
+test('ReconRetryCoordinator 应在重试耗尽时构造 retry error，并保留 retry-after 信息', async () => {
+  const navigator = {
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-retry-exhausted',
+    page: null,
+    context: null,
+    browserContext: {},
+    proxyProvider: null,
+    proxyRotator: null,
+    http503RetryDelaysMs: [],
+    navigationTimeoutMs: 100,
+    postApiDiscoveryWaitMs: 0,
+    async close() {},
+    async launch() {},
+    async _waitBeforeRetry() {
+      throw new Error('should_not_wait');
+    }
+  };
+
+  const coordinator = new ReconRetryCoordinator(navigator);
+  const nonRetryable = await coordinator.executeWith503Retry(async () => ({ ok: true }), {
+    operationName: 'noop'
+  });
+  assert.deepStrictEqual(nonRetryable, { ok: true });
+
+  const resultFailure = coordinator.resolveRetryableHttpFailureFromResult({
+    httpFailure: {
+      statusCode: '502',
+      retryAfterRaw: '3'
+    }
+  });
+  assert.deepStrictEqual(resultFailure, {
+    retryable: true,
+    statusCode: 502,
+    retryAfterMs: 3000,
+    retryAfterRaw: '3'
+  });
+
+  await assert.rejects(
+    () => coordinator.executeWith503Retry(async () => ({
+      httpFailure: {
+        statusCode: 503,
+        retryAfterRaw: '7'
+      }
+    }), {
+      operationName: 'fetch_archive_pages',
+      breakerKey: 'league:epl'
+    }),
+    (error) => {
+      assert.strictEqual(error.code, 'HTTP_503');
+      assert.strictEqual(error.statusCode, 503);
+      assert.strictEqual(error.retryAfterMs, 7000);
+      assert.strictEqual(error.retryAfterRaw, '7');
+      assert.match(error.message, /fetch_archive_pages failed with HTTP_503 after retries/);
+      return true;
+    }
+  );
+});
