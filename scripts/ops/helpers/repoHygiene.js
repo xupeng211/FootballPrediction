@@ -19,6 +19,8 @@ const DATA_ALLOWLIST_PREFIXES = [
 ];
 const DATA_ALLOWLIST_FILES = new Set([
   'data/.gitkeep',
+  'data/manual_html/.gitkeep',
+  'data/manual_html/test_sample.html',
   'data/processed/.gitkeep',
   'data/snapshots/.gitkeep'
 ]);

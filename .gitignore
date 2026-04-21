@@ -60,6 +60,9 @@ data/redis/
 data/audit/
 data/backfill/
 data/recon/
+data/manual_html/*
+!data/manual_html/.gitkeep
+!data/manual_html/test_sample.html
 data/snapshots/*.sql
 !data/snapshots/.gitkeep
 data/raw_json/
