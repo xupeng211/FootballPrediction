@@ -366,50 +366,40 @@ test('TotalWarPipeline parseArgs 应在参数非法时抛错或回退默认值',
 });
 
 test('TotalWarPipeline parseArgs 应在 --help 时输出帮助并退出 0', () => {
-  const originalExit = process.exit;
-  const originalLog = console.log;
   const logs = [];
 
-  process.exit = (code) => {
-    throw new Error(`EXIT:${code}`);
-  };
-  console.log = (message) => {
-    logs.push(String(message));
-  };
-
-  try {
-    assert.throws(() => parseArgs(['--help']), /EXIT:0/);
-    assert.ok(logs.some((line) => line.includes('TOTAL WAR PIPELINE')));
-  } finally {
-    process.exit = originalExit;
-    console.log = originalLog;
-  }
+  assert.throws(() => parseArgs(['--help'], {
+    stdout: {
+      write(chunk) {
+        logs.push(String(chunk));
+      }
+    },
+    exit(code) {
+      throw new Error(`EXIT:${code}`);
+    }
+  }), /EXIT:0/);
+  assert.ok(logs.some((line) => line.includes('TOTAL WAR PIPELINE')));
 });
 
 test('TotalWarPipeline parseArgs 应在缺少 season 时输出错误并退出 1', () => {
-  const originalExit = process.exit;
-  const originalLog = console.log;
-  const originalError = console.error;
   const logs = [];
   const errors = [];
 
-  process.exit = (code) => {
-    throw new Error(`EXIT:${code}`);
-  };
-  console.log = (message) => {
-    logs.push(String(message));
-  };
-  console.error = (message) => {
-    errors.push(String(message));
-  };
-
-  try {
-    assert.throws(() => parseArgs([]), /EXIT:1/);
-    assert.ok(errors.some((line) => line.includes('--season 参数是必需的')));
-    assert.ok(logs.some((line) => line.includes('TOTAL WAR PIPELINE')));
-  } finally {
-    process.exit = originalExit;
-    console.log = originalLog;
-    console.error = originalError;
-  }
+  assert.throws(() => parseArgs([], {
+    stdout: {
+      write(chunk) {
+        logs.push(String(chunk));
+      }
+    },
+    stderr: {
+      write(chunk) {
+        errors.push(String(chunk));
+      }
+    },
+    exit(code) {
+      throw new Error(`EXIT:${code}`);
+    }
+  }), /EXIT:1/);
+  assert.ok(errors.some((line) => line.includes('--season 参数是必需的')));
+  assert.ok(logs.some((line) => line.includes('TOTAL WAR PIPELINE')));
 });

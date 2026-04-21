@@ -15,6 +15,7 @@ const { spawn } = require('child_process');
 const { Pool } = require('pg');
 const { ProcessSupervisor } = require('../../src/core/process/ProcessSupervisor');
 const { ReconSessionManager } = require('../../src/infrastructure/recon/services/ReconSessionManager');
+const { TitanLogger } = require('../../src/infrastructure/utils/TitanLogger');
 
 const ROOT_DIR = path.resolve(__dirname, '../..');
 const RUNTIME_DIR = path.join(ROOT_DIR, 'tmp', 'total_war_pipeline');
@@ -38,8 +39,21 @@ function ensureRuntimeDir() {
   fs.mkdirSync(RUNTIME_DIR, { recursive: true });
 }
 
-function showHelp() {
-  console.log(`
+function writeToStream(stream, message) {
+  const normalizedMessage = String(message ?? '');
+  const payload = normalizedMessage.endsWith('\n')
+    ? normalizedMessage
+    : `${normalizedMessage}\n`;
+  if (stream && typeof stream.write === 'function') {
+    stream.write(payload);
+    return;
+  }
+
+  process.stdout.write(payload);
+}
+
+function showHelp(output = process.stdout) {
+  writeToStream(output, `
 TOTAL WAR PIPELINE - 24 小时自动编排器
 
 用法:
@@ -220,10 +234,18 @@ function getTotalWarLogSettings() {
   };
 }
 
-function parseArgs(argv = process.argv.slice(2)) {
+function parseArgs(argv = process.argv.slice(2), runtime = {}) {
   const normalizedArgv = Array.isArray(argv) ? [...argv] : [];
   const firstOptionIndex = normalizedArgv.findIndex((arg) => String(arg).startsWith('-'));
   const args = firstOptionIndex > 0 ? normalizedArgv.slice(firstOptionIndex) : normalizedArgv;
+  const stdout = runtime.stdout || process.stdout;
+  const stderr = runtime.stderr || process.stderr;
+  const exit = typeof runtime.exit === 'function'
+    ? runtime.exit
+    : (code) => process.exit(code);
+  const showHelpFn = typeof runtime.showHelp === 'function'
+    ? runtime.showHelp
+    : showHelp;
   const options = {
     seasonInput: null,
     loopMs: 60_000,
@@ -286,8 +308,8 @@ function parseArgs(argv = process.argv.slice(2)) {
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === '--help' || arg === '-h') {
-      showHelp();
-      process.exit(0);
+      showHelpFn(stdout);
+      return exit(0);
     } else if (arg === '--once') {
       options.once = true;
     } else if (arg === '--dry-run') {
@@ -394,9 +416,9 @@ function parseArgs(argv = process.argv.slice(2)) {
   }
 
   if (!options.seasonInput) {
-    console.error('❌ 错误: --season 参数是必需的');
-    showHelp();
-    process.exit(1);
+    writeToStream(stderr, '❌ 错误: --season 参数是必需的');
+    showHelpFn(stdout);
+    return exit(1);
   }
 
   options.dbSeason = options.seasonInput.includes('-')
@@ -413,7 +435,11 @@ class Logger {
   constructor(logPath, options = {}) {
     this.logPath = logPath;
     this.fs = options.fsImpl || fs;
-    this.console = options.consoleImpl || console;
+    this.consoleWriter = options.consoleImpl || null;
+    this.titanLogger = options.titanLogger || new TitanLogger({
+      serviceName: 'total-war-pipeline',
+      enableFileLogging: false
+    });
     this.maxBytes = Math.max(1, Number(options.maxBytes || DEFAULT_LOG_MAX_BYTES));
     this.retainedFiles = Math.max(1, Number(options.retainedFiles || DEFAULT_LOG_RETAINED_FILES));
   }
@@ -464,7 +490,19 @@ class Logger {
     const line = `${JSON.stringify(entry)}\n`;
     this._rotateIfNeeded(line);
     this.fs.appendFileSync(this.logPath, line);
-    this.console.log(`[${level}] ${message}${Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : ''}`);
+    if (this.consoleWriter && typeof this.consoleWriter.log === 'function') {
+      this.consoleWriter.log(`[${level}] ${message}${Object.keys(meta).length ? ` ${JSON.stringify(meta)}` : ''}`);
+      return;
+    }
+
+    const normalizedLevel = String(level || 'INFO').toLowerCase();
+    const logMethod = typeof this.titanLogger?.[normalizedLevel] === 'function'
+      ? this.titanLogger[normalizedLevel].bind(this.titanLogger)
+      : this.titanLogger.info.bind(this.titanLogger);
+    logMethod(message, {
+      pipelineLevel: level,
+      ...meta
+    });
   }
 
   info(message, meta = {}) {
@@ -1262,7 +1300,14 @@ if (require.main === module) {
   main().then(
     () => process.exit(0),
     (error) => {
-      console.error('❌ TOTAL WAR 编排器异常:', error.message);
+      const bootstrapLogger = new TitanLogger({
+        serviceName: 'total-war-pipeline',
+        enableFileLogging: false
+      });
+      bootstrapLogger.error('total_war_pipeline_unhandled_error', {
+        error: error.message
+      });
+      writeToStream(process.stderr, `❌ TOTAL WAR 编排器异常: ${error.message}`);
       process.exit(1);
     }
   );

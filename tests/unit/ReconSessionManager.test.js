@@ -475,3 +475,196 @@ test('ReconSessionManager 应为同一代理端口稳定持久化 JA3 节点身�
   assert.equal(identityA.ja3ProfileId, identityB.ja3ProfileId);
   assert.equal(identityB.source, 'session_buffer_pool');
 });
+
+test('ReconSessionManager 应覆盖 worker lineage 持久化、header 规范化与空 runtime 快照', () => {
+  const infoLogs = [];
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-lineage-'));
+  const bufferPoolPath = path.join(tempDir, 'session-buffer.json');
+  const manager = new ReconSessionManager({
+    logger: {
+      info(event, payload) {
+        infoLogs.push({ event, payload });
+      },
+      warn() {},
+      error() {},
+      debug() {}
+    },
+    traceId: 'trace-lineage-worker',
+    sessionPath: '',
+    bufferPoolPath,
+    proxyPort: 7905
+  });
+
+  assert.deepStrictEqual(manager.setRuntimeSnapshot({}), {
+    applied: false,
+    cookies: 0,
+    sourceFormat: 'runtime_empty'
+  });
+
+  const writeResult = manager.setRuntimeSnapshot({
+    cookies: [{
+      name: 'keep',
+      value: '1',
+      domain: '.oddsportal.com',
+      path: '/'
+    }],
+    userAgent: 'Worker-UA/1.0',
+    extraHTTPHeaders: {
+      'X-Test': ' yes ',
+      empty: '   ',
+      numeric: 7
+    }
+  }, {
+    snapshotKind: 'lineage_snapshot'
+  });
+
+  const pool = JSON.parse(fs.readFileSync(bufferPoolPath, 'utf8'));
+  assert.equal(writeResult.snapshotKind, 'LINEAGE_SNAPSHOT');
+  assert.equal(writeResult.lineageKey, 'proxy:7905');
+  assert.ok(pool.lineages['proxy:7905']);
+  assert.ok(pool.nodeIdentities['proxy:7905']);
+  assert.equal(pool.lineages['proxy:7905'].kind, 'LINEAGE_SNAPSHOT');
+  assert.equal(pool.lineages['proxy:7905'].snapshot.extraHTTPHeaders['x-test'], 'yes');
+  assert.equal(pool.lineages['proxy:7905'].snapshot.extraHTTPHeaders.numeric, undefined);
+
+  const loaded = manager.load();
+  assert.match(loaded.sourceFormat, /session_buffer_lineage\+runtime/);
+  assert.equal(loaded.userAgent, 'Worker-UA/1.0');
+  assert.equal(loaded.extraHTTPHeaders['x-test'], 'yes');
+  assert.equal(loaded.extraHTTPHeaders['user-agent'], 'Worker-UA/1.0');
+  assert.equal(loaded.cookies.length, 1);
+  assert.ok(infoLogs.some((entry) => entry.event === 'recon_runtime_session_snapshot_updated'));
+
+  manager.clearRuntimeSnapshot();
+  assert.equal(manager.runtimeSnapshot, null);
+});
+
+test('ReconSessionManager 应在禁止 stale buffer 时跳过过期 golden 并优先 fresh lineage', () => {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-stale-buffer-'));
+  const bufferPoolPath = path.join(tempDir, 'session-buffer.json');
+  const referenceTime = Date.now();
+  const freshIso = new Date(referenceTime).toISOString();
+  const staleIso = new Date(referenceTime - 2000).toISOString();
+
+  fs.writeFileSync(bufferPoolPath, JSON.stringify({
+    version: 1,
+    ttlMs: 1000,
+    updatedAt: freshIso,
+    goldenSnapshot: {
+      kind: 'GOLDEN_SNAPSHOT',
+      traceId: 'trace-golden',
+      proxyPort: null,
+      lineageKey: 'proxy:direct',
+      updatedAt: staleIso,
+      snapshot: {
+        cookies: [{
+          name: 'gold',
+          value: '1',
+          domain: '.oddsportal.com',
+          path: '/'
+        }],
+        userAgent: 'Golden-UA/1.0',
+        extraHTTPHeaders: {}
+      }
+    },
+    lineages: {
+      'proxy:7906': {
+        kind: 'LINEAGE_SNAPSHOT',
+        traceId: 'trace-lineage',
+        proxyPort: 7906,
+        lineageKey: 'proxy:7906',
+        updatedAt: freshIso,
+        snapshot: {
+          cookies: [{
+            name: 'lineage',
+            value: '2',
+            domain: '.oddsportal.com',
+            path: '/'
+          }],
+          userAgent: 'Lineage-UA/1.0',
+          extraHTTPHeaders: {
+            'x-lineage': '1'
+          }
+        }
+      }
+    },
+    nodeIdentities: {}
+  }, null, 2), 'utf8');
+
+  const manager = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-stale-buffer',
+    sessionPath: '',
+    bufferPoolPath,
+    bufferPoolTtlMs: 1000,
+    proxyPort: 7906
+  });
+
+  const inspect = manager.inspectBufferPool({ referenceTime });
+  assert.equal(inspect.hasGoldenSnapshot, true);
+  assert.equal(inspect.hasLineageSnapshot, true);
+  assert.equal(inspect.isGoldenStale, true);
+  assert.equal(inspect.isLineageStale, false);
+  assert.equal(inspect.needsRefresh, true);
+
+  const freshOnly = manager.load({ allowStaleBuffer: false });
+  assert.match(freshOnly.sourceFormat, /session_buffer_lineage/);
+  assert.equal(freshOnly.userAgent, 'Lineage-UA/1.0');
+  assert.ok(freshOnly.cookies.some((cookie) => cookie.name === 'lineage'));
+  assert.ok(!freshOnly.cookies.some((cookie) => cookie.name === 'gold'));
+
+  const withStale = manager.load({ allowStaleBuffer: true });
+  assert.ok(withStale.cookies.some((cookie) => cookie.name === 'gold'));
+  assert.ok(withStale.cookies.some((cookie) => cookie.name === 'lineage'));
+});
+
+test('ReconSessionManager 应覆盖 refresh lease 校验、损坏 buffer 读取与 derived identity', () => {
+  const warnings = [];
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'recon-session-lock-'));
+  const bufferPoolPath = path.join(tempDir, 'session-buffer.json');
+  const manager = new ReconSessionManager({
+    logger: {
+      info() {},
+      warn(event, payload) {
+        warnings.push({ event, payload });
+      },
+      error() {},
+      debug() {}
+    },
+    traceId: 'trace-session-lock',
+    sessionPath: '',
+    bufferPoolPath
+  });
+
+  const lease = manager.acquireGoldenRefreshLease();
+  assert.equal(lease.acquired, true);
+  assert.equal(manager.releaseGoldenRefreshLease({ traceId: 'trace-other' }), false);
+  assert.equal(manager.releaseGoldenRefreshLease(lease.lease), true);
+  assert.equal(manager.releaseGoldenRefreshLease(lease.lease), false);
+
+  fs.writeFileSync(bufferPoolPath, '{broken-json', 'utf8');
+  const inspect = manager.inspectBufferPool();
+  assert.equal(inspect.enabled, true);
+  assert.equal(inspect.exists, false);
+  assert.equal(inspect.hasGoldenSnapshot, false);
+  assert.ok(warnings.some((entry) => entry.event === 'recon_session_buffer_pool_read_failed'));
+  assert.equal(manager._readJsonFile(bufferPoolPath), null);
+
+  const derivedManager = new ReconSessionManager({
+    logger: { info() {}, warn() {}, error() {}, debug() {} },
+    traceId: 'trace-session-derived',
+    sessionPath: '',
+    proxyPort: 0
+  });
+  const derivedIdentity = derivedManager.resolveProtocolIdentity({
+    proxyPort: 0,
+    ciphersCount: 'bad',
+    sigalgsCount: 'bad'
+  });
+
+  assert.equal(derivedIdentity.source, 'derived');
+  assert.equal(derivedIdentity.lineageKey, 'proxy:direct');
+  assert.equal(derivedIdentity.cipherIdx, 0);
+  assert.equal(derivedIdentity.sigalgIdx, 0);
+  assert.equal(derivedManager._resolveSnapshotKind('unknown-kind'), 'LINEAGE_SNAPSHOT');
+});

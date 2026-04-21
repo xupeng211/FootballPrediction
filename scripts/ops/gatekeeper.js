@@ -18,9 +18,50 @@
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { TitanLogger } = require('../../src/infrastructure/utils/TitanLogger');
+
+function writeToStream(stream, message = '') {
+  const normalizedMessage = String(message);
+  const payload = normalizedMessage.endsWith('\n')
+    ? normalizedMessage
+    : `${normalizedMessage}\n`;
+  if (stream && typeof stream.write === 'function') {
+    stream.write(payload);
+    return;
+  }
+
+  process.stdout.write(payload);
+}
+
+function countConsoleStatements(targetPath) {
+  if (!targetPath || !fs.existsSync(targetPath)) {
+    return 0;
+  }
+
+  const stat = fs.statSync(targetPath);
+  if (stat.isFile()) {
+    const content = fs.readFileSync(targetPath, 'utf8');
+    const matches = content.match(/console\.(log|info|warn|error)/g);
+    return matches ? matches.length : 0;
+  }
+
+  if (!stat.isDirectory()) {
+    return 0;
+  }
+
+  return fs.readdirSync(targetPath).reduce((count, entry) => (
+    count + countConsoleStatements(path.join(targetPath, entry))
+  ), 0);
+}
 
 class Gatekeeper {
-  constructor() {
+  constructor(options = {}) {
+    this.stdout = options.stdout || process.stdout;
+    this.stderr = options.stderr || process.stderr;
+    this.logger = options.logger || new TitanLogger({
+      serviceName: 'gatekeeper',
+      enableFileLogging: false
+    });
     this.results = {
       tests: { passed: false, message: '' },
       coverage: { passed: false, message: '', metrics: {} },
@@ -39,7 +80,12 @@ class Gatekeeper {
       success: '🎯'
     }[level] || 'ℹ';
 
-    console.log(`[${timestamp}] ${prefix} ${message}`);
+    const payload = `[${timestamp}] ${prefix} ${message}`;
+    const logMethod = typeof this.logger?.[level] === 'function'
+      ? this.logger[level].bind(this.logger)
+      : this.logger.info.bind(this.logger);
+    logMethod('gatekeeper_status', { gateMessage: message, gatePrefix: prefix, gateTimestamp: timestamp });
+    writeToStream(this.stdout, payload);
   }
 
   exec(command, options = {}) {
@@ -79,9 +125,17 @@ class Gatekeeper {
   async checkCoverage() {
     this.log('info', '【门禁 2/4】验证代码覆盖率...');
 
-    const coveragePath = path.join(process.cwd(), 'coverage/coverage-summary.json');
+    const coverageCandidates = [
+      path.join(process.cwd(), 'reports/coverage/node/coverage-summary.json'),
+      path.join(process.cwd(), 'coverage/coverage-summary.json')
+    ];
+    const coveragePath = coverageCandidates.find(candidate => fs.existsSync(candidate));
+    const thresholds = {
+      lines: Number.parseFloat(process.env.GATEKEEPER_LINES_THRESHOLD || '80'),
+      branches: Number.parseFloat(process.env.GATEKEEPER_BRANCH_THRESHOLD || '81')
+    };
 
-    if (!fs.existsSync(coveragePath)) {
+    if (!coveragePath) {
       this.results.coverage.passed = false;
       this.results.coverage.message = '覆盖率报告不存在，请先运行 npm run test:coverage';
       this.log('warn', this.results.coverage.message);
@@ -101,20 +155,23 @@ class Gatekeeper {
 
       this.results.coverage.metrics = metrics;
 
-      const threshold = 80;
       const failed = [];
 
-      if (metrics.lines < threshold) failed.push(`Lines: ${metrics.lines.toFixed(2)}%`);
-      if (metrics.branches < threshold) failed.push(`Branches: ${metrics.branches.toFixed(2)}%`);
+      if (metrics.lines < thresholds.lines) {
+        failed.push(`Lines: ${metrics.lines.toFixed(2)}% < ${thresholds.lines.toFixed(2)}%`);
+      }
+      if (metrics.branches < thresholds.branches) {
+        failed.push(`Branches: ${metrics.branches.toFixed(2)}% < ${thresholds.branches.toFixed(2)}%`);
+      }
 
       if (failed.length > 0) {
         this.results.coverage.passed = false;
-        this.results.coverage.message = `覆盖率不足 (阈值: ${threshold}%) - ${failed.join(', ')}`;
+        this.results.coverage.message = `覆盖率不足 - ${failed.join(', ')}`;
         this.log('error', `代码覆盖率: FAIL - ${this.results.coverage.message}`);
         this.exitCode = 1;
       } else {
         this.results.coverage.passed = true;
-        this.results.coverage.message = `Lines: ${metrics.lines.toFixed(2)}%, Branches: ${metrics.branches.toFixed(2)}%`;
+        this.results.coverage.message = `覆盖率达标 - Lines: ${metrics.lines.toFixed(2)}%, Branches: ${metrics.branches.toFixed(2)}%`;
         this.log('success', `代码覆盖率: PASS - ${this.results.coverage.message}`);
       }
     } catch (error) {
@@ -156,21 +213,16 @@ class Gatekeeper {
       }
     }
 
-    const srcFiles = this.exec('find src -name "*.js" -o -name "*.py"', { silent: true });
-    if (srcFiles.success) {
-      const files = srcFiles.output.trim().split('\n');
-      const consoleLogCount = files.reduce((count, file) => {
-        if (fs.existsSync(file)) {
-          const content = fs.readFileSync(file, 'utf8');
-          const matches = content.match(/console\.(log|info|warn|error)/g);
-          return count + (matches ? matches.length : 0);
-        }
-        return count;
-      }, 0);
+    const criticalPaths = [
+      path.join(process.cwd(), 'src/infrastructure/recon'),
+      path.join(process.cwd(), 'scripts/ops/total_war_pipeline.js')
+    ];
+    const consoleLogCount = criticalPaths.reduce((count, targetPath) => (
+      count + countConsoleStatements(targetPath)
+    ), 0);
 
-      if (consoleLogCount > 50) {
-        violations.push(`发现 ${consoleLogCount} 处 console.log (建议使用结构化日志)`);
-      }
+    if (consoleLogCount > 0) {
+      violations.push(`关键路径仍存在 ${consoleLogCount} 处 console 输出`);
     }
 
     if (violations.length > 0) {
@@ -185,9 +237,9 @@ class Gatekeeper {
   }
 
   printSummary() {
-    console.log('\n' + '='.repeat(60));
-    console.log('🎯 Gatekeeper 质量门禁报告');
-    console.log('='.repeat(60));
+    writeToStream(this.stdout, `\n${'='.repeat(60)}`);
+    writeToStream(this.stdout, '🎯 Gatekeeper 质量门禁报告');
+    writeToStream(this.stdout, '='.repeat(60));
 
     const checks = [
       { name: '单元测试', result: this.results.tests },
@@ -198,25 +250,25 @@ class Gatekeeper {
 
     checks.forEach(({ name, result }) => {
       const status = result.passed ? '✓ PASS' : '✗ FAIL';
-      console.log(`${status.padEnd(10)} | ${name.padEnd(15)} | ${result.message}`);
+      writeToStream(this.stdout, `${status.padEnd(10)} | ${name.padEnd(15)} | ${result.message}`);
     });
 
-    console.log('='.repeat(60));
+    writeToStream(this.stdout, '='.repeat(60));
 
     const allPassed = checks.every(c => c.result.passed);
     if (allPassed) {
-      console.log('🎉 【准予准入】所有质量门禁检查通过！');
-      console.log('='.repeat(60));
+      writeToStream(this.stdout, '🎉 【准予准入】所有质量门禁检查通过！');
+      writeToStream(this.stdout, '='.repeat(60));
       return 0;
     } else {
-      console.log('🚫 【拒绝准入】存在未通过的质量检查');
-      console.log('='.repeat(60));
+      writeToStream(this.stdout, '🚫 【拒绝准入】存在未通过的质量检查');
+      writeToStream(this.stdout, '='.repeat(60));
       return 1;
     }
   }
 
   async run() {
-    console.log('🚀 启动 Gatekeeper 质量门禁系统...\n');
+    writeToStream(this.stdout, '🚀 启动 Gatekeeper 质量门禁系统...\n');
 
     await this.checkTests();
     await this.checkCoverage();
@@ -231,7 +283,11 @@ class Gatekeeper {
 if (require.main === module) {
   const gatekeeper = new Gatekeeper();
   gatekeeper.run().catch(error => {
-    console.error('Gatekeeper 执行失败:', error);
+    gatekeeper.logger.error('gatekeeper_run_failed', {
+      error: error.message,
+      stack: error.stack
+    });
+    writeToStream(gatekeeper.stderr, `Gatekeeper 执行失败: ${error.message}`);
     process.exit(1);
   });
 }

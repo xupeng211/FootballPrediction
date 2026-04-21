@@ -2,8 +2,11 @@
 
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
+const { EventEmitter } = require('node:events');
+const https = require('node:https');
 
 const { reconProtocolAdapter, JA3_CIPHER_SUITES, JA3_SIGALGS } = require('../../src/infrastructure/recon/services/ReconProtocolAdapter');
+const { ReconPureDecryptor } = require('../../src/infrastructure/recon/services/ReconPureDecryptor');
 
 function makeAdapter(overrides = {}) {
   return {
@@ -218,6 +221,49 @@ describe('ReconProtocolAdapter', () => {
       assert.strictEqual(result.outrightId, '');
       assert.ok(warns.some((entry) => entry.event === 'pure_protocol_runtime_state_probe_failed'));
     });
+
+    it('runtime state 成功时应优先使用提取的 tournament token 与 bookiehash', async () => {
+      const navigations = [];
+      const adapter = makeAdapter({
+        navigator: {
+          ensureBrowserHealthy: async () => {},
+          navigate: async (url, options) => {
+            navigations.push({ url, options });
+          },
+          stateProber: {
+            deriveCurrentResultsUrl: () => 'https://op.com/results/live/',
+            extractTournamentToken: async () => 'runtime-ot'
+          },
+          archiveTimeoutMs: 5000,
+          postApiDiscoveryWaitMs: 0
+        },
+        page: {
+          async evaluate() {
+            return {
+              otCode: 'pagevar-ot',
+              bookiehash: 'X2X3X4',
+              myot: 'X9X10'
+            };
+          }
+        }
+      });
+
+      const result = await adapter._resolvePureProtocolRuntimeState({ baseUrl: 'https://op.com/' }, {
+        timeoutMs: 3210
+      });
+
+      assert.deepStrictEqual(result, {
+        outrightId: 'runtime-ot',
+        bookmakerHash: 'X2X3X4'
+      });
+      assert.deepStrictEqual(navigations, [{
+        url: 'https://op.com/results/live/',
+        options: {
+          waitUntil: 'domcontentloaded',
+          timeout: 3210
+        }
+      }]);
+    });
   });
 
   describe('_resolvePureProtocolUserAgent', () => {
@@ -231,6 +277,21 @@ describe('ReconProtocolAdapter', () => {
       const adapter = makeAdapter();
       const ua = adapter._resolvePureProtocolUserAgent({ userAgent: 'TestAgent/1.0' });
       assert.strictEqual(ua, 'TestAgent/1.0');
+    });
+
+    it('无显式 options 时应优先使用 browser fingerprint summary', () => {
+      const adapter = makeAdapter({
+        navigator: {
+          browserContext: {
+            getFingerprintSummary() {
+              return { userAgent: 'Fingerprint-UA/9.0' };
+            },
+            userAgent: 'BrowserContext-UA/8.0'
+          }
+        }
+      });
+
+      assert.strictEqual(adapter._resolvePureProtocolUserAgent(), 'Fingerprint-UA/9.0');
     });
   });
 
@@ -304,6 +365,19 @@ describe('ReconProtocolAdapter', () => {
         { cookieHeader: 'session=abc123' }
       );
       assert.ok(headers.cookie === 'session=abc123' || headers['cookie'] === 'session=abc123');
+    });
+
+    it('禁用 content-type 与 x-requested-with 时应回退默认 origin', () => {
+      const adapter = makeAdapter();
+      const headers = adapter._buildPureProtocolHeaders('::bad-referer::', 'text/plain', {
+        includeContentType: false,
+        includeXRequestedWith: false
+      });
+
+      assert.strictEqual(headers.origin, 'https://www.oddsportal.com');
+      assert.strictEqual(headers['content-type'], undefined);
+      assert.strictEqual(headers['x-requested-with'], undefined);
+      assert.strictEqual(headers.accept, 'text/plain');
     });
   });
 
@@ -1002,6 +1076,31 @@ describe('ReconProtocolAdapter', () => {
         source: 'session-buffer'
       });
     });
+
+    it('session identity 缺少合法索引时应回退到端口派生值', () => {
+      const adapter = makeAdapter({
+        navigator: {
+          browserContext: {
+            sessionManager: {
+              resolveProtocolIdentity: () => ({
+                cipherIdx: 'bad',
+                sigalgIdx: null,
+                lineageKey: 'lineage-fallback',
+                ja3ProfileId: 'ja3-fallback'
+              })
+            }
+          }
+        }
+      });
+
+      const profile = adapter._resolveNodeSpecificJa3Profile(7892);
+
+      assert.strictEqual(profile.lineageKey, 'lineage-fallback');
+      assert.strictEqual(profile.ja3ProfileId, 'ja3-fallback');
+      assert.strictEqual(profile.cipherIdx, 7892 % JA3_CIPHER_SUITES.length);
+      assert.strictEqual(profile.sigalgIdx, (7892 + 1) % JA3_SIGALGS.length);
+      assert.strictEqual(profile.source, 'session_buffer_pool');
+    });
   });
 
   describe('_resolvePureProtocolSessionSourceFormat', () => {
@@ -1304,11 +1403,343 @@ describe('ReconProtocolAdapter', () => {
     });
   });
 
+  describe('纯协议脚本装载', () => {
+    it('_buildPureProtocolScriptHeaders 应继承 context cookie 并禁用脚本无关头', () => {
+      const adapter = makeAdapter();
+      const headers = adapter._buildPureProtocolScriptHeaders({
+        baseUrl: 'https://op.com/results/',
+        appBundleUrl: 'https://op.com/build/assets/app-abc.js',
+        cookieHeader: 'session=abc'
+      });
+
+      assert.strictEqual(headers.cookie, 'session=abc');
+      assert.strictEqual(headers['sec-fetch-dest'], 'script');
+      assert.strictEqual(headers['sec-fetch-mode'], 'cors');
+      assert.strictEqual(Object.prototype.hasOwnProperty.call(headers, 'content-type'), false);
+      assert.strictEqual(Object.prototype.hasOwnProperty.call(headers, 'x-requested-with'), false);
+    });
+
+    it('_fetchPureProtocolScriptText 成功时应返回脚本文本', { concurrency: false }, async () => {
+      const originalFetch = global.fetch;
+      const adapter = makeAdapter();
+
+      global.fetch = async () => ({
+        ok: true,
+        text: async () => 'console.log("bundle");'
+      });
+
+      try {
+        const text = await adapter._fetchPureProtocolScriptText('/build/assets/app-abc.js', {
+          baseUrl: 'https://op.com/results/',
+          cookieHeader: 'session=abc'
+        });
+
+        assert.strictEqual(text, 'console.log("bundle");');
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it('_fetchPureProtocolScriptText 失败时应抛出带状态码的错误', { concurrency: false }, async () => {
+      const originalFetch = global.fetch;
+      const adapter = makeAdapter();
+
+      global.fetch = async () => ({
+        ok: false,
+        status: 503,
+        text: async () => ''
+      });
+
+      try {
+        await assert.rejects(
+          () => adapter._fetchPureProtocolScriptText('/build/assets/app-abc.js', {
+            baseUrl: 'https://op.com/results/'
+          }),
+          /HTTP_503/
+        );
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
+
+    it('_createPureProtocolSourceLoader 应在 manifest remap 命中时回退并记录日志', async () => {
+      const infos = [];
+      const adapter = makeAdapter({
+        logger: { warn: () => {}, debug: () => {}, info: (event, payload) => infos.push({ event, payload }) },
+        navigator: {
+          traceId: 'trace-protocol'
+        }
+      });
+
+      let fetchCount = 0;
+      adapter._fetchPureProtocolScriptText = async (targetUrl) => {
+        fetchCount += 1;
+        if (fetchCount === 1) {
+          throw new Error(`HTTP_404:${targetUrl}`);
+        }
+        return `bundle:${targetUrl}`;
+      };
+
+      const loader = adapter._createPureProtocolSourceLoader({
+        baseUrl: 'https://op.com/results/',
+        appBundleUrl: 'https://op.com/build/assets/app-abc.js',
+        appScriptManifestMap: new Map([['vendor-abc', 'https://cdn.op.com/vendor-remap.js']])
+      });
+
+      const source = await loader('https://cdn.op.com/build/assets/vendor-abc.js');
+
+      assert.strictEqual(source, 'bundle:https://cdn.op.com/vendor-remap.js');
+      assert.deepStrictEqual(infos, [{
+        event: 'app_script_manifest_remap_hit',
+        payload: {
+          traceId: 'trace-protocol',
+          requestedUrl: 'https://cdn.op.com/build/assets/vendor-abc.js',
+          remappedUrl: 'https://cdn.op.com/vendor-remap.js',
+          source: 'pure_protocol'
+        }
+      }]);
+    });
+
+    it('_createPureProtocolDecryptor 应将 sourceLoader、headers 与 globals 透传给 decryptor', { concurrency: false }, async () => {
+      const adapter = makeAdapter({
+        navigator: {
+          traceId: 'trace-protocol'
+        }
+      });
+      const originalLoadFromBundleUrl = ReconPureDecryptor.prototype.loadFromBundleUrl;
+      let captured = null;
+
+      ReconPureDecryptor.prototype.loadFromBundleUrl = async function loadFromBundleUrl(bundleUrl, options) {
+        captured = { bundleUrl, options, instance: this };
+      };
+
+      try {
+        const decryptor = await adapter._createPureProtocolDecryptor({
+          baseUrl: 'https://op.com/results/',
+          appBundleUrl: 'https://op.com/build/assets/app-abc.js',
+          appBundleSource: 'manifest',
+          cookieHeader: 'session=abc',
+          locale: 'en',
+          html: '<html></html>'
+        }, 'sample-encrypted', 'ot-1', 'X2X3');
+
+        assert.strictEqual(decryptor, captured.instance);
+        assert.strictEqual(captured.bundleUrl, 'https://op.com/build/assets/app-abc.js');
+        assert.strictEqual(captured.options.sampleEncryptedData, 'sample-encrypted');
+        assert.strictEqual(captured.options.bundleSource, 'manifest');
+        assert.strictEqual(typeof captured.options.sourceLoader, 'function');
+        assert.strictEqual(captured.options.headers.cookie, 'session=abc');
+        assert.strictEqual(captured.options.globals.pageVar.otCode, 'ot-1');
+      } finally {
+        ReconPureDecryptor.prototype.loadFromBundleUrl = originalLoadFromBundleUrl;
+      }
+    });
+  });
+
+  describe('_fetchPureProtocolTextViaProxyRequest', () => {
+    it('缺少 proxy server 时应抛出错误', async () => {
+      const adapter = makeAdapter();
+
+      await assert.rejects(
+        () => adapter._fetchPureProtocolTextViaProxyRequest('https://op.com/api/', {}),
+        /PURE_PROTOCOL_PROXY_SERVER_MISSING/
+      );
+    });
+
+    it('应跟随重定向并返回成功结果', { concurrency: false }, async () => {
+      const originalRequest = https.request;
+      const adapter = makeAdapter();
+      let requestCount = 0;
+
+      https.request = (requestOptions, callback) => {
+        const req = new EventEmitter();
+        req.setTimeout = () => {};
+        req.destroy = () => {};
+        req.end = () => {
+          const response = new EventEmitter();
+          response.headers = requestCount === 0
+            ? { location: '/api/final', 'retry-after': '' }
+            : { 'retry-after': '' };
+          response.statusCode = requestCount === 0 ? 302 : 200;
+          callback(response);
+          process.nextTick(() => {
+            if (requestCount > 0) {
+              response.emit('data', Buffer.from('proxy-success'));
+            }
+            response.emit('end');
+          });
+          requestCount += 1;
+        };
+        req.on = EventEmitter.prototype.on.bind(req);
+        return req;
+      };
+
+      try {
+        const result = await adapter._fetchPureProtocolTextViaProxyRequest('https://op.com/api/start', {
+          referer: 'https://op.com/results/',
+          proxyServer: 'http://127.0.0.1:7891'
+        });
+
+        assert.deepStrictEqual(result, {
+          success: true,
+          status: 200,
+          text: 'proxy-success',
+          retryAfterRaw: ''
+        });
+      } finally {
+        https.request = originalRequest;
+      }
+    });
+
+    it('请求错误时应返回失败结构', { concurrency: false }, async () => {
+      const originalRequest = https.request;
+      const adapter = makeAdapter();
+
+      https.request = () => {
+        const req = new EventEmitter();
+        req.setTimeout = () => {};
+        req.destroy = () => {};
+        req.end = () => {
+          process.nextTick(() => {
+            req.emit('error', new Error('socket hang up'));
+          });
+        };
+        req.on = EventEmitter.prototype.on.bind(req);
+        return req;
+      };
+
+      try {
+        const result = await adapter._fetchPureProtocolTextViaProxyRequest('https://op.com/api/start', {
+          referer: 'https://op.com/results/',
+          proxyServer: 'http://127.0.0.1:7891'
+        });
+
+        assert.deepStrictEqual(result, {
+          success: false,
+          status: null,
+          error: 'socket hang up',
+          text: ''
+        });
+      } finally {
+        https.request = originalRequest;
+      }
+    });
+
+    it('HTTP 非 2xx 时应返回失败结构并保留 retry-after', { concurrency: false }, async () => {
+      const originalRequest = https.request;
+      const adapter = makeAdapter();
+
+      https.request = (_requestOptions, callback) => {
+        const req = new EventEmitter();
+        req.setTimeout = () => {};
+        req.destroy = () => {};
+        req.end = () => {
+          const response = new EventEmitter();
+          response.headers = { 'retry-after': '8' };
+          response.statusCode = 429;
+          callback(response);
+          process.nextTick(() => {
+            response.emit('data', Buffer.from('rate limited'));
+            response.emit('end');
+          });
+        };
+        req.on = EventEmitter.prototype.on.bind(req);
+        return req;
+      };
+
+      try {
+        const result = await adapter._fetchPureProtocolTextViaProxyRequest('https://op.com/api/rate-limit', {
+          referer: 'https://op.com/results/',
+          proxyServer: 'http://127.0.0.1:7891'
+        });
+
+        assert.deepStrictEqual(result, {
+          success: false,
+          status: 429,
+          error: 'HTTP_429',
+          text: 'rate limited',
+          retryAfterRaw: '8'
+        });
+      } finally {
+        https.request = originalRequest;
+      }
+    });
+
+    it('200 响应命中 embedded failure 时应回写 EMBEDDED_HTTP_503', { concurrency: false }, async () => {
+      const originalRequest = https.request;
+      const adapter = makeAdapter();
+
+      https.request = (_requestOptions, callback) => {
+        const req = new EventEmitter();
+        req.setTimeout = () => {};
+        req.destroy = () => {};
+        req.end = () => {
+          const response = new EventEmitter();
+          response.headers = { 'retry-after': '' };
+          response.statusCode = 200;
+          callback(response);
+          process.nextTick(() => {
+            response.emit('data', Buffer.from('backend fetch failed'));
+            response.emit('end');
+          });
+        };
+        req.on = EventEmitter.prototype.on.bind(req);
+        return req;
+      };
+
+      try {
+        const result = await adapter._fetchPureProtocolTextViaProxyRequest('https://op.com/api/embedded', {
+          referer: 'https://op.com/results/',
+          proxyServer: 'http://127.0.0.1:7891'
+        });
+
+        assert.deepStrictEqual(result, {
+          success: false,
+          status: 503,
+          error: 'EMBEDDED_HTTP_503',
+          text: 'backend fetch failed',
+          retryAfterRaw: ''
+        });
+      } finally {
+        https.request = originalRequest;
+      }
+    });
+  });
+
   describe('_decoratePureProtocolFetchResult', () => {
     it('result.success=true 时应透传并添加元数据', () => {
-      const adapter = makeAdapter();
-      const decorated = adapter._decoratePureProtocolFetchResult({ success: true, text: '{"d":{}}', status: 200 }, {});
-      assert.ok(decorated && typeof decorated === 'object');
+      const adapter = makeAdapter({
+        navigator: {
+          browserContext: {
+            sessionManager: {
+              resolveProtocolIdentity: () => ({
+                cipherIdx: 1,
+                sigalgIdx: 2,
+                lineageKey: 'proxy:7902',
+                ja3ProfileId: 'proxy:7902:1:2',
+                source: 'session_buffer_pool'
+              })
+            }
+          }
+        }
+      });
+      const decorated = adapter._decoratePureProtocolFetchResult(
+        { success: true, text: '{"d":{}}', status: 200 },
+        {
+          requestProxyServer: 'http://127.0.0.1:7902',
+          requestProxyPort: 7902,
+          requestProxyLease: {
+            id: 'lease-7902',
+            proxy: { server: 'http://127.0.0.1:7902', port: 7902 }
+          }
+        }
+      );
+
+      assert.strictEqual(decorated.activeProxyState.port, 7902);
+      assert.strictEqual(decorated.activeProxyState.server, 'http://127.0.0.1:7902');
+      assert.strictEqual(decorated.activeProxyState.lease.id, 'lease-7902');
+      assert.strictEqual(decorated.activeProxyState.lineageKey, 'proxy:7902');
+      assert.strictEqual(decorated.activeProxyState.ja3ProfileId, 'proxy:7902:1:2');
     });
 
     it('result.success=false 时应返回失败结构', () => {
