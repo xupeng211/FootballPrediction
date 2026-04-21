@@ -62,15 +62,103 @@ const OUTPUT_HEADERS = [
   'status',
   'bookmaker_name',
   'market_type',
+  'open_line',
   'open_home',
   'open_draw',
   'open_away',
+  'close_line',
   'close_home',
   'close_draw',
   'close_away',
   'home_score',
   'away_score',
   'quality_flags'
+];
+const MARKET_CONFIGS = [
+  {
+    bookmakerName: 'Bet365',
+    marketType: '1x2',
+    openColumns: { home: 'B365H', draw: 'B365D', away: 'B365A' },
+    closeColumns: { home: 'B365CH', draw: 'B365CD', away: 'B365CA' }
+  },
+  {
+    bookmakerName: 'Pinnacle',
+    marketType: '1x2',
+    openColumns: { home: 'PSH', draw: 'PSD', away: 'PSA' },
+    closeColumns: { home: 'PSCH', draw: 'PSCD', away: 'PSCA' }
+  },
+  {
+    bookmakerName: 'William Hill',
+    marketType: '1x2',
+    openColumns: { home: 'WHH', draw: 'WHD', away: 'WHA' },
+    closeColumns: { home: 'WHCH', draw: 'WHCD', away: 'WHCA' }
+  },
+  {
+    bookmakerName: 'Ladbrokes',
+    marketType: '1x2',
+    openColumns: { home: 'LBH', draw: 'LBD', away: 'LBA' },
+    closeColumns: { home: 'LBCH', draw: 'LBCD', away: 'LBCA' }
+  },
+  {
+    bookmakerName: 'Bwin',
+    marketType: '1x2',
+    openColumns: { home: 'BWH', draw: 'BWD', away: 'BWA' },
+    closeColumns: { home: 'BWCH', draw: 'BWCD', away: 'BWCA' }
+  },
+  {
+    bookmakerName: 'Betfair',
+    marketType: '1x2',
+    openColumns: { home: 'BFH', draw: 'BFD', away: 'BFA' },
+    closeColumns: { home: 'BFCH', draw: 'BFCD', away: 'BFCA' }
+  },
+  {
+    bookmakerName: 'Bet365',
+    marketType: 'Asian Handicap',
+    openColumns: { home: 'B365AHH', away: 'B365AHA' },
+    closeColumns: { home: 'B365CAHH', away: 'B365CAHA' },
+    openLineColumn: 'AHh',
+    closeLineColumn: 'AHCh'
+  },
+  {
+    bookmakerName: 'Pinnacle',
+    marketType: 'Asian Handicap',
+    openColumns: { home: 'PAHH', away: 'PAHA' },
+    closeColumns: { home: 'PCAHH', away: 'PCAHA' },
+    openLineColumn: 'AHh',
+    closeLineColumn: 'AHCh'
+  },
+  {
+    bookmakerName: 'Betfair Exchange',
+    marketType: 'Asian Handicap',
+    openColumns: { home: 'BFEAHH', away: 'BFEAHA' },
+    closeColumns: { home: 'BFECAHH', away: 'BFECAHA' },
+    openLineColumn: 'AHh',
+    closeLineColumn: 'AHCh'
+  },
+  {
+    bookmakerName: 'Bet365',
+    marketType: 'Over/Under',
+    openColumns: { over: 'B365>2.5', under: 'B365<2.5' },
+    closeColumns: { over: 'B365C>2.5', under: 'B365C<2.5' },
+    openLineValue: '2.5',
+    closeLineValue: '2.5'
+  },
+  {
+    bookmakerName: 'Pinnacle',
+    marketType: 'Over/Under',
+    openColumns: { over: 'P>2.5', under: 'P<2.5' },
+    closeColumns: { over: 'PC>2.5', under: 'PC<2.5' },
+    openLineValue: '2.5',
+    closeLineValue: '2.5'
+  },
+  {
+    bookmakerName: 'Betfair Exchange',
+    marketType: 'Over/Under',
+    openColumns: { over: 'BFE>2.5', under: 'BFE<2.5' },
+    closeColumns: { over: 'BFEC>2.5', under: 'BFEC<2.5' },
+    openLineValue: '2.5',
+    closeLineValue: '2.5'
+  }
 ];
 
 function normalizeText(value) {
@@ -181,20 +269,88 @@ function compareCandidatePriority(left, right) {
   return String(left.match_id).localeCompare(String(right.match_id));
 }
 
-function extractOddsTriplet(row, columns) {
+function extractOddsValues(row, columns = {}) {
+  return Object.fromEntries(
+    Object.entries(columns).map(([key, columnName]) => [key, normalizeText(row[columnName])])
+  );
+}
+
+function hasAnyOddsValue(oddsValues) {
+  return Object.values(oddsValues).some((value) => value !== '');
+}
+
+function hasCompleteOddsTriplet(oddsValues) {
+  return Object.values(oddsValues).every((value) => value !== '');
+}
+
+function resolveLineValue(row, config, phase) {
+  if (phase === 'open' && config.openLineValue) {
+    return normalizeText(config.openLineValue);
+  }
+  if (phase === 'close' && config.closeLineValue) {
+    return normalizeText(config.closeLineValue);
+  }
+
+  const columnName = phase === 'open' ? config.openLineColumn : config.closeLineColumn;
+  if (!columnName) {
+    return '';
+  }
+
+  return normalizeText(row[columnName]);
+}
+
+function mapOutcomeColumns(config, values) {
+  if (config.marketType === 'Over/Under') {
+    return {
+      primary: values.over || '',
+      middle: '',
+      secondary: values.under || ''
+    };
+  }
+
   return {
-    home: normalizeText(row[columns.home]),
-    draw: normalizeText(row[columns.draw]),
-    away: normalizeText(row[columns.away])
+    primary: values.home || '',
+    middle: values.draw || '',
+    secondary: values.away || ''
   };
 }
 
-function hasAnyOddsValue(oddsTriplet) {
-  return Object.values(oddsTriplet).some((value) => value !== '');
-}
+function buildExpandedOddsRows(row, context, matchCore) {
+  const rows = [];
 
-function hasCompleteOddsTriplet(oddsTriplet) {
-  return Object.values(oddsTriplet).every((value) => value !== '');
+  for (const config of MARKET_CONFIGS) {
+    const openValues = extractOddsValues(row, config.openColumns);
+    const closeValues = extractOddsValues(row, config.closeColumns);
+    const openLine = resolveLineValue(row, config, 'open');
+    const closeLine = resolveLineValue(row, config, 'close') || openLine;
+    const hasOpenOdds = hasCompleteOddsTriplet(openValues);
+    const hasCloseOdds = hasCompleteOddsTriplet(closeValues);
+
+    if (!hasAnyOddsValue(openValues) && !hasAnyOddsValue(closeValues)) {
+      continue;
+    }
+
+    const openColumns = mapOutcomeColumns(config, openValues);
+    const closeColumns = mapOutcomeColumns(config, closeValues);
+    const qualityFlags = context.mapper.buildSourceQualityFlags({ hasOpenOdds });
+
+    rows.push({
+      ...matchCore,
+      bookmaker_name: config.bookmakerName,
+      market_type: config.marketType,
+      open_line: openLine,
+      open_home: openColumns.primary,
+      open_draw: openColumns.middle,
+      open_away: openColumns.secondary,
+      close_line: closeLine,
+      close_home: closeColumns.primary,
+      close_draw: closeColumns.middle,
+      close_away: closeColumns.secondary,
+      quality_flags: qualityFlags.join(';')
+    });
+  }
+
+  return rows;
 }
 
 class ExistingMatchResolver {
@@ -325,48 +481,29 @@ function adaptSourceRow(row, context) {
     awayTeam,
     resolver: context.resolver
   });
-  const openOdds = extractOddsTriplet(row, {
-    home: 'B365H',
-    draw: 'B365D',
-    away: 'B365A'
-  });
-  const closeOddsRaw = extractOddsTriplet(row, {
-    home: 'B365CH',
-    draw: 'B365CD',
-    away: 'B365CA'
-  });
-  const hasOpenOdds = hasCompleteOddsTriplet(openOdds);
-  const hasCloseOdds = hasCompleteOddsTriplet(closeOddsRaw);
-  const qualityFlags = context.mapper.buildSourceQualityFlags({ hasOpenOdds });
-  const closeOdds = hasCloseOdds ? closeOddsRaw : openOdds;
-  if (!hasAnyOddsValue(closeOdds)) {
-    throw new Error('Bet365 赔率列缺失');
+  const matchCore = {
+    match_id: matchIdResolution.matchId,
+    external_id: `${context.sourceMeta.seasonCode}_${hashExternalId(matchDate, homeTeam, awayTeam)}`,
+    league_name: context.mapper.normalizeLeagueName('Premier League'),
+    season: Normalizer.normalizeSeason(context.sourceMeta.season),
+    home_team: homeTeam,
+    away_team: awayTeam,
+    match_date: matchDate,
+    status: hasFinalScore(row) ? 'finished' : 'scheduled',
+    home_score: normalizeText(row.FTHG),
+    away_score: normalizeText(row.FTAG)
+  };
+  const expandedRows = buildExpandedOddsRows(row, context, matchCore);
+  if (expandedRows.length === 0) {
+    throw new Error('未提取到任何支持的赔率记录');
   }
 
   return {
-    row: {
-      match_id: matchIdResolution.matchId,
-      external_id: `${context.sourceMeta.seasonCode}_${hashExternalId(matchDate, homeTeam, awayTeam)}`,
-      league_name: context.mapper.normalizeLeagueName('Premier League'),
-      season: Normalizer.normalizeSeason(context.sourceMeta.season),
-      home_team: homeTeam,
-      away_team: awayTeam,
-      match_date: matchDate,
-      status: hasFinalScore(row) ? 'finished' : 'scheduled',
-      bookmaker_name: 'Bet365',
-      market_type: '1x2',
-      open_home: openOdds.home,
-      open_draw: openOdds.draw,
-      open_away: openOdds.away,
-      close_home: closeOdds.home,
-      close_draw: closeOdds.draw,
-      close_away: closeOdds.away,
-      home_score: normalizeText(row.FTHG),
-      away_score: normalizeText(row.FTAG),
-      quality_flags: qualityFlags.join(';')
-    },
+    rows: expandedRows,
     diagnostics: {
-      qualityFlags,
+      qualityFlags: [...new Set(expandedRows.flatMap((record) => (
+        normalizeText(record.quality_flags).split(';').filter(Boolean)
+      )))],
       reusedExisting: matchIdResolution.reusedExisting,
       matchedSource: matchIdResolution.matchedSource,
       matchedDate: matchIdResolution.matchedDate
@@ -461,7 +598,7 @@ class CollectingWriter extends Writable {
         mapper: this.mapper,
         resolver: this.resolver
       });
-      this.rows.push(adapted.row);
+      this.rows.push(...adapted.rows);
       if (adapted.diagnostics.reusedExisting) {
         this.stats.reusedExisting += 1;
       } else {
@@ -555,7 +692,7 @@ async function main() {
     if (adapted.sourceQualityFlags.includes(WARNING_LOW_QUALITY_SOURCE)) {
       console.log(
         `[FETCH-EPL] 数据源质量告警 flags=${adapted.sourceQualityFlags.join(',')} `
-        + '原因=缺少 Bet365 初盘列，不满足 ML 训练要求'
+        + '原因=部分庄家/市场缺少开盘赔率，相关记录已带低质量标记'
       );
     } else {
       console.log('[FETCH-EPL] 数据源质量诊断: 已检测到 Bet365 开盘与收盘列');

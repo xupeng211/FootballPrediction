@@ -189,7 +189,28 @@ function compactObject(value) {
   );
 }
 
+function parseLine(rawValue) {
+  return parseDecimal(rawValue);
+}
+
 function buildOpenOdds(row) {
+  const marketType = normalizeText(row.market_type);
+  if (marketType === 'Asian Handicap') {
+    return compactObject({
+      line: parseLine(row.open_line),
+      home: parseDecimal(row.open_home),
+      away: parseDecimal(row.open_away)
+    });
+  }
+
+  if (marketType === 'Over/Under') {
+    return compactObject({
+      line: parseLine(row.open_line),
+      over: parseDecimal(row.open_home),
+      under: parseDecimal(row.open_away)
+    });
+  }
+
   return compactObject({
     home: parseDecimal(row.open_home),
     draw: parseDecimal(row.open_draw),
@@ -198,6 +219,23 @@ function buildOpenOdds(row) {
 }
 
 function buildCloseOdds(row) {
+  const marketType = normalizeText(row.market_type);
+  if (marketType === 'Asian Handicap') {
+    return compactObject({
+      line: parseLine(row.close_line),
+      home: parseDecimal(row.close_home),
+      away: parseDecimal(row.close_away)
+    });
+  }
+
+  if (marketType === 'Over/Under') {
+    return compactObject({
+      line: parseLine(row.close_line),
+      over: parseDecimal(row.close_home),
+      under: parseDecimal(row.close_away)
+    });
+  }
+
   return compactObject({
     home: parseDecimal(row.close_home),
     draw: parseDecimal(row.close_draw),
