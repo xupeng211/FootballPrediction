@@ -820,4 +820,13 @@ const reconMatrixTargetRunner = {
   }
 };
 
-module.exports = { reconMatrixTargetRunner, hasOnlyFuturePendingMatches };
+module.exports = {
+  reconMatrixTargetRunner,
+  hasOnlyFuturePendingMatches,
+  resolvePendingMatchTimestamp,
+  isFuturePendingMatch,
+  shouldDeferFuturePendingFromResults,
+  splitDeferredFuturePendingMatches,
+  mergeDeferredPendingMatches,
+  normalizeLeagueName
+};
