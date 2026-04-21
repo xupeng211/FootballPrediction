@@ -57,6 +57,8 @@ data/*.pkl
 data/*.joblib
 data/postgres/
 data/redis/
+data/snapshots/*.sql
+!data/snapshots/.gitkeep
 data/raw_json/
 data/models/*.pkl
 data/models/*.joblib
