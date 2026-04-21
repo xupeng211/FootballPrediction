@@ -109,8 +109,8 @@ async function main() {
     console.log(`📝 文件路径: ${sessionPath}`);
     console.log(`📊 Cookie 数量: ${storageState.cookies.length}`);
     console.log('');
-    console.log('💡 现在可以运行:');
-    console.log('   node scripts/ops/p2p_harvest_v38.js');
+    console.log('💡 会话已可供当前主流程复用。');
+    console.log('   请按 AGENTS.md 中的容器化入口继续执行 Recon / Backfill 主链路。');
     console.log('='.repeat(60));
     
   } catch (error) {

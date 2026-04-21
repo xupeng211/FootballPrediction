@@ -10,7 +10,7 @@
 ## ✅ 已完成工作
 
 ### 1. URL动态拼接引擎 (URL Builder)
-- **实现文件**: `scripts/ops/p2p_harvest_v38.js`
+- **状态**: `V38 试验脚本已退役，本文档仅保留历史记录，不再对应当前仓库入口`
 - **功能**: 
   - 3场2023/24赛季真实英超比赛URL硬编码
     - Fulham vs Burnley (2024-05-11)
@@ -161,8 +161,8 @@ node scripts/ops/precision_strike_v6.js
 
 | 文件 | 说明 |
 |------|------|
-| `scripts/ops/p2p_harvest_v38.js` | 点对点收割主脚本 |
-| `scripts/ops/p2p_harvest_playwright_v38.py` | Python版(Playwright) |
+| `已退役（原 V38 试验脚本）` | 历史点对点收割主脚本，不再作为当前仓库入口 |
+| `已退役（原 V38 Playwright 试验脚本）` | 历史 Python 实验实现，不再作为当前仓库入口 |
 | `debug_*.html` | 页面HTML快照 (3个比赛) |
 | `p2p_harvest_v383_*.json` | 执行结果JSON |
 | `P2P_HARVEST_REPORT_V38.md` | 本报告 |
