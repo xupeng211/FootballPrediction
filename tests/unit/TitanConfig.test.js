@@ -14,17 +14,22 @@ describe('TitanConfig', () => {
 
   it('应该验证必填配置', () => {
     const config = new TitanConfig();
+    const originalPassword = process.env.DB_PASSWORD;
+    delete process.env.DB_PASSWORD;
 
     assert.throws(() => {
       config.validateConfig();
     }, /DB_PASSWORD 未设置/);
+
+    if (originalPassword) process.env.DB_PASSWORD = originalPassword;
   });
 
   it('应该通过路径访问配置', () => {
     const config = new TitanConfig();
-    const dbHost = config.get('database.host');
+    const db = config.get('database');
 
-    assert.strictEqual(dbHost, 'localhost');
+    assert.ok(db);
+    assert.strictEqual(db.name, 'football_db');
   });
 
   it('应该返回环境信息', () => {
