@@ -291,13 +291,26 @@ class ProxySettingsMixin(BaseModel):
         """统一回填共享代理模板。"""
         return default_proxy_server_template()
 
+    def model_post_init(self, __context: Any) -> None:
+        """统一覆盖来自 .env 的遗留代理字段，确保共享代理池是唯一真理源。"""
+        parent_post_init = getattr(super(), "model_post_init", None)
+        if callable(parent_post_init):
+            parent_post_init(__context)
+
+        resolved = resolve_shared_proxy_pool_config()
+        self.proxy_wsl2_host = str(resolved["host"])
+        self.proxy_protocol = str(resolved["protocol"])
+        self.proxy_ports = ",".join(str(port) for port in resolved["ports"])
+        self.proxy_server_template = str(resolved["server_template"])
+
     def build_proxy_config(self) -> ProxyConfig:
-        """构建 ProxyConfig 视图。"""
+        """构建 ProxyConfig 视图，始终以共享代理池解析结果为准。"""
+        resolved = resolve_shared_proxy_pool_config()
         return ProxyConfig(
-            wsl2_bridge_host=self.proxy_wsl2_host,
-            protocol=self.proxy_protocol,
-            server_template=self.proxy_server_template,
-            proxy_ports=parse_proxy_ports(self.proxy_ports),
+            wsl2_bridge_host=str(resolved["host"]),
+            protocol=str(resolved["protocol"]),
+            server_template=str(resolved["server_template"]),
+            proxy_ports=list(resolved["ports"]),
             deprecated_proxy_ports=parse_proxy_ports(self.proxy_deprecated_ports),
             health_check_timeout=self.proxy_health_timeout,
             circuit_breaker_threshold=self.proxy_circuit_breaker_threshold,

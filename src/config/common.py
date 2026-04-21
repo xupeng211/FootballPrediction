@@ -76,6 +76,9 @@ def load_dotenv_if_available() -> None:
     if _load_dotenv is None:
         logger.debug("python-dotenv 未安装，跳过 .env 文件加载")
         return
+    if os.getenv("PYTEST_CURRENT_TEST"):
+        logger.debug("检测到 pytest 环境，跳过二次加载 .env")
+        return
     _load_dotenv()
 
 
