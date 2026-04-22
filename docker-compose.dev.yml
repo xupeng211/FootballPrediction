@@ -63,19 +63,24 @@ services:
       # 时区
       - TZ=Asia/Shanghai
       # 数据库连接（连接到宿主机）
-      - DB_HOST=host.docker.internal
+      - HOST_LOOPBACK_GATEWAY=${HOST_LOOPBACK_GATEWAY:-192.168.65.254}
+      - DB_HOST=${HOST_LOOPBACK_GATEWAY:-192.168.65.254}
       - DB_PORT=5432
       - DB_NAME=football_db
       - DB_USER=${DB_USER:-football_user}
       - DB_PASSWORD=${DB_PASSWORD:-football_pass}
       # Redis 连接
-      - REDIS_HOST=host.docker.internal
+      - REDIS_HOST=${HOST_LOOPBACK_GATEWAY:-192.168.65.254}
       - REDIS_PORT=6379
+      # WSL2 Mirrored + Docker bridge: 容器内使用宿主网关直连，避免每次解析 host.docker.internal
+      - PROXY_HOST=${HOST_LOOPBACK_GATEWAY:-192.168.65.254}
+      - WSL2_PROXY_HOST=${HOST_LOOPBACK_GATEWAY:-192.168.65.254}
+      - PROXY_PROTOCOL=socks5
       # 代理配置（仅在显式设置 DEV_* 变量时启用）
       - HTTP_PROXY=${DEV_HTTP_PROXY:-}
       - HTTPS_PROXY=${DEV_HTTPS_PROXY:-}
       - CONTAINER_PROXY=${DEV_CONTAINER_PROXY:-}
-      - NO_PROXY=localhost,127.0.0.1,host.docker.internal
+      - NO_PROXY=localhost,127.0.0.1,${HOST_LOOPBACK_GATEWAY:-192.168.65.254}
       # Python 配置
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
@@ -92,10 +97,6 @@ services:
       - "${API_PORT:-8000}:8000"    # API 服务
       - "${DASHBOARD_PORT:-3000}:3000"  # Dashboard
       - "${DEBUG_PORT:-5678}:5678"  # Python Debug
-
-    # V172-L2-04: 启用 host.docker.internal
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
 
     # 健康检查
     healthcheck:

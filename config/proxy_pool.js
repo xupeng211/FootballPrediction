@@ -5,14 +5,23 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const PROXY_POOL_PATH = path.resolve(__dirname, 'proxy_pool.json');
-const DEFAULT_PROTOCOL = 'http';
-const DEFAULT_PREFERRED_HOST = 'host.docker.internal';
+const DEFAULT_PROTOCOL = 'socks5';
+const DEFAULT_PREFERRED_HOST = '127.0.0.1';
 const DEFAULT_HOST = DEFAULT_PREFERRED_HOST;
 
 function normalizeHost(value) {
     return typeof value === 'string' && value.trim() !== ''
         ? value.trim()
         : '';
+}
+
+function normalizeProxyProtocol(value) {
+    const protocol = String(value || '').trim().toLowerCase();
+    if (protocol === 'socks5h') {
+        return 'socks5';
+    }
+
+    return protocol || DEFAULT_PROTOCOL;
 }
 
 function isLegacyBridgeHost(value) {
@@ -59,7 +68,7 @@ function expandPortRange(start, end) {
 }
 
 function extractHost(serverTemplate = '') {
-    const match = String(serverTemplate).match(/^https?:\/\/([^/:]+)/i);
+    const match = String(serverTemplate).match(/^(?:https?|socks5h?):\/\/([^/:]+)/i);
     return match?.[1] || null;
 }
 
@@ -82,8 +91,9 @@ function readProxyPoolFile() {
 }
 
 function resolveProxyPoolConfig(env = process.env) {
+    const radarMode = String(env.PROXY_RADAR_MODE || '').toLowerCase() === 'true';
     const fileConfig = readProxyPoolFile();
-    const protocol = env.PROXY_PROTOCOL || fileConfig.protocol || DEFAULT_PROTOCOL;
+    const protocol = normalizeProxyProtocol(env.PROXY_PROTOCOL || fileConfig.protocol || DEFAULT_PROTOCOL);
     const explicitServerTemplate = typeof env.PROXY_SERVER === 'string' && env.PROXY_SERVER.trim() !== ''
         ? env.PROXY_SERVER.trim()
         : '';
@@ -92,13 +102,18 @@ function resolveProxyPoolConfig(env = process.env) {
     const rangePorts = envPorts.length === 0
         ? expandPortRange(env.PROXY_PORT_START, env.PROXY_PORT_END)
         : [];
+
+    const hardcodedPorts = Array.from({ length: 40 }, (_, i) => 10001 + i);
+
     const fileActivePorts = parseProxyPorts(fileConfig.active_ports);
     const filePorts = fileActivePorts.length > 0
         ? fileActivePorts
         : parseProxyPorts(fileConfig.ports);
-    const candidatePorts = envPorts.length > 0
-        ? envPorts
-        : (rangePorts.length > 0 ? rangePorts : filePorts);
+    const candidatePorts = radarMode
+        ? []
+        : (envPorts.length > 0
+            ? envPorts
+            : (rangePorts.length > 0 ? rangePorts : (filePorts.length > 0 ? filePorts : hardcodedPorts)));
 
     const fileServerTemplate = typeof fileConfig.serverTemplate === 'string'
         ? fileConfig.serverTemplate
@@ -137,6 +152,7 @@ function resolveProxyPoolConfig(env = process.env) {
         defaultPort: defaultPort || ports[0] || 0,
         serverTemplate,
         configPath: PROXY_POOL_PATH,
+        radarMode,
         healthCheckIntervalMs: parsePositiveNumber(fileConfig.healthCheckIntervalMs),
         failureThreshold: parsePositiveNumber(fileConfig.failureThreshold),
         failureCooldownMs: parsePositiveNumber(fileConfig.failureCooldownMs),
@@ -162,7 +178,7 @@ function buildProxyServer(port, options = {}) {
         return serverTemplate.replace('{port}', String(Number(port)));
     }
 
-    const protocol = options.protocol || config.protocol || DEFAULT_PROTOCOL;
+    const protocol = normalizeProxyProtocol(options.protocol || config.protocol || DEFAULT_PROTOCOL);
     const host = options.host || config.host || DEFAULT_HOST;
     return `${protocol}://${host}:${Number(port)}`;
 }
@@ -172,6 +188,7 @@ module.exports = {
     buildProxyServer,
     extractHost,
     isLegacyBridgeHost,
+    normalizeProxyProtocol,
     parseProxyPorts,
     readProxyPoolFile,
     resolveProxyPoolConfig
