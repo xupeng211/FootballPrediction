@@ -59,6 +59,33 @@ class EntityMapper {
     return matchedLeague?.name || raw;
   }
 
+  normalizeFotMobExternalId(rawValue) {
+    return String(rawValue || '').trim();
+  }
+
+  buildMatchLookupKey(homeTeam, awayTeam) {
+    const normalizedHome = this.normalizeTeamName(homeTeam);
+    const normalizedAway = this.normalizeTeamName(awayTeam);
+    return `${normalizeLookupKey(normalizedHome)}::${normalizeLookupKey(normalizedAway)}`;
+  }
+
+  bindFotMobIdentity(match = {}) {
+    const matchId = String(match.match_id || match.matchId || '').trim();
+    const externalId = this.normalizeFotMobExternalId(match.external_id || match.externalId);
+
+    if (!matchId) {
+      throw new Error('未找到可复用的 FotMob match_id');
+    }
+    if (!externalId) {
+      throw new Error(`比赛 ${matchId} 缺少 FotMob external_id`);
+    }
+
+    return {
+      matchId,
+      externalId
+    };
+  }
+
   buildSourceQualityFlags(options = {}) {
     const flags = [];
     if (options.hasOpenOdds === false) {
