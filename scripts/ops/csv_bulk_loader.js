@@ -32,7 +32,7 @@ const MATCH_REUSE_WINDOW_MS = 2 * 60 * 60 * 1000;
 function printUsage() {
   console.log('用法: node scripts/ops/csv_bulk_loader.js --file <path> [--commit] [--batch-size <n>] [--error-log <path>]');
   console.log('说明: 默认 dry-run，仅执行流式解析、实体转换、批量聚合和日志预览。');
-  console.log('说明: 带 --commit 时只会把赔率写入 bookmaker_odds_history，绝不会新建 matches。');
+  console.log('说明: 带 --commit 时会把战术维度同步到已匹配的 matches，并写入 bookmaker_odds_history。');
 }
 
 function resolveCliPath(rawValue) {
@@ -442,6 +442,13 @@ async function buildMatchRecord(row, context) {
     away_team: toNullableText(resolvedMatch.away_team) || awayTeam,
     home_score: parseInteger(row.home_score),
     away_score: parseInteger(row.away_score),
+    home_corners: parseInteger(row.home_corners),
+    away_corners: parseInteger(row.away_corners),
+    home_yellow_cards: parseInteger(row.home_yellow_cards),
+    away_yellow_cards: parseInteger(row.away_yellow_cards),
+    home_red_cards: parseInteger(row.home_red_cards),
+    away_red_cards: parseInteger(row.away_red_cards),
+    referee: toNullableText(row.referee),
     match_date: resolvedMatch.match_date instanceof Date
       ? resolvedMatch.match_date
       : parseDateOrThrow(resolvedMatch.match_date || matchDate),
@@ -453,7 +460,7 @@ async function buildMatchRecord(row, context) {
 }
 
 function buildOddsRecord(row, context) {
-  const bookmakerName = normalizeText(row.bookmaker_name);
+  const bookmakerName = context.mapper.normalizeBookmakerName(row.bookmaker_name);
   const marketType = normalizeText(row.market_type);
   if (!bookmakerName) {
     throw new Error('bookmaker_name 缺失');
@@ -490,6 +497,7 @@ async function normalizeCsvRow(row, context) {
   const match = await buildMatchRecord(row, context);
   const odds = buildOddsRecord(row, {
     match,
+    mapper: context.mapper,
     sourceFile: context.sourceFile,
     sourceRowNumber: context.sourceRowNumber
   });
@@ -613,21 +621,28 @@ class CsvBulkLoaderWriter {
       await client.query('BEGIN');
       await this._ensureOddsHistoryTable(client);
 
+      const matchRows = dedupeByKey(
+        records.map((record) => record.match),
+        (item) => item.match_id
+      );
       const oddsRows = dedupeByKey(
         records.map((record) => record.odds),
         (item) => `${item.match_id}::${item.bookmaker_name}::${item.market_type}`
       );
 
+      const matchResult = await syncResolvedMatches(client, matchRows);
       const oddsResult = await upsertBookmakerOddsHistory(client, oddsRows);
       await client.query('COMMIT');
 
       this.stats.rowsProcessed = (this.stats.rowsProcessed || 0) + records.length;
+      this.stats.matchesUpdated = (this.stats.matchesUpdated || 0) + matchResult.updated;
       this.stats.oddsInserted = (this.stats.oddsInserted || 0) + oddsResult.inserted;
       this.stats.oddsUpdated = (this.stats.oddsUpdated || 0) + oddsResult.updated;
 
       console.log(
         `[CSV-BULK] commit batch=${this.batchIndex} rows=${records.length} `
         + `resolved_matches=${new Set(records.map((record) => record.match.match_id)).size} `
+        + `matches(updated=${matchResult.updated}) `
         + `odds(inserted=${oddsResult.inserted},updated=${oddsResult.updated})`
       );
     } catch (error) {
@@ -659,6 +674,76 @@ class CsvBulkLoaderWriter {
 
     this.tableEnsured = true;
   }
+}
+
+async function syncResolvedMatches(client, rows = []) {
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return { updated: 0 };
+  }
+
+  const values = [];
+  const placeholders = rows.map((row, index) => {
+    const offset = index * 12;
+    values.push(
+      row.match_id,
+      row.home_score,
+      row.away_score,
+      row.status,
+      row.is_finished,
+      row.home_corners,
+      row.away_corners,
+      row.home_yellow_cards,
+      row.away_yellow_cards,
+      row.home_red_cards,
+      row.away_red_cards,
+      row.referee
+    );
+
+    return `($${offset + 1}::varchar, $${offset + 2}::int, $${offset + 3}::int, $${offset + 4}::varchar, $${offset + 5}::boolean, $${offset + 6}::int, $${offset + 7}::int, $${offset + 8}::int, $${offset + 9}::int, $${offset + 10}::int, $${offset + 11}::int, $${offset + 12}::varchar)`;
+  });
+
+  const result = await client.query(`
+    UPDATE matches AS target
+    SET
+      home_score = COALESCE(source.home_score, target.home_score),
+      away_score = COALESCE(source.away_score, target.away_score),
+      status = COALESCE(source.status, target.status),
+      is_finished = COALESCE(source.is_finished, target.is_finished),
+      home_corners = COALESCE(source.home_corners, target.home_corners),
+      away_corners = COALESCE(source.away_corners, target.away_corners),
+      home_yellow_cards = COALESCE(source.home_yellow_cards, target.home_yellow_cards),
+      away_yellow_cards = COALESCE(source.away_yellow_cards, target.away_yellow_cards),
+      home_red_cards = COALESCE(source.home_red_cards, target.home_red_cards),
+      away_red_cards = COALESCE(source.away_red_cards, target.away_red_cards),
+      referee = COALESCE(source.referee, target.referee),
+      updated_at = NOW()
+    FROM (
+      VALUES ${placeholders.join(', ')}
+    ) AS source(
+      match_id,
+      home_score,
+      away_score,
+      status,
+      is_finished,
+      home_corners,
+      away_corners,
+      home_yellow_cards,
+      away_yellow_cards,
+      home_red_cards,
+      away_red_cards,
+      referee
+    )
+    WHERE target.match_id = source.match_id
+    RETURNING target.match_id
+  `, values);
+
+  if (result.rowCount !== rows.length) {
+    throw new Error(
+      `matches 同步失败: expected=${rows.length} updated=${result.rowCount}`
+    );
+  }
+
+  return { updated: result.rowCount };
 }
 
 function dedupeByKey(items = [], keySelector) {
@@ -813,5 +898,6 @@ module.exports = {
   normalizeCsvRow,
   parseArgs,
   runCsvBulkLoader,
+  syncResolvedMatches,
   upsertBookmakerOddsHistory
 };

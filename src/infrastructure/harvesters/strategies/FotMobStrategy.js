@@ -13,7 +13,12 @@
 
 'use strict';
 
+const fs = require('fs');
+const path = require('path');
+
 const { transformToApiFormat } = require('../../../parsers/fotmob/NextDataParser');
+
+const DEFAULT_FOTMOB_SESSION_PATH = path.join(process.cwd(), 'data', 'sessions', 'fotmob_session.json');
 
 // ============================================================================
 // FotMobStrategy 类
@@ -30,6 +35,7 @@ class FotMobStrategy {
     constructor(config = {}) {
         this.config = {
             verboseLogging: config.verboseLogging || false,
+            sessionPath: config.sessionPath || process.env.FOTMOB_SESSION_PATH || DEFAULT_FOTMOB_SESSION_PATH,
             ...config
         };
 
@@ -41,6 +47,7 @@ class FotMobStrategy {
 
         // 资源类型拦截黑名单
         this.blockedResourceTypes = ['image', 'media', 'font'];
+        this._sessionCookieContextCache = new WeakSet();
     }
 
     /**
@@ -50,6 +57,14 @@ class FotMobStrategy {
      * @returns {string} 目标 URL
      */
     getTargetUrl(match) {
+        const routedPageUrl = String(match?.page_url || match?.pageUrl || '').trim();
+        if (routedPageUrl) {
+            if (/^https?:\/\//i.test(routedPageUrl)) {
+                return routedPageUrl;
+            }
+            return `https://www.fotmob.com${routedPageUrl.startsWith('/') ? '' : '/'}${routedPageUrl}`;
+        }
+
         const { external_id } = match;
         return `https://www.fotmob.com/match/${external_id}`;
     }
@@ -169,6 +184,170 @@ class FotMobStrategy {
         return capturedData;
     }
 
+    _normalizeSameSite(value) {
+        const normalized = String(value || '').trim().toLowerCase();
+        if (!normalized || normalized === 'unspecified') {
+            return undefined;
+        }
+        if (normalized === 'no_restriction' || normalized === 'none') {
+            return 'None';
+        }
+        if (normalized === 'lax') {
+            return 'Lax';
+        }
+        if (normalized === 'strict') {
+            return 'Strict';
+        }
+        return undefined;
+    }
+
+    _normalizeSessionCookie(rawCookie = {}) {
+        const name = String(rawCookie.name || '').trim();
+        const value = String(rawCookie.value || '').trim();
+        const domain = String(rawCookie.domain || '').trim();
+
+        if (!name || !value || !domain) {
+            return null;
+        }
+
+        const expires = Number(rawCookie.expires ?? rawCookie.expirationDate);
+        if (Number.isFinite(expires) && expires > 0 && expires < (Date.now() / 1000)) {
+            return null;
+        }
+
+        const normalized = {
+            name,
+            value,
+            domain,
+            path: String(rawCookie.path || '/'),
+            httpOnly: Boolean(rawCookie.httpOnly),
+            secure: Boolean(rawCookie.secure)
+        };
+
+        if (Number.isFinite(expires) && expires > 0) {
+            normalized.expires = expires;
+        }
+
+        const sameSite = this._normalizeSameSite(rawCookie.sameSite);
+        if (sameSite) {
+            normalized.sameSite = sameSite;
+        }
+
+        return normalized;
+    }
+
+    _loadSessionCookies() {
+        try {
+            if (!fs.existsSync(this.config.sessionPath)) {
+                return [];
+            }
+
+            const payload = JSON.parse(fs.readFileSync(this.config.sessionPath, 'utf8'));
+            const cookies = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.cookies)
+                    ? payload.cookies
+                    : [];
+
+            return cookies
+                .map((cookie) => this._normalizeSessionCookie(cookie))
+                .filter(Boolean);
+        } catch (error) {
+            if (this.config.verboseLogging) {
+                console.log(`[FotMobStrategy] 会话加载失败: ${error.message}`);
+            }
+            return [];
+        }
+    }
+
+    _buildCookieHeader(cookies = []) {
+        return (Array.isArray(cookies) ? cookies : [])
+            .map((cookie) => {
+                const name = String(cookie?.name || '').trim();
+                const value = String(cookie?.value || '').trim();
+                if (!name || !value) {
+                    return null;
+                }
+                return `${name}=${value}`;
+            })
+            .filter(Boolean)
+            .join('; ');
+    }
+
+    _extractPayloadMatchId(data) {
+        const candidates = [
+            data?.general?.matchId,
+            data?.general?.id,
+            data?.matchId,
+            data?.content?.matchFacts?.matchId,
+            data?.header?.matchId
+        ];
+
+        return candidates
+            .map((candidate) => String(candidate || '').trim())
+            .find(Boolean) || '';
+    }
+
+    async _applySessionCookiesToContext(page, cookies = []) {
+        const context = page?.context?.();
+        if (!context || this._sessionCookieContextCache.has(context)) {
+            return false;
+        }
+
+        if (!Array.isArray(cookies) || cookies.length === 0) {
+            return false;
+        }
+
+        await context.addCookies(cookies);
+        this._sessionCookieContextCache.add(context);
+        return true;
+    }
+
+    async _fetchMatchDetailsWithSession(page, match) {
+        const externalId = String(match?.external_id || '').trim();
+        if (!externalId) {
+            return null;
+        }
+
+        const sessionCookies = this._loadSessionCookies();
+        const cookieHeader = this._buildCookieHeader(sessionCookies);
+        if (!cookieHeader) {
+            return null;
+        }
+
+        await this._applySessionCookiesToContext(page, sessionCookies);
+
+        const referer = this.getTargetUrl(match);
+        const userAgent = await page.evaluate(() => navigator.userAgent).catch(() => 'Mozilla/5.0');
+        const response = await fetch(`https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(externalId)}`, {
+            headers: {
+                accept: 'application/json, text/plain, */*',
+                'accept-language': 'zh-Hans,zh;q=0.9,en;q=0.8',
+                cookie: cookieHeader,
+                referer,
+                'user-agent': userAgent,
+                'x-requested-with': 'XMLHttpRequest'
+            }
+        });
+
+        if (!response.ok) {
+            if (this.config.verboseLogging) {
+                console.log(`[FotMobStrategy] 会话 matchDetails 请求失败: matchId=${externalId} status=${response.status}`);
+            }
+            return null;
+        }
+
+        const payload = await response.json();
+        const normalized = this._normalizeData(payload);
+        const payloadMatchId = this._extractPayloadMatchId(normalized);
+
+        if (payloadMatchId && payloadMatchId !== externalId) {
+            throw new Error(`MATCH_ID_MISMATCH: expected=${externalId} actual=${payloadMatchId}`);
+        }
+
+        return normalized;
+    }
+
     /**
      * 从页面提取数据
      * 优先从 API 拦截获取，失败则从 __NEXT_DATA__ 提取
@@ -184,6 +363,14 @@ class FotMobStrategy {
                 console.log(`[FotMobStrategy] 使用 API 拦截数据`);
             }
             return this._normalizeData(interceptionData.data);
+        }
+
+        const sessionPayload = await this._fetchMatchDetailsWithSession(page, match);
+        if (sessionPayload) {
+            if (this.config.verboseLogging) {
+                console.log(`[FotMobStrategy] 使用带 Cookie 的 matchDetails API`);
+            }
+            return sessionPayload;
         }
 
         // 备用方案：从 __NEXT_DATA__ 提取

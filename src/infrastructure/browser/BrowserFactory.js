@@ -10,6 +10,8 @@
 
 'use strict';
 
+const path = require('path');
+
 const { chromium } = require('playwright');
 const { getPathResolver } = require('../utils/PathResolver');
 const { logger } = require('../utils/Logger');
@@ -428,29 +430,77 @@ class BrowserFactory {
         const fs = require('fs').promises;
         const pathResolver = getPathResolver();
         const statePath = pathResolver.getBrowserStatePath();
+        const sessionPath = path.join(process.cwd(), 'data', 'sessions', 'fotmob_session.json');
+        const candidatePaths = [statePath, sessionPath];
 
-        try {
-            const content = await fs.readFile(statePath, 'utf8');
-            const state = JSON.parse(content);
-
-            if (state.cookies && state.cookies.length > 0) {
-                const validCookies = state.cookies.filter(c => {
-                    if (c.expires && c.expires < Date.now() / 1000) {
-                        return false;
-                    }
-                    return true;
-                });
+        for (const candidatePath of candidatePaths) {
+            try {
+                const content = await fs.readFile(candidatePath, 'utf8');
+                const state = JSON.parse(content);
+                const rawCookies = Array.isArray(state)
+                    ? state
+                    : Array.isArray(state?.cookies)
+                        ? state.cookies
+                        : [];
+                const validCookies = rawCookies
+                    .map((cookie) => this._normalizeContextCookie(cookie))
+                    .filter(Boolean);
 
                 if (validCookies.length > 0) {
                     await context.addCookies(validCookies);
-                    console.log(`🔑 [BrowserFactory] 浏览器身份加载成功: ${validCookies.length} 个 Cookie`);
+                    console.log(`🔑 [BrowserFactory] 浏览器身份加载成功: ${validCookies.length} 个 Cookie | source=${candidatePath}`);
                     return true;
                 }
+            } catch (error) {
+                // 继续检查下一个候选路径
             }
-            return false;
-        } catch (error) {
-            return false;
         }
+
+        return false;
+    }
+
+    _normalizeContextCookie(cookie = {}) {
+        const expires = Number(cookie?.expires ?? cookie?.expirationDate);
+        const normalized = {
+            name: String(cookie?.name || '').trim(),
+            value: String(cookie?.value || '').trim(),
+            domain: String(cookie?.domain || '').trim(),
+            path: String(cookie?.path || '/'),
+            httpOnly: Boolean(cookie?.httpOnly),
+            secure: Boolean(cookie?.secure)
+        };
+
+        if (!normalized.name || !normalized.value || !normalized.domain) {
+            return null;
+        }
+
+        if (Number.isFinite(expires) && expires > 0) {
+            if (expires < Date.now() / 1000) {
+                return null;
+            }
+            normalized.expires = expires;
+        }
+
+        const sameSite = this._normalizeCookieSameSite(cookie?.sameSite);
+        if (sameSite) {
+            normalized.sameSite = sameSite;
+        }
+
+        return normalized;
+    }
+
+    _normalizeCookieSameSite(rawValue) {
+        const sameSite = String(rawValue || '').trim().toLowerCase();
+        if (sameSite === 'no_restriction' || sameSite === 'none') {
+            return 'None';
+        }
+        if (sameSite === 'lax') {
+            return 'Lax';
+        }
+        if (sameSite === 'strict') {
+            return 'Strict';
+        }
+        return undefined;
     }
 
     // ========================================================================

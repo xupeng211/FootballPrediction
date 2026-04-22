@@ -10,7 +10,7 @@ function normalizeLookupKey(value) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/[^\p{Letter}\p{Number}]+/gu, ' ')
     .trim();
 }
 
@@ -20,9 +20,11 @@ class EntityMapper {
     this.activeLeagues = this.configManager.getActiveLeagues();
     this.teamAliases = new Map();
     this.leagueAliases = new Map();
+    this.bookmakerAliases = new Map();
 
     this._seedTeamAliases(options.teamAliases || {});
     this._seedLeagueAliases(options.leagueAliases || {});
+    this._seedBookmakerAliases(options.bookmakerAliases || {});
   }
 
   normalizeTeamName(rawName) {
@@ -61,6 +63,20 @@ class EntityMapper {
 
   normalizeFotMobExternalId(rawValue) {
     return String(rawValue || '').trim();
+  }
+
+  normalizeBookmakerName(rawName) {
+    const raw = String(rawName || '').trim();
+    if (!raw) {
+      return '';
+    }
+
+    const lookupKey = normalizeLookupKey(raw);
+    if (this.bookmakerAliases.has(lookupKey)) {
+      return this.bookmakerAliases.get(lookupKey);
+    }
+
+    return raw;
   }
 
   buildMatchLookupKey(homeTeam, awayTeam) {
@@ -147,6 +163,26 @@ class EntityMapper {
 
     for (const [rawValue, canonicalValue] of Object.entries({ ...defaults, ...extraAliases })) {
       this._registerAlias(this.leagueAliases, rawValue, canonicalValue);
+    }
+  }
+
+  _seedBookmakerAliases(extraAliases = {}) {
+    const defaults = {
+      'Macau Slot': 'MACAU_SLOT',
+      '澳门彩票': 'MACAU_SLOT',
+      '澳彩': 'MACAU_SLOT',
+      MacauSlot: 'MACAU_SLOT',
+      Crown: 'CROWN',
+      '皇冠': 'CROWN',
+      IBC: 'CROWN',
+      IBCBET: 'CROWN',
+      '188Bet': '188BET',
+      '利记': '188BET',
+      '188': '188BET'
+    };
+
+    for (const [rawValue, canonicalValue] of Object.entries({ ...defaults, ...extraAliases })) {
+      this._registerAlias(this.bookmakerAliases, rawValue, canonicalValue);
     }
   }
 }

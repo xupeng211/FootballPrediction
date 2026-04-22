@@ -91,6 +91,7 @@ describe('SeasonStrategy', () => {
     });
 
     assert.strictEqual(await discovery.discover(47, '2025'), '2025');
+    assert.strictEqual(await discovery.discover(47, '20242025'), '2024/2025');
     assert.strictEqual(await discovery.discover(48, '2026'), '2025/2026');
     assert.strictEqual(await discovery.discover(49, '2026'), '2027/2028');
     assert.strictEqual(await discovery.discover(50, '2026'), '2026');
