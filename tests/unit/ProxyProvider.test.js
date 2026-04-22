@@ -225,7 +225,7 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     assert.ok(provider.getNodeStates().find(item => item.port === blockedPort).healthScore < 60);
   });
 
-  test('默认主机应统一解析为 host.docker.internal', () => {
+  test('默认主机应统一解析为 127.0.0.1', () => {
     const provider = getProxyProvider({
       healthCheckIntervalMs: 0
     });
@@ -233,8 +233,8 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     const stats = provider.getStats();
     const nodes = provider.getNodeStates();
 
-    assert.strictEqual(stats.host, 'host.docker.internal');
-    assert.ok(nodes.every(node => node.host === 'host.docker.internal'));
+    assert.strictEqual(stats.host, '127.0.0.1');
+    assert.ok(nodes.every(node => node.host === '127.0.0.1'));
   });
 
   test('ERR_EMPTY_RESPONSE 应触发软退避而不是判定代理物理死亡', async () => {
@@ -352,7 +352,7 @@ describe('src/infrastructure/network/ProxyProvider', () => {
 
     await assert.rejects(
       provider.initialize(),
-      /代理网关无法连接，请检查 host\.docker\.internal 是否可用/
+      /请检查 host\.docker\.internal 是否可达/
     );
   });
 });

@@ -68,9 +68,9 @@ function resolveLineValue(row, config, phase) {
 
 function mapOutcomeColumns(config, values) {
     return {
-        home: values[config.home] !== undefined ? values[config.home] : null,
-        draw: values[config.draw] !== undefined ? values[config.draw] : null,
-        away: values[config.away] !== undefined ? values[config.away] : null,
+        home: values.home !== undefined ? values.home : null,
+        draw: values.draw !== undefined ? values.draw : null,
+        away: values.away !== undefined ? values.away : null,
     };
 }
 
