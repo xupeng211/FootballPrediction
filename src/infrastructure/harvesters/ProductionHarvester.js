@@ -135,10 +135,11 @@ class ProductionHarvester extends AbstractHarvester {
     /**
      * 获取待处理比赛
      * @param {number} [limit=500]
+     * @param {object} [filters={}]
      * @returns {Promise<object[]>}
      * @throws {Error} 当数据库查询失败时抛出
      */
-    async getPendingMatches(limit = 500) {
+    async getPendingMatches(limit = 500, filters = {}) {
         const dbHandle = this.db || this.pool;
         if (!dbHandle || typeof dbHandle.query !== 'function') {
             return [];
@@ -149,6 +150,37 @@ class ProductionHarvester extends AbstractHarvester {
             const pendingPredicate = statusColumn === 'pipeline_status'
                 ? `COALESCE(m.pipeline_status, 'pending') = 'pending'`
                 : `COALESCE(m.status, 'pending') != 'harvested'`;
+            const normalizedFilters = this._normalizePendingFilters(filters);
+            const conditions = [
+                'r.match_id IS NULL',
+                pendingPredicate
+            ];
+            const params = [limit];
+
+            if (normalizedFilters.leagueIds.length > 0) {
+                params.push(normalizedFilters.leagueIds);
+                conditions.push(`split_part(m.match_id, '_', 1) = ANY($${params.length}::text[])`);
+            }
+
+            if (normalizedFilters.season) {
+                params.push(normalizedFilters.season);
+                conditions.push(`m.season = $${params.length}`);
+            }
+
+            if (normalizedFilters.dateFrom) {
+                params.push(normalizedFilters.dateFrom.toISOString());
+                conditions.push(`m.match_date >= $${params.length}::timestamptz`);
+            }
+
+            if (normalizedFilters.dateTo) {
+                params.push(normalizedFilters.dateTo.toISOString());
+                conditions.push(`m.match_date < $${params.length}::timestamptz`);
+            }
+
+            if (normalizedFilters.finishedOnly) {
+                conditions.push('COALESCE(m.is_finished, false) = true');
+            }
+
             const result = await dbHandle.query(
                 `
                     SELECT
@@ -159,12 +191,11 @@ class ProductionHarvester extends AbstractHarvester {
                         m.match_date
                     FROM matches m
                     LEFT JOIN raw_match_data r ON m.match_id = r.match_id
-                    WHERE r.match_id IS NULL
-                      AND ${pendingPredicate}
-                    ORDER BY m.match_id ASC, m.match_date ASC NULLS LAST, m.created_at ASC NULLS LAST
+                    WHERE ${conditions.join('\n                      AND ')}
+                    ORDER BY m.match_date ASC NULLS LAST, m.match_id ASC, m.created_at ASC NULLS LAST
                     LIMIT $1
                 `,
-                [limit]
+                params
             );
             return (result.rows || []).sort((a, b) => a.match_id.localeCompare(b.match_id));
         } catch (error) {
@@ -215,6 +246,7 @@ class ProductionHarvester extends AbstractHarvester {
             payload.progressEvery || this.config.bulkProgressEvery
         );
         const captureResults = payload.captureResults === true || this.config.captureBulkResults === true;
+        const pendingMatchFilters = this._normalizePendingFilters(payload);
 
         const state = {
             startedAt: Date.now(),
@@ -247,7 +279,7 @@ class ProductionHarvester extends AbstractHarvester {
 
             let pendingMatches;
             try {
-                pendingMatches = await this.getPendingMatches(batchLimit);
+                pendingMatches = await this.getPendingMatches(batchLimit, pendingMatchFilters);
             } catch (error) {
                 const wrapped = new Error(
                     `[BULK_ABORT] 待处理比赛查询失败: batch=${state.batches + 1} processed=${state.total} message=${error.message}`
@@ -290,6 +322,13 @@ class ProductionHarvester extends AbstractHarvester {
             batches: state.batches,
             browserRecycles: state.browserRecycles,
             requestedLimit: Number.isFinite(targetLimit) ? targetLimit : 'ALL',
+            filters: {
+                leagueIds: pendingMatchFilters.leagueIds,
+                season: pendingMatchFilters.season,
+                dateFrom: pendingMatchFilters.dateFrom ? pendingMatchFilters.dateFrom.toISOString() : null,
+                dateTo: pendingMatchFilters.dateTo ? pendingMatchFilters.dateTo.toISOString() : null,
+                finishedOnly: pendingMatchFilters.finishedOnly
+            },
             results: state.results
         };
     }
@@ -465,6 +504,49 @@ class ProductionHarvester extends AbstractHarvester {
     _resolveBrowserRecycleRssBytes(value) {
         const parsed = Number.parseInt(value, 10);
         return Number.isFinite(parsed) && parsed > 0 ? parsed : Math.floor(1.5 * 1024 * 1024 * 1024);
+    }
+
+    _normalizePendingFilters(filters = {}) {
+        return {
+            leagueIds: this._normalizeLeagueIds(filters.leagueIds),
+            season: this._normalizeOptionalString(filters.season),
+            dateFrom: this._normalizeDateFilter(filters.dateFrom, 'dateFrom'),
+            dateTo: this._normalizeDateFilter(filters.dateTo, 'dateTo'),
+            finishedOnly: filters.finishedOnly === true
+        };
+    }
+
+    _normalizeLeagueIds(value) {
+        const rawValues = Array.isArray(value)
+            ? value
+            : String(value || '')
+                .split(',')
+                .map((entry) => entry.trim())
+                .filter(Boolean);
+
+        return [...new Set(
+            rawValues
+                .map((entry) => Number.parseInt(entry, 10))
+                .filter((entry) => Number.isInteger(entry) && entry > 0)
+                .map((entry) => String(entry))
+        )];
+    }
+
+    _normalizeOptionalString(value) {
+        const normalized = String(value || '').trim();
+        return normalized || null;
+    }
+
+    _normalizeDateFilter(value, fieldName) {
+        if (value === undefined || value === null || value === '') {
+            return null;
+        }
+
+        const parsed = value instanceof Date ? value : new Date(value);
+        if (Number.isNaN(parsed.getTime())) {
+            throw new Error(`[ProductionHarvester] ${fieldName} 无法解析: ${value}`);
+        }
+        return parsed;
     }
 
     _getProcessMemoryUsage() {
