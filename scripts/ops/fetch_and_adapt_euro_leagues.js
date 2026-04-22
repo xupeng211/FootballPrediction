@@ -13,8 +13,21 @@ const { Pool } = require('pg');
 const { Normalizer } = require('../../src/utils/Normalizer');
 const { EntityMapper, WARNING_LOW_QUALITY_SOURCE } = require('../../src/infrastructure/etl/EntityMapper');
 const { REPO_ROOT, buildDbConnectionConfig } = require('./helpers/dbBlueprint');
+const {
+    normalizeText,
+    resolveCsvField,
+    toCsvCell,
+    formatCsvLine,
+    parseFootballDataDateTime,
+    extractOddsValues,
+    hasAnyOddsValue,
+    hasCompleteOddsTriplet,
+    resolveLineValue,
+    mapOutcomeColumns,
+    buildExpandedOddsRows,
+} = require('./helpers/euroLeagueAdapters');
 
-const MATCH_REUSE_WINDOW_MS = 2 * 60 * 60 * 1000;
+const MATCH_REUSE_WINDOW_MS = 6 * 60 * 60 * 1000;
 const FOOTBALL_DATA_LEAGUES = {
     E0: 'Premier League',
     SP1: 'La Liga',
@@ -165,24 +178,34 @@ const MARKET_CONFIGS = [
         closeLineValue: '2.5',
     },
 ];
+const TACTICAL_FIELD_ALIASES = {
+    homeCorners: ['HC', 'HomeCorners', 'H_Corners'],
+    awayCorners: ['AC', 'AwayCorners', 'A_Corners'],
+    homeYellowCards: ['HY', 'HomeYellowCards', 'H_YellowCards'],
+    awayYellowCards: ['AY', 'AwayYellowCards', 'A_YellowCards'],
+    homeRedCards: ['HR', 'HomeRedCards', 'H_RedCards'],
+    awayRedCards: ['AR', 'AwayRedCards', 'A_RedCards'],
+    referee: ['Referee', 'RefereeName', 'OfficialsReferee']
+};
 
-function normalizeText(value) {
-    return String(value || '')
-        .replace(/\s+/g, ' ')
-        .trim();
+function resolveRawReferee(match = {}) {
+    return normalizeText(match.raw_referee || '');
 }
 
-function toCsvCell(value) {
-    const normalized = value === null || value === undefined ? '' : String(value);
-    if (!/[",\n]/.test(normalized)) {
-        return normalized;
-    }
+function resolveTacticalValues(row, existingMatch = {}) {
+    const refereeFromCsv = resolveCsvField(row, TACTICAL_FIELD_ALIASES.referee);
+    const refereeFromRaw = resolveRawReferee(existingMatch);
 
-    return `"${normalized.replace(/"/g, '""')}"`;
-}
-
-function formatCsvLine(row) {
-    return `${OUTPUT_HEADERS.map(header => toCsvCell(row[header] ?? '')).join(',')}\n`;
+    return {
+        home_corners: resolveCsvField(row, TACTICAL_FIELD_ALIASES.homeCorners),
+        away_corners: resolveCsvField(row, TACTICAL_FIELD_ALIASES.awayCorners),
+        home_yellow_cards: resolveCsvField(row, TACTICAL_FIELD_ALIASES.homeYellowCards),
+        away_yellow_cards: resolveCsvField(row, TACTICAL_FIELD_ALIASES.awayYellowCards),
+        home_red_cards: resolveCsvField(row, TACTICAL_FIELD_ALIASES.homeRedCards),
+        away_red_cards: resolveCsvField(row, TACTICAL_FIELD_ALIASES.awayRedCards),
+        referee: refereeFromCsv || refereeFromRaw,
+        referee_source: refereeFromCsv ? 'csv' : (refereeFromRaw ? 'fotmob_raw' : 'missing')
+    };
 }
 
 function parseArgs(argv = process.argv.slice(2)) {
@@ -235,32 +258,6 @@ function printUsage() {
     console.log('说明: 默认抓取英超最新可用赛季；传入 --season-code 时只处理指定赛季。');
 }
 
-function parseFootballDataDateTime(dateValue, timeValue) {
-    const dateText = normalizeText(dateValue);
-    if (!dateText) {
-        throw new Error('Date 缺失');
-    }
-
-    const match = dateText.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-    if (!match) {
-        throw new Error(`无法识别的 Date: ${dateValue}`);
-    }
-
-    const day = Number.parseInt(match[1], 10);
-    const month = Number.parseInt(match[2], 10);
-    let year = Number.parseInt(match[3], 10);
-    if (year < 100) {
-        year += 2000;
-    }
-
-    const timeText = normalizeText(timeValue) || '15:00';
-    const timeMatch = timeText.match(/^(\d{1,2}):(\d{2})$/);
-    const hour = timeMatch ? Number.parseInt(timeMatch[1], 10) : 15;
-    const minute = timeMatch ? Number.parseInt(timeMatch[2], 10) : 0;
-
-    return new Date(Date.UTC(year, month - 1, day, hour, minute, 0)).toISOString();
-}
-
 function compareCandidatePriority(left, right) {
     const leftPriority = left.data_source === 'CSV_BULK_LOADER' ? 1 : 0;
     const rightPriority = right.data_source === 'CSV_BULK_LOADER' ? 1 : 0;
@@ -269,90 +266,6 @@ function compareCandidatePriority(left, right) {
     }
 
     return String(left.match_id).localeCompare(String(right.match_id));
-}
-
-function extractOddsValues(row, columns = {}) {
-    return Object.fromEntries(
-        Object.entries(columns).map(([key, columnName]) => [key, normalizeText(row[columnName])])
-    );
-}
-
-function hasAnyOddsValue(oddsValues) {
-    return Object.values(oddsValues).some(value => value !== '');
-}
-
-function hasCompleteOddsTriplet(oddsValues) {
-    return Object.values(oddsValues).every(value => value !== '');
-}
-
-function resolveLineValue(row, config, phase) {
-    if (phase === 'open' && config.openLineValue) {
-        return normalizeText(config.openLineValue);
-    }
-    if (phase === 'close' && config.closeLineValue) {
-        return normalizeText(config.closeLineValue);
-    }
-
-    const columnName = phase === 'open' ? config.openLineColumn : config.closeLineColumn;
-    if (!columnName) {
-        return '';
-    }
-
-    return normalizeText(row[columnName]);
-}
-
-function mapOutcomeColumns(config, values) {
-    if (config.marketType === 'Over/Under') {
-        return {
-            primary: values.over || '',
-            middle: '',
-            secondary: values.under || '',
-        };
-    }
-
-    return {
-        primary: values.home || '',
-        middle: values.draw || '',
-        secondary: values.away || '',
-    };
-}
-
-function buildExpandedOddsRows(row, context, matchCore) {
-    const rows = [];
-
-    for (const config of MARKET_CONFIGS) {
-        const openValues = extractOddsValues(row, config.openColumns);
-        const closeValues = extractOddsValues(row, config.closeColumns);
-        const openLine = resolveLineValue(row, config, 'open');
-        const closeLine = resolveLineValue(row, config, 'close') || openLine;
-        const hasOpenOdds = hasCompleteOddsTriplet(openValues);
-        const hasCloseOdds = hasCompleteOddsTriplet(closeValues);
-
-        if (!hasAnyOddsValue(openValues) && !hasAnyOddsValue(closeValues)) {
-            continue;
-        }
-
-        const openColumns = mapOutcomeColumns(config, openValues);
-        const closeColumns = mapOutcomeColumns(config, closeValues);
-        const qualityFlags = context.mapper.buildSourceQualityFlags({ hasOpenOdds });
-
-        rows.push({
-            ...matchCore,
-            bookmaker_name: config.bookmakerName,
-            market_type: config.marketType,
-            open_line: openLine,
-            open_home: openColumns.primary,
-            open_draw: openColumns.middle,
-            open_away: openColumns.secondary,
-            close_line: closeLine,
-            close_home: closeColumns.primary,
-            close_draw: closeColumns.middle,
-            close_away: closeColumns.secondary,
-            quality_flags: qualityFlags.join(';'),
-        });
-    }
-
-    return rows;
 }
 
 class ExistingMatchResolver {
@@ -378,18 +291,20 @@ class ExistingMatchResolver {
             const result = await client.query(
                 `
         SELECT
-          match_id,
-          external_id,
-          home_team,
-          away_team,
-          match_date,
-          data_source,
-          data_version
-        FROM matches
-        WHERE season = $1
-          AND league_name = $2
-          AND COALESCE(data_source, '') <> 'CSV_BULK_LOADER'
-          AND match_date IS NOT NULL
+          m.match_id,
+          m.external_id,
+          m.home_team,
+          m.away_team,
+          m.match_date,
+          m.data_source,
+          m.data_version,
+          COALESCE(r.raw_data#>>'{content,matchFacts,infoBox,Referee,text}', '') AS raw_referee
+        FROM matches m
+        LEFT JOIN raw_match_data r ON r.match_id = m.match_id
+        WHERE m.season = $1
+          AND m.league_name = $2
+          AND COALESCE(m.data_source, '') <> 'CSV_BULK_LOADER'
+          AND m.match_date IS NOT NULL
       `,
                 [this.season, leagueName]
             );
@@ -446,10 +361,21 @@ function buildMatchId(options = {}) {
     });
 
     if (!existingMatch) {
-        throw new Error(
+        const error = new Error(
             `未找到对应 FotMob 比赛: league=${options.leagueName} season=${Normalizer.normalizeSeason(options.season)} ` +
                 `home=${options.homeTeam} away=${options.awayTeam} match_date=${options.matchDate}`
         );
+        error.code = 'FOTMOB_MATCH_NOT_FOUND';
+        error.details = {
+            leagueName: options.leagueName,
+            season: Normalizer.normalizeSeason(options.season),
+            rawHomeTeam: options.rawHomeTeam || options.homeTeam,
+            rawAwayTeam: options.rawAwayTeam || options.awayTeam,
+            homeTeam: options.homeTeam,
+            awayTeam: options.awayTeam,
+            matchDate: options.matchDate
+        };
+        throw error;
     }
 
     const identity = options.mapper.bindFotMobIdentity(existingMatch);
@@ -459,6 +385,7 @@ function buildMatchId(options = {}) {
         reusedExisting: true,
         matchedSource: existingMatch.data_source || '',
         matchedDate: existingMatch.match_date,
+        existingMatch,
     };
 }
 
@@ -499,11 +426,14 @@ function adaptSourceRow(row, context) {
         leagueName: context.leagueMeta.leagueName,
         season: context.sourceMeta.season,
         matchDate,
+        rawHomeTeam,
+        rawAwayTeam,
         homeTeam,
         awayTeam,
         mapper: context.mapper,
         resolver: context.resolver,
     });
+    const tacticalValues = resolveTacticalValues(row, matchIdResolution.existingMatch);
     const matchCore = {
         match_id: matchIdResolution.matchId,
         external_id: matchIdResolution.externalId,
@@ -515,13 +445,13 @@ function adaptSourceRow(row, context) {
         status: hasFinalScore(row) ? 'finished' : 'scheduled',
         home_score: normalizeText(row.FTHG),
         away_score: normalizeText(row.FTAG),
-        home_corners: normalizeText(row.HC),
-        away_corners: normalizeText(row.AC),
-        home_yellow_cards: normalizeText(row.HY),
-        away_yellow_cards: normalizeText(row.AY),
-        home_red_cards: normalizeText(row.HR),
-        away_red_cards: normalizeText(row.AR),
-        referee: normalizeText(row.Referee),
+        home_corners: tacticalValues.home_corners,
+        away_corners: tacticalValues.away_corners,
+        home_yellow_cards: tacticalValues.home_yellow_cards,
+        away_yellow_cards: tacticalValues.away_yellow_cards,
+        home_red_cards: tacticalValues.home_red_cards,
+        away_red_cards: tacticalValues.away_red_cards,
+        referee: tacticalValues.referee,
     };
     const expandedRows = buildExpandedOddsRows(row, context, matchCore);
     if (expandedRows.length === 0) {
@@ -539,6 +469,12 @@ function adaptSourceRow(row, context) {
             reusedExisting: matchIdResolution.reusedExisting,
             matchedSource: matchIdResolution.matchedSource,
             matchedDate: matchIdResolution.matchedDate,
+            tacticalCoverage: {
+                hasCorners: Boolean(tacticalValues.home_corners && tacticalValues.away_corners),
+                hasYellowCards: Boolean(tacticalValues.home_yellow_cards && tacticalValues.away_yellow_cards),
+                hasRedCards: Boolean(tacticalValues.home_red_cards !== '' && tacticalValues.away_red_cards !== ''),
+                refereeSource: tacticalValues.referee_source
+            }
         },
     };
 }
@@ -620,8 +556,17 @@ class CollectingWriter extends Writable {
             reusedExisting: 0,
             unmatchedRows: 0,
             lowQualityRows: 0,
+            tacticalRows: 0,
+            cornersRows: 0,
+            yellowCardRows: 0,
+            redCardRows: 0,
+            refereeFromCsv: 0,
+            refereeFromFotmob: 0,
+            refereeMissing: 0
         };
         this.sourceQualityFlags = new Set();
+        this.unmatchedPairCounts = new Map();
+        this.unmatchedTeamCounts = new Map();
     }
 
     _write(row, _encoding, callback) {
@@ -639,13 +584,61 @@ class CollectingWriter extends Writable {
             if (adapted.diagnostics.qualityFlags.length > 0) {
                 this.stats.lowQualityRows += 1;
             }
+            this.stats.tacticalRows += 1;
+            if (adapted.diagnostics.tacticalCoverage.hasCorners) {
+                this.stats.cornersRows += 1;
+            }
+            if (adapted.diagnostics.tacticalCoverage.hasYellowCards) {
+                this.stats.yellowCardRows += 1;
+            }
+            if (adapted.diagnostics.tacticalCoverage.hasRedCards) {
+                this.stats.redCardRows += 1;
+            }
+            if (adapted.diagnostics.tacticalCoverage.refereeSource === 'csv') {
+                this.stats.refereeFromCsv += 1;
+            } else if (adapted.diagnostics.tacticalCoverage.refereeSource === 'fotmob_raw') {
+                this.stats.refereeFromFotmob += 1;
+            } else {
+                this.stats.refereeMissing += 1;
+            }
             adapted.diagnostics.qualityFlags.forEach(flag => this.sourceQualityFlags.add(flag));
             callback();
         } catch (error) {
             this.skipped += 1;
             this.stats.unmatchedRows += 1;
             this.errors.push(error.message);
+            this._recordUnmatchedTeams(error);
             callback();
+        }
+    }
+
+    _recordUnmatchedTeams(error) {
+        if (error?.code !== 'FOTMOB_MATCH_NOT_FOUND' || !error.details) {
+            return;
+        }
+
+        const {
+            rawHomeTeam,
+            rawAwayTeam,
+            homeTeam,
+            awayTeam
+        } = error.details;
+        const pairKey = `${rawHomeTeam} vs ${rawAwayTeam}`;
+        this.unmatchedPairCounts.set(pairKey, (this.unmatchedPairCounts.get(pairKey) || 0) + 1);
+
+        const teamPairs = [
+            [rawHomeTeam, homeTeam],
+            [rawAwayTeam, awayTeam]
+        ];
+
+        for (const [rawName, normalizedName] of teamPairs) {
+            if (!rawName) {
+                continue;
+            }
+            const teamKey = rawName === normalizedName
+                ? rawName
+                : `${rawName} => ${normalizedName}`;
+            this.unmatchedTeamCounts.set(teamKey, (this.unmatchedTeamCounts.get(teamKey) || 0) + 1);
         }
     }
 }
@@ -660,6 +653,10 @@ async function parseAndAdaptCsv(sourceMeta, options = {}) {
         errors: collector.errors,
         stats: collector.stats,
         sourceQualityFlags: [...collector.sourceQualityFlags],
+        unmatchedPairCounts: [...collector.unmatchedPairCounts.entries()]
+            .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])),
+        unmatchedTeamCounts: [...collector.unmatchedTeamCounts.entries()]
+            .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
     };
 }
 
@@ -720,6 +717,12 @@ async function main() {
                 `rows=${adapted.rows.length} skipped=${adapted.skipped} ` +
                 `reused_existing=${adapted.stats.reusedExisting} unmatched_rows=${adapted.stats.unmatchedRows}`
         );
+        console.log(
+            `[FETCH-EURO] 战术覆盖 corners=${adapted.stats.cornersRows}/${adapted.stats.tacticalRows} ` +
+                `yellow_cards=${adapted.stats.yellowCardRows}/${adapted.stats.tacticalRows} ` +
+                `red_cards=${adapted.stats.redCardRows}/${adapted.stats.tacticalRows} ` +
+                `referee(csv=${adapted.stats.refereeFromCsv},fotmob=${adapted.stats.refereeFromFotmob},missing=${adapted.stats.refereeMissing})`
+        );
 
         if (adapted.sourceQualityFlags.includes(WARNING_LOW_QUALITY_SOURCE)) {
             console.log(
@@ -736,6 +739,12 @@ async function main() {
         }
         if (adapted.errors.length > 0) {
             console.log(`[FETCH-EURO] 跳过样本原因: ${adapted.errors.slice(0, 3).join(' | ')}`);
+        }
+        if (adapted.unmatchedTeamCounts.length > 0) {
+            console.log(`[FETCH-EURO] 未匹配球队名审计: ${adapted.unmatchedTeamCounts.slice(0, 12).map(([name, count]) => `${name} x${count}`).join(' | ')}`);
+        }
+        if (adapted.unmatchedPairCounts.length > 0) {
+            console.log(`[FETCH-EURO] 未匹配对阵审计: ${adapted.unmatchedPairCounts.slice(0, 8).map(([name, count]) => `${name} x${count}`).join(' | ')}`);
         }
     } finally {
         await resolver.close();
@@ -759,5 +768,8 @@ module.exports = {
     buildMatchId,
     parseArgs,
     parseFootballDataDateTime,
+    resolveCsvField,
     resolveLeagueMeta,
+    resolveRawReferee,
+    resolveTacticalValues,
 };

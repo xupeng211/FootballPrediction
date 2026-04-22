@@ -180,7 +180,7 @@ describe('ProductionHarvester - Bulk Flow', () => {
     assert.ok(capturedSql.includes('LEFT JOIN raw_match_data r ON m.match_id = r.match_id'));
     assert.ok(capturedSql.includes('COALESCE(m.pipeline_status, \'pending\') = \'pending\''));
     assert.ok(capturedSql.includes('r.match_id IS NULL'));
-    assert.ok(capturedSql.includes('ORDER BY m.match_id ASC'));
+    assert.ok(capturedSql.includes('ORDER BY m.match_date ASC NULLS LAST, m.match_id ASC'));
     assert.deepStrictEqual(capturedParams, [25]);
   });
 

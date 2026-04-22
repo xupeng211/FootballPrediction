@@ -218,6 +218,16 @@ function resolveFileMatchId(filePath) {
   return String(path.basename(filePath, '.json').split('_').pop() || '').trim();
 }
 
+function resolveFileSeason(filePath) {
+  const parts = String(path.basename(filePath, '.json') || '').split('_');
+  const seasonTag = String(parts[1] || '').trim();
+  if (!/^\d{8}$/.test(seasonTag)) {
+    return null;
+  }
+
+  return `${seasonTag.slice(0, 4)}/${seasonTag.slice(4, 8)}`;
+}
+
 function assertCandidateField(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -231,6 +241,7 @@ function extractCandidate(filePath) {
   const header = rawData.header || {};
   const matchId = resolveMatchId(rawData);
   const fileMatchId = resolveFileMatchId(filePath);
+  const fileSeason = resolveFileSeason(filePath);
   const leagueId = resolveLeagueId(rawData);
   const round = resolveRound(rawData);
   const matchDateRaw = resolveMatchDate(rawData);
@@ -253,6 +264,7 @@ function extractCandidate(filePath) {
     filePath,
     fileName: path.basename(filePath),
     fileMatchId,
+    fileSeason,
     fileNameMatchesMatchId: Boolean(fileMatchId) && fileMatchId === matchId,
     contentLength,
     matchId,
@@ -386,18 +398,33 @@ function filterCandidates(candidates = [], options = {}) {
   const sorted = [...candidates]
     .sort((left, right) => left.matchDate - right.matchDate || left.matchId.localeCompare(right.matchId));
 
+  const seasonFiltered = sorted.filter((candidate) => {
+    if (!options.season || !candidate.fileSeason) {
+      return true;
+    }
+    return String(candidate.fileSeason) === String(options.season);
+  });
+
   if (options.allCandidates) {
-    return sorted.slice(0, options.limit || Number.MAX_SAFE_INTEGER);
+    return seasonFiltered.slice(0, options.limit || Number.MAX_SAFE_INTEGER);
   }
 
   const dateFrom = toDate(options.dateFrom, 'dateFrom');
   const dateTo = toDate(options.dateTo, 'dateTo');
 
-  return sorted
+  return seasonFiltered
     .filter((candidate) => candidate.leagueId === options.leagueId)
     .filter((candidate) => String(candidate.round) === String(options.round))
     .filter((candidate) => candidate.matchDate >= dateFrom && candidate.matchDate < dateTo)
     .slice(0, options.limit || Number.MAX_SAFE_INTEGER);
+}
+
+function chunkValues(values = [], size = 500) {
+  const chunks = [];
+  for (let index = 0; index < values.length; index += size) {
+    chunks.push(values.slice(index, index + size));
+  }
+  return chunks;
 }
 
 function loadCandidates(options = {}) {
@@ -430,6 +457,74 @@ function loadCandidates(options = {}) {
       excludedByLeagueId: leagueFiltered.excludedByLeagueId,
       filteredCandidates: leagueFiltered.candidates.length,
       ...dedupeResult.stats
+    }
+  };
+}
+
+async function resolveExistingMatchIdentities(client, rows = [], options = {}) {
+  const externalIds = [...new Set(rows
+    .map((row) => String(row?.externalId || '').trim())
+    .filter(Boolean))];
+
+  if (externalIds.length === 0) {
+    return {
+      rows,
+      stats: {
+        matchedExistingRows: 0,
+        reusedExistingIdentities: 0,
+        newSeedIdentities: rows.length
+      }
+    };
+  }
+
+  const existingByExternalId = new Map();
+  for (const chunk of chunkValues(externalIds, 500)) {
+    const result = await client.query(
+      `
+        SELECT external_id, match_id
+        FROM matches
+        WHERE season = $1
+          AND external_id = ANY($2::text[])
+        ORDER BY updated_at DESC NULLS LAST, created_at DESC NULLS LAST, match_id
+      `,
+      [options.season, chunk]
+    );
+
+    for (const record of result.rows) {
+      const externalId = String(record?.external_id || '').trim();
+      const matchId = String(record?.match_id || '').trim();
+      if (!externalId || !matchId || existingByExternalId.has(externalId)) {
+        continue;
+      }
+      existingByExternalId.set(externalId, matchId);
+    }
+  }
+
+  let matchedExistingRows = 0;
+  let reusedExistingIdentities = 0;
+  const resolvedRows = rows.map((row) => {
+    const existingMatchId = existingByExternalId.get(String(row.externalId || '').trim());
+    if (!existingMatchId) {
+      return row;
+    }
+
+    matchedExistingRows += 1;
+    if (existingMatchId !== row.matchId) {
+      reusedExistingIdentities += 1;
+    }
+
+    return {
+      ...row,
+      matchId: existingMatchId
+    };
+  });
+
+  return {
+    rows: resolvedRows,
+    stats: {
+      matchedExistingRows,
+      reusedExistingIdentities,
+      newSeedIdentities: rows.length - matchedExistingRows
     }
   };
 }
@@ -539,15 +634,20 @@ async function seedFotMobSample(options = {}) {
   const client = await pool.connect();
 
   try {
+    const identityResolution = await resolveExistingMatchIdentities(client, selected, options);
+    const resolvedSelected = identityResolution.rows;
     await client.query('BEGIN');
-    await upsertMatches(client, selected, options);
-    await upsertRawMatchData(client, selected);
+    await upsertMatches(client, resolvedSelected, options);
+    await upsertRawMatchData(client, resolvedSelected);
     await client.query('COMMIT');
 
     return {
       committed: true,
-      selected,
-      stats,
+      selected: resolvedSelected,
+      stats: {
+        ...stats,
+        ...identityResolution.stats
+      },
       errors,
       message: 'commit'
     };
@@ -597,6 +697,9 @@ async function main() {
       + `filtered_candidates=${result.stats.filteredCandidates} excluded_by_league_id=${result.stats.excludedByLeagueId} `
       + `unique_match_ids=${result.stats.uniqueMatchIds} filename_mismatches=${result.stats.filenameMismatches} `
       + `duplicate_match_ids=${result.stats.duplicateMatchIds} duplicate_candidates=${result.stats.duplicateCandidates} `
+      + `matched_existing_rows=${result.stats.matchedExistingRows || 0} `
+      + `reused_existing_identities=${result.stats.reusedExistingIdentities || 0} `
+      + `new_seed_identities=${result.stats.newSeedIdentities || 0} `
       + `selected=${result.selected.length} `
       + `selection=${formatSelection(result.selected)} `
       + `parse_errors=${result.errors.length} message=${result.message}`
@@ -623,6 +726,8 @@ module.exports = {
   listJsonFiles,
   loadCandidates,
   parseArgs,
+  resolveExistingMatchIdentities,
   resolveFileMatchId,
+  resolveFileSeason,
   seedFotMobSample
 };

@@ -8,7 +8,10 @@ const assert = require('node:assert/strict');
 
 const {
   extractCandidate,
-  loadCandidates
+  filterCandidates,
+  loadCandidates,
+  resolveFileSeason,
+  resolveExistingMatchIdentities
 } = require('../../scripts/ops/seed_fotmob_sample');
 
 function createFotMobSample(matchId, overrides = {}) {
@@ -63,6 +66,7 @@ test('extractCandidate 应强制使用 JSON 内部的 general.matchId', () => {
     assert.equal(candidate.matchId, '1234567');
     assert.equal(candidate.externalId, '1234567');
     assert.equal(candidate.fileMatchId, '9999999');
+    assert.equal(candidate.fileSeason, '2025/2026');
     assert.equal(candidate.fileNameMatchesMatchId, false);
     assert.equal(candidate.leagueName, 'Premier League');
   } finally {
@@ -131,4 +135,72 @@ test('loadCandidates 应支持递归扫描、联赛过滤并按 internal matchId
   } finally {
     fs.rmSync(tempDir, { recursive: true, force: true });
   }
+});
+
+test('resolveFileSeason 应从文件名解析赛季标记', () => {
+  assert.equal(resolveFileSeason('/tmp/47_20252026_1234567.json'), '2025/2026');
+  assert.equal(resolveFileSeason('/tmp/1234567.json'), null);
+});
+
+test('filterCandidates 在 allCandidates 模式下仍应按 season 过滤', () => {
+  const selected = filterCandidates([
+    {
+      matchId: '1234567',
+      fileSeason: '2025/2026',
+      leagueId: 47,
+      round: '1',
+      matchDate: new Date('2025-08-16T14:00:00.000Z')
+    },
+    {
+      matchId: '2345678',
+      fileSeason: '2024/2025',
+      leagueId: 47,
+      round: '1',
+      matchDate: new Date('2025-08-17T14:00:00.000Z')
+    }
+  ], {
+    allCandidates: true,
+    season: '2025/2026'
+  });
+
+  assert.deepEqual(selected.map((row) => row.matchId), ['1234567']);
+});
+
+test('resolveExistingMatchIdentities 应优先复用同赛季 external_id 的既有 match_id', async () => {
+  const rows = [
+    {
+      matchId: '1234567',
+      externalId: '1234567',
+      homeTeam: 'Barcelona',
+      awayTeam: 'Real Madrid'
+    },
+    {
+      matchId: '7654321',
+      externalId: '7654321',
+      homeTeam: 'Arsenal',
+      awayTeam: 'Chelsea'
+    }
+  ];
+
+  const client = {
+    async query(sql, params) {
+      assert.match(sql, /SELECT external_id, match_id/);
+      assert.deepEqual(params, ['2025/2026', ['1234567', '7654321']]);
+      return {
+        rows: [
+          { external_id: '1234567', match_id: '87_20252026_1234567' },
+          { external_id: '7654321', match_id: '7654321' }
+        ]
+      };
+    }
+  };
+
+  const result = await resolveExistingMatchIdentities(client, rows, { season: '2025/2026' });
+
+  assert.equal(result.stats.matchedExistingRows, 2);
+  assert.equal(result.stats.reusedExistingIdentities, 1);
+  assert.equal(result.stats.newSeedIdentities, 0);
+  assert.equal(result.rows[0].matchId, '87_20252026_1234567');
+  assert.equal(result.rows[0].externalId, '1234567');
+  assert.equal(result.rows[1].matchId, '7654321');
 });

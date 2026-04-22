@@ -33,3 +33,12 @@ test('normalizeLeagueName 应识别 LaLiga 别名', () => {
 
   assert.equal(mapper.normalizeLeagueName('LaLiga'), 'La Liga');
 });
+
+test('normalizeTeamName 应识别五大联赛常见别名', () => {
+  const mapper = new EntityMapper();
+
+  assert.equal(mapper.normalizeTeamName('Vallecano'), 'Rayo Vallecano');
+  assert.equal(mapper.normalizeTeamName('Ein Frankfurt'), 'Eintracht Frankfurt');
+  assert.equal(mapper.normalizeTeamName('Verona'), 'Hellas Verona');
+  assert.equal(mapper.normalizeTeamName('Paris SG'), 'Paris Saint Germain');
+});
