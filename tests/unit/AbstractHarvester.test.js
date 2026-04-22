@@ -792,8 +792,8 @@ describe('AbstractHarvester 完整测试套件', () => {
                 if (path.includes('browser_state.json')) {
                     return JSON.stringify({
                         cookies: [
-                            { name: 'test1', value: 'value1', expires: Date.now() / 1000 + 3600 },
-                            { name: 'test2', value: 'value2', expires: Date.now() / 1000 + 3600 }
+                            { name: 'test1', value: 'value1', domain: '.fotmob.com', path: '/', expires: Date.now() / 1000 + 3600 },
+                            { name: 'test2', value: 'value2', domain: '.fotmob.com', path: '/', expires: Date.now() / 1000 + 3600 }
                         ]
                     });
                 }
@@ -829,8 +829,8 @@ describe('AbstractHarvester 完整测试套件', () => {
                 if (path.includes('browser_state.json')) {
                     return JSON.stringify({
                         cookies: [
-                            { name: 'expired', value: 'value', expires: Date.now() / 1000 - 3600 },  // 已过期
-                            { name: 'valid', value: 'value', expires: Date.now() / 1000 + 3600 }   // 有效
+                            { name: 'expired', value: 'value', domain: '.fotmob.com', path: '/', expires: Date.now() / 1000 - 3600 },  // 已过期
+                            { name: 'valid', value: 'value', domain: '.fotmob.com', path: '/', expires: Date.now() / 1000 + 3600 }   // 有效
                         ]
                     });
                 }
