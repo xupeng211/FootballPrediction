@@ -129,7 +129,23 @@ class EntityMapper {
       'Nott M Forest': 'Nottingham Forest',
       'Nottm Forest': 'Nottingham Forest',
       Spurs: 'Tottenham Hotspur',
-      'Burgos': 'Burgos CF'
+      'Burgos': 'Burgos CF',
+      Vallecano: 'Rayo Vallecano',
+      Oviedo: 'Real Oviedo',
+      Alaves: 'Deportivo Alaves',
+      'Ath Madrid': 'Atletico Madrid',
+      Betis: 'Real Betis',
+      Celta: 'Celta Vigo',
+      Espanol: 'Espanyol',
+      Sociedad: 'Real Sociedad',
+      'Ein Frankfurt': 'Eintracht Frankfurt',
+      'FC Koln': '1 Fc Koln',
+      Heidenheim: 'Fc Heidenheim',
+      Leverkusen: 'Bayer Leverkusen',
+      "M'gladbach": 'Borussia Monchengladbach',
+      Mainz: 'Mainz 05',
+      Verona: 'Hellas Verona',
+      'Paris SG': 'Paris Saint Germain'
     };
 
     for (const [rawValue, canonicalValue] of Object.entries({ ...defaults, ...extraAliases })) {

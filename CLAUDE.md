@@ -2,9 +2,9 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-**系统版本**: V4.47.0-BATTLE | **最后更新**: 2026-03-11
+**系统版本**: V4.51.2-TOTAL-WAR | **最后更新**: 2026-04-22
 
-> 📋 **环境配置**: 复制 `.env.example` 到 `.env` 并填写 `DB_PASSWORD`。
+> 📋 **环境配置**: 复制 `config/.env.example` 到 `config/.env` 并填写 `DB_PASSWORD`。
 
 ---
 
@@ -49,38 +49,26 @@ node scripts/ops/run_production.js
 
 ---
 
-## V4.46 架构规范
+## 架构规范
 
-### 统一标准
+### 核心原则
 
-- **配置唯一源**: `src/config/__init__.py`
-- **数学能力**: `src/core/math/` (finance, evaluator)
-- **动态能力**: `src/core/` (Math, Database, Types)
-- **预测大脑**: `src/ml/`
-- **基础设施**: `src/infrastructure/`
-- **唯一数据**: `src/database/`
-- **唯一指环部**: `src/config/`
-
----
-
-## V4.42 契约统一
-
-### 政策统一
-
-- **MatchStatus 唯一源头**: `src/constants/shared_constants.py`
-- **禁止**在任何其他模块新建 MatchStatus 定义
-- 所有模块都必须从 `shared_constants` 导入
-
-### 契约统一
-
+- **配置唯一源**: `config/factory_config.js` (Node.js) 和 `src/config/__init__.py` (Python)
 - **数据库模型**: `src/database/models.py` 是唯一真理
-- **Pydantic Schema**: `src/schemas/match_features.py` 必须与数据库模型对齐
 - **字段命名**: 全部使用下划线命名
+- **MatchStatus 唯一源头**: `src/constants/shared_constants.py`
+- **服务加载**: `dependency_injection.py` 是唯一服务加载方式
 
-### 服务加载标准
+### 目录职责
 
-- **唯一标准**: `dependency_injection.py` 是唯一服务加载方式
-- **向后兼容**: 使用 `MatchDataService` 替代原有 `MatchAligner` + `MatchLinker`
+- `src/infrastructure/` - 基础设施层 (收割器、网络、浏览器)
+- `src/ml/` - 机器学习 (推理、训练、特征)
+- `src/core/` - 核心能力 (IPC、进程管理、浏览器管理)
+- `src/parsers/` - 数据解析器 (FotMob、NextData)
+- `src/feature_engine/` - Node.js 特征引擎
+- `config/` - 配置中心
+- `scripts/ops/` - 运维脚本
+- `scripts/maintenance/` - 维护工具
 
 ---
 
@@ -193,8 +181,10 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 | `npm run seed` | L1 赛程种子数据 |
 | `npm run seed:all` | 全量赛程种子 |
 | `npm run smelt` | L3 特征熔炼 |
-| `npm run harvest` | 超频收割 (`hyper_swarm.js`) |
-| `npm run harvest:swarm` | 蜂群收割 (`swarm_test.js`) |
+| `npm run etl:local-dom` | 本地 DOM 数据摄取 |
+| `npm run etl:csv-bulk` | CSV 批量加载器 |
+| `npm run etl:fetch-epl` | 获取英超数据 (E0) |
+| `npm run etl:fetch-euro` | 获取欧洲五大联赛数据 |
 | `npm run harvest:production` | 生产收割器 |
 
 ### ML 训练与预测
@@ -212,8 +202,11 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 
 | 命令 | 描述 |
 |------|------|
-| `npm run metrics` | 启动指标服务 (端口 8000) |
-| `npm run monitor:up` | 启动监控栈 (Prometheus + Grafana) |
+| `npm run titan:total-war` | TOTAL-WAR 全流水线 |
+| `npm run titan:check` | 健康检查 |
+| `npm run titan:start` | 启动 TITAN 收割 (12 Workers) |
+| `npm run titan:audit` | 数据集审计 |
+| `npm run titan:watch` | 哨兵监控 |
 | `npm run monitor:down` | 停止监控栈 |
 | `npm run status` | 数据完整性检查 |
 | `npm run status:db` | 数据库层级统计 |
@@ -234,16 +227,21 @@ make clean-all           # 完全清理 (包括临时文件和日志)
 |------|------|
 | `npm test` | 运行所有 Node.js 单元测试 |
 | `npm run test:unit` | 单元测试 |
+| `npm run test:affected` | 受影响的测试 |
 | `npm run test:l1` | L1 赛程测试 |
 | `npm run test:integration` | 集成测试 |
 | `npm run test:coverage` | 带覆盖率测试 |
+| `npm run test:coverage:recon-core` | Recon 核心覆盖率 |
+| `npm run test:coverage:python` | Python 覆盖率 |
 | `npm run lint` | ESLint 检查 |
 | `npm run lint:fix` | ESLint 自动修复 |
 | `npm run lint:python` | Ruff Python 检查 |
+| `npm run lint:md` | Markdown 检查 |
 | `npm run format` | Prettier 格式化 |
 | `npm run format:check` | 格式化检查 |
 | `npm run format:python` | Ruff 格式化 |
-| `npm run qa` | 全量检查 (lint + test:unit) |
+| `npm run qa` | 全量检查 (gatekeeper push 模式) |
+| `npm run gatekeeper` | 质量门禁检查 |
 
 ## Makefile 命令
 
@@ -797,7 +795,7 @@ docker stats football_prediction_dev
 
 ---
 
-**更新日期**: 2026-03-11
+**更新日期**: 2026-04-22
 
 ---
 

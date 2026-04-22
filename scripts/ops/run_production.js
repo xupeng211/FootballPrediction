@@ -49,11 +49,29 @@ function normalizeBulkConcurrency(requested) {
     return Math.min(15, Math.max(8, fallback));
 }
 
+function getFlagValue(argv, flagName) {
+    const index = argv.indexOf(flagName);
+    if (index === -1 || !argv[index + 1]) {
+        return null;
+    }
+
+    return argv[index + 1];
+}
+
+function parseLeagueIds(rawValue) {
+    return String(rawValue || '')
+        .split(',')
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .map((value) => parseInt(value, 10))
+        .filter((value) => Number.isInteger(value) && value > 0);
+}
+
 function parseCliArgs(argv = process.argv.slice(2)) {
     let limit = null;
-    const limitIdx = argv.indexOf('--limit');
-    if (limitIdx !== -1 && argv[limitIdx + 1]) {
-        limit = parseInt(argv[limitIdx + 1], 10) || null;
+    const rawLimit = getFlagValue(argv, '--limit');
+    if (rawLimit) {
+        limit = parseInt(rawLimit, 10) || null;
     }
 
     let workers = parseInt(process.env.MAX_WORKERS, 10) || 10;
@@ -64,24 +82,27 @@ function parseCliArgs(argv = process.argv.slice(2)) {
         workers = parseInt(rawConcurrency, 10) || workers;
     }
 
-    let sessionPath = null;
-    const sessionIdx = argv.indexOf('--session-path');
-    if (sessionIdx !== -1 && argv[sessionIdx + 1]) {
-        sessionPath = argv[sessionIdx + 1];
-    }
+    const sessionPath = getFlagValue(argv, '--session-path');
 
     let progressEvery = parseInt(process.env.BULK_PROGRESS_EVERY, 10) || 100;
-    const progressIdx = argv.indexOf('--progress-every');
-    if (progressIdx !== -1 && argv[progressIdx + 1]) {
-        progressEvery = parseInt(argv[progressIdx + 1], 10) || progressEvery;
+    const rawProgressEvery = getFlagValue(argv, '--progress-every');
+    if (rawProgressEvery) {
+        progressEvery = parseInt(rawProgressEvery, 10) || progressEvery;
     }
+
+    const leagueIds = parseLeagueIds(getFlagValue(argv, '--league-ids'));
 
     return {
         limit,
         concurrency: normalizeBulkConcurrency(workers),
         dryRun: argv.includes('--dry-run'),
         sessionPath,
-        progressEvery
+        progressEvery,
+        leagueIds,
+        season: getFlagValue(argv, '--season'),
+        dateFrom: getFlagValue(argv, '--date-from'),
+        dateTo: getFlagValue(argv, '--date-to'),
+        finishedOnly: argv.includes('--finished-only')
     };
 }
 
@@ -103,14 +124,25 @@ async function main(argv = process.argv.slice(2), dependencies = {}) {
         bulkProgressEvery: options.progressEvery
     });
 
-    console.log(`🔧 [CONFIG] Concurrency: ${options.concurrency} | Limit: ${options.limit || 'ALL'} | ProgressEvery: ${options.progressEvery} | DryRun: ${options.dryRun} | Session: ${options.sessionPath || '默认'}`);
+    console.log(
+        `🔧 [CONFIG] Concurrency: ${options.concurrency} | Limit: ${options.limit || 'ALL'} | ` +
+        `ProgressEvery: ${options.progressEvery} | DryRun: ${options.dryRun} | Session: ${options.sessionPath || '默认'} | ` +
+        `LeagueIds: ${options.leagueIds.length > 0 ? options.leagueIds.join(',') : 'ALL'} | ` +
+        `Season: ${options.season || 'ALL'} | DateFrom: ${options.dateFrom || 'NONE'} | DateTo: ${options.dateTo || 'NONE'} | ` +
+        `FinishedOnly: ${options.finishedOnly}`
+    );
 
     try {
         await harvester.init();
         const result = await harvester.run({
             limit: options.limit,
             concurrency: options.concurrency,
-            progressEvery: options.progressEvery
+            progressEvery: options.progressEvery,
+            leagueIds: options.leagueIds,
+            season: options.season,
+            dateFrom: options.dateFrom,
+            dateTo: options.dateTo,
+            finishedOnly: options.finishedOnly
         });
         console.log(`📦 [SUMMARY] 批量收割完成: total=${result.total} success=${result.success} failed=${result.failed} concurrency=${result.concurrency}`);
         
@@ -143,6 +175,8 @@ if (require.main === module) {
 module.exports = {
     main,
     parseCliArgs,
+    parseLeagueIds,
+    getFlagValue,
     normalizeBulkConcurrency,
     executeZombieKiller
 };
