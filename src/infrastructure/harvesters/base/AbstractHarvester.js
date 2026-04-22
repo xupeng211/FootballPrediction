@@ -64,6 +64,16 @@ class AbstractHarvester {
             verboseLogging: process.env.VERBOSE_LOGGING === 'true' || config.verboseLogging || false,
             shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS) || config.shutdownTimeoutMs || 30000,
             harvestTimeoutMs: parseInt(process.env.HARVEST_TIMEOUT_MS) || config.harvestTimeoutMs || 120000,
+            navigationWaitUntil: process.env.HARVEST_NAVIGATION_WAIT_UNTIL || config.navigationWaitUntil || 'domcontentloaded',
+            navigationTimeoutMs: parseInt(process.env.HARVEST_NAVIGATION_TIMEOUT_MS, 10)
+                || config.navigationTimeoutMs
+                || 60000,
+            postNavigationWaitMs: parseInt(process.env.HARVEST_POST_NAVIGATION_WAIT_MS, 10)
+                || config.postNavigationWaitMs
+                || 2500,
+            retryPostNavigationWaitMs: parseInt(process.env.HARVEST_POST_NAVIGATION_WAIT_MS_RETRY, 10)
+                || config.retryPostNavigationWaitMs
+                || 1500,
             skipZombieCleanup: config.skipZombieCleanup || false,
             ...config,
         };
@@ -180,9 +190,16 @@ class AbstractHarvester {
             maxWorkers: this.config.maxWorkers,
             stealthGenerator: generateStealthHeaders,
         });
-        await this.networkManager.initialize({
+        const networkInitResult = await this.networkManager.initialize({
             preFlightCleanup: () => this._preFlightCleanupNetworkLocks(),
         });
+
+        // Titan 7.0: 弹性并发引擎 - 根据雷达探测到的代理数量动态调整并发数
+        if (networkInitResult?.discoveredPorts && networkInitResult.discoveredPorts.length > 0) {
+            const elasticConcurrency = networkInitResult.discoveredPorts.length;
+            console.log(`⚡ Titan 7.0 弹性并发引擎: 雷达探测到 ${elasticConcurrency} 个代理节点，自动调整并发数`);
+            this.config.maxWorkers = elasticConcurrency;
+        }
 
         // 初始化 WorkerPool
         this.workerPool = getWorkerPool({
@@ -404,14 +421,29 @@ class AbstractHarvester {
             }
 
             const targetUrl = this.getTargetUrl(match);
+
             await page.goto(targetUrl, {
-                waitUntil: 'domcontentloaded',
-                timeout: 60000,
+                waitUntil: this.config.navigationWaitUntil,
+                timeout: this.config.navigationTimeoutMs,
             });
+
+            // TITAN 7.0: 防御性检查 - 确保页面未关闭
+            if (page.isClosed()) {
+                throw new Error('RETRYABLE_RESOURCE_ERROR: Page closed after navigation');
+            }
 
             await this.browserFactory.quickMouseMove(page, 3, 5);
 
-            await page.waitForTimeout(isRetry ? 2000 : 3000);
+            await page.waitForTimeout(
+                isRetry
+                    ? this.config.retryPostNavigationWaitMs
+                    : this.config.postNavigationWaitMs
+            );
+
+            // TITAN 7.0: 防御性检查 - 确保页面未关闭
+            if (page.isClosed()) {
+                throw new Error('RETRYABLE_RESOURCE_ERROR: Page closed before extractData');
+            }
 
             const capturedData = await this.extractData(page, match);
 

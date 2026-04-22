@@ -17,6 +17,45 @@ const { getPathResolver } = require('../utils/PathResolver');
 const { logger } = require('../utils/Logger');
 const { mergeContextExtraHTTPHeaders } = require('../shared/helpers/browserHeaderUtils');
 
+const DEFAULT_BLOCKED_RESOURCE_TYPES = ['image', 'stylesheet', 'font', 'media'];
+
+function resolveBooleanFlag(explicitValue, envValue, defaultValue) {
+    if (typeof explicitValue === 'boolean') {
+        return explicitValue;
+    }
+
+    if (typeof envValue === 'string' && envValue.trim() !== '') {
+        return envValue.trim().toLowerCase() !== 'false';
+    }
+
+    return defaultValue;
+}
+
+function parseBlockedResourceTypes(value) {
+    if (Array.isArray(value) && value.length > 0) {
+        return new Set(value.map(type => String(type).trim()).filter(Boolean));
+    }
+
+    if (typeof value === 'string' && value.trim() !== '') {
+        return new Set(
+            value
+                .split(',')
+                .map(type => type.trim())
+                .filter(Boolean)
+        );
+    }
+
+    return new Set(DEFAULT_BLOCKED_RESOURCE_TYPES);
+}
+
+function normalizeProxyProtocol(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (normalized === 'socks5h') {
+        return 'socks5';
+    }
+    return normalized || 'socks5';
+}
+
 // ============================================================================
 // BrowserFactory - 浏览器工厂类
 // ============================================================================
@@ -38,8 +77,22 @@ class BrowserFactory {
             disableHomepageWarmup: true,
             ...config
         };
+        this.config.blockResources = resolveBooleanFlag(
+            this.config.blockResources,
+            process.env.PLAYWRIGHT_BLOCK_RESOURCES,
+            true
+        );
+        this.config.enableRemoteDnsHardening = resolveBooleanFlag(
+            this.config.enableRemoteDnsHardening,
+            process.env.PLAYWRIGHT_REMOTE_DNS_HARDENING,
+            true
+        );
+        this.config.blockedResourceTypes = parseBlockedResourceTypes(
+            this.config.blockedResourceTypes || process.env.PLAYWRIGHT_BLOCK_RESOURCE_TYPES
+        );
 
         this.browser = null;
+        this.contextSlimmingStats = new WeakMap();
     }
 
     // ========================================================================
@@ -57,15 +110,27 @@ class BrowserFactory {
 
         console.log('🚀 [BrowserFactory] 启动浏览器...');
 
+        const launchArgs = [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-blink-features=AutomationControlled',
+            '--disable-gpu',
+            '--disable-background-networking',
+            '--disable-component-update',
+            '--disable-default-apps',
+            '--disable-extensions',
+            '--disable-sync',
+            '--mute-audio',
+            '--no-default-browser-check',
+            '--no-first-run'
+        ];
+        // Chromium 对 SOCKSv5 已采用代理端解析域名；额外的 host-resolver-rules
+        // 会在 Docker Desktop 网络栈中直接导致 ERR_PROXY_CONNECTION_FAILED。
+
         this.browser = await chromium.launch({
             headless: this.config.headless,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-blink-features=AutomationControlled',
-                '--disable-gpu'
-            ]
+            args: launchArgs
         });
 
         console.log('✅ [BrowserFactory] 浏览器已启动');
@@ -112,32 +177,56 @@ class BrowserFactory {
             throw new Error('浏览器未启动，请先调用 launch()');
         }
 
-        const proxyConfig = disableProxy || process.env.DISABLE_PROXY === 'true'
-            ? undefined
-            : { server: identity.proxy.url };
+        const proxyConfig = this._buildContextProxyConfig(identity, disableProxy);
+        const contextOptions = this._buildContextOptions(identity, proxyConfig);
+        const context = await this.browser.newContext(contextOptions);
 
+        await this._enableResourceSlimming(context);
+
+        return context;
+    }
+
+    _buildContextProxyConfig(identity, disableProxy) {
+        if (disableProxy || process.env.DISABLE_PROXY === 'true') {
+            return undefined;
+        }
+
+        const proxyProtocol = normalizeProxyProtocol(process.env.PROXY_PROTOCOL || 'socks5');
+        const proxyUrl = identity.proxy.url.startsWith('socks5') || identity.proxy.url.startsWith('http')
+            ? identity.proxy.url.replace(/^socks5h:\/\//i, 'socks5://')
+            : `${proxyProtocol}://${identity.proxy.host}:${identity.proxy.port}`;
+
+        return { server: proxyUrl };
+    }
+
+    _buildContextOptions(identity, proxyConfig) {
         const extraHTTPHeaders = mergeContextExtraHTTPHeaders({
             extraHeaders: identity.stealth.extraHTTPHeaders || {},
             userAgent: identity.stealth.userAgent,
-            acceptLanguage: identity.stealth.locale === 'en-US'
-                ? 'en-US,en;q=0.9'
-                : identity.stealth.extraHTTPHeaders?.['accept-language']
-                    || identity.stealth.extraHTTPHeaders?.['Accept-Language']
-                    || 'en-US,en;q=0.9',
+            acceptLanguage: this._resolveAcceptLanguage(identity.stealth),
             platform: identity.stealth.platform || 'Win32'
         });
 
-        const context = await this.browser.newContext({
+        return {
             viewport: identity.stealth.viewport,
             userAgent: identity.stealth.userAgent,
-            extraHTTPHeaders: extraHTTPHeaders,
+            extraHTTPHeaders,
             proxy: proxyConfig,
             deviceScaleFactor: identity.stealth.deviceScaleFactor || 1,
             locale: identity.stealth.locale || 'en-US',
-            timezoneId: identity.stealth.timezoneId || 'Europe/London'
-        });
+            timezoneId: identity.stealth.timezoneId || 'Europe/London',
+            serviceWorkers: this.config.blockResources ? 'block' : 'allow'
+        };
+    }
 
-        return context;
+    _resolveAcceptLanguage(stealthConfig = {}) {
+        if (stealthConfig.locale === 'en-US') {
+            return 'en-US,en;q=0.9';
+        }
+
+        return stealthConfig.extraHTTPHeaders?.['accept-language']
+            || stealthConfig.extraHTTPHeaders?.['Accept-Language']
+            || 'en-US,en;q=0.9';
     }
 
     // ========================================================================
@@ -457,6 +546,72 @@ class BrowserFactory {
         }
 
         return false;
+    }
+
+    getResourceSlimmingStats(context) {
+        const stats = this.contextSlimmingStats.get(context);
+        if (!stats) {
+            return {
+                enabled: false,
+                blockedTotal: 0,
+                continuedTotal: 0,
+                blockedByType: {}
+            };
+        }
+
+        return {
+            enabled: stats.enabled,
+            blockedTotal: stats.blockedTotal,
+            continuedTotal: stats.continuedTotal,
+            blockedByType: { ...stats.blockedByType }
+        };
+    }
+
+    async _enableResourceSlimming(context) {
+        const blockedByType = {};
+        for (const resourceType of this.config.blockedResourceTypes) {
+            blockedByType[resourceType] = 0;
+        }
+
+        const stats = {
+            enabled: this.config.blockResources,
+            blockedTotal: 0,
+            continuedTotal: 0,
+            blockedByType
+        };
+        this.contextSlimmingStats.set(context, stats);
+
+        if (!this.config.blockResources) {
+            return;
+        }
+
+        await context.route('**/*', async (route) => {
+            const resourceType = route.request().resourceType();
+
+            try {
+                if (this.config.blockedResourceTypes.has(resourceType)) {
+                    stats.blockedTotal++;
+                    stats.blockedByType[resourceType] = (stats.blockedByType[resourceType] || 0) + 1;
+                    await route.abort('blockedbyclient');
+                    return;
+                }
+
+                stats.continuedTotal++;
+                await route.continue();
+            } catch (error) {
+                if (!this._isIgnorableRouteError(error)) {
+                    throw error;
+                }
+            }
+        });
+    }
+
+    _isIgnorableRouteError(error) {
+        const message = String(error?.message || '').toLowerCase();
+        return message.includes('target closed')
+            || message.includes('page closed')
+            || message.includes('context closed')
+            || message.includes('route is already handled');
     }
 
     _normalizeContextCookie(cookie = {}) {

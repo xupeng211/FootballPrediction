@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field, field_validator
 from src.config.common import logger
 
 PROXY_POOL_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "proxy_pool.json"
-DEFAULT_PREFERRED_PROXY_HOST = "host.docker.internal"
+DEFAULT_PREFERRED_PROXY_HOST = "127.0.0.1"
 IPV4_OCTET_COUNT = 4
 IPV4_OCTET_MAX = 255
 LEGACY_BRIDGE_PROXY_OCTETS = (172, 25, 16, 1)
@@ -74,8 +74,16 @@ def _extract_proxy_host(server_template: str | None) -> str | None:
     if not server_template:
         return None
 
-    match = re.match(r"^https?://([^/:]+)", str(server_template))
+    match = re.match(r"^(?:https?|socks5h?)://([^/:]+)", str(server_template))
     return match.group(1) if match else None
+
+
+def _normalize_proxy_protocol(protocol: str | None) -> str:
+    """规范化代理协议，统一将 socks5h 收敛为 socks5。"""
+    normalized = str(protocol or "").strip().lower()
+    if normalized == "socks5h":
+        return "socks5"
+    return normalized or "socks5"
 
 
 def _normalize_proxy_host(host: str | None) -> str | None:
@@ -111,7 +119,9 @@ def _is_legacy_bridge_proxy_host(host: str | None) -> bool:
 def resolve_shared_proxy_pool_config() -> dict[str, Any]:
     """解析跨语言共享的代理池配置。"""
     file_config = _read_proxy_pool_file()
-    protocol = os.environ.get("PROXY_PROTOCOL") or file_config.get("protocol") or "http"
+    protocol = _normalize_proxy_protocol(
+        os.environ.get("PROXY_PROTOCOL") or file_config.get("protocol") or "socks5"
+    )
     explicit_server_template = (os.environ.get("PROXY_SERVER") or "").strip()
     file_server_template = str(file_config.get("serverTemplate") or "").strip()
     server_template = explicit_server_template or file_server_template

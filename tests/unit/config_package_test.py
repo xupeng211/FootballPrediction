@@ -292,6 +292,7 @@ def test_unified_settings_urls_and_accessors(monkeypatch, tmp_path):
     monkeypatch.setenv("REDIS_HOST", "redis")
     monkeypatch.delenv("PROXY_HOST", raising=False)
     monkeypatch.delenv("PROXY_SERVER", raising=False)
+    monkeypatch.delenv("PROXY_PROTOCOL", raising=False)
     monkeypatch.delenv("PROXY_PORTS", raising=False)
     monkeypatch.delenv("PROXY_PORT", raising=False)
 
@@ -308,8 +309,8 @@ def test_unified_settings_urls_and_accessors(monkeypatch, tmp_path):
     assert accessor.database.name == "football_db"
 
 
-def test_proxy_pool_default_host_prefers_host_docker_internal(monkeypatch, tmp_path):
-    """未显式指定 PROXY_HOST 时，应优先回退到 host.docker.internal。"""
+def test_proxy_pool_default_host_prefers_loopback_gateway(monkeypatch, tmp_path):
+    """未显式指定 PROXY_HOST 时，应优先回退到 127.0.0.1。"""
     pool_file = tmp_path / "proxy_pool.json"
     pool_file.write_text(
         json.dumps(
@@ -327,9 +328,10 @@ def test_proxy_pool_default_host_prefers_host_docker_internal(monkeypatch, tmp_p
     monkeypatch.delenv("WSL2_PROXY_HOST", raising=False)
     monkeypatch.delenv("PROXY_HOST", raising=False)
     monkeypatch.delenv("PROXY_SERVER", raising=False)
+    monkeypatch.delenv("PROXY_PROTOCOL", raising=False)
     monkeypatch.delenv("PROXY_PORTS", raising=False)
     monkeypatch.delenv("PROXY_PORT", raising=False)
 
     resolved = proxy_settings.resolve_shared_proxy_pool_config()
-    assert resolved["host"] == "host.docker.internal"
-    assert resolved["server_template"] == "http://host.docker.internal:{port}"
+    assert resolved["host"] == "127.0.0.1"
+    assert resolved["server_template"] == "http://127.0.0.1:{port}"

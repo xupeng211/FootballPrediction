@@ -8,9 +8,10 @@ const net = require('node:net');
 const { URL } = require('node:url');
 const { HttpProxyAgent } = require('http-proxy-agent');
 const { HttpsProxyAgent } = require('https-proxy-agent');
-const { buildProxyServer, resolveProxyPoolConfig } = require('../../../config/proxy_pool');
+const { SocksProxyAgent } = require('socks-proxy-agent');
+const { buildProxyServer, normalizeProxyProtocol, resolveProxyPoolConfig } = require('../../../config/proxy_pool');
 
-const DEFAULT_PROTOCOL = 'http';
+const DEFAULT_PROTOCOL = 'socks5';
 const DEFAULT_TARGET_LATENCY_MS = 1500;
 const DEFAULT_SUCCESS_RATE = 0.95;
 const DEFAULT_HEARTBEAT_URL = 'https://httpbin.org/ip';
@@ -48,6 +49,18 @@ function extractStatusCode(reason = '') {
 function positiveNumber(value, fallback) {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function createProxyAgent(proxyUrl, proxyProtocol, targetProtocol, timeoutMs) {
+  if (normalizeProxyProtocol(proxyProtocol) === 'socks5') {
+    return new SocksProxyAgent(proxyUrl, { timeout: timeoutMs });
+  }
+
+  if (targetProtocol === 'https:') {
+    return new HttpsProxyAgent(proxyUrl, { keepAlive: false, timeout: timeoutMs });
+  }
+
+  return new HttpProxyAgent(proxyUrl, { keepAlive: false, timeout: timeoutMs });
 }
 
 function normalizeHealthProbeMode(value) {
@@ -139,7 +152,9 @@ class ProxyProvider extends EventEmitter {
 
   _buildConfig(options = {}) {
     const resolvedPoolConfig = resolveProxyPoolConfig();
-    const protocol = options.protocol || resolvedPoolConfig.protocol || ProxyProvider.resolveProtocol();
+    const protocol = normalizeProxyProtocol(
+      options.protocol || resolvedPoolConfig.protocol || ProxyProvider.resolveProtocol()
+    );
     const host = options.host || resolvedPoolConfig.host || ProxyProvider.resolveHost();
     const ports = Array.isArray(options.ports) && options.ports.length > 0
       ? [...options.ports]
@@ -260,7 +275,7 @@ class ProxyProvider extends EventEmitter {
   }
 
   static resolveProtocol() {
-    return resolveProxyPoolConfig().protocol || DEFAULT_PROTOCOL;
+    return normalizeProxyProtocol(resolveProxyPoolConfig().protocol || DEFAULT_PROTOCOL);
   }
 
   static buildServer(port, options = {}) {
@@ -318,24 +333,216 @@ class ProxyProvider extends EventEmitter {
       return {
         ok: true,
         host: this.config.host,
-        port: this._resolvePreflightPort()
+        port: this._resolvePreflightPort(),
+        discoveredPorts: this.config.ports
       };
     }
 
     if (!this.initializationPromise) {
-      this.initializationPromise = this._runGatewayPreflight()
-        .then((result) => {
-          this.initialized = true;
-          this.start();
-          return result;
-        })
-        .catch((error) => {
-          this.initializationPromise = null;
-          throw error;
-        });
+      const radarMode = String(process.env.PROXY_RADAR_MODE || '').toLowerCase() === 'true';
+
+      if (radarMode && this.config.ports.length === 0) {
+        this.initializationPromise = this._runRadarDiscovery()
+          .then((result) => {
+            this.initialized = true;
+            this.start();
+            return result;
+          })
+          .catch((error) => {
+            this.initializationPromise = null;
+            throw error;
+          });
+      } else {
+        this.initializationPromise = this._runGatewayPreflight()
+          .then((result) => {
+            this.initialized = true;
+            this.start();
+            return {
+              ...result,
+              discoveredPorts: this.config.ports,
+              totalDiscovered: this.config.ports.length,
+              mode: radarMode ? 'radar_with_static_ports' : 'static_ports_only'
+            };
+          })
+          .catch((error) => {
+            this.initializationPromise = null;
+            throw error;
+          });
+      }
     }
 
     return this.initializationPromise;
+  }
+
+  async _runRadarDiscovery() {
+    const radarStartPort = Number(process.env.PROXY_RADAR_START_PORT) || 10001;
+    const radarEndPort = Number(process.env.PROXY_RADAR_END_PORT) || 10040;
+    const radarMaxConsecutiveFailures = Number(process.env.PROXY_RADAR_MAX_FAILURES) || 5;
+    const radarTimeoutMs = Number(process.env.PROXY_RADAR_TIMEOUT_MS) || 5000;
+
+    if (typeof this.logger.info === 'function') {
+      this.logger.info('[ProxyProvider] 🔍 Titan 7.0 L7 雷达扫描启动 (物理隔离端口)', {
+        host: this.config.host,
+        portRange: `${radarStartPort}-${radarEndPort}`,
+        maxConsecutiveFailures: radarMaxConsecutiveFailures,
+        mode: 'L7_SOCKS5_VALIDATION'
+      });
+    }
+
+    const discoveredPorts = [];
+    const ghostPorts = [];
+    let consecutiveFailures = 0;
+    let currentPort = radarStartPort;
+    const maxScans = radarEndPort - radarStartPort + 1;
+    let scannedCount = 0;
+
+    while (consecutiveFailures < radarMaxConsecutiveFailures && scannedCount < maxScans && currentPort <= radarEndPort) {
+      const probeResult = await this._probeL7Proxy(
+        { port: currentPort, host: this.config.host },
+        { ...this.config, httpTimeoutMs: radarTimeoutMs }
+      );
+
+      if (probeResult?.ok && probeResult?.validProxy) {
+        discoveredPorts.push(currentPort);
+        consecutiveFailures = 0;
+        if (typeof this.logger.debug === 'function') {
+          this.logger.debug('[ProxyProvider] ✓ L7 验证通过', {
+            port: currentPort,
+            latencyMs: probeResult.latencyMs,
+            remoteIp: probeResult.remoteIp
+          });
+        }
+      } else {
+        consecutiveFailures += 1;
+        if (probeResult?.ghostPort) {
+          ghostPorts.push(currentPort);
+        }
+      }
+
+      currentPort += 1;
+      scannedCount += 1;
+    }
+
+    if (discoveredPorts.length === 0) {
+      const error = new Error(
+        `PROXY_RADAR_NO_NODES: L7 雷达扫描未发现任何真实代理节点 (扫描范围: ${radarStartPort}-${currentPort - 1}, 幽灵端口: ${ghostPorts.length})`
+      );
+      error.code = 'PROXY_RADAR_NO_NODES';
+      error.scannedRange = { start: radarStartPort, end: currentPort - 1 };
+      error.ghostPorts = ghostPorts;
+      throw error;
+    }
+
+    this.config.ports = discoveredPorts;
+    this.nodes = discoveredPorts.map(port => this._createNode(port));
+    this.nodeByPort = new Map(this.nodes.map(node => [node.port, node]));
+
+    if (typeof this.logger.info === 'function') {
+      this.logger.info('[ProxyProvider] 🎯 L7 雷达扫描完成', {
+        discoveredCount: discoveredPorts.length,
+        ghostPortsFiltered: ghostPorts.length,
+        portRange: discoveredPorts.length > 0
+          ? `${discoveredPorts[0]}-${discoveredPorts[discoveredPorts.length - 1]}`
+          : 'N/A',
+        ports: discoveredPorts
+      });
+    }
+
+    return {
+      ok: true,
+      host: this.config.host,
+      discoveredPorts,
+      totalDiscovered: discoveredPorts.length,
+      ghostPortsFiltered: ghostPorts.length,
+      scannedRange: { start: radarStartPort, end: currentPort - 1 }
+    };
+  }
+
+  _probeL7Proxy(node, config) {
+    return new Promise(resolve => {
+      const startedAt = this.now();
+      const proxyProtocol = normalizeProxyProtocol(config.protocol || process.env.PROXY_PROTOCOL || DEFAULT_PROTOCOL);
+      const proxyUrl = `${proxyProtocol}://${node.host}:${node.port}`;
+      const agent = createProxyAgent(proxyUrl, proxyProtocol, 'http:', config.httpTimeoutMs);
+
+      const request = http.request({
+        hostname: 'httpbin.org',
+        port: 80,
+        path: '/ip',
+        method: 'GET',
+        timeout: config.httpTimeoutMs,
+        agent,
+        headers: {
+          'User-Agent': 'ProxyRadar/7.0',
+          'Accept': 'application/json'
+        }
+      }, response => {
+        let body = '';
+        response.on('data', chunk => {
+          body += chunk.toString();
+          if (body.length > 10000) {
+            request.destroy(new Error('response_too_large'));
+          }
+        });
+
+        response.on('end', () => {
+          const latencyMs = this.now() - startedAt;
+          const statusCode = Number(response.statusCode);
+
+          if (statusCode === 200) {
+            try {
+              const data = JSON.parse(body);
+              const remoteIp = data?.origin || null;
+
+              if (remoteIp && /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/.test(remoteIp)) {
+                resolve({
+                  ok: true,
+                  validProxy: true,
+                  latencyMs,
+                  statusCode,
+                  remoteIp
+                });
+                return;
+              }
+            } catch {
+              // JSON 解析失败
+            }
+          }
+
+          resolve({
+            ok: false,
+            validProxy: false,
+            ghostPort: statusCode >= 200 && statusCode < 500,
+            latencyMs,
+            statusCode,
+            error: `invalid_response_status_${statusCode}`
+          });
+        });
+      });
+
+      request.once('timeout', () => {
+        request.destroy(new Error('http_timeout'));
+      });
+
+      request.once('error', error => {
+        const latencyMs = this.now() - startedAt;
+        const errorMessage = String(error.message || '').toLowerCase();
+
+        const isGhostPort = errorMessage.includes('aborted')
+          || errorMessage.includes('econnreset')
+          || errorMessage.includes('socket hang up');
+
+        resolve({
+          ok: false,
+          validProxy: false,
+          ghostPort: isGhostPort,
+          latencyMs,
+          error: error.message
+        });
+      });
+
+      request.end();
+    });
   }
 
   start() {
@@ -401,10 +608,7 @@ class ProxyProvider extends EventEmitter {
     }
 
     const reason = String(result?.error || 'tcp_preflight_failed');
-    const error = new Error(
-      `PROXY_GATEWAY_UNREACHABLE: ${this.config.host}:${port} (${reason}). `
-      + '代理网关无法连接，请检查 host.docker.internal 是否可用，或通过 PROXY_HOST 指定正确的宿主机地址'
-    );
+    const error = new Error(this._buildGatewayPreflightErrorMessage(port, reason));
     error.code = 'PROXY_GATEWAY_UNREACHABLE';
     error.host = this.config.host;
     error.port = port;
@@ -419,6 +623,14 @@ class ProxyProvider extends EventEmitter {
     }
 
     throw error;
+  }
+
+  _buildGatewayPreflightErrorMessage(port, reason) {
+    const hostHint = this.config.host === '127.0.0.1'
+      ? '请检查 127.0.0.1 在 WSL2 Mirrored 模式下是否可达'
+      : `请检查 ${this.config.host} 是否可达`;
+
+    return `PROXY_GATEWAY_UNREACHABLE: ${this.config.host}:${port} (${reason}). ${hostHint}，或通过 PROXY_HOST 指定正确的宿主机地址`;
   }
 
   stop() {
@@ -1088,9 +1300,12 @@ class ProxyProvider extends EventEmitter {
       const startedAt = this.now();
       const target = new URL(config.heartbeatUrl);
       const requestLib = target.protocol === 'https:' ? https : http;
-      const agent = target.protocol === 'https:'
-        ? new HttpsProxyAgent(node.server)
-        : new HttpProxyAgent(node.server);
+      const agent = createProxyAgent(
+        node.server,
+        config.protocol,
+        target.protocol,
+        config.httpTimeoutMs
+      );
 
       const request = requestLib.request({
         hostname: target.hostname,

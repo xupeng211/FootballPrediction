@@ -933,6 +933,63 @@ run_recon_core_coverage_guard() {
   npm run test:coverage:recon-core
 }
 
+run_remote_merge_enforcement() {
+  log '执行远程合并约束检查。'
+
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 0
+  fi
+
+  local current_branch
+  current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+
+  if [[ "$current_branch" != "main" && "$current_branch" != "master" ]]; then
+    return 0
+  fi
+
+  local last_commit_parents
+  last_commit_parents="$(git log -1 --format=%P HEAD 2>/dev/null || true)"
+
+  if [[ -z "$last_commit_parents" ]]; then
+    return 0
+  fi
+
+  local parent_count
+  parent_count="$(echo "$last_commit_parents" | wc -w | tr -d '[:space:]')"
+
+  if (( parent_count > 1 )); then
+    printf '[Gatekeeper] ERROR: 检测到本地合并提交推送到主干分支 %s\n' "$current_branch" >&2
+    printf '[Gatekeeper] 最后一次提交有 %s 个父提交，疑似本地 merge\n' "$parent_count" >&2
+    printf '[Gatekeeper] 提交哈希: %s\n' "$(git log -1 --format=%H HEAD)" >&2
+    printf '[Gatekeeper] 提交信息: %s\n' "$(git log -1 --format=%s HEAD)" >&2
+    fail '禁止在本地合并代码推送到主干，请通过 GitHub PR 在云端完成合并！'
+  fi
+}
+
+run_commit_smoke_tests() {
+  log '执行 Commit 模式核心单测烟雾检查。'
+
+  local smoke_tests=(
+    'tests/unit/EntityMapper.test.js'
+  )
+
+  local test_file
+  for test_file in "${smoke_tests[@]}"; do
+    if [[ ! -f "$test_file" ]]; then
+      log "烟雾测试文件不存在，跳过: ${test_file}"
+      continue
+    fi
+
+    log "运行烟雾测试: ${test_file}"
+    node --test "$test_file" || fail "烟雾测试失败: ${test_file}"
+  done
+
+  if [[ -f "tests/unit/helpers/euroLeagueAdapters.test.js" ]]; then
+    log "运行烟雾测试: tests/unit/helpers/euroLeagueAdapters.test.js"
+    node --test tests/unit/helpers/euroLeagueAdapters.test.js || fail "烟雾测试失败: euroLeagueAdapters.test.js"
+  fi
+}
+
 main() {
   log "进入门禁容器执行阶段（mode=${MODE}）。"
 
@@ -953,12 +1010,17 @@ main() {
   run_repo_hygiene_guard
   run_proxyprovider_smoke_test
 
+  if [[ "$MODE" == "commit" ]]; then
+    run_commit_smoke_tests
+  fi
+
   if [[ "$MODE" == "pr" ]]; then
     run_js_incremental_gate
     run_recon_core_coverage_guard
   fi
 
   if [[ "$MODE" == "push" ]]; then
+    run_remote_merge_enforcement
     run_coverage_guards
     run_recon_core_coverage_guard
   fi
