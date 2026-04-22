@@ -27,11 +27,12 @@ const BOOKMAKER_ODDS_HISTORY_MIGRATION = path.join(
 );
 const DATA_SOURCE = 'CSV_BULK_LOADER';
 const DATA_VERSION = 'TEP001_PHASE1';
+const MATCH_REUSE_WINDOW_MS = 2 * 60 * 60 * 1000;
 
 function printUsage() {
   console.log('用法: node scripts/ops/csv_bulk_loader.js --file <path> [--commit] [--batch-size <n>] [--error-log <path>]');
   console.log('说明: 默认 dry-run，仅执行流式解析、实体转换、批量聚合和日志预览。');
-  console.log('说明: 带 --commit 时才会把数据批量写入 matches 和 bookmaker_odds_history。');
+  console.log('说明: 带 --commit 时只会把赔率写入 bookmaker_odds_history，绝不会新建 matches。');
 }
 
 function resolveCliPath(rawValue) {
@@ -275,17 +276,140 @@ function buildImportRunId() {
   return `csv_bulk_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
 }
 
-function buildMatchRecord(row, mapper) {
-  const matchId = normalizeText(row.match_id);
-  if (!matchId) {
-    throw new Error('match_id 缺失');
+function compareMatchCandidatePriority(left, right) {
+  const leftPriority = left.data_source === DATA_SOURCE ? 1 : 0;
+  const rightPriority = right.data_source === DATA_SOURCE ? 1 : 0;
+  if (leftPriority !== rightPriority) {
+    return leftPriority - rightPriority;
   }
 
+  return String(left.match_id).localeCompare(String(right.match_id));
+}
+
+class ExistingFotMobMatchResolver {
+  constructor(options = {}) {
+    this.mapper = options.mapper || new EntityMapper();
+    this.pool = options.pool || new Pool(buildDbConnectionConfig());
+    this.ownsPool = !options.pool;
+    this.cache = new Map();
+  }
+
+  async resolve(options = {}) {
+    const season = Normalizer.normalizeSeason(String(options.season || '').trim());
+    const leagueName = this.mapper.normalizeLeagueName(options.leagueName);
+    const homeTeam = this.mapper.normalizeTeamName(options.homeTeam);
+    const awayTeam = this.mapper.normalizeTeamName(options.awayTeam);
+    const matchDate = new Date(options.matchDate);
+    if (Number.isNaN(matchDate.getTime())) {
+      throw new Error(`无效日期: ${options.matchDate}`);
+    }
+
+    const group = await this._loadGroup(leagueName, season);
+    const requestedMatchId = normalizeText(options.requestedMatchId);
+    if (requestedMatchId) {
+      const exactById = group.byId.get(requestedMatchId);
+      if (exactById) {
+        return exactById;
+      }
+    }
+
+    const requestedExternalId = this.mapper.normalizeFotMobExternalId(options.requestedExternalId);
+    if (requestedExternalId) {
+      const exactByExternalId = group.byExternalId.get(requestedExternalId);
+      if (exactByExternalId) {
+        return exactByExternalId;
+      }
+    }
+
+    const lookupKey = this.mapper.buildMatchLookupKey(homeTeam, awayTeam);
+    const candidates = (group.byLookupKey.get(lookupKey) || [])
+      .map((candidate) => {
+        const candidateDate = new Date(candidate.match_date);
+        return {
+          ...candidate,
+          diffMs: Math.abs(matchDate.getTime() - candidateDate.getTime())
+        };
+      })
+      .filter((candidate) => Number.isFinite(candidate.diffMs) && candidate.diffMs <= MATCH_REUSE_WINDOW_MS)
+      .sort((left, right) => left.diffMs - right.diffMs || compareMatchCandidatePriority(left, right));
+
+    if (candidates.length === 0) {
+      throw new Error(
+        `未找到对应 FotMob 比赛: league=${leagueName} season=${season} `
+        + `home=${homeTeam} away=${awayTeam} match_date=${matchDate.toISOString()}`
+      );
+    }
+
+    return candidates[0];
+  }
+
+  async close() {
+    if (!this.ownsPool) {
+      return;
+    }
+    await this.pool.end();
+  }
+
+  async _loadGroup(leagueName, season) {
+    const cacheKey = `${season}::${leagueName}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
+
+    const client = await this.pool.connect();
+    try {
+      const result = await client.query(
+        `
+          SELECT
+            match_id,
+            external_id,
+            league_name,
+            season,
+            home_team,
+            away_team,
+            match_date,
+            status,
+            data_source
+          FROM matches
+          WHERE season = $1
+            AND league_name = $2
+            AND match_date IS NOT NULL
+            AND external_id IS NOT NULL
+            AND COALESCE(data_source, '') <> $3
+        `,
+        [season, leagueName, DATA_SOURCE]
+      );
+
+      const group = {
+        byId: new Map(),
+        byExternalId: new Map(),
+        byLookupKey: new Map()
+      };
+
+      for (const row of result.rows) {
+        group.byId.set(String(row.match_id), row);
+        group.byExternalId.set(String(row.external_id), row);
+
+        const lookupKey = this.mapper.buildMatchLookupKey(row.home_team, row.away_team);
+        const bucket = group.byLookupKey.get(lookupKey) || [];
+        bucket.push(row);
+        group.byLookupKey.set(lookupKey, bucket);
+      }
+
+      this.cache.set(cacheKey, group);
+      return group;
+    } finally {
+      client.release();
+    }
+  }
+}
+
+async function buildMatchRecord(row, context) {
   const season = Normalizer.normalizeSeason(String(row.season || '').trim());
   const matchDate = parseDateOrThrow(row.match_date);
-  const leagueName = mapper.normalizeLeagueName(row.league_name);
-  const homeTeam = mapper.normalizeTeamName(row.home_team);
-  const awayTeam = mapper.normalizeTeamName(row.away_team);
+  const leagueName = context.mapper.normalizeLeagueName(row.league_name);
+  const homeTeam = context.mapper.normalizeTeamName(row.home_team);
+  const awayTeam = context.mapper.normalizeTeamName(row.away_team);
   const status = Normalizer.normalizeStatus(row.status || 'scheduled');
 
   if (!leagueName) {
@@ -298,20 +422,33 @@ function buildMatchRecord(row, mapper) {
     throw new Error('away_team 缺失');
   }
 
-  return {
-    match_id: matchId,
-    external_id: toNullableText(row.external_id),
-    league_name: leagueName,
+  const resolvedMatch = await context.matchResolver.resolve({
+    requestedMatchId: normalizeText(row.match_id),
+    requestedExternalId: toNullableText(row.external_id),
+    leagueName,
     season,
-    home_team: homeTeam,
-    away_team: awayTeam,
+    homeTeam,
+    awayTeam,
+    matchDate
+  });
+  const identity = context.mapper.bindFotMobIdentity(resolvedMatch);
+
+  return {
+    match_id: identity.matchId,
+    external_id: identity.externalId,
+    league_name: toNullableText(resolvedMatch.league_name) || leagueName,
+    season: Normalizer.normalizeSeason(String(resolvedMatch.season || season)),
+    home_team: toNullableText(resolvedMatch.home_team) || homeTeam,
+    away_team: toNullableText(resolvedMatch.away_team) || awayTeam,
     home_score: parseInteger(row.home_score),
     away_score: parseInteger(row.away_score),
-    match_date: matchDate,
+    match_date: resolvedMatch.match_date instanceof Date
+      ? resolvedMatch.match_date
+      : parseDateOrThrow(resolvedMatch.match_date || matchDate),
     status,
     is_finished: status === 'finished',
     data_version: DATA_VERSION,
-    data_source: DATA_SOURCE
+    data_source: toNullableText(resolvedMatch.data_source) || 'FotMob'
   };
 }
 
@@ -349,8 +486,8 @@ function buildOddsRecord(row, context) {
   };
 }
 
-function normalizeCsvRow(row, context) {
-  const match = buildMatchRecord(row, context.mapper);
+async function normalizeCsvRow(row, context) {
+  const match = await buildMatchRecord(row, context);
   const odds = buildOddsRecord(row, {
     match,
     sourceFile: context.sourceFile,
@@ -370,6 +507,7 @@ class CsvRowTransform extends Transform {
   constructor(options = {}) {
     super({ objectMode: true });
     this.mapper = options.mapper || new EntityMapper();
+    this.matchResolver = options.matchResolver;
     this.errorSink = options.errorSink;
     this.importRunId = options.importRunId || buildImportRunId();
     this.sourceFile = options.sourceFile || 'unknown.csv';
@@ -383,8 +521,9 @@ class CsvRowTransform extends Transform {
       this.stats.rowsRead = (this.stats.rowsRead || 0) + 1;
 
       try {
-        const normalized = normalizeCsvRow(row, {
+        const normalized = await normalizeCsvRow(row, {
           mapper: this.mapper,
+          matchResolver: this.matchResolver,
           importRunId: this.importRunId,
           sourceFile: this.sourceFile,
           sourceRowNumber: this.rawRowIndex + 1
@@ -474,25 +613,21 @@ class CsvBulkLoaderWriter {
       await client.query('BEGIN');
       await this._ensureOddsHistoryTable(client);
 
-      const matches = dedupeByKey(records.map((record) => record.match), (item) => item.match_id);
       const oddsRows = dedupeByKey(
         records.map((record) => record.odds),
         (item) => `${item.match_id}::${item.bookmaker_name}::${item.market_type}`
       );
 
-      const matchResult = await upsertMatches(client, matches);
       const oddsResult = await upsertBookmakerOddsHistory(client, oddsRows);
       await client.query('COMMIT');
 
       this.stats.rowsProcessed = (this.stats.rowsProcessed || 0) + records.length;
-      this.stats.matchInserted = (this.stats.matchInserted || 0) + matchResult.inserted;
-      this.stats.matchUpdated = (this.stats.matchUpdated || 0) + matchResult.updated;
       this.stats.oddsInserted = (this.stats.oddsInserted || 0) + oddsResult.inserted;
       this.stats.oddsUpdated = (this.stats.oddsUpdated || 0) + oddsResult.updated;
 
       console.log(
         `[CSV-BULK] commit batch=${this.batchIndex} rows=${records.length} `
-        + `matches(inserted=${matchResult.inserted},updated=${matchResult.updated}) `
+        + `resolved_matches=${new Set(records.map((record) => record.match.match_id)).size} `
         + `odds(inserted=${oddsResult.inserted},updated=${oddsResult.updated})`
       );
     } catch (error) {
@@ -532,73 +667,6 @@ function dedupeByKey(items = [], keySelector) {
     map.set(keySelector(item), item);
   }
   return [...map.values()];
-}
-
-async function upsertMatches(client, rows = []) {
-  if (!Array.isArray(rows) || rows.length === 0) {
-    return { inserted: 0, updated: 0 };
-  }
-
-  const values = [];
-  const placeholders = rows.map((row, index) => {
-    const offset = index * 14;
-    values.push(
-      row.match_id,
-      row.external_id,
-      row.league_name,
-      row.season,
-      row.home_team,
-      row.away_team,
-      row.home_score,
-      row.away_score,
-      row.match_date,
-      row.status,
-      row.is_finished,
-      row.data_version,
-      row.data_source,
-      row.match_date
-    );
-
-    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12}, $${offset + 13}, $${offset + 14})`;
-  });
-
-  const result = await client.query(`
-    INSERT INTO matches (
-      match_id,
-      external_id,
-      league_name,
-      season,
-      home_team,
-      away_team,
-      home_score,
-      away_score,
-      match_date,
-      status,
-      is_finished,
-      data_version,
-      data_source,
-      collection_date
-    )
-    VALUES ${placeholders.join(', ')}
-    ON CONFLICT (match_id) DO UPDATE SET
-      external_id = COALESCE(EXCLUDED.external_id, matches.external_id),
-      league_name = EXCLUDED.league_name,
-      season = EXCLUDED.season,
-      home_team = EXCLUDED.home_team,
-      away_team = EXCLUDED.away_team,
-      home_score = COALESCE(EXCLUDED.home_score, matches.home_score),
-      away_score = COALESCE(EXCLUDED.away_score, matches.away_score),
-      match_date = COALESCE(EXCLUDED.match_date, matches.match_date),
-      status = EXCLUDED.status,
-      is_finished = EXCLUDED.is_finished,
-      data_version = EXCLUDED.data_version,
-      data_source = EXCLUDED.data_source,
-      updated_at = NOW()
-    RETURNING (xmax = 0) AS inserted
-  `, values);
-
-  const inserted = result.rows.filter((row) => row.inserted).length;
-  return { inserted, updated: result.rows.length - inserted };
 }
 
 async function upsertBookmakerOddsHistory(client, rows = []) {
@@ -665,9 +733,12 @@ async function runCsvBulkLoader(options = {}) {
     rowsProcessed: 0
   };
   const importRunId = buildImportRunId();
+  const mapper = new EntityMapper();
+  const matchResolver = new ExistingFotMobMatchResolver({ mapper });
   const errorSink = fs.createWriteStream(options.errorLogPath, { flags: 'a' });
   const rowTransform = new CsvRowTransform({
-    mapper: new EntityMapper(),
+    mapper,
+    matchResolver,
     errorSink,
     importRunId,
     sourceFile: path.relative(REPO_ROOT, inputPath),
@@ -696,6 +767,7 @@ async function runCsvBulkLoader(options = {}) {
   } finally {
     errorSink.end();
     await once(errorSink, 'finish').catch(() => {});
+    await matchResolver.close();
     await writer.close();
   }
 
@@ -734,12 +806,12 @@ if (require.main === module) {
 
 module.exports = {
   BatchAggregator,
+  ExistingFotMobMatchResolver,
   CsvBulkLoaderWriter,
   CsvRowTransform,
   buildMovementTrajectory,
   normalizeCsvRow,
   parseArgs,
   runCsvBulkLoader,
-  upsertBookmakerOddsHistory,
-  upsertMatches
+  upsertBookmakerOddsHistory
 };

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict';
 
-const crypto = require('crypto');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
@@ -251,21 +250,6 @@ function parseFootballDataDateTime(dateValue, timeValue) {
     return new Date(Date.UTC(year, month - 1, day, hour, minute, 0)).toISOString();
 }
 
-function buildSeasonTag(season) {
-    const normalizedSeason = Normalizer.normalizeSeason(season);
-    return normalizedSeason.replace(/\//g, '');
-}
-
-function buildFallbackMatchId(leagueId, season, matchDate, homeTeam, awayTeam) {
-    const seasonTag = buildSeasonTag(season);
-    const hash = crypto.createHash('sha1').update(`${matchDate}|${homeTeam}|${awayTeam}`).digest('hex').slice(0, 12);
-    return `${leagueId}_${seasonTag}_${hash}`;
-}
-
-function buildKey(homeTeam, awayTeam) {
-    return `${normalizeText(homeTeam)}::${normalizeText(awayTeam)}`;
-}
-
 function compareCandidatePriority(left, right) {
     const leftPriority = left.data_source === 'CSV_BULK_LOADER' ? 1 : 0;
     const rightPriority = right.data_source === 'CSV_BULK_LOADER' ? 1 : 0;
@@ -384,6 +368,7 @@ class ExistingMatchResolver {
                 `
         SELECT
           match_id,
+          external_id,
           home_team,
           away_team,
           match_date,
@@ -399,10 +384,7 @@ class ExistingMatchResolver {
             );
 
             for (const row of result.rows) {
-                const key = buildKey(
-                    this.mapper.normalizeTeamName(row.home_team),
-                    this.mapper.normalizeTeamName(row.away_team)
-                );
+                const key = this.mapper.buildMatchLookupKey(row.home_team, row.away_team);
                 const bucket = this.matchesByKey.get(key) || [];
                 bucket.push(row);
                 this.matchesByKey.set(key, bucket);
@@ -422,7 +404,7 @@ class ExistingMatchResolver {
             return null;
         }
 
-        const key = buildKey(options.homeTeam, options.awayTeam);
+        const key = this.mapper.buildMatchLookupKey(options.homeTeam, options.awayTeam);
         const candidates = (this.matchesByKey.get(key) || [])
             .map(candidate => {
                 const candidateDate = new Date(candidate.match_date);
@@ -452,26 +434,20 @@ function buildMatchId(options = {}) {
         matchDate: options.matchDate,
     });
 
-    if (existingMatch) {
-        return {
-            matchId: existingMatch.match_id,
-            reusedExisting: true,
-            matchedSource: existingMatch.data_source || '',
-            matchedDate: existingMatch.match_date,
-        };
+    if (!existingMatch) {
+        throw new Error(
+            `未找到对应 FotMob 比赛: league=${options.leagueName} season=${Normalizer.normalizeSeason(options.season)} ` +
+                `home=${options.homeTeam} away=${options.awayTeam} match_date=${options.matchDate}`
+        );
     }
 
+    const identity = options.mapper.bindFotMobIdentity(existingMatch);
     return {
-        matchId: buildFallbackMatchId(
-            options.leagueId,
-            options.season,
-            options.matchDate,
-            options.homeTeam,
-            options.awayTeam
-        ),
-        reusedExisting: false,
-        matchedSource: '',
-        matchedDate: null,
+        matchId: identity.matchId,
+        externalId: identity.externalId,
+        reusedExisting: true,
+        matchedSource: existingMatch.data_source || '',
+        matchedDate: existingMatch.match_date,
     };
 }
 
@@ -509,16 +485,17 @@ function adaptSourceRow(row, context) {
     const awayTeam = context.mapper.normalizeTeamName(rawAwayTeam);
     const matchDate = parseFootballDataDateTime(row.Date, row.Time);
     const matchIdResolution = buildMatchId({
-        leagueId: context.leagueMeta.leagueId,
+        leagueName: context.leagueMeta.leagueName,
         season: context.sourceMeta.season,
         matchDate,
         homeTeam,
         awayTeam,
+        mapper: context.mapper,
         resolver: context.resolver,
     });
     const matchCore = {
         match_id: matchIdResolution.matchId,
-        external_id: `${context.leagueMeta.leagueCode}_${context.sourceMeta.seasonCode}_${hashExternalId(matchDate, homeTeam, awayTeam)}`,
+        external_id: matchIdResolution.externalId,
         league_name: context.leagueMeta.leagueName,
         season: Normalizer.normalizeSeason(context.sourceMeta.season),
         home_team: homeTeam,
@@ -550,10 +527,6 @@ function adaptSourceRow(row, context) {
 
 function hasFinalScore(row) {
     return normalizeText(row.FTHG) !== '' && normalizeText(row.FTAG) !== '';
-}
-
-function hashExternalId(matchDate, homeTeam, awayTeam) {
-    return crypto.createHash('md5').update(`${matchDate}|${homeTeam}|${awayTeam}`).digest('hex').slice(0, 10);
 }
 
 async function downloadToTempFile(sourceMeta) {
@@ -627,7 +600,7 @@ class CollectingWriter extends Writable {
         this.errors = [];
         this.stats = {
             reusedExisting: 0,
-            generatedNew: 0,
+            unmatchedRows: 0,
             lowQualityRows: 0,
         };
         this.sourceQualityFlags = new Set();
@@ -644,8 +617,6 @@ class CollectingWriter extends Writable {
             this.rows.push(...adapted.rows);
             if (adapted.diagnostics.reusedExisting) {
                 this.stats.reusedExisting += 1;
-            } else {
-                this.stats.generatedNew += 1;
             }
             if (adapted.diagnostics.qualityFlags.length > 0) {
                 this.stats.lowQualityRows += 1;
@@ -654,6 +625,7 @@ class CollectingWriter extends Writable {
             callback();
         } catch (error) {
             this.skipped += 1;
+            this.stats.unmatchedRows += 1;
             this.errors.push(error.message);
             callback();
         }
@@ -728,7 +700,7 @@ async function main() {
         console.log(
             `[FETCH-EURO] 适配完成 output=${path.relative(REPO_ROOT, OUTPUT_PATH)} ` +
                 `rows=${adapted.rows.length} skipped=${adapted.skipped} ` +
-                `reused_existing=${adapted.stats.reusedExisting} generated_new=${adapted.stats.generatedNew}`
+                `reused_existing=${adapted.stats.reusedExisting} unmatched_rows=${adapted.stats.unmatchedRows}`
         );
 
         if (adapted.sourceQualityFlags.includes(WARNING_LOW_QUALITY_SOURCE)) {
@@ -766,7 +738,6 @@ module.exports = {
     OUTPUT_PATH,
     SEASON_CANDIDATES,
     adaptSourceRow,
-    buildFallbackMatchId,
     buildMatchId,
     parseArgs,
     parseFootballDataDateTime,
