@@ -24,6 +24,10 @@ const FOOTBALL_DATA_LEAGUES = {
 };
 const SEASON_CANDIDATES = [
     {
+        seasonCode: '2526',
+        season: '2025-2026',
+    },
+    {
         seasonCode: '2425',
         season: '2024-2025',
     },
@@ -66,6 +70,13 @@ const OUTPUT_HEADERS = [
     'close_away',
     'home_score',
     'away_score',
+    'home_corners',
+    'away_corners',
+    'home_yellow_cards',
+    'away_yellow_cards',
+    'home_red_cards',
+    'away_red_cards',
+    'referee',
     'quality_flags',
 ];
 const MARKET_CONFIGS = [
@@ -219,7 +230,7 @@ function parseArgs(argv = process.argv.slice(2)) {
 
 function printUsage() {
     console.log(
-        '用法: node scripts/ops/fetch_and_adapt_euro_leagues.js [--league-code E0|SP1|D1|I1|F1] [--season-code 2425]'
+        '用法: node scripts/ops/fetch_and_adapt_euro_leagues.js [--league-code E0|SP1|D1|I1|F1] [--season-code 2526|2425]'
     );
     console.log('说明: 默认抓取英超最新可用赛季；传入 --season-code 时只处理指定赛季。');
 }
@@ -504,6 +515,13 @@ function adaptSourceRow(row, context) {
         status: hasFinalScore(row) ? 'finished' : 'scheduled',
         home_score: normalizeText(row.FTHG),
         away_score: normalizeText(row.FTAG),
+        home_corners: normalizeText(row.HC),
+        away_corners: normalizeText(row.AC),
+        home_yellow_cards: normalizeText(row.HY),
+        away_yellow_cards: normalizeText(row.AY),
+        home_red_cards: normalizeText(row.HR),
+        away_red_cards: normalizeText(row.AR),
+        referee: normalizeText(row.Referee),
     };
     const expandedRows = buildExpandedOddsRows(row, context, matchCore);
     if (expandedRows.length === 0) {

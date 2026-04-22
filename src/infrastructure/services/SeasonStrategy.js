@@ -9,6 +9,24 @@
 
 'use strict';
 
+function normalizeSeasonFingerprint(season) {
+  return String(season || '').replace(/[^0-9]/g, '');
+}
+
+function extractPrimarySeasonYear(season) {
+  const directMatch = String(season || '').match(/(\d{4})/);
+  if (directMatch) {
+    return parseInt(directMatch[1], 10);
+  }
+
+  const fingerprint = normalizeSeasonFingerprint(season);
+  if (fingerprint.length >= 4) {
+    return parseInt(fingerprint.slice(0, 4), 10);
+  }
+
+  return Number.NaN;
+}
+
 /**
  * 赛季策略接口
  * @interface ISeasonStrategy
@@ -214,32 +232,45 @@ class SeasonDiscovery {
       
       const availableSeasons = response.allAvailableSeasons;
       this.logger.info(`[SeasonDiscovery] 📋 发现 ${availableSeasons.length} 个可用赛季`);
+      const targetFingerprint = normalizeSeasonFingerprint(targetYear);
       
       // 策略 1: 精确匹配
       if (availableSeasons.includes(targetYear)) {
         this.logger.info(`[SeasonDiscovery] ✅ 精确匹配: ${targetYear}`);
         return targetYear;
       }
+
+      const normalizedExactMatch = availableSeasons.find((seasonId) => (
+        normalizeSeasonFingerprint(seasonId) === targetFingerprint
+      ));
+      if (normalizedExactMatch) {
+        this.logger.info(`[SeasonDiscovery] ✅ 归一化精确匹配: ${targetYear} -> ${normalizedExactMatch}`);
+        return normalizedExactMatch;
+      }
       
       // 策略 2: 包含匹配
-      const partialMatch = availableSeasons.find(s => 
-        s.includes(targetYear) || targetYear.includes(s)
-      );
+      const partialMatch = availableSeasons.find((seasonId) => {
+        const seasonFingerprint = normalizeSeasonFingerprint(seasonId);
+        return (
+          seasonId.includes(targetYear)
+          || targetYear.includes(seasonId)
+          || (targetFingerprint && seasonFingerprint.includes(targetFingerprint))
+          || (targetFingerprint && targetFingerprint.includes(seasonFingerprint))
+        );
+      });
       if (partialMatch) {
         this.logger.info(`[SeasonDiscovery] ✅ 包含匹配: ${targetYear} -> ${partialMatch}`);
         return partialMatch;
       }
       
       // 策略 3: 最接近匹配
-      const yearPattern = /(\d{4})/;
-      const targetYearNum = parseInt(targetYear);
+      const targetYearNum = extractPrimarySeasonYear(targetYear);
       let closestMatch = null;
       let minDiff = Infinity;
       
       for (const seasonId of availableSeasons) {
-        const match = seasonId.match(yearPattern);
-        if (match) {
-          const year = parseInt(match[1]);
+        const year = extractPrimarySeasonYear(seasonId);
+        if (Number.isFinite(year) && Number.isFinite(targetYearNum)) {
           const diff = Math.abs(year - targetYearNum);
           if (diff < minDiff) {
             minDiff = diff;

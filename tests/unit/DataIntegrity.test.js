@@ -133,6 +133,34 @@ describe('数据完整性测试套件', () => {
                 assert.strictEqual(url, 'https://www.fotmob.com/match/12345');
             });
 
+        it('getTargetUrl 应优先使用 L1 提供的历史 pageUrl', () => {
+                const match = {
+                    external_id: '12345',
+                    pageUrl: '/matches/fulham-vs-manchester-united/3cqww9#4506263'
+                };
+                const url = fotmobStrategy.getTargetUrl(match);
+                assert.strictEqual(url, 'https://www.fotmob.com/matches/fulham-vs-manchester-united/3cqww9#4506263');
+            });
+
+        it('_buildCookieHeader 应正确拼接 Cookie 头', () => {
+                const header = fotmobStrategy._buildCookieHeader([
+                    { name: 'session', value: 'abc' },
+                    { name: 'locale', value: 'zh-Hans' }
+                ]);
+                assert.strictEqual(header, 'session=abc; locale=zh-Hans');
+            });
+
+        it('_normalizeSessionCookie 应兼容 no_restriction sameSite', () => {
+                const cookie = fotmobStrategy._normalizeSessionCookie({
+                    name: 'session',
+                    value: 'abc',
+                    domain: '.fotmob.com',
+                    sameSite: 'no_restriction',
+                    secure: true
+                });
+                assert.strictEqual(cookie.sameSite, 'None');
+            });
+
         it('validateData 应该验证有效数据', () => {
                 const data = {
                     content: { lineup: {}, stats: {} },
