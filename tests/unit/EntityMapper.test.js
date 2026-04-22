@@ -27,3 +27,9 @@ test('normalizeBookmakerName 对未预置庄家应保持原值', () => {
   assert.equal(mapper.normalizeBookmakerName('Bet365'), 'Bet365');
   assert.equal(mapper.normalizeBookmakerName('Betfair Exchange'), 'Betfair Exchange');
 });
+
+test('normalizeLeagueName 应识别 LaLiga 别名', () => {
+  const mapper = new EntityMapper();
+
+  assert.equal(mapper.normalizeLeagueName('LaLiga'), 'La Liga');
+});

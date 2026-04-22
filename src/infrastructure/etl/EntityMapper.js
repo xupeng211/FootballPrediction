@@ -146,12 +146,14 @@ class EntityMapper {
 
     const segundaDivision = this.activeLeagues.find((league) => Number(league?.id) === 140)?.name || 'Segunda División';
     const premierLeague = this.activeLeagues.find((league) => Number(league?.id) === 47)?.name || 'Premier League';
+    const laLiga = this.activeLeagues.find((league) => Number(league?.id) === 87)?.name || 'La Liga';
     const championsLeague = this.activeLeagues.find((league) => Number(league?.id) === 42)?.name || 'Champions League';
     const mls = this.activeLeagues.find((league) => Number(league?.id) === 130)?.name || 'Major League Soccer';
 
     const defaults = {
       Segunda: segundaDivision,
       'Segunda Division': segundaDivision,
+      LaLiga: laLiga,
       LaLiga2: segundaDivision,
       'La Liga 2': segundaDivision,
       EPL: premierLeague,
