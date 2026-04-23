@@ -632,7 +632,7 @@ class TotalWarPipeline {
     ensureRuntimeDir();
     this.lockManager.acquire();
     this.pool = new Pool({
-      host: process.env.DB_HOST || 'host.docker.internal',
+      host: process.env.DB_HOST || '127.0.0.1',
       port: parseInt(process.env.DB_PORT || '5432', 10),
       database: process.env.DB_NAME || 'football_db',
       user: process.env.DB_USER || 'football_user',

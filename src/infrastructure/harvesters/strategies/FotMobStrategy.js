@@ -378,9 +378,24 @@ class FotMobStrategy {
             console.log(`[FotMobStrategy] 尝试从 __NEXT_DATA__ 提取数据...`);
         }
 
+        // TITAN 7.0: 防御性检查 - 确保页面未关闭
+        if (page.isClosed()) {
+            throw new Error('RETRYABLE_RESOURCE_ERROR: Page closed before evaluate');
+        }
+
         const nextData = await page.evaluate(() => {
             const script = document.getElementById('__NEXT_DATA__');
             return script ? JSON.parse(script.textContent) : null;
+        }).catch(error => {
+            // TITAN 7.0: 捕获上下文销毁错误并转换为可重试错误
+            if (error.message.includes('Execution context was destroyed') ||
+                error.message.includes('Target closed')) {
+                const retryError = new Error('RETRYABLE_RESOURCE_ERROR: Context destroyed during evaluate');
+                retryError.code = 'RETRYABLE_RESOURCE_ERROR';
+                retryError.originalError = error;
+                throw retryError;
+            }
+            throw error;
         });
 
         if (this.config.verboseLogging) {
@@ -392,6 +407,11 @@ class FotMobStrategy {
         // V4.51.2: 备用方案 B - 从 DOM 提取基础数据
         if (!nextData) {
             console.log('[FotMobStrategy] __NEXT_DATA__ 缺失，尝试 DOM 提取...');
+
+            // TITAN 7.0: 防御性检查 - 确保页面未关闭
+            if (page.isClosed()) {
+                throw new Error('RETRYABLE_RESOURCE_ERROR: Page closed before DOM extraction');
+            }
 
             const basicData = await page.evaluate(() => {
                 // 尝试多种选择器提取比赛信息

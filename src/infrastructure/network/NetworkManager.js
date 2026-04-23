@@ -129,7 +129,7 @@ class NetworkManager {
      * 初始化网络管理器
      * @param {object} options - 初始化选项
      * @param {Function} [options.preFlightCleanup] - 预清理函数
-     * @returns {Promise<void>}
+     * @returns {Promise<object>} 初始化结果，包含雷达探测信息
      */
     async initialize(options = {}) {
         // 预清理（如果提供）
@@ -137,11 +137,20 @@ class NetworkManager {
             await options.preFlightCleanup();
         }
 
+        let radarResult = null;
+        if (typeof this.proxyProvider.initialize === 'function') {
+            // Titan 7.0: 初始化 ProxyProvider 并获取雷达探测结果
+            radarResult = await this.proxyProvider.initialize();
+        }
+
         // 初始化 NetworkShield
         await this._initNetworkShield();
 
         // 初始化 SessionManager
         await this._initSessionManager();
+
+        // 返回雷达探测结果供弹性并发引擎使用
+        return radarResult;
     }
 
     /**
