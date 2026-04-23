@@ -88,6 +88,9 @@ jobs:
         env:
           GATEKEEPER_BUILD: "0"
           GATEKEEPER_CI_MODE: ${{ github.event_name == 'pull_request' && 'pr' || 'push' }}
+          DEV_DB_HOST: db
+          DEV_REDIS_HOST: redis
+          DEV_PROXY_HOST: 127.0.0.1
         run: bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"
 
   docker-build:
