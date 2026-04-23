@@ -29,7 +29,7 @@ const { EloRatingExtractor } = require('../../src/feature_engine/extractors/EloR
 
 const CONFIG = {
     db: {
-        host: process.env.DB_HOST || 'host.docker.internal',
+        host: process.env.DB_HOST || '127.0.0.1',
         port: parseInt(process.env.DB_PORT || '5432'),
         database: process.env.DB_NAME || 'football_db',
         user: process.env.DB_USER || 'football_user',

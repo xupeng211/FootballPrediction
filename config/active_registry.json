@@ -1,68 +1,72 @@
 {
   "$schema": "./schemas/registry_schema.json",
   "version": "V1.1.0",
-  "last_updated": "2026-04-19T09:30:00.000Z",
-  "registry_id": "REG-CLASH-36",
-  "description": "[Genesis.NetworkShield] Active Proxy Registry - Multi-Node Cluster Mode",
+  "last_updated": "2026-04-22T17:27:44.830Z",
+  "registry_id": "REG-TITAN-40",
+  "description": "[Genesis.NetworkShield] Active Proxy Registry - Titan 40 SOCKS5 Mirrored Mode",
   "registry_config": {
-    "proxy_host": "host.docker.internal",
+    "proxy_host": "127.0.0.1",
     "port_range": {
-      "start": 7890,
-      "end": 7925
+      "start": 10001,
+      "end": 10040
     },
-    "protocol": "http",
+    "protocol": "socks5",
     "health_check_interval_seconds": 30,
     "cooldown_minutes": 5,
     "max_consecutive_failures": 6,
     "session_timeout_minutes": 30,
     "circuit_breaker_threshold": 3,
     "active_ports": [
-      7890,
-      7891,
-      7892,
-      7893,
-      7894,
-      7895,
-      7896,
-      7897,
-      7898,
-      7899,
-      7900,
-      7901,
-      7902,
-      7903,
-      7904,
-      7905,
-      7906,
-      7907,
-      7908,
-      7909,
-      7910,
-      7911,
-      7912,
-      7913,
-      7914,
-      7915,
-      7916,
-      7917,
-      7918,
-      7919,
-      7920,
-      7921,
-      7922,
-      7923,
-      7924,
-      7925
+      10001,
+      10002,
+      10003,
+      10004,
+      10005,
+      10006,
+      10007,
+      10008,
+      10009,
+      10010,
+      10011,
+      10012,
+      10013,
+      10014,
+      10015,
+      10016,
+      10017,
+      10018,
+      10019,
+      10020,
+      10021,
+      10022,
+      10023,
+      10024,
+      10025,
+      10026,
+      10027,
+      10028,
+      10029,
+      10030,
+      10031,
+      10032,
+      10033,
+      10034,
+      10035,
+      10036,
+      10037,
+      10038,
+      10039,
+      10040
     ]
   },
   "nodes": [
     {
-      "id": "NODE-7890",
-      "port": 7890,
+      "id": "NODE-10001",
+      "port": 10001,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -71,17 +75,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7891",
-      "port": 7891,
+      "id": "NODE-10002",
+      "port": 10002,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -90,17 +94,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7892",
-      "port": 7892,
+      "id": "NODE-10003",
+      "port": 10003,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -109,17 +113,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7893",
-      "port": 7893,
+      "id": "NODE-10004",
+      "port": 10004,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -128,17 +132,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7894",
-      "port": 7894,
+      "id": "NODE-10005",
+      "port": 10005,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -147,17 +151,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7895",
-      "port": 7895,
+      "id": "NODE-10006",
+      "port": 10006,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -166,17 +170,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7896",
-      "port": 7896,
+      "id": "NODE-10007",
+      "port": 10007,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -185,17 +189,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7897",
-      "port": 7897,
+      "id": "NODE-10008",
+      "port": 10008,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -204,17 +208,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7898",
-      "port": 7898,
+      "id": "NODE-10009",
+      "port": 10009,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -223,17 +227,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7899",
-      "port": 7899,
+      "id": "NODE-10010",
+      "port": 10010,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -242,17 +246,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7900",
-      "port": 7900,
+      "id": "NODE-10011",
+      "port": 10011,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -261,17 +265,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7901",
-      "port": 7901,
+      "id": "NODE-10012",
+      "port": 10012,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -280,17 +284,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7902",
-      "port": 7902,
+      "id": "NODE-10013",
+      "port": 10013,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -299,17 +303,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7903",
-      "port": 7903,
+      "id": "NODE-10014",
+      "port": 10014,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -318,17 +322,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7904",
-      "port": 7904,
+      "id": "NODE-10015",
+      "port": 10015,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -337,17 +341,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7905",
-      "port": 7905,
+      "id": "NODE-10016",
+      "port": 10016,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -356,17 +360,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7906",
-      "port": 7906,
+      "id": "NODE-10017",
+      "port": 10017,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -375,17 +379,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7907",
-      "port": 7907,
+      "id": "NODE-10018",
+      "port": 10018,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -394,17 +398,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7908",
-      "port": 7908,
+      "id": "NODE-10019",
+      "port": 10019,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -413,17 +417,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7909",
-      "port": 7909,
+      "id": "NODE-10020",
+      "port": 10020,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -432,17 +436,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7910",
-      "port": 7910,
+      "id": "NODE-10021",
+      "port": 10021,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -451,17 +455,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7911",
-      "port": 7911,
+      "id": "NODE-10022",
+      "port": 10022,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -470,17 +474,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7912",
-      "port": 7912,
+      "id": "NODE-10023",
+      "port": 10023,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -489,17 +493,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7913",
-      "port": 7913,
+      "id": "NODE-10024",
+      "port": 10024,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -508,17 +512,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7914",
-      "port": 7914,
+      "id": "NODE-10025",
+      "port": 10025,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -527,17 +531,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7915",
-      "port": 7915,
+      "id": "NODE-10026",
+      "port": 10026,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -546,17 +550,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7916",
-      "port": 7916,
+      "id": "NODE-10027",
+      "port": 10027,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -565,17 +569,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7917",
-      "port": 7917,
+      "id": "NODE-10028",
+      "port": 10028,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -584,17 +588,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7918",
-      "port": 7918,
+      "id": "NODE-10029",
+      "port": 10029,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -603,17 +607,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7919",
-      "port": 7919,
+      "id": "NODE-10030",
+      "port": 10030,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -622,17 +626,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7920",
-      "port": 7920,
+      "id": "NODE-10031",
+      "port": 10031,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -641,17 +645,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7921",
-      "port": 7921,
+      "id": "NODE-10032",
+      "port": 10032,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -660,17 +664,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7922",
-      "port": 7922,
+      "id": "NODE-10033",
+      "port": 10033,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -679,17 +683,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7923",
-      "port": 7923,
+      "id": "NODE-10034",
+      "port": 10034,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -698,17 +702,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7924",
-      "port": 7924,
+      "id": "NODE-10035",
+      "port": 10035,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -717,17 +721,17 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
         "region": "default"
       }
     },
     {
-      "id": "NODE-7925",
-      "port": 7925,
+      "id": "NODE-10036",
+      "port": 10036,
       "status": "active",
       "health_score": 100,
       "consecutive_failures": 0,
-      "last_check": "2026-04-19T09:30:00.000Z",
+      "last_check": "2026-04-22T17:27:44.830Z",
       "last_success": null,
       "last_failure": null,
       "cooldown_until": null,
@@ -736,7 +740,83 @@
       "total_requests": 0,
       "successful_requests": 0,
       "metadata": {
-        "provider": "clash_verge",
+        "provider": "titan_socks5",
+        "region": "default"
+      }
+    },
+    {
+      "id": "NODE-10037",
+      "port": 10037,
+      "status": "active",
+      "health_score": 100,
+      "consecutive_failures": 0,
+      "last_check": "2026-04-22T17:27:44.830Z",
+      "last_success": null,
+      "last_failure": null,
+      "cooldown_until": null,
+      "ip_address": null,
+      "avg_latency_ms": 0,
+      "total_requests": 0,
+      "successful_requests": 0,
+      "metadata": {
+        "provider": "titan_socks5",
+        "region": "default"
+      }
+    },
+    {
+      "id": "NODE-10038",
+      "port": 10038,
+      "status": "active",
+      "health_score": 100,
+      "consecutive_failures": 0,
+      "last_check": "2026-04-22T17:27:44.830Z",
+      "last_success": null,
+      "last_failure": null,
+      "cooldown_until": null,
+      "ip_address": null,
+      "avg_latency_ms": 0,
+      "total_requests": 0,
+      "successful_requests": 0,
+      "metadata": {
+        "provider": "titan_socks5",
+        "region": "default"
+      }
+    },
+    {
+      "id": "NODE-10039",
+      "port": 10039,
+      "status": "active",
+      "health_score": 100,
+      "consecutive_failures": 0,
+      "last_check": "2026-04-22T17:27:44.830Z",
+      "last_success": null,
+      "last_failure": null,
+      "cooldown_until": null,
+      "ip_address": null,
+      "avg_latency_ms": 0,
+      "total_requests": 0,
+      "successful_requests": 0,
+      "metadata": {
+        "provider": "titan_socks5",
+        "region": "default"
+      }
+    },
+    {
+      "id": "NODE-10040",
+      "port": 10040,
+      "status": "active",
+      "health_score": 100,
+      "consecutive_failures": 0,
+      "last_check": "2026-04-22T17:27:44.830Z",
+      "last_success": null,
+      "last_failure": null,
+      "cooldown_until": null,
+      "ip_address": null,
+      "avg_latency_ms": 0,
+      "total_requests": 0,
+      "successful_requests": 0,
+      "metadata": {
+        "provider": "titan_socks5",
         "region": "default"
       }
     }

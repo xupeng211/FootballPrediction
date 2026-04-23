@@ -236,7 +236,8 @@ class HarvesterRetryPolicy {
         const currentIdentity = harvester.networkManager?.getWorkerIdentity(workerId);
 
         if (currentIdentity) {
-            const newPort = await harvester.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
+            const newIdentity = await harvester.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
+            const newPort = newIdentity?.proxy?.port || newIdentity?.port || newIdentity;
 
             if (harvester.networkManager.sessionManager) {
                 await harvester.networkManager.sessionManager.clearSession(currentIdentity.proxy.port);
@@ -244,7 +245,7 @@ class HarvesterRetryPolicy {
             }
 
             console.log(
-                `🔄 [RETRY-${attempt + 1}] ${homeTeam} vs ${awayTeam} 切换端口 ${currentIdentity.proxy.port} → ${newPort?.port || newPort}...`
+                `🔄 [RETRY-${attempt + 1}] ${homeTeam} vs ${awayTeam} 切换端口 ${currentIdentity.proxy.port} → ${newPort}...`
             );
         }
 
@@ -283,8 +284,8 @@ class HarvesterRetryPolicy {
             if (harvester.networkManager) {
                 const currentIdentity = harvester.networkManager.getWorkerIdentity(workerId);
                 if (currentIdentity?.proxy?.port) {
-                    newPort = await harvester.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
-                    const newPortValue = newPort?.port || newPort;
+                    const newIdentity = await harvester.networkManager.forceReassignPort(workerId, currentIdentity.proxy.port);
+                    const newPortValue = newIdentity?.proxy?.port || newIdentity?.port || newIdentity;
                     console.log(`  🔄 [AUTO-AUTH] 端口切换: ${currentIdentity.proxy.port} → ${newPortValue}`);
                     newPort = newPortValue;
                 }

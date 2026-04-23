@@ -20,6 +20,7 @@ const { OddsPortalHarvester, OddsPortalURLParser } = require('../../src/infrastr
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
 const { resetProxyProvider } = require('../../src/infrastructure/network/ProxyProvider');
 const { Normalizer } = require('../../src/utils/Normalizer');
+const { resolveProxyPoolConfig } = require('../../config/proxy_pool');
 
 afterEach(() => {
   resetProxyProvider();
@@ -36,7 +37,7 @@ const TEST_CONFIG = {
     league: 'Premier League',
     season: '2023/2024'
   },
-  PROXY_PORTS: [7890, 7891, 7892] // 测试用代理端口
+  PROXY_PORTS: resolveProxyPoolConfig().ports // 测试用代理端口
 };
 
 // ============================================================================
@@ -97,15 +98,15 @@ describe('RealWorld_Odds_Fetch - TITAN V6.0 真实赔率抓取', () => {
       assert.ok(proxy.server, '必须有server属性');
       assert.strictEqual(typeof proxy.server, 'string', 'server必须是字符串');
       
-      // 断言: server必须是真实代理格式 (http://host:port)
+      // 断言: server必须是真实代理格式
       const proxyUrl = new URL(proxy.server);
-      assert.strictEqual(proxyUrl.protocol, 'http:', '代理协议必须是 http');
+      assert.strictEqual(proxyUrl.protocol, `${resolveProxyPoolConfig().protocol}:`, `代理协议必须是 ${resolveProxyPoolConfig().protocol}`);
       assert.ok(proxyUrl.hostname, '代理必须包含主机名');
       assert.ok(proxyUrl.port, '代理必须包含端口号');
 
-      // 断言: 必须是22端口之一
+      // 断言: 必须命中当前活动端口池
       const port = parseInt(proxyUrl.port, 10);
-      assert.ok(port >= 7890 && port <= 7911, `端口${port}必须在7890-7911范围内`);
+      assert.ok(TEST_CONFIG.PROXY_PORTS.includes(port), `端口${port}必须在活动端口池范围内`);
     });
     
     it('断言4: 连续获取代理必须轮询不同端口', () => {
