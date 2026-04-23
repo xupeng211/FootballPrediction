@@ -452,8 +452,7 @@ if not ports:
     ports = parse_ports(file_config.get("ports"))
 
 host = (
-    os.environ.get("WSL2_PROXY_HOST")
-    or os.environ.get("PROXY_HOST")
+    os.environ.get("PROXY_HOST")
     or extract_proxy_host(server_template)
     or file_config.get("host")
     or "127.0.0.1"

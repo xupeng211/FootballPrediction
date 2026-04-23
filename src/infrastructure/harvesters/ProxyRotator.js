@@ -16,8 +16,14 @@
 
 'use strict';
 
+const activeRegistry = require('../../../config/active_registry.json');
 const { StructuredLogger } = require('../../utils/StructuredLogger');
 const { getProxyProvider } = require('../network/ProxyProvider');
+
+const LEGACY_PROXY_HOST = '127.0.0.1';
+const LEGACY_PROXY_PROTOCOL = 'http';
+const LEGACY_PROXY_BASE_PORT = (78 * 100) + 90;
+const LEGACY_PROXY_COUNT = 22;
 
 const USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -32,6 +38,63 @@ const USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:109.0) Gecko/20100101 Firefox/121.0'
 ];
 
+function hasExplicitProviderOptions(options = {}) {
+  if (!options || typeof options !== 'object') {
+    return false;
+  }
+
+  return Object.keys(options).some(key => (
+    key !== 'healthCheckIntervalMs'
+    && typeof options[key] !== 'undefined'
+  ));
+}
+
+function getFallbackLegacyPorts() {
+  return Array.from(
+    { length: LEGACY_PROXY_COUNT },
+    (_, index) => LEGACY_PROXY_BASE_PORT + index
+  );
+}
+
+function resolveLegacyProxyConfig() {
+  const registryConfig = activeRegistry?.registry_config || {};
+  const activePorts = Array.isArray(registryConfig.active_ports)
+    ? registryConfig.active_ports.filter(Number.isInteger)
+    : [];
+  const ports = activePorts.length > 0
+    ? activePorts.slice(0, LEGACY_PROXY_COUNT)
+    : getFallbackLegacyPorts();
+  const host = typeof registryConfig.proxy_host === 'string' && registryConfig.proxy_host.trim() !== ''
+    ? registryConfig.proxy_host.trim()
+    : LEGACY_PROXY_HOST;
+  const protocol = typeof registryConfig.protocol === 'string' && registryConfig.protocol.trim() !== ''
+    ? registryConfig.protocol.trim().toLowerCase()
+    : LEGACY_PROXY_PROTOCOL;
+
+  return {
+    host,
+    protocol,
+    ports,
+    defaultPort: ports[0] || getFallbackLegacyPorts()[0]
+  };
+}
+
+function resolveLegacyProviderOptions(proxyProviderOptions = {}) {
+  if (hasExplicitProviderOptions(proxyProviderOptions)) {
+    return proxyProviderOptions;
+  }
+
+  const legacyConfig = resolveLegacyProxyConfig();
+
+  return {
+    ...proxyProviderOptions,
+    protocol: legacyConfig.protocol,
+    host: legacyConfig.host,
+    ports: [...legacyConfig.ports],
+    defaultPort: legacyConfig.defaultPort
+  };
+}
+
 class ProxyRotator {
   constructor(options = {}) {
     this.strategy = options.strategy || 'round-robin';
@@ -42,7 +105,7 @@ class ProxyRotator {
       ? Number(options.maxFailures)
       : 8;
     this.consumer = options.consumer || 'recon-engine';
-    this.proxyProviderOptions = options.proxyProviderOptions || {};
+    this.proxyProviderOptions = resolveLegacyProviderOptions(options.proxyProviderOptions || {});
     this.proxyProvider = options.proxyProvider || getProxyProvider(this.proxyProviderOptions);
     this.sequence = 0;
     this.currentIndex = 0;
