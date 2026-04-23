@@ -1,0 +1,46 @@
+{
+  "routes": [
+    {
+      "leagueName": "Premier League",
+      "country": "england",
+      "slug": "premier-league",
+      "expectedMatches": 380
+    },
+    {
+      "leagueName": "La Liga",
+      "country": "spain",
+      "slug": "laliga",
+      "expectedMatches": 380
+    },
+    {
+      "leagueName": "Bundesliga",
+      "country": "germany",
+      "slug": "bundesliga",
+      "expectedMatches": 306
+    },
+    {
+      "leagueName": "Serie A",
+      "country": "italy",
+      "slug": "serie-a",
+      "expectedMatches": 380
+    },
+    {
+      "leagueName": "Ligue 1",
+      "country": "france",
+      "slug": "ligue-1",
+      "expectedMatches": 306
+    },
+    {
+      "leagueName": "Champions League",
+      "country": "europe",
+      "slug": "champions-league",
+      "expectedMatches": 189
+    },
+    {
+      "leagueName": "Europa League",
+      "country": "europe",
+      "slug": "europa-league",
+      "expectedMatches": 189
+    }
+  ]
+}

@@ -30,7 +30,7 @@ const {
   normalizeTitleKey,
   parseArgs,
   sleep
-} = require('./odds_harvest_2425.shared');
+} = require('./odds_harvest_pipeline.shared');
 
 const pool = new Pool({
   host: process.env.DB_HOST || '127.0.0.1',
@@ -506,7 +506,7 @@ async function runL3Stitch(options = {}) {
   }
 
   await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, ['scripts/ops/l3_stitch_2425.js'], {
+    const child = spawn(process.execPath, ['scripts/ops/l3_stitch_pipeline.js'], {
       cwd: process.cwd(),
       env: {
         ...process.env,
@@ -522,7 +522,7 @@ async function runL3Stitch(options = {}) {
         resolve();
         return;
       }
-      reject(new Error(`l3_stitch_2425.js exited with code ${code}`));
+      reject(new Error(`l3_stitch_pipeline.js exited with code ${code}`));
     });
   });
 }

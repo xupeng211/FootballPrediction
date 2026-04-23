@@ -143,6 +143,8 @@ Python 脚本同理：
 | L1 发现 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js` | `scripts/ops/titan_discovery.js` |
 | L2 生产收割 | `<compose> -f docker-compose.dev.yml exec dev npm start` | `scripts/ops/run_production.js` |
 | 全自动总攻编排 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:total-war -- --season <season>` | `scripts/ops/total_war_pipeline.js` |
+| 专项赔率收割 | `<compose> -f docker-compose.dev.yml exec dev npm run odds:harvest -- --season <season>` | `scripts/ops/odds_harvest_pipeline.js` |
+| 定向 L3 缝合 | `<compose> -f docker-compose.dev.yml exec dev npm run l3:stitch` | `scripts/ops/l3_stitch_pipeline.js` |
 | L3 熔炼 | `<compose> -f docker-compose.dev.yml exec dev npm run smelt` | `scripts/ops/smelt_all.js` |
 
 ### 5.2 Recon / Backfill / Monitor
@@ -209,6 +211,8 @@ Recon 运行补充约定：
 - `src/config/proxy_settings.py`
 - `config/factory_config.js`
 - `config/registry.js`
+- `config/active_registry.json`
+- `config/odds_harvest_routes.json`
 - `config/recon_config.json`
 - `config/leagues.json`
 - `config/season_windows.json`

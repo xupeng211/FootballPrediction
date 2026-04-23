@@ -1,9 +1,14 @@
- 'use strict';
+'use strict';
 
 const reconConfig = require('../../config/recon_config.json');
+const routeConfig = require('../../config/odds_harvest_routes.json');
 const { Normalizer } = require('../../src/utils/Normalizer');
+const { resolveSeasonContext } = require('./helpers/seasonRuntimeConfig');
 
-const TARGET_SEASON = process.env.ODDS_HARVEST_SEASON || '2024/2025';
+const { season: TARGET_SEASON, seasonTag: TARGET_SEASON_TAG } = resolveSeasonContext({
+  seasonEnvVar: 'ODDS_HARVEST_SEASON',
+  seasonTagEnvVar: 'ODDS_HARVEST_SEASON_TAG'
+});
 const DEFAULT_USER_AGENT = process.env.ODDS_HARVEST_USER_AGENT
   || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 const DEFAULT_CONCURRENCY = Math.max(
@@ -119,50 +124,35 @@ const ODDSPORTAL_TEAM_ALIASES = Object.freeze({
   'Qarabag FK': 'Qarabag Fk'
 });
 
-const LEAGUE_ROUTE_CATALOG = Object.freeze({
-  'Premier League': {
-    leagueName: 'Premier League',
-    country: 'england',
-    slug: 'premier-league',
-    expectedMatches: 380
-  },
-  'La Liga': {
-    leagueName: 'La Liga',
-    country: 'spain',
-    slug: 'laliga',
-    expectedMatches: 380
-  },
-  Bundesliga: {
-    leagueName: 'Bundesliga',
-    country: 'germany',
-    slug: 'bundesliga',
-    expectedMatches: 306
-  },
-  'Serie A': {
-    leagueName: 'Serie A',
-    country: 'italy',
-    slug: 'serie-a',
-    expectedMatches: 380
-  },
-  'Ligue 1': {
-    leagueName: 'Ligue 1',
-    country: 'france',
-    slug: 'ligue-1',
-    expectedMatches: 306
-  },
-  'Champions League': {
-    leagueName: 'Champions League',
-    country: 'europe',
-    slug: 'champions-league',
-    expectedMatches: 189
-  },
-  'Europa League': {
-    leagueName: 'Europa League',
-    country: 'europe',
-    slug: 'europa-league',
-    expectedMatches: 189
+function buildLeagueRouteCatalog() {
+  const routes = Array.isArray(routeConfig?.routes) ? routeConfig.routes : [];
+  if (routes.length === 0) {
+    throw new Error('config/odds_harvest_routes.json 未声明任何联赛路由');
   }
-});
+
+  const catalog = {};
+  for (const route of routes) {
+    const leagueName = String(route?.leagueName || '').trim();
+    const country = String(route?.country || '').trim();
+    const slug = String(route?.slug || '').trim();
+    const expectedMatches = Number.parseInt(route?.expectedMatches, 10);
+
+    if (!leagueName || !country || !slug || !Number.isInteger(expectedMatches) || expectedMatches <= 0) {
+      throw new Error(`无效联赛路由配置: ${JSON.stringify(route)}`);
+    }
+
+    catalog[leagueName] = Object.freeze({
+      leagueName,
+      country,
+      slug,
+      expectedMatches
+    });
+  }
+
+  return Object.freeze(catalog);
+}
+
+const LEAGUE_ROUTE_CATALOG = buildLeagueRouteCatalog();
 
 const COVERAGE_SQL = `
   SELECT
@@ -593,6 +583,7 @@ module.exports = {
   RESULTS_BASE_URL,
   TARGETS_SQL,
   TARGET_SEASON,
+  TARGET_SEASON_TAG,
   UPSERT_MAPPING_SQL,
   UPSERT_ODDS_SQL,
   extractMedianOddsSnapshots,
