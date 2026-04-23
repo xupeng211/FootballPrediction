@@ -29,6 +29,10 @@ log() {
   printf '[Gatekeeper] %s\n' "$*"
 }
 
+warn() {
+  printf '[Gatekeeper] WARN: %s\n' "$*" >&2
+}
+
 fail() {
   printf '[Gatekeeper] ERROR: %s\n' "$*" >&2
   exit 1
@@ -62,6 +66,150 @@ resolve_auto_mode() {
   fi
 
   printf 'push\n'
+}
+
+is_ci_gatekeeper_context() {
+  [[ -n "${GITHUB_ACTIONS:-}" || "${CI:-}" == "true" ]]
+}
+
+git_current_branch() {
+  git symbolic-ref --quiet --short HEAD 2>/dev/null || true
+}
+
+git_branch_is_protected() {
+  local branch="$1"
+  case "$branch" in
+    main|master)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+git_branch_is_preferred_workspace() {
+  local branch="$1"
+  case "$branch" in
+    security/*|feat/*)
+      return 0
+      ;;
+    *)
+      return 1
+      ;;
+  esac
+}
+
+resolve_branch_upstream_ref() {
+  local branch="$1"
+  local upstream_ref=''
+
+  upstream_ref="$(git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true)"
+  if [[ -n "$upstream_ref" ]]; then
+    printf '%s\n' "$upstream_ref"
+    return 0
+  fi
+
+  if [[ -n "$branch" ]] && git rev-parse --verify "origin/${branch}" >/dev/null 2>&1; then
+    printf 'origin/%s\n' "$branch"
+    return 0
+  fi
+
+  return 1
+}
+
+collect_significant_status_lines() {
+  local line=''
+  local file=''
+
+  git status --short 2>/dev/null | while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    file="${line:3}"
+
+    case "$file" in
+      src/*|scripts/*|config/*|database/*|.github/*|.githooks/*|docker-compose*.yml|package.json|package-lock.json|Makefile|requirements*.txt|pytest.ini)
+        printf '%s\n' "$line"
+        ;;
+    esac
+  done
+}
+
+run_branch_workspace_preflight() {
+  local current_branch=''
+  local upstream_ref=''
+  local ahead_count=0
+  local ahead_merge_count=0
+  local merge_subject=''
+  local important_status=()
+  local line=''
+  local limit=10
+  local index=0
+
+  if [[ "${GATEKEEPER_HOST_PREFLIGHT_DONE:-0}" == "1" ]]; then
+    return 0
+  fi
+
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    return 0
+  fi
+
+  current_branch="$(git_current_branch)"
+  [[ -n "$current_branch" ]] || return 0
+
+  if ! is_ci_gatekeeper_context && git_branch_is_protected "$current_branch"; then
+    if [[ "$MODE" == "commit" ]]; then
+      fail '本地主干禁写协议触发！严禁在本地 main 编写或合并代码。请前往 feature 分支并通过 GitHub PR 流程操作。'
+    fi
+
+    if [[ "$MODE" == "push" ]]; then
+      upstream_ref="$(resolve_branch_upstream_ref "$current_branch" || true)"
+      if [[ -n "$upstream_ref" ]]; then
+        ahead_count="$(git rev-list --count "${upstream_ref}..HEAD" 2>/dev/null | tr -d '[:space:]')"
+        ahead_merge_count="$(git rev-list --count --merges "${upstream_ref}..HEAD" 2>/dev/null | tr -d '[:space:]')"
+      fi
+
+      if [[ -n "$ahead_count" ]] && (( ahead_count > 0 )); then
+        if [[ -n "$ahead_merge_count" ]] && (( ahead_merge_count > 0 )); then
+          merge_subject="$(git log --format=%s --merges -1 "${upstream_ref}..HEAD" 2>/dev/null || true)"
+          warn "检测到 ${ahead_merge_count} 个尚未推送到远端的 Merge Commit（范围 ${upstream_ref}..HEAD）。"
+          [[ -n "$merge_subject" ]] && warn "最近一次本地 Merge Commit: ${merge_subject}"
+        else
+          warn "检测到主干分支 ${current_branch} 存在 ${ahead_count} 个尚未推送的本地提交。"
+        fi
+        fail '本地主干禁写协议触发！严禁在本地 main 编写或合并代码。请前往 feature 分支并通过 GitHub PR 流程操作。'
+      fi
+    fi
+  fi
+
+  if is_ci_gatekeeper_context; then
+    return 0
+  fi
+
+  if [[ "$MODE" != "commit" && "$MODE" != "push" && "$MODE" != "pr" ]]; then
+    return 0
+  fi
+
+  if git_branch_is_protected "$current_branch" || git_branch_is_preferred_workspace "$current_branch"; then
+    return 0
+  fi
+
+  mapfile -t important_status < <(collect_significant_status_lines)
+  if [[ "${#important_status[@]}" -eq 0 ]]; then
+    return 0
+  fi
+
+  warn "当前分支 ${current_branch} 不属于规范工作分支（security/* 或 feat/*），但检测到 ${#important_status[@]} 个重要改动："
+  for line in "${important_status[@]}"; do
+    printf '[Gatekeeper] WARN:   %s\n' "$line" >&2
+    index=$((index + 1))
+    if (( index >= limit )); then
+      break
+    fi
+  done
+
+  if (( ${#important_status[@]} > limit )); then
+    warn "... 还有 $(( ${#important_status[@]} - limit )) 个重要改动未展开。"
+  fi
 }
 
 if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
@@ -99,6 +247,8 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
     log "自动选择门禁模式: ${MODE}"
   fi
 
+  run_branch_workspace_preflight
+
   UP_ARGS=(-d)
   if [[ "${GATEKEEPER_BUILD:-0}" == "1" ]]; then
     UP_ARGS=(-d --build)
@@ -112,7 +262,7 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
   log '切入 dev 容器执行门禁。'
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" exec -T "$DEV_SERVICE" \
     env GATEKEEPER_IN_CONTAINER=1 GATEKEEPER_MODE="$MODE" GATEKEEPER_WORKSPACE_ROOT="$WORKSPACE_ROOT" \
-    GITHUB_ACTIONS="${GITHUB_ACTIONS:-}" CI="${CI:-}" \
+    GATEKEEPER_HOST_PREFLIGHT_DONE=1 GITHUB_ACTIONS="${GITHUB_ACTIONS:-}" CI="${CI:-}" \
     bash "$CONTAINER_GATEKEEPER_PATH"
   exit $?
 fi
@@ -193,6 +343,37 @@ collect_scan_files() {
           ! -name '*.md' \
           ! -name '*.disabled' \
           ! -path '*/tests/*' \
+          ! -path '*/node_modules/*' \
+          ! -path '*/docs/*' \
+          ! -path '*/archive_vault_2026/*' \
+          ! -path '*/logs/*' \
+          ! -path '*/tmp/*' \
+          ! -path '*/__pycache__/*'
+      )
+    fi
+  done
+
+  printf '%s\n' "${files[@]}" | sort -u
+}
+
+collect_no_verify_scan_files() {
+  local roots=(scripts .githooks .github Makefile package.json)
+  local files=()
+  local root
+
+  for root in "${roots[@]}"; do
+    if [[ -f "$root" ]]; then
+      files+=("$root")
+      continue
+    fi
+
+    if [[ -d "$root" ]]; then
+      while IFS= read -r file; do
+        files+=("$file")
+      done < <(
+        find "$root" -type f \
+          ! -name '*.md' \
+          ! -name '*.disabled' \
           ! -path '*/node_modules/*' \
           ! -path '*/docs/*' \
           ! -path '*/archive_vault_2026/*' \
@@ -355,6 +536,35 @@ run_optional_grep() {
   fi
 
   return 0
+}
+
+run_no_verify_backdoor_guard() {
+  log '执行 Git Hook 逃逸参数扫描。'
+
+  mapfile -t scan_files < <(collect_no_verify_scan_files)
+  if [[ "${#scan_files[@]}" -eq 0 ]]; then
+    fail '未找到可用于扫描 Hook 逃逸参数的脚本文件。'
+  fi
+
+  local findings=()
+  local line=''
+  local no_verify_word='no'
+  local no_verify_long='--no'
+  local pattern=''
+  no_verify_word+='-verify'
+  no_verify_long+='-verify'
+  pattern="(^|[^[:alnum:]_-])(${no_verify_long}|${no_verify_word})([^[:alnum:]_-]|$)"
+
+  while IFS= read -r line; do
+    [[ -n "$line" ]] || continue
+    findings+=("$line")
+  done < <(run_optional_grep "$pattern" "${scan_files[@]}")
+
+  if [[ "${#findings[@]}" -gt 0 ]]; then
+    printf '[Gatekeeper] 命中 Hook 逃逸参数字面量:\n' >&2
+    printf '  %s\n' "${findings[@]}" >&2
+    fail '检测到绕过 Gatekeeper 的 Hook 逃逸参数，请立即移除。'
+  fi
 }
 
 assert_quality_tooling() {
@@ -981,27 +1191,27 @@ run_remote_merge_enforcement() {
   fi
 
   local current_branch
-  current_branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+  current_branch="$(git_current_branch)"
 
-  if [[ "$current_branch" != "main" && "$current_branch" != "master" ]]; then
+  if ! git_branch_is_protected "$current_branch"; then
     return 0
   fi
 
-  local last_commit_parents
-  last_commit_parents="$(git log -1 --format=%P HEAD 2>/dev/null || true)"
-
-  if [[ -z "$last_commit_parents" ]]; then
+  local upstream_ref
+  upstream_ref="$(resolve_branch_upstream_ref "$current_branch" || true)"
+  if [[ -z "$upstream_ref" ]]; then
     return 0
   fi
 
-  local parent_count
-  parent_count="$(echo "$last_commit_parents" | wc -w | tr -d '[:space:]')"
+  local merge_count
+  merge_count="$(git rev-list --count --merges "${upstream_ref}..HEAD" 2>/dev/null | tr -d '[:space:]')"
 
-  if (( parent_count > 1 )); then
+  if [[ -n "$merge_count" ]] && (( merge_count > 0 )); then
     printf '[Gatekeeper] ERROR: 检测到本地合并提交推送到主干分支 %s\n' "$current_branch" >&2
-    printf '[Gatekeeper] 最后一次提交有 %s 个父提交，疑似本地 merge\n' "$parent_count" >&2
-    printf '[Gatekeeper] 提交哈希: %s\n' "$(git log -1 --format=%H HEAD)" >&2
-    printf '[Gatekeeper] 提交信息: %s\n' "$(git log -1 --format=%s HEAD)" >&2
+    printf '[Gatekeeper] 命中 %s 个尚未推送的本地 Merge Commit，范围: %s..HEAD\n' "$merge_count" "$upstream_ref" >&2
+    printf '[Gatekeeper] 最近一次 Merge Commit: %s %s\n' \
+      "$(git log --format=%H --merges -1 "${upstream_ref}..HEAD")" \
+      "$(git log --format=%s --merges -1 "${upstream_ref}..HEAD")" >&2
     fail '禁止在本地合并代码推送到主干，请通过 GitHub PR 在云端完成合并！'
   fi
 }
@@ -1033,11 +1243,13 @@ run_commit_smoke_tests() {
 main() {
   log "进入门禁容器执行阶段（mode=${MODE}）。"
 
+  run_branch_workspace_preflight
   ensure_git_context
   bootstrap_node_dependencies
   bootstrap_python_dependencies
   assert_quality_tooling
 
+  run_no_verify_backdoor_guard
   validate_proxy_pool_file
   validate_cross_language_proxy_source
   run_secret_ip_leak_check
