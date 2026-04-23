@@ -112,6 +112,7 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
   log '切入 dev 容器执行门禁。'
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" exec -T "$DEV_SERVICE" \
     env GATEKEEPER_IN_CONTAINER=1 GATEKEEPER_MODE="$MODE" GATEKEEPER_WORKSPACE_ROOT="$WORKSPACE_ROOT" \
+    GITHUB_ACTIONS="${GITHUB_ACTIONS:-}" CI="${CI:-}" \
     bash "$CONTAINER_GATEKEEPER_PATH"
   exit $?
 fi
@@ -126,6 +127,8 @@ fi
 readonly MODE
 readonly WORKSPACE_ROOT
 readonly CONTAINER_GATEKEEPER_PATH
+readonly NODE_LOCKFILE='package-lock.json'
+readonly NODE_DEPENDENCY_STAMP='node_modules/.package-lock.sha256'
 readonly PORT_REGEX='7890|7891|7892|7893|7894|7895|7896|7897|7898|7899|7900|7901|7902|7903|7904|7905|7906|7907|7908|7909|7910|7911|7912'
 readonly LEAK_REGEX="172\\.25\\.16\\.1|\\b(${PORT_REGEX})\\b"
 readonly CONTRACT_REGEX='require\(["'"'"'](axios|node-fetch|got|http|https|node:http|node:https|http-proxy-agent|https-proxy-agent)["'"'"']\)|from ["'"'"'](axios|node-fetch|got|undici)["'"'"']'
@@ -280,9 +283,47 @@ resolve_python_quality_targets() {
 }
 
 bootstrap_node_dependencies() {
+  local expected_hash=''
+  local installed_hash=''
+  local reason=''
+
+  if [[ -f "$NODE_LOCKFILE" ]]; then
+    expected_hash="$(sha256sum "$NODE_LOCKFILE" | awk '{print $1}')"
+  fi
+
   if [[ ! -x node_modules/.bin/eslint || ! -x node_modules/.bin/c8 ]]; then
-    log 'Node 依赖缺失，执行 npm install 补齐开发工具链。'
-    npm install --no-fund --no-audit >/dev/null
+    reason='缺少核心 QA 二进制'
+  elif ! node <<'NODE' >/dev/null 2>&1
+const requiredModules = [
+  'http-proxy-agent',
+  'https-proxy-agent',
+  'socks-proxy-agent'
+];
+
+for (const moduleName of requiredModules) {
+  require.resolve(moduleName);
+}
+NODE
+  then
+    reason='缺少关键代理依赖'
+  elif [[ -n "$expected_hash" ]]; then
+    if [[ -f "$NODE_DEPENDENCY_STAMP" ]]; then
+      installed_hash="$(tr -d '[:space:]' < "$NODE_DEPENDENCY_STAMP")"
+    fi
+
+    if [[ "$installed_hash" != "$expected_hash" ]]; then
+      reason='node_modules 与 package-lock.json 指纹不一致'
+    fi
+  fi
+
+  if [[ -n "$reason" ]]; then
+    log "Node 依赖缓存失配（${reason}），执行 npm ci 重建依赖树。"
+    rm -f "$NODE_DEPENDENCY_STAMP"
+    npm ci --no-fund --no-audit >/dev/null
+
+    if [[ -n "$expected_hash" ]]; then
+      printf '%s\n' "$expected_hash" > "$NODE_DEPENDENCY_STAMP"
+    fi
   fi
 }
 
