@@ -13,6 +13,7 @@
         "etl:fetch-euro": "node scripts/ops/fetch_and_adapt_euro_leagues.js",
         "smelt": "node scripts/ops/smelt_all.js",
         "l3:stitch:2425": "node scripts/ops/l3_stitch_2425.js",
+        "odds:sniper": "node scripts/ops/odds_sniper.js",
         "harvest:production": "node scripts/ops/run_production.js",
         "titan:total-war": "node scripts/ops/total_war_pipeline.js",
         "titan:check": "node scripts/ops/check_health.js",
