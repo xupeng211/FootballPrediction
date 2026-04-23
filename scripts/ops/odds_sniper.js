@@ -24,32 +24,19 @@ const {
   OPENING_BOOKMAKER,
   UPSERT_ODDS_SQL,
   extractMedianOddsSnapshots
-} = require('./odds_harvest_2425.shared');
+} = require('./odds_harvest_pipeline.shared');
+const { resolveSeasonContext } = require('./helpers/seasonRuntimeConfig');
 
 const RESULTS_BASE_URL = 'https://www.oddsportal.com';
-const TARGET_SEASON = '2024/2025';
+const { season: TARGET_SEASON } = resolveSeasonContext({
+  seasonEnvVar: 'ODDS_SNIPER_SEASON',
+  seasonTagEnvVar: 'ODDS_SNIPER_SEASON_TAG'
+});
 const DEFAULT_PROXY_PROTOCOL = process.env.PROXY_PROTOCOL || 'socks5';
 const DEFAULT_PROXY_HOST = process.env.PROXY_HOST || process.env.WSL2_PROXY_HOST || '127.0.0.1';
 const DEFAULT_PROXY_PORT = Number.parseInt(process.env.ODDS_SNIPER_PROXY_PORT || '10001', 10);
 const DEFAULT_FETCH_TIMEOUT_MS = Number.parseInt(process.env.ODDS_SNIPER_FETCH_TIMEOUT_MS || '60000', 10);
 const DEFAULT_PAGE_SETTLE_MS = Number.parseInt(process.env.ODDS_SNIPER_PAGE_SETTLE_MS || '10000', 10);
-const DEFAULT_TARGETS = Object.freeze([
-  {
-    match_id: '42_20242025_4723906',
-    hash: 'GjsyvuYh',
-    url: 'https://www.oddsportal.com/football/h2h/ac-milan-8Sa8HInO/feyenoord-8zjySeoN/#GjsyvuYh'
-  },
-  {
-    match_id: '73_20242025_4622134',
-    hash: 'dr8bBL6U',
-    url: 'https://www.oddsportal.com/football/h2h/royale-union-sg-407h8Ird/twente-dhOKTHGA/#dr8bBL6U'
-  },
-  {
-    match_id: '53_20242025_4514030',
-    hash: 'hEkEOCFE',
-    url: 'https://www.oddsportal.com/football/h2h/montpellier-Eyf00syR/st-etienne-YL2QybFe/#hEkEOCFE'
-  }
-]);
 
 const FETCH_MATCH_ROWS_SQL = `
   SELECT
@@ -322,29 +309,32 @@ function parseArgs(argv) {
 }
 
 function resolveTargets(options) {
-  const catalog = new Map(DEFAULT_TARGETS.map((target) => [target.match_id, ensureTargetShape(target)]));
-
-  let targets = [];
-  if (options.targetsFile) {
-    const filePath = path.resolve(process.cwd(), options.targetsFile);
-    const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-    if (!Array.isArray(parsed)) {
-      throw new Error(`targets-file 必须是数组: ${filePath}`);
-    }
-    targets = parsed.map(ensureTargetShape);
-  } else if (options.matchIds.length > 0) {
-    targets = options.matchIds.map((matchId) => {
-      const target = catalog.get(matchId);
-      if (!target) {
-        throw new Error(`默认目标目录里不存在 match_id=${matchId}`);
-      }
-      return target;
-    });
-  } else {
-    targets = [...catalog.values()];
+  if (!options.targetsFile) {
+    throw new Error('必须提供 --targets-file，脚本不再内置 24/25 专项目标列表');
   }
 
-  return targets;
+  const filePath = path.resolve(process.cwd(), options.targetsFile);
+  const parsed = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  if (!Array.isArray(parsed)) {
+    throw new Error(`targets-file 必须是数组: ${filePath}`);
+  }
+
+  const catalog = new Map(parsed.map((target) => {
+    const normalized = ensureTargetShape(target);
+    return [normalized.match_id, normalized];
+  }));
+
+  if (options.matchIds.length === 0) {
+    return [...catalog.values()];
+  }
+
+  return options.matchIds.map((matchId) => {
+    const target = catalog.get(matchId);
+    if (!target) {
+      throw new Error(`targets-file 中不存在 match_id=${matchId}`);
+    }
+    return target;
+  });
 }
 
 function parsePageVar(html) {

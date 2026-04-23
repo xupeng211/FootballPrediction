@@ -251,6 +251,67 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
                 const features = extractGoldenFeatures(data);
                 assert.ok(features.home_market_value_total > 0, '应从 starters 计算身价');
             });
+
+            it('应该在未命中身价来源时仍保留 starters_count', () => {
+                const starters = Array.from({ length: 11 }, (_, index) => ({
+                    id: index + 1,
+                    name: `Starter ${index + 1}`,
+                    performance: { rating: 6.5 + (index * 0.01) }
+                }));
+                const data = MockDataFactory.createValidFotMobData({
+                    content: {
+                        lineup: {
+                            homeTeam: {
+                                name: 'Audit FC',
+                                starters,
+                                subs: []
+                            },
+                            awayTeam: {
+                                name: 'Mirror FC',
+                                starters,
+                                subs: []
+                            }
+                        }
+                    }
+                });
+
+                const features = extractGoldenFeatures(data);
+                assert.strictEqual(features.home_starters_count, 11, '未命中身价时主队首发人数仍应来自 starters');
+                assert.strictEqual(features.away_starters_count, 11, '未命中身价时客队首发人数仍应来自 starters');
+                assert.strictEqual(features.home_market_value_source, 'not_found', '应明确标记为 not_found');
+            });
+
+            it('应该禁止用 subs.length 覆盖 starters_count', () => {
+                const starters = Array.from({ length: 11 }, (_, index) => ({
+                    id: index + 1,
+                    name: `Starter ${index + 1}`
+                }));
+                const subs = Array.from({ length: 7 }, (_, index) => ({
+                    id: 100 + index,
+                    name: `Sub ${index + 1}`,
+                    marketValue: 10000000 + (index * 1000000)
+                }));
+                const data = MockDataFactory.createValidFotMobData({
+                    content: {
+                        lineup: {
+                            homeTeam: {
+                                name: 'Fallback FC',
+                                starters,
+                                subs
+                            },
+                            awayTeam: {
+                                name: 'Fallback United',
+                                starters,
+                                subs: []
+                            }
+                        }
+                    }
+                });
+
+                const features = extractGoldenFeatures(data);
+                assert.strictEqual(features.home_starters_count, 11, '主队首发人数不能被 subs.length 覆盖');
+                assert.strictEqual(features.home_market_value_source, 'subs', '应允许 subs 仅作为身价来源回退');
+            });
         });
 
         describe('TacticalMomentumExtractor', () => {

@@ -10,6 +10,7 @@
 'use strict';
 
 const { ProductionHarvester } = require('../../src/infrastructure/harvesters/ProductionHarvester');
+const { resolveSeasonContext } = require('./helpers/seasonRuntimeConfig');
 
 function parseLeagueIds(value) {
     const raw = String(value || '').trim();
@@ -26,12 +27,17 @@ function parseLeagueIds(value) {
 }
 
 function resolveTitanConfig() {
+    const seasonContext = resolveSeasonContext({
+        seasonEnvVar: 'TITAN_SEASON',
+        seasonTagEnvVar: 'TITAN_SEASON_TAG'
+    });
+
     return {
         workerCount: Number(process.env.TITAN_MAX_WORKERS || process.env.MAX_WORKERS || '40'),
         targetMatchCount: Number(process.env.TITAN_TARGET_MATCHES || '2130'),
         progressEvery: Number(process.env.TITAN_PROGRESS_EVERY || '10'),
-        season: process.env.TITAN_SEASON || '2024/2025',
-        seasonTag: process.env.TITAN_SEASON_TAG || '20242025',
+        season: seasonContext.season,
+        seasonTag: seasonContext.seasonTag,
         leagueIds: parseLeagueIds(process.env.TITAN_LEAGUE_IDS)
     };
 }
