@@ -198,7 +198,10 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
     describe('Extractor 组件测试', () => {
         const { extractGoldenFeatures } = require('../../src/feature_engine/extractors/GoldenFeatureExtractor.js');
         const { extractTacticalFeatures } = require('../../src/feature_engine/extractors/TacticalMomentumExtractor.js');
-        const { extractOddsMovementFeatures } = require('../../src/feature_engine/extractors/OddsMovementExtractor.js');
+        const {
+            extractOddsMovementFeatures,
+            extractOddsMovementFeaturesFromOddsData
+        } = require('../../src/feature_engine/extractors/OddsMovementExtractor.js');
 
         describe('GoldenFeatureExtractor', () => {
             it('应该正确提取标准数据', () => {
@@ -271,6 +274,24 @@ describe('🔥 FeatureSmelter 生产级压力审计', () => {
                 const features = extractOddsMovementFeatures(data);
                 
                 assert.strictEqual(features.has_odds_data, false, '应标记无赔率数据');
+            });
+
+            it('应该支持数据库赔率快照输入', () => {
+                const features = extractOddsMovementFeaturesFromOddsData({
+                    initial: { home: 1.95, draw: 3.4, away: 4.2 },
+                    current: { home: 1.82, draw: 3.55, away: 4.6 },
+                    history: [
+                        { home: 1.95, draw: 3.4, away: 4.2 },
+                        { home: 1.82, draw: 3.55, away: 4.6 }
+                    ],
+                    hasData: true
+                });
+
+                assert.strictEqual(features.has_odds_data, true, '数据库赔率应被识别为有效');
+                assert.strictEqual(features.odds_source, 'raw_data', '标准化快照应走统一赔率来源标记');
+                assert.strictEqual(features.initial_home_odds, 1.95, '应保留开盘赔率');
+                assert.strictEqual(features.current_home_odds, 1.82, '应保留收盘赔率');
+                assert.strictEqual(features.favorite, 'home', '应能计算市场热门方');
             });
         });
     });
