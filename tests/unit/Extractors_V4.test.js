@@ -390,6 +390,29 @@ console.log('\n🏆 GoldenExtractor 黄金特征提取测试\n');
     console.log('  ✅ 多路径身价搜索通过');
 }
 
+// 测试 10.1: starters_count 不应依赖身价命中
+{
+    console.log('  Test 2.4.1: starters_count 独立提取');
+    const extractor = new GoldenExtractor();
+    const data = createValidRawData();
+    const starters = Array.from({ length: 11 }, (_, index) => ({
+        performance: { rating: 6.2 + (index * 0.05) },
+        age: 20 + index
+    }));
+
+    delete data.content.lineup.homeTeam.totalStarterMarketValue;
+    delete data.content.lineup.awayTeam.totalStarterMarketValue;
+    data.content.lineup.homeTeam.starters = starters;
+    data.content.lineup.awayTeam.starters = starters;
+
+    const features = extractor.extract(data);
+    assert.strictEqual(features.home_starters_count, 11, '主队首发人数应直接来自 starters');
+    assert.strictEqual(features.away_starters_count, 11, '客队首发人数应直接来自 starters');
+    assert.strictEqual(features.home_market_value_source, 'deep_search', '未命中 starters 身价时应继续走后续回退');
+
+    console.log('  ✅ starters_count 独立提取通过');
+}
+
 // 测试 11: 特征字段清单
 {
     console.log('  Test 2.5: 特征字段清单完整性');

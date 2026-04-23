@@ -4,6 +4,10 @@
   "last_updated": "2026-04-22T17:27:44.830Z",
   "registry_id": "REG-TITAN-40",
   "description": "[Genesis.NetworkShield] Active Proxy Registry - Titan 40 SOCKS5 Mirrored Mode",
+  "active_context": {
+    "current_season": "2024/2025",
+    "current_season_tag": "20242025"
+  },
   "registry_config": {
     "proxy_host": "127.0.0.1",
     "port_range": {

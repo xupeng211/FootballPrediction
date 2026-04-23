@@ -184,6 +184,10 @@ function extractTeamFeatures(rawData, teamType, config) {
     return features;
 }
 
+function extractStarterCount(teamData) {
+    return safeGetArray(teamData, 'starters', []).length;
+}
+
 /**
  * 提取身价特征 - V201.13 多路径回退策略 + 单位修正
  *
@@ -204,6 +208,8 @@ function extractTeamFeatures(rawData, teamType, config) {
  */
 function extractMarketValueFeatures(rawData, teamData, prefix, config) {
     const features = {};
+    const starters = safeGetArray(teamData, 'starters', []);
+    const startersCount = extractStarterCount(teamData);
 
     // 初始化默认值
     features[`${prefix}_market_value_total`] = 0;
@@ -211,7 +217,7 @@ function extractMarketValueFeatures(rawData, teamData, prefix, config) {
     features[`${prefix}_market_value_std`] = 0;
     features[`${prefix}_market_value_max`] = 0;
     features[`${prefix}_market_value_min`] = 0;
-    features[`${prefix}_starters_count`] = 0;
+    features[`${prefix}_starters_count`] = startersCount;
     features[`${prefix}_market_value_source`] = 'none';
     features[`${prefix}_market_value_raw`] = 0;  // 保存原始值用于调试
 
@@ -225,9 +231,7 @@ function extractMarketValueFeatures(rawData, teamData, prefix, config) {
         features[`${prefix}_market_value_source`] = 'totalStarterMarketValue';
 
         // 尝试获取首发人数
-        const starters = safeGetArray(teamData, 'starters', []);
-        if (starters.length > 0) {
-            features[`${prefix}_starters_count`] = starters.length;
+        if (startersCount > 0) {
             features[`${prefix}_market_value_avg`] = Math.round(convertedValue / starters.length);
         }
 
@@ -235,7 +239,6 @@ function extractMarketValueFeatures(rawData, teamData, prefix, config) {
     }
 
     // 策略 2: 从 starters 数组提取身价
-    const starters = safeGetArray(teamData, 'starters', []);
     if (starters.length > 0) {
         // ✅ V201.13 修复: 单位转换
         const marketValues = starters
@@ -256,7 +259,6 @@ function extractMarketValueFeatures(rawData, teamData, prefix, config) {
             features[`${prefix}_market_value_std`] = Math.round(std);
             features[`${prefix}_market_value_max`] = Math.max(...marketValues);
             features[`${prefix}_market_value_min`] = Math.min(...marketValues);
-            features[`${prefix}_starters_count`] = starters.length;
             features[`${prefix}_market_value_source`] = 'starters';
 
             return features;
@@ -285,7 +287,6 @@ function extractMarketValueFeatures(rawData, teamData, prefix, config) {
             features[`${prefix}_market_value_std`] = Math.round(std);
             features[`${prefix}_market_value_max`] = Math.max(...marketValues);
             features[`${prefix}_market_value_min`] = Math.min(...marketValues);
-            features[`${prefix}_starters_count`] = subs.length;
             features[`${prefix}_market_value_source`] = 'subs';
 
             return features;
