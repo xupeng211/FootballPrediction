@@ -10,11 +10,15 @@ const {
     extractOddsMovementFeatures,
     extractOddsMovementFeaturesFromOddsData
 } = require('../../src/feature_engine/extractors/OddsMovementExtractor');
+const { resolveSeasonContext } = require('./helpers/seasonRuntimeConfig');
 
 const WORKER_INDEX = Number.parseInt(process.env.L3_STITCH_WORKER_INDEX || '0', 10);
 const SHARD_COUNT = Number.parseInt(process.env.L3_STITCH_SHARD_COUNT || '1', 10);
 const PROGRESS_EVERY = Number.parseInt(process.env.L3_STITCH_PROGRESS_EVERY || '25', 10);
-const TARGET_SEASON = process.env.L3_STITCH_SEASON || '2024/2025';
+const { season: TARGET_SEASON } = resolveSeasonContext({
+    seasonEnvVar: 'L3_STITCH_SEASON',
+    seasonTagEnvVar: 'L3_STITCH_SEASON_TAG'
+});
 const FULL_RECALCULATE = String(process.env.L3_STITCH_FULL_RECALCULATE || '').toLowerCase() === 'true';
 
 const pool = new Pool({

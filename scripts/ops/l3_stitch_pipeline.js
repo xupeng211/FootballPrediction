@@ -7,8 +7,12 @@ const os = require('os');
 const path = require('path');
 const { fork, spawn } = require('child_process');
 const { Pool } = require('pg');
+const { resolveSeasonContext } = require('./helpers/seasonRuntimeConfig');
 
-const TARGET_SEASON = process.env.L3_STITCH_SEASON || '2024/2025';
+const { season: TARGET_SEASON } = resolveSeasonContext({
+    seasonEnvVar: 'L3_STITCH_SEASON',
+    seasonTagEnvVar: 'L3_STITCH_SEASON_TAG'
+});
 const TARGET_WORKERS = Number.parseInt(
     process.env.L3_STITCH_WORKERS
         || String(Math.min(12, os.availableParallelism ? os.availableParallelism() : os.cpus().length)),

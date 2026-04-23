@@ -214,6 +214,10 @@ class GoldenExtractor extends BaseExtractor {
         return features;
     }
 
+    _extractStarterCount(teamData) {
+        return this._safeGetArray(teamData, 'starters').length;
+    }
+
     /**
      * 提取身价特征
      * @private
@@ -224,6 +228,8 @@ class GoldenExtractor extends BaseExtractor {
      */
     _extractMarketValueFeatures(rawData, teamData, prefix) {
         const features = {};
+        const starters = this._safeGetArray(teamData, 'starters');
+        const startersCount = this._extractStarterCount(teamData);
 
         // 初始化默认值
         features[`${prefix}_market_value_total`] = 0;
@@ -231,7 +237,7 @@ class GoldenExtractor extends BaseExtractor {
         features[`${prefix}_market_value_std`] = 0;
         features[`${prefix}_market_value_max`] = 0;
         features[`${prefix}_market_value_min`] = 0;
-        features[`${prefix}_starters_count`] = 0;
+        features[`${prefix}_starters_count`] = startersCount;
         features[`${prefix}_market_value_source`] = 'none';
         features[`${prefix}_market_value_raw`] = 0;
 
@@ -243,9 +249,7 @@ class GoldenExtractor extends BaseExtractor {
             features[`${prefix}_market_value_raw`] = totalMarketValue;
             features[`${prefix}_market_value_source`] = 'totalStarterMarketValue';
 
-            const starters = this._safeGetArray(teamData, 'starters');
-            if (starters.length > 0) {
-                features[`${prefix}_starters_count`] = starters.length;
+            if (startersCount > 0) {
                 features[`${prefix}_market_value_avg`] = Math.round(convertedValue / starters.length);
             }
 
@@ -253,7 +257,6 @@ class GoldenExtractor extends BaseExtractor {
         }
 
         // 策略 2: 从 starters 数组提取
-        const starters = this._safeGetArray(teamData, 'starters');
         if (starters.length > 0) {
             const marketValues = starters
                 .map(player => {
@@ -275,7 +278,6 @@ class GoldenExtractor extends BaseExtractor {
                 features[`${prefix}_market_value_std`] = Math.round(std);
                 features[`${prefix}_market_value_max`] = Math.max(...marketValues);
                 features[`${prefix}_market_value_min`] = Math.min(...marketValues);
-                features[`${prefix}_starters_count`] = starters.length;
                 features[`${prefix}_market_value_source`] = 'starters';
 
                 return features;
