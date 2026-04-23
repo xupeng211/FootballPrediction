@@ -120,8 +120,7 @@ function resolveProxyPoolConfig(env = process.env) {
         : '';
     const configuredServerTemplate = explicitServerTemplate || fileServerTemplate;
     const fileHost = normalizeHost(fileConfig.host);
-    const host = normalizeHost(env.WSL2_PROXY_HOST)
-        || normalizeHost(env.PROXY_HOST)
+    const host = normalizeHost(env.PROXY_HOST)
         || normalizeHost(extractHost(explicitServerTemplate))
         || (isLegacyBridgeHost(fileHost) ? '' : fileHost)
         || DEFAULT_PREFERRED_HOST
@@ -139,7 +138,7 @@ function resolveProxyPoolConfig(env = process.env) {
     const ports = candidatePorts.length > 0
         ? [...candidatePorts]
         : (defaultPort > 0 ? [defaultPort] : []);
-    const hasExplicitHost = normalizeHost(env.WSL2_PROXY_HOST) || normalizeHost(env.PROXY_HOST);
+    const hasExplicitHost = normalizeHost(env.PROXY_HOST);
     const serverTemplate = configuredServerTemplate && !hasExplicitHost
         ? configuredServerTemplate
         : `${protocol}://${host}:{port}`;

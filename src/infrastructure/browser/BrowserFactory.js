@@ -585,6 +585,10 @@ class BrowserFactory {
             return;
         }
 
+        if (!context || typeof context.route !== 'function') {
+            return;
+        }
+
         await context.route('**/*', async (route) => {
             const resourceType = route.request().resourceType();
 

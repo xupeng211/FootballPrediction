@@ -137,8 +137,7 @@ def resolve_shared_proxy_pool_config() -> dict[str, Any]:
 
     file_host = _normalize_proxy_host(file_config.get("host"))
     host = (
-        _normalize_proxy_host(os.environ.get("WSL2_PROXY_HOST"))
-        or _normalize_proxy_host(os.environ.get("PROXY_HOST"))
+        _normalize_proxy_host(os.environ.get("PROXY_HOST"))
         or _normalize_proxy_host(_extract_proxy_host(explicit_server_template))
         or (None if _is_legacy_bridge_proxy_host(file_host) else file_host)
         or DEFAULT_PREFERRED_PROXY_HOST
@@ -158,9 +157,7 @@ def resolve_shared_proxy_pool_config() -> dict[str, Any]:
 
     resolved_template = (
         server_template
-        if server_template
-        and not os.environ.get("WSL2_PROXY_HOST")
-        and not os.environ.get("PROXY_HOST")
+        if server_template and not os.environ.get("PROXY_HOST")
         else f"{protocol}://{host}:{{port}}"
     )
 

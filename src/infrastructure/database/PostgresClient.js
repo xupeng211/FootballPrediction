@@ -39,6 +39,18 @@ function loadEnvFile() {
 // 尝试加载 .env
 loadEnvFile();
 
+function getResolvedProxyConfig() {
+    const poolConfig = resolveProxyPoolConfig(process.env);
+    const ports = poolConfig.ports || [];
+
+    return {
+        host: process.env.PROXY_HOST || poolConfig.host,
+        portStart: parseInt(process.env.PROXY_PORT_START || '', 10) || ports[0] || 0,
+        portEnd: parseInt(process.env.PROXY_PORT_END || '', 10) || ports[ports.length - 1] || 0,
+        protocol: process.env.PROXY_PROTOCOL || poolConfig.protocol
+    };
+}
+
 /**
  * 数据库配置
  */
@@ -77,18 +89,16 @@ const ProxyConfig = {
         return process.env.ENABLE_PROXY_ROTATION === 'true';
     },
     get host() {
-        return resolveProxyPoolConfig().host;
+        return getResolvedProxyConfig().host;
     },
     get portStart() {
-        const ports = resolveProxyPoolConfig().ports;
-        return ports[0] || 0;
+        return getResolvedProxyConfig().portStart;
     },
     get portEnd() {
-        const ports = resolveProxyPoolConfig().ports;
-        return ports[ports.length - 1] || 0;
+        return getResolvedProxyConfig().portEnd;
     },
     get protocol() {
-        return resolveProxyPoolConfig().protocol;
+        return getResolvedProxyConfig().protocol;
     }
 };
 

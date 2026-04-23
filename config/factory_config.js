@@ -24,6 +24,13 @@ const { resolveProxyPoolConfig } = require('./proxy_pool');
 
 const ENV = process.env;
 const proxyPoolConfig = resolveProxyPoolConfig(ENV);
+const envProxyPorts = String(ENV.PROXY_PORTS || '')
+    .split(',')
+    .map(port => Number.parseInt(port.trim(), 10))
+    .filter(Number.isInteger);
+const resolvedProxyPorts = envProxyPorts.length > 0 ? envProxyPorts : [...proxyPoolConfig.ports];
+const resolvedDefaultProxyPort = Number.parseInt(ENV.PROXY_PORT || '', 10) || proxyPoolConfig.defaultPort;
+const resolvedProxyServerTemplate = ENV.PROXY_SERVER || proxyPoolConfig.serverTemplate;
 
 // ============================================================================
 // 璐ㄩ噺闂ㄧ閰嶇疆 (Quality Gate)
@@ -197,13 +204,13 @@ const PROXY_CONFIG = {
      * V173-OVERHAUL: 22 涓嫭绔?IP 浠ｇ悊绔彛姹?     * 绔彛鑼冨洿来自共享 proxy_pool 配置
      * 姣忎釜绔彛瀵瑰簲涓€涓嫭绔?IP 鍦板潃
      */
-    ports: [...proxyPoolConfig.ports],
+    ports: [...resolvedProxyPorts],
 
     /** 榛樿浠ｇ悊绔彛 */
-    defaultPort: proxyPoolConfig.defaultPort,
+    defaultPort: resolvedDefaultProxyPort,
 
     /** 浠ｇ悊鏈嶅姟鍣ㄥ湴鍧€妯℃澘 - V174-TUNING: 浣跨敤鐩存帴 IP 鍦板潃鎻愰珮绋冲畾鎬?*/
-    serverTemplate: proxyPoolConfig.serverTemplate,
+    serverTemplate: resolvedProxyServerTemplate,
 
     /** 浠ｇ悊鍋ュ悍妫€鏌ヨ秴鏃?(ms) */
     healthCheckTimeout: parseInt(ENV.PROXY_HEALTH_TIMEOUT) || 10000,
