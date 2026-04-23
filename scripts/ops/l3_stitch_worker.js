@@ -6,7 +6,10 @@ require('dotenv').config();
 const { Pool } = require('pg');
 const { extractGoldenFeatures } = require('../../src/feature_engine/extractors/GoldenFeatureExtractor');
 const { extractTacticalFeatures } = require('../../src/feature_engine/extractors/TacticalMomentumExtractor');
-const { extractOddsMovementFeatures } = require('../../src/feature_engine/extractors/OddsMovementExtractor');
+const {
+    extractOddsMovementFeatures,
+    extractOddsMovementFeaturesFromOddsData
+} = require('../../src/feature_engine/extractors/OddsMovementExtractor');
 
 const WORKER_INDEX = Number.parseInt(process.env.L3_STITCH_WORKER_INDEX || '0', 10);
 const SHARD_COUNT = Number.parseInt(process.env.L3_STITCH_SHARD_COUNT || '1', 10);
@@ -52,6 +55,37 @@ const UPSERT_SQL = `
         stitch_summary = EXCLUDED.stitch_summary,
         computed_at = EXCLUDED.computed_at,
         updated_at = NOW()
+`;
+
+const FETCH_CANONICAL_ODDS_SQL = `
+    SELECT
+        id,
+        match_id,
+        bookmaker,
+        home_odds,
+        draw_odds,
+        away_odds,
+        collected_at
+    FROM odds
+    WHERE match_id = ANY($1::varchar[])
+      AND home_odds IS NOT NULL
+      AND draw_odds IS NOT NULL
+      AND away_odds IS NOT NULL
+    ORDER BY match_id ASC, collected_at ASC NULLS LAST, id ASC
+`;
+
+const FETCH_BOOKMAKER_HISTORY_SQL = `
+    SELECT
+        id,
+        match_id,
+        bookmaker_name,
+        open_odds,
+        close_odds,
+        collected_at
+    FROM bookmaker_odds_history
+    WHERE match_id = ANY($1::varchar[])
+      AND lower(market_type) = '1x2'
+    ORDER BY match_id ASC, collected_at ASC NULLS LAST, id ASC
 `;
 
 function sendMessage(message) {
@@ -102,7 +136,227 @@ function buildConflictSummary(rawData, tacticalFeatures, goldenFeatures, oddsFea
         shotmap_shots: shotmapShots,
         rating_samples: ratingSamples,
         has_odds_data: !!oddsFeatures?.has_odds_data,
+        odds_source: oddsFeatures?._odds_source || 'none',
         conflicts
+    };
+}
+
+function groupRowsByKey(rows, keyField) {
+    const grouped = new Map();
+
+    for (const row of rows) {
+        const key = row?.[keyField];
+        if (!key) {
+            continue;
+        }
+
+        if (!grouped.has(key)) {
+            grouped.set(key, []);
+        }
+        grouped.get(key).push(row);
+    }
+
+    return grouped;
+}
+
+function toPositiveNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function median(values) {
+    if (values.length === 0) {
+        return null;
+    }
+
+    const sorted = [...values].sort((left, right) => left - right);
+    const middle = Math.floor(sorted.length / 2);
+
+    if (sorted.length % 2 === 1) {
+        return sorted[middle];
+    }
+
+    return (sorted[middle - 1] + sorted[middle]) / 2;
+}
+
+function aggregateOddsTriplet(points, collectedAt = null) {
+    const homeValues = points.map((point) => point.home).filter(Boolean);
+    const drawValues = points.map((point) => point.draw).filter(Boolean);
+    const awayValues = points.map((point) => point.away).filter(Boolean);
+
+    if (homeValues.length === 0 || drawValues.length === 0 || awayValues.length === 0) {
+        return null;
+    }
+
+    return {
+        home: median(homeValues),
+        draw: median(drawValues),
+        away: median(awayValues),
+        collectedAt
+    };
+}
+
+function normalizeCanonicalOddsRow(row) {
+    return {
+        home: toPositiveNumber(row.home_odds),
+        draw: toPositiveNumber(row.draw_odds),
+        away: toPositiveNumber(row.away_odds),
+        collectedAt: row.collected_at ? new Date(row.collected_at).toISOString() : null
+    };
+}
+
+function normalizeHistoryOddsPayload(payload, collectedAt) {
+    return {
+        home: toPositiveNumber(payload?.home),
+        draw: toPositiveNumber(payload?.draw),
+        away: toPositiveNumber(payload?.away),
+        collectedAt: collectedAt ? new Date(collectedAt).toISOString() : null
+    };
+}
+
+function buildOddsDataFromCanonicalRows(rows) {
+    if (!rows || rows.length === 0) {
+        return null;
+    }
+
+    const groupedByTimestamp = new Map();
+
+    for (const row of rows) {
+        const normalized = normalizeCanonicalOddsRow(row);
+        if (!normalized.home || !normalized.draw || !normalized.away) {
+            continue;
+        }
+
+        const timestampKey = normalized.collectedAt || `snapshot-${row.id}`;
+        if (!groupedByTimestamp.has(timestampKey)) {
+            groupedByTimestamp.set(timestampKey, []);
+        }
+        groupedByTimestamp.get(timestampKey).push(normalized);
+    }
+
+    const history = Array.from(groupedByTimestamp.entries())
+        .map(([timestampKey, points]) => aggregateOddsTriplet(points, timestampKey.startsWith('snapshot-') ? null : timestampKey))
+        .filter(Boolean);
+
+    if (history.length === 0) {
+        return null;
+    }
+
+    return {
+        initial: history[0],
+        current: history[history.length - 1],
+        history,
+        hasData: true,
+        odds_source: 'odds',
+        _odds_source: 'odds',
+        _odds_source_rows: rows.length,
+        _odds_source_points: history.length
+    };
+}
+
+function buildOddsDataFromHistoricalRows(rows) {
+    if (!rows || rows.length === 0) {
+        return null;
+    }
+
+    const openingPoints = rows
+        .map((row) => normalizeHistoryOddsPayload(row.open_odds, row.collected_at))
+        .filter((point) => point.home && point.draw && point.away);
+
+    const closingPoints = rows
+        .map((row) => normalizeHistoryOddsPayload(row.close_odds, row.collected_at))
+        .filter((point) => point.home && point.draw && point.away);
+
+    const initial = aggregateOddsTriplet(openingPoints, openingPoints[0]?.collectedAt || null);
+    const current = aggregateOddsTriplet(closingPoints, closingPoints[closingPoints.length - 1]?.collectedAt || null);
+
+    if (!initial && !current) {
+        return null;
+    }
+
+    const history = [];
+    if (initial) {
+        history.push(initial);
+    }
+    if (
+        current
+        && (
+            !initial
+            || initial.home !== current.home
+            || initial.draw !== current.draw
+            || initial.away !== current.away
+        )
+    ) {
+        history.push(current);
+    }
+
+    return {
+        initial: initial || current,
+        current: current || initial,
+        history,
+        hasData: true,
+        odds_source: 'bookmaker_odds_history',
+        _odds_source: 'bookmaker_odds_history',
+        _odds_source_rows: rows.length,
+        _odds_source_points: history.length
+    };
+}
+
+async function prefetchOddsSources(client, rows) {
+    const matchIds = rows.map((row) => row.match_id).filter(Boolean);
+    const externalIds = rows.map((row) => row.external_id).filter(Boolean);
+
+    const canonicalRows = matchIds.length > 0
+        ? (await client.query(FETCH_CANONICAL_ODDS_SQL, [matchIds])).rows
+        : [];
+
+    const historicalRows = externalIds.length > 0
+        ? (await client.query(FETCH_BOOKMAKER_HISTORY_SQL, [externalIds])).rows
+        : [];
+
+    return {
+        canonicalByMatchId: groupRowsByKey(canonicalRows, 'match_id'),
+        historicalByExternalId: groupRowsByKey(historicalRows, 'match_id')
+    };
+}
+
+function extractBestAvailableOddsFeatures(row, tacticalFeatures, oddsSources) {
+    const canonicalData = buildOddsDataFromCanonicalRows(
+        oddsSources.canonicalByMatchId.get(row.match_id) || []
+    );
+
+    if (canonicalData) {
+        return {
+            ...extractOddsMovementFeaturesFromOddsData(canonicalData, tacticalFeatures),
+            odds_source: canonicalData.odds_source,
+            _odds_source: canonicalData._odds_source,
+            _odds_source_rows: canonicalData._odds_source_rows,
+            _odds_source_points: canonicalData._odds_source_points
+        };
+    }
+
+    const historicalKey = row.external_id || row.match_id;
+    const historicalData = buildOddsDataFromHistoricalRows(
+        oddsSources.historicalByExternalId.get(historicalKey) || []
+    );
+
+    if (historicalData) {
+        return {
+            ...extractOddsMovementFeaturesFromOddsData(historicalData, tacticalFeatures),
+            odds_source: historicalData.odds_source,
+            _odds_source: historicalData._odds_source,
+            _odds_source_rows: historicalData._odds_source_rows,
+            _odds_source_points: historicalData._odds_source_points
+        };
+    }
+
+    const rawFeatures = extractOddsMovementFeatures(row.raw_data, tacticalFeatures);
+    return {
+        ...rawFeatures,
+        odds_source: rawFeatures.has_odds_data ? 'raw_data' : 'none',
+        _odds_source: rawFeatures.has_odds_data ? 'raw_data' : 'none',
+        _odds_source_rows: 0,
+        _odds_source_points: Number(rawFeatures.odds_history_count || 0)
     };
 }
 
@@ -148,13 +402,14 @@ async function run() {
 
     try {
         const rows = await fetchMatches(client);
+        const oddsSources = await prefetchOddsSources(client, rows);
         sendMessage({ type: 'worker_start', workerIndex: WORKER_INDEX, assigned: rows.length });
 
         for (const row of rows) {
             try {
                 const goldenFeatures = extractGoldenFeatures(row.raw_data);
                 const tacticalFeatures = extractTacticalFeatures(row.raw_data);
-                const oddsFeatures = extractOddsMovementFeatures(row.raw_data);
+                const oddsFeatures = extractBestAvailableOddsFeatures(row, tacticalFeatures, oddsSources);
                 const summary = buildConflictSummary(row.raw_data, tacticalFeatures, goldenFeatures, oddsFeatures);
 
                 if (summary.conflicts.length > 0) {

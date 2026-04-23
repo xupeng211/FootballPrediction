@@ -116,6 +116,18 @@ async function getFinalReport(client) {
                 WHERE jsonb_array_length(COALESCE(l.stitch_summary->'conflicts', '[]'::jsonb)) > 0
             ) AS parser_conflict_rows,
             COUNT(*) FILTER (
+                WHERE COALESCE((l.odds_features->>'has_odds_data')::boolean, FALSE)
+            ) AS odds_seeded_rows,
+            COUNT(*) FILTER (
+                WHERE l.odds_features->>'odds_source' = 'odds'
+            ) AS odds_table_seeded_rows,
+            COUNT(*) FILTER (
+                WHERE l.odds_features->>'odds_source' = 'bookmaker_odds_history'
+            ) AS odds_history_seeded_rows,
+            COUNT(*) FILTER (
+                WHERE l.odds_features->>'odds_source' = 'none'
+            ) AS odds_none_rows,
+            COUNT(*) FILTER (
                 WHERE COALESCE((l.elo_features->>'home_elo')::numeric, 0) > 0
             ) AS elo_seeded_rows
         FROM matches m

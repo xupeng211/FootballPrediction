@@ -52,21 +52,39 @@ function extractOddsMovementFeatures(rawData, tacticalFeatures = {}, config = DE
         return createEmptyOddsFeatures();
     }
 
+    return extractOddsMovementFeaturesFromOddsData(
+        extractOddsData(rawData),
+        tacticalFeatures,
+        config
+    );
+}
+
+/**
+ * 从标准化赔率快照中提取赔率变动特征
+ * @param {object} oddsData
+ * @param {object} tacticalFeatures
+ * @param {object} config
+ * @returns {object}
+ */
+function extractOddsMovementFeaturesFromOddsData(oddsData, tacticalFeatures = {}, config = DEFAULT_CONFIG) {
+    const normalizedOddsData = normalizeOddsData(oddsData);
+
+    if (!normalizedOddsData.hasData) {
+        return createEmptyOddsFeatures();
+    }
+
     const features = {};
 
-    // 提取赔率数据
-    const oddsData = extractOddsData(rawData);
-
     // 1. 基础赔率特征
-    const basicFeatures = extractBasicOddsFeatures(oddsData);
+    const basicFeatures = extractBasicOddsFeatures(normalizedOddsData);
     Object.assign(features, basicFeatures);
 
     // 2. 隐含概率（Market Consensus）
-    const consensusFeatures = calculateMarketConsensus(oddsData);
+    const consensusFeatures = calculateMarketConsensus(normalizedOddsData);
     Object.assign(features, consensusFeatures);
 
     // 3. Steam 信号检测
-    const steamFeatures = detectSteamSignals(oddsData, config);
+    const steamFeatures = detectSteamSignals(normalizedOddsData, config);
     Object.assign(features, steamFeatures);
 
     // 4. 异常检测（与 xG 模型对比）
@@ -74,6 +92,7 @@ function extractOddsMovementFeatures(rawData, tacticalFeatures = {}, config = DE
     Object.assign(features, anomalyFeatures);
 
     // 元数据
+    features.odds_source = oddsData.odds_source || 'raw_data';
     features._version = 'V176.0.0';
     features._extractedAt = new Date().toISOString();
 
@@ -137,6 +156,61 @@ function extractOddsData(rawData) {
     oddsData.hasData = !!(oddsData.initial.home || oddsData.current.home);
 
     return oddsData;
+}
+
+function normalizePositiveNumber(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function normalizeOddsTriplet(candidate = {}) {
+    return {
+        home: normalizePositiveNumber(candidate?.home),
+        draw: normalizePositiveNumber(candidate?.draw),
+        away: normalizePositiveNumber(candidate?.away)
+    };
+}
+
+function normalizeOddsHistoryEntry(entry) {
+    const normalized = normalizeOddsTriplet(entry);
+
+    if (!normalized.home && !normalized.draw && !normalized.away) {
+        return null;
+    }
+
+    if (Number.isFinite(Number(entry?.minutesToKickoff))) {
+        normalized.minutesToKickoff = Number(entry.minutesToKickoff);
+    }
+
+    if (entry?.collectedAt) {
+        normalized.collectedAt = entry.collectedAt;
+    }
+
+    return normalized;
+}
+
+function normalizeOddsData(oddsData = {}) {
+    const initial = normalizeOddsTriplet(oddsData.initial);
+    const current = normalizeOddsTriplet(oddsData.current);
+    const history = Array.isArray(oddsData.history)
+        ? oddsData.history.map(normalizeOddsHistoryEntry).filter(Boolean)
+        : [];
+
+    const hasTriplet = (triplet) => !!(triplet.home || triplet.draw || triplet.away);
+    const hasData = Boolean(
+        oddsData.hasData
+        || hasTriplet(initial)
+        || hasTriplet(current)
+        || history.length > 0
+    );
+
+    return {
+        initial,
+        current,
+        history,
+        hasData,
+        odds_source: oddsData.odds_source || null
+    };
 }
 
 /**
@@ -370,6 +444,7 @@ function createEmptyOddsFeatures() {
         steam_detected: false,
         steam_strength: 0,
         odds_anomaly_flag: false,
+        odds_source: 'none',
         _error: 'No odds data available',
         _version: 'V176.0.0',
         _extractedAt: new Date().toISOString()
@@ -378,6 +453,7 @@ function createEmptyOddsFeatures() {
 
 module.exports = {
     extractOddsMovementFeatures,
+    extractOddsMovementFeaturesFromOddsData,
     extractOddsData,
     calculateMarketConsensus,
     detectSteamSignals,
