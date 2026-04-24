@@ -103,6 +103,18 @@ class L1ConfigManager {
     return this._resolveExpectedMatches(this.runtimeConfig.season_windows || {}, Number(leagueId), season);
   }
 
+  getSeasonDateWindow(leagueId, season) {
+    if (!season) {
+      return null;
+    }
+    return this._resolveSeasonDateWindow(
+      this.runtimeConfig.season_windows || {},
+      this.runtimeConfig.season_window_derivation || {},
+      Number(leagueId),
+      season
+    );
+  }
+
   buildLeagueApiUrl(leagueId, season) {
     const providerLeagueId = this.getProviderLeagueId(leagueId);
     return `https://www.fotmob.com/api/data/leagues?id=${Number(providerLeagueId)}&season=${encodeURIComponent(season)}`;
@@ -129,7 +141,8 @@ class L1ConfigManager {
       active_seasons: activeSeasons,
       default_season: defaultSeason,
       single_year_league_ids: singleYearLeagueIds,
-      season_windows: seasonWindows.seasons || {}
+      season_windows: seasonWindows.seasons || {},
+      season_window_derivation: seasonWindows.derived_windows || {}
     };
   }
 
@@ -159,11 +172,82 @@ class L1ConfigManager {
 
   _resolveExpectedMatches(seasonConfig, leagueId, season) {
     const candidates = [
-      this._findSeasonWindowByLeague(seasonConfig[season], leagueId),
-      this._findSeasonWindowBySuffix(seasonConfig, leagueId, season),
+      this._resolveSeasonWindowEntry(seasonConfig, leagueId, season),
       ...Object.values(seasonConfig).filter((window) => this._isSeasonWindowMatch(window, leagueId, season))
     ];
     return candidates.find((window) => Number.isFinite(Number(window?.expected_matches)))?.expected_matches || null;
+  }
+
+  _resolveSeasonDateWindow(seasonConfig, derivationConfig, leagueId, season) {
+    const explicitWindow = this._resolveSeasonWindowEntry(seasonConfig, leagueId, season);
+    if (explicitWindow?.start && explicitWindow?.end) {
+      return {
+        start: explicitWindow.start,
+        end: explicitWindow.end,
+        source: 'explicit'
+      };
+    }
+
+    const derivedWindow = this._buildDerivedSeasonWindow(derivationConfig, leagueId, season);
+    if (derivedWindow) {
+      return derivedWindow;
+    }
+
+    return null;
+  }
+
+  _resolveSeasonWindowEntry(seasonConfig, leagueId, season) {
+    return [
+      this._findSeasonWindowByLeague(seasonConfig[season], leagueId),
+      this._findSeasonWindowBySuffix(seasonConfig, leagueId, season)
+    ].find(Boolean) || null;
+  }
+
+  _buildDerivedSeasonWindow(derivationConfig, leagueId, season) {
+    const seasonYears = this._extractSeasonYears(season);
+    if (!seasonYears) {
+      return null;
+    }
+
+    const strategies = derivationConfig?.strategies || {};
+    const overrides = derivationConfig?.league_strategy_overrides || {};
+    const strategyKey = String(overrides[String(leagueId)] || 'dual_year').trim();
+    const strategy = strategies[strategyKey];
+
+    if (!strategy?.start_month_day || !strategy?.end_month_day) {
+      return null;
+    }
+
+    const startYear = seasonYears.startYear;
+    const endYear = strategyKey === 'calendar_year'
+      ? seasonYears.startYear
+      : seasonYears.endYear > seasonYears.startYear
+        ? seasonYears.endYear
+        : seasonYears.startYear + 1;
+
+    return {
+      start: `${startYear}-${strategy.start_month_day}`,
+      end: `${endYear}-${strategy.end_month_day}`,
+      source: `derived:${strategyKey}`
+    };
+  }
+
+  _extractSeasonYears(season) {
+    const matches = String(season || '').match(/\d{4}/g);
+    if (!Array.isArray(matches) || matches.length === 0) {
+      return null;
+    }
+
+    const startYear = Number.parseInt(matches[0], 10);
+    const endYear = matches.length > 1
+      ? Number.parseInt(matches[1], 10)
+      : startYear;
+
+    if (!Number.isInteger(startYear) || !Number.isInteger(endYear)) {
+      return null;
+    }
+
+    return { startYear, endYear };
   }
 
   _findSeasonWindowByLeague(window, leagueId) {

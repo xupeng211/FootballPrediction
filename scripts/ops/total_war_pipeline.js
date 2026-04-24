@@ -2,7 +2,7 @@
 /* eslint-disable complexity, max-lines */
 /**
  * @file total_war_pipeline.js
- * @description TOTAL WAR 自动编排器，串行调度 Discovery / Harvest / Recon
+ * @description TOTAL WAR 自动编排器，串行调度 Discovery / Harvest / Recon / Smelt
  */
 
 'use strict';
@@ -71,7 +71,7 @@ TOTAL WAR PIPELINE - 24 小时自动编排器
   --recon-limit=N            Recon 单批上限，默认读取配置
   --recon-threshold=N        触发 Recon 的新增 raw 阈值，默认 50
   --threshold=0.X            Recon 匹配置信度阈值，透传给 recon_scanner
-  --task-stage=STAGE         指定阶段: auto|discovery|harvest|recon，默认 auto
+  --task-stage=STAGE         指定阶段: auto|discovery|harvest|recon|smelt，默认 auto
   --skip-leagues=LIST        Recon 跳过联赛（逗号分隔，可重复）
   --include-all-leagues      Recon 忽略默认 skip_list，显式纳入全部联赛
   --retry-failed-only        仅执行 pending/harvested/mismatch 收尾，不再触发 Discovery
@@ -118,7 +118,7 @@ function mergeLeagueLists(...lists) {
 
 function normalizeTaskStage(value) {
   const normalized = String(value || 'auto').trim().toLowerCase();
-  const allowedStages = new Set(['auto', 'discovery', 'harvest', 'recon']);
+  const allowedStages = new Set(['auto', 'discovery', 'harvest', 'recon', 'smelt']);
   if (allowedStages.has(normalized)) {
     return normalized;
   }
@@ -607,11 +607,13 @@ class TotalWarPipeline {
       lastDiscoveryAt: null,
       lastHarvestAt: null,
       lastReconAt: null,
+      lastSmeltAt: null,
       lastReconRawCount: 0,
       tasks: {
         discovery: this._defaultTaskState(),
         harvest: this._defaultTaskState(),
-        recon: this._defaultTaskState()
+        recon: this._defaultTaskState(),
+        smelt: this._defaultTaskState()
       }
     };
   }
@@ -649,7 +651,8 @@ class TotalWarPipeline {
         tasks: {
           discovery: { ...this._defaultTaskState(), ...(persisted.tasks || {}).discovery },
           harvest: { ...this._defaultTaskState(), ...(persisted.tasks || {}).harvest },
-          recon: { ...this._defaultTaskState(), ...(persisted.tasks || {}).recon }
+          recon: { ...this._defaultTaskState(), ...(persisted.tasks || {}).recon },
+          smelt: { ...this._defaultTaskState(), ...(persisted.tasks || {}).smelt }
         }
       };
     }
@@ -734,6 +737,11 @@ class TotalWarPipeline {
         name: 'recon',
         enabled: this._isTaskStageAllowed('recon')
           && this._isReconDue(metrics)
+      },
+      {
+        name: 'smelt',
+        enabled: this._isTaskStageAllowed('smelt')
+          && this._isSmeltDue(metrics)
       }
     ];
 
@@ -784,6 +792,21 @@ class TotalWarPipeline {
       return true;
     }
     return rawDelta >= this.options.reconThreshold;
+  }
+
+  _isSmeltDue(metrics) {
+    const rawWithoutL3Count = Number(metrics.rawWithoutL3Count || 0);
+    if (rawWithoutL3Count <= 0) {
+      return false;
+    }
+
+    if ((this.options.taskStage || 'auto') === 'smelt') {
+      return true;
+    }
+
+    return Number(metrics.pendingCount || 0) === 0
+      && Number(metrics.harvestedCount || 0) === 0
+      && Number(metrics.mismatchCount || 0) === 0;
   }
 
   _isTaskCoolingDown(taskName) {
@@ -894,6 +917,14 @@ class TotalWarPipeline {
 
   buildTaskEnv(taskName, options = {}) {
     const env = { ...process.env };
+    if (taskName === 'smelt') {
+      env.ACTIVE_SEASON = this.options.dbSeason;
+      env.ACTIVE_SEASON_TAG = this.options.dbSeason.replace('/', '');
+      env.L3_STITCH_SEASON = this.options.dbSeason;
+      env.L3_STITCH_SEASON_TAG = this.options.dbSeason.replace('/', '');
+      return env;
+    }
+
     if (taskName !== 'recon') {
       return env;
     }
@@ -1077,6 +1108,17 @@ class TotalWarPipeline {
       };
     }
 
+    if (taskName === 'smelt') {
+      return {
+        task: taskName,
+        command,
+        args: [
+          path.join(ROOT_DIR, 'scripts/ops/l3_stitch_pipeline.js')
+        ],
+        env: this.buildTaskEnv(taskName, options)
+      };
+    }
+
     throw new Error(`未知任务: ${taskName}`);
   }
 
@@ -1173,6 +1215,8 @@ class TotalWarPipeline {
     } else if (taskName === 'recon') {
       this.state.lastReconAt = taskState.lastSuccessAt;
       this.state.lastReconRawCount = metrics.rawCount;
+    } else if (taskName === 'smelt') {
+      this.state.lastSmeltAt = taskState.lastSuccessAt;
     }
   }
 
@@ -1214,9 +1258,13 @@ class TotalWarPipeline {
     `;
 
     const rawQuery = `
-      SELECT COUNT(*) AS raw_count
+      SELECT
+        COUNT(*) AS raw_count,
+        COUNT(l.match_id) AS l3_count,
+        COUNT(*) FILTER (WHERE l.match_id IS NULL) AS raw_without_l3_count
       FROM raw_match_data r
       JOIN matches m USING (match_id)
+      LEFT JOIN l3_features l USING (match_id)
       WHERE m.season = $1
     `;
 
@@ -1236,6 +1284,8 @@ class TotalWarPipeline {
       failedCount: parseInt(counts.failed_count || 0, 10),
       linkedCount: parseInt(counts.linked_count || 0, 10),
       rawCount,
+      l3Count: parseInt(rawRow.l3_count || 0, 10),
+      rawWithoutL3Count: parseInt(rawRow.raw_without_l3_count || 0, 10),
       rawDeltaSinceRecon: Math.max(0, rawCount - (this.state.lastReconRawCount || 0))
     };
   }
