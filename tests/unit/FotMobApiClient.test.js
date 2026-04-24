@@ -10,9 +10,11 @@ const {
 } = require('../../src/infrastructure/network/FotMobApiClient');
 
 describe('FotMobApiClient', () => {
-    it('缺少缓存 Session 时应先探测首页 Cookie，再携带 Cookie 请求 matchDetails API', async () => {
+    it('缺少缓存 Session 时应先通过浏览器破冰获取 Cookie，再携带 Cookie 请求 matchDetails API', async () => {
         const persistedSessions = [];
         const requests = [];
+        const browserBootstrapCalls = [];
+        let browserClosed = false;
         const client = new FotMobApiClient({
             logger: {
                 info() {},
@@ -27,6 +29,50 @@ describe('FotMobApiClient', () => {
                     persistedSessions.push(stored);
                     return stored;
                 }
+            },
+            browserBootstrapFactory(options = {}) {
+                browserBootstrapCalls.push(options);
+                return {
+                    async warmup(url, warmupOptions) {
+                        browserBootstrapCalls.push({ type: 'warmup', url, warmupOptions });
+                    },
+                    async goto(url, gotoOptions) {
+                        browserBootstrapCalls.push({ type: 'goto', url, gotoOptions });
+                    },
+                    async sleep(ms) {
+                        browserBootstrapCalls.push({ type: 'sleep', ms });
+                    },
+                    getPage() {
+                        return {
+                            context() {
+                                return {
+                                    async cookies() {
+                                        return [
+                                            {
+                                                name: 'cf_clearance',
+                                                value: 'token-1',
+                                                domain: '.fotmob.com',
+                                                path: '/',
+                                                httpOnly: true,
+                                                secure: true
+                                            },
+                                            {
+                                                name: '_cfuvid',
+                                                value: 'token-2',
+                                                domain: '.fotmob.com',
+                                                path: '/',
+                                                secure: true
+                                            }
+                                        ];
+                                    }
+                                };
+                            }
+                        };
+                    },
+                    async close() {
+                        browserClosed = true;
+                    }
+                };
             }
         });
 
@@ -36,19 +82,6 @@ describe('FotMobApiClient', () => {
                 url: url.href,
                 headers: options.headers || {}
             });
-
-            if (requests.length === 1) {
-                return {
-                    statusCode: 200,
-                    headers: {
-                        'set-cookie': [
-                            'cf_clearance=token-1; Path=/; HttpOnly; Secure',
-                            '_cfuvid=token-2; Path=/; Secure'
-                        ]
-                    },
-                    body: '<html>ok</html>'
-                };
-            }
 
             return {
                 statusCode: 200,
@@ -70,15 +103,18 @@ describe('FotMobApiClient', () => {
             }
         );
 
-        assert.strictEqual(requests.length, 2);
-        assert.match(requests[0].url, /^https:\/\/www\.fotmob\.com\/$/);
-        assert.match(requests[1].url, /api\/data\/matchDetails\?matchId=12345$/);
+        assert.strictEqual(requests.length, 1);
+        assert.match(requests[0].url, /api\/data\/matchDetails\?matchId=12345$/);
+        assert.strictEqual(browserBootstrapCalls[0].proxyServer, 'socks5://127.0.0.1:10001');
+        assert.strictEqual(browserBootstrapCalls.some(call => call.type === 'warmup'), true);
+        assert.strictEqual(browserClosed, true);
         assert.strictEqual(
-            requests[1].headers.cookie,
+            requests[0].headers.cookie,
             'cf_clearance=token-1; _cfuvid=token-2'
         );
         assert.strictEqual(persistedSessions.length, 1);
         assert.strictEqual(persistedSessions[0].storedPort, 10001);
+        assert.strictEqual(persistedSessions[0].source, 'browser_bootstrap_probe');
         assert.strictEqual(payload.general.matchId, '12345');
     });
 

@@ -257,6 +257,40 @@ describe('src/infrastructure/services/BrowserProvider', () => {
     assert.deepStrictEqual(releaseCalls, ['LEASE-1']);
   });
 
+  test('固定代理模式应直接使用 fixedProxy 启动浏览器', async () => {
+    let launchProxy = null;
+
+    const fakeBrowser = {
+      async newPage() {
+        return {
+          removeAllListeners() {},
+        };
+      },
+      async close() {},
+    };
+
+    const { BrowserProvider } = loadBrowserProvider({
+      async launch(options) {
+        launchProxy = options.proxy;
+        return fakeBrowser;
+      },
+    });
+
+    const provider = new BrowserProvider({
+      fixedProxy: {
+        server: 'socks5://127.0.0.1:10001',
+        port: 10001,
+      },
+    });
+
+    await provider.initialize();
+    await provider.close();
+
+    assert.deepStrictEqual(launchProxy, {
+      server: 'socks5://127.0.0.1:10001',
+    });
+  });
+
   test('初始化失败与页面预热失败时应记录错误/告警', async () => {
     const infoLogs = [];
     const warnLogs = [];
