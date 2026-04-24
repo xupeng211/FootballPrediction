@@ -102,7 +102,8 @@ class NetworkManager {
     constructor(options = {}) {
         this.maxWorkers = options.maxWorkers || 6;
         this.stealthGenerator = options.stealthGenerator || generateStealthHeaders;
-        this.proxyProvider = options.proxyProvider || getProxyProvider();
+        this.proxyPoolName = options.proxyPoolName || options.proxyProvider?.getPoolName?.() || 'fotmob_pool';
+        this.proxyProvider = options.proxyProvider || getProxyProvider({ poolName: this.proxyPoolName });
         this.proxyConsumer = options.proxyConsumer || 'l2-harvest';
 
         // NetworkShield 代理管理器
@@ -648,7 +649,19 @@ class NetworkManager {
 // 单例导出
 // ============================================================================
 
-let instance = null;
+const instances = new Map();
+
+function resolveManagerKey(options = {}) {
+    if (typeof options === 'string') {
+        return String(options);
+    }
+
+    return String(
+        options.proxyPoolName
+        || options.proxyProvider?.getPoolName?.()
+        || 'fotmob_pool'
+    );
+}
 
 /**
  * 获取 NetworkManager 单例
@@ -656,20 +669,31 @@ let instance = null;
  * @returns {NetworkManager}
  */
 function getNetworkManager(options) {
-    if (!instance) {
-        instance = new NetworkManager(options);
+    const key = resolveManagerKey(options || {});
+    if (!instances.has(key)) {
+        instances.set(key, new NetworkManager(options));
     }
-    return instance;
+    return instances.get(key);
 }
 
 /**
  * 重置单例 (用于测试)
  */
-function resetNetworkManager() {
-    if (instance) {
+function resetNetworkManager(poolName = null) {
+    if (poolName) {
+        const key = resolveManagerKey(poolName);
+        const instance = instances.get(key);
+        if (instance) {
+            instance.shutdown();
+        }
+        instances.delete(key);
+        return;
+    }
+
+    for (const instance of instances.values()) {
         instance.shutdown();
     }
-    instance = null;
+    instances.clear();
 }
 
 module.exports = {

@@ -543,6 +543,139 @@ describe('AbstractHarvester 完整测试套件', () => {
         });
     });
 
+    describe('API-first 收割路径', () => {
+        class DirectPathHarvester extends AbstractHarvester {
+            constructor(config = {}) {
+                super(config);
+                this.saved = [];
+            }
+
+            getTargetUrl(match) {
+                return `https://www.fotmob.com/match/${match.external_id}`;
+            }
+
+            async extractData(_page, _match, options = {}) {
+                this.extractOptions = options;
+                return {
+                    content: { stats: {}, lineup: {} },
+                    general: {},
+                    header: {},
+                    padding: 'x'.repeat(1200)
+                };
+            }
+
+            async saveData(matchId, data) {
+                this.saved.push({ matchId, data });
+            }
+        }
+
+        it('API-first 成功时不应创建浏览器页面', async () => {
+            const harvester = createHarvester(DirectPathHarvester, {
+                minDelayMs: 1,
+                maxDelayMs: 1,
+                dryRun: false
+            });
+            let contextCreated = false;
+            let markSuccessCalled = false;
+
+            harvester.strategy = {
+                async fetchDataDirect() {
+                    return {
+                        content: { stats: {}, lineup: {} },
+                        general: {},
+                        header: {},
+                        padding: 'x'.repeat(1200)
+                    };
+                }
+            };
+            harvester.networkManager = {
+                sessionManager: null,
+                async assignWorkerIdentity() {
+                    return { proxy: { port: 10001 } };
+                },
+                async markProxySuccess() {
+                    markSuccessCalled = true;
+                },
+                async markProxyFailed() {}
+            };
+            harvester._getOrCreateContext = async () => {
+                contextCreated = true;
+                throw new Error('should not create context');
+            };
+
+            const result = await harvester._harvestSingleMatch({
+                match_id: '1_20242025_12345',
+                external_id: '12345',
+                home_team: 'A',
+                away_team: 'B'
+            }, 0, 1);
+
+            assert.strictEqual(result.success, true);
+            assert.strictEqual(contextCreated, false);
+            assert.strictEqual(markSuccessCalled, true);
+            assert.strictEqual(harvester.saved.length, 1);
+        });
+
+        it('API-first 需要回退时应进入浏览器路径', async () => {
+            const harvester = createHarvester(DirectPathHarvester, {
+                minDelayMs: 1,
+                maxDelayMs: 1,
+                dryRun: false
+            });
+            let contextCreated = false;
+            let pageClosed = false;
+
+            harvester.strategy = {
+                async fetchDataDirect() {
+                    const error = new Error('HTTP_403');
+                    error.fallbackToBrowser = true;
+                    throw error;
+                }
+            };
+            harvester.networkManager = {
+                sessionManager: null,
+                async assignWorkerIdentity() {
+                    return { proxy: { port: 10001 } };
+                },
+                async markProxySuccess() {},
+                async markProxyFailed() {}
+            };
+            harvester.browserFactory = {
+                async injectStealthScripts() {},
+                async warmupHomepage() {},
+                async quickMouseMove() {}
+            };
+            harvester._getOrCreateContext = async () => {
+                contextCreated = true;
+                return {
+                    context: {
+                        async newPage() {
+                            return {
+                                async goto() {},
+                                isClosed() { return false; },
+                                async waitForTimeout() {},
+                                async close() { pageClosed = true; }
+                            };
+                        }
+                    },
+                    isNew: false
+                };
+            };
+
+            const result = await harvester._harvestSingleMatch({
+                match_id: '1_20242025_67890',
+                external_id: '67890',
+                home_team: 'A',
+                away_team: 'B'
+            }, 0, 1);
+
+            assert.strictEqual(result.success, true);
+            assert.strictEqual(contextCreated, true);
+            assert.strictEqual(pageClosed, true);
+            assert.strictEqual(harvester.extractOptions.skipDirectApi, true);
+        });
+    });
+
     // ========================================================================
     // 测试 7: Context 池管理
     // ========================================================================

@@ -37,7 +37,7 @@ function buildStandingsUrl(league, season) {
 function fetchText(url, redirectCount = 0) {
   return new Promise((resolve, reject) => {
     let lease = null;
-    const proxyProvider = getProxyProvider();
+    const proxyProvider = getProxyProvider({ poolName: 'oddsportal_pool' });
     
     proxyProvider.acquire({
       consumer: 'generate-league-dictionary',
