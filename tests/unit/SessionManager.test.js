@@ -318,6 +318,34 @@ describe('SessionManager', () => {
             });
             assert.strictEqual(await manager.validateSession(7892), true);
         });
+
+        it('storeSession 应规范化并持久化 bootstrap Cookie 会话', async () => {
+            const profilePath = await fs.mkdtemp(path.join(os.tmpdir(), 'session-bootstrap-'));
+            const manager = createMockSessionManager({ profilePath });
+            let savedPayload = null;
+
+            manager._initialized = true;
+            manager._saveSessionToFile = async (port, session) => {
+                savedPayload = { port, session };
+            };
+
+            const stored = await manager.storeSession(7890, {
+                cookies: [
+                    { name: 'cf_clearance', value: 'token', domain: '.fotmob.com' }
+                ],
+                userAgent: 'UA-BOOTSTRAP',
+                source: 'api_bootstrap_probe'
+            });
+
+            assert.strictEqual(stored.port, 7890);
+            assert.strictEqual(stored.cookies.length, 1);
+            assert.strictEqual(stored.userAgent, 'UA-BOOTSTRAP');
+            assert.strictEqual(manager._sessionCache.get(7890).cookies.length, 1);
+            assert.deepStrictEqual(savedPayload.port, 7890);
+            assert.strictEqual(savedPayload.session.source, 'api_bootstrap_probe');
+
+            await fs.rm(profilePath, { recursive: true, force: true });
+        });
     });
 
     describe('文件系统与环境工具', () => {

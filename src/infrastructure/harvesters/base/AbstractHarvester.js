@@ -49,8 +49,12 @@ let globalSigtermListener = null;
 
 class AbstractHarvester {
     constructor(config = {}) {
+        const requestedMaxWorkers = this._resolveRequestedMaxWorkers(
+            parseInt(process.env.MAX_WORKERS, 10) || config.maxWorkers || 6
+        );
         this.config = {
-            maxWorkers: parseInt(process.env.MAX_WORKERS) || config.maxWorkers || 6,
+            maxWorkers: requestedMaxWorkers,
+            requestedMaxWorkers,
             minDelayMs: parseInt(process.env.MIN_DELAY_MS) || config.minDelayMs || 10000,
             maxDelayMs: parseInt(process.env.MAX_DELAY_MS) || config.maxDelayMs || 20000,
             batchSize: parseInt(process.env.BATCH_SIZE) || config.batchSize || 500,
@@ -198,11 +202,21 @@ class AbstractHarvester {
             preFlightCleanup: () => this._preFlightCleanupNetworkLocks(),
         });
 
-        // Titan 7.0: 弹性并发引擎 - 根据雷达探测到的代理数量动态调整并发数
+        // Titan 7.0: 雷达结果只能下调并发，不能突破启动参数的硬上限
         if (networkInitResult?.discoveredPorts && networkInitResult.discoveredPorts.length > 0) {
             const elasticConcurrency = networkInitResult.discoveredPorts.length;
-            console.log(`⚡ Titan 7.0 弹性并发引擎: 雷达探测到 ${elasticConcurrency} 个代理节点，自动调整并发数`);
-            this.config.maxWorkers = elasticConcurrency;
+            const effectiveMaxWorkers = this._resolveEffectiveMaxWorkers(elasticConcurrency);
+
+            if (elasticConcurrency > this.config.requestedMaxWorkers) {
+                console.log(
+                    `⚡ Titan 7.0 弹性并发引擎: 雷达探测到 ${elasticConcurrency} 个代理节点，` +
+                    `但实际并发受启动参数封顶为 ${effectiveMaxWorkers}`
+                );
+            } else if (elasticConcurrency !== this.config.requestedMaxWorkers) {
+                console.log(`⚡ Titan 7.0 弹性并发引擎: 雷达探测到 ${elasticConcurrency} 个代理节点，实际并发调整为 ${effectiveMaxWorkers}`);
+            }
+
+            this.config.maxWorkers = effectiveMaxWorkers;
         }
         this._ensureContextPoolCapacity(this.config.maxWorkers);
 
@@ -215,6 +229,24 @@ class AbstractHarvester {
         console.log(
             `📋 配置: MAX_WORKERS=${this.config.maxWorkers}, DELAY=${this.config.minDelayMs}-${this.config.maxDelayMs}ms`
         );
+    }
+
+    _resolveRequestedMaxWorkers(value) {
+        const parsed = Number.parseInt(value, 10);
+        return Number.isInteger(parsed) && parsed > 0 ? parsed : 1;
+    }
+
+    _resolveEffectiveMaxWorkers(discoveredPortCount) {
+        const requested = this._resolveRequestedMaxWorkers(
+            this.config?.requestedMaxWorkers || this.config?.maxWorkers || 1
+        );
+        const discovered = Number.parseInt(discoveredPortCount, 10);
+
+        if (!Number.isInteger(discovered) || discovered <= 0) {
+            return requested;
+        }
+
+        return Math.max(1, Math.min(requested, discovered));
     }
 
     async cleanup() {
