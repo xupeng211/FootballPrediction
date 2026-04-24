@@ -65,8 +65,83 @@ function resolveRequestedRoutes(requestedLeagues = []) {
   return matches;
 }
 
-function buildResultsUrl(route, season) {
-  return `${RESULTS_BASE_URL}/football/${route.country}/${route.slug}-${season.replace('/', '-')}/results/`;
+function resolveSeasonContext(route, season) {
+  const normalizedSeason = String(season || '').trim();
+  const [startYear = '', endYear = ''] = normalizedSeason.split('/');
+  const year = route.seasonType === 'single_year' ? startYear : '';
+  const seasonSegment = route.seasonType === 'single_year'
+    ? year
+    : normalizedSeason.replace('/', '-');
+
+  return {
+    startYear,
+    endYear,
+    year,
+    season: normalizedSeason,
+    seasonSegment
+  };
+}
+
+function renderResultsUrl(template, route, seasonContext) {
+  if (!template) {
+    return null;
+  }
+
+  return `${RESULTS_BASE_URL}${template}`
+    .replace('{country}', route.country)
+    .replace('{league}', route.slug)
+    .replace('{start}', seasonContext.startYear)
+    .replace('{end}', seasonContext.endYear)
+    .replace('{year}', seasonContext.year)
+    .replace('{season}', seasonContext.seasonSegment);
+}
+
+function buildResultsUrls(route, season) {
+  const seasonContext = resolveSeasonContext(route, season);
+  const templates = [];
+
+  if (route.resultsPathTemplate) {
+    templates.push(route.resultsPathTemplate);
+  } else if (route.resultsUrlStrategy === 'seasonless') {
+    templates.push('/football/{country}/{league}/results/');
+  } else {
+    templates.push('/football/{country}/{league}-{season}/results/');
+  }
+
+  templates.push(...(route.additionalResultsPaths || []));
+  templates.push(...(route.additionalHistoricalResultsPaths || []));
+
+  return [...new Set(templates
+    .map((template) => renderResultsUrl(template, route, seasonContext))
+    .filter(Boolean))];
+}
+
+async function openResultsPage(page, route, season) {
+  const candidates = buildResultsUrls(route, season);
+  let lastError = null;
+
+  for (let index = 0; index < candidates.length; index += 1) {
+    const url = candidates[index];
+
+    try {
+      await page.goto(url, {
+        waitUntil: 'networkidle',
+        timeout: 120000
+      });
+      await waitForRowsReady(page, `${route.leagueName}:initial:${index + 1}`);
+
+      if (index > 0) {
+        console.log(`[ENUM] ${route.leagueName} fallback url hit: ${url}`);
+      }
+
+      return;
+    } catch (error) {
+      lastError = error;
+      console.warn(`[ENUM] ${route.leagueName} results url failed ${index + 1}/${candidates.length}: ${url} | ${error.message}`);
+    }
+  }
+
+  throw lastError || new Error(`${route.leagueName} 未找到可用 results URL`);
 }
 
 async function acceptCookieBanner(page) {
@@ -160,11 +235,7 @@ async function enumerateLeagueEvents(route, season) {
   });
 
   try {
-    await page.goto(buildResultsUrl(route, season), {
-      waitUntil: 'networkidle',
-      timeout: 120000
-    });
-    await waitForRowsReady(page, `${route.leagueName}:initial`);
+    await openResultsPage(page, route, season);
 
     const totalPages = await page.evaluate(() => {
       const numbers = Array.from(document.querySelectorAll('a.pagination-link[data-number]'))

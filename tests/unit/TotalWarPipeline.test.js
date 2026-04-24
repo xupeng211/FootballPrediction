@@ -156,9 +156,7 @@ test('Recon 子任务应透传 reconLimit 以强制进入 Matrix 模式', () => 
     '--limit',
     '8000',
     '--concurrency',
-    '15',
-    '--skip-leagues',
-    'J1 League'
+    '15'
   ]);
 });
 
@@ -263,9 +261,7 @@ test('Recon preflight 子任务应以单点 Worker 模式启动并注入 session
     '--limit',
     '1',
     '--concurrency',
-    '1',
-    '--skip-leagues',
-    'J1 League'
+    '1'
   ]);
   assert.equal(task.env.RECON_SESSION_BUFFER_ROLE, 'preflight');
   assert.equal(task.env.RECON_SESSION_BUFFER_TTL_MS, String(pipeline.options.reconSessionBufferTtlMs));
