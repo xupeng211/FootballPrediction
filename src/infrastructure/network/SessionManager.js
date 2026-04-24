@@ -16,8 +16,8 @@
 const { chromium } = require('playwright');
 const fs = require('fs').promises;
 const path = require('path');
-const FactoryConfig = require('../../../config/factory_config');
 const { ProxyProvider } = require('./ProxyProvider');
+const { generateStealthHeaders } = require('./StealthFingerprint');
 
 // V4.46.5 HARDENING: 本地确定性 ID 生成器（零模拟铁律）
 function generateLockId(port) {
@@ -465,7 +465,7 @@ class SessionManager {
         this.logger.info(`端口 ${port} 启动可见浏览器...`);
 
         // 获取隐身指纹
-        const stealth = this._generateStealthHeaders();
+        const stealth = this._generateStealthHeaders(port);
 
         // 启动可见浏览器
         const browser = await chromium.launch({
@@ -490,7 +490,7 @@ class SessionManager {
         });
 
         // 注入隐身脚本
-        await this._injectStealthScripts(context);
+        await this._injectStealthScripts(context, stealth);
 
         const page = await context.newPage();
 
@@ -606,8 +606,21 @@ class SessionManager {
      * @private
      * @param {import('playwright').BrowserContext} context - Playwright 上下文
      */
-    async _injectStealthScripts(context) {
-        await context.addInitScript(() => {
+    async _injectStealthScripts(context, stealth = {}) {
+        const fingerprint = {
+            hardwareConcurrency: Number.isFinite(Number(stealth.hardwareConcurrency))
+                ? Math.max(1, Math.round(Number(stealth.hardwareConcurrency)))
+                : 8,
+            deviceMemory: Number.isFinite(Number(stealth.deviceMemory))
+                ? Math.max(1, Math.round(Number(stealth.deviceMemory)))
+                : 8,
+            webgl: {
+                vendor: stealth.webgl?.vendor || 'Google Inc. (NVIDIA)',
+                renderer: stealth.webgl?.renderer || 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0)'
+            }
+        };
+
+        await context.addInitScript((stableFingerprint) => {
             /* eslint-disable no-undef */
             // 禁用 webdriver 标志
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
@@ -615,8 +628,8 @@ class SessionManager {
             // WebGL 伪装
             const getParameter = WebGLRenderingContext.prototype.getParameter;
             WebGLRenderingContext.prototype.getParameter = function(p) {
-                if (p === 37445) return 'Google Inc. (NVIDIA)';
-                if (p === 37446) return 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0)';
+                if (p === 37445) return stableFingerprint.webgl.vendor;
+                if (p === 37446) return stableFingerprint.webgl.renderer;
                 return getParameter.apply(this, arguments);
             };
 
@@ -624,23 +637,23 @@ class SessionManager {
             if (typeof WebGL2RenderingContext !== 'undefined') {
                 const getParameter2 = WebGL2RenderingContext.prototype.getParameter;
                 WebGL2RenderingContext.prototype.getParameter = function(p) {
-                    if (p === 37445) return 'Google Inc. (NVIDIA)';
-                    if (p === 37446) return 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0)';
+                    if (p === 37445) return stableFingerprint.webgl.vendor;
+                    if (p === 37446) return stableFingerprint.webgl.renderer;
                     return getParameter2.apply(this, arguments);
                 };
             }
 
             // 硬件伪装
             Object.defineProperty(navigator, 'hardwareConcurrency', {
-                get: () => 8,
+                get: () => stableFingerprint.hardwareConcurrency,
                 configurable: true
             });
             Object.defineProperty(navigator, 'deviceMemory', {
-                get: () => 8,
+                get: () => stableFingerprint.deviceMemory,
                 configurable: true
             });
             /* eslint-enable no-undef */
-        });
+        }, fingerprint);
     }
 
     /**
@@ -648,26 +661,11 @@ class SessionManager {
      * @private
      * @returns {object} 隐身配置
      */
-    _generateStealthHeaders() {
-        // V180: 使用与 ProductionHarvester 完全一致的深度隐身配置
-        const userAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0 Safari/537.36';
-        const viewport = { width: 1920, height: 1080 };
-
-        return {
-            userAgent,
-            viewport,
-            extraHTTPHeaders: {
-                'sec-ch-ua': '"Chromium";v="131", "Google Chrome";v="131", "Not-A.Brand";v="99"',
-                'sec-ch-ua-mobile': '?0',
-                'sec-ch-ua-platform': '"Windows"',
-                'sec-fetch-dest': 'document',
-                'sec-fetch-mode': 'navigate',
-                'sec-fetch-site': 'none',
-                'sec-fetch-user': '?1',
-                'accept-language': 'en-US,en;q=0.9',
-                'accept-encoding': 'gzip, deflate, br'
-            }
-        };
+    _generateStealthHeaders(port = 1) {
+        return generateStealthHeaders({
+            port,
+            useFixed: true
+        });
     }
 
     /**

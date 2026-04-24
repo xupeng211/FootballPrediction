@@ -131,6 +131,48 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     assert.strictEqual(node.cooling, false);
   });
 
+  test('ERR_CONNECTION_CLOSED 应升级为 5-15 分钟重故障隔离', async () => {
+    let now = 40_000;
+    const alerts = [];
+    const provider = new ProxyProvider({
+      now: () => now,
+      healthCheckIntervalMs: 0,
+      minHealthScore: 60,
+      severeTransportMinCooldownMs: 300_000,
+      severeTransportMaxCooldownMs: 900_000
+    });
+
+    provider.on('alert', payload => {
+      alerts.push(payload);
+    });
+
+    const lease = await provider.acquire({
+      consumer: 'harvest',
+      sessionKey: 'severe-transport',
+      sticky: false
+    });
+
+    await provider.reportFailure(lease.id, {
+      failureClass: 'proxy_transport',
+      reason: 'page.goto: net::ERR_CONNECTION_CLOSED; Client network socket disconnected before secure TLS connection was established'
+    });
+
+    let node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.isolated, true);
+    assert.strictEqual(node.cooling, true);
+    assert.ok(node.healthScore < 60);
+    assert.ok(alerts.some(item => item.type === 'proxy_severe_backoff' && item.port === lease.proxy.port));
+
+    now += 299_999;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, true);
+
+    now += 2;
+    node = provider.getNodeStates().find(item => item.port === lease.proxy.port);
+    assert.strictEqual(node.cooling, false);
+    assert.strictEqual(node.isolated, false);
+  });
+
   test('503 在 observationThreshold=1 时应首次命中立即进入 20 分钟冷却', async () => {
     let now = 30_000;
     const alerts = [];

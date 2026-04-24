@@ -356,11 +356,15 @@ describe('src/infrastructure/network/NetworkManager', () => {
 
   test('assignWorkerIdentity 应覆盖复用、Shield 回退、Session 警告与降级代理池分支', async () => {
     Date.now = () => 1700000001000;
+    const stealthInputs = [];
     const loaded = loadNetworkManagerModule({
-      stealthGenerator: () => ({
+      stealthGenerator: (seed) => {
+        stealthInputs.push(seed);
+        return {
         userAgent: 'UA-CUSTOM',
         viewport: { width: 1440, height: 900 },
-      }),
+        };
+      },
     });
     try {
       const proxyProvider = createProxyProvider({
@@ -372,6 +376,7 @@ describe('src/infrastructure/network/NetworkManager', () => {
       const identity = await manager.assignWorkerIdentity(2);
       assert.strictEqual(identity.proxy.port, 7891);
       assert.strictEqual(identity.stealth.userAgent, 'UA-CUSTOM');
+      assert.deepStrictEqual(stealthInputs[0], { workerId: 2, port: 7891, useFixed: true });
       assert.strictEqual(manager.getWorkerIdentity(2), identity);
       assert.ok(loaded.state.consoleLogs.some(message => message.includes('Worker 2 新身份绑定')));
 

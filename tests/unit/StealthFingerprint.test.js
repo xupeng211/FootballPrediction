@@ -58,7 +58,16 @@ describe('src/infrastructure/network/StealthFingerprint', () => {
     assert.deepStrictEqual(fixed.viewport, fingerprint.FIXED_FINGERPRINT.viewport);
     assert.strictEqual(fixed.locale, 'en-US');
     assert.strictEqual(fixed.timezoneId, 'Europe/London');
+    assert.strictEqual(typeof fixed.hardwareConcurrency, 'number');
+    assert.strictEqual(typeof fixed.deviceMemory, 'number');
+    assert.ok(fixed.webgl.renderer.includes('ANGLE'));
     assert.strictEqual(fixed.extraHTTPHeaders['sec-ch-ua-platform'], '"Windows"');
+
+    const seeded = fingerprint.generateStealthHeaders({ port: 7895, useFixed: true });
+    const seededConfig = fingerprint.generateStealthConfig(7895);
+    assert.strictEqual(seeded.hardwareConcurrency, seededConfig.hardwareConcurrency);
+    assert.strictEqual(seeded.deviceMemory, seededConfig.deviceMemory);
+    assert.deepStrictEqual(seeded.webgl, seededConfig.webgl);
 
     Math.random = mockRandomSequence([0, 0]);
     const chrome = fingerprint.generateStealthHeaders(false);

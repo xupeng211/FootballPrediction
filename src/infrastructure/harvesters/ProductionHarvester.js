@@ -248,6 +248,8 @@ class ProductionHarvester extends AbstractHarvester {
         const captureResults = payload.captureResults === true || this.config.captureBulkResults === true;
         const pendingMatchFilters = this._normalizePendingFilters(payload);
 
+        this._ensureContextPoolCapacity(concurrency);
+
         const state = {
             startedAt: Date.now(),
             total: 0,

@@ -29,6 +29,8 @@ const DEFAULT_GATEWAY_PREFLIGHT_TIMEOUT_MS = 1500;
 const DEFAULT_TRANSIENT_CONTEXT_COOLDOWN_MS = 3000;
 const DEFAULT_UPSTREAM_BLOCK_BASE_COOLDOWN_MS = 5000;
 const DEFAULT_UPSTREAM_BLOCK_MAX_COOLDOWN_MS = 15000;
+const DEFAULT_SEVERE_TRANSPORT_MIN_COOLDOWN_MS = 300000;
+const DEFAULT_SEVERE_TRANSPORT_MAX_COOLDOWN_MS = 900000;
 
 function clamp(value, min, max) {
   return Math.max(min, Math.min(max, value));
@@ -78,15 +80,36 @@ function isTimeoutLike(reason = '') {
     || message.includes('etimedout');
 }
 
+function isSevereTransportFailure(reason = '') {
+  const message = String(reason || '').toLowerCase();
+  return message.includes('err_connection_closed')
+    || message.includes('client network socket disconnected before secure tls connection was established')
+    || message.includes('tls handshake')
+    || message.includes('tlsv1')
+    || message.includes('ssl')
+    || message.includes('econnreset')
+    || message.includes('econnrefused')
+    || message.includes('socket hang up')
+    || message.includes('err_proxy_connection_failed')
+    || message.includes('proxy connection failed');
+}
+
 function normalizeFailureClass(failureClass, statusCode, reason = '') {
   const normalized = String(failureClass || '').trim().toLowerCase();
-  if (normalized) {
+  const message = String(reason || '').toLowerCase();
+
+  if (normalized && normalized !== 'proxy_transport') {
     return normalized;
   }
 
-  const message = String(reason || '').toLowerCase();
   if (statusCode === 429) {
     return 'rate_limit';
+  }
+  if (isSevereTransportFailure(message)) {
+    return 'severe_transport_failure';
+  }
+  if (normalized) {
+    return normalized;
   }
   if (message.includes('err_empty_response') || message.includes('empty_response')) {
     return 'upstream_block';
@@ -103,6 +126,9 @@ function normalizeFailureClass(failureClass, statusCode, reason = '') {
 }
 
 function resolveHealthPenalty(statusCode, reason = '', failureClass = 'hard_proxy_failure') {
+  if (failureClass === 'severe_transport_failure') {
+    return 45;
+  }
   if (failureClass === 'browser_context_transient') {
     return 2;
   }
@@ -215,6 +241,14 @@ class ProxyProvider extends EventEmitter {
       upstreamBlockMaxCooldownMs: positiveNumber(
         options.upstreamBlockMaxCooldownMs,
         DEFAULT_UPSTREAM_BLOCK_MAX_COOLDOWN_MS
+      ),
+      severeTransportMinCooldownMs: positiveNumber(
+        options.severeTransportMinCooldownMs,
+        DEFAULT_SEVERE_TRANSPORT_MIN_COOLDOWN_MS
+      ),
+      severeTransportMaxCooldownMs: positiveNumber(
+        options.severeTransportMaxCooldownMs,
+        DEFAULT_SEVERE_TRANSPORT_MAX_COOLDOWN_MS
       ),
       heartbeatFailureCooldownMs: positiveNumber(
         options.heartbeatFailureCooldownMs,
@@ -832,6 +866,37 @@ class ProxyProvider extends EventEmitter {
       return true;
     }
 
+    if (failureClass === 'severe_transport_failure') {
+      const cooldownMs = this._resolveSevereFailureCooldownMs(node);
+      node.isolatedUntil = Math.max(node.isolatedUntil, now + cooldownMs);
+      node.cooldownUntil = Math.max(node.cooldownUntil, now + cooldownMs);
+      this._emitAlert('proxy_severe_backoff', node, {
+        statusCode,
+        reason,
+        failureClass,
+        isolatedUntil: node.isolatedUntil,
+        cooldownUntil: node.cooldownUntil,
+        cooldownMs,
+        consecutiveFailures: node.consecutiveFailures
+      });
+      this._emitAlert('proxy_cooled_down', node, {
+        statusCode,
+        reason,
+        cooldownUntil: node.cooldownUntil,
+        cooldownMs,
+        consecutiveFailures: node.consecutiveFailures
+      });
+      if (node.healthScore < this.config.minHealthScore) {
+        this._emitAlert('proxy_health_score_blocked', node, {
+          statusCode,
+          reason,
+          healthScore: node.healthScore,
+          minHealthScore: this.config.minHealthScore
+        });
+      }
+      return true;
+    }
+
     if (failureClass === 'browser_context_transient' || failureClass === 'upstream_block') {
       const cooldownMs = this._resolveSoftFailureCooldownMs(failureClass, node);
       if (cooldownMs > 0) {
@@ -887,7 +952,11 @@ class ProxyProvider extends EventEmitter {
   }
 
   _shouldCooldownNode(statusCode, node, failureClass = 'hard_proxy_failure') {
-    if (failureClass === 'browser_context_transient' || failureClass === 'upstream_block') {
+    if (
+      failureClass === 'browser_context_transient'
+      || failureClass === 'upstream_block'
+      || failureClass === 'severe_transport_failure'
+    ) {
       return false;
     }
     if (statusCode === 403) {
@@ -903,6 +972,9 @@ class ProxyProvider extends EventEmitter {
   }
 
   _resolveFailureCooldownMs(statusCode, failureClass = 'hard_proxy_failure') {
+    if (failureClass === 'severe_transport_failure') {
+      return this._resolveSevereFailureCooldownMs({ consecutiveFailures: 1 });
+    }
     if (failureClass === 'browser_context_transient' || failureClass === 'upstream_block') {
       return this._resolveSoftFailureCooldownMs(failureClass, { consecutiveFailures: 1 });
     }
@@ -934,6 +1006,15 @@ class ProxyProvider extends EventEmitter {
     }
 
     return 0;
+  }
+
+  _resolveSevereFailureCooldownMs(node) {
+    const consecutiveFailures = Math.max(1, Number(node?.consecutiveFailures) || 1);
+    const multiplier = Math.min(3, consecutiveFailures);
+    return Math.min(
+      this.config.severeTransportMaxCooldownMs,
+      this.config.severeTransportMinCooldownMs * multiplier
+    );
   }
 
   getStats() {

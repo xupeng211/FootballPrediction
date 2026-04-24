@@ -245,7 +245,11 @@ class NetworkManager {
         }
 
         // 生成隐身指纹
-        const stealth = this.stealthGenerator();
+        const stealth = this.stealthGenerator({
+            workerId,
+            port: proxyAssignment.port,
+            useFixed: true
+        });
 
         // 创建 Worker 身份
         const identity = new WorkerIdentity(workerId, proxyAssignment, stealth);
@@ -460,7 +464,11 @@ class NetworkManager {
         });
         const proxyAssignment = this._buildProxyAssignment(workerId, lease, 'RETRY');
 
-        const stealth = this.stealthGenerator();
+        const stealth = this.stealthGenerator({
+            workerId,
+            port: proxyAssignment.port,
+            useFixed: true
+        });
         const identity = new WorkerIdentity(workerId, proxyAssignment, stealth);
         identity.proxyLeaseId = lease.id;
         this.workerIdentities.set(workerId, identity);
