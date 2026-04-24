@@ -362,6 +362,42 @@ class SessionManager {
     }
 
     /**
+     * 写入轻量会话（例如纯 HTTP 预热拿到的基础 Cookie）
+     * @param {number} port - 代理端口
+     * @param {object} session - 会话对象
+     * @returns {Promise<object>} 规范化后的会话
+     */
+    async storeSession(port, session = {}) {
+        if (!this._initialized) {
+            await this.initialize();
+        }
+
+        const normalizedPort = Number.parseInt(port, 10);
+        if (!Number.isInteger(normalizedPort) || normalizedPort <= 0) {
+            throw new Error(`INVALID_SESSION_PORT:${port}`);
+        }
+
+        const now = Date.now();
+        const normalizedSession = {
+            port: normalizedPort,
+            cookies: Array.isArray(session.cookies) ? session.cookies.filter(Boolean) : [],
+            origins: Array.isArray(session.origins) ? session.origins : [],
+            createdAt: Number(session.createdAt) || now,
+            expiresAt: Number(session.expiresAt) || (now + (this.config.sessionTtlHours * 60 * 60 * 1000)),
+            userAgent: session.userAgent || '',
+            viewport: session.viewport || null,
+            proxyUrl: session.proxyUrl || ProxyProvider.buildServer(normalizedPort),
+            source: session.source || 'bootstrap'
+        };
+
+        this._sessionCache.set(normalizedPort, normalizedSession);
+        await this._saveSessionToFile(normalizedPort, normalizedSession);
+        this.logger.info(`端口 ${normalizedPort} 已缓存 ${normalizedSession.cookies.length} 个基础 Cookie`);
+
+        return normalizedSession;
+    }
+
+    /**
      * 获取统计信息
      * @returns {object} 统计信息
      */
