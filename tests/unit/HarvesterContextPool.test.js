@@ -99,4 +99,30 @@ describe('HarvesterContextPool 单元测试', () => {
         assert.deepStrictEqual(closedContexts.sort((a, b) => a - b), [1, 2], '所有 Context 都应被关闭');
         assert.strictEqual(pool.getSize(), 0, '故障清理后池应为空');
     });
+
+    it('默认应禁止回退到共享 browser_state Cookie', async () => {
+        const pool = new HarvesterContextPool({ maxSize: 5, maxUsage: 10, logger: silentLogger });
+        let sharedCookieLoads = 0;
+
+        const deps = {
+            browserFactory: {
+                createContext: async () => ({
+                    close: async () => {},
+                    clearCookies: async () => {}
+                }),
+                loadBrowserStateCookies: async () => {
+                    sharedCookieLoads++;
+                    return true;
+                }
+            },
+            networkManager: {
+                loadSessionToContext: async () => false
+            }
+        };
+
+        const result = await pool.getOrCreate(1, { proxy: { port: 7890 } }, deps);
+
+        assert.strictEqual(sharedCookieLoads, 0, '默认不应加载共享 Cookie');
+        assert.strictEqual(result.entry.cookieLoaded, false, '无端口会话时应保持纯净 Context');
+    });
 });

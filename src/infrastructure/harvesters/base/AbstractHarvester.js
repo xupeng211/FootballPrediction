@@ -64,6 +64,8 @@ class AbstractHarvester {
             verboseLogging: process.env.VERBOSE_LOGGING === 'true' || config.verboseLogging || false,
             shutdownTimeoutMs: parseInt(process.env.SHUTDOWN_TIMEOUT_MS) || config.shutdownTimeoutMs || 30000,
             harvestTimeoutMs: parseInt(process.env.HARVEST_TIMEOUT_MS) || config.harvestTimeoutMs || 120000,
+            contextPoolBuffer: parseInt(process.env.CONTEXT_POOL_BUFFER, 10) || config.contextPoolBuffer || 5,
+            contextPoolMaxSize: parseInt(process.env.CONTEXT_POOL_MAX_SIZE, 10) || config.contextPoolMaxSize || 0,
             navigationWaitUntil: process.env.HARVEST_NAVIGATION_WAIT_UNTIL || config.navigationWaitUntil || 'domcontentloaded',
             navigationTimeoutMs: parseInt(process.env.HARVEST_NAVIGATION_TIMEOUT_MS, 10)
                 || config.navigationTimeoutMs
@@ -101,7 +103,7 @@ class AbstractHarvester {
 
         this.contextPool = new HarvesterContextPool({
             maxUsage: 10,
-            maxSize: 20,
+            maxSize: this._resolveContextPoolMaxSize(this.config.maxWorkers),
         });
         this._bindContextPoolCompatibility();
         this._bindTelemetryCompatibility();
@@ -200,6 +202,7 @@ class AbstractHarvester {
             console.log(`⚡ Titan 7.0 弹性并发引擎: 雷达探测到 ${elasticConcurrency} 个代理节点，自动调整并发数`);
             this.config.maxWorkers = elasticConcurrency;
         }
+        this._ensureContextPoolCapacity(this.config.maxWorkers);
 
         // 初始化 WorkerPool
         this.workerPool = getWorkerPool({
@@ -414,7 +417,7 @@ class AbstractHarvester {
 
         try {
             page = await context.newPage();
-            await this.browserFactory.injectStealthScripts(page);
+            await this.browserFactory.injectStealthScripts(page, identity);
 
             if (isNewContext) {
                 await this.browserFactory.warmupHomepage(page, { scrollMore: false, randomScrolls: false });
@@ -526,6 +529,7 @@ class AbstractHarvester {
         const result = await this.contextPool.getOrCreate(workerId, identity, {
             browserFactory: this.browserFactory,
             networkManager: this.networkManager,
+            allowSharedBrowserStateCookies: false,
         });
 
         return {
@@ -555,8 +559,8 @@ class AbstractHarvester {
         return this.contextPool.closeWorkerContext(workerId, reason);
     }
 
-    async _injectStealthScripts(page) {
-        await this.browserFactory.injectStealthScripts(page);
+    async _injectStealthScripts(page, identity = null) {
+        await this.browserFactory.injectStealthScripts(page, identity);
     }
 
     async _simulateHumanBehavior(page) {
@@ -610,6 +614,30 @@ class AbstractHarvester {
 
     _delay(ms) {
         return new Promise(resolve => { setTimeout(resolve, ms); });
+    }
+
+    _resolveContextPoolMaxSize(targetWorkers) {
+        const requestedWorkers = Number.parseInt(targetWorkers, 10);
+        const fallbackWorkers = Number.parseInt(this.config.maxWorkers, 10);
+        const workerCount = Number.isFinite(requestedWorkers) && requestedWorkers > 0
+            ? requestedWorkers
+            : (Number.isFinite(fallbackWorkers) && fallbackWorkers > 0 ? fallbackWorkers : 1);
+        const buffer = Number.isFinite(Number.parseInt(this.config.contextPoolBuffer, 10))
+            ? Math.max(0, Number.parseInt(this.config.contextPoolBuffer, 10))
+            : 5;
+        const explicitMaxSize = Number.isFinite(Number.parseInt(this.config.contextPoolMaxSize, 10))
+            ? Math.max(0, Number.parseInt(this.config.contextPoolMaxSize, 10))
+            : 0;
+
+        return Math.max(workerCount + buffer, explicitMaxSize, 1);
+    }
+
+    _ensureContextPoolCapacity(targetWorkers) {
+        const nextMaxSize = this._resolveContextPoolMaxSize(targetWorkers);
+        if (nextMaxSize > this.contextPool.config.maxSize) {
+            this.contextPool.setMaxSize(nextMaxSize);
+        }
+        return this.contextPool.config.maxSize;
     }
 
     _teardownGracefulShutdown() {

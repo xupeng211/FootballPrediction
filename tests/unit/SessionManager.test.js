@@ -484,8 +484,8 @@ describe('SessionManager', () => {
 
             const initScripts = [];
             await manager._injectStealthScripts({
-                async addInitScript(script) {
-                    initScripts.push(script);
+                async addInitScript(script, arg) {
+                    initScripts.push(() => script(arg));
                 }
             });
 

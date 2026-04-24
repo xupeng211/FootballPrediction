@@ -33,6 +33,17 @@ describe('ProductionHarvester', () => {
             assert.strictEqual(harvester.config.dryRun, true);
         });
 
+        it('应让 Context 池容量始终高于并发数', () => {
+            harvester = new ProductionHarvester({
+                maxWorkers: 25,
+                dryRun: true
+            });
+
+            assert.ok(harvester.contextPool.config.maxSize >= 30, 'Context 池应至少等于并发数加缓冲');
+            assert.strictEqual(harvester._ensureContextPoolCapacity(40), 45);
+            assert.ok(harvester.contextPool.config.maxSize >= 45);
+        });
+
         it('应使用环境变量默认值', () => {
             harvester = new ProductionHarvester();
 
