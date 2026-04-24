@@ -60,10 +60,10 @@ describe('SeasonStrategy', () => {
     assert.doesNotThrow(() => defaultDiscovery.logger.info('noop-info'));
     assert.doesNotThrow(() => defaultDiscovery.logger.warn('noop-warn'));
     assert.doesNotThrow(() => defaultDiscovery.logger.error('noop-error'));
-    assert.strictEqual(await defaultDiscovery.discover(52, '2026'), '2028/2029');
+    assert.strictEqual(await defaultDiscovery.discover(52, '2026'), '2026');
   });
 
-  it('赛季探测应覆盖精确、包含、最接近、回退与异常分支', async () => {
+  it('赛季探测应覆盖精确、包含、安全保底与异常分支', async () => {
     const warnings = [];
     const discovery = new SeasonDiscovery({
       logger: {
@@ -93,10 +93,11 @@ describe('SeasonStrategy', () => {
     assert.strictEqual(await discovery.discover(47, '2025'), '2025');
     assert.strictEqual(await discovery.discover(47, '20242025'), '2024/2025');
     assert.strictEqual(await discovery.discover(48, '2026'), '2025/2026');
-    assert.strictEqual(await discovery.discover(49, '2026'), '2027/2028');
+    assert.strictEqual(await discovery.discover(49, '2026'), '2026');
     assert.strictEqual(await discovery.discover(50, '2026'), '2026');
     assert.strictEqual(await discovery.discover(51, '2026'), '2026');
     assert.ok(warnings.some((message) => message.includes('未获取到 allAvailableSeasons')));
+    assert.ok(warnings.some((message) => message.includes('未找到可信赛季映射')));
     assert.ok(warnings.some((message) => message.includes('探测失败')));
   });
 });
