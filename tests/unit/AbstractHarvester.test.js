@@ -155,6 +155,18 @@ describe('AbstractHarvester 完整测试套件', () => {
             assert.strictEqual(harvester.stats.success, 0);
             assert.strictEqual(harvester.stats.failed, 0);
         });
+
+        it('应该将启动参数并发保存为硬上限，并阻止雷达结果越权上调', () => {
+            process.env.MAX_WORKERS = '8';
+            const harvester = createHarvester(AbstractHarvester, {
+                maxWorkers: 8
+            });
+
+            assert.strictEqual(harvester.config.requestedMaxWorkers, 8);
+            assert.strictEqual(harvester._resolveEffectiveMaxWorkers(20), 8);
+            assert.strictEqual(harvester._resolveEffectiveMaxWorkers(6), 6);
+            assert.strictEqual(harvester._resolveEffectiveMaxWorkers(0), 8);
+        });
     });
 
     // ========================================================================
