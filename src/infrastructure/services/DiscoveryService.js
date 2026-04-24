@@ -98,10 +98,11 @@ class DiscoveryService {
     this.stats = { total: 0, inserted: 0, updated: 0, failed: 0, startTime: null, criticalWarnings: [] };
     this.configManager = configManager || new L1ConfigManager({ logger: this.logger });
     this.leagueConfig = this.configManager.getRuntimeConfig();
+    this.proxyPoolName = runtimeConfig.proxyPoolName || 'fotmob_pool';
     this.proxyProvider = proxyProvider
       || browserProvider?.proxyProvider
       || httpClient?.proxyProvider
-      || getProxyProvider();
+      || getProxyProvider({ poolName: this.proxyPoolName });
     
     // V6.7.2: 初始化解析器
     this.parser = parser || new DiscoveryParser(this.logger, this.leagueConfig);

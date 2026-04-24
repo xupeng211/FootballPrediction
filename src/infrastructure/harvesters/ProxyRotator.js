@@ -79,14 +79,24 @@ function resolveLegacyProxyConfig() {
   };
 }
 
-function resolveLegacyProviderOptions(proxyProviderOptions = {}) {
+function resolveLegacyProviderOptions(proxyProviderOptions = {}, proxyPoolName = 'default') {
   if (hasExplicitProviderOptions(proxyProviderOptions)) {
-    return proxyProviderOptions;
+    return {
+      poolName: proxyPoolName,
+      ...proxyProviderOptions
+    };
+  }
+
+  if (proxyPoolName !== 'default') {
+    return {
+      poolName: proxyPoolName
+    };
   }
 
   const legacyConfig = resolveLegacyProxyConfig();
 
   return {
+    poolName: proxyPoolName,
     ...proxyProviderOptions,
     protocol: legacyConfig.protocol,
     host: legacyConfig.host,
@@ -105,7 +115,11 @@ class ProxyRotator {
       ? Number(options.maxFailures)
       : 8;
     this.consumer = options.consumer || 'recon-engine';
-    this.proxyProviderOptions = resolveLegacyProviderOptions(options.proxyProviderOptions || {});
+    this.proxyPoolName = options.proxyPoolName || 'oddsportal_pool';
+    this.proxyProviderOptions = resolveLegacyProviderOptions(
+      options.proxyProviderOptions || {},
+      this.proxyPoolName
+    );
     this.proxyProvider = options.proxyProvider || getProxyProvider(this.proxyProviderOptions);
     this.sequence = 0;
     this.currentIndex = 0;

@@ -47,6 +47,15 @@ describe('src/infrastructure/network/ProxyProvider', () => {
     assert.strictEqual(provider.getStats().activeLeases, 0);
   });
 
+  test('不同 poolName 应返回物理隔离的单例实例', () => {
+    const fotmobProvider = getProxyProvider({ poolName: 'fotmob_pool', healthCheckIntervalMs: 0 });
+    const oddsProvider = getProxyProvider({ poolName: 'oddsportal_pool', healthCheckIntervalMs: 0 });
+
+    assert.notStrictEqual(fotmobProvider, oddsProvider);
+    assert.deepStrictEqual(fotmobProvider.getPorts(), Array.from({ length: 20 }, (_, index) => 10001 + index));
+    assert.deepStrictEqual(oddsProvider.getPorts(), Array.from({ length: 20 }, (_, index) => 10021 + index));
+  });
+
   test('连续 503 应在观察窗后进入 90 秒冷却并触发告警', async () => {
     let now = 1_000;
     const alerts = [];

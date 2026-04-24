@@ -191,6 +191,8 @@ class AbstractHarvester {
         this.networkManager = getNetworkManager({
             maxWorkers: this.config.maxWorkers,
             stealthGenerator: generateStealthHeaders,
+            proxyPoolName: 'fotmob_pool',
+            proxyConsumer: 'l2-harvest'
         });
         const networkInitResult = await this.networkManager.initialize({
             preFlightCleanup: () => this._preFlightCleanupNetworkLocks(),
@@ -399,16 +401,8 @@ class AbstractHarvester {
         await this._delay(delay);
 
         const identity = await this.networkManager.assignWorkerIdentity(workerId);
-
-        let contextResult;
-        try {
-            contextResult = await this._getOrCreateContext(workerId, identity);
-        } catch (contextError) {
-            console.error(`❌ [W${workerId}] Context 创建失败: ${contextError.message}`);
-            return { success: false, match_id, error: contextError.message, workerId, attempt };
-        }
-
-        const { context, isNew: isNewContext } = contextResult;
+        let context = null;
+        let isNewContext = false;
         let page = null;
 
         const logPrefix = isRetry ? `[W${workerId}-R${attempt}]` : `[W${workerId}]`;
@@ -416,6 +410,30 @@ class AbstractHarvester {
         console.log(`${logPrefix} Harvesting Match: ${match_id} | ${home_team} vs ${away_team}`);
 
         try {
+            const directData = await this._tryDirectHarvest(match, identity, {
+                logPrefix,
+                workerId
+            });
+
+            if (directData) {
+                return this._completeHarvestSuccess({
+                    matchId: match_id,
+                    data: directData,
+                    workerId,
+                    attempt,
+                    harvestStartTime,
+                    identity,
+                    logPrefix,
+                    homeTeam: home_team,
+                    awayTeam: away_team,
+                    sourceLabel: 'api-first'
+                });
+            }
+
+            const contextResult = await this._getOrCreateContext(workerId, identity);
+            context = contextResult.context;
+            isNewContext = contextResult.isNew;
+
             page = await context.newPage();
             await this.browserFactory.injectStealthScripts(page, identity);
 
@@ -448,39 +466,23 @@ class AbstractHarvester {
                 throw new Error('RETRYABLE_RESOURCE_ERROR: Page closed before extractData');
             }
 
-            const capturedData = await this.extractData(page, match);
+            const capturedData = await this.extractData(page, match, {
+                identity,
+                skipDirectApi: true
+            });
 
-            if (!capturedData) {
-                throw new Error('NO_DATA:无法获取数据');
-            }
-
-            const size = JSON.stringify(capturedData).length;
-            if (size < 1000) {
-                await this._escape403(workerId);
-                throw new Error(`SIZE_TOO_SMALL:${size}`);
-            }
-
-            await this.networkManager.markProxySuccess(workerId);
-
-            if (!this.config.dryRun) {
-                await this.saveData(match_id, capturedData);
-            }
-
-            const harvestDuration = Date.now() - harvestStartTime;
-            this._recordHarvestSuccess(match_id, workerId, harvestDuration, size, identity.proxy.port);
-
-            console.log(`${logPrefix} Success: Data Saved. | ${match_id} | ${size} bytes | ${harvestDuration}ms`);
-            console.log(`✅ ${logPrefix} ${home_team} vs ${away_team} | Port ${identity.proxy.port}`);
-
-            return {
-                success: true,
-                match_id,
-                size,
+            return this._completeHarvestSuccess({
+                matchId: match_id,
+                data: capturedData,
                 workerId,
-                port: identity.proxy.port,
                 attempt,
-                duration: harvestDuration,
-            };
+                harvestStartTime,
+                identity,
+                logPrefix,
+                homeTeam: home_team,
+                awayTeam: away_team,
+                sourceLabel: 'browser-fallback'
+            });
         } catch (error) {
             await this.networkManager.markProxyFailed(workerId, error.message);
 
@@ -523,6 +525,74 @@ class AbstractHarvester {
 
     async _triggerAutoAuth(index, errorMessage) {
         return this.retryPolicy.handleBlockedRecovery(this, index, errorMessage);
+    }
+
+    async _tryDirectHarvest(match, identity, context = {}) {
+        if (!this.strategy || typeof this.strategy.fetchDataDirect !== 'function') {
+            return null;
+        }
+
+        try {
+            return await this.strategy.fetchDataDirect(match, {
+                identity,
+                sessionManager: this.networkManager?.sessionManager
+            });
+        } catch (error) {
+            if (error?.fallbackToBrowser === true) {
+                console.warn(
+                    `${context.logPrefix || '[DIRECT]'} API-first 回退浏览器: ${error.message}`
+                );
+                return null;
+            }
+            throw error;
+        }
+    }
+
+    async _completeHarvestSuccess({
+        matchId,
+        data,
+        workerId,
+        attempt,
+        harvestStartTime,
+        identity,
+        logPrefix,
+        homeTeam,
+        awayTeam,
+        sourceLabel
+    }) {
+        if (!data) {
+            throw new Error('NO_DATA:无法获取数据');
+        }
+
+        const size = JSON.stringify(data).length;
+        if (size < 1000) {
+            await this._escape403(workerId);
+            throw new Error(`SIZE_TOO_SMALL:${size}`);
+        }
+
+        await this.networkManager.markProxySuccess(workerId);
+
+        if (!this.config.dryRun) {
+            await this.saveData(matchId, data);
+        }
+
+        const harvestDuration = Date.now() - harvestStartTime;
+        this._recordHarvestSuccess(matchId, workerId, harvestDuration, size, identity.proxy.port);
+
+        console.log(
+            `${logPrefix} Success: Data Saved. | ${matchId} | ${size} bytes | ${harvestDuration}ms | ${sourceLabel}`
+        );
+        console.log(`✅ ${logPrefix} ${homeTeam} vs ${awayTeam} | Port ${identity.proxy.port}`);
+
+        return {
+            success: true,
+            match_id: matchId,
+            size,
+            workerId,
+            port: identity.proxy.port,
+            attempt,
+            duration: harvestDuration,
+        };
     }
 
     async _getOrCreateContext(workerId, identity) {

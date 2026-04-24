@@ -32,7 +32,7 @@ class ProductionHarvester extends AbstractHarvester {
 
         this.config.dataMatchesPath = resolvedDataPath;
         this.config.bulkConcurrency = this._resolveBulkConcurrency(
-            config.bulkConcurrency || config.maxWorkers || 10
+            config.bulkConcurrency || config.maxWorkers || 8
         );
         this.config.bulkProgressEvery = this._resolveProgressInterval(
             config.bulkProgressEvery || process.env.BULK_PROGRESS_EVERY || 100
@@ -97,12 +97,12 @@ class ProductionHarvester extends AbstractHarvester {
      * @param {object} match
      * @returns {Promise<object>}
      */
-    async extractData(page, match) {
+    async extractData(page, match, options = {}) {
         if (!page || !match) {
             throw new Error('子类必须实现 extractData() 所需 page/match 参数');
         }
 
-        return this.strategy.extractData(page, match);
+        return this.strategy.extractData(page, match, options);
     }
 
     /**

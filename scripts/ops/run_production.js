@@ -45,7 +45,7 @@ function executeZombieKiller() {
 
 function normalizeBulkConcurrency(requested) {
     const parsed = parseInt(requested, 10);
-    const fallback = Number.isFinite(parsed) ? parsed : 10;
+    const fallback = Number.isFinite(parsed) ? parsed : 8;
     return Math.max(1, fallback);
 }
 
@@ -74,7 +74,7 @@ function parseCliArgs(argv = process.argv.slice(2)) {
         limit = parseInt(rawLimit, 10) || null;
     }
 
-    let workers = parseInt(process.env.MAX_WORKERS, 10) || 10;
+    let workers = parseInt(process.env.MAX_WORKERS, 10) || 8;
     const concurrencyIdx = argv.indexOf('--concurrency');
     const workersIdx = argv.indexOf('--workers');
     const rawConcurrency = concurrencyIdx !== -1 ? argv[concurrencyIdx + 1] : argv[workersIdx + 1];

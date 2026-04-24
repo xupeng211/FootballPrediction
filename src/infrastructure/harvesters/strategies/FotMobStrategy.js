@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 
+const { FotMobApiClient } = require('../../network/FotMobApiClient');
 const { transformToApiFormat } = require('../../../parsers/fotmob/NextDataParser');
 
 const DEFAULT_FOTMOB_SESSION_PATH = path.join(process.cwd(), 'data', 'sessions', 'fotmob_session.json');
@@ -36,6 +37,10 @@ class FotMobStrategy {
         this.config = {
             verboseLogging: config.verboseLogging || false,
             sessionPath: config.sessionPath || process.env.FOTMOB_SESSION_PATH || DEFAULT_FOTMOB_SESSION_PATH,
+            harvestMode: String(config.harvestMode || process.env.FOTMOB_HARVEST_MODE || 'api-first'),
+            apiRequestTimeoutMs: Number(config.apiRequestTimeoutMs || process.env.FOTMOB_API_TIMEOUT_MS || 20000),
+            apiJitterMinMs: Number(config.apiJitterMinMs || process.env.FOTMOB_API_JITTER_MIN_MS || 1500),
+            apiJitterMaxMs: Number(config.apiJitterMaxMs || process.env.FOTMOB_API_JITTER_MAX_MS || 4000),
             ...config
         };
 
@@ -48,6 +53,29 @@ class FotMobStrategy {
         // 资源类型拦截黑名单
         this.blockedResourceTypes = ['image', 'media', 'font'];
         this._sessionCookieContextCache = new WeakSet();
+        this.apiClient = config.apiClient || new FotMobApiClient({
+            logger: this._createLogger(),
+            sessionManager: config.sessionManager || null,
+            requestTimeoutMs: this.config.apiRequestTimeoutMs,
+            jitterMinMs: this.config.apiJitterMinMs,
+            jitterMaxMs: this.config.apiJitterMaxMs
+        });
+    }
+
+    _createLogger() {
+        return {
+            warn: (...args) => {
+                if (this.config.verboseLogging) {
+                    console.warn(...args);
+                }
+            }
+        };
+    }
+
+    setSessionManager(sessionManager) {
+        if (this.apiClient && typeof this.apiClient.setSessionManager === 'function') {
+            this.apiClient.setSessionManager(sessionManager);
+        }
     }
 
     /**
@@ -288,6 +316,84 @@ class FotMobStrategy {
             .find(Boolean) || '';
     }
 
+    _shouldFallbackToBrowser(error) {
+        if (!error) {
+            return false;
+        }
+
+        if (error.fallbackToBrowser === true) {
+            return true;
+        }
+
+        const statusCode = Number(error.statusCode) || 0;
+        if ([403, 404, 429].includes(statusCode)) {
+            return true;
+        }
+
+        const code = String(error.code || '').trim().toUpperCase();
+        if (code === 'HTML_CHALLENGE_RESPONSE' || code === 'API_INCOMPLETE_DATA') {
+            return true;
+        }
+
+        return false;
+    }
+
+    _wrapBrowserFallbackError(error) {
+        if (this._shouldFallbackToBrowser(error)) {
+            error.fallbackToBrowser = true;
+        }
+        return error;
+    }
+
+    supportsDirectFetch(match) {
+        if (String(this.config.harvestMode).toLowerCase() === 'browser-only') {
+            return false;
+        }
+
+        const externalId = String(match?.external_id || '').trim();
+        return externalId.length > 0;
+    }
+
+    async fetchDataDirect(match, options = {}) {
+        if (!this.supportsDirectFetch(match)) {
+            return null;
+        }
+
+        if (options.sessionManager) {
+            this.setSessionManager(options.sessionManager);
+        }
+
+        const externalId = String(match?.external_id || '').trim();
+
+        try {
+            const payload = await this.apiClient.fetchMatchDetails(match, {
+                identity: options.identity,
+                proxyServer: options.identity?.proxy?.server || options.identity?.proxy?.url || null,
+                referer: this.getTargetUrl(match),
+                session: options.session
+            });
+            const normalized = this._normalizeData(payload);
+            const payloadMatchId = this._extractPayloadMatchId(normalized);
+
+            if (payloadMatchId && payloadMatchId !== externalId) {
+                throw new Error(`MATCH_ID_MISMATCH: expected=${externalId} actual=${payloadMatchId}`);
+            }
+
+            const validation = this.validateData(normalized);
+            if (!validation.valid) {
+                const validationError = new Error(`API_INCOMPLETE_DATA:${validation.reason}`);
+                validationError.code = 'API_INCOMPLETE_DATA';
+                validationError.validation = validation;
+                validationError.fallbackToBrowser = true;
+                throw validationError;
+            }
+
+            return normalized;
+        } catch (error) {
+            throw this._wrapBrowserFallbackError(error);
+        }
+    }
+
     async _applySessionCookiesToContext(page, cookies = []) {
         const context = page?.context?.();
         if (!context || this._sessionCookieContextCache.has(context)) {
@@ -356,7 +462,13 @@ class FotMobStrategy {
      * @param {object} [interceptionData] - 请求拦截捕获的数据
      * @returns {Promise<object>} 提取的比赛数据
      */
-    async extractData(page, match, interceptionData = null) {
+    // eslint-disable-next-line complexity
+    async extractData(page, match, options = {}) {
+        const normalizedOptions = options && Object.prototype.hasOwnProperty.call(options, 'data')
+            && !Object.prototype.hasOwnProperty.call(options, 'interceptionData')
+            ? { interceptionData: options }
+            : options;
+        const interceptionData = normalizedOptions.interceptionData || null;
         // 优先使用拦截数据
         if (interceptionData && interceptionData.data) {
             if (this.config.verboseLogging) {
@@ -365,12 +477,14 @@ class FotMobStrategy {
             return this._normalizeData(interceptionData.data);
         }
 
-        const sessionPayload = await this._fetchMatchDetailsWithSession(page, match);
-        if (sessionPayload) {
-            if (this.config.verboseLogging) {
-                console.log(`[FotMobStrategy] 使用带 Cookie 的 matchDetails API`);
+        if (normalizedOptions.skipDirectApi !== true) {
+            const sessionPayload = await this._fetchMatchDetailsWithSession(page, match);
+            if (sessionPayload) {
+                if (this.config.verboseLogging) {
+                    console.log(`[FotMobStrategy] 使用带 Cookie 的 matchDetails API`);
+                }
+                return sessionPayload;
             }
-            return sessionPayload;
         }
 
         // 备用方案：从 __NEXT_DATA__ 提取

@@ -60,7 +60,10 @@ function getProxyRotatorClass() {
 }
 
 function getProxyProviderSingleton(options = {}) {
-  return require('../../src/infrastructure/network/ProxyProvider').getProxyProvider(options);
+  return require('../../src/infrastructure/network/ProxyProvider').getProxyProvider({
+    poolName: 'oddsportal_pool',
+    ...options
+  });
 }
 
 function getFixtureRepositoryClass() {
@@ -368,6 +371,7 @@ class ReconScanner {
       this.proxyRotator = new ProxyRotator({
         logger: this._childLogger('ProxyRotator'),
         strategy: 'round-robin',
+        proxyPoolName: 'oddsportal_pool',
         proxyProvider: getProxyProviderSingleton(proxyProviderOptions)
       });
     }
