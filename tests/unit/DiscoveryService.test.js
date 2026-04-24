@@ -9,6 +9,7 @@ const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 const { DiscoveryService } = require('../../src/infrastructure/services/DiscoveryService');
 const { DiscoveryParser } = require('../../src/infrastructure/services/DiscoveryParser');
+const { SeasonDiscovery } = require('../../src/infrastructure/services/SeasonStrategy');
 
 describe('DiscoveryService - V6.7 L1 发现引擎', () => {
   let service;
@@ -414,6 +415,18 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
   });
 
   describe('工业级硬化链路', () => {
+    it('SeasonDiscovery 在无可信候选时应保留原始目标赛季，禁止跨赛季回退', async () => {
+      const discovery = new SeasonDiscovery({
+        logger: { info() {}, warn() {}, error() {} },
+        apiRequest: async () => ({
+          allAvailableSeasons: ['2026', '2025/2026']
+        })
+      });
+
+      const resolvedSeason = await discovery.discover(77, '2024');
+      assert.strictEqual(resolvedSeason, '2024');
+    });
+
     it('内部联赛存在 providerId 映射时，应使用 providerId 请求并保留内部 ID 入库', async () => {
       const requests = [];
       const persisted = [];
@@ -944,6 +957,47 @@ describe('DiscoveryService - V6.7 L1 发现引擎', () => {
         );
         assert.ok(warns.some((message) => message.includes('API 请求失败: api down')));
         assert.ok(errors.some((message) => message.includes('灵魂抽取失败: soul down')));
+      } finally {
+        await testService.close();
+      }
+    });
+
+    it('_applySeasonWindowGuard 应剔除越界赛程并保留窗口内数据', async () => {
+      const testService = new DiscoveryService({
+        silent: true,
+        delayMs: 0,
+        dbPool: { end: async () => {}, connect: async () => ({ release: () => {} }) },
+        configManager: {
+          getRuntimeConfig: () => ({
+            active_leagues: [],
+            active_seasons: ['2024/2025'],
+            default_season: '2024/2025',
+            single_year_league_ids: []
+          }),
+          getSeasonDateWindow: () => ({
+            start: '2024-06-01',
+            end: '2025-07-31',
+            source: 'derived:dual_year'
+          }),
+          getSingleYearLeagueIds: () => []
+        },
+        browserProvider: { isInitialized: () => false, close: async () => {} },
+        networkInterceptor: { getCapturedApis: () => new Map(), reset: () => {} }
+      });
+
+      try {
+        const filtered = testService._applySeasonWindowGuard([
+          {
+            match_id: '87_20242025_in',
+            match_date: '2025-05-20T18:00:00.000Z'
+          },
+          {
+            match_id: '87_20242025_out',
+            match_date: '2026-05-20T18:00:00.000Z'
+          }
+        ], { id: 87 }, '2024/2025');
+
+        assert.deepStrictEqual(filtered.map((fixture) => fixture.match_id), ['87_20242025_in']);
       } finally {
         await testService.close();
       }

@@ -532,7 +532,7 @@ test('TotalWarPipeline.collectMetrics 应解析数据库计数与 raw 增量', a
     async query(sql) {
       if (sql.includes('raw_match_data')) {
         return {
-          rows: [{ raw_count: '25' }]
+          rows: [{ raw_count: '25', l3_count: '20', raw_without_l3_count: '5' }]
         };
       }
 
@@ -557,6 +557,8 @@ test('TotalWarPipeline.collectMetrics 应解析数据库计数与 raw 增量', a
     failedCount: 4,
     linkedCount: 5,
     rawCount: 25,
+    l3Count: 20,
+    rawWithoutL3Count: 5,
     rawDeltaSinceRecon: 15
   });
 });
@@ -910,6 +912,8 @@ test('TotalWarPipeline.runChild 与 collectMetrics 应覆盖默认兜底分支',
     failedCount: 0,
     linkedCount: 0,
     rawCount: 0,
+    l3Count: 0,
+    rawWithoutL3Count: 0,
     rawDeltaSinceRecon: 0
   });
 });

@@ -3,6 +3,32 @@
   "version": "V6.1-FULL-LEAGUES",
   "last_updated": "2026-03-27",
   "description": "定义五大联赛各赛季的有效时间窗口，用于过滤API返回的越界数据",
+  "derived_windows": {
+    "strategies": {
+      "dual_year": {
+        "start_month_day": "06-01",
+        "end_month_day": "07-31",
+        "description": "跨年赛季宽容窗口，覆盖资格赛与季前/季后边界"
+      },
+      "calendar_year": {
+        "start_month_day": "01-01",
+        "end_month_day": "12-31",
+        "description": "自然年赛事窗口，用于单年联赛与杯赛/洲际大赛"
+      }
+    },
+    "league_strategy_overrides": {
+      "44": "calendar_year",
+      "50": "calendar_year",
+      "77": "calendar_year",
+      "112": "calendar_year",
+      "130": "calendar_year",
+      "223": "calendar_year",
+      "268": "calendar_year",
+      "289": "calendar_year",
+      "290": "calendar_year",
+      "9080": "calendar_year"
+    }
+  },
   "seasons": {
     "2023/2024": {
       "start": "2023-08-11",

@@ -66,10 +66,12 @@ test('parseArgs 应兼容 --season 2025/2026', () => {
   assert.equal(result.dryRun, true);
 });
 
-test('parseArgs 应支持 --task-stage recon', () => {
+test('parseArgs 应支持 --task-stage recon 与 smelt', () => {
   const result = parseArgs(['--season', '2025/2026', '--task-stage', 'recon', '--once']);
+  const smeltResult = parseArgs(['--season', '2025/2026', '--task-stage', 'smelt', '--once']);
 
   assert.equal(result.taskStage, 'recon');
+  assert.equal(smeltResult.taskStage, 'smelt');
 });
 
 test('parseArgs 应支持 Recon 阈值与 mismatch-only 透传参数', () => {
@@ -317,6 +319,25 @@ test('task-stage=harvest 时应禁止 recon 抢占调度', () => {
   assert.equal(task, 'harvest');
 });
 
+test('当 Recon 收尾完成且仍有缺失 L3 时，编排器应进入 smelt', () => {
+  const pipeline = new TotalWarPipeline(parseArgs(['--season', '2025/2026', '--once']));
+  pipeline.state.lastDiscoveryAt = new Date().toISOString();
+
+  const task = pipeline.decideNextTask({
+    pendingCount: 0,
+    harvestedCount: 0,
+    mismatchCount: 0,
+    failedCount: 0,
+    linkedCount: 3712,
+    rawCount: 4005,
+    l3Count: 3900,
+    rawWithoutL3Count: 105,
+    rawDeltaSinceRecon: 0
+  });
+
+  assert.equal(task, 'smelt');
+});
+
 test('Discovery 子任务应显式透传安全并发，避免依赖脚本默认值', () => {
   const pipeline = new TotalWarPipeline(parseArgs([
     '--season',
@@ -335,6 +356,17 @@ test('Discovery 子任务应显式透传安全并发，避免依赖脚本默认�
     '--concurrency',
     '5'
   ]);
+});
+
+test('Smelt 子任务应调用 l3_stitch_pipeline 并注入赛季上下文', () => {
+  const pipeline = new TotalWarPipeline(parseArgs(['--season', '2025/2026', '--once']));
+  const task = pipeline.buildTaskCommand('smelt');
+
+  assert.equal(task.args[0].endsWith(path.join('scripts', 'ops', 'l3_stitch_pipeline.js')), true);
+  assert.equal(task.env.ACTIVE_SEASON, '2025/2026');
+  assert.equal(task.env.ACTIVE_SEASON_TAG, '20252026');
+  assert.equal(task.env.L3_STITCH_SEASON, '2025/2026');
+  assert.equal(task.env.L3_STITCH_SEASON_TAG, '20252026');
 });
 
 test('Logger 在日志文件超过阈值时必须执行轮转并保留最新内容', () => {
