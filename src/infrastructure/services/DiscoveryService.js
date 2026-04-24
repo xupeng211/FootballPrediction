@@ -299,10 +299,11 @@ class DiscoveryService {
         lookaheadDays: this.config.lookaheadDays,
         fullSync
       });
+      const guardedFixtures = this._applySeasonWindowGuard(fixtures, target, season);
       const expectedMatches = this.configManager.getExpectedMatches(leagueId, season);
       const criticalWarnings = [];
 
-      if (!fixtures || fixtures.length === 0) {
+      if (!guardedFixtures || guardedFixtures.length === 0) {
         this.uiHelper.printNoFixtures(`W${workerId}`, name);
         if (expectedMatches && expectedMatches > 0) {
           const warning = {
@@ -319,22 +320,22 @@ class DiscoveryService {
         return { total: 0, inserted: 0, updated: 0, failed: 0, criticalWarnings };
       }
 
-      this.uiHelper.printParsedFixtures(`W${workerId}`, name, fixtures.length);
-      if (expectedMatches && fixtures.length < expectedMatches) {
+      this.uiHelper.printParsedFixtures(`W${workerId}`, name, guardedFixtures.length);
+      if (expectedMatches && guardedFixtures.length < expectedMatches) {
         const warning = {
           leagueId,
           name,
           season,
-          actual: fixtures.length,
+          actual: guardedFixtures.length,
           expected: expectedMatches,
-          missing: expectedMatches - fixtures.length
+          missing: expectedMatches - guardedFixtures.length
         };
         criticalWarnings.push(warning);
-        this.uiHelper.printCriticalWarn(`W${workerId}`, name, season, fixtures.length, expectedMatches);
+        this.uiHelper.printCriticalWarn(`W${workerId}`, name, season, guardedFixtures.length, expectedMatches);
       }
 
       // V6.7.5-EXTRACTED: 使用 Repository 入库
-      const result = await this.fixtureRepository.persist(fixtures);
+      const result = await this.fixtureRepository.persist(guardedFixtures);
       result.criticalWarnings = criticalWarnings;
 
       this.uiHelper.printProgress(`W${workerId}`, name, result);
@@ -457,6 +458,50 @@ class DiscoveryService {
     }
 
     throw new Error(`无法获取联赛 ${internalLeagueId} 赛季 ${normalizedSeason} 的数据`);
+  }
+
+  _applySeasonWindowGuard(fixtures, target, season) {
+    if (!Array.isArray(fixtures) || fixtures.length === 0) {
+      return [];
+    }
+
+    const leagueId = Number(target?.id);
+    const seasonWindow = typeof this.configManager?.getSeasonDateWindow === 'function'
+      ? this.configManager.getSeasonDateWindow(leagueId, season)
+      : null;
+
+    if (!seasonWindow?.start || !seasonWindow?.end) {
+      return fixtures;
+    }
+
+    const start = new Date(`${seasonWindow.start}T00:00:00.000Z`);
+    const end = new Date(`${seasonWindow.end}T23:59:59.999Z`);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+      this.logger.warn(
+        `[HOUND-GUARD] ⚠️  赛季窗口配置非法，跳过过滤: league=${leagueId} season=${season} `
+        + `start=${seasonWindow.start} end=${seasonWindow.end}`
+      );
+      return fixtures;
+    }
+
+    const filteredFixtures = fixtures.filter((fixture) => {
+      const matchDate = new Date(fixture?.match_date);
+      if (Number.isNaN(matchDate.getTime())) {
+        return true;
+      }
+      return matchDate >= start && matchDate <= end;
+    });
+
+    const droppedCount = fixtures.length - filteredFixtures.length;
+    if (droppedCount > 0) {
+      this.logger.warn(
+        `[HOUND-GUARD] 🛡️  拦截越界赛程: league=${leagueId} season=${season} `
+        + `window=${seasonWindow.start}..${seasonWindow.end} source=${seasonWindow.source || 'unknown'} `
+        + `dropped=${droppedCount}/${fixtures.length}`
+      );
+    }
+
+    return filteredFixtures;
   }
 
   /**

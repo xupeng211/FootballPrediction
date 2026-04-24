@@ -13,20 +13,6 @@ function normalizeSeasonFingerprint(season) {
   return String(season || '').replace(/[^0-9]/g, '');
 }
 
-function extractPrimarySeasonYear(season) {
-  const directMatch = String(season || '').match(/(\d{4})/);
-  if (directMatch) {
-    return parseInt(directMatch[1], 10);
-  }
-
-  const fingerprint = normalizeSeasonFingerprint(season);
-  if (fingerprint.length >= 4) {
-    return parseInt(fingerprint.slice(0, 4), 10);
-  }
-
-  return Number.NaN;
-}
-
 /**
  * 赛季策略接口
  * @interface ISeasonStrategy
@@ -262,32 +248,12 @@ class SeasonDiscovery {
         this.logger.info(`[SeasonDiscovery] ✅ 包含匹配: ${targetYear} -> ${partialMatch}`);
         return partialMatch;
       }
-      
-      // 策略 3: 最接近匹配
-      const targetYearNum = extractPrimarySeasonYear(targetYear);
-      let closestMatch = null;
-      let minDiff = Infinity;
-      
-      for (const seasonId of availableSeasons) {
-        const year = extractPrimarySeasonYear(seasonId);
-        if (Number.isFinite(year) && Number.isFinite(targetYearNum)) {
-          const diff = Math.abs(year - targetYearNum);
-          if (diff < minDiff) {
-            minDiff = diff;
-            closestMatch = seasonId;
-          }
-        }
-      }
-      
-      if (closestMatch && minDiff <= 1) {
-        this.logger.info(`[SeasonDiscovery] ✅ 最接近匹配: ${targetYear} -> ${closestMatch}`);
-        return closestMatch;
-      }
-      
-      // 回退: 使用第一个可用赛季
-      const fallbackSeason = availableSeasons[0];
-      this.logger.warn(`[SeasonDiscovery] ⚠️  回退到第一个可用赛季: ${fallbackSeason}`);
-      return fallbackSeason;
+
+      // 安全策略: 禁止“最接近赛季”与“首个赛季”回退，避免把 25/26 或 2026 混入 24/25。
+      this.logger.warn(
+        `[SeasonDiscovery] ⚠️  未找到可信赛季映射，保持原始 season=${targetYear}，available=${availableSeasons.join(',')}`
+      );
+      return targetYear;
       
     } catch (error) {
       this.logger.warn(`[SeasonDiscovery] ⚠️  探测失败: ${error.message}`);

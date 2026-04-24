@@ -358,6 +358,7 @@ test('TotalWarPipeline parseArgs 应在参数非法时抛错或回退默认值',
     assert.equal(options.loopMs, 60_000);
     assert.equal(options.reconLimit, getDefaultReconLimit());
     assert.equal(options.failureLimit, 3);
+    assert.equal(parseArgs(['--season', '2025/2026', '--task-stage', 'smelt']).taskStage, 'smelt');
     assert.throws(() => parseArgs(['--season', '2025/2026', '--task-stage', 'invalid']), /不支持的 --task-stage/);
     assert.throws(() => parseArgs(['--season']), /参数 --season 缺少取值/);
   } finally {
