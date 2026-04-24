@@ -124,6 +124,40 @@ const ODDSPORTAL_TEAM_ALIASES = Object.freeze({
   'Qarabag FK': 'Qarabag Fk'
 });
 
+function normalizeStringList(value) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.map((entry) => String(entry || '').trim()).filter(Boolean);
+}
+
+function normalizeLeagueRoute(route) {
+  return {
+    leagueName: String(route?.leagueName || '').trim(),
+    country: String(route?.country || '').trim(),
+    slug: String(route?.slug || '').trim(),
+    expectedMatches: Number.parseInt(route?.expectedMatches, 10),
+    seasonType: String(route?.seasonType || 'dual_year').trim().toLowerCase(),
+    resultsUrlStrategy: String(route?.resultsUrlStrategy || 'seasonal').trim().toLowerCase(),
+    additionalResultsPaths: normalizeStringList(route?.additionalResultsPaths),
+    additionalHistoricalResultsPaths: normalizeStringList(route?.additionalHistoricalResultsPaths),
+    resultsPathTemplate: String(route?.resultsPathTemplate || '').trim() || null
+  };
+}
+
+function isValidLeagueRoute(route) {
+  return Boolean(
+    route.leagueName
+    && route.country
+    && route.slug
+    && Number.isInteger(route.expectedMatches)
+    && route.expectedMatches > 0
+    && ['dual_year', 'single_year'].includes(route.seasonType)
+    && ['seasonal', 'seasonless'].includes(route.resultsUrlStrategy)
+  );
+}
+
 function buildLeagueRouteCatalog() {
   const routes = Array.isArray(routeConfig?.routes) ? routeConfig.routes : [];
   if (routes.length === 0) {
@@ -132,20 +166,15 @@ function buildLeagueRouteCatalog() {
 
   const catalog = {};
   for (const route of routes) {
-    const leagueName = String(route?.leagueName || '').trim();
-    const country = String(route?.country || '').trim();
-    const slug = String(route?.slug || '').trim();
-    const expectedMatches = Number.parseInt(route?.expectedMatches, 10);
-
-    if (!leagueName || !country || !slug || !Number.isInteger(expectedMatches) || expectedMatches <= 0) {
+    const normalizedRoute = normalizeLeagueRoute(route);
+    if (!isValidLeagueRoute(normalizedRoute)) {
       throw new Error(`无效联赛路由配置: ${JSON.stringify(route)}`);
     }
 
-    catalog[leagueName] = Object.freeze({
-      leagueName,
-      country,
-      slug,
-      expectedMatches
+    catalog[normalizedRoute.leagueName] = Object.freeze({
+      ...normalizedRoute,
+      additionalResultsPaths: Object.freeze(normalizedRoute.additionalResultsPaths),
+      additionalHistoricalResultsPaths: Object.freeze(normalizedRoute.additionalHistoricalResultsPaths)
     });
   }
 

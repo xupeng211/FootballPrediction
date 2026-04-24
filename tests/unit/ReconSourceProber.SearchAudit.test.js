@@ -116,15 +116,15 @@ describe('ReconSourceProber Search Audit', () => {
       attemptedSearchSlugs: [
         'kyoto-sanga-tokyo-verdy',
         'tokyo-verdy-kyoto-sanga',
-        'kyoto-sanga-fc-verdy',
-        'verdy-kyoto-sanga-fc',
+        'kyoto-sanga-verdy',
+        'verdy-kyoto-sanga',
         'kyoto-sanga'
       ],
       attemptedSearchUrls: [
         'https://www.oddsportal.com/search/kyoto-sanga-tokyo-verdy/',
         'https://www.oddsportal.com/search/tokyo-verdy-kyoto-sanga/',
-        'https://www.oddsportal.com/search/kyoto-sanga-fc-verdy/',
-        'https://www.oddsportal.com/search/verdy-kyoto-sanga-fc/',
+        'https://www.oddsportal.com/search/kyoto-sanga-verdy/',
+        'https://www.oddsportal.com/search/verdy-kyoto-sanga/',
         'https://www.oddsportal.com/search/kyoto-sanga/'
       ],
     });
@@ -166,15 +166,15 @@ describe('ReconSourceProber Search Audit', () => {
         attemptedSearchSlugs: [
           'kawasaki-frontale-shonan-bellmare',
           'shonan-bellmare-kawasaki-frontale',
-          'frontale-shonan',
-          'shonan-frontale',
+          'frontale-shonan-bellmare',
+          'shonan-bellmare-frontale',
           'kawasaki-frontale'
         ],
         attemptedSearchUrls: [
           'https://www.oddsportal.com/search/kawasaki-frontale-shonan-bellmare/',
           'https://www.oddsportal.com/search/shonan-bellmare-kawasaki-frontale/',
-          'https://www.oddsportal.com/search/frontale-shonan/',
-          'https://www.oddsportal.com/search/shonan-frontale/',
+          'https://www.oddsportal.com/search/frontale-shonan-bellmare/',
+          'https://www.oddsportal.com/search/shonan-bellmare-frontale/',
           'https://www.oddsportal.com/search/kawasaki-frontale/'
         ],
       }

@@ -1,57 +1,145 @@
 {
-  "version": "V6.7-ATLAS",
-  "description": "TITAN V6.7 全球赛事图谱 - Project Atlas",
+  "version": "V6.8-ATLAS-33",
+  "description": "TITAN V6.8 33 项赛事图谱 - Boss Lock List",
   "active_leagues": [
-    { "id": 47, "name": "Premier League", "country": "England", "tier": "P0", "enabled": true },
-    { "id": 87, "name": "La Liga", "country": "Spain", "tier": "P0", "enabled": true },
-    { "id": 54, "name": "Bundesliga", "country": "Germany", "tier": "P0", "enabled": true },
-    { "id": 55, "name": "Serie A", "country": "Italy", "tier": "P0", "enabled": true },
-    { "id": 53, "name": "Ligue 1", "country": "France", "tier": "P0", "enabled": true },
-    { "id": 42, "name": "Champions League", "country": "Europe", "tier": "P0", "enabled": true },
-    { "id": 73, "name": "Europa League", "country": "Europe", "tier": "P0", "enabled": true },
-
-    { "id": 132, "name": "FA Cup", "country": "England", "tier": "P1", "enabled": true },
-    { "id": 133, "name": "EFL Cup", "country": "England", "tier": "P1", "enabled": true },
-    { "id": 209, "name": "DFB Pokal", "country": "Germany", "tier": "P1", "enabled": true },
-    { "id": 138, "name": "Copa del Rey", "country": "Spain", "tier": "P1", "enabled": true },
-    { "id": 141, "name": "Coppa Italia", "country": "Italy", "tier": "P1", "enabled": true },
-    { "id": 181, "providerId": 134, "name": "Coupe de France", "country": "France", "tier": "P1", "enabled": true },
-    { "id": 10216, "name": "Conference League", "country": "Europe", "tier": "P1", "enabled": true },
-    { "id": 74, "name": "UEFA Super Cup", "country": "Europe", "tier": "P1", "enabled": true },
-
-    { "id": 48, "name": "Championship", "country": "England", "tier": "P2", "enabled": true },
-    { "id": 140, "name": "Segunda División", "country": "Spain", "tier": "P2", "enabled": true },
-    { "id": 146, "name": "2. Bundesliga", "country": "Germany", "tier": "P2", "enabled": true },
-    { "id": 156, "providerId": 86, "name": "Serie B", "country": "Italy", "tier": "P2", "enabled": true },
-    { "id": 182, "providerId": 110, "name": "Ligue 2", "country": "France", "tier": "P2", "enabled": true },
-
     {
-      "id": 268,
-      "name": "Brasileirão",
-      "country": "Brazil",
-      "tier": "P3",
+      "id": 47,
+      "name": "Premier League",
+      "country": "England",
+      "tier": "P0",
       "enabled": true,
+      "slug": "premier-league",
+      "results_slug": "premier-league",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 87,
+      "name": "La Liga",
+      "country": "Spain",
+      "tier": "P0",
+      "enabled": true,
+      "slug": "laliga",
+      "results_slug": "laliga",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 54,
+      "name": "Bundesliga",
+      "country": "Germany",
+      "tier": "P0",
+      "enabled": true,
+      "slug": "bundesliga",
+      "results_slug": "bundesliga",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 55,
+      "name": "Serie A",
+      "country": "Italy",
+      "tier": "P0",
+      "enabled": true,
+      "slug": "serie-a",
       "results_slug": "serie-a",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 53,
+      "name": "Ligue 1",
+      "country": "France",
+      "tier": "P0",
+      "enabled": true,
+      "slug": "ligue-1",
+      "results_slug": "ligue-1",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 42,
+      "name": "Champions League",
+      "country": "Europe",
+      "tier": "P0",
+      "enabled": true,
+      "slug": "champions-league",
+      "results_slug": "champions-league",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 73,
+      "name": "Europa League",
+      "country": "Europe",
+      "tier": "P0",
+      "enabled": true,
+      "slug": "europa-league",
+      "results_slug": "europa-league",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 10216,
+      "name": "Europa Conference League",
+      "country": "Europe",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "conference-league",
+      "results_slug": "conference-league",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 57,
+      "name": "Eredivisie",
+      "country": "Netherlands",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "eredivisie",
+      "results_slug": "eredivisie",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 61,
+      "name": "Liga Portugal",
+      "country": "Portugal",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "liga-portugal",
+      "results_slug": "liga-portugal",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 40,
+      "name": "Jupiler Pro League",
+      "country": "Belgium",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "jupiler-pro-league",
+      "results_slug": "jupiler-pro-league",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 71,
+      "name": "Super Lig",
+      "country": "Turkey",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "super-lig",
+      "results_slug": "super-lig",
       "results_url_strategy": "seasonless"
     },
     {
-      "id": 121,
-      "name": "Primera División",
-      "country": "Costa Rica",
-      "tier": "P3",
+      "id": 48,
+      "name": "Championship",
+      "country": "England",
+      "tier": "P1",
       "enabled": true,
-      "slug": "primera-division",
-      "results_slug": "primera-division"
+      "slug": "championship",
+      "results_slug": "championship",
+      "results_url_strategy": "seasonal"
     },
-    { "id": 57, "name": "Eredivisie", "country": "Netherlands", "tier": "P3", "enabled": true },
-    { "id": 61, "name": "Primeira Liga", "country": "Portugal", "tier": "P3", "enabled": true },
     {
       "id": 130,
       "name": "MLS",
       "country": "USA",
-      "tier": "P3",
+      "tier": "P2",
       "enabled": true,
       "slug": "mls",
+      "results_slug": "mls",
       "results_url_strategy": "seasonless",
       "additional_results_paths": [
         "/football/{country}/{league}/"
@@ -61,94 +149,232 @@
       ]
     },
     {
-      "id": 120,
-      "name": "CSL",
-      "country": "China",
-      "tier": "P3",
+      "id": 268,
+      "name": "Serie A (Brazil)",
+      "country": "Brazil",
+      "tier": "P2",
       "enabled": true,
-      "slug": "super-league",
-      "results_url_strategy": "seasonless"
+      "slug": "brasileirao",
+      "results_slug": "brasileirao",
+      "results_url_strategy": "seasonless",
+      "seasonless_current_year_basis": "start"
+    },
+    {
+      "id": 112,
+      "name": "Liga Profesional",
+      "country": "Argentina",
+      "tier": "P2",
+      "enabled": true,
+      "slug": "liga-profesional",
+      "results_slug": "liga-profesional",
+      "results_url_strategy": "seasonless",
+      "seasonless_current_year_basis": "start",
+      "additional_historical_results_paths": [
+        "/football/{country}/{league}-{year}/results/"
+      ]
+    },
+    {
+      "id": 230,
+      "name": "Liga MX",
+      "country": "Mexico",
+      "tier": "P2",
+      "enabled": true,
+      "slug": "liga-mx",
+      "results_slug": "liga-mx",
+      "results_url_strategy": "seasonless",
+      "seasonless_current_year_basis": "start",
+      "additional_historical_results_paths": [
+        "/football/{country}/{league}-{year}/results/"
+      ]
     },
     {
       "id": 223,
       "name": "J1 League",
       "country": "Japan",
-      "tier": "P3",
+      "tier": "P2",
       "enabled": true,
       "slug": "j1-league",
       "results_slug": "j1-league",
-      "results_url_strategy": "seasonless",
+      "results_url_strategy": "seasonal",
       "seasonless_current_year_basis": "start",
       "ready_selector": "div[role='row']"
     },
     {
-      "id": 8974,
-      "name": "J2 League",
-      "country": "Japan",
-      "tier": "P3",
+      "id": 9080,
+      "name": "K League 1",
+      "country": "South Korea",
+      "tier": "P2",
       "enabled": true,
-      "slug": "j2-league",
-      "results_slug": "j2-league",
+      "slug": "k-league-1",
+      "results_slug": "k-league-1",
       "results_url_strategy": "seasonless",
       "seasonless_current_year_basis": "start"
     },
     {
-      "id": 71,
-      "name": "Süper Lig",
-      "country": "Turkey",
-      "tier": "P3",
+      "id": 536,
+      "name": "Saudi Professional League",
+      "country": "Saudi Arabia",
+      "tier": "P2",
       "enabled": true,
-      "slug": "super-lig",
-      "results_url_strategy": "seasonless"
-    },
-    { "id": 230, "name": "Liga MX", "country": "Mexico", "tier": "P3", "enabled": true },
-
-    {
-      "id": 77,
-      "name": "FIFA World Cup",
-      "country": "World",
-      "tier": "P4",
-      "enabled": true,
-      "awaiting_finals": true,
-      "slug": "world-cup-2026",
+      "slug": "saudi-professional-league",
+      "results_slug": "saudi-professional-league",
       "results_url_strategy": "seasonal"
     },
     {
+      "id": 132,
+      "name": "FA Cup",
+      "country": "England",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "fa-cup",
+      "results_slug": "fa-cup",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 133,
+      "name": "EFL Cup",
+      "country": "England",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "efl-cup",
+      "results_slug": "efl-cup",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 138,
+      "name": "Copa del Rey",
+      "country": "Spain",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "copa-del-rey",
+      "results_slug": "copa-del-rey",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 141,
+      "name": "Coppa Italia",
+      "country": "Italy",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "coppa-italia",
+      "results_slug": "coppa-italia",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 209,
+      "name": "DFB Pokal",
+      "country": "Germany",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "dfb-pokal",
+      "results_slug": "dfb-pokal",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 134,
+      "name": "Coupe de France",
+      "country": "France",
+      "tier": "P3",
+      "enabled": true,
+      "slug": "coupe-de-france",
+      "results_slug": "coupe-de-france",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 77,
+      "name": "World Cup",
+      "country": "World",
+      "tier": "P4",
+      "enabled": true,
+      "slug": "world-cup-2026",
+      "results_slug": "world-cup-2026",
+      "results_url_strategy": "seasonless",
+      "awaiting_finals": true
+    },
+    {
       "id": 50,
-      "name": "UEFA Euro",
+      "name": "Euro",
       "country": "Europe",
       "tier": "P4",
       "enabled": true,
-      "slug": "euro",
-      "results_url_strategy": "seasonless"
+      "slug": "euro-2028",
+      "results_slug": "euro-2028",
+      "results_url_strategy": "seasonless",
+      "awaiting_finals": true
     },
-    { "id": 10148, "name": "UEFA Nations League", "country": "Europe", "tier": "P4", "enabled": true },
     {
-      "id": 131,
-      "name": "Copa América",
+      "id": 44,
+      "name": "Copa America",
       "country": "South America",
       "tier": "P4",
-      "enabled": true
+      "enabled": true,
+      "slug": "copa-america",
+      "results_slug": "copa-america",
+      "results_url_strategy": "seasonless"
     },
-    { "id": 10004, "name": "AFC Asian Cup", "country": "Asia", "tier": "P4", "enabled": true }
+    {
+      "id": 290,
+      "name": "AFC Asian Cup",
+      "country": "Asia",
+      "tier": "P4",
+      "enabled": true,
+      "slug": "afc-asian-cup",
+      "results_slug": "afc-asian-cup",
+      "results_url_strategy": "seasonless"
+    },
+    {
+      "id": 289,
+      "name": "Africa Cup of Nations",
+      "country": "Africa",
+      "tier": "P4",
+      "enabled": true,
+      "slug": "africa-cup-of-nations",
+      "results_slug": "africa-cup-of-nations",
+      "results_url_strategy": "seasonless"
+    },
+    {
+      "id": 9806,
+      "name": "UEFA Nations League",
+      "country": "Europe",
+      "tier": "P4",
+      "enabled": true,
+      "slug": "uefa-nations-league",
+      "results_slug": "uefa-nations-league",
+      "results_url_strategy": "seasonless"
+    },
+    {
+      "id": 64,
+      "name": "Scottish Premiership",
+      "country": "Scotland",
+      "tier": "P4",
+      "enabled": true,
+      "slug": "premiership",
+      "results_slug": "premiership",
+      "results_url_strategy": "seasonal"
+    }
   ],
   "inactive_leagues": [],
-  "active_seasons": ["2023/2024", "2024/2025", "2025/2026"],
+  "active_seasons": [
+    "2023/2024",
+    "2024/2025",
+    "2025/2026"
+  ],
   "metadata": {
-    "last_updated": "2026-03-20",
-    "total_leagues": 35,
+    "last_updated": "2026-04-24",
+    "total_leagues": 33,
     "tier_distribution": {
       "P0": 7,
-      "P1": 7,
-      "P2": 5,
-      "P3": 8,
-      "P4": 5
+      "P1": 6,
+      "P2": 7,
+      "P3": 6,
+      "P4": 7
     },
     "coverage": {
-      "europe": "100%",
-      "south_america": "High",
-      "north_america": "Medium",
-      "asia": "Medium"
+      "europe": "Expanded",
+      "south_america": "Expanded",
+      "north_america": "Expanded",
+      "asia": "Expanded",
+      "africa": "Expanded"
     }
   }
 }
