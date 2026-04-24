@@ -39,6 +39,17 @@ function loadConfigTeamMappings() {
   return cachedConfigTeamMappings;
 }
 
+function normalizeLooseLookupKey(teamName) {
+  return String(teamName || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[\\/]+/g, ' ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 const reconLocalDictionaryService = {
   async _primeLeagueDictionary(target) {
     if (!this.matchEvaluator || typeof this.matchEvaluator.setLeagueDictionaryEntries !== 'function') {
@@ -108,25 +119,29 @@ const reconLocalDictionaryService = {
     }
 
     const index = new Map();
-    for (const entry of Array.isArray(target?.leagueDictionaryEntries) ? target.leagueDictionaryEntries : []) {
-      const key = this._normalizeLocalDictionaryTeamName(entry?.local_team_name);
-      if (!key || index.has(key)) {
-        continue;
-      }
+    const registerEntry = (entry, options = {}) => {
+      const overwrite = options.overwrite === true;
+      for (const key of this._buildLocalDictionaryLookupKeys(entry?.local_team_name)) {
+        if (!key || (!overwrite && index.has(key))) {
+          continue;
+        }
 
-      index.set(key, entry);
+        index.set(key, entry);
+      }
+    };
+
+    for (const entry of Array.isArray(target?.leagueDictionaryEntries) ? target.leagueDictionaryEntries : []) {
+      registerEntry(entry);
     }
 
     for (const entry of loadConfigTeamMappings()) {
-      const key = this._normalizeLocalDictionaryTeamName(entry?.local_team_name);
-      if (!key) {
-        continue;
-      }
-
-      index.set(key, {
-        ...entry,
-        source: 'config_alias_override'
-      });
+      registerEntry(
+        {
+          ...entry,
+          source: 'config_alias_override'
+        },
+        { overwrite: true }
+      );
     }
 
     target.localDictionaryIndex = index;
@@ -141,9 +156,27 @@ const reconLocalDictionaryService = {
     return String(teamName || '').toLowerCase().trim();
   },
 
+  _buildLocalDictionaryLookupKeys(teamName) {
+    return [...new Set([
+      this._normalizeLocalDictionaryTeamName(teamName),
+      normalizeLooseLookupKey(teamName)
+    ].filter(Boolean))];
+  },
+
+  _resolveLocalDictionaryIndexEntry(teamName, index) {
+    for (const key of this._buildLocalDictionaryLookupKeys(teamName)) {
+      const entry = index.get(key) || null;
+      if (entry) {
+        return entry;
+      }
+    }
+
+    return null;
+  },
+
   _resolveLocalDictionaryRemoteName(teamName, index) {
     const normalizedTeamName = this._normalizeLocalDictionaryTeamName(teamName);
-    const directEntry = index.get(normalizedTeamName) || null;
+    const directEntry = this._resolveLocalDictionaryIndexEntry(teamName, index);
     if (directEntry?.remote_name) {
       return String(directEntry.remote_name);
     }
@@ -154,21 +187,28 @@ const reconLocalDictionaryService = {
       .filter(Boolean);
     if (slashSegments.length > 1) {
       const resolvedSlashSegments = slashSegments.map((segment) => {
-        const entry = index.get(this._normalizeLocalDictionaryTeamName(segment)) || null;
+        const entry = this._resolveLocalDictionaryIndexEntry(segment, index);
         return entry?.remote_name ? String(entry.remote_name) : null;
       });
       return resolvedSlashSegments.every(Boolean) ? resolvedSlashSegments.join('/') : null;
     }
 
-    const tokens = normalizedTeamName.split(' ').filter(Boolean);
-    for (let splitIndex = 1; splitIndex < tokens.length; splitIndex++) {
-      const leftKey = tokens.slice(0, splitIndex).join(' ');
-      const rightKey = tokens.slice(splitIndex).join(' ');
-      const leftEntry = index.get(leftKey) || null;
-      const rightEntry = index.get(rightKey) || null;
+    const compositeCandidates = [...new Set([
+      normalizedTeamName,
+      normalizeLooseLookupKey(teamName)
+    ].filter(Boolean))];
 
-      if (leftEntry?.remote_name && rightEntry?.remote_name) {
-        return `${leftEntry.remote_name}/${rightEntry.remote_name}`;
+    for (const compositeCandidate of compositeCandidates) {
+      const tokens = compositeCandidate.split(' ').filter(Boolean);
+      for (let splitIndex = 1; splitIndex < tokens.length; splitIndex++) {
+        const leftKey = tokens.slice(0, splitIndex).join(' ');
+        const rightKey = tokens.slice(splitIndex).join(' ');
+        const leftEntry = index.get(leftKey) || null;
+        const rightEntry = index.get(rightKey) || null;
+
+        if (leftEntry?.remote_name && rightEntry?.remote_name) {
+          return `${leftEntry.remote_name}/${rightEntry.remote_name}`;
+        }
       }
     }
 
