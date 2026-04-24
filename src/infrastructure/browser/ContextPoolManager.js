@@ -123,7 +123,7 @@ class ContextPoolManager {
         if (deps.networkManager) {
             cookieLoaded = await deps.networkManager.loadSessionToContext(context, identity.proxy.port);
         }
-        if (!cookieLoaded) {
+        if (!cookieLoaded && deps.allowSharedBrowserStateCookies === true) {
             cookieLoaded = await deps.browserFactory.loadBrowserStateCookies(context);
         }
 
@@ -334,6 +334,14 @@ class ContextPoolManager {
             totalReuses: 0,
             totalEvictions: 0
         };
+    }
+
+    setMaxSize(maxSize) {
+        const normalized = Number.parseInt(maxSize, 10);
+        if (Number.isFinite(normalized) && normalized > 0) {
+            this.config.maxSize = normalized;
+        }
+        return this.config.maxSize;
     }
 }
 

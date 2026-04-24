@@ -229,6 +229,36 @@ class BrowserFactory {
             || 'en-US,en;q=0.9';
     }
 
+    _buildStableStealthProfile(stealthConfig = {}) {
+        const locale = typeof stealthConfig.locale === 'string' && stealthConfig.locale.trim()
+            ? stealthConfig.locale.trim()
+            : 'en-US';
+        const platform = typeof stealthConfig.platform === 'string' && stealthConfig.platform.trim()
+            ? stealthConfig.platform.trim()
+            : 'Win32';
+        const normalizedLanguages = Array.isArray(stealthConfig.languages) && stealthConfig.languages.length > 0
+            ? stealthConfig.languages.map(value => String(value).trim()).filter(Boolean)
+            : [locale, 'en'].filter((value, index, source) => source.indexOf(value) === index);
+        const hardwareConcurrency = Number.isFinite(Number(stealthConfig.hardwareConcurrency))
+            ? Math.max(1, Math.round(Number(stealthConfig.hardwareConcurrency)))
+            : 8;
+        const deviceMemory = Number.isFinite(Number(stealthConfig.deviceMemory))
+            ? Math.max(1, Math.round(Number(stealthConfig.deviceMemory)))
+            : 8;
+        const webgl = {
+            vendor: stealthConfig.webgl?.vendor || 'Google Inc. (NVIDIA)',
+            renderer: stealthConfig.webgl?.renderer || 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)'
+        };
+
+        return {
+            platform,
+            languages: normalizedLanguages.length > 0 ? normalizedLanguages : ['en-US', 'en'],
+            hardwareConcurrency,
+            deviceMemory,
+            webgl
+        };
+    }
+
     // ========================================================================
     // 隐身脚本注入
     // ========================================================================
@@ -238,8 +268,10 @@ class BrowserFactory {
      * V4.46.1: 修复 platform 与 UA 不一致导致的指纹泄露
      * @param {import('playwright').Page} page - Playwright 页面对象
      */
-    async injectStealthScripts(page) {
-        await page.addInitScript(() => {
+    async injectStealthScripts(page, identity = null) {
+        const stableFingerprint = this._buildStableStealthProfile(identity?.stealth || {});
+
+        await page.addInitScript((fingerprint) => {
             // ═══════════════════════════════════════════════════════════════
             // 核心指纹覆盖 - 必须与 UA 完全一致
             // ═══════════════════════════════════════════════════════════════
@@ -252,25 +284,25 @@ class BrowserFactory {
 
             // 【关键修复】覆盖 platform - 必须与 UA 中的 Windows 匹配
             Object.defineProperty(navigator, 'platform', {
-                get: () => 'Win32',
+                get: () => fingerprint.platform,
                 configurable: true
             });
 
             // 【关键修复】模拟语言 - 包含 q 值权重
             Object.defineProperty(navigator, 'languages', {
-                get: () => ['en-US', 'en'],
+                get: () => fingerprint.languages,
                 configurable: true
             });
 
-            // 模拟硬件并发 (随机化)
+            // 绑定稳定硬件并发，避免同一身份在每次页面加载时漂移
             Object.defineProperty(navigator, 'hardwareConcurrency', {
-                get: () => 8 + (Math.floor(Math.random() * 17)),
+                get: () => fingerprint.hardwareConcurrency,
                 configurable: true
             });
 
-            // 模拟设备内存
+            // 绑定稳定设备内存
             Object.defineProperty(navigator, 'deviceMemory', {
-                get: () => [4, 8, 8, 16, 16, 32][Math.floor(Math.random() * 6)],
+                get: () => fingerprint.deviceMemory,
                 configurable: true
             });
 
@@ -306,15 +338,9 @@ class BrowserFactory {
             });
 
             // ═══════════════════════════════════════════════════════════════
-            // WebGL 指纹伪装 - 随机化
+            // WebGL 指纹伪装 - 复用稳定渲染器，避免每次页面初始化漂移
             // ═══════════════════════════════════════════════════════════════
-            const WEBGL_RENDERERS = [
-                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
-                { vendor: 'Google Inc. (NVIDIA)', renderer: 'ANGLE (NVIDIA, NVIDIA GeForce GTX 1660 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
-                { vendor: 'Google Inc. (AMD)', renderer: 'ANGLE (AMD, AMD Radeon RX 580 Direct3D11 vs_5_0 ps_5_0, D3D11)' },
-                { vendor: 'Google Inc. (Intel)', renderer: 'ANGLE (Intel, Intel UHD Graphics 630 Direct3D11 vs_5_0 ps_5_0, D3D11)' }
-            ];
-            const selectedRenderer = WEBGL_RENDERERS[Math.floor(Math.random() * WEBGL_RENDERERS.length)];
+            const selectedRenderer = fingerprint.webgl;
 
             const getParameterProxyHandler = {
                 apply: function(target, thisArg, args) {
@@ -336,25 +362,6 @@ class BrowserFactory {
                 const originalGetParameter2 = WebGL2RenderingContext.prototype.getParameter;
                 WebGL2RenderingContext.prototype.getParameter = new Proxy(originalGetParameter2, getParameterProxyHandler);
             }
-
-            // ═══════════════════════════════════════════════════════════════
-            // Canvas 指纹噪音
-            // ═══════════════════════════════════════════════════════════════
-            const originalToDataURL = HTMLCanvasElement.prototype.toDataURL;
-            HTMLCanvasElement.prototype.toDataURL = function(type) {
-                if (this.width > 0 && this.height > 0) {
-                    const ctx = this.getContext('2d');
-                    if (ctx) {
-                        // 添加微弱噪音
-                        const imageData = ctx.getImageData(0, 0, this.width, this.height);
-                        for (let i = 0; i < imageData.data.length; i += 4) {
-                            imageData.data[i] ^= (Math.random() * 2) | 0;
-                        }
-                        ctx.putImageData(imageData, 0, 0);
-                    }
-                }
-                return originalToDataURL.apply(this, arguments);
-            };
 
             // ═══════════════════════════════════════════════════════════════
             // 隐藏自动化标志
@@ -401,9 +408,6 @@ class BrowserFactory {
                 if (this === navigator.permissions?.query) {
                     return 'function query() { [native code] }';
                 }
-                if (this === HTMLCanvasElement.prototype.toDataURL) {
-                    return 'function toDataURL() { [native code] }';
-                }
                 return oldToString.call(this);
             };
 
@@ -421,8 +425,7 @@ class BrowserFactory {
                 }
             });
 
-            console.log('[Stealth] V4.46.1 深度隐身脚本已注入');
-        });
+        }, stableFingerprint);
     }
 
     // ========================================================================

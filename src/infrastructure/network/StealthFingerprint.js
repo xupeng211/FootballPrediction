@@ -97,6 +97,37 @@ function getRandomViewport() {
     return GHOST_VIEWPORTS[Math.floor(Math.random() * GHOST_VIEWPORTS.length)];
 }
 
+function normalizeSeed(value, fallback = 1) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function resolveHeaderOptions(useFixedOrOptions = true, maybeSeed = 1) {
+    if (typeof useFixedOrOptions === 'object' && useFixedOrOptions !== null) {
+        return {
+            useFixed: useFixedOrOptions.useFixed !== false,
+            seed: normalizeSeed(
+                useFixedOrOptions.seed
+                    || useFixedOrOptions.port
+                    || useFixedOrOptions.workerId,
+                1
+            )
+        };
+    }
+
+    if (typeof useFixedOrOptions === 'number') {
+        return {
+            useFixed: true,
+            seed: normalizeSeed(useFixedOrOptions, 1)
+        };
+    }
+
+    return {
+        useFixed: useFixedOrOptions !== false,
+        seed: normalizeSeed(maybeSeed, 1)
+    };
+}
+
 /**
  * V185: 生成随机化的深度隐身配置
  * @param {number} workerId - Worker ID，用于确定性随机
@@ -136,16 +167,25 @@ function generateStealthConfig(workerId = 1) {
  * @param {boolean} useFixed - 是否使用固定指纹 (默认 true)
  * @returns {object} 包含 userAgent, viewport, extraHTTPHeaders 的对象
  */
-function generateStealthHeaders(useFixed = true) {
+function generateStealthHeaders(useFixedOrOptions = true, maybeSeed = 1) {
+    const { useFixed, seed } = resolveHeaderOptions(useFixedOrOptions, maybeSeed);
+
     if (useFixed) {
         const ua = FIXED_FINGERPRINT.userAgent;
         const viewport = FIXED_FINGERPRINT.viewport;
+        const stableFingerprint = generateStealthConfig(seed);
 
         return {
             userAgent: ua,
             viewport,
             locale: FIXED_FINGERPRINT.locale,
             timezoneId: FIXED_FINGERPRINT.timezoneId,
+            platform: FIXED_FINGERPRINT.platform,
+            deviceScaleFactor: FIXED_FINGERPRINT.deviceScaleFactor,
+            hardwareConcurrency: stableFingerprint.hardwareConcurrency,
+            deviceMemory: stableFingerprint.deviceMemory,
+            webgl: stableFingerprint.webgl,
+            fonts: stableFingerprint.fonts,
             extraHTTPHeaders: {
                 'sec-ch-ua': '"Chromium";v="131", "Google Chrome";v="131", "Not-A.Brand";v="99"',
                 'sec-ch-ua-mobile': '?0',
