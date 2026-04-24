@@ -65,7 +65,7 @@ TOTAL WAR PIPELINE - 24 小时自动编排器
   --discovery-interval-ms=N  Discovery 间隔，默认 3600000
   --discovery-concurrency=N  Discovery 并发，默认 5
   --concurrency=N            主任务并发别名，同时设置 Harvest/Recon 并发
-  --harvest-concurrency=N    Harvest 并发，默认 10
+  --harvest-concurrency=N    Harvest 并发，默认 8
   --harvest-limit=N          Harvest 单批上限，默认 500
   --recon-concurrency=N      Recon 并发，默认 5
   --recon-limit=N            Recon 单批上限，默认读取配置
@@ -251,7 +251,7 @@ function parseArgs(argv = process.argv.slice(2), runtime = {}) {
     loopMs: 60_000,
     discoveryIntervalMs: 60 * 60 * 1000,
     discoveryConcurrency: 5,
-    harvestConcurrency: 10,
+    harvestConcurrency: 8,
     harvestLimit: 500,
     reconConcurrency: 5,
     reconLimit: getDefaultReconLimit(),

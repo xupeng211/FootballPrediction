@@ -596,4 +596,18 @@ describe('src/infrastructure/network/NetworkManager', () => {
       loaded.restore();
     }
   });
+
+  test('不同 proxyPoolName 应返回独立的 NetworkManager 单例', () => {
+    const loaded = loadNetworkManagerModule();
+    try {
+      const fotmobManager = loaded.getNetworkManager({ maxWorkers: 3, proxyPoolName: 'fotmob_pool' });
+      const oddsManager = loaded.getNetworkManager({ maxWorkers: 3, proxyPoolName: 'oddsportal_pool' });
+
+      assert.notStrictEqual(fotmobManager, oddsManager);
+      assert.strictEqual(fotmobManager.proxyPoolName, 'fotmob_pool');
+      assert.strictEqual(oddsManager.proxyPoolName, 'oddsportal_pool');
+    } finally {
+      loaded.restore();
+    }
+  });
 });

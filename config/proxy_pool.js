@@ -5,9 +5,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const PROXY_POOL_PATH = path.resolve(__dirname, 'proxy_pool.json');
+const PROXY_POOLS_PATH = path.resolve(__dirname, 'proxy_pools.json');
 const DEFAULT_PROTOCOL = 'socks5';
 const DEFAULT_PREFERRED_HOST = '127.0.0.1';
 const DEFAULT_HOST = DEFAULT_PREFERRED_HOST;
+const DEFAULT_POOL_NAME = 'default';
 
 function normalizeHost(value) {
     return typeof value === 'string' && value.trim() !== ''
@@ -77,9 +79,15 @@ function parsePositiveNumber(value) {
     return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
-function readProxyPoolFile() {
+function normalizePoolName(value) {
+    return typeof value === 'string' && value.trim() !== ''
+        ? value.trim()
+        : DEFAULT_POOL_NAME;
+}
+
+function readJsonFile(filePath) {
     try {
-        const raw = fs.readFileSync(PROXY_POOL_PATH, 'utf8');
+        const raw = fs.readFileSync(filePath, 'utf8');
         const data = JSON.parse(raw);
         if (!data || typeof data !== 'object' || Array.isArray(data)) {
             return {};
@@ -90,9 +98,51 @@ function readProxyPoolFile() {
     }
 }
 
-function resolveProxyPoolConfig(env = process.env) {
+function selectPoolConfig(rawConfig, poolName) {
+    if (!rawConfig || typeof rawConfig !== 'object' || Array.isArray(rawConfig)) {
+        return null;
+    }
+
+    if (Array.isArray(rawConfig.active_ports) || Array.isArray(rawConfig.ports)) {
+        return rawConfig;
+    }
+
+    const normalizedPoolName = normalizePoolName(poolName);
+    const selected = rawConfig[normalizedPoolName] || rawConfig[DEFAULT_POOL_NAME] || null;
+    return selected && typeof selected === 'object' && !Array.isArray(selected)
+        ? selected
+        : null;
+}
+
+function readProxyPoolFile(poolName = DEFAULT_POOL_NAME) {
+    const normalizedPoolName = normalizePoolName(poolName);
+    const multiPoolConfig = selectPoolConfig(readJsonFile(PROXY_POOLS_PATH), normalizedPoolName);
+    if (multiPoolConfig) {
+        return {
+            ...multiPoolConfig,
+            poolName: normalizedPoolName,
+            configPath: PROXY_POOLS_PATH
+        };
+    }
+
+    return {
+        ...readJsonFile(PROXY_POOL_PATH),
+        poolName: normalizedPoolName,
+        configPath: PROXY_POOL_PATH
+    };
+}
+
+function resolveProxyPoolConfig(env = process.env, options = {}) {
+    const normalizedOptions = typeof options === 'string'
+        ? { poolName: options }
+        : (options || {});
+    const poolName = normalizePoolName(
+        normalizedOptions.poolName
+        || env.PROXY_POOL_NAME
+        || DEFAULT_POOL_NAME
+    );
     const radarMode = String(env.PROXY_RADAR_MODE || '').toLowerCase() === 'true';
-    const fileConfig = readProxyPoolFile();
+    const fileConfig = readProxyPoolFile(poolName);
     const protocol = normalizeProxyProtocol(env.PROXY_PROTOCOL || fileConfig.protocol || DEFAULT_PROTOCOL);
     const explicitServerTemplate = typeof env.PROXY_SERVER === 'string' && env.PROXY_SERVER.trim() !== ''
         ? env.PROXY_SERVER.trim()
@@ -144,13 +194,14 @@ function resolveProxyPoolConfig(env = process.env) {
         : `${protocol}://${host}:{port}`;
 
     return {
+        poolName,
         protocol,
         host,
         ports,
         activePorts: ports,
         defaultPort: defaultPort || ports[0] || 0,
         serverTemplate,
-        configPath: PROXY_POOL_PATH,
+        configPath: fileConfig.configPath || PROXY_POOL_PATH,
         radarMode,
         healthCheckIntervalMs: parsePositiveNumber(fileConfig.healthCheckIntervalMs),
         failureThreshold: parsePositiveNumber(fileConfig.failureThreshold),
@@ -168,7 +219,7 @@ function resolveProxyPoolConfig(env = process.env) {
 }
 
 function buildProxyServer(port, options = {}) {
-    const config = options.config || resolveProxyPoolConfig(options.env);
+    const config = options.config || resolveProxyPoolConfig(options.env, { poolName: options.poolName });
     const hasExplicitHost = Object.prototype.hasOwnProperty.call(options, 'host');
     const hasExplicitProtocol = Object.prototype.hasOwnProperty.call(options, 'protocol');
     const serverTemplate = options.serverTemplate
@@ -184,10 +235,12 @@ function buildProxyServer(port, options = {}) {
 
 module.exports = {
     PROXY_POOL_PATH,
+    PROXY_POOLS_PATH,
     buildProxyServer,
     extractHost,
     isLegacyBridgeHost,
     normalizeProxyProtocol,
+    normalizePoolName,
     parseProxyPorts,
     readProxyPoolFile,
     resolveProxyPoolConfig

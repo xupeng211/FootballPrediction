@@ -161,6 +161,47 @@ describe('数据完整性测试套件', () => {
                 assert.strictEqual(cookie.sameSite, 'None');
             });
 
+        it('fetchDataDirect 应优先返回 API 数据且保留统一结构', async () => {
+                const { FotMobStrategy } = require(FOTMOB_STRATEGY_PATH);
+                const strategy = new FotMobStrategy({
+                    apiClient: {
+                        setSessionManager() {},
+                        async fetchMatchDetails() {
+                            return {
+                                general: { matchId: '12345' },
+                                content: { stats: {}, lineup: {} },
+                                header: {},
+                                padding: 'x'.repeat(1200)
+                            };
+                        }
+                    }
+                });
+
+                const result = await strategy.fetchDataDirect({ external_id: '12345' });
+                assert.ok(result.content);
+                assert.ok(result.general);
+                assert.ok(result.header);
+            });
+
+        it('fetchDataDirect 在 403 时应标记浏览器回退', async () => {
+                const { FotMobStrategy } = require(FOTMOB_STRATEGY_PATH);
+                const strategy = new FotMobStrategy({
+                    apiClient: {
+                        setSessionManager() {},
+                        async fetchMatchDetails() {
+                            const error = new Error('HTTP_403');
+                            error.statusCode = 403;
+                            throw error;
+                        }
+                    }
+                });
+
+                await assert.rejects(
+                    strategy.fetchDataDirect({ external_id: '12345' }),
+                    (error) => error && error.fallbackToBrowser === true
+                );
+            });
+
         it('validateData 应该验证有效数据', () => {
                 const data = {
                     content: { lineup: {}, stats: {} },

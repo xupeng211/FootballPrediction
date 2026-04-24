@@ -9,7 +9,12 @@ const { URL } = require('node:url');
 const { HttpProxyAgent } = require('http-proxy-agent');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 const { SocksProxyAgent } = require('socks-proxy-agent');
-const { buildProxyServer, normalizeProxyProtocol, resolveProxyPoolConfig } = require('../../../config/proxy_pool');
+const {
+  buildProxyServer,
+  normalizePoolName,
+  normalizeProxyProtocol,
+  resolveProxyPoolConfig
+} = require('../../../config/proxy_pool');
 
 const DEFAULT_PROTOCOL = 'socks5';
 const DEFAULT_TARGET_LATENCY_MS = 1500;
@@ -164,7 +169,11 @@ class ProxyProvider extends EventEmitter {
       http: options.probes?.http || ((node, config) => this._probeHttp(node, config))
     };
 
-    this.config = this._buildConfig(options);
+    this.poolName = normalizePoolName(options.poolName || process.env.PROXY_POOL_NAME);
+    this.config = this._buildConfig({
+      ...options,
+      poolName: this.poolName
+    });
     this.nodes = this.config.ports.map(port => this._createNode(port));
     this.nodeByPort = new Map(this.nodes.map(node => [node.port, node]));
     this.leases = new Map();
@@ -177,7 +186,9 @@ class ProxyProvider extends EventEmitter {
   }
 
   _buildConfig(options = {}) {
-    const resolvedPoolConfig = resolveProxyPoolConfig();
+    const resolvedPoolConfig = resolveProxyPoolConfig(process.env, {
+      poolName: options.poolName || this.poolName
+    });
     const protocol = normalizeProxyProtocol(
       options.protocol || resolvedPoolConfig.protocol || ProxyProvider.resolveProtocol()
     );
@@ -200,6 +211,7 @@ class ProxyProvider extends EventEmitter {
     );
 
     return {
+      poolName: normalizePoolName(options.poolName || resolvedPoolConfig.poolName || this.poolName),
       protocol,
       host,
       ports,
@@ -300,24 +312,25 @@ class ProxyProvider extends EventEmitter {
     };
   }
 
-  static resolveHost() {
-    return resolveProxyPoolConfig().host;
+  static resolveHost(options = {}) {
+    return resolveProxyPoolConfig(process.env, options).host;
   }
 
-  static resolvePorts() {
-    return [...resolveProxyPoolConfig().ports];
+  static resolvePorts(options = {}) {
+    return [...resolveProxyPoolConfig(process.env, options).ports];
   }
 
-  static resolveProtocol() {
-    return normalizeProxyProtocol(resolveProxyPoolConfig().protocol || DEFAULT_PROTOCOL);
+  static resolveProtocol(options = {}) {
+    return normalizeProxyProtocol(resolveProxyPoolConfig(process.env, options).protocol || DEFAULT_PROTOCOL);
   }
 
   static buildServer(port, options = {}) {
+    const poolName = normalizePoolName(options.poolName || process.env.PROXY_POOL_NAME);
     return buildProxyServer(port, {
       config: {
-        ...resolveProxyPoolConfig(),
-        protocol: options.protocol || ProxyProvider.resolveProtocol(),
-        host: options.host || ProxyProvider.resolveHost()
+        ...resolveProxyPoolConfig(process.env, { poolName }),
+        protocol: options.protocol || ProxyProvider.resolveProtocol({ poolName }),
+        host: options.host || ProxyProvider.resolveHost({ poolName })
       },
       protocol: options.protocol,
       host: options.host,
@@ -326,10 +339,12 @@ class ProxyProvider extends EventEmitter {
   }
 
   static buildAssignment(port, options = {}) {
-    const host = options.host || ProxyProvider.resolveHost();
+    const poolName = normalizePoolName(options.poolName || process.env.PROXY_POOL_NAME);
+    const host = options.host || ProxyProvider.resolveHost({ poolName });
     const server = ProxyProvider.buildServer(port, {
       protocol: options.protocol,
-      host
+      host,
+      poolName
     });
 
     return {
@@ -348,17 +363,23 @@ class ProxyProvider extends EventEmitter {
     return this.config.host;
   }
 
+  getPoolName() {
+    return this.config.poolName || this.poolName;
+  }
+
   getServer(port) {
     return ProxyProvider.buildServer(port, {
       protocol: this.config.protocol,
-      host: this.config.host
+      host: this.config.host,
+      poolName: this.getPoolName()
     });
   }
 
   buildAssignment(port) {
     return ProxyProvider.buildAssignment(port, {
       protocol: this.config.protocol,
-      host: this.config.host
+      host: this.config.host,
+      poolName: this.getPoolName()
     });
   }
 
@@ -1028,6 +1049,7 @@ class ProxyProvider extends EventEmitter {
     const available = this.nodes.filter(node => this._isNodeAvailable(node, now)).length;
 
     return {
+      poolName: this.getPoolName(),
       host: this.config.host,
       total: this.nodes.length,
       healthy,
@@ -1041,6 +1063,7 @@ class ProxyProvider extends EventEmitter {
   getNodeStates() {
     const now = this.now();
     return this.nodes.map(node => ({
+      poolName: this.getPoolName(),
       port: node.port,
       host: node.host,
       server: node.server,
@@ -1441,23 +1464,45 @@ class ProxyProvider extends EventEmitter {
   }
 }
 
-let singleton = null;
+const singletons = new Map();
 
-function getProxyProvider(options = {}) {
-  if (!singleton) {
-    singleton = new ProxyProvider(options);
+function resolveSingletonPoolName(options = {}) {
+  if (typeof options === 'string') {
+    return normalizePoolName(options);
   }
 
-  return singleton;
+  return normalizePoolName(options.poolName || process.env.PROXY_POOL_NAME);
 }
 
-function resetProxyProvider() {
-  if (singleton) {
-    singleton.stop();
-    singleton.removeAllListeners();
+function getProxyProvider(options = {}) {
+  const poolName = resolveSingletonPoolName(options);
+  if (!singletons.has(poolName)) {
+    singletons.set(poolName, new ProxyProvider({
+      ...options,
+      poolName
+    }));
   }
 
-  singleton = null;
+  return singletons.get(poolName);
+}
+
+function resetProxyProvider(poolName = null) {
+  if (poolName) {
+    const normalizedPoolName = resolveSingletonPoolName(poolName);
+    const provider = singletons.get(normalizedPoolName);
+    if (provider) {
+      provider.stop();
+      provider.removeAllListeners();
+    }
+    singletons.delete(normalizedPoolName);
+    return;
+  }
+
+  for (const provider of singletons.values()) {
+    provider.stop();
+    provider.removeAllListeners();
+  }
+  singletons.clear();
 }
 
 module.exports = {
