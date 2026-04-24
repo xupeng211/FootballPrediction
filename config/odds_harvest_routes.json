@@ -4,43 +4,274 @@
       "leagueName": "Premier League",
       "country": "england",
       "slug": "premier-league",
-      "expectedMatches": 380
+      "expectedMatches": 380,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
     },
     {
       "leagueName": "La Liga",
       "country": "spain",
       "slug": "laliga",
-      "expectedMatches": 380
+      "expectedMatches": 380,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
     },
     {
       "leagueName": "Bundesliga",
       "country": "germany",
       "slug": "bundesliga",
-      "expectedMatches": 306
+      "expectedMatches": 306,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
     },
     {
       "leagueName": "Serie A",
       "country": "italy",
       "slug": "serie-a",
-      "expectedMatches": 380
+      "expectedMatches": 380,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
     },
     {
       "leagueName": "Ligue 1",
       "country": "france",
       "slug": "ligue-1",
-      "expectedMatches": 306
+      "expectedMatches": 306,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
     },
     {
       "leagueName": "Champions League",
       "country": "europe",
       "slug": "champions-league",
-      "expectedMatches": 189
+      "expectedMatches": 189,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
     },
     {
       "leagueName": "Europa League",
       "country": "europe",
       "slug": "europa-league",
-      "expectedMatches": 189
+      "expectedMatches": 189,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Europa Conference League",
+      "country": "europe",
+      "slug": "conference-league",
+      "expectedMatches": 153,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Eredivisie",
+      "country": "netherlands",
+      "slug": "eredivisie",
+      "expectedMatches": 306,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Liga Portugal",
+      "country": "portugal",
+      "slug": "liga-portugal",
+      "expectedMatches": 306,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Jupiler Pro League",
+      "country": "belgium",
+      "slug": "jupiler-pro-league",
+      "expectedMatches": 240,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Super Lig",
+      "country": "turkey",
+      "slug": "super-lig",
+      "expectedMatches": 306,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "Championship",
+      "country": "england",
+      "slug": "championship",
+      "expectedMatches": 552,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "MLS",
+      "country": "usa",
+      "slug": "mls",
+      "expectedMatches": 510,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless",
+      "additionalHistoricalResultsPaths": [
+        "/football/{country}/{league}-{year}/results/"
+      ]
+    },
+    {
+      "leagueName": "Serie A (Brazil)",
+      "country": "brazil",
+      "slug": "brasileirao",
+      "expectedMatches": 380,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "Liga Profesional",
+      "country": "argentina",
+      "slug": "liga-profesional",
+      "expectedMatches": 435,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless",
+      "additionalHistoricalResultsPaths": [
+        "/football/{country}/{league}-{year}/results/"
+      ]
+    },
+    {
+      "leagueName": "Liga MX",
+      "country": "mexico",
+      "slug": "liga-mx",
+      "expectedMatches": 306,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless",
+      "additionalHistoricalResultsPaths": [
+        "/football/{country}/{league}-{year}/results/"
+      ]
+    },
+    {
+      "leagueName": "J1 League",
+      "country": "japan",
+      "slug": "j1-league",
+      "expectedMatches": 380,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "K League 1",
+      "country": "south-korea",
+      "slug": "k-league-1",
+      "expectedMatches": 228,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "Saudi Professional League",
+      "country": "saudi-arabia",
+      "slug": "saudi-professional-league",
+      "expectedMatches": 306,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "FA Cup",
+      "country": "england",
+      "slug": "fa-cup",
+      "expectedMatches": 124,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "EFL Cup",
+      "country": "england",
+      "slug": "efl-cup",
+      "expectedMatches": 93,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Copa del Rey",
+      "country": "spain",
+      "slug": "copa-del-rey",
+      "expectedMatches": 125,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Coppa Italia",
+      "country": "italy",
+      "slug": "coppa-italia",
+      "expectedMatches": 49,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "DFB Pokal",
+      "country": "germany",
+      "slug": "dfb-pokal",
+      "expectedMatches": 63,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Coupe de France",
+      "country": "france",
+      "slug": "coupe-de-france",
+      "expectedMatches": 156,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "World Cup",
+      "country": "world",
+      "slug": "world-cup-2026",
+      "expectedMatches": 104,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "Euro",
+      "country": "europe",
+      "slug": "euro-2028",
+      "expectedMatches": 51,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "Copa America",
+      "country": "south-america",
+      "slug": "copa-america",
+      "expectedMatches": 32,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "AFC Asian Cup",
+      "country": "asia",
+      "slug": "afc-asian-cup",
+      "expectedMatches": 51,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "Africa Cup of Nations",
+      "country": "africa",
+      "slug": "africa-cup-of-nations",
+      "expectedMatches": 52,
+      "seasonType": "single_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "UEFA Nations League",
+      "country": "europe",
+      "slug": "uefa-nations-league",
+      "expectedMatches": 54,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonless"
+    },
+    {
+      "leagueName": "Scottish Premiership",
+      "country": "scotland",
+      "slug": "premiership",
+      "expectedMatches": 228,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
     }
   ]
 }
