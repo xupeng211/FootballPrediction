@@ -11,6 +11,7 @@ const { URL } = require('node:url');
 const { HttpProxyAgent } = require('http-proxy-agent');
 const { HttpsProxyAgent } = require('https-proxy-agent');
 const { SocksProxyAgent } = require('socks-proxy-agent');
+const { BrowserProvider } = require('../services/BrowserProvider');
 
 const DEFAULT_BASE_URL = 'https://www.fotmob.com';
 const DEFAULT_REQUEST_TIMEOUT_MS = 20000;
@@ -18,6 +19,21 @@ const DEFAULT_JITTER_MIN_MS = 1500;
 const DEFAULT_JITTER_MAX_MS = 4000;
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36';
 const DEFAULT_BOOTSTRAP_SESSION_TTL_MS = 6 * 60 * 60 * 1000;
+const DEFAULT_BROWSER_BOOTSTRAP_TIMEOUT_MS = 30000;
+const DEFAULT_BROWSER_BOOTSTRAP_POLL_INTERVAL_MS = 1000;
+const CRITICAL_BOOTSTRAP_COOKIE_NAMES = new Set(['cf_clearance', '__cf_bm', '_cfuvid']);
+
+function resolveCookieExpiry(rawExpires) {
+  const expires = Number(rawExpires);
+  if (!Number.isFinite(expires) || expires <= 0) {
+    return { expires: null, expired: false };
+  }
+
+  return {
+    expires,
+    expired: expires < (Date.now() / 1000)
+  };
+}
 
 function createProxyAgent(proxyServer, targetProtocol, timeoutMs) {
   if (!proxyServer) {
@@ -188,7 +204,12 @@ class FotMobApiClient {
     this.jitterMinMs = Number(options.jitterMinMs) || DEFAULT_JITTER_MIN_MS;
     this.jitterMaxMs = Number(options.jitterMaxMs) || DEFAULT_JITTER_MAX_MS;
     this.bootstrapSessionTtlMs = Number(options.bootstrapSessionTtlMs) || DEFAULT_BOOTSTRAP_SESSION_TTL_MS;
+    this.browserBootstrapTimeoutMs = Number(options.browserBootstrapTimeoutMs) || DEFAULT_BROWSER_BOOTSTRAP_TIMEOUT_MS;
+    this.browserBootstrapPollIntervalMs = Number(options.browserBootstrapPollIntervalMs) || DEFAULT_BROWSER_BOOTSTRAP_POLL_INTERVAL_MS;
     this.sessionManager = options.sessionManager || null;
+    this.browserBootstrapFactory = typeof options.browserBootstrapFactory === 'function'
+      ? options.browserBootstrapFactory
+      : (bootstrapOptions) => this._createDefaultBrowserBootstrapProvider(bootstrapOptions);
   }
 
   setSessionManager(sessionManager) {
@@ -254,7 +275,8 @@ class FotMobApiClient {
       proxyServer,
       referer,
       userAgent: defaultUserAgent,
-      explicitSession: options.session
+      explicitSession: options.session,
+      identity: requestContext.identity
     });
     const userAgent = String(
       options.userAgent
@@ -335,23 +357,161 @@ class FotMobApiClient {
     return bootstrapTargets;
   }
 
-  async _collectBootstrapCookies(target, proxyServer, userAgent, defaultDomain) {
-    const response = await this._requestRaw(target, {
-      proxyServer,
-      headers: {
-        accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'accept-language': 'zh-Hans,zh;q=0.9,en;q=0.8',
-        'accept-encoding': 'identity',
-        'cache-control': 'no-cache',
-        pragma: 'no-cache',
-        referer: this.baseUrl,
-        'user-agent': userAgent
-      }
-    });
+  _normalizeBrowserCookie(rawCookie = {}, defaultDomain) {
+    const name = String(rawCookie?.name || '').trim();
+    const value = String(rawCookie?.value || '').trim();
+    const domain = String(rawCookie?.domain || defaultDomain || '').trim() || defaultDomain;
 
-    return (Array.isArray(response?.headers?.['set-cookie']) ? response.headers['set-cookie'] : [])
-      .map((cookie) => parseSetCookieHeader(cookie, defaultDomain))
+    if (!name || !value || !domain) {
+      return null;
+    }
+
+    const normalized = {
+      name,
+      value,
+      domain,
+      path: String(rawCookie?.path || '/').trim() || '/',
+      httpOnly: Boolean(rawCookie?.httpOnly),
+      secure: Boolean(rawCookie?.secure)
+    };
+
+    const expiry = resolveCookieExpiry(rawCookie?.expires);
+    if (expiry.expired) {
+      return null;
+    }
+    if (expiry.expires) {
+      normalized.expires = expiry.expires;
+    }
+
+    const sameSite = String(rawCookie?.sameSite || '').trim();
+    if (sameSite) {
+      normalized.sameSite = sameSite;
+    }
+
+    return normalized;
+  }
+
+  _normalizeBrowserCookies(cookies = [], defaultDomain) {
+    return (Array.isArray(cookies) ? cookies : [])
+      .map((cookie) => this._normalizeBrowserCookie(cookie, defaultDomain))
       .filter(Boolean);
+  }
+
+  _hasCriticalBootstrapCookie(cookies = []) {
+    return (Array.isArray(cookies) ? cookies : []).some((cookie) => {
+      const name = String(cookie?.name || '').trim().toLowerCase();
+      return CRITICAL_BOOTSTRAP_COOKIE_NAMES.has(name);
+    });
+  }
+
+  _resolveBootstrapViewport(identity) {
+    const width = Number(identity?.stealth?.viewport?.width);
+    const height = Number(identity?.stealth?.viewport?.height);
+    if (width > 0 && height > 0) {
+      return { width, height };
+    }
+    return undefined;
+  }
+
+  _createBrowserLogger() {
+    return {
+      info: (...args) => this.logger?.info?.(...args),
+      warn: (...args) => this.logger?.warn?.(...args),
+      error: (...args) => this.logger?.error?.(...args)
+    };
+  }
+
+  _createDefaultBrowserBootstrapProvider(options = {}) {
+    const fixedProxy = options.proxyServer
+      ? {
+        server: String(options.proxyServer),
+        port: Number(options.port) || 0
+      }
+      : null;
+
+    return new BrowserProvider({
+      logger: this._createBrowserLogger(),
+      headless: true,
+      userAgent: options.userAgent || DEFAULT_USER_AGENT,
+      viewport: options.viewport || undefined,
+      defaultTimeoutMs: this.browserBootstrapTimeoutMs,
+      fixedProxy
+    });
+  }
+
+  async _collectBrowserBootstrapCookies(browserProvider, target, defaultDomain) {
+    const page = browserProvider?.getPage?.();
+    const context = page?.context?.();
+    if (!context || typeof context.cookies !== 'function') {
+      return [];
+    }
+
+    const targetUrls = [this.baseUrl];
+    if (target?.href) {
+      targetUrls.push(target.href);
+    }
+
+    const deadline = Date.now() + this.browserBootstrapTimeoutMs;
+    let cookies = [];
+
+    while (Date.now() <= deadline) {
+      let rawCookies = [];
+      try {
+        rawCookies = await context.cookies(targetUrls);
+      } catch (error) {
+        if (typeof this.logger?.warn === 'function') {
+          this.logger.warn(`[FotMobApiClient] 浏览器读取 Cookie 失败: ${error.message}`);
+        }
+        break;
+      }
+
+      cookies = mergeCookies(cookies, this._normalizeBrowserCookies(rawCookies, defaultDomain));
+      if (this._hasCriticalBootstrapCookie(cookies)) {
+        return cookies;
+      }
+
+      await browserProvider.sleep(this.browserBootstrapPollIntervalMs);
+    }
+
+    return cookies;
+  }
+
+  async _runBrowserBootstrapTarget(browserProvider, target, index, defaultDomain) {
+    if (index === 0) {
+      await browserProvider.warmup(target.href, {
+        waitUntil: 'domcontentloaded',
+        timeout: this.browserBootstrapTimeoutMs
+      });
+    } else {
+      await browserProvider.goto(target.href, {
+        waitUntil: 'domcontentloaded',
+        timeout: this.browserBootstrapTimeoutMs
+      });
+    }
+
+    const freshCookies = await this._collectBrowserBootstrapCookies(browserProvider, target, defaultDomain);
+    if (freshCookies.length > 0 && typeof this.logger?.info === 'function') {
+      const cookieSummary = this._hasCriticalBootstrapCookie(freshCookies) ? '命中关键 Cookie' : '获取到基础 Cookie';
+      this.logger.info(
+        `[FotMobApiClient] 浏览器破冰成功: ${target.href} -> ${freshCookies.length} 个 Cookie (${cookieSummary})`
+      );
+    }
+
+    return freshCookies;
+  }
+
+  async _closeBrowserBootstrapProvider(browserProvider) {
+    if (!browserProvider || typeof browserProvider.close !== 'function') {
+      return;
+    }
+
+    try {
+      await browserProvider.close();
+    } catch (error) {
+      if (typeof this.logger?.warn === 'function') {
+        this.logger.warn(`[FotMobApiClient] 浏览器破冰关闭失败: ${error.message}`);
+      }
+    }
   }
 
   async _persistBootstrapSession(port, session) {
@@ -379,27 +539,34 @@ class FotMobApiClient {
     const userAgent = String(options.userAgent || DEFAULT_USER_AGENT).trim();
     const defaultDomain = normalizeCookieDomain(new URL(this.baseUrl).hostname);
     const bootstrapTargets = this._resolveBootstrapTargets(options.referer);
+    const browserProvider = this.browserBootstrapFactory({
+      identity: options.identity || null,
+      port: options.port,
+      proxyServer,
+      userAgent,
+      viewport: this._resolveBootstrapViewport(options.identity)
+    });
 
     let collectedCookies = [];
-    for (const target of bootstrapTargets) {
-      try {
-        const freshCookies = await this._collectBootstrapCookies(target, proxyServer, userAgent, defaultDomain);
+    try {
+      for (const [index, target] of bootstrapTargets.entries()) {
+        try {
+          const freshCookies = await this._runBrowserBootstrapTarget(browserProvider, target, index, defaultDomain);
+          if (freshCookies.length > 0) {
+            collectedCookies = mergeCookies(collectedCookies, freshCookies);
+          }
 
-        if (freshCookies.length > 0) {
-          collectedCookies = mergeCookies(collectedCookies, freshCookies);
-          if (typeof this.logger?.info === 'function') {
-            this.logger.info(`[FotMobApiClient] API 预热成功: ${target.href} -> ${freshCookies.length} 个 Cookie`);
+          if (this._hasCriticalBootstrapCookie(collectedCookies)) {
+            break;
+          }
+        } catch (error) {
+          if (typeof this.logger?.warn === 'function') {
+            this.logger.warn(`[FotMobApiClient] 浏览器破冰失败: ${target.href} -> ${error.message}`);
           }
         }
-
-        if (collectedCookies.length > 0) {
-          break;
-        }
-      } catch (error) {
-        if (typeof this.logger?.warn === 'function') {
-          this.logger.warn(`[FotMobApiClient] API 预热失败: ${target.href} -> ${error.message}`);
-        }
       }
+    } finally {
+      await this._closeBrowserBootstrapProvider(browserProvider);
     }
 
     if (collectedCookies.length === 0) {
@@ -413,8 +580,9 @@ class FotMobApiClient {
       createdAt: Date.now(),
       expiresAt: Date.now() + this.bootstrapSessionTtlMs,
       userAgent,
+      viewport: this._resolveBootstrapViewport(options.identity) || null,
       proxyUrl: proxyServer || null,
-      source: 'api_bootstrap_probe'
+      source: 'browser_bootstrap_probe'
     };
 
     return this._persistBootstrapSession(options.port, session);
