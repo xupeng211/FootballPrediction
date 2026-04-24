@@ -10,6 +10,56 @@
 'use strict';
 
 const { chromium } = require('playwright');
+const { URL } = require('node:url');
+
+function parseProxyServer(server) {
+  try {
+    const parsed = new URL(server);
+    return {
+      host: parsed.hostname,
+      port: Number(parsed.port) || 0,
+    };
+  } catch {
+    return {
+      host: '',
+      port: 0,
+    };
+  }
+}
+
+function normalizeFixedProxy(proxy) {
+  if (typeof proxy === 'string') {
+    const server = proxy.trim();
+    if (!server) {
+      return null;
+    }
+    return { server, ...parseProxyServer(server) };
+  }
+
+  if (!proxy) {
+    return null;
+  }
+
+  const server = String(proxy.server || proxy.url || '').trim();
+  if (!server) {
+    return null;
+  }
+
+  const parsedProxy = parseProxyServer(server);
+  const normalized = {
+    ...proxy,
+    server,
+    host: String(proxy.host || '').trim(),
+    port: Number(proxy.port) || 0,
+  };
+
+  if (!normalized.host || normalized.port <= 0) {
+    normalized.host = normalized.host || parsedProxy.host;
+    normalized.port = normalized.port || parsedProxy.port;
+  }
+
+  return normalized;
+}
 
 function classifyBrowserFailure(reason = '') {
   const message = String(reason || '').toLowerCase();
@@ -79,7 +129,8 @@ class BrowserProvider {
     this.config = {
       headless: options.headless !== false,
       viewport: options.viewport || { width: 1920, height: 1080 },
-      userAgent: options.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      userAgent: options.userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      fixedProxy: normalizeFixedProxy(options.fixedProxy || options.proxyServer || null)
     };
     
     this.browser = null;
@@ -148,10 +199,10 @@ class BrowserProvider {
     this.logger.info('[BrowserProvider] 🕵️  启动影子浏览器 (闪击模式)...');
     
     try {
-      const proxyLease = await this.ensureProxyLease('browser-launch');
+      const launchProxy = await this._resolveLaunchProxy('browser-launch');
       this.browser = await chromium.launch({
         headless: this.config.headless,
-        ...(proxyLease ? { proxy: { server: proxyLease.proxy.server } } : {}),
+        ...(launchProxy ? { proxy: { server: launchProxy.server } } : {}),
         args: [
           '--disable-dev-shm-usage',
           '--disable-gpu',
@@ -173,7 +224,7 @@ class BrowserProvider {
       this.page = await this._createFreshPage('initialize-launch');
       
       this.logger.info(
-        `[BrowserProvider] ✅ 浏览器实例创建成功${proxyLease ? ` | Port ${proxyLease.proxy.port}` : ''}`
+        `[BrowserProvider] ✅ 浏览器实例创建成功${launchProxy?.port ? ` | Port ${launchProxy.port}` : ''}`
       );
       return this.page;
       
@@ -686,6 +737,15 @@ class BrowserProvider {
     });
 
     return this.proxyLease;
+  }
+
+  async _resolveLaunchProxy(reason = 'browser') {
+    if (this.config.fixedProxy?.server) {
+      return this.config.fixedProxy;
+    }
+
+    const proxyLease = await this.ensureProxyLease(reason);
+    return proxyLease ? proxyLease.proxy : null;
   }
 
   getCurrentProxyLease() {
