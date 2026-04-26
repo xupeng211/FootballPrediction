@@ -308,19 +308,18 @@ function buildOddsDataFromHistoricalRows(rows) {
 
 async function prefetchOddsSources(client, rows) {
     const matchIds = rows.map((row) => row.match_id).filter(Boolean);
-    const externalIds = rows.map((row) => row.external_id).filter(Boolean);
 
     const canonicalRows = matchIds.length > 0
         ? (await client.query(FETCH_CANONICAL_ODDS_SQL, [matchIds])).rows
         : [];
 
-    const historicalRows = externalIds.length > 0
-        ? (await client.query(FETCH_BOOKMAKER_HISTORY_SQL, [externalIds])).rows
+    const historicalRows = matchIds.length > 0
+        ? (await client.query(FETCH_BOOKMAKER_HISTORY_SQL, [matchIds])).rows
         : [];
 
     return {
         canonicalByMatchId: groupRowsByKey(canonicalRows, 'match_id'),
-        historicalByExternalId: groupRowsByKey(historicalRows, 'match_id')
+        historicalByMatchId: groupRowsByKey(historicalRows, 'match_id')
     };
 }
 
@@ -339,9 +338,8 @@ function extractBestAvailableOddsFeatures(row, tacticalFeatures, oddsSources) {
         };
     }
 
-    const historicalKey = row.external_id || row.match_id;
     const historicalData = buildOddsDataFromHistoricalRows(
-        oddsSources.historicalByExternalId.get(historicalKey) || []
+        oddsSources.historicalByMatchId.get(row.match_id) || []
     );
 
     if (historicalData) {
