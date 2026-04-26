@@ -178,6 +178,24 @@ const MARKET_CONFIGS = [
         closeLineValue: '2.5',
     },
 ];
+
+function buildOddsConfig(configs = []) {
+    return configs.reduce((accumulator, config) => {
+        const bookmakerBucket = accumulator[config.bookmakerName] || {};
+        bookmakerBucket[config.marketType] = {
+            open: { ...(config.openColumns || {}) },
+            close: { ...(config.closeColumns || {}) },
+            open_line: config.openLineColumn || '',
+            close_line: config.closeLineColumn || '',
+            open_line_value: config.openLineValue || '',
+            close_line_value: config.closeLineValue || '',
+        };
+        accumulator[config.bookmakerName] = bookmakerBucket;
+        return accumulator;
+    }, {});
+}
+
+const ODDS_CONFIG = buildOddsConfig(MARKET_CONFIGS);
 const TACTICAL_FIELD_ALIASES = {
     homeCorners: ['HC', 'HomeCorners', 'H_Corners'],
     awayCorners: ['AC', 'AwayCorners', 'A_Corners'],
@@ -576,6 +594,8 @@ class CollectingWriter extends Writable {
                 mapper: this.mapper,
                 resolver: this.resolver,
                 leagueMeta: this.sourceMeta,
+                oddsConfig: ODDS_CONFIG,
+                WARNING_LOW_QUALITY_SOURCE,
             });
             this.rows.push(...adapted.rows);
             if (adapted.diagnostics.reusedExisting) {
@@ -665,7 +685,7 @@ async function writeAdaptedCsv(outputPath, rows) {
     const output = fs.createWriteStream(outputPath, { encoding: 'utf8' });
     output.write(`${OUTPUT_HEADERS.join(',')}\n`);
     for (const row of rows) {
-        output.write(formatCsvLine(row));
+        output.write(`${formatCsvLine(row, OUTPUT_HEADERS)}\n`);
     }
     output.end();
     await once(output, 'finish');
