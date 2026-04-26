@@ -84,13 +84,43 @@ jobs:
             mv .cache/buildx-new .cache/buildx
           fi
 
-      - name: Run authority gatekeeper in container
+      - name: Print resolved dev environment
+        run: |
+          docker compose -f docker-compose.dev.yml config > /tmp/production-gate.compose.yml
+          echo "[Production Gate] Resolved dev container environment:"
+          awk '
+            /^  dev:$/ { in_dev=1 }
+            in_dev { print }
+            in_dev && /^    working_dir:/ { exit }
+          ' /tmp/production-gate.compose.yml | \
+            grep -E 'DB_HOST:|DB_PORT:|DB_NAME:|REDIS_HOST:|REDIS_PORT:|PROXY_HOST:|WSL2_PROXY_HOST:|cpus:'
+
+      - name: CI Environment Diagnostics
+        env:
+          DEV_DB_HOST: db
+          DEV_REDIS_HOST: redis
+          DEV_PROXY_HOST: 127.0.0.1
+        run: |
+          docker compose -f docker-compose.dev.yml up -d dev db redis
+          echo "[Production Gate] Working directory:"
+          pwd
+          echo "[Production Gate] Container status:"
+          docker compose -f docker-compose.dev.yml ps
+          echo "[Production Gate] DEV_* environment variables:"
+          env | grep '^DEV_' || true
+          echo "[Production Gate] Container network alias probe (dev -> db):"
+          docker compose -f docker-compose.dev.yml exec -T dev bash -lc 'ping -c 2 db'
+
+      - name: Run Gatekeeper
         env:
           GATEKEEPER_BUILD: "0"
           GATEKEEPER_CI_MODE: ${{ github.event_name == 'pull_request' && 'pr' || 'push' }}
           DEV_DB_HOST: db
           DEV_REDIS_HOST: redis
           DEV_PROXY_HOST: 127.0.0.1
+          DB_BLUEPRINT_DEBUG: "1"
+          DB_BLUEPRINT_CONNECT_TIMEOUT_MS: "5000"
+          DB_BLUEPRINT_STATEMENT_TIMEOUT_MS: "30000"
         run: bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"
 
   docker-build:
