@@ -38,6 +38,32 @@ fail() {
   exit 1
 }
 
+run_with_failure_reason() {
+  local reason="$1"
+  shift
+
+  local stderr_file=''
+  local status=0
+  stderr_file="$(mktemp -t gatekeeper-stderr.XXXXXX)"
+
+  set +e
+  "$@" 2> >(tee "$stderr_file" >&2)
+  status=$?
+  set -e
+
+  if (( status != 0 )); then
+    printf '[Gatekeeper] GATEKEEPER_FAILURE_REASON=%s\n' "$reason" >&2
+    if [[ -s "$stderr_file" ]]; then
+      printf '[Gatekeeper] STDERR_CAPTURE_BEGIN reason=%s\n' "$reason" >&2
+      cat "$stderr_file" >&2
+      printf '[Gatekeeper] STDERR_CAPTURE_END reason=%s\n' "$reason" >&2
+    fi
+  fi
+
+  rm -f "$stderr_file"
+  return "$status"
+}
+
 resolve_auto_mode() {
   local branch=''
 
@@ -263,6 +289,9 @@ if [[ "${GATEKEEPER_IN_CONTAINER:-0}" != "1" ]]; then
   "${COMPOSE_CMD[@]}" -f "$COMPOSE_FILE" exec -T "$DEV_SERVICE" \
     env GATEKEEPER_IN_CONTAINER=1 GATEKEEPER_MODE="$MODE" GATEKEEPER_WORKSPACE_ROOT="$WORKSPACE_ROOT" \
     GATEKEEPER_HOST_PREFLIGHT_DONE=1 GITHUB_ACTIONS="${GITHUB_ACTIONS:-}" CI="${CI:-}" \
+    DB_BLUEPRINT_DEBUG="${DB_BLUEPRINT_DEBUG:-}" \
+    DB_BLUEPRINT_CONNECT_TIMEOUT_MS="${DB_BLUEPRINT_CONNECT_TIMEOUT_MS:-}" \
+    DB_BLUEPRINT_STATEMENT_TIMEOUT_MS="${DB_BLUEPRINT_STATEMENT_TIMEOUT_MS:-}" \
     bash "$CONTAINER_GATEKEEPER_PATH"
   exit $?
 fi
@@ -980,8 +1009,9 @@ run_static_quality_checks() {
 
 run_cold_start_integrity_guard() {
   log '执行 [GATE-COLD-START] 冷启动蓝图校验。'
+  log "冷启动参数: DB_HOST=${DB_HOST:-unset} DB_PORT=${DB_PORT:-unset} DB_NAME=${DB_NAME:-unset} admin_db=${DB_ADMIN_NAME:-postgres} connect_timeout_ms=${DB_BLUEPRINT_CONNECT_TIMEOUT_MS:-5000} statement_timeout_ms=${DB_BLUEPRINT_STATEMENT_TIMEOUT_MS:-30000} debug=${DB_BLUEPRINT_DEBUG:-0}"
 
-  node <<'NODE'
+  run_with_failure_reason 'dbBlueprint cold start integrity guard failed' node - <<'NODE'
 const { runColdStartBlueprintCheck } = require('./scripts/ops/helpers/dbBlueprint');
 
 (async () => {
@@ -990,7 +1020,9 @@ const { runColdStartBlueprintCheck } = require('./scripts/ops/helpers/dbBlueprin
     `[GATE-COLD-START] PASS - 空库回放成功 - 临时库 ${result.databaseName}，蓝图 ${result.appliedFiles.length} 个文件`
   );
 })().catch((error) => {
+  console.error('GATEKEEPER_FAILURE_REASON=dbBlueprint cold start integrity guard failed');
   console.error(`[GATE-COLD-START] FAIL - ${error.message}`);
+  console.error(error?.stack || error);
   process.exit(1);
 });
 NODE
@@ -1136,7 +1168,7 @@ run_js_coverage_guard() {
   log "执行 Node 覆盖率门禁（阈值 ${COVERAGE_THRESHOLD}%）。"
   rm -rf "${COVERAGE_DIR}/node"
   mkdir -p "${COVERAGE_DIR}/node"
-  npm run test:coverage
+  run_with_failure_reason 'npm run test:coverage failed' npm run test:coverage
 }
 
 run_python_coverage_guard() {
@@ -1180,7 +1212,7 @@ run_coverage_guards() {
 
 run_recon_core_coverage_guard() {
   log '执行 Recon 核心独立覆盖率门禁（行覆盖率 >= 90%）。'
-  npm run test:coverage:recon-core
+  run_with_failure_reason 'npm run test:coverage:recon-core failed' npm run test:coverage:recon-core
 }
 
 run_remote_merge_enforcement() {
