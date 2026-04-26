@@ -20,8 +20,11 @@ function toCsvCell(value) {
     return str.includes(',') || str.includes('"') || str.includes('\n') ? `"${str.replace(/"/g, '""')}"` : str;
 }
 
-function formatCsvLine(row) {
-    return Object.values(row).map(toCsvCell).join(',');
+function formatCsvLine(row, headers = null) {
+    const values = Array.isArray(headers) && headers.length > 0
+        ? headers.map((header) => row?.[header])
+        : Object.values(row);
+    return values.map(toCsvCell).join(',');
 }
 
 function parseFootballDataDateTime(dateValue, timeValue) {
@@ -58,7 +61,23 @@ function hasCompleteOddsTriplet(oddsValues) {
            oddsValues.away !== null && oddsValues.away !== undefined;
 }
 
+function hasCompleteTwoWayOdds(oddsValues) {
+    return oddsValues.home !== null && oddsValues.home !== undefined &&
+           oddsValues.away !== null && oddsValues.away !== undefined;
+}
+
+function hasCompleteMarketOdds(marketType, oddsValues) {
+    return normalizeText(marketType) === '1x2'
+        ? hasCompleteOddsTriplet(oddsValues)
+        : hasCompleteTwoWayOdds(oddsValues);
+}
+
 function resolveLineValue(row, config, phase) {
+    const lineValue = config[`${phase}_line_value`];
+    if (lineValue !== null && lineValue !== undefined && lineValue !== '') {
+        return String(lineValue);
+    }
+
     const lineCol = config[`${phase}_line`];
     if (!lineCol) return '';
     const val = row[lineCol];
@@ -68,9 +87,9 @@ function resolveLineValue(row, config, phase) {
 
 function mapOutcomeColumns(config, values) {
     return {
-        home: values.home !== undefined ? values.home : null,
+        home: values.home !== undefined ? values.home : (values.over !== undefined ? values.over : null),
         draw: values.draw !== undefined ? values.draw : null,
-        away: values.away !== undefined ? values.away : null,
+        away: values.away !== undefined ? values.away : (values.under !== undefined ? values.under : null),
     };
 }
 
@@ -83,10 +102,10 @@ function buildExpandedOddsRows(row, context, matchCore) {
             if (!hasAnyOddsValue(openValues) && !hasAnyOddsValue(closeValues)) continue;
             const openOutcomes = mapOutcomeColumns(config.open, openValues);
             const closeOutcomes = mapOutcomeColumns(config.close, closeValues);
-            const openLine = resolveLineValue(row, config.open, 'open');
-            const closeLine = resolveLineValue(row, config.close, 'close');
-            const hasOpenTriplet = hasCompleteOddsTriplet(openOutcomes);
-            const hasCloseTriplet = hasCompleteOddsTriplet(closeOutcomes);
+            const openLine = resolveLineValue(row, config, 'open');
+            const closeLine = resolveLineValue(row, config, 'close');
+            const hasOpenTriplet = hasCompleteMarketOdds(marketType, openOutcomes);
+            const hasCloseTriplet = hasCompleteMarketOdds(marketType, closeOutcomes);
             const qualityFlags = [];
             if (!hasOpenTriplet && !hasCloseTriplet) {
                 qualityFlags.push(context.WARNING_LOW_QUALITY_SOURCE);
@@ -119,6 +138,7 @@ module.exports = {
     extractOddsValues,
     hasAnyOddsValue,
     hasCompleteOddsTriplet,
+    hasCompleteMarketOdds,
     resolveLineValue,
     mapOutcomeColumns,
     buildExpandedOddsRows,
