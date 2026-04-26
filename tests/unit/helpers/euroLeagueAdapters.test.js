@@ -75,6 +75,17 @@ test('formatCsvLine - 应正确格式化 CSV 行', () => {
     assert.strictEqual(result, 'Arsenal,Chelsea,2-1');
 });
 
+test('formatCsvLine - 应按指定表头顺序输出', () => {
+    const row = {
+        away: 'Chelsea',
+        score: '2-1',
+        home: 'Arsenal',
+    };
+
+    const result = formatCsvLine(row, ['home', 'away', 'score']);
+    assert.strictEqual(result, 'Arsenal,Chelsea,2-1');
+});
+
 test('formatCsvLine - 应处理包含特殊字符的行', () => {
     const row = {
         team: 'Man Utd',
@@ -202,6 +213,19 @@ test('resolveLineValue - 应处理缺失盘口', () => {
 
     assert.strictEqual(resolveLineValue(row, config, 'close'), '');
     assert.strictEqual(resolveLineValue(row, {}, 'open'), '');
+});
+
+test('resolveLineValue - 应优先返回固定盘口值', () => {
+    const row = {
+        AHh: '-0.5',
+    };
+
+    const config = {
+        open_line_value: '2.5',
+        open_line: 'AHh',
+    };
+
+    assert.strictEqual(resolveLineValue(row, config, 'open'), '2.5');
 });
 
 test('mapOutcomeColumns - 应正确映射结果列', () => {
@@ -370,4 +394,48 @@ test('buildExpandedOddsRows - 应标记低质量数据源', () => {
     // 所以不会标记为 LOW_QUALITY
     // 修改测试以匹配实际行为
     assert.strictEqual(result[0].quality_flags, '');
+});
+
+test('buildExpandedOddsRows - 应支持大小球列映射到内部标准字段', () => {
+    const row = {
+        'B365>2.5': '1.80',
+        'B365<2.5': '2.00',
+        'B365C>2.5': '1.75',
+        'B365C<2.5': '2.05',
+    };
+
+    const context = {
+        oddsConfig: {
+            Bet365: {
+                'Over/Under': {
+                    open: {
+                        over: 'B365>2.5',
+                        under: 'B365<2.5',
+                    },
+                    close: {
+                        over: 'B365C>2.5',
+                        under: 'B365C<2.5',
+                    },
+                    open_line_value: '2.5',
+                    close_line_value: '2.5',
+                },
+            },
+        },
+        WARNING_LOW_QUALITY_SOURCE: 'LOW_QUALITY',
+    };
+
+    const matchCore = {
+        match_id: '47_20242025_1002',
+    };
+
+    const result = buildExpandedOddsRows(row, context, matchCore);
+    assert.strictEqual(result.length, 1);
+    assert.strictEqual(result[0].market_type, 'Over/Under');
+    assert.strictEqual(result[0].open_line, '2.5');
+    assert.strictEqual(result[0].close_line, '2.5');
+    assert.strictEqual(result[0].open_home, '1.80');
+    assert.strictEqual(result[0].open_draw, '');
+    assert.strictEqual(result[0].open_away, '2.00');
+    assert.strictEqual(result[0].close_home, '1.75');
+    assert.strictEqual(result[0].close_away, '2.05');
 });
