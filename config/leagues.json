@@ -1,6 +1,6 @@
 {
-  "version": "V6.8-ATLAS-33",
-  "description": "TITAN V6.8 33 项赛事图谱 - Boss Lock List",
+  "version": "V6.9-ATLAS-37",
+  "description": "TITAN V6.9 37 项赛事图谱 - 横向大扩军版",
   "active_leagues": [
     {
       "id": 47,
@@ -130,6 +130,46 @@
       "enabled": true,
       "slug": "championship",
       "results_slug": "championship",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 77,
+      "name": "2. Bundesliga",
+      "country": "Germany",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "2-bundesliga",
+      "results_slug": "2-bundesliga",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 88,
+      "name": "Segunda División",
+      "country": "Spain",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "segunda-division",
+      "results_slug": "segunda-division",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 56,
+      "name": "Serie B",
+      "country": "Italy",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "serie-b",
+      "results_slug": "serie-b",
+      "results_url_strategy": "seasonal"
+    },
+    {
+      "id": 60,
+      "name": "Ligue 2",
+      "country": "France",
+      "tier": "P1",
+      "enabled": true,
+      "slug": "ligue-2",
+      "results_slug": "ligue-2",
       "results_url_strategy": "seasonal"
     },
     {
@@ -355,16 +395,17 @@
   ],
   "inactive_leagues": [],
   "active_seasons": [
+    "2022/2023",
     "2023/2024",
     "2024/2025",
     "2025/2026"
   ],
   "metadata": {
-    "last_updated": "2026-04-24",
-    "total_leagues": 33,
+    "last_updated": "2026-04-27",
+    "total_leagues": 37,
     "tier_distribution": {
       "P0": 7,
-      "P1": 6,
+      "P1": 10,
       "P2": 7,
       "P3": 6,
       "P4": 7

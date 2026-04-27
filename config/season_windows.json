@@ -1,8 +1,8 @@
 {
   "_comment": "V6.0 赛季时间窗口配置 - 用于三道铁门过滤系统",
-  "version": "V6.1-FULL-LEAGUES",
-  "last_updated": "2026-03-27",
-  "description": "定义五大联赛各赛季的有效时间窗口，用于过滤API返回的越界数据",
+  "version": "V6.2-EXPANSION",
+  "last_updated": "2026-04-27",
+  "description": "定义五大联赛及二级联赛各赛季的有效时间窗口，用于过滤API返回的越界数据",
   "derived_windows": {
     "strategies": {
       "dual_year": {
@@ -30,6 +30,62 @@
     }
   },
   "seasons": {
+    "2022/2023": {
+      "start": "2022-08-05",
+      "end": "2023-05-28",
+      "expected_matches": 380,
+      "leagues": [47, 87, 55],
+      "description": "英超/西甲/意甲 22/23赛季"
+    },
+    "2022/2023-Bundesliga": {
+      "start": "2022-08-05",
+      "end": "2023-05-27",
+      "expected_matches": 306,
+      "leagues": [54],
+      "description": "德甲 22/23赛季"
+    },
+    "2022/2023-Ligue1": {
+      "start": "2022-08-05",
+      "end": "2023-06-03",
+      "expected_matches": 306,
+      "leagues": [53],
+      "description": "法甲 22/23赛季"
+    },
+    "2022/2023-Championship": {
+      "start": "2022-07-29",
+      "end": "2023-05-29",
+      "expected_matches": 555,
+      "leagues": [48],
+      "description": "英冠 22/23赛季（含附加赛）"
+    },
+    "2022/2023-2Bundesliga": {
+      "start": "2022-07-15",
+      "end": "2023-05-28",
+      "expected_matches": 306,
+      "leagues": [77],
+      "description": "德乙 22/23赛季"
+    },
+    "2022/2023-Segunda": {
+      "start": "2022-08-12",
+      "end": "2023-06-11",
+      "expected_matches": 462,
+      "leagues": [88],
+      "description": "西乙 22/23赛季（含附加赛）"
+    },
+    "2022/2023-SerieB": {
+      "start": "2022-08-13",
+      "end": "2023-05-19",
+      "expected_matches": 380,
+      "leagues": [56],
+      "description": "意乙 22/23赛季"
+    },
+    "2022/2023-Ligue2": {
+      "start": "2022-07-30",
+      "end": "2023-05-27",
+      "expected_matches": 380,
+      "leagues": [60],
+      "description": "法乙 22/23赛季"
+    },
     "2023/2024": {
       "start": "2023-08-11",
       "end": "2024-05-19",
@@ -79,6 +135,41 @@
       "leagues": [53],
       "description": "法甲 23/24赛季"
     },
+    "2023/2024-Championship": {
+      "start": "2023-08-04",
+      "end": "2024-05-27",
+      "expected_matches": 555,
+      "leagues": [48],
+      "description": "英冠 23/24赛季（含附加赛）"
+    },
+    "2023/2024-2Bundesliga": {
+      "start": "2023-07-28",
+      "end": "2024-05-19",
+      "expected_matches": 306,
+      "leagues": [77],
+      "description": "德乙 23/24赛季"
+    },
+    "2023/2024-Segunda": {
+      "start": "2023-08-11",
+      "end": "2024-06-23",
+      "expected_matches": 462,
+      "leagues": [88],
+      "description": "西乙 23/24赛季（含附加赛）"
+    },
+    "2023/2024-SerieB": {
+      "start": "2023-08-18",
+      "end": "2024-05-10",
+      "expected_matches": 380,
+      "leagues": [56],
+      "description": "意乙 23/24赛季"
+    },
+    "2023/2024-Ligue2": {
+      "start": "2023-07-29",
+      "end": "2024-05-18",
+      "expected_matches": 380,
+      "leagues": [60],
+      "description": "法乙 23/24赛季"
+    },
     "2024/2025-Ligue1": {
       "start": "2024-08-16",
       "end": "2025-05-17",
@@ -99,6 +190,34 @@
       "expected_matches": 555,
       "leagues": [48],
       "description": "英冠 24/25赛季（含附加赛）"
+    },
+    "2024/2025-2Bundesliga": {
+      "start": "2024-08-02",
+      "end": "2025-05-18",
+      "expected_matches": 306,
+      "leagues": [77],
+      "description": "德乙 24/25赛季"
+    },
+    "2024/2025-Segunda": {
+      "start": "2024-08-16",
+      "end": "2025-06-22",
+      "expected_matches": 462,
+      "leagues": [88],
+      "description": "西乙 24/25赛季（含附加赛）"
+    },
+    "2024/2025-SerieB": {
+      "start": "2024-08-16",
+      "end": "2025-05-09",
+      "expected_matches": 380,
+      "leagues": [56],
+      "description": "意乙 24/25赛季"
+    },
+    "2024/2025-Ligue2": {
+      "start": "2024-08-16",
+      "end": "2025-05-30",
+      "expected_matches": 380,
+      "leagues": [60],
+      "description": "法乙 24/25赛季"
     },
     "2025/2026-Championship": {
       "start": "2025-08-08",
