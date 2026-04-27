@@ -2,11 +2,32 @@
 
 set -euo pipefail
 
+resolve_default_proxy_port() {
+  node - <<'NODE'
+const fs = require('node:fs');
+
+const fallbackPort = 10001;
+try {
+  const raw = fs.readFileSync('config/proxy_pool.json', 'utf8');
+  const config = JSON.parse(raw);
+  const candidates = [
+    config.defaultPort,
+    ...(Array.isArray(config.active_ports) ? config.active_ports : []),
+    ...(Array.isArray(config.ports) ? config.ports : [])
+  ];
+  const port = candidates.map(Number).find(value => Number.isInteger(value) && value > 0);
+  console.log(port || fallbackPort);
+} catch {
+  console.log(fallbackPort);
+}
+NODE
+}
+
 export PROXY_LOOPBACK_GATEWAY="${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}"
 export PROXY_HOST="${PROXY_HOST:-$PROXY_LOOPBACK_GATEWAY}"
 export WSL2_PROXY_HOST="${WSL2_PROXY_HOST:-$PROXY_HOST}"
 export PROXY_PROTOCOL="${PROXY_PROTOCOL:-socks5}"
-export HOST_PROXY_PORT="${HOST_PROXY_PORT:-7897}"
+export HOST_PROXY_PORT="${HOST_PROXY_PORT:-${DEV_HOST_PROXY_PORT:-$(resolve_default_proxy_port)}}"
 export PROXY_PORT="${PROXY_PORT:-$HOST_PROXY_PORT}"
 export PROXY_PORT_START="${PROXY_PORT_START:-$HOST_PROXY_PORT}"
 export PROXY_PORT_END="${PROXY_PORT_END:-$HOST_PROXY_PORT}"
