@@ -250,6 +250,7 @@ function runDiscovery(target, season, options) {
         return;
     }
 
+    const commandRunner = options.commandRunner || runCommand;
     const args = [
         'scripts/ops/titan_discovery.js',
         `--league=${target.id}`,
@@ -263,7 +264,7 @@ function runDiscovery(target, season, options) {
         args.push('--dry-run');
     }
 
-    runCommand(`L1 低频播种 ${target.name} ${season}`, 'node', args, {
+    commandRunner(`L1 低频播种 ${target.name} ${season}`, 'node', args, {
         env: { FOTMOB_COMPLIANCE_MODE: 'true' },
     });
 }
@@ -275,8 +276,9 @@ function runCsvFlow(target, season, options) {
 
     const outputPath = buildAdaptedCsvPath(options.outputDir, target, season);
     fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+    const commandRunner = options.commandRunner || runCommand;
 
-    runCommand(`下载并适配 CSV ${target.code} ${season}`, 'node', [
+    commandRunner(`下载并适配 CSV ${target.code} ${season}`, 'node', [
         'scripts/ops/fetch_and_adapt_euro_leagues.js',
         '--league-code',
         target.code,
@@ -299,7 +301,7 @@ function runCsvFlow(target, season, options) {
         loaderArgs.push('--commit');
     }
 
-    runCommand(`导入 matches / bookmaker_odds_history ${target.name} ${season}`, 'node', loaderArgs);
+    commandRunner(`导入 matches / bookmaker_odds_history ${target.name} ${season}`, 'node', loaderArgs);
     return outputPath;
 }
 
@@ -308,7 +310,8 @@ function runComplianceHarvest(target, season, options) {
         return;
     }
 
-    runCommand(
+    const commandRunner = options.commandRunner || runCommand;
+    commandRunner(
         `FOTMOB 合规低频 L2 ${target.name} ${season}`,
         'node',
         [
@@ -335,15 +338,16 @@ function runComplianceHarvest(target, season, options) {
 }
 
 function runPostProcessing(options) {
+    const commandRunner = options.commandRunner || runCommand;
     if (!options.skipElo) {
-        runCommand('ELO 全量重算', 'node', [
+        commandRunner('ELO 全量重算', 'node', [
             'scripts/maintenance/recalculate_elo.js',
             ...(options.dryRun ? ['--dry-run'] : []),
         ]);
     }
 
     if (!options.skipL3) {
-        runCommand('L3 特征熔炼', 'node', ['scripts/ops/smelt_all.js', ...(options.dryRun ? ['--dry-run'] : [])]);
+        commandRunner('L3 特征熔炼', 'node', ['scripts/ops/smelt_all.js', ...(options.dryRun ? ['--dry-run'] : [])]);
     }
 }
 
@@ -408,6 +412,7 @@ async function main(argv = process.argv.slice(2)) {
     return report;
 }
 
+/* node:coverage ignore next 6 */
 if (require.main === module) {
     main().catch(error => {
         console.error(`[EXPANSION] 失败: ${error.message}`);
@@ -419,8 +424,16 @@ module.exports = {
     DEFAULT_SEASONS,
     EXPANSION_TARGETS,
     SEASON_CODE_BY_SEASON,
+    buildAdaptedCsvPath,
     buildPlan,
+    main,
     normalizeSeasonInput,
     parseArgs,
     resolveTargets,
+    runCommand,
+    runComplianceHarvest,
+    runCsvFlow,
+    runDiscovery,
+    runPostProcessing,
+    writeReport,
 };
