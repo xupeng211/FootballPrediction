@@ -18,6 +18,12 @@ const {
   buildDbConnectionConfig,
   readExecutableSql
 } = require('./helpers/dbBlueprint');
+const {
+  MAX_ALIGNMENT_TIME_WINDOW_MS,
+  MIN_CONFIDENCE_SCORE,
+  MIN_ALIGNMENT_SCORE_GAP,
+  selectBestAlignmentCandidate
+} = require('./helpers/euroLeagueAdapters');
 
 const DEFAULT_BATCH_SIZE = 1000;
 const DEFAULT_ERROR_LOG = path.join(REPO_ROOT, 'logs', 'csv_bulk_loader_errors.jsonl');
@@ -25,9 +31,13 @@ const BOOKMAKER_ODDS_HISTORY_MIGRATION = path.join(
   MIGRATIONS_DIR,
   'V12.5__create_bookmaker_odds_history.sql'
 );
+const BOOKMAKER_ALIGNMENT_META_MIGRATION = path.join(
+  MIGRATIONS_DIR,
+  'V12.8__add_alignment_meta_to_bookmaker_odds_history.sql'
+);
 const DATA_SOURCE = 'CSV_BULK_LOADER';
 const DATA_VERSION = 'TEP001_PHASE1';
-const MATCH_REUSE_WINDOW_MS = 2 * 60 * 60 * 1000;
+const MATCH_REUSE_WINDOW_MS = MAX_ALIGNMENT_TIME_WINDOW_MS;
 
 function printUsage() {
   console.log('用法: node scripts/ops/csv_bulk_loader.js --file <path> [--commit] [--batch-size <n>] [--error-log <path>]');
@@ -276,16 +286,6 @@ function buildImportRunId() {
   return `csv_bulk_${Date.now()}_${crypto.randomUUID().replace(/-/g, '').slice(0, 8)}`;
 }
 
-function compareMatchCandidatePriority(left, right) {
-  const leftPriority = left.data_source === DATA_SOURCE ? 1 : 0;
-  const rightPriority = right.data_source === DATA_SOURCE ? 1 : 0;
-  if (leftPriority !== rightPriority) {
-    return leftPriority - rightPriority;
-  }
-
-  return String(left.match_id).localeCompare(String(right.match_id));
-}
-
 class ExistingFotMobMatchResolver {
   constructor(options = {}) {
     this.mapper = options.mapper || new EntityMapper();
@@ -305,42 +305,36 @@ class ExistingFotMobMatchResolver {
     }
 
     const group = await this._loadGroup(leagueName, season);
-    const requestedMatchId = normalizeText(options.requestedMatchId);
-    if (requestedMatchId) {
-      const exactById = group.byId.get(requestedMatchId);
-      if (exactById) {
-        return exactById;
-      }
-    }
+    const outcome = selectBestAlignmentCandidate(group.matches, {
+      homeTeam,
+      awayTeam,
+      matchDate
+    }, {
+      maxTimeWindowMs: MATCH_REUSE_WINDOW_MS,
+      minConfidenceScore: MIN_CONFIDENCE_SCORE,
+      minScoreGap: MIN_ALIGNMENT_SCORE_GAP
+    });
 
-    const requestedExternalId = this.mapper.normalizeFotMobExternalId(options.requestedExternalId);
-    if (requestedExternalId) {
-      const exactByExternalId = group.byExternalId.get(requestedExternalId);
-      if (exactByExternalId) {
-        return exactByExternalId;
-      }
-    }
-
-    const lookupKey = this.mapper.buildMatchLookupKey(homeTeam, awayTeam);
-    const candidates = (group.byLookupKey.get(lookupKey) || [])
-      .map((candidate) => {
-        const candidateDate = new Date(candidate.match_date);
-        return {
-          ...candidate,
-          diffMs: Math.abs(matchDate.getTime() - candidateDate.getTime())
-        };
-      })
-      .filter((candidate) => Number.isFinite(candidate.diffMs) && candidate.diffMs <= MATCH_REUSE_WINDOW_MS)
-      .sort((left, right) => left.diffMs - right.diffMs || compareMatchCandidatePriority(left, right));
-
-    if (candidates.length === 0) {
+    if (outcome.status === 'not_found') {
       throw new Error(
         `未找到对应 FotMob 比赛: league=${leagueName} season=${season} `
         + `home=${homeTeam} away=${awayTeam} match_date=${matchDate.toISOString()}`
       );
     }
 
-    return candidates[0];
+    if (outcome.status !== 'matched') {
+      const best = outcome.ranked[0];
+      throw new Error(
+        `对齐失败 status=${outcome.status} league=${leagueName} season=${season} `
+        + `home=${homeTeam} away=${awayTeam} match_date=${matchDate.toISOString()} `
+        + `best_score=${best ? best.score.matchScore : 'n/a'}`
+      );
+    }
+
+    return {
+      ...outcome.candidate,
+      alignment_meta: outcome.alignmentMeta
+    };
   }
 
   async close() {
@@ -376,25 +370,13 @@ class ExistingFotMobMatchResolver {
             AND match_date IS NOT NULL
             AND external_id IS NOT NULL
             AND COALESCE(data_source, '') <> $3
+            AND COALESCE(data_version, '') <> 'CSV_BOOTSTRAP'
+            AND COALESCE(external_id, '') NOT LIKE 'csv%'
         `,
         [season, leagueName, DATA_SOURCE]
       );
 
-      const group = {
-        byId: new Map(),
-        byExternalId: new Map(),
-        byLookupKey: new Map()
-      };
-
-      for (const row of result.rows) {
-        group.byId.set(String(row.match_id), row);
-        group.byExternalId.set(String(row.external_id), row);
-
-        const lookupKey = this.mapper.buildMatchLookupKey(row.home_team, row.away_team);
-        const bucket = group.byLookupKey.get(lookupKey) || [];
-        bucket.push(row);
-        group.byLookupKey.set(lookupKey, bucket);
-      }
+      const group = { matches: result.rows };
 
       this.cache.set(cacheKey, group);
       return group;
@@ -452,6 +434,7 @@ async function buildMatchRecord(row, context) {
     match_date: resolvedMatch.match_date instanceof Date
       ? resolvedMatch.match_date
       : parseDateOrThrow(resolvedMatch.match_date || matchDate),
+    alignment_meta: resolvedMatch.alignment_meta || parseJson(row.alignment_meta, {}),
     status,
     is_finished: status === 'finished',
     data_version: DATA_VERSION,
@@ -478,7 +461,8 @@ function buildOddsRecord(row, context) {
     bookmaker_name: bookmakerName,
     market_type: marketType,
     openOdds,
-    closeOdds
+    closeOdds,
+    alignmentMeta: parseJson(row.alignment_meta, context.match.alignment_meta || {})
   });
 
   return {
@@ -488,6 +472,7 @@ function buildOddsRecord(row, context) {
     open_odds: openOdds,
     close_odds: closeOdds,
     movement_trajectory: buildMovementTrajectory(row, openOdds, closeOdds),
+    alignment_meta: parseJson(row.alignment_meta, context.match.alignment_meta || {}),
     source_html_path: context.sourceFile,
     source_digest: sha256(rawDigestPayload)
   };
@@ -672,6 +657,18 @@ class CsvBulkLoaderWriter {
       await client.query(readExecutableSql(BOOKMAKER_ODDS_HISTORY_MIGRATION));
     }
 
+    const columnResult = await client.query(`
+      SELECT 1
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'bookmaker_odds_history'
+        AND column_name = 'alignment_meta'
+      LIMIT 1
+    `);
+    if (columnResult.rowCount === 0) {
+      await client.query(readExecutableSql(BOOKMAKER_ALIGNMENT_META_MIGRATION));
+    }
+
     this.tableEnsured = true;
   }
 }
@@ -761,7 +758,7 @@ async function upsertBookmakerOddsHistory(client, rows = []) {
 
   const values = [];
   const placeholders = rows.map((row, index) => {
-    const offset = index * 8;
+    const offset = index * 9;
     values.push(
       row.match_id,
       row.bookmaker_name,
@@ -769,11 +766,12 @@ async function upsertBookmakerOddsHistory(client, rows = []) {
       JSON.stringify(row.open_odds || {}),
       JSON.stringify(row.close_odds || {}),
       JSON.stringify(Array.isArray(row.movement_trajectory) ? row.movement_trajectory : []),
+      JSON.stringify(row.alignment_meta || {}),
       row.source_html_path || null,
       row.source_digest || null
     );
 
-    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}::jsonb, $${offset + 5}::jsonb, $${offset + 6}::jsonb, $${offset + 7}, $${offset + 8})`;
+    return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}::jsonb, $${offset + 5}::jsonb, $${offset + 6}::jsonb, $${offset + 7}::jsonb, $${offset + 8}, $${offset + 9})`;
   });
 
   const result = await client.query(`
@@ -784,6 +782,7 @@ async function upsertBookmakerOddsHistory(client, rows = []) {
       open_odds,
       close_odds,
       movement_trajectory,
+      alignment_meta,
       source_html_path,
       source_digest
     )
@@ -792,6 +791,7 @@ async function upsertBookmakerOddsHistory(client, rows = []) {
       open_odds = EXCLUDED.open_odds,
       close_odds = EXCLUDED.close_odds,
       movement_trajectory = EXCLUDED.movement_trajectory,
+      alignment_meta = EXCLUDED.alignment_meta,
       source_html_path = EXCLUDED.source_html_path,
       source_digest = EXCLUDED.source_digest,
       collected_at = NOW(),

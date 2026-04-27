@@ -12,8 +12,36 @@
 
 'use strict';
 
-const { describe, it, afterEach } = require('node:test');
+const { after, afterEach, beforeEach, describe, it } = require('node:test');
 const assert = require('node:assert');
+
+const PROXY_PORT_ENV_KEYS = [
+  'PROXY_PORTS',
+  'PROXY_PORT',
+  'PROXY_PORT_START',
+  'PROXY_PORT_END'
+];
+const originalProxyPortEnv = Object.fromEntries(
+  PROXY_PORT_ENV_KEYS.map(key => [key, process.env[key]])
+);
+
+function clearProxyPortEnv() {
+  for (const key of PROXY_PORT_ENV_KEYS) {
+    delete process.env[key];
+  }
+}
+
+function restoreProxyPortEnv() {
+  for (const [key, value] of Object.entries(originalProxyPortEnv)) {
+    if (value === undefined) {
+      delete process.env[key];
+    } else {
+      process.env[key] = value;
+    }
+  }
+}
+
+clearProxyPortEnv();
 
 // 导入真实模块
 const { OddsPortalHarvester, OddsPortalURLParser } = require('../../src/infrastructure/harvesters/OddsPortalHarvester');
@@ -22,7 +50,18 @@ const { resetProxyProvider } = require('../../src/infrastructure/network/ProxyPr
 const { Normalizer } = require('../../src/utils/Normalizer');
 const { resolveProxyPoolConfig } = require('../../config/proxy_pool');
 
+beforeEach(() => {
+  clearProxyPortEnv();
+  resetProxyProvider();
+});
+
 afterEach(() => {
+  resetProxyProvider();
+  clearProxyPortEnv();
+});
+
+after(() => {
+  restoreProxyPortEnv();
   resetProxyProvider();
 });
 

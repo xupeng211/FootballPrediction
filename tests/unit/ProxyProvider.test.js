@@ -1,6 +1,6 @@
 'use strict';
 
-const { afterEach, describe, test } = require('node:test');
+const { after, afterEach, beforeEach, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 
 const {
@@ -10,11 +10,42 @@ const {
 } = require('../../src/infrastructure/network/ProxyProvider');
 
 describe('src/infrastructure/network/ProxyProvider', () => {
+  const originalProxyPortEnv = {
+    PROXY_PORTS: process.env.PROXY_PORTS,
+    PROXY_PORT: process.env.PROXY_PORT,
+    PROXY_PORT_START: process.env.PROXY_PORT_START,
+    PROXY_PORT_END: process.env.PROXY_PORT_END,
+  };
+
+  function clearProxyPortEnv() {
+    delete process.env.PROXY_PORTS;
+    delete process.env.PROXY_PORT;
+    delete process.env.PROXY_PORT_START;
+    delete process.env.PROXY_PORT_END;
+  }
+
+  beforeEach(() => {
+    resetProxyProvider();
+    clearProxyPortEnv();
+  });
+
   afterEach(() => {
     resetProxyProvider();
     delete process.env.PROXY_SERVER;
     delete process.env.PROXY_HOST;
     delete process.env.WSL2_PROXY_HOST;
+    clearProxyPortEnv();
+  });
+
+  after(() => {
+    for (const [key, value] of Object.entries(originalProxyPortEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+    resetProxyProvider();
   });
 
   test('100 次并发租约应在当前可用端口间近似均衡分布', async () => {

@@ -49,7 +49,9 @@ function parseArgs() {
     restart: 500,
     verbose: false,
     dryRun: false,
-    maxRounds: 5
+    maxRounds: 5,
+    leagueId: null,
+    season: null
   };
 
   for (let i = 2; i < process.argv.length; i++) {
@@ -62,6 +64,10 @@ function parseArgs() {
       args.verbose = true;
     } else if (arg === '--dry-run') {
       args.dryRun = true;
+    } else if (arg.startsWith('--league=')) {
+      args.leagueId = parseInt(arg.split('=')[1], 10) || null;
+    } else if (arg.startsWith('--season=')) {
+      args.season = arg.split('=')[1] || null;
     } else if (arg === '--help' || arg === '-h') {
       printHelp();
       process.exit(0);
@@ -87,6 +93,8 @@ TITAN MARATHON V6.6 - 万场饱和收割引擎
   --stagger=N     错峰启动间隔 ms (默认: 800)
   --restart=N     浏览器重启阈值 (默认: 500)
   --rounds=N      最大对齐轮数 (默认: 5)
+  --league=ID     仅处理指定联赛 (如 87=La Liga)
+  --season=S      仅处理指定赛季 (如 2024/2025)
   --verbose, -v   详细输出
   --dry-run       试运行模式
   --help, -h      显示帮助
@@ -96,7 +104,7 @@ TITAN MARATHON V6.6 - 万场饱和收割引擎
   node scripts/ops/titan_marathon.js --workers=22 --limit=10000
 
   # 保守测试模式
-  node scripts/ops/titan_marathon.js --workers=5 --limit=100
+  node scripts/ops/titan_marathon.js --workers=5 --limit=100 --league=87 --season=2024/2025
 
   # 快速对齐 (最多3轮)
   node scripts/ops/titan_marathon.js --rounds=3
@@ -128,7 +136,9 @@ async function main() {
     staggerMs: args.stagger,
     restartThreshold: args.restart,
     maxRounds: args.maxRounds,
-    verbose: args.verbose
+    verbose: args.verbose,
+    leagueId: args.leagueId,
+    season: args.season
   });
 
   try {

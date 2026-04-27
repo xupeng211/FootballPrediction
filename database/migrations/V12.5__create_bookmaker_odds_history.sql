@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS bookmaker_odds_history (
     open_odds JSONB NOT NULL DEFAULT '{}'::jsonb,
     close_odds JSONB NOT NULL DEFAULT '{}'::jsonb,
     movement_trajectory JSONB NOT NULL DEFAULT '[]'::jsonb,
+    alignment_meta JSONB NOT NULL DEFAULT '{}'::jsonb,
     source_html_path TEXT,
     source_digest VARCHAR(64),
     collected_at TIMESTAMP DEFAULT NOW(),
@@ -25,7 +26,9 @@ CREATE TABLE IF NOT EXISTS bookmaker_odds_history (
     CONSTRAINT bookmaker_odds_history_close_is_object
         CHECK (jsonb_typeof(close_odds) = 'object'),
     CONSTRAINT bookmaker_odds_history_trajectory_is_array
-        CHECK (jsonb_typeof(movement_trajectory) = 'array')
+        CHECK (jsonb_typeof(movement_trajectory) = 'array'),
+    CONSTRAINT bookmaker_odds_history_alignment_meta_is_object
+        CHECK (jsonb_typeof(alignment_meta) = 'object')
 );
 
 CREATE INDEX IF NOT EXISTS idx_bookmaker_odds_history_match
@@ -67,3 +70,6 @@ COMMENT ON COLUMN bookmaker_odds_history.close_odds IS
 
 COMMENT ON COLUMN bookmaker_odds_history.movement_trajectory IS
 'V12.5: 变盘轨迹，推荐存为 JSON array，元素包含 captured_at 与赔率快照';
+
+COMMENT ON COLUMN bookmaker_odds_history.alignment_meta IS
+'V12.8: Football-Data CSV 对齐到 FotMob 基座的审计证据，记录 match_score / name_similarity / time_diff_seconds';

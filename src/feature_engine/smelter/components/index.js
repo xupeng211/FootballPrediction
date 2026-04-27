@@ -15,6 +15,7 @@ const { GoldenExtractor, DEFAULT_CONFIG: GOLDEN_CONFIG, FEATURE_NAMES: GOLDEN_FE
 const { TacticalExtractor, DEFAULT_CONFIG: TACTICAL_CONFIG, FEATURE_NAMES: TACTICAL_FEATURES } = require('./TacticalExtractor');
 const { DataFetcher, DEFAULT_CONFIG: DATAFETCHER_CONFIG } = require('./DataFetcher');
 const { L3Writer, DEFAULT_CONFIG: L3WRITER_CONFIG } = require('./L3Writer');
+const { FotMobSchemaGuard, DEFAULT_EXPECTED_KEYS, flattenKeyShape } = require('./FotMobSchemaGuard');
 
 module.exports = {
     // 基类
@@ -30,14 +31,20 @@ module.exports = {
     // 数据组件
     DataFetcher,
     L3Writer,
+    FotMobSchemaGuard,
 
     // 配置
     DEFAULT_CONFIGS: {
         golden: GOLDEN_CONFIG,
         tactical: TACTICAL_CONFIG,
         dataFetcher: DATAFETCHER_CONFIG,
-        l3Writer: L3WRITER_CONFIG
+        l3Writer: L3WRITER_CONFIG,
+        fotMobSchemaGuard: {
+            expectedKeys: DEFAULT_EXPECTED_KEYS
+        }
     },
+
+    flattenKeyShape,
 
     // 特征清单
     FEATURE_NAMES: {
