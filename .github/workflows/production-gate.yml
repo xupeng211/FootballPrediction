@@ -111,6 +111,13 @@ jobs:
           echo "[Production Gate] Container network alias probe (dev -> db):"
           docker compose -f docker-compose.dev.yml exec -T dev bash -lc 'ping -c 2 db'
 
+      - name: Install project dependencies
+        run: |
+          echo "[Production Gate] Installing Node.js dependencies..."
+          docker compose -f docker-compose.dev.yml exec -T dev bash -lc 'npm ci'
+          echo "[Production Gate] Verifying critical dependencies..."
+          docker compose -f docker-compose.dev.yml exec -T dev bash -lc 'node -e "require(\"playwright\"); require(\"pg\"); require(\"nock\"); console.log(\"✓ All critical dependencies installed\")"'
+
       - name: Run Gatekeeper
         env:
           GATEKEEPER_BUILD: "0"
