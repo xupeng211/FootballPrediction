@@ -3,8 +3,6 @@
 
 require('dotenv').config();
 
-const http = require('http');
-const https = require('https');
 const zlib = require('zlib');
 const { Pool } = require('pg');
 const { Normalizer } = require('../../src/utils/Normalizer');
@@ -472,55 +470,50 @@ function buildPseudoFotMobPayload(match, gsmData) {
     };
 }
 
-function fetchBuffer(url, redirectsLeft = 3) {
-    return new Promise((resolve, reject) => {
-        const client = url.startsWith('https:') ? https : http;
-        const request = client.get(url, {
+async function fetchBuffer(url, redirectsLeft = 3) {
+    if (typeof fetch !== 'function') {
+        throw new Error('FETCH_UNAVAILABLE: Node runtime does not provide native fetch');
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), DEFAULT_TIMEOUT_MS);
+    let response;
+
+    try {
+        response = await fetch(url, {
+            redirect: 'manual',
+            signal: controller.signal,
             headers: {
                 'User-Agent': 'Mozilla/5.0 (compatible; FootballPrediction/1.0; +historical-l2-backfill)',
                 'Accept': 'application/json,text/plain,*/*',
                 'Accept-Encoding': 'gzip'
             }
-        }, (response) => {
-            const statusCode = response.statusCode || 0;
-            if (statusCode >= 300 && statusCode < 400 && response.headers.location && redirectsLeft > 0) {
-                response.resume();
-                const redirected = new URL(response.headers.location, url).toString();
-                resolve(fetchBuffer(redirected, redirectsLeft - 1));
-                return;
-            }
-
-            if (statusCode !== 200) {
-                const chunks = [];
-                response.on('data', chunk => chunks.push(chunk));
-                response.on('end', () => {
-                    reject(new Error(`HTTP_${statusCode}: ${Buffer.concat(chunks).toString('utf8').slice(0, 200)}`));
-                });
-                return;
-            }
-
-            const chunks = [];
-            response.on('data', chunk => chunks.push(chunk));
-            response.on('end', () => {
-                try {
-                    const buffer = Buffer.concat(chunks);
-                    const encoding = String(response.headers['content-encoding'] || '').toLowerCase();
-                    if (encoding.includes('gzip') || url.endsWith('.gz')) {
-                        resolve(zlib.gunzipSync(buffer));
-                        return;
-                    }
-                    resolve(buffer);
-                } catch (error) {
-                    reject(error);
-                }
-            });
         });
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw new Error(`TIMEOUT_${DEFAULT_TIMEOUT_MS}ms`);
+        }
+        throw error;
+    } finally {
+        clearTimeout(timeout);
+    }
 
-        request.setTimeout(DEFAULT_TIMEOUT_MS, () => {
-            request.destroy(new Error(`TIMEOUT_${DEFAULT_TIMEOUT_MS}ms`));
-        });
-        request.on('error', reject);
-    });
+    if (response.status >= 300 && response.status < 400 && response.headers.get('location') && redirectsLeft > 0) {
+        const redirected = new URL(response.headers.get('location'), url).toString();
+        return fetchBuffer(redirected, redirectsLeft - 1);
+    }
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`HTTP_${response.status}: ${errorText.slice(0, 200)}`);
+    }
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+    const looksGzipped = buffer[0] === 0x1f && buffer[1] === 0x8b;
+    if (looksGzipped) {
+        return zlib.gunzipSync(buffer);
+    }
+    return buffer;
 }
 
 async function fetchGsmPayload(externalId) {
