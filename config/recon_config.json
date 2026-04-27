@@ -166,6 +166,42 @@
       "results_slug": "championship",
       "results_url_strategy": "seasonal"
     },
+    "BUNDESLIGA2": {
+      "name": "2. Bundesliga",
+      "country": "germany",
+      "slug": "2-bundesliga",
+      "league_id": 146,
+      "season_type": "dual_year",
+      "results_slug": "2-bundesliga",
+      "results_url_strategy": "seasonal"
+    },
+    "LALIGA2": {
+      "name": "Segunda División",
+      "country": "spain",
+      "slug": "laliga2",
+      "league_id": 140,
+      "season_type": "dual_year",
+      "results_slug": "laliga2",
+      "results_url_strategy": "seasonal"
+    },
+    "SERIEB": {
+      "name": "Serie B",
+      "country": "italy",
+      "slug": "serie-b",
+      "league_id": 86,
+      "season_type": "dual_year",
+      "results_slug": "serie-b",
+      "results_url_strategy": "seasonal"
+    },
+    "LIGUE2": {
+      "name": "Ligue 2",
+      "country": "france",
+      "slug": "ligue-2",
+      "league_id": 110,
+      "season_type": "dual_year",
+      "results_slug": "ligue-2",
+      "results_url_strategy": "seasonal"
+    },
     "MLS": {
       "name": "MLS",
       "country": "usa",

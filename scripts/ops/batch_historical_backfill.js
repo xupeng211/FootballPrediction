@@ -1,285 +1,426 @@
 #!/usr/bin/env node
+'use strict';
 
 /**
- * 横向大扩军 - 批量历史数据回溯脚本
+ * 横向大扩军 - 历史 CSV / FotMob / ELO / L3 批量编排入口。
  *
- * 功能：
- * 1. 批量导入 CSV 历史数据到 matches 和 bookmaker_odds_history
- * 2. 触发 ELO 重算
- * 3. 触发 L3 特征生成
- * 4. FotMob 合规模式：极其保守的低频拉取缺失数据
- *
- * 使用方式：
- * node scripts/ops/batch_historical_backfill.js --season 2022/2023 --leagues 47,54,53,55,87
- * node scripts/ops/batch_historical_backfill.js --season 2022/2023 --leagues 48,77,88,56,60 --fotmob-compliance
+ * 该脚本只编排仓库已有真实入口，不生成模拟数据：
+ * - scripts/ops/titan_discovery.js
+ * - scripts/ops/fetch_and_adapt_euro_leagues.js
+ * - scripts/ops/csv_bulk_loader.js
+ * - scripts/ops/run_production.js
+ * - scripts/maintenance/recalculate_elo.js
+ * - scripts/ops/smelt_all.js
  */
 
+const fs = require('fs');
 const path = require('path');
-const fs = require('fs').promises;
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 
-// 配置
-const CONFIG = {
-  csvDataDir: path.join(__dirname, '../../data/historical_csv'),
-  fotmobComplianceMode: process.env.FOTMOB_COMPLIANCE_MODE === 'true',
-  fotmobDelayMs: 30000, // 30秒延迟，极其保守
-  fotmobMaxRetries: 2,
-  batchSize: 50,
-  dryRun: process.argv.includes('--dry-run'),
+const { Normalizer } = require('../../src/utils/Normalizer');
+
+const REPO_ROOT = path.resolve(__dirname, '../..');
+const DEFAULT_SEASONS = ['2022/2023', '2023/2024', '2024/2025'];
+const DEFAULT_OUTPUT_DIR = path.join(REPO_ROOT, 'data', 'historical_csv', 'adapted');
+const DEFAULT_ERROR_LOG = path.join(REPO_ROOT, 'logs', 'batch_historical_backfill_csv_errors.jsonl');
+const DEFAULT_HARVEST_LIMIT = 25;
+
+const SEASON_CODE_BY_SEASON = {
+    '2022/2023': '2223',
+    '2023/2024': '2324',
+    '2024/2025': '2425',
 };
 
-// 联赛映射表
-const LEAGUE_MAP = {
-  47: { name: 'Premier League', csvCode: 'E0' },
-  54: { name: 'Bundesliga', csvCode: 'D1' },
-  53: { name: 'Ligue 1', csvCode: 'F1' },
-  55: { name: 'Serie A', csvCode: 'I1' },
-  87: { name: 'La Liga', csvCode: 'SP1' },
-  48: { name: 'Championship', csvCode: 'E1' },
-  77: { name: '2. Bundesliga', csvCode: 'D2' },
-  88: { name: 'Segunda División', csvCode: 'SP2' },
-  56: { name: 'Serie B', csvCode: 'I2' },
-  60: { name: 'Ligue 2', csvCode: 'F2' },
-};
+const EXPANSION_TARGETS = [
+    { id: 47, code: 'E0', name: 'Premier League', expectedMatches: 380, group: 'core' },
+    { id: 87, code: 'SP1', name: 'La Liga', expectedMatches: 380, group: 'core' },
+    { id: 54, code: 'D1', name: 'Bundesliga', expectedMatches: 306, group: 'core' },
+    { id: 55, code: 'I1', name: 'Serie A', expectedMatches: 380, group: 'core' },
+    { id: 53, code: 'F1', name: 'Ligue 1', expectedMatches: 306, group: 'core' },
+    { id: 48, code: 'E1', name: 'Championship', expectedMatches: 552, group: 'expansion' },
+    { id: 146, code: 'D2', name: '2. Bundesliga', expectedMatches: 306, group: 'expansion' },
+    { id: 140, code: 'SP2', name: 'Segunda División', expectedMatches: 462, group: 'expansion' },
+    { id: 86, code: 'I2', name: 'Serie B', expectedMatches: 380, group: 'expansion' },
+    { id: 110, code: 'F2', name: 'Ligue 2', expectedMatches: 380, group: 'expansion' },
+    { id: 57, code: 'N1', name: 'Eredivisie', expectedMatches: 306, group: 'expansion' },
+    { id: 61, code: 'P1', name: 'Liga Portugal', expectedMatches: 306, group: 'expansion' },
+];
 
-// 解析命令行参数
-function parseArgs() {
-  const args = {
-    season: null,
-    leagues: [],
-    fotmobCompliance: process.argv.includes('--fotmob-compliance'),
-  };
+const TARGETS_BY_ID = new Map(EXPANSION_TARGETS.map(target => [String(target.id), target]));
+const TARGETS_BY_CODE = new Map(EXPANSION_TARGETS.map(target => [target.code, target]));
 
-  const seasonIdx = process.argv.indexOf('--season');
-  if (seasonIdx !== -1 && process.argv[seasonIdx + 1]) {
-    args.season = process.argv[seasonIdx + 1];
-  }
+function printUsage() {
+    console.log(`
+横向大扩军历史回填编排
 
-  const leaguesIdx = process.argv.indexOf('--leagues');
-  if (leaguesIdx !== -1 && process.argv[leaguesIdx + 1]) {
-    args.leagues = process.argv[leaguesIdx + 1].split(',').map(Number);
-  }
+用法:
+  node scripts/ops/batch_historical_backfill.js --commit --fotmob-compliance
+  node scripts/ops/batch_historical_backfill.js --dry-run --leagues E1,D2,SP2,I2,F2,N1,P1 --seasons 2022/2023,2023/2024,2024/2025
 
-  return args;
+选项:
+  --commit                 实际写入数据库；默认只做 dry-run
+  --dry-run                显式预览，不写数据库
+  --fotmob-compliance      在 FOTMOB_COMPLIANCE_MODE=true 下低频补齐 L1/L2
+  --leagues <list>         联赛 ID 或 football-data 代码，逗号分隔；默认 12 项扩军清单
+  --seasons <list>         赛季列表，逗号分隔；默认 2022/2023,2023/2024,2024/2025
+  --output-dir <path>      适配后 CSV 输出目录
+  --harvest-limit <n>      合规 L2 每个联赛/赛季最多收割条数，默认 ${DEFAULT_HARVEST_LIMIT}
+  --skip-discovery         跳过 L1 播种
+  --skip-csv               跳过 football-data CSV 适配与导入
+  --skip-elo               跳过 Elo 全量重算
+  --skip-l3                跳过 L3 熔炼
+`);
 }
 
-// 获取 CSV 文件路径
-function getCsvFilePath(leagueId, season) {
-  const league = LEAGUE_MAP[leagueId];
-  if (!league) {
-    throw new Error(`Unknown league ID: ${leagueId}`);
-  }
-
-  const seasonYear = season.split('/')[0].slice(2); // "2022/2023" -> "22"
-  const csvFileName = `${league.csvCode}_${seasonYear}${parseInt(seasonYear) + 1}.csv`;
-  return path.join(CONFIG.csvDataDir, csvFileName);
+function readOptionValue(argv, index, flag) {
+    const value = argv[index + 1];
+    if (!value || String(value).startsWith('--')) {
+        throw new Error(`参数 ${flag} 缺少值`);
+    }
+    return value;
 }
 
-// 执行 CSV 批量加载
-async function loadCsvData(csvFilePath, leagueId) {
-  console.log(`\n[CSV 加载] 开始导入: ${csvFilePath}`);
-
-  if (CONFIG.dryRun) {
-    console.log('[DRY-RUN] 跳过实际导入');
-    return { success: true, matchCount: 0 };
-  }
-
-  try {
-    const cmd = `node scripts/ops/csv_bulk_loader.js --file "${csvFilePath}" --league ${leagueId}`;
-    const output = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe' });
-
-    const matchCountMatch = output.match(/导入成功: (\d+) 场比赛/);
-    const matchCount = matchCountMatch ? parseInt(matchCountMatch[1]) : 0;
-
-    console.log(`[CSV 加载] 完成: ${matchCount} 场比赛`);
-    return { success: true, matchCount };
-  } catch (error) {
-    console.error(`[CSV 加载] 失败: ${error.message}`);
-    return { success: false, matchCount: 0, error: error.message };
-  }
+function parseList(rawValue) {
+    return String(rawValue || '')
+        .split(',')
+        .map(value => value.trim())
+        .filter(Boolean);
 }
 
-// FotMob 合规模式拉取缺失数据
-async function fotmobComplianceFetch(leagueId, season) {
-  if (!CONFIG.fotmobComplianceMode) {
-    console.log('[FotMob] 非合规模式，跳过');
-    return { success: true, fetchCount: 0 };
-  }
-
-  console.log(`\n[FotMob 合规] 开始极保守拉取: League ${leagueId}, Season ${season}`);
-  console.log(`[FotMob 合规] 延迟: ${CONFIG.fotmobDelayMs}ms, 最大重试: ${CONFIG.fotmobMaxRetries}`);
-
-  if (CONFIG.dryRun) {
-    console.log('[DRY-RUN] 跳过实际拉取');
-    return { success: true, fetchCount: 0 };
-  }
-
-  try {
-    const cmd = `node scripts/ops/fotmob_historical_backfill.js --league ${leagueId} --season ${season} --compliance --delay ${CONFIG.fotmobDelayMs} --max-retries ${CONFIG.fotmobMaxRetries}`;
-    const output = execSync(cmd, { encoding: 'utf-8', stdio: 'pipe', timeout: 600000 }); // 10分钟超时
-
-    const fetchCountMatch = output.match(/拉取成功: (\d+) 场比赛/);
-    const fetchCount = fetchCountMatch ? parseInt(fetchCountMatch[1]) : 0;
-
-    console.log(`[FotMob 合规] 完成: ${fetchCount} 场比赛`);
-    return { success: true, fetchCount };
-  } catch (error) {
-    console.error(`[FotMob 合规] 失败: ${error.message}`);
-    return { success: false, fetchCount: 0, error: error.message };
-  }
+function parsePositiveInteger(rawValue, flag) {
+    const parsed = Number.parseInt(rawValue, 10);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+        throw new Error(`参数 ${flag} 必须是正整数`);
+    }
+    return parsed;
 }
 
-// 触发 ELO 重算
-async function recalculateElo(leagueId, season) {
-  console.log(`\n[ELO 重算] 开始: League ${leagueId}, Season ${season}`);
-
-  if (CONFIG.dryRun) {
-    console.log('[DRY-RUN] 跳过实际重算');
-    return { success: true };
-  }
-
-  try {
-    const cmd = `python -m src.ml.elo_calculator --league ${leagueId} --season ${season}`;
-    execSync(cmd, { encoding: 'utf-8', stdio: 'inherit' });
-
-    console.log('[ELO 重算] 完成');
-    return { success: true };
-  } catch (error) {
-    console.error(`[ELO 重算] 失败: ${error.message}`);
-    return { success: false, error: error.message };
-  }
-}
-
-// 触发 L3 特征生成
-async function generateL3Features(leagueId, season) {
-  console.log(`\n[L3 特征] 开始生成: League ${leagueId}, Season ${season}`);
-
-  if (CONFIG.dryRun) {
-    console.log('[DRY-RUN] 跳过实际生成');
-    return { success: true };
-  }
-
-  try {
-    const cmd = `node scripts/ops/smelt_all.js --league ${leagueId} --season ${season}`;
-    execSync(cmd, { encoding: 'utf-8', stdio: 'inherit' });
-
-    console.log('[L3 特征] 完成');
-    return { success: true };
-  } catch (error) {
-    console.error(`[L3 特征] 失败: ${error.message}`);
-    return { success: false, error: error.message };
-  }
-}
-
-// 主流程
-async function main() {
-  const args = parseArgs();
-
-  if (!args.season || args.leagues.length === 0) {
-    console.error('错误: 必须指定 --season 和 --leagues 参数');
-    console.error('示例: node scripts/ops/batch_historical_backfill.js --season 2022/2023 --leagues 47,54,53,55,87');
-    process.exit(1);
-  }
-
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log('  横向大扩军 - 批量历史数据回溯');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log(`赛季: ${args.season}`);
-  console.log(`联赛: ${args.leagues.map(id => LEAGUE_MAP[id]?.name || id).join(', ')}`);
-  console.log(`FotMob 合规模式: ${args.fotmobCompliance ? '启用' : '禁用'}`);
-  console.log(`Dry-Run 模式: ${CONFIG.dryRun ? '启用' : '禁用'}`);
-  console.log('═══════════════════════════════════════════════════════════\n');
-
-  const results = {
-    total: args.leagues.length,
-    success: 0,
-    failed: 0,
-    totalMatches: 0,
-    details: [],
-  };
-
-  for (const leagueId of args.leagues) {
-    const leagueName = LEAGUE_MAP[leagueId]?.name || `League ${leagueId}`;
-    console.log(`\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-    console.log(`  处理联赛: ${leagueName} (ID: ${leagueId})`);
-    console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-
-    const leagueResult = {
-      leagueId,
-      leagueName,
-      season: args.season,
-      steps: {},
+function parseArgs(argv = process.argv.slice(2)) {
+    const options = {
+        commit: false,
+        dryRun: false,
+        fotmobCompliance: false,
+        leagueTokens: [],
+        seasons: DEFAULT_SEASONS,
+        outputDir: DEFAULT_OUTPUT_DIR,
+        harvestLimit: DEFAULT_HARVEST_LIMIT,
+        skipDiscovery: false,
+        skipCsv: false,
+        skipElo: false,
+        skipL3: false,
     };
 
-    try {
-      // Step 1: CSV 批量加载
-      const csvFilePath = getCsvFilePath(leagueId, args.season);
-      const csvResult = await loadCsvData(csvFilePath, leagueId);
-      leagueResult.steps.csv = csvResult;
-      results.totalMatches += csvResult.matchCount;
-
-      if (!csvResult.success) {
-        throw new Error(`CSV 加载失败: ${csvResult.error}`);
-      }
-
-      // Step 2: FotMob 合规拉取（如果启用）
-      if (args.fotmobCompliance) {
-        const fotmobResult = await fotmobComplianceFetch(leagueId, args.season);
-        leagueResult.steps.fotmob = fotmobResult;
-
-        if (!fotmobResult.success) {
-          console.warn(`[警告] FotMob 拉取失败，继续后续步骤`);
+    for (let index = 0; index < argv.length; index++) {
+        const token = String(argv[index] || '').trim();
+        if (!token) {
+            continue;
         }
-      }
-
-      // Step 3: ELO 重算
-      const eloResult = await recalculateElo(leagueId, args.season);
-      leagueResult.steps.elo = eloResult;
-
-      if (!eloResult.success) {
-        throw new Error(`ELO 重算失败: ${eloResult.error}`);
-      }
-
-      // Step 4: L3 特征生成
-      const l3Result = await generateL3Features(leagueId, args.season);
-      leagueResult.steps.l3 = l3Result;
-
-      if (!l3Result.success) {
-        throw new Error(`L3 特征生成失败: ${l3Result.error}`);
-      }
-
-      results.success++;
-      leagueResult.status = 'success';
-      console.log(`\n✅ ${leagueName} 处理完成`);
-    } catch (error) {
-      results.failed++;
-      leagueResult.status = 'failed';
-      leagueResult.error = error.message;
-      console.error(`\n❌ ${leagueName} 处理失败: ${error.message}`);
+        index = applyArgToken(options, argv, index, token);
     }
 
-    results.details.push(leagueResult);
-  }
+    if (!options.commit) {
+        options.dryRun = true;
+    }
+    options.outputDir = path.isAbsolute(options.outputDir)
+        ? options.outputDir
+        : path.resolve(REPO_ROOT, options.outputDir);
 
-  // 输出最终报告
-  console.log('\n\n═══════════════════════════════════════════════════════════');
-  console.log('  批量回溯完成报告');
-  console.log('═══════════════════════════════════════════════════════════');
-  console.log(`总联赛数: ${results.total}`);
-  console.log(`成功: ${results.success}`);
-  console.log(`失败: ${results.failed}`);
-  console.log(`总导入比赛数: ${results.totalMatches}`);
-  console.log('═══════════════════════════════════════════════════════════\n');
-
-  // 输出详细结果到 JSON 文件
-  const reportPath = path.join(__dirname, `../../logs/backfill_report_${Date.now()}.json`);
-  await fs.writeFile(reportPath, JSON.stringify(results, null, 2));
-  console.log(`详细报告已保存: ${reportPath}\n`);
-
-  process.exit(results.failed > 0 ? 1 : 0);
+    return options;
 }
 
-main().catch((error) => {
-  console.error('致命错误:', error);
-  process.exit(1);
-});
+function applyArgToken(options, argv, index, token) {
+    if (token === '--help' || token === '-h') {
+        options.help = true;
+        return index;
+    }
+    if (token === '--commit') {
+        options.commit = true;
+        options.dryRun = false;
+        return index;
+    }
+    if (token === '--dry-run') {
+        options.dryRun = true;
+        options.commit = false;
+        return index;
+    }
+    if (token === '--fotmob-compliance') {
+        options.fotmobCompliance = true;
+        return index;
+    }
+    if (token === '--skip-discovery') {
+        options.skipDiscovery = true;
+        return index;
+    }
+    if (token === '--skip-csv') {
+        options.skipCsv = true;
+        return index;
+    }
+    if (token === '--skip-elo') {
+        options.skipElo = true;
+        return index;
+    }
+    if (token === '--skip-l3') {
+        options.skipL3 = true;
+        return index;
+    }
+    return applyValueArgToken(options, argv, index, token);
+}
+
+function applyValueArgToken(options, argv, index, token) {
+    if (token === '--leagues') {
+        options.leagueTokens = parseList(readOptionValue(argv, index, token));
+        return index + 1;
+    }
+    if (token === '--seasons' || token === '--season') {
+        options.seasons = parseList(readOptionValue(argv, index, token));
+        return index + 1;
+    }
+    if (token === '--output-dir') {
+        options.outputDir = readOptionValue(argv, index, token);
+        return index + 1;
+    }
+    if (token === '--harvest-limit') {
+        options.harvestLimit = parsePositiveInteger(readOptionValue(argv, index, token), token);
+        return index + 1;
+    }
+    throw new Error(`未知参数: ${token}`);
+}
+
+function normalizeSeasonInput(season) {
+    const normalized = Normalizer.normalizeSeason(String(season || '').trim());
+    if (!SEASON_CODE_BY_SEASON[normalized]) {
+        throw new Error(`未支持的扩军赛季: ${season}`);
+    }
+    return normalized;
+}
+
+function resolveTargets(leagueTokens = []) {
+    if (!leagueTokens.length) {
+        return [...EXPANSION_TARGETS];
+    }
+
+    const targets = leagueTokens.map(token => {
+        const normalized = String(token).trim().toUpperCase();
+        const target = TARGETS_BY_ID.get(normalized) || TARGETS_BY_CODE.get(normalized);
+        if (!target) {
+            throw new Error(`未支持的扩军联赛: ${token}`);
+        }
+        return target;
+    });
+
+    return [...new Map(targets.map(target => [target.id, target])).values()];
+}
+
+function buildPlan(options) {
+    const seasons = [...new Set(options.seasons.map(normalizeSeasonInput))];
+    const targets = resolveTargets(options.leagueTokens);
+    return {
+        seasons,
+        targets,
+        expectedMatches: seasons.length * targets.reduce((sum, target) => sum + target.expectedMatches, 0),
+    };
+}
+
+function runCommand(label, command, args, options = {}) {
+    const printable = [command, ...args].join(' ');
+    console.log(`\n[EXPANSION] ${label}`);
+    console.log(`[EXPANSION] $ ${printable}`);
+
+    const result = spawnSync(command, args, {
+        cwd: REPO_ROOT,
+        stdio: 'inherit',
+        env: {
+            ...process.env,
+            ...(options.env || {}),
+        },
+    });
+
+    if (result.status !== 0) {
+        throw new Error(`${label} 失败: exit=${result.status}`);
+    }
+}
+
+function buildAdaptedCsvPath(outputDir, target, season) {
+    const seasonCode = SEASON_CODE_BY_SEASON[season];
+    return path.join(outputDir, `${target.code}_${seasonCode}_adapted.csv`);
+}
+
+function runDiscovery(target, season, options) {
+    if (options.skipDiscovery || !options.fotmobCompliance) {
+        return;
+    }
+
+    const args = [
+        'scripts/ops/titan_discovery.js',
+        `--league=${target.id}`,
+        `--season=${season}`,
+        '--full-sync',
+        '--concurrency=1',
+        '--lookback=2000',
+        '--lookahead=2000',
+    ];
+    if (options.dryRun) {
+        args.push('--dry-run');
+    }
+
+    runCommand(`L1 低频播种 ${target.name} ${season}`, 'node', args, {
+        env: { FOTMOB_COMPLIANCE_MODE: 'true' },
+    });
+}
+
+function runCsvFlow(target, season, options) {
+    if (options.skipCsv) {
+        return null;
+    }
+
+    const outputPath = buildAdaptedCsvPath(options.outputDir, target, season);
+    fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+
+    runCommand(`下载并适配 CSV ${target.code} ${season}`, 'node', [
+        'scripts/ops/fetch_and_adapt_euro_leagues.js',
+        '--league-code',
+        target.code,
+        '--season-code',
+        SEASON_CODE_BY_SEASON[season],
+        '--output',
+        outputPath,
+    ]);
+
+    const loaderArgs = [
+        'scripts/ops/csv_bulk_loader.js',
+        '--file',
+        outputPath,
+        '--batch-size',
+        '500',
+        '--error-log',
+        DEFAULT_ERROR_LOG,
+    ];
+    if (options.commit) {
+        loaderArgs.push('--commit');
+    }
+
+    runCommand(`导入 matches / bookmaker_odds_history ${target.name} ${season}`, 'node', loaderArgs);
+    return outputPath;
+}
+
+function runComplianceHarvest(target, season, options) {
+    if (!options.fotmobCompliance || options.dryRun) {
+        return;
+    }
+
+    runCommand(
+        `FOTMOB 合规低频 L2 ${target.name} ${season}`,
+        'node',
+        [
+            'scripts/ops/run_production.js',
+            '--league-ids',
+            String(target.id),
+            '--season',
+            season,
+            '--finished-only',
+            '--workers',
+            '1',
+            '--limit',
+            String(options.harvestLimit),
+            '--progress-every',
+            '10',
+        ],
+        {
+            env: {
+                FOTMOB_COMPLIANCE_MODE: 'true',
+                MAX_WORKERS: '1',
+            },
+        }
+    );
+}
+
+function runPostProcessing(options) {
+    if (!options.skipElo) {
+        runCommand('ELO 全量重算', 'node', [
+            'scripts/maintenance/recalculate_elo.js',
+            ...(options.dryRun ? ['--dry-run'] : []),
+        ]);
+    }
+
+    if (!options.skipL3) {
+        runCommand('L3 特征熔炼', 'node', ['scripts/ops/smelt_all.js', ...(options.dryRun ? ['--dry-run'] : [])]);
+    }
+}
+
+function writeReport(report) {
+    try {
+        fs.mkdirSync(path.join(REPO_ROOT, 'logs'), { recursive: true });
+        const reportPath = path.join(REPO_ROOT, 'logs', `batch_historical_backfill_${Date.now()}.json`);
+        fs.writeFileSync(reportPath, JSON.stringify(report, null, 2));
+        console.log(`\n[EXPANSION] 报告已写入 ${path.relative(REPO_ROOT, reportPath)}`);
+        return reportPath;
+    } catch (error) {
+        console.warn(`[EXPANSION] WARN: 报告写入失败，主流程已完成: ${error.message}`);
+        return null;
+    }
+}
+
+async function main(argv = process.argv.slice(2)) {
+    const options = parseArgs(argv);
+    if (options.help) {
+        printUsage();
+        return null;
+    }
+
+    const plan = buildPlan(options);
+    const report = {
+        startedAt: new Date().toISOString(),
+        mode: options.commit ? 'commit' : 'dry-run',
+        fotmobCompliance: options.fotmobCompliance,
+        seasons: plan.seasons,
+        targets: plan.targets.map(({ id, code, name, expectedMatches, group }) => ({
+            id,
+            code,
+            name,
+            expectedMatches,
+            group,
+        })),
+        expectedMatches: plan.expectedMatches,
+        csvFiles: [],
+    };
+
+    console.log('[EXPANSION] 横向大扩军计划启动');
+    console.log(
+        `[EXPANSION] seasons=${plan.seasons.join(',')} targets=${plan.targets.length} expected_matches=${plan.expectedMatches}`
+    );
+
+    for (const season of plan.seasons) {
+        for (const target of plan.targets) {
+            runDiscovery(target, season, options);
+            const csvPath = runCsvFlow(target, season, options);
+            if (csvPath) {
+                report.csvFiles.push(path.relative(REPO_ROOT, csvPath));
+            }
+            runComplianceHarvest(target, season, options);
+        }
+    }
+
+    runPostProcessing(options);
+
+    report.finishedAt = new Date().toISOString();
+    writeReport(report);
+    console.log('[EXPANSION] 横向大扩军计划完成');
+    return report;
+}
+
+if (require.main === module) {
+    main().catch(error => {
+        console.error(`[EXPANSION] 失败: ${error.message}`);
+        process.exit(1);
+    });
+}
+
+module.exports = {
+    DEFAULT_SEASONS,
+    EXPANSION_TARGETS,
+    SEASON_CODE_BY_SEASON,
+    buildPlan,
+    normalizeSeasonInput,
+    parseArgs,
+    resolveTargets,
+};

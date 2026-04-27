@@ -33,10 +33,17 @@ const {
 const MATCH_REUSE_WINDOW_MS = 6 * 60 * 60 * 1000;
 const FOOTBALL_DATA_LEAGUES = {
     E0: 'Premier League',
+    E1: 'Championship',
     SP1: 'La Liga',
+    SP2: 'Segunda División',
     D1: 'Bundesliga',
+    D2: '2. Bundesliga',
     I1: 'Serie A',
+    I2: 'Serie B',
     F1: 'Ligue 1',
+    F2: 'Ligue 2',
+    N1: 'Eredivisie',
+    P1: 'Liga Portugal',
 };
 const SEASON_CANDIDATES = [
     {
@@ -207,7 +214,7 @@ const TACTICAL_FIELD_ALIASES = {
     awayYellowCards: ['AY', 'AwayYellowCards', 'A_YellowCards'],
     homeRedCards: ['HR', 'HomeRedCards', 'H_RedCards'],
     awayRedCards: ['AR', 'AwayRedCards', 'A_RedCards'],
-    referee: ['Referee', 'RefereeName', 'OfficialsReferee']
+    referee: ['Referee', 'RefereeName', 'OfficialsReferee'],
 };
 
 function resolveRawReferee(match = {}) {
@@ -226,7 +233,7 @@ function resolveTacticalValues(row, existingMatch = {}) {
         home_red_cards: resolveCsvField(row, TACTICAL_FIELD_ALIASES.homeRedCards),
         away_red_cards: resolveCsvField(row, TACTICAL_FIELD_ALIASES.awayRedCards),
         referee: refereeFromCsv || refereeFromRaw,
-        referee_source: refereeFromCsv ? 'csv' : (refereeFromRaw ? 'fotmob_raw' : 'missing')
+        referee_source: refereeFromCsv ? 'csv' : refereeFromRaw ? 'fotmob_raw' : 'missing',
     };
 }
 
@@ -234,6 +241,7 @@ function parseArgs(argv = process.argv.slice(2)) {
     const options = {
         seasonCode: null,
         leagueCode: 'E0',
+        outputPath: OUTPUT_PATH,
     };
 
     for (let index = 0; index < argv.length; index++) {
@@ -242,40 +250,48 @@ function parseArgs(argv = process.argv.slice(2)) {
             continue;
         }
 
-        if (token === '--season-code') {
-            const value = argv[index + 1];
-            if (!value || String(value).startsWith('--')) {
-                throw new Error('参数 --season-code 缺少值');
-            }
-            options.seasonCode = normalizeText(value);
-            index += 1;
-            continue;
-        }
-
-        if (token === '--league-code') {
-            const value = argv[index + 1];
-            if (!value || String(value).startsWith('--')) {
-                throw new Error('参数 --league-code 缺少值');
-            }
-            options.leagueCode = normalizeText(value).toUpperCase();
-            index += 1;
-            continue;
-        }
-
-        if (token === '--help' || token === '-h') {
-            options.help = true;
-            continue;
-        }
-
-        throw new Error(`未知参数: ${token}`);
+        index = applyArgToken(options, argv, index, token);
     }
 
     return options;
 }
 
+function readCliValue(argv, index, flagName) {
+    const value = argv[index + 1];
+    if (!value || String(value).startsWith('--')) {
+        throw new Error(`参数 ${flagName} 缺少值`);
+    }
+    return value;
+}
+
+function applyArgToken(options, argv, index, token) {
+    if (token === '--help' || token === '-h') {
+        options.help = true;
+        return index;
+    }
+
+    if (token === '--season-code') {
+        options.seasonCode = normalizeText(readCliValue(argv, index, token));
+        return index + 1;
+    }
+
+    if (token === '--league-code') {
+        options.leagueCode = normalizeText(readCliValue(argv, index, token)).toUpperCase();
+        return index + 1;
+    }
+
+    if (token === '--output') {
+        const value = readCliValue(argv, index, token);
+        options.outputPath = path.isAbsolute(value) ? value : path.resolve(REPO_ROOT, value);
+        return index + 1;
+    }
+
+    throw new Error(`未知参数: ${token}`);
+}
+
 function printUsage() {
     console.log(
-        '用法: node scripts/ops/fetch_and_adapt_euro_leagues.js [--league-code E0|SP1|D1|I1|F1] [--season-code 2526|2425]'
+        '用法: node scripts/ops/fetch_and_adapt_euro_leagues.js [--league-code E0|E1|SP1|SP2|D1|D2|I1|I2|F1|F2|N1|P1] [--season-code 2526|2425] [--output <path>]'
     );
     console.log('说明: 默认抓取英超最新可用赛季；传入 --season-code 时只处理指定赛季。');
 }
@@ -338,15 +354,19 @@ class ExistingMatchResolver {
             return null;
         }
 
-        const outcome = selectBestAlignmentCandidate(this.matches, {
-            homeTeam: options.homeTeam,
-            awayTeam: options.awayTeam,
-            matchDate
-        }, {
-            maxTimeWindowMs: MATCH_REUSE_WINDOW_MS,
-            minConfidenceScore: MIN_CONFIDENCE_SCORE,
-            minScoreGap: MIN_ALIGNMENT_SCORE_GAP
-        });
+        const outcome = selectBestAlignmentCandidate(
+            this.matches,
+            {
+                homeTeam: options.homeTeam,
+                awayTeam: options.awayTeam,
+                matchDate,
+            },
+            {
+                maxTimeWindowMs: MATCH_REUSE_WINDOW_MS,
+                minConfidenceScore: MIN_CONFIDENCE_SCORE,
+                minScoreGap: MIN_ALIGNMENT_SCORE_GAP,
+            }
+        );
 
         if (outcome.status === 'not_found') {
             return null;
@@ -355,8 +375,8 @@ class ExistingMatchResolver {
             const best = outcome.ranked[0];
             const error = new Error(
                 `对齐失败 status=${outcome.status} home=${options.homeTeam} away=${options.awayTeam} ` +
-                `match_date=${matchDate.toISOString()} ` +
-                `best_score=${best ? best.score.matchScore : 'n/a'}`
+                    `match_date=${matchDate.toISOString()} ` +
+                    `best_score=${best ? best.score.matchScore : 'n/a'}`
             );
             error.code = 'FOTMOB_MATCH_ALIGNMENT_FAILED';
             error.details = {
@@ -364,14 +384,14 @@ class ExistingMatchResolver {
                 awayTeam: options.awayTeam,
                 matchDate: matchDate.toISOString(),
                 status: outcome.status,
-                bestScore: best?.score?.matchScore ?? null
+                bestScore: best?.score?.matchScore ?? null,
             };
             throw error;
         }
 
         return {
             ...outcome.candidate,
-            alignment_meta: outcome.alignmentMeta
+            alignment_meta: outcome.alignmentMeta,
         };
     }
 
@@ -403,7 +423,7 @@ function buildMatchId(options = {}) {
             rawAwayTeam: options.rawAwayTeam || options.awayTeam,
             homeTeam: options.homeTeam,
             awayTeam: options.awayTeam,
-            matchDate: options.matchDate
+            matchDate: options.matchDate,
         };
         throw error;
     }
@@ -453,7 +473,7 @@ function adaptSourceRow(row, context) {
     const homeTeam = context.mapper.normalizeTeamName(rawHomeTeam);
     const awayTeam = context.mapper.normalizeTeamName(rawAwayTeam);
     const matchDate = parseFootballDataDateTime(row.Date, row.Time, {
-        leagueName: context.leagueMeta.leagueName
+        leagueName: context.leagueMeta.leagueName,
     });
     const matchIdResolution = buildMatchId({
         leagueName: context.leagueMeta.leagueName,
@@ -507,8 +527,8 @@ function adaptSourceRow(row, context) {
                 hasCorners: Boolean(tacticalValues.home_corners && tacticalValues.away_corners),
                 hasYellowCards: Boolean(tacticalValues.home_yellow_cards && tacticalValues.away_yellow_cards),
                 hasRedCards: Boolean(tacticalValues.home_red_cards !== '' && tacticalValues.away_red_cards !== ''),
-                refereeSource: tacticalValues.referee_source
-            }
+                refereeSource: tacticalValues.referee_source,
+            },
         },
     };
 }
@@ -596,7 +616,7 @@ class CollectingWriter extends Writable {
             redCardRows: 0,
             refereeFromCsv: 0,
             refereeFromFotmob: 0,
-            refereeMissing: 0
+            refereeMissing: 0,
         };
         this.sourceQualityFlags = new Set();
         this.unmatchedPairCounts = new Map();
@@ -653,27 +673,20 @@ class CollectingWriter extends Writable {
             return;
         }
 
-        const {
-            rawHomeTeam,
-            rawAwayTeam,
-            homeTeam,
-            awayTeam
-        } = error.details;
+        const { rawHomeTeam, rawAwayTeam, homeTeam, awayTeam } = error.details;
         const pairKey = `${rawHomeTeam} vs ${rawAwayTeam}`;
         this.unmatchedPairCounts.set(pairKey, (this.unmatchedPairCounts.get(pairKey) || 0) + 1);
 
         const teamPairs = [
             [rawHomeTeam, homeTeam],
-            [rawAwayTeam, awayTeam]
+            [rawAwayTeam, awayTeam],
         ];
 
         for (const [rawName, normalizedName] of teamPairs) {
             if (!rawName) {
                 continue;
             }
-            const teamKey = rawName === normalizedName
-                ? rawName
-                : `${rawName} => ${normalizedName}`;
+            const teamKey = rawName === normalizedName ? rawName : `${rawName} => ${normalizedName}`;
             this.unmatchedTeamCounts.set(teamKey, (this.unmatchedTeamCounts.get(teamKey) || 0) + 1);
         }
     }
@@ -689,10 +702,12 @@ async function parseAndAdaptCsv(sourceMeta, options = {}) {
         errors: collector.errors,
         stats: collector.stats,
         sourceQualityFlags: [...collector.sourceQualityFlags],
-        unmatchedPairCounts: [...collector.unmatchedPairCounts.entries()]
-            .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0])),
-        unmatchedTeamCounts: [...collector.unmatchedTeamCounts.entries()]
-            .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
+        unmatchedPairCounts: [...collector.unmatchedPairCounts.entries()].sort(
+            (left, right) => right[1] - left[1] || left[0].localeCompare(right[0])
+        ),
+        unmatchedTeamCounts: [...collector.unmatchedTeamCounts.entries()].sort(
+            (left, right) => right[1] - left[1] || left[0].localeCompare(right[0])
+        ),
     };
 }
 
@@ -746,10 +761,10 @@ async function main() {
             mapper,
             resolver,
         });
-        await writeAdaptedCsv(OUTPUT_PATH, adapted.rows);
+        await writeAdaptedCsv(options.outputPath, adapted.rows);
 
         console.log(
-            `[FETCH-EURO] 适配完成 output=${path.relative(REPO_ROOT, OUTPUT_PATH)} ` +
+            `[FETCH-EURO] 适配完成 output=${path.relative(REPO_ROOT, options.outputPath)} ` +
                 `rows=${adapted.rows.length} skipped=${adapted.skipped} ` +
                 `reused_existing=${adapted.stats.reusedExisting} unmatched_rows=${adapted.stats.unmatchedRows}`
         );
@@ -777,10 +792,20 @@ async function main() {
             console.log(`[FETCH-EURO] 跳过样本原因: ${adapted.errors.slice(0, 3).join(' | ')}`);
         }
         if (adapted.unmatchedTeamCounts.length > 0) {
-            console.log(`[FETCH-EURO] 未匹配球队名审计: ${adapted.unmatchedTeamCounts.slice(0, 12).map(([name, count]) => `${name} x${count}`).join(' | ')}`);
+            console.log(
+                `[FETCH-EURO] 未匹配球队名审计: ${adapted.unmatchedTeamCounts
+                    .slice(0, 12)
+                    .map(([name, count]) => `${name} x${count}`)
+                    .join(' | ')}`
+            );
         }
         if (adapted.unmatchedPairCounts.length > 0) {
-            console.log(`[FETCH-EURO] 未匹配对阵审计: ${adapted.unmatchedPairCounts.slice(0, 8).map(([name, count]) => `${name} x${count}`).join(' | ')}`);
+            console.log(
+                `[FETCH-EURO] 未匹配对阵审计: ${adapted.unmatchedPairCounts
+                    .slice(0, 8)
+                    .map(([name, count]) => `${name} x${count}`)
+                    .join(' | ')}`
+            );
         }
     } finally {
         await resolver.close();
