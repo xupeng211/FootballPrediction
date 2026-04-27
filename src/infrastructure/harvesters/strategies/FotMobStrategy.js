@@ -17,7 +17,8 @@ const fs = require('fs');
 const path = require('path');
 
 const { FotMobApiClient } = require('../../network/FotMobApiClient');
-const { transformToApiFormat } = require('../../../parsers/fotmob/NextDataParser');
+const { extractFromHtml, transformToApiFormat } = require('../../../parsers/fotmob/NextDataParser');
+const { resolveFotMobComplianceMode } = require('../../compliance/FotMobComplianceMode');
 
 const DEFAULT_FOTMOB_SESSION_PATH = path.join(process.cwd(), 'data', 'sessions', 'fotmob_session.json');
 
@@ -34,6 +35,7 @@ class FotMobStrategy {
      * @param {object} config - 配置选项
      */
     constructor(config = {}) {
+        const complianceMode = resolveFotMobComplianceMode(config);
         this.config = {
             verboseLogging: config.verboseLogging || false,
             sessionPath: config.sessionPath || process.env.FOTMOB_SESSION_PATH || DEFAULT_FOTMOB_SESSION_PATH,
@@ -41,7 +43,8 @@ class FotMobStrategy {
             apiRequestTimeoutMs: Number(config.apiRequestTimeoutMs || process.env.FOTMOB_API_TIMEOUT_MS || 20000),
             apiJitterMinMs: Number(config.apiJitterMinMs || process.env.FOTMOB_API_JITTER_MIN_MS || 1500),
             apiJitterMaxMs: Number(config.apiJitterMaxMs || process.env.FOTMOB_API_JITTER_MAX_MS || 4000),
-            ...config
+            ...config,
+            complianceMode
         };
 
         // 请求拦截配置
@@ -359,6 +362,10 @@ class FotMobStrategy {
             return null;
         }
 
+        if (this.config.complianceMode || options.complianceMode === true) {
+            return this._fetchDataComplianceMode(match);
+        }
+
         if (options.sessionManager) {
             this.setSessionManager(options.sessionManager);
         }
@@ -392,6 +399,126 @@ class FotMobStrategy {
         } catch (error) {
             throw this._wrapBrowserFallbackError(error);
         }
+    }
+
+    async _fetchDataComplianceMode(match) {
+        const htmlPayload = await this._fetchComplianceHtml(match);
+        if (htmlPayload) {
+            return htmlPayload;
+        }
+
+        return this._fetchCompliancePublicJson(match);
+    }
+
+    async _fetchComplianceHtml(match) {
+        const targetUrl = this.getTargetUrl(match);
+        const response = await this._fetchComplianceResponse(targetUrl, {
+            headers: {
+                accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'
+            }
+        }, 'html');
+
+        if (!response.ok) {
+            if (response.status === 403) {
+                throw this._createComplianceHttpError(response, 'html', targetUrl);
+            }
+            return null;
+        }
+
+        const html = await response.text();
+        const extracted = extractFromHtml(html);
+        if (!extracted.success) {
+            return null;
+        }
+
+        const apiData = transformToApiFormat(extracted.data, String(match?.external_id || '').trim());
+        if (!apiData) {
+            return null;
+        }
+
+        return this._normalizeAndValidateCompliancePayload(apiData, match, 'html');
+    }
+
+    async _fetchCompliancePublicJson(match) {
+        const externalId = String(match?.external_id || '').trim();
+        const url = `https://www.fotmob.com/api/data/matchDetails?matchId=${encodeURIComponent(externalId)}`;
+        const response = await this._fetchComplianceResponse(url, {
+            headers: {
+                accept: 'application/json, text/plain, */*'
+            }
+        }, 'public-json');
+
+        if (!response.ok) {
+            throw this._createComplianceHttpError(response, 'public-json', url);
+        }
+
+        let payload;
+        try {
+            payload = await response.json();
+        } catch (error) {
+            const parseError = new Error(`COMPLIANCE_PARSE_ERROR: public-json response is not valid JSON: ${error.message}`);
+            parseError.code = 'COMPLIANCE_PARSE_ERROR';
+            throw parseError;
+        }
+
+        return this._normalizeAndValidateCompliancePayload(payload, match, 'public-json');
+    }
+
+    async _fetchComplianceResponse(url, options, source) {
+        if (typeof fetch !== 'function') {
+            const error = new Error('COMPLIANCE_FETCH_UNAVAILABLE: native fetch is not available in this Node runtime');
+            error.code = 'COMPLIANCE_FETCH_UNAVAILABLE';
+            throw error;
+        }
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), this.config.apiRequestTimeoutMs);
+
+        try {
+            return await fetch(url, {
+                ...options,
+                redirect: 'follow',
+                signal: controller.signal
+            });
+        } catch (error) {
+            const prefix = error.name === 'AbortError'
+                ? `COMPLIANCE_FETCH_TIMEOUT:${source}`
+                : `COMPLIANCE_FETCH_FAILED:${source}`;
+            const wrapped = new Error(`${prefix}: ${error.message}`);
+            wrapped.code = prefix.split(':')[0];
+            wrapped.cause = error;
+            throw wrapped;
+        } finally {
+            clearTimeout(timeout);
+        }
+    }
+
+    _createComplianceHttpError(response, source, url) {
+        const error = new Error(`COMPLIANCE_HTTP_${response.status}: ${source} fetch failed for ${url}`);
+        error.code = `COMPLIANCE_HTTP_${response.status}`;
+        error.status = response.status;
+        error.source = source;
+        return error;
+    }
+
+    _normalizeAndValidateCompliancePayload(payload, match, source) {
+        const externalId = String(match?.external_id || '').trim();
+        const normalized = this._normalizeData(payload);
+        const payloadMatchId = this._extractPayloadMatchId(normalized);
+
+        if (payloadMatchId && payloadMatchId !== externalId) {
+            throw new Error(`MATCH_ID_MISMATCH: expected=${externalId} actual=${payloadMatchId}`);
+        }
+
+        const validation = this.validateData(normalized);
+        if (!validation.valid) {
+            const error = new Error(`COMPLIANCE_INCOMPLETE_DATA:${source}:${validation.reason}`);
+            error.code = 'COMPLIANCE_INCOMPLETE_DATA';
+            error.validation = validation;
+            throw error;
+        }
+
+        return normalized;
     }
 
     async _applySessionCookiesToContext(page, cookies = []) {

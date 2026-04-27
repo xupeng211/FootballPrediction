@@ -9,6 +9,9 @@ const {
     toCsvCell,
     formatCsvLine,
     parseFootballDataDateTime,
+    calculateStringSimilarity,
+    calculateAlignmentScore,
+    selectBestAlignmentCandidate,
     extractOddsValues,
     hasAnyOddsValue,
     hasCompleteOddsTriplet,
@@ -20,6 +23,8 @@ const {
 test('normalizeText - 应正确规范化文本', () => {
     assert.strictEqual(normalizeText('Man Utd'), 'Manchester United');
     assert.strictEqual(normalizeText('Man City'), 'Manchester City');
+    assert.strictEqual(normalizeText('Getafe'), 'Getafe CF');
+    assert.strictEqual(normalizeText('Inter'), 'Inter Milan');
     assert.strictEqual(normalizeText(''), '');
     assert.strictEqual(normalizeText(null), '');
     assert.strictEqual(normalizeText(undefined), '');
@@ -110,6 +115,18 @@ test('parseFootballDataDateTime - 应正确解析日期时间', () => {
         parseFootballDataDateTime('31/12/24'),
         '2024-12-31T15:00:00.000Z'
     );
+    assert.strictEqual(
+        parseFootballDataDateTime('16/08/2024', '20:00', { leagueName: 'Premier League' }),
+        '2024-08-16T19:00:00.000Z'
+    );
+    assert.strictEqual(
+        parseFootballDataDateTime('17/08/2024', '20:45', { leagueName: 'Serie A' }),
+        '2024-08-17T19:45:00.000Z'
+    );
+    assert.strictEqual(
+        parseFootballDataDateTime('01/12/2024', '13:30', { leagueName: 'Premier League' }),
+        '2024-12-01T13:30:00.000Z'
+    );
 });
 
 test('parseFootballDataDateTime - 应处理无效输入', () => {
@@ -117,6 +134,49 @@ test('parseFootballDataDateTime - 应处理无效输入', () => {
     assert.strictEqual(parseFootballDataDateTime(''), null);
     assert.strictEqual(parseFootballDataDateTime('invalid'), null);
     assert.strictEqual(parseFootballDataDateTime('32/13/2025'), null);
+});
+
+test('calculateStringSimilarity - 应识别常见别名并返回高相似度', () => {
+    assert.ok(calculateStringSimilarity('Man Utd', 'Manchester United') >= 0.95);
+    assert.ok(calculateStringSimilarity('Ath Bilbao', 'Athletic Club') >= 0.9);
+});
+
+test('calculateAlignmentScore - 应结合队名和时间输出高置信度', () => {
+    const score = calculateAlignmentScore({
+        requestedHomeTeam: 'Man Utd',
+        requestedAwayTeam: 'Everton',
+        requestedMatchDate: '2024-12-01T13:30:00.000Z',
+        candidateHomeTeam: 'Manchester United',
+        candidateAwayTeam: 'Everton',
+        candidateMatchDate: '2024-12-01T13:30:00.000Z'
+    });
+
+    assert.ok(score.matchScore >= 0.95);
+    assert.ok(score.nameSimilarity >= 0.95);
+    assert.equal(score.timeDiffSeconds, 0);
+});
+
+test('selectBestAlignmentCandidate - 米兰德比类相似候选应触发歧义保护', () => {
+    const outcome = selectBestAlignmentCandidate([
+        {
+            match_id: '47_20242025_9000001',
+            home_team: 'Inter Milan',
+            away_team: 'Milan',
+            match_date: '2025-02-02T19:45:00.000Z'
+        },
+        {
+            match_id: '47_20242025_9000002',
+            home_team: 'Inter Milan',
+            away_team: 'Milan',
+            match_date: '2025-02-02T19:47:00.000Z'
+        }
+    ], {
+        homeTeam: 'Inter',
+        awayTeam: 'Ac Milan',
+        matchDate: '2025-02-02T19:46:00.000Z'
+    });
+
+    assert.equal(outcome.status, 'ambiguous');
 });
 
 test('extractOddsValues - 应正确提取赔率值', () => {

@@ -19,6 +19,9 @@ const {
     toCsvCell,
     formatCsvLine,
     parseFootballDataDateTime,
+    MIN_CONFIDENCE_SCORE,
+    MIN_ALIGNMENT_SCORE_GAP,
+    selectBestAlignmentCandidate,
     extractOddsValues,
     hasAnyOddsValue,
     hasCompleteOddsTriplet,
@@ -90,6 +93,7 @@ const OUTPUT_HEADERS = [
     'home_red_cards',
     'away_red_cards',
     'referee',
+    'alignment_meta',
     'quality_flags',
 ];
 const MARKET_CONFIGS = [
@@ -276,16 +280,6 @@ function printUsage() {
     console.log('说明: 默认抓取英超最新可用赛季；传入 --season-code 时只处理指定赛季。');
 }
 
-function compareCandidatePriority(left, right) {
-    const leftPriority = left.data_source === 'CSV_BULK_LOADER' ? 1 : 0;
-    const rightPriority = right.data_source === 'CSV_BULK_LOADER' ? 1 : 0;
-    if (leftPriority !== rightPriority) {
-        return leftPriority - rightPriority;
-    }
-
-    return String(left.match_id).localeCompare(String(right.match_id));
-}
-
 class ExistingMatchResolver {
     constructor(options = {}) {
         this.mapper = options.mapper || new EntityMapper();
@@ -293,7 +287,7 @@ class ExistingMatchResolver {
         this.season = Normalizer.normalizeSeason(options.season || '');
         this.pool = options.pool || new Pool(buildDbConnectionConfig());
         this.ownsPool = !options.pool;
-        this.matchesByKey = new Map();
+        this.matches = [];
         this.candidateCount = 0;
         this.loaded = false;
     }
@@ -322,18 +316,14 @@ class ExistingMatchResolver {
         WHERE m.season = $1
           AND m.league_name = $2
           AND COALESCE(m.data_source, '') <> 'CSV_BULK_LOADER'
+          AND COALESCE(m.data_version, '') <> 'CSV_BOOTSTRAP'
+          AND COALESCE(m.external_id, '') NOT LIKE 'csv%'
           AND m.match_date IS NOT NULL
       `,
                 [this.season, leagueName]
             );
 
-            for (const row of result.rows) {
-                const key = this.mapper.buildMatchLookupKey(row.home_team, row.away_team);
-                const bucket = this.matchesByKey.get(key) || [];
-                bucket.push(row);
-                this.matchesByKey.set(key, bucket);
-            }
-
+            this.matches = result.rows;
             this.candidateCount = result.rows.length;
             this.loaded = true;
             return this;
@@ -348,19 +338,41 @@ class ExistingMatchResolver {
             return null;
         }
 
-        const key = this.mapper.buildMatchLookupKey(options.homeTeam, options.awayTeam);
-        const candidates = (this.matchesByKey.get(key) || [])
-            .map(candidate => {
-                const candidateDate = new Date(candidate.match_date);
-                return {
-                    ...candidate,
-                    diffMs: Math.abs(matchDate.getTime() - candidateDate.getTime()),
-                };
-            })
-            .filter(candidate => candidate.diffMs <= MATCH_REUSE_WINDOW_MS)
-            .sort((left, right) => left.diffMs - right.diffMs || compareCandidatePriority(left, right));
+        const outcome = selectBestAlignmentCandidate(this.matches, {
+            homeTeam: options.homeTeam,
+            awayTeam: options.awayTeam,
+            matchDate
+        }, {
+            maxTimeWindowMs: MATCH_REUSE_WINDOW_MS,
+            minConfidenceScore: MIN_CONFIDENCE_SCORE,
+            minScoreGap: MIN_ALIGNMENT_SCORE_GAP
+        });
 
-        return candidates[0] || null;
+        if (outcome.status === 'not_found') {
+            return null;
+        }
+        if (outcome.status !== 'matched') {
+            const best = outcome.ranked[0];
+            const error = new Error(
+                `对齐失败 status=${outcome.status} home=${options.homeTeam} away=${options.awayTeam} ` +
+                `match_date=${matchDate.toISOString()} ` +
+                `best_score=${best ? best.score.matchScore : 'n/a'}`
+            );
+            error.code = 'FOTMOB_MATCH_ALIGNMENT_FAILED';
+            error.details = {
+                homeTeam: options.homeTeam,
+                awayTeam: options.awayTeam,
+                matchDate: matchDate.toISOString(),
+                status: outcome.status,
+                bestScore: best?.score?.matchScore ?? null
+            };
+            throw error;
+        }
+
+        return {
+            ...outcome.candidate,
+            alignment_meta: outcome.alignmentMeta
+        };
     }
 
     async close() {
@@ -403,6 +415,7 @@ function buildMatchId(options = {}) {
         reusedExisting: true,
         matchedSource: existingMatch.data_source || '',
         matchedDate: existingMatch.match_date,
+        alignmentMeta: existingMatch.alignment_meta || null,
         existingMatch,
     };
 }
@@ -439,7 +452,9 @@ function adaptSourceRow(row, context) {
 
     const homeTeam = context.mapper.normalizeTeamName(rawHomeTeam);
     const awayTeam = context.mapper.normalizeTeamName(rawAwayTeam);
-    const matchDate = parseFootballDataDateTime(row.Date, row.Time);
+    const matchDate = parseFootballDataDateTime(row.Date, row.Time, {
+        leagueName: context.leagueMeta.leagueName
+    });
     const matchIdResolution = buildMatchId({
         leagueName: context.leagueMeta.leagueName,
         season: context.sourceMeta.season,
@@ -470,6 +485,7 @@ function adaptSourceRow(row, context) {
         home_red_cards: tacticalValues.home_red_cards,
         away_red_cards: tacticalValues.away_red_cards,
         referee: tacticalValues.referee,
+        alignment_meta: JSON.stringify(matchIdResolution.alignmentMeta || {}),
     };
     const expandedRows = buildExpandedOddsRows(row, context, matchCore);
     if (expandedRows.length === 0) {

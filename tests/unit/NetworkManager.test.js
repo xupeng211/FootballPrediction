@@ -1,6 +1,6 @@
 'use strict';
 
-const { afterEach, describe, test } = require('node:test');
+const { after, afterEach, before, describe, test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
@@ -283,6 +283,31 @@ function createProxyProvider(options = {}) {
 describe('src/infrastructure/network/NetworkManager', () => {
   const originalDateNow = Date.now;
   const originalRandom = Math.random;
+  const originalProxyEnv = {
+    PROXY_PORTS: process.env.PROXY_PORTS,
+    PROXY_PORT: process.env.PROXY_PORT,
+    PROXY_PORT_START: process.env.PROXY_PORT_START,
+    PROXY_PORT_END: process.env.PROXY_PORT_END,
+  };
+
+  before(() => {
+    process.env.PROXY_PORTS = '10001,10002,10003';
+    process.env.PROXY_PORT = '10001';
+    process.env.PROXY_PORT_START = '10001';
+    process.env.PROXY_PORT_END = '10003';
+    resetProxyProvider();
+  });
+
+  after(() => {
+    for (const [key, value] of Object.entries(originalProxyEnv)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+    resetProxyProvider();
+  });
 
   afterEach(() => {
     Date.now = originalDateNow;

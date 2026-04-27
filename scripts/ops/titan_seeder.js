@@ -34,6 +34,40 @@ const SEASONS = [
   '2025/2026'
 ];
 
+function formatSeasonForFotMobApi(season) {
+  return encodeURIComponent(Normalizer.normalizeSeason(season));
+}
+
+function parseCliArgs(argv = process.argv.slice(2)) {
+  const options = {
+    mode: 'sql',
+    target: 10000,
+    leagueId: null,
+    season: null
+  };
+
+  const positional = [];
+  for (const arg of argv) {
+    if (arg.startsWith('--league-id=')) {
+      options.leagueId = Number.parseInt(arg.split('=')[1], 10);
+    } else if (arg.startsWith('--season=')) {
+      options.season = arg.split('=')[1];
+    } else {
+      positional.push(arg);
+    }
+  }
+
+  if (positional[0]) {
+    options.mode = positional[0];
+  }
+
+  if (positional[1] && /^\d+$/.test(positional[1])) {
+    options.target = Number.parseInt(positional[1], 10);
+  }
+
+  return options;
+}
+
 class BulkSeedMarathon {
   constructor() {
     this.dbPool = new Pool({
@@ -58,16 +92,16 @@ class BulkSeedMarathon {
    */
   async fetchFotMobMatches(leagueId, season) {
     return new Promise((resolve, reject) => {
-      // 转换季节格式 (2024/2025 -> 2024)
-      const seasonYear = season.split('/')[0];
+      const seasonFingerprint = formatSeasonForFotMobApi(season);
       
       const options = {
         hostname: 'www.fotmob.com',
-        path: `/api/leagues?id=${leagueId}&season=${seasonYear}`,
+        path: `/api/data/leagues?id=${leagueId}&season=${seasonFingerprint}&ccode3=USA`,
         method: 'GET',
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-          'Accept': 'application/json'
+          'Accept': 'application/json,text/plain,*/*',
+          'Referer': 'https://www.fotmob.com/'
         },
         timeout: 15000
       };
@@ -109,8 +143,8 @@ class BulkSeedMarathon {
     const matches = [];
     
     try {
-      // FotMob API 结构: matches -> allMatches
-      const allMatches = apiData?.matches?.allMatches || [];
+      // 新版 FotMob API 结构优先走 fixtures.allMatches，兼容旧路径
+      const allMatches = apiData?.fixtures?.allMatches || apiData?.matches?.allMatches || [];
       
       for (const match of allMatches) {
         if (!match.id) continue;
@@ -126,7 +160,7 @@ class BulkSeedMarathon {
           home_team: match.home?.name || 'Unknown',
           away_team: match.away?.name || 'Unknown',
           match_date: match.status?.utcTime ? new Date(match.status.utcTime) : new Date(),
-          status: match.status?.finished ? 'FINISHED' : 'SCHEDULED',
+          status: match.status?.finished ? 'finished' : 'scheduled',
           is_finished: match.status?.finished || false,
           home_score: match.home?.score || null,
           away_score: match.away?.score || null,
@@ -204,7 +238,7 @@ class BulkSeedMarathon {
   /**
    * 执行万场种子注入
    */
-  async seedMarathon(targetCount = 10000) {
+  async seedMarathon(targetCount = 10000, filters = {}) {
     console.log('');
     console.log('╔══════════════════════════════════════════════════════════════════╗');
     console.log('║  🌱 BULK SEED MARATHON - 万场种子注入器                          ║');
@@ -217,8 +251,13 @@ class BulkSeedMarathon {
     
     let totalInserted = 0;
     
-    for (const league of LEAGUES) {
-      for (const season of SEASONS) {
+    const leagues = Number.isInteger(filters.leagueId)
+      ? LEAGUES.filter((league) => Number(league.id) === Number(filters.leagueId))
+      : LEAGUES;
+    const seasons = filters.season ? [Normalizer.normalizeSeason(filters.season)] : SEASONS;
+
+    for (const league of leagues) {
+      for (const season of seasons) {
         if (totalInserted >= targetCount) break;
         
         console.log(`📥 获取 ${league.name} ${season}...`);
@@ -388,14 +427,18 @@ class BulkSeedMarathon {
  */
 async function main() {
   const seeder = new BulkSeedMarathon();
-  const mode = process.argv[2] || 'sql'; // 'api' 或 'sql'
-  const target = parseInt(process.argv[3]) || 10000;
+  const cli = parseCliArgs();
+  const mode = cli.mode;
+  const target = cli.target;
   
   try {
     let inserted;
     
     if (mode === 'api') {
-      inserted = await seeder.seedMarathon(target);
+      inserted = await seeder.seedMarathon(target, {
+        leagueId: cli.leagueId,
+        season: cli.season
+      });
     } else {
       inserted = await seeder.seedViaSQL(target);
     }

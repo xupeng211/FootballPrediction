@@ -31,6 +31,8 @@ const { getNetworkShield } = require('../network/NetworkShield');
  * @property {boolean} [headless=true] - 无头模式
  * @property {number} [maxRounds=5] - 最大对齐轮数
  * @property {number} [roundCooldownMs=3000] - 轮间冷却时间
+ * @property {number|null} [leagueId=null] - 仅处理指定联赛 ID
+ * @property {string|null} [season=null] - 仅处理指定赛季
  */
 
 /**
@@ -61,12 +63,17 @@ class MarathonService {
       batchSize: 10000,
       restartThreshold: 500,
       navigationTimeout: 45000,
+      nextDataTimeoutMs: 15000,
       progressInterval: 10,
       proxyRetryThreshold: 3,
       headless: true,
       maxRounds: 5,
       roundCooldownMs: 3000,
-      silent: process.env.SILENT_MODE !== 'false', // 默认静默模式
+      leagueId: null,
+      season: null,
+      minimumPayloadBytes: 10 * 1024,
+      requiredContentModules: ['stats', 'lineup', 'shotmap'],
+      silent: config.verbose ? false : process.env.SILENT_MODE !== 'false', // verbose 时强制显式输出
       ...config
     };
     
@@ -116,7 +123,8 @@ class MarathonService {
    * @private
    */
   _initWorkerStates() {
-    for (let i = 1; i <= this.config.workers; i++) {
+    const maxWorkerSlots = Math.max(this.config.workers, 5);
+    for (let i = 1; i <= maxWorkerSlots; i++) {
       this.workerStates.set(i, {
         consecutiveFailures: 0,
         currentProxy: null,
@@ -257,6 +265,9 @@ class MarathonService {
             this._updateWorkerSuccess(workerId, result.proxy);
           } else {
             stats.failed++;
+            if (this.config.verbose) {
+              this.logger.warn(`[W${workerId}] HARVEST_FAILED match=${match.match_id} reason=${result.error}`);
+            }
           }
           
           // 进度报告
@@ -289,7 +300,7 @@ class MarathonService {
     const { match_id, external_id, home_team, away_team } = match;
     const startTime = Date.now();
     
-    let workerState = this.workerStates.get(workerId);
+    const workerState = this._getWorkerState(workerId);
     
     // 代理漂移检查
     if (workerState.consecutiveFailures >= this.config.proxyRetryThreshold) {
@@ -318,53 +329,24 @@ class MarathonService {
       await this._checkGlobalRestart();
     }
 
+    let context = null;
+    let page = null;
+
     try {
       // 创建上下文
-      const context = await this.browser.newContext({
+      const browserProxyServer = this._resolveBrowserProxyServer(proxyConfig);
+      context = await this.browser.newContext({
         viewport: { width: 1920, height: 1080 },
-        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.0',
-        proxy: { server: proxyConfig.url }
+        userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+        ignoreHTTPSErrors: true,
+        proxy: browserProxyServer ? { server: browserProxyServer } : undefined,
+        extraHTTPHeaders: this._buildApiHeaders()
       });
       
-      const page = await context.newPage();
+      page = await context.newPage();
 
-      // 资源拦截
-      await page.route('**/*', (route) => {
-        const resourceType = route.request().resourceType();
-        if (['image', 'stylesheet', 'font', 'media'].includes(resourceType)) {
-          route.abort();
-        } else {
-          route.continue();
-        }
-      });
-
-      // 导航
-      const url = `https://www.fotmob.com/match/${external_id}`;
-      await page.goto(url, { 
-        waitUntil: 'domcontentloaded',
-        timeout: timeout 
-      });
-
-      // 等待数据
-      await page.waitForSelector('#__NEXT_DATA__', { 
-        state: 'attached', 
-        timeout: 15000 
-      });
-
-      // 提取数据
-      const rawData = await page.evaluate(() => {
-        const el = document.getElementById('__NEXT_DATA__');
-        return el ? JSON.parse(el.textContent) : null;
-      });
-
-      // 数据哨兵
+      const rawData = await this._extractLuxuryPayload(page, match, timeout);
       const dataSize = JSON.stringify(rawData).length;
-      if (dataSize < 5120) {
-        throw new Error(`数据哨兵拦截: ${(dataSize/1024).toFixed(1)}KB < 5KB`);
-      }
-
-      await page.close();
-      await context.close();
 
       // 入库
       await this._saveToDatabase(match_id, external_id, rawData);
@@ -400,7 +382,174 @@ class MarathonService {
         proxy: proxyConfig.port,
         consecutiveFailures: workerState.consecutiveFailures
       };
+    } finally {
+      if (page) {
+        await page.close().catch(() => {});
+      }
+      if (context) {
+        await context.close().catch(() => {});
+      }
     }
+  }
+
+  /**
+   * 解析浏览器实际使用的代理地址。
+   * curl 类工具会读取环境变量，Playwright 需要在 context 中显式声明。
+   * @private
+   * @param {object} proxyConfig
+   * @returns {string|null}
+   */
+  _resolveBrowserProxyServer(proxyConfig) {
+    return process.env.BROWSER_PROXY_SERVER
+      || process.env.HTTPS_PROXY
+      || process.env.HTTP_PROXY
+      || process.env.https_proxy
+      || process.env.http_proxy
+      || proxyConfig?.url
+      || null;
+  }
+
+  _buildApiHeaders() {
+    return {
+      accept: 'application/json, text/plain, */*',
+      'accept-language': 'en-US,en;q=0.9',
+      'x-requested-with': 'XMLHttpRequest',
+      referer: 'https://www.fotmob.com/'
+    };
+  }
+
+  /**
+   * 直接请求 matchDetails JSON API，缺任一关键模块则失败
+   * @private
+   * @param {import('playwright').Page} page
+   * @param {object} match
+   * @param {number} timeout
+   * @returns {Promise<object>}
+   */
+  async _extractLuxuryPayload(page, match, timeout) {
+    const candidateUrls = this._buildMatchDetailsApiUrls(match.external_id);
+    const attemptErrors = [];
+
+    for (const url of candidateUrls) {
+      try {
+        const response = await page.goto(url, {
+          waitUntil: 'commit',
+          timeout
+        });
+        if (!response) {
+          throw new Error(`API_NO_RESPONSE url=${url}`);
+        }
+
+        const responseText = await response.text();
+        if (!response.ok()) {
+          throw new Error(`API_HTTP_${response.status()} url=${url} body=${responseText.slice(0, 240)}`);
+        }
+
+        const apiPayload = JSON.parse(responseText);
+        const diagnostics = this._buildPayloadDiagnostics(apiPayload, match, url);
+        const validation = this._validatePayloadDiagnostics(diagnostics, match);
+        if (!validation.valid) {
+          throw new Error(`${validation.reason} diagnostics=${JSON.stringify(diagnostics)}`);
+        }
+
+        if (this.config.verbose) {
+          this.logger.info(
+            `[MARATHON] Extracted full payload bytes=${diagnostics.payloadBytes} modules=${diagnostics.contentKeys.join(',')} match=${match.match_id}`
+          );
+        }
+
+        return apiPayload;
+      } catch (error) {
+        attemptErrors.push({
+          url,
+          error: error.message
+        });
+      }
+    }
+
+    throw new Error(`MATCH_DETAILS_API_FAILED attempts=${JSON.stringify(attemptErrors)}`);
+  }
+
+  /**
+   * 构建 matchDetails API 候选。FotMob 近期页面使用 /api/data/matchDetails。
+   * @private
+   * @param {string|number} externalId
+   * @returns {string[]}
+   */
+  _buildMatchDetailsApiUrls(externalId) {
+    const id = encodeURIComponent(String(externalId).trim());
+    return [
+      `https://www.fotmob.com/api/data/matchDetails?matchId=${id}`,
+      `https://www.fotmob.com/api/matchDetails?matchId=${id}`
+    ];
+  }
+
+  /**
+   * 构造 payload 诊断信息
+   * @private
+   * @param {object} payload
+   * @param {object} match
+   * @param {string} finalUrl
+   * @returns {object}
+   */
+  _buildPayloadDiagnostics(payload, match, finalUrl) {
+    const content = payload?.content || {};
+    const generalMatchId = String(payload?.general?.matchId || '').trim();
+    const contentKeys = Object.keys(content);
+    const payloadBytes = JSON.stringify(payload).length;
+
+    return {
+      finalUrl,
+      expectedExternalId: String(match.external_id),
+      generalMatchId,
+      contentKeys,
+      payloadBytes,
+      hasStats: !!content.stats,
+      hasLineup: !!content.lineup,
+      hasShotmap: !!content.shotmap,
+      statsKeys: content.stats && typeof content.stats === 'object'
+        ? Object.keys(content.stats).slice(0, 10)
+        : [],
+      lineupKeys: content.lineup && typeof content.lineup === 'object'
+        ? Object.keys(content.lineup).slice(0, 10)
+        : [],
+      shotCount: Array.isArray(content?.shotmap?.shots) ? content.shotmap.shots.length : 0
+    };
+  }
+
+  /**
+   * 校验 payload 诊断结果
+   * @private
+   * @param {object} diagnostics
+   * @param {object} match
+   * @returns {{valid: boolean, reason?: string}}
+   */
+  _validatePayloadDiagnostics(diagnostics, match) {
+    if (!diagnostics.payloadBytes || diagnostics.payloadBytes < this.config.minimumPayloadBytes) {
+      return {
+        valid: false,
+        reason: `PAYLOAD_TOO_SMALL_${diagnostics.payloadBytes}`
+      };
+    }
+
+    if (diagnostics.generalMatchId && diagnostics.generalMatchId !== String(match.external_id)) {
+      return {
+        valid: false,
+        reason: `HISTORICAL_REDIRECT_MISMATCH expected=${match.external_id} actual=${diagnostics.generalMatchId}`
+      };
+    }
+
+    for (const moduleName of this.config.requiredContentModules) {
+      const flagName = `has${moduleName.charAt(0).toUpperCase()}${moduleName.slice(1)}`;
+      if (!diagnostics[flagName]) {
+        return {
+          valid: false,
+          reason: `INCOMPLETE_CONTENT_MISSING_${moduleName.toUpperCase()}`
+        };
+      }
+    }
+
+    return { valid: true };
   }
 
   /**
@@ -408,10 +557,30 @@ class MarathonService {
    * @private
    */
   _updateWorkerSuccess(workerId, proxyPort) {
-    const state = this.workerStates.get(workerId);
+    const state = this._getWorkerState(workerId);
     state.consecutiveFailures = 0;
     state.totalHarvested++;
     state.matchesSinceRestart++;
+  }
+
+  /**
+   * 获取或初始化 worker 状态
+   * @private
+   * @param {number} workerId
+   * @returns {WorkerState}
+   */
+  _getWorkerState(workerId) {
+    if (!this.workerStates.has(workerId)) {
+      this.workerStates.set(workerId, {
+        consecutiveFailures: 0,
+        currentProxy: null,
+        totalHarvested: 0,
+        matchesSinceRestart: 0,
+        isRestarting: false
+      });
+    }
+
+    return this.workerStates.get(workerId);
   }
 
   /**
@@ -457,21 +626,33 @@ class MarathonService {
     
     try {
       const jsonData = JSON.stringify(rawData);
-      if (jsonData.length < 1024) {
-        throw new Error(`数据哨兵拦截: ${(jsonData.length/1024).toFixed(1)}KB < 1KB`);
+      if (jsonData.length < this.config.minimumPayloadBytes) {
+        throw new Error(`数据哨兵拦截: ${(jsonData.length/1024).toFixed(1)}KB < ${(this.config.minimumPayloadBytes/1024).toFixed(1)}KB`);
       }
 
       const query = `
-        INSERT INTO raw_match_data (match_id, external_id, raw_data, collected_at, data_version)
-        VALUES ($1, $2, $3, NOW(), 'V26.1-MARATHON')
+        INSERT INTO raw_match_data (match_id, external_id, raw_data, collected_at, data_version, data_hash)
+        VALUES ($1, $2, $3::jsonb, NOW(), 'V26.1-MARATHON', md5($3))
         ON CONFLICT (match_id)
         DO UPDATE SET 
+          external_id = EXCLUDED.external_id,
           raw_data = EXCLUDED.raw_data,
-          collected_at = NOW()
+          collected_at = NOW(),
+          data_version = EXCLUDED.data_version,
+          data_hash = EXCLUDED.data_hash
         RETURNING match_id
       `;
       
       await client.query(query, [matchId, externalId, jsonData]);
+      await client.query(
+        `
+          UPDATE matches
+          SET pipeline_status = 'harvested',
+              updated_at = NOW()
+          WHERE match_id = $1
+        `,
+        [matchId]
+      );
     } finally {
       client.release();
     }
@@ -484,12 +665,14 @@ class MarathonService {
   async _getPendingCount() {
     const client = await this.dbPool.connect();
     try {
+      const { whereClause, params } = this._buildPendingFilterClauses();
       const result = await client.query(`
         SELECT COUNT(*) as count
         FROM matches m
         LEFT JOIN raw_match_data r ON m.match_id = r.match_id
         WHERE r.match_id IS NULL
-      `);
+          ${whereClause}
+      `, params);
       return parseInt(result.rows[0].count);
     } finally {
       client.release();
@@ -504,16 +687,18 @@ class MarathonService {
     const client = await this.dbPool.connect();
     
     try {
+      const { whereClause, params } = this._buildPendingFilterClauses();
       const query = `
         SELECT m.match_id, m.external_id, m.home_team, m.away_team, m.match_date
         FROM matches m
         LEFT JOIN raw_match_data r ON m.match_id = r.match_id
         WHERE r.match_id IS NULL
+          ${whereClause}
         ORDER BY m.match_date
-        LIMIT $1
+        LIMIT $${params.length + 1}
       `;
       
-      const result = await client.query(query, [limit]);
+      const result = await client.query(query, [...params, limit]);
       return result.rows;
     } finally {
       client.release();
@@ -527,18 +712,48 @@ class MarathonService {
   async _getDeadLetterMatches(limit = 20) {
     const client = await this.dbPool.connect();
     try {
+      const { whereClause, params } = this._buildPendingFilterClauses();
       const result = await client.query(`
         SELECT m.match_id, m.external_id, m.home_team, m.away_team, m.match_date
         FROM matches m
         LEFT JOIN raw_match_data r ON m.match_id = r.match_id
         WHERE r.match_id IS NULL
+          ${whereClause}
         ORDER BY m.match_date DESC
-        LIMIT $1
-      `, [limit]);
+        LIMIT $${params.length + 1}
+      `, [...params, limit]);
       return result.rows;
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * 构建待采集过滤条件
+   * @private
+   * @returns {{whereClause: string, params: Array<string|number>}}
+   */
+  _buildPendingFilterClauses() {
+    const conditions = [
+      `m.external_id IS NOT NULL`,
+      `m.external_id NOT LIKE 'csv%'`
+    ];
+    const params = [];
+
+    if (Number.isInteger(this.config.leagueId) && this.config.leagueId > 0) {
+      params.push(`${this.config.leagueId}_%`);
+      conditions.push(`m.match_id LIKE $${params.length}`);
+    }
+
+    if (typeof this.config.season === 'string' && this.config.season.trim()) {
+      params.push(this.config.season.trim());
+      conditions.push(`m.season = $${params.length}`);
+    }
+
+    return {
+      whereClause: conditions.length > 0 ? `AND ${conditions.join('\n          AND ')}` : '',
+      params
+    };
   }
 
   /**

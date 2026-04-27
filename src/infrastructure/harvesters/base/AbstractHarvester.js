@@ -32,6 +32,7 @@ const { getPathResolver } = require('../../utils/PathResolver');
 const { getNetworkManager } = require('../../network/NetworkManager');
 const { generateStealthHeaders } = require('../../network/StealthFingerprint');
 const { getWorkerPool } = require('../workers/WorkerPool');
+const { resolveFotMobComplianceMode } = require('../../compliance/FotMobComplianceMode');
 
 // V4.46: 导入指标客户端
 const { getMetricsClient } = require('../../monitoring/MetricsClient');
@@ -52,6 +53,7 @@ class AbstractHarvester {
         const requestedMaxWorkers = this._resolveRequestedMaxWorkers(
             parseInt(process.env.MAX_WORKERS, 10) || config.maxWorkers || 6
         );
+        const complianceMode = resolveFotMobComplianceMode(config);
         this.config = {
             maxWorkers: requestedMaxWorkers,
             requestedMaxWorkers,
@@ -82,6 +84,7 @@ class AbstractHarvester {
                 || 1500,
             skipZombieCleanup: config.skipZombieCleanup || false,
             ...config,
+            complianceMode,
         };
 
         this.pool = null;
@@ -184,23 +187,34 @@ class AbstractHarvester {
             await preFlightCleanup();
         }
 
-        // V2.0: 使用 BrowserFactory 启动浏览器
-        await this.browserFactory.launch();
+        if (this.config.complianceMode) {
+            console.log('🕊️  FOTMOB_COMPLIANCE_MODE=true：跳过浏览器、代理池与隐身指纹初始化');
+        } else {
+            // V2.0: 使用 BrowserFactory 启动浏览器
+            await this.browserFactory.launch();
+        }
 
         // V2.0: 使用 ErrorAuditor 管理错误分类
         this.errorAuditor = getErrorAuditor();
         this.retryPolicy.setErrorAuditor(this.errorAuditor);
 
-        // 初始化 NetworkManager
-        this.networkManager = getNetworkManager({
-            maxWorkers: this.config.maxWorkers,
-            stealthGenerator: generateStealthHeaders,
-            proxyPoolName: 'fotmob_pool',
-            proxyConsumer: 'l2-harvest'
-        });
-        const networkInitResult = await this.networkManager.initialize({
-            preFlightCleanup: () => this._preFlightCleanupNetworkLocks(),
-        });
+        let networkInitResult = null;
+
+        if (this.config.complianceMode) {
+            this.networkManager = null;
+            this.config.maxWorkers = 1;
+        } else {
+            // 初始化 NetworkManager
+            this.networkManager = getNetworkManager({
+                maxWorkers: this.config.maxWorkers,
+                stealthGenerator: generateStealthHeaders,
+                proxyPoolName: 'fotmob_pool',
+                proxyConsumer: 'l2-harvest'
+            });
+            networkInitResult = await this.networkManager.initialize({
+                preFlightCleanup: () => this._preFlightCleanupNetworkLocks(),
+            });
+        }
 
         // Titan 7.0: 雷达结果只能下调并发，不能突破启动参数的硬上限
         if (networkInitResult?.discoveredPorts && networkInitResult.discoveredPorts.length > 0) {
@@ -415,7 +429,8 @@ class AbstractHarvester {
     }
 
     async harvestWithRetry(match, index, maxRetries = 3) {
-        return this.retryPolicy.executeWithRetry(this, match, index, maxRetries);
+        const retryLimit = this.config.complianceMode ? 1 : maxRetries;
+        return this.retryPolicy.executeWithRetry(this, match, index, retryLimit);
     }
 
     async _harvestSingleMatch(match, index, attempt = 1) {
@@ -432,7 +447,9 @@ class AbstractHarvester {
         const delay = baseDelay + Math.random() * (maxDelay - baseDelay);
         await this._delay(delay);
 
-        const identity = await this.networkManager.assignWorkerIdentity(workerId);
+        const identity = this.config.complianceMode
+            ? this._createComplianceIdentity(workerId)
+            : await this.networkManager.assignWorkerIdentity(workerId);
         let context = null;
         let isNewContext = false;
         let page = null;
@@ -460,6 +477,10 @@ class AbstractHarvester {
                     awayTeam: away_team,
                     sourceLabel: 'api-first'
                 });
+            }
+
+            if (this.config.complianceMode) {
+                throw new Error('COMPLIANCE_NO_PUBLIC_DATA: public JSON/HTML fetch returned no usable data');
             }
 
             const contextResult = await this._getOrCreateContext(workerId, identity);
@@ -516,7 +537,9 @@ class AbstractHarvester {
                 sourceLabel: 'browser-fallback'
             });
         } catch (error) {
-            await this.networkManager.markProxyFailed(workerId, error.message);
+            if (!this.config.complianceMode && this.networkManager) {
+                await this.networkManager.markProxyFailed(workerId, error.message);
+            }
 
             const harvestDuration = Date.now() - harvestStartTime;
             const errorType = this._classifyError(error.message);
@@ -567,7 +590,8 @@ class AbstractHarvester {
         try {
             return await this.strategy.fetchDataDirect(match, {
                 identity,
-                sessionManager: this.networkManager?.sessionManager
+                sessionManager: this.config.complianceMode ? null : this.networkManager?.sessionManager,
+                complianceMode: this.config.complianceMode
             });
         } catch (error) {
             if (error?.fallbackToBrowser === true) {
@@ -598,32 +622,50 @@ class AbstractHarvester {
 
         const size = JSON.stringify(data).length;
         if (size < 1000) {
-            await this._escape403(workerId);
+            if (!this.config.complianceMode) {
+                await this._escape403(workerId);
+            }
             throw new Error(`SIZE_TOO_SMALL:${size}`);
         }
 
-        await this.networkManager.markProxySuccess(workerId);
+        if (!this.config.complianceMode && this.networkManager) {
+            await this.networkManager.markProxySuccess(workerId);
+        }
 
         if (!this.config.dryRun) {
             await this.saveData(matchId, data);
         }
 
         const harvestDuration = Date.now() - harvestStartTime;
-        this._recordHarvestSuccess(matchId, workerId, harvestDuration, size, identity.proxy.port);
+        const port = identity?.proxy?.port || null;
+        this._recordHarvestSuccess(matchId, workerId, harvestDuration, size, port);
 
         console.log(
             `${logPrefix} Success: Data Saved. | ${matchId} | ${size} bytes | ${harvestDuration}ms | ${sourceLabel}`
         );
-        console.log(`✅ ${logPrefix} ${homeTeam} vs ${awayTeam} | Port ${identity.proxy.port}`);
+        console.log(`✅ ${logPrefix} ${homeTeam} vs ${awayTeam} | ${port ? `Port ${port}` : 'direct-compliance'}`);
 
         return {
             success: true,
             match_id: matchId,
             size,
             workerId,
-            port: identity.proxy.port,
+            port,
             attempt,
             duration: harvestDuration,
+        };
+    }
+
+    _createComplianceIdentity(workerId) {
+        return {
+            workerId,
+            complianceMode: true,
+            proxy: {
+                port: null,
+                server: null,
+                url: null
+            },
+            stealth: null
         };
     }
 
