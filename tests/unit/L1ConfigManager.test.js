@@ -50,7 +50,7 @@ describe('L1ConfigManager', () => {
     assert.strictEqual(url, 'https://www.fotmob.com/api/data/leagues?id=47&season=20242025');
   });
 
-  it('33 项正式清单应移除旧保护联赛绕路，并直连新的 Coupe de France ID', () => {
+  it('37 项正式清单应移除旧保护联赛绕路，并直连新的 Coupe de France ID', () => {
     const coupeDeFrance = manager.getLeagueById(134);
 
     assert.strictEqual(manager.getLeagueById(156), null);
@@ -66,6 +66,23 @@ describe('L1ConfigManager', () => {
   it('应能读取德甲赛季的 expected_matches', () => {
     assert.strictEqual(manager.getExpectedMatches(54, '2025/2026'), 306);
     assert.strictEqual(manager.getExpectedMatches(47, '2025/2026'), 380);
+  });
+
+  it('横向扩军二级联赛应使用真实 FotMob ID 且不与杯赛冲突', () => {
+    const leagueIds = manager.getActiveLeagues().map((league) => league.id);
+    const bundesliga2 = manager.getLeagueById(146);
+    const laliga2 = manager.getLeagueById(140);
+    const serieB = manager.getLeagueById(86);
+    const ligue2 = manager.getLeagueById(110);
+
+    assert.strictEqual(new Set(leagueIds).size, leagueIds.length);
+    assert.equal(bundesliga2.name, '2. Bundesliga');
+    assert.equal(laliga2.name, 'Segunda División');
+    assert.equal(serieB.name, 'Serie B');
+    assert.equal(ligue2.name, 'Ligue 2');
+    assert.equal(manager.getLeagueById(77).name, 'World Cup');
+    assert.strictEqual(manager.getExpectedMatches(146, '2024/2025'), 306);
+    assert.strictEqual(manager.getExpectedMatches(110, '2024/2025'), 306);
   });
 
   it('seasonless 联赛与 J1 单年份历史页联赛应保留 canonical slug 与 URL 策略', () => {

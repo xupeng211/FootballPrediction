@@ -105,6 +105,38 @@
       "resultsUrlStrategy": "seasonal"
     },
     {
+      "leagueName": "2. Bundesliga",
+      "country": "germany",
+      "slug": "2-bundesliga",
+      "expectedMatches": 306,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Segunda División",
+      "country": "spain",
+      "slug": "laliga2",
+      "expectedMatches": 462,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Serie B",
+      "country": "italy",
+      "slug": "serie-b",
+      "expectedMatches": 380,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
+      "leagueName": "Ligue 2",
+      "country": "france",
+      "slug": "ligue-2",
+      "expectedMatches": 380,
+      "seasonType": "dual_year",
+      "resultsUrlStrategy": "seasonal"
+    },
+    {
       "leagueName": "MLS",
       "country": "usa",
       "slug": "mls",
