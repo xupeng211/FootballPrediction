@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "description": "Example manifest for model artifacts. Do not put secrets or real private URLs in this file.",
+  "artifact_root": "models",
+  "model_zoo_root": "model_zoo",
+  "artifacts": [
+    {
+      "name": "baseline_v1_result_1x2",
+      "path": "models/baseline_v1/baseline_v1_result_1x2.calibrated.joblib",
+      "required_for": "prediction_runtime",
+      "source": "external_artifact_storage_or_training_pipeline",
+      "checksum_sha256": "TODO"
+    },
+    {
+      "name": "titan_v4468_combat",
+      "path": "models/titan_v4468_combat.joblib",
+      "required_for": "prediction_runtime",
+      "source": "external_artifact_storage_or_training_pipeline",
+      "checksum_sha256": "TODO"
+    }
+  ],
+  "notes": [
+    "This is a template only.",
+    "Do not commit real model binaries to Git.",
+    "Do not commit private artifact URLs or credentials.",
+    "Use local ignored directories such as models/ and model_zoo/ for restored artifacts."
+  ]
+}
