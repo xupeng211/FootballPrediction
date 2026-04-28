@@ -19,16 +19,27 @@ services:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
+      extra_hosts:
+        - "host.docker.internal:host-gateway"
       args:
         INSTALL_PLAYWRIGHT: "true"
-        # 构建时代理（仅在显式设置 DEV_HTTP_PROXY / DEV_HTTPS_PROXY 时启用）
-        HTTP_PROXY: ${DEV_HTTP_PROXY:-}
-        HTTPS_PROXY: ${DEV_HTTPS_PROXY:-}
+        # 构建时代理：Docker build 容器通过 host-gateway 访问宿主 Clash/Mihomo。
+        HTTP_PROXY: ${DEV_HTTP_PROXY:-http://host.docker.internal:7897}
+        HTTPS_PROXY: ${DEV_HTTPS_PROXY:-http://host.docker.internal:7897}
+        http_proxy: ${DEV_HTTP_PROXY:-http://host.docker.internal:7897}
+        https_proxy: ${DEV_HTTPS_PROXY:-http://host.docker.internal:7897}
+        NO_PROXY: ${DEV_NO_PROXY:-localhost,127.0.0.1,::1,db,redis,prometheus,grafana,host.docker.internal,mirrors.aliyun.com,registry.npmmirror.com,deb.nodesource.com,npmmirror.com}
+        no_proxy: ${DEV_NO_PROXY:-localhost,127.0.0.1,::1,db,redis,prometheus,grafana,host.docker.internal,mirrors.aliyun.com,registry.npmmirror.com,deb.nodesource.com,npmmirror.com}
+        PIP_FALLBACK_INDEX_URL: ${PIP_FALLBACK_INDEX_URL:-https://pypi.org/simple/}
+        UVLOOP_VERSION: ${UVLOOP_VERSION:-0.22.1}
+        PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST: ${PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST:-https://storage.googleapis.com/chrome-for-testing-public}
     image: footballprediction:v175-stable
     container_name: football_prediction_dev
     restart: unless-stopped
     # V175: 使用 tini 作为 init 系统，自动回收僵尸进程
     init: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
     # 热更新: 挂载本地代码目录
     volumes:
@@ -72,10 +83,10 @@ services:
       # Redis 连接
       - REDIS_HOST=${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}}
       - REDIS_PORT=6379
-      # Docker bridge 下容器访问宿主代理使用实际网关；可通过 DEV_PROXY_HOST 覆盖。
-      - PROXY_LOOPBACK_GATEWAY=${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}
-      - PROXY_HOST=${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}
-      - WSL2_PROXY_HOST=${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}
+      # 容器内访问宿主代理使用 host-gateway 映射；可通过 DEV_PROXY_HOST 覆盖。
+      - PROXY_LOOPBACK_GATEWAY=${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}
+      - PROXY_HOST=${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}
+      - WSL2_PROXY_HOST=${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}
       - PROXY_PROTOCOL=socks5
       - HOST_PROXY_PORT=${DEV_HOST_PROXY_PORT:-7897}
       - PROXY_PORT=${DEV_PROXY_PORT:-${DEV_HOST_PROXY_PORT:-7897}}
@@ -83,15 +94,15 @@ services:
       - PROXY_PORT_END=${DEV_PROXY_PORT_END:-${DEV_HOST_PROXY_PORT:-7897}}
       - PROXY_PORTS=${DEV_PROXY_PORTS:-${DEV_HOST_PROXY_PORT:-7897}}
       # 容器内 127.0.0.1 指向容器自身，所有通用代理变量必须指向宿主机网关。
-      - HTTP_PROXY=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}:${DEV_HOST_PROXY_PORT:-7897}
-      - HTTPS_PROXY=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}:${DEV_HOST_PROXY_PORT:-7897}
-      - ALL_PROXY=socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}:${DEV_HOST_PROXY_PORT:-7897}
-      - http_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}:${DEV_HOST_PROXY_PORT:-7897}
-      - https_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}:${DEV_HOST_PROXY_PORT:-7897}
-      - all_proxy=socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}:${DEV_HOST_PROXY_PORT:-7897}
+      - HTTP_PROXY=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
+      - HTTPS_PROXY=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
+      - ALL_PROXY=socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
+      - http_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
+      - https_proxy=http://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
+      - all_proxy=socks5://${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}:${DEV_HOST_PROXY_PORT:-7897}
       - CONTAINER_PROXY=${DEV_CONTAINER_PROXY:-}
-      - NO_PROXY=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}
-      - no_proxy=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-172.19.0.1}}
+      - NO_PROXY=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}
+      - no_proxy=localhost,${HOST_LOOPBACK_GATEWAY:-192.168.65.254},${DEV_DB_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}},${DEV_PROXY_HOST:-${PROXY_LOOPBACK_GATEWAY:-host.docker.internal}}
       # Python 配置
       - PYTHONUNBUFFERED=1
       - PYTHONDONTWRITEBYTECODE=1
