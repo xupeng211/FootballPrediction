@@ -14,6 +14,19 @@ FROM python:3.11-slim-bookworm
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Asia/Shanghai
 ARG APT_MIRROR_HOST=mirrors.aliyun.com
+ARG HTTP_PROXY
+ARG HTTPS_PROXY
+ARG http_proxy
+ARG https_proxy
+ARG NO_PROXY
+ARG no_proxy
+
+ENV HTTP_PROXY=${HTTP_PROXY} \
+    HTTPS_PROXY=${HTTPS_PROXY} \
+    http_proxy=${http_proxy} \
+    https_proxy=${https_proxy} \
+    NO_PROXY=${NO_PROXY} \
+    no_proxy=${no_proxy}
 
 # 默认替换为国内镜像源；CI 可显式传入 deb.debian.org 保持官方源
 RUN if [ "$APT_MIRROR_HOST" != "deb.debian.org" ]; then \
@@ -137,7 +150,10 @@ RUN pip config set global.index-url "${PIP_INDEX_URL}" && \
     pip config set install.trusted-host "${PIP_TRUSTED_HOST}"
 
 # 安装项目依赖和额外开发工具
+ARG PIP_FALLBACK_INDEX_URL=https://pypi.org/simple/
+ARG UVLOOP_VERSION=0.22.1
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir --index-url "${PIP_FALLBACK_INDEX_URL}" "uvloop==${UVLOOP_VERSION}" && \
     pip install --no-cache-dir \
     -r /tmp/python-deps/requirements.txt \
     -r /tmp/python-deps/mcp_servers-requirements.txt \
@@ -166,11 +182,12 @@ ENV DOCKER_ENV=true \
     DOCKER_DEV_CONTAINER=true
 
 # 代理环境变量（预留接口，容器内使用）
-ENV HTTP_PROXY=${HTTP_PROXY:-} \
-    HTTPS_PROXY=${HTTPS_PROXY:-} \
-    NO_PROXY=${NO_PROXY:-localhost,127.0.0.1} \
-    http_proxy=${HTTP_PROXY:-} \
-    https_proxy=${HTTPS_PROXY:-}
+ENV HTTP_PROXY=${HTTP_PROXY} \
+    HTTPS_PROXY=${HTTPS_PROXY} \
+    NO_PROXY=${NO_PROXY} \
+    http_proxy=${http_proxy} \
+    https_proxy=${https_proxy} \
+    no_proxy=${no_proxy}
 
 # 时区
 ENV TZ=Asia/Shanghai
@@ -181,6 +198,10 @@ ENV TZ=Asia/Shanghai
 # 注意：Playwright 浏览器较大，首次构建需要时间
 # 如需禁用，设置环境变量: INSTALL_PLAYWRIGHT=false
 ARG INSTALL_PLAYWRIGHT=true
+ARG PLAYWRIGHT_DOWNLOAD_HOST
+ARG PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST
+ENV PLAYWRIGHT_DOWNLOAD_HOST=${PLAYWRIGHT_DOWNLOAD_HOST} \
+    PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST=${PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST}
 RUN if [ "$INSTALL_PLAYWRIGHT" = "true" ]; then \
     pip install --no-cache-dir playwright && \
     playwright install chromium --with-deps; \
