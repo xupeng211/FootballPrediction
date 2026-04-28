@@ -50,3 +50,29 @@ Recommended next steps:
 2. Add a model download or generation script.
 3. Document required model filenames and checksums.
 4. Ensure CI does not depend on local-only model files.
+
+## Recovery Workflow
+
+This is currently a recovery scaffold only. Production model artifact storage still needs a follow-up integration with object storage, release artifacts, or the training pipeline.
+
+1. Copy `config/model_artifacts.example.json` to `config/model_artifacts.json`.
+2. Fill in the required artifact list and checksums.
+3. Restore artifacts from external storage or regenerate them via the training pipeline.
+4. Place restored files under ignored local directories such as `models/` and `model_zoo/`.
+5. Run:
+
+```bash
+python scripts/model_artifacts/check_model_artifacts.py
+```
+
+For CI or documentation-only validation:
+
+```bash
+python scripts/model_artifacts/check_model_artifacts.py --allow-missing
+```
+
+## Important
+
+Fresh clones do not include production model artifacts.
+Prediction workloads require restored or regenerated model files.
+Unit tests should not depend on production model binaries.
