@@ -56,7 +56,30 @@ History still contains old large objects until a separate Phase 3 history cleanu
 
 The `.git` directory may remain large after this phase because removing files from the current index does not rewrite existing commits.
 
-## 6. Next Phase Recommendation
+## 6. Pre-Merge Impact Assessment
+
+A pre-merge impact assessment was performed after the index cleanup.
+
+Findings:
+
+- A temporary clean worktree was created from this branch to approximate a fresh clone.
+- The clean worktree did not contain the removed `models/` or `model_zoo/` artifacts.
+- `docker compose -f docker-compose.dev.yml config` passed in the clean worktree.
+- Lightweight npm and pytest checks were not run because the temporary worktree had no installed project dependencies.
+- Runtime code still references model artifacts under `models/`, `model_zoo/`, and `data/models/`.
+- Basic service startup is not expected to fail solely because these model files are absent, but prediction and model-validation workflows may require external artifact restoration or model regeneration.
+- Integration tests that explicitly check model files may fail in a fresh clone unless they are scoped as artifact-dependent tests.
+
+Documentation added:
+
+- `docs/MODEL_ARTIFACTS.md`
+
+PR merge recommendation:
+
+- Create a PR and run CI before merge.
+- Confirm model artifact storage or regeneration workflow before relying on fresh clones for prediction workloads.
+
+## 7. Next Phase Recommendation
 
 Phase 3 should evaluate `git filter-repo` or BFG only after:
 
