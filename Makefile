@@ -7,7 +7,9 @@
 # ============================================
 
 .PHONY: help up down restart logs test clean build db-reset db-shell lint format security \
-        dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test
+        dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
+        data-help data-check data-local-dry-run data-network-dry-run data-db-write-small \
+        data-harvest data-risk-report
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -219,6 +221,92 @@ dev-harvest: ## 在容器中运行生产收割器
 
 dev-test: ## 在容器中运行测试
 	$(COMPOSE_DEV) exec dev python main.py --test-proxy
+
+# ============================================
+# 数据入口安全门禁
+# ============================================
+data-help: ## Show safe data harvesting entrypoint policy
+	@echo "FootballPrediction data entrypoints are safety-gated."
+	@echo ""
+	@echo "Allowed by default:"
+	@echo "  make data-help"
+	@echo "  make data-check"
+	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
+	@echo ""
+	@echo "Requires explicit authorization:"
+	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
+	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
+	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
+	@echo ""
+	@echo "Read docs/DATA_HARVESTING_GUIDE.md before running any data task."
+
+data-check: ## Read-only data environment check
+	@echo "Checking data environment in dev container..."
+	$(COMPOSE_DEV) ps
+	$(COMPOSE_DEV) exec -T dev node --version
+	$(COMPOSE_DEV) exec -T dev npm --version
+	$(COMPOSE_DEV) exec -T dev python --version
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/local_dom_ingestor.js --help >/tmp/fp_data_local_dom_help.txt
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/csv_bulk_loader.js --help >/tmp/fp_data_csv_loader_help.txt
+	@echo "OK: read-only data environment check completed."
+
+data-local-dry-run: ## Run a safe local-only dry-run. Requires SAMPLE_HTML or SAMPLE_CSV.
+	@if [ -n "$(SAMPLE_HTML)" ]; then \
+		echo "Running local HTML preview only: $(SAMPLE_HTML)"; \
+		$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_HTML)"; \
+		$(COMPOSE_DEV) exec -T dev node scripts/ops/local_dom_ingestor.js --file "$(SAMPLE_HTML)"; \
+	elif [ -n "$(SAMPLE_CSV)" ]; then \
+		echo "Running local CSV preview only: $(SAMPLE_CSV)"; \
+		$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_CSV)"; \
+		$(COMPOSE_DEV) exec -T dev node scripts/ops/csv_bulk_loader.js --file "$(SAMPLE_CSV)" --batch-size 50 --error-log /tmp/csv_bulk_loader_errors.jsonl; \
+	else \
+		echo "ERROR: provide SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"; \
+		exit 1; \
+	fi
+
+data-network-dry-run: ## Blocked unless explicitly authorized. Does not run by default.
+	@if [ "$(CONFIRM_NETWORK)" != "1" ]; then \
+		echo "BLOCKED: NETWORK_DRY_RUN requires CONFIRM_NETWORK=1 plus LIMIT and SCOPE."; \
+		echo "Read docs/DATA_HARVESTING_GUIDE.md."; \
+		exit 1; \
+	fi
+	@if [ -z "$(LIMIT)" ] || [ -z "$(SCOPE)" ]; then \
+		echo "BLOCKED: provide LIMIT=<n> and SCOPE=<league/season/date/match scope>."; \
+		exit 1; \
+	fi
+	@echo "NETWORK_DRY_RUN authorized for SCOPE=$(SCOPE), LIMIT=$(LIMIT)."
+	@echo "No default network command is wired in Phase 4.3. Create a runbook before execution."
+	@exit 1
+
+data-db-write-small: ## Blocked unless explicitly authorized. Requires --commit-capable runbook.
+	@if [ "$(CONFIRM_DB_WRITE)" != "1" ]; then \
+		echo "BLOCKED: DB_WRITE_SMALL requires CONFIRM_DB_WRITE=1."; \
+		exit 1; \
+	fi
+	@if [ -z "$(LIMIT)" ] || [ -z "$(SCOPE)" ]; then \
+		echo "BLOCKED: provide LIMIT=<n> and SCOPE=<league/season/date/match scope>."; \
+		exit 1; \
+	fi
+	@echo "DB_WRITE_SMALL authorized for SCOPE=$(SCOPE), LIMIT=$(LIMIT)."
+	@echo "No default DB write command is wired in Phase 4.3. Confirm backup, pre/post DB stats, and --commit before execution."
+	@exit 1
+
+data-harvest: ## Blocked bulk harvesting gate. Requires runbook and explicit authorization.
+	@if [ "$(CONFIRM_BULK_HARVEST)" != "1" ]; then \
+		echo "BLOCKED: BULK_HARVEST requires CONFIRM_BULK_HARVEST=1."; \
+		exit 1; \
+	fi
+	@if [ -z "$(RUNBOOK)" ]; then \
+		echo "BLOCKED: provide RUNBOOK=<path>."; \
+		exit 1; \
+	fi
+	@echo "BULK_HARVEST authorization detected with RUNBOOK=$(RUNBOOK)."
+	@echo "No bulk command is wired in Phase 4.3. Review runbook, backup, monitoring, and stop conditions first."
+	@exit 1
+
+data-risk-report: ## Print location of data entrypoint governance docs
+	@echo "Data harvesting guide: docs/DATA_HARVESTING_GUIDE.md"
+	@echo "Governance report: docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE4_2.md"
 
 # ============================================
 # 监控命令

@@ -39,6 +39,7 @@
 6. 先读后改。没有读过的文件，不直接修改。
 7. 最小修改。除非明确要求，不做顺手重构和无关清理。
 8. 修改后要做与改动范围相匹配的验证。
+9. 数据收割、ETL、Recon、Backfill、Odds、L3/ELO 相关入口默认必须走 `make data-*` 安全门禁。
 
 ### 2.2 默认工作方式
 
@@ -199,6 +200,39 @@ Recon 运行补充约定：
 | 训练模型 | `npm run train` | 宿主机调用后进入容器执行 `scripts/ops/train_model.py` |
 | 生成预测 | `npm run predict` | 宿主机调用后进入容器执行 `scripts/ops/predict_pipeline.py` |
 | ELO 重算 | `<compose> -f docker-compose.dev.yml exec dev npm run elo:recalc` | `scripts/maintenance/recalculate_elo.js` |
+
+### 5.4 数据入口安全门禁
+
+数据收割治理以 `make data-*` 为统一入口。详细规范见：
+
+- `docs/DATA_HARVESTING_GUIDE.md`
+- `docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE4_2.md`
+
+AI / Codex 默认只能执行：
+
+- `make data-help`
+- `make data-check`
+- 用户明确授权的 `make data-local-dry-run`
+
+AI / Codex 不能直接执行：
+
+- `make dev-harvest`
+- `npm start`
+- `node scripts/ops/run_production.js`
+- `node scripts/ops/titan_discovery.js`
+- `npm run titan:total-war`
+- `npm run odds:harvest`
+- `node scripts/ops/recon_scanner.js --season ...`
+- `node scripts/ops/batch_historical_backfill.js`
+- 任何 `--commit` 命令
+- 任何外网收割命令
+- 任何写 DB 命令
+
+`NETWORK_DRY_RUN` 不是安全 dry-run，必须由用户显式授权，并给出 `LIMIT`、`SCOPE`、代理和限速说明。
+
+`DB_WRITE_SMALL` 必须由用户显式授权，命令必须支持并显式使用 `--commit`，同时提供 `LIMIT`、`SCOPE` 和执行前后 DB 统计。
+
+`BULK_HARVEST` 必须有 runbook、备份、监控和停止条件。没有 runbook 时，AI / Codex 不得执行。
 
 ## 6. 核心文件地图
 
@@ -367,6 +401,8 @@ make dev-ps
 ### 10.3 运维与专项文档
 
 - `docs/OPERATIONS_MANUAL.md`
+- `docs/DATA_HARVESTING_GUIDE.md`
+- `docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE4_2.md`
 - `archive_vault_2026/docs_legacy/OPERATIONS_RUNBOOK.md`
 - `docs/OPERATIONS_SOP.md`
 - `docs/ops/backfill_v6_manual.md`
