@@ -57,6 +57,32 @@ docker compose config
 
 `.env.example` is the committed template that keeps safe local defaults for Docker Compose and development setup.
 
+## Docker Development Entrypoint
+
+Use `docker-compose.dev.yml` for the full local development stack. It defines the development container, database, Redis, Prometheus, and Grafana services.
+
+Recommended commands:
+
+```bash
+make dev-config
+make dev-up
+make dev-ps
+make dev-shell
+```
+
+Equivalent direct commands:
+
+```bash
+docker compose -f docker-compose.dev.yml config
+docker compose -f docker-compose.dev.yml up -d --build --remove-orphans
+docker compose -f docker-compose.dev.yml ps
+docker compose -f docker-compose.dev.yml exec dev bash
+```
+
+Do not use bare `docker compose up` for normal development. The default `docker-compose.yml` only covers the basic service subset and is not the complete development stack.
+
+Do not use `docker compose down -v` unless you explicitly intend to clear local Docker data volumes.
+
 Model artifacts are not distributed through Git. If model files are missing, use the artifact documentation and checker paths:
 
 - Manifest template: `config/model_artifacts.example.json`
