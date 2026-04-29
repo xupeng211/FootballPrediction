@@ -92,19 +92,35 @@
 - 当前终端必须能正常执行 `docker compose` 或 `docker-compose`。
 - 本文后续统一写作 `<compose>`，表示优先使用 `docker compose`；若本机只提供旧版命令，再替换为 `docker-compose`。
 - 如果 `docker` / Compose 当前不可用，先修复 Docker Desktop / WSL 集成，再继续执行仓库命令。
+- 标准开发入口优先使用 `make dev-*`，其底层固定为 `docker compose -f docker-compose.dev.yml`。
 - 运行时服务名以 `docker-compose.dev.yml` 为准：开发容器 `dev`、数据库 `db`、缓存 `redis`。
+- 默认 `docker-compose.yml` 只覆盖基础服务，不是完整开发栈；不要裸用 `docker compose up` 作为开发入口。
+- 不要使用 `docker compose down -v`，除非明确要清空本地数据 volume。
 
 ### 4.2 进入方式
 
+优先使用 Makefile 标准入口：
+
 ```bash
-<compose> -f docker-compose.dev.yml up -d
+make dev-config
+make dev-up
+make dev-ps
+make dev-shell
+```
+
+等价底层命令：
+
+```bash
+<compose> -f docker-compose.dev.yml config
+<compose> -f docker-compose.dev.yml up -d --build --remove-orphans
+<compose> -f docker-compose.dev.yml ps
 <compose> -f docker-compose.dev.yml exec dev bash
 ```
 
 如果修改了 `.devcontainer/Dockerfile`、`requirements.txt` 或 `package.json`，应改用：
 
 ```bash
-<compose> -f docker-compose.dev.yml up -d --build
+make dev-up
 ```
 
 如果当前机器需要代理，显式设置 `DEV_HTTP_PROXY`、`DEV_HTTPS_PROXY`、`DEV_CONTAINER_PROXY`，
@@ -253,7 +269,7 @@ Recon 运行补充约定：
 UNION ALL SELECT 'L2', COUNT(*) FROM raw_match_data \
 UNION ALL SELECT 'L3', COUNT(*) FROM l3_features;"
 <compose> -f docker-compose.dev.yml exec dev npm run titan:check
-<compose> -f docker-compose.dev.yml ps
+make dev-ps
 ```
 
 ### 7.4 变更后的最低验证要求
