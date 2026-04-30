@@ -40,6 +40,7 @@
 7. 最小修改。除非明确要求，不做顺手重构和无关清理。
 8. 修改后要做与改动范围相匹配的验证。
 9. 数据收割、ETL、Recon、Backfill、Odds、L3/ELO 相关入口默认必须走 `make data-*` 安全门禁。
+10. DB schema migration 默认必须走 `make data-schema-*` 安全门禁，禁止直接执行 migration apply。
 
 ### 2.2 默认工作方式
 
@@ -234,6 +235,31 @@ AI / Codex 不能直接执行：
 
 `BULK_HARVEST` 必须有 runbook、备份、监控和停止条件。没有 runbook 时，AI / Codex 不得执行。
 
+### 5.5 DB Schema Migration 安全门禁
+
+DB schema migration 治理以 `make data-schema-*` 为统一入口。执行规范见：
+
+- `docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md`
+
+AI / Codex 默认只能执行：
+
+- `make data-schema-help`
+- `make data-schema-status`
+- `make data-schema-plan`
+
+AI / Codex 不能执行：
+
+- `make data-schema-migrate`
+- any migration apply / migrate up / schema sync
+- `ensureBlueprintOnCurrentDatabase`
+- cold-start blueprint check
+- `alembic upgrade`
+- 任何 `CREATE` / `ALTER` / `INSERT` / `UPDATE` / `DELETE` / `DROP` / `TRUNCATE`
+
+Schema migration 必须有人类明确授权。执行前必须有 runbook、DB 备份、应用文件清单、post-apply verification plan 和回滚方案。
+
+Phase 4.9 中 `make data-schema-migrate` 即使提供确认变量也只到安全门禁，不接真实 migration 执行。
+
 ## 6. 核心文件地图
 
 ### 6.1 业务入口
@@ -403,6 +429,7 @@ make dev-ps
 - `docs/OPERATIONS_MANUAL.md`
 - `docs/DATA_HARVESTING_GUIDE.md`
 - `docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE4_2.md`
+- `docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md`
 - `archive_vault_2026/docs_legacy/OPERATIONS_RUNBOOK.md`
 - `docs/OPERATIONS_SOP.md`
 - `docs/ops/backfill_v6_manual.md`

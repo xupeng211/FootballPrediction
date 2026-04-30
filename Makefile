@@ -9,7 +9,8 @@
 .PHONY: help up down restart logs test clean build db-reset db-shell lint format security \
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
         data-help data-check data-local-dry-run data-network-dry-run data-db-write-small \
-        data-harvest data-risk-report
+        data-harvest data-risk-report data-schema-help data-schema-status data-schema-plan \
+        data-schema-migrate
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -239,6 +240,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
 	@echo ""
 	@echo "Read docs/DATA_HARVESTING_GUIDE.md before running any data task."
+	@echo "For DB schema migration safety gates, run: make data-schema-help"
 
 data-check: ## Read-only data environment check
 	@echo "Checking data environment in dev container..."
@@ -307,6 +309,64 @@ data-harvest: ## Blocked bulk harvesting gate. Requires runbook and explicit aut
 data-risk-report: ## Print location of data entrypoint governance docs
 	@echo "Data harvesting guide: docs/DATA_HARVESTING_GUIDE.md"
 	@echo "Governance report: docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE4_2.md"
+	@echo "DB schema migration runbook: docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md"
+
+data-schema-help: ## Show DB schema migration safety gate policy
+	@echo "FootballPrediction DB schema migration is safety-gated."
+	@echo ""
+	@echo "Allowed by default:"
+	@echo "  make data-schema-help"
+	@echo "  make data-schema-status"
+	@echo "  make data-schema-plan"
+	@echo ""
+	@echo "Blocked by default:"
+	@echo "  make data-schema-migrate"
+	@echo ""
+	@echo "Future migration execution requires all of:"
+	@echo "  CONFIRM_SCHEMA_MIGRATION=1"
+	@echo "  BACKUP_CONFIRMED=1"
+	@echo "  RUNBOOK=docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md"
+	@echo ""
+	@echo "Phase 4.9 does not wire migration execution. Read the runbook first."
+
+data-schema-status: ## Read-only DB schema status check
+	@echo "Checking DB schema status with read-only SQL..."
+	$(COMPOSE_DEV) exec -T db sh -lc 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "\dt"'
+	$(COMPOSE_DEV) exec -T db sh -lc 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT table_name FROM information_schema.tables WHERE table_schema = '\''public'\'' AND table_name IN ('\''bookmaker_odds_history'\'', '\''matches_oddsportal_mapping'\'', '\''l3_features'\'', '\''alembic_version'\'', '\''schema_migrations'\'', '\''knex_migrations'\'') ORDER BY table_name;"'
+	$(COMPOSE_DEV) exec -T db sh -lc 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT '\''matches'\'' AS table_name, COUNT(*) AS rows FROM matches UNION ALL SELECT '\''raw_match_data'\'', COUNT(*) FROM raw_match_data UNION ALL SELECT '\''odds'\'', COUNT(*) FROM odds UNION ALL SELECT '\''match_features_training'\'', COUNT(*) FROM match_features_training UNION ALL SELECT '\''predictions'\'', COUNT(*) FROM predictions UNION ALL SELECT '\''league_config'\'', COUNT(*) FROM league_config UNION ALL SELECT '\''feature_registry'\'', COUNT(*) FROM feature_registry UNION ALL SELECT '\''data_collection_log'\'', COUNT(*) FROM data_collection_log;"'
+	$(COMPOSE_DEV) exec -T db sh -lc 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -c "SELECT table_name, column_name, data_type FROM information_schema.columns WHERE table_schema = '\''public'\'' AND table_name IN ('\''matches'\'', '\''raw_match_data'\'', '\''odds'\'') ORDER BY table_name, ordinal_position;"'
+	@echo "OK: read-only DB schema status check completed."
+
+data-schema-plan: ## Print planned DB schema migration order without executing SQL
+	@echo "Recommended DB schema migration order from docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md:"
+	@echo "  database/migrations/V6.5__hardened_matches_schema.sql"
+	@echo "  database/migrations/V6.6__hardened_l2_raw_storage.sql"
+	@echo "  database/migrations/V12.2__add_matches_pipeline_status.sql"
+	@echo "  database/migrations/V12.3__expand_matches_pipeline_status_for_recon.sql"
+	@echo "  database/migrations/V12.4__create_matches_oddsportal_mapping.sql"
+	@echo "  database/migrations/V12.5__create_bookmaker_odds_history.sql"
+	@echo "  database/migrations/V12.6__allow_numeric_fotmob_ids_in_raw_match_data.sql"
+	@echo "  database/migrations/V12.7__add_tactical_stats_to_matches.sql"
+	@echo "  database/migrations/V12.8__add_alignment_meta_to_bookmaker_odds_history.sql"
+	@echo "  database/migrations/V26.4__create_l3_features_table.sql"
+	@echo "No SQL was executed."
+
+data-schema-migrate: ## Blocked DB schema migration gate. Execution is not wired in Phase 4.9.
+	@if [ "$(CONFIRM_SCHEMA_MIGRATION)" != "1" ]; then \
+		echo "BLOCKED: schema migration requires CONFIRM_SCHEMA_MIGRATION=1."; \
+		exit 1; \
+	fi
+	@if [ "$(BACKUP_CONFIRMED)" != "1" ]; then \
+		echo "BLOCKED: schema migration requires BACKUP_CONFIRMED=1."; \
+		exit 1; \
+	fi
+	@if [ "$(RUNBOOK)" != "docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md" ]; then \
+		echo "BLOCKED: provide RUNBOOK=docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md."; \
+		exit 1; \
+	fi
+	@echo "Phase 4.9 safety gate reached. Migration execution is not wired in this phase."
+	@echo "No CREATE/ALTER/INSERT/UPDATE/DELETE was executed."
+	@exit 1
 
 # ============================================
 # 监控命令
