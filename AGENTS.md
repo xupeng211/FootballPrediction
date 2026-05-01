@@ -214,6 +214,7 @@ AI / Codex 默认只能执行：
 - `make data-help`
 - `make data-check`
 - 用户明确授权的 `make data-local-dry-run`
+- 用户明确授权且仅使用本地 fixture 的 `make data-l3-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 
 AI / Codex 不能直接执行：
 
@@ -225,9 +226,24 @@ AI / Codex 不能直接执行：
 - `npm run odds:harvest`
 - `node scripts/ops/recon_scanner.js --season ...`
 - `node scripts/ops/batch_historical_backfill.js`
+- `npm run smelt`
+- `npm run l3:stitch`
+- `scripts/ops/smelt_all.js`
+- `scripts/ops/l3_stitch_pipeline.js`
+- `scripts/ops/l3_stitch_worker.js`
+- `npm run elo:recalc`
 - 任何 `--commit` 命令
 - 任何外网收割命令
 - 任何写 DB 命令
+
+执行 `make data-l3-dry-run` 的前提：
+
+- 用户明确授权
+- fixture 是本地文件
+- 不写 DB
+- 不访问外网
+
+L3 本地 dry-run 预检背景见：`docs/_reports/L3_RAW_FIXTURE_PREFLIGHT_PHASE4_18.md`
 
 `NETWORK_DRY_RUN` 不是安全 dry-run，必须由用户显式授权，并给出 `LIMIT`、`SCOPE`、代理和限速说明。
 

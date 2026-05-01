@@ -8,9 +8,9 @@
 
 .PHONY: help up down restart logs test clean build db-reset db-shell lint format security \
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
-        data-help data-check data-local-dry-run data-network-dry-run data-db-write-small \
-        data-harvest data-risk-report data-schema-help data-schema-status data-schema-plan \
-        data-schema-migrate
+        data-help data-check data-local-dry-run data-l3-dry-run data-network-dry-run \
+        data-db-write-small data-harvest data-risk-report data-schema-help data-schema-status \
+        data-schema-plan data-schema-migrate
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -233,6 +233,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-help"
 	@echo "  make data-check"
 	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
+	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo ""
 	@echo "Requires explicit authorization:"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
@@ -265,6 +266,15 @@ data-local-dry-run: ## Run a safe local-only dry-run. Requires SAMPLE_HTML or SA
 		echo "ERROR: provide SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"; \
 		exit 1; \
 	fi
+
+data-l3-dry-run: ## Run safe local L3 dry-run from fixture. Requires SAMPLE_RAW and MATCH_ID.
+	@if [ -z "$(SAMPLE_RAW)" ] || [ -z "$(MATCH_ID)" ]; then \
+		echo "ERROR: provide SAMPLE_RAW=<path> and MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Running safe local L3 dry-run: SAMPLE_RAW=$(SAMPLE_RAW), MATCH_ID=$(MATCH_ID)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_RAW)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/l3_local_dry_run.js --fixture "$(SAMPLE_RAW)" --match-id "$(MATCH_ID)"
 
 data-network-dry-run: ## Blocked unless explicitly authorized. Does not run by default.
 	@if [ "$(CONFIRM_NETWORK)" != "1" ]; then \
