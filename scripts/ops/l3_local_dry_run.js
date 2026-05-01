@@ -17,7 +17,7 @@ const { extractGoldenFeatures } = require('../../src/feature_engine/extractors/G
 const { extractTacticalFeatures } = require('../../src/feature_engine/extractors/TacticalMomentumExtractor');
 const {
     extractOddsMovementFeatures,
-    extractOddsMovementFeaturesFromOddsData
+    extractOddsMovementFeaturesFromOddsData,
 } = require('../../src/feature_engine/extractors/OddsMovementExtractor');
 
 const FORBIDDEN_SQL = /\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|UPSERT|MERGE|GRANT|REVOKE)\b/i;
@@ -28,7 +28,7 @@ function usage() {
         '  node scripts/ops/l3_local_dry_run.js --fixture <path> --match-id <id> [--json]',
         '',
         'Safety:',
-        '  SELECT-only DB checks; no L3 writes, no schema writes, no Elo, no network.'
+        '  SELECT-only DB checks; no L3 writes, no schema writes, no Elo, no network.',
     ].join('\n');
 }
 
@@ -37,7 +37,7 @@ function parseArgs(argv) {
         fixture: null,
         matchId: null,
         json: false,
-        help: false
+        help: false,
     };
 
     for (let index = 0; index < argv.length; index += 1) {
@@ -65,7 +65,7 @@ function readJsonFile(filePath) {
     const raw = fs.readFileSync(resolved, 'utf8');
     return {
         resolved,
-        data: JSON.parse(raw)
+        data: JSON.parse(raw),
     };
 }
 
@@ -87,46 +87,56 @@ function normalizeFixtureMatchId(fixture) {
     return String(fixture.match_id || fixture.raw_data?.matchId || fixture.raw_data?.general?.matchId || '');
 }
 
-function validateFixture(fixture, expectedMatchId) {
-    const missing = [];
+function assertFixtureRoot(fixture, expectedMatchId) {
+    const actualMatchId = normalizeFixtureMatchId(fixture);
 
     if (!fixture || typeof fixture !== 'object') {
         throw new Error('Fixture root must be a JSON object');
     }
-    if (normalizeFixtureMatchId(fixture) !== expectedMatchId) {
-        throw new Error(`Fixture match_id does not match --match-id (${normalizeFixtureMatchId(fixture)} != ${expectedMatchId})`);
+    if (actualMatchId !== expectedMatchId) {
+        throw new Error(`Fixture match_id does not match --match-id (${actualMatchId} != ${expectedMatchId})`);
     }
-    if (!fixture.raw_data || typeof fixture.raw_data !== 'object' || Array.isArray(fixture.raw_data)) {
+}
+
+function collectRawDataMissingFields(rawData) {
+    const missing = [];
+
+    if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
         missing.push('raw_data');
     }
 
-    const rawData = fixture.raw_data || {};
-    if (!('matchId' in rawData) && !rawData.general && !rawData.header) {
+    const rawDataObject = rawData || {};
+    if (!('matchId' in rawDataObject) && !rawDataObject.general && !rawDataObject.header) {
         missing.push('raw_data.matchId_or_general_or_header');
     }
-    if (!rawData.general) {
+    if (!rawDataObject.general) {
         missing.push('raw_data.general');
     }
-    if (!rawData.header) {
+    if (!rawDataObject.header) {
         missing.push('raw_data.header');
     }
-    if (!rawData.content) {
+    if (!rawDataObject.content) {
         missing.push('raw_data.content');
     }
-    if (!rawData.content?.lineup?.homeTeam) {
+    if (!rawDataObject.content?.lineup?.homeTeam) {
         missing.push('raw_data.content.lineup.homeTeam');
     }
-    if (!rawData.content?.lineup?.awayTeam) {
+    if (!rawDataObject.content?.lineup?.awayTeam) {
         missing.push('raw_data.content.lineup.awayTeam');
     }
-    if (!Array.isArray(rawData.content?.stats)) {
+    if (!Array.isArray(rawDataObject.content?.stats)) {
         missing.push('raw_data.content.stats[]');
     }
-    if (!Array.isArray(rawData.content?.shotmap?.shots)) {
+    if (!Array.isArray(rawDataObject.content?.shotmap?.shots)) {
         missing.push('raw_data.content.shotmap.shots[]');
     }
 
     return missing;
+}
+
+function validateFixture(fixture, expectedMatchId) {
+    assertFixtureRoot(fixture, expectedMatchId);
+    return collectRawDataMissingFields(fixture.raw_data);
 }
 
 function toPositiveNumber(value) {
@@ -139,7 +149,7 @@ function normalizeOddsPayload(payload, collectedAt) {
         home: toPositiveNumber(payload?.home),
         draw: toPositiveNumber(payload?.draw),
         away: toPositiveNumber(payload?.away),
-        collectedAt: collectedAt ? new Date(collectedAt).toISOString() : null
+        collectedAt: collectedAt ? new Date(collectedAt).toISOString() : null,
     };
 }
 
@@ -160,13 +170,8 @@ function buildOddsDataFromHistoryRows(rows) {
         history.push(initial);
     }
     if (
-        current
-        && (
-            !initial
-            || current.home !== initial.home
-            || current.draw !== initial.draw
-            || current.away !== initial.away
-        )
+        current &&
+        (!initial || current.home !== initial.home || current.draw !== initial.draw || current.away !== initial.away)
     ) {
         history.push(current);
     }
@@ -176,7 +181,7 @@ function buildOddsDataFromHistoryRows(rows) {
         current,
         history,
         hasData: Boolean(initial || current || history.length > 0),
-        odds_source: oneX2Rows.length > 0 ? 'bookmaker_odds_history' : 'none'
+        odds_source: oneX2Rows.length > 0 ? 'bookmaker_odds_history' : 'none',
     };
 }
 
@@ -185,9 +190,7 @@ function uniqueSorted(values) {
 }
 
 function summarizeFixture(rawData) {
-    const shotmapShots = Array.isArray(rawData?.content?.shotmap?.shots)
-        ? rawData.content.shotmap.shots.length
-        : 0;
+    const shotmapShots = Array.isArray(rawData?.content?.shotmap?.shots) ? rawData.content.shotmap.shots.length : 0;
     const momentum = rawData?.content?.momentum?.data || rawData?.content?.momentum?.main?.data || [];
     const lineup = rawData?.content?.lineup || {};
 
@@ -196,7 +199,7 @@ function summarizeFixture(rawData) {
         home_starters: Array.isArray(lineup.homeTeam?.starters) ? lineup.homeTeam.starters.length : 0,
         away_starters: Array.isArray(lineup.awayTeam?.starters) ? lineup.awayTeam.starters.length : 0,
         shots_count: shotmapShots,
-        momentum_points: Array.isArray(momentum) ? momentum.length : 0
+        momentum_points: Array.isArray(momentum) ? momentum.length : 0,
     };
 }
 
@@ -226,7 +229,7 @@ function buildStitchSummary(rawData, oddsRows, missingFields) {
         would_update_matches: false,
         would_trigger_elo: false,
         would_create_index: false,
-        would_create_table: false
+        would_create_table: false,
     };
 }
 
@@ -238,7 +241,7 @@ function selectFeatureHighlights(goldenFeatures, tacticalFeatures, oddsMovementF
             home_rating_avg: goldenFeatures.home_rating_avg,
             away_rating_avg: goldenFeatures.away_rating_avg,
             home_starters_count: goldenFeatures.home_starters_count,
-            away_starters_count: goldenFeatures.away_starters_count
+            away_starters_count: goldenFeatures.away_starters_count,
         },
         tactical: {
             home_xg: tacticalFeatures.home_xg,
@@ -247,15 +250,15 @@ function selectFeatureHighlights(goldenFeatures, tacticalFeatures, oddsMovementF
             away_possession_pct: tacticalFeatures.away_possession_pct,
             home_shots: tacticalFeatures.home_shots,
             away_shots: tacticalFeatures.away_shots,
-            momentum_samples_count: tacticalFeatures.momentum_samples_count
+            momentum_samples_count: tacticalFeatures.momentum_samples_count,
         },
         odds: {
             has_odds_data: oddsMovementFeatures.has_odds_data,
             odds_source: oddsMovementFeatures.odds_source,
             initial_home_odds: oddsMovementFeatures.initial_home_odds,
             current_home_odds: oddsMovementFeatures.current_home_odds,
-            total_movement: oddsMovementFeatures.total_movement
-        }
+            total_movement: oddsMovementFeatures.total_movement,
+        },
     };
 }
 
@@ -268,7 +271,7 @@ function buildDbConfig() {
         password: process.env.DB_PASSWORD || process.env.POSTGRES_PASSWORD,
         max: 2,
         connectionTimeoutMillis: 5000,
-        idleTimeoutMillis: 5000
+        idleTimeoutMillis: 5000,
     };
 }
 
@@ -327,7 +330,7 @@ async function main() {
             fixture: {
                 path: args.fixture,
                 resolved_path: resolved,
-                external_id: fixture.external_id || rawData.general?.matchId || null
+                external_id: fixture.external_id || rawData.general?.matchId || null,
             },
             db: {
                 match_found: true,
@@ -341,8 +344,8 @@ async function main() {
                     away_team: matchRow.away_team,
                     match_date: matchRow.match_date ? new Date(matchRow.match_date).toISOString() : null,
                     status: matchRow.status,
-                    pipeline_status: matchRow.pipeline_status
-                }
+                    pipeline_status: matchRow.pipeline_status,
+                },
             },
             golden_features: {
                 league_name: matchRow.league_name,
@@ -350,13 +353,13 @@ async function main() {
                 home_team: matchRow.home_team,
                 away_team: matchRow.away_team,
                 match_date: matchRow.match_date ? new Date(matchRow.match_date).toISOString() : null,
-                extracted: goldenExtracted
+                extracted: goldenExtracted,
             },
             tactical_features: {
                 shots_count: fixtureSummary.shots_count,
                 momentum_points: fixtureSummary.momentum_points,
                 lineup_available: fixtureSummary.lineup_available,
-                extracted: tacticalExtracted
+                extracted: tacticalExtracted,
             },
             odds_features: {
                 rows: oddsRows.length,
@@ -364,11 +367,11 @@ async function main() {
                 bookmakers: uniqueSorted(oddsRows.map(row => row.bookmaker_name)),
                 markets: uniqueSorted(oddsRows.map(row => row.market_type)),
                 source: oddsData.hasData ? 'bookmaker_odds_history' : 'raw_fixture_or_none',
-                extracted: oddsMovementFeatures
+                extracted: oddsMovementFeatures,
             },
             elo_features: {
                 available: false,
-                reason: 'ELO not computed in local dry-run'
+                reason: 'ELO not computed in local dry-run',
             },
             feature_highlights: selectFeatureHighlights(goldenExtracted, tacticalExtracted, oddsMovementFeatures),
             stitch_summary: stitchSummary,
@@ -384,8 +387,8 @@ async function main() {
                 'no_upsert',
                 'no_l3_write',
                 'no_elo',
-                'no_external_network'
-            ]
+                'no_external_network',
+            ],
         };
 
         console.log(JSON.stringify(preview, null, 2));
@@ -395,16 +398,17 @@ async function main() {
 }
 
 main().catch(error => {
-    console.error(JSON.stringify({
-        mode: 'dry-run',
-        ok: false,
-        error: error.message,
-        non_execution_confirmations: [
-            'no_db_writes',
-            'no_create_index',
-            'no_elo',
-            'no_external_network'
-        ]
-    }, null, 2));
+    console.error(
+        JSON.stringify(
+            {
+                mode: 'dry-run',
+                ok: false,
+                error: error.message,
+                non_execution_confirmations: ['no_db_writes', 'no_create_index', 'no_elo', 'no_external_network'],
+            },
+            null,
+            2
+        )
+    );
     process.exit(1);
 });

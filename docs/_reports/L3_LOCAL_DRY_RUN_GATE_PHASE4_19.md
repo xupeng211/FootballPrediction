@@ -26,12 +26,12 @@
 - `external_id`: `4837496`
 - 数据源: 本地脱敏样本，不含 secret，不访问外网
 - 结构覆盖:
-  - `raw_data.general`
-  - `raw_data.header`
-  - `raw_data.content.stats`
-  - `raw_data.content.lineup`
-  - `raw_data.content.shotmap`
-  - `raw_data.content.momentum`
+    - `raw_data.general`
+    - `raw_data.header`
+    - `raw_data.content.stats`
+    - `raw_data.content.lineup`
+    - `raw_data.content.shotmap`
+    - `raw_data.content.momentum`
 
 ## 4. Dry-Run 脚本行为
 

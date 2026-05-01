@@ -1,205 +1,205 @@
 {
-  "match_id": "140_20252026_4837496",
-  "external_id": "4837496",
-  "raw_data": {
-    "matchId": 4837496,
-    "general": {
-      "matchId": 4837496,
-      "leagueId": 140,
-      "leagueName": "Segunda División",
-      "season": "2025/2026",
-      "homeTeam": {
-        "id": 1001401,
-        "name": "Cultural Leonesa"
-      },
-      "awayTeam": {
-        "id": 1001402,
-        "name": "Burgos CF"
-      },
-      "matchTimeUTC": "2026-05-24T17:00:00Z",
-      "matchTimeUTCDate": "2026-05-24T17:00:00Z",
-      "started": false,
-      "finished": false,
-      "coverageLevel": "local_fixture"
-    },
-    "header": {
-      "teams": [
-        {
-          "name": "Cultural Leonesa",
-          "id": 1001401,
-          "score": null
+    "match_id": "140_20252026_4837496",
+    "external_id": "4837496",
+    "raw_data": {
+        "matchId": 4837496,
+        "general": {
+            "matchId": 4837496,
+            "leagueId": 140,
+            "leagueName": "Segunda División",
+            "season": "2025/2026",
+            "homeTeam": {
+                "id": 1001401,
+                "name": "Cultural Leonesa"
+            },
+            "awayTeam": {
+                "id": 1001402,
+                "name": "Burgos CF"
+            },
+            "matchTimeUTC": "2026-05-24T17:00:00Z",
+            "matchTimeUTCDate": "2026-05-24T17:00:00Z",
+            "started": false,
+            "finished": false,
+            "coverageLevel": "local_fixture"
         },
-        {
-          "name": "Burgos CF",
-          "id": 1001402,
-          "score": null
+        "header": {
+            "teams": [
+                {
+                    "name": "Cultural Leonesa",
+                    "id": 1001401,
+                    "score": null
+                },
+                {
+                    "name": "Burgos CF",
+                    "id": 1001402,
+                    "score": null
+                }
+            ],
+            "status": {
+                "started": false,
+                "finished": false,
+                "cancelled": false,
+                "utcTime": "2026-05-24T17:00:00Z",
+                "timezone": "UTC",
+                "scoreStr": "- - -"
+            }
+        },
+        "content": {
+            "stats": [
+                {
+                    "title": "Expected goals (xG)",
+                    "stats": [1.1, 0.9]
+                },
+                {
+                    "title": "Ball possession",
+                    "stats": ["52%", "48%"]
+                },
+                {
+                    "title": "Total shots",
+                    "stats": [11, 9]
+                },
+                {
+                    "title": "Shots on target",
+                    "stats": [4, 3]
+                },
+                {
+                    "title": "Corner kicks",
+                    "stats": [5, 4]
+                },
+                {
+                    "title": "Yellow cards",
+                    "stats": [2, 2]
+                },
+                {
+                    "title": "Red cards",
+                    "stats": [0, 0]
+                },
+                {
+                    "title": "Fouls",
+                    "stats": [13, 12]
+                }
+            ],
+            "lineup": {
+                "homeTeam": {
+                    "id": 1001401,
+                    "name": "Cultural Leonesa",
+                    "formation": "4-2-3-1",
+                    "totalStarterMarketValue": 12.4,
+                    "starters": [
+                        {
+                            "playerId": "cl-1",
+                            "name": "Cultural Keeper",
+                            "position": "GK",
+                            "age": 28,
+                            "marketValue": 1.2,
+                            "performance": {
+                                "rating": 6.8
+                            }
+                        },
+                        {
+                            "playerId": "cl-2",
+                            "name": "Cultural Midfielder",
+                            "position": "MF",
+                            "age": 25,
+                            "marketValue": 2.8,
+                            "performance": {
+                                "rating": 7.1
+                            }
+                        },
+                        {
+                            "playerId": "cl-3",
+                            "name": "Cultural Forward",
+                            "position": "FW",
+                            "age": 27,
+                            "marketValue": 3.4,
+                            "performance": {
+                                "rating": 7.3
+                            }
+                        }
+                    ],
+                    "subs": [
+                        {
+                            "playerId": "cl-sub-1",
+                            "name": "Cultural Substitute",
+                            "position": "MF",
+                            "marketValue": 0.9,
+                            "performance": {
+                                "rating": 6.4
+                            }
+                        }
+                    ],
+                    "unavailable": []
+                },
+                "awayTeam": {
+                    "id": 1001402,
+                    "name": "Burgos CF",
+                    "formation": "4-4-2",
+                    "totalStarterMarketValue": 10.8,
+                    "starters": [
+                        {
+                            "playerId": "bcf-1",
+                            "name": "Burgos Keeper",
+                            "position": "GK",
+                            "age": 29,
+                            "marketValue": 1.0,
+                            "performance": {
+                                "rating": 6.7
+                            }
+                        },
+                        {
+                            "playerId": "bcf-2",
+                            "name": "Burgos Midfielder",
+                            "position": "MF",
+                            "age": 26,
+                            "marketValue": 2.5,
+                            "performance": {
+                                "rating": 6.9
+                            }
+                        },
+                        {
+                            "playerId": "bcf-3",
+                            "name": "Burgos Forward",
+                            "position": "FW",
+                            "age": 24,
+                            "marketValue": 3.1,
+                            "performance": {
+                                "rating": 7.0
+                            }
+                        }
+                    ],
+                    "subs": [
+                        {
+                            "playerId": "bcf-sub-1",
+                            "name": "Burgos Substitute",
+                            "position": "DF",
+                            "marketValue": 0.8,
+                            "performance": {
+                                "rating": 6.3
+                            }
+                        }
+                    ],
+                    "unavailable": []
+                }
+            },
+            "shotmap": {
+                "shots": []
+            },
+            "momentum": {
+                "data": [
+                    { "minute": 10, "value": 8 },
+                    { "minute": 25, "value": -5 },
+                    { "minute": 40, "value": 4 },
+                    { "minute": 55, "value": 7 },
+                    { "minute": 70, "value": -3 },
+                    { "minute": 85, "value": 2 }
+                ]
+            }
+        },
+        "_meta": {
+            "source": "phase419_local_fixture",
+            "dataVersion": "PHASE4.19",
+            "containsSecrets": false,
+            "externalNetworkAccess": false
         }
-      ],
-      "status": {
-        "started": false,
-        "finished": false,
-        "cancelled": false,
-        "utcTime": "2026-05-24T17:00:00Z",
-        "timezone": "UTC",
-        "scoreStr": "- - -"
-      }
-    },
-    "content": {
-      "stats": [
-        {
-          "title": "Expected goals (xG)",
-          "stats": [1.1, 0.9]
-        },
-        {
-          "title": "Ball possession",
-          "stats": ["52%", "48%"]
-        },
-        {
-          "title": "Total shots",
-          "stats": [11, 9]
-        },
-        {
-          "title": "Shots on target",
-          "stats": [4, 3]
-        },
-        {
-          "title": "Corner kicks",
-          "stats": [5, 4]
-        },
-        {
-          "title": "Yellow cards",
-          "stats": [2, 2]
-        },
-        {
-          "title": "Red cards",
-          "stats": [0, 0]
-        },
-        {
-          "title": "Fouls",
-          "stats": [13, 12]
-        }
-      ],
-      "lineup": {
-        "homeTeam": {
-          "id": 1001401,
-          "name": "Cultural Leonesa",
-          "formation": "4-2-3-1",
-          "totalStarterMarketValue": 12.4,
-          "starters": [
-            {
-              "playerId": "cl-1",
-              "name": "Cultural Keeper",
-              "position": "GK",
-              "age": 28,
-              "marketValue": 1.2,
-              "performance": {
-                "rating": 6.8
-              }
-            },
-            {
-              "playerId": "cl-2",
-              "name": "Cultural Midfielder",
-              "position": "MF",
-              "age": 25,
-              "marketValue": 2.8,
-              "performance": {
-                "rating": 7.1
-              }
-            },
-            {
-              "playerId": "cl-3",
-              "name": "Cultural Forward",
-              "position": "FW",
-              "age": 27,
-              "marketValue": 3.4,
-              "performance": {
-                "rating": 7.3
-              }
-            }
-          ],
-          "subs": [
-            {
-              "playerId": "cl-sub-1",
-              "name": "Cultural Substitute",
-              "position": "MF",
-              "marketValue": 0.9,
-              "performance": {
-                "rating": 6.4
-              }
-            }
-          ],
-          "unavailable": []
-        },
-        "awayTeam": {
-          "id": 1001402,
-          "name": "Burgos CF",
-          "formation": "4-4-2",
-          "totalStarterMarketValue": 10.8,
-          "starters": [
-            {
-              "playerId": "bcf-1",
-              "name": "Burgos Keeper",
-              "position": "GK",
-              "age": 29,
-              "marketValue": 1.0,
-              "performance": {
-                "rating": 6.7
-              }
-            },
-            {
-              "playerId": "bcf-2",
-              "name": "Burgos Midfielder",
-              "position": "MF",
-              "age": 26,
-              "marketValue": 2.5,
-              "performance": {
-                "rating": 6.9
-              }
-            },
-            {
-              "playerId": "bcf-3",
-              "name": "Burgos Forward",
-              "position": "FW",
-              "age": 24,
-              "marketValue": 3.1,
-              "performance": {
-                "rating": 7.0
-              }
-            }
-          ],
-          "subs": [
-            {
-              "playerId": "bcf-sub-1",
-              "name": "Burgos Substitute",
-              "position": "DF",
-              "marketValue": 0.8,
-              "performance": {
-                "rating": 6.3
-              }
-            }
-          ],
-          "unavailable": []
-        }
-      },
-      "shotmap": {
-        "shots": []
-      },
-      "momentum": {
-        "data": [
-          { "minute": 10, "value": 8 },
-          { "minute": 25, "value": -5 },
-          { "minute": 40, "value": 4 },
-          { "minute": 55, "value": 7 },
-          { "minute": 70, "value": -3 },
-          { "minute": 85, "value": 2 }
-        ]
-      }
-    },
-    "_meta": {
-      "source": "phase419_local_fixture",
-      "dataVersion": "PHASE4.19",
-      "containsSecrets": false,
-      "externalNetworkAccess": false
     }
-  }
 }
