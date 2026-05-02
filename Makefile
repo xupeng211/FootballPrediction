@@ -8,9 +8,9 @@
 
 .PHONY: help up down restart logs test clean build db-reset db-shell lint format security \
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
-        data-help data-check data-local-dry-run data-l3-dry-run data-network-dry-run \
-        data-db-write-small data-harvest data-risk-report data-schema-help data-schema-status \
-        data-schema-plan data-schema-migrate
+        data-help data-check data-local-dry-run data-l3-dry-run data-raw-dry-run \
+        data-raw-commit data-network-dry-run data-db-write-small data-harvest \
+        data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -234,8 +234,10 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-check"
 	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
+	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-raw-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_RAW_COMMIT=1  # blocked in Phase 4.21"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -275,6 +277,27 @@ data-l3-dry-run: ## Run safe local L3 dry-run from fixture. Requires SAMPLE_RAW 
 	@echo "Running safe local L3 dry-run: SAMPLE_RAW=$(SAMPLE_RAW), MATCH_ID=$(MATCH_ID)"
 	$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_RAW)"
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/l3_local_dry_run.js --fixture "$(SAMPLE_RAW)" --match-id "$(MATCH_ID)"
+
+data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.
+	@if [ -z "$(SAMPLE_RAW)" ] || [ -z "$(MATCH_ID)" ]; then \
+		echo "ERROR: provide SAMPLE_RAW=<path> and MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Running safe local raw_match_data ingest dry-run: SAMPLE_RAW=$(SAMPLE_RAW), MATCH_ID=$(MATCH_ID)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_RAW)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/raw_match_data_local_ingest.js --fixture "$(SAMPLE_RAW)" --match-id "$(MATCH_ID)"
+
+data-raw-commit: ## Blocked raw_match_data commit gate. Requires SAMPLE_RAW, MATCH_ID, CONFIRM_RAW_COMMIT=1.
+	@if [ "$(CONFIRM_RAW_COMMIT)" != "1" ]; then \
+		echo "BLOCKED: raw_match_data commit requires CONFIRM_RAW_COMMIT=1 and is not wired in Phase 4.21."; \
+		exit 1; \
+	fi
+	@if [ -z "$(SAMPLE_RAW)" ] || [ -z "$(MATCH_ID)" ]; then \
+		echo "BLOCKED: provide SAMPLE_RAW=<path> and MATCH_ID=<id>; raw_match_data commit is not wired in Phase 4.21."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: raw_match_data commit is not wired in Phase 4.21."
+	@exit 1
 
 data-network-dry-run: ## Blocked unless explicitly authorized. Does not run by default.
 	@if [ "$(CONFIRM_NETWORK)" != "1" ]; then \

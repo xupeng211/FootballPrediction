@@ -215,6 +215,7 @@ AI / Codex 默认只能执行：
 - `make data-check`
 - 用户明确授权的 `make data-local-dry-run`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
+- 用户明确授权且仅使用本地 fixture 的 `make data-raw-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 
 AI / Codex 不能直接执行：
 
@@ -232,6 +233,8 @@ AI / Codex 不能直接执行：
 - `scripts/ops/l3_stitch_pipeline.js`
 - `scripts/ops/l3_stitch_worker.js`
 - `npm run elo:recalc`
+- `make data-raw-commit`
+- `node scripts/ops/raw_match_data_local_ingest.js --commit`
 - 任何 `--commit` 命令
 - 任何外网收割命令
 - 任何写 DB 命令
@@ -244,6 +247,15 @@ AI / Codex 不能直接执行：
 - 不访问外网
 
 L3 本地 dry-run 预检背景见：`docs/_reports/L3_RAW_FIXTURE_PREFLIGHT_PHASE4_18.md`
+
+执行 `make data-raw-dry-run` 的前提：
+
+- 用户明确授权
+- fixture 是本地文件
+- 不写 DB
+- 不访问外网
+
+Phase 4.21 中 `make data-raw-commit` 和 `node scripts/ops/raw_match_data_local_ingest.js --commit` 仍是 blocked / not wired。相关背景见：`docs/_reports/L3_RAW_FIXTURE_PREFLIGHT_PHASE4_18.md` 和 `docs/_reports/L3_LOCAL_DRY_RUN_GATE_PHASE4_19.md`
 
 `NETWORK_DRY_RUN` 不是安全 dry-run，必须由用户显式授权，并给出 `LIMIT`、`SCOPE`、代理和限速说明。
 
