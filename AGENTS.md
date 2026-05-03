@@ -220,6 +220,7 @@ AI / Codex 默认只能执行：
 - 安全占位且不训练、不预测、不写 DB 的 `make data-training-dry-run`
 - 安全占位且不训练、不预测、不写 DB 的 `make data-prediction-dry-run`
 - 用户明确授权且只读 DB 的 `make data-training-feature-dry-run MATCH_ID=<id>`
+- 用户明确授权且只读 DB 的 `make data-prediction-write-dry-run MATCH_ID=<id>`
 
 AI / Codex 不能直接执行：
 
@@ -252,6 +253,9 @@ AI / Codex 不能直接执行：
 - `make data-training-feature-commit`
 - `make data-training-feature-commit CONFIRM_TRAINING_FEATURE=1`
 - `node scripts/ops/match_features_training_local_write_gate.js --commit`
+- `make data-prediction-write-commit`
+- `make data-prediction-write-commit CONFIRM_PREDICTION_WRITE=1`
+- `node scripts/ops/prediction_local_write_gate.js --commit`
 - `make data-l3-write-commit`
 - `make data-l3-write-commit CONFIRM_L3_WRITE=1`
 - `node scripts/ops/l3_features_local_write_gate.js --commit`
@@ -299,6 +303,19 @@ Phase 4.29 中 `make data-training-commit` 和 `make data-prediction-commit` 仍
 - 不访问外网
 
 Phase 4.30 中 `make data-training-feature-commit`、`make data-training-feature-commit CONFIRM_TRAINING_FEATURE=1` 和 `node scripts/ops/match_features_training_local_write_gate.js --commit` 仍是 blocked / not wired。禁止直接或间接执行 `npm run train`、`npm run predict`、`npm run model:train`、`npm run model:predict` 或任何写 `match_features_training` / `predictions` 的命令来替代该门禁。相关背景见：`docs/_reports/TRAINING_PREDICTION_PREFLIGHT_PHASE4_29.md` 和 `docs/_reports/L3_FEATURES_SINGLE_INSERT_PHASE4_28.md`
+
+执行 `make data-prediction-write-dry-run MATCH_ID=<id>` 的前提：
+
+- 用户明确授权
+- 只读查询本地 DB
+- 不训练模型
+- 不执行预测
+- 不加载未经授权模型 artifact
+- 不写 `predictions`
+- 不写 DB
+- 不访问外网
+
+Phase 4.32 中 `make data-prediction-write-commit`、`make data-prediction-write-commit CONFIRM_PREDICTION_WRITE=1` 和 `node scripts/ops/prediction_local_write_gate.js --commit` 仍是 blocked / not wired。禁止直接或间接执行 `npm run predict`、`npm run predict:dry`、`npm run model:predict`、`npm run train`、`npm run model:train`、任何加载未经授权模型 artifact 的命令或任何写 `predictions` 的命令来替代该门禁。相关背景见：`docs/_reports/MATCH_FEATURES_TRAINING_SINGLE_INSERT_PHASE4_31.md` 和 `docs/_reports/TRAINING_PREDICTION_PREFLIGHT_PHASE4_29.md`
 
 执行 `make data-l3-write-dry-run` 的前提：
 

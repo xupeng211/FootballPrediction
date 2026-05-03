@@ -12,6 +12,7 @@
         data-l3-write-dry-run data-l3-write-commit \
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
+        data-prediction-write-dry-run data-prediction-write-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -242,8 +243,10 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-training-dry-run"
 	@echo "  make data-prediction-dry-run"
 	@echo "  make data-training-feature-dry-run MATCH_ID=<id>"
+	@echo "  make data-prediction-write-dry-run MATCH_ID=<id>"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
 	@echo "  make data-training-commit CONFIRM_TRAINING=1  # blocked in Phase 4.29"
 	@echo "  make data-prediction-commit CONFIRM_PREDICTION=1  # blocked in Phase 4.29"
@@ -365,6 +368,26 @@ data-training-feature-commit: ## Blocked match_features_training write gate. Req
 		exit 1; \
 	fi
 	@echo "BLOCKED: match_features_training commit is not wired in Phase 4.30."
+	@exit 1
+
+data-prediction-write-dry-run: ## Run safe local predictions write preview. Requires MATCH_ID.
+	@if [ -z "$(MATCH_ID)" ]; then \
+		echo "ERROR: provide MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Running safe local prediction write dry-run: MATCH_ID=$(MATCH_ID)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/prediction_local_write_gate.js --match-id "$(MATCH_ID)"
+
+data-prediction-write-commit: ## Blocked predictions write gate. Requires MATCH_ID, CONFIRM_PREDICTION_WRITE=1.
+	@if [ "$(CONFIRM_PREDICTION_WRITE)" != "1" ]; then \
+		echo "BLOCKED: prediction write requires CONFIRM_PREDICTION_WRITE=1 and is not wired in Phase 4.32."; \
+		exit 1; \
+	fi
+	@if [ -z "$(MATCH_ID)" ]; then \
+		echo "BLOCKED: provide MATCH_ID=<id>; prediction commit is not wired in Phase 4.32."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: prediction commit is not wired in Phase 4.32."
 	@exit 1
 
 data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.
