@@ -414,6 +414,35 @@ AI / Codex 禁止：
 - 在未授权时写 `raw_match_data`
 - 用不匹配 fixture 冒充目标比赛
 
+执行 `make data-synthetic-l3-dry-run MATCH_ID=<id>` 的前提：
+
+- 用户明确授权
+- 入口只做 SELECT-only DB 审计
+- 输入 `raw_match_data` 必须明确标记 `synthetic=true`
+- 输入 `raw_match_data` 必须明确标记 `engineering_test_only=true`
+- 不写 DB
+- 不写 `l3_features`
+- 不写 `match_features_training`
+- 不写 `predictions`
+- 不调用 `smelt`
+- 不调用 `l3:stitch`
+- 不触发 ELO 重算
+- 不训练模型
+- 不执行预测
+- 不加载模型 artifact
+- 不访问外网
+
+AI / Codex 禁止执行：
+
+- `make data-synthetic-l3-commit`
+- `make data-synthetic-l3-commit CONFIRM_SYNTHETIC_L3=1`
+- `node scripts/ops/synthetic_l3_preflight.js --commit`
+- `npm run smelt`
+- `npm run l3:stitch`
+- `node scripts/ops/l3_features_local_write_gate.js --commit`
+
+synthetic raw 生成的 L3 preview 只能用于工程验证，不可用于真实训练，不可进入 production，也不能被当作真实特征。任何真实 `l3_features` 写入前必须有单独授权、pg_dump 备份和写入前后统计。相关背景见：`docs/_reports/SYNTHETIC_RAW_MATCH_DATA_SINGLE_INSERT_PHASE4_43.md`、`docs/_reports/SYNTHETIC_RAW_FIXTURE_PHASE4_42.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
+
 执行 `make data-l3-write-dry-run` 的前提：
 
 - 用户明确授权
