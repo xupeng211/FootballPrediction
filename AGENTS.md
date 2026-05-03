@@ -221,6 +221,8 @@ AI / Codex 默认只能执行：
 - 安全占位且不训练、不预测、不写 DB 的 `make data-prediction-dry-run`
 - 用户明确授权且只读 DB 的 `make data-training-feature-dry-run MATCH_ID=<id>`
 - 用户明确授权且只读 DB 的 `make data-prediction-write-dry-run MATCH_ID=<id>`
+- 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-dataset-status`
+- 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
 
 AI / Codex 不能直接执行：
 
@@ -256,6 +258,8 @@ AI / Codex 不能直接执行：
 - `make data-prediction-write-commit`
 - `make data-prediction-write-commit CONFIRM_PREDICTION_WRITE=1`
 - `node scripts/ops/prediction_local_write_gate.js --commit`
+- `make data-training-dataset-export`
+- `make data-training-dataset-export CONFIRM_DATASET_EXPORT=1`
 - `make data-l3-write-commit`
 - `make data-l3-write-commit CONFIRM_L3_WRITE=1`
 - `node scripts/ops/l3_features_local_write_gate.js --commit`
@@ -316,6 +320,18 @@ Phase 4.30 中 `make data-training-feature-commit`、`make data-training-feature
 - 不访问外网
 
 Phase 4.32 中 `make data-prediction-write-commit`、`make data-prediction-write-commit CONFIRM_PREDICTION_WRITE=1` 和 `node scripts/ops/prediction_local_write_gate.js --commit` 仍是 blocked / not wired。禁止直接或间接执行 `npm run predict`、`npm run predict:dry`、`npm run model:predict`、`npm run train`、`npm run model:train`、任何加载未经授权模型 artifact 的命令或任何写 `predictions` 的命令来替代该门禁。相关背景见：`docs/_reports/MATCH_FEATURES_TRAINING_SINGLE_INSERT_PHASE4_31.md` 和 `docs/_reports/TRAINING_PREDICTION_PREFLIGHT_PHASE4_29.md`
+
+执行 `make data-dataset-status` 或 `make data-training-dataset-dry-run` 的前提：
+
+- 入口只做 SELECT-only DB 审计
+- 不训练模型
+- 不执行预测
+- 不加载或生成模型 artifact
+- 不导出数据集或大文件
+- 不写 DB
+- 不访问外网
+
+Phase 4.36 中 `make data-training-dataset-export` 和 `make data-training-dataset-export CONFIRM_DATASET_EXPORT=1` 仍是 blocked / not wired。真实训练前必须先通过 dataset readiness report；单条 local sample 不能作为真实训练集；scheduled match 不能作为训练 label；`P4_LOCAL_BASELINE` manual / baseline prediction 不是模型输出；`predictions` 表不能反哺训练。相关背景见：`docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md` 和 `docs/_reports/PREDICTION_SINGLE_INSERT_PHASE4_34B.md`
 
 执行 `make data-l3-write-dry-run` 的前提：
 
