@@ -9,6 +9,7 @@
 .PHONY: help up down restart logs test clean build db-reset db-shell lint format security \
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
         data-help data-check data-local-dry-run data-l3-dry-run data-l3-commit \
+        data-l3-write-dry-run data-l3-write-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -234,9 +235,11 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-check"
 	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
+	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-l3-write-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_L3_WRITE=1  # blocked in Phase 4.26"
 	@echo "  make data-l3-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_L3_COMMIT=1  # blocked in Phase 4.24"
 	@echo "  make data-raw-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_RAW_COMMIT=1  # blocked in Phase 4.21"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
@@ -285,6 +288,27 @@ data-l3-commit: ## Blocked l3_features commit gate. Requires SAMPLE_RAW, MATCH_I
 		exit 1; \
 	fi
 	@echo "BLOCKED: l3_features commit is not wired in Phase 4.24."
+	@exit 1
+
+data-l3-write-dry-run: ## Run safe local l3_features write preview. Requires SAMPLE_RAW and MATCH_ID.
+	@if [ -z "$(SAMPLE_RAW)" ] || [ -z "$(MATCH_ID)" ]; then \
+		echo "ERROR: provide SAMPLE_RAW=<path> and MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Running safe local l3_features write dry-run: SAMPLE_RAW=$(SAMPLE_RAW), MATCH_ID=$(MATCH_ID)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_RAW)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/l3_features_local_write_gate.js --fixture "$(SAMPLE_RAW)" --match-id "$(MATCH_ID)"
+
+data-l3-write-commit: ## Blocked l3_features write gate. Requires SAMPLE_RAW, MATCH_ID, CONFIRM_L3_WRITE=1.
+	@if [ "$(CONFIRM_L3_WRITE)" != "1" ]; then \
+		echo "BLOCKED: l3_features write requires CONFIRM_L3_WRITE=1 and is not wired in Phase 4.26."; \
+		exit 1; \
+	fi
+	@if [ -z "$(SAMPLE_RAW)" ] || [ -z "$(MATCH_ID)" ]; then \
+		echo "BLOCKED: provide SAMPLE_RAW=<path> and MATCH_ID=<id>; l3_features commit is not wired in Phase 4.26."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: l3_features commit is not wired in Phase 4.26."
 	@exit 1
 
 data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.
