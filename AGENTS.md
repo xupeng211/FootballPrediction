@@ -225,6 +225,7 @@ AI / Codex 默认只能执行：
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
 - 用户明确授权、只读 DB 且只读本地 fixture 的 `make data-finished-backfill-dry-run MATCH_ID=<id>`
+- 用户明确授权、只读 DB 且只读本地 JSON 的 `make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<local json>`
 
 AI / Codex 不能直接执行：
 
@@ -268,6 +269,9 @@ AI / Codex 不能直接执行：
 - `make data-finished-backfill-commit`
 - `make data-finished-backfill-commit CONFIRM_FINISHED_BACKFILL=1`
 - `node scripts/ops/finished_match_backfill_preflight.js --commit`
+- `make data-raw-fixture-commit`
+- `make data-raw-fixture-commit CONFIRM_RAW_FIXTURE_COMMIT=1`
+- `node scripts/ops/raw_fixture_adapter_dry_run.js --commit`
 - `csv_bulk_loader --commit`
 - 任何 finished CSV 直接写 DB 的命令
 - `make data-l3-write-commit`
@@ -372,6 +376,23 @@ Phase 4.38 中 `make data-finished-csv-commit`、`make data-finished-csv-commit 
 - 不导出数据集或大文件
 
 Phase 4.40 中 `make data-finished-backfill-commit`、`make data-finished-backfill-commit CONFIRM_FINISHED_BACKFILL=1` 和 `node scripts/ops/finished_match_backfill_preflight.js --commit` 仍是 blocked / not wired。finished match backfill 必须按 `raw_match_data -> l3_features -> match_features_training -> predictions` 顺序推进；没有匹配 raw fixture 时不得伪造 `raw_match_data`；不得把相似 fixture 冒充目标比赛；scheduled / baseline sample 不可混入真实训练；任何真实 write 前必须单独授权并完成 pg_dump。相关背景见：`docs/_reports/FINISHED_CSV_SINGLE_MATCH_INSERT_PHASE4_39.md`、`docs/_reports/FINISHED_CSV_DRY_RUN_GATE_PHASE4_38.md` 和 `docs/_reports/DATASET_STATUS_AUDIT_GATE_PHASE4_36.md`
+
+执行 `make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<local json>` 的前提：
+
+- 用户明确授权
+- 入口只做 SELECT-only DB 审计和本地 JSON 只读检查
+- 不写 DB
+- 不创建 fixture 文件
+- 不执行 raw ingest
+- 不写 `l3_features`
+- 不写 `match_features_training`
+- 不写 `predictions`
+- 不训练模型
+- 不执行预测
+- 不加载模型 artifact
+- 不访问外网
+
+Phase 4.41 中 `make data-raw-fixture-commit`、`make data-raw-fixture-commit CONFIRM_RAW_FIXTURE_COMMIT=1`、`node scripts/ops/raw_fixture_adapter_dry_run.js --commit` 和 `node scripts/ops/raw_match_data_local_ingest.js --commit` 仍是 blocked / not wired。raw fixture 必须与目标 `match_id`、teams、score、status 匹配；不匹配 fixture 不能冒充目标 match；synthetic fixture 只能用于 engineering test，不能用于真实训练；synthetic raw_data 不能标记为真实 external / FotMob data；任何 `raw_match_data` 写入前必须单独授权并完成 pg_dump。相关背景见：`docs/_reports/FINISHED_MATCH_BACKFILL_PREFLIGHT_PHASE4_40.md`、`docs/_reports/FINISHED_CSV_SINGLE_MATCH_INSERT_PHASE4_39.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
 
 执行 `make data-l3-write-dry-run` 的前提：
 
