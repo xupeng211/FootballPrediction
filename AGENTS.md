@@ -443,6 +443,32 @@ AI / Codex 禁止执行：
 
 synthetic raw 生成的 L3 preview 只能用于工程验证，不可用于真实训练，不可进入 production，也不能被当作真实特征。任何真实 `l3_features` 写入前必须有单独授权、pg_dump 备份和写入前后统计。相关背景见：`docs/_reports/SYNTHETIC_RAW_MATCH_DATA_SINGLE_INSERT_PHASE4_43.md`、`docs/_reports/SYNTHETIC_RAW_FIXTURE_PHASE4_42.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
 
+执行 `make data-synthetic-training-feature-dry-run MATCH_ID=<id>` 的前提：
+
+- 用户明确授权
+- 入口只做 SELECT-only DB 审计
+- 输入 `l3_features` 必须明确标记 `synthetic=true`
+- 输入 `l3_features` 必须明确标记 `engineering_test_only=true`
+- 输入 `l3_features` 必须明确标记 `not_for_training=true`
+- 不写 DB
+- 不写 `match_features_training`
+- 不写 `predictions`
+- 不训练模型
+- 不执行预测
+- 不加载模型 artifact
+- 不访问外网
+
+AI / Codex 禁止执行：
+
+- `make data-synthetic-training-feature-commit`
+- `make data-synthetic-training-feature-commit CONFIRM_SYNTHETIC_TRAINING_FEATURE=1`
+- `node scripts/ops/synthetic_training_feature_preflight.js --commit`
+- `node scripts/ops/match_features_training_local_write_gate.js --commit`
+- `npm run train`
+- `npm run predict`
+
+synthetic training feature preview 只能用于工程验证，不可用于真实训练，不可进入 production，也不能被当作真实训练数据。任何真实 `match_features_training` 写入前必须有单独授权、pg_dump 备份和写入前后统计。相关背景见：`docs/_reports/SYNTHETIC_L3_FEATURES_SINGLE_INSERT_PHASE4_45.md`、`docs/_reports/SYNTHETIC_L3_PREFLIGHT_PHASE4_44.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
+
 执行 `make data-l3-write-dry-run` 的前提：
 
 - 用户明确授权

@@ -18,6 +18,7 @@
         data-finished-backfill-dry-run data-finished-backfill-commit \
         data-raw-fixture-dry-run data-raw-fixture-commit \
         data-synthetic-l3-dry-run data-synthetic-l3-commit \
+        data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -257,11 +258,13 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<path>"
 	@echo "  make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<path> ALLOW_SYNTHETIC=1"
 	@echo "  make data-synthetic-l3-dry-run MATCH_ID=<id>"
+	@echo "  make data-synthetic-training-feature-dry-run MATCH_ID=<id>"
 	@echo ""
 	@echo "Requires explicit authorization:"
 	@echo "  make data-raw-fixture-commit MATCH_ID=<id> FIXTURE=<path> CONFIRM_RAW_FIXTURE_COMMIT=1  # blocked in Phase 4.41"
 	@echo "  make data-finished-backfill-commit MATCH_ID=<id> CONFIRM_FINISHED_BACKFILL=1  # blocked in Phase 4.40"
 	@echo "  make data-synthetic-l3-commit MATCH_ID=<id> CONFIRM_SYNTHETIC_L3=1  # blocked in Phase 4.44"
+	@echo "  make data-synthetic-training-feature-commit MATCH_ID=<id> CONFIRM_SYNTHETIC_TRAINING_FEATURE=1  # blocked in Phase 4.46"
 	@echo "  make data-finished-csv-commit SAMPLE_CSV=<path> CONFIRM_FINISHED_CSV_COMMIT=1  # blocked in Phase 4.38"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
@@ -386,6 +389,22 @@ data-training-feature-commit: ## Blocked match_features_training write gate. Req
 		exit 1; \
 	fi
 	@echo "BLOCKED: match_features_training commit is not wired in Phase 4.30."
+	@exit 1
+
+data-synthetic-training-feature-dry-run: ## Run safe synthetic L3 to training feature preflight. Requires MATCH_ID.
+	@if [ -z "$(MATCH_ID)" ]; then \
+		echo "ERROR: provide MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Running safe synthetic L3 to training feature preflight: MATCH_ID=$(MATCH_ID)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/synthetic_training_feature_preflight.js --match-id "$(MATCH_ID)"
+
+data-synthetic-training-feature-commit: ## Blocked synthetic training feature gate. Requires MATCH_ID, CONFIRM_SYNTHETIC_TRAINING_FEATURE=1.
+	@if [ "$(CONFIRM_SYNTHETIC_TRAINING_FEATURE)" != "1" ]; then \
+		echo "BLOCKED: synthetic training feature commit requires CONFIRM_SYNTHETIC_TRAINING_FEATURE=1 and is not wired in Phase 4.46."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: synthetic training feature commit is not wired in Phase 4.46."
 	@exit 1
 
 data-prediction-write-dry-run: ## Run safe local predictions write preview. Requires MATCH_ID.
