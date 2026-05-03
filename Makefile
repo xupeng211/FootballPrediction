@@ -16,6 +16,7 @@
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
+        data-raw-fixture-dry-run data-raw-fixture-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -252,8 +253,11 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id> FIXTURE=<path>"
+	@echo "  make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<path>"
+	@echo "  make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<path> ALLOW_SYNTHETIC=1"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-raw-fixture-commit MATCH_ID=<id> FIXTURE=<path> CONFIRM_RAW_FIXTURE_COMMIT=1  # blocked in Phase 4.41"
 	@echo "  make data-finished-backfill-commit MATCH_ID=<id> CONFIRM_FINISHED_BACKFILL=1  # blocked in Phase 4.40"
 	@echo "  make data-finished-csv-commit SAMPLE_CSV=<path> CONFIRM_FINISHED_CSV_COMMIT=1  # blocked in Phase 4.38"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
@@ -451,6 +455,27 @@ data-finished-backfill-commit: ## Blocked finished match backfill gate. Requires
 		exit 1; \
 	fi
 	@echo "BLOCKED: finished match backfill commit is not wired in Phase 4.40."
+	@exit 1
+
+data-raw-fixture-dry-run: ## Run raw fixture adapter dry-run. Requires MATCH_ID and FIXTURE.
+	@if [ -z "$(MATCH_ID)" ] || [ -z "$(FIXTURE)" ]; then \
+		echo "ERROR: provide MATCH_ID=<id> and FIXTURE=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running safe raw fixture adapter dry-run: MATCH_ID=$(MATCH_ID), FIXTURE=$(FIXTURE)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(FIXTURE)"
+	@if [ "$(ALLOW_SYNTHETIC)" = "1" ]; then \
+		$(COMPOSE_DEV) exec -T dev node scripts/ops/raw_fixture_adapter_dry_run.js --match-id "$(MATCH_ID)" --fixture "$(FIXTURE)" --allow-synthetic; \
+	else \
+		$(COMPOSE_DEV) exec -T dev node scripts/ops/raw_fixture_adapter_dry_run.js --match-id "$(MATCH_ID)" --fixture "$(FIXTURE)"; \
+	fi
+
+data-raw-fixture-commit: ## Blocked raw fixture adapter gate. Requires MATCH_ID, FIXTURE, CONFIRM_RAW_FIXTURE_COMMIT=1.
+	@if [ "$(CONFIRM_RAW_FIXTURE_COMMIT)" != "1" ]; then \
+		echo "BLOCKED: raw fixture commit requires CONFIRM_RAW_FIXTURE_COMMIT=1 and is not wired in Phase 4.41."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: raw fixture adapter commit is not wired in Phase 4.41."
 	@exit 1
 
 data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.
