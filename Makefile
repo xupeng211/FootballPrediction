@@ -13,6 +13,7 @@
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
+        data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -244,8 +245,11 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-prediction-dry-run"
 	@echo "  make data-training-feature-dry-run MATCH_ID=<id>"
 	@echo "  make data-prediction-write-dry-run MATCH_ID=<id>"
+	@echo "  make data-dataset-status"
+	@echo "  make data-training-dataset-dry-run"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
 	@echo "  make data-training-commit CONFIRM_TRAINING=1  # blocked in Phase 4.29"
@@ -388,6 +392,20 @@ data-prediction-write-commit: ## Blocked predictions write gate. Requires MATCH_
 		exit 1; \
 	fi
 	@echo "BLOCKED: prediction commit is not wired in Phase 4.32."
+	@exit 1
+
+data-dataset-status: ## Run SELECT-only dataset status audit. Does not train, export, predict, or write DB.
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/dataset_status_audit.js
+
+data-training-dataset-dry-run: ## Run SELECT-only training dataset readiness audit. Does not train, export, or write DB.
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/dataset_status_audit.js
+
+data-training-dataset-export: ## Blocked dataset export gate. Remains not wired in Phase 4.36.
+	@if [ "$(CONFIRM_DATASET_EXPORT)" != "1" ]; then \
+		echo "BLOCKED: dataset export requires CONFIRM_DATASET_EXPORT=1 and is not wired in Phase 4.36."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: dataset export is not wired in Phase 4.36."
 	@exit 1
 
 data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.
