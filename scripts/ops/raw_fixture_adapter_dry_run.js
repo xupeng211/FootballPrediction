@@ -202,12 +202,45 @@ function extractScore(rawData) {
 function extractStatus(rawData) {
     return pickFirst([
         rawData?.general?.status,
+        rawData?.general?.finished,
         rawData?.header?.status?.reason?.shortKey,
         rawData?.header?.status?.reason?.short,
+        rawData?.header?.status?.short,
         rawData?.header?.status?.finished,
         rawData?.data?.match?.status?.status,
         rawData?.data?.match?.status?.finished,
     ]);
+}
+
+function hasSyntheticMetadata(fixture, rawData) {
+    return (
+        fixture?.metadata?.synthetic === true ||
+        rawData?.metadata?.synthetic === true ||
+        fixture?.synthetic === true ||
+        rawData?.synthetic === true
+    );
+}
+
+function buildSyntheticMetadata(fixture, rawData) {
+    const metadata = asObject(fixture?.metadata || rawData?.metadata);
+    const synthetic = hasSyntheticMetadata(fixture, rawData);
+
+    return {
+        synthetic,
+        engineering_test_only: metadata.engineering_test_only === true,
+        not_real_external_data: metadata.not_real_external_data === true,
+        not_for_training: metadata.not_for_training === true,
+        not_for_production: metadata.not_for_production === true,
+        source: metadata.source || null,
+        target_match_id: metadata.target_match_id || null,
+        provenance_note: metadata.provenance_note || null,
+        synthetic_safety_complete:
+            synthetic &&
+            metadata.engineering_test_only === true &&
+            metadata.not_real_external_data === true &&
+            metadata.not_for_training === true &&
+            metadata.not_for_production === true,
+    };
 }
 
 function extractFixtureInfo(fixture) {
@@ -261,6 +294,7 @@ function extractFixtureInfo(fixture) {
         raw_data_not_empty: Object.keys(asObject(rawData)).length > 0,
         raw_data_hash_preview: sha256(stableStringify(rawData)),
         raw_data_top_level_keys: Object.keys(asObject(rawData)).sort(),
+        synthetic_metadata: buildSyntheticMetadata(fixture, rawData),
     };
 }
 
@@ -278,12 +312,17 @@ function buildMatchChecks(match, fixtureInfo) {
 
 function buildWarnings(checks, fixtureInfo) {
     const warnings = [];
+    const syntheticMetadata = fixtureInfo.synthetic_metadata;
+
     if (!checks.match_id_matches) warnings.push('fixture_mismatch:match_id');
     if (!checks.home_team_matches) warnings.push('fixture_mismatch:home_team');
     if (!checks.away_team_matches) warnings.push('fixture_mismatch:away_team');
     if (!checks.score_matches) warnings.push('fixture_mismatch:score');
     if (!checks.status_reasonable) warnings.push('fixture_status_not_finished_or_unknown');
     if (!checks.raw_data_constraint_ok) warnings.push('fixture_raw_data_constraint_not_satisfied');
+    if (syntheticMetadata.synthetic && !syntheticMetadata.synthetic_safety_complete) {
+        warnings.push('synthetic_fixture_missing_required_safety_metadata');
+    }
     if (!checks.match_id_matches || !checks.home_team_matches || !checks.away_team_matches || !checks.score_matches) {
         warnings.push('cannot_use_this_fixture_as_raw_data_for_target_match');
         warnings.push('do_not_impersonate_another_match');
@@ -292,14 +331,41 @@ function buildWarnings(checks, fixtureInfo) {
     return warnings;
 }
 
-function buildSyntheticPreview({ args, match }) {
-    if (!args.allowSynthetic) return null;
+function buildSyntheticPreview({ args, match, fixtureInfo }) {
+    const syntheticMetadata = fixtureInfo.synthetic_metadata;
+    if (!args.allowSynthetic && !syntheticMetadata.synthetic) return null;
+
+    if (syntheticMetadata.synthetic) {
+        return {
+            synthetic: true,
+            synthetic_preview_only: true,
+            preview_only: true,
+            allow_synthetic: args.allowSynthetic,
+            synthetic_requires_allow_synthetic: !args.allowSynthetic,
+            engineering_test_only: syntheticMetadata.engineering_test_only,
+            not_real_external_data: syntheticMetadata.not_real_external_data,
+            not_for_training: syntheticMetadata.not_for_training,
+            not_for_production: syntheticMetadata.not_for_production,
+            not_production_data: syntheticMetadata.not_for_production,
+            would_create_fixture_file: false,
+            would_insert_raw_match_data: false,
+            provenance: {
+                source: syntheticMetadata.source,
+                target_match_id: syntheticMetadata.target_match_id,
+                provenance_note: syntheticMetadata.provenance_note,
+            },
+        };
+    }
+
     return {
         synthetic: true,
         synthetic_preview_only: true,
+        preview_only: true,
+        allow_synthetic: args.allowSynthetic,
         engineering_test_only: true,
         not_real_external_data: true,
         not_for_training: true,
+        not_for_production: true,
         not_production_data: true,
         would_create_fixture_file: false,
         would_insert_raw_match_data: false,
@@ -367,7 +433,7 @@ function buildTargetMatchPayload(match) {
     };
 }
 
-function buildDecisionPayload(checks) {
+function buildDecisionPayload(checks, fixtureInfo, args) {
     const directFixtureMatch =
         checks.match_id_matches &&
         checks.home_team_matches &&
@@ -375,10 +441,17 @@ function buildDecisionPayload(checks) {
         checks.score_matches &&
         checks.status_reasonable &&
         checks.raw_data_constraint_ok;
+    const synthetic = fixtureInfo.synthetic_metadata.synthetic;
+    const syntheticSafetyComplete = fixtureInfo.synthetic_metadata.synthetic_safety_complete;
+    const syntheticPreviewAllowed = synthetic && args.allowSynthetic && syntheticSafetyComplete;
+    const fixtureCanBeUsedForTarget = directFixtureMatch && !synthetic;
 
     return {
         direct_fixture_match: directFixtureMatch,
-        fixture_can_be_used_for_target: directFixtureMatch,
+        fixture_can_be_used_for_target: fixtureCanBeUsedForTarget,
+        synthetic_fixture: synthetic,
+        synthetic_preview_allowed: syntheticPreviewAllowed,
+        preview_only: synthetic,
         synthetic_required: !directFixtureMatch,
         would_insert_raw_match_data: false,
         would_update_matches: false,
@@ -388,8 +461,12 @@ function buildDecisionPayload(checks) {
 
 function buildPayload({ args, match, fixturePath, fixtureInfo, checks }) {
     const targetMatch = buildTargetMatchPayload(match);
-    const decision = buildDecisionPayload(checks);
+    const decision = buildDecisionPayload(checks, fixtureInfo, args);
     const warnings = buildWarnings(checks, fixtureInfo);
+    if (fixtureInfo.synthetic_metadata.synthetic && !args.allowSynthetic) {
+        warnings.push('synthetic_fixture_requires_explicit_ALLOW_SYNTHETIC_1');
+        warnings.push('synthetic_fixture_not_for_training');
+    }
 
     return {
         mode: 'dry-run',
@@ -407,13 +484,15 @@ function buildPayload({ args, match, fixturePath, fixtureInfo, checks }) {
             target_table: 'raw_match_data',
             match_id: args.matchId,
             external_id: fixtureInfo.external_id,
-            data_version_candidate: decision.direct_fixture_match
+            data_version_candidate: decision.fixture_can_be_used_for_target
                 ? 'PHASE4.41_REAL_LOCAL_FIXTURE_DRY_RUN_ONLY'
-                : 'not_available_for_mismatched_fixture',
+                : decision.synthetic_fixture
+                  ? 'PHASE4.42_SYNTHETIC_PREVIEW_ONLY'
+                  : 'not_available_for_mismatched_fixture',
             data_hash_preview: fixtureInfo.raw_data_hash_preview,
             would_insert_raw_match_data: false,
         },
-        synthetic_preview: buildSyntheticPreview({ args, match }),
+        synthetic_preview: buildSyntheticPreview({ args, match, fixtureInfo }),
         warnings,
         non_execution_confirmations: buildNonExecutionConfirmations(),
     };
@@ -428,6 +507,8 @@ function formatText(payload) {
         `match_found=${payload.target_match.match_found}`,
         `direct_fixture_match=${payload.decision.direct_fixture_match}`,
         `fixture_can_be_used_for_target=${payload.decision.fixture_can_be_used_for_target}`,
+        `synthetic=${payload.decision.synthetic_fixture}`,
+        `preview_only=${payload.decision.preview_only}`,
         `synthetic_required=${payload.decision.synthetic_required}`,
         `would_insert_raw_match_data=${payload.decision.would_insert_raw_match_data}`,
         `would_update_matches=${payload.decision.would_update_matches}`,
