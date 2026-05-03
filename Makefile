@@ -14,6 +14,7 @@
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
+        data-finished-csv-dry-run data-finished-csv-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -247,8 +248,10 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-prediction-write-dry-run MATCH_ID=<id>"
 	@echo "  make data-dataset-status"
 	@echo "  make data-training-dataset-dry-run"
+	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-finished-csv-commit SAMPLE_CSV=<path> CONFIRM_FINISHED_CSV_COMMIT=1  # blocked in Phase 4.38"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
@@ -406,6 +409,23 @@ data-training-dataset-export: ## Blocked dataset export gate. Remains not wired 
 		exit 1; \
 	fi
 	@echo "BLOCKED: dataset export is not wired in Phase 4.36."
+	@exit 1
+
+data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
+	@if [ -z "$(SAMPLE_CSV)" ]; then \
+		echo "ERROR: provide SAMPLE_CSV=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running safe local finished CSV dry-run: SAMPLE_CSV=$(SAMPLE_CSV)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_CSV)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/finished_csv_local_dry_run.js --csv "$(SAMPLE_CSV)"
+
+data-finished-csv-commit: ## Blocked finished CSV commit gate. Requires SAMPLE_CSV, CONFIRM_FINISHED_CSV_COMMIT=1.
+	@if [ "$(CONFIRM_FINISHED_CSV_COMMIT)" != "1" ]; then \
+		echo "BLOCKED: finished CSV commit requires CONFIRM_FINISHED_CSV_COMMIT=1 and is not wired in Phase 4.38."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: finished CSV commit is not wired in Phase 4.38."
 	@exit 1
 
 data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.

@@ -223,6 +223,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读 DB 的 `make data-prediction-write-dry-run MATCH_ID=<id>`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-dataset-status`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
+- 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
 
 AI / Codex 不能直接执行：
 
@@ -260,6 +261,11 @@ AI / Codex 不能直接执行：
 - `node scripts/ops/prediction_local_write_gate.js --commit`
 - `make data-training-dataset-export`
 - `make data-training-dataset-export CONFIRM_DATASET_EXPORT=1`
+- `make data-finished-csv-commit`
+- `make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1`
+- `node scripts/ops/finished_csv_local_dry_run.js --commit`
+- `csv_bulk_loader --commit`
+- 任何 finished CSV 直接写 DB 的命令
 - `make data-l3-write-commit`
 - `make data-l3-write-commit CONFIRM_L3_WRITE=1`
 - `node scripts/ops/l3_features_local_write_gate.js --commit`
@@ -332,6 +338,19 @@ Phase 4.32 中 `make data-prediction-write-commit`、`make data-prediction-write
 - 不访问外网
 
 Phase 4.36 中 `make data-training-dataset-export` 和 `make data-training-dataset-export CONFIRM_DATASET_EXPORT=1` 仍是 blocked / not wired。真实训练前必须先通过 dataset readiness report；单条 local sample 不能作为真实训练集；scheduled match 不能作为训练 label；`P4_LOCAL_BASELINE` manual / baseline prediction 不是模型输出；`predictions` 表不能反哺训练。相关背景见：`docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md` 和 `docs/_reports/PREDICTION_SINGLE_INSERT_PHASE4_34B.md`
+
+执行 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>` 的前提：
+
+- 用户明确授权
+- CSV 是本地文件
+- 入口只做 dry-run 解析和可选 SELECT-only DB 查重
+- 不写 DB
+- 不训练模型
+- 不执行预测
+- 不访问外网
+- 不导出数据集或大文件
+
+Phase 4.38 中 `make data-finished-csv-commit`、`make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1` 和 `node scripts/ops/finished_csv_local_dry_run.js --commit` 仍是 blocked / not wired。finished CSV import 必须先 dry-run；label mapping 必须在报告中确认；scheduled / unlabeled rows 不可作为训练样本；外部 CSV 下载仍禁止，公开数据源也必须先人工确认许可和用途。相关背景见：`docs/_reports/FINISHED_MATCH_SOURCE_AUDIT_PHASE4_37.md`、`docs/_reports/DATASET_STATUS_AUDIT_GATE_PHASE4_36.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
 
 执行 `make data-l3-write-dry-run` 的前提：
 
