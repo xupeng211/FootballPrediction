@@ -1,0 +1,90 @@
+{
+    "metadata": {
+        "synthetic": true,
+        "engineering_test_only": true,
+        "not_real_external_data": true,
+        "not_for_training": true,
+        "not_for_production": true,
+        "source": "phase4.42_synthetic_local_fixture",
+        "target_match_id": "47_20242025_900002",
+        "created_for": "raw_fixture_adapter_dry_run_and_pipeline_shape_testing",
+        "provenance_note": "Synthetic fixture created locally for engineering validation only. Do not use as real match data or model training data."
+    },
+    "matchId": "47_20242025_900002",
+    "general": {
+        "matchId": "47_20242025_900002",
+        "leagueName": "Segunda",
+        "season": "2024/2025",
+        "homeTeam": {
+            "name": "Burgos"
+        },
+        "awayTeam": {
+            "name": "Oviedo"
+        },
+        "status": "finished",
+        "matchDate": "2024-08-17T17:30:00Z",
+        "score": {
+            "home": 1,
+            "away": 0
+        }
+    },
+    "header": {
+        "teams": [
+            {
+                "name": "Burgos",
+                "score": 1
+            },
+            {
+                "name": "Oviedo",
+                "score": 0
+            }
+        ],
+        "status": {
+            "finished": true,
+            "short": "FT",
+            "long": "Full time",
+            "scoreStr": "1-0"
+        }
+    },
+    "content": {
+        "stats": {
+            "synthetic": true,
+            "items": [
+                {
+                    "title": "Possession",
+                    "home": "51%",
+                    "away": "49%"
+                },
+                {
+                    "title": "Shots",
+                    "home": 8,
+                    "away": 7
+                },
+                {
+                    "title": "Shots on target",
+                    "home": 3,
+                    "away": 2
+                }
+            ]
+        },
+        "lineup": {
+            "synthetic": true,
+            "homeTeam": {
+                "name": "Burgos",
+                "players": []
+            },
+            "awayTeam": {
+                "name": "Oviedo",
+                "players": []
+            }
+        },
+        "shotmap": {
+            "synthetic": true,
+            "shots": []
+        },
+        "momentum": {
+            "synthetic": true,
+            "data": []
+        }
+    }
+}

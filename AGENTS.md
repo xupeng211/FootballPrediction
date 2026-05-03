@@ -394,6 +394,26 @@ Phase 4.40 中 `make data-finished-backfill-commit`、`make data-finished-backfi
 
 Phase 4.41 中 `make data-raw-fixture-commit`、`make data-raw-fixture-commit CONFIRM_RAW_FIXTURE_COMMIT=1`、`node scripts/ops/raw_fixture_adapter_dry_run.js --commit` 和 `node scripts/ops/raw_match_data_local_ingest.js --commit` 仍是 blocked / not wired。raw fixture 必须与目标 `match_id`、teams、score、status 匹配；不匹配 fixture 不能冒充目标 match；synthetic fixture 只能用于 engineering test，不能用于真实训练；synthetic raw_data 不能标记为真实 external / FotMob data；任何 `raw_match_data` 写入前必须单独授权并完成 pg_dump。相关背景见：`docs/_reports/FINISHED_MATCH_BACKFILL_PREFLIGHT_PHASE4_40.md`、`docs/_reports/FINISHED_CSV_SINGLE_MATCH_INSERT_PHASE4_39.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
 
+AI / Codex 仅在用户明确授权时允许创建 synthetic raw fixture，且必须满足：
+
+- fixture 路径位于 `tests/fixtures/synthetic/`
+- 明确标记 `synthetic=true`
+- 明确标记 `engineering_test_only=true`
+- 明确标记 `not_real_external_data=true`
+- 明确标记 `not_for_training=true`
+- 明确标记 `not_for_production=true`
+- 只用于工程链路测试
+- 不写 DB
+- 不用于真实训练
+
+AI / Codex 禁止：
+
+- 把 synthetic fixture 标记为真实 external / FotMob / OddsPortal 数据
+- 用 synthetic fixture 训练模型
+- 用 synthetic fixture 写 production data
+- 在未授权时写 `raw_match_data`
+- 用不匹配 fixture 冒充目标比赛
+
 执行 `make data-l3-write-dry-run` 的前提：
 
 - 用户明确授权
