@@ -217,6 +217,8 @@ AI / Codex 默认只能执行：
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-write-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 - 用户明确授权且仅使用本地 fixture 的 `make data-raw-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
+- 安全占位且不训练、不预测、不写 DB 的 `make data-training-dry-run`
+- 安全占位且不训练、不预测、不写 DB 的 `make data-prediction-dry-run`
 
 AI / Codex 不能直接执行：
 
@@ -230,10 +232,22 @@ AI / Codex 不能直接执行：
 - `node scripts/ops/batch_historical_backfill.js`
 - `npm run smelt`
 - `npm run l3:stitch`
+- `npm run train`
+- `npm run predict`
+- `npm run predict:dry`
+- `npm run model:train`
+- `npm run model:predict`
 - `scripts/ops/smelt_all.js`
 - `scripts/ops/l3_stitch_pipeline.js`
 - `scripts/ops/l3_stitch_worker.js`
 - `npm run elo:recalc`
+- 任何写 `match_features_training` 的命令
+- 任何写 `predictions` 的命令
+- 任何加载或生成模型 artifact 的训练命令
+- `make data-training-commit`
+- `make data-training-commit CONFIRM_TRAINING=1`
+- `make data-prediction-commit`
+- `make data-prediction-commit CONFIRM_PREDICTION=1`
 - `make data-l3-write-commit`
 - `make data-l3-write-commit CONFIRM_L3_WRITE=1`
 - `node scripts/ops/l3_features_local_write_gate.js --commit`
@@ -253,6 +267,20 @@ AI / Codex 不能直接执行：
 - 不访问外网
 
 L3 本地 dry-run 预检背景见：`docs/_reports/L3_RAW_FIXTURE_PREFLIGHT_PHASE4_18.md`
+
+执行 `make data-training-dry-run` 或 `make data-prediction-dry-run` 的前提：
+
+- 入口只是安全占位 / runbook preview
+- 不调用 `npm run train` 或 `npm run predict`
+- 不训练模型
+- 不执行预测
+- 不加载或生成模型 artifact
+- 不写 `match_features_training`
+- 不写 `predictions`
+- 不写 DB
+- 不访问外网
+
+Phase 4.29 中 `make data-training-commit` 和 `make data-prediction-commit` 仍是 blocked / not wired，即使提供 `CONFIRM_TRAINING=1` 或 `CONFIRM_PREDICTION=1` 也不得执行训练、预测或写库。相关背景见：`docs/_reports/L3_FEATURES_SINGLE_INSERT_PHASE4_28.md`、`docs/_reports/L3_FEATURES_LOCAL_WRITE_GATE_PHASE4_26.md` 和 `docs/_reports/L3_FEATURES_WRITE_GATE_PREFLIGHT_PHASE4_24.md`
 
 执行 `make data-l3-write-dry-run` 的前提：
 

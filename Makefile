@@ -10,6 +10,7 @@
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
         data-help data-check data-local-dry-run data-l3-dry-run data-l3-commit \
         data-l3-write-dry-run data-l3-write-commit \
+        data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -237,8 +238,12 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
+	@echo "  make data-training-dry-run"
+	@echo "  make data-prediction-dry-run"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-training-commit CONFIRM_TRAINING=1  # blocked in Phase 4.29"
+	@echo "  make data-prediction-commit CONFIRM_PREDICTION=1  # blocked in Phase 4.29"
 	@echo "  make data-l3-write-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_L3_WRITE=1  # blocked in Phase 4.26"
 	@echo "  make data-l3-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_L3_COMMIT=1  # blocked in Phase 4.24"
 	@echo "  make data-raw-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_RAW_COMMIT=1  # blocked in Phase 4.21"
@@ -309,6 +314,34 @@ data-l3-write-commit: ## Blocked l3_features write gate. Requires SAMPLE_RAW, MA
 		exit 1; \
 	fi
 	@echo "BLOCKED: l3_features commit is not wired in Phase 4.26."
+	@exit 1
+
+data-training-dry-run: ## Safe training preflight placeholder. Does not train or write DB.
+	@echo "SAFE PREVIEW ONLY: training dry-run is not wired in Phase 4.29."
+	@echo "No npm run train, model training, model artifact generation, or DB writes are executed."
+	@echo "Current local sample is insufficient for training; requires multi-match finished historical dataset and explicit model artifact policy."
+	@echo "Recommended next step: create a training runbook with dataset scope, artifact paths, backup plan, and validation gates."
+
+data-training-commit: ## Blocked training gate. Requires CONFIRM_TRAINING=1 but remains blocked in Phase 4.29.
+	@if [ "$(CONFIRM_TRAINING)" != "1" ]; then \
+		echo "BLOCKED: training requires CONFIRM_TRAINING=1 and is not wired in Phase 4.29."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: training commit is not wired in Phase 4.29."
+	@exit 1
+
+data-prediction-dry-run: ## Safe prediction preflight placeholder. Does not predict or write DB.
+	@echo "SAFE PREVIEW ONLY: prediction dry-run is not wired in Phase 4.29."
+	@echo "No npm run predict, model inference, prediction write, or DB writes are executed."
+	@echo "Prediction requires l3_features, trusted model artifacts, target window policy, and explicit output/write policy."
+	@echo "Recommended next step: create a prediction runbook with match scope, artifact manifest, and no-write verification gates."
+
+data-prediction-commit: ## Blocked prediction gate. Requires CONFIRM_PREDICTION=1 but remains blocked in Phase 4.29.
+	@if [ "$(CONFIRM_PREDICTION)" != "1" ]; then \
+		echo "BLOCKED: prediction requires CONFIRM_PREDICTION=1 and is not wired in Phase 4.29."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: prediction commit is not wired in Phase 4.29."
 	@exit 1
 
 data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.
