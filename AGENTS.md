@@ -219,6 +219,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且仅使用本地 fixture 的 `make data-raw-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 - 安全占位且不训练、不预测、不写 DB 的 `make data-training-dry-run`
 - 安全占位且不训练、不预测、不写 DB 的 `make data-prediction-dry-run`
+- 用户明确授权且只读 DB 的 `make data-training-feature-dry-run MATCH_ID=<id>`
 
 AI / Codex 不能直接执行：
 
@@ -248,6 +249,9 @@ AI / Codex 不能直接执行：
 - `make data-training-commit CONFIRM_TRAINING=1`
 - `make data-prediction-commit`
 - `make data-prediction-commit CONFIRM_PREDICTION=1`
+- `make data-training-feature-commit`
+- `make data-training-feature-commit CONFIRM_TRAINING_FEATURE=1`
+- `node scripts/ops/match_features_training_local_write_gate.js --commit`
 - `make data-l3-write-commit`
 - `make data-l3-write-commit CONFIRM_L3_WRITE=1`
 - `node scripts/ops/l3_features_local_write_gate.js --commit`
@@ -281,6 +285,20 @@ L3 本地 dry-run 预检背景见：`docs/_reports/L3_RAW_FIXTURE_PREFLIGHT_PHAS
 - 不访问外网
 
 Phase 4.29 中 `make data-training-commit` 和 `make data-prediction-commit` 仍是 blocked / not wired，即使提供 `CONFIRM_TRAINING=1` 或 `CONFIRM_PREDICTION=1` 也不得执行训练、预测或写库。相关背景见：`docs/_reports/L3_FEATURES_SINGLE_INSERT_PHASE4_28.md`、`docs/_reports/L3_FEATURES_LOCAL_WRITE_GATE_PHASE4_26.md` 和 `docs/_reports/L3_FEATURES_WRITE_GATE_PREFLIGHT_PHASE4_24.md`
+
+执行 `make data-training-feature-dry-run MATCH_ID=<id>` 的前提：
+
+- 用户明确授权
+- 只读查询本地 DB
+- 不训练模型
+- 不执行预测
+- 不加载或生成模型 artifact
+- 不写 `match_features_training`
+- 不写 `predictions`
+- 不写 DB
+- 不访问外网
+
+Phase 4.30 中 `make data-training-feature-commit`、`make data-training-feature-commit CONFIRM_TRAINING_FEATURE=1` 和 `node scripts/ops/match_features_training_local_write_gate.js --commit` 仍是 blocked / not wired。禁止直接或间接执行 `npm run train`、`npm run predict`、`npm run model:train`、`npm run model:predict` 或任何写 `match_features_training` / `predictions` 的命令来替代该门禁。相关背景见：`docs/_reports/TRAINING_PREDICTION_PREFLIGHT_PHASE4_29.md` 和 `docs/_reports/L3_FEATURES_SINGLE_INSERT_PHASE4_28.md`
 
 执行 `make data-l3-write-dry-run` 的前提：
 
