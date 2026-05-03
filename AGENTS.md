@@ -233,6 +233,8 @@ AI / Codex 不能直接执行：
 - `scripts/ops/l3_stitch_pipeline.js`
 - `scripts/ops/l3_stitch_worker.js`
 - `npm run elo:recalc`
+- `make data-l3-commit`
+- `make data-l3-commit CONFIRM_L3_COMMIT=1`
 - `make data-raw-commit`
 - `node scripts/ops/raw_match_data_local_ingest.js --commit`
 - 任何 `--commit` 命令
@@ -247,6 +249,8 @@ AI / Codex 不能直接执行：
 - 不访问外网
 
 L3 本地 dry-run 预检背景见：`docs/_reports/L3_RAW_FIXTURE_PREFLIGHT_PHASE4_18.md`
+
+Phase 4.24 中 `make data-l3-commit` 仍是 blocked / not wired。禁止直接或间接执行 `npm run smelt`、`npm run l3:stitch`、`scripts/ops/smelt_all.js`、`scripts/ops/l3_stitch_pipeline.js`、`scripts/ops/l3_stitch_worker.js`、`npm run elo:recalc` 来替代该门禁。相关背景见：`docs/_reports/L3_RAW_FIXTURE_PREFLIGHT_PHASE4_18.md`、`docs/_reports/L3_LOCAL_DRY_RUN_GATE_PHASE4_19.md` 和 `docs/_reports/RAW_MATCH_DATA_SINGLE_INSERT_PHASE4_23.md`
 
 执行 `make data-raw-dry-run` 的前提：
 
