@@ -15,6 +15,7 @@
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-finished-csv-dry-run data-finished-csv-commit \
+        data-finished-backfill-dry-run data-finished-backfill-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
 
@@ -249,8 +250,11 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-dataset-status"
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
+	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id>"
+	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id> FIXTURE=<path>"
 	@echo ""
 	@echo "Requires explicit authorization:"
+	@echo "  make data-finished-backfill-commit MATCH_ID=<id> CONFIRM_FINISHED_BACKFILL=1  # blocked in Phase 4.40"
 	@echo "  make data-finished-csv-commit SAMPLE_CSV=<path> CONFIRM_FINISHED_CSV_COMMIT=1  # blocked in Phase 4.38"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
@@ -426,6 +430,27 @@ data-finished-csv-commit: ## Blocked finished CSV commit gate. Requires SAMPLE_C
 		exit 1; \
 	fi
 	@echo "BLOCKED: finished CSV commit is not wired in Phase 4.38."
+	@exit 1
+
+data-finished-backfill-dry-run: ## Run finished match raw/L3/training backfill preflight. Requires MATCH_ID.
+	@if [ -z "$(MATCH_ID)" ]; then \
+		echo "ERROR: provide MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Running safe finished match backfill preflight: MATCH_ID=$(MATCH_ID)"
+	@if [ -n "$(FIXTURE)" ]; then \
+		$(COMPOSE_DEV) exec -T dev test -f "$(FIXTURE)"; \
+		$(COMPOSE_DEV) exec -T dev node scripts/ops/finished_match_backfill_preflight.js --match-id "$(MATCH_ID)" --fixture "$(FIXTURE)"; \
+	else \
+		$(COMPOSE_DEV) exec -T dev node scripts/ops/finished_match_backfill_preflight.js --match-id "$(MATCH_ID)"; \
+	fi
+
+data-finished-backfill-commit: ## Blocked finished match backfill gate. Requires MATCH_ID, CONFIRM_FINISHED_BACKFILL=1.
+	@if [ "$(CONFIRM_FINISHED_BACKFILL)" != "1" ]; then \
+		echo "BLOCKED: finished match backfill requires CONFIRM_FINISHED_BACKFILL=1 and is not wired in Phase 4.40."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: finished match backfill commit is not wired in Phase 4.40."
 	@exit 1
 
 data-raw-dry-run: ## Run safe local raw_match_data ingest dry-run. Requires SAMPLE_RAW and MATCH_ID.

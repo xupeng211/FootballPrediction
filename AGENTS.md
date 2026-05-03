@@ -224,6 +224,7 @@ AI / Codex 默认只能执行：
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-dataset-status`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
+- 用户明确授权、只读 DB 且只读本地 fixture 的 `make data-finished-backfill-dry-run MATCH_ID=<id>`
 
 AI / Codex 不能直接执行：
 
@@ -264,6 +265,9 @@ AI / Codex 不能直接执行：
 - `make data-finished-csv-commit`
 - `make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1`
 - `node scripts/ops/finished_csv_local_dry_run.js --commit`
+- `make data-finished-backfill-commit`
+- `make data-finished-backfill-commit CONFIRM_FINISHED_BACKFILL=1`
+- `node scripts/ops/finished_match_backfill_preflight.js --commit`
 - `csv_bulk_loader --commit`
 - 任何 finished CSV 直接写 DB 的命令
 - `make data-l3-write-commit`
@@ -351,6 +355,23 @@ Phase 4.36 中 `make data-training-dataset-export` 和 `make data-training-datas
 - 不导出数据集或大文件
 
 Phase 4.38 中 `make data-finished-csv-commit`、`make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1` 和 `node scripts/ops/finished_csv_local_dry_run.js --commit` 仍是 blocked / not wired。finished CSV import 必须先 dry-run；label mapping 必须在报告中确认；scheduled / unlabeled rows 不可作为训练样本；外部 CSV 下载仍禁止，公开数据源也必须先人工确认许可和用途。相关背景见：`docs/_reports/FINISHED_MATCH_SOURCE_AUDIT_PHASE4_37.md`、`docs/_reports/DATASET_STATUS_AUDIT_GATE_PHASE4_36.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
+
+执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
+
+- 用户明确授权
+- 入口只做 SELECT-only DB 审计和本地 fixture 只读检查
+- 不写 DB
+- 不执行 raw ingest
+- 不写 `l3_features`
+- 不写 `match_features_training`
+- 不写 `predictions`
+- 不训练模型
+- 不执行预测
+- 不加载模型 artifact
+- 不访问外网
+- 不导出数据集或大文件
+
+Phase 4.40 中 `make data-finished-backfill-commit`、`make data-finished-backfill-commit CONFIRM_FINISHED_BACKFILL=1` 和 `node scripts/ops/finished_match_backfill_preflight.js --commit` 仍是 blocked / not wired。finished match backfill 必须按 `raw_match_data -> l3_features -> match_features_training -> predictions` 顺序推进；没有匹配 raw fixture 时不得伪造 `raw_match_data`；不得把相似 fixture 冒充目标比赛；scheduled / baseline sample 不可混入真实训练；任何真实 write 前必须单独授权并完成 pg_dump。相关背景见：`docs/_reports/FINISHED_CSV_SINGLE_MATCH_INSERT_PHASE4_39.md`、`docs/_reports/FINISHED_CSV_DRY_RUN_GATE_PHASE4_38.md` 和 `docs/_reports/DATASET_STATUS_AUDIT_GATE_PHASE4_36.md`
 
 执行 `make data-l3-write-dry-run` 的前提：
 
