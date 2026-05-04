@@ -223,6 +223,8 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读 DB 的 `make data-prediction-write-dry-run MATCH_ID=<id>`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-dataset-status`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
+- 用户明确授权且只读本地 source manifest、不写 DB、不训练、不预测的 `make data-real-source-audit SOURCE_MANIFEST=<local json>`
+- 用户明确授权且只读本地 source manifest + 本地 CSV、不写 DB、不训练、不预测的 `make data-real-finished-csv-dry-run SOURCE_MANIFEST=<local json> SAMPLE_CSV=<local csv>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
 - 用户明确授权、只读 DB 且只读本地 fixture 的 `make data-finished-backfill-dry-run MATCH_ID=<id>`
 - 用户明确授权、只读 DB 且只读本地 JSON 的 `make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<local json>`
@@ -263,6 +265,9 @@ AI / Codex 不能直接执行：
 - `node scripts/ops/prediction_local_write_gate.js --commit`
 - `make data-training-dataset-export`
 - `make data-training-dataset-export CONFIRM_DATASET_EXPORT=1`
+- `make data-real-finished-csv-commit`
+- `make data-real-finished-csv-commit CONFIRM_REAL_CSV_COMMIT=1`
+- `node scripts/ops/real_finished_csv_staging_dry_run.js --commit`
 - `make data-finished-csv-commit`
 - `make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1`
 - `node scripts/ops/finished_csv_local_dry_run.js --commit`
@@ -359,6 +364,36 @@ Phase 4.36 中 `make data-training-dataset-export` 和 `make data-training-datas
 - 不导出数据集或大文件
 
 Phase 4.38 中 `make data-finished-csv-commit`、`make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1` 和 `node scripts/ops/finished_csv_local_dry_run.js --commit` 仍是 blocked / not wired。finished CSV import 必须先 dry-run；label mapping 必须在报告中确认；scheduled / unlabeled rows 不可作为训练样本；外部 CSV 下载仍禁止，公开数据源也必须先人工确认许可和用途。相关背景见：`docs/_reports/FINISHED_MATCH_SOURCE_AUDIT_PHASE4_37.md`、`docs/_reports/DATASET_STATUS_AUDIT_GATE_PHASE4_36.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
+
+执行 `make data-real-source-audit SOURCE_MANIFEST=<local json>` 的前提：
+
+- 用户明确授权
+- source manifest 是本地文件
+- 入口只做 manifest 完整性和 provenance 只读检查
+- 不写 DB
+- 不训练模型
+- 不执行预测
+- 不访问外部足球数据源
+- 不导出数据
+
+执行 `make data-real-finished-csv-dry-run SOURCE_MANIFEST=<local json> SAMPLE_CSV=<local csv>` 的前提：
+
+- 用户明确授权
+- source manifest 和 CSV 都是本地文件
+- 入口只做 manifest + CSV 只读解析
+- DB duplicate check 仅允许 SELECT-only
+- 不写 DB
+- 不训练模型
+- 不执行预测
+- 不加载 model artifact
+- 不下载外部数据
+- 不访问外部足球数据源
+- finished score / `actual_result` 只能做 label
+- post-match stats 不得作为赛前 feature
+- synthetic rows 不得混入真实训练
+- `predictions` 表不得反哺训练
+
+Phase 4.52 中 `make data-real-finished-csv-commit`、`make data-real-finished-csv-commit CONFIRM_REAL_CSV_COMMIT=1` 和 `node scripts/ops/real_finished_csv_staging_dry_run.js --commit` 仍是 blocked / not wired。没有完整 source manifest，不得 dry-run；没有 license / provenance，不得 commit；真实写库前必须 `pg_dump` + 小批量授权。相关背景见：`docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md`、`docs/_reports/SYNTHETIC_CHAIN_CLOSURE_PHASE4_50.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
 
 真实 finished match 数据源接入前置规则：
 

@@ -1,0 +1,33 @@
+{
+    "source_name": "local_sample_history",
+    "source_type": "local_staging_csv",
+    "source_url": "local:data/mock/sample_history.csv",
+    "license_url": "local",
+    "terms_url": "local",
+    "license_type": "local_fixture_for_dry_run_only",
+    "allowed_use": "dry_run_gate_validation_only",
+    "attribution_required": false,
+    "commercial_use_allowed": false,
+    "redistribution_allowed": false,
+    "data_owner": "project_local_fixture",
+    "downloaded_by": "not_applicable_local_fixture",
+    "downloaded_at": "not_applicable_local_fixture",
+    "original_filename": "data/mock/sample_history.csv",
+    "sha256": "6cdb9e6a2df94c2c6bd8dc718f26e95fbb431526a54e659ee6fb24b2ae98d5ea",
+    "row_count": 4,
+    "competition_coverage": "local sample only",
+    "season_coverage": "mixed local sample",
+    "field_dictionary": {
+        "date": ["date", "Date", "match_date"],
+        "home_team": ["home_team", "HomeTeam", "home"],
+        "away_team": ["away_team", "AwayTeam", "away"],
+        "home_score": ["home_score", "FTHG", "home_goals"],
+        "away_score": ["away_score", "FTAG", "away_goals"],
+        "result": ["actual_result", "FTR", "result"],
+        "league": ["league_name", "league", "Div"],
+        "season": ["season"]
+    },
+    "mapping_version": "PHASE4.52_REAL_CSV_DRY_RUN",
+    "approval_status": "dry_run_only",
+    "human_approval_note": "Local fixture manifest for validating real finished CSV staging dry-run gate only. Do not treat as externally licensed production data."
+}

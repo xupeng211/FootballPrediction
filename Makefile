@@ -14,6 +14,7 @@
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
+        data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
         data-raw-fixture-dry-run data-raw-fixture-commit \
@@ -253,6 +254,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-prediction-write-dry-run MATCH_ID=<id>"
 	@echo "  make data-dataset-status"
 	@echo "  make data-training-dataset-dry-run"
+	@echo "  make data-real-source-audit SOURCE_MANIFEST=<path>"
+	@echo "  make data-real-finished-csv-dry-run SOURCE_MANIFEST=<path> SAMPLE_CSV=<path>"
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id> FIXTURE=<path>"
@@ -269,6 +272,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-synthetic-training-feature-commit MATCH_ID=<id> CONFIRM_SYNTHETIC_TRAINING_FEATURE=1  # blocked in Phase 4.46"
 	@echo "  make data-synthetic-prediction-commit MATCH_ID=<id> CONFIRM_SYNTHETIC_PREDICTION=1  # blocked in Phase 4.48"
 	@echo "  make data-finished-csv-commit SAMPLE_CSV=<path> CONFIRM_FINISHED_CSV_COMMIT=1  # blocked in Phase 4.38"
+	@echo "  make data-real-finished-csv-commit SOURCE_MANIFEST=<path> SAMPLE_CSV=<path> CONFIRM_REAL_CSV_COMMIT=1  # blocked in Phase 4.52"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
@@ -458,6 +462,33 @@ data-training-dataset-export: ## Blocked dataset export gate. Remains not wired 
 		exit 1; \
 	fi
 	@echo "BLOCKED: dataset export is not wired in Phase 4.36."
+	@exit 1
+
+data-real-source-audit: ## Run local source manifest audit for real finished CSV staging. Requires SOURCE_MANIFEST.
+	@if [ -z "$(SOURCE_MANIFEST)" ]; then \
+		echo "ERROR: provide SOURCE_MANIFEST=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running safe real source manifest audit: SOURCE_MANIFEST=$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/real_finished_csv_staging_dry_run.js --source-manifest "$(SOURCE_MANIFEST)" --audit-source
+
+data-real-finished-csv-dry-run: ## Run local real finished CSV staging dry-run. Requires SOURCE_MANIFEST and SAMPLE_CSV.
+	@if [ -z "$(SOURCE_MANIFEST)" ] || [ -z "$(SAMPLE_CSV)" ]; then \
+		echo "ERROR: provide SOURCE_MANIFEST=<path> and SAMPLE_CSV=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running safe real finished CSV staging dry-run: SOURCE_MANIFEST=$(SOURCE_MANIFEST), SAMPLE_CSV=$(SAMPLE_CSV)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SAMPLE_CSV)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/real_finished_csv_staging_dry_run.js --source-manifest "$(SOURCE_MANIFEST)" --sample-csv "$(SAMPLE_CSV)"
+
+data-real-finished-csv-commit: ## Blocked real finished CSV commit gate. Requires SOURCE_MANIFEST, SAMPLE_CSV, CONFIRM_REAL_CSV_COMMIT=1.
+	@if [ "$(CONFIRM_REAL_CSV_COMMIT)" != "1" ]; then \
+		echo "BLOCKED: real finished CSV commit requires CONFIRM_REAL_CSV_COMMIT=1 and is not wired in Phase 4.52."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: real finished CSV commit is not wired in Phase 4.52."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
