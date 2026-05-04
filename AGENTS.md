@@ -469,6 +469,31 @@ AI / Codex 禁止执行：
 
 synthetic training feature preview 只能用于工程验证，不可用于真实训练，不可进入 production，也不能被当作真实训练数据。任何真实 `match_features_training` 写入前必须有单独授权、pg_dump 备份和写入前后统计。相关背景见：`docs/_reports/SYNTHETIC_L3_FEATURES_SINGLE_INSERT_PHASE4_45.md`、`docs/_reports/SYNTHETIC_L3_PREFLIGHT_PHASE4_44.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
 
+执行 `make data-synthetic-prediction-dry-run MATCH_ID=<id>` 的前提：
+
+- 用户明确授权
+- 只读 DB
+- 输入 `match_features_training` 必须明确标记 `synthetic=true`、`engineering_test_only=true`、`not_for_training=true`
+- 不写 DB
+- 不写 `predictions`
+- 不训练模型
+- 不执行真实预测
+- 不加载 model artifact
+- 不访问外网
+
+AI / Codex 禁止执行：
+
+- `make data-synthetic-prediction-commit`
+- `make data-synthetic-prediction-commit CONFIRM_SYNTHETIC_PREDICTION=1`
+- `node scripts/ops/synthetic_prediction_preflight.js --commit`
+- `node scripts/ops/prediction_local_write_gate.js --commit`
+- `npm run predict`
+- `npm run predict:dry`
+- `npm run predict:json`
+- `npm run train`
+
+synthetic prediction preview 只能用于工程验证，不是真实模型输出，不可进入 production，也不能被当作真实预测。真实 `predictions` 写入前必须有单独授权、pg_dump 备份和写入前后统计。相关背景见：`docs/_reports/SYNTHETIC_TRAINING_FEATURE_SINGLE_INSERT_PHASE4_47.md`、`docs/_reports/SYNTHETIC_TRAINING_FEATURE_PREFLIGHT_PHASE4_46.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
+
 执行 `make data-l3-write-dry-run` 的前提：
 
 - 用户明确授权
