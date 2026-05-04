@@ -155,25 +155,25 @@ Python 脚本同理：
 
 ### 5.1 L1 / L2 / L3
 
-| 能力 | 推荐入口 | 实际目标 |
-|------|----------|----------|
-| L1 种子 | `<compose> -f docker-compose.dev.yml exec dev npm run seed` | `scripts/ops/seed_fixtures.js` |
-| L1 发现 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js` | `scripts/ops/titan_discovery.js` |
-| L2 生产收割 | `<compose> -f docker-compose.dev.yml exec dev npm start` | `scripts/ops/run_production.js` |
-| 全自动总攻编排 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:total-war -- --season <season>` | `scripts/ops/total_war_pipeline.js` |
-| 专项赔率收割 | `<compose> -f docker-compose.dev.yml exec dev npm run odds:harvest -- --season <season>` | `scripts/ops/odds_harvest_pipeline.js` |
-| 定向 L3 缝合 | `<compose> -f docker-compose.dev.yml exec dev npm run l3:stitch` | `scripts/ops/l3_stitch_pipeline.js` |
-| L3 熔炼 | `<compose> -f docker-compose.dev.yml exec dev npm run smelt` | `scripts/ops/smelt_all.js` |
+| 能力           | 推荐入口                                                                                    | 实际目标                               |
+| -------------- | ------------------------------------------------------------------------------------------- | -------------------------------------- |
+| L1 种子        | `<compose> -f docker-compose.dev.yml exec dev npm run seed`                                 | `scripts/ops/seed_fixtures.js`         |
+| L1 发现        | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_discovery.js`          | `scripts/ops/titan_discovery.js`       |
+| L2 生产收割    | `<compose> -f docker-compose.dev.yml exec dev npm start`                                    | `scripts/ops/run_production.js`        |
+| 全自动总攻编排 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:total-war -- --season <season>` | `scripts/ops/total_war_pipeline.js`    |
+| 专项赔率收割   | `<compose> -f docker-compose.dev.yml exec dev npm run odds:harvest -- --season <season>`    | `scripts/ops/odds_harvest_pipeline.js` |
+| 定向 L3 缝合   | `<compose> -f docker-compose.dev.yml exec dev npm run l3:stitch`                            | `scripts/ops/l3_stitch_pipeline.js`    |
+| L3 熔炼        | `<compose> -f docker-compose.dev.yml exec dev npm run smelt`                                | `scripts/ops/smelt_all.js`             |
 
 ### 5.2 Recon / Backfill / Monitor
 
-| 能力 | 推荐入口 | 实际目标 |
-|------|----------|----------|
-| Recon 扫描（唯一入口） | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/recon_scanner.js --season <season> --league <league>` | `scripts/ops/recon_scanner.js` |
-| 回填 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/gold_pilot_50.js` | `scripts/ops/gold_pilot_50.js` |
-| 长时运行 | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_marathon.js` | `scripts/ops/titan_marathon.js` |
-| 监控检查 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:check` | `scripts/ops/check_health.js` |
-| 哨兵监控 | `<compose> -f docker-compose.dev.yml exec dev npm run titan:watch` | `scripts/ops/sentinel_watch.js` |
+| 能力                   | 推荐入口                                                                                                             | 实际目标                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Recon 扫描（唯一入口） | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/recon_scanner.js --season <season> --league <league>` | `scripts/ops/recon_scanner.js`  |
+| 回填                   | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/gold_pilot_50.js`                                     | `scripts/ops/gold_pilot_50.js`  |
+| 长时运行               | `<compose> -f docker-compose.dev.yml exec dev node scripts/ops/titan_marathon.js`                                    | `scripts/ops/titan_marathon.js` |
+| 监控检查               | `<compose> -f docker-compose.dev.yml exec dev npm run titan:check`                                                   | `scripts/ops/check_health.js`   |
+| 哨兵监控               | `<compose> -f docker-compose.dev.yml exec dev npm run titan:watch`                                                   | `scripts/ops/sentinel_watch.js` |
 
 Recon 运行补充约定：
 
@@ -196,11 +196,11 @@ Recon 运行补充约定：
 
 ### 5.3 ML / ELO
 
-| 能力 | 推荐入口 | 实际目标 |
-|------|----------|----------|
-| 训练模型 | `npm run train` | 宿主机调用后进入容器执行 `scripts/ops/train_model.py` |
-| 生成预测 | `npm run predict` | 宿主机调用后进入容器执行 `scripts/ops/predict_pipeline.py` |
-| ELO 重算 | `<compose> -f docker-compose.dev.yml exec dev npm run elo:recalc` | `scripts/maintenance/recalculate_elo.js` |
+| 能力     | 推荐入口                                                          | 实际目标                                                   |
+| -------- | ----------------------------------------------------------------- | ---------------------------------------------------------- |
+| 训练模型 | `npm run train`                                                   | 宿主机调用后进入容器执行 `scripts/ops/train_model.py`      |
+| 生成预测 | `npm run predict`                                                 | 宿主机调用后进入容器执行 `scripts/ops/predict_pipeline.py` |
+| ELO 重算 | `<compose> -f docker-compose.dev.yml exec dev npm run elo:recalc` | `scripts/maintenance/recalculate_elo.js`                   |
 
 ### 5.4 数据入口安全门禁
 
@@ -359,6 +359,40 @@ Phase 4.36 中 `make data-training-dataset-export` 和 `make data-training-datas
 - 不导出数据集或大文件
 
 Phase 4.38 中 `make data-finished-csv-commit`、`make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1` 和 `node scripts/ops/finished_csv_local_dry_run.js --commit` 仍是 blocked / not wired。finished CSV import 必须先 dry-run；label mapping 必须在报告中确认；scheduled / unlabeled rows 不可作为训练样本；外部 CSV 下载仍禁止，公开数据源也必须先人工确认许可和用途。相关背景见：`docs/_reports/FINISHED_MATCH_SOURCE_AUDIT_PHASE4_37.md`、`docs/_reports/DATASET_STATUS_AUDIT_GATE_PHASE4_36.md` 和 `docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`
+
+真实 finished match 数据源接入前置规则：
+
+AI / Codex 默认禁止：
+
+- 直接下载外部足球数据
+- 对外部数据源执行 `curl` / `wget` / `git clone`
+- scraping / browser automation / harvest
+- 导入无 license / provenance 的数据
+- 写入真实数据
+- 把 synthetic 数据用于真实训练
+- 把 post-match stats 当作赛前 features
+- 把 `predictions` 反哺训练
+
+AI / Codex 允许：
+
+- 本地只读审计
+- 用户已提供本地文件的 dry-run
+- source manifest 完整性检查
+- schema mapping preview
+- duplicate / label readiness preview
+
+真实数据写入必须满足：
+
+- 用户单独授权
+- source manifest 完整
+- license / terms 已人工确认
+- dry-run 报告通过
+- `pg_dump` 备份
+- 小批量优先
+- commit gate 显式授权
+- 不训练、不预测，除非另行授权
+
+没有 license / terms 结论前，不得导入；没有 provenance metadata，不得导入；外部下载必须单独授权；写库必须单独授权并完成备份。Phase 4.51 后应停止继续堆 synthetic 数据，下一步转向真实 finished match source / license / provenance / schema mapping 和 local staging dry-run。相关背景见：`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md`、`docs/_reports/SYNTHETIC_CHAIN_CLOSURE_PHASE4_50.md`、`docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`、`docs/_reports/FINISHED_MATCH_SOURCE_AUDIT_PHASE4_37.md` 和 `docs/_reports/FINISHED_CSV_DRY_RUN_GATE_PHASE4_38.md`
 
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
@@ -549,19 +583,19 @@ Phase 4.9 中 `make data-schema-migrate` 即使提供确认变量也只到安全
 
 ### 6.1 业务入口
 
-| 模块 | 关键文件 |
-|------|----------|
-| L1 种子 | `src/infrastructure/services/DiscoveryService.js` |
-| L1 配置 | `src/infrastructure/services/L1ConfigManager.js` |
-| L1 发现 | `scripts/ops/titan_discovery.js` |
-| L2 收割 | `src/infrastructure/harvesters/ProductionHarvester.js` |
-| Swarm | `src/infrastructure/harvesters/SwarmHarvester.js` |
+| 模块     | 关键文件                                               |
+| -------- | ------------------------------------------------------ |
+| L1 种子  | `src/infrastructure/services/DiscoveryService.js`      |
+| L1 配置  | `src/infrastructure/services/L1ConfigManager.js`       |
+| L1 发现  | `scripts/ops/titan_discovery.js`                       |
+| L2 收割  | `src/infrastructure/harvesters/ProductionHarvester.js` |
+| Swarm    | `src/infrastructure/harvesters/SwarmHarvester.js`      |
 | Backfill | `src/infrastructure/harvesters/OddsPortalHarvester.js` |
-| Recon | `src/infrastructure/recon/` |
-| L3 熔炼 | `src/feature_engine/smelter/FeatureSmelter.js` |
-| 预测 | `src/ml/inference/predictor.py` |
-| H2H 补位 | `src/ml/feature_engine/h2h_estimator.py` |
-| 哨兵 | `src/infrastructure/monitoring/` |
+| Recon    | `src/infrastructure/recon/`                            |
+| L3 熔炼  | `src/feature_engine/smelter/FeatureSmelter.js`         |
+| 预测     | `src/ml/inference/predictor.py`                        |
+| H2H 补位 | `src/ml/feature_engine/h2h_estimator.py`               |
+| 哨兵     | `src/infrastructure/monitoring/`                       |
 
 ### 6.2 配置唯一源
 
@@ -633,16 +667,16 @@ make dev-ps
 
 ### 8.1 主要数据表
 
-| 表名 | 用途 |
-|------|------|
-| `matches` | L1 比赛基础信息 |
-| `raw_match_data` | L2 原始数据 |
-| `l2_match_data` | L2 结构化数据 |
-| `l3_features` | L3 特征数据 |
-| `predictions` | 预测结果 |
-| `team_elo_ratings` | Elo 评分 |
-| `backfill_progress` | 回填进度 |
-| `recon_standings` | Recon 标准化结果 |
+| 表名                | 用途             |
+| ------------------- | ---------------- |
+| `matches`           | L1 比赛基础信息  |
+| `raw_match_data`    | L2 原始数据      |
+| `l2_match_data`     | L2 结构化数据    |
+| `l3_features`       | L3 特征数据      |
+| `predictions`       | 预测结果         |
+| `team_elo_ratings`  | Elo 评分         |
+| `backfill_progress` | 回填进度         |
+| `recon_standings`   | Recon 标准化结果 |
 
 ### 8.2 数据侧工作原则
 
