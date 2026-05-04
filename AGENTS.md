@@ -429,6 +429,50 @@ AI / Codex 允许：
 
 没有 license / terms 结论前，不得导入；没有 provenance metadata，不得导入；外部下载必须单独授权；写库必须单独授权并完成备份。Phase 4.51 后应停止继续堆 synthetic 数据，下一步转向真实 finished match source / license / provenance / schema mapping 和 local staging dry-run。相关背景见：`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md`、`docs/_reports/SYNTHETIC_CHAIN_CLOSURE_PHASE4_50.md`、`docs/_reports/MULTISAMPLE_TRAINING_STRATEGY_PHASE4_35.md`、`docs/_reports/FINISHED_MATCH_SOURCE_AUDIT_PHASE4_37.md` 和 `docs/_reports/FINISHED_CSV_DRY_RUN_GATE_PHASE4_38.md`
 
+真实数据 acquisition engine 前置规则：
+
+AI / Codex 默认禁止：
+
+- `node scripts/ops/run_production.js`
+- `node scripts/ops/titan_discovery.js`
+- `node scripts/ops/recon_scanner.js --season ...`
+- `node scripts/ops/batch_historical_backfill.js`
+- `node scripts/ops/fetch_and_adapt_euro_leagues.js`
+- `node scripts/ops/local_dom_ingestor.js --commit`
+- `node scripts/ops/csv_bulk_loader.js --commit`
+- `npm start`
+- `make dev-harvest`
+- `make data-harvest`
+- `make data-network-dry-run`
+- odds harvest / total war / marathon / bulk harvest 入口
+- 任何会访问外部足球数据源的命令
+- 任何会写 DB 的 acquisition / ingest command
+- 任何会批量抓取的命令
+- 任何没有 source manifest 的真实数据接入
+
+AI / Codex 允许：
+
+- 只读扫描源码、文档、Makefile 和 package scripts
+- 已有 local staging CSV dry-run
+- source manifest audit
+- 不访问外网的 preflight gate
+
+未来 network dry-run 必须满足：
+
+- 用户单独授权
+- 目标 source 明确
+- 目标范围极小，例如单场 match_id 或 very small date window
+- source manifest draft 存在
+- 不写 DB
+- 不批量
+- 不训练
+- 不预测
+- 不绕过 ToS / login / paywall / anti-bot
+- 输出 local staging 文件、hash、timestamp、source_url、engine_version 和 provenance
+- 后续入库必须另行授权并完成 `pg_dump`
+
+Phase 4.53A 后，项目真实数据应先进入 `target source -> acquisition network dry-run -> local staging -> source manifest -> dry-run gate` 链路，不得走 `target source -> bulk harvest -> DB commit -> training` 直通链路。相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md`、`docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md` 和 `docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE4_2.md`
+
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
 - 用户明确授权
