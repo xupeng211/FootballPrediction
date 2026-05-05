@@ -558,6 +558,16 @@ Phase 4.58C titan discovery rules：
 - 任何 titan discovery network dry-run 都必须单独授权；不得把 legacy discovery runtime 直接接到 DB / staging / training。
 - 当前只允许通过 acquisition registry / gate 检查 `titan_discovery` 的 readiness，不允许直接复用其 legacy runtime。
 
+Phase 4.59C odds harvest rules：
+
+- `odds_harvest_pipeline` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
+- Codex 不得直接运行 `node scripts/ops/odds_harvest_pipeline.js`、`npm run odds:harvest` 或任何 odds harvest / bulk odds pipeline。
+- 当前 `odds_harvest_pipeline` dry-run trust 不足，不能被当作安全 dry-run 使用。
+- 未来如要使用 odds harvest 能力，必须先抽取成 single-target odds acquisition adapter，并先具备本地 `source manifest`、单场或极小 date window、以及人工确认的 license / terms / ToS。
+- 任何 odds network dry-run 都必须单独授权；不得绕过 login / paywall / anti-bot / rate limit；不得把 legacy odds runtime 直接接到 DB / training。
+- 赔率必须带 `captured_at`、`bookmaker`、`market`、`source_url` 和 provenance；closing odds / post-match odds 不能冒充赛前赔率。
+- 当前只允许通过 acquisition registry / gate 检查 `odds_harvest_pipeline` 的 readiness，不允许直接复用其 legacy runtime。
+
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
 - 用户明确授权

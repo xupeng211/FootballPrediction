@@ -329,15 +329,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Playwright and fetch based OddsPortal pipeline with DB upserts and optional downstream L3 work.",
+            "notes": "Legacy odds_harvest_pipeline may access external OddsPortal odds sources, launch Playwright browser automation, use fetch/proxy-adjacent recon code, query Postgres, upsert odds/mapping rows, and trigger downstream L3. Current dry-run trust is insufficient, bulk harvest is possible, and odds without captured_at/bookmaker/market provenance can create training leakage risk.",
             "owner": "data-governance",
             "status": "adapter_candidate",
             "intended_layer": "layer_3_single_target_acquisition",
-            "replacement_plan": "Refactor into a single-target odds adapter after manifest binding, no-db dry-run support, and source isolation are in place.",
+            "replacement_plan": "Do not directly reuse the legacy odds_harvest_pipeline runtime. Extract a Layer 3 single-target odds acquisition adapter only after source manifest support, strict target scope, bookmaker/market/captured_at/source_url/sha256/provenance capture, no-db dry-run tests, and source isolation are in place; any future network dry-run remains separately authorized, and any later DB write requires separate authorization plus pg_dump.",
             "deprecation_status": "watch",
             "canonical_entrypoint": false,
             "allowed_next_phase": "requires_future_network_dry_run_authorization",
-            "test_coverage": "needs_unit_tests"
+            "test_coverage": "gate_covered"
         },
         {
             "id": "total_war_pipeline",
