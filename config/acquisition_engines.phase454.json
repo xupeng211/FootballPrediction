@@ -300,15 +300,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Always downloads external CSV and writes adapted output. No safe no-network mode exists.",
+            "notes": "Legacy football-data downloader always fetches external CSV, reads DB for alignment, and writes adapted output. No safe no-network mode exists.",
             "owner": "data-governance",
             "status": "adapter_candidate",
             "intended_layer": "layer_3_single_target_acquisition",
-            "replacement_plan": "Refactor into a manifest-bound single-target adapter with explicit local staging output and no-network/no-db tests.",
+            "replacement_plan": "Do not directly reuse the legacy downloader runtime. Extract a source-specific adapter only after source manifest, license review, and local staging dry-run are in place; any future network dry-run remains separately authorized.",
             "deprecation_status": "watch",
             "canonical_entrypoint": false,
             "allowed_next_phase": "requires_future_network_dry_run_authorization",
-            "test_coverage": "needs_unit_tests"
+            "test_coverage": "gate_covered"
         },
         {
             "id": "odds_harvest_pipeline",
