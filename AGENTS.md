@@ -223,6 +223,8 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读 DB 的 `make data-prediction-write-dry-run MATCH_ID=<id>`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-dataset-status`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
+- 不访问外网、不写 DB 的 `make data-acquisition-engines`
+- 不访问外网、不写 DB 的 `make data-acquisition-engine-audit`
 - 用户明确授权且只读本地 source manifest、不写 DB、不训练、不预测的 `make data-real-source-audit SOURCE_MANIFEST=<local json>`
 - 用户明确授权且只读本地 source manifest + 本地 CSV、不写 DB、不训练、不预测的 `make data-real-finished-csv-dry-run SOURCE_MANIFEST=<local json> SAMPLE_CSV=<local csv>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
@@ -268,6 +270,9 @@ AI / Codex 不能直接执行：
 - `make data-real-finished-csv-commit`
 - `make data-real-finished-csv-commit CONFIRM_REAL_CSV_COMMIT=1`
 - `node scripts/ops/real_finished_csv_staging_dry_run.js --commit`
+- `make data-single-target-network-commit`
+- `make data-single-target-network-commit CONFIRM_SINGLE_TARGET_NETWORK=1`
+- `node scripts/ops/acquisition_engine_gate.js --commit`
 - `make data-finished-csv-commit`
 - `make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1`
 - `node scripts/ops/finished_csv_local_dry_run.js --commit`
@@ -472,6 +477,49 @@ AI / Codex 允许：
 - 后续入库必须另行授权并完成 `pg_dump`
 
 Phase 4.53A 后，项目真实数据应先进入 `target source -> acquisition network dry-run -> local staging -> source manifest -> dry-run gate` 链路，不得走 `target source -> bulk harvest -> DB commit -> training` 直通链路。相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md`、`docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md` 和 `docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE4_2.md`
+
+Phase 4.54 acquisition registry / scaffold-only gate 规则：
+
+AI / Codex 默认允许：
+
+- `make data-acquisition-engines`
+- `make data-acquisition-engine-audit`
+
+AI / Codex 只能在用户明确授权下运行：
+
+- `make data-single-target-network-dry-run ENGINE=<engine> TARGET_MATCH_ID=<id> SOURCE_MANIFEST=<path>`
+
+但在 Phase 4.54 中，上述命令仍然只是 scaffold-only，不访问外网，不执行真实 acquisition engine。
+
+AI / Codex 默认禁止：
+
+- `make data-single-target-network-commit`
+- `make data-single-target-network-commit CONFIRM_SINGLE_TARGET_NETWORK=1`
+- `node scripts/ops/acquisition_engine_gate.js --commit`
+- `node scripts/ops/run_production.js`
+- `node scripts/ops/titan_discovery.js`
+- `node scripts/ops/recon_scanner.js --season ...`
+- `node scripts/ops/batch_historical_backfill.js`
+- `node scripts/ops/fetch_and_adapt_euro_leagues.js`
+- `node scripts/ops/odds_harvest_pipeline.js`
+- `node scripts/ops/total_war_pipeline.js`
+- `node scripts/ops/titan_marathon.js`
+- `npm start`
+- `make dev-harvest`
+- `make data-harvest`
+- `make data-network-dry-run`
+
+补充约束：
+
+- Phase 4.54 只做 registry + scaffold-only gate
+- 不允许真正访问外网
+- 不允许保存 staging
+- 不允许写 DB
+- 不允许训练
+- 不允许预测
+- 未来真正 network dry-run 必须在单独阶段、获得单独授权
+
+相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md` 和 `docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md`
 
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
