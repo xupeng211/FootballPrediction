@@ -25,6 +25,60 @@ const REQUIRED_ENGINE_FIELDS = [
     'safe_for_ai_default',
     'phase454_policy',
 ];
+const REQUIRED_GOVERNANCE_FIELDS = [
+    'owner',
+    'status',
+    'intended_layer',
+    'replacement_plan',
+    'deprecation_status',
+    'canonical_entrypoint',
+    'allowed_next_phase',
+    'test_coverage',
+];
+const ALLOWED_STATUS_VALUES = new Set([
+    'canonical',
+    'gate_only',
+    'quarantine',
+    'deprecation_candidate',
+    'adapter_candidate',
+    'legacy_blocked',
+]);
+const ALLOWED_INTENDED_LAYER_VALUES = new Set([
+    'layer_0_registry_policy',
+    'layer_1_source_manifest',
+    'layer_2_discovery',
+    'layer_3_single_target_acquisition',
+    'layer_4_local_staging_normalization',
+    'layer_5_local_staging_dry_run',
+    'layer_6_small_db_write',
+    'layer_7_feature_dry_run',
+    'layer_8_training_prediction',
+    'legacy_bulk_pipeline',
+    'legacy_production_path',
+    'unknown',
+]);
+const ALLOWED_DEPRECATION_STATUS_VALUES = new Set([
+    'not_deprecated',
+    'watch',
+    'quarantine',
+    'deprecation_candidate',
+    'deprecated_do_not_use',
+]);
+const ALLOWED_NEXT_PHASE_VALUES = new Set([
+    'allowed_read_only',
+    'requires_user_authorization',
+    'requires_future_network_dry_run_authorization',
+    'requires_future_db_write_authorization',
+    'blocked',
+    'blocked_legacy',
+]);
+const ALLOWED_TEST_COVERAGE_VALUES = new Set([
+    'unit_covered',
+    'gate_covered',
+    'needs_unit_tests',
+    'needs_integration_tests',
+    'not_covered',
+]);
 
 function runGate(args) {
     const result = spawnSync(process.execPath, [SCRIPT_PATH, ...args], {
@@ -56,7 +110,7 @@ test('acquisition_engine_gate registry JSON 可解析且包含必需字段', () 
     const registry = JSON.parse(fs.readFileSync(REGISTRY_PATH, 'utf8'));
 
     assert.equal(registry.phase, '4.54');
-    assert.equal(registry.registry_type, 'acquisition_engine_risk_registry');
+    assert.equal(registry.registry_type, 'acquisition_engine_governance_registry');
     assert.ok(Array.isArray(registry.engines));
     assert.ok(registry.engines.length >= 13);
 
@@ -64,6 +118,27 @@ test('acquisition_engine_gate registry JSON 可解析且包含必需字段', () 
         for (const field of REQUIRED_ENGINE_FIELDS) {
             assert.ok(field in engine, `missing field ${field} for engine ${engine.id}`);
         }
+        for (const field of REQUIRED_GOVERNANCE_FIELDS) {
+            assert.ok(field in engine, `missing governance field ${field} for engine ${engine.id}`);
+        }
+        assert.ok(ALLOWED_STATUS_VALUES.has(engine.status), `invalid status for ${engine.id}: ${engine.status}`);
+        assert.ok(
+            ALLOWED_INTENDED_LAYER_VALUES.has(engine.intended_layer),
+            `invalid intended_layer for ${engine.id}: ${engine.intended_layer}`
+        );
+        assert.ok(
+            ALLOWED_DEPRECATION_STATUS_VALUES.has(engine.deprecation_status),
+            `invalid deprecation_status for ${engine.id}: ${engine.deprecation_status}`
+        );
+        assert.ok(
+            ALLOWED_NEXT_PHASE_VALUES.has(engine.allowed_next_phase),
+            `invalid allowed_next_phase for ${engine.id}: ${engine.allowed_next_phase}`
+        );
+        assert.ok(
+            ALLOWED_TEST_COVERAGE_VALUES.has(engine.test_coverage),
+            `invalid test_coverage for ${engine.id}: ${engine.test_coverage}`
+        );
+        assert.equal(typeof engine.canonical_entrypoint, 'boolean');
     }
 });
 
@@ -89,9 +164,20 @@ test('acquisition_engine_gate --audit 应成功并标记高风险 engine', () =>
     assert.equal(payload.mode, 'acquisition-engine-audit');
     assert.equal(payload.registry_found, true);
     assert.equal(payload.registry_valid, true);
+    assert.equal(payload.governance_fields_complete, true);
+    assert.deepEqual(payload.missing_governance_fields, []);
     assert.ok(payload.high_risk_engines.includes('run_production'));
     assert.ok(payload.blocked_engines.includes('run_production'));
     assert.ok(payload.allowed_read_only_engines.includes('real_finished_csv_staging_dry_run'));
+    assert.ok(payload.canonical_engines.includes('real_finished_csv_staging_dry_run'));
+    assert.ok(payload.gate_only_engines.includes('csv_bulk_loader'));
+    assert.ok(payload.quarantine_engines.includes('recon_scanner'));
+    assert.ok(payload.adapter_candidate_engines.includes('titan_discovery'));
+    assert.ok(payload.legacy_blocked_engines.includes('run_production'));
+    assert.ok(payload.engines_requiring_user_authorization.includes('real_finished_csv_staging_dry_run'));
+    assert.ok(payload.engines_requiring_future_network_authorization.includes('titan_discovery'));
+    assert.ok(payload.engines_requiring_future_db_write_authorization.includes('csv_bulk_loader'));
+    assert.ok(payload.engines_needing_unit_tests.includes('csv_bulk_loader'));
     assert.deepEqual(payload.engines_missing_provenance_requirement, []);
     assertNoExecutionFlags(payload);
 });

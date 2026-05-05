@@ -531,6 +531,16 @@ Phase 4.55C acquisition architecture rules：
 - 任何 engine 进入 `allowed_read_only` 前，必须先具备 no-network / no-db tests。
 - 任何 network dry-run 都必须单独授权；任何 DB write 都必须单独授权并先完成 `pg_dump`。
 
+Phase 4.56C registry governance rules：
+
+- acquisition registry 是治理总表，不只是风险清单。
+- 任何新增 acquisition engine 必须注册到 registry，并包含 `owner`、`status`、`intended_layer`、`replacement_plan`、`deprecation_status`、`canonical_entrypoint`、`allowed_next_phase`、`test_coverage`。
+- 只有 `canonical` engine 才能作为推荐主干入口。
+- `gate_only` engine 只能通过 gate 使用；`quarantine` / `legacy_blocked` engine 禁止 Codex 直接执行。
+- `adapter_candidate` 只能作为未来重写参考，不得直接运行旧 pipeline。
+- `allowed_next_phase` 决定 Codex 是否可进入下一阶段；任何从 `blocked` 升级到可用状态都必须先补测试和报告。
+- network dry-run 仍需单独授权；DB write 仍需单独授权并完成 `pg_dump`。
+
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
 - 用户明确授权

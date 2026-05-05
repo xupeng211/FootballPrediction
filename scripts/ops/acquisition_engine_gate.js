@@ -24,6 +24,60 @@ const REQUIRED_ENGINE_FIELDS = [
     'phase454_policy',
     'notes',
 ];
+const REQUIRED_GOVERNANCE_FIELDS = [
+    'owner',
+    'status',
+    'intended_layer',
+    'replacement_plan',
+    'deprecation_status',
+    'canonical_entrypoint',
+    'allowed_next_phase',
+    'test_coverage',
+];
+const ALLOWED_STATUS_VALUES = new Set([
+    'canonical',
+    'gate_only',
+    'quarantine',
+    'deprecation_candidate',
+    'adapter_candidate',
+    'legacy_blocked',
+]);
+const ALLOWED_INTENDED_LAYER_VALUES = new Set([
+    'layer_0_registry_policy',
+    'layer_1_source_manifest',
+    'layer_2_discovery',
+    'layer_3_single_target_acquisition',
+    'layer_4_local_staging_normalization',
+    'layer_5_local_staging_dry_run',
+    'layer_6_small_db_write',
+    'layer_7_feature_dry_run',
+    'layer_8_training_prediction',
+    'legacy_bulk_pipeline',
+    'legacy_production_path',
+    'unknown',
+]);
+const ALLOWED_DEPRECATION_STATUS_VALUES = new Set([
+    'not_deprecated',
+    'watch',
+    'quarantine',
+    'deprecation_candidate',
+    'deprecated_do_not_use',
+]);
+const ALLOWED_NEXT_PHASE_VALUES = new Set([
+    'allowed_read_only',
+    'requires_user_authorization',
+    'requires_future_network_dry_run_authorization',
+    'requires_future_db_write_authorization',
+    'blocked',
+    'blocked_legacy',
+]);
+const ALLOWED_TEST_COVERAGE_VALUES = new Set([
+    'unit_covered',
+    'gate_covered',
+    'needs_unit_tests',
+    'needs_integration_tests',
+    'not_covered',
+]);
 
 function usage() {
     return [
@@ -150,23 +204,7 @@ function validateRegistry(registry) {
 
     const seenIds = new Set();
     registry.engines.forEach((engine, index) => {
-        REQUIRED_ENGINE_FIELDS.forEach(field => {
-            if (!(field in engine)) {
-                errors.push(`engine[${index}] missing field: ${field}`);
-            }
-        });
-
-        if (typeof engine.id !== 'string' || engine.id.trim() === '') {
-            errors.push(`engine[${index}] id must be a non-empty string`);
-        } else if (seenIds.has(engine.id)) {
-            errors.push(`duplicate engine id: ${engine.id}`);
-        } else {
-            seenIds.add(engine.id);
-        }
-
-        if (!Array.isArray(engine.commands) || engine.commands.length === 0) {
-            errors.push(`engine[${index}] commands must be a non-empty array`);
-        }
+        validateEngine(engine, index, seenIds, errors);
     });
 
     return {
@@ -175,8 +213,75 @@ function validateRegistry(registry) {
     };
 }
 
+function validateMissingFields(engine, index, fields, errorPrefix, errors) {
+    fields.forEach(field => {
+        if (!(field in engine)) {
+            errors.push(`engine[${index}] ${errorPrefix}: ${field}`);
+        }
+    });
+}
+
+function validateEngineId(engine, index, seenIds, errors) {
+    if (typeof engine.id !== 'string' || engine.id.trim() === '') {
+        errors.push(`engine[${index}] id must be a non-empty string`);
+        return;
+    }
+    if (seenIds.has(engine.id)) {
+        errors.push(`duplicate engine id: ${engine.id}`);
+        return;
+    }
+    seenIds.add(engine.id);
+}
+
+function validateEnumField(engine, index, fieldName, allowedValues, errors) {
+    if (fieldName in engine && !allowedValues.has(engine[fieldName])) {
+        errors.push(`engine[${index}] invalid ${fieldName}: ${engine[fieldName]}`);
+    }
+}
+
+function validateEngine(engine, index, seenIds, errors) {
+    validateMissingFields(engine, index, REQUIRED_ENGINE_FIELDS, 'missing field', errors);
+    validateMissingFields(engine, index, REQUIRED_GOVERNANCE_FIELDS, 'missing governance field', errors);
+    validateEngineId(engine, index, seenIds, errors);
+
+    if (!Array.isArray(engine.commands) || engine.commands.length === 0) {
+        errors.push(`engine[${index}] commands must be a non-empty array`);
+    }
+
+    validateEnumField(engine, index, 'status', ALLOWED_STATUS_VALUES, errors);
+    validateEnumField(engine, index, 'intended_layer', ALLOWED_INTENDED_LAYER_VALUES, errors);
+    validateEnumField(engine, index, 'deprecation_status', ALLOWED_DEPRECATION_STATUS_VALUES, errors);
+    validateEnumField(engine, index, 'allowed_next_phase', ALLOWED_NEXT_PHASE_VALUES, errors);
+    validateEnumField(engine, index, 'test_coverage', ALLOWED_TEST_COVERAGE_VALUES, errors);
+
+    if ('canonical_entrypoint' in engine && typeof engine.canonical_entrypoint !== 'boolean') {
+        errors.push(`engine[${index}] canonical_entrypoint must be boolean`);
+    }
+}
+
 function getEngines(registry) {
     return Array.isArray(registry?.engines) ? registry.engines : [];
+}
+
+function collectGovernanceFieldGaps(engines) {
+    return engines
+        .map(engine => ({
+            id: engine.id,
+            missing_fields: REQUIRED_GOVERNANCE_FIELDS.filter(field => !(field in engine)),
+        }))
+        .filter(entry => entry.missing_fields.length > 0);
+}
+
+function collectEnginesByStatus(engines, status) {
+    return engines.filter(engine => engine.status === status).map(engine => engine.id);
+}
+
+function collectEnginesByNextPhase(engines, allowedNextPhase) {
+    return engines.filter(engine => engine.allowed_next_phase === allowedNextPhase).map(engine => engine.id);
+}
+
+function collectEnginesByTestCoverage(engines, testCoverage) {
+    return engines.filter(engine => engine.test_coverage === testCoverage).map(engine => engine.id);
 }
 
 function buildListPayload(loaded) {
@@ -213,6 +318,7 @@ function buildAuditPayload(loaded) {
         .map(engine => engine.id);
     const blocked = engines.filter(engine => engine.phase454_policy === 'blocked').map(engine => engine.id);
     const missingProvenance = engines.filter(engine => engine.provenance_required !== true).map(engine => engine.id);
+    const missingGovernanceFields = collectGovernanceFieldGaps(engines);
 
     return {
         mode: 'acquisition-engine-audit',
@@ -220,9 +326,28 @@ function buildAuditPayload(loaded) {
         registry_valid: loaded.registry_valid,
         registry_path: loaded.registry_path,
         total_engines: engines.length,
+        governance_fields_required: REQUIRED_GOVERNANCE_FIELDS,
+        governance_fields_complete: missingGovernanceFields.length === 0,
+        missing_governance_fields: missingGovernanceFields,
         high_risk_engines: highRisk,
         allowed_read_only_engines: allowedReadOnly,
         blocked_engines: blocked,
+        canonical_engines: collectEnginesByStatus(engines, 'canonical'),
+        gate_only_engines: collectEnginesByStatus(engines, 'gate_only'),
+        quarantine_engines: collectEnginesByStatus(engines, 'quarantine'),
+        deprecation_candidate_engines: collectEnginesByStatus(engines, 'deprecation_candidate'),
+        adapter_candidate_engines: collectEnginesByStatus(engines, 'adapter_candidate'),
+        legacy_blocked_engines: collectEnginesByStatus(engines, 'legacy_blocked'),
+        engines_requiring_user_authorization: collectEnginesByNextPhase(engines, 'requires_user_authorization'),
+        engines_requiring_future_network_authorization: collectEnginesByNextPhase(
+            engines,
+            'requires_future_network_dry_run_authorization'
+        ),
+        engines_requiring_future_db_write_authorization: collectEnginesByNextPhase(
+            engines,
+            'requires_future_db_write_authorization'
+        ),
+        engines_needing_unit_tests: collectEnginesByTestCoverage(engines, 'needs_unit_tests'),
         engines_missing_provenance_requirement: missingProvenance,
         non_execution_confirmations: buildNonExecutionConfirmations(),
         errors: loaded.errors,
@@ -361,9 +486,22 @@ function formatAuditText(payload) {
         `registry_valid=${boolToText(payload.registry_valid)}`,
         `registry_path=${payload.registry_path}`,
         `total_engines=${payload.total_engines}`,
+        `governance_fields_required=${listToText(payload.governance_fields_required)}`,
+        `governance_fields_complete=${boolToText(payload.governance_fields_complete)}`,
+        `missing_governance_fields=${payload.missing_governance_fields.length === 0 ? 'none' : JSON.stringify(payload.missing_governance_fields)}`,
         `high_risk_engines=${listToText(payload.high_risk_engines)}`,
         `allowed_read_only_engines=${listToText(payload.allowed_read_only_engines)}`,
         `blocked_engines=${listToText(payload.blocked_engines)}`,
+        `canonical_engines=${listToText(payload.canonical_engines)}`,
+        `gate_only_engines=${listToText(payload.gate_only_engines)}`,
+        `quarantine_engines=${listToText(payload.quarantine_engines)}`,
+        `deprecation_candidate_engines=${listToText(payload.deprecation_candidate_engines)}`,
+        `adapter_candidate_engines=${listToText(payload.adapter_candidate_engines)}`,
+        `legacy_blocked_engines=${listToText(payload.legacy_blocked_engines)}`,
+        `engines_requiring_user_authorization=${listToText(payload.engines_requiring_user_authorization)}`,
+        `engines_requiring_future_network_authorization=${listToText(payload.engines_requiring_future_network_authorization)}`,
+        `engines_requiring_future_db_write_authorization=${listToText(payload.engines_requiring_future_db_write_authorization)}`,
+        `engines_needing_unit_tests=${listToText(payload.engines_needing_unit_tests)}`,
         `engines_missing_provenance_requirement=${listToText(payload.engines_missing_provenance_requirement)}`,
         'no_db_writes',
         'no_external_network',
@@ -505,4 +643,10 @@ module.exports = {
     resolveEngineRequirements,
     resolveManifestState,
     validateRegistry,
+    REQUIRED_GOVERNANCE_FIELDS,
+    ALLOWED_STATUS_VALUES,
+    ALLOWED_INTENDED_LAYER_VALUES,
+    ALLOWED_DEPRECATION_STATUS_VALUES,
+    ALLOWED_NEXT_PHASE_VALUES,
+    ALLOWED_TEST_COVERAGE_VALUES,
 };
