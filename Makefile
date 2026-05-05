@@ -14,6 +14,8 @@
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
+        data-acquisition-engines data-acquisition-engine-audit \
+        data-single-target-network-dry-run data-single-target-network-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
@@ -254,6 +256,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-prediction-write-dry-run MATCH_ID=<id>"
 	@echo "  make data-dataset-status"
 	@echo "  make data-training-dataset-dry-run"
+	@echo "  make data-acquisition-engines"
+	@echo "  make data-acquisition-engine-audit"
 	@echo "  make data-real-source-audit SOURCE_MANIFEST=<path>"
 	@echo "  make data-real-finished-csv-dry-run SOURCE_MANIFEST=<path> SAMPLE_CSV=<path>"
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
@@ -281,6 +285,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l3-write-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_L3_WRITE=1  # blocked in Phase 4.26"
 	@echo "  make data-l3-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_L3_COMMIT=1  # blocked in Phase 4.24"
 	@echo "  make data-raw-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_RAW_COMMIT=1  # blocked in Phase 4.21"
+	@echo "  make data-single-target-network-dry-run ENGINE=<engine> TARGET_MATCH_ID=<id> SOURCE_MANIFEST=<path>  # scaffold-only / blocked in Phase 4.54"
+	@echo "  make data-single-target-network-commit ENGINE=<engine> TARGET_MATCH_ID=<id> SOURCE_MANIFEST=<path> CONFIRM_SINGLE_TARGET_NETWORK=1  # blocked in Phase 4.54"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -489,6 +495,29 @@ data-real-finished-csv-commit: ## Blocked real finished CSV commit gate. Require
 		exit 1; \
 	fi
 	@echo "BLOCKED: real finished CSV commit is not wired in Phase 4.52."
+	@exit 1
+
+data-acquisition-engines: ## List acquisition engine registry entries. No network, no DB writes.
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/acquisition_engine_gate.js --list
+
+data-acquisition-engine-audit: ## Audit acquisition engine registry. No network, no DB writes.
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/acquisition_engine_gate.js --audit
+
+data-single-target-network-dry-run: ## Scaffold-only single-target network dry-run gate. Requires ENGINE, TARGET_MATCH_ID, SOURCE_MANIFEST.
+	@if [ -z "$(ENGINE)" ] || [ -z "$(TARGET_MATCH_ID)" ] || [ -z "$(SOURCE_MANIFEST)" ]; then \
+		echo "ERROR: provide ENGINE=<engine>, TARGET_MATCH_ID=<id>, and SOURCE_MANIFEST=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running Phase 4.54 scaffold-only single-target network gate: ENGINE=$(ENGINE), TARGET_MATCH_ID=$(TARGET_MATCH_ID), SOURCE_MANIFEST=$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/acquisition_engine_gate.js --engine "$(ENGINE)" --target-match-id "$(TARGET_MATCH_ID)" --source-manifest "$(SOURCE_MANIFEST)"
+
+data-single-target-network-commit: ## Blocked acquisition network commit gate. Requires CONFIRM_SINGLE_TARGET_NETWORK=1 but remains not wired in Phase 4.54.
+	@if [ "$(CONFIRM_SINGLE_TARGET_NETWORK)" != "1" ]; then \
+		echo "BLOCKED: acquisition network commit requires CONFIRM_SINGLE_TARGET_NETWORK=1 and is not wired in Phase 4.54."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: acquisition network commit is not wired in Phase 4.54."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
