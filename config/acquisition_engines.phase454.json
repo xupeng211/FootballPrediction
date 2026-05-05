@@ -1,7 +1,8 @@
 {
     "phase": "4.54",
-    "registry_type": "acquisition_engine_risk_registry",
+    "registry_type": "acquisition_engine_governance_registry",
     "generated_from_report": "docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md",
+    "governance_revision": "4.56C",
     "engines": [
         {
             "id": "real_finished_csv_staging_dry_run",
@@ -25,7 +26,15 @@
             "safe_for_ai_default": true,
             "requires_user_authorization": true,
             "phase454_policy": "allowed_read_only",
-            "notes": "Local staging preflight only. No DB writes."
+            "notes": "Local staging preflight only. No DB writes.",
+            "owner": "data-governance",
+            "status": "canonical",
+            "intended_layer": "layer_5_local_staging_dry_run",
+            "replacement_plan": "Keep as canonical local staging dry-run gate for source manifest and finished CSV review.",
+            "deprecation_status": "not_deprecated",
+            "canonical_entrypoint": true,
+            "allowed_next_phase": "requires_user_authorization",
+            "test_coverage": "gate_covered"
         },
         {
             "id": "raw_match_data_local_ingest",
@@ -46,7 +55,15 @@
             "safe_for_ai_default": true,
             "requires_user_authorization": true,
             "phase454_policy": "allowed_read_only",
-            "notes": "Local raw fixture preview only. Commit remains blocked."
+            "notes": "Local raw fixture preview only. Commit remains blocked.",
+            "owner": "data-governance",
+            "status": "canonical",
+            "intended_layer": "layer_5_local_staging_dry_run",
+            "replacement_plan": "Keep as canonical raw fixture preview gate until a future small-write phase is explicitly authorized.",
+            "deprecation_status": "not_deprecated",
+            "canonical_entrypoint": true,
+            "allowed_next_phase": "requires_user_authorization",
+            "test_coverage": "gate_covered"
         },
         {
             "id": "finished_match_backfill_preflight",
@@ -67,7 +84,15 @@
             "safe_for_ai_default": true,
             "requires_user_authorization": true,
             "phase454_policy": "allowed_read_only",
-            "notes": "SELECT-only chain preflight. No raw ingest, no DB writes."
+            "notes": "SELECT-only chain preflight. No raw ingest, no DB writes.",
+            "owner": "data-governance",
+            "status": "canonical",
+            "intended_layer": "layer_7_feature_dry_run",
+            "replacement_plan": "Keep as canonical downstream chain readiness gate before any raw, L3, training-feature, or prediction write phase.",
+            "deprecation_status": "not_deprecated",
+            "canonical_entrypoint": true,
+            "allowed_next_phase": "requires_user_authorization",
+            "test_coverage": "gate_covered"
         },
         {
             "id": "csv_bulk_loader",
@@ -91,7 +116,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Local CSV parser is safe in dry-run, but commit updates matches and bookmaker_odds_history."
+            "notes": "Local CSV parser is safe in dry-run, but commit updates matches and bookmaker_odds_history.",
+            "owner": "data-governance",
+            "status": "gate_only",
+            "intended_layer": "layer_6_small_db_write",
+            "replacement_plan": "Keep behind explicit commit gate for local CSV import until a manifest-bound small-write path fully replaces it.",
+            "deprecation_status": "watch",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "requires_future_db_write_authorization",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "local_dom_ingestor",
@@ -115,7 +148,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Local HTML preview only is possible, but commit writes bookmaker_odds_history."
+            "notes": "Local HTML preview only is possible, but commit writes bookmaker_odds_history.",
+            "owner": "data-governance",
+            "status": "gate_only",
+            "intended_layer": "layer_4_local_staging_normalization",
+            "replacement_plan": "Keep behind gate as a local HTML normalization helper while canonical staging paths move toward manifest-bound adapters.",
+            "deprecation_status": "watch",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "requires_future_db_write_authorization",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "run_production",
@@ -136,7 +177,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Network harvest / production path. Must not be executed by AI without explicit future authorization."
+            "notes": "Network harvest / production path. Must not be executed by AI without explicit future authorization.",
+            "owner": "data-governance",
+            "status": "legacy_blocked",
+            "intended_layer": "legacy_production_path",
+            "replacement_plan": "Do not use as canonical acquisition. Extract only narrowly scoped adapters later if the future single-target route truly needs them.",
+            "deprecation_status": "quarantine",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "blocked_legacy",
+            "test_coverage": "gate_covered"
         },
         {
             "id": "titan_discovery",
@@ -157,7 +206,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Discovery dry-run trust is low until the CLI flag is proven to suppress writes end to end."
+            "notes": "Discovery dry-run trust is low until the CLI flag is proven to suppress writes end to end.",
+            "owner": "data-governance",
+            "status": "adapter_candidate",
+            "intended_layer": "layer_2_discovery",
+            "replacement_plan": "Refactor into a discovery-only adapter after dry-run trust and CLI flag propagation are proven with no-network/no-db tests.",
+            "deprecation_status": "watch",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "requires_future_network_dry_run_authorization",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "recon_scanner",
@@ -178,7 +235,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "OddsPortal recon pipeline uses browser, proxy, Redis, and DB-backed mapping stores."
+            "notes": "OddsPortal recon pipeline uses browser, proxy, Redis, and DB-backed mapping stores.",
+            "owner": "data-governance",
+            "status": "quarantine",
+            "intended_layer": "legacy_bulk_pipeline",
+            "replacement_plan": "Isolate browser, proxy, Redis, and persistence concerns before considering any future single-target reuse.",
+            "deprecation_status": "quarantine",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "blocked_legacy",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "batch_historical_backfill",
@@ -203,7 +268,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Bulk orchestrator. Even dry-run can trigger external download and staging file writes."
+            "notes": "Bulk orchestrator. Even dry-run can trigger external download and staging file writes.",
+            "owner": "data-governance",
+            "status": "legacy_blocked",
+            "intended_layer": "legacy_bulk_pipeline",
+            "replacement_plan": "Keep blocked and do not use for early real-data onboarding; replace with single-target staging and small-write phases.",
+            "deprecation_status": "quarantine",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "blocked_legacy",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "fetch_and_adapt_euro_leagues",
@@ -227,7 +300,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Always downloads external CSV and writes adapted output. No safe no-network mode exists."
+            "notes": "Always downloads external CSV and writes adapted output. No safe no-network mode exists.",
+            "owner": "data-governance",
+            "status": "adapter_candidate",
+            "intended_layer": "layer_3_single_target_acquisition",
+            "replacement_plan": "Refactor into a manifest-bound single-target adapter with explicit local staging output and no-network/no-db tests.",
+            "deprecation_status": "watch",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "requires_future_network_dry_run_authorization",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "odds_harvest_pipeline",
@@ -248,7 +329,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Playwright and fetch based OddsPortal pipeline with DB upserts and optional downstream L3 work."
+            "notes": "Playwright and fetch based OddsPortal pipeline with DB upserts and optional downstream L3 work.",
+            "owner": "data-governance",
+            "status": "adapter_candidate",
+            "intended_layer": "layer_3_single_target_acquisition",
+            "replacement_plan": "Refactor into a single-target odds adapter after manifest binding, no-db dry-run support, and source isolation are in place.",
+            "deprecation_status": "watch",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "requires_future_network_dry_run_authorization",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "total_war_pipeline",
@@ -269,7 +358,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Discovery / Harvest / Recon / Smelt orchestrator. Phase 4.54 must not call it."
+            "notes": "Discovery / Harvest / Recon / Smelt orchestrator. Phase 4.54 must not call it.",
+            "owner": "data-governance",
+            "status": "legacy_blocked",
+            "intended_layer": "legacy_bulk_pipeline",
+            "replacement_plan": "Quarantine as a legacy bulk super-orchestrator and retire once single-target routes cover the needed sub-capabilities.",
+            "deprecation_status": "deprecation_candidate",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "blocked_legacy",
+            "test_coverage": "needs_unit_tests"
         },
         {
             "id": "titan_marathon",
@@ -290,7 +387,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Large-scale reconciliation harvester. Full mode writes raw_match_data and updates matches."
+            "notes": "Large-scale reconciliation harvester. Full mode writes raw_match_data and updates matches.",
+            "owner": "data-governance",
+            "status": "legacy_blocked",
+            "intended_layer": "legacy_bulk_pipeline",
+            "replacement_plan": "Quarantine as a legacy marathon harvester and retire after the single-target acquisition path is mature.",
+            "deprecation_status": "deprecation_candidate",
+            "canonical_entrypoint": false,
+            "allowed_next_phase": "blocked_legacy",
+            "test_coverage": "needs_unit_tests"
         }
     ]
 }
