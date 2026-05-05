@@ -521,6 +521,16 @@ AI / Codex 默认禁止：
 
 相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md` 和 `docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md`
 
+Phase 4.55C acquisition architecture rules：
+
+- Codex 不应直接运行 legacy / high-risk acquisition engines，尤其是 `run_production`、`titan_discovery`、`recon_scanner`、`batch_historical_backfill`、`fetch_and_adapt_euro_leagues`、`odds_harvest_pipeline`、`total_war_pipeline`、`titan_marathon`。
+- acquisition canonical path 应为 `source -> staging -> manifest -> dry-run -> approval -> pg_dump -> small DB write`，而不是 `bulk harvest -> DB commit -> training`。
+- Codex 应优先通过 `registry / gate / manifest / dry-run` 路线操作，不应绕过 `make data-*` 门禁直接调用引擎脚本。
+- bulk pipeline 只有在真实数据链路、manifest、staging、small write 和回滚策略成熟后才考虑恢复；在此之前保持 gate-only / quarantine。
+- 任何新 acquisition engine 必须先登记到 registry，再决定是否允许进入 `allowed_read_only` 或未来 network dry-run。
+- 任何 engine 进入 `allowed_read_only` 前，必须先具备 no-network / no-db tests。
+- 任何 network dry-run 都必须单独授权；任何 DB write 都必须单独授权并先完成 `pg_dump`。
+
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
 - 用户明确授权
