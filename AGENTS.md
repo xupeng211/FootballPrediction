@@ -541,6 +541,14 @@ Phase 4.56C registry governance rules：
 - `allowed_next_phase` 决定 Codex 是否可进入下一阶段；任何从 `blocked` 升级到可用状态都必须先补测试和报告。
 - network dry-run 仍需单独授权；DB write 仍需单独授权并完成 `pg_dump`。
 
+Phase 4.57C football-data adapter rules：
+
+- `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
+- Codex 不得直接运行 `node scripts/ops/fetch_and_adapt_euro_leagues.js`。
+- 未来如要使用 Football-Data 类 CSV 来源，必须先有本地 `source manifest`，再人工确认 license / terms，再做 local staging / dry-run。
+- 任何 football-data network dry-run 都必须单独授权；不得把 legacy downloader 直接接到 DB / training。
+- 当前只允许通过 acquisition registry / gate 检查 `fetch_and_adapt_euro_leagues` 的 readiness，不允许直接复用其 legacy downloader runtime。
+
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
 - 用户明确授权
