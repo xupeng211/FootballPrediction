@@ -206,15 +206,15 @@
             "safe_for_ai_default": false,
             "requires_user_authorization": true,
             "phase454_policy": "blocked",
-            "notes": "Discovery dry-run trust is low until the CLI flag is proven to suppress writes end to end.",
+            "notes": "Legacy titan_discovery may touch external network, call DiscoveryService, and batch-discover leagues. Current --dry-run trust is insufficient and CLI flag propagation is not proven end to end.",
             "owner": "data-governance",
             "status": "adapter_candidate",
             "intended_layer": "layer_2_discovery",
-            "replacement_plan": "Refactor into a discovery-only adapter after dry-run trust and CLI flag propagation are proven with no-network/no-db tests.",
+            "replacement_plan": "Do not directly reuse the legacy titan_discovery runtime. Extract a Layer 2 discovery-only adapter only after CLI flag propagation, source manifest support, and single-target or very small-window scope controls are proven with no-network/no-db tests; any future network dry-run remains separately authorized.",
             "deprecation_status": "watch",
             "canonical_entrypoint": false,
             "allowed_next_phase": "requires_future_network_dry_run_authorization",
-            "test_coverage": "needs_unit_tests"
+            "test_coverage": "gate_covered"
         },
         {
             "id": "recon_scanner",

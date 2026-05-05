@@ -549,6 +549,15 @@ Phase 4.57C football-data adapter rules：
 - 任何 football-data network dry-run 都必须单独授权；不得把 legacy downloader 直接接到 DB / training。
 - 当前只允许通过 acquisition registry / gate 检查 `fetch_and_adapt_euro_leagues` 的 readiness，不允许直接复用其 legacy downloader runtime。
 
+Phase 4.58C titan discovery rules：
+
+- `titan_discovery` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
+- Codex 不得直接运行 `node scripts/ops/titan_discovery.js`，也不得运行 `node scripts/ops/titan_discovery.js --dry-run`。
+- 当前 `titan_discovery` dry-run trust 不足，不能被当作安全 dry-run 使用。
+- 未来如要使用 titan discovery 能力，必须先抽取成 Layer 2 discovery-only adapter，并先具备本地 `source manifest`、单场或极小 date window 限制、以及人工确认的 license / terms。
+- 任何 titan discovery network dry-run 都必须单独授权；不得把 legacy discovery runtime 直接接到 DB / staging / training。
+- 当前只允许通过 acquisition registry / gate 检查 `titan_discovery` 的 readiness，不允许直接复用其 legacy runtime。
+
 执行 `make data-finished-backfill-dry-run MATCH_ID=<id>` 的前提：
 
 - 用户明确授权
