@@ -1,0 +1,6 @@
+Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR,B365H,B365D,B365A,PSH,PSD,PSA
+SP2,17/08/2024,17:30,Synthetic Home Winners,Synthetic Away Losers,1,0,H,2.50,3.10,2.90,2.55,3.05,2.88
+SP2,18/08/2024,19:00,Example Home,Example Away,0,0,D,2.10,3.20,3.50,,,
+SP2,19/08/2024,20:00,Away Winners,Home Losers,1,2,A,,,,,,
+SP2,not-a-date,20:00,Bad Date FC,Other FC,1,1,D,2.00,3.00,4.00,,,
+SP2,20/08/2024,20:00,Missing Score FC,Other FC,,,D,2.00,3.00,4.00,,,

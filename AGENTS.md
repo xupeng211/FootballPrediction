@@ -549,6 +549,11 @@ Phase 4.57C football-data adapter rules：
 - 任何 football-data network dry-run 都必须单独授权；不得把 legacy downloader 直接接到 DB / training。
 - 当前只允许通过 acquisition registry / gate 检查 `fetch_and_adapt_euro_leagues` 的 readiness，不允许直接复用其 legacy downloader runtime。
 - Phase 4.61C 后，`fetch_and_adapt_euro_leagues` 只能作为 pure parser / local CSV adapter 的抽取参考；parser 必须 no-network / no-db / no-file-write。
+- Phase 4.62C 的 `scripts/lib/football_data_local_csv_parser.js` 是 pure parser，只能处理调用方提供的本地 CSV text / rows 或本地 fixture。
+- 在用户明确授权下，Codex 可以运行 `docker compose -f docker-compose.dev.yml exec -T dev node --test tests/unit/football_data_local_csv_parser.test.js`。
+- `football_data_local_csv_parser` 不得访问外网、不得读 / 写 DB、不得写文件、不得 import `scripts/ops/fetch_and_adapt_euro_leagues.js` legacy runtime。
+- `FTHG` / `FTAG` / `FTR` 只能用于 finished label 映射，不得作为赛前 feature；`B365H/B365D/B365A`、`PSH/PSD/PSA` 等 odds columns 只能 preview，不得写 `odds` 或 `bookmaker_odds_history`。
+- 未来 football-data network dry-run 仍需单独授权；未来任何 DB write 仍需单独授权并先完成 `pg_dump`。
 - 未来 local CSV adapter 必须由 source manifest + 本地 CSV 驱动，不得下载 Football-Data CSV，不得写 staging / DB，不得训练或预测。
 - 任何 DB write 必须另行授权并先完成 `pg_dump`；不得把 legacy downloader 直接接到 training / prediction。
 
