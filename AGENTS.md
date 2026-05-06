@@ -548,6 +548,9 @@ Phase 4.57C football-data adapter rules：
 - 未来如要使用 Football-Data 类 CSV 来源，必须先有本地 `source manifest`，再人工确认 license / terms，再做 local staging / dry-run。
 - 任何 football-data network dry-run 都必须单独授权；不得把 legacy downloader 直接接到 DB / training。
 - 当前只允许通过 acquisition registry / gate 检查 `fetch_and_adapt_euro_leagues` 的 readiness，不允许直接复用其 legacy downloader runtime。
+- Phase 4.61C 后，`fetch_and_adapt_euro_leagues` 只能作为 pure parser / local CSV adapter 的抽取参考；parser 必须 no-network / no-db / no-file-write。
+- 未来 local CSV adapter 必须由 source manifest + 本地 CSV 驱动，不得下载 Football-Data CSV，不得写 staging / DB，不得训练或预测。
+- 任何 DB write 必须另行授权并先完成 `pg_dump`；不得把 legacy downloader 直接接到 training / prediction。
 
 Phase 4.58C titan discovery rules：
 
