@@ -18,6 +18,7 @@
         data-single-target-network-dry-run data-single-target-network-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
+        data-football-data-db-write-preflight data-football-data-db-write-commit \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
         data-raw-fixture-dry-run data-raw-fixture-commit \
@@ -262,6 +263,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-real-source-audit SOURCE_MANIFEST=<path>"
 	@echo "  make data-real-finished-csv-dry-run SOURCE_MANIFEST=<path> SAMPLE_CSV=<path>"
 	@echo "  make data-football-data-csv-dry-run SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
+	@echo "  make data-football-data-db-write-preflight SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id> FIXTURE=<path>"
@@ -280,6 +282,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-finished-csv-commit SAMPLE_CSV=<path> CONFIRM_FINISHED_CSV_COMMIT=1  # blocked in Phase 4.38"
 	@echo "  make data-real-finished-csv-commit SOURCE_MANIFEST=<path> SAMPLE_CSV=<path> CONFIRM_REAL_CSV_COMMIT=1  # blocked in Phase 4.52"
 	@echo "  make data-football-data-csv-commit SOURCE_MANIFEST=<path> LOCAL_CSV=<path> CONFIRM_FOOTBALL_DATA_CSV_COMMIT=1  # blocked in Phase 4.63C"
+	@echo "  make data-football-data-db-write-commit SOURCE_MANIFEST=<path> LOCAL_CSV=<path> CONFIRM_FOOTBALL_DATA_DB_WRITE=1  # blocked in Phase 4.64C"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
@@ -516,6 +519,24 @@ data-football-data-csv-commit: ## Blocked Football-Data CSV commit gate. Require
 		exit 1; \
 	fi
 	@echo "BLOCKED: football-data CSV commit is not wired in Phase 4.63C."
+	@exit 1
+
+data-football-data-db-write-preflight: ## Preview future Football-Data small DB write runbook. Requires SOURCE_MANIFEST and LOCAL_CSV.
+	@if [ -z "$(SOURCE_MANIFEST)" ] || [ -z "$(LOCAL_CSV)" ]; then \
+		echo "ERROR: provide SOURCE_MANIFEST=<path> and LOCAL_CSV=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running Football-Data DB write preflight preview: SOURCE_MANIFEST=$(SOURCE_MANIFEST), LOCAL_CSV=$(LOCAL_CSV)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(LOCAL_CSV)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/football_data_db_write_preflight.js --source-manifest "$(SOURCE_MANIFEST)" --local-csv "$(LOCAL_CSV)"
+
+data-football-data-db-write-commit: ## Blocked Football-Data DB write gate. Requires SOURCE_MANIFEST, LOCAL_CSV, CONFIRM_FOOTBALL_DATA_DB_WRITE=1 but remains not wired.
+	@if [ "$(CONFIRM_FOOTBALL_DATA_DB_WRITE)" != "1" ]; then \
+		echo "BLOCKED: football-data DB write requires CONFIRM_FOOTBALL_DATA_DB_WRITE=1 and is not wired in Phase 4.64C."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: football-data DB write commit is not wired in Phase 4.64C."
 	@exit 1
 
 data-acquisition-engines: ## List acquisition engine registry entries. No network, no DB writes.

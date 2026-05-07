@@ -228,6 +228,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读本地 source manifest、不写 DB、不训练、不预测的 `make data-real-source-audit SOURCE_MANIFEST=<local json>`
 - 用户明确授权且只读本地 source manifest + 本地 CSV、不写 DB、不训练、不预测的 `make data-real-finished-csv-dry-run SOURCE_MANIFEST=<local json> SAMPLE_CSV=<local csv>`
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV、不写 DB、不训练、不预测、不写 staging 的 `make data-football-data-csv-dry-run SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
+- 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV、不写 DB、不执行 pg_dump、不训练、不预测的 `make data-football-data-db-write-preflight SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
 - 用户明确授权、只读 DB 且只读本地 fixture 的 `make data-finished-backfill-dry-run MATCH_ID=<id>`
 - 用户明确授权、只读 DB 且只读本地 JSON 的 `make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<local json>`
@@ -273,6 +274,8 @@ AI / Codex 不能直接执行：
 - `node scripts/ops/real_finished_csv_staging_dry_run.js --commit`
 - `make data-football-data-csv-commit`
 - `make data-football-data-csv-commit CONFIRM_FOOTBALL_DATA_CSV_COMMIT=1`
+- `make data-football-data-db-write-commit`
+- `make data-football-data-db-write-commit CONFIRM_FOOTBALL_DATA_DB_WRITE=1`
 - `make data-single-target-network-commit`
 - `make data-single-target-network-commit CONFIRM_SINGLE_TARGET_NETWORK=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
@@ -559,6 +562,9 @@ Phase 4.57C football-data adapter rules：
 - Phase 4.63C 的 `make data-football-data-csv-dry-run SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是本地 source manifest + CSV dry-run gate；仅在用户提供本地路径并明确授权时运行。
 - `data-football-data-csv-dry-run` 只能读取本地 manifest / CSV，校验 sha256、row_count 和 approval_status，然后调用 pure parser；不得触网、不得读 / 写 DB、不得写 adapted CSV / staging 文件、不得 import `fetch_and_adapt_euro_leagues` legacy runtime。
 - `make data-football-data-csv-commit` 和 `make data-football-data-csv-commit CONFIRM_FOOTBALL_DATA_CSV_COMMIT=1` 当前仍 blocked / not wired。
+- Phase 4.64C 的 `make data-football-data-db-write-preflight SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 DB write 前置 runbook preview，不是真写库；只能读取本地 manifest / CSV 并复用 dry-run 结果。
+- `data-football-data-db-write-preflight` 不得触网、不得读 / 写 DB、不得执行 `pg_dump`、不得写文件、不得 import legacy downloader runtime；`make data-football-data-db-write-commit` 当前 blocked / not wired。
+- future DB write 必须单独阶段、单独授权、真实 `pg_dump`、small batch、post-write validation；DB write 前后 training / prediction 仍必须走单独 gate。
 - 未来 football-data network dry-run 仍需单独授权；未来任何 DB write 仍需单独授权并先完成 `pg_dump`。
 - 未来 local CSV adapter 必须由 source manifest + 本地 CSV 驱动，不得下载 Football-Data CSV，不得写 staging / DB，不得训练或预测。
 - 任何 DB write 必须另行授权并先完成 `pg_dump`；不得把 legacy downloader 直接接到 training / prediction。
