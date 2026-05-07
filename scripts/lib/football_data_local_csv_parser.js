@@ -297,8 +297,18 @@ function buildBaseMeta(context = {}) {
 }
 
 function resolveResult(homeScore, awayScore, ftrValue) {
+    const hasFtrValue = normalizeText(ftrValue) !== '';
     const resultFromFtr = mapFtrToActualResult(ftrValue);
     const resultFromScore = deriveActualResultFromScores(homeScore, awayScore);
+
+    if (hasFtrValue && !resultFromFtr) {
+        return {
+            actualResult: null,
+            resultSource: null,
+            invalidResult: true,
+            mismatch: false,
+        };
+    }
 
     if (resultFromFtr && resultFromScore && resultFromFtr !== resultFromScore) {
         return {

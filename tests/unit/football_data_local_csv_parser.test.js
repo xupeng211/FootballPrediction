@@ -165,3 +165,129 @@ test('helper functions 支持 FTR label mapping 与日期解析', t => {
     assert.equal(parser.parseFootballDataDate('17/08/24', '07:05', { timezone: 'UTC' }), '2024-08-17T07:05:00.000Z');
     assert.equal(parser.parseFootballDataDate('not-a-date', '17:30', { timezone: 'UTC' }), null);
 });
+
+test('FTR 缺失但比分完整时应使用 score-derived fallback', t => {
+    installExecutionGuards(t);
+    const parser = loadParserFresh();
+    const parsed = parser.parseFootballDataCsv(
+        'Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR\nSP2,21/08/2024,20:00,Fallback Home,Fallback Away,2,1,',
+        PARSER_OPTIONS
+    );
+    const candidate = parsed.candidate_rows[0];
+
+    assert.equal(parsed.total_rows, 1);
+    assert.equal(parsed.row_classification.trainable_label_rows, 1);
+    assert.equal(candidate.actual_result, 'home_win');
+    assert.equal(candidate.result_source, 'score_derived');
+    assert.equal(candidate.would_insert_matches, false);
+    assert.equal(candidate.would_insert_odds, false);
+    assert.ok(parsed.non_execution_confirmations.includes('no_external_network'));
+    assert.ok(parsed.non_execution_confirmations.includes('no_db_reads'));
+    assert.ok(parsed.non_execution_confirmations.includes('no_db_writes'));
+    assert.ok(parsed.non_execution_confirmations.includes('no_file_writes'));
+    assert.ok(parsed.non_execution_confirmations.includes('no_legacy_runtime'));
+});
+
+test('非法 FTR 和 FTR/比分冲突必须标记 invalid_result', t => {
+    installExecutionGuards(t);
+    const parser = loadParserFresh();
+    const parsed = parser.parseFootballDataCsv(
+        [
+            {
+                Div: 'SP2',
+                Date: '22/08/2024',
+                Time: '20:00',
+                HomeTeam: 'Bad FTR FC',
+                AwayTeam: 'Other FC',
+                FTHG: '1',
+                FTAG: '1',
+                FTR: 'Z',
+            },
+            {
+                Div: 'SP2',
+                Date: '22/08/2024',
+                Time: '20:00',
+                HomeTeam: 'Mismatch FC',
+                AwayTeam: 'Other FC',
+                FTHG: '2',
+                FTAG: '0',
+                FTR: 'A',
+            },
+        ],
+        PARSER_OPTIONS
+    );
+
+    assert.equal(parsed.total_rows, 2);
+    assert.equal(parsed.candidate_rows.length, 0);
+    assert.equal(parsed.row_classification.invalid_result_rows, 2);
+    assert.equal(parsed.row_classification.skipped_rows, 2);
+    assert.deepEqual(
+        parsed.warnings.map(item => item.code),
+        ['invalid_result', 'result_score_mismatch']
+    );
+});
+
+test('missing team 行应跳过并记录 warning', t => {
+    installExecutionGuards(t);
+    const parser = loadParserFresh();
+    const parsed = parser.parseFootballDataCsv(
+        'Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR\nSP2,23/08/2024,20:00,,Away FC,1,0,H',
+        PARSER_OPTIONS
+    );
+
+    assert.equal(parsed.candidate_rows.length, 0);
+    assert.equal(parsed.row_classification.missing_team_rows, 1);
+    assert.equal(parsed.row_classification.skipped_rows, 1);
+    assert.equal(parsed.warnings[0].code, 'missing_team');
+});
+
+test('无 odds columns 与 partial odds columns 都只能 preview，不写 odds', t => {
+    installExecutionGuards(t);
+    const parser = loadParserFresh();
+    const noOdds = parser.parseFootballDataCsv(
+        'Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR\nSP2,24/08/2024,20:00,No Odds Home,No Odds Away,0,0,D',
+        PARSER_OPTIONS
+    );
+    const partialOdds = parser.parseFootballDataCsv(
+        'Div,Date,Time,HomeTeam,AwayTeam,FTHG,FTAG,FTR,B365H\nSP2,24/08/2024,20:00,Partial Odds Home,Partial Odds Away,0,0,D,2.10',
+        PARSER_OPTIONS
+    );
+    const partialBookmaker = partialOdds.candidate_rows[0].odds_preview.bookmakers[0];
+
+    assert.equal(noOdds.candidate_rows[0].odds_preview.available, false);
+    assert.equal(noOdds.candidate_rows[0].would_insert_odds, false);
+    assert.equal(noOdds.row_classification.odds_preview_rows, 0);
+    assert.equal(partialOdds.candidate_rows[0].odds_preview.available, true);
+    assert.equal(partialBookmaker.supported_columns_present, false);
+    assert.equal(partialBookmaker.has_any_value, true);
+    assert.equal(partialBookmaker.complete_triplet, false);
+    assert.equal(partialOdds.candidate_rows[0].odds_preview_only, true);
+    assert.equal(partialOdds.candidate_rows[0].would_insert_odds, false);
+});
+
+test('rows 输入、默认 options、短年份、缺失 Time 和空 CSV 分支应稳定', t => {
+    installExecutionGuards(t);
+    const parser = loadParserFresh();
+    const parsed = parser.parseFootballDataCsv([
+        {
+            Div: 'SP2',
+            Date: '25/08/24',
+            Time: '',
+            HomeTeam: 'Short Year Home',
+            AwayTeam: 'Short Year Away',
+            FTHG: '0',
+            FTAG: '1',
+            FTR: 'A',
+        },
+    ]);
+    const empty = parser.parseFootballDataCsv('\n\n');
+    const candidate = parsed.candidate_rows[0];
+
+    assert.equal(parsed.source_name, 'football_data_local_csv');
+    assert.equal(candidate.match_date, '2024-08-25T00:00:00.000Z');
+    assert.equal(candidate.season, '2024/2025');
+    assert.equal(candidate.actual_result, 'away_win');
+    assert.equal(empty.total_rows, 0);
+    assert.equal(empty.parsed_rows, 0);
+    assert.equal(empty.row_classification.finished_rows, 0);
+});
