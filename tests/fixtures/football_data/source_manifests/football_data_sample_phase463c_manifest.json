@@ -1,0 +1,22 @@
+{
+    "source_name": "football_data_local_synthetic_fixture",
+    "source_type": "local_csv_fixture",
+    "source_url": "local://tests/fixtures/football_data/football_data_sample_phase462c.csv",
+    "license_url": "local://synthetic-fixture",
+    "terms_url": "local://synthetic-fixture",
+    "license_type": "synthetic_test_fixture",
+    "allowed_use": "engineering_tests_only",
+    "approval_status": "dry_run_only",
+    "human_approval_note": "Synthetic local parser fixture for Phase 4.63C dry-run gate tests. Not real external football data.",
+    "original_filename": "football_data_sample_phase462c.csv",
+    "local_csv_path": "tests/fixtures/football_data/football_data_sample_phase462c.csv",
+    "sha256": "d6681446dc08f44987aa50fec79e50091b12ff18a6808e2b4d4b703ed806605d",
+    "row_count": 5,
+    "mapping_version": "PHASE4.63C_FOOTBALL_DATA_DRY_RUN",
+    "parser_version": "PHASE4.62C_FOOTBALL_DATA_LOCAL_CSV_PARSER",
+    "downloaded_by": "not_downloaded_synthetic_fixture",
+    "downloaded_at": null,
+    "not_real_external_data": true,
+    "not_for_training": true,
+    "not_for_production": true
+}
