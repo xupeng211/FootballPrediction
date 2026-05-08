@@ -20,6 +20,7 @@
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
         data-football-data-duplicate-precheck data-football-data-duplicate-precheck-commit \
+        data-football-data-small-write-auth-preview data-football-data-small-write-commit \
         data-football-data-insert-policy-precheck data-football-data-insert-policy-commit \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
@@ -267,6 +268,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-csv-dry-run SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-football-data-db-write-preflight SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-football-data-duplicate-precheck SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
+	@echo "  make data-football-data-small-write-auth-preview SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id>"
@@ -561,6 +563,24 @@ data-football-data-duplicate-precheck-commit: ## Blocked Football-Data duplicate
 		exit 1; \
 	fi
 	@echo "BLOCKED: football-data duplicate precheck commit is not wired in Phase 4.65C."
+	@exit 1
+
+data-football-data-small-write-auth-preview: ## Preview future Football-Data small DB write authorization checklist. Requires SOURCE_MANIFEST and LOCAL_CSV.
+	@if [ -z "$(SOURCE_MANIFEST)" ] || [ -z "$(LOCAL_CSV)" ]; then \
+		echo "ERROR: provide SOURCE_MANIFEST=<path> and LOCAL_CSV=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running Football-Data small DB write authorization preview: SOURCE_MANIFEST=$(SOURCE_MANIFEST), LOCAL_CSV=$(LOCAL_CSV)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(LOCAL_CSV)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/football_data_small_write_auth_preview.js --source-manifest "$(SOURCE_MANIFEST)" --local-csv "$(LOCAL_CSV)"
+
+data-football-data-small-write-commit: ## Blocked Football-Data small DB write commit gate. Requires CONFIRM_FOOTBALL_DATA_SMALL_WRITE=1 but remains not wired.
+	@if [ "$(CONFIRM_FOOTBALL_DATA_SMALL_WRITE)" != "1" ]; then \
+		echo "BLOCKED: football-data small DB write requires CONFIRM_FOOTBALL_DATA_SMALL_WRITE=1 and is not wired in Phase 4.67C."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: football-data small DB write commit is not wired in Phase 4.67C."
 	@exit 1
 
 data-football-data-insert-policy-precheck: ## Run SELECT-only Football-Data deterministic match_id + insert policy precheck. Requires SOURCE_MANIFEST and LOCAL_CSV.
