@@ -599,7 +599,13 @@ Phase 4.57C football-data adapter rules：
 - Phase 4.72C 的 `make data-football-data-packet-file-auth-review AUTH_FORM=<local md> SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv> APPROVAL_FORM=<local md> RUNBOOK_TEMPLATE=<local md>` 只做 dry-run authorization review；不得创建目录、不得写 packet 文件、不得写 DB、不得执行 `pg_dump` / `pg_restore`。
 - `data-football-data-packet-file-auth-review` 不得把 `authorization_status` 改成 `authorized_for_packet_file_creation`，也不得把 `final_packet_creation_confirmation` 改成 `true`；真实 packet file creation authorization 与 DB write / `pg_dump` / training / prediction 权限分离。
 - `make data-football-data-packet-file-auth-review-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH_REVIEW=1` 也不得创建真实 packet 文件、创建 packet 目录、执行真实 `pg_dump` / `pg_restore` 或执行真实 DB write。
-- 真实 packet 文件创建必须在单独阶段进行，且需要用户明确授权、显式输出目录、显式 packet 文件路径；创建 packet 文件不代表允许 DB write、`pg_dump`、training 或 prediction。
+- Phase 4.73C 的 `docs/runbooks/FOOTBALL_DATA_PACKET_FILE_CREATION_READINESS_CHECKLIST_TEMPLATE.md` 是未来 packet 文件创建之前的 readiness 汇总模板，不是授权表。
+- Phase 4.73C 的 readiness checklist 默认 `readiness_status=not_ready`、默认 `packet_file_creation_ready=false`、默认 `packet_file_creation_authorized=false`；Codex 不得自行改成 `ready` 或 `true`。
+- `make data-football-data-packet-file-readiness-review READINESS_CHECKLIST=<local md> AUTH_FORM=<local md> SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv> APPROVAL_FORM=<local md> RUNBOOK_TEMPLATE=<local md>` 只做 readiness checklist consolidation；不得创建目录、不得写 packet 文件、不得写 DB、不得执行 `pg_dump` / `pg_restore`。
+- `data-football-data-packet-file-readiness-review` 不得把 `readiness_status` 改成 `ready`、不得把 `authorization_status` 改成 `authorized_for_packet_file_creation`、不得把 `final_packet_creation_confirmation` 改成 `true`。
+- `make data-football-data-packet-file-readiness-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE_READINESS=1` 也不得创建目录、不写 packet 文件、不写 packet manifest、不执行 `pg_dump` / `pg_restore`、不写 DB、不触网。
+- readiness checklist 不等于 packet file creation authorization；packet file creation authorization 不等于 DB write authorization。
+- 真实 packet 文件创建必须单独阶段、用户明确授权、真实 auth form、显式路径。
 - 真实 packet 文件创建、真实 `pg_dump` 和真实 DB write 必须分别在单独阶段进行，并需要用户明确授权。
 - Phase 4.66C 的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 deterministic match_id + insert candidate policy preview；只能读取本地 manifest / CSV，并对 DB 执行 SELECT-only schema / duplicate 查询。
 - `data-football-data-insert-policy-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-insert-policy-commit` 当前 blocked / not wired。
