@@ -22,6 +22,7 @@
         data-football-data-duplicate-precheck data-football-data-duplicate-precheck-commit \
         data-football-data-small-write-auth-preview data-football-data-small-write-commit \
         data-football-data-small-write-runbook-validate data-football-data-small-write-runbook-commit \
+        data-football-data-small-write-packet-preview data-football-data-small-write-packet-commit \
         data-football-data-insert-policy-precheck data-football-data-insert-policy-commit \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
@@ -271,6 +272,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-duplicate-precheck SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-football-data-small-write-auth-preview SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-football-data-small-write-runbook-validate APPROVAL_FORM=<path>"
+	@echo "  make data-football-data-small-write-packet-preview SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path>"
 	@echo "  make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id>"
@@ -294,6 +296,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-duplicate-precheck-commit SOURCE_MANIFEST=<path> LOCAL_CSV=<path> CONFIRM_FOOTBALL_DATA_DUPLICATE_PRECHECK=1  # blocked in Phase 4.65C"
 	@echo "  make data-football-data-insert-policy-commit SOURCE_MANIFEST=<path> LOCAL_CSV=<path> CONFIRM_FOOTBALL_DATA_INSERT_POLICY=1  # blocked in Phase 4.66C"
 	@echo "  make data-football-data-small-write-runbook-commit APPROVAL_FORM=<path> CONFIRM_FOOTBALL_DATA_SMALL_WRITE_RUNBOOK=1  # blocked in Phase 4.68C"
+	@echo "  make data-football-data-small-write-packet-commit SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_SMALL_WRITE_PACKET=1  # blocked in Phase 4.69C"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
@@ -601,6 +604,26 @@ data-football-data-small-write-runbook-commit: ## Blocked Football-Data small DB
 		exit 1; \
 	fi
 	@echo "BLOCKED: football-data small write runbook commit is not wired in Phase 4.68C."
+	@exit 1
+
+data-football-data-small-write-packet-preview: ## Assemble Football-Data small write dry-run packet preview to stdout only. Requires SOURCE_MANIFEST, LOCAL_CSV, APPROVAL_FORM, RUNBOOK_TEMPLATE.
+	@if [ -z "$(SOURCE_MANIFEST)" ] || [ -z "$(LOCAL_CSV)" ] || [ -z "$(APPROVAL_FORM)" ] || [ -z "$(RUNBOOK_TEMPLATE)" ]; then \
+		echo "ERROR: provide SOURCE_MANIFEST=<path>, LOCAL_CSV=<path>, APPROVAL_FORM=<path>, and RUNBOOK_TEMPLATE=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running Football-Data small write packet preview: SOURCE_MANIFEST=$(SOURCE_MANIFEST), LOCAL_CSV=$(LOCAL_CSV), APPROVAL_FORM=$(APPROVAL_FORM), RUNBOOK_TEMPLATE=$(RUNBOOK_TEMPLATE)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(LOCAL_CSV)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(APPROVAL_FORM)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(RUNBOOK_TEMPLATE)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/football_data_small_write_packet_assembly.js --source-manifest "$(SOURCE_MANIFEST)" --local-csv "$(LOCAL_CSV)" --approval-form "$(APPROVAL_FORM)" --runbook-template "$(RUNBOOK_TEMPLATE)"
+
+data-football-data-small-write-packet-commit: ## Blocked Football-Data small write packet commit gate. Requires CONFIRM_FOOTBALL_DATA_SMALL_WRITE_PACKET=1 but remains not wired.
+	@if [ "$(CONFIRM_FOOTBALL_DATA_SMALL_WRITE_PACKET)" != "1" ]; then \
+		echo "BLOCKED: football-data small write packet commit requires CONFIRM_FOOTBALL_DATA_SMALL_WRITE_PACKET=1 and is not wired in Phase 4.69C."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: football-data small write packet commit is not wired in Phase 4.69C."
 	@exit 1
 
 data-football-data-insert-policy-precheck: ## Run SELECT-only Football-Data deterministic match_id + insert policy precheck. Requires SOURCE_MANIFEST and LOCAL_CSV.
