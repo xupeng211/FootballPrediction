@@ -586,6 +586,10 @@ Phase 4.57C football-data adapter rules：
 - `data-football-data-small-write-packet-preview` 不得写 DB、不得执行 `pg_dump` / `pg_restore`、不得把 approval form 变成真实授权、不得把 `approval_status` 改成 `approved_for_db_write`、不得把 `final_human_confirmation` 改成 `true`。
 - `make data-football-data-small-write-packet-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_SMALL_WRITE_PACKET=1` 也不得执行真实 packet 写入或 DB write。
 - 真实 packet 文件创建、真实 `pg_dump` 和真实 small DB write 必须在单独阶段进行，并需要用户明确授权。
+- Phase 4.70C 的 `make data-football-data-packet-file-preflight SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv> APPROVAL_FORM=<local md> RUNBOOK_TEMPLATE=<local md>` 只预览未来 packet 文件路径和 metadata，不创建目录，也不写 packet 文件。
+- `data-football-data-packet-file-preflight` 不得创建目录、不得写 packet 文件、不得写 DB、不得执行 `pg_dump` / `pg_restore`、不得把 approval form 变成真实授权、不得把 `approval_status` 改成 `approved_for_db_write`、不得把 `final_human_confirmation` 改成 `true`。
+- `make data-football-data-packet-file-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE=1` 也不得创建真实 packet 文件、执行真实 `pg_dump` 或执行真实 DB write。
+- 真实 packet 文件创建、真实 `pg_dump` 和真实 DB write 必须分别在单独阶段进行，并需要用户明确授权。
 - Phase 4.66C 的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 deterministic match_id + insert candidate policy preview；只能读取本地 manifest / CSV，并对 DB 执行 SELECT-only schema / duplicate 查询。
 - `data-football-data-insert-policy-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-insert-policy-commit` 当前 blocked / not wired。
 - future real DB write 必须单独阶段、单独授权、真实 `pg_dump`、非空备份验证、small batch transaction、post-write validation；restore 也必须单独授权，不得自动执行；DB write 前后 training / prediction 仍必须走单独 gate。
