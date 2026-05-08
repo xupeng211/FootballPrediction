@@ -230,6 +230,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV、不写 DB、不训练、不预测、不写 staging 的 `make data-football-data-csv-dry-run SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV、不写 DB、不执行 pg_dump、不训练、不预测的 `make data-football-data-db-write-preflight SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV，并只执行 SELECT-only DB 查重、不写 DB、不训练、不预测的 `make data-football-data-duplicate-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
+- 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV，并只执行 SELECT-only DB schema / duplicate 查询、不写 DB、不训练、不预测的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
 - 用户明确授权、只读 DB 且只读本地 fixture 的 `make data-finished-backfill-dry-run MATCH_ID=<id>`
 - 用户明确授权、只读 DB 且只读本地 JSON 的 `make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<local json>`
@@ -279,6 +280,8 @@ AI / Codex 不能直接执行：
 - `make data-football-data-db-write-commit CONFIRM_FOOTBALL_DATA_DB_WRITE=1`
 - `make data-football-data-duplicate-precheck-commit`
 - `make data-football-data-duplicate-precheck-commit CONFIRM_FOOTBALL_DATA_DUPLICATE_PRECHECK=1`
+- `make data-football-data-insert-policy-commit`
+- `make data-football-data-insert-policy-commit CONFIRM_FOOTBALL_DATA_INSERT_POLICY=1`
 - `make data-single-target-network-commit`
 - `make data-single-target-network-commit CONFIRM_SINGLE_TARGET_NETWORK=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
@@ -569,6 +572,8 @@ Phase 4.57C football-data adapter rules：
 - `data-football-data-db-write-preflight` 不得触网、不得读 / 写 DB、不得执行 `pg_dump`、不得写文件、不得 import legacy downloader runtime；`make data-football-data-db-write-commit` 当前 blocked / not wired。
 - Phase 4.65C 的 `make data-football-data-duplicate-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是入库前 SELECT-only duplicate / existing match precheck；只能读取本地 manifest / CSV 并对 DB 执行 `BEGIN READ ONLY` + `SELECT` + `ROLLBACK`。
 - `data-football-data-duplicate-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-duplicate-precheck-commit` 当前 blocked / not wired。
+- Phase 4.66C 的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 deterministic match_id + insert candidate policy preview；只能读取本地 manifest / CSV，并对 DB 执行 SELECT-only schema / duplicate 查询。
+- `data-football-data-insert-policy-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-insert-policy-commit` 当前 blocked / not wired。
 - future DB write 必须单独阶段、单独授权、真实 `pg_dump`、small batch、post-write validation；DB write 前后 training / prediction 仍必须走单独 gate。
 - 未来 football-data network dry-run 仍需单独授权；未来任何 DB write 仍需单独授权并先完成 `pg_dump`。
 - 未来 local CSV adapter 必须由 source manifest + 本地 CSV 驱动，不得下载 Football-Data CSV，不得写 staging / DB，不得训练或预测。
