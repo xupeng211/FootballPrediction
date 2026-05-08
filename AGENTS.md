@@ -572,9 +572,11 @@ Phase 4.57C football-data adapter rules：
 - `data-football-data-db-write-preflight` 不得触网、不得读 / 写 DB、不得执行 `pg_dump`、不得写文件、不得 import legacy downloader runtime；`make data-football-data-db-write-commit` 当前 blocked / not wired。
 - Phase 4.65C 的 `make data-football-data-duplicate-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是入库前 SELECT-only duplicate / existing match precheck；只能读取本地 manifest / CSV 并对 DB 执行 `BEGIN READ ONLY` + `SELECT` + `ROLLBACK`。
 - `data-football-data-duplicate-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-duplicate-precheck-commit` 当前 blocked / not wired。
+- Phase 4.67C 的 `make data-football-data-small-write-auth-preview SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 small DB write 授权预览；只能读取本地 manifest / CSV，复用 dry-run / preflight / duplicate / insert policy 结果，并执行 SELECT-only DB row count / schema inspection。
+- `data-football-data-small-write-auth-preview` 不得写 DB、不得执行 `pg_dump`、不得执行 `pg_restore`、不得写 backup 文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-small-write-commit` 当前 blocked / not wired。
 - Phase 4.66C 的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 deterministic match_id + insert candidate policy preview；只能读取本地 manifest / CSV，并对 DB 执行 SELECT-only schema / duplicate 查询。
 - `data-football-data-insert-policy-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-insert-policy-commit` 当前 blocked / not wired。
-- future DB write 必须单独阶段、单独授权、真实 `pg_dump`、small batch、post-write validation；DB write 前后 training / prediction 仍必须走单独 gate。
+- future real DB write 必须单独阶段、单独授权、真实 `pg_dump`、非空备份验证、small batch transaction、post-write validation；restore 也必须单独授权，不得自动执行；DB write 前后 training / prediction 仍必须走单独 gate。
 - 未来 football-data network dry-run 仍需单独授权；未来任何 DB write 仍需单独授权并先完成 `pg_dump`。
 - 未来 local CSV adapter 必须由 source manifest + 本地 CSV 驱动，不得下载 Football-Data CSV，不得写 staging / DB，不得训练或预测。
 - 任何 DB write 必须另行授权并先完成 `pg_dump`；不得把 legacy downloader 直接接到 training / prediction。
