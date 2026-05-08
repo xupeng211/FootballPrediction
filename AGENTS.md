@@ -596,6 +596,9 @@ Phase 4.57C football-data adapter rules：
 - Phase 4.71C 的 packet file creation auth form 默认 `authorization_status=not_authorized`、默认 `final_packet_creation_confirmation=false`；Codex 不得自行改成 `authorized_for_packet_file_creation` 或 `true`。
 - `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>` 只验证本地 packet file creation authorization 模板；不得读 DB、写 DB、创建目录、写 packet 文件、执行 `pg_dump` / `pg_restore`、训练或预测。
 - `make data-football-data-packet-file-auth-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH=1` 也不得创建真实 packet 文件、创建 packet 目录、写 packet manifest、执行真实 `pg_dump` 或执行真实 DB write。
+- Phase 4.72C 的 `make data-football-data-packet-file-auth-review AUTH_FORM=<local md> SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv> APPROVAL_FORM=<local md> RUNBOOK_TEMPLATE=<local md>` 只做 dry-run authorization review；不得创建目录、不得写 packet 文件、不得写 DB、不得执行 `pg_dump` / `pg_restore`。
+- `data-football-data-packet-file-auth-review` 不得把 `authorization_status` 改成 `authorized_for_packet_file_creation`，也不得把 `final_packet_creation_confirmation` 改成 `true`；真实 packet file creation authorization 与 DB write / `pg_dump` / training / prediction 权限分离。
+- `make data-football-data-packet-file-auth-review-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH_REVIEW=1` 也不得创建真实 packet 文件、创建 packet 目录、执行真实 `pg_dump` / `pg_restore` 或执行真实 DB write。
 - 真实 packet 文件创建必须在单独阶段进行，且需要用户明确授权、显式输出目录、显式 packet 文件路径；创建 packet 文件不代表允许 DB write、`pg_dump`、training 或 prediction。
 - 真实 packet 文件创建、真实 `pg_dump` 和真实 DB write 必须分别在单独阶段进行，并需要用户明确授权。
 - Phase 4.66C 的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 deterministic match_id + insert candidate policy preview；只能读取本地 manifest / CSV，并对 DB 执行 SELECT-only schema / duplicate 查询。
