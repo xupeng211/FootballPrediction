@@ -24,6 +24,7 @@
         data-football-data-small-write-runbook-validate data-football-data-small-write-runbook-commit \
         data-football-data-small-write-packet-preview data-football-data-small-write-packet-commit \
         data-football-data-packet-file-preflight data-football-data-packet-file-commit \
+        data-football-data-packet-file-auth-validate data-football-data-packet-file-auth-commit \
         data-football-data-insert-policy-precheck data-football-data-insert-policy-commit \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
@@ -275,6 +276,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-small-write-runbook-validate APPROVAL_FORM=<path>"
 	@echo "  make data-football-data-small-write-packet-preview SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path>"
 	@echo "  make data-football-data-packet-file-preflight SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path>"
+	@echo "  make data-football-data-packet-file-auth-validate AUTH_FORM=<path>"
 	@echo "  make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
 	@echo "  make data-finished-csv-dry-run SAMPLE_CSV=<path>"
 	@echo "  make data-finished-backfill-dry-run MATCH_ID=<id>"
@@ -300,6 +302,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-small-write-runbook-commit APPROVAL_FORM=<path> CONFIRM_FOOTBALL_DATA_SMALL_WRITE_RUNBOOK=1  # blocked in Phase 4.68C"
 	@echo "  make data-football-data-small-write-packet-commit SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_SMALL_WRITE_PACKET=1  # blocked in Phase 4.69C"
 	@echo "  make data-football-data-packet-file-commit SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE=1  # blocked in Phase 4.70C"
+	@echo "  make data-football-data-packet-file-auth-commit AUTH_FORM=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH=1  # blocked in Phase 4.71C"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
@@ -647,6 +650,23 @@ data-football-data-packet-file-commit: ## Blocked Football-Data packet file gene
 		exit 1; \
 	fi
 	@echo "BLOCKED: football-data packet file generation is not wired in Phase 4.70C."
+	@exit 1
+
+data-football-data-packet-file-auth-validate: ## Validate Football-Data packet file creation authorization form template. Requires AUTH_FORM.
+	@if [ -z "$(AUTH_FORM)" ]; then \
+		echo "ERROR: provide AUTH_FORM=<path>"; \
+		exit 1; \
+	fi
+	@echo "Validating Football-Data packet file creation authorization form: AUTH_FORM=$(AUTH_FORM)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(AUTH_FORM)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/football_data_packet_file_auth_validate.js --auth-form "$(AUTH_FORM)"
+
+data-football-data-packet-file-auth-commit: ## Blocked Football-Data packet file creation authorization commit gate. Requires CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH=1 but remains not wired.
+	@if [ "$(CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH)" != "1" ]; then \
+		echo "BLOCKED: football-data packet file creation authorization requires CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH=1 and is not wired in Phase 4.71C."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: football-data packet file creation authorization commit is not wired in Phase 4.71C."
 	@exit 1
 
 data-football-data-insert-policy-precheck: ## Run SELECT-only Football-Data deterministic match_id + insert policy precheck. Requires SOURCE_MANIFEST and LOCAL_CSV.

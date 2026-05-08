@@ -232,6 +232,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV，并只执行 SELECT-only DB 查重、不写 DB、不训练、不预测的 `make data-football-data-duplicate-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV，并只执行 SELECT-only DB schema / duplicate 查询、不写 DB、不训练、不预测的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 只读本地 approval form 模板、不读 DB、不写 DB、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-small-write-runbook-validate APPROVAL_FORM=<local md>`
+- 只读本地 packet file creation authorization 模板、不读 DB、不写 DB、不创建目录、不写 packet 文件、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
 - 用户明确授权、只读 DB 且只读本地 fixture 的 `make data-finished-backfill-dry-run MATCH_ID=<id>`
 - 用户明确授权、只读 DB 且只读本地 JSON 的 `make data-raw-fixture-dry-run MATCH_ID=<id> FIXTURE=<local json>`
@@ -285,6 +286,8 @@ AI / Codex 不能直接执行：
 - `make data-football-data-insert-policy-commit CONFIRM_FOOTBALL_DATA_INSERT_POLICY=1`
 - `make data-football-data-small-write-runbook-commit`
 - `make data-football-data-small-write-runbook-commit CONFIRM_FOOTBALL_DATA_SMALL_WRITE_RUNBOOK=1`
+- `make data-football-data-packet-file-auth-commit`
+- `make data-football-data-packet-file-auth-commit CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH=1`
 - `make data-single-target-network-commit`
 - `make data-single-target-network-commit CONFIRM_SINGLE_TARGET_NETWORK=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
@@ -589,6 +592,11 @@ Phase 4.57C football-data adapter rules：
 - Phase 4.70C 的 `make data-football-data-packet-file-preflight SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv> APPROVAL_FORM=<local md> RUNBOOK_TEMPLATE=<local md>` 只预览未来 packet 文件路径和 metadata，不创建目录，也不写 packet 文件。
 - `data-football-data-packet-file-preflight` 不得创建目录、不得写 packet 文件、不得写 DB、不得执行 `pg_dump` / `pg_restore`、不得把 approval form 变成真实授权、不得把 `approval_status` 改成 `approved_for_db_write`、不得把 `final_human_confirmation` 改成 `true`。
 - `make data-football-data-packet-file-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE=1` 也不得创建真实 packet 文件、执行真实 `pg_dump` 或执行真实 DB write。
+- Phase 4.71C 的 `docs/runbooks/FOOTBALL_DATA_PACKET_FILE_CREATION_AUTH_FORM_TEMPLATE.md` 是未来 packet 文件创建授权模板，不是真实授权。
+- Phase 4.71C 的 packet file creation auth form 默认 `authorization_status=not_authorized`、默认 `final_packet_creation_confirmation=false`；Codex 不得自行改成 `authorized_for_packet_file_creation` 或 `true`。
+- `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>` 只验证本地 packet file creation authorization 模板；不得读 DB、写 DB、创建目录、写 packet 文件、执行 `pg_dump` / `pg_restore`、训练或预测。
+- `make data-football-data-packet-file-auth-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH=1` 也不得创建真实 packet 文件、创建 packet 目录、写 packet manifest、执行真实 `pg_dump` 或执行真实 DB write。
+- 真实 packet 文件创建必须在单独阶段进行，且需要用户明确授权、显式输出目录、显式 packet 文件路径；创建 packet 文件不代表允许 DB write、`pg_dump`、training 或 prediction。
 - 真实 packet 文件创建、真实 `pg_dump` 和真实 DB write 必须分别在单独阶段进行，并需要用户明确授权。
 - Phase 4.66C 的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 deterministic match_id + insert candidate policy preview；只能读取本地 manifest / CSV，并对 DB 执行 SELECT-only schema / duplicate 查询。
 - `data-football-data-insert-policy-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-insert-policy-commit` 当前 blocked / not wired。
