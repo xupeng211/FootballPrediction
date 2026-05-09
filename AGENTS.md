@@ -568,6 +568,14 @@ Phase 4.77D acquisition runtime / ingestion order rules：
 - 真实 network dry-run 必须 single-target、用户单独授权、目标 source 和 terms 明确、只落 staging、不写 DB、不训练、不预测，并且后续 DB write 必须另行授权和先完成 `pg_dump`。
 - DB 入库顺序必须先确定 `matches.match_id`，再分别进入赔率 / raw data 写入，之后才允许 L3、training features 和 predictions 的单独 gate；`predictions` 不得反哺 training。
 
+Phase 4.78D single-target acquisition runtime design rules：
+
+- Phase 4.78D 只允许 single-target acquisition runtime design，不允许执行真实 network dry-run、采集、browser automation、staging write、DB write、训练或预测。
+- `titan_discovery` 能力族可以作为未来 first single-target discovery adapter 的候选，但 `scripts/ops/titan_discovery.js` legacy runtime 仍 blocked，不能直接运行，也不能把其 `--dry-run` 当作安全采集 dry-run。
+- proxy / browser / network preflight 只是配置与授权前置检查，不等于采集授权；browser launch 和 proxy health check 也不等于允许访问外部 source。
+- staging artifact schema 只是设计产物，不等于 staging write authorization；source manifest candidate 也不等于 DB write authorization。
+- 未来 network dry-run 必须 single-target、用户明确授权、source / terms 明确、最多只落 staging、不写 DB、不训练、不预测，且后续 DB write 必须另行授权并先完成 `pg_dump`。
+
 Phase 4.57C football-data adapter rules：
 
 - `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
