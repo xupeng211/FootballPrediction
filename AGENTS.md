@@ -559,6 +559,15 @@ Phase 4.56C registry governance rules：
 - `allowed_next_phase` 决定 Codex 是否可进入下一阶段；任何从 `blocked` 升级到可用状态都必须先补测试和报告。
 - network dry-run 仍需单独授权；DB write 仍需单独授权并完成 `pg_dump`。
 
+Phase 4.77D acquisition runtime / ingestion order rules：
+
+- 真实 acquisition 主路线必须先经过 `source -> engine -> proxy/browser/network runtime -> staging -> manifest -> dry-run audit -> ordered DB write` 审计。
+- 本地 CSV dry-run、packet preview 和 packet closure 只是 safety harness / 入库前审计工具，不是最终 acquisition 主路线，也不能替代真实 acquisition engine 设计。
+- high-risk legacy engines 仍默认 blocked，包括 `run_production`、`titan_discovery`、`recon_scanner`、`batch_historical_backfill`、`fetch_and_adapt_euro_leagues`、`odds_harvest_pipeline`、`total_war_pipeline`、`titan_marathon`。
+- 代理、浏览器、Redis、DB write 和本地文件写入耦合未拆清前，AI / Codex 不得直接运行这些 engine，也不得把它们的 `--dry-run` 当作安全采集 dry-run。
+- 真实 network dry-run 必须 single-target、用户单独授权、目标 source 和 terms 明确、只落 staging、不写 DB、不训练、不预测，并且后续 DB write 必须另行授权和先完成 `pg_dump`。
+- DB 入库顺序必须先确定 `matches.match_id`，再分别进入赔率 / raw data 写入，之后才允许 L3、training features 和 predictions 的单独 gate；`predictions` 不得反哺 training。
+
 Phase 4.57C football-data adapter rules：
 
 - `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
