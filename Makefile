@@ -29,6 +29,7 @@
         data-football-data-packet-file-readiness-review data-football-data-packet-file-readiness-commit \
         data-football-data-packet-file-auth-packet-draft data-football-data-packet-file-auth-packet-draft-commit \
         data-football-data-packet-file-auth-review-consolidation data-football-data-packet-file-auth-review-consolidation-commit \
+        data-football-data-packet-file-preauth-closure data-football-data-packet-file-preauth-closure-commit \
         data-football-data-insert-policy-precheck data-football-data-insert-policy-commit \
         data-finished-csv-dry-run data-finished-csv-commit \
         data-finished-backfill-dry-run data-finished-backfill-commit \
@@ -315,6 +316,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-packet-file-auth-packet-draft-commit DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH_PACKET_DRAFT=1  # blocked in Phase 4.74C"
 	@echo "  make data-football-data-packet-file-auth-review-consolidation CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path>"
 	@echo "  make data-football-data-packet-file-auth-review-consolidation-commit CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH_REVIEW_CONSOLIDATION=1  # blocked in Phase 4.75C"
+	@echo "  make data-football-data-packet-file-preauth-closure CLOSURE_TEMPLATE=<path> CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path>"
+	@echo "  make data-football-data-packet-file-preauth-closure-commit CLOSURE_TEMPLATE=<path> CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE_PREAUTH_CLOSURE=1  # blocked in Phase 4.76C"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
@@ -769,6 +772,31 @@ data-football-data-packet-file-auth-review-consolidation-commit: ## Blocked Foot
 		exit 1; \
 	fi
 	@echo "BLOCKED: football-data auth review consolidation commit is not wired in Phase 4.75C."
+	@exit 1
+
+data-football-data-packet-file-preauth-closure: ## Run Football-Data packet file creation pre-authorization closure. Requires CLOSURE_TEMPLATE, CONSOLIDATION_TEMPLATE, DRAFT_TEMPLATE, READINESS_CHECKLIST, AUTH_FORM, SOURCE_MANIFEST, LOCAL_CSV, APPROVAL_FORM, RUNBOOK_TEMPLATE.
+	@if [ -z "$(CLOSURE_TEMPLATE)" ] || [ -z "$(CONSOLIDATION_TEMPLATE)" ] || [ -z "$(DRAFT_TEMPLATE)" ] || [ -z "$(READINESS_CHECKLIST)" ] || [ -z "$(AUTH_FORM)" ] || [ -z "$(SOURCE_MANIFEST)" ] || [ -z "$(LOCAL_CSV)" ] || [ -z "$(APPROVAL_FORM)" ] || [ -z "$(RUNBOOK_TEMPLATE)" ]; then \
+		echo "ERROR: provide CLOSURE_TEMPLATE=<path>, CONSOLIDATION_TEMPLATE=<path>, DRAFT_TEMPLATE=<path>, READINESS_CHECKLIST=<path>, AUTH_FORM=<path>, SOURCE_MANIFEST=<path>, LOCAL_CSV=<path>, APPROVAL_FORM=<path>, and RUNBOOK_TEMPLATE=<path>"; \
+		exit 1; \
+	fi
+	@echo "Running Football-Data packet file pre-authorization closure: CLOSURE_TEMPLATE=$(CLOSURE_TEMPLATE)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(CLOSURE_TEMPLATE)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(CONSOLIDATION_TEMPLATE)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(DRAFT_TEMPLATE)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(READINESS_CHECKLIST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(AUTH_FORM)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(SOURCE_MANIFEST)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(LOCAL_CSV)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(APPROVAL_FORM)"
+	$(COMPOSE_DEV) exec -T dev test -f "$(RUNBOOK_TEMPLATE)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/football_data_packet_file_preauthorization_closure.js --closure-template "$(CLOSURE_TEMPLATE)" --consolidation-template "$(CONSOLIDATION_TEMPLATE)" --draft-template "$(DRAFT_TEMPLATE)" --readiness-checklist "$(READINESS_CHECKLIST)" --auth-form "$(AUTH_FORM)" --source-manifest "$(SOURCE_MANIFEST)" --local-csv "$(LOCAL_CSV)" --approval-form "$(APPROVAL_FORM)" --runbook-template "$(RUNBOOK_TEMPLATE)"
+
+data-football-data-packet-file-preauth-closure-commit: ## Blocked Football-Data pre-authorization closure commit gate. Requires CONFIRM_FOOTBALL_DATA_PACKET_FILE_PREAUTH_CLOSURE=1 but remains not wired.
+	@if [ "$(CONFIRM_FOOTBALL_DATA_PACKET_FILE_PREAUTH_CLOSURE)" != "1" ]; then \
+		echo "BLOCKED: football-data packet file pre-authorization closure requires CONFIRM_FOOTBALL_DATA_PACKET_FILE_PREAUTH_CLOSURE=1 and is not wired in Phase 4.76C."; \
+		exit 1; \
+	fi
+	@echo "BLOCKED: football-data packet file pre-authorization closure commit is not wired in Phase 4.76C."
 	@exit 1
 
 data-football-data-insert-policy-precheck: ## Run SELECT-only Football-Data deterministic match_id + insert policy precheck. Requires SOURCE_MANIFEST and LOCAL_CSV.
