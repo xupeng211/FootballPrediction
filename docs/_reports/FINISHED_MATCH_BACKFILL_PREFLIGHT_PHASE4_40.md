@@ -94,7 +94,7 @@ No direct local raw fixture was found for:
 Additional observations:
 
 - `tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/test_data/quality_test_sample_20251130.json` was skipped as large during the shallow audit.
-- `tests/fixtures/l1-config-5XOks7/broken.json` is intentionally malformed and produced a JSON parse error.
+- A temporary malformed L1 config fixture produced a JSON parse error during the shallow audit.
 - No fixture was imported or written to DB.
 
 ## Backfill Entrypoint Risk Audit
