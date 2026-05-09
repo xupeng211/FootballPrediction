@@ -16,6 +16,7 @@
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-single-target-network-dry-run data-single-target-network-commit \
+        data-single-target-acquisition-runtime-scaffold data-single-target-acquisition-runtime-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -328,6 +329,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-raw-commit SAMPLE_RAW=<path> MATCH_ID=<id> CONFIRM_RAW_COMMIT=1  # blocked in Phase 4.21"
 	@echo "  make data-single-target-network-dry-run ENGINE=<engine> TARGET_MATCH_ID=<id> SOURCE_MANIFEST=<path>  # scaffold-only / blocked in Phase 4.54"
 	@echo "  make data-single-target-network-commit ENGINE=<engine> TARGET_MATCH_ID=<id> SOURCE_MANIFEST=<path> CONFIRM_SINGLE_TARGET_NETWORK=1  # blocked in Phase 4.54"
+	@echo "  make data-single-target-acquisition-runtime-scaffold TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> ...  # scaffold-only, Phase 4.79D"
+	@echo "  make data-single-target-acquisition-runtime-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1  # blocked in Phase 4.79D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -838,6 +841,36 @@ data-single-target-network-commit: ## Blocked acquisition network commit gate. R
 		exit 1; \
 	fi
 	@echo "BLOCKED: acquisition network commit is not wired in Phase 4.54."
+	@exit 1
+
+data-single-target-acquisition-runtime-scaffold: ## Scaffold-only single-target acquisition runtime plan preview. Phase 4.79D. Requires TARGET_SOURCE, TARGET_ENGINE_FAMILY, TARGET_SCOPE_TYPE, plus scope fields and yes/no fields.
+	@if [ -z "$(TARGET_SOURCE)" ] || [ -z "$(TARGET_ENGINE_FAMILY)" ] || [ -z "$(TARGET_SCOPE_TYPE)" ]; then \
+		echo "ERROR: provide TARGET_SOURCE=<src>, TARGET_ENGINE_FAMILY=titan_discovery, TARGET_SCOPE_TYPE=<match_id|league_season_date>"; \
+		echo "  plus scope-specific fields and yes/no authorization fields."; \
+		echo "  See docs/_reports/SINGLE_TARGET_ACQUISITION_RUNTIME_DESIGN_PHASE4_78D.md for full parameter contract."; \
+		exit 1; \
+	fi
+	@echo "Phase 4.79D: single-target acquisition runtime scaffold (scaffold-only, no network, no DB, no staging)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/single_target_acquisition_runtime_scaffold.js \
+		--target-source "$(TARGET_SOURCE)" \
+		--target-engine-family "$(TARGET_ENGINE_FAMILY)" \
+		--target-scope-type "$(TARGET_SCOPE_TYPE)" \
+		$(if $(TARGET_MATCH_ID),--target-match-id "$(TARGET_MATCH_ID)") \
+		$(if $(TARGET_LEAGUE),--target-league "$(TARGET_LEAGUE)") \
+		$(if $(TARGET_SEASON),--target-season "$(TARGET_SEASON)") \
+		$(if $(TARGET_DATE),--target-date "$(TARGET_DATE)") \
+		--terms-approval "$(or $(TERMS_APPROVAL),no)" \
+		--network-dry-run-authorization "$(or $(NETWORK_DRY_RUN_AUTHORIZATION),no)" \
+		--allow-browser-runtime "$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime "$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--allow-external-network "$(or $(ALLOW_EXTERNAL_NETWORK),no)" \
+		--allow-staging-write "$(or $(ALLOW_STAGING_WRITE),no)" \
+		--confirm-single-target-scope "$(or $(CONFIRM_SINGLE_TARGET_SCOPE),no)"
+
+data-single-target-acquisition-runtime-commit: ## Blocked single-target acquisition runtime commit gate. Remains not wired in Phase 4.79D.
+	@echo "BLOCKED: single-target acquisition runtime commit/execution is not wired in Phase 4.79D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1, this path remains blocked."
+	@echo "  Real network dry-run requires a separate future phase with explicit source/target/terms/network/staging authorization."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.

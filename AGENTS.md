@@ -231,6 +231,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV、不写 DB、不执行 pg_dump、不训练、不预测的 `make data-football-data-db-write-preflight SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV，并只执行 SELECT-only DB 查重、不写 DB、不训练、不预测的 `make data-football-data-duplicate-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV，并只执行 SELECT-only DB schema / duplicate 查询、不写 DB、不训练、不预测的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
+- 不触网、不启动 browser、不执行 proxy runtime、不写 staging、不写 manifest、不写 DB、不运行 titan_discovery legacy runtime 的 scaffold-only 参数校验和 plan preview：`make data-single-target-acquisition-runtime-scaffold TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> ...`（Phase 4.79D scaffold-only）
 - 只读本地 approval form 模板、不读 DB、不写 DB、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-small-write-runbook-validate APPROVAL_FORM=<local md>`
 - 只读本地 packet file creation authorization 模板、不读 DB、不写 DB、不创建目录、不写 packet 文件、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
@@ -290,6 +291,8 @@ AI / Codex 不能直接执行：
 - `make data-football-data-packet-file-auth-commit CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH=1`
 - `make data-single-target-network-commit`
 - `make data-single-target-network-commit CONFIRM_SINGLE_TARGET_NETWORK=1`
+- `make data-single-target-acquisition-runtime-commit`
+- `make data-single-target-acquisition-runtime-commit CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
 - `make data-finished-csv-commit`
 - `make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1`
@@ -513,6 +516,8 @@ AI / Codex 默认禁止：
 
 - `make data-single-target-network-commit`
 - `make data-single-target-network-commit CONFIRM_SINGLE_TARGET_NETWORK=1`
+- `make data-single-target-acquisition-runtime-commit`
+- `make data-single-target-acquisition-runtime-commit CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
 - `node scripts/ops/run_production.js`
 - `node scripts/ops/titan_discovery.js`
@@ -536,6 +541,36 @@ AI / Codex 默认禁止：
 - 不允许训练
 - 不允许预测
 - 未来真正 network dry-run 必须在单独阶段、获得单独授权
+
+### Phase 4.79D: single-target acquisition runtime scaffold
+
+`data-single-target-acquisition-runtime-scaffold` 只允许参数校验和 runtime plan preview：
+
+- 它不得触网
+- 它不得启动 browser
+- 它不得执行 proxy runtime
+- 它不得写 staging
+- 它不得写 manifest
+- 它不得写 DB
+- 它不得运行 titan_discovery legacy runtime
+- 它不得执行任何 acquisition engine
+- 它不得 spawn child process
+
+`data-single-target-acquisition-runtime-commit` 当前 blocked。即使用户提供 yes 字段，Phase 4.79D 也只是 scaffold-only，不等于授权真实 network dry-run。
+
+真实 network dry-run 必须后续单独阶段、明确 source / target / terms / network authorization / staging policy。
+
+在 Phase 4.79D 中允许：
+
+- `make data-single-target-acquisition-runtime-scaffold TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> ...`
+- `node scripts/ops/single_target_acquisition_runtime_scaffold.js --target-source=... --target-engine-family=titan_discovery --target-scope-type=... ...`
+
+在 Phase 4.79D 中严格禁止：
+
+- `make data-single-target-acquisition-runtime-commit`
+- `make data-single-target-acquisition-runtime-commit CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1`
+- `node scripts/ops/single_target_acquisition_runtime_scaffold.js --commit`
+- 以及上述所有禁止的 legacy / high-risk 命令
 
 相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md` 和 `docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md`
 
