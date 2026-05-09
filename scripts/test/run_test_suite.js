@@ -628,7 +628,7 @@ if (mode === 'default' || mode === 'unit') {
 }
 
 if (mode === 'affected') {
-  const affectedFiles = resolveAffectedTestFiles(modeArgs, allTestFiles);
+  const affectedFiles = resolveAffectedTestFiles(modeArgs, unitFiles);
   const selectedFiles = affectedFiles.length > 0
     ? affectedFiles
     : resolveCriticalSmokeFiles(allTestFiles);
