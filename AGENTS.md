@@ -606,6 +606,12 @@ Phase 4.57C football-data adapter rules：
 - `make data-football-data-packet-file-readiness-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE_READINESS=1` 也不得创建目录、不写 packet 文件、不写 packet manifest、不执行 `pg_dump` / `pg_restore`、不写 DB、不触网。
 - readiness checklist 不等于 packet file creation authorization；packet file creation authorization 不等于 DB write authorization。
 - 真实 packet 文件创建必须单独阶段、用户明确授权、真实 auth form、显式路径。
+- Phase 4.74C 的 `docs/runbooks/FOOTBALL_DATA_PACKET_FILE_CREATION_AUTH_PACKET_DRAFT_TEMPLATE.md` 是未来提交给人类审核的 packet file creation authorization packet 草案模板，不是授权，不是 packet 文件。
+- Phase 4.74C 的 draft template 默认 `draft_status=draft_only`、默认 `ready_for_packet_file_creation=false`、默认 `authorized_for_packet_file_creation=false`；Codex 不得自行改成 `approved` 或 `true`。
+- `make data-football-data-packet-file-auth-packet-draft DRAFT_TEMPLATE=<local md> READINESS_CHECKLIST=<local md> AUTH_FORM=<local md> SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv> APPROVAL_FORM=<local md> RUNBOOK_TEMPLATE=<local md>` 只生成 authorization packet draft review；不得创建目录、不得写 packet 文件、不得写 DB、不得执行 `pg_dump` / `pg_restore`。
+- `data-football-data-packet-file-auth-packet-draft` 不得把 `draft_status` 改成 `approved`、不得把 `readiness_status` 改成 `ready`、不得把 `authorization_status` 改成 `authorized_for_packet_file_creation`、不得把 `final_packet_creation_confirmation` 改成 `true`。
+- `make data-football-data-packet-file-auth-packet-draft-commit` 当前 blocked / not wired，即使带 `CONFIRM_FOOTBALL_DATA_PACKET_FILE_AUTH_PACKET_DRAFT=1` 也不得创建目录、不写 packet 文件、不写 DB、不执行 `pg_dump` / `pg_restore`。
+- authorization packet draft 不等于 packet file creation authorization；packet file creation authorization 不等于 DB write authorization。
 - 真实 packet 文件创建、真实 `pg_dump` 和真实 DB write 必须分别在单独阶段进行，并需要用户明确授权。
 - Phase 4.66C 的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>` 是 deterministic match_id + insert candidate policy preview；只能读取本地 manifest / CSV，并对 DB 执行 SELECT-only schema / duplicate 查询。
 - `data-football-data-insert-policy-precheck` 不得写 DB、不得执行 `pg_dump`、不得写文件、不得触网、不得 import legacy downloader runtime；`make data-football-data-insert-policy-commit` 当前 blocked / not wired。
