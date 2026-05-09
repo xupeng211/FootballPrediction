@@ -55,18 +55,11 @@ const MockBrowser = class {
     }
 };
 
-// 模拟 Playwright
-const mockPlaywright = {
-    chromium: MockBrowser
-};
+// 模拟 Playwright：加载 playwright 模块后替换 chromium.launch 和 connect 为 mock 实现
+const playwright = require('playwright');
+playwright.chromium.launch = MockBrowser.launch;
+playwright.chromium.connect = MockBrowser.launch;
 
-// 劫持 require
-const originalRequire = require;
-// eslint-disable-next-line no-global-assign
-require = function(id) {
-    if (id === 'playwright') return mockPlaywright;
-    return originalRequire.apply(this, arguments);
-};
 
 const { BrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory');
 
