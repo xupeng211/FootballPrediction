@@ -15,6 +15,14 @@
 
 'use strict';
 
+// Patch playwright.chromium.launch to avoid requiring Chromium binary in CI
+const _pw = require('playwright');
+const _mockBrowser = { newContext() { let s = false; return { newPage() { return { goto: async () => {}, waitForTimeout: async () => {}, evaluate: async (fn) => { if (s) { const t = fn.toString(); if (t.includes('navigator.webdriver')) return undefined; if (t.includes('navigator.platform')) return 'Win32'; if (t.includes('navigator.languages')) return ['en-US', 'en']; if (t.includes('navigator.plugins')) return { length: 3 }; } return undefined; }, addInitScript: async () => { s = true; }, close: async () => {} }; }, addCookies: async () => true, close: async () => {} }; }, close: async () => {} };
+const _mockLaunch = async () => _mockBrowser;
+_pw.chromium.launch = _mockLaunch;
+_pw.chromium.connect = _mockLaunch;
+_pw.chromium.launchPersistentContext = _mockLaunch;
+
 const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert');
 
