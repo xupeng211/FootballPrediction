@@ -20,6 +20,7 @@
         data-single-target-acquisition-staging-schema-validate data-single-target-acquisition-staging-schema-commit \
         data-single-target-acquisition-staging-writer-preflight data-single-target-acquisition-staging-writer-commit \
         data-single-target-acquisition-staging-packet-preview data-single-target-acquisition-staging-packet-commit \
+        data-single-target-acquisition-pre-network-runbook-validate data-single-target-acquisition-pre-network-runbook-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -73,6 +74,7 @@ help: ## 显示帮助信息
 # Docker 命令
 # ============================================
 COMPOSE_DEV=docker compose -f docker-compose.dev.yml
+PRE_NETWORK_RUNBOOK_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -340,6 +342,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-staging-writer-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1  # blocked in Phase 4.81D"
 	@echo "  make data-single-target-acquisition-staging-packet-preview ARTIFACT_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...  # packet preview, Phase 4.82D"
 	@echo "  make data-single-target-acquisition-staging-packet-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_PACKET=1  # blocked in Phase 4.82D"
+	@echo "  make data-single-target-acquisition-pre-network-runbook-validate RUNBOOK=<path> ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ARTIFACT=<path> MANIFEST=<path> OUTPUT_ROOT=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...  # draft-only validate, Phase 4.83D"
+	@echo "  make data-single-target-acquisition-pre-network-runbook-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_PRE_NETWORK_RUNBOOK=1  # blocked in Phase 4.83D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -960,6 +964,42 @@ data-single-target-acquisition-staging-packet-preview: ## Packet preview aggrega
 data-single-target-acquisition-staging-packet-commit: ## Blocked staging packet commit gate. Remains not wired in Phase 4.82D.
 	@echo "BLOCKED: single-target acquisition staging packet commit/execution is not wired in Phase 4.82D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_PACKET=1, this path remains blocked."
+	@exit 1
+
+data-single-target-acquisition-pre-network-runbook-validate: ## Draft-only pre-network runbook validation. Phase 4.83D. No network, no writes, no DB.
+	@if [ -z "$(RUNBOOK)" ] || [ -z "$(ARTIFACT_SCHEMA)" ] || [ -z "$(MANIFEST_SCHEMA)" ] || [ -z "$(ARTIFACT)" ] || [ -z "$(MANIFEST)" ] || [ -z "$(OUTPUT_ROOT)" ] || [ -z "$(TARGET_SOURCE)" ] || [ -z "$(TARGET_ENGINE_FAMILY)" ] || [ -z "$(TARGET_SCOPE_TYPE)" ] || [ -z "$(TARGET_MATCH_ID)" ]; then \
+		echo "ERROR: provide RUNBOOK=<path>, ARTIFACT_SCHEMA=<path>, MANIFEST_SCHEMA=<path>, ARTIFACT=<path>, MANIFEST=<path>, OUTPUT_ROOT=<path>, TARGET_SOURCE=<src>, TARGET_ENGINE_FAMILY=titan_discovery, TARGET_SCOPE_TYPE=<type>, TARGET_MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.83D: pre-network runbook validate (draft-only, local-only, no writes, no network, no DB)"
+	$(PRE_NETWORK_RUNBOOK_NODE) scripts/ops/single_target_acquisition_pre_network_runbook_validate.js \
+		--runbook "$(RUNBOOK)" \
+		--artifact-schema "$(ARTIFACT_SCHEMA)" \
+		--manifest-schema "$(MANIFEST_SCHEMA)" \
+		--artifact "$(ARTIFACT)" \
+		--manifest "$(MANIFEST)" \
+		--output-root "$(OUTPUT_ROOT)" \
+		--target-source "$(TARGET_SOURCE)" \
+		--target-engine-family "$(TARGET_ENGINE_FAMILY)" \
+		--target-scope-type "$(TARGET_SCOPE_TYPE)" \
+		--target-match-id "$(TARGET_MATCH_ID)" \
+		$(if $(TARGET_LEAGUE),--target-league "$(TARGET_LEAGUE)") \
+		$(if $(TARGET_SEASON),--target-season "$(TARGET_SEASON)") \
+		$(if $(TARGET_DATE),--target-date "$(TARGET_DATE)") \
+		--terms-approval "$(or $(TERMS_APPROVAL),no)" \
+		--network-dry-run-authorization "$(or $(NETWORK_DRY_RUN_AUTHORIZATION),no)" \
+		--allow-browser-runtime "$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime "$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--allow-external-network "$(or $(ALLOW_EXTERNAL_NETWORK),no)" \
+		--allow-staging-write "$(or $(ALLOW_STAGING_WRITE),no)" \
+		--confirm-single-target-scope "$(or $(CONFIRM_SINGLE_TARGET_SCOPE),no)" \
+		--staging-write-authorization "$(or $(STAGING_WRITE_AUTHORIZATION),no)" \
+		--final-human-confirmation "$(or $(FINAL_HUMAN_CONFIRMATION),no)"
+
+data-single-target-acquisition-pre-network-runbook-commit: ## Blocked pre-network runbook execution gate. Remains not wired in Phase 4.83D.
+	@echo "BLOCKED: single-target acquisition pre-network runbook execution is not wired in Phase 4.83D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_PRE_NETWORK_RUNBOOK=1, this path remains blocked."
+	@echo "  Phase 4.83D validates a draft only and does not authorize any network dry-run, staging write, or DB write."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
