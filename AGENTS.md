@@ -235,6 +235,7 @@ AI / Codex 默认只能执行：
 - 不触网、不写文件、只读本地 schema 和 sample fixture 的 staging artifact / manifest candidate schema 校验：`make data-single-target-acquisition-staging-schema-validate ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ARTIFACT=<path> MANIFEST=<path>`（Phase 4.80D local-only）
 - 不触网、不写文件、不创建目录、只做路径预览和授权预检的 staging writer preflight：`make data-single-target-acquisition-staging-writer-preflight ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...`（Phase 4.81D preflight-only）
 - 不触网、不写文件、不创建目录、汇总 4.79D+4.80D+4.81D 安全门禁的 staging packet preview：`make data-single-target-acquisition-staging-packet-preview ARTIFACT_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...`（Phase 4.82D preview-only）
+- 不触网、不写文件、不创建目录、只验证 pre-network runbook draft 和 packet preview 前置条件的本地 validator：`make data-single-target-acquisition-pre-network-runbook-validate RUNBOOK=<path> ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ARTIFACT=<path> MANIFEST=<path> OUTPUT_ROOT=<path> ...`（Phase 4.83D draft-only）
 - 只读本地 approval form 模板、不读 DB、不写 DB、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-small-write-runbook-validate APPROVAL_FORM=<local md>`
 - 只读本地 packet file creation authorization 模板、不读 DB、不写 DB、不创建目录、不写 packet 文件、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
@@ -671,6 +672,25 @@ AI / Codex 默认禁止：
 - `node scripts/ops/single_target_acquisition_staging_packet_preview.js --commit`
 
 相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md` 和 `docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md`
+
+### Phase 4.83D: single-target acquisition pre-network runbook draft
+
+`data-single-target-acquisition-pre-network-runbook-validate` 只允许验证 pre-network runbook draft：
+
+- 它不得触网
+- 它不得启动 browser
+- 它不得执行 proxy runtime
+- 它不得运行 titan_discovery legacy runtime
+- 它不得写 staging
+- 它不得写 source manifest
+- 它不得写 packet file
+- 它不得写 DB
+- pre-network runbook draft 不等于 network dry-run authorization
+- 即使 CLI 传入 yes，Phase 4.83D 也不触网、不写文件、不写 DB
+
+`data-single-target-acquisition-pre-network-runbook-commit` 当前 blocked。
+
+真实 network dry-run 必须后续单独阶段、用户明确授权、参数齐全、terms approval 齐全、runbook 审核通过。
 
 Phase 4.55C acquisition architecture rules：
 
