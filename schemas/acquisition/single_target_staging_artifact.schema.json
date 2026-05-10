@@ -1,0 +1,193 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://football-prediction.local/schemas/acquisition/single_target_staging_artifact.schema.json",
+    "title": "Single-Target Acquisition Staging Artifact",
+    "description": "Phase 4.80D: Schema for a future single-target acquisition network dry-run staging artifact. This is a validator-only schema; no real staging artifact has been written.",
+    "type": "object",
+    "required": [
+        "artifact_version",
+        "phase",
+        "source",
+        "target_scope",
+        "engine",
+        "runtime",
+        "capture",
+        "provenance",
+        "safety",
+        "outputs"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "artifact_version": {
+            "type": "string",
+            "description": "Schema version for the artifact structure."
+        },
+        "phase": {
+            "type": "string",
+            "description": "Acquisition phase this artifact was produced under."
+        },
+        "source": {
+            "type": "object",
+            "required": ["name", "source_url"],
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Source name (e.g. fotmob)."
+                },
+                "source_url": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "terms_url": {
+                    "type": "string",
+                    "format": "uri"
+                },
+                "license_url": {
+                    "type": "string",
+                    "format": "uri"
+                }
+            }
+        },
+        "target_scope": {
+            "type": "object",
+            "required": ["scope_type"],
+            "additionalProperties": false,
+            "properties": {
+                "scope_type": {
+                    "type": "string",
+                    "enum": ["match_id", "league_season_date"]
+                },
+                "match_id": {
+                    "type": "string"
+                },
+                "league": {
+                    "type": ["string", "null"]
+                },
+                "season": {
+                    "type": ["string", "null"]
+                },
+                "date": {
+                    "type": ["string", "null"]
+                }
+            },
+            "allOf": [
+                {
+                    "if": {
+                        "properties": { "scope_type": { "const": "match_id" } }
+                    },
+                    "then": {
+                        "required": ["match_id"]
+                    }
+                },
+                {
+                    "if": {
+                        "properties": { "scope_type": { "const": "league_season_date" } }
+                    },
+                    "then": {
+                        "required": ["league", "season", "date"]
+                    }
+                }
+            ]
+        },
+        "engine": {
+            "type": "object",
+            "required": ["family"],
+            "additionalProperties": false,
+            "properties": {
+                "family": {
+                    "type": "string",
+                    "const": "titan_discovery"
+                },
+                "version": {
+                    "type": "string"
+                }
+            }
+        },
+        "runtime": {
+            "type": "object",
+            "required": ["browser", "proxy", "network"],
+            "additionalProperties": false,
+            "properties": {
+                "browser": {
+                    "type": "object",
+                    "required": ["enabled"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "provider": { "type": ["string", "null"] },
+                        "headless": { "type": "boolean" }
+                    }
+                },
+                "proxy": {
+                    "type": "object",
+                    "required": ["enabled"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": { "type": "boolean" },
+                        "provider": { "type": ["string", "null"] },
+                        "lease_id": { "type": ["string", "null"] }
+                    }
+                },
+                "network": {
+                    "type": "object",
+                    "required": ["requested_at"],
+                    "additionalProperties": false,
+                    "properties": {
+                        "requested_at": { "type": "string", "format": "date-time" },
+                        "completed_at": { "type": "string", "format": "date-time" },
+                        "duration_ms": { "type": "integer" },
+                        "rate_limit_policy": { "type": "string" },
+                        "retry_policy": { "type": "string" }
+                    }
+                }
+            }
+        },
+        "capture": {
+            "type": "object",
+            "required": ["raw_payload_sha256"],
+            "additionalProperties": false,
+            "properties": {
+                "raw_payload_sha256": { "type": "string" },
+                "raw_payload_bytes": { "type": "integer" },
+                "content_type": { "type": "string" },
+                "status_code": { "type": "integer" },
+                "row_count": { "type": "integer" },
+                "object_count": { "type": "integer" }
+            }
+        },
+        "provenance": {
+            "type": "object",
+            "required": ["captured_at"],
+            "additionalProperties": false,
+            "properties": {
+                "captured_by": { "type": "string" },
+                "captured_at": { "type": "string", "format": "date-time" },
+                "command": { "type": "string" },
+                "git_commit": { "type": "string" },
+                "container_image": { "type": "string" }
+            }
+        },
+        "safety": {
+            "type": "object",
+            "required": ["would_write_db", "would_train", "would_predict", "bulk_scope"],
+            "additionalProperties": false,
+            "properties": {
+                "would_write_db": { "type": "boolean", "const": false },
+                "would_train": { "type": "boolean", "const": false },
+                "would_predict": { "type": "boolean", "const": false },
+                "bulk_scope": { "type": "boolean", "const": false },
+                "post_match_leakage_checked": { "type": "boolean" }
+            }
+        },
+        "outputs": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "raw_payload_path": { "type": ["string", "null"] },
+                "normalized_preview_path": { "type": ["string", "null"] },
+                "manifest_candidate_path": { "type": ["string", "null"] }
+            }
+        }
+    }
+}

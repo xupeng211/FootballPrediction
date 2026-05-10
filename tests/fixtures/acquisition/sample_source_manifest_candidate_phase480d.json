@@ -1,0 +1,31 @@
+{
+    "manifest_version": "1.0",
+    "manifest_status": "candidate_not_approved",
+    "source_name": "fotmob",
+    "source_url": "https://example.invalid/match/sample-match-001",
+    "terms_url": "https://example.invalid/terms",
+    "license_url": "https://example.invalid/license",
+    "allowed_use": "unknown_pending_human_review",
+    "downloaded_by": "manual_or_future_runtime",
+    "downloaded_at": "2026-05-10T00:00:01.000Z",
+    "engine_family": "titan_discovery",
+    "engine_version": "future-scaffold",
+    "target_scope": {
+        "scope_type": "match_id",
+        "match_id": "sample-match-001",
+        "league": null,
+        "season": null,
+        "date": null
+    },
+    "original_payload_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "row_count": 0,
+    "object_count": 1,
+    "staging_artifact_path": null,
+    "approval_status": "not_approved",
+    "human_approval_note": null,
+    "safety": {
+        "approved_for_db_write": false,
+        "approved_for_training": false,
+        "approved_for_prediction": false
+    }
+}
