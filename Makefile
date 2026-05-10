@@ -19,6 +19,7 @@
         data-single-target-acquisition-runtime-scaffold data-single-target-acquisition-runtime-commit \
         data-single-target-acquisition-staging-schema-validate data-single-target-acquisition-staging-schema-commit \
         data-single-target-acquisition-staging-writer-preflight data-single-target-acquisition-staging-writer-commit \
+        data-single-target-acquisition-staging-packet-preview data-single-target-acquisition-staging-packet-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -337,6 +338,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-staging-schema-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_SCHEMA=1  # blocked in Phase 4.80D"
 	@echo "  make data-single-target-acquisition-staging-writer-preflight ARTIFACT_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...  # preflight-only, Phase 4.81D"
 	@echo "  make data-single-target-acquisition-staging-writer-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1  # blocked in Phase 4.81D"
+	@echo "  make data-single-target-acquisition-staging-packet-preview ARTIFACT_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...  # packet preview, Phase 4.82D"
+	@echo "  make data-single-target-acquisition-staging-packet-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_PACKET=1  # blocked in Phase 4.82D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -923,6 +926,40 @@ data-single-target-acquisition-staging-writer-commit: ## Blocked staging writer 
 	@echo "BLOCKED: single-target acquisition staging writer commit/execution is not wired in Phase 4.81D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1, this path remains blocked."
 	@echo "  Real staging write requires a separate future phase with explicit source/target/terms/network/staging authorization."
+	@exit 1
+
+data-single-target-acquisition-staging-packet-preview: ## Packet preview aggregating 4.79D scaffold + 4.80D schema + 4.81D preflight. Phase 4.82D. No writes, no network, no DB.
+	@if [ -z "$(ARTIFACT_SCHEMA)" ] || [ -z "$(MANIFEST_SCHEMA)" ] || [ -z "$(ARTIFACT)" ] || [ -z "$(MANIFEST)" ] || [ -z "$(OUTPUT_ROOT)" ]; then \
+		echo "ERROR: provide ARTIFACT_SCHEMA=<path>, MANIFEST_SCHEMA=<path>, ARTIFACT=<path>, MANIFEST=<path>, OUTPUT_ROOT=<path>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.82D: staging packet preview (aggregated preview-only, no writes, no network, no DB)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/single_target_acquisition_staging_packet_preview.js \
+		--artifact-schema "$(ARTIFACT_SCHEMA)" \
+		--manifest-schema "$(MANIFEST_SCHEMA)" \
+		--artifact "$(ARTIFACT)" \
+		--manifest "$(MANIFEST)" \
+		--output-root "$(OUTPUT_ROOT)" \
+		$(if $(TARGET_SOURCE),--target-source "$(TARGET_SOURCE)") \
+		$(if $(TARGET_ENGINE_FAMILY),--target-engine-family "$(TARGET_ENGINE_FAMILY)") \
+		$(if $(TARGET_SCOPE_TYPE),--target-scope-type "$(TARGET_SCOPE_TYPE)") \
+		$(if $(TARGET_MATCH_ID),--target-match-id "$(TARGET_MATCH_ID)") \
+		$(if $(TARGET_LEAGUE),--target-league "$(TARGET_LEAGUE)") \
+		$(if $(TARGET_SEASON),--target-season "$(TARGET_SEASON)") \
+		$(if $(TARGET_DATE),--target-date "$(TARGET_DATE)") \
+		--terms-approval "$(or $(TERMS_APPROVAL),no)" \
+		--network-dry-run-authorization "$(or $(NETWORK_DRY_RUN_AUTHORIZATION),no)" \
+		--allow-browser-runtime "$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime "$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--allow-external-network "$(or $(ALLOW_EXTERNAL_NETWORK),no)" \
+		--allow-staging-write "$(or $(ALLOW_STAGING_WRITE),no)" \
+		--confirm-single-target-scope "$(or $(CONFIRM_SINGLE_TARGET_SCOPE),no)" \
+		--staging-write-authorization "$(or $(STAGING_WRITE_AUTHORIZATION),no)" \
+		--final-human-confirmation "$(or $(FINAL_HUMAN_CONFIRMATION),no)"
+
+data-single-target-acquisition-staging-packet-commit: ## Blocked staging packet commit gate. Remains not wired in Phase 4.82D.
+	@echo "BLOCKED: single-target acquisition staging packet commit/execution is not wired in Phase 4.82D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_PACKET=1, this path remains blocked."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
