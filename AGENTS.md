@@ -234,6 +234,7 @@ AI / Codex 默认只能执行：
 - 不触网、不启动 browser、不执行 proxy runtime、不写 staging、不写 manifest、不写 DB、不运行 titan_discovery legacy runtime 的 scaffold-only 参数校验和 plan preview：`make data-single-target-acquisition-runtime-scaffold TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> ...`（Phase 4.79D scaffold-only）
 - 不触网、不写文件、只读本地 schema 和 sample fixture 的 staging artifact / manifest candidate schema 校验：`make data-single-target-acquisition-staging-schema-validate ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ARTIFACT=<path> MANIFEST=<path>`（Phase 4.80D local-only）
 - 不触网、不写文件、不创建目录、只做路径预览和授权预检的 staging writer preflight：`make data-single-target-acquisition-staging-writer-preflight ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...`（Phase 4.81D preflight-only）
+- 不触网、不写文件、不创建目录、汇总 4.79D+4.80D+4.81D 安全门禁的 staging packet preview：`make data-single-target-acquisition-staging-packet-preview ARTIFACT_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...`（Phase 4.82D preview-only）
 - 只读本地 approval form 模板、不读 DB、不写 DB、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-small-write-runbook-validate APPROVAL_FORM=<local md>`
 - 只读本地 packet file creation authorization 模板、不读 DB、不写 DB、不创建目录、不写 packet 文件、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
@@ -299,6 +300,8 @@ AI / Codex 不能直接执行：
 - `make data-single-target-acquisition-staging-schema-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_SCHEMA=1`
 - `make data-single-target-acquisition-staging-writer-commit`
 - `make data-single-target-acquisition-staging-writer-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1`
+- `make data-single-target-acquisition-staging-packet-commit`
+- `make data-single-target-acquisition-staging-packet-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_PACKET=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
 - `make data-finished-csv-commit`
 - `make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1`
@@ -641,6 +644,31 @@ AI / Codex 默认禁止：
 - `make data-single-target-acquisition-staging-writer-commit`
 - `make data-single-target-acquisition-staging-writer-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1`
 - `node scripts/ops/single_target_acquisition_staging_writer_preflight.js --commit`
+
+### Phase 4.82D: single-target acquisition staging packet preview
+
+`data-single-target-acquisition-staging-packet-preview` 汇总 4.79D scaffold + 4.80D schema + 4.81D preflight 为一个 packet preview：
+
+- 它不得创建 staging 目录
+- 它不得写 staging artifact
+- 它不得写 source manifest
+- 它不得写 packet file
+- 它不得触网
+- 它不得启动 browser
+- 它不得执行 proxy runtime
+- 它不得运行 titan_discovery legacy runtime
+- 它不得写 DB
+- staging packet preview 不等于 staging write authorization
+- staging packet preview 不等于 network dry-run authorization
+- 即使所有授权字段为 yes，Phase 4.82D 也不写文件、不触网、不写 DB
+
+`data-single-target-acquisition-staging-packet-commit` 当前 blocked。
+
+在 Phase 4.82D 中严格禁止：
+
+- `make data-single-target-acquisition-staging-packet-commit`
+- `make data-single-target-acquisition-staging-packet-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_PACKET=1`
+- `node scripts/ops/single_target_acquisition_staging_packet_preview.js --commit`
 
 相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md` 和 `docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md`
 
