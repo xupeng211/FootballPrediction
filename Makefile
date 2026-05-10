@@ -17,6 +17,7 @@
         data-acquisition-engines data-acquisition-engine-audit \
         data-single-target-network-dry-run data-single-target-network-commit \
         data-single-target-acquisition-runtime-scaffold data-single-target-acquisition-runtime-commit \
+        data-single-target-acquisition-staging-schema-validate data-single-target-acquisition-staging-schema-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -331,6 +332,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-network-commit ENGINE=<engine> TARGET_MATCH_ID=<id> SOURCE_MANIFEST=<path> CONFIRM_SINGLE_TARGET_NETWORK=1  # blocked in Phase 4.54"
 	@echo "  make data-single-target-acquisition-runtime-scaffold TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> ...  # scaffold-only, Phase 4.79D"
 	@echo "  make data-single-target-acquisition-runtime-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1  # blocked in Phase 4.79D"
+	@echo "  make data-single-target-acquisition-staging-schema-validate ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ARTIFACT=<path> MANIFEST=<path>  # local-only, Phase 4.80D"
+	@echo "  make data-single-target-acquisition-staging-schema-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_SCHEMA=1  # blocked in Phase 4.80D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -871,6 +874,24 @@ data-single-target-acquisition-runtime-commit: ## Blocked single-target acquisit
 	@echo "BLOCKED: single-target acquisition runtime commit/execution is not wired in Phase 4.79D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1, this path remains blocked."
 	@echo "  Real network dry-run requires a separate future phase with explicit source/target/terms/network/staging authorization."
+	@exit 1
+
+data-single-target-acquisition-staging-schema-validate: ## Local-only staging artifact / manifest schema validation. Phase 4.80D. Requires ARTIFACT_SCHEMA, MANIFEST_SCHEMA, ARTIFACT, MANIFEST (at least one pair).
+	@if [ -z "$(ARTIFACT_SCHEMA)" ] && [ -z "$(MANIFEST_SCHEMA)" ]; then \
+		echo "ERROR: provide at least one pair: ARTIFACT_SCHEMA=<path> + ARTIFACT=<path> and/or MANIFEST_SCHEMA=<path> + MANIFEST=<path>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.80D: staging schema validator (local-only, no network, no DB, no staging writes)"
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/single_target_acquisition_staging_schema_validator.js \
+		$(if $(ARTIFACT_SCHEMA),--artifact-schema "$(ARTIFACT_SCHEMA)") \
+		$(if $(MANIFEST_SCHEMA),--manifest-schema "$(MANIFEST_SCHEMA)") \
+		$(if $(ARTIFACT),--artifact "$(ARTIFACT)") \
+		$(if $(MANIFEST),--manifest "$(MANIFEST)")
+
+data-single-target-acquisition-staging-schema-commit: ## Blocked staging schema commit gate. Remains not wired in Phase 4.80D.
+	@echo "BLOCKED: single-target acquisition staging schema commit/execution is not wired in Phase 4.80D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_SCHEMA=1, this path remains blocked."
+	@echo "  Real staging write requires a separate future phase with explicit source/target/terms/network/staging authorization."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.

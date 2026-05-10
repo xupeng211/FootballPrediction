@@ -1,0 +1,108 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://football-prediction.local/schemas/acquisition/source_manifest_candidate.schema.json",
+    "title": "Source Manifest Candidate",
+    "description": "Phase 4.80D: Schema for a source manifest candidate derived from a staging artifact. This is a validator-only schema; manifest candidate is NOT a DB write authorization.",
+    "type": "object",
+    "required": [
+        "manifest_version",
+        "manifest_status",
+        "source_name",
+        "source_url",
+        "allowed_use",
+        "engine_family",
+        "target_scope",
+        "original_payload_sha256",
+        "approval_status",
+        "safety"
+    ],
+    "additionalProperties": false,
+    "properties": {
+        "manifest_version": {
+            "type": "string",
+            "description": "Schema version for the manifest structure."
+        },
+        "manifest_status": {
+            "type": "string",
+            "const": "candidate_not_approved",
+            "description": "All manifests start as candidate_not_approved; human review is required for any status change."
+        },
+        "source_name": {
+            "type": "string"
+        },
+        "source_url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "terms_url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "license_url": {
+            "type": "string",
+            "format": "uri"
+        },
+        "allowed_use": {
+            "type": "string"
+        },
+        "downloaded_by": {
+            "type": "string"
+        },
+        "downloaded_at": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "engine_family": {
+            "type": "string",
+            "const": "titan_discovery"
+        },
+        "engine_version": {
+            "type": "string"
+        },
+        "target_scope": {
+            "type": "object",
+            "required": ["scope_type"],
+            "additionalProperties": false,
+            "properties": {
+                "scope_type": {
+                    "type": "string",
+                    "enum": ["match_id", "league_season_date"]
+                },
+                "match_id": { "type": "string" },
+                "league": { "type": ["string", "null"] },
+                "season": { "type": ["string", "null"] },
+                "date": { "type": ["string", "null"] }
+            }
+        },
+        "original_payload_sha256": {
+            "type": "string"
+        },
+        "row_count": {
+            "type": "integer"
+        },
+        "object_count": {
+            "type": "integer"
+        },
+        "staging_artifact_path": {
+            "type": ["string", "null"]
+        },
+        "approval_status": {
+            "type": "string",
+            "const": "not_approved",
+            "description": "Must be not_approved; DB write requires separate authorization."
+        },
+        "human_approval_note": {
+            "type": ["string", "null"]
+        },
+        "safety": {
+            "type": "object",
+            "required": ["approved_for_db_write", "approved_for_training", "approved_for_prediction"],
+            "additionalProperties": false,
+            "properties": {
+                "approved_for_db_write": { "type": "boolean", "const": false },
+                "approved_for_training": { "type": "boolean", "const": false },
+                "approved_for_prediction": { "type": "boolean", "const": false }
+            }
+        }
+    }
+}

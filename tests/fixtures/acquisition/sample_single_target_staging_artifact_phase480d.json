@@ -1,0 +1,67 @@
+{
+    "artifact_version": "1.0",
+    "phase": "single_target_acquisition_network_dry_run",
+    "source": {
+        "name": "fotmob",
+        "source_url": "https://example.invalid/match/sample-match-001",
+        "terms_url": "https://example.invalid/terms",
+        "license_url": "https://example.invalid/license"
+    },
+    "target_scope": {
+        "scope_type": "match_id",
+        "match_id": "sample-match-001",
+        "league": null,
+        "season": null,
+        "date": null
+    },
+    "engine": {
+        "family": "titan_discovery",
+        "version": "future-scaffold"
+    },
+    "runtime": {
+        "browser": {
+            "enabled": false,
+            "provider": null,
+            "headless": true
+        },
+        "proxy": {
+            "enabled": false,
+            "provider": null,
+            "lease_id": null
+        },
+        "network": {
+            "requested_at": "2026-05-10T00:00:00.000Z",
+            "completed_at": "2026-05-10T00:00:01.000Z",
+            "duration_ms": 1000,
+            "rate_limit_policy": "single_target_only",
+            "retry_policy": "no_retry_in_scaffold"
+        }
+    },
+    "capture": {
+        "raw_payload_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "raw_payload_bytes": 0,
+        "content_type": "application/json",
+        "status_code": 200,
+        "row_count": 0,
+        "object_count": 1
+    },
+    "provenance": {
+        "captured_by": "manual_or_future_runtime",
+        "captured_at": "2026-05-10T00:00:01.000Z",
+        "command": "future command preview",
+        "git_commit": "unknown",
+        "container_image": "unknown"
+    },
+    "safety": {
+        "would_write_db": false,
+        "would_train": false,
+        "would_predict": false,
+        "bulk_scope": false,
+        "post_match_leakage_checked": false
+    },
+    "outputs": {
+        "raw_payload_path": null,
+        "normalized_preview_path": null,
+        "manifest_candidate_path": null
+    }
+}
