@@ -21,6 +21,7 @@
         data-single-target-acquisition-staging-writer-preflight data-single-target-acquisition-staging-writer-commit \
         data-single-target-acquisition-staging-packet-preview data-single-target-acquisition-staging-packet-commit \
         data-single-target-acquisition-pre-network-runbook-validate data-single-target-acquisition-pre-network-runbook-commit \
+        data-single-target-acquisition-network-auth-form-validate data-single-target-acquisition-network-auth-form-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -75,6 +76,7 @@ help: ## 显示帮助信息
 # ============================================
 COMPOSE_DEV=docker compose -f docker-compose.dev.yml
 PRE_NETWORK_RUNBOOK_NODE?=$(COMPOSE_DEV) exec -T dev node
+NETWORK_AUTH_FORM_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -344,6 +346,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-staging-packet-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_PACKET=1  # blocked in Phase 4.82D"
 	@echo "  make data-single-target-acquisition-pre-network-runbook-validate RUNBOOK=<path> ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ARTIFACT=<path> MANIFEST=<path> OUTPUT_ROOT=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...  # draft-only validate, Phase 4.83D"
 	@echo "  make data-single-target-acquisition-pre-network-runbook-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_PRE_NETWORK_RUNBOOK=1  # blocked in Phase 4.83D"
+	@echo "  make data-single-target-acquisition-network-auth-form-validate AUTH_FORM=<path> RUNBOOK=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...  # template-only validate, Phase 4.84D"
+	@echo "  make data-single-target-acquisition-network-auth-form-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTH_FORM=1  # blocked in Phase 4.84D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -1000,6 +1004,36 @@ data-single-target-acquisition-pre-network-runbook-commit: ## Blocked pre-networ
 	@echo "BLOCKED: single-target acquisition pre-network runbook execution is not wired in Phase 4.83D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_PRE_NETWORK_RUNBOOK=1, this path remains blocked."
 	@echo "  Phase 4.83D validates a draft only and does not authorize any network dry-run, staging write, or DB write."
+	@exit 1
+
+data-single-target-acquisition-network-auth-form-validate: ## Template-only network auth form validation. Phase 4.84D. No network, no writes, no DB.
+	@if [ -z "$(AUTH_FORM)" ] || [ -z "$(RUNBOOK)" ] || [ -z "$(TARGET_SOURCE)" ] || [ -z "$(TARGET_ENGINE_FAMILY)" ] || [ -z "$(TARGET_SCOPE_TYPE)" ] || [ -z "$(TARGET_MATCH_ID)" ]; then \
+		echo "ERROR: provide AUTH_FORM=<path>, RUNBOOK=<path>, TARGET_SOURCE=<src>, TARGET_ENGINE_FAMILY=titan_discovery, TARGET_SCOPE_TYPE=<type>, TARGET_MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.84D: network auth form validate (template-only, local-only, no writes, no network, no DB)"
+	$(NETWORK_AUTH_FORM_NODE) scripts/ops/single_target_acquisition_network_auth_form_validate.js \
+		--auth-form "$(AUTH_FORM)" \
+		--runbook "$(RUNBOOK)" \
+		--target-source "$(TARGET_SOURCE)" \
+		--target-engine-family "$(TARGET_ENGINE_FAMILY)" \
+		--target-scope-type "$(TARGET_SCOPE_TYPE)" \
+		--target-match-id "$(TARGET_MATCH_ID)" \
+		$(if $(TARGET_LEAGUE),--target-league "$(TARGET_LEAGUE)") \
+		$(if $(TARGET_SEASON),--target-season "$(TARGET_SEASON)") \
+		$(if $(TARGET_DATE),--target-date "$(TARGET_DATE)") \
+		--terms-approval "$(or $(TERMS_APPROVAL),no)" \
+		--network-dry-run-authorization "$(or $(NETWORK_DRY_RUN_AUTHORIZATION),no)" \
+		--allow-browser-runtime "$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime "$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--allow-external-network "$(or $(ALLOW_EXTERNAL_NETWORK),no)" \
+		--allow-staging-write "$(or $(ALLOW_STAGING_WRITE),no)" \
+		--final-human-confirmation "$(or $(FINAL_HUMAN_CONFIRMATION),no)"
+
+data-single-target-acquisition-network-auth-form-commit: ## Blocked network auth form execution gate. Remains not wired in Phase 4.84D.
+	@echo "BLOCKED: single-target acquisition network dry-run authorization execution is not wired in Phase 4.84D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTH_FORM=1, this path remains blocked."
+	@echo "  Phase 4.84D validates a template only and does not authorize any network dry-run, staging write, or DB write."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
