@@ -240,6 +240,7 @@ AI / Codex 默认只能执行：
 - 不触网、不写文件、不创建目录、只验证 final readiness checklist template + pre-network runbook template + network auth form template 的本地 validator：`make data-single-target-acquisition-network-readiness-checklist-validate CHECKLIST=<path> RUNBOOK=<path> AUTH_FORM=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...`（Phase 4.85D template-only）
 - 不触网、不写文件、不创建目录、只验证 execution plan draft + final readiness checklist + runbook + auth form template 的本地 validator：`make data-single-target-acquisition-network-execution-plan-validate EXECUTION_PLAN=<path> CHECKLIST=<path> RUNBOOK=<path> AUTH_FORM=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...`（Phase 4.86D draft-only）
 - 不触网、不写文件、不创建目录、只预览 human approval packet + execution plan + final readiness checklist + runbook + auth form template 的本地 validator：`make data-single-target-acquisition-network-approval-packet-preview APPROVAL_PACKET=<path> EXECUTION_PLAN=<path> CHECKLIST=<path> RUNBOOK=<path> AUTH_FORM=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...`（Phase 4.87D preview-only）
+- 不触网、不写文件、不创建目录、只预览 user input requirements closure + human approval packet + execution plan + final readiness checklist + runbook + auth form template 的本地 validator：`make data-single-target-acquisition-network-user-input-closure-preview INPUT_CLOSURE=<path> APPROVAL_PACKET=<path> EXECUTION_PLAN=<path> CHECKLIST=<path> RUNBOOK=<path> AUTH_FORM=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...`（Phase 4.88D closure-preview-only）
 - 只读本地 approval form 模板、不读 DB、不写 DB、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-small-write-runbook-validate APPROVAL_FORM=<local md>`
 - 只读本地 packet file creation authorization 模板、不读 DB、不写 DB、不创建目录、不写 packet 文件、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
@@ -772,6 +773,28 @@ AI / Codex 默认禁止：
 `data-single-target-acquisition-network-approval-packet-commit` 当前 blocked。
 
 真实 network dry-run 必须后续单独阶段、用户明确授权、参数齐全、terms approval 齐全、runbook / auth form / readiness checklist / execution plan / human approval packet 全部审核通过。
+
+### Phase 4.88D: single-target acquisition network dry-run user input requirements closure
+
+`data-single-target-acquisition-network-user-input-closure-preview` 只允许预览 user input requirements closure：
+
+- 它不得触网
+- 它不得启动 browser
+- 它不得执行 proxy runtime
+- 它不得运行 titan_discovery legacy runtime
+- 它不得写 staging
+- 它不得写 source manifest
+- 它不得写 packet file
+- 它不得写 approval packet file
+- 它不得写 user input closure file
+- 它不得写 DB
+- user input requirements closure 不等于真实 network dry-run authorization
+- Codex 不得自行填写真实 source / target / terms / authorization
+- 即使 CLI 传入 yes，Phase 4.88D 也不触网、不写文件、不写 DB
+
+`data-single-target-acquisition-network-user-input-closure-commit` 当前 blocked。
+
+真实 network dry-run 必须后续单独阶段、用户明确给齐真实参数、terms approval、network authorization、runbook / auth form / readiness checklist / execution plan / approval packet 全部审核通过。
 
 Phase 4.55C acquisition architecture rules：
 
