@@ -26,6 +26,7 @@
         data-single-target-acquisition-network-execution-plan-validate data-single-target-acquisition-network-execution-plan-commit \
         data-single-target-acquisition-network-approval-packet-preview data-single-target-acquisition-network-approval-packet-commit \
         data-single-target-acquisition-network-user-input-closure-preview data-single-target-acquisition-network-user-input-closure-commit \
+        data-single-target-acquisition-network-blocked-final-preflight-summary data-single-target-acquisition-network-blocked-final-preflight-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -85,6 +86,7 @@ NETWORK_READINESS_CHECKLIST_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_EXECUTION_PLAN_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_APPROVAL_PACKET_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_USER_INPUT_CLOSURE_NODE?=$(COMPOSE_DEV) exec -T dev node
+NETWORK_BLOCKED_PREFLIGHT_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -364,6 +366,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-network-approval-packet-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_APPROVAL_PACKET=1  # blocked in Phase 4.87D"
 	@echo "  make data-single-target-acquisition-network-user-input-closure-preview INPUT_CLOSURE=<path> APPROVAL_PACKET=<path> EXECUTION_PLAN=<path> CHECKLIST=<path> RUNBOOK=<path> AUTH_FORM=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...  # closure-preview-only validate, Phase 4.88D"
 	@echo "  make data-single-target-acquisition-network-user-input-closure-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_USER_INPUT_CLOSURE=1  # blocked in Phase 4.88D"
+	@echo "  make data-single-target-acquisition-network-blocked-final-preflight-summary BLOCKED_SUMMARY=<path> INPUT_CLOSURE=<path> APPROVAL_PACKET=<path> EXECUTION_PLAN=<path> CHECKLIST=<path> RUNBOOK=<path> AUTH_FORM=<path> TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> TARGET_MATCH_ID=<id> ...  # blocked final preflight summary, Phase 4.89D"
+	@echo "  make data-single-target-acquisition-network-blocked-final-preflight-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_BLOCKED_FINAL_PREFLIGHT=1  # blocked in Phase 4.89D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -1180,6 +1184,41 @@ data-single-target-acquisition-network-user-input-closure-commit: ## Blocked net
 	@echo "BLOCKED: single-target acquisition network dry-run user input requirements closure execution is not wired in Phase 4.88D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_USER_INPUT_CLOSURE=1, this path remains blocked."
 	@echo "  Phase 4.88D previews required user inputs only and does not authorize any network dry-run, staging write, user input closure file write, or DB write."
+	@exit 1
+
+data-single-target-acquisition-network-blocked-final-preflight-summary: ## Preview-only blocked final preflight summary validation. Phase 4.89D. No network, no writes, no DB.
+	@if [ -z "$(BLOCKED_SUMMARY)" ] || [ -z "$(INPUT_CLOSURE)" ] || [ -z "$(APPROVAL_PACKET)" ] || [ -z "$(EXECUTION_PLAN)" ] || [ -z "$(CHECKLIST)" ] || [ -z "$(RUNBOOK)" ] || [ -z "$(AUTH_FORM)" ] || [ -z "$(TARGET_SOURCE)" ] || [ -z "$(TARGET_ENGINE_FAMILY)" ] || [ -z "$(TARGET_SCOPE_TYPE)" ] || [ -z "$(TARGET_MATCH_ID)" ]; then \
+		echo "ERROR: provide BLOCKED_SUMMARY=<path>, INPUT_CLOSURE=<path>, APPROVAL_PACKET=<path>, EXECUTION_PLAN=<path>, CHECKLIST=<path>, RUNBOOK=<path>, AUTH_FORM=<path>, TARGET_SOURCE=<src>, TARGET_ENGINE_FAMILY=titan_discovery, TARGET_SCOPE_TYPE=<type>, TARGET_MATCH_ID=<id>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.89D: network blocked final preflight summary (preview-only, local-only, no writes, no network, no DB)"
+	$(NETWORK_BLOCKED_PREFLIGHT_NODE) scripts/ops/single_target_acquisition_network_blocked_final_preflight_summary.js \
+		--blocked-summary "$(BLOCKED_SUMMARY)" \
+		--input-closure "$(INPUT_CLOSURE)" \
+		--approval-packet "$(APPROVAL_PACKET)" \
+		--execution-plan "$(EXECUTION_PLAN)" \
+		--checklist "$(CHECKLIST)" \
+		--runbook "$(RUNBOOK)" \
+		--auth-form "$(AUTH_FORM)" \
+		--target-source "$(TARGET_SOURCE)" \
+		--target-engine-family "$(TARGET_ENGINE_FAMILY)" \
+		--target-scope-type "$(TARGET_SCOPE_TYPE)" \
+		--target-match-id "$(TARGET_MATCH_ID)" \
+		$(if $(TARGET_LEAGUE),--target-league "$(TARGET_LEAGUE)") \
+		$(if $(TARGET_SEASON),--target-season "$(TARGET_SEASON)") \
+		$(if $(TARGET_DATE),--target-date "$(TARGET_DATE)") \
+		--terms-approval "$(or $(TERMS_APPROVAL),no)" \
+		--network-dry-run-authorization "$(or $(NETWORK_DRY_RUN_AUTHORIZATION),no)" \
+		--allow-browser-runtime "$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime "$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--allow-external-network "$(or $(ALLOW_EXTERNAL_NETWORK),no)" \
+		--allow-staging-write "$(or $(ALLOW_STAGING_WRITE),no)" \
+		--final-human-confirmation "$(or $(FINAL_HUMAN_CONFIRMATION),no)"
+
+data-single-target-acquisition-network-blocked-final-preflight-commit: ## Blocked network blocked final preflight gate. Remains not wired in Phase 4.89D.
+	@echo "BLOCKED: single-target acquisition network dry-run blocked final preflight summary execution is not wired in Phase 4.89D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_BLOCKED_FINAL_PREFLIGHT=1, this path remains blocked."
+	@echo "  Phase 4.89D previews blocked status only and does not authorize any network dry-run, staging write, blocked summary file write, or DB write."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
