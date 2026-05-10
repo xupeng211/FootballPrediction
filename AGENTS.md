@@ -821,6 +821,30 @@ AI / Codex 默认禁止：
 
 真实 network dry-run 必须后续单独阶段、用户明确给齐真实参数、terms approval、network authorization、runbook / auth form / readiness checklist / execution plan / approval packet / input closure 全部审核通过。
 
+### Phase 4.90D: single-target acquisition network dry-run real-parameter intake template
+
+`data-single-target-acquisition-network-real-parameter-intake-preview` 只允许预览 real-parameter intake template：
+
+- 它不得触网
+- 它不得启动 browser
+- 它不得执行 proxy runtime
+- 它不得运行 titan_discovery legacy runtime
+- 它不得写 staging
+- 它不得写 source manifest
+- 它不得写 packet file
+- 它不得写 approval packet file
+- 它不得写 blocked summary file
+- 它不得写 real parameter intake file
+- 它不得写 DB
+- real-parameter intake template 不等于真实 network dry-run authorization
+- Codex 不得自行填写真实 source / target / terms / authorization
+- Codex 不得自行把 provided 改成 true
+- 即使 CLI 传入确认参数，Phase 4.90D 也不触网、不写文件、不写 DB
+
+`data-single-target-acquisition-network-real-parameter-intake-commit` 当前 blocked。
+
+真实 network dry-run 必须后续单独阶段、用户明确给齐真实参数、terms approval、network authorization、runbook / auth form / readiness checklist / execution plan / approval packet / input closure / blocked preflight 全部审核通过。
+
 Phase 4.55C acquisition architecture rules：
 
 - Codex 不应直接运行 legacy / high-risk acquisition engines，尤其是 `run_production`、`titan_discovery`、`recon_scanner`、`batch_historical_backfill`、`fetch_and_adapt_euro_leagues`、`odds_harvest_pipeline`、`total_war_pipeline`、`titan_marathon`。
