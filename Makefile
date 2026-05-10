@@ -28,6 +28,7 @@
         data-single-target-acquisition-network-user-input-closure-preview data-single-target-acquisition-network-user-input-closure-commit \
         data-single-target-acquisition-network-blocked-final-preflight-summary data-single-target-acquisition-network-blocked-final-preflight-commit \
         data-single-target-acquisition-network-real-parameter-intake-preview data-single-target-acquisition-network-real-parameter-intake-commit \
+        data-single-target-acquisition-network-real-parameter-validation-closure-preview data-single-target-acquisition-network-real-parameter-validation-closure-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -89,6 +90,7 @@ NETWORK_APPROVAL_PACKET_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_USER_INPUT_CLOSURE_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_BLOCKED_PREFLIGHT_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_REAL_PARAMETER_INTAKE_NODE?=$(COMPOSE_DEV) exec -T dev node
+NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -372,6 +374,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-network-blocked-final-preflight-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_BLOCKED_FINAL_PREFLIGHT=1  # blocked in Phase 4.89D"
 	@echo "  make data-single-target-acquisition-network-real-parameter-intake-preview INTAKE=<path> BLOCKED_SUMMARY=<path>  # real-parameter intake template preview, Phase 4.90D"
 	@echo "  make data-single-target-acquisition-network-real-parameter-intake-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_REAL_PARAMETER_INTAKE=1  # blocked in Phase 4.90D"
+	@echo "  make data-single-target-acquisition-network-real-parameter-validation-closure-preview VALIDATION_CLOSURE=<path> INTAKE=<path> BLOCKED_SUMMARY=<path>  # validation closure preview, Phase 4.91D"
+	@echo "  make data-single-target-acquisition-network-real-parameter-validation-closure-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE=1  # blocked in Phase 4.91D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -1239,6 +1243,23 @@ data-single-target-acquisition-network-real-parameter-intake-commit: ## Blocked 
 	@echo "BLOCKED: single-target acquisition real-parameter intake execution is not wired in Phase 4.90D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_REAL_PARAMETER_INTAKE=1, this path remains blocked."
 	@echo "  Phase 4.90D previews the intake template only and does not authorize any network dry-run, staging write, real parameter intake file write, or DB write."
+	@exit 1
+
+data-single-target-acquisition-network-real-parameter-validation-closure-preview: ## Preview-only real-parameter intake validation closure. Phase 4.91D. No network, no writes, no DB.
+	@if [ -z "$(VALIDATION_CLOSURE)" ] || [ -z "$(INTAKE)" ] || [ -z "$(BLOCKED_SUMMARY)" ]; then \
+		echo "ERROR: provide VALIDATION_CLOSURE=<path>, INTAKE=<path>, and BLOCKED_SUMMARY=<path>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.91D: network real-parameter intake validation closure (template-only, local-only, no writes, no network, no DB)"
+	$(NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE_NODE) scripts/ops/single_target_acquisition_network_real_parameter_intake_validation_closure.js \
+		--validation-closure "$(VALIDATION_CLOSURE)" \
+		--intake "$(INTAKE)" \
+		--blocked-summary "$(BLOCKED_SUMMARY)"
+
+data-single-target-acquisition-network-real-parameter-validation-closure-commit: ## Blocked network real-parameter validation closure gate. Remains not wired in Phase 4.91D.
+	@echo "BLOCKED: single-target acquisition real-parameter intake validation closure execution is not wired in Phase 4.91D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE=1, this path remains blocked."
+	@echo "  Phase 4.91D previews the validation closure template only and does not authorize any network dry-run, staging write, validation closure file write, or DB write."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
