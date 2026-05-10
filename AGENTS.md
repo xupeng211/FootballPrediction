@@ -233,6 +233,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读本地 Football-Data source manifest + 本地 CSV，并只执行 SELECT-only DB schema / duplicate 查询、不写 DB、不训练、不预测的 `make data-football-data-insert-policy-precheck SOURCE_MANIFEST=<local json> LOCAL_CSV=<local csv>`
 - 不触网、不启动 browser、不执行 proxy runtime、不写 staging、不写 manifest、不写 DB、不运行 titan_discovery legacy runtime 的 scaffold-only 参数校验和 plan preview：`make data-single-target-acquisition-runtime-scaffold TARGET_SOURCE=<src> TARGET_ENGINE_FAMILY=titan_discovery TARGET_SCOPE_TYPE=<type> ...`（Phase 4.79D scaffold-only）
 - 不触网、不写文件、只读本地 schema 和 sample fixture 的 staging artifact / manifest candidate schema 校验：`make data-single-target-acquisition-staging-schema-validate ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ARTIFACT=<path> MANIFEST=<path>`（Phase 4.80D local-only）
+- 不触网、不写文件、不创建目录、只做路径预览和授权预检的 staging writer preflight：`make data-single-target-acquisition-staging-writer-preflight ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ... OUTPUT_ROOT=<path> ...`（Phase 4.81D preflight-only）
 - 只读本地 approval form 模板、不读 DB、不写 DB、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-small-write-runbook-validate APPROVAL_FORM=<local md>`
 - 只读本地 packet file creation authorization 模板、不读 DB、不写 DB、不创建目录、不写 packet 文件、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
@@ -296,6 +297,8 @@ AI / Codex 不能直接执行：
 - `make data-single-target-acquisition-runtime-commit CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1`
 - `make data-single-target-acquisition-staging-schema-commit`
 - `make data-single-target-acquisition-staging-schema-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_SCHEMA=1`
+- `make data-single-target-acquisition-staging-writer-commit`
+- `make data-single-target-acquisition-staging-writer-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
 - `make data-finished-csv-commit`
 - `make data-finished-csv-commit CONFIRM_FINISHED_CSV_COMMIT=1`
@@ -523,6 +526,8 @@ AI / Codex 默认禁止：
 - `make data-single-target-acquisition-runtime-commit CONFIRM_SINGLE_TARGET_ACQUISITION_RUNTIME=1`
 - `make data-single-target-acquisition-staging-schema-commit`
 - `make data-single-target-acquisition-staging-schema-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_SCHEMA=1`
+- `make data-single-target-acquisition-staging-writer-commit`
+- `make data-single-target-acquisition-staging-writer-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1`
 - `node scripts/ops/acquisition_engine_gate.js --commit`
 - `node scripts/ops/run_production.js`
 - `node scripts/ops/titan_discovery.js`
@@ -606,6 +611,36 @@ AI / Codex 默认禁止：
 - `make data-single-target-acquisition-staging-schema-commit`
 - `make data-single-target-acquisition-staging-schema-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_SCHEMA=1`
 - `node scripts/ops/single_target_acquisition_staging_schema_validator.js --commit`
+
+### Phase 4.81D: single-target acquisition staging writer preflight
+
+`data-single-target-acquisition-staging-writer-preflight` 只允许 staging writer preflight：
+
+- 它不得创建 staging 目录
+- 它不得写 staging artifact
+- 它不得写 source manifest
+- 它不得触网
+- 它不得启动 browser
+- 它不得执行 proxy runtime
+- 它不得运行 titan_discovery legacy runtime
+- 它不得写 DB
+- staging writer preflight 不等于 staging write authorization
+- 即使 `STAGING_WRITE_AUTHORIZATION=yes` 和 `FINAL_HUMAN_CONFIRMATION=yes`，Phase 4.81D 也不写文件
+
+`data-single-target-acquisition-staging-writer-commit` 当前 blocked。
+
+真实 staging write 必须后续单独阶段、用户明确授权、路径明确、schema validation 通过。
+
+在 Phase 4.81D 中允许：
+
+- `make data-single-target-acquisition-staging-writer-preflight ARTIFACT_SCHEMA=<path> MANIFEST_SCHEMA=<path> ...`
+- `node scripts/ops/single_target_acquisition_staging_writer_preflight.js --artifact-schema=... ...`
+
+在 Phase 4.81D 中严格禁止：
+
+- `make data-single-target-acquisition-staging-writer-commit`
+- `make data-single-target-acquisition-staging-writer-commit CONFIRM_SINGLE_TARGET_ACQUISITION_STAGING_WRITE=1`
+- `node scripts/ops/single_target_acquisition_staging_writer_preflight.js --commit`
 
 相关背景见：`docs/_reports/ACQUISITION_ENGINE_READINESS_PHASE4_53A.md`、`docs/_reports/REAL_DATA_SOURCE_STRATEGY_PHASE4_51.md` 和 `docs/_reports/REAL_FINISHED_CSV_STAGING_DRY_RUN_PHASE4_52.md`
 
