@@ -29,6 +29,7 @@
         data-single-target-acquisition-network-blocked-final-preflight-summary data-single-target-acquisition-network-blocked-final-preflight-commit \
         data-single-target-acquisition-network-real-parameter-intake-preview data-single-target-acquisition-network-real-parameter-intake-commit \
         data-single-target-acquisition-network-real-parameter-validation-closure-preview data-single-target-acquisition-network-real-parameter-validation-closure-commit \
+        data-single-target-acquisition-network-filled-intake-review-plan-preview data-single-target-acquisition-network-filled-intake-review-plan-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -91,6 +92,7 @@ NETWORK_USER_INPUT_CLOSURE_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_BLOCKED_PREFLIGHT_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_REAL_PARAMETER_INTAKE_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE_NODE?=$(COMPOSE_DEV) exec -T dev node
+NETWORK_FILLED_INTAKE_REVIEW_PLAN_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -376,6 +378,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-network-real-parameter-intake-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_REAL_PARAMETER_INTAKE=1  # blocked in Phase 4.90D"
 	@echo "  make data-single-target-acquisition-network-real-parameter-validation-closure-preview VALIDATION_CLOSURE=<path> INTAKE=<path> BLOCKED_SUMMARY=<path>  # validation closure preview, Phase 4.91D"
 	@echo "  make data-single-target-acquisition-network-real-parameter-validation-closure-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE=1  # blocked in Phase 4.91D"
+	@echo "  make data-single-target-acquisition-network-filled-intake-review-plan-preview REVIEW_PLAN=<path> INTAKE=<path> VALIDATION_CLOSURE=<path> BLOCKED_SUMMARY=<path>  # review plan preview, Phase 4.92D"
+	@echo "  make data-single-target-acquisition-network-filled-intake-review-plan-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_FILLED_INTAKE_REVIEW_PLAN=1  # blocked in Phase 4.92D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -1260,6 +1264,24 @@ data-single-target-acquisition-network-real-parameter-validation-closure-commit:
 	@echo "BLOCKED: single-target acquisition real-parameter intake validation closure execution is not wired in Phase 4.91D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE=1, this path remains blocked."
 	@echo "  Phase 4.91D previews the validation closure template only and does not authorize any network dry-run, staging write, validation closure file write, or DB write."
+	@exit 1
+
+data-single-target-acquisition-network-filled-intake-review-plan-preview: ## Preview-only filled-intake review plan. Phase 4.92D. No network, no writes, no DB.
+	@if [ -z "$(REVIEW_PLAN)" ] || [ -z "$(INTAKE)" ] || [ -z "$(VALIDATION_CLOSURE)" ] || [ -z "$(BLOCKED_SUMMARY)" ]; then \
+		echo "ERROR: provide REVIEW_PLAN=<path>, INTAKE=<path>, VALIDATION_CLOSURE=<path>, and BLOCKED_SUMMARY=<path>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.92D: network filled-intake review plan (template-only, local-only, no writes, no network, no DB)"
+	$(NETWORK_FILLED_INTAKE_REVIEW_PLAN_NODE) scripts/ops/single_target_acquisition_network_filled_intake_review_plan.js \
+		--review-plan "$(REVIEW_PLAN)" \
+		--intake "$(INTAKE)" \
+		--validation-closure "$(VALIDATION_CLOSURE)" \
+		--blocked-summary "$(BLOCKED_SUMMARY)"
+
+data-single-target-acquisition-network-filled-intake-review-plan-commit: ## Blocked network filled-intake review plan gate. Remains not wired in Phase 4.92D.
+	@echo "BLOCKED: single-target acquisition filled-intake review plan execution is not wired in Phase 4.92D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_FILLED_INTAKE_REVIEW_PLAN=1, this path remains blocked."
+	@echo "  Phase 4.92D previews the filled-intake review plan template only and does not authorize any network dry-run, staging write, filled-intake review file write, or DB write."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
