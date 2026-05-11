@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Phase 4.97F: FotMob trusted single-target adapter scaffold.
+ * Phase 4.98F: FotMob trusted single-target adapter preflight hardening.
  *
  * This command is preflight-only. It does not access the network, launch browser
  * or proxy runtime, execute legacy FotMob runtime, write staging, write DB,
@@ -9,9 +9,9 @@
 
 'use strict';
 
-const PHASE = 'PHASE4_97F_FOTMOB_TRUSTED_SINGLE_TARGET_ADAPTER_SCAFFOLD';
-const BLOCKED_COMMIT_MESSAGE =
-    'BLOCKED: FotMob trusted single-target adapter scaffold is not executable in Phase 4.97F.';
+const PHASE = 'PHASE4_98F_FOTMOB_ADAPTER_PREFLIGHT_HARDENING';
+const DEFAULT_PARSER_CONFIDENCE_THRESHOLD = 0.8;
+const BLOCKED_COMMIT_MESSAGE = 'BLOCKED: FotMob adapter preflight hardening is not executable in Phase 4.98F.';
 
 const ALLOWED_SCOPE_TYPES = ['match_id', 'league_season_date'];
 const BOOLEAN_FIELDS = [
@@ -29,6 +29,19 @@ const BOOLEAN_FIELDS = [
 
 const TRUE_VALUES = new Set(['yes', 'true']);
 const FALSE_VALUES = new Set(['no', 'false']);
+
+const OPTIONAL_POLICY_FIELDS = [
+    'source_homepage_url',
+    'terms_url',
+    'license_url',
+    'allowed_use_summary',
+    'rate_limit_policy',
+    'retry_policy',
+    'user_agent_policy',
+    'output_root',
+    'expected_response_kind',
+    'parser_confidence_threshold',
+];
 
 function assignArgValue(args, key, value) {
     if (args[key] === undefined) {
@@ -110,7 +123,7 @@ function hasMultipleTargets(params) {
 }
 
 function normalizeInput(params) {
-    return {
+    const normalized = {
         target_source: singleValue(params, 'target_source'),
         target_scope_type: singleValue(params, 'target_scope_type'),
         target_match_id: singleValue(params, 'target_match_id'),
@@ -122,6 +135,18 @@ function normalizeInput(params) {
         max_targets: 1,
         ignored_yes_flags: [],
     };
+
+    for (const field of OPTIONAL_POLICY_FIELDS) {
+        normalized[field] = singleValue(params, field);
+    }
+
+    normalized.expected_response_kind = normalized.expected_response_kind || 'unknown';
+    normalized.parser_confidence_threshold =
+        normalized.parser_confidence_threshold === undefined
+            ? DEFAULT_PARSER_CONFIDENCE_THRESHOLD
+            : Number(normalized.parser_confidence_threshold);
+
+    return normalized;
 }
 
 function validateCommitFlag(params, errors) {
@@ -198,13 +223,23 @@ function validateBooleanFields(params, normalized, errors) {
         const value = singleValue(params, field);
         const parsed = normalizeBooleanFlag(value);
         if (value === undefined || value === '') {
-            errors.push(`ERROR: --${field.replace(/_/g, '-')} is required (no/false in Phase 4.97F).`);
+            errors.push(`ERROR: --${field.replace(/_/g, '-')} is required (no/false in Phase 4.98F).`);
         } else if (parsed === undefined) {
             errors.push(`ERROR: --${field.replace(/_/g, '-')} must be yes/no or true/false.`);
         } else if (parsed === true) {
             normalized.ignored_yes_flags.push(field);
         }
         normalized[field] = false;
+    }
+}
+
+function validatePolicyFlags(normalized, errors) {
+    if (
+        !Number.isFinite(normalized.parser_confidence_threshold) ||
+        normalized.parser_confidence_threshold < 0 ||
+        normalized.parser_confidence_threshold > 1
+    ) {
+        errors.push('ERROR: --parser-confidence-threshold must be a number between 0 and 1.');
     }
 }
 
@@ -218,11 +253,107 @@ function validateSingleTargetInput(params) {
     validateScopeFields(params, normalized, errors);
     validateTargetLimits(params, errors);
     validateBooleanFields(params, normalized, errors);
+    validatePolicyFlags(normalized, errors);
 
     return {
         valid: errors.length === 0,
         errors,
         normalized,
+    };
+}
+
+function hasProvided(value) {
+    return value !== undefined && value !== null && String(value).trim() !== '';
+}
+
+function buildTargetIdentifier(input) {
+    if (input.target_scope_type === 'match_id') {
+        return input.target_match_id;
+    }
+    if (input.target_scope_type === 'league_season_date') {
+        return [input.target_league, input.target_season, input.target_date].join('|');
+    }
+    return null;
+}
+
+function buildSourceManifestCandidatePreview(input) {
+    return {
+        source: 'fotmob',
+        target_scope_type: input.target_scope_type,
+        target_identifier: buildTargetIdentifier(input),
+        source_homepage_url_provided: hasProvided(input.source_homepage_url),
+        terms_url_provided: hasProvided(input.terms_url),
+        license_url_provided: hasProvided(input.license_url),
+        allowed_use_summary_provided: hasProvided(input.allowed_use_summary),
+        network_authorization: false,
+        created_for_preview_only: true,
+        would_write_source_manifest: false,
+    };
+}
+
+function buildParserConfidenceStub(input) {
+    return {
+        parser_ready: false,
+        real_response_available: false,
+        parser_confidence: 0,
+        parser_confidence_threshold: input.parser_confidence_threshold,
+        parser_confidence_passed: false,
+        would_parse_real_response: false,
+    };
+}
+
+function buildResponsePreviewSchemaStub(input) {
+    return {
+        expected_response_kind: input.expected_response_kind || 'unknown',
+        schema_ready: false,
+        schema_validation_passed: false,
+        would_validate_real_response: false,
+    };
+}
+
+function stopGate(gate, reason) {
+    return {
+        gate,
+        blocked: true,
+        reason,
+    };
+}
+
+function buildStopGates(input) {
+    return [
+        stopGate('missing_terms_approval', 'terms approval is not granted in Phase 4.98F'),
+        stopGate('missing_network_authorization', 'network authorization is not granted in Phase 4.98F'),
+        stopGate('no_real_target_authorization', 'real target authorization must be reviewed in a later phase'),
+        stopGate('source_terms_not_verified', 'source terms and allowed-use evidence are not verified'),
+        stopGate('browser_runtime_not_authorized', 'browser runtime remains blocked by default'),
+        stopGate('proxy_runtime_not_authorized', 'proxy runtime remains blocked by default'),
+        stopGate('external_network_not_authorized', 'external network access remains blocked in Phase 4.98F'),
+        stopGate('staging_write_not_authorized', 'staging writes remain blocked in Phase 4.98F'),
+        stopGate('db_write_not_authorized', 'DB writes remain blocked in Phase 4.98F'),
+        stopGate('parser_not_ready', 'parser confidence is stub-only and no real response is available'),
+        stopGate('source_manifest_not_approved', 'source manifest candidate preview is not an approved manifest'),
+        stopGate('network_execution_blocked', 'network dry-run execution is blocked in Phase 4.98F'),
+        stopGate('future_phase_required', 'a later authorization phase is required before any execution'),
+        stopGate(
+            'allowed_use_summary_missing',
+            hasProvided(input.allowed_use_summary)
+                ? 'allowed-use summary is provided but not approved in Phase 4.98F'
+                : 'allowed-use summary is missing'
+        ),
+    ];
+}
+
+function buildReadinessSummary() {
+    return {
+        adapter_scaffold_ready: true,
+        preflight_hardened: true,
+        source_manifest_candidate_preview_ready: true,
+        parser_confidence_stub_ready: true,
+        network_dry_run_ready: false,
+        network_dry_run_authorized: false,
+        network_dry_run_execution_allowed: false,
+        next_required_phase:
+            'Phase 4.99F FotMob stdout-only network dry-run authorization packet or explicit user-supplied real target authorization',
     };
 }
 
@@ -238,6 +369,8 @@ function buildPreflightSummary(params) {
     return {
         phase: PHASE,
         adapter_scaffold_only: true,
+        adapter_scaffold_ready: true,
+        preflight_hardened: true,
         target_source: 'fotmob',
         target_scope_type: input.target_scope_type,
         target_match_id: input.target_scope_type === 'match_id' ? input.target_match_id : null,
@@ -248,6 +381,18 @@ function buildPreflightSummary(params) {
         single_target: true,
         bulk_scope_allowed: false,
         max_targets: 1,
+        policy_inputs: {
+            source_homepage_url_provided: hasProvided(input.source_homepage_url),
+            terms_url_provided: hasProvided(input.terms_url),
+            license_url_provided: hasProvided(input.license_url),
+            allowed_use_summary_provided: hasProvided(input.allowed_use_summary),
+            rate_limit_policy: input.rate_limit_policy || null,
+            retry_policy: input.retry_policy || null,
+            user_agent_policy: input.user_agent_policy || null,
+            output_root_provided: hasProvided(input.output_root),
+            expected_response_kind: input.expected_response_kind,
+            parser_confidence_threshold: input.parser_confidence_threshold,
+        },
         terms_approval: false,
         network_authorization: false,
         browser_runtime_allowed: false,
@@ -275,17 +420,22 @@ function buildPreflightSummary(params) {
         would_train: false,
         would_predict: false,
         would_spawn_child_process: false,
+        source_manifest_candidate_preview: buildSourceManifestCandidatePreview(input),
+        parser_confidence_stub: buildParserConfidenceStub(input),
+        response_preview_schema_stub: buildResponsePreviewSchemaStub(input),
+        stop_gates: buildStopGates(input),
+        readiness_summary: buildReadinessSummary(),
         commit_gate: 'blocked',
         ignored_yes_flags: input.ignored_yes_flags,
         next_required_phase:
-            'Phase 4.98F FotMob adapter preflight hardening or explicit user-supplied real target authorization',
+            'Phase 4.99F FotMob stdout-only network dry-run authorization packet or explicit user-supplied real target authorization',
     };
 }
 
 function createDisabledNetworkClient() {
     return {
         fetch() {
-            throw new Error('Network access is disabled in Phase 4.97F.');
+            throw new Error('Network access is disabled in Phase 4.98F.');
         },
     };
 }
@@ -329,7 +479,7 @@ function createFotMobSingleTargetAdapter(dependencies = {}) {
             return buildPreflightSummary(input);
         },
         dryRunFetchSingleTarget() {
-            throw new Error('Network dry-run execution is disabled in Phase 4.97F.');
+            throw new Error('Network dry-run execution is disabled in Phase 4.98F.');
         },
         parsePreview(payload) {
             return parser.parsePreview(payload);
@@ -368,9 +518,16 @@ module.exports = {
     parseArgs,
     normalizeBooleanFlag,
     validateSingleTargetInput,
+    validatePolicyFlags,
     createFotMobSingleTargetAdapter,
     buildPreflightSummary,
+    buildStopGates,
+    buildSourceManifestCandidatePreview,
+    buildParserConfidenceStub,
+    buildResponsePreviewSchemaStub,
+    buildReadinessSummary,
     runCli,
     PHASE,
     BLOCKED_COMMIT_MESSAGE,
+    DEFAULT_PARSER_CONFIDENCE_THRESHOLD,
 };

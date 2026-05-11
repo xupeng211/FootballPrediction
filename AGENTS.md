@@ -1038,6 +1038,15 @@ Phase 4.97F FotMob trusted single-target adapter scaffold rules：
 - CLI `yes` flags must not override Phase 4.97F blocked behavior.
 - Future FotMob network dry-run requires explicit user target, terms, allowed-use, and network authorization in a separate phase.
 
+Phase 4.98F FotMob adapter preflight hardening rules：
+
+- FotMob adapter preflight may generate source manifest candidate preview only to stdout.
+- It must not write source manifest files.
+- Parser confidence in Phase 4.98F is stub-only and must not parse real network responses.
+- Response schema preview in Phase 4.98F is stub-only and must not validate real remote payloads.
+- All `yes` flags remain blocked until an explicit future authorization phase.
+- Network dry-run remains prohibited in Phase 4.98F.
+
 Phase 4.57C football-data adapter rules：
 
 - `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
