@@ -15,6 +15,7 @@
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
+        data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-single-target-network-dry-run data-single-target-network-commit \
         data-single-target-acquisition-runtime-scaffold data-single-target-acquisition-runtime-commit \
         data-single-target-acquisition-staging-schema-validate data-single-target-acquisition-staging-schema-commit \
@@ -99,6 +100,7 @@ NETWORK_FILLED_INTAKE_REVIEW_PLAN_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_FILLED_INTAKE_REVIEW_RESULT_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_AUTHORIZATION_HANDOFF_CHECKLIST_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_AUTHORIZATION_DECISION_NODE?=$(COMPOSE_DEV) exec -T dev node
+FOTMOB_SINGLE_TARGET_ADAPTER_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -302,6 +304,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
+	@echo "  make data-fotmob-single-target-adapter-preflight TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> ...  # scaffold-only, Phase 4.97F"
 	@echo "  make data-real-source-audit SOURCE_MANIFEST=<path>"
 	@echo "  make data-real-finished-csv-dry-run SOURCE_MANIFEST=<path> SAMPLE_CSV=<path>"
 	@echo "  make data-football-data-csv-dry-run SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
@@ -392,6 +395,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-network-authorization-handoff-checklist-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTHORIZATION_HANDOFF_CHECKLIST=1  # blocked in Phase 4.94D"
 	@echo "  make data-single-target-acquisition-network-authorization-decision-preview AUTHORIZATION_DECISION=<path> HANDOFF_CHECKLIST=<path> REVIEW_RESULT=<path> REVIEW_PLAN=<path> INTAKE=<path> VALIDATION_CLOSURE=<path> BLOCKED_SUMMARY=<path>  # authorization decision preview, Phase 4.95D"
 	@echo "  make data-single-target-acquisition-network-authorization-decision-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTHORIZATION_DECISION=1  # blocked in Phase 4.95D"
+	@echo "  make data-fotmob-single-target-adapter-commit TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> CONFIRM_FOTMOB_SINGLE_TARGET_ADAPTER=1  # blocked in Phase 4.97F"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -886,6 +890,34 @@ data-acquisition-engines: ## List acquisition engine registry entries. No networ
 
 data-acquisition-engine-audit: ## Audit acquisition engine registry. No network, no DB writes.
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/acquisition_engine_gate.js --audit
+
+data-fotmob-single-target-adapter-preflight: ## No-network FotMob trusted single-target adapter scaffold preflight. Phase 4.97F.
+	@$(FOTMOB_SINGLE_TARGET_ADAPTER_NODE) scripts/ops/fotmob_single_target_adapter_scaffold.js \
+		--target-source "$(TARGET_SOURCE)" \
+		--target-scope-type "$(TARGET_SCOPE_TYPE)" \
+		$(if $(TARGET_MATCH_ID),--target-match-id "$(TARGET_MATCH_ID)") \
+		$(if $(TARGET_LEAGUE),--target-league "$(TARGET_LEAGUE)") \
+		$(if $(TARGET_SEASON),--target-season "$(TARGET_SEASON)") \
+		$(if $(TARGET_DATE),--target-date "$(TARGET_DATE)") \
+		$(if $(TARGET_COUNT),--target-count "$(TARGET_COUNT)") \
+		$(if $(BULK_SCOPE_ALLOWED),--bulk-scope-allowed "$(BULK_SCOPE_ALLOWED)") \
+		$(if $(MAX_TARGETS),--max-targets "$(MAX_TARGETS)") \
+		--terms-approval "$(or $(TERMS_APPROVAL),no)" \
+		--network-authorization "$(or $(NETWORK_AUTHORIZATION),no)" \
+		--allow-browser-runtime "$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime "$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--allow-external-network "$(or $(ALLOW_EXTERNAL_NETWORK),no)" \
+		--allow-staging-write "$(or $(ALLOW_STAGING_WRITE),no)" \
+		--allow-db-write "$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-training "$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction "$(or $(ALLOW_PREDICTION),no)" \
+		--final-human-confirmation "$(or $(FINAL_HUMAN_CONFIRMATION),no)"
+
+data-fotmob-single-target-adapter-commit: ## Blocked FotMob trusted single-target adapter execution gate. Remains blocked in Phase 4.97F.
+	@echo "BLOCKED: FotMob trusted single-target adapter scaffold is not executable in Phase 4.97F."
+	@echo "  Even with CONFIRM_FOTMOB_SINGLE_TARGET_ADAPTER=1, this path remains blocked."
+	@echo "  Future FotMob network dry-run requires separate user target, terms, allowed-use, and network authorization."
+	@exit 1
 
 data-single-target-network-dry-run: ## Scaffold-only single-target network dry-run gate. Requires ENGINE, TARGET_MATCH_ID, SOURCE_MANIFEST.
 	@if [ -z "$(ENGINE)" ] || [ -z "$(TARGET_MATCH_ID)" ] || [ -z "$(SOURCE_MANIFEST)" ]; then \
