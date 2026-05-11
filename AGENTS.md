@@ -1018,6 +1018,16 @@ Phase 4.78D single-target acquisition runtime design rules：
 - staging artifact schema 只是设计产物，不等于 staging write authorization；source manifest candidate 也不等于 DB write authorization。
 - 未来 network dry-run 必须 single-target、用户明确授权、source / terms 明确、最多只落 staging、不写 DB、不训练、不预测，且后续 DB write 必须另行授权并先完成 `pg_dump`。
 
+Phase 4.96F FotMob single-target dry-run readiness rules：
+
+- FotMob legacy runtime must not be executed directly by agents.
+- `scripts/ops/titan_discovery.js` is not a trusted single-target dry-run adapter.
+- `run_production` / `ProductionHarvester` / `FotMobStrategy` must not be used for the first safe FotMob dry-run.
+- `FixtureRepository.persist` and `Persistence.dualSave` are DB/file write paths and must remain blocked unless separately authorized.
+- FotMob browser / proxy / session helpers must not be launched without explicit user authorization.
+- A future FotMob dry-run must first use a trusted single-target adapter scaffold.
+- The first FotMob network dry-run should be stdout-only, no DB, no staging, and no browser/proxy by default.
+
 Phase 4.57C football-data adapter rules：
 
 - `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
