@@ -17,6 +17,7 @@
         data-acquisition-engines data-acquisition-engine-audit \
         data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-fotmob-stdout-network-dry-run-authorization-packet-preview data-fotmob-stdout-network-dry-run-authorization-packet-commit \
+        data-fotmob-stdout-network-dry-run-execution-plan-preview data-fotmob-stdout-network-dry-run-execution-plan-commit \
         data-single-target-network-dry-run data-single-target-network-commit \
         data-single-target-acquisition-runtime-scaffold data-single-target-acquisition-runtime-commit \
         data-single-target-acquisition-staging-schema-validate data-single-target-acquisition-staging-schema-commit \
@@ -103,6 +104,7 @@ NETWORK_AUTHORIZATION_HANDOFF_CHECKLIST_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_AUTHORIZATION_DECISION_NODE?=$(COMPOSE_DEV) exec -T dev node
 FOTMOB_SINGLE_TARGET_ADAPTER_NODE?=$(COMPOSE_DEV) exec -T dev node
 FOTMOB_STDOUT_NETWORK_AUTH_PACKET_NODE?=$(COMPOSE_DEV) exec -T dev node
+FOTMOB_STDOUT_NETWORK_EXECUTION_PLAN_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -308,6 +310,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-acquisition-engine-audit"
 	@echo "  make data-fotmob-single-target-adapter-preflight TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> ...  # Phase 4.98F hardening, stdout-only, no network/staging/DB/legacy runtime"
 	@echo "  make data-fotmob-stdout-network-dry-run-authorization-packet-preview PACKET=<path>  # Phase 4.99F template-only, stdout-only, no network/staging/DB/runtime packet write"
+	@echo "  make data-fotmob-stdout-network-dry-run-execution-plan-preview PLAN=<path> PACKET=<path>  # Phase 5.00F template-only, stdout-only, no network/staging/DB/runtime execution plan write"
 	@echo "  make data-real-source-audit SOURCE_MANIFEST=<path>"
 	@echo "  make data-real-finished-csv-dry-run SOURCE_MANIFEST=<path> SAMPLE_CSV=<path>"
 	@echo "  make data-football-data-csv-dry-run SOURCE_MANIFEST=<path> LOCAL_CSV=<path>"
@@ -400,6 +403,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-network-authorization-decision-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTHORIZATION_DECISION=1  # blocked in Phase 4.95D"
 	@echo "  make data-fotmob-single-target-adapter-commit TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> CONFIRM_FOTMOB_SINGLE_TARGET_ADAPTER=1  # blocked in Phase 4.98F"
 	@echo "  make data-fotmob-stdout-network-dry-run-authorization-packet-commit PACKET=<path> CONFIRM_FOTMOB_STDOUT_NETWORK_DRY_RUN_AUTHORIZATION_PACKET=1  # blocked in Phase 4.99F"
+	@echo "  make data-fotmob-stdout-network-dry-run-execution-plan-commit PLAN=<path> PACKET=<path> CONFIRM_FOTMOB_STDOUT_NETWORK_DRY_RUN_EXECUTION_PLAN=1  # blocked in Phase 5.00F"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -944,6 +948,19 @@ data-fotmob-stdout-network-dry-run-authorization-packet-commit: ## Blocked FotMo
 	@echo "BLOCKED: FotMob stdout-only network dry-run authorization packet is not executable in Phase 4.99F."
 	@echo "  Even with CONFIRM_FOTMOB_STDOUT_NETWORK_DRY_RUN_AUTHORIZATION_PACKET=1, this path remains blocked."
 	@echo "  The packet is template-only and does not authorize or execute a network dry-run."
+	@exit 1
+
+data-fotmob-stdout-network-dry-run-execution-plan-preview: ## Validate FotMob stdout-only network dry-run execution plan template. Phase 5.00F.
+	@if [ -z "$(PLAN)" ] || [ -z "$(PACKET)" ]; then \
+		echo "ERROR: provide PLAN=<path> and PACKET=<path>"; \
+		exit 1; \
+	fi
+	@$(FOTMOB_STDOUT_NETWORK_EXECUTION_PLAN_NODE) scripts/ops/fotmob_stdout_network_dry_run_execution_plan.js --plan "$(PLAN)" --packet "$(PACKET)"
+
+data-fotmob-stdout-network-dry-run-execution-plan-commit: ## Blocked FotMob stdout-only network dry-run execution plan execution gate. Remains blocked in Phase 5.00F.
+	@echo "BLOCKED: FotMob stdout-only network dry-run execution plan is not executable in Phase 5.00F."
+	@echo "  Even with CONFIRM_FOTMOB_STDOUT_NETWORK_DRY_RUN_EXECUTION_PLAN=1, this path remains blocked."
+	@echo "  The execution plan is template-only and does not authorize or execute a network dry-run."
 	@exit 1
 
 data-single-target-network-dry-run: ## Scaffold-only single-target network dry-run gate. Requires ENGINE, TARGET_MATCH_ID, SOURCE_MANIFEST.

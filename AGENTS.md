@@ -1056,6 +1056,16 @@ Phase 4.99F FotMob stdout-only network dry-run authorization packet rules：
 - Codex must not self-authorize network access or convert the authorization packet into execution.
 - Future FotMob stdout-only network dry-run requires an explicit user-filled authorization packet and a separate execution phase.
 
+Phase 5.00F FotMob stdout-only network dry-run execution plan rules：
+
+- FotMob stdout-only network dry-run execution plan is template-only in Phase 5.00F.
+- It must not access external FotMob or execute a network dry-run.
+- It must not write runtime execution plan files, staging, source manifest, packet, or DB.
+- Codex must not self-fill a real FotMob target, source terms, license, or allowed-use approval.
+- Codex must not self-authorize network access or convert the execution plan into execution.
+- Phase 5.00F is intended to stop template expansion and wait for user real input.
+- Next action after Phase 5.00F should be user-provided real FotMob target, terms, allowed-use, and authorization, not automatic Phase 5.01F.
+
 Phase 4.57C football-data adapter rules：
 
 - `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
