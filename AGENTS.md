@@ -245,6 +245,7 @@ AI / Codex 默认只能执行：
 - 不触网、不写文件、不创建目录、不写 DB、只预览 real-parameter intake validation closure template + real-parameter intake template + blocked preflight summary template 的本地 validator：`make data-single-target-acquisition-network-real-parameter-validation-closure-preview VALIDATION_CLOSURE=<path> INTAKE=<path> BLOCKED_SUMMARY=<path>`（Phase 4.91D template-only）
 - 不触网、不写文件、不创建目录、不写 DB、只预览 filled-intake review plan template + real-parameter intake template + validation closure template + blocked preflight summary template 的本地 validator：`make data-single-target-acquisition-network-filled-intake-review-plan-preview REVIEW_PLAN=<path> INTAKE=<path> VALIDATION_CLOSURE=<path> BLOCKED_SUMMARY=<path>`（Phase 4.92D template-only）
 - 不触网、不写文件、不创建目录、不写 DB、只预览 filled-intake review result template + review plan template + real-parameter intake template + validation closure template + blocked preflight summary template 的本地 validator：`make data-single-target-acquisition-network-filled-intake-review-result-preview REVIEW_RESULT=<path> REVIEW_PLAN=<path> INTAKE=<path> VALIDATION_CLOSURE=<path> BLOCKED_SUMMARY=<path>`（Phase 4.93D template-only）
+- 不触网、不写文件、不创建目录、不写 DB、只预览 authorization handoff checklist template + review result + review plan + intake + validation closure + blocked summary 的本地 validator：`make data-single-target-acquisition-network-authorization-handoff-checklist-preview HANDOFF_CHECKLIST=<path> REVIEW_RESULT=<path> REVIEW_PLAN=<path> INTAKE=<path> VALIDATION_CLOSURE=<path> BLOCKED_SUMMARY=<path>`（Phase 4.94D template-only）
 - 只读本地 approval form 模板、不读 DB、不写 DB、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-small-write-runbook-validate APPROVAL_FORM=<local md>`
 - 只读本地 packet file creation authorization 模板、不读 DB、不写 DB、不创建目录、不写 packet 文件、不执行 `pg_dump` / `pg_restore` 的 `make data-football-data-packet-file-auth-validate AUTH_FORM=<local md>`
 - 用户明确授权且只读本地 CSV、不写 DB、不训练、不预测的 `make data-finished-csv-dry-run SAMPLE_CSV=<local csv>`
@@ -931,6 +932,22 @@ AI / Codex 默认禁止：
 `data-single-target-acquisition-network-filled-intake-review-result-commit` 当前 blocked。
 
 真实 network dry-run 必须后续单独阶段、用户明确给齐真实参数、再经过独立 filled-intake review result / terms / authorization review。review result template 只定义记录格式，不授权任何执行。
+
+### Phase 4.94D: single-target acquisition network dry-run authorization handoff checklist
+
+`data-single-target-acquisition-network-authorization-handoff-checklist-preview` 只允许预览 authorization handoff checklist template：
+
+- 它不得触网/启动 browser/执行 proxy runtime/运行 legacy runtime
+- 它不得写 staging/source manifest/packet/approval/closure/runtime 文件
+- 它不得写 DB
+- authorization handoff checklist 不等于真实 authorization
+- Codex 不得自行把 checked/passed/completed/ready 改成 true
+- Codex 不得自行 authorize network dry-run
+- 即使 CLI 传入确认参数，Phase 4.94D 也不触网、不写文件、不写 DB
+
+`data-single-target-acquisition-network-authorization-handoff-checklist-commit` 当前 blocked。
+
+真实 network dry-run 必须后续单独 authorization 阶段。
 
 Phase 4.55C acquisition architecture rules：
 
