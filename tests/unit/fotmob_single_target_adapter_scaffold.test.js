@@ -202,6 +202,8 @@ function runCli(gate, input) {
 
 function assertSafePayload(payload) {
     assert.equal(payload.adapter_scaffold_only, true);
+    assert.equal(payload.adapter_scaffold_ready, true);
+    assert.equal(payload.preflight_hardened, true);
     assert.equal(payload.target_source, 'fotmob');
     assert.equal(payload.target_count, 1);
     assert.equal(payload.single_target, true);
@@ -211,10 +213,19 @@ function assertSafePayload(payload) {
     assert.equal(payload.network_dry_run_authorized, false);
     assert.equal(payload.network_dry_run_execution_allowed, false);
     assert.equal(payload.commit_gate, 'blocked');
+    assert.equal(payload.readiness_summary.adapter_scaffold_ready, true);
+    assert.equal(payload.readiness_summary.preflight_hardened, true);
+    assert.equal(payload.readiness_summary.network_dry_run_ready, false);
+    assert.equal(payload.readiness_summary.network_dry_run_authorized, false);
+    assert.equal(payload.readiness_summary.network_dry_run_execution_allowed, false);
 
     for (const field of WOULD_FALSE_FIELDS) {
         assert.equal(payload[field], false, `${field} must remain false`);
     }
+}
+
+function findStopGate(payload, gateName) {
+    return payload.stop_gates.find(gate => gate.gate === gateName);
 }
 
 test('valid match_id preflight succeeds and returns stdout-only safety JSON', t => {
@@ -325,7 +336,7 @@ test('bulk scope and max_targets greater than one fail closed', t => {
     assert.match(maxTargets.errors.join('\n'), /max-targets must be 1/);
 });
 
-test('yes authorization flags are accepted as input but ignored by Phase 4.97F policy', t => {
+test('yes authorization flags are accepted as input but ignored by Phase 4.98F policy', t => {
     installExecutionGuards(t);
     const gate = loadFresh();
 
@@ -349,6 +360,12 @@ test('all-yes CLI remains blocked no-op and does not authorize execution', t => 
     assert.equal(result.status, 0);
     assert.equal(result.payload.adapter_scaffold_only, true);
     assert.equal(result.payload.ignored_yes_flags.length, BOOLEAN_FIELDS.length);
+    assert.equal(result.payload.network_dry_run_authorized, false);
+    assert.equal(result.payload.network_dry_run_execution_allowed, false);
+    assert.equal(result.payload.would_access_network, false);
+    assert.equal(result.payload.would_write_source_manifest, false);
+    assert.equal(result.payload.would_write_staging, false);
+    assert.equal(result.payload.would_write_db, false);
     assertSafePayload(result.payload);
 });
 
@@ -368,7 +385,7 @@ test('--commit is blocked and exits non-zero', t => {
 
     assert.equal(status, 1);
     assert.equal(stdout, '');
-    assert.match(stderr, /BLOCKED: FotMob trusted single-target adapter scaffold is not executable/);
+    assert.match(stderr, /BLOCKED: FotMob adapter preflight hardening is not executable in Phase 4\.98F/);
 });
 
 test('default networkClient.fetch and dryRunFetchSingleTarget are disabled', t => {
@@ -385,6 +402,148 @@ test('default networkClient.fetch and dryRunFetchSingleTarget are disabled', t =
         parser_stub_only: true,
         parsed_remote_response: false,
     });
+});
+
+test('source manifest candidate preview is stdout-only and never writes source manifest files', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const result = runCli(
+        gate,
+        baseInput({
+            source_homepage_url: 'https://example.invalid/fotmob-placeholder',
+            terms_url: 'https://example.invalid/terms-placeholder',
+            license_url: 'https://example.invalid/license-placeholder',
+            allowed_use_summary: 'placeholder-not-approved',
+            output_root: 'docs/_staging_preview/fotmob-placeholder',
+        })
+    );
+
+    assert.equal(result.status, 0);
+    assert.equal(result.payload.source_manifest_candidate_preview.source, 'fotmob');
+    assert.equal(result.payload.source_manifest_candidate_preview.target_identifier, 'sample-match-001');
+    assert.equal(result.payload.source_manifest_candidate_preview.source_homepage_url_provided, true);
+    assert.equal(result.payload.source_manifest_candidate_preview.terms_url_provided, true);
+    assert.equal(result.payload.source_manifest_candidate_preview.license_url_provided, true);
+    assert.equal(result.payload.source_manifest_candidate_preview.allowed_use_summary_provided, true);
+    assert.equal(result.payload.source_manifest_candidate_preview.created_for_preview_only, true);
+    assert.equal(result.payload.source_manifest_candidate_preview.would_write_source_manifest, false);
+    assert.equal(result.payload.would_create_staging_directory, false);
+});
+
+test('parser confidence stub is present and does not parse a real response', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const payload = gate.buildPreflightSummary(baseInput());
+
+    assert.equal(payload.parser_confidence_stub.parser_ready, false);
+    assert.equal(payload.parser_confidence_stub.real_response_available, false);
+    assert.equal(payload.parser_confidence_stub.parser_confidence, 0);
+    assert.equal(payload.parser_confidence_stub.parser_confidence_threshold, 0.8);
+    assert.equal(payload.parser_confidence_stub.parser_confidence_passed, false);
+    assert.equal(payload.parser_confidence_stub.would_parse_real_response, false);
+});
+
+test('response preview schema stub is present and does not validate real remote payloads', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const payload = gate.buildPreflightSummary(baseInput({ expected_response_kind: 'match_detail' }));
+
+    assert.equal(payload.response_preview_schema_stub.expected_response_kind, 'match_detail');
+    assert.equal(payload.response_preview_schema_stub.schema_ready, false);
+    assert.equal(payload.response_preview_schema_stub.schema_validation_passed, false);
+    assert.equal(payload.response_preview_schema_stub.would_validate_real_response, false);
+});
+
+test('stop gates include required Phase 4.98F blockers', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const payload = gate.buildPreflightSummary(baseInput());
+    const expectedGates = [
+        'missing_terms_approval',
+        'missing_network_authorization',
+        'external_network_not_authorized',
+        'staging_write_not_authorized',
+        'db_write_not_authorized',
+        'allowed_use_summary_missing',
+        'network_execution_blocked',
+        'future_phase_required',
+    ];
+
+    for (const gateName of expectedGates) {
+        const gateEntry = findStopGate(payload, gateName);
+        assert.ok(gateEntry, `${gateName} must be present`);
+        assert.equal(gateEntry.blocked, true);
+    }
+});
+
+test('readiness summary distinguishes scaffold readiness from network readiness', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const payload = gate.buildPreflightSummary(baseInput());
+
+    assert.equal(payload.readiness_summary.adapter_scaffold_ready, true);
+    assert.equal(payload.readiness_summary.preflight_hardened, true);
+    assert.equal(payload.readiness_summary.source_manifest_candidate_preview_ready, true);
+    assert.equal(payload.readiness_summary.parser_confidence_stub_ready, true);
+    assert.equal(payload.readiness_summary.network_dry_run_ready, false);
+    assert.equal(payload.readiness_summary.network_dry_run_authorized, false);
+    assert.equal(payload.readiness_summary.network_dry_run_execution_allowed, false);
+});
+
+test('new policy inputs remain no-network and no-write preview data only', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const result = runCli(
+        gate,
+        baseInput({
+            source_homepage_url: 'https://example.invalid/fotmob-placeholder',
+            terms_url: 'https://example.invalid/terms-placeholder',
+            license_url: 'https://example.invalid/license-placeholder',
+            allowed_use_summary: 'placeholder-not-approved',
+            rate_limit_policy: 'placeholder',
+            retry_policy: 'none',
+            user_agent_policy: 'default',
+            output_root: 'docs/_staging_preview/fotmob-placeholder',
+            expected_response_kind: 'match_detail',
+            parser_confidence_threshold: '0.9',
+        })
+    );
+
+    assert.equal(result.status, 0);
+    assert.equal(result.payload.policy_inputs.source_homepage_url_provided, true);
+    assert.equal(result.payload.policy_inputs.terms_url_provided, true);
+    assert.equal(result.payload.policy_inputs.license_url_provided, true);
+    assert.equal(result.payload.policy_inputs.output_root_provided, true);
+    assert.equal(result.payload.response_preview_schema_stub.expected_response_kind, 'match_detail');
+    assert.equal(result.payload.response_preview_schema_stub.would_validate_real_response, false);
+    assert.equal(result.payload.parser_confidence_stub.parser_confidence_threshold, 0.9);
+    assertSafePayload(result.payload);
+});
+
+test('parser-confidence-threshold must be numeric between zero and one', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const invalidText = gate.validateSingleTargetInput(baseInput({ parser_confidence_threshold: 'bad' }));
+    const invalidRange = gate.validateSingleTargetInput(baseInput({ parser_confidence_threshold: '1.5' }));
+    const valid = gate.validateSingleTargetInput(baseInput({ parser_confidence_threshold: '0.75' }));
+
+    assert.equal(invalidText.valid, false);
+    assert.match(invalidText.errors.join('\n'), /parser-confidence-threshold/);
+    assert.equal(invalidRange.valid, false);
+    assert.match(invalidRange.errors.join('\n'), /parser-confidence-threshold/);
+    assert.equal(valid.valid, true);
+    assert.equal(valid.normalized.parser_confidence_threshold, 0.75);
+});
+
+test('missing allowed-use-summary keeps stop gate active', t => {
+    installExecutionGuards(t);
+    const gate = loadFresh();
+    const payload = gate.buildPreflightSummary(baseInput({ allowed_use_summary: undefined }));
+    const gateEntry = findStopGate(payload, 'allowed_use_summary_missing');
+
+    assert.ok(gateEntry);
+    assert.equal(gateEntry.blocked, true);
+    assert.match(gateEntry.reason, /missing/);
 });
 
 test('adapter import and preflight do not import or execute legacy runtime, browser, proxy, DB, files, or child process paths', t => {
