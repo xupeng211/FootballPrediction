@@ -1047,6 +1047,15 @@ Phase 4.98F FotMob adapter preflight hardening rules：
 - All `yes` flags remain blocked until an explicit future authorization phase.
 - Network dry-run remains prohibited in Phase 4.98F.
 
+Phase 4.99F FotMob stdout-only network dry-run authorization packet rules：
+
+- FotMob stdout-only network dry-run authorization packet is template-only in Phase 4.99F.
+- It must not access external FotMob or execute a network dry-run.
+- It must not write runtime packet files, staging, source manifest, packet, or DB.
+- Codex must not self-fill a real FotMob target, source terms, license, or allowed-use approval.
+- Codex must not self-authorize network access or convert the authorization packet into execution.
+- Future FotMob stdout-only network dry-run requires an explicit user-filled authorization packet and a separate execution phase.
+
 Phase 4.57C football-data adapter rules：
 
 - `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
