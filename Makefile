@@ -32,6 +32,7 @@
         data-single-target-acquisition-network-filled-intake-review-plan-preview data-single-target-acquisition-network-filled-intake-review-plan-commit \
         data-single-target-acquisition-network-filled-intake-review-result-preview data-single-target-acquisition-network-filled-intake-review-result-commit \
         data-single-target-acquisition-network-authorization-handoff-checklist-preview data-single-target-acquisition-network-authorization-handoff-checklist-commit \
+        data-single-target-acquisition-network-authorization-decision-preview data-single-target-acquisition-network-authorization-decision-commit \
         data-real-source-audit data-real-finished-csv-dry-run data-real-finished-csv-commit \
         data-football-data-csv-dry-run data-football-data-csv-commit \
         data-football-data-db-write-preflight data-football-data-db-write-commit \
@@ -97,6 +98,7 @@ NETWORK_REAL_PARAMETER_VALIDATION_CLOSURE_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_FILLED_INTAKE_REVIEW_PLAN_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_FILLED_INTAKE_REVIEW_RESULT_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_AUTHORIZATION_HANDOFF_CHECKLIST_NODE?=$(COMPOSE_DEV) exec -T dev node
+NETWORK_AUTHORIZATION_DECISION_NODE?=$(COMPOSE_DEV) exec -T dev node
 
 up: ## 启动核心服务 (db + redis)
 	docker-compose up -d
@@ -388,6 +390,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-target-acquisition-network-filled-intake-review-result-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_FILLED_INTAKE_REVIEW_RESULT=1  # blocked in Phase 4.93D"
 	@echo "  make data-single-target-acquisition-network-authorization-handoff-checklist-preview HANDOFF_CHECKLIST=<path> REVIEW_RESULT=<path> REVIEW_PLAN=<path> INTAKE=<path> VALIDATION_CLOSURE=<path> BLOCKED_SUMMARY=<path>  # handoff preview, Phase 4.94D"
 	@echo "  make data-single-target-acquisition-network-authorization-handoff-checklist-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTHORIZATION_HANDOFF_CHECKLIST=1  # blocked in Phase 4.94D"
+	@echo "  make data-single-target-acquisition-network-authorization-decision-preview AUTHORIZATION_DECISION=<path> HANDOFF_CHECKLIST=<path> REVIEW_RESULT=<path> REVIEW_PLAN=<path> INTAKE=<path> VALIDATION_CLOSURE=<path> BLOCKED_SUMMARY=<path>  # authorization decision preview, Phase 4.95D"
+	@echo "  make data-single-target-acquisition-network-authorization-decision-commit ... CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTHORIZATION_DECISION=1  # blocked in Phase 4.95D"
 	@echo "  make data-network-dry-run CONFIRM_NETWORK=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-db-write-small CONFIRM_DB_WRITE=1 LIMIT=<n> SCOPE=<scope>"
 	@echo "  make data-harvest CONFIRM_BULK_HARVEST=1 RUNBOOK=<path>"
@@ -1329,6 +1333,27 @@ data-single-target-acquisition-network-authorization-handoff-checklist-commit: #
 	@echo "BLOCKED: single-target acquisition authorization handoff checklist execution is not wired in Phase 4.94D."
 	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTHORIZATION_HANDOFF_CHECKLIST=1, this path remains blocked."
 	@echo "  Phase 4.94D previews the authorization handoff checklist template only and does not authorize any network dry-run, staging write, authorization handoff checklist file write, or DB write."
+	@exit 1
+
+data-single-target-acquisition-network-authorization-decision-preview: ## Preview-only network authorization decision. Phase 4.95D. No network, no writes, no DB.
+	@if [ -z "$(AUTHORIZATION_DECISION)" ] || [ -z "$(HANDOFF_CHECKLIST)" ] || [ -z "$(REVIEW_RESULT)" ] || [ -z "$(REVIEW_PLAN)" ] || [ -z "$(INTAKE)" ] || [ -z "$(VALIDATION_CLOSURE)" ] || [ -z "$(BLOCKED_SUMMARY)" ]; then \
+		echo "ERROR: provide AUTHORIZATION_DECISION=<path>, HANDOFF_CHECKLIST=<path>, REVIEW_RESULT=<path>, REVIEW_PLAN=<path>, INTAKE=<path>, VALIDATION_CLOSURE=<path>, and BLOCKED_SUMMARY=<path>"; \
+		exit 1; \
+	fi
+	@echo "Phase 4.95D: network authorization decision (template-only, local-only, no writes, no network, no DB)"
+	$(NETWORK_AUTHORIZATION_DECISION_NODE) scripts/ops/single_target_acquisition_network_authorization_decision.js \
+		--authorization-decision "$(AUTHORIZATION_DECISION)" \
+		--handoff-checklist "$(HANDOFF_CHECKLIST)" \
+		--review-result "$(REVIEW_RESULT)" \
+		--review-plan "$(REVIEW_PLAN)" \
+		--intake "$(INTAKE)" \
+		--validation-closure "$(VALIDATION_CLOSURE)" \
+		--blocked-summary "$(BLOCKED_SUMMARY)"
+
+data-single-target-acquisition-network-authorization-decision-commit: ## Blocked network authorization decision gate. Remains not wired in Phase 4.95D.
+	@echo "BLOCKED: single-target acquisition network authorization decision execution is not wired in Phase 4.95D."
+	@echo "  Even with CONFIRM_SINGLE_TARGET_ACQUISITION_NETWORK_AUTHORIZATION_DECISION=1, this path remains blocked."
+	@echo "  Phase 4.95D previews the authorization decision template only and does not authorize any network dry-run, staging write, network authorization decision file write, or DB write."
 	@exit 1
 
 data-finished-csv-dry-run: ## Run local finished CSV sample import preview. Requires SAMPLE_CSV.
