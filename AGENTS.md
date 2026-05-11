@@ -1028,6 +1028,16 @@ Phase 4.96F FotMob single-target dry-run readiness rules：
 - A future FotMob dry-run must first use a trusted single-target adapter scaffold.
 - The first FotMob network dry-run should be stdout-only, no DB, no staging, and no browser/proxy by default.
 
+Phase 4.97F FotMob trusted single-target adapter scaffold rules：
+
+- FotMob trusted single-target adapter scaffold is allowed only for no-network preflight.
+- `make data-fotmob-single-target-adapter-preflight` must not access external FotMob or any external football / odds data source.
+- `make data-fotmob-single-target-adapter-preflight` must not launch browser or proxy runtime.
+- `make data-fotmob-single-target-adapter-preflight` must not write staging, source manifest, packet, or DB.
+- `make data-fotmob-single-target-adapter-commit` is blocked.
+- CLI `yes` flags must not override Phase 4.97F blocked behavior.
+- Future FotMob network dry-run requires explicit user target, terms, allowed-use, and network authorization in a separate phase.
+
 Phase 4.57C football-data adapter rules：
 
 - `fetch_and_adapt_euro_leagues` 属于 `adapter_candidate`，不是 Codex 可直接执行入口。
