@@ -16,7 +16,7 @@
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
-        data-l1-matches-seed-commit-plan data-l1-matches-seed-commit \
+        data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit \
         data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-fotmob-stdout-network-dry-run-authorization-packet-preview data-fotmob-stdout-network-dry-run-authorization-packet-commit \
         data-fotmob-stdout-network-dry-run-execution-plan-preview data-fotmob-stdout-network-dry-run-execution-plan-commit \
@@ -314,6 +314,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l1-discovery-candidates-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> NETWORK_AUTHORIZATION=no  # Phase 5.05L1 candidates preview, no external network/browser/proxy/DB, no matches/raw writes"
 	@echo "  make data-l1-discovery-candidates-network-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CONCURRENCY=1 MAX_TARGETS<=10 NETWORK_AUTHORIZATION=yes ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no ALLOW_DB_WRITE=no  # Phase 5.05L1 controlled external network candidates preview only"
 	@echo "  make data-l1-matches-seed-commit-plan SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> MAX_SEED_ROWS<=10 COMMIT=no  # Phase 5.06L1 planning-only, no network/DB/matches/raw writes"
+	@echo "  make data-l1-matches-seed-commit-authorization SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> MAX_SEED_ROWS<=10 USER_AUTHORIZED_MATCHES_SEED_COMMIT=yes ALLOW_MATCHES_WRITE_NEXT_PHASE=yes ALLOW_DB_WRITE_NOW=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no FINAL_HUMAN_CONFIRMATION=yes  # Phase 5.07L1 authorization-only, stdout-only, no DB/matches/raw writes"
 	@echo "  make data-fotmob-single-target-adapter-preflight TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> ...  # Phase 4.98F hardening, stdout-only, no network/staging/DB/legacy runtime"
 	@echo "  make data-fotmob-stdout-network-dry-run-authorization-packet-preview PACKET=<path>  # Phase 4.99F template-only, stdout-only, no network/staging/DB/runtime packet write"
 	@echo "  make data-fotmob-stdout-network-dry-run-execution-plan-preview PLAN=<path> PACKET=<path>  # Phase 5.00F template-only, stdout-only, no network/staging/DB/runtime execution plan write"
@@ -365,7 +366,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-packet-file-preauth-closure-commit CLOSURE_TEMPLATE=<path> CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE_PREAUTH_CLOSURE=1  # blocked in Phase 4.76C"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-l1-discovery-commit SOURCE=fotmob SCOPE=<scope> CONFIRM_L1_DISCOVERY_COMMIT=1  # blocked in Phase 5.05L1"
-	@echo "  make data-l1-matches-seed-commit SOURCE=fotmob SCOPE=<scope> CONFIRM_L1_MATCHES_SEED_COMMIT=1  # blocked in Phase 5.06L1"
+	@echo "  make data-l1-matches-seed-commit SOURCE=fotmob SCOPE=<scope> CONFIRM_L1_MATCHES_SEED_COMMIT=1  # blocked in Phase 5.07L1"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
 	@echo "  make data-training-commit CONFIRM_TRAINING=1  # blocked in Phase 4.29"
@@ -514,9 +515,33 @@ data-l1-matches-seed-commit-plan: ## L1 matches seed commit planning. Phase 5.06
 		--training=no \
 		--prediction=no
 
-data-l1-matches-seed-commit: ## Blocked L1 matches seed commit gate. Remains blocked in Phase 5.06L1.
+data-l1-matches-seed-commit-authorization: ## L1 matches seed commit authorization. Phase 5.07L1. Authorization-only, no network/DB writes.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(SCOPE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(SEASON)" ] || [ -z "$(DATE)" ] || [ -z "$(CANDIDATE_COUNT)" ] || [ -z "$(CONTAINS_TARGET_MATCH_ID)" ] || [ -z "$(CONTAINS_TARGET_LABEL)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> CONTAINS_TARGET_MATCH_ID=<id> CONTAINS_TARGET_LABEL=<label>"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/l1_matches_seed_commit_authorization.js \
+		--source="$(SOURCE)" \
+		--scope="$(SCOPE)" \
+		--league-id="$(LEAGUE_ID)" \
+		--season="$(SEASON)" \
+		--date="$(DATE)" \
+		--candidate-count="$(CANDIDATE_COUNT)" \
+		--contains-target-match-id="$(CONTAINS_TARGET_MATCH_ID)" \
+		--contains-target-label="$(CONTAINS_TARGET_LABEL)" \
+		--max-seed-rows="$(or $(MAX_SEED_ROWS),10)" \
+		--user-authorized-matches-seed-commit="$(or $(USER_AUTHORIZED_MATCHES_SEED_COMMIT),no)" \
+		--allow-matches-write-next-phase="$(or $(ALLOW_MATCHES_WRITE_NEXT_PHASE),no)" \
+		--allow-db-write-now="$(or $(ALLOW_DB_WRITE_NOW),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
+		--final-human-confirmation="$(or $(FINAL_HUMAN_CONFIRMATION),no)"
+
+data-l1-matches-seed-commit: ## Blocked L1 matches seed commit gate. Remains blocked in Phase 5.07L1.
 	@echo "BLOCKED: L1 matches seed commit is not executable in Phase 5.06L1 planning."
-	@echo "  Use data-l1-matches-seed-commit-plan for stdout planning only."
+	@echo "  L1 matches seed commit remains authorization-only in Phase 5.07L1."
+	@echo "  Use data-l1-matches-seed-commit-plan and data-l1-matches-seed-commit-authorization for stdout-only planning/authorization."
 	@echo "  Even with CONFIRM_L1_MATCHES_SEED_COMMIT=1, matches/DB/raw writes remain blocked."
 	@exit 1
 
