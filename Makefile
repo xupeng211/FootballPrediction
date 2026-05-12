@@ -16,6 +16,7 @@
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
+        data-l1-matches-seed-commit-plan data-l1-matches-seed-commit \
         data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-fotmob-stdout-network-dry-run-authorization-packet-preview data-fotmob-stdout-network-dry-run-authorization-packet-commit \
         data-fotmob-stdout-network-dry-run-execution-plan-preview data-fotmob-stdout-network-dry-run-execution-plan-commit \
@@ -312,6 +313,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...  # Phase 5.05L1 preview-only, no network/browser/proxy/DB, no titan_discovery/DiscoveryService.discover/FixtureRepository.persist"
 	@echo "  make data-l1-discovery-candidates-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> NETWORK_AUTHORIZATION=no  # Phase 5.05L1 candidates preview, no external network/browser/proxy/DB, no matches/raw writes"
 	@echo "  make data-l1-discovery-candidates-network-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CONCURRENCY=1 MAX_TARGETS<=10 NETWORK_AUTHORIZATION=yes ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no ALLOW_DB_WRITE=no  # Phase 5.05L1 controlled external network candidates preview only"
+	@echo "  make data-l1-matches-seed-commit-plan SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> MAX_SEED_ROWS<=10 COMMIT=no  # Phase 5.06L1 planning-only, no network/DB/matches/raw writes"
 	@echo "  make data-fotmob-single-target-adapter-preflight TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> ...  # Phase 4.98F hardening, stdout-only, no network/staging/DB/legacy runtime"
 	@echo "  make data-fotmob-stdout-network-dry-run-authorization-packet-preview PACKET=<path>  # Phase 4.99F template-only, stdout-only, no network/staging/DB/runtime packet write"
 	@echo "  make data-fotmob-stdout-network-dry-run-execution-plan-preview PLAN=<path> PACKET=<path>  # Phase 5.00F template-only, stdout-only, no network/staging/DB/runtime execution plan write"
@@ -363,6 +365,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-packet-file-preauth-closure-commit CLOSURE_TEMPLATE=<path> CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE_PREAUTH_CLOSURE=1  # blocked in Phase 4.76C"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
 	@echo "  make data-l1-discovery-commit SOURCE=fotmob SCOPE=<scope> CONFIRM_L1_DISCOVERY_COMMIT=1  # blocked in Phase 5.05L1"
+	@echo "  make data-l1-matches-seed-commit SOURCE=fotmob SCOPE=<scope> CONFIRM_L1_MATCHES_SEED_COMMIT=1  # blocked in Phase 5.06L1"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
 	@echo "  make data-training-commit CONFIRM_TRAINING=1  # blocked in Phase 4.29"
@@ -487,6 +490,34 @@ data-l1-discovery-commit: ## Blocked L1 safe preview commit gate. Remains blocke
 	@echo "BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5.05L1."
 	@echo "  No titan_discovery direct call, no DiscoveryService.discover call, no FixtureRepository.persist call."
 	@echo "  Even with CONFIRM_L1_DISCOVERY_COMMIT=1, network execution and DB writes remain blocked."
+	@exit 1
+
+data-l1-matches-seed-commit-plan: ## L1 matches seed commit planning. Phase 5.06L1. Planning-only, no network/DB writes.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(SCOPE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(SEASON)" ] || [ -z "$(DATE)" ] || [ -z "$(CANDIDATE_COUNT)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n>"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/l1_matches_seed_commit_plan.js \
+		--source="$(SOURCE)" \
+		--scope="$(SCOPE)" \
+		--league-id="$(LEAGUE_ID)" \
+		--season="$(SEASON)" \
+		--date="$(DATE)" \
+		--candidate-count="$(CANDIDATE_COUNT)" \
+		$(if $(CONTAINS_TARGET_MATCH_ID),--contains-target-match-id="$(CONTAINS_TARGET_MATCH_ID)") \
+		$(if $(CONTAINS_TARGET_LABEL),--contains-target-label="$(CONTAINS_TARGET_LABEL)") \
+		--max-seed-rows="$(or $(MAX_SEED_ROWS),10)" \
+		--commit="$(or $(COMMIT),no)" \
+		--allow-db-write=no \
+		--allow-matches-write=no \
+		--allow-raw-match-data-write=no \
+		--training=no \
+		--prediction=no
+
+data-l1-matches-seed-commit: ## Blocked L1 matches seed commit gate. Remains blocked in Phase 5.06L1.
+	@echo "BLOCKED: L1 matches seed commit is not executable in Phase 5.06L1 planning."
+	@echo "  Use data-l1-matches-seed-commit-plan for stdout planning only."
+	@echo "  Even with CONFIRM_L1_MATCHES_SEED_COMMIT=1, matches/DB/raw writes remain blocked."
 	@exit 1
 
 data-local-dry-run: ## Run a safe local-only dry-run. Requires SAMPLE_HTML or SAMPLE_CSV.
