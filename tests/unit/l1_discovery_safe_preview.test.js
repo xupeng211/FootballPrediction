@@ -152,9 +152,9 @@ function buildDependencies() {
     };
 }
 
-test('parseArgs 能解析 league_season_date 参数', () => {
+test('parseArgs 能解析 preview 与 controlled network 参数', () => {
     const gate = loadModuleFresh();
-    const options = gate.parseArgs([
+    const dateOptions = gate.parseArgs([
         '--source=fotmob',
         '--scope=league_season_date',
         '--league-id=53',
@@ -164,18 +164,15 @@ test('parseArgs 能解析 league_season_date 参数', () => {
         '--max-targets=1',
     ]);
 
-    assert.equal(options.source, 'fotmob');
-    assert.equal(options.scope, 'league_season_date');
-    assert.equal(options.leagueId, '53');
-    assert.equal(options.season, '2025/2026');
-    assert.equal(options.date, '2026-05-10');
-    assert.equal(options.concurrency, '1');
-    assert.equal(options.maxTargets, '1');
-});
+    assert.equal(dateOptions.source, 'fotmob');
+    assert.equal(dateOptions.scope, 'league_season_date');
+    assert.equal(dateOptions.leagueId, '53');
+    assert.equal(dateOptions.season, '2025/2026');
+    assert.equal(dateOptions.date, '2026-05-10');
+    assert.equal(dateOptions.concurrency, '1');
+    assert.equal(dateOptions.maxTargets, '1');
 
-test('parseArgs 能解析 controlled_candidates_preview 和 network authorization', () => {
-    const gate = loadModuleFresh();
-    const options = gate.parseArgs([
+    const candidateOptions = gate.parseArgs([
         '--source=fotmob',
         '--scope=controlled_candidates_preview',
         '--league-id=53',
@@ -184,8 +181,30 @@ test('parseArgs 能解析 controlled_candidates_preview 和 network authorizatio
         '--network-authorization=no',
     ]);
 
-    assert.equal(options.scope, 'controlled_candidates_preview');
-    assert.equal(options.networkAuthorization, false);
+    assert.equal(candidateOptions.scope, 'controlled_candidates_preview');
+    assert.equal(candidateOptions.networkAuthorization, false);
+
+    const networkOptions = gate.parseArgs([
+        '--network-preview=true',
+        '--source=fotmob',
+        '--scope=controlled_candidates_preview',
+        '--league-id=53',
+        '--season=2025/2026',
+        '--date=2026-05-10',
+        '--concurrency=1',
+        '--max-targets=10',
+        '--network-authorization=yes',
+        '--allow-browser-runtime=no',
+        '--allow-proxy-runtime=no',
+        '--allow-db-write=no',
+    ]);
+
+    assert.equal(networkOptions.networkPreview, true);
+    assert.equal(networkOptions.maxTargets, '10');
+    assert.equal(networkOptions.networkAuthorization, true);
+    assert.equal(networkOptions.allowBrowserRuntime, false);
+    assert.equal(networkOptions.allowProxyRuntime, false);
+    assert.equal(networkOptions.allowDbWrite, false);
 });
 
 test('valid config_only_preview 成功', async t => {
@@ -271,208 +290,37 @@ test('valid league_season_window_preview 成功', async t => {
     assertSafePreviewFlags(payload);
 });
 
-test('缺 source 失败', async t => {
+test('参数校验失败场景保持 blocked', async t => {
     installExecutionGuards(t);
     const gate = loadModuleFresh();
-    const result = await runCli(gate, ['--scope=config_only_preview'], buildDependencies());
-    const payload = parseJsonOutput(result.stdout);
+    const cases = [
+        [['--scope=config_only_preview'], /missing source/i],
+        [['--source=other', '--scope=config_only_preview'], /unsupported source/i],
+        [['--source=fotmob'], /missing scope/i],
+        [['--source=fotmob', '--scope=bulk'], /unsupported scope/i],
+        [
+            ['--source=fotmob', '--scope=league_season_date', '--season=2025/2026', '--date=2026-05-10'],
+            /missing league-id/i,
+        ],
+        [['--source=fotmob', '--scope=league_season_date', '--league-id=53', '--date=2026-05-10'], /missing season/i],
+        [['--source=fotmob', '--scope=league_season_date', '--league-id=53', '--season=2025/2026'], /missing date/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--concurrency=2'], /concurrency > 1/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--max-targets=11'], /max_targets > 10/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--all'], /--all/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--all-leagues'], /--all-leagues/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--full-sync'], /--full-sync/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--dry-run=false'], /dry_run=false/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--db-write=true'], /db_write=true/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--browser=true'], /browser=true/i],
+        [['--source=fotmob', '--scope=config_only_preview', '--proxy=true'], /proxy=true/i],
+    ];
 
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /missing source/i);
-});
-
-test('source 不是 fotmob 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(gate, ['--source=other', '--scope=config_only_preview'], buildDependencies());
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /unsupported source/i);
-});
-
-test('缺 scope 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(gate, ['--source=fotmob'], buildDependencies());
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /missing scope/i);
-});
-
-test('unsupported scope 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(gate, ['--source=fotmob', '--scope=bulk'], buildDependencies());
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /unsupported scope/i);
-});
-
-test('league scope 缺 league-id 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=league_season_date', '--season=2025/2026', '--date=2026-05-10'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /missing league-id/i);
-});
-
-test('league scope 缺 season 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=league_season_date', '--league-id=53', '--date=2026-05-10'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /missing season/i);
-});
-
-test('league_season_date 缺 date 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=league_season_date', '--league-id=53', '--season=2025/2026'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /missing date/i);
-});
-
-test('concurrency > 1 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--concurrency=2'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /concurrency > 1/i);
-});
-
-test('max_targets > 1 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--max-targets=2'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /max_targets > 1/i);
-});
-
-test('--all 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(gate, ['--source=fotmob', '--scope=config_only_preview', '--all'], buildDependencies());
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /--all/i);
-});
-
-test('--all-leagues 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--all-leagues'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /--all-leagues/i);
-});
-
-test('--full-sync 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--full-sync'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /--full-sync/i);
-});
-
-test('dry_run=false 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--dry-run=false'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /dry_run=false/i);
-});
-
-test('db_write=true 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--db-write=true'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /db_write=true/i);
-});
-
-test('browser=true 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--browser=true'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /browser=true/i);
-});
-
-test('proxy=true 失败', async t => {
-    installExecutionGuards(t);
-    const gate = loadModuleFresh();
-    const result = await runCli(
-        gate,
-        ['--source=fotmob', '--scope=config_only_preview', '--proxy=true'],
-        buildDependencies()
-    );
-    const payload = parseJsonOutput(result.stdout);
-
-    assert.equal(result.status, 1);
-    assert.match(payload.errors.join('\n'), /proxy=true/i);
+    for (const [argv, pattern] of cases) {
+        const result = await runCli(gate, argv, buildDependencies());
+        const payload = parseJsonOutput(result.stdout);
+        assert.equal(result.status, 1);
+        assert.match(payload.errors.join('\n'), pattern);
+    }
 });
 
 test('--commit blocked', async t => {
@@ -611,7 +459,7 @@ test('controlled_candidates_preview 默认真实 CLI plan-only 且 no external n
     assertSafePreviewFlags(payload);
 });
 
-test('network-authorization=yes 在 Phase 5.04L1 仍 blocked', async t => {
+test('旧 candidates preview target network-authorization=yes 仍 blocked', async t => {
     installExecutionGuards(t);
     const gate = loadModuleFresh();
     const result = await runCli(
@@ -632,8 +480,184 @@ test('network-authorization=yes 在 Phase 5.04L1 仍 blocked', async t => {
     assert.equal(payload.mode, 'blocked-network-authorization');
     assert.equal(payload.external_network_used, false);
     assert.equal(payload.network_execution_allowed, false);
-    assert.match(payload.blocked_reason, /later authorized phase/i);
+    assert.match(payload.blocked_reason, /data-l1-discovery-candidates-network-preview/i);
     assertSafePreviewFlags(payload);
+});
+
+test('controlled network preview 参数校验通过并输出安全摘要', async t => {
+    installExecutionGuards(t);
+    const gate = loadModuleFresh();
+    let discoverCalls = 0;
+    const result = await runCli(
+        gate,
+        [
+            '--network-preview=true',
+            '--source=fotmob',
+            '--scope=controlled_candidates_preview',
+            '--league-id=53',
+            '--season=2025/2026',
+            '--date=2026-05-10',
+            '--concurrency=1',
+            '--max-targets=10',
+            '--network-authorization=yes',
+            '--allow-browser-runtime=no',
+            '--allow-proxy-runtime=no',
+            '--allow-db-write=no',
+        ],
+        {
+            ...buildDependencies(),
+            createDiscoveryService: () => ({
+                discoverCandidates: async options => {
+                    discoverCalls += 1;
+                    assert.equal(options.source, 'fotmob');
+                    assert.equal(options.scope, 'controlled_candidates_preview');
+                    assert.equal(options.leagueId, '53');
+                    assert.equal(options.season, '2025/2026');
+                    assert.equal(options.date, '2026-05-10');
+                    assert.equal(options.concurrency, 1);
+                    assert.equal(options.maxTargets, 10);
+                    assert.equal(options.allowNetwork, true);
+                    assert.equal(options.networkAuthorization, true);
+                    assert.equal(options.writeDb, false);
+                    assert.equal(options.allowBrowserFallback, false);
+                    assert.equal(options.allowProxy, false);
+                    return {
+                        source: 'fotmob',
+                        scope: 'controlled_candidates_preview',
+                        league_id: '53',
+                        season: '2025/2026',
+                        date: '2026-05-10',
+                        preview_only: true,
+                        network_used: true,
+                        external_network_used: true,
+                        network_authorization_used: true,
+                        browser_used: false,
+                        proxy_used: false,
+                        db_written: false,
+                        matches_written: false,
+                        raw_match_data_written: false,
+                        source_url_template:
+                            'https://www.fotmob.com/api/data/leagues?id={providerLeagueId}&season={season}',
+                        source_url_candidate: 'https://www.fotmob.com/api/data/leagues?id=53&season=20252026',
+                        source_url_used: 'https://www.fotmob.com/api/data/leagues?id=53&season=20252026',
+                        candidate_count: 1,
+                        candidates: [
+                            {
+                                match_id: '53_20252026_4830746',
+                                external_id: '4830746',
+                                league: 'Ligue 1',
+                                season: '2025/2026',
+                                home: 'Angers',
+                                away: 'Strasbourg',
+                                match_date: '2026-05-10T19:00:00.000Z',
+                                data_source: 'FotMob',
+                            },
+                        ],
+                        safety_summary: {
+                            wrote_db: false,
+                            wrote_matches: false,
+                            wrote_raw_match_data: false,
+                            called_persist: false,
+                            launched_browser: false,
+                            used_proxy: false,
+                            would_write_db: false,
+                            would_write_matches: false,
+                            would_write_raw_match_data: false,
+                            would_call_persist: false,
+                            would_launch_browser: false,
+                            would_use_proxy: false,
+                        },
+                    };
+                },
+                close: async () => {},
+            }),
+        }
+    );
+    const payload = parseJsonOutput(result.stdout);
+
+    assert.equal(result.status, 0);
+    assert.equal(discoverCalls, 1);
+    assert.equal(payload.phase, 'PHASE5_05L1_CONTROLLED_L1_EXTERNAL_NETWORK_CANDIDATES_PREVIEW');
+    assert.equal(payload.source, 'fotmob');
+    assert.equal(payload.league_id, '53');
+    assert.equal(payload.season, '2025/2026');
+    assert.equal(payload.date, '2026-05-10');
+    assert.equal(payload.concurrency, 1);
+    assert.equal(payload.max_targets, 10);
+    assert.equal(payload.external_network_used, true);
+    assert.equal(payload.network_authorization_used, true);
+    assert.equal(payload.candidate_count, 1);
+    assert.equal(payload.candidates_preview[0].external_id, '4830746');
+    assert.equal(payload.contains_target_match_id_candidate, true);
+    assert.equal(payload.contains_anglers_strasbourg_candidate, true);
+    assert.equal(payload.would_write_db, false);
+    assert.equal(payload.would_call_persist, false);
+    assert.equal(payload.would_call_fixture_repository_persist, false);
+    assert.equal(payload.would_launch_browser, false);
+    assert.equal(payload.would_use_proxy, false);
+    assert.equal(payload.would_train, false);
+    assert.equal(payload.would_predict, false);
+});
+
+test('controlled network preview 拒绝 DB/browser/proxy runtime', async t => {
+    installExecutionGuards(t);
+    const gate = loadModuleFresh();
+    const baseArgv = [
+        '--network-preview=true',
+        '--source=fotmob',
+        '--scope=controlled_candidates_preview',
+        '--league-id=53',
+        '--season=2025/2026',
+        '--date=2026-05-10',
+        '--network-authorization=yes',
+    ];
+
+    const dbWrite = await runCli(gate, [...baseArgv, '--allow-db-write=yes'], buildDependencies());
+    const browser = await runCli(gate, [...baseArgv, '--allow-browser-runtime=yes'], buildDependencies());
+    const proxy = await runCli(gate, [...baseArgv, '--allow-proxy-runtime=yes'], buildDependencies());
+
+    assert.equal(dbWrite.status, 1);
+    assert.match(parseJsonOutput(dbWrite.stdout).errors.join('\n'), /ALLOW_DB_WRITE=yes/i);
+    assert.equal(browser.status, 1);
+    assert.match(parseJsonOutput(browser.stdout).errors.join('\n'), /ALLOW_BROWSER_RUNTIME=yes/i);
+    assert.equal(proxy.status, 1);
+    assert.match(parseJsonOutput(proxy.stdout).errors.join('\n'), /ALLOW_PROXY_RUNTIME=yes/i);
+});
+
+test('controlled network preview 拒绝 maxTargets > 10 和缺 date', async t => {
+    installExecutionGuards(t);
+    const gate = loadModuleFresh();
+    const maxTargets = await runCli(
+        gate,
+        [
+            '--network-preview=true',
+            '--source=fotmob',
+            '--scope=controlled_candidates_preview',
+            '--league-id=53',
+            '--season=2025/2026',
+            '--date=2026-05-10',
+            '--max-targets=11',
+            '--network-authorization=yes',
+        ],
+        buildDependencies()
+    );
+    const missingDate = await runCli(
+        gate,
+        [
+            '--network-preview=true',
+            '--source=fotmob',
+            '--scope=controlled_candidates_preview',
+            '--league-id=53',
+            '--season=2025/2026',
+            '--network-authorization=yes',
+        ],
+        buildDependencies()
+    );
+
+    assert.equal(maxTargets.status, 1);
+    assert.match(parseJsonOutput(maxTargets.stdout).errors.join('\n'), /max_targets > 10/i);
+    assert.equal(missingDate.status, 1);
+    assert.match(parseJsonOutput(missingDate.stdout).errors.join('\n'), /missing date/i);
 });
 
 test('buildL1DiscoveryPlanPreview 直接构建时仍保持 no-side-effect 摘要', async t => {
@@ -653,7 +677,7 @@ test('buildL1DiscoveryPlanPreview 直接构建时仍保持 no-side-effect 摘要
         buildDependencies()
     );
 
-    assert.equal(payload.phase, 'PHASE5_04L1_L1_DISCOVERY_CANDIDATES_EXTRACTION');
+    assert.equal(payload.phase, 'PHASE5_05L1_CONTROLLED_L1_EXTERNAL_NETWORK_CANDIDATES_PREVIEW');
     assert.equal(payload.candidate_preview.estimated_target_limit, 1);
     assert.equal(payload.registry_reference.engine_id, 'titan_discovery');
     assert.equal(payload.registry_reference.accesses_network, true);
@@ -666,13 +690,14 @@ test('Makefile preview target 已注册', () => {
     const makefile = fs.readFileSync(MAKEFILE_PATH, 'utf8');
     assert.match(makefile, /^data-l1-discovery-preview:/m);
     assert.match(makefile, /^data-l1-discovery-candidates-preview:/m);
+    assert.match(makefile, /^data-l1-discovery-candidates-network-preview:/m);
     assert.match(makefile, /scripts\/ops\/l1_discovery_safe_preview\.js/);
 });
 
 test('Makefile commit target blocked 文案存在', () => {
     const makefile = fs.readFileSync(MAKEFILE_PATH, 'utf8');
     assert.match(makefile, /^data-l1-discovery-commit:/m);
-    assert.match(makefile, /BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5\.04L1\./);
+    assert.match(makefile, /BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5\.05L1\./);
 });
 
 test('测试不在仓库内创建随机目录', () => {

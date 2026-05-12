@@ -165,28 +165,24 @@ function createService() {
     return { service, calls };
 }
 
-function fakePayload() {
+function fakeMatch(id, home, away, utcTime = '2026-05-10T19:00:00.000Z') {
+    return {
+        id,
+        home: { name: home },
+        away: { name: away },
+        status: {
+            scheduled: true,
+            utcTime,
+        },
+    };
+}
+
+function fakePayload(matches = null) {
     return {
         fixtures: {
-            allMatches: [
-                {
-                    id: 123,
-                    home: { name: 'Paris SG' },
-                    away: { name: 'Lyon' },
-                    status: {
-                        scheduled: true,
-                        utcTime: '2026-05-10T19:00:00.000Z',
-                    },
-                },
-                {
-                    id: 124,
-                    home: { name: 'Marseille' },
-                    away: { name: 'Nice' },
-                    status: {
-                        scheduled: true,
-                        utcTime: '2026-05-10T21:00:00.000Z',
-                    },
-                },
+            allMatches: matches || [
+                fakeMatch(123, 'Paris SG', 'Lyon', '2026-05-10T19:00:00.000Z'),
+                fakeMatch(124, 'Marseille', 'Nice', '2026-05-10T21:00:00.000Z'),
             ],
         },
     };
@@ -201,15 +197,32 @@ function baseOptions(overrides = {}) {
         date: '2026-05-10',
         concurrency: 1,
         maxTargets: 1,
+        allowNetwork: false,
+        networkAuthorization: false,
         ...overrides,
     };
+}
+
+function assertSafetySummaryAllFalse(result) {
+    assert.equal(result.safety_summary.wrote_db, false);
+    assert.equal(result.safety_summary.wrote_matches, false);
+    assert.equal(result.safety_summary.wrote_raw_match_data, false);
+    assert.equal(result.safety_summary.called_persist, false);
+    assert.equal(result.safety_summary.launched_browser, false);
+    assert.equal(result.safety_summary.used_proxy, false);
+    assert.equal(result.safety_summary.would_write_db, false);
+    assert.equal(result.safety_summary.would_write_matches, false);
+    assert.equal(result.safety_summary.would_write_raw_match_data, false);
+    assert.equal(result.safety_summary.would_call_persist, false);
+    assert.equal(result.safety_summary.would_launch_browser, false);
+    assert.equal(result.safety_summary.would_use_proxy, false);
 }
 
 test('discoverCandidates 存在并默认 safe preview/no network/no DB', async t => {
     installNoSideEffectGuards(t);
     const { service, calls } = createService();
 
-    const result = await service.discoverCandidates({ source: 'fotmob' });
+    const result = await service.discoverCandidates(baseOptions());
 
     assert.equal(typeof service.discoverCandidates, 'function');
     assert.equal(result.preview_only, true);
@@ -223,6 +236,7 @@ test('discoverCandidates 存在并默认 safe preview/no network/no DB', async t
     assert.equal(calls.browserInitialize, 0);
     assert.equal(calls.proxyAcquire, 0);
     assert.equal(calls.httpRequest, 0);
+    assertSafetySummaryAllFalse(result);
 });
 
 test('discoverCandidates source 缺失或非 fotmob 会失败', async t => {
@@ -231,6 +245,7 @@ test('discoverCandidates source 缺失或非 fotmob 会失败', async t => {
 
     await assert.rejects(() => service.discoverCandidates({}), /missing source/i);
     await assert.rejects(() => service.discoverCandidates({ source: 'other' }), /unsupported source/i);
+    await assert.rejects(() => service.discoverCandidates(baseOptions({ scope: 'bulk' })), /unsupported scope/i);
 });
 
 test('discoverCandidates 拒绝并发、批量、写库、browser fallback 和 proxy', async t => {
@@ -238,13 +253,32 @@ test('discoverCandidates 拒绝并发、批量、写库、browser fallback 和 p
     const { service } = createService();
 
     await assert.rejects(() => service.discoverCandidates(baseOptions({ concurrency: 2 })), /concurrency > 1/i);
-    await assert.rejects(() => service.discoverCandidates(baseOptions({ maxTargets: 2 })), /maxTargets > 1/i);
+    await assert.rejects(() => service.discoverCandidates(baseOptions({ maxTargets: 11 })), /maxTargets > 10/i);
     await assert.rejects(() => service.discoverCandidates(baseOptions({ writeDb: true })), /writeDb=true/i);
     await assert.rejects(
         () => service.discoverCandidates(baseOptions({ allowBrowserFallback: true })),
         /allowBrowserFallback=true/i
     );
     await assert.rejects(() => service.discoverCandidates(baseOptions({ allowProxy: true })), /allowProxy=true/i);
+});
+
+test('discoverCandidates 要求显式 leagueId/season/date', async t => {
+    installNoSideEffectGuards(t);
+    const { service } = createService();
+
+    await assert.rejects(() => service.discoverCandidates(baseOptions({ leagueId: null })), /missing leagueId/i);
+    await assert.rejects(() => service.discoverCandidates(baseOptions({ season: null })), /missing season/i);
+    await assert.rejects(() => service.discoverCandidates(baseOptions({ date: null })), /missing date/i);
+});
+
+test('allowNetwork=true 但 networkAuthorization=false 失败', async t => {
+    installNoSideEffectGuards(t);
+    const { service } = createService();
+
+    await assert.rejects(
+        () => service.discoverCandidates(baseOptions({ allowNetwork: true, networkAuthorization: false })),
+        /networkAuthorization=true is required/i
+    );
 });
 
 test('allowNetwork=false 时不调用注入的真实 fetch', async t => {
@@ -262,14 +296,16 @@ test('allowNetwork=false 时不调用注入的真实 fetch', async t => {
     assert.equal(fetchCalls, 0);
     assert.equal(result.fetch_mode, 'not_executed');
     assert.equal(result.candidate_count, 0);
+    assert.equal(result.external_network_used, false);
+    assert.equal(result.network_authorization_used, false);
 });
 
-test('fake fetchLeagueFixtures 可返回 normalized candidates 且受 maxTargets 限制', async t => {
+test('allowNetwork=true 且 networkAuthorization=true 时调用 fake client 并返回 normalized candidates', async t => {
     installNoSideEffectGuards(t);
     const { service, calls } = createService();
     let fetchCalls = 0;
 
-    const result = await service.discoverCandidates(baseOptions(), {
+    const result = await service.discoverCandidates(baseOptions({ allowNetwork: true, networkAuthorization: true }), {
         networkKind: 'fake',
         fetchLeagueFixtures: async request => {
             fetchCalls += 1;
@@ -284,7 +320,9 @@ test('fake fetchLeagueFixtures 可返回 normalized candidates 且受 maxTargets
     assert.equal(fetchCalls, 1);
     assert.equal(result.fetch_mode, 'fake_injected_client');
     assert.equal(result.external_network_used, false);
-    assert.equal(result.network_used, false);
+    assert.equal(result.network_used, true);
+    assert.equal(result.network_authorization_used, true);
+    assert.equal(result.source_url_used, 'https://www.fotmob.com/api/data/leagues?id=53&season=20252026');
     assert.equal(result.raw_candidate_count, 2);
     assert.equal(result.candidate_count, 1);
     assert.equal(result.candidates.length, 1);
@@ -299,6 +337,28 @@ test('fake fetchLeagueFixtures 可返回 normalized candidates 且受 maxTargets
     assert.equal(calls.persist, 0);
     assert.equal(calls.browserInitialize, 0);
     assert.equal(calls.proxyAcquire, 0);
+    assert.equal(calls.httpRequest, 0);
+    assertSafetySummaryAllFalse(result);
+});
+
+test('candidates 受 maxTargets=10 限制', async t => {
+    installNoSideEffectGuards(t);
+    const { service } = createService();
+    const matches = Array.from({ length: 12 }, (_, index) =>
+        fakeMatch(200 + index, `Home ${index}`, `Away ${index}`, '2026-05-10T12:00:00.000Z')
+    );
+
+    const result = await service.discoverCandidates(
+        baseOptions({ allowNetwork: true, networkAuthorization: true, maxTargets: 10 }),
+        {
+            networkKind: 'fake',
+            fetchLeagueFixtures: async () => fakePayload(matches),
+        }
+    );
+
+    assert.equal(result.raw_candidate_count, 12);
+    assert.equal(result.candidate_count, 10);
+    assert.equal(result.candidates.length, 10);
 });
 
 test('fake network error 返回 controlled error 且不 retry', async t => {
@@ -308,7 +368,7 @@ test('fake network error 返回 controlled error 且不 retry', async t => {
 
     await assert.rejects(
         () =>
-            service.discoverCandidates(baseOptions(), {
+            service.discoverCandidates(baseOptions({ allowNetwork: true, networkAuthorization: true }), {
                 networkKind: 'fake',
                 fetchLeagueFixtures: async () => {
                     fetchCalls += 1;
@@ -318,6 +378,8 @@ test('fake network error 返回 controlled error 且不 retry', async t => {
         error => {
             assert.equal(error.code, 'L1_DISCOVERY_CANDIDATES_FETCH_FAILED');
             assert.equal(error.retryCount, 0);
+            assert.equal(error.externalNetworkUsed, false);
+            assert.equal(error.networkAuthorizationUsed, true);
             assert.match(error.message, /fake upstream down/);
             return true;
         }
@@ -327,4 +389,5 @@ test('fake network error 返回 controlled error 且不 retry', async t => {
     assert.equal(calls.persist, 0);
     assert.equal(calls.browserInitialize, 0);
     assert.equal(calls.proxyAcquire, 0);
+    assert.equal(calls.httpRequest, 0);
 });
