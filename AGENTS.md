@@ -49,7 +49,7 @@
 - 开始修改前先确认当前 Git 分支；如果是 `main`，先切出工作分支。
 - 如果命令已经封装为 `npm script`，优先使用脚本入口。
 - 如果 `npm script` 指向缺失文件，先修正文档或脚本，再继续依赖该入口。
-- 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` / `make data-l1-discovery-candidates-preview` 的 safe preview 路径进入，除非用户后续显式授权受控网络阶段。
+- 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` / `make data-l1-discovery-candidates-preview` 的 safe preview 路径进入；显式授权的 L1 外网候选预览只能通过 `make data-l1-discovery-candidates-network-preview`。
 
 ### 2.3 禁止行为
 
@@ -216,6 +216,7 @@ AI / Codex 默认只能执行：
 - `make data-check`
 - `make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...`
 - `make data-l1-discovery-candidates-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> NETWORK_AUTHORIZATION=no ...`
+- 用户明确授权、仅做 candidates stdout summary、不写 DB/不启动 browser/proxy 的 `make data-l1-discovery-candidates-network-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CONCURRENCY=1 MAX_TARGETS<=10 NETWORK_AUTHORIZATION=yes ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no ALLOW_DB_WRITE=no`
 - 用户明确授权的 `make data-local-dry-run`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-write-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
@@ -366,6 +367,19 @@ Phase 5.04L1 补充约定：
 - 不得启动 browser / proxy runtime。
 - 真实 L1 network preview 必须后续阶段另行授权。
 - matches seed commit 必须后续阶段另行授权。
+
+Phase 5.05L1 补充约定：
+
+- L1 external network candidate preview 只能走 `make data-l1-discovery-candidates-network-preview`。
+- 该入口必须调用 `discoverCandidates()`，不得运行 `titan_discovery.js`。
+- 不得调用 `DiscoveryService.discover()`。
+- 不得调用 `FixtureRepository.persist()`。
+- 不得写 `matches`、`raw_match_data` 或任何 DB 表。
+- 不得启动 browser / proxy runtime，除非未来单独阶段另行授权。
+- 参数必须显式包含 source / scope / league / season / date / concurrency / maxTargets。
+- 仅允许 `SOURCE=fotmob`、`SCOPE=controlled_candidates_preview`、`CONCURRENCY=1`、`MAX_TARGETS<=10`。
+- 网络错误、403、429、captcha 或 block 信号必须立即停止。
+- 不得自动 retry，不得降级到 browser/proxy，不得降级到 `titan_discovery.js`。
 
 执行 `make data-l3-dry-run` 的前提：
 

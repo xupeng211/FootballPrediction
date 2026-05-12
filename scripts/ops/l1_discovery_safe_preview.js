@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const { L1ConfigManager } = require('../../src/infrastructure/services/L1ConfigManager');
 
-const PHASE = 'PHASE5_04L1_L1_DISCOVERY_CANDIDATES_EXTRACTION';
+const PHASE = 'PHASE5_05L1_CONTROLLED_L1_EXTERNAL_NETWORK_CANDIDATES_PREVIEW';
 const SAFE_SOURCE = 'fotmob';
 const CONTROLLED_CANDIDATES_SCOPE = 'controlled_candidates_preview';
 const SAFE_SCOPES = new Set([
@@ -18,11 +18,13 @@ const SAFE_SCOPES = new Set([
 ]);
 const DEFAULT_CONCURRENCY = 1;
 const DEFAULT_MAX_TARGETS = 1;
+const MAX_CONTROLLED_NETWORK_TARGETS = 10;
 const DEFAULT_LOOKBACK = 30;
 const DEFAULT_LOOKAHEAD = 7;
-const NEXT_REQUIRED_PHASE = 'controlled L1 external network preview with explicit user authorization';
-const BLOCKED_COMMIT_MESSAGE = 'BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5.04L1.';
+const NEXT_REQUIRED_PHASE = 'controlled matches seed commit planning with explicit user authorization';
+const BLOCKED_COMMIT_MESSAGE = 'BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5.05L1.';
 const REGISTRY_PATH = path.resolve(__dirname, '../../config/acquisition_engines.phase454.json');
+const TARGET_MATCH_ID_CANDIDATE = '4830746';
 
 function parseBooleanLike(value, fallback = undefined) {
     if (typeof value === 'boolean') {
@@ -127,6 +129,10 @@ function parseArgs(argv = process.argv.slice(2)) {
         allLeagues: false,
         fullSync: false,
         networkAuthorization: false,
+        networkPreview: false,
+        allowBrowserRuntime: false,
+        allowProxyRuntime: false,
+        allowDbWrite: false,
         help: false,
         json: true,
     };
@@ -157,6 +163,16 @@ function parseArgs(argv = process.argv.slice(2)) {
         full_sync: 'fullSync',
         'network-authorization': 'networkAuthorization',
         network_authorization: 'networkAuthorization',
+        'network-preview': 'networkPreview',
+        network_preview: 'networkPreview',
+        'allow-network': 'networkPreview',
+        allow_network: 'networkPreview',
+        'allow-browser-runtime': 'allowBrowserRuntime',
+        allow_browser_runtime: 'allowBrowserRuntime',
+        'allow-proxy-runtime': 'allowProxyRuntime',
+        allow_proxy_runtime: 'allowProxyRuntime',
+        'allow-db-write': 'allowDbWrite',
+        allow_db_write: 'allowDbWrite',
         help: 'help',
         h: 'help',
         json: 'json',
@@ -189,6 +205,10 @@ function parseArgs(argv = process.argv.slice(2)) {
                 'allLeagues',
                 'fullSync',
                 'networkAuthorization',
+                'networkPreview',
+                'allowBrowserRuntime',
+                'allowProxyRuntime',
+                'allowDbWrite',
                 'help',
                 'json',
             ].includes(optionKey)
@@ -237,6 +257,10 @@ function normalizeSafePreviewInput(input = {}) {
         dbWrite: parseBooleanLike(input.dbWrite, false),
         browser: parseBooleanLike(input.browser, false),
         proxy: parseBooleanLike(input.proxy, false),
+        networkPreview: parseBooleanLike(input.networkPreview, false),
+        allowBrowserRuntime: parseBooleanLike(input.allowBrowserRuntime, false),
+        allowProxyRuntime: parseBooleanLike(input.allowProxyRuntime, false),
+        allowDbWrite: parseBooleanLike(input.allowDbWrite, false),
         all: parseBooleanLike(input.all, false),
         allLeagues: parseBooleanLike(input.allLeagues, false),
         fullSync: parseBooleanLike(input.fullSync, false),
@@ -267,27 +291,30 @@ function validateSourceAndScope(input, errors) {
 }
 
 function validateBlockedFlags(input, errors) {
-    pushIf(input.all, errors, 'bulk flag not allowed: --all is blocked in Phase 5.04L1');
-    pushIf(input.allLeagues, errors, 'bulk flag not allowed: --all-leagues is blocked in Phase 5.04L1');
-    pushIf(input.fullSync, errors, 'bulk flag not allowed: --full-sync is blocked in Phase 5.04L1');
+    pushIf(input.all, errors, 'bulk flag not allowed: --all is blocked in Phase 5.05L1');
+    pushIf(input.allLeagues, errors, 'bulk flag not allowed: --all-leagues is blocked in Phase 5.05L1');
+    pushIf(input.fullSync, errors, 'bulk flag not allowed: --full-sync is blocked in Phase 5.05L1');
     pushIf(input.commit, errors, BLOCKED_COMMIT_MESSAGE);
     pushIf(input.dryRun !== true, errors, 'dry_run=false is not allowed: preview wrapper is fixed to dry-run mode');
-    pushIf(input.dbWrite === true, errors, 'db_write=true is not allowed in Phase 5.04L1');
-    pushIf(input.browser === true, errors, 'browser=true is not allowed in Phase 5.04L1');
-    pushIf(input.proxy === true, errors, 'proxy=true is not allowed in Phase 5.04L1');
+    pushIf(input.dbWrite === true, errors, 'db_write=true is not allowed in Phase 5.05L1');
+    pushIf(input.allowDbWrite === true, errors, 'ALLOW_DB_WRITE=yes is not allowed in Phase 5.05L1');
+    pushIf(input.browser === true, errors, 'browser=true is not allowed in Phase 5.05L1');
+    pushIf(input.allowBrowserRuntime === true, errors, 'ALLOW_BROWSER_RUNTIME=yes is not allowed in Phase 5.05L1');
+    pushIf(input.proxy === true, errors, 'proxy=true is not allowed in Phase 5.05L1');
+    pushIf(input.allowProxyRuntime === true, errors, 'ALLOW_PROXY_RUNTIME=yes is not allowed in Phase 5.05L1');
 }
 
 function validateLimits(input, errors) {
     if (!Number.isInteger(input.concurrency) || input.concurrency < 1) {
         errors.push('invalid concurrency: provide a positive integer');
     } else if (input.concurrency > 1) {
-        errors.push('concurrency > 1 is blocked in Phase 5.04L1');
+        errors.push('concurrency > 1 is blocked in Phase 5.05L1');
     }
 
     if (!Number.isInteger(input.maxTargets) || input.maxTargets < 1) {
         errors.push('invalid max_targets: provide a positive integer');
-    } else if (input.maxTargets > 1) {
-        errors.push('max_targets > 1 is blocked in Phase 5.04L1');
+    } else if (input.maxTargets > MAX_CONTROLLED_NETWORK_TARGETS) {
+        errors.push(`max_targets > ${MAX_CONTROLLED_NETWORK_TARGETS} is blocked in Phase 5.05L1`);
     }
 
     if (!Number.isInteger(input.lookback) || input.lookback < 0) {
@@ -327,6 +354,28 @@ function validateLeagueScope(input, errors) {
     }
 }
 
+function validateNetworkPreview(input, errors) {
+    if (!input.networkPreview) {
+        return;
+    }
+
+    if (input.source !== SAFE_SOURCE) {
+        return;
+    }
+    if (input.scope !== CONTROLLED_CANDIDATES_SCOPE) {
+        errors.push('network preview requires scope=controlled_candidates_preview');
+    }
+    if (input.networkAuthorization !== true) {
+        errors.push('network preview requires NETWORK_AUTHORIZATION=yes');
+    }
+    if (input.concurrency !== 1) {
+        errors.push('network preview requires CONCURRENCY=1');
+    }
+    if (input.maxTargets > MAX_CONTROLLED_NETWORK_TARGETS) {
+        errors.push(`network preview requires MAX_TARGETS<=${MAX_CONTROLLED_NETWORK_TARGETS}`);
+    }
+}
+
 function validateSafePreviewInput(input) {
     const errors = [];
     const normalized = normalizeSafePreviewInput(input);
@@ -335,6 +384,7 @@ function validateSafePreviewInput(input) {
     validateBlockedFlags(normalized, errors);
     validateLimits(normalized, errors);
     validateLeagueScope(normalized, errors);
+    validateNetworkPreview(normalized, errors);
 
     return {
         ok: errors.length === 0,
@@ -350,6 +400,10 @@ function validateSafePreviewInput(input) {
             dbWrite: false,
             browser: false,
             proxy: false,
+            networkPreview: normalized.networkPreview,
+            allowBrowserRuntime: false,
+            allowProxyRuntime: false,
+            allowDbWrite: false,
             all: false,
             allLeagues: false,
             fullSync: false,
@@ -406,7 +460,9 @@ function buildSafetySummary(input, metadata = {}) {
         bulk_allowed: false,
         full_sync_allowed: false,
         all_leagues_allowed: false,
-        network_execution_allowed: false,
+        network_execution_allowed: input.networkPreview === true && input.networkAuthorization === true,
+        controlled_external_network_preview_allowed:
+            input.networkPreview === true && input.networkAuthorization === true,
         browser_runtime_allowed: false,
         proxy_runtime_allowed: false,
         db_write_allowed: false,
@@ -416,13 +472,16 @@ function buildSafetySummary(input, metadata = {}) {
         discover_candidates_available: true,
         training_allowed: false,
         prediction_allowed: false,
-        would_access_network: false,
+        would_access_network: input.networkPreview === true,
         external_network_used: false,
+        network_authorization_used: false,
+        source_url_used: null,
         would_launch_browser: false,
         would_use_proxy: false,
         would_call_titan_discovery: false,
         would_call_discovery_service_discover: false,
         would_call_fixture_repository_persist: false,
+        would_call_persist: false,
         would_write_matches: false,
         would_write_raw_match_data: false,
         would_write_db: false,
@@ -431,9 +490,13 @@ function buildSafetySummary(input, metadata = {}) {
         would_create_files: false,
         would_spawn_child_process: false,
         network_authorization_requested: input.networkAuthorization === true,
-        network_authorization_effective: false,
+        network_authorization_effective: input.networkPreview === true && input.networkAuthorization === true,
         network_authorization_status:
-            input.networkAuthorization === true ? 'blocked_phase_5_04l1_plan_only' : 'not_requested',
+            input.networkAuthorization === true && input.networkPreview === true
+                ? 'authorized_phase_5_05l1_controlled_network_preview'
+                : input.networkAuthorization === true
+                  ? 'blocked_without_network_preview_target'
+                  : 'not_requested',
         candidate_count: 0,
         candidates: [],
         safety_classification: 'safe_preview_only',
@@ -480,6 +543,137 @@ function buildWindowPreview(input, seasonWindow, dependencies = {}) {
     };
 }
 
+function assertFotMobLeagueApiUrl(sourceUrl) {
+    let parsed;
+    try {
+        parsed = new URL(sourceUrl);
+    } catch (error) {
+        throw new Error(`invalid FotMob source URL: ${error.message}`);
+    }
+
+    if (
+        parsed.protocol !== 'https:' ||
+        parsed.hostname !== 'www.fotmob.com' ||
+        parsed.pathname !== '/api/data/leagues'
+    ) {
+        throw new Error('blocked source URL: only https://www.fotmob.com/api/data/leagues is allowed');
+    }
+
+    if (!parsed.searchParams.get('id') || !parsed.searchParams.get('season')) {
+        throw new Error('blocked source URL: FotMob league API requires id and season');
+    }
+}
+
+function classifyBlockText(bodyText) {
+    const normalized = String(bodyText || '').toLowerCase();
+    return ['captcha', 'cloudflare', 'access denied', 'too many requests', 'blocked', 'rate limit'].some(pattern =>
+        normalized.includes(pattern)
+    );
+}
+
+function buildNetworkError(message, context = {}) {
+    const error = new Error(message);
+    error.statusCode = context.statusCode || null;
+    error.code = context.code || null;
+    error.sourceUrl = context.sourceUrl || null;
+    return error;
+}
+
+function createSafeFotMobNetworkClient(dependencies = {}) {
+    const fetchImpl = dependencies.fetch || global.fetch;
+    const timeoutMs = Number.parseInt(String(dependencies.timeoutMs || 15000), 10);
+
+    return async request => {
+        assertFotMobLeagueApiUrl(request.sourceUrl);
+        if (request.source !== SAFE_SOURCE) {
+            throw new Error(`unsupported source for safe network client: ${request.source}`);
+        }
+        if (request.concurrency !== 1) {
+            throw new Error('safe network client requires concurrency=1');
+        }
+        if (
+            !Number.isInteger(Number(request.maxTargets)) ||
+            Number(request.maxTargets) > MAX_CONTROLLED_NETWORK_TARGETS
+        ) {
+            throw new Error(`safe network client requires maxTargets<=${MAX_CONTROLLED_NETWORK_TARGETS}`);
+        }
+        if (request.networkAuthorization !== true) {
+            throw new Error('safe network client requires networkAuthorization=true');
+        }
+        if (typeof fetchImpl !== 'function') {
+            throw new Error('global fetch is unavailable for controlled network preview');
+        }
+
+        const controller = typeof AbortController === 'function' ? new AbortController() : null;
+        const timeout = controller
+            ? setTimeout(() => {
+                  controller.abort();
+              }, timeoutMs)
+            : null;
+
+        try {
+            const response = await fetchImpl(request.sourceUrl, {
+                method: 'GET',
+                headers: {
+                    accept: 'application/json,text/plain;q=0.9,*/*;q=0.8',
+                    'user-agent': 'FootballPrediction-L1CandidatesPreview/5.05',
+                },
+                signal: controller?.signal,
+            });
+            const statusCode = Number(response.status);
+            const bodyText = await response.text();
+
+            if (statusCode === 403 || statusCode === 429 || classifyBlockText(bodyText)) {
+                throw buildNetworkError(`FotMob controlled network preview blocked with status ${statusCode}`, {
+                    statusCode,
+                    code: 'L1_DISCOVERY_CANDIDATES_NETWORK_BLOCKED',
+                    sourceUrl: request.sourceUrl,
+                });
+            }
+            if (!response.ok) {
+                throw buildNetworkError(`FotMob controlled network preview failed with status ${statusCode}`, {
+                    statusCode,
+                    code: 'L1_DISCOVERY_CANDIDATES_FETCH_FAILED',
+                    sourceUrl: request.sourceUrl,
+                });
+            }
+
+            return JSON.parse(bodyText);
+        } finally {
+            if (timeout) {
+                clearTimeout(timeout);
+            }
+        }
+    };
+}
+
+function normalizeTeamName(value) {
+    return String(value || '')
+        .toLowerCase()
+        .normalize('NFKD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '');
+}
+
+function containsTargetMatchIdCandidate(candidates, targetId = TARGET_MATCH_ID_CANDIDATE) {
+    return (Array.isArray(candidates) ? candidates : []).some(candidate =>
+        [candidate?.external_id, candidate?.externalId, candidate?.id, candidate?.match_id, candidate?.matchId].some(
+            value => String(value || '').includes(targetId)
+        )
+    );
+}
+
+function containsAngersStrasbourgCandidate(candidates) {
+    return (Array.isArray(candidates) ? candidates : []).some(candidate => {
+        const home = normalizeTeamName(candidate?.home || candidate?.home_team);
+        const away = normalizeTeamName(candidate?.away || candidate?.away_team);
+        return (
+            (home.includes('angers') && away.includes('strasbourg')) ||
+            (home.includes('strasbourg') && away.includes('angers'))
+        );
+    });
+}
+
 function resolveDiscoveryServiceFactory(dependencies = {}) {
     if (dependencies.discoveryService) {
         return () => dependencies.discoveryService;
@@ -513,9 +707,9 @@ async function buildControlledCandidatesPreview(input, context, dependencies = {
     basePreview.mode = 'controlled_candidates_preview';
     basePreview.plan_summary = {
         preview_kind: CONTROLLED_CANDIDATES_SCOPE,
-        network_execution: 'blocked_by_default',
+        network_execution: input.networkPreview ? 'authorized_controlled_external_preview' : 'blocked_by_default',
         network_authorization_requested: input.networkAuthorization === true,
-        network_authorization_effective: false,
+        network_authorization_effective: input.networkPreview === true && input.networkAuthorization === true,
         persistence: 'blocked',
         browser_runtime: 'blocked',
         proxy_runtime: 'blocked',
@@ -523,6 +717,8 @@ async function buildControlledCandidatesPreview(input, context, dependencies = {
     basePreview.discover_candidates_available = true;
     basePreview.candidates_preview_available = true;
     basePreview.external_network_used = false;
+    basePreview.network_authorization_used = false;
+    basePreview.source_url_used = null;
     basePreview.candidate_count = 0;
     basePreview.candidates = [];
 
@@ -534,6 +730,15 @@ async function buildControlledCandidatesPreview(input, context, dependencies = {
         };
     }
 
+    const fetchLeagueFixtures =
+        dependencies.fetchLeagueFixtures ||
+        (input.networkPreview
+            ? createSafeFotMobNetworkClient({
+                  fetch: dependencies.fetch,
+                  timeoutMs: dependencies.timeoutMs,
+              })
+            : null);
+    const networkKind = dependencies.networkKind || (input.networkPreview ? 'external' : 'none');
     const service = createDiscoveryService({ input, context, dependencies });
     if (!service || typeof service.discoverCandidates !== 'function') {
         throw new Error('discoverCandidates provider is not available');
@@ -552,20 +757,20 @@ async function buildControlledCandidatesPreview(input, context, dependencies = {
                 concurrency: input.concurrency,
                 maxTargets: input.maxTargets,
                 dryRun: true,
-                allowNetwork: dependencies.allowFakeNetwork === true,
+                allowNetwork: input.networkPreview === true || dependencies.allowFakeNetwork === true,
+                networkAuthorization: input.networkAuthorization === true || dependencies.allowFakeNetwork === true,
                 allowBrowserFallback: false,
                 allowProxy: false,
                 writeDb: false,
                 previewOnly: true,
             },
             {
-                fetchLeagueFixtures: dependencies.fetchLeagueFixtures,
-                httpClient: dependencies.httpClient,
+                fetchLeagueFixtures,
                 parser: dependencies.parser,
                 logger: dependencies.logger,
                 repository: dependencies.repository,
                 browserProvider: dependencies.browserProvider,
-                networkKind: dependencies.allowFakeNetwork === true ? 'fake' : 'none',
+                networkKind: dependencies.allowFakeNetwork === true ? 'fake' : networkKind,
             }
         );
 
@@ -574,6 +779,9 @@ async function buildControlledCandidatesPreview(input, context, dependencies = {
             : [];
         basePreview.fetch_mode = candidateResult.fetch_mode || 'discover_candidates';
         basePreview.source_url_candidate = candidateResult.source_url_candidate || basePreview.source_url_template;
+        basePreview.source_url_used = candidateResult.source_url_used || null;
+        basePreview.external_network_used = candidateResult.external_network_used === true;
+        basePreview.network_authorization_used = candidateResult.network_authorization_used === true;
         basePreview.candidate_count = Number(candidateResult.candidate_count) || candidates.length;
         basePreview.candidates = candidates;
         basePreview.safety_summary = candidateResult.safety_summary || null;
@@ -720,14 +928,20 @@ async function buildL1DiscoveryPlanPreview(input, dependencies = {}) {
         ...payload,
         candidates_preview_available: true,
         discover_candidates_available: true,
-        external_network_used: false,
+        external_network_used: controlledPreview.preview.external_network_used === true,
+        network_authorization_used: controlledPreview.preview.network_authorization_used === true,
         candidate_count: Number(controlledPreview.preview.candidate_count) || candidates.length,
         candidates,
+        candidates_preview: candidates,
+        contains_target_match_id_candidate: containsTargetMatchIdCandidate(candidates),
+        contains_anglers_strasbourg_candidate: containsAngersStrasbourgCandidate(candidates),
+        contains_angers_strasbourg_candidate: containsAngersStrasbourgCandidate(candidates),
         source_url_template:
             controlledPreview.preview.source_url_template || buildSourceUrlPreview(configManager, normalizedInput),
         source_url_candidate:
             controlledPreview.preview.source_url_candidate || buildSourceUrlPreview(configManager, normalizedInput),
-        network_used: false,
+        source_url_used: controlledPreview.preview.source_url_used || null,
+        network_used: controlledPreview.preview.external_network_used === true || candidateResult.network_used === true,
         browser_used: false,
         proxy_used: false,
         db_written: false,
@@ -753,6 +967,10 @@ function buildErrorPayload(options, errors, mode = 'validation-error') {
         dbWrite: false,
         browser: false,
         proxy: false,
+        networkPreview: options.networkPreview,
+        allowBrowserRuntime: false,
+        allowProxyRuntime: false,
+        allowDbWrite: false,
         all: false,
         allLeagues: false,
         fullSync: false,
@@ -764,6 +982,9 @@ function buildErrorPayload(options, errors, mode = 'validation-error') {
         ok: false,
         mode,
         errors: Array.isArray(errors) ? errors : [String(errors)],
+        contains_target_match_id_candidate: false,
+        contains_anglers_strasbourg_candidate: false,
+        contains_angers_strasbourg_candidate: false,
     };
 }
 
@@ -775,6 +996,7 @@ function showHelp(io = {}) {
             '',
             '用法:',
             '  node scripts/ops/l1_discovery_safe_preview.js --source=fotmob --scope=league_season_date --league-id=53 --season=2025/2026 --date=2026-05-10 --concurrency=1 --max-targets=1',
+            '  node scripts/ops/l1_discovery_safe_preview.js --network-preview=true --source=fotmob --scope=controlled_candidates_preview --league-id=53 --season=2025/2026 --date=2026-05-10 --concurrency=1 --max-targets=10 --network-authorization=yes',
             '',
             '允许 scope:',
             '  config_only_preview',
@@ -782,9 +1004,9 @@ function showHelp(io = {}) {
             '  league_season_window_preview',
             '  controlled_candidates_preview',
             '',
-            'Phase 5.04L1 约束:',
+            'Phase 5.05L1 约束:',
             '  preview-only',
-            '  no network',
+            '  network only when --network-preview=true and --network-authorization=yes',
             '  no browser',
             '  no proxy',
             '  no DB write',
@@ -820,13 +1042,14 @@ async function runCli(argv = process.argv.slice(2), io = {}, dependencies = {}) 
         return 1;
     }
 
-    if (validation.value.networkAuthorization === true) {
+    if (validation.value.networkAuthorization === true && validation.value.networkPreview !== true) {
         const payload = buildErrorPayload(
             options,
-            ['BLOCKED: external L1 network execution requires a later authorized phase.'],
+            ['BLOCKED: external L1 network execution requires data-l1-discovery-candidates-network-preview.'],
             'blocked-network-authorization'
         );
-        payload.blocked_reason = 'BLOCKED: external L1 network execution requires a later authorized phase.';
+        payload.blocked_reason =
+            'BLOCKED: external L1 network execution requires data-l1-discovery-candidates-network-preview.';
         payload.candidates_preview_available = validation.value.scope === CONTROLLED_CANDIDATES_SCOPE;
         payload.discover_candidates_available = true;
         payload.external_network_used = false;
@@ -841,7 +1064,18 @@ async function runCli(argv = process.argv.slice(2), io = {}, dependencies = {}) 
         stdout(`${JSON.stringify(payload, null, 2)}\n`);
         return 0;
     } catch (error) {
-        const payload = buildErrorPayload(options, error.validationErrors || [error.message]);
+        const mode =
+            error.code === 'L1_DISCOVERY_CANDIDATES_NETWORK_BLOCKED'
+                ? 'controlled-network-blocked'
+                : error.code === 'L1_DISCOVERY_CANDIDATES_FETCH_FAILED'
+                  ? 'controlled-network-error'
+                  : 'validation-error';
+        const payload = buildErrorPayload(options, error.validationErrors || [error.message], mode);
+        payload.external_network_used = error.externalNetworkUsed === true;
+        payload.network_authorization_used = error.networkAuthorizationUsed === true;
+        payload.source_url_used = error.sourceUrl || null;
+        payload.status_code = error.statusCode || null;
+        payload.retry_count = Number.isInteger(error.retryCount) ? error.retryCount : 0;
         stderr(`${error.message}\n`);
         stdout(`${JSON.stringify(payload, null, 2)}\n`);
         return 1;
@@ -867,5 +1101,8 @@ module.exports = {
     loadSeasonWindowSafe,
     buildSafetySummary,
     buildControlledCandidatesPreview,
+    createSafeFotMobNetworkClient,
+    containsTargetMatchIdCandidate,
+    containsAngersStrasbourgCandidate,
     runCli,
 };

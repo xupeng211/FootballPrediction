@@ -31,6 +31,9 @@ const { L1ConfigManager } = require('./L1ConfigManager');
 
 require('dotenv').config({ path: path.resolve(__dirname, '../../../.env') });
 
+const DISCOVERY_CANDIDATE_SCOPES = new Set(['controlled_candidates_preview', 'league_season_date']);
+const MAX_CONTROLLED_CANDIDATE_TARGETS = 10;
+
 function loadPool() {
     return require('pg').Pool;
 }
@@ -348,17 +351,20 @@ class DiscoveryService {
     }
 
     /**
-     * Phase 5.04L1: candidates-only preview path.
-     * 只做 fetch provider 注入、parse、normalize，不调用 persist，不写 DB。
+     * Phase 5.05L1: candidates-only preview path.
+     * 只做 safe network client 注入、parse、normalize，不调用 persist，不写 DB。
      */
     async discoverCandidates(options = {}, deps = {}) {
         const input = this._normalizeDiscoverCandidatesOptions(options);
         const target = this._resolveCandidateTarget(input);
-        const sourceUrl = target ? this._buildCandidateSourceUrl(target) : this._buildCandidateSourceUrlTemplate();
+        const sourceUrl = this._buildCandidateSourceUrl(target);
         const fetchLeagueFixtures = this._resolveCandidateFetch(input, deps);
         const basePayload = this._buildDiscoverCandidatesPayload(input, target, sourceUrl);
 
         if (!fetchLeagueFixtures) {
+            if (input.allowNetwork) {
+                throw new Error('safe network client is required when allowNetwork=true');
+            }
             return {
                 ...basePayload,
                 fetch_mode: 'not_executed',
@@ -372,30 +378,18 @@ class DiscoveryService {
         try {
             const fetchRequest = {
                 source: input.source,
-                leagueId: target?.id || null,
-                providerLeagueId: target ? target.providerId || target.id : null,
-                season: target?.season || input.season,
+                leagueId: target.id,
+                providerLeagueId: target.providerId || target.id,
+                season: target.season,
                 formattedSeason: this._formatCandidateSeason(target),
                 date: input.date,
                 sourceUrl,
                 target,
+                networkAuthorization: input.networkAuthorization,
+                maxTargets: input.maxTargets,
+                concurrency: input.concurrency,
             };
             const response = await fetchLeagueFixtures(fetchRequest);
-            if (!target) {
-                return {
-                    ...basePayload,
-                    ok: true,
-                    fetch_mode: deps.networkKind === 'fake' ? 'fake_injected_client' : 'injected_client',
-                    raw_candidate_count: 0,
-                    candidate_count: 0,
-                    candidates: [],
-                    response_preview_available: Boolean(response),
-                    safety_summary: {
-                        ...basePayload.safety_summary,
-                        network_client_injected: true,
-                    },
-                };
-            }
             const parser = deps.parser || this.parser;
             const isHistorical = this._isHistoricalSeason(target.season);
             const parsedFixtures = parser.parse(response, target.id, target.season, isHistorical, {
@@ -412,19 +406,35 @@ class DiscoveryService {
             return {
                 ...basePayload,
                 ok: true,
-                fetch_mode: deps.networkKind === 'fake' ? 'fake_injected_client' : 'injected_client',
+                fetch_mode: deps.networkKind === 'fake' ? 'fake_injected_client' : 'safe_injected_client',
+                network_used: true,
+                external_network_used: deps.networkKind === 'external',
+                network_authorization_used: input.networkAuthorization,
+                source_url_used: sourceUrl,
                 raw_candidate_count: datedFixtures.length,
                 candidate_count: candidates.length,
                 candidates,
                 safety_summary: {
                     ...basePayload.safety_summary,
                     network_client_injected: true,
+                    external_network_used: deps.networkKind === 'external',
+                    network_authorization_used: input.networkAuthorization,
                 },
             };
         } catch (error) {
             const controlledError = new Error(`L1 discovery candidates fetch failed: ${error.message}`);
-            controlledError.code = 'L1_DISCOVERY_CANDIDATES_FETCH_FAILED';
+            const statusCode = Number(error.statusCode || error.status || 0) || null;
+            const blocked =
+                statusCode === 403 || statusCode === 429 || error.code === 'L1_DISCOVERY_CANDIDATES_NETWORK_BLOCKED';
+            controlledError.code = blocked
+                ? 'L1_DISCOVERY_CANDIDATES_NETWORK_BLOCKED'
+                : 'L1_DISCOVERY_CANDIDATES_FETCH_FAILED';
             controlledError.retryCount = 0;
+            controlledError.statusCode = statusCode;
+            controlledError.blocked = blocked;
+            controlledError.sourceUrl = sourceUrl;
+            controlledError.externalNetworkUsed = deps.networkKind === 'external';
+            controlledError.networkAuthorizationUsed = input.networkAuthorization;
             controlledError.cause = error;
             throw controlledError;
         }
@@ -434,11 +444,16 @@ class DiscoveryService {
         const source = String(options.source || '')
             .trim()
             .toLowerCase();
+        const scope = String(options.scope || 'controlled_candidates_preview').trim();
         const concurrency = Number.parseInt(String(options.concurrency ?? 1), 10);
         const maxTargets = Number.parseInt(String(options.maxTargets ?? options.max_targets ?? 1), 10);
         const lookback = Number.parseInt(String(options.lookback ?? 30), 10);
         const lookahead = Number.parseInt(String(options.lookahead ?? 7), 10);
         const leagueId = options.leagueId ?? options.league_id ?? null;
+        const season = typeof options.season === 'string' ? options.season.trim() : options.season || null;
+        const date = typeof options.date === 'string' ? options.date.trim() : options.date || null;
+        const allowNetwork = options.allowNetwork === true || options.allow_network === true;
+        const networkAuthorization = options.networkAuthorization === true || options.network_authorization === true;
 
         if (!source) {
             throw new Error('missing source: discoverCandidates requires source=fotmob');
@@ -446,36 +461,62 @@ class DiscoveryService {
         if (source !== 'fotmob') {
             throw new Error('unsupported source: discoverCandidates currently only allows fotmob');
         }
-        if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 1) {
-            throw new Error('concurrency > 1 is blocked for discoverCandidates in Phase 5.04L1');
+        if (!DISCOVERY_CANDIDATE_SCOPES.has(scope)) {
+            throw new Error(
+                'unsupported scope: discoverCandidates only allows controlled_candidates_preview or league_season_date'
+            );
         }
-        if (!Number.isInteger(maxTargets) || maxTargets < 1 || maxTargets > 1) {
-            throw new Error('maxTargets > 1 is blocked for discoverCandidates in Phase 5.04L1');
+        if (!Number.isInteger(concurrency) || concurrency < 1 || concurrency > 1) {
+            throw new Error('concurrency > 1 is blocked for discoverCandidates in Phase 5.05L1');
+        }
+        if (!Number.isInteger(maxTargets) || maxTargets < 1 || maxTargets > MAX_CONTROLLED_CANDIDATE_TARGETS) {
+            throw new Error(
+                `maxTargets > ${MAX_CONTROLLED_CANDIDATE_TARGETS} is blocked for discoverCandidates in Phase 5.05L1`
+            );
+        }
+        if (leagueId === null || leagueId === undefined || leagueId === '') {
+            throw new Error('missing leagueId: discoverCandidates requires explicit leagueId');
+        }
+        if (!season) {
+            throw new Error('missing season: discoverCandidates requires explicit season');
+        }
+        if (!date) {
+            throw new Error('missing date: discoverCandidates requires explicit date');
+        }
+        if (allowNetwork && !networkAuthorization) {
+            throw new Error('networkAuthorization=true is required when allowNetwork=true');
         }
         if (options.writeDb === true || options.write_db === true) {
             throw new Error('writeDb=true is not allowed in discoverCandidates');
         }
         if (options.allowBrowserFallback === true || options.allow_browser_fallback === true) {
-            throw new Error('allowBrowserFallback=true is not allowed in Phase 5.04L1');
+            throw new Error('allowBrowserFallback=true is not allowed in Phase 5.05L1');
         }
         if (options.allowProxy === true || options.allow_proxy === true) {
-            throw new Error('allowProxy=true is not allowed in Phase 5.04L1');
+            throw new Error('allowProxy=true is not allowed in Phase 5.05L1');
+        }
+        if (options.dryRun === false || options.dry_run === false) {
+            throw new Error('dryRun=false is not allowed in discoverCandidates');
+        }
+        if (options.previewOnly === false || options.preview_only === false) {
+            throw new Error('previewOnly=false is not allowed in discoverCandidates');
         }
 
         return {
             source,
-            scope: options.scope || 'controlled_candidates_preview',
+            scope,
             league: options.league || null,
             leagueId: leagueId === null || leagueId === undefined || leagueId === '' ? null : String(leagueId),
-            season: options.season || null,
-            date: options.date || null,
+            season,
+            date,
             lookback,
             lookahead,
             concurrency,
             maxTargets,
             dryRun: options.dryRun !== false && options.dry_run !== false,
             previewOnly: options.previewOnly !== false && options.preview_only !== false,
-            allowNetwork: options.allowNetwork === true || options.allow_network === true,
+            allowNetwork,
+            networkAuthorization,
             allowBrowserFallback: false,
             allowProxy: false,
             writeDb: false,
@@ -519,25 +560,29 @@ class DiscoveryService {
     }
 
     _resolveCandidateFetch(input, deps = {}) {
-        const fakeClientAllowed = deps.networkKind === 'fake';
-        if (!input.allowNetwork && !fakeClientAllowed) {
+        if (!input.allowNetwork) {
             return null;
         }
         if (typeof deps.fetchLeagueFixtures === 'function') {
             return deps.fetchLeagueFixtures;
         }
-        if (deps.httpClient && typeof deps.httpClient.request === 'function') {
-            return ({ sourceUrl, providerLeagueId }) =>
-                deps.httpClient.request(sourceUrl, {
-                    expectedLeagueId: Number(providerLeagueId),
-                });
+        if (typeof deps.safeNetworkClient === 'function') {
+            return deps.safeNetworkClient;
         }
         return null;
     }
 
     _buildDiscoverCandidatesPayload(input, target, sourceUrl) {
         const safetySummary = {
+            wrote_db: false,
+            wrote_matches: false,
+            wrote_raw_match_data: false,
+            called_persist: false,
+            launched_browser: false,
+            used_proxy: false,
             would_write_db: false,
+            would_write_matches: false,
+            would_write_raw_match_data: false,
             would_call_persist: false,
             would_launch_browser: false,
             would_use_proxy: false,
@@ -556,6 +601,7 @@ class DiscoveryService {
             preview_only: true,
             dry_run: true,
             allow_network: input.allowNetwork,
+            network_authorization_used: false,
             network_used: false,
             external_network_used: false,
             browser_used: false,
@@ -565,6 +611,7 @@ class DiscoveryService {
             raw_match_data_written: false,
             source_url_template: this._buildCandidateSourceUrlTemplate(),
             source_url_candidate: sourceUrl,
+            source_url_used: null,
             raw_candidate_count: 0,
             candidate_count: 0,
             candidates: [],
