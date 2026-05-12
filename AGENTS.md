@@ -50,6 +50,7 @@
 - 如果命令已经封装为 `npm script`，优先使用脚本入口。
 - 如果 `npm script` 指向缺失文件，先修正文档或脚本，再继续依赖该入口。
 - 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` / `make data-l1-discovery-candidates-preview` 的 safe preview 路径进入；显式授权的 L1 外网候选预览只能通过 `make data-l1-discovery-candidates-network-preview`。
+- L1 matches seed commit 不能由 AI / Codex 直接执行；Phase 5.06L1 仅允许 `make data-l1-matches-seed-commit-plan` 输出 stdout planning。
 
 ### 2.3 禁止行为
 
@@ -217,6 +218,7 @@ AI / Codex 默认只能执行：
 - `make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...`
 - `make data-l1-discovery-candidates-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> NETWORK_AUTHORIZATION=no ...`
 - 用户明确授权、仅做 candidates stdout summary、不写 DB/不启动 browser/proxy 的 `make data-l1-discovery-candidates-network-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CONCURRENCY=1 MAX_TARGETS<=10 NETWORK_AUTHORIZATION=yes ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no ALLOW_DB_WRITE=no`
+- 仅做 matches seed commit planning、不触网、不写 DB、不写 matches/raw_match_data 的 `make data-l1-matches-seed-commit-plan SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> MAX_SEED_ROWS<=10 COMMIT=no`
 - 用户明确授权的 `make data-local-dry-run`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-write-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
@@ -380,6 +382,16 @@ Phase 5.05L1 补充约定：
 - 仅允许 `SOURCE=fotmob`、`SCOPE=controlled_candidates_preview`、`CONCURRENCY=1`、`MAX_TARGETS<=10`。
 - 网络错误、403、429、captcha 或 block 信号必须立即停止。
 - 不得自动 retry，不得降级到 browser/proxy，不得降级到 `titan_discovery.js`。
+
+Phase 5.06L1 补充约定：
+
+- L1 matches seed commit planning 只能走 `make data-l1-matches-seed-commit-plan`。
+- `data-l1-matches-seed-commit-plan` 只允许输出 stdout planning，不得触网，不得写 DB，不得写 `matches` / `raw_match_data`。
+- `make data-l1-matches-seed-commit` 固定 blocked，即使传入 `CONFIRM_L1_MATCHES_SEED_COMMIT=1`。
+- matches seed commit 必须等待未来单独用户明确授权阶段。
+- raw_match_data ingest 必须与 matches seed commit 分离，不得合并执行。
+- matches seed 阶段不得训练、不得预测、不得加载或生成模型 artifact。
+- 任何 DB write 前必须先复核 candidate mapping、upsert policy、backup policy、rollback policy。
 
 执行 `make data-l3-dry-run` 的前提：
 
