@@ -15,7 +15,7 @@
         data-prediction-write-dry-run data-prediction-write-commit \
         data-dataset-status data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
-        data-l1-discovery-preview data-l1-discovery-commit \
+        data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-commit \
         data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-fotmob-stdout-network-dry-run-authorization-packet-preview data-fotmob-stdout-network-dry-run-authorization-packet-commit \
         data-fotmob-stdout-network-dry-run-execution-plan-preview data-fotmob-stdout-network-dry-run-execution-plan-commit \
@@ -309,7 +309,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
-	@echo "  make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...  # Phase 5.03L1 preview-only, no network/browser/proxy/DB, no titan_discovery/DiscoveryService.discover/FixtureRepository.persist"
+	@echo "  make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...  # Phase 5.04L1 preview-only, no network/browser/proxy/DB, no titan_discovery/DiscoveryService.discover/FixtureRepository.persist"
+	@echo "  make data-l1-discovery-candidates-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> NETWORK_AUTHORIZATION=no  # Phase 5.04L1 candidates preview, no external network/browser/proxy/DB, no matches/raw writes"
 	@echo "  make data-fotmob-single-target-adapter-preflight TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> ...  # Phase 4.98F hardening, stdout-only, no network/staging/DB/legacy runtime"
 	@echo "  make data-fotmob-stdout-network-dry-run-authorization-packet-preview PACKET=<path>  # Phase 4.99F template-only, stdout-only, no network/staging/DB/runtime packet write"
 	@echo "  make data-fotmob-stdout-network-dry-run-execution-plan-preview PLAN=<path> PACKET=<path>  # Phase 5.00F template-only, stdout-only, no network/staging/DB/runtime execution plan write"
@@ -360,7 +361,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-football-data-packet-file-preauth-closure CLOSURE_TEMPLATE=<path> CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path>"
 	@echo "  make data-football-data-packet-file-preauth-closure-commit CLOSURE_TEMPLATE=<path> CONSOLIDATION_TEMPLATE=<path> DRAFT_TEMPLATE=<path> READINESS_CHECKLIST=<path> AUTH_FORM=<path> SOURCE_MANIFEST=<path> LOCAL_CSV=<path> APPROVAL_FORM=<path> RUNBOOK_TEMPLATE=<path> CONFIRM_FOOTBALL_DATA_PACKET_FILE_PREAUTH_CLOSURE=1  # blocked in Phase 4.76C"
 	@echo "  make data-training-dataset-export CONFIRM_DATASET_EXPORT=1  # blocked in Phase 4.36"
-	@echo "  make data-l1-discovery-commit SOURCE=fotmob SCOPE=<scope> CONFIRM_L1_DISCOVERY_COMMIT=1  # blocked in Phase 5.03L1"
+	@echo "  make data-l1-discovery-commit SOURCE=fotmob SCOPE=<scope> CONFIRM_L1_DISCOVERY_COMMIT=1  # blocked in Phase 5.04L1"
 	@echo "  make data-prediction-write-commit MATCH_ID=<id> CONFIRM_PREDICTION_WRITE=1  # blocked in Phase 4.32"
 	@echo "  make data-training-feature-commit MATCH_ID=<id> CONFIRM_TRAINING_FEATURE=1  # blocked in Phase 4.30"
 	@echo "  make data-training-commit CONFIRM_TRAINING=1  # blocked in Phase 4.29"
@@ -424,9 +425,9 @@ data-check: ## Read-only data environment check
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/csv_bulk_loader.js --help >/tmp/fp_data_csv_loader_help.txt
 	@echo "OK: read-only data environment check completed."
 
-data-l1-discovery-preview: ## L1 safe preview wrapper. Phase 5.03L1. Preview-only, no network, no DB, no browser/proxy.
+data-l1-discovery-preview: ## L1 safe preview wrapper. Phase 5.04L1. Preview-only, no network, no DB, no browser/proxy.
 	@if [ -z "$(SOURCE)" ] || [ -z "$(SCOPE)" ]; then \
-		echo "ERROR: provide SOURCE=fotmob and SCOPE=<config_only_preview|league_season_date|league_season_window_preview>"; \
+		echo "ERROR: provide SOURCE=fotmob and SCOPE=<config_only_preview|league_season_date|league_season_window_preview|controlled_candidates_preview>"; \
 		exit 1; \
 	fi
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/l1_discovery_safe_preview.js \
@@ -441,8 +442,26 @@ data-l1-discovery-preview: ## L1 safe preview wrapper. Phase 5.03L1. Preview-onl
 		$(if $(LOOKAHEAD),--lookahead="$(LOOKAHEAD)") \
 		--dry-run=true
 
-data-l1-discovery-commit: ## Blocked L1 safe preview commit gate. Remains blocked in Phase 5.03L1.
-	@echo "BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5.03L1."
+data-l1-discovery-candidates-preview: ## L1 controlled candidates preview. Phase 5.04L1. Default no external network, no DB, no browser/proxy.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(SEASON)" ] || [ -z "$(DATE)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd>"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/l1_discovery_safe_preview.js \
+		--source="$(SOURCE)" \
+		--scope="$(or $(SCOPE),controlled_candidates_preview)" \
+		--league-id="$(LEAGUE_ID)" \
+		--season="$(SEASON)" \
+		--date="$(DATE)" \
+		--concurrency="$(or $(CONCURRENCY),1)" \
+		--max-targets="$(or $(MAX_TARGETS),1)" \
+		$(if $(LOOKBACK),--lookback="$(LOOKBACK)") \
+		$(if $(LOOKAHEAD),--lookahead="$(LOOKAHEAD)") \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),no)" \
+		--dry-run=true
+
+data-l1-discovery-commit: ## Blocked L1 safe preview commit gate. Remains blocked in Phase 5.04L1.
+	@echo "BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5.04L1."
 	@echo "  No titan_discovery direct call, no DiscoveryService.discover call, no FixtureRepository.persist call."
 	@echo "  Even with CONFIRM_L1_DISCOVERY_COMMIT=1, network execution and DB writes remain blocked."
 	@exit 1
