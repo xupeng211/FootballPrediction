@@ -49,7 +49,7 @@
 - 开始修改前先确认当前 Git 分支；如果是 `main`，先切出工作分支。
 - 如果命令已经封装为 `npm script`，优先使用脚本入口。
 - 如果 `npm script` 指向缺失文件，先修正文档或脚本，再继续依赖该入口。
-- 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` 进入，除非用户后续显式授权受控网络阶段。
+- 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` / `make data-l1-discovery-candidates-preview` 的 safe preview 路径进入，除非用户后续显式授权受控网络阶段。
 
 ### 2.3 禁止行为
 
@@ -215,6 +215,7 @@ AI / Codex 默认只能执行：
 - `make data-help`
 - `make data-check`
 - `make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...`
+- `make data-l1-discovery-candidates-preview SOURCE=fotmob SCOPE=controlled_candidates_preview LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> NETWORK_AUTHORIZATION=no ...`
 - 用户明确授权的 `make data-local-dry-run`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-write-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
@@ -352,6 +353,19 @@ Phase 5.03L1 补充约定：
 - 不得启用 browser / proxy runtime。
 - `make data-l1-discovery-commit` 在 Phase 5.03L1 固定 blocked。
 - 未来受控 L1 network preview 必须用户显式授权。
+
+Phase 5.04L1 补充约定：
+
+- L1 candidate preview 必须走 `discoverCandidates()` / safe preview path。
+- `make data-l1-discovery-candidates-preview` 仅允许 `controlled_candidates_preview`。
+- 默认不得访问外部网络；即使 `NETWORK_AUTHORIZATION=yes`，本阶段 CLI 仍必须 blocked / plan-only。
+- 不得写 `matches`。
+- 不得写 `raw_match_data`。
+- 不得调用 `FixtureRepository.persist()`。
+- 不得调用 `DiscoveryService.discover()`。
+- 不得启动 browser / proxy runtime。
+- 真实 L1 network preview 必须后续阶段另行授权。
+- matches seed commit 必须后续阶段另行授权。
 
 执行 `make data-l3-dry-run` 的前提：
 

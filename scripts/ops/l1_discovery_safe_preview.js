@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable complexity, max-lines */
 'use strict';
 
 const fs = require('node:fs');
@@ -6,16 +7,21 @@ const path = require('node:path');
 
 const { L1ConfigManager } = require('../../src/infrastructure/services/L1ConfigManager');
 
-const PHASE = 'PHASE5_03L1_L1_DISCOVERY_SAFE_PREVIEW_WRAPPER';
+const PHASE = 'PHASE5_04L1_L1_DISCOVERY_CANDIDATES_EXTRACTION';
 const SAFE_SOURCE = 'fotmob';
-const SAFE_SCOPES = new Set(['config_only_preview', 'league_season_date', 'league_season_window_preview']);
+const CONTROLLED_CANDIDATES_SCOPE = 'controlled_candidates_preview';
+const SAFE_SCOPES = new Set([
+    'config_only_preview',
+    'league_season_date',
+    'league_season_window_preview',
+    CONTROLLED_CANDIDATES_SCOPE,
+]);
 const DEFAULT_CONCURRENCY = 1;
 const DEFAULT_MAX_TARGETS = 1;
 const DEFAULT_LOOKBACK = 30;
 const DEFAULT_LOOKAHEAD = 7;
-const NEXT_REQUIRED_PHASE =
-    'controlled L1 network preview with explicit user authorization, or implement discoverCandidates() extraction';
-const BLOCKED_COMMIT_MESSAGE = 'BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5.03L1.';
+const NEXT_REQUIRED_PHASE = 'controlled L1 external network preview with explicit user authorization';
+const BLOCKED_COMMIT_MESSAGE = 'BLOCKED: L1 discovery safe preview wrapper does not execute writes in Phase 5.04L1.';
 const REGISTRY_PATH = path.resolve(__dirname, '../../config/acquisition_engines.phase454.json');
 
 function parseBooleanLike(value, fallback = undefined) {
@@ -120,6 +126,7 @@ function parseArgs(argv = process.argv.slice(2)) {
         all: false,
         allLeagues: false,
         fullSync: false,
+        networkAuthorization: false,
         help: false,
         json: true,
     };
@@ -148,6 +155,8 @@ function parseArgs(argv = process.argv.slice(2)) {
         all_leagues: 'allLeagues',
         'full-sync': 'fullSync',
         full_sync: 'fullSync',
+        'network-authorization': 'networkAuthorization',
+        network_authorization: 'networkAuthorization',
         help: 'help',
         h: 'help',
         json: 'json',
@@ -171,9 +180,18 @@ function parseArgs(argv = process.argv.slice(2)) {
         }
 
         if (
-            ['commit', 'dbWrite', 'browser', 'proxy', 'all', 'allLeagues', 'fullSync', 'help', 'json'].includes(
-                optionKey
-            )
+            [
+                'commit',
+                'dbWrite',
+                'browser',
+                'proxy',
+                'all',
+                'allLeagues',
+                'fullSync',
+                'networkAuthorization',
+                'help',
+                'json',
+            ].includes(optionKey)
         ) {
             options[optionKey] = parseBooleanLike(value, true);
             continue;
@@ -222,6 +240,7 @@ function normalizeSafePreviewInput(input = {}) {
         all: parseBooleanLike(input.all, false),
         allLeagues: parseBooleanLike(input.allLeagues, false),
         fullSync: parseBooleanLike(input.fullSync, false),
+        networkAuthorization: parseBooleanLike(input.networkAuthorization, false),
     };
 }
 
@@ -235,12 +254,12 @@ function validateSourceAndScope(input, errors) {
     if (!input.source) {
         errors.push('missing source: provide --source=fotmob');
     } else if (input.source !== SAFE_SOURCE) {
-        errors.push(`unsupported source: only ${SAFE_SOURCE} is allowed in Phase 5.03L1`);
+        errors.push(`unsupported source: only ${SAFE_SOURCE} is allowed in Phase 5.04L1`);
     }
 
     if (!input.scope) {
         errors.push(
-            'missing scope: provide --scope=<config_only_preview|league_season_date|league_season_window_preview>'
+            'missing scope: provide --scope=<config_only_preview|league_season_date|league_season_window_preview|controlled_candidates_preview>'
         );
     } else if (!SAFE_SCOPES.has(input.scope)) {
         errors.push(`unsupported scope: ${input.scope}`);
@@ -248,27 +267,27 @@ function validateSourceAndScope(input, errors) {
 }
 
 function validateBlockedFlags(input, errors) {
-    pushIf(input.all, errors, 'bulk flag not allowed: --all is blocked in Phase 5.03L1');
-    pushIf(input.allLeagues, errors, 'bulk flag not allowed: --all-leagues is blocked in Phase 5.03L1');
-    pushIf(input.fullSync, errors, 'bulk flag not allowed: --full-sync is blocked in Phase 5.03L1');
+    pushIf(input.all, errors, 'bulk flag not allowed: --all is blocked in Phase 5.04L1');
+    pushIf(input.allLeagues, errors, 'bulk flag not allowed: --all-leagues is blocked in Phase 5.04L1');
+    pushIf(input.fullSync, errors, 'bulk flag not allowed: --full-sync is blocked in Phase 5.04L1');
     pushIf(input.commit, errors, BLOCKED_COMMIT_MESSAGE);
     pushIf(input.dryRun !== true, errors, 'dry_run=false is not allowed: preview wrapper is fixed to dry-run mode');
-    pushIf(input.dbWrite === true, errors, 'db_write=true is not allowed in Phase 5.03L1');
-    pushIf(input.browser === true, errors, 'browser=true is not allowed in Phase 5.03L1');
-    pushIf(input.proxy === true, errors, 'proxy=true is not allowed in Phase 5.03L1');
+    pushIf(input.dbWrite === true, errors, 'db_write=true is not allowed in Phase 5.04L1');
+    pushIf(input.browser === true, errors, 'browser=true is not allowed in Phase 5.04L1');
+    pushIf(input.proxy === true, errors, 'proxy=true is not allowed in Phase 5.04L1');
 }
 
 function validateLimits(input, errors) {
     if (!Number.isInteger(input.concurrency) || input.concurrency < 1) {
         errors.push('invalid concurrency: provide a positive integer');
     } else if (input.concurrency > 1) {
-        errors.push('concurrency > 1 is blocked in Phase 5.03L1');
+        errors.push('concurrency > 1 is blocked in Phase 5.04L1');
     }
 
     if (!Number.isInteger(input.maxTargets) || input.maxTargets < 1) {
         errors.push('invalid max_targets: provide a positive integer');
     } else if (input.maxTargets > 1) {
-        errors.push('max_targets > 1 is blocked in Phase 5.03L1');
+        errors.push('max_targets > 1 is blocked in Phase 5.04L1');
     }
 
     if (!Number.isInteger(input.lookback) || input.lookback < 0) {
@@ -280,7 +299,10 @@ function validateLimits(input, errors) {
 }
 
 function validateLeagueScope(input, errors) {
-    const isLeagueScope = input.scope === 'league_season_date' || input.scope === 'league_season_window_preview';
+    const isLeagueScope =
+        input.scope === 'league_season_date' ||
+        input.scope === 'league_season_window_preview' ||
+        input.scope === CONTROLLED_CANDIDATES_SCOPE;
 
     if (!isLeagueScope) {
         return;
@@ -296,9 +318,9 @@ function validateLeagueScope(input, errors) {
         errors.push('missing season for league scope');
     }
 
-    if (input.scope === 'league_season_date') {
+    if (input.scope === 'league_season_date' || input.scope === CONTROLLED_CANDIDATES_SCOPE) {
         if (!input.date) {
-            errors.push('missing date for league_season_date scope');
+            errors.push(`missing date for ${input.scope} scope`);
         } else if (!parseDateStrict(input.date)) {
             errors.push('invalid date: provide YYYY-MM-DD');
         }
@@ -331,6 +353,7 @@ function validateSafePreviewInput(input) {
             all: false,
             allLeagues: false,
             fullSync: false,
+            networkAuthorization: normalized.networkAuthorization,
         },
     };
 }
@@ -389,9 +412,12 @@ function buildSafetySummary(input, metadata = {}) {
         db_write_allowed: false,
         matches_write_allowed: false,
         raw_match_data_write_allowed: false,
+        candidates_preview_available: input.scope === CONTROLLED_CANDIDATES_SCOPE,
+        discover_candidates_available: true,
         training_allowed: false,
         prediction_allowed: false,
         would_access_network: false,
+        external_network_used: false,
         would_launch_browser: false,
         would_use_proxy: false,
         would_call_titan_discovery: false,
@@ -404,6 +430,12 @@ function buildSafetySummary(input, metadata = {}) {
         would_predict: false,
         would_create_files: false,
         would_spawn_child_process: false,
+        network_authorization_requested: input.networkAuthorization === true,
+        network_authorization_effective: false,
+        network_authorization_status:
+            input.networkAuthorization === true ? 'blocked_phase_5_04l1_plan_only' : 'not_requested',
+        candidate_count: 0,
+        candidates: [],
         safety_classification: 'safe_preview_only',
         commit_gate: 'blocked',
         next_required_phase: NEXT_REQUIRED_PHASE,
@@ -446,6 +478,115 @@ function buildWindowPreview(input, seasonWindow, dependencies = {}) {
         lookahead_days: input.lookahead,
         source: seasonWindow.window.source || 'explicit_or_derived',
     };
+}
+
+function resolveDiscoveryServiceFactory(dependencies = {}) {
+    if (dependencies.discoveryService) {
+        return () => dependencies.discoveryService;
+    }
+
+    if (typeof dependencies.createDiscoveryService === 'function') {
+        return dependencies.createDiscoveryService;
+    }
+
+    if (dependencies.allowDiscoveryServiceImport === false) {
+        return null;
+    }
+
+    return () => {
+        const { DiscoveryService } = require('../../src/infrastructure/services/DiscoveryService');
+        return new DiscoveryService({
+            silent: true,
+            disableDbPool: true,
+            disableBrowserProvider: true,
+            disableProxyProvider: true,
+            disableHttpClient: true,
+            disableFixtureRepository: true,
+        });
+    };
+}
+
+async function buildControlledCandidatesPreview(input, context, dependencies = {}) {
+    const createDiscoveryService = resolveDiscoveryServiceFactory(dependencies);
+    const basePreview = buildCandidatePreview(input, context, dependencies);
+
+    basePreview.mode = 'controlled_candidates_preview';
+    basePreview.plan_summary = {
+        preview_kind: CONTROLLED_CANDIDATES_SCOPE,
+        network_execution: 'blocked_by_default',
+        network_authorization_requested: input.networkAuthorization === true,
+        network_authorization_effective: false,
+        persistence: 'blocked',
+        browser_runtime: 'blocked',
+        proxy_runtime: 'blocked',
+    };
+    basePreview.discover_candidates_available = true;
+    basePreview.candidates_preview_available = true;
+    basePreview.external_network_used = false;
+    basePreview.candidate_count = 0;
+    basePreview.candidates = [];
+
+    if (!createDiscoveryService) {
+        basePreview.fetch_mode = 'plan_only_no_service_import';
+        return {
+            preview: basePreview,
+            candidateResult: null,
+        };
+    }
+
+    const service = createDiscoveryService({ input, context, dependencies });
+    if (!service || typeof service.discoverCandidates !== 'function') {
+        throw new Error('discoverCandidates provider is not available');
+    }
+
+    try {
+        const candidateResult = await service.discoverCandidates(
+            {
+                source: input.source,
+                scope: input.scope,
+                leagueId: input.leagueId,
+                season: input.season,
+                date: input.date,
+                lookback: input.lookback,
+                lookahead: input.lookahead,
+                concurrency: input.concurrency,
+                maxTargets: input.maxTargets,
+                dryRun: true,
+                allowNetwork: dependencies.allowFakeNetwork === true,
+                allowBrowserFallback: false,
+                allowProxy: false,
+                writeDb: false,
+                previewOnly: true,
+            },
+            {
+                fetchLeagueFixtures: dependencies.fetchLeagueFixtures,
+                httpClient: dependencies.httpClient,
+                parser: dependencies.parser,
+                logger: dependencies.logger,
+                repository: dependencies.repository,
+                browserProvider: dependencies.browserProvider,
+                networkKind: dependencies.allowFakeNetwork === true ? 'fake' : 'none',
+            }
+        );
+
+        const candidates = Array.isArray(candidateResult.candidates)
+            ? candidateResult.candidates.slice(0, input.maxTargets)
+            : [];
+        basePreview.fetch_mode = candidateResult.fetch_mode || 'discover_candidates';
+        basePreview.source_url_candidate = candidateResult.source_url_candidate || basePreview.source_url_template;
+        basePreview.candidate_count = Number(candidateResult.candidate_count) || candidates.length;
+        basePreview.candidates = candidates;
+        basePreview.safety_summary = candidateResult.safety_summary || null;
+
+        return {
+            preview: basePreview,
+            candidateResult,
+        };
+    } finally {
+        if (service && typeof service.close === 'function') {
+            await service.close();
+        }
+    }
 }
 
 function buildCandidatePreview(input, context, dependencies = {}) {
@@ -517,7 +658,7 @@ function buildCandidatePreview(input, context, dependencies = {}) {
     return basePreview;
 }
 
-function buildL1DiscoveryPlanPreview(input, dependencies = {}) {
+async function buildL1DiscoveryPlanPreview(input, dependencies = {}) {
     const validation = validateSafePreviewInput(input);
     if (!validation.ok) {
         const error = new Error(validation.errors[0]);
@@ -546,7 +687,7 @@ function buildL1DiscoveryPlanPreview(input, dependencies = {}) {
           }
         : null;
 
-    return {
+    const payload = {
         ...buildSafetySummary(normalizedInput, { registryReference }),
         candidate_preview: buildCandidatePreview(
             normalizedInput,
@@ -557,6 +698,48 @@ function buildL1DiscoveryPlanPreview(input, dependencies = {}) {
             },
             dependencies
         ),
+    };
+
+    if (normalizedInput.scope !== CONTROLLED_CANDIDATES_SCOPE) {
+        return payload;
+    }
+
+    const controlledPreview = await buildControlledCandidatesPreview(
+        normalizedInput,
+        {
+            configManager,
+            leagueConfig,
+            seasonWindow,
+        },
+        dependencies
+    );
+    const candidateResult = controlledPreview.candidateResult || {};
+    const candidates = Array.isArray(controlledPreview.preview.candidates) ? controlledPreview.preview.candidates : [];
+
+    return {
+        ...payload,
+        candidates_preview_available: true,
+        discover_candidates_available: true,
+        external_network_used: false,
+        candidate_count: Number(controlledPreview.preview.candidate_count) || candidates.length,
+        candidates,
+        source_url_template:
+            controlledPreview.preview.source_url_template || buildSourceUrlPreview(configManager, normalizedInput),
+        source_url_candidate:
+            controlledPreview.preview.source_url_candidate || buildSourceUrlPreview(configManager, normalizedInput),
+        network_used: false,
+        browser_used: false,
+        proxy_used: false,
+        db_written: false,
+        matches_written: false,
+        raw_match_data_written: false,
+        safety_summary: candidateResult.safety_summary || {
+            would_write_db: false,
+            would_call_persist: false,
+            would_launch_browser: false,
+            would_use_proxy: false,
+        },
+        candidate_preview: controlledPreview.preview,
     };
 }
 
@@ -573,6 +756,7 @@ function buildErrorPayload(options, errors, mode = 'validation-error') {
         all: false,
         allLeagues: false,
         fullSync: false,
+        networkAuthorization: options.networkAuthorization,
     }).value;
 
     return {
@@ -596,8 +780,9 @@ function showHelp(io = {}) {
             '  config_only_preview',
             '  league_season_date',
             '  league_season_window_preview',
+            '  controlled_candidates_preview',
             '',
-            'Phase 5.03L1 约束:',
+            'Phase 5.04L1 约束:',
             '  preview-only',
             '  no network',
             '  no browser',
@@ -609,7 +794,7 @@ function showHelp(io = {}) {
     );
 }
 
-function runCli(argv = process.argv.slice(2), io = {}, dependencies = {}) {
+async function runCli(argv = process.argv.slice(2), io = {}, dependencies = {}) {
     const stdout = io.stdout || (text => process.stdout.write(text));
     const stderr = io.stderr || (text => process.stderr.write(text));
     const options = parseArgs(argv);
@@ -635,8 +820,24 @@ function runCli(argv = process.argv.slice(2), io = {}, dependencies = {}) {
         return 1;
     }
 
+    if (validation.value.networkAuthorization === true) {
+        const payload = buildErrorPayload(
+            options,
+            ['BLOCKED: external L1 network execution requires a later authorized phase.'],
+            'blocked-network-authorization'
+        );
+        payload.blocked_reason = 'BLOCKED: external L1 network execution requires a later authorized phase.';
+        payload.candidates_preview_available = validation.value.scope === CONTROLLED_CANDIDATES_SCOPE;
+        payload.discover_candidates_available = true;
+        payload.external_network_used = false;
+        payload.network_execution_allowed = false;
+        stderr(`${payload.blocked_reason}\n`);
+        stdout(`${JSON.stringify(payload, null, 2)}\n`);
+        return 1;
+    }
+
     try {
-        const payload = buildL1DiscoveryPlanPreview(validation.value, dependencies);
+        const payload = await buildL1DiscoveryPlanPreview(validation.value, dependencies);
         stdout(`${JSON.stringify(payload, null, 2)}\n`);
         return 0;
     } catch (error) {
@@ -648,7 +849,14 @@ function runCli(argv = process.argv.slice(2), io = {}, dependencies = {}) {
 }
 
 if (require.main === module) {
-    process.exitCode = runCli();
+    runCli()
+        .then(exitCode => {
+            process.exitCode = exitCode;
+        })
+        .catch(error => {
+            process.stderr.write(`${error.message}\n`);
+            process.exitCode = 1;
+        });
 }
 
 module.exports = {
@@ -658,5 +866,6 @@ module.exports = {
     loadLeagueConfigSafe,
     loadSeasonWindowSafe,
     buildSafetySummary,
+    buildControlledCandidatesPreview,
     runCli,
 };
