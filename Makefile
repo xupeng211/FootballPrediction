@@ -564,7 +564,7 @@ data-l1-matches-seed-commit-execution-preflight: ## L1 matches seed commit execu
 		$(if $(EXISTING_MATCHES_JSON),--existing-matches-json='$(EXISTING_MATCHES_JSON)')
 
 data-l1-matches-seed-commit: ## Blocked L1 matches seed commit gate. Remains blocked in Phase 5.08L1.
-	@echo "BLOCKED: L1 matches seed commit is not executable in Phase 5.08L1 execution preflight."
+	@echo "BLOCKED: L1 matches seed commit is not executable in Phase 5.06L1 planning."
 	@echo "  L1 matches seed commit remains authorization-only in Phase 5.07L1 and execution-preflight-only in Phase 5.08L1."
 	@echo "  Use data-l1-matches-seed-commit-plan, data-l1-matches-seed-commit-authorization, and data-l1-matches-seed-commit-execution-preflight for stdout-only planning/preflight."
 	@echo "  Even with CONFIRM_L1_MATCHES_SEED_COMMIT=1, matches/DB/raw writes remain blocked."
