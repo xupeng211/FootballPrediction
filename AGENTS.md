@@ -57,6 +57,7 @@
 - Phase 5.11L2 direct `matchDetails` endpoint 已返回 403。AI / Codex 不得擅自 retry、增加 headers、改走 browser/proxy 或尝试 alternate route；继续请求 raw detail 前必须先完成现有 L2 fetch path reconciliation 并取得明确授权，`raw_match_data` 写入仍未授权。
 - Phase 5.12L2B 新增 safe FotMob detail route selector，默认顺序为 `html_hydration` -> `api_match_details`，`alternate_route` 仅 plan-only；live external raw detail preview 仍默认 blocked，未经未来单独授权不得 retry Phase 5.11L2 direct API 403、不得加 headers/browser/proxy 绕过，`raw_match_data` 写入仍未授权。
 - Phase 5.13L2 raw_match_data ingest planning 仅允许 planning-only；`raw_match_data` 写入仍未授权。raw_data 应存 canonical transformed detail payload 而不是完整 HTML body；data_hash 应为 canonical raw_data JSON 的 SHA-256，而不是 HTML body hash；raw_match_data ingest 不得更新 `matches`、features、training 或 predictions，未来写入必须另行 authorization + preflight。
+- Phase 5.14L2 raw_match_data ingest authorization 仅允许 authorization-only：它只记录未来 `raw_match_data` 写入授权范围，本阶段不得写 DB、不得写 `raw_match_data`、不得 live preview / network request；后续写入仍必须先完成 Phase 5.15L2 preflight，并在最终执行阶段再次确认。raw_match_data ingest 必须保持 raw-only，不得更新 `matches`、features、training 或 predictions。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
@@ -229,6 +230,7 @@ AI / Codex 默认只能执行：
 - legacy L1/data entrypoints 对 agents 视为 deprecated：admin / 人工兼容可以继续保留，但默认不得直接运行；L1 discovery 和 matches seed 默认必须走 `data-l1-*` safe workflow。
 - L2 raw JSON acquisition 仍处于 planning 阶段，默认不得触网、不得抓取 FotMob match detail、不得写 `raw_match_data`；后续必须走 controlled preview / authorization / preflight。
 - Phase 5.11L2 仅允许用户明确授权的 `make data-l2-raw-detail-preview SOURCE=fotmob MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg NETWORK_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no`；只输出 stdout metadata/hash/markers，不写 DB，不写 `raw_match_data`，不保存或打印完整 body。
+- Phase 5.14L2 仅允许用户明确授权的 `make data-l2-raw-match-data-ingest-authorization SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg DATA_VERSION=fotmob_html_hyd_v1 PREVIEW_BODY_SHA256=<sha256> HYDRATION_PARSE_OK=yes LOOKS_LIKE_VALID_MATCH_DETAIL=yes USER_AUTHORIZED_RAW_MATCH_DATA_INGEST=yes ALLOW_RAW_MATCH_DATA_WRITE_NEXT_PHASE=yes ALLOW_DB_WRITE_NOW=no ALLOW_RAW_MATCH_DATA_WRITE_NOW=no ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no FINAL_HUMAN_CONFIRMATION=yes`；只输出 stdout authorization JSON，不触网、不写 DB、不写 `raw_match_data`。
 - `make data-help`
 - `make data-check`
 - `make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...`
