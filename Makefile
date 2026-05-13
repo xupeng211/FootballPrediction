@@ -17,6 +17,7 @@
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
+        data-l2-raw-detail-preview \
         data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-fotmob-stdout-network-dry-run-authorization-packet-preview data-fotmob-stdout-network-dry-run-authorization-packet-commit \
         data-fotmob-stdout-network-dry-run-execution-plan-preview data-fotmob-stdout-network-dry-run-execution-plan-commit \
@@ -330,7 +331,10 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "L2 raw JSON acquisition is under planning:"
 	@echo "  Do not run legacy raw backfill / production harvest as an agent workflow."
 	@echo "  Do not write raw_match_data until a separate controlled authorization/preflight phase."
-	@echo "  Future preferred path will be data-l2-* controlled targets."
+	@echo "  make data-l2-raw-detail-preview SOURCE=fotmob MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg NETWORK_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no  # Phase 5.11L2 single-target preview only"
+	@echo "  L2 raw detail preview is preview-only: no raw_match_data write, no DB write, no browser/proxy, no full body print/save."
+	@echo "  raw_match_data write requires future authorization/preflight."
+	@echo "  Future preferred path will continue as data-l2-* controlled targets."
 	@echo "  make data-fotmob-single-target-adapter-preflight TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> ...  # Phase 4.98F hardening, stdout-only, no network/staging/DB/legacy runtime"
 	@echo "  make data-fotmob-stdout-network-dry-run-authorization-packet-preview PACKET=<path>  # Phase 4.99F template-only, stdout-only, no network/staging/DB/runtime packet write"
 	@echo "  make data-fotmob-stdout-network-dry-run-execution-plan-preview PLAN=<path> PACKET=<path>  # Phase 5.00F template-only, stdout-only, no network/staging/DB/runtime execution plan write"
@@ -611,6 +615,27 @@ data-l1-matches-seed-commit: ## Blocked L1 matches seed commit gate. Remains blo
 	@echo "  Use data-l1-matches-seed-commit-plan, data-l1-matches-seed-commit-authorization, data-l1-matches-seed-commit-execution-preflight, and the exact-scope data-l1-matches-seed-commit-execute gate."
 	@echo "  Even with CONFIRM_L1_MATCHES_SEED_COMMIT=1, matches/DB/raw writes remain blocked."
 	@exit 1
+
+data-l2-raw-detail-preview: ## L2 raw detail preview. Phase 5.11L2. Single target, stdout metadata only, no DB/raw write/browser/proxy/body save.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(MATCH_ID)" ] || [ -z "$(EXTERNAL_ID)" ] || [ -z "$(HOME_TEAM)" ] || [ -z "$(AWAY_TEAM)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/l2_raw_detail_preview.js \
+		--source="$(SOURCE)" \
+		--match-id="$(MATCH_ID)" \
+		--external-id="$(EXTERNAL_ID)" \
+		--home-team="$(HOME_TEAM)" \
+		--away-team="$(AWAY_TEAM)" \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),no)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-browser-runtime="$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime="$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--concurrency="$(or $(CONCURRENCY),1)" \
+		--retry="$(or $(RETRY),0)" \
+		--print-body="$(or $(PRINT_BODY),no)" \
+		--save-body="$(or $(SAVE_BODY),no)"
 
 data-local-dry-run: ## Run a safe local-only dry-run. Requires SAMPLE_HTML or SAMPLE_CSV.
 	@if [ -n "$(SAMPLE_HTML)" ]; then \
