@@ -333,7 +333,9 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  Do not write raw_match_data until a separate controlled authorization/preflight phase."
 	@echo "  make data-l2-raw-detail-route-preview-plan  # Phase 5.12L2B route selector plan only, no network"
 	@echo "  make data-l2-raw-detail-preview SOURCE=fotmob MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg ROUTE=auto NETWORK_AUTHORIZATION=yes LIVE_PREVIEW_AUTHORIZATION=no ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no  # route selector preview; live remains blocked without future authorization"
+	@echo "  make data-l2-raw-match-data-ingest-plan SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg PREVIEW_BODY_SHA256=<sha256> PREVIEW_BODY_BYTE_LENGTH=<bytes> HYDRATION_PARSE_OK=yes LOOKS_LIKE_VALID_MATCH_DETAIL=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.13L2 planning-only, no network/DB/raw write"
 	@echo "  L2 raw detail preview is preview-only: no raw_match_data write, no DB write, no browser/proxy, no full body print/save."
+	@echo "  L2 raw_match_data ingest is planning-only in Phase 5.13L2: future write requires explicit authorization + preflight, and raw_match_data write remains blocked."
 	@echo "  Phase 5.11L2 direct matchDetails endpoint returned 403; do not retry or change headers/routes before route audit authorization."
 	@echo "  Phase 5.12L2B route selector supports html_hydration before api_match_details; alternate_route remains plan-only."
 	@echo "  Live raw detail requests require future explicit authorization; use audited route selector / safe adapter, not legacy harvest/backfill."
@@ -654,9 +656,34 @@ data-l2-raw-detail-preview: ## L2 raw detail preview. Phase 5.12L2B. Route selec
 		--allow-browser-runtime="$(or $(ALLOW_BROWSER_RUNTIME),no)" \
 		--allow-proxy-runtime="$(or $(ALLOW_PROXY_RUNTIME),no)" \
 		--concurrency="$(or $(CONCURRENCY),1)" \
-		--retry="$(or $(RETRY),0)" \
-		--print-body="$(or $(PRINT_BODY),no)" \
-		--save-body="$(or $(SAVE_BODY),no)"
+			--retry="$(or $(RETRY),0)" \
+			--print-body="$(or $(PRINT_BODY),no)" \
+			--save-body="$(or $(SAVE_BODY),no)"
+
+data-l2-raw-match-data-ingest-plan: ## L2 raw_match_data ingest planning. Phase 5.13L2. No network/DB/raw write.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(ROUTE)" ] || [ -z "$(MATCH_ID)" ] || [ -z "$(EXTERNAL_ID)" ] || [ -z "$(HOME_TEAM)" ] || [ -z "$(AWAY_TEAM)" ] || [ -z "$(PREVIEW_BODY_SHA256)" ] || [ -z "$(PREVIEW_BODY_BYTE_LENGTH)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg PREVIEW_BODY_SHA256=<sha256> PREVIEW_BODY_BYTE_LENGTH=<bytes>"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/l2_raw_match_data_ingest_plan.js \
+		--source="$(SOURCE)" \
+		--route="$(ROUTE)" \
+		--match-id="$(MATCH_ID)" \
+		--external-id="$(EXTERNAL_ID)" \
+		--home-team="$(HOME_TEAM)" \
+		--away-team="$(AWAY_TEAM)" \
+		--preview-body-sha256="$(PREVIEW_BODY_SHA256)" \
+		--preview-body-byte-length="$(PREVIEW_BODY_BYTE_LENGTH)" \
+		--hydration-parse-ok="$(or $(HYDRATION_PARSE_OK),yes)" \
+		--looks-like-valid-match-detail="$(or $(LOOKS_LIKE_VALID_MATCH_DETAIL),yes)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
+		--commit="$(or $(COMMIT),no)" \
+		--execute="$(or $(EXECUTE),no)" \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),no)"
 
 data-local-dry-run: ## Run a safe local-only dry-run. Requires SAMPLE_HTML or SAMPLE_CSV.
 	@if [ -n "$(SAMPLE_HTML)" ]; then \
