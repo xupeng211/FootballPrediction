@@ -333,6 +333,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  Do not write raw_match_data until a separate controlled authorization/preflight phase."
 	@echo "  make data-l2-raw-detail-preview SOURCE=fotmob MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg NETWORK_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no  # Phase 5.11L2 single-target preview only"
 	@echo "  L2 raw detail preview is preview-only: no raw_match_data write, no DB write, no browser/proxy, no full body print/save."
+	@echo "  Phase 5.11L2 direct matchDetails endpoint returned 403; do not retry or change headers/routes before route audit authorization."
+	@echo "  Use a future audited L2 route selector / safe adapter, not legacy harvest/backfill, for further raw detail access."
 	@echo "  raw_match_data write requires future authorization/preflight."
 	@echo "  Future preferred path will continue as data-l2-* controlled targets."
 	@echo "  make data-fotmob-single-target-adapter-preflight TARGET_SOURCE=fotmob TARGET_SCOPE_TYPE=match_id TARGET_MATCH_ID=<id> ...  # Phase 4.98F hardening, stdout-only, no network/staging/DB/legacy runtime"
