@@ -3,11 +3,15 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
+const { createFotMobDetailRouteSelector } = require('../../src/infrastructure/services/FotMobDetailRouteSelector');
 
-const PHASE = 'PHASE5_11L2_CONTROLLED_RAW_DETAIL_ACQUISITION_PREVIEW';
-const NEXT_REQUIRED_PHASE = 'Phase 5.12L2 raw_match_data ingest planning';
+const PHASE = 'PHASE5_12L2B_SAFE_FOTMOB_DETAIL_ROUTE_SELECTOR';
+const NEXT_REQUIRED_PHASE = 'Phase 5.12L2C controlled raw detail preview via audited route selector';
 const DEFAULT_TIMEOUT_MS = 20000;
+const FOTMOB_BASE_URL = 'https://www.fotmob.com';
 const FOTMOB_DETAIL_URL = 'https://www.fotmob.com/api/data/matchDetails';
+const FOTMOB_ALTERNATE_DETAIL_URL = 'https://www.fotmob.com/api/matchDetails';
 const TARGET = Object.freeze({
     source: 'fotmob',
     matchId: '53_20252026_4830746',
@@ -15,6 +19,13 @@ const TARGET = Object.freeze({
     homeTeam: 'Angers',
     awayTeam: 'Strasbourg',
 });
+const ROUTES = Object.freeze({
+    AUTO: 'auto',
+    HTML_HYDRATION: 'html_hydration',
+    API_MATCH_DETAILS: 'api_match_details',
+    ALTERNATE_ROUTE: 'alternate_route',
+});
+const EXECUTABLE_ROUTES = new Set([ROUTES.HTML_HYDRATION, ROUTES.API_MATCH_DETAILS]);
 const BLOCK_SIGNAL_PATTERNS = Object.freeze([
     /captcha/i,
     /cloudflare/i,
@@ -94,7 +105,9 @@ function parseArgs(argv = process.argv.slice(2)) {
         externalId: null,
         homeTeam: null,
         awayTeam: null,
+        route: ROUTES.AUTO,
         networkAuthorization: null,
+        livePreviewAuthorization: null,
         allowDbWrite: null,
         allowRawMatchDataWrite: null,
         allowBrowserRuntime: null,
@@ -117,8 +130,11 @@ function parseArgs(argv = process.argv.slice(2)) {
         home_team: 'homeTeam',
         'away-team': 'awayTeam',
         away_team: 'awayTeam',
+        route: 'route',
         'network-authorization': 'networkAuthorization',
         network_authorization: 'networkAuthorization',
+        'live-preview-authorization': 'livePreviewAuthorization',
+        live_preview_authorization: 'livePreviewAuthorization',
         'allow-db-write': 'allowDbWrite',
         allow_db_write: 'allowDbWrite',
         'allow-raw-match-data-write': 'allowRawMatchDataWrite',
@@ -160,6 +176,7 @@ function parseArgs(argv = process.argv.slice(2)) {
         if (
             [
                 'networkAuthorization',
+                'livePreviewAuthorization',
                 'allowDbWrite',
                 'allowRawMatchDataWrite',
                 'allowBrowserRuntime',
@@ -193,11 +210,11 @@ function pushRequiredBooleanError(errors, value, flagName, expected) {
         return;
     }
     if (value === true) {
-        errors.push(`${flagName}=yes is blocked in Phase 5.11L2`);
+        errors.push(`${flagName}=yes is blocked in Phase 5.12L2B`);
         return;
     }
     if (value === false) {
-        errors.push(`${flagName}=no is required in Phase 5.11L2`);
+        errors.push(`${flagName}=no is required in Phase 5.12L2B`);
         return;
     }
     errors.push(`missing ${flagName}=${expected ? 'yes' : 'no'}`);
@@ -210,7 +227,15 @@ function normalizePreviewInput(input = {}) {
         externalId: normalizeText(input.externalId),
         homeTeam: normalizeText(input.homeTeam),
         awayTeam: normalizeText(input.awayTeam),
-        networkAuthorization: normalizeBooleanFlag(input.networkAuthorization, undefined),
+        route: normalizeText(input.route || ROUTES.AUTO).toLowerCase(),
+        networkAuthorization: normalizeBooleanFlag(
+            input.networkAuthorization,
+            normalizeBooleanFlag(process.env.NETWORK_AUTHORIZATION, false)
+        ),
+        livePreviewAuthorization: normalizeBooleanFlag(
+            input.livePreviewAuthorization,
+            normalizeBooleanFlag(process.env.LIVE_PREVIEW_AUTHORIZATION, false)
+        ),
         allowDbWrite: normalizeBooleanFlag(input.allowDbWrite, undefined),
         allowRawMatchDataWrite: normalizeBooleanFlag(input.allowRawMatchDataWrite, undefined),
         allowBrowserRuntime: normalizeBooleanFlag(input.allowBrowserRuntime, undefined),
@@ -239,12 +264,12 @@ function validatePreviewInput(input = {}) {
     if (!value.matchId) {
         errors.push('missing match-id');
     } else if (value.matchId !== TARGET.matchId) {
-        errors.push(`match-id must be ${TARGET.matchId} in Phase 5.11L2`);
+        errors.push(`match-id must be ${TARGET.matchId} in Phase 5.12L2B`);
     }
     if (!value.externalId) {
         errors.push('missing external-id');
     } else if (value.externalId !== TARGET.externalId) {
-        errors.push(`external-id must be ${TARGET.externalId} in Phase 5.11L2`);
+        errors.push(`external-id must be ${TARGET.externalId} in Phase 5.12L2B`);
     }
     if (!value.homeTeam) {
         errors.push('missing home-team');
@@ -256,8 +281,10 @@ function validatePreviewInput(input = {}) {
     } else if (!includesText(value.awayTeam, TARGET.awayTeam)) {
         errors.push(`away-team must contain ${TARGET.awayTeam}`);
     }
+    if (![ROUTES.AUTO, ROUTES.HTML_HYDRATION, ROUTES.API_MATCH_DETAILS].includes(value.route)) {
+        errors.push(`unsupported route: use ${ROUTES.AUTO}, ${ROUTES.HTML_HYDRATION}, or ${ROUTES.API_MATCH_DETAILS}`);
+    }
 
-    pushRequiredBooleanError(errors, value.networkAuthorization, 'network-authorization', true);
     pushRequiredBooleanError(errors, value.allowDbWrite, 'allow-db-write', false);
     pushRequiredBooleanError(errors, value.allowRawMatchDataWrite, 'allow-raw-match-data-write', false);
     pushRequiredBooleanError(errors, value.allowBrowserRuntime, 'allow-browser-runtime', false);
@@ -272,13 +299,36 @@ function validatePreviewInput(input = {}) {
         errors.push(value.retry > 0 ? 'retry > 0 is blocked' : 'retry must be 0');
     }
     if (value.bulk === true) {
-        errors.push('bulk=yes is blocked in Phase 5.11L2');
+        errors.push('bulk=yes is blocked in Phase 5.12L2B');
     }
 
     return {
         ok: errors.length === 0,
         errors,
         value,
+    };
+}
+
+function buildFotMobPageRequest(input = {}) {
+    const validation = validatePreviewInput(input);
+    if (!validation.ok) {
+        throw new Error(`INVALID_PREVIEW_INPUT:${validation.errors.join('; ')}`);
+    }
+
+    const url = new URL(`/match/${validation.value.externalId}`, FOTMOB_BASE_URL);
+
+    return {
+        route: ROUTES.HTML_HYDRATION,
+        method: 'GET',
+        url: url.href,
+        headers: {
+            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'accept-language': 'en-US,en;q=0.9',
+            'accept-encoding': 'identity',
+            referer: FOTMOB_BASE_URL,
+            'user-agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
     };
 }
 
@@ -292,6 +342,7 @@ function buildFotMobDetailRequest(input = {}) {
     url.searchParams.set('matchId', validation.value.externalId);
 
     return {
+        route: ROUTES.API_MATCH_DETAILS,
         method: 'GET',
         url: url.href,
         headers: {
@@ -304,6 +355,71 @@ function buildFotMobDetailRequest(input = {}) {
             'x-requested-with': 'XMLHttpRequest',
         },
     };
+}
+
+function buildAlternateRoutePlan(input = {}) {
+    const validation = validatePreviewInput(input);
+    if (!validation.ok) {
+        throw new Error(`INVALID_PREVIEW_INPUT:${validation.errors.join('; ')}`);
+    }
+
+    const url = new URL(FOTMOB_ALTERNATE_DETAIL_URL);
+    url.searchParams.set('matchId', validation.value.externalId);
+
+    return {
+        route: ROUTES.ALTERNATE_ROUTE,
+        method: 'GET',
+        url: url.href,
+        headers: {
+            accept: 'application/json, text/plain, */*',
+            'accept-language': 'en-US,en;q=0.9',
+            'accept-encoding': 'identity',
+            referer: buildFotMobPageRequest(input).url,
+            'user-agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+            'x-requested-with': 'XMLHttpRequest',
+        },
+        plan_only: true,
+    };
+}
+
+function resolveRouteOrder(route = ROUTES.AUTO) {
+    if (route === ROUTES.HTML_HYDRATION) {
+        return [ROUTES.HTML_HYDRATION];
+    }
+    if (route === ROUTES.API_MATCH_DETAILS) {
+        return [ROUTES.API_MATCH_DETAILS];
+    }
+    return [ROUTES.HTML_HYDRATION, ROUTES.API_MATCH_DETAILS];
+}
+
+function buildRequestForRoute(route, input = {}) {
+    if (route === ROUTES.HTML_HYDRATION) {
+        return buildFotMobPageRequest(input);
+    }
+    if (route === ROUTES.API_MATCH_DETAILS) {
+        return buildFotMobDetailRequest(input);
+    }
+    if (route === ROUTES.ALTERNATE_ROUTE) {
+        return buildAlternateRoutePlan(input);
+    }
+    throw new Error(`UNSUPPORTED_ROUTE:${route}`);
+}
+
+function buildFotMobDetailRoutePlan(input = {}) {
+    const validation = validatePreviewInput(input);
+    if (!validation.ok) {
+        throw new Error(`INVALID_PREVIEW_INPUT:${validation.errors.join('; ')}`);
+    }
+
+    const executableRouteOrder = resolveRouteOrder(validation.value.route);
+    const plannedRoutes = [...executableRouteOrder, ROUTES.ALTERNATE_ROUTE];
+    return plannedRoutes.map(route => ({
+        route,
+        request: buildRequestForRoute(route, input),
+        executable: EXECUTABLE_ROUTES.has(route),
+        plan_only: route === ROUTES.ALTERNATE_ROUTE,
+    }));
 }
 
 function getObjectKeys(value) {
@@ -344,23 +460,6 @@ function parseJsonPayload(bodyText) {
     }
 }
 
-function extractNextDataPayload(bodyText) {
-    const match = String(bodyText || '').match(/<script[^>]+id=["']__NEXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i);
-    if (!match) {
-        return {
-            ok: false,
-            value: null,
-            error: 'NEXT_DATA_NOT_FOUND',
-        };
-    }
-
-    const parsed = parseJsonPayload(match[1].trim());
-    return {
-        ...parsed,
-        error: parsed.ok ? null : parsed.error,
-    };
-}
-
 function detectBlockSignals(bodyText, httpStatus = null) {
     const signals = [];
     if ([403, 429].includes(Number(httpStatus))) {
@@ -382,6 +481,8 @@ function extractJsonOrHydrationPreview(body, contentType = '', context = {}) {
     const likelyJson = contentTypeText.includes('json') || /^[\s\n\r]*[{[]/.test(bodyText);
     let jsonParseOk = false;
     let hydrationParseOk = false;
+    let hydrationTransformOk = false;
+    let parseError = null;
     let parsedRoot = null;
 
     if (likelyJson) {
@@ -391,16 +492,30 @@ function extractJsonOrHydrationPreview(body, contentType = '', context = {}) {
             parsedRoot = parsed.value;
             markers.push('json');
             collectCandidatePaths(parsed.value, '', candidatePaths);
+        } else {
+            parseError = parsed.error;
         }
     }
 
     if (bodyText.includes('__NEXT_DATA__')) {
         markers.push('__NEXT_DATA__');
-        const nextData = extractNextDataPayload(bodyText);
-        hydrationParseOk = nextData.ok;
-        if (nextData.ok) {
-            parsedRoot = nextData.value;
-            collectCandidatePaths(nextData.value, '__NEXT_DATA__', candidatePaths);
+        const nextData = extractFromHtml(bodyText);
+        hydrationParseOk = nextData.success === true;
+        if (hydrationParseOk) {
+            const transformedData = transformToApiFormat(
+                nextData.data,
+                String(context.externalId || TARGET.externalId)
+            );
+            hydrationTransformOk = Boolean(transformedData);
+            parsedRoot = transformedData || nextData.data;
+            markers.push('next_data_parser');
+            if (transformedData) {
+                markers.push('transformed_api_format');
+                collectCandidatePaths(transformedData, '', candidatePaths);
+            }
+            collectCandidatePaths(nextData.data, '__NEXT_DATA__', candidatePaths);
+        } else {
+            parseError = nextData.error || 'NEXT_DATA_PARSE_FAILED';
         }
     }
 
@@ -419,10 +534,12 @@ function extractJsonOrHydrationPreview(body, contentType = '', context = {}) {
         contains_away_team: containsAwayTeam,
         json_parse_ok: jsonParseOk,
         hydration_parse_ok: hydrationParseOk,
+        hydration_transform_ok: hydrationTransformOk,
         hydration_or_json_markers: [...new Set(markers)].sort(),
         top_level_keys: topLevelKeys,
         candidate_raw_data_paths: [...candidatePaths].sort().slice(0, 30),
         block_signals: blockSignals,
+        parse_error: parseError,
         looks_like_valid_match_detail:
             blockSignals.length === 0 && containsMatchId && (jsonParseOk || hydrationParseOk) && hasExpectedStructure,
     };
@@ -492,9 +609,15 @@ function buildRawDetailPreviewSummary({ input, request, response = {}, body = ''
         looks_like_valid_match_detail: preview.looks_like_valid_match_detail,
         json_parse_ok: preview.json_parse_ok,
         hydration_parse_ok: preview.hydration_parse_ok,
+        hydration_transform_ok: preview.hydration_transform_ok,
         hydration_or_json_markers: preview.hydration_or_json_markers,
         top_level_keys: preview.top_level_keys,
         candidate_raw_data_paths: preview.candidate_raw_data_paths,
+        route_selector_enabled: false,
+        selected_route: request?.route || ROUTES.API_MATCH_DETAILS,
+        attempted_routes: [],
+        fallback_routes_planned: [],
+        existing_client_integration: buildExistingClientIntegrationSummary(),
         raw_match_data_write_allowed: false,
         db_write_allowed: false,
         would_write_raw_match_data: false,
@@ -542,6 +665,22 @@ async function fetchPreviewBody(request, dependencies = {}) {
     }
 }
 
+const routeSelector = createFotMobDetailRouteSelector({
+    TARGET,
+    ROUTES,
+    validatePreviewInput,
+    normalizePreviewInput,
+    buildFotMobDetailRoutePlan,
+    fetchPreviewBody,
+    extractJsonOrHydrationPreview,
+    getHeaderValue,
+    sha256,
+    PHASE,
+    NEXT_REQUIRED_PHASE,
+});
+const { buildExistingClientIntegrationSummary, runFotMobDetailRouteSelector, buildRouteSelectorPreviewSummary } =
+    routeSelector;
+
 function buildValidationFailureSummary(args, errors) {
     return {
         phase: PHASE,
@@ -551,6 +690,11 @@ function buildValidationFailureSummary(args, errors) {
         source: args.source || null,
         match_id: args.matchId || null,
         external_id: args.externalId || null,
+        route_selector_enabled: true,
+        selected_route: 'none',
+        attempted_routes: [],
+        fallback_routes_planned: [],
+        existing_client_integration: buildExistingClientIntegrationSummary(),
         raw_match_data_write_allowed: false,
         db_write_allowed: false,
         would_write_raw_match_data: false,
@@ -568,10 +712,12 @@ function buildValidationFailureSummary(args, errors) {
 function usage() {
     return [
         'Usage:',
-        '  node scripts/ops/l2_raw_detail_preview.js --source=fotmob --match-id=53_20252026_4830746 --external-id=4830746 --home-team=Angers --away-team=Strasbourg --network-authorization=yes --allow-db-write=no --allow-raw-match-data-write=no --allow-browser-runtime=no --allow-proxy-runtime=no --concurrency=1 --retry=0 --print-body=no --save-body=no',
+        '  node scripts/ops/l2_raw_detail_preview.js --source=fotmob --match-id=53_20252026_4830746 --external-id=4830746 --home-team=Angers --away-team=Strasbourg --route=auto --network-authorization=no --live-preview-authorization=no --allow-db-write=no --allow-raw-match-data-write=no --allow-browser-runtime=no --allow-proxy-runtime=no --concurrency=1 --retry=0 --print-body=no --save-body=no',
         '',
         'Safety:',
-        '  Phase 5.11L2 is preview-only: no DB write, no raw_match_data write, no browser/proxy, no full body print/save.',
+        '  Phase 5.12L2B is route-selector preview planning by default: no DB write, no raw_match_data write, no browser/proxy, no full body print/save.',
+        '  Default route order is html_hydration before api_match_details; alternate_route is plan-only.',
+        '  Live external execution remains blocked unless a future phase provides explicit authorization.',
     ].join('\n');
 }
 
@@ -590,40 +736,51 @@ async function runCli(argv = process.argv.slice(2), streams = {}, dependencies =
         return 1;
     }
 
-    const request = buildFotMobDetailRequest(args);
     try {
-        const { response, body } = await fetchPreviewBody(request, dependencies);
-        const contentType = getHeaderValue(response.headers, 'content-type');
-        const extraction = extractJsonOrHydrationPreview(body, contentType, {
-            externalId: validation.value.externalId,
-            homeTeam: validation.value.homeTeam,
-            awayTeam: validation.value.awayTeam,
-            httpStatus: response.status,
-        });
-        const summary = buildRawDetailPreviewSummary({
-            input: args,
-            request,
-            response,
-            body,
-            extraction,
-        });
+        const selectorResult = await runFotMobDetailRouteSelector(validation.value, dependencies);
+        const summary = buildRouteSelectorPreviewSummary(validation.value, selectorResult);
         stdout(`${JSON.stringify(summary, null, 2)}\n`);
         return summary.ok ? 0 : 1;
     } catch (error) {
-        const summary = buildRawDetailPreviewSummary({
-            input: args,
-            request,
-            response: {
-                status: null,
-                url: request.url,
-                headers: {},
-            },
-            body: '',
-            error,
-        });
+        const selectorResult = {
+            ok: false,
+            plan_only: true,
+            selected_route: 'none',
+            attempted_routes: [],
+            fallback_routes_planned: [],
+            controlled_error: String(error.message || error),
+            live_network_used: false,
+            existing_client_integration: buildExistingClientIntegrationSummary(),
+        };
+        const summary = buildRouteSelectorPreviewSummary(validation.value, selectorResult);
         stdout(`${JSON.stringify(summary, null, 2)}\n`);
         return 1;
     }
+}
+
+function buildFatalErrorSummary(error) {
+    return {
+        phase: PHASE,
+        preview_only: true,
+        ok: false,
+        error: error.message,
+        route_selector_enabled: true,
+        selected_route: 'none',
+        attempted_routes: [],
+        fallback_routes_planned: [],
+        existing_client_integration: buildExistingClientIntegrationSummary(),
+        raw_match_data_write_allowed: false,
+        db_write_allowed: false,
+        would_write_raw_match_data: false,
+        would_write_db: false,
+        would_train: false,
+        would_predict: false,
+        browser_used: false,
+        proxy_used: false,
+        body_printed: false,
+        body_saved: false,
+        next_required_phase: NEXT_REQUIRED_PHASE,
+    };
 }
 
 if (require.main === module) {
@@ -632,29 +789,7 @@ if (require.main === module) {
             process.exitCode = status;
         })
         .catch(error => {
-            console.error(
-                JSON.stringify(
-                    {
-                        phase: PHASE,
-                        preview_only: true,
-                        ok: false,
-                        error: error.message,
-                        raw_match_data_write_allowed: false,
-                        db_write_allowed: false,
-                        would_write_raw_match_data: false,
-                        would_write_db: false,
-                        would_train: false,
-                        would_predict: false,
-                        browser_used: false,
-                        proxy_used: false,
-                        body_printed: false,
-                        body_saved: false,
-                        next_required_phase: NEXT_REQUIRED_PHASE,
-                    },
-                    null,
-                    2
-                )
-            );
+            console.error(JSON.stringify(buildFatalErrorSummary(error), null, 2));
             process.exitCode = 1;
         });
 }
@@ -663,8 +798,13 @@ module.exports = {
     parseArgs,
     normalizeBooleanFlag,
     validatePreviewInput,
+    buildFotMobPageRequest,
     buildFotMobDetailRequest,
+    buildAlternateRoutePlan,
+    buildFotMobDetailRoutePlan,
     extractJsonOrHydrationPreview,
     buildRawDetailPreviewSummary,
+    runFotMobDetailRouteSelector,
+    buildRouteSelectorPreviewSummary,
     runCli,
 };
