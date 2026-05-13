@@ -51,6 +51,9 @@
 - 如果 `npm script` 指向缺失文件，先修正文档或脚本，再继续依赖该入口。
 - 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` / `make data-l1-discovery-candidates-preview` 的 safe preview 路径进入；显式授权的 L1 外网候选预览只能通过 `make data-l1-discovery-candidates-network-preview`。
 - L1 matches seed commit 不能由 AI / Codex 直接走旧 commit 大入口执行；Phase 5.06L1 仅允许 `make data-l1-matches-seed-commit-plan` 输出 stdout planning；Phase 5.07L1 仅允许 `make data-l1-matches-seed-commit-authorization` 输出 stdout authorization summary；Phase 5.08L1 仅允许 `make data-l1-matches-seed-commit-execution-preflight` 输出 stdout preflight summary 和 SELECT-only affected rows preview；Phase 5.09L1 仅允许 `make data-l1-matches-seed-commit-execute` 在最终确认后、按 exact scope 事务写入 `matches`。
+- legacy L1 / data entrypoints 对 agents 视为 deprecated：admin / 人工兼容入口可以保留，但 AI / Codex 不得直接运行 `titan_discovery.js`、`run_production.js`、`batch_historical_backfill.js`、`total_war_pipeline.js`、生产 harvest 入口或 raw ingest commit 入口；L1 discovery 与 matches seed 操作必须走 `data-l1-*` safe targets。
+- 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
+- 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
 ### 2.3 禁止行为
 
@@ -167,6 +170,11 @@ Python 脚本同理：
 | 定向 L3 缝合   | `<compose> -f docker-compose.dev.yml exec dev npm run l3:stitch`                            | `scripts/ops/l3_stitch_pipeline.js`    |
 | L3 熔炼        | `<compose> -f docker-compose.dev.yml exec dev npm run smelt`                                | `scripts/ops/smelt_all.js`             |
 
+补充说明：
+
+- 对 AI / agents 而言，上表中的 `titan_discovery`、`run_production`、`total_war_pipeline`、`odds_harvest_pipeline` 属于 legacy/admin-only 入口清单，不是默认推荐路径。
+- L1 默认推荐路径是 5.4 节的 `data-l1-*` safe workflow。
+
 ### 5.2 Recon / Backfill / Monitor
 
 | 能力                   | 推荐入口                                                                                                             | 实际目标                        |
@@ -213,6 +221,7 @@ Recon 运行补充约定：
 
 AI / Codex 默认只能执行：
 
+- legacy L1/data entrypoints 对 agents 视为 deprecated：admin / 人工兼容可以继续保留，但默认不得直接运行；L1 discovery 和 matches seed 默认必须走 `data-l1-*` safe workflow。
 - `make data-help`
 - `make data-check`
 - `make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...`
