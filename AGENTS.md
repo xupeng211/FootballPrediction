@@ -50,7 +50,7 @@
 - 如果命令已经封装为 `npm script`，优先使用脚本入口。
 - 如果 `npm script` 指向缺失文件，先修正文档或脚本，再继续依赖该入口。
 - 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` / `make data-l1-discovery-candidates-preview` 的 safe preview 路径进入；显式授权的 L1 外网候选预览只能通过 `make data-l1-discovery-candidates-network-preview`。
-- L1 matches seed commit 不能由 AI / Codex 直接执行；Phase 5.06L1 仅允许 `make data-l1-matches-seed-commit-plan` 输出 stdout planning；Phase 5.07L1 仅允许 `make data-l1-matches-seed-commit-authorization` 输出 stdout authorization summary；Phase 5.08L1 仅允许 `make data-l1-matches-seed-commit-execution-preflight` 输出 stdout preflight summary 和 SELECT-only affected rows preview。
+- L1 matches seed commit 不能由 AI / Codex 直接走旧 commit 大入口执行；Phase 5.06L1 仅允许 `make data-l1-matches-seed-commit-plan` 输出 stdout planning；Phase 5.07L1 仅允许 `make data-l1-matches-seed-commit-authorization` 输出 stdout authorization summary；Phase 5.08L1 仅允许 `make data-l1-matches-seed-commit-execution-preflight` 输出 stdout preflight summary 和 SELECT-only affected rows preview；Phase 5.09L1 仅允许 `make data-l1-matches-seed-commit-execute` 在最终确认后、按 exact scope 事务写入 `matches`。
 
 ### 2.3 禁止行为
 
@@ -221,6 +221,7 @@ AI / Codex 默认只能执行：
 - 仅做 matches seed commit planning、不触网、不写 DB、不写 matches/raw_match_data 的 `make data-l1-matches-seed-commit-plan SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> MAX_SEED_ROWS<=10 COMMIT=no`
 - 用户明确授权、只记录 stdout authorization summary、不触网、不写 DB、不写 matches/raw_match_data 的 `make data-l1-matches-seed-commit-authorization SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> MAX_SEED_ROWS<=10 USER_AUTHORIZED_MATCHES_SEED_COMMIT=yes ALLOW_MATCHES_WRITE_NEXT_PHASE=yes ALLOW_DB_WRITE_NOW=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no FINAL_HUMAN_CONFIRMATION=yes`
 - 用户明确授权、仅做 execution preflight、允许 safe exact candidates + SELECT-only affected matches、不写 DB、不写 matches/raw_match_data 的 `make data-l1-matches-seed-commit-execution-preflight SOURCE=fotmob SCOPE=<league_season_date|controlled_candidates_preview> LEAGUE_ID=<id> SEASON=<season> DATE=<yyyy-mm-dd> CANDIDATE_COUNT=<n> MAX_SEED_ROWS<=10 FINAL_DB_WRITE_CONFIRMATION=no ALLOW_DB_WRITE_NOW=no ALLOW_MATCHES_WRITE_NOW=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no`
+- 用户明确授权、Phase 5.09L1 exact scope 下唯一允许的 matches 写入入口：`make data-l1-matches-seed-commit-execute SOURCE=fotmob SCOPE=league_season_date LEAGUE_ID=53 SEASON=2025/2026 DATE=2026-05-10 CANDIDATE_COUNT=8 CONTAINS_TARGET_MATCH_ID=4830746 CONTAINS_TARGET_LABEL="Angers vs Strasbourg" MAX_SEED_ROWS=10 FINAL_DB_WRITE_CONFIRMATION=yes ALLOW_DB_WRITE_NOW=yes ALLOW_MATCHES_WRITE_NOW=yes ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no`；仅允许事务写 `matches`，不得写 `raw_match_data`
 - 用户明确授权的 `make data-local-dry-run`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
 - 用户明确授权且仅使用本地 fixture 的 `make data-l3-write-dry-run SAMPLE_RAW=<local fixture> MATCH_ID=<id>`
@@ -411,6 +412,17 @@ Phase 5.08L1 补充约定：
 - preflight 结束后仍必须要求最终 DB-write confirmation。
 - raw_match_data ingest 必须与 matches seed commit 分离，不得合并执行。
 - matches seed 各阶段不得训练、不得预测、不得加载或生成模型 artifact。
+
+Phase 5.09L1 补充约定：
+
+- controlled matches seed commit execution 只能走 `make data-l1-matches-seed-commit-execute`。
+- 该入口只允许 exact `source=fotmob`、`league_id=53`、`season=2025/2026`、`date=2026-05-10`、`candidate_count=8`、`contains_target_match_id=4830746`、`contains_target_label=Angers vs Strasbourg`。
+- 必须要求 `FINAL_DB_WRITE_CONFIRMATION=yes`、`ALLOW_DB_WRITE_NOW=yes`、`ALLOW_MATCHES_WRITE_NOW=yes`。
+- 只允许事务写 `matches`；不得写 `raw_match_data`、bookmaker odds、features、training、predictions。
+- 不得调用 `FixtureRepository.persist()`。
+- 不得运行 `titan_discovery.js`，不得调用 `DiscoveryService.discover()`。
+- 不得训练，不得预测。
+- L2 raw JSON acquisition 仍属于后续独立阶段。
 
 执行 `make data-l3-dry-run` 的前提：
 
