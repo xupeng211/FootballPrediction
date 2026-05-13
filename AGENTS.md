@@ -52,6 +52,7 @@
 - 不直接运行 `scripts/ops/titan_discovery.js`。L1 discovery 默认只能通过 `make data-l1-discovery-preview` / `make data-l1-discovery-candidates-preview` 的 safe preview 路径进入；显式授权的 L1 外网候选预览只能通过 `make data-l1-discovery-candidates-network-preview`。
 - L1 matches seed commit 不能由 AI / Codex 直接走旧 commit 大入口执行；Phase 5.06L1 仅允许 `make data-l1-matches-seed-commit-plan` 输出 stdout planning；Phase 5.07L1 仅允许 `make data-l1-matches-seed-commit-authorization` 输出 stdout authorization summary；Phase 5.08L1 仅允许 `make data-l1-matches-seed-commit-execution-preflight` 输出 stdout preflight summary 和 SELECT-only affected rows preview；Phase 5.09L1 仅允许 `make data-l1-matches-seed-commit-execute` 在最终确认后、按 exact scope 事务写入 `matches`。
 - legacy L1 / data entrypoints 对 agents 视为 deprecated：admin / 人工兼容入口可以保留，但 AI / Codex 不得直接运行 `titan_discovery.js`、`run_production.js`、`batch_historical_backfill.js`、`total_war_pipeline.js`、生产 harvest 入口或 raw ingest commit 入口；L1 discovery 与 matches seed 操作必须走 `data-l1-*` safe targets。
+- L2 raw JSON acquisition 当前仍未授权执行。AI / Codex 不得运行 legacy raw backfill、production harvest、`raw_match_data` commit 或任何会抓取 FotMob match detail / 写 `raw_match_data` 的入口；后续必须先走 Phase 5.10L2+ controlled planning / preview / authorization / preflight，且 `raw_match_data` 写入必须与训练、预测分离并单独授权。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
@@ -222,6 +223,7 @@ Recon 运行补充约定：
 AI / Codex 默认只能执行：
 
 - legacy L1/data entrypoints 对 agents 视为 deprecated：admin / 人工兼容可以继续保留，但默认不得直接运行；L1 discovery 和 matches seed 默认必须走 `data-l1-*` safe workflow。
+- L2 raw JSON acquisition 仍处于 planning 阶段，默认不得触网、不得抓取 FotMob match detail、不得写 `raw_match_data`；后续必须走 controlled preview / authorization / preflight。
 - `make data-help`
 - `make data-check`
 - `make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...`
