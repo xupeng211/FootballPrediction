@@ -54,6 +54,7 @@
 - legacy L1 / data entrypoints 对 agents 视为 deprecated：admin / 人工兼容入口可以保留，但 AI / Codex 不得直接运行 `titan_discovery.js`、`run_production.js`、`batch_historical_backfill.js`、`total_war_pipeline.js`、生产 harvest 入口或 raw ingest commit 入口；L1 discovery 与 matches seed 操作必须走 `data-l1-*` safe targets。
 - L2 raw JSON acquisition 当前仍未授权执行。AI / Codex 不得运行 legacy raw backfill、production harvest、`raw_match_data` commit 或任何会抓取 FotMob match detail / 写 `raw_match_data` 的入口；后续必须先走 Phase 5.10L2+ controlled planning / preview / authorization / preflight，且 `raw_match_data` 写入必须与训练、预测分离并单独授权。
 - Phase 5.11L2 raw detail preview 仅允许 preview-only：除非未来用户扩大授权，只能目标 `53_20252026_4830746` / `external_id=4830746`；不得写 `raw_match_data` 或任何 DB，不得打印或保存完整 body，不得启 browser/proxy，不得调用 `ProductionHarvester` 或 legacy raw backfill；`raw_match_data` 写入必须等待后续 planning / authorization / preflight。
+- Phase 5.11L2 direct `matchDetails` endpoint 已返回 403。AI / Codex 不得擅自 retry、增加 headers、改走 browser/proxy 或尝试 alternate route；继续请求 raw detail 前必须先完成现有 L2 fetch path reconciliation 并取得明确授权，`raw_match_data` 写入仍未授权。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
