@@ -5,6 +5,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const childProcess = require('node:child_process');
+const http = require('node:http');
+const https = require('node:https');
 const Module = require('node:module');
 const { pathToFileURL } = require('node:url');
 
@@ -23,7 +25,9 @@ function validArgs(overrides = {}) {
         externalId: '4830746',
         homeTeam: 'Angers',
         awayTeam: 'Strasbourg',
+        route: 'auto',
         networkAuthorization: true,
+        livePreviewAuthorization: false,
         allowDbWrite: false,
         allowRawMatchDataWrite: false,
         allowBrowserRuntime: false,
@@ -45,7 +49,9 @@ function cliArgs(overrides = {}) {
         `--external-id=${args.externalId}`,
         `--home-team=${args.homeTeam}`,
         `--away-team=${args.awayTeam}`,
+        `--route=${args.route}`,
         `--network-authorization=${args.networkAuthorization ? 'yes' : 'no'}`,
+        `--live-preview-authorization=${args.livePreviewAuthorization ? 'yes' : 'no'}`,
         `--allow-db-write=${args.allowDbWrite ? 'yes' : 'no'}`,
         `--allow-raw-match-data-write=${args.allowRawMatchDataWrite ? 'yes' : 'no'}`,
         `--allow-browser-runtime=${args.allowBrowserRuntime ? 'yes' : 'no'}`,
@@ -100,6 +106,16 @@ function fakeHtmlBody() {
                         id: 4830746,
                         fixture: 'Angers vs Strasbourg',
                     },
+                    stats: {
+                        periods: [],
+                    },
+                    lineup: {
+                        homeTeam: 'Angers',
+                        awayTeam: 'Strasbourg',
+                    },
+                },
+                header: {
+                    teams: [{ name: 'Angers' }, { name: 'Strasbourg' }],
                 },
             },
         },
@@ -135,7 +151,7 @@ async function runCli(gate, argv, dependencies = {}) {
                 stdout += text;
             },
         },
-        dependencies
+        dependencies.fetchImpl ? { allowRouteExecution: true, ...dependencies } : dependencies
     );
     return {
         status,
@@ -153,6 +169,8 @@ function installExecutionGuards(t) {
     const originalSpawn = childProcess.spawn;
     const originalExec = childProcess.exec;
     const originalExecFile = childProcess.execFile;
+    const originalHttpRequest = http.request;
+    const originalHttpsRequest = https.request;
     const originalLoad = Module._load;
 
     const fail = name => () => {
@@ -167,6 +185,8 @@ function installExecutionGuards(t) {
     childProcess.spawn = fail('child_process.spawn');
     childProcess.exec = fail('child_process.exec');
     childProcess.execFile = fail('child_process.execFile');
+    http.request = fail('http.request');
+    https.request = fail('https.request');
 
     Module._load = function patchedLoad(request, parent, isMain) {
         const blockedImports = new Set([
@@ -200,6 +220,8 @@ function installExecutionGuards(t) {
         childProcess.spawn = originalSpawn;
         childProcess.exec = originalExec;
         childProcess.execFile = originalExecFile;
+        http.request = originalHttpRequest;
+        https.request = originalHttpsRequest;
         Module._load = originalLoad;
     });
 }
@@ -218,7 +240,9 @@ test('parseArgs maps dashed CLI flags', () => {
     assert.equal(parsed.externalId, '4830746');
     assert.equal(parsed.homeTeam, 'Angers');
     assert.equal(parsed.awayTeam, 'Strasbourg');
+    assert.equal(parsed.route, 'auto');
     assert.equal(parsed.networkAuthorization, true);
+    assert.equal(parsed.livePreviewAuthorization, false);
     assert.equal(parsed.allowDbWrite, false);
     assert.equal(parsed.allowRawMatchDataWrite, false);
 });
@@ -263,7 +287,7 @@ const invalidInputCases = [
     ['home-team mismatch fails', { homeTeam: 'Nice' }, /home-team must contain/],
     ['missing away-team fails', { awayTeam: null }, /missing away-team/],
     ['away-team mismatch fails', { awayTeam: 'Lyon' }, /away-team must contain/],
-    ['network-authorization=no fails for actual preview', { networkAuthorization: false }, /network-authorization=no/],
+    ['unsupported route fails', { route: 'alternate_route' }, /unsupported route/],
     ['allow-db-write=yes blocked', { allowDbWrite: true }, /allow-db-write=yes/],
     ['allow-raw-match-data-write=yes blocked', { allowRawMatchDataWrite: true }, /allow-raw-match-data-write=yes/],
     ['allow-browser-runtime=yes blocked', { allowBrowserRuntime: true }, /allow-browser-runtime=yes/],
@@ -291,8 +315,31 @@ test('build request URL contains 4830746', () => {
     const gate = loadModuleFresh();
     const request = gate.buildFotMobDetailRequest(validArgs());
     assert.equal(request.method, 'GET');
+    assert.equal(request.route, 'api_match_details');
     assert.match(request.url, /matchDetails/);
     assert.match(request.url, /matchId=4830746/);
+});
+
+test('build route plan defaults to html hydration, api fallback, and alternate plan-only', () => {
+    const gate = loadModuleFresh();
+    const plan = gate.buildFotMobDetailRoutePlan(validArgs());
+    assert.deepEqual(
+        plan.map(route => route.route),
+        ['html_hydration', 'api_match_details', 'alternate_route']
+    );
+    assert.match(plan[0].request.url, /\/match\/4830746$/);
+    assert.match(plan[1].request.url, /\/api\/data\/matchDetails\?matchId=4830746$/);
+    assert.match(plan[2].request.url, /\/api\/matchDetails\?matchId=4830746$/);
+    assert.equal(plan[2].plan_only, true);
+});
+
+test('route=api_match_details builds only API route plus alternate plan', () => {
+    const gate = loadModuleFresh();
+    const plan = gate.buildFotMobDetailRoutePlan(validArgs({ route: 'api_match_details' }));
+    assert.deepEqual(
+        plan.map(route => route.route),
+        ['api_match_details', 'alternate_route']
+    );
 });
 
 test('build request rejects invalid input', () => {
@@ -300,20 +347,23 @@ test('build request rejects invalid input', () => {
     assert.throws(() => gate.buildFotMobDetailRequest(validArgs({ externalId: '4830747' })), /INVALID_PREVIEW_INPUT/);
 });
 
-test('fake JSON response preview succeeds', async t => {
+test('route=api_match_details fake JSON response preview succeeds', async t => {
     installExecutionGuards(t);
     const gate = loadModuleFresh();
     let fetchCount = 0;
-    const result = await runCli(gate, cliArgs(), {
+    const result = await runCli(gate, cliArgs({ route: 'api_match_details' }), {
         fetchImpl: async url => {
             fetchCount += 1;
             assert.match(url, /4830746/);
+            assert.match(url, /api\/data\/matchDetails/);
             return createResponse(fakeJsonBody());
         },
     });
 
     assert.equal(result.status, 0);
     assert.equal(fetchCount, 1);
+    assert.equal(result.payload.route_selector_enabled, true);
+    assert.equal(result.payload.selected_route, 'api_match_details');
     assert.equal(result.payload.http_status, 200);
     assert.equal(result.payload.contains_match_id, true);
     assert.equal(result.payload.contains_home_team, true);
@@ -327,23 +377,73 @@ test('fake JSON response preview succeeds', async t => {
 test('fake HTML __NEXT_DATA__ response preview succeeds', async t => {
     installExecutionGuards(t);
     const gate = loadModuleFresh();
+    const requestedUrls = [];
     const result = await runCli(gate, cliArgs(), {
-        fetchImpl: async () => createResponse(fakeHtmlBody(), { contentType: 'text/html; charset=utf-8' }),
+        fetchImpl: async url => {
+            requestedUrls.push(url);
+            return createResponse(fakeHtmlBody(), {
+                url,
+                contentType: 'text/html; charset=utf-8',
+            });
+        },
     });
 
     assert.equal(result.status, 0);
+    assert.deepEqual(requestedUrls, ['https://www.fotmob.com/match/4830746']);
+    assert.equal(result.payload.selected_route, 'html_hydration');
+    assert.equal(result.payload.attempted_routes[0].route, 'html_hydration');
+    assert.equal(result.payload.attempted_routes[0].executed, true);
+    assert.equal(result.payload.attempted_routes.at(-1).route, 'alternate_route');
+    assert.equal(result.payload.attempted_routes.at(-1).executed, false);
     assert.equal(result.payload.hydration_parse_ok, true);
+    assert.equal(result.payload.hydration_transform_ok, true);
     assert.equal(result.payload.hydration_or_json_markers.includes('__NEXT_DATA__'), true);
+    assert.equal(result.payload.hydration_or_json_markers.includes('next_data_parser'), true);
     assert.equal(result.payload.contains_match_id, true);
     assert.equal(result.payload.contains_home_team, true);
     assert.equal(result.payload.contains_away_team, true);
     assert.equal(result.payload.looks_like_valid_match_detail, true);
+    assert.equal(result.payload.body_printed, false);
+    assert.equal(result.payload.body_saved, false);
+});
+
+test('route=auto falls back from missing hydration to fake API JSON', async t => {
+    installExecutionGuards(t);
+    const gate = loadModuleFresh();
+    const requestedUrls = [];
+    const result = await runCli(gate, cliArgs(), {
+        fetchImpl: async url => {
+            requestedUrls.push(url);
+            if (url.includes('/match/4830746')) {
+                return createResponse('<html>Angers vs Strasbourg 4830746</html>', {
+                    url,
+                    contentType: 'text/html',
+                });
+            }
+            return createResponse(fakeJsonBody(), {
+                url,
+                contentType: 'application/json',
+            });
+        },
+    });
+
+    assert.equal(result.status, 0);
+    assert.deepEqual(requestedUrls, [
+        'https://www.fotmob.com/match/4830746',
+        'https://www.fotmob.com/api/data/matchDetails?matchId=4830746',
+    ]);
+    assert.equal(result.payload.selected_route, 'api_match_details');
+    assert.equal(result.payload.attempted_routes.length, 3);
+    assert.equal(result.payload.attempted_routes[0].looks_like_valid_match_detail, false);
+    assert.equal(result.payload.attempted_routes[1].looks_like_valid_match_detail, true);
+    assert.equal(result.payload.attempted_routes[2].route, 'alternate_route');
+    assert.equal(result.payload.attempted_routes[2].executed, false);
 });
 
 test('invalid JSON response returns parse failure without printing body', async t => {
     installExecutionGuards(t);
     const gate = loadModuleFresh();
-    const result = await runCli(gate, cliArgs(), {
+    const result = await runCli(gate, cliArgs({ route: 'api_match_details' }), {
         fetchImpl: async () =>
             createResponse('{not-json Angers Strasbourg 4830746', {
                 contentType: 'application/json',
@@ -424,6 +524,30 @@ test('runCli --help prints usage and does not fetch', async () => {
     assert.match(result.stdout, /Usage:/);
 });
 
+test('runCli defaults to plan-only and does not use global fetch', async () => {
+    const gate = loadModuleFresh();
+    const originalFetch = global.fetch;
+    let fetchCalled = false;
+    global.fetch = async () => {
+        fetchCalled = true;
+        throw new Error('global fetch should not be called in plan-only mode');
+    };
+
+    try {
+        const result = await runCli(gate, cliArgs());
+        assert.equal(result.status, 1);
+        assert.equal(fetchCalled, false);
+        assert.equal(result.payload.plan_only, true);
+        assert.equal(result.payload.route_selector_enabled, true);
+        assert.equal(result.payload.selected_route, 'none');
+        assert.equal(result.payload.attempted_routes[0].route, 'html_hydration');
+        assert.equal(result.payload.attempted_routes[0].executed, false);
+        assert.match(result.payload.controlled_error, /LIVE_PREVIEW_BLOCKED|PLAN_ONLY/);
+    } finally {
+        global.fetch = originalFetch;
+    }
+});
+
 test('runCli validation failure returns controlled summary', async () => {
     const gate = loadModuleFresh();
     const result = await runCli(gate, cliArgs({ source: 'bad' }), {
@@ -447,7 +571,7 @@ test('fetch unavailable returns controlled error summary', async t => {
         global.fetch = originalFetch;
     });
 
-    const result = await runCli(gate, cliArgs());
+    const result = await runCli(gate, cliArgs(), { allowRouteExecution: true });
     assert.equal(result.status, 1);
     assert.match(result.payload.controlled_error, /FETCH_UNAVAILABLE/);
     assert.equal(result.payload.body_saved, false);
@@ -507,6 +631,26 @@ test('output safety flags remain false', async t => {
     assert.equal(result.payload.proxy_used, false);
     assert.equal(result.payload.raw_match_data_write_allowed, false);
     assert.equal(result.payload.db_write_allowed, false);
+});
+
+test('route selector summary exposes existing client integration flags', async t => {
+    installExecutionGuards(t);
+    const gate = loadModuleFresh();
+    const result = await runCli(gate, cliArgs(), {
+        fetchImpl: async url =>
+            createResponse(fakeHtmlBody(), {
+                url,
+                contentType: 'text/html; charset=utf-8',
+            }),
+    });
+
+    assert.equal(result.payload.existing_client_integration.fotmob_api_client_considered, true);
+    assert.equal(result.payload.existing_client_integration.fotmob_api_client_route_aligned, true);
+    assert.equal(result.payload.existing_client_integration.fotmob_api_client_imported, false);
+    assert.equal(result.payload.existing_client_integration.fotmob_strategy_hydration_considered, true);
+    assert.equal(result.payload.existing_client_integration.next_data_parser_reused, true);
+    assert.equal(result.payload.existing_client_integration.production_harvester_used, false);
+    assert.equal(result.payload.existing_client_integration.legacy_backfill_used, false);
 });
 
 test('output body_printed=false', async t => {
@@ -579,10 +723,41 @@ test('controlled 403 error does not retry', async t => {
 
     assert.equal(result.status, 1);
     assert.equal(fetchCount, 1);
+    assert.equal(result.payload.selected_route, 'none');
+    assert.deepEqual(
+        result.payload.attempted_routes.filter(route => route.executed).map(route => route.route),
+        ['html_hydration']
+    );
     assert.equal(result.payload.http_status, 403);
     assert.match(result.payload.controlled_error, /CONTROLLED_BLOCK_SIGNAL/);
     assert.equal(result.payload.browser_used, false);
     assert.equal(result.payload.proxy_used, false);
+});
+
+test('route=api_match_details fake 403 produces controlled error', async t => {
+    installExecutionGuards(t);
+    const gate = loadModuleFresh();
+    let fetchCount = 0;
+    const result = await runCli(gate, cliArgs({ route: 'api_match_details' }), {
+        fetchImpl: async url => {
+            fetchCount += 1;
+            assert.match(url, /api\/data\/matchDetails/);
+            return createResponse(JSON.stringify({ code: 403, error: 'Forbidden' }), {
+                url,
+                status: 403,
+                contentType: 'application/json',
+            });
+        },
+    });
+
+    assert.equal(result.status, 1);
+    assert.equal(fetchCount, 1);
+    assert.equal(result.payload.selected_route, 'none');
+    assert.equal(result.payload.http_status, 403);
+    assert.equal(result.payload.json_parse_ok, true);
+    assert.match(result.payload.controlled_error, /CONTROLLED_BLOCK_SIGNAL:HTTP_403/);
+    assert.equal(result.payload.body_printed, false);
+    assert.equal(result.payload.body_saved, false);
 });
 
 test('no fs.writeFile / mkdir or child_process operations during preview', async t => {
@@ -605,6 +780,12 @@ test('source audit: no DB client write', () => {
 test('source audit: no child_process spawn', () => {
     const source = fs.readFileSync(SCRIPT_PATH, 'utf8');
     assert.ok(!/require\s*\(\s*['"](?:node:)?child_process['"]/.test(source));
+});
+
+test('source audit: no native http or https request client', () => {
+    const source = fs.readFileSync(SCRIPT_PATH, 'utf8');
+    assert.ok(!/require\s*\(\s*['"](?:node:)?https?['"]/.test(source));
+    assert.ok(!/\bhttps?\.request\b/.test(source));
 });
 
 test('source audit: no ProductionHarvester', () => {
