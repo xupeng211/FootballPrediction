@@ -53,6 +53,7 @@
 - L1 matches seed commit 不能由 AI / Codex 直接走旧 commit 大入口执行；Phase 5.06L1 仅允许 `make data-l1-matches-seed-commit-plan` 输出 stdout planning；Phase 5.07L1 仅允许 `make data-l1-matches-seed-commit-authorization` 输出 stdout authorization summary；Phase 5.08L1 仅允许 `make data-l1-matches-seed-commit-execution-preflight` 输出 stdout preflight summary 和 SELECT-only affected rows preview；Phase 5.09L1 仅允许 `make data-l1-matches-seed-commit-execute` 在最终确认后、按 exact scope 事务写入 `matches`。
 - legacy L1 / data entrypoints 对 agents 视为 deprecated：admin / 人工兼容入口可以保留，但 AI / Codex 不得直接运行 `titan_discovery.js`、`run_production.js`、`batch_historical_backfill.js`、`total_war_pipeline.js`、生产 harvest 入口或 raw ingest commit 入口；L1 discovery 与 matches seed 操作必须走 `data-l1-*` safe targets。
 - L2 raw JSON acquisition 当前仍未授权执行。AI / Codex 不得运行 legacy raw backfill、production harvest、`raw_match_data` commit 或任何会抓取 FotMob match detail / 写 `raw_match_data` 的入口；后续必须先走 Phase 5.10L2+ controlled planning / preview / authorization / preflight，且 `raw_match_data` 写入必须与训练、预测分离并单独授权。
+- Phase 5.11L2 raw detail preview 仅允许 preview-only：除非未来用户扩大授权，只能目标 `53_20252026_4830746` / `external_id=4830746`；不得写 `raw_match_data` 或任何 DB，不得打印或保存完整 body，不得启 browser/proxy，不得调用 `ProductionHarvester` 或 legacy raw backfill；`raw_match_data` 写入必须等待后续 planning / authorization / preflight。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
@@ -224,6 +225,7 @@ AI / Codex 默认只能执行：
 
 - legacy L1/data entrypoints 对 agents 视为 deprecated：admin / 人工兼容可以继续保留，但默认不得直接运行；L1 discovery 和 matches seed 默认必须走 `data-l1-*` safe workflow。
 - L2 raw JSON acquisition 仍处于 planning 阶段，默认不得触网、不得抓取 FotMob match detail、不得写 `raw_match_data`；后续必须走 controlled preview / authorization / preflight。
+- Phase 5.11L2 仅允许用户明确授权的 `make data-l2-raw-detail-preview SOURCE=fotmob MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg NETWORK_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no`；只输出 stdout metadata/hash/markers，不写 DB，不写 `raw_match_data`，不保存或打印完整 body。
 - `make data-help`
 - `make data-check`
 - `make data-l1-discovery-preview SOURCE=fotmob SCOPE=<config_only_preview|league_season_date|league_season_window_preview> ...`
