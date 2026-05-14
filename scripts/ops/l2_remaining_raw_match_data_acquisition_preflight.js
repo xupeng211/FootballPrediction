@@ -13,11 +13,10 @@
 
 const crypto = require('node:crypto');
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
+const { fetchFotMobRawDetail } = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
 
 const PHASE = 'PHASE5_19L2_REMAINING_RAW_MATCH_DATA_ACQUISITION_PREFLIGHT';
 const NEXT_REQUIRED_PHASE = 'Phase 5.20L2 controlled remaining raw_match_data write';
-
-const FOTMOB_BASE_URL = 'https://www.fotmob.com';
 
 const REMAINING_TARGET_REGISTRY = Object.freeze([
     Object.freeze({ match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'Auxerre', away_team: 'Nice' }),
@@ -306,96 +305,52 @@ function validatePreflightInput(input = {}) {
     return { ok: errors.length === 0, errors, value };
 }
 
-// ── data recapture ───────────────────────────────────────────────────────────
+// ── data recapture (delegates to FotMobRawDetailFetcher) ───────────────────
 
-function buildHtmlHydrationRequest(externalId) {
-    const url = new URL(`/match/${externalId}`, FOTMOB_BASE_URL);
-    return {
-        route: 'html_hydration',
-        method: 'GET',
-        url: url.href,
-        headers: {
-            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'accept-language': 'en-US,en;q=0.9',
-            'accept-encoding': 'identity',
-            referer: FOTMOB_BASE_URL,
-            'user-agent':
-                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+/**
+ * Recapture a single target via FotMobRawDetailFetcher.
+ * Maps fetcher output to preflight-compatible shape.
+ * @param {object} target - { external_id, home_team, away_team }
+ * @param {object} [fetcherDeps] - { fetchFn, now?, parser? }
+ * @returns {object} recapture result (snake_case fields for buildPerTargetPreflight)
+ */
+async function recaptureTarget(target, fetcherDeps = {}) {
+    const fetchFn =
+        fetcherDeps.fetchFn ||
+        (() => {
+            throw new Error('FETCH_DEPENDENCY_MISSING: live preflight requires --network-authorization=yes');
+        });
+    const parser = fetcherDeps.parser || { extractFromHtml, transformToApiFormat };
+
+    const result = await fetchFotMobRawDetail(
+        {
+            externalId: target.external_id,
+            matchId: target.match_id,
+            homeTeam: target.home_team,
+            awayTeam: target.away_team,
         },
+        { fetchFn, parser, now: fetcherDeps.now }
+    );
+
+    return {
+        request_url: result.request_url,
+        final_url: result.final_url,
+        http_status: result.http_status,
+        content_type: result.content_type,
+        body_byte_length: result.body_byte_length,
+        body_sha256: result.body_sha256,
+        hydration_parse_ok: result.hydration_parse_ok,
+        looks_like_valid_match_detail: result.looks_like_valid_match_detail,
+        payload: result.raw_data || (result.ok ? {} : null),
+        error: result.controlled_error || null,
     };
 }
 
-/**
- * Direct html_hydration recapture for a single target.
- * Uses fetchPreviewBody for safe HTTP GET (no browser/proxy/retry).
- * @param {object} target - { external_id, home_team, away_team }
- * @param {Function} [fetchFn] - injected for testability
- * @returns {object} recapture result
- */
-async function recaptureTarget(target, fetchFn = global.fetch) {
-    const request = buildHtmlHydrationRequest(target.external_id);
-    let response;
-    let body = '';
-
-    try {
-        response = await fetchFn(request.url, {
-            method: request.method,
-            headers: request.headers,
-            redirect: 'follow',
-        });
-        body = typeof response.text === 'function' ? await response.text() : '';
-    } catch (err) {
-        return {
-            request_url: request.url,
-            final_url: request.url,
-            http_status: 0,
-            content_type: null,
-            body_byte_length: 0,
-            body_sha256: null,
-            hydration_parse_ok: false,
-            looks_like_valid_match_detail: false,
-            payload: null,
-            error: `fetch error: ${err.message}`,
-        };
-    }
-
-    const bodySha256 = crypto.createHash('sha256').update(body).digest('hex');
-    const httpStatus = response ? response.status : 0;
-    const contentType =
-        response && typeof response.headers.get === 'function' ? response.headers.get('content-type') || '' : '';
-
-    // Parse HTML hydration
-    let hydrationParseOk = false;
-    let payload = null;
-    let looksLikeValid = false;
-
-    if (body && httpStatus >= 200 && httpStatus < 300) {
-        try {
-            const extracted = extractFromHtml(body);
-            if (extracted && extracted.ok !== false) {
-                const transformed = transformToApiFormat(extracted.data || extracted);
-                if (transformed) {
-                    hydrationParseOk = true;
-                    payload = transformed;
-                    looksLikeValid = !!((transformed.general && transformed.general.matchId) || transformed.matchId);
-                }
-            }
-        } catch (_) {
-            hydrationParseOk = false;
-        }
-    }
-
-    return {
-        request_url: request.url,
-        final_url: response ? response.url : request.url,
-        http_status: httpStatus,
-        content_type: contentType,
-        body_byte_length: Buffer.byteLength(body, 'utf8'),
-        body_sha256: bodySha256,
-        hydration_parse_ok: hydrationParseOk,
-        looks_like_valid_match_detail: looksLikeValid,
-        payload,
-    };
+// Kept for backward compatibility with tests
+function buildHtmlHydrationRequest(externalId) {
+    return require('../../src/infrastructure/services/FotMobRawDetailFetcher').buildFotMobHtmlHydrationRequest(
+        externalId
+    );
 }
 
 // ── canonical data & preflight entry ────────────────────────────────────────
@@ -530,6 +485,7 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
 
     const targetRegistry = getRemainingTargetRegistry();
     const recaptureFn = options.recaptureFn || recaptureTarget;
+    const recaptureDeps = options.recaptureDeps || { fetchFn: global.fetch };
     const dbSelectFn = options.dbSelectFn || null;
 
     const perTarget = [];
@@ -539,7 +495,7 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
     for (const target of targetRegistry) {
         let result;
         try {
-            result = await recaptureFn(target);
+            result = await recaptureFn(target, recaptureDeps);
         } catch (err) {
             perTarget.push({
                 match_id: target.match_id,
