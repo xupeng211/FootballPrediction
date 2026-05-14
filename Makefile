@@ -17,7 +17,7 @@
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
-        data-l2-raw-detail-preview data-l2-raw-detail-route-preview-plan data-l2-raw-match-data-ingest-plan data-l2-raw-match-data-ingest-authorization data-l2-raw-match-data-ingest-preflight data-l2-raw-match-data-write \
+        data-l2-raw-detail-preview data-l2-raw-detail-route-preview-plan data-l2-raw-match-data-ingest-plan data-l2-raw-match-data-ingest-authorization data-l2-raw-match-data-ingest-preflight data-l2-raw-match-data-write data-l2-remaining-raw-match-data-acquisition-plan \
         data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-fotmob-stdout-network-dry-run-authorization-packet-preview data-fotmob-stdout-network-dry-run-authorization-packet-commit \
         data-fotmob-stdout-network-dry-run-execution-plan-preview data-fotmob-stdout-network-dry-run-execution-plan-commit \
@@ -337,10 +337,13 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l2-raw-match-data-ingest-authorization SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg DATA_VERSION=fotmob_html_hyd_v1 PREVIEW_BODY_SHA256=<sha256> HYDRATION_PARSE_OK=yes LOOKS_LIKE_VALID_MATCH_DETAIL=yes USER_AUTHORIZED_RAW_MATCH_DATA_INGEST=yes ALLOW_RAW_MATCH_DATA_WRITE_NEXT_PHASE=yes ALLOW_DB_WRITE_NOW=no ALLOW_RAW_MATCH_DATA_WRITE_NOW=no ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no FINAL_HUMAN_CONFIRMATION=yes  # Phase 5.14L2 authorization-only, no network/DB/raw write"
 	@echo "  make data-l2-raw-match-data-ingest-preflight SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg DATA_VERSION=fotmob_html_hyd_v1 NETWORK_AUTHORIZATION=yes LIVE_PREVIEW_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no  # Phase 5.15L2 preflight-only: recapture exact payload/hash and output would_insert/update/skip, no DB/raw write"
 	@echo "  make data-l2-raw-match-data-write SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg DATA_VERSION=fotmob_html_hyd_v1 BASELINE_RAW_DATA_HASH=d40f757adccf5be96d107188196efa905b6b573b62d7b4428014d7ce4f39a1f6 NETWORK_AUTHORIZATION=yes LIVE_PREVIEW_AUTHORIZATION=yes FINAL_DB_WRITE_CONFIRMATION=yes ALLOW_DB_WRITE=yes ALLOW_RAW_MATCH_DATA_WRITE=yes ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no  # Phase 5.16L2 controlled single-target raw_match_data write"
+	@echo "  make data-l2-remaining-raw-match-data-acquisition-plan SOURCE=fotmob LEAGUE_ID=53 SEASON=2025/2026 DATE=2026-05-10 EXPECTED_SEEDED_COUNT=8 EXPECTED_EXISTING_RAW_COUNT=1 EXPECTED_MISSING_RAW_COUNT=7 ALLOW_NETWORK=no ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.17L2 planning-only: remaining seeded raw acquisition scope"
 	@echo "  L2 raw detail preview is preview-only: no raw_match_data write, no DB write, no browser/proxy, no full body print/save."
 	@echo "  L2 raw_match_data ingest authorization is authorization-only in Phase 5.14L2: future write requires preflight + final DB-write confirmation, and raw_match_data write remains blocked this phase."
 	@echo "  L2 raw_match_data ingest preflight recomputes exact payload/hash and outputs would_insert/update/skip; it does not write raw_match_data. Future write requires final DB-write confirmation."
 	@echo "  L2 raw_match_data write is controlled single-target execution: it requires final DB-write confirmation, writes only raw_match_data, and keeps protected tables untouched."
+	@echo "  L2 remaining raw_match_data acquisition planning is raw-first / parse-later. Parser is deferred until training data design."
+	@echo "  Remaining seeded matches require separate authorization, preflight, and controlled write phases."
 	@echo "  Phase 5.11L2 direct matchDetails endpoint returned 403; do not retry or change headers/routes before route audit authorization."
 	@echo "  Phase 5.12L2B route selector supports html_hydration before api_match_details; alternate_route remains plan-only."
 	@echo "  Live raw detail requests require future explicit authorization; use audited route selector / safe adapter, not legacy harvest/backfill."
@@ -779,6 +782,34 @@ data-l2-raw-match-data-write: ## L2 controlled raw_match_data write. Phase 5.16L
 		--bulk="$(or $(BULK),no)" \
 		--commit="$(or $(COMMIT),no)" \
 		--execute="$(or $(EXECUTE),no)"
+
+data-l2-remaining-raw-match-data-acquisition-plan: ## L2 remaining seeded raw_match_data acquisition planning. Phase 5.17L2. SELECT-only DB coverage, no network/write/parser.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(SEASON)" ] || [ -z "$(DATE)" ] || [ -z "$(EXPECTED_SEEDED_COUNT)" ] || [ -z "$(EXPECTED_EXISTING_RAW_COUNT)" ] || [ -z "$(EXPECTED_MISSING_RAW_COUNT)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob LEAGUE_ID=53 SEASON=2025/2026 DATE=2026-05-10 EXPECTED_SEEDED_COUNT=8 EXPECTED_EXISTING_RAW_COUNT=1 EXPECTED_MISSING_RAW_COUNT=7"; \
+		exit 1; \
+	fi
+	@SEEDED_JSON="$$( $(COMPOSE_DEV) exec -T db sh -lc 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -At -c "SELECT COALESCE(json_agg(row_to_json(seeded) ORDER BY seeded.match_id)::text, '\''[]'\'') FROM (SELECT match_id, external_id, home_team, away_team, match_date, status FROM matches WHERE match_id LIKE '\''53_20252026_%'\'' ORDER BY match_id) seeded;"' )"; \
+	RAW_COVERAGE_JSON="$$( $(COMPOSE_DEV) exec -T db sh -lc 'psql -U "$$POSTGRES_USER" -d "$$POSTGRES_DB" -At -c "SELECT COALESCE(json_agg(row_to_json(coverage) ORDER BY coverage.match_id)::text, '\''[]'\'') FROM (SELECT m.match_id, m.external_id, m.home_team, m.away_team, m.match_date, m.status, r.id AS raw_id, r.data_version, r.data_hash, r.collected_at, CASE WHEN r.match_id IS NULL THEN '\''missing_raw'\'' ELSE '\''has_raw'\'' END AS raw_status FROM matches m LEFT JOIN raw_match_data r ON r.match_id = m.match_id WHERE m.match_id LIKE '\''53_20252026_%'\'' ORDER BY m.match_id) coverage;"' )"; \
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/l2_remaining_raw_match_data_acquisition_plan.js \
+		--source="$(SOURCE)" \
+		--league-id="$(LEAGUE_ID)" \
+		--season="$(SEASON)" \
+		--date="$(DATE)" \
+		--expected-seeded-count="$(EXPECTED_SEEDED_COUNT)" \
+		--expected-existing-raw-count="$(EXPECTED_EXISTING_RAW_COUNT)" \
+		--expected-missing-raw-count="$(EXPECTED_MISSING_RAW_COUNT)" \
+		--allow-network="$(or $(ALLOW_NETWORK),no)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),no)" \
+		--live-preview-authorization="$(or $(LIVE_PREVIEW_AUTHORIZATION),no)" \
+		--commit="$(or $(COMMIT),no)" \
+		--execute="$(or $(EXECUTE),no)" \
+		--seeded-matches-json="$$SEEDED_JSON" \
+		--raw-coverage-json="$$RAW_COVERAGE_JSON"
 
 data-local-dry-run: ## Run a safe local-only dry-run. Requires SAMPLE_HTML or SAMPLE_CSV.
 	@if [ -n "$(SAMPLE_HTML)" ]; then \
