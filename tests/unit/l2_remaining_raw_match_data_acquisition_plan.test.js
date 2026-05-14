@@ -294,6 +294,32 @@ test('parseArgs and normalizeBooleanFlag handle unknown args and booleans', () =
     assert.equal(gate.normalizeBooleanFlag('maybe', false), false);
 });
 
+test('normalizeBooleanFlag handles null/empty/boolean and numeric inputs', () => {
+    const gate = loadModuleFresh();
+    assert.equal(gate.normalizeBooleanFlag(null, false), false);
+    assert.equal(gate.normalizeBooleanFlag(undefined, undefined), undefined);
+    assert.equal(gate.normalizeBooleanFlag('', true), true);
+    assert.equal(gate.normalizeBooleanFlag(true), true);
+    assert.equal(gate.normalizeBooleanFlag(false), false);
+    assert.equal(gate.normalizeBooleanFlag('1'), true);
+    assert.equal(gate.normalizeBooleanFlag('0'), false);
+});
+
+test('parseInteger handles null/empty/non-numeric and valid inputs', () => {
+    const gate = loadModuleFresh();
+    assert.equal(gate.validatePlanningInput(validArgs({ allowNetwork: null })).value.allowNetwork, undefined);
+    assert.equal(gate.validatePlanningInput(validArgs({ expectedSeededCount: '' })).ok, false);
+    assert.equal(gate.validatePlanningInput(validArgs({ expectedSeededCount: 'abc' })).ok, false);
+    assert.equal(gate.validatePlanningInput(validArgs({ expectedSeededCount: '8' })).ok, true);
+});
+
+test('validatePlanningInput rejects unknown arguments', () => {
+    const gate = loadModuleFresh();
+    const validation = gate.validatePlanningInput(validArgs({ unknown: ['--bogus'] }));
+    assert.equal(validation.ok, false);
+    assert.match(validation.errors.join('\n'), /unknown arguments/);
+});
+
 test('remaining_targets count = 7', () => {
     const gate = loadModuleFresh();
     const plan = gate.buildRemainingRawMatchDataAcquisitionPlan(validArgs());
@@ -419,6 +445,79 @@ test('coverage mismatch fails closed', () => {
     );
     assert.equal(result.ok, false);
     assert.match(result.controlled_error, /COVERAGE_VALIDATION_FAILED/);
+});
+
+test('coverage validation rejects external_id mismatch', () => {
+    const gate = loadModuleFresh();
+    const badSeeded = SEEDED_MATCHES.map((row, index) => (index === 2 ? { ...row, external_id: '9999999' } : row));
+    const result = gate.buildRemainingRawMatchDataAcquisitionPlan(
+        validArgs({ seededMatchesJson: JSON.stringify(badSeeded) })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.controlled_error, /external_id mismatch/);
+});
+
+test('coverage validation rejects home_team mismatch', () => {
+    const gate = loadModuleFresh();
+    const badSeeded = SEEDED_MATCHES.map((row, index) => (index === 2 ? { ...row, home_team: 'WrongTeam' } : row));
+    const result = gate.buildRemainingRawMatchDataAcquisitionPlan(
+        validArgs({ seededMatchesJson: JSON.stringify(badSeeded) })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.controlled_error, /home_team mismatch/);
+});
+
+test('coverage validation rejects away_team mismatch', () => {
+    const gate = loadModuleFresh();
+    const badSeeded = SEEDED_MATCHES.map((row, index) => (index === 2 ? { ...row, away_team: 'WrongTeam' } : row));
+    const result = gate.buildRemainingRawMatchDataAcquisitionPlan(
+        validArgs({ seededMatchesJson: JSON.stringify(badSeeded) })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.controlled_error, /away_team mismatch/);
+});
+
+test('coverage validation rejects invalid raw_status', () => {
+    const gate = loadModuleFresh();
+    const badCoverage = RAW_COVERAGE.map((row, index) =>
+        index === 2 ? { ...row, raw_id: null, raw_status: 'bogus_status' } : row
+    );
+    const merged = gate.buildSeededMatchCoverage(JSON.stringify(SEEDED_MATCHES), JSON.stringify(badCoverage));
+    const row = merged.find(r => r.match_id === '53_20252026_4830748');
+    assert.equal(row.raw_status, 'bogus_status');
+});
+
+test('buildSeededMatchCoverage accepts Array input directly', () => {
+    const gate = loadModuleFresh();
+    const coverage = gate.buildSeededMatchCoverage(SEEDED_MATCHES, RAW_COVERAGE);
+    assert.equal(coverage.length, 8);
+});
+
+test('buildSeededMatchCoverage throws when raw-coverage-json is null but seeded valid', () => {
+    const gate = loadModuleFresh();
+    const result = gate.buildRemainingRawMatchDataAcquisitionPlan(
+        validArgs({ seededMatchesJson: JSON.stringify(SEEDED_MATCHES), rawCoverageJson: '' })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.controlled_error, /COVERAGE_INPUT_REQUIRED/);
+});
+
+test('buildSeededMatchCoverage fails on non-array JSON input', () => {
+    const gate = loadModuleFresh();
+    const result = gate.buildRemainingRawMatchDataAcquisitionPlan(
+        validArgs({ seededMatchesJson: '"not-an-array"', rawCoverageJson: '"not-an-array"' })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.controlled_error, /COVERAGE_INPUT_REQUIRED/);
+});
+
+test('buildSeededMatchCoverage fails on invalid JSON input', () => {
+    const gate = loadModuleFresh();
+    const result = gate.buildRemainingRawMatchDataAcquisitionPlan(
+        validArgs({ seededMatchesJson: '{invalid', rawCoverageJson: '[]' })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.controlled_error, /COVERAGE_INPUT_REQUIRED/);
 });
 
 test('missing coverage input fails closed', () => {
