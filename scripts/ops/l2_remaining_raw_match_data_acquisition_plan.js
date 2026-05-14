@@ -399,7 +399,7 @@ function buildSeededMatchCoverage(seededMatchesInput = [], rawCoverageInput = []
                 data_version: coverage.data_version || null,
                 data_hash: coverage.data_hash || null,
                 collected_at: coverage.collected_at ?? null,
-                raw_status: hasRaw ? 'has_raw' : 'missing_raw',
+                raw_status: coverage.raw_status || (hasRaw ? 'has_raw' : 'missing_raw'),
             };
         })
         .sort((left, right) => left.match_id.localeCompare(right.match_id));
