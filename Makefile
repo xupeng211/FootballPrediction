@@ -17,7 +17,7 @@
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
-        data-l2-raw-detail-preview data-l2-raw-detail-route-preview-plan data-l2-raw-match-data-ingest-plan data-l2-raw-match-data-ingest-authorization data-l2-raw-match-data-ingest-preflight data-l2-raw-match-data-write data-l2-remaining-raw-match-data-acquisition-plan data-l2-remaining-raw-match-data-acquisition-authorization \
+        data-l2-raw-detail-preview data-l2-raw-detail-route-preview-plan data-l2-raw-match-data-ingest-plan data-l2-raw-match-data-ingest-authorization data-l2-raw-match-data-ingest-preflight data-l2-raw-match-data-write data-l2-remaining-raw-match-data-acquisition-plan data-l2-remaining-raw-match-data-acquisition-authorization data-l2-remaining-raw-match-data-acquisition-preflight \
         data-fotmob-single-target-adapter-preflight data-fotmob-single-target-adapter-commit \
         data-fotmob-stdout-network-dry-run-authorization-packet-preview data-fotmob-stdout-network-dry-run-authorization-packet-commit \
         data-fotmob-stdout-network-dry-run-execution-plan-preview data-fotmob-stdout-network-dry-run-execution-plan-commit \
@@ -339,6 +339,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l2-raw-match-data-write SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830746 EXTERNAL_ID=4830746 HOME_TEAM=Angers AWAY_TEAM=Strasbourg DATA_VERSION=fotmob_html_hyd_v1 BASELINE_RAW_DATA_HASH=d40f757adccf5be96d107188196efa905b6b573b62d7b4428014d7ce4f39a1f6 NETWORK_AUTHORIZATION=yes LIVE_PREVIEW_AUTHORIZATION=yes FINAL_DB_WRITE_CONFIRMATION=yes ALLOW_DB_WRITE=yes ALLOW_RAW_MATCH_DATA_WRITE=yes ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no  # Phase 5.16L2 controlled single-target raw_match_data write"
 	@echo "  make data-l2-remaining-raw-match-data-acquisition-plan SOURCE=fotmob LEAGUE_ID=53 SEASON=2025/2026 DATE=2026-05-10 EXPECTED_SEEDED_COUNT=8 EXPECTED_EXISTING_RAW_COUNT=1 EXPECTED_MISSING_RAW_COUNT=7 ALLOW_NETWORK=no ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.17L2 planning-only: remaining seeded raw acquisition scope"
 	@echo "  make data-l2-remaining-raw-match-data-acquisition-authorization SOURCE=fotmob LEAGUE_ID=53 SEASON=2025/2026 DATE=2026-05-10 ROUTE=html_hydration EXPECTED_SEEDED_COUNT=8 EXPECTED_EXISTING_RAW_COUNT=1 EXPECTED_MISSING_RAW_COUNT=7 REMAINING_EXTERNAL_IDS=4830747,4830748,4830750,4830751,4830752,4830753,4830754 USER_AUTHORIZED_REMAINING_RAW_ACQUISITION=yes ALLOW_NETWORK_NEXT_PHASE=yes ALLOW_RAW_MATCH_DATA_WRITE_FUTURE_PHASE=yes ALLOW_NETWORK_THIS_PHASE=no ALLOW_DB_WRITE_THIS_PHASE=no ALLOW_RAW_MATCH_DATA_WRITE_THIS_PHASE=no ALLOW_MATCHES_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no FINAL_HUMAN_CONFIRMATION=yes  # Phase 5.18L2 authorization-only: remaining 7 targets authorized for future preflight"
+	@echo "  make data-l2-remaining-raw-match-data-acquisition-preflight SOURCE=fotmob LEAGUE_ID=53 SEASON=2025/2026 DATE=2026-05-10 ROUTE=html_hydration REMAINING_EXTERNAL_IDS=4830747,4830748,4830750,4830751,4830752,4830753,4830754 EXPECTED_TARGET_COUNT=7 NETWORK_AUTHORIZATION=yes LIVE_PREVIEW_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no  # Phase 5.19L2 preflight-only: recaptures 7 payloads, computes hashes, outputs would_insert/update/skip, no DB write"
 	@echo "  L2 raw detail preview is preview-only: no raw_match_data write, no DB write, no browser/proxy, no full body print/save."
 	@echo "  L2 raw_match_data ingest authorization is authorization-only in Phase 5.14L2: future write requires preflight + final DB-write confirmation, and raw_match_data write remains blocked this phase."
 	@echo "  L2 raw_match_data ingest preflight recomputes exact payload/hash and outputs would_insert/update/skip; it does not write raw_match_data. Future write requires final DB-write confirmation."
@@ -838,6 +839,32 @@ data-l2-remaining-raw-match-data-acquisition-authorization: ## L2 remaining raw_
 		--allow-training="$(or $(ALLOW_TRAINING),no)" \
 		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
 		--final-human-confirmation="$(or $(FINAL_HUMAN_CONFIRMATION),yes)"
+
+data-l2-remaining-raw-match-data-acquisition-preflight: ## L2 remaining raw_match_data preflight. Phase 5.19L2. Recaptures 7 payloads, no DB write.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(ROUTE)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob LEAGUE_ID=53 ROUTE=html_hydration"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/l2_remaining_raw_match_data_acquisition_preflight.js \
+		--source="$(SOURCE)" \
+		--league-id="$(LEAGUE_ID)" \
+		--season="$(or $(SEASON),2025/2026)" \
+		--date="$(or $(DATE),2026-05-10)" \
+		--route="$(ROUTE)" \
+		--remaining-external-ids="$(or $(REMAINING_EXTERNAL_IDS),4830747,4830748,4830750,4830751,4830752,4830753,4830754)" \
+		--expected-target-count="$(or $(EXPECTED_TARGET_COUNT),7)" \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),yes)" \
+		--live-preview-authorization="$(or $(LIVE_PREVIEW_AUTHORIZATION),yes)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
+		--allow-parser-features="$(or $(ALLOW_PARSER_FEATURES),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
+		--concurrency="$(or $(CONCURRENCY),1)" \
+		--retry="$(or $(RETRY),0)" \
+		--print-body="$(or $(PRINT_BODY),no)" \
+		--save-body="$(or $(SAVE_BODY),no)"
 
 data-local-dry-run: ## Run a safe local-only dry-run. Requires SAMPLE_HTML or SAMPLE_CSV.
 	@if [ -n "$(SAMPLE_HTML)" ]; then \
