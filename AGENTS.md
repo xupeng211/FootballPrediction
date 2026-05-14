@@ -62,6 +62,7 @@
 - Phase 5.16L2 controlled raw_match_data write 是目标 `4830746` 唯一允许的 raw 写入路径；它必须要求最终 DB-write confirmation，在写入前把 recapture 得到的 `raw_data_hash` 与 Phase 5.15L2 baseline 比对，一致时才允许事务写入；它只能写 `raw_match_data`，不得更新 `matches`、features、training 或 predictions，不得训练/预测，不得保存或打印完整 body。
 - Phase 5.17L2 起，L2 当前策略改为 raw-first / parse-later / train-driven parsing：在训练目标与数据泄漏策略明确前，agents 不得把 `raw_match_data` 解析成 features，不得进入 parser implementation；剩余 seeded matches 的 raw acquisition 只能继续走 authorization / preflight / controlled write，且这些 phase 不得做 parser/features/training/prediction。
 - Phase 5.18L2 授权剩余 7 场 seeded matches（4830747-4830754）进入 future controlled raw_match_data acquisition；本阶段是 authorization-only，不触网、不写 DB、不写 raw_match_data；parser/features/training/prediction 仍 deferred；剩余 raw acquisition 必须先完成 preflight 才能进入 controlled write。
+- Phase 5.19L2 允许对剩余 7 场执行 controlled live preflight，通过 safe html_hydration route recapture exact payload；必须输出 would_insert/would_update/would_skip per target；不得写 DB 或 raw_match_data；parser/features/training/prediction 仍 deferred；controlled write 必须留到 Phase 5.20L2。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
