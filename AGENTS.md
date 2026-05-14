@@ -58,6 +58,7 @@
 - Phase 5.12L2B 新增 safe FotMob detail route selector，默认顺序为 `html_hydration` -> `api_match_details`，`alternate_route` 仅 plan-only；live external raw detail preview 仍默认 blocked，未经未来单独授权不得 retry Phase 5.11L2 direct API 403、不得加 headers/browser/proxy 绕过，`raw_match_data` 写入仍未授权。
 - Phase 5.13L2 raw_match_data ingest planning 仅允许 planning-only；`raw_match_data` 写入仍未授权。raw_data 应存 canonical transformed detail payload 而不是完整 HTML body；data_hash 应为 canonical raw_data JSON 的 SHA-256，而不是 HTML body hash；raw_match_data ingest 不得更新 `matches`、features、training 或 predictions，未来写入必须另行 authorization + preflight。
 - Phase 5.14L2 raw_match_data ingest authorization 仅允许 authorization-only：它只记录未来 `raw_match_data` 写入授权范围，本阶段不得写 DB、不得写 `raw_match_data`、不得 live preview / network request；后续写入仍必须先完成 Phase 5.15L2 preflight，并在最终执行阶段再次确认。raw_match_data ingest 必须保持 raw-only，不得更新 `matches`、features、training 或 predictions。
+- Phase 5.15L2 raw_match_data ingest preflight 允许通过 safe route selector 重新 recapture exact raw payload；它必须保持 SELECT-only，不得写 DB，不得写 `raw_match_data`，不得写 `matches`、features、training 或 predictions；它必须输出 `would_insert` / `would_update` / `would_skip`，`data_hash` 必须来自 canonical raw_data JSON，不得存完整 HTML body；真正 controlled write 仅能留到 Phase 5.16L2 且必须有最终 DB-write confirmation。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
