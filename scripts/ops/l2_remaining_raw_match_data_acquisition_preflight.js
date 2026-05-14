@@ -6,17 +6,18 @@
  * Phase 5.19L2 — remaining raw_match_data acquisition PREFLIGHT.
  *
  * Recaptures the 7 remaining seeded match detail payloads via safe
- * html_hydration route, computes canonical raw_data and data_hash per target,
- * SELECTs existing raw_match_data rows, and outputs would_insert / would_update
- * / would_skip per target WITHOUT writing the DB.
+ * direct html_hydration fetch, computes canonical raw_data and data_hash per
+ * target, SELECTs existing raw_match_data rows, and outputs would_insert /
+ * would_update / would_skip per target WITHOUT writing the DB.
  */
 
 const crypto = require('node:crypto');
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
-const { runFotMobDetailRouteSelector } = require('./l2_raw_detail_preview');
 
 const PHASE = 'PHASE5_19L2_REMAINING_RAW_MATCH_DATA_ACQUISITION_PREFLIGHT';
 const NEXT_REQUIRED_PHASE = 'Phase 5.20L2 controlled remaining raw_match_data write';
+
+const FOTMOB_BASE_URL = 'https://www.fotmob.com';
 
 const REMAINING_TARGET_REGISTRY = Object.freeze([
     Object.freeze({ match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'Auxerre', away_team: 'Nice' }),
@@ -58,6 +59,8 @@ const EXPECTED_SCOPE = Object.freeze({
     route: 'html_hydration',
     targetCount: 7,
 });
+
+// ── helpers ──────────────────────────────────────────────────────────────────
 
 function normalizeText(value) {
     return String(value || '').trim();
@@ -204,6 +207,8 @@ function parseArgs(argv = process.argv.slice(2)) {
     return options;
 }
 
+// ── validation ───────────────────────────────────────────────────────────────
+
 function pushRequiredYesError(errors, value, flagName) {
     if (value !== true) errors.push(`${flagName}=yes is required for Phase 5.19L2`);
 }
@@ -282,35 +287,123 @@ function validatePreflightInput(input = {}) {
     pushRequiredIntegerError(errors, value.expectedTargetCount, EXPECTED_SCOPE.targetCount, 'expected-target-count');
     pushRequiredYesError(errors, value.networkAuthorization, 'network-authorization');
     pushRequiredYesError(errors, value.livePreviewAuthorization, 'live-preview-authorization');
-
     pushRequiredNoError(errors, value.allowDbWrite, 'allow-db-write');
     pushRequiredNoError(errors, value.allowRawMatchDataWrite, 'allow-raw-match-data-write');
     pushRequiredNoError(errors, value.allowMatchesWrite, 'allow-matches-write');
     pushRequiredNoError(errors, value.allowParserFeatures, 'allow-parser-features');
     pushRequiredNoError(errors, value.allowTraining, 'allow-training');
     pushRequiredNoError(errors, value.allowPrediction, 'allow-prediction');
-
     pushRequiredIntegerError(errors, value.concurrency, 1, 'concurrency');
     pushRequiredIntegerError(errors, value.retry, 0, 'retry');
     pushRequiredNoError(errors, value.printBody, 'print-body');
     pushRequiredNoError(errors, value.saveBody, 'save-body');
-
-    if (value.allowBrowserRuntime === true) errors.push('allow-browser-runtime=yes is blocked in Phase 5.19L2');
-    if (value.allowProxyRuntime === true) errors.push('allow-proxy-runtime=yes is blocked in Phase 5.19L2');
-    if (value.bulk === true) errors.push('bulk=yes is blocked in Phase 5.19L2');
-    if (value.commit === true) errors.push('commit=yes is blocked in Phase 5.19L2');
-    if (value.execute === true) errors.push('execute=yes is blocked in Phase 5.19L2');
+    if (value.allowBrowserRuntime === true) errors.push('allow-browser-runtime=yes is blocked');
+    if (value.allowProxyRuntime === true) errors.push('allow-proxy-runtime=yes is blocked');
+    if (value.bulk === true) errors.push('bulk=yes is blocked');
+    if (value.commit === true) errors.push('commit=yes is blocked');
+    if (value.execute === true) errors.push('execute=yes is blocked');
 
     return { ok: errors.length === 0, errors, value };
 }
+
+// ── data recapture ───────────────────────────────────────────────────────────
+
+function buildHtmlHydrationRequest(externalId) {
+    const url = new URL(`/match/${externalId}`, FOTMOB_BASE_URL);
+    return {
+        route: 'html_hydration',
+        method: 'GET',
+        url: url.href,
+        headers: {
+            accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'accept-language': 'en-US,en;q=0.9',
+            'accept-encoding': 'identity',
+            referer: FOTMOB_BASE_URL,
+            'user-agent':
+                'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        },
+    };
+}
+
+/**
+ * Direct html_hydration recapture for a single target.
+ * Uses fetchPreviewBody for safe HTTP GET (no browser/proxy/retry).
+ * @param {object} target - { external_id, home_team, away_team }
+ * @param {Function} [fetchFn] - injected for testability
+ * @returns {object} recapture result
+ */
+async function recaptureTarget(target, fetchFn = global.fetch) {
+    const request = buildHtmlHydrationRequest(target.external_id);
+    let response;
+    let body = '';
+
+    try {
+        response = await fetchFn(request.url, {
+            method: request.method,
+            headers: request.headers,
+            redirect: 'follow',
+        });
+        body = typeof response.text === 'function' ? await response.text() : '';
+    } catch (err) {
+        return {
+            request_url: request.url,
+            final_url: request.url,
+            http_status: 0,
+            content_type: null,
+            body_byte_length: 0,
+            body_sha256: null,
+            hydration_parse_ok: false,
+            looks_like_valid_match_detail: false,
+            payload: null,
+            error: `fetch error: ${err.message}`,
+        };
+    }
+
+    const bodySha256 = crypto.createHash('sha256').update(body).digest('hex');
+    const httpStatus = response ? response.status : 0;
+    const contentType =
+        response && typeof response.headers.get === 'function' ? response.headers.get('content-type') || '' : '';
+
+    // Parse HTML hydration
+    let hydrationParseOk = false;
+    let payload = null;
+    let looksLikeValid = false;
+
+    if (body && httpStatus >= 200 && httpStatus < 300) {
+        try {
+            const extracted = extractFromHtml(body);
+            if (extracted && extracted.ok !== false) {
+                const transformed = transformToApiFormat(extracted.data || extracted);
+                if (transformed) {
+                    hydrationParseOk = true;
+                    payload = transformed;
+                    looksLikeValid = !!((transformed.general && transformed.general.matchId) || transformed.matchId);
+                }
+            }
+        } catch (_) {
+            hydrationParseOk = false;
+        }
+    }
+
+    return {
+        request_url: request.url,
+        final_url: response ? response.url : request.url,
+        http_status: httpStatus,
+        content_type: contentType,
+        body_byte_length: Buffer.byteLength(body, 'utf8'),
+        body_sha256: bodySha256,
+        hydration_parse_ok: hydrationParseOk,
+        looks_like_valid_match_detail: looksLikeValid,
+        payload,
+    };
+}
+
+// ── canonical data & preflight entry ────────────────────────────────────────
 
 function getRemainingTargetRegistry() {
     return REMAINING_TARGET_REGISTRY.map(t => ({ ...t }));
 }
 
-/**
- * Canonical JSON: stable sorted object keys, arrays preserve order.
- */
 function canonicalizeJson(value) {
     if (value === null || typeof value !== 'object') return value;
     if (Array.isArray(value)) return value.map(canonicalizeJson);
@@ -326,10 +419,6 @@ function sha256CanonicalJson(value) {
     return crypto.createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
 }
 
-/**
- * Build raw_data payload without full HTML body.
- * Preserves _meta, content, general, header, matchId.
- */
 function buildRawDataFromPreviewPayload(preview) {
     const raw = {};
     if (preview._meta) raw._meta = preview._meta;
@@ -340,15 +429,10 @@ function buildRawDataFromPreviewPayload(preview) {
     return raw;
 }
 
-/**
- * Build per-target preflight entry.
- * @param {object} target
- * @param {object} recaptureResult - from runFotMobDetailRouteSelector
- * @param {object|null} existingRawRow - existing raw_match_data row or null
- */
 function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
     const rawData = buildRawDataFromPreviewPayload(recaptureResult.payload || recaptureResult);
-    const rawDataHash = sha256CanonicalJson(rawData);
+    const rawDataHash =
+        rawData && Object.keys(rawData).length > 0 ? sha256CanonicalJson(rawData) : recaptureResult.body_sha256;
 
     let decision = 'would_insert';
     let reason = 'no existing raw_match_data row for match_id';
@@ -359,7 +443,7 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
             reason = 'existing raw_match_data row has identical data_hash';
         } else {
             decision = 'would_update';
-            reason = 'existing raw_match_data row has different data_hash; update requires separate authorization';
+            reason = 'existing raw_match_data row has different data_hash';
         }
     }
 
@@ -369,14 +453,14 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
         home_team: target.home_team,
         away_team: target.away_team,
         selected_route: EXPECTED_SCOPE.route,
-        request_url: recaptureResult.requestUrl || null,
-        final_url: recaptureResult.finalUrl || null,
-        http_status: recaptureResult.httpStatus || null,
-        content_type: recaptureResult.contentType || null,
-        body_byte_length: recaptureResult.bodyByteLength || 0,
-        body_sha256: recaptureResult.bodySha256 || null,
-        hydration_parse_ok: recaptureResult.hydrationParseOk !== false,
-        looks_like_valid_match_detail: recaptureResult.looksLikeValidMatchDetail !== false,
+        request_url: recaptureResult.request_url || null,
+        final_url: recaptureResult.final_url || null,
+        http_status: recaptureResult.http_status,
+        content_type: recaptureResult.content_type || null,
+        body_byte_length: recaptureResult.body_byte_length || 0,
+        body_sha256: recaptureResult.body_sha256 || null,
+        hydration_parse_ok: recaptureResult.hydration_parse_ok === true,
+        looks_like_valid_match_detail: recaptureResult.looks_like_valid_match_detail === true,
         raw_data_hash: rawDataHash,
         existing_raw_match_data_found: !!existingRawRow,
         decision,
@@ -399,6 +483,8 @@ function buildProtectedTableBaseline(baseline) {
     };
 }
 
+// ── plan builders ────────────────────────────────────────────────────────────
+
 function buildInvalidPreflight(input = {}, errors = [], controlledError = null) {
     const value = normalizePreflightInput(input);
     return {
@@ -419,6 +505,8 @@ function buildInvalidPreflight(input = {}, errors = [], controlledError = null) 
         would_skip_count: 0,
         per_target_preflight: [],
         protected_table_baseline: buildProtectedTableBaseline({}),
+        plan_only: true,
+        live_preflight_used: false,
         db_write_allowed_this_phase: false,
         raw_match_data_write_allowed_this_phase: false,
         matches_write_allowed: false,
@@ -436,18 +524,12 @@ function buildInvalidPreflight(input = {}, errors = [], controlledError = null) 
     };
 }
 
-/**
- * Core preflight logic.
- * @param {object} options
- * @param {Function} [options.recaptureFn] - injected recapture function for testability
- * @param {Function} [options.dbSelectFn] - injected DB SELECT function
- */
 async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, options = {}) {
     const validation = validatePreflightInput(input);
     if (!validation.ok) return buildInvalidPreflight(input, validation.errors);
 
     const targetRegistry = getRemainingTargetRegistry();
-    const recaptureFn = options.recaptureFn || runFotMobDetailRouteSelector;
+    const recaptureFn = options.recaptureFn || recaptureTarget;
     const dbSelectFn = options.dbSelectFn || null;
 
     const perTarget = [];
@@ -455,9 +537,9 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
     let failedCount = 0;
 
     for (const target of targetRegistry) {
-        let recaptureResult;
+        let result;
         try {
-            recaptureResult = await recaptureFn(target);
+            result = await recaptureFn(target);
         } catch (err) {
             perTarget.push({
                 match_id: target.match_id,
@@ -491,24 +573,19 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
             try {
                 existingRawRow = await dbSelectFn(target.match_id);
             } catch (_) {
-                // DB select failure is non-fatal for preflight
+                /* non-fatal */
             }
         }
 
-        const entry = buildPerTargetPreflight(target, recaptureResult, existingRawRow);
+        const entry = buildPerTargetPreflight(target, result, existingRawRow);
         perTarget.push(entry);
 
-        if (recaptureResult.httpStatus >= 200 && recaptureResult.httpStatus < 300 && recaptureResult.hydrationParseOk) {
+        if (entry.hydration_parse_ok && entry.looks_like_valid_match_detail) {
             validCount += 1;
         } else {
             failedCount += 1;
         }
     }
-
-    const attemptedCount = perTarget.length;
-    const insertCount = perTarget.filter(e => e.decision === 'would_insert').length;
-    const updateCount = perTarget.filter(e => e.decision === 'would_update').length;
-    const skipCount = perTarget.filter(e => e.decision === 'would_skip').length;
 
     let baseline = {};
     if (dbSelectFn) {
@@ -518,7 +595,6 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
             /* ignore */
         }
     }
-    const protectedBaseline = buildProtectedTableBaseline(baseline);
 
     return {
         phase: PHASE,
@@ -530,14 +606,16 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
         date: EXPECTED_SCOPE.date,
         route: EXPECTED_SCOPE.route,
         target_count: targetRegistry.length,
-        attempted_target_count: attemptedCount,
+        attempted_target_count: perTarget.length,
         valid_payload_count: validCount,
         failed_target_count: failedCount,
-        would_insert_count: insertCount,
-        would_update_count: updateCount,
-        would_skip_count: skipCount,
+        would_insert_count: perTarget.filter(e => e.decision === 'would_insert').length,
+        would_update_count: perTarget.filter(e => e.decision === 'would_update').length,
+        would_skip_count: perTarget.filter(e => e.decision === 'would_skip').length,
         per_target_preflight: perTarget,
-        protected_table_baseline: protectedBaseline,
+        protected_table_baseline: buildProtectedTableBaseline(baseline),
+        plan_only: false,
+        live_preflight_used: true,
         db_write_allowed_this_phase: false,
         raw_match_data_write_allowed_this_phase: false,
         matches_write_allowed: false,
@@ -566,9 +644,9 @@ function usage() {
         '    --concurrency=1 --retry=0 --print-body=no --save-body=no',
         '',
         'Safety:',
-        '  Phase 5.19L2 is preflight-only: recaptures 7 payloads, computes hashes,',
-        '  checks existing raw rows, and outputs would_insert/update/skip.',
-        '  No DB write. No raw_match_data write. No parser/features/training/prediction.',
+        '  Phase 5.19L2 is preflight-only: direct html_hydration fetch for 7 targets,',
+        '  computes canonical raw_data and hash per target,',
+        '  outputs would_insert/update/skip. No DB write. No body save/print.',
     ].join('\n');
 }
 
@@ -619,5 +697,7 @@ module.exports = {
     buildPerTargetPreflight,
     buildProtectedTableBaseline,
     buildRemainingRawMatchDataAcquisitionPreflight,
+    recaptureTarget,
+    buildHtmlHydrationRequest,
     runCli,
 };
