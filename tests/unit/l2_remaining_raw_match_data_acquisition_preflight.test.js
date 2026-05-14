@@ -123,8 +123,9 @@ function installExecutionGuards(t) {
             'node:https',
         ]);
         if (blocked.has(request)) throw new Error(`blocked import: ${request}`);
-        if (/ProductionHarvester|raw_match_data_local_ingest|backfill_historical_raw_match_data/i.test(request))
+        if (/ProductionHarvester|raw_match_data_local_ingest|backfill_historical_raw_match_data/i.test(request)) {
             throw new Error(`blocked import: ${request}`);
+        }
         return orig.load.call(this, request, parent, isMain);
     };
     t.after(() => {
@@ -254,13 +255,13 @@ test('buildPerTargetPreflight: all no existing rows -> would_insert', () => {
     const gate = loadModuleFresh();
     const target = { match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'A', away_team: 'B' };
     const recapture = {
-        requestUrl: 'u',
-        finalUrl: 'u',
-        httpStatus: 200,
-        bodyByteLength: 100,
-        bodySha256: 'abc',
-        hydrationParseOk: true,
-        looksLikeValidMatchDetail: true,
+        request_url: 'u',
+        final_url: 'u',
+        http_status: 200,
+        body_byte_length: 100,
+        body_sha256: 'abc',
+        hydration_parse_ok: true,
+        looks_like_valid_match_detail: true,
         payload: { matchId: '4830747' },
     };
     const entry = gate.buildPerTargetPreflight(target, recapture, null);
@@ -271,16 +272,16 @@ test('buildPerTargetPreflight: same hash existing row -> would_skip', () => {
     const gate = loadModuleFresh();
     const target = { match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'A', away_team: 'B' };
     const recapture = {
-        requestUrl: 'u',
-        finalUrl: 'u',
-        httpStatus: 200,
-        bodyByteLength: 100,
-        bodySha256: 'abc',
-        hydrationParseOk: true,
-        looksLikeValidMatchDetail: true,
+        request_url: 'u',
+        final_url: 'u',
+        http_status: 200,
+        body_byte_length: 100,
+        body_sha256: 'abc',
+        hydration_parse_ok: true,
+        looks_like_valid_match_detail: true,
         payload: { matchId: '4830747' },
     };
-    const raw = gate.buildRawDataFromPreviewPayload(recapture.payload || recapture);
+    const raw = gate.buildRawDataFromPreviewPayload(recapture.payload);
     const hash = gate.sha256CanonicalJson(raw);
     const entry = gate.buildPerTargetPreflight(target, recapture, { data_hash: hash });
     assert.equal(entry.decision, 'would_skip');
@@ -290,13 +291,13 @@ test('buildPerTargetPreflight: different hash existing row -> would_update', () 
     const gate = loadModuleFresh();
     const target = { match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'A', away_team: 'B' };
     const recapture = {
-        requestUrl: 'u',
-        finalUrl: 'u',
-        httpStatus: 200,
-        bodyByteLength: 100,
-        bodySha256: 'abc',
-        hydrationParseOk: true,
-        looksLikeValidMatchDetail: true,
+        request_url: 'u',
+        final_url: 'u',
+        http_status: 200,
+        body_byte_length: 100,
+        body_sha256: 'abc',
+        hydration_parse_ok: true,
+        looks_like_valid_match_detail: true,
         payload: { matchId: '4830747' },
     };
     const entry = gate.buildPerTargetPreflight(target, recapture, { data_hash: 'different_hash_value' });
@@ -307,19 +308,21 @@ test('buildPerTargetPreflight: different hash existing row -> would_update', () 
 test('preflight output with fake recapture yields 7 would_insert', async () => {
     const gate = loadModuleFresh();
     const fakeRecapture = async target => ({
-        requestUrl: 'https://www.fotmob.com/en-GB/match-script/?matchId=' + target.external_id,
-        finalUrl: 'https://www.fotmob.com/match/' + target.external_id,
-        httpStatus: 200,
-        contentType: 'text/html',
-        bodyByteLength: 50000,
-        bodySha256: crypto.createHash('sha256').update(target.external_id).digest('hex'),
-        hydrationParseOk: true,
-        looksLikeValidMatchDetail: true,
+        request_url: 'https://www.fotmob.com/match/' + target.external_id,
+        final_url: 'https://www.fotmob.com/match/' + target.external_id,
+        http_status: 200,
+        content_type: 'text/html',
+        body_byte_length: 50000,
+        body_sha256: crypto.createHash('sha256').update(target.external_id).digest('hex'),
+        hydration_parse_ok: true,
+        looks_like_valid_match_detail: true,
         payload: { _meta: { ver: '1' }, general: { matchId: target.external_id }, matchId: target.external_id },
     });
     const plan = await gate.buildRemainingRawMatchDataAcquisitionPreflight(validArgs(), { recaptureFn: fakeRecapture });
     assert.equal(plan.ok, true);
     assert.equal(plan.preflight_only, true);
+    assert.equal(plan.plan_only, false);
+    assert.equal(plan.live_preflight_used, true);
     assert.equal(plan.attempted_target_count, 7);
     assert.equal(plan.valid_payload_count, 7);
     assert.equal(plan.failed_target_count, 0);
@@ -343,25 +346,25 @@ test('preflight with one failed target -> failed count = 1', async () => {
         calls += 1;
         if (calls === 3) {
             return {
-                requestUrl: 'url',
-                finalUrl: 'url',
-                httpStatus: 503,
-                contentType: null,
-                bodyByteLength: 0,
-                bodySha256: null,
-                hydrationParseOk: false,
-                looksLikeValidMatchDetail: false,
+                request_url: 'url',
+                final_url: 'url',
+                http_status: 503,
+                content_type: null,
+                body_byte_length: 0,
+                body_sha256: null,
+                hydration_parse_ok: false,
+                looks_like_valid_match_detail: false,
             };
         }
         return {
-            requestUrl: 'url',
-            finalUrl: 'url',
-            httpStatus: 200,
-            contentType: 'text/html',
-            bodyByteLength: 50000,
-            bodySha256: crypto.createHash('sha256').update(target.external_id).digest('hex'),
-            hydrationParseOk: true,
-            looksLikeValidMatchDetail: true,
+            request_url: 'url',
+            final_url: 'url',
+            http_status: 200,
+            content_type: 'text/html',
+            body_byte_length: 50000,
+            body_sha256: crypto.createHash('sha256').update(target.external_id).digest('hex'),
+            hydration_parse_ok: true,
+            looks_like_valid_match_detail: true,
             payload: { matchId: target.external_id },
         };
     };
@@ -370,6 +373,14 @@ test('preflight with one failed target -> failed count = 1', async () => {
     });
     assert.equal(plan.valid_payload_count, 6);
     assert.equal(plan.failed_target_count, 1);
+});
+
+test('buildHtmlHydrationRequest returns correct URL', () => {
+    const gate = loadModuleFresh();
+    const req = gate.buildHtmlHydrationRequest('4830747');
+    assert.equal(req.method, 'GET');
+    assert.match(req.url, /fotmob\.com\/match\/4830747/);
+    assert.equal(req.route, 'html_hydration');
 });
 
 test('runCli help returns usage', async () => {
