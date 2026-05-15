@@ -5,7 +5,9 @@
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
 const {
     fetchFotMobRawDetail,
-    sha256CanonicalJson,
+    HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
+    sha256StableRawPayload,
+    validateCanonicalRawDataShape,
 } = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
 
 const PHASE = 'PHASE5_20L2C_CONTROLLED_REMAINING_RAW_MATCH_DATA_WRITE';
@@ -132,7 +134,24 @@ function parseBaselineRawDataHashes(value) {
     if (value && typeof value === 'object' && !Array.isArray(value)) {
         return Object.fromEntries(
             Object.entries(value)
-                .map(([externalId, hash]) => [normalizeText(externalId), normalizeText(hash).toLowerCase()])
+                .map(([externalId, payload]) => {
+                    if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
+                        return [
+                            normalizeText(externalId),
+                            {
+                                hash: normalizeText(payload.hash).toLowerCase(),
+                                strategy: normalizeText(payload.strategy) || null,
+                            },
+                        ];
+                    }
+                    return [
+                        normalizeText(externalId),
+                        {
+                            hash: normalizeText(payload).toLowerCase(),
+                            strategy: null,
+                        },
+                    ];
+                })
                 .filter(([externalId]) => Boolean(externalId))
         );
     }
@@ -147,12 +166,21 @@ function parseBaselineRawDataHashes(value) {
     for (const segment of segments) {
         const separatorIndex = segment.indexOf(':');
         if (separatorIndex === -1) {
-            parsed[`__invalid__${Object.keys(parsed).length}`] = normalizeText(segment).toLowerCase();
+            parsed[`__invalid__${Object.keys(parsed).length}`] = {
+                hash: normalizeText(segment).toLowerCase(),
+                strategy: null,
+            };
             continue;
         }
         const externalId = normalizeText(segment.slice(0, separatorIndex));
-        const hash = normalizeText(segment.slice(separatorIndex + 1)).toLowerCase();
-        if (externalId) parsed[externalId] = hash;
+        const rawValue = normalizeText(segment.slice(separatorIndex + 1));
+        const [hashPart, strategyPart] = rawValue.split('@');
+        if (externalId) {
+            parsed[externalId] = {
+                hash: normalizeText(hashPart).toLowerCase(),
+                strategy: normalizeText(strategyPart) || null,
+            };
+        }
     }
 
     return parsed;
@@ -426,7 +454,9 @@ function validateWriteInput(input = {}) {
         }
     }
     for (const externalId of EXPECTED_EXTERNAL_IDS) {
-        const hash = value.baselineRawDataHashes[externalId];
+        const baseline = value.baselineRawDataHashes[externalId];
+        const hash = baseline && typeof baseline === 'object' ? baseline.hash : null;
+        const strategy = baseline && typeof baseline === 'object' ? baseline.strategy : null;
         if (!hash) {
             errors.push(`missing baseline raw_data_hash for external_id ${externalId}`);
             continue;
@@ -435,8 +465,13 @@ function validateWriteInput(input = {}) {
             errors.push(`invalid baseline raw_data_hash format for external_id ${externalId}`);
             continue;
         }
-        if (hash !== BASELINE_RAW_DATA_HASHES[externalId]) {
-            errors.push(`baseline raw_data_hash mismatch for external_id ${externalId}`);
+        if (!strategy) {
+            errors.push(`missing baseline hash_strategy for external_id ${externalId}`);
+            continue;
+        }
+        if (strategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1) {
+            errors.push(`baseline hash_strategy mismatch for external_id ${externalId}`);
+            continue;
         }
     }
 
@@ -486,7 +521,17 @@ function validateWriteInput(input = {}) {
 function getRemainingTargetRegistry(baselineRawDataHashes = BASELINE_RAW_DATA_HASHES) {
     return REMAINING_TARGET_REGISTRY.map(target => ({
         ...target,
-        baseline_raw_data_hash: baselineRawDataHashes[target.external_id] || null,
+        baseline_raw_data_hash:
+            (baselineRawDataHashes[target.external_id] &&
+                typeof baselineRawDataHashes[target.external_id] === 'object' &&
+                baselineRawDataHashes[target.external_id].hash) ||
+            baselineRawDataHashes[target.external_id] ||
+            null,
+        baseline_hash_strategy:
+            (baselineRawDataHashes[target.external_id] &&
+                typeof baselineRawDataHashes[target.external_id] === 'object' &&
+                baselineRawDataHashes[target.external_id].strategy) ||
+            (baselineRawDataHashes[target.external_id] ? HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1 : null),
     }));
 }
 
@@ -518,19 +563,6 @@ async function recaptureTarget(target, fetcherDeps = {}) {
     );
 }
 
-function validateRawDataShape(rawData = {}) {
-    const errors = [];
-    if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
-        return ['raw_data must be a plain object'];
-    }
-    for (const key of ['_meta', 'content', 'general', 'header', 'matchId']) {
-        if (!Object.prototype.hasOwnProperty.call(rawData, key)) {
-            errors.push(`raw_data missing ${key}`);
-        }
-    }
-    return errors;
-}
-
 function buildPerTargetRecapture(target, recaptureResult = {}) {
     const rawData =
         recaptureResult.raw_data &&
@@ -538,16 +570,24 @@ function buildPerTargetRecapture(target, recaptureResult = {}) {
         !Array.isArray(recaptureResult.raw_data)
             ? JSON.parse(JSON.stringify(recaptureResult.raw_data))
             : null;
-    const rawDataHash = rawData
-        ? sha256CanonicalJson(rawData)
-        : normalizeText(recaptureResult.raw_data_hash).toLowerCase() || null;
-    const rawDataErrors = rawData ? validateRawDataShape(rawData) : ['raw_data missing from recapture result'];
+    const rawDataHash =
+        normalizeText(
+            recaptureResult.raw_data_hash || recaptureResult.data_hash || recaptureResult.stable_raw_payload_hash
+        ).toLowerCase() ||
+        (recaptureResult.stable_raw_payload ? sha256StableRawPayload(recaptureResult.stable_raw_payload) : null);
+    const rawDataErrors = rawData ? validateCanonicalRawDataShape(rawData) : ['raw_data missing from recapture result'];
     const validPayload =
         recaptureResult.ok === true &&
         recaptureResult.hydration_parse_ok === true &&
         recaptureResult.looks_like_valid_match_detail === true &&
         rawDataErrors.length === 0;
-    const hashMatchesBaseline = validPayload && rawDataHash === target.baseline_raw_data_hash;
+    const hashStrategy = recaptureResult.hash_strategy || HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1;
+    const baselineStrategy = target.baseline_hash_strategy || null;
+    const hashMatchesBaseline =
+        validPayload &&
+        baselineStrategy === HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1 &&
+        hashStrategy === HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1 &&
+        rawDataHash === target.baseline_raw_data_hash;
 
     return {
         match_id: target.match_id,
@@ -563,11 +603,19 @@ function buildPerTargetRecapture(target, recaptureResult = {}) {
         body_sha256: recaptureResult.body_sha256 || null,
         hydration_parse_ok: recaptureResult.hydration_parse_ok === true,
         looks_like_valid_match_detail: recaptureResult.looks_like_valid_match_detail === true,
+        hash_strategy: hashStrategy,
+        baseline_hash_strategy: baselineStrategy,
         baseline_raw_data_hash: target.baseline_raw_data_hash,
         raw_data_hash: rawDataHash,
         hash_matches_baseline: hashMatchesBaseline,
         existing_raw_match_data_found: false,
-        decision: !validPayload ? 'invalid_payload' : hashMatchesBaseline ? 'would_insert' : 'hash_drift',
+        decision: !validPayload
+            ? 'invalid_payload'
+            : baselineStrategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1
+              ? 'baseline_strategy_mismatch'
+              : hashMatchesBaseline
+                ? 'would_insert'
+                : 'hash_drift',
         body_printed: false,
         body_saved: false,
         browser_used: false,
@@ -943,6 +991,7 @@ function buildControlledRemainingWriteResult({
         hash_match_count: hashMatchCount,
         hash_drift_count: hashDriftCount,
         invalid_payload_count: invalidPayloadCount,
+        hash_strategy: HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
         existing_raw_match_data_count: existingRawMatchDataCount,
         inserted_count: insertedCount,
         updated_count: updatedCount,
@@ -1050,6 +1099,22 @@ async function executeRemainingRawMatchDataWrite(input = {}, dependencies = {}) 
                 controlledError:
                     entry.controlled_error ||
                     `INVALID_PAYLOAD_FOR_EXTERNAL_ID:${entry.external_id}:${entry.raw_data_errors.join('; ')}`,
+            });
+        }
+
+        if (entry.baseline_hash_strategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1) {
+            return buildControlledRemainingWriteResult({
+                input: value,
+                executionCompleted: false,
+                targetCount: targetRegistry.length,
+                attemptedTargetCount: perTargetRecapture.length,
+                validPayloadCount: perTargetRecapture.filter(item => item.valid_payload === true).length,
+                hashMatchCount: 0,
+                hashDriftCount: 0,
+                invalidPayloadCount: perTargetRecapture.filter(item => item.valid_payload !== true).length,
+                perTargetWrite: perTargetRecapture,
+                reason: 'baseline_strategy_mismatch',
+                controlledError: `BASELINE_HASH_STRATEGY_MISMATCH:${entry.external_id}: expected ${HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1}, got ${entry.baseline_hash_strategy || 'missing'}; run Phase 5.20L2E stable-hash preflight refresh`,
             });
         }
 
@@ -1308,7 +1373,7 @@ function usage() {
         '    --route=html_hydration \\',
         '    --remaining-external-ids=4830747,4830748,4830750,4830751,4830752,4830753,4830754 \\',
         '    --expected-target-count=7 \\',
-        '    --baseline-raw-data-hashes=4830747:435296093b7d73ec822262c00a22903fa1d28d260a5a2b982b0bf8006e191728,4830748:e98b0adb557d54ba0ada53ff836a5f6eea2629a0ed06389b78f23d83fbe617e5,4830750:5c02a11384459581821026aa2c85677e05877f219e158e5f733aef2ddb484880,4830751:b391b896c3260446b7185d81b31949ac47ad50cf956f733c87920f36579aed0f,4830752:dfe719cae63e09710b04aba411bf74b9662c554aff284a1f414fa255ee5cd93f,4830753:6b4438453fa7d0ceb99c80fb736d3cb7dcc51d5593b4ca48bb1ba682fe78fe4f,4830754:c843897451773c8317111a4c010da59223f1bb98cb7ce12253eafa4f57f550f7 \\',
+        '    --baseline-raw-data-hashes=4830747:435296093b7d73ec822262c00a22903fa1d28d260a5a2b982b0bf8006e191728@stable_raw_payload_v1,4830748:e98b0adb557d54ba0ada53ff836a5f6eea2629a0ed06389b78f23d83fbe617e5@stable_raw_payload_v1,4830750:5c02a11384459581821026aa2c85677e05877f219e158e5f733aef2ddb484880@stable_raw_payload_v1,4830751:b391b896c3260446b7185d81b31949ac47ad50cf956f733c87920f36579aed0f@stable_raw_payload_v1,4830752:dfe719cae63e09710b04aba411bf74b9662c554aff284a1f414fa255ee5cd93f@stable_raw_payload_v1,4830753:6b4438453fa7d0ceb99c80fb736d3cb7dcc51d5593b4ca48bb1ba682fe78fe4f@stable_raw_payload_v1,4830754:c843897451773c8317111a4c010da59223f1bb98cb7ce12253eafa4f57f550f7@stable_raw_payload_v1 \\',
         '    --data-version=fotmob_html_hyd_v1 \\',
         '    --network-authorization=yes --live-preview-authorization=yes --final-db-write-confirmation=yes \\',
         '    --allow-db-write=yes --allow-raw-match-data-write=yes --allow-matches-write=no \\',
@@ -1317,7 +1382,7 @@ function usage() {
         '',
         'Safety:',
         '  Phase 5.20L2C performs one controlled recapture pass for the remaining 7 targets,',
-        '  compares every raw_data_hash with the Phase 5.20L2B baselines,',
+        '  compares every stable raw_data_hash with stable_raw_payload_v1 baselines,',
         '  and writes only raw_match_data inside one transaction.',
     ].join('\n');
 }

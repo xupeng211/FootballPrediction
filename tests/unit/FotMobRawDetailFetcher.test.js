@@ -59,6 +59,19 @@ function makeFakeParser(matchId) {
     };
 }
 
+function makePayload(overrides = {}) {
+    return {
+        content: {
+            matchFacts: {},
+            stats: [{ title: 'Top stats', stats: [{ key: 'shotsOnTarget', home: 2, away: 3 }] }],
+        },
+        general: { matchId: '4830747', homeTeam: { name: 'Home FC' }, awayTeam: { name: 'Away FC' } },
+        header: { teams: [{ name: 'Home FC' }, { name: 'Away FC' }] },
+        matchId: '4830747',
+        ...overrides,
+    };
+}
+
 function installGuards(t) {
     const orig = {};
     const fail = name => () => {
@@ -129,6 +142,12 @@ test('externalId non-numeric fails', () => {
     const fetcher = loadFresh();
     const v = fetcher.validateFetchInput({ externalId: 'abc' });
     assert.equal(v.ok, false);
+});
+test('matchId non-string fails', () => {
+    const fetcher = loadFresh();
+    const v = fetcher.validateFetchInput({ externalId: '4830747', matchId: 4830747 });
+    assert.equal(v.ok, false);
+    assert.match(v.errors.join(';'), /matchId must be a string/);
 });
 test('route non-html_hydration fails', () => {
     const fetcher = loadFresh();
@@ -236,7 +255,7 @@ test('raw_data does NOT contain full HTML body', async t => {
     assert.doesNotMatch(rawStr, /__NEXT_DATA__/);
     assert.doesNotMatch(rawStr, /<!DOCTYPE/);
 });
-test('raw_data_hash stable', async t => {
+test('raw_data_hash stable and excludes fetched_at metadata drift', async t => {
     installGuards(t);
     const fetcher = loadFresh();
     const html = fake200Html('4830747');
@@ -248,10 +267,121 @@ test('raw_data_hash stable', async t => {
     );
     const r2 = await fetcher.fetchFotMobRawDetail(
         { externalId: '4830747' },
-        { fetchFn: fn2, parser: makeFakeParser(), now: () => '2026-01-01T00:00:00Z' }
+        { fetchFn: fn2, parser: makeFakeParser(), now: () => '2026-01-01T00:01:00Z' }
     );
     assert.equal(r1.raw_data_hash, r2.raw_data_hash);
+    assert.notEqual(r1.raw_data_with_meta_hash, r2.raw_data_with_meta_hash);
     assert.equal(r1.raw_data_hash.length, 64);
+});
+test('stable hash excludes fetched_at/collected_at/body_sha256/url/http metadata', () => {
+    const fetcher = loadFresh();
+    const stablePayload = fetcher.buildStableRawPayload(makePayload(), { externalId: '4830747' }, {});
+    const stableHash = fetcher.sha256StableRawPayload(stablePayload);
+    const rawA = fetcher.buildRawDataFromStablePayload(
+        stablePayload,
+        fetcher.buildFetchMetadata({
+            requestUrl: 'https://www.fotmob.com/match/4830747',
+            finalUrl: 'https://www.fotmob.com/matches/auxerre-vs-nice/2sy6tc',
+            httpStatus: 200,
+            contentType: 'text/html; charset=utf-8',
+            bodyByteLength: 1000,
+            bodySha256: 'body-a',
+            fetchedAt: '2026-05-15T10:00:00.000Z',
+            dataHash: stableHash,
+            matchIdSource: 'payload.matchId',
+        })
+    );
+    const rawB = fetcher.buildRawDataFromStablePayload(
+        stablePayload,
+        fetcher.buildFetchMetadata({
+            requestUrl: 'https://www.fotmob.com/match/4830747?ref=drift',
+            finalUrl: 'https://www.fotmob.com/matches/auxerre-vs-nice/2sy6tc?tab=stats',
+            httpStatus: 206,
+            contentType: 'text/html; charset=iso-8859-1',
+            bodyByteLength: 2000,
+            bodySha256: 'body-b',
+            fetchedAt: '2026-05-15T10:01:00.000Z',
+            dataHash: stableHash,
+            matchIdSource: 'payload.matchId',
+        })
+    );
+    const hashA = fetcher.computeRawDetailHashes(stablePayload, rawA);
+    const hashB = fetcher.computeRawDetailHashes(stablePayload, rawB);
+    assert.equal(hashA.raw_data_hash, hashB.raw_data_hash);
+    assert.equal(hashA.data_hash, hashB.data_hash);
+    assert.notEqual(hashA.raw_data_with_meta_hash, hashB.raw_data_with_meta_hash);
+});
+test('stable hash changes when stable content changes', () => {
+    const fetcher = loadFresh();
+    const payloadA = fetcher.buildStableRawPayload(makePayload(), { externalId: '4830747' }, {});
+    const payloadB = fetcher.buildStableRawPayload(
+        makePayload({
+            content: {
+                matchFacts: {},
+                stats: [{ title: 'Top stats', stats: [{ key: 'shotsOnTarget', home: 4, away: 3 }] }],
+            },
+        }),
+        { externalId: '4830747' },
+        {}
+    );
+    assert.notEqual(fetcher.sha256StableRawPayload(payloadA), fetcher.sha256StableRawPayload(payloadB));
+});
+test('matchId fallback uses input externalId when payload matchId missing and markers pass', () => {
+    const fetcher = loadFresh();
+    const payload = makePayload({
+        matchId: undefined,
+        general: { homeTeam: { name: 'Auxerre' }, awayTeam: { name: 'Nice' } },
+    });
+    const resolved = fetcher.normalizeMatchId(
+        payload,
+        { externalId: '4830747', homeTeam: 'Auxerre', awayTeam: 'Nice' },
+        {
+            requestUrl: 'https://www.fotmob.com/match/4830747',
+            finalUrl: 'https://www.fotmob.com/matches/auxerre-vs-nice/2sy6tc',
+        }
+    );
+    assert.equal(resolved.matchId, '4830747');
+    assert.equal(resolved.matchIdSource, 'input_external_id_fallback');
+});
+test('matchId unresolved when payload matchId missing and markers fail', () => {
+    const fetcher = loadFresh();
+    const payload = { content: {}, general: {}, header: {} };
+    const resolved = fetcher.normalizeMatchId(
+        payload,
+        { externalId: 'abc', homeTeam: 'Auxerre', awayTeam: 'Nice' },
+        {
+            requestUrl: 'https://www.fotmob.com/match/unknown',
+            finalUrl: 'https://www.fotmob.com/matches/unknown',
+        }
+    );
+    assert.equal(resolved.matchId, null);
+    assert.equal(resolved.matchIdSource, 'unresolved');
+});
+test('looks_like_valid_match_detail fails if matchId cannot be established', () => {
+    const fetcher = loadFresh();
+    const raw = fetcher.buildRawDataFromStablePayload(
+        { content: {}, general: {}, header: {}, matchId: null },
+        fetcher.buildFetchMetadata({ dataHash: 'x', matchIdSource: 'unresolved' })
+    );
+    assert.equal(
+        fetcher.looksLikeValidRawDetail(raw, { externalId: '4830747', homeTeam: 'Home FC', awayTeam: 'Away FC' }),
+        false
+    );
+});
+test('hash_strategy is stable_raw_payload_v1 and raw_data_hash equals stable payload hash', async t => {
+    installGuards(t);
+    const fetcher = loadFresh();
+    const result = await fetcher.fetchFotMobRawDetail(
+        { externalId: '4830747', homeTeam: 'Home FC', awayTeam: 'Away FC' },
+        {
+            fetchFn: fakeFetch(200, fake200Html('4830747')),
+            parser: makeFakeParser(),
+            now: () => '2026-05-15T10:00:00.000Z',
+        }
+    );
+    assert.equal(result.hash_strategy, 'stable_raw_payload_v1');
+    assert.equal(result.raw_data_hash, result.stable_raw_payload_hash);
+    assert.equal(result.data_hash, result.stable_raw_payload_hash);
 });
 test('canonicalizeJson sorts object keys recursively', () => {
     const fetcher = loadFresh();
@@ -406,6 +536,49 @@ test('extractHydrationPayload fails with empty HTML', () => {
     const fetcher = loadFresh();
     const r = fetcher.extractHydrationPayload('', makeRealParser());
     assert.equal(r.ok, false);
+});
+test('extractHydrationPayload surfaces extract and transform failures', () => {
+    const fetcher = loadFresh();
+    const extractFail = fetcher.extractHydrationPayload('<html></html>', {
+        extractFromHtml: () => {
+            throw new Error('boom-extract');
+        },
+        transformToApiFormat: () => ({}),
+    });
+    assert.equal(extractFail.ok, false);
+    assert.match(extractFail.error, /EXTRACT_ERROR:boom-extract/);
+
+    const transformFail = fetcher.extractHydrationPayload('<html></html>', {
+        extractFromHtml: () => ({ success: true, data: { ok: true } }),
+        transformToApiFormat: () => {
+            throw new Error('boom-transform');
+        },
+    });
+    assert.equal(transformFail.ok, false);
+    assert.match(transformFail.error, /TRANSFORM_ERROR:boom-transform/);
+});
+test('extractHydrationPayload rejects empty transformed object shape', () => {
+    const fetcher = loadFresh();
+    const r = fetcher.extractHydrationPayload('<html></html>', {
+        extractFromHtml: () => ({ success: true, data: { ok: true } }),
+        transformToApiFormat: () => null,
+    });
+    assert.equal(r.ok, false);
+    assert.match(r.error, /TRANSFORM_FAILED/);
+});
+test('validateCanonicalRawDataShape reports missing keys and invalid flags', () => {
+    const fetcher = loadFresh();
+    assert.deepEqual(fetcher.validateCanonicalRawDataShape(null), ['raw_data must be a plain object']);
+    const errors = fetcher.validateCanonicalRawDataShape({
+        _meta: { full_html_body_stored: true, http_response_string_stored: true },
+        content: {},
+        matchId: 'x',
+    });
+    assert.match(errors.join(';'), /raw_data missing general/);
+    assert.match(errors.join(';'), /raw_data missing header/);
+    assert.match(errors.join(';'), /raw_data.matchId must be numeric/);
+    assert.match(errors.join(';'), /full_html_body_stored must be false/);
+    assert.match(errors.join(';'), /http_response_string_stored must be false/);
 });
 test('fetcher result does NOT include full HTML body', async t => {
     installGuards(t);

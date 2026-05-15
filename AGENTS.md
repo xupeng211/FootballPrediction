@@ -64,6 +64,7 @@
 - Phase 5.18L2 授权剩余 7 场 seeded matches（4830747-4830754）进入 future controlled raw_match_data acquisition；本阶段是 authorization-only，不触网、不写 DB、不写 raw_match_data；parser/features/training/prediction 仍 deferred；剩余 raw acquisition 必须先完成 preflight 才能进入 controlled write。
 - Phase 5.19L2 允许对剩余 7 场执行 controlled live preflight，通过 safe html_hydration route recapture exact payload；必须输出 would_insert/would_update/would_skip per target；不得写 DB 或 raw_match_data；parser/features/training/prediction 仍 deferred；controlled write 必须留到 Phase 5.20L2。
 - Phase 5.20L2C 是剩余 7 场 seeded matches（4830747-4830754）唯一允许的 `raw_match_data` 写入路径；它必须使用 `FotMobRawDetailFetcher` 逐场 recapture，并在写入前把每个 `raw_data_hash` 与 Phase 5.20L2B baseline 对比，任何 hash drift 都必须停止且不得写 DB；它只能单事务写入 `raw_match_data` 7 行，不得写 `matches`、features、training 或 predictions，不得保存或打印完整 body/raw_data。
+- Phase 5.20L2D 起，FotMob raw detail `data_hash` / `raw_data_hash` 必须使用 `stable_raw_payload_v1`：hash gate 只能比较稳定 payload hash，`_meta.fetched_at`、`_meta.fetch_body_sha256`、request/final URL、HTTP metadata 和其他 volatile fetch metadata 不得参与 `data_hash`；`raw_data` 可以保留 `_meta`，但 write 在 baseline `hash_strategy` 缺失或不匹配时必须停止并等待新的 stable preflight baseline。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 

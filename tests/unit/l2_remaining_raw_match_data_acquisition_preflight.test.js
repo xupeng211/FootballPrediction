@@ -266,6 +266,7 @@ test('buildPerTargetPreflight: all no existing rows -> would_insert', () => {
     };
     const entry = gate.buildPerTargetPreflight(target, recapture, null);
     assert.equal(entry.decision, 'would_insert');
+    assert.equal(entry.hash_strategy, 'stable_raw_payload_v1');
     assert.equal(entry.existing_raw_match_data_found, false);
 });
 test('buildPerTargetPreflight: same hash existing row -> would_skip', () => {
@@ -282,7 +283,7 @@ test('buildPerTargetPreflight: same hash existing row -> would_skip', () => {
         payload: { matchId: '4830747' },
     };
     const raw = gate.buildRawDataFromPreviewPayload(recapture.payload);
-    const hash = gate.sha256CanonicalJson(raw);
+    const hash = raw._meta.data_hash;
     const entry = gate.buildPerTargetPreflight(target, recapture, { data_hash: hash });
     assert.equal(entry.decision, 'would_skip');
     assert.equal(entry.existing_raw_match_data_found, true);
@@ -320,6 +321,7 @@ test('preflight output with fake recapture yields 7 would_insert', async () => {
     });
     const plan = await gate.buildRemainingRawMatchDataAcquisitionPreflight(validArgs(), { recaptureFn: fakeRecapture });
     assert.equal(plan.ok, true);
+    assert.equal(plan.hash_strategy, 'stable_raw_payload_v1');
     assert.equal(plan.preflight_only, true);
     assert.equal(plan.plan_only, false);
     assert.equal(plan.live_preflight_used, true);
@@ -337,6 +339,70 @@ test('preflight output with fake recapture yields 7 would_insert', async () => {
     assert.equal(plan.parser_features_allowed, false);
     assert.equal(plan.training_allowed, false);
     assert.ok(plan.protected_table_baseline);
+});
+
+test('preflight stable hash does not drift when only metadata changes', () => {
+    const gate = loadModuleFresh();
+    const target = { match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'Auxerre', away_team: 'Nice' };
+    const recaptureA = {
+        request_url: 'https://www.fotmob.com/match/4830747',
+        final_url: 'https://www.fotmob.com/matches/auxerre-vs-nice/2sy6tc',
+        http_status: 200,
+        content_type: 'text/html',
+        body_byte_length: 100,
+        body_sha256: 'body-a',
+        hydration_parse_ok: true,
+        looks_like_valid_match_detail: true,
+        hash_strategy: 'stable_raw_payload_v1',
+        payload: {
+            _meta: { fetched_at: '2026-05-15T10:00:00.000Z' },
+            general: { matchId: '4830747' },
+            header: {},
+            content: {},
+            matchId: '4830747',
+        },
+    };
+    const recaptureB = {
+        ...recaptureA,
+        body_sha256: 'body-b',
+        payload: {
+            ...recaptureA.payload,
+            _meta: {
+                fetched_at: '2026-05-15T10:01:00.000Z',
+                request_url: 'https://www.fotmob.com/match/4830747?ref=drift',
+            },
+        },
+    };
+    const entryA = gate.buildPerTargetPreflight(target, recaptureA, null);
+    const entryB = gate.buildPerTargetPreflight(target, recaptureB, null);
+    assert.equal(entryA.raw_data_hash, entryB.raw_data_hash);
+});
+
+test('preflight matchId fallback is preserved at top level', () => {
+    const gate = loadModuleFresh();
+    const target = { match_id: '53_20252026_4830747', external_id: '4830747', home_team: 'Auxerre', away_team: 'Nice' };
+    const entry = gate.buildPerTargetPreflight(
+        target,
+        {
+            request_url: 'https://www.fotmob.com/match/4830747',
+            final_url: 'https://www.fotmob.com/matches/auxerre-vs-nice/2sy6tc',
+            http_status: 200,
+            content_type: 'text/html',
+            body_byte_length: 100,
+            body_sha256: 'body-a',
+            hydration_parse_ok: true,
+            looks_like_valid_match_detail: true,
+            hash_strategy: 'stable_raw_payload_v1',
+            payload: {
+                content: {},
+                general: { homeTeam: { name: 'Auxerre' }, awayTeam: { name: 'Nice' } },
+                header: { teams: [{ name: 'Auxerre' }, { name: 'Nice' }] },
+            },
+        },
+        null
+    );
+    assert.equal(entry.match_id_source, 'input_external_id_fallback');
+    assert.equal(entry.hash_strategy, 'stable_raw_payload_v1');
 });
 
 test('preflight with one failed target -> failed count = 1', async () => {
@@ -373,6 +439,32 @@ test('preflight with one failed target -> failed count = 1', async () => {
     });
     assert.equal(plan.valid_payload_count, 6);
     assert.equal(plan.failed_target_count, 1);
+});
+test('preflight recapture exception is surfaced as failed entry', async () => {
+    const gate = loadModuleFresh();
+    let calls = 0;
+    const plan = await gate.buildRemainingRawMatchDataAcquisitionPreflight(validArgs(), {
+        recaptureFn: async target => {
+            calls += 1;
+            if (calls === 1) {
+                throw new Error(`boom-${target.external_id}`);
+            }
+            return {
+                request_url: 'url',
+                final_url: 'url',
+                http_status: 200,
+                content_type: 'text/html',
+                body_byte_length: 1,
+                body_sha256: 'ok',
+                hydration_parse_ok: true,
+                looks_like_valid_match_detail: true,
+                payload: { matchId: target.external_id },
+            };
+        },
+    });
+    assert.equal(plan.failed_target_count, 1);
+    assert.equal(plan.per_target_preflight[0].decision, 'failed');
+    assert.match(plan.per_target_preflight[0].reason, /boom-4830747/);
 });
 
 test('buildHtmlHydrationRequest returns correct URL', () => {
