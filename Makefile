@@ -13,7 +13,7 @@
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
-        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-training-dataset-dry-run data-training-dataset-export \
+        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
@@ -311,6 +311,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-raw-match-data-completeness-audit SOURCE=fotmob EXPECTED_RAW_COUNT=10 EXPECTED_SEEDED_RAW_COUNT=8 ALLOW_NETWORK=no ALLOW_DB_WRITE=no PRINT_FULL_RAW_DATA=no SAVE_FULL_RAW_DATA=no  # Phase 5.21L2A SELECT-only completeness/source fidelity audit, layered by data_version/provenance, no parser/features/training/prediction"
 	@echo "  make data-html-hydration-source-fidelity-live-compare SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830747 EXTERNAL_ID=4830747 HOME_TEAM=Auxerre AWAY_TEAM=Nice NETWORK_AUTHORIZATION=yes LIVE_COMPARE_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no PRINT_FULL_JSON=no SAVE_FULL_JSON=no  # Phase 5.21L2B single-target live source fidelity compare, no DB/raw write, no parser/features/training/prediction"
 	@echo "  make data-raw-storage-strategy-revision-plan SOURCE=fotmob CURRENT_VERSION=fotmob_html_hyd_v1 RECOMMENDED_VERSION=fotmob_pageprops_v2 RECOMMENDED_HASH_STRATEGY=stable_pageprops_payload_v1 ALLOW_NETWORK=no ALLOW_DB_WRITE=no ALLOW_MIGRATION=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2C planning-only: recommends full pageProps raw v2, transformed payload derived/helper, no DB write/parser/features/training/prediction"
+	@echo "  make data-pageprops-v2-no-write-preview SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830747 EXTERNAL_ID=4830747 HOME_TEAM=Auxerre AWAY_TEAM=Nice CANDIDATE_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 NETWORK_AUTHORIZATION=yes PAGEPROPS_V2_PREVIEW_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no PRINT_FULL_JSON=no SAVE_FULL_JSON=no  # Phase 5.21L2D single-target pageProps v2 no-write preview, candidate in memory only"
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
@@ -353,6 +354,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  Phase 5.21L2A raw_match_data completeness audit is SELECT-only, layered by data_version/provenance, no network/DB write/parser/features/training/prediction, and checks whether FotMob raw_data is complete enough or transformed/lossy."
 	@echo "  Phase 5.21L2B live source fidelity compare is single-target only: compare live __NEXT_DATA__.props.pageProps with stored raw_data path coverage, no DB/raw write, no parser/features/training/prediction."
 	@echo "  Phase 5.21L2C raw storage strategy planning is planning-only: future canonical raw should prefer fotmob_pageprops_v2, transformed payload is derived/helper, no rewrite/DB write/parser/features/training/prediction."
+	@echo "  Phase 5.21L2D pageProps v2 no-write preview is single-target only: constructs fotmob_pageprops_v2 in memory, computes stable_pageprops_payload_v1 hash, compares v2 candidate vs existing v1, no DB/raw write/parser/features/training/prediction."
 	@echo "  Phase 5.20L2D hash stability audit is local-only: verify stable_raw_payload_v1, keep volatile _meta out of data_hash, no network, no DB writes."
 	@echo "  Remaining seeded matches require separate authorization, preflight, and controlled write phases."
 	@echo "  Phase 5.11L2 direct matchDetails endpoint returned 403; do not retry or change headers/routes before route audit authorization."
@@ -1118,10 +1120,39 @@ data-raw-storage-strategy-revision-plan: ## Run Phase 5.21L2C raw storage strate
 		--recommended-hash-strategy="$(RECOMMENDED_HASH_STRATEGY)" \
 		--allow-network="$(or $(ALLOW_NETWORK),no)" \
 		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
-		--allow-migration="$(or $(ALLOW_MIGRATION),no)" \
+			--allow-migration="$(or $(ALLOW_MIGRATION),no)" \
+			--allow-parser-features="$(or $(ALLOW_PARSER_FEATURES),no)" \
+			--allow-training="$(or $(ALLOW_TRAINING),no)" \
+			--allow-prediction="$(or $(ALLOW_PREDICTION),no)"
+
+data-pageprops-v2-no-write-preview: ## Run Phase 5.21L2D single-target pageProps v2 no-write preview. No DB/raw write or full body/json print/save.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(ROUTE)" ] || [ -z "$(MATCH_ID)" ] || [ -z "$(EXTERNAL_ID)" ] || [ -z "$(HOME_TEAM)" ] || [ -z "$(AWAY_TEAM)" ] || [ -z "$(CANDIDATE_VERSION)" ] || [ -z "$(HASH_STRATEGY)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830747 EXTERNAL_ID=4830747 HOME_TEAM=Auxerre AWAY_TEAM=Nice CANDIDATE_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/pageprops_v2_no_write_preview.js \
+		--source="$(SOURCE)" \
+		--route="$(ROUTE)" \
+		--match-id="$(MATCH_ID)" \
+		--external-id="$(EXTERNAL_ID)" \
+		--home-team="$(HOME_TEAM)" \
+		--away-team="$(AWAY_TEAM)" \
+		--candidate-version="$(CANDIDATE_VERSION)" \
+		--hash-strategy="$(HASH_STRATEGY)" \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),no)" \
+		--pageprops-v2-preview-authorization="$(or $(PAGEPROPS_V2_PREVIEW_AUTHORIZATION),no)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
 		--allow-parser-features="$(or $(ALLOW_PARSER_FEATURES),no)" \
 		--allow-training="$(or $(ALLOW_TRAINING),no)" \
-		--allow-prediction="$(or $(ALLOW_PREDICTION),no)"
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
+		--concurrency="$(or $(CONCURRENCY),1)" \
+		--retry="$(or $(RETRY),0)" \
+		--print-body="$(or $(PRINT_BODY),no)" \
+		--save-body="$(or $(SAVE_BODY),no)" \
+		--print-full-json="$(or $(PRINT_FULL_JSON),no)" \
+		--save-full-json="$(or $(SAVE_FULL_JSON),no)"
 
 data-training-dataset-dry-run: ## Run SELECT-only training dataset readiness audit. Does not train, export, or write DB.
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/dataset_status_audit.js
