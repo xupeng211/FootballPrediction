@@ -74,7 +74,7 @@ function loadModuleFresh() {
 }
 
 function baselineHashString(map = BASELINE_MAP) {
-    return EXPECTED_IDS.map(externalId => `${externalId}:${map[externalId]}`).join(',');
+    return EXPECTED_IDS.map(externalId => `${externalId}:${map[externalId]}@stable_raw_payload_v1`).join(',');
 }
 
 function validArgs(overrides = {}) {
@@ -161,6 +161,11 @@ function fakeRawData(target) {
             parser: 'NextDataParser',
             data_version: 'fotmob_html_hyd_v1',
             fetched_at: '2026-05-15T00:00:00.000Z',
+            full_html_body_stored: false,
+            http_response_string_stored: false,
+            hash_strategy: 'stable_raw_payload_v1',
+            data_hash: BASELINE_MAP[target.external_id],
+            match_id_source: 'payload.matchId',
         },
         content: {
             stats: [{ title: 'Top stats', stats: [] }],
@@ -183,7 +188,11 @@ function fakeRecapture(target, gate, overrides = {}) {
     const rawDataHash =
         overrides.rawDataHash ||
         gate.buildPerTargetRecapture(
-            { ...target, baseline_raw_data_hash: BASELINE_MAP[target.external_id] },
+            {
+                ...target,
+                baseline_raw_data_hash: BASELINE_MAP[target.external_id],
+                baseline_hash_strategy: 'stable_raw_payload_v1',
+            },
             {
                 route: 'html_hydration',
                 request_url: `https://www.fotmob.com/match/${target.external_id}`,
@@ -195,6 +204,13 @@ function fakeRecapture(target, gate, overrides = {}) {
                 ok: true,
                 hydration_parse_ok: true,
                 looks_like_valid_match_detail: true,
+                hash_strategy: 'stable_raw_payload_v1',
+                stable_raw_payload: {
+                    content: rawData.content,
+                    general: rawData.general,
+                    header: rawData.header,
+                    matchId: rawData.matchId,
+                },
                 raw_data: rawData,
                 raw_data_hash: null,
             }
@@ -210,6 +226,13 @@ function fakeRecapture(target, gate, overrides = {}) {
         ok: true,
         hydration_parse_ok: true,
         looks_like_valid_match_detail: true,
+        hash_strategy: 'stable_raw_payload_v1',
+        stable_raw_payload: {
+            content: rawData.content,
+            general: rawData.general,
+            header: rawData.header,
+            matchId: rawData.matchId,
+        },
         raw_data: rawData,
         raw_data_hash: rawDataHash,
         controlled_error: null,
@@ -231,7 +254,7 @@ function computedBaselineMap(gate) {
 
 function computedBaselineString(gate) {
     const map = computedBaselineMap(gate);
-    return EXPECTED_IDS.map(externalId => `${externalId}:${map[externalId]}`).join(',');
+    return EXPECTED_IDS.map(externalId => `${externalId}:${map[externalId]}@stable_raw_payload_v1`).join(',');
 }
 
 function executionArgs(gate, overrides = {}) {
@@ -559,7 +582,15 @@ test('normalizeBooleanFlag handles fallback and parseArgs handles unknown argume
 test('parseRemainingExternalIds and parseBaselineRawDataHashes parse exact scope', () => {
     const gate = loadModuleFresh();
     assert.deepEqual(gate.parseRemainingExternalIds(EXPECTED_IDS.join(',')), EXPECTED_IDS);
-    assert.deepEqual(gate.parseBaselineRawDataHashes(baselineHashString()), BASELINE_MAP);
+    assert.deepEqual(gate.parseBaselineRawDataHashes(baselineHashString()), {
+        4830747: { hash: BASELINE_MAP['4830747'], strategy: 'stable_raw_payload_v1' },
+        4830748: { hash: BASELINE_MAP['4830748'], strategy: 'stable_raw_payload_v1' },
+        4830750: { hash: BASELINE_MAP['4830750'], strategy: 'stable_raw_payload_v1' },
+        4830751: { hash: BASELINE_MAP['4830751'], strategy: 'stable_raw_payload_v1' },
+        4830752: { hash: BASELINE_MAP['4830752'], strategy: 'stable_raw_payload_v1' },
+        4830753: { hash: BASELINE_MAP['4830753'], strategy: 'stable_raw_payload_v1' },
+        4830754: { hash: BASELINE_MAP['4830754'], strategy: 'stable_raw_payload_v1' },
+    });
 });
 
 test('getRemainingTargetRegistry returns exact ordered targets with baseline hashes', () => {
@@ -569,6 +600,7 @@ test('getRemainingTargetRegistry returns exact ordered targets with baseline has
     assert.equal(registry[0].external_id, '4830747');
     assert.equal(registry[6].external_id, '4830754');
     assert.equal(registry[0].baseline_raw_data_hash, BASELINE_MAP['4830747']);
+    assert.equal(registry[0].baseline_hash_strategy, 'stable_raw_payload_v1');
 });
 
 test('buildPerTargetRecapture builds canonical per-target shape', () => {
@@ -580,6 +612,8 @@ test('buildPerTargetRecapture builds canonical per-target shape', () => {
     });
     const entry = gate.buildPerTargetRecapture(target, recapture);
     assert.equal(entry.hash_matches_baseline, true);
+    assert.equal(entry.hash_strategy, 'stable_raw_payload_v1');
+    assert.equal(entry.baseline_hash_strategy, 'stable_raw_payload_v1');
     assert.equal(entry.body_printed, false);
     assert.equal(entry.body_saved, false);
     assert.equal(entry.browser_used, false);
@@ -654,9 +688,10 @@ test('fake fetcher returns 7 matching hashes -> inserts 7 rows in fake transacti
     assert.equal(result.db_write_executed, true);
 });
 
-test('hash drift on first target -> no transaction / no write', async () => {
+test('metadata-only drift on first target does not block hash gate', async () => {
     const gate = loadModuleFresh();
-    const client = buildReadWriteClient();
+    const baselineMap = computedBaselineMap(gate);
+    const client = buildReadWriteClient({ hashMap: baselineMap });
     let callIndex = 0;
     const result = await gate.executeRemainingRawMatchDataWrite(executionArgs(gate), {
         skipValidation: true,
@@ -670,6 +705,36 @@ test('hash drift on first target -> no transaction / no write', async () => {
                           _meta: {
                               ...fakeRawData(target)._meta,
                               drift_marker: 'first',
+                              fetched_at: '2026-05-15T00:03:00.000Z',
+                          },
+                      }
+                    : undefined;
+            return fakeRecapture(target, gate, {
+                rawData: driftedRawData,
+            });
+        },
+    });
+    assert.equal(result.execution_completed, true);
+    assert.equal(result.hash_drift_count, 0);
+    assert.equal(result.db_write_executed, true);
+});
+
+test('stable payload drift on middle target -> no write', async () => {
+    const gate = loadModuleFresh();
+    const client = buildReadWriteClient();
+    let callIndex = 0;
+    const result = await gate.executeRemainingRawMatchDataWrite(executionArgs(gate), {
+        skipValidation: true,
+        client,
+        recaptureFn: async target => {
+            callIndex += 1;
+            const driftedRawData =
+                callIndex === 4
+                    ? {
+                          ...fakeRawData(target),
+                          content: {
+                              ...fakeRawData(target).content,
+                              stats: [{ title: 'Top stats', stats: [{ key: 'shotsOnTarget', home: 9, away: 1 }] }],
                           },
                       }
                     : undefined;
@@ -685,34 +750,79 @@ test('hash drift on first target -> no transaction / no write', async () => {
     assert.equal(client.queries.length, 0);
 });
 
-test('hash drift on middle target -> no write', async () => {
+test('write rejects baseline hashes without stable hash strategy', async () => {
+    const gate = loadModuleFresh();
+    const result = await gate.executeRemainingRawMatchDataWrite(
+        executionArgs(gate, {
+            baselineRawDataHashes: EXPECTED_IDS.map(
+                externalId => `${externalId}:${computedBaselineMap(gate)[externalId]}`
+            ).join(','),
+        }),
+        {
+            skipValidation: false,
+        }
+    );
+    assert.equal(result.execution_completed, false);
+    assert.match(result.controlled_error, /missing baseline hash_strategy/);
+});
+
+test('baseline strategy mismatch blocks before transaction', async () => {
+    const gate = loadModuleFresh();
+    const baselineMap = computedBaselineMap(gate);
+    const mismatched = EXPECTED_IDS.map(
+        externalId => `${externalId}:${baselineMap[externalId]}@legacy_raw_data_v0`
+    ).join(',');
+    const client = buildReadWriteClient({ hashMap: baselineMap });
+    const result = await gate.executeRemainingRawMatchDataWrite(
+        executionArgs(gate, { baselineRawDataHashes: mismatched }),
+        {
+            skipValidation: false,
+            client,
+        }
+    );
+    assert.equal(result.execution_completed, false);
+    assert.match(result.controlled_error, /baseline hash_strategy mismatch/i);
+    assert.equal(client.queries.length, 0);
+});
+test('recapture exception becomes invalid payload without DB access', async () => {
     const gate = loadModuleFresh();
     const client = buildReadWriteClient();
-    let callIndex = 0;
     const result = await gate.executeRemainingRawMatchDataWrite(executionArgs(gate), {
         skipValidation: true,
         client,
-        recaptureFn: async target => {
-            callIndex += 1;
-            const driftedRawData =
-                callIndex === 4
-                    ? {
-                          ...fakeRawData(target),
-                          _meta: {
-                              ...fakeRawData(target)._meta,
-                              drift_marker: 'middle',
-                          },
-                      }
-                    : undefined;
-            return fakeRecapture(target, gate, {
-                rawData: driftedRawData,
-            });
+        recaptureFn: async () => {
+            throw new Error('synthetic recapture explosion');
         },
     });
     assert.equal(result.execution_completed, false);
-    assert.equal(result.hash_drift_count, 1);
-    assert.equal(result.db_write_executed, false);
-    assert.equal(result.raw_match_data_write_executed, false);
+    assert.equal(result.reason, 'invalid_payload');
+    assert.match(result.controlled_error, /RECAPTURE_ERROR:4830747:synthetic recapture explosion/);
+    assert.equal(client.queries.length, 0);
+});
+test('missing raw_data from recapture blocks before transaction', async () => {
+    const gate = loadModuleFresh();
+    const client = buildReadWriteClient();
+    const result = await gate.executeRemainingRawMatchDataWrite(executionArgs(gate), {
+        skipValidation: true,
+        client,
+        recaptureFn: async target => ({
+            route: 'html_hydration',
+            request_url: `https://www.fotmob.com/match/${target.external_id}`,
+            final_url: `https://www.fotmob.com/match/${target.external_id}`,
+            http_status: 200,
+            content_type: 'text/html',
+            body_byte_length: 1,
+            body_sha256: 'body',
+            ok: true,
+            hydration_parse_ok: true,
+            looks_like_valid_match_detail: true,
+            hash_strategy: 'stable_raw_payload_v1',
+            raw_data: null,
+            raw_data_hash: null,
+        }),
+    });
+    assert.equal(result.execution_completed, false);
+    assert.match(result.controlled_error, /raw_data missing from recapture result/);
     assert.equal(client.queries.length, 0);
 });
 

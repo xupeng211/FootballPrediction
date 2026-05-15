@@ -11,6 +11,30 @@
 const crypto = require('node:crypto');
 
 const FOTMOB_BASE_URL = 'https://www.fotmob.com';
+const HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1 = 'stable_raw_payload_v1';
+const METADATA_HASH_EXCLUDED_FIELDS = Object.freeze([
+    '_meta.source',
+    '_meta.route',
+    '_meta.requested_route',
+    '_meta.request_url',
+    '_meta.final_url',
+    '_meta.http_status',
+    '_meta.content_type',
+    '_meta.body_byte_length',
+    '_meta.fetch_body_sha256',
+    '_meta.parser',
+    '_meta.data_version',
+    '_meta.fetched_at',
+    '_meta.full_html_body_stored',
+    '_meta.http_response_string_stored',
+    '_meta.has_stats',
+    '_meta.has_lineup',
+    '_meta.has_shotmap',
+    '_meta.hash_strategy',
+    '_meta.data_hash',
+    '_meta.match_id_source',
+    '_meta.metadata_hash_excluded_fields',
+]);
 
 // ══════════════════════════════════════════════════════════════════════════════
 // URL builder
@@ -131,11 +155,48 @@ function sha256CanonicalJson(value) {
     return sha256Text(JSON.stringify(canonicalizeJson(value)));
 }
 
+function normalizeText(value) {
+    return String(value || '').trim();
+}
+
+function isNumericId(value) {
+    return /^\d+$/.test(normalizeText(value));
+}
+
+function isPlainObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function jsonClone(value, fallback = {}) {
+    if (!isPlainObject(value)) return { ...fallback };
+    return JSON.parse(JSON.stringify(value));
+}
+
+function buildPayloadSearchText(payload = {}) {
+    return JSON.stringify({
+        content: payload.content || {},
+        general: payload.general || {},
+        header: payload.header || {},
+        matchId: payload.matchId || null,
+    }).toLowerCase();
+}
+
+function buildRequestSearchText(context = {}) {
+    return `${normalizeText(context.requestUrl)} ${normalizeText(context.finalUrl)}`.toLowerCase();
+}
+
+function containsExpectedMarkers({ externalId, homeTeam, awayTeam, payloadText, requestText }) {
+    const containsExternalId = !externalId || payloadText.includes(externalId) || requestText.includes(externalId);
+    const containsHomeTeam = !homeTeam || payloadText.includes(homeTeam);
+    const containsAwayTeam = !awayTeam || payloadText.includes(awayTeam);
+    return containsExternalId && containsHomeTeam && containsAwayTeam;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // HTML hydration extraction
 // ══════════════════════════════════════════════════════════════════════════════
 
-function extractHydrationPayload(html, parserDeps = {}) {
+function extractHydrationPayload(html, parserDeps = {}, input = {}) {
     const extractFn = parserDeps.extractFromHtml;
     const transformFn = parserDeps.transformToApiFormat;
 
@@ -159,7 +220,10 @@ function extractHydrationPayload(html, parserDeps = {}) {
 
     let transformed;
     try {
-        transformed = transformFn(extracted.data);
+        transformed = transformFn(
+            extracted.data,
+            normalizeText(input.externalId) || normalizeText(input.matchId) || undefined
+        );
     } catch (err) {
         return { ok: false, error: `TRANSFORM_ERROR:${err.message}` };
     }
@@ -175,30 +239,170 @@ function extractHydrationPayload(html, parserDeps = {}) {
 // raw_data construction
 // ══════════════════════════════════════════════════════════════════════════════
 
-function buildRawDataFromTransformedPayload(payload, meta) {
-    const raw = {};
-    if (meta && typeof meta === 'object') raw._meta = { ...meta };
-    if (payload.content) raw.content = payload.content;
-    if (payload.general) raw.general = payload.general;
-    if (payload.header) raw.header = payload.header;
-    if (payload.matchId) raw.matchId = payload.matchId;
-    return raw;
+function normalizeMatchId(payload = {}, input = {}, context = {}) {
+    const safePayload = isPlainObject(payload) ? payload : {};
+    const payloadMatchId = normalizeText(safePayload.matchId);
+    const generalMatchId = normalizeText(safePayload.general && safePayload.general.matchId);
+    const externalId = normalizeText(input.externalId);
+    const homeTeam = normalizeText(input.homeTeam).toLowerCase();
+    const awayTeam = normalizeText(input.awayTeam).toLowerCase();
+    const payloadText = buildPayloadSearchText(safePayload);
+    const requestText = buildRequestSearchText(context);
+
+    if (isNumericId(payloadMatchId)) {
+        return {
+            matchId: payloadMatchId,
+            matchIdSource: 'payload.matchId',
+        };
+    }
+
+    if (isNumericId(generalMatchId)) {
+        return {
+            matchId: generalMatchId,
+            matchIdSource: 'general.matchId',
+        };
+    }
+
+    if (
+        isNumericId(externalId) &&
+        containsExpectedMarkers({
+            externalId,
+            homeTeam,
+            awayTeam,
+            payloadText,
+            requestText,
+        })
+    ) {
+        return {
+            matchId: externalId,
+            matchIdSource: 'input_external_id_fallback',
+        };
+    }
+
+    return {
+        matchId: null,
+        matchIdSource: 'unresolved',
+    };
+}
+
+function buildStableRawPayload(payload = {}, input = {}, context = {}) {
+    const safePayload = isPlainObject(payload) ? payload : {};
+    const matchIdResolution = normalizeMatchId(safePayload, input, context);
+
+    return {
+        content: jsonClone(safePayload.content),
+        general: jsonClone(safePayload.general),
+        header: jsonClone(safePayload.header),
+        matchId: matchIdResolution.matchId,
+    };
+}
+
+function buildFetchMetadata(meta = {}) {
+    return {
+        source: 'fotmob',
+        route: 'html_hydration',
+        requested_route: normalizeText(meta.requestedRoute) || 'html_hydration',
+        request_url: meta.requestUrl || null,
+        final_url: meta.finalUrl || null,
+        http_status: Number(meta.httpStatus || 0),
+        content_type: meta.contentType || null,
+        body_byte_length: Number(meta.bodyByteLength || 0),
+        fetch_body_sha256: meta.bodySha256 || null,
+        parser: 'NextDataParser',
+        data_version: meta.dataVersion || 'fotmob_html_hyd_v1',
+        fetched_at: meta.fetchedAt || null,
+        full_html_body_stored: false,
+        http_response_string_stored: false,
+        has_stats: meta.hasStats === true,
+        has_lineup: meta.hasLineup === true,
+        has_shotmap: meta.hasShotmap === true,
+        hash_strategy: HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
+        data_hash: meta.dataHash || null,
+        match_id_source: meta.matchIdSource || null,
+        metadata_hash_excluded_fields: [...METADATA_HASH_EXCLUDED_FIELDS],
+    };
+}
+
+function buildRawDataFromStablePayload(stablePayload = {}, meta = {}) {
+    const safePayload = isPlainObject(stablePayload) ? stablePayload : {};
+    return {
+        _meta: isPlainObject(meta) ? JSON.parse(JSON.stringify(meta)) : {},
+        content: jsonClone(safePayload.content),
+        general: jsonClone(safePayload.general),
+        header: jsonClone(safePayload.header),
+        matchId: normalizeText(safePayload.matchId) || null,
+    };
+}
+
+function sha256StableRawPayload(stablePayload = {}) {
+    return sha256CanonicalJson(stablePayload);
+}
+
+function computeRawDetailHashes(stableRawPayload = {}, rawData = {}) {
+    const stableHash = sha256StableRawPayload(stableRawPayload);
+    return {
+        raw_data_hash: stableHash,
+        stable_raw_payload_hash: stableHash,
+        data_hash: stableHash,
+        raw_data_with_meta_hash: sha256CanonicalJson(rawData),
+        hash_strategy: HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
+        metadata_hash_excluded_fields: [...METADATA_HASH_EXCLUDED_FIELDS],
+    };
+}
+
+function validateCanonicalRawDataShape(rawData = {}) {
+    const errors = [];
+
+    if (!isPlainObject(rawData)) {
+        return ['raw_data must be a plain object'];
+    }
+
+    for (const key of ['_meta', 'content', 'general', 'header', 'matchId']) {
+        if (!Object.prototype.hasOwnProperty.call(rawData, key)) {
+            errors.push(`raw_data missing ${key}`);
+        }
+    }
+
+    if (!/^\d+$/.test(normalizeText(rawData.matchId))) {
+        errors.push('raw_data.matchId must be numeric');
+    }
+    if (rawData._meta?.full_html_body_stored !== false) {
+        errors.push('raw_data._meta.full_html_body_stored must be false');
+    }
+    if (rawData._meta?.http_response_string_stored !== false) {
+        errors.push('raw_data._meta.http_response_string_stored must be false');
+    }
+
+    return errors;
+}
+
+function buildRawDataFromTransformedPayload(payload = {}, meta = {}, input = {}, context = {}) {
+    const stableRawPayload = buildStableRawPayload(payload, input, context);
+    return buildRawDataFromStablePayload(stableRawPayload, meta);
 }
 
 function looksLikeValidRawDetail(rawData, input = {}) {
     if (!rawData || typeof rawData !== 'object') return false;
-    const gen = rawData.general || {};
     const externalId = String(input.externalId || '').trim();
     const homeTeam = (input.homeTeam || '').toLowerCase();
     const awayTeam = (input.awayTeam || '').toLowerCase();
+    const hasMatchId = isNumericId(rawData.matchId);
+    const payloadText = buildPayloadSearchText(rawData);
+    const requestText = buildRequestSearchText({
+        requestUrl: rawData._meta?.request_url,
+        finalUrl: rawData._meta?.final_url,
+    });
 
-    const hasMatchId = !!(gen.matchId || rawData.matchId);
-    const matchStr = JSON.stringify(rawData).toLowerCase();
-    const containsExternal = !externalId || matchStr.includes(externalId);
-    const containsHome = !homeTeam || matchStr.includes(homeTeam);
-    const containsAway = !awayTeam || matchStr.includes(awayTeam);
-
-    return hasMatchId && containsExternal && containsHome && containsAway;
+    return (
+        hasMatchId &&
+        containsExpectedMarkers({
+            externalId,
+            homeTeam,
+            awayTeam,
+            payloadText,
+            requestText,
+        })
+    );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -333,7 +537,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
     const bodySha256 = sha256Text(body);
     const fetchedBodySha256 = bodySha256;
 
-    const extraction = extractHydrationPayload(body, parser);
+    const extraction = extractHydrationPayload(body, parser, v);
 
     if (!extraction.ok) {
         return {
@@ -366,22 +570,28 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
         };
     }
 
-    const meta = {
-        source: 'fotmob',
-        route: 'html_hydration',
-        request_url: requestUrl,
-        final_url: finalUrl,
-        http_status: httpStatus,
-        content_type: contentType,
-        body_byte_length: bodyByteLength,
-        fetch_body_sha256: fetchedBodySha256,
-        parser: 'NextDataParser',
-        data_version: v.dataVersion,
-        fetched_at: fetchedAt,
-    };
+    const matchIdResolution = normalizeMatchId(extraction.data, v, { requestUrl, finalUrl });
+    const stableRawPayload = buildStableRawPayload(extraction.data, v, { requestUrl, finalUrl });
+    const stableHash = sha256StableRawPayload(stableRawPayload);
+    const meta = buildFetchMetadata({
+        requestedRoute: v.route,
+        requestUrl,
+        finalUrl,
+        httpStatus,
+        contentType,
+        bodyByteLength,
+        bodySha256: fetchedBodySha256,
+        dataVersion: v.dataVersion,
+        fetchedAt,
+        hasStats: Boolean(stableRawPayload.content?.stats),
+        hasLineup: Boolean(stableRawPayload.content?.lineup),
+        hasShotmap: Boolean(stableRawPayload.content?.shotmap),
+        dataHash: stableHash,
+        matchIdSource: matchIdResolution.matchIdSource,
+    });
 
-    const rawData = buildRawDataFromTransformedPayload(extraction.data, meta);
-    const rawDataHash = sha256CanonicalJson(rawData);
+    const rawData = buildRawDataFromStablePayload(stableRawPayload, meta);
+    const hashInfo = computeRawDetailHashes(stableRawPayload, rawData);
     const valid = looksLikeValidRawDetail(rawData, v);
 
     return {
@@ -400,8 +610,15 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
         body_sha256: bodySha256,
         hydration_parse_ok: true,
         transformed_api_format: true,
+        stable_raw_payload: stableRawPayload,
+        stable_raw_payload_hash: hashInfo.stable_raw_payload_hash,
         raw_data: rawData,
-        raw_data_hash: rawDataHash,
+        raw_data_hash: hashInfo.raw_data_hash,
+        raw_data_with_meta_hash: hashInfo.raw_data_with_meta_hash,
+        data_hash: hashInfo.data_hash,
+        hash_strategy: hashInfo.hash_strategy,
+        metadata_hash_excluded_fields: hashInfo.metadata_hash_excluded_fields,
+        match_id_source: matchIdResolution.matchIdSource,
         contains_external_id: valid,
         contains_home_team: valid,
         contains_away_team: valid,
@@ -421,7 +638,16 @@ module.exports = {
     canonicalizeJson,
     sha256Text,
     sha256CanonicalJson,
+    HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
+    METADATA_HASH_EXCLUDED_FIELDS,
     extractHydrationPayload,
+    normalizeMatchId,
+    buildStableRawPayload,
+    buildFetchMetadata,
+    buildRawDataFromStablePayload,
+    sha256StableRawPayload,
+    computeRawDetailHashes,
+    validateCanonicalRawDataShape,
     buildRawDataFromTransformedPayload,
     looksLikeValidRawDetail,
     fetchFotMobRawDetail,

@@ -11,9 +11,19 @@
  * would_update / would_skip per target WITHOUT writing the DB.
  */
 
-const crypto = require('node:crypto');
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
-const { fetchFotMobRawDetail } = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
+const {
+    fetchFotMobRawDetail,
+    HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
+    canonicalizeJson,
+    buildStableRawPayload,
+    buildRawDataFromStablePayload,
+    buildFetchMetadata,
+    normalizeMatchId,
+    sha256CanonicalJson,
+    sha256StableRawPayload,
+    validateCanonicalRawDataShape,
+} = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
 
 const PHASE = 'PHASE5_19L2_REMAINING_RAW_MATCH_DATA_ACQUISITION_PREFLIGHT';
 const NEXT_REQUIRED_PHASE = 'Phase 5.20L2 controlled remaining raw_match_data write';
@@ -341,6 +351,15 @@ async function recaptureTarget(target, fetcherDeps = {}) {
         body_sha256: result.body_sha256,
         hydration_parse_ok: result.hydration_parse_ok,
         looks_like_valid_match_detail: result.looks_like_valid_match_detail,
+        stable_raw_payload: result.stable_raw_payload || null,
+        raw_data_hash: result.raw_data_hash || null,
+        data_hash: result.data_hash || null,
+        stable_raw_payload_hash: result.stable_raw_payload_hash || null,
+        raw_data_with_meta_hash: result.raw_data_with_meta_hash || null,
+        hash_strategy: result.hash_strategy || HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
+        match_id_source: result.match_id_source || null,
+        fetched_at: result.raw_data?._meta?.fetched_at || null,
+        data_version: result.raw_data?._meta?.data_version || null,
         payload: result.raw_data || (result.ok ? {} : null),
         error: result.controlled_error || null,
     };
@@ -359,35 +378,70 @@ function getRemainingTargetRegistry() {
     return REMAINING_TARGET_REGISTRY.map(t => ({ ...t }));
 }
 
-function canonicalizeJson(value) {
-    if (value === null || typeof value !== 'object') return value;
-    if (Array.isArray(value)) return value.map(canonicalizeJson);
-    const sorted = {};
-    for (const key of Object.keys(value).sort()) {
-        sorted[key] = canonicalizeJson(value[key]);
-    }
-    return sorted;
-}
-
-function sha256CanonicalJson(value) {
-    const canonical = canonicalizeJson(value);
-    return crypto.createHash('sha256').update(JSON.stringify(canonical)).digest('hex');
-}
-
-function buildRawDataFromPreviewPayload(preview) {
-    const raw = {};
-    if (preview._meta) raw._meta = preview._meta;
-    if (preview.content) raw.content = preview.content;
-    if (preview.general) raw.general = preview.general;
-    if (preview.header) raw.header = preview.header;
-    if (preview.matchId) raw.matchId = preview.matchId;
-    return raw;
+function buildRawDataFromPreviewPayload(preview = {}) {
+    const stableRawPayload = buildStableRawPayload(preview, {}, {});
+    const matchIdSource = normalizeMatchId(preview, {}, {}).matchIdSource;
+    const dataHash = sha256StableRawPayload(stableRawPayload);
+    return buildRawDataFromStablePayload(
+        stableRawPayload,
+        buildFetchMetadata({
+            dataHash,
+            matchIdSource,
+        })
+    );
 }
 
 function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
-    const rawData = buildRawDataFromPreviewPayload(recaptureResult.payload || recaptureResult);
+    const fetcherInput = {
+        externalId: target.external_id,
+        matchId: target.match_id,
+        homeTeam: target.home_team,
+        awayTeam: target.away_team,
+    };
+    const sourcePayload =
+        recaptureResult.payload &&
+        typeof recaptureResult.payload === 'object' &&
+        !Array.isArray(recaptureResult.payload)
+            ? recaptureResult.payload
+            : recaptureResult;
+    const originalMatchResolution = normalizeMatchId(sourcePayload, fetcherInput, {
+        requestUrl: recaptureResult.request_url,
+        finalUrl: recaptureResult.final_url,
+    });
+    const stableRawPayload =
+        recaptureResult.stable_raw_payload &&
+        typeof recaptureResult.stable_raw_payload === 'object' &&
+        !Array.isArray(recaptureResult.stable_raw_payload)
+            ? JSON.parse(JSON.stringify(recaptureResult.stable_raw_payload))
+            : buildStableRawPayload(sourcePayload, fetcherInput, {
+                  requestUrl: recaptureResult.request_url,
+                  finalUrl: recaptureResult.final_url,
+              });
     const rawDataHash =
-        rawData && Object.keys(rawData).length > 0 ? sha256CanonicalJson(rawData) : recaptureResult.body_sha256;
+        recaptureResult.raw_data_hash ||
+        recaptureResult.data_hash ||
+        recaptureResult.stable_raw_payload_hash ||
+        sha256StableRawPayload(stableRawPayload);
+    const rawData = buildRawDataFromStablePayload(
+        stableRawPayload,
+        buildFetchMetadata({
+            requestedRoute: EXPECTED_SCOPE.route,
+            requestUrl: recaptureResult.request_url,
+            finalUrl: recaptureResult.final_url,
+            httpStatus: recaptureResult.http_status,
+            contentType: recaptureResult.content_type,
+            bodyByteLength: recaptureResult.body_byte_length,
+            bodySha256: recaptureResult.body_sha256,
+            dataVersion: recaptureResult.data_version || 'fotmob_html_hyd_v1',
+            fetchedAt: recaptureResult.fetched_at || null,
+            hasStats: Boolean(stableRawPayload.content?.stats),
+            hasLineup: Boolean(stableRawPayload.content?.lineup),
+            hasShotmap: Boolean(stableRawPayload.content?.shotmap),
+            dataHash: rawDataHash,
+            matchIdSource: recaptureResult.match_id_source || originalMatchResolution.matchIdSource,
+        })
+    );
+    const rawDataErrors = validateCanonicalRawDataShape(rawData);
 
     let decision = 'would_insert';
     let reason = 'no existing raw_match_data row for match_id';
@@ -416,10 +470,15 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
         body_sha256: recaptureResult.body_sha256 || null,
         hydration_parse_ok: recaptureResult.hydration_parse_ok === true,
         looks_like_valid_match_detail: recaptureResult.looks_like_valid_match_detail === true,
+        hash_strategy: recaptureResult.hash_strategy || HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
         raw_data_hash: rawDataHash,
+        data_hash: rawDataHash,
+        stable_raw_payload_hash: rawDataHash,
+        raw_data_with_meta_hash: recaptureResult.raw_data_with_meta_hash || null,
+        match_id_source: recaptureResult.match_id_source || originalMatchResolution.matchIdSource,
         existing_raw_match_data_found: !!existingRawRow,
         decision,
-        reason,
+        reason: rawDataErrors.length > 0 ? `${reason}; ${rawDataErrors.join('; ')}` : reason,
         body_printed: false,
         body_saved: false,
         browser_used: false,
@@ -451,6 +510,7 @@ function buildInvalidPreflight(input = {}, errors = [], controlledError = null) 
         season: value.season || null,
         date: value.date || null,
         route: value.route || null,
+        hash_strategy: HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
         target_count: value.expectedTargetCount || 0,
         attempted_target_count: 0,
         valid_payload_count: 0,
@@ -561,6 +621,7 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
         season: EXPECTED_SCOPE.season,
         date: EXPECTED_SCOPE.date,
         route: EXPECTED_SCOPE.route,
+        hash_strategy: HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
         target_count: targetRegistry.length,
         attempted_target_count: perTarget.length,
         valid_payload_count: validCount,
@@ -645,10 +706,10 @@ module.exports = {
     parseArgs,
     normalizeBooleanFlag,
     parseRemainingExternalIds,
-    validatePreflightInput,
-    getRemainingTargetRegistry,
     canonicalizeJson,
     sha256CanonicalJson,
+    validatePreflightInput,
+    getRemainingTargetRegistry,
     buildRawDataFromPreviewPayload,
     buildPerTargetPreflight,
     buildProtectedTableBaseline,
