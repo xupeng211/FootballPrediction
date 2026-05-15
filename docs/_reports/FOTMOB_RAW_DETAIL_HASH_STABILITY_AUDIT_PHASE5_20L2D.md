@@ -2,25 +2,39 @@
 
 ## 1. Executive summary
 
-Phase 5.20L2C 的 controlled remaining `raw_match_data` write 被正确拦下。
+Phase 5.20L2C 的 controlled remaining `raw_match_data` write 被正确拦下，未发生误写库。
 
-拦截原因出现在首个目标 `4830747 / Auxerre vs Nice`：
+触发点是首个目标 `4830747 / Auxerre vs Nice`：
 
-- write 前 live recapture `raw_data_hash` 与 Phase 5.20L2B baseline 不一致
+- Phase 5.20L2B baseline `raw_data_hash`:
+  `435296093b7d73ec822262c00a22903fa1d28d260a5a2b982b0bf8006e191728`
+- Phase 5.20L2C live recapture `raw_data_hash`:
+  `9ebf69175565788ed92e4c0f3dc599b3aedef5dfb531972d9334979050b485c8`
 - write 前 `raw_data.matchId` 缺失
 - transaction 未开始
 - DB 未变化
 
-本阶段不写 DB，不重试 controlled write。本阶段只审计：
+Phase 5.20L2D 的落地结果已经并入主线：
 
-- `FotMobRawDetailFetcher` hash stability
-- `raw_data` shape stability
-- `matchId` normalization / fallback
-- remaining preflight / write 是否共用同一 stable hash 逻辑
+- PR: `#1244`
+- PR URL: `https://github.com/xupeng211/FootballPrediction/pull/1244`
+- merge commit / current main HEAD:
+  `0dd62a54628439121ee43b152e32bd820eb37ecc`
+- main push CI:
+  `success` on `2026-05-15`
+
+本阶段没有写 DB，没有重试 controlled write，也没有触网复抓。工作内容限于：
+
+- 审计 `FotMobRawDetailFetcher` 的 hash 稳定性
+- 审计 `raw_data` canonical shape
+- 统一 `matchId` normalization / fallback
+- 让 preflight / write 共用同一 stable hash 策略
 
 ## 2. Incident details
 
 - target: `4830747`
+- Phase 5.20L2B baseline `body_sha256`:
+  `d9f70d8ed1f7858af284280dda4b0cd4ce22f8873ae27d2082460b4db7570718`
 - Phase 5.20L2B baseline `raw_data_hash`:
   `435296093b7d73ec822262c00a22903fa1d28d260a5a2b982b0bf8006e191728`
 - Phase 5.20L2C live recapture `raw_data_hash`:
@@ -29,21 +43,33 @@ Phase 5.20L2C 的 controlled remaining `raw_match_data` write 被正确拦下。
   `raw_data.matchId missing`
 - transaction:
   `not begun`
-- DB after incident:
-  `matches=10`
-  `raw_match_data=3`
-  `bookmaker_odds_history=2`
-  `l3_features=2`
-  `match_features_training=2`
-  `predictions=2`
+
+DB after incident and after Phase 5.20L2D verification remains:
+
+- `matches=10`
+- `raw_match_data=3`
+- `bookmaker_odds_history=2`
+- `l3_features=2`
+- `match_features_training=2`
+- `predictions=2`
+
+Remaining targets still absent from `raw_match_data`:
+
+- `4830747`
+- `4830748`
+- `4830750`
+- `4830751`
+- `4830752`
+- `4830753`
+- `4830754`
 
 ## 3. Root cause analysis
 
 结论：
 
-1. 旧 `FotMobRawDetailFetcher` 把 volatile fetch metadata 放进 `_meta` 后，直接对整份
-   `raw_data` 做 `sha256CanonicalJson(raw_data)`。
-2. 参与旧 hash 的 volatile 字段包括：
+1. 旧 `FotMobRawDetailFetcher` 在构造 `raw_data` 后，直接对整份 `raw_data` 做
+   `sha256CanonicalJson(raw_data)`。
+2. 旧 hash 会把 `_meta` 一并算进去，因此以下 volatile fetch metadata 会参与 hash：
     - `_meta.fetched_at`
     - `_meta.request_url`
     - `_meta.final_url`
@@ -51,94 +77,148 @@ Phase 5.20L2C 的 controlled remaining `raw_match_data` write 被正确拦下。
     - `_meta.content_type`
     - `_meta.body_byte_length`
     - `_meta.fetch_body_sha256`
-3. 因为旧 hash 直接覆盖整份 `raw_data`，即便 stable payload 不变，只要 fetch metadata 变化，
-   `raw_data_hash` 就会 drift。
-4. Phase 5.20L2B 和 Phase 5.20L2C 虽然都走了 consolidated `FotMobRawDetailFetcher`，
-   但它们比较的是旧的“含 `_meta` 的 raw_data hash”，不是稳定 payload hash。
-5. `raw_data.matchId` 缺失的直接原因是旧 fetcher 只在 transformed payload 顶层已经带
-   `matchId` 时才保留该字段；当 parser 输出把 `matchId` 放在 `general.matchId` 或压根缺失顶层
-   `matchId` 时，remaining write 的 shape gate 会把它判为 invalid。
-6. remaining preflight 和 remaining write 的 valid gate 不完全一致：
-    - preflight 更关注 `hydration_parse_ok + looks_like_valid_match_detail`
-    - write 额外强制 `raw_data` 顶层必须有 `matchId`
-7. 因此旧 baseline 不是 stable baseline。它不能继续作为 future controlled write 的可信基线。
+3. 这意味着 stable payload 本身不变时，只要抓取时间、URL、HTTP metadata 或 body hash 变化，
+   旧 `raw_data_hash` 也会 drift。
+4. Phase 5.20L2B preflight 与 Phase 5.20L2C write 虽然都调用 consolidated
+   `FotMobRawDetailFetcher`，但它们比较的是“含 `_meta` 的 raw_data hash”，不是稳定内容 hash。
+5. `raw_data.matchId` 缺失的原因，是旧 fetcher 只在 transformed payload 顶层已经有
+   `matchId` 时才保留该字段；当 parser 输出把 `matchId` 放在 `general.matchId`，或者顶层未归一化，
+   write 的 canonical shape gate 会判定 `raw_data` invalid。
+6. 因此 Phase 5.20L2B 旧 baseline 不是 stable baseline，不能继续作为 future controlled write
+   的可信 hash gate 基线。
+
+明确回答：
+
+- hash drift 是由 volatile metadata 参与旧 hash 导致的：`yes`
+- `raw_data.matchId` 缺失是因为旧 normalize 逻辑不统一：`yes`
+- 5.20L2B 和 5.20L2C 走的是同一 fetcher，但比较的不是 stable payload hash：`yes`
+- `body_sha256` / `fetched_at` / URL / HTTP metadata 参与旧 hash：`yes`
+- old baseline 需要重新生成 stable baseline：`yes`
 
 ## 4. Fix
 
-本阶段实现了 `stable_raw_payload_v1`：
+本阶段引入并统一了 `stable_raw_payload_v1`。
 
-- `stable_raw_payload`
-    - 只包含稳定的 match detail 内容
-    - 结构固定为：`content` / `general` / `header` / `matchId`
-    - 不包含 fetch timestamp、URL、HTTP metadata、body SHA 等 volatile metadata
-- `raw_data`
-    - 继续保留 `_meta`
-    - `_meta` 可记录 request/final URL、HTTP metadata、body SHA、fetched_at、parser、`match_id_source`
-    - 但 `_meta` 不参与 `data_hash`
-- `data_hash` / `raw_data_hash`
-    - 统一改为 `SHA-256(canonical_json(stable_raw_payload))`
-- `raw_data_with_meta_hash`
-    - 仅保留为 debug / audit 信息
-    - 不参与 hash gate，不参与 future DB baseline
+### stable payload
 
-`matchId` normalization / fallback：
+`stable_raw_payload` 只保留稳定的 match detail 内容：
 
-- 优先 `payload.matchId`
-- 其次 `payload.general.matchId`
-- 若两者缺失，但 `externalId` 数字合法且 payload/URL/team markers 一致，则 fallback 为
-  `input_external_id_fallback`
-- fallback 时保留：
-  `raw_data._meta.match_id_source = "input_external_id_fallback"`
-- 若连 fallback 条件也不满足，则 payload invalid
+- `content`
+- `general`
+- `header`
+- `matchId`
 
-remaining preflight / write 修复：
+它不包含以下 volatile fetch metadata：
+
+- `fetched_at`
+- `request_url`
+- `final_url`
+- `http_status`
+- `content_type`
+- `body_byte_length`
+- `fetch_body_sha256`
+- 其他 `_meta` 抓取元信息
+
+### raw_data
+
+`raw_data` 继续保留 `_meta`，用于入库和审计：
+
+- `_meta.request_url`
+- `_meta.final_url`
+- `_meta.http_status`
+- `_meta.content_type`
+- `_meta.fetch_body_sha256`
+- `_meta.fetched_at`
+- `_meta.hash_strategy`
+- `_meta.match_id_source`
+- `_meta.metadata_hash_excluded_fields`
+
+但 `_meta` 不参与 `data_hash` / `raw_data_hash`。
+
+### new hash strategy
+
+- `data_hash = SHA-256(canonical_json(stable_raw_payload))`
+- `raw_data_hash = SHA-256(canonical_json(stable_raw_payload))`
+- `stable_raw_payload_hash = SHA-256(canonical_json(stable_raw_payload))`
+- `raw_data_with_meta_hash` 仅保留为 debug / audit，不参与 hash gate
+
+### matchId normalization
+
+统一规则：
+
+1. 优先 `payload.matchId`
+2. 其次 `payload.general.matchId`
+3. 若两者缺失，但 `externalId` 数字合法且 payload / URL / team markers 一致，则 fallback 为
+   `input_external_id_fallback`
+4. fallback 会记录：
+   `raw_data._meta.match_id_source = "input_external_id_fallback"`
+5. 若 fallback 条件也不成立，则 payload invalid，write blocked
+
+### preflight / write guard
 
 - preflight 输出 `hash_strategy = stable_raw_payload_v1`
 - write hash gate 只比较 stable hash
 - write 在 baseline `hash_strategy` 缺失或不匹配时直接 blocked
-- old baseline 不再被默认为可写 baseline
+- write 不会把旧 5.20L2B baseline 当作默认可写 baseline
+- old baselines 需要在下一阶段按 stable strategy refresh
 
 ## 5. Validation
 
-本阶段验证目标：
+已验证：
 
 - `tests/unit/FotMobRawDetailFetcher.test.js`
-    - stable hash excludes volatile metadata
+    - stable hash excludes `fetched_at`
+    - stable hash excludes `collected_at`
+    - stable hash excludes `body_sha256`
+    - stable hash excludes request / final URL
+    - stable hash excludes HTTP metadata
     - metadata-only drift does not change `raw_data_hash`
     - content drift changes stable hash
-    - `matchId` fallback works
     - `raw_data` 保留 `_meta`
+    - `matchId` fallback works
 - `tests/unit/l2_remaining_raw_match_data_acquisition_preflight.test.js`
     - preflight 输出 `hash_strategy=stable_raw_payload_v1`
     - metadata-only drift does not change per-target `raw_data_hash`
-    - `matchId` fallback reaches top-level `raw_data.matchId`
+    - fallback 后顶层 `raw_data.matchId` 可用
 - `tests/unit/l2_remaining_raw_match_data_write.test.js`
     - write rejects missing / mismatched baseline strategy
-    - write uses stable hash
+    - write hash gate uses stable hash
     - metadata-only drift does not block
     - stable payload drift still blocks
 - `tests/unit/fotmob_raw_detail_hash_stability_audit.test.js`
     - audit proves stable hash ignores metadata drift
-    - audit proves payload drift changes stable hash
-- quality:
-    - `npm test`
-    - `npm run test:coverage`
-    - `eslint`
-    - `prettier`
-    - `git diff --check`
-- DB unchanged:
+    - audit proves `raw_data_with_meta_hash` changes when `_meta` changes
+
+本次复核时已再次确认：
+
+- `node --test tests/unit/FotMobRawDetailFetcher.test.js`: pass
+- `node --test tests/unit/l2_remaining_raw_match_data_acquisition_preflight.test.js`: pass
+- `node --test tests/unit/l2_remaining_raw_match_data_write.test.js`: pass
+- `node --test tests/unit/fotmob_raw_detail_hash_stability_audit.test.js`: pass
+- `npm test`: pass
+- `npm run test:coverage`: pending at time of report refresh; prior Phase 5.20L2D main CI was green
+- `eslint`: pass
+- `prettier --check`: pass
+- `git diff --check`: pass
+
+Safety re-check:
+
+- DB row counts unchanged:
     - `matches=10`
     - `raw_match_data=3`
     - `bookmaker_odds_history=2`
     - `l3_features=2`
     - `match_features_training=2`
     - `predictions=2`
+- remaining 7 rows still absent from `raw_match_data`
+- no `tests/fixtures/l1-config-*` residue
+- no `docs/_staging_preview` directory
 
 ## 6. Next phase recommendation
 
 不要直接重试 Phase 5.20L2C。
 
-下一阶段建议进入：
+下一阶段应进入：
 
 `Phase 5.20L2E: remaining raw_match_data stable-hash preflight refresh`
 
