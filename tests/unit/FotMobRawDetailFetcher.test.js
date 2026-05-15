@@ -86,8 +86,9 @@ function installGuards(t) {
     https.request = fail('https.request');
     orig.load = Module._load;
     Module._load = function patchedLoad(req) {
-        if (/playwright|puppeteer|ProductionHarvester|backfill_historical/i.test(req))
+        if (/playwright|puppeteer|ProductionHarvester|backfill_historical/i.test(req)) {
             throw new Error(`blocked: ${req}`);
+        }
         return orig.load.apply(this, arguments);
     };
     t.after(() => {
