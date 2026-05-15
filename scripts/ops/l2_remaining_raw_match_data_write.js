@@ -6,11 +6,10 @@ const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fot
 const {
     fetchFotMobRawDetail,
     HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
-    sha256StableRawPayload,
     validateCanonicalRawDataShape,
 } = require('../../src/infrastructure/services/FotMobRawDetailFetcher');
 
-const PHASE = 'PHASE5_20L2C_CONTROLLED_REMAINING_RAW_MATCH_DATA_WRITE';
+const PHASE = 'PHASE5_20L2F_CONTROLLED_REMAINING_RAW_MATCH_DATA_WRITE_STABLE_BASELINES';
 const NEXT_REQUIRED_PHASE = 'Phase 5.21L2 raw_match_data inventory and parser-deferred training design';
 
 const REMAINING_TARGET_REGISTRY = Object.freeze([
@@ -44,13 +43,13 @@ const REMAINING_TARGET_REGISTRY = Object.freeze([
 ]);
 
 const BASELINE_RAW_DATA_HASHES = Object.freeze({
-    4830747: '435296093b7d73ec822262c00a22903fa1d28d260a5a2b982b0bf8006e191728',
-    4830748: 'e98b0adb557d54ba0ada53ff836a5f6eea2629a0ed06389b78f23d83fbe617e5',
-    4830750: '5c02a11384459581821026aa2c85677e05877f219e158e5f733aef2ddb484880',
-    4830751: 'b391b896c3260446b7185d81b31949ac47ad50cf956f733c87920f36579aed0f',
-    4830752: 'dfe719cae63e09710b04aba411bf74b9662c554aff284a1f414fa255ee5cd93f',
-    4830753: '6b4438453fa7d0ceb99c80fb736d3cb7dcc51d5593b4ca48bb1ba682fe78fe4f',
-    4830754: 'c843897451773c8317111a4c010da59223f1bb98cb7ce12253eafa4f57f550f7',
+    4830747: '8dfc7faaf236ee9f8090301cce9dede32a11ed5b66f2a89e1b3324064f788b25',
+    4830748: '538fc2c33281f65d56f5fc004378e5933c0d3bbabc81d8e640bcb7abb4ad9bc3',
+    4830750: 'c04915c0e972566f56bcb88a004f9e7e282777f9ca512c626a6acd4bd05e7304',
+    4830751: '5c603f83265887f223776941dde430e7abc8b8b9a9577d649cfd149339ffbd37',
+    4830752: '241e21be67a3f854d3320bbe86857a19c4bc357b6647d8b798df9b2dec6f56d6',
+    4830753: '358466958ec7b60b4dfa5e847537391b85153a564300804636497dd683311567',
+    4830754: '3a0832dc6bc16892491c11905ad8ab2fd80e4b29ea2f0aaa71d5659e57785c30',
 });
 
 const EXPECTED_EXTERNAL_IDS = Object.freeze(REMAINING_TARGET_REGISTRY.map(target => target.external_id));
@@ -208,6 +207,7 @@ function parseArgs(argv = process.argv.slice(2)) {
         route: null,
         remainingExternalIds: null,
         expectedTargetCount: null,
+        hashStrategy: null,
         baselineRawDataHashes: null,
         dataVersion: null,
         networkAuthorization: null,
@@ -242,6 +242,8 @@ function parseArgs(argv = process.argv.slice(2)) {
         remaining_external_ids: 'remainingExternalIds',
         'expected-target-count': 'expectedTargetCount',
         expected_target_count: 'expectedTargetCount',
+        'hash-strategy': 'hashStrategy',
+        hash_strategy: 'hashStrategy',
         'baseline-raw-data-hashes': 'baselineRawDataHashes',
         baseline_raw_data_hashes: 'baselineRawDataHashes',
         'data-version': 'dataVersion',
@@ -331,7 +333,7 @@ function parseArgs(argv = process.argv.slice(2)) {
 function pushRequiredYesError(errors, value, flagName) {
     if (value === true) return;
     if (value === false) {
-        errors.push(`${flagName}=yes is required in Phase 5.20L2C`);
+        errors.push(`${flagName}=yes is required in Phase 5.20L2F`);
         return;
     }
     errors.push(`missing ${flagName}=yes`);
@@ -340,7 +342,7 @@ function pushRequiredYesError(errors, value, flagName) {
 function pushRequiredNoError(errors, value, flagName) {
     if (value === false) return;
     if (value === true) {
-        errors.push(`${flagName}=yes is blocked in Phase 5.20L2C`);
+        errors.push(`${flagName}=yes is blocked in Phase 5.20L2F`);
         return;
     }
     errors.push(`missing ${flagName}=no`);
@@ -348,7 +350,7 @@ function pushRequiredNoError(errors, value, flagName) {
 
 function pushRequiredIntegerError(errors, value, expected, flagName) {
     if (!Number.isFinite(value) || value !== expected) {
-        errors.push(`${flagName} must be ${expected} in Phase 5.20L2C`);
+        errors.push(`${flagName} must be ${expected} in Phase 5.20L2F`);
     }
 }
 
@@ -361,6 +363,7 @@ function normalizeWriteInput(input = {}) {
         route: normalizeText(input.route).toLowerCase(),
         remainingExternalIds: parseRemainingExternalIds(input.remainingExternalIds),
         expectedTargetCount: parseInteger(input.expectedTargetCount, null),
+        hashStrategy: normalizeText(input.hashStrategy).toLowerCase(),
         baselineRawDataHashes: parseBaselineRawDataHashes(input.baselineRawDataHashes),
         dataVersion: normalizeText(input.dataVersion).toLowerCase(),
         networkAuthorization: normalizeBooleanFlag(input.networkAuthorization, undefined),
@@ -442,6 +445,12 @@ function validateWriteInput(input = {}) {
 
     pushRequiredIntegerError(errors, value.expectedTargetCount, EXPECTED_SCOPE.targetCount, 'expected-target-count');
 
+    if (!value.hashStrategy) {
+        errors.push('missing hash-strategy=stable_raw_payload_v1');
+    } else if (value.hashStrategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1) {
+        errors.push(`hash-strategy must be ${HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1}`);
+    }
+
     const baselineHashKeys = Object.keys(value.baselineRawDataHashes);
     if (baselineHashKeys.length === 0) {
         errors.push('baseline-raw-data-hashes is required');
@@ -456,13 +465,19 @@ function validateWriteInput(input = {}) {
     for (const externalId of EXPECTED_EXTERNAL_IDS) {
         const baseline = value.baselineRawDataHashes[externalId];
         const hash = baseline && typeof baseline === 'object' ? baseline.hash : null;
-        const strategy = baseline && typeof baseline === 'object' ? baseline.strategy : null;
+        const strategy = baseline && typeof baseline === 'object' ? baseline.strategy || value.hashStrategy : null;
         if (!hash) {
             errors.push(`missing baseline raw_data_hash for external_id ${externalId}`);
             continue;
         }
         if (!/^[a-f0-9]{64}$/.test(hash)) {
             errors.push(`invalid baseline raw_data_hash format for external_id ${externalId}`);
+            continue;
+        }
+        if (hash !== BASELINE_RAW_DATA_HASHES[externalId]) {
+            errors.push(
+                `baseline raw_data_hash mismatch for external_id ${externalId}; expected Phase 5.20L2E stable baseline`
+            );
             continue;
         }
         if (!strategy) {
@@ -473,6 +488,7 @@ function validateWriteInput(input = {}) {
             errors.push(`baseline hash_strategy mismatch for external_id ${externalId}`);
             continue;
         }
+        value.baselineRawDataHashes[externalId].strategy = strategy;
     }
 
     if (!value.dataVersion) {
@@ -496,19 +512,19 @@ function validateWriteInput(input = {}) {
     pushRequiredIntegerError(errors, value.retry, 0, 'retry');
 
     if (value.allowBrowserRuntime === true) {
-        errors.push('allow-browser-runtime=yes is blocked in Phase 5.20L2C');
+        errors.push('allow-browser-runtime=yes is blocked in Phase 5.20L2F');
     }
     if (value.allowProxyRuntime === true) {
-        errors.push('allow-proxy-runtime=yes is blocked in Phase 5.20L2C');
+        errors.push('allow-proxy-runtime=yes is blocked in Phase 5.20L2F');
     }
     if (value.bulk === true) {
-        errors.push('bulk=yes is blocked in Phase 5.20L2C');
+        errors.push('bulk=yes is blocked in Phase 5.20L2F');
     }
     if (value.commit === true) {
-        errors.push('commit=yes is blocked in Phase 5.20L2C');
+        errors.push('commit=yes is blocked in Phase 5.20L2F');
     }
     if (value.execute === true) {
-        errors.push('execute=yes is blocked in Phase 5.20L2C');
+        errors.push('execute=yes is blocked in Phase 5.20L2F');
     }
 
     return {
@@ -563,6 +579,22 @@ async function recaptureTarget(target, fetcherDeps = {}) {
     );
 }
 
+function buildRecaptureDecision({
+    validPayload,
+    baselineStrategy,
+    hashStrategy,
+    hasStableHashOutput,
+    hashMatchesBaseline,
+}) {
+    if (!validPayload) return 'invalid_payload';
+    if (!hashStrategy) return 'hash_strategy_missing';
+    if (baselineStrategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1) return 'baseline_strategy_mismatch';
+    if (hashStrategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1) return 'hash_strategy_mismatch';
+    if (!hasStableHashOutput) return 'stable_hash_output_missing';
+    if (hashMatchesBaseline) return 'would_insert';
+    return 'hash_drift';
+}
+
 function buildPerTargetRecapture(target, recaptureResult = {}) {
     const rawData =
         recaptureResult.raw_data &&
@@ -570,21 +602,26 @@ function buildPerTargetRecapture(target, recaptureResult = {}) {
         !Array.isArray(recaptureResult.raw_data)
             ? JSON.parse(JSON.stringify(recaptureResult.raw_data))
             : null;
-    const rawDataHash =
-        normalizeText(
-            recaptureResult.raw_data_hash || recaptureResult.data_hash || recaptureResult.stable_raw_payload_hash
-        ).toLowerCase() ||
-        (recaptureResult.stable_raw_payload ? sha256StableRawPayload(recaptureResult.stable_raw_payload) : null);
+    const rawDataHash = normalizeText(
+        recaptureResult.raw_data_hash || recaptureResult.data_hash || recaptureResult.stable_raw_payload_hash
+    ).toLowerCase();
     const rawDataErrors = rawData ? validateCanonicalRawDataShape(rawData) : ['raw_data missing from recapture result'];
     const validPayload =
         recaptureResult.ok === true &&
         recaptureResult.hydration_parse_ok === true &&
         recaptureResult.looks_like_valid_match_detail === true &&
         rawDataErrors.length === 0;
-    const hashStrategy = recaptureResult.hash_strategy || HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1;
+    const hashStrategy = normalizeText(recaptureResult.hash_strategy).toLowerCase() || null;
+    const hasStableHashOutput =
+        Boolean(rawDataHash) &&
+        normalizeText(recaptureResult.raw_data_hash).toLowerCase() === rawDataHash &&
+        normalizeText(recaptureResult.data_hash).toLowerCase() === rawDataHash &&
+        normalizeText(recaptureResult.stable_raw_payload_hash).toLowerCase() === rawDataHash;
+    const matchIdSource = recaptureResult.match_id_source || rawData?._meta?.match_id_source || null;
     const baselineStrategy = target.baseline_hash_strategy || null;
     const hashMatchesBaseline =
         validPayload &&
+        hasStableHashOutput &&
         baselineStrategy === HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1 &&
         hashStrategy === HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1 &&
         rawDataHash === target.baseline_raw_data_hash;
@@ -607,15 +644,18 @@ function buildPerTargetRecapture(target, recaptureResult = {}) {
         baseline_hash_strategy: baselineStrategy,
         baseline_raw_data_hash: target.baseline_raw_data_hash,
         raw_data_hash: rawDataHash,
+        data_hash: rawDataHash,
+        stable_hash_output_complete: hasStableHashOutput,
         hash_matches_baseline: hashMatchesBaseline,
+        match_id_source: matchIdSource,
         existing_raw_match_data_found: false,
-        decision: !validPayload
-            ? 'invalid_payload'
-            : baselineStrategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1
-              ? 'baseline_strategy_mismatch'
-              : hashMatchesBaseline
-                ? 'would_insert'
-                : 'hash_drift',
+        decision: buildRecaptureDecision({
+            validPayload,
+            baselineStrategy,
+            hashStrategy,
+            hasStableHashOutput,
+            hashMatchesBaseline,
+        }),
         body_printed: false,
         body_saved: false,
         browser_used: false,
@@ -937,9 +977,14 @@ function sanitizePerTargetWrite(perTargetWrite = []) {
         body_sha256: entry.body_sha256,
         hydration_parse_ok: entry.hydration_parse_ok === true,
         looks_like_valid_match_detail: entry.looks_like_valid_match_detail === true,
+        hash_strategy: entry.hash_strategy,
+        baseline_hash_strategy: entry.baseline_hash_strategy,
         baseline_raw_data_hash: entry.baseline_raw_data_hash,
         raw_data_hash: entry.raw_data_hash,
+        data_hash: entry.data_hash,
+        stable_hash_output_complete: entry.stable_hash_output_complete === true,
         hash_matches_baseline: entry.hash_matches_baseline === true,
+        match_id_source: entry.match_id_source,
         existing_raw_match_data_found: entry.existing_raw_match_data_found === true,
         decision: entry.decision,
         body_printed: false,
@@ -991,7 +1036,7 @@ function buildControlledRemainingWriteResult({
         hash_match_count: hashMatchCount,
         hash_drift_count: hashDriftCount,
         invalid_payload_count: invalidPayloadCount,
-        hash_strategy: HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
+        hash_strategy: value.hashStrategy || HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1,
         existing_raw_match_data_count: existingRawMatchDataCount,
         inserted_count: insertedCount,
         updated_count: updatedCount,
@@ -1115,6 +1160,38 @@ async function executeRemainingRawMatchDataWrite(input = {}, dependencies = {}) 
                 perTargetWrite: perTargetRecapture,
                 reason: 'baseline_strategy_mismatch',
                 controlledError: `BASELINE_HASH_STRATEGY_MISMATCH:${entry.external_id}: expected ${HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1}, got ${entry.baseline_hash_strategy || 'missing'}; run Phase 5.20L2E stable-hash preflight refresh`,
+            });
+        }
+
+        if (entry.hash_strategy !== HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1) {
+            return buildControlledRemainingWriteResult({
+                input: value,
+                executionCompleted: false,
+                targetCount: targetRegistry.length,
+                attemptedTargetCount: perTargetRecapture.length,
+                validPayloadCount: perTargetRecapture.filter(item => item.valid_payload === true).length,
+                hashMatchCount: 0,
+                hashDriftCount: 0,
+                invalidPayloadCount: perTargetRecapture.filter(item => item.valid_payload !== true).length,
+                perTargetWrite: perTargetRecapture,
+                reason: entry.hash_strategy ? 'hash_strategy_mismatch' : 'hash_strategy_missing',
+                controlledError: `FETCHER_HASH_STRATEGY_MISMATCH:${entry.external_id}: expected ${HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1}, got ${entry.hash_strategy || 'missing'}`,
+            });
+        }
+
+        if (entry.stable_hash_output_complete !== true) {
+            return buildControlledRemainingWriteResult({
+                input: value,
+                executionCompleted: false,
+                targetCount: targetRegistry.length,
+                attemptedTargetCount: perTargetRecapture.length,
+                validPayloadCount: perTargetRecapture.filter(item => item.valid_payload === true).length,
+                hashMatchCount: 0,
+                hashDriftCount: 0,
+                invalidPayloadCount: perTargetRecapture.filter(item => item.valid_payload !== true).length,
+                perTargetWrite: perTargetRecapture,
+                reason: 'stable_hash_output_missing',
+                controlledError: `FETCHER_STABLE_HASH_OUTPUT_MISSING:${entry.external_id}`,
             });
         }
 
@@ -1373,7 +1450,8 @@ function usage() {
         '    --route=html_hydration \\',
         '    --remaining-external-ids=4830747,4830748,4830750,4830751,4830752,4830753,4830754 \\',
         '    --expected-target-count=7 \\',
-        '    --baseline-raw-data-hashes=4830747:435296093b7d73ec822262c00a22903fa1d28d260a5a2b982b0bf8006e191728@stable_raw_payload_v1,4830748:e98b0adb557d54ba0ada53ff836a5f6eea2629a0ed06389b78f23d83fbe617e5@stable_raw_payload_v1,4830750:5c02a11384459581821026aa2c85677e05877f219e158e5f733aef2ddb484880@stable_raw_payload_v1,4830751:b391b896c3260446b7185d81b31949ac47ad50cf956f733c87920f36579aed0f@stable_raw_payload_v1,4830752:dfe719cae63e09710b04aba411bf74b9662c554aff284a1f414fa255ee5cd93f@stable_raw_payload_v1,4830753:6b4438453fa7d0ceb99c80fb736d3cb7dcc51d5593b4ca48bb1ba682fe78fe4f@stable_raw_payload_v1,4830754:c843897451773c8317111a4c010da59223f1bb98cb7ce12253eafa4f57f550f7@stable_raw_payload_v1 \\',
+        '    --hash-strategy=stable_raw_payload_v1 \\',
+        '    --baseline-raw-data-hashes=4830747:8dfc7faaf236ee9f8090301cce9dede32a11ed5b66f2a89e1b3324064f788b25,4830748:538fc2c33281f65d56f5fc004378e5933c0d3bbabc81d8e640bcb7abb4ad9bc3,4830750:c04915c0e972566f56bcb88a004f9e7e282777f9ca512c626a6acd4bd05e7304,4830751:5c603f83265887f223776941dde430e7abc8b8b9a9577d649cfd149339ffbd37,4830752:241e21be67a3f854d3320bbe86857a19c4bc357b6647d8b798df9b2dec6f56d6,4830753:358466958ec7b60b4dfa5e847537391b85153a564300804636497dd683311567,4830754:3a0832dc6bc16892491c11905ad8ab2fd80e4b29ea2f0aaa71d5659e57785c30 \\',
         '    --data-version=fotmob_html_hyd_v1 \\',
         '    --network-authorization=yes --live-preview-authorization=yes --final-db-write-confirmation=yes \\',
         '    --allow-db-write=yes --allow-raw-match-data-write=yes --allow-matches-write=no \\',
@@ -1381,7 +1459,7 @@ function usage() {
         '    --concurrency=1 --retry=0 --print-body=no --save-body=no',
         '',
         'Safety:',
-        '  Phase 5.20L2C performs one controlled recapture pass for the remaining 7 targets,',
+        '  Phase 5.20L2F performs one controlled recapture pass for the remaining 7 targets,',
         '  compares every stable raw_data_hash with stable_raw_payload_v1 baselines,',
         '  and writes only raw_match_data inside one transaction.',
     ].join('\n');
