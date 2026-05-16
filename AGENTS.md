@@ -83,6 +83,7 @@
 - Phase 5.21L2O 是 pageProps v2 raw inventory / completeness audit：只能 SELECT-only，只读本地 `raw_match_data` 中 8 条 seeded `fotmob_pageprops_v2`，不得触 FotMob/network、不得写 DB、不得保存或打印完整 `raw_data`/完整 `pageProps`。本阶段只允许做路径盘点、模块覆盖、可疑载荷和完整性 assessment；不得实现 parser/features/training。下一步应是 parser planning，不是 parser implementation。
 - Phase 5.21L2P 是 pageProps v2 parser boundary / leakage-safe planning：只能 planning-only，不得实现 parser、不得抽 features、不得写 `l3_features` / `match_features_training` / `predictions`、不得训练/预测、不得触 FotMob/network、不得写 DB。当前 8 条 seeded `fotmob_pageprops_v2` 仅是 raw pipeline / 结构 / parser design sampling，不构成训练数据集。
 - Phase 5.21L2P 起，parser implementation 必须等待 parser boundary / leakage policy review；features/training 必须等待 large-scale raw acquisition plan 和 `prediction_cutoff_time` policy 明确。odds raw 必须视为独立 market-pricing source，允许尽早做 raw history planning，但 odds features 在 cutoff-time policy 明确前保持 blocked；未经未来明确授权，不得运行 `odds_harvest_pipeline` 或任何 odds write path。
+- Phase 5.21L2Q 是 large-scale pageProps v2 acquisition strategy planning-only：它只能规划 future target inventory / preflight / controlled write / canonical verification / completeness audit 生命周期，不得触 FotMob/network、不得执行 raw acquisition、不得写 DB、不得实现 parser/features/training/prediction。低级别/冷门联赛必须先做 coverage profile，不能把 seeded Ligue 1 高覆盖样本泛化到所有联赛；future odds alignment 应保留稳定 `match_id` / `kickoff_time`，但 odds ingestion 仍保持独立路线。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
@@ -278,6 +279,7 @@ AI / Codex 默认只能执行：
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-dataset-status`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
 - 用户明确授权且 planning-only、不触网、不写 DB、不实现 parser/features/training/prediction 的 `make data-pageprops-v2-parser-boundary-leakage-plan SOURCE=fotmob RAW_VERSION=fotmob_pageprops_v2 PLANNING_SCOPE=parser-boundary-leakage-acquisition-odds-roadmap ALLOW_DB_WRITE=no ALLOW_NETWORK=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no`
+- 用户明确授权且 planning-only、不触网、不执行 raw acquisition、不写 DB、不实现 parser/features/training/prediction 的 `make data-large-scale-pageprops-v2-acquisition-strategy-plan SOURCE=fotmob RAW_VERSION=fotmob_pageprops_v2 PLANNING_SCOPE=large-scale-acquisition-strategy ALLOW_DB_WRITE=no ALLOW_NETWORK=no ALLOW_RAW_ACQUISITION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no`
 - 不访问外网、不写 DB 的 `make data-acquisition-engines`
 - 不访问外网、不写 DB 的 `make data-acquisition-engine-audit`
 - 用户明确授权且只读本地 source manifest、不写 DB、不训练、不预测的 `make data-real-source-audit SOURCE_MANIFEST=<local json>`

@@ -13,7 +13,7 @@
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
-        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-raw-match-data-version-compatibility-audit data-pageprops-v2-single-target-controlled-write data-pageprops-v2-post-write-canonical-read-verification data-remaining-seeded-pageprops-v2-acquisition-preflight data-remaining-seeded-pageprops-v2-controlled-write data-all-seeded-pageprops-v2-canonical-read-verification data-pageprops-v2-raw-completeness-audit data-pageprops-v2-parser-boundary-leakage-plan data-training-dataset-dry-run data-training-dataset-export \
+        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-raw-match-data-version-compatibility-audit data-pageprops-v2-single-target-controlled-write data-pageprops-v2-post-write-canonical-read-verification data-remaining-seeded-pageprops-v2-acquisition-preflight data-remaining-seeded-pageprops-v2-controlled-write data-all-seeded-pageprops-v2-canonical-read-verification data-pageprops-v2-raw-completeness-audit data-pageprops-v2-parser-boundary-leakage-plan data-large-scale-pageprops-v2-acquisition-strategy-plan data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
@@ -324,6 +324,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-all-seeded-pageprops-v2-canonical-read-verification SOURCE=fotmob TABLE=raw_match_data TARGET_EXTERNAL_IDS=4830746,4830747,4830748,4830750,4830751,4830752,4830753,4830754 EXPECTED_TARGET_VERSION=fotmob_pageprops_v2 FALLBACK_VERSION=fotmob_html_hyd_v1 EXPECTED_HASHES='<json>' ALLOW_DB_WRITE=no ALLOW_NETWORK=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2N SELECT-only canonical read verification for all 8 seeded matches, synthetic/unknown excluded, no DB write/network/parser/features/training"
 	@echo "  make data-pageprops-v2-raw-completeness-audit SOURCE=fotmob TABLE=raw_match_data TARGET_EXTERNAL_IDS=4830746,4830747,4830748,4830750,4830751,4830752,4830753,4830754 DATA_VERSION=fotmob_pageprops_v2 ALLOW_DB_WRITE=no ALLOW_NETWORK=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no PRINT_FULL_RAW_DATA=no SAVE_FULL_RAW_DATA=no  # Phase 5.21L2O SELECT-only pageProps v2 raw inventory/completeness audit for all 8 seeded matches, local raw_match_data only, no DB write/network/parser/features/training"
 	@echo "  make data-pageprops-v2-parser-boundary-leakage-plan SOURCE=fotmob RAW_VERSION=fotmob_pageprops_v2 PLANNING_SCOPE=parser-boundary-leakage-acquisition-odds-roadmap ALLOW_DB_WRITE=no ALLOW_NETWORK=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2P planning-only parser boundary / leakage-safe planning with large-scale acquisition and odds raw roadmap"
+	@echo "  make data-large-scale-pageprops-v2-acquisition-strategy-plan SOURCE=fotmob RAW_VERSION=fotmob_pageprops_v2 PLANNING_SCOPE=large-scale-acquisition-strategy ALLOW_DB_WRITE=no ALLOW_NETWORK=no ALLOW_RAW_ACQUISITION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2Q planning-only large-scale pageProps v2 acquisition strategy, no DB write/network/raw acquisition/parser/features/training"
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
@@ -1428,6 +1429,23 @@ data-pageprops-v2-parser-boundary-leakage-plan: ## Run Phase 5.21L2P parser boun
 		--planning-scope="$(PLANNING_SCOPE)" \
 		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
 		--allow-network="$(or $(ALLOW_NETWORK),no)" \
+		--allow-parser-implementation="$(or $(ALLOW_PARSER_IMPLEMENTATION),no)" \
+		--allow-feature-extraction="$(or $(ALLOW_FEATURE_EXTRACTION),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)"
+
+data-large-scale-pageprops-v2-acquisition-strategy-plan: ## Run Phase 5.21L2Q large-scale pageProps v2 acquisition strategy planning. Planning-only, no network/raw acquisition/write/parser/features/training.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(RAW_VERSION)" ] || [ -z "$(PLANNING_SCOPE)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob RAW_VERSION=fotmob_pageprops_v2 PLANNING_SCOPE=large-scale-acquisition-strategy"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/large_scale_pageprops_v2_acquisition_strategy_plan.js \
+		--source="$(SOURCE)" \
+		--raw-version="$(RAW_VERSION)" \
+		--planning-scope="$(PLANNING_SCOPE)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-network="$(or $(ALLOW_NETWORK),no)" \
+		--allow-raw-acquisition="$(or $(ALLOW_RAW_ACQUISITION),no)" \
 		--allow-parser-implementation="$(or $(ALLOW_PARSER_IMPLEMENTATION),no)" \
 		--allow-feature-extraction="$(or $(ALLOW_FEATURE_EXTRACTION),no)" \
 		--allow-training="$(or $(ALLOW_TRAINING),no)" \
