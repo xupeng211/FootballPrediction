@@ -70,6 +70,7 @@
 - Phase 5.21L2B 仅允许在明确授权后执行 single-target source fidelity live compare：必须 no-write，不得保存或打印完整 HTML body / full JSON，不得 browser/proxy，不得 parser/features/training/prediction；若确认 stored `raw_data` 是 transformed/lossy，必须先解决 raw storage strategy，再进入 parser/training。
 - Phase 5.21L2C 起，当前 FotMob v1 `raw_data` 明确视为 transformed hydration payload；未来 canonical FotMob raw 默认应优先 `fotmob_pageprops_v2`，即存 `__NEXT_DATA__.props.pageProps` 并使用 stable pageProps hash。transformed payload 只能作为 derived/helper，不得作为唯一 raw source；parser/features/training 必须按 data_version/source/provenance 分支。低级别/冷门联赛扩展前必须先做 raw completeness profile；未经明确授权不得 rewrite 现有 raw rows，也不得默认存 full `__NEXT_DATA__`。
 - Phase 5.21L2D 仅允许明确授权后的 single-target pageProps v2 no-write preview：`fotmob_pageprops_v2` candidate 必须只留在内存中；在 schema/version coexistence 完成规划前不得写 v2 rows，且需先复核当前 `raw_match_data` `unique(match_id)` 是否阻止同一 match 多版本共存；parser/features/training 继续 deferred。
+- Phase 5.21L2E 起，pageProps v2 write 在完成 `raw_match_data` version coexistence 规划前不得推进；当前 `unique(match_id)` 必须视为潜在 blocker。不得覆盖或 rewrite `fotmob_html_hyd_v1`，优先规划 versioned coexistence；parser/features/training 必须显式选择 `data_version`。schema migration 必须另行明确授权，pageProps v2 写入也必须先完成独立 preflight 并取得 DB-write authorization。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
