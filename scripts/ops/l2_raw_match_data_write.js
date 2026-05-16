@@ -5,6 +5,7 @@
 const crypto = require('node:crypto');
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
 const { runFotMobDetailRouteSelector, buildRouteSelectorPreviewSummary } = require('./l2_raw_detail_preview');
+const { requireSingleVersionRow } = require('../../src/infrastructure/services/RawMatchDataVersionSelector');
 
 const PHASE = 'PHASE5_16L2_CONTROLLED_RAW_MATCH_DATA_WRITE';
 const NEXT_REQUIRED_PHASE = 'Phase 5.17L2 raw_match_data local parser planning';
@@ -701,8 +702,13 @@ function validateExistingRawRows(rows = []) {
     if (!Array.isArray(rows)) {
         return ['existing raw_match_data SELECT did not return an array'];
     }
-    if (rows.length > 1) {
-        return [`existing raw_match_data SELECT expected <= 1 row, got ${rows.length}`];
+    try {
+        requireSingleVersionRow(rows, {
+            expectedMatchId: TARGET.matchId,
+            expectedDataVersion: TARGET.dataVersion,
+        });
+    } catch (error) {
+        return [String(error.message || error)];
     }
     return [];
 }
@@ -746,6 +752,7 @@ function buildInsertRawMatchDataSql({ matchId, externalId, rawData, collectedAt,
                 data_hash
             )
             VALUES ($1, $2, $3::jsonb, $4::timestamptz, $5, $6)
+            ON CONFLICT (match_id, data_version) DO NOTHING
             RETURNING id, match_id, external_id, collected_at, data_version, data_hash
         `,
         values: [matchId, externalId, JSON.stringify(rawData), collectedAt, dataVersion, dataHash],
@@ -918,10 +925,10 @@ async function selectExistingRawMatchData(client, value) {
         SELECT id, match_id, external_id, collected_at, data_version, data_hash
         FROM raw_match_data
         WHERE match_id = $1
-           OR external_id = $2
+          AND data_version = $2
         ORDER BY collected_at DESC NULLS LAST, id DESC
     `;
-    const result = await safeSelect(client, query, [value.matchId, value.externalId]);
+    const result = await safeSelect(client, query, [value.matchId, value.dataVersion]);
     return result.rows || [];
 }
 
@@ -948,10 +955,10 @@ async function selectVerificationRow(client, value) {
         SELECT id, match_id, external_id, collected_at, data_version, data_hash
         FROM raw_match_data
         WHERE match_id = $1
-           OR external_id = $2
+          AND data_version = $2
         ORDER BY collected_at DESC NULLS LAST, id DESC
     `;
-    const result = await safeSelect(client, query, [value.matchId, value.externalId]);
+    const result = await safeSelect(client, query, [value.matchId, value.dataVersion]);
     return Array.isArray(result.rows) && result.rows.length > 0 ? result.rows[0] : null;
 }
 

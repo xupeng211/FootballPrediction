@@ -266,6 +266,8 @@ test('buildPerTargetPreflight: all no existing rows -> would_insert', () => {
     };
     const entry = gate.buildPerTargetPreflight(target, recapture, null);
     assert.equal(entry.decision, 'would_insert');
+    assert.equal(entry.data_version, 'fotmob_html_hyd_v1');
+    assert.match(entry.reason, /match_id,data_version/);
     assert.equal(entry.hash_strategy, 'stable_raw_payload_v1');
     assert.equal(entry.existing_raw_match_data_found, false);
 });
@@ -338,7 +340,45 @@ test('preflight output with fake recapture yields 7 would_insert', async () => {
     assert.equal(plan.would_predict, false);
     assert.equal(plan.parser_features_allowed, false);
     assert.equal(plan.training_allowed, false);
+    assert.equal(plan.per_target_preflight[0].data_version, 'fotmob_html_hyd_v1');
     assert.ok(plan.protected_table_baseline);
+});
+
+test('existing row lookup passes match_id and data_version to dbSelectFn', async () => {
+    const gate = loadModuleFresh();
+    const seen = [];
+    const fakeRecapture = async target => ({
+        request_url: 'https://www.fotmob.com/match/' + target.external_id,
+        final_url: 'https://www.fotmob.com/match/' + target.external_id,
+        http_status: 200,
+        content_type: 'text/html',
+        body_byte_length: 50000,
+        body_sha256: crypto.createHash('sha256').update(target.external_id).digest('hex'),
+        hydration_parse_ok: true,
+        looks_like_valid_match_detail: true,
+        payload: { matchId: target.external_id },
+    });
+    const plan = await gate.buildRemainingRawMatchDataAcquisitionPreflight(validArgs(), {
+        recaptureFn: fakeRecapture,
+        dbSelectFn: async lookup => {
+            seen.push(lookup);
+            if (lookup === '__baseline__') {
+                return {
+                    matches: 10,
+                    raw_match_data: 10,
+                    bookmaker_odds_history: 2,
+                    l3_features: 2,
+                    match_features_training: 2,
+                    predictions: 2,
+                };
+            }
+            assert.equal(lookup.data_version, 'fotmob_html_hyd_v1');
+            assert.match(lookup.match_id, /^53_20252026_/);
+            return null;
+        },
+    });
+    assert.equal(plan.ok, true);
+    assert.equal(seen.length, 8);
 });
 
 test('preflight stable hash does not drift when only metadata changes', () => {
@@ -464,6 +504,7 @@ test('preflight recapture exception is surfaced as failed entry', async () => {
     });
     assert.equal(plan.failed_target_count, 1);
     assert.equal(plan.per_target_preflight[0].decision, 'failed');
+    assert.equal(plan.per_target_preflight[0].data_version, 'fotmob_html_hyd_v1');
     assert.match(plan.per_target_preflight[0].reason, /boom-4830747/);
 });
 

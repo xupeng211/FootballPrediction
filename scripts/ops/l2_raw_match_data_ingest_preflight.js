@@ -5,6 +5,10 @@
 const crypto = require('node:crypto');
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
 const { runFotMobDetailRouteSelector, buildRouteSelectorPreviewSummary } = require('./l2_raw_detail_preview');
+const {
+    requireSingleVersionRow,
+    buildVersionAwareLookupSpec,
+} = require('../../src/infrastructure/services/RawMatchDataVersionSelector');
 
 const PHASE = 'PHASE5_15L2_RAW_MATCH_DATA_INGEST_PREFLIGHT';
 const NEXT_REQUIRED_PHASE = 'Phase 5.16L2 controlled raw_match_data write';
@@ -448,13 +452,20 @@ function validateRawDataShape(rawData = {}) {
     return errors;
 }
 
-function buildAffectedPreview({ matchId, externalId, existingRows = [], rawDataHash }) {
+function buildAffectedPreview({
+    matchId,
+    externalId,
+    dataVersion = TARGET.dataVersion,
+    existingRows = [],
+    rawDataHash,
+}) {
     if (!Array.isArray(existingRows) || existingRows.length === 0) {
         return {
             match_id: matchId,
             external_id: externalId,
+            data_version: dataVersion,
             decision: 'would_insert',
-            reason: 'no existing raw_match_data row for match_id',
+            reason: 'no existing raw_match_data row for match_id,data_version',
         };
     }
 
@@ -463,6 +474,7 @@ function buildAffectedPreview({ matchId, externalId, existingRows = [], rawDataH
         return {
             match_id: matchId,
             external_id: externalId,
+            data_version: dataVersion,
             decision: 'would_skip',
             reason: 'existing raw_match_data data_hash matches computed raw_data_hash',
             existing_data_hash: normalizeText(existingRow.data_hash),
@@ -473,6 +485,7 @@ function buildAffectedPreview({ matchId, externalId, existingRows = [], rawDataH
     return {
         match_id: matchId,
         external_id: externalId,
+        data_version: dataVersion,
         decision: 'would_update',
         reason: 'existing raw_match_data data_hash differs from computed raw_data_hash',
         existing_data_hash: normalizeText(existingRow.data_hash) || null,
@@ -591,10 +604,10 @@ async function selectExistingRawMatchData(pool, value, dependencies = {}) {
         SELECT id, match_id, external_id, collected_at, data_version, data_hash
         FROM raw_match_data
         WHERE match_id = $1
-           OR external_id = $2
+          AND data_version = $2
         ORDER BY collected_at DESC NULLS LAST, id DESC
     `;
-    const result = await safeSelect(pool, query, [value.matchId, value.externalId]);
+    const result = await safeSelect(pool, query, [value.matchId, value.dataVersion]);
     return result.rows || [];
 }
 
@@ -686,8 +699,13 @@ function validateExistingRawRows(rows = []) {
     if (!Array.isArray(rows)) {
         return ['existing raw_match_data SELECT did not return an array'];
     }
-    if (rows.length > 1) {
-        return [`existing raw_match_data SELECT expected <= 1 row, got ${rows.length}`];
+    try {
+        requireSingleVersionRow(rows, {
+            expectedMatchId: TARGET.matchId,
+            expectedDataVersion: TARGET.dataVersion,
+        });
+    } catch (error) {
+        return [String(error.message || error)];
     }
     return [];
 }
@@ -884,9 +902,11 @@ async function buildRawMatchDataIngestPreflight(input = {}, dependencies = {}) {
     const affectedPreview = buildAffectedPreview({
         matchId: TARGET.matchId,
         externalId: TARGET.externalId,
+        dataVersion: TARGET.dataVersion,
         existingRows: dbState.existingRawMatchDataRows,
         rawDataHash,
     });
+    const versionAwareLookup = buildVersionAwareLookupSpec();
 
     return {
         phase: PHASE,
@@ -913,6 +933,7 @@ async function buildRawMatchDataIngestPreflight(input = {}, dependencies = {}) {
         raw_data_canonicalized: true,
         raw_data_hash: rawDataHash,
         existing_raw_match_data_found: dbState.existingRawMatchDataRows.length > 0,
+        existing_raw_match_data_lookup: versionAwareLookup,
         would_insert: affectedPreview.decision === 'would_insert',
         would_update: affectedPreview.decision === 'would_update',
         would_skip: affectedPreview.decision === 'would_skip',

@@ -234,9 +234,9 @@ function fakeReadOnlyPool() {
     const queries = [];
     return {
         queries,
-        async query(sql) {
+        async query(sql, values = []) {
             const text = String(sql || '');
-            queries.push(text);
+            queries.push({ text, values });
             assert.match(text.trim(), /^SELECT/i);
             assert.doesNotMatch(text, /\b(INSERT|UPDATE|DELETE|TRUNCATE|ALTER|DROP|BEGIN|COMMIT|ROLLBACK)\b/i);
             if (text.includes('UNION ALL')) {
@@ -495,10 +495,13 @@ test('no existing row -> would_insert', () => {
     const affected = gate.buildAffectedPreview({
         matchId: '53_20252026_4830746',
         externalId: '4830746',
+        dataVersion: 'fotmob_html_hyd_v1',
         existingRows: [],
         rawDataHash: 'abc',
     });
     assert.equal(affected.decision, 'would_insert');
+    assert.equal(affected.data_version, 'fotmob_html_hyd_v1');
+    assert.match(affected.reason, /match_id,data_version/);
 });
 
 test('same existing data_hash -> would_skip', () => {
@@ -584,7 +587,14 @@ test('custom dependency functions are used without pool and array baselines', as
         },
         selectExistingRawMatchData: async ({ input }) => {
             assert.equal(input.matchId, '53_20252026_4830746');
-            return [{ data_hash: rawDataHash }];
+            assert.equal(input.dataVersion, 'fotmob_html_hyd_v1');
+            return [
+                {
+                    match_id: '53_20252026_4830746',
+                    data_version: 'fotmob_html_hyd_v1',
+                    data_hash: rawDataHash,
+                },
+            ];
         },
         selectProtectedTableBaseline: async () => [
             { table_name: 'matches', rows: 10 },
@@ -598,6 +608,7 @@ test('custom dependency functions are used without pool and array baselines', as
 
     assert.equal(result.ok, true);
     assert.equal(result.existing_raw_match_data_found, true);
+    assert.deepEqual(result.existing_raw_match_data_lookup.conflict_target, ['match_id', 'data_version']);
     assert.equal(result.would_skip, true);
     assert.deepEqual(result.protected_table_baseline, BASELINE);
 });
@@ -632,7 +643,16 @@ test('same hash output would_skip_count=1', async () => {
     const rawHash = gate.sha256CanonicalJson(rawData);
     const result = await gate.buildRawMatchDataIngestPreflight(
         validArgs(),
-        fakeDeps({ preview, existingRawMatchDataRows: [{ data_hash: rawHash }] })
+        fakeDeps({
+            preview,
+            existingRawMatchDataRows: [
+                {
+                    match_id: '53_20252026_4830746',
+                    data_version: 'fotmob_html_hyd_v1',
+                    data_hash: rawHash,
+                },
+            ],
+        })
     );
     assert.equal(result.would_skip, true);
     assert.equal(result.would_skip_count, 1);
@@ -642,7 +662,15 @@ test('different hash output would_update_count=1', async () => {
     const gate = loadModuleFresh();
     const result = await gate.buildRawMatchDataIngestPreflight(
         validArgs(),
-        fakeDeps({ existingRawMatchDataRows: [{ data_hash: 'old' }] })
+        fakeDeps({
+            existingRawMatchDataRows: [
+                {
+                    match_id: '53_20252026_4830746',
+                    data_version: 'fotmob_html_hyd_v1',
+                    data_hash: 'old',
+                },
+            ],
+        })
     );
     assert.equal(result.would_update, true);
     assert.equal(result.would_update_count, 1);
@@ -797,11 +825,40 @@ test('multiple existing raw rows return controlled error', async () => {
     const result = await gate.buildRawMatchDataIngestPreflight(
         validArgs(),
         fakeDeps({
-            existingRawMatchDataRows: [{ data_hash: 'a' }, { data_hash: 'b' }],
+            existingRawMatchDataRows: [
+                {
+                    match_id: '53_20252026_4830746',
+                    data_version: 'fotmob_html_hyd_v1',
+                    data_hash: 'a',
+                },
+                {
+                    match_id: '53_20252026_4830746',
+                    data_version: 'fotmob_html_hyd_v1',
+                    data_hash: 'b',
+                },
+            ],
         })
     );
     assert.equal(result.ok, false);
-    assert.match(result.controlled_error, /expected <= 1 row/);
+    assert.match(result.controlled_error, /expected <=\s*1 row/);
+});
+
+test('existing raw row with wrong data_version returns controlled error', async () => {
+    const gate = loadModuleFresh();
+    const result = await gate.buildRawMatchDataIngestPreflight(
+        validArgs(),
+        fakeDeps({
+            existingRawMatchDataRows: [
+                {
+                    match_id: '53_20252026_4830746',
+                    data_version: 'fotmob_pageprops_v2',
+                    data_hash: 'a',
+                },
+            ],
+        })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.controlled_error, /expected data_version fotmob_html_hyd_v1/);
 });
 
 test('existing raw rows must be an array', async () => {
@@ -845,6 +902,9 @@ test('default pg pool path uses SELECT-only queries', async () => {
     assert.equal(result.ok, true);
     assert.equal(ended, true);
     assert.equal(pool.queries.length, 3);
+    const rawLookup = pool.queries.find(item => item.text.includes('FROM raw_match_data'));
+    assert.match(rawLookup.text, /match_id = \$1\s+AND data_version = \$2/i);
+    assert.deepEqual(rawLookup.values, ['53_20252026_4830746', 'fotmob_html_hyd_v1']);
 });
 
 test('recapture path uses fake fetch and does not save or print body', async () => {

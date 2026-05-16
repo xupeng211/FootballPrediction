@@ -13,7 +13,7 @@
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
-        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-training-dataset-dry-run data-training-dataset-export \
+        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-raw-match-data-version-compatibility-audit data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
@@ -315,6 +315,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-pageprops-v2-controlled-write-plan SOURCE=fotmob CURRENT_VERSION=fotmob_html_hyd_v1 TARGET_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 TARGET_MATCH_ID=53_20252026_4830747 TARGET_EXTERNAL_ID=4830747 ALLOW_NETWORK=no ALLOW_DB_WRITE=no ALLOW_MIGRATION=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2E planning-only: reviews raw_match_data schema/version coexistence, no DB write/migration/parser/features/training/prediction"
 	@echo "  make data-raw-match-data-versioned-schema-migration-preflight SOURCE=fotmob TABLE=raw_match_data CURRENT_UNIQUE=match_id TARGET_UNIQUE=match_id,data_version TARGET_VERSION=fotmob_pageprops_v2 ALLOW_DB_WRITE=no ALLOW_MIGRATION=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2F planning/preflight-only: plans UNIQUE(match_id) -> UNIQUE(match_id,data_version), no DB write/ALTER/migration/parser/features/training/prediction"
 	@echo "  make data-raw-match-data-versioned-schema-migration-execute SOURCE=fotmob TABLE=raw_match_data CURRENT_UNIQUE=match_id TARGET_UNIQUE=match_id,data_version CURRENT_CONSTRAINT=raw_match_data_match_id_key TARGET_CONSTRAINT=raw_match_data_match_id_data_version_key FINAL_SCHEMA_MIGRATION_CONFIRMATION=yes ALLOW_DB_WRITE=yes ALLOW_SCHEMA_MIGRATION=yes ALLOW_ALTER_TABLE=yes ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2G controlled schema-only migration execution, no raw row write/FotMob/parser/features/training/prediction"
+	@echo "  make data-raw-match-data-version-compatibility-audit SOURCE=fotmob TABLE=raw_match_data PREFERRED_VERSION=fotmob_pageprops_v2 FALLBACK_VERSION=fotmob_html_hyd_v1 ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2H SELECT-only version-aware compatibility audit; canonical selector prefers pageProps v2 then html_hyd_v1; no DB write/FotMob/parser/features/training/prediction"
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
@@ -1216,6 +1217,22 @@ data-raw-match-data-versioned-schema-migration-execute: ## Run Phase 5.21L2G con
 		--allow-alter-table="$(or $(ALLOW_ALTER_TABLE),no)" \
 		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
 		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
+		--allow-parser-features="$(or $(ALLOW_PARSER_FEATURES),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)"
+
+data-raw-match-data-version-compatibility-audit: ## Run Phase 5.21L2H version-aware raw_match_data compatibility audit. SELECT-only, no DB write, FotMob access, parser/features, training, or prediction.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(TABLE)" ] || [ -z "$(PREFERRED_VERSION)" ] || [ -z "$(FALLBACK_VERSION)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob TABLE=raw_match_data PREFERRED_VERSION=fotmob_pageprops_v2 FALLBACK_VERSION=fotmob_html_hyd_v1"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/raw_match_data_version_compatibility_audit.js \
+		--source="$(SOURCE)" \
+		--table="$(TABLE)" \
+		--preferred-version="$(PREFERRED_VERSION)" \
+		--fallback-version="$(FALLBACK_VERSION)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
 		--allow-parser-features="$(or $(ALLOW_PARSER_FEATURES),no)" \
 		--allow-training="$(or $(ALLOW_TRAINING),no)" \
 		--allow-prediction="$(or $(ALLOW_PREDICTION),no)"

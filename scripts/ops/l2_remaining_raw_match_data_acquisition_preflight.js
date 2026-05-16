@@ -66,6 +66,7 @@ const EXPECTED_SCOPE = Object.freeze({
     season: '2025/2026',
     date: '2026-05-10',
     route: 'html_hydration',
+    dataVersion: 'fotmob_html_hyd_v1',
     targetCount: 7,
 });
 
@@ -442,9 +443,10 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
         })
     );
     const rawDataErrors = validateCanonicalRawDataShape(rawData);
+    const dataVersion = recaptureResult.data_version || EXPECTED_SCOPE.dataVersion;
 
     let decision = 'would_insert';
-    let reason = 'no existing raw_match_data row for match_id';
+    let reason = 'no existing raw_match_data row for match_id,data_version';
 
     if (existingRawRow) {
         if (existingRawRow.data_hash === rawDataHash) {
@@ -459,6 +461,7 @@ function buildPerTargetPreflight(target, recaptureResult, existingRawRow) {
     return {
         match_id: target.match_id,
         external_id: target.external_id,
+        data_version: dataVersion,
         home_team: target.home_team,
         away_team: target.away_team,
         selected_route: EXPECTED_SCOPE.route,
@@ -560,6 +563,7 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
             perTarget.push({
                 match_id: target.match_id,
                 external_id: target.external_id,
+                data_version: EXPECTED_SCOPE.dataVersion,
                 home_team: target.home_team,
                 away_team: target.away_team,
                 selected_route: EXPECTED_SCOPE.route,
@@ -587,7 +591,11 @@ async function buildRemainingRawMatchDataAcquisitionPreflight(input = {}, option
         let existingRawRow = null;
         if (dbSelectFn) {
             try {
-                existingRawRow = await dbSelectFn(target.match_id);
+                existingRawRow = await dbSelectFn({
+                    match_id: target.match_id,
+                    external_id: target.external_id,
+                    data_version: EXPECTED_SCOPE.dataVersion,
+                });
             } catch (_) {
                 /* non-fatal */
             }

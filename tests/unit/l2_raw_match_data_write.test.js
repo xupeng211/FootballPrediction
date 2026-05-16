@@ -688,6 +688,21 @@ test('multiple existing raw rows return controlled error', async () => {
     assert.match(result.controlled_error, /EXISTING_RAW_MATCH_DATA_VALIDATION_FAILED/);
 });
 
+test('existing raw row with wrong data_version returns controlled error', async () => {
+    const gate = loadModuleFresh();
+    const client = buildReadWriteClient({
+        existingRows: [insertedRow({ data_version: 'fotmob_pageprops_v2' })],
+        preBaseline: POST_BASELINE,
+        postBaseline: POST_BASELINE,
+    });
+    const result = await gate.executeRawMatchDataWrite(validArgs(), {
+        ...fakeDeps(),
+        client,
+    });
+    assert.equal(result.execution_completed, false);
+    assert.match(result.controlled_error, /expected data_version fotmob_html_hyd_v1/);
+});
+
 test('pre-write baseline mismatch returns controlled error', async () => {
     const gate = loadModuleFresh();
     const client = buildReadWriteClient({
@@ -817,6 +832,12 @@ test('no existing row inserts exactly one row in fake DB transaction', async () 
     assert.equal(result.updated_count, 0);
     assert.equal(result.skipped_count, 0);
     assert.equal(client.queries.filter(item => /^INSERT/i.test(item.text)).length, 1);
+    const rawSelects = client.queries.filter(item => isSelectRawMatchDataQuery(item.text) && !item.text.includes('UNION ALL'));
+    assert.ok(rawSelects.length >= 2);
+    for (const rawSelect of rawSelects) {
+        assert.match(rawSelect.text, /match_id = \$1\s+AND data_version = \$2/i);
+        assert.deepEqual(rawSelect.values, ['53_20252026_4830746', 'fotmob_html_hyd_v1']);
+    }
 });
 
 test('transaction commits on success', async () => {
@@ -859,6 +880,8 @@ test('SQL plan only targets raw_match_data', () => {
         dataHash: BASELINE_RAW_DATA_HASH,
     });
     assert.match(sql.text, /INSERT INTO raw_match_data/i);
+    assert.match(sql.text, /ON CONFLICT\s*\(\s*match_id\s*,\s*data_version\s*\) DO NOTHING/i);
+    assert.equal(sql.values[4], 'fotmob_html_hyd_v1');
 });
 
 test('SQL plan does not mention matches update', () => {
