@@ -13,7 +13,7 @@
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
-        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-training-dataset-dry-run data-training-dataset-export \
+        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
@@ -313,6 +313,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-raw-storage-strategy-revision-plan SOURCE=fotmob CURRENT_VERSION=fotmob_html_hyd_v1 RECOMMENDED_VERSION=fotmob_pageprops_v2 RECOMMENDED_HASH_STRATEGY=stable_pageprops_payload_v1 ALLOW_NETWORK=no ALLOW_DB_WRITE=no ALLOW_MIGRATION=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2C planning-only: recommends full pageProps raw v2, transformed payload derived/helper, no DB write/parser/features/training/prediction"
 	@echo "  make data-pageprops-v2-no-write-preview SOURCE=fotmob ROUTE=html_hydration MATCH_ID=53_20252026_4830747 EXTERNAL_ID=4830747 HOME_TEAM=Auxerre AWAY_TEAM=Nice CANDIDATE_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 NETWORK_AUTHORIZATION=yes PAGEPROPS_V2_PREVIEW_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no CONCURRENCY=1 RETRY=0 PRINT_BODY=no SAVE_BODY=no PRINT_FULL_JSON=no SAVE_FULL_JSON=no  # Phase 5.21L2D single-target pageProps v2 no-write preview, candidate in memory only"
 	@echo "  make data-pageprops-v2-controlled-write-plan SOURCE=fotmob CURRENT_VERSION=fotmob_html_hyd_v1 TARGET_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 TARGET_MATCH_ID=53_20252026_4830747 TARGET_EXTERNAL_ID=4830747 ALLOW_NETWORK=no ALLOW_DB_WRITE=no ALLOW_MIGRATION=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2E planning-only: reviews raw_match_data schema/version coexistence, no DB write/migration/parser/features/training/prediction"
+	@echo "  make data-raw-match-data-versioned-schema-migration-preflight SOURCE=fotmob TABLE=raw_match_data CURRENT_UNIQUE=match_id TARGET_UNIQUE=match_id,data_version TARGET_VERSION=fotmob_pageprops_v2 ALLOW_DB_WRITE=no ALLOW_MIGRATION=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_PARSER_FEATURES=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2F planning/preflight-only: plans UNIQUE(match_id) -> UNIQUE(match_id,data_version), no DB write/ALTER/migration/parser/features/training/prediction"
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
@@ -357,6 +358,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  Phase 5.21L2C raw storage strategy planning is planning-only: future canonical raw should prefer fotmob_pageprops_v2, transformed payload is derived/helper, no rewrite/DB write/parser/features/training/prediction."
 	@echo "  Phase 5.21L2D pageProps v2 no-write preview is single-target only: constructs fotmob_pageprops_v2 in memory, computes stable_pageprops_payload_v1 hash, compares v2 candidate vs existing v1, no DB/raw write/parser/features/training/prediction."
 	@echo "  Phase 5.21L2E pageProps v2 controlled write planning is planning-only: review raw_match_data unique constraints, plan v1/v2 coexistence, no DB write/migration/parser/features/training/prediction."
+	@echo "  Phase 5.21L2F raw_match_data versioned schema migration preflight is planning-only: exact UNIQUE(match_id) -> UNIQUE(match_id,data_version) plan, no DB write/ALTER TABLE/migration/parser/features/training/prediction."
 	@echo "  Phase 5.20L2D hash stability audit is local-only: verify stable_raw_payload_v1, keep volatile _meta out of data_hash, no network, no DB writes."
 	@echo "  Remaining seeded matches require separate authorization, preflight, and controlled write phases."
 	@echo "  Phase 5.11L2 direct matchDetails endpoint returned 403; do not retry or change headers/routes before route audit authorization."
@@ -1169,6 +1171,24 @@ data-pageprops-v2-controlled-write-plan: ## Run Phase 5.21L2E pageProps v2 contr
 		--target-match-id="$(TARGET_MATCH_ID)" \
 		--target-external-id="$(TARGET_EXTERNAL_ID)" \
 		--allow-network="$(or $(ALLOW_NETWORK),no)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-migration="$(or $(ALLOW_MIGRATION),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-parser-features="$(or $(ALLOW_PARSER_FEATURES),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)"
+
+data-raw-match-data-versioned-schema-migration-preflight: ## Run Phase 5.21L2F raw_match_data versioned schema migration preflight. No DB write, ALTER TABLE, migration, raw write, parser/features, training, or prediction.
+	@if [ -z "$(SOURCE)" ] || [ -z "$(TABLE)" ] || [ -z "$(CURRENT_UNIQUE)" ] || [ -z "$(TARGET_UNIQUE)" ] || [ -z "$(TARGET_VERSION)" ]; then \
+		echo "ERROR: provide SOURCE=fotmob TABLE=raw_match_data CURRENT_UNIQUE=match_id TARGET_UNIQUE=match_id,data_version TARGET_VERSION=fotmob_pageprops_v2"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/raw_match_data_versioned_schema_migration_preflight.js \
+		--source="$(SOURCE)" \
+		--table="$(TABLE)" \
+		--current-unique="$(CURRENT_UNIQUE)" \
+		--target-unique="$(TARGET_UNIQUE)" \
+		--target-version="$(TARGET_VERSION)" \
 		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
 		--allow-migration="$(or $(ALLOW_MIGRATION),no)" \
 		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
