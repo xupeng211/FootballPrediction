@@ -629,6 +629,7 @@ function buildPerTargetRecapture(target, recaptureResult = {}) {
     return {
         match_id: target.match_id,
         external_id: target.external_id,
+        data_version: EXPECTED_SCOPE.dataVersion,
         home_team: target.home_team,
         away_team: target.away_team,
         selected_route: recaptureResult.route || EXPECTED_SCOPE.route,
@@ -894,18 +895,15 @@ async function selectTargetMatches(client, targetRegistry = []) {
     return result.rows || [];
 }
 
-async function selectExistingRawMatchData(client, targetRegistry = []) {
+async function selectExistingRawMatchData(client, targetRegistry = [], dataVersion = EXPECTED_SCOPE.dataVersion) {
     const query = `
         SELECT id, match_id, external_id, collected_at, data_version, data_hash
         FROM raw_match_data
         WHERE match_id = ANY($1::text[])
-           OR external_id = ANY($2::text[])
+          AND data_version = $2
         ORDER BY external_id, collected_at DESC NULLS LAST, id DESC
     `;
-    const result = await safeSelect(client, query, [
-        targetRegistry.map(target => target.match_id),
-        targetRegistry.map(target => target.external_id),
-    ]);
+    const result = await safeSelect(client, query, [targetRegistry.map(target => target.match_id), dataVersion]);
     return result.rows || [];
 }
 
@@ -927,14 +925,15 @@ async function selectProtectedTableBaseline(client) {
     return buildProtectedTableBaseline(result.rows || []);
 }
 
-async function selectInsertedRowsMetadata(client, targetRegistry = []) {
+async function selectInsertedRowsMetadata(client, targetRegistry = [], dataVersion = EXPECTED_SCOPE.dataVersion) {
     const query = `
         SELECT id, match_id, external_id, collected_at, data_version, data_hash
         FROM raw_match_data
-        WHERE external_id = ANY($1::text[])
+        WHERE match_id = ANY($1::text[])
+          AND data_version = $2
         ORDER BY external_id, id
     `;
-    const result = await safeSelect(client, query, [targetRegistry.map(target => target.external_id)]);
+    const result = await safeSelect(client, query, [targetRegistry.map(target => target.match_id), dataVersion]);
     return result.rows || [];
 }
 
@@ -950,6 +949,7 @@ function buildInsertRawMatchDataSql({ matchId, externalId, rawData, collectedAt,
                 data_hash
             )
             VALUES ($1, $2, $3::jsonb, $4::timestamptz, $5, $6)
+            ON CONFLICT (match_id, data_version) DO NOTHING
             RETURNING id, match_id, external_id, collected_at, data_version, data_hash
         `,
         values: [matchId, externalId, JSON.stringify(rawData), collectedAt, dataVersion, dataHash],
@@ -1267,7 +1267,7 @@ async function executeRemainingRawMatchDataWrite(input = {}, dependencies = {}) 
 
         const existingRawRows =
             dependencies.existingRawRowsOverride ||
-            (await selectExistingRawMatchData(connection.client, targetRegistry));
+            (await selectExistingRawMatchData(connection.client, targetRegistry, value.dataVersion));
         if (!Array.isArray(existingRawRows)) {
             await connection.client.query('ROLLBACK');
             transaction.rolled_back = true;
@@ -1352,7 +1352,7 @@ async function executeRemainingRawMatchDataWrite(input = {}, dependencies = {}) 
 
         const insertedRowsMetadata =
             dependencies.insertedRowsMetadataOverride ||
-            (await selectInsertedRowsMetadata(connection.client, targetRegistry));
+            (await selectInsertedRowsMetadata(connection.client, targetRegistry, value.dataVersion));
         const insertedRowErrors = validateInsertedRows(insertedRowsMetadata, targetRegistry, value.dataVersion);
         const postWriteBaseline =
             dependencies.postWriteBaselineOverride || (await selectProtectedTableBaseline(connection.client));

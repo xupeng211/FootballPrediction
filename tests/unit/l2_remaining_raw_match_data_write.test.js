@@ -307,8 +307,7 @@ function buildQueryResponse(text, queries, options) {
         return { rows: targetMatchRows() };
     }
     if (isSelectRawMatchDataQuery(text)) {
-        const values = queries[queries.length - 1].values || [];
-        if (values.length === 1) {
+        if (/ORDER BY external_id,\s*id/i.test(text)) {
             return { rows: insertedMetadata };
         }
         return { rows: existingRows };
@@ -625,6 +624,7 @@ test('buildPerTargetRecapture builds canonical per-target shape', () => {
         rawDataHash: baselineMap[target.external_id],
     });
     const entry = gate.buildPerTargetRecapture(target, recapture);
+    assert.equal(entry.data_version, 'fotmob_html_hyd_v1');
     assert.equal(entry.hash_matches_baseline, true);
     assert.equal(entry.hash_strategy, 'stable_raw_payload_v1');
     assert.equal(entry.baseline_hash_strategy, 'stable_raw_payload_v1');
@@ -685,9 +685,10 @@ test('fake fetcher returns 7 matching hashes -> inserts 7 rows in fake transacti
     const gate = loadModuleFresh();
     const baselineMap = computedBaselineMap(gate);
     const registry = gate.getRemainingTargetRegistry(baselineMap);
+    const client = buildReadWriteClient({ hashMap: baselineMap });
     const result = await gate.executeRemainingRawMatchDataWrite(executionArgs(gate), {
         skipValidation: true,
-        client: buildReadWriteClient({ hashMap: baselineMap }),
+        client,
         recaptureFn: async target =>
             fakeRecapture(target, gate, {
                 rawDataHash: baselineMap[target.external_id],
@@ -704,6 +705,14 @@ test('fake fetcher returns 7 matching hashes -> inserts 7 rows in fake transacti
     assert.equal(result.skipped_count, 0);
     assert.equal(result.raw_match_data_write_executed, true);
     assert.equal(result.db_write_executed, true);
+    const rawSelects = client.queries.filter(item => isSelectRawMatchDataQuery(item.text) && !item.text.includes('UNION ALL'));
+    assert.equal(rawSelects.length, 2);
+    assert.match(rawSelects[0].text, /match_id = ANY\(\$1::text\[\]\)\s+AND data_version = \$2/i);
+    assert.equal(rawSelects[0].values[1], 'fotmob_html_hyd_v1');
+    assert.match(rawSelects[1].text, /match_id = ANY\(\$1::text\[\]\)\s+AND data_version = \$2/i);
+    assert.equal(rawSelects[1].values[1], 'fotmob_html_hyd_v1');
+    const insertSql = client.queries.find(item => /^INSERT\s+INTO\s+raw_match_data/i.test(item.text));
+    assert.match(insertSql.text, /ON CONFLICT\s*\(\s*match_id\s*,\s*data_version\s*\) DO NOTHING/i);
 });
 
 test('metadata-only drift on first target does not block hash gate', async () => {
