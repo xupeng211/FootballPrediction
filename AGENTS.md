@@ -81,6 +81,8 @@
 - Phase 5.21L2M 仅允许在明确最终 DB-write confirmation 后，为 remaining 7 个 seeded targets（4830746、4830748、4830750、4830751、4830752、4830753、4830754）插入 exactly seven `fotmob_pageprops_v2` `raw_match_data` rows；必须逐场串行 recapture 并用 Phase 5.21L2L `stable_pageprops_payload_v1` baseline 精确 hash gate，任何 hash drift / fetch failure / v2 already exists / guard failure 都阻断 whole write。不得 partial write，除非未来另行授权 reduced target set；不得 rewrite `4830747`、不得 rewrite v1、不得 parser/features/training。写后下一步是 all-seeded canonical read verification。
 - Phase 5.21L2N 是 all-seeded pageProps v2 canonical read verification：只能 SELECT-only、不触 FotMob、不写 DB；Phase 5.21L2M 后 8 个 seeded matches（4830746、4830747、4830748、4830750、4830751、4830752、4830753、4830754）都应通过 `RawMatchDataVersionSelector` canonical 选择 `fotmob_pageprops_v2`，且 selected hash 必须与授权 baseline 一致。`PHASE4.43_SYNTHETIC`、`PHASE4.23` 与 unknown 仍默认排除，不得 accidental canonical select。不得直接进入 parser/features/training；下一步应先做本地 pageProps v2 raw inventory / completeness audit。
 - Phase 5.21L2O 是 pageProps v2 raw inventory / completeness audit：只能 SELECT-only，只读本地 `raw_match_data` 中 8 条 seeded `fotmob_pageprops_v2`，不得触 FotMob/network、不得写 DB、不得保存或打印完整 `raw_data`/完整 `pageProps`。本阶段只允许做路径盘点、模块覆盖、可疑载荷和完整性 assessment；不得实现 parser/features/training。下一步应是 parser planning，不是 parser implementation。
+- Phase 5.21L2P 是 pageProps v2 parser boundary / leakage-safe planning：只能 planning-only，不得实现 parser、不得抽 features、不得写 `l3_features` / `match_features_training` / `predictions`、不得训练/预测、不得触 FotMob/network、不得写 DB。当前 8 条 seeded `fotmob_pageprops_v2` 仅是 raw pipeline / 结构 / parser design sampling，不构成训练数据集。
+- Phase 5.21L2P 起，parser implementation 必须等待 parser boundary / leakage policy review；features/training 必须等待 large-scale raw acquisition plan 和 `prediction_cutoff_time` policy 明确。odds raw 必须视为独立 market-pricing source，允许尽早做 raw history planning，但 odds features 在 cutoff-time policy 明确前保持 blocked；未经未来明确授权，不得运行 `odds_harvest_pipeline` 或任何 odds write path。
 - 以下 engine core 不是 deprecated，也不得误删：`DiscoveryService`、`DiscoveryParser`、`DiscoveryAttributeMapper`、`DiscoveryDataValidator`、`L1ConfigManager`、`HttpClient`、`FotMobExtractor`、`BrowserProvider`、`FixtureRepository`。
 - 未完成 migration inventory 且未经用户批准前，不删除 legacy entrypoints。
 
@@ -275,6 +277,7 @@ AI / Codex 默认只能执行：
 - 用户明确授权且只读 DB 的 `make data-prediction-write-dry-run MATCH_ID=<id>`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-dataset-status`
 - 只读 DB 且不训练、不预测、不导出、不加载模型 artifact 的 `make data-training-dataset-dry-run`
+- 用户明确授权且 planning-only、不触网、不写 DB、不实现 parser/features/training/prediction 的 `make data-pageprops-v2-parser-boundary-leakage-plan SOURCE=fotmob RAW_VERSION=fotmob_pageprops_v2 PLANNING_SCOPE=parser-boundary-leakage-acquisition-odds-roadmap ALLOW_DB_WRITE=no ALLOW_NETWORK=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no`
 - 不访问外网、不写 DB 的 `make data-acquisition-engines`
 - 不访问外网、不写 DB 的 `make data-acquisition-engine-audit`
 - 用户明确授权且只读本地 source manifest、不写 DB、不训练、不预测的 `make data-real-source-audit SOURCE_MANIFEST=<local json>`

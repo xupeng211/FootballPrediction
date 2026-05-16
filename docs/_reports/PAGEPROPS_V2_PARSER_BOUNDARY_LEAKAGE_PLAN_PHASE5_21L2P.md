@@ -1,0 +1,485 @@
+# PageProps V2 Parser Boundary / Leakage Plan - Phase 5.21L2P
+
+## 1. Executive summary
+
+Phase 5.21L2O confirmed that all eight seeded Ligue 1 `fotmob_pageprops_v2` rows
+have high structural coverage, 8/8 core module presence, no suspicious small
+payloads, and no captcha / block / forbidden / placeholder markers.
+
+That result allows parser planning, but it does not justify parser
+implementation, feature extraction, training, or prediction.
+
+This phase is planning-only:
+
+- define parser module boundaries for pageProps v2
+- define leakage-safe policy by prediction horizon
+- plan large-scale pageProps v2 acquisition
+- plan early odds raw history integration as a separate source
+
+This phase does not implement a parser, does not write DB rows, does not touch
+FotMob or any odds source, and does not train a model.
+
+## 2. Current data status
+
+Read-only baseline confirmed for this phase:
+
+| table                     | rows |
+| ------------------------- | ---: |
+| `matches`                 |   10 |
+| `raw_match_data`          |   18 |
+| `bookmaker_odds_history`  |    2 |
+| `l3_features`             |    2 |
+| `match_features_training` |    2 |
+| `predictions`             |    2 |
+
+Current `raw_match_data` version distribution:
+
+| data_version          | rows |
+| --------------------- | ---: |
+| `PHASE4.23`           |    1 |
+| `PHASE4.43_SYNTHETIC` |    1 |
+| `fotmob_html_hyd_v1`  |    8 |
+| `fotmob_pageprops_v2` |    8 |
+
+Current seeded state:
+
+- 8 seeded Ligue 1 matches already have `fotmob_pageprops_v2`
+- canonical selector chooses v2 for all 8 seeded matches
+- `bookmaker_odds_history` remains at 2 rows
+
+Important judgment:
+
+当前 8-10 场数据绝对不能用于训练模型。它们只能作为 raw pipeline validation
+set 和 parser design sampling，用于验证原始结构、边界与泄漏规则，不构成
+真实训练集。
+
+## 3. Parser boundary plan
+
+### `identity_metadata_parser`
+
+- Raw paths:
+    - `matchId`
+    - `general`
+    - `header`
+- Candidate outputs:
+    - `match_id`
+    - kickoff metadata
+    - home / away team identity
+    - league / season identity
+    - basic status metadata
+- Leakage tier:
+    - `metadata_only`
+- Pre-match usability:
+    - safe for joins, dedupe, scheduling and normalization
+    - not a direct predictive feature by itself
+- Optional handling:
+    - require only minimal identifiers
+    - deeper descriptive branches remain optional
+- Why not for training:
+    - identity fields are mainly metadata and should be excluded by default
+
+### `team_context_parser`
+
+- Raw paths:
+    - `header.teams`
+    - `general`
+    - `content.table`
+- Candidate outputs:
+    - league / season / round context
+    - team identity context
+    - standings snapshot features
+- Leakage tier:
+    - `conditional_pre_match_if_timestamped`
+- Pre-match usability:
+    - only if table snapshot is confirmed at or before `prediction_cutoff_time`
+- Optional handling:
+    - `content.table` must be optional-first
+- Why not always safe:
+    - standings or context snapshots taken after kickoff leak information
+
+### `h2h_parser`
+
+- Raw paths:
+    - `content.h2h`
+- Candidate outputs:
+    - historical H2H counts
+    - recent result summaries
+    - historical goal totals
+    - venue split history
+- Leakage tier:
+    - `conditional_pre_match_if_timestamped`
+- Pre-match usability:
+    - allowed only if referenced matches are historical and snapshot-safe
+- Optional handling:
+    - filter out undated, unresolved, current-match, or future-match entries
+- Why not always safe:
+    - H2H payloads can echo current fixture context or future-contaminated views
+
+### `lineup_parser`
+
+- Raw paths:
+    - `content.lineup`
+- Candidate outputs:
+    - confirmed starters
+    - bench depth
+    - formation
+    - coach context
+    - player availability signals
+- Leakage tier:
+    - `conditional_pre_match_if_timestamped`
+- Pre-match usability:
+    - only if `lineup_timestamp <= prediction_cutoff_time`
+    - excluded from `T_MINUS_24H` by default
+- Optional handling:
+    - fully optional-first because many leagues expose lineup late or not at all
+- Why not always safe:
+    - late lineup or in-match lineup branches are not valid for earlier horizons
+
+### `match_facts_parser`
+
+- Raw paths:
+    - `content.matchFacts`
+- Candidate outputs:
+    - goals, cards, substitutions, result-bearing facts, summary facts
+- Leakage tier:
+    - `post_match_only`
+    - `live_only`
+- Pre-match usability:
+    - not safe for pre-match training
+- Optional handling:
+    - isolated for live/post-match analytics only
+- Why not for training:
+    - contains direct outcome/event leakage
+
+### `stats_parser`
+
+- Raw paths:
+    - `content.stats`
+- Candidate outputs:
+    - team stat splits
+    - xG recap
+    - possession recap
+    - period aggregates
+- Leakage tier:
+    - `post_match_only`
+    - `live_only`
+- Pre-match usability:
+    - not safe for pre-match training
+- Optional handling:
+    - expect sparse or missing coverage outside richer leagues/statuses
+- Why not for training:
+    - stat aggregates are generated by the match itself
+
+### `player_stats_parser`
+
+- Raw paths:
+    - `content.playerStats`
+- Candidate outputs:
+    - player performance recap
+    - minutes played
+    - xG/xA recap
+    - player event summaries
+- Leakage tier:
+    - `post_match_only`
+    - `live_only`
+- Pre-match usability:
+    - not safe for pre-match training
+- Optional handling:
+    - parser must tolerate complete absence in colder leagues
+- Why not for training:
+    - direct player-match outcome leakage
+
+### `shotmap_parser`
+
+- Raw paths:
+    - `content.shotmap`
+- Candidate outputs:
+    - shot locations
+    - xG shot sequence
+    - chance quality recap
+- Leakage tier:
+    - `post_match_only`
+    - `live_only`
+- Pre-match usability:
+    - not safe for pre-match training
+- Optional handling:
+    - missing shotmap must not break parser in low-tier leagues
+- Why not for training:
+    - shot events are in-match or post-match outcomes
+
+### `momentum_parser`
+
+- Raw paths:
+    - `content.momentum`
+- Candidate outputs:
+    - momentum curve
+    - pressure swings
+    - period dominance summaries
+- Leakage tier:
+    - `live_only`
+    - `post_match_only`
+- Pre-match usability:
+    - not safe for pre-match training
+- Optional handling:
+    - treat as optional because many leagues/statuses will omit it
+- Why not for training:
+    - momentum is inherently in-match state
+
+### `seo_auxiliary_parser`
+
+- Raw paths:
+    - `seo`
+    - `seo.eventJSONLD`
+    - `seo.breadcrumbJSONLD`
+- Candidate outputs:
+    - canonical labels
+    - structured metadata
+    - kickoff cross-checks
+    - breadcrumb mapping
+- Leakage tier:
+    - `metadata_only`
+    - `auxiliary_only`
+- Pre-match usability:
+    - useful for metadata reconciliation and QA
+- Optional handling:
+    - treat as helper path, not core parser dependency
+- Why not for training:
+    - text/breadcrumb fields are mainly normalization metadata
+
+### `fallback_translations_parser`
+
+- Raw paths:
+    - `fallback`
+    - `translations`
+- Candidate outputs:
+    - label normalization
+    - localization mapping
+    - fallback markers
+- Leakage tier:
+    - `auxiliary_only`
+- Pre-match usability:
+    - normalization only
+- Optional handling:
+    - fully optional
+- Why not for training:
+    - not predictive; only useful for mapping and QA
+
+## 4. Leakage-safe feature policy
+
+Core rule:
+
+- `prediction_cutoff_time` is mandatory
+
+Feature availability must be evaluated relative to the selected cutoff time, not
+just the raw payload capture time. A pageProps v2 payload harvested after
+full-time can still contain both pre-match candidates and live/post-match
+leakage in the same JSON.
+
+Prediction horizons:
+
+- `T_MINUS_24H`
+- `T_MINUS_6H`
+- `T_MINUS_1H`
+- `CLOSING_OR_NEAR_KICKOFF`
+
+Mandatory rules:
+
+- no post-match or in-match data in pre-match models
+- no current match result / score / event outcome leakage
+- no closing odds in `T_MINUS_24H` model
+- no future H2H entries
+- no table snapshot after kickoff
+- lineup only allowed if `lineup_timestamp <= prediction_cutoff_time`
+- odds only allowed if `odds_timestamp <= prediction_cutoff_time`
+
+## 5. Large-scale acquisition roadmap
+
+Why expansion is required:
+
+- 8 seeded matches prove raw storage and selector behavior
+- they do not prove league-wide completeness
+- they do not support model training
+- training should wait for thousands or tens of thousands of matches
+
+Recommended execution order:
+
+1. build target inventory by league / season / status
+2. run no-write preflight
+3. run controlled write
+4. run post-write completeness audit
+5. publish per-league completeness profile
+6. only then review parser implementation scope
+
+Coverage strategy:
+
+- top leagues may show high module richness
+- mid-tier leagues may have mixed coverage
+- low-tier / obscure leagues may miss:
+    - lineup
+    - playerStats
+    - shotmap
+    - momentum
+    - stats
+    - stable table snapshots
+
+Key planning stance:
+
+- parser must be optional-first
+- do not assume Ligue 1 sample generalizes to all leagues
+- future parser/features must remain `data_version`-aware
+- source fidelity and completeness must be profiled per league / season
+
+## 6. Odds raw roadmap
+
+Source boundary:
+
+- FotMob pageProps v2 is a match-detail / factual raw source
+- FotMob does not provide canonical odds history for this project
+- odds must come from an independent market-pricing source
+- odds raw should not be mixed into FotMob `raw_match_data`
+- join should happen via `match_id`
+
+Why odds raw should be planned early:
+
+- historical odds are time-sensitive
+- opening / intermediate / near-kickoff snapshots are easy to lose
+- leakage-safe feature generation depends on preserving timestamped raw history
+
+Current read-only audit findings:
+
+- `bookmaker_odds_history` currently has 13 columns
+- key columns include:
+    - `match_id`
+    - `bookmaker_name`
+    - `market_type`
+    - `open_odds`
+    - `close_odds`
+    - `movement_trajectory`
+    - `alignment_meta`
+    - `source_html_path`
+    - `source_digest`
+    - `collected_at`
+- unique constraint:
+    - `(match_id, bookmaker_name, market_type)`
+- current shape is oriented around open/close + trajectory aggregates
+- this is useful for legacy aligned storage, but not yet a clean cutoff-time-first
+  raw snapshot contract
+
+Existing module audit:
+
+- `database/migrations/V12.5__create_bookmaker_odds_history.sql`
+- `database/migrations/V12.8__add_alignment_meta_to_bookmaker_odds_history.sql`
+- `scripts/ops/odds_harvest_pipeline.js`:
+    - legacy runtime
+    - imports Playwright and child process flow
+    - blocked for agent execution
+- `src/ml/features/odds_movement_features.py`:
+    - existing feature logic
+    - must remain blocked until raw odds timing/leakage policy is fixed
+
+Recommended future odds raw fields:
+
+- `match_id`
+- `source`
+- `bookmaker`
+- `market_type`
+- `selection`
+- `odds_decimal`
+- `collected_at`
+- `odds_timestamp` or `source_snapshot_at`
+- `kickoff_time`
+- `time_to_kickoff`
+- `raw_payload`
+- `data_hash`
+- `data_version`
+
+Future odds feature examples:
+
+- implied probabilities
+- market margin
+- consensus odds
+- movement between snapshots
+- opening / `T_MINUS_24H` / `T_MINUS_6H` / `T_MINUS_1H` / closing odds
+
+Leakage rules for future odds features:
+
+- only odds observed at or before `prediction_cutoff_time` are allowed
+- `T_MINUS_24H` model cannot use closing odds
+- near-kickoff model can use near-kickoff odds captured before kickoff
+
+This phase does not ingest odds, does not write `bookmaker_odds_history`, and
+does not generate odds features.
+
+## 7. Recommended next phases
+
+Recommended next phases:
+
+- `Phase 5.21L2Q`:
+    - large-scale pageProps v2 acquisition strategy planning
+    - still planning-only
+    - no DB write
+    - no network execution
+    - define league / season / target expansion
+    - define batch preflight / controlled write phases
+    - define coverage profile strategy
+- `Phase 5.22L2A`:
+    - odds raw schema / source / leakage policy planning and existing module audit
+    - no odds access
+    - no DB write
+    - inspect existing odds modules only
+    - plan raw odds history schema and timing policy
+- `Phase 5.22L2B`:
+    - odds raw controlled preflight small sample
+    - only after explicit future authorization
+
+Parser implementation should come only after:
+
+- parser boundary is reviewed and accepted
+- large-scale raw acquisition plan is accepted
+- odds timing / leakage policy is accepted
+
+## 8. Verification results
+
+Verification gates for this phase:
+
+- new planning test:
+    - `tests/unit/pageprops_v2_parser_boundary_leakage_plan.test.js`
+- existing safety regressions:
+    - `tests/unit/pageprops_v2_raw_completeness_audit.test.js`
+    - `tests/unit/all_seeded_pageprops_v2_canonical_read_verification.test.js`
+    - `tests/unit/RawMatchDataVersionSelector.test.js`
+- Makefile planning target:
+    - `make data-pageprops-v2-parser-boundary-leakage-plan ...`
+- full validation:
+    - `npm test`
+    - `npm run test:coverage`
+    - `eslint`
+    - `prettier --check`
+    - `git diff --check`
+- safety checks:
+    - DB row counts unchanged
+    - `tests/fixtures/l1-config-*` residue absent
+    - `docs/_staging_preview` absent
+    - PR CI green
+    - main push CI green
+
+## 9. Explicit non-execution
+
+This phase confirms that none of the following were executed:
+
+- no DB writes
+- no `raw_match_data` writes
+- no `bookmaker_odds_history` writes
+- no network / FotMob access
+- no odds access
+- no schema migration
+- no `matches` writes
+- no parser implementation
+- no feature extraction
+- no `l3_features` write
+- no `match_features_training` write
+- no training / prediction
+- no browser / proxy
+- no full raw_data print/save
+- no full pageProps print/save
+- no file deletion
