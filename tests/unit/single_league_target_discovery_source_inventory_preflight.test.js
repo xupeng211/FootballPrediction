@@ -339,6 +339,12 @@ test('fake source inventory extracts candidate external_ids', async () => {
     assert.equal(output.source_inventory_route.reused_l1_capability, true);
     assert.equal(output.source_inventory_route.l1_capability, 'FotMobSourceInventoryAdapter');
     assert.equal(output.source_inventory_route.l1_route_kind, 'l1_api_data_leagues');
+    assert.equal(
+        output.source_inventory_route.generated_url,
+        'https://www.fotmob.com/api/data/leagues?id=53&season=20252026'
+    );
+    assert.equal(output.source_inventory_route.status_code, 200);
+    assert.ok(!output.source_inventory_route.generated_url.includes('/api/leagues?'));
 });
 
 test('fake source inventory excludes known completed 8', async () => {
@@ -508,6 +514,11 @@ test('manifest update preserves known_completed_targets', async () => {
 test('manifest update writes candidate_targets only from source inventory', async () => {
     const { writes } = await runPreflight(sourceInventory(3));
     assert.equal(writes[0].candidate_targets.length, 3);
+    assert.equal(
+        writes[0].source_inventory_result.generated_url,
+        'https://www.fotmob.com/api/data/leagues?id=53&season=20252026'
+    );
+    assert.equal(writes[0].source_inventory_result.status_code, 200);
     assert.deepEqual(
         writes[0].candidate_targets.map(target => target.external_id),
         ['6000001', '6000002', '6000003']

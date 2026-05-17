@@ -217,23 +217,141 @@ One behavior changed intentionally: duplicate external IDs are now deduped insid
 
 T0B executed no external FotMob/network request. It did not retry the 404, did not switch live endpoint, did not launch browser/proxy, did not fetch match detail/pageProps, did not write DB, did not write `raw_match_data`, did not update `matches`, did not implement parser/features/training, and did not invent targets.
 
-## 10. Recommended Next Phase
+## L2T0C Authorized Retry Using Reused L1 Discovery Path
 
-Not ready. Recommended next phase:
+### Executive summary
 
-- Phase 5.21L2T0C: authorized source inventory retry using reused L1 discovery path
-- requires explicit network authorization
+T0B identified the existing L1 route/config path and added `FotMobSourceInventoryAdapter`. T0C used that reused L1 discovery path for the one authorized source inventory retry:
+
+- reused route: `https://www.fotmob.com/api/data/leagues?id=53&season=20252026`
+- old failed route was not used: `/api/leagues?id=53&season=2025%2F2026`
 - no DB write
 - no `raw_match_data` write
-- no `matches` write
-- no match detail pageProps acquisition unless a later phase explicitly authorizes Phase 5.21L2T
-- use `FotMobSourceInventoryAdapter` / existing L1 `/api/data/leagues` route
-- update manifest only with real candidates discovered from source inventory
+- no match detail pageProps fetch
 - no parser/features/training
 
-## 11. Explicit Non-Execution
+The retry succeeded with HTTP 200 and parsed JSON. It discovered 297 raw Ligue 1 2025/2026 source-inventory targets, excluded the 8 already completed seeded v2 targets, and capped the new manifest candidate batch at 50 real candidates.
 
-Confirmed by design before execution:
+### Authorization / guardrails
+
+| Guardrail                          | Value                          |
+| ---------------------------------- | ------------------------------ |
+| `network_authorization`            | `yes`                          |
+| `source_inventory_authorization`   | `yes`                          |
+| `reused_adapter`                   | `true`                         |
+| `adapter`                          | `FotMobSourceInventoryAdapter` |
+| `concurrency`                      | `1`                            |
+| `retry`                            | `0`                            |
+| browser/proxy                      | blocked                        |
+| match detail fetch                 | blocked                        |
+| DB write                           | blocked                        |
+| raw write                          | blocked                        |
+| full source body / full JSON save  | blocked                        |
+| full source body / full JSON print | blocked                        |
+
+### Source inventory result
+
+| Field                         | Value                                                           |
+| ----------------------------- | --------------------------------------------------------------- |
+| `route_used`                  | `source_inventory`                                              |
+| `generated_url`               | `https://www.fotmob.com/api/data/leagues?id=53&season=20252026` |
+| `request_count`               | `1`                                                             |
+| `status_code`                 | `200`                                                           |
+| `content_type`                | `application/json; charset=utf-8`                               |
+| `parse_status`                | `parsed_json`                                                   |
+| blocked/captcha markers       | none                                                            |
+| `discovered_raw_target_count` | `297`                                                           |
+| `excluded_completed_count`    | `8`                                                             |
+| `duplicate_removed_count`     | `0`                                                             |
+| `invalid_identity_count`      | `0`                                                             |
+| `capped_removed_count`        | `239`                                                           |
+| `candidate_targets_count`     | `50`                                                            |
+| `target_population_status`    | `ready_for_no_write_preflight`                                  |
+| `required_next_step`          | `single_league_small_batch_no_write_pageprops_v2_preflight`     |
+
+### Candidate targets summary
+
+The manifest stores the capped 50-target batch. All targets below came from the authorized source inventory response; no external IDs, teams, or kickoff times were invented.
+
+| #   | target_id                                                              | match_id              | external_id | home_team           | away_team           | kickoff_time / match_date  | status   | target_status               | odds_alignment_ready |
+| --- | ---------------------------------------------------------------------- | --------------------- | ----------- | ------------------- | ------------------- | -------------------------- | -------- | --------------------------- | -------------------- |
+| 1   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830466` | `53_20252026_4830466` | `4830466`   | Rennes              | Marseille           | `2025-08-15T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 2   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830461` | `53_20252026_4830461` | `4830461`   | Lens                | Lyon                | `2025-08-16T15:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 3   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830463` | `53_20252026_4830463` | `4830463`   | Monaco              | Le Havre            | `2025-08-16T17:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 4   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830465` | `53_20252026_4830465` | `4830465`   | Nice                | Toulouse            | `2025-08-16T19:05:00.000Z` | finished | source_inventory_discovered | true                 |
+| 5   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830460` | `53_20252026_4830460` | `4830460`   | Brest               | Lille               | `2025-08-17T13:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 6   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830458` | `53_20252026_4830458` | `4830458`   | Angers              | Paris FC            | `2025-08-17T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 7   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830459` | `53_20252026_4830459` | `4830459`   | Auxerre             | Lorient             | `2025-08-17T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 8   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830462` | `53_20252026_4830462` | `4830462`   | Metz                | Strasbourg          | `2025-08-17T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 9   | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830464` | `53_20252026_4830464` | `4830464`   | Nantes              | Paris Saint-Germain | `2025-08-17T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 10  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830473` | `53_20252026_4830473` | `4830473`   | Paris Saint-Germain | Angers              | `2025-08-22T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 11  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830471` | `53_20252026_4830471` | `4830471`   | Marseille           | Paris FC            | `2025-08-23T15:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 12  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830472` | `53_20252026_4830472` | `4830472`   | Nice                | Auxerre             | `2025-08-23T17:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 13  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830470` | `53_20252026_4830470` | `4830470`   | Lyon                | Metz                | `2025-08-23T19:05:00.000Z` | finished | source_inventory_discovered | true                 |
+| 14  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830469` | `53_20252026_4830469` | `4830469`   | Lorient             | Rennes              | `2025-08-24T13:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 15  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830467` | `53_20252026_4830467` | `4830467`   | Le Havre            | Lens                | `2025-08-24T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 16  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830474` | `53_20252026_4830474` | `4830474`   | Strasbourg          | Nantes              | `2025-08-24T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 17  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830475` | `53_20252026_4830475` | `4830475`   | Toulouse            | Brest               | `2025-08-24T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 18  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830468` | `53_20252026_4830468` | `4830468`   | Lille               | Monaco              | `2025-08-24T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 19  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830478` | `53_20252026_4830478` | `4830478`   | Lens                | Brest               | `2025-08-29T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 20  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830479` | `53_20252026_4830479` | `4830479`   | Lorient             | Lille               | `2025-08-30T15:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 21  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830482` | `53_20252026_4830482` | `4830482`   | Nantes              | Auxerre             | `2025-08-30T17:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 22  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830484` | `53_20252026_4830484` | `4830484`   | Toulouse            | Paris Saint-Germain | `2025-08-30T19:05:00.000Z` | finished | source_inventory_discovered | true                 |
+| 23  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830476` | `53_20252026_4830476` | `4830476`   | Angers              | Rennes              | `2025-08-31T13:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 24  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830477` | `53_20252026_4830477` | `4830477`   | Le Havre            | Nice                | `2025-08-31T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 25  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830481` | `53_20252026_4830481` | `4830481`   | Monaco              | Strasbourg          | `2025-08-31T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 26  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830483` | `53_20252026_4830483` | `4830483`   | Paris FC            | Metz                | `2025-08-31T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 27  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830480` | `53_20252026_4830480` | `4830480`   | Lyon                | Marseille           | `2025-08-31T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 28  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830488` | `53_20252026_4830488` | `4830488`   | Marseille           | Lorient             | `2025-09-12T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 29  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830490` | `53_20252026_4830490` | `4830490`   | Nice                | Nantes              | `2025-09-13T15:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 30  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830485` | `53_20252026_4830485` | `4830485`   | Auxerre             | Monaco              | `2025-09-13T19:05:00.000Z` | finished | source_inventory_discovered | true                 |
+| 31  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830487` | `53_20252026_4830487` | `4830487`   | Lille               | Toulouse            | `2025-09-14T13:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 32  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830486` | `53_20252026_4830486` | `4830486`   | Brest               | Paris FC            | `2025-09-14T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 33  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830489` | `53_20252026_4830489` | `4830489`   | Metz                | Angers              | `2025-09-14T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 34  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830491` | `53_20252026_4830491` | `4830491`   | Paris Saint-Germain | Lens                | `2025-09-14T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 35  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830493` | `53_20252026_4830493` | `4830493`   | Strasbourg          | Le Havre            | `2025-09-14T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 36  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830492` | `53_20252026_4830492` | `4830492`   | Rennes              | Lyon                | `2025-09-14T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 37  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830498` | `53_20252026_4830498` | `4830498`   | Lyon                | Angers              | `2025-09-19T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 38  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830501` | `53_20252026_4830501` | `4830501`   | Nantes              | Rennes              | `2025-09-20T15:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 39  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830495` | `53_20252026_4830495` | `4830495`   | Brest               | Nice                | `2025-09-20T17:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 40  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830497` | `53_20252026_4830497` | `4830497`   | Lens                | Lille               | `2025-09-20T19:05:00.000Z` | finished | source_inventory_discovered | true                 |
+| 41  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830502` | `53_20252026_4830502` | `4830502`   | Paris FC            | Strasbourg          | `2025-09-21T13:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 42  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830494` | `53_20252026_4830494` | `4830494`   | Auxerre             | Toulouse            | `2025-09-21T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 43  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830496` | `53_20252026_4830496` | `4830496`   | Le Havre            | Lorient             | `2025-09-21T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 44  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830500` | `53_20252026_4830500` | `4830500`   | Monaco              | Metz                | `2025-09-21T15:15:00.000Z` | finished | source_inventory_discovered | true                 |
+| 45  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830499` | `53_20252026_4830499` | `4830499`   | Marseille           | Paris Saint-Germain | `2025-09-22T18:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 46  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830510` | `53_20252026_4830510` | `4830510`   | Strasbourg          | Marseille           | `2025-09-26T18:45:00.000Z` | finished | source_inventory_discovered | true                 |
+| 47  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830505` | `53_20252026_4830505` | `4830505`   | Lorient             | Monaco              | `2025-09-27T15:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 48  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830511` | `53_20252026_4830511` | `4830511`   | Toulouse            | Nantes              | `2025-09-27T17:00:00.000Z` | finished | source_inventory_discovered | true                 |
+| 49  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830508` | `53_20252026_4830508` | `4830508`   | Paris Saint-Germain | Auxerre             | `2025-09-27T19:05:00.000Z` | finished | source_inventory_discovered | true                 |
+| 50  | `fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830507` | `53_20252026_4830507` | `4830507`   | Nice                | Paris FC            | `2025-09-28T13:00:00.000Z` | finished | source_inventory_discovered | true                 |
+
+### Manifest update result
+
+- manifest file: `docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json`
+- `known_completed_targets`: `8`
+- `candidate_targets`: `50`
+- `target_population_status`: `ready_for_no_write_preflight`
+- `required_next_step`: `single_league_small_batch_no_write_pageprops_v2_preflight`
+- no invented `external_id`
+- no source body, pageProps, raw detail, or full JSON saved
+
+### DB safety result
+
+Post-retry SELECT-only row count check remained unchanged:
+
+| Table                     | Rows |
+| ------------------------- | ---- |
+| `matches`                 | `10` |
+| `bookmaker_odds_history`  | `2`  |
+| `raw_match_data`          | `18` |
+| `l3_features`             | `2`  |
+| `match_features_training` | `2`  |
+| `predictions`             | `2`  |
+
+### T0C non-execution
+
+Confirmed:
 
 - no DB writes
 - no `raw_match_data` writes
@@ -248,6 +366,44 @@ Confirmed by design before execution:
 - no `match_features_training` write
 - no training/prediction
 - no browser/proxy/captcha bypass
+- no retry
+- no full raw_data/pageProps/source body print/save
+- no file deletion
+- no invented `external_id` / fake target data
+
+## 10. Recommended Next Phase
+
+Ready. Recommended next phase:
+
+- Phase 5.21L2T: single-league small-batch no-write pageProps v2 preflight
+- requires explicit network authorization
+- no DB write
+- no `raw_match_data` write
+- no `matches` write
+- use `candidate_targets` from `docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json`
+- fetch match detail pageProps only for explicitly authorized candidate targets
+- compute `stable_pageprops_payload_v1` baseline hashes
+- output no-write baseline hashes
+- no parser/features/training
+
+## 11. Explicit Non-Execution
+
+Confirmed by design and after T0C execution:
+
+- no DB writes
+- no `raw_match_data` writes
+- no `bookmaker_odds_history` writes
+- no match detail pageProps fetch
+- no controlled write
+- no schema migration
+- no `matches` writes
+- no parser implementation
+- no feature extraction
+- no `l3_features` write
+- no `match_features_training` write
+- no training/prediction
+- no browser/proxy/captcha bypass
+- no retry
 - no full raw_data/pageProps/source body print/save
 - no file deletion
 - no invented `external_id` / fake target data
