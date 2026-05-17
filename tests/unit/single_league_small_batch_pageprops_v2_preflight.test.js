@@ -328,6 +328,8 @@ for (const [name, override, pattern] of [
     ['invent-targets=yes blocked', { inventTargets: true }, /invent-targets=yes is blocked/],
     ['fabricate-external-ids=yes blocked', { fabricateExternalIds: true }, /fabricate-external-ids=yes is blocked/],
     ['allow-odds-write=yes blocked', { allowOddsWrite: true }, /allow-odds-write=yes is blocked/],
+    ['allow-matches-write=yes blocked', { allowMatchesWrite: true }, /allow-matches-write=yes is blocked/],
+    ['allow-raw-data-print=yes blocked', { allowRawDataPrint: true }, /allow-raw-data-print=yes is blocked/],
 ]) {
     test(name, () => {
         const result = mod.validatePreflightInput(validInput(override));
@@ -349,8 +351,31 @@ test('parseArgs records positional and unknown arguments', () => {
     assert.equal(parsed.networkAuthorization, true);
 });
 
+test('parseArgs supports equals syntax, underscore keys, and bare booleans before another flag', () => {
+    const parsed = mod.parseArgs([
+        '--league_id=53',
+        '--network-authorization',
+        '--source=fotmob',
+        '--print-full-body=off',
+    ]);
+    assert.equal(parsed.leagueId, '53');
+    assert.equal(parsed.networkAuthorization, true);
+    assert.equal(parsed.source, 'fotmob');
+    assert.equal(parsed.printFullBody, false);
+});
+
 test('normalizeBooleanFlag falls back for invalid boolean text', () => {
     assert.equal(mod.normalizeBooleanFlag('maybe', 'fallback'), 'fallback');
+});
+
+test('normalizeBooleanFlag covers accepted yes/no aliases', () => {
+    for (const value of ['1', 'true', 'yes', 'y', 'on']) {
+        assert.equal(mod.normalizeBooleanFlag(value, false), true);
+    }
+    for (const value of ['0', 'false', 'no', 'n', 'off']) {
+        assert.equal(mod.normalizeBooleanFlag(value, true), false);
+    }
+    assert.equal(mod.normalizeBooleanFlag('', 'fallback'), 'fallback');
 });
 
 test('missing required yes/no guardrails fail explicitly', () => {
@@ -363,6 +388,22 @@ test('missing required yes/no guardrails fail explicitly', () => {
     assert.equal(result.ok, false);
     assert.match(result.errors.join('\n'), /missing network-authorization=yes/);
     assert.match(result.errors.join('\n'), /missing allow-db-write=no/);
+});
+
+test('invalid numeric guardrail values fail closed', () => {
+    const result = mod.validatePreflightInput(
+        validInput({
+            leagueId: 'abc',
+            targetCount: 'fifty',
+            concurrency: 'one',
+            retry: 'zero',
+        })
+    );
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join('\n'), /league-id must be 53/);
+    assert.match(result.errors.join('\n'), /target-count must be 50/);
+    assert.match(result.errors.join('\n'), /concurrency=1 is required/);
+    assert.match(result.errors.join('\n'), /retry=0 is required/);
 });
 
 for (const [name, inputManifest, pattern] of [
@@ -507,6 +548,17 @@ for (const [name, inputManifest, pattern] of [
         },
         /league_id mismatch/,
     ],
+    [
+        'candidate league name and season metadata mismatch fails',
+        {
+            ...manifest(),
+            candidate_targets: [
+                candidate(0, { league_name: 'Ligue 2', season: '2024/2025' }),
+                ...Array.from({ length: 49 }, (_, index) => candidate(index + 1)),
+            ],
+        },
+        /league_name mismatch[\s\S]*season mismatch/,
+    ],
 ]) {
     test(name, () => {
         const result = mod.validateManifest(inputManifest);
@@ -514,6 +566,69 @@ for (const [name, inputManifest, pattern] of [
         assert.match(result.errors.join('\n'), pattern);
     });
 }
+
+test('manifest top-level source route version hash and league metadata mismatches are reported', () => {
+    const result = mod.validateManifest({
+        ...manifest(),
+        source: 'other',
+        route: 'api_match_details',
+        raw_data_version: 'fotmob_html_hyd_v1',
+        hash_strategy: 'stable_raw_payload_v1',
+        league: {
+            league_id: 54,
+            league_name: 'Ligue 2',
+            season: '2024/2025',
+        },
+    });
+    assert.equal(result.ok, false);
+    assert.match(result.errors.join('\n'), /manifest source mismatch/);
+    assert.match(result.errors.join('\n'), /manifest route mismatch/);
+    assert.match(result.errors.join('\n'), /manifest raw_data_version mismatch/);
+    assert.match(result.errors.join('\n'), /manifest hash_strategy mismatch/);
+    assert.match(result.errors.join('\n'), /manifest league_id mismatch/);
+    assert.match(result.errors.join('\n'), /manifest league_name mismatch/);
+    assert.match(result.errors.join('\n'), /manifest season mismatch/);
+});
+
+test('protected table baseline handles missing rows and non-array input', () => {
+    assert.deepEqual(mod.buildProtectedTableBaseline(null), {
+        matches: 0,
+        bookmaker_odds_history: 0,
+        raw_match_data: 0,
+        l3_features: 0,
+        match_features_training: 0,
+        predictions: 0,
+    });
+    assert.equal(mod.buildProtectedTableBaseline([{ table_name: 'matches', rows: '10' }]).matches, 10);
+    assert.equal(mod.buildProtectedTableBaseline([{ table_name: 'matches', rows: '10' }]).raw_match_data, 0);
+});
+
+test('existing version decision preserves legacy versions and blocks duplicate version rows', () => {
+    const emptyDecision = mod.buildExistingVersionDecision(null);
+    assert.equal(emptyDecision.decision, 'needs_preflight');
+    assert.deepEqual(emptyDecision.existing_versions, []);
+    assert.equal(emptyDecision.existing_v2_data_hash, null);
+
+    const decision = mod.buildExistingVersionDecision([
+        {
+            match_id: '53_20252026_4830460',
+            data_version: 'fotmob_html_hyd_v1',
+            data_hash: 'b'.repeat(64),
+        },
+    ]);
+    assert.equal(decision.decision, 'needs_preflight');
+    assert.deepEqual(decision.existing_versions, ['fotmob_html_hyd_v1']);
+    assert.equal(decision.should_fetch, true);
+
+    assert.throws(
+        () =>
+            mod.buildExistingVersionDecision([
+                { match_id: '53_20252026_4830460', data_version: 'fotmob_html_hyd_v1' },
+                { match_id: '53_20252026_4830460', data_version: 'fotmob_html_hyd_v1' },
+            ]),
+        /DUPLICATE_MATCH_ID_DATA_VERSION/
+    );
+});
 
 test('existing v2 in DB marks skipped_existing_v2', async () => {
     const first = manifest().candidate_targets[0];
@@ -557,6 +672,54 @@ test('raw_data shape _meta/matchId/pageProps verified', async () => {
     assert.equal(first.has_meta, true);
     assert.equal(first.has_matchId, true);
     assert.equal(first.has_pageProps, true);
+});
+
+test('pageProps v2 candidate builder uses safe metadata fallbacks without storing full body', () => {
+    const target = candidate(0, {
+        kickoff_time: '',
+        match_date: '2025-08-01T18:45:00.000Z',
+        status: '',
+    });
+    const pageProps = fakePageProps(target.external_id, { content: null });
+    const built = mod.buildPagePropsV2Candidate({
+        target,
+        pageProps,
+        fetchResult: {},
+        generatedAt: '2026-05-17T10:00:00.000Z',
+    });
+    assert.equal(built._meta.request_url, `https://www.fotmob.com/match/${target.external_id}`);
+    assert.equal(built._meta.final_url, `https://www.fotmob.com/match/${target.external_id}`);
+    assert.equal(built._meta.http_status, 0);
+    assert.equal(built._meta.content_type, null);
+    assert.equal(built._meta.fetch_body_sha256, null);
+    assert.equal(built._meta.full_html_body_stored, false);
+    assert.equal(built._meta.full_next_data_stored, false);
+    assert.equal(built.matchId, Number(target.external_id));
+
+    const summary = mod.buildSuccessfulTargetSummary(target, {}, pageProps, '2026-05-17T10:00:00.000Z');
+    assert.equal(summary.kickoff_time, target.match_date);
+    assert.equal(summary.status, null);
+    assert.equal(summary.request_url, `https://www.fotmob.com/match/${target.external_id}`);
+    assert.equal(summary.final_url, `https://www.fotmob.com/match/${target.external_id}`);
+    assert.equal(summary.raw_data_shape_valid, true);
+});
+
+test('successful target summary can mark larger candidate payloads as non-suspicious', () => {
+    const target = candidate(0);
+    const pageProps = fakePageProps(target.external_id, {
+        content: {
+            ...fakePageProps(target.external_id).content,
+            largeModule: 'x'.repeat(8000),
+        },
+    });
+    const summary = mod.buildSuccessfulTargetSummary(
+        target,
+        fetchResultFor(target.external_id),
+        pageProps,
+        '2026-05-17T10:00:00.000Z'
+    );
+    assert.equal(summary.preflight_status, 'hash_baseline_ready');
+    assert.equal(summary.suspicious_small_payload, false);
 });
 
 test('missing pageProps marks preflight_failed and partial_preflight_completed', async () => {
@@ -634,6 +797,11 @@ test('access denied marker is captured as block marker', () => {
     assert.ok(markers.includes('access_denied'));
 });
 
+test('429 and error-only Cloudflare markers are captured as systemic block markers', () => {
+    assert.deepEqual(mod.detectBlockMarkers({ http_status: 429, body: '' }), ['http_429']);
+    assert.ok(mod.detectBlockMarkers({ http_status: 200, error: 'cf-chl challenge' }).includes('cloudflare'));
+});
+
 test('no retry and sequential manifest order', async () => {
     const { calls } = await buildPayload();
     assert.deepEqual(
@@ -690,6 +858,55 @@ test('runCli writes manifest and report through injected writers', async () => {
     );
 });
 
+test('runCli write toggles can update manifest only without report output', async () => {
+    const writes = [];
+    const result = await mod.runCli(validArgv(), {
+        client: fakeClient(),
+        manifest: manifest(),
+        fetchHtmlFn: async requestUrl => fetchResultFor(requestUrl.split('/').pop()),
+        writeManifestFile: (filePath, value) => writes.push({ type: 'manifest', filePath, value }),
+        writeReport: false,
+        output: () => {},
+        generatedAt: '2026-05-17T10:00:00.000Z',
+    });
+    assert.equal(result.status, 0);
+    assert.deepEqual(
+        writes.map(write => write.type),
+        ['manifest']
+    );
+    assert.equal(result.payload.manifest_updated, true);
+    assert.equal(result.payload.report_updated, false);
+});
+
+test('runCli default manifest and report writers are interceptable without touching disk', async t => {
+    const originalWriteFileSync = fs.writeFileSync;
+    const writes = [];
+    fs.writeFileSync = (filePath, content) => {
+        writes.push({
+            filePath: String(filePath),
+            content: String(content).slice(0, 120),
+        });
+    };
+    t.after(() => {
+        fs.writeFileSync = originalWriteFileSync;
+    });
+
+    const result = await mod.runCli(validArgv(), {
+        client: fakeClient(),
+        manifest: manifest(),
+        fetchHtmlFn: async requestUrl => fetchResultFor(requestUrl.split('/').pop()),
+        output: () => {},
+        generatedAt: '2026-05-17T10:00:00.000Z',
+    });
+
+    assert.equal(result.status, 0);
+    assert.equal(writes.length, 2);
+    assert.ok(writes[0].filePath.endsWith(mod.MANIFEST_PATH));
+    assert.ok(writes[1].filePath.endsWith(mod.REPORT_PATH));
+    assert.match(writes[0].content, /target_manifest_proposal_v1/);
+    assert.match(writes[1].content, /Single-League Small-Batch pageProps v2 Preflight/);
+});
+
 test('runCli catches read-only DB failures without writing files', async () => {
     const writes = [];
     const result = await mod.runCli(validArgv(), {
@@ -728,6 +945,28 @@ test('invalid DB baseline before and after are blocked', async () => {
         },
     });
     assert.match(after.failure_reason, /DB_BASELINE_AFTER_INVALID/);
+});
+
+test('candidate shape validation covers malformed raw candidate guards', () => {
+    assert.deepEqual(mod.validateCandidateShape(null), ['candidate must be an object']);
+    assert.deepEqual(mod.validateCandidateShape({}), [
+        'candidate missing _meta',
+        'candidate missing matchId',
+        'candidate missing pageProps',
+        'candidate _meta.full_html_body_stored must be false',
+        'candidate _meta.full_next_data_stored must be false',
+    ]);
+    assert.deepEqual(
+        mod.validateCandidateShape({
+            _meta: {
+                full_html_body_stored: true,
+                full_next_data_stored: true,
+            },
+            matchId: 4830460,
+            pageProps: {},
+        }),
+        ['candidate _meta.full_html_body_stored must be false', 'candidate _meta.full_next_data_stored must be false']
+    );
 });
 
 test('invalid manifest blocks preflight before fetch', async () => {
@@ -813,12 +1052,130 @@ test('all pass sets ready_for_controlled_write_authorization in manifest', async
     assert.equal(updated.required_next_step, 'single_league_small_batch_controlled_pageprops_v2_write_authorization');
 });
 
+test('manifest update keeps targets without summaries untouched and records skipped_existing_v2 review branch', async () => {
+    const sourceManifest = manifest();
+    const first = sourceManifest.candidate_targets[0];
+    const skippedSummary = {
+        match_id: first.match_id,
+        external_id: first.external_id,
+        existing_versions: ['fotmob_pageprops_v2'],
+        target_status: 'skipped_existing_v2',
+        preflight_status: 'skipped_existing_v2',
+        stable_pageprops_hash: null,
+        last_preflight_at: '2026-05-17T10:00:00.000Z',
+        failure_reason: 'existing_fotmob_pageprops_v2',
+        http_status: null,
+        content_type: null,
+        parse_status: 'skipped_existing_v2',
+        next_data_parse_ok: false,
+        page_props_found: false,
+        raw_data_shape_valid: false,
+        has_meta: false,
+        has_matchId: false,
+        has_pageProps: false,
+        candidate_json_byte_length: 0,
+        pageProps_top_level_keys: [],
+        pageProps_path_count: 0,
+        pageProps_content_path_count: 0,
+        module_presence: {},
+        suspicious_small_payload: false,
+        block_markers: [],
+        skipped: true,
+    };
+    const updated = mod.updateManifestWithPreflight(sourceManifest, [skippedSummary], '2026-05-17T10:00:00.000Z');
+    assert.equal(updated.candidate_targets[0].preflight_status, 'skipped_existing_v2');
+    assert.equal(updated.candidate_targets[0].required_next_step, 'review_before_write_authorization');
+    assert.equal(updated.candidate_targets[1].preflight_status, 'not_started');
+    assert.equal(updated.skipped_existing_v2_count, 1);
+    assert.equal(updated.required_next_step, 'review_failed_targets_before_write_authorization');
+});
+
+test('buildCoverageSummary and buildReport cover empty and partial result branches', () => {
+    const coverage = mod.buildCoverageSummary([]);
+    assert.equal(coverage.pageProps_found_count, 0);
+    assert.deepEqual(coverage.block_captcha_markers, []);
+
+    const report = mod.buildReport({
+        manifest_path: mod.MANIFEST_PATH,
+        known_completed_targets_count: 8,
+        candidate_targets_count: 50,
+        target_population_status_before: 'ready_for_no_write_preflight',
+        target_population_status_after: 'partial_preflight_completed',
+        required_next_step: 'review_failed_targets_before_write_authorization',
+        attempted_target_count: 1,
+        skipped_existing_v2_count: 0,
+        success_count: 0,
+        failed_count: 1,
+        blocked_count: 0,
+        request_count: 1,
+        hash_strategy: 'stable_pageprops_payload_v1',
+        target_summaries: [],
+        coverage_summary: coverage,
+        db_baseline_before: protectedRows().reduce((acc, row) => ({ ...acc, [row.table_name]: row.rows }), {}),
+        db_row_counts_unchanged: true,
+    });
+    assert.match(report, /Phase 5\.21L2T1/);
+    assert.match(report, /pageProps_found_count=0/);
+});
+
+test('buildReport ready branch renders controlled-write recommendation and default DB fallback', async () => {
+    const { payload } = await buildPayload();
+    const report = mod.buildReport({
+        ...payload,
+        db_baseline_before: payload.db_baseline_after,
+        db_baseline_after: null,
+    });
+    assert.match(report, /Phase 5\.21L2U/);
+    assert.match(report, /ready_for_controlled_write_authorization/);
+    assert.match(report, /matches=10/);
+});
+
 test('queryReadOnly blocks non SELECT SQL', async () => {
     await assert.rejects(
         () =>
             mod.queryReadOnly({ query: async () => ({ rows: [] }) }, 'UPDATE raw_match_data SET data_hash = $1', ['x']),
         /NON_SELECT|BLOCKED/
     );
+});
+
+test('queryReadOnly blocks SELECT statements that request locks', async () => {
+    await assert.rejects(
+        () => mod.queryReadOnly({ query: async () => ({ rows: [] }) }, 'SELECT * FROM raw_match_data FOR UPDATE'),
+        /SQL_WRITE_OR_LOCK_BLOCKED/
+    );
+});
+
+test('SELECT helper loaders default to empty rows when the client omits rows', async () => {
+    const calls = [];
+    const client = {
+        async query(sql, params) {
+            calls.push({ sql, params });
+            return {};
+        },
+    };
+    assert.deepEqual(await mod.loadProtectedTableBaselineRows(client), []);
+    assert.deepEqual(await mod.loadExistingRawVersions(client, ['53_20252026_4830460']), []);
+    assert.equal(calls.length, 2);
+    assert.deepEqual(calls[1].params, [['53_20252026_4830460']]);
+});
+
+test('runCli can read the source manifest file and fail closed without fetching or writing when manifest is not preflight-ready', async () => {
+    const writes = [];
+    const fetchCalls = [];
+    const result = await mod.runCli(validArgv(), {
+        client: fakeClient(),
+        fetchHtmlFn: async requestUrl => {
+            fetchCalls.push(requestUrl);
+            return fetchResultFor(requestUrl.split('/').pop());
+        },
+        writeManifestFile: () => writes.push('manifest'),
+        writeReportFile: () => writes.push('report'),
+        output: () => {},
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.payload.failure_reason, /MANIFEST_INVALID/);
+    assert.deepEqual(fetchCalls, []);
+    assert.deepEqual(writes, []);
 });
 
 test('no ProductionHarvester/raw ingest/odds pipeline import', () => {

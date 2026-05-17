@@ -161,6 +161,27 @@ test('valid input succeeds', () => {
     assert.equal(result.ok, true);
 });
 
+test('parseArgs supports equals, bare yes flags, and ignores positional tokens', () => {
+    const parsed = mod.parseArgs([
+        'loose-token',
+        '--source=fotmob',
+        '--route',
+        'html_hydration',
+        '--network-authorization',
+    ]);
+    assert.equal(parsed.source, 'fotmob');
+    assert.equal(parsed.route, 'html_hydration');
+    assert.equal(parsed['network-authorization'], 'yes');
+    assert.equal(Object.hasOwn(parsed, 'loose-token'), false);
+});
+
+test('boolean and external-id helpers fail closed for invalid values', () => {
+    assert.equal(mod.normalizeBooleanFlag('maybe'), null);
+    assert.equal(mod.normalizeBooleanFlag('Y'), true);
+    assert.equal(mod.normalizeBooleanFlag('N'), false);
+    assert.throws(() => mod.buildFotMobMatchUrl('abc'), /INVALID_EXTERNAL_ID/);
+});
+
 for (const [name, override] of [
     ['source missing fails', { source: '' }],
     ['source non-fotmob fails', { source: 'other' }],
@@ -202,6 +223,15 @@ test('extractNextDataJsonFromHtml parses fake HTML', () => {
     const result = mod.extractNextDataJsonFromHtml(fakeHtml());
     assert.equal(result.ok, true);
     assert.equal(result.data.props.pageProps.general.matchId, '4830747');
+});
+
+test('extractNextDataJsonFromHtml and getPageProps fail closed for invalid hydration', () => {
+    assert.deepEqual(mod.extractNextDataJsonFromHtml(null), { ok: false, error: 'INVALID_HTML' });
+    assert.match(
+        mod.extractNextDataJsonFromHtml('<script id="__NEXT_DATA__">{bad-json}</script>').error,
+        /NEXT_DATA_PARSE_ERROR/
+    );
+    assert.equal(mod.getPageProps({ props: { pageProps: null } }), null);
 });
 
 test('getPageProps finds props.pageProps', () => {
@@ -343,6 +373,34 @@ test('fake invalid hydration returns controlled failure/no retry', async () => {
     assert.equal(result.status, 1);
     assert.equal(calls, 1);
     assert.equal(result.payload.failure_reason, 'NO_NEXT_DATA');
+});
+
+test('fetchHtml returns controlled failures for missing fetch dependency and body read errors', async t => {
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = undefined;
+    t.after(() => {
+        globalThis.fetch = originalFetch;
+    });
+
+    const missingFetch = await mod.fetchHtml('https://www.fotmob.com/match/4830747');
+    assert.equal(missingFetch.ok, false);
+    assert.equal(missingFetch.error, 'FETCH_DEPENDENCY_MISSING');
+
+    const bodyReadFailure = await mod.fetchHtml('https://www.fotmob.com/match/4830747', {
+        fetchFn: async () => ({
+            ok: true,
+            status: 200,
+            url: '',
+            headers: {},
+            async text() {
+                throw new Error('body unavailable');
+            },
+        }),
+    });
+    assert.equal(bodyReadFailure.ok, false);
+    assert.match(bodyReadFailure.error, /FETCH_BODY_READ_ERROR:body unavailable/);
+    assert.equal(bodyReadFailure.final_url, 'https://www.fotmob.com/match/4830747');
+    assert.equal(bodyReadFailure.content_type, null);
 });
 
 test('no full HTML body printed/saved', async () => {
