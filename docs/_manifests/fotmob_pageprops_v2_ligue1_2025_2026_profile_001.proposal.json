@@ -233,7 +233,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -246,7 +246,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830461",
@@ -281,7 +285,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -294,7 +298,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830463",
@@ -329,7 +337,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -342,7 +350,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830465",
@@ -377,7 +389,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -390,7 +402,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830460",
@@ -425,7 +441,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -438,7 +454,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830458",
@@ -473,7 +493,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -486,7 +506,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830459",
@@ -521,7 +545,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -534,7 +558,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830462",
@@ -569,7 +597,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -582,7 +610,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830464",
@@ -617,7 +649,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -630,7 +662,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830473",
@@ -665,7 +701,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -678,7 +714,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830471",
@@ -713,7 +753,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -726,7 +766,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830472",
@@ -761,7 +805,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -774,7 +818,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830470",
@@ -809,7 +857,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -822,7 +870,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830469",
@@ -857,7 +909,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -870,7 +922,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830467",
@@ -905,7 +961,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -918,7 +974,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830474",
@@ -953,7 +1013,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -966,7 +1026,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830475",
@@ -1001,7 +1065,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1014,7 +1078,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830468",
@@ -1049,7 +1117,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1062,7 +1130,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830478",
@@ -1097,7 +1169,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1110,7 +1182,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830479",
@@ -1145,7 +1221,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1158,7 +1234,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830482",
@@ -1193,7 +1273,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1206,7 +1286,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830484",
@@ -1241,7 +1325,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1254,7 +1338,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830476",
@@ -1289,7 +1377,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1302,7 +1390,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830477",
@@ -1337,7 +1429,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1350,7 +1442,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830481",
@@ -1385,7 +1481,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1398,7 +1494,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830483",
@@ -1433,7 +1533,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1446,7 +1546,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830480",
@@ -1481,7 +1585,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1494,7 +1598,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830488",
@@ -1529,7 +1637,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1542,7 +1650,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830490",
@@ -1577,7 +1689,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1590,7 +1702,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830485",
@@ -1625,7 +1741,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1638,7 +1754,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830487",
@@ -1673,7 +1793,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1686,7 +1806,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830486",
@@ -1721,7 +1845,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1734,7 +1858,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830489",
@@ -1769,7 +1897,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1782,7 +1910,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830491",
@@ -1817,7 +1949,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1830,7 +1962,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830493",
@@ -1865,7 +2001,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1878,7 +2014,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830492",
@@ -1913,7 +2053,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1926,7 +2066,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830498",
@@ -1961,7 +2105,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1974,7 +2118,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830501",
@@ -2009,7 +2157,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2022,7 +2170,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830495",
@@ -2057,7 +2209,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2070,7 +2222,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830497",
@@ -2105,7 +2261,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2118,7 +2274,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830502",
@@ -2153,7 +2313,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2166,7 +2326,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830494",
@@ -2201,7 +2365,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2214,7 +2378,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830496",
@@ -2249,7 +2417,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2262,7 +2430,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830500",
@@ -2297,7 +2469,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2310,7 +2482,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830499",
@@ -2345,7 +2521,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2358,7 +2534,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830510",
@@ -2393,7 +2573,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2406,7 +2586,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830505",
@@ -2441,7 +2625,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2454,7 +2638,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830511",
@@ -2489,7 +2677,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2502,7 +2690,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830508",
@@ -2537,7 +2729,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2550,7 +2742,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830507",
@@ -2585,7 +2781,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-17T10:42:45.212Z",
+            "updated_at": "2026-05-17T16:25:42.920Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2598,7 +2794,11 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_write_authorization_required"
+            "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+            "write_authorization_status": "pending_final_db_write_confirmation",
+            "write_plan_status": "eligible_for_insert",
+            "write_eligibility_status": "eligible_insert",
+            "planned_write_action": "insert_fotmob_pageprops_v2_after_l2v_hash_gate"
         }
     ],
     "readiness_gates": [
@@ -2612,7 +2812,7 @@
         "baseline hash capture before write",
         "separate final DB write confirmation before controlled write"
     ],
-    "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_authorization",
+    "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
     "non_execution": {
         "db_write_executed": false,
         "raw_match_data_write_executed": false,
@@ -2809,5 +3009,38 @@
         "no_raw_match_data_write": true,
         "no_controlled_write": true,
         "no_full_body_json_pageprops_print_save": true
+    },
+    "write_authorization_status": "pending_final_db_write_confirmation",
+    "write_plan_status": "ready_for_final_authorization",
+    "eligible_insert_count": 50,
+    "write_planning_blocked_count": 0,
+    "existing_v2_count": 0,
+    "would_insert_count": 50,
+    "would_update_count": 0,
+    "would_skip_count": 0,
+    "expected_raw_match_data_after": 68,
+    "single_league_pageprops_v2_write_planning_result": {
+        "phase": "PHASE5_21L2U_SINGLE_LEAGUE_PAGEPROPS_V2_CONTROLLED_WRITE_PLANNING",
+        "generated_at": "2026-05-17T16:25:42.920Z",
+        "candidate_count": 50,
+        "eligible_insert_count": 50,
+        "skipped_existing_v2_count": 0,
+        "blocked_count": 0,
+        "invalid_hash_count": 0,
+        "invalid_identity_count": 0,
+        "duplicate_external_id_count": 0,
+        "duplicate_match_id_count": 0,
+        "existing_v2_count": 0,
+        "would_insert_count": 50,
+        "would_update_count": 0,
+        "would_skip_count": 0,
+        "expected_raw_match_data_after": 68,
+        "write_authorization_status": "pending_final_db_write_confirmation",
+        "write_plan_status": "ready_for_final_authorization",
+        "required_next_step": "single_league_small_batch_controlled_pageprops_v2_write_execution",
+        "no_db_write": true,
+        "no_network": true,
+        "no_match_detail_fetch": true,
+        "no_parser_features_training": true
     }
 }
