@@ -1135,6 +1135,9 @@ module.exports = {
     EXPECTED_ROW_COUNTS,
     parseArgs,
     normalizeBooleanFlag,
+    readJsonFile,
+    writeJsonFile,
+    writeReportFile,
     validatePlanningInput,
     validateManifestGate,
     validateRenewedProposalGate,
@@ -1146,6 +1149,7 @@ module.exports = {
     buildSummary,
     buildUpdatedManifest,
     buildReport,
+    sleep,
     runPlanning,
     runCli,
 };

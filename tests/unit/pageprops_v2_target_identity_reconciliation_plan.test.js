@@ -1,6 +1,9 @@
 'use strict';
+/* eslint-disable max-lines -- safety-contract coverage stays in one file for auditability. */
 
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 
@@ -639,6 +642,159 @@ test('classification and summary cover identity, team-date and unknown branches'
     assert.equal(unknownSummary.next_required_step, 'target_identity_reconciliation_follow_up_investigation');
 });
 
+test('summary and selection cover route, canonical, observed-mismatch and default-selection branches', () => {
+    const routeSummary = mod.buildSummary({
+        diagnostics: [
+            {
+                identity_match: false,
+                mismatch_type: 'route_generation_mismatch',
+                request_url_external_id: '9999999',
+                requested_external_id: '4830466',
+                canonical_redirect_detected: false,
+                deterministic_observed_identity_with_l2v3c: false,
+                deterministic_with_l2v3c: false,
+            },
+        ],
+        input: validInput(),
+        manifestGate: { candidate_targets_count: 50 },
+        proposalGate: { checkedTargets: [proposalTarget('4830466')] },
+        generatedAt: '2026-05-18T00:00:00.000Z',
+    });
+    assert.equal(routeSummary.root_cause_status, 'confirmed_route_generation_mismatch');
+    assert.equal(routeSummary.next_required_step, 'route_generation_fix_planning');
+
+    const canonicalSummary = mod.buildSummary({
+        diagnostics: [
+            {
+                identity_match: false,
+                mismatch_type: 'canonical_redirect_mismatch',
+                final_url_external_id: '4830759',
+                requested_external_id: '4830466',
+                deterministic_observed_identity_with_l2v3c: false,
+                deterministic_with_l2v3c: false,
+            },
+        ],
+        input: validInput(),
+        manifestGate: { candidate_targets_count: 50 },
+        proposalGate: { checkedTargets: [proposalTarget('4830466')] },
+        generatedAt: '2026-05-18T00:00:00.000Z',
+    });
+    assert.equal(canonicalSummary.canonical_redirect_detected, true);
+    assert.equal(canonicalSummary.next_required_step, 'target_identity_source_inventory_reconciliation_planning');
+
+    const selected = mod.selectMismatchTargets(
+        mod.validateManifestGate(manifest()),
+        mod.validateRenewedProposalGate(renewedProposal()),
+        []
+    );
+    assert.equal(selected.ok, true);
+    assert.equal(selected.selected_external_ids.length, 8);
+});
+
+test('diagnoseTarget covers delayed array fetch, invalid URLs and search-id extraction', async () => {
+    const target = candidate('4830466', {
+        home_team: 'Rennes',
+        away_team: 'Marseille',
+        kickoff_time: '2025-08-15T18:45:00.000Z',
+    });
+    const diagnostic = await mod.diagnoseTarget(
+        target,
+        proposalTarget('4830466'),
+        1,
+        validInput({ requestDelayMs: 1 }),
+        {
+            fetchResults: [
+                null,
+                {
+                    ok: true,
+                    request_url: 'notaurl/match/4830466?matchId=4830466',
+                    final_url: 'https://www.fotmob.com/match/details?id=4830466',
+                    http_status: 200,
+                    body_byte_length: Buffer.byteLength(
+                        fakeHtml(
+                            '4830466',
+                            fakePageProps('4830466', {
+                                general: {
+                                    matchID: '4830466',
+                                    parentLeagueId: 53,
+                                    matchName: 'Rennes-vs-Marseille',
+                                    matchTimeUTC: '2025-08-15T18:45:00.000Z',
+                                    status: 'finished',
+                                },
+                                header: { homeTeam: 'Rennes', awayTeam: 'Marseille' },
+                            })
+                        ),
+                        'utf8'
+                    ),
+                    body: fakeHtml(
+                        '4830466',
+                        fakePageProps('4830466', {
+                            general: {
+                                matchID: '4830466',
+                                parentLeagueId: 53,
+                                matchName: 'Rennes-vs-Marseille',
+                                matchTimeUTC: '2025-08-15T18:45:00.000Z',
+                                status: 'finished',
+                            },
+                            header: { homeTeam: 'Rennes', awayTeam: 'Marseille' },
+                        })
+                    ),
+                },
+            ],
+        }
+    );
+
+    assert.equal(diagnostic.identity_match, true);
+    assert.equal(diagnostic.final_url_external_id, '4830466');
+    assert.equal(diagnostic.request_url_summary.startsWith('notaurl/match/4830466'), true);
+    assert.equal(diagnostic.mismatch_type, 'identity_match');
+});
+
+test('diagnoseTarget covers non-200 success envelope and missing observed identity branches', async () => {
+    const target = candidate('4830466');
+    const proposal = proposalTarget('4830466');
+
+    const non200 = await mod.diagnoseTarget(target, proposal, 0, validInput(), {
+        fetchResultsByExternalId: {
+            4830466: {
+                ok: true,
+                request_url: 'https://www.fotmob.com/match/4830466',
+                final_url: 'https://www.fotmob.com/match/4830466',
+                http_status: 503,
+                body_byte_length: 0,
+            },
+        },
+    });
+    assert.equal(non200.safe_error_summary, 'HTTP_NON_200');
+
+    const missingObserved = await mod.diagnoseTarget(
+        candidate('4830466', {
+            home_team: 'Rennes',
+            away_team: 'Marseille',
+            kickoff_time: '2025-08-15T18:45:00.000Z',
+        }),
+        proposalTarget('4830466'),
+        0,
+        validInput(),
+        {
+            fetchHtmlFn: () =>
+                fetchResultFor(
+                    '4830466',
+                    fakePageProps('4830466', {
+                        general: {
+                            leagueId: 53,
+                            matchName: 'Rennes-vs-Marseille',
+                            matchTimeUTCDate: '2025-08-15T18:45:00.000Z',
+                        },
+                        header: { teams: [{ name: 'Rennes' }, { name: 'Marseille' }] },
+                    })
+                ),
+        }
+    );
+    assert.equal(missingObserved.observed_external_id, null);
+    assert.equal(missingObserved.mismatch_type, 'identity_match');
+});
+
 test('report and manifest do not contain full raw_data, pageProps or source body markers', async () => {
     const result = await mod.runPlanning(validInput({ targetExternalIds: ['4830466'] }), {
         manifest: manifest(),
@@ -675,6 +831,31 @@ test('runPlanning can use file readers and default writers through injected safe
     assert.equal(writes.length, 2);
     assert.equal(writes[0].filePath, mod.MANIFEST_PATH);
     assert.equal(writes[1].filePath, mod.REPORT_PATH);
+});
+
+test('file helpers and sleep cover local IO branches safely', async () => {
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'l2v3d-'));
+    const jsonPath = path.join(tempDir, 'nested', 'sample.json');
+    const reportPath = path.join(tempDir, 'nested', 'report.md');
+
+    mod.writeJsonFile(jsonPath, { ok: true });
+    mod.writeReportFile(reportPath, '# ok\n');
+
+    assert.deepEqual(mod.readJsonFile(jsonPath), { ok: true });
+    assert.equal(fs.readFileSync(reportPath, 'utf8'), '# ok\n');
+
+    await mod.sleep(1);
+});
+
+test('runPlanning can read manifest/proposal from default repo files without writes', async () => {
+    const result = await mod.runPlanning(validInput({ targetExternalIds: ['4830466'] }), {
+        fetchHtmlFn: url => fetchResultFor(url.split('/').pop()),
+        writeManifest: false,
+        writeReport: false,
+    });
+
+    assert.equal(result.ok, false);
+    assert.equal(result.status, 3);
 });
 
 test('unresolved identity proposal is not executable by raw write runner', async () => {
