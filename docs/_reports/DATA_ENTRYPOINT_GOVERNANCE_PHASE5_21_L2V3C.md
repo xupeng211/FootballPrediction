@@ -159,7 +159,11 @@ Does not contain:
 
 ## R. PR Status
 
-- pending until PR is created
+- pr_url=https://github.com/xupeng211/FootballPrediction/pull/1277
+- pr_state=OPEN
+- pr_base=data/post-seed-matches-identity-raw-write-execution-phase521l2v3
+- pr_head=data/pageprops-v2-renewed-baseline-planning-phase521l2v3c
+- pr_ci_status=pending at report update time
 
 ## S. Next Step
 
