@@ -233,7 +233,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -246,7 +246,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -258,7 +258,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830461",
@@ -293,7 +296,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -306,7 +309,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -318,7 +321,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830463",
@@ -353,7 +359,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -366,7 +372,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -378,7 +384,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830465",
@@ -413,7 +422,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -426,7 +435,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -438,7 +447,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830460",
@@ -473,7 +485,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -486,7 +498,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -498,7 +510,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830458",
@@ -533,7 +548,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -546,7 +561,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -558,7 +573,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830459",
@@ -593,7 +611,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -606,7 +624,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -618,7 +636,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830462",
@@ -653,7 +674,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -666,7 +687,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -678,7 +699,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830464",
@@ -713,7 +737,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -726,7 +750,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -738,7 +762,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830473",
@@ -773,7 +800,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -786,7 +813,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -798,7 +825,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830471",
@@ -833,7 +863,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -846,7 +876,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -858,7 +888,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830472",
@@ -893,7 +926,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -906,7 +939,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -918,7 +951,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830470",
@@ -953,7 +989,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -966,7 +1002,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -978,7 +1014,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830469",
@@ -1013,7 +1052,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1026,7 +1065,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1038,7 +1077,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830467",
@@ -1073,7 +1115,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1086,7 +1128,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1098,7 +1140,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830474",
@@ -1133,7 +1178,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1146,7 +1191,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1158,7 +1203,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830475",
@@ -1193,7 +1241,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1206,7 +1254,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1218,7 +1266,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830468",
@@ -1253,7 +1304,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1266,7 +1317,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1278,7 +1329,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830478",
@@ -1313,7 +1367,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1326,7 +1380,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1338,7 +1392,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830479",
@@ -1373,7 +1430,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1386,7 +1443,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1398,7 +1455,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830482",
@@ -1433,7 +1493,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1446,7 +1506,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1458,7 +1518,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830484",
@@ -1493,7 +1556,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1506,7 +1569,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1518,7 +1581,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830476",
@@ -1553,7 +1619,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1566,7 +1632,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1578,7 +1644,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830477",
@@ -1613,7 +1682,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1626,7 +1695,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1638,7 +1707,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830481",
@@ -1673,7 +1745,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1686,7 +1758,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1698,7 +1770,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830483",
@@ -1733,7 +1808,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1746,7 +1821,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1758,7 +1833,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830480",
@@ -1793,7 +1871,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1806,7 +1884,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1818,7 +1896,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830488",
@@ -1853,7 +1934,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1866,7 +1947,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1878,7 +1959,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830490",
@@ -1913,7 +1997,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1926,7 +2010,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1938,7 +2022,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830485",
@@ -1973,7 +2060,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -1986,7 +2073,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -1998,7 +2085,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830487",
@@ -2033,7 +2123,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2046,7 +2136,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2058,7 +2148,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830486",
@@ -2093,7 +2186,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2106,7 +2199,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2118,7 +2211,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830489",
@@ -2153,7 +2249,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2166,7 +2262,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2178,7 +2274,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830491",
@@ -2213,7 +2312,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2226,7 +2325,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2238,7 +2337,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830493",
@@ -2273,7 +2375,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2286,7 +2388,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2298,7 +2400,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830492",
@@ -2333,7 +2438,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2346,7 +2451,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2358,7 +2463,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830498",
@@ -2393,7 +2501,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2406,7 +2514,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2418,7 +2526,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830501",
@@ -2453,7 +2564,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2466,7 +2577,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2478,7 +2589,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830495",
@@ -2513,7 +2627,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2526,7 +2640,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2538,7 +2652,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830497",
@@ -2573,7 +2690,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2586,7 +2703,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2598,7 +2715,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830502",
@@ -2633,7 +2753,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2646,7 +2766,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2658,7 +2778,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830494",
@@ -2693,7 +2816,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2706,7 +2829,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2718,7 +2841,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830496",
@@ -2753,7 +2879,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2766,7 +2892,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2778,7 +2904,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830500",
@@ -2813,7 +2942,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2826,7 +2955,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2838,7 +2967,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830499",
@@ -2873,7 +3005,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2886,7 +3018,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2898,7 +3030,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830510",
@@ -2933,7 +3068,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -2946,7 +3081,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -2958,7 +3093,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830505",
@@ -2993,7 +3131,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -3006,7 +3144,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -3018,7 +3156,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830511",
@@ -3053,7 +3194,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -3066,7 +3207,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -3078,7 +3219,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830508",
@@ -3113,7 +3257,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -3126,7 +3270,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -3138,7 +3282,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         },
         {
             "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830507",
@@ -3173,7 +3320,7 @@
             "source_fidelity_notes": "pageprops_v2_no_write_preflight_passed_no_full_body_or_pageprops_saved",
             "odds_alignment_ready": true,
             "created_at": "2026-05-17T09:30:55.640Z",
-            "updated_at": "2026-05-18T04:03:18.066Z",
+            "updated_at": "2026-05-18T05:13:09.222Z",
             "pageprops_summary": {
                 "http_status": 200,
                 "parse_status": "pageprops_v2_parsed",
@@ -3186,7 +3333,7 @@
                 "suspicious_small_payload": false,
                 "block_markers": []
             },
-            "required_next_step": "controlled_matches_identity_seed_execution",
+            "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
             "write_authorization_status": "pending_final_db_write_confirmation",
             "write_plan_status": "eligible_for_insert",
             "write_eligibility_status": "eligible_insert",
@@ -3198,7 +3345,10 @@
             "matches_identity_seed_status": "eligible_matches_insert",
             "matches_identity_seed_action": "insert_missing_matches_identity_row_in_l2v1",
             "matches_identity_seed_failure_reason": null,
-            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z"
+            "matches_identity_seed_planned_at": "2026-05-18T04:03:18.066Z",
+            "matches_seed_status": "inserted_matches_identity",
+            "matches_seed_inserted_at": "2026-05-18T05:13:09.222Z",
+            "matches_seed_failure_reason": null
         }
     ],
     "readiness_gates": [
@@ -3212,7 +3362,7 @@
         "baseline hash capture before write",
         "separate final DB write confirmation before controlled write"
     ],
-    "required_next_step": "controlled_matches_identity_seed_execution",
+    "required_next_step": "post_seed_matches_identity_verification_raw_write_retry_readiness_audit",
     "non_execution": {
         "db_write_executed": false,
         "raw_match_data_write_executed": false,
@@ -3490,5 +3640,11 @@
         "matches_write_executed": false,
         "raw_match_data_write_executed": false,
         "network_executed": false
-    }
+    },
+    "matches_identity_seed_execution_status": "completed",
+    "matches_identity_seed_execution_at": "2026-05-18T05:13:09.222Z",
+    "matches_identity_seed_inserted_count": 50,
+    "matches_identity_seed_transaction_began": true,
+    "matches_identity_seed_committed": true,
+    "matches_identity_seed_rolled_back": false
 }
