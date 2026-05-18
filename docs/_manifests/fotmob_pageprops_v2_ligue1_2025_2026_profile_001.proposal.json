@@ -3994,7 +3994,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "target_identity_source_inventory_reconciliation_planning",
+    "next_required_step": "schedule_detail_identity_normalization_fix_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4066,6 +4066,25 @@
     "phase_5_21_l2v3d_suspected_root_cause": "manifest_target_identity_or_fotmob_detail_payload_mapping_mismatch",
     "target_identity_mismatch_blocks_baseline_acceptance": true,
     "raw_write_ready_for_execution": false,
-    "raw_write_retry_authorization_status": "blocked_pending_target_identity_reconciliation",
-    "phase_5_21_l2v3d_deterministic_observed_identity_with_l2v3c": true
+    "raw_write_retry_authorization_status": "blocked_pending_target_identity_source_inventory_reconciliation",
+    "phase_5_21_l2v3d_deterministic_observed_identity_with_l2v3c": true,
+    "phase_5_21_l2v3e_planning_status": "completed_no_write",
+    "target_identity_source_inventory_reconciliation_status": "blocked_schedule_detail_identity_mismatch_identified",
+    "phase_5_21_l2v3e_checked_target_count": 8,
+    "phase_5_21_l2v3e_identity_match_count": 0,
+    "phase_5_21_l2v3e_identity_mismatch_count": 8,
+    "phase_5_21_l2v3e_source_inventory_vs_manifest_mismatch_count": 0,
+    "phase_5_21_l2v3e_manifest_vs_db_mismatch_count": 0,
+    "phase_5_21_l2v3e_db_vs_live_observed_mismatch_count": 8,
+    "phase_5_21_l2v3e_requested_vs_observed_external_id_mismatch_count": 8,
+    "phase_5_21_l2v3e_mismatch_stage_counts": {
+        "fetch_route": 8
+    },
+    "phase_5_21_l2v3e_shared_page_url_base_pair_count": 8,
+    "phase_5_21_l2v3e_all_pairs_share_page_url_base": true,
+    "phase_5_21_l2v3e_suspected_root_cause": "schedule_vs_detail_external_id_mismatch",
+    "phase_5_21_l2v3e_root_cause_confidence": "high",
+    "phase_5_21_l2v3e_recommended_next_step": "schedule_detail_identity_normalization_fix_planning",
+    "requires_separate_baseline_acceptance": true,
+    "requires_separate_final_db_write_authorization": true
 }
