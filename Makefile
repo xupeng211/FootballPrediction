@@ -13,7 +13,7 @@
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
         data-prediction-write-dry-run data-prediction-write-commit \
-        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-raw-match-data-version-compatibility-audit data-pageprops-v2-single-target-controlled-write data-pageprops-v2-post-write-canonical-read-verification data-remaining-seeded-pageprops-v2-acquisition-preflight data-remaining-seeded-pageprops-v2-controlled-write data-all-seeded-pageprops-v2-canonical-read-verification data-pageprops-v2-raw-completeness-audit data-pageprops-v2-parser-boundary-leakage-plan data-large-scale-pageprops-v2-acquisition-strategy-plan data-large-scale-target-inventory-schema-readiness-audit data-single-league-small-batch-target-manifest-plan data-single-league-target-discovery-source-inventory-preflight data-single-league-small-batch-pageprops-v2-preflight data-single-league-pageprops-v2-controlled-write-plan data-single-league-pageprops-v2-controlled-write-execute data-training-dataset-dry-run data-training-dataset-export \
+        data-dataset-status data-raw-match-data-completeness-audit data-html-hydration-source-fidelity-live-compare data-raw-storage-strategy-revision-plan data-pageprops-v2-no-write-preview data-pageprops-v2-controlled-write-plan data-raw-match-data-versioned-schema-migration-preflight data-raw-match-data-versioned-schema-migration-execute data-raw-match-data-version-compatibility-audit data-pageprops-v2-single-target-controlled-write data-pageprops-v2-post-write-canonical-read-verification data-remaining-seeded-pageprops-v2-acquisition-preflight data-remaining-seeded-pageprops-v2-controlled-write data-all-seeded-pageprops-v2-canonical-read-verification data-pageprops-v2-raw-completeness-audit data-pageprops-v2-parser-boundary-leakage-plan data-large-scale-pageprops-v2-acquisition-strategy-plan data-large-scale-target-inventory-schema-readiness-audit data-single-league-small-batch-target-manifest-plan data-single-league-target-discovery-source-inventory-preflight data-single-league-small-batch-pageprops-v2-preflight data-single-league-pageprops-v2-controlled-write-plan data-single-league-pageprops-v2-controlled-write-execute data-controlled-matches-identity-seed-prerequisite-plan data-controlled-matches-identity-seed-execute data-post-seed-matches-identity-raw-write-readiness-audit data-training-dataset-dry-run data-training-dataset-export \
         data-acquisition-engines data-acquisition-engine-audit \
         data-l1-discovery-preview data-l1-discovery-candidates-preview data-l1-discovery-candidates-network-preview data-l1-discovery-commit \
         data-l1-matches-seed-commit-plan data-l1-matches-seed-commit-authorization data-l1-matches-seed-commit-execution-preflight data-l1-matches-seed-commit-execute data-l1-matches-seed-commit \
@@ -333,6 +333,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-single-league-pageprops-v2-controlled-write-execute MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 ROUTE=html_hydration RAW_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 FINAL_DB_WRITE_CONFIRMATION=yes NETWORK_AUTHORIZATION=yes MATCH_DETAIL_RECAPTURE_AUTHORIZATION=yes ALLOW_DB_WRITE=yes ALLOW_RAW_MATCH_DATA_WRITE=yes ALLOW_CONTROLLED_WRITE=yes ALLOW_MATCHES_WRITE=no ALLOW_BOOKMAKER_ODDS_WRITE=no ALLOW_FEATURE_WRITE=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no CONCURRENCY=1 RETRY=0 PRINT_FULL_BODY=no SAVE_FULL_BODY=no PRINT_FULL_JSON=no SAVE_FULL_JSON=no PRINT_FULL_PAGEPROPS=no SAVE_FULL_PAGEPROPS=no  # Phase 5.21L2V controlled pageProps v2 write execution, FK gate before network/write, raw_match_data only, no matches/odds/features/training/predictions, no browser/proxy"
 	@echo "  make data-controlled-matches-identity-seed-prerequisite-plan MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 PLANNING_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_CONTROLLED_WRITE=no ALLOW_NETWORK=no ALLOW_MATCH_DETAIL_FETCH=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2V0 controlled matches identity seed prerequisite planning, SELECT-only, no DB/matches/raw write, no network/parser/features/training"
 	@echo "  make data-controlled-matches-identity-seed-execute MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 FINAL_DB_WRITE_CONFIRMATION=yes ALLOW_DB_WRITE=yes ALLOW_MATCHES_WRITE=yes ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_BOOKMAKER_ODDS_WRITE=no ALLOW_FEATURE_WRITE=no ALLOW_NETWORK=no ALLOW_MATCH_DETAIL_FETCH=no ALLOW_CONTROLLED_RAW_WRITE=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2V1 controlled matches identity seed execution, writes matches only, no raw_match_data/network/parser/features/training; raw write retry still requires separate authorization"
+	@echo "  make data-post-seed-matches-identity-raw-write-readiness-audit MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 READINESS_AUDIT_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_CONTROLLED_WRITE=no ALLOW_NETWORK=no ALLOW_MATCH_DETAIL_FETCH=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2V2 SELECT-only post-seed readiness audit, verifies matches/FK/no v2 rows, no DB write/network/parser/features/training"
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
@@ -1691,6 +1692,32 @@ data-controlled-matches-identity-seed-execute: ## Run Phase 5.21L2V1 controlled 
 		--allow-network="$(or $(ALLOW_NETWORK),no)" \
 		--allow-match-detail-fetch="$(or $(ALLOW_MATCH_DETAIL_FETCH),no)" \
 		--allow-controlled-raw-write="$(or $(ALLOW_CONTROLLED_RAW_WRITE),no)" \
+		--allow-schema-migration="$(or $(ALLOW_SCHEMA_MIGRATION),no)" \
+		--allow-parser-implementation="$(or $(ALLOW_PARSER_IMPLEMENTATION),no)" \
+		--allow-feature-extraction="$(or $(ALLOW_FEATURE_EXTRACTION),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)"
+
+data-post-seed-matches-identity-raw-write-readiness-audit: ## Run Phase 5.21L2V2 post-seed raw write retry readiness audit. SELECT-only, no write/network.
+	@if [ -z "$(MANIFEST)" ] || [ -z "$(SOURCE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(LEAGUE_NAME)" ] || [ -z "$(SEASON)" ] || [ -z "$(BATCH_ID)" ] || [ -z "$(TARGET_COUNT)" ]; then \
+		echo "ERROR: provide MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME='Ligue 1' SEASON=2025/2026 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/post_seed_matches_identity_raw_write_readiness_audit.js \
+		--manifest="$(MANIFEST)" \
+		--source="$(SOURCE)" \
+		--league-id="$(LEAGUE_ID)" \
+		--league-name="$(LEAGUE_NAME)" \
+		--season="$(SEASON)" \
+		--batch-id="$(BATCH_ID)" \
+		--target-count="$(TARGET_COUNT)" \
+		--readiness-audit-authorization="$(or $(READINESS_AUDIT_AUTHORIZATION),no)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-controlled-write="$(or $(ALLOW_CONTROLLED_WRITE),no)" \
+		--allow-network="$(or $(ALLOW_NETWORK),no)" \
+		--allow-match-detail-fetch="$(or $(ALLOW_MATCH_DETAIL_FETCH),no)" \
 		--allow-schema-migration="$(or $(ALLOW_SCHEMA_MIGRATION),no)" \
 		--allow-parser-implementation="$(or $(ALLOW_PARSER_IMPLEMENTATION),no)" \
 		--allow-feature-extraction="$(or $(ALLOW_FEATURE_EXTRACTION),no)" \
