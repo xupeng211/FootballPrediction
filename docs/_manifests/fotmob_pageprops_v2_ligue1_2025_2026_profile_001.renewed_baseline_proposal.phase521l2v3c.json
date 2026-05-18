@@ -1,0 +1,1209 @@
+{
+    "proposal_phase": "Phase 5.21L2V3C",
+    "proposal_status": "renewed_baseline_review_required",
+    "source_manifest_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+    "generated_at": "2026-05-18T12:14:52.506Z",
+    "base_head": "8360e91133c6a02a3bdd99d5fcc32ccbd70913b2",
+    "base_branch": "data/post-seed-matches-identity-raw-write-execution-phase521l2v3",
+    "branch": "data/pageprops-v2-renewed-baseline-planning-phase521l2v3c",
+    "candidate_targets_count": 50,
+    "checked_targets_count": 8,
+    "no_write": true,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "hash_strategy": "stable_pageprops_payload_v1",
+    "hash_function": "computeStablePagePropsHash",
+    "baseline_source_phase": "Phase 5.21L2T no-write preflight",
+    "renewed_hash_generation_phase": "Phase 5.21L2V3C no-write proposal",
+    "summary": {
+        "phase": "PHASE5_21L2V3C_RENEWED_BASELINE_REGENERATION_PLANNING",
+        "proposal_status": "renewed_baseline_review_required",
+        "source_manifest_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+        "renewed_baseline_proposal_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.renewed_baseline_proposal.phase521l2v3c.json",
+        "generated_at": "2026-05-18T12:14:52.506Z",
+        "base_head": "8360e91133c6a02a3bdd99d5fcc32ccbd70913b2",
+        "base_branch": "data/post-seed-matches-identity-raw-write-execution-phase521l2v3",
+        "branch": "data/pageprops-v2-renewed-baseline-planning-phase521l2v3c",
+        "pr_1276_state": "OPEN",
+        "pr_1276_url": "https://github.com/xupeng211/FootballPrediction/pull/1276",
+        "candidate_targets_count": 50,
+        "checked_target_count": 8,
+        "no_write": true,
+        "db_write_performed": false,
+        "raw_insert_performed": false,
+        "hash_strategy": "stable_pageprops_payload_v1",
+        "hash_function": "computeStablePagePropsHash",
+        "baseline_source_phase": "Phase 5.21L2T no-write preflight",
+        "renewed_hash_generation_phase": "Phase 5.21L2V3C no-write proposal",
+        "stable_match_count": 0,
+        "stable_drift_count": 0,
+        "unstable_hash_count": 0,
+        "fetch_or_parse_failure_count": 0,
+        "block_or_captcha_count": 0,
+        "metadata_target_mismatch_count": 8,
+        "low_path_count_target_count": 5,
+        "low_path_count_checked_count": 5,
+        "low_path_count_drift_count": 0,
+        "normal_path_count_drift_count": 0,
+        "drift_classification": "unknown",
+        "requires_human_review": true,
+        "requires_separate_baseline_acceptance": true,
+        "requires_separate_final_db_write_authorization": true,
+        "next_required_step": "target_identity_reconciliation_planning"
+    },
+    "checked_targets": [
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830466",
+            "match_id": "53_20252026_4830466",
+            "external_id": "4830466",
+            "old_baseline_hash": "c0365494bedfad7f49c59db649dc52d45bd364e7991f518261085349bebd530b",
+            "renewed_candidate_hash": "6167789073021a8d0b12665d936fea1bbffd3c1df94cdc2698e41799ecbdac87",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": true,
+            "old_baseline_path_count": 2916,
+            "old_baseline_content_path_count": 365,
+            "payload_size_summary": {
+                "body_byte_lengths": [1115133, 1115133],
+                "candidate_json_byte_lengths": [434094, 434094]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 2916,
+                "old_pageProps_content_path_count": 365,
+                "renewed_pageProps_path_counts": [10220, 10220],
+                "renewed_pageProps_content_path_counts": [7392, 7392]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": "HASH_DRIFT: recaptured 6167789073021a8d0b12665d936fea1bbffd3c1df94cdc2698e41799ecbdac87 differs from baseline c0365494bedfad7f49c59db649dc52d45bd364e7991f518261085349bebd530b | HASH_DRIFT: recaptured 6167789073021a8d0b12665d936fea1bbffd3c1df94cdc2698e41799ecbdac87 differs from baseline c0365494bedfad7f49c59db649dc52d45bd364e7991f518261085349bebd530b",
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830466",
+                    "match_id": "53_20252026_4830466",
+                    "external_id": "4830466",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1115133,
+                    "candidate_json_byte_length": 434094,
+                    "stable_hash": "6167789073021a8d0b12665d936fea1bbffd3c1df94cdc2698e41799ecbdac87",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10220,
+                    "pageProps_content_path_count": 7392,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830759",
+                        "home_team": "Marseille",
+                        "away_team": "Rennes",
+                        "match_name": "Marseille-vs-Rennes_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 6167789073021a8d0b12665d936fea1bbffd3c1df94cdc2698e41799ecbdac87 differs from baseline c0365494bedfad7f49c59db649dc52d45bd364e7991f518261085349bebd530b"
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830466",
+                    "match_id": "53_20252026_4830466",
+                    "external_id": "4830466",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1115133,
+                    "candidate_json_byte_length": 434094,
+                    "stable_hash": "6167789073021a8d0b12665d936fea1bbffd3c1df94cdc2698e41799ecbdac87",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10220,
+                    "pageProps_content_path_count": 7392,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830759",
+                        "home_team": "Marseille",
+                        "away_team": "Rennes",
+                        "match_name": "Marseille-vs-Rennes_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 6167789073021a8d0b12665d936fea1bbffd3c1df94cdc2698e41799ecbdac87 differs from baseline c0365494bedfad7f49c59db649dc52d45bd364e7991f518261085349bebd530b"
+                }
+            ]
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830461",
+            "match_id": "53_20252026_4830461",
+            "external_id": "4830461",
+            "old_baseline_hash": "eac411c9c86256df2099bbd8f75f4d86217d598b12d32d68cd67fbddea464767",
+            "renewed_candidate_hash": "f29ee7f91736e05d978cc55610ecf3328222e38a6d4ff6fdb33f1048cbdc4a37",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": true,
+            "old_baseline_path_count": 2915,
+            "old_baseline_content_path_count": 364,
+            "payload_size_summary": {
+                "body_byte_lengths": [1076403, 1076403],
+                "candidate_json_byte_lengths": [361058, 361058]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 2915,
+                "old_pageProps_content_path_count": 364,
+                "renewed_pageProps_path_counts": [10071, 10071],
+                "renewed_pageProps_content_path_counts": [7309, 7309]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": "HASH_DRIFT: recaptured f29ee7f91736e05d978cc55610ecf3328222e38a6d4ff6fdb33f1048cbdc4a37 differs from baseline eac411c9c86256df2099bbd8f75f4d86217d598b12d32d68cd67fbddea464767 | HASH_DRIFT: recaptured f29ee7f91736e05d978cc55610ecf3328222e38a6d4ff6fdb33f1048cbdc4a37 differs from baseline eac411c9c86256df2099bbd8f75f4d86217d598b12d32d68cd67fbddea464767",
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830461",
+                    "match_id": "53_20252026_4830461",
+                    "external_id": "4830461",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1076403,
+                    "candidate_json_byte_length": 361058,
+                    "stable_hash": "f29ee7f91736e05d978cc55610ecf3328222e38a6d4ff6fdb33f1048cbdc4a37",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10071,
+                    "pageProps_content_path_count": 7309,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830758",
+                        "home_team": "Lyon",
+                        "away_team": "Lens",
+                        "match_name": "Lyon-vs-Lens_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured f29ee7f91736e05d978cc55610ecf3328222e38a6d4ff6fdb33f1048cbdc4a37 differs from baseline eac411c9c86256df2099bbd8f75f4d86217d598b12d32d68cd67fbddea464767"
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830461",
+                    "match_id": "53_20252026_4830461",
+                    "external_id": "4830461",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1076403,
+                    "candidate_json_byte_length": 361058,
+                    "stable_hash": "f29ee7f91736e05d978cc55610ecf3328222e38a6d4ff6fdb33f1048cbdc4a37",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10071,
+                    "pageProps_content_path_count": 7309,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830758",
+                        "home_team": "Lyon",
+                        "away_team": "Lens",
+                        "match_name": "Lyon-vs-Lens_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured f29ee7f91736e05d978cc55610ecf3328222e38a6d4ff6fdb33f1048cbdc4a37 differs from baseline eac411c9c86256df2099bbd8f75f4d86217d598b12d32d68cd67fbddea464767"
+                }
+            ]
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830481",
+            "match_id": "53_20252026_4830481",
+            "external_id": "4830481",
+            "old_baseline_hash": "3196b8854e54b04ed951883c76463e98c6b92600ed5d7c6e6906e7d12f8fde97",
+            "renewed_candidate_hash": "3c8610e8912467cba6c67d0ccfe77a5ee444a5302bad7d4c0c97361d87b0b757",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": true,
+            "old_baseline_path_count": 2915,
+            "old_baseline_content_path_count": 364,
+            "payload_size_summary": {
+                "body_byte_lengths": [1176313, 1176313],
+                "candidate_json_byte_lengths": [389397, 389397]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 2915,
+                "old_pageProps_content_path_count": 364,
+                "renewed_pageProps_path_counts": [10014, 10014],
+                "renewed_pageProps_content_path_counts": [7048, 7048]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": "HASH_DRIFT: recaptured 3c8610e8912467cba6c67d0ccfe77a5ee444a5302bad7d4c0c97361d87b0b757 differs from baseline 3196b8854e54b04ed951883c76463e98c6b92600ed5d7c6e6906e7d12f8fde97 | HASH_DRIFT: recaptured 3c8610e8912467cba6c67d0ccfe77a5ee444a5302bad7d4c0c97361d87b0b757 differs from baseline 3196b8854e54b04ed951883c76463e98c6b92600ed5d7c6e6906e7d12f8fde97",
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830481",
+                    "match_id": "53_20252026_4830481",
+                    "external_id": "4830481",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1176313,
+                    "candidate_json_byte_length": 389397,
+                    "stable_hash": "3c8610e8912467cba6c67d0ccfe77a5ee444a5302bad7d4c0c97361d87b0b757",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10014,
+                    "pageProps_content_path_count": 7048,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830763",
+                        "home_team": "Strasbourg",
+                        "away_team": "Monaco",
+                        "match_name": "Strasbourg-vs-Monaco_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 3c8610e8912467cba6c67d0ccfe77a5ee444a5302bad7d4c0c97361d87b0b757 differs from baseline 3196b8854e54b04ed951883c76463e98c6b92600ed5d7c6e6906e7d12f8fde97"
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830481",
+                    "match_id": "53_20252026_4830481",
+                    "external_id": "4830481",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1176313,
+                    "candidate_json_byte_length": 389397,
+                    "stable_hash": "3c8610e8912467cba6c67d0ccfe77a5ee444a5302bad7d4c0c97361d87b0b757",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10014,
+                    "pageProps_content_path_count": 7048,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830763",
+                        "home_team": "Strasbourg",
+                        "away_team": "Monaco",
+                        "match_name": "Strasbourg-vs-Monaco_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 3c8610e8912467cba6c67d0ccfe77a5ee444a5302bad7d4c0c97361d87b0b757 differs from baseline 3196b8854e54b04ed951883c76463e98c6b92600ed5d7c6e6906e7d12f8fde97"
+                }
+            ]
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830496",
+            "match_id": "53_20252026_4830496",
+            "external_id": "4830496",
+            "old_baseline_hash": "4aee2a2e2801dbfd4a33cb94fe87182e9165b33a15937dbd70e3783d79f81a6c",
+            "renewed_candidate_hash": "2ee3570c3c5fa53622c948dcf8ede0598e9abeb3b2e934ea8120f45b6ecc614b",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": true,
+            "old_baseline_path_count": 2912,
+            "old_baseline_content_path_count": 361,
+            "payload_size_summary": {
+                "body_byte_lengths": [1014347, 1014347],
+                "candidate_json_byte_lengths": [320114, 320114]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 2912,
+                "old_pageProps_content_path_count": 361,
+                "renewed_pageProps_path_counts": [9668, 9668],
+                "renewed_pageProps_content_path_counts": [6978, 6978]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": "HASH_DRIFT: recaptured 2ee3570c3c5fa53622c948dcf8ede0598e9abeb3b2e934ea8120f45b6ecc614b differs from baseline 4aee2a2e2801dbfd4a33cb94fe87182e9165b33a15937dbd70e3783d79f81a6c | HASH_DRIFT: recaptured 2ee3570c3c5fa53622c948dcf8ede0598e9abeb3b2e934ea8120f45b6ecc614b differs from baseline 4aee2a2e2801dbfd4a33cb94fe87182e9165b33a15937dbd70e3783d79f81a6c",
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830496",
+                    "match_id": "53_20252026_4830496",
+                    "external_id": "4830496",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1014347,
+                    "candidate_json_byte_length": 320114,
+                    "stable_hash": "2ee3570c3c5fa53622c948dcf8ede0598e9abeb3b2e934ea8120f45b6ecc614b",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 9668,
+                    "pageProps_content_path_count": 6978,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830757",
+                        "home_team": "Lorient",
+                        "away_team": "Le Havre",
+                        "match_name": "Lorient-vs-Le Havre_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 2ee3570c3c5fa53622c948dcf8ede0598e9abeb3b2e934ea8120f45b6ecc614b differs from baseline 4aee2a2e2801dbfd4a33cb94fe87182e9165b33a15937dbd70e3783d79f81a6c"
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830496",
+                    "match_id": "53_20252026_4830496",
+                    "external_id": "4830496",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1014347,
+                    "candidate_json_byte_length": 320114,
+                    "stable_hash": "2ee3570c3c5fa53622c948dcf8ede0598e9abeb3b2e934ea8120f45b6ecc614b",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 9668,
+                    "pageProps_content_path_count": 6978,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830757",
+                        "home_team": "Lorient",
+                        "away_team": "Le Havre",
+                        "match_name": "Lorient-vs-Le Havre_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 2ee3570c3c5fa53622c948dcf8ede0598e9abeb3b2e934ea8120f45b6ecc614b differs from baseline 4aee2a2e2801dbfd4a33cb94fe87182e9165b33a15937dbd70e3783d79f81a6c"
+                }
+            ]
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830511",
+            "match_id": "53_20252026_4830511",
+            "external_id": "4830511",
+            "old_baseline_hash": "e6721fc620e526e7d97be1e1545b4b1c3073f284d0b4aa66498724235b0557c8",
+            "renewed_candidate_hash": "3bc05ba73428e22c2fdabf31c53998389c0a855fdd7596c23c77b14ab8af85cb",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": true,
+            "old_baseline_path_count": 2914,
+            "old_baseline_content_path_count": 363,
+            "payload_size_summary": {
+                "body_byte_lengths": [754155, 754155],
+                "candidate_json_byte_lengths": [226797, 226797]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 2914,
+                "old_pageProps_content_path_count": 363,
+                "renewed_pageProps_path_counts": [7091, 7091],
+                "renewed_pageProps_content_path_counts": [4543, 4543]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": "HASH_DRIFT: recaptured 3bc05ba73428e22c2fdabf31c53998389c0a855fdd7596c23c77b14ab8af85cb differs from baseline e6721fc620e526e7d97be1e1545b4b1c3073f284d0b4aa66498724235b0557c8 | HASH_DRIFT: recaptured 3bc05ba73428e22c2fdabf31c53998389c0a855fdd7596c23c77b14ab8af85cb differs from baseline e6721fc620e526e7d97be1e1545b4b1c3073f284d0b4aa66498724235b0557c8",
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830511",
+                    "match_id": "53_20252026_4830511",
+                    "external_id": "4830511",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 754155,
+                    "candidate_json_byte_length": 226797,
+                    "stable_hash": "3bc05ba73428e22c2fdabf31c53998389c0a855fdd7596c23c77b14ab8af85cb",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 7091,
+                    "pageProps_content_path_count": 4543,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830760",
+                        "home_team": "Nantes",
+                        "away_team": "Toulouse",
+                        "match_name": "Nantes-vs-Toulouse_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 3bc05ba73428e22c2fdabf31c53998389c0a855fdd7596c23c77b14ab8af85cb differs from baseline e6721fc620e526e7d97be1e1545b4b1c3073f284d0b4aa66498724235b0557c8"
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830511",
+                    "match_id": "53_20252026_4830511",
+                    "external_id": "4830511",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 754155,
+                    "candidate_json_byte_length": 226797,
+                    "stable_hash": "3bc05ba73428e22c2fdabf31c53998389c0a855fdd7596c23c77b14ab8af85cb",
+                    "matches_baseline": false,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 7091,
+                    "pageProps_content_path_count": 4543,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830760",
+                        "home_team": "Nantes",
+                        "away_team": "Toulouse",
+                        "match_name": "Nantes-vs-Toulouse_Sun, May 17, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-05-17T19:00:00.000Z"
+                    },
+                    "safe_error_summary": "HASH_DRIFT: recaptured 3bc05ba73428e22c2fdabf31c53998389c0a855fdd7596c23c77b14ab8af85cb differs from baseline e6721fc620e526e7d97be1e1545b4b1c3073f284d0b4aa66498724235b0557c8"
+                }
+            ]
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830463",
+            "match_id": "53_20252026_4830463",
+            "external_id": "4830463",
+            "old_baseline_hash": "519a171d16190df970026046d067f8acf10e9489e3d57a1c269278799199ea83",
+            "renewed_candidate_hash": "519a171d16190df970026046d067f8acf10e9489e3d57a1c269278799199ea83",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": false,
+            "old_baseline_path_count": 9396,
+            "old_baseline_content_path_count": 6845,
+            "payload_size_summary": {
+                "body_byte_lengths": [950273, 950273],
+                "candidate_json_byte_lengths": [300429, 300429]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 9396,
+                "old_pageProps_content_path_count": 6845,
+                "renewed_pageProps_path_counts": [9396, 9396],
+                "renewed_pageProps_content_path_counts": [6845, 6845]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": null,
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830463",
+                    "match_id": "53_20252026_4830463",
+                    "external_id": "4830463",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 950273,
+                    "candidate_json_byte_length": 300429,
+                    "stable_hash": "519a171d16190df970026046d067f8acf10e9489e3d57a1c269278799199ea83",
+                    "matches_baseline": true,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 9396,
+                    "pageProps_content_path_count": 6845,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830622",
+                        "home_team": "Le Havre",
+                        "away_team": "Monaco",
+                        "match_name": "Le Havre-vs-Monaco_Sat, Jan 24, 2026, 18:00 UTC",
+                        "match_time_utc": "2026-01-24T18:00:00.000Z"
+                    },
+                    "safe_error_summary": null
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830463",
+                    "match_id": "53_20252026_4830463",
+                    "external_id": "4830463",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 950273,
+                    "candidate_json_byte_length": 300429,
+                    "stable_hash": "519a171d16190df970026046d067f8acf10e9489e3d57a1c269278799199ea83",
+                    "matches_baseline": true,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 9396,
+                    "pageProps_content_path_count": 6845,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830622",
+                        "home_team": "Le Havre",
+                        "away_team": "Monaco",
+                        "match_name": "Le Havre-vs-Monaco_Sat, Jan 24, 2026, 18:00 UTC",
+                        "match_time_utc": "2026-01-24T18:00:00.000Z"
+                    },
+                    "safe_error_summary": null
+                }
+            ]
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830465",
+            "match_id": "53_20252026_4830465",
+            "external_id": "4830465",
+            "old_baseline_hash": "cec694ea6bf683cf815bfd68bf0db35ce427bd6203dd13031479579ce015ceeb",
+            "renewed_candidate_hash": "cec694ea6bf683cf815bfd68bf0db35ce427bd6203dd13031479579ce015ceeb",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": false,
+            "old_baseline_path_count": 10452,
+            "old_baseline_content_path_count": 7561,
+            "payload_size_summary": {
+                "body_byte_lengths": [1150806, 1150806],
+                "candidate_json_byte_lengths": [394072, 394072]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 10452,
+                "old_pageProps_content_path_count": 7561,
+                "renewed_pageProps_path_counts": [10452, 10452],
+                "renewed_pageProps_content_path_counts": [7561, 7561]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": null,
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830465",
+                    "match_id": "53_20252026_4830465",
+                    "external_id": "4830465",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1150806,
+                    "candidate_json_byte_length": 394072,
+                    "stable_hash": "cec694ea6bf683cf815bfd68bf0db35ce427bd6203dd13031479579ce015ceeb",
+                    "matches_baseline": true,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10452,
+                    "pageProps_content_path_count": 7561,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830619",
+                        "home_team": "Toulouse",
+                        "away_team": "Nice",
+                        "match_name": "Toulouse-vs-Nice_Sat, Jan 17, 2026, 18:00 UTC",
+                        "match_time_utc": "2026-01-17T18:00:00.000Z"
+                    },
+                    "safe_error_summary": null
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830465",
+                    "match_id": "53_20252026_4830465",
+                    "external_id": "4830465",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 1150806,
+                    "candidate_json_byte_length": 394072,
+                    "stable_hash": "cec694ea6bf683cf815bfd68bf0db35ce427bd6203dd13031479579ce015ceeb",
+                    "matches_baseline": true,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 10452,
+                    "pageProps_content_path_count": 7561,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830619",
+                        "home_team": "Toulouse",
+                        "away_team": "Nice",
+                        "match_name": "Toulouse-vs-Nice_Sat, Jan 17, 2026, 18:00 UTC",
+                        "match_time_utc": "2026-01-17T18:00:00.000Z"
+                    },
+                    "safe_error_summary": null
+                }
+            ]
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830508",
+            "match_id": "53_20252026_4830508",
+            "external_id": "4830508",
+            "old_baseline_hash": "e511251e50e701e6d626bd7ff57620556a7654fe587e0828bae02bb36f2a231c",
+            "renewed_candidate_hash": "e511251e50e701e6d626bd7ff57620556a7654fe587e0828bae02bb36f2a231c",
+            "hash_status": "metadata_target_mismatch",
+            "repeated_hash_stability": "stable_current_hash",
+            "low_path_count_risk": false,
+            "old_baseline_path_count": 9106,
+            "old_baseline_content_path_count": 6482,
+            "payload_size_summary": {
+                "body_byte_lengths": [957145, 957145],
+                "candidate_json_byte_lengths": [326373, 326373]
+            },
+            "top_level_keys_summary": [],
+            "path_count_summary": {
+                "old_pageProps_path_count": 9106,
+                "old_pageProps_content_path_count": 6482,
+                "renewed_pageProps_path_counts": [9106, 9106],
+                "renewed_pageProps_content_path_counts": [6482, 6482]
+            },
+            "metadata_identity_status": "metadata_target_mismatch",
+            "safe_error_summary": null,
+            "attempts": [
+                {
+                    "attempt": 1,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830508",
+                    "match_id": "53_20252026_4830508",
+                    "external_id": "4830508",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 957145,
+                    "candidate_json_byte_length": 326373,
+                    "stable_hash": "e511251e50e701e6d626bd7ff57620556a7654fe587e0828bae02bb36f2a231c",
+                    "matches_baseline": true,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 9106,
+                    "pageProps_content_path_count": 6482,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830620",
+                        "home_team": "Auxerre",
+                        "away_team": "Paris Saint-Germain",
+                        "match_name": "Auxerre-vs-Paris Saint-Germain_Fri, Jan 23, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-01-23T19:00:00.000Z"
+                    },
+                    "safe_error_summary": null
+                },
+                {
+                    "attempt": 2,
+                    "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830508",
+                    "match_id": "53_20252026_4830508",
+                    "external_id": "4830508",
+                    "http_status": 200,
+                    "parsed": true,
+                    "block_markers": [],
+                    "body_byte_length": 957145,
+                    "candidate_json_byte_length": 326373,
+                    "stable_hash": "e511251e50e701e6d626bd7ff57620556a7654fe587e0828bae02bb36f2a231c",
+                    "matches_baseline": true,
+                    "top_level_keys": [
+                        "content",
+                        "fallback",
+                        "fetchingLeagueData",
+                        "general",
+                        "hasPendingVAR",
+                        "header",
+                        "nav",
+                        "ongoing",
+                        "seo",
+                        "ssr",
+                        "translations"
+                    ],
+                    "pageProps_path_count": 9106,
+                    "pageProps_content_path_count": 6482,
+                    "metadata_identity_status": "metadata_target_mismatch",
+                    "metadata_identity_observed": {
+                        "external_id": "4830620",
+                        "home_team": "Auxerre",
+                        "away_team": "Paris Saint-Germain",
+                        "match_name": "Auxerre-vs-Paris Saint-Germain_Fri, Jan 23, 2026, 19:00 UTC",
+                        "match_time_utc": "2026-01-23T19:00:00.000Z"
+                    },
+                    "safe_error_summary": null
+                }
+            ]
+        }
+    ],
+    "targets_not_checked": [
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830460",
+            "match_id": "53_20252026_4830460",
+            "external_id": "4830460",
+            "old_baseline_hash": "76d5fc82872d5bde2ffae016dd8b292f199501db478090f1d714dd25e08ef98e",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830458",
+            "match_id": "53_20252026_4830458",
+            "external_id": "4830458",
+            "old_baseline_hash": "14aff4519d38f6f90f428becef08c018dc4b4f98dbb668b36d7cffad48cb8972",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830459",
+            "match_id": "53_20252026_4830459",
+            "external_id": "4830459",
+            "old_baseline_hash": "34fa44344f7abf24ac7a29c646a963ac373853be6d04c55637539f60ebe3c26b",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830462",
+            "match_id": "53_20252026_4830462",
+            "external_id": "4830462",
+            "old_baseline_hash": "5089b44e1f5af688cc3930f37b6c09b19c83700592cc3d044e8ba4d42d988a30",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830464",
+            "match_id": "53_20252026_4830464",
+            "external_id": "4830464",
+            "old_baseline_hash": "883991364eb632755e018fd4ecd719d2e669134c2fde265f3a470adbd92af905",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830473",
+            "match_id": "53_20252026_4830473",
+            "external_id": "4830473",
+            "old_baseline_hash": "562ce0e4aba52769b53a5b3848a7aa0ac55175943f20df1e2a59ff64318ebc47",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830471",
+            "match_id": "53_20252026_4830471",
+            "external_id": "4830471",
+            "old_baseline_hash": "2725352ca86d4254e74601f4b61ff0f6267d226cb9ecfd2cc1f3368192553242",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830472",
+            "match_id": "53_20252026_4830472",
+            "external_id": "4830472",
+            "old_baseline_hash": "f892b403fe6e420a745888ab31e825843c4fd5387a7518ce61c4b456bb980acc",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830470",
+            "match_id": "53_20252026_4830470",
+            "external_id": "4830470",
+            "old_baseline_hash": "de53eeb2ffd112577ef70684a998e3c85f5e2f5603550e272c59472691d062c8",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830469",
+            "match_id": "53_20252026_4830469",
+            "external_id": "4830469",
+            "old_baseline_hash": "75b4aaf6e7632842dafee1c946e1422a11179be2fb0c0be19ecd009130f6fc45",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830467",
+            "match_id": "53_20252026_4830467",
+            "external_id": "4830467",
+            "old_baseline_hash": "bfc3881169c68bb7b39f29e60278fc34d05b7a838e10602cc2d55991c805d622",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830474",
+            "match_id": "53_20252026_4830474",
+            "external_id": "4830474",
+            "old_baseline_hash": "6a00d18d740d69eb9a65c593426cad4f956bf9492b0e5be489b75b90d838b6b6",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830475",
+            "match_id": "53_20252026_4830475",
+            "external_id": "4830475",
+            "old_baseline_hash": "0e7c1d543e12c112bf6c3e7002d02d49d56afab1283d0fb62f8c81ee78575775",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830468",
+            "match_id": "53_20252026_4830468",
+            "external_id": "4830468",
+            "old_baseline_hash": "de78dc67d69ffc22739e4cf648788fd6f50a6dfccae8518a9c1fa8def0eb16a5",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830478",
+            "match_id": "53_20252026_4830478",
+            "external_id": "4830478",
+            "old_baseline_hash": "3d6e522813c63b99f430c4367996385c74196b2b47602560f27ac8441ee1f33c",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830479",
+            "match_id": "53_20252026_4830479",
+            "external_id": "4830479",
+            "old_baseline_hash": "c0a8136ad9a50a19b5a2e70fd8d11aa2be83b2107ad66b63b3ca0dde212c033d",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830482",
+            "match_id": "53_20252026_4830482",
+            "external_id": "4830482",
+            "old_baseline_hash": "d1d9c0a32ec75b4f2ce88f56c47f587dd937520bee260167aa7ca8e9d685f1a5",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830484",
+            "match_id": "53_20252026_4830484",
+            "external_id": "4830484",
+            "old_baseline_hash": "594c6ded490ba7f2089dc266edeb30b68d9654f9e0859812035865c197f9c097",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830476",
+            "match_id": "53_20252026_4830476",
+            "external_id": "4830476",
+            "old_baseline_hash": "b45c4afc5e7a055bc3b60add689b46cd826ec213f12bc6efc37581c11bf5e978",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830477",
+            "match_id": "53_20252026_4830477",
+            "external_id": "4830477",
+            "old_baseline_hash": "32fea505aa1fc0bebb9e6336208bf32f7f0cdeacb536f3ecce70823317b7393f",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830483",
+            "match_id": "53_20252026_4830483",
+            "external_id": "4830483",
+            "old_baseline_hash": "b3800c9c47ccdb4eb4f485f579f79f5e91916e91ff01b462f2d4241a57a94456",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830480",
+            "match_id": "53_20252026_4830480",
+            "external_id": "4830480",
+            "old_baseline_hash": "782563109844e30585bc814b899bba71fae456c9340ccad6ee0b4693162eb593",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830488",
+            "match_id": "53_20252026_4830488",
+            "external_id": "4830488",
+            "old_baseline_hash": "f3e28a11286b14aa3e72435c7472493d7132eb1013ba2e970914d1d25fd7afea",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830490",
+            "match_id": "53_20252026_4830490",
+            "external_id": "4830490",
+            "old_baseline_hash": "6884afd9685c014f020461d16802af09384f606d4828e99d909818916d1a29ed",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830485",
+            "match_id": "53_20252026_4830485",
+            "external_id": "4830485",
+            "old_baseline_hash": "ed8639a0b1f82861d0f991a8d547409b3b88ff35ed1fd127f7fc1623ab675467",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830487",
+            "match_id": "53_20252026_4830487",
+            "external_id": "4830487",
+            "old_baseline_hash": "42728b7c805ca2d929f72f2ac29ed4e663e13a374c7467d0d6f181e2a4b2cd76",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830486",
+            "match_id": "53_20252026_4830486",
+            "external_id": "4830486",
+            "old_baseline_hash": "2d4144f8fa562c0520728f51c33e4eb501e61b273705c8d3ecfa082fd3587fa3",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830489",
+            "match_id": "53_20252026_4830489",
+            "external_id": "4830489",
+            "old_baseline_hash": "7d66f6530c38aa538339b894e70928b72fc55dbc408755ad996f44d4e08a2b6e",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830491",
+            "match_id": "53_20252026_4830491",
+            "external_id": "4830491",
+            "old_baseline_hash": "67a805fc4db215cb67c60a5f1db9364eab0d0a92d3b0ed6a04d288df0024bdc8",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830493",
+            "match_id": "53_20252026_4830493",
+            "external_id": "4830493",
+            "old_baseline_hash": "e0425ed9c188d92e16188ab9d8f45a363942caa7c753c28fdddc6955678ab208",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830492",
+            "match_id": "53_20252026_4830492",
+            "external_id": "4830492",
+            "old_baseline_hash": "d5464aa69be9f3706dce73e9f489cf5f6f76a93b15130b24d8b8f6c6ac19968d",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830498",
+            "match_id": "53_20252026_4830498",
+            "external_id": "4830498",
+            "old_baseline_hash": "3fd2973d716f971bb2062d75d10ae93de600dfa1c7e5f35102acc9695ca17755",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830501",
+            "match_id": "53_20252026_4830501",
+            "external_id": "4830501",
+            "old_baseline_hash": "04fd2fb2e6d47d9e53ab77d5de5ed225ea0cbdd7f27b940e192b58e85bd8953b",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830495",
+            "match_id": "53_20252026_4830495",
+            "external_id": "4830495",
+            "old_baseline_hash": "c8ea54f5922827e78c0f748cb0774fa188884f9c9f74be3eebb37be32e1b819b",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830497",
+            "match_id": "53_20252026_4830497",
+            "external_id": "4830497",
+            "old_baseline_hash": "b36842dc75def684cc6950cd01699b1746cd2768c4e9bfe6d4dbbc492413961d",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830502",
+            "match_id": "53_20252026_4830502",
+            "external_id": "4830502",
+            "old_baseline_hash": "aab3e77aaef4c4a0a34c036e06aff64fa8cb7b079465596f2eef91de457edf90",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830494",
+            "match_id": "53_20252026_4830494",
+            "external_id": "4830494",
+            "old_baseline_hash": "ed99f9e33746a204933da86d0df6ad35b902f7f8ff7e9a2093c4ea0f698d66db",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830500",
+            "match_id": "53_20252026_4830500",
+            "external_id": "4830500",
+            "old_baseline_hash": "9db7a361bdc24349f17ddc64f7eb487883fd87e2f646d3e2889731ce5a323f56",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830499",
+            "match_id": "53_20252026_4830499",
+            "external_id": "4830499",
+            "old_baseline_hash": "8ccde7d5658d1148e6c3283efb94510a7b965fdd553b70e7151b5feb4d309666",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830510",
+            "match_id": "53_20252026_4830510",
+            "external_id": "4830510",
+            "old_baseline_hash": "dae81353108344a1581fb87584fa65ca833a939900173e34ffef843eb38467e4",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830505",
+            "match_id": "53_20252026_4830505",
+            "external_id": "4830505",
+            "old_baseline_hash": "680d9ed7b927e37162a677737848fec7c38841b18f299cea2145bf408da4fe8b",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        },
+        {
+            "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830507",
+            "match_id": "53_20252026_4830507",
+            "external_id": "4830507",
+            "old_baseline_hash": "0c73ba5c6e646e6312de6cbc9f9445c2cd063c56e19c371e01dfa5b5a02da550",
+            "preserved_old_baseline": true,
+            "proposal_status": "not_regenerated_in_l2v3c_sample"
+        }
+    ],
+    "recommendation": {
+        "requires_human_review": true,
+        "requires_separate_baseline_acceptance": true,
+        "requires_separate_final_db_write_authorization": true,
+        "raw_write_ready_for_execution": false,
+        "recommended_next_phase": "Phase 5.21L2V3D target_identity_reconciliation_planning"
+    }
+}
