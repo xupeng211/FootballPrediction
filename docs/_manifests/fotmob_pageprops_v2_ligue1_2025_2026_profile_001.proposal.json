@@ -3994,7 +3994,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "target_identity_reconciliation_planning",
+    "next_required_step": "target_identity_source_inventory_reconciliation_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4049,5 +4049,23 @@
     "renewed_baseline_requires_separate_baseline_acceptance": true,
     "renewed_baseline_requires_separate_final_db_write_authorization": true,
     "phase_5_21_l2v3c_db_write_performed": false,
-    "phase_5_21_l2v3c_raw_insert_performed": false
+    "phase_5_21_l2v3c_raw_insert_performed": false,
+    "phase_5_21_l2v3d_planning_status": "completed_no_write",
+    "target_identity_reconciliation_status": "blocked_identity_mismatch_unresolved",
+    "phase_5_21_l2v3d_checked_target_count": 8,
+    "phase_5_21_l2v3d_identity_match_count": 0,
+    "phase_5_21_l2v3d_identity_mismatch_count": 8,
+    "phase_5_21_l2v3d_mismatch_type_counts": {
+        "requested_vs_observed_external_id_mismatch": 8
+    },
+    "phase_5_21_l2v3d_deterministic_with_l2v3c": false,
+    "phase_5_21_l2v3d_request_url_itself_wrong": false,
+    "phase_5_21_l2v3d_parser_extractor_wrong_indicated": false,
+    "phase_5_21_l2v3d_manifest_target_metadata_mismatch_indicated": true,
+    "phase_5_21_l2v3d_root_cause_status": "suspected_not_accepted",
+    "phase_5_21_l2v3d_suspected_root_cause": "manifest_target_identity_or_fotmob_detail_payload_mapping_mismatch",
+    "target_identity_mismatch_blocks_baseline_acceptance": true,
+    "raw_write_ready_for_execution": false,
+    "raw_write_retry_authorization_status": "blocked_pending_target_identity_reconciliation",
+    "phase_5_21_l2v3d_deterministic_observed_identity_with_l2v3c": true
 }

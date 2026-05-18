@@ -336,6 +336,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-post-seed-matches-identity-raw-write-readiness-audit MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 READINESS_AUDIT_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_CONTROLLED_WRITE=no ALLOW_NETWORK=no ALLOW_MATCH_DETAIL_FETCH=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no  # Phase 5.21L2V2 SELECT-only post-seed readiness audit, verifies matches/FK/no v2 rows, no DB write/network/parser/features/training"
 	@echo "  make data-renewed-pageprops-v2-raw-write-execute MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 ROUTE=html_hydration RAW_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 RENEWED_RAW_WRITE_AUTHORIZATION=yes FINAL_DB_WRITE_CONFIRMATION=yes NETWORK_AUTHORIZATION=yes MATCH_DETAIL_RECAPTURE_AUTHORIZATION=yes ALLOW_DB_WRITE=yes ALLOW_RAW_MATCH_DATA_WRITE=yes ALLOW_CONTROLLED_WRITE=yes ALLOW_MATCHES_WRITE=no ALLOW_BOOKMAKER_ODDS_WRITE=no ALLOW_FEATURE_WRITE=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no CONCURRENCY=1 RETRY=0 PRINT_FULL_BODY=no SAVE_FULL_BODY=no PRINT_FULL_JSON=no SAVE_FULL_JSON=no PRINT_FULL_PAGEPROPS=no SAVE_FULL_PAGEPROPS=no REQUEST_DELAY_MS=750  # Phase 5.21L2V3 renewed controlled raw_match_data pageProps v2 write, post-seed FK-ready retry only"
 	@echo "  make data-renewed-pageprops-v2-baseline-proposal-plan MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json PROPOSAL_OUTPUT=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.renewed_baseline_proposal.phase521l2v3c.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 ROUTE=html_hydration RAW_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 PLANNING_AUTHORIZATION=yes NETWORK_AUTHORIZATION=yes MATCH_DETAIL_RECAPTURE_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_CONTROLLED_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_BOOKMAKER_ODDS_WRITE=no ALLOW_FEATURE_WRITE=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no PRINT_FULL_BODY=no SAVE_FULL_BODY=no PRINT_FULL_JSON=no SAVE_FULL_JSON=no PRINT_FULL_PAGEPROPS=no SAVE_FULL_PAGEPROPS=no REPEAT_COUNT=2 REQUEST_DELAY_MS=750  # Phase 5.21L2V3C no-write renewed baseline proposal, hashes are review-only and not accepted baselines"
+	@echo "  make data-pageprops-v2-target-identity-reconciliation-plan MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json RENEWED_PROPOSAL=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.renewed_baseline_proposal.phase521l2v3c.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME=\"Ligue 1\" SEASON=2025/2026 ROUTE=html_hydration RAW_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50 PLANNING_AUTHORIZATION=yes TARGET_IDENTITY_RECONCILIATION_AUTHORIZATION=yes NETWORK_AUTHORIZATION=yes MATCH_DETAIL_RECAPTURE_AUTHORIZATION=yes ALLOW_DB_WRITE=no ALLOW_RAW_MATCH_DATA_WRITE=no ALLOW_CONTROLLED_WRITE=no ALLOW_MATCHES_WRITE=no ALLOW_BOOKMAKER_ODDS_WRITE=no ALLOW_FEATURE_WRITE=no ALLOW_SCHEMA_MIGRATION=no ALLOW_PARSER_IMPLEMENTATION=no ALLOW_FEATURE_EXTRACTION=no ALLOW_TRAINING=no ALLOW_PREDICTION=no ALLOW_BROWSER_RUNTIME=no ALLOW_PROXY_RUNTIME=no PRINT_FULL_BODY=no SAVE_FULL_BODY=no PRINT_FULL_JSON=no SAVE_FULL_JSON=no PRINT_FULL_PAGEPROPS=no SAVE_FULL_PAGEPROPS=no RETRY=0 REQUEST_DELAY_MS=750  # Phase 5.21L2V3D no-write target identity reconciliation planning, mismatch blocks baseline acceptance/raw write retry"
 	@echo "  make data-training-dataset-dry-run"
 	@echo "  make data-acquisition-engines"
 	@echo "  make data-acquisition-engine-audit"
@@ -1818,6 +1819,60 @@ data-renewed-pageprops-v2-baseline-proposal-plan: ## Run Phase 5.21L2V3C no-writ
 		--branch="$(or $(BRANCH),)" \
 		--pr1276-state="$(or $(PR1276_STATE),)" \
 		--pr1276-url="$(or $(PR1276_URL),)"
+
+data-pageprops-v2-target-identity-reconciliation-plan: ## Run Phase 5.21L2V3D no-write target identity reconciliation planning. Writes docs only.
+	@if [ -z "$(MANIFEST)" ] || [ -z "$(SOURCE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(LEAGUE_NAME)" ] || [ -z "$(SEASON)" ] || [ -z "$(ROUTE)" ] || [ -z "$(RAW_VERSION)" ] || [ -z "$(HASH_STRATEGY)" ] || [ -z "$(BATCH_ID)" ] || [ -z "$(TARGET_COUNT)" ]; then \
+		echo "ERROR: provide MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME='Ligue 1' SEASON=2025/2026 ROUTE=html_hydration RAW_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/pageprops_v2_target_identity_reconciliation_plan.js \
+		--manifest="$(MANIFEST)" \
+		--renewed-proposal="$(or $(RENEWED_PROPOSAL),docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.renewed_baseline_proposal.phase521l2v3c.json)" \
+		--report-output="$(or $(REPORT_OUTPUT),docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3D.md)" \
+		--source="$(SOURCE)" \
+		--league-id="$(LEAGUE_ID)" \
+		--league-name="$(LEAGUE_NAME)" \
+		--season="$(SEASON)" \
+		--route="$(ROUTE)" \
+		--raw-version="$(RAW_VERSION)" \
+		--hash-strategy="$(HASH_STRATEGY)" \
+		--batch-id="$(BATCH_ID)" \
+		--target-count="$(TARGET_COUNT)" \
+		--planning-authorization="$(or $(PLANNING_AUTHORIZATION),no)" \
+		--target-identity-reconciliation-authorization="$(or $(TARGET_IDENTITY_RECONCILIATION_AUTHORIZATION),no)" \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),no)" \
+		--match-detail-recapture-authorization="$(or $(MATCH_DETAIL_RECAPTURE_AUTHORIZATION),no)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-controlled-write="$(or $(ALLOW_CONTROLLED_WRITE),no)" \
+		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
+		--allow-bookmaker-odds-write="$(or $(ALLOW_BOOKMAKER_ODDS_WRITE),no)" \
+		--allow-feature-write="$(or $(ALLOW_FEATURE_WRITE),no)" \
+		--allow-schema-migration="$(or $(ALLOW_SCHEMA_MIGRATION),no)" \
+		--allow-parser-implementation="$(or $(ALLOW_PARSER_IMPLEMENTATION),no)" \
+		--allow-feature-extraction="$(or $(ALLOW_FEATURE_EXTRACTION),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
+		--allow-browser-runtime="$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime="$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--print-full-body="$(or $(PRINT_FULL_BODY),no)" \
+		--save-full-body="$(or $(SAVE_FULL_BODY),no)" \
+		--print-full-json="$(or $(PRINT_FULL_JSON),no)" \
+		--save-full-json="$(or $(SAVE_FULL_JSON),no)" \
+		--print-full-pageprops="$(or $(PRINT_FULL_PAGEPROPS),no)" \
+		--save-full-pageprops="$(or $(SAVE_FULL_PAGEPROPS),no)" \
+		--retry="$(or $(RETRY),0)" \
+		--request-delay-ms="$(or $(REQUEST_DELAY_MS),750)" \
+		--target-external-ids="$(or $(TARGET_EXTERNAL_IDS),)" \
+		--base-head="$(or $(BASE_HEAD),)" \
+		--branch="$(or $(BRANCH),)" \
+		--main-head="$(or $(MAIN_HEAD),)" \
+		--main-ci-status="$(or $(MAIN_CI_STATUS),)" \
+		--pr1276-state="$(or $(PR1276_STATE),)" \
+		--pr1276-merge-commit="$(or $(PR1276_MERGE_COMMIT),)" \
+		--pr1277-state="$(or $(PR1277_STATE),)" \
+		--pr1277-merge-commit="$(or $(PR1277_MERGE_COMMIT),)" \
+		--pr1277-retarget-result="$(or $(PR1277_RETARGET_RESULT),)"
 
 data-training-dataset-dry-run: ## Run SELECT-only training dataset readiness audit. Does not train, export, or write DB.
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/dataset_status_audit.js
