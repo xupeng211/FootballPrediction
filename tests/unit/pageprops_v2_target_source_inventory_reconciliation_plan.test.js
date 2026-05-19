@@ -382,7 +382,24 @@ test('argument parsing, help mode and helper branches stay safe', async () => {
     assert.equal(parsed.planningAuthorization, true);
     assert.equal(parsed.targetExternalIds, '4830466,4830466,4830461');
     assert.deepEqual(parsed.unknown, ['unknown-flag', 'loose']);
+    assert.equal(mod.normalizeBooleanFlag(true, false), true);
+    assert.equal(mod.normalizeBooleanFlag(false, true), false);
+    assert.equal(mod.normalizeBooleanFlag('yes', false), true);
+    assert.equal(mod.normalizeBooleanFlag('0', true), false);
     assert.equal(mod.normalizeBooleanFlag('bogus', false), false);
+
+    const underscoreAndBareBoolean = mod.parseArgs([
+        '--base_head',
+        'abc123',
+        '--main-ci-status=success',
+        '--final_db_write_confirmation',
+        '--request-delay-ms',
+        '5',
+    ]);
+    assert.equal(underscoreAndBareBoolean.baseHead, 'abc123');
+    assert.equal(underscoreAndBareBoolean.mainCiStatus, 'success');
+    assert.equal(underscoreAndBareBoolean.finalDbWriteConfirmation, true);
+    assert.equal(underscoreAndBareBoolean.requestDelayMs, '5');
 
     const stdout = [];
     const originalWrite = process.stdout.write;
@@ -746,6 +763,158 @@ test('source inventory selection, DB snapshot helpers and comparison helpers cov
     assert.equal(snapshot.row_counts.raw_match_data, 0);
     assert.equal(snapshot.candidate_v2_rows_count, 0);
     assert.equal(fakePool.ended, false);
+
+    const emptySelection = mod.buildSourceInventorySelection({ json: {} }, ['missing'], ['observed-missing']);
+    assert.equal(emptySelection.selected_count, 0);
+
+    const baseTarget = candidate('4830466');
+    const missingSourceItem = mod.buildTargetReconciliationItem(baseTarget, proposalTarget('4830466'), new Map(), []);
+    assert.equal(missingSourceItem.source_inventory_vs_manifest_status, 'missing_source_inventory_record');
+    assert.equal(missingSourceItem.manifest_vs_db_status, 'missing_db_row');
+    assert.equal(missingSourceItem.db_vs_live_observed_status, 'missing_db_row');
+    assert.equal(missingSourceItem.suspected_mismatch_stage, 'source_inventory_generation');
+
+    const requestedRecord = {
+        external_id: '4830466',
+        home_team: 'Rennes',
+        away_team: 'Marseille',
+        match_date: '2025-08-15T18:45:00.000Z',
+        status: 'finished',
+        page_url_base: '/matches/marseille-vs-rennes/2t9n7h',
+    };
+    const dbSeedMismatch = mod.buildTargetReconciliationItem(
+        baseTarget,
+        proposalTarget('4830466'),
+        new Map([['4830466', requestedRecord]]),
+        [
+            {
+                match_id: '53_20252026_4830466',
+                external_id: 'wrong',
+                home_team: 'Rennes',
+                away_team: 'Marseille',
+                match_date: '2025-08-15T18:45:00.000Z',
+                status: 'finished',
+            },
+        ]
+    );
+    assert.equal(dbSeedMismatch.source_inventory_vs_manifest_status, 'match');
+    assert.equal(dbSeedMismatch.manifest_vs_db_status, 'mismatch');
+    assert.equal(dbSeedMismatch.suspected_mismatch_stage, 'DB_seed');
+});
+
+test('source inventory normalization covers alternate id, team, status, url, and duplicate priority branches', () => {
+    const selected = mod.buildSourceInventorySelection(
+        {
+            request_url: '/api/data/leagues?id=53&season=20252026',
+            final_url: '/api/data/leagues?id=53&season=20252026',
+            http_status: 200,
+            body_bytes: 123,
+            parse_status: 'parsed_json',
+            blocked_markers: [],
+            json: {
+                fixtures: {
+                    allMatches: [
+                        {
+                            matchId: '7001',
+                            homeTeam: 'Home String',
+                            awayTeam: { shortName: 'Away Short' },
+                            matchTime: '2026-02-01T10:00:00.000Z',
+                            status: 'Live',
+                            matchUrl: '/matches/home-string-vs-away-short/a#7001',
+                        },
+                        {
+                            id: '7003',
+                            home: { name: 'Lower Priority Home' },
+                            away: { name: 'Lower Priority Away' },
+                            date: '2026-02-03T10:00:00.000Z',
+                            scheduled: true,
+                            pageUrl: '/matches/lower-priority/low#7003',
+                        },
+                    ],
+                },
+                matches: {
+                    allMatches: [
+                        {
+                            match_id: '7002',
+                            home_team: { longName: 'Home Snake' },
+                            away: 'Away Direct',
+                            time: { utc: '2026-02-02T10:00:00.000Z' },
+                            status: { live: true },
+                            url: '/matches/home-snake-vs-away-direct/b#7002',
+                        },
+                    ],
+                },
+                overview: {
+                    matches: {
+                        allMatches: [
+                            {
+                                id: '7003',
+                                home: { name: 'Preferred Home' },
+                                away: { name: 'Preferred Away' },
+                                kickoff: { datetime: '2026-02-03T10:00:00.000Z' },
+                                status: { cancelled: true },
+                                pageURL: '/matches/preferred/c#7003',
+                                slug: 'preferred-home-preferred-away',
+                            },
+                        ],
+                    },
+                    leagueOverviewMatches: [
+                        {
+                            id: '7004',
+                            home: { longName: 'Home Event' },
+                            away: { shortName: 'Away Event' },
+                            date: '2026-02-04T10:00:00.000Z',
+                            status: { started: true },
+                            pageUrl: '/matches/home-event-vs-away-event/d#7004',
+                        },
+                    ],
+                },
+            },
+        },
+        ['7001', '7002', '7003', '7004'],
+        []
+    );
+
+    assert.equal(selected.selected_count, 4);
+    assert.equal(selected.duplicate_selection_events >= 1, true);
+    assert.equal(selected.selected_by_external_id.get('7001').home_team, 'Home String');
+    assert.equal(selected.selected_by_external_id.get('7001').away_team, 'Away Short');
+    assert.equal(selected.selected_by_external_id.get('7001').status, 'live');
+    assert.equal(selected.selected_by_external_id.get('7002').home_team, 'Home Snake');
+    assert.equal(selected.selected_by_external_id.get('7002').away_team, 'Away Direct');
+    assert.equal(selected.selected_by_external_id.get('7002').status, 'live');
+    assert.equal(selected.selected_by_external_id.get('7003').source_path, 'overview.matches.allMatches');
+    assert.equal(selected.selected_by_external_id.get('7003').status, 'cancelled');
+    assert.equal(selected.selected_by_external_id.get('7003').id_like_fields.slug, 'preferred-home-preferred-away');
+    assert.equal(selected.selected_by_external_id.get('7004').status, 'live');
+});
+
+test('target reconciliation covers malformed URL summary and missing observed identity branches', () => {
+    const malformedSource = {
+        external_id: '4830466',
+        source_path: 'fixtures.allMatches',
+        source_inventory_record_key: 'fixtures.allMatches#4830466',
+        home_team: 'Rennes',
+        away_team: 'Marseille',
+        match_date: '2025-08-15T18:45:00.000Z',
+        status: 'finished',
+        page_url: 'http://[::1',
+        page_url_base: 'http://[::1',
+        page_url_anchor: null,
+        id_like_fields: { pageUrl: 'http://[::1' },
+        top_level_keys: ['id', 'pageUrl'],
+    };
+    const item = mod.buildTargetReconciliationItem(
+        candidate('4830466'),
+        { attempts: [{ metadata_identity_observed: {} }] },
+        new Map([['4830466', malformedSource]]),
+        dbSnapshot().target_rows
+    );
+
+    assert.equal(item.source_inventory_page_url_summary, 'http://[::1');
+    assert.equal(item.live_observed_external_id, null);
+    assert.equal(item.db_vs_live_observed_status, 'missing_live_observed');
+    assert.equal(item.suspected_mismatch_stage, 'unknown');
 });
 
 test('summary and planning gates cover unresolved-unknown, proposal failure and selection failure branches', async () => {
@@ -799,6 +968,140 @@ test('summary and planning gates cover unresolved-unknown, proposal failure and 
     });
     assert.equal(invalidSelection.ok, false);
     assert.equal(invalidSelection.status, 5);
+
+    const manifestGenerationSummary = mod.buildSummary({
+        items: [
+            {
+                requested_vs_observed_identity_status: 'mismatch',
+                source_inventory_vs_manifest_status: 'mismatch',
+                manifest_vs_db_status: 'match',
+                db_vs_live_observed_status: 'mismatch',
+                observed_source_inventory_found: true,
+                shared_page_url_base_with_observed: false,
+                suspected_mismatch_stage: 'source_inventory_generation',
+            },
+        ],
+        input: validInput(),
+        manifestGate: { candidate_targets_count: 50 },
+        proposalGate: { checkedTargets: [proposalTarget('4830466')] },
+        sourceInventorySelection: {},
+        dbSnapshot: dbSnapshot(),
+        generatedAt: '2026-05-18T00:00:00.000Z',
+    });
+    assert.equal(manifestGenerationSummary.suspected_root_cause, 'manifest_generation_mapping_wrong');
+    assert.equal(manifestGenerationSummary.recommended_next_step, 'source_inventory_manifest_regeneration_review');
+
+    const dbSeedSummary = mod.buildSummary({
+        items: [
+            {
+                requested_vs_observed_identity_status: 'mismatch',
+                source_inventory_vs_manifest_status: 'match',
+                manifest_vs_db_status: 'mismatch',
+                db_vs_live_observed_status: 'mismatch',
+                observed_source_inventory_found: true,
+                shared_page_url_base_with_observed: false,
+                suspected_mismatch_stage: 'DB_seed',
+            },
+        ],
+        input: validInput(),
+        manifestGate: { candidate_targets_count: 50 },
+        proposalGate: { checkedTargets: [proposalTarget('4830466')] },
+        sourceInventorySelection: {},
+        dbSnapshot: dbSnapshot(),
+        generatedAt: '2026-05-18T00:00:00.000Z',
+    });
+    assert.equal(dbSeedSummary.suspected_root_cause, 'DB_seed_identity_wrong');
+    assert.equal(dbSeedSummary.recommended_next_step, 'matches_identity_seed_reconciliation_review');
+
+    const liveMappingSummary = mod.buildSummary({
+        items: [
+            {
+                requested_vs_observed_identity_status: 'mismatch',
+                source_inventory_vs_manifest_status: 'match',
+                manifest_vs_db_status: 'match',
+                db_vs_live_observed_status: 'mismatch',
+                observed_source_inventory_found: true,
+                shared_page_url_base_with_observed: false,
+                suspected_mismatch_stage: 'FotMob_live_mapping',
+            },
+        ],
+        input: validInput(),
+        manifestGate: { candidate_targets_count: 50 },
+        proposalGate: { checkedTargets: [proposalTarget('4830466')] },
+        sourceInventorySelection: {},
+        dbSnapshot: dbSnapshot(),
+        generatedAt: '2026-05-18T00:00:00.000Z',
+    });
+    assert.equal(liveMappingSummary.suspected_root_cause, 'FotMob_live_detail_mapping_changed');
+});
+
+test('source inventory fetch helper fail-closed branches stay no-write and body-safe', async () => {
+    const baseInput = validInput();
+    const originalFetch = globalThis.fetch;
+    try {
+        globalThis.fetch = undefined;
+        const missingFetch = await mod.fetchSourceInventoryPayload(baseInput, {
+            sourceInventoryUrl: 'https://example.test/source.json',
+        });
+        assert.equal(missingFetch.ok, false);
+        assert.equal(missingFetch.parse_status, 'fetch_dependency_missing');
+    } finally {
+        globalThis.fetch = originalFetch;
+    }
+
+    const fetchError = await mod.fetchSourceInventoryPayload(baseInput, {
+        sourceInventoryUrl: 'https://example.test/source.json',
+        fetchFn: async () => {
+            throw new Error('network down');
+        },
+    });
+    assert.equal(fetchError.parse_status, 'fetch_error');
+    assert.match(fetchError.error, /^FETCH_ERROR:/);
+
+    const bodyReadError = await mod.fetchSourceInventoryPayload(baseInput, {
+        sourceInventoryUrl: 'https://example.test/source.json',
+        fetchFn: async () => ({
+            status: 200,
+            url: 'https://example.test/source.json',
+            text: async () => {
+                throw new Error('body failed');
+            },
+        }),
+    });
+    assert.equal(bodyReadError.parse_status, 'body_read_error');
+
+    const blocked = await mod.fetchSourceInventoryPayload(baseInput, {
+        sourceInventoryUrl: 'https://example.test/source.json',
+        fetchFn: async () => ({
+            status: 403,
+            url: 'https://example.test/source.json',
+            text: async () => '<html>cloudflare access denied</html>',
+        }),
+    });
+    assert.equal(blocked.ok, false);
+    assert.equal(blocked.parse_status, 'blocked_markers_detected');
+    assert.equal(blocked.error.includes('<html>'), false);
+
+    const invalidJson = await mod.fetchSourceInventoryPayload(baseInput, {
+        sourceInventoryUrl: 'https://example.test/source.json',
+        fetchFn: async () => ({
+            status: 200,
+            url: 'https://example.test/source.json',
+            text: async () => '{bad',
+        }),
+    });
+    assert.equal(invalidJson.parse_status, 'json_parse_failed');
+
+    const non200Json = await mod.fetchSourceInventoryPayload(baseInput, {
+        sourceInventoryUrl: 'https://example.test/source.json',
+        fetchFn: async () => ({
+            status: 204,
+            url: 'https://example.test/source.json',
+            text: async () => '{}',
+        }),
+    });
+    assert.equal(non200Json.ok, false);
+    assert.equal(non200Json.parse_status, 'parsed_json');
 });
 
 test('file helpers and sleep cover local IO branches safely', async () => {

@@ -40,9 +40,11 @@ function createConfigManager() {
     };
 }
 
-function createAdapter() {
+function createAdapter(overrides = {}) {
     return new FotMobSourceInventoryAdapter({
-        configManager: createConfigManager(),
+        configManager: overrides.configManager || createConfigManager(),
+        parser: overrides.parser,
+        seasonStrategyFactory: overrides.seasonStrategyFactory,
         logger: {
             info() {},
             warn() {},
@@ -180,4 +182,174 @@ test('adapter import avoids unsafe runners, DB writers, browser, proxy, odds, an
     delete require.cache[require.resolve('../../src/infrastructure/services/FotMobSourceInventoryAdapter')];
     const loaded = require('../../src/infrastructure/services/FotMobSourceInventoryAdapter');
     assert.equal(typeof loaded.FotMobSourceInventoryAdapter, 'function');
+});
+
+test('resolveTarget fails closed for wrong source, missing league id, missing season and unknown league', () => {
+    const adapter = createAdapter();
+
+    assert.throws(
+        () => adapter.resolveTarget({ source: 'other', leagueId: 53, season: '2025/2026' }),
+        /only supports source=fotmob/
+    );
+    assert.throws(
+        () => adapter.resolveTarget({ source: 'fotmob', leagueId: 0, season: '2025/2026' }),
+        /positive leagueId/
+    );
+    assert.throws(() => adapter.resolveTarget({ source: 'fotmob', leagueId: 53, season: '' }), /requires season/);
+    assert.throws(
+        () => adapter.resolveTarget({ source: 'fotmob', leagueId: 999, season: '2025/2026' }),
+        /league config not found/
+    );
+});
+
+test('resolveTarget supports league_id input and provider id fallback without fabricating source identity', () => {
+    const configManager = {
+        getRuntimeConfig: () => ({ active_leagues: [], single_year_league_ids: [] }),
+        getLeagueById: leagueId => ({
+            id: Number(leagueId),
+            providerId: 777,
+            name: 'Fallback League',
+        }),
+        buildLeagueApiUrl: (leagueId, season) => `https://example.test/${leagueId}/${season}`,
+    };
+    const adapter = createAdapter({
+        configManager,
+        seasonStrategyFactory: {
+            format: (_leagueId, season) => `formatted-${season}`,
+        },
+    });
+
+    const target = adapter.resolveTarget({
+        source: ' FOTMOB ',
+        league_id: '53',
+        season: '2025/2026',
+    });
+
+    assert.equal(target.source, 'fotmob');
+    assert.equal(target.leagueId, 53);
+    assert.equal(target.providerLeagueId, 777);
+    assert.equal(target.formattedSeason, 'formatted-2025/2026');
+    assert.equal(target.routeKind, ROUTE_KIND);
+});
+
+test('buildFetchRequest returns safe source inventory request metadata only', () => {
+    const adapter = createAdapter();
+
+    const request = adapter.buildFetchRequest({
+        source: 'fotmob',
+        leagueId: 53,
+        season: '2025/2026',
+    });
+
+    assert.equal(request.source, 'fotmob');
+    assert.equal(request.routeKind, ROUTE_KIND);
+    assert.equal(request.leagueId, 53);
+    assert.equal(request.providerLeagueId, 53);
+    assert.equal(request.formattedSeason, '20252026');
+    assert.match(request.sourceUrl, /\/api\/data\/leagues\?id=53&season=20252026/);
+    assert.equal(Object.hasOwn(request, 'body'), false);
+    assert.equal(Object.hasOwn(request, 'pageProps'), false);
+});
+
+test('filterBySeasonWindow handles absent or invalid windows and filters out-of-window fixtures', () => {
+    const fixtures = [
+        { match_date: '2025-08-15T12:00:00.000Z', external_id: '1' },
+        { match_date: '2026-06-01T12:00:00.000Z', external_id: '2' },
+        { match_date: 'not-a-date', external_id: '3' },
+        { external_id: '4' },
+    ];
+
+    const noWindowAdapter = createAdapter({
+        configManager: {
+            ...createConfigManager(),
+            getSeasonDateWindow: () => null,
+        },
+    });
+    assert.equal(noWindowAdapter.filterBySeasonWindow(fixtures, 53, '2025/2026').length, 4);
+    assert.deepEqual(noWindowAdapter.filterBySeasonWindow(null, 53, '2025/2026'), []);
+
+    const invalidWindowAdapter = createAdapter({
+        configManager: {
+            ...createConfigManager(),
+            getSeasonDateWindow: () => ({ start: 'bad-date', end: '2026-05-16' }),
+        },
+    });
+    assert.equal(invalidWindowAdapter.filterBySeasonWindow(fixtures, 53, '2025/2026').length, 4);
+
+    const guarded = createAdapter().filterBySeasonWindow(fixtures, 53, '2025/2026');
+    assert.deepEqual(
+        guarded.map(fixture => fixture.external_id),
+        ['1', '3', '4']
+    );
+});
+
+test('toManifestCandidateSeed preserves separate identity fields and defaults nullable metadata safely', () => {
+    const adapter = createAdapter();
+
+    const seed = adapter.toManifestCandidateSeed(
+        {
+            external_id: ' 7000001 ',
+            match_id: '',
+            league_name: '',
+            season: '',
+            home_team: '',
+            away_team: '',
+            match_date: 'not-a-date',
+            status: '',
+            data_source: '',
+        },
+        9
+    );
+
+    assert.equal(seed.source, 'fotmob');
+    assert.equal(seed.source_inventory_route, ROUTE_KIND);
+    assert.equal(seed.external_id, '7000001');
+    assert.equal(seed.valid_external_id, true);
+    assert.equal(seed.match_id, null);
+    assert.equal(seed.kickoff_time, null);
+    assert.equal(seed.match_date, null);
+    assert.equal(seed.status, 'scheduled');
+    assert.equal(seed.data_source, 'FotMob');
+    assert.equal(seed.source_url, null);
+    assert.equal(seed.priority, 9);
+});
+
+test('parseSourceInventory can use injected parser without network or DB side effects', () => {
+    const calls = [];
+    const adapter = createAdapter({
+        parser: {
+            parse: (sourceJson, leagueId, season, commit, options) => {
+                calls.push({ sourceJson, leagueId, season, commit, options });
+                return [
+                    {
+                        match_id: '53_20252026_8000001',
+                        external_id: '8000001',
+                        league_name: 'Ligue 1',
+                        season: '2025/2026',
+                        home_team: 'Home',
+                        away_team: 'Away',
+                        match_date: '2025-09-01T19:00:00.000Z',
+                        status: 'scheduled',
+                        data_source: 'FotMob',
+                    },
+                ];
+            },
+        },
+    });
+
+    const candidates = adapter.parseSourceInventory(
+        { safe: true },
+        {
+            source: 'fotmob',
+            leagueId: 53,
+            season: '2025/2026',
+        }
+    );
+
+    assert.equal(calls.length, 1);
+    assert.equal(calls[0].commit, false);
+    assert.deepEqual(calls[0].options, { fullSync: true });
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0].match_id, '53_20252026_8000001');
+    assert.equal(candidates[0].external_id, '8000001');
 });

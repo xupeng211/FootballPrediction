@@ -1923,6 +1923,56 @@ data-pageprops-v2-target-source-inventory-reconciliation-plan: ## Run Phase 5.21
 		--pr1278-state="$(or $(PR1278_STATE),)" \
 		--pr1278-merge-commit="$(or $(PR1278_MERGE_COMMIT),)"
 
+data-pageprops-v2-schedule-detail-identity-normalization-plan: ## Run Phase 5.21L2V3F no-write schedule/detail identity normalization planning. Writes docs only.
+	@if [ -z "$(MANIFEST)" ] || [ -z "$(SOURCE)" ] || [ -z "$(LEAGUE_ID)" ] || [ -z "$(LEAGUE_NAME)" ] || [ -z "$(SEASON)" ] || [ -z "$(RAW_VERSION)" ] || [ -z "$(HASH_STRATEGY)" ] || [ -z "$(BATCH_ID)" ] || [ -z "$(TARGET_COUNT)" ]; then \
+		echo "ERROR: provide MANIFEST=docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json SOURCE=fotmob LEAGUE_ID=53 LEAGUE_NAME='Ligue 1' SEASON=2025/2026 RAW_VERSION=fotmob_pageprops_v2 HASH_STRATEGY=stable_pageprops_payload_v1 BATCH_ID=fotmob-pageprops-v2-ligue1-2025-2026-profile-001 TARGET_COUNT=50"; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev node scripts/ops/pageprops_v2_schedule_detail_identity_normalization_plan.js \
+		--manifest="$(MANIFEST)" \
+		--renewed-proposal="$(or $(RENEWED_PROPOSAL),docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.renewed_baseline_proposal.phase521l2v3c.json)" \
+		--report-output="$(or $(REPORT_OUTPUT),docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3F.md)" \
+		--normalization-proposal-output="$(or $(NORMALIZATION_PROPOSAL_OUTPUT),docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.schedule_detail_identity_normalization_proposal.phase521l2v3f.json)" \
+		--source-inventory-reconciliation-report="$(or $(SOURCE_INVENTORY_RECONCILIATION_REPORT),docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3E.md)" \
+		--source="$(SOURCE)" \
+		--league-id="$(LEAGUE_ID)" \
+		--league-name="$(LEAGUE_NAME)" \
+		--season="$(SEASON)" \
+		--raw-version="$(RAW_VERSION)" \
+		--hash-strategy="$(HASH_STRATEGY)" \
+		--batch-id="$(BATCH_ID)" \
+		--target-count="$(TARGET_COUNT)" \
+		--planning-authorization="$(or $(PLANNING_AUTHORIZATION),no)" \
+		--schedule-detail-normalization-authorization="$(or $(SCHEDULE_DETAIL_NORMALIZATION_AUTHORIZATION),no)" \
+		--network-authorization="$(or $(NETWORK_AUTHORIZATION),no)" \
+		--allow-db-write="$(or $(ALLOW_DB_WRITE),no)" \
+		--allow-raw-match-data-write="$(or $(ALLOW_RAW_MATCH_DATA_WRITE),no)" \
+		--allow-controlled-write="$(or $(ALLOW_CONTROLLED_WRITE),no)" \
+		--allow-matches-write="$(or $(ALLOW_MATCHES_WRITE),no)" \
+		--allow-bookmaker-odds-write="$(or $(ALLOW_BOOKMAKER_ODDS_WRITE),no)" \
+		--allow-feature-write="$(or $(ALLOW_FEATURE_WRITE),no)" \
+		--allow-schema-migration="$(or $(ALLOW_SCHEMA_MIGRATION),no)" \
+		--allow-parser-implementation="$(or $(ALLOW_PARSER_IMPLEMENTATION),no)" \
+		--allow-feature-extraction="$(or $(ALLOW_FEATURE_EXTRACTION),no)" \
+		--allow-training="$(or $(ALLOW_TRAINING),no)" \
+		--allow-prediction="$(or $(ALLOW_PREDICTION),no)" \
+		--allow-browser-runtime="$(or $(ALLOW_BROWSER_RUNTIME),no)" \
+		--allow-proxy-runtime="$(or $(ALLOW_PROXY_RUNTIME),no)" \
+		--print-full-body="$(or $(PRINT_FULL_BODY),no)" \
+		--save-full-body="$(or $(SAVE_FULL_BODY),no)" \
+		--print-full-json="$(or $(PRINT_FULL_JSON),no)" \
+		--save-full-json="$(or $(SAVE_FULL_JSON),no)" \
+		--print-full-pageprops="$(or $(PRINT_FULL_PAGEPROPS),no)" \
+		--save-full-pageprops="$(or $(SAVE_FULL_PAGEPROPS),no)" \
+		--retry="$(or $(RETRY),0)" \
+		--request-delay-ms="$(or $(REQUEST_DELAY_MS),0)" \
+		--branch="$(or $(BRANCH),)" \
+		--base-head="$(or $(BASE_HEAD),)" \
+		--main-head="$(or $(MAIN_HEAD),)" \
+		--main-ci-status="$(or $(MAIN_CI_STATUS),)" \
+		--pr1279-state="$(or $(PR1279_STATE),)" \
+		--pr1279-merge-commit="$(or $(PR1279_MERGE_COMMIT),)"
+
 data-training-dataset-dry-run: ## Run SELECT-only training dataset readiness audit. Does not train, export, or write DB.
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/dataset_status_audit.js
 
