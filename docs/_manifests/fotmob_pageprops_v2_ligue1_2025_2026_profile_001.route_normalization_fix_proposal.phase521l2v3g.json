@@ -1,0 +1,167 @@
+{
+    "proposal_phase": "Phase 5.21L2V3G",
+    "proposal_status": "schedule_detail_route_normalization_fix_review_required",
+    "no_write": true,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "matches_write_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "raw_write_retry_performed": false,
+    "raw_write_ready_for_execution": false,
+    "source_manifest_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+    "source_normalization_proposal_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.schedule_detail_identity_normalization_proposal.phase521l2v3f.json",
+    "source_normalization_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3F.md",
+    "candidate_scope": {
+        "candidate_scope_explained": true,
+        "candidate_matches_count": 58,
+        "manifest_schedule_targets_count": 50,
+        "preexisting_seeded_pageprops_v2_match_count": 8,
+        "candidate_fotmob_pageprops_v2_raw_rows": 8,
+        "candidate_count_is_schedule_targets_plus_observed_detail_ids": false,
+        "candidate_scope_is_write_success": false,
+        "candidate_v2_rows_are_l2v3g_writes": false
+    },
+    "route_identity_findings": {
+        "current_detail_fetch_route_identity_source": "manifest_target_external_id",
+        "current_detail_fetch_route_identity_classification": "schedule_or_listing_external_id_for_l2v3f_mismatch_targets",
+        "current_fetcher_builds_url_from": "externalId",
+        "current_request_url_template": "https://www.fotmob.com/match/{externalId}",
+        "current_fetcher_contract_gap": "requested external_id and observed canonical detail identity are not exposed as separate top-level fields",
+        "current_raw_write_candidate_identity_source": "manifest match_id plus manifest external_id",
+        "raw_write_identity_decision": "must remain blocked when requested_schedule_external_id differs from observed_detail_external_id and no accepted identity mapping artifact exists"
+    },
+    "proposed_route_identity_model": {
+        "requested_schedule_external_id": "required",
+        "requested_url": "required_safe_summary",
+        "observed_detail_external_id": "required_when_parse_ok",
+        "observed_page_url_base": "required_when_available",
+        "canonical_identity_status": "match | mismatch | missing | unknown",
+        "schedule_detail_mapping_status": "unresolved | proposal_only_unaccepted | accepted_in_separate_artifact",
+        "mapping_confidence": "high | medium | low | unknown",
+        "route_normalization_status": "not_required | fix_required | blocked_unresolved_mapping"
+    },
+    "proposed_fetcher_contract": {
+        "must_not_silently_treat_requested_external_id_as_canonical_detail_identity": true,
+        "must_expose_requested_schedule_external_id": true,
+        "must_expose_observed_detail_external_id_separately": true,
+        "must_expose_page_url_base": true,
+        "must_expose_identity_mismatch_status": true,
+        "must_not_mutate_db": true,
+        "must_not_rewrite_matches_external_id": true,
+        "must_not_store_or_print_full_body_or_pageprops": true
+    },
+    "proposed_raw_write_precondition": {
+        "requested_schedule_external_id_mismatch_observed_detail_external_id_blocks_raw_write_without_accepted_mapping": true,
+        "proposal_only_mapping_is_insufficient": true,
+        "date_mismatch_blocks_high_confidence_acceptance": true,
+        "raw_write_ready_for_execution": false,
+        "requires_separate_identity_mapping_acceptance": true,
+        "requires_separate_baseline_acceptance": true,
+        "requires_separate_final_db_write_authorization": true
+    },
+    "accepted_identity_mapping_artifact": {
+        "required_before_baseline_acceptance": true,
+        "required_before_raw_write_retry": true,
+        "status": "not_created_in_l2v3g",
+        "proposal_mapping_must_not_be_used_as_accepted_mapping": true
+    },
+    "checked_route_mismatch_targets": [
+        {
+            "requested_schedule_external_id": "4830466",
+            "requested_match_id": "53_20252026_4830466",
+            "requested_url": "https://www.fotmob.com/match/4830466",
+            "observed_detail_external_id": "4830759",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        },
+        {
+            "requested_schedule_external_id": "4830461",
+            "requested_match_id": "53_20252026_4830461",
+            "requested_url": "https://www.fotmob.com/match/4830461",
+            "observed_detail_external_id": "4830758",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        },
+        {
+            "requested_schedule_external_id": "4830481",
+            "requested_match_id": "53_20252026_4830481",
+            "requested_url": "https://www.fotmob.com/match/4830481",
+            "observed_detail_external_id": "4830763",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        },
+        {
+            "requested_schedule_external_id": "4830496",
+            "requested_match_id": "53_20252026_4830496",
+            "requested_url": "https://www.fotmob.com/match/4830496",
+            "observed_detail_external_id": "4830757",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        },
+        {
+            "requested_schedule_external_id": "4830511",
+            "requested_match_id": "53_20252026_4830511",
+            "requested_url": "https://www.fotmob.com/match/4830511",
+            "observed_detail_external_id": "4830760",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        },
+        {
+            "requested_schedule_external_id": "4830463",
+            "requested_match_id": "53_20252026_4830463",
+            "requested_url": "https://www.fotmob.com/match/4830463",
+            "observed_detail_external_id": "4830622",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        },
+        {
+            "requested_schedule_external_id": "4830465",
+            "requested_match_id": "53_20252026_4830465",
+            "requested_url": "https://www.fotmob.com/match/4830465",
+            "observed_detail_external_id": "4830619",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        },
+        {
+            "requested_schedule_external_id": "4830508",
+            "requested_match_id": "53_20252026_4830508",
+            "requested_url": "https://www.fotmob.com/match/4830508",
+            "observed_detail_external_id": "4830620",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "route_normalization_status": "fix_required_unresolved_mapping",
+            "safety_blockers": ["team_date_status_mismatch", "accepted_identity_mapping_missing"]
+        }
+    ],
+    "proposed_tests": [
+        "route accepts schedule id but returns detail id -> classify unresolved unless accepted mapping exists",
+        "pageUrl base match alone is insufficient when date mismatch exists",
+        "candidate count expansion is not write success",
+        "raw write runner refuses unresolved mapping",
+        "accepted identity mapping artifact required before baseline acceptance"
+    ],
+    "recommended_next_step": "schedule_detail_route_normalization_fix_implementation"
+}
