@@ -157,8 +157,10 @@
 ## N. PR Status
 
 - branch_ready_for_pr=true
-- pr_created=false
-- pr_status=pending commit, push, and PR creation
+- pr_created=true
+- pr_number=1281
+- pr_url=https://github.com/xupeng211/FootballPrediction/pull/1281
+- pr_status=open_pending_ci
 
 ## O. Next Step Recommendation
 
