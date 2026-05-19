@@ -3994,7 +3994,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "schedule_detail_identity_normalization_fix_planning",
+    "next_required_step": "schedule_detail_route_normalization_fix_implementation_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4086,5 +4086,47 @@
     "phase_5_21_l2v3e_root_cause_confidence": "high",
     "phase_5_21_l2v3e_recommended_next_step": "schedule_detail_identity_normalization_fix_planning",
     "requires_separate_baseline_acceptance": true,
-    "requires_separate_final_db_write_authorization": true
+    "requires_separate_final_db_write_authorization": true,
+    "phase_5_21_l2v3f_planning_status": "completed_no_write",
+    "schedule_detail_identity_normalization_status": "blocked_pending_route_normalization_fix_planning_required",
+    "phase_5_21_l2v3f_checked_target_count": 8,
+    "phase_5_21_l2v3f_proposed_mapping_count": 8,
+    "phase_5_21_l2v3f_high_confidence_mapping_count": 0,
+    "phase_5_21_l2v3f_medium_confidence_mapping_count": 8,
+    "phase_5_21_l2v3f_low_confidence_mapping_count": 0,
+    "phase_5_21_l2v3f_unresolved_mapping_count": 8,
+    "phase_5_21_l2v3f_page_url_base_match_count": 8,
+    "phase_5_21_l2v3f_team_pair_match_count": 8,
+    "phase_5_21_l2v3f_exact_date_match_count": 0,
+    "phase_5_21_l2v3f_team_date_status_compatible_count": 0,
+    "phase_5_21_l2v3f_team_date_status_mismatch_count": 8,
+    "phase_5_21_l2v3f_page_url_base_match_status_counts": {
+        "match": 8
+    },
+    "phase_5_21_l2v3f_team_date_status_match_status_counts": {
+        "date_mismatch": 8
+    },
+    "phase_5_21_l2v3f_mapping_confidence_counts": {
+        "medium": 8
+    },
+    "phase_5_21_l2v3f_mapping_status_counts": {
+        "proposal_only_unaccepted": 8
+    },
+    "phase_5_21_l2v3f_multiple_detail_ids_for_same_schedule_id_count": 0,
+    "phase_5_21_l2v3f_multiple_schedule_ids_for_same_detail_id_count": 0,
+    "phase_5_21_l2v3f_normalization_proposal_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.schedule_detail_identity_normalization_proposal.phase521l2v3f.json",
+    "phase_5_21_l2v3f_candidate_scope_explained": true,
+    "phase_5_21_l2v3f_candidate_matches_scope_count": 58,
+    "phase_5_21_l2v3f_candidate_count_scope_explanation": "Current DB safety scope is Ligue 1 2025/2026 matches in matches: 50 source-controlled manifest schedule targets plus 8 pre-existing seeded pageProps v2 match identities, not 50 schedule targets plus the 8 L2V3F observed detail external_ids.",
+    "phase_5_21_l2v3f_candidate_count_is_schedule_targets_plus_observed_detail_ids": false,
+    "phase_5_21_l2v3f_manifest_schedule_targets_count": 50,
+    "phase_5_21_l2v3f_preexisting_seeded_pageprops_v2_match_count": 8,
+    "phase_5_21_l2v3f_observed_detail_external_ids_in_matches_count": 0,
+    "phase_5_21_l2v3f_observed_detail_external_ids_in_candidate_v2_rows_count": 0,
+    "phase_5_21_l2v3f_candidate_fotmob_pageprops_v2_raw_rows": 8,
+    "phase_5_21_l2v3f_candidate_v2_rows_preexisting": true,
+    "phase_5_21_l2v3f_candidate_v2_rows_are_l2v3f_writes": false,
+    "phase_5_21_l2v3f_raw_write_succeeded": false,
+    "schedule_detail_normalization_required": true,
+    "requires_separate_identity_mapping_acceptance": true
 }

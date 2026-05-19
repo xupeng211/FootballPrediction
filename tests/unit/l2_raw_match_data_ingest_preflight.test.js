@@ -963,6 +963,74 @@ test('recapture path fails closed when hydration payload cannot be parsed', asyn
     );
 });
 
+test('recapture path fails closed when selector captures no preview body', async () => {
+    const gate = loadModuleFresh();
+    await assert.rejects(
+        () =>
+            gate.buildRawMatchDataIngestPreflight(validArgs(), {
+                fetchImpl: async () => ({
+                    status: 200,
+                    statusCode: 200,
+                    ok: true,
+                    url: 'https://www.fotmob.com/matches/angers-vs-strasbourg/2o4och',
+                    headers: {
+                        get: () => 'text/html; charset=utf-8',
+                    },
+                    text: async () => '',
+                }),
+                runFotMobDetailRouteSelector: async () => ({
+                    ok: true,
+                    attempts: [],
+                    selected_route: 'html_hydration',
+                }),
+                buildRouteSelectorPreviewSummary: () => ({
+                    ok: true,
+                    selected_route: 'html_hydration',
+                    request_url: 'https://www.fotmob.com/match/4830746',
+                    final_url: 'https://www.fotmob.com/matches/angers-vs-strasbourg/2o4och',
+                    http_status: 200,
+                    hydration_parse_ok: true,
+                    looks_like_valid_match_detail: true,
+                }),
+                targetMatchRows: targetMatchRows(),
+                existingRawMatchDataRows: [],
+                protectedTableBaseline: BASELINE,
+            }),
+        /NO_CAPTURED_PREVIEW_BODY|NO_NEXT_DATA|NEXT_DATA_PARSE_FAILED|INVALID_INPUT/
+    );
+});
+
+test('CLI main catch branch emits safe controlled error payload', () => {
+    const tempDir = fs.mkdtempSync(path.join(require('node:os').tmpdir(), 'l2-ingest-cli-'));
+    const preloadPath = path.join(tempDir, 'block-fetch.js');
+    fs.writeFileSync(
+        preloadPath,
+        "global.fetch = async () => { throw new Error('SAFE_TEST_FETCH_BLOCKED'); };\n",
+        'utf8'
+    );
+    const result = childProcess.spawnSync(process.execPath, ['--require', preloadPath, SCRIPT_PATH, ...cliArgs()], {
+        cwd: tempDir,
+        encoding: 'utf8',
+        env: {
+            ...process.env,
+            DB_HOST: '127.0.0.1',
+            DB_PORT: '1',
+        },
+    });
+
+    assert.notEqual(result.status, 0);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.preflight_only, true);
+    assert.equal(output.ok, false);
+    assert.equal(output.raw_match_data_write_allowed_this_phase, false);
+    assert.equal(output.db_write_allowed_this_phase, false);
+    assert.equal(output.would_write_raw_match_data, false);
+    assert.equal(output.body_printed, false);
+    assert.equal(output.body_saved, false);
+    assert.equal(result.stdout.includes('<html>'), false);
+    assert.equal(result.stdout.includes('__NEXT_DATA__'), false);
+});
+
 test('no fs write / mkdir source usage', () => {
     const source = fs.readFileSync(SCRIPT_PATH, 'utf8');
     assert.doesNotMatch(source, /writeFile|writeFileSync|mkdir|createWriteStream/);

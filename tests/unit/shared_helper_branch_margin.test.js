@@ -35,6 +35,30 @@ const {
     parseMatchTeams,
     slugifyPathSegment,
 } = require('../../src/infrastructure/shared/helpers/oddsPortalUrlUtils');
+const {
+    calculateVolatilityMetrics,
+    extractOddsArray,
+    extractOddsArrays,
+    findBookieById,
+    findValuesByKey,
+    normalizeOddsTriplet,
+    normalizeTimestampValue,
+    validatePurity,
+} = require('../../src/infrastructure/shared/helpers/oddsPortalShared');
+const {
+    deepParseOddsData,
+    extractClosingOdds,
+    extractOpeningOdds,
+    processOddsTimeline,
+    recursiveHistoryScanner,
+} = require('../../src/infrastructure/shared/helpers/oddsPortalTimeline');
+const {
+    extractAndTransform,
+    extractFromHtml,
+    extractNextData,
+    transformToApiFormat,
+    validateNextDataStructure,
+} = require('../../src/parsers/fotmob/NextDataParser');
 const { OddsPortalURLParser } = require('../../src/infrastructure/shared/helpers/OddsPortalURLParser');
 const {
     buildForceOverwriteParams,
@@ -46,6 +70,23 @@ const {
     buildStatusUpdateStatement,
     getConfidenceThreshold,
 } = require('../../src/infrastructure/shared/helpers/reconMappingSqlBuilders');
+const {
+    assertFunctionDependency,
+    assertMismatchEvidenceFields,
+    assertObjectDependency,
+    assertRequiredFields,
+    assertSuccessfulRebind,
+    buildEvidenceOnlyHash,
+    buildForceOverwriteAssignments,
+    classifyWriteError,
+    getPreserveLinkedStatusFlag,
+    isSeasonHashUniqueViolation,
+    scoreFixturePair,
+    scoreUrlAgainstMatch,
+    shouldForceOverwriteEvidenceOnlyConflict,
+    shouldPreferIncomingProtocolOverwrite,
+    shouldPreferIncomingSequentialHashOverwrite,
+} = require('../../src/infrastructure/shared/helpers/reconMappingStoreShared');
 const {
     decodeCandidateTeamSegment,
     extractCandidatePathname,
@@ -279,6 +320,100 @@ test('FotMob extraction helpers cover fallback, pageProps, DOM payload, and dedu
     assert.deepEqual(dedupeById([{ id: 'a' }, { id: 'a' }, { id: 'b' }]), [{ id: 'a' }, { id: 'b' }]);
 });
 
+test('NextDataParser covers safe pageProps extraction and transform failure branches without browser runtime', async () => {
+    const nextData = {
+        props: {
+            pageProps: {
+                content: {
+                    stats: { xg: [1.1, 0.8] },
+                    lineup: { home: [] },
+                    shotmap: [{ id: 1 }],
+                },
+                general: { matchId: 'detail-1' },
+                header: { teams: ['Home', 'Away'] },
+            },
+        },
+    };
+    const html = `<html><script id="__NEXT_DATA__" type="application/json">${JSON.stringify(nextData)}</script></html>`;
+    const extracted = extractFromHtml(html);
+    assert.equal(extracted.success, true);
+    assert.deepEqual(extracted.data.props.pageProps.general, { matchId: 'detail-1' });
+
+    const alt = extractFromHtml(
+        `<script type="application/json" id="__NEXT_DATA__">${JSON.stringify(nextData)}</script>`
+    );
+    assert.equal(alt.success, true);
+    assert.equal(extractFromHtml(null).error, 'INVALID_INPUT:HTML 不是有效字符串');
+    assert.match(extractFromHtml('<html></html>').error, /^NO_NEXT_DATA:/);
+    assert.match(extractFromHtml('<script id="__NEXT_DATA__">{bad</script>').error, /^PARSE_ERROR:/);
+    assert.match(
+        extractFromHtml('<script type="application/json" id="__NEXT_DATA__">{bad</script>').error,
+        /^PARSE_ERROR:/
+    );
+
+    const api = transformToApiFormat(nextData, 'match-1');
+    assert.equal(api.matchId, 'match-1');
+    assert.equal(api._meta.hasStats, true);
+    assert.equal(api._meta.hasLineup, true);
+    assert.equal(api._meta.hasShotmap, true);
+    assert.equal(transformToApiFormat(null, 'match-1'), null);
+    assert.equal(transformToApiFormat({ props: { pageProps: {} } }, 'match-1'), null);
+
+    assert.deepEqual(validateNextDataStructure(null), { valid: false, missing: ['nextData'] });
+    assert.deepEqual(validateNextDataStructure({}), { valid: false, missing: ['props'] });
+    assert.deepEqual(validateNextDataStructure({ props: {} }), { valid: false, missing: ['props.pageProps'] });
+    assert.deepEqual(validateNextDataStructure({ props: { pageProps: {} } }), {
+        valid: false,
+        missing: ['props.pageProps.content'],
+    });
+    assert.deepEqual(validateNextDataStructure(nextData), { valid: true, missing: [] });
+
+    const makePage = value => ({
+        evaluate: async callback => {
+            global.document = {
+                getElementById: () => value,
+            };
+            try {
+                return callback();
+            } finally {
+                delete global.document;
+            }
+        },
+    });
+    assert.equal((await extractNextData(makePage({ innerHTML: JSON.stringify(nextData) }))).success, true);
+    assert.match((await extractNextData(makePage(null))).error, /^NO_NEXT_DATA:/);
+    assert.match((await extractNextData(makePage({ innerHTML: '{bad' }))).error, /^PARSE_ERROR:/);
+    assert.match(
+        (
+            await extractNextData({
+                evaluate: async () => {
+                    throw new Error('safe evaluate failure');
+                },
+            })
+        ).error,
+        /^EXTRACT_ERROR:/
+    );
+
+    assert.equal(
+        (await extractAndTransform(makePage({ innerHTML: JSON.stringify(nextData) }), 'match-2')).success,
+        true
+    );
+    assert.match((await extractAndTransform(makePage(null), 'match-2')).error, /^NO_NEXT_DATA:/);
+    assert.match(
+        (await extractAndTransform(makePage({ innerHTML: JSON.stringify({ props: {} }) }), 'match-2')).error,
+        /^INVALID_STRUCTURE:/
+    );
+    assert.match(
+        (
+            await extractAndTransform(
+                makePage({ innerHTML: JSON.stringify({ props: { pageProps: { content: { ok: true } } } }) }),
+                'match-2'
+            )
+        ).data.matchId,
+        /^match-2$/
+    );
+});
+
 test('OddsPortal URL helpers cover slug, hash, and team parsing branches', () => {
     assert.equal(slugifyPathSegment('Real Madrid & Barça!!'), 'real-madrid-and-barca');
     assert.equal(buildDeterministicMatchHash('/Football/England/Match'), '09d70035');
@@ -325,6 +460,92 @@ test('OddsPortal URL parser covers invalid, non-soccer, explicit hash, and deter
     assert.equal(deterministic.match_hash, buildDeterministicMatchHash(deterministic.full_path));
     assert.equal(deterministic.home_team, 'Real Madrid');
     assert.equal(deterministic.away_team, 'Barcelona');
+});
+
+test('OddsPortal shared and timeline helpers cover pure parser branches', () => {
+    assert.equal(normalizeTimestampValue(null), null);
+    assert.equal(normalizeTimestampValue(''), null);
+    assert.equal(normalizeTimestampValue('2026-01-02T03:04:05Z'), 1767323045);
+    assert.equal(normalizeTimestampValue(1767323045000), 1767323045);
+    assert.equal(normalizeOddsTriplet(['2.10', '3.40', '3.20']).join(','), '2.1,3.4,3.2');
+    assert.equal(normalizeOddsTriplet({ home: '2.10', draw: '3.40', away: '3.20' }).join(','), '2.1,3.4,3.2');
+    assert.equal(normalizeOddsTriplet(['1.00', '3.40', '3.20']), null);
+    assert.equal(
+        extractOddsArray([{ value: ['bad'] }, { value: { h: 2.1, d: 3.4, a: 3.2 } }]).join(','),
+        '2.1,3.4,3.2'
+    );
+    assert.equal(extractOddsArray([]), null);
+    assert.equal(extractOddsArrays({ market: { odds: ['2.10', '3.40', '3.20'] } }).rawArrays[0].path, 'market.odds');
+
+    const purityWarnOnly = validatePurity(['bad', '3.40', '3.20'], { strictMode: false });
+    assert.equal(purityWarnOnly.valid, false);
+    assert.equal(purityWarnOnly.purity_score, 67);
+    assert.equal(validatePurity('bad').errors[0], '赔率数据必须是数组');
+    assert.equal(validatePurity([2.1, 3.4]).errors[0], '赔率数组长度必须为3，当前为2');
+    const volatility = calculateVolatilityMetrics([{ o: [2.0, 3.0, 4.0] }, { o: [2.2, 3.1, 3.8] }]);
+    assert.equal(volatility.total_movement_count, 2);
+    assert.equal(calculateVolatilityMetrics(null).total_movement_count, 0);
+
+    const foundValues = findValuesByKey({ nested: { oddsHistory: [1, 2, 3] } }, 'history');
+    assert.equal(foundValues[0].path.join('.'), 'nested.oddsHistory');
+    assert.equal(findBookieById({ providers: [{ id: 18, opening: [2.1, 3.4, 3.2] }] }, 'pinnacle').id, 18);
+    assert.equal(findBookieById({ providers: [{ name: 'Bet365 Sportsbook' }] }, 'bet365').name, 'Bet365 Sportsbook');
+
+    const historyPoints = recursiveHistoryScanner({
+        bookie: {
+            history: [
+                { o: [2.1, 3.4, 3.2], t: 1767323045 },
+                { odds: [2.2, 3.3, 3.1], timestamp: 1767326645 },
+                { o: [2.2, 3.3, 3.1], ts: 1767326645 },
+            ],
+            current: { home: 2.2, draw: 3.3, away: 3.1, ts: 1767326645 },
+        },
+    });
+    const timeline = processOddsTimeline(historyPoints);
+    assert.equal(timeline.opening[0], 2.1);
+    assert.equal(timeline.closing[0], 2.2);
+    assert.equal(timeline._point_count, 2);
+    assert.deepEqual(processOddsTimeline([{ o: [2.1, 3.4, 3.2] }, { o: [2.2, 3.3, 3.1] }]).history, [
+        { o: [2.1, 3.4, 3.2] },
+        { o: [2.2, 3.3, 3.1] },
+    ]);
+    assert.equal(processOddsTimeline([]), null);
+
+    const warningCalls = [];
+    const originalWarn = console.warn;
+    console.warn = (...args) => warningCalls.push(args);
+    try {
+        assert.equal(extractOpeningOdds(null, 'pinnacle'), null);
+        assert.equal(extractClosingOdds({ closing: ['bad', 3.4, 3.2] }, 'pinnacle'), null);
+    } finally {
+        console.warn = originalWarn;
+    }
+    assert.equal(warningCalls.length, 0);
+    assert.deepEqual(
+        extractOpeningOdds({ initial: [2.1, 3.4, 3.2], initial_at: '2026-01-02T03:04:05Z' }, 'pinnacle').o,
+        [2.1, 3.4, 3.2]
+    );
+    assert.deepEqual(
+        extractClosingOdds({ odds: { current: { h: 2.2, d: 3.3, a: 3.1, ts: 1767326645 } } }, 'bet365').o,
+        [2.2, 3.3, 3.1]
+    );
+
+    const parsed = deepParseOddsData({
+        providers: [
+            {
+                id: 18,
+                opening: [2.1, 3.4, 3.2],
+                current: [2.2, 3.3, 3.1],
+            },
+            {
+                name: 'Bet365',
+                history: [{ o: [2.3, 3.2, 3.0], t: 1767323045 }],
+            },
+        ],
+    });
+    assert.equal(parsed.pinnacle.bookmaker_id, 18);
+    assert.equal(parsed.bet365.bookmaker_id, 16);
+    assert.equal(deepParseOddsData(null).pinnacle, null);
 });
 
 test('recon name helpers cover normalization, URL extraction, and placeholder branches', () => {
@@ -491,4 +712,143 @@ test('recon mapping SQL builders cover optional field and fallback branches with
         ]
     );
     assert.equal(buildForceOverwriteParams({ match_id: 'existing' }, { match_id: 'incoming' }, {}, {})[6], null);
+});
+
+test('recon mapping store shared helpers cover pure conflict and error classification branches', () => {
+    class RepositoryError extends Error {
+        constructor(message, code, cause = null, details = null) {
+            super(message);
+            this.code = code;
+            this.cause = cause;
+            this.details = details;
+        }
+    }
+
+    assert.throws(() => assertFunctionDependency('query', null), /缺少必需依赖/);
+    assert.throws(() => assertObjectDependency('pool', null), /缺少必需依赖/);
+    assert.doesNotThrow(() => assertFunctionDependency('query', () => {}));
+    assert.doesNotThrow(() => assertObjectDependency('pool', {}));
+    assert.equal(getPreserveLinkedStatusFlag({ preserve_linked_status: true }), true);
+    assert.equal(
+        shouldForceOverwriteEvidenceOnlyConflict({ is_evidence_only: true }, { is_evidence_only: false }),
+        true
+    );
+    assert.match(buildEvidenceOnlyHash('m-1'), /^~[a-f0-9]{7}$/);
+    assert.deepEqual(buildForceOverwriteAssignments({ match_confidence: true, candidate_name: true }).slice(-2), [
+        'match_confidence = $7',
+        'candidate_name = NULL',
+    ]);
+
+    assert.throws(
+        () => assertRequiredFields(RepositoryError, { match_id: 'm-1' }),
+        error => error.code === 'MISSING_REQUIRED_FIELDS'
+    );
+    assert.throws(
+        () => assertMismatchEvidenceFields(RepositoryError, { match_id: 'm-1' }),
+        error => error.code === 'MISMATCH_EVIDENCE_REQUIRED_FIELDS'
+    );
+    assert.doesNotThrow(() =>
+        assertRequiredFields(RepositoryError, {
+            match_id: 'm-1',
+            oddsportal_hash: 'h',
+            full_url: 'https://example.test/a',
+            season: '2024/2025',
+            league_name: 'Ligue 1',
+            home_team: 'Home',
+            away_team: 'Away',
+        })
+    );
+    assert.throws(
+        () => assertSuccessfulRebind(RepositoryError, 0, { match_id: 'm-1' }),
+        error => error.code === 'HASH_CONFLICT_REBIND_FAILED' && error.details.match_id === 'm-1'
+    );
+    assert.doesNotThrow(() => assertSuccessfulRebind(RepositoryError, 1));
+
+    assert.equal(isSeasonHashUniqueViolation(null), false);
+    assert.equal(isSeasonHashUniqueViolation({ code: '23505', constraint: 'idx_mapping_season_hash_unique' }), true);
+    assert.equal(
+        isSeasonHashUniqueViolation(
+            { code: '23505', detail: 'Key (season, oddsportal_hash)=(2024/2025,h) already exists.' },
+            { season: '2024/2025', oddsportal_hash: 'h' }
+        ),
+        true
+    );
+    assert.equal(
+        classifyWriteError(new RepositoryError('kept', 'KEPT'), {
+            RepositoryError,
+            mappingData: {},
+            defaultCode: 'DEFAULT',
+            defaultMessage: 'default',
+        }).code,
+        'KEPT'
+    );
+    assert.equal(
+        classifyWriteError(
+            { code: '23503', message: 'fk failed' },
+            { RepositoryError, mappingData: {}, defaultCode: 'DEFAULT', defaultMessage: 'default' }
+        ).code,
+        'FOREIGN_KEY_VIOLATION'
+    );
+    assert.equal(
+        classifyWriteError(
+            { code: '23505', message: 'unique failed' },
+            { RepositoryError, mappingData: null, defaultCode: 'DEFAULT', defaultMessage: 'default' }
+        ).code,
+        'UNIQUE_VIOLATION'
+    );
+    assert.equal(
+        classifyWriteError(
+            { code: '23502', message: 'not null failed' },
+            { RepositoryError, mappingData: {}, defaultCode: 'DEFAULT', defaultMessage: 'default' }
+        ).code,
+        'NOT_NULL_VIOLATION'
+    );
+    assert.equal(
+        classifyWriteError(
+            { code: 'XX000', message: 'unknown failed' },
+            { RepositoryError, mappingData: {}, defaultCode: 'DEFAULT', defaultMessage: 'default' }
+        ).code,
+        'DEFAULT'
+    );
+
+    const arbiter = {
+        sameFixtureThreshold: 1.5,
+        sameFixtureWindowMs: 60_000,
+        teamSimilarity(left, right) {
+            return String(left).split(' ')[0].toLowerCase() === String(right).split(' ')[0].toLowerCase() ? 1 : 0;
+        },
+    };
+    const existingMatch = { home_team: 'Alpha FC', away_team: 'Beta FC', match_date: '2026-01-01T12:00:00Z' };
+    const incomingMatch = { home_team: 'Alpha United', away_team: 'Beta City', match_date: '2026-01-03T12:00:00Z' };
+    assert.equal(scoreFixturePair(arbiter, existingMatch, incomingMatch).bestScore, 2);
+    assert.equal(
+        scoreUrlAgainstMatch(arbiter, 'https://example.test/football/h2h/alpha-fc/beta-fc/', existingMatch),
+        2
+    );
+    assert.equal(scoreUrlAgainstMatch(arbiter, 'not-a-url', existingMatch), 0);
+    assert.equal(
+        shouldPreferIncomingSequentialHashOverwrite({
+            arbiter,
+            existingMatch,
+            incomingMatch,
+            existingMapping: { full_url: 'https://example.test/match/alpha-beta-11111111', match_confidence: 0.75 },
+            incomingMapping: { full_url: 'https://example.test/match/alpha-beta-22222222', match_confidence: 0.8 },
+            decision: { sameFixture: false, dateDistanceMs: 172_800_000 },
+        }),
+        true
+    );
+    assert.equal(
+        shouldPreferIncomingProtocolOverwrite({
+            arbiter,
+            existingMatch,
+            incomingMatch,
+            existingMapping: { full_url: 'https://example.test/football/h2h/gamma/delta/' },
+            incomingMapping: {
+                full_url: 'https://example.test/football/france/alpha-united-beta-city-abcdef12/',
+                mapping_method: 'protocol_extract',
+            },
+            decision: { incomingScore: 2, existingScore: 0 },
+        }),
+        true
+    );
 });

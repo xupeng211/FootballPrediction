@@ -1,0 +1,649 @@
+{
+    "proposal_phase": "Phase 5.21L2V3F",
+    "proposal_status": "schedule_detail_identity_normalization_review_required",
+    "no_write": true,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "baseline_acceptance_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "raw_write_ready_for_execution": false,
+    "source_manifest_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+    "source_inventory_reconciliation_report": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3E.md",
+    "candidate_targets_count": 50,
+    "checked_targets_count": 8,
+    "proposed_mapping_count": 8,
+    "high_confidence_mapping_count": 0,
+    "medium_confidence_mapping_count": 8,
+    "low_confidence_mapping_count": 0,
+    "unresolved_mapping_count": 8,
+    "candidate_scope_review": {
+        "candidate_scope_explained": true,
+        "candidate_matches_count": 58,
+        "candidate_count_scope_explanation": "The 58-row DB safety scope is the current Ligue 1 2025/2026 matches population: 50 source-controlled manifest schedule targets plus 8 pre-existing seeded pageProps v2 match identities.",
+        "candidate_count_is_schedule_targets_plus_observed_detail_ids": false,
+        "manifest_schedule_targets_count": 50,
+        "preexisting_seeded_pageprops_v2_match_count": 8,
+        "observed_detail_external_ids_in_matches_count": 0,
+        "observed_detail_external_ids_in_candidate_v2_rows_count": 0,
+        "candidate_fotmob_pageprops_v2_raw_rows": 8,
+        "candidate_v2_rows_explanation": "The 8 fotmob_pageprops_v2 rows are pre-existing raw rows from earlier seeded pageProps v2 phases; they are not L2V3F writes and do not mean raw write retry succeeded.",
+        "candidate_v2_rows_preexisting": true,
+        "l2v3f_db_write_performed": false,
+        "l2v3f_raw_write_succeeded": false,
+        "whether_this_blocks_ready_for_review": false,
+        "safe_raw_row_columns_used": ["match_id", "external_id", "data_version", "collected_at"],
+        "raw_match_data_created_at_updated_at_source_columns_present": false,
+        "candidate_v2_safe_rows": [
+            {
+                "match_id": "53_20252026_4830746",
+                "external_id": "4830746",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 13:37:39.108+00"
+            },
+            {
+                "match_id": "53_20252026_4830747",
+                "external_id": "4830747",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 09:57:56.892+00"
+            },
+            {
+                "match_id": "53_20252026_4830748",
+                "external_id": "4830748",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 13:37:39.108+00"
+            },
+            {
+                "match_id": "53_20252026_4830750",
+                "external_id": "4830750",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 13:37:39.108+00"
+            },
+            {
+                "match_id": "53_20252026_4830751",
+                "external_id": "4830751",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 13:37:39.108+00"
+            },
+            {
+                "match_id": "53_20252026_4830752",
+                "external_id": "4830752",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 13:37:39.108+00"
+            },
+            {
+                "match_id": "53_20252026_4830753",
+                "external_id": "4830753",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 13:37:39.108+00"
+            },
+            {
+                "match_id": "53_20252026_4830754",
+                "external_id": "4830754",
+                "data_version": "fotmob_pageprops_v2",
+                "collected_at": "2026-05-16 13:37:39.108+00"
+            }
+        ]
+    },
+    "mapping_strategy": {
+        "primary_anchor": "page_url_base",
+        "fallback_anchor": "league+season+teams+date",
+        "acceptance_rule": "page_url_base match plus team/date/status compatibility only; proposal-only mapping stays blocked until separate identity mapping acceptance"
+    },
+    "requires_human_review": true,
+    "requires_separate_identity_mapping_acceptance": true,
+    "requires_separate_baseline_acceptance": true,
+    "requires_separate_final_db_write_authorization": true,
+    "checked_targets": [
+        {
+            "requested_schedule_external_id": "4830466",
+            "requested_match_id": "53_20252026_4830466",
+            "observed_detail_external_id": "4830759",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830466",
+                "detail_external_id": "4830759"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        },
+        {
+            "requested_schedule_external_id": "4830461",
+            "requested_match_id": "53_20252026_4830461",
+            "observed_detail_external_id": "4830758",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830461",
+                "detail_external_id": "4830758"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        },
+        {
+            "requested_schedule_external_id": "4830481",
+            "requested_match_id": "53_20252026_4830481",
+            "observed_detail_external_id": "4830763",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830481",
+                "detail_external_id": "4830763"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        },
+        {
+            "requested_schedule_external_id": "4830496",
+            "requested_match_id": "53_20252026_4830496",
+            "observed_detail_external_id": "4830757",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830496",
+                "detail_external_id": "4830757"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        },
+        {
+            "requested_schedule_external_id": "4830511",
+            "requested_match_id": "53_20252026_4830511",
+            "observed_detail_external_id": "4830760",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830511",
+                "detail_external_id": "4830760"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        },
+        {
+            "requested_schedule_external_id": "4830463",
+            "requested_match_id": "53_20252026_4830463",
+            "observed_detail_external_id": "4830622",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830463",
+                "detail_external_id": "4830622"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        },
+        {
+            "requested_schedule_external_id": "4830465",
+            "requested_match_id": "53_20252026_4830465",
+            "observed_detail_external_id": "4830619",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830465",
+                "detail_external_id": "4830619"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        },
+        {
+            "requested_schedule_external_id": "4830508",
+            "requested_match_id": "53_20252026_4830508",
+            "observed_detail_external_id": "4830620",
+            "page_url_base_match_status": "match",
+            "team_date_status_match_status": "date_mismatch",
+            "mapping_confidence": "medium",
+            "mapping_status": "proposal_only_unaccepted",
+            "proposed_mapping": {
+                "schedule_external_id": "4830508",
+                "detail_external_id": "4830620"
+            },
+            "safety_blockers": ["team_date_status_mismatch"]
+        }
+    ],
+    "unchecked_targets": [
+        {
+            "requested_schedule_external_id": "4830460",
+            "requested_match_id": "53_20252026_4830460",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830458",
+            "requested_match_id": "53_20252026_4830458",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830459",
+            "requested_match_id": "53_20252026_4830459",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830462",
+            "requested_match_id": "53_20252026_4830462",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830464",
+            "requested_match_id": "53_20252026_4830464",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830473",
+            "requested_match_id": "53_20252026_4830473",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830471",
+            "requested_match_id": "53_20252026_4830471",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830472",
+            "requested_match_id": "53_20252026_4830472",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830470",
+            "requested_match_id": "53_20252026_4830470",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830469",
+            "requested_match_id": "53_20252026_4830469",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830467",
+            "requested_match_id": "53_20252026_4830467",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830474",
+            "requested_match_id": "53_20252026_4830474",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830475",
+            "requested_match_id": "53_20252026_4830475",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830468",
+            "requested_match_id": "53_20252026_4830468",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830478",
+            "requested_match_id": "53_20252026_4830478",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830479",
+            "requested_match_id": "53_20252026_4830479",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830482",
+            "requested_match_id": "53_20252026_4830482",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830484",
+            "requested_match_id": "53_20252026_4830484",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830476",
+            "requested_match_id": "53_20252026_4830476",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830477",
+            "requested_match_id": "53_20252026_4830477",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830483",
+            "requested_match_id": "53_20252026_4830483",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830480",
+            "requested_match_id": "53_20252026_4830480",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830488",
+            "requested_match_id": "53_20252026_4830488",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830490",
+            "requested_match_id": "53_20252026_4830490",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830485",
+            "requested_match_id": "53_20252026_4830485",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830487",
+            "requested_match_id": "53_20252026_4830487",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830486",
+            "requested_match_id": "53_20252026_4830486",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830489",
+            "requested_match_id": "53_20252026_4830489",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830491",
+            "requested_match_id": "53_20252026_4830491",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830493",
+            "requested_match_id": "53_20252026_4830493",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830492",
+            "requested_match_id": "53_20252026_4830492",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830498",
+            "requested_match_id": "53_20252026_4830498",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830501",
+            "requested_match_id": "53_20252026_4830501",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830495",
+            "requested_match_id": "53_20252026_4830495",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830497",
+            "requested_match_id": "53_20252026_4830497",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830502",
+            "requested_match_id": "53_20252026_4830502",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830494",
+            "requested_match_id": "53_20252026_4830494",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830500",
+            "requested_match_id": "53_20252026_4830500",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830499",
+            "requested_match_id": "53_20252026_4830499",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830510",
+            "requested_match_id": "53_20252026_4830510",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830505",
+            "requested_match_id": "53_20252026_4830505",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830507",
+            "requested_match_id": "53_20252026_4830507",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        }
+    ],
+    "targets_not_checked": [
+        {
+            "requested_schedule_external_id": "4830460",
+            "requested_match_id": "53_20252026_4830460",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830458",
+            "requested_match_id": "53_20252026_4830458",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830459",
+            "requested_match_id": "53_20252026_4830459",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830462",
+            "requested_match_id": "53_20252026_4830462",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830464",
+            "requested_match_id": "53_20252026_4830464",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830473",
+            "requested_match_id": "53_20252026_4830473",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830471",
+            "requested_match_id": "53_20252026_4830471",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830472",
+            "requested_match_id": "53_20252026_4830472",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830470",
+            "requested_match_id": "53_20252026_4830470",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830469",
+            "requested_match_id": "53_20252026_4830469",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830467",
+            "requested_match_id": "53_20252026_4830467",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830474",
+            "requested_match_id": "53_20252026_4830474",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830475",
+            "requested_match_id": "53_20252026_4830475",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830468",
+            "requested_match_id": "53_20252026_4830468",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830478",
+            "requested_match_id": "53_20252026_4830478",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830479",
+            "requested_match_id": "53_20252026_4830479",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830482",
+            "requested_match_id": "53_20252026_4830482",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830484",
+            "requested_match_id": "53_20252026_4830484",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830476",
+            "requested_match_id": "53_20252026_4830476",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830477",
+            "requested_match_id": "53_20252026_4830477",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830483",
+            "requested_match_id": "53_20252026_4830483",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830480",
+            "requested_match_id": "53_20252026_4830480",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830488",
+            "requested_match_id": "53_20252026_4830488",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830490",
+            "requested_match_id": "53_20252026_4830490",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830485",
+            "requested_match_id": "53_20252026_4830485",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830487",
+            "requested_match_id": "53_20252026_4830487",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830486",
+            "requested_match_id": "53_20252026_4830486",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830489",
+            "requested_match_id": "53_20252026_4830489",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830491",
+            "requested_match_id": "53_20252026_4830491",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830493",
+            "requested_match_id": "53_20252026_4830493",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830492",
+            "requested_match_id": "53_20252026_4830492",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830498",
+            "requested_match_id": "53_20252026_4830498",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830501",
+            "requested_match_id": "53_20252026_4830501",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830495",
+            "requested_match_id": "53_20252026_4830495",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830497",
+            "requested_match_id": "53_20252026_4830497",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830502",
+            "requested_match_id": "53_20252026_4830502",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830494",
+            "requested_match_id": "53_20252026_4830494",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830500",
+            "requested_match_id": "53_20252026_4830500",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830499",
+            "requested_match_id": "53_20252026_4830499",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830510",
+            "requested_match_id": "53_20252026_4830510",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830505",
+            "requested_match_id": "53_20252026_4830505",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        },
+        {
+            "requested_schedule_external_id": "4830507",
+            "requested_match_id": "53_20252026_4830507",
+            "mapping_status": "not_evaluated_in_l2v3f"
+        }
+    ],
+    "normalized_identity_model": {
+        "schedule_external_id": "separate",
+        "detail_external_id": "separate",
+        "page_url_base": "proposal_only_anchor",
+        "league_id": 53,
+        "season": "2025/2026",
+        "home_team": "proposal_only",
+        "away_team": "proposal_only",
+        "match_date": "proposal_only",
+        "status": "proposal_only",
+        "mapping_confidence": "proposal_only",
+        "mapping_source": "source_inventory_page_url_base_plus_prior_safe_live_metadata",
+        "mapping_verified_at": "2026-05-19T01:13:49.568Z"
+    },
+    "recommended_next_step": "schedule_detail_route_normalization_fix_implementation_planning"
+}
