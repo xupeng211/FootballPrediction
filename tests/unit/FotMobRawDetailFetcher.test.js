@@ -198,6 +198,44 @@ test('fake fetch HTTP 200 with hydration succeeds', async t => {
     assert.equal(result.hydration_parse_ok, true);
     assert.equal(result.looks_like_valid_match_detail, true);
 });
+test('fetcher exposes identity_match when requested and observed ids match', async t => {
+    installGuards(t);
+    const fetcher = loadFresh();
+    const fn = fakeFetch(200, fake200Html('4830747'), { url: 'https://www.fotmob.com/match/4830747' });
+    const result = await fetcher.fetchFotMobRawDetail(
+        { externalId: '4830747', homeTeam: 'Home FC', awayTeam: 'Away FC' },
+        { fetchFn: fn, parser: makeFakeParser('4830747') }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.external_id, '4830747');
+    assert.equal(result.requested_schedule_external_id, '4830747');
+    assert.equal(result.observed_detail_external_id, '4830747');
+    assert.equal(result.canonical_identity_status, 'identity_match');
+    assert.equal(result.identity_reconciliation_status, 'identity_match');
+    assert.equal(result.raw_write_blocked, false);
+});
+test('fetcher keeps requested id separate from observed detail id mismatch', async t => {
+    installGuards(t);
+    const fetcher = loadFresh();
+    const fn = fakeFetch(200, fake200Html('4830466'), {
+        url: 'https://www.fotmob.com/matches/rennes-vs-marseille/2t9n7h#4830759',
+    });
+    const result = await fetcher.fetchFotMobRawDetail(
+        { externalId: '4830466', homeTeam: 'Home FC', awayTeam: 'Away FC' },
+        { fetchFn: fn, parser: makeFakeParser('4830759') }
+    );
+
+    assert.equal(result.ok, true);
+    assert.equal(result.external_id, '4830466');
+    assert.equal(result.requested_schedule_external_id, '4830466');
+    assert.equal(result.observed_detail_external_id, '4830759');
+    assert.equal(result.observed_page_url_base, '/matches/rennes-vs-marseille/2t9n7h');
+    assert.equal(result.canonical_identity_status, 'requested_vs_observed_external_id_mismatch');
+    assert.equal(result.identity_reconciliation_status, 'unresolved_schedule_detail_mapping');
+    assert.equal(result.mapping_confidence, 'unknown');
+    assert.equal(result.safety_blockers.includes('accepted_identity_mapping_missing'), true);
+});
 test('final_url captured', async t => {
     installGuards(t);
     const fetcher = loadFresh();
