@@ -15,6 +15,10 @@ const {
     listJsonPaths,
     summarizeJsonShape,
 } = require('./pageprops_v2_no_write_preview');
+const {
+    reconcileRouteIdentity,
+    assertRawWriteIdentityGate,
+} = require('../../src/infrastructure/services/FotMobRouteIdentityReconciler');
 
 const PHASE = 'PHASE5_21L2V_SINGLE_LEAGUE_PAGEPROPS_V2_CONTROLLED_WRITE_EXECUTION';
 const MANIFEST_PATH = 'docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json';
@@ -738,6 +742,16 @@ async function recaptureTarget(target, index, dependencies = {}) {
             failure_reason: 'PAGE_PROPS_NOT_FOUND',
         };
     }
+    const routeIdentity = reconcileRouteIdentity({
+        target,
+        pageProps,
+        requestedScheduleExternalId: target.external_id,
+        requestedUrl: requestUrl,
+        finalUrl: fetchResult.final_url || requestUrl,
+        proposalOnlyMapping: target.mapping_status === 'proposal_only_unaccepted',
+        acceptedIdentityMappingPresent: dependencies.acceptedIdentityMappingPresent === true,
+    });
+    const routeIdentityGate = assertRawWriteIdentityGate(routeIdentity);
     const rawData = buildRawDataForTarget({
         target,
         pageProps,
@@ -750,8 +764,26 @@ async function recaptureTarget(target, index, dependencies = {}) {
     const hashMatchesBaseline = recapturedHash === target.baseline_hash;
     const pagePropsPaths = listJsonPaths(pageProps);
     const contentPaths = listJsonPaths(isPlainObject(pageProps.content) ? pageProps.content : {});
+    const targetStatus =
+        shapeErrors.length > 0
+            ? 'hash_gate_failed'
+            : !hashMatchesBaseline
+              ? 'hash_gate_failed'
+              : routeIdentityGate.ok
+                ? 'hash_gate_passed'
+                : 'route_identity_gate_blocked';
+    const failureReason =
+        shapeErrors.length > 0
+            ? `RAW_DATA_SHAPE_INVALID:${shapeErrors.join(',')}`
+            : !hashMatchesBaseline
+              ? `HASH_DRIFT: recaptured ${recapturedHash} differs from baseline ${target.baseline_hash}`
+              : routeIdentityGate.ok
+                ? null
+                : `${routeIdentityGate.blocked_reason}:${routeIdentity.safety_blockers.join(',')}`;
     return {
         ...base,
+        ...routeIdentity,
+        route_identity_gate_ok: routeIdentityGate.ok,
         next_data_parse_ok: true,
         page_props_found: true,
         raw_data_shape_valid: shapeErrors.length === 0,
@@ -760,13 +792,8 @@ async function recaptureTarget(target, index, dependencies = {}) {
         has_pageProps: isPlainObject(rawData.pageProps),
         recaptured_hash: recapturedHash,
         hash_matches_baseline: hashMatchesBaseline,
-        target_status: shapeErrors.length === 0 && hashMatchesBaseline ? 'hash_gate_passed' : 'hash_gate_failed',
-        failure_reason:
-            shapeErrors.length > 0
-                ? `RAW_DATA_SHAPE_INVALID:${shapeErrors.join(',')}`
-                : hashMatchesBaseline
-                  ? null
-                  : `HASH_DRIFT: recaptured ${recapturedHash} differs from baseline ${target.baseline_hash}`,
+        target_status: targetStatus,
+        failure_reason: failureReason,
         candidate_json_byte_length: jsonByteLength(rawData),
         pageProps_top_level_keys: Object.keys(pageProps).sort(),
         pageProps_path_count: pagePropsPaths.length,
@@ -794,6 +821,10 @@ async function recaptureTargets(candidates = [], dependencies = {}) {
             .length,
         failed_count: publicTargets.filter(target => target.failure_reason && !target.block_markers?.length).length,
         blocked_count: publicTargets.filter(target => (target.block_markers || []).length > 0).length,
+        route_identity_blocked_count: publicTargets.filter(target => target.route_identity_gate_ok === false).length,
+        unresolved_schedule_detail_mapping_count: publicTargets.filter(
+            target => target.identity_reconciliation_status === 'unresolved_schedule_detail_mapping'
+        ).length,
         request_count: candidates.length,
     };
 }

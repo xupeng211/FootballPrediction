@@ -9,6 +9,7 @@
  */
 
 const crypto = require('node:crypto');
+const { reconcileRouteIdentity } = require('./FotMobRouteIdentityReconciler');
 
 const FOTMOB_BASE_URL = 'https://www.fotmob.com';
 const HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1 = 'stable_raw_payload_v1';
@@ -405,6 +406,30 @@ function looksLikeValidRawDetail(rawData, input = {}) {
     );
 }
 
+function buildFetchRouteIdentity(input = {}, context = {}) {
+    return reconcileRouteIdentity({
+        requestedScheduleExternalId: input.externalId,
+        requestedUrl: context.requestUrl,
+        finalUrl: context.finalUrl,
+        observedDetailExternalId: context.observedDetailExternalId,
+        observedPayload: context.observedPayload,
+        requestedHomeTeam: input.homeTeam,
+        requestedAwayTeam: input.awayTeam,
+        fetchOrParseFailure: context.fetchOrParseFailure === true,
+        blockOrCaptcha: context.blockOrCaptcha === true,
+    });
+}
+
+function isBlockHttpStatus(status) {
+    return [403, 429].includes(Number(status || 0));
+}
+
+function resolveObservedDetailExternalId(payload = {}, stableRawPayload = {}) {
+    const generalMatchId = normalizeText(payload?.general?.matchId);
+    if (generalMatchId) return generalMatchId;
+    return normalizeText(stableRawPayload?.matchId) || null;
+}
+
 // ══════════════════════════════════════════════════════════════════════════════
 // Core fetch function
 // ══════════════════════════════════════════════════════════════════════════════
@@ -419,6 +444,7 @@ function looksLikeValidRawDetail(rawData, input = {}) {
 async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
     const inputValidation = validateFetchInput(input);
     if (!inputValidation.ok) {
+        const routeIdentity = buildFetchRouteIdentity(input, { fetchOrParseFailure: true });
         return {
             source: 'fotmob',
             route: 'html_hydration',
@@ -446,11 +472,13 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
             body_saved: false,
             browser_used: false,
             proxy_used: false,
+            ...routeIdentity,
         };
     }
 
     const depValidation = validateFetchDependencies(dependencies);
     if (!depValidation.ok) {
+        const routeIdentity = buildFetchRouteIdentity(inputValidation.value, { fetchOrParseFailure: true });
         return {
             ...inputValidation.value,
             request_url: null,
@@ -477,6 +505,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
             match_id: inputValidation.value.matchId,
             home_team: inputValidation.value.homeTeam,
             away_team: inputValidation.value.awayTeam,
+            ...routeIdentity,
         };
     }
 
@@ -499,6 +528,11 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
         });
         body = typeof response.text === 'function' ? await response.text() : '';
     } catch (err) {
+        const routeIdentity = buildFetchRouteIdentity(v, {
+            requestUrl,
+            finalUrl: requestUrl,
+            fetchOrParseFailure: true,
+        });
         return {
             source: 'fotmob',
             route: 'html_hydration',
@@ -526,6 +560,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
             body_saved: false,
             browser_used: false,
             proxy_used: false,
+            ...routeIdentity,
         };
     }
 
@@ -540,6 +575,12 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
     const extraction = extractHydrationPayload(body, parser, v);
 
     if (!extraction.ok) {
+        const routeIdentity = buildFetchRouteIdentity(v, {
+            requestUrl,
+            finalUrl,
+            fetchOrParseFailure: true,
+            blockOrCaptcha: isBlockHttpStatus(httpStatus),
+        });
         return {
             source: 'fotmob',
             route: 'html_hydration',
@@ -567,6 +608,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
             body_saved: false,
             browser_used: false,
             proxy_used: false,
+            ...routeIdentity,
         };
     }
 
@@ -593,6 +635,13 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
     const rawData = buildRawDataFromStablePayload(stableRawPayload, meta);
     const hashInfo = computeRawDetailHashes(stableRawPayload, rawData);
     const valid = looksLikeValidRawDetail(rawData, v);
+    const observedDetailExternalId = resolveObservedDetailExternalId(extraction.data, stableRawPayload);
+    const routeIdentity = buildFetchRouteIdentity(v, {
+        requestUrl,
+        finalUrl,
+        observedDetailExternalId,
+        observedPayload: extraction.data,
+    });
 
     return {
         source: 'fotmob',
@@ -627,6 +676,7 @@ async function fetchFotMobRawDetail(input = {}, dependencies = {}) {
         body_saved: false,
         browser_used: false,
         proxy_used: false,
+        ...routeIdentity,
     };
 }
 

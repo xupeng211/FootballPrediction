@@ -627,6 +627,8 @@ async function recaptureTargetsSequential(candidates = [], dependencies = {}) {
                 body_byte_length: publicSummary.body_byte_length,
                 failure_reason: publicSummary.failure_reason,
                 block_markers: publicSummary.block_markers,
+                identity_reconciliation_status: publicSummary.identity_reconciliation_status,
+                route_identity_gate_ok: publicSummary.route_identity_gate_ok,
             });
         }
         if (!isRecapturePass(summary)) break;
@@ -642,6 +644,10 @@ async function recaptureTargetsSequential(candidates = [], dependencies = {}) {
             .length,
         failed_count: publicTargets.filter(target => target.failure_reason && !target.block_markers?.length).length,
         blocked_count: publicTargets.filter(target => (target.block_markers || []).length > 0).length,
+        route_identity_blocked_count: publicTargets.filter(target => target.route_identity_gate_ok === false).length,
+        unresolved_schedule_detail_mapping_count: publicTargets.filter(
+            target => target.identity_reconciliation_status === 'unresolved_schedule_detail_mapping'
+        ).length,
         request_count: publicTargets.length,
         request_delay_ms: requestDelayMs,
     };
@@ -941,6 +947,8 @@ function buildPayload({
                   hash_drift_count: recaptureGate.hash_drift_count,
                   failed_count: recaptureGate.failed_count,
                   blocked_count: recaptureGate.blocked_count,
+                  route_identity_blocked_count: recaptureGate.route_identity_blocked_count,
+                  unresolved_schedule_detail_mapping_count: recaptureGate.unresolved_schedule_detail_mapping_count,
                   request_count: recaptureGate.request_count,
                   request_delay_ms: recaptureGate.request_delay_ms,
                   first_target: recaptureGate.public_targets[0] || null,
@@ -1318,12 +1326,17 @@ async function runCli(argv = process.argv.slice(2), dependencies = {}) {
             recaptureGate.hash_match_count !== TARGET_COUNT ||
             recaptureGate.failed_count > 0 ||
             recaptureGate.blocked_count > 0 ||
+            recaptureGate.route_identity_blocked_count > 0 ||
             recaptureGate.attempted_target_count !== TARGET_COUNT
         ) {
+            const reason =
+                recaptureGate.route_identity_blocked_count > 0
+                    ? 'ROUTE_IDENTITY_GATE_BLOCKED'
+                    : 'RECAPTURE_HASH_GATE_BLOCKED';
             const payload = buildPayload({
                 ok: false,
                 input,
-                reason: 'RECAPTURE_HASH_GATE_BLOCKED',
+                reason,
                 manifestGate,
                 rowCountsBefore,
                 schemaReadiness,

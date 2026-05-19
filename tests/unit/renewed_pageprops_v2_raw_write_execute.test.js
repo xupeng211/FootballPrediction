@@ -437,6 +437,94 @@ test('hash drift blocks before transaction', async () => {
     );
 });
 
+test('unresolved schedule/detail route identity mismatch blocks before transaction', async () => {
+    const requestedExternalId = '4830460';
+    const observedDetailExternalId = '4830759';
+    const observedPageProps = fakePageProps(requestedExternalId, {
+        general: {
+            ...fakePageProps(requestedExternalId).general,
+            matchId: observedDetailExternalId,
+            homeTeam: { name: 'Home 0' },
+            awayTeam: { name: 'Away 0' },
+            matchTimeUTC: '2025-08-02T18:45:00.000Z',
+            status: 'finished',
+            pageUrl: '/matches/home-0-vs-away-0/abc#4830759',
+        },
+    });
+    const targets = candidates({
+        0: {
+            external_id: requestedExternalId,
+            match_id: `53_20252026_${requestedExternalId}`,
+            baseline_hash: preview.computeStablePagePropsHash(observedPageProps),
+            page_url_base: '/matches/home-0-vs-away-0/abc',
+        },
+    });
+    const deps = successDeps(targets, {
+        fetchResultsByExternalId: fetchResultsByExternalId(targets, {
+            [requestedExternalId]: { pageProps: observedPageProps },
+        }),
+        client: fakeClient(),
+    });
+
+    const result = await mod.runCli(validInput(), deps);
+    assert.equal(result.status, 1);
+    assert.equal(result.payload.blocked_reason, 'ROUTE_IDENTITY_GATE_BLOCKED');
+    assert.equal(result.payload.recapture_hash_gate.route_identity_blocked_count, 1);
+    assert.equal(result.payload.recapture_hash_gate.unresolved_schedule_detail_mapping_count, 1);
+    assert.equal(
+        result.payload.recapture_hash_gate.failed_targets[0].requested_schedule_external_id,
+        requestedExternalId
+    );
+    assert.equal(
+        result.payload.recapture_hash_gate.failed_targets[0].observed_detail_external_id,
+        observedDetailExternalId
+    );
+    assert.equal(result.payload.inserted_raw_match_data_count, 0);
+    assert.equal(result.payload.transaction.began, false);
+    assert.equal(
+        deps.client.queries.some(query => /^BEGIN$/i.test(query.sql)),
+        false
+    );
+});
+
+test('proposal-only route mapping is not accepted by raw write runner', async () => {
+    const requestedExternalId = '4830460';
+    const observedPageProps = fakePageProps(requestedExternalId, {
+        general: {
+            ...fakePageProps(requestedExternalId).general,
+            matchId: '4830759',
+            pageUrl: '/matches/home-0-vs-away-0/abc#4830759',
+        },
+    });
+    const targets = candidates({
+        0: {
+            external_id: requestedExternalId,
+            match_id: `53_20252026_${requestedExternalId}`,
+            baseline_hash: preview.computeStablePagePropsHash(observedPageProps),
+            page_url_base: '/matches/home-0-vs-away-0/abc',
+            mapping_status: 'proposal_only_unaccepted',
+        },
+    });
+    const deps = successDeps(targets, {
+        fetchResultsByExternalId: fetchResultsByExternalId(targets, {
+            [requestedExternalId]: { pageProps: observedPageProps },
+        }),
+        client: fakeClient(),
+    });
+
+    const result = await mod.runCli(validInput(), deps);
+    assert.equal(result.status, 1);
+    assert.equal(result.payload.blocked_reason, 'ROUTE_IDENTITY_GATE_BLOCKED');
+    assert.equal(
+        result.payload.recapture_hash_gate.failed_targets[0].safety_blockers.includes(
+            'proposal_only_mapping_not_accepted'
+        ),
+        true
+    );
+    assert.equal(result.payload.transaction.began, false);
+    assert.equal(result.payload.inserted_raw_match_data_count, 0);
+});
+
 test('all gates pass inserts exactly 50 raw_match_data rows and commits', async () => {
     const deps = successDeps();
     const result = await mod.runCli(validInput(), deps);
