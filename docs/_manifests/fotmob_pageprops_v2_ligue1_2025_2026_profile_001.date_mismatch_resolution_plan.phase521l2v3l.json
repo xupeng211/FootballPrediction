@@ -1,0 +1,167 @@
+{
+    "artifact_type": "date_mismatch_resolution_plan",
+    "artifact_status": "planning_completed_root_cause_identified",
+    "proposal_phase": "Phase 5.21L2V3L",
+    "source_phase": "Phase 5.21L2V3L",
+    "generated_at": "2026-05-19T12:00:00Z",
+    "planning_only": true,
+    "no_write": true,
+    "no_acceptance": true,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "raw_write_retry_performed": false,
+    "raw_write_ready_for_execution": false,
+    "accepted_mapping_count": 0,
+    "source_review_result_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.identity_mapping_acceptance_review_result.phase521l2v3k.json",
+    "source_review_plan_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.identity_mapping_acceptance_review_plan.phase521l2v3j.json",
+    "source_normalization_proposal_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.schedule_detail_identity_normalization_proposal.phase521l2v3f.json",
+    "source_inventory_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3E.md",
+    "source_manifest_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+    "source_k_review_merge_commit": "9500041a278be7bd7d85ba7aa36921b4bcbd3552",
+    "date_provenance_analysis": {
+        "schedule_date_source": "FotMob API leagues?id=53&season=20252026 source inventory overview.matches.allMatches",
+        "schedule_date_field_path": "overview.matches.allMatches[].matchTimeUTC or equivalent",
+        "schedule_date_authority": "league schedule listing via FotMob public API",
+        "schedule_date_represents": "scheduled match date as listed in the league season overview",
+        "detail_date_source": "pageProps.general.matchTimeUTC from detail page fetched via schedule pageUrl",
+        "detail_date_field_path": "pageProps.general.matchTimeUTC",
+        "detail_date_authority": "detail page canonical match, which may differ from schedule target when slug is reused",
+        "detail_date_represents": "actual match date of the canonical/recent fixture served by FotMob for that pageUrl slug",
+        "date_source_divergence": "schedule date comes from overview listing; detail date comes from detail page which may resolve to a different fixture when pageUrl slug is shared across fixtures"
+    },
+    "root_cause": {
+        "primary": "fotmob_pageurl_slug_cross_fixture_reuse",
+        "confidence": "high",
+        "explanation": "FotMob uses the same pageUrl base slug for both home and away fixtures between the same two teams within a season. The slug /matches/{home}-vs-{away}/{slug} is shared. When the fetcher navigates to the schedule target's pageUrl, FotMob serves the most recent/canonical fixture for that slug, which is typically the reverse/second-leg fixture. The schedule external_id and detail external_id differ because they represent distinct fixtures that share the same pageUrl base.",
+        "supporting_evidence": [
+            "All 8 pairs share the same pageUrl base",
+            "All 8 pairs have team names in reversed home/away order",
+            "Schedule dates are all Aug-Sep 2025 (early season, Matchdays 1-7)",
+            "Detail dates are all Jan-May 2026 (mid-to-late season)",
+            "Detail dates cluster in two groups: 5 on May 17 2026 (likely Matchday 38), 3 on Jan 17-24 2026 (mid-season)",
+            "Schedule external_ids and detail external_ids are distinct and non-overlapping",
+            "No multiple detail IDs per schedule ID or vice versa",
+            "All 8 share match status 'finished'",
+            "Source inventory confirms schedule IDs are from league overview allMatches"
+        ],
+        "sub_classifications": {
+            "reverse_fixture_second_leg": {
+                "count": 8,
+                "explanation": "Schedule ID points to the first meeting; detail ID points to the reverse fixture. The team pair is reversed, consistent with home/away swap for the return fixture."
+            },
+            "cross_season_slug_reuse": {
+                "count": 0,
+                "explanation": "All mismatches are within the same 2025/2026 season. No cross-season slug reuse detected."
+            },
+            "timezone_only_mismatch": {
+                "count": 0,
+                "explanation": "Date gaps of 118-275 days cannot be explained by timezone differences alone."
+            }
+        }
+    },
+    "date_gap_pattern_analysis": {
+        "cluster_1_matchday_38_likely": {
+            "detail_date": "2026-05-17T19:00:00.000Z",
+            "detail_ids": ["4830757", "4830758", "4830759", "4830760", "4830763"],
+            "schedule_ids": ["4830466", "4830461", "4830481", "4830496", "4830511"],
+            "date_gap_range_days": "232-275",
+            "schedule_date_range": "2025-08-15 to 2025-09-27",
+            "interpretation": "Schedule targets from early-season Matchdays 1-7. Detail reverse fixtures all from the final matchday (Matchday 38) of Ligue 1 2025/2026."
+        },
+        "cluster_2_mid_season_likely": {
+            "detail_date": "2026-01-17 to 2026-01-24",
+            "detail_ids": ["4830619", "4830620", "4830622"],
+            "schedule_ids": ["4830463", "4830465", "4830508"],
+            "date_gap_range_days": "118-161",
+            "schedule_date_range": "2025-08-16 to 2025-09-27",
+            "interpretation": "Schedule targets from early-season Matchdays 1-7. Detail reverse fixtures from mid-season (approximately Matchday 19-20) of Ligue 1 2025/2026."
+        }
+    },
+    "pageurl_base_as_mapping_anchor_assessment": {
+        "pageurl_base_sufficient_for_acceptance": false,
+        "pageurl_base_confidence": "weak_to_medium",
+        "rationale": "A shared pageUrl base confirms the same team pair but does not distinguish between first-leg and second-leg fixtures. Date mismatch of 118-275 days indicates different matches. pageUrl base alone is insufficient for identity mapping acceptance.",
+        "requires_additional_evidence": [
+            "exact date match or explicit date compatibility explanation",
+            "confirmed schedule external_id and detail external_id represent the same fixture",
+            "human review of the specific fixture identity"
+        ]
+    },
+    "proposed_date_compatibility_rules": {
+        "date_match": {
+            "condition": "schedule_date == detail_date",
+            "mapping_confidence": "high",
+            "acceptance_eligible": "yes_with_human_review"
+        },
+        "same_utc_day": {
+            "condition": "abs(schedule_date - detail_date) < 24h",
+            "mapping_confidence": "high",
+            "acceptance_eligible": "yes_with_human_review",
+            "note": "Tolerates minor timezone/UTC normalization differences"
+        },
+        "reverse_fixture_detected": {
+            "condition": "same pageUrl base, reversed teams, date gap > 30d",
+            "mapping_confidence": "confirmed_mismatch_not_acceptance",
+            "acceptance_eligible": "no",
+            "action": "The schedule and detail IDs represent different matches. The mapping is an identity mismatch, not an identity mapping. Do not accept."
+        },
+        "postponed_or_rescheduled": {
+            "condition": "same teams, same pageUrl base, date gap < 30d, explicit reschedule evidence",
+            "mapping_confidence": "medium",
+            "acceptance_eligible": "yes_with_human_review_and_explicit_evidence"
+        },
+        "cross_season_slug_reuse": {
+            "condition": "same pageUrl base, different season",
+            "mapping_confidence": "confirmed_mismatch_not_acceptance",
+            "acceptance_eligible": "no"
+        },
+        "unresolved_large_gap": {
+            "condition": "date gap > 30d without explanation",
+            "mapping_confidence": "invalid_mapping",
+            "acceptance_eligible": "no",
+            "action": "Block until root cause is explained and classified."
+        }
+    },
+    "proposed_date_resolution_statuses": {
+        "date_match": "schedule and detail dates match exactly",
+        "same_utc_day": "dates are on the same UTC calendar day",
+        "timezone_only_mismatch": "dates differ only by timezone offset, same UTC instant",
+        "within_tolerance": "dates differ by a small, explained amount (e.g., rescheduled same week)",
+        "postponed_or_rescheduled_explained": "date difference has a documented postponement/reschedule reason",
+        "reverse_fixture_detected": "schedule and detail represent different fixtures (home/away reverse, same season)",
+        "cross_season_slug_reuse": "pageUrl slug reused for a different season entirely",
+        "unresolved_large_gap": "date gap > 30d without verified explanation",
+        "unknown": "insufficient evidence to classify"
+    },
+    "application_to_8_candidates": {
+        "all_8_classification": "reverse_fixture_detected",
+        "all_8_acceptance_eligible": false,
+        "all_8_recommended_action": "These are identity mismatches, not identity mappings. The schedule external_id and detail external_id should NOT be accepted as a mapping because they represent different fixtures. Instead, the fetcher should be fixed to navigate to the correct fixture (using fragment anchor or direct detail API).",
+        "mapping_acceptance_not_applicable": "For reverse fixtures, the correct remediation is not identity mapping acceptance but rather fetcher route correction. The schedule ID should either fetch its own detail page (not the reverse fixture) or the pageUrl should include the specific fixture identifier."
+    },
+    "recommended_remediation": {
+        "short_term": "Classify all 8 candidates as reverse_fixture_detected (identity mismatch, not mapping). Block all from acceptance.",
+        "medium_term": "Implement date compatibility rule engine in fetcher/route normalizer to detect reverse fixtures before attempting identity mapping.",
+        "long_term": "Fix fetcher route to use schedule external_id as fragment anchor (#4830466) when navigating to detail page, ensuring the correct fixture is loaded.",
+        "note": "None of these remediations involve DB writes, identity mapping acceptance, baseline acceptance, or raw write retry."
+    },
+    "raw_write_guard_compatibility": {
+        "date_mismatch_plan_usable_by_raw_write": false,
+        "date_mismatch_plan_is_accepted_mapping": false,
+        "reverse_fixture_detected_blocks_acceptance": true,
+        "reverse_fixture_detected_blocks_raw_write": true,
+        "unresolved_date_mismatch_blocks_acceptance": true,
+        "unresolved_date_mismatch_blocks_raw_write": true,
+        "pageurl_base_alone_insufficient_for_acceptance": true,
+        "identity_mapping_acceptance_does_not_accept_baseline": true,
+        "identity_mapping_acceptance_does_not_authorize_db_write": true,
+        "raw_write_still_requires_separate_identity_mapping_acceptance": true,
+        "raw_write_still_requires_separate_baseline_acceptance": true,
+        "raw_write_still_requires_separate_final_db_write_authorization": true
+    },
+    "recommended_next_step": "date_mismatch_resolution_rule_implementation"
+}
