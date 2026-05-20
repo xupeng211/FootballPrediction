@@ -7,6 +7,15 @@ const ACCEPTED_MAPPING_REQUIRED = 'accepted_schedule_detail_mapping_required';
 const FETCH_OR_PARSE_FAILURE = 'fetch_or_parse_failure';
 const BLOCK_OR_CAPTCHA = 'block_or_captcha';
 const METADATA_TARGET_MISMATCH = 'metadata_target_mismatch';
+const DATE_MATCH = 'date_match';
+const SAME_UTC_DAY = 'same_utc_day';
+const TIMEZONE_ONLY_MISMATCH = 'timezone_only_mismatch';
+const POSTPONED_OR_RESCHEDULED_EXPLAINED = 'postponed_or_rescheduled_explained';
+const REVERSE_FIXTURE_DETECTED = 'reverse_fixture_detected';
+const CROSS_SEASON_SLUG_REUSE = 'cross_season_slug_reuse';
+const UNRESOLVED_LARGE_GAP = 'unresolved_large_gap';
+const UNKNOWN_DATE_COMPATIBILITY = 'unknown';
+const LARGE_DATE_GAP_DAYS = 30;
 
 function normalizeText(value) {
     return String(value ?? '').trim();
@@ -67,6 +76,39 @@ function normalizeDateOnly(value) {
     return match ? match[0] : text;
 }
 
+function parseDateInfo(value) {
+    const text = normalizeText(value);
+    if (!text) return { ok: false, reason: 'missing', text: null };
+    const parsed = new Date(text);
+    if (Number.isNaN(parsed.getTime())) return { ok: false, reason: 'invalid', text };
+    const literalDate = text.match(/\d{4}-\d{2}-\d{2}/)?.[0] || null;
+    return {
+        ok: true,
+        text,
+        ms: parsed.getTime(),
+        utc_date: parsed.toISOString().slice(0, 10),
+        literal_date: literalDate,
+    };
+}
+
+function normalizeSeason(value) {
+    const text = normalizeText(value);
+    if (!text) return null;
+    const compact = text.replace(/[^0-9]/g, '');
+    if (/^\d{8}$/.test(compact)) return `${compact.slice(0, 4)}/${compact.slice(4, 8)}`;
+    const match = text.match(/(\d{4})\D+(\d{4})/);
+    if (match) return `${match[1]}/${match[2]}`;
+    return text;
+}
+
+function seasonFromDateInfo(dateInfo) {
+    if (!dateInfo?.ok) return null;
+    const date = new Date(dateInfo.ms);
+    const year = date.getUTCFullYear();
+    const month = date.getUTCMonth() + 1;
+    return month >= 7 ? `${year}/${year + 1}` : `${year - 1}/${year}`;
+}
+
 function normalizeStatus(value) {
     if (isPlainObject(value)) {
         return firstText(value.type, value.status, value.reason, value.long, value.short);
@@ -106,13 +148,13 @@ function extractObservedMetadata(input = {}) {
         observed_page_url_base: normalizePageUrlBase(
             firstText(
                 input.observedPageUrlBase,
-                input.canonicalPageUrl,
-                input.finalUrl,
                 general.pageUrl,
                 general.pageURL,
                 general.canonicalUrl,
                 pageProps.pageUrl,
-                pageProps.canonicalUrl
+                pageProps.canonicalUrl,
+                input.canonicalPageUrl,
+                input.finalUrl
             )
         ),
         observed_home_team: firstText(
@@ -134,6 +176,16 @@ function extractObservedMetadata(input = {}) {
             header.matchTimeUTC,
             header.utcTime,
             header.status?.utcTime
+        ),
+        observed_season: normalizeSeason(
+            firstText(
+                input.observedSeason,
+                general.season,
+                general.leagueSeason,
+                general.parentLeagueSeason,
+                pageProps.season,
+                pageProps.leagueSeason
+            )
         ),
         observed_status: firstText(
             input.observedStatus,
@@ -166,6 +218,9 @@ function extractRequestedMetadata(input = {}) {
         requested_home_team: firstText(input.requestedHomeTeam, target.home_team, target.homeTeam),
         requested_away_team: firstText(input.requestedAwayTeam, target.away_team, target.awayTeam),
         requested_match_date: firstText(input.requestedMatchDate, target.match_date, target.kickoff_time, target.date),
+        requested_season: normalizeSeason(
+            firstText(input.requestedSeason, target.season, target.league_season, target.leagueSeason)
+        ),
         requested_status: firstText(input.requestedStatus, target.status),
     };
 }
@@ -218,11 +273,226 @@ function compareTeamDateStatus(requested = {}, observed = {}) {
     return 'unknown';
 }
 
-function inferMappingConfidence({ externalIdStatus, pageUrlStatus, teamDateStatus }) {
+function hasExplicitRescheduleEvidence(input = {}) {
+    if (
+        input.postponedOrRescheduledEvidence === true ||
+        input.rescheduleEvidence === true ||
+        input.explicitRescheduleEvidence === true
+    ) {
+        return true;
+    }
+    const evidence = firstText(
+        input.postponedOrRescheduledEvidence,
+        input.rescheduleEvidence,
+        input.explicitRescheduleEvidence,
+        input.dateMismatchExplanation,
+        input.dateMismatchEvidence
+    );
+    if (!evidence) return false;
+    return /postpon|reschedul|human_review|explicit/i.test(evidence);
+}
+
+function buildTeamPairEvidence(requested = {}, observed = {}) {
+    const requestedHome = normalizeTeam(requested.requested_home_team);
+    const requestedAway = normalizeTeam(requested.requested_away_team);
+    const observedHome = normalizeTeam(observed.observed_home_team);
+    const observedAway = normalizeTeam(observed.observed_away_team);
+    const teamsKnown = Boolean(requestedHome && requestedAway && observedHome && observedAway);
+    const sameOrder = teamsKnown && requestedHome === observedHome && requestedAway === observedAway;
+    const reversedOrder = teamsKnown && requestedHome === observedAway && requestedAway === observedHome;
+    return {
+        teams_known: teamsKnown,
+        same_order: sameOrder,
+        reversed_home_away: reversedOrder,
+        same_pair_any_order: sameOrder || reversedOrder,
+    };
+}
+
+function buildDateCompatibilityResult(status, details = {}) {
+    const hardBlockStatuses = new Set([
+        REVERSE_FIXTURE_DETECTED,
+        CROSS_SEASON_SLUG_REUSE,
+        UNRESOLVED_LARGE_GAP,
+        UNKNOWN_DATE_COMPATIBILITY,
+    ]);
+    return {
+        date_compatibility_status: status,
+        status,
+        positive_evidence: status === DATE_MATCH || status === SAME_UTC_DAY,
+        review_required:
+            status === TIMEZONE_ONLY_MISMATCH ||
+            status === POSTPONED_OR_RESCHEDULED_EXPLAINED ||
+            hardBlockStatuses.has(status),
+        blocks_identity_mapping_acceptance: hardBlockStatuses.has(status),
+        blocks_raw_write: hardBlockStatuses.has(status),
+        ...details,
+    };
+}
+
+function buildSeasonContext(requested = {}, observed = {}, requestedDate = {}, observedDate = {}) {
+    const requestedSeason = normalizeSeason(requested.requested_season) || seasonFromDateInfo(requestedDate);
+    const observedSeason = normalizeSeason(observed.observed_season) || seasonFromDateInfo(observedDate);
+    const seasonKnown = Boolean(requestedSeason && observedSeason);
+    const sameSeason = seasonKnown ? requestedSeason === observedSeason : null;
+    return { requestedSeason, observedSeason, seasonKnown, sameSeason };
+}
+
+function buildDateGap(requestedDate = {}, observedDate = {}) {
+    if (!requestedDate.ok || !observedDate.ok) {
+        return { dateGapHours: null, dateGapDays: null, largeDateGap: false };
+    }
+    const dateGapHours = Math.abs(observedDate.ms - requestedDate.ms) / 36e5;
+    const dateGapDays = dateGapHours === null ? null : dateGapHours / 24;
+    const largeDateGap = dateGapDays !== null && dateGapDays > LARGE_DATE_GAP_DAYS;
+    return { dateGapHours, dateGapDays, largeDateGap };
+}
+
+function buildDateCompatibilityBaseDetails(context = {}) {
+    const { requestedDate, observedDate, seasonContext, dateGap, teamEvidence, pageUrlStatus } = context;
+    return {
+        requested_date_valid: requestedDate.ok,
+        observed_date_valid: observedDate.ok,
+        requested_date_error: requestedDate.ok ? null : requestedDate.reason,
+        observed_date_error: observedDate.ok ? null : observedDate.reason,
+        requested_utc_date: requestedDate.utc_date || null,
+        observed_utc_date: observedDate.utc_date || null,
+        requested_season: seasonContext.requestedSeason,
+        observed_season: seasonContext.observedSeason,
+        same_season: seasonContext.sameSeason,
+        date_gap_hours: dateGap.dateGapHours === null ? null : Number(dateGap.dateGapHours.toFixed(3)),
+        date_gap_days: dateGap.dateGapDays === null ? null : Number(dateGap.dateGapDays.toFixed(3)),
+        same_pair_any_order: teamEvidence.same_pair_any_order,
+        reversed_home_away: teamEvidence.reversed_home_away,
+        page_url_base_match_status: pageUrlStatus,
+    };
+}
+
+function buildDateCompatibilityContext(input = {}) {
+    const requested = input.requested || extractRequestedMetadata(input);
+    const observed = input.observed || extractObservedMetadata(input);
+    const pageUrlStatus =
+        input.pageUrlStatus || comparePageUrlBases(requested.requested_page_url_base, observed.observed_page_url_base);
+    const requestedDate = parseDateInfo(requested.requested_match_date);
+    const observedDate = parseDateInfo(observed.observed_match_date);
+    const teamEvidence = buildTeamPairEvidence(requested, observed);
+    const seasonContext = buildSeasonContext(requested, observed, requestedDate, observedDate);
+    const dateGap = buildDateGap(requestedDate, observedDate);
+    const baseDetails = buildDateCompatibilityBaseDetails({
+        requestedDate,
+        observedDate,
+        seasonContext,
+        dateGap,
+        teamEvidence,
+        pageUrlStatus,
+    });
+
+    return {
+        requestedDate,
+        observedDate,
+        pageUrlStatus,
+        seasonKnown: seasonContext.seasonKnown,
+        sameSeason: seasonContext.sameSeason,
+        teamEvidence,
+        largeDateGap: dateGap.largeDateGap,
+        baseDetails,
+    };
+}
+
+function hasTimezoneOnlyMismatch(requestedDate, observedDate) {
+    return (
+        requestedDate.ms === observedDate.ms &&
+        requestedDate.literal_date &&
+        observedDate.literal_date &&
+        requestedDate.literal_date !== observedDate.literal_date
+    );
+}
+
+function pickDateCompatibilityStatus(input = {}, context = {}) {
+    const rules = [
+        {
+            status: UNKNOWN_DATE_COMPATIBILITY,
+            matches: () => !context.requestedDate.ok || !context.observedDate.ok,
+        },
+        {
+            status: CROSS_SEASON_SLUG_REUSE,
+            matches: () => context.seasonKnown && context.sameSeason === false && context.pageUrlStatus === 'match',
+        },
+        {
+            status: REVERSE_FIXTURE_DETECTED,
+            matches: () =>
+                input.reverseFixtureDetected === true ||
+                (context.pageUrlStatus === 'match' &&
+                    context.teamEvidence.reversed_home_away === true &&
+                    context.largeDateGap),
+        },
+        {
+            status: TIMEZONE_ONLY_MISMATCH,
+            matches: () => hasTimezoneOnlyMismatch(context.requestedDate, context.observedDate),
+        },
+        {
+            status: DATE_MATCH,
+            matches: () => context.requestedDate.ms === context.observedDate.ms,
+        },
+        {
+            status: SAME_UTC_DAY,
+            matches: () => context.requestedDate.utc_date === context.observedDate.utc_date,
+        },
+        {
+            status: POSTPONED_OR_RESCHEDULED_EXPLAINED,
+            matches: () => hasExplicitRescheduleEvidence(input) === true,
+        },
+        {
+            status: UNRESOLVED_LARGE_GAP,
+            matches: () => context.largeDateGap,
+        },
+    ];
+    return rules.find(rule => rule.matches())?.status || UNKNOWN_DATE_COMPATIBILITY;
+}
+
+function evaluateDateCompatibility(input = {}) {
+    const context = buildDateCompatibilityContext(input);
+    const status = pickDateCompatibilityStatus(input, context);
+    return buildDateCompatibilityResult(status, context.baseDetails);
+}
+
+function compareExternalIds(requestedId, observedId) {
+    if (requestedId && observedId && requestedId === observedId) return IDENTITY_MATCH;
+    if (requestedId && observedId && requestedId !== observedId) return REQUESTED_OBSERVED_MISMATCH;
+    return 'unknown';
+}
+
+function buildIdentityStatuses(input = {}, externalIdStatus = 'unknown') {
+    if (input.fetchOrParseFailure === true) {
+        return {
+            canonicalIdentityStatus: FETCH_OR_PARSE_FAILURE,
+            identityReconciliationStatus: FETCH_OR_PARSE_FAILURE,
+        };
+    }
+    if (input.blockOrCaptcha === true || (Array.isArray(input.blockMarkers) && input.blockMarkers.length > 0)) {
+        return {
+            canonicalIdentityStatus: BLOCK_OR_CAPTCHA,
+            identityReconciliationStatus: BLOCK_OR_CAPTCHA,
+        };
+    }
+    if (externalIdStatus === REQUESTED_OBSERVED_MISMATCH) {
+        return {
+            canonicalIdentityStatus: REQUESTED_OBSERVED_MISMATCH,
+            identityReconciliationStatus:
+                input.acceptedIdentityMappingPresent === true ? 'accepted_schedule_detail_mapping' : UNRESOLVED_MAPPING,
+        };
+    }
+    return {
+        canonicalIdentityStatus: externalIdStatus,
+        identityReconciliationStatus: externalIdStatus,
+    };
+}
+
+function inferMappingConfidence({ externalIdStatus, pageUrlStatus, teamDateStatus, dateCompatibility }) {
     if (externalIdStatus === IDENTITY_MATCH) return 'high';
     if (externalIdStatus !== REQUESTED_OBSERVED_MISMATCH) return 'unknown';
+    if (dateCompatibility?.blocks_identity_mapping_acceptance === true) return 'blocked';
     if (pageUrlStatus === 'match' && teamDateStatus === 'compatible') return 'medium';
-    if (pageUrlStatus === 'match') return 'medium';
+    if (pageUrlStatus === 'match') return 'low';
     if (pageUrlStatus === 'missing_page_url_base' || teamDateStatus === 'unknown') return 'unknown';
     return 'low';
 }
@@ -234,6 +504,7 @@ function buildSafetyBlockers({
     externalIdStatus,
     pageUrlStatus,
     teamDateStatus,
+    dateCompatibility,
 }) {
     const blockers = new Set();
     const blockMarkers = Array.isArray(input.blockMarkers) ? input.blockMarkers : [];
@@ -255,6 +526,15 @@ function buildSafetyBlockers({
     addWhen(pageUrlStatus === 'missing_page_url_base', 'missing_page_url_base');
     addWhen(pageUrlStatus === 'mismatch', 'page_url_base_mismatch');
     addWhen(teamDateStatus !== 'compatible' && teamDateStatus !== 'unknown', 'team_date_status_mismatch');
+    if (dateCompatibility?.blocks_raw_write === true) {
+        blockers.add(dateCompatibility.date_compatibility_status || UNKNOWN_DATE_COMPATIBILITY);
+    }
+    if (externalIdStatus === REQUESTED_OBSERVED_MISMATCH) {
+        addWhen(
+            pageUrlStatus === 'match' && dateCompatibility?.positive_evidence !== true,
+            'page_url_base_alone_insufficient_for_acceptance'
+        );
+    }
     addWhen(input.multipleDetailIdsForSameScheduleId === true, 'multiple_detail_ids_for_same_schedule_id');
     addWhen(input.multipleScheduleIdsForSameDetailId === true, 'multiple_schedule_ids_for_same_detail_id');
     addWhen(input.metadataTargetMismatch === true, METADATA_TARGET_MISMATCH);
@@ -267,16 +547,21 @@ function reconcileRouteIdentity(input = {}) {
     const requestedId = requested.requested_schedule_external_id;
     const observedId = observed.observed_detail_external_id;
 
-    let externalIdStatus = 'unknown';
-    if (requestedId && observedId && requestedId === observedId) externalIdStatus = IDENTITY_MATCH;
-    if (requestedId && observedId && requestedId !== observedId) externalIdStatus = REQUESTED_OBSERVED_MISMATCH;
-
+    const externalIdStatus = compareExternalIds(requestedId, observedId);
     const pageUrlStatus = comparePageUrlBases(requested.requested_page_url_base, observed.observed_page_url_base);
     const teamDateStatus = compareTeamDateStatus(requested, observed);
+    const dateCompatibility = evaluateDateCompatibility({
+        ...input,
+        requested,
+        observed,
+        pageUrlStatus,
+    });
+    const dateCompatibilityBlocksRawWrite = dateCompatibility.blocks_raw_write === true;
     const mappingConfidence = inferMappingConfidence({
         externalIdStatus,
         pageUrlStatus,
         teamDateStatus,
+        dateCompatibility,
     });
     const safetyBlockers = buildSafetyBlockers({
         input,
@@ -285,25 +570,15 @@ function reconcileRouteIdentity(input = {}) {
         externalIdStatus,
         pageUrlStatus,
         teamDateStatus,
+        dateCompatibility,
     });
 
-    let canonicalIdentityStatus = externalIdStatus;
-    let identityReconciliationStatus = externalIdStatus;
-    if (input.fetchOrParseFailure === true) {
-        canonicalIdentityStatus = FETCH_OR_PARSE_FAILURE;
-        identityReconciliationStatus = FETCH_OR_PARSE_FAILURE;
-    } else if (input.blockOrCaptcha === true || (Array.isArray(input.blockMarkers) && input.blockMarkers.length > 0)) {
-        canonicalIdentityStatus = BLOCK_OR_CAPTCHA;
-        identityReconciliationStatus = BLOCK_OR_CAPTCHA;
-    } else if (externalIdStatus === REQUESTED_OBSERVED_MISMATCH) {
-        canonicalIdentityStatus = REQUESTED_OBSERVED_MISMATCH;
-        identityReconciliationStatus =
-            input.acceptedIdentityMappingPresent === true ? 'accepted_schedule_detail_mapping' : UNRESOLVED_MAPPING;
-    }
+    const { canonicalIdentityStatus, identityReconciliationStatus } = buildIdentityStatuses(input, externalIdStatus);
 
     const rawWriteBlocked =
-        identityReconciliationStatus !== IDENTITY_MATCH &&
-        identityReconciliationStatus !== 'accepted_schedule_detail_mapping';
+        dateCompatibilityBlocksRawWrite ||
+        (identityReconciliationStatus !== IDENTITY_MATCH &&
+            identityReconciliationStatus !== 'accepted_schedule_detail_mapping');
 
     return {
         requested_schedule_external_id: requestedId,
@@ -313,6 +588,15 @@ function reconcileRouteIdentity(input = {}) {
         observed_page_url_base: observed.observed_page_url_base,
         page_url_base_match_status: pageUrlStatus,
         team_date_status_match_status: teamDateStatus,
+        date_compatibility_status: dateCompatibility.date_compatibility_status,
+        date_compatibility_result: dateCompatibility,
+        date_gap_days: dateCompatibility.date_gap_days,
+        date_gap_hours: dateCompatibility.date_gap_hours,
+        reverse_fixture_detected: dateCompatibility.date_compatibility_status === REVERSE_FIXTURE_DETECTED,
+        date_compatibility_blocks_raw_write: dateCompatibilityBlocksRawWrite,
+        date_compatibility_blocks_identity_mapping_acceptance:
+            dateCompatibility.blocks_identity_mapping_acceptance === true &&
+            externalIdStatus === REQUESTED_OBSERVED_MISMATCH,
         schedule_external_id_vs_detail_external_id_status: externalIdStatus,
         canonical_identity_status: canonicalIdentityStatus,
         identity_reconciliation_status: identityReconciliationStatus,
@@ -330,6 +614,10 @@ function assertRawWriteIdentityGate(reconciliation = {}) {
     const ok =
         reconciliation.raw_write_blocked !== true &&
         reconciliation.proposal_mapping_used_for_raw_write !== true &&
+        !blockers.includes(REVERSE_FIXTURE_DETECTED) &&
+        !blockers.includes(CROSS_SEASON_SLUG_REUSE) &&
+        !blockers.includes(UNRESOLVED_LARGE_GAP) &&
+        !blockers.includes(UNKNOWN_DATE_COMPATIBILITY) &&
         !blockers.includes('proposal_only_mapping_not_accepted') &&
         !blockers.includes('accepted_identity_mapping_missing');
     return {
@@ -349,11 +637,21 @@ module.exports = {
     FETCH_OR_PARSE_FAILURE,
     BLOCK_OR_CAPTCHA,
     METADATA_TARGET_MISMATCH,
+    DATE_MATCH,
+    SAME_UTC_DAY,
+    TIMEZONE_ONLY_MISMATCH,
+    POSTPONED_OR_RESCHEDULED_EXPLAINED,
+    REVERSE_FIXTURE_DETECTED,
+    CROSS_SEASON_SLUG_REUSE,
+    UNRESOLVED_LARGE_GAP,
+    UNKNOWN_DATE_COMPATIBILITY,
     normalizePageUrlBase,
     normalizeDateOnly,
+    normalizeSeason,
     extractRequestedMetadata,
     extractObservedMetadata,
     compareTeamDateStatus,
+    evaluateDateCompatibility,
     reconcileRouteIdentity,
     assertRawWriteIdentityGate,
 };

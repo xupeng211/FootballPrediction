@@ -648,6 +648,17 @@ async function recaptureTargetsSequential(candidates = [], dependencies = {}) {
         unresolved_schedule_detail_mapping_count: publicTargets.filter(
             target => target.identity_reconciliation_status === 'unresolved_schedule_detail_mapping'
         ).length,
+        reverse_fixture_detected_count: publicTargets.filter(
+            target => target.date_compatibility_status === 'reverse_fixture_detected'
+        ).length,
+        unresolved_large_gap_count: publicTargets.filter(
+            target => target.date_compatibility_status === 'unresolved_large_gap'
+        ).length,
+        cross_season_slug_reuse_count: publicTargets.filter(
+            target => target.date_compatibility_status === 'cross_season_slug_reuse'
+        ).length,
+        unknown_date_status_count: publicTargets.filter(target => target.date_compatibility_status === 'unknown')
+            .length,
         request_count: publicTargets.length,
         request_delay_ms: requestDelayMs,
     };
@@ -949,6 +960,10 @@ function buildPayload({
                   blocked_count: recaptureGate.blocked_count,
                   route_identity_blocked_count: recaptureGate.route_identity_blocked_count,
                   unresolved_schedule_detail_mapping_count: recaptureGate.unresolved_schedule_detail_mapping_count,
+                  reverse_fixture_detected_count: recaptureGate.reverse_fixture_detected_count,
+                  unresolved_large_gap_count: recaptureGate.unresolved_large_gap_count,
+                  cross_season_slug_reuse_count: recaptureGate.cross_season_slug_reuse_count,
+                  unknown_date_status_count: recaptureGate.unknown_date_status_count,
                   request_count: recaptureGate.request_count,
                   request_delay_ms: recaptureGate.request_delay_ms,
                   first_target: recaptureGate.public_targets[0] || null,

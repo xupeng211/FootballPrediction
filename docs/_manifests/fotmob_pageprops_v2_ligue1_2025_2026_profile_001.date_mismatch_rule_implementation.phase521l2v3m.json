@@ -1,0 +1,127 @@
+{
+    "artifact_type": "date_mismatch_rule_implementation",
+    "artifact_status": "implementation_completed_no_write",
+    "proposal_phase": "Phase 5.21L2V3M",
+    "source_phase": "Phase 5.21L2V3L",
+    "generated_at": "2026-05-20T00:00:00Z",
+    "implementation_only": true,
+    "no_write": true,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "raw_write_retry_performed": false,
+    "raw_write_ready_for_execution": false,
+    "accepted_mapping_count": 0,
+    "review_blocked_count": 8,
+    "reverse_fixture_detected_count": 8,
+    "date_rule_engine_implemented": true,
+    "integrated_with_fotmob_route_identity_reconciler": true,
+    "integrated_with_raw_write_guard": true,
+    "date_rule_engine_statuses": [
+        "date_match",
+        "same_utc_day",
+        "timezone_only_mismatch",
+        "postponed_or_rescheduled_explained",
+        "reverse_fixture_detected",
+        "cross_season_slug_reuse",
+        "unresolved_large_gap",
+        "unknown"
+    ],
+    "blocking_statuses": ["reverse_fixture_detected", "cross_season_slug_reuse", "unresolved_large_gap", "unknown"],
+    "review_only_statuses": ["timezone_only_mismatch", "postponed_or_rescheduled_explained"],
+    "positive_evidence_statuses": ["date_match", "same_utc_day"],
+    "rule_contract": {
+        "date_match_is_positive_evidence_not_accepted_mapping": true,
+        "same_utc_day_is_positive_evidence_not_accepted_mapping": true,
+        "timezone_only_mismatch_requires_review": true,
+        "postponed_or_rescheduled_requires_explicit_evidence": true,
+        "reverse_fixture_detected_blocks_identity_mapping_acceptance": true,
+        "reverse_fixture_detected_blocks_raw_write": true,
+        "cross_season_slug_reuse_blocks_identity_mapping_acceptance": true,
+        "cross_season_slug_reuse_blocks_raw_write": true,
+        "unresolved_large_gap_blocks_identity_mapping_acceptance": true,
+        "unresolved_large_gap_blocks_raw_write": true,
+        "unknown_blocks_identity_mapping_acceptance": true,
+        "unknown_blocks_raw_write": true,
+        "pageurl_base_match_alone_blocks_acceptance": true
+    },
+    "known_mappings": [
+        {
+            "schedule_external_id": "4830466",
+            "detail_external_id": "4830759",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        },
+        {
+            "schedule_external_id": "4830461",
+            "detail_external_id": "4830758",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        },
+        {
+            "schedule_external_id": "4830481",
+            "detail_external_id": "4830763",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        },
+        {
+            "schedule_external_id": "4830496",
+            "detail_external_id": "4830757",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        },
+        {
+            "schedule_external_id": "4830511",
+            "detail_external_id": "4830760",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        },
+        {
+            "schedule_external_id": "4830463",
+            "detail_external_id": "4830622",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        },
+        {
+            "schedule_external_id": "4830465",
+            "detail_external_id": "4830619",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        },
+        {
+            "schedule_external_id": "4830508",
+            "detail_external_id": "4830620",
+            "classification": "reverse_fixture_detected",
+            "accepted_mapping": false,
+            "raw_write_blocked": true
+        }
+    ],
+    "raw_write_guard_result": {
+        "reverse_fixture_detected_enters_safety_blockers": true,
+        "raw_write_runner_no_go_on_reverse_fixture_detected": true,
+        "raw_write_runner_no_go_on_unresolved_large_gap": true,
+        "raw_write_runner_no_go_on_cross_season_slug_reuse": true,
+        "raw_write_runner_no_go_on_unknown_date_status": true,
+        "raw_write_ready_for_execution": false,
+        "transaction_began": false,
+        "inserted_raw_match_data_count": 0
+    },
+    "separate_authorization_still_required": {
+        "requires_separate_identity_mapping_acceptance": true,
+        "requires_separate_baseline_acceptance": true,
+        "requires_separate_final_db_write_authorization": true
+    },
+    "recommended_next_step": "expanded no-write date rule verification across 50 targets"
+}
