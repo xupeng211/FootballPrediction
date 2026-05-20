@@ -48,7 +48,7 @@ test('L2V3O artifact records no-write source-controlled investigation only', () 
         manifest.continued_expanded_date_rule_investigation_status,
         'completed_no_write_source_controlled_artifact_only'
     );
-    assert.equal(manifest.controlled_metadata_check_performed, false);
+    assert.equal(manifest.phase_5_21_l2v3o_controlled_metadata_check_performed, false);
     assert.equal(manifest.raw_write_ready_for_execution, false);
 });
 
