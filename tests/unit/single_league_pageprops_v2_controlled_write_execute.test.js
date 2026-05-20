@@ -104,6 +104,12 @@ function validArgv(overrides = {}) {
     return Object.entries(base).flatMap(([key, value]) => [`--${key}`, value]);
 }
 
+function matchTimeForExternalId(externalId) {
+    const index = Number(externalId) - 4830460;
+    const day = String((index % 20) + 1).padStart(2, '0');
+    return `2025-08-${day}T18:45:00.000Z`;
+}
+
 function fakePageProps(externalId, overrides = {}) {
     return {
         content: {
@@ -116,7 +122,7 @@ function fakePageProps(externalId, overrides = {}) {
             h2h: { matches: [] },
             table: { all: [] },
         },
-        general: { matchId: externalId, leagueId: 53 },
+        general: { matchId: externalId, leagueId: 53, matchTimeUTC: matchTimeForExternalId(externalId) },
         header: { teams: [{ name: `Home ${externalId}` }, { name: `Away ${externalId}` }] },
         seo: { eventJSONLD: { '@type': 'SportsEvent' } },
         translations: { ok: true },
@@ -597,6 +603,61 @@ for (const [name, fetchOverride, pattern] of [
         );
     });
 }
+
+test('single-league controlled write blocks reverse fixture before transaction', async () => {
+    const requestedExternalId = '4830460';
+    const observedPageProps = fakePageProps(requestedExternalId, {
+        general: {
+            ...fakePageProps(requestedExternalId).general,
+            matchId: '4830759',
+            homeTeam: { name: 'Away 0' },
+            awayTeam: { name: 'Home 0' },
+            matchTimeUTC: '2026-05-17T19:00:00.000Z',
+            status: 'finished',
+            pageUrl: '/matches/away-0-vs-home-0/reused#4830759',
+        },
+        header: { teams: [{ name: 'Away 0' }, { name: 'Home 0' }] },
+    });
+    const targets = candidates({
+        0: {
+            external_id: requestedExternalId,
+            match_id: `53_20252026_${requestedExternalId}`,
+            home_team: 'Home 0',
+            away_team: 'Away 0',
+            match_date: '2025-08-01T18:45:00.000Z',
+            baseline_hash: preview.computeStablePagePropsHash(observedPageProps),
+            page_url_base: '/matches/away-0-vs-home-0/reused',
+        },
+    });
+    const byExternalId = fetchResults(targets, {
+        [requestedExternalId]: { pageProps: observedPageProps },
+    });
+    const client = fakeClient();
+    const result = await mod.runCli(validInput(), {
+        client,
+        acceptedIdentityMappingPresent: true,
+        manifest: manifest({ candidate_targets: targets }),
+        protectedTableRowsBefore: protectedRows(),
+        constraintRows: constraintRows(),
+        matchRows: matchRows(targets),
+        existingV2Rows: [],
+        fetchResultsByExternalId: byExternalId,
+        writeManifestFile: () => {},
+        writeReportFile: () => {},
+        output: () => {},
+    });
+
+    assert.equal(result.status, 1);
+    assert.equal(result.payload.blocked_reason, 'recapture_hash_gate_blocked');
+    assert.equal(result.payload.recapture_hash_gate.reverse_fixture_detected_count, 1);
+    assert.equal(result.payload.recapture_hash_gate.targets[0].date_compatibility_status, 'reverse_fixture_detected');
+    assert.equal(result.payload.raw_match_data_write_executed, false);
+    assert.equal(result.payload.transaction.began, false);
+    assert.equal(
+        client.queries.some(query => /^BEGIN$/i.test(query.sql)),
+        false
+    );
+});
 
 test('all hashes match begins transaction and inserts exactly 50 rows', async () => {
     const targets = candidates();

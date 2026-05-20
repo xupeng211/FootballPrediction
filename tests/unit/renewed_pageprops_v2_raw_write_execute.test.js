@@ -60,6 +60,12 @@ function validInput(overrides = {}) {
     };
 }
 
+function matchTimeForExternalId(externalId) {
+    const index = Number(externalId) - 4830460;
+    const day = String((index % 20) + 1).padStart(2, '0');
+    return `2025-08-${day}T18:45:00.000Z`;
+}
+
 function fakePageProps(externalId, overrides = {}) {
     return {
         content: {
@@ -72,7 +78,7 @@ function fakePageProps(externalId, overrides = {}) {
             h2h: { matches: [] },
             table: { all: [] },
         },
-        general: { matchId: externalId, leagueId: 53 },
+        general: { matchId: externalId, leagueId: 53, matchTimeUTC: matchTimeForExternalId(externalId) },
         header: { teams: [{ name: `Home ${externalId}` }, { name: `Away ${externalId}` }] },
         seo: { eventJSONLD: { '@type': 'SportsEvent' } },
         translations: { ok: true },
@@ -478,6 +484,60 @@ test('unresolved schedule/detail route identity mismatch blocks before transacti
     assert.equal(
         result.payload.recapture_hash_gate.failed_targets[0].observed_detail_external_id,
         observedDetailExternalId
+    );
+    assert.equal(result.payload.inserted_raw_match_data_count, 0);
+    assert.equal(result.payload.transaction.began, false);
+    assert.equal(
+        deps.client.queries.some(query => /^BEGIN$/i.test(query.sql)),
+        false
+    );
+});
+
+test('reverse fixture date compatibility blocks renewed raw write even with accepted mapping present', async () => {
+    const requestedExternalId = '4830460';
+    const observedDetailExternalId = '4830759';
+    const observedPageProps = fakePageProps(requestedExternalId, {
+        general: {
+            ...fakePageProps(requestedExternalId).general,
+            matchId: observedDetailExternalId,
+            homeTeam: { name: 'Away 0' },
+            awayTeam: { name: 'Home 0' },
+            matchTimeUTC: '2026-05-17T19:00:00.000Z',
+            status: 'finished',
+            pageUrl: '/matches/away-0-vs-home-0/reused#4830759',
+        },
+        header: { teams: [{ name: 'Away 0' }, { name: 'Home 0' }] },
+    });
+    const targets = candidates({
+        0: {
+            external_id: requestedExternalId,
+            match_id: `53_20252026_${requestedExternalId}`,
+            home_team: 'Home 0',
+            away_team: 'Away 0',
+            match_date: '2025-08-01T18:45:00.000Z',
+            baseline_hash: preview.computeStablePagePropsHash(observedPageProps),
+            page_url_base: '/matches/away-0-vs-home-0/reused',
+        },
+    });
+    const deps = successDeps(targets, {
+        acceptedIdentityMappingPresent: true,
+        fetchResultsByExternalId: fetchResultsByExternalId(targets, {
+            [requestedExternalId]: { pageProps: observedPageProps },
+        }),
+        client: fakeClient(),
+    });
+
+    const result = await mod.runCli(validInput(), deps);
+    assert.equal(result.status, 1);
+    assert.equal(result.payload.blocked_reason, 'ROUTE_IDENTITY_GATE_BLOCKED');
+    assert.equal(result.payload.recapture_hash_gate.reverse_fixture_detected_count, 1);
+    assert.equal(
+        result.payload.recapture_hash_gate.failed_targets[0].date_compatibility_status,
+        'reverse_fixture_detected'
+    );
+    assert.equal(
+        result.payload.recapture_hash_gate.failed_targets[0].safety_blockers.includes('reverse_fixture_detected'),
+        true
     );
     assert.equal(result.payload.inserted_raw_match_data_count, 0);
     assert.equal(result.payload.transaction.began, false);
