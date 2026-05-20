@@ -1,0 +1,226 @@
+{
+    "artifact_type": "continued_detail_endpoint_investigation",
+    "artifact_status": "completed_no_write_continued_detail_endpoint_investigation",
+    "proposal_phase": "Phase 5.21L2V3T",
+    "phase_name": "continued_detail_endpoint_investigation",
+    "source_phase": "Phase 5.21L2V3S",
+    "generated_at": "2026-05-21T00:00:00Z",
+    "no_write": true,
+    "live_source_check_performed": false,
+    "controlled_live_check_performed": false,
+    "network_request_performed": false,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "browser_proxy_captcha_bypass_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "raw_write_retry_performed": false,
+    "raw_write_ready_for_execution": false,
+    "accepted_mapping_count": 0,
+    "previous_endpoint_status": "blocked_http_403",
+    "analyzed_endpoint_hint_count": 6,
+    "checked_target_count": 0,
+    "block_or_captcha_count": 0,
+    "new_endpoint_candidate_count": 0,
+    "precise_detail_endpoint_found": "unknown",
+    "endpoint_avoids_slug_reuse": "unknown",
+    "endpoint_investigation_result": "no_new_safe_public_detail_endpoint_candidate_found_public_api_403_remains_and_source_inventory_pageUrl_metadata_is_missing_from_manifest",
+    "recommended_strategy": "Phase 5.21L2V3U: source inventory enrichment planning",
+    "strategy_confidence": "medium",
+    "requires_followup_implementation": false,
+    "endpoint_hints": [
+        {
+            "endpoint_hint_key": "source_inventory_schedule_api",
+            "route_candidate": "/api/data/leagues?id={leagueId}&season={season}",
+            "hint_type": "schedule_inventory",
+            "code_evidence_found": true,
+            "current_pageprops_detail_usage": false,
+            "safe_conclusion": "supports_target_inventory_and_pageUrl_recovery_not_precise_detail_payload"
+        },
+        {
+            "endpoint_hint_key": "html_match_external_id_route",
+            "route_candidate": "/match/{externalId}",
+            "hint_type": "html_detail_route",
+            "code_evidence_found": true,
+            "current_pageprops_detail_usage": true,
+            "precise_detail_candidate": false,
+            "safe_conclusion": "current_route_exists_but_schedule_external_id_alone_remains_slug_reuse_risk"
+        },
+        {
+            "endpoint_hint_key": "api_data_match_details",
+            "route_candidate": "/api/data/matchDetails?matchId={externalId}",
+            "hint_type": "json_detail_api",
+            "code_evidence_found": true,
+            "previous_status": "blocked_http_403",
+            "precise_detail_candidate": true,
+            "safe_conclusion": "public_no_write_access_still_blocked_by_http_403"
+        },
+        {
+            "endpoint_hint_key": "api_match_details_alternate",
+            "route_candidate": "/api/matchDetails?matchId={externalId}",
+            "hint_type": "json_detail_api_legacy_or_alternate",
+            "code_evidence_found": true,
+            "precise_detail_candidate": true,
+            "plan_only": true,
+            "safe_conclusion": "legacy_or_browser_associated_route_not_adopted_without_future_authorization"
+        },
+        {
+            "endpoint_hint_key": "source_inventory_page_url_slug_route",
+            "route_candidate": "/matches/{slug}#{externalId}",
+            "hint_type": "source_inventory_identity_route",
+            "code_evidence_found": true,
+            "precise_detail_candidate": "unknown",
+            "requires_manifest_page_url_base": true,
+            "safe_conclusion": "source_inventory_preserves_pageUrl_identity_hints_but_current_manifest_does_not_store_them"
+        },
+        {
+            "endpoint_hint_key": "nextjs_build_data_route",
+            "route_candidate": "unknown_nextjs_build_data_route_shape",
+            "hint_type": "nextjs_build_data_route",
+            "code_evidence_found": false,
+            "docs_or_tests_only": true,
+            "precise_detail_candidate": "unknown",
+            "safe_conclusion": "no_executable_buildId_route_builder_found_in_runtime_code"
+        }
+    ],
+    "source_code_evidence": {
+        "analyzed_source_file_count": 8,
+        "source_files": [
+            {
+                "key": "source_inventory_preflight",
+                "path": "scripts/ops/single_league_target_discovery_source_inventory_preflight.js",
+                "matched_pattern_count": 4,
+                "evidence_found": true
+            },
+            {
+                "key": "source_inventory_reconciliation_plan",
+                "path": "scripts/ops/pageprops_v2_target_source_inventory_reconciliation_plan.js",
+                "matched_pattern_count": 3,
+                "evidence_found": true
+            },
+            {
+                "key": "fotmob_raw_detail_fetcher",
+                "path": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+                "matched_pattern_count": 2,
+                "evidence_found": true
+            },
+            {
+                "key": "fotmob_api_client",
+                "path": "src/infrastructure/network/FotMobApiClient.js",
+                "matched_pattern_count": 2,
+                "evidence_found": true
+            },
+            {
+                "key": "l2_raw_detail_preview",
+                "path": "scripts/ops/l2_raw_detail_preview.js",
+                "matched_pattern_count": 3,
+                "evidence_found": true
+            },
+            {
+                "key": "fotmob_detail_route_selector",
+                "path": "src/infrastructure/services/FotMobDetailRouteSelector.js",
+                "matched_pattern_count": 0,
+                "evidence_found": false
+            },
+            {
+                "key": "marathon_service",
+                "path": "src/infrastructure/services/MarathonService.js",
+                "matched_pattern_count": 2,
+                "evidence_found": true
+            },
+            {
+                "key": "next_data_parser",
+                "path": "src/parsers/fotmob/NextDataParser.js",
+                "matched_pattern_count": 2,
+                "evidence_found": true
+            }
+        ]
+    },
+    "build_data_context": {
+        "context_files": [
+            {
+                "key": "raw_storage_strategy_revision_plan",
+                "path": "docs/_reports/RAW_STORAGE_STRATEGY_REVISION_PLANNING_PHASE5_21L2C.md",
+                "matched_pattern_count": 1,
+                "evidence_found": true
+            },
+            {
+                "key": "pageprops_v2_no_write_preview_test",
+                "path": "tests/unit/pageprops_v2_no_write_preview.test.js",
+                "matched_pattern_count": 1,
+                "evidence_found": true
+            },
+            {
+                "key": "html_hydration_source_fidelity_test",
+                "path": "tests/unit/html_hydration_source_fidelity_live_compare.test.js",
+                "matched_pattern_count": 1,
+                "evidence_found": true
+            }
+        ],
+        "context_mention_count": 3,
+        "executable_builder_found": false,
+        "docs_or_tests_only": true
+    },
+    "evidence_summary": {
+        "manifest_candidate_targets_count": 50,
+        "manifest_page_url_count": 0,
+        "manifest_page_url_base_count": 0,
+        "manifest_source_inventory_page_url_base_count": 0,
+        "manifest_page_url_base_missing_count": 50,
+        "l2v3q_missing_pageurl_base_count": 42,
+        "l2v3q_detail_url_construction_suspect_count": 42,
+        "l2v3q_route_target_regeneration_needed_count": 0,
+        "l2v3e_shared_page_url_base_pair_count": 8,
+        "l2v3e_all_pairs_share_page_url_base": true,
+        "source_inventory_page_url_extraction_supported": true,
+        "current_writer_uses_source_inventory_page_url": false,
+        "build_data_route_context_mention_count": 3,
+        "build_data_route_executable_builder_found": false,
+        "source_inventory_enrichment_required": true,
+        "route_target_regeneration_indicated": false
+    },
+    "controlled_endpoint_check": {
+        "max_allowed_targets": 1,
+        "supported_route_keys": ["api_data_match_details"],
+        "stopped_early": false,
+        "stop_reason": null,
+        "checked_targets": []
+    },
+    "upstream_context": {
+        "l2v3r_current_url_strategy": "fotmob_match_external_id_route",
+        "l2v3r_uses_match_external_id_route": true,
+        "l2v3r_uses_source_inventory_page_url": false,
+        "l2v3r_slug_reuse_risk": true,
+        "l2v3q_detail_url_construction_suspect_count": 42,
+        "l2v3q_missing_pageurl_base_count": 42,
+        "l2v3s_previous_stop_reason": "CONTROLLED_BLOCK_SIGNAL:HTTP_403"
+    },
+    "question_answers": {
+        "is_public_api_route_suitable_for_server_side_no_write_access": false,
+        "repo_has_other_detail_endpoint_hints": true,
+        "nextjs_hydration_or_build_data_route_status": "unknown_no_executable_builder_found",
+        "source_inventory_metadata_sufficiency": "partial_source_inventory_can_preserve_pageUrl_but_current_manifest_lacks_page_url_base",
+        "should_abandon_public_api_endpoint_path": "deprioritize_public_api_match_details_keep_source_inventory_and_html_hydration_identity_work_separate",
+        "precise_detail_request_strategy_summary": "requested_schedule_external_id_remains_primary_identity_and_observed_detail_external_id_must_equal_requested_schedule_external_id_before_any_future_acceptance",
+        "recommended_phase_5_21_l2v3u": "Phase 5.21L2V3U: source inventory enrichment planning"
+    },
+    "safety_contract": {
+        "endpoint_investigation_result_is_not_accepted_mapping": true,
+        "endpoint_investigation_result_is_not_raw_write_authorization": true,
+        "endpoint_investigation_result_is_not_baseline_acceptance": true,
+        "endpoint_investigation_result_is_not_raw_write_retry": true,
+        "public_api_403_remains_blocked_or_unknown": true,
+        "controlled_live_check_cannot_save_full_payload": true,
+        "controlled_live_check_cannot_write_db": true,
+        "no_browser_proxy_captcha_bypass": true,
+        "separate_identity_mapping_acceptance_required": true,
+        "separate_baseline_acceptance_required": true,
+        "separate_final_db_write_authorization_required": true
+    },
+    "recommended_next_step": "Phase 5.21L2V3U: source inventory enrichment planning",
+    "next_required_step": "source_inventory_enrichment_planning"
+}
