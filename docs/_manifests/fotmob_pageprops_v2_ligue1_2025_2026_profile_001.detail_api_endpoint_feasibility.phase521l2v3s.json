@@ -1,0 +1,204 @@
+{
+    "artifact_type": "detail_api_endpoint_feasibility",
+    "artifact_status": "completed_no_write_detail_api_endpoint_feasibility_verification",
+    "proposal_phase": "Phase 5.21L2V3S",
+    "phase_name": "detail_api_endpoint_feasibility_verification",
+    "source_phase": "Phase 5.21L2V3R",
+    "generated_at": "2026-05-21T00:00:00Z",
+    "no_write": true,
+    "live_source_check_performed": true,
+    "controlled_live_check_performed": true,
+    "network_request_performed": true,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "browser_proxy_captcha_bypass_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "raw_write_retry_performed": false,
+    "raw_write_ready_for_execution": false,
+    "accepted_mapping_count": 0,
+    "analyzed_endpoint_count": 5,
+    "checked_target_count": 1,
+    "precise_detail_endpoint_found": "unknown",
+    "endpoint_avoids_slug_reuse": "unknown",
+    "requested_observed_identity_match_count": 0,
+    "requested_observed_identity_mismatch_count": 0,
+    "reverse_fixture_still_detected_count": 1,
+    "unresolved_large_gap_still_detected_count": 1,
+    "parse_failure_count": 0,
+    "block_or_captcha_count": 1,
+    "recommended_precise_detail_strategy": "do_not_adopt_api_match_details_until_controlled_no_write_check_parses_safe_metadata_and_requested_observed_id_matches",
+    "strategy_confidence": "low",
+    "requires_followup_implementation": false,
+    "recommended_next_step": "Phase 5.21L2V3T: continued detail endpoint investigation",
+    "next_required_step": "continued_detail_endpoint_investigation",
+    "source_code_evidence": {
+        "analyzed_source_file_count": 6,
+        "source_files": [
+            {
+                "key": "fotmob_raw_detail_fetcher",
+                "path": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+                "matched_patterns": ["buildFotMobMatchUrl", "unsupported route: only html_hydration is supported"],
+                "matched_pattern_count": 2,
+                "evidence_found": true
+            },
+            {
+                "key": "fotmob_api_client",
+                "path": "src/infrastructure/network/FotMobApiClient.js",
+                "matched_patterns": ["/api/data/matchDetails", "fetchMatchDetails"],
+                "matched_pattern_count": 2,
+                "evidence_found": true
+            },
+            {
+                "key": "l2_raw_detail_preview",
+                "path": "scripts/ops/l2_raw_detail_preview.js",
+                "matched_patterns": ["api/data/matchDetails", "api_match_details", "alternate_route"],
+                "matched_pattern_count": 3,
+                "evidence_found": true
+            },
+            {
+                "key": "marathon_service",
+                "path": "src/infrastructure/services/MarathonService.js",
+                "matched_patterns": ["_buildMatchDetailsApiUrls", "api/data/matchDetails", "api/matchDetails"],
+                "matched_pattern_count": 3,
+                "evidence_found": true
+            },
+            {
+                "key": "fotmob_strategy",
+                "path": "src/infrastructure/harvesters/strategies/FotMobStrategy.js",
+                "matched_patterns": ["fetchMatchDetails", "api/data/matchDetails", "_fetchMatchDetailsWithSession"],
+                "matched_pattern_count": 3,
+                "evidence_found": true
+            },
+            {
+                "key": "source_inventory_preflight",
+                "path": "scripts/ops/l1_discovery_safe_preview.js",
+                "matched_patterns": ["api/data/leagues"],
+                "matched_pattern_count": 1,
+                "evidence_found": true
+            }
+        ]
+    },
+    "endpoint_inventory": [
+        {
+            "endpoint_key": "league_schedule_source_inventory",
+            "route_candidate": "/api/data/leagues?id={leagueId}&season={season}",
+            "endpoint_type": "schedule_inventory",
+            "code_evidence_found": true,
+            "precise_detail_candidate": false,
+            "current_pageprops_detail_usage": false,
+            "safe_conclusion": "available_for_target_inventory_not_detail_payload_identity"
+        },
+        {
+            "endpoint_key": "html_match_external_id_route",
+            "route_candidate": "/match/{externalId}",
+            "endpoint_type": "html_detail_route",
+            "code_evidence_found": true,
+            "precise_detail_candidate": false,
+            "current_pageprops_detail_usage": true,
+            "safe_conclusion": "current_strategy_but_slug_reuse_risk_remains_blocked"
+        },
+        {
+            "endpoint_key": "source_inventory_slug_fragment_route",
+            "route_candidate": "/matches/{slug}#{externalId}",
+            "endpoint_type": "html_slug_fragment_route",
+            "code_evidence_found": true,
+            "precise_detail_candidate": false,
+            "current_pageprops_detail_usage": false,
+            "fragment_reaches_server": false,
+            "safe_conclusion": "fragment_cannot_be_assumed_to_select_server_payload"
+        },
+        {
+            "endpoint_key": "api_data_match_details",
+            "route_candidate": "/api/data/matchDetails?matchId={externalId}",
+            "endpoint_type": "json_detail_api",
+            "code_evidence_found": true,
+            "precise_detail_candidate": true,
+            "current_pageprops_detail_usage": false,
+            "safe_conclusion": "candidate_requires_controlled_no_write_feasibility_and_identity_guard"
+        },
+        {
+            "endpoint_key": "api_match_details_alternate",
+            "route_candidate": "/api/matchDetails?matchId={externalId}",
+            "endpoint_type": "json_detail_api_legacy_or_alternate",
+            "code_evidence_found": true,
+            "precise_detail_candidate": true,
+            "current_pageprops_detail_usage": false,
+            "plan_only": true,
+            "safe_conclusion": "alternate_route_not_adopted_without_future_authorization"
+        }
+    ],
+    "controlled_endpoint_check": {
+        "max_allowed_targets": 3,
+        "stopped_early": true,
+        "stop_reason": "CONTROLLED_BLOCK_SIGNAL:HTTP_403",
+        "checked_targets": [
+            {
+                "target_category": "known_reverse_fixture_or_slug_reuse",
+                "requested_schedule_external_id": "4830460",
+                "match_id": "53_20252026_4830460",
+                "endpoint_path": "/api/data/matchDetails?matchId={externalId}",
+                "request_url_summary": "https://www.fotmob.com/api/data/matchDetails?matchId={externalId}",
+                "http_status": 403,
+                "parsed": true,
+                "observed_detail_external_id": null,
+                "schedule_detail_date_safe_summary": {
+                    "requested_date": "2025-08-17",
+                    "observed_date": null
+                },
+                "team_safe_summary": {
+                    "requested": "Brest-Lille",
+                    "observed": "-",
+                    "status": "unknown"
+                },
+                "status_safe_summary": {
+                    "requested_status": null,
+                    "observed_status": null
+                },
+                "identity_match": false,
+                "date_rule_status": "unknown",
+                "whether_endpoint_avoids_slug_reuse": "unknown",
+                "safe_error_summary": "CONTROLLED_BLOCK_SIGNAL:HTTP_403",
+                "payload_size_summary": {
+                    "body_byte_length": 61,
+                    "content_type": "application/json"
+                },
+                "top_level_keys_summary": ["code", "error"],
+                "block_signals": ["HTTP_403"],
+                "full_payload_saved": false,
+                "full_payload_printed": false,
+                "db_write_performed": false,
+                "raw_insert_performed": false
+            }
+        ]
+    },
+    "upstream_context": {
+        "l2v3r_current_url_strategy": "fotmob_match_external_id_route",
+        "l2v3r_uses_match_external_id_route": true,
+        "l2v3r_uses_source_inventory_page_url": false,
+        "l2v3r_fragment_reaches_server": false,
+        "l2v3r_slug_reuse_risk": true,
+        "l2v3r_detail_url_construction_suspect_count": 42,
+        "l2v3q_analyzed_target_count": 42,
+        "l2v3q_still_blocked_count": 42
+    },
+    "safety_contract": {
+        "endpoint_feasibility_result_is_not_accepted_mapping": true,
+        "endpoint_feasibility_result_is_not_raw_write_authorization": true,
+        "precise_detail_endpoint_found_does_not_imply_raw_write_ready": true,
+        "requested_observed_mismatch_remains_blocked": true,
+        "slug_reuse_risk_blocks_raw_write_until_future_guarded_strategy": true,
+        "full_payload_saved": false,
+        "full_payload_printed": false,
+        "db_write_performed": false,
+        "raw_match_data_insert_performed": false,
+        "matches_write_performed": false,
+        "separate_identity_mapping_acceptance_required": true,
+        "separate_baseline_acceptance_required": true,
+        "separate_final_db_write_authorization_required": true
+    }
+}

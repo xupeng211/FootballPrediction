@@ -386,7 +386,16 @@ test('repository L2V3R artifacts preserve planning-only and blocking semantics',
     assert.equal(manifest.phase_5_21_l2v3r_planning_status, 'completed_no_write_detail_url_construction_fix_planning');
     assert.equal(manifest.raw_write_ready_for_execution, false);
     assert.equal(manifest.accepted_mapping_count, 0);
-    assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3S: detail API endpoint feasibility verification');
-    assert.equal(manifest.next_required_step, 'detail_api_endpoint_feasibility_verification');
+    if (manifest.phase_5_21_l2v3s_feasibility_status) {
+        assert.equal(
+            manifest.phase_5_21_l2v3s_feasibility_status,
+            'completed_no_write_detail_api_endpoint_feasibility_verification'
+        );
+        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3T: continued detail endpoint investigation');
+        assert.equal(manifest.next_required_step, 'continued_detail_endpoint_investigation');
+    } else {
+        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3S: detail API endpoint feasibility verification');
+        assert.equal(manifest.next_required_step, 'detail_api_endpoint_feasibility_verification');
+    }
     assert.match(report, /detail_url_construction_suspect_count=42/);
 });
