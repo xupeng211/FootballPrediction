@@ -220,8 +220,24 @@ function sha256Text(text) {
         .digest('hex');
 }
 
+function createAbortTimeout(timeoutMs) {
+    const controller = typeof AbortController === 'function' ? new AbortController() : null;
+    const timeoutHandle = controller
+        ? setTimeout(() => {
+              controller.abort(new Error(`FETCH_TIMEOUT:${timeoutMs}ms`));
+          }, timeoutMs)
+        : null;
+    return { controller, timeoutHandle };
+}
+
+function clearAbortTimeout(timeoutHandle) {
+    if (timeoutHandle) clearTimeout(timeoutHandle);
+}
+
 async function fetchHtml(requestUrl, dependencies = {}) {
     const fetchFn = dependencies.fetchFn || globalThis.fetch;
+    const timeoutMs =
+        Number.isInteger(dependencies.timeoutMs) && dependencies.timeoutMs > 0 ? dependencies.timeoutMs : 15000;
     if (typeof fetchFn !== 'function') {
         return {
             ok: false,
@@ -231,6 +247,7 @@ async function fetchHtml(requestUrl, dependencies = {}) {
         };
     }
 
+    const { controller, timeoutHandle } = createAbortTimeout(timeoutMs);
     let response;
     try {
         response = await fetchFn(requestUrl, {
@@ -244,8 +261,10 @@ async function fetchHtml(requestUrl, dependencies = {}) {
                     'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
             },
             redirect: 'follow',
+            signal: controller?.signal,
         });
     } catch (error) {
+        clearAbortTimeout(timeoutHandle);
         return {
             ok: false,
             controlled_failure: true,
@@ -253,6 +272,7 @@ async function fetchHtml(requestUrl, dependencies = {}) {
             request_url: requestUrl,
         };
     }
+    clearAbortTimeout(timeoutHandle);
 
     let body = '';
     try {
