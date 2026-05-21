@@ -1,0 +1,196 @@
+{
+    "artifact_type": "source_inventory_acquisition_path_investigation",
+    "artifact_status": "completed_no_write_source_inventory_acquisition_path_investigation",
+    "proposal_phase": "Phase 5.21L2V3W",
+    "phase_name": "source_inventory_acquisition_path_investigation",
+    "source_phase": "Phase 5.21L2V3V",
+    "generated_at": "2026-05-21T10:30:00Z",
+    "no_write": true,
+    "live_source_check_performed": false,
+    "network_request_performed": false,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "browser_proxy_captcha_bypass_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "baseline_replacement_accepted": false,
+    "raw_write_authorization_performed": false,
+    "raw_write_retry_performed": false,
+    "accepted_mapping_count": 0,
+    "raw_write_ready_for_execution": false,
+    "analyzed_acquisition_path_count": 11,
+    "source_inventory_input_file_count": 5,
+    "source_inventory_contains_url_field": false,
+    "adapter_extracts_url_field": true,
+    "manifest_builder_propagates_url_field": true,
+    "l1_discovery_captures_url_field": true,
+    "current_candidates_retroactively_enrichable": false,
+    "requires_source_inventory_regeneration": true,
+    "requires_l1_discovery_rerun": "unknown",
+    "requires_controlled_no_write_source_acquisition": true,
+    "recommended_strategy": "controlled_no_write_source_inventory_acquisition_planning",
+    "strategy_confidence": "medium",
+    "current_candidate_url_evidence_counts": {
+        "target_count": 50,
+        "source_page_url_count": 0,
+        "source_page_url_base_count": 0,
+        "source_url_fragment_external_id_count": 0,
+        "source_inventory_record_key_count": 0,
+        "identity_evidence_missing_count": 50
+    },
+    "acquisition_path_analysis": [
+        {
+            "key": "source_inventory_adapter",
+            "path": "src/infrastructure/services/FotMobSourceInventoryAdapter.js",
+            "role": "extracts source inventory match identity and URL evidence when present",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": true,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "source_inventory_preflight",
+            "path": "scripts/ops/single_league_target_discovery_source_inventory_preflight.js",
+            "role": "authorized source inventory acquisition and manifest candidate generation",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": true,
+            "imports_network_or_db_module": true
+        },
+        {
+            "key": "small_batch_manifest_builder",
+            "path": "scripts/ops/single_league_small_batch_target_manifest_plan.js",
+            "role": "local DB backed manifest proposal builder",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": true,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "source_inventory_enrichment_apply",
+            "path": "scripts/ops/pageprops_v2_source_inventory_enrichment_apply.js",
+            "role": "source-controlled manifest enrichment helper",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": true,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "source_inventory_enrichment_plan",
+            "path": "scripts/ops/pageprops_v2_source_inventory_enrichment_plan.js",
+            "role": "L2V3U enrichment planning helper",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": true,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "l1_discovery_safe_preview",
+            "path": "scripts/ops/l1_discovery_safe_preview.js",
+            "role": "L1 safe discovery preview entrypoint",
+            "extracts_or_mentions_url_field": false,
+            "propagates_record_key": false,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "fixture_harvester_l1",
+            "path": "scripts/ops/fixture_harvester_l1.js",
+            "role": "legacy L1 fixture harvest code path for read-only audit only",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": false,
+            "imports_network_or_db_module": true
+        },
+        {
+            "key": "discovery_parser",
+            "path": "src/infrastructure/services/DiscoveryParser.js",
+            "role": "L1 fixture parser used by source inventory adapter",
+            "extracts_or_mentions_url_field": false,
+            "propagates_record_key": false,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "l1_config_manager",
+            "path": "src/infrastructure/services/L1ConfigManager.js",
+            "role": "FotMob league API URL construction",
+            "extracts_or_mentions_url_field": false,
+            "propagates_record_key": false,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "source_inventory_preflight_test",
+            "path": "tests/unit/single_league_target_discovery_source_inventory_preflight.test.js",
+            "role": "source inventory URL evidence propagation tests",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": true,
+            "imports_network_or_db_module": false
+        },
+        {
+            "key": "source_inventory_adapter_test",
+            "path": "tests/unit/FotMobSourceInventoryAdapter.test.js",
+            "role": "adapter URL evidence extraction tests",
+            "extracts_or_mentions_url_field": true,
+            "propagates_record_key": true,
+            "imports_network_or_db_module": false
+        }
+    ],
+    "source_inventory_input_files": [
+        {
+            "key": "manifest",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+            "role": "current_manifest"
+        },
+        {
+            "key": "l2v3v_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.source_inventory_enrichment_implementation.phase521l2v3v.json",
+            "role": "source_inventory_enrichment_implementation"
+        },
+        {
+            "key": "l2v3u_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.source_inventory_enrichment_plan.phase521l2v3u.json",
+            "role": "source_inventory_enrichment_planning"
+        },
+        {
+            "key": "l2v3t_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.continued_detail_endpoint_investigation.phase521l2v3t.json",
+            "role": "continued_detail_endpoint_investigation"
+        },
+        {
+            "key": "l2v3r_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.detail_url_construction_fix_plan.phase521l2v3r.json",
+            "role": "detail_url_construction_plan"
+        }
+    ],
+    "source_inventory_acquisition_pipeline": [
+        "FotMobSourceInventoryAdapter builds /api/data/leagues?id={leagueId}&season={season}.",
+        "single_league_target_discovery_source_inventory_preflight can perform an authorized source inventory request and normalize discovered match objects.",
+        "FotMobSourceInventoryAdapter now extracts pageUrl/matchUrl/href/url/link when present and derives base, fragment external_id, slug, route code, and record key.",
+        "single_league_small_batch_target_manifest_plan is local DB backed and cannot recover pageUrl evidence absent from DB/local rows.",
+        "pageprops_v2_source_inventory_enrichment_apply only enriches fields already present in source-controlled manifest candidates."
+    ],
+    "why_current_50_candidates_missing_url_evidence": [
+        "current source-controlled manifest candidate targets have source_page_url/source_page_url_base/source_url_fragment_external_id/source_inventory_record_key set to null",
+        "current source-controlled files preserve source_inventory_result summary metadata but not the full source inventory JSON body",
+        "L2V3V enrichment implementation intentionally did not fabricate pageUrl, fragment id, route code, or source record key",
+        "old manifest candidates cannot be retroactively enriched without a source-controlled source inventory record containing requested-side URL evidence"
+    ],
+    "upstream_context": {
+        "l2v3v_candidate_targets_checked": 50,
+        "l2v3v_identity_evidence_missing_count": 50,
+        "l2v3u_missing_source_page_url_count": 50,
+        "l2v3t_previous_endpoint_status": "blocked_http_403",
+        "l2v3t_precise_detail_endpoint_found": "unknown",
+        "l2v3r_uses_source_inventory_page_url": false
+    },
+    "safety_contract": {
+        "acquisition_investigation_result_is_not_accepted_mapping": true,
+        "acquisition_investigation_result_is_not_raw_write_authorization": true,
+        "missing_source_url_evidence_remains_blocker": true,
+        "current_candidates_cannot_be_raw_write_ready_from_investigation_alone": true,
+        "no_live_fetch_performed": true,
+        "no_full_raw_data_pageprops_or_source_body_saved_or_printed": true,
+        "separate_identity_mapping_acceptance_required": true,
+        "separate_baseline_acceptance_required": true,
+        "separate_final_db_write_authorization_required": true
+    },
+    "recommended_next_step": "Phase 5.21L2V3X: controlled no-write source inventory acquisition planning",
+    "next_required_step": "controlled_no_write_source_inventory_acquisition_planning"
+}
