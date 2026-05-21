@@ -403,6 +403,7 @@ test('repository L2V3U artifacts preserve planning-only safety when generated', 
             'Phase 5.21L2V3V: source inventory enrichment implementation',
             'Phase 5.21L2V3W: source inventory acquisition path investigation',
             'Phase 5.21L2V3X: controlled no-write source inventory acquisition planning',
+            'Phase 5.21L2V3Y: controlled no-write source inventory acquisition execution',
         ].includes(manifest.recommended_next_step)
     );
     assert.match(report, /enrichment does not unblock raw write/i);

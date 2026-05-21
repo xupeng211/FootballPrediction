@@ -386,11 +386,29 @@ test('repository L2V3T artifacts preserve no-write investigation semantics when 
                     manifest.phase_5_21_l2v3w_investigation_status,
                     'completed_no_write_source_inventory_acquisition_path_investigation'
                 );
-                assert.equal(
-                    manifest.recommended_next_step,
-                    'Phase 5.21L2V3X: controlled no-write source inventory acquisition planning'
-                );
-                assert.equal(manifest.next_required_step, 'controlled_no_write_source_inventory_acquisition_planning');
+                if (manifest.phase_5_21_l2v3x_planning_status) {
+                    assert.equal(
+                        manifest.phase_5_21_l2v3x_planning_status,
+                        'completed_no_write_controlled_source_inventory_acquisition_planning'
+                    );
+                    assert.equal(
+                        manifest.recommended_next_step,
+                        'Phase 5.21L2V3Y: controlled no-write source inventory acquisition execution'
+                    );
+                    assert.equal(
+                        manifest.next_required_step,
+                        'controlled_no_write_source_inventory_acquisition_execution'
+                    );
+                } else {
+                    assert.equal(
+                        manifest.recommended_next_step,
+                        'Phase 5.21L2V3X: controlled no-write source inventory acquisition planning'
+                    );
+                    assert.equal(
+                        manifest.next_required_step,
+                        'controlled_no_write_source_inventory_acquisition_planning'
+                    );
+                }
             } else {
                 assert.equal(
                     manifest.recommended_next_step,

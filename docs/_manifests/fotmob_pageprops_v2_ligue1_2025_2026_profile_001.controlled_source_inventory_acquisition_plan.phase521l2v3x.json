@@ -1,0 +1,251 @@
+{
+    "artifact_type": "controlled_source_inventory_acquisition_plan",
+    "artifact_status": "completed_no_write_controlled_source_inventory_acquisition_planning",
+    "proposal_phase": "Phase 5.21L2V3X",
+    "phase_name": "controlled_no_write_source_inventory_acquisition_planning",
+    "source_phase": "Phase 5.21L2V3W",
+    "generated_at": "2026-05-21T11:30:00Z",
+    "no_write": true,
+    "live_fetch_performed": false,
+    "live_source_check_performed": false,
+    "source_acquisition_execution_performed": false,
+    "network_request_performed": false,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "raw_match_data_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "browser_proxy_captcha_bypass_performed": false,
+    "bulk_crawl_spider_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "baseline_replacement_accepted": false,
+    "raw_write_authorization_performed": false,
+    "raw_write_retry_performed": false,
+    "accepted_mapping_count": 0,
+    "raw_write_ready_for_execution": false,
+    "planned_acquisition_scope": "ligue1_2025_2026_profile_001_current_50_candidates_metadata_only_source_inventory",
+    "planned_source_endpoint": "/api/data/leagues?id=53&season=20252026",
+    "planned_target_league_id": 53,
+    "planned_target_season": "2025/2026",
+    "planned_candidate_scope_count": 50,
+    "planned_metadata_field_count": 15,
+    "planned_output_artifact_count": 4,
+    "acquisition_execution_authorization_required": true,
+    "baseline_acceptance_required": true,
+    "final_db_write_authorization_required": true,
+    "planned_scope_details": {
+        "planned_acquisition_scope": "ligue1_2025_2026_profile_001_current_50_candidates_metadata_only_source_inventory",
+        "league_id": 53,
+        "league_name": "Ligue 1",
+        "season": "2025/2026",
+        "candidate_scope_count": 50,
+        "include_known_completed_seeded_targets": false,
+        "exclude_known_completed_seeded_targets": true,
+        "source_inventory_only": true,
+        "raw_match_data_generation_allowed": false,
+        "target_generation_allowed_after_review": true
+    },
+    "planned_metadata_fields": [
+        {
+            "field": "source_page_url",
+            "source": "source inventory pageUrl/matchUrl/href/equivalent URL field",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "source_page_url_base",
+            "source": "source_page_url with fragment removed",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "source_url_fragment_external_id",
+            "source": "fragment component of source_page_url when present",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "source_slug",
+            "source": "match route slug parsed from source_page_url path",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "source_route_code",
+            "source": "stable route code parsed from source_page_url path when present",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "schedule_external_id",
+            "source": "source inventory schedule-side match id",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "schedule_date",
+            "source": "source inventory schedule-side date/kickoff metadata",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "schedule_home_team",
+            "source": "source inventory schedule-side home team",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "schedule_away_team",
+            "source": "source inventory schedule-side away team",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "source_inventory_record_key",
+            "source": "deterministic source inventory record path plus external id",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "source_inventory_generated_at",
+            "source": "controlled acquisition execution timestamp",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "identity_evidence_status",
+            "source": "complete/partial/missing/unknown source URL identity evidence classification",
+            "required_for_future_target_regeneration": true
+        },
+        {
+            "field": "source_endpoint_summary",
+            "source": "safe endpoint route summary without headers/cookies/tokens/body",
+            "required_for_future_target_regeneration": false
+        },
+        {
+            "field": "acquisition_status",
+            "source": "metadata-only execution status for future acquisition run",
+            "required_for_future_target_regeneration": false
+        },
+        {
+            "field": "safe_error_summary",
+            "source": "short sanitized error category without response body",
+            "required_for_future_target_regeneration": false
+        }
+    ],
+    "payload_safety_rules": [
+        "do_not_save_full_api_payload",
+        "do_not_print_full_api_payload",
+        "do_not_save_full_pageProps",
+        "do_not_print_full_pageProps",
+        "do_not_save_full_raw_data",
+        "do_not_print_full_raw_data",
+        "do_not_save_full_html_or_source_body",
+        "do_not_print_full_html_or_source_body",
+        "metadata_only_safe_fields_only",
+        "do_not_record_cookies_tokens_headers",
+        "stop_on_block_captcha_or_abnormal_response"
+    ],
+    "stopping_rules": [
+        "http_block_or_captcha_signal",
+        "rate_limit_signal",
+        "parse_failure_spike",
+        "widespread_non_200_response",
+        "unexpected_schema_drift",
+        "payload_too_large_or_suspicious_small_payload",
+        "source_identity_mismatch",
+        "any_attempted_write_path",
+        "browser_proxy_captcha_bypass_required",
+        "full_payload_persistence_attempt"
+    ],
+    "planned_output_artifacts": [
+        {
+            "artifact_type": "metadata_only_source_inventory_artifact",
+            "planned_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.controlled_source_inventory_acquisition.phase521l2v3y.json",
+            "full_payload_allowed": false
+        },
+        {
+            "artifact_type": "governance_report",
+            "planned_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3Y.md",
+            "full_payload_allowed": false
+        },
+        {
+            "artifact_type": "manifest_metadata_update",
+            "planned_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+            "full_payload_allowed": false
+        },
+        {
+            "artifact_type": "unit_test_fixture_or_fake_fetch",
+            "planned_path": "tests/unit/pageprops_v2_controlled_source_inventory_acquisition_plan.test.js",
+            "full_payload_allowed": false
+        }
+    ],
+    "input_analysis": [
+        {
+            "key": "manifest",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+            "role": "current_manifest",
+            "exists": true
+        },
+        {
+            "key": "l2v3w_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.source_inventory_acquisition_path_investigation.phase521l2v3w.json",
+            "role": "acquisition_path_investigation",
+            "exists": true
+        },
+        {
+            "key": "l2v3w_report",
+            "path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3W.md",
+            "role": "report",
+            "exists": true
+        },
+        {
+            "key": "l2v3v_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.source_inventory_enrichment_implementation.phase521l2v3v.json",
+            "role": "source_inventory_enrichment_implementation",
+            "exists": true
+        },
+        {
+            "key": "l2v3u_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.source_inventory_enrichment_plan.phase521l2v3u.json",
+            "role": "source_inventory_enrichment_planning",
+            "exists": true
+        },
+        {
+            "key": "source_inventory_preflight",
+            "path": "scripts/ops/single_league_target_discovery_source_inventory_preflight.js",
+            "role": "future_controlled_source_inventory_execution_candidate",
+            "exists": true
+        },
+        {
+            "key": "source_inventory_adapter",
+            "path": "src/infrastructure/services/FotMobSourceInventoryAdapter.js",
+            "role": "metadata_extraction_adapter",
+            "exists": true
+        },
+        {
+            "key": "small_batch_manifest_builder",
+            "path": "scripts/ops/single_league_small_batch_target_manifest_plan.js",
+            "role": "manifest_candidate_builder",
+            "exists": true
+        },
+        {
+            "key": "source_inventory_acquisition_path_investigation",
+            "path": "scripts/ops/pageprops_v2_source_inventory_acquisition_path_investigation.js",
+            "role": "prior_no_write_investigation_helper",
+            "exists": true
+        }
+    ],
+    "upstream_context": {
+        "l2v3w_requires_controlled_no_write_source_acquisition": true,
+        "l2v3w_source_inventory_contains_url_field": false,
+        "l2v3w_current_candidates_retroactively_enrichable": false,
+        "l2v3v_identity_evidence_missing_count": 50,
+        "l2v3u_missing_source_page_url_count": 50
+    },
+    "safety_contract": {
+        "controlled_acquisition_plan_is_not_accepted_mapping": true,
+        "controlled_acquisition_plan_is_not_raw_write_authorization": true,
+        "controlled_acquisition_plan_is_not_baseline_acceptance": true,
+        "controlled_acquisition_plan_is_not_source_acquisition_execution": true,
+        "source_inventory_acquisition_execution_requires_separate_authorization": true,
+        "missing_source_url_evidence_remains_blocker": true,
+        "separate_identity_mapping_acceptance_required": true,
+        "separate_baseline_acceptance_required": true,
+        "separate_final_db_write_authorization_required": true
+    },
+    "recommended_next_step": "Phase 5.21L2V3Y: controlled no-write source inventory acquisition execution",
+    "next_required_step": "controlled_no_write_source_inventory_acquisition_execution"
+}
