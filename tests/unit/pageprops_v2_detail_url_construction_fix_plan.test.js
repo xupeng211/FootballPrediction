@@ -411,11 +411,26 @@ test('repository L2V3R artifacts preserve planning-only and blocking semantics',
                             manifest.phase_5_21_l2v3y_execution_status,
                             'completed_metadata_only_source_inventory_acquisition_execution'
                         );
-                        assert.equal(
-                            manifest.recommended_next_step,
-                            'Phase 5.21L2V3Z: enriched target regeneration planning'
-                        );
-                        assert.equal(manifest.next_required_step, 'enriched_target_regeneration_planning');
+                        if (manifest.phase_5_21_l2v3z_planning_status) {
+                            assert.equal(
+                                manifest.phase_5_21_l2v3z_planning_status,
+                                'completed_no_write_enriched_target_regeneration_planning'
+                            );
+                            assert.equal(
+                                manifest.recommended_next_step,
+                                'Phase 5.21L2V3AA: controlled enriched target regeneration execution'
+                            );
+                            assert.equal(
+                                manifest.next_required_step,
+                                'controlled_enriched_target_regeneration_execution'
+                            );
+                        } else {
+                            assert.equal(
+                                manifest.recommended_next_step,
+                                'Phase 5.21L2V3Z: enriched target regeneration planning'
+                            );
+                            assert.equal(manifest.next_required_step, 'enriched_target_regeneration_planning');
+                        }
                     } else {
                         assert.equal(
                             manifest.recommended_next_step,
