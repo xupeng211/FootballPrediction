@@ -1,0 +1,439 @@
+{
+    "artifact_type": "source_inventory_enrichment_plan",
+    "artifact_status": "completed_no_write_source_inventory_enrichment_planning",
+    "proposal_phase": "Phase 5.21L2V3U",
+    "phase_name": "source_inventory_enrichment_planning",
+    "source_phase": "Phase 5.21L2V3T",
+    "generated_at": "2026-05-21T08:00:00Z",
+    "no_write": true,
+    "live_source_check_performed": false,
+    "controlled_live_check_performed": false,
+    "network_request_performed": false,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "browser_proxy_captcha_bypass_performed": false,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "raw_write_retry_performed": false,
+    "raw_write_ready_for_execution": false,
+    "accepted_mapping_count": 0,
+    "baseline_replacement_accepted": false,
+    "raw_write_authorization_performed": false,
+    "previous_endpoint_status": "blocked_http_403",
+    "precise_detail_endpoint_found": "unknown",
+    "endpoint_avoids_slug_reuse": "unknown",
+    "analyzed_inventory_path_count": 19,
+    "source_inventory_file_count": 5,
+    "manifest_candidate_field_gap_count": 400,
+    "missing_source_page_url_count": 50,
+    "missing_page_url_base_count": 50,
+    "missing_url_fragment_external_id_count": 50,
+    "missing_source_record_key_count": 50,
+    "proposed_new_field_count": 12,
+    "enrichment_strategy": "source_controlled_manifest_candidate_enrichment_from_source_inventory_pageUrl_metadata",
+    "enrichment_confidence": "medium",
+    "requires_followup_implementation": true,
+    "requires_target_regeneration": true,
+    "identity_evidence_status": "blocked_pending_source_inventory_enrichment",
+    "current_manifest_gap_summary": {
+        "candidate_targets_count": 50,
+        "proposed_new_field_count": 12,
+        "manifest_candidate_field_gap_count": 400,
+        "missing_source_page_url_count": 50,
+        "missing_page_url_base_count": 50,
+        "missing_url_fragment_external_id_count": 50,
+        "missing_source_record_key_count": 50,
+        "missing_source_slug_count": 50,
+        "missing_source_route_code_count": 50,
+        "source_identity_evidence_field_gap_count": 200,
+        "by_field": {
+            "source_page_url": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": ["source_page_url", "page_url", "pageUrl"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "source_page_url_base": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": [
+                    "source_page_url_base",
+                    "page_url_base",
+                    "source_inventory_page_url_base",
+                    "manifest_page_url_base"
+                ],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "source_url_fragment_external_id": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": [
+                    "source_url_fragment_external_id",
+                    "source_page_url_fragment_external_id",
+                    "page_url_anchor"
+                ],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "source_slug": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": ["source_slug", "page_url_slug", "detail_route_slug"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "source_route_code": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": ["source_route_code", "page_url_route_code", "detail_route_code"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "schedule_external_id": {
+                "missing_count": 0,
+                "present_or_equivalent_count": 50,
+                "aliases_checked": ["schedule_external_id", "external_id"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "schedule_date": {
+                "missing_count": 0,
+                "present_or_equivalent_count": 50,
+                "aliases_checked": ["schedule_date", "match_date", "kickoff_time"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "schedule_home_team": {
+                "missing_count": 0,
+                "present_or_equivalent_count": 50,
+                "aliases_checked": ["schedule_home_team", "home_team"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "schedule_away_team": {
+                "missing_count": 0,
+                "present_or_equivalent_count": 50,
+                "aliases_checked": ["schedule_away_team", "away_team"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "source_inventory_record_key": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": ["source_inventory_record_key"],
+                "persistence_layer": "manifest_candidate_target"
+            },
+            "source_inventory_generated_at": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": ["source_inventory_generated_at"],
+                "persistence_layer": "manifest_metadata"
+            },
+            "identity_evidence_status": {
+                "missing_count": 50,
+                "present_or_equivalent_count": 0,
+                "aliases_checked": ["identity_evidence_status"],
+                "persistence_layer": "manifest_candidate_target"
+            }
+        }
+    },
+    "proposed_enrichment_fields": [
+        {
+            "field": "source_page_url",
+            "aliases": ["source_page_url", "page_url", "pageUrl"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "requested-side FotMob page URL captured from source inventory"
+        },
+        {
+            "field": "source_page_url_base",
+            "aliases": [
+                "source_page_url_base",
+                "page_url_base",
+                "source_inventory_page_url_base",
+                "manifest_page_url_base"
+            ],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "requested-side page URL without fragment for slug reuse detection"
+        },
+        {
+            "field": "source_url_fragment_external_id",
+            "aliases": ["source_url_fragment_external_id", "source_page_url_fragment_external_id", "page_url_anchor"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "external id encoded after the URL fragment"
+        },
+        {
+            "field": "source_slug",
+            "aliases": ["source_slug", "page_url_slug", "detail_route_slug"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "slug segment from the requested source inventory URL"
+        },
+        {
+            "field": "source_route_code",
+            "aliases": ["source_route_code", "page_url_route_code", "detail_route_code"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "stable route code segment from the requested source inventory URL"
+        },
+        {
+            "field": "schedule_external_id",
+            "aliases": ["schedule_external_id", "external_id"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "requested schedule id; equivalent currently exists as external_id"
+        },
+        {
+            "field": "schedule_date",
+            "aliases": ["schedule_date", "match_date", "kickoff_time"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "requested schedule date used for requested-vs-observed checks"
+        },
+        {
+            "field": "schedule_home_team",
+            "aliases": ["schedule_home_team", "home_team"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "requested home team from source inventory"
+        },
+        {
+            "field": "schedule_away_team",
+            "aliases": ["schedule_away_team", "away_team"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "requested away team from source inventory"
+        },
+        {
+            "field": "source_inventory_record_key",
+            "aliases": ["source_inventory_record_key"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "deterministic source inventory path plus external id key"
+        },
+        {
+            "field": "source_inventory_generated_at",
+            "aliases": ["source_inventory_generated_at"],
+            "persistence_layer": "manifest_metadata",
+            "purpose": "timestamp of the authorized source inventory regeneration run"
+        },
+        {
+            "field": "identity_evidence_status",
+            "aliases": ["identity_evidence_status"],
+            "persistence_layer": "manifest_candidate_target",
+            "purpose": "explicit blocker/pass status for source URL identity evidence"
+        }
+    ],
+    "persistence_plan": [
+        {
+            "layer": "source_inventory",
+            "status": "future_authorized_regeneration_required",
+            "fields": "pageUrl/page_url_base/url_fragment_external_id/source_slug/source_route_code/source_inventory_record_key",
+            "db_write_allowed": false
+        },
+        {
+            "layer": "manifest_candidate_target",
+            "status": "planned_target_enrichment_layer",
+            "fields": [
+                "source_page_url",
+                "source_page_url_base",
+                "source_url_fragment_external_id",
+                "source_slug",
+                "source_route_code",
+                "schedule_external_id",
+                "schedule_date",
+                "schedule_home_team",
+                "schedule_away_team",
+                "source_inventory_record_key",
+                "source_inventory_generated_at",
+                "identity_evidence_status"
+            ],
+            "db_write_allowed": false
+        },
+        {
+            "layer": "no_write_metadata_artifact",
+            "status": "records_gap_counts_and_blockers_only",
+            "fields": "gap counts, proposed schema, blocker status",
+            "db_write_allowed": false
+        },
+        {
+            "layer": "db_matches_metadata",
+            "status": "not_recommended_for_this_phase",
+            "fields": "none",
+            "db_write_allowed": false
+        }
+    ],
+    "future_usage_plan": [
+        "detect whether requested-side pageUrl base is reused by a different observed detail fixture",
+        "compare requested schedule external id with source URL fragment external id before any mapping review",
+        "separate reverse fixture, slug reuse, and unresolved large-gap cases without relying on observed pageUrl only",
+        "block raw write when requested-side source URL evidence is missing or inconsistent",
+        "feed a future source inventory enrichment implementation or route target regeneration plan"
+    ],
+    "analyzed_inputs": [
+        {
+            "key": "manifest",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+            "role": "current_manifest",
+            "exists": true,
+            "matched_pattern_count": 4,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3t_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.continued_detail_endpoint_investigation.phase521l2v3t.json",
+            "role": "continued_detail_endpoint_investigation",
+            "exists": true,
+            "matched_pattern_count": 4,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3t_report",
+            "path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3T.md",
+            "role": "report",
+            "exists": true,
+            "matched_pattern_count": 3,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3r_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.detail_url_construction_fix_plan.phase521l2v3r.json",
+            "role": "detail_url_construction_plan",
+            "exists": true,
+            "matched_pattern_count": 4,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3r_report",
+            "path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3R.md",
+            "role": "report",
+            "exists": true,
+            "matched_pattern_count": 4,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3q_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.continued_metadata_investigation.phase521l2v3q.json",
+            "role": "continued_metadata_investigation",
+            "exists": true,
+            "matched_pattern_count": 2,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3q_report",
+            "path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3Q.md",
+            "role": "report",
+            "exists": true,
+            "matched_pattern_count": 1,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3p_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.metadata_only_detail_check.phase521l2v3p.json",
+            "role": "metadata_only_detail_check",
+            "exists": true,
+            "matched_pattern_count": 2,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3p_report",
+            "path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3P.md",
+            "role": "report",
+            "exists": true,
+            "matched_pattern_count": 0,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3n_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
+            "role": "expanded_date_rule_verification",
+            "exists": true,
+            "matched_pattern_count": 2,
+            "source_inventory_related": false
+        },
+        {
+            "key": "l2v3n_report",
+            "path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3N.md",
+            "role": "report",
+            "exists": true,
+            "matched_pattern_count": 0,
+            "source_inventory_related": false
+        },
+        {
+            "key": "source_inventory_preflight",
+            "path": "scripts/ops/single_league_target_discovery_source_inventory_preflight.js",
+            "role": "source_inventory_generation_script",
+            "exists": true,
+            "matched_pattern_count": 3,
+            "source_inventory_related": true
+        },
+        {
+            "key": "source_inventory_adapter",
+            "path": "src/infrastructure/services/FotMobSourceInventoryAdapter.js",
+            "role": "source_inventory_adapter",
+            "exists": true,
+            "matched_pattern_count": 1,
+            "source_inventory_related": true
+        },
+        {
+            "key": "source_inventory_reconciliation",
+            "path": "scripts/ops/pageprops_v2_target_source_inventory_reconciliation_plan.js",
+            "role": "source_inventory_reconciliation_script",
+            "exists": true,
+            "matched_pattern_count": 4,
+            "source_inventory_related": true
+        },
+        {
+            "key": "no_write_preview",
+            "path": "scripts/ops/pageprops_v2_no_write_preview.js",
+            "role": "no_write_preview_helper",
+            "exists": true,
+            "matched_pattern_count": 0,
+            "source_inventory_related": false
+        },
+        {
+            "key": "metadata_only_helper",
+            "path": "scripts/ops/pageprops_v2_metadata_only_detail_check.js",
+            "role": "metadata_only_helper",
+            "exists": true,
+            "matched_pattern_count": 3,
+            "source_inventory_related": false
+        },
+        {
+            "key": "candidate_manifest_generation",
+            "path": "scripts/ops/single_league_small_batch_target_manifest_plan.js",
+            "role": "candidate_target_generation_code",
+            "exists": true,
+            "matched_pattern_count": 2,
+            "source_inventory_related": false
+        },
+        {
+            "key": "source_inventory_preflight_test",
+            "path": "tests/unit/single_league_target_discovery_source_inventory_preflight.test.js",
+            "role": "source_inventory_test",
+            "exists": true,
+            "matched_pattern_count": 3,
+            "source_inventory_related": true
+        },
+        {
+            "key": "source_inventory_reconciliation_test",
+            "path": "tests/unit/pageprops_v2_target_source_inventory_reconciliation_plan.test.js",
+            "role": "source_inventory_test",
+            "exists": true,
+            "matched_pattern_count": 4,
+            "source_inventory_related": true
+        }
+    ],
+    "upstream_context": {
+        "l2v3t_endpoint_investigation_result": "no_new_safe_public_detail_endpoint_candidate_found_public_api_403_remains_and_source_inventory_pageUrl_metadata_is_missing_from_manifest",
+        "l2v3t_recommended_strategy": "Phase 5.21L2V3U: source inventory enrichment planning",
+        "l2v3r_current_url_strategy": "fotmob_match_external_id_route",
+        "l2v3r_uses_source_inventory_page_url": false,
+        "l2v3q_missing_pageurl_base_count": 42,
+        "l2v3q_detail_url_construction_suspect_count": 42,
+        "l2v3p_checked_target_count": null,
+        "l2v3n_checked_target_count": 50
+    },
+    "safety_contract": {
+        "source_inventory_enrichment_plan_is_not_accepted_mapping": true,
+        "source_inventory_enrichment_plan_is_not_raw_write_authorization": true,
+        "source_inventory_enrichment_plan_is_not_baseline_acceptance": true,
+        "source_inventory_enrichment_plan_is_not_raw_write_retry": true,
+        "enrichment_does_not_unblock_raw_write": true,
+        "missing_page_url_base_remains_blocker": true,
+        "separate_identity_mapping_acceptance_required": true,
+        "separate_baseline_acceptance_required": true,
+        "separate_final_db_write_authorization_required": true
+    },
+    "recommended_next_step": "Phase 5.21L2V3V: source inventory enrichment implementation",
+    "next_required_step": "source_inventory_enrichment_implementation"
+}
