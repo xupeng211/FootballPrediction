@@ -347,6 +347,47 @@ test('fake source inventory extracts candidate external_ids', async () => {
     assert.ok(!output.source_inventory_route.generated_url.includes('/api/leagues?'));
 });
 
+test('source inventory preflight propagates requested-side source URL identity fields', async () => {
+    const body = sourceInventory(20);
+    body.matches.allMatches[0] = sourceMatch(1, {
+        pageUrl: '/matches/home-vs-away/abcd12#6000001',
+    });
+
+    const { output, writes } = await runPreflight(body);
+    const target = output.candidate_targets[0];
+    const writtenTarget = writes[0].candidate_targets[0];
+
+    assert.equal(target.source_page_url, '/matches/home-vs-away/abcd12#6000001');
+    assert.equal(target.source_page_url_base, '/matches/home-vs-away/abcd12');
+    assert.equal(target.source_url_fragment_external_id, '6000001');
+    assert.equal(target.source_slug, 'home-vs-away');
+    assert.equal(target.source_route_code, 'abcd12');
+    assert.equal(target.schedule_external_id, '6000001');
+    assert.equal(target.schedule_date, '2026-03-02T19:00:00.000Z');
+    assert.equal(target.schedule_home_team, 'Home 1');
+    assert.equal(target.schedule_away_team, 'Away 1');
+    assert.equal(target.source_inventory_record_key, 'l1_api_data_leagues:matches.allMatches.0:6000001');
+    assert.equal(target.identity_evidence_status, 'complete');
+    assert.equal(writtenTarget.source_url_fragment_external_id, '6000001');
+});
+
+test('source URL evidence does not imply accepted mapping or raw write readiness', async () => {
+    const body = sourceInventory(20);
+    body.matches.allMatches[0] = sourceMatch(1, {
+        pageUrl: '/matches/home-vs-away/abcd12#6000001',
+    });
+
+    const { output } = await runPreflight(body);
+    const target = output.candidate_targets[0];
+
+    assert.equal(target.identity_evidence_status, 'complete');
+    assert.equal(output.raw_match_data_write_executed, false);
+    assert.equal(output.db_write_executed, false);
+    assert.equal(Object.hasOwn(target, 'accepted_mapping_count'), false);
+    assert.equal(Object.hasOwn(target, 'raw_write_ready_for_execution'), false);
+    assert.equal(target.write_status, 'not_started');
+});
+
 test('fake source inventory excludes known completed 8', async () => {
     const body = {
         matches: {

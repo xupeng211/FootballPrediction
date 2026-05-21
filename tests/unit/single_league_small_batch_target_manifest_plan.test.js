@@ -313,6 +313,22 @@ test('manifest includes required fields', () => {
     assert.ok(fields.includes('target_id'));
     assert.ok(fields.includes('baseline_hash'));
     assert.ok(fields.includes('odds_alignment_ready'));
+    for (const field of [
+        'source_page_url',
+        'source_page_url_base',
+        'source_url_fragment_external_id',
+        'source_slug',
+        'source_route_code',
+        'schedule_external_id',
+        'schedule_date',
+        'schedule_home_team',
+        'schedule_away_team',
+        'source_inventory_record_key',
+        'source_inventory_generated_at',
+        'identity_evidence_status',
+    ]) {
+        assert.ok(fields.includes(field), `${field} should be part of manifest schema`);
+    }
 });
 
 test('manifest includes readiness gates', () => {
@@ -326,6 +342,24 @@ test('manifest includes odds_alignment_ready field', () => {
     const manifest = runPlan().json.manifest_proposal;
     assert.equal(manifest.known_completed_targets[0].odds_alignment_ready, true);
     assert.ok(manifest.target_manifest_schema.some(entry => entry.field === 'odds_alignment_ready'));
+});
+
+test('local DB inventory keeps source URL evidence missing instead of fabricating pageUrl', () => {
+    const manifest = mod.buildManifestProposal(fakeInventory());
+    const target = manifest.candidate_targets[0];
+
+    assert.equal(target.source_page_url, null);
+    assert.equal(target.source_page_url_base, null);
+    assert.equal(target.source_url_fragment_external_id, null);
+    assert.equal(target.source_inventory_record_key, null);
+    assert.equal(target.source_inventory_generated_at, 'unknown');
+    assert.equal(target.identity_evidence_status, 'missing');
+    assert.equal(target.schedule_external_id, target.external_id);
+    assert.equal(target.schedule_date, target.match_date);
+    assert.equal(target.schedule_home_team, target.home_team);
+    assert.equal(target.schedule_away_team, target.away_team);
+    assert.equal(Object.hasOwn(target, 'accepted_mapping_count'), false);
+    assert.equal(Object.hasOwn(target, 'raw_write_ready_for_execution'), false);
 });
 
 test('no DB write', () => {

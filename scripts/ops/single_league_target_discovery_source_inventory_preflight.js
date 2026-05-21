@@ -8,6 +8,7 @@ const { Pool } = require('pg');
 const {
     FotMobSourceInventoryAdapter,
     ROUTE_KIND: L1_SOURCE_INVENTORY_ROUTE_KIND,
+    deriveSourceInventoryIdentityEvidence,
 } = require('../../src/infrastructure/services/FotMobSourceInventoryAdapter');
 
 const PHASE = 'PHASE5_21L2T0_AUTHORIZED_SINGLE_LEAGUE_TARGET_DISCOVERY_SOURCE_INVENTORY_PREFLIGHT';
@@ -72,10 +73,25 @@ const TARGET_MANIFEST_FIELDS = Object.freeze([
     'batch_id',
     'source',
     'route',
+    'source_inventory_route',
     'raw_data_version',
     'hash_strategy',
     'match_id',
     'external_id',
+    'source_url',
+    'source_path',
+    'source_page_url',
+    'source_page_url_base',
+    'source_url_fragment_external_id',
+    'source_slug',
+    'source_route_code',
+    'schedule_external_id',
+    'schedule_date',
+    'schedule_home_team',
+    'schedule_away_team',
+    'source_inventory_record_key',
+    'source_inventory_generated_at',
+    'identity_evidence_status',
     'league_id',
     'league_name',
     'season',
@@ -651,6 +667,19 @@ function resolveSourcePath(match) {
     return pickText([match?.pageUrl, match?.matchUrl, match?.url, match?.href, match?.sourcePath]) || null;
 }
 
+function buildMissingSourceIdentityEvidence(candidate = {}) {
+    return {
+        source_page_url: candidate.source_page_url || null,
+        source_page_url_base: candidate.source_page_url_base || null,
+        source_url_fragment_external_id: candidate.source_url_fragment_external_id || null,
+        source_slug: candidate.source_slug || null,
+        source_route_code: candidate.source_route_code || null,
+        source_inventory_record_key: candidate.source_inventory_record_key || null,
+        source_inventory_generated_at: candidate.source_inventory_generated_at || 'unknown',
+        identity_evidence_status: candidate.identity_evidence_status || 'missing',
+    };
+}
+
 function looksLikeMatchObject(value) {
     return isObjectLike(value) && getExternalId(value) !== null;
 }
@@ -749,6 +778,7 @@ function buildCandidateTarget(candidate, priority, nowIso) {
     const identityComplete = isIdentityComplete(candidate);
     const matchId = identityComplete ? buildMatchId(candidate.external_id) : null;
     const targetStatus = identityComplete ? 'source_inventory_discovered' : 'identity_incomplete';
+    const sourceEvidence = buildMissingSourceIdentityEvidence(candidate);
     return {
         target_id: identityComplete ? `${BATCH_ID}:${matchId}` : `${BATCH_ID}:external:${candidate.external_id}`,
         batch_id: BATCH_ID,
@@ -761,6 +791,18 @@ function buildCandidateTarget(candidate, priority, nowIso) {
         external_id: candidate.external_id,
         source_url: candidate.source_url,
         source_path: candidate.source_path,
+        source_page_url: sourceEvidence.source_page_url,
+        source_page_url_base: sourceEvidence.source_page_url_base,
+        source_url_fragment_external_id: sourceEvidence.source_url_fragment_external_id,
+        source_slug: sourceEvidence.source_slug,
+        source_route_code: sourceEvidence.source_route_code,
+        schedule_external_id: candidate.external_id || null,
+        schedule_date: candidate.kickoff_time || null,
+        schedule_home_team: candidate.home_team || null,
+        schedule_away_team: candidate.away_team || null,
+        source_inventory_record_key: sourceEvidence.source_inventory_record_key,
+        source_inventory_generated_at: sourceEvidence.source_inventory_generated_at,
+        identity_evidence_status: sourceEvidence.identity_evidence_status,
         league_id: LEAGUE_ID,
         league_name: LEAGUE_NAME,
         season: SEASON,
@@ -796,11 +838,25 @@ function normalizeSourceCandidate(rawEntry) {
         return { validExternalId: false, external_id: externalId || null };
     }
     const sourcePath = resolveSourcePath(match) || rawEntry.sourcePath || null;
+    const sourceEvidence = deriveSourceInventoryIdentityEvidence({
+        match,
+        sourcePath: rawEntry.sourcePath || sourcePath,
+        externalId,
+        generatedAt: rawEntry.sourceInventoryGeneratedAt || rawEntry.generatedAt || 'unknown',
+    });
     return {
         validExternalId: true,
         external_id: externalId,
         source_url: sourcePath && /^https?:\/\//.test(sourcePath) ? sourcePath : null,
         source_path: sourcePath && !/^https?:\/\//.test(sourcePath) ? sourcePath : null,
+        source_page_url: sourceEvidence.source_page_url,
+        source_page_url_base: sourceEvidence.source_page_url_base,
+        source_url_fragment_external_id: sourceEvidence.source_url_fragment_external_id,
+        source_slug: sourceEvidence.source_slug,
+        source_route_code: sourceEvidence.source_route_code,
+        source_inventory_record_key: sourceEvidence.source_inventory_record_key,
+        source_inventory_generated_at: sourceEvidence.source_inventory_generated_at,
+        identity_evidence_status: sourceEvidence.identity_evidence_status,
         home_team: resolveTeamName(match, 'home'),
         away_team: resolveTeamName(match, 'away'),
         kickoff_time: resolveKickoffTime(match),
@@ -828,6 +884,14 @@ function normalizeL1Candidate(candidate) {
         external_id: externalId,
         source_url: candidate?.source_url || null,
         source_path: candidate?.source_path || L1_SOURCE_INVENTORY_ROUTE_KIND,
+        source_page_url: candidate?.source_page_url || null,
+        source_page_url_base: candidate?.source_page_url_base || null,
+        source_url_fragment_external_id: candidate?.source_url_fragment_external_id || null,
+        source_slug: candidate?.source_slug || null,
+        source_route_code: candidate?.source_route_code || null,
+        source_inventory_record_key: candidate?.source_inventory_record_key || null,
+        source_inventory_generated_at: candidate?.source_inventory_generated_at || 'unknown',
+        identity_evidence_status: candidate?.identity_evidence_status || 'missing',
         home_team: normalizeText(candidate?.home_team) || null,
         away_team: normalizeText(candidate?.away_team) || null,
         kickoff_time: parseDateValue(candidate?.kickoff_time || candidate?.match_date),
