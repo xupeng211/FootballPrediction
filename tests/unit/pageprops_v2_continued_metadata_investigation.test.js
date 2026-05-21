@@ -236,7 +236,14 @@ test('repository L2V3Q artifacts preserve no-write and blocking semantics', () =
     assert.equal(manifest.phase_5_21_l2v3q_investigation_status, 'completed_no_write_metadata_pattern_investigation');
     assert.equal(manifest.raw_write_ready_for_execution, false);
     assert.equal(manifest.accepted_mapping_count, 0);
-    if (manifest.phase_5_21_l2v3s_feasibility_status) {
+    if (manifest.phase_5_21_l2v3t_investigation_status) {
+        assert.equal(
+            manifest.phase_5_21_l2v3t_investigation_status,
+            'completed_no_write_continued_detail_endpoint_investigation'
+        );
+        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3U: source inventory enrichment planning');
+        assert.equal(manifest.next_required_step, 'source_inventory_enrichment_planning');
+    } else if (manifest.phase_5_21_l2v3s_feasibility_status) {
         assert.equal(
             manifest.phase_5_21_l2v3s_feasibility_status,
             'completed_no_write_detail_api_endpoint_feasibility_verification'

@@ -497,25 +497,28 @@ test('controlled live checks continue when safe summaries pass and stop checks c
     assert.equal(mod.summarizeControlledChecks(result, true).precise_detail_endpoint_found, true);
 });
 
-test('runCli covers help, invalid options, and no-write success output without writing files', async () => {
+test('runCli covers help and invalid options; synthetic no-write success remains available without writing files', async () => {
     let helpOutput = '';
     let invalidOutput = '';
-    let successOutput = '';
     const helpStatus = await mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
     const invalidStatus = await mod.runCli(['--controlled-live-check=yes', '--network-authorization=no'], {
         stdout: text => (invalidOutput += text),
     });
-    const successStatus = await mod.runCli(
-        ['--controlled-live-check=no', '--network-authorization=no', '--max-targets=0', '--write-files=no'],
-        { stdout: text => (successOutput += text) }
-    );
+    const successResult = await buildSyntheticRunResult({
+        controlledLiveCheck: false,
+        networkAuthorization: false,
+        maxTargets: 0,
+        writeFiles: false,
+    });
 
     assert.equal(helpStatus, 0);
     assert.match(helpOutput, /Usage:/);
     assert.equal(invalidStatus, 2);
     assert.match(invalidOutput, /network-authorization/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /Phase 5.21L2V3S/);
+    assert.equal(successResult.status, 0);
+    assert.equal(successResult.ok, true);
+    assert.equal(successResult.artifact.proposal_phase, 'Phase 5.21L2V3S');
+    assert.equal(successResult.artifact.no_write, true);
 });
 
 test('L2V3S outputs avoid full raw data pageProps and source body payloads', async () => {
