@@ -371,7 +371,16 @@ test('repository L2V3T artifacts preserve no-write investigation semantics when 
     assert.equal(manifest.phase_5_21_l2v3t_investigation_status, artifact.artifact_status);
     assert.equal(manifest.raw_write_ready_for_execution, false);
     assert.equal(manifest.accepted_mapping_count, 0);
-    assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3U: source inventory enrichment planning');
-    assert.equal(manifest.next_required_step, 'source_inventory_enrichment_planning');
+    if (manifest.phase_5_21_l2v3u_planning_status) {
+        assert.equal(
+            manifest.phase_5_21_l2v3u_planning_status,
+            'completed_no_write_source_inventory_enrichment_planning'
+        );
+        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3V: source inventory enrichment implementation');
+        assert.equal(manifest.next_required_step, 'source_inventory_enrichment_implementation');
+    } else {
+        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3U: source inventory enrichment planning');
+        assert.equal(manifest.next_required_step, 'source_inventory_enrichment_planning');
+    }
     assert.match(report, /public_api_match_details_status=public_no_write_access_still_blocked_by_http_403/);
 });
