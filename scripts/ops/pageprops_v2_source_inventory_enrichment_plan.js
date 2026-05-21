@@ -319,7 +319,14 @@ function validateInputs(manifest = {}, l2v3tArtifact = {}) {
     const alreadyCompleted =
         nextRequiredStep === NEXT_REQUIRED_STEP &&
         normalizeText(manifest.phase_5_21_l2v3u_planning_status) === ARTIFACT_STATUS;
-    if (nextRequiredStep !== 'source_inventory_enrichment_planning' && !alreadyCompleted) {
+    const followupImplementationCompleted =
+        normalizeText(manifest.phase_5_21_l2v3v_implementation_status) ===
+        'completed_no_write_source_inventory_enrichment_implementation';
+    if (
+        nextRequiredStep !== 'source_inventory_enrichment_planning' &&
+        !alreadyCompleted &&
+        !followupImplementationCompleted
+    ) {
         errors.push('manifest next_required_step must be source_inventory_enrichment_planning');
     }
     if (manifest.raw_write_ready_for_execution !== false) {

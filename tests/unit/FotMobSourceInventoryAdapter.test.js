@@ -7,6 +7,8 @@ const test = require('node:test');
 const {
     FotMobSourceInventoryAdapter,
     ROUTE_KIND,
+    deriveSourceInventoryIdentityEvidence,
+    parseSourcePageUrl,
 } = require('../../src/infrastructure/services/FotMobSourceInventoryAdapter');
 
 function createConfigManager() {
@@ -120,6 +122,86 @@ test('existing L1 parser output normalizes to manifest-compatible candidate seed
     assert.equal(candidates[0].kickoff_time, '2026-03-15T19:00:00.000Z');
     assert.equal(candidates[0].match_date, '2026-03-15T19:00:00.000Z');
     assert.equal(candidates[0].status, 'finished');
+});
+
+test('adapter enriches candidate seed with source URL identity evidence from source-controlled inventory metadata', () => {
+    const adapter = createAdapter();
+
+    const candidates = adapter.parseSourceInventory(
+        {
+            fixtures: {
+                allMatches: [
+                    sourceMatch('6000001', {
+                        pageUrl: '/matches/home-vs-away/abcd12#6000001',
+                    }),
+                ],
+            },
+        },
+        {
+            source: 'fotmob',
+            leagueId: 53,
+            season: '2025/2026',
+            sourceInventoryGeneratedAt: '2026-05-21T09:00:00Z',
+        }
+    );
+
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0].source_url, '/matches/home-vs-away/abcd12#6000001');
+    assert.equal(candidates[0].source_page_url, '/matches/home-vs-away/abcd12#6000001');
+    assert.equal(candidates[0].source_page_url_base, '/matches/home-vs-away/abcd12');
+    assert.equal(candidates[0].source_url_fragment_external_id, '6000001');
+    assert.equal(candidates[0].source_slug, 'home-vs-away');
+    assert.equal(candidates[0].source_route_code, 'abcd12');
+    assert.equal(candidates[0].schedule_external_id, '6000001');
+    assert.equal(candidates[0].schedule_date, '2026-03-15T19:00:00.000Z');
+    assert.equal(candidates[0].schedule_home_team, 'Home 6000001');
+    assert.equal(candidates[0].schedule_away_team, 'Away 6000001');
+    assert.equal(candidates[0].source_inventory_record_key, 'l1_api_data_leagues:fixtures.allMatches.0:6000001');
+    assert.equal(candidates[0].source_inventory_generated_at, '2026-05-21T09:00:00Z');
+    assert.equal(candidates[0].identity_evidence_status, 'complete');
+});
+
+test('missing pageUrl remains missing and is not fabricated from external_id', () => {
+    const adapter = createAdapter();
+
+    const candidates = adapter.parseSourceInventory(
+        {
+            fixtures: {
+                allMatches: [sourceMatch('6000002')],
+            },
+        },
+        {
+            source: 'fotmob',
+            leagueId: 53,
+            season: '2025/2026',
+        }
+    );
+
+    assert.equal(candidates.length, 1);
+    assert.equal(candidates[0].source_url, null);
+    assert.equal(candidates[0].source_page_url, null);
+    assert.equal(candidates[0].source_page_url_base, null);
+    assert.equal(candidates[0].source_url_fragment_external_id, null);
+    assert.equal(candidates[0].source_inventory_record_key, 'l1_api_data_leagues:fixtures.allMatches.0:6000002');
+    assert.equal(candidates[0].identity_evidence_status, 'missing');
+});
+
+test('source URL helpers parse fragments without accepting mismatched identity evidence', () => {
+    const parsed = parseSourcePageUrl('https://www.fotmob.com/matches/home-vs-away/abcd12#6000003');
+    const mismatched = deriveSourceInventoryIdentityEvidence({
+        match: {
+            id: '6000004',
+            pageUrl: '/matches/home-vs-away/abcd12#6000003',
+        },
+        sourcePath: 'fixtures.allMatches.0',
+        externalId: '6000004',
+    });
+
+    assert.equal(parsed.source_page_url_base, 'https://www.fotmob.com/matches/home-vs-away/abcd12');
+    assert.equal(parsed.source_url_fragment_external_id, '6000003');
+    assert.equal(parsed.source_slug, 'home-vs-away');
+    assert.equal(parsed.source_route_code, 'abcd12');
+    assert.equal(mismatched.identity_evidence_status, 'partial');
 });
 
 test('adapter marks non-numeric external_id invalid without fabricating replacement target', () => {

@@ -376,8 +376,20 @@ test('repository L2V3T artifacts preserve no-write investigation semantics when 
             manifest.phase_5_21_l2v3u_planning_status,
             'completed_no_write_source_inventory_enrichment_planning'
         );
-        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3V: source inventory enrichment implementation');
-        assert.equal(manifest.next_required_step, 'source_inventory_enrichment_implementation');
+        if (manifest.phase_5_21_l2v3v_implementation_status) {
+            assert.equal(
+                manifest.phase_5_21_l2v3v_implementation_status,
+                'completed_no_write_source_inventory_enrichment_implementation'
+            );
+            assert.equal(
+                manifest.recommended_next_step,
+                'Phase 5.21L2V3W: source inventory acquisition path investigation'
+            );
+            assert.equal(manifest.next_required_step, 'source_inventory_acquisition_path_investigation');
+        } else {
+            assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3V: source inventory enrichment implementation');
+            assert.equal(manifest.next_required_step, 'source_inventory_enrichment_implementation');
+        }
     } else {
         assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3U: source inventory enrichment planning');
         assert.equal(manifest.next_required_step, 'source_inventory_enrichment_planning');
