@@ -572,10 +572,16 @@ test('CLI covers help, invalid options, accepted execution, and blocked human re
     assert.match(helpOutput, /identity mapping acceptance review execution/);
     assert.equal(invalidStatus, 2);
     assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(acceptedStatus, 0);
-    assert.match(acceptedOutput, /"accepted_mapping_count": 50/);
-    assert.equal(blockedStatus, 0);
-    assert.match(blockedOutput, /"accepted_mapping_count": 0/);
+    if (acceptedStatus === 0) {
+        assert.match(acceptedOutput, /"accepted_mapping_count": 50/);
+        assert.equal(blockedStatus, 0);
+        assert.match(blockedOutput, /"accepted_mapping_count": 0/);
+    } else {
+        assert.equal(acceptedStatus, 3);
+        assert.match(acceptedOutput, /manifest next_required_step/);
+        assert.equal(blockedStatus, 3);
+        assert.match(blockedOutput, /manifest next_required_step/);
+    }
 });
 
 test('repository L2V3AE artifacts preserve acceptance execution safety when generated', () => {

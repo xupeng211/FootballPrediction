@@ -266,6 +266,7 @@ test('L2V3AC records controlled no-write verification execution semantics', () =
             'identity_mapping_acceptance_review_planning',
             'identity_mapping_acceptance_review_execution',
             'baseline_acceptance_planning',
+            'baseline_acceptance_execution',
         ].includes(manifest.next_required_step)
     );
 });
@@ -593,6 +594,7 @@ test('repository L2V3AC artifacts preserve controlled no-write verification exec
             'identity_mapping_acceptance_review_planning',
             'identity_mapping_acceptance_review_execution',
             'baseline_acceptance_planning',
+            'baseline_acceptance_execution',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /verification_status=passed_no_write_source_controlled/i);

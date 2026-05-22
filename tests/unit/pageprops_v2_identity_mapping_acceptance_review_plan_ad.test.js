@@ -530,9 +530,11 @@ test('repository L2V3AD artifacts preserve planning-only safety when generated',
     assert.equal(manifestJson.accepted_mapping_count, 0);
     assert.equal(manifestJson.raw_write_ready_for_execution, false);
     assert.equal(
-        ['identity_mapping_acceptance_review_execution', 'baseline_acceptance_planning'].includes(
-            manifestJson.next_required_step
-        ),
+        [
+            'identity_mapping_acceptance_review_execution',
+            'baseline_acceptance_planning',
+            'baseline_acceptance_execution',
+        ].includes(manifestJson.next_required_step),
         true
     );
     assert.match(report, /review_ready is not accepted mapping/i);
