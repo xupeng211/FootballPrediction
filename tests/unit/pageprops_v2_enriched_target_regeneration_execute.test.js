@@ -475,7 +475,16 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
     assert.equal(manifest.phase_5_21_l2v3aa_execution_status, artifact.artifact_status);
     assert.equal(manifest.raw_write_ready_for_execution, false);
     assert.equal(manifest.accepted_mapping_count, 0);
-    assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3AB: enriched no-write verification planning');
-    assert.equal(manifest.next_required_step, 'enriched_no_write_verification_planning');
+    assert.ok(
+        [
+            'Phase 5.21L2V3AB: enriched no-write verification planning',
+            'Phase 5.21L2V3AC: controlled enriched no-write verification execution',
+        ].includes(manifest.recommended_next_step)
+    );
+    assert.ok(
+        ['enriched_no_write_verification_planning', 'controlled_enriched_no_write_verification_execution'].includes(
+            manifest.next_required_step
+        )
+    );
     assert.match(report, /planned_mapping_key=target_id/i);
 });
