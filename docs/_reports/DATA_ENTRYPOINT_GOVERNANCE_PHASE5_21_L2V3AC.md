@@ -81,6 +81,18 @@
 - write_execution_status=RECAPTURE_HASH_GATE_BLOCKED
 - raw_match_data_write_status=not_executed
 
+## Validation Caution
+
+- broad node --test accidental write-path attempt reviewed=true
+- broad node --test should not be used as a regular safety validation entrypoint.
+- future safety validation should prefer targeted suites.
+- accidental write-path attempt was blocked by DB constraints.
+- cleanup executed after accidental attempt=true
+- follow-up SELECT-only row count unchanged=true
+- protected tables unchanged=true
+- accidental attempt was not a successful DB write.
+- accidental attempt is not a passing condition for this phase.
+
 ## Safety Contract
 
 - verification result is not accepted mapping.

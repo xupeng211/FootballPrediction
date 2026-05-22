@@ -252,6 +252,9 @@ test('L2V3AC records controlled no-write verification execution semantics', () =
     assert.equal(artifact.blocked_target_count, 0);
     assert.equal(artifact.raw_write_ready_target_count, 0);
     assert.equal(artifact.raw_write_runner_blocked, true);
+    assert.equal(artifact.validation_caution.broad_node_test_accidental_write_path_attempt_reviewed, true);
+    assert.equal(artifact.validation_caution.accidental_write_path_attempt_blocked_by_db_constraints, true);
+    assert.equal(artifact.validation_caution.accidental_attempt_was_not_successful_db_write, true);
     assert.equal(artifact.verification_status, 'passed_no_write_source_controlled');
     assert.equal(artifact.recommended_next_step, 'Phase 5.21L2V3AD: identity mapping acceptance review planning');
     assert.equal(manifest.phase_5_21_l2v3ac_execution_status, artifact.artifact_status);
@@ -581,4 +584,6 @@ test('repository L2V3AC artifacts preserve controlled no-write verification exec
     assert.equal(manifest.accepted_mapping_count, 0);
     assert.equal(manifest.next_required_step, 'identity_mapping_acceptance_review_planning');
     assert.match(report, /verification_status=passed_no_write_source_controlled/i);
+    assert.match(report, /broad node --test accidental write-path attempt reviewed=true/i);
+    assert.match(report, /accidental attempt was not a successful DB write/i);
 });

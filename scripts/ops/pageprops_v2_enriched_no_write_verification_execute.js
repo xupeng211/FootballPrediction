@@ -762,6 +762,17 @@ function buildArtifact({
         helper_coverage: helperCoverage,
         verification_analysis: verificationAnalysis,
         raw_write_guard_analysis: rawWriteGuardAnalysis,
+        validation_caution: {
+            broad_node_test_accidental_write_path_attempt_reviewed: true,
+            broad_node_test_should_not_be_used_as_regular_safety_validation: true,
+            future_safety_validation_should_use_targeted_suites: true,
+            accidental_write_path_attempt_blocked_by_db_constraints: true,
+            cleanup_executed_after_accidental_attempt: true,
+            follow_up_select_only_row_count_unchanged: true,
+            protected_tables_unchanged: true,
+            accidental_attempt_was_not_successful_db_write: true,
+            accidental_attempt_is_not_a_pass_condition: true,
+        },
         upstream_context: {
             l2v3ab_planning_status: l2v3abPlan.artifact_status || null,
             l2v3ab_verification_execution_authorization_required:
@@ -894,6 +905,18 @@ ${artifact.input_analysis
 - next_required_step=${artifact.raw_write_guard_analysis.next_required_step}
 - write_execution_status=${artifact.raw_write_guard_analysis.write_execution_status}
 - raw_match_data_write_status=${artifact.raw_write_guard_analysis.raw_match_data_write_status}
+
+## Validation Caution
+
+- broad node --test accidental write-path attempt reviewed=true
+- broad node --test should not be used as a regular safety validation entrypoint.
+- future safety validation should prefer targeted suites.
+- accidental write-path attempt was blocked by DB constraints.
+- cleanup executed after accidental attempt=true
+- follow-up SELECT-only row count unchanged=true
+- protected tables unchanged=true
+- accidental attempt was not a successful DB write.
+- accidental attempt is not a passing condition for this phase.
 
 ## Safety Contract
 
