@@ -12,10 +12,13 @@ FROM node:20-bookworm-slim AS node-builder
 WORKDIR /build
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+ARG NPM_REGISTRY=https://registry.npmjs.org
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --omit=dev --ignore-scripts \
+RUN npm config set registry "${NPM_REGISTRY}" \
+    && npm config set replace-registry-host always \
+    && npm ci --omit=dev --ignore-scripts \
     && npx playwright install chromium \
     && npm cache clean --force
 

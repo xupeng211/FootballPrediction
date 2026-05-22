@@ -149,6 +149,7 @@ jobs:
         run: |
           docker buildx build \
             --file Dockerfile \
+            --build-arg NPM_REGISTRY=https://registry.npmjs.org \
             --cache-from type=gha,scope=production-image-buildx \
             --cache-to type=gha,scope=production-image-buildx,mode=min \
             .
