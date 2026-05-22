@@ -1,0 +1,709 @@
+{
+    "artifact_type": "enriched_no_write_verification_result",
+    "artifact_status": "completed_controlled_enriched_no_write_verification_execution",
+    "proposal_phase": "Phase 5.21L2V3AC",
+    "phase_name": "controlled_enriched_no_write_verification_execution",
+    "source_phase": "Phase 5.21L2V3AB",
+    "generated_at": "2026-05-22T06:00:00Z",
+    "no_write": true,
+    "source_controlled_artifacts_only": true,
+    "live_fetch_performed": false,
+    "detail_fetch_performed": false,
+    "network_request_performed": false,
+    "db_write_performed": false,
+    "raw_insert_performed": false,
+    "raw_match_data_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "browser_proxy_captcha_bypass_performed": false,
+    "verification_execution_performed": true,
+    "identity_mapping_acceptance_performed": false,
+    "baseline_acceptance_performed": false,
+    "baseline_replacement_accepted": false,
+    "raw_write_authorization_performed": false,
+    "raw_write_retry_performed": false,
+    "accepted_mapping_count": 0,
+    "raw_write_ready_for_execution": false,
+    "enriched_target_count": 50,
+    "verified_target_count": 50,
+    "failed_target_count": 0,
+    "blocked_target_count": 0,
+    "source_url_evidence_complete_count": 50,
+    "fragment_schedule_id_match_count": 50,
+    "duplicate_target_id_count": 0,
+    "duplicate_match_id_count": 0,
+    "duplicate_source_inventory_record_key_count": 0,
+    "duplicate_fragment_external_id_count": 0,
+    "missing_source_page_url_count": 0,
+    "missing_source_page_url_base_count": 0,
+    "missing_source_url_fragment_external_id_count": 0,
+    "missing_source_inventory_record_key_count": 0,
+    "missing_required_metadata_count": 0,
+    "regeneration_status_valid_count": 50,
+    "regeneration_blockers_count": 0,
+    "raw_write_ready_target_count": 0,
+    "raw_write_runner_blocked": true,
+    "verification_status": "passed_no_write_source_controlled",
+    "verification_rule_count": 21,
+    "verification_rule_results": [
+        {
+            "rule_id": "enriched_target_count_eq_50",
+            "rule_number": 1,
+            "description": "enriched_target_count must equal 50.",
+            "passed": true
+        },
+        {
+            "rule_id": "source_page_url_present",
+            "rule_number": 2,
+            "description": "each target must have source_page_url.",
+            "passed": true
+        },
+        {
+            "rule_id": "source_page_url_base_present",
+            "rule_number": 3,
+            "description": "each target must have source_page_url_base.",
+            "passed": true
+        },
+        {
+            "rule_id": "source_url_fragment_external_id_present",
+            "rule_number": 4,
+            "description": "each target must have source_url_fragment_external_id.",
+            "passed": true
+        },
+        {
+            "rule_id": "source_inventory_record_key_present",
+            "rule_number": 5,
+            "description": "each target must have source_inventory_record_key.",
+            "passed": true
+        },
+        {
+            "rule_id": "fragment_external_id_matches_schedule_external_id",
+            "rule_number": 6,
+            "description": "source_url_fragment_external_id must equal schedule_external_id.",
+            "passed": true
+        },
+        {
+            "rule_id": "target_id_unique",
+            "rule_number": 7,
+            "description": "target_id must be unique.",
+            "passed": true
+        },
+        {
+            "rule_id": "match_id_unique",
+            "rule_number": 8,
+            "description": "match_id must be unique.",
+            "passed": true
+        },
+        {
+            "rule_id": "source_inventory_record_key_unique",
+            "rule_number": 9,
+            "description": "source_inventory_record_key must be unique.",
+            "passed": true
+        },
+        {
+            "rule_id": "source_url_fragment_external_id_unique",
+            "rule_number": 10,
+            "description": "source_url_fragment_external_id must be unique.",
+            "passed": true
+        },
+        {
+            "rule_id": "schedule_date_present",
+            "rule_number": 11,
+            "description": "schedule_date must be present.",
+            "passed": true
+        },
+        {
+            "rule_id": "schedule_home_team_present",
+            "rule_number": 12,
+            "description": "schedule_home_team must be present.",
+            "passed": true
+        },
+        {
+            "rule_id": "schedule_away_team_present",
+            "rule_number": 13,
+            "description": "schedule_away_team must be present.",
+            "passed": true
+        },
+        {
+            "rule_id": "regeneration_status_regenerated_no_write",
+            "rule_number": 14,
+            "description": "regeneration_status must be regenerated_no_write.",
+            "passed": true
+        },
+        {
+            "rule_id": "regeneration_blockers_empty",
+            "rule_number": 15,
+            "description": "regeneration_blockers must be empty.",
+            "passed": true
+        },
+        {
+            "rule_id": "target_raw_write_ready_false",
+            "rule_number": 16,
+            "description": "raw_write_ready_for_execution must be false for every target.",
+            "passed": true
+        },
+        {
+            "rule_id": "raw_write_runner_remains_blocked",
+            "rule_number": 17,
+            "description": "raw write runner must remain blocked.",
+            "passed": true
+        },
+        {
+            "rule_id": "accepted_mapping_count_zero",
+            "rule_number": 18,
+            "description": "accepted_mapping_count must remain 0.",
+            "passed": true
+        },
+        {
+            "rule_id": "identity_mapping_acceptance_not_performed",
+            "rule_number": 19,
+            "description": "identity_mapping_acceptance_performed must remain false.",
+            "passed": true
+        },
+        {
+            "rule_id": "baseline_acceptance_not_performed",
+            "rule_number": 20,
+            "description": "baseline_acceptance_performed must remain false.",
+            "passed": true
+        },
+        {
+            "rule_id": "raw_write_retry_not_performed",
+            "rule_number": 21,
+            "description": "raw_write_retry_performed must remain false.",
+            "passed": true
+        }
+    ],
+    "input_analysis": [
+        {
+            "key": "manifest",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+            "role": "current_manifest",
+            "count_as_artifact": true,
+            "exists": true
+        },
+        {
+            "key": "l2v3ab_plan",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.enriched_no_write_verification_plan.phase521l2v3ab.json",
+            "role": "enriched_no_write_verification_plan",
+            "count_as_artifact": true,
+            "exists": true
+        },
+        {
+            "key": "l2v3aa_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.enriched_targets.phase521l2v3aa.json",
+            "role": "enriched_targets_artifact",
+            "count_as_artifact": true,
+            "exists": true
+        },
+        {
+            "key": "l2v3aa_report",
+            "path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AA.md",
+            "role": "governance_report",
+            "count_as_artifact": true,
+            "exists": true
+        },
+        {
+            "key": "l2v3y_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.controlled_source_inventory_acquisition_result.phase521l2v3y.json",
+            "role": "source_inventory_acquisition_result",
+            "count_as_artifact": true,
+            "exists": true
+        },
+        {
+            "key": "l2v3m_artifact",
+            "path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.date_mismatch_rule_implementation.phase521l2v3m.json",
+            "role": "date_rule_implementation",
+            "count_as_artifact": true,
+            "exists": true
+        },
+        {
+            "key": "raw_write_guard",
+            "path": "scripts/ops/renewed_pageprops_v2_raw_write_execute.js",
+            "role": "raw_write_runner_guard",
+            "count_as_artifact": false,
+            "exists": true
+        }
+    ],
+    "helper_coverage": {
+        "l2v3ab_plan_authorizes_verification_execution": true,
+        "raw_write_guard_validate_manifest_gate_available": true,
+        "l2v3m_integrated_with_raw_write_guard": true,
+        "checked_paths": [
+            "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.enriched_no_write_verification_plan.phase521l2v3ab.json",
+            "scripts/ops/renewed_pageprops_v2_raw_write_execute.js",
+            "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.date_mismatch_rule_implementation.phase521l2v3m.json"
+        ]
+    },
+    "verification_analysis": {
+        "enriched_target_count": 50,
+        "verified_target_count": 50,
+        "failed_target_count": 0,
+        "blocked_target_count": 0,
+        "source_url_evidence_complete_count": 50,
+        "fragment_schedule_id_match_count": 50,
+        "duplicate_target_id_count": 0,
+        "duplicate_match_id_count": 0,
+        "duplicate_source_inventory_record_key_count": 0,
+        "duplicate_fragment_external_id_count": 0,
+        "missing_source_page_url_count": 0,
+        "missing_source_page_url_base_count": 0,
+        "missing_source_url_fragment_external_id_count": 0,
+        "missing_source_inventory_record_key_count": 0,
+        "missing_schedule_date_count": 0,
+        "missing_schedule_home_team_count": 0,
+        "missing_schedule_away_team_count": 0,
+        "missing_required_metadata_count": 0,
+        "regeneration_status_valid_count": 50,
+        "regeneration_blockers_count": 0,
+        "raw_write_ready_target_count": 0,
+        "source_inventory_consistency_count": 50,
+        "target_results": [
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830466",
+                "match_id": "53_20252026_4830466",
+                "schedule_external_id": "4830466",
+                "source_url_fragment_external_id": "4830466",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830461",
+                "match_id": "53_20252026_4830461",
+                "schedule_external_id": "4830461",
+                "source_url_fragment_external_id": "4830461",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830463",
+                "match_id": "53_20252026_4830463",
+                "schedule_external_id": "4830463",
+                "source_url_fragment_external_id": "4830463",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830465",
+                "match_id": "53_20252026_4830465",
+                "schedule_external_id": "4830465",
+                "source_url_fragment_external_id": "4830465",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830460",
+                "match_id": "53_20252026_4830460",
+                "schedule_external_id": "4830460",
+                "source_url_fragment_external_id": "4830460",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830458",
+                "match_id": "53_20252026_4830458",
+                "schedule_external_id": "4830458",
+                "source_url_fragment_external_id": "4830458",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830459",
+                "match_id": "53_20252026_4830459",
+                "schedule_external_id": "4830459",
+                "source_url_fragment_external_id": "4830459",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830462",
+                "match_id": "53_20252026_4830462",
+                "schedule_external_id": "4830462",
+                "source_url_fragment_external_id": "4830462",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830464",
+                "match_id": "53_20252026_4830464",
+                "schedule_external_id": "4830464",
+                "source_url_fragment_external_id": "4830464",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830473",
+                "match_id": "53_20252026_4830473",
+                "schedule_external_id": "4830473",
+                "source_url_fragment_external_id": "4830473",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830471",
+                "match_id": "53_20252026_4830471",
+                "schedule_external_id": "4830471",
+                "source_url_fragment_external_id": "4830471",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830472",
+                "match_id": "53_20252026_4830472",
+                "schedule_external_id": "4830472",
+                "source_url_fragment_external_id": "4830472",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830470",
+                "match_id": "53_20252026_4830470",
+                "schedule_external_id": "4830470",
+                "source_url_fragment_external_id": "4830470",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830469",
+                "match_id": "53_20252026_4830469",
+                "schedule_external_id": "4830469",
+                "source_url_fragment_external_id": "4830469",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830467",
+                "match_id": "53_20252026_4830467",
+                "schedule_external_id": "4830467",
+                "source_url_fragment_external_id": "4830467",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830474",
+                "match_id": "53_20252026_4830474",
+                "schedule_external_id": "4830474",
+                "source_url_fragment_external_id": "4830474",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830475",
+                "match_id": "53_20252026_4830475",
+                "schedule_external_id": "4830475",
+                "source_url_fragment_external_id": "4830475",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830468",
+                "match_id": "53_20252026_4830468",
+                "schedule_external_id": "4830468",
+                "source_url_fragment_external_id": "4830468",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830478",
+                "match_id": "53_20252026_4830478",
+                "schedule_external_id": "4830478",
+                "source_url_fragment_external_id": "4830478",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830479",
+                "match_id": "53_20252026_4830479",
+                "schedule_external_id": "4830479",
+                "source_url_fragment_external_id": "4830479",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830482",
+                "match_id": "53_20252026_4830482",
+                "schedule_external_id": "4830482",
+                "source_url_fragment_external_id": "4830482",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830484",
+                "match_id": "53_20252026_4830484",
+                "schedule_external_id": "4830484",
+                "source_url_fragment_external_id": "4830484",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830476",
+                "match_id": "53_20252026_4830476",
+                "schedule_external_id": "4830476",
+                "source_url_fragment_external_id": "4830476",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830477",
+                "match_id": "53_20252026_4830477",
+                "schedule_external_id": "4830477",
+                "source_url_fragment_external_id": "4830477",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830481",
+                "match_id": "53_20252026_4830481",
+                "schedule_external_id": "4830481",
+                "source_url_fragment_external_id": "4830481",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830483",
+                "match_id": "53_20252026_4830483",
+                "schedule_external_id": "4830483",
+                "source_url_fragment_external_id": "4830483",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830480",
+                "match_id": "53_20252026_4830480",
+                "schedule_external_id": "4830480",
+                "source_url_fragment_external_id": "4830480",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830488",
+                "match_id": "53_20252026_4830488",
+                "schedule_external_id": "4830488",
+                "source_url_fragment_external_id": "4830488",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830490",
+                "match_id": "53_20252026_4830490",
+                "schedule_external_id": "4830490",
+                "source_url_fragment_external_id": "4830490",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830485",
+                "match_id": "53_20252026_4830485",
+                "schedule_external_id": "4830485",
+                "source_url_fragment_external_id": "4830485",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830487",
+                "match_id": "53_20252026_4830487",
+                "schedule_external_id": "4830487",
+                "source_url_fragment_external_id": "4830487",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830486",
+                "match_id": "53_20252026_4830486",
+                "schedule_external_id": "4830486",
+                "source_url_fragment_external_id": "4830486",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830489",
+                "match_id": "53_20252026_4830489",
+                "schedule_external_id": "4830489",
+                "source_url_fragment_external_id": "4830489",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830491",
+                "match_id": "53_20252026_4830491",
+                "schedule_external_id": "4830491",
+                "source_url_fragment_external_id": "4830491",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830493",
+                "match_id": "53_20252026_4830493",
+                "schedule_external_id": "4830493",
+                "source_url_fragment_external_id": "4830493",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830492",
+                "match_id": "53_20252026_4830492",
+                "schedule_external_id": "4830492",
+                "source_url_fragment_external_id": "4830492",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830498",
+                "match_id": "53_20252026_4830498",
+                "schedule_external_id": "4830498",
+                "source_url_fragment_external_id": "4830498",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830501",
+                "match_id": "53_20252026_4830501",
+                "schedule_external_id": "4830501",
+                "source_url_fragment_external_id": "4830501",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830495",
+                "match_id": "53_20252026_4830495",
+                "schedule_external_id": "4830495",
+                "source_url_fragment_external_id": "4830495",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830497",
+                "match_id": "53_20252026_4830497",
+                "schedule_external_id": "4830497",
+                "source_url_fragment_external_id": "4830497",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830502",
+                "match_id": "53_20252026_4830502",
+                "schedule_external_id": "4830502",
+                "source_url_fragment_external_id": "4830502",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830494",
+                "match_id": "53_20252026_4830494",
+                "schedule_external_id": "4830494",
+                "source_url_fragment_external_id": "4830494",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830496",
+                "match_id": "53_20252026_4830496",
+                "schedule_external_id": "4830496",
+                "source_url_fragment_external_id": "4830496",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830500",
+                "match_id": "53_20252026_4830500",
+                "schedule_external_id": "4830500",
+                "source_url_fragment_external_id": "4830500",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830499",
+                "match_id": "53_20252026_4830499",
+                "schedule_external_id": "4830499",
+                "source_url_fragment_external_id": "4830499",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830510",
+                "match_id": "53_20252026_4830510",
+                "schedule_external_id": "4830510",
+                "source_url_fragment_external_id": "4830510",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830505",
+                "match_id": "53_20252026_4830505",
+                "schedule_external_id": "4830505",
+                "source_url_fragment_external_id": "4830505",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830511",
+                "match_id": "53_20252026_4830511",
+                "schedule_external_id": "4830511",
+                "source_url_fragment_external_id": "4830511",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830508",
+                "match_id": "53_20252026_4830508",
+                "schedule_external_id": "4830508",
+                "source_url_fragment_external_id": "4830508",
+                "verification_status": "verified",
+                "failure_reasons": []
+            },
+            {
+                "target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830507",
+                "match_id": "53_20252026_4830507",
+                "schedule_external_id": "4830507",
+                "source_url_fragment_external_id": "4830507",
+                "verification_status": "verified",
+                "failure_reasons": []
+            }
+        ],
+        "all_target_rules_passed": true
+    },
+    "raw_write_guard_analysis": {
+        "ok": false,
+        "blocked": true,
+        "error_count": 52,
+        "errors_excerpt": [
+            "required_next_step must be renewed_controlled_pageprops_v2_raw_write_execution",
+            "write_execution_status must retain prior blocked_missing_matches_fk_prerequisite before retry",
+            "53_20252026_4830466: write_execution_status must be blocked_missing_matches_fk_prerequisite, failure_reason must be prior FK prerequisite block or empty",
+            "53_20252026_4830461: write_execution_status must be blocked_missing_matches_fk_prerequisite, failure_reason must be prior FK prerequisite block or empty",
+            "53_20252026_4830463: write_execution_status must be blocked_missing_matches_fk_prerequisite, failure_reason must be prior FK prerequisite block or empty"
+        ],
+        "required_next_step": "renewed_controlled_pageprops_v2_raw_write_execution_blocked_review",
+        "next_required_step": "identity_mapping_acceptance_review_planning",
+        "write_execution_status": "RECAPTURE_HASH_GATE_BLOCKED",
+        "raw_match_data_write_status": "not_executed"
+    },
+    "upstream_context": {
+        "l2v3ab_planning_status": "completed_no_write_enriched_no_write_verification_planning",
+        "l2v3ab_verification_execution_authorization_required": true,
+        "l2v3aa_regenerated_target_count": 50,
+        "l2v3aa_no_write_verification_required": true,
+        "current_manifest_next_required_step": "identity_mapping_acceptance_review_planning"
+    },
+    "date_rule_context": {
+        "integrated_with_raw_write_guard": true,
+        "blocking_statuses": ["reverse_fixture_detected", "cross_season_slug_reuse", "unresolved_large_gap", "unknown"],
+        "review_only_statuses": ["timezone_only_mismatch", "postponed_or_rescheduled_explained"],
+        "positive_evidence_statuses": ["date_match", "same_utc_day"]
+    },
+    "safety_contract": {
+        "verification_result_is_not_accepted_mapping": true,
+        "verification_result_is_not_raw_write_authorization": true,
+        "verification_result_is_not_identity_mapping_acceptance": true,
+        "verification_result_is_not_baseline_acceptance": true,
+        "source_url_fragment_external_id_match_does_not_imply_accepted_mapping": true,
+        "verification_passed_does_not_imply_raw_write_ready_for_execution": true,
+        "raw_write_runner_remains_blocked": true,
+        "separate_identity_mapping_acceptance_required": true,
+        "separate_baseline_acceptance_required": true,
+        "separate_final_db_write_authorization_required": true
+    },
+    "recommended_next_step": "Phase 5.21L2V3AD: identity mapping acceptance review planning",
+    "next_required_step": "identity_mapping_acceptance_review_planning"
+}

@@ -4642,7 +4642,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "controlled_enriched_no_write_verification_execution",
+    "next_required_step": "identity_mapping_acceptance_review_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4920,7 +4920,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AC: controlled enriched no-write verification execution",
+    "recommended_next_step": "Phase 5.21L2V3AD: identity mapping acceptance review planning",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5343,7 +5343,18 @@
     "phase_5_21_l2v3ab_planned_verification_rule_count": 17,
     "planned_verification_input_artifact_count": 5,
     "phase_5_21_l2v3ab_planned_verification_input_artifact_count": 5,
-    "verification_execution_performed": false,
+    "verification_execution_performed": true,
     "verification_execution_authorization_required": true,
-    "phase_5_21_l2v3ab_verification_execution_authorization_required": true
+    "phase_5_21_l2v3ab_verification_execution_authorization_required": true,
+    "phase_5_21_l2v3ac_execution_status": "completed_controlled_enriched_no_write_verification_execution",
+    "enriched_no_write_verification_execution_status": "completed_controlled_enriched_no_write_verification_execution",
+    "phase_5_21_l2v3ac_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.enriched_no_write_verification_result.phase521l2v3ac.json",
+    "phase_5_21_l2v3ac_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AC.md",
+    "detail_fetch_performed": false,
+    "verified_target_count": 50,
+    "failed_target_count": 0,
+    "source_url_evidence_complete_count": 50,
+    "fragment_schedule_id_match_count": 50,
+    "raw_write_runner_blocked": true,
+    "enriched_no_write_verification_status": "passed_no_write_source_controlled"
 }

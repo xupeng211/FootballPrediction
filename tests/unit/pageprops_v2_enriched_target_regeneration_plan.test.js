@@ -626,12 +626,15 @@ test('repository L2V3Z artifacts preserve planning-only safety when generated', 
             [
                 'Phase 5.21L2V3AB: enriched no-write verification planning',
                 'Phase 5.21L2V3AC: controlled enriched no-write verification execution',
+                'Phase 5.21L2V3AD: identity mapping acceptance review planning',
             ].includes(manifest.recommended_next_step)
         );
         assert.ok(
-            ['enriched_no_write_verification_planning', 'controlled_enriched_no_write_verification_execution'].includes(
-                manifest.next_required_step
-            )
+            [
+                'enriched_no_write_verification_planning',
+                'controlled_enriched_no_write_verification_execution',
+                'identity_mapping_acceptance_review_planning',
+            ].includes(manifest.next_required_step)
         );
     } else {
         assert.equal(
