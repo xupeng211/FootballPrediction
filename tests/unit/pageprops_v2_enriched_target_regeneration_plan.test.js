@@ -617,7 +617,19 @@ test('repository L2V3Z artifacts preserve planning-only safety when generated', 
     assert.equal(manifest.phase_5_21_l2v3z_planning_status, artifact.artifact_status);
     assert.equal(manifest.raw_write_ready_for_execution, false);
     assert.equal(manifest.accepted_mapping_count, 0);
-    assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3AA: controlled enriched target regeneration execution');
-    assert.equal(manifest.next_required_step, 'controlled_enriched_target_regeneration_execution');
+    if (manifest.phase_5_21_l2v3aa_execution_status) {
+        assert.equal(
+            manifest.phase_5_21_l2v3aa_execution_status,
+            'completed_controlled_no_write_enriched_target_regeneration_execution'
+        );
+        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3AB: enriched no-write verification planning');
+        assert.equal(manifest.next_required_step, 'enriched_no_write_verification_planning');
+    } else {
+        assert.equal(
+            manifest.recommended_next_step,
+            'Phase 5.21L2V3AA: controlled enriched target regeneration execution'
+        );
+        assert.equal(manifest.next_required_step, 'controlled_enriched_target_regeneration_execution');
+    }
     assert.match(report, /primary_mapping_key=target_id/i);
 });
