@@ -261,7 +261,11 @@ test('L2V3AC records controlled no-write verification execution semantics', () =
     assert.equal(manifest.enriched_no_write_verification_execution_status, artifact.artifact_status);
     assert.equal(manifest.raw_write_ready_for_execution, false);
     assert.equal(manifest.accepted_mapping_count, 0);
-    assert.equal(manifest.next_required_step, 'identity_mapping_acceptance_review_planning');
+    assert.ok(
+        ['identity_mapping_acceptance_review_planning', 'identity_mapping_acceptance_review_execution'].includes(
+            manifest.next_required_step
+        )
+    );
 });
 
 test('verification rules cover 50 targets, evidence, uniqueness, metadata, regeneration, and raw guard', () => {
@@ -582,7 +586,11 @@ test('repository L2V3AC artifacts preserve controlled no-write verification exec
     assert.equal(manifest.phase_5_21_l2v3ac_execution_status, artifact.artifact_status);
     assert.equal(manifest.raw_write_ready_for_execution, false);
     assert.equal(manifest.accepted_mapping_count, 0);
-    assert.equal(manifest.next_required_step, 'identity_mapping_acceptance_review_planning');
+    assert.ok(
+        ['identity_mapping_acceptance_review_planning', 'identity_mapping_acceptance_review_execution'].includes(
+            manifest.next_required_step
+        )
+    );
     assert.match(report, /verification_status=passed_no_write_source_controlled/i);
     assert.match(report, /broad node --test accidental write-path attempt reviewed=true/i);
     assert.match(report, /accidental attempt was not a successful DB write/i);

@@ -480,6 +480,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'Phase 5.21L2V3AB: enriched no-write verification planning',
             'Phase 5.21L2V3AC: controlled enriched no-write verification execution',
             'Phase 5.21L2V3AD: identity mapping acceptance review planning',
+            'Phase 5.21L2V3AE: identity mapping acceptance review execution',
         ].includes(manifest.recommended_next_step)
     );
     assert.ok(
@@ -487,6 +488,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'enriched_no_write_verification_planning',
             'controlled_enriched_no_write_verification_execution',
             'identity_mapping_acceptance_review_planning',
+            'identity_mapping_acceptance_review_execution',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /planned_mapping_key=target_id/i);
