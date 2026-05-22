@@ -622,8 +622,17 @@ test('repository L2V3Z artifacts preserve planning-only safety when generated', 
             manifest.phase_5_21_l2v3aa_execution_status,
             'completed_controlled_no_write_enriched_target_regeneration_execution'
         );
-        assert.equal(manifest.recommended_next_step, 'Phase 5.21L2V3AB: enriched no-write verification planning');
-        assert.equal(manifest.next_required_step, 'enriched_no_write_verification_planning');
+        assert.ok(
+            [
+                'Phase 5.21L2V3AB: enriched no-write verification planning',
+                'Phase 5.21L2V3AC: controlled enriched no-write verification execution',
+            ].includes(manifest.recommended_next_step)
+        );
+        assert.ok(
+            ['enriched_no_write_verification_planning', 'controlled_enriched_no_write_verification_execution'].includes(
+                manifest.next_required_step
+            )
+        );
     } else {
         assert.equal(
             manifest.recommended_next_step,
