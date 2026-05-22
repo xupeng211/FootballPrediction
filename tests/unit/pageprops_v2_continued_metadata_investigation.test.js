@@ -276,6 +276,7 @@ test('repository L2V3Q artifacts preserve no-write and blocking semantics', () =
                                         'Phase 5.21L2V3AC: controlled enriched no-write verification execution',
                                         'Phase 5.21L2V3AD: identity mapping acceptance review planning',
                                         'Phase 5.21L2V3AE: identity mapping acceptance review execution',
+                                        'Phase 5.21L2V3AF: baseline acceptance planning',
                                     ].includes(manifest.recommended_next_step)
                                 );
                                 assert.ok(
@@ -283,6 +284,7 @@ test('repository L2V3Q artifacts preserve no-write and blocking semantics', () =
                                         'controlled_enriched_no_write_verification_execution',
                                         'identity_mapping_acceptance_review_planning',
                                         'identity_mapping_acceptance_review_execution',
+                                        'baseline_acceptance_planning',
                                     ].includes(manifest.next_required_step)
                                 );
                             } else {
