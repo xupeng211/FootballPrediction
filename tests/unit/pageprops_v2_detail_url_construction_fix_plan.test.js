@@ -427,6 +427,7 @@ test('repository L2V3R artifacts preserve planning-only and blocking semantics',
                                         'Phase 5.21L2V3AD: identity mapping acceptance review planning',
                                         'Phase 5.21L2V3AE: identity mapping acceptance review execution',
                                         'Phase 5.21L2V3AF: baseline acceptance planning',
+                                        'Phase 5.21L2V3AG: baseline acceptance execution',
                                     ].includes(manifest.recommended_next_step)
                                 );
                                 assert.ok(
@@ -435,6 +436,7 @@ test('repository L2V3R artifacts preserve planning-only and blocking semantics',
                                         'identity_mapping_acceptance_review_planning',
                                         'identity_mapping_acceptance_review_execution',
                                         'baseline_acceptance_planning',
+                                        'baseline_acceptance_execution',
                                     ].includes(manifest.next_required_step)
                                 );
                             } else {
