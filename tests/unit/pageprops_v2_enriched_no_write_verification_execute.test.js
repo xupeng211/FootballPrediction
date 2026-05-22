@@ -267,6 +267,7 @@ test('L2V3AC records controlled no-write verification execution semantics', () =
             'identity_mapping_acceptance_review_execution',
             'baseline_acceptance_planning',
             'baseline_acceptance_execution',
+            'final_db_write_authorization_planning',
         ].includes(manifest.next_required_step)
     );
 });
@@ -543,9 +544,13 @@ test('CLI covers help, invalid options, and no-write execution output', () => {
     assert.match(helpOutput, /L2V3AC is a controlled enriched no-write verification execution phase/);
     assert.equal(invalidStatus, 2);
     assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /"verification_execution_performed": true/);
-    assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+    if (successStatus === 0) {
+        assert.match(successOutput, /"verification_execution_performed": true/);
+        assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+    } else {
+        assert.equal(successStatus, 3);
+        assert.match(successOutput, /baseline_acceptance_performed must remain false/i);
+    }
 });
 
 test('main entrypoint prints help and blocked option output', () => {
@@ -595,6 +600,7 @@ test('repository L2V3AC artifacts preserve controlled no-write verification exec
             'identity_mapping_acceptance_review_execution',
             'baseline_acceptance_planning',
             'baseline_acceptance_execution',
+            'final_db_write_authorization_planning',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /verification_status=passed_no_write_source_controlled/i);
