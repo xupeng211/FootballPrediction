@@ -1,0 +1,171 @@
+{
+    "artifact_type": "raw_write_input_source_investigation",
+    "artifact_status": "completed_controlled_raw_write_input_source_investigation",
+    "proposal_phase": "Phase 5.21L2V3AK",
+    "phase_name": "continued_controlled_raw_write_planning",
+    "planning_only": true,
+    "continued_controlled_raw_write_planning": true,
+    "generated_at": "2026-05-24T20:25:50.581Z",
+    "reviewed_input_artifact_count": 8,
+    "reviewed_input_artifact_paths": {
+        "proposal_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
+        "source_inventory_acquisition_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.controlled_source_inventory_acquisition_result.phase521l2v3y.json",
+        "enriched_targets": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.enriched_targets.phase521l2v3aa.json",
+        "enriched_no_write_verification_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.enriched_no_write_verification_result.phase521l2v3ac.json",
+        "identity_mapping_acceptance_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.identity_mapping_acceptance_result.phase521l2v3ae.json",
+        "baseline_acceptance_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.baseline_acceptance_result.phase521l2v3ag.json",
+        "final_db_write_authorization_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.final_db_write_authorization_result.phase521l2v3ai.json",
+        "controlled_raw_match_data_write_execution_plan": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.controlled_raw_match_data_write_execution_plan.phase521l2v3aj.json"
+    },
+    "planning_status": "completed_controlled_raw_write_input_source_investigation",
+    "controlled_raw_write_input_source_planning_status": "unknown_or_missing",
+    "raw_write_runner_input_contract_status": "requires_manifest_metadata_plus_live_recapture_to_construct_raw_data",
+    "raw_write_runner_input_contract": {
+        "status": "requires_manifest_metadata_plus_live_recapture_to_construct_raw_data",
+        "runner_reference_path": "scripts/ops/renewed_pageprops_v2_raw_write_execute.js",
+        "base_helper_reference_path": "scripts/ops/single_league_pageprops_v2_controlled_write_execute.js",
+        "requires_manifest_metadata": true,
+        "requires_live_recapture": true,
+        "requires_full_pageprops_payload": true,
+        "constructs_raw_data_in_memory_from_pageprops": true,
+        "inserts_raw_match_data_from_recapture_gate_targets": true,
+        "accepts_payload_file_path": false,
+        "manifest_embeds_payload": false,
+        "write_mode_invoked": false,
+        "inspected_by_source_read_only": true
+    },
+    "safe_payload_source_path_status": "unknown_or_missing",
+    "safe_payload_source_path": null,
+    "payload_source_candidate_count": 6,
+    "payload_source_accepted_count": 0,
+    "payload_source_rejected_count": 4,
+    "payload_source_blocked_count": 2,
+    "metadata_only_artifacts_count": 8,
+    "reviewed_artifact_summaries": [
+        {
+            "label": "proposal_manifest",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 1,
+            "metadata_only": true
+        },
+        {
+            "label": "source_inventory_acquisition_result",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 0,
+            "metadata_only": true
+        },
+        {
+            "label": "enriched_targets",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 0,
+            "metadata_only": true
+        },
+        {
+            "label": "enriched_no_write_verification_result",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 0,
+            "metadata_only": true
+        },
+        {
+            "label": "identity_mapping_acceptance_result",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 0,
+            "metadata_only": true
+        },
+        {
+            "label": "baseline_acceptance_result",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 0,
+            "metadata_only": true
+        },
+        {
+            "label": "final_db_write_authorization_result",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 0,
+            "metadata_only": true
+        },
+        {
+            "label": "controlled_raw_match_data_write_execution_plan",
+            "full_payload_key_count": 0,
+            "full_payload_key_paths": [],
+            "payload_path_candidate_count": 0,
+            "metadata_only": true
+        }
+    ],
+    "full_payload_artifact_found": false,
+    "live_recapture_required": true,
+    "controlled_payload_source_planning_required": true,
+    "raw_write_execution_ready": false,
+    "raw_write_execution_performed": false,
+    "db_write_performed": false,
+    "raw_match_data_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "network_request_performed": false,
+    "live_fetch_performed": false,
+    "detail_fetch_performed": false,
+    "schema_migration_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "raw_write_runner_write_mode_invoked": false,
+    "requires_separate_raw_write_execution_authorization": true,
+    "metadata_only_artifacts_cannot_be_used_as_raw_payload": true,
+    "nonexistent_payload_path_cannot_be_accepted": true,
+    "source_url_evidence_cannot_be_treated_as_raw_payload": true,
+    "baseline_accepted_cannot_be_treated_as_raw_payload": true,
+    "full_payload_printed_or_saved": false,
+    "payload_source_candidates": [
+        {
+            "candidate_type": "declared_payload_source_path",
+            "candidate_count": 0,
+            "accepted": false,
+            "status": "blocked",
+            "reason": "no safe payload source path declared",
+            "evidence": []
+        },
+        {
+            "candidate_type": "manifest_candidate_targets_source_path",
+            "candidate_count": 1,
+            "accepted": false,
+            "status": "rejected",
+            "reason": "source_path points to schedule/source-inventory provenance, not full pageProps or raw_data payload"
+        },
+        {
+            "candidate_type": "source_url_identity_evidence",
+            "candidate_count": 1,
+            "accepted": false,
+            "status": "rejected",
+            "reason": "source URL evidence verifies identity only and cannot be treated as raw payload"
+        },
+        {
+            "candidate_type": "accepted_baseline_hash_metadata",
+            "candidate_count": 50,
+            "accepted": false,
+            "status": "rejected",
+            "reason": "accepted baseline hashes are hash gates and not raw_data/pageProps payloads"
+        },
+        {
+            "candidate_type": "pageprops_summary_metadata",
+            "candidate_count": 1,
+            "accepted": false,
+            "status": "rejected",
+            "reason": "pageprops_summary contains counts/status metadata only and no pageProps object"
+        },
+        {
+            "candidate_type": "l2v3aj_write_input_source_paths_found",
+            "candidate_count": 0,
+            "accepted": false,
+            "status": "blocked",
+            "reason": "L2V3AJ explicitly recorded no safe payload source paths"
+        }
+    ],
+    "blocker": "write_input_source_status=unknown_no_safe_payload_source_path_declared",
+    "recommended_next_step": "Phase 5.21L2V3AL: controlled payload source declaration planning",
+    "next_required_step": "controlled_payload_source_declaration_planning"
+}
