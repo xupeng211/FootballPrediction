@@ -414,6 +414,7 @@ test('repository L2V3T artifacts preserve no-write investigation semantics when 
                                         'Phase 5.21L2V3AF: baseline acceptance planning',
                                         'Phase 5.21L2V3AG: baseline acceptance execution',
                                         'Phase 5.21L2V3AH: final DB-write authorization planning',
+                                        'Phase 5.21L2V3AI: final DB-write authorization execution',
                                     ].includes(manifest.recommended_next_step)
                                 );
                                 assert.ok(
@@ -424,6 +425,7 @@ test('repository L2V3T artifacts preserve no-write investigation semantics when 
                                         'baseline_acceptance_planning',
                                         'baseline_acceptance_execution',
                                         'final_db_write_authorization_planning',
+                                        'final_db_write_authorization_execution',
                                     ].includes(manifest.next_required_step)
                                 );
                             } else {
