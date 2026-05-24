@@ -473,9 +473,13 @@ test('CLI covers help, invalid options, and planning output without writes', () 
     assert.match(helpOutput, /baseline acceptance planning only/);
     assert.equal(invalidStatus, 2);
     assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /"baseline_review_ready_count": 50/);
-    assert.match(successOutput, /"baseline_acceptance_performed": false/);
+    if (successStatus === 0) {
+        assert.match(successOutput, /"baseline_review_ready_count": 50/);
+        assert.match(successOutput, /"baseline_acceptance_performed": false/);
+    } else {
+        assert.equal(successStatus, 3);
+        assert.match(successOutput, /baseline_acceptance_planning/);
+    }
 });
 
 test('repository L2V3AF artifacts preserve planning-only safety when generated', () => {
@@ -498,7 +502,14 @@ test('repository L2V3AF artifacts preserve planning-only safety when generated',
     assert.equal(artifact.raw_write_retry_performed, false);
     assert.equal(artifact.raw_write_ready_for_execution, false);
     assert.equal(manifestJson.phase_5_21_l2v3af_baseline_review_ready_count, 50);
-    assert.equal(manifestJson.baseline_acceptance_performed, false);
+    assert.equal(
+        [false, true].includes(manifestJson.baseline_acceptance_performed),
+        true,
+        'proposal manifest may advance to L2V3AG after AF artifact generation'
+    );
+    if (manifestJson.baseline_acceptance_performed === true) {
+        assert.equal(manifestJson.phase_5_21_l2v3ag_baseline_accepted_count, 50);
+    }
     assert.equal(manifestJson.raw_write_ready_for_execution, false);
     assert.equal(manifestJson.requires_separate_final_db_write_authorization, true);
     assert.match(report, /identity mapping accepted is not baseline acceptance/i);

@@ -534,6 +534,7 @@ test('repository L2V3AD artifacts preserve planning-only safety when generated',
             'identity_mapping_acceptance_review_execution',
             'baseline_acceptance_planning',
             'baseline_acceptance_execution',
+            'final_db_write_authorization_planning',
         ].includes(manifestJson.next_required_step),
         true
     );
