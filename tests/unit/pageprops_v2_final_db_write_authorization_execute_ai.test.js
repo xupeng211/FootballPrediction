@@ -2,6 +2,7 @@
 /* eslint-disable max-lines -- L2V3AI safety contract is audited together. */
 
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const Module = require('node:module');
 const os = require('node:os');
@@ -275,6 +276,24 @@ test('missing human final authorization blocks performed authorization', () => {
     assert.equal(artifact.raw_write_ready_for_execution, false);
 });
 
+test('validateInputs accepts already-executed manifest when next step advanced beyond AI', () => {
+    const validation = mod.validateInputs(
+        manifest({
+            phase_5_21_l2v3ai_execution_status: mod.ARTIFACT_STATUS,
+            next_required_step: 'continued_controlled_raw_write_planning',
+        }),
+        l2v3ahPlan(),
+        l2v3agArtifact(),
+        l2v3aeArtifact(),
+        l2v3acArtifact(),
+        l2v3aaArtifact(),
+        l2v3yArtifact()
+    );
+
+    assert.equal(validation.ok, true);
+    assert.deepEqual(validation.errors, []);
+});
+
 test('missing upstream identity mapping, baseline acceptance, and no-write verification fail closed', () => {
     const validation = mod.validateInputs(
         manifest(),
@@ -329,6 +348,47 @@ test('DB safety blockers prevent final authorization without writes', () => {
     assert.equal(blockers.includes('fk_prerequisite_not_satisfied'), true);
     assert.equal(artifact.db_write_performed, false);
     assert.equal(artifact.raw_match_data_insert_performed, false);
+});
+
+test('unresolved planning blockers remain blocked during final authorization execution review', () => {
+    const artifact = runSynthetic({
+        finalDbWriteHumanReviewSatisfied: true,
+        l2v3ahPlan: {
+            final_authorization_entries: Array.from({ length: 50 }, (_, index) =>
+                finalAuthorizationPlanEntry(index, {
+                    final_authorization_blockers: ['baseline_hash_review_pending'],
+                })
+            ),
+        },
+    }).artifact;
+    const blockers = artifact.final_authorization_entries.flatMap(entry => entry.final_authorization_blockers);
+
+    assert.equal(blockers.includes('unresolved_planning_blocker'), true);
+    assert.equal(artifact.final_db_write_authorization_performed, false);
+});
+
+test('artifact stays blocked when accepted count is inconsistent even without explicit blocker rows', () => {
+    const artifact = mod.buildArtifact({
+        loaded: {
+            l2v3ahPlan: l2v3ahPlan(),
+        },
+        execution: {
+            db_safety_status: goodDbSafetyStatus(),
+            final_authorization_candidate_count: 50,
+            final_authorization_reviewed_count: 50,
+            final_authorization_accepted_count: 49,
+            final_authorization_rejected_count: 0,
+            final_authorization_blocked_count: 0,
+            final_authorization_blocker_count: 0,
+            final_authorization_entries: [],
+        },
+        finalDbWriteHumanReviewSatisfied: true,
+        authorizedBy: 'codex_test_authorizer',
+        authorizedAt: '2026-05-25T00:00:00Z',
+    });
+
+    assert.equal(artifact.final_db_write_authorization_performed, false);
+    assert.equal(artifact.next_required_step, 'final_db_write_authorization_blocker_resolution');
 });
 
 test('missing explicit DB safety evidence fails closed', () => {
@@ -389,6 +449,11 @@ test('helper does not import network, DB, browser, proxy, harvest, odds, or chil
     installImportGuard(t);
     const loaded = loadFreshModule();
     assert.equal(typeof loaded.runFinalDbWriteAuthorizationExecution, 'function');
+});
+
+test('import guard blocks forbidden modules when exercised', t => {
+    installImportGuard(t);
+    assert.throws(() => Module._load('pg', module, false), /blocked import: pg/);
 });
 
 test('outputs avoid full raw data, pageProps, source body, and HTML payloads', () => {
@@ -473,6 +538,39 @@ test('CLI covers help, invalid options, authorized execution output, and no writ
     } finally {
         fs.rmSync(tmpDir, { recursive: true, force: true });
     }
+});
+
+test('CLI returns status 3 when source-controlled manifest state is invalid', () => {
+    const originalReadFileSync = fs.readFileSync;
+    let output = '';
+
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        if (String(filePath).endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest({ next_required_step: 'wrong-step' }), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
+
+    try {
+        const status = mod.runCli(['--write-files=false', '--final-db-write-human-review-satisfied=yes'], {
+            stdout: text => (output += text),
+        });
+        assert.equal(status, 3);
+        assert.match(output, /manifest next_required_step must be final_db_write_authorization_execution/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
+});
+
+test('script entrypoint prints help without writes when executed as main module', () => {
+    const result = spawnSync(process.execPath, [MODULE_PATH, '--help'], {
+        cwd: PROJECT_ROOT,
+        encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /final DB-write authorization execution only/i);
+    assert.equal(result.stderr, '');
 });
 
 test('repository L2V3AI artifacts preserve final authorization without raw write when generated', () => {

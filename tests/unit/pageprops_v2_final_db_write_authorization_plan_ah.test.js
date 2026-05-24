@@ -2,6 +2,7 @@
 /* eslint-disable max-lines -- L2V3AH safety contract is audited together. */
 
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const Module = require('node:module');
 const os = require('node:os');
@@ -328,6 +329,60 @@ test('blocking criteria prevent final authorization readiness without performing
     assert.equal(blockers.includes('unique_constraint_missing_or_wrong'), true);
 });
 
+test('identity review rejection blocks final authorization planning entries explicitly', () => {
+    const blockedArtifact = runSynthetic({
+        l2v3aeArtifact: {
+            review_entries: Array.from({ length: 50 }, (_, index) =>
+                identityEntry(index, {
+                    acceptance_status: 'blocked_identity_mapping',
+                    review_result: 'blocked_identity_mapping',
+                })
+            ),
+        },
+    }).artifact;
+    const blockers = blockedArtifact.final_authorization_entries.flatMap(entry => entry.final_authorization_blockers);
+
+    assert.equal(blockers.includes('identity_mapping_not_accepted'), true);
+    assert.equal(blockedArtifact.final_authorization_ready_count < 50, true);
+});
+
+test('artifact stays in continued planning when readiness count is inconsistent without blockers', () => {
+    const artifact = mod.buildArtifact({
+        loaded: {
+            manifest: manifest(),
+            l2v3agArtifact: l2v3agArtifact(),
+            l2v3aeArtifact: l2v3aeArtifact(),
+            l2v3acArtifact: l2v3acArtifact(),
+            l2v3aaArtifact: l2v3aaArtifact(),
+            l2v3yArtifact: l2v3yArtifact(),
+        },
+        plan: {
+            baseline_accepted_count: 50,
+            identity_mapping_accepted_count: 50,
+            no_write_verified_target_count: 50,
+            enriched_target_count: 50,
+            final_authorization_candidate_count: 50,
+            final_authorization_ready_count: 49,
+            final_authorization_blocked_count: 0,
+            final_authorization_blocker_count: 0,
+            final_authorization_entries: [],
+            db_safety_status: {
+                raw_match_data_count: 18,
+                candidate_v2_raw_rows_existing_count: 0,
+                unique_match_id_data_version_present: true,
+                legacy_unique_match_id_absent: true,
+                fk_prerequisite_satisfied: true,
+                protected_tables_unchanged: true,
+                raw_write_runner_guard_ok: false,
+                raw_write_runner_guard_error_count: 52,
+            },
+        },
+    });
+
+    assert.equal(artifact.planning_status, mod.ARTIFACT_STATUS);
+    assert.equal(artifact.next_required_step, 'continued_final_db_write_authorization_planning');
+});
+
 test('input validation fails closed on missing upstream acceptance and unsafe write state', () => {
     const alreadyPlanned = mod.validateInputs(
         manifest({
@@ -490,6 +545,37 @@ test('CLI covers help, invalid options, and planning output without writes', () 
     assert.match(successOutput, /"final_authorization_ready_count": 50/);
     assert.match(successOutput, /"final_db_write_authorization_performed": false/);
     assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+});
+
+test('CLI returns status 3 when source-controlled manifest state is invalid', () => {
+    const originalReadFileSync = fs.readFileSync;
+    let output = '';
+
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        if (String(filePath).endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest({ next_required_step: 'wrong-step' }), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
+
+    try {
+        const status = mod.runCli(['--write-files=false'], { stdout: text => (output += text) });
+        assert.equal(status, 3);
+        assert.match(output, /manifest next_required_step must be final_db_write_authorization_planning/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
+});
+
+test('script entrypoint prints help without writes when executed as main module', () => {
+    const result = spawnSync(process.execPath, [MODULE_PATH, '--help'], {
+        cwd: PROJECT_ROOT,
+        encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /final DB-write authorization planning only/i);
+    assert.equal(result.stderr, '');
 });
 
 test('repository L2V3AH artifacts preserve final authorization planning-only safety when generated', () => {

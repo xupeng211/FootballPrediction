@@ -277,9 +277,15 @@ function validateInputs(
     l2v3yArtifact = {}
 ) {
     const errors = [];
+    const advancedNextSteps = new Set([
+        'controlled_raw_match_data_write_execution_planning',
+        'controlled_raw_match_data_write_execution',
+        'controlled_raw_write_execution_blocker_resolution',
+        'continued_controlled_raw_write_planning',
+    ]);
     const alreadyExecuted =
         normalizeText(manifest.phase_5_21_l2v3ai_execution_status) === ARTIFACT_STATUS &&
-        normalizeText(manifest.next_required_step) === 'controlled_raw_match_data_write_execution_planning';
+        advancedNextSteps.has(normalizeText(manifest.next_required_step));
     if (normalizeText(manifest.next_required_step) !== 'final_db_write_authorization_execution' && !alreadyExecuted) {
         errors.push('manifest next_required_step must be final_db_write_authorization_execution');
     }

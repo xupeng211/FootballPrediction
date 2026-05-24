@@ -290,6 +290,9 @@ function validateInputs(
     const advancedNextSteps = new Set([
         'final_db_write_authorization_execution',
         'controlled_raw_match_data_write_execution_planning',
+        'controlled_raw_match_data_write_execution',
+        'controlled_raw_write_execution_blocker_resolution',
+        'continued_controlled_raw_write_planning',
     ]);
     const alreadyPlanned =
         normalizeText(manifest.phase_5_21_l2v3ah_planning_status) === ARTIFACT_STATUS &&
