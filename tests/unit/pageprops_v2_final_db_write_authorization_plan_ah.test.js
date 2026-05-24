@@ -516,7 +516,13 @@ test('repository L2V3AH artifacts preserve final authorization planning-only saf
     assert.equal(artifact.expected_raw_match_data_before_count, 18);
     assert.equal(artifact.expected_raw_match_data_after_count, 68);
     assert.equal(manifestJson.phase_5_21_l2v3ah_final_authorization_ready_count, 50);
-    assert.equal(manifestJson.final_db_write_authorization_performed, false);
+    assert.equal([false, true].includes(manifestJson.final_db_write_authorization_performed), true);
+    if (manifestJson.final_db_write_authorization_performed === true) {
+        assert.equal(
+            manifestJson.phase_5_21_l2v3ai_execution_status,
+            'completed_final_db_write_authorization_execution'
+        );
+    }
     assert.equal(manifestJson.raw_write_ready_for_execution, false);
     assert.equal(manifestJson.requires_separate_final_db_write_authorization_execution, true);
     assert.match(report, /current user instruction authorizes planning only, not DB write/i);
