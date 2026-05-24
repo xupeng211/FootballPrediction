@@ -251,17 +251,18 @@ function validateCliOptions(options = {}) {
 
 function hasUnsafeWriteState(value = {}, options = {}) {
     const allowBaselineAcceptance = options.allowBaselineAcceptance === true;
+    const allowFinalAuthorization = options.allowFinalAuthorization === true;
     return (
         value.db_write_performed === true ||
         value.raw_insert_performed === true ||
         value.raw_match_data_insert_performed === true ||
         value.matches_write_performed === true ||
         value.matches_external_id_modified === true ||
-        value.raw_write_authorization_performed === true ||
+        (allowFinalAuthorization !== true && value.raw_write_authorization_performed === true) ||
         value.raw_write_retry_performed === true ||
-        value.final_db_write_authorization_performed === true ||
+        (allowFinalAuthorization !== true && value.final_db_write_authorization_performed === true) ||
         value.raw_write_ready_for_execution === true ||
-        value.final_db_write_authorization_execution_performed === true ||
+        (allowFinalAuthorization !== true && value.final_db_write_authorization_execution_performed === true) ||
         (allowBaselineAcceptance !== true && value.baseline_acceptance_performed === true)
     );
 }
@@ -286,9 +287,13 @@ function validateInputs(
     l2v3yArtifact = {}
 ) {
     const errors = [];
+    const advancedNextSteps = new Set([
+        'final_db_write_authorization_execution',
+        'controlled_raw_match_data_write_execution_planning',
+    ]);
     const alreadyPlanned =
         normalizeText(manifest.phase_5_21_l2v3ah_planning_status) === ARTIFACT_STATUS &&
-        normalizeText(manifest.next_required_step) === 'final_db_write_authorization_execution';
+        advancedNextSteps.has(normalizeText(manifest.next_required_step));
     if (normalizeText(manifest.next_required_step) !== 'final_db_write_authorization_planning' && !alreadyPlanned) {
         errors.push('manifest next_required_step must be final_db_write_authorization_planning');
     }
@@ -298,7 +303,15 @@ function validateInputs(
     if (Number(manifest.phase_5_21_l2v3ag_baseline_accepted_count || 0) !== EXPECTED_TARGET_COUNT) {
         errors.push('manifest phase_5_21_l2v3ag_baseline_accepted_count must be 50');
     }
-    if (hasUnsafeWriteState(manifest, { allowBaselineAcceptance: true })) {
+    const laterFinalAuthorizationExecuted =
+        normalizeText(manifest.phase_5_21_l2v3ai_execution_status) ===
+        'completed_final_db_write_authorization_execution';
+    if (
+        hasUnsafeWriteState(manifest, {
+            allowBaselineAcceptance: true,
+            allowFinalAuthorization: laterFinalAuthorizationExecuted,
+        })
+    ) {
         errors.push('manifest must not contain DB-write, raw-write, final authorization, or raw-ready state');
     }
 

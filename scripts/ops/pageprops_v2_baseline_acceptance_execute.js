@@ -252,11 +252,12 @@ function isDuplicate(counts, value) {
 
 function hasUnsafeWriteState(value = {}, options = {}) {
     const allowBaselineAcceptance = options.allowBaselineAcceptance === true;
+    const allowFinalAuthorization = options.allowFinalAuthorization === true;
     return (
         (allowBaselineAcceptance !== true && value.baseline_acceptance_performed === true) ||
-        value.raw_write_authorization_performed === true ||
+        (allowFinalAuthorization !== true && value.raw_write_authorization_performed === true) ||
         value.raw_write_retry_performed === true ||
-        value.final_db_write_authorization_performed === true ||
+        (allowFinalAuthorization !== true && value.final_db_write_authorization_performed === true) ||
         value.raw_write_ready_for_execution === true ||
         value.db_write_performed === true ||
         value.raw_insert_performed === true ||
@@ -304,6 +305,7 @@ function validateInputs(
     const advancedNextSteps = new Set([
         'final_db_write_authorization_planning',
         'final_db_write_authorization_execution',
+        'controlled_raw_match_data_write_execution_planning',
     ]);
     const alreadyExecuted =
         normalizeText(manifest.phase_5_21_l2v3ag_execution_status) === ARTIFACT_STATUS &&
@@ -317,7 +319,15 @@ function validateInputs(
     if (Number(manifest.phase_5_21_l2v3af_baseline_review_ready_count || 0) !== EXPECTED_TARGET_COUNT) {
         errors.push('manifest phase_5_21_l2v3af_baseline_review_ready_count must be 50');
     }
-    if (hasUnsafeWriteState(manifest, { allowBaselineAcceptance: alreadyExecuted })) {
+    const laterFinalAuthorizationExecuted =
+        normalizeText(manifest.phase_5_21_l2v3ai_execution_status) ===
+        'completed_final_db_write_authorization_execution';
+    if (
+        hasUnsafeWriteState(manifest, {
+            allowBaselineAcceptance: alreadyExecuted,
+            allowFinalAuthorization: laterFinalAuthorizationExecuted,
+        })
+    ) {
         errors.push('manifest must not contain DB-write, raw-write, final authorization, or raw-ready state');
     }
 
@@ -558,7 +568,10 @@ function executeBaselineAcceptance(
         acceptedBy: normalizeText(options.acceptedBy) || DEFAULT_ACCEPTED_BY,
         acceptedAt: normalizeText(options.acceptedAt) || GENERATED_AT,
         rawWriteRetryPerformed: manifest.raw_write_retry_performed === true,
-        finalDbWriteAuthorizationPerformed: manifest.final_db_write_authorization_performed === true,
+        finalDbWriteAuthorizationPerformed:
+            manifest.final_db_write_authorization_performed === true &&
+            normalizeText(manifest.phase_5_21_l2v3ai_execution_status) !==
+                'completed_final_db_write_authorization_execution',
         rawWriteReadyForExecution: manifest.raw_write_ready_for_execution === true,
     };
     const baselineEntries = context.baselinePlanEntries.map(entry =>

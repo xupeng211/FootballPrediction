@@ -485,6 +485,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'Phase 5.21L2V3AG: baseline acceptance execution',
             'Phase 5.21L2V3AH: final DB-write authorization planning',
             'Phase 5.21L2V3AI: final DB-write authorization execution',
+            'Phase 5.21L2V3AJ: controlled raw_match_data write execution planning',
         ].includes(manifest.recommended_next_step)
     );
     assert.ok(
@@ -497,6 +498,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'baseline_acceptance_execution',
             'final_db_write_authorization_planning',
             'final_db_write_authorization_execution',
+            'controlled_raw_match_data_write_execution_planning',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /planned_mapping_key=target_id/i);

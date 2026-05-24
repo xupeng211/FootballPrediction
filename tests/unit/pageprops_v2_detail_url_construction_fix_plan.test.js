@@ -430,6 +430,7 @@ test('repository L2V3R artifacts preserve planning-only and blocking semantics',
                                         'Phase 5.21L2V3AG: baseline acceptance execution',
                                         'Phase 5.21L2V3AH: final DB-write authorization planning',
                                         'Phase 5.21L2V3AI: final DB-write authorization execution',
+                                        'Phase 5.21L2V3AJ: controlled raw_match_data write execution planning',
                                     ].includes(manifest.recommended_next_step)
                                 );
                                 assert.ok(
@@ -441,6 +442,7 @@ test('repository L2V3R artifacts preserve planning-only and blocking semantics',
                                         'baseline_acceptance_execution',
                                         'final_db_write_authorization_planning',
                                         'final_db_write_authorization_execution',
+                                        'controlled_raw_match_data_write_execution_planning',
                                     ].includes(manifest.next_required_step)
                                 );
                             } else {

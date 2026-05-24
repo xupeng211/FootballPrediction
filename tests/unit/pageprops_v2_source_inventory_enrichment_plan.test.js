@@ -414,6 +414,7 @@ test('repository L2V3U artifacts preserve planning-only safety when generated', 
             'Phase 5.21L2V3AG: baseline acceptance execution',
             'Phase 5.21L2V3AH: final DB-write authorization planning',
             'Phase 5.21L2V3AI: final DB-write authorization execution',
+            'Phase 5.21L2V3AJ: controlled raw_match_data write execution planning',
         ].includes(manifest.recommended_next_step)
     );
     assert.match(report, /enrichment does not unblock raw write/i);
