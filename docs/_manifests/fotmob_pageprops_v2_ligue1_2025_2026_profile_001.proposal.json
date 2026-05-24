@@ -4642,7 +4642,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "controlled_raw_match_data_write_execution_planning",
+    "next_required_step": "continued_controlled_raw_write_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4920,7 +4920,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AJ: controlled raw_match_data write execution planning",
+    "recommended_next_step": "Phase 5.21L2V3AK: continued controlled raw write planning",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5483,5 +5483,17 @@
     "expected_raw_match_data_after_future_write": 68,
     "requires_separate_raw_write_execution": true,
     "final_authorization_is_not_raw_write_execution": true,
-    "raw_write_execution_authorization_performed": false
+    "raw_write_execution_authorization_performed": false,
+    "phase_5_21_l2v3aj_planning_status": "completed_controlled_raw_match_data_write_execution_planning",
+    "controlled_raw_match_data_write_execution_planning_status": "continued_controlled_raw_write_planning_required",
+    "phase_5_21_l2v3aj_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.controlled_raw_match_data_write_execution_plan.phase521l2v3aj.json",
+    "phase_5_21_l2v3aj_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AJ.md",
+    "planned_write_table": "raw_match_data",
+    "planned_data_version": "fotmob_pageprops_v2",
+    "planned_target_count": 50,
+    "expected_insert_count": 50,
+    "raw_write_execution_performed": false,
+    "requires_separate_raw_write_execution_authorization": true,
+    "phase_5_21_l2v3aj_payload_source_status": "unknown_no_safe_payload_source_path_declared",
+    "phase_5_21_l2v3aj_write_input_source_unknown": true
 }

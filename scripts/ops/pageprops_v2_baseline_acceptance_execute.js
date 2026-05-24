@@ -306,6 +306,9 @@ function validateInputs(
         'final_db_write_authorization_planning',
         'final_db_write_authorization_execution',
         'controlled_raw_match_data_write_execution_planning',
+        'controlled_raw_match_data_write_execution',
+        'controlled_raw_write_execution_blocker_resolution',
+        'continued_controlled_raw_write_planning',
     ]);
     const alreadyExecuted =
         normalizeText(manifest.phase_5_21_l2v3ag_execution_status) === ARTIFACT_STATUS &&

@@ -2,6 +2,7 @@
 /* eslint-disable max-lines -- L2V3AG safety contract is audited together. */
 
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const Module = require('node:module');
 const os = require('node:os');
@@ -339,6 +340,45 @@ test('missing accepted mapping, failed verification, and source evidence gaps bl
     assert.equal(artifact.raw_write_ready_for_execution, false);
 });
 
+test('existing final authorization marker blocks baseline acceptance execution', () => {
+    const execution = mod.executeBaselineAcceptance(
+        manifest({ final_db_write_authorization_performed: true }),
+        l2v3afPlan(),
+        l2v3aeArtifact(),
+        l2v3acArtifact(),
+        l2v3aaArtifact(),
+        l2v3yArtifact(),
+        { baselineHumanReviewSatisfied: true }
+    );
+    const blockers = execution.baseline_entries.flatMap(entry => entry.baseline_acceptance_blockers);
+
+    assert.equal(blockers.includes('final_db_write_authorization_already_performed'), true);
+    assert.equal(execution.baseline_accepted_count, 0);
+});
+
+test('planning-only drift and missing evidence summary block baseline acceptance entries', () => {
+    const execution = mod.executeBaselineAcceptance(
+        manifest(),
+        l2v3afPlan({
+            baseline_review_entries: Array.from({ length: 50 }, (_, index) =>
+                baselinePlanEntry(index, {
+                    baseline_acceptance_status: 'accepted_enriched_baseline_metadata',
+                    baseline_acceptance_evidence_summary: null,
+                })
+            ),
+        }),
+        l2v3aeArtifact(),
+        l2v3acArtifact(),
+        l2v3aaArtifact(),
+        l2v3yArtifact(),
+        { baselineHumanReviewSatisfied: true }
+    );
+    const blockers = execution.baseline_entries.flatMap(entry => entry.baseline_acceptance_blockers);
+
+    assert.equal(blockers.includes('plan_entry_not_planning_only'), true);
+    assert.equal(blockers.includes('proposed_baseline_lacks_evidence_summary'), true);
+});
+
 test('unresolved blockers, duplicates, regeneration drift, and raw-write readiness block acceptance', () => {
     const duplicate = baselinePlanEntry(0);
     const entries = Array.from({ length: 50 }, (_, index) =>
@@ -378,6 +418,30 @@ test('unresolved blockers, duplicates, regeneration drift, and raw-write readine
     assert.equal(blockers.includes('plan_entry_not_baseline_ready'), true);
     assert.equal(blockers.includes('unresolved_planning_blocker'), true);
     assert.equal(blockers.includes('regeneration_not_clean'), true);
+});
+
+test('artifact stays blocked when accepted count is inconsistent without explicit blocked rows', () => {
+    const artifact = mod.buildArtifact({
+        manifest: manifest(),
+        l2v3afPlan: l2v3afPlan(),
+        l2v3aeArtifact: l2v3aeArtifact(),
+        execution: {
+            baseline_review_candidate_count: 50,
+            baseline_reviewed_target_count: 50,
+            baseline_accepted_count: 49,
+            baseline_rejected_count: 0,
+            baseline_blocked_count: 0,
+            baseline_review_blocker_count: 0,
+            baseline_acceptance_evidence_summary_present_count: 49,
+            baseline_entries: [],
+        },
+        baselineHumanReviewSatisfied: true,
+        acceptedBy: 'codex_test_authorizer',
+        acceptedAt: '2026-05-25T00:00:00Z',
+    });
+
+    assert.equal(artifact.baseline_acceptance_performed, false);
+    assert.equal(artifact.next_required_step, 'baseline_acceptance_blocker_resolution');
 });
 
 test('input validation rejects invalid upstream state and permits idempotent completed manifest metadata', () => {
@@ -596,6 +660,39 @@ test('CLI covers help, invalid options, missing review block, and execution outp
     assert.equal(successStatus, 0);
     assert.match(successOutput, /"baseline_accepted_count": 50/);
     assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+});
+
+test('CLI returns status 3 when source-controlled manifest state is invalid', () => {
+    const originalReadFileSync = fs.readFileSync;
+    let output = '';
+
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        if (String(filePath).endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest({ next_required_step: 'wrong-step' }), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
+
+    try {
+        const status = mod.runCli(['--write-files=false', '--baseline-human-review-satisfied=yes'], {
+            stdout: text => (output += text),
+        });
+        assert.equal(status, 3);
+        assert.match(output, /manifest next_required_step must be baseline_acceptance_execution/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
+});
+
+test('script entrypoint prints help without writes when executed as main module', () => {
+    const result = spawnSync(process.execPath, [MODULE_PATH, '--help'], {
+        cwd: PROJECT_ROOT,
+        encoding: 'utf8',
+    });
+
+    assert.equal(result.status, 0);
+    assert.match(result.stdout, /baseline acceptance execution/i);
+    assert.equal(result.stderr, '');
 });
 
 test('repository L2V3AG artifacts preserve baseline execution safety when generated', () => {

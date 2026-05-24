@@ -585,6 +585,9 @@ test('repository L2V3AB artifacts preserve no-write verification planning semant
             'Phase 5.21L2V3AH: final DB-write authorization planning',
             'Phase 5.21L2V3AI: final DB-write authorization execution',
             'Phase 5.21L2V3AJ: controlled raw_match_data write execution planning',
+            'Phase 5.21L2V3AK: controlled raw_match_data write execution',
+            'Phase 5.21L2V3AK: controlled raw write execution blocker resolution',
+            'Phase 5.21L2V3AK: continued controlled raw write planning',
         ].includes(manifest.recommended_next_step)
     );
     assert.ok(
@@ -597,6 +600,9 @@ test('repository L2V3AB artifacts preserve no-write verification planning semant
             'final_db_write_authorization_planning',
             'final_db_write_authorization_execution',
             'controlled_raw_match_data_write_execution_planning',
+            'controlled_raw_match_data_write_execution',
+            'controlled_raw_write_execution_blocker_resolution',
+            'continued_controlled_raw_write_planning',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /raw_write_guard_ok=false/i);
