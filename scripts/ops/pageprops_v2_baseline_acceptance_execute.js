@@ -301,9 +301,13 @@ function validateInputs(
     l2v3yArtifact = {}
 ) {
     const errors = [];
+    const advancedNextSteps = new Set([
+        'final_db_write_authorization_planning',
+        'final_db_write_authorization_execution',
+    ]);
     const alreadyExecuted =
         normalizeText(manifest.phase_5_21_l2v3ag_execution_status) === ARTIFACT_STATUS &&
-        normalizeText(manifest.next_required_step) === 'final_db_write_authorization_planning';
+        advancedNextSteps.has(normalizeText(manifest.next_required_step));
     if (normalizeText(manifest.next_required_step) !== 'baseline_acceptance_execution' && alreadyExecuted !== true) {
         errors.push('manifest next_required_step must be baseline_acceptance_execution');
     }
