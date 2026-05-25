@@ -59,6 +59,23 @@
 - full_source_body_printed_or_saved=false
 - cookies_tokens_headers_saved=false
 
+## Local Validation Incident Review
+
+- broad_node_test_accidental_e2e_db_insert_attempt_observed=true
+- insert_attempt_succeeded=false
+- insert_attempt_blocked_by_db_constraint=true
+- cleanup_ran=true
+- followup_select_only_row_count_unchanged=true
+- protected_tables_unchanged=true
+- raw_match_data_rows_added=0
+- matches_rows_added_or_modified=0
+- matches_external_id_modified=false
+- later_explicit_file_list_validation_passed=true
+- not_successful_db_write=true
+- not_raw_write_execution=true
+- not_regular_safety_validation_entrypoint=true
+- l2v3am_db_write_performed=false
+
 ## Next Step
 
 Phase 5.21L2V3AN: controlled no-write payload recapture planning

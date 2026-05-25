@@ -214,6 +214,26 @@ test('payload source declaration does not imply raw write readiness or raw write
     assert.match(artifact.recommended_next_step, /Phase 5.21L2V3AN/);
 });
 
+test('local broad node --test DB insert attempt is documented as blocked and non-persistent', () => {
+    const artifact = runSynthetic().artifact;
+    const incident = artifact.local_validation_incident_review;
+
+    assert.equal(incident.broad_node_test_accidental_e2e_db_insert_attempt_observed, true);
+    assert.equal(incident.insert_attempt_succeeded, false);
+    assert.equal(incident.insert_attempt_blocked_by_db_constraint, true);
+    assert.equal(incident.cleanup_ran, true);
+    assert.equal(incident.followup_select_only_row_count_unchanged, true);
+    assert.equal(incident.protected_tables_unchanged, true);
+    assert.equal(incident.raw_match_data_rows_added, 0);
+    assert.equal(incident.matches_rows_added_or_modified, 0);
+    assert.equal(incident.matches_external_id_modified, false);
+    assert.equal(incident.later_explicit_file_list_validation_passed, true);
+    assert.equal(incident.not_successful_db_write, true);
+    assert.equal(incident.not_raw_write_execution, true);
+    assert.equal(incident.not_regular_safety_validation_entrypoint, true);
+    assert.equal(incident.l2v3am_db_write_performed, false);
+});
+
 test('helper refuses live recapture, DB write, raw write, network, and write mode flags', () => {
     const parsed = mod.parseArgs([
         '--allow-db-write=yes',
@@ -378,4 +398,8 @@ test('repository L2V3AM artifacts preserve declaration-only semantics when gener
     assert.equal(manifestJson.phase_5_21_l2v3am_execution_status, mod.ARTIFACT_STATUS);
     assert.equal(manifestJson.raw_write_execution_ready, false);
     assert.match(report, /payload_source_declaration_is_not_raw_write_execution=true/i);
+    assert.match(report, /broad_node_test_accidental_e2e_db_insert_attempt_observed=true/i);
+    assert.match(report, /insert_attempt_succeeded=false/i);
+    assert.match(report, /followup_select_only_row_count_unchanged=true/i);
+    assert.match(report, /not_successful_db_write=true/i);
 });

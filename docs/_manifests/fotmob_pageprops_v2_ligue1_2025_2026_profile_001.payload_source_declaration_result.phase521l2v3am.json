@@ -5,7 +5,7 @@
     "phase_name": "controlled_payload_source_declaration_execution",
     "payload_source_declaration_execution_performed": true,
     "payload_source_declaration_performed": true,
-    "generated_at": "2026-05-25T04:31:54.794Z",
+    "generated_at": "2026-05-25T11:03:08.391Z",
     "reviewed_input_artifact_count": 3,
     "reviewed_input_artifact_paths": {
         "proposal_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json",
@@ -63,6 +63,22 @@
     "full_pageprops_printed_or_saved": false,
     "full_source_body_printed_or_saved": false,
     "cookies_tokens_headers_saved": false,
+    "local_validation_incident_review": {
+        "broad_node_test_accidental_e2e_db_insert_attempt_observed": true,
+        "insert_attempt_succeeded": false,
+        "insert_attempt_blocked_by_db_constraint": true,
+        "cleanup_ran": true,
+        "followup_select_only_row_count_unchanged": true,
+        "protected_tables_unchanged": true,
+        "raw_match_data_rows_added": 0,
+        "matches_rows_added_or_modified": 0,
+        "matches_external_id_modified": false,
+        "later_explicit_file_list_validation_passed": true,
+        "not_successful_db_write": true,
+        "not_raw_write_execution": true,
+        "not_regular_safety_validation_entrypoint": true,
+        "l2v3am_db_write_performed": false
+    },
     "requires_separate_raw_write_execution_authorization": true,
     "recommended_next_step": "Phase 5.21L2V3AN: controlled no-write payload recapture planning",
     "next_required_step": "controlled_no_write_payload_recapture_planning"
