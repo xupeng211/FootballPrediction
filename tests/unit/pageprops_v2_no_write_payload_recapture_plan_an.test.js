@@ -351,21 +351,43 @@ test('CLI covers help, invalid options, planning output, and no-write markers', 
     let helpOutput = '';
     let invalidOutput = '';
     let successOutput = '';
+    const originalReadFileSync = fs.readFileSync;
 
-    const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
-    const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
-    const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        const textPath = String(filePath);
+        if (textPath.endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AK_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3akArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AL_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3alArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AM_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3amArtifact(), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
 
-    assert.equal(helpStatus, 0);
-    assert.match(helpOutput, /plans controlled no-write payload recapture only/i);
-    assert.equal(invalidStatus, 2);
-    assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /"planned_source_type": "controlled_live_recapture_in_memory"/);
-    assert.match(successOutput, /"live_recapture_execution_performed": false/);
-    assert.match(successOutput, /"raw_write_execution_ready": false/);
-    assert.match(successOutput, /"db_write_performed": false/);
-    assert.match(successOutput, /"raw_match_data_insert_performed": false/);
+    try {
+        const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
+        const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
+        const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+
+        assert.equal(helpStatus, 0);
+        assert.match(helpOutput, /plans controlled no-write payload recapture only/i);
+        assert.equal(invalidStatus, 2);
+        assert.match(invalidOutput, /unknown arguments/);
+        assert.equal(successStatus, 0);
+        assert.match(successOutput, /"planned_source_type": "controlled_live_recapture_in_memory"/);
+        assert.match(successOutput, /"live_recapture_execution_performed": false/);
+        assert.match(successOutput, /"raw_write_execution_ready": false/);
+        assert.match(successOutput, /"db_write_performed": false/);
+        assert.match(successOutput, /"raw_match_data_insert_performed": false/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
 });
 
 test('helper does not import network, DB, browser, proxy, harvest, odds, or child process modules on load', t => {
@@ -412,6 +434,9 @@ test('repository L2V3AN artifacts preserve planning-only semantics when generate
             'no_write_payload_recapture_blocker_investigation',
             'partial_recapture_review_planning',
             'controlled_recapture_result_verification_planning',
+            'accepted_mapping_and_baseline_contradiction_review_planning',
+            'recapture_runner_identity_input_contract_fix_planning',
+            'continued_no_write_recapture_blocker_investigation',
         ].includes(manifestJson.next_required_step)
     );
     assert.match(report, /current_user_instruction_authorizes_planning_only=true/i);

@@ -425,6 +425,9 @@ test('repository L2V3U artifacts preserve planning-only safety when generated', 
             'Phase 5.21L2V3AP: no-write payload recapture blocker investigation',
             'Phase 5.21L2V3AP: partial recapture review planning',
             'Phase 5.21L2V3AP: controlled recapture result verification planning',
+            'Phase 5.21L2V3AQ: accepted mapping and baseline contradiction review planning',
+            'Phase 5.21L2V3AQ: recapture runner identity input contract fix planning',
+            'Phase 5.21L2V3AQ: continued no-write recapture blocker investigation',
         ].includes(manifest.recommended_next_step)
     );
     assert.match(report, /enrichment does not unblock raw write/i);

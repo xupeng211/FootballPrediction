@@ -31,7 +31,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -54,7 +57,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -77,7 +83,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -100,7 +109,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -123,7 +135,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -146,7 +161,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -169,7 +187,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -192,7 +213,10 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
+            "existing_versions": [
+                "fotmob_html_hyd_v1",
+                "fotmob_pageprops_v2"
+            ],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -4468,8 +4492,12 @@
         "l1_route_kind": "l1_api_data_leagues",
         "request_count": 1,
         "status_code": 200,
-        "status_codes": [200],
-        "content_type_summary": ["application/json; charset=utf-8"],
+        "status_codes": [
+            200
+        ],
+        "content_type_summary": [
+            "application/json; charset=utf-8"
+        ],
         "parse_status": "parsed_json",
         "blocked_markers": [],
         "discovered_raw_target_count": 297,
@@ -4641,8 +4669,10 @@
     "expected_raw_match_data_after_count": 68,
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
-    "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "no_write_payload_recapture_blocker_investigation",
+    "blockers": [
+        "RECAPTURE_HASH_GATE_BLOCKED"
+    ],
+    "next_required_step": "accepted_mapping_and_baseline_contradiction_review_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4658,7 +4688,9 @@
         "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
         "transaction_status": "not_started",
         "existing_v2_raw_rows_for_candidates": null,
-        "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
+        "blockers": [
+            "RECAPTURE_HASH_GATE_BLOCKED"
+        ],
         "next_required_step": "renewed_controlled_pageprops_v2_raw_write_execution_blocked_review"
     },
     "phase_5_21_l2v3b_review_status": "completed_no_write",
@@ -4920,7 +4952,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AP: no-write payload recapture blocker investigation",
+    "recommended_next_step": "Phase 5.21L2V3AQ: accepted mapping and baseline contradiction review planning",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5568,5 +5600,22 @@
     "hash_mismatch_count": 1,
     "full_payload_saved": false,
     "full_payload_printed": false,
-    "recapture_success_does_not_authorize_raw_write": true
+    "recapture_success_does_not_authorize_raw_write": true,
+    "phase_5_21_l2v3ap_investigation_status": "completed_no_write_payload_recapture_blocker_investigation",
+    "phase_5_21_l2v3ap_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.no_write_payload_recapture_blocker_investigation.phase521l2v3ap.json",
+    "phase_5_21_l2v3ap_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AP.md",
+    "no_write_payload_recapture_blocker_investigation_status": "completed_no_write_payload_recapture_blocker_investigation",
+    "blocker_target_count": 1,
+    "requested_external_id": "4830466",
+    "observed_detail_external_id": "4830759",
+    "identity_mismatch_confirmed": true,
+    "reverse_fixture_confirmed": true,
+    "date_route_mismatch_confirmed": true,
+    "hash_mismatch_classification": "secondary_to_identity_mismatch_reverse_fixture",
+    "likely_root_cause": "accepted mapping and baseline accepted schedule-side slug/fragment evidence without resolved detail identity, while L2V3M/L2V3N already recorded the same schedule id as a reverse fixture",
+    "runner_input_contract_issue": true,
+    "accepted_mapping_contradiction": true,
+    "baseline_acceptance_contradiction": true,
+    "source_url_route_issue": true,
+    "payload_recapture_retry_ready": false
 }

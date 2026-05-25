@@ -643,6 +643,9 @@ test('repository L2V3Z artifacts preserve planning-only safety when generated', 
                 'Phase 5.21L2V3AP: no-write payload recapture blocker investigation',
                 'Phase 5.21L2V3AP: partial recapture review planning',
                 'Phase 5.21L2V3AP: controlled recapture result verification planning',
+                'Phase 5.21L2V3AQ: accepted mapping and baseline contradiction review planning',
+                'Phase 5.21L2V3AQ: recapture runner identity input contract fix planning',
+                'Phase 5.21L2V3AQ: continued no-write recapture blocker investigation',
             ].includes(manifest.recommended_next_step)
         );
         assert.ok(
@@ -666,6 +669,9 @@ test('repository L2V3Z artifacts preserve planning-only safety when generated', 
                 'no_write_payload_recapture_blocker_investigation',
                 'partial_recapture_review_planning',
                 'controlled_recapture_result_verification_planning',
+                'accepted_mapping_and_baseline_contradiction_review_planning',
+                'recapture_runner_identity_input_contract_fix_planning',
+                'continued_no_write_recapture_blocker_investigation',
             ].includes(manifest.next_required_step)
         );
     } else {
