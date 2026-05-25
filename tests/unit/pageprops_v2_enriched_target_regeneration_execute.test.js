@@ -489,6 +489,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'Phase 5.21L2V3AK: controlled raw_match_data write execution',
             'Phase 5.21L2V3AK: controlled raw write execution blocker resolution',
             'Phase 5.21L2V3AK: continued controlled raw write planning',
+            'Phase 5.21L2V3AL: controlled payload source declaration planning',
         ].includes(manifest.recommended_next_step)
     );
     assert.ok(
@@ -505,6 +506,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'controlled_raw_match_data_write_execution',
             'controlled_raw_write_execution_blocker_resolution',
             'continued_controlled_raw_write_planning',
+            'controlled_payload_source_declaration_planning',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /planned_mapping_key=target_id/i);
