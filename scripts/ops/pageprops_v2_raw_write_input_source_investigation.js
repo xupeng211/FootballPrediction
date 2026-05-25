@@ -260,6 +260,7 @@ function validateInputs(loaded = {}) {
     const l2v3aj = loaded.l2v3ajArtifact || {};
     const advancedNextSteps = new Set([
         NEXT_REQUIRED_STEP,
+        'controlled_payload_source_declaration_execution',
         'controlled_no_write_payload_recapture_planning',
         'continued_controlled_raw_write_planning',
     ]);

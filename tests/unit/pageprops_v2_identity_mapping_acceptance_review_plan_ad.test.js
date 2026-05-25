@@ -541,6 +541,7 @@ test('repository L2V3AD artifacts preserve planning-only safety when generated',
             'controlled_raw_write_execution_blocker_resolution',
             'continued_controlled_raw_write_planning',
             'controlled_payload_source_declaration_planning',
+            'controlled_payload_source_declaration_execution',
         ].includes(manifestJson.next_required_step),
         true
     );
