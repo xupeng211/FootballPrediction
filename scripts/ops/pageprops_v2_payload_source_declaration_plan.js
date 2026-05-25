@@ -272,6 +272,9 @@ function validateInputs(loaded = {}) {
         NEXT_REQUIRED_STEP,
         'controlled_no_write_payload_recapture_planning',
         'controlled_no_write_payload_recapture_execution',
+        'no_write_payload_recapture_blocker_investigation',
+        'partial_recapture_review_planning',
+        'controlled_recapture_result_verification_planning',
         'raw_write_runner_input_contract_declaration_planning',
         'continued_payload_source_declaration_planning',
     ]);

@@ -291,7 +291,8 @@ function loadDependencies(dependencies = {}) {
     };
 }
 
-function hasProhibitedExecutionState(value = {}) {
+function hasProhibitedExecutionState(value = {}, options = {}) {
+    const allowLaterNoWriteRecapture = options.allowLaterNoWriteRecapture === true;
     return (
         value.db_write_performed === true ||
         value.raw_insert_performed === true ||
@@ -302,11 +303,11 @@ function hasProhibitedExecutionState(value = {}) {
         value.raw_write_ready_for_execution === true ||
         value.raw_write_execution_ready === true ||
         value.raw_write_execution_performed === true ||
-        value.network_request_performed === true ||
+        (!allowLaterNoWriteRecapture && value.network_request_performed === true) ||
         value.live_fetch_performed === true ||
-        value.detail_fetch_performed === true ||
-        value.live_recapture_execution_performed === true ||
-        value.no_write_payload_recapture_execution_performed === true ||
+        (!allowLaterNoWriteRecapture && value.detail_fetch_performed === true) ||
+        (!allowLaterNoWriteRecapture && value.live_recapture_execution_performed === true) ||
+        (!allowLaterNoWriteRecapture && value.no_write_payload_recapture_execution_performed === true) ||
         value.schema_migration_performed === true ||
         value.parser_features_training_prediction_performed === true
     );
@@ -322,6 +323,9 @@ function validateInputs(loaded = {}) {
         NEXT_REQUIRED_STEP,
         'no_write_payload_recapture_contract_clarification',
         'continued_no_write_payload_recapture_planning',
+        'no_write_payload_recapture_blocker_investigation',
+        'partial_recapture_review_planning',
+        'controlled_recapture_result_verification_planning',
     ]);
     const alreadyPlanned =
         normalizeText(manifest.phase_5_21_l2v3an_planning_status) === ARTIFACT_STATUS &&
@@ -371,7 +375,13 @@ function validateInputs(loaded = {}) {
         ['payload_source_declaration_plan', al],
         ['payload_source_declaration_result', am],
     ]) {
-        if (hasProhibitedExecutionState(value || {})) {
+        const allowLaterNoWriteRecapture =
+            label === 'proposal_manifest' &&
+            normalizeText(value?.phase_5_21_l2v3ao_execution_status) !== '' &&
+            value?.db_write_performed === false &&
+            value?.raw_match_data_insert_performed === false &&
+            value?.raw_write_execution_performed === false;
+        if (hasProhibitedExecutionState(value || {}, { allowLaterNoWriteRecapture })) {
             errors.push(`${label} contains prohibited write/fetch/recapture execution state`);
         }
     }
