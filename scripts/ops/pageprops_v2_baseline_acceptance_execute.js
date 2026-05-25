@@ -310,6 +310,7 @@ function validateInputs(
         'controlled_raw_write_execution_blocker_resolution',
         'continued_controlled_raw_write_planning',
         'controlled_payload_source_declaration_planning',
+        'controlled_payload_source_declaration_execution',
     ]);
     const alreadyExecuted =
         normalizeText(manifest.phase_5_21_l2v3ag_execution_status) === ARTIFACT_STATUS &&

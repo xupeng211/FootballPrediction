@@ -509,6 +509,7 @@ test('repository L2V3AJ artifacts preserve planning-only semantics when generate
             'controlled_raw_match_data_write_execution',
             'controlled_raw_write_execution_blocker_resolution',
             'controlled_payload_source_declaration_planning',
+            'controlled_payload_source_declaration_execution',
         ].includes(manifestJson.next_required_step),
         true
     );
