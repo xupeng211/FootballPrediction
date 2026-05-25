@@ -385,20 +385,39 @@ test('CLI covers help, invalid options, planning output, and no write markers', 
     let helpOutput = '';
     let invalidOutput = '';
     let successOutput = '';
+    const originalReadFileSync = fs.readFileSync;
 
-    const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
-    const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
-    const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        const textPath = String(filePath);
+        if (textPath.endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AJ_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3ajArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AK_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3akArtifact(), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
 
-    assert.equal(helpStatus, 0);
-    assert.match(helpOutput, /declaration planning only/);
-    assert.equal(invalidStatus, 2);
-    assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /"selected_planned_source_type": "controlled_live_recapture_in_memory"/);
-    assert.match(successOutput, /"raw_write_execution_ready": false/);
-    assert.match(successOutput, /"db_write_performed": false/);
-    assert.match(successOutput, /"raw_match_data_insert_performed": false/);
+    try {
+        const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
+        const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
+        const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+
+        assert.equal(helpStatus, 0);
+        assert.match(helpOutput, /declaration planning only/);
+        assert.equal(invalidStatus, 2);
+        assert.match(invalidOutput, /unknown arguments/);
+        assert.equal(successStatus, 0);
+        assert.match(successOutput, /"selected_planned_source_type": "controlled_live_recapture_in_memory"/);
+        assert.match(successOutput, /"raw_write_execution_ready": false/);
+        assert.match(successOutput, /"db_write_performed": false/);
+        assert.match(successOutput, /"raw_match_data_insert_performed": false/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
 });
 
 test('helper does not import network, DB, browser, proxy, harvest, odds, or child process modules on load', t => {

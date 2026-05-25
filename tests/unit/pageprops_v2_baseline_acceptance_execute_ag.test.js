@@ -643,23 +643,59 @@ test('CLI covers help, invalid options, missing review block, and execution outp
     let invalidOutput = '';
     let blockedOutput = '';
     let successOutput = '';
+    const originalReadFileSync = fs.readFileSync;
 
-    const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
-    const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
-    const blockedStatus = mod.runCli(['--write-files=false'], { stdout: text => (blockedOutput += text) });
-    const successStatus = mod.runCli(['--write-files=false', '--baseline-human-review-satisfied=yes'], {
-        stdout: text => (successOutput += text),
-    });
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        const textPath = String(filePath);
+        if (textPath.endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AF_PLAN_PATH)) {
+            return JSON.stringify(l2v3afPlan(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AE_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3aeArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AC_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3acArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AA_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3aaArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3Y_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3yArtifact(), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
 
-    assert.equal(helpStatus, 0);
-    assert.match(helpOutput, /baseline acceptance execution/i);
-    assert.equal(invalidStatus, 2);
-    assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(blockedStatus, 0);
-    assert.match(blockedOutput, /"baseline_accepted_count": 0/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /"baseline_accepted_count": 50/);
-    assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+    try {
+        const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
+        const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
+        const blockedStatus = mod.runCli(['--write-files=false'], { stdout: text => (blockedOutput += text) });
+        const successStatus = mod.runCli(
+            [
+                '--write-files=false',
+                '--baseline-human-review-satisfied=yes',
+                '--accepted-by=codex_test_reviewer',
+                '--accepted-at=2026-05-22T16:30:00Z',
+            ],
+            {
+                stdout: text => (successOutput += text),
+            }
+        );
+
+        assert.equal(helpStatus, 0);
+        assert.match(helpOutput, /baseline acceptance execution/i);
+        assert.equal(invalidStatus, 2);
+        assert.match(invalidOutput, /unknown arguments/);
+        assert.equal(blockedStatus, 0);
+        assert.match(blockedOutput, /"baseline_accepted_count": 0/);
+        assert.equal(successStatus, 0);
+        assert.match(successOutput, /"baseline_accepted_count": 50/);
+        assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
 });
 
 test('CLI returns status 3 when source-controlled manifest state is invalid', () => {

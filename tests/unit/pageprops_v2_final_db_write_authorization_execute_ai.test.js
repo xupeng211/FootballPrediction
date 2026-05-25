@@ -506,12 +506,39 @@ test('CLI covers help, invalid options, authorized execution output, and no writ
     let helpOutput = '';
     let invalidOutput = '';
     let successOutput = '';
+    const originalReadFileSync = fs.readFileSync;
 
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'l2v3ai-final-db-write-auth-cli-'));
     const dbSafetyPath = path.join(tmpDir, 'db-safety.json');
     fs.writeFileSync(dbSafetyPath, JSON.stringify(goodDbSafetyStatus(), null, 2));
 
     try {
+        fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+            const textPath = String(filePath);
+            if (textPath.endsWith(mod.MANIFEST_PATH)) {
+                return JSON.stringify(manifest(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AH_PLAN_PATH)) {
+                return JSON.stringify(l2v3ahPlan(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AG_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3agArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AE_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3aeArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AC_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3acArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AA_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3aaArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3Y_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3yArtifact(), null, 2);
+            }
+            return originalReadFileSync.call(this, filePath, ...rest);
+        };
+
         const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
         const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
         const successStatus = mod.runCli(
@@ -536,6 +563,7 @@ test('CLI covers help, invalid options, authorized execution output, and no writ
         assert.match(successOutput, /"raw_write_ready_for_execution": false/);
         assert.match(successOutput, /"requires_separate_raw_write_execution": true/);
     } finally {
+        fs.readFileSync = originalReadFileSync;
         fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 });

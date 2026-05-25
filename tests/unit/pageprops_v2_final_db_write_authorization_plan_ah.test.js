@@ -532,19 +532,47 @@ test('CLI covers help, invalid options, and planning output without writes', () 
     let helpOutput = '';
     let invalidOutput = '';
     let successOutput = '';
+    const originalReadFileSync = fs.readFileSync;
 
-    const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
-    const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
-    const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        const textPath = String(filePath);
+        if (textPath.endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AG_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3agArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AE_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3aeArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AC_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3acArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AA_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3aaArtifact(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3Y_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3yArtifact(), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
 
-    assert.equal(helpStatus, 0);
-    assert.match(helpOutput, /final DB-write authorization planning only/);
-    assert.equal(invalidStatus, 2);
-    assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /"final_authorization_ready_count": 50/);
-    assert.match(successOutput, /"final_db_write_authorization_performed": false/);
-    assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+    try {
+        const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
+        const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
+        const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+
+        assert.equal(helpStatus, 0);
+        assert.match(helpOutput, /final DB-write authorization planning only/);
+        assert.equal(invalidStatus, 2);
+        assert.match(invalidOutput, /unknown arguments/);
+        assert.equal(successStatus, 0);
+        assert.match(successOutput, /"final_authorization_ready_count": 50/);
+        assert.match(successOutput, /"final_db_write_authorization_performed": false/);
+        assert.match(successOutput, /"raw_write_ready_for_execution": false/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
 });
 
 test('CLI returns status 3 when source-controlled manifest state is invalid', () => {

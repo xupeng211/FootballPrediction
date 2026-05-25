@@ -331,20 +331,55 @@ test('CLI covers help, invalid options, planning output, and no write markers', 
     let helpOutput = '';
     let invalidOutput = '';
     let successOutput = '';
+    const originalReadFileSync = fs.readFileSync;
 
-    const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
-    const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
-    const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+    fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+        const textPath = String(filePath);
+        if (textPath.endsWith(mod.MANIFEST_PATH)) {
+            return JSON.stringify(manifest(), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3Y_ARTIFACT_PATH)) {
+            return JSON.stringify(metadataArtifact({ proposal_phase: 'Phase 5.21L2V3Y' }), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AA_ARTIFACT_PATH)) {
+            return JSON.stringify(metadataArtifact({ proposal_phase: 'Phase 5.21L2V3AA' }), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AC_ARTIFACT_PATH)) {
+            return JSON.stringify(metadataArtifact({ proposal_phase: 'Phase 5.21L2V3AC' }), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AE_ARTIFACT_PATH)) {
+            return JSON.stringify(metadataArtifact({ proposal_phase: 'Phase 5.21L2V3AE' }), null, 2);
+        }
+        if (textPath.endsWith(mod.L2V3AG_ARTIFACT_PATH)) {
+            return JSON.stringify(
+                metadataArtifact({ proposal_phase: 'Phase 5.21L2V3AG', baseline_accepted_count: 50 }),
+                null,
+                2
+            );
+        }
+        if (textPath.endsWith(mod.L2V3AJ_ARTIFACT_PATH)) {
+            return JSON.stringify(l2v3ajArtifact(), null, 2);
+        }
+        return originalReadFileSync.call(this, filePath, ...rest);
+    };
 
-    assert.equal(helpStatus, 0);
-    assert.match(helpOutput, /input source investigation only/);
-    assert.equal(invalidStatus, 2);
-    assert.match(invalidOutput, /unknown arguments/);
-    assert.equal(successStatus, 0);
-    assert.match(successOutput, /"safe_payload_source_path_status": "unknown_or_missing"/);
-    assert.match(successOutput, /"raw_write_execution_ready": false/);
-    assert.match(successOutput, /"db_write_performed": false/);
-    assert.match(successOutput, /"raw_match_data_insert_performed": false/);
+    try {
+        const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
+        const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
+        const successStatus = mod.runCli(['--write-files=false'], { stdout: text => (successOutput += text) });
+
+        assert.equal(helpStatus, 0);
+        assert.match(helpOutput, /input source investigation only/);
+        assert.equal(invalidStatus, 2);
+        assert.match(invalidOutput, /unknown arguments/);
+        assert.equal(successStatus, 0);
+        assert.match(successOutput, /"safe_payload_source_path_status": "unknown_or_missing"/);
+        assert.match(successOutput, /"raw_write_execution_ready": false/);
+        assert.match(successOutput, /"db_write_performed": false/);
+        assert.match(successOutput, /"raw_match_data_insert_performed": false/);
+    } finally {
+        fs.readFileSync = originalReadFileSync;
+    }
 });
 
 test('helper does not import network, DB, browser, proxy, harvest, odds, or child process modules on load', t => {

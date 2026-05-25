@@ -424,12 +424,39 @@ test('CLI covers help, invalid options, planning output, and no write markers', 
     let helpOutput = '';
     let invalidOutput = '';
     let successOutput = '';
+    const originalReadFileSync = fs.readFileSync;
 
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'l2v3aj-cli-'));
     const dbSafetyPath = path.join(tmpDir, 'db-safety.json');
     fs.writeFileSync(dbSafetyPath, JSON.stringify(goodDbSafetyStatus(), null, 2));
 
     try {
+        fs.readFileSync = function patchedReadFileSync(filePath, ...rest) {
+            const textPath = String(filePath);
+            if (textPath.endsWith(mod.MANIFEST_PATH)) {
+                return JSON.stringify(manifest(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AI_ARTIFACT_PATH)) {
+                return JSON.stringify(finalAuthArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AG_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3agArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AE_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3aeArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AC_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3acArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3AA_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3aaArtifact(), null, 2);
+            }
+            if (textPath.endsWith(mod.L2V3Y_ARTIFACT_PATH)) {
+                return JSON.stringify(l2v3yArtifact(), null, 2);
+            }
+            return originalReadFileSync.call(this, filePath, ...rest);
+        };
+
         const helpStatus = mod.runCli(['--help'], { stdout: text => (helpOutput += text) });
         const invalidStatus = mod.runCli(['--unknown'], { stdout: text => (invalidOutput += text) });
         const successStatus = mod.runCli([`--db-safety-status-file=${dbSafetyPath}`, '--write-files=false'], {
@@ -448,6 +475,7 @@ test('CLI covers help, invalid options, planning output, and no write markers', 
         assert.match(successOutput, /"raw_match_data_insert_performed": false/);
         assert.match(successOutput, /"requires_separate_raw_write_execution_authorization": true/);
     } finally {
+        fs.readFileSync = originalReadFileSync;
         fs.rmSync(tmpDir, { recursive: true, force: true });
     }
 });
@@ -515,6 +543,9 @@ test('repository L2V3AJ artifacts preserve planning-only semantics when generate
             'no_write_payload_recapture_blocker_investigation',
             'partial_recapture_review_planning',
             'controlled_recapture_result_verification_planning',
+            'accepted_mapping_and_baseline_contradiction_review_planning',
+            'recapture_runner_identity_input_contract_fix_planning',
+            'continued_no_write_recapture_blocker_investigation',
         ].includes(manifestJson.next_required_step),
         true
     );
