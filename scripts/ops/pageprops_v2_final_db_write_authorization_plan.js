@@ -295,6 +295,7 @@ function validateInputs(
         'continued_controlled_raw_write_planning',
         'controlled_payload_source_declaration_planning',
         'controlled_payload_source_declaration_execution',
+        'controlled_no_write_payload_recapture_planning',
     ]);
     const alreadyPlanned =
         normalizeText(manifest.phase_5_21_l2v3ah_planning_status) === ARTIFACT_STATUS &&
