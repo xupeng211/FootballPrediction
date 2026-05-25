@@ -275,6 +275,7 @@ test('L2V3AC records controlled no-write verification execution semantics', () =
             'continued_controlled_raw_write_planning',
             'controlled_payload_source_declaration_planning',
             'controlled_payload_source_declaration_execution',
+            'controlled_no_write_payload_recapture_planning',
         ].includes(manifest.next_required_step)
     );
 });
@@ -615,6 +616,7 @@ test('repository L2V3AC artifacts preserve controlled no-write verification exec
             'continued_controlled_raw_write_planning',
             'controlled_payload_source_declaration_planning',
             'controlled_payload_source_declaration_execution',
+            'controlled_no_write_payload_recapture_planning',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /verification_status=passed_no_write_source_controlled/i);

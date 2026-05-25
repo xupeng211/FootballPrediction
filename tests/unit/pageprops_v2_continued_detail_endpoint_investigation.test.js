@@ -421,6 +421,7 @@ test('repository L2V3T artifacts preserve no-write investigation semantics when 
                                         'Phase 5.21L2V3AK: continued controlled raw write planning',
                                         'Phase 5.21L2V3AL: controlled payload source declaration planning',
                                         'Phase 5.21L2V3AM: controlled payload source declaration execution',
+                                        'Phase 5.21L2V3AN: controlled no-write payload recapture planning',
                                     ].includes(manifest.recommended_next_step)
                                 );
                                 assert.ok(
@@ -438,6 +439,7 @@ test('repository L2V3T artifacts preserve no-write investigation semantics when 
                                         'continued_controlled_raw_write_planning',
                                         'controlled_payload_source_declaration_planning',
                                         'controlled_payload_source_declaration_execution',
+                                        'controlled_no_write_payload_recapture_planning',
                                     ].includes(manifest.next_required_step)
                                 );
                             } else {

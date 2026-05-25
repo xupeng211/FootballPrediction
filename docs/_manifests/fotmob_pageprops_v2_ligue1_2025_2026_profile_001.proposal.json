@@ -4642,7 +4642,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "controlled_payload_source_declaration_execution",
+    "next_required_step": "controlled_no_write_payload_recapture_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4920,7 +4920,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AM: controlled payload source declaration execution",
+    "recommended_next_step": "Phase 5.21L2V3AN: controlled no-write payload recapture planning",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5526,5 +5526,14 @@
     "live_recapture_authorization_required": true,
     "full_payload_storage_allowed": false,
     "full_payload_print_allowed": false,
-    "metadata_only_artifacts_accepted_as_payload": false
+    "metadata_only_artifacts_accepted_as_payload": false,
+    "phase_5_21_l2v3am_execution_status": "completed_controlled_payload_source_declaration_execution",
+    "phase_5_21_l2v3am_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.payload_source_declaration_result.phase521l2v3am.json",
+    "phase_5_21_l2v3am_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AM.md",
+    "controlled_payload_source_declaration_execution_status": "completed_controlled_payload_source_declaration_execution",
+    "payload_source_declaration_execution_performed": true,
+    "payload_source_declaration_performed": true,
+    "selected_source_type": "controlled_live_recapture_in_memory",
+    "payload_source_status": "declared",
+    "in_memory_only": true
 }
