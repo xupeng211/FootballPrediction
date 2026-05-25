@@ -4642,7 +4642,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "controlled_no_write_payload_recapture_planning",
+    "next_required_step": "controlled_no_write_payload_recapture_execution",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4920,7 +4920,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AN: controlled no-write payload recapture planning",
+    "recommended_next_step": "Phase 5.21L2V3AO: controlled no-write payload recapture execution",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5535,5 +5535,15 @@
     "payload_source_declaration_performed": true,
     "selected_source_type": "controlled_live_recapture_in_memory",
     "payload_source_status": "declared",
-    "in_memory_only": true
+    "in_memory_only": true,
+    "phase_5_21_l2v3an_planning_status": "completed_controlled_no_write_payload_recapture_planning",
+    "phase_5_21_l2v3an_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.no_write_payload_recapture_plan.phase521l2v3an.json",
+    "phase_5_21_l2v3an_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AN.md",
+    "no_write_payload_recapture_planning_status": "planned_not_executed",
+    "planned_source_type": "controlled_live_recapture_in_memory",
+    "live_recapture_execution_performed": false,
+    "no_write_recapture_authorization_required": true,
+    "planned_stopping_rule_count": 11,
+    "planned_identity_validation_rule_count": 5,
+    "recapture_execution_ready": false
 }
