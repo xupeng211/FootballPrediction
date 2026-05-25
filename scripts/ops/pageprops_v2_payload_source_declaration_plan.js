@@ -271,6 +271,7 @@ function validateInputs(loaded = {}) {
     const advancedNextSteps = new Set([
         NEXT_REQUIRED_STEP,
         'controlled_no_write_payload_recapture_planning',
+        'controlled_no_write_payload_recapture_execution',
         'raw_write_runner_input_contract_declaration_planning',
         'continued_payload_source_declaration_planning',
     ]);

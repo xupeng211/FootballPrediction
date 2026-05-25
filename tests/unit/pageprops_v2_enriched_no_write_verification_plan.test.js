@@ -591,6 +591,7 @@ test('repository L2V3AB artifacts preserve no-write verification planning semant
             'Phase 5.21L2V3AL: controlled payload source declaration planning',
             'Phase 5.21L2V3AM: controlled payload source declaration execution',
             'Phase 5.21L2V3AN: controlled no-write payload recapture planning',
+            'Phase 5.21L2V3AO: controlled no-write payload recapture execution',
         ].includes(manifest.recommended_next_step)
     );
     assert.ok(
@@ -609,6 +610,7 @@ test('repository L2V3AB artifacts preserve no-write verification planning semant
             'controlled_payload_source_declaration_planning',
             'controlled_payload_source_declaration_execution',
             'controlled_no_write_payload_recapture_planning',
+            'controlled_no_write_payload_recapture_execution',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /raw_write_guard_ok=false/i);

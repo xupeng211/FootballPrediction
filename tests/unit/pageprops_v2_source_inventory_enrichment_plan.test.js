@@ -421,6 +421,7 @@ test('repository L2V3U artifacts preserve planning-only safety when generated', 
             'Phase 5.21L2V3AL: controlled payload source declaration planning',
             'Phase 5.21L2V3AM: controlled payload source declaration execution',
             'Phase 5.21L2V3AN: controlled no-write payload recapture planning',
+            'Phase 5.21L2V3AO: controlled no-write payload recapture execution',
         ].includes(manifest.recommended_next_step)
     );
     assert.match(report, /enrichment does not unblock raw write/i);
