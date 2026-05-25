@@ -288,6 +288,9 @@ test('repository L2V3Q artifacts preserve no-write and blocking semantics', () =
                                         'Phase 5.21L2V3AM: controlled payload source declaration execution',
                                         'Phase 5.21L2V3AN: controlled no-write payload recapture planning',
                                         'Phase 5.21L2V3AO: controlled no-write payload recapture execution',
+                                        'Phase 5.21L2V3AP: no-write payload recapture blocker investigation',
+                                        'Phase 5.21L2V3AP: partial recapture review planning',
+                                        'Phase 5.21L2V3AP: controlled recapture result verification planning',
                                     ].includes(manifest.recommended_next_step)
                                 );
                                 assert.ok(
@@ -307,6 +310,9 @@ test('repository L2V3Q artifacts preserve no-write and blocking semantics', () =
                                         'controlled_payload_source_declaration_execution',
                                         'controlled_no_write_payload_recapture_planning',
                                         'controlled_no_write_payload_recapture_execution',
+                                        'no_write_payload_recapture_blocker_investigation',
+                                        'partial_recapture_review_planning',
+                                        'controlled_recapture_result_verification_planning',
                                     ].includes(manifest.next_required_step)
                                 );
                             } else {

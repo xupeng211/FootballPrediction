@@ -229,7 +229,8 @@ function loadDependencies(dependencies = {}) {
     };
 }
 
-function hasProhibitedWriteState(value = {}) {
+function hasProhibitedWriteState(value = {}, options = {}) {
+    const allowLaterNoWriteRecapture = options.allowLaterNoWriteRecapture === true;
     return (
         value.db_write_performed === true ||
         value.raw_insert_performed === true ||
@@ -240,10 +241,11 @@ function hasProhibitedWriteState(value = {}) {
         value.raw_write_ready_for_execution === true ||
         value.raw_write_execution_ready === true ||
         value.raw_write_execution_performed === true ||
-        value.network_request_performed === true ||
+        (!allowLaterNoWriteRecapture && value.network_request_performed === true) ||
         value.live_fetch_performed === true ||
-        value.detail_fetch_performed === true ||
-        value.live_recapture_execution_performed === true ||
+        (!allowLaterNoWriteRecapture && value.detail_fetch_performed === true) ||
+        (!allowLaterNoWriteRecapture && value.live_recapture_execution_performed === true) ||
+        (!allowLaterNoWriteRecapture && value.no_write_payload_recapture_execution_performed === true) ||
         value.schema_migration_performed === true ||
         value.parser_features_training_prediction_performed === true
     );
@@ -257,6 +259,9 @@ function validateInputs(loaded = {}) {
     const advancedNextSteps = new Set([
         NEXT_REQUIRED_STEP,
         'controlled_no_write_payload_recapture_execution',
+        'no_write_payload_recapture_blocker_investigation',
+        'partial_recapture_review_planning',
+        'controlled_recapture_result_verification_planning',
         'raw_write_runner_input_contract_declaration_planning',
         'payload_source_declaration_blocker_resolution',
     ]);
@@ -313,7 +318,14 @@ function validateInputs(loaded = {}) {
                 : label === 'raw_write_input_source_investigation'
                   ? 'l2v3akArtifact'
                   : 'l2v3alArtifact';
-        if (hasProhibitedWriteState(loaded[key] || {})) {
+        const value = loaded[key] || {};
+        const allowLaterNoWriteRecapture =
+            label === 'proposal_manifest' &&
+            normalizeText(value.phase_5_21_l2v3ao_execution_status) !== '' &&
+            value.db_write_performed === false &&
+            value.raw_match_data_insert_performed === false &&
+            value.raw_write_execution_performed === false;
+        if (hasProhibitedWriteState(value, { allowLaterNoWriteRecapture })) {
             errors.push(`${label} contains prohibited write/fetch/execution state`);
         }
     }

@@ -406,7 +406,14 @@ test('repository L2V3AN artifacts preserve planning-only semantics when generate
     assert.equal(artifact.full_payload_storage_allowed, false);
     assert.equal(artifact.full_payload_print_allowed, false);
     assert.equal(manifestJson.phase_5_21_l2v3an_planning_status, mod.ARTIFACT_STATUS);
-    assert.equal(manifestJson.next_required_step, mod.NEXT_REQUIRED_STEP);
+    assert.ok(
+        [
+            mod.NEXT_REQUIRED_STEP,
+            'no_write_payload_recapture_blocker_investigation',
+            'partial_recapture_review_planning',
+            'controlled_recapture_result_verification_planning',
+        ].includes(manifestJson.next_required_step)
+    );
     assert.match(report, /current_user_instruction_authorizes_planning_only=true/i);
     assert.match(report, /This next step requires a new, separate, explicit no-write live recapture authorization/i);
 });
