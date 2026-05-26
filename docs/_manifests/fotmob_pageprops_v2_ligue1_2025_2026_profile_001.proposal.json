@@ -31,10 +31,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -57,10 +54,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -83,10 +77,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -109,10 +100,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -135,10 +123,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -161,10 +146,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -187,10 +169,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -213,10 +192,7 @@
             "kickoff_time": "2026-05-10T19:00:00.000Z",
             "match_date": "2026-05-10T19:00:00.000Z",
             "status": "finished",
-            "existing_versions": [
-                "fotmob_html_hyd_v1",
-                "fotmob_pageprops_v2"
-            ],
+            "existing_versions": ["fotmob_html_hyd_v1", "fotmob_pageprops_v2"],
             "target_status": "already_completed",
             "exclude_from_new_profile_batch": true,
             "reason": "already_has_fotmob_pageprops_v2",
@@ -4492,12 +4468,8 @@
         "l1_route_kind": "l1_api_data_leagues",
         "request_count": 1,
         "status_code": 200,
-        "status_codes": [
-            200
-        ],
-        "content_type_summary": [
-            "application/json; charset=utf-8"
-        ],
+        "status_codes": [200],
+        "content_type_summary": ["application/json; charset=utf-8"],
         "parse_status": "parsed_json",
         "blocked_markers": [],
         "discovered_raw_target_count": 297,
@@ -4669,10 +4641,8 @@
     "expected_raw_match_data_after_count": 68,
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
-    "blockers": [
-        "RECAPTURE_HASH_GATE_BLOCKED"
-    ],
-    "next_required_step": "accepted_mapping_and_baseline_contradiction_review_execution",
+    "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
+    "next_required_step": "accepted_mapping_and_baseline_suspension_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4688,9 +4658,7 @@
         "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
         "transaction_status": "not_started",
         "existing_v2_raw_rows_for_candidates": null,
-        "blockers": [
-            "RECAPTURE_HASH_GATE_BLOCKED"
-        ],
+        "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
         "next_required_step": "renewed_controlled_pageprops_v2_raw_write_execution_blocked_review"
     },
     "phase_5_21_l2v3b_review_status": "completed_no_write",
@@ -4952,7 +4920,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AR: accepted mapping and baseline contradiction review execution",
+    "recommended_next_step": "Phase 5.21L2V3AS: accepted mapping and baseline suspension planning",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5630,5 +5598,24 @@
     "mapping_suspension_planning_required": true,
     "baseline_suspension_planning_required": true,
     "re_acceptance_planning_required": true,
-    "runner_contract_fix_planning_required": true
+    "runner_contract_fix_planning_required": true,
+    "phase_5_21_l2v3ar_execution_status": "completed_accepted_mapping_baseline_contradiction_review_execution",
+    "phase_5_21_l2v3ar_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.accepted_mapping_baseline_contradiction_review_result.phase521l2v3ar.json",
+    "phase_5_21_l2v3ar_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AR.md",
+    "accepted_mapping_baseline_contradiction_review_execution_status": "completed_accepted_mapping_baseline_contradiction_review_execution",
+    "contradiction_review_execution_performed": true,
+    "contradiction_reviewed_count": 50,
+    "contradiction_confirmed_count": 8,
+    "contradiction_not_confirmed_count": 0,
+    "contradiction_blocked_pending_evidence_count": 42,
+    "accepted_mapping_contradiction_confirmed_count": 8,
+    "baseline_acceptance_contradiction_confirmed_count": 8,
+    "mapping_suspension_required_count": 8,
+    "baseline_suspension_required_count": 8,
+    "re_acceptance_required_count": 8,
+    "runner_contract_fix_required": true,
+    "expanded_review_required": true,
+    "mapping_suspension_execution_performed": false,
+    "baseline_suspension_execution_performed": false,
+    "re_acceptance_execution_performed": false
 }
