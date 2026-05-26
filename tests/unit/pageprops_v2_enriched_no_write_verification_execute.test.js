@@ -281,6 +281,9 @@ test('L2V3AC records controlled no-write verification execution semantics', () =
             'partial_recapture_review_planning',
             'controlled_recapture_result_verification_planning',
             'accepted_mapping_and_baseline_contradiction_review_planning',
+            'accepted_mapping_and_baseline_contradiction_review_execution',
+            'accepted_mapping_and_baseline_suspension_planning',
+            'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
             'continued_no_write_recapture_blocker_investigation',
         ].includes(manifest.next_required_step)
@@ -629,6 +632,9 @@ test('repository L2V3AC artifacts preserve controlled no-write verification exec
             'partial_recapture_review_planning',
             'controlled_recapture_result_verification_planning',
             'accepted_mapping_and_baseline_contradiction_review_planning',
+            'accepted_mapping_and_baseline_contradiction_review_execution',
+            'accepted_mapping_and_baseline_suspension_planning',
+            'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
             'continued_no_write_recapture_blocker_investigation',
         ].includes(manifest.next_required_step)
