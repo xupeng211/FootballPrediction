@@ -5689,5 +5689,13 @@
     "page_url_base_alone_insufficient_enforced": true,
     "identity_mismatch_blocks_recapture": true,
     "hash_mismatch_under_identity_mismatch_blocks_baseline_update": true,
-    "recommended_next_step_after_l2v3aw": "Phase 5.21L2V3AX: controlled no-write identity contract regression planning"
+    "recommended_next_step_after_l2v3aw": "Phase 5.21L2V3AX: controlled no-write identity contract regression planning",
+    "phase_5_21_l2v3ax_planning_status": "completed_controlled_no_write_identity_contract_regression_planning",
+    "phase_5_21_l2v3ax_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.identity_contract_regression_plan.phase521l2v3ax.json",
+    "phase_5_21_l2v3ax_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AX.md",
+    "identity_contract_regression_planning_status": "completed_controlled_no_write_identity_contract_regression_planning",
+    "target_behavior_under_test_count": 7,
+    "planned_regression_case_count": 7,
+    "planned_regression_blocking_rule_count": 7,
+    "recommended_next_step_after_l2v3ax": "Phase 5.21L2V3AY: controlled no-write identity contract regression execution"
 }
