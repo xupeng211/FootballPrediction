@@ -1,88 +1,81 @@
-## 📋 Pull Request 详情
+## PR Type
 
-### 🎯 变更类型
-请选择适用的类型：
-- [ ] 🐛 Bug修复 (Bug fix)
-- [ ] ✨ 新功能 (New feature)
-- [ ] 🔧 代码重构 (Refactoring)
-- [ ] 📚 文档更新 (Documentation)
-- [ ] 🎨 样式调整 (Style changes)
-- [ ] ⚡ 性能优化 (Performance improvement)
-- [ ] 🔒 安全修复 (Security fix)
-- [ ] 🚀 部署相关 (Deployment)
+选择一个主类型：
 
-### 📝 变更描述
-简要描述此次变更的内容：
+- [ ] runtime-code-change
+- [ ] governance-only
+- [ ] docs-only
+- [ ] test-only
+- [ ] ci-fix
+- [ ] data-artifact
 
-### 🔗 相关Issue
-关闭的Issue: Closes #(issue number)
+## Runtime Behavior
 
-### 🧪 测试情况
-- [ ] 所有现有测试通过
-- [ ] 添加了新的测试用例
-- [ ] 手动测试已完成
-- [ ] 测试覆盖率达到80%以上
+- Runtime code change included: yes / no
+- Runtime code paths changed: n/a
+- Runtime behavior changed: n/a
 
-### 📸 截图/演示
-如果有UI变更，请提供截图或GIF演示：
+如果这是 implementation phase 但没有 runtime code change，默认 No-Go。请说明原因、blocker 和人工确认：
 
-### ✅ 检查清单
-代码质量：
-- [ ] 代码已通过lint检查 (black, flake8)
-- [ ] 代码已通过类型检查 (mypy)
-- [ ] 代码已通过安全扫描 (bandit)
-- [ ] 添加了适当的注释和文档字符串
-- [ ] 变量和函数命名清晰易懂
+- Explanation:
+- Human confirmation:
 
-功能完整性：
-- [ ] 功能按预期工作
-- [ ] 处理了错误情况
-- [ ] 添加了适当的日志记录
-- [ ] API文档已更新（如适用）
+## Artifact Scope
 
-数据库变更（如适用）：
-- [ ] 数据库迁移脚本已创建
-- [ ] 迁移脚本已测试
-- [ ] 考虑了向后兼容性
-- [ ] 更新了数据库文档
+- Docs/report/manifest changes included: yes / no
+- Added/modified report lines:
+- Added/modified manifest lines:
+- Copies full historical state: yes / no
+- Includes large artifact: yes / no
+- Large artifact justification, if any:
 
-部署相关：
-- [ ] 环境变量已文档化
-- [ ] Docker构建成功
-- [ ] 健康检查端点正常工作
-- [ ] 考虑了部署对生产环境的影响
+## Business Progress
 
-### 🎯 部署计划
-- [ ] 需要停机维护
-- [ ] 可以热部署
-- [ ] 需要数据库迁移
-- [ ] 需要更新环境变量
-- [ ] 需要清除缓存
+- Business progress:
+- Blocker removed:
+- Blocker remaining:
+- Next step:
 
-### 📋 测试指南
-为reviewer提供测试此PR的步骤：
+## Safety Status
 
-1. 
-2. 
-3. 
+- no live fetch: yes / no / n/a
+- no detail fetch: yes / no / n/a
+- no network request: yes / no / n/a
+- no DB writes: yes / no / n/a
+- no raw_match_data inserts: yes / no / n/a
+- no matches writes: yes / no / n/a
+- no matches.external_id changes: yes / no / n/a
+- no raw write execution: yes / no / n/a
+- no re-acceptance execution: yes / no / n/a
+- no suspension reversal: yes / no / n/a
+- no rollback execution: yes / no / n/a
+- no parser/features/training/prediction: yes / no / n/a
+- no full body/raw_data/pageProps saved or printed: yes / no / n/a
 
-### 💭 其他说明
-添加任何reviewer需要知道的其他信息：
+If any answer is `no`, list the explicit authorization, scope, command, and verification:
 
----
+- Authorization details:
 
-### 📊 代码统计
-- 新增行数: 
-- 删除行数: 
-- 修改文件数: 
-- 新增测试数: 
+## Tests Run
 
-### 🔄 后续工作
-此PR完成后的后续计划：
-- [ ] 
-- [ ] 
-- [ ] 
+- [ ] lint
+- [ ] unit tests
+- [ ] coverage
+- [ ] formatter
+- [ ] git diff --check
+- [ ] hidden/bidi scan
+- [ ] full payload marker scan
+- [ ] DB SELECT-only safety check, if applicable
+- [ ] other:
 
----
+Commands and results:
 
-**感谢您的贡献！** 🎉 
+```text
+
+```
+
+## Review Notes
+
+- Reviewer focus:
+- Residual risk:
+- Follow-up PR, if any:
