@@ -6,7 +6,10 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 
-const { reconcileRouteIdentity } = require('../../src/infrastructure/services/FotMobRouteIdentityReconciler');
+const {
+    reconcileRouteIdentity,
+    resolveRecaptureIdentityContract,
+} = require('../../src/infrastructure/services/FotMobRouteIdentityReconciler');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const PHASE = 'Phase 5.21L2V3AO';
@@ -586,6 +589,24 @@ function normalizeCandidateTarget(target = {}, enrichedByMatchId = new Map()) {
         source_url_fragment_external_id: normalizeText(
             enriched.source_url_fragment_external_id || target.source_url_fragment_external_id
         ),
+        accepted_detail_external_id: normalizeText(
+            target.accepted_detail_external_id ||
+                enriched.accepted_detail_external_id ||
+                target.recapture_expected_identity
+        ),
+        observed_detail_external_id: normalizeText(
+            enriched.observed_detail_external_id || target.observed_detail_external_id
+        ),
+        current_mapping_effective_status: normalizeText(
+            target.current_mapping_effective_status || enriched.current_mapping_effective_status
+        ),
+        current_baseline_effective_status: normalizeText(
+            target.current_baseline_effective_status || enriched.current_baseline_effective_status
+        ),
+        re_acceptance_execution_performed: normalizeBooleanFlag(
+            target.re_acceptance_execution_performed ?? enriched.re_acceptance_execution_performed,
+            false
+        ),
         league_id: parseInteger(target.league_id, LEAGUE_ID),
         league_name: normalizeText(target.league_name || LEAGUE_NAME),
         season: normalizeText(target.season || SEASON),
@@ -737,22 +758,60 @@ function validateInputArtifacts({
     return { ok: errors.length === 0, errors, candidate_validation: candidateValidation };
 }
 
+function attachIdentityContract(fetchResult = {}, contract = {}) {
+    return {
+        ...fetchResult,
+        identity_contract: contract,
+        recapture_request_identity: contract.recapture_request_identity || null,
+        recapture_expected_identity: contract.recapture_expected_identity || null,
+        route_identity_strategy: contract.route_identity_strategy,
+        canonical_identity_source: contract.canonical_identity_source,
+    };
+}
+
+function buildIdentityContractBlockedFetchResult(target = {}, contract = {}) {
+    return attachIdentityContract(
+        {
+            ok: false,
+            error: `RECAPTURE_IDENTITY_CONTRACT_BLOCKED:${(contract.blockers || []).join(',')}`,
+            request_url: null,
+            final_url: null,
+            http_status: 0,
+            body_byte_length: 0,
+            body: '',
+            identity_contract_blocked: true,
+        },
+        contract
+    );
+}
+
 function resolveFetchResultForTarget(target, index, input = {}, dependencies = {}) {
-    const byExternalId = dependencies.fetchResultsByExternalId || {};
-    if (byExternalId[target.external_id]) return byExternalId[target.external_id];
-    if (Array.isArray(dependencies.fetchResults) && dependencies.fetchResults[index]) {
-        return dependencies.fetchResults[index];
+    const contract = resolveRecaptureIdentityContract({ target });
+    if (contract.recapture_request_allowed !== true) {
+        return buildIdentityContractBlockedFetchResult(target, contract);
     }
-    const requestUrl = buildFotMobMatchUrl(target.external_id);
+    const byExternalId = dependencies.fetchResultsByExternalId || {};
+    if (byExternalId[contract.recapture_request_identity]) {
+        return attachIdentityContract(byExternalId[contract.recapture_request_identity], contract);
+    }
+    if (byExternalId[target.external_id]) return attachIdentityContract(byExternalId[target.external_id], contract);
+    if (Array.isArray(dependencies.fetchResults) && dependencies.fetchResults[index]) {
+        return attachIdentityContract(dependencies.fetchResults[index], contract);
+    }
+    const requestUrl = buildFotMobMatchUrl(contract.recapture_request_identity);
     const fetchHtmlFn = dependencies.fetchHtmlFn || fetchHtml;
-    return fetchHtmlFn(requestUrl, {
+    const fetchResult = fetchHtmlFn(requestUrl, {
         fetchFn: dependencies.fetchFn,
         timeoutMs: input.timeoutMs,
     });
+    return Promise.resolve(fetchResult).then(result => attachIdentityContract(result, contract));
 }
 
 function buildBaseResult(target = {}, fetchResult = {}) {
-    const requestUrl = fetchResult.request_url || buildFotMobMatchUrl(target.external_id);
+    const contract = fetchResult.identity_contract || resolveRecaptureIdentityContract({ target });
+    const requestUrl =
+        fetchResult.request_url ||
+        (contract.recapture_request_identity ? buildFotMobMatchUrl(contract.recapture_request_identity) : null);
     const finalUrl = fetchResult.final_url || requestUrl;
     return {
         target_id: target.target_id,
@@ -763,6 +822,16 @@ function buildBaseResult(target = {}, fetchResult = {}) {
         source_url_fragment_external_id_match: target.source_url_fragment_external_id
             ? target.source_url_fragment_external_id === target.external_id
             : null,
+        accepted_detail_external_id: contract.accepted_detail_external_id || target.accepted_detail_external_id || null,
+        recapture_request_identity: contract.recapture_request_identity || null,
+        recapture_expected_identity: contract.recapture_expected_identity || null,
+        route_identity_strategy: contract.route_identity_strategy,
+        canonical_identity_source: contract.canonical_identity_source,
+        identity_contract_blocked: fetchResult.identity_contract_blocked === true,
+        identity_contract_blockers: contract.blockers || [],
+        baseline_update_allowed: contract.baseline_update_allowed === true,
+        baseline_re_acceptance_allowed: contract.baseline_re_acceptance_allowed === true,
+        raw_write_execution_ready: false,
         home_team: target.home_team,
         away_team: target.away_team,
         kickoff_time: target.kickoff_time || target.match_date || null,
@@ -796,6 +865,7 @@ function buildBaseResult(target = {}, fetchResult = {}) {
 }
 
 function firstStoppingRule(result = {}) {
+    if (result.identity_contract_blocked === true) return 'identity_contract_blocked';
     if ((result.block_markers || []).includes('http_403')) return 'http_403';
     if ((result.block_markers || []).includes('http_429')) return 'http_429';
     if ((result.block_markers || []).length > 0) return 'captcha_or_block_marker';
@@ -830,6 +900,14 @@ function finalizeTargetResult(result = {}) {
 async function recaptureTarget(target = {}, index = 0, input = {}, dependencies = {}) {
     const fetchResult = await resolveFetchResultForTarget(target, index, input, dependencies);
     const base = buildBaseResult(target, fetchResult);
+    if (fetchResult.identity_contract_blocked === true) {
+        return finalizeTargetResult({
+            ...base,
+            blocker_list: [
+                ...new Set([...(base.blocker_list || []), ...(base.identity_contract_blockers || [])]),
+            ].sort(),
+        });
+    }
     if ((base.block_markers || []).length > 0) return finalizeTargetResult(base);
     if (!fetchResult.ok || Number(fetchResult.http_status || 0) !== 200) {
         return finalizeTargetResult({
@@ -858,10 +936,12 @@ async function recaptureTarget(target = {}, index = 0, input = {}, dependencies 
     const routeIdentity = reconcileRouteIdentity({
         target,
         pageProps,
-        requestedScheduleExternalId: target.external_id,
+        requestedScheduleExternalId: target.schedule_external_id || target.external_id,
+        requestedDetailExternalId:
+            fetchResult.identity_contract?.recapture_expected_identity || target.accepted_detail_external_id,
         requestedUrl: target.source_page_url || null,
         requestedPageUrlBase: target.source_page_url_base || null,
-        finalUrl: fetchResult.final_url || fetchResult.request_url || buildFotMobMatchUrl(target.external_id),
+        finalUrl: fetchResult.final_url || fetchResult.request_url || base.request_url,
         acceptedIdentityMappingPresent: true,
     });
     const identityMismatch =
@@ -887,8 +967,15 @@ async function recaptureTarget(target = {}, index = 0, input = {}, dependencies 
     const blockers = new Set(routeIdentity.safety_blockers || []);
     if (identityMismatch) blockers.add('identity_mismatch');
     if (dateRouteMismatch) blockers.add('date_or_route_mismatch');
-    if (!hashMatches) blockers.add('hash_mismatch_unexplained');
+    if (!hashMatches) {
+        blockers.add(identityMismatch ? 'hash_mismatch_secondary_to_identity_mismatch' : 'hash_mismatch_unexplained');
+    }
     if (structure.has_content !== true) blockers.add('unexpected_schema_drift');
+    const hashValidationStatus = hashMatches
+        ? 'hash_match'
+        : identityMismatch
+          ? 'secondary_to_identity_mismatch'
+          : 'hash_mismatch';
 
     return finalizeTargetResult({
         ...base,
@@ -903,7 +990,9 @@ async function recaptureTarget(target = {}, index = 0, input = {}, dependencies 
         page_url_base_match_status: routeIdentity.page_url_base_match_status || 'unknown',
         stable_pageprops_payload_v1_hash: pagePropsHash,
         hash_matches_baseline: hashMatches,
-        hash_validation_status: hashMatches ? 'hash_match' : 'hash_mismatch',
+        hash_validation_status: hashValidationStatus,
+        baseline_update_allowed: false,
+        baseline_re_acceptance_allowed: false,
         payload_size_summary: {
             body_byte_length: Number(fetchResult.body_byte_length || Buffer.byteLength(fetchResult.body || '', 'utf8')),
             pageprops_json_byte_length: jsonByteLength(pageProps),

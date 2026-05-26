@@ -16,6 +16,10 @@ const CROSS_SEASON_SLUG_REUSE = 'cross_season_slug_reuse';
 const UNRESOLVED_LARGE_GAP = 'unresolved_large_gap';
 const UNKNOWN_DATE_COMPATIBILITY = 'unknown';
 const LARGE_DATE_GAP_DAYS = 30;
+const BLOCKED_ROUTE_IDENTITY_STRATEGY = 'blocked_until_reaccepted_identity_contract';
+const ACCEPTED_DETAIL_ROUTE_IDENTITY_STRATEGY = 'accepted_detail_external_id';
+const BLOCKED_CANONICAL_IDENTITY_SOURCE = 'none_until_reaccepted_mapping_baseline';
+const REACCEPTED_CANONICAL_IDENTITY_SOURCE = 'reaccepted_mapping_baseline';
 
 function normalizeText(value) {
     return String(value ?? '').trim();
@@ -48,6 +52,22 @@ function firstId(...values) {
         if (id) return id;
     }
     return null;
+}
+
+function firstBooleanTrue(...values) {
+    return values.some(value => value === true || normalizeLower(value) === 'true');
+}
+
+function statusMatches(value, pattern) {
+    return pattern.test(normalizeLower(value));
+}
+
+function isSuspendedEffectiveStatus(value) {
+    return statusMatches(value, /suspended|blocked_or_superseded|invalidated_for_current_write_plan/);
+}
+
+function isReacceptedEffectiveStatus(value) {
+    return statusMatches(value, /re[-_]?accept|accepted_after_re[-_]?accept|completed_re[-_]?accept/);
 }
 
 function normalizePageUrlBase(value) {
@@ -198,18 +218,30 @@ function extractObservedMetadata(input = {}) {
 function extractRequestedMetadata(input = {}) {
     const target = isPlainObject(input.target) ? input.target : {};
     return {
+        requested_detail_external_id: firstId(
+            input.requestedDetailExternalId,
+            input.recaptureExpectedIdentity,
+            input.acceptedDetailExternalId,
+            input.accepted_detail_external_id,
+            target.accepted_detail_external_id,
+            target.recapture_expected_identity
+        ),
         requested_schedule_external_id: firstId(
             input.requestedScheduleExternalId,
+            input.scheduleExternalId,
+            input.schedule_external_id,
             input.externalId,
             input.external_id,
+            target.schedule_external_id,
             target.external_id
         ),
-        requested_url: firstText(input.requestedUrl, input.request_url, target.request_url),
+        requested_url: firstText(input.requestedUrl, input.request_url, target.source_page_url, target.request_url),
         requested_page_url_base: normalizePageUrlBase(
             firstText(
                 input.requestedPageUrlBase,
                 input.sourceInventoryPageUrlBase,
                 input.manifestPageUrlBase,
+                target.source_page_url_base,
                 target.page_url_base,
                 target.source_inventory_page_url_base,
                 target.manifest_page_url_base
@@ -511,9 +543,10 @@ function buildSafetyBlockers({
     const addWhen = (condition, blocker) => {
         if (condition) blockers.add(blocker);
     };
+    const requestedIdentityId = requested.requested_detail_external_id || requested.requested_schedule_external_id;
     addWhen(blockMarkers.length > 0 || input.blockOrCaptcha === true, BLOCK_OR_CAPTCHA);
     addWhen(input.fetchOrParseFailure === true, FETCH_OR_PARSE_FAILURE);
-    addWhen(!requested.requested_schedule_external_id, 'missing_requested_schedule_external_id');
+    addWhen(!requestedIdentityId, 'missing_requested_detail_external_id');
     addWhen(!observed.observed_detail_external_id, 'missing_observed_detail_external_id');
     if (externalIdStatus === REQUESTED_OBSERVED_MISMATCH) {
         blockers.add(ACCEPTED_MAPPING_REQUIRED);
@@ -541,10 +574,147 @@ function buildSafetyBlockers({
     return [...blockers].sort();
 }
 
+// eslint-disable-next-line complexity
+function resolveRecaptureIdentityContract(input = {}) {
+    const target = isPlainObject(input.target) ? input.target : input;
+    const scheduleExternalId = firstId(
+        input.scheduleExternalId,
+        input.schedule_external_id,
+        input.requestedScheduleExternalId,
+        input.externalId,
+        input.external_id,
+        target.schedule_external_id,
+        target.external_id
+    );
+    const sourceUrlFragmentExternalId = firstId(
+        input.sourceUrlFragmentExternalId,
+        input.source_url_fragment_external_id,
+        target.source_url_fragment_external_id
+    );
+    const sourcePageUrl = firstText(input.sourcePageUrl, input.source_page_url, target.source_page_url);
+    const sourcePageUrlBase = normalizePageUrlBase(
+        firstText(
+            input.sourcePageUrlBase,
+            input.source_page_url_base,
+            target.source_page_url_base,
+            target.page_url_base
+        )
+    );
+    const acceptedDetailExternalId = firstId(
+        input.acceptedDetailExternalId,
+        input.accepted_detail_external_id,
+        input.recaptureExpectedIdentity,
+        input.recapture_expected_identity,
+        target.accepted_detail_external_id,
+        target.recapture_expected_identity
+    );
+    const observedDetailExternalId = firstId(
+        input.observedDetailExternalId,
+        input.observed_detail_external_id,
+        target.observed_detail_external_id
+    );
+    const mappingEffectiveStatus = firstText(
+        input.currentMappingEffectiveStatus,
+        input.current_mapping_effective_status,
+        input.mappingEffectiveStatus,
+        target.current_mapping_effective_status,
+        target.mapping_effective_status
+    );
+    const baselineEffectiveStatus = firstText(
+        input.currentBaselineEffectiveStatus,
+        input.current_baseline_effective_status,
+        input.baselineEffectiveStatus,
+        target.current_baseline_effective_status,
+        target.baseline_effective_status
+    );
+    const reAcceptancePerformed =
+        firstBooleanTrue(
+            input.reAcceptanceExecutionPerformed,
+            input.re_acceptance_execution_performed,
+            target.re_acceptance_execution_performed
+        ) ||
+        isReacceptedEffectiveStatus(mappingEffectiveStatus) ||
+        isReacceptedEffectiveStatus(baselineEffectiveStatus);
+    const mappingOrBaselineSuspended =
+        isSuspendedEffectiveStatus(mappingEffectiveStatus) || isSuspendedEffectiveStatus(baselineEffectiveStatus);
+    const reverseFixtureDetected =
+        firstBooleanTrue(
+            input.reverseFixtureDetected,
+            input.reverse_fixture_detected,
+            target.reverse_fixture_detected
+        ) ||
+        normalizeLower(
+            input.dateCompatibilityStatus || input.date_compatibility_status || target.date_compatibility_status
+        ) === REVERSE_FIXTURE_DETECTED;
+    const hashMismatch =
+        input.hashMatchesBaseline === false ||
+        target.hash_matches_baseline === false ||
+        statusMatches(
+            input.hashValidationStatus || input.hash_validation_status || target.hash_validation_status,
+            /hash_mismatch/
+        );
+
+    const blockers = new Set();
+    if (mappingOrBaselineSuspended) blockers.add('suspended_mapping_or_baseline');
+    if (!reAcceptancePerformed) blockers.add('missing_re_acceptance');
+    if (!acceptedDetailExternalId) blockers.add('missing_accepted_detail_external_id');
+    if (
+        (sourcePageUrl || sourcePageUrlBase || sourceUrlFragmentExternalId) &&
+        (!acceptedDetailExternalId || !reAcceptancePerformed)
+    ) {
+        blockers.add('page_url_base_alone_insufficient');
+    }
+    if (observedDetailExternalId && acceptedDetailExternalId && observedDetailExternalId !== acceptedDetailExternalId) {
+        blockers.add('identity_mismatch');
+    }
+    if (reverseFixtureDetected) blockers.add(REVERSE_FIXTURE_DETECTED);
+    if (blockers.has('identity_mismatch') && hashMismatch) {
+        blockers.add('hash_mismatch_secondary_to_identity_mismatch');
+    }
+
+    const recaptureAllowed = blockers.size === 0;
+    const hashValidationStatus = blockers.has('hash_mismatch_secondary_to_identity_mismatch')
+        ? 'secondary_to_identity_mismatch'
+        : firstText(
+              input.hashValidationStatus,
+              input.hash_validation_status,
+              target.hash_validation_status,
+              'not_evaluated'
+          );
+
+    return {
+        schedule_external_id: scheduleExternalId,
+        source_url_fragment_external_id: sourceUrlFragmentExternalId,
+        source_page_url: sourcePageUrl || null,
+        source_page_url_base: sourcePageUrlBase,
+        accepted_detail_external_id: acceptedDetailExternalId,
+        observed_detail_external_id: observedDetailExternalId,
+        recapture_request_identity: recaptureAllowed ? acceptedDetailExternalId : null,
+        recapture_expected_identity: acceptedDetailExternalId,
+        recapture_request_allowed: recaptureAllowed,
+        route_identity_strategy: recaptureAllowed
+            ? ACCEPTED_DETAIL_ROUTE_IDENTITY_STRATEGY
+            : BLOCKED_ROUTE_IDENTITY_STRATEGY,
+        canonical_identity_source: recaptureAllowed
+            ? REACCEPTED_CANONICAL_IDENTITY_SOURCE
+            : BLOCKED_CANONICAL_IDENTITY_SOURCE,
+        current_mapping_effective_status: mappingEffectiveStatus || null,
+        current_baseline_effective_status: baselineEffectiveStatus || null,
+        re_acceptance_execution_performed: reAcceptancePerformed,
+        mapping_or_baseline_suspended: mappingOrBaselineSuspended,
+        page_url_base_alone_insufficient_enforced: blockers.has('page_url_base_alone_insufficient'),
+        baseline_update_allowed: false,
+        baseline_re_acceptance_allowed: false,
+        hash_validation_status: hashValidationStatus,
+        raw_write_execution_ready: false,
+        blockers: [...blockers].sort(),
+    };
+}
+
 function reconcileRouteIdentity(input = {}) {
     const requested = extractRequestedMetadata(input);
     const observed = extractObservedMetadata(input);
-    const requestedId = requested.requested_schedule_external_id;
+    const requestedId = requested.requested_detail_external_id || requested.requested_schedule_external_id;
     const observedId = observed.observed_detail_external_id;
 
     const externalIdStatus = compareExternalIds(requestedId, observedId);
@@ -581,7 +751,9 @@ function reconcileRouteIdentity(input = {}) {
             identityReconciliationStatus !== 'accepted_schedule_detail_mapping');
 
     return {
-        requested_schedule_external_id: requestedId,
+        requested_detail_external_id: requested.requested_detail_external_id,
+        requested_schedule_external_id: requested.requested_schedule_external_id,
+        recapture_expected_identity: requestedId,
         observed_detail_external_id: observedId,
         requested_url: requested.requested_url,
         requested_page_url_base: requested.requested_page_url_base,
@@ -648,6 +820,7 @@ module.exports = {
     normalizePageUrlBase,
     normalizeDateOnly,
     normalizeSeason,
+    resolveRecaptureIdentityContract,
     extractRequestedMetadata,
     extractObservedMetadata,
     compareTeamDateStatus,

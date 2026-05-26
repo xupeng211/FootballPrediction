@@ -287,6 +287,7 @@ test('L2V3AC records controlled no-write verification execution semantics', () =
             'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
             'continued_no_write_recapture_blocker_investigation',
+            'controlled_no_write_identity_contract_regression_planning',
         ].includes(manifest.next_required_step)
     );
 });
@@ -639,6 +640,7 @@ test('repository L2V3AC artifacts preserve controlled no-write verification exec
             'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
             'continued_no_write_recapture_blocker_investigation',
+            'controlled_no_write_identity_contract_regression_planning',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /verification_status=passed_no_write_source_controlled/i);
