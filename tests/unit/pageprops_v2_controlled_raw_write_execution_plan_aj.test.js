@@ -546,6 +546,7 @@ test('repository L2V3AJ artifacts preserve planning-only semantics when generate
             'accepted_mapping_and_baseline_contradiction_review_planning',
             'accepted_mapping_and_baseline_contradiction_review_execution',
             'accepted_mapping_and_baseline_suspension_planning',
+            'accepted_mapping_and_baseline_suspension_execution',
             'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
             'continued_no_write_recapture_blocker_investigation',
