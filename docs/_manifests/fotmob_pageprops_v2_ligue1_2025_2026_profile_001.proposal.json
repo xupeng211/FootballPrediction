@@ -4642,7 +4642,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "accepted_mapping_and_baseline_suspension_planning",
+    "next_required_step": "accepted_mapping_and_baseline_suspension_execution",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4920,7 +4920,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AS: accepted mapping and baseline suspension planning",
+    "recommended_next_step": "Phase 5.21L2V3AT: accepted mapping and baseline suspension execution",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5617,5 +5617,15 @@
     "expanded_review_required": true,
     "mapping_suspension_execution_performed": false,
     "baseline_suspension_execution_performed": false,
-    "re_acceptance_execution_performed": false
+    "re_acceptance_execution_performed": false,
+    "phase_5_21_l2v3as_planning_status": "completed_accepted_mapping_baseline_suspension_planning",
+    "phase_5_21_l2v3as_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.accepted_mapping_baseline_suspension_plan.phase521l2v3as.json",
+    "phase_5_21_l2v3as_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AS.md",
+    "accepted_mapping_baseline_suspension_planning_status": "completed_accepted_mapping_baseline_suspension_planning",
+    "mapping_suspension_candidate_count": 8,
+    "baseline_suspension_candidate_count": 8,
+    "blocked_pending_review_target_count": 42,
+    "mapping_suspension_planned_count": 8,
+    "baseline_suspension_planned_count": 8,
+    "rollback_execution_performed": false
 }
