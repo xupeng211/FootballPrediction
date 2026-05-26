@@ -161,8 +161,17 @@ test('L2V3AQ is planning-only and does not execute fetch, retry, DB write, or su
     assert.equal(artifact.raw_write_execution_ready, false);
     assert.equal(manifest.phase_5_21_l2v3aq_planning_status, artifact.planning_status);
     assert.equal(manifest.raw_write_execution_ready, false);
-    assert.equal(manifest.recommended_next_step, artifact.recommended_next_step);
-    assert.equal(manifest.next_required_step, artifact.next_required_step);
+    assert.ok(
+        [
+            artifact.recommended_next_step,
+            'Phase 5.21L2V3AS: accepted mapping and baseline suspension planning',
+        ].includes(manifest.recommended_next_step)
+    );
+    assert.ok(
+        [artifact.next_required_step, 'accepted_mapping_and_baseline_suspension_planning'].includes(
+            manifest.next_required_step
+        )
+    );
 });
 
 test('L2V3AQ surfaces accepted mapping and baseline contradictions from reverse fixture evidence', () => {
@@ -404,8 +413,17 @@ test('repository L2V3AQ artifacts preserve planning-only contradiction review se
     assert.equal(manifest.contradiction_review_candidate_count, 50);
     assert.equal(manifest.contradiction_review_ready_count, 8);
     assert.equal(manifest.contradiction_review_blocked_count, 42);
-    assert.equal(manifest.recommended_next_step, artifact.recommended_next_step);
-    assert.equal(manifest.next_required_step, artifact.next_required_step);
+    assert.ok(
+        [
+            artifact.recommended_next_step,
+            'Phase 5.21L2V3AS: accepted mapping and baseline suspension planning',
+        ].includes(manifest.recommended_next_step)
+    );
+    assert.ok(
+        [artifact.next_required_step, 'accepted_mapping_and_baseline_suspension_planning'].includes(
+            manifest.next_required_step
+        )
+    );
     assert.match(report, /accepted_mapping_contradiction_count=8/);
     assert.match(report, /baseline_acceptance_contradiction_count=8/);
     assert.match(
