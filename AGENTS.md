@@ -41,6 +41,18 @@
 8. 修改后要做与改动范围相匹配的验证。
 9. 数据收割、ETL、Recon、Backfill、Odds、L3/ELO 相关入口默认必须走 `make data-*` 安全门禁。
 10. DB schema migration 默认必须走 `make data-schema-*` 安全门禁，禁止直接执行 migration apply。
+11. implementation phase 必须包含实际 runtime code behavior change；
+    不得只用 `docs/_reports`、`docs/_manifests`、tests 或 proposal metadata 替代实现。
+12. 如果无法安全完成 runtime code change，必须 No-Go 并说明 blocker；
+    不得用继续新增 report / manifest phase snapshot 伪装业务推进。
+13. PR 必须声明 PR type、runtime behavior 是否变化、business progress、剩余 blocker，
+    以及 no-live-fetch / no-DB-write / no-raw-write 状态。
+14. 连续 governance-only PR 超过 1 个，或 implementation PR 没有 runtime behavior change，
+    必须先人工确认后再继续。
+15. report / manifest 必须最小化；
+    大型治理 artifact、完整历史状态复制和无限 phase snapshot 不得默认提交到 `main`。
+16. 测试必须优先验证系统行为；
+    文档字段断言只能作为辅助，不得替代 runtime behavior coverage。
 
 ### 2.2 默认工作方式
 
@@ -107,6 +119,17 @@
 - 不硬编码应进入配置系统的参数。
 - 不添加未被请求的功能。
 - 不因为“顺手”移动核心模块边界。
+- 不把 implementation phase 降级成 docs-only / report-only / manifest-only / test-only PR。
+- 不默认提交大型 phase snapshot、完整历史 manifest 复制或无限增长的治理 artifact。
+
+### 2.4 Agent workflow hardening
+
+详细规则见 `docs/AGENT_WORKFLOW.md`。默认执行原则：
+
+- 代码解决问题，测试证明问题，文档解释问题。
+- live fetch、detail fetch、network request、DB write、`raw_match_data` write、re-acceptance、rollback、schema migration 仍必须逐项单独授权。
+- `docs/_reports` 与 `docs/_manifests` 只记录必要 delta 和当前有效状态；不得替代 runtime 实现。
+- PR reviewer 必须能从模板中直接判断：PR type、runtime code paths、artifact 体积、business progress、blocker 变化和安全边界。
 
 ---
 
