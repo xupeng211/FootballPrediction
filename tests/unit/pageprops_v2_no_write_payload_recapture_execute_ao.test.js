@@ -29,6 +29,12 @@ function target(index = 0, baselineHash = 'a'.repeat(64)) {
         hash_strategy: mod.HASH_STRATEGY,
         match_id: `53_20252026_${externalId}`,
         external_id: externalId,
+        schedule_external_id: externalId,
+        accepted_detail_external_id: externalId,
+        recapture_expected_identity: externalId,
+        current_mapping_effective_status: 'reaccepted',
+        current_baseline_effective_status: 'reaccepted',
+        re_acceptance_execution_performed: true,
         league_id: 53,
         league_name: 'Ligue 1',
         season: '2025/2026',
@@ -71,7 +77,8 @@ function htmlFor(pageProps) {
 
 function fetchResultFor(targetValue, pageProps = pagePropsFor(targetValue), overrides = {}) {
     const body = htmlFor(pageProps);
-    const requestUrl = mod.buildFotMobMatchUrl(targetValue.external_id);
+    const requestIdentity = targetValue.accepted_detail_external_id || targetValue.external_id;
+    const requestUrl = mod.buildFotMobMatchUrl(requestIdentity);
     return {
         ok: true,
         request_url: requestUrl,
@@ -101,6 +108,10 @@ function enrichedTargets(targets = []) {
         source_page_url: `/match/${item.external_id}#${item.external_id}`,
         source_page_url_base: `/match/${item.external_id}`,
         source_url_fragment_external_id: item.external_id,
+        accepted_detail_external_id: item.accepted_detail_external_id || item.external_id,
+        current_mapping_effective_status: 'reaccepted',
+        current_baseline_effective_status: 'reaccepted',
+        re_acceptance_execution_performed: true,
         schedule_date: item.kickoff_time,
         schedule_home_team: item.home_team,
         schedule_away_team: item.away_team,

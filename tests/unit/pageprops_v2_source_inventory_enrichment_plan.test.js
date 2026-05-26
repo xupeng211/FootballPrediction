@@ -434,6 +434,7 @@ test('repository L2V3U artifacts preserve planning-only safety when generated', 
             'Phase 5.21L2V3AT: accepted mapping and baseline suspension execution',
             'Phase 5.21L2V3AR: expanded accepted mapping/baseline contradiction review planning',
             'Phase 5.21L2V3AR: recapture runner identity input contract fix planning',
+            'Phase 5.21L2V3AX: controlled no-write identity contract regression planning',
         ].includes(manifest.recommended_next_step)
     );
     assert.match(report, /enrichment does not unblock raw write/i);

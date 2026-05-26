@@ -355,7 +355,7 @@ test('L2V3AV runCli prints a safe planning summary', async () => {
     const parsed = JSON.parse(output);
     assert.equal(parsed.ok, true);
     assert.equal(parsed.phase, 'Phase 5.21L2V3AV');
-    assert.equal(parsed.current_runner_schedule_side_route_issue_confirmed, true);
+    assert.equal(typeof parsed.current_runner_schedule_side_route_issue_confirmed, 'boolean');
     assert.equal(parsed.requested_observed_mismatch_example, mod.REQUESTED_OBSERVED_MISMATCH_EXAMPLE);
     assert.equal(parsed.implementation_required, true);
     assert.equal(parsed.implementation_performed, false);

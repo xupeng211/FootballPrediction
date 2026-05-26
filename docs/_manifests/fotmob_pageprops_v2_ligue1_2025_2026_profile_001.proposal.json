@@ -4642,7 +4642,7 @@
     "non_raw_tables_unchanged_status": "unchanged_after_blocked_no_transaction",
     "transaction_status": "not_started",
     "blockers": ["RECAPTURE_HASH_GATE_BLOCKED"],
-    "next_required_step": "recapture_runner_identity_input_contract_fix_implementation",
+    "next_required_step": "controlled_no_write_identity_contract_regression_planning",
     "phase_5_21_l2v3_execution_result": {
         "phase": "PHASE5_21L2V3_RENEWED_CONTROLLED_PAGEPROPS_V2_RAW_WRITE_EXECUTION",
         "generated_at": "2026-05-18T10:43:37.450Z",
@@ -4920,7 +4920,7 @@
     "phase_5_21_l2v3m_matches_write_performed": false,
     "phase_5_21_l2v3m_transaction_began": false,
     "phase_5_21_l2v3m_inserted_raw_match_data_count": 0,
-    "recommended_next_step": "Phase 5.21L2V3AW: recapture runner identity input contract fix implementation",
+    "recommended_next_step": "Phase 5.21L2V3AX: controlled no-write identity contract regression planning",
     "phase_5_21_l2v3n_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_status": "completed_no_write_source_controlled_metadata_only",
     "expanded_date_rule_verification_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
@@ -5676,6 +5676,18 @@
     "planned_contract_field_count": 10,
     "planned_blocking_rule_count": 7,
     "implementation_required": true,
-    "implementation_performed": false,
-    "recapture_retry_performed": false
+    "implementation_performed": true,
+    "recapture_retry_performed": false,
+    "phase_5_21_l2v3aw_implementation_status": "completed_recapture_runner_identity_input_contract_fix_implementation",
+    "phase_5_21_l2v3aw_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.recapture_runner_identity_input_contract_fix_implementation.phase521l2v3aw.json",
+    "phase_5_21_l2v3aw_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AW.md",
+    "runner_identity_contract_fix_implemented": true,
+    "schedule_side_route_default_disabled": true,
+    "identity_contract_resolver_added_or_updated": true,
+    "suspended_mapping_baseline_blocks_recapture": true,
+    "missing_re_acceptance_blocks_recapture": true,
+    "page_url_base_alone_insufficient_enforced": true,
+    "identity_mismatch_blocks_recapture": true,
+    "hash_mismatch_under_identity_mismatch_blocks_baseline_update": true,
+    "recommended_next_step_after_l2v3aw": "Phase 5.21L2V3AX: controlled no-write identity contract regression planning"
 }

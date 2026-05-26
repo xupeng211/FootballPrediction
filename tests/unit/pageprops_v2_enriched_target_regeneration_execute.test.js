@@ -505,6 +505,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'Phase 5.21L2V3AT: accepted mapping and baseline suspension execution',
             'Phase 5.21L2V3AR: expanded accepted mapping/baseline contradiction review planning',
             'Phase 5.21L2V3AR: recapture runner identity input contract fix planning',
+            'Phase 5.21L2V3AX: controlled no-write identity contract regression planning',
         ].includes(manifest.recommended_next_step)
     );
     assert.ok(
@@ -535,6 +536,7 @@ test('repository L2V3AA artifacts preserve controlled no-write semantics when ge
             'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
             'continued_no_write_recapture_blocker_investigation',
+            'controlled_no_write_identity_contract_regression_planning',
         ].includes(manifest.next_required_step)
     );
     assert.match(report, /planned_mapping_key=target_id/i);
