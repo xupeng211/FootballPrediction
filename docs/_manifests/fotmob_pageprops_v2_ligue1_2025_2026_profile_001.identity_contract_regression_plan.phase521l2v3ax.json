@@ -1,0 +1,85 @@
+{
+    "artifact_type": "identity_contract_regression_plan",
+    "artifact_status": "completed_controlled_no_write_identity_contract_regression_planning",
+    "proposal_phase": "Phase 5.21L2V3AX",
+    "phase_name": "controlled_no_write_identity_contract_regression_planning",
+    "generated_at": "2026-05-26T23:29:56Z",
+    "pr_type": "data-artifact/planning",
+    "planning_only": true,
+    "runtime_code_change": false,
+    "regression_planning_status": "completed_controlled_no_write_identity_contract_regression_planning",
+    "reviewed_input_artifact_count": 7,
+    "reviewed_input_artifact_paths": {
+        "aw_implementation_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.recapture_runner_identity_input_contract_fix_implementation.phase521l2v3aw.json",
+        "aw_implementation_report": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AW.md",
+        "av_fix_plan_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.recapture_runner_identity_input_contract_fix_plan.phase521l2v3av.json",
+        "ao_no_write_recapture_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.no_write_payload_recapture_result.phase521l2v3ao.json",
+        "aw_implementation_tests": "tests/unit/pageprops_v2_recapture_runner_identity_input_contract_fix_implementation_aw.test.js",
+        "recapture_runner": "scripts/ops/pageprops_v2_no_write_payload_recapture_execute.js",
+        "route_identity_reconciler": "src/infrastructure/services/FotMobRouteIdentityReconciler.js"
+    },
+    "target_behavior_under_test_count": 7,
+    "planned_regression_case_count": 7,
+    "planned_regression_cases": [
+        {
+            "id": "schedule_external_id_is_correlation_only",
+            "expected_result": "schedule-side external_id is not blindly used as detail route identity"
+        },
+        {
+            "id": "suspended_mapping_baseline_blocks_before_fetch",
+            "expected_result": "suspended mapping or baseline blocks recapture before fetch"
+        },
+        {
+            "id": "missing_re_acceptance_blocks_before_fetch",
+            "expected_result": "missing re-acceptance blocks recapture before fetch"
+        },
+        {
+            "id": "page_url_base_slug_fragment_alone_insufficient",
+            "expected_result": "page_url_base, slug, and fragment evidence alone remain insufficient"
+        },
+        {
+            "id": "requested_4830466_observed_4830759_remains_blocked",
+            "expected_result": "requested 4830466 observed 4830759 remains blocked"
+        },
+        {
+            "id": "hash_mismatch_under_identity_mismatch_cannot_update_baseline",
+            "expected_result": "hash mismatch under identity mismatch cannot update baseline"
+        },
+        {
+            "id": "raw_write_execution_ready_remains_false",
+            "expected_result": "raw_write_execution_ready remains false"
+        }
+    ],
+    "planned_blocking_rule_count": 7,
+    "planned_blocking_rules": [
+        "schedule_external_id_default_detail_route_blocked",
+        "suspended_mapping_or_baseline_blocks_recapture",
+        "missing_re_acceptance_blocks_recapture",
+        "page_url_base_slug_fragment_alone_insufficient",
+        "identity_mismatch_blocks_recapture",
+        "hash_mismatch_secondary_to_identity_mismatch_blocks_baseline_update",
+        "raw_write_execution_ready_false_until_future_authorization"
+    ],
+    "live_fetch_performed": false,
+    "detail_fetch_performed": false,
+    "network_request_performed": false,
+    "recapture_retry_performed": false,
+    "db_write_performed": false,
+    "raw_match_data_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "raw_write_execution_performed": false,
+    "re_acceptance_execution_performed": false,
+    "suspension_reversal_performed": false,
+    "rollback_execution_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "schema_migration_performed": false,
+    "full_payload_saved": false,
+    "full_payload_printed": false,
+    "raw_write_execution_ready": false,
+    "large_artifact_added": false,
+    "full_phase_snapshot_added": false,
+    "history_artifact_cleanup_performed": false,
+    "recommended_next_step": "Phase 5.21L2V3AY: controlled no-write identity contract regression execution",
+    "next_required_step": "controlled_no_write_identity_contract_regression_execution"
+}

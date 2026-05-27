@@ -440,6 +440,8 @@ test('repository L2V3AN artifacts preserve planning-only semantics when generate
             'accepted_mapping_and_baseline_suspension_execution',
             'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
+            'controlled_no_write_identity_contract_regression_planning',
+            'controlled_no_write_identity_contract_regression_execution',
             'continued_no_write_recapture_blocker_investigation',
         ].includes(manifestJson.next_required_step)
     );
