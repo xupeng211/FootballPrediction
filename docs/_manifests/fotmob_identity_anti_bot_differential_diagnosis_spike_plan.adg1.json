@@ -1,0 +1,163 @@
+{
+    "schema_version": "fotmob_identity_differential_diagnosis_spike_plan_v1",
+    "phase": "Phase 5.21-ADG1",
+    "plan_status": "completed_spike_planning_only",
+    "generated_at": "2026-05-27T12:30:00Z",
+    "pr_type": "architecture-decision/spike-planning/governance-only",
+    "runtime_code_change": false,
+    "business_progress": "plans bounded diagnosis of FotMob schedule/detail/hash identity and anti-bot request-contract risks",
+    "architecture_decision_gate_context": {
+        "source_pr": 1334,
+        "source_pr_merged": true,
+        "main_production_gate_green_before_adg1": true,
+        "architecture_decision_gate_triggered": true,
+        "no_progress_stop_rule_triggered": true,
+        "current_raw_write_route_paused": true,
+        "current_50_target_batch_not_raw_write_ready": true,
+        "clean_candidate_count": 0,
+        "rejected_mapping_count": 0,
+        "superseded_mapping_count": 0,
+        "eligible_for_re_acceptance_review_count": 0,
+        "needs_new_evidence_target_count": 42,
+        "suspended_target_count": 8,
+        "raw_write_execution_ready": false
+    },
+    "safety_status": {
+        "planning_only": true,
+        "spike_execution_performed": false,
+        "live_fetch_performed": false,
+        "detail_fetch_performed": false,
+        "network_request_performed": false,
+        "browser_automation_performed": false,
+        "db_write_performed": false,
+        "raw_match_data_insert_performed": false,
+        "raw_write_execution_performed": false,
+        "matches_write_performed": false,
+        "matches_external_id_modified": false,
+        "re_acceptance_execution_performed": false,
+        "suspension_reversal_performed": false,
+        "rollback_execution_performed": false,
+        "parser_features_training_prediction_performed": false
+    },
+    "diagnosis_questions": [
+        "How do schedule_external_id, URL path slug, URL hash match id, detail request id, and observed payload id correspond?",
+        "Does discovery extract URL hash ids like #4813735?",
+        "Does enrichment persist URL hash id as source_url_fragment_external_id?",
+        "Does recapture incorrectly use schedule_external_id when a distinct detail/hash identity should be used?",
+        "Do direct API and browser/page route return different identities?",
+        "Do anti-bot, header, session, redirect, locale, or region differences change returned payload identity?",
+        "Is a second source required for canonical fixture identity?"
+    ],
+    "current_chain_audit_focus": {
+        "discovery_extracts_url_hash_id": "must_verify_in_adg2",
+        "enrichment_persists_source_url_fragment_external_id": "must_verify_in_adg2",
+        "recapture_uses_detail_external_id_or_url_hash_candidate_instead_of_schedule_external_id": "must_verify_in_adg2",
+        "known_local_contracts": [
+            "FotMobSourceInventoryAdapter derives source_url_fragment_external_id when pageUrl/matchUrl/href/url evidence is present",
+            "source_inventory_enrichment keeps schedule_external_id separate from URL fragment evidence",
+            "FotMobRouteIdentityReconciler treats schedule_external_id as correlation key, not default detail route identity"
+        ]
+    },
+    "positive_sample": {
+        "name": "AFC Bournemouth vs Manchester City",
+        "source_page_url": "https://www.fotmob.com/zh-Hans/matches/manchester-city-vs-afc-bournemouth/2feiv3#4813735",
+        "url_path_slug_or_route_fragment": "2feiv3",
+        "url_hash_id": "4813735",
+        "expected_teams": {
+            "home_team": "AFC Bournemouth",
+            "away_team": "Manchester City"
+        },
+        "purpose": "verify URL hash id extraction and downstream detail identity candidate handling"
+    },
+    "sample_groups": {
+        "positive_url_hash_sample_count": 1,
+        "suspended_targets": [
+            { "schedule_external_id": "4830461", "observed_detail_external_id": "4830758" },
+            { "schedule_external_id": "4830463", "observed_detail_external_id": "4830622" },
+            { "schedule_external_id": "4830465", "observed_detail_external_id": "4830619" },
+            { "schedule_external_id": "4830466", "observed_detail_external_id": "4830759" },
+            { "schedule_external_id": "4830481", "observed_detail_external_id": "4830763" },
+            { "schedule_external_id": "4830496", "observed_detail_external_id": "4830757" },
+            { "schedule_external_id": "4830508", "observed_detail_external_id": "4830620" },
+            { "schedule_external_id": "4830511", "observed_detail_external_id": "4830760" }
+        ],
+        "needs_new_evidence_sample_external_ids": [
+            "4830460",
+            "4830458",
+            "4830459",
+            "4830462",
+            "4830464",
+            "4830473",
+            "4830471",
+            "4830472"
+        ],
+        "needs_new_evidence_population_count": 42,
+        "old_good_samples": {
+            "status": "unavailable",
+            "reason": "repository search did not locate source-controlled evidence proving the user-described old code fetched these correctly",
+            "do_not_fabricate": true
+        },
+        "bounded_sample_count_max": 17
+    },
+    "planned_identity_fields": [
+        "schedule_external_id",
+        "source_inventory_record_key",
+        "source_page_url",
+        "url_path_slug_or_route_fragment",
+        "url_hash_id",
+        "accepted_detail_external_id",
+        "detail_request_id_to_be_used",
+        "observed_payload_match_id",
+        "observed_detail_external_id",
+        "home_team",
+        "away_team",
+        "match_date_time",
+        "league",
+        "season",
+        "status",
+        "score",
+        "content_type",
+        "http_status",
+        "redirect_chain",
+        "locale_language",
+        "anti_bot_signs",
+        "browser_page_route_result",
+        "direct_api_result"
+    ],
+    "anti_bot_signs": [
+        "401",
+        "403",
+        "captcha",
+        "block_page",
+        "html_instead_of_expected_data",
+        "missing_hydration_data",
+        "header_or_session_requirement"
+    ],
+    "classification_taxonomy": [
+        "URL hash id not extracted",
+        "URL hash id extracted but not persisted",
+        "URL hash id persisted but not used by recapture runner",
+        "schedule_external_id incorrectly used as detail id",
+        "direct API identity differs from browser/page route identity",
+        "missing headers/session/locale/region contract",
+        "anti-bot/block/captcha/403/401 issue",
+        "reverse fixture / home-away inversion",
+        "current 50-target source inventory candidate generation defect",
+        "second source required for canonical fixture identity",
+        "unknown / insufficient evidence"
+    ],
+    "adg2_execution_boundaries": {
+        "requires_separate_explicit_authorization": true,
+        "default_no_db_write": true,
+        "default_no_raw_write": true,
+        "network_browser_api_requires_explicit_authorization": true,
+        "save_full_raw_data_pageprops_source_body": false,
+        "safe_summary_only": true,
+        "stop_sample_on_401_403_captcha_block_or_identity_mismatch": true,
+        "captcha_bypass_allowed": false,
+        "proxy_bypass_allowed": false,
+        "large_scale_fetch_allowed": false,
+        "bounded_sample_count_required": true
+    },
+    "recommended_next_step": "Phase 5.21-ADG2: execute bounded FotMob identity / anti-bot differential diagnosis spike only after separate explicit authorization"
+}
