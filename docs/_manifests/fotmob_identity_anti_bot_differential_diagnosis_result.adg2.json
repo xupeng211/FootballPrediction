@@ -1,0 +1,222 @@
+{
+    "schema_version": "fotmob_identity_differential_diagnosis_result_v1",
+    "phase": "Phase 5.21-ADG2",
+    "adg2_execution_status": "completed_bounded_fotmob_identity_anti_bot_differential_diagnosis_execution",
+    "adg2_execution_performed": true,
+    "generated_at": "2026-05-27T14:45:00Z",
+    "source_prerequisites": {
+        "adg1_pr": 1335,
+        "adg1_merge_commit": "fbdf5d4f8e95866df047fd30efb5e4112018dab7",
+        "main_production_gate_green_before_adg2": true
+    },
+    "execution_scope": {
+        "positive_sample_count": 1,
+        "suspended_sample_diagnosis_count": 3,
+        "needs_new_evidence_sample_diagnosis_count": 3,
+        "uncontrolled_retry_performed": false,
+        "bulk_fetch_performed": false,
+        "captcha_bypass_performed": false,
+        "proxy_bypass_performed": false,
+        "login_or_access_control_bypass_performed": false
+    },
+    "safety_status": {
+        "live_fetch_performed": true,
+        "network_request_performed": true,
+        "browser_automation_performed": false,
+        "db_write_performed": false,
+        "raw_write_execution_performed": false,
+        "raw_match_data_insert_performed": false,
+        "matches_write_performed": false,
+        "matches_external_id_modified": false,
+        "re_acceptance_execution_performed": false,
+        "suspension_reversal_performed": false,
+        "rollback_execution_performed": false,
+        "parser_features_training_prediction_performed": false,
+        "full_payload_saved": false,
+        "full_payload_printed": false,
+        "raw_write_execution_ready": false
+    },
+    "positive_sample_url_parsing": {
+        "source_page_url": "https://www.fotmob.com/zh-Hans/matches/manchester-city-vs-afc-bournemouth/2feiv3#4813735",
+        "parsed_url_path_slug": "2feiv3",
+        "parsed_url_hash_id": "4813735",
+        "positive_sample_url_hash_id": "4813735",
+        "positive_sample_url_path_slug": "2feiv3",
+        "hash_id_numeric": true,
+        "hash_id_available_before_http_request": true,
+        "fragment_sent_to_server_by_http": false,
+        "note": "URL fragment is not sent to the server by normal HTTP requests; it must be parsed from the href/string before request."
+    },
+    "hash_id_extraction_diagnosis": {
+        "discovery_extracts_hash_id": true,
+        "discovery_persists_hash_id": true,
+        "source_url_fragment_external_id_supported": true,
+        "source_inventory_all_50_records_have_fragment_id": true,
+        "active_proposal_candidate_targets_have_fragment_id": false,
+        "diagnosis": "source inventory code and artifact support URL hash id extraction, but current active proposal candidate_targets do not carry source_page_url/source_url_fragment_external_id fields for the sampled targets."
+    },
+    "discovery_chain_diagnosis": {
+        "evidence_file_paths": [
+            "src/infrastructure/services/FotMobSourceInventoryAdapter.js",
+            "scripts/ops/pageprops_v2_source_inventory_enrichment_apply.js",
+            "scripts/ops/pageprops_v2_controlled_source_inventory_acquisition_execute.js",
+            "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.controlled_source_inventory_acquisition_result.phase521l2v3y.json",
+            "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json"
+        ],
+        "code_paths_inspected": [
+            "FotMobSourceInventoryAdapter.parseSourcePageUrl",
+            "FotMobSourceInventoryAdapter.deriveSourceInventoryIdentityEvidence",
+            "pageprops_v2_source_inventory_enrichment_apply.parseSourcePageUrl",
+            "pageprops_v2_controlled_source_inventory_acquisition_execute.safeSourceRecord"
+        ],
+        "source_inventory_counts": {
+            "candidate_scope_count": 50,
+            "candidate_targets_with_source_page_url": 50,
+            "candidate_targets_with_source_page_url_base": 50,
+            "candidate_targets_with_source_url_fragment_external_id": 50,
+            "candidate_targets_with_source_inventory_record_key": 50,
+            "identity_evidence_complete_count": 50,
+            "identity_evidence_missing_count": 0
+        },
+        "active_proposal_sample_gap": {
+            "sampled_target_count": 6,
+            "sampled_targets_with_source_page_url": 0,
+            "sampled_targets_with_source_url_fragment_external_id": 0
+        }
+    },
+    "recapture_identity_usage_diagnosis": {
+        "recapture_uses_detail_identity_candidate": true,
+        "recapture_falls_back_to_schedule_external_id": false,
+        "fallback_blocked_when_not_reaccepted": true,
+        "blind_schedule_route_blocked": true,
+        "current_guard": "resolveRecaptureIdentityContract allows recapture only when a re-accepted accepted_detail_external_id exists; otherwise recapture_request_identity is null.",
+        "legacy_issue_observed_in_prior_artifact": {
+            "artifact": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.no_write_payload_recapture_blocker_investigation.phase521l2v3ap.json",
+            "ao_runner_uses_schedule_match_route": true,
+            "runner_input_contract_issue": true,
+            "raw_write_execution_ready": false
+        }
+    },
+    "positive_sample_network_diagnosis": {
+        "page_route_test_performed": true,
+        "page_request_url_without_hash": "https://www.fotmob.com/zh-Hans/matches/manchester-city-vs-afc-bournemouth/2feiv3",
+        "page_http_status": 200,
+        "page_content_type": "text/html; charset=utf-8",
+        "page_redirect_summary": [],
+        "page_body_sha256": "1d65dd396c47e9528f1e474d0c884cfa069ede9384c25e59b3759d93d57c7984",
+        "page_body_byte_length": 1005956,
+        "hydration_marker_present": true,
+        "next_data_marker_present": true,
+        "expected_hash_id_occurrences": 21,
+        "expected_team_marker_presence": {
+            "bournemouth": true,
+            "manchester_city": true
+        },
+        "page_anti_bot_signs": [],
+        "direct_api_test_performed": true,
+        "direct_api_request_url": "https://www.fotmob.com/api/data/matchDetails?matchId=4813735",
+        "direct_api_http_status": 403,
+        "direct_api_content_type": "application/json",
+        "direct_api_redirect_summary": [],
+        "direct_api_body_sha256": "9f36e31930368263ca03ccd40f8ad36ddc178b25211d7b4bf0cbc2c1f6fa7558",
+        "direct_api_body_byte_length": 61,
+        "direct_api_parse_ok": true,
+        "direct_api_observed_payload_match_id": null,
+        "direct_api_observed_detail_external_id": null,
+        "direct_api_anti_bot_signs": ["403", "block_or_captcha_marker"],
+        "browser_page_route_vs_direct_api_identity_status": "page_route_available_but_direct_api_blocked_identity_not_comparable"
+    },
+    "sample_diagnoses": {
+        "suspended_targets": [
+            {
+                "schedule_external_id": "4830461",
+                "observed_detail_external_id": "4830758",
+                "source_page_url": "/matches/lens-vs-lyon/2s3gtg#4830461",
+                "source_url_fragment_external_id": "4830461",
+                "source_route_code": "2s3gtg",
+                "page_url_base_match_status": "match",
+                "date_rule_status": "reverse_fixture_detected",
+                "classification": [
+                    "url_hash_id_persisted_but_not_used",
+                    "reverse_fixture_or_home_away_inversion",
+                    "source_inventory_candidate_generation_defect"
+                ]
+            },
+            {
+                "schedule_external_id": "4830463",
+                "observed_detail_external_id": "4830622",
+                "source_page_url": "/matches/le-havre-vs-monaco/362v61#4830463",
+                "source_url_fragment_external_id": "4830463",
+                "source_route_code": "362v61",
+                "page_url_base_match_status": "match",
+                "date_rule_status": "reverse_fixture_detected",
+                "classification": [
+                    "url_hash_id_persisted_but_not_used",
+                    "reverse_fixture_or_home_away_inversion",
+                    "source_inventory_candidate_generation_defect"
+                ]
+            },
+            {
+                "schedule_external_id": "4830465",
+                "observed_detail_external_id": "4830619",
+                "source_page_url": "/matches/nice-vs-toulouse/38dxtn#4830465",
+                "source_url_fragment_external_id": "4830465",
+                "source_route_code": "38dxtn",
+                "page_url_base_match_status": "match",
+                "date_rule_status": "reverse_fixture_detected",
+                "classification": [
+                    "url_hash_id_persisted_but_not_used",
+                    "reverse_fixture_or_home_away_inversion",
+                    "source_inventory_candidate_generation_defect"
+                ]
+            }
+        ],
+        "needs_new_evidence_targets": [
+            {
+                "schedule_external_id": "4830460",
+                "source_page_url": "/matches/brest-vs-lille/2fo2ub#4830460",
+                "source_url_fragment_external_id": "4830460",
+                "source_route_code": "2fo2ub",
+                "observed_detail_external_id": null,
+                "classification": ["url_hash_id_persisted_but_not_used", "unknown_insufficient_evidence"]
+            },
+            {
+                "schedule_external_id": "4830458",
+                "source_page_url": "/matches/paris-fc-vs-angers/1qlitv#4830458",
+                "source_url_fragment_external_id": "4830458",
+                "source_route_code": "1qlitv",
+                "observed_detail_external_id": null,
+                "classification": ["url_hash_id_persisted_but_not_used", "unknown_insufficient_evidence"]
+            },
+            {
+                "schedule_external_id": "4830459",
+                "source_page_url": "/matches/auxerre-vs-lorient/2gteq5#4830459",
+                "source_url_fragment_external_id": "4830459",
+                "source_route_code": "2gteq5",
+                "observed_detail_external_id": null,
+                "classification": ["url_hash_id_persisted_but_not_used", "unknown_insufficient_evidence"]
+            }
+        ]
+    },
+    "diagnosis_classification_summary": {
+        "url_hash_id_not_extracted": 0,
+        "url_hash_id_extracted_but_not_persisted": 0,
+        "url_hash_id_persisted_but_not_used": 6,
+        "schedule_external_id_incorrectly_used_as_detail_id": 0,
+        "direct_api_identity_differs_from_browser_route": 0,
+        "missing_request_contract_headers_session_locale_region": 1,
+        "anti_bot_or_access_block": 1,
+        "reverse_fixture_or_home_away_inversion": 3,
+        "source_inventory_candidate_generation_defect": 3,
+        "second_source_required": 0,
+        "unknown_insufficient_evidence": 3
+    },
+    "likely_root_cause": [
+        "source_inventory_hash_identity_exists_but_is_not_propagated_to_active_candidate_manifest",
+        "current_raw_write_route_was_paused_correctly_because accepted detail identity is not established for mismatched targets",
+        "public_page_route_can_return hydration for positive sample while direct matchDetails API returns 403 without a usable request contract",
+        "suspended samples show reverse fixture evidence, so schedule-side hash/slug alone is not sufficient for raw write or re-acceptance"
+    ],
+    "recommended_next_step": "Plan runtime implementation for a URL-hash/detail-external-id identity pipeline: propagate source_url_fragment_external_id from source inventory into active candidates, treat it as detail identity evidence requiring validation, and keep raw write blocked until a future implementation and review establish canonical detail identity. Also perform request-contract review for matchDetails API 403 without bypass. Do not raw write.",
+    "raw_write_execution_ready": false
+}
