@@ -5742,5 +5742,18 @@
     "reject_mapping_count": 0,
     "supersede_mapping_count": 0,
     "blocked_pending_review_target_status": "blocked_pending_review_not_clean_not_raw_write_eligible",
-    "recommended_next_step_after_l2v3ba": "Phase 5.21L2V3BB: expanded blocked target review planning"
+    "recommended_next_step_after_l2v3ba": "Phase 5.21L2V3BB: expanded blocked target review planning",
+    "phase_5_21_l2v3bb_planning_status": "completed_bounded_expanded_blocked_target_review_planning",
+    "phase_5_21_l2v3bb_artifact_path": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.bounded_expanded_blocked_target_review_plan.phase521l2v3bb.json",
+    "phase_5_21_l2v3bb_report_path": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3BB.md",
+    "phase_5_21_l2v3bb_next_required_step": "bounded_expanded_blocked_target_review_execution",
+    "phase_5_21_l2v3bb_convergence_gate_applied": true,
+    "phase_5_21_l2v3bb_bounded_review_target_count": 42,
+    "phase_5_21_l2v3bb_target_expansion_allowed": false,
+    "phase_5_21_l2v3bb_actual_state_changes_this_planning_pr": 0,
+    "phase_5_21_l2v3bb_maximum_possible_transitions_from_blocked_pending_review": 42,
+    "phase_5_21_l2v3bb_no_progress_stop_rule": "if L2V3BC yields 0 clean/reject/supersede/re-acceptance candidates, trigger architecture decision gate",
+    "phase_5_21_l2v3bb_architecture_decision_gate_on_no_progress": true,
+    "phase_5_21_l2v3bb_raw_write_execution_ready": false,
+    "recommended_next_step_after_l2v3bb": "Phase 5.21L2V3BC: bounded expanded blocked target review execution under Ingestion Convergence Gate"
 }
