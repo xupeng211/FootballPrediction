@@ -1,0 +1,19 @@
+{
+  "_meta": {
+    "phase": "5.21_ADG",
+    "description": "FotMob identity architecture decision gate",
+    "execution_timestamp": "2026-05-27T11:30:00Z"
+  },
+  "current_state": {
+    "remain_suspended_count": 8,
+    "needs_new_evidence_count": 42,
+    "resolved_count": 0,
+    "raw_write_execution_ready": false
+  },
+  "decision": {
+    "trigger": "L2V3BC no-progress stop rule",
+    "selected_option": "perform FotMob identity / anti-bot differential diagnosis spike",
+    "status": "current raw write route paused",
+    "recommended_next_step": "Phase 5.21-ADG1: FotMob identity / anti-bot differential diagnosis spike planning"
+  }
+}
