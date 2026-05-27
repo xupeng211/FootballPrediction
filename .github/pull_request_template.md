@@ -36,6 +36,25 @@
 - Blocker remaining:
 - Next step:
 
+## Ingestion Convergence Gate
+
+Fill this section for any data ingestion, source inventory, target identity, raw write readiness,
+accepted mapping, baseline, suspended target, or blocked target PR. Use `n/a` only when the PR is
+not part of ingestion.
+
+- Ingestion blocker removed:
+- Target state delta:
+- Count moved to clean_candidate:
+- Count moved to rejected/superseded:
+- Count moved to eligible_for_re_acceptance_review:
+- Count moved to needs_new_evidence:
+- Count remain_suspended:
+- Count still blocked:
+- No-progress justification:
+- Does this PR trigger architecture decision gate? yes / no / n/a
+- Is next step bounded? yes / no / n/a
+- Is this the second consecutive no-progress ingestion PR? yes / no / n/a
+
 ## Safety Status
 
 - no live fetch: yes / no / n/a

@@ -53,6 +53,21 @@
     大型治理 artifact、完整历史状态复制和无限 phase snapshot 不得默认提交到 `main`。
 16. 测试必须优先验证系统行为；
     文档字段断言只能作为辅助，不得替代 runtime behavior coverage。
+17. Data ingestion phase 必须声明 blocker transition 目标和 `target_state_delta`；
+    PR 必须回答解除哪个 blocker、哪些 target 状态发生实质变化、是否有 target 进入
+    `clean_candidate` / `rejected_mapping` / `superseded_mapping` /
+    `eligible_for_re_acceptance_review` / `needs_new_evidence`。
+18. 如果 ingestion PR 没有解除 blocker、没有 target 状态实质变化，必须说明为什么仍值得合并；
+    连续 2 个 ingestion governance / review / planning / execution PR 无实质进展时，
+    必须停止进入 Ingestion Architecture Decision Gate，不得自动开启下一轮 planning / review。
+19. expanded review planning / execution 必须 bounded；
+    bounded review 后仍没有 clean / reject / supersede / re-acceptance candidate 时，
+    必须输出架构决策，不得继续 phase 化。
+20. Ingestion Architecture Decision Gate 的可选方向包括：
+    abandon current batch、rebuild canonical identity pipeline、redo source inventory strategy、
+    switch data source / compare alternative source、redesign FotMob identity mapping strategy。
+21. raw write 仍需 fresh authorization；
+    review / planning / execution 结果不得自动放行 DB write、`raw_match_data` write 或 re-acceptance。
 
 ### 2.2 默认工作方式
 
@@ -130,6 +145,8 @@
 - live fetch、detail fetch、network request、DB write、`raw_match_data` write、re-acceptance、rollback、schema migration 仍必须逐项单独授权。
 - `docs/_reports` 与 `docs/_manifests` 只记录必要 delta 和当前有效状态；不得替代 runtime 实现。
 - PR reviewer 必须能从模板中直接判断：PR type、runtime code paths、artifact 体积、business progress、blocker 变化和安全边界。
+- Data ingestion PR 必须满足 `docs/INGESTION_CONVERGENCE_GATE.md` 的 outcome gate：
+  声明 blocker transition、`target_state_delta`、bounded review 范围和 no-progress stop 条件。
 
 ---
 
