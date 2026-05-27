@@ -20,6 +20,7 @@ const BLOCKED_ROUTE_IDENTITY_STRATEGY = 'blocked_until_reaccepted_identity_contr
 const ACCEPTED_DETAIL_ROUTE_IDENTITY_STRATEGY = 'accepted_detail_external_id';
 const BLOCKED_CANONICAL_IDENTITY_SOURCE = 'none_until_reaccepted_mapping_baseline';
 const REACCEPTED_CANONICAL_IDENTITY_SOURCE = 'reaccepted_mapping_baseline';
+const DETAIL_IDENTITY_SOURCE_URL_HASH_FRAGMENT = 'url_hash_fragment';
 
 function normalizeText(value) {
     return String(value ?? '').trim();
@@ -608,6 +609,21 @@ function resolveRecaptureIdentityContract(input = {}) {
         target.accepted_detail_external_id,
         target.recapture_expected_identity
     );
+    const detailExternalIdCandidate = firstId(
+        input.detailExternalIdCandidate,
+        input.detail_external_id_candidate,
+        target.detail_external_id_candidate,
+        sourceUrlFragmentExternalId
+    );
+    const detailIdentitySource = firstText(
+        input.detailIdentitySource,
+        input.detail_identity_source,
+        target.detail_identity_source,
+        detailExternalIdCandidate && detailExternalIdCandidate === sourceUrlFragmentExternalId
+            ? DETAIL_IDENTITY_SOURCE_URL_HASH_FRAGMENT
+            : null
+    );
+    const recaptureExpectedIdentity = acceptedDetailExternalId || detailExternalIdCandidate;
     const observedDetailExternalId = firstId(
         input.observedDetailExternalId,
         input.observed_detail_external_id,
@@ -659,7 +675,7 @@ function resolveRecaptureIdentityContract(input = {}) {
     if (!reAcceptancePerformed) blockers.add('missing_re_acceptance');
     if (!acceptedDetailExternalId) blockers.add('missing_accepted_detail_external_id');
     if (
-        (sourcePageUrl || sourcePageUrlBase || sourceUrlFragmentExternalId) &&
+        (sourcePageUrl || sourcePageUrlBase || sourceUrlFragmentExternalId || detailExternalIdCandidate) &&
         (!acceptedDetailExternalId || !reAcceptancePerformed)
     ) {
         blockers.add('page_url_base_alone_insufficient');
@@ -687,10 +703,12 @@ function resolveRecaptureIdentityContract(input = {}) {
         source_url_fragment_external_id: sourceUrlFragmentExternalId,
         source_page_url: sourcePageUrl || null,
         source_page_url_base: sourcePageUrlBase,
+        detail_external_id_candidate: detailExternalIdCandidate,
+        detail_identity_source: detailIdentitySource,
         accepted_detail_external_id: acceptedDetailExternalId,
         observed_detail_external_id: observedDetailExternalId,
         recapture_request_identity: recaptureAllowed ? acceptedDetailExternalId : null,
-        recapture_expected_identity: acceptedDetailExternalId,
+        recapture_expected_identity: recaptureExpectedIdentity,
         recapture_request_allowed: recaptureAllowed,
         route_identity_strategy: recaptureAllowed
             ? ACCEPTED_DETAIL_ROUTE_IDENTITY_STRATEGY

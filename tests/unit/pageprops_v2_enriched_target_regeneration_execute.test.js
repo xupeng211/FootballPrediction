@@ -220,9 +220,13 @@ test('enriched targets use target_id one-to-one mapping and required cross-check
     assert.equal(target.schedule_external_id, '9000001');
     assert.equal(target.source_url_fragment_external_id, '9000001');
     assert.equal(target.source_page_url_base, '/matches/home-0-away-0/route-0');
+    assert.equal(target.source_url_path_slug, 'route-0');
+    assert.equal(target.detail_external_id_candidate, '9000001');
+    assert.equal(target.detail_identity_source, 'url_hash_fragment');
     assert.deepEqual(target.regeneration_blockers, []);
     assert.equal(target.regeneration_status, 'regenerated_no_write');
     assert.equal(target.raw_write_ready_for_execution, false);
+    assert.equal(result.artifact.detail_identity_candidate_count, 50);
 });
 
 test('missing metadata or duplicate keys block targets without enabling acceptance or raw write readiness', () => {

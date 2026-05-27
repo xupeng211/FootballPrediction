@@ -27,6 +27,9 @@ const ENRICHMENT_FIELDS = Object.freeze([
     'source_url_fragment_external_id',
     'source_slug',
     'source_route_code',
+    'source_url_path_slug',
+    'detail_external_id_candidate',
+    'detail_identity_source',
     'schedule_external_id',
     'schedule_date',
     'schedule_home_team',
@@ -130,6 +133,7 @@ function parseSourcePageUrl(sourcePageUrl) {
             source_url_fragment_external_id: null,
             source_slug: null,
             source_route_code: null,
+            source_url_path_slug: null,
         };
     }
     const hashIndex = value.indexOf('#');
@@ -157,6 +161,17 @@ function parseSourcePageUrl(sourcePageUrl) {
         source_url_fragment_external_id: fragmentExternalId,
         source_slug: sourceSlug,
         source_route_code: sourceRouteCode,
+        source_url_path_slug: sourceRouteCode,
+    };
+}
+
+function buildDetailIdentityFields(sourceUrlFragmentExternalId) {
+    const detailExternalIdCandidate = /^\d+$/.test(normalizeText(sourceUrlFragmentExternalId))
+        ? normalizeText(sourceUrlFragmentExternalId)
+        : null;
+    return {
+        detail_external_id_candidate: detailExternalIdCandidate,
+        detail_identity_source: detailExternalIdCandidate ? 'url_hash_fragment' : null,
     };
 }
 
@@ -199,6 +214,12 @@ function enrichCandidateTarget(target = {}) {
         ]),
         source_slug: pickFirstText([target.source_slug, parsed.source_slug]),
         source_route_code: pickFirstText([target.source_route_code, parsed.source_route_code]),
+        source_url_path_slug: pickFirstText([
+            target.source_url_path_slug,
+            target.source_route_code,
+            parsed.source_url_path_slug,
+            parsed.source_route_code,
+        ]),
         schedule_external_id: pickFirstText([target.schedule_external_id, target.external_id]),
         schedule_date: pickFirstText([target.schedule_date, target.match_date, target.kickoff_time]),
         schedule_home_team: pickFirstText([target.schedule_home_team, target.home_team]),
@@ -206,8 +227,14 @@ function enrichCandidateTarget(target = {}) {
         source_inventory_record_key: pickFirstText([target.source_inventory_record_key]),
         source_inventory_generated_at: pickFirstText([target.source_inventory_generated_at]) || 'unknown',
     };
+    const detailIdentity = buildDetailIdentityFields(enriched.source_url_fragment_external_id);
     return {
         ...enriched,
+        detail_external_id_candidate: pickFirstText([
+            target.detail_external_id_candidate,
+            detailIdentity.detail_external_id_candidate,
+        ]),
+        detail_identity_source: pickFirstText([target.detail_identity_source, detailIdentity.detail_identity_source]),
         identity_evidence_status: target.identity_evidence_status || classifyIdentityEvidence(enriched),
     };
 }

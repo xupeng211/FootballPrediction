@@ -31,6 +31,9 @@ const ENRICHED_TARGET_FIELDS = Object.freeze([
     'source_url_fragment_external_id',
     'source_slug',
     'source_route_code',
+    'source_url_path_slug',
+    'detail_external_id_candidate',
+    'detail_identity_source',
     'schedule_date',
     'schedule_home_team',
     'schedule_away_team',
@@ -344,7 +347,18 @@ function compareScheduleMetadata(candidate = {}, record = {}) {
     return mismatches;
 }
 
+function buildDetailIdentityFields(record = {}) {
+    const detailExternalIdCandidate = /^\d+$/.test(normalizeText(record.source_url_fragment_external_id))
+        ? normalizeText(record.source_url_fragment_external_id)
+        : null;
+    return {
+        detail_external_id_candidate: detailExternalIdCandidate,
+        detail_identity_source: detailExternalIdCandidate ? 'url_hash_fragment' : null,
+    };
+}
+
 function buildEnrichedTarget(candidate = {}, record = {}, regenerationBlockers = []) {
+    const detailIdentity = buildDetailIdentityFields(record);
     return {
         target_id: candidate.target_id,
         match_id: candidate.match_id,
@@ -355,6 +369,9 @@ function buildEnrichedTarget(candidate = {}, record = {}, regenerationBlockers =
         source_url_fragment_external_id: record.source_url_fragment_external_id,
         source_slug: record.source_slug || null,
         source_route_code: record.source_route_code || null,
+        source_url_path_slug: record.source_url_path_slug || record.source_route_code || null,
+        detail_external_id_candidate: detailIdentity.detail_external_id_candidate,
+        detail_identity_source: detailIdentity.detail_identity_source,
         schedule_date: record.schedule_date,
         schedule_home_team: record.schedule_home_team,
         schedule_away_team: record.schedule_away_team,
@@ -454,6 +471,9 @@ function regenerateTargets(manifest = {}, l2v3yArtifact = {}) {
                 enrichedTargets,
                 target => normalizeText(target.identity_evidence_status) === 'complete'
             ),
+            detail_identity_candidate_count: countWhere(enrichedTargets, target =>
+                normalizeText(target.detail_external_id_candidate)
+            ),
             raw_write_ready_target_count: 0,
             accepted_mapping_count: 0,
             raw_write_ready_for_execution: false,
@@ -505,6 +525,7 @@ function buildArtifact({ manifest = {}, l2v3yArtifact = {}, l2v3zArtifact = {}, 
         fragment_schedule_id_mismatch_count: regeneration.summary.fragment_schedule_id_mismatch_count,
         schedule_metadata_mismatch_count: regeneration.summary.schedule_metadata_mismatch_count,
         identity_evidence_complete_count: regeneration.summary.identity_evidence_complete_count,
+        detail_identity_candidate_count: regeneration.summary.detail_identity_candidate_count,
         raw_write_ready_target_count: 0,
         accepted_mapping_count: 0,
         raw_write_ready_for_execution: false,
@@ -566,6 +587,8 @@ function updateManifestMetadata(manifest = {}, artifact = {}) {
         schedule_metadata_mismatch_count: artifact.schedule_metadata_mismatch_count,
         phase_5_21_l2v3aa_schedule_metadata_mismatch_count: artifact.schedule_metadata_mismatch_count,
         identity_evidence_complete_count: artifact.identity_evidence_complete_count,
+        detail_identity_candidate_count: artifact.detail_identity_candidate_count,
+        phase_5_21_l2v3aa_detail_identity_candidate_count: artifact.detail_identity_candidate_count,
         phase_5_21_l2v3aa_identity_evidence_complete_count: artifact.identity_evidence_complete_count,
         raw_write_ready_target_count: 0,
         phase_5_21_l2v3aa_raw_write_ready_target_count: 0,
@@ -617,6 +640,7 @@ function buildReport(artifact = {}) {
 - fragment_schedule_id_mismatch_count=${artifact.fragment_schedule_id_mismatch_count}
 - schedule_metadata_mismatch_count=${artifact.schedule_metadata_mismatch_count}
 - identity_evidence_complete_count=${artifact.identity_evidence_complete_count}
+- detail_identity_candidate_count=${artifact.detail_identity_candidate_count}
 - raw_write_ready_target_count=0
 - accepted_mapping_count=0
 - raw_write_ready_for_execution=false
