@@ -1,0 +1,279 @@
+{
+    "artifact_type": "identity_contract_regression_result",
+    "artifact_status": "completed_controlled_no_write_identity_contract_regression_execution",
+    "proposal_phase": "Phase 5.21L2V3AY",
+    "phase_name": "controlled_no_write_identity_contract_regression_execution",
+    "generated_at": "2026-05-27T01:01:49.959Z",
+    "execution_status": "completed_controlled_no_write_identity_contract_regression_execution",
+    "regression_execution_status": "completed_controlled_no_write_identity_contract_regression_execution",
+    "regression_execution_performed": true,
+    "reviewed_input_artifact_count": 9,
+    "reviewed_input_artifact_paths": {
+        "ax_regression_plan_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.identity_contract_regression_plan.phase521l2v3ax.json",
+        "ax_regression_plan_report": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AX.md",
+        "aw_implementation_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.recapture_runner_identity_input_contract_fix_implementation.phase521l2v3aw.json",
+        "aw_implementation_report": "docs/_reports/DATA_ENTRYPOINT_GOVERNANCE_PHASE5_21_L2V3AW.md",
+        "ao_no_write_recapture_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.no_write_payload_recapture_result.phase521l2v3ao.json",
+        "aw_implementation_tests": "tests/unit/pageprops_v2_recapture_runner_identity_input_contract_fix_implementation_aw.test.js",
+        "recapture_runner": "scripts/ops/pageprops_v2_no_write_payload_recapture_execute.js",
+        "route_identity_reconciler": "src/infrastructure/services/FotMobRouteIdentityReconciler.js",
+        "proposal_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json"
+    },
+    "planning_source_phase": "Phase 5.21L2V3AX",
+    "case_target_id": "fotmob-pageprops-v2-ligue1-2025-2026-profile-001:53_20252026_4830466",
+    "case_match_id": "53_20252026_4830466",
+    "case_schedule_external_id": "4830466",
+    "case_observed_mismatch_external_id": "4830759",
+    "planned_regression_case_count": 7,
+    "executed_regression_case_count": 7,
+    "passed_regression_case_count": 7,
+    "failed_regression_case_count": 0,
+    "planned_blocking_rule_count": 7,
+    "blocking_rule_verified_count": 7,
+    "schedule_side_route_default_block_verified": true,
+    "suspended_mapping_baseline_block_verified": true,
+    "missing_re_acceptance_block_verified": true,
+    "page_url_base_alone_insufficient_verified": true,
+    "requested_observed_mismatch_block_verified": true,
+    "hash_mismatch_under_identity_mismatch_baseline_update_block_verified": true,
+    "raw_write_execution_ready": false,
+    "live_fetch_performed": false,
+    "detail_fetch_performed": false,
+    "network_request_performed": false,
+    "recapture_retry_performed": false,
+    "db_write_performed": false,
+    "raw_match_data_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "raw_write_execution_performed": false,
+    "re_acceptance_execution_performed": false,
+    "suspension_reversal_performed": false,
+    "rollback_execution_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "schema_migration_performed": false,
+    "full_payload_saved": false,
+    "full_payload_printed": false,
+    "full_source_body_saved": false,
+    "full_source_body_printed": false,
+    "recommended_next_step": "Phase 5.21L2V3AZ: controlled no-write suspended target review planning",
+    "next_required_step": "controlled_no_write_suspended_target_review_planning",
+    "regression_cases": [
+        {
+            "case_id": "schedule_external_id_is_correlation_only",
+            "input_source": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json:candidate_target:53_20252026_4830466 + local_in_memory_identity_input",
+            "executed": true,
+            "result": "pass",
+            "expected_behavior": "schedule-side external_id is not blindly used as detail route identity",
+            "observed_behavior": {
+                "recapture_request_allowed": false,
+                "recapture_request_identity": null,
+                "route_identity_strategy": "blocked_until_reaccepted_identity_contract",
+                "canonical_identity_source": "none_until_reaccepted_mapping_baseline"
+            },
+            "blocker_status": "verified",
+            "verified_blockers": [
+                "missing_accepted_detail_external_id",
+                "missing_re_acceptance",
+                "page_url_base_alone_insufficient"
+            ],
+            "no_live_fetch": true,
+            "no_detail_fetch": true,
+            "no_network_request": true,
+            "no_db_write": true,
+            "no_raw_write": true,
+            "raw_write_execution_ready": false
+        },
+        {
+            "case_id": "suspended_mapping_baseline_blocks_before_fetch",
+            "input_source": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json:candidate_target:53_20252026_4830466 + local_in_memory_suspended_target",
+            "executed": true,
+            "result": "pass",
+            "expected_behavior": "suspended mapping or baseline blocks recapture before fetch",
+            "observed_behavior": {
+                "fetch_called": false,
+                "identity_contract_blocked": true,
+                "stopping_rule_triggered": "identity_contract_blocked",
+                "recapture_request_identity": null
+            },
+            "blocker_status": "verified",
+            "verified_blockers": [
+                "identity_contract_blocked",
+                "suspended_mapping_or_baseline"
+            ],
+            "no_live_fetch": true,
+            "no_detail_fetch": true,
+            "no_network_request": true,
+            "no_db_write": true,
+            "no_raw_write": true,
+            "raw_write_execution_ready": false
+        },
+        {
+            "case_id": "missing_re_acceptance_blocks_before_fetch",
+            "input_source": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json:candidate_target:53_20252026_4830466 + local_in_memory_missing_re_acceptance_target",
+            "executed": true,
+            "result": "pass",
+            "expected_behavior": "missing re-acceptance blocks recapture before fetch",
+            "observed_behavior": {
+                "recapture_request_allowed": false,
+                "recapture_request_identity": null,
+                "route_identity_strategy": "blocked_until_reaccepted_identity_contract"
+            },
+            "blocker_status": "verified",
+            "verified_blockers": [
+                "missing_re_acceptance",
+                "page_url_base_alone_insufficient"
+            ],
+            "no_live_fetch": true,
+            "no_detail_fetch": true,
+            "no_network_request": true,
+            "no_db_write": true,
+            "no_raw_write": true,
+            "raw_write_execution_ready": false
+        },
+        {
+            "case_id": "page_url_base_slug_fragment_alone_insufficient",
+            "input_source": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json:candidate_target:53_20252026_4830466 + local_in_memory_page_url_evidence_fixture",
+            "executed": true,
+            "result": "pass",
+            "expected_behavior": "page_url_base, slug, and fragment evidence alone remain insufficient",
+            "observed_behavior": {
+                "recapture_request_allowed": false,
+                "page_url_base_alone_insufficient_enforced": true,
+                "route_identity_strategy": "blocked_until_reaccepted_identity_contract"
+            },
+            "blocker_status": "verified",
+            "verified_blockers": [
+                "missing_accepted_detail_external_id",
+                "missing_re_acceptance",
+                "page_url_base_alone_insufficient"
+            ],
+            "no_live_fetch": true,
+            "no_detail_fetch": true,
+            "no_network_request": true,
+            "no_db_write": true,
+            "no_raw_write": true,
+            "raw_write_execution_ready": false
+        },
+        {
+            "case_id": "requested_4830466_observed_4830759_remains_blocked",
+            "input_source": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json:candidate_target:53_20252026_4830466 + local_in_memory_pageprops_fixture",
+            "executed": true,
+            "result": "pass",
+            "expected_behavior": "requested 4830466 observed 4830759 remains blocked",
+            "observed_behavior": {
+                "recapture_request_identity": "4830466",
+                "observed_detail_external_id": "4830759",
+                "identity_match_status": "mismatch",
+                "stopping_rule_triggered": "identity_mismatch"
+            },
+            "blocker_status": "verified",
+            "verified_blockers": [
+                "accepted_schedule_detail_mapping_required",
+                "date_or_route_mismatch",
+                "hash_mismatch_secondary_to_identity_mismatch",
+                "identity_mismatch",
+                "page_url_base_mismatch",
+                "team_date_status_mismatch",
+                "unresolved_large_gap"
+            ],
+            "no_live_fetch": true,
+            "no_detail_fetch": true,
+            "no_network_request": true,
+            "no_db_write": true,
+            "no_raw_write": true,
+            "raw_write_execution_ready": false
+        },
+        {
+            "case_id": "hash_mismatch_under_identity_mismatch_cannot_update_baseline",
+            "input_source": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json:candidate_target:53_20252026_4830466 + local_in_memory_pageprops_fixture",
+            "executed": true,
+            "result": "pass",
+            "expected_behavior": "hash mismatch under identity mismatch cannot update baseline",
+            "observed_behavior": {
+                "hash_validation_status": "secondary_to_identity_mismatch",
+                "hash_matches_baseline": false,
+                "baseline_update_allowed": false
+            },
+            "blocker_status": "verified",
+            "verified_blockers": [
+                "accepted_schedule_detail_mapping_required",
+                "date_or_route_mismatch",
+                "hash_mismatch_secondary_to_identity_mismatch",
+                "identity_mismatch",
+                "page_url_base_mismatch",
+                "team_date_status_mismatch",
+                "unresolved_large_gap"
+            ],
+            "no_live_fetch": true,
+            "no_detail_fetch": true,
+            "no_network_request": true,
+            "no_db_write": true,
+            "no_raw_write": true,
+            "raw_write_execution_ready": false
+        },
+        {
+            "case_id": "raw_write_execution_ready_remains_false",
+            "input_source": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json:candidate_target:53_20252026_4830466 + aggregate_case_results",
+            "executed": true,
+            "result": "pass",
+            "expected_behavior": "raw_write_execution_ready remains false",
+            "observed_behavior": {
+                "raw_write_execution_ready_values": [
+                    false,
+                    false,
+                    false,
+                    false,
+                    false
+                ],
+                "all_cases_false": true
+            },
+            "blocker_status": "verified",
+            "verified_blockers": [
+                "raw_write_execution_ready_false_until_future_authorization"
+            ],
+            "no_live_fetch": true,
+            "no_detail_fetch": true,
+            "no_network_request": true,
+            "no_db_write": true,
+            "no_raw_write": true,
+            "raw_write_execution_ready": false
+        }
+    ],
+    "blocking_rules": [
+        {
+            "rule_id": "schedule_external_id_default_detail_route_blocked",
+            "covered_by_case_id": "schedule_external_id_is_correlation_only",
+            "verified": true
+        },
+        {
+            "rule_id": "suspended_mapping_or_baseline_blocks_recapture",
+            "covered_by_case_id": "suspended_mapping_baseline_blocks_before_fetch",
+            "verified": true
+        },
+        {
+            "rule_id": "missing_re_acceptance_blocks_recapture",
+            "covered_by_case_id": "missing_re_acceptance_blocks_before_fetch",
+            "verified": true
+        },
+        {
+            "rule_id": "page_url_base_slug_fragment_alone_insufficient",
+            "covered_by_case_id": "page_url_base_slug_fragment_alone_insufficient",
+            "verified": true
+        },
+        {
+            "rule_id": "identity_mismatch_blocks_recapture",
+            "covered_by_case_id": "requested_4830466_observed_4830759_remains_blocked",
+            "verified": true
+        },
+        {
+            "rule_id": "hash_mismatch_secondary_to_identity_mismatch_blocks_baseline_update",
+            "covered_by_case_id": "hash_mismatch_under_identity_mismatch_cannot_update_baseline",
+            "verified": true
+        },
+        {
+            "rule_id": "raw_write_execution_ready_false_until_future_authorization",
+            "covered_by_case_id": "raw_write_execution_ready_remains_false",
+            "verified": true
+        }
+    ]
+}
