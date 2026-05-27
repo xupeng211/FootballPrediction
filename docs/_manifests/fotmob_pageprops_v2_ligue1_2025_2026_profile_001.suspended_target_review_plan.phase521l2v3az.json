@@ -1,0 +1,471 @@
+{
+    "artifact_type": "suspended_target_review_plan",
+    "artifact_status": "completed_controlled_no_write_suspended_target_review_planning",
+    "proposal_phase": "Phase 5.21L2V3AZ",
+    "phase_name": "controlled_no_write_suspended_target_review_planning",
+    "generated_at": "2026-05-27T02:10:42Z",
+    "pr_type": "governance-only/planning",
+    "planning_only": true,
+    "runtime_code_change": false,
+    "suspended_target_review_planning_status": "completed_controlled_no_write_suspended_target_review_planning",
+    "reviewed_input_artifact_count": 8,
+    "reviewed_input_artifact_paths": {
+        "accepted_mapping_baseline_suspension_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.accepted_mapping_baseline_suspension_result.phase521l2v3at.json",
+        "accepted_mapping_baseline_contradiction_review_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.accepted_mapping_baseline_contradiction_review_result.phase521l2v3ar.json",
+        "identity_contract_regression_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.identity_contract_regression_result.phase521l2v3ay.json",
+        "no_write_payload_recapture_blocker_investigation": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.no_write_payload_recapture_blocker_investigation.phase521l2v3ap.json",
+        "controlled_source_inventory_acquisition_result": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.controlled_source_inventory_acquisition_result.phase521l2v3y.json",
+        "source_inventory_enrichment_implementation": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.source_inventory_enrichment_implementation.phase521l2v3v.json",
+        "expanded_date_rule_verification": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.expanded_date_rule_verification.phase521l2v3n.json",
+        "proposal_manifest": "docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json"
+    },
+    "review_input_groups": [
+        "current_suspension_result",
+        "contradiction_review_result",
+        "identity_contract_regression_result",
+        "source_inventory_evidence",
+        "enriched_target_metadata",
+        "no_write_recapture_blocker_evidence",
+        "baseline_hash_evidence",
+        "route_identity_team_date_status_evidence"
+    ],
+    "suspended_target_review_candidate_count": 8,
+    "blocked_pending_review_target_count": 42,
+    "planned_review_case_count": 9,
+    "planned_review_cases": [
+        {
+            "id": "suspended_target_review_4830461",
+            "match_id": "53_20252026_4830461",
+            "schedule_external_id": "4830461",
+            "observed_detail_external_id": "4830758",
+            "expected_result": "plan a no-write evidence review for suspended target 4830461 without recapture retry or raw write",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "suspended_target_review_4830463",
+            "match_id": "53_20252026_4830463",
+            "schedule_external_id": "4830463",
+            "observed_detail_external_id": "4830622",
+            "expected_result": "plan a no-write evidence review for suspended target 4830463 without recapture retry or raw write",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "suspended_target_review_4830465",
+            "match_id": "53_20252026_4830465",
+            "schedule_external_id": "4830465",
+            "observed_detail_external_id": "4830619",
+            "expected_result": "plan a no-write evidence review for suspended target 4830465 without recapture retry or raw write",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "suspended_target_review_4830466",
+            "match_id": "53_20252026_4830466",
+            "schedule_external_id": "4830466",
+            "observed_detail_external_id": "4830759",
+            "expected_result": "plan a no-write evidence review for suspended target 4830466 and keep runner follow-up as a review-only decision, not an execution path",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "no_write_recapture_blocker_evidence",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_runner_contract_followup",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "suspended_target_review_4830481",
+            "match_id": "53_20252026_4830481",
+            "schedule_external_id": "4830481",
+            "observed_detail_external_id": "4830763",
+            "expected_result": "plan a no-write evidence review for suspended target 4830481 without recapture retry or raw write",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "suspended_target_review_4830496",
+            "match_id": "53_20252026_4830496",
+            "schedule_external_id": "4830496",
+            "observed_detail_external_id": "4830757",
+            "expected_result": "plan a no-write evidence review for suspended target 4830496 without recapture retry or raw write",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "suspended_target_review_4830508",
+            "match_id": "53_20252026_4830508",
+            "schedule_external_id": "4830508",
+            "observed_detail_external_id": "4830620",
+            "expected_result": "plan a no-write evidence review for suspended target 4830508 without recapture retry or raw write",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "suspended_target_review_4830511",
+            "match_id": "53_20252026_4830511",
+            "schedule_external_id": "4830511",
+            "observed_detail_external_id": "4830760",
+            "expected_result": "plan a no-write evidence review for suspended target 4830511 without recapture retry or raw write",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ],
+            "decision_candidates": [
+                "remain_suspended",
+                "eligible_for_re_acceptance_review",
+                "requires_expanded_evidence",
+                "reject_mapping",
+                "supersede_mapping"
+            ]
+        },
+        {
+            "id": "blocked_pending_review_pool_control",
+            "expected_result": "plan how the 42 blocked_pending_review targets remain blocked, are not treated as clean, and stay out of raw write eligibility until future expanded review or evidence collection",
+            "required_inputs": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata"
+            ],
+            "decision_candidates": ["requires_expanded_evidence", "reject_mapping"]
+        }
+    ],
+    "planned_review_decision_count": 6,
+    "planned_review_decisions": [
+        {
+            "id": "remain_suspended",
+            "meaning": "keep mapping and baseline suspended until future review execution confirms stronger evidence"
+        },
+        {
+            "id": "eligible_for_re_acceptance_review",
+            "meaning": "review execution may classify the target as ready for a future no-write re-acceptance review path"
+        },
+        {
+            "id": "requires_runner_contract_followup",
+            "meaning": "review execution may keep a target blocked pending additional runner-contract follow-up analysis"
+        },
+        {
+            "id": "requires_expanded_evidence",
+            "meaning": "review execution may keep the target blocked pending stronger source-controlled or future authorized evidence"
+        },
+        {
+            "id": "reject_mapping",
+            "meaning": "review execution may reject the previously accepted mapping as untrustworthy"
+        },
+        {
+            "id": "supersede_mapping",
+            "meaning": "review execution may recommend a future superseding mapping path, still outside this no-write planning phase"
+        }
+    ],
+    "planned_blocking_rule_count": 7,
+    "planned_blocking_rules": [
+        {
+            "id": "suspended_mapping_baseline_remains_blocked_until_review_execution",
+            "expected_enforcement": "suspended mapping and baseline stay blocked until a future controlled no-write review execution"
+        },
+        {
+            "id": "missing_re_acceptance_blocks_recapture",
+            "expected_enforcement": "missing re-acceptance continues to block recapture"
+        },
+        {
+            "id": "identity_mismatch_blocks_recapture",
+            "expected_enforcement": "requested/observed identity mismatch continues to block recapture"
+        },
+        {
+            "id": "reverse_fixture_detected_blocks_recapture",
+            "expected_enforcement": "reverse-fixture contradiction evidence continues to block recapture"
+        },
+        {
+            "id": "page_url_base_slug_fragment_alone_insufficient",
+            "expected_enforcement": "page_url_base, slug, and fragment evidence alone cannot clear a suspended or blocked target"
+        },
+        {
+            "id": "hash_mismatch_under_identity_mismatch_cannot_update_baseline",
+            "expected_enforcement": "hash mismatch remains secondary to identity mismatch and cannot update baseline"
+        },
+        {
+            "id": "raw_write_requires_future_fresh_authorization",
+            "expected_enforcement": "future raw write remains blocked until separate fresh authorization after review execution"
+        }
+    ],
+    "suspended_review_targets": [
+        {
+            "match_id": "53_20252026_4830461",
+            "schedule_external_id": "4830461",
+            "observed_detail_external_id": "4830758",
+            "source_page_url_base": "/matches/lens-vs-lyon/2s3gtg",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        },
+        {
+            "match_id": "53_20252026_4830463",
+            "schedule_external_id": "4830463",
+            "observed_detail_external_id": "4830622",
+            "source_page_url_base": "/matches/le-havre-vs-monaco/362v61",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        },
+        {
+            "match_id": "53_20252026_4830465",
+            "schedule_external_id": "4830465",
+            "observed_detail_external_id": "4830619",
+            "source_page_url_base": "/matches/nice-vs-toulouse/38dxtn",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        },
+        {
+            "match_id": "53_20252026_4830466",
+            "schedule_external_id": "4830466",
+            "observed_detail_external_id": "4830759",
+            "source_page_url_base": "/matches/marseille-vs-rennes/2t9n7h",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "no_write_recapture_blocker_evidence",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        },
+        {
+            "match_id": "53_20252026_4830481",
+            "schedule_external_id": "4830481",
+            "observed_detail_external_id": "4830763",
+            "source_page_url_base": "/matches/monaco-vs-strasbourg/379ruz",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        },
+        {
+            "match_id": "53_20252026_4830496",
+            "schedule_external_id": "4830496",
+            "observed_detail_external_id": "4830757",
+            "source_page_url_base": "/matches/lorient-vs-le-havre/2t6haw",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        },
+        {
+            "match_id": "53_20252026_4830508",
+            "schedule_external_id": "4830508",
+            "observed_detail_external_id": "4830620",
+            "source_page_url_base": "/matches/auxerre-vs-paris-saint-germain/2t4i9k",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        },
+        {
+            "match_id": "53_20252026_4830511",
+            "schedule_external_id": "4830511",
+            "observed_detail_external_id": "4830760",
+            "source_page_url_base": "/matches/nantes-vs-toulouse/38dikf",
+            "current_effective_status": "suspended",
+            "suspension_reason": "reverse_fixture_contradiction_confirmed",
+            "review_input_groups": [
+                "current_suspension_result",
+                "contradiction_review_result",
+                "identity_contract_regression_result",
+                "source_inventory_evidence",
+                "enriched_target_metadata",
+                "baseline_hash_evidence",
+                "route_identity_team_date_status_evidence"
+            ]
+        }
+    ],
+    "blocked_pending_review_planning": {
+        "candidate_pool_size": 42,
+        "classification": "blocked_pending_review",
+        "may_be_treated_as_clean": false,
+        "may_enter_raw_write_eligibility": false,
+        "future_path": "expanded_review_or_future_evidence_collection",
+        "raw_write_execution_ready": false,
+        "sample_match_ids": [
+            "53_20252026_4830458",
+            "53_20252026_4830459",
+            "53_20252026_4830460",
+            "53_20252026_4830462",
+            "53_20252026_4830464"
+        ],
+        "dominant_blocker_status": "expanded_reverse_fixture_evidence_review_required"
+    },
+    "live_fetch_performed": false,
+    "detail_fetch_performed": false,
+    "network_request_performed": false,
+    "recapture_retry_performed": false,
+    "db_write_performed": false,
+    "raw_match_data_insert_performed": false,
+    "matches_write_performed": false,
+    "matches_external_id_modified": false,
+    "raw_write_execution_performed": false,
+    "re_acceptance_execution_performed": false,
+    "suspension_reversal_performed": false,
+    "rollback_execution_performed": false,
+    "parser_features_training_prediction_performed": false,
+    "schema_migration_performed": false,
+    "full_payload_saved": false,
+    "full_payload_printed": false,
+    "full_source_body_saved": false,
+    "full_source_body_printed": false,
+    "raw_write_execution_ready": false,
+    "large_artifact_added": false,
+    "full_phase_snapshot_added": false,
+    "history_artifact_cleanup_performed": false,
+    "recommended_next_step": "Phase 5.21L2V3BA: controlled no-write suspended target review execution",
+    "next_required_step": "controlled_no_write_suspended_target_review_execution"
+}
