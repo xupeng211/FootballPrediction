@@ -362,6 +362,9 @@ test('source inventory preflight propagates requested-side source URL identity f
     assert.equal(target.source_url_fragment_external_id, '6000001');
     assert.equal(target.source_slug, 'home-vs-away');
     assert.equal(target.source_route_code, 'abcd12');
+    assert.equal(target.source_url_path_slug, 'abcd12');
+    assert.equal(target.detail_external_id_candidate, '6000001');
+    assert.equal(target.detail_identity_source, 'url_hash_fragment');
     assert.equal(target.schedule_external_id, '6000001');
     assert.equal(target.schedule_date, '2026-03-02T19:00:00.000Z');
     assert.equal(target.schedule_home_team, 'Home 1');
@@ -369,6 +372,8 @@ test('source inventory preflight propagates requested-side source URL identity f
     assert.equal(target.source_inventory_record_key, 'l1_api_data_leagues:matches.allMatches.0:6000001');
     assert.equal(target.identity_evidence_status, 'complete');
     assert.equal(writtenTarget.source_url_fragment_external_id, '6000001');
+    assert.equal(writtenTarget.detail_external_id_candidate, '6000001');
+    assert.equal(writtenTarget.detail_identity_source, 'url_hash_fragment');
 });
 
 test('source URL evidence does not imply accepted mapping or raw write readiness', async () => {

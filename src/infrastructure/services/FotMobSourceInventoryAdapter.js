@@ -7,6 +7,7 @@ const { SeasonStrategyFactory } = require('./SeasonStrategy');
 const SOURCE = 'fotmob';
 const ROUTE_KIND = 'l1_api_data_leagues';
 const FOTMOB_BASE_URL = 'https://www.fotmob.com';
+const DETAIL_IDENTITY_SOURCE_URL_HASH_FRAGMENT = 'url_hash_fragment';
 
 function noopLogger() {
     return {
@@ -56,6 +57,7 @@ function parseSourcePageUrl(sourcePageUrl) {
             source_url_fragment_external_id: null,
             source_slug: null,
             source_route_code: null,
+            source_url_path_slug: null,
         };
     }
 
@@ -85,6 +87,7 @@ function parseSourcePageUrl(sourcePageUrl) {
         source_url_fragment_external_id: fragmentExternalId,
         source_slug: sourceSlug,
         source_route_code: sourceRouteCode,
+        source_url_path_slug: sourceRouteCode,
     };
 }
 
@@ -98,6 +101,16 @@ function fallback(value, defaultValue = null) {
     return value || defaultValue;
 }
 
+function buildDetailIdentityFields(evidence = {}) {
+    const detailExternalIdCandidate = isNumericExternalId(evidence.source_url_fragment_external_id)
+        ? String(evidence.source_url_fragment_external_id).trim()
+        : null;
+    return {
+        detail_external_id_candidate: detailExternalIdCandidate,
+        detail_identity_source: detailExternalIdCandidate ? DETAIL_IDENTITY_SOURCE_URL_HASH_FRAGMENT : null,
+    };
+}
+
 function buildSourceEvidenceFields(evidence = {}) {
     return {
         source_url: fallback(evidence.source_page_url),
@@ -106,6 +119,8 @@ function buildSourceEvidenceFields(evidence = {}) {
         source_url_fragment_external_id: fallback(evidence.source_url_fragment_external_id),
         source_slug: fallback(evidence.source_slug),
         source_route_code: fallback(evidence.source_route_code),
+        source_url_path_slug: fallback(evidence.source_url_path_slug || evidence.source_route_code),
+        ...buildDetailIdentityFields(evidence),
         source_inventory_record_key: fallback(evidence.source_inventory_record_key),
         source_inventory_generated_at: fallback(evidence.source_inventory_generated_at, 'unknown'),
         identity_evidence_status: fallback(evidence.identity_evidence_status, 'missing'),
@@ -154,6 +169,7 @@ function deriveSourceInventoryIdentityEvidence({
 
     return {
         ...evidence,
+        ...buildDetailIdentityFields(evidence),
         identity_evidence_status: classifyIdentityEvidence(evidence, resolvedExternalId),
     };
 }
@@ -360,6 +376,7 @@ class FotMobSourceInventoryAdapter {
 module.exports = {
     FotMobSourceInventoryAdapter,
     ROUTE_KIND,
+    DETAIL_IDENTITY_SOURCE_URL_HASH_FRAGMENT,
     deriveSourceInventoryIdentityEvidence,
     extractSourceInventoryEvidence,
     parseSourcePageUrl,

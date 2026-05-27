@@ -589,6 +589,19 @@ function normalizeCandidateTarget(target = {}, enrichedByMatchId = new Map()) {
         source_url_fragment_external_id: normalizeText(
             enriched.source_url_fragment_external_id || target.source_url_fragment_external_id
         ),
+        detail_external_id_candidate: normalizeText(
+            target.detail_external_id_candidate ||
+                enriched.detail_external_id_candidate ||
+                enriched.source_url_fragment_external_id ||
+                target.source_url_fragment_external_id
+        ),
+        detail_identity_source: normalizeText(
+            target.detail_identity_source ||
+                enriched.detail_identity_source ||
+                (enriched.source_url_fragment_external_id || target.source_url_fragment_external_id
+                    ? 'url_hash_fragment'
+                    : null)
+        ),
         accepted_detail_external_id: normalizeText(
             target.accepted_detail_external_id ||
                 enriched.accepted_detail_external_id ||
@@ -822,6 +835,9 @@ function buildBaseResult(target = {}, fetchResult = {}) {
         source_url_fragment_external_id_match: target.source_url_fragment_external_id
             ? target.source_url_fragment_external_id === target.external_id
             : null,
+        detail_external_id_candidate:
+            contract.detail_external_id_candidate || target.detail_external_id_candidate || null,
+        detail_identity_source: contract.detail_identity_source || target.detail_identity_source || null,
         accepted_detail_external_id: contract.accepted_detail_external_id || target.accepted_detail_external_id || null,
         recapture_request_identity: contract.recapture_request_identity || null,
         recapture_expected_identity: contract.recapture_expected_identity || null,

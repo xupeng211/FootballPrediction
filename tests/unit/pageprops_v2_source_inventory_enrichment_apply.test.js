@@ -161,7 +161,7 @@ test('L2V3V artifact records no-write source inventory enrichment implementation
     assert.equal(artifact.raw_write_retry_performed, false);
     assert.equal(artifact.accepted_mapping_count, 0);
     assert.equal(artifact.raw_write_ready_for_execution, false);
-    assert.equal(artifact.implemented_enrichment_field_count, 12);
+    assert.equal(artifact.implemented_enrichment_field_count, mod.ENRICHMENT_FIELDS.length);
     assert.equal(artifact.source_inventory_adapter_updated, true);
     assert.equal(artifact.manifest_candidate_builder_updated, true);
     assert.equal(manifest.phase_5_21_l2v3v_implementation_status, artifact.artifact_status);
@@ -207,6 +207,9 @@ test('source-controlled URL fields can be enriched but do not imply accepted map
     assert.equal(target.source_url_fragment_external_id, '9000001');
     assert.equal(target.source_slug, 'home-vs-away');
     assert.equal(target.source_route_code, 'abcd12');
+    assert.equal(target.source_url_path_slug, 'abcd12');
+    assert.equal(target.detail_external_id_candidate, '9000001');
+    assert.equal(target.detail_identity_source, 'url_hash_fragment');
     assert.equal(target.identity_evidence_status, 'complete');
     assert.equal(result.artifact.identity_evidence_complete_count, 1);
     assert.equal(result.artifact.accepted_mapping_count, 0);

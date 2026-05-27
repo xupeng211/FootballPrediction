@@ -1,0 +1,67 @@
+{
+    "schema_version": "fotmob_url_hash_detail_identity_propagation_implementation_v1",
+    "phase": "Phase 5.21-ADG3",
+    "implementation_status": "completed_runtime_code_change",
+    "generated_at": "2026-05-27T15:45:00Z",
+    "prerequisites": {
+        "adg2_pr": 1336,
+        "adg2_merge_commit": "991c6c8af17a0f792193ed0142270bf563077d44",
+        "main_production_gate_green_before_adg3": true
+    },
+    "runtime_behavior_changed": true,
+    "runtime_code_paths_changed": [
+        "src/infrastructure/services/FotMobSourceInventoryAdapter.js",
+        "scripts/ops/single_league_target_discovery_source_inventory_preflight.js",
+        "scripts/ops/pageprops_v2_source_inventory_enrichment_apply.js",
+        "scripts/ops/pageprops_v2_enriched_target_regeneration_execute.js",
+        "src/infrastructure/services/FotMobRouteIdentityReconciler.js",
+        "scripts/ops/pageprops_v2_no_write_payload_recapture_execute.js"
+    ],
+    "positive_sample": {
+        "source_page_url": "https://www.fotmob.com/zh-Hans/matches/manchester-city-vs-afc-bournemouth/2feiv3#4813735",
+        "source_url_path_slug": "2feiv3",
+        "source_url_fragment_external_id": "4813735",
+        "detail_external_id_candidate": "4813735",
+        "detail_identity_source": "url_hash_fragment"
+    },
+    "implemented_behavior": {
+        "url_hash_parsing_normalizes_numeric_hash_as_string": true,
+        "source_inventory_exposes_detail_external_id_candidate": true,
+        "candidate_generation_carries_detail_external_id_candidate": true,
+        "enrichment_carries_detail_external_id_candidate": true,
+        "enriched_target_regeneration_carries_detail_external_id_candidate": true,
+        "recapture_contract_reads_detail_external_id_candidate": true,
+        "recapture_expected_identity_prefers_detail_candidate_over_schedule_id": true,
+        "schedule_external_id_blind_fallback_blocked": true
+    },
+    "safety_status": {
+        "live_fetch_performed": false,
+        "network_request_performed": false,
+        "db_write_performed": false,
+        "raw_match_data_insert_performed": false,
+        "raw_write_execution_performed": false,
+        "matches_write_performed": false,
+        "matches_external_id_modified": false,
+        "re_acceptance_execution_performed": false,
+        "suspension_reversal_performed": false,
+        "parser_features_training_prediction_performed": false,
+        "full_payload_saved": false,
+        "full_payload_printed": false,
+        "raw_write_execution_ready": false
+    },
+    "blocker_preservation": {
+        "missing_accepted_detail_identity_still_blocks": true,
+        "missing_re_acceptance_still_blocks": true,
+        "suspended_mapping_or_baseline_still_blocks": true,
+        "reverse_fixture_still_blocks": true,
+        "page_url_base_or_slug_alone_still_insufficient": true,
+        "hash_identity_candidate_does_not_authorize_raw_write": true
+    },
+    "request_contract_status": {
+        "direct_match_details_api_403_remains_blocked": true,
+        "bypass_logic_added": false,
+        "proxy_or_captcha_bypass_added": false,
+        "uncontrolled_retry_added": false
+    },
+    "recommended_next_step": "Review and verify the URL-hash/detail identity propagation path; do not raw write or re-accept from propagation alone."
+}
