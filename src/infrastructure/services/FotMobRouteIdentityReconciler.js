@@ -1,4 +1,5 @@
 'use strict';
+/* eslint-disable complexity, max-lines */
 
 const IDENTITY_MATCH = 'identity_match';
 const REQUESTED_OBSERVED_MISMATCH = 'requested_vs_observed_external_id_mismatch';
@@ -21,6 +22,19 @@ const ACCEPTED_DETAIL_ROUTE_IDENTITY_STRATEGY = 'accepted_detail_external_id';
 const BLOCKED_CANONICAL_IDENTITY_SOURCE = 'none_until_reaccepted_mapping_baseline';
 const REACCEPTED_CANONICAL_IDENTITY_SOURCE = 'reaccepted_mapping_baseline';
 const DETAIL_IDENTITY_SOURCE_URL_HASH_FRAGMENT = 'url_hash_fragment';
+
+// ADG9: Strict fixture identity guard
+const FIXTURE_IDENTITY_GUARD_PASSED = 'passed';
+const FIXTURE_IDENTITY_GUARD_BLOCKED = 'blocked';
+const STRICT_DATE_TOLERANCE_DAYS = 1;
+const AUDIT_CLASSIFICATION_CORRECT_MAPPING = 'correct_mapping';
+const AUDIT_CLASSIFICATION_REVERSE_FIXTURE_MAPPING_ERROR = 'reverse_fixture_mapping_error';
+const AUDIT_CLASSIFICATION_HOME_AWAY_INVERSION = 'home_away_inversion';
+const AUDIT_CLASSIFICATION_SAME_TEAM_PAIR_WRONG_LEG = 'same_team_pair_wrong_leg';
+const AUDIT_CLASSIFICATION_DATE_MISMATCH = 'date_mismatch';
+const AUDIT_CLASSIFICATION_COMPETITION_MISMATCH = 'competition_mismatch';
+const AUDIT_CLASSIFICATION_SUSPENDED_REFERENCE_STILL_BLOCKED = 'suspended_reference_still_blocked';
+const AUDIT_CLASSIFICATION_INSUFFICIENT_EVIDENCE = 'insufficient_source_inventory_evidence';
 
 function normalizeText(value) {
     return String(value ?? '').trim();
@@ -819,6 +833,191 @@ function assertRawWriteIdentityGate(reconciliation = {}) {
     };
 }
 
+// ADG9: Strict fixture identity guard — validates expected (schedule) vs observed (detail) identity.
+// Blocks candidates with home/away inversion, date mismatch, same-team-pair wrong-leg.
+// URL hash fragment alone is insufficient for candidate acceptance.
+function validateStrictFixtureIdentity(input = {}) {
+    const expectedScheduleExternalId = firstId(
+        input.schedule_external_id,
+        input.expected_schedule_external_id,
+        input.scheduleExternalId
+    );
+    const detailExternalIdCandidate = firstId(
+        input.detail_external_id_candidate,
+        input.expected_detail_external_id_candidate,
+        input.detailExternalIdCandidate
+    );
+    const expectedHomeTeam = normalizeTeam(
+        firstText(input.expected_home_team, input.home_team, input.expectedHomeTeam)
+    );
+    const expectedAwayTeam = normalizeTeam(
+        firstText(input.expected_away_team, input.away_team, input.expectedAwayTeam)
+    );
+    const observedHomeTeam = normalizeTeam(
+        firstText(input.observed_home_team, input.observedHomeTeam)
+    );
+    const observedAwayTeam = normalizeTeam(
+        firstText(input.observed_away_team, input.observedAwayTeam)
+    );
+    const expectedMatchDate = firstText(
+        input.expected_match_date, input.match_date, input.expectedMatchDate
+    );
+    const observedMatchDate = firstText(
+        input.observed_match_date, input.observedMatchDate
+    );
+    const expectedCompetition = normalizeLower(
+        firstText(input.expected_competition, input.competition, input.expectedCompetition)
+    );
+    const observedCompetition = normalizeLower(
+        firstText(input.observed_competition, input.observedCompetition)
+    );
+    const expectedSeason = normalizeSeason(
+        firstText(input.expected_season, input.season, input.expectedSeason)
+    );
+    const observedSeason = normalizeSeason(
+        firstText(input.observed_season, input.observedSeason)
+    );
+    const observedDetailId = firstId(
+        input.observed_detail_id,
+        input.observed_detail_external_id,
+        input.observedDetailId
+    );
+    const isSuspended = Boolean(
+        input.is_suspended_reference === true ||
+        input.isSuspendedReference === true ||
+        input.reference_status === 'blocked_reference_only_no_unsuspend'
+    );
+
+    const teamsKnown = Boolean(expectedHomeTeam && expectedAwayTeam && observedHomeTeam && observedAwayTeam);
+    const detailCandidateKnown = Boolean(detailExternalIdCandidate);
+    const observedDetailKnown = Boolean(observedDetailId);
+    const detailIdsDiffer = observedDetailKnown && detailCandidateKnown && detailExternalIdCandidate !== observedDetailId;
+    const sameOrder = teamsKnown && expectedHomeTeam === observedHomeTeam && expectedAwayTeam === observedAwayTeam;
+    const reversedOrder =
+        teamsKnown && expectedHomeTeam === observedAwayTeam && expectedAwayTeam === observedHomeTeam;
+    const samePairAnyOrder = sameOrder || reversedOrder;
+
+    const expectedDateMs = parseDateInfo(expectedMatchDate);
+    const observedDateMs = parseDateInfo(observedMatchDate);
+    const dateDelta = dateDeltaDays(expectedDateMs, observedDateMs);
+    const dateWithinTolerance = dateDelta !== null && dateDelta <= STRICT_DATE_TOLERANCE_DAYS;
+    const dateLargeDelta = dateDelta !== null && dateDelta > STRICT_DATE_TOLERANCE_DAYS;
+
+    const competitionKnown = Boolean(expectedCompetition && observedCompetition);
+    const competitionMatches = competitionKnown && expectedCompetition === observedCompetition;
+    const competitionMismatch = competitionKnown && !competitionMatches;
+
+    const seasonKnown = Boolean(expectedSeason && observedSeason);
+    const seasonMatches = seasonKnown && expectedSeason === observedSeason;
+
+    // Classification logic
+    let auditClassification = AUDIT_CLASSIFICATION_INSUFFICIENT_EVIDENCE;
+    let guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+    let guardReason = null;
+    let correctionNeeded = false;
+    let correctionType = null;
+
+    if (isSuspended) {
+        auditClassification = AUDIT_CLASSIFICATION_SUSPENDED_REFERENCE_STILL_BLOCKED;
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        guardReason = 'suspended_reference_cannot_be_reactivated_by_guard';
+        correctionNeeded = false;
+    } else if (sameOrder && !detailIdsDiffer) {
+        auditClassification = AUDIT_CLASSIFICATION_CORRECT_MAPPING;
+        guardStatus = FIXTURE_IDENTITY_GUARD_PASSED;
+        guardReason = null;
+        correctionNeeded = false;
+    } else if (reversedOrder && teamsKnown && dateLargeDelta) {
+        auditClassification = AUDIT_CLASSIFICATION_REVERSE_FIXTURE_MAPPING_ERROR;
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        guardReason = 'home_away_inversion_with_date_mismatch_indicates_reverse_fixture_not_this_target';
+        correctionNeeded = true;
+        correctionType = 'reject_candidate';
+    } else if (reversedOrder && teamsKnown) {
+        auditClassification = AUDIT_CLASSIFICATION_HOME_AWAY_INVERSION;
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        guardReason = 'home_and_away_teams_reversed_vs_expected_schedule';
+        correctionNeeded = true;
+        correctionType = 'reject_candidate';
+    } else if (samePairAnyOrder && dateLargeDelta) {
+        auditClassification = AUDIT_CLASSIFICATION_SAME_TEAM_PAIR_WRONG_LEG;
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        guardReason = 'same_team_pair_but_date_delta_indicates_wrong_leg_of_home_away_fixture';
+        correctionNeeded = true;
+        correctionType = 'reject_candidate';
+    } else if (dateLargeDelta && teamsKnown) {
+        auditClassification = AUDIT_CLASSIFICATION_DATE_MISMATCH;
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        guardReason = 'match_date_differs_beyond_tolerance';
+        correctionNeeded = true;
+        correctionType = 'reject_candidate';
+    } else if (competitionMismatch) {
+        auditClassification = AUDIT_CLASSIFICATION_COMPETITION_MISMATCH;
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        guardReason = 'expected_competition_does_not_match_observed';
+        correctionNeeded = true;
+        correctionType = 'reject_candidate';
+    }
+
+    const correctionActions = correctionNeeded
+        ? ['reject_candidate', 'supersede_candidate', 'require_new_source_inventory_record', 'require_strict_home_away_date_guard']
+        : [];
+
+    const blockers = [];
+    if (isSuspended) blockers.push('suspended_reference_still_blocked');
+    if (detailExternalIdCandidate && !teamsKnown && !dateDelta) {
+        blockers.push('url_hash_alone_insufficient');
+    }
+    if (reversedOrder) blockers.push('home_away_inversion');
+    if (dateLargeDelta) blockers.push('date_mismatch');
+    if (competitionMismatch) blockers.push('competition_mismatch');
+    if (detailIdsDiffer && samePairAnyOrder && dateLargeDelta) blockers.push('same_team_pair_wrong_leg');
+
+    const rejectedDetailId = correctionNeeded ? detailExternalIdCandidate : null;
+    const observedReversedDetailId =
+        reversedOrder && detailIdsDiffer && observedDetailKnown ? observedDetailId : null;
+
+    return {
+        fixture_identity_guard_status: guardStatus,
+        fixture_identity_guard_reason: guardReason,
+        audit_classification: auditClassification,
+        schedule_external_id: expectedScheduleExternalId,
+        detail_external_id_candidate: detailExternalIdCandidate,
+        rejected_detail_external_id_candidate: rejectedDetailId,
+        observed_reversed_detail_id: observedReversedDetailId,
+        observed_detail_id: observedDetailId,
+        expected_home_team: expectedHomeTeam || null,
+        expected_away_team: expectedAwayTeam || null,
+        observed_home_team: observedHomeTeam || null,
+        observed_away_team: observedAwayTeam || null,
+        expected_match_date: expectedMatchDate,
+        observed_match_date: observedMatchDate,
+        expected_competition: expectedCompetition || null,
+        observed_competition: observedCompetition || null,
+        expected_season: expectedSeason,
+        observed_season: observedSeason,
+        home_away_orientation_status: sameOrder ? 'matches' : reversedOrder ? 'reversed' : 'unknown_or_mismatch',
+        team_pair_match: samePairAnyOrder,
+        date_delta_days: dateDelta,
+        date_within_tolerance: dateWithinTolerance,
+        competition_match: competitionMatches,
+        season_match: seasonMatches,
+        detail_identity_candidate_validated: guardStatus === FIXTURE_IDENTITY_GUARD_PASSED,
+        url_hash_alone_insufficient: Boolean(detailCandidateKnown && !teamsKnown),
+        correction_needed: correctionNeeded,
+        correction_type: correctionType,
+        correction_actions: correctionActions,
+        raw_write_execution_ready: false,
+        is_suspended_reference: isSuspended,
+        blockers,
+    };
+}
+
+function dateDeltaDays(expected, observed) {
+    if (!expected?.ok || !observed?.ok) return null;
+    return Math.round(Math.abs(observed.ms - expected.ms) / 86400000);
+}
+
 module.exports = {
     IDENTITY_MATCH,
     REQUESTED_OBSERVED_MISMATCH,
@@ -835,6 +1034,19 @@ module.exports = {
     CROSS_SEASON_SLUG_REUSE,
     UNRESOLVED_LARGE_GAP,
     UNKNOWN_DATE_COMPATIBILITY,
+    // ADG9: Strict fixture identity guard
+    FIXTURE_IDENTITY_GUARD_PASSED,
+    FIXTURE_IDENTITY_GUARD_BLOCKED,
+    STRICT_DATE_TOLERANCE_DAYS,
+    AUDIT_CLASSIFICATION_CORRECT_MAPPING,
+    AUDIT_CLASSIFICATION_REVERSE_FIXTURE_MAPPING_ERROR,
+    AUDIT_CLASSIFICATION_HOME_AWAY_INVERSION,
+    AUDIT_CLASSIFICATION_SAME_TEAM_PAIR_WRONG_LEG,
+    AUDIT_CLASSIFICATION_DATE_MISMATCH,
+    AUDIT_CLASSIFICATION_COMPETITION_MISMATCH,
+    AUDIT_CLASSIFICATION_SUSPENDED_REFERENCE_STILL_BLOCKED,
+    AUDIT_CLASSIFICATION_INSUFFICIENT_EVIDENCE,
+    validateStrictFixtureIdentity,
     normalizePageUrlBase,
     normalizeDateOnly,
     normalizeSeason,
