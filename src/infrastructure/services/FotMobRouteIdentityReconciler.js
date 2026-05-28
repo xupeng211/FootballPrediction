@@ -1122,6 +1122,46 @@ function classifyDetailCandidateIdentity(input = {}) {
     };
 }
 
+// ADG17: Select the oriented fixture record from multiple source inventory candidates.
+// Given expected identity and a list of candidate records (each with home/away/date/external_id),
+// selects the best match. Rejects if only reverse fixture is available.
+function selectOrientedFixtureRecord({ expectedHome, expectedAway, expectedDate, expectedCompetition, candidates = [] } = {}) {
+    const expHome = normalizeTeam(expectedHome);
+    const expAway = normalizeTeam(expectedAway);
+    const expDate = expectedDate ? parseDateInfo(expectedDate) : null;
+    const sorted = (Array.isArray(candidates) ? candidates : []).map(c => {
+        const cHome = normalizeTeam(c.home_team || c.observed_home_team);
+        const cAway = normalizeTeam(c.away_team || c.observed_away_team);
+        const cDate = (c.match_date || c.observed_match_date) ? parseDateInfo(c.match_date || c.observed_match_date) : null;
+        const sameOrder = cHome === expHome && cAway === expAway;
+        const reversed = cHome === expAway && cAway === expHome;
+        const dateDelta = dateDeltaDays(expDate, cDate);
+        const dateClose = dateDelta !== null && dateDelta <= STRICT_DATE_TOLERANCE_DAYS;
+        let score = 0;
+        if (sameOrder) score += 100;
+        if (reversed) score -= 50;
+        if (dateClose) score += 50;
+        if (dateDelta !== null && dateDelta > 1) score -= dateDelta;
+        return { ...c, _sameOrder: sameOrder, _reversed: reversed, _dateDelta: dateDelta, _score: score };
+    }).sort((a, b) => b._score - a._score);
+
+    if (sorted.length === 0) return { selected: null, status: 'no_candidates', raw_write_ready: false };
+
+    const best = sorted[0];
+    if (best._sameOrder) {
+        return { selected: best, status: 'oriented_match_selected',
+            selection_method: best._dateDelta <= STRICT_DATE_TOLERANCE_DAYS ? 'home_away_date_match' : 'home_away_match_date_delta',
+            raw_write_ready: false };
+    }
+    if (best._reversed) {
+        return { selected: null, rejected_candidate: best, status: 'rejected_reverse_fixture_mapping',
+            selection_method: 'only_reverse_available', correction_needed: true,
+            raw_write_ready: false };
+    }
+    return { selected: sorted.find(c => !c._reversed) || null, status: 'oriented_best_effort',
+        selection_method: 'fallback_no_perfect_match', raw_write_ready: false };
+}
+
 module.exports = {
     IDENTITY_MATCH,
     REQUESTED_OBSERVED_MISMATCH,
@@ -1152,6 +1192,7 @@ module.exports = {
     AUDIT_CLASSIFICATION_INSUFFICIENT_EVIDENCE,
     validateStrictFixtureIdentity,
     classifyDetailCandidateIdentity,
+    selectOrientedFixtureRecord,
     normalizePageUrlBase,
     normalizeDateOnly,
     normalizeSeason,
