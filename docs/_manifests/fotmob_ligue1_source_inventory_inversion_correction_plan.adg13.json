@@ -1,0 +1,155 @@
+{
+    "schema_version": "fotmob_ligue1_source_inventory_inversion_correction_plan_adg13_v1",
+    "phase": "Phase 5.21-ADG13",
+    "generated_at": "2026-05-28T13:35:00.000Z",
+    "adg13_planning_status": "completed_source_inventory_inversion_correction_planning",
+    "planning_performed": true,
+    "planning_scope": "source_inventory_candidate_generation_home_away_inversion_correction_design",
+    "governance_type": "correction_planning_only_no_execution",
+    "source": "ADG12 Batch A result: 7/9 samples reverse_fixture_mapping_error",
+
+    "systematic_home_away_inversion_confirmed": true,
+    "newly_acquired_reverse_fixture_count": 5,
+    "known_reverse_control_count": 2,
+    "total_reverse_evidence_count": 7,
+    "positive_control_count": 1,
+    "suspended_control_count": 1,
+
+    "root_cause_analysis": {
+        "primary_cause": "Ligue 1 double round-robin team-pair key collision without home/away orientation binding",
+        "mechanism": [
+            "FotMob L1 API league overview returns match records for both home and away legs of double round-robin fixtures",
+            "team-pair key (e.g. 'angers|paris fc') matches BOTH legs but does not encode which leg is home vs away",
+            "source inventory candidate generation picks the WRONG leg's page URL when the team-pair key is ambiguous",
+            "URL hash fragment #detail_id points to the reverse fixture, not the expected schedule fixture",
+            "enriched target regeneration propagates detail_external_id_candidate without strict home/away validation",
+            "ADG9 strict guard CORRECTLY detects the inversion but only at validation time, not at candidate generation time"
+        ],
+        "why_not_detected_earlier": [
+            "Before ADG9 strict guard, there was no home/away validation at all",
+            "Before ADG12 Batch A actual evidence acquisition, the 37 missing-observed targets had no observed identity to compare",
+            "Positive control #4813735 (Premier League single round-robin check) did not trigger the Ligue 1 double round-robin issue"
+        ]
+    },
+
+    "runtime_paths_to_correct": [
+        {
+            "path": "src/infrastructure/services/FotMobSourceInventoryAdapter.js",
+            "function": "toManifestCandidateSeed() / buildDetailIdentityFields()",
+            "issue": "detail_external_id_candidate is accepted from URL hash without home/away validation",
+            "planned_correction": "Add home/away orientation check using source_inventory evidence fields. If URL slug or route code indicates inverted home/away, mark candidate status=rejected_not_active."
+        },
+        {
+            "path": "scripts/ops/pageprops_v2_source_inventory_enrichment_apply.js",
+            "function": "candidate enrichment flow",
+            "issue": "Enrichment propagates detail_external_id_candidate without fixture identity validation",
+            "planned_correction": "Add inline call to validateStrictFixtureIdentity() during enrichment. Reject candidates with reverse_fixture_mapping_error."
+        },
+        {
+            "path": "scripts/ops/pageprops_v2_enriched_target_regeneration_execute.js",
+            "function": "target regeneration flow",
+            "issue": "Regenerated targets carry detail_external_id_candidate as active even when home/away orientation is unknown",
+            "planned_correction": "Add strict_guard_classification to each regenerated target. Set regeneration_blockers for reverse_fixture targets."
+        },
+        {
+            "path": "src/infrastructure/services/FotMobRouteIdentityReconciler.js",
+            "function": "validateStrictFixtureIdentity()",
+            "issue": "Guard works correctly but is only called at acquisition/validation time",
+            "planned_correction": "No change to guard logic itself. Ensure it is called during candidate generation/enrichment/regeneration, not just at evidence acquisition."
+        }
+    ],
+
+    "correction_strategy": {
+        "strategy_name": "reject_supersede_inverted_candidates_during_generation",
+        "rules": [
+            {
+                "rule": "team_pair_orientation_binding",
+                "description": "When source inventory generates a detail_external_id_candidate from URL hash, also extract expected home/away from the source page URL structure or L1 API record. If URL path/slug suggests reversed home/away vs schedule, mark candidate as 'blocked_home_away_inversion'.",
+                "implemented_in": "FotMobSourceInventoryAdapter.toManifestCandidateSeed()"
+            },
+            {
+                "rule": "enrichment_strict_guard_inline",
+                "description": "During candidate enrichment, if expected home/away teams and observed teams are both available, run validateStrictFixtureIdentity(). If guard blocks, set enrichment_status=blocked_reverse_fixture and do not propagate as active candidate.",
+                "implemented_in": "pageprops_v2_source_inventory_enrichment_apply.js"
+            },
+            {
+                "rule": "regeneration_guard_classification",
+                "description": "During enriched target regeneration, add strict_guard_classification field. For any target with reverse_fixture_mapping_error, set regeneration_status=blocked, set regeneration_blockers=['home_away_inversion','reverse_fixture_mapping_error','correction_needed'].",
+                "implemented_in": "pageprops_v2_enriched_target_regeneration_execute.js"
+            },
+            {
+                "rule": "candidate_status_fields",
+                "description": "Add new candidate status values: 'rejected_home_away_inversion', 'rejected_reverse_fixture_mapping', 'requires_new_source_inventory_record'. Rejected candidates must NOT be treated as detail_identity_candidate_validated=true.",
+                "implemented_in": "All paths above"
+            },
+            {
+                "rule": "positive_control_preservation",
+                "description": "#4813735 must continue to pass all guards. The correction must not introduce false positives for correct mappings.",
+                "implemented_in": "All paths above"
+            },
+            {
+                "rule": "suspended_preservation",
+                "description": "Suspended targets (4830461, 4830463, 4830466, etc.) must remain blocked. The correction must not re-accept or unsuspend any suspended target.",
+                "implemented_in": "All paths above"
+            },
+            {
+                "rule": "url_hash_as_evidence_not_acceptance",
+                "description": "URL hash fragment remains as evidence source but does not constitute candidate acceptance. detail_identity_candidate_validated remains false unless strict guard passes.",
+                "implemented_in": "All paths above"
+            },
+            {
+                "rule": "raw_write_boundary",
+                "description": "raw_write_execution_ready=false always. No correction changes the raw_write boundary.",
+                "implemented_in": "All paths above"
+            }
+        ]
+    },
+
+    "adg14_implementation_scope": {
+        "phase": "Phase 5.21-ADG14",
+        "scope": "runtime_source_inventory_candidate_generation_correction_implementation",
+        "estimated_runtime_paths_changed": "3-4 files",
+        "primary_changes": [
+            "FotMobSourceInventoryAdapter.js: add home/away orientation validation in toManifestCandidateSeed()",
+            "pageprops_v2_source_inventory_enrichment_apply.js: inline strict guard during enrichment",
+            "pageprops_v2_enriched_target_regeneration_execute.js: add guard classification to regenerated targets"
+        ],
+        "secondary_changes": [
+            "FotMobRouteIdentityReconciler.js: may add bulk_candidate_validation helper"
+        ]
+    },
+
+    "adg14_validation_targets": {
+        "must_pass": ["4813735"],
+        "must_block": ["4830458", "4830464", "4830467", "4830468", "4830469", "4830470", "4830471"],
+        "must_remain_suspended": ["4830461", "4830463", "4830466", "4830465", "4830481", "4830496", "4830511", "4830508"],
+        "expected_classifications": "correct_mapping=1, reverse_fixture_mapping_error=7, suspended=8"
+    },
+
+    "recommendation_on_remaining_37_targets": {
+        "stop_batch_expansion": true,
+        "rationale": "7/7 Ligue 1 samples with observed identity show reverse_fixture_mapping_error. Almost certainly the remaining 37-5=32 targets have the same issue. Further evidence acquisition would only confirm the pattern without changing the outcome.",
+        "recommended_approach": "Implement correction guard first (ADG14), then rerun no-write regression (ADG15). Only acquire more evidence after the guard is in place."
+    },
+
+    "safety": {
+        "live_fetch_performed": false,
+        "network_request_performed": false,
+        "browser_automation_performed": false,
+        "direct_api_probing_performed": false,
+        "db_write_performed": false,
+        "raw_write_execution_performed": false,
+        "raw_match_data_insert_performed": false,
+        "re_acceptance_execution_performed": false,
+        "suspension_reversal_performed": false,
+        "source_inventory_mutation_performed": false,
+        "candidate_mutation_performed": false,
+        "full_payload_saved": false,
+        "full_payload_printed": false,
+        "raw_write_execution_ready": false,
+        "batch_b_c_d_expansion_performed": false,
+        "full_37_target_acquisition_performed": false
+    },
+
+    "recommended_next_step": "Phase 5.21-ADG14: runtime source inventory/candidate generation home/away inversion correction implementation. Do not raw write. Do not Batch B/C/D."
+}
