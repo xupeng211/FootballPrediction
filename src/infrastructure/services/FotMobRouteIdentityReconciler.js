@@ -1018,6 +1018,110 @@ function dateDeltaDays(expected, observed) {
     return Math.round(Math.abs(observed.ms - expected.ms) / 86400000);
 }
 
+// ADG14: Classification of detail candidate identity during source inventory generation.
+// Uses limited source-controlled evidence (no live fetch required).
+// Returns candidate_status: accepted_validated | rejected_home_away_inversion |
+//   rejected_reverse_fixture_mapping | requires_new_source_inventory_record |
+//   unknown_insufficient_evidence
+function classifyDetailCandidateIdentity(input = {}) {
+    const expectedHome = normalizeTeam(
+        firstText(input.expected_home_team, input.schedule_home_team)
+    );
+    const expectedAway = normalizeTeam(
+        firstText(input.expected_away_team, input.schedule_away_team)
+    );
+    const sourceHome = normalizeTeam(
+        firstText(input.source_home_team, input.observed_home_team)
+    );
+    const sourceAway = normalizeTeam(
+        firstText(input.source_away_team, input.observed_away_team)
+    );
+    const expectedDate = firstText(
+        input.expected_match_date, input.schedule_match_date, input.schedule_date
+    );
+    const sourceDate = firstText(
+        input.source_match_date, input.observed_match_date
+    );
+    const detailCandidate = firstId(
+        input.detail_external_id_candidate, input.source_url_fragment_external_id
+    );
+    const expectedCompetition = normalizeLower(
+        firstText(input.expected_competition, input.league_name)
+    );
+    const sourceCompetition = normalizeLower(
+        firstText(input.source_competition, input.observed_competition)
+    );
+
+    const teamsKnown = Boolean(expectedHome && expectedAway && sourceHome && sourceAway);
+    const sameOrder = teamsKnown && expectedHome === sourceHome && expectedAway === sourceAway;
+    const isReversed = teamsKnown && expectedHome === sourceAway && expectedAway === sourceHome;
+
+    const expectedDateMs = expectedDate ? parseDateInfo(expectedDate) : null;
+    const sourceDateMs = sourceDate ? parseDateInfo(sourceDate) : null;
+    const dateDelta = dateDeltaDays(expectedDateMs, sourceDateMs);
+    const dateLargeGap = dateDelta !== null && dateDelta > STRICT_DATE_TOLERANCE_DAYS;
+
+    const competitionMismatch =
+        Boolean(expectedCompetition && sourceCompetition && expectedCompetition !== sourceCompetition);
+
+    // Classification logic
+    let candidateStatus = 'unknown_insufficient_evidence';
+    let guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+    let correctionNeeded = false;
+    let correctionType = null;
+
+    if (!detailCandidate) {
+        candidateStatus = 'unknown_insufficient_evidence';
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+    } else if (isReversed && dateLargeGap) {
+        candidateStatus = 'rejected_reverse_fixture_mapping';
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        correctionNeeded = true;
+        correctionType = 'reject_candidate';
+    } else if (isReversed) {
+        candidateStatus = 'rejected_home_away_inversion';
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        correctionNeeded = true;
+        correctionType = 'reject_candidate';
+    } else if (dateLargeGap) {
+        candidateStatus = 'rejected_reverse_fixture_mapping';
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        correctionNeeded = true;
+        correctionType = 'require_new_source_inventory_record';
+    } else if (competitionMismatch) {
+        candidateStatus = 'requires_new_source_inventory_record';
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+        correctionNeeded = true;
+        correctionType = 'require_new_source_inventory_record';
+    } else if (sameOrder && detailCandidate) {
+        candidateStatus = 'accepted_validated';
+        guardStatus = FIXTURE_IDENTITY_GUARD_PASSED;
+        correctionNeeded = false;
+    } else if (detailCandidate && !teamsKnown) {
+        candidateStatus = 'unknown_insufficient_evidence';
+        guardStatus = FIXTURE_IDENTITY_GUARD_BLOCKED;
+    }
+
+    return {
+        detail_identity_candidate_status: candidateStatus,
+        fixture_identity_guard_status: guardStatus,
+        detail_external_id_candidate: detailCandidate,
+        expected_home_team: expectedHome || null,
+        expected_away_team: expectedAway || null,
+        source_home_team: sourceHome || null,
+        source_away_team: sourceAway || null,
+        home_away_orientation: sameOrder ? 'matches' : isReversed ? 'reversed' : 'unknown',
+        date_delta_days: dateDelta,
+        correction_needed: correctionNeeded,
+        correction_type: correctionType,
+        correction_actions: correctionNeeded
+            ? ['reject_candidate', 'supersede_candidate', 'require_strict_home_away_date_guard']
+            : [],
+        raw_write_execution_ready: false,
+        url_hash_alone_insufficient: Boolean(detailCandidate && !teamsKnown && !dateDelta),
+    };
+}
+
 module.exports = {
     IDENTITY_MATCH,
     REQUESTED_OBSERVED_MISMATCH,
@@ -1047,6 +1151,7 @@ module.exports = {
     AUDIT_CLASSIFICATION_SUSPENDED_REFERENCE_STILL_BLOCKED,
     AUDIT_CLASSIFICATION_INSUFFICIENT_EVIDENCE,
     validateStrictFixtureIdentity,
+    classifyDetailCandidateIdentity,
     normalizePageUrlBase,
     normalizeDateOnly,
     normalizeSeason,

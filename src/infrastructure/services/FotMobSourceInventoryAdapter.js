@@ -101,17 +101,50 @@ function fallback(value, defaultValue = null) {
     return value || defaultValue;
 }
 
-function buildDetailIdentityFields(evidence = {}) {
+function buildDetailIdentityFields(evidence = {}, candidateContext = {}) {
     const detailExternalIdCandidate = isNumericExternalId(evidence.source_url_fragment_external_id)
         ? String(evidence.source_url_fragment_external_id).trim()
         : null;
-    return {
+    const base = {
         detail_external_id_candidate: detailExternalIdCandidate,
         detail_identity_source: detailExternalIdCandidate ? DETAIL_IDENTITY_SOURCE_URL_HASH_FRAGMENT : null,
     };
+
+    // ADG14: Classify detail candidate at generation time when context is available.
+    // Only home/away orientation from source inventory evidence can be used (no live fetch).
+    if (candidateContext.schedule_home_team || candidateContext.schedule_away_team) {
+        try {
+            const reconciler = require('./FotMobRouteIdentityReconciler');
+            const classification = reconciler.classifyDetailCandidateIdentity({
+                expected_home_team: candidateContext.schedule_home_team,
+                expected_away_team: candidateContext.schedule_away_team,
+                expected_match_date: candidateContext.schedule_date,
+                expected_competition: candidateContext.league_name,
+                source_home_team: evidence.source_home_team,
+                source_away_team: evidence.source_away_team,
+                source_match_date: evidence.source_match_date,
+                detail_external_id_candidate: detailExternalIdCandidate,
+            });
+            return {
+                ...base,
+                detail_identity_candidate_status: classification.detail_identity_candidate_status,
+                fixture_identity_guard_status: classification.fixture_identity_guard_status,
+                home_away_orientation: classification.home_away_orientation,
+                correction_needed: classification.correction_needed,
+                correction_type: classification.correction_type,
+                correction_actions: classification.correction_actions,
+                raw_write_execution_ready: false,
+                url_hash_alone_insufficient: classification.url_hash_alone_insufficient,
+            };
+        } catch {
+            return { ...base, detail_identity_candidate_status: 'unknown_insufficient_evidence' };
+        }
+    }
+
+    return { ...base, detail_identity_candidate_status: 'unknown_insufficient_evidence' };
 }
 
-function buildSourceEvidenceFields(evidence = {}) {
+function buildSourceEvidenceFields(evidence = {}, candidateContext = {}) {
     return {
         source_url: fallback(evidence.source_page_url),
         source_page_url: fallback(evidence.source_page_url),
@@ -120,7 +153,7 @@ function buildSourceEvidenceFields(evidence = {}) {
         source_slug: fallback(evidence.source_slug),
         source_route_code: fallback(evidence.source_route_code),
         source_url_path_slug: fallback(evidence.source_url_path_slug || evidence.source_route_code),
-        ...buildDetailIdentityFields(evidence),
+        ...buildDetailIdentityFields(evidence, candidateContext),
         source_inventory_record_key: fallback(evidence.source_inventory_record_key),
         source_inventory_generated_at: fallback(evidence.source_inventory_generated_at, 'unknown'),
         identity_evidence_status: fallback(evidence.identity_evidence_status, 'missing'),
@@ -351,6 +384,12 @@ class FotMobSourceInventoryAdapter {
     toManifestCandidateSeed(fixture, priority = null, sourceEvidence = {}) {
         const externalId = String(fixture?.external_id || '').trim();
         const evidence = sourceEvidence || {};
+        const candidateContext = {
+            schedule_home_team: fallback(fixture?.home_team),
+            schedule_away_team: fallback(fixture?.away_team),
+            schedule_date: toIsoText(fixture?.match_date),
+            league_name: fallback(fixture?.league_name),
+        };
         return {
             source: SOURCE,
             source_inventory_route: ROUTE_KIND,
@@ -366,7 +405,7 @@ class FotMobSourceInventoryAdapter {
             status: fallback(fixture?.status, 'scheduled'),
             data_source: fallback(fixture?.data_source, 'FotMob'),
             source_path: ROUTE_KIND,
-            ...buildSourceEvidenceFields(evidence),
+            ...buildSourceEvidenceFields(evidence, candidateContext),
             ...buildScheduleEvidenceFields(fixture, externalId),
             priority,
         };
