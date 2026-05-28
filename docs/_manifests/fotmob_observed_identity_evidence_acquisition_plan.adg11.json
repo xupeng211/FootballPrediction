@@ -1,0 +1,181 @@
+{
+    "schema_version": "fotmob_observed_identity_evidence_acquisition_plan_adg11_v1",
+    "phase": "Phase 5.21-ADG11",
+    "generated_at": "2026-05-28T11:00:00.000Z",
+    "adg11_planning_status": "completed_bounded_observed_identity_evidence_acquisition_planning",
+    "planning_performed": true,
+    "planning_scope": "bounded_no_write_evidence_acquisition_planning_only",
+    "planning_source": "ADG10 missing_observed_identity_evidence regression result",
+    "governance_type": "planning_only_no_execution",
+    "planned_target_groups": {
+        "missing_observed_identity_evidence": {
+            "source": "ADG10 regression: audit_classification=missing_observed_identity_evidence",
+            "target_count": 37,
+            "external_ids": [
+                "4830467", "4830468", "4830469", "4830470", "4830471",
+                "4830472", "4830473", "4830474", "4830475", "4830476",
+                "4830477", "4830478", "4830479", "4830480", "4830482",
+                "4830483", "4830484", "4830485", "4830486", "4830487",
+                "4830488", "4830489", "4830490", "4830491", "4830492",
+                "4830493", "4830494", "4830495", "4830497", "4830498",
+                "4830499", "4830500", "4830501", "4830502", "4830505",
+                "4830507", "4830510"
+            ],
+            "adg12_role": "primary_evidence_acquisition_candidates"
+        },
+        "known_reverse_fixture_controls": {
+            "source": "ADG8 audit result: reverse_fixture_mapping_error",
+            "target_count": 5,
+            "external_ids": ["4830458", "4830459", "4830460", "4830462", "4830464"],
+            "observed_detail_ids": ["4830627", "4830667", "4830648", "4830618", "4830689"],
+            "adg12_role": "negative_controls_ensure_known_errors_not_re_accepted"
+        },
+        "suspended_preservation_controls": {
+            "source": "ADG10 regression: suspended_preservation_regression",
+            "target_count": 8,
+            "external_ids": ["4830466", "4830461", "4830463", "4830465", "4830481", "4830496", "4830511", "4830508"],
+            "adg12_role": "preservation_controls_remain_blocked_no_unsuspend"
+        },
+        "positive_control": {
+            "source": "ADG8 audit result: correct_mapping #4813735",
+            "target_count": 1,
+            "external_ids": ["4813735"],
+            "adg12_role": "positive_control_verify_acquisition_parse_logic"
+        }
+    },
+    "planned_adg12_batch_policy": {
+        "adg12_requires_explicit_authorization": true,
+        "adg12_batch_a_planned": true,
+        "adg12_batch_a_description": "positive_control + 5 missing targets + 2 reverse controls + 1 suspended control",
+        "adg12_batch_a_planned_sample_count": 9,
+        "adg12_batch_a_external_ids": [
+            "4813735",
+            "4830467", "4830468", "4830469", "4830470", "4830471",
+            "4830458", "4830464",
+            "4830466"
+        ],
+        "adg12_batch_a_gating": "if batch A safe and classification valid, authorize subsequent batches",
+        "adg12_subsequent_batches": [
+            {
+                "batch": "B",
+                "description": "next 10 missing targets from ranked FIFO",
+                "planned_sample_count": 10
+            },
+            {
+                "batch": "C",
+                "description": "next 10 missing targets",
+                "planned_sample_count": 10
+            },
+            {
+                "batch": "D",
+                "description": "remaining 12 missing targets",
+                "planned_sample_count": 12
+            }
+        ],
+        "max_requests_per_target": 1,
+        "max_concurrent_requests": 1,
+        "no_retry_storm": true,
+        "stop_on_403_or_block": true,
+        "delay_between_targets_seconds": "10-15 as per factory_config TIMING"
+    },
+    "planned_evidence_acquisition_strategy": {
+        "strategy": "public_page_route_safe_summary_acquisition",
+        "description": "Use existing source_page_url from enriched targets/proposal. One normal public page-route request per target. Extract only safe summary fields. No full HTML/pageProps/raw_data saved.",
+        "allowed_operations": [
+            "single_normal_public_page_route_request_per_target",
+            "safe_metadata_extraction_from_page_response",
+            "no_full_body_storage",
+            "no_full_pageprops_storage",
+            "no_cookies_tokens_headers_persistence"
+        ],
+        "prohibited_operations": [
+            "captcha_bypass",
+            "proxy_bypass",
+            "login_or_session_injection",
+            "access_control_bypass",
+            "uncontrolled_retry",
+            "bulk_harvesting",
+            "direct_aggressive_api_probing",
+            "saving_full_pageprops",
+            "saving_full_raw_html",
+            "saving_full_raw_data",
+            "saving_full_source_body",
+            "db_write",
+            "raw_match_data_insert",
+            "re_acceptance",
+            "suspension_reversal"
+        ],
+        "evidence_reuse_policy": "if target already has observed identity in ADG6/ADG8/ADG10 safe summaries, do not re-fetch; use existing evidence"
+    },
+    "planned_evidence_fields": [
+        "target_match_id",
+        "source_page_url",
+        "page_route_url_without_fragment",
+        "source_url_path_slug",
+        "source_url_fragment_external_id",
+        "detail_external_id_candidate",
+        "expected_home_team",
+        "expected_away_team",
+        "expected_match_date",
+        "expected_competition",
+        "page_http_status",
+        "page_content_type",
+        "redirect_summary",
+        "hydration_marker_present",
+        "safe_identity_marker_present",
+        "observed_detail_id_if_safely_available",
+        "observed_home_team_if_safely_available",
+        "observed_away_team_if_safely_available",
+        "observed_date_if_safely_available",
+        "observed_competition_if_safely_available",
+        "observed_status_or_score_if_safely_available",
+        "anti_bot_signs",
+        "evidence_acquisition_status",
+        "strict_guard_status_after_evidence",
+        "no_full_body_saved",
+        "no_db_write",
+        "no_raw_write"
+    ],
+    "planned_classifications": [
+        "observed_identity_acquired",
+        "observed_identity_missing",
+        "page_route_available_but_identity_not_observed",
+        "anti_bot_or_access_block",
+        "redirect_or_locale_mismatch",
+        "hydration_marker_missing",
+        "reverse_fixture_mapping_error",
+        "home_away_inversion",
+        "same_team_pair_wrong_leg",
+        "date_mismatch",
+        "competition_mismatch",
+        "strict_guard_passed_no_write",
+        "strict_guard_blocked",
+        "suspended_control_still_blocked",
+        "insufficient_safe_evidence",
+        "network_unavailable_or_transient"
+    ],
+    "safety": {
+        "live_fetch_performed": false,
+        "network_request_performed": false,
+        "browser_automation_performed": false,
+        "direct_api_probing_performed": false,
+        "db_write_performed": false,
+        "raw_write_execution_performed": false,
+        "raw_match_data_insert_performed": false,
+        "re_acceptance_execution_performed": false,
+        "suspension_reversal_performed": false,
+        "source_inventory_mutation_performed": false,
+        "candidate_mutation_performed": false,
+        "full_payload_saved": false,
+        "full_payload_printed": false,
+        "raw_write_execution_ready": false
+    },
+    "recommended_next_step": "Phase 5.21-ADG12: bounded observed identity evidence acquisition execution (Batch A only, requires explicit authorization)",
+    "adg12_prerequisites": [
+        "ADG11 plan merged and approved",
+        "explicit authorization for Batch A execution",
+        "ADG9 strict guard runtime code available",
+        "ADG10 regression result available as reference",
+        "no pending raw_write or re-acceptance authorization"
+    ]
+}
