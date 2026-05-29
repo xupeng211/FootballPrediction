@@ -7,7 +7,7 @@
 
 ## Current status
 
-- latest completed phase: ADG37 L2 route code construction fix
+- latest completed phase: ADG38 route code fix verification
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
 - next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
