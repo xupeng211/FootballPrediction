@@ -1,0 +1,60 @@
+{
+    "schema_version": "adg30_v1",
+    "phase": "Phase 5.21-ADG30",
+    "generated_at": "2026-05-29T13:07:48.926Z",
+    "adg30_status": "completed_l2_readiness_preview",
+    "l2_readiness_preview_performed": true,
+    "no_network": true,
+    "no_db_write": true,
+    "no_raw_write": true,
+    "no_live_fetch": true,
+    "full_payload_saved": false,
+    "input_contract": {
+        "required_fields": [
+            "external_id",
+            "corrected_detail_id",
+            "expected_home",
+            "expected_away"
+        ],
+        "detail_identity": "corrected_detail_external_id from corrected source inventory",
+        "home_away": "expected_home / expected_away from corrected source inventory",
+        "identity_source": "ADG27 corrected source inventory artifact",
+        "strict_guard": "validateStrictFixtureIdentity + classifyDetailCandidateIdentity + selectOrientedFixtureRecord"
+    },
+    "request_contract": {
+        "path": "FotMob match detail page-route (html_hydration)",
+        "identity": "corrected_detail_external_id",
+        "locale": "zh-Hans (default, can be adjusted)",
+        "risk": "direct API 403 known; public page-route safer; requires explicit authorization",
+        "bounded": "max 1 request per target, 10-15s delay, stop on 403/block"
+    },
+    "response_contract": {
+        "detail_id": "must match corrected_detail_external_id",
+        "home_team": "must match expected_home",
+        "away_team": "must match expected_away",
+        "date": "must be close to expected_match_date",
+        "wrong_leg": "rejected if home/away reversed or date delta > tolerance",
+        "raw_write": "remains false until post-fetch no-write validation"
+    },
+    "output_contract": {
+        "safe_fields": [
+            "target_match_id",
+            "corrected_detail_external_id",
+            "expected_home",
+            "expected_away",
+            "observed_home_if_fetched",
+            "observed_away_if_fetched",
+            "detail_validation_status",
+            "raw_write_ready=false"
+        ],
+        "no_full_body": true,
+        "no_full_pageprops": true,
+        "no_full_raw_data": true
+    },
+    "candidates": 32,
+    "l2_ready": 32,
+    "l2_blocked": 0,
+    "raw_write_ready": 0,
+    "re_acceptance": 0,
+    "recommended_next_step": "32/32 L2 detail-fetch ready; recommend ADG31 bounded L2 detail-fetch execution planning; do not bypass 403; do not raw write"
+}
