@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG20 corrected source inventory generation preview
+- latest completed phase: ADG21 bounded corrected-source discovery
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
-- next data phase after hygiene merge: ADG21 bounded corrected-source discovery
+- next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
 - raw_write_ready_count: 0
 
 ## Confirmed facts
