@@ -1179,16 +1179,49 @@ function buildCorrectedFotmobDetailUrl({ correctedDetailExternalId, expectedHome
     }
 
     const matchSlug = `${homeSlug}-vs-${awaySlug}`;
-    // Extract route code from historical URL if available (FotMob uses short codes like '2o4ahb')
-    let routeCode = correctedDetailExternalId; // fallback: use detail ID as route code
+
+    // ADG37: Route code construction with slug mismatch detection.
+    // FotMob server serves page content by route code, not hash ID or slug.
+    // Do NOT reuse historical route code when historical slug orientation is reversed vs corrected.
+    let routeCode = correctedDetailExternalId; // default fallback
+    let routeCodeSource = 'corrected_detail_id_fallback';
+    let historicalRouteCodeReused = false;
+    let historicalRouteCodeRejectedReason = null;
+    let historicalSlugMismatchDetected = false;
+    const routeCodeVerificationRequired = false;
+
     if (historicalSourcePageUrl) {
         const segments = historicalSourcePageUrl.split('/').filter(Boolean);
         const matchesIdx = segments.indexOf('matches');
-        if (matchesIdx >= 0 && segments.length > matchesIdx + 2) routeCode = segments[matchesIdx + 2].split('#')[0];
+        if (matchesIdx >= 0 && segments.length > matchesIdx + 2) {
+            const historicalSlug = segments[matchesIdx + 1] || '';
+            const historicalRouteCode = segments[matchesIdx + 2].split('#')[0];
+            // Detect if historical slug orientation is reversed vs corrected slug
+            const histSlugNorm = historicalSlug.toLowerCase().replace(/-vs-/g, ' ').split(' ').filter(Boolean);
+            const corrSlugNorm = matchSlug.toLowerCase().replace(/-vs-/g, ' ').split(' ').filter(Boolean);
+            historicalSlugMismatchDetected = histSlugNorm.length >= 2 && corrSlugNorm.length >= 2 &&
+                histSlugNorm[0] === corrSlugNorm[corrSlugNorm.length - 1];
+            if (historicalSlugMismatchDetected) {
+                // Do not reuse: historical route code belongs to reverse fixture
+                historicalRouteCodeRejectedReason = 'slug_mismatch_historical_route_code_rejected';
+                routeCode = correctedDetailExternalId;
+                routeCodeSource = 'corrected_detail_id_fallback_slug_mismatch_rejected';
+            } else {
+                // Historical slug matches corrected orientation — reuse is safe
+                routeCode = historicalRouteCode;
+                routeCodeSource = 'historical_route_code_reused_slug_match';
+                historicalRouteCodeReused = true;
+            }
+        }
     }
+
     const url = `https://www.fotmob.com/${locale}/matches/${matchSlug}/${routeCode}#${correctedDetailExternalId}`;
 
     return { ok: true, url, slug: matchSlug, route_code: routeCode, detail_id: correctedDetailExternalId,
+        route_code_source: routeCodeSource, historical_route_code_reused: historicalRouteCodeReused,
+        historical_route_code_rejected_reason: historicalRouteCodeRejectedReason,
+        historical_slug_mismatch_detected: historicalSlugMismatchDetected,
+        route_code_verification_required: routeCodeVerificationRequired,
         construction_source: 'corrected_identity', historical_enriched_url_used: false, raw_write_ready: false };
 }
 
