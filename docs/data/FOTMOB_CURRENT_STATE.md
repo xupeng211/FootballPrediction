@@ -7,7 +7,7 @@
 
 ## Current status
 
-- latest completed phase: ADG21 bounded corrected-source discovery
+- latest completed phase: ADG22 no-write corrected source validation
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
 - next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
