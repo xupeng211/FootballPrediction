@@ -1,0 +1,39 @@
+{
+    "schema_version": "adg39_v1",
+    "phase": "Phase 5.21-ADG39",
+    "generated_at": "2026-05-29T19:50:21.703Z",
+    "adg39_status": "completed_canonical_url_investigation",
+    "investigation_performed": true,
+    "no_network": true,
+    "no_db_write": true,
+    "no_raw_write": true,
+    "full_payload_saved": false,
+    "canonical_detail_url_found": 5,
+    "route_code_found": 5,
+    "route_code_from_l1_api": true,
+    "l2_route_code_guessing_blocked": true,
+    "alternate_route_code_discovery_required": true,
+    "canonical_url_diagnostic_probe_required": true,
+    "total": 32,
+    "handoff_contract": {
+        "l1_must_deliver": [
+            "canonical_detail_url",
+            "route_code",
+            "detail_hash_id",
+            "slug",
+            "expected_home",
+            "expected_away",
+            "expected_date",
+            "expected_competition"
+        ],
+        "l2_must_not": [
+            "guess_route_code",
+            "use_detail_id_as_route_code",
+            "use_historical_enriched_url_as_primary"
+        ],
+        "canonical_url_source": "L1 league API page_url field — already present in ADG21/ADG23 discovery results",
+        "blocker": "L1 API may return page_url with reverse-leg route code despite correct home/away in record fields"
+    },
+    "raw_write_ready": 0,
+    "recommended_next_step": "ADG40: bounded diagnostic probe for alternate detail ID with correct-orientation route code from L1 API; do not raw write"
+}
