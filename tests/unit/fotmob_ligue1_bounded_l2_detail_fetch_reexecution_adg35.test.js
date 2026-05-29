@@ -4,12 +4,14 @@ const { buildCorrectedFotmobDetailUrl } = require('../../src/infrastructure/serv
 const RP = path.resolve(__dirname, '../../docs/_manifests/fotmob_ligue1_bounded_l2_detail_fetch_reexecution.adg35.json');
 function r() { return JSON.parse(fs.readFileSync(RP, 'utf8')); }
 
-test('ADG35 URL builder now extracts route code from historical URL', () => {
+test('ADG35 URL builder now rejects historical route code on slug mismatch', () => {
     const built = buildCorrectedFotmobDetailUrl({ correctedDetailExternalId: '4830473', expectedHomeTeam: 'Paris Saint-Germain', expectedAwayTeam: 'Angers', historicalSourcePageUrl: '/matches/angers-vs-paris-saint-germain/2o4ahb#4830473' });
     assert.equal(built.ok, true);
-    assert.equal(built.route_code, '2o4ahb');
+    assert.equal(built.historical_route_code_reused, false, 'route code 2o4ahb must be rejected due to slug mismatch');
+    assert.equal(built.historical_slug_mismatch_detected, true);
+    assert.equal(built.route_code_source.includes('fallback'), true);
     assert.ok(built.url.includes('paris-saint-germain-vs-angers'));
-    assert.ok(built.url.includes('/2o4ahb#4830473'));
+    assert.ok(!built.url.includes('/2o4ahb'), 'URL must no longer contain rejected route code 2o4ahb');
 });
 
 test('ADG35 URL construction works but detail ID points to reverse leg', () => {
