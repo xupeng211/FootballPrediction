@@ -7,7 +7,7 @@
 
 ## Current status
 
-- latest completed phase: ADG30 L2 detail-fetch readiness preview
+- latest completed phase: ADG31 bounded L2 detail-fetch planning
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
 - next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)

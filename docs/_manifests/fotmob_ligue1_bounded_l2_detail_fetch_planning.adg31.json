@@ -1,0 +1,92 @@
+{
+    "schema_version": "adg31_v1",
+    "phase": "Phase 5.21-ADG31",
+    "generated_at": "2026-05-29T13:26:44.873Z",
+    "adg31_status": "completed_fetch_planning",
+    "execution_planning_performed": true,
+    "no_live_fetch": true,
+    "no_network": true,
+    "no_db_write": true,
+    "no_raw_write": true,
+    "full_payload_saved": false,
+    "future_execution_contract": {
+        "request": {
+            "max_samples": 3,
+            "max_per_target": 1,
+            "delay": "10-15 seconds",
+            "path": "FotMob html_hydration page-route",
+            "identity": "corrected_detail_external_id",
+            "no_browser": true,
+            "no_proxy": true,
+            "stop_on_403": true,
+            "requires_explicit_authorization": true
+        },
+        "response": {
+            "no_full_html": true,
+            "no_full_pageprops": true,
+            "no_full_raw_data": true,
+            "in_memory_parse_only": true
+        },
+        "validation": {
+            "detail_id_match": true,
+            "home_away_match": true,
+            "wrong_leg_reject": true,
+            "raw_write_remains_false": true
+        },
+        "output": {
+            "safe_fields": [
+                "target_id",
+                "corrected_detail",
+                "request_status",
+                "http_status",
+                "observed_home_if_safe",
+                "observed_away_if_safe",
+                "validation",
+                "raw_write_ready=false"
+            ]
+        },
+        "risks": [
+            "direct API 403 known",
+            "public page-route preferred",
+            "anti-bot/block risk",
+            "no browser/proxy bypass"
+        ]
+    },
+    "total": 32,
+    "planned": 3,
+    "planned_requests": 3,
+    "ready": 3,
+    "blocked": 0,
+    "raw_write_ready": 0,
+    "re_acceptance": 0,
+    "planned_samples": [
+        {
+            "target_id": "4830473",
+            "corrected_detail": "4830473",
+            "expected_home": "Paris Saint-Germain",
+            "expected_away": "Angers",
+            "reason": "first_corrected_candidate",
+            "planned_requests": 1,
+            "raw_write_ready": false
+        },
+        {
+            "target_id": "4830487",
+            "corrected_detail": "4830487",
+            "expected_home": "Lille",
+            "expected_away": "Toulouse",
+            "reason": "mid_range_sample",
+            "planned_requests": 1,
+            "raw_write_ready": false
+        },
+        {
+            "target_id": "4830507",
+            "corrected_detail": "4830507",
+            "expected_home": "Nice",
+            "expected_away": "Paris FC",
+            "reason": "last_corrected_candidate",
+            "planned_requests": 1,
+            "raw_write_ready": false
+        }
+    ],
+    "recommended_next_step": "ADG32 bounded L2 detail-fetch execution for 3 planned samples; requires explicit user authorization; do not fetch until authorized; do not raw write"
+}
