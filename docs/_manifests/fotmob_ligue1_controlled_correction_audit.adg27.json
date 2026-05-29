@@ -1,0 +1,17 @@
+{
+    "generated_at": "2026-05-29T11:20:34.621Z",
+    "correction_phase": "Phase 5.21-ADG27",
+    "input_manifest": "docs/_manifests/fotmob_ligue1_controlled_correction_implementation.adg26.json",
+    "guard_results": "all passed",
+    "failures": 0,
+    "source_inventory_count": 32,
+    "candidate_count": 32,
+    "superseded_wrong_leg": [],
+    "suspended_excluded": 9,
+    "positive_preserved": true,
+    "rollback_plan": "revert to ADG26 application preview if any post-correction guard fails",
+    "before_snapshot": "ADG25 generation preview + ADG26 application preview",
+    "after_diff": "compare corrected artifacts with pre-ADG27 state",
+    "raw_write_ready": false,
+    "db_write_performed": false
+}

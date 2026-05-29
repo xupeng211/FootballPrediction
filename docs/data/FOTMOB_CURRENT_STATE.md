@@ -7,7 +7,7 @@
 
 ## Current status
 
-- latest completed phase: ADG26 controlled correction application preview
+- latest completed phase: ADG27 controlled correction implementation
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
 - next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
