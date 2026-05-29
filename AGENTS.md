@@ -5,6 +5,8 @@
 > 最后整理: `2026-04-03`
 >
 > 目标: 让 AI 助手先遵守约束，再高效落地，不把 `AGENTS.md` 继续膨胀成总手册。
+>
+> Claude Code 用户也必须阅读 `CLAUDE.md`，它指向与本文件相同的权威工作流来源。
 
 ---
 
@@ -147,6 +149,24 @@
 - PR reviewer 必须能从模板中直接判断：PR type、runtime code paths、artifact 体积、business progress、blocker 变化和安全边界。
 - Data ingestion PR 必须满足 `docs/INGESTION_CONVERGENCE_GATE.md` 的 outcome gate：
   声明 blocker transition、`target_state_delta`、bounded review 范围和 no-progress stop 条件。
+
+### 2.5 Repository Hygiene / Technical Debt Guardrails
+
+每个新增文件必须声明 lifecycle：`permanent` / `current-state` / `phase-artifact` / `temporary` / `one-shot-helper` / `test-fixture` / `archive-candidate` / `delete-after-use`。无 lifecycle 声明的新文件不得合并。
+
+Phase artifact limits：report <= 120 行（除非明确说明原因）；manifest 只保留机器需要的最小字段；不得复制完整历史；不得保存 full HTML / pageProps / raw_data / source body。
+
+每个新增 helper/script 必须说明是否长期保留、是否被 Makefile/npm script/CI 引用、cleanup 条件。若 helper 只服务一次，默认成为 cleanup candidate。
+
+测试必须优先验证 runtime behavior。只验证 report wording / manifest metadata 的测试不得替代 behavior coverage。
+
+应维护 current-state 入口；历史 ADG report 不能替代 current truth。
+
+每 3-5 个 data/ingestion PR 后必须考虑是否需要 hygiene PR。
+
+PR 最终回复必须包含 Debt Impact：new files added、permanent files、phase-only files、temporary helpers、files superseded、files deleted/archived、cleanup needed later、repository noise increased? yes/no、next cleanup trigger。
+
+详见 `docs/AGENT_WORKFLOW.md` Repository Hygiene Gate 章节。
 
 ---
 
