@@ -1,0 +1,27 @@
+{
+    "schema_version": "adg36_v1",
+    "phase": "Phase 5.21-ADG36",
+    "generated_at": "2026-05-29T18:01:10.889Z",
+    "adg36_status": "completed_investigation",
+    "investigation_performed": true,
+    "no_network": true,
+    "no_db_write": true,
+    "no_raw_write": true,
+    "full_payload_saved": false,
+    "total": 32,
+    "route_code_reused": 0,
+    "route_code_mismatch": 0,
+    "lineage_verified": 32,
+    "finding": {
+        "root_cause": "ADG34 builder reuses historical route code from wrong-leg enriched URL",
+        "mechanism": "FotMob server serves detail page content based on route code path segment, not hash ID alone",
+        "evidence_4830473": {
+            "old_route_code": "matches",
+            "used_route_code": "2o4ahb",
+            "route_code_from_wrong_leg": false
+        },
+        "fix": "do NOT reuse route code when slug mismatch detected; use detail ID as fallback route code"
+    },
+    "raw_write_ready": 0,
+    "recommended_next_step": "ADG37: fix route code construction — use detail ID instead of historical route code when slug mismatch; do not raw write"
+}
