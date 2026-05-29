@@ -7,7 +7,7 @@
 
 ## Current status
 
-- latest completed phase: ADG33 L1/L2 orientation reconciliation
+- latest completed phase: ADG34 L2 URL construction fix
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
 - next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
