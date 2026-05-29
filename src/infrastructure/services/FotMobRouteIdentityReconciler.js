@@ -1162,20 +1162,33 @@ function selectOrientedFixtureRecord({ expectedHome, expectedAway, expectedDate,
         selection_method: 'fallback_no_perfect_match', raw_write_ready: false };
 }
 
-// ADG34: Build FotMob detail page URL from corrected identity.
+// ADG34/ADG35: Build FotMob detail page URL from corrected identity.
 // Uses corrected_detail_external_id and expected home/away, NOT historical enriched source_page_url.
-function buildCorrectedFotmobDetailUrl({ correctedDetailExternalId, expectedHomeTeam, expectedAwayTeam, locale = 'zh-Hans' } = {}) {
-    if (!correctedDetailExternalId || !expectedHomeTeam || !expectedAwayTeam) return { ok: false, reason: 'missing_required_identity_fields', url: null, raw_write_ready: false };
+// Optionally extracts route code from historical URL for slug construction.
+function buildCorrectedFotmobDetailUrl({ correctedDetailExternalId, expectedHomeTeam, expectedAwayTeam,
+    historicalSourcePageUrl = null, locale = 'zh-Hans' } = {}) {
+    if (!correctedDetailExternalId || !expectedHomeTeam || !expectedAwayTeam) {
+        return { ok: false, reason: 'missing_required_identity_fields', url: null, raw_write_ready: false };
+    }
 
     const normalizeSlug = (name) => String(name).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const homeSlug = normalizeSlug(expectedHomeTeam);
     const awaySlug = normalizeSlug(expectedAwayTeam);
-    if (!homeSlug || !awaySlug || homeSlug === awaySlug) return { ok: false, reason: 'blocked_slug_generation_uncertain', url: null, raw_write_ready: false };
+    if (!homeSlug || !awaySlug || homeSlug === awaySlug) {
+        return { ok: false, reason: 'blocked_slug_generation_uncertain', url: null, raw_write_ready: false };
+    }
 
     const matchSlug = `${homeSlug}-vs-${awaySlug}`;
-    const url = `https://www.fotmob.com/${locale}/matches/${matchSlug}/${correctedDetailExternalId}#${correctedDetailExternalId}`;
+    // Extract route code from historical URL if available (FotMob uses short codes like '2o4ahb')
+    let routeCode = correctedDetailExternalId; // fallback: use detail ID as route code
+    if (historicalSourcePageUrl) {
+        const segments = historicalSourcePageUrl.split('/').filter(Boolean);
+        const matchesIdx = segments.indexOf('matches');
+        if (matchesIdx >= 0 && segments.length > matchesIdx + 2) routeCode = segments[matchesIdx + 2].split('#')[0];
+    }
+    const url = `https://www.fotmob.com/${locale}/matches/${matchSlug}/${routeCode}#${correctedDetailExternalId}`;
 
-    return { ok: true, url, slug: matchSlug, detail_id: correctedDetailExternalId,
+    return { ok: true, url, slug: matchSlug, route_code: routeCode, detail_id: correctedDetailExternalId,
         construction_source: 'corrected_identity', historical_enriched_url_used: false, raw_write_ready: false };
 }
 
