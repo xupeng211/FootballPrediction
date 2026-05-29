@@ -13,6 +13,10 @@ Before working on this repository, treat the following files as the authoritativ
 
 Do not rely on historical ADG reports as the primary current truth. Use docs/data/FOTMOB_CURRENT_STATE.md for the latest FotMob ingestion state.
 
+## Container-first
+
+All Node.js / Python commands run inside the dev container: `docker compose -f docker-compose.dev.yml exec dev <command>`. Never run business logic directly on the host. Use `make dev-up` / `make dev-shell` for environment setup. See AGENTS.md §4 for details.
+
 ## Core rules
 
 - Implementation PRs must include real runtime behavior change.
@@ -35,6 +39,21 @@ Current high-level status:
 - raw_write_ready_count is 0.
 - Existing source-controlled artifacts cannot generate corrected Ligue 1 source inventory records.
 - The next data step is bounded corrected-source discovery, only after workflow hygiene is merged and explicitly authorized.
+
+## MCP permissions
+
+| Server | Permission | Allowed |
+|--------|-----------|---------|
+| postgres | READ-ONLY | SELECT / DESCRIBE / EXPLAIN |
+| filesystem | PROJECT ROOT | read / diff / controlled write |
+| git | READ-ONLY | commit history / diff / blame |
+| pytest | RESTRICTED | run pytest / list tests |
+
+MCP does not own production control. No irreversible or high-risk automation via MCP.
+
+## Claude Skills
+
+Project has 12+ dedicated Skills (see `.claude/README.md`). Use Skill tool for specialized tasks (football-prediction, data-collection, code-quality, etc.).
 
 ## Validation expectations
 
