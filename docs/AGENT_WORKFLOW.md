@@ -198,7 +198,7 @@ reviewer 应能在 PR 中快速看到：
 
 这套顺序不能绕过既有 L1/L2/L3、DB、raw write、network、schema migration 授权规则。
 
-## 8. Repository Hygiene Gate
+## 14. Repository Hygiene Gate
 
 每个 PR 在完成前必须做 hygiene check：
 
@@ -237,3 +237,5 @@ reviewer 应能在 PR 中快速看到：
 - 只建规则，不做大规模批量清理
 - 文件满足当前生命周期声明的继续保留
 - 只有明确标注 delete-after-use / archive-candidate 的文件才在后续 hygiene PR 中删除或归档
+
+**Cross-agent rule**：Codex and Claude Code must follow the same workflow defined here. `CLAUDE.md` is an entrypoint that points to the same authoritative sources — it is not a separate rule set.
