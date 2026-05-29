@@ -1162,6 +1162,23 @@ function selectOrientedFixtureRecord({ expectedHome, expectedAway, expectedDate,
         selection_method: 'fallback_no_perfect_match', raw_write_ready: false };
 }
 
+// ADG34: Build FotMob detail page URL from corrected identity.
+// Uses corrected_detail_external_id and expected home/away, NOT historical enriched source_page_url.
+function buildCorrectedFotmobDetailUrl({ correctedDetailExternalId, expectedHomeTeam, expectedAwayTeam, locale = 'zh-Hans' } = {}) {
+    if (!correctedDetailExternalId || !expectedHomeTeam || !expectedAwayTeam) return { ok: false, reason: 'missing_required_identity_fields', url: null, raw_write_ready: false };
+
+    const normalizeSlug = (name) => String(name).toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const homeSlug = normalizeSlug(expectedHomeTeam);
+    const awaySlug = normalizeSlug(expectedAwayTeam);
+    if (!homeSlug || !awaySlug || homeSlug === awaySlug) return { ok: false, reason: 'blocked_slug_generation_uncertain', url: null, raw_write_ready: false };
+
+    const matchSlug = `${homeSlug}-vs-${awaySlug}`;
+    const url = `https://www.fotmob.com/${locale}/matches/${matchSlug}/${correctedDetailExternalId}#${correctedDetailExternalId}`;
+
+    return { ok: true, url, slug: matchSlug, detail_id: correctedDetailExternalId,
+        construction_source: 'corrected_identity', historical_enriched_url_used: false, raw_write_ready: false };
+}
+
 module.exports = {
     IDENTITY_MATCH,
     REQUESTED_OBSERVED_MISMATCH,
@@ -1193,6 +1210,7 @@ module.exports = {
     validateStrictFixtureIdentity,
     classifyDetailCandidateIdentity,
     selectOrientedFixtureRecord,
+    buildCorrectedFotmobDetailUrl,
     normalizePageUrlBase,
     normalizeDateOnly,
     normalizeSeason,
