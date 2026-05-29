@@ -93,6 +93,32 @@ Commands and results:
 
 ```
 
+## Repository Hygiene / Debt Impact
+
+- New files added:
+- File lifecycle for each new file (permanent / phase-artifact / one-shot-helper / test-fixture / temporary / archive-candidate / delete-after-use):
+- Permanent files:
+- Phase-only artifacts:
+- One-shot helpers (describe cleanup condition):
+- Test fixtures:
+- Files superseded:
+- Files deleted or archived:
+- Cleanup required later:
+- Current-state doc updated? yes / no / not needed:
+- Report line count:
+- Manifest size (lines / fields):
+- Does this PR increase repository noise? yes / no:
+- If yes, why is it justified:
+- Next cleanup trigger:
+
+## Artifact limits checklist
+
+- [ ] No full HTML/pageProps/raw_data/source body saved
+- [ ] No large report unless justified in comments above
+- [ ] No full historical recap copied
+- [ ] No orphan helper/script without lifecycle
+- [ ] Tests protect runtime behavior where applicable
+
 ## Review Notes
 
 - Reviewer focus:

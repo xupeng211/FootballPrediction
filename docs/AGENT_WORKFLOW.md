@@ -197,3 +197,43 @@ reviewer 应能在 PR 中快速看到：
 7. CI green 后再合并。
 
 这套顺序不能绕过既有 L1/L2/L3、DB、raw write、network、schema migration 授权规则。
+
+## 8. Repository Hygiene Gate
+
+每个 PR 在完成前必须做 hygiene check：
+
+**File lifecycle**：每个新增文件必须在 PR body 声明 lifecycle（见 AGENTS.md 2.5 节）。PR 不得留下无 lifecycle 的新文件。
+
+**Phase artifact limits**：
+- Report 默认 <= 120 行；如需更长，必须在 PR body 说明原因
+- Manifest 只保留机器需要的最小字段；不得复制完整历史
+- Implementation PR 不得顺手新增无 lifecycle artifact
+- Evidence/acquisition/regression PR 只能保留安全摘要，不保存 full payload
+
+**One-shot helpers**：
+- 每个新增 helper/script 必须说明是否长期保留
+- 若 helper 只服务一次，默认成为 cleanup candidate
+- 若 helper 被 Makefile/npm script/CI 引用，标注 permanent
+
+**Tests**：
+- 优先新增 runtime behavior tests
+- 只验证 report wording / manifest metadata 的测试不得替代 behavior coverage
+- Planning-only PR 不要求强 behavior tests
+
+**Current truth first**：
+- 维护 current-state 入口（如 docs/ 中的状态文件）
+- 历史 ADG report 不能作为 current truth 的替代
+- 后续状态变更应优先更新 current-state，不是继续堆 phase report
+
+**Cleanup cadence**：
+- 每 3-5 个 data/ingestion PR 后必须考虑是否需要一个 hygiene PR
+- 若连续多个 PR 只新加 phase artifacts 不作清理，应在最终回复里建议 cleanup / archive
+
+**Debt Impact**：
+- 每个 PR 最终回复必须包含 Debt Impact（new files、permanent、phase-only、temporary、superseded、deleted、cleanup needed、noise increased、next trigger）
+- 详见 `.github/pull_request_template.md` Repository Hygiene / Debt Impact 段落
+
+**Hygiene PR scope**：
+- 只建规则，不做大规模批量清理
+- 文件满足当前生命周期声明的继续保留
+- 只有明确标注 delete-after-use / archive-candidate 的文件才在后续 hygiene PR 中删除或归档
