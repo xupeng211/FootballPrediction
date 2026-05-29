@@ -7,7 +7,7 @@
 
 ## Current status
 
-- latest completed phase: ADG28 corrected artifacts regression
+- latest completed phase: ADG29 corrected pipeline integration preview
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
 - next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
