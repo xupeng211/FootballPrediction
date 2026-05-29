@@ -1,0 +1,279 @@
+{
+    "schema_version": "adg28_v1",
+    "phase": "Phase 5.21-ADG28",
+    "generated_at": "2026-05-29T11:40:26.760Z",
+    "adg28_status": "completed_no_write_regression",
+    "regression_performed": true,
+    "no_network": true,
+    "no_db_write": true,
+    "no_raw_write": true,
+    "no_mutation": true,
+    "full_payload_saved": false,
+    "source_count": 32,
+    "candidate_count": 32,
+    "validated": 32,
+    "missing": 0,
+    "guard_failed": 0,
+    "audit_consistent": true,
+    "raw_write_ready": 0,
+    "re_acceptance": 0,
+    "recommended_next_step": "32/32 corrected artifacts validated; recommend ADG29 corrected pipeline integration preview; do not raw write",
+    "regression_results": [
+        {
+            "external_id": "4830473",
+            "expected": "Paris Saint-Germain vs Angers",
+            "corrected_id": "4830473",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830472",
+            "expected": "Nice vs Auxerre",
+            "corrected_id": "4830472",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830474",
+            "expected": "Strasbourg vs Nantes",
+            "corrected_id": "4830474",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830475",
+            "expected": "Toulouse vs Brest",
+            "corrected_id": "4830475",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830478",
+            "expected": "Lens vs Brest",
+            "corrected_id": "4830478",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830479",
+            "expected": "Lorient vs Lille",
+            "corrected_id": "4830479",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830482",
+            "expected": "Nantes vs Auxerre",
+            "corrected_id": "4830482",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830484",
+            "expected": "Toulouse vs Paris Saint-Germain",
+            "corrected_id": "4830484",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830476",
+            "expected": "Angers vs Rennes",
+            "corrected_id": "4830476",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830477",
+            "expected": "Le Havre vs Nice",
+            "corrected_id": "4830477",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830483",
+            "expected": "Paris FC vs Metz",
+            "corrected_id": "4830483",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830480",
+            "expected": "Lyon vs Marseille",
+            "corrected_id": "4830480",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830488",
+            "expected": "Marseille vs Lorient",
+            "corrected_id": "4830488",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830490",
+            "expected": "Nice vs Nantes",
+            "corrected_id": "4830490",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830485",
+            "expected": "Auxerre vs Monaco",
+            "corrected_id": "4830485",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830487",
+            "expected": "Lille vs Toulouse",
+            "corrected_id": "4830487",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830486",
+            "expected": "Brest vs Paris FC",
+            "corrected_id": "4830486",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830489",
+            "expected": "Metz vs Angers",
+            "corrected_id": "4830489",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830491",
+            "expected": "Paris Saint-Germain vs Lens",
+            "corrected_id": "4830491",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830493",
+            "expected": "Strasbourg vs Le Havre",
+            "corrected_id": "4830493",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830492",
+            "expected": "Rennes vs Lyon",
+            "corrected_id": "4830492",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830498",
+            "expected": "Lyon vs Angers",
+            "corrected_id": "4830498",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830501",
+            "expected": "Nantes vs Rennes",
+            "corrected_id": "4830501",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830495",
+            "expected": "Brest vs Nice",
+            "corrected_id": "4830495",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830497",
+            "expected": "Lens vs Lille",
+            "corrected_id": "4830497",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830502",
+            "expected": "Paris FC vs Strasbourg",
+            "corrected_id": "4830502",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830494",
+            "expected": "Auxerre vs Toulouse",
+            "corrected_id": "4830494",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830500",
+            "expected": "Monaco vs Metz",
+            "corrected_id": "4830500",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830499",
+            "expected": "Marseille vs Paris Saint-Germain",
+            "corrected_id": "4830499",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830510",
+            "expected": "Strasbourg vs Marseille",
+            "corrected_id": "4830510",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830505",
+            "expected": "Lorient vs Monaco",
+            "corrected_id": "4830505",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        },
+        {
+            "external_id": "4830507",
+            "expected": "Nice vs Paris FC",
+            "corrected_id": "4830507",
+            "guard": "passed",
+            "rw": false,
+            "status": "validated_no_write"
+        }
+    ]
+}
