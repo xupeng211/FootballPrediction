@@ -1,0 +1,36 @@
+{
+    "schema_version": "adg33_v1",
+    "phase": "Phase 5.21-ADG33",
+    "generated_at": "2026-05-29T16:40:13.167Z",
+    "adg33_status": "completed_l1_l2_reconciliation",
+    "reconciliation_performed": true,
+    "no_live_fetch": true,
+    "no_network": true,
+    "no_db_write": true,
+    "no_raw_write": true,
+    "full_payload_saved": false,
+    "findings": {
+        "root_cause": "ADG32 used enriched source_page_url which contains WRONG-LEG slug from original source inventory",
+        "lineage_evidence": {
+            "adg21": "oriented_match_selected — league API correctly identified PSG home vs Angers away",
+            "enriched_url": "source_page_url slug = angers-vs-paris-saint-germain — Angers FIRST means Angers is home in URL",
+            "discrepancy": "URL slug encodes reverse orientation (Angers home) vs expected (PSG home)",
+            "adg32_bug": "ADG32 script used enriched source_page_url directly instead of constructing URL from corrected orientation",
+            "detail_page_result": "Detail page at this URL returned Angers home vs PSG away — confirmed reverse",
+            "conclusion": "L1 league API orientation IS correct. Enriched URL from wrong-leg source inventory IS not. ADG32 used wrong URL."
+        },
+        "impacted_targets": 15,
+        "total_checked": 32,
+        "recommendation": "fix L2 URL construction in ADG34: build URL from corrected_detail_external_id and expected home/away, not from historical enriched source_page_url"
+    },
+    "total": 32,
+    "affected_slug_mismatch": 15,
+    "confirmed_root_cause": "enriched_source_page_url_contains_wrong_leg_slug",
+    "l1_orientation_correct": true,
+    "l2_url_construction_wrong": true,
+    "adg32_bug_confirmed": true,
+    "candidates_downgraded": 15,
+    "raw_write_ready": 0,
+    "re_acceptance": 0,
+    "recommended_next_step": "ADG34: fix L2 URL construction using corrected_detail_external_id and expected orientation; do not raw write"
+}
