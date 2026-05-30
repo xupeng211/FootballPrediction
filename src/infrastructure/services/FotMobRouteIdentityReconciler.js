@@ -1225,6 +1225,48 @@ function buildCorrectedFotmobDetailUrl({ correctedDetailExternalId, expectedHome
         construction_source: 'corrected_identity', historical_enriched_url_used: false, raw_write_ready: false };
 }
 
+// ADG41: Parse FotMob canonical detail URL into atomic identity components.
+// Canonical identity = {route_code, hash_id} as atomic tuple. Does NOT treat slug as home/away.
+function parseFotmobCanonicalDetailUrl(url) {
+    if (!url || typeof url !== 'string') return { ok: false, reason: 'invalid_url', url: null };
+    const parts = url.split('/').filter(Boolean);
+    const matchesIdx = parts.indexOf('matches');
+    if (matchesIdx < 0 || parts.length <= matchesIdx + 2) return { ok: false, reason: 'not_a_fotmob_match_url', url };
+    const slug = parts[matchesIdx + 1] || null;
+    const routeCodeFragment = parts[matchesIdx + 2] || '';
+    const hashIdx = routeCodeFragment.indexOf('#');
+    const routeCode = hashIdx >= 0 ? routeCodeFragment.slice(0, hashIdx) : routeCodeFragment;
+    const hashId = hashIdx >= 0 ? routeCodeFragment.slice(hashIdx + 1) : null;
+    if (!routeCode || !hashId) return { ok: false, reason: 'missing_route_code_or_hash_id', url, slug, route_code: routeCode || null, hash_id: hashId || null };
+    return { ok: true, url, slug, route_code: routeCode, hash_id: hashId,
+        route_hash_pair: `${routeCode}#${hashId}`, canonical_identity_present: true };
+}
+
+// ADG41: Validate canonical URL atomic handoff contract.
+// L2 must NOT rewrite URL components. route_code + hash_id are atomic tuple.
+function validateCanonicalUrlAtomicHandoff({ canonicalDetailUrl, expectedHome, expectedAway } = {}) {
+    const parsed = parseFotmobCanonicalDetailUrl(canonicalDetailUrl);
+    if (!parsed.ok) {return { ...parsed, handoff_valid: false, handoff_blocker: parsed.reason,
+        l2_url_rewrite_allowed: false, detail_id_as_route_code_allowed: false, raw_write_ready: false };}
+
+    const slugParts = (parsed.slug || '').toLowerCase().split('-vs-');
+    const expHomeNorm = (expectedHome || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slugHomeFirst = slugParts[0] === expHomeNorm || slugParts[0].includes(expHomeNorm.substring(0, 5));
+
+    return { ...parsed, handoff_valid: true, handoff_blocker: null,
+        slug_matches_expected_home: slugHomeFirst,
+        slug_not_home_away_authority: true,
+        l2_url_rewrite_allowed: false,
+        l2_may_replace_route_code: false,
+        l2_may_replace_hash_id: false,
+        detail_id_as_route_code_allowed: false,
+        route_code_must_not_be_guessed: true,
+        canonical_url_must_be_atomic: true,
+        detail_page_verification_required: true,
+        historical_enriched_url_role: 'historical_evidence_only',
+        raw_write_ready: false };
+}
+
 module.exports = {
     IDENTITY_MATCH,
     REQUESTED_OBSERVED_MISMATCH,
@@ -1257,6 +1299,8 @@ module.exports = {
     classifyDetailCandidateIdentity,
     selectOrientedFixtureRecord,
     buildCorrectedFotmobDetailUrl,
+    parseFotmobCanonicalDetailUrl,
+    validateCanonicalUrlAtomicHandoff,
     normalizePageUrlBase,
     normalizeDateOnly,
     normalizeSeason,
