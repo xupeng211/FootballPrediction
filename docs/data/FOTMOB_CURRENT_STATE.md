@@ -7,15 +7,15 @@
 
 ## Current status
 
-- latest completed phase: ADG46 SSR pageProps discovery authorization gate prepared
-- latest merged ADG PR: #1381
-- active workflow PR: ADG46 SSR pageProps discovery gate
-- next data phase: user must explicitly authorize ADG46 SSR/pageProps bounded diagnostic probe; do NOT execute without authorization
+- latest completed phase: ADG46 SSR/pageProps bounded diagnostic probe executed
+- latest merged ADG PR: #1382
+- active workflow PR: ADG46 SSR/pageProps bounded probe results
+- next data phase: ADG47 review SSR probe findings; plan correct-orientation discovery
 - raw_write_ready_count: 0
 
 ## Confirmed facts
 
-- ADG46 SSR gate: fotmob_ssr_pageprops chosen as preferred strategy. 2 future probe targets selected (4830473 PSG-Angers, 4830499 Marseille-PSG). Safe summary extraction contract defined (22 allowed fields). 7 forbidden save types. Authorization gate prepared; probe NOT executed.
+- ADG46 SSR probe: FotMob match page IS accessible (HTTP 200). __NEXT_DATA__ marker FOUND. Safe summary extracted in-memory. Critical finding: route_hash_pair 2o4ahb#4830473 corresponds to REVERSE fixture (Angers home vs PSG away, Apr 2026). Expected orientation (PSG home vs Angers away, Aug 2025) needs different route_hash_pair. 2nd target not attempted (no source-controlled URL). No full HTML/pageProps/__NEXT_DATA__ saved.
 - ADG44 probe result: all 5 targets attempted; FotMob API endpoints (league API id=47, id=53) return 404 via simple HTTPS GET. API architecture has changed. No canonical URLs discovered, no route_hash_pairs verified. No full payload saved. No raw write. 0/5 canonical URL found. Endpoint access requires revised strategy.
 - ADG43 result: planning completed for 32 corrected candidates. 27 missing canonical_url targets require L1 discovery. 5 unverified route_hash_pair targets require detail-page verification. ADG44 bounded diagnostic probe designed but NOT executed.
 - ADG42 result: total_corrected_candidates=32, canonical_url_atomic_identity_valid_count=5, canonical_url_missing_count=27, route_hash_pair_unverified_count=5, raw_write_ready_count=0.
@@ -34,12 +34,12 @@
 
 ## Current blockers
 
-- FotMob API endpoints (league API, match details) not accessible via simple HTTPS GET; 404 for both id=47 and id=53.
+- FotMob legacy API endpoints not accessible (404) but SSR match pages ARE accessible (200, __NEXT_DATA__ present).
 - 27 corrected candidates still lack canonical_detail_url and must not be guessed.
-- 5 corrected candidates have route_hash_pair from source-controlled canonical URL evidence but remain detail-page unverified.
+- 5 corrected candidates have route_hash_pair from source-controlled canonical URL evidence — 1 confirmed as reverse fixture via SSR probe.
+- Correct-orientation route_hash_pairs need discovery; reverse fixture pairs should not be raw-written.
 - Current wrong-leg source records must not be raw-written.
 - Corrected artifacts are not raw-write-ready.
-- L1 discovery strategy needs revision: API architecture has changed; browser-based or authenticated access may be required.
 
 ## Forbidden without explicit authorization
 
@@ -52,4 +52,4 @@
 
 ## Recommended next step
 
-User must explicitly authorize ADG46 SSR/pageProps bounded diagnostic probe; 2 targets selected; safe summary extraction contract defined; in-memory parse only; no full HTML/pageProps save; do NOT execute probe without authorization; do NOT raw write
+ADG47 review ADG46 SSR probe findings; SSR strategy works (page accessible, __NEXT_DATA__ found); plan correct-orientation route_hash_pair discovery; do NOT raw write
