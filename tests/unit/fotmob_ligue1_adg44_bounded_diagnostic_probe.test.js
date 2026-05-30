@@ -61,6 +61,20 @@ test('ADG44 probe raw_write_ready_count is 0', () => {
     assert.ok(a.results.every(r => r.raw_write_ready === false));
 });
 
+test('ADG44 count fields are consistent: endpoint requests vs target classifications', () => {
+    const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
+    assert.equal(a.planned_probe_target_count, 5);
+    assert.equal(a.target_classified_count, 5);
+    assert.equal(a.endpoint_http_request_count, 2);
+    assert.equal(a.attempted_http_request_count, 2);
+    assert.equal(a.endpoint_404_count, 2);
+    // endpoint_http_request_count (HTTP requests) != target_classified_count (targets classified)
+    assert.notEqual(a.endpoint_http_request_count, a.target_classified_count, 'HTTP request count must differ from target count');
+    assert.equal(a.endpoint_http_request_count, 2, 'exactly 2 HTTP endpoints were probed');
+    assert.equal(a.target_classified_count, 5, 'exactly 5 targets were classified');
+    assert.equal(a.successful_http_200_count, 0);
+});
+
 test('ADG44 probe targets match authorization gate selection', () => {
     const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
     const targetIds = a.results.map(r => r.target_match_id).sort();

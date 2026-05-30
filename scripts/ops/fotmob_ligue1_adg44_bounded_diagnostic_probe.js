@@ -124,7 +124,7 @@ async function executeProbe() {
                 },
             }));
         }
-        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount);
+        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount, endpointResults);
     }
 
     // Check for block/captcha signals
@@ -144,7 +144,7 @@ async function executeProbe() {
                 http_status: httpStatus,
             }));
         }
-        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount);
+        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount, endpointResults);
     }
 
     if (httpStatus !== 200) {
@@ -157,7 +157,7 @@ async function executeProbe() {
                 http_status: httpStatus,
             }));
         }
-        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount);
+        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount, endpointResults);
     }
 
     // Parse safe summary only — never save full body
@@ -174,7 +174,7 @@ async function executeProbe() {
                 http_status: httpStatus,
             }));
         }
-        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount);
+        return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount, endpointResults);
     }
 
     // Check for anti-bot / block signs in response body
@@ -268,7 +268,7 @@ async function executeProbe() {
         }));
     }
 
-    return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount);
+    return buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount, endpointResults);
 }
 
 function classifyResult(target, summary) {
@@ -324,8 +324,9 @@ function countBy(results, classification) {
     return results.filter(r => r.classification === classification).length;
 }
 
-function buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount) {
-    const attempted = results.filter(r => r.request_attempted).length;
+function buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSigns, accessBlockSigns, captchaSigns, safeSummaryCount, endpointResults) {
+    const targetClassified = results.filter(r => r.request_attempted).length;
+    const endpointReqCount = Array.isArray(endpointResults) ? endpointResults.length : 0;
     const success200 = results.filter(r => r.http_status === 200).length;
 
     return {
@@ -338,21 +339,26 @@ function buildOutput(results, stopReason, httpStatus, httpContentType, antiBotSi
         user_authorization_confirmed: true,
         authorization_gate_merged: true,
         planned_probe_target_count: 5,
-        attempted_request_count: attempted,
+        target_classified_count: targetClassified,
+        endpoint_http_request_count: endpointReqCount,
+        attempted_http_request_count: endpointReqCount,
         successful_http_200_count: success200,
+        endpoint_404_count: Array.isArray(endpointResults) ? endpointResults.filter(e => e.status === 404).length : 0,
         canonical_url_pair_discovered_count: countBy(results, 'canonical_url_pair_discovered_no_write'),
         route_hash_pair_verified_count: countBy(results, 'route_hash_pair_verified_no_write'),
         reverse_fixture_rejected_count: countBy(results, 'route_hash_pair_reverse_fixture_rejected'),
         canonical_url_not_found_count: countBy(results, 'canonical_url_not_found'),
+        blocked_api_endpoint_not_found_count: countBy(results, 'blocked_api_endpoint_not_found'),
         blocked_403_count: countBy(results, 'blocked_403'),
         blocked_captcha_or_access_wall_count: countBy(results, 'blocked_captcha_or_access_wall'),
         identity_mismatch_count: countBy(results, 'identity_mismatch_stop'),
         not_attempted_due_to_prior_stop_count: countBy(results, 'not_attempted_due_to_prior_stop'),
         safe_summary_saved_count: safeSummaryCount,
+        full_payload_saved: false,
         stop_reason: stopReason,
         safety: {
-            live_fetch_performed: attempted > 0,
-            network_request_performed: attempted > 0,
+            live_fetch_performed: targetClassified > 0,
+            network_request_performed: targetClassified > 0,
             db_write_performed: false,
             raw_write_execution_performed: false,
             raw_match_data_insert_performed: false,
@@ -382,7 +388,11 @@ function writeReport(data) {
         `- adg44_status: ${data.adg44_status}`,
         `- user_authorization_confirmed: true`,
         `- planned_probe_target_count: 5`,
-        `- attempted_request_count: ${data.attempted_request_count}`,
+        `- planned_probe_target_count: ${data.planned_probe_target_count}
+- target_classified_count: ${data.target_classified_count}
+- endpoint_http_request_count: ${data.endpoint_http_request_count}
+- attempted_http_request_count: ${data.attempted_http_request_count}
+- endpoint_404_count: ${data.endpoint_404_count}`,
         `- canonical_url_pair_discovered_count: ${data.canonical_url_pair_discovered_count}`,
         `- route_hash_pair_verified_count: ${data.route_hash_pair_verified_count}`,
         `- reverse_fixture_rejected_count: ${data.reverse_fixture_rejected_count}`,
@@ -431,7 +441,8 @@ async function main() {
     writeReport(data);
     console.log(JSON.stringify({
         adg44_status: data.adg44_status,
-        attempted: data.attempted_request_count,
+        target_classified: data.target_classified_count,
+        endpoint_http_requests: data.endpoint_http_request_count,
         discovered: data.canonical_url_pair_discovered_count,
         verified: data.route_hash_pair_verified_count,
         raw_write_ready_count: 0,

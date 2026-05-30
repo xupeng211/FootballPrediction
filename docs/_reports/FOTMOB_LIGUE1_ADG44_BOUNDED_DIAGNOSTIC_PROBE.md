@@ -5,7 +5,11 @@
 - adg44_status: completed_with_stop
 - user_authorization_confirmed: true
 - planned_probe_target_count: 5
-- attempted_request_count: 5
+- planned_probe_target_count: 5
+- target_classified_count: 5
+- endpoint_http_request_count: 2
+- attempted_http_request_count: 2
+- endpoint_404_count: 2
 - canonical_url_pair_discovered_count: 0
 - route_hash_pair_verified_count: 0
 - reverse_fixture_rejected_count: 0
