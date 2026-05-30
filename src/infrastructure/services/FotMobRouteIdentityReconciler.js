@@ -1228,32 +1228,73 @@ function buildCorrectedFotmobDetailUrl({ correctedDetailExternalId, expectedHome
 // ADG41: Parse FotMob canonical detail URL into atomic identity components.
 // Canonical identity = {route_code, hash_id} as atomic tuple. Does NOT treat slug as home/away.
 function parseFotmobCanonicalDetailUrl(url) {
-    if (!url || typeof url !== 'string') return { ok: false, reason: 'invalid_url', url: null };
-    const parts = url.split('/').filter(Boolean);
+    if (!url || typeof url !== 'string') {
+        return { ok: false, reason: 'missing_canonical_detail_url', url: null, canonicalDetailUrl: null,
+            canonical_detail_url: null, raw_write_ready: false };
+    }
+
+    let parsedUrl;
+    try {
+        parsedUrl = new URL(url);
+    } catch (_err) {
+        return { ok: false, reason: 'invalid_url', url, canonicalDetailUrl: url, canonical_detail_url: url,
+            raw_write_ready: false };
+    }
+
+    const parts = parsedUrl.pathname.split('/').filter(Boolean);
     const matchesIdx = parts.indexOf('matches');
-    if (matchesIdx < 0 || parts.length <= matchesIdx + 2) return { ok: false, reason: 'not_a_fotmob_match_url', url };
+    if (matchesIdx < 0 || parts.length <= matchesIdx + 2) {
+        return { ok: false, reason: 'invalid_url', url, canonicalDetailUrl: url, canonical_detail_url: url,
+            raw_write_ready: false };
+    }
+
+    const locale = matchesIdx > 0 ? parts[matchesIdx - 1] : null;
     const slug = parts[matchesIdx + 1] || null;
-    const routeCodeFragment = parts[matchesIdx + 2] || '';
-    const hashIdx = routeCodeFragment.indexOf('#');
-    const routeCode = hashIdx >= 0 ? routeCodeFragment.slice(0, hashIdx) : routeCodeFragment;
-    const hashId = hashIdx >= 0 ? routeCodeFragment.slice(hashIdx + 1) : null;
-    if (!routeCode || !hashId) return { ok: false, reason: 'missing_route_code_or_hash_id', url, slug, route_code: routeCode || null, hash_id: hashId || null };
-    return { ok: true, url, slug, route_code: routeCode, hash_id: hashId,
-        route_hash_pair: `${routeCode}#${hashId}`, canonical_identity_present: true };
+    const routeCode = parts[matchesIdx + 2] || null;
+    const hashId = parsedUrl.hash ? parsedUrl.hash.slice(1) : null;
+
+    if (!routeCode) {
+        return { ok: false, reason: 'missing_route_code', url, canonicalDetailUrl: url, canonical_detail_url: url,
+            locale, slug, routeCode: null, route_code: null, hashId, hash_id: hashId, raw_write_ready: false };
+    }
+    if (!hashId) {
+        return { ok: false, reason: 'missing_hash_id', url, canonicalDetailUrl: url, canonical_detail_url: url,
+            locale, slug, routeCode, route_code: routeCode, hashId: null, hash_id: null, raw_write_ready: false };
+    }
+
+    const routeHashPair = `${routeCode}#${hashId}`;
+    return { ok: true, url, canonicalDetailUrl: url, canonical_detail_url: url, locale, slug,
+        routeCode, route_code: routeCode, hashId, hash_id: hashId, routeHashPair,
+        route_hash_pair: routeHashPair, canonical_identity_present: true, raw_write_ready: false };
 }
 
 // ADG41: Validate canonical URL atomic handoff contract.
 // L2 must NOT rewrite URL components. route_code + hash_id are atomic tuple.
-function validateCanonicalUrlAtomicHandoff({ canonicalDetailUrl, expectedHome, expectedAway } = {}) {
+function validateCanonicalUrlAtomicHandoff(input = {}) {
+    const canonicalDetailUrl = input.canonicalDetailUrl || input.canonical_detail_url || input.url;
+    const expectedHome = input.expectedHome || input.expected_home || input.home;
+    const expectedAway = input.expectedAway || input.expected_away || input.away;
     const parsed = parseFotmobCanonicalDetailUrl(canonicalDetailUrl);
     if (!parsed.ok) {return { ...parsed, handoff_valid: false, handoff_blocker: parsed.reason,
-        l2_url_rewrite_allowed: false, detail_id_as_route_code_allowed: false, raw_write_ready: false };}
+        canonical_url_must_be_atomic: true,
+        l2_url_rewrite_allowed: false,
+        l2_may_replace_route_code: false,
+        l2_may_replace_hash_id: false,
+        detail_id_as_route_code_allowed: false,
+        route_code_must_not_be_guessed: true,
+        slug_not_home_away_authority: true,
+        raw_write_ready: false };}
 
     const slugParts = (parsed.slug || '').toLowerCase().split('-vs-');
     const expHomeNorm = (expectedHome || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-    const slugHomeFirst = slugParts[0] === expHomeNorm || slugParts[0].includes(expHomeNorm.substring(0, 5));
+    const expAwayNorm = (expectedAway || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    const slugHomeFirst = Boolean(expHomeNorm) && (slugParts[0] === expHomeNorm || slugParts[0].includes(expHomeNorm.substring(0, 5)));
 
     return { ...parsed, handoff_valid: true, handoff_blocker: null,
+        expected_home: expectedHome || null,
+        expected_away: expectedAway || null,
+        expected_home_normalized: expHomeNorm || null,
+        expected_away_normalized: expAwayNorm || null,
         slug_matches_expected_home: slugHomeFirst,
         slug_not_home_away_authority: true,
         l2_url_rewrite_allowed: false,
