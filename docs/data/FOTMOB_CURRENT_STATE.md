@@ -7,14 +7,15 @@
 
 ## Current status
 
-- latest completed phase: ADG42 corrected artifacts canonical contract migration preview
-- latest merged ADG PR: #1376
-- active workflow PR: ADG42 corrected artifacts canonical contract migration preview
-- next data phase: ADG43 planning only; design L1 canonical URL pair discovery for missing candidates
+- latest completed phase: ADG43 L1 canonical URL pair discovery planning
+- latest merged ADG PR: #1377
+- active workflow PR: ADG43 L1 canonical URL pair discovery planning
+- next data phase: ADG44 bounded diagnostic probe ONLY with explicit user authorization
 - raw_write_ready_count: 0
 
 ## Confirmed facts
 
+- ADG43 result: planning completed for 32 corrected candidates. 27 missing canonical_url targets require L1 discovery. 5 unverified route_hash_pair targets require detail-page verification. ADG44 bounded diagnostic probe designed but NOT executed.
 - ADG42 result: total_corrected_candidates=32, canonical_url_atomic_identity_valid_count=5, canonical_url_missing_count=27, route_hash_pair_unverified_count=5, raw_write_ready_count=0.
 
 - URL hash fragment can be detail identity evidence, but alone is insufficient for candidate acceptance.
@@ -47,4 +48,4 @@
 
 ## Recommended next step
 
-ADG43 design L1 canonical URL pair discovery for missing candidates; no fetch/write in ADG42
+ADG44 bounded diagnostic probe for remaining missing canonical URLs; requires explicit user authorization; must NOT proceed to raw write; ADG44 must NOT be executed without authorization
