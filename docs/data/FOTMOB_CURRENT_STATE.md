@@ -7,15 +7,15 @@
 
 ## Current status
 
-- latest completed phase: ADG45 L1 canonical URL discovery strategy review
-- latest merged ADG PR: #1380
-- active workflow PR: ADG45 probe result review
-- next data phase: user must select and authorize revised L1 discovery strategy; do NOT execute without authorization
+- latest completed phase: ADG46 SSR pageProps discovery authorization gate prepared
+- latest merged ADG PR: #1381
+- active workflow PR: ADG46 SSR pageProps discovery gate
+- next data phase: user must explicitly authorize ADG46 SSR/pageProps bounded diagnostic probe; do NOT execute without authorization
 - raw_write_ready_count: 0
 
 ## Confirmed facts
 
-- ADG45 review: ADG44 probe confirmed FotMob API endpoints not accessible (2 endpoint attempts, both 404). Simple HTTPS GET strategy failed. Four revised L1 discovery strategies proposed. User must select and authorize next approach.
+- ADG46 SSR gate: fotmob_ssr_pageprops chosen as preferred strategy. 2 future probe targets selected (4830473 PSG-Angers, 4830499 Marseille-PSG). Safe summary extraction contract defined (22 allowed fields). 7 forbidden save types. Authorization gate prepared; probe NOT executed.
 - ADG44 probe result: all 5 targets attempted; FotMob API endpoints (league API id=47, id=53) return 404 via simple HTTPS GET. API architecture has changed. No canonical URLs discovered, no route_hash_pairs verified. No full payload saved. No raw write. 0/5 canonical URL found. Endpoint access requires revised strategy.
 - ADG43 result: planning completed for 32 corrected candidates. 27 missing canonical_url targets require L1 discovery. 5 unverified route_hash_pair targets require detail-page verification. ADG44 bounded diagnostic probe designed but NOT executed.
 - ADG42 result: total_corrected_candidates=32, canonical_url_atomic_identity_valid_count=5, canonical_url_missing_count=27, route_hash_pair_unverified_count=5, raw_write_ready_count=0.
@@ -52,4 +52,4 @@
 
 ## Recommended next step
 
-User must select and explicitly authorize one of four revised L1 discovery strategies; recommended: fotmob_ssr_pageprops; do NOT execute any strategy without explicit authorization; do NOT raw write
+User must explicitly authorize ADG46 SSR/pageProps bounded diagnostic probe; 2 targets selected; safe summary extraction contract defined; in-memory parse only; no full HTML/pageProps save; do NOT execute probe without authorization; do NOT raw write
