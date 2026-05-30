@@ -7,14 +7,15 @@
 
 ## Current status
 
-- latest completed phase: ADG43 L1 canonical URL pair discovery planning
-- latest merged ADG PR: #1377
-- active workflow PR: ADG43 L1 canonical URL pair discovery planning
-- next data phase: ADG44 bounded diagnostic probe ONLY with explicit user authorization
+- latest completed phase: ADG44 probe authorization gate prepared
+- latest merged ADG PR: #1378
+- active workflow PR: ADG44 probe authorization gate
+- next data phase: ADG44 bounded diagnostic probe execution REQUIRES explicit user authorization; NOT auto-executed
 - raw_write_ready_count: 0
 
 ## Confirmed facts
 
+- ADG44 auth gate: 5 future probe targets selected (2 missing L1 discovery, 3 unverified detail verification). Authorization gate prepared; probe NOT executed; requires explicit user authorization.
 - ADG43 result: planning completed for 32 corrected candidates. 27 missing canonical_url targets require L1 discovery. 5 unverified route_hash_pair targets require detail-page verification. ADG44 bounded diagnostic probe designed but NOT executed.
 - ADG42 result: total_corrected_candidates=32, canonical_url_atomic_identity_valid_count=5, canonical_url_missing_count=27, route_hash_pair_unverified_count=5, raw_write_ready_count=0.
 
@@ -32,10 +33,12 @@
 
 ## Current blockers
 
+- ADG44 probe execution requires explicit user authorization; not yet authorized.
 - 27 corrected candidates still lack canonical_detail_url and must not be guessed.
 - 5 corrected candidates have route_hash_pair from source-controlled canonical URL evidence but remain detail-page unverified.
 - Current wrong-leg source records must not be raw-written.
 - Corrected artifacts are not raw-write-ready.
+- 5 future probe targets selected; 0 probes executed.
 
 ## Forbidden without explicit authorization
 
@@ -48,4 +51,4 @@
 
 ## Recommended next step
 
-ADG44 bounded diagnostic probe for remaining missing canonical URLs; requires explicit user authorization; must NOT proceed to raw write; ADG44 must NOT be executed without authorization
+User must explicitly authorize ADG44 probe execution; 5 targets selected and documented in ADG44 auth gate manifest; probe boundaries and stop rules defined; do NOT auto-execute; do NOT raw write
