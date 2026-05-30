@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG47 SSR probe result review
-- latest merged ADG PR: #1383
-- active workflow PR: ADG47 SSR probe result review
-- next data phase: user must authorize correct-orientation route_hash_pair discovery; SSR strategy is viable
+- latest completed phase: ADG48 correct-orientation route_hash_pair discovery gate prepared
+- latest merged ADG PR: #1384
+- active workflow PR: ADG48 correct-orientation gate
+- next data phase: user must explicitly authorize ADG48 SSR correct-orientation probe
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -53,4 +53,4 @@
 
 ## Recommended next step
 
-User must authorize correct-orientation route_hash_pair discovery; SSR strategy works; need to discover correct-orientation hash_ids under same route_codes; do NOT raw write; do NOT execute probe without explicit authorization
+User must explicitly authorize ADG48 SSR correct-orientation probe; 3 targets selected (1 reverse fix, 1 unverified verify, 1 missing discover); SSR strategy confirmed viable; do NOT execute without authorization; do NOT raw write
