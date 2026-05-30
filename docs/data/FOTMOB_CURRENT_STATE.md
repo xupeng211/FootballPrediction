@@ -7,15 +7,15 @@
 
 ## Current status
 
-- latest completed phase: ADG44 probe authorization gate prepared
-- latest merged ADG PR: #1378
-- active workflow PR: ADG44 probe authorization gate
-- next data phase: ADG44 bounded diagnostic probe execution REQUIRES explicit user authorization; NOT auto-executed
+- latest completed phase: ADG44 bounded diagnostic probe executed
+- latest merged ADG PR: #1379
+- active workflow PR: ADG44 bounded diagnostic probe results
+- next data phase: ADG45 review probe findings; revise L1 discovery strategy
 - raw_write_ready_count: 0
 
 ## Confirmed facts
 
-- ADG44 auth gate: 5 future probe targets selected (2 missing L1 discovery, 3 unverified detail verification). Authorization gate prepared; probe NOT executed; requires explicit user authorization.
+- ADG44 probe result: all 5 targets attempted; FotMob API endpoints (league API id=47, id=53) return 404 via simple HTTPS GET. API architecture has changed. No canonical URLs discovered, no route_hash_pairs verified. No full payload saved. No raw write. 0/5 canonical URL found. Endpoint access requires revised strategy.
 - ADG43 result: planning completed for 32 corrected candidates. 27 missing canonical_url targets require L1 discovery. 5 unverified route_hash_pair targets require detail-page verification. ADG44 bounded diagnostic probe designed but NOT executed.
 - ADG42 result: total_corrected_candidates=32, canonical_url_atomic_identity_valid_count=5, canonical_url_missing_count=27, route_hash_pair_unverified_count=5, raw_write_ready_count=0.
 
@@ -33,12 +33,12 @@
 
 ## Current blockers
 
-- ADG44 probe execution requires explicit user authorization; not yet authorized.
+- FotMob API endpoints (league API, match details) not accessible via simple HTTPS GET; 404 for both id=47 and id=53.
 - 27 corrected candidates still lack canonical_detail_url and must not be guessed.
 - 5 corrected candidates have route_hash_pair from source-controlled canonical URL evidence but remain detail-page unverified.
 - Current wrong-leg source records must not be raw-written.
 - Corrected artifacts are not raw-write-ready.
-- 5 future probe targets selected; 0 probes executed.
+- L1 discovery strategy needs revision: API architecture has changed; browser-based or authenticated access may be required.
 
 ## Forbidden without explicit authorization
 
@@ -51,4 +51,4 @@
 
 ## Recommended next step
 
-User must explicitly authorize ADG44 probe execution; 5 targets selected and documented in ADG44 auth gate manifest; probe boundaries and stop rules defined; do NOT auto-execute; do NOT raw write
+ADG45 review ADG44 probe findings; FotMob API endpoints inaccessible via simple HTTPS; revised L1 canonical URL discovery strategy needed; do NOT raw write; do NOT attempt browser/proxy bypass
