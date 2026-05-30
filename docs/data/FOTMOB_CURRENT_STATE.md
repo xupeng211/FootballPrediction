@@ -7,7 +7,7 @@
 
 ## Current status
 
-- latest completed phase: ADG39 canonical detail URL discovery
+- latest completed phase: ADG40 canonical URL identity model
 - latest merged ADG PR: #1354
 - active workflow PR: #1355 repository hygiene guardrails
 - next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
