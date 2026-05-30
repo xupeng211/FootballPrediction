@@ -1,0 +1,65 @@
+{
+    "schema_version": "adg40_v1",
+    "phase": "Phase 5.21-ADG40",
+    "generated_at": "2026-05-30T03:29:36.104Z",
+    "adg40_status": "completed_identity_model",
+    "investigation_performed": true,
+    "manual_observation_recorded": true,
+    "no_network": true,
+    "no_db_write": true,
+    "no_raw_write": true,
+    "full_payload_saved": false,
+    "observation": {
+        "url_a": "https://www.fotmob.com/zh-Hans/matches/manchester-city-vs-afc-bournemouth/2feiv3#4813735",
+        "page_a": "AFC Bournemouth 1-1 Manchester City, venue: Vitality Stadium",
+        "url_b": "https://www.fotmob.com/zh-Hans/matches/manchester-city-vs-afc-bournemouth/2feiv3#4813470",
+        "page_b": "Manchester City 3-1 AFC Bournemouth, venue: Etihad Stadium",
+        "implication": "same slug + same route code + different hash ID = different fixtures with different home/away"
+    },
+    "model": {
+        "slug": "display/SEO only — not authoritative for home/away orientation",
+        "route_code": "matchup route / team-pair entry point — NOT unique fixture identity",
+        "hash_id": "fixture selector within the route — determines which concrete fixture is displayed",
+        "canonical_identity": "atomic tuple = {route_code, hash_id} — must be preserved as unit"
+    },
+    "l2_prohibitions": [
+        "rewrite slug based on expected home/away",
+        "replace route_code with detail_id",
+        "treat route_code alone as unique fixture identity",
+        "treat hash_id alone as unique fixture identity",
+        "use historical enriched URL as primary L2 URL source",
+        "guess route_code when L1 has not provided one"
+    ],
+    "contract": {
+        "l1_must_deliver": [
+            "canonical_detail_url",
+            "route_code",
+            "hash_id",
+            "route_hash_pair",
+            "expected_home",
+            "expected_away",
+            "expected_date",
+            "expected_competition"
+        ],
+        "l2_must_consume": "canonical_detail_url as atomic unit; do not decompose and rewrite components",
+        "l2_must_validate": "observed home/away/date after fetch; do not assume orientation from URL"
+    },
+    "builder_assessment": {
+        "issue_1": "detail ID as route code fallback — violates model (route_code ≠ detail_id)",
+        "issue_2": "slug rewriting based on expected home/away — violates model (slug not authoritative)",
+        "issue_3": "route_code guessing when historical URL unavailable — violates model",
+        "recommendation": "deprecate buildCorrectedFotmobDetailUrl() for primary L2 use; use only when no L1 canonical URL exists AND mark as provisional"
+    },
+    "route_code_not_unique": true,
+    "hash_id_fixture_selector": true,
+    "slug_not_authoritative": true,
+    "route_hash_pair_required": true,
+    "existing_builder_requires_change": true,
+    "l2_url_rewriting_blocked": true,
+    "detail_id_as_route_code_blocked": true,
+    "alternate_hash_discovery_required": true,
+    "canonical_url_probe_required": true,
+    "adg32_38_explained": "L1 API provided route_code + hash_id for reverse fixture; correct-orientation hash_id was not discovered",
+    "raw_write_ready": 0,
+    "recommended_next_step": "ADG41: implement canonical URL atomic handoff contract; block L2 URL rewriting; do not raw write"
+}
