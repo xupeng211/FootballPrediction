@@ -7,13 +7,15 @@
 
 ## Current status
 
-- latest completed phase: ADG41 canonical URL atomic handoff contract
-- latest merged ADG PR: #1354
-- active workflow PR: #1355 repository hygiene guardrails
-- next data phase after hygiene merge: ADG22 (oriented corrected candidates found from league API; recomme...)
+- latest completed phase: ADG42 corrected artifacts canonical contract migration preview
+- latest merged ADG PR: #1376
+- active workflow PR: ADG42 corrected artifacts canonical contract migration preview
+- next data phase: ADG43 planning only; design L1 canonical URL pair discovery for missing candidates
 - raw_write_ready_count: 0
 
 ## Confirmed facts
+
+- ADG42 result: total_corrected_candidates=32, canonical_url_atomic_identity_valid_count=5, canonical_url_missing_count=27, route_hash_pair_unverified_count=5, raw_write_ready_count=0.
 
 - URL hash fragment can be detail identity evidence, but alone is insufficient for candidate acceptance.
 - Ligue 1 current source inventory / candidate records show systematic home/away inversion.
@@ -29,10 +31,10 @@
 
 ## Current blockers
 
-- 42 non-suspended Ligue 1 targets require corrected source inventory records.
-- 32 targets require external corrected-source discovery or evidence acquisition.
+- 27 corrected candidates still lack canonical_detail_url and must not be guessed.
+- 5 corrected candidates have route_hash_pair from source-controlled canonical URL evidence but remain detail-page unverified.
 - Current wrong-leg source records must not be raw-written.
-- Current source-controlled artifacts are insufficient to propose corrected records.
+- Corrected artifacts are not raw-write-ready.
 
 ## Forbidden without explicit authorization
 
@@ -45,4 +47,4 @@
 
 ## Recommended next step
 
-Merge workflow hygiene / cross-agent alignment. Then ADG21 bounded corrected-source discovery under updated rules.
+ADG43 design L1 canonical URL pair discovery for missing candidates; no fetch/write in ADG42
