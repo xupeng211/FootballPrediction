@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG49 correct-orientation strategy review
-- latest merged ADG PR: #1386
-- active workflow PR: ADG49 correct-orientation strategy review
-- next data phase: user must select and authorize revised discovery strategy; league_schedule_ssr_discovery recommended
+- latest completed phase: ADG50 league schedule SSR discovery gate prepared
+- latest merged ADG PR: #1388 (hotfix)
+- active workflow PR: ADG50 league schedule SSR discovery gate
+- next data phase: user must provide source-controlled league schedule page URL seed; do NOT execute probe without authorization
 - raw_write_ready_count: 0
 
 ## Confirmed facts
