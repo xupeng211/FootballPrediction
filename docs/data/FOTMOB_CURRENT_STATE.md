@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG57 no-write mutation dry-run preview
-- latest merged ADG PR: #1395
-- active workflow PR: ADG57 no-write mutation dry-run preview
-- next data phase: user must authorize ADG58 controlled mutation authorization gate
+- latest completed phase: ADG58 controlled mutation authorization gate
+- latest merged ADG PR: #1396
+- active workflow PR: ADG58 controlled mutation authorization gate
+- next data phase: user must explicitly authorize ADG59A using defined authorization phrase
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+User must explicitly authorize ADG59A: source-controlled artifact promotion for 32 targets, no DB write, no raw write; do NOT enter mutation without defined authorization phrase
 
 User must authorize ADG58 controlled mutation authorization gate; 32 dry-run records generated; 5 mutation classes proposed; 15 prerequisites defined; do NOT raw write
 
