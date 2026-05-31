@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG52 league schedule SSR probe executed
-- latest merged ADG PR: #1390
-- active workflow PR: ADG52 league schedule SSR probe results
-- next data phase: ADG53 review ADG52 league schedule probe findings; ALL 32 targets have canonical route_hash_pairs
+- latest completed phase: ADG53 league schedule SSR result review
+- latest merged ADG PR: #1391
+- active workflow PR: ADG53 league schedule SSR result review
+- next data phase: user must authorize ADG54 no-write canonical identity promotion preview
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+User must authorize ADG54 no-write canonical identity promotion preview; 32 targets have canonical identities from league schedule SSR; do NOT raw write
 
 ADG53 review ADG52 breakthrough: 32/32 targets matched, 306 fixtures, ALL have canonical route_hash_pairs; league schedule home/away data confirms correct orientation; do NOT raw write
 
