@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG51 league schedule URL seed recorded
-- latest merged ADG PR: #1389
-- active workflow PR: ADG51 URL seed gate
-- next data phase: user must explicitly authorize ADG52 bounded league schedule SSR probe
+- latest completed phase: ADG52 league schedule SSR probe executed
+- latest merged ADG PR: #1390
+- active workflow PR: ADG52 league schedule SSR probe results
+- next data phase: ADG53 review ADG52 league schedule probe findings; ALL 32 targets have canonical route_hash_pairs
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+ADG53 review ADG52 breakthrough: 32/32 targets matched, 306 fixtures, ALL have canonical route_hash_pairs; league schedule home/away data confirms correct orientation; do NOT raw write
 
 User must select and authorize revised strategy; 5 options proposed; league_schedule_ssr_discovery recommended; do NOT raw write
 
