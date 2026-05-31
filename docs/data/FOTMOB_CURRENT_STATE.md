@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG50 league schedule SSR discovery gate prepared
-- latest merged ADG PR: #1388 (hotfix)
-- active workflow PR: ADG50 league schedule SSR discovery gate
-- next data phase: user must provide source-controlled league schedule page URL seed; do NOT execute probe without authorization
+- latest completed phase: ADG51 league schedule URL seed recorded
+- latest merged ADG PR: #1389
+- active workflow PR: ADG51 URL seed gate
+- next data phase: user must explicitly authorize ADG52 bounded league schedule SSR probe
 - raw_write_ready_count: 0
 
 ## Confirmed facts
