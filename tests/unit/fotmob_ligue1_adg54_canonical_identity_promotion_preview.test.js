@@ -1,0 +1,8 @@
+'use strict'; const assert = require('node:assert/strict'); const test = require('node:test'); const fs = require('node:fs'); const path = require('node:path');
+const MANIFEST = path.resolve(__dirname, '../../docs/_manifests/fotmob_ligue1_adg54_canonical_identity_promotion_preview.json');
+test('ADG54 32/32 promotion preview ready, 0 blocked', () => { const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8')); assert.equal(a.total_targets, 32); assert.equal(a.promotion_preview_ready_count, 32); assert.equal(a.promotion_guard_blocked_count, 0); });
+test('ADG54 all 32 have route_hash_pair', () => { const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8')); assert.equal(a.canonical_url_parse_pass_count, 32); assert.ok(a.preview_records.every(p => p.corrected_route_hash_pair)); });
+test('ADG54 orientation 32/32 matches', () => { const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8')); assert.equal(a.orientation_pass_count, 32); assert.equal(a.orientation_mismatch_count, 0); });
+test('ADG54 zero duplicate conflicts', () => { const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8')); assert.equal(a.duplicate_conflict_count, 0); });
+test('ADG54 all raw_write_ready=false', () => { const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8')); assert.equal(a.raw_write_ready_count, 0); assert.ok(a.preview_records.every(p => p.raw_write_ready === false)); });
+test('ADG54 no DB/raw write, no full payload', () => { const a = JSON.parse(fs.readFileSync(MANIFEST, 'utf8')); const s = a.safety; assert.equal(s.db_write_performed, false); assert.equal(s.raw_write_execution_performed, false); assert.equal(s.full_payload_saved, false); });
