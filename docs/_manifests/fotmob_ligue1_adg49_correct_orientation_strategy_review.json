@@ -1,0 +1,93 @@
+{
+    "schema_version": "adg49_review_v1",
+    "lifecycle": "phase-artifact",
+    "phase": "Phase 5.21-ADG49-REVIEW",
+    "generated_at": "2026-05-31T05:27:38.562Z",
+    "input_sources": [
+        "docs/_manifests/fotmob_ligue1_adg48_ssr_correct_orientation_probe.json",
+        "docs/data/FOTMOB_CURRENT_STATE.md"
+    ],
+    "safety": {
+        "live_fetch_performed": false,
+        "network_request_performed": false,
+        "db_write_performed": false,
+        "raw_write_execution_performed": false,
+        "raw_match_data_insert_performed": false,
+        "full_payload_saved": false
+    },
+    "adg49_status": "review_completed",
+    "review_performed": true,
+    "ssr_strategy_still_viable": true,
+    "adg48_result_summary": {
+        "planned_probe_target_count": 3,
+        "attempted_request_count": 2,
+        "successful_http_200_count": 2,
+        "next_data_marker_found_count": 2,
+        "safe_summary_extracted_count": 2,
+        "correct_orientation_discovered": 0,
+        "route_hash_pair_verified": 0,
+        "reverse_fixture_confirmed": 2,
+        "alternate_hash_found": 0
+    },
+    "confirmed_reverse_pairs": [
+        {
+            "route_hash_pair": "2o4ahb#4830473",
+            "expected": "PSG vs Angers",
+            "observed": "Angers vs PSG, Apr 2026"
+        },
+        {
+            "route_hash_pair": "2sy6tc#4830472",
+            "expected": "Nice vs Auxerre",
+            "observed": "Auxerre vs Nice, May 2026"
+        }
+    ],
+    "remaining_problem": {
+        "known_route_hash_pairs": 5,
+        "confirmed_reverse": 2,
+        "still_unverified": 3,
+        "canonical_url_missing": 27,
+        "correct_orientation_route_hash_pair_missing": true,
+        "ssr_alternate_hash_not_exposed": true
+    },
+    "revised_strategy_options": [
+        {
+            "name": "league_schedule_ssr_discovery",
+            "desc": "Probe FotMob league schedule/matchday page (SSR) to enumerate all fixtures and discover correct-orientation route_hash_pairs from full-season data",
+            "risk": "Requires authorized probe; league page may be large but safe summary extraction works",
+            "requires_auth": true,
+            "not_executed": true
+        },
+        {
+            "name": "matchup_route_page_discovery",
+            "desc": "Use same route_code matchup page to see if it lists both legs (home/away) with different hash_ids",
+            "risk": "May not expose both legs on single page",
+            "requires_auth": true,
+            "not_executed": true
+        },
+        {
+            "name": "season_schedule_hydration_data",
+            "desc": "Look for season-level __NEXT_DATA__ that contains all fixtures with full route/hash pairs",
+            "risk": "Requires finding correct league season page URL",
+            "requires_auth": true,
+            "not_executed": true
+        },
+        {
+            "name": "manual_canonical_seed",
+            "desc": "Accept user-provided browser-observed canonical URL examples as manual evidence only, not automated source",
+            "risk": "Manual process; may still yield reverse fixtures",
+            "requires_auth": true,
+            "not_executed": true
+        },
+        {
+            "name": "alternate_public_source",
+            "desc": "Evaluate other public football data sources if FotMob cannot expose correct pairs safely",
+            "risk": "Different data model; integration cost",
+            "requires_auth": true,
+            "not_executed": true
+        }
+    ],
+    "recommended_approach": "league_schedule_ssr_discovery",
+    "strategy_revision_required": true,
+    "raw_write_ready_count": 0,
+    "recommended_next_step": "User must select and authorize revised discovery strategy; league_schedule_ssr_discovery recommended; do NOT raw write"
+}
