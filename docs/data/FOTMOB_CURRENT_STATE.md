@@ -7,15 +7,15 @@
 
 ## Current status
 
-- latest completed phase: ADG48 correct-orientation route_hash_pair discovery gate prepared
-- latest merged ADG PR: #1384
-- active workflow PR: ADG48 correct-orientation gate
-- next data phase: user must explicitly authorize ADG48 SSR correct-orientation probe
+- latest completed phase: ADG48 SSR correct-orientation bounded probe executed
+- latest merged ADG PR: #1385
+- active workflow PR: ADG48 SSR correct-orientation probe results
+- next data phase: ADG49 review findings; both known pairs are reverse fixtures; correct-orientation pairs still missing
 - raw_write_ready_count: 0
 
 ## Confirmed facts
 
-- ADG47 review: SSR strategy confirmed viable. 2o4ahb#4830473 confirmed reverse fixture. 5 known route_hash_pairs (1 confirmed reverse, 4 unverified). 27 missing canonical URLs. Correct-orientation route_hash_pair discovery needed: same route_code may serve both legs via different hash_ids.
+- ADG48 correct-orientation probe: 2 targets probed (PSG-Angers, Nice-Auxerre), both HTTP 200. Both confirmed reverse fixtures. 2o4ahb#4830473 = Angers-PSG (reverse observed again). 2sy6tc#4830472 = Auxerre-Nice (newly confirmed reverse). No correct-orientation pairs discovered. No alternate hash candidates found in pageProps. 5 known pairs: 2 confirmed reverse, 3 unverified. 27 missing canonical URLs.
 - ADG46 SSR probe: FotMob match page IS accessible (HTTP 200). __NEXT_DATA__ marker FOUND. Safe summary extracted in-memory. Critical finding: route_hash_pair 2o4ahb#4830473 corresponds to REVERSE fixture (Angers home vs PSG away, Apr 2026). Expected orientation (PSG home vs Angers away, Aug 2025) needs different route_hash_pair.
 - ADG44 probe result: all 5 targets attempted; FotMob API endpoints (league API id=47, id=53) return 404 via simple HTTPS GET. API architecture has changed. No canonical URLs discovered, no route_hash_pairs verified. No full payload saved. No raw write. 0/5 canonical URL found. Endpoint access requires revised strategy.
 - ADG43 result: planning completed for 32 corrected candidates. 27 missing canonical_url targets require L1 discovery. 5 unverified route_hash_pair targets require detail-page verification. ADG44 bounded diagnostic probe designed but NOT executed.
@@ -53,4 +53,4 @@
 
 ## Recommended next step
 
-User must explicitly authorize ADG48 SSR correct-orientation probe; 3 targets selected (1 reverse fix, 1 unverified verify, 1 missing discover); SSR strategy confirmed viable; do NOT execute without authorization; do NOT raw write
+ADG49 review ADG48 findings; 2/2 known pairs confirmed reverse; SSR data shows no alternate hash_ids in pageProps; correct-orientation discovery strategy needs revision; do NOT raw write
