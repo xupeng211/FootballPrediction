@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG55 acceptance/mutation planning completed
-- latest merged ADG PR: #1393
-- active workflow PR: ADG55 acceptance/mutation planning
-- next data phase: user must authorize ADG56 date guard completion/acceptance eligibility review
+- latest completed phase: ADG56 date guard completion review
+- latest merged ADG PR: #1394
+- active workflow PR: ADG56 date guard completion review
+- next data phase: user must authorize ADG57 no-write mutation dry-run preview
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+User must authorize ADG57 no-write mutation dry-run preview; 32/32 dates completed; 32/32 eligible; 0 blocked; all 32 require explicit re-acceptance; do NOT raw write
 
 User must authorize ADG56 date guard completion/acceptance eligibility review; 32 targets ready; 10 date_pass/22 date_unknown; 0 blocked; do NOT raw write
 
