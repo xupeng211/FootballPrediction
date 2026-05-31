@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG56 date guard completion review
-- latest merged ADG PR: #1394
-- active workflow PR: ADG56 date guard completion review
-- next data phase: user must authorize ADG57 no-write mutation dry-run preview
+- latest completed phase: ADG57 no-write mutation dry-run preview
+- latest merged ADG PR: #1395
+- active workflow PR: ADG57 no-write mutation dry-run preview
+- next data phase: user must authorize ADG58 controlled mutation authorization gate
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+User must authorize ADG58 controlled mutation authorization gate; 32 dry-run records generated; 5 mutation classes proposed; 15 prerequisites defined; do NOT raw write
 
 User must authorize ADG57 no-write mutation dry-run preview; 32/32 dates completed; 32/32 eligible; 0 blocked; all 32 require explicit re-acceptance; do NOT raw write
 
