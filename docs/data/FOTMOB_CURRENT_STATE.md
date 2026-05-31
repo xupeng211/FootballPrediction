@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG48 SSR correct-orientation bounded probe executed
-- latest merged ADG PR: #1385
-- active workflow PR: ADG48 SSR correct-orientation probe results
-- next data phase: ADG49 review findings; both known pairs are reverse fixtures; correct-orientation pairs still missing
+- latest completed phase: ADG49 correct-orientation strategy review
+- latest merged ADG PR: #1386
+- active workflow PR: ADG49 correct-orientation strategy review
+- next data phase: user must select and authorize revised discovery strategy; league_schedule_ssr_discovery recommended
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,5 +52,7 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+User must select and authorize revised strategy; 5 options proposed; league_schedule_ssr_discovery recommended; do NOT raw write
 
 ADG49 review ADG48 findings; 2/2 known pairs confirmed reverse; SSR data shows no alternate hash_ids in pageProps; correct-orientation discovery strategy needs revision; do NOT raw write

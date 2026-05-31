@@ -1,0 +1,7 @@
+'use strict'; const assert = require('node:assert/strict'); const test = require('node:test'); const { build } = require('../../scripts/ops/fotmob_ligue1_adg49_correct_orientation_strategy_review');
+test('ADG49 confirms 2 reverse pairs', () => { const a = build(); assert.equal(a.adg48_result_summary.reverse_fixture_confirmed, 2); assert.equal(a.confirmed_reverse_pairs.length, 2); });
+test('ADG49 records remaining problem', () => { const a = build(); const r = a.remaining_problem; assert.equal(r.known_route_hash_pairs, 5); assert.equal(r.confirmed_reverse, 2); assert.equal(r.still_unverified, 3); assert.equal(r.canonical_url_missing, 27); assert.equal(r.correct_orientation_route_hash_pair_missing, true); });
+test('ADG49 proposes 5 revised strategies', () => { const a = build(); assert.equal(a.strategy_revision_required, true); assert.ok(a.revised_strategy_options.length >= 4); assert.ok(a.revised_strategy_options.every(o => o.requires_auth && o.not_executed)); });
+test('ADG49 ssr strategy still viable', () => { const a = build(); assert.equal(a.ssr_strategy_still_viable, true); });
+test('ADG49 no network request', () => { const a = build(); const s = a.safety; assert.equal(s.live_fetch_performed, false); assert.equal(s.network_request_performed, false); assert.equal(s.db_write_performed, false); });
+test('ADG49 raw_write_ready_count=0', () => { const a = build(); assert.equal(a.raw_write_ready_count, 0); });
