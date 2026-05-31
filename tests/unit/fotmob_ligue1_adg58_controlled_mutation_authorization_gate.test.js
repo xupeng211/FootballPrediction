@@ -1,0 +1,7 @@
+'use strict'; const assert = require('node:assert/strict'); const test = require('node:test'); const { build } = require('../../scripts/ops/fotmob_ligue1_adg58_controlled_mutation_authorization_gate');
+test('ADG58 32 allowlist records, 0 mutation', () => { const a = build(); assert.equal(a.total_targets, 32); assert.equal(a.authorization_gate_records, 32); assert.equal(a.mutation_executed, 0); });
+test('ADG58 3 future scopes separated', () => { const a = build(); assert.equal(a.scope_a_allowed, 32); assert.equal(a.scope_b_requires_explicit_authorization, 32); assert.equal(a.scope_c_planned, 32); });
+test('ADG58 scope A no DB/raw write, scope B requires DB write', () => { const a = build(); const s = a.future_mutation_scopes; assert.equal(s.scope_a.db_write_required, false); assert.equal(s.scope_a.raw_write_required, false); assert.equal(s.scope_b.db_write_required, true); });
+test('ADG58 defines authorization phrases', () => { const a = build(); assert.ok(a.authorization_phrases.scope_a.includes('ADG59A')); assert.ok(a.authorization_phrases.scope_b.includes('ADG59B')); assert.ok(a.authorization_phrases.note.includes('do NOT enter mutation')); });
+test('ADG58 has rollback and validation plans', () => { const a = build(); assert.ok(a.rollback_plan.no_force_push); assert.ok(a.validation_plan.length >= 8); });
+test('ADG58 no network, no DB/raw write, raw_write_ready=0', () => { const a = build(); const s = a.safety; assert.equal(s.live_fetch_performed, false); assert.equal(s.db_write_performed, false); assert.equal(a.raw_write_ready_count, 0); });
