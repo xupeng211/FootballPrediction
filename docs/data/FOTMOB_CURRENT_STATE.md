@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG54 canonical identity promotion preview completed
-- latest merged ADG PR: #1392
-- active workflow PR: ADG54 canonical identity promotion preview
-- next data phase: user must authorize ADG55 acceptance/mutation planning; all 32 previews generated and pass all guards
+- latest completed phase: ADG55 acceptance/mutation planning completed
+- latest merged ADG PR: #1393
+- active workflow PR: ADG55 acceptance/mutation planning
+- next data phase: user must authorize ADG56 date guard completion/acceptance eligibility review
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+User must authorize ADG56 date guard completion/acceptance eligibility review; 32 targets ready; 10 date_pass/22 date_unknown; 0 blocked; do NOT raw write
 
 User must authorize ADG55; 32/32 promotion preview ready; 0 blocked; ALL guards pass (orientation 32/32, canonical parse 32/32, zero duplicates); do NOT raw write before explicit authorization
 
