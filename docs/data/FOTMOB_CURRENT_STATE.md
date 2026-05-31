@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG53 league schedule SSR result review
-- latest merged ADG PR: #1391
-- active workflow PR: ADG53 league schedule SSR result review
-- next data phase: user must authorize ADG54 no-write canonical identity promotion preview
+- latest completed phase: ADG54 canonical identity promotion preview completed
+- latest merged ADG PR: #1392
+- active workflow PR: ADG54 canonical identity promotion preview
+- next data phase: user must authorize ADG55 acceptance/mutation planning; all 32 previews generated and pass all guards
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+User must authorize ADG55; 32/32 promotion preview ready; 0 blocked; ALL guards pass (orientation 32/32, canonical parse 32/32, zero duplicates); do NOT raw write before explicit authorization
 
 User must authorize ADG54 no-write canonical identity promotion preview; 32 targets have canonical identities from league schedule SSR; do NOT raw write
 
