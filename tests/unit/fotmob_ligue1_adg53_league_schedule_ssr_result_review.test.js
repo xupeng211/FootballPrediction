@@ -1,0 +1,6 @@
+'use strict'; const assert = require('node:assert/strict'); const test = require('node:test'); const { build } = require('../../scripts/ops/fotmob_ligue1_adg53_league_schedule_ssr_result_review');
+test('ADG53 confirms 32/32 coverage', () => { const a = build(); const r = a.adg52_breakthrough_review; assert.equal(r.matched_targets, 32); assert.equal(r.matched_coverage_percent, 100); assert.equal(r.fixture_count_detected, 306); });
+test('ADG53 confirms orientation breakthrough', () => { const a = build(); const r = a.adg52_breakthrough_review; assert.equal(r.league_schedule_home_away_orientation_confirmed, true); assert.equal(r.prior_blocker_resolved, 'single_match_page_pageprops_did_not_expose_alternate_hash_ids'); });
+test('ADG53 ADG54 plan defined, not executed', () => { const a = build(); assert.ok(a.adg54_promotion_plan.requires_explicit_user_authorization); assert.ok(a.adg54_promotion_plan.not_executed_in_adg53); assert.ok(a.adg54_promotion_plan.guards.length >= 6); });
+test('ADG53 no network', () => { const a = build(); const s = a.safety; assert.equal(s.live_fetch_performed, false); assert.equal(s.network_request_performed, false); assert.equal(s.db_write_performed, false); });
+test('ADG53 raw_write_ready_count=0', () => { const a = build(); assert.equal(a.raw_write_ready_count, 0); });
