@@ -43,7 +43,7 @@
 - mapping_suspension_planning_required=true
 - baseline_suspension_planning_required=true
 - re_acceptance_planning_required=true
-- runner_contract_fix_planning_required=false
+- runner_contract_fix_planning_required=true
 - hash_mismatch_classification=secondary_to_identity_mismatch_reverse_fixture
 - hash_mismatch_baseline_update_allowed=false
 - reverse_fixture_evidence_blocks_raw_write_readiness=true

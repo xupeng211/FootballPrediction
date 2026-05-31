@@ -44,9 +44,9 @@
 
 ## Consistency Analysis
 
-- runner_input_contract_issue=false
+- runner_input_contract_issue=true
 - source_url_route_issue=true
-- ao_runner_uses_schedule_match_route=false
+- ao_runner_uses_schedule_match_route=true
 - ao_runner_uses_accepted_source_page_url_for_request=false
 - ao_test_uses_simplified_match_route_fixture=true
 - accepted_mapping_contradiction=true
