@@ -1,0 +1,855 @@
+{
+    "schema_version": "adg60_preflight_no_write_v1",
+    "lifecycle": "phase-artifact",
+    "phase": "ADG60-PREFLIGHT-NO-WRITE",
+    "generated_at": "2026-06-01T12:53:20.984Z",
+    "base_main_commit": "bc278ff440e3941fe9492647efc86df4da970924",
+    "input_sources": [
+        "docs/_manifests/fotmob_ligue1_adg59a_source_controlled_canonical_identity_promotion.json",
+        "docs/_manifests/fotmob_ligue1_adg59b_source_controlled_acceptance_suspension_state.json",
+        "docs/data/FOTMOB_CURRENT_STATE.md",
+        "docs/_reports/FOTMOB_LIGUE1_ADG59B_SOURCE_CONTROLLED_ACCEPTANCE_SUSPENSION_STATE.md",
+        "docs/_reports/FOTMOB_LIGUE1_ADG59B_HYGIENE_POST_MERGE.md",
+        "SELECT-only DB invariant"
+    ],
+    "safety": {
+        "db_write_performed": false,
+        "raw_write_performed": false,
+        "raw_match_data_insert_performed": false,
+        "live_fetch_performed": false,
+        "network_fetch_performed": false,
+        "schema_migration_performed": false,
+        "adg60_write_performed": false
+    },
+    "db_invariant_before": {
+        "bookmaker_odds_history": 2,
+        "l3_features": 2,
+        "match_features_training": 2,
+        "matches": 60,
+        "predictions": 2,
+        "raw_match_data": 18
+    },
+    "db_invariant_after": {
+        "bookmaker_odds_history": 2,
+        "l3_features": 2,
+        "match_features_training": 2,
+        "matches": 60,
+        "predictions": 2,
+        "raw_match_data": 18
+    },
+    "target_count": 32,
+    "accepted_count": 32,
+    "suspension_resolved_count": 32,
+    "duplicate_conflict": 0,
+    "orientation_pass": 32,
+    "date_pass": 32,
+    "competition_pass": 32,
+    "raw_write_ready_count_before": 0,
+    "raw_write_ready_count_after": 0,
+    "raw_write_ready_count": 0,
+    "per_target_preflight_results": [
+        {
+            "target_match_id": "53_20252026_4830473",
+            "corrected_hash_id": "4830473",
+            "corrected_route_hash_pair": "2o4ahb#4830473",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830472",
+            "corrected_hash_id": "4830472",
+            "corrected_route_hash_pair": "2sy6tc#4830472",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830474",
+            "corrected_hash_id": "4830474",
+            "corrected_route_hash_pair": "37a71l#4830474",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830475",
+            "corrected_hash_id": "4830475",
+            "corrected_route_hash_pair": "2th5t2#4830475",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830478",
+            "corrected_hash_id": "4830478",
+            "corrected_route_hash_pair": "2f5cib#4830478",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830479",
+            "corrected_hash_id": "4830479",
+            "corrected_route_hash_pair": "2he6a1#4830479",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830476",
+            "corrected_hash_id": "4830476",
+            "corrected_route_hash_pair": "2o5ty5#4830476",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830477",
+            "corrected_hash_id": "4830477",
+            "corrected_route_hash_pair": "363pdo#4830477",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830480",
+            "corrected_hash_id": "4830480",
+            "corrected_route_hash_pair": "2s51f2#4830480",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830482",
+            "corrected_hash_id": "4830482",
+            "corrected_route_hash_pair": "2sxslt#4830482",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830483",
+            "corrected_hash_id": "4830483",
+            "corrected_route_hash_pair": "1ucu3j#4830483",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830484",
+            "corrected_hash_id": "4830484",
+            "corrected_route_hash_pair": "38kq0z#4830484",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830485",
+            "corrected_hash_id": "4830485",
+            "corrected_route_hash_pair": "2sxeeb#4830485",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830486",
+            "corrected_hash_id": "4830486",
+            "corrected_route_hash_pair": "1u3kbv#4830486",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830487",
+            "corrected_hash_id": "4830487",
+            "corrected_route_hash_pair": "2us06f#4830487",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830488",
+            "corrected_hash_id": "4830488",
+            "corrected_route_hash_pair": "2gwqpe#4830488",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830489",
+            "corrected_hash_id": "4830489",
+            "corrected_route_hash_pair": "2aqs46#4830489",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830490",
+            "corrected_hash_id": "4830490",
+            "corrected_route_hash_pair": "37310i#4830490",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830491",
+            "corrected_hash_id": "4830491",
+            "corrected_route_hash_pair": "2t6hdp#4830491",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830492",
+            "corrected_hash_id": "4830492",
+            "corrected_route_hash_pair": "36cxwz#4830492",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830493",
+            "corrected_hash_id": "4830493",
+            "corrected_route_hash_pair": "36aub3#4830493",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830494",
+            "corrected_hash_id": "4830494",
+            "corrected_route_hash_pair": "2u5qiz#4830494",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830495",
+            "corrected_hash_id": "4830495",
+            "corrected_route_hash_pair": "2s9rcv#4830495",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830497",
+            "corrected_hash_id": "4830497",
+            "corrected_route_hash_pair": "2gcrq9#4830497",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830498",
+            "corrected_hash_id": "4830498",
+            "corrected_route_hash_pair": "2n29lb#4830498",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830499",
+            "corrected_hash_id": "4830499",
+            "corrected_route_hash_pair": "2t82ab#4830499",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830500",
+            "corrected_hash_id": "4830500",
+            "corrected_route_hash_pair": "2skdzb#4830500",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830501",
+            "corrected_hash_id": "4830501",
+            "corrected_route_hash_pair": "37bglo#4830501",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830502",
+            "corrected_hash_id": "4830502",
+            "corrected_route_hash_pair": "26e9n2#4830502",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830505",
+            "corrected_hash_id": "4830505",
+            "corrected_route_hash_pair": "2u3coy#4830505",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830507",
+            "corrected_hash_id": "4830507",
+            "corrected_route_hash_pair": "268cvm#4830507",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        },
+        {
+            "target_match_id": "53_20252026_4830510",
+            "corrected_hash_id": "4830510",
+            "corrected_route_hash_pair": "2t8gik#4830510",
+            "match_exists": true,
+            "canonical_identity_exists": true,
+            "raw_match_data_exists": false,
+            "duplicate_risk": false,
+            "home_away_conflict": false,
+            "date_conflict": false,
+            "competition_conflict": false,
+            "route_hash_pair_conflict": false,
+            "hash_id_conflict": false,
+            "missing_raw_payload": true,
+            "missing_writable_fields": [
+                "raw_data"
+            ],
+            "schema_gap": false,
+            "raw_write_ready": false,
+            "classifications": [
+                "blocked_missing_payload",
+                "blocked_requires_explicit_write_authorization"
+            ]
+        }
+    ],
+    "preflight_field_counts": {
+        "match_exists": 32,
+        "canonical_identity_exists": 32,
+        "raw_match_data_exists": 0,
+        "duplicate_risk": 0,
+        "home_away_conflict": 0,
+        "date_conflict": 0,
+        "competition_conflict": 0,
+        "route_hash_pair_conflict": 0,
+        "hash_id_conflict": 0,
+        "missing_raw_payload": 32,
+        "missing_writable_fields": 32,
+        "schema_gap": 0
+    },
+    "aggregate_counts": {
+        "preflight_pass": 0,
+        "blocked_missing_payload": 32,
+        "blocked_existing_duplicate": 0,
+        "blocked_identity_conflict": 0,
+        "blocked_schema_gap": 0,
+        "blocked_requires_explicit_write_authorization": 32,
+        "unknown_needs_manual_review": 0
+    },
+    "blockers": [
+        "blocked_missing_payload: no source-controlled raw payload exists for any of the 32 targets",
+        "blocked_requires_explicit_write_authorization: ADG60 write requires separate user authorization"
+    ],
+    "risks": [
+        "raw payload acquisition is not part of this PR",
+        "raw-write execution must remain separated from preflight",
+        "any future write must re-check DB invariant and target duplicates immediately before transaction"
+    ],
+    "decision": "blocked",
+    "next_authorization_required": true,
+    "recommended_next_step": "ADG60 write remains blocked until separate user authorization."
+}

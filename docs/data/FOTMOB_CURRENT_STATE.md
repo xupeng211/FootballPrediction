@@ -9,8 +9,8 @@
 
 - latest completed phase: ADG59B source-controlled acceptance/suspension state completed
 - latest merged ADG PR: #1399
-- active workflow PR: none; pending ADG60 authorization
-- next data phase: stop; ADG60 requires separate explicit authorization
+- active workflow PR: ADG60-PREFLIGHT no-write
+- next data phase: stop; ADG60 write requires separate explicit authorization
 - raw_write_ready_count: 0
 - latest ADG59B merge commit: eac95fc6839e215969d5c3315b5ea5950de93cd3
 
