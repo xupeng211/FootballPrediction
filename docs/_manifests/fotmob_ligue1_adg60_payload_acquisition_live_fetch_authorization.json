@@ -1,0 +1,173 @@
+{
+    "schema_version": "adg60_payload_acquisition_live_fetch_authorization_v1",
+    "lifecycle": "phase-artifact",
+    "phase": "ADG60-PAYLOAD-ACQUISITION-LIVE-FETCH-AUTHORIZATION",
+    "generated_at": "2026-06-02T00:00:00.000Z",
+    "source_inputs": [
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PREFLIGHT_NO_WRITE.md",
+        "docs/_manifests/fotmob_ligue1_adg60_preflight_no_write.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_RAW_PAYLOAD_SOURCE_INVENTORY.md",
+        "docs/_manifests/fotmob_ligue1_adg60_raw_payload_source_inventory.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PAYLOAD_ACQUISITION_PLAN.md",
+        "docs/_manifests/fotmob_ligue1_adg60_payload_acquisition_plan.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PAYLOAD_ACQUISITION_AUTHORIZATION_GATE.md",
+        "docs/_manifests/fotmob_ligue1_adg60_payload_acquisition_authorization_gate.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PAYLOAD_ACQUISITION_DRY_RUN_NO_WRITE.md",
+        "docs/_manifests/fotmob_ligue1_adg60_payload_acquisition_dry_run_no_write.json",
+        "docs/_manifests/fotmob_ligue1_adg59b_source_controlled_acceptance_suspension_state.json",
+        "docs/data/FOTMOB_CURRENT_STATE.md"
+    ],
+    "target_count": 32,
+    "accepted_count": 32,
+    "suspension_resolved_count": 32,
+    "raw_write_ready_count": 0,
+    "current_blockers": {
+        "blocked_missing_payload": 32,
+        "blocked_requires_explicit_write_authorization": 32,
+        "raw_write_ready_count": 0,
+        "decision": "blocked"
+    },
+    "dry_run_matrix_count": 32,
+    "command_preview_only": true,
+    "command_executed": false,
+    "authorization_contract": {
+        "authorization_stage_requested": true,
+        "live_fetch_may_be_requested_in_next_phase": true,
+        "network_fetch_may_be_requested_in_next_phase": true,
+        "browser_automation_may_be_requested_in_next_phase": false,
+        "current_pr_live_fetch_performed": false,
+        "current_pr_network_fetch_performed": false,
+        "current_pr_browser_automation_performed": false
+    },
+    "target_scope": [
+        "exactly 32 ADG59B accepted Ligue 1 targets",
+        "no scope expansion",
+        "no target discovery",
+        "no extra leagues",
+        "no extra seasons",
+        "no extra matches",
+        "no opportunistic collection"
+    ],
+    "fetch_method_policy": {
+        "preferred": "minimal direct detail endpoint / pageProps route if already source-controlled and stable; use corrected_route_hash_pair from ADG59B source-controlled artifacts",
+        "acceptable_only_if_explicitly_authorized": "browser-backed capture (Playwright/Puppeteer/Chromium); requires separate authorization because of higher anti-bot risk",
+        "not_preferred": "legacy API route guessing (FotMob legacy API endpoints returned 404; not reliable)",
+        "forbidden_without_separate_approval": [
+            "uncontrolled crawler",
+            "broad discovery",
+            "recursive fetch",
+            "full-site crawl"
+        ]
+    },
+    "batch_policy": {
+        "initial_batch_size": 1,
+        "max_batch_size_before_review": 3,
+        "require_manual_review_after_first_successful_target": true,
+        "require_manual_review_after_any_mismatch": true,
+        "no_automatic_32_target_full_run_in_first_execution_pr": true,
+        "batch_size_increase_requires_separate_authorization_pr": true
+    },
+    "rate_limit_policy": {
+        "minimum_delay_between_requests_seconds": {
+            "min": 20,
+            "max": 60
+        },
+        "randomized_human_like_delay_allowed": "only_if_explicitly_authorized",
+        "stop_on_429": true,
+        "stop_on_403": true,
+        "stop_on_captcha": true,
+        "stop_on_anti_bot": true,
+        "stop_on_redirect_anomaly": true,
+        "no_retry_storm": true,
+        "no_parallel_fetch_in_first_execution_pr": true,
+        "max_requests_per_run_must_be_explicitly_declared": true
+    },
+    "payload_persistence_policy": {
+        "payload_persistence_must_be_separately_authorized": true,
+        "full_raw_payload_not_committed_to_git": true,
+        "html_next_data_pageprops_source_body_not_committed_to_git": true,
+        "source_controlled_manifest_may_store_only": [
+            "metadata",
+            "hash",
+            "size",
+            "timestamp",
+            "target_identity",
+            "status"
+        ],
+        "raw_payload_storage_path_must_be_gitignored": true,
+        "verify_gitignore_before_any_payload_persistence": true,
+        "cleanup_policy_required": true,
+        "payload_minimization_policy_required": true,
+        "stable_hash_policy_required": true,
+        "payload_saved_in_this_pr": false
+    },
+    "db_raw_write_policy": {
+        "db_write_prohibited": true,
+        "raw_write_prohibited": true,
+        "raw_match_data_insert_prohibited": true,
+        "schema_migration_prohibited": true,
+        "adg60_write_blocked": true,
+        "raw_write_ready_count_remains_0": true,
+        "future_payload_capture_success_does_not_imply_raw_write_ready": true,
+        "raw_write_ready_reconsideration_requires": [
+            "source_controlled_metadata_hash_validation",
+            "separate_write_authorization"
+        ]
+    },
+    "stop_conditions": [
+        "target identity mismatch",
+        "home/away orientation mismatch",
+        "expected date mismatch",
+        "competition mismatch",
+        "missing corrected_hash_id",
+        "missing route hash",
+        "duplicate raw_match_data row already exists",
+        "output directory not clean",
+        "payload would be saved to git-tracked path",
+        "full HTML would be saved",
+        "full pageProps would be saved",
+        "DB write attempted",
+        "raw_match_data insert attempted",
+        "unexpected network route",
+        "unexpected redirect",
+        "403 / 429 / captcha / anti-bot / blocked response",
+        "unexpected schema / payload structure",
+        "payload too large (> 5 MB per target)",
+        "more targets than authorized batch",
+        "any automatic retry loop"
+    ],
+    "future_execution_prerequisites": [
+        "This authorization gate is merged and unmodified",
+        "Authorization contract flags are re-checked",
+        "Target scope is still exactly 32 ADG59B accepted Ligue 1 targets",
+        "Batch size and rate-limit are explicitly declared in the execution PR",
+        "Output directory is clean and gitignored",
+        "Stop conditions are wired into the execution script",
+        "No DB write, raw write, or raw_match_data insert code paths are reachable",
+        "Execution PR explicitly references this authorization gate"
+    ],
+    "safety": {
+        "live_fetch_performed": false,
+        "network_fetch_performed": false,
+        "browser_automation_performed": false,
+        "payload_saved": false,
+        "acquisition_execution_performed": false,
+        "db_write_performed": false,
+        "raw_write_performed": false,
+        "raw_match_data_insert_performed": false,
+        "schema_migration_performed": false,
+        "adg60_write_performed": false
+    },
+    "live_fetch_performed": false,
+    "network_fetch_performed": false,
+    "browser_automation_performed": false,
+    "payload_saved": false,
+    "acquisition_execution_performed": false,
+    "db_write_performed": false,
+    "raw_write_performed": false,
+    "raw_match_data_insert_performed": false,
+    "schema_migration_performed": false,
+    "adg60_write_performed": false,
+    "recommended_next_phase": "ADG60-PAYLOAD-ACQUISITION-LIVE-FETCH-ONE-TARGET-NO-WRITE",
+    "next_phase_boundary": "Next phase must execute live fetch for at most 1 target. DB write, raw write, and raw_match_data insert remain prohibited. If payload persistence is separately authorized, store only to gitignored external raw storage and commit only metadata/hash/status manifest. If payload persistence is NOT authorized, request/response metadata dry-run only (no body save)."
+}
