@@ -7,11 +7,12 @@
 
 ## Current status
 
-- latest completed phase: ADG59B source-controlled acceptance/suspension state
-- latest merged ADG PR: #1398
-- active workflow PR: ADG59B source-controlled acceptance/suspension state
+- latest completed phase: ADG59B source-controlled acceptance/suspension state completed
+- latest merged ADG PR: #1399
+- active workflow PR: none; pending ADG60 authorization
 - next data phase: stop; ADG60 requires separate explicit authorization
 - raw_write_ready_count: 0
+- latest ADG59B merge commit: eac95fc6839e215969d5c3315b5ea5950de93cd3
 
 ## Confirmed facts
 
@@ -53,9 +54,12 @@
 
 ## Recommended next step
 
-FIRST MUTATION MILESTONE: 32 Ligue 1 corrected canonical identities promoted to source-controlled artifact. All guards pass. User must explicitly authorize ADG59B using defined authorization phrase with DB backup plan.
+STOP: ADG59B merged via PR #1399 at merge commit eac95fc6839e215969d5c3315b5ea5950de93cd3.
+ADG60 remains blocked without separate explicit authorization.
 
-ADG59B source-controlled acceptance/suspension state completed for exactly 32 ADG59A Ligue 1 targets; accepted_count=32; suspension_resolved_count=32; raw_write_ready_count=0; no DB write, raw write, raw_match_data insert, schema migration, live fetch, or ADG60.
+ADG59B source-controlled acceptance/suspension state completed for exactly 32 ADG59A Ligue 1 targets;
+accepted_count=32; suspension_resolved_count=32; raw_write_ready_count=0; no DB write, raw write,
+raw_match_data insert, schema migration, live fetch, or ADG60 occurred in ADG59B.
 
 User must explicitly authorize ADG59A: source-controlled artifact promotion for 32 targets, no DB write, no raw write; do NOT enter mutation without defined authorization phrase
 
