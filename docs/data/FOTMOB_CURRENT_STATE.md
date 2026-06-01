@@ -7,10 +7,10 @@
 
 ## Current status
 
-- latest completed phase: ADG58 controlled mutation authorization gate
-- latest merged ADG PR: #1396
-- active workflow PR: ADG58 controlled mutation authorization gate
-- next data phase: user must explicitly authorize ADG59A using defined authorization phrase
+- latest completed phase: ADG59A source-controlled canonical identity promotion
+- latest merged ADG PR: #1397
+- active workflow PR: ADG59A source-controlled canonical identity promotion
+- next data phase: user must authorize ADG59B using defined authorization phrase
 - raw_write_ready_count: 0
 
 ## Confirmed facts
@@ -52,6 +52,8 @@
 - full HTML / pageProps / raw_data / source body save or print
 
 ## Recommended next step
+
+FIRST MUTATION MILESTONE: 32 Ligue 1 corrected canonical identities promoted to source-controlled artifact. All guards pass. User must explicitly authorize ADG59B using defined authorization phrase with DB backup plan.
 
 User must explicitly authorize ADG59A: source-controlled artifact promotion for 32 targets, no DB write, no raw write; do NOT enter mutation without defined authorization phrase
 
