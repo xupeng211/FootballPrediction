@@ -65,6 +65,7 @@ unfixable = []
 "scripts/*" = ["T20"]  # 允许脚本中使用 print
 "tests/**/*.py" = ["S101", "D101", "D102", "D103"]
 "tests/*.py" = ["S101", "D101", "D102", "D103"]
+"tests/unit/fotmob_football_calendar_target_registry_design_check.test.py" = ["N999", "S101", "D101", "D102", "D103"]
 "__init__.py" = ["F401"]  # 允许未使用的导入
 
 [lint.isort]
