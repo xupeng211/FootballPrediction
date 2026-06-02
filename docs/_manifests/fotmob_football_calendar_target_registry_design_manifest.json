@@ -1,0 +1,73 @@
+{
+  "schema_version": "fotmob_football_calendar_target_registry_design_v1",
+  "lifecycle": "permanent/governance",
+  "phase": "FOTMOB-FOOTBALL-CALENDAR-TARGET-REGISTRY-DESIGN-AND-MIGRATION",
+  "migration_path": "database/migrations/V26.6__create_football_calendar_target_registry.sql",
+  "design_doc_path": "docs/data/FOTMOB_FOOTBALL_CALENDAR_TARGET_REGISTRY_DESIGN.md",
+  "helper_path": "scripts/ops/fotmob_football_calendar_target_registry_design_check.py",
+  "test_path": "tests/unit/fotmob_football_calendar_target_registry_design_check.test.py",
+  "tables": [
+    "football_teams",
+    "football_competitions",
+    "football_competition_editions",
+    "football_team_competition_participation",
+    "football_match_targets",
+    "football_match_target_teams",
+    "football_source_identities"
+  ],
+  "enums": {
+    "team_type": ["club", "national"],
+    "competition_type": [
+      "league",
+      "domestic_cup",
+      "continental_club",
+      "international_tournament",
+      "international_qualifier",
+      "nations_league",
+      "friendly",
+      "super_cup",
+      "other"
+    ],
+    "target_state": [
+      "discovered",
+      "pending_raw_fetch",
+      "raw_fetched",
+      "raw_json_stored",
+      "blocked",
+      "failed",
+      "retired"
+    ],
+    "participation_state": ["expected", "confirmed", "eliminated", "completed", "unknown"]
+  },
+  "supports_club_matches": true,
+  "supports_national_team_matches": true,
+  "supports_league": true,
+  "supports_domestic_cup": true,
+  "supports_continental_club": true,
+  "supports_international_tournament": true,
+  "supports_international_qualifier": true,
+  "supports_secondary_leagues": true,
+  "supports_team_full_calendar": true,
+  "non_goals": {
+    "no_network_fetch": true,
+    "no_live_fetch": true,
+    "no_db_data_write": true,
+    "no_raw_json_write": true,
+    "no_raw_match_data_write": true,
+    "no_l3_features_write": true,
+    "no_match_features_training_write": true,
+    "no_predictions_write": true,
+    "no_scheduler_enable": true,
+    "no_feature_parse": true,
+    "no_model_training": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "db_data_write_performed": false,
+    "raw_json_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-DRY-RUN"
+}
