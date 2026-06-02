@@ -1,0 +1,1112 @@
+{
+  "schema_version": "adg60_raw_payload_extract_smoke_no_db_v1",
+  "phase": "ADG60-RAW-PAYLOAD-STORAGE-FOUNDATION-AND-CAPTURE-NO-DB",
+  "generated_at": "2026-06-02T09:36:10.461Z",
+  "source_manifest": "docs/_manifests/fotmob_raw_payload_capture_adg60_manifest.json",
+  "aggregate": {
+    "total_entries": 32,
+    "next_data_found": 32,
+    "next_data_parse_ok": 32,
+    "page_props_found": 32,
+    "extraction_ok": 32
+  },
+  "per_target_results": [
+    {
+      "target_index": 1,
+      "target_match_id": "53_20252026_4830473",
+      "expected_home": "Paris Saint-Germain",
+      "expected_away": "Angers",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 2,
+      "target_match_id": "53_20252026_4830472",
+      "expected_home": "Nice",
+      "expected_away": "Auxerre",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 3,
+      "target_match_id": "53_20252026_4830474",
+      "expected_home": "Strasbourg",
+      "expected_away": "Nantes",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 4,
+      "target_match_id": "53_20252026_4830475",
+      "expected_home": "Toulouse",
+      "expected_away": "Brest",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 5,
+      "target_match_id": "53_20252026_4830478",
+      "expected_home": "Lens",
+      "expected_away": "Brest",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 6,
+      "target_match_id": "53_20252026_4830479",
+      "expected_home": "Lorient",
+      "expected_away": "Lille",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 7,
+      "target_match_id": "53_20252026_4830476",
+      "expected_home": "Angers",
+      "expected_away": "Rennes",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 8,
+      "target_match_id": "53_20252026_4830477",
+      "expected_home": "Le Havre",
+      "expected_away": "Nice",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 9,
+      "target_match_id": "53_20252026_4830480",
+      "expected_home": "Lyon",
+      "expected_away": "Marseille",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 10,
+      "target_match_id": "53_20252026_4830482",
+      "expected_home": "Nantes",
+      "expected_away": "Auxerre",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 11,
+      "target_match_id": "53_20252026_4830483",
+      "expected_home": "Paris FC",
+      "expected_away": "Metz",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 12,
+      "target_match_id": "53_20252026_4830484",
+      "expected_home": "Toulouse",
+      "expected_away": "Paris Saint-Germain",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 13,
+      "target_match_id": "53_20252026_4830485",
+      "expected_home": "Auxerre",
+      "expected_away": "Monaco",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 14,
+      "target_match_id": "53_20252026_4830486",
+      "expected_home": "Brest",
+      "expected_away": "Paris FC",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 15,
+      "target_match_id": "53_20252026_4830487",
+      "expected_home": "Lille",
+      "expected_away": "Toulouse",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 16,
+      "target_match_id": "53_20252026_4830488",
+      "expected_home": "Marseille",
+      "expected_away": "Lorient",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 17,
+      "target_match_id": "53_20252026_4830489",
+      "expected_home": "Metz",
+      "expected_away": "Angers",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 18,
+      "target_match_id": "53_20252026_4830490",
+      "expected_home": "Nice",
+      "expected_away": "Nantes",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 19,
+      "target_match_id": "53_20252026_4830491",
+      "expected_home": "Paris Saint-Germain",
+      "expected_away": "Lens",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 20,
+      "target_match_id": "53_20252026_4830492",
+      "expected_home": "Rennes",
+      "expected_away": "Lyon",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 21,
+      "target_match_id": "53_20252026_4830493",
+      "expected_home": "Strasbourg",
+      "expected_away": "Le Havre",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 22,
+      "target_match_id": "53_20252026_4830494",
+      "expected_home": "Auxerre",
+      "expected_away": "Toulouse",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 23,
+      "target_match_id": "53_20252026_4830495",
+      "expected_home": "Brest",
+      "expected_away": "Nice",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 24,
+      "target_match_id": "53_20252026_4830497",
+      "expected_home": "Lens",
+      "expected_away": "Lille",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 25,
+      "target_match_id": "53_20252026_4830498",
+      "expected_home": "Lyon",
+      "expected_away": "Angers",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 26,
+      "target_match_id": "53_20252026_4830499",
+      "expected_home": "Marseille",
+      "expected_away": "Paris Saint-Germain",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 27,
+      "target_match_id": "53_20252026_4830500",
+      "expected_home": "Monaco",
+      "expected_away": "Metz",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 28,
+      "target_match_id": "53_20252026_4830501",
+      "expected_home": "Nantes",
+      "expected_away": "Rennes",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 29,
+      "target_match_id": "53_20252026_4830502",
+      "expected_home": "Paris FC",
+      "expected_away": "Strasbourg",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 30,
+      "target_match_id": "53_20252026_4830505",
+      "expected_home": "Lorient",
+      "expected_away": "Monaco",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 31,
+      "target_match_id": "53_20252026_4830507",
+      "expected_home": "Nice",
+      "expected_away": "Paris FC",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    },
+    {
+      "target_index": 32,
+      "target_match_id": "53_20252026_4830510",
+      "expected_home": "Strasbourg",
+      "expected_away": "Marseille",
+      "extraction_status": "ok",
+      "next_data_found": true,
+      "next_data_parse_ok": true,
+      "page_props_found": true,
+      "top_level_keys": [
+        "props",
+        "page",
+        "query",
+        "buildId",
+        "isFallback",
+        "isExperimentalCompile",
+        "dynamicIds",
+        "gssp",
+        "appGip",
+        "scriptLoader"
+      ],
+      "page_props_top_level_keys": [
+        "fetchingLeagueData",
+        "ssr",
+        "fallback",
+        "translations"
+      ],
+      "candidate_match_detail_key_paths": [
+        "props.pageProps"
+      ],
+      "body_saved": false,
+      "db_write": false,
+      "raw_match_data_insert": false
+    }
+  ],
+  "safety": {
+    "body_saved": false,
+    "full_json_committed": false,
+    "page_props_committed": false,
+    "db_write": false,
+    "raw_match_data_insert": false,
+    "adg60_write": false,
+    "raw_write_ready_marked": false
+  }
+}
