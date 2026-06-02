@@ -1,0 +1,74 @@
+{
+  "schema_version": "fotmob_football_calendar_target_registry_review_v1",
+  "lifecycle": "current-state/governance",
+  "phase": "FOTMOB-FOOTBALL-CALENDAR-TARGET-REGISTRY-REVIEW",
+  "reviewed_pr": 1423,
+  "reviewed_migration_path": "database/migrations/V26.6__create_football_calendar_target_registry.sql",
+  "reviewed_design_doc_path": "docs/data/FOTMOB_FOOTBALL_CALENDAR_TARGET_REGISTRY_DESIGN.md",
+  "reviewed_manifest_path": "docs/_manifests/fotmob_football_calendar_target_registry_design_manifest.json",
+  "review_report_path": "docs/_reports/FOTMOB_FOOTBALL_CALENDAR_TARGET_REGISTRY_REVIEW.md",
+  "registry_foundation_status": "foundation_solid",
+  "tables_reviewed": [
+    "football_teams",
+    "football_competitions",
+    "football_competition_editions",
+    "football_team_competition_participation",
+    "football_match_targets",
+    "football_match_target_teams",
+    "football_source_identities"
+  ],
+  "enums_reviewed": {
+    "team_type": ["club", "national"],
+    "competition_type": [
+      "league",
+      "domestic_cup",
+      "continental_club",
+      "international_tournament",
+      "international_qualifier",
+      "nations_league",
+      "friendly",
+      "super_cup",
+      "other"
+    ],
+    "target_state": [
+      "discovered",
+      "pending_raw_fetch",
+      "raw_fetched",
+      "raw_json_stored",
+      "blocked",
+      "failed",
+      "retired"
+    ],
+    "participation_state": ["expected", "confirmed", "eliminated", "completed", "unknown"]
+  },
+  "support_flags": {
+    "supports_club_teams": true,
+    "supports_national_teams": true,
+    "supports_domestic_cups": true,
+    "supports_continental_club_competitions": true,
+    "supports_international_tournaments": true,
+    "supports_international_qualifiers": true,
+    "supports_secondary_leagues": true,
+    "supports_team_full_calendar_reconstruction": true,
+    "supports_raw_json_db_linkage": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "db_data_write_performed": false,
+    "migration_performed": false,
+    "raw_json_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "remaining_gaps": [
+    "no_real_team_competition_or_match_target_seeded",
+    "no_discovery_crawler",
+    "no_dry_run_collector",
+    "no_live_fetch",
+    "no_scheduler",
+    "no_full_national_team_or_cup_coverage_data",
+    "no_parser_or_feature_layer"
+  ],
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-DRY-RUN"
+}
