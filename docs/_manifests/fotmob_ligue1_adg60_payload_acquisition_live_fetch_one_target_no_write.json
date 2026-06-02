@@ -1,0 +1,200 @@
+{
+    "schema_version": "adg60_payload_acquisition_live_fetch_one_target_no_write_v1",
+    "lifecycle": "phase-artifact",
+    "phase": "ADG60-PAYLOAD-ACQUISITION-LIVE-FETCH-ONE-TARGET-NO-WRITE",
+    "generated_at": "2026-06-02T03:50:59.670Z",
+    "source_inputs": [
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PREFLIGHT_NO_WRITE.md",
+        "docs/_manifests/fotmob_ligue1_adg60_preflight_no_write.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_RAW_PAYLOAD_SOURCE_INVENTORY.md",
+        "docs/_manifests/fotmob_ligue1_adg60_raw_payload_source_inventory.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PAYLOAD_ACQUISITION_PLAN.md",
+        "docs/_manifests/fotmob_ligue1_adg60_payload_acquisition_plan.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PAYLOAD_ACQUISITION_AUTHORIZATION_GATE.md",
+        "docs/_manifests/fotmob_ligue1_adg60_payload_acquisition_authorization_gate.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PAYLOAD_ACQUISITION_DRY_RUN_NO_WRITE.md",
+        "docs/_manifests/fotmob_ligue1_adg60_payload_acquisition_dry_run_no_write.json",
+        "docs/_reports/FOTMOB_LIGUE1_ADG60_PAYLOAD_ACQUISITION_LIVE_FETCH_AUTHORIZATION.md",
+        "docs/_manifests/fotmob_ligue1_adg60_payload_acquisition_live_fetch_authorization.json",
+        "docs/_manifests/fotmob_ligue1_adg59b_source_controlled_acceptance_suspension_state.json",
+        "docs/data/FOTMOB_CURRENT_STATE.md"
+    ],
+    "selected_target": {
+        "target_index": 1,
+        "target_match_id": "53_20252026_4830473",
+        "expected_home": "Paris Saint-Germain",
+        "expected_away": "Angers",
+        "expected_date": "2025-08-22",
+        "competition": "Ligue 1",
+        "corrected_hash_id": "4830473",
+        "corrected_route_hash_pair": "2o4ahb#4830473",
+        "selected_reason": "Default first target (smallest target_index=1) from dry-run matrix",
+        "preflight_identity_status": "accepted_suspension_resolved",
+        "preflight_route_status": "route_hash_pair_available"
+    },
+    "request_policy": {
+        "method": "GET",
+        "url": "https://www.fotmob.com/matches/2o4ahb/4830473",
+        "route_hash": "2o4ahb",
+        "match_id": "4830473",
+        "max_network_requests": 1,
+        "max_selected_targets": 1,
+        "timeout_ms": 20000,
+        "redirect": "manual",
+        "browser_automation": false,
+        "retry": false,
+        "parallelism": false,
+        "body_persistence": false,
+        "execute_flag_required": "--execute-one-target-live-fetch"
+    },
+    "preflight_checks": {
+        "passed": true,
+        "checks": [
+            {
+                "name": "exactly_one_target_selected",
+                "pass": true
+            },
+            {
+                "name": "target_count_total_32",
+                "pass": true
+            },
+            {
+                "name": "expected_home_exists",
+                "pass": true
+            },
+            {
+                "name": "expected_away_exists",
+                "pass": true
+            },
+            {
+                "name": "expected_date_exists",
+                "pass": true
+            },
+            {
+                "name": "competition_exists",
+                "pass": true
+            },
+            {
+                "name": "corrected_hash_id_exists",
+                "pass": true
+            },
+            {
+                "name": "corrected_route_hash_pair_exists",
+                "pass": true
+            },
+            {
+                "name": "url_constructed",
+                "pass": true
+            },
+            {
+                "name": "browser_automation_allowed",
+                "pass": false,
+                "note": "browser automation not allowed in this PR"
+            },
+            {
+                "name": "payload_body_persistence_allowed",
+                "pass": false,
+                "note": "body persistence not allowed in this PR"
+            },
+            {
+                "name": "db_write_allowed",
+                "pass": false,
+                "note": "DB write not allowed"
+            },
+            {
+                "name": "raw_write_allowed",
+                "pass": false,
+                "note": "raw write not allowed"
+            },
+            {
+                "name": "raw_match_data_insert_allowed",
+                "pass": false,
+                "note": "raw_match_data insert not allowed"
+            },
+            {
+                "name": "adg60_write_allowed",
+                "pass": false,
+                "note": "ADG60 write not allowed"
+            }
+        ],
+        "selected_target_count": 1,
+        "target_count_total": 32,
+        "execute_live_fetch_requested": true
+    },
+    "execution_result": {
+        "requestPerformed": true,
+        "requestCount": 1,
+        "httpStatus": 200,
+        "redirected": false,
+        "finalUrl": "https://www.fotmob.com/matches/2o4ahb/4830473",
+        "contentType": "text/html; charset=utf-8",
+        "byteSize": 281623,
+        "bodySha256": "d8081fc11823e5c0de014b71bb00fc14ee43cfdf1a286d10a86920abb74cab5a",
+        "payloadLike": true,
+        "minimalSchemaFlags": {
+            "hasNextDataMarker": true,
+            "hasPagePropsMarker": true,
+            "hasPropsMarker": true,
+            "looksLikeJson": false,
+            "looksLikeHtml": true,
+            "hasMatchDetails": true,
+            "hasGeneral": false,
+            "hasContent": false,
+            "hasTeamColorsPageProps": false
+        },
+        "stopped": false,
+        "stopReason": null,
+        "bodyPersisted": false,
+        "bodyLogged": false,
+        "bodyCommitted": false
+    },
+    "safety": {
+        "live_fetch_performed": true,
+        "network_fetch_performed": true,
+        "browser_automation_performed": false,
+        "payload_saved": false,
+        "response_body_saved": false,
+        "acquisition_execution_performed": true,
+        "db_write_performed": false,
+        "raw_write_performed": false,
+        "raw_match_data_insert_performed": false,
+        "schema_migration_performed": false,
+        "adg60_write_performed": false,
+        "raw_write_ready_marked": false
+    },
+    "live_fetch_performed": true,
+    "network_fetch_performed": true,
+    "browser_automation_performed": false,
+    "payload_saved": false,
+    "response_body_saved": false,
+    "acquisition_execution_performed": true,
+    "db_write_performed": false,
+    "raw_write_performed": false,
+    "raw_match_data_insert_performed": false,
+    "schema_migration_performed": false,
+    "adg60_write_performed": false,
+    "raw_write_ready_marked": false,
+    "recommended_next_phase": "ADG60-PAYLOAD-ACQUISITION-LIVE-FETCH-ONE-TARGET-NO-WRITE-REVIEW",
+    "next_phase_boundary": "Review the one-target live fetch result before any further target. No automatic progression to next target. DB/raw/raw_match_data writes remain prohibited.",
+    "stop_conditions": [
+        "target identity mismatch",
+        "home/away orientation mismatch",
+        "expected date mismatch",
+        "competition mismatch",
+        "missing corrected_hash_id",
+        "missing route hash",
+        "selected target count exceeded 1",
+        "network request count would exceed 1",
+        "output directory not clean",
+        "body would be persisted",
+        "DB write attempted",
+        "raw_match_data insert attempted",
+        "browser automation attempted in this PR",
+        "403 / 429 / captcha / anti-bot / blocked response",
+        "unexpected redirect",
+        "unexpected schema / payload structure",
+        "payload too large (> 5 MB)",
+        "more targets than authorized batch",
+        "any retry loop"
+    ]
+}
