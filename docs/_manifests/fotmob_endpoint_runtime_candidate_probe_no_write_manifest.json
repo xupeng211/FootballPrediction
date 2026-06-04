@@ -1,0 +1,110 @@
+{
+  "schema_version": "fotmob_endpoint_runtime_candidate_probe_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-ENDPOINT-RUNTIME-CANDIDATE-PROBE-NO-WRITE",
+  "run_id": "fotmob_endpoint_runtime_candidate_probe_no_write_v1",
+  "generated_at": "2026-06-04T18:37:05Z",
+  "mode": "controlled_endpoint_candidate_probe_no_write",
+  "inherited_plan": {
+    "endpoint_candidate_count": 10,
+    "next_probe_candidate_count": 3,
+    "html_hydration_route_status": "exhausted_no_embedded_match_detail",
+    "page_level_next_data_status": "no_match_detail_json_embedded",
+    "raw_json_readiness": "not_ready",
+    "db_write_readiness": "blocked",
+    "l2_harvesting_readiness": "blocked"
+  },
+  "selected_candidates": [
+    "ep-004",
+    "ep-005",
+    "ep-006"
+  ],
+  "selected_samples": [
+    {
+      "sample_id": "s01",
+      "match_id": "4813722",
+      "route_code": "2ygkcb",
+      "date_known": false
+    },
+    {
+      "sample_id": "s02",
+      "match_id": "4813492",
+      "route_code": "2ynv4k",
+      "date_known": false
+    }
+  ],
+  "probe_limits": {
+    "max_candidates": 3,
+    "max_samples": 2,
+    "max_network_requests": 6,
+    "max_body_bytes": 262144,
+    "browser_automation_allowed": false,
+    "cookie_harvesting_allowed": false,
+    "captcha_bypass_allowed": false,
+    "proxy_rotation_allowed": false,
+    "db_write_allowed": false,
+    "raw_write_allowed": false
+  },
+  "probe_results": [],
+  "skipped_candidates": [
+    {
+      "candidate_id": "ep-004",
+      "reason": "skipped_missing_build_id"
+    },
+    {
+      "candidate_id": "ep-005",
+      "reason": "skipped_missing_build_id"
+    },
+    {
+      "candidate_id": "ep-006",
+      "reason": "skipped_missing_date"
+    }
+  ],
+  "probe_summary": {
+    "allow_network_probe": true,
+    "network_requests_attempted": 0,
+    "strong_endpoint_match_detail_candidate_count": 0,
+    "weak_endpoint_match_detail_candidate_count": 0,
+    "partial_or_ambiguous_endpoint_candidate_count": 0,
+    "rejected_or_generic_endpoint_candidate_count": 0,
+    "blocked_403_count": 0,
+    "blocked_429_count": 0,
+    "not_found_404_count": 0,
+    "parse_failed_count": 0,
+    "skipped_count": 3
+  },
+  "raw_write_readiness": {
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_write_blocked_until_json_validated": true
+  },
+  "safety": {
+    "network_fetch_performed": true,
+    "bounded_body_read_performed": true,
+    "full_body_read_performed": false,
+    "response_body_saved": false,
+    "raw_response_body_saved": false,
+    "full_html_saved": false,
+    "html_body_saved": false,
+    "full_next_data_saved": false,
+    "value_persistence_performed": false,
+    "raw_json_write_performed": false,
+    "db_read_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "cookie_harvesting_performed": false,
+    "captcha_bypass_performed": false,
+    "proxy_rotation_performed": false
+  },
+  "embedded_review": {
+    "endpoint_candidate_probe_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_ENDPOINT_RUNTIME_CANDIDATE_PROBE_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-FOTMOB-RAW-DETAIL-DOWNGRADE-DECISION-NO-WRITE"
+}
