@@ -1,0 +1,57 @@
+{
+  "schema_version": "fotmob_registry_seed_dry_run_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DRY-RUN",
+  "run_id": "fotmob_registry_seed_dry_run_v1",
+  "generated_at": "2026-06-04T01:56:21Z",
+  "input_plan_path": "docs/_fixtures/fotmob_registry_seed_dry_run_plan.json",
+  "sql_preview_path": "docs/_reports/FOTMOB_REGISTRY_SEED_DRY_RUN_SQL_PREVIEW.sql",
+  "teams_count": 18,
+  "competitions_count": 10,
+  "editions_count": 10,
+  "participation_count": 11,
+  "match_targets_count": 14,
+  "match_target_teams_count": 28,
+  "source_identities_count": 10,
+  "coverage": {
+    "manchester_united_calendar_present": true,
+    "england_national_team_calendar_present": true,
+    "japanese_club_calendar_present": true,
+    "secondary_league_calendar_present": true,
+    "domestic_cup_present": true,
+    "continental_club_present": true,
+    "international_qualifier_present": true,
+    "nations_league_present": true,
+    "friendly_present": true
+  },
+  "target_selection": {
+    "input_target_count": 14,
+    "selected_target_count": 10,
+    "skipped_target_count": 4,
+    "skip_reasons": [
+      "raw_json_status=stored (已存储)",
+      "target_state=blocked (默认跳过)",
+      "request_budget exhausted"
+    ],
+    "request_budget": 10,
+    "per_team_budget": 5,
+    "per_competition_budget": 4,
+    "budget_respected": true
+  },
+  "team_full_calendar": {
+    "manchester_united_target_count": 6,
+    "england_target_count": 4,
+    "japanese_club_target_count": 2,
+    "secondary_league_target_count": 2
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "db_write_performed": false,
+    "sql_executed": false,
+    "raw_json_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DRY-RUN-REVIEW"
+}
