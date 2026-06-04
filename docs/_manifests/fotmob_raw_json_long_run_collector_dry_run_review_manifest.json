@@ -1,0 +1,71 @@
+{
+  "schema_version": "fotmob_raw_json_long_run_collector_dry_run_review_v1",
+  "lifecycle": "current-state/governance",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-DRY-RUN-REVIEW",
+  "reviewed_pr": 1425,
+  "reviewed_helper_path": "scripts/ops/fotmob_raw_json_long_run_collector_dry_run.py",
+  "reviewed_fixture_path": "docs/_fixtures/fotmob_long_run_collector_dry_run_targets.json",
+  "reviewed_manifest_path": "docs/_manifests/fotmob_raw_json_long_run_collector_dry_run_manifest.json",
+  "reviewed_report_path": "docs/_reports/FOTMOB_RAW_JSON_LONG_RUN_COLLECTOR_DRY_RUN.md",
+  "reviewed_design_doc_path": "docs/data/FOTMOB_RAW_JSON_LONG_RUN_COLLECTOR_DRY_RUN_DESIGN.md",
+  "reviewed_test_path": "tests/unit/fotmob_raw_json_long_run_collector_dry_run.test.py",
+  "dry_run_collector_status": "pass",
+  "input_target_count": 14,
+  "selected_target_count": 10,
+  "skipped_target_count": 4,
+  "request_budget": 10,
+  "per_team_budget": 5,
+  "per_competition_budget": 4,
+  "skip_reasons": [
+    "target_state=blocked (默认跳过)",
+    "raw_json_status=stored (已存储)",
+    "request_budget exhausted",
+    "request_budget exhausted"
+  ],
+  "coverage_flags": {
+    "manchester_united_cross_competition_present": true,
+    "national_team_present": true,
+    "domestic_cup_present": true,
+    "continental_club_present": true,
+    "japanese_club_present": true,
+    "secondary_league_present": true,
+    "international_qualifier_present": true,
+    "blocked_case_present": true,
+    "stored_case_present": true,
+    "budget_exhausted_case_present": true
+  },
+  "budget_review": {
+    "request_budget_respected": true,
+    "per_team_budget_respected": true,
+    "per_competition_budget_respected": true
+  },
+  "stop_policy_review": {
+    "stop_on_403": true,
+    "stop_on_429": true,
+    "stop_on_captcha": true,
+    "stop_on_unexpected_html": true,
+    "stop_on_schema_shift": true,
+    "no_retry_storm": true,
+    "no_proxy_rotation": true,
+    "no_anti_bot_bypass": true,
+    "no_browser_automation": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "db_write_performed": false,
+    "raw_json_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "remaining_gaps": [
+    "no_real_registry_seed",
+    "no_real_db_query_target_selection",
+    "no_live_fetch",
+    "no_raw_json_write",
+    "no_scheduler",
+    "no_parser_or_feature_layer",
+    "no_production_rollout"
+  ],
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DRY-RUN"
+}
