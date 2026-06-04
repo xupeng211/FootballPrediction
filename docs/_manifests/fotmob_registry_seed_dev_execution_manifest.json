@@ -1,0 +1,76 @@
+{
+  "schema_version": "fotmob_registry_seed_dev_execution_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DEV-EXECUTION-NO-LIVE-FETCH",
+  "run_id": "fotmob_registry_seed_dev_execution_v1",
+  "generated_at": "2026-06-04T02:34:09Z",
+  "db_environment": "docker_dev",
+  "production_db_guard": "pass",
+  "production_db_guard_details": [],
+  "production_db_write_performed": false,
+  "source_fixture_path": "docs/_fixtures/fotmob_registry_seed_dry_run_plan.json",
+  "inserted_counts": {
+    "football_teams": 0,
+    "football_competitions": 0,
+    "football_competition_editions": 0,
+    "football_team_competition_participation": 0,
+    "football_match_targets": 0,
+    "football_match_target_teams": 0,
+    "football_source_identities": 0
+  },
+  "existing_counts": {
+    "football_teams": 18,
+    "football_competitions": 10,
+    "football_competition_editions": 10,
+    "football_team_competition_participation": 11,
+    "football_match_targets": 14,
+    "football_match_target_teams": 28,
+    "football_source_identities": 10
+  },
+  "final_counts": {
+    "football_teams": 18,
+    "football_competitions": 10,
+    "football_competition_editions": 10,
+    "football_team_competition_participation": 11,
+    "football_match_targets": 14,
+    "football_match_target_teams": 28,
+    "football_source_identities": 10
+  },
+  "idempotency": {
+    "first_run_total": 0,
+    "second_run_total": 0,
+    "pass": true
+  },
+  "target_selection": {
+    "input_target_count": 14,
+    "selected_target_count": 10,
+    "skipped_target_count": 4,
+    "skip_reasons": [
+      "target_state=blocked",
+      "raw_json_status=stored",
+      "request_budget exhausted"
+    ],
+    "request_budget": 10,
+    "per_team_budget": 5,
+    "per_competition_budget": 4,
+    "budget_respected": true
+  },
+  "team_full_calendar": {
+    "manchester_united_target_count": 6,
+    "england_target_count": 4,
+    "kashima_antlers_target_count": 2,
+    "leeds_united_target_count": 2
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "db_write_performed": true,
+    "db_write_scope": "registry_tables_only",
+    "raw_json_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DEV-EXECUTION-REVIEW"
+}
