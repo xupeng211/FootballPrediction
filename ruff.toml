@@ -129,6 +129,10 @@ unfixable = []
 "tests/unit/fotmob_limited_html_hydration_inspection_no_write.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004", "PLC0415", "RUF005"]
 "__init__.py" = ["F401"]  # 允许未使用的导入
 
+"scripts/ops/fotmob_hydration_structure_validation_no_write.py" = ["T20", "C901", "PLR0911", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401", "ARG001", "PLC0415", "RUF100", "F841", "SIM105", "Q000", "SIM102", "I001"]
+"scripts/ops/fotmob_hydration_structure_validation_no_write_report.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401", "TC003", "F541", "E741", "ARG001", "F401"]
+"scripts/ops/fotmob_hydration_structure_validation_no_write_check.py" = ["T20", "D103", "PLR2004", "E702"]
+"tests/unit/fotmob_hydration_structure_validation_no_write.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004", "PLC0415", "RUF005"]
 [lint.isort]
 known-first-party = ["src", "tests"]
 force-sort-within-sections = true
