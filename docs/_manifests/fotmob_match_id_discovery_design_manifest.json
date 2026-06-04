@@ -1,0 +1,149 @@
+{
+  "schema_version": "fotmob_match_id_discovery_design_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-MATCH-ID-DISCOVERY-DESIGN-NO-WRITE",
+  "run_id": "fotmob_match_id_discovery_design_no_write_v1",
+  "generated_at": "2026-06-04T05:30:00Z",
+
+  "previous_blocker": {
+    "route_review_status": "blocked",
+    "reliable_route_candidate_found": false,
+    "source_identity_quality": "fixture_like",
+    "source_match_id_realism": "all_fixture_like",
+    "match_id_discovery_required": true,
+    "previous_phase_pr_number": 1433,
+    "previous_phase_commit": "350a0b5"
+  },
+
+  "discovery_sources": {
+    "team_calendar": {
+      "label": "team_calendar_discovery",
+      "description": "从 FotMob team page 获取该队赛季内所有比赛的 match ID 列表",
+      "input": ["team_id", "team_name", "season", "date_range"],
+      "output": ["candidate_match_id", "candidate_hash_id", "match_date", "home_team_name", "away_team_name"],
+      "route_pattern_redacted": "https://www.fotmob.com/teams?id=<team_id>",
+      "confidence_estimate": "high",
+      "implemented": false
+    },
+    "competition_fixtures": {
+      "label": "competition_fixtures_discovery",
+      "description": "从 FotMob league/competition page 获取该赛事赛季内所有比赛的 match ID 列表",
+      "input": ["competition_id", "season", "round", "date_range"],
+      "output": ["candidate_match_id", "candidate_hash_id", "match_date", "home_team_name", "away_team_name"],
+      "route_pattern_redacted": "https://www.fotmob.com/leagues?id=<league_id>&season=<season>",
+      "confidence_estimate": "high",
+      "implemented": false
+    },
+    "date_fixtures": {
+      "label": "date_fixtures_discovery",
+      "description": "从 FotMob date fixtures page 获取当日所有比赛的 match ID 列表",
+      "input": ["calendar_date"],
+      "output": ["candidate_match_id", "match_date", "home_team_name", "away_team_name"],
+      "route_pattern_redacted": "https://www.fotmob.com/fixtures?date=<YYYY-MM-DD>",
+      "confidence_estimate": "medium",
+      "implemented": false
+    },
+    "known_match_page": {
+      "label": "known_match_page_parsing",
+      "description": "从已知 FotMob match page URL 提取 match ID、hash ID、team mapping",
+      "input": ["known_match_page_url_fragment"],
+      "output": ["match_id", "hash_id", "home_team_name", "away_team_name", "match_date", "competition_name"],
+      "route_pattern_redacted": "https://www.fotmob.com/matches/<team1>-vs-<team2>/<hash>#<match_id>",
+      "confidence_estimate": "very_high",
+      "implemented": false
+    },
+    "historical_raw_payload_backfill": {
+      "label": "historical_raw_payload_backfill",
+      "description": "从已有 raw JSON payload manifest、旧 collector log、过往 ADG 成功样本回填 known-good source identity",
+      "input": ["existing_manifest", "old_collector_log", "historical_adg_report"],
+      "output": ["source_match_id", "source_team_id", "source_competition_id", "route_hash_pair"],
+      "confidence_estimate": "very_high",
+      "implemented": false
+    },
+    "manual_known_good_seed": {
+      "label": "manual_known_good_seed",
+      "description": "人工审核过的 known-good FotMob match ID 作为 bootstrap 种子",
+      "input": ["manually_verified_match_id", "manually_verified_url"],
+      "output": ["source_match_id", "validation_state=json_validated"],
+      "confidence_estimate": "maximum",
+      "implemented": false
+    }
+  },
+
+  "source_identity_validation_states": {
+    "unknown": {"description": "尚未验证", "allows_raw_write": false},
+    "fixture_like": {"description": "当前 ID 是 fixture/placeholder/synthetic，不允许 live raw write", "allows_raw_write": false},
+    "candidate": {"description": "从 discovery source 发现，但尚未 route probe", "allows_raw_write": false},
+    "route_candidate": {"description": "可以拼出 route，但尚未确认 JSON", "allows_raw_write": false},
+    "route_validated": {"description": "no-write route probe 返回非 HTML、非 404、非 blocked，响应形态合理", "allows_raw_write": false},
+    "json_validated": {"description": "no-write probe json_parse_ok=true，top-level keys 合理，但 raw body 未保存", "allows_raw_write": false},
+    "blocked": {"description": "403/429/captcha/bot challenge/policy stop", "allows_raw_write": false},
+    "invalid": {"description": "404/unexpected_html/impossible mapping", "allows_raw_write": false},
+    "stale": {"description": "旧 ID 可能过期，需要重新 discovery", "allows_raw_write": false}
+  },
+
+  "state_transition_rules": [
+    {"from": "fixture_like", "to": "candidate", "trigger": "discovery_completed"},
+    {"from": "candidate", "to": "route_candidate", "trigger": "route_url_constructed"},
+    {"from": "route_candidate", "to": "route_validated", "trigger": "no_write_probe_200_non_html"},
+    {"from": "route_validated", "to": "json_validated", "trigger": "no_write_probe_json_parse_ok"},
+    {"from": "any", "to": "blocked", "trigger": "http_403_or_429_or_captcha"},
+    {"from": "any", "to": "invalid", "trigger": "http_404_or_unexpected_html"},
+    {"from": "stale", "to": "candidate", "trigger": "re_discovery_requested"}
+  ],
+
+  "candidate_record_schema": {
+    "fields": [
+      "candidate_id",
+      "target_id",
+      "source",
+      "discovery_source",
+      "team_id",
+      "team_name",
+      "competition_id",
+      "competition_name",
+      "match_date",
+      "home_team_name",
+      "away_team_name",
+      "candidate_match_id",
+      "candidate_hash_id",
+      "candidate_url_pattern_label",
+      "candidate_url_pattern_redacted",
+      "confidence_score",
+      "validation_state",
+      "rejection_reason",
+      "created_at",
+      "reviewed_by"
+    ]
+  },
+
+  "no_write_guards": {
+    "network_fetch_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "raw_json_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "raw_response_body_saved": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "captcha_bypass_performed": false,
+    "proxy_rotation_performed": false
+  },
+
+  "readiness_gates": {
+    "route_validation_required": true,
+    "json_validation_required": true,
+    "raw_write_blocked_until_json_validated": true,
+    "explicit_authorization_required_for_raw_write": true
+  },
+
+  "embedded_review": {
+    "match_id_discovery_design_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_MATCH_ID_DISCOVERY_DESIGN_NO_WRITE_REVIEW.md"
+  },
+
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-MATCH-ID-DISCOVERY-DB-DRY-RUN-NO-WRITE"
+}
