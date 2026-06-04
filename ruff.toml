@@ -79,6 +79,9 @@ unfixable = []
 "tests/unit/fotmob_registry_seed_dev_execution.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004"]
 "scripts/ops/fotmob_registry_seed_dev_execution_review_check.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "E701"]
 "tests/unit/fotmob_registry_seed_dev_execution_review_check.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004"]
+"scripts/ops/fotmob_target_selection_db_dry_run.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401"]
+"scripts/ops/fotmob_target_selection_db_dry_run_check.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103"]
+"tests/unit/fotmob_target_selection_db_dry_run.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004"]
 "__init__.py" = ["F401"]  # 允许未使用的导入
 
 [lint.isort]
