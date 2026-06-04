@@ -1,0 +1,401 @@
+{
+  "schema_version": "fotmob_html_hydration_extraction_plan_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-HTML-HYDRATION-EXTRACTION-PLAN-NO-WRITE",
+  "run_id": "fotmob_html_hydration_extraction_plan_no_write_v1",
+  "generated_at": "2026-06-04T12:54:12Z",
+  "mode": "offline_extraction_plan",
+  "inherited_route_probe": {
+    "html_route_observed_count": 6,
+    "html_route_blocked_count": 0,
+    "html_route_invalid_count": 0,
+    "response_body_read": false,
+    "html_body_saved": false,
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0
+  },
+  "selected_routes_for_next_phase": {
+    "selected_sample_count": 2,
+    "selected_match_ids": [
+      "4813722",
+      "4813492"
+    ],
+    "selected_route_codes": [
+      "2ygkcb",
+      "2ynv4k"
+    ],
+    "selected_route_templates": [
+      "https://www.fotmob.com/match/{match_id}",
+      "https://www.fotmob.com/matches/{route_code}/{match_id}"
+    ]
+  },
+  "extraction_plan_candidates": [
+    {
+      "candidate_id": "extract-cand-s01-r01",
+      "route_template": "https://www.fotmob.com/match/{match_id}",
+      "route_name": "match_page",
+      "sample_match_id": "4813722",
+      "sample_route_code": "2ygkcb",
+      "sample_pair": "Liverpool vs Manchester United",
+      "planned_url": "https://www.fotmob.com/match/4813722",
+      "body_read_limit_bytes": 262144,
+      "allowed_markers": [
+        "__NEXT_DATA__",
+        "pageProps",
+        "matchId",
+        "header",
+        "general",
+        "content",
+        "script"
+      ],
+      "allowed_extraction_scope": "bounded_snippet_only_first_256KB",
+      "forbidden_persistence": [
+        "full_HTML_body_save",
+        "raw_JSON_file_write",
+        "DB_write",
+        "raw_response_body_persistence",
+        "pageProps_full_extraction_save"
+      ],
+      "expected_structural_signals": [
+        "__NEXT_DATA__ script tag presence",
+        "pageProps JSON blob presence",
+        "matchId field in hydrated data",
+        "header.teams structure",
+        "general.matchTimeUTC"
+      ],
+      "success_criteria": [
+        "__NEXT_DATA__ marker found in first 256KB",
+        "pageProps key found in embedded JSON",
+        "match_id matches expected value"
+      ],
+      "stop_conditions": [
+        "HTTP 403 → stop all probes",
+        "HTTP 429 → stop all probes",
+        "captcha/cloudflare signature detected → stop",
+        "body exceeds read limit without finding markers → stop that route",
+        "non-HTML content_type → record and skip"
+      ],
+      "risk_score": 2,
+      "confidence_score": 9,
+      "recommended_priority": 1,
+      "next_phase_allowed": true
+    },
+    {
+      "candidate_id": "extract-cand-s01-r02",
+      "route_template": "https://www.fotmob.com/matches/{route_code}/{match_id}",
+      "route_name": "matches_page",
+      "sample_match_id": "4813722",
+      "sample_route_code": "2ygkcb",
+      "sample_pair": "Liverpool vs Manchester United",
+      "planned_url": "https://www.fotmob.com/matches/2ygkcb/4813722",
+      "body_read_limit_bytes": 262144,
+      "allowed_markers": [
+        "__NEXT_DATA__",
+        "pageProps",
+        "matchId",
+        "header",
+        "general",
+        "content",
+        "script"
+      ],
+      "allowed_extraction_scope": "bounded_snippet_only_first_256KB",
+      "forbidden_persistence": [
+        "full_HTML_body_save",
+        "raw_JSON_file_write",
+        "DB_write",
+        "raw_response_body_persistence",
+        "pageProps_full_extraction_save"
+      ],
+      "expected_structural_signals": [
+        "__NEXT_DATA__ script tag presence",
+        "pageProps JSON blob presence",
+        "matchId field in hydrated data",
+        "header.teams structure",
+        "general.matchTimeUTC"
+      ],
+      "success_criteria": [
+        "__NEXT_DATA__ marker found in first 256KB",
+        "pageProps key found in embedded JSON",
+        "match_id matches expected value"
+      ],
+      "stop_conditions": [
+        "HTTP 403 → stop all probes",
+        "HTTP 429 → stop all probes",
+        "captcha/cloudflare signature detected → stop",
+        "body exceeds read limit without finding markers → stop that route",
+        "non-HTML content_type → record and skip"
+      ],
+      "risk_score": 3,
+      "confidence_score": 8,
+      "recommended_priority": 2,
+      "next_phase_allowed": true
+    },
+    {
+      "candidate_id": "extract-cand-s02-r01",
+      "route_template": "https://www.fotmob.com/match/{match_id}",
+      "route_name": "match_page",
+      "sample_match_id": "4813492",
+      "sample_route_code": "2ynv4k",
+      "sample_pair": "Everton vs Manchester United",
+      "planned_url": "https://www.fotmob.com/match/4813492",
+      "body_read_limit_bytes": 262144,
+      "allowed_markers": [
+        "__NEXT_DATA__",
+        "pageProps",
+        "matchId",
+        "header",
+        "general",
+        "content",
+        "script"
+      ],
+      "allowed_extraction_scope": "bounded_snippet_only_first_256KB",
+      "forbidden_persistence": [
+        "full_HTML_body_save",
+        "raw_JSON_file_write",
+        "DB_write",
+        "raw_response_body_persistence",
+        "pageProps_full_extraction_save"
+      ],
+      "expected_structural_signals": [
+        "__NEXT_DATA__ script tag presence",
+        "pageProps JSON blob presence",
+        "matchId field in hydrated data",
+        "header.teams structure",
+        "general.matchTimeUTC"
+      ],
+      "success_criteria": [
+        "__NEXT_DATA__ marker found in first 256KB",
+        "pageProps key found in embedded JSON",
+        "match_id matches expected value"
+      ],
+      "stop_conditions": [
+        "HTTP 403 → stop all probes",
+        "HTTP 429 → stop all probes",
+        "captcha/cloudflare signature detected → stop",
+        "body exceeds read limit without finding markers → stop that route",
+        "non-HTML content_type → record and skip"
+      ],
+      "risk_score": 2,
+      "confidence_score": 9,
+      "recommended_priority": 1,
+      "next_phase_allowed": true
+    },
+    {
+      "candidate_id": "extract-cand-s02-r02",
+      "route_template": "https://www.fotmob.com/matches/{route_code}/{match_id}",
+      "route_name": "matches_page",
+      "sample_match_id": "4813492",
+      "sample_route_code": "2ynv4k",
+      "sample_pair": "Everton vs Manchester United",
+      "planned_url": "https://www.fotmob.com/matches/2ynv4k/4813492",
+      "body_read_limit_bytes": 262144,
+      "allowed_markers": [
+        "__NEXT_DATA__",
+        "pageProps",
+        "matchId",
+        "header",
+        "general",
+        "content",
+        "script"
+      ],
+      "allowed_extraction_scope": "bounded_snippet_only_first_256KB",
+      "forbidden_persistence": [
+        "full_HTML_body_save",
+        "raw_JSON_file_write",
+        "DB_write",
+        "raw_response_body_persistence",
+        "pageProps_full_extraction_save"
+      ],
+      "expected_structural_signals": [
+        "__NEXT_DATA__ script tag presence",
+        "pageProps JSON blob presence",
+        "matchId field in hydrated data",
+        "header.teams structure",
+        "general.matchTimeUTC"
+      ],
+      "success_criteria": [
+        "__NEXT_DATA__ marker found in first 256KB",
+        "pageProps key found in embedded JSON",
+        "match_id matches expected value"
+      ],
+      "stop_conditions": [
+        "HTTP 403 → stop all probes",
+        "HTTP 429 → stop all probes",
+        "captcha/cloudflare signature detected → stop",
+        "body exceeds read limit without finding markers → stop that route",
+        "non-HTML content_type → record and skip"
+      ],
+      "risk_score": 3,
+      "confidence_score": 8,
+      "recommended_priority": 2,
+      "next_phase_allowed": true
+    },
+    {
+      "candidate_id": "extract-cand-s03-r01",
+      "route_template": "https://www.fotmob.com/match/{match_id}",
+      "route_name": "match_page",
+      "sample_match_id": "4813622",
+      "sample_route_code": "2xqo0r",
+      "sample_pair": "Tottenham Hotspur vs Manchester United",
+      "planned_url": "https://www.fotmob.com/match/4813622",
+      "body_read_limit_bytes": 262144,
+      "allowed_markers": [
+        "__NEXT_DATA__",
+        "pageProps",
+        "matchId",
+        "header",
+        "general",
+        "content",
+        "script"
+      ],
+      "allowed_extraction_scope": "bounded_snippet_only_first_256KB",
+      "forbidden_persistence": [
+        "full_HTML_body_save",
+        "raw_JSON_file_write",
+        "DB_write",
+        "raw_response_body_persistence",
+        "pageProps_full_extraction_save"
+      ],
+      "expected_structural_signals": [
+        "__NEXT_DATA__ script tag presence",
+        "pageProps JSON blob presence",
+        "matchId field in hydrated data",
+        "header.teams structure",
+        "general.matchTimeUTC"
+      ],
+      "success_criteria": [
+        "__NEXT_DATA__ marker found in first 256KB",
+        "pageProps key found in embedded JSON",
+        "match_id matches expected value"
+      ],
+      "stop_conditions": [
+        "HTTP 403 → stop all probes",
+        "HTTP 429 → stop all probes",
+        "captcha/cloudflare signature detected → stop",
+        "body exceeds read limit without finding markers → stop that route",
+        "non-HTML content_type → record and skip"
+      ],
+      "risk_score": 2,
+      "confidence_score": 9,
+      "recommended_priority": 1,
+      "next_phase_allowed": true
+    },
+    {
+      "candidate_id": "extract-cand-s03-r02",
+      "route_template": "https://www.fotmob.com/matches/{route_code}/{match_id}",
+      "route_name": "matches_page",
+      "sample_match_id": "4813622",
+      "sample_route_code": "2xqo0r",
+      "sample_pair": "Tottenham Hotspur vs Manchester United",
+      "planned_url": "https://www.fotmob.com/matches/2xqo0r/4813622",
+      "body_read_limit_bytes": 262144,
+      "allowed_markers": [
+        "__NEXT_DATA__",
+        "pageProps",
+        "matchId",
+        "header",
+        "general",
+        "content",
+        "script"
+      ],
+      "allowed_extraction_scope": "bounded_snippet_only_first_256KB",
+      "forbidden_persistence": [
+        "full_HTML_body_save",
+        "raw_JSON_file_write",
+        "DB_write",
+        "raw_response_body_persistence",
+        "pageProps_full_extraction_save"
+      ],
+      "expected_structural_signals": [
+        "__NEXT_DATA__ script tag presence",
+        "pageProps JSON blob presence",
+        "matchId field in hydrated data",
+        "header.teams structure",
+        "general.matchTimeUTC"
+      ],
+      "success_criteria": [
+        "__NEXT_DATA__ marker found in first 256KB",
+        "pageProps key found in embedded JSON",
+        "match_id matches expected value"
+      ],
+      "stop_conditions": [
+        "HTTP 403 → stop all probes",
+        "HTTP 429 → stop all probes",
+        "captcha/cloudflare signature detected → stop",
+        "body exceeds read limit without finding markers → stop that route",
+        "non-HTML content_type → record and skip"
+      ],
+      "risk_score": 3,
+      "confidence_score": 8,
+      "recommended_priority": 2,
+      "next_phase_allowed": true
+    }
+  ],
+  "limited_inspection_next_plan": {
+    "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-LIMITED-HTML-HYDRATION-INSPECTION-NO-WRITE",
+    "max_samples": 2,
+    "max_route_templates": 2,
+    "max_network_requests": 4,
+    "max_body_bytes": 524288,
+    "allowed_markers": [
+      "__NEXT_DATA__",
+      "pageProps",
+      "matchId",
+      "header",
+      "general",
+      "content",
+      "script"
+    ],
+    "forbidden_persistence": [
+      "full HTML body save",
+      "raw JSON file write",
+      "DB write (any table)",
+      "raw response body persistence",
+      "pageProps full extraction save",
+      "__NEXT_DATA__ full dump save"
+    ],
+    "success_criteria": [
+      "__NEXT_DATA__ script tag found in first 256KB",
+      "pageProps marker found",
+      "match_id confirmed in hydrated data"
+    ],
+    "stop_conditions": [
+      "403 on any route → stop all",
+      "429 on any route → stop all",
+      "captcha/bot page detected → stop all",
+      "body exceeds 512KB without marker → stop that route"
+    ],
+    "next_phase_after_success": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-HYDRATION-EXTRACTION-VALIDATION-NO-WRITE",
+    "next_phase_after_failure": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-HTML-HYDRATION-ROUTE-REVIEW-FOLLOWUP-NO-WRITE",
+    "notes": "Even if markers are found, next phase is extraction validation no-write, not raw JSON write. Full body extraction requires separate planning. L2 raw harvesting remains blocked until json_validated."
+  },
+  "raw_write_readiness": {
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_write_blocked_until_json_validated": true,
+    "limited_body_inspection_required": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "response_body_read": false,
+    "raw_response_body_saved": false,
+    "html_body_saved": false,
+    "raw_json_write_performed": false,
+    "db_read_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "captcha_bypass_performed": false,
+    "proxy_rotation_performed": false
+  },
+  "embedded_review": {
+    "extraction_plan_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_HTML_HYDRATION_EXTRACTION_PLAN_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-LIMITED-HTML-HYDRATION-INSPECTION-NO-WRITE"
+}
