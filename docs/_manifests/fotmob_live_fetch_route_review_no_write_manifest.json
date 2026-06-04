@@ -1,0 +1,75 @@
+{
+  "schema_version": "fotmob_live_fetch_route_review_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-LIVE-FETCH-ROUTE-REVIEW-NO-WRITE",
+  "run_id": "fotmob_live_fetch_route_review_no_write_v1",
+  "generated_at": "2026-06-04T05:02:55Z",
+  "explicit_allow_flag_present": true,
+  "db_environment": "docker_dev",
+  "production_db_guard": "pass",
+  "production_db_guard_details": [],
+  "db_read_performed": true,
+  "db_write_performed": false,
+  "production_db_write_performed": false,
+  "reviewed_previous_phase": {
+    "one_day_live_fetch_no_raw_write_status": "partial",
+    "previous_stop_reason": "unexpected_html",
+    "previous_status_code": 404,
+    "previous_content_type": "text/html; charset=utf-8",
+    "previous_json_parse_ok_count": 0
+  },
+  "route_review": {
+    "route_review_status": "blocked",
+    "likely_failure_reason": "all_source_match_ids_are_fixture_like_synthetics; route_concatenation_with_fixture_prefix_yields_non_existent_fotmob_url; fotmob_expects_numeric_match_ids_or_hash_id_pairs",
+    "source_identity_quality": "fixture_like",
+    "source_match_id_realism": "all_fixture_like",
+    "endpoint_route_realism": "invalid_when_fixture_like",
+    "match_id_discovery_required": true,
+    "reliable_route_candidate_found": false,
+    "detailed_reason": "blocked_no_reliable_route_candidate"
+  },
+  "route_candidates": [],
+  "probe_results": [],
+  "request_budget": {
+    "max_route_candidates": 3,
+    "max_live_probe_requests": 3,
+    "used": 0,
+    "remaining": 3
+  },
+  "rate_limit": {
+    "concurrency": 1,
+    "sleep_seconds": 5,
+    "max_attempts_per_route": 1
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "raw_response_body_saved": false,
+    "raw_json_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "captcha_bypass_performed": false,
+    "proxy_rotation_performed": false,
+    "retry_storm_performed": false
+  },
+  "embedded_review": {
+    "live_fetch_route_review_no_write_status": "blocked",
+    "review_report_path": "docs/_reports/FOTMOB_LIVE_FETCH_ROUTE_REVIEW_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-MATCH-ID-DISCOVERY-DESIGN-NO-WRITE",
+  "source_identity_analysis": {
+    "total": 10,
+    "fixture_like_count": 10,
+    "numeric_count": 0,
+    "quality": "fixture_like"
+  },
+  "match_target_analysis": {
+    "total": 14,
+    "fixture_like_source_match_ids": 14,
+    "numeric_source_match_ids": 0,
+    "has_source_url_count": 0
+  }
+}
