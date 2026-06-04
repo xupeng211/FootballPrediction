@@ -123,6 +123,10 @@ unfixable = []
 "scripts/ops/fotmob_html_hydration_extraction_plan_no_write_report.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401", "TC003", "F541", "E741"]
 "scripts/ops/fotmob_html_hydration_extraction_plan_no_write_check.py" = ["T20", "D103", "PLR2004"]
 "tests/unit/fotmob_html_hydration_extraction_plan_no_write.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004", "PLC0415"]
+"scripts/ops/fotmob_limited_html_hydration_inspection_no_write.py" = ["T20", "C901", "PLR0911", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401", "ARG001", "PLC0415", "RUF100", "F841", "C420", "SIM105"]
+"scripts/ops/fotmob_limited_html_hydration_inspection_no_write_report.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401", "TC003", "F541", "E741", "ARG001", "F401"]
+"scripts/ops/fotmob_limited_html_hydration_inspection_no_write_check.py" = ["T20", "D103", "PLR2004", "F401"]
+"tests/unit/fotmob_limited_html_hydration_inspection_no_write.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004", "PLC0415", "RUF005"]
 "__init__.py" = ["F401"]  # 允许未使用的导入
 
 [lint.isort]
