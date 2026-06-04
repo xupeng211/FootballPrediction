@@ -1,0 +1,84 @@
+{
+  "schema_version": "fotmob_page_no_embedded_detail_decision_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-FOTMOB-PAGE-NO-EMBEDDED-DETAIL-DECISION-NO-WRITE",
+  "run_id": "fotmob_page_no_embedded_detail_decision_no_write_v1",
+  "generated_at": "2026-06-04T17:56:55Z",
+  "mode": "offline_no_embedded_detail_decision",
+  "missing_inputs": [],
+  "inherited_route_variant_followup": {
+    "route_variant_unlocks_detail_candidate_count": 0,
+    "route_variant_differs_but_no_detail_count": 0,
+    "route_variant_same_generic_keyspace_count": 2,
+    "route_variant_invalid_count": 2,
+    "en_variant_detail_unlocked": false,
+    "slug_variant_detail_unlocked": false,
+    "slug_variant_next_data_parse_ok": false,
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0
+  },
+  "inherited_keyspace_review": {
+    "strong_path_candidate_count": 0,
+    "weak_path_candidate_count": 0,
+    "top_candidate_path": "props.pageProps.fetchingLeagueData",
+    "top_candidate_score": 1,
+    "notable_matches_rejected": true
+  },
+  "inherited_endpoint_review": {
+    "api_matchDetails_404": true,
+    "api_data_matchDetails_403": true,
+    "match_slash_id_no_marker": true,
+    "direct_api_route_status": "blocked_or_invalid"
+  },
+  "formal_decision": {
+    "html_hydration_route_status": "exhausted_no_embedded_match_detail",
+    "page_level_next_data_status": "no_match_detail_json_embedded",
+    "raw_json_readiness": "not_ready",
+    "db_write_readiness": "blocked",
+    "l2_harvesting_readiness": "blocked",
+    "next_technical_direction": "endpoint_runtime_or_alternative_source_required"
+  },
+  "next_endpoint_runtime_discovery_plan": {
+    "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-ENDPOINT-RUNTIME-REQUEST-DISCOVERY-PLAN-NO-WRITE",
+    "network_allowed": false,
+    "browser_automation_allowed": false,
+    "cookie_harvesting_allowed": false,
+    "captcha_bypass_allowed": false,
+    "proxy_rotation_allowed": false,
+    "db_write_allowed": false,
+    "raw_write_allowed": false
+  },
+  "raw_write_readiness": {
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_write_blocked_until_json_validated": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "response_body_read": false,
+    "bounded_body_read_performed": false,
+    "full_body_read_performed": false,
+    "full_html_saved": false,
+    "raw_response_body_saved": false,
+    "html_body_saved": false,
+    "full_next_data_saved": false,
+    "value_persistence_performed": false,
+    "raw_json_write_performed": false,
+    "db_read_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "captcha_bypass_performed": false,
+    "proxy_rotation_performed": false
+  },
+  "embedded_review": {
+    "no_embedded_detail_decision_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_PAGE_NO_EMBEDDED_DETAIL_DECISION_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-ENDPOINT-RUNTIME-REQUEST-DISCOVERY-PLAN-NO-WRITE"
+}
