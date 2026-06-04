@@ -1,0 +1,365 @@
+{
+  "schema_version": "fotmob_endpoint_runtime_request_discovery_plan_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-ENDPOINT-RUNTIME-REQUEST-DISCOVERY-PLAN-NO-WRITE",
+  "run_id": "fotmob_endpoint_runtime_request_discovery_plan_no_write_v1",
+  "generated_at": "2026-06-04T18:18:02Z",
+  "mode": "offline_endpoint_runtime_discovery_plan",
+  "missing_inputs": [],
+  "inherited_no_embedded_detail_decision": {
+    "html_hydration_route_status": "exhausted_no_embedded_match_detail",
+    "page_level_next_data_status": "no_match_detail_json_embedded",
+    "raw_json_readiness": "not_ready",
+    "db_write_readiness": "blocked",
+    "l2_harvesting_readiness": "blocked",
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0
+  },
+  "inherited_endpoint_failures": {
+    "api_matchDetails_status": "404_or_invalid",
+    "api_data_matchDetails_status": "403_or_blocked",
+    "direct_api_route_status": "blocked_or_invalid"
+  },
+  "historical_code_review": {
+    "files_reviewed": [
+      "src/infrastructure/services/FotMobRawDetailFetcher.js",
+      "src/infrastructure/services/FotMobDetailRouteSelector.js",
+      "src/infrastructure/services/FotMobExtractor.js",
+      "src/infrastructure/services/FotMobRouteIdentityReconciler.js",
+      "src/infrastructure/harvesters/TitanSlimHarvester.js",
+      "src/parsers/fotmob/NextDataParser.js",
+      "src/parsers/fotmob/MatchParser.js",
+      "src/parsers/fotmob/MatchStatsParser.js",
+      "docs/AGENT_WORKFLOW.md"
+    ],
+    "files_reviewed_count": 9,
+    "relevant_symbols_found": [
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "symbol": "buildFotMobMatchUrl"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "symbol": "buildFotMobHtmlHydrationRequest"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "symbol": "FOTMOB_BASE_URL"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "symbol": "looks_like_valid_match_detail"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "symbol": "transformToApiFormat"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "symbol": "hasShotmap"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "symbol": "matchId"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobDetailRouteSelector.js",
+        "symbol": "looks_like_valid_match_detail"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobDetailRouteSelector.js",
+        "symbol": "matchId"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobExtractor.js",
+        "symbol": "matchId"
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRouteIdentityReconciler.js",
+        "symbol": "matchId"
+      },
+      {
+        "file": "src/infrastructure/harvesters/TitanSlimHarvester.js",
+        "symbol": "matchId"
+      },
+      {
+        "file": "src/parsers/fotmob/NextDataParser.js",
+        "symbol": "transformToApiFormat"
+      },
+      {
+        "file": "src/parsers/fotmob/NextDataParser.js",
+        "symbol": "hasShotmap"
+      },
+      {
+        "file": "src/parsers/fotmob/NextDataParser.js",
+        "symbol": "matchId"
+      },
+      {
+        "file": "src/parsers/fotmob/NextDataParser.js",
+        "symbol": "pageProps.content"
+      },
+      {
+        "file": "src/parsers/fotmob/MatchParser.js",
+        "symbol": "transformToApiFormat"
+      },
+      {
+        "file": "src/parsers/fotmob/MatchParser.js",
+        "symbol": "matchId"
+      }
+    ],
+    "endpoint_patterns_found": [
+      "match_url",
+      "html_hydration"
+    ],
+    "pattern_match_count": 50
+  },
+  "endpoint_candidate_inventory": {
+    "candidate_count": 10,
+    "candidates": [
+      {
+        "candidate_id": "ep-001",
+        "category": "historical_known_candidate",
+        "endpoint_template": "https://www.fotmob.com/match/{match_id}",
+        "source": "FotMobRawDetailFetcher.js buildFotMobMatchUrl",
+        "reason": "Historical fetcher used /match/{id} for HTML hydration extraction",
+        "confidence": 3,
+        "risk": 7,
+        "expected_params": "match_id",
+        "expected_response_type": "text/html",
+        "previous_status": "tested as /match/{id} variant — no NEXT_DATA marker found",
+        "next_probe_allowed": false,
+        "rejection_reason": "No NEXT_DATA marker; prior phases excluded"
+      },
+      {
+        "candidate_id": "ep-002",
+        "category": "blocked_403_candidate",
+        "endpoint_template": "https://www.fotmob.com/api/data/matchDetails?matchId={match_id}",
+        "source": "prior endpoint probe phases #1440 #1441",
+        "reason": "Standard REST API pattern for match details",
+        "confidence": 2,
+        "risk": 9,
+        "expected_params": "matchId",
+        "expected_response_type": "application/json",
+        "previous_status": "403 or blocked",
+        "next_probe_allowed": false,
+        "rejection_reason": "403 blocked; may require auth/session/referer"
+      },
+      {
+        "candidate_id": "ep-003",
+        "category": "rejected_404_candidate",
+        "endpoint_template": "https://www.fotmob.com/api/matchDetails?matchId={match_id}",
+        "source": "prior endpoint probe phases #1440 #1441",
+        "reason": "Common API pattern on football stats sites",
+        "confidence": 2,
+        "risk": 9,
+        "expected_params": "matchId",
+        "expected_response_type": "application/json",
+        "previous_status": "404",
+        "next_probe_allowed": false,
+        "rejection_reason": "404 not found"
+      },
+      {
+        "candidate_id": "ep-004",
+        "category": "nextjs_data_route_candidate",
+        "endpoint_template": "https://www.fotmob.com/_next/data/{buildId}/en/match/{match_id}.json",
+        "source": "Next.js ISR pattern + historical NextDataParser evidence",
+        "reason": "Next.js data routes serve getServerSideProps/getStaticProps payloads that may embed match detail JSON without page HTML wrapper",
+        "confidence": 5,
+        "risk": 6,
+        "expected_params": "buildId, match_id",
+        "expected_response_type": "application/json",
+        "previous_status": "unknown — not yet probed",
+        "next_probe_allowed": true,
+        "next_probe_priority": 1
+      },
+      {
+        "candidate_id": "ep-005",
+        "category": "nextjs_data_route_candidate",
+        "endpoint_template": "https://www.fotmob.com/_next/data/{buildId}/en/matches/{route_code}/{match_id}.json",
+        "source": "Next.js ISR page route from #1449 keyspace review",
+        "reason": "The /matches/{route_code}/{match_id} page is served by Next.js ISR; the _next/data route may contain the full pageProps including potential detail",
+        "confidence": 5,
+        "risk": 6,
+        "expected_params": "buildId, route_code, match_id",
+        "expected_response_type": "application/json",
+        "previous_status": "unknown — not yet probed",
+        "next_probe_allowed": true,
+        "next_probe_priority": 2
+      },
+      {
+        "candidate_id": "ep-006",
+        "category": "runtime_request_candidate",
+        "endpoint_template": "https://www.fotmob.com/api/matches?date={date}&status=finished",
+        "source": "FotMobApiClient.js / TitanSlimHarvester.js historical pattern",
+        "reason": "FotMob API client historically used match listing endpoints; may have detail variant",
+        "confidence": 3,
+        "risk": 7,
+        "expected_params": "date, status, league",
+        "expected_response_type": "application/json",
+        "previous_status": "unknown — endpoint template speculative",
+        "next_probe_allowed": true,
+        "next_probe_priority": 3
+      },
+      {
+        "candidate_id": "ep-007",
+        "category": "static_json_candidate",
+        "endpoint_template": "https://www.fotmob.com/static/data/match_{match_id}.json",
+        "source": "speculative — common pattern on football data sites",
+        "reason": "Some football sites serve static JSON snapshots for match data",
+        "confidence": 1,
+        "risk": 8,
+        "expected_params": "match_id",
+        "expected_response_type": "application/json",
+        "previous_status": "unknown — speculative",
+        "next_probe_allowed": false,
+        "rejection_reason": "Confidence too low; defer until other candidates exhausted"
+      },
+      {
+        "candidate_id": "ep-008",
+        "category": "requires_browser_or_session_candidate",
+        "endpoint_template": "https://www.fotmob.com/api/graphql (or equivalent runtime endpoint)",
+        "source": "historical ADG / FotMobExtractor browser-based extraction",
+        "reason": "FotMobExtractor uses browser automation; match detail likely fetched via client-side GraphQL or XHR",
+        "confidence": 7,
+        "risk": 10,
+        "expected_params": "match_id, operationName, query hash",
+        "expected_response_type": "application/json",
+        "previous_status": "requires browser/cookies/session; out of scope",
+        "next_probe_allowed": false,
+        "rejection_reason": "Requires browser automation, cookies, or session — forbidden"
+      },
+      {
+        "candidate_id": "ep-009",
+        "category": "alternative_source_candidate",
+        "endpoint_template": "https://api.football-data.org/v4/matches/{match_id}",
+        "source": "football-data.org public API",
+        "reason": "Established football data API with free tier; currently used by project",
+        "confidence": 8,
+        "risk": 3,
+        "expected_params": "match_id, auth token",
+        "expected_response_type": "application/json",
+        "previous_status": "operational in project",
+        "next_probe_allowed": false,
+        "rejection_reason": "Already integrated; FotMob-specific detail still missing"
+      },
+      {
+        "candidate_id": "ep-010",
+        "category": "alternative_source_candidate",
+        "endpoint_template": "https://v3.football.api-sports.io/fixtures?id={match_id}",
+        "source": "API-Football (api-sports.io)",
+        "reason": "Paid API with comprehensive match detail including stats/lineup/events",
+        "confidence": 9,
+        "risk": 2,
+        "expected_params": "match_id, API key",
+        "expected_response_type": "application/json",
+        "previous_status": "not integrated",
+        "next_probe_allowed": false,
+        "rejection_reason": "Paid tier required; evaluate if FotMob endpoints all fail"
+      }
+    ],
+    "rejected_count": 7,
+    "next_probe_candidate_count": 3,
+    "next_probe_candidates": [
+      {
+        "candidate_id": "ep-004",
+        "category": "nextjs_data_route_candidate",
+        "endpoint_template": "https://www.fotmob.com/_next/data/{buildId}/en/match/{match_id}.json",
+        "source": "Next.js ISR pattern + historical NextDataParser evidence",
+        "reason": "Next.js data routes serve getServerSideProps/getStaticProps payloads that may embed match detail JSON without page HTML wrapper",
+        "confidence": 5,
+        "risk": 6,
+        "expected_params": "buildId, match_id",
+        "expected_response_type": "application/json",
+        "previous_status": "unknown — not yet probed",
+        "next_probe_allowed": true,
+        "next_probe_priority": 1
+      },
+      {
+        "candidate_id": "ep-005",
+        "category": "nextjs_data_route_candidate",
+        "endpoint_template": "https://www.fotmob.com/_next/data/{buildId}/en/matches/{route_code}/{match_id}.json",
+        "source": "Next.js ISR page route from #1449 keyspace review",
+        "reason": "The /matches/{route_code}/{match_id} page is served by Next.js ISR; the _next/data route may contain the full pageProps including potential detail",
+        "confidence": 5,
+        "risk": 6,
+        "expected_params": "buildId, route_code, match_id",
+        "expected_response_type": "application/json",
+        "previous_status": "unknown — not yet probed",
+        "next_probe_allowed": true,
+        "next_probe_priority": 2
+      },
+      {
+        "candidate_id": "ep-006",
+        "category": "runtime_request_candidate",
+        "endpoint_template": "https://www.fotmob.com/api/matches?date={date}&status=finished",
+        "source": "FotMobApiClient.js / TitanSlimHarvester.js historical pattern",
+        "reason": "FotMob API client historically used match listing endpoints; may have detail variant",
+        "confidence": 3,
+        "risk": 7,
+        "expected_params": "date, status, league",
+        "expected_response_type": "application/json",
+        "previous_status": "unknown — endpoint template speculative",
+        "next_probe_allowed": true,
+        "next_probe_priority": 3
+      }
+    ],
+    "historical_known_candidate_count": 1,
+    "nextjs_data_route_candidate_count": 2,
+    "static_json_candidate_count": 1,
+    "runtime_request_candidate_count": 1,
+    "rejected_404_candidate_count": 1,
+    "blocked_403_candidate_count": 1,
+    "requires_browser_or_session_candidate_count": 1,
+    "alternative_source_candidate_count": 2
+  },
+  "next_controlled_probe_plan": {
+    "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-ENDPOINT-RUNTIME-CANDIDATE-PROBE-NO-WRITE",
+    "max_candidates": 3,
+    "max_samples": 2,
+    "max_network_requests": 6,
+    "max_body_bytes": 262144,
+    "browser_automation_allowed": false,
+    "cookie_harvesting_allowed": false,
+    "captcha_bypass_allowed": false,
+    "proxy_rotation_allowed": false,
+    "db_write_allowed": false,
+    "raw_write_allowed": false
+  },
+  "raw_write_readiness": {
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_write_blocked_until_json_validated": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "response_body_read": false,
+    "bounded_body_read_performed": false,
+    "full_body_read_performed": false,
+    "full_html_saved": false,
+    "raw_response_body_saved": false,
+    "html_body_saved": false,
+    "full_next_data_saved": false,
+    "value_persistence_performed": false,
+    "raw_json_write_performed": false,
+    "db_read_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "browser_automation_allowed": false,
+    "cookie_harvesting_allowed": false,
+    "captcha_bypass_performed": false,
+    "captcha_bypass_allowed": false,
+    "proxy_rotation_performed": false,
+    "proxy_rotation_allowed": false
+  },
+  "embedded_review": {
+    "endpoint_runtime_discovery_plan_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_ENDPOINT_RUNTIME_REQUEST_DISCOVERY_PLAN_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-ENDPOINT-RUNTIME-CANDIDATE-PROBE-NO-WRITE"
+}
