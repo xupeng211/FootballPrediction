@@ -1,0 +1,290 @@
+{
+  "schema_version": "fotmob_match_detail_subtree_extraction_plan_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-MATCH-DETAIL-SUBTREE-EXTRACTION-PLAN-NO-WRITE",
+  "run_id": "fotmob_match_detail_subtree_extraction_plan_no_write_v1",
+  "generated_at": "2026-06-04T14:00:22Z",
+  "mode": "offline_subtree_extraction_plan",
+  "inherited_hydration_validation": {
+    "next_data_parse_ok_count": 2,
+    "pageProps_present_count": 2,
+    "match_detail_candidate_observed_count": 2,
+    "target_match_id_seen_count": 0,
+    "best_candidate_path": "props.pageProps",
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0
+  },
+  "selected_next_phase_scope": {
+    "route_template": "https://www.fotmob.com/matches/{route_code}/{match_id}",
+    "selected_match_ids": [
+      "4813722",
+      "4813492"
+    ],
+    "selected_route_codes": [
+      "2ygkcb",
+      "2ynv4k"
+    ],
+    "max_samples": 2,
+    "max_network_requests": 2,
+    "max_body_bytes": 524288,
+    "max_subtree_scan_depth": 8
+  },
+  "subtree_extraction_plan": {
+    "root_path": "props.pageProps",
+    "priority_paths": [
+      {
+        "priority": 1,
+        "path": "props.pageProps.fallback",
+        "purpose": "primary cache candidate from Next.js SSG"
+      },
+      {
+        "priority": 2,
+        "path": "props.pageProps.fallback.*.data",
+        "purpose": "potential data wrapper under fallback"
+      },
+      {
+        "priority": 3,
+        "path": "props.pageProps.fallback.*.matchDetails",
+        "purpose": "match details cache entry"
+      },
+      {
+        "priority": 4,
+        "path": "props.pageProps.fallback.*.content",
+        "purpose": "content subtree under cache"
+      },
+      {
+        "priority": 5,
+        "path": "props.pageProps.fallback.*.header",
+        "purpose": "header subtree under cache"
+      },
+      {
+        "priority": 6,
+        "path": "props.pageProps.fallback.*.general",
+        "purpose": "general subtree under cache"
+      },
+      {
+        "priority": 7,
+        "path": "props.pageProps.*.match",
+        "purpose": "match data at pageProps level"
+      },
+      {
+        "priority": 8,
+        "path": "props.pageProps.*.matchData",
+        "purpose": "explicit match data key"
+      },
+      {
+        "priority": 9,
+        "path": "props.pageProps.*.matchDetails",
+        "purpose": "explicit match details key"
+      },
+      {
+        "priority": 10,
+        "path": "props.pageProps.*.content",
+        "purpose": "content at pageProps level"
+      }
+    ],
+    "key_search_terms": [
+      "matchId",
+      "id",
+      "header",
+      "general",
+      "content",
+      "matchFacts",
+      "stats",
+      "lineup",
+      "events",
+      "teams",
+      "homeTeam",
+      "awayTeam",
+      "status",
+      "score",
+      "fixture"
+    ],
+    "scoring_rules": [
+      {
+        "signal": "target match_id found in subtree",
+        "score": 5
+      },
+      {
+        "signal": "key path or name contains matchId/id and value matches target",
+        "score": 4
+      },
+      {
+        "signal": "subtree contains 'header' key",
+        "score": 3
+      },
+      {
+        "signal": "subtree contains 'general' key",
+        "score": 3
+      },
+      {
+        "signal": "subtree contains 'content' key",
+        "score": 3
+      },
+      {
+        "signal": "subtree contains 'matchFacts' key",
+        "score": 2
+      },
+      {
+        "signal": "subtree contains 'stats' key",
+        "score": 2
+      },
+      {
+        "signal": "subtree contains 'lineup' key",
+        "score": 2
+      },
+      {
+        "signal": "subtree contains 'events' key",
+        "score": 2
+      },
+      {
+        "signal": "subtree contains 'homeTeam' / 'awayTeam' / 'teams' key",
+        "score": 2
+      },
+      {
+        "signal": "subtree contains 'status' key",
+        "score": 1
+      },
+      {
+        "signal": "subtree contains 'fixture' key",
+        "score": 1
+      },
+      {
+        "signal": "subtree contains 'score' key",
+        "score": 1
+      },
+      {
+        "signal": "subtree contains 'tournament' / 'league' key",
+        "score": 1
+      },
+      {
+        "signal": "subtree only contains CountryCodes/Language/translations/static config",
+        "score": -3
+      },
+      {
+        "signal": "subtree lacks target match_id AND lacks team names",
+        "score": -5
+      },
+      {
+        "signal": "subtree is clearly translation/config dictionary",
+        "score": -5
+      }
+    ],
+    "candidate_classification_rules": [
+      {
+        "min_score": 10,
+        "state": "match_detail_subtree_strong_candidate"
+      },
+      {
+        "min_score": 6,
+        "state": "match_detail_subtree_weak_candidate"
+      },
+      {
+        "min_score": 3,
+        "state": "partial_match_detail_subtree"
+      },
+      {
+        "min_score": -999,
+        "state": "generic_or_irrelevant_subtree"
+      }
+    ],
+    "persistence_policy": "metadata_only_no_body_no_json",
+    "stop_conditions": [
+      "HTTP 403 on any route → stop all",
+      "HTTP 429 on any route → stop all",
+      "captcha/bot page detected → stop all",
+      "body exceeds max_body_bytes without finding NEXT_DATA → stop"
+    ]
+  },
+  "controlled_subtree_extraction_next_plan": {
+    "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-CONTROLLED-MATCH-DETAIL-SUBTREE-EXTRACTION-NO-WRITE",
+    "route_template": "https://www.fotmob.com/matches/{route_code}/{match_id}",
+    "selected_match_ids": [
+      "4813722",
+      "4813492"
+    ],
+    "selected_route_codes": [
+      "2ygkcb",
+      "2ynv4k"
+    ],
+    "max_samples": 2,
+    "max_network_requests": 2,
+    "max_body_bytes": 524288,
+    "max_subtree_scan_depth": 8,
+    "max_key_paths_recorded": 200,
+    "max_candidate_paths_recorded": 20,
+    "allowed_metadata": [
+      "key path metadata",
+      "data type metadata",
+      "key presence booleans",
+      "candidate subtree path",
+      "candidate score",
+      "estimated subtree size",
+      "value fingerprints: length, type, numeric equality, string contains match_id"
+    ],
+    "forbidden_persistence": [
+      "full HTML body",
+      "full __NEXT_DATA__ JSON",
+      "full pageProps",
+      "full match detail subtree value",
+      "raw JSON file",
+      "DB write",
+      "raw response body",
+      "scheduler enable",
+      "feature parse",
+      "browser automation",
+      "captcha bypass",
+      "proxy rotation"
+    ],
+    "success_criteria": [
+      "find at least one subtree with score >= 6",
+      "detect target match_id in subtree",
+      "identify viable path for match detail extraction"
+    ],
+    "failure_criteria": [
+      "max depth reached without finding any candidate with score > 0",
+      "all subtrees are generic config/translations"
+    ],
+    "stop_conditions": [
+      "HTTP 403 on any route → stop all",
+      "HTTP 429 on any route → stop all",
+      "captcha/bot page detected → stop all",
+      "body exceeds max_body_bytes without finding NEXT_DATA → stop"
+    ],
+    "next_phase_after_success": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-MATCH-DETAIL-SUBTREE-VALIDATION-NO-WRITE",
+    "notes": "Even if strong candidate found, next phase is subtree validation no-write, not raw JSON write. Full subtree extraction requires separate validation phase. L2 raw harvesting remains blocked until json_validated."
+  },
+  "raw_write_readiness": {
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_write_blocked_until_json_validated": true,
+    "subtree_validation_required": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "response_body_read": false,
+    "bounded_body_read_performed": false,
+    "full_body_read_performed": false,
+    "full_html_saved": false,
+    "raw_response_body_saved": false,
+    "html_body_saved": false,
+    "full_next_data_saved": false,
+    "raw_json_write_performed": false,
+    "db_read_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "captcha_bypass_performed": false,
+    "proxy_rotation_performed": false
+  },
+  "embedded_review": {
+    "subtree_extraction_plan_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_MATCH_DETAIL_SUBTREE_EXTRACTION_PLAN_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-CONTROLLED-MATCH-DETAIL-SUBTREE-EXTRACTION-NO-WRITE"
+}
