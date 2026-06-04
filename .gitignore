@@ -190,6 +190,9 @@ Thumbs.db
 docs/_build/
 docs/.doctrees/
 
+# Local seed files (user-supplied, not committed)
+docs/_local/
+
 # Sensitive configuration
 config_local.py
 config_secrets.py
