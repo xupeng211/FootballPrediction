@@ -1,0 +1,63 @@
+{
+  "schema_version": "fotmob_registry_seed_dev_execution_review_v1",
+  "lifecycle": "current-state/governance",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DEV-EXECUTION-REVIEW",
+  "reviewed_pr": 1429,
+  "reviewed_helper_path": "scripts/ops/fotmob_registry_seed_dev_execution.py",
+  "reviewed_manifest_path": "docs/_manifests/fotmob_registry_seed_dev_execution_manifest.json",
+  "reviewed_report_path": "docs/_reports/FOTMOB_REGISTRY_SEED_DEV_EXECUTION.md",
+  "reviewed_test_path": "tests/unit/fotmob_registry_seed_dev_execution.test.py",
+  "registry_seed_dev_execution_status": "pass",
+  "db_environment": "docker_dev",
+  "production_db_guard": "pass",
+  "production_db_write_performed": false,
+  "db_write_scope": "registry_tables_only",
+  "final_counts": {
+    "football_teams": 18,
+    "football_competitions": 10,
+    "football_competition_editions": 10,
+    "football_team_competition_participation": 11,
+    "football_match_targets": 14,
+    "football_match_target_teams": 28,
+    "football_source_identities": 10,
+    "total": 101
+  },
+  "idempotency": {
+    "first_run_inserted_total": 101,
+    "second_run_inserted_total": 0,
+    "pass": true
+  },
+  "target_selection": {
+    "selected_target_count": 10,
+    "skipped_target_count": 4,
+    "request_budget_respected": true,
+    "per_team_budget_respected": true,
+    "per_competition_budget_respected": true
+  },
+  "team_full_calendar": {
+    "manchester_united_target_count": 6,
+    "england_target_count": 4,
+    "kashima_antlers_target_count": 2,
+    "leeds_united_target_count": 2
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "raw_json_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "remaining_gaps": [
+    "no_production_db_seed",
+    "no_live_fetch",
+    "no_raw_json_write",
+    "no_scheduler",
+    "no_parser_or_feature_layer",
+    "no_production_rollout",
+    "no_large_scale_registry_seed",
+    "no_real_source_match_id_discovery"
+  ],
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-TARGET-SELECTION-DB-DRY-RUN"
+}
