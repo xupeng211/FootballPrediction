@@ -100,6 +100,9 @@ unfixable = []
 "scripts/ops/fotmob_match_id_discovery_route_candidate.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103"]
 "scripts/ops/fotmob_match_id_discovery_route_candidate_check.py" = ["T20", "D103", "PLR2004"]
 "tests/unit/fotmob_match_id_discovery_route_candidate.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004", "PLC0415"]
+"scripts/ops/fotmob_known_match_page_user_seeds_parse_no_write.py" = ["T20", "C901", "PLR0911", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401"]
+"scripts/ops/fotmob_known_match_page_user_seeds_parse_no_write_check.py" = ["T20", "D103", "PLR2004"]
+"tests/unit/fotmob_known_match_page_user_seeds_parse_no_write.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004", "PLC0415"]
 "__init__.py" = ["F401"]  # 允许未使用的导入
 
 [lint.isort]

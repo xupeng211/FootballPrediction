@@ -1,0 +1,129 @@
+{
+  "schema_version": "fotmob_known_match_page_user_seeds_v1",
+  "lifecycle": "example",
+  "description": "User-supplied public FotMob match page URLs for known_match_page seed parsing. No account/cookie/login data. Do not commit private data here.",
+  "source_type": "user_supplied_known_match_page",
+  "seed_input_count": 12,
+  "seed_records": [
+    {
+      "seed_id": "user-seed-01",
+      "source_url": "https://www.fotmob.com/matches/aston-villa-vs-manchester-united/3h9f6s#4506597",
+      "team_hint": "Manchester United",
+      "opponent_hint": "Aston Villa",
+      "expected_match_slug": "aston-villa-vs-manchester-united",
+      "expected_route_code": "3h9f6s",
+      "expected_fotmob_match_id": "4506597",
+      "target_relevance": "current_target_team_related"
+    },
+    {
+      "seed_id": "user-seed-02",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/england-vs-croatia/2viayw#4667825",
+      "team_hint": "England",
+      "opponent_hint": "Croatia",
+      "expected_match_slug": "england-vs-croatia",
+      "expected_route_code": "2viayw",
+      "expected_fotmob_match_id": "4667825",
+      "target_relevance": "current_target_team_related"
+    },
+    {
+      "seed_id": "user-seed-03",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/leeds-united-vs-west-ham-united/2f8a75#4813754",
+      "team_hint": "Leeds United",
+      "opponent_hint": "West Ham United",
+      "expected_match_slug": "leeds-united-vs-west-ham-united",
+      "expected_route_code": "2f8a75",
+      "expected_fotmob_match_id": "4813754",
+      "target_relevance": "current_target_team_related"
+    },
+    {
+      "seed_id": "user-seed-04",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/liverpool-vs-manchester-united/2ygkcb#4813722",
+      "team_hint": "Manchester United",
+      "opponent_hint": "Liverpool",
+      "expected_match_slug": "liverpool-vs-manchester-united",
+      "expected_route_code": "2ygkcb",
+      "expected_fotmob_match_id": "4813722",
+      "target_relevance": "current_target_exact_or_reversed_pair"
+    },
+    {
+      "seed_id": "user-seed-05",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/everton-vs-manchester-united/2ynv4k#4813492",
+      "team_hint": "Manchester United",
+      "opponent_hint": "Everton",
+      "expected_match_slug": "everton-vs-manchester-united",
+      "expected_route_code": "2ynv4k",
+      "expected_fotmob_match_id": "4813492",
+      "target_relevance": "current_target_exact_or_reversed_pair"
+    },
+    {
+      "seed_id": "user-seed-06",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/tottenham-hotspur-vs-manchester-united/2xqo0r#4813622",
+      "team_hint": "Manchester United",
+      "opponent_hint": "Tottenham Hotspur",
+      "expected_match_slug": "tottenham-hotspur-vs-manchester-united",
+      "expected_route_code": "2xqo0r",
+      "expected_fotmob_match_id": "4813622",
+      "target_relevance": "current_target_exact_or_reversed_pair"
+    },
+    {
+      "seed_id": "user-seed-07",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/chelsea-vs-manchester-united/2w9xj5#4813421",
+      "team_hint": "Manchester United",
+      "opponent_hint": "Chelsea",
+      "expected_match_slug": "chelsea-vs-manchester-united",
+      "expected_route_code": "2w9xj5",
+      "expected_fotmob_match_id": "4813421",
+      "target_relevance": "current_target_exact_or_reversed_pair"
+    },
+    {
+      "seed_id": "user-seed-08",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/leeds-united-vs-newcastle-united/2wdjjd#4813398",
+      "team_hint": "Leeds United",
+      "opponent_hint": "Newcastle United",
+      "expected_match_slug": "leeds-united-vs-newcastle-united",
+      "expected_route_code": "2wdjjd",
+      "expected_fotmob_match_id": "4813398",
+      "target_relevance": "current_target_team_related"
+    },
+    {
+      "seed_id": "user-seed-09",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/brazil-vs-england/2bhzy5#4359098",
+      "team_hint": "England",
+      "opponent_hint": "Brazil",
+      "expected_match_slug": "brazil-vs-england",
+      "expected_route_code": "2bhzy5",
+      "expected_fotmob_match_id": "4359098",
+      "target_relevance": "current_target_exact_or_reversed_pair"
+    },
+    {
+      "seed_id": "user-seed-10",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/italy-vs-england/2azd0v#4044692",
+      "team_hint": "England",
+      "opponent_hint": "Italy",
+      "expected_match_slug": "italy-vs-england",
+      "expected_route_code": "2azd0v",
+      "expected_fotmob_match_id": "4044692",
+      "target_relevance": "current_target_exact_or_reversed_pair"
+    },
+    {
+      "seed_id": "user-seed-11",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/england-vs-poland/2en1da#3495351",
+      "team_hint": "England",
+      "opponent_hint": "Poland",
+      "expected_match_slug": "england-vs-poland",
+      "expected_route_code": "2en1da",
+      "expected_fotmob_match_id": "3495351",
+      "target_relevance": "current_target_exact_or_reversed_pair"
+    },
+    {
+      "seed_id": "user-seed-12",
+      "source_url": "https://www.fotmob.com/zh-Hans/matches/kashima-antlers-vs-fc-tokyo/n1c6d#5130312",
+      "team_hint": "Kashima Antlers",
+      "opponent_hint": "FC Tokyo",
+      "expected_match_slug": "kashima-antlers-vs-fc-tokyo",
+      "expected_route_code": "n1c6d",
+      "expected_fotmob_match_id": "5130312",
+      "target_relevance": "current_target_team_related"
+    }
+  ]
+}
