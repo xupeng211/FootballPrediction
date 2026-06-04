@@ -1,0 +1,71 @@
+{
+  "schema_version": "fotmob_registry_seed_dry_run_review_v1",
+  "lifecycle": "current-state/governance",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DRY-RUN-REVIEW",
+  "reviewed_pr": 1427,
+  "reviewed_plan_path": "docs/_fixtures/fotmob_registry_seed_dry_run_plan.json",
+  "reviewed_helper_path": "scripts/ops/fotmob_registry_seed_dry_run.py",
+  "reviewed_sql_preview_path": "docs/_reports/FOTMOB_REGISTRY_SEED_DRY_RUN_SQL_PREVIEW.sql",
+  "reviewed_manifest_path": "docs/_manifests/fotmob_registry_seed_dry_run_manifest.json",
+  "reviewed_report_path": "docs/_reports/FOTMOB_REGISTRY_SEED_DRY_RUN.md",
+  "reviewed_test_path": "tests/unit/fotmob_registry_seed_dry_run.test.py",
+  "registry_seed_dry_run_status": "pass",
+  "counts": {
+    "teams": 18,
+    "competitions": 10,
+    "editions": 10,
+    "participations": 11,
+    "match_targets": 14,
+    "match_target_teams": 28,
+    "source_identities": 10,
+    "selected": 10,
+    "skipped": 4
+  },
+  "coverage_flags": {
+    "manchester_united_full_calendar_present": true,
+    "england_national_team_present": true,
+    "japanese_club_present": true,
+    "secondary_league_present": true,
+    "domestic_cup_present": true,
+    "continental_club_present": true,
+    "international_qualifier_present": true,
+    "nations_league_present": true,
+    "friendly_present": true,
+    "blocked_target_present": true,
+    "stored_target_present": true,
+    "failed_target_present": true,
+    "budget_exhausted_case_present": true
+  },
+  "sql_preview_safety": {
+    "file_exists": true,
+    "has_dry_run_header": true,
+    "has_do_not_execute": true,
+    "all_inserts_commented": true,
+    "no_executable_sql": true,
+    "sql_executed_flag": false
+  },
+  "budget_review": {
+    "request_budget_respected": true,
+    "per_team_budget_respected": true,
+    "per_competition_budget_respected": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "db_write_performed": false,
+    "sql_executed": false,
+    "raw_json_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "remaining_gaps": [
+    "no_real_db_seed_execution",
+    "no_real_registry_data_in_db",
+    "no_live_fetch",
+    "no_raw_json_write",
+    "no_scheduler",
+    "no_parser_or_feature_layer",
+    "no_production_rollout"
+  ],
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-REGISTRY-SEED-DEV-EXECUTION-NO-LIVE-FETCH"
+}
