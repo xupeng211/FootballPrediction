@@ -1,0 +1,263 @@
+{
+  "schema_version": "fotmob_match_detail_subtree_review_followup_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-MATCH-DETAIL-SUBTREE-REVIEW-FOLLOWUP-NO-WRITE",
+  "run_id": "fotmob_match_detail_subtree_review_followup_no_write_v1",
+  "generated_at": "2026-06-04T15:08:31Z",
+  "mode": "offline_subtree_review_followup",
+  "inherited_controlled_subtree_extraction": {
+    "fallback_present_count": 2,
+    "target_match_id_seen_count": 0,
+    "strong_candidate_count": 0,
+    "weak_candidate_count": 0,
+    "partial_candidate_count": 0,
+    "generic_or_irrelevant_count": 2,
+    "best_candidate_path": "props.pageProps.fallback.notableMatches:en:USA",
+    "best_candidate_score": -5,
+    "best_candidate_state": "generic_or_irrelevant_subtree",
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0
+  },
+  "negative_findings": {
+    "notable_matches_is_not_match_detail": true,
+    "target_match_id_missing": true,
+    "fallback_scan_too_narrow_possible": true,
+    "route_variant_review_required": true,
+    "keyspace_review_required": true,
+    "route_template_still_current_baseline": "/matches/{route_code}/{match_id}",
+    "prior_root_path": "props.pageProps",
+    "prior_pageProps_keys": [
+      "fallback",
+      "fetchingLeagueData",
+      "ssr",
+      "translations"
+    ]
+  },
+  "historical_code_review": {
+    "files_reviewed": [
+      "src/parsers/fotmob/NextDataParser.js",
+      "src/parsers/fotmob/MatchParser.js",
+      "src/parsers/fotmob/TeamParser.js",
+      "src/parsers/fotmob/MatchStatsParser.js",
+      "src/infrastructure/services/FotMobRawDetailFetcher.js",
+      "scripts/ops/pageprops_v2_no_write_preview.js",
+      "scripts/ops/pageprops_v2_target_identity_reconciliation_plan.js",
+      "docs/_reports/FOTMOB_HYDRATION_STRUCTURE_DECISION.md",
+      "docs/_reports/FOTMOB_MATCH_DETAIL_CANDIDATE_DECISION.md"
+    ],
+    "relevant_paths_found": [
+      {
+        "file": "src/parsers/fotmob/NextDataParser.js",
+        "evidence": "transformToApiFormat expects props.pageProps.content/general/header",
+        "candidate_paths": [
+          "props.pageProps.content",
+          "props.pageProps.general",
+          "props.pageProps.header"
+        ]
+      },
+      {
+        "file": "src/parsers/fotmob/MatchParser.js",
+        "evidence": "match parser unwraps props.pageProps through NextDataParser",
+        "candidate_paths": [
+          "content.general",
+          "content.header",
+          "general.matchId"
+        ]
+      },
+      {
+        "file": "src/parsers/fotmob/MatchStatsParser.js",
+        "evidence": "stats parser expects stats under rawData.stats or content.stats",
+        "candidate_paths": [
+          "content.stats",
+          "stats",
+          "matchStats"
+        ]
+      },
+      {
+        "file": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+        "evidence": "legacy html_hydration fetcher transforms hydrated page data into content/general/header/matchId",
+        "candidate_paths": [
+          "content",
+          "general",
+          "header",
+          "matchId"
+        ]
+      },
+      {
+        "file": "scripts/ops/pageprops_v2_no_write_preview.js",
+        "evidence": "pageProps v2 preview extracts __NEXT_DATA__.props.pageProps and computes metadata/hash",
+        "candidate_paths": [
+          "props.pageProps",
+          "props.pageProps.content"
+        ]
+      }
+    ],
+    "suspected_existing_parser_paths": [
+      "props.pageProps.content",
+      "props.pageProps.general",
+      "props.pageProps.header",
+      "content.matchFacts",
+      "content.stats",
+      "content.lineup",
+      "header.teams",
+      "general.homeTeam",
+      "general.awayTeam"
+    ],
+    "missing_evidence": [
+      "no historical parser treats props.pageProps.fallback.notableMatches as match detail",
+      "no target match_id was observed in #1447 candidate metadata",
+      "no team-name/detail-key evidence was observed under notableMatches",
+      "no json validation or raw-write eligibility exists"
+    ]
+  },
+  "route_variant_review": {
+    "target_seed_paths": [
+      {
+        "match_id": "4813722",
+        "locale": "zh-Hans",
+        "match_slug": "liverpool-vs-manchester-united",
+        "route_code": "2ygkcb"
+      },
+      {
+        "match_id": "4813492",
+        "locale": "zh-Hans",
+        "match_slug": "everton-vs-manchester-united",
+        "route_code": "2ynv4k"
+      }
+    ],
+    "candidates": [
+      {
+        "variant": "/matches/{route_code}/{match_id}",
+        "recommendation": "keep",
+        "reason": "current working route parses __NEXT_DATA__/pageProps/fallback but only found generic notableMatches"
+      },
+      {
+        "variant": "/zh-Hans/matches/{route_code}/{match_id}",
+        "recommendation": "review next",
+        "reason": "target user seeds were supplied with zh-Hans locale and should be compared as metadata only"
+      },
+      {
+        "variant": "/en/matches/{route_code}/{match_id}",
+        "recommendation": "review next",
+        "reason": "English locale variant may change hydration keyspace or fallback cache keys"
+      },
+      {
+        "variant": "original user URL path without fragment",
+        "recommendation": "review next",
+        "reason": "seed slug paths provide canonical slug evidence without using the fragment as a request path"
+      },
+      {
+        "variant": "/matches/{slug}/{route_code}",
+        "recommendation": "defer unless slug evidence is used",
+        "reason": "supported by seed URL shape, but should only be executed after keyspace plan selects slug routes"
+      }
+    ],
+    "recommended": [
+      {
+        "variant": "/matches/{route_code}/{match_id}",
+        "recommendation": "keep",
+        "reason": "current working route parses __NEXT_DATA__/pageProps/fallback but only found generic notableMatches"
+      },
+      {
+        "variant": "/zh-Hans/matches/{route_code}/{match_id}",
+        "recommendation": "review next",
+        "reason": "target user seeds were supplied with zh-Hans locale and should be compared as metadata only"
+      },
+      {
+        "variant": "/en/matches/{route_code}/{match_id}",
+        "recommendation": "review next",
+        "reason": "English locale variant may change hydration keyspace or fallback cache keys"
+      },
+      {
+        "variant": "original user URL path without fragment",
+        "recommendation": "review next",
+        "reason": "seed slug paths provide canonical slug evidence without using the fragment as a request path"
+      }
+    ],
+    "deferred": [
+      {
+        "variant": "/matches/{slug}/{route_code}",
+        "recommendation": "defer unless slug evidence is used",
+        "reason": "supported by seed URL shape, but should only be executed after keyspace plan selects slug routes"
+      }
+    ],
+    "rejected": [
+      {
+        "variant": "/api/matchDetails or /api/data/matchDetails",
+        "reason": "prior phases observed 404/403 and this follow-up forbids API endpoint probing"
+      },
+      {
+        "variant": "browser/cookie/session route",
+        "reason": "browser automation, login, cookie/session capture, proxy, and bypass behavior are forbidden"
+      }
+    ]
+  },
+  "next_keyspace_review_plan": {
+    "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-HYDRATION-KEYSPACE-REVIEW-NO-WRITE",
+    "max_samples": 2,
+    "max_network_requests": 2,
+    "max_body_bytes": 524288,
+    "max_key_paths_recorded": 500,
+    "max_value_preview_chars": 0,
+    "max_scan_depth": 12,
+    "no_value_persistence": true,
+    "route_variants": [
+      "/matches/{route_code}/{match_id}",
+      "/zh-Hans/matches/{route_code}/{match_id}",
+      "/en/matches/{route_code}/{match_id}",
+      "original user URL path without fragment"
+    ],
+    "metadata_only": [
+      "key path",
+      "data type",
+      "depth",
+      "approximate size",
+      "key name",
+      "marker flags",
+      "score",
+      "classification",
+      "route variant"
+    ],
+    "forbidden_persistence": [
+      "value content",
+      "subtree value",
+      "full JSON",
+      "full HTML",
+      "DB write"
+    ]
+  },
+  "raw_write_readiness": {
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_write_blocked_until_json_validated": true,
+    "keyspace_review_required": true
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "response_body_read": false,
+    "bounded_body_read_performed": false,
+    "full_body_read_performed": false,
+    "full_html_saved": false,
+    "raw_response_body_saved": false,
+    "html_body_saved": false,
+    "full_next_data_saved": false,
+    "candidate_subtree_value_saved": false,
+    "raw_json_write_performed": false,
+    "db_read_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false,
+    "browser_automation_performed": false,
+    "captcha_bypass_performed": false,
+    "proxy_rotation_performed": false
+  },
+  "embedded_review": {
+    "subtree_review_followup_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_MATCH_DETAIL_SUBTREE_REVIEW_FOLLOWUP_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-HYDRATION-KEYSPACE-REVIEW-NO-WRITE"
+}
