@@ -1,0 +1,389 @@
+{
+  "schema_version": "fotmob_target_selection_db_dry_run_v1",
+  "lifecycle": "current-state",
+  "phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-TARGET-SELECTION-DB-DRY-RUN",
+  "run_id": "fotmob_target_selection_db_dry_run_v1",
+  "generated_at": "2026-06-04T03:19:57Z",
+  "db_environment": "docker_dev",
+  "production_db_guard": "pass",
+  "production_db_guard_details": [],
+  "db_read_performed": true,
+  "db_write_performed": false,
+  "production_db_write_performed": false,
+  "input_target_count": 14,
+  "selected_target_count": 10,
+  "skipped_target_count": 4,
+  "selected_targets": [
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-eng-friend-001",
+      "match_date": "2026-10-14T19:00:00+00:00",
+      "priority": 20,
+      "competition_name": "International Friendly",
+      "competition_type": "friendly",
+      "home_team_name": "England",
+      "away_team_name": "Brazil",
+      "team_names": [
+        "England",
+        "Brazil"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-champ-facup-001",
+      "match_date": "2026-08-29T14:00:00+00:00",
+      "priority": 18,
+      "competition_name": "FA Cup",
+      "competition_type": "domestic_cup",
+      "home_team_name": "Leeds United",
+      "away_team_name": "Sheffield Wednesday",
+      "team_names": [
+        "Leeds United",
+        "Sheffield Wednesday"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-jpn-empcup-001",
+      "match_date": "2026-09-26T10:00:00+00:00",
+      "priority": 17,
+      "competition_name": "Emperor's Cup",
+      "competition_type": "domestic_cup",
+      "home_team_name": "Kashima Antlers",
+      "away_team_name": "Urawa Red Diamonds",
+      "team_names": [
+        "Kashima Antlers",
+        "Urawa Red Diamonds"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-champ-001",
+      "match_date": "2026-08-15T14:00:00+00:00",
+      "priority": 16,
+      "competition_name": "EFL Championship",
+      "competition_type": "league",
+      "home_team_name": "Leeds United",
+      "away_team_name": "Sunderland",
+      "team_names": [
+        "Leeds United",
+        "Sunderland"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-jpn-j1-001",
+      "match_date": "2026-08-16T10:00:00+00:00",
+      "priority": 15,
+      "competition_name": "J1 League",
+      "competition_type": "league",
+      "home_team_name": "Kashima Antlers",
+      "away_team_name": "Yokohama F. Marinos",
+      "team_names": [
+        "Kashima Antlers",
+        "Yokohama F. Marinos"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-mun-eflcup-001",
+      "match_date": "2026-09-12T18:45:00+00:00",
+      "priority": 14,
+      "competition_name": "EFL Cup",
+      "competition_type": "domestic_cup",
+      "home_team_name": "Newcastle United",
+      "away_team_name": "Manchester United",
+      "team_names": [
+        "Newcastle United",
+        "Manchester United"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-eng-failed-001",
+      "match_date": "2026-09-06T18:00:00+00:00",
+      "priority": 13,
+      "competition_name": "UEFA Nations League",
+      "competition_type": "nations_league",
+      "home_team_name": "England",
+      "away_team_name": "Italy",
+      "team_names": [
+        "England",
+        "Italy"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "failed",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-mun-facup-001",
+      "match_date": "2026-08-22T14:00:00+00:00",
+      "priority": 12,
+      "competition_name": "FA Cup",
+      "competition_type": "domestic_cup",
+      "home_team_name": "Manchester United",
+      "away_team_name": "Chelsea",
+      "team_names": [
+        "Manchester United",
+        "Chelsea"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-mun-uel-001",
+      "match_date": "2026-09-19T19:00:00+00:00",
+      "priority": 11,
+      "competition_name": "UEFA Europa League",
+      "competition_type": "continental_club",
+      "home_team_name": "Manchester United",
+      "away_team_name": "AS Roma",
+      "team_names": [
+        "Manchester United",
+        "AS Roma"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-mun-epl-001",
+      "match_date": "2026-08-15T14:00:00+00:00",
+      "priority": 10,
+      "competition_name": "Premier League",
+      "competition_type": "league",
+      "home_team_name": "Manchester United",
+      "away_team_name": "Liverpool",
+      "team_names": [
+        "Manchester United",
+        "Liverpool"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true
+    }
+  ],
+  "skipped_targets": [
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-mun-blocked-001",
+      "match_date": "2026-08-08T14:00:00+00:00",
+      "priority": 9,
+      "competition_name": "Premier League",
+      "competition_type": "league",
+      "home_team_name": "Manchester United",
+      "away_team_name": "Tottenham Hotspur",
+      "team_names": [
+        "Manchester United",
+        "Tottenham Hotspur"
+      ],
+      "target_state": "blocked",
+      "raw_json_status": "missing",
+      "source_identity_available": true,
+      "skip_reason": "blocked",
+      "skip_category": "blocked"
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-eng-unl-001",
+      "match_date": "2026-09-09T18:00:00+00:00",
+      "priority": 8,
+      "competition_name": "UEFA Nations League",
+      "competition_type": "nations_league",
+      "home_team_name": "Germany",
+      "away_team_name": "England",
+      "team_names": [
+        "Germany",
+        "England"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true,
+      "skip_reason": "budget_exhausted:request",
+      "skip_category": "budget_exhausted"
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-mun-stored-001",
+      "match_date": "2026-08-01T14:00:00+00:00",
+      "priority": 7,
+      "competition_name": "Premier League",
+      "competition_type": "league",
+      "home_team_name": "Manchester United",
+      "away_team_name": "Everton",
+      "team_names": [
+        "Manchester United",
+        "Everton"
+      ],
+      "target_state": "raw_json_stored",
+      "raw_json_status": "stored",
+      "source_identity_available": true,
+      "skip_reason": "stored",
+      "skip_category": "stored"
+    },
+    {
+      "source": "fotmob",
+      "source_match_id": "fixture-eng-wcq-001",
+      "match_date": "2026-09-05T18:00:00+00:00",
+      "priority": 5,
+      "competition_name": "FIFA World Cup Qualifier",
+      "competition_type": "international_qualifier",
+      "home_team_name": "England",
+      "away_team_name": "Poland",
+      "team_names": [
+        "England",
+        "Poland"
+      ],
+      "target_state": "pending_raw_fetch",
+      "raw_json_status": "missing",
+      "source_identity_available": true,
+      "skip_reason": "budget_exhausted:request",
+      "skip_category": "budget_exhausted"
+    }
+  ],
+  "skip_reason_counts": {
+    "blocked": 1,
+    "budget_exhausted": 2,
+    "stored": 1
+  },
+  "budgets": {
+    "request_budget": 10,
+    "selected_count": 10,
+    "per_team_budget": 5,
+    "per_competition_budget": 4,
+    "request_budget_respected": true,
+    "per_team_budget_respected": true,
+    "per_competition_budget_respected": true,
+    "selected_by_team": {
+      "AS Roma": 1,
+      "Brazil": 1,
+      "Chelsea": 1,
+      "England": 2,
+      "Italy": 1,
+      "Kashima Antlers": 2,
+      "Leeds United": 2,
+      "Liverpool": 1,
+      "Manchester United": 4,
+      "Newcastle United": 1,
+      "Sheffield Wednesday": 1,
+      "Sunderland": 1,
+      "Urawa Red Diamonds": 1,
+      "Yokohama F. Marinos": 1
+    },
+    "selected_by_competition": {
+      "EFL Championship": 1,
+      "EFL Cup": 1,
+      "Emperor's Cup": 1,
+      "FA Cup": 2,
+      "International Friendly": 1,
+      "J1 League": 1,
+      "Premier League": 1,
+      "UEFA Europa League": 1,
+      "UEFA Nations League": 1
+    }
+  },
+  "team_full_calendar": {
+    "manchester_united_target_count": 6,
+    "Manchester United": {
+      "target_count": 6,
+      "competitions": [
+        "EFL Cup",
+        "FA Cup",
+        "Premier League",
+        "UEFA Europa League"
+      ],
+      "selected_relevance": "full_calendar_read_only"
+    },
+    "england_target_count": 4,
+    "England": {
+      "target_count": 4,
+      "competitions": [
+        "FIFA World Cup Qualifier",
+        "International Friendly",
+        "UEFA Nations League"
+      ],
+      "selected_relevance": "full_calendar_read_only"
+    },
+    "kashima_antlers_target_count": 2,
+    "Kashima Antlers": {
+      "target_count": 2,
+      "competitions": [
+        "Emperor's Cup",
+        "J1 League"
+      ],
+      "selected_relevance": "full_calendar_read_only"
+    },
+    "leeds_united_target_count": 2,
+    "Leeds United": {
+      "target_count": 2,
+      "competitions": [
+        "EFL Championship",
+        "FA Cup"
+      ],
+      "selected_relevance": "full_calendar_read_only"
+    }
+  },
+  "source_identity": {
+    "all_selected_have_source_identity": true,
+    "unsupported_source_selected": false,
+    "selected_without_source_identity": [],
+    "selected_sources": [
+      "fotmob"
+    ],
+    "unsupported_selected_sources": []
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "raw_json_write_performed": false,
+    "fotmob_raw_match_payloads_write_performed": false,
+    "raw_match_data_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "raw_write_ready_marked": false
+  },
+  "embedded_review": {
+    "target_selection_db_dry_run_status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_TARGET_SELECTION_DB_DRY_RUN_REVIEW.md",
+    "review_failures": []
+  },
+  "sort_policy": "priority_desc_match_date_asc_competition_team_source_match_id",
+  "registry_counts": {
+    "football_teams": 18,
+    "football_competitions": 10,
+    "football_competition_editions": 10,
+    "football_team_competition_participation": 11,
+    "football_match_targets": 14,
+    "football_match_target_teams": 28,
+    "football_source_identities": 10
+  },
+  "remaining_gaps": [
+    "no_live_fetch_probe",
+    "no_raw_json_storage",
+    "no_scheduler",
+    "no_feature_parser",
+    "no_production_rollout"
+  ],
+  "recommended_next_phase": "FOTMOB-RAW-JSON-LONG-RUN-COLLECTOR-ONE-DAY-LIVE-FETCH-NO-RAW-WRITE"
+}
