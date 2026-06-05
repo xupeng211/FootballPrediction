@@ -140,6 +140,19 @@ Codex must not restart HISTORICAL-FOTMOB-PAYLOAD-SHAPE-RECONSTRUCTION-READONLY
 until documentation cleanup Phase1 is merged and the next governance task has
 confirmed which reports are evidence, superseded, or archive candidates.
 
+## Document Lifecycle Usage
+
+At task start, Codex must read active source-of-truth docs first. Evidence docs
+can support historical claims, but they cannot be used alone as current truth.
+`superseded`, `archive_candidate`, and `archived` docs must not be cited as the
+current project state.
+
+When Codex cites an old report, it must say whether the report is evidence. If a
+report conflicts with an active doc, the active doc wins and the PR body should
+describe the conflict. If no active doc exists for a long-lived conclusion,
+Codex should create or update a source-of-truth doc in a scoped task instead of
+continuing a report chain.
+
 ## Codex Final Report Format
 
 Codex final replies should include:

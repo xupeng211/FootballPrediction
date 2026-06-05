@@ -31,6 +31,14 @@
 - The next FotMob task is deferred until documentation governance Phase1
   completes.
 
+## Documentation Lifecycle Status
+
+- This file is the active FotMob current-state source of truth.
+- #1454 safe parser/schema reuse is evidence for offline reuse only.
+- Old FotMob probe reports are evidence or archive_candidate material.
+- Do not restore browser, session, cookie, captcha, proxy, or anti-bot paths
+  directly from old high-risk collection reports.
+
 ## Confirmed facts
 
 - ADG48 correct-orientation probe: 2 targets probed (PSG-Angers, Nice-Auxerre), both HTTP 200. Both confirmed reverse fixtures. 2o4ahb#4830473 = Angers-PSG (reverse observed again). 2sy6tc#4830472 = Auxerre-Nice (newly confirmed reverse). No correct-orientation pairs discovered. No alternate hash candidates found in pageProps. 5 known pairs: 2 confirmed reverse, 3 unverified. 27 missing canonical URLs.
