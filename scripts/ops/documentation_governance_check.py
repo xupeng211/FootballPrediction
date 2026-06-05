@@ -15,8 +15,9 @@ ROOT = Path(__file__).resolve().parents[2]
 MAX_ADDED_FILES = 5
 NAME_STATUS_PATH_PARTS = 2
 NAME_STATUS_RENAME_PARTS = 3
+PHASE1_MAX_ADDED_FILES = 1
 
-ALLOWED_ADDED = frozenset(
+PHASE0_ALLOWED_ADDED = frozenset(
     {
         "docs/DOCUMENTATION_GOVERNANCE.md",
         "docs/CODEX_WORKFLOW.md",
@@ -25,6 +26,27 @@ ALLOWED_ADDED = frozenset(
         "tests/unit/test_documentation_governance_check.py",
     }
 )
+
+PHASE1_ALLOWED_ADDED = frozenset(
+    {
+        "docs/_reports/DOCUMENTATION_CLEANUP_PHASE1_SOURCE_OF_TRUTH_NO_DELETION.md",
+    }
+)
+
+SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
+    {
+        "README.md",
+        "docs/PROJECT_STATUS.md",
+        "docs/DATA_SOURCE_STRATEGY.md",
+        "docs/data/FOTMOB_CURRENT_STATE.md",
+        "docs/CANONICAL_MATCH_SCHEMA.md",
+        "docs/DOCUMENTATION_GOVERNANCE.md",
+        "docs/CODEX_WORKFLOW.md",
+    }
+)
+
+ALLOWED_ADDED = PHASE0_ALLOWED_ADDED | PHASE1_ALLOWED_ADDED
+ALLOWED_CHANGED = ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED
 
 REQUIRED_DOCS = (
     "docs/DOCUMENTATION_GOVERNANCE.md",
@@ -196,16 +218,25 @@ def validate_required_files(errors: list[str]) -> None:
         )
 
 
+def max_added_files_for(added: set[str]) -> int:
+    """Return the added-file budget for the current documentation governance phase."""
+
+    if PHASE1_ALLOWED_ADDED & added:
+        return PHASE1_MAX_ADDED_FILES
+    return MAX_ADDED_FILES
+
+
 def validate_change_budget(changes: list[Change], errors: list[str]) -> None:
     """Validate file budget and allowed paths."""
 
     added = added_paths(changes)
     changed = changed_paths(changes)
-    unexpected = sorted(changed - ALLOWED_ADDED)
+    max_added = max_added_files_for(added)
+    unexpected = sorted(changed - ALLOWED_CHANGED)
     missing = sorted(ALLOWED_ADDED - {path for path in ALLOWED_ADDED if (ROOT / path).exists()})
 
-    if len(added) > MAX_ADDED_FILES:
-        errors.append(f"added file budget exceeded: {len(added)} > {MAX_ADDED_FILES}")
+    if len(added) > max_added:
+        errors.append(f"added file budget exceeded: {len(added)} > {max_added}")
     if unexpected:
         errors.append(f"unexpected changed paths: {', '.join(unexpected)}")
     if missing:

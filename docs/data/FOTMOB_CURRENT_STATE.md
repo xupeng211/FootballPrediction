@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 # FotMob Current State
 
 - lifecycle: current-state
@@ -13,6 +15,21 @@
 - next data phase: stop; ADG60 write requires separate explicit authorization
 - raw_write_ready_count: 0
 - latest ADG59B merge commit: eac95fc6839e215969d5c3315b5ea5950de93cd3
+
+## Current Safe State After #1454
+
+- #1454 merged the FotMob safe parser/schema reuse plan into `main`.
+- Historical FotMob raw detail success is acknowledged as evidence.
+- Parser, schema, fixture, and validation assets are safe to reuse as offline
+  references.
+- Raw write remains blocked.
+- DB write remains blocked.
+- High-risk browser/session/cookie/anti-bot assets remain read-only or
+  do-not-reactivate.
+- No browser automation, cookie harvesting, captcha bypass, proxy rotation, DB
+  write, or raw JSON write is authorized by #1454.
+- The next FotMob task is deferred until documentation governance Phase1
+  completes.
 
 ## Confirmed facts
 

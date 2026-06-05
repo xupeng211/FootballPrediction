@@ -124,6 +124,22 @@ Recommended source-of-truth docs:
 If a source-of-truth doc is missing, mark it planned. Do not create it as a side
 effect of an unrelated task.
 
+## Active Workflow After Phase1
+
+After Phase1, Codex must treat documentation governance as the active blocker
+before restarting FotMob payload work.
+
+Current order:
+
+1. Keep source-of-truth summaries current.
+2. Prepare a no-deletion, no-move archive candidate marking phase.
+3. Only after governance summaries and archive candidate marking are reviewed,
+   resume FotMob payload reconstruction.
+
+Codex must not restart HISTORICAL-FOTMOB-PAYLOAD-SHAPE-RECONSTRUCTION-READONLY
+until documentation cleanup Phase1 is merged and the next governance task has
+confirmed which reports are evidence, superseded, or archive candidates.
+
 ## Codex Final Report Format
 
 Codex final replies should include:
