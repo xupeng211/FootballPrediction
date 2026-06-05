@@ -186,6 +186,29 @@ Codex must follow these rules:
 - Machine manifests must not be treated as human-facing status docs.
 - Temporary exploration should stay local unless explicitly approved.
 
+## Phase1 Source-of-Truth Summary Status
+
+Phase1 source-of-truth cleanup updates only active summary locations. It does
+not delete, move, rename, or archive files.
+
+Active source-of-truth status after Phase1:
+
+| Area | Source of Truth | Status |
+|---|---|---|
+| Project status | docs/PROJECT_STATUS.md | planned/missing |
+| Documentation governance | docs/DOCUMENTATION_GOVERNANCE.md | active |
+| Codex workflow | docs/CODEX_WORKFLOW.md | active |
+| Data source strategy | docs/DATA_SOURCE_STRATEGY.md | planned/missing |
+| FotMob current state | docs/data/FOTMOB_CURRENT_STATE.md | active |
+| Canonical match schema | docs/CANONICAL_MATCH_SCHEMA.md | planned/missing |
+| Testing strategy | docs/TESTING_GUIDE.md | active |
+| CI strategy | docs/GITHUB_ACTIONS_AUDIT_REPORT.md | evidence/needs_update |
+| Data storage strategy | docs/DATA_MODEL_STORAGE_POLICY.md | active |
+
+Long-lived project conclusions should be summarized in the active or planned
+source-of-truth docs above. Existing reports and manifests remain evidence until
+a future no-move archive-candidate phase marks lifecycle status explicitly.
+
 ## Cleanup Strategy
 
 ### Phase 0
