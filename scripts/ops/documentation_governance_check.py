@@ -191,7 +191,9 @@ def validate_required_files(errors: list[str]) -> None:
         if not file_path.exists():
             continue
         text = read_text(path)
-        errors.extend(f"{path} missing section: {section}" for section in sections if section not in text)
+        errors.extend(
+            f"{path} missing section: {section}" for section in sections if section not in text
+        )
 
 
 def validate_change_budget(changes: list[Change], errors: list[str]) -> None:
@@ -229,7 +231,9 @@ def validate_prohibited_files(changes: list[Change], errors: list[str]) -> None:
         if change.status == "D":
             errors.append(f"deleted file is prohibited: {change.path}")
         if change.status == "R":
-            errors.append(f"moved or renamed file is prohibited: {change.old_path} -> {change.path}")
+            errors.append(
+                f"moved or renamed file is prohibited: {change.old_path} -> {change.path}"
+            )
         if change.path.startswith("docs/_archive/"):
             errors.append(f"archive operation is prohibited: {change.path}")
 

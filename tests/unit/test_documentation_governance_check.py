@@ -74,7 +74,9 @@ def test_no_review_report_created():
 
 def test_no_decision_report_created():
     added = checker.added_paths(checker.collect_changes())
-    assert not any(path.startswith("docs/_reports/") and "decision" in path.lower() for path in added)
+    assert not any(
+        path.startswith("docs/_reports/") and "decision" in path.lower() for path in added
+    )
 
 
 def test_file_budget_at_most_five():
