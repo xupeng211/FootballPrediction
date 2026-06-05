@@ -1,0 +1,337 @@
+{
+  "schema_version": "fotmob_safe_parser_schema_reuse_plan_no_write_v1",
+  "lifecycle": "current-state",
+  "phase": "SAFE-PARSER-SCHEMA-REUSE-PLAN-NO-WRITE",
+  "run_id": "fotmob_safe_parser_schema_reuse_plan_no_write_v1",
+  "generated_at": "2026-06-04T23:30:22Z",
+  "mode": "offline_safe_parser_schema_reuse_plan",
+  "missing_inputs": [],
+  "inherited_current_status": {
+    "html_hydration_route_status": "exhausted_no_embedded_match_detail",
+    "page_level_next_data_status": "no_match_detail_json_embedded",
+    "endpoint_candidate_probe_result": "all_skipped_missing_parameters",
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_json_readiness": "not_ready",
+    "db_write_readiness": "blocked",
+    "l2_harvesting_readiness": "blocked"
+  },
+  "historical_success_context": {
+    "historical_raw_rows_count": 2501,
+    "historical_coverage_percent": 64.58,
+    "average_payload_bytes": 205773,
+    "historical_success_confirmed": true,
+    "historical_payload_is_match_detail": true
+  },
+  "safe_reuse_assets": [
+    {
+      "asset_id": "parser-nextdata",
+      "category": "parser",
+      "path": "src/parsers/fotmob/NextDataParser.js",
+      "symbol": "transformToApiFormat, extractFromHtml, validateNextDataStructure",
+      "reason": "Pure function; regex-extracts __NEXT_DATA__ from HTML; transforms props.pageProps.content/general/header into apiFormat. No network, no browser, no DB.",
+      "recommended_use": "Parse HTML/JSON responses from any FotMob data source into canonical apiFormat"
+    },
+    {
+      "asset_id": "parser-match",
+      "category": "parser",
+      "path": "src/parsers/fotmob/MatchParser.js",
+      "symbol": "parseMatchData, firstValue, resolveMatchId",
+      "reason": "Pure function; cascading resolution of matchId/general/header/status; handles nested payload shapes.",
+      "recommended_use": "Parse match-level metadata regardless of data source format"
+    },
+    {
+      "asset_id": "parser-stats",
+      "category": "parser",
+      "path": "src/parsers/fotmob/MatchStatsParser.js",
+      "symbol": "extractMatchStats, normalizeStat",
+      "reason": "Pure function; probes multiple stats paths (content.stats, stats, matchStats); normalizes stat rows with flexible key mapping.",
+      "recommended_use": "Extract and normalize match statistics from any source"
+    },
+    {
+      "asset_id": "parser-team",
+      "category": "parser",
+      "path": "src/parsers/fotmob/TeamParser.js",
+      "symbol": "parseTeamData",
+      "reason": "Pure function; extracts team identity data from general/header.",
+      "recommended_use": "Parse team identity fields"
+    },
+    {
+      "asset_id": "parser-player",
+      "category": "parser",
+      "path": "src/parsers/fotmob/PlayerParser.js",
+      "symbol": "parsePlayerData",
+      "reason": "Pure function; extracts player-level data from lineup sections.",
+      "recommended_use": "Parse player identity and stats from lineup"
+    },
+    {
+      "asset_id": "parser-xg",
+      "category": "parser",
+      "path": "src/parsers/fotmob/XGExtractor.js",
+      "symbol": "extractAllStats, extractXG",
+      "reason": "Pure function; extracts xG/expectedGoals from stats/shotmap sections.",
+      "recommended_use": "Extract expected goals data from match statistics"
+    },
+    {
+      "asset_id": "parser-league",
+      "category": "parser",
+      "path": "src/parsers/fotmob/LeagueParser.js",
+      "symbol": "parseLeagueData",
+      "reason": "Pure function; extracts league/tournament metadata.",
+      "recommended_use": "Parse league and tournament context"
+    },
+    {
+      "asset_id": "schema-raw-payloads",
+      "category": "schema",
+      "path": "database/migrations/V26.5__create_fotmob_raw_match_payloads.sql",
+      "symbol": "CREATE TABLE fotmob_raw_match_payloads",
+      "reason": "Clean DB schema for storing raw __NEXT_DATA__ and pageProps as JSONB with proper indexes and unique constraints.",
+      "recommended_use": "Reuse table structure for future raw JSON storage (not for direct DB write in this phase)"
+    },
+    {
+      "asset_id": "schema-raw-match-data",
+      "category": "schema",
+      "path": "database/migrations/V12.6__allow_numeric_fotmob_ids_in_raw_match_data.sql",
+      "symbol": "ALTER TABLE raw_match_data match_id constraint",
+      "reason": "Allows both legacy 3-segment and plain numeric FotMob IDs.",
+      "recommended_use": "Reuse ID format flexibility for future match_id storage"
+    },
+    {
+      "asset_id": "fixture-match-success",
+      "category": "fixture",
+      "path": "tests/fixtures/match_success.json",
+      "symbol": "match_success.json full payload structure",
+      "reason": "Complete synthetic payload: content.stats(xG), content.lineup(11+subs), content.shotmap(xG+outcome), content.events, general.homeTeam/awayTeam, header.tournament/venue. Average size aligned with historical 205KB.",
+      "recommended_use": "Use as canonical payload shape reference; adapt new data sources to this structure"
+    },
+    {
+      "asset_id": "validation-hash",
+      "category": "validation",
+      "path": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+      "symbol": "sha256CanonicalJson, canonicalizeJson, HASH_STRATEGY_STABLE_RAW_PAYLOAD_V1",
+      "reason": "Pure functions for SHA-256 hashing of canonical JSON; key-sorted recursive canonicalization; stable hash excludes metadata fields.",
+      "recommended_use": "Reuse hash strategy for payload integrity verification"
+    },
+    {
+      "asset_id": "validation-shape",
+      "category": "validation",
+      "path": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+      "symbol": "validateCanonicalRawDataShape, looksLikeValidRawDetail",
+      "reason": "Pure validation functions; checks _meta/content/general/header/matchId keys; checks numeric matchId; checks external_id/home_team/away_team markers.",
+      "recommended_use": "Reuse shape validation to verify future payloads match canonical structure"
+    },
+    {
+      "asset_id": "validation-status",
+      "category": "validation",
+      "path": "src/infrastructure/services/FotMobRawDetailFetcher.js",
+      "symbol": "classifyStatus, isBlockHttpStatus (403, 429)",
+      "reason": "Pure status classification functions; no browser/cookie/session dependency.",
+      "recommended_use": "Reuse HTTP status classification for future data source evaluation"
+    },
+    {
+      "asset_id": "report-collection",
+      "category": "report",
+      "path": "docs/_reports/FOTMOB_COLLECTION_REPORT.md",
+      "symbol": "Collection health report with schema diff evidence",
+      "reason": "Historical evidence: 2,501 raw JSON rows, 64.58% coverage, 205KB avg, lineup/stats/details/teams present.",
+      "recommended_use": "Reference for historical payload shape and collection metrics"
+    },
+    {
+      "asset_id": "report-adg60",
+      "category": "report",
+      "path": "docs/_reports/FOTMOB_ADG60_RAW_JSON_DB_STORAGE_REVIEW_NO_FEATURE_PARSE.md",
+      "symbol": "ADG60 storage review: 32 samples, JSONB structural integrity confirmed",
+      "reason": "Confirms next_data_json and page_props_json parse successfully; raw_layer_db_ready=true.",
+      "recommended_use": "Reference for JSONB storage architecture validation"
+    },
+    {
+      "asset_id": "state-current",
+      "category": "report",
+      "path": "docs/data/FOTMOB_CURRENT_STATE.md",
+      "symbol": "Current pipeline state: raw_write_ready_count=0, ADG59B completed",
+      "reason": "Authoritative current-state document; lists active guards, blockers, forbidden operations.",
+      "recommended_use": "Reference for current pipeline governance and authorization requirements"
+    }
+  ],
+  "read_only_reference_assets": [
+    {
+      "asset_id": "risk-fotmob-api-client",
+      "category": "browser_session",
+      "path": "src/infrastructure/network/FotMobApiClient.js",
+      "risk_reason": "Requires Playwright browser bootstrap for cf_clearance cookie capture; targets /api/data/matchDetails which returns 403 without session. Browser/session/cookie/anti-bot stack.",
+      "safety_status": "read_only_reference_only"
+    },
+    {
+      "asset_id": "risk-session-manager",
+      "category": "browser_session",
+      "path": "src/infrastructure/network/SessionManager.js",
+      "risk_reason": "Automates Turnstile bypass; manages 22-node port map for FotMob sessions; opens visible browsers; captures and persists Cloudflare cookies.",
+      "safety_status": "do_not_reactivate"
+    },
+    {
+      "asset_id": "risk-auto-auth",
+      "category": "browser_session",
+      "path": "src/infrastructure/auth/AutoAuthManager.js",
+      "risk_reason": "Opens visible browser for FotMob login/cookie capture; saves authenticated session state.",
+      "safety_status": "do_not_reactivate"
+    },
+    {
+      "asset_id": "risk-session-warmer",
+      "category": "browser_session",
+      "path": "src/infrastructure/harvesters/SessionWarmer.js",
+      "risk_reason": "Progressive navigation + proxy rotation + Cloudflare cookie establishment methodology (though targets OddsPortal, technique is site-agnostic).",
+      "safety_status": "read_only_reference_only"
+    },
+    {
+      "asset_id": "risk-stealth-navigator",
+      "category": "anti_bot",
+      "path": "src/infrastructure/harvesters/StealthNavigator.js",
+      "risk_reason": "Bezier mouse movement, scroll simulation, vision healing, CAPTCHA bypass primitives.",
+      "safety_status": "do_not_reactivate"
+    },
+    {
+      "asset_id": "risk-stealth-fingerprint",
+      "category": "anti_bot",
+      "path": "src/infrastructure/network/StealthFingerprint.js",
+      "risk_reason": "30+ spoofed browser fingerprint pool; WebGL renderer pool; matches capture_auth.js fingerprint for FotMob.",
+      "safety_status": "do_not_reactivate"
+    },
+    {
+      "asset_id": "risk-stealth-config",
+      "category": "anti_bot",
+      "path": "src/infrastructure/network/enhanced_stealth_config.js",
+      "risk_reason": "Enhanced stealth configuration for anti-detection.",
+      "safety_status": "do_not_reactivate"
+    },
+    {
+      "asset_id": "risk-browser-factory",
+      "category": "browser_core",
+      "path": "src/infrastructure/browser/BrowserFactory.js",
+      "risk_reason": "Generic Playwright browser lifecycle; not FotMob-specific but enables anti-bot bypass via stealth scripts.",
+      "safety_status": "read_only_reference_only"
+    },
+    {
+      "asset_id": "risk-context-pool",
+      "category": "browser_core",
+      "path": "src/infrastructure/browser/ContextPoolManager.js",
+      "risk_reason": "Playwright context pool management for multi-session harvesting.",
+      "safety_status": "read_only_reference_only"
+    },
+    {
+      "asset_id": "risk-fotmob-extractor",
+      "category": "browser_core",
+      "path": "src/infrastructure/services/FotMobExtractor.js",
+      "risk_reason": "Uses Playwright browser; league-level scraping with NetworkInterceptor; browser-based DOM scanning.",
+      "safety_status": "do_not_reactivate"
+    },
+    {
+      "asset_id": "risk-network-interceptor",
+      "category": "browser_core",
+      "path": "src/infrastructure/services/NetworkInterceptor.js",
+      "risk_reason": "Passive API endpoint discovery via Playwright page request/response events; requires browser runtime.",
+      "safety_status": "read_only_reference_only"
+    },
+    {
+      "asset_id": "risk-archive-v6",
+      "category": "archive",
+      "path": "archive_vault_2026/archive_v6/*",
+      "risk_reason": "Full harvesting pipeline: capture_auth.js, inject_golden_cookies.js, auto_harvest_v6.js, sniffer_harvest_v6.js. Contains cookie injection, auth capture, automated harvesting with anti-bot bypass.",
+      "safety_status": "do_not_reactivate"
+    },
+    {
+      "asset_id": "risk-archive-legacy",
+      "category": "archive",
+      "path": "archive_vault_2026/legacy_v446/*",
+      "risk_reason": "Legacy hyper_swarm_stealth.js and related scripts; massive-scale anti-bot harvesting infrastructure.",
+      "safety_status": "do_not_reactivate"
+    }
+  ],
+  "canonical_payload_shape_plan": {
+    "required_sections": [
+      "general",
+      "header",
+      "content.stats",
+      "content.lineup",
+      "content.events"
+    ],
+    "optional_sections": [
+      "content.shotmap",
+      "xG/expectedGoals",
+      "tournament/venue"
+    ],
+    "field_aliases": {
+      "matchId": [
+        "match_id",
+        "externalId",
+        "id"
+      ],
+      "homeTeam": [
+        "home",
+        "home_team"
+      ],
+      "awayTeam": [
+        "away",
+        "away_team"
+      ],
+      "stats": [
+        "statistics"
+      ],
+      "lineup": [
+        "lineups"
+      ],
+      "events": [
+        "incidents",
+        "timeline"
+      ]
+    },
+    "source_adapter_requirements": [
+      "Map source fields to canonical general/header/content structure",
+      "Normalize team identity (id + name + shortName)",
+      "Normalize stat names to standard keys",
+      "Preserve xG data at both aggregate and shot level",
+      "Map events to type/min/player/team format"
+    ],
+    "validation_rules": [
+      "matchId must be present and numeric/string-compatible",
+      "content must have at minimum: stats OR lineup OR events",
+      "general.homeTeam and general.awayTeam must be present",
+      "header.tournament should be present for league matches"
+    ]
+  },
+  "raw_write_gate": {
+    "json_validated_count": 0,
+    "raw_write_eligible_count": 0,
+    "raw_write_allowed": false,
+    "db_write_allowed": false,
+    "raw_write_blocked_until_validated_payload": true,
+    "required_before_raw_write": [
+      "validated raw detail payload",
+      "schema mapping reviewed",
+      "parser test coverage",
+      "no production DB write without explicit authorization"
+    ]
+  },
+  "safety": {
+    "network_fetch_performed": false,
+    "db_read_performed": false,
+    "db_write_performed": false,
+    "production_db_write_performed": false,
+    "raw_json_write_performed": false,
+    "feature_parse_performed": false,
+    "scheduler_enabled": false,
+    "browser_automation_performed": false,
+    "browser_automation_allowed": false,
+    "cookie_harvesting_performed": false,
+    "cookie_harvesting_allowed": false,
+    "captcha_bypass_performed": false,
+    "captcha_bypass_allowed": false,
+    "proxy_rotation_performed": false,
+    "proxy_rotation_allowed": false,
+    "secrets_printed": false
+  },
+  "embedded_review": {
+    "status": "pass",
+    "review_report_path": "docs/_reports/FOTMOB_SAFE_PARSER_SCHEMA_REUSE_PLAN_NO_WRITE_REVIEW.md"
+  },
+  "recommended_next_phase": "HISTORICAL-FOTMOB-PAYLOAD-SHAPE-RECONSTRUCTION-READONLY"
+}
