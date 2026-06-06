@@ -153,6 +153,17 @@ describe the conflict. If no active doc exists for a long-lived conclusion,
 Codex should create or update a source-of-truth doc in a scoped task instead of
 continuing a report chain.
 
+## Archive Move Planning Rules
+
+Archive move plans are not authorization to move files. During Phase3A, Codex
+may only document proposed source and destination paths. It must not delete,
+move, rename, archive, or create `docs/_archive/` content.
+
+Before any future move, Codex must require owner review, list every moved file in
+the PR body, preserve the original relative path or mapping table, and provide a
+rollback plan. If a candidate has uncertain current value, mark it do-not-move
+until the source-of-truth replacement is confirmed.
+
 ## Codex Final Report Format
 
 Codex final replies should include:
