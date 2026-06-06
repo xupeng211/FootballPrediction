@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Check documentation governance rules for the Phase 0 PR.
+"""Check documentation governance rules for documentation cleanup PRs.
 
 lifecycle: permanent
 """
@@ -16,6 +16,7 @@ MAX_ADDED_FILES = 5
 NAME_STATUS_PATH_PARTS = 2
 NAME_STATUS_RENAME_PARTS = 3
 PHASE1_MAX_ADDED_FILES = 1
+PHASE2_MAX_ADDED_FILES = 1
 
 PHASE0_ALLOWED_ADDED = frozenset(
     {
@@ -33,6 +34,12 @@ PHASE1_ALLOWED_ADDED = frozenset(
     }
 )
 
+PHASE2_ALLOWED_ADDED = frozenset(
+    {
+        "docs/_reports/DOCUMENTATION_CLEANUP_PHASE2_ARCHIVE_CANDIDATE_MARKING_NO_MOVE.md",
+    }
+)
+
 SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
     {
         "README.md",
@@ -45,7 +52,7 @@ SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
     }
 )
 
-ALLOWED_ADDED = PHASE0_ALLOWED_ADDED | PHASE1_ALLOWED_ADDED
+ALLOWED_ADDED = PHASE0_ALLOWED_ADDED | PHASE1_ALLOWED_ADDED | PHASE2_ALLOWED_ADDED
 ALLOWED_CHANGED = ALLOWED_ADDED | SOURCE_OF_TRUTH_ALLOWED_CHANGED
 
 REQUIRED_DOCS = (
@@ -223,6 +230,8 @@ def max_added_files_for(added: set[str]) -> int:
 
     if PHASE1_ALLOWED_ADDED & added:
         return PHASE1_MAX_ADDED_FILES
+    if PHASE2_ALLOWED_ADDED & added:
+        return PHASE2_MAX_ADDED_FILES
     return MAX_ADDED_FILES
 
 

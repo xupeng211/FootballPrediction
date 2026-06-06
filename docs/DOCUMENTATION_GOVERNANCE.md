@@ -209,6 +209,24 @@ Long-lived project conclusions should be summarized in the active or planned
 source-of-truth docs above. Existing reports and manifests remain evidence until
 a future no-move archive-candidate phase marks lifecycle status explicitly.
 
+## Phase2 Archive Candidate Marking Status
+
+Phase2 only marks archive candidates and lifecycle states. It does not delete,
+move, rename, or archive files.
+
+Lifecycle states now used for documentation cleanup are:
+
+- `active`
+- `evidence`
+- `superseded`
+- `archive_candidate`
+- `archived`
+
+Phase3 may execute an archive move only after a reviewed mapping table exists.
+Deleting documentation remains forbidden. Active docs take priority over phase
+reports, and Codex must not treat `superseded` or `archive_candidate` files as
+current conclusions.
+
 ## Cleanup Strategy
 
 ### Phase 0
@@ -225,12 +243,12 @@ a future no-move archive-candidate phase marks lifecycle status explicitly.
 
 ### Phase 2
 
-- move superseded reports into archive
-- preserve information
-- avoid current-state regressions
+- mark active, evidence, superseded, and archive_candidate docs
+- no move
+- no deletion
 
 ### Phase 3
 
-- enforce CI document budget
-- require Documentation Impact
-- block repeated report/review/decision/next-plan bundles
+- move confirmed archive_candidate files only after mapping review
+- preserve information
+- avoid current-state regressions
