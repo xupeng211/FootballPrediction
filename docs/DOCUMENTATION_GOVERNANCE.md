@@ -227,6 +227,15 @@ Deleting documentation remains forbidden. Active docs take priority over phase
 reports, and Codex must not treat `superseded` or `archive_candidate` files as
 current conclusions.
 
+## Phase3A Archive Move Plan Status
+
+Phase3A creates a proposed archive move mapping only. It does not delete, move,
+rename, archive, or create `docs/_archive/` content.
+
+Proposed archive destinations are not authorization to move files. Owner review
+is required before any later task can move archive candidates. Active docs still
+take priority over reports, and deletion remains forbidden.
+
 ## Cleanup Strategy
 
 ### Phase 0
@@ -249,6 +258,7 @@ current conclusions.
 
 ### Phase 3
 
-- move confirmed archive_candidate files only after mapping review
+- create and review archive move mapping before moving anything
+- move confirmed archive_candidate files only after owner review
 - preserve information
 - avoid current-state regressions

@@ -90,6 +90,12 @@ DOCUMENTATION-CLEANUP-PHASE3-ARCHIVE-MOVE-PLAN-NO-DELETION
 Phase3 should still delete nothing. It may only move confirmed candidates into
 `docs/_archive/` after a reviewed mapping table is available.
 
+## Phase3A Handoff Status
+
+Phase3A should create a proposed archive move mapping only. It should not delete,
+move, rename, archive, create `docs/_archive/` content, or create manifests.
+Owner review is required before any later move task.
+
 ## Safety
 
 | Item | Value |
