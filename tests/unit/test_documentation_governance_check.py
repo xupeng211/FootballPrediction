@@ -108,6 +108,12 @@ def test_pull_request_template_is_allowed_when_present():
         assert ".github/pull_request_template.md" in checker.ALLOWED_CHANGED
 
 
+def test_test_debt_audit_report_is_exact_path_allowed():
+    expected = "docs/_reports/TEST_DEBT_AUDIT_NO_RUNTIME_CHANGE.md"
+    assert frozenset({expected}) == checker.TEST_DEBT_AUDIT_ALLOWED_ADDED
+    assert expected in checker.ALLOWED_ADDED
+
+
 def test_destructive_actions_forbidden():
     changes = checker.collect_changes()
     assert not any(change.status in {"D", "R"} for change in changes)
