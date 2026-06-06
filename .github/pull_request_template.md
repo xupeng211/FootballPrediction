@@ -1,3 +1,91 @@
+## Summary
+
+- TBD
+
+## Scope
+
+| Item | Value |
+|---|---|
+| Task type |  |
+| One task / one branch / one PR | yes / no |
+| Combines feature + cleanup, audit + repair, merge + new work, or docs governance + business code | no |
+| Merge-only zero-change task | yes / no / n/a |
+| Business code changed | yes / no |
+| FotMob code changed | yes / no |
+
+## Files Changed
+
+| Path | Purpose |
+|---|---|
+|  |  |
+
+## Documentation Impact
+
+| Item | Value |
+|---|---|
+| New docs added |  |
+| Reports added |  |
+| Manifests added |  |
+| Review reports added |  |
+| Decision reports added |  |
+| Next plans added |  |
+| Exact allowed report paths, if any |  |
+
+## Safety Impact
+
+| Item | Value |
+|---|---|
+| Existing files deleted | 0 |
+| Existing files moved | 0 |
+| Existing files renamed | 0 |
+| Archive operation performed | no |
+| Business code changed | no |
+| FotMob code changed | no |
+| DB used | no |
+| Browser automation used | no |
+| Scraper run | no |
+| New manifest created | no |
+| New next-plan created | no |
+| New review report created | no |
+| New decision report created | no |
+
+## Validation
+
+| Validation | Result |
+|---|---|
+| Host validation |  |
+| Container validation |  |
+| GitHub Production Gate |  |
+
+## CI Gate Scope
+
+- What the validation proves:
+- What the validation does not prove:
+- Host unavailable results, if any:
+- Container validation results, if any:
+
+## No deletion / no move / no rename confirmation
+
+| Item | Value |
+|---|---|
+| Deleted files | 0 |
+| Moved files | 0 |
+| Renamed files | 0 |
+| Created docs/_archive content | no |
+| Performed archive move | no |
+
+## Rollback Plan
+
+- TBD
+
+## Next Recommended Task
+
+Do not start automatically.
+
+Recommended next task only after user confirmation:
+
+- TBD
+
 ## PR Type
 
 选择一个主类型：
@@ -96,7 +184,9 @@ Commands and results:
 ## Repository Hygiene / Debt Impact
 
 - New files added:
-- File lifecycle for each new file (permanent / phase-artifact / one-shot-helper / test-fixture / temporary / archive-candidate / delete-after-use):
+- File lifecycle for each new file:
+  permanent / phase-artifact / one-shot-helper / test-fixture / temporary /
+  archive-candidate / delete-after-use
 - Permanent files:
 - Phase-only artifacts:
 - One-shot helpers (describe cleanup condition):

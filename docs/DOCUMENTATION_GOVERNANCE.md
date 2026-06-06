@@ -114,6 +114,10 @@ Default rules for every PR:
 
 - Default to adding no documents.
 - Update existing documents before creating new ones.
+- If a task allows a new report, the exact path must be listed. Broad patterns
+  such as `docs/_reports/*.md`, `docs/_reports/*AUDIT*.md`,
+  `docs/_reports/*NEXT_PLAN*.md`, `docs/_reports/*REVIEW*.md`, and
+  `docs/_reports/*DECISION*.md` are prohibited.
 - Add at most 1 human-readable report per PR.
 - Add at most 1 machine manifest per PR.
 - Add at most 1 checker per PR.
@@ -178,6 +182,8 @@ Codex must follow these rules:
 - Do not add a manifest for every task.
 - Do not generate review reports by default.
 - Do not create next-plan chains.
+- Do not add reports, manifests, review reports, decision reports, or next-plan
+  files unless the task explicitly allows the exact path.
 - First update main docs such as PROJECT_STATUS, DATA_SOURCE_STRATEGY, or
   FOTMOB_CURRENT_STATE when the conclusion is long-lived.
 - Then consider whether a new report is still needed.
@@ -235,6 +241,30 @@ rename, archive, or create `docs/_archive/` content.
 Proposed archive destinations are not authorization to move files. Owner review
 is required before any later task can move archive candidates. Active docs still
 take priority over reports, and deletion remains forbidden.
+
+## AI Guardrail Hardening Status
+
+AI workflow guardrails now require one task, one branch, and one PR. Tasks must
+not combine feature work with cleanup, audit with repair, merge with new work,
+or documentation governance with business code.
+
+Merge-only tasks are zero-change tasks. They may verify state, merge the
+approved PR, sync local `main`, delete the task branch, and report final state,
+but they must not edit files or start follow-up work.
+
+Destructive operations require an exact owner-approved file list, explicit
+destructive flag, rollback plan, and no broad patterns. Archive moves require an
+owner-approved candidate list; filename patterns such as `FOTMOB_*`,
+`*_REVIEW*`, `*_DECISION*`, and `*_NEXT_PLAN*` are not move authorization.
+
+Every PR must state CI Gate Scope. Production Gate success does not prove
+full-system coverage, model/data quality, or authorization for unscoped runtime,
+DB, browser, scraper, network, or raw-write work. Host validation unavailable
+results must be separated from container validation.
+
+High-risk FotMob, scraper, browser, Playwright, Chromium, cookie/session,
+captcha, proxy rotation, DB write, raw write, and network data collection work
+remains blocked unless a future task explicitly authorizes the exact scope.
 
 ## Cleanup Strategy
 

@@ -84,6 +84,30 @@ def test_file_budget_at_most_five():
     assert len(added) <= checker.MAX_ADDED_FILES
 
 
+def test_allowlists_use_exact_paths_without_wildcards():
+    assert not any(
+        any(char in path for char in checker.WILDCARD_CHARS)
+        for path in checker.iter_allowlist_paths()
+    )
+
+
+def test_allowlists_do_not_allow_broad_reports_or_archive_paths():
+    added = checker.ALLOWED_ADDED
+    assert not any(path.startswith("docs/_archive/") for path in checker.iter_allowlist_paths())
+    assert not any(path.startswith("docs/_manifests/") for path in added)
+    assert not any("next_plan" in path.lower() or "next-plan" in path.lower() for path in added)
+    assert not any(path.startswith("docs/_reports/") and "review" in path.lower() for path in added)
+    assert not any(
+        path.startswith("docs/_reports/") and "decision" in path.lower() for path in added
+    )
+
+
+def test_pull_request_template_is_allowed_when_present():
+    template = ROOT / ".github/pull_request_template.md"
+    if template.exists():
+        assert ".github/pull_request_template.md" in checker.ALLOWED_CHANGED
+
+
 def test_destructive_actions_forbidden():
     changes = checker.collect_changes()
     assert not any(change.status in {"D", "R"} for change in changes)
