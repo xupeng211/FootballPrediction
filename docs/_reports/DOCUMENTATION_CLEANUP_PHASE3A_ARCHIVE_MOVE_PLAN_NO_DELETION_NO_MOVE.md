@@ -21,6 +21,25 @@ All destinations below are proposed paths for future review, not executed moves.
 | `docs/_reports/FOTMOB_ENDPOINT_RUNTIME_CANDIDATE_PROBE_NEXT_PLAN.md` | archive_candidate | `docs/_archive/_reports/FOTMOB_ENDPOINT_RUNTIME_CANDIDATE_PROBE_NEXT_PLAN.md` | Superseded by active workflow ordering. | `docs/CODEX_WORKFLOW.md` | medium | Verify no blocker is missing from active docs. | Move back to original path. | Required before any move. |
 | `docs/_reports/FOTMOB_CONTROLLED_JSON_PROBE_NO_WRITE_ENDPOINT_DECISION.md` | archive_candidate | `docs/_archive/_reports/FOTMOB_CONTROLLED_JSON_PROBE_NO_WRITE_ENDPOINT_DECISION.md` | Historical decision should be evidence only. | `docs/data/FOTMOB_CURRENT_STATE.md` | high | Confirm decision is summarized before move. | Move back to original path. | Required before any move. |
 
+## Phase3B Review
+
+Phase3B reviews the Phase3A mapping only. It does not delete, move, rename, or
+archive files. Filename pattern alone is not enough to approve a future move.
+
+| Candidate | Current proposed action | Phase3B classification | Reason | Evidence replacement | Risk | Future action |
+|---|---|---|---|---|---|---|
+| `docs/_reports/FOTMOB_*` old probe chains | Move to `docs/_archive/_reports/FOTMOB_*` | evidence_keep_in_place_for_now | FotMob reports may contain historical success, endpoint failure, raw payload, or anti-bot boundary evidence. | `docs/data/FOTMOB_CURRENT_STATE.md` only partially preserves this history. | high | Keep in place until owner confirms specific files are summarized. |
+| `docs/_reports/*_REVIEW*.md` | Move to `docs/_archive/_reports/*_REVIEW*.md` | needs_owner_review | Some review reports may contain unique validation or safety notes. | Active docs and PR bodies may not preserve all detail. | medium | Review specific files before any move. |
+| `docs/_reports/*_NEXT_PLAN*.md` | Move to `docs/_archive/_reports/*_NEXT_PLAN*.md` | needs_owner_review | Next-plan files may include unresolved blockers. | `docs/CODEX_WORKFLOW.md` preserves workflow rules, not every blocker. | medium | Move only after blocker content is copied or closed. |
+| `docs/_reports/*_DECISION*.md` | Move to `docs/_archive/_reports/*_DECISION*.md` | evidence_keep_in_place_for_now | Decisions may be current architecture evidence until ADR/source summary exists. | `docs/DOCUMENTATION_GOVERNANCE.md` defines policy but not every decision. | high | Keep in place until replacement summary or ADR is reviewed. |
+| `docs/_manifests/*.json` | Move to `docs/_archive/_manifests/*.json` | blocked_do_not_move | Manifest references and automation consumers are not audited. | Matching report/source summary is not verified per file. | high | Do not move until dependency scan and owner review complete. |
+| `docs/_reports/FOTMOB_CONTROLLED_JSON_PROBE_NO_WRITE_REVIEW.md` | Move to `docs/_archive/_reports/FOTMOB_CONTROLLED_JSON_PROBE_NO_WRITE_REVIEW.md` | evidence_keep_in_place_for_now | Specific FotMob endpoint review may preserve no-write and failure-boundary evidence. | `docs/data/FOTMOB_CURRENT_STATE.md` summarizes but may not include probe detail. | medium | Keep in place until endpoint findings are summarized. |
+| `docs/_reports/FOTMOB_ENDPOINT_RUNTIME_CANDIDATE_PROBE_NEXT_PLAN.md` | Move to `docs/_archive/_reports/FOTMOB_ENDPOINT_RUNTIME_CANDIDATE_PROBE_NEXT_PLAN.md` | needs_owner_review | Could contain unresolved endpoint discovery blocker details. | `docs/CODEX_WORKFLOW.md` preserves workflow order only. | medium | Owner must confirm blockers are obsolete or summarized. |
+| `docs/_reports/FOTMOB_CONTROLLED_JSON_PROBE_NO_WRITE_ENDPOINT_DECISION.md` | Move to `docs/_archive/_reports/FOTMOB_CONTROLLED_JSON_PROBE_NO_WRITE_ENDPOINT_DECISION.md` | evidence_keep_in_place_for_now | Endpoint decision may preserve historical route and no-write rationale. | `docs/data/FOTMOB_CURRENT_STATE.md` only summarizes current boundary. | high | Keep until decision content is summarized or owner approves. |
+
+Phase3B result: no candidate is safe for automatic future move. A future move
+task must use a smaller, owner-approved candidate list.
+
 ## Do Not Move Yet
 
 | Candidate | Reason |
