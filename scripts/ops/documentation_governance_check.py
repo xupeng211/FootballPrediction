@@ -10,6 +10,10 @@ from dataclasses import dataclass
 from pathlib import Path
 import subprocess
 import sys
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 ROOT = Path(__file__).resolve().parents[2]
 MAX_ADDED_FILES = 5
@@ -19,6 +23,7 @@ PHASE1_MAX_ADDED_FILES = 1
 PHASE2_MAX_ADDED_FILES = 1
 PHASE3A_MAX_ADDED_FILES = 1
 AI_AUDIT_MAX_ADDED_FILES = 1
+WILDCARD_CHARS = frozenset("*?[]")
 
 PHASE0_ALLOWED_ADDED = frozenset(
     {
@@ -56,6 +61,7 @@ AI_AUDIT_ALLOWED_ADDED = frozenset(
 
 SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
     {
+        ".github/pull_request_template.md",
         "README.md",
         "docs/PROJECT_STATUS.md",
         "docs/DATA_SOURCE_STRATEGY.md",
@@ -104,6 +110,14 @@ AUDIT_SECTIONS = (
     "Proposed Source of Truth Docs",
     "Archive Candidates",
     "Phase 1 Cleanup Proposal",
+)
+
+ALLOWLIST_GROUPS = (
+    PHASE0_ALLOWED_ADDED,
+    PHASE1_ALLOWED_ADDED,
+    PHASE2_ALLOWED_ADDED,
+    PHASE3A_ALLOWED_ADDED,
+    AI_AUDIT_ALLOWED_ADDED,
 )
 
 
@@ -223,6 +237,13 @@ def read_text(path: str) -> str:
     return (ROOT / path).read_text(encoding="utf-8")
 
 
+def iter_allowlist_paths() -> Iterable[str]:
+    """Yield all exact paths from governance allowlists."""
+
+    yield from ALLOWED_ADDED
+    yield from SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
 def validate_required_files(errors: list[str]) -> None:
     """Validate required governance files and sections."""
 
@@ -243,6 +264,42 @@ def validate_required_files(errors: list[str]) -> None:
         errors.extend(
             f"{path} missing section: {section}" for section in sections if section not in text
         )
+
+
+def validate_exact_allowlist_paths(errors: list[str]) -> None:
+    """Validate that allowlist paths are exact and do not target archives."""
+    for path in sorted(iter_allowlist_paths()):
+        if any(char in path for char in WILDCARD_CHARS):
+            errors.append(f"allowlist path must be exact, not wildcard: {path}")
+        if path.startswith("docs/_archive/"):
+            errors.append(f"archive allowlist path is prohibited: {path}")
+
+
+def validate_added_allowlist_paths(errors: list[str]) -> None:
+    """Validate that added-file allowlists do not permit governance sprawl."""
+    for path in sorted(ALLOWED_ADDED):
+        lower = path.lower()
+        if path.startswith("docs/_manifests/"):
+            errors.append(f"manifest allowlist path is prohibited: {path}")
+        if "next_plan" in lower or "next-plan" in lower:
+            errors.append(f"next-plan allowlist path is prohibited: {path}")
+        if path.startswith("docs/_reports/") and "review" in lower:
+            errors.append(f"review report allowlist path is prohibited: {path}")
+        if path.startswith("docs/_reports/") and "decision" in lower:
+            errors.append(f"decision report allowlist path is prohibited: {path}")
+
+
+def validate_allowlist_budgets(errors: list[str]) -> None:
+    """Validate that phase allowlist groups stay within the file budget."""
+    if any(len(group) > MAX_ADDED_FILES for group in ALLOWLIST_GROUPS):
+        errors.append("allowlist group exceeds maximum added-file budget")
+
+
+def validate_allowlist_hardening(errors: list[str]) -> None:
+    """Validate that governance allowlists stay exact and non-destructive."""
+    validate_exact_allowlist_paths(errors)
+    validate_added_allowlist_paths(errors)
+    validate_allowlist_budgets(errors)
 
 
 def max_added_files_for(added: set[str]) -> int:
@@ -308,6 +365,7 @@ def validate() -> list[str]:
     errors: list[str] = []
     changes = collect_changes()
     validate_required_files(errors)
+    validate_allowlist_hardening(errors)
     validate_change_budget(changes, errors)
     validate_prohibited_files(changes, errors)
     return errors

@@ -8,6 +8,8 @@
 - Never develop directly on `main`.
 - Use one branch per task.
 - Use one PR per task.
+- One task must not combine feature work with cleanup, audit with repair, merge
+  with new work, or documentation governance with business code.
 - Read current source-of-truth docs before starting a task.
 - Default to adding no documents.
 - Default to adding no manifests.
@@ -19,6 +21,9 @@
 - Include Validation in every PR.
 - Keep `git status` clean after commit.
 - Do not continue a paused feature stream when the task is governance-only.
+- Do not start the next recommended task automatically. Every final report must
+  say "Do not start automatically" and that the recommended next task requires
+  user confirmation.
 
 ## Task Types
 
@@ -76,8 +81,16 @@ Every PR body must include:
 - Documentation Impact
 - Safety Impact
 - Validation
+- CI Gate Scope
+- No deletion / no move / no rename confirmation
 - Rollback Plan
 - Next Recommended Task
+
+The CI Gate Scope section must state what validation proves and does not prove.
+Production Gate success does not prove full-system coverage, model/data quality,
+or safety for unscoped runtime, DB, browser, scraper, or network work. Host
+validation that is unavailable must be reported separately from container
+validation.
 
 ## Documentation Creation Decision Tree
 
@@ -105,6 +118,11 @@ Codex must not:
 - put temporary exploration files in the main docs tree
 - skip source-of-truth updates while adding more reports
 - use PR body reports as the only durable documentation
+- use broad report allowlists such as `docs/_reports/*.md`,
+  `docs/_reports/*AUDIT*.md`, `docs/_reports/*NEXT_PLAN*.md`,
+  `docs/_reports/*REVIEW*.md`, or `docs/_reports/*DECISION*.md`
+- create reports, manifests, next-plan files, review reports, or decision
+  reports unless the task explicitly allows the exact path
 
 ## Current Project Source of Truth
 
@@ -163,6 +181,29 @@ Before any future move, Codex must require owner review, list every moved file i
 the PR body, preserve the original relative path or mapping table, and provide a
 rollback plan. If a candidate has uncertain current value, mark it do-not-move
 until the source-of-truth replacement is confirmed.
+
+Archive moves must not be based on filename patterns alone. Broad patterns such
+as `FOTMOB_*`, `*_REVIEW*`, `*_DECISION*`, and `*_NEXT_PLAN*` are planning
+signals only. A future archive move task requires an exact owner-approved file
+list, explicit destructive flag, rollback plan, and no broad destination pattern.
+
+## Merge-Only Task Rules
+
+Merge-only tasks are zero-change tasks. They may only verify repository and PR
+state, merge the approved PR, sync local `main`, delete the local task branch,
+and report final state. They must not modify files, create commits, create new
+branches, create new PRs, or start follow-up work.
+
+## High-Risk Work Restrictions
+
+Codex must not run or modify FotMob reconstruction, scraper, browser automation,
+Playwright, Chromium, cookie/session code, captcha code, proxy rotation, DB
+writes, raw data writes, or network data collection unless a future task
+explicitly authorizes the exact scope.
+
+Test-debt work must be handled in a separate audit or repair task. Do not fix
+tests as part of workflow hardening unless the task explicitly scopes governance
+checker tests.
 
 ## Codex Final Report Format
 
