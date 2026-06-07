@@ -130,6 +130,24 @@ jobs:
           DB_BLUEPRINT_STATEMENT_TIMEOUT_MS: "30000"
         run: bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"
 
+      - name: AI Workflow Gate (P0)
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
+        run: |
+          PR_BODY_FILE="$(mktemp -t pr-body.XXXXXX)"
+          if [ -n "${PR_BODY:-}" ]; then
+            printf '%s\n' "${PR_BODY}" > "${PR_BODY_FILE}"
+            python3 scripts/ops/ai_workflow_gate.py --pr-body-file "${PR_BODY_FILE}"
+          else
+            # Push event on main — run git-diff-based checks only
+            echo "[AI Workflow Gate] No PR body (push event). Running git-diff checks only."
+            touch "${PR_BODY_FILE}"
+            python3 scripts/ops/ai_workflow_gate.py \
+              --pr-body-file "${PR_BODY_FILE}" \
+              --skip-body-checks
+          fi
+          rm -f "${PR_BODY_FILE}"
+
   docker-build:
     name: Docker Build Validation
     runs-on: ubuntu-latest
