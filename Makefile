@@ -61,7 +61,8 @@
         data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
-        data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate
+        data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
+        ci-local ci-local-pr
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -181,6 +182,21 @@ verify: ## 运行完整验证
 	$(MAKE) lint
 	$(MAKE) test-unit
 	$(MAKE) security
+
+# ============================================
+# 本地 CI 入口
+# ============================================
+ci-local: ## 运行本地 CI 部分验证（静态检查为主，远程 CI 为最终权威）
+	@echo "$(YELLOW)[Local CI] 运行本地部分验证...$(NC)"
+	@echo "$(YELLOW)[Local CI] 远程 GitHub Actions 为最终权威。$(NC)"
+	@echo "$(YELLOW)[Local CI] 不要将本地 CI 通过等同于远程 CI 通过。$(NC)"
+	@GATEKEEPER_LOCAL_CI=1 GATEKEEPER_DIRECT_MODE=1 \
+		GATEKEEPER_FAKE_CI=1 \
+		bash scripts/devops/gatekeeper.sh --mode=pr || \
+		(echo "$(YELLOW)[Local CI] 部分检查失败或跳过。远程 CI 为最终权威。$(NC)"; exit 0)
+
+ci-local-pr: ## PR 前本地验证（同 ci-local）
+	$(MAKE) ci-local
 
 # ============================================
 # 数据库命令

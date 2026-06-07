@@ -239,3 +239,19 @@ reviewer 应能在 PR 中快速看到：
 - 只有明确标注 delete-after-use / archive-candidate 的文件才在后续 hygiene PR 中删除或归档
 
 **Cross-agent rule**：Codex and Claude Code must follow the same workflow defined here. `CLAUDE.md` is an entrypoint that points to the same authoritative sources — it is not a separate rule set.
+
+## 15. Local CI before push
+
+Before pushing a PR branch, run:
+
+```bash
+make ci-local-pr
+```
+
+This invokes `scripts/devops/gatekeeper.sh` in local CI direct mode. It runs
+static checks (no-verify guard, proxy config, leak check, contract check,
+ruff, mypy, repo hygiene, etc.) directly in the current environment.
+
+If the command reports partial validation, remote GitHub CI remains the final
+authority. Do not claim full local CI passed unless gatekeeper completed
+without any skipped checks.
