@@ -376,7 +376,10 @@ def test_mixed_with_missing_sections_fails():
     ]
     errors = gate.validate(body, changes)
     # Should have: missing sections + missing stop phrase + mixed governance
-    assert len(errors) >= 3, f"Expected >= 3 errors, got {len(errors)}: {errors}"
+    min_expected = 3
+    assert len(errors) >= min_expected, (
+        f"Expected >= {min_expected} errors, got {len(errors)}: {errors}"
+    )
 
 
 # ---------------------------------------------------------------------------

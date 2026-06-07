@@ -246,6 +246,10 @@ class Change:
     old_path: str | None = None
 
 
+NAME_STATUS_PATH_PARTS = 2
+NAME_STATUS_RENAME_PARTS = 3
+
+
 def git_output(args: list[str], *, check: bool = True) -> str:
     """Run a local Git command and return stdout."""
 
@@ -286,16 +290,16 @@ def parse_name_status(output: str) -> list[Change]:
             continue
         parts = line.split("\t")
         status = parts[0]
-        if status.startswith("R") and len(parts) >= 3:
+        if status.startswith("R") and len(parts) >= NAME_STATUS_RENAME_PARTS:
             changes.append(Change("R", parts[2], parts[1]))
             continue
-        if status.startswith("D") and len(parts) >= 2:
+        if status.startswith("D") and len(parts) >= NAME_STATUS_PATH_PARTS:
             changes.append(Change("D", parts[1]))
             continue
-        if status.startswith("A") and len(parts) >= 2:
+        if status.startswith("A") and len(parts) >= NAME_STATUS_PATH_PARTS:
             changes.append(Change("A", parts[1]))
             continue
-        if len(parts) >= 2:
+        if len(parts) >= NAME_STATUS_PATH_PARTS:
             changes.append(Change("M", parts[1]))
     return changes
 
@@ -420,11 +424,11 @@ def section_text_between(pr_body: str, start_heading: str, next_heading: str | N
 def check_required_sections(pr_body: str) -> list[str]:
     """Return missing required section headings."""
 
-    missing: list[str] = []
-    for heading in REQUIRED_SECTIONS:
-        if not section_present(pr_body, heading):
-            missing.append(heading)
-    return missing
+    return [
+        heading
+        for heading in REQUIRED_SECTIONS
+        if not section_present(pr_body, heading)
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -442,11 +446,11 @@ def check_next_task_stop_phrase(pr_body: str) -> list[str]:
     if not section:
         return ["## Next Recommended Task section not found or empty"]
 
-    errors: list[str] = []
-    for phrase in NEXT_TASK_MANDATORY_PHRASES:
-        if phrase not in section:
-            errors.append(f"## Next Recommended Task missing phrase: '{phrase}'")
-    return errors
+    return [
+        f"## Next Recommended Task missing phrase: '{phrase}'"
+        for phrase in NEXT_TASK_MANDATORY_PHRASES
+        if phrase not in section
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -563,8 +567,10 @@ def check_dangerous_keywords_in_blind_spots(
             ("proxy bypass", PROXY_BYPASS_RAW_IMPORTS),
         ):
             hits = _scan_file_for_patterns(abs_path, patterns)
-            for hit in hits:
-                errors.append(f"[{label}] dangerous keyword in blind-spot path: {hit}")
+            errors.extend(
+                f"[{label}] dangerous keyword in blind-spot path: {hit}"
+                for hit in hits
+            )
 
     return errors
 
@@ -685,6 +691,7 @@ def validate(
 
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser for the AI workflow gate."""
     parser = argparse.ArgumentParser(
         description="AI workflow gate — P0 risk checks for PRs",
     )
@@ -715,6 +722,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run AI workflow gate checks and exit 0 (pass) or 1 (fail)."""
     parser = build_parser()
     args = parser.parse_args(argv)
 
