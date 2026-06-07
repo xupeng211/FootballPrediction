@@ -67,3 +67,34 @@ test('LeagueParser 应从 __NEXT_DATA__ HTML 中抽取联赛边界对象', () =>
   assert.equal(result.data.leagueId, 47);
   assert.equal(result.data.name, 'Premier League');
 });
+
+test('PlayerParser 在空 lineup 时应安全返回空数组', () => {
+  const raw = {
+    matchId: '4506745',
+    general: {
+      homeTeam: { name: 'Arsenal' },
+      awayTeam: { name: 'Chelsea' }
+    }
+    // no content, no lineup
+  };
+
+  const players = new PlayerParser().parsePlayers(raw);
+
+  assert.ok(Array.isArray(players));
+  assert.equal(players.length, 0);
+});
+
+test('MatchStatsParser 在缺少 xG 数据时应安全返回 null 不抛异常', () => {
+  // Extremely minimal input — no content.stats at all
+  const raw = { matchId: '4506745' };
+
+  const result = new MatchStatsParser().parseStats(raw);
+
+  // xG fields are null when no stat data exists
+  assert.equal(result.xg.xg_home, null);
+  assert.equal(result.xg.xg_away, null);
+  assert.equal(result.xg.hasAnyStats, false);
+  // stats array should be empty but no error
+  assert.ok(Array.isArray(result.stats));
+  assert.equal(result.stats.length, 0);
+});
