@@ -48,6 +48,22 @@ test('FotMob thin parsers 应提供清晰实体边界并复用原始结构', () 
   assert.equal(stats.xg.xg_home, 1.4);
 });
 
+test('TeamParser 在 homeTeam 缺失时应过滤 null 并保留有效 awayTeam', () => {
+  const raw = {
+    general: {
+      homeTeam: null,
+      awayTeam: { id: 2, name: 'Chelsea', score: 1 }
+    }
+  };
+
+  const teams = new TeamParser().parseTeams(raw);
+
+  assert.equal(teams.length, 1);
+  assert.equal(teams[0].side, 'away');
+  assert.equal(teams[0].name, 'Chelsea');
+  assert.equal(teams[0].score, 1);
+});
+
 test('LeagueParser 应从 __NEXT_DATA__ HTML 中抽取联赛边界对象', () => {
   const nextData = {
     props: {
