@@ -424,11 +424,7 @@ def section_text_between(pr_body: str, start_heading: str, next_heading: str | N
 def check_required_sections(pr_body: str) -> list[str]:
     """Return missing required section headings."""
 
-    return [
-        heading
-        for heading in REQUIRED_SECTIONS
-        if not section_present(pr_body, heading)
-    ]
+    return [heading for heading in REQUIRED_SECTIONS if not section_present(pr_body, heading)]
 
 
 # ---------------------------------------------------------------------------
@@ -567,10 +563,7 @@ def check_dangerous_keywords_in_blind_spots(
             ("proxy bypass", PROXY_BYPASS_RAW_IMPORTS),
         ):
             hits = _scan_file_for_patterns(abs_path, patterns)
-            errors.extend(
-                f"[{label}] dangerous keyword in blind-spot path: {hit}"
-                for hit in hits
-            )
+            errors.extend(f"[{label}] dangerous keyword in blind-spot path: {hit}" for hit in hits)
 
     return errors
 
