@@ -100,6 +100,52 @@ test('PlayerParser 在空 lineup 时应安全返回空数组', () => {
   assert.equal(players.length, 0);
 });
 
+test('PlayerParser bench/substitutes extraction — 应从 lineup 中提取替补球员并分配正确的 side', () => {
+  const raw = {
+    matchId: '4506745',
+    content: {
+      lineup: {
+        home: {
+          starters: [{ id: 10, name: 'Home Starter', rating: 7.1 }],
+          substitutes: [
+            { id: 11, name: 'Home Substitute', rating: 6.0 },
+            { id: 12, name: 'Home Unrated Sub' }
+          ]
+        },
+        away: {
+          starters: [{ id: 20, name: 'Away Starter', rating: 6.8 }],
+          substitutes: [
+            { id: 21, name: 'Away Substitute', rating: 5.5 }
+          ]
+        }
+      }
+    }
+  };
+
+  const players = new PlayerParser().parsePlayers(raw);
+
+  // 2 starters + 3 substitutes = 5 total
+  assert.equal(players.length, 5);
+
+  // All substitutes present with correct side
+  const subs = players.filter(p => p.name && p.name.toLowerCase().includes('sub'));
+  assert.equal(subs.length, 3);
+
+  const homeSub = players.find(p => p.name === 'Home Substitute');
+  assert.equal(homeSub.side, 'home');
+  assert.equal(homeSub.id, 11);
+  assert.equal(homeSub.rating, 6.0);
+
+  const awaySub = players.find(p => p.name === 'Away Substitute');
+  assert.equal(awaySub.side, 'away');
+  assert.equal(awaySub.id, 21);
+  assert.equal(awaySub.rating, 5.5);
+
+  // Unrated substitute should have null rating, not NaN
+  const unrated = players.find(p => p.name === 'Home Unrated Sub');
+  assert.equal(unrated.rating, null);
+});
+
 test('MatchStatsParser 在缺少 xG 数据时应安全返回 null 不抛异常', () => {
   // Extremely minimal input — no content.stats at all
   const raw = { matchId: '4506745' };
