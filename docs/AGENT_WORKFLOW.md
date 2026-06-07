@@ -255,3 +255,175 @@ ruff, mypy, repo hygiene, etc.) directly in the current environment.
 If the command reports partial validation, remote GitHub CI remains the final
 authority. Do not claim full local CI passed unless gatekeeper completed
 without any skipped checks.
+
+## 16. PR Body Gate Local Check
+
+PR body must pass `scripts/ops/ai_workflow_gate.py` before push. Missing required
+sections or stop phrases will cause remote CI failure.
+
+### Before creating a PR
+
+Write the draft PR body to a temp file and validate:
+
+```bash
+cat > /tmp/pr_body.md <<'EOF'
+## Summary
+...
+## Next Recommended Task
+Do not start automatically.
+Recommended next task only after user confirmation.
+EOF
+
+python3 scripts/ops/ai_workflow_gate.py --pr-body-file /tmp/pr_body.md
+```
+
+Gate must report `PASS` before `git push`.
+
+### After creating a PR
+
+Fetch the real PR body and re-validate:
+
+```bash
+gh pr view <PR_NUMBER> --json body --jq .body > /tmp/pr_body.md
+python3 scripts/ops/ai_workflow_gate.py --pr-body-file /tmp/pr_body.md
+```
+
+### Required PR body sections (9)
+
+```text
+## Summary
+## Scope
+## Documentation Impact
+## Safety Impact
+## Validation
+## CI Gate Scope
+## No deletion / no move / no rename confirmation
+## Rollback Plan
+## Next Recommended Task
+```
+
+### Mandatory stop phrases in `## Next Recommended Task`
+
+```text
+Do not start automatically.
+Recommended next task only after user confirmation.
+```
+
+### If the local gate fails
+
+- Update only the PR body (via `gh pr edit` or `gh api PATCH`).
+- Do **not** change code, tests, scripts, CI, or docs to satisfy the gate.
+- Do **not** merge with a failing body check.
+- Do **not** start another task until the gate passes.
+
+## 17. CI Failure Handling and CI Retrigger Rules
+
+### PR body edits do not trigger new CI
+
+When you edit a PR body via `gh pr edit` or `gh api PATCH`, GitHub does **not**
+fire a new `pull_request` event. The existing CI run still holds the old body.
+
+### Do not rerun old workflow runs for body validation
+
+`gh run rerun --failed` replays the **original** event payload. A rerun will
+**not** see the updated PR body. The gate will fail again.
+
+### Trigger a fresh CI run after a body-only fix
+
+If you need to validate a PR body update and no code changes are required, push
+an empty commit to create a new `pull_request` `synchronize` event:
+
+```bash
+git commit --allow-empty -m "ci: retrigger PR gate after body update"
+git push
+```
+
+Before using an empty commit, confirm:
+
+- Working tree is clean (`git status --short` produces no output).
+- PR body passes local gate check (`python3 scripts/ops/ai_workflow_gate.py --pr-body-file /tmp/pr_body.md`).
+- User has explicitly authorized the empty-commit push.
+- No files are modified — `git diff --stat` shows zero changes.
+
+## 18. P0 Engineering Design Constraints
+
+These constraints apply to all implementation tasks.
+
+### Separation of concerns
+
+- **Fetch ≠ Parse ≠ Validate ≠ Write**. These four responsibilities must live
+  in separate modules.
+- One module = one responsibility. Do not create catch-all `Manager`,
+  `Processor`, `Handler`, or `Utils` classes that absorb unrelated logic.
+- Fetchers may retrieve data but must not write to DB.
+- Parsers must be pure functions: no network, no DB, no file writes.
+- Validators must only validate — they must not fetch or write.
+- Writers may write to DB or files but must not scrape or parse raw payloads.
+- Pipeline / Service modules orchestrate steps; they do not inline business
+  details.
+
+### Scope discipline
+
+- One PR = one concern. Do not mix runtime, DB, docs, CI, and schema changes
+  in a single PR unless the user explicitly authorizes it.
+- If a single file or function is already too large, do not add more
+  responsibilities. Stop and report that the module needs decomposition first.
+
+### File placement
+
+- New files go into the directory that matches their responsibility
+  (`src/parsers/`, `src/infrastructure/network/`, `tests/unit/`, etc.).
+- If file placement is unclear, **stop and ask the user** before creating it.
+- Do not create new top-level directories without explicit authorization.
+- Temporary reports, scripts, outputs, screenshots, raw payloads, dumps, and
+  coverage artifacts must never be committed.
+
+## 19. Code / Test / Docs Sync Rules
+
+When making changes, check the following synchronization requirements:
+
+| Change type | Check needed |
+|---|---|
+| Runtime behavior change | Test coverage (success + failure paths) |
+| User-facing behavior change | Documentation update |
+| Data structure / schema change | Schema docs and migration plan |
+| Safety boundary change | PR body Safety Impact section |
+| Test-only enhancement | Document in PR body; docs update optional |
+| Governance / workflow rule change | Update `docs/AGENT_WORKFLOW.md` |
+
+Do **not** use temporary reports under `docs/_reports/` or `docs/_manifests/`
+as substitutes for permanent documentation. These directories accumulate
+historical evidence; new files require explicit user authorization.
+
+## 20. AI Agent Default Behaviors
+
+These defaults apply unless a specific task overrides them with explicit
+authorization.
+
+### Read-only by default
+
+- Audit, inspect, and review before modifying.
+- Do not create branches, PRs, or Issues without explicit user instruction.
+- Do not merge, auto-merge, or delete branches without explicit authorization.
+
+### Stop-and-ask
+
+Stop and ask the user before:
+
+- Destructive or irreversible operations.
+- Creating files in directories whose responsibility is unclear.
+- Creating new top-level directories.
+- Running `git add -A` or committing files beyond the authorized scope.
+- Installing new dependencies.
+- Starting any next task that was not explicitly authorized.
+
+### Auto-start prohibition
+
+Every PR body, Issue comment, and terminal report must include:
+
+```text
+Do not start automatically.
+Recommended next task only after user confirmation.
+```
+
+This is enforced by CI through `scripts/ops/ai_workflow_gate.py`.
