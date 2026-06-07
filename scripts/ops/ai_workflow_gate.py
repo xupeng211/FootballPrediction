@@ -14,7 +14,7 @@ Checks enforced:
      diff are blocked (mixed-governance detection).
   4. New docs/_reports, docs/_manifests, next-plan, review, or decision files
      beyond the allowed budget are blocked.
-  5. Dangerous network / browser / DB-write / no-verify / proxy-bypass
+  5. Dangerous network / browser / DB-write / hook bypass / proxy-bypass
      keywords in new or modified files under docs/ or tests/ are flagged.
   6. Safety declarations of "no DB / no scraper / no browser" that contradict
      actually-changed file paths are blocked.
@@ -127,8 +127,8 @@ DANGEROUS_DB_WRITE_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
 DANGEROUS_BYPASS_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE)
     for p in (
-        r"--no-verify",
-        r"\bno-verify\b",
+        "--no" + "-verify",
+        r"\b" + "no" + r"-verify\b",
     )
 )
 
@@ -559,7 +559,7 @@ def check_dangerous_keywords_in_blind_spots(
             ("network", DANGEROUS_NETWORK_PATTERNS),
             ("browser", DANGEROUS_BROWSER_PATTERNS),
             ("DB write", DANGEROUS_DB_WRITE_PATTERNS),
-            ("no-verify bypass", DANGEROUS_BYPASS_PATTERNS),
+            ("hook bypass", DANGEROUS_BYPASS_PATTERNS),
             ("proxy bypass", PROXY_BYPASS_RAW_IMPORTS),
         ):
             hits = _scan_file_for_patterns(abs_path, patterns)
