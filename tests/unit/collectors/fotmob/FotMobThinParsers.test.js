@@ -146,6 +146,43 @@ test('PlayerParser bench/substitutes extraction — 应从 lineup 中提取替�
   assert.equal(unrated.rating, null);
 });
 
+test('PlayerParser bench alias — 应从 lineup 中提取 bench 替补球员并分配正确的 side', () => {
+  const raw = {
+    matchId: '4506745',
+    content: {
+      lineup: {
+        home: {
+          starters: [{ id: 10, name: 'Home Starter', rating: 7.1 }],
+          bench: [
+            { id: 11, name: 'Home Bench Player', rating: 6.0 }
+          ]
+        },
+        away: {
+          starters: [{ id: 20, name: 'Away Starter', rating: 6.8 }],
+          bench: [
+            { id: 21, name: 'Away Bench Player', rating: 5.5 }
+          ]
+        }
+      }
+    }
+  };
+
+  const players = new PlayerParser().parsePlayers(raw);
+
+  // 2 starters + 2 bench = 4 total
+  assert.equal(players.length, 4);
+
+  const homeBench = players.find(p => p.name === 'Home Bench Player');
+  assert.equal(homeBench.side, 'home');
+  assert.equal(homeBench.id, 11);
+  assert.equal(homeBench.rating, 6.0);
+
+  const awayBench = players.find(p => p.name === 'Away Bench Player');
+  assert.equal(awayBench.side, 'away');
+  assert.equal(awayBench.id, 21);
+  assert.equal(awayBench.rating, 5.5);
+});
+
 test('MatchStatsParser 在缺少 xG 数据时应安全返回 null 不抛异常', () => {
   // Extremely minimal input — no content.stats at all
   const raw = { matchId: '4506745' };
