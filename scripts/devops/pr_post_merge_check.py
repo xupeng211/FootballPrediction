@@ -23,6 +23,7 @@ Checks performed:
   4. Production Gate CI workflow concluded with success on the merge commit
   5. Local main can fast-forward sync to origin/main
   6. Working tree is clean (no uncommitted changes)
+  7. Branch is not protected (main/master/current branch)
 
 PASS conditions (ALL must be true):
   - PR state == MERGED
@@ -33,6 +34,7 @@ PASS conditions (ALL must be true):
   - CI conclusion is success
   - Local main is up-to-date or can ff-only sync
   - git status is clean
+  - Branch is not protected (main/master/origin/main/origin/master/current)
 
 FAIL on any of:
   - PR not merged
@@ -41,6 +43,7 @@ FAIL on any of:
   - CI run not found / pending / failed / cancelled
   - Local main diverged from origin/main
   - Working tree has uncommitted changes
+  - Branch is protected or is the current branch
 
 Cleanup (only with --confirm-cleanup):
   - Delete remote branch
@@ -64,6 +67,8 @@ from typing import Any
 PRODUCTION_GATE_WORKFLOW = "Production Gate"
 TIMEOUT_SECONDS = 30
 MIN_SHA_LENGTH = 7
+
+PROTECTED_BRANCHES: frozenset[str] = frozenset({"main", "master", "origin/main", "origin/master"})
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -283,7 +288,44 @@ CHECKS: list[tuple[str, Any]] = [
     ("Production Gate CI success", None),
     ("Local main ff-only sync", _check_main_ff_sync),
     ("Working tree clean", _check_status_clean),
+    ("Branch not protected", None),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Branch protection
+# ---------------------------------------------------------------------------
+
+
+def get_current_branch() -> str:
+    """Return the current git branch name, or empty string on failure."""
+    result = run_git(["rev-parse", "--abbrev-ref", "HEAD"])
+    if result.returncode != 0:
+        return ""
+    return result.stdout.strip()
+
+
+def _check_branch_not_protected(branch: str) -> list[str]:
+    """Check that *branch* is not a protected branch and is not the current branch.
+
+    Returns [] on pass, [error_message] on failure.
+    """
+    failures: list[str] = []
+
+    if branch in PROTECTED_BRANCHES:
+        failures.append(
+            f"Branch '{branch}' is a protected branch — cleanup is forbidden. "
+            f"Protected branches: {', '.join(sorted(PROTECTED_BRANCHES))}"
+        )
+
+    current = get_current_branch()
+    if current and branch == current:
+        failures.append(
+            f"Branch '{branch}' is the currently checked-out branch — "
+            f"cannot delete the branch you are on."
+        )
+
+    return failures
 
 
 # ---------------------------------------------------------------------------
@@ -297,6 +339,12 @@ def cleanup_branch(branch: str, dry_run: bool = False) -> list[str]:
     Only called when --confirm-cleanup is set and all checks pass.
     """
     log: list[str] = []
+
+    # Belt-and-suspenders: refuse to touch protected branches
+    protected = _check_branch_not_protected(branch)
+    if protected:
+        log.append(f"REFUSED: {protected[0]}")
+        return log
 
     if dry_run:
         log.append(f"[DRY RUN] Would delete remote branch: origin/{branch}")
@@ -365,6 +413,9 @@ def evaluate(
 
     # Check 6: Working tree clean
     failures.extend(_check_status_clean())
+
+    # Check 7: Branch not protected (blocks cleanup of main/master/current)
+    failures.extend(_check_branch_not_protected(branch))
 
     passed = len(failures) == 0
 
