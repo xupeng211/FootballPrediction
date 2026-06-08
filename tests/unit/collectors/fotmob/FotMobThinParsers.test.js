@@ -237,6 +237,84 @@ test('MatchStatsParser Ball possession 解析 — 应提取 possession 到 resul
   assert.equal(result.xg.hasAnyStats, true);
 });
 
+test('TeamParser header.teams alias — 应从 header.teams 数组提取球队，支持 teamId/fotmobId/teamName/shortName/string score 别名', () => {
+  const raw = {
+    header: {
+      teams: [
+        { teamId: 100, teamName: 'Red FC', score: '3' },
+        { fotmobId: 200, shortName: 'Blue FC', score: '1' }
+      ]
+    }
+  };
+
+  const teams = new TeamParser().parseTeams(raw);
+
+  assert.equal(teams.length, 2);
+  assert.equal(teams[0].side, 'home');
+  assert.equal(teams[0].id, 100);
+  assert.equal(teams[0].name, 'Red FC');
+  assert.equal(teams[0].score, 3);
+  assert.equal(teams[1].side, 'away');
+  assert.equal(teams[1].id, 200);
+  assert.equal(teams[1].name, 'Blue FC');
+  assert.equal(teams[1].score, 1);
+});
+
+test('PlayerParser playerId/fullName/playerName/role/rating string alias — 应从 content.lineup.homeTeam/awayTeam 提取，支持字段别名', () => {
+  const raw = {
+    content: {
+      lineup: {
+        homeTeam: {
+          starters: [
+            { playerId: 10, fullName: 'Home Star', role: 'FW', rating: '7.4' }
+          ]
+        },
+        awayTeam: {
+          starters: [
+            { playerId: 20, playerName: 'Away Star', role: 'GK', rating: '6.2' }
+          ]
+        }
+      }
+    }
+  };
+
+  const players = new PlayerParser().parsePlayers(raw);
+
+  assert.equal(players.length, 2);
+
+  const home = players.find(p => p.side === 'home');
+  assert.equal(home.id, 10);
+  assert.equal(home.name, 'Home Star');
+  assert.equal(home.position, 'FW');
+  assert.equal(home.rating, 7.4);
+
+  const away = players.find(p => p.side === 'away');
+  assert.equal(away.id, 20);
+  assert.equal(away.name, 'Away Star');
+  assert.equal(away.position, 'GK');
+  assert.equal(away.rating, 6.2);
+});
+
+test('MatchParser header/context fallback — 应从 header.matchId/status/timeUTC 和 context.externalId 提取', () => {
+  const raw = {
+    header: {
+      matchId: '4506745',
+      status: 'Finished',
+      timeUTC: '2024-12-26T15:00:00Z'
+    }
+  };
+  const context = {
+    externalId: 'ext-4506745'
+  };
+
+  const match = new MatchParser().parseMatch(raw, context);
+
+  assert.equal(match.matchId, '4506745');
+  assert.equal(match.status, 'Finished');
+  assert.equal(match.startTime, '2024-12-26T15:00:00Z');
+  assert.equal(match.externalId, 'ext-4506745');
+});
+
 test('MatchStatsParser 在缺少 xG 数据时应安全返回 null 不抛异常', () => {
   // Extremely minimal input — no content.stats at all
   const raw = { matchId: '4506745' };
