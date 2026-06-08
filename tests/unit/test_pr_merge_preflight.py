@@ -285,7 +285,12 @@ def test_format_text_fail():
 
 def test_format_json_pass():
     pr = pp.PrInfo.from_gh_json(_PR_NUM, VALID_PR_JSON)
-    ci = pp.CiInfo(workflow_name="Production Gate", run_id="9876543210", status="completed", conclusion="success")
+    ci = pp.CiInfo(
+        workflow_name="Production Gate",
+        run_id="9876543210",
+        status="completed",
+        conclusion="success",
+    )
     result = pp.PreflightResult(pr=pr, ci=ci, passed=True, failures=[])
     data = json.loads(pp.format_evidence(result, as_json=True))
     assert data["verdict"] == "PASS"
