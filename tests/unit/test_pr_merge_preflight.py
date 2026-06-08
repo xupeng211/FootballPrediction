@@ -8,13 +8,14 @@ All tests use mocked gh/subprocess output — no real GitHub access.
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import subprocess
 import sys
-from pathlib import Path
 from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts/devops/pr_merge_preflight.py"
+_PR_NUM = 1474
 
 sys.path.insert(0, str(ROOT / "scripts/devops"))
 import pr_merge_preflight as pp  # noqa: E402
@@ -77,7 +78,7 @@ def _mock_gh_output(*stdouts: str) -> mock.MagicMock:
     def _run_factory():
         call_count = 0
 
-        def _run(args, **kwargs):
+        def _run(args, **_kwargs):
             nonlocal call_count
             if call_count < len(stdouts):
                 result = mock.MagicMock()
@@ -112,8 +113,8 @@ def _assert_pass(result: pp.PreflightResult) -> None:
 
 
 def test_parses_valid_pr_json():
-    info = pp.PrInfo.from_gh_json(1474, VALID_PR_JSON)
-    assert info.number == 1474
+    info = pp.PrInfo.from_gh_json(_PR_NUM, VALID_PR_JSON)
+    assert info.number == _PR_NUM
     assert info.title == "test(foo): add bar"
     assert info.state == "OPEN"
     assert not info.is_draft
@@ -131,7 +132,7 @@ def test_open_pr_ci_success_passes():
     stdout1 = json.dumps(VALID_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_pass(result)
 
 
@@ -144,7 +145,7 @@ def test_closed_pr_fails():
     stdout1 = json.dumps(CLOSED_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="CLOSED")
 
 
@@ -157,7 +158,7 @@ def test_draft_pr_fails():
     stdout1 = json.dumps(DRAFT_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="draft")
 
 
@@ -170,7 +171,7 @@ def test_ci_pending_fails():
     stdout1 = json.dumps(VALID_PR_JSON)
     stdout2 = json.dumps(CI_PENDING)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="in_progress")
 
 
@@ -183,7 +184,7 @@ def test_ci_failed_fails():
     stdout1 = json.dumps(VALID_PR_JSON)
     stdout2 = json.dumps(CI_FAILED)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="failure")
 
 
@@ -196,7 +197,7 @@ def test_ci_missing_fails():
     stdout1 = json.dumps(VALID_PR_JSON)
     stdout2 = json.dumps(CI_EMPTY)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="not found")
 
 
@@ -211,7 +212,7 @@ def test_ci_gh_error_is_handled_as_missing():
             subprocess.CalledProcessError(1, "gh"),
         ],
     ):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="not found")
 
 
@@ -224,7 +225,7 @@ def test_wrong_base_branch_fails():
     stdout1 = json.dumps(NOT_MAIN_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="develop")
 
 
@@ -232,7 +233,7 @@ def test_conflicting_mergeable_fails():
     stdout1 = json.dumps(CONFLICTING_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="CONFLICTING")
 
 
@@ -240,7 +241,7 @@ def test_empty_head_sha_fails():
     stdout1 = json.dumps(EMPTY_SHA_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="SHA")
 
 
@@ -248,7 +249,7 @@ def test_ci_cancelled_fails():
     stdout1 = json.dumps(VALID_PR_JSON)
     stdout2 = json.dumps(CI_CANCELLED)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        result = pp.evaluate(1474)
+        result = pp.evaluate(_PR_NUM)
     _assert_fail(result, reason_contains="cancelled")
 
 
@@ -258,7 +259,7 @@ def test_ci_cancelled_fails():
 
 
 def test_format_text_pass():
-    pr = pp.PrInfo.from_gh_json(1474, VALID_PR_JSON)
+    pr = pp.PrInfo.from_gh_json(_PR_NUM, VALID_PR_JSON)
     ci = pp.CiInfo(
         workflow_name="Production Gate",
         run_id="9876543210",
@@ -268,13 +269,13 @@ def test_format_text_pass():
     result = pp.PreflightResult(pr=pr, ci=ci, passed=True, failures=[])
     text = pp.format_evidence(result, as_json=False)
     assert "PASS" in text
-    assert "1474" in text
+    assert str(_PR_NUM) in text
     assert "test(foo)" in text
     assert "Production Gate" in text
 
 
 def test_format_text_fail():
-    pr = pp.PrInfo.from_gh_json(1474, DRAFT_PR_JSON)
+    pr = pp.PrInfo.from_gh_json(_PR_NUM, DRAFT_PR_JSON)
     ci = pp.CiInfo.empty()
     result = pp.PreflightResult(pr=pr, ci=ci, passed=False, failures=["PR is a draft"])
     text = pp.format_evidence(result, as_json=False)
@@ -283,16 +284,16 @@ def test_format_text_fail():
 
 
 def test_format_json_pass():
-    pr = pp.PrInfo.from_gh_json(1474, VALID_PR_JSON)
+    pr = pp.PrInfo.from_gh_json(_PR_NUM, VALID_PR_JSON)
     ci = pp.CiInfo(workflow_name="Production Gate", run_id="9876543210", status="completed", conclusion="success")
     result = pp.PreflightResult(pr=pr, ci=ci, passed=True, failures=[])
     data = json.loads(pp.format_evidence(result, as_json=True))
     assert data["verdict"] == "PASS"
-    assert data["pr_number"] == 1474
+    assert data["pr_number"] == _PR_NUM
 
 
 def test_format_json_fail():
-    pr = pp.PrInfo.from_gh_json(1474, CLOSED_PR_JSON)
+    pr = pp.PrInfo.from_gh_json(_PR_NUM, CLOSED_PR_JSON)
     ci = pp.CiInfo.empty()
     result = pp.PreflightResult(pr=pr, ci=ci, passed=False, failures=["PR state is 'CLOSED'"])
     data = json.loads(pp.format_evidence(result, as_json=True))
@@ -341,7 +342,7 @@ def test_main_pass():
     stdout1 = json.dumps(VALID_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        exit_code = pp.main(["--pr", "1474"])
+        exit_code = pp.main(["--pr", str(_PR_NUM)])
     assert exit_code == 0
 
 
@@ -349,7 +350,7 @@ def test_main_fail():
     stdout1 = json.dumps(CLOSED_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        exit_code = pp.main(["--pr", "1474"])
+        exit_code = pp.main(["--pr", str(_PR_NUM)])
     assert exit_code == 1
 
 
@@ -357,5 +358,5 @@ def test_main_json_output():
     stdout1 = json.dumps(VALID_PR_JSON)
     stdout2 = json.dumps(VALID_CI_RUN)
     with mock.patch("subprocess.run", _mock_gh_output(stdout1, stdout2)):
-        exit_code = pp.main(["--pr", "1474", "--json"])
+        exit_code = pp.main(["--pr", str(_PR_NUM), "--json"])
     assert exit_code == 0

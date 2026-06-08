@@ -37,11 +37,10 @@ FAIL on any of:
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass, field
 import json
 import subprocess
 import sys
-from dataclasses import dataclass, field
-from pathlib import Path
 from typing import Any
 
 # ---------------------------------------------------------------------------
@@ -50,6 +49,7 @@ from typing import Any
 
 PRODUCTION_GATE_WORKFLOW = "Production Gate"
 TIMEOUT_SECONDS = 30
+MIN_SHA_LENGTH = 7
 
 # ---------------------------------------------------------------------------
 # Data classes
@@ -74,6 +74,7 @@ class PrInfo:
 
     @classmethod
     def from_gh_json(cls, number: int, data: dict[str, Any]) -> PrInfo:
+        """Construct PrInfo from ``gh pr view --json`` output."""
         return cls(
             number=number,
             title=data.get("title", ""),
@@ -100,6 +101,7 @@ class CiInfo:
 
     @classmethod
     def empty(cls) -> CiInfo:
+        """Return a CiInfo representing a missing CI run."""
         return cls(workflow_name=PRODUCTION_GATE_WORKFLOW, run_id=None, status="", conclusion="")
 
 
@@ -113,6 +115,7 @@ class PreflightResult:
     failures: list[str] = field(default_factory=list)
 
     def verdict(self) -> str:
+        """Return 'PASS' or 'FAIL' as a human-readable string."""
         return "PASS" if self.passed else "FAIL"
 
 
@@ -129,6 +132,7 @@ def run_gh(args: list[str], stdin: str | None = None) -> str:
         text=True,
         timeout=TIMEOUT_SECONDS,
         input=stdin,
+        check=False,
     )
     result.check_returncode()
     return result.stdout.strip()
@@ -217,7 +221,7 @@ def _check_mergeable(pr: PrInfo) -> list[str]:
 
 
 def _check_head_sha(pr: PrInfo) -> list[str]:
-    if not pr.head_ref_oid or len(pr.head_ref_oid) < 7:
+    if not pr.head_ref_oid or len(pr.head_ref_oid) < MIN_SHA_LENGTH:
         return ["Head SHA is empty or too short"]
     return []
 
@@ -255,11 +259,8 @@ def evaluate(pr_number: int) -> PreflightResult:
     ci = fetch_ci(pr.head_ref_oid)
 
     failures: list[str] = []
-    for label, check_fn in CHECKS:
-        if check_fn is _check_ci:
-            result = check_fn(ci)
-        else:
-            result = check_fn(pr)
+    for _label, check_fn in CHECKS:
+        result = check_fn(ci) if check_fn is _check_ci else check_fn(pr)
         failures.extend(result)
 
     return PreflightResult(
@@ -333,8 +334,7 @@ def format_evidence(result: PreflightResult, *, as_json: bool = False) -> str:
     if result.failures:
         lines.append("-" * 60)
         lines.append("  Failures:")
-        for f in result.failures:
-            lines.append(f"    - {f}")
+        lines.extend(f"    - {f}" for f in result.failures)
 
     lines.append("=" * 60)
     return "\n".join(lines)
@@ -360,6 +360,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Run the preflight check and exit with 0 on PASS, 1 on FAIL."""
     args = _parse_args(argv)
     result = evaluate(args.pr)
     print(format_evidence(result, as_json=args.json))
