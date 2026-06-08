@@ -249,9 +249,9 @@ pr-post-merge-check: ## Post-merge check / cleanup gate. Usage: make pr-post-mer
 		exit 1; \
 	fi
 	@if [ "$(CONFIRM_CLEANUP)" = "1" ]; then \
-		python scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH) --confirm-cleanup; \
+		python3 scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH) --confirm-cleanup; \
 	else \
-		python scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH); \
+		python3 scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH); \
 	fi
 
 # ============================================
