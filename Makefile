@@ -62,7 +62,7 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
-        ci-local ci-local-pr pr-merge-preflight workflow-pr-check pr-post-merge-check
+        ci-local ci-local-pr pr-body-check pr-merge-preflight workflow-pr-check pr-post-merge-check
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -204,6 +204,13 @@ pr-merge-preflight: ## PR merge preflight evidence check (read-only, no merge)
 		exit 1; \
 	fi
 	@python scripts/devops/pr_merge_preflight.py --pr $(PR)
+
+pr-body-check: ## PR body + current Production Gate evidence check (read-only). Usage: make pr-body-check PR=<number>
+	@if [ -z "$(PR)" ]; then \
+		echo "ERROR: PR number required. Usage: make pr-body-check PR=<number>"; \
+		exit 1; \
+	fi
+	@python3 scripts/devops/pr_body_check.py --pr $(PR)
 
 workflow-pr-check: ## Workflow PR local validation: ruff check + format check + pytest. Usage: make workflow-pr-check FILES="<python_files>" TESTS="<test_files>"
 	@if [ -z "$(FILES)" ]; then \

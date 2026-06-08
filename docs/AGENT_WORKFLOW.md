@@ -281,7 +281,22 @@ Gate must report `PASS` before `git push`.
 
 ### After creating a PR
 
-Fetch the real PR body and re-validate:
+PR body 不能靠记忆维护，也不能只看 GitHub 页面上的绿色状态。必须拉取
+GitHub 上的真实 PR body，并确认 Production Gate 对应当前 PR head SHA。
+
+Use the fixed read-only check:
+
+```bash
+make pr-body-check PR=<PR_NUMBER>
+```
+
+This check fetches the live PR body, runs `scripts/ops/ai_workflow_gate.py`
+against that body, verifies the current head SHA prefix, changed files count,
+latest Production Gate run id, and confirms Production Gate is
+`completed` + `success` for the current head SHA. If GitHub shows a green CI
+run for an older head SHA, the check must fail.
+
+Manual fallback if the Makefile target is unavailable:
 
 ```bash
 gh pr view <PR_NUMBER> --json body --jq .body > /tmp/pr_body.md
