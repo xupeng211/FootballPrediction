@@ -183,6 +183,34 @@ test('PlayerParser bench alias — 应从 lineup 中提取 bench 替补球员并
   assert.equal(awayBench.rating, 5.5);
 });
 
+test('MatchStatsParser Ball possession 解析 — 应提取 possession 到 result.xg.possession_home/away', () => {
+  const raw = {
+    matchId: '4506745',
+    content: {
+      stats: {
+        Periods: {
+          All: {
+            stats: [
+              {
+                title: 'Ball possession',
+                stats: [
+                  { key: 'possession', stats: ['55%', '45%'] }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    }
+  };
+
+  const result = new MatchStatsParser().parseStats(raw);
+
+  assert.equal(result.xg.possession_home, 0.55);
+  assert.equal(result.xg.possession_away, 0.45);
+  assert.equal(result.xg.hasAnyStats, true);
+});
+
 test('MatchStatsParser 在缺少 xG 数据时应安全返回 null 不抛异常', () => {
   // Extremely minimal input — no content.stats at all
   const raw = { matchId: '4506745' };
