@@ -426,4 +426,52 @@ Do not start automatically.
 Recommended next task only after user confirmation.
 ```
 
+## 21. PR Merge Preflight Evidence Check
+
+Before merging a PR, run the read-only evidence check to produce an auditable
+PASS/FAIL verdict. The check does **not** merge, delete branches, or modify
+anything — it only reads via ``gh`` CLI.
+
+```bash
+make pr-merge-preflight PR=<PR_NUMBER>
+```
+
+Or run the script directly:
+
+```bash
+python scripts/devops/pr_merge_preflight.py --pr <PR_NUMBER>
+python scripts/devops/pr_merge_preflight.py --pr <PR_NUMBER> --json  # machine-readable
+```
+
+### Evidence emitted
+
+- PR number, title, state, draft status
+- base branch, head branch, head SHA
+- mergeable status
+- changed files, additions/deletions
+- CI workflow name (Production Gate)
+- CI run id, status, conclusion
+- Final PASS / FAIL verdict
+
+### PASS conditions (all must be true)
+
+- PR is open
+- PR is **not** a draft
+- base ref is ``main``
+- mergeable is ``MERGEABLE``
+- a Production Gate CI run exists for the head SHA
+- Production Gate status is ``completed``
+- Production Gate conclusion is ``success``
+
+### FAIL conditions
+
+- PR closed / merged
+- PR is a draft
+- base branch is not ``main``
+- mergeable unknown / conflicting
+- head SHA empty or too short
+- Production Gate CI run not found for head SHA
+- CI status is not ``completed``
+- CI conclusion is not ``success`` (includes ``failure``, ``cancelled``, ``skipped``)
+
 This is enforced by CI through `scripts/ops/ai_workflow_gate.py`.
