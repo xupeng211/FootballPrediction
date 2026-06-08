@@ -475,3 +475,117 @@ python scripts/devops/pr_merge_preflight.py --pr <PR_NUMBER> --json  # machine-r
 - CI conclusion is not ``success`` (includes ``failure``, ``cancelled``, ``skipped``)
 
 This is enforced by CI through `scripts/ops/ai_workflow_gate.py`.
+
+## 22. Workflow PR Local Validation
+
+Every workflow-only PR (governance-only, test-only, ci-fix) must pass local
+validation before pushing. The ``make workflow-pr-check`` target is the fixed
+entry point.
+
+### Usage
+
+```bash
+make workflow-pr-check \
+  FILES="scripts/devops/foo.py tests/unit/test_foo.py" \
+  TESTS="tests/unit/test_foo.py"
+```
+
+### What it runs
+
+```
+ruff check $FILES
+ruff format --check $FILES
+pytest $TESTS -v
+```
+
+### Rules
+
+- ``FILES`` must not be empty.
+- ``TESTS`` must not be empty.
+- If either parameter is missing, the target fails immediately with a clear
+  usage message.
+- The target does **not** guess files, does **not** default to whole-repo
+  tests, and does **not** modify files (it is a check command, not a fix
+  command).
+- All three checks must pass for the target to report PASS.
+
+### Workflow PR requirement
+
+A workflow PR must run **all three** checks — ruff check, ruff format --check,
+and pytest. Running only pytest is **not** sufficient.
+
+### Typical call for this PR
+
+```bash
+make workflow-pr-check \
+  FILES="scripts/devops/pr_post_merge_check.py tests/unit/test_pr_post_merge_check.py" \
+  TESTS="tests/unit/test_pr_post_merge_check.py tests/unit/test_pr_merge_preflight.py"
+```
+
+## 23. Post-Merge Check / Cleanup Gate
+
+After a PR is merged, a read-only post-merge safety check must pass before
+any branch cleanup. The ``make pr-post-merge-check`` target is the fixed
+entry point.
+
+### Usage
+
+```bash
+# Read-only check (default — safe, no deletion)
+make pr-post-merge-check PR=1475 MERGE_COMMIT=<sha> BRANCH=<branch>
+
+# With branch cleanup (explicit opt-in required)
+make pr-post-merge-check PR=1475 MERGE_COMMIT=<sha> BRANCH=<branch> CONFIRM_CLEANUP=1
+```
+
+### Checks performed
+
+1. PR state is ``MERGED``.
+2. Merge commit SHA is valid (>= 7 characters).
+3. Merge commit is reachable from ``origin/main``.
+4. Production Gate CI workflow exists for the merge commit.
+5. Production Gate CI status is ``completed`` and conclusion is ``success``.
+   This implies Run Gatekeeper, AI Workflow Gate (P0), and Docker Build
+   Validation all passed (they are jobs/steps within the same workflow).
+6. Local ``main`` can fast-forward sync to ``origin/main``.
+7. Working tree is clean (no uncommitted changes).
+
+### Safety rules
+
+- Default mode is **read-only**. No branch deletion without explicit opt-in.
+- Set ``CONFIRM_CLEANUP=1`` to delete the remote branch and local branch.
+- Without ``CONFIRM_CLEANUP=1``, remote and local branches are **never**
+  deleted.
+- If the Production Gate CI run cannot be found, the check **fails** — no
+  guessing, no fallback.
+- If the Production Gate CI conclusion is anything other than ``success``
+  (including ``failure``, ``cancelled``, ``skipped``, ``in_progress``), the
+  check **fails** — branch cleanup is blocked.
+- Any uncertain situation must cause a failure and stop. No automatic
+  recovery, no automatic branch deletion.
+
+### Post-merge cleanup timing rule
+
+Post-merge cleanup must **not** be performed before main CI success is
+confirmed. If the Production Gate on the merge commit has not completed or
+has failed, the branch must not be deleted.
+
+### No auto-start
+
+After post-merge check passes (and optional cleanup completes):
+
+- Do **not** start the next task automatically.
+- Recommended next task only after user confirmation.
+
+### Script
+
+The underlying script is ``scripts/devops/pr_post_merge_check.py``:
+
+```bash
+python scripts/devops/pr_post_merge_check.py \
+  --pr <PR_NUMBER> \
+  --merge-commit <SHA> \
+  --branch <BRANCH> \
+  [--confirm-cleanup] \
+  [--json]
+```
