@@ -62,7 +62,7 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
-        ci-local ci-local-pr pr-merge-preflight
+        ci-local ci-local-pr pr-merge-preflight workflow-pr-check pr-post-merge-check
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -204,6 +204,48 @@ pr-merge-preflight: ## PR merge preflight evidence check (read-only, no merge)
 		exit 1; \
 	fi
 	@python scripts/devops/pr_merge_preflight.py --pr $(PR)
+
+workflow-pr-check: ## Workflow PR local validation: ruff check + format check + pytest. Usage: make workflow-pr-check FILES="<python_files>" TESTS="<test_files>"
+	@if [ -z "$(FILES)" ]; then \
+		echo "ERROR: FILES is required."; \
+		echo "Usage: make workflow-pr-check FILES=\"scripts/devops/foo.py tests/unit/test_foo.py\" TESTS=\"tests/unit/test_foo.py\""; \
+		echo "  FILES  — space-separated list of Python files to lint/format-check"; \
+		echo "  TESTS  — space-separated list of test files/dirs for pytest"; \
+		exit 1; \
+	fi
+	@if [ -z "$(TESTS)" ]; then \
+		echo "ERROR: TESTS is required."; \
+		echo "Usage: make workflow-pr-check FILES=\"scripts/devops/foo.py tests/unit/test_foo.py\" TESTS=\"tests/unit/test_foo.py\""; \
+		echo "  FILES  — space-separated list of Python files to lint/format-check"; \
+		echo "  TESTS  — space-separated list of test files/dirs for pytest"; \
+		exit 1; \
+	fi
+	@echo "$(BLUE)[Workflow PR Check] Running ruff check...$(NC)"
+	@$(COMPOSE_DEV) exec -T dev ruff check $(FILES)
+	@echo "$(BLUE)[Workflow PR Check] Running ruff format --check...$(NC)"
+	@$(COMPOSE_DEV) exec -T dev ruff format --check $(FILES)
+	@echo "$(BLUE)[Workflow PR Check] Running pytest...$(NC)"
+	@$(COMPOSE_DEV) exec -T dev pytest $(TESTS) -v
+	@echo "$(GREEN)[Workflow PR Check] All checks PASSED$(NC)"
+
+pr-post-merge-check: ## Post-merge check / cleanup gate. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name> [CONFIRM_CLEANUP=1]
+	@if [ -z "$(PR)" ]; then \
+		echo "ERROR: PR number required. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name>"; \
+		exit 1; \
+	fi
+	@if [ -z "$(MERGE_COMMIT)" ]; then \
+		echo "ERROR: MERGE_COMMIT required. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name>"; \
+		exit 1; \
+	fi
+	@if [ -z "$(BRANCH)" ]; then \
+		echo "ERROR: BRANCH required. Usage: make pr-post-merge-check PR=<number> MERGE_COMMIT=<sha> BRANCH=<name>"; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_CLEANUP)" = "1" ]; then \
+		python scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH) --confirm-cleanup; \
+	else \
+		python scripts/devops/pr_post_merge_check.py --pr $(PR) --merge-commit $(MERGE_COMMIT) --branch $(BRANCH); \
+	fi
 
 # ============================================
 # 数据库命令
