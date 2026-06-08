@@ -203,7 +203,7 @@ pr-merge-preflight: ## PR merge preflight evidence check (read-only, no merge)
 		echo "ERROR: PR number required. Usage: make pr-merge-preflight PR=<number>"; \
 		exit 1; \
 	fi
-	@python scripts/devops/pr_merge_preflight.py --pr $(PR)
+	@python3 scripts/devops/pr_merge_preflight.py --pr $(PR)
 
 pr-body-check: ## PR body + current Production Gate evidence check (read-only). Usage: make pr-body-check PR=<number>
 	@if [ -z "$(PR)" ]; then \
