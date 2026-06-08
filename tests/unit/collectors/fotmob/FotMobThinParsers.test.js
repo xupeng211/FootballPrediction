@@ -183,6 +183,32 @@ test('PlayerParser bench alias — 应从 lineup 中提取 bench 替补球员并
   assert.equal(awayBench.rating, 5.5);
 });
 
+test('PlayerParser rawData.lineups + homeTeam/awayTeam alias — 应从 lineups 中通过 homeTeam/awayTeam 别名提取球员', () => {
+  const raw = {
+    matchId: '4506745',
+    lineups: {
+      homeTeam: {
+        starters: [{ id: 10, name: 'Home Player', rating: 7.1 }]
+      },
+      awayTeam: {
+        starters: [{ id: 20, name: 'Away Player', rating: 6.8 }]
+      }
+    }
+  };
+
+  const players = new PlayerParser().parsePlayers(raw);
+
+  assert.equal(players.length, 2);
+  assert.equal(players[0].side, 'home');
+  assert.equal(players[0].name, 'Home Player');
+  assert.equal(players[0].id, 10);
+  assert.equal(players[0].rating, 7.1);
+  assert.equal(players[1].side, 'away');
+  assert.equal(players[1].name, 'Away Player');
+  assert.equal(players[1].id, 20);
+  assert.equal(players[1].rating, 6.8);
+});
+
 test('MatchStatsParser Ball possession 解析 — 应提取 possession 到 result.xg.possession_home/away', () => {
   const raw = {
     matchId: '4506745',
