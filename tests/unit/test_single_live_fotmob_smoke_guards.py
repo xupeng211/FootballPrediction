@@ -49,10 +49,14 @@ class TestGuardRequiresLiveFotmobConfirmation:
         """Dry-run without CONFIRM_LIVE_FOTMOB_SINGLE_FETCH must be blocked."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
             "--dry-run",
         )
         combined = stdout + stderr
@@ -65,10 +69,14 @@ class TestGuardRequiresLiveFotmobConfirmation:
         """--commit without CONFIRM_LIVE_FOTMOB_SINGLE_FETCH must be blocked."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
             "--commit",
         )
         combined = stdout + stderr
@@ -85,10 +93,14 @@ class TestGuardRejectsWriteWithoutConfirm:
         """--commit with live fetch but without CONFIRM_LOCAL_DB_WRITE must be blocked."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
             "--commit",
             env={"CONFIRM_LIVE_FOTMOB_SINGLE_FETCH": "1"},
         )
@@ -106,10 +118,14 @@ class TestGuardProductionDbDetection:
         """RDS hostname must be detected as production."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
             "--commit",
             env={
                 "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH": "1",
@@ -127,10 +143,14 @@ class TestGuardProductionDbDetection:
         """Supabase hostname must be detected as production."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
             "--commit",
             env={
                 "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH": "1",
@@ -155,18 +175,25 @@ class TestGuardDataVersionLength:
         """Short data_version passes guards (won't do actual fetch due to node env)."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
-            "--data-version", "v1",
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
+            "--data-version",
+            "v1",
             "--dry-run",
         )
         combined = stdout + stderr
         # Will fail at G3 (no CONFIRM_LIVE_FOTMOB_SINGLE_FETCH), not G5
-        assert "G5" in combined or "BLOCKED" in combined or "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH" in combined, (
-            f"Should pass G5 even if blocked by G3: {combined[:500]}"
-        )
+        assert (
+            "G5" in combined
+            or "BLOCKED" in combined
+            or "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH" in combined
+        ), f"Should pass G5 even if blocked by G3: {combined[:500]}"
         # rc may be non-zero due to G3 block, which is expected
         assert isinstance(rc, int)
 
@@ -174,11 +201,16 @@ class TestGuardDataVersionLength:
         """data_version > 20 chars must be rejected (before fetch attempt)."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
-            "--data-version", "a" * 21,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
+            "--data-version",
+            "a" * 21,
             "--dry-run",
         )
         combined = stdout + stderr
@@ -191,18 +223,25 @@ class TestGuardDataVersionLength:
         """20-char data_version must pass G5 (may fail at G3)."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
-            "--data-version", "12345678901234567890",
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
+            "--data-version",
+            "12345678901234567890",
             "--dry-run",
         )
         combined = stdout + stderr
         # Will fail at G3, not G5
-        assert "G5 PASS" in combined or "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH" in combined or "BLOCKED" in combined, (
-            f"G5 should pass even if blocked by G3: {combined[:500]}"
-        )
+        assert (
+            "G5 PASS" in combined
+            or "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH" in combined
+            or "BLOCKED" in combined
+        ), f"G5 should pass even if blocked by G3: {combined[:500]}"
         # rc may be non-zero due to G3 block, which is expected
         assert isinstance(rc, int)
 
@@ -214,9 +253,12 @@ class TestGuardRequiredArgs:
         """Missing --match-id must fail."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--external-id", VALID_EXTERNAL_ID,
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
+            "--external-id",
+            VALID_EXTERNAL_ID,
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
         )
         combined = stdout + stderr
         assert rc != 0, f"Missing match-id should fail, got {rc}"
@@ -228,10 +270,14 @@ class TestGuardRequiredArgs:
         """Non-numeric external_id must be rejected."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--match-id", VALID_MATCH_ID,
-            "--external-id", "abc123",
-            "--home-team", VALID_HOME,
-            "--away-team", VALID_AWAY,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--external-id",
+            "abc123",
+            "--home-team",
+            VALID_HOME,
+            "--away-team",
+            VALID_AWAY,
         )
         combined = stdout + stderr
         assert rc != 0, f"Non-numeric external-id should fail, got {rc}"
