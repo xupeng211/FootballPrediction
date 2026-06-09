@@ -8,6 +8,7 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 import sys
+import tempfile
 import textwrap
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -458,3 +459,75 @@ def test_skip_body_checks_skips_sections():
     # No section errors, no stop-phrase errors
     assert not any("Missing required PR body" in e for e in errors)
     assert not any("Do not start automatically" in e for e in errors)
+
+
+# ---------------------------------------------------------------------------
+# Multiline PR body handling
+# ---------------------------------------------------------------------------
+
+
+def test_multiline_body_with_code_blocks_passes():
+    """All required sections must be detected even with Markdown code blocks."""
+    body = _valid_pr_body() + textwrap.dedent("""\
+
+    ## Additional Notes
+
+    Here is a code block that should not break section parsing:
+
+    ```
+    const x = 1;
+    console.log(x);
+    ```
+
+    And an inline `code` span.
+
+    | Table | With | Rows |
+    |-------|------|------|
+    | a     | b    | c    |
+    """)
+    missing = gate.check_required_sections(body)
+    assert missing == [], f"Should find all sections; missing: {missing}"
+
+
+def test_multiline_body_with_crlf_normalised():
+    """CRLF line endings must be normalised to LF by read_pr_body."""
+    body = _valid_pr_body()
+    crlf_body = body.replace("\n", "\r\n")
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
+        f.write(crlf_body)
+        tmp_path = f.name
+    try:
+        result = gate.read_pr_body(tmp_path)
+        assert "\r\n" not in result, "CRLF should be normalised to LF"
+        assert gate.check_required_sections(result) == []
+    finally:
+        Path(tmp_path).unlink()
+
+
+def test_read_pr_body_from_file_preserves_multiline():
+    """read_pr_body must return the full multiline content from a file."""
+    body = _valid_pr_body()
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False, encoding="utf-8") as f:
+        f.write(body)
+        tmp_path = f.name
+    try:
+        result = gate.read_pr_body(tmp_path)
+        assert len(result) >= len(body) - 5, f"Expected ~{len(body)} chars, got {len(result)}"
+        for heading in gate.REQUIRED_SECTIONS:
+            assert heading in result, f"Missing heading: {heading}"
+    finally:
+        Path(tmp_path).unlink()
+
+
+def test_empty_body_with_skip_body_checks_still_passes():
+    """Empty body with skip_body_checks must not trigger section errors."""
+    errors = gate.validate("", [], skip_body_checks=True)
+    assert not any("Missing required PR body" in e for e in errors)
+    assert not any("Do not start automatically" in e for e in errors)
+
+
+def test_body_missing_sections_without_skip_fails():
+    """Without skip_body_checks, missing sections must be detected."""
+    body = "## Summary\n\nJust a summary, nothing else.\n"
+    errors = gate.validate(body, [], skip_body_checks=False)
+    assert any("Missing required PR body" in e for e in errors)
