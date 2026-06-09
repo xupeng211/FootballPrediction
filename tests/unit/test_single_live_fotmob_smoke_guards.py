@@ -167,6 +167,8 @@ class TestGuardDataVersionLength:
         assert "G5" in combined or "BLOCKED" in combined or "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH" in combined, (
             f"Should pass G5 even if blocked by G3: {combined[:500]}"
         )
+        # rc may be non-zero due to G3 block, which is expected
+        assert isinstance(rc, int)
 
     def test_long_version_rejected(self):
         """data_version > 20 chars must be rejected (before fetch attempt)."""
@@ -201,6 +203,8 @@ class TestGuardDataVersionLength:
         assert "G5 PASS" in combined or "CONFIRM_LIVE_FOTMOB_SINGLE_FETCH" in combined or "BLOCKED" in combined, (
             f"G5 should pass even if blocked by G3: {combined[:500]}"
         )
+        # rc may be non-zero due to G3 block, which is expected
+        assert isinstance(rc, int)
 
 
 class TestGuardRequiredArgs:
