@@ -9,6 +9,7 @@
 - `make workflow-pr-check`
 - `make pr-body-check`
 - `make pr-merge-preflight`
+- `make pr-ready-check`
 - `make pr-post-merge-check`
 - `make ci-local-pr`
 - `scripts/ops/ai_workflow_gate.py`
@@ -25,6 +26,7 @@
 | `make workflow-pr-check` | 给 workflow-only PR 提供固定的本地 lint + format-check + pytest 校验入口 | workflow/governance/test-only PR 在 push 前 | 是 | 否，默认只做检查 | 否 | `FILES`, `TESTS` | `ruff check`、`ruff format --check`、`pytest -v` 全部通过才 PASS | 修正被检查的文件或测试；不要跳过任一步，不要只跑 pytest |
 | `make pr-body-check` | 防止 PR body 滞后，强制把真实 PR body 与当前 head SHA 的 CI 证据绑定 | PR 创建后、更新 PR body 后、合并前 | 是 | 否 | 否 | `PR=<N>` | PR 存在且 open；body 可实时拉取；`ai_workflow_gate` 通过；body 包含当前 short SHA、changed files、最新 Production Gate run id；CI 对应当前 head 且 `completed/success` | 先修 PR body 或等当前 head CI 完成；如果 body 只更新了文字，需要 fresh CI，而不是迷信旧绿灯 |
 | `make pr-merge-preflight` | 在 merge 前输出可审计的 PR + CI 证据，阻止错误 head / draft / 非 main / 失败 CI 被 merge | 合并前最后一步 | 是 | 否 | 否 | `PR=<N>` | PR open、非 draft、base=`main`、mergeable、head SHA 存在、Production Gate 对应当前 head 且 `completed/success` | 不修复脚本外的东西；先解决 PR 状态、head SHA、CI 或 mergeability，再重跑 |
+| `make pr-ready-check` | 串联 `pr-body-check` + `pr-merge-preflight`，减少合并前手工漏跑风险 | 合并前，替代手工两步 | 是 | 否 | 否 | `PR=<N>` | 两者都 PASS 才 PASS；任一步失败则停止 | 按失败的子步骤修；不要跳过任一步 |
 | `make pr-post-merge-check` | 在 merge 后验证 merge commit、main CI、工作区和 cleanup 条件 | PR merge 之后 | 默认是；`CONFIRM_CLEANUP=1` 时不是 | 默认不改；`CONFIRM_CLEANUP=1` 会删分支 | 默认否；显式确认后会删远程/本地分支 | `PR=<N> MERGE_COMMIT=<sha> BRANCH=<name> [CONFIRM_CLEANUP=1]` | 默认模式：所有 post-merge gate 通过则 PASS；带 `CONFIRM_CLEANUP=1` 时，在 PASS 后继续执行 cleanup | 如果 merge commit CI 未成功、main 未同步、工作区不干净或分支受保护，立即停止；不要先删分支 |
 | `make ci-local-pr` | 提供本地 gatekeeper 入口，提醒“本地部分验证 != 远程 CI 权威” | PR push 前 | 否 | 可能。可能重建本地依赖树或缓存，例如 `npm ci`、本地工具缓存 | 否 | 无 | 目标本身总是把结果解释为“部分验证”；真正结论仍看远程 GitHub Actions | 报告具体本地环境失败原因；不要把本地 PASS/0 退出码当成远程 CI PASS |
 
@@ -60,7 +62,7 @@
 2. 创建 PR 后：
    跑 `make pr-body-check PR=<N>`，确认 live PR body、当前 head SHA、changed files、Production Gate run id 和 AI gate 一致。
 3. 合并前：
-   再跑一次 `make pr-body-check PR=<N>`，然后跑 `make pr-merge-preflight PR=<N>`；两个都 PASS 才能 merge。
+   跑 `make pr-ready-check PR=<N>`（串联 `pr-body-check` + `pr-merge-preflight`）；PASS 才能 merge。
 4. 合并后：
    先等 merge commit 在 `main` 上的 Production Gate `completed / success`，再同步本地 `main`，然后跑 `make pr-post-merge-check PR=<N> MERGE_COMMIT=<sha> BRANCH=<branch>`。
 5. cleanup 后：
@@ -70,7 +72,7 @@
 
 | 项目 | 优先级 | 要解决的问题 |
 | --- | --- | --- |
-| `make pr-ready-check PR=<N>` | `P0` | 把 `pr-body-check + pr-merge-preflight` 串起来，减少合并前的手工两步和漏跑风险 |
+| `make pr-ready-check PR=<N>` | `P0` — **已实现** | 把 `pr-body-check + pr-merge-preflight` 串起来，减少合并前的手工两步和漏跑风险 |
 | `make changed-files-policy-check PR=<N>` | `P1` | 对 governance-only / docs-only / runtime-code-change 做更显式的 changed-files policy 检查，避免“声明安全、实际越界” |
 | `docs/REPOSITORY_STRUCTURE.md` | `P1` | 明确文件应该放哪里，减少 AI 乱建目录、乱放报告、乱放 helper 的概率 |
 | `make repo-structure-check` | `P1` | 把目录放置规则工具化，防止新增文件落在错误位置 |
@@ -85,7 +87,7 @@
 
 ## 7. 推荐下一步
 
-推荐只做一个小 PR：实现 `make pr-ready-check PR=<N>`，只负责串联 `make pr-body-check` 和 `make pr-merge-preflight`，不要复制或重写底层校验逻辑。
+`make pr-ready-check PR=<N>` 已实现。下一步推荐 `P1`：`make changed-files-policy-check PR=<N>` 或 `docs/REPOSITORY_STRUCTURE.md`。
 
 Do not start automatically.
 Recommended next task only after user confirmation.
