@@ -31,7 +31,8 @@ def _run_node(script, *args, env=None):
 
     result = subprocess.run(
         [node_bin, script, *list(args)],
-        check=False, capture_output=True,
+        check=False,
+        capture_output=True,
         text=True,
         env=base_env,
         timeout=30,
@@ -46,8 +47,10 @@ class TestGuardRejectsWriteWithoutConfirm:
         """Dry-run (default) must succeed without CONFIRM_LOCAL_DB_WRITE."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
             "--dry-run",
         )
         # Should succeed in dry-run mode
@@ -58,8 +61,10 @@ class TestGuardRejectsWriteWithoutConfirm:
         """--commit without CONFIRM_LOCAL_DB_WRITE must be blocked."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
             "--commit",
         )
         combined = stdout + stderr
@@ -76,8 +81,10 @@ class TestGuardProductionDbDetection:
         """RDS hostname must be detected as production."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
             "--commit",
             env={"CONFIRM_LOCAL_DB_WRITE": "1", "PGHOST": "football-db.rds.amazonaws.com"},
         )
@@ -91,23 +98,30 @@ class TestGuardProductionDbDetection:
         """Supabase hostname must be detected as production."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
             "--commit",
             env={"CONFIRM_LOCAL_DB_WRITE": "1", "PGHOST": "db.abc123.supabase.co"},
         )
         combined = stdout + stderr
         assert rc != 0, f"Supabase host should be rejected, got rc={rc}"
-        assert "BLOCKED" in combined or "G2" in combined or "production" in combined.lower() or "whitelist" in combined.lower(), (
-            f"Should detect production pattern: {combined[:500]}"
-        )
+        assert (
+            "BLOCKED" in combined
+            or "G2" in combined
+            or "production" in combined.lower()
+            or "whitelist" in combined.lower()
+        ), f"Should detect production pattern: {combined[:500]}"
 
     def test_unknown_host_rejected_fail_closed(self):
         """Unknown host not in whitelist must be rejected (fail-closed)."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
             "--commit",
             env={"CONFIRM_LOCAL_DB_WRITE": "1", "PGHOST": "some-random-host.example.com"},
         )
@@ -125,9 +139,12 @@ class TestGuardDataVersionLength:
         """Short data_version must pass."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
-            "--data-version", "v1",
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--data-version",
+            "v1",
             "--dry-run",
         )
         combined = stdout + stderr
@@ -140,9 +157,12 @@ class TestGuardDataVersionLength:
         """data_version > 20 chars must be rejected."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
-            "--data-version", "a" * 21,  # 21 chars
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--data-version",
+            "a" * 21,  # 21 chars
             "--dry-run",
         )
         combined = stdout + stderr
@@ -155,9 +175,12 @@ class TestGuardDataVersionLength:
         """20-char data_version must pass (boundary)."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", VALID_FIXTURE,
-            "--match-id", VALID_MATCH_ID,
-            "--data-version", "12345678901234567890",  # exactly 20 chars
+            "--fixture",
+            VALID_FIXTURE,
+            "--match-id",
+            VALID_MATCH_ID,
+            "--data-version",
+            "12345678901234567890",  # exactly 20 chars
             "--dry-run",
         )
         combined = stdout + stderr
@@ -171,8 +194,10 @@ class TestGuardFixturePath:
         """Nonexistent fixture must fail."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", "/nonexistent/path/fixture.html",
-            "--match-id", VALID_MATCH_ID,
+            "--fixture",
+            "/nonexistent/path/fixture.html",
+            "--match-id",
+            VALID_MATCH_ID,
             "--dry-run",
         )
         combined = stdout + stderr
@@ -185,15 +210,20 @@ class TestGuardFixturePath:
         """URL as fixture path must be rejected (G3 no-network)."""
         rc, stdout, stderr = _run_node(
             SCRIPT,
-            "--fixture", "https://www.fotmob.com/match/4830474",
-            "--match-id", VALID_MATCH_ID,
+            "--fixture",
+            "https://www.fotmob.com/match/4830474",
+            "--match-id",
+            VALID_MATCH_ID,
             "--dry-run",
         )
         combined = stdout + stderr
         assert rc != 0, f"URL fixture should be rejected, got rc={rc}"
-        assert "G3" in combined or "URL" in combined or "BLOCKED" in combined or "network" in combined.lower(), (
-            f"Should reject URL fixture: {combined[:500]}"
-        )
+        assert (
+            "G3" in combined
+            or "URL" in combined
+            or "BLOCKED" in combined
+            or "network" in combined.lower()
+        ), f"Should reject URL fixture: {combined[:500]}"
 
 
 class TestGuardHelpFlag:
@@ -203,6 +233,4 @@ class TestGuardHelpFlag:
         """--help should exit 0 and show usage."""
         rc, stdout, _stderr = _run_node(SCRIPT, "--help")
         assert rc == 0, f"--help should exit 0, got {rc}"
-        assert "Usage" in stdout or "usage" in stdout.lower(), (
-            f"Should show usage: {stdout[:500]}"
-        )
+        assert "Usage" in stdout or "usage" in stdout.lower(), f"Should show usage: {stdout[:500]}"
