@@ -131,6 +131,8 @@ jobs:
         run: bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"
 
       - name: AI Workflow Gate (P0)
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           PR_BODY_FILE="$(mktemp -t pr-body.XXXXXX)"
           if [ "${{ github.event_name }}" = "pull_request" ]; then
