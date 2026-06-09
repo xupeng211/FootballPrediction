@@ -131,16 +131,21 @@ jobs:
         run: bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"
 
       - name: AI Workflow Gate (P0)
-        env:
-          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
           PR_BODY_FILE="$(mktemp -t pr-body.XXXXXX)"
-          if [ -n "${PR_BODY:-}" ]; then
-            printf '%s\n' "${PR_BODY}" > "${PR_BODY_FILE}"
-            python3 scripts/ops/ai_workflow_gate.py --pr-body-file "${PR_BODY_FILE}"
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "[AI Workflow Gate] Fetching PR body via gh CLI for PR #${{ github.event.pull_request.number }}"
+            gh pr view "${{ github.event.pull_request.number }}" --json body --jq '.body' > "${PR_BODY_FILE}"
+            if [ -s "${PR_BODY_FILE}" ]; then
+              echo "[AI Workflow Gate] PR body fetched ($(wc -l < "${PR_BODY_FILE}") lines, $(wc -c < "${PR_BODY_FILE}") bytes)."
+              python3 scripts/ops/ai_workflow_gate.py --pr-body-file "${PR_BODY_FILE}"
+            else
+              echo "[AI Workflow Gate] PR body empty after fetch — running git-diff checks only."
+              python3 scripts/ops/ai_workflow_gate.py --pr-body-file "${PR_BODY_FILE}" --skip-body-checks
+            fi
           else
             # Push event on main — run git-diff-based checks only
-            echo "[AI Workflow Gate] No PR body (push event). Running git-diff checks only."
+            echo "[AI Workflow Gate] Push event. Running git-diff checks only."
             touch "${PR_BODY_FILE}"
             python3 scripts/ops/ai_workflow_gate.py \
               --pr-body-file "${PR_BODY_FILE}" \
