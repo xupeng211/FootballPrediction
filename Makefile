@@ -60,7 +60,7 @@
         data-synthetic-l3-dry-run data-synthetic-l3-commit \
         data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
-        data-raw-dry-run data-raw-commit data-network-dry-run data-db-write-small data-harvest \
+        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
         ci-local ci-local-pr pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
 
@@ -383,6 +383,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
+	@echo "  make data-raw-single-fixture-smoke  # dry-run safe by default; CONFIRM_LOCAL_DB_WRITE=1 to commit"
 	@echo "  make data-training-dry-run"
 	@echo "  make data-prediction-dry-run"
 	@echo "  make data-training-feature-dry-run MATCH_ID=<id>"
@@ -3004,6 +3005,26 @@ data-raw-commit: ## Blocked raw_match_data commit gate. Requires SAMPLE_RAW, MAT
 	fi
 	@echo "BLOCKED: raw_match_data commit is not wired in Phase 4.21."
 	@exit 1
+
+data-raw-single-fixture-smoke: ## Single raw fixture ingestion smoke tool. Dry-run safe by default; DB write requires CONFIRM_LOCAL_DB_WRITE=1.
+	@if [ -z "$(FIXTURE)" ] || [ -z "$(MATCH_ID)" ]; then \
+		echo "ERROR: provide FIXTURE=<path> and MATCH_ID=<id>"; \
+		echo "  Example: make data-raw-single-fixture-smoke FIXTURE=data/raw/fotmob/match_detail/53_20252026_4830474.payload.html MATCH_ID=53_20252026_4830474"; \
+		echo "  To write:  CONFIRM_LOCAL_DB_WRITE=1 make data-raw-single-fixture-smoke FIXTURE=... MATCH_ID=... DATA_VERSION=..."; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -T dev test -f "$(FIXTURE)"
+	$(COMPOSE_DEV) exec -e CONFIRM_LOCAL_DB_WRITE="$(or $(CONFIRM_LOCAL_DB_WRITE),)" \
+		-e PGHOST="db" \
+		-e PGPORT="5432" \
+		-e PGDATABASE="football_db" \
+		-e PGUSER="football_user" \
+		-e PGPASSWORD="$(or $(DB_PASSWORD),your_secure_password_here)" \
+		dev node scripts/ops/single_raw_match_data_ingest.js \
+		--fixture "$(FIXTURE)" \
+		--match-id "$(MATCH_ID)" \
+		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
+		$(if $(filter 1,$(CONFIRM_LOCAL_DB_WRITE)),--commit,--dry-run)
 
 data-network-dry-run: ## Blocked unless explicitly authorized. Does not run by default.
 	@if [ "$(CONFIRM_NETWORK)" != "1" ]; then \
