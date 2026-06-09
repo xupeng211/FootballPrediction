@@ -11,9 +11,6 @@ lifecycle: permanent / smoke-test
 
 import os
 import subprocess
-import sys
-
-import pytest
 
 SCRIPT = "scripts/ops/single_raw_match_data_ingest.js"
 VALID_FIXTURE = "data/raw/fotmob/match_detail/53_20252026_4830474.payload.html"
@@ -33,8 +30,8 @@ def _run_node(script, *args, env=None):
     node_bin = os.environ.get("NODE_BIN", "node")
 
     result = subprocess.run(
-        [node_bin, script] + list(args),
-        capture_output=True,
+        [node_bin, script, *list(args)],
+        check=False, capture_output=True,
         text=True,
         env=base_env,
         timeout=30,
@@ -204,7 +201,7 @@ class TestGuardHelpFlag:
 
     def test_help_flag(self):
         """--help should exit 0 and show usage."""
-        rc, stdout, stderr = _run_node(SCRIPT, "--help")
+        rc, stdout, _stderr = _run_node(SCRIPT, "--help")
         assert rc == 0, f"--help should exit 0, got {rc}"
         assert "Usage" in stdout or "usage" in stdout.lower(), (
             f"Should show usage: {stdout[:500]}"
