@@ -43,6 +43,8 @@ def _valid_pr_body() -> str:
     | Item | Value |
     |---|---|
     | New docs added | 0 |
+    | Modified docs | AGENT_WORKFLOW.md — added section 19.5 hollow-compliance rules |
+    | Reason | Updated workflow documentation to record new content-quality gate rules |
 
     ## Safety Impact
 
@@ -56,7 +58,10 @@ def _valid_pr_body() -> str:
 
     | Validation | Result |
     |---|---|
-    | Host validation | pass |
+    | Unit tests (pytest) | 47 passed, 0 failed |
+    | Ruff check | clean |
+    | Ruff format --check | clean |
+    | Gate CLI smoke | AI workflow gate passes with valid body |
 
     ## CI Gate Scope
 
@@ -71,7 +76,9 @@ def _valid_pr_body() -> str:
 
     ## Rollback Plan
 
-    - Revert this commit.
+    - Revert this commit via `git revert <merge-commit-sha>`.
+    - No database migrations, schema changes, or data writes are involved.
+    - After revert, re-run `make ci-local` to confirm the gate still passes.
 
     ## Next Recommended Task
 
@@ -342,6 +349,232 @@ def test_declared_no_browser_but_touches_browser_paths_fails():
     errors = gate.check_safety_consistency(body, changed)
     assert len(errors) >= 1
     assert "browser" in errors[0].lower()
+
+
+# ---------------------------------------------------------------------------
+# Check 7: critical section content quality (anti-hollow-compliance)
+# ---------------------------------------------------------------------------
+
+
+def _body_with_section_content(doc: str, validation: str, rollback: str) -> str:
+    """Build a minimal PR body with specific content for the 3 critical sections."""
+    return textwrap.dedent(f"""\
+    ## Summary
+
+    Test PR.
+
+    ## Scope
+
+    test
+
+    ## Documentation Impact
+
+    {doc}
+
+    ## Safety Impact
+
+    no
+
+    ## Validation
+
+    {validation}
+
+    ## CI Gate Scope
+
+    test
+
+    ## No deletion / no move / no rename confirmation
+
+    test
+
+    ## Rollback Plan
+
+    {rollback}
+
+    ## Next Recommended Task
+
+    Do not start automatically.
+    Recommended next task only after user confirmation.
+    """)
+
+
+def _substantive_doc() -> str:
+    return (
+        "Updated AGENT_WORKFLOW.md to document new hollow-compliance "
+        "rules in section 19.5. Added detailed validation examples "
+        "and cross-reference to ai_workflow_gate.py check 7."
+    )
+
+
+def _substantive_validation() -> str:
+    return (
+        "Unit tests: 47 passed, 0 failed. Ruff check: clean. "
+        "Ruff format --check: clean. Gate CLI smoke: passed. "
+        "CI production-gate: completed + success."
+    )
+
+
+def _substantive_rollback() -> str:
+    return (
+        "Revert via git revert <merge-commit-sha>. "
+        "No DB migrations or schema changes involved. "
+        "After revert, re-run make ci-local to confirm gate passes."
+    )
+
+
+def test_all_critical_sections_substantive_passes():
+    """A PR body with real content in all 3 critical sections should pass."""
+    body = _body_with_section_content(
+        _substantive_doc(),
+        _substantive_validation(),
+        _substantive_rollback(),
+    )
+    assert gate.check_section_content_quality(body) == []
+
+
+def test_documentation_impact_na_fails():
+    """Documentation Impact with only 'N/A' should be rejected."""
+    body = _body_with_section_content("N/A", _substantive_validation(), _substantive_rollback())
+    errors = gate.check_section_content_quality(body)
+    assert any("## Documentation Impact" in e for e in errors), (
+        f"Should flag Documentation Impact as hollow; got: {errors}"
+    )
+
+
+def test_documentation_impact_none_fails():
+    """Documentation Impact with only 'none' should be rejected."""
+    body = _body_with_section_content("none", _substantive_validation(), _substantive_rollback())
+    errors = gate.check_section_content_quality(body)
+    assert any("## Documentation Impact" in e for e in errors)
+
+
+def test_documentation_impact_not_applicable_fails():
+    """Documentation Impact with only 'not applicable' should be rejected."""
+    body = _body_with_section_content(
+        "not applicable", _substantive_validation(), _substantive_rollback()
+    )
+    errors = gate.check_section_content_quality(body)
+    assert any("## Documentation Impact" in e for e in errors)
+
+
+def test_documentation_impact_no_impact_fails():
+    """Documentation Impact with only 'no impact' should be rejected."""
+    body = _body_with_section_content(
+        "no impact", _substantive_validation(), _substantive_rollback()
+    )
+    errors = gate.check_section_content_quality(body)
+    assert any("## Documentation Impact" in e for e in errors)
+
+
+def test_documentation_impact_no_documentation_impact_fails():
+    """Documentation Impact with only 'no documentation impact' should be rejected."""
+    body = _body_with_section_content(
+        "no documentation impact", _substantive_validation(), _substantive_rollback()
+    )
+    errors = gate.check_section_content_quality(body)
+    assert any("## Documentation Impact" in e for e in errors)
+
+
+def test_documentation_impact_empty_fails():
+    """Documentation Impact section with no content should be rejected."""
+    body = _body_with_section_content("", _substantive_validation(), _substantive_rollback())
+    errors = gate.check_section_content_quality(body)
+    assert any("## Documentation Impact" in e for e in errors)
+
+
+def test_validation_passed_fails():
+    """Validation with only 'passed' should be rejected."""
+    body = _body_with_section_content(_substantive_doc(), "passed", _substantive_rollback())
+    errors = gate.check_section_content_quality(body)
+    assert any("## Validation" in e for e in errors), (
+        f"Should flag Validation as hollow; got: {errors}"
+    )
+
+
+def test_validation_ok_fails():
+    """Validation with only 'ok' should be rejected."""
+    body = _body_with_section_content(_substantive_doc(), "ok", _substantive_rollback())
+    errors = gate.check_section_content_quality(body)
+    assert any("## Validation" in e for e in errors)
+
+
+def test_validation_na_fails():
+    """Validation with only 'N/A' should be rejected."""
+    body = _body_with_section_content(_substantive_doc(), "N/A", _substantive_rollback())
+    errors = gate.check_section_content_quality(body)
+    assert any("## Validation" in e for e in errors)
+
+
+def test_validation_all_tests_pass_fails():
+    """Validation with only 'all tests pass' should be rejected."""
+    body = _body_with_section_content(_substantive_doc(), "all tests pass", _substantive_rollback())
+    errors = gate.check_section_content_quality(body)
+    assert any("## Validation" in e for e in errors)
+
+
+def test_rollback_plan_revert_pr_fails():
+    """Rollback Plan with only 'revert the PR' should be rejected."""
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), "revert the PR"
+    )
+    errors = gate.check_section_content_quality(body)
+    assert any("## Rollback Plan" in e for e in errors), (
+        f"Should flag Rollback Plan as hollow; got: {errors}"
+    )
+
+
+def test_rollback_plan_revert_commit_fails():
+    """Rollback Plan with only 'revert this commit' should be rejected."""
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), "revert this commit"
+    )
+    errors = gate.check_section_content_quality(body)
+    assert any("## Rollback Plan" in e for e in errors)
+
+
+def test_rollback_plan_git_revert_fails():
+    """Rollback Plan with only 'git revert ...' should be rejected."""
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), "git revert HEAD~1"
+    )
+    errors = gate.check_section_content_quality(body)
+    assert any("## Rollback Plan" in e for e in errors)
+
+
+def test_rollback_plan_empty_fails():
+    """Rollback Plan with no content should be rejected."""
+    body = _body_with_section_content(_substantive_doc(), _substantive_validation(), "")
+    errors = gate.check_section_content_quality(body)
+    assert any("## Rollback Plan" in e for e in errors)
+
+
+def test_check_7_does_not_break_next_task_gate():
+    """Next Recommended Task mandatory phrases must still be enforced."""
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), _substantive_rollback()
+    )
+    assert gate.check_next_task_stop_phrase(body) == []
+
+
+def test_check_7_does_not_break_safety_consistency():
+    """Safety consistency must still be enforced alongside quality checks."""
+    body = _valid_pr_body()  # uses the full fixture with proper Safety Impact table
+    changed = {"database/migrations/v2.sql"}
+    errors = gate.check_safety_consistency(body, changed)
+    assert len(errors) >= 1
+    assert "DB" in errors[0]
+
+
+def test_all_three_critical_sections_hollow_reports_all():
+    """When all 3 critical sections are hollow, all 3 should be reported."""
+    body = _body_with_section_content("N/A", "passed", "revert PR")
+    errors = gate.check_section_content_quality(body)
+    doc_hits = [e for e in errors if "Documentation Impact" in e]
+    val_hits = [e for e in errors if "Validation" in e]
+    roll_hits = [e for e in errors if "Rollback Plan" in e]
+    assert len(doc_hits) >= 1, f"Expected Documentation Impact error; got: {errors}"
+    assert len(val_hits) >= 1, f"Expected Validation error; got: {errors}"
+    assert len(roll_hits) >= 1, f"Expected Rollback Plan error; got: {errors}"
 
 
 # ---------------------------------------------------------------------------
