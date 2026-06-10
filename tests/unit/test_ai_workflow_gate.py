@@ -14,8 +14,19 @@ import textwrap
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "scripts/ops/ai_workflow_gate.py"
 
+sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/ops"))
 import ai_workflow_gate as gate  # noqa: E402
+
+# Convenience: partially-applied check_section_content_quality for test use.
+# The real function takes (body, section_text_between_fn); the callback is
+# called as fn(heading, body) but gate.section_text_between expects
+# (body, heading), so we wrap with a lambda like validate() does.
+def _check_content(body: str) -> list[str]:
+    return gate.check_section_content_quality(
+        body,
+        lambda heading, pr_body: gate.section_text_between(pr_body, heading),
+    )
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -429,13 +440,13 @@ def test_all_critical_sections_substantive_passes():
         _substantive_validation(),
         _substantive_rollback(),
     )
-    assert gate.check_section_content_quality(body) == []
+    assert _check_content(body) == []
 
 
 def test_documentation_impact_na_fails():
     """Documentation Impact with only 'N/A' should be rejected."""
     body = _body_with_section_content("N/A", _substantive_validation(), _substantive_rollback())
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors), (
         f"Should flag Documentation Impact as hollow; got: {errors}"
     )
@@ -444,7 +455,7 @@ def test_documentation_impact_na_fails():
 def test_documentation_impact_none_fails():
     """Documentation Impact with only 'none' should be rejected."""
     body = _body_with_section_content("none", _substantive_validation(), _substantive_rollback())
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
 
@@ -453,7 +464,7 @@ def test_documentation_impact_not_applicable_fails():
     body = _body_with_section_content(
         "not applicable", _substantive_validation(), _substantive_rollback()
     )
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
 
@@ -462,7 +473,7 @@ def test_documentation_impact_no_impact_fails():
     body = _body_with_section_content(
         "no impact", _substantive_validation(), _substantive_rollback()
     )
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
 
@@ -471,21 +482,21 @@ def test_documentation_impact_no_documentation_impact_fails():
     body = _body_with_section_content(
         "no documentation impact", _substantive_validation(), _substantive_rollback()
     )
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
 
 def test_documentation_impact_empty_fails():
     """Documentation Impact section with no content should be rejected."""
     body = _body_with_section_content("", _substantive_validation(), _substantive_rollback())
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
 
 def test_validation_passed_fails():
     """Validation with only 'passed' should be rejected."""
     body = _body_with_section_content(_substantive_doc(), "passed", _substantive_rollback())
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Validation" in e for e in errors), (
         f"Should flag Validation as hollow; got: {errors}"
     )
@@ -494,21 +505,21 @@ def test_validation_passed_fails():
 def test_validation_ok_fails():
     """Validation with only 'ok' should be rejected."""
     body = _body_with_section_content(_substantive_doc(), "ok", _substantive_rollback())
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Validation" in e for e in errors)
 
 
 def test_validation_na_fails():
     """Validation with only 'N/A' should be rejected."""
     body = _body_with_section_content(_substantive_doc(), "N/A", _substantive_rollback())
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Validation" in e for e in errors)
 
 
 def test_validation_all_tests_pass_fails():
     """Validation with only 'all tests pass' should be rejected."""
     body = _body_with_section_content(_substantive_doc(), "all tests pass", _substantive_rollback())
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Validation" in e for e in errors)
 
 
@@ -517,7 +528,7 @@ def test_rollback_plan_revert_pr_fails():
     body = _body_with_section_content(
         _substantive_doc(), _substantive_validation(), "revert the PR"
     )
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Rollback Plan" in e for e in errors), (
         f"Should flag Rollback Plan as hollow; got: {errors}"
     )
@@ -528,7 +539,7 @@ def test_rollback_plan_revert_commit_fails():
     body = _body_with_section_content(
         _substantive_doc(), _substantive_validation(), "revert this commit"
     )
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Rollback Plan" in e for e in errors)
 
 
@@ -537,14 +548,14 @@ def test_rollback_plan_git_revert_fails():
     body = _body_with_section_content(
         _substantive_doc(), _substantive_validation(), "git revert HEAD~1"
     )
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Rollback Plan" in e for e in errors)
 
 
 def test_rollback_plan_empty_fails():
     """Rollback Plan with no content should be rejected."""
     body = _body_with_section_content(_substantive_doc(), _substantive_validation(), "")
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     assert any("## Rollback Plan" in e for e in errors)
 
 
@@ -568,7 +579,7 @@ def test_check_7_does_not_break_safety_consistency():
 def test_all_three_critical_sections_hollow_reports_all():
     """When all 3 critical sections are hollow, all 3 should be reported."""
     body = _body_with_section_content("N/A", "passed", "revert PR")
-    errors = gate.check_section_content_quality(body)
+    errors = _check_content(body)
     doc_hits = [e for e in errors if "Documentation Impact" in e]
     val_hits = [e for e in errors if "Validation" in e]
     roll_hits = [e for e in errors if "Rollback Plan" in e]
