@@ -75,7 +75,13 @@ Last updated: 2026-06-07
 
 - FotMob data ingestion is blocked. See `docs/data/FOTMOB_CURRENT_STATE.md` for details.
 - `raw_write_ready_count` is 0.
+  **(Superseded 2026-06-11: retained raw storage has moved forward. 4 real FotMob raw
+  payloads exist in `raw_match_data` with `data_version=fotmob_live_v1`, audited
+  4/4 parseable, sha valid, inner matchId ok, 0 errors, 0 warnings. See
+  `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`.)**
 - No DB write, raw write, browser automation, or network data collection is authorized.
+  **(Partial exception: the 4 retained raw rows above were written under explicit
+  authorization in #1485 and #1486.)**
 - Parser, schema, fixture, and validation assets from #1454 are safe to reuse as
   offline references only.
 

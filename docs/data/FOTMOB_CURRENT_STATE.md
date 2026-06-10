@@ -6,14 +6,30 @@
 - owner: data / ingestion workflow
 - update rule: update when ingestion state, blockers, active guards, or next step changes
 - do not use historical ADG reports as the primary current truth
+- retained raw storage state has diverged from legacy ADG state; see superseded notice in §Current status and docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md
 
-## Current status
+## Superseded notice — 2026-06-11
+
+The `raw_write_ready_count=0` and "ADG60 write blocked" statements below are
+**superseded** for retained raw storage. As of June 2026, 4 real FotMob raw
+payloads have been written to `raw_match_data` with `data_version=fotmob_live_v1`
+and audited (4/4 parseable, sha valid, inner matchId ok, 0 errors, 0 warnings).
+
+See `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md` for the current retained raw
+stage status.
+
+The legacy ADG/32-target inventory and corrected-source identity pipeline below
+remains relevant for Ligue 1 corrected-source inventory — it was never about raw
+storage, and its blockers (missing canonical URLs, route_hash_pair verification)
+are a separate concern.
+
+## Current status (legacy ADG state — see superseded notice above)
 
 - latest completed phase: ADG59B source-controlled acceptance/suspension state completed
 - latest merged ADG PR: #1399
 - active workflow PR: ADG60-PREFLIGHT no-write
 - next data phase: stop; ADG60 write requires separate explicit authorization
-- raw_write_ready_count: 0
+- raw_write_ready_count: 0 **(superseded for retained raw — see superseded notice above)**
 - latest ADG59B merge commit: eac95fc6839e215969d5c3315b5ea5950de93cd3
 
 ## Current Safe State After #1454
@@ -79,8 +95,11 @@
 
 ## Recommended next step
 
+For retained raw storage: see `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`.
+
 STOP: ADG59B merged via PR #1399 at merge commit eac95fc6839e215969d5c3315b5ea5950de93cd3.
 ADG60 remains blocked without separate explicit authorization.
+(Legacy ADG state; retained raw has moved forward — see superseded notice above.)
 
 ADG59B source-controlled acceptance/suspension state completed for exactly 32 ADG59A Ligue 1 targets;
 accepted_count=32; suspension_resolved_count=32; raw_write_ready_count=0; no DB write, raw write,
