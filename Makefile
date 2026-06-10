@@ -60,7 +60,7 @@
         data-synthetic-l3-dry-run data-synthetic-l3-commit \
         data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
-        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-network-dry-run data-db-write-small data-harvest \
+        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
         ci-local ci-local-pr pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
 
@@ -384,6 +384,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-single-fixture-smoke  # dry-run safe by default; CONFIRM_LOCAL_DB_WRITE=1 to commit"
+	@echo "  make data-raw-single-live-fotmob-smoke  # live fetch dry-run; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 required"
 	@echo "  make data-training-dry-run"
 	@echo "  make data-prediction-dry-run"
 	@echo "  make data-training-feature-dry-run MATCH_ID=<id>"
@@ -3023,6 +3024,29 @@ data-raw-single-fixture-smoke: ## Single raw fixture ingestion smoke tool. Dry-r
 		dev node scripts/ops/single_raw_match_data_ingest.js \
 		--fixture "$(FIXTURE)" \
 		--match-id "$(MATCH_ID)" \
+		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
+		$(if $(filter 1,$(CONFIRM_LOCAL_DB_WRITE)),--commit,--dry-run)
+
+data-raw-single-live-fotmob-smoke: ## Single live FotMob raw ingestion smoke tool. Live fetch dry-run safe by default; network requires CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1; DB write requires CONFIRM_LOCAL_DB_WRITE=1.
+	@if [ -z "$(MATCH_ID)" ] || [ -z "$(EXTERNAL_ID)" ] || [ -z "$(HOME_TEAM)" ] || [ -z "$(AWAY_TEAM)" ]; then \
+		echo "ERROR: provide MATCH_ID=<id> EXTERNAL_ID=<fotmob_id> HOME_TEAM=<name> AWAY_TEAM=<name>"; \
+		echo "  Example dry-run: CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 make data-raw-single-live-fotmob-smoke MATCH_ID=53_20252026_4830507 EXTERNAL_ID=4830507 HOME_TEAM=Nice AWAY_TEAM=\"Paris FC\""; \
+		echo "  Example commit:  CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 make data-raw-single-live-fotmob-smoke MATCH_ID=... EXTERNAL_ID=... HOME_TEAM=... AWAY_TEAM=..."; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -e CONFIRM_LIVE_FOTMOB_SINGLE_FETCH="$(or $(CONFIRM_LIVE_FOTMOB_SINGLE_FETCH),)" \
+		-e CONFIRM_LOCAL_DB_WRITE="$(or $(CONFIRM_LOCAL_DB_WRITE),)" \
+		-e PGHOST="db" \
+		-e PGPORT="5432" \
+		-e PGDATABASE="football_db" \
+		-e PGUSER="football_user" \
+		-e PGPASSWORD="$(or $(DB_PASSWORD),your_secure_password_here)" \
+		dev node scripts/ops/single_live_fotmob_raw_ingest_smoke.js \
+		--match-id "$(MATCH_ID)" \
+		--external-id "$(EXTERNAL_ID)" \
+		--home-team "$(HOME_TEAM)" \
+		--away-team "$(AWAY_TEAM)" \
+		$(if $(MATCH_DATE),--match-date "$(MATCH_DATE)") \
 		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
 		$(if $(filter 1,$(CONFIRM_LOCAL_DB_WRITE)),--commit,--dry-run)
 
