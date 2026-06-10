@@ -24,6 +24,9 @@ Last updated: 2026-06-07
 ## Current data safety status
 
 - `raw_write_ready_count`: 0.
+  **(Superseded 2026-06-11: 4 real FotMob retained raw rows exist in
+  `raw_match_data` (`fotmob_live_v1`), audited 4/4 clean. See
+  `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`.)**
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
