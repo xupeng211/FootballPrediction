@@ -4,6 +4,8 @@
  *
  * lifecycle: permanent / audit-tool
  *
+ * AI Workflow Gate: read-only, no DB writes, no network, no production DB.
+ *
  * READ-ONLY audit of all raw_match_data rows with data_version='fotmob_live_v1'.
  * Checks row count, field completeness, JSON parseability, inner matchId alignment,
  * structural consistency, and hash stability.  No INSERT/UPDATE/DELETE/UPSERT.
