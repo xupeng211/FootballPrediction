@@ -324,6 +324,33 @@ Do not start automatically.
 Recommended next task only after user confirmation.
 ```
 
+### Anti-hollow-compliance: critical sections MUST contain substantive content
+
+The gate rejects PR bodies where any of these sections contains only hollow
+placeholders:
+
+| Section | Rejected hollow placeholders |
+|---------|------------------------------|
+| `## Documentation Impact` | N/A, none, not applicable, no impact, no documentation impact, empty |
+| `## Validation` | N/A, passed, ok, okay, all tests pass, tests pass, no validation, empty |
+| `## Rollback Plan` | revert PR, revert the PR, revert this commit, revert, git revert, empty |
+
+**If a section truly does not apply**, explain *why* it does not apply in at
+least one full sentence (minimum 15 meaningful characters).  For example:
+
+- Documentation Impact: "No documentation change needed because this PR only
+  refactors an internal helper with no user-facing API surface change."
+- Validation: "No automated tests exist for this legacy module; manual
+  verification was performed by running `make ci-local` and confirming zero
+  regressions."
+- Rollback Plan: "This is a governance-only PR with no runtime code changes.
+  Rollback consists of reverting the merge commit."
+
+The rule is enforced by `scripts/ops/ai_workflow_gate.py` check 7.
+Hollow compliance — checkbox-ticking without substance — is explicitly
+rejected.  If you cannot fill a section, stop and ask the user whether
+the PR should proceed.
+
 ### If the local gate fails
 
 - Update only the PR body (via `gh pr edit` or `gh api PATCH`).

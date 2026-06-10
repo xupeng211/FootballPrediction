@@ -18,6 +18,9 @@ Checks enforced:
      keywords in new or modified files under docs/ or tests/ are flagged.
   6. Safety declarations of "no DB / no scraper / no browser" that contradict
      actually-changed file paths are blocked.
+  7. Three critical sections (Documentation Impact, Validation, Rollback Plan)
+     must contain substantive content — hollow placeholders such as "N/A",
+     "none", "passed", or "revert PR" are rejected.
 
 Usage:
   python scripts/ops/ai_workflow_gate.py --pr-body-file /tmp/pr_body.txt
@@ -231,6 +234,19 @@ BLIND_SPOT_CODE_EXTENSIONS: frozenset[str] = frozenset(
     }
 )
 
+
+# ---------------------------------------------------------------------------
+# Check 7: critical section content quality (anti-hollow-compliance)
+# Implemented in scripts/ops/helpers/section_content_quality.py to stay
+# under the 800-line architecture limit enforced by gatekeeper.sh.
+# ---------------------------------------------------------------------------
+
+# Check 7 implementation lives in a helper module to stay under the 800-line
+# architecture limit enforced by gatekeeper.sh.  Ensure the project root is
+# on sys.path so the absolute import works in subprocess / CLI invocations.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from scripts.ops.helpers.section_content_quality import check_section_content_quality  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -674,6 +690,16 @@ def validate(
     # 6. Safety declaration consistency (only when body is available)
     if not skip_body_checks:
         errors.extend(check_safety_consistency(pr_body, changed))
+
+    # 7. Critical section content quality (only when body is available)
+    if not skip_body_checks:
+        # Pass section_text_between to avoid circular import from helper.
+        errors.extend(
+            check_section_content_quality(
+                pr_body,
+                lambda heading, body: section_text_between(body, heading),
+            )
+        )
 
     return errors
 
