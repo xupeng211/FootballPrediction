@@ -221,6 +221,7 @@ data/processed/V*.csv
 /test_*.py
 test_*.py
 !tests/test_*.py
+!tests/**/test_*.py
 
 # Prediction smoke test files
 prediction_smoke_test_*.json
