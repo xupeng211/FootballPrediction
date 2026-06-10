@@ -60,7 +60,7 @@
         data-synthetic-l3-dry-run data-synthetic-l3-commit \
         data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
-        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-network-dry-run data-db-write-small data-harvest \
+        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
         ci-local ci-local-pr pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
 
@@ -385,6 +385,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-raw-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-raw-single-fixture-smoke  # dry-run safe by default; CONFIRM_LOCAL_DB_WRITE=1 to commit"
 	@echo "  make data-raw-single-live-fotmob-smoke  # live fetch dry-run; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 required"
+	@echo "  make data-raw-single-live-fotmob-retain  # live fetch + retain; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 required"
 	@echo "  make data-training-dry-run"
 	@echo "  make data-prediction-dry-run"
 	@echo "  make data-training-feature-dry-run MATCH_ID=<id>"
@@ -3049,6 +3050,43 @@ data-raw-single-live-fotmob-smoke: ## Single live FotMob raw ingestion smoke too
 		$(if $(MATCH_DATE),--match-date "$(MATCH_DATE)") \
 		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
 		$(if $(filter 1,$(CONFIRM_LOCAL_DB_WRITE)),--commit,--dry-run)
+
+data-raw-single-live-fotmob-retain: ## Single live FotMob raw ingestion RETAIN tool. Retains 1 raw payload permanently. REQUIRES: CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1.
+	@if [ -z "$(MATCH_ID)" ] || [ -z "$(EXTERNAL_ID)" ] || [ -z "$(HOME_TEAM)" ] || [ -z "$(AWAY_TEAM)" ]; then \
+		echo "ERROR: provide MATCH_ID=<id> EXTERNAL_ID=<fotmob_id> HOME_TEAM=<name> AWAY_TEAM=<name>"; \
+		echo "  Example: CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 make data-raw-single-live-fotmob-retain MATCH_ID=53_20252026_4830507 EXTERNAL_ID=4830507 HOME_TEAM=Nice AWAY_TEAM=\"Paris FC\" DATA_VERSION=fotmob_live_v1"; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_RETAIN_RAW_DATA)" != "1" ]; then \
+		echo "BLOCKED: CONFIRM_RETAIN_RAW_DATA=1 is required for retain mode."; \
+		echo "  Retain mode PERMANENTLY keeps the raw payload in the DB."; \
+		echo "  Smoke mode (make data-raw-single-live-fotmob-smoke) always cleans up."; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_LIVE_FOTMOB_SINGLE_FETCH)" != "1" ]; then \
+		echo "BLOCKED: CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 is required."; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_LOCAL_DB_WRITE)" != "1" ]; then \
+		echo "BLOCKED: CONFIRM_LOCAL_DB_WRITE=1 is required."; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec -e CONFIRM_LIVE_FOTMOB_SINGLE_FETCH="1" \
+		-e CONFIRM_LOCAL_DB_WRITE="1" \
+		-e CONFIRM_RETAIN_RAW_DATA="1" \
+		-e PGHOST="db" \
+		-e PGPORT="5432" \
+		-e PGDATABASE="football_db" \
+		-e PGUSER="football_user" \
+		-e PGPASSWORD="$(or $(DB_PASSWORD),your_secure_password_here)" \
+		dev node scripts/ops/single_live_fotmob_raw_ingest_smoke.js \
+		--match-id "$(MATCH_ID)" \
+		--external-id "$(EXTERNAL_ID)" \
+		--home-team "$(HOME_TEAM)" \
+		--away-team "$(AWAY_TEAM)" \
+		$(if $(MATCH_DATE),--match-date "$(MATCH_DATE)") \
+		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
+		--commit --retain
 
 data-network-dry-run: ## Blocked unless explicitly authorized. Does not run by default.
 	@if [ "$(CONFIRM_NETWORK)" != "1" ]; then \

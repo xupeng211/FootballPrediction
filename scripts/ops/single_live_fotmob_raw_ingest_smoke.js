@@ -7,7 +7,8 @@
  * Performs a SINGLE live HTTP fetch to FotMob match detail page, extracts
  * __NEXT_DATA__ via FotMobRawDetailFetcher, UPSERTs one row into
  * raw_match_data (local/dev DB only), reads back, verifies idempotency,
- * then CLEANS UP the test row.
+ * then CLEANS UP the test row (default smoke mode) or RETAINS it (--retain
+ * mode).
  *
  * SAFETY GUARDS (hard-block, cannot be bypassed by flags):
  *   G1. CONFIRM_LOCAL_DB_WRITE=1 env var REQUIRED for any DB write.
@@ -21,11 +22,14 @@
  *   G6. FK guard: if the match does not exist in the matches table, fails with
  *       a clear error. Does NOT auto-seed.
  *   G7. Single request only: retry=0, concurrency=1, no batch.
- *   G8. Cleanup always runs after successful write; script exits non-zero if
- *       cleanup fails.
+ *   G8. Cleanup always runs after successful write in smoke mode (default);
+ *       script exits non-zero if cleanup fails. In --retain mode, cleanup is
+ *       SKIPPED and the row is permanently kept.
  *   G9. Dry-run is the DEFAULT. --commit is only honored when
  *       CONFIRM_LOCAL_DB_WRITE=1 AND CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1.
  *   G10. No browser, no proxy, no printBody, no saveBody.
+ *   G11. CONFIRM_RETAIN_RAW_DATA=1 env var REQUIRED for --retain mode.
+ *        Without it, --retain is blocked. Retained rows are NOT cleaned up.
  *
  * Usage:
  *   # Dry-run (live fetch, no DB write):
@@ -35,7 +39,7 @@
  *     --home-team Nice \
  *     --away-team "Paris FC"
  *
- *   # Commit to local/dev DB:
+ *   # Commit to local/dev DB (smoke mode — cleans up after):
  *   CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 \
  *     node scripts/ops/single_live_fotmob_raw_ingest_smoke.js \
  *     --match-id 53_20252026_4830507 \
@@ -44,10 +48,24 @@
  *     --away-team "Paris FC" \
  *     --commit
  *
+ *   # Retain mode (commits AND keeps the row):
+ *   CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 \
+ *     CONFIRM_RETAIN_RAW_DATA=1 \
+ *     node scripts/ops/single_live_fotmob_raw_ingest_smoke.js \
+ *     --match-id 53_20252026_4830507 \
+ *     --external-id 4830507 \
+ *     --home-team Nice \
+ *     --away-team "Paris FC" \
+ *     --commit --retain \
+ *     --data-version fotmob_live_v1
+ *
  *   # Via Makefile:
  *   CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 make data-raw-single-live-fotmob-smoke  # dry-run
  *   CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 \
- *     make data-raw-single-live-fotmob-smoke  # commit
+ *     make data-raw-single-live-fotmob-smoke  # commit (smoke)
+ *   CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 \
+ *     CONFIRM_RETAIN_RAW_DATA=1 \
+ *     make data-raw-single-live-fotmob-retain  # retain
  */
 
 'use strict';
@@ -125,12 +143,15 @@ function usage() {
         '    --away-team <name> \\',
         '    [--match-date <date>] \\',
         '    [--data-version <version>] \\',
-        '    [--commit] [--dry-run] [--help]',
+        '    [--commit] [--dry-run] [--retain] [--help]',
         '',
         'SAFETY: Dry-run is the DEFAULT.',
         '        Live fetch REQUIRES: CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1.',
         '        DB write REQUIRES: CONFIRM_LOCAL_DB_WRITE=1 AND --commit.',
+        '        Retain REQUIRES: CONFIRM_RETAIN_RAW_DATA=1 AND --retain.',
         '        Single match only. Single request only.',
+        '        WARNING: --retain keeps the row in the DB permanently.',
+        '        Smoke mode (default) ALWAYS cleans up after success.',
     ].join('\n');
 }
 
@@ -138,7 +159,7 @@ function parseArgs(argv) {
     let args = {
         matchId: null, externalId: null, homeTeam: null, awayTeam: null,
         matchDate: null, dataVersion: 'fp_live_smoke',
-        commit: false, dryRun: true, help: false,
+        commit: false, dryRun: true, retain: false, help: false,
     };
     for (let i = 0; i < argv.length; i++) {
         let t = argv[i];
@@ -150,6 +171,7 @@ function parseArgs(argv) {
         else if (t === '--data-version') { args.dataVersion = argv[++i]; }
         else if (t === '--commit') { args.commit = true; args.dryRun = false; }
         else if (t === '--dry-run') { args.dryRun = true; args.commit = false; }
+        else if (t === '--retain') { args.retain = true; }
         else if (t === '--help' || t === '-h') { args.help = true; }
         else { throw new Error('Unknown argument: ' + t); }
     }
@@ -225,11 +247,29 @@ function guardDataVersionLength(version) {
     return true;
 }
 
+function guardConfirmRetainRawData(retainRequested) {
+    if (!retainRequested) return true;
+    let val = (process.env.CONFIRM_RETAIN_RAW_DATA || '').trim();
+    if (val !== '1') {
+        console.error(
+            'BLOCKED (G11): --retain mode requires CONFIRM_RETAIN_RAW_DATA=1.\n' +
+            '  Retained rows are NOT automatically cleaned up. This is a permanent\n' +
+            '  write to the local/dev raw_match_data table.\n' +
+            '  Set CONFIRM_RETAIN_RAW_DATA=1 to confirm you intend to permanently\n' +
+            '  retain this raw payload as a data asset.'
+        );
+        return false;
+    }
+    console.log('  [G11 PASS] CONFIRM_RETAIN_RAW_DATA=1 confirmed. Row will be RETAINED.');
+    return true;
+}
+
 function runSafetyGuards(args) {
     console.log('\n── Safety Guards ──');
     if (!guardConfirmLiveFotmobSingleFetch()) process.exit(1);
     if (!guardDataVersionLength(args.dataVersion)) process.exit(1);
     if (!guardConfirmLocalDbWrite(args.commit)) process.exit(1);
+    if (!guardConfirmRetainRawData(args.retain)) process.exit(1);
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -246,6 +286,7 @@ function fail(label, detail) {
 }
 
 function printBanner(args) {
+    let mode = args.retain ? 'COMMIT (RETAIN)' : (args.commit ? 'COMMIT (SMOKE)' : 'DRY-RUN');
     console.log('='.repeat(70));
     console.log('Single Live FotMob Raw Ingestion Smoke Tool');
     console.log('='.repeat(70));
@@ -255,7 +296,7 @@ function printBanner(args) {
     console.log('Away:          ' + args.awayTeam);
     console.log('Match Date:    ' + (args.matchDate || 'N/A'));
     console.log('Data Version:  ' + args.dataVersion);
-    console.log('Mode:          ' + (args.commit ? 'COMMIT' : 'DRY-RUN'));
+    console.log('Mode:          ' + mode);
     console.log('='.repeat(70));
 }
 
@@ -333,7 +374,8 @@ function printDryRunSummary(args, fetchResult) {
     console.log('    data_hash    = ' + fetchResult.raw_data_hash);
     console.log('    raw_data     = ' + JSON.stringify(fetchResult.raw_data).length + ' bytes JSONB');
     console.log('');
-    console.log('  To write to DB: CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 ... --commit');
+    console.log('  To write to DB (smoke):  CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 ... --commit');
+    console.log('  To retain permanently:   CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 ... --commit --retain');
     console.log('='.repeat(70));
     console.log('DRY-RUN COMPLETE. No DB connection opened. No writes.');
 }
@@ -445,12 +487,16 @@ async function executeDbWrite(dbConfig, args, fetchResult) {
         // Idempotency
         await verifyIdempotency(client, upsertParams, insertedId, fetchResult.raw_data_hash);
 
-        // Cleanup
-        await runCleanup(client, args.matchId, args.dataVersion);
+        // Retain or Cleanup
+        if (args.retain) {
+            await printRetainSummary(client, args, fetchResult);
+        } else {
+            await runCleanup(client, args.matchId, args.dataVersion);
+        }
 
     } catch (err) {
         fail('DB operation', err.message);
-        if (client && insertedId) {
+        if (client && insertedId && !args.retain) {
             try { await client.query(CLEANUP_SQL, [args.matchId, args.dataVersion]); }
             catch (_) { /* ignore */ }
         }
@@ -464,14 +510,49 @@ async function executeDbWrite(dbConfig, args, fetchResult) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// Retain summary — prints retention confirmation and rollback SQL
+// ═══════════════════════════════════════════════════════════════════════════════
+
+async function printRetainSummary(client, args, fetchResult) {
+    console.log('\n── Retain Summary ──');
+    let cnt = await client.query(
+        'SELECT COUNT(*)::int AS cnt FROM raw_match_data WHERE match_id = $1 AND data_version = $2',
+        [args.matchId, args.dataVersion]
+    );
+    let rowCount = cnt.rows[0].cnt;
+    ok('retained row count', String(rowCount));
+    ok('retained match_id', args.matchId);
+    ok('retained data_version', args.dataVersion);
+    ok('retained data_hash', fetchResult.raw_data_hash);
+
+    console.log('\n── Rollback SQL (run manually only if needed) ──');
+    console.log('-- WARNING: This deletes the retained raw payload. Only run if explicitly requested.');
+    console.log('DELETE FROM raw_match_data');
+    console.log('WHERE match_id = \'' + args.matchId + '\'');
+    console.log('  AND data_version = \'' + args.dataVersion + '\';');
+    console.log('');
+    console.log('-- Verify deletion:');
+    console.log('SELECT COUNT(*) FROM raw_match_data');
+    console.log('WHERE match_id = \'' + args.matchId + '\'');
+    console.log('  AND data_version = \'' + args.dataVersion + '\';');
+    console.log('-- Expected after deletion: 0');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // Final verdict
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function printVerdict() {
+function printVerdict(retainMode) {
     console.log('\n' + '='.repeat(70));
     if (errorCount === 0) {
-        console.log('ALL CHECKS PASSED. Live FotMob smoke test SUCCESS.');
-        console.log('The test row has been cleaned up from the database.');
+        if (retainMode) {
+            console.log('ALL CHECKS PASSED. Live FotMob retain SUCCESS.');
+            console.log('The row has been RETAINED in the local/dev database.');
+            console.log('It will NOT be automatically cleaned up.');
+        } else {
+            console.log('ALL CHECKS PASSED. Live FotMob smoke test SUCCESS.');
+            console.log('The test row has been cleaned up from the database.');
+        }
     } else {
         console.error('FAILED: ' + errorCount + ' check(s) did not pass.');
     }
@@ -528,7 +609,7 @@ async function main() {
 
     let dbConfig = getDbConfig();
     await executeDbWrite(dbConfig, args, fetchResult);
-    printVerdict();
+    printVerdict(args.retain);
 }
 
 main().catch(function (err) {
