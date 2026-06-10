@@ -60,7 +60,7 @@
         data-synthetic-l3-dry-run data-synthetic-l3-commit \
         data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
-        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-network-dry-run data-db-write-small data-harvest \
+        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
         ci-local ci-local-pr pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
 
@@ -386,6 +386,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-raw-single-fixture-smoke  # dry-run safe by default; CONFIRM_LOCAL_DB_WRITE=1 to commit"
 	@echo "  make data-raw-single-live-fotmob-smoke  # live fetch dry-run; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 required"
 	@echo "  make data-raw-single-live-fotmob-retain  # live fetch + retain; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 required"
+	@echo "  make data-raw-n3-live-fotmob-retain  # N=3 batch retain; CONFIRM_LIVE_FOTMOB_SMALL_BATCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 CONFIRM_MAX_MATCHES=3 required"
 	@echo "  make data-training-dry-run"
 	@echo "  make data-prediction-dry-run"
 	@echo "  make data-training-feature-dry-run MATCH_ID=<id>"
@@ -3085,6 +3086,38 @@ data-raw-single-live-fotmob-retain: ## Single live FotMob raw ingestion RETAIN t
 		--home-team "$(HOME_TEAM)" \
 		--away-team "$(AWAY_TEAM)" \
 		$(if $(MATCH_DATE),--match-date "$(MATCH_DATE)") \
+		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
+		--commit --retain
+
+data-raw-n3-live-fotmob-retain: ## N=3 FotMob small-batch raw retain tool. Retains 3 raw payloads permanently. REQUIRES: CONFIRM_LIVE_FOTMOB_SMALL_BATCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 CONFIRM_MAX_MATCHES=3.
+	@if [ "$(CONFIRM_LIVE_FOTMOB_SMALL_BATCH)" != "1" ]; then \
+		echo "BLOCKED: CONFIRM_LIVE_FOTMOB_SMALL_BATCH=1 is required for N=3 batch."; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_LOCAL_DB_WRITE)" != "1" ]; then \
+		echo "BLOCKED: CONFIRM_LOCAL_DB_WRITE=1 is required."; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_RETAIN_RAW_DATA)" != "1" ]; then \
+		echo "BLOCKED: CONFIRM_RETAIN_RAW_DATA=1 is required for retain."; \
+		exit 1; \
+	fi
+	@if [ "$(CONFIRM_MAX_MATCHES)" != "3" ]; then \
+		echo "BLOCKED: CONFIRM_MAX_MATCHES=3 is required for N=3 batch."; \
+		exit 1; \
+	fi
+	$(COMPOSE_DEV) exec \
+		-e CONFIRM_LIVE_FOTMOB_SMALL_BATCH="1" \
+		-e CONFIRM_LOCAL_DB_WRITE="1" \
+		-e CONFIRM_RETAIN_RAW_DATA="1" \
+		-e CONFIRM_MAX_MATCHES="3" \
+		-e PGHOST="db" \
+		-e PGPORT="5432" \
+		-e PGDATABASE="football_db" \
+		-e PGUSER="football_user" \
+		-e PGPASSWORD="$(or $(DB_PASSWORD),your_secure_password_here)" \
+		dev node scripts/ops/n3_live_fotmob_raw_retain.js \
+		--config configs/data/fotmob_n3_raw_retain_candidates.json \
 		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
 		--commit --retain
 

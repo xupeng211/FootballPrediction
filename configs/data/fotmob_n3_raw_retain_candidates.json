@@ -1,0 +1,50 @@
+{
+  "_meta": {
+    "lifecycle": "permanent / data-catalog",
+    "description": "N=3 Ligue 1 2025/2026 FotMob raw retain candidates for small-batch validation",
+    "data_version": "fotmob_live_v1",
+    "league": "Ligue 1",
+    "season": "2025/2026",
+    "total_candidates": 3,
+    "selection_criteria": [
+      "Ligue 1 2025/2026 season",
+      "match_id exists in matches table",
+      "external_id (FotMob match ID) present",
+      "no existing raw_match_data row with same data_version",
+      "diverse teams across different matchdays"
+    ],
+    "created_at": "2026-06-10"
+  },
+  "candidates": [
+    {
+      "match_id": "53_20252026_4830466",
+      "external_id": "4830466",
+      "league": "Ligue 1",
+      "season": "2025/2026",
+      "home_team": "Rennes",
+      "away_team": "Marseille",
+      "match_date": "2025-08-15",
+      "selection_reason": "Ligue 1 2025/2026 opening match; Rennes vs Marseille is a marquee fixture"
+    },
+    {
+      "match_id": "53_20252026_4830461",
+      "external_id": "4830461",
+      "league": "Ligue 1",
+      "season": "2025/2026",
+      "home_team": "Lens",
+      "away_team": "Lyon",
+      "match_date": "2025-08-16",
+      "selection_reason": "Competitive mid-table clash; Lens and Lyon were both top-7 in 2024/25"
+    },
+    {
+      "match_id": "53_20252026_4830464",
+      "external_id": "4830464",
+      "league": "Ligue 1",
+      "season": "2025/2026",
+      "home_team": "Nantes",
+      "away_team": "Paris Saint-Germain",
+      "match_date": "2025-08-17",
+      "selection_reason": "Includes PSG (defending champion); Nantes home atmosphere; closes matchday 1"
+    }
+  ]
+}
