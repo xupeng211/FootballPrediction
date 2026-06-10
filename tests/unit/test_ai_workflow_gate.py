@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/ops"))
 import ai_workflow_gate as gate  # noqa: E402
 
+
 # Convenience: partially-applied check_section_content_quality for test use.
 # The real function takes (body, section_text_between_fn); the callback is
 # called as fn(heading, body) but gate.section_text_between expects
@@ -27,6 +28,7 @@ def _check_content(body: str) -> list[str]:
         body,
         lambda heading, pr_body: gate.section_text_between(pr_body, heading),
     )
+
 
 # ---------------------------------------------------------------------------
 # Fixtures

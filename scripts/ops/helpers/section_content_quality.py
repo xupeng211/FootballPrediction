@@ -28,20 +28,20 @@ CRITICAL_SECTIONS: tuple[str, ...] = (
 HOLLOW_CONTENT_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE)
     for p in (
-        r"^N/?A$",                           # N/A, NA, n/a
-        r"^none\.?$",                         # none, None
-        r"^not\s+applicable\.?$",             # not applicable
-        r"^no\s+impact\.?$",                  # no impact
+        r"^N/?A$",  # N/A, NA, n/a
+        r"^none\.?$",  # none, None
+        r"^not\s+applicable\.?$",  # not applicable
+        r"^no\s+impact\.?$",  # no impact
         r"^no\s+documentation\s+impact\.?$",  # no documentation impact
-        r"^passed\.?$",                       # passed (for Validation)
-        r"^ok(ay)?\.?$",                      # ok / okay (for Validation)
-        r"^no\s+validation\.?$",              # no validation
-        r"^all\s+tests?\s+pass(ed)?\.?$",     # all tests pass / passed
-        r"^tests?\s+pass(ed)?\.?$",           # tests pass / passed
-        r"^n/?c\.?$",                         # N/C (no change)
-        r"^not?\s+required\.?$",              # not required
-        r"^nothing\.?$",                      # nothing
-        r"^no\s+changes?\.?$",                # no change / no changes
+        r"^passed\.?$",  # passed (for Validation)
+        r"^ok(ay)?\.?$",  # ok / okay (for Validation)
+        r"^no\s+validation\.?$",  # no validation
+        r"^all\s+tests?\s+pass(ed)?\.?$",  # all tests pass / passed
+        r"^tests?\s+pass(ed)?\.?$",  # tests pass / passed
+        r"^n/?c\.?$",  # N/C (no change)
+        r"^not?\s+required\.?$",  # not required
+        r"^nothing\.?$",  # nothing
+        r"^no\s+changes?\.?$",  # no change / no changes
     )
 )
 
@@ -73,9 +73,21 @@ def _clean_markdown_content(raw_text: str) -> str:
     # Words that are pure table-header boilerplate, not human content.
     _header_words = frozenset(
         {
-            "item", "value", "result", "check", "status", "notes",
-            "description", "details", "validation", "metric", "count",
-            "added", "deleted", "changed", "total",
+            "item",
+            "value",
+            "result",
+            "check",
+            "status",
+            "notes",
+            "description",
+            "details",
+            "validation",
+            "metric",
+            "count",
+            "added",
+            "deleted",
+            "changed",
+            "total",
         }
     )
 
@@ -101,8 +113,7 @@ def _clean_markdown_content(raw_text: str) -> str:
             meaningful.append(stripped)
 
     # Join with spaces and collapse runs of whitespace.
-    joined = re.sub(r"\s+", " ", " ".join(meaningful)).strip()
-    return joined
+    return re.sub(r"\s+", " ", " ".join(meaningful)).strip()
 
 
 def _section_content_is_hollow(
@@ -126,11 +137,7 @@ def _section_content_is_hollow(
             return True
 
     # Check extra (section-specific) hollow patterns.
-    for pat in extra_patterns:
-        if pat.fullmatch(cleaned):
-            return True
-
-    return False
+    return any(pat.fullmatch(cleaned) for pat in extra_patterns)
 
 
 def check_section_content_quality(
