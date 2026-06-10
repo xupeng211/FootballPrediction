@@ -4,6 +4,9 @@
  *
  * lifecycle: permanent / smoke-tool
  *
+ * AI Workflow Gate: local/dev only, single match, no batch harvest, no OddsPortal,
+ * no model training, no feature engineering, no production data.
+ *
  * Performs a SINGLE live HTTP fetch to FotMob match detail page, extracts
  * __NEXT_DATA__ via FotMobRawDetailFetcher, UPSERTs one row into
  * raw_match_data (local/dev DB only), reads back, verifies idempotency,
