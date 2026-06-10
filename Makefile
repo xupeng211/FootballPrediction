@@ -60,7 +60,7 @@
         data-synthetic-l3-dry-run data-synthetic-l3-commit \
         data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
-        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-network-dry-run data-db-write-small data-harvest \
+        data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
         ci-local ci-local-pr pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
 
@@ -387,6 +387,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-raw-single-live-fotmob-smoke  # live fetch dry-run; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 required"
 	@echo "  make data-raw-single-live-fotmob-retain  # live fetch + retain; CONFIRM_LIVE_FOTMOB_SINGLE_FETCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 required"
 	@echo "  make data-raw-n3-live-fotmob-retain  # N=3 batch retain; CONFIRM_LIVE_FOTMOB_SMALL_BATCH=1 CONFIRM_LOCAL_DB_WRITE=1 CONFIRM_RETAIN_RAW_DATA=1 CONFIRM_MAX_MATCHES=3 required"
+	@echo "  make data-raw-fotmob-retained-quality-audit  # READ-ONLY audit of retained fotmob_live_v1 rows"
 	@echo "  make data-training-dry-run"
 	@echo "  make data-prediction-dry-run"
 	@echo "  make data-training-feature-dry-run MATCH_ID=<id>"
@@ -3120,6 +3121,15 @@ data-raw-n3-live-fotmob-retain: ## N=3 FotMob small-batch raw retain tool. Retai
 		--config configs/data/fotmob_n3_raw_retain_candidates.json \
 		$(if $(DATA_VERSION),--data-version "$(DATA_VERSION)") \
 		--commit --retain
+
+data-raw-fotmob-retained-quality-audit: ## READ-ONLY audit of retained fotmob_live_v1 raw_match_data rows. No writes, no network.
+	$(COMPOSE_DEV) exec \
+		-e PGHOST="db" \
+		-e PGPORT="5432" \
+		-e PGDATABASE="football_db" \
+		-e PGUSER="football_user" \
+		-e PGPASSWORD="$(or $(DB_PASSWORD),your_secure_password_here)" \
+		dev node scripts/ops/audit_fotmob_retained_raw_quality.js
 
 data-network-dry-run: ## Blocked unless explicitly authorized. Does not run by default.
 	@if [ "$(CONFIRM_NETWORK)" != "1" ]; then \
