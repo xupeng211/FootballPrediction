@@ -17,6 +17,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parents[2]
 _EXPECTED_HOME_SCORE = 2
 _EXPECTED_AWAY_SCORE = 1
+_EXPECTED_EVENT_MINUTE = 23
 PARSER_PATH = ROOT / "src" / "parsers" / "fotmob" / "FotMobRawParser.js"
 
 
@@ -135,14 +136,17 @@ def _build_minimal_valid_payload() -> dict:
                 "events": {
                     "events": [
                         {
-                            "id": 1,
+                            "eventId": 1,
                             "type": "Goal",
-                            "minute": 23,
+                            "time": 23,
+                            "isHome": True,
                             "teamId": 85,
                             "playerId": 1,
-                            "playerName": "Player 1",
+                            "nameStr": "Player 1",
                             "assistPlayerId": None,
                             "outcome": "goal",
+                            "homeScore": 1,
+                            "awayScore": 0,
                         },
                     ],
                     "ongoing": None,
@@ -200,6 +204,10 @@ def test_parser_successful_parse():
     assert isinstance(data["events"], list)
     assert len(data["events"]) == 1
     assert data["events"][0]["type"] == "Goal"
+    assert data["events"][0]["id"] == 1
+    assert data["events"][0]["minute"] == _EXPECTED_EVENT_MINUTE
+    assert data["events"][0]["teamSide"] == "home"
+    assert data["events"][0]["playerName"] == "Player 1"
 
     # lineup
     assert isinstance(data["lineup"]["home"]["starters"], list)
