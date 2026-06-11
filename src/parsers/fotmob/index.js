@@ -12,6 +12,7 @@ const { TeamParser } = require('./TeamParser');
 const { MatchParser } = require('./MatchParser');
 const { PlayerParser } = require('./PlayerParser');
 const { MatchStatsParser } = require('./MatchStatsParser');
+const { parseFotMobRaw } = require('./FotMobRawParser');
 
 function optionalRequire(path) {
     try {
@@ -48,6 +49,7 @@ module.exports = {
     MatchParser,
     PlayerParser,
     MatchStatsParser,
+    parseFotMobRaw,
 
     // V175: API 流量嗅探
     ApiSniffer,
