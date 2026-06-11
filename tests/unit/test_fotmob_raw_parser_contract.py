@@ -11,13 +11,12 @@ lifecycle: permanent
 from __future__ import annotations
 
 import json
-import subprocess
-import sys
 from pathlib import Path
-
-import pytest
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[2]
+_EXPECTED_HOME_SCORE = 2
+_EXPECTED_AWAY_SCORE = 1
 PARSER_PATH = ROOT / "src" / "parsers" / "fotmob" / "FotMobRawParser.js"
 
 
@@ -35,6 +34,7 @@ def _run_parser(payload: dict, external_id: str = "test-001") -> dict:
         text=True,
         capture_output=True,
         timeout=15,
+        check=False,
     )
     if proc.returncode != 0:
         raise RuntimeError(f"Node.js 执行失败: {proc.stderr.strip()}")
@@ -152,9 +152,9 @@ def test_parser_successful_parse():
 
     # teams
     assert data["homeTeam"]["name"] == "PSG"
-    assert data["homeTeam"]["score"] == 2
+    assert data["homeTeam"]["score"] == _EXPECTED_HOME_SCORE
     assert data["awayTeam"]["name"] == "Angers"
-    assert data["awayTeam"]["score"] == 1
+    assert data["awayTeam"]["score"] == _EXPECTED_AWAY_SCORE
 
     # stats — periods-aware
     assert isinstance(data["stats"], list)
@@ -253,7 +253,8 @@ def test_parser_deterministic():
     r1 = _run_parser(payload, "4830507")
     r2 = _run_parser(payload, "4830507")
 
-    assert r1["ok"] and r2["ok"]
+    assert r1["ok"] is True
+    assert r2["ok"] is True
     assert r1["data"] == r2["data"]
 
 
