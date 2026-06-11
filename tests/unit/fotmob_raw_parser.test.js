@@ -170,34 +170,43 @@ function buildMinimalPayload(overrides = {}) {
         events: {
           events: [
             {
-              id: 1,
+              eventId: 1,
               type: 'Goal',
-              minute: 23,
+              time: 23,
+              isHome: true,
               teamId: 85,
               playerId: 1001,
-              playerName: 'Kylian Mbappé',
+              nameStr: 'Kylian Mbappé',
               assistPlayerId: 1002,
               outcome: 'goal',
+              homeScore: 1,
+              awayScore: 0,
             },
             {
-              id: 2,
+              eventId: 2,
               type: 'Goal',
-              minute: 67,
+              timeStr: '67',
+              isHome: false,
               teamId: 96,
-              playerId: 2001,
-              playerName: 'Himad Abdelli',
+              player: { id: 2001, name: 'player.name fallback should lose to fullName' },
+              fullName: 'Himad Abdelli',
               assistPlayerId: null,
               outcome: 'goal',
+              homeScore: 1,
+              awayScore: 1,
             },
             {
               id: 3,
-              type: 'Goal',
+              type: 'Card',
               minute: 82,
-              teamId: 85,
-              playerId: 1002,
-              playerName: 'Ousmane Dembélé',
+              isHome: true,
+              player: { id: 1002, name: 'player.name fallback should lose to shortName' },
+              shortName: 'O. Dembélé',
               assistPlayerId: null,
-              outcome: 'goal',
+              outcome: 'booked',
+              card: 'yellow',
+              homeScore: 2,
+              awayScore: 1,
             },
           ],
           ongoing: null,
@@ -309,16 +318,93 @@ test('events 应从 content.matchFacts.events.events[] 读取事件时间线', (
   assert.ok(result.ok);
   assert.ok(Array.isArray(result.data.events));
   assert.equal(result.data.events.length, 3, '应解析 3 个事件');
+  for (const event of result.data.events) {
+    assert.notEqual(event.id, null, 'event.id 不应为 null');
+    assert.notEqual(event.minute, null, 'event.minute 不应为 null');
+  }
 
   // 第一个事件：Mbappé 进球
   const goal = result.data.events[0];
   assert.equal(goal.id, 1);
   assert.equal(goal.type, 'Goal');
   assert.equal(goal.minute, 23);
+  assert.equal(goal.teamSide, 'home');
   assert.equal(goal.teamId, 85);
   assert.equal(goal.playerId, 1001);
   assert.equal(goal.playerName, 'Kylian Mbappé');
+  assert.equal(goal.homeScore, 1);
+  assert.equal(goal.awayScore, 0);
   assert.equal(goal.assistPlayerId, 1002);
+
+  // 第二个事件：minute 走 timeStr fallback，playerName 走 fullName，teamSide 由 isHome=false 推导
+  const awayGoal = result.data.events[1];
+  assert.equal(awayGoal.id, 2);
+  assert.equal(awayGoal.minute, '67');
+  assert.equal(awayGoal.teamSide, 'away');
+  assert.equal(awayGoal.teamId, 96);
+  assert.equal(awayGoal.playerId, 2001);
+  assert.equal(awayGoal.playerName, 'Himad Abdelli');
+
+  // 第三个事件：id/minute 回退到旧键，playerName 走 shortName，缺失 teamId 时不应乱造
+  const card = result.data.events[2];
+  assert.equal(card.id, 3);
+  assert.equal(card.minute, 82);
+  assert.equal(card.teamSide, 'home');
+  assert.equal(card.teamId, null);
+  assert.equal(card.playerId, 1002);
+  assert.equal(card.playerName, 'O. Dembélé');
+  assert.equal(card.card, 'yellow');
+});
+
+test('extractEvents 应按真实 FotMob 键顺序回退 playerName', () => {
+  const { extractEvents } = _internals;
+  const payload = {
+    content: {
+      matchFacts: {
+        events: {
+          events: [
+            {
+              eventId: 11,
+              time: 10,
+              isHome: true,
+              nameStr: 'nameStr wins',
+              fullName: 'fullName loses',
+              shortName: 'shortName loses',
+              player: { name: 'player.name loses' },
+            },
+            {
+              eventId: 12,
+              time: 20,
+              isHome: false,
+              fullName: 'fullName wins',
+              shortName: 'shortName loses',
+              player: { name: 'player.name loses' },
+            },
+            {
+              eventId: 13,
+              time: 30,
+              isHome: true,
+              shortName: 'shortName wins',
+              player: { name: 'player.name loses' },
+            },
+            {
+              eventId: 14,
+              time: 40,
+              isHome: false,
+              player: { name: 'player.name wins' },
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  const events = extractEvents(payload);
+
+  assert.deepStrictEqual(
+    events.map((event) => event.playerName),
+    ['nameStr wins', 'fullName wins', 'shortName wins', 'player.name wins']
+  );
 });
 
 // ---------------------------------------------------------------------------
@@ -640,7 +726,7 @@ test('不应混淆 header.events（score summary）和 content.matchFacts.events
   assert.ok(result.ok);
   // events 数组来自 content.matchFacts.events.events，不是 header.events
   assert.equal(result.data.events.length, 3);
-  // 事件是 timeline 条目（Goal/Goal/Goal），不是 score summary
+  // 事件是 timeline 条目，不是 score summary
   assert.equal(result.data.events[0].type, 'Goal');
   assert.equal(result.data.events[0].minute, 23);
 });

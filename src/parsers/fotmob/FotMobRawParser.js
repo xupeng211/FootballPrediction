@@ -278,16 +278,27 @@ function extractEvents(payload) {
 
   return eventsArray
     .filter((e) => e && typeof e === 'object')
-    .map((e) => ({
-      id: firstValue([e.id], null),
-      type: firstValue([e.type], null),
-      minute: firstValue([e.minute], null),
-      teamId: firstValue([e.teamId, e.team_id], null),
-      playerId: firstValue([e.playerId, e.player_id], null),
-      playerName: firstValue([e.playerName, e.player_name], null),
-      assistPlayerId: firstValue([e.assistPlayerId, e.assist_player_id], null),
-      outcome: firstValue([e.outcome], null),
-    }));
+    .map((e) => {
+      const player = ensureObject(e.player);
+      const teamSide = typeof e.isHome === 'boolean'
+        ? (e.isHome ? 'home' : 'away')
+        : null;
+
+      return {
+        id: firstValue([e.eventId, e.id], null),
+        type: firstValue([e.type], null),
+        minute: firstValue([e.time, e.timeStr, e.minute], null),
+        teamSide,
+        teamId: firstValue([e.teamId, e.team_id], null),
+        playerId: firstValue([e.playerId, e.player_id, player.id], null),
+        playerName: firstValue([e.nameStr, e.fullName, e.shortName, player.name], null),
+        card: firstValue([e.card], null),
+        homeScore: firstValue([e.homeScore], null),
+        awayScore: firstValue([e.awayScore], null),
+        assistPlayerId: firstValue([e.assistPlayerId, e.assist_player_id], null),
+        outcome: firstValue([e.outcome], null),
+      };
+    });
 }
 
 /**
