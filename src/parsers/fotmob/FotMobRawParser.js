@@ -131,10 +131,10 @@ function extractTeams(payload) {
     }
 
     return {
-      id: id != null ? Number(id) : null,
-      name: name != null ? String(name) : null,
+      id: id !== null && id !== undefined ? Number(id) : null,
+      name: name !== null && name !== undefined ? String(name) : null,
       score: scoreNum,
-      formation: formation != null ? String(formation) : null,
+      formation: formation !== null && formation !== undefined ? String(formation) : null,
     };
   }
 
@@ -142,6 +142,27 @@ function extractTeams(payload) {
     homeTeam: buildTeam('home'),
     awayTeam: buildTeam('away'),
   };
+}
+
+/**
+ * 从 sub-stats 数组中提取 homeValue / awayValue。
+ * contract §3.2.4: stats 数组含 { key: "homeValue", value: N } 和 { key: "awayValue", value: N }
+ */
+function extractHomeAwayValues(subStats) {
+  let homeValue = null;
+  let awayValue = null;
+
+  for (const sub of subStats) {
+    if (!sub || typeof sub !== 'object') continue;
+    const v = Number(sub.value);
+    if (sub.key === 'homeValue' && Number.isFinite(v)) {
+      homeValue = v;
+    } else if (sub.key === 'awayValue' && Number.isFinite(v)) {
+      awayValue = v;
+    }
+  }
+
+  return { homeValue, awayValue };
 }
 
 /**
@@ -181,21 +202,7 @@ function extractStats(payload) {
         continue;
       }
 
-      // 按 contract §3.2.4: stats 数组含 { key: "homeValue", value: N } 和 { key: "awayValue", value: N }
-      let homeValue = null;
-      let awayValue = null;
-
-      const subStats = ensureArray(statEntry.stats);
-      for (const sub of subStats) {
-        if (!sub || typeof sub !== 'object') continue;
-        if (sub.key === 'homeValue') {
-          const v = Number(sub.value);
-          homeValue = Number.isFinite(v) ? v : null;
-        } else if (sub.key === 'awayValue') {
-          const v = Number(sub.value);
-          awayValue = Number.isFinite(v) ? v : null;
-        }
-      }
+      const { homeValue, awayValue } = extractHomeAwayValues(ensureArray(statEntry.stats));
 
       result.push({
         period: periodKey,
@@ -392,6 +399,7 @@ module.exports = {
     safeGet,
     ensureArray,
     ensureObject,
+    extractHomeAwayValues,
     extractMatch,
     extractTeams,
     extractStats,
