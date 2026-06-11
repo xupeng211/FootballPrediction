@@ -71,7 +71,12 @@ def _build_minimal_valid_payload() -> dict:
                 "halfs": {},
                 "reason": {},
             },
-            "events": {"homeTeamGoals": 2, "awayTeamGoals": 1, "homeTeamRedCards": 0, "awayTeamRedCards": 0},
+            "events": {
+                "homeTeamGoals": 2,
+                "awayTeamGoals": 1,
+                "homeTeamRedCards": 0,
+                "awayTeamRedCards": 0,
+            },
         },
         "content": {
             "stats": {
@@ -94,24 +99,51 @@ def _build_minimal_valid_payload() -> dict:
             },
             "lineup": {
                 "homeTeam": {
-                    "id": 85, "name": "PSG", "formation": "4-3-3",
-                    "starters": [{"id": 1, "name": {"fullName": "Player 1"}, "position": "FW", "shirtNumber": 7, "rating": 8.0}],
+                    "id": 85,
+                    "name": "PSG",
+                    "formation": "4-3-3",
+                    "starters": [
+                        {
+                            "id": 1,
+                            "name": {"fullName": "Player 1"},
+                            "position": "FW",
+                            "shirtNumber": 7,
+                            "rating": 8.0,
+                        }
+                    ],
                     "subs": [],
                     "coach": {"id": 99, "name": "Coach"},
-                    "rating": 7.0, "averageStarterAge": 25, "totalStarterMarketValue": "€500M", "unavailable": [],
+                    "rating": 7.0,
+                    "averageStarterAge": 25,
+                    "totalStarterMarketValue": "€500M",
+                    "unavailable": [],
                 },
                 "awayTeam": {
-                    "id": 96, "name": "Angers", "formation": "5-4-1",
+                    "id": 96,
+                    "name": "Angers",
+                    "formation": "5-4-1",
                     "starters": [],
                     "subs": [],
                     "coach": {},
-                    "rating": 6.0, "averageStarterAge": 26, "totalStarterMarketValue": "€45M", "unavailable": [],
+                    "rating": 6.0,
+                    "averageStarterAge": 26,
+                    "totalStarterMarketValue": "€45M",
+                    "unavailable": [],
                 },
             },
             "matchFacts": {
                 "events": {
                     "events": [
-                        {"id": 1, "type": "Goal", "minute": 23, "teamId": 85, "playerId": 1, "playerName": "Player 1", "assistPlayerId": None, "outcome": "goal"},
+                        {
+                            "id": 1,
+                            "type": "Goal",
+                            "minute": 23,
+                            "teamId": 85,
+                            "playerId": 1,
+                            "playerName": "Player 1",
+                            "assistPlayerId": None,
+                            "outcome": "goal",
+                        },
                     ],
                     "ongoing": None,
                     "eventTypes": [],
@@ -266,6 +298,18 @@ def test_parser_output_structure_matches_contract():
     assert result["ok"] is True
     data = result["data"]
 
-    required_keys = {"match", "homeTeam", "awayTeam", "stats", "lineup", "events", "shotmap", "playerStats", "meta"}
+    required_keys = {
+        "match",
+        "homeTeam",
+        "awayTeam",
+        "stats",
+        "lineup",
+        "events",
+        "shotmap",
+        "playerStats",
+        "meta",
+    }
     actual_keys = set(data.keys())
-    assert required_keys.issubset(actual_keys), f"缺少 contract 必选字段: {required_keys - actual_keys}"
+    assert required_keys.issubset(actual_keys), (
+        f"缺少 contract 必选字段: {required_keys - actual_keys}"
+    )
