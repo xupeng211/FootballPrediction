@@ -268,7 +268,9 @@ function extractLineup(payload) {
  * 从 content.matchFacts.events.events[] 读取。
  * 与 header.events（score summary）明确区分。
  */
-function extractEvents(payload) {
+const MARKER_EVENT_TYPES = new Set(['AddedTime', 'Half']);
+
+function extractEvents(payload, externalId = null) {
   const eventsContainer = safeGet(payload, 'content', 'matchFacts', 'events');
   if (!eventsContainer || typeof eventsContainer !== 'object') {
     return [];
@@ -280,13 +282,22 @@ function extractEvents(payload) {
     .filter((e) => e && typeof e === 'object')
     .map((e) => {
       const player = ensureObject(e.player);
+      const nativeId = firstValue([e.eventId, e.id], null);
+      const type = firstValue([e.type], null);
       const teamSide = typeof e.isHome === 'boolean'
         ? (e.isHome ? 'home' : 'away')
         : null;
+      const sourceHasNativeId = nativeId !== null;
+      const eventKind = MARKER_EVENT_TYPES.has(type) ? 'marker_event' : 'real_event';
+      const syntheticEventKey = !sourceHasNativeId
+        && type === 'Substitution'
+        && firstValue([e.reactKey], null) !== null
+        ? `fotmob:${String(externalId ?? '')}:event:${type}:${String(e.reactKey)}`
+        : null;
 
       return {
-        id: firstValue([e.eventId, e.id], null),
-        type: firstValue([e.type], null),
+        id: sourceHasNativeId ? nativeId : syntheticEventKey,
+        type,
         minute: firstValue([e.time, e.timeStr, e.minute], null),
         teamSide,
         teamId: firstValue([e.teamId, e.team_id], null),
@@ -297,6 +308,9 @@ function extractEvents(payload) {
         awayScore: firstValue([e.awayScore], null),
         assistPlayerId: firstValue([e.assistPlayerId, e.assist_player_id], null),
         outcome: firstValue([e.outcome], null),
+        source_has_native_id: sourceHasNativeId,
+        synthetic_event_key: syntheticEventKey,
+        event_kind: eventKind,
       };
     });
 }
@@ -376,7 +390,7 @@ function parseFotMobRaw(payload, externalId) {
   const { homeTeam, awayTeam } = extractTeams(payload);
   const stats = extractStats(payload);
   const lineup = extractLineup(payload);
-  const events = extractEvents(payload);
+  const events = extractEvents(payload, matchResult.data.externalId);
   const shotmap = extractShotmap(payload);
   const playerStats = extractPlayerStats(payload);
 

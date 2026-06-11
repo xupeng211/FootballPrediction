@@ -335,6 +335,9 @@ test('events 应从 content.matchFacts.events.events[] 读取事件时间线', (
   assert.equal(goal.homeScore, 1);
   assert.equal(goal.awayScore, 0);
   assert.equal(goal.assistPlayerId, 1002);
+  assert.equal(goal.source_has_native_id, true);
+  assert.equal(goal.synthetic_event_key, null);
+  assert.equal(goal.event_kind, 'real_event');
 
   // 第二个事件：minute 走 timeStr fallback，playerName 走 fullName，teamSide 由 isHome=false 推导
   const awayGoal = result.data.events[1];
@@ -344,6 +347,9 @@ test('events 应从 content.matchFacts.events.events[] 读取事件时间线', (
   assert.equal(awayGoal.teamId, 96);
   assert.equal(awayGoal.playerId, 2001);
   assert.equal(awayGoal.playerName, 'Himad Abdelli');
+  assert.equal(awayGoal.source_has_native_id, true);
+  assert.equal(awayGoal.synthetic_event_key, null);
+  assert.equal(awayGoal.event_kind, 'real_event');
 
   // 第三个事件：id/minute 回退到旧键，playerName 走 shortName，缺失 teamId 时不应乱造
   const card = result.data.events[2];
@@ -354,6 +360,9 @@ test('events 应从 content.matchFacts.events.events[] 读取事件时间线', (
   assert.equal(card.playerId, 1002);
   assert.equal(card.playerName, 'O. Dembélé');
   assert.equal(card.card, 'yellow');
+  assert.equal(card.source_has_native_id, true);
+  assert.equal(card.synthetic_event_key, null);
+  assert.equal(card.event_kind, 'real_event');
 });
 
 test('extractEvents 应按真实 FotMob 键顺序回退 playerName', () => {
@@ -405,6 +414,70 @@ test('extractEvents 应按真实 FotMob 键顺序回退 playerName', () => {
     events.map((event) => event.playerName),
     ['nameStr wins', 'fullName wins', 'shortName wins', 'player.name wins']
   );
+});
+
+test('extractEvents 应为无 native id 的 Substitution 生成 synthetic key，并允许 marker event 保持 id=null', () => {
+  const { extractEvents } = _internals;
+  const payload = {
+    content: {
+      matchFacts: {
+        events: {
+          events: [
+            {
+              type: 'Substitution',
+              time: 46,
+              timeStr: '46',
+              isHome: true,
+              reactKey: 'sub-46-home-1',
+              swap: 'player-swap',
+              homeScore: 1,
+              awayScore: 0,
+            },
+            {
+              type: 'AddedTime',
+              time: 45,
+              timeStr: '45+2',
+              reactKey: 'added-time-1h',
+              minutesAddedKey: '2',
+              homeScore: 1,
+              awayScore: 0,
+            },
+            {
+              type: 'Half',
+              time: 45,
+              timeStr: 'HT',
+              reactKey: 'half-time',
+              halfStrKey: 'halftime',
+              homeScore: 1,
+              awayScore: 0,
+            },
+          ],
+        },
+      },
+    },
+  };
+
+  const events = extractEvents(payload, '4830507');
+  assert.equal(events.length, 3);
+
+  const substitution = events[0];
+  assert.equal(substitution.id, 'fotmob:4830507:event:Substitution:sub-46-home-1');
+  assert.equal(substitution.source_has_native_id, false);
+  assert.equal(substitution.synthetic_event_key, 'fotmob:4830507:event:Substitution:sub-46-home-1');
+  assert.equal(substitution.event_kind, 'real_event');
+  assert.equal(substitution.teamSide, 'home');
+
+  const addedTime = events[1];
+  assert.equal(addedTime.id, null);
+  assert.equal(addedTime.source_has_native_id, false);
+  assert.equal(addedTime.synthetic_event_key, null);
+  assert.equal(addedTime.event_kind, 'marker_event');
+
+  const half = events[2];
+  assert.equal(half.id, null);
+  assert.equal(half.source_has_native_id, false);
+  assert.equal(half.synthetic_event_key, null);
+  assert.equal(half.event_kind, 'marker_event');
 });
 
 // ---------------------------------------------------------------------------

@@ -208,6 +208,9 @@ def test_parser_successful_parse():
     assert data["events"][0]["minute"] == _EXPECTED_EVENT_MINUTE
     assert data["events"][0]["teamSide"] == "home"
     assert data["events"][0]["playerName"] == "Player 1"
+    assert data["events"][0]["source_has_native_id"] is True
+    assert data["events"][0]["synthetic_event_key"] is None
+    assert data["events"][0]["event_kind"] == "real_event"
 
     # lineup
     assert isinstance(data["lineup"]["home"]["starters"], list)
@@ -273,6 +276,61 @@ def test_parser_missing_events_returns_empty():
     result = _run_parser(payload, "4830507")
     assert result["ok"] is True
     assert result["data"]["events"] == []
+
+
+def test_parser_event_id_policy_for_substitution_and_marker_events():
+    """无 native id 的 substitution 生成 synthetic key；marker event 允许 id=null."""
+    payload = _build_minimal_valid_payload()
+    payload["content"]["matchFacts"]["events"]["events"] = [
+        {
+            "type": "Substitution",
+            "time": 46,
+            "timeStr": "46",
+            "isHome": True,
+            "reactKey": "sub-46-home-1",
+            "swap": "player-swap",
+            "homeScore": 1,
+            "awayScore": 0,
+        },
+        {
+            "type": "AddedTime",
+            "time": 45,
+            "timeStr": "45+2",
+            "reactKey": "added-time-1h",
+            "minutesAddedKey": "2",
+            "homeScore": 1,
+            "awayScore": 0,
+        },
+        {
+            "type": "Half",
+            "time": 45,
+            "timeStr": "HT",
+            "reactKey": "half-time",
+            "halfStrKey": "halftime",
+            "homeScore": 1,
+            "awayScore": 0,
+        },
+    ]
+
+    result = _run_parser(payload, "4830507")
+    assert result["ok"] is True
+
+    substitution, added_time, half = result["data"]["events"]
+
+    assert substitution["id"] == "fotmob:4830507:event:Substitution:sub-46-home-1"
+    assert substitution["source_has_native_id"] is False
+    assert substitution["synthetic_event_key"] == substitution["id"]
+    assert substitution["event_kind"] == "real_event"
+
+    assert added_time["id"] is None
+    assert added_time["source_has_native_id"] is False
+    assert added_time["synthetic_event_key"] is None
+    assert added_time["event_kind"] == "marker_event"
+
+    assert half["id"] is None
+    assert half["source_has_native_id"] is False
+    assert half["synthetic_event_key"] is None
+    assert half["event_kind"] == "marker_event"
 
 
 def test_parser_missing_lineup_returns_empty_containers():
