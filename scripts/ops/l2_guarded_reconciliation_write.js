@@ -462,50 +462,126 @@ function toIsoOrNull(value) {
     return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-function classifyRow(row = {}) {
-    const pipelineStatus = normalizeText(row.pipeline_status)?.toLowerCase() || 'pending';
-    const matchStatus = normalizeText(row.match_status)?.toLowerCase() || null;
-    const externalId = normalizeText(row.external_id);
-    const rawExternalId = normalizeText(row.raw_external_id);
-    const rawRowCount = Number(row.raw_row_count || 0);
-    const rawExists = rawRowCount > 0;
-    const hasRawData = row.has_raw_data === true;
-    const hasDataHash = row.has_data_hash === true;
+function buildRowState(row = {}) {
+    return {
+        pipelineStatus: normalizeText(row.pipeline_status)?.toLowerCase() || 'pending',
+        matchStatus: normalizeText(row.match_status)?.toLowerCase() || null,
+        externalId: normalizeText(row.external_id),
+        rawExternalId: normalizeText(row.raw_external_id),
+        rawRowCount: Number(row.raw_row_count || 0),
+        hasRawData: row.has_raw_data === true,
+        hasDataHash: row.has_data_hash === true,
+    };
+}
 
-    if (pipelineStatus !== 'pending') {
-        if (pipelineStatus === 'harvested') {
-            return { decision: 'excluded_status_already_harvested', reason: 'pipeline_status_already_harvested' };
-        }
-        if (pipelineStatus === 'processing') {
-            return { decision: 'excluded_status_processing', reason: 'pipeline_status_processing' };
-        }
-        if (['failed', 'skipped'].includes(pipelineStatus)) {
-            return { decision: 'excluded_status_failed_or_skipped', reason: 'pipeline_status_failed_or_skipped' };
-        }
-        return { decision: 'excluded_unknown_pipeline_status', reason: 'unknown_pipeline_status' };
-    }
+function classifyNonPendingStatus(pipelineStatus) {
+    const decisionMap = {
+        harvested: { decision: 'excluded_status_already_harvested', reason: 'pipeline_status_already_harvested' },
+        processing: { decision: 'excluded_status_processing', reason: 'pipeline_status_processing' },
+        failed: { decision: 'excluded_status_failed_or_skipped', reason: 'pipeline_status_failed_or_skipped' },
+        skipped: { decision: 'excluded_status_failed_or_skipped', reason: 'pipeline_status_failed_or_skipped' },
+    };
 
-    if (!rawExists) {
+    return decisionMap[pipelineStatus] || { decision: 'excluded_unknown_pipeline_status', reason: 'unknown_pipeline_status' };
+}
+
+function classifyPendingRowState(state) {
+    if (state.rawRowCount <= 0) {
         return { decision: 'excluded_no_raw', reason: 'pending_without_fotmob_live_v1_raw' };
     }
 
-    if (rawRowCount > 1) {
+    if (state.rawRowCount > 1) {
         return { decision: 'hold_duplicate_raw', reason: 'duplicate_fotmob_live_v1_raw_rows' };
     }
 
-    if (matchStatus !== 'finished') {
+    if (state.matchStatus !== 'finished') {
         return { decision: 'hold_non_finished', reason: 'match_status_not_finished' };
     }
 
-    if (externalId && rawExternalId && externalId !== rawExternalId) {
+    if (state.externalId && state.rawExternalId && state.externalId !== state.rawExternalId) {
         return { decision: 'hold_external_id_mismatch', reason: 'external_id_mismatch_between_matches_and_raw' };
     }
 
-    if (hasRawData !== true || hasDataHash !== true) {
+    if (state.hasRawData !== true || state.hasDataHash !== true) {
         return { decision: 'hold_missing_hash_or_payload', reason: 'missing_raw_data_or_data_hash_signal' };
     }
 
     return { decision: 'would_update', reason: 'pending_with_single_complete_fotmob_live_v1_raw' };
+}
+
+function classifyRow(row = {}) {
+    const state = buildRowState(row);
+    if (state.pipelineStatus !== 'pending') {
+        return classifyNonPendingStatus(state.pipelineStatus);
+    }
+
+    return classifyPendingRowState(state);
+}
+
+function collectPreviewContext(connectionClient, query, options, rawColumnsResult, matchesColumnsResult) {
+    const rawColumns = (rawColumnsResult.rows || []).map(row => String(row.column_name || '').trim()).filter(Boolean);
+    const matchesColumns = (matchesColumnsResult.rows || []).map(row => String(row.column_name || '').trim()).filter(Boolean);
+    const queryBundle = buildQueryBundle(options, rawColumns);
+
+    return query(connectionClient, queryBundle.rows.sql, queryBundle.rows.params).then(rowsResult => ({
+        rawColumns,
+        matchesColumns,
+        queryBundle,
+        rows: rowsResult.rows || [],
+    }));
+}
+
+async function runDryRunFlow(connectionClient, query, options, context) {
+    await query(connectionClient, ROLLBACK_SQL);
+    return buildDryRunPayload(
+        options,
+        context.rows,
+        context.rawColumns,
+        context.matchesColumns,
+        context.queryBundle.rawSignalMetadata,
+    );
+}
+
+async function runWriteFlow(connectionClient, query, options, context) {
+    validateWritePrerequisites(context.matchesColumns);
+    const classifiedRows = context.rows.map(row => ({
+        ...row,
+        ...classifyRow(row),
+    }));
+    const selectedCandidates = classifiedRows.filter(row => row.decision === 'would_update').slice(0, options.limit);
+    validateExpectedCount(options.expectedCount, selectedCandidates.length);
+
+    if (selectedCandidates.length === 0) {
+        throw new Error('No guarded reconciliation candidates available for write path');
+    }
+
+    const updatedRows = [];
+    for (const row of selectedCandidates) {
+        const updateResult = await query(connectionClient, GUARDED_UPDATE_SQL, [row.match_id]);
+        const returnedRows = updateResult.rows || [];
+        if (returnedRows.length !== 1) {
+            throw new Error(`Guarded update count mismatch for match_id=${row.match_id}`);
+        }
+        updatedRows.push({
+            match_id: returnedRows[0].match_id,
+            external_id: returnedRows[0].external_id,
+            new_pipeline_status: returnedRows[0].new_pipeline_status,
+        });
+    }
+
+    if (updatedRows.length !== selectedCandidates.length) {
+        throw new Error(`Updated count ${updatedRows.length} does not match selected count ${selectedCandidates.length}`);
+    }
+
+    await query(connectionClient, COMMIT_SQL);
+    return buildWritePayload(
+        options,
+        selectedCandidates,
+        updatedRows,
+        context.rawColumns,
+        context.matchesColumns,
+        context.queryBundle.rawSignalMetadata,
+    );
 }
 
 function mapCandidateRow(row = {}) {
@@ -658,55 +734,24 @@ async function runGuardedReconciliationWrite(options = {}, dependencies = {}) {
 
     try {
         const query = options.allowWrite ? queryWriteCapable : querySelectOnly;
-        await query(connection.client, options.allowWrite ? WRITE_BEGIN_SQL : READ_ONLY_BEGIN_SQL);
+        const beginSql = options.allowWrite ? WRITE_BEGIN_SQL : READ_ONLY_BEGIN_SQL;
+        await query(connection.client, beginSql);
 
         const rawColumnsResult = await query(connection.client, RAW_COLUMNS_SQL);
         const matchesColumnsResult = await query(connection.client, MATCHES_COLUMNS_SQL);
-        const rawColumns = (rawColumnsResult.rows || []).map(row => String(row.column_name || '').trim()).filter(Boolean);
-        const matchesColumns = (matchesColumnsResult.rows || []).map(row => String(row.column_name || '').trim()).filter(Boolean);
-        const queryBundle = buildQueryBundle(options, rawColumns);
-        const rowsResult = await query(connection.client, queryBundle.rows.sql, queryBundle.rows.params);
-        const rows = rowsResult.rows || [];
+        const context = await collectPreviewContext(
+            connection.client,
+            query,
+            options,
+            rawColumnsResult,
+            matchesColumnsResult,
+        );
 
-        if (!options.allowWrite) {
-            await query(connection.client, ROLLBACK_SQL);
-            finished = true;
-            return buildDryRunPayload(options, rows, rawColumns, matchesColumns, queryBundle.rawSignalMetadata);
-        }
-
-        validateWritePrerequisites(matchesColumns);
-        const classifiedRows = rows.map(row => ({
-            ...row,
-            ...classifyRow(row),
-        }));
-        const selectedCandidates = classifiedRows.filter(row => row.decision === 'would_update').slice(0, options.limit);
-        validateExpectedCount(options.expectedCount, selectedCandidates.length);
-
-        if (selectedCandidates.length === 0) {
-            throw new Error('No guarded reconciliation candidates available for write path');
-        }
-
-        const updatedRows = [];
-        for (const row of selectedCandidates) {
-            const updateResult = await query(connection.client, GUARDED_UPDATE_SQL, [row.match_id]);
-            const returnedRows = updateResult.rows || [];
-            if (returnedRows.length !== 1) {
-                throw new Error(`Guarded update count mismatch for match_id=${row.match_id}`);
-            }
-            updatedRows.push({
-                match_id: returnedRows[0].match_id,
-                external_id: returnedRows[0].external_id,
-                new_pipeline_status: returnedRows[0].new_pipeline_status,
-            });
-        }
-
-        if (updatedRows.length !== selectedCandidates.length) {
-            throw new Error(`Updated count ${updatedRows.length} does not match selected count ${selectedCandidates.length}`);
-        }
-
-        await query(connection.client, COMMIT_SQL);
+        const payload = options.allowWrite
+            ? await runWriteFlow(connection.client, query, options, context)
+            : await runDryRunFlow(connection.client, query, options, context);
         finished = true;
-        return buildWritePayload(options, selectedCandidates, updatedRows, rawColumns, matchesColumns, queryBundle.rawSignalMetadata);
+        return payload;
     } catch (error) {
         if (!finished) {
             try {
