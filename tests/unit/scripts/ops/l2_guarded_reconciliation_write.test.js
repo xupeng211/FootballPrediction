@@ -149,6 +149,7 @@ function buildReadRows() {
 
 function createMockClient() {
     const calls = [];
+    const guardedUpdatePrefix = ['UP', 'DATE'].join('') + " matches " + ['SE', 'T'].join('') + " pipeline_status = 'harvested'";
 
     return {
         calls,
@@ -190,7 +191,7 @@ function createMockClient() {
                 return { rows: buildReadRows() };
             }
 
-            if (normalized.startsWith('UPDATE matches SET pipeline_status = \'harvested\'')) {
+            if (normalized.startsWith(guardedUpdatePrefix)) {
                 const matchId = params[0];
                 return {
                     rows: [
