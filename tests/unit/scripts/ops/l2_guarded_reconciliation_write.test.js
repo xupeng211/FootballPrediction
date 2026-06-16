@@ -147,7 +147,28 @@ function buildReadRows() {
     ];
 }
 
-function createMockClient() {
+function buildCleanCandidateRows(count = 12) {
+    return Array.from({ length: count }, (_, index) => ({
+        match_id: `53_20252026_4900${String(index + 1).padStart(2, '0')}`,
+        external_id: `4900${String(index + 1).padStart(2, '0')}`,
+        league_name: 'Ligue 1',
+        season: '2025/2026',
+        home_team: `Home ${index + 1}`,
+        away_team: `Away ${index + 1}`,
+        match_date: `2025-10-${String(index + 1).padStart(2, '0')}T18:00:00.000Z`,
+        match_status: 'finished',
+        normalized_match_status: 'finished',
+        pipeline_status: 'pending',
+        raw_data_version: 'fotmob_live_v1',
+        raw_row_count: 1,
+        raw_external_id: `4900${String(index + 1).padStart(2, '0')}`,
+        raw_external_id_distinct_count: 1,
+        has_raw_data: true,
+        has_data_hash: true,
+    }));
+}
+
+function createMockClient(rows = buildReadRows()) {
     const calls = [];
     const guardedUpdatePrefix = ['UP', 'DATE'].join('') + " matches " + ['SE', 'T'].join('') + " pipeline_status = 'harvested'";
 
@@ -188,7 +209,7 @@ function createMockClient() {
             }
 
             if (normalized.startsWith('WITH raw_version_scope AS')) {
-                return { rows: buildReadRows() };
+                return { rows };
             }
 
             if (normalized.startsWith(guardedUpdatePrefix)) {
@@ -209,7 +230,7 @@ function createMockClient() {
     };
 }
 
-test('parseArgs defaults to dry_run limit=3 and clamps larger values to 3', () => {
+test('parseArgs defaults to dry_run limit=3 and clamps larger values to 10', () => {
     const gate = loadGateFresh();
 
     const defaults = gate.parseArgs([]);
@@ -218,7 +239,7 @@ test('parseArgs defaults to dry_run limit=3 and clamps larger values to 3', () =
     assert.equal(defaults.expectedCount, null);
 
     const limited = gate.parseArgs(['--limit', '99', '--json']);
-    assert.equal(limited.limit, 3);
+    assert.equal(limited.limit, 10);
     assert.equal(limited.json, true);
 });
 
@@ -341,10 +362,23 @@ test('default dry_run mode uses BEGIN READ ONLY and ROLLBACK and does not execut
     assert.equal(payload.safety.db_write_allowed, false);
     assert.equal(payload.safety.pipeline_status_update_allowed, false);
     assert.equal(payload.safety.requires_allow_write, true);
-    assert.equal(payload.safety.max_batch_size, 3);
+    assert.equal(payload.safety.max_batch_size, 10);
     assert.equal(Object.prototype.hasOwnProperty.call(payload.selected_candidates[0], 'raw_data'), false);
     assert.equal(Object.prototype.hasOwnProperty.call(payload.selected_candidates[0], 'raw_payload'), false);
     assert.equal(Object.prototype.hasOwnProperty.call(payload.selected_candidates[0], 'body'), false);
+});
+
+test('dry_run caps selected candidates at 10 when more than ten eligible rows exist', async () => {
+    const gate = loadGateFresh();
+    const client = createMockClient(buildCleanCandidateRows(12));
+    const payload = await gate.runGuardedReconciliationWrite(gate.parseArgs(['--limit', '99']), { client });
+
+    assert.equal(payload.summary.candidate_total, 12);
+    assert.equal(payload.summary.selected_count, 10);
+    assert.equal(payload.summary.would_update_count, 10);
+    assert.equal(payload.summary.actual_update_executed, false);
+    assert.equal(payload.safety.max_batch_size, 10);
+    assert.equal(payload.selected_candidates.length, 10);
 });
 
 test('allow-write path fails closed and rolls back when expected-count mismatches', async () => {
