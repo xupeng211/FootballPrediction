@@ -9,7 +9,7 @@ const CONTRACT_CARRIER = 'matches + pipeline_status';
 const DATA_VERSION = 'fotmob_live_v1';
 const GUARDED_TRANSITION = 'pending -> harvested';
 const DEFAULT_LIMIT = 3;
-const MAX_LIMIT = 3;
+const MAX_LIMIT = 10;
 const READ_ONLY_BEGIN_SQL = 'BEGIN READ ONLY';
 const WRITE_BEGIN_SQL = 'BEGIN';
 const COMMIT_SQL = 'COMMIT';
@@ -112,7 +112,7 @@ RETURNING
 function usage() {
     return [
         'Usage:',
-        '  node scripts/ops/l2_guarded_reconciliation_write.js [--limit 3] [--json] [--league "Premier League"] [--season "2025/2026"] [--status finished] [--expected-count 3] [--allow-write]',
+        '  node scripts/ops/l2_guarded_reconciliation_write.js [--limit 10] [--json] [--league "Premier League"] [--season "2025/2026"] [--status finished] [--expected-count 10] [--allow-write]',
         '',
         'Safety:',
         '  Default mode is DRY-RUN / no-op.',
