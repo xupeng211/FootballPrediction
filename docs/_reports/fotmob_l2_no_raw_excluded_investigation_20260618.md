@@ -6,7 +6,7 @@
 
 ## Nature
 
-This is a **read-only investigation**, not a fix. No `--allow-write`, no real DB write, no FotMob live fetch, no raw payload output, no raw_match_data write/delete, no eleventh batch planning, no eleventh batch execution.
+This is a **read-only investigation**, not a fix. No `--allow-write`, no real DB write, no FotMob live fetch, no raw payload output, no raw_match_data write/delete, no eleventh batch planning, no eleventh batch execution. All DB access was SELECT-only via the `db` container.
 
 ## Investigation scope
 
