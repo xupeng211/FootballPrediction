@@ -69,11 +69,17 @@ ORDER BY
 function usage() {
     return [
         'Usage:',
-        '  node scripts/ops/score_backfill_dry_run.js [--json] [--sample-limit 5]',
+        '  node scripts/ops/score_backfill_dry_run.js [--json] [--sample-limit 5] [--allow-write]',
+        '',
+        'Options:',
+        '  --json            JSON output',
+        '  --sample-limit N  Number of sample rows (max 10)',
+        '  --allow-write     Execute real score backfill write (requires --json)',
         '',
         'Safety:',
-        '  Dry-run only. No migration, no schema change, no DB write, no backfill,',
-        '  no live fetch, no raw payload output.',
+        '  Default is dry-run. Real write only with --allow-write --json.',
+        '  Single transaction, strict WHERE, rollback on failure.',
+        '  No migration, no schema change, no raw write, no live fetch.',
     ].join('\n');
 }
 
@@ -117,6 +123,7 @@ function parseArgs(argv = process.argv.slice(2)) {
         json: false,
         help: false,
         sampleLimit: DEFAULT_SAMPLE_LIMIT,
+        allowWrite: false,
     };
 
     const keyMap = {
@@ -125,6 +132,8 @@ function parseArgs(argv = process.argv.slice(2)) {
         h: 'help',
         'sample-limit': 'sampleLimit',
         sample_limit: 'sampleLimit',
+        'allow-write': 'allowWrite',
+        allow_write: 'allowWrite',
     };
 
     for (let index = 0; index < argv.length; index += 1) {
@@ -144,7 +153,7 @@ function parseArgs(argv = process.argv.slice(2)) {
             index += 1;
         }
 
-        if (optionKey === 'json' || optionKey === 'help') {
+        if (optionKey === 'json' || optionKey === 'help' || optionKey === 'allowWrite') {
             options[optionKey] = true;
             continue;
         }
@@ -673,12 +682,25 @@ async function main(argv = process.argv.slice(2), io = {}) {
         json: false,
         help: false,
         sampleLimit: DEFAULT_SAMPLE_LIMIT,
+        allowWrite: false,
     };
 
     try {
         options = parseArgs(argv);
         if (options.help) {
             output.stdout(`${usage()}\n`);
+            return 0;
+        }
+
+        if (options.allowWrite) {
+            if (!options.json) {
+                output.stderr('Error: --allow-write requires --json\n');
+                return 1;
+            }
+            // Lazy-require write module — only loaded when explicitly authorized
+            const { runWrite } = require('./score_backfill_write');
+            const payload = await runWrite(options);
+            writePayload(payload, true, output);
             return 0;
         }
 
