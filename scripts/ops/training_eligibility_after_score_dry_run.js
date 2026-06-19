@@ -46,21 +46,28 @@ ORDER BY
 function usage() {
     return [
         'Usage:',
-        '  node scripts/ops/training_eligibility_after_score_dry_run.js [--json]',
+        '  node scripts/ops/training_eligibility_after_score_dry_run.js [--json] [--allow-write]',
+        '',
+        'Options:',
+        '  --json            JSON output',
+        '  --allow-write     Execute real training eligibility write (requires --json)',
         '',
         'Safety:',
-        '  Dry-run only. No migration, no schema change, no DB write, no backfill,',
-        '  no live fetch, no raw payload output.',
+        '  Default is dry-run. Real write only with --allow-write --json.',
+        '  Single transaction, strict WHERE, rollback on failure.',
+        '  No migration, no schema change, no raw write, no live fetch.',
     ].join('\n');
 }
 
 function parseArgs(argv = process.argv.slice(2)) {
-    const options = { json: false, help: false };
+    const options = { json: false, help: false, allowWrite: false };
 
     for (let index = 0; index < argv.length; index += 1) {
         const arg = String(argv[index]);
         if (arg === '--json') {
             options.json = true;
+        } else if (arg === '--allow-write') {
+            options.allowWrite = true;
         } else if (arg === '--help' || arg === '-h') {
             options.help = true;
         } else {
@@ -415,12 +422,28 @@ async function main(argv = process.argv.slice(2), io = {}) {
         stderr: io.stderr || (text => process.stderr.write(text)),
     };
 
-    let options = { json: false, help: false };
+    let options = { json: false, help: false, allowWrite: false };
 
     try {
         options = parseArgs(argv);
         if (options.help) {
             output.stdout(`${usage()}\n`);
+            return 0;
+        }
+
+        if (options.allowWrite) {
+            if (!options.json) {
+                output.stderr('Error: --allow-write requires --json\n');
+                return 1;
+            }
+            // Delegate to write module via child process to avoid circular dependency
+            const { execFileSync } = require('child_process');
+            const result = execFileSync(
+                process.execPath,
+                ['-e', 'require("./scripts/ops/training_eligibility_write").runWrite({json:true,allowWrite:true}).then(p=>console.log(JSON.stringify(p,null,2))).catch(e=>{console.error(e.message);process.exit(1)})'],
+                { encoding: 'utf-8', timeout: 30000 }
+            );
+            output.stdout(result);
             return 0;
         }
 
