@@ -305,78 +305,62 @@ function isAllCurrentScoreFieldsNull(row) {
     return row.home_score === null && row.away_score === null && normalizeOptionalText(row.actual_result) === null;
 }
 
-function classifyScannedMatch(row) {
-    const rawScoreFromTeams = {
-        home: toIntegerOrNull(row.raw_home_score_text),
-        away: toIntegerOrNull(row.raw_away_score_text),
-    };
-    const rawScoreFromScoreStr = parseScoreStr(row.raw_score_str);
-    const proposedHomeScore = rawScoreFromTeams.home;
-    const proposedAwayScore = rawScoreFromTeams.away;
-    const proposedActualResult = deriveActualResult(proposedHomeScore, proposedAwayScore);
-    const targetScope = isTargetScope(row);
-    const validations = {
-        target_scope: targetScope,
+function buildMatchValidations(row, derived) {
+    const teamScoresAvailable =
+        Number.isInteger(derived.proposedHomeScore) &&
+        Number.isInteger(derived.proposedAwayScore);
+
+    return {
+        target_scope: derived.targetScope,
         status_finished: String(row.status || '').trim().toLowerCase() === 'finished',
         pipeline_status_harvested: String(row.pipeline_status || '').trim().toLowerCase() === 'harvested',
         source_type_fotmob_live_fetch: row.source_type === TARGET_SOURCE_TYPE,
         evidence_level_strong: row.evidence_level === TARGET_EVIDENCE_LEVEL,
         current_score_fields_null: isAllCurrentScoreFieldsNull(row),
-        raw_single: toIntegerOrNull(row.fotmob_live_v1_count) === 1,
+        raw_single: derived.fotmobLiveV1Count === 1,
         raw_data_version_fotmob_live_v1: row.fotmob_live_v1_data_version === TARGET_DATA_VERSION,
-        raw_score_str_available: rawScoreFromScoreStr !== null,
-        raw_team_scores_available:
-            Number.isInteger(proposedHomeScore) &&
-            Number.isInteger(proposedAwayScore),
+        raw_score_str_available: derived.rawScoreFromScoreStr !== null,
+        raw_team_scores_available: teamScoresAvailable,
         score_str_matches_team_scores:
-            rawScoreFromScoreStr !== null &&
-            Number.isInteger(proposedHomeScore) &&
-            Number.isInteger(proposedAwayScore) &&
-            rawScoreFromScoreStr.home === proposedHomeScore &&
-            rawScoreFromScoreStr.away === proposedAwayScore,
-        proposed_scores_non_null:
-            Number.isInteger(proposedHomeScore) &&
-            Number.isInteger(proposedAwayScore),
-        proposed_actual_result_valid: VALID_ACTUAL_RESULTS.has(proposedActualResult),
+            derived.rawScoreFromScoreStr !== null &&
+            teamScoresAvailable &&
+            derived.rawScoreFromScoreStr.home === derived.proposedHomeScore &&
+            derived.rawScoreFromScoreStr.away === derived.proposedAwayScore,
+        proposed_scores_non_null: teamScoresAvailable,
+        proposed_actual_result_valid: VALID_ACTUAL_RESULTS.has(derived.proposedActualResult),
     };
+}
 
-    const wouldUpdate = Object.values(validations).every(Boolean);
+function buildSkipReasons(validations, fotmobLiveV1Count) {
     const skipReasons = [];
 
-    if (!validations.target_scope) {
-        skipReasons.push('excluded_non_target_scope');
+    const simpleFailures = [
+        ['target_scope', 'excluded_non_target_scope'],
+        ['status_finished', 'status_not_finished'],
+        ['pipeline_status_harvested', 'pipeline_status_not_harvested'],
+        ['source_type_fotmob_live_fetch', 'source_type_not_fotmob_live_fetch'],
+        ['evidence_level_strong', 'evidence_level_not_strong'],
+        ['current_score_fields_null', 'current_scores_already_present'],
+        ['raw_data_version_fotmob_live_v1', 'raw_data_version_not_fotmob_live_v1'],
+        ['raw_score_str_available', 'raw_score_str_unavailable'],
+        ['raw_team_scores_available', 'raw_team_scores_unavailable'],
+        ['proposed_actual_result_valid', 'proposed_actual_result_invalid'],
+    ];
+
+    for (const [validationKey, reason] of simpleFailures) {
+        if (!validations[validationKey]) {
+            skipReasons.push(reason);
+        }
     }
-    if (!validations.status_finished) {
-        skipReasons.push('status_not_finished');
-    }
-    if (!validations.pipeline_status_harvested) {
-        skipReasons.push('pipeline_status_not_harvested');
-    }
-    if (!validations.source_type_fotmob_live_fetch) {
-        skipReasons.push('source_type_not_fotmob_live_fetch');
-    }
-    if (!validations.evidence_level_strong) {
-        skipReasons.push('evidence_level_not_strong');
-    }
-    if (!validations.current_score_fields_null) {
-        skipReasons.push('current_scores_already_present');
-    }
+
     if (!validations.raw_single) {
         skipReasons.push(
-            toIntegerOrNull(row.fotmob_live_v1_count) === 0
+            fotmobLiveV1Count === 0
                 ? 'missing_fotmob_live_v1_raw'
                 : 'unexpected_fotmob_live_v1_row_count'
         );
     }
-    if (!validations.raw_data_version_fotmob_live_v1) {
-        skipReasons.push('raw_data_version_not_fotmob_live_v1');
-    }
-    if (!validations.raw_score_str_available) {
-        skipReasons.push('raw_score_str_unavailable');
-    }
-    if (!validations.raw_team_scores_available) {
-        skipReasons.push('raw_team_scores_unavailable');
-    }
+
     if (
         validations.raw_score_str_available &&
         validations.raw_team_scores_available &&
@@ -384,9 +368,29 @@ function classifyScannedMatch(row) {
     ) {
         skipReasons.push('score_str_mismatch');
     }
-    if (!validations.proposed_actual_result_valid) {
-        skipReasons.push('proposed_actual_result_invalid');
-    }
+
+    return skipReasons;
+}
+
+function classifyScannedMatch(row) {
+    const rawScoreFromTeams = {
+        home: toIntegerOrNull(row.raw_home_score_text),
+        away: toIntegerOrNull(row.raw_away_score_text),
+    };
+    const proposedHomeScore = rawScoreFromTeams.home;
+    const proposedAwayScore = rawScoreFromTeams.away;
+    const proposedActualResult = deriveActualResult(proposedHomeScore, proposedAwayScore);
+    const derived = {
+        fotmobLiveV1Count: toIntegerOrNull(row.fotmob_live_v1_count) || 0,
+        rawScoreFromScoreStr: parseScoreStr(row.raw_score_str),
+        proposedHomeScore,
+        proposedAwayScore,
+        proposedActualResult,
+        targetScope: isTargetScope(row),
+    };
+    const validations = buildMatchValidations(row, derived);
+    const wouldUpdate = Object.values(validations).every(Boolean);
+    const skipReasons = buildSkipReasons(validations, derived.fotmobLiveV1Count);
 
     return {
         match_id: row.match_id,
@@ -400,11 +404,11 @@ function classifyScannedMatch(row) {
         current_home_score: row.home_score,
         current_away_score: row.away_score,
         current_actual_result: normalizeOptionalText(row.actual_result),
-        fotmob_live_v1_count: toIntegerOrNull(row.fotmob_live_v1_count) || 0,
+        fotmob_live_v1_count: derived.fotmobLiveV1Count,
         raw_data_version: normalizeOptionalText(row.fotmob_live_v1_data_version),
         raw_score_str_available: validations.raw_score_str_available,
         raw_team_scores_available: validations.raw_team_scores_available,
-        target_scope: targetScope,
+        target_scope: derived.targetScope,
         proposed_home_score: proposedHomeScore,
         proposed_away_score: proposedAwayScore,
         proposed_actual_result: proposedActualResult,
