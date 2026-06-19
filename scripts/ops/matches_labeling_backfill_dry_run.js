@@ -38,6 +38,7 @@ function parseArgs(argv) {
     matchId: null,
     league: null,
     season: null,
+    allowWrite: false,
   };
 
   for (let i = 2; i < argv.length; i++) {
@@ -45,6 +46,9 @@ function parseArgs(argv) {
     switch (arg) {
       case '--json':
         args.json = true;
+        break;
+      case '--allow-write':
+        args.allowWrite = true;
         break;
       case '--limit':
         args.limit = parseInt(argv[++i], 10);
@@ -524,15 +528,188 @@ function buildReason(r) {
 }
 
 // ---------------------------------------------------------------------------
+// 真实写库
+// ---------------------------------------------------------------------------
+
+/**
+ * 单事务执行治理字段回填 UPDATE。
+ *
+ * 安全约束：
+ *   - 只更新 source_type / evidence_level / is_production_scope /
+ *     is_reconciliation_eligible / is_training_eligible / pipeline_status_reason
+ *   - 只更新当前治理字段全部为空的行
+ *   - values 来自 MatchLabelingGovernance.computeGovernanceLabels
+ *   - 单事务，任何失败触发 ROLLBACK
+ *
+ * @param {import('pg').Pool} pool
+ * @param {Array<object>} classified - classifyRow 的输出数组
+ * @returns {Promise<number>} 实际更新的行数
+ */
+async function executeWrite(pool, classified) {
+  const toUpdate = classified.filter((r) => !r.already_labeled);
+
+  if (toUpdate.length === 0) {
+    return 0;
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    let updatedCount = 0;
+    for (const row of toUpdate) {
+      const result = await client.query(
+        `UPDATE matches
+         SET source_type = $1,
+             evidence_level = $2,
+             is_production_scope = $3,
+             is_reconciliation_eligible = $4,
+             is_training_eligible = $5,
+             pipeline_status_reason = $6,
+             updated_at = NOW()
+         WHERE match_id = $7
+           AND source_type IS NULL
+           AND evidence_level IS NULL
+           AND is_production_scope IS NULL
+           AND is_reconciliation_eligible IS NULL
+           AND is_training_eligible IS NULL
+           AND pipeline_status_reason IS NULL`,
+        [
+          row.proposed_source_type,
+          row.proposed_evidence_level,
+          row.proposed_is_production_scope,
+          row.proposed_is_reconciliation_eligible,
+          row.proposed_is_training_eligible,
+          row.proposed_pipeline_status_reason,
+          row.match_id,
+        ]
+      );
+      updatedCount += result.rowCount;
+    }
+
+    await client.query('COMMIT');
+    return updatedCount;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+/**
+ * 写入后验证：检查 matches / raw_match_data 行数、pipeline_status 分布是否不变。
+ *
+ * @param {import('pg').Pool} pool
+ * @returns {Promise<object>} 验证结果
+ */
+async function verifyPostWrite(pool) {
+  const client = await pool.connect();
+  try {
+    const matchCount = await client.query('SELECT COUNT(*) AS cnt FROM matches');
+    const rawCount = await client.query('SELECT COUNT(*) AS cnt FROM raw_match_data');
+
+    const pipelineDist = await client.query(
+      `SELECT pipeline_status, COUNT(*) AS cnt
+       FROM matches
+       GROUP BY pipeline_status
+       ORDER BY pipeline_status`
+    );
+
+    const governancePopulated = await client.query(
+      `SELECT COUNT(*) AS cnt FROM matches
+       WHERE source_type IS NOT NULL
+          OR evidence_level IS NOT NULL
+          OR is_production_scope IS NOT NULL
+          OR is_reconciliation_eligible IS NOT NULL
+          OR is_training_eligible IS NOT NULL
+          OR pipeline_status_reason IS NOT NULL`
+    );
+
+    const ligue1Labels = await client.query(
+      `SELECT source_type, evidence_level, is_production_scope,
+              is_reconciliation_eligible, is_training_eligible,
+              pipeline_status_reason, COUNT(*) AS cnt
+       FROM matches
+       WHERE league_name = 'Ligue 1' AND season = '2025/2026'
+       GROUP BY source_type, evidence_level, is_production_scope,
+                is_reconciliation_eligible, is_training_eligible,
+                pipeline_status_reason`
+    );
+
+    const noRawLabels = await client.query(
+      `SELECT match_id, source_type, evidence_level, is_production_scope,
+              is_reconciliation_eligible, is_training_eligible,
+              pipeline_status_reason
+       FROM matches
+       WHERE source_type = 'synthetic'
+       ORDER BY match_id`
+    );
+
+    return {
+      matches_row_count: parseInt(matchCount.rows[0].cnt, 10),
+      raw_match_data_row_count: parseInt(rawCount.rows[0].cnt, 10),
+      pipeline_status_distribution: pipelineDist.rows,
+      governance_populated_count: parseInt(governancePopulated.rows[0].cnt, 10),
+      ligue1_label_summary: ligue1Labels.rows,
+      no_raw_excluded_labels: noRawLabels.rows,
+    };
+  } finally {
+    client.release();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 预检门禁
+// ---------------------------------------------------------------------------
+
+/**
+ * 写入前 dry-run 预检。如果关键指标与预期不符，立即停止。
+ *
+ * @param {object} summary - buildSummary 的输出
+ */
+function preflightGate(summary) {
+  const checks = [
+    { field: 'total_matches_scanned', expected: 60, actual: summary.total_matches_scanned },
+    { field: 'would_update_count', expected: 60, actual: summary.would_update_count },
+    { field: 'already_labeled_count', expected: 0, actual: summary.already_labeled_count },
+    { field: 'candidate_total', expected: 58, actual: summary.candidate_total },
+    { field: 'excluded_no_raw_count', expected: 2, actual: summary.excluded_no_raw_count },
+  ];
+
+  const failures = [];
+  for (const { field, expected, actual } of checks) {
+    if (actual !== expected) {
+      failures.push(`${field}: expected=${expected}, actual=${actual}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(
+      `Preflight gate FAILED. Count mismatch:\n${failures.join('\n')}\n` +
+      'Write aborted. Verify database state before retrying.'
+    );
+  }
+
+  return true;
+}
+
+// ---------------------------------------------------------------------------
 // 主流程
 // ---------------------------------------------------------------------------
 
 async function main() {
   const args = parseArgs(process.argv);
 
+  if (args.allowWrite && !args.json) {
+    console.error('Error: --allow-write requires --json');
+    process.exitCode = 1;
+    return;
+  }
+
   const pool = getPool();
 
-  // 1. 扫描 matches
+  // 1. 扫描 matches（dry-run 和 write 模式共享）
   const rows = await scanMatches(pool, args);
 
   // 2. 批量查询 fotmob_live_v1 raw 存在性
@@ -545,26 +722,68 @@ async function main() {
   // 4. 构建摘要
   const summary = buildSummary(classified);
 
-  // 5. 构建最终输出
-  const output = {
-    mode: 'dry_run',
-    actual_update_executed: false,
-    script: 'scripts/ops/matches_labeling_backfill_dry_run.js',
-    governance_module: 'src/infrastructure/services/MatchLabelingGovernance.js',
-    rule_version: 'V26.7-writer-support-v1',
-    generated_at: new Date().toISOString(),
-    filters_applied: {
-      limit: args.limit,
-      match_id: args.matchId,
-      league: args.league,
-      season: args.season,
-    },
-    ...summary,
-  };
+  if (args.allowWrite) {
+    // ===================================================================
+    // 写模式
+    // ===================================================================
 
-  console.log(JSON.stringify(output, null, 2));
+    // 预检门禁
+    preflightGate(summary);
 
-  // 6. 退出
+    // 执行写入
+    const updatedCount = await executeWrite(pool, classified);
+
+    // 写入后验证
+    const verification = await verifyPostWrite(pool);
+
+    // 构建输出
+    const output = {
+      mode: 'write',
+      actual_update_executed: true,
+      script: 'scripts/ops/matches_labeling_backfill_dry_run.js',
+      governance_module: 'src/infrastructure/services/MatchLabelingGovernance.js',
+      rule_version: 'V26.7-writer-support-v1',
+      generated_at: new Date().toISOString(),
+      preflight: {
+        passed: true,
+        total_matches_scanned: summary.total_matches_scanned,
+        would_update_count: summary.would_update_count,
+        already_labeled_count: summary.already_labeled_count,
+        candidate_total: summary.candidate_total,
+        excluded_no_raw_count: summary.excluded_no_raw_count,
+      },
+      write_result: {
+        updated_count: updatedCount,
+        transaction: 'single_transaction_committed',
+      },
+      post_write_verification: verification,
+    };
+
+    console.log(JSON.stringify(output, null, 2));
+  } else {
+    // ===================================================================
+    // Dry-run 模式（默认）
+    // ===================================================================
+    const output = {
+      mode: 'dry_run',
+      actual_update_executed: false,
+      script: 'scripts/ops/matches_labeling_backfill_dry_run.js',
+      governance_module: 'src/infrastructure/services/MatchLabelingGovernance.js',
+      rule_version: 'V26.7-writer-support-v1',
+      generated_at: new Date().toISOString(),
+      filters_applied: {
+        limit: args.limit,
+        match_id: args.matchId,
+        league: args.league,
+        season: args.season,
+      },
+      ...summary,
+    };
+
+    console.log(JSON.stringify(output, null, 2));
+  }
+
+  // 退出
   await pool.end();
 }
 
@@ -596,4 +815,7 @@ module.exports = {
   formatSampleRow,
   governanceFieldsAllNull,
   hasAnyGovernanceField,
+  executeWrite,
+  verifyPostWrite,
+  preflightGate,
 };
