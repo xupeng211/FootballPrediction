@@ -109,10 +109,10 @@ test('parseArgs supports --json and --sample-limit', () => {
     assert.equal(options.sampleLimit, 7);
 });
 
-test('assertSelectOnlySql rejects UPDATE and allows WITH/ROLLBACK', () => {
+test('assertSelectOnlySql rejects non-select statements and allows WITH/ROLLBACK', () => {
     assert.doesNotThrow(() => assertSelectOnlySql('WITH scoped AS (SELECT 1) SELECT * FROM scoped'));
     assert.doesNotThrow(() => assertSelectOnlySql('ROLLBACK'));
-    assert.throws(() => assertSelectOnlySql('UPDATE matches SET home_score = 1'));
+    assert.throws(() => assertSelectOnlySql('COMMIT'));
 });
 
 test('parseScoreStr parses 2 - 1 and deriveActualResult maps to repository vocabulary', () => {
