@@ -15,6 +15,7 @@
 const fs = require('fs').promises;
 const path = require('path');
 const { Normalizer } = require('../../../utils/Normalizer');
+const { computeGovernanceLabels } = require('../../services/MatchLabelingGovernance');
 
 /**
  * 数据持久化器类
@@ -312,10 +313,70 @@ class Persistence {
             assignments.push(`l2_raw_json = $${values.length}::jsonb`);
         }
 
+        // V26.7: 治理标签字段
+        if (columns.has('source_type')) {
+            const matchCtx = await this._fetchMatchGovernanceContext(client, matchId);
+            const hasFotmobLiveV1Raw = await this._checkHasFotmobLiveV1Raw(client, matchId);
+            const labels = computeGovernanceLabels({
+                dataVersion: 'V26.1',
+                dataSource: matchCtx.data_source,
+                leagueName: matchCtx.league_name,
+                season: matchCtx.season,
+                status: matchCtx.status,
+                pipelineStatus: 'harvested',
+                hasFotmobLiveV1Raw,
+                externalId: matchCtx.external_id,
+            });
+            values.push(labels.source_type);
+            assignments.push(`source_type = $${values.length}`);
+            values.push(labels.evidence_level);
+            assignments.push(`evidence_level = $${values.length}`);
+            values.push(labels.is_production_scope);
+            assignments.push(`is_production_scope = $${values.length}`);
+            values.push(labels.is_reconciliation_eligible);
+            assignments.push(`is_reconciliation_eligible = $${values.length}`);
+            values.push(labels.is_training_eligible);
+            assignments.push(`is_training_eligible = $${values.length}`);
+            if (labels.pipeline_status_reason) {
+                values.push(labels.pipeline_status_reason);
+                assignments.push(`pipeline_status_reason = $${values.length}`);
+            }
+        }
+
         await client.query(
             `UPDATE matches SET ${assignments.join(', ')} WHERE match_id = $1`,
             values
         );
+    }
+
+    /**
+     * 获取比赛治理标签所需的基本上下文字段。
+     * @private
+     */
+    async _fetchMatchGovernanceContext(client, matchId) {
+        const result = await client.query(
+            `SELECT league_name, season, status, external_id, data_source
+             FROM matches WHERE match_id = $1`,
+            [matchId]
+        );
+        if (result.rows.length === 0) {
+            return { league_name: null, season: null, status: null, external_id: null, data_source: null };
+        }
+        return result.rows[0];
+    }
+
+    /**
+     * 检查是否存在 fotmob_live_v1 raw 数据。
+     * @private
+     */
+    async _checkHasFotmobLiveV1Raw(client, matchId) {
+        const result = await client.query(
+            `SELECT 1 FROM raw_match_data
+             WHERE match_id = $1 AND data_version = 'fotmob_live_v1'
+             LIMIT 1`,
+            [matchId]
+        );
+        return result.rows.length > 0;
     }
 
     async _ensurePipelineStatusSchemaWithClient(client) {
@@ -387,7 +448,13 @@ class Persistence {
                 'updated_at',
                 'l2_collected_at',
                 'l2_data_version',
-                'l2_raw_json'
+                'l2_raw_json',
+                'source_type',
+                'evidence_level',
+                'is_production_scope',
+                'is_reconciliation_eligible',
+                'is_training_eligible',
+                'pipeline_status_reason'
             ]]
         );
 

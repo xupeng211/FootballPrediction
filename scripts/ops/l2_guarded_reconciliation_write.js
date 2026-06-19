@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable max-lines */
 'use strict';
 
 // lifecycle: permanent
@@ -92,7 +93,13 @@ ORDER BY match_date ASC NULLS LAST, match_id ASC
 const GUARDED_UPDATE_SQL = `
 UPDATE matches
 SET pipeline_status = 'harvested',
-    updated_at = NOW()
+    updated_at = NOW(),
+    source_type = COALESCE(matches.source_type, 'fotmob_live_fetch'),
+    evidence_level = COALESCE(matches.evidence_level, 'strong'),
+    is_production_scope = COALESCE(matches.is_production_scope, true),
+    is_reconciliation_eligible = COALESCE(matches.is_reconciliation_eligible, true),
+    is_training_eligible = COALESCE(matches.is_training_eligible, false),
+    pipeline_status_reason = NULL
 WHERE match_id = $1
   AND pipeline_status = 'pending'
   AND NULLIF(BTRIM(external_id), '') IS NOT NULL
