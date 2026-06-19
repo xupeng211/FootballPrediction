@@ -17,6 +17,7 @@ const { Pool } = require('pg');
 const { chromium } = require('playwright');
 const pLimit = require('p-limit');
 const { getNetworkShield } = require('../network/NetworkShield');
+const { computeGovernanceLabels } = require('./MatchLabelingGovernance');
 
 /**
  * 马拉松服务配置选项
@@ -644,15 +645,60 @@ class MarathonService {
       `;
       
       await client.query(query, [matchId, externalId, jsonData]);
+
+      // V26.7: 计算治理标签并一并写入
+      const matchCtx = await client.query(
+        `SELECT league_name, season, status, external_id, data_source
+         FROM matches WHERE match_id = $1`,
+        [matchId]
+      );
+      const ctx = matchCtx.rows.length > 0 ? matchCtx.rows[0] : {};
+      const hasFotmobLiveV1Raw = await client.query(
+        `SELECT 1 FROM raw_match_data
+         WHERE match_id = $1 AND data_version = 'fotmob_live_v1'
+         LIMIT 1`,
+        [matchId]
+      ).then(r => r.rows.length > 0);
+
+      const labels = computeGovernanceLabels({
+        dataVersion: 'V26.1-MARATHON',
+        dataSource: ctx.data_source,
+        leagueName: ctx.league_name,
+        season: ctx.season,
+        status: ctx.status,
+        pipelineStatus: 'harvested',
+        hasFotmobLiveV1Raw,
+        externalId: ctx.external_id,
+      });
+
       await client.query(
         `
           UPDATE matches
           SET pipeline_status = 'harvested',
-              updated_at = NOW()
+              updated_at = NOW(),
+              source_type = $2,
+              evidence_level = $3,
+              is_production_scope = $4,
+              is_reconciliation_eligible = $5,
+              is_training_eligible = $6
           WHERE match_id = $1
         `,
-        [matchId]
+        [
+          matchId,
+          labels.source_type,
+          labels.evidence_level,
+          labels.is_production_scope,
+          labels.is_reconciliation_eligible,
+          labels.is_training_eligible,
+        ]
       );
+
+      if (labels.pipeline_status_reason) {
+        await client.query(
+          `UPDATE matches SET pipeline_status_reason = $2 WHERE match_id = $1`,
+          [matchId, labels.pipeline_status_reason]
+        );
+      }
     } finally {
       client.release();
     }

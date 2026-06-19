@@ -9,6 +9,7 @@ const { MatchIdentityResolver } = require('./recon/MatchIdentityResolver');
 const { MatchCanonicalJanitor } = require('./recon/MatchCanonicalJanitor');
 const { ReconSchemaJanitor } = require('./recon/ReconSchemaJanitor');
 const { ReconMappingStore } = require('./recon/ReconMappingStore');
+const { computeGovernanceLabels } = require('./MatchLabelingGovernance');
 
 function loadRepositoryConfig() {
   try { return loadReconConfig(process.env.RECON_CONFIG_PATH); } catch (error) {
@@ -490,9 +491,10 @@ class FixtureRepository {
     return this._executeWithRetry(async () => {
       const client = await this.dbPool.connect();
       try {
+        const COLUMNS_PER_ROW = 18;
         const values = [];
         const rows = batch.map((fixture, index) => {
-          const offset = index * 12;
+          const offset = index * COLUMNS_PER_ROW;
           values.push(
             fixture.match_id,
             fixture.external_id,
@@ -507,12 +509,35 @@ class FixtureRepository {
             fixture.is_finished,
             fixture.data_source
           );
-          return `($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9}, $${offset + 10}, $${offset + 11}, $${offset + 12})`;
+
+          // V26.7: 计算治理标签（仅新 INSERT 生效，ON CONFLICT UPDATE 不触碰）
+          const labels = computeGovernanceLabels({
+            dataSource: fixture.data_source,
+            leagueName: fixture.league_name,
+            season: fixture.season,
+            status: fixture.status,
+            pipelineStatus: fixture.pipeline_status,
+            externalId: fixture.external_id,
+          });
+          values.push(
+            labels.source_type,
+            labels.evidence_level,
+            labels.is_production_scope,
+            labels.is_reconciliation_eligible,
+            labels.is_training_eligible,
+            labels.pipeline_status_reason
+          );
+
+          const ph = (col) => `$${offset + col}`;
+          return `(${ph(1)}, ${ph(2)}, ${ph(3)}, ${ph(4)}, ${ph(5)}, ${ph(6)}, ${ph(7)}, ${ph(8)}, ${ph(9)}, ${ph(10)}, ${ph(11)}, ${ph(12)}, ${ph(13)}, ${ph(14)}, ${ph(15)}, ${ph(16)}, ${ph(17)}, ${ph(18)})`;
         });
         const result = await client.query(`
           INSERT INTO matches (
             match_id, external_id, league_name, season, home_team, away_team,
-            match_date, home_score, away_score, status, is_finished, data_source
+            match_date, home_score, away_score, status, is_finished, data_source,
+            source_type, evidence_level, is_production_scope,
+            is_reconciliation_eligible, is_training_eligible,
+            pipeline_status_reason
           )
           VALUES ${rows.join(', ')}
           ON CONFLICT (match_id) DO UPDATE SET
