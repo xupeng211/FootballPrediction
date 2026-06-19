@@ -261,65 +261,36 @@ function classifyRow(row, fotmobLiveV1Ids) {
 }
 
 // ---------------------------------------------------------------------------
-// 聚合统计
+// 聚合统计辅助函数
 // ---------------------------------------------------------------------------
 
 /**
- * 基于分类结果生成聚合统计。
- *
- * @param {Array<object>} classified - classifyRow 的输出数组
- * @returns {object} 聚合统计数据
+ * 统计字符串字段的分布。
  */
-function buildSummary(classified) {
-  const total = classified.length;
-
-  const unlabeled = classified.filter((r) => !r.already_labeled);
-  const alreadyLabeled = classified.filter((r) => r.already_labeled);
-  const excludedNoRaw = classified.filter((r) => !r.has_raw);
-
-  // source_type 分布
-  const bySourceType = {};
-  for (const r of unlabeled) {
-    const st = r.proposed_source_type;
-    bySourceType[st] = (bySourceType[st] || 0) + 1;
+function countDistribution(rows, keyFn) {
+  const dist = {};
+  for (const r of rows) {
+    const val = keyFn(r);
+    dist[val] = (dist[val] || 0) + 1;
   }
+  return dist;
+}
 
-  // evidence_level 分布
-  const byEvidenceLevel = {};
-  for (const r of unlabeled) {
-    const el = r.proposed_evidence_level;
-    byEvidenceLevel[el] = (byEvidenceLevel[el] || 0) + 1;
+/**
+ * 统计布尔字段的分布。
+ */
+function countBooleanDistribution(rows, keyFn) {
+  const dist = { true: 0, false: 0 };
+  for (const r of rows) {
+    dist[keyFn(r) ? 'true' : 'false']++;
   }
+  return dist;
+}
 
-  // production_scope 分布
-  const byProductionScope = { true: 0, false: 0 };
-  for (const r of unlabeled) {
-    byProductionScope[r.proposed_is_production_scope ? 'true' : 'false']++;
-  }
-
-  // reconciliation_eligible 分布
-  const byReconciliationEligible = { true: 0, false: 0 };
-  for (const r of unlabeled) {
-    byReconciliationEligible[r.proposed_is_reconciliation_eligible ? 'true' : 'false']++;
-  }
-
-  // training_eligible 分布
-  const byTrainingEligible = { true: 0, false: 0 };
-  for (const r of unlabeled) {
-    byTrainingEligible[r.proposed_is_training_eligible ? 'true' : 'false']++;
-  }
-
-  // pipeline_status_reason 分布
-  const byPipelineStatusReason = {};
-  for (const r of unlabeled) {
-    const reason = r.proposed_pipeline_status_reason || 'NULL';
-    byPipelineStatusReason[reason] = (byPipelineStatusReason[reason] || 0) + 1;
-  }
-
-  // 候选行 = unlabeled 中不是 no-raw excluded 的
-  const candidateTotal = unlabeled.filter((r) => r.has_raw).length;
-
-  // 风险标记
+/**
+ * 生成风险标记列表。
+ */
+function buildRiskFlags(unlabeled, candidateTotal, bySourceType) {
   const riskFlags = [];
   if (unlabeled.length === 0) {
     riskFlags.push('no_unlabeled_rows: all matches already have governance labels');
@@ -335,8 +306,13 @@ function buildSummary(classified) {
   if (unknownCount > 0) {
     riskFlags.push(`unknown_source_detected: ${unknownCount} unlabeled rows have source_type=unknown`);
   }
+  return riskFlags;
+}
 
-  // 3 类关键行的 proposed labels
+/**
+ * 提取 class A / B / C 关键行的 proposed labels。
+ */
+function extractKeyRows(classified) {
   const classARows = classified.filter(
     (r) =>
       r.league_name === 'Ligue 1' &&
@@ -344,17 +320,90 @@ function buildSummary(classified) {
       r.pipeline_status === 'harvested' &&
       r.has_fotmob_live_v1_raw
   );
+  const classBRow = classified.find((r) => r.match_id === '140_20252026_4837496');
+  const classCRow = classified.find((r) => r.match_id === '47_20242025_900002');
 
-  const classBRow = classified.find(
-    (r) => r.match_id === '140_20252026_4837496'
-  );
+  return { classARows, classBRow, classCRow };
+}
 
-  const classCRow = classified.find(
-    (r) => r.match_id === '47_20242025_900002'
-  );
+/**
+ * 格式化 class summary。
+ */
+function formatClassSummary(classARows) {
+  if (classARows.length === 0) return null;
+  return {
+    count: classARows.length,
+    expected_source_type: 'fotmob_live_fetch',
+    expected_evidence_level: 'strong',
+    expected_is_production_scope: true,
+    expected_is_reconciliation_eligible: true,
+    expected_is_training_eligible: false,
+    expected_pipeline_status_reason: null,
+  };
+}
 
-  // sample rows: 最多 20 条，优先选取有代表性的
-  const sampleRows = selectSampleRows(classified, 20);
+/**
+ * 格式化单个 class row 的 proposed labels。
+ */
+function formatClassRowProposed(row) {
+  if (!row) return null;
+  return {
+    match_id: row.match_id,
+    proposed_source_type: row.proposed_source_type,
+    proposed_evidence_level: row.proposed_evidence_level,
+    proposed_is_production_scope: row.proposed_is_production_scope,
+    proposed_is_reconciliation_eligible: row.proposed_is_reconciliation_eligible,
+    proposed_is_training_eligible: row.proposed_is_training_eligible,
+    proposed_pipeline_status_reason: row.proposed_pipeline_status_reason,
+    already_labeled: row.already_labeled,
+  };
+}
+
+/**
+ * 格式化 no-raw excluded 行的 proposed labels（最多 10 条）。
+ */
+function formatNoRawExcluded(excludedNoRaw) {
+  return excludedNoRaw.slice(0, 10).map((r) => ({
+    match_id: r.match_id,
+    league_name: r.league_name,
+    season: r.season,
+    status: r.status,
+    proposed_source_type: r.proposed_source_type,
+    proposed_evidence_level: r.proposed_evidence_level,
+    proposed_is_production_scope: r.proposed_is_production_scope,
+    proposed_is_reconciliation_eligible: r.proposed_is_reconciliation_eligible,
+    proposed_is_training_eligible: r.proposed_is_training_eligible,
+    proposed_pipeline_status_reason: r.proposed_pipeline_status_reason,
+  }));
+}
+
+// ---------------------------------------------------------------------------
+// 聚合统计主函数
+// ---------------------------------------------------------------------------
+
+/**
+ * 基于分类结果生成聚合统计。
+ *
+ * @param {Array<object>} classified - classifyRow 的输出数组
+ * @returns {object} 聚合统计数据
+ */
+function buildSummary(classified) {
+  const total = classified.length;
+  const unlabeled = classified.filter((r) => !r.already_labeled);
+  const alreadyLabeled = classified.filter((r) => r.already_labeled);
+  const excludedNoRaw = classified.filter((r) => !r.has_raw);
+
+  const bySourceType = countDistribution(unlabeled, (r) => r.proposed_source_type);
+  const byEvidenceLevel = countDistribution(unlabeled, (r) => r.proposed_evidence_level);
+  const byProductionScope = countBooleanDistribution(unlabeled, (r) => r.proposed_is_production_scope);
+  const byReconciliationEligible = countBooleanDistribution(unlabeled, (r) => r.proposed_is_reconciliation_eligible);
+  const byTrainingEligible = countBooleanDistribution(unlabeled, (r) => r.proposed_is_training_eligible);
+  const byPipelineStatusReason = countDistribution(unlabeled, (r) => r.proposed_pipeline_status_reason || 'NULL');
+
+  const candidateTotal = unlabeled.filter((r) => r.has_raw).length;
+  const riskFlags = buildRiskFlags(unlabeled, candidateTotal, bySourceType);
+
+  const { classARows, classBRow, classCRow } = extractKeyRows(classified);
 
   return {
     total_matches_scanned: total,
@@ -369,56 +418,13 @@ function buildSummary(classified) {
     by_pipeline_status_reason: byPipelineStatusReason,
     excluded_no_raw_count: excludedNoRaw.length,
     candidate_total: candidateTotal,
-    sample_rows: sampleRows,
+    sample_rows: selectSampleRows(classified, 20),
     risk_flags: riskFlags,
     class_a_count: classARows.length,
-    class_a_summary: classARows.length > 0
-      ? {
-          count: classARows.length,
-          expected_source_type: 'fotmob_live_fetch',
-          expected_evidence_level: 'strong',
-          expected_is_production_scope: true,
-          expected_is_reconciliation_eligible: true,
-          expected_is_training_eligible: false,
-          expected_pipeline_status_reason: null,
-        }
-      : null,
-    class_b_proposed: classBRow
-      ? {
-          match_id: classBRow.match_id,
-          proposed_source_type: classBRow.proposed_source_type,
-          proposed_evidence_level: classBRow.proposed_evidence_level,
-          proposed_is_production_scope: classBRow.proposed_is_production_scope,
-          proposed_is_reconciliation_eligible: classBRow.proposed_is_reconciliation_eligible,
-          proposed_is_training_eligible: classBRow.proposed_is_training_eligible,
-          proposed_pipeline_status_reason: classBRow.proposed_pipeline_status_reason,
-          already_labeled: classBRow.already_labeled,
-        }
-      : null,
-    class_c_proposed: classCRow
-      ? {
-          match_id: classCRow.match_id,
-          proposed_source_type: classCRow.proposed_source_type,
-          proposed_evidence_level: classCRow.proposed_evidence_level,
-          proposed_is_production_scope: classCRow.proposed_is_production_scope,
-          proposed_is_reconciliation_eligible: classCRow.proposed_is_reconciliation_eligible,
-          proposed_is_training_eligible: classCRow.proposed_is_training_eligible,
-          proposed_pipeline_status_reason: classCRow.proposed_pipeline_status_reason,
-          already_labeled: classCRow.already_labeled,
-        }
-      : null,
-    no_raw_excluded_proposed: excludedNoRaw.slice(0, 10).map((r) => ({
-      match_id: r.match_id,
-      league_name: r.league_name,
-      season: r.season,
-      status: r.status,
-      proposed_source_type: r.proposed_source_type,
-      proposed_evidence_level: r.proposed_evidence_level,
-      proposed_is_production_scope: r.proposed_is_production_scope,
-      proposed_is_reconciliation_eligible: r.proposed_is_reconciliation_eligible,
-      proposed_is_training_eligible: r.proposed_is_training_eligible,
-      proposed_pipeline_status_reason: r.proposed_pipeline_status_reason,
-    })),
+    class_a_summary: formatClassSummary(classARows),
+    class_b_proposed: formatClassRowProposed(classBRow),
+    class_c_proposed: formatClassRowProposed(classCRow),
+    no_raw_excluded_proposed: formatNoRawExcluded(excludedNoRaw),
   };
 }
 
@@ -579,6 +585,13 @@ module.exports = {
   getFotmobLiveV1MatchIds,
   classifyRow,
   buildSummary,
+  countDistribution,
+  countBooleanDistribution,
+  buildRiskFlags,
+  extractKeyRows,
+  formatClassSummary,
+  formatClassRowProposed,
+  formatNoRawExcluded,
   selectSampleRows,
   formatSampleRow,
   governanceFieldsAllNull,
