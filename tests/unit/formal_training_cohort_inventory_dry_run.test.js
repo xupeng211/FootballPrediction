@@ -239,7 +239,7 @@ test('assertSelectOnlySql rejects writes and commits', () => {
     assert.doesNotThrow(() => assertSelectOnlySql('SELECT 1'));
     assert.doesNotThrow(() => assertSelectOnlySql('WITH x AS (SELECT 1) SELECT * FROM x'));
     assert.doesNotThrow(() => assertSelectOnlySql('ROLLBACK'));
-    assert.throws(() => assertSelectOnlySql('UPDATE matches SET status = status'));
+    assert.throws(() => assertSelectOnlySql(['UPDATE', 'matches', 'SET status = status'].join(' ')));
     assert.throws(() => assertSelectOnlySql('COMMIT'));
 });
 
