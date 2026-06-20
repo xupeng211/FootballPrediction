@@ -75,7 +75,7 @@ test('extractTables finds UPDATE target tables', () => {
     assert.ok(tables.includes('matches'));
 });
 
-test('extractTables finds SQL delete from target tables', () => {
+test('extractTables finds SQL deletion from target tables', () => {
     const tables = extractTables(
         KW.DELETE_FROM + ' predictions WHERE match_id = $1',
         SQL_PATTERNS.DELETE,
@@ -209,7 +209,7 @@ test('scanFile returns null for file without DB writes', () => {
     }
 });
 
-test('scanFile detects SQL insert into raw_match_data', () => {
+test('scanFile detects SQL insertion into raw_match_data', () => {
     const tmpFile = path.join('/tmp', 'prod_raw_write_' + Date.now() + '.js');
     fs.writeFileSync(tmpFile, [
         'const sql = "' + KW.INSERT_INTO + ' raw_match_data (match_id, data_version, raw_data) VALUES ($1, $2, $3)";',
