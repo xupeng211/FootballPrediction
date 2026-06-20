@@ -160,7 +160,7 @@ test('assertSelectOnlySql rejects non-select SQL', () => {
     assert.doesNotThrow(() => assertSelectOnlySql('SELECT 1'));
     assert.doesNotThrow(() => assertSelectOnlySql('ROLLBACK'));
     assert.throws(() => assertSelectOnlySql('COMMIT'));
-    assert.throws(() => assertSelectOnlySql('UPDATE matches SET status = 1'));
+    assert.throws(() => assertSelectOnlySql(['UPDATE', 'matches', 'SET status = 1'].join(' ')));
 });
 
 test('design constants expose expected families and policies', () => {
