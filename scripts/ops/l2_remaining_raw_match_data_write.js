@@ -2,6 +2,7 @@
 /* eslint-disable complexity, max-lines */
 'use strict';
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
 const {
     fetchFotMobRawDetail,
@@ -1240,6 +1241,13 @@ async function executeRemainingRawMatchDataWrite(input = {}, dependencies = {}) 
 
     try {
         connection = await acquireDbConnection(dependencies);
+
+        assertDbWriteAllowed({
+            script: 'l2_remaining_raw_match_data_write.js',
+            tables: ['raw_match_data'],
+            operations: ['INSERT'],
+        });
+
         await connection.client.query('BEGIN');
         transaction.began = true;
 
