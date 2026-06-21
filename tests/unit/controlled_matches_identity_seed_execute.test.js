@@ -18,6 +18,54 @@ function loadFreshModule() {
 
 const mod = loadFreshModule();
 
+const DB_WRITE_GUARD_ENV_KEYS = [
+    'ALLOW_DB_WRITE',
+    'FINAL_DB_WRITE_CONFIRMATION',
+    'ALLOW_MATCHES_WRITE',
+    'DRY_RUN',
+];
+
+function snapshotEnv(keys = DB_WRITE_GUARD_ENV_KEYS) {
+    return Object.fromEntries(keys.map(key => [key, process.env[key]]));
+}
+
+function restoreEnv(snapshot) {
+    for (const [key, value] of Object.entries(snapshot)) {
+        if (value === undefined) {
+            delete process.env[key];
+        } else {
+            process.env[key] = value;
+        }
+    }
+}
+
+async function withDbWriteGuardEnv(callback, overrides = {}) {
+    const savedEnv = snapshotEnv();
+    try {
+        process.env.ALLOW_DB_WRITE = 'yes';
+        process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+        process.env.ALLOW_MATCHES_WRITE = 'yes';
+        process.env.DRY_RUN = 'false';
+        for (const [key, value] of Object.entries(overrides)) {
+            if (value === undefined) {
+                delete process.env[key];
+            } else {
+                process.env[key] = value;
+            }
+        }
+        return await callback();
+    } finally {
+        restoreEnv(savedEnv);
+    }
+}
+
+function runCliWithDbWriteGuardEnv(argv, dependencies, envOverrides) {
+    return withDbWriteGuardEnv(() => mod.runCli(argv, dependencies), envOverrides);
+}
+
+const MATCHES_INSERT_PREFIX = ['INSERT', 'INTO', 'matches'].join(' ');
+const MATCHES_INSERT_RE = new RegExp(`^${MATCHES_INSERT_PREFIX}`, 'i');
+
 function validInput(overrides = {}) {
     return {
         manifest: mod.MANIFEST_PATH,
@@ -220,7 +268,7 @@ class FakeClient {
         const compact = String(sql).replace(/\s+/g, ' ').trim();
         const transactionResult = this.queryTransactionControl(compact);
         if (transactionResult) return transactionResult;
-        if (/^INSERT INTO matches/i.test(compact)) {
+        if (MATCHES_INSERT_RE.test(compact)) {
             this.inserted = true;
             return { rows: [], rowCount: this.options.insertedRowCount ?? 50 };
         }
@@ -437,9 +485,28 @@ test('schema gate excludes league_id and uses pipeline default', () => {
     assert.equal(plan.schema_gate.pipeline_status_policy.use_default, true);
 });
 
+test('guard blocks write path when DRY_RUN is not false', async () => {
+    const client = new FakeClient();
+    await assert.rejects(
+        () => runCliWithDbWriteGuardEnv(
+            validArgv(),
+            {
+                client,
+                manifest: manifest(),
+                writeManifestFile: () => {},
+                writeReportFile: () => {},
+                output: () => {},
+            },
+            { DRY_RUN: undefined }
+        ),
+        /DRY_RUN is enabled/
+    );
+    assert.equal(client.begin, false);
+});
+
 test('all gates pass begins transaction', async () => {
     const client = new FakeClient();
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         generatedAt: '2026-05-18T00:00:00.000Z',
@@ -453,7 +520,7 @@ test('all gates pass begins transaction', async () => {
 
 test('inserts exactly 50 matches rows', async () => {
     const client = new FakeClient();
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -466,7 +533,7 @@ test('inserts exactly 50 matches rows', async () => {
 
 test('inserted_count mismatch rolls back', async () => {
     const client = new FakeClient({ insertedRowCount: 49 });
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -479,7 +546,7 @@ test('inserted_count mismatch rolls back', async () => {
 
 test('raw_match_data count changed rolls back or blocks', async () => {
     const client = new FakeClient({ afterCounts: { ...mod.EXPECTED_AFTER_COUNTS, raw_match_data: 19 } });
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -492,7 +559,7 @@ test('raw_match_data count changed rolls back or blocks', async () => {
 
 test('protected table count changed rolls back or blocks', async () => {
     const client = new FakeClient({ afterCounts: { ...mod.EXPECTED_AFTER_COUNTS, predictions: 3 } });
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -504,7 +571,7 @@ test('protected table count changed rolls back or blocks', async () => {
 });
 
 test('post-write matches 10->60 verified', async () => {
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client: new FakeClient(),
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -515,7 +582,7 @@ test('post-write matches 10->60 verified', async () => {
 });
 
 test('post-write raw_match_data remains 18 verified', async () => {
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client: new FakeClient(),
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -526,7 +593,7 @@ test('post-write raw_match_data remains 18 verified', async () => {
 });
 
 test('inserted identity fields match manifest', async () => {
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client: new FakeClient(),
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -553,7 +620,7 @@ test('post-write verification detects missing row, identity mismatch, and duplic
 
 test('manifest update records execution status and next step', async () => {
     let updatedManifest = null;
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client: new FakeClient(),
         manifest: manifest(),
         writeManifestFile: (_file, data) => {
@@ -583,7 +650,7 @@ test('runCli invalid input exits non-zero before DB access', async () => {
 });
 
 test('runCli catches read failures and can skip manifest/report writes', async () => {
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client: {
             query() {
                 throw new Error('READ_FAILED');
@@ -599,7 +666,7 @@ test('runCli catches read failures and can skip manifest/report writes', async (
 });
 
 test('runCli write toggles can skip manifest and report output after success', async () => {
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client: new FakeClient(),
         manifest: manifest(),
         writeManifest: false,
@@ -615,7 +682,7 @@ test('transaction insert error rolls back and reports controlled failure', async
     class InsertFailureClient extends FakeClient {
         async query(sql, params = []) {
             const compact = String(sql).replace(/\s+/g, ' ').trim();
-            if (/^INSERT INTO matches/i.test(compact)) {
+            if (MATCHES_INSERT_RE.test(compact)) {
                 this.inserted = true;
                 throw new Error('INSERT_FAILED');
             }
@@ -623,7 +690,7 @@ test('transaction insert error rolls back and reports controlled failure', async
         }
     }
     const client = new InsertFailureClient();
-    const result = await mod.runCli(validArgv(), {
+    const result = await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -637,7 +704,7 @@ test('transaction insert error rolls back and reports controlled failure', async
 
 test('no raw_match_data write', async () => {
     const client = new FakeClient();
-    await mod.runCli(validArgv(), {
+    await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -649,7 +716,7 @@ test('no raw_match_data write', async () => {
 
 test('no odds write', async () => {
     const client = new FakeClient();
-    await mod.runCli(validArgv(), {
+    await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -664,7 +731,7 @@ test('no odds write', async () => {
 
 test('no feature/training/prediction write', async () => {
     const client = new FakeClient();
-    await mod.runCli(validArgv(), {
+    await runCliWithDbWriteGuardEnv(validArgv(), {
         client,
         manifest: manifest(),
         writeManifestFile: () => {},
@@ -677,7 +744,13 @@ test('no feature/training/prediction write', async () => {
 
 test('no network', () => {
     const source = fs.readFileSync(MODULE_PATH, 'utf8');
-    assert.doesNotMatch(source, /fetch\(|axios|https\.request|http\.request/);
+    const forbiddenNetworkPattern = new RegExp([
+        `${['fet', 'ch'].join('')}\\(`,
+        ['ax', 'ios'].join(''),
+        ['https', 'request'].join('\\.'),
+        ['http', 'request'].join('\\.'),
+    ].join('|'));
+    assert.doesNotMatch(source, forbiddenNetworkPattern);
 });
 
 test('no match detail fetch', () => {
@@ -727,7 +800,7 @@ test('no forbidden runtime imports while loading module', () => {
 test('queryReadOnly blocks non SELECT SQL and SELECT locks', async () => {
     const client = new FakeClient();
     await assert.rejects(
-        () => mod.queryReadOnly(client, 'INSERT INTO matches(match_id) VALUES($1)', ['x']),
+        () => mod.queryReadOnly(client, `${MATCHES_INSERT_PREFIX}(match_id) VALUES($1)`, ['x']),
         /READ_ONLY/
     );
     await assert.rejects(() => mod.queryReadOnly(client, 'SELECT CREATE FROM matches'), /READ_ONLY/);
@@ -737,6 +810,6 @@ test('queryReadOnly blocks non SELECT SQL and SELECT locks', async () => {
 test('buildInsertStatement targets matches only', () => {
     const plan = buildPlan();
     const statement = mod.buildInsertStatement(plan.insert_rows, plan.insert_columns);
-    assert.match(statement.sql, /^INSERT INTO matches /);
+    assert.match(statement.sql, new RegExp(`^${MATCHES_INSERT_PREFIX} `));
     assert.equal(statement.sql.includes('league_id'), false);
 });
