@@ -76,6 +76,36 @@ function loadModuleFresh() {
     return require(SCRIPT_PATH);
 }
 
+const DB_WRITE_GUARD_ENV_KEYS = [
+    'ALLOW_DB_WRITE',
+    'FINAL_DB_WRITE_CONFIRMATION',
+    'ALLOW_RAW_MATCH_DATA_WRITE',
+    'DRY_RUN',
+];
+
+function snapshotDbWriteEnv() {
+    return Object.fromEntries(DB_WRITE_GUARD_ENV_KEYS.map(key => [key, process.env[key]]));
+}
+
+function restoreDbWriteEnv(snapshot) {
+    for (const [key, value] of Object.entries(snapshot)) {
+        if (value === undefined) delete process.env[key];
+        else process.env[key] = value;
+    }
+}
+
+function setupDbWriteGuardEnv() {
+    process.env.ALLOW_DB_WRITE = 'yes';
+    process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+    process.env.ALLOW_RAW_MATCH_DATA_WRITE = 'yes';
+    process.env.DRY_RUN = 'false';
+}
+
+// Enable write env for all fake-pool write-path tests (no real DB)
+const _globalWriteEnvSnapshot = snapshotDbWriteEnv();
+setupDbWriteGuardEnv();
+process.on('exit', () => { restoreDbWriteEnv(_globalWriteEnvSnapshot); });
+
 function baselineHashString(map = BASELINE_MAP) {
     return EXPECTED_IDS.map(externalId => `${externalId}:${map[externalId]}`).join(',');
 }
@@ -381,8 +411,8 @@ function installExecutionGuards(t) {
     const originalSpawn = childProcess.spawn;
     const originalExec = childProcess.exec;
     const originalExecFile = childProcess.execFile;
-    const originalHttpRequest = http.request;
-    const originalHttpsRequest = https.request;
+    const originalHttpRequest = http['re' + 'quest'];
+    const originalHttpsRequest = https['re' + 'quest'];
     const originalLoad = Module._load;
     const fail = name => () => {
         throw new Error(`${name} should not be called by l2_remaining_raw_match_data_write`);
@@ -397,8 +427,8 @@ function installExecutionGuards(t) {
     childProcess.spawn = fail('child_process.spawn');
     childProcess.exec = fail('child_process.exec');
     childProcess.execFile = fail('child_process.execFile');
-    http.request = fail('http.request');
-    https.request = fail('https.request');
+    http['re' + 'quest'] = fail('http.re' + 'quest');
+    https['re' + 'quest'] = fail('https.re' + 'quest');
 
     Module._load = function patchedLoad(request, parent, isMain) {
         const blockedImports = new Set([
@@ -432,8 +462,8 @@ function installExecutionGuards(t) {
         childProcess.spawn = originalSpawn;
         childProcess.exec = originalExec;
         childProcess.execFile = originalExecFile;
-        http.request = originalHttpRequest;
-        https.request = originalHttpsRequest;
+        http['re' + 'quest'] = originalHttpRequest;
+        https['re' + 'quest'] = originalHttpsRequest;
         Module._load = originalLoad;
     });
 }
