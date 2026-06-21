@@ -12,6 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const { extractGoldenFeatures } = require('../../src/feature_engine/extractors/GoldenFeatureExtractor');
 const { extractTacticalFeatures } = require('../../src/feature_engine/extractors/TacticalMomentumExtractor');
@@ -386,6 +387,12 @@ async function main() {
         return;
     }
     if (args.commit) {
+        // DB Write Safety Gate — unified guard (defense-in-depth)
+        assertDbWriteAllowed({
+            script: 'l3_features_local_write_gate.js',
+            tables: ['l3_features'],
+            operations: ['INSERT', 'UPDATE'],
+        });
         console.error(JSON.stringify(buildBlockedCommitPayload(), null, 2));
         process.exitCode = 1;
         return;

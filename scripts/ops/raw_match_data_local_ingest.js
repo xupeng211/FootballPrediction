@@ -12,6 +12,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const DATA_VERSION = 'PHASE4.21_DRY_RUN';
 const FORBIDDEN_SQL = /\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|UPSERT|MERGE|GRANT|REVOKE)\b/i;
@@ -196,6 +197,12 @@ async function main() {
         return;
     }
     if (args.commit) {
+        // DB Write Safety Gate — unified guard (defense-in-depth)
+        assertDbWriteAllowed({
+            script: 'raw_match_data_local_ingest.js',
+            tables: ['raw_match_data'],
+            operations: ['INSERT', 'UPDATE'],
+        });
         console.error(JSON.stringify(buildBlockedCommitPayload(), null, 2));
         process.exitCode = 1;
         return;

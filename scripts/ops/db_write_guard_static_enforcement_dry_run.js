@@ -114,6 +114,17 @@ const PHASE2_GUARDED = Object.freeze([
     'matches_labeling_backfill_dry_run.js',
 ]);
 
+const PHASE3_GUARDED = Object.freeze([
+    'reset_database.js',
+    'purge_ghost_data.js',
+    'gold_pilot_50.js',
+    'raw_match_data_local_ingest.js',
+    'local_dom_ingestor.js',
+    'l3_features_local_write_gate.js',
+    'match_features_training_local_write_gate.js',
+    'prediction_local_write_gate.js',
+]);
+
 const PHASE1_SKIPPED = Object.freeze([
     'l2_raw_match_data_write.js',
     'l2_remaining_raw_match_data_write.js',
@@ -327,6 +338,7 @@ function classifyScript(filePath, content) {
     // Check if Phase1/Phase2 guarded
     const isPhase1 = PHASE1_GUARDED.includes(baseName);
     const isPhase2 = PHASE2_GUARDED.includes(baseName);
+    const isPhase3 = PHASE3_GUARDED.includes(baseName);
     const wasSkipped = PHASE1_SKIPPED.includes(baseName);
 
     if (writeRisks.length === 0) {
@@ -342,6 +354,8 @@ function classifyScript(filePath, content) {
         const pos = guardBeforeWrite(content, baseName);
         const needsReview = !pos.beforeWrite;
 
+        const phaseLabel = isPhase1 ? 'phase1' : (isPhase2 ? 'phase2' : (isPhase3 ? 'phase3' : null));
+
         if (needsReview) {
             return {
                 classification: 'guarded_but_needs_review',
@@ -349,18 +363,18 @@ function classifyScript(filePath, content) {
                 writeOps: ops,
                 tables,
                 riskLevel: highestRisk,
-                phase1_or_2: isPhase1 ? 'phase1' : (isPhase2 ? 'phase2' : null),
+                phase1_or_2: phaseLabel,
                 hasHighRiskOps: hasHighRisk,
             };
         }
 
         return {
             classification: 'guarded',
-            reason: `guard present, before write${isPhase1 ? ', Phase1' : ''}${isPhase2 ? ', Phase2' : ''}`,
+            reason: `guard present, before write${isPhase1 ? ', Phase1' : ''}${isPhase2 ? ', Phase2' : ''}${isPhase3 ? ', Phase3' : ''}`,
             writeOps: ops,
             tables,
             riskLevel: highestRisk,
-            phase1_or_2: isPhase1 ? 'phase1' : (isPhase2 ? 'phase2' : null),
+            phase1_or_2: phaseLabel,
             hasHighRiskOps: hasHighRisk,
         };
     }
@@ -478,13 +492,13 @@ function buildSummary(results) {
         test_file_count: results.filter(r => r.classification === 'test_file').length,
         self_referential_count: results.filter(r => r.classification === 'self_referential').length,
 
-        phase1_phase2_guarded_detected_count: results.filter(
+        phase1_phase2_phase3_guarded_detected_count: results.filter(
             r => (r.classification === 'guarded' || r.classification === 'guarded_but_needs_review') &&
-                (r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2')
+                (r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2' || r.phase1_or_2 === 'phase3')
         ).length,
 
-        phase1_phase2_guarded_expected: PHASE1_GUARDED.length + PHASE2_GUARDED.length,
-        all_phase1_phase2_detected: null, // filled below
+        phase1_phase2_phase3_guarded_expected: PHASE1_GUARDED.length + PHASE2_GUARDED.length + PHASE3_GUARDED.length,
+        all_phase1_phase2_phase3_detected: null, // filled below
 
         candidates_for_phase3: results
             .filter(r => r.classification === 'unguarded_p0_candidate')
@@ -496,16 +510,16 @@ function buildSummary(results) {
         recommended_next_task: null, // filled below
     };
 
-    // Check all Phase1+Phase2 guarded detected (including needs-review as verified)
+    // Check all Phase1+Phase2+Phase3 guarded detected (including needs-review as verified)
     const detectedGuardedNames = results
         .filter(r => r.classification === 'guarded' || r.classification === 'guarded_but_needs_review')
-        .filter(r => r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2')
+        .filter(r => r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2' || r.phase1_or_2 === 'phase3')
         .map(r => path.basename(r.path));
-    const allExpected = [...PHASE1_GUARDED, ...PHASE2_GUARDED];
+    const allExpected = [...PHASE1_GUARDED, ...PHASE2_GUARDED, ...PHASE3_GUARDED];
     const missing = allExpected.filter(n => !detectedGuardedNames.includes(n));
 
-    summary.all_phase1_phase2_detected = missing.length === 0;
-    summary.missing_phase1_phase2 = missing;
+    summary.all_phase1_phase2_phase3_detected = missing.length === 0;
+    summary.missing_phase1_phase2_phase3 = missing;
 
     if (summary.unguarded_p0_candidate_count > 0) {
         summary.recommended_next_task = 'p0_db_write_safety_gate_fix_phase3';
@@ -545,12 +559,12 @@ function printReport(results, summary) {
     console.log(`  self-referential:                  ${summary.self_referential_count}`);
     console.log('');
 
-    console.log('── Phase1 + Phase2 Check ──');
-    console.log(`  Expected guarded:  ${summary.phase1_phase2_guarded_expected}`);
-    console.log(`  Detected guarded:  ${summary.phase1_phase2_guarded_detected_count}`);
-    console.log(`  All detected:      ${summary.all_phase1_phase2_detected ? 'YES ✓' : 'NO ✗'}`);
-    if (summary.missing_phase1_phase2 && summary.missing_phase1_phase2.length > 0) {
-        console.log(`  Missing:           ${summary.missing_phase1_phase2.join(', ')}`);
+    console.log('── Phase1 + Phase2 + Phase3 Check ──');
+    console.log(`  Expected guarded:  ${summary.phase1_phase2_phase3_guarded_expected}`);
+    console.log(`  Detected guarded:  ${summary.phase1_phase2_phase3_guarded_detected_count}`);
+    console.log(`  All detected:      ${summary.all_phase1_phase2_phase3_detected ? 'YES ✓' : 'NO ✗'}`);
+    if (summary.missing_phase1_phase2_phase3 && summary.missing_phase1_phase2_phase3.length > 0) {
+        console.log(`  Missing:           ${summary.missing_phase1_phase2_phase3.join(', ')}`);
     }
     console.log('');
 
@@ -682,6 +696,7 @@ module.exports = {
     KNOWN_TABLES,
     PHASE1_GUARDED,
     PHASE2_GUARDED,
+    PHASE3_GUARDED,
     PHASE1_SKIPPED,
     // Functions
     hasDbWriteRisk,

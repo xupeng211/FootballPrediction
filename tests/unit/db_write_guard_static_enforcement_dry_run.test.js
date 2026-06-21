@@ -204,7 +204,7 @@ test('Scenario 6: buildSummary output structure is complete', (t) => {
     assert.equal(typeof summary.guarded_count, 'number');
     assert.equal(typeof summary.unguarded_p0_candidate_count, 'number');
     assert.equal(typeof summary.false_positive_or_readonly_count, 'number');
-    assert.equal(typeof summary.all_phase1_phase2_detected, 'boolean');
+    assert.equal(typeof summary.all_phase1_phase2_phase3_detected, 'boolean');
     assert.ok(Array.isArray(summary.candidates_for_phase3));
     assert.ok(summary.recommended_enforcement_rule.length > 0);
     assert.ok(summary.recommended_ci_mode.length > 0);

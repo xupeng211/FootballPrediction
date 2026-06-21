@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 
 const { Normalizer } = require('../../src/utils/Normalizer');
 const { buildDbConnectionConfig } = require('./helpers/dbBlueprint');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const DEFAULT_LEAGUE = 'Premier League';
 const DEFAULT_SEASON = '2024-2025';
@@ -121,6 +122,13 @@ async function purgeGhostData(options = {}) {
         committed: false
       };
     }
+
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+      script: 'purge_ghost_data.js',
+      tables: ['matches', 'bookmaker_odds_history', 'match_features_training', 'matches_oddsportal_mapping', 'odds', 'predictions'],
+      operations: ['DELETE'],
+    });
 
     await client.query('BEGIN');
     const deletedRefs = {};

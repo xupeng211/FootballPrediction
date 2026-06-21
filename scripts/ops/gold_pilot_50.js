@@ -16,6 +16,7 @@ const { Pool } = require('pg');
 const { Checkpointer } = require('../../src/infrastructure/harvesters/Checkpointer');
 const { ProxyRotator } = require('../../src/infrastructure/harvesters/ProxyRotator');
 const { OddsPortalHarvester, OddsPortalURLParser } = require('../../src/infrastructure/harvesters/OddsPortalHarvester');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 // 真实比赛数据 (50场英超经典对决)
 const REAL_MATCHES = [
@@ -373,6 +374,13 @@ class GoldPilotExecutor {
 
 // 主入口
 async function main() {
+  // DB Write Safety Gate — unified guard
+  assertDbWriteAllowed({
+    script: 'gold_pilot_50.js',
+    tables: ['l3_features', 'matches'],
+    operations: ['INSERT', 'UPDATE'],
+  });
+
   const executor = new GoldPilotExecutor();
   
   try {
