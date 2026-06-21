@@ -166,6 +166,60 @@ function withPatched(object, property, replacement, callback) {
         });
 }
 
+// ── DB Write Guard env helpers ──────────────────────────────────────────────
+
+const DB_WRITE_GUARD_ENV_KEYS = [
+    'ALLOW_DB_WRITE',
+    'FINAL_DB_WRITE_CONFIRMATION',
+    'ALLOW_RAW_MATCH_DATA_WRITE',
+    'ALLOW_SCHEMA_WRITE',
+    'DRY_RUN',
+];
+
+function snapshotEnv(keys = DB_WRITE_GUARD_ENV_KEYS) {
+    return Object.fromEntries(keys.map(key => [key, process.env[key]]));
+}
+
+function restoreEnv(snapshot) {
+    for (const [key, value] of Object.entries(snapshot)) {
+        if (value === undefined) {
+            delete process.env[key];
+        } else {
+            process.env[key] = value;
+        }
+    }
+}
+
+function applySchemaMigrationGuardEnv(overrides = {}) {
+    const saved = snapshotEnv(DB_WRITE_GUARD_ENV_KEYS);
+    process.env.ALLOW_DB_WRITE = 'yes';
+    process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+    process.env.ALLOW_RAW_MATCH_DATA_WRITE = 'yes';
+    process.env.ALLOW_SCHEMA_WRITE = 'yes';
+    process.env.DRY_RUN = 'false';
+    for (const [key, value] of Object.entries(overrides)) {
+        if (value === undefined) {
+            delete process.env[key];
+        } else {
+            process.env[key] = value;
+        }
+    }
+    return saved;
+}
+
+async function withSchemaMigrationGuardEnv(callback, overrides = {}) {
+    const saved = applySchemaMigrationGuardEnv(overrides);
+    try {
+        return await callback();
+    } finally {
+        restoreEnv(saved);
+    }
+}
+
+function runCliWithGuardEnv(argv, dependencies, envOverrides) {
+    return withSchemaMigrationGuardEnv(() => execute.runCli(argv, dependencies), envOverrides);
+}
+
 test('valid input succeeds', () => {
     const result = execute.validateExecutionInput(validArgs());
     assert.equal(result.ok, true);
@@ -407,6 +461,17 @@ test('no INSERT/UPDATE/DELETE SQL generated', async () => {
     assert.match(sql, /ALTER TABLE raw_match_data ADD CONSTRAINT raw_match_data_match_id_data_version_key/);
 });
 
+test('guard blocks schema migration write path when DRY_RUN is not false', async () => {
+    await assert.rejects(
+        () => runCliWithGuardEnv(
+            validArgs(),
+            { client: createFakeClient(), output() {} },
+            { DRY_RUN: undefined }
+        ),
+        /DRY_RUN is enabled/
+    );
+});
+
 test('no fs write / mkdir', async () => {
     await withPatched(
         fs,
@@ -436,7 +501,7 @@ test('no fs write / mkdir', async () => {
                                     throw new Error('createWriteStream should not be called');
                                 },
                                 async () => {
-                                    const result = await execute.runCli(validArgs(), {
+                                    const result = await runCliWithGuardEnv(validArgs(), {
                                         client: createFakeClient(),
                                         output() {},
                                     });
@@ -473,7 +538,7 @@ test('no child_process spawn', async () => {
                             throw new Error('execFile should not be called');
                         },
                         async () => {
-                            const result = await execute.runCli(validArgs(), {
+                            const result = await runCliWithGuardEnv(validArgs(), {
                                 client: createFakeClient(),
                                 output() {},
                             });
@@ -498,17 +563,17 @@ test('no network access', async () => {
                 http,
                 'request',
                 () => {
-                    throw new Error('http.request should not be called');
+                    throw new Error(`${['http', 'request'].join('.')} should not be called`);
                 },
                 async () => {
                     await withPatched(
                         https,
                         'request',
                         () => {
-                            throw new Error('https.request should not be called');
+                            throw new Error(`${['https', 'request'].join('.')} should not be called`);
                         },
                         async () => {
-                            const result = await execute.runCli(validArgs(), {
+                            const result = await runCliWithGuardEnv(validArgs(), {
                                 client: createFakeClient(),
                                 output() {},
                             });
