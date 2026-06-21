@@ -50,11 +50,7 @@ def _emit_violation_errors(violations: list[dict]) -> list[str]:
         )
         suggested = v.get("suggestedFix", "")
         if suggested:
-            errors.extend(
-                f"  {line.strip()}"
-                for line in suggested.split("\n")
-                if line.strip()
-            )
+            errors.extend(f"  {line.strip()}" for line in suggested.split("\n") if line.strip())
     errors.append(
         "[DB-WRITE-GUARD ENFORCEMENT] SC-002 is NOT fully fixed. "
         "Historical full-scan candidates are exempt from this hard fail. "
@@ -65,10 +61,7 @@ def _emit_violation_errors(violations: list[dict]) -> list[str]:
 
 def _emit_violation_warnings(violations: list[dict]) -> list[str]:
     """Build advisory warnings from violation entries (should_fail=false edge case)."""
-    return [
-        f"  {v.get('path', '?')}: {v.get('reason', '?')}"
-        for v in violations
-    ]
+    return [f"  {v.get('path', '?')}: {v.get('reason', '?')}" for v in violations]
 
 
 def check_db_write_guard_enforcement(  # noqa: C901, PLR0912

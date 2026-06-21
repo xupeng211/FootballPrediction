@@ -95,9 +95,7 @@ def test_db_write_guard_enforcement_function_exists():
 
 def test_db_write_guard_enforcement_no_js_ops_changed():
     """When no scripts/ops/*.js files changed, returns empty errors/warnings."""
-    errors, warnings = gate.check_db_write_guard_enforcement(
-        {"docs/README.md", "src/main.py"}
-    )
+    errors, warnings = gate.check_db_write_guard_enforcement({"docs/README.md", "src/main.py"})
     assert errors == []
     assert warnings == []
 
@@ -107,17 +105,13 @@ _ENFORCEMENT_TUPLE_LEN = 2
 
 def test_db_write_guard_enforcement_guarded_file():
     """A known guarded scripts/ops file should produce no errors."""
-    errors, _warnings = gate.check_db_write_guard_enforcement(
-        {"scripts/ops/purge_orphans.js"}
-    )
+    errors, _warnings = gate.check_db_write_guard_enforcement({"scripts/ops/purge_orphans.js"})
     assert errors == [], f"Expected no errors for guarded file, got: {errors}"
 
 
 def test_db_write_guard_enforcement_returns_tuple():
     """check_db_write_guard_enforcement must return a 2-tuple of lists."""
-    result = gate.check_db_write_guard_enforcement(
-        {"scripts/ops/purge_orphans.js"}
-    )
+    result = gate.check_db_write_guard_enforcement({"scripts/ops/purge_orphans.js"})
     assert isinstance(result, tuple)
     assert len(result) == _ENFORCEMENT_TUPLE_LEN
     errors, warnings = result
@@ -140,9 +134,11 @@ def test_enforcement_validate_integration_clean():
 def test_gate_cli_with_skip_body_checks_and_clean_files_passes():
     """Gate CLI with --skip-body-checks and clean changed files should exit 0."""
     result = subprocess.run(
-        [sys.executable, str(GATE), "--pr-body-file", "/dev/null",
-         "--skip-body-checks"],
-        cwd=ROOT, text=True, capture_output=True, check=False,
+        [sys.executable, str(GATE), "--pr-body-file", "/dev/null", "--skip-body-checks"],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
     )
     assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
 
@@ -152,6 +148,10 @@ def test_gate_cli_with_valid_body_and_clean_files_passes():
     body = _valid_pr_body()
     result = subprocess.run(
         [sys.executable, str(GATE), "--pr-body-stdin"],
-        input=body, cwd=ROOT, text=True, capture_output=True, check=False,
+        input=body,
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
     )
     assert result.returncode == 0, f"stdout: {result.stdout}\nstderr: {result.stderr}"
