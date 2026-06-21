@@ -2,6 +2,7 @@
 /* eslint-disable complexity, max-lines */
 'use strict';
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const crypto = require('node:crypto');
 const { extractFromHtml, transformToApiFormat } = require('../../src/parsers/fotmob/NextDataParser');
 const { runFotMobDetailRouteSelector, buildRouteSelectorPreviewSummary } = require('./l2_raw_detail_preview');
@@ -1028,6 +1029,13 @@ async function executeRawMatchDataWrite(input = {}, dependencies = {}) {
     };
     try {
         connection = await acquireDbConnection(dependencies);
+
+        assertDbWriteAllowed({
+            script: 'l2_raw_match_data_write.js',
+            tables: ['raw_match_data'],
+            operations: ['INSERT'],
+        });
+
         await connection.client.query('BEGIN');
         transaction.began = true;
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const {
     RAW_MATCH_DATA_VERSIONS,
     selectCanonicalRawMatchData,
@@ -396,6 +397,14 @@ async function buildRawMatchDataVersionCompatibilityAudit(input = {}, dependenci
 
     if (dependencies.auditRows) {
         return buildAuditResult(validation.value, dependencies.auditRows);
+    }
+
+    if (validation.value.execute || validation.value.commit) {
+        assertDbWriteAllowed({
+            script: 'raw_match_data_version_compatibility_audit.js',
+            tables: ['raw_match_data'],
+            operations: ['INSERT', 'UPDATE'],
+        });
     }
 
     const pool = dependencies.pool || (dependencies.getPool ? dependencies.getPool() : createDefaultPool());

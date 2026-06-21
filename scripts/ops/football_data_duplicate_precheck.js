@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const { runDryRun, parseArgs: parseDryRunArgs } = require('./football_data_adapter_dry_run');
 
 const DUPLICATE_PRECHECK_PHASE = 'PHASE4.65C_FOOTBALL_DATA_DUPLICATE_PRECHECK';
@@ -542,6 +543,11 @@ async function main(argv = process.argv.slice(2), io = {}) {
             return 0;
         }
         if (args.commit) {
+            assertDbWriteAllowed({
+                script: 'football_data_duplicate_precheck.js',
+                tables: ['matches'],
+                operations: ['INSERT'],
+            });
             const payload = buildBlockedCommitPayload(args);
             writePayload(payload, args.json, output);
             return 1;
