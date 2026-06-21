@@ -13,6 +13,8 @@ Last updated: 2026-06-21
 - `main` includes PR #1569 (p0_db_write_safety_gate_fix_phase1 — unified guard + 8 scripts).
 - `p0_db_write_guard_hardening_production_host_block` hardens the guard: production-like
   DB hosts are now blocked by default (previously warning-only). No production override exists.
+- `p0_db_write_safety_gate_fix_phase2` adds guard to 8 more P0 scripts/ops entrypoints.
+  Phase1 + Phase2 = 16 scripts now protected. SC-002 remains partial mitigation only.
 - Remote GitHub Actions `production-gate.yml` is the final CI authority.
 - Local `make ci-local-pr` is a pre-push helper, not a full replacement for remote CI.
 - AI workflow governance rules are enforced by:
@@ -29,6 +31,8 @@ Last updated: 2026-06-21
 - `p0_db_write_safety_gate_fix_phase1` merged: unified guard helper + 8 script integrations.
 - `p0_db_write_guard_hardening_production_host_block`: production-like DB host is now blocked
   by default (was warning-only). No production override exists. DB write remains blocked.
+- `p0_db_write_safety_gate_fix_phase2` merged: 8 more scripts/ops entrypoints now protected.
+  Phase1 + Phase2 = 16 of 66 P0 scripts now have guard. SC-002 still partial mitigation only.
 - A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
 - 8 of 12 target P0 scripts now integrate the guard before DB write operations.
 - 4 scripts were skipped (see PR body): already have extensive controlled write
@@ -144,8 +148,8 @@ Last updated: 2026-06-21
 
 ## Next recommended sequence
 
-1. Merge `p0_db_write_safety_gate_fix_phase1` (this PR).
-2. Plan `p0_db_write_safety_gate_fix_phase2` to cover remaining P0 scripts.
+1. Phase1 + Phase2 = 16 scripts/ops entrypoints now guarded. ~50 P0 scripts remain.
+2. Plan `p0_db_write_safety_gate_fix_phase3` or static guard enforcement.
 3. Keep formal training and data expansion blocked until DB write safety,
    cutoff strategy, training eligibility, and schema/init alignment are handled.
 4. Do not start model training, data expansion, or raw-write work automatically.

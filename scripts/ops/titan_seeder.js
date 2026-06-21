@@ -15,6 +15,7 @@
 const { Pool } = require('pg');
 const https = require('https');
 const { Normalizer } = require('../../src/utils/Normalizer');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 // 五大联赛配置
 const LEAGUES = [
@@ -426,6 +427,13 @@ class BulkSeedMarathon {
  * 主函数
  */
 async function main() {
+  // DB Write Safety Gate — unified guard
+  assertDbWriteAllowed({
+    script: 'titan_seeder.js',
+    tables: ['matches'],
+    operations: ['INSERT'],
+  });
+
   const seeder = new BulkSeedMarathon();
   const cli = parseCliArgs();
   const mode = cli.mode;

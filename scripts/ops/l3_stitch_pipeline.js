@@ -8,6 +8,7 @@ const path = require('path');
 const { fork, spawn } = require('child_process');
 const { Pool } = require('pg');
 const { resolveSeasonContext } = require('./helpers/seasonRuntimeConfig');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const { season: TARGET_SEASON } = resolveSeasonContext({
     seasonEnvVar: 'L3_STITCH_SEASON',
@@ -267,6 +268,13 @@ function runEloRecalculation() {
 }
 
 async function main() {
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+        script: 'l3_stitch_pipeline.js',
+        tables: ['l3_features', 'matches'],
+        operations: ['CREATE', 'UPDATE'],
+    });
+
     const client = await pool.connect();
 
     try {

@@ -23,6 +23,7 @@
 'use strict';
 
 const { getPool } = require('../../config/database');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const {
   computeGovernanceLabels,
 } = require('../../src/infrastructure/services/MatchLabelingGovernance');
@@ -554,6 +555,13 @@ async function executeWrite(pool, classified) {
 
   const client = await pool.connect();
   try {
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+      script: 'matches_labeling_backfill_dry_run.js',
+      tables: ['matches'],
+      operations: ['UPDATE'],
+    });
+
     await client.query('BEGIN');
 
     let updatedCount = 0;

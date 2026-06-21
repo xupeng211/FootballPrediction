@@ -16,6 +16,7 @@
 const fs = require('fs');
 const path = require('path');
 const { getPool } = require('../../config/database');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const DATA_DIR = process.env.DATA_MATCHES_PATH
     ? path.resolve(process.cwd(), process.env.DATA_MATCHES_PATH)
@@ -26,6 +27,13 @@ const BATCH_SIZE = 500;
  * 主函数
  */
 async function main() {
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+        script: 'bulk_import_matches.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
     const startTime = Date.now();
     console.log('🔥 TITAN-WAREHOUSE-IMPORT 启动');
     console.log(`📁 目标目录: ${DATA_DIR}`);
