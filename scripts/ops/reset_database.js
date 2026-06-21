@@ -4,6 +4,7 @@
 const { Pool } = require('pg');
 
 const { buildDbConnectionConfig } = require('./helpers/dbBlueprint');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const PRIMARY_TABLE = 'matches';
 const REQUIRED_TABLES = [
@@ -82,6 +83,13 @@ async function resetDatabase(options = {}) {
         after: before
       };
     }
+
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+      script: 'reset_database.js',
+      tables: ['matches', 'bookmaker_odds_history', 'raw_match_data', 'predictions'],
+      operations: ['TRUNCATE'],
+    });
 
     await client.query('BEGIN');
     await client.query(`TRUNCATE TABLE ${tableNames.map(quoteIdentifier).join(', ')} RESTART IDENTITY CASCADE`);

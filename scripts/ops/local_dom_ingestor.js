@@ -14,6 +14,7 @@ const {
   readExecutableSql
 } = require('./helpers/dbBlueprint');
 const { EntityMapper } = require('../../src/infrastructure/etl/EntityMapper');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const DEFAULT_INPUT_DIR = path.join(REPO_ROOT, 'data', 'manual_html');
 const BOOKMAKER_ODDS_HISTORY_MIGRATION = path.join(
@@ -491,6 +492,13 @@ async function commitInsertPreview(rows = []) {
   const client = await pool.connect();
 
   try {
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+      script: 'local_dom_ingestor.js',
+      tables: ['bookmaker_odds_history'],
+      operations: ['INSERT', 'UPDATE'],
+    });
+
     await client.query('BEGIN');
     const migrationApplied = await ensureOddsHistoryTable(client);
     await assertReferencedMatchesExist(client, rows);
