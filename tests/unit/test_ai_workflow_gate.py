@@ -476,9 +476,9 @@ def test_documentation_impact_na_fails():
     """Documentation Impact with only 'N/A' should be rejected."""
     body = _body_with_section_content("N/A", _substantive_validation(), _substantive_rollback())
     errors = _check_content(body)
-    assert any(
-        "## Documentation Impact" in e for e in errors
-    ), f"Should flag Documentation Impact as hollow; got: {errors}"
+    assert any("## Documentation Impact" in e for e in errors), (
+        f"Should flag Documentation Impact as hollow; got: {errors}"
+    )
 
 
 def test_documentation_impact_none_fails():
@@ -490,21 +490,27 @@ def test_documentation_impact_none_fails():
 
 def test_documentation_impact_not_applicable_fails():
     """Documentation Impact with only 'not applicable' should be rejected."""
-    body = _body_with_section_content("not applicable", _substantive_validation(), _substantive_rollback())
+    body = _body_with_section_content(
+        "not applicable", _substantive_validation(), _substantive_rollback()
+    )
     errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
 
 def test_documentation_impact_no_impact_fails():
     """Documentation Impact with only 'no impact' should be rejected."""
-    body = _body_with_section_content("no impact", _substantive_validation(), _substantive_rollback())
+    body = _body_with_section_content(
+        "no impact", _substantive_validation(), _substantive_rollback()
+    )
     errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
 
 def test_documentation_impact_no_documentation_impact_fails():
     """Documentation Impact with only 'no documentation impact' should be rejected."""
-    body = _body_with_section_content("no documentation impact", _substantive_validation(), _substantive_rollback())
+    body = _body_with_section_content(
+        "no documentation impact", _substantive_validation(), _substantive_rollback()
+    )
     errors = _check_content(body)
     assert any("## Documentation Impact" in e for e in errors)
 
@@ -520,7 +526,9 @@ def test_validation_passed_fails():
     """Validation with only 'passed' should be rejected."""
     body = _body_with_section_content(_substantive_doc(), "passed", _substantive_rollback())
     errors = _check_content(body)
-    assert any("## Validation" in e for e in errors), f"Should flag Validation as hollow; got: {errors}"
+    assert any("## Validation" in e for e in errors), (
+        f"Should flag Validation as hollow; got: {errors}"
+    )
 
 
 def test_validation_ok_fails():
@@ -546,21 +554,29 @@ def test_validation_all_tests_pass_fails():
 
 def test_rollback_plan_revert_pr_fails():
     """Rollback Plan with only 'revert the PR' should be rejected."""
-    body = _body_with_section_content(_substantive_doc(), _substantive_validation(), "revert the PR")
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), "revert the PR"
+    )
     errors = _check_content(body)
-    assert any("## Rollback Plan" in e for e in errors), f"Should flag Rollback Plan as hollow; got: {errors}"
+    assert any("## Rollback Plan" in e for e in errors), (
+        f"Should flag Rollback Plan as hollow; got: {errors}"
+    )
 
 
 def test_rollback_plan_revert_commit_fails():
     """Rollback Plan with only 'revert this commit' should be rejected."""
-    body = _body_with_section_content(_substantive_doc(), _substantive_validation(), "revert this commit")
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), "revert this commit"
+    )
     errors = _check_content(body)
     assert any("## Rollback Plan" in e for e in errors)
 
 
 def test_rollback_plan_git_revert_fails():
     """Rollback Plan with only 'git revert ...' should be rejected."""
-    body = _body_with_section_content(_substantive_doc(), _substantive_validation(), "git revert HEAD~1")
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), "git revert HEAD~1"
+    )
     errors = _check_content(body)
     assert any("## Rollback Plan" in e for e in errors)
 
@@ -574,7 +590,9 @@ def test_rollback_plan_empty_fails():
 
 def test_check_7_does_not_break_next_task_gate():
     """Next Recommended Task mandatory phrases must still be enforced."""
-    body = _body_with_section_content(_substantive_doc(), _substantive_validation(), _substantive_rollback())
+    body = _body_with_section_content(
+        _substantive_doc(), _substantive_validation(), _substantive_rollback()
+    )
     assert gate.check_next_task_stop_phrase(body) == []
 
 
@@ -628,7 +646,9 @@ def test_mixed_with_missing_sections_fails():
     errors = gate.validate(body, changes)
     # Should have: missing sections + missing stop phrase + mixed governance
     min_expected = 3
-    assert len(errors) >= min_expected, f"Expected >= {min_expected} errors, got {len(errors)}: {errors}"
+    assert len(errors) >= min_expected, (
+        f"Expected >= {min_expected} errors, got {len(errors)}: {errors}"
+    )
 
 
 def test_gate_script_exists():

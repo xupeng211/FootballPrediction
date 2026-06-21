@@ -452,7 +452,9 @@ def check_mixed_governance_business(changed: set[str]) -> list[str]:
     biz = _touches_business_code(changed)
     if gov and biz:
         gov_files = sorted(changed & GOVERNANCE_DOC_PATHS)
-        biz_files = sorted(p for p in changed if any(p.startswith(px) for px in BUSINESS_CODE_PATH_PREFIXES))
+        biz_files = sorted(
+            p for p in changed if any(p.startswith(px) for px in BUSINESS_CODE_PATH_PREFIXES)
+        )
         return [
             "Mixed governance + business code in one PR is prohibited. "
             f"Governance: {', '.join(gov_files)}. "
@@ -485,14 +487,18 @@ def check_doc_sprawl(added: set[str]) -> list[str]:
 
 def _touches_report_artifact(changes: list[Change]) -> bool:
     return any(
-        c.status != "D" and c.path.startswith(REPORT_ARTIFACT_PREFIX) and c.path.endswith(REPORT_ARTIFACT_SUFFIX)
+        c.status != "D"
+        and c.path.startswith(REPORT_ARTIFACT_PREFIX)
+        and c.path.endswith(REPORT_ARTIFACT_SUFFIX)
         for c in changes
     )
 
 
 def _extract_table_value(pr_body: str, labels: tuple[str, ...]) -> str:
     label_pattern = "|".join(re.escape(label) for label in labels)
-    pattern = re.compile(rf"^\|\s*(?:{label_pattern})\s*\|\s*(.*?)\s*\|", re.IGNORECASE | re.MULTILINE)
+    pattern = re.compile(
+        rf"^\|\s*(?:{label_pattern})\s*\|\s*(.*?)\s*\|", re.IGNORECASE | re.MULTILINE
+    )
     match = pattern.search(pr_body)
     return match.group(1).strip().strip("`").strip() if match else ""
 
@@ -500,7 +506,10 @@ def _extract_table_value(pr_body: str, labels: tuple[str, ...]) -> str:
 def _has_substantive_no_update_reason(pr_body: str) -> bool:
     reason = _extract_table_value(pr_body, SOURCE_OF_TRUTH_REASON_LABELS)
     normalized = re.sub(r"\s+", " ", reason).strip().strip(".:-").lower()
-    return len(normalized) >= MIN_SOURCE_OF_TRUTH_REASON_CHARS and normalized not in HOLLOW_NO_UPDATE_REASONS
+    return (
+        len(normalized) >= MIN_SOURCE_OF_TRUTH_REASON_CHARS
+        and normalized not in HOLLOW_NO_UPDATE_REASONS
+    )
 
 
 def check_authoritative_report_backflow(pr_body: str, changes: list[Change]) -> list[str]:
@@ -539,7 +548,9 @@ def _scan_file_for_patterns(file_path: Path, patterns: tuple[re.Pattern[str], ..
         for m in pat.finditer(text):
             # Truncate match for readable error message
             snippet = m.group()[:80]
-            hits.append(f"{file_path.relative_to(ROOT)}: pattern '{pat.pattern}' matched '{snippet}'")
+            hits.append(
+                f"{file_path.relative_to(ROOT)}: pattern '{pat.pattern}' matched '{snippet}'"
+            )
     return hits
 
 
@@ -593,23 +604,31 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
     errors: list[str] = []
 
     # DB check
-    db_declared_no = _safety_declared_no(pr_body, r"DB\s+used") or _safety_status_no(pr_body, r"DB\s+writes")
+    db_declared_no = _safety_declared_no(pr_body, r"DB\s+used") or _safety_status_no(
+        pr_body, r"DB\s+writes"
+    )
     if db_declared_no and _touches_any(changed, DB_TOUCH_PATHS):
         touching = sorted(p for p in changed if any(p.startswith(px) for px in DB_TOUCH_PATHS))
-        errors.append("Safety declaration says no DB, but changed files touch DB paths: " + ", ".join(touching))
+        errors.append(
+            "Safety declaration says no DB, but changed files touch DB paths: "
+            + ", ".join(touching)
+        )
 
     # Scraper check
-    scraper_declared_no = _safety_declared_no(pr_body, r"Scraper\s+run") or _safety_status_no(pr_body, r"scraper")
+    scraper_declared_no = _safety_declared_no(pr_body, r"Scraper\s+run") or _safety_status_no(
+        pr_body, r"scraper"
+    )
     if scraper_declared_no and _touches_any(changed, SCRAPER_TOUCH_PATHS):
         touching = sorted(p for p in changed if any(p.startswith(px) for px in SCRAPER_TOUCH_PATHS))
         errors.append(
-            "Safety declaration says no scraper, but changed files touch scraper/data paths: " + ", ".join(touching)
+            "Safety declaration says no scraper, but changed files touch scraper/data paths: "
+            + ", ".join(touching)
         )
 
     # Browser check
-    browser_declared_no = _safety_declared_no(pr_body, r"Browser\s+automation\s+used") or _safety_status_no(
-        pr_body, r"browser"
-    )
+    browser_declared_no = _safety_declared_no(
+        pr_body, r"Browser\s+automation\s+used"
+    ) or _safety_status_no(pr_body, r"browser")
     if browser_declared_no and _touches_any(changed, BROWSER_TOUCH_PATHS):
         touching = sorted(p for p in changed if any(p.startswith(px) for px in BROWSER_TOUCH_PATHS))
         errors.append(
@@ -677,7 +696,6 @@ def validate(
 
 def check_db_write_guard_advisory(changed: set[str]) -> list[str]:
     """Run DB write guard advisory scanner. Never fails CI."""
-    # pylint: disable=import-outside-toplevel
     import importlib.util  # noqa: PLC0415
     from pathlib import Path  # noqa: PLC0415
 

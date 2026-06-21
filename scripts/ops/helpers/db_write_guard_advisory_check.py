@@ -26,7 +26,9 @@ def check_db_write_guard_advisory(changed: set[str]) -> list[str]:
     if not js_ops_changed:
         return warnings
 
-    scanner = str(Path(__file__).resolve().parent.parent / "db_write_guard_static_enforcement_dry_run.js")
+    scanner = str(
+        Path(__file__).resolve().parent.parent / "db_write_guard_static_enforcement_dry_run.js"
+    )
 
     try:
         proc = subprocess.run(
