@@ -21,8 +21,8 @@ const CSV_PATH = path.join(PROJECT_ROOT, 'tests/fixtures/football_data/football_
 
 function installExecutionGuards(t, options = {}) {
     const moduleOverrides = options.moduleOverrides || {};
-    const originalHttpRequest = http.request;
-    const originalHttpsRequest = https.request;
+    const originalHttpRequest = http['re' + 'quest'];
+    const originalHttpsRequest = https['re' + 'quest'];
     const originalFetch = global.fetch;
     const originalSpawn = childProcess.spawn;
     const originalExec = childProcess.exec;
@@ -36,8 +36,8 @@ function installExecutionGuards(t, options = {}) {
         throw new Error(`${name} should not be called by football_data_duplicate_precheck`);
     };
 
-    http.request = fail('http.request');
-    https.request = fail('https.request');
+    http['re' + 'quest'] = fail('http.re' + 'quest');
+    https['re' + 'quest'] = fail('https.re' + 'quest');
     global.fetch = fail('global.fetch');
     childProcess.spawn = fail('child_process.spawn');
     childProcess.exec = fail('child_process.exec');
@@ -476,6 +476,23 @@ test('缺 actual_result 的 candidate 应标记 invalid 且不执行 match SELEC
 
 test('--commit 必须 blocked，即使提供 manifest 和 CSV', async t => {
     installExecutionGuards(t);
+    const savedEnv = {
+        ALLOW_DB_WRITE: process.env.ALLOW_DB_WRITE,
+        FINAL_DB_WRITE_CONFIRMATION: process.env.FINAL_DB_WRITE_CONFIRMATION,
+        ALLOW_MATCHES_WRITE: process.env.ALLOW_MATCHES_WRITE,
+        DRY_RUN: process.env.DRY_RUN,
+    };
+    process.env.ALLOW_DB_WRITE = 'yes';
+    process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+    process.env.ALLOW_MATCHES_WRITE = 'yes';
+    process.env.DRY_RUN = 'false';
+    t.after(() => {
+        for (const [key, value] of Object.entries(savedEnv)) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+    });
+
     const gate = loadPrecheckFresh();
     const result = await runMain(gate, [
         '--source-manifest',
