@@ -6,6 +6,7 @@ require('dotenv').config();
 const zlib = require('zlib');
 const { Pool } = require('pg');
 const { Normalizer } = require('../../src/utils/Normalizer');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const DEFAULT_TIMEOUT_MS = 15000;
 const DEFAULT_WORKERS = 8;
@@ -627,6 +628,13 @@ async function processMatch(match, options) {
         };
         return result;
     }
+
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+        script: 'backfill_historical_raw_match_data.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT', 'UPDATE'],
+    });
 
     const client = await pool.connect();
     try {

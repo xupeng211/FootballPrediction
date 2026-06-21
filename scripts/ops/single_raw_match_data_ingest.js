@@ -47,6 +47,8 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // Constants — keep in sync with raw_match_data schema
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -206,6 +208,21 @@ function runSafetyGuards(args) {
     console.log('  [G3 PASS] Fixture is a local path (no network).');
     if (!guardDataVersionLength(args.dataVersion)) process.exit(1);
     if (!guardConfirmLocalDbWrite(args.commit)) process.exit(1);
+
+    // DB Write Safety Gate — unified guard (complements existing G1-G9)
+    if (args.commit) {
+        try {
+            assertDbWriteAllowed({
+                script: 'single_raw_match_data_ingest.js',
+                tables: ['raw_match_data'],
+                operations: ['INSERT', 'UPDATE'],
+            });
+            console.log('  [Unified Guard PASS] All DB write safety gates satisfied.');
+        } catch (err) {
+            console.error('[Unified Guard BLOCKED]', err.message);
+            process.exit(1);
+        }
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════

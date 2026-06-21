@@ -9,6 +9,7 @@ const {
   buildDbConnectionConfig,
   ensureBlueprintOnCurrentDatabase
 } = require('./helpers/dbBlueprint');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const SNAPSHOT_DIR = path.join(REPO_ROOT, 'data', 'snapshots');
 const DEFAULT_SNAPSHOT_PATH = path.join(SNAPSHOT_DIR, 'mapping_last_stable.sql');
@@ -266,6 +267,13 @@ async function backupSnapshot(options) {
 }
 
 async function restoreSnapshot(options) {
+  // DB Write Safety Gate — unified guard (restore writes + truncates)
+  assertDbWriteAllowed({
+    script: 'db_vault.js',
+    tables: ['matches', 'matches_oddsportal_mapping'],
+    operations: ['INSERT', 'UPDATE', 'TRUNCATE'],
+  });
+
   const snapshotPath = path.resolve(options.filePath);
   if (!fs.existsSync(snapshotPath)) {
     throw new Error(`快照文件不存在: ${snapshotPath}`);

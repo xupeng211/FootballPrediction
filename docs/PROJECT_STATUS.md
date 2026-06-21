@@ -20,6 +20,21 @@ Last updated: 2026-06-21
   - `docs/CODEX_WORKFLOW.md` (Codex task rules)
   - `docs/DOCUMENTATION_GOVERNANCE.md` (doc lifecycle rules)
 
+## Current SC-002 status (DB write safety gate)
+
+- SC-002 is **not fully fixed**. This is a partial mitigation.
+- `p0_db_write_safety_gate_fix_phase1` has started.
+- A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
+- 8 of 12 target P0 scripts now integrate the guard before DB write operations.
+- 4 scripts were skipped (see PR body): already have extensive controlled write
+  guard systems or are too complex for minimal-guard integration.
+- DB write safety status: **blocked / partial phase1 guard added** (was: blocked /
+  fix pending).
+- Training and data expansion remain blocked.
+- SC-002 remains open until all P0 scripts have guards, verified by live dry-run,
+  and the remaining batch is addressed.
+- Further phases (phase2+) are needed to cover the remaining scripts.
+
 ## Current operating rules
 
 - One task / one branch / one PR.
@@ -90,9 +105,11 @@ Last updated: 2026-06-21
 - Formal training must not start until eligibility, odds, cutoff-time policy,
   and DB write safety blockers are resolved.
 - Data expansion: blocked by P0 technical debt and raw/write governance.
-- DB write safety: blocked / fix pending. The P0 DB write safety dry-run found
-  122 production DB-write risk files, including 66 P0 files and 110 files with
-  no safety gate. SC-002 is still unresolved.
+- DB write safety: blocked / partial phase1 guard added. The P0 DB write safety
+  dry-run found 122 production DB-write risk files, including 66 P0 files and 110
+  files with no safety gate. Phase1 adds a unified guard helper and integrates 8
+  of the most dangerous scripts/ops entrypoints. SC-002 is partially mitigated,
+  NOT fully fixed. Remaining scripts need phase2+.
 - Authoritative document backflow: fix phase1 starts enforcement through the PR
   template, AI Workflow Gate, Documentation Governance, Codex Workflow, and this
   current-state update.
@@ -122,8 +139,9 @@ Last updated: 2026-06-21
 
 ## Next recommended sequence
 
-1. Complete `p0_db_write_safety_gate_fix_phase1`.
-2. Keep formal training and data expansion blocked until DB write safety,
+1. Merge `p0_db_write_safety_gate_fix_phase1` (this PR).
+2. Plan `p0_db_write_safety_gate_fix_phase2` to cover remaining P0 scripts.
+3. Keep formal training and data expansion blocked until DB write safety,
    cutoff strategy, training eligibility, and schema/init alignment are handled.
-3. Do not start model training, data expansion, or raw-write work automatically.
-4. Do not start automatically. Recommended next task only after user confirmation.
+4. Do not start model training, data expansion, or raw-write work automatically.
+5. Do not start automatically. Recommended next task only after user confirmation.

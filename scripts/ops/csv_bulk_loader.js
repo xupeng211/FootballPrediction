@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable max-lines */
 'use strict';
 
 const crypto = require('crypto');
@@ -18,6 +19,7 @@ const {
   buildDbConnectionConfig,
   readExecutableSql
 } = require('./helpers/dbBlueprint');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const {
   MAX_ALIGNMENT_TIME_WINDOW_MS,
   MIN_CONFIDENCE_SCORE,
@@ -599,6 +601,15 @@ class CsvBulkLoaderWriter {
       });
       this.stats.rowsProcessed = (this.stats.rowsProcessed || 0) + records.length;
       return;
+    }
+
+    // DB Write Safety Gate — unified guard (checked once on first batch)
+    if (this.batchIndex === 1) {
+      assertDbWriteAllowed({
+        script: 'csv_bulk_loader.js',
+        tables: ['matches', 'bookmaker_odds_history'],
+        operations: ['INSERT', 'UPDATE'],
+      });
     }
 
     const client = await this.pool.connect();

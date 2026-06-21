@@ -233,6 +233,15 @@ explicitly authorizes the exact scope.
 Real DB writes, schema migrations, live data collection, raw writes, and formal
 model training still require explicit user authorization before execution.
 
+Any script that performs INSERT / UPDATE / DELETE / TRUNCATE / DROP on the
+database must integrate the unified DB write guard (`scripts/ops/helpers/db_write_guard.js`)
+before executing the write operation. New write entrypoints must not bypass this
+guard. The guard enforces universal gates (`ALLOW_DB_WRITE`, `FINAL_DB_WRITE_CONFIRMATION`),
+table-level gates (`ALLOW_RAW_MATCH_DATA_WRITE`, `ALLOW_MATCHES_WRITE`,
+`ALLOW_ODDS_WRITE`, `ALLOW_TRAINING_WRITE`), and schema-level gates
+(`ALLOW_SCHEMA_WRITE`). DRY_RUN defaults to `true`. Production environment
+(`NODE_ENV=production` / `APP_ENV=production`) blocks write by default.
+
 Test-debt work must be handled in a separate audit or repair task. Do not fix
 tests as part of workflow hardening unless the task explicitly scopes governance
 checker tests.
