@@ -11,6 +11,8 @@
 - One task must not combine feature work with cleanup, audit with repair, merge
   with new work, or documentation governance with business code.
 - Read current source-of-truth docs before starting a task.
+- Before finishing a task, decide whether active conclusions need to be
+  reflected in source-of-truth docs.
 - Default to adding no documents.
 - Default to adding no manifests.
 - Default to adding no review reports.
@@ -21,6 +23,8 @@
 - Include Validation in every PR.
 - Keep `git status` clean after commit.
 - Do not continue a paused feature stream when the task is governance-only.
+- Do not treat adding a report as task completion unless the source-of-truth
+  backflow decision is also handled.
 - Do not start the next recommended task automatically. Every final report must
   say "Do not start automatically" and that the recommended next task requires
   user confirmation.
@@ -86,6 +90,14 @@ Every PR body must include:
 - Rollback Plan
 - Next Recommended Task
 
+When a PR adds or modifies `docs/_reports/*.md`, the PR body must also state:
+
+- whether a `docs/_reports` artifact was added or modified
+- whether source-of-truth docs were updated
+- which authoritative docs were updated
+- if not updated, a concrete no-update reason
+- whether active conclusions were reflected in `docs/PROJECT_STATUS.md`
+
 The CI Gate Scope section must state what validation proves and does not prove.
 Production Gate success does not prove full-system coverage, model/data quality,
 or safety for unscoped runtime, DB, browser, scraper, or network work. Host
@@ -117,7 +129,10 @@ Codex must not:
 - treat a machine manifest as a human status document
 - put temporary exploration files in the main docs tree
 - skip source-of-truth updates while adding more reports
+- use a new report as a substitute for updating `docs/PROJECT_STATUS.md`
 - use PR body reports as the only durable documentation
+- create `PROJECT_STATUS_V2.md`, `NEW_WORKFLOW.md`, `NEW_RULES.md`, or similar
+  new authority entrypoints to avoid maintaining existing docs
 - use broad report allowlists such as `docs/_reports/*.md`,
   `docs/_reports/*AUDIT*.md`, `docs/_reports/*NEXT_PLAN*.md`,
   `docs/_reports/*REVIEW*.md`, or `docs/_reports/*DECISION*.md`
@@ -130,8 +145,8 @@ Recommended source-of-truth docs:
 
 | Path | Status | Codex action |
 |---|---|---|
-| docs/PROJECT_STATUS.md | planned | Create only when explicitly scoped. |
-| docs/DATA_SOURCE_STRATEGY.md | planned | Create only when explicitly scoped. |
+| docs/PROJECT_STATUS.md | active | Read before status-sensitive tasks; update when active blockers change. |
+| docs/DATA_SOURCE_STRATEGY.md | active | Read before data-source strategy tasks. |
 | docs/FOTMOB_CURRENT_STATE.md | planned | Prefer root-level state after cleanup. |
 | docs/data/FOTMOB_CURRENT_STATE.md | exists/needs_update | Read for current FotMob state. |
 | docs/CANONICAL_MATCH_SCHEMA.md | planned | Create after schema direction is approved. |
@@ -171,6 +186,20 @@ describe the conflict. If no active doc exists for a long-lived conclusion,
 Codex should create or update a source-of-truth doc in a scoped task instead of
 continuing a report chain.
 
+## Task Completion Standard
+
+Before finalizing a task, Codex must check whether the task changed active
+project status, blockers, workflow rules, safety posture, or next-step priority.
+If it did, update the relevant source-of-truth doc in the same PR unless the user
+explicitly scoped the task away from that update. When `docs/_reports/*.md` is
+added or modified without a source-of-truth update, the PR body must provide a
+specific no-update reason; hollow placeholders such as `n/a`, `none`, `not
+needed`, `no`, `无`, or `无需` are not valid.
+
+Completion is not "a new report exists". Completion means the implementation,
+validation, safety boundary, and current-state backflow decision are all handled
+within the authorized scope.
+
 ## Archive Move Planning Rules
 
 Archive move plans are not authorization to move files. During Phase3A, Codex
@@ -200,6 +229,9 @@ Codex must not run or modify FotMob reconstruction, scraper, browser automation,
 Playwright, Chromium, cookie/session code, captcha code, proxy rotation, DB
 writes, raw data writes, or network data collection unless a future task
 explicitly authorizes the exact scope.
+
+Real DB writes, schema migrations, live data collection, raw writes, and formal
+model training still require explicit user authorization before execution.
 
 Test-debt work must be handled in a separate audit or repair task. Do not fix
 tests as part of workflow hardening unless the task explicitly scopes governance

@@ -30,11 +30,6 @@ def _check_content(body: str) -> list[str]:
     )
 
 
-# ---------------------------------------------------------------------------
-# Fixtures
-# ---------------------------------------------------------------------------
-
-
 def _valid_pr_body() -> str:
     """A minimal-valid PR body with all required sections."""
 
@@ -103,11 +98,6 @@ def _valid_pr_body() -> str:
     """)
 
 
-# ---------------------------------------------------------------------------
-# Check 1: required sections
-# ---------------------------------------------------------------------------
-
-
 def test_all_required_sections_present_passes():
     body = _valid_pr_body()
     assert gate.check_required_sections(body) == []
@@ -161,11 +151,6 @@ def test_missing_next_recommended_task_fails():
     assert "## Next Recommended Task" in missing
 
 
-# ---------------------------------------------------------------------------
-# Check 2: Do not start automatically
-# ---------------------------------------------------------------------------
-
-
 def test_do_not_start_automatically_present_passes():
     body = _valid_pr_body()
     assert gate.check_next_task_stop_phrase(body) == []
@@ -191,11 +176,6 @@ def test_next_task_section_empty_fails():
     )
     errors = gate.check_next_task_stop_phrase(body)
     assert len(errors) >= 1
-
-
-# ---------------------------------------------------------------------------
-# Check 3: mixed governance + business code
-# ---------------------------------------------------------------------------
 
 
 def test_pure_governance_pr_passes():
@@ -251,11 +231,6 @@ def test_governance_checker_with_business_code_fails():
     assert len(errors) >= 1
 
 
-# ---------------------------------------------------------------------------
-# Check 4: document sprawl
-# ---------------------------------------------------------------------------
-
-
 def test_no_sprawl_files_passes():
     added = {"docs/CODEX_WORKFLOW.md"}
     assert gate.check_doc_sprawl(added) == []
@@ -288,9 +263,67 @@ def test_review_report_files_count_as_sprawl():
     assert len(errors) >= 1
 
 
-# ---------------------------------------------------------------------------
-# Check 5: dangerous keywords in blind-spot paths
-# ---------------------------------------------------------------------------
+def test_report_without_authoritative_update_or_reason_fails():
+    body = _valid_pr_body()
+    changes = [gate.Change("A", "docs/_reports/new_audit.md")]
+    errors = gate.check_authoritative_report_backflow(body, changes)
+    assert len(errors) == 1
+    assert "docs/_reports" in errors[0]
+
+
+def test_report_with_project_status_update_passes():
+    body = _valid_pr_body()
+    changes = [
+        gate.Change("A", "docs/_reports/new_audit.md"),
+        gate.Change("M", "docs/PROJECT_STATUS.md"),
+    ]
+    assert gate.check_authoritative_report_backflow(body, changes) == []
+
+
+def test_report_with_explicit_no_update_reason_passes():
+    body = _valid_pr_body().replace(
+        "| Reason | Updated workflow documentation to record new content-quality gate rules |",
+        "| Source-of-truth no-update reason | User scoped this PR to a transient evidence "
+        "report and explicitly blocked source-of-truth edits. |",
+    )
+    changes = [gate.Change("A", "docs/_reports/new_audit.md")]
+    assert gate.check_authoritative_report_backflow(body, changes) == []
+
+
+def test_report_with_hollow_no_update_reasons_fails():
+    hollow_values = ("n/a", "none", "not needed", "no", "无", "无需")
+    changes = [gate.Change("A", "docs/_reports/new_audit.md")]
+    for value in hollow_values:
+        body = _valid_pr_body().replace(
+            "| Reason | Updated workflow documentation to record new content-quality gate rules |",
+            f"| Source-of-truth no-update reason | {value} |",
+        )
+        errors = gate.check_authoritative_report_backflow(body, changes)
+        assert len(errors) == 1, f"{value!r} should fail"
+
+
+def test_code_pr_without_report_passes_authoritative_backflow_gate():
+    body = _valid_pr_body()
+    changes = [gate.Change("M", "src/prediction/model.py")]
+    assert gate.check_authoritative_report_backflow(body, changes) == []
+
+
+def test_key_authoritative_docs_satisfy_report_backflow_gate():
+    body = _valid_pr_body()
+    for path in (
+        "docs/DOCUMENTATION_GOVERNANCE.md",
+        "docs/CODEX_WORKFLOW.md",
+        "docs/PROJECT_STATUS.md",
+    ):
+        changes = [gate.Change("A", "docs/_reports/new_audit.md"), gate.Change("M", path)]
+        assert gate.check_authoritative_report_backflow(body, changes) == []
+
+
+def test_validate_reports_authoritative_backflow_failure():
+    body = _valid_pr_body()
+    changes = [gate.Change("A", "docs/_reports/new_audit.md")]
+    errors = gate.validate(body, changes)
+    assert any("Source-of-truth no-update reason" in e for e in errors)
 
 
 def test_clean_docs_file_passes():
@@ -329,11 +362,6 @@ def test_blind_spot_path_classification():
     assert gate._is_blind_spot_path("scripts/ops/check.py") is False
 
 
-# ---------------------------------------------------------------------------
-# Check 6: safety declaration consistency
-# ---------------------------------------------------------------------------
-
-
 def test_safety_consistent_passes():
     body = _valid_pr_body()
     changed = {"docs/CODEX_WORKFLOW.md"}
@@ -362,11 +390,6 @@ def test_declared_no_browser_but_touches_browser_paths_fails():
     errors = gate.check_safety_consistency(body, changed)
     assert len(errors) >= 1
     assert "browser" in errors[0].lower()
-
-
-# ---------------------------------------------------------------------------
-# Check 7: critical section content quality (anti-hollow-compliance)
-# ---------------------------------------------------------------------------
 
 
 def _body_with_section_content(doc: str, validation: str, rollback: str) -> str:
@@ -590,11 +613,6 @@ def test_all_three_critical_sections_hollow_reports_all():
     assert len(roll_hits) >= 1, f"Expected Rollback Plan error; got: {errors}"
 
 
-# ---------------------------------------------------------------------------
-# Integration: full validate() with synthetic data
-# ---------------------------------------------------------------------------
-
-
 def test_valid_governance_pr_passes_full_validate():
     """A governance-only PR with all sections should pass."""
     body = _valid_pr_body()
@@ -627,11 +645,6 @@ def test_mixed_with_missing_sections_fails():
     assert len(errors) >= min_expected, (
         f"Expected >= {min_expected} errors, got {len(errors)}: {errors}"
     )
-
-
-# ---------------------------------------------------------------------------
-# CLI subprocess test
-# ---------------------------------------------------------------------------
 
 
 def test_gate_script_exists():
@@ -705,11 +718,6 @@ def test_skip_body_checks_skips_sections():
     # No section errors, no stop-phrase errors
     assert not any("Missing required PR body" in e for e in errors)
     assert not any("Do not start automatically" in e for e in errors)
-
-
-# ---------------------------------------------------------------------------
-# Multiline PR body handling
-# ---------------------------------------------------------------------------
 
 
 def test_multiline_body_with_code_blocks_passes():
