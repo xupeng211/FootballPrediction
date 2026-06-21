@@ -135,6 +135,16 @@ const PHASE4_GUARDED = Object.freeze([
     'l3_stitch_worker.js',
 ]);
 
+const PHASE5_GUARDED = Object.freeze([
+    'synthetic_l3_preflight.js',
+    'synthetic_prediction_preflight.js',
+    'synthetic_training_feature_preflight.js',
+    'finished_csv_local_dry_run.js',
+    'real_finished_csv_staging_dry_run.js',
+    'finished_match_backfill_preflight.js',
+    'raw_fixture_adapter_dry_run.js',
+]);
+
 const PHASE1_SKIPPED = Object.freeze([
     'l2_raw_match_data_write.js',
     'l2_remaining_raw_match_data_write.js',
@@ -345,11 +355,12 @@ function classifyScript(filePath, content) {
     const writeRisks = hasDbWriteRisk(content);
     const guard = hasGuard(content);
 
-    // Check if Phase1/Phase2 guarded
+    // Check if Phase1/Phase2/Phase3/Phase4/Phase5 guarded
     const isPhase1 = PHASE1_GUARDED.includes(baseName);
     const isPhase2 = PHASE2_GUARDED.includes(baseName);
     const isPhase3 = PHASE3_GUARDED.includes(baseName);
     const isPhase4 = PHASE4_GUARDED.includes(baseName);
+    const isPhase5 = PHASE5_GUARDED.includes(baseName);
     const wasSkipped = PHASE1_SKIPPED.includes(baseName);
 
     if (writeRisks.length === 0) {
@@ -367,7 +378,7 @@ function classifyScript(filePath, content) {
 
         const phaseLabel = isPhase1
             ? 'phase1'
-            : (isPhase2 ? 'phase2' : (isPhase3 ? 'phase3' : (isPhase4 ? 'phase4' : null)));
+            : (isPhase2 ? 'phase2' : (isPhase3 ? 'phase3' : (isPhase4 ? 'phase4' : (isPhase5 ? 'phase5' : null))));
 
         if (needsReview) {
             return {
@@ -383,7 +394,7 @@ function classifyScript(filePath, content) {
 
         return {
             classification: 'guarded',
-            reason: `guard present, before write${isPhase1 ? ', Phase1' : ''}${isPhase2 ? ', Phase2' : ''}${isPhase3 ? ', Phase3' : ''}${isPhase4 ? ', Phase4' : ''}`,
+            reason: `guard present, before write${isPhase1 ? ', Phase1' : ''}${isPhase2 ? ', Phase2' : ''}${isPhase3 ? ', Phase3' : ''}${isPhase4 ? ', Phase4' : ''}${isPhase5 ? ', Phase5' : ''}`,
             writeOps: ops,
             tables,
             riskLevel: highestRisk,
@@ -519,6 +530,13 @@ function buildSummary(results) {
         phase1_phase2_phase3_phase4_guarded_expected:
             PHASE1_GUARDED.length + PHASE2_GUARDED.length + PHASE3_GUARDED.length + PHASE4_GUARDED.length,
         all_phase1_phase2_phase3_phase4_detected: null, // filled below
+        phase1_phase2_phase3_phase4_phase5_guarded_detected_count: results.filter(
+            r => (r.classification === 'guarded' || r.classification === 'guarded_but_needs_review') &&
+                (r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2' || r.phase1_or_2 === 'phase3' || r.phase1_or_2 === 'phase4' || r.phase1_or_2 === 'phase5')
+        ).length,
+        phase1_phase2_phase3_phase4_phase5_guarded_expected:
+            PHASE1_GUARDED.length + PHASE2_GUARDED.length + PHASE3_GUARDED.length + PHASE4_GUARDED.length + PHASE5_GUARDED.length,
+        all_phase1_phase2_phase3_phase4_phase5_detected: null, // filled below
 
         candidates_for_phase3: results
             .filter(r => r.classification === 'unguarded_p0_candidate')
@@ -550,6 +568,15 @@ function buildSummary(results) {
     summary.all_phase1_phase2_phase3_phase4_detected = missingThroughPhase4.length === 0;
     summary.missing_phase1_phase2_phase3_phase4 = missingThroughPhase4;
 
+    const detectedGuardedNamesThroughPhase5 = results
+        .filter(r => r.classification === 'guarded' || r.classification === 'guarded_but_needs_review')
+        .filter(r => r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2' || r.phase1_or_2 === 'phase3' || r.phase1_or_2 === 'phase4' || r.phase1_or_2 === 'phase5')
+        .map(r => path.basename(r.path));
+    const allExpectedThroughPhase5 = [...PHASE1_GUARDED, ...PHASE2_GUARDED, ...PHASE3_GUARDED, ...PHASE4_GUARDED, ...PHASE5_GUARDED];
+    const missingThroughPhase5 = allExpectedThroughPhase5.filter(n => !detectedGuardedNamesThroughPhase5.includes(n));
+    summary.all_phase1_phase2_phase3_phase4_phase5_detected = missingThroughPhase5.length === 0;
+    summary.missing_phase1_phase2_phase3_phase4_phase5 = missingThroughPhase5;
+
     if (summary.unguarded_p0_candidate_count > 0) {
         summary.recommended_next_task = 'p0_db_write_safety_gate_fix_phase5';
     } else if (summary.guarded_but_needs_review_count > 0) {
@@ -567,6 +594,7 @@ function classifyGuarded(rel) {
     if (PHASE2_GUARDED.includes(base)) return 'phase2';
     if (PHASE3_GUARDED.includes(base)) return 'phase3';
     if (PHASE4_GUARDED.includes(base)) return 'phase4';
+    if (PHASE5_GUARDED.includes(base)) return 'phase5';
     return 'other';
 }
 
@@ -596,6 +624,15 @@ function printReport(results, summary) {
     console.log(`  All detected:      ${summary.all_phase1_phase2_phase3_detected ? 'YES ✓' : 'NO ✗'}`);
     if (summary.missing_phase1_phase2_phase3 && summary.missing_phase1_phase2_phase3.length > 0) {
         console.log(`  Missing:           ${summary.missing_phase1_phase2_phase3.join(', ')}`);
+    }
+    console.log('');
+
+    console.log('── Phase1 + Phase2 + Phase3 + Phase4 + Phase5 Check ──');
+    console.log(`  Expected guarded:  ${summary.phase1_phase2_phase3_phase4_phase5_guarded_expected}`);
+    console.log(`  Detected guarded:  ${summary.phase1_phase2_phase3_phase4_phase5_guarded_detected_count}`);
+    console.log(`  All detected:      ${summary.all_phase1_phase2_phase3_phase4_phase5_detected ? 'YES ✓' : 'NO ✗'}`);
+    if (summary.missing_phase1_phase2_phase3_phase4_phase5 && summary.missing_phase1_phase2_phase3_phase4_phase5.length > 0) {
+        console.log(`  Missing:           ${summary.missing_phase1_phase2_phase3_phase4_phase5.join(', ')}`);
     }
     console.log('');
 
@@ -834,6 +871,7 @@ module.exports = {
     PHASE2_GUARDED,
     PHASE3_GUARDED,
     PHASE4_GUARDED,
+    PHASE5_GUARDED,
     PHASE1_SKIPPED,
     // Functions
     hasDbWriteRisk,

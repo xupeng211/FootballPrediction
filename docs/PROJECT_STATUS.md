@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-06-21
+Last updated: 2026-06-22
 
 ## Current baseline
 
@@ -14,7 +14,7 @@ Last updated: 2026-06-21
 - `p0_db_write_guard_hardening_production_host_block` hardens the guard: production-like
   DB hosts are now blocked by default (previously warning-only). No production override exists.
 - `p0_db_write_safety_gate_fix_phase2` adds guard to 8 more P0 scripts/ops entrypoints.
-  Phase1 + Phase2 + Phase3 + Phase4 = 30 scripts now protected. SC-002 remains partial mitigation only.
+  Phase1 + Phase2 + Phase3 + Phase4 + Phase5 = 37 scripts now protected. SC-002 remains partial mitigation only.
 - Remote GitHub Actions `production-gate.yml` is the final CI authority.
 - Local `make ci-local-pr` is a pre-push helper, not a full replacement for remote CI.
 - AI workflow governance rules are enforced by:
@@ -43,8 +43,10 @@ Last updated: 2026-06-21
   DB write risk but no guard receive an advisory warning — CI does NOT fail.
 - `p0_db_write_safety_gate_fix_phase4`: 6 more scripts integrated with the unified
   guard. Phase4 stayed scoped to DB write safety and did not enable CI hard fail.
-- **Phase1 + Phase2 + Phase3 + Phase4 = 30 of 66 P0 scripts now guarded.**
-- DB write safety status: **blocked / partial phase1+phase2+phase3+phase4 guards added**.
+- `p0_db_write_safety_gate_fix_phase5` (#1579): 7 more scripts integrated with the
+  unified guard. Phase5 stayed scoped to DB write safety and did not enable CI hard fail.
+- **Phase1 + Phase2 + Phase3 + Phase4 + Phase5 = 37 of 66 P0 scripts now guarded.**
+- DB write safety status: **blocked / partial phase1+phase2+phase3+phase4+phase5 guards added**.
 - Guard remains opt-in per script. New scripts can still bypass the guard
   (but will receive advisory warning if they touch scripts/ops).
 - Training and data expansion remain blocked.
@@ -121,12 +123,12 @@ Last updated: 2026-06-21
 - Formal training must not start until eligibility, odds, cutoff-time policy,
   and DB write safety blockers are resolved.
 - Data expansion: blocked by P0 technical debt and raw/write governance.
-- DB write safety: blocked / partial phase1+phase2+phase3+phase4 guards added. The P0 DB
+- DB write safety: blocked / partial phase1+phase2+phase3+phase4+phase5 guards added. The P0 DB
   write safety dry-run found 122 production DB-write risk files, including 66 P0
-  files and 110 files with no safety gate. Phase1+Phase2+Phase3+Phase4 = 30 scripts/ops
-  now guarded (Phase1+Phase2+Phase3+Phase4 = 30/66). A static enforcement dry-run scanner
+  files and 110 files with no safety gate. Phase1+Phase2+Phase3+Phase4+Phase5 = 37 scripts/ops
+  now guarded (Phase1+Phase2+Phase3+Phase4+Phase5 = 37/66). A static enforcement dry-run scanner
   has been added to audit remaining coverage. SC-002 is partially mitigated, NOT
-  fully fixed. Remaining scripts need Phase5+ or static enforcement.
+  fully fixed. Remaining scripts need Phase6+ or static enforcement.
 - Authoritative document backflow: fix phase1 starts enforcement through the PR
   template, AI Workflow Gate, Documentation Governance, Codex Workflow, and this
   current-state update.
@@ -156,12 +158,12 @@ Last updated: 2026-06-21
 
 ## Next recommended sequence
 
-1. Phase1 + Phase2 + Phase3 + Phase4 = 30 scripts/ops entrypoints now guarded (~45% of P0).
+1. Phase1 + Phase2 + Phase3 + Phase4 + Phase5 = 37 scripts/ops entrypoints now guarded (~56% of P0).
 2. Static enforcement dry-run scanner deployed for coverage auditing.
 3. `db_write_guard_static_enforcement_fix_phase1`: advisory warning now active in
    ai_workflow_gate for new/modified unguarded scripts/ops JS files. No CI hard fail.
 4. Decide next between:
-   - `p0_db_write_safety_gate_fix_phase5` (more script-level guard integrations)
+   - `p0_db_write_safety_gate_fix_phase6` (more script-level guard integrations)
    - `db_write_guard_static_enforcement_fix_phase2` (upgrade advisory → fail)
 4. Keep formal training and data expansion blocked until DB write safety resolved.
 5. Do not start model training, data expansion, raw-write work, or CI hard-fail
