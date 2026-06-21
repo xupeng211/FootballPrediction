@@ -637,23 +637,128 @@ function printReport(results, summary) {
 // CLI
 // ═══════════════════════════════════════════════════════════════════════════════
 
-function parseArgs(argv) {
+function scanAdvisory(changedFiles = []) {
+    const results = [];
+    const skipped = [];
+    const unguarded = [];
+    const guarded = [];
+    const falsePositives = [];
+
+    for (const rel of changedFiles) {
+        const fullPath = path.join(REPO_ROOT, rel);
+
+        // Skip non-JS files
+        if (!rel.endsWith('.js')) {
+            skipped.push({ path: rel, reason: 'not a JS file' });
+            continue;
+        }
+
+        // Skip non-scripts/ops files
+        if (!rel.startsWith('scripts/ops/') && !rel.startsWith('scripts\\ops\\')) {
+            skipped.push({ path: rel, reason: 'not in scripts/ops/' });
+            continue;
+        }
+
+        // Skip deleted/missing files
+        if (!fs.existsSync(fullPath)) {
+            skipped.push({ path: rel, reason: 'file deleted or missing' });
+            continue;
+        }
+
+        const content = fs.readFileSync(fullPath, 'utf8');
+        const result = classifyScript(fullPath, content);
+        result.path = rel;
+        results.push(result);
+
+        if (result.classification === 'unguarded_p0_candidate') {
+            unguarded.push(result);
+        } else if (result.classification === 'guarded' || result.classification === 'guarded_but_needs_review') {
+            guarded.push(result);
+        } else {
+            falsePositives.push(result);
+        }
+    }
+
     return {
-        json: argv.includes('--json'),
-        help: argv.includes('--help') || argv.includes('-h'),
-        firstBatch: argv.includes('--first-batch'),
+        mode: 'changed_files_advisory',
+        changed_files_checked: changedFiles.length,
+        changed_js_ops_checked: results.length,
+        advisory_warning_count: unguarded.length,
+        unguarded_changed_js_ops: unguarded.map(r => ({
+            path: r.path,
+            writeOps: r.writeOps,
+            tables: r.tables,
+            riskLevel: r.riskLevel,
+            suggestedGates: r.suggestedGates,
+        })),
+        guarded_changed_js_ops: guarded.map(r => r.path),
+        skipped_changed_files: skipped,
+        false_positive_changed: falsePositives.map(r => r.path),
+        should_fail: false,
+        recommended_action: unguarded.length > 0
+            ? 'ADVISORY: new/modified scripts/ops JS files have DB write risk without guard. Consider adding assertDbWriteAllowed.'
+            : 'OK: all changed scripts/ops JS files are guarded or read-only.',
     };
+}
+
+function parseArgs(argv) {
+    const args = {
+        json: false,
+        help: false,
+        firstBatch: false,
+        changedFiles: null,
+    };
+
+    for (let i = 0; i < argv.length; i++) {
+        const token = argv[i];
+        if (token === '--json') args.json = true;
+        else if (token === '--help' || token === '-h') args.help = true;
+        else if (token === '--first-batch') args.firstBatch = true;
+        else if (token === '--changed-files') {
+            const val = argv[++i];
+            args.changedFiles = val ? val.split(',').map(s => s.trim()).filter(Boolean) : [];
+        } else if (token === '--changed-files-from-stdin') {
+            const stdin = require('fs').readFileSync(0, 'utf8').trim();
+            args.changedFiles = stdin.split('\n').map(s => s.trim()).filter(Boolean);
+        }
+    }
+
+    return args;
 }
 
 function main(argv = process.argv.slice(2)) {
     const args = parseArgs(argv);
 
     if (args.help) {
-        console.log('Usage: node scripts/ops/db_write_guard_static_enforcement_dry_run.js [--json] [--first-batch] [--help]');
-        console.log('  --json          Output JSON summary to stdout');
-        console.log('  --first-batch   Only show unguarded P0 candidates (first batch for phase3)');
-        console.log('  --help          Show this help');
+        console.log('Usage: node scripts/ops/db_write_guard_static_enforcement_dry_run.js [options]');
+        console.log('  --json                        Output JSON summary');
+        console.log('  --first-batch                 Only show unguarded P0 candidates');
+        console.log('  --changed-files <a,b,c>       Advisory mode: only check listed files');
+        console.log('  --changed-files-from-stdin    Read changed files from stdin');
+        console.log('  --help                        Show this help');
         process.exit(0);
+    }
+
+    // Changed-files advisory mode
+    if (args.changedFiles !== null) {
+        const output = scanAdvisory(args.changedFiles);
+        if (args.json) {
+            console.log(JSON.stringify(output, null, 2));
+        } else {
+            // Human-readable advisory output
+            if (output.advisory_warning_count > 0) {
+                console.log('[DB-WRITE-GUARD ADVISORY] WARNING: ' + output.advisory_warning_count +
+                    ' changed scripts/ops JS file(s) have DB write risk without guard:');
+                for (const u of output.unguarded_changed_js_ops) {
+                    console.log('  - ' + u.path + ' ops=' + (u.writeOps || []).join(',') +
+                        ' tables=' + (u.tables || []).join(',') + ' risk=' + u.riskLevel);
+                }
+                console.log('[DB-WRITE-GUARD ADVISORY] This is an advisory warning. CI will NOT fail.');
+            } else {
+                console.log('[DB-WRITE-GUARD ADVISORY] OK: all changed scripts/ops JS files are guarded or read-only.');
+            }
+        }
+        return;
     }
 
     const results = scanAll();
@@ -713,6 +818,7 @@ module.exports = {
     isSqlFile,
     isHelperFile,
     isGuardItself,
+    scanAdvisory,
     // Entry
     main,
 };

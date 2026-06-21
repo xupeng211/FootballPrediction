@@ -621,8 +621,8 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
     if scraper_declared_no and _touches_any(changed, SCRAPER_TOUCH_PATHS):
         touching = sorted(p for p in changed if any(p.startswith(px) for px in SCRAPER_TOUCH_PATHS))
         errors.append(
-            "Safety declaration says no scraper, but changed files touch "
-            "scraper/data paths: " + ", ".join(touching)
+            "Safety declaration says no scraper, but changed files touch scraper/data paths: "
+            + ", ".join(touching)
         )
 
     # Browser check
@@ -694,6 +694,24 @@ def validate(
     return errors
 
 
+def check_db_write_guard_advisory(changed: set[str]) -> list[str]:
+    """Run DB write guard advisory scanner. Never fails CI."""
+    import importlib.util  # noqa: PLC0415
+    from pathlib import Path  # noqa: PLC0415
+
+    helper = Path(__file__).resolve().parent / "helpers" / "db_write_guard_advisory_check.py"
+    if not helper.exists():
+        helper = Path.cwd() / "scripts" / "ops" / "helpers" / "db_write_guard_advisory_check.py"
+        if not helper.exists():
+            return []
+    spec = importlib.util.spec_from_file_location("_dbga", str(helper))
+    if spec is None or spec.loader is None:
+        return []
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod.check_db_write_guard_advisory(changed)
+
+
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser for the AI workflow gate."""
     parser = argparse.ArgumentParser(
@@ -749,11 +767,24 @@ def main(argv: list[str] | None = None) -> int:
     # Collect git changes (optional base ref override)
     changes = collect_changes(args.base_ref)
 
+    # Derive changed file paths from git changes for downstream checks
+    changed = changed_paths(changes)
+
     errors = validate(
         pr_body,
         changes,
         skip_body_checks=args.skip_body_checks,
     )
+
+    # 8. DB write guard static enforcement — advisory only, no CI fail
+    try:
+        db_warnings = check_db_write_guard_advisory(changed)
+        if db_warnings:
+            sys.stdout.write(f"[DB-WRITE-GUARD ADVISORY] {len(db_warnings)} advisory warning(s)\n")
+            for w in db_warnings:
+                sys.stdout.write(f"- {w}\n")
+    except Exception as exc:
+        sys.stdout.write(f"[DB-WRITE-GUARD ADVISORY] scanner skipped due to error: {exc}\n")
 
     if errors:
         sys.stdout.write(f"FAIL: {len(errors)} AI workflow gate error(s)\n")

@@ -33,7 +33,8 @@ def _check_content(body: str) -> list[str]:
 def _valid_pr_body() -> str:
     """A minimal-valid PR body with all required sections."""
 
-    return textwrap.dedent("""\
+    return textwrap.dedent(
+        """\
     ## Summary
 
     - Test PR for AI workflow gate validation.
@@ -58,7 +59,7 @@ def _valid_pr_body() -> str:
 
     | Item | Value |
     |---|---|
-    | DB used | no |
+    | DB used | n/a |
     | Browser automation used | no |
     | Scraper run | no |
 
@@ -95,7 +96,8 @@ def _valid_pr_body() -> str:
     Recommended next task only after user confirmation:
 
     - TBD
-    """)
+    """
+    )
 
 
 def test_all_required_sections_present_passes():
@@ -369,7 +371,7 @@ def test_safety_consistent_passes():
 
 
 def test_declared_no_db_but_touches_db_paths_fails():
-    body = _valid_pr_body()
+    body = _valid_pr_body().replace("| DB used | n/a |", "| DB used | no |")
     changed = {"database/migrations/v2.sql"}
     errors = gate.check_safety_consistency(body, changed)
     assert len(errors) >= 1
@@ -394,7 +396,8 @@ def test_declared_no_browser_but_touches_browser_paths_fails():
 
 def _body_with_section_content(doc: str, validation: str, rollback: str) -> str:
     """Build a minimal PR body with specific content for the 3 critical sections."""
-    return textwrap.dedent(f"""\
+    return textwrap.dedent(
+        f"""\
     ## Summary
 
     Test PR.
@@ -431,7 +434,8 @@ def _body_with_section_content(doc: str, validation: str, rollback: str) -> str:
 
     Do not start automatically.
     Recommended next task only after user confirmation.
-    """)
+    """
+    )
 
 
 def _substantive_doc() -> str:
@@ -594,7 +598,7 @@ def test_check_7_does_not_break_next_task_gate():
 
 def test_check_7_does_not_break_safety_consistency():
     """Safety consistency must still be enforced alongside quality checks."""
-    body = _valid_pr_body()  # uses the full fixture with proper Safety Impact table
+    body = _valid_pr_body().replace("| DB used | n/a |", "| DB used | no |")
     changed = {"database/migrations/v2.sql"}
     errors = gate.check_safety_consistency(body, changed)
     assert len(errors) >= 1
@@ -722,7 +726,8 @@ def test_skip_body_checks_skips_sections():
 
 def test_multiline_body_with_code_blocks_passes():
     """All required sections must be detected even with Markdown code blocks."""
-    body = _valid_pr_body() + textwrap.dedent("""\
+    body = _valid_pr_body() + textwrap.dedent(
+        """\
 
     ## Additional Notes
 
@@ -738,7 +743,8 @@ def test_multiline_body_with_code_blocks_passes():
     | Table | With | Rows |
     |-------|------|------|
     | a     | b    | c    |
-    """)
+    """
+    )
     missing = gate.check_required_sections(body)
     assert missing == [], f"Should find all sections; missing: {missing}"
 
