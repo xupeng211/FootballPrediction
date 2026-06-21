@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 
 const { Normalizer } = require('../../src/utils/Normalizer');
 const { buildDbConnectionConfig } = require('./helpers/dbBlueprint');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const DEFAULT_DATA_SOURCE = 'ProductionHarvester';
 const DEFAULT_SEASON = '2024-2025';
@@ -119,6 +120,13 @@ async function purgeOrphans(options = {}) {
                 committed: false,
             };
         }
+
+        // DB Write Safety Gate — unified guard
+        assertDbWriteAllowed({
+            script: 'purge_orphans.js',
+            tables: ['matches'],
+            operations: ['DELETE'],
+        });
 
         await client.query('BEGIN');
         const deletion = await client.query(

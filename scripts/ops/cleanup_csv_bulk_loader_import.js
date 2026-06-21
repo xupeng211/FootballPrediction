@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 
 const { Normalizer } = require('../../src/utils/Normalizer');
 const { buildDbConnectionConfig } = require('./helpers/dbBlueprint');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 function parseArgs(argv = process.argv.slice(2)) {
   const options = {
@@ -88,6 +89,13 @@ async function cleanupImport(options = {}) {
         committed: false
       };
     }
+
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+      script: 'cleanup_csv_bulk_loader_import.js',
+      tables: ['matches', 'bookmaker_odds_history'],
+      operations: ['DELETE'],
+    });
 
     await client.query('BEGIN');
     const deletion = await client.query(`

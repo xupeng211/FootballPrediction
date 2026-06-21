@@ -7,6 +7,7 @@ const { Pool } = require('pg');
 
 const { buildDbConnectionConfig, REPO_ROOT } = require('./helpers/dbBlueprint');
 const { EntityMapper } = require('../../src/infrastructure/etl/EntityMapper');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const entityMapper = new EntityMapper();
 
@@ -629,6 +630,13 @@ async function seedFotMobSample(options = {}) {
       message: 'dry-run'
     };
   }
+
+  // DB Write Safety Gate — unified guard
+  assertDbWriteAllowed({
+    script: 'seed_fotmob_sample.js',
+    tables: ['matches', 'raw_match_data'],
+    operations: ['INSERT', 'UPDATE'],
+  });
 
   const pool = new Pool(buildDbConnectionConfig());
   const client = await pool.connect();
