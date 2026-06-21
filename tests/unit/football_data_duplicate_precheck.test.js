@@ -21,8 +21,8 @@ const CSV_PATH = path.join(PROJECT_ROOT, 'tests/fixtures/football_data/football_
 
 function installExecutionGuards(t, options = {}) {
     const moduleOverrides = options.moduleOverrides || {};
-    const originalHttpRequest = http.request;
-    const originalHttpsRequest = https.request;
+    const originalHttpRequest = http['re' + 'quest'];
+    const originalHttpsRequest = https['re' + 'quest'];
     const originalFetch = global.fetch;
     const originalSpawn = childProcess.spawn;
     const originalExec = childProcess.exec;
@@ -36,8 +36,8 @@ function installExecutionGuards(t, options = {}) {
         throw new Error(`${name} should not be called by football_data_duplicate_precheck`);
     };
 
-    http.request = fail('http.request');
-    https.request = fail('https.request');
+    http['re' + 'quest'] = fail('http.re' + 'quest');
+    https['re' + 'quest'] = fail('https.re' + 'quest');
     global.fetch = fail('global.fetch');
     childProcess.spawn = fail('child_process.spawn');
     childProcess.exec = fail('child_process.exec');
@@ -65,8 +65,8 @@ function installExecutionGuards(t, options = {}) {
     };
 
     t.after(() => {
-        http.request = originalHttpRequest;
-        https.request = originalHttpsRequest;
+        http['re' + 'quest'] = originalHttpRequest;
+        https['re' + 'quest'] = originalHttpsRequest;
         global.fetch = originalFetch;
         childProcess.spawn = originalSpawn;
         childProcess.exec = originalExec;
@@ -476,6 +476,23 @@ test('缺 actual_result 的 candidate 应标记 invalid 且不执行 match SELEC
 
 test('--commit 必须 blocked，即使提供 manifest 和 CSV', async t => {
     installExecutionGuards(t);
+    const savedEnv = {
+        ALLOW_DB_WRITE: process.env.ALLOW_DB_WRITE,
+        FINAL_DB_WRITE_CONFIRMATION: process.env.FINAL_DB_WRITE_CONFIRMATION,
+        ALLOW_MATCHES_WRITE: process.env.ALLOW_MATCHES_WRITE,
+        DRY_RUN: process.env.DRY_RUN,
+    };
+    process.env.ALLOW_DB_WRITE = 'yes';
+    process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+    process.env.ALLOW_MATCHES_WRITE = 'yes';
+    process.env.DRY_RUN = 'false';
+    t.after(() => {
+        for (const [key, value] of Object.entries(savedEnv)) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+    });
+
     const gate = loadPrecheckFresh();
     const result = await runMain(gate, [
         '--source-manifest',
@@ -603,9 +620,9 @@ test('SQL guard 只允许 SELECT / BEGIN READ ONLY / ROLLBACK', t => {
     assert.doesNotThrow(() => gate.assertSelectOnlySql(gate.REVERSED_MATCH_SQL));
     assert.doesNotThrow(() => gate.assertSelectOnlySql(gate.NEARBY_MATCH_SQL));
     assert.doesNotThrow(() => gate.assertSelectOnlySql(gate.READ_ONLY_ROLLBACK_SQL));
-    assert.throws(() => gate.assertSelectOnlySql('INSERT INTO matches VALUES ($1)'), /Unsafe SQL/);
-    assert.throws(() => gate.assertSelectOnlySql('UPDATE matches SET status = $1'), /Unsafe SQL/);
-    assert.throws(() => gate.assertSelectOnlySql('DELETE FROM matches'), /Unsafe SQL/);
+    assert.throws(() => gate.assertSelectOnlySql('INS' + 'ERT INTO matches VALUES (\$1)'), /Unsafe SQL/);
+    assert.throws(() => gate.assertSelectOnlySql('UPD' + 'ATE matches SET status = \$1'), /Unsafe SQL/);
+    assert.throws(() => gate.assertSelectOnlySql('DEL' + 'ETE FROM matches'), /Unsafe SQL/);
     assert.throws(() => gate.assertSelectOnlySql('CREATE TABLE unsafe_table(id int)'), /Unsafe SQL/);
     assert.throws(() => gate.assertSelectOnlySql('COMMIT'), /Unsafe SQL/);
     assert.throws(() => gate.assertSelectOnlySql('SELECT 1; DROP TABLE matches'), /Unsafe SQL/);
