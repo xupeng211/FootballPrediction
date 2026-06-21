@@ -28,7 +28,9 @@
  *
  * ### Production protection
  *   NODE_ENV=production or APP_ENV=production blocks write by default.
- *   DB hosts matching known production patterns print high-risk warnings.
+ *   DB hosts matching known production patterns (RDS, Cloud SQL, Supabase,
+ *   Railway, Render, Heroku, etc.) BLOCK write by default — no override exists.
+ *   Future explicit authorization required for any production-like host access.
  *
  * ## Usage
  *
@@ -226,18 +228,37 @@ function requireDbWriteGuards(options = {}) {
         ? true
         : normalizeBooleanEnv(dryRunEnv) !== false;
 
-    // ── 3. Production DB host warning ───────────────────────────────────────
+    // ── 3. Production DB host detection ─────────────────────────────────────
     const prodDb = checkProductionDbHost();
     warnings.push(...prodDb.warnings);
 
-    // ── 4. Universal gates ──────────────────────────────────────────────────
+    // ── 4. Production DB host block ─────────────────────────────────────────
+    // Hard block: production-like DB host is NOT allowed in this phase.
+    // No override env var exists.  Future explicit authorization required.
+    if (prodDb.suspicious) {
+        const matchedPatterns = prodDb.warnings.join('; ');
+        return {
+            allowed: false,
+            dryRun: null,
+            error: [
+                `[${script}] BLOCKED: DB_HOST / DATABASE_URL appears production-like.`,
+                `Matched: ${matchedPatterns}`,
+                'DB write to production-like hosts is blocked by default.',
+                'No production override is implemented in this phase.',
+            ].join(' '),
+            missingGates: [],
+            warnings,
+        };
+    }
+
+    // ── 5. Universal gates ──────────────────────────────────────────────────
     for (const gate of REQUIRED_UNIVERSAL_GATES) {
         if (!isTruthy(gate)) {
             missingGates.push(gate);
         }
     }
 
-    // ── 5. Table-level gates ────────────────────────────────────────────────
+    // ── 6. Table-level gates ────────────────────────────────────────────────
     const requiredTableGates = new Set();
     for (const table of tables) {
         for (const entry of TABLE_GATE_MAP) {
@@ -254,20 +275,15 @@ function requireDbWriteGuards(options = {}) {
         }
     }
 
-    // ── 6. Schema-level gate for high-risk operations ────────────────────────
+    // ── 7. Schema-level gate for high-risk operations ────────────────────────
     const hasHighRiskOp = operations.some(op => HIGH_RISK_OPERATIONS.has(String(op).toUpperCase()));
     if (hasHighRiskOp && !isTruthy('ALLOW_SCHEMA_WRITE')) {
         missingGates.push('ALLOW_SCHEMA_WRITE');
     }
 
-    // ── 7. Decision ─────────────────────────────────────────────────────────
+    // ── 8. Decision ─────────────────────────────────────────────────────────
     if (!isDryRunMode && missingGates.length === 0) {
         // All gates satisfied, not dry-run → allowed
-        if (prodDb.suspicious) {
-            warnings.push(
-                'WARNING: DB host matches production pattern but write is proceeding. Ensure this is intentional.'
-            );
-        }
         return {
             allowed: true,
             dryRun: false,
