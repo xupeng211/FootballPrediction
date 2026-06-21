@@ -4,6 +4,7 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const PHASE = 'PHASE5_21L2V1_CONTROLLED_MATCHES_IDENTITY_SEED_EXECUTION';
 const MANIFEST_PATH = 'docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.proposal.json';
@@ -1041,6 +1042,12 @@ async function runCli(argv = process.argv.slice(2), dependencies = {}) {
         output(payload);
         return { status: 1, payload };
     }
+
+    assertDbWriteAllowed({
+        script: 'controlled_matches_identity_seed_execute.js',
+        tables: ['matches'],
+        operations: ['INSERT'],
+    });
 
     const input = validation.value;
     const generatedAt = dependencies.generatedAt || new Date().toISOString();

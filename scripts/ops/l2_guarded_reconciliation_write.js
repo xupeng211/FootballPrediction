@@ -8,6 +8,7 @@
 const PHASE = 'FOTMOB_L2_GUARDED_RECONCILIATION_WRITE_DRAFT';
 const CONTRACT_CARRIER = 'matches + pipeline_status';
 const DATA_VERSION = 'fotmob_live_v1';
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const GUARDED_TRANSITION = 'pending -> harvested';
 const DEFAULT_LIMIT = 3;
 const MAX_LIMIT = 10;
@@ -736,6 +737,14 @@ function buildWritePayload(options = {}, selectedCandidates = [], updatedRows = 
 }
 
 async function runGuardedReconciliationWrite(options = {}, dependencies = {}) {
+    if (options.allowWrite) {
+        assertDbWriteAllowed({
+            script: 'l2_guarded_reconciliation_write.js',
+            tables: ['matches'],
+            operations: ['UPDATE'],
+        });
+    }
+
     const connection = await openClient(dependencies);
     let finished = false;
 

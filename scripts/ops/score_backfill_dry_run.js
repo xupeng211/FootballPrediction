@@ -13,6 +13,7 @@ const TARGET_EVIDENCE_LEVEL = 'strong';
 const TARGET_DATA_VERSION = 'fotmob_live_v1';
 const DEFAULT_SAMPLE_LIMIT = 5;
 const MAX_SAMPLE_LIMIT = 10;
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const READ_ONLY_BEGIN_SQL = 'BEGIN READ ONLY';
 const READ_ONLY_ROLLBACK_SQL = 'ROLLBACK';
 const VALID_ACTUAL_RESULTS = new Set(['home_win', 'draw', 'away_win']);
@@ -697,6 +698,11 @@ async function main(argv = process.argv.slice(2), io = {}) {
                 output.stderr('Error: --allow-write requires --json\n');
                 return 1;
             }
+            assertDbWriteAllowed({
+                script: 'score_backfill_dry_run.js',
+                tables: ['matches'],
+                operations: ['UPDATE'],
+            });
             // Lazy-require write module — only loaded when explicitly authorized
             const { runWrite } = require('./score_backfill_write');
             const payload = await runWrite(options);

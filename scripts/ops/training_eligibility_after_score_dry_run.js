@@ -8,6 +8,7 @@ const PHASE = 'TRAINING_ELIGIBILITY_AFTER_SCORE_DRY_RUN';
 const CONTRACT_CARRIER = 'matches.is_training_eligible (read-only preflight)';
 const TARGET_LEAGUE = 'Ligue 1';
 const TARGET_SEASON = '2025/2026';
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const READ_ONLY_BEGIN_SQL = 'BEGIN READ ONLY';
 const READ_ONLY_ROLLBACK_SQL = 'ROLLBACK';
 
@@ -436,6 +437,11 @@ async function main(argv = process.argv.slice(2), io = {}) {
                 output.stderr('Error: --allow-write requires --json\n');
                 return 1;
             }
+            assertDbWriteAllowed({
+                script: 'training_eligibility_after_score_dry_run.js',
+                tables: ['matches'],
+                operations: ['UPDATE'],
+            });
             // Delegate to write module via child process to avoid circular dependency
             const { execFileSync } = require('child_process');
             const result = execFileSync(

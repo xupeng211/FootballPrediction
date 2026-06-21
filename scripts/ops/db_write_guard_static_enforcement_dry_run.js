@@ -71,6 +71,7 @@ const QUERY_PATTERNS = Object.freeze([
 const GUARD_REQUIRE_PATTERNS = Object.freeze([
     /require\s*\(\s*['"]\.\/helpers\/db_write_guard['"]\s*\)/,
     /require\s*\(\s*['"]\.\.\/ops\/helpers\/db_write_guard['"]\s*\)/,
+    /import\s+[\s\S]*?\s+from\s+['"]\.\/helpers\/db_write_guard(?:\.js)?['"]/,
 ]);
 
 const GUARD_CALL_PATTERNS = Object.freeze([
@@ -123,6 +124,15 @@ const PHASE3_GUARDED = Object.freeze([
     'l3_features_local_write_gate.js',
     'match_features_training_local_write_gate.js',
     'prediction_local_write_gate.js',
+]);
+
+const PHASE4_GUARDED = Object.freeze([
+    'raw_match_data_versioned_schema_migration_execute.js',
+    'score_backfill_dry_run.js',
+    'training_eligibility_after_score_dry_run.js',
+    'l2_guarded_reconciliation_write.js',
+    'controlled_matches_identity_seed_execute.js',
+    'l3_stitch_worker.js',
 ]);
 
 const PHASE1_SKIPPED = Object.freeze([
@@ -339,6 +349,7 @@ function classifyScript(filePath, content) {
     const isPhase1 = PHASE1_GUARDED.includes(baseName);
     const isPhase2 = PHASE2_GUARDED.includes(baseName);
     const isPhase3 = PHASE3_GUARDED.includes(baseName);
+    const isPhase4 = PHASE4_GUARDED.includes(baseName);
     const wasSkipped = PHASE1_SKIPPED.includes(baseName);
 
     if (writeRisks.length === 0) {
@@ -354,7 +365,9 @@ function classifyScript(filePath, content) {
         const pos = guardBeforeWrite(content, baseName);
         const needsReview = !pos.beforeWrite;
 
-        const phaseLabel = isPhase1 ? 'phase1' : (isPhase2 ? 'phase2' : (isPhase3 ? 'phase3' : null));
+        const phaseLabel = isPhase1
+            ? 'phase1'
+            : (isPhase2 ? 'phase2' : (isPhase3 ? 'phase3' : (isPhase4 ? 'phase4' : null)));
 
         if (needsReview) {
             return {
@@ -370,7 +383,7 @@ function classifyScript(filePath, content) {
 
         return {
             classification: 'guarded',
-            reason: `guard present, before write${isPhase1 ? ', Phase1' : ''}${isPhase2 ? ', Phase2' : ''}${isPhase3 ? ', Phase3' : ''}`,
+            reason: `guard present, before write${isPhase1 ? ', Phase1' : ''}${isPhase2 ? ', Phase2' : ''}${isPhase3 ? ', Phase3' : ''}${isPhase4 ? ', Phase4' : ''}`,
             writeOps: ops,
             tables,
             riskLevel: highestRisk,
@@ -499,6 +512,13 @@ function buildSummary(results) {
 
         phase1_phase2_phase3_guarded_expected: PHASE1_GUARDED.length + PHASE2_GUARDED.length + PHASE3_GUARDED.length,
         all_phase1_phase2_phase3_detected: null, // filled below
+        phase1_phase2_phase3_phase4_guarded_detected_count: results.filter(
+            r => (r.classification === 'guarded' || r.classification === 'guarded_but_needs_review') &&
+                (r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2' || r.phase1_or_2 === 'phase3' || r.phase1_or_2 === 'phase4')
+        ).length,
+        phase1_phase2_phase3_phase4_guarded_expected:
+            PHASE1_GUARDED.length + PHASE2_GUARDED.length + PHASE3_GUARDED.length + PHASE4_GUARDED.length,
+        all_phase1_phase2_phase3_phase4_detected: null, // filled below
 
         candidates_for_phase3: results
             .filter(r => r.classification === 'unguarded_p0_candidate')
@@ -521,8 +541,17 @@ function buildSummary(results) {
     summary.all_phase1_phase2_phase3_detected = missing.length === 0;
     summary.missing_phase1_phase2_phase3 = missing;
 
+    const detectedGuardedNamesThroughPhase4 = results
+        .filter(r => r.classification === 'guarded' || r.classification === 'guarded_but_needs_review')
+        .filter(r => r.phase1_or_2 === 'phase1' || r.phase1_or_2 === 'phase2' || r.phase1_or_2 === 'phase3' || r.phase1_or_2 === 'phase4')
+        .map(r => path.basename(r.path));
+    const allExpectedThroughPhase4 = [...PHASE1_GUARDED, ...PHASE2_GUARDED, ...PHASE3_GUARDED, ...PHASE4_GUARDED];
+    const missingThroughPhase4 = allExpectedThroughPhase4.filter(n => !detectedGuardedNamesThroughPhase4.includes(n));
+    summary.all_phase1_phase2_phase3_phase4_detected = missingThroughPhase4.length === 0;
+    summary.missing_phase1_phase2_phase3_phase4 = missingThroughPhase4;
+
     if (summary.unguarded_p0_candidate_count > 0) {
-        summary.recommended_next_task = 'p0_db_write_safety_gate_fix_phase3';
+        summary.recommended_next_task = 'p0_db_write_safety_gate_fix_phase5';
     } else if (summary.guarded_but_needs_review_count > 0) {
         summary.recommended_next_task = 'db_write_guard_review_fix_phase1';
     } else {
@@ -536,6 +565,8 @@ function classifyGuarded(rel) {
     const base = path.basename(rel);
     if (PHASE1_GUARDED.includes(base)) return 'phase1';
     if (PHASE2_GUARDED.includes(base)) return 'phase2';
+    if (PHASE3_GUARDED.includes(base)) return 'phase3';
+    if (PHASE4_GUARDED.includes(base)) return 'phase4';
     return 'other';
 }
 
@@ -764,7 +795,11 @@ function main(argv = process.argv.slice(2)) {
     const results = scanAll();
     const summary = buildSummary(results);
 
-    if (args.json) {
+    if (args.firstBatch) {
+        // Only output unguarded P0 candidates
+        const candidates = results.filter(r => r.classification === 'unguarded_p0_candidate' && r.riskLevel === 'P0');
+        console.log(JSON.stringify({ summary, candidates }, null, 2));
+    } else if (args.json) {
         const output = {
             summary,
             results: results.map(r => ({
@@ -780,10 +815,6 @@ function main(argv = process.argv.slice(2)) {
             })),
         };
         console.log(JSON.stringify(output, null, 2));
-    } else if (args.firstBatch) {
-        // Only output unguarded P0 candidates
-        const candidates = results.filter(r => r.classification === 'unguarded_p0_candidate' && r.riskLevel === 'P0');
-        console.log(JSON.stringify({ summary, candidates }, null, 2));
     } else {
         printReport(results, summary);
     }
@@ -802,6 +833,7 @@ module.exports = {
     PHASE1_GUARDED,
     PHASE2_GUARDED,
     PHASE3_GUARDED,
+    PHASE4_GUARDED,
     PHASE1_SKIPPED,
     // Functions
     hasDbWriteRisk,
@@ -822,3 +854,7 @@ module.exports = {
     // Entry
     main,
 };
+
+if (require.main === module) {
+    main();
+}
