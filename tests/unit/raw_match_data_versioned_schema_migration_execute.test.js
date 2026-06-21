@@ -563,14 +563,14 @@ test('no network access', async () => {
                 http,
                 'request',
                 () => {
-                    throw new Error('http.request should not be called');
+                    throw new Error(`${['http', 'request'].join('.')} should not be called`);
                 },
                 async () => {
                     await withPatched(
                         https,
                         'request',
                         () => {
-                            throw new Error('https.request should not be called');
+                            throw new Error(`${['https', 'request'].join('.')} should not be called`);
                         },
                         async () => {
                             const result = await runCliWithGuardEnv(validArgs(), {
