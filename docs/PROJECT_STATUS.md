@@ -33,11 +33,14 @@ Last updated: 2026-06-21
   by default (was warning-only). No production override exists. DB write remains blocked.
 - `p0_db_write_safety_gate_fix_phase2` merged: 8 more scripts/ops entrypoints now protected.
   Phase1 + Phase2 = 16 of 66 P0 scripts now have guard. SC-002 still partial mitigation only.
+- `db_write_guard_static_enforcement_dry_run`: static scanner added to audit guard coverage
+  across all scripts/ops JS files. ~44 unguarded candidates identified (many false positives).
+  Report at `docs/_reports/db_write_guard_static_enforcement_dry_run_20260621.md`.
 - A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
 - 8 of 12 target P0 scripts now integrate the guard before DB write operations.
 - 4 scripts were skipped (see PR body): already have extensive controlled write
   guard systems or are too complex for minimal-guard integration.
-- DB write safety status: **blocked / partial phase1 guard added** (was: blocked /
+- DB write safety status: **blocked / partial phase1+phase2 guards added** (was: blocked /
   fix pending).
 - Training and data expansion remain blocked.
 - SC-002 remains open until all P0 scripts have guards, verified by live dry-run,
@@ -114,11 +117,12 @@ Last updated: 2026-06-21
 - Formal training must not start until eligibility, odds, cutoff-time policy,
   and DB write safety blockers are resolved.
 - Data expansion: blocked by P0 technical debt and raw/write governance.
-- DB write safety: blocked / partial phase1 guard added. The P0 DB write safety
-  dry-run found 122 production DB-write risk files, including 66 P0 files and 110
-  files with no safety gate. Phase1 adds a unified guard helper and integrates 8
-  of the most dangerous scripts/ops entrypoints. SC-002 is partially mitigated,
-  NOT fully fixed. Remaining scripts need phase2+.
+- DB write safety: blocked / partial phase1+phase2 guards added. The P0 DB write
+  safety dry-run found 122 production DB-write risk files, including 66 P0 files
+  and 110 files with no safety gate. Phase1+Phase2 = 16 scripts/ops entrypoints
+  now guarded. A static enforcement dry-run scanner has been added to audit
+  remaining coverage. SC-002 is partially mitigated, NOT fully fixed. Remaining
+  scripts need phase3+.
 - Authoritative document backflow: fix phase1 starts enforcement through the PR
   template, AI Workflow Gate, Documentation Governance, Codex Workflow, and this
   current-state update.
@@ -148,9 +152,9 @@ Last updated: 2026-06-21
 
 ## Next recommended sequence
 
-1. Phase1 + Phase2 = 16 scripts/ops entrypoints now guarded. ~50 P0 scripts remain.
-2. Plan `p0_db_write_safety_gate_fix_phase3` or static guard enforcement.
-3. Keep formal training and data expansion blocked until DB write safety,
-   cutoff strategy, training eligibility, and schema/init alignment are handled.
-4. Do not start model training, data expansion, or raw-write work automatically.
-5. Do not start automatically. Recommended next task only after user confirmation.
+1. Phase1 + Phase2 = 16 scripts/ops entrypoints now guarded.
+2. Static enforcement dry-run scanner deployed for coverage auditing.
+3. Plan `p0_db_write_safety_gate_fix_phase3` for next batch of script integrations.
+4. Keep formal training and data expansion blocked until DB write safety resolved.
+5. Do not start model training, data expansion, or raw-write work automatically.
+6. Do not start automatically. Recommended next task only after user confirmation.
