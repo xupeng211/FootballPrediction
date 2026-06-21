@@ -149,9 +149,9 @@ test('Phase5 static: changed-files advisory remains non-failing for phase5 targe
     const { scanAdvisory } = require('../../scripts/ops/db_write_guard_static_enforcement_dry_run');
     const result = scanAdvisory(PHASE5_SCRIPTS.map(script => script.path));
 
-    assert.equal(result.mode, 'changed_files_advisory');
+    assert.equal(result.mode, 'changed_files_enforcement');
     assert.equal(result.should_fail, false);
-    assert.equal(result.advisory_warning_count, 0);
+    assert.equal(result.violation_count, 0);
     for (const script of PHASE5_SCRIPTS) {
         assert.ok(result.guarded_changed_js_ops.includes(script.path), `${script.path} should be guarded`);
     }
