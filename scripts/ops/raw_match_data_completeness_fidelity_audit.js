@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 'use strict';
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 const PHASE = 'PHASE5_21L2A_RAW_MATCH_DATA_COMPLETENESS_SOURCE_FIDELITY_AUDIT';
 const FOTMOB_DATA_VERSION = 'fotmob_html_hyd_v1';
 const SYNTHETIC_DATA_VERSION = 'PHASE4.43_SYNTHETIC';
@@ -775,6 +777,14 @@ async function runCli(argv = process.argv.slice(2), dependencies = {}) {
             db_write_executed: false,
         });
         return { status: 1, payload: null };
+    }
+
+    if (validation.value.execute || validation.value.commit) {
+        assertDbWriteAllowed({
+            script: 'raw_match_data_completeness_fidelity_audit.js',
+            tables: ['raw_match_data', 'matches'],
+            operations: ['INSERT', 'UPDATE'],
+        });
     }
 
     const pool = dependencies.client ? null : createDefaultPool();

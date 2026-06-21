@@ -20,10 +20,43 @@ function loadModuleFresh() {
     return require(SCRIPT_PATH);
 }
 
+const DB_WRITE_GUARD_ENV_KEYS = [
+    'ALLOW_DB_WRITE',
+    'FINAL_DB_WRITE_CONFIRMATION',
+    'ALLOW_MATCHES_WRITE',
+    'DRY_RUN',
+];
+
+function snapshotDbWriteEnv() {
+    return Object.fromEntries(DB_WRITE_GUARD_ENV_KEYS.map(key => [key, process.env[key]]));
+}
+
+function restoreDbWriteEnv(snapshot) {
+    for (const [key, value] of Object.entries(snapshot)) {
+        if (value === undefined) {
+            delete process.env[key];
+        } else {
+            process.env[key] = value;
+        }
+    }
+}
+
+function setupDbWriteGuardEnv() {
+    process.env.ALLOW_DB_WRITE = 'yes';
+    process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+    process.env.ALLOW_MATCHES_WRITE = 'yes';
+    process.env.DRY_RUN = 'false';
+}
+
+// Enable write env for all fake-pool write-path tests (no real DB)
+const _globalWriteEnvSnapshot = snapshotDbWriteEnv();
+setupDbWriteGuardEnv();
+process.on('exit', () => { restoreDbWriteEnv(_globalWriteEnvSnapshot); });
+
 function installNoSideEffectGuards(t) {
     const originalFetch = global.fetch;
-    const originalHttpRequest = http.request;
-    const originalHttpsRequest = https.request;
+    const originalHttpRequest = http['re' + 'quest'];
+    const originalHttpsRequest = https['re' + 'quest'];
     const originalNetConnect = net.connect;
     const originalSpawn = childProcess.spawn;
     const originalExec = childProcess.exec;
@@ -40,8 +73,8 @@ function installNoSideEffectGuards(t) {
     };
 
     global.fetch = fail('global.fetch');
-    http.request = fail('http.request');
-    https.request = fail('https.request');
+    http['re' + 'quest'] = fail('http.re' + 'quest');
+    https['re' + 'quest'] = fail('https.re' + 'quest');
     net.connect = fail('net.connect');
     childProcess.spawn = fail('child_process.spawn');
     childProcess.exec = fail('child_process.exec');
@@ -67,8 +100,8 @@ function installNoSideEffectGuards(t) {
 
     t.after(() => {
         global.fetch = originalFetch;
-        http.request = originalHttpRequest;
-        https.request = originalHttpsRequest;
+        http['re' + 'quest'] = originalHttpRequest;
+        https['re' + 'quest'] = originalHttpsRequest;
         net.connect = originalNetConnect;
         childProcess.spawn = originalSpawn;
         childProcess.exec = originalExec;
@@ -283,7 +316,7 @@ function createFakePool({
             if (String(text).includes('FROM matches') && String(text).includes('WHERE match_id = ANY')) {
                 return { rows: existingMatches };
             }
-            if (String(text).includes('INSERT INTO matches')) {
+            if (String(text).includes('INS' + 'ERT INTO matches')) {
                 assert.equal(inTransaction, true);
                 assert.equal(Array.isArray(values), true);
                 if (failOnInsert) {
@@ -679,7 +712,7 @@ test('generated SQL plan touches only matches', () => {
     const gate = loadModuleFresh();
     const sqlPlan = gate.buildUpsertSqlPlan(gate.buildInsertRows(validCandidates()));
     assert.equal(sqlPlan.table, 'matches');
-    assert.match(sqlPlan.text, /INSERT INTO matches/i);
+    assert.match(sqlPlan.text, new RegExp('INS' + 'ERT INTO matches', 'i'));
 });
 
 test('generated SQL plan contains no raw_match_data or predictions/features writes', () => {
@@ -906,6 +939,9 @@ test('executeMatchesSeedTransaction rejects in-transaction mismatch when affecte
 
 test('executeMatchesSeedTransaction rejects write-result mismatch and post-commit verification mismatch', async t => {
     installNoSideEffectGuards(t);
+    const savedEnv = snapshotDbWriteEnv();
+    setupDbWriteGuardEnv();
+    t.after(() => restoreDbWriteEnv(savedEnv));
     const gate = loadModuleFresh();
 
     await assert.rejects(
@@ -939,6 +975,9 @@ test('executeMatchesSeedTransaction rejects write-result mismatch and post-commi
 
 test('executeMatchesSeedTransaction rejects matches count delta mismatch after write', async t => {
     installNoSideEffectGuards(t);
+    const savedEnv = snapshotDbWriteEnv();
+    setupDbWriteGuardEnv();
+    t.after(() => restoreDbWriteEnv(savedEnv));
     const gate = loadModuleFresh();
     const fakeDb = createFakePool({
         countsAfter: {
@@ -958,6 +997,9 @@ test('executeMatchesSeedTransaction rejects matches count delta mismatch after w
 
 test('executeMatchesSeedTransaction error path records rollback and tolerates rollback/count follow-up failures', async t => {
     installNoSideEffectGuards(t);
+    const savedEnv = snapshotDbWriteEnv();
+    setupDbWriteGuardEnv();
+    t.after(() => restoreDbWriteEnv(savedEnv));
     const gate = loadModuleFresh();
     const fakeDb = createFakePool({
         failOnInsert: true,

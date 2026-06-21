@@ -2,6 +2,8 @@
 /* eslint-disable complexity, max-lines */
 'use strict';
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 const PHASE = 'PHASE5_09L1_CONTROLLED_MATCHES_SEED_COMMIT_EXECUTION';
 const SAFE_SOURCE = 'fotmob';
 const SAFE_SCOPES = new Set(['league_season_date', 'controlled_candidates_preview']);
@@ -977,6 +979,13 @@ async function executeMatchesSeedTransaction(input = {}, dependencies = {}) {
     try {
         client = dependencies.client || (await pool.connect());
         transaction.began = true;
+
+        assertDbWriteAllowed({
+            script: 'l1_matches_seed_commit_execute.js',
+            tables: ['matches'],
+            operations: ['INSERT', 'UPDATE'],
+        });
+
         await client.query('BEGIN');
 
         beforeCounts = await selectProtectedRowCounts(client, dependencies);
