@@ -230,28 +230,26 @@ BLIND_SPOT_CODE_EXTENSIONS: frozenset[str] = frozenset(
     }
 )
 
-
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-from scripts.ops.helpers.section_content_quality import check_section_content_quality  # noqa: E402
+from scripts.ops.helpers.section_content_quality import check_section_content_quality  # noqa: E402, I001
 
 
+# fmt: off
 @dataclass(frozen=True)
 class Change:
     """A single git change entry."""
-
     status: str  # A, M, D, R
     path: str
     old_path: str | None = None
 
-
 NAME_STATUS_PATH_PARTS = 2
 NAME_STATUS_RENAME_PARTS = 3
+# fmt: on
 
 
 def git_output(args: list[str], *, check: bool = True) -> str:
     """Run a local Git command and return stdout."""
-
     result = subprocess.run(
         ["git", *args],
         cwd=ROOT,
@@ -266,7 +264,6 @@ def git_output(args: list[str], *, check: bool = True) -> str:
 
 def find_base_ref() -> str:
     """Find a local base ref without network access."""
-
     for ref in ("origin/main", "main"):
         res = subprocess.run(
             ["git", "rev-parse", "--verify", ref],
@@ -305,7 +302,6 @@ def parse_name_status(output: str) -> list[Change]:
 
 def parse_porcelain(output: str) -> list[Change]:
     """Parse 'git status --porcelain' output."""
-
     changes: list[Change] = []
     for line in output.splitlines():
         if not line:
@@ -694,8 +690,8 @@ def validate(
     return errors
 
 
-def check_db_write_guard_advisory(changed: set[str]) -> list[str]:
-    """Run DB write guard advisory scanner. Never fails CI."""
+def check_db_write_guard_enforcement(changed: set[str]) -> tuple[list[str], list[str]]:
+    """Run DB write guard enforcement scanner (phase2). Returns (errors, warnings)."""
     import importlib.util  # noqa: PLC0415
     from pathlib import Path  # noqa: PLC0415
 
@@ -703,13 +699,14 @@ def check_db_write_guard_advisory(changed: set[str]) -> list[str]:
     if not helper.exists():
         helper = Path.cwd() / "scripts" / "ops" / "helpers" / "db_write_guard_advisory_check.py"
         if not helper.exists():
-            return []
+            return [], []
     spec = importlib.util.spec_from_file_location("_dbga", str(helper))
     if spec is None or spec.loader is None:
-        return []
+        return [], []
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
-    return mod.check_db_write_guard_advisory(changed)
+    fn = getattr(mod, "check_db_write_guard_enforcement", None)
+    return fn(changed) if fn else ([], mod.check_db_write_guard_advisory(changed))
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -776,15 +773,18 @@ def main(argv: list[str] | None = None) -> int:
         skip_body_checks=args.skip_body_checks,
     )
 
-    # 8. DB write guard static enforcement — advisory only, no CI fail
+    # 8. DB write guard enforcement — phase2 hard fail on changed-files violations
     try:
-        db_warnings = check_db_write_guard_advisory(changed)
+        db_errors, db_warnings = check_db_write_guard_enforcement(changed)
+        errors.extend(db_errors)
         if db_warnings:
-            sys.stdout.write(f"[DB-WRITE-GUARD ADVISORY] {len(db_warnings)} advisory warning(s)\n")
+            sys.stdout.write(f"[DB-WRITE-GUARD ENFORCEMENT] {len(db_warnings)} note(s)\n")
             for w in db_warnings:
                 sys.stdout.write(f"- {w}\n")
     except Exception as exc:
-        sys.stdout.write(f"[DB-WRITE-GUARD ADVISORY] scanner skipped due to error: {exc}\n")
+        sys.stdout.write(f"[DB-WRITE-GUARD ENFORCEMENT] scanner error: {exc}\n")
+        if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
+            errors.append(f"[DB-WRITE-GUARD ENFORCEMENT] fail-closed in CI: {exc}")
 
     if errors:
         sys.stdout.write(f"FAIL: {len(errors)} AI workflow gate error(s)\n")

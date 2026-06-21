@@ -30,34 +30,39 @@ Last updated: 2026-06-22
 - SC-002 is **not fully fixed**. This remains partial mitigation only.
 - A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
 - Production-like DB host (RDS, Cloud SQL, Supabase, etc.) is hard blocked by default.
-  No production override exists.
+  No production override exists. No `ALLOW_PRODUCTION_DB_WRITE` bypass variable exists.
 - `p0_db_write_safety_gate_fix_phase1` (#1569): 8 scripts integrated.
 - `p0_db_write_guard_hardening_production_host_block` (#1570): production host hard block.
 - `p0_db_write_safety_gate_fix_phase2` (#1571): 8 more scripts integrated.
-- `db_write_guard_static_enforcement_dry_run` (#1572): static scanner deployed for
-  coverage audit. Report at `docs/_reports/db_write_guard_static_enforcement_dry_run_20260621.md`.
+- `db_write_guard_static_enforcement_dry_run` (#1572): static scanner deployed.
 - `p0_db_write_safety_gate_fix_phase3` (#1573): 8 more scripts integrated.
-- Static scanner is advisory/dry-run only. No CI hard fail is active.
-- `db_write_guard_static_enforcement_fix_phase1`: scanner now integrated into
-  ai_workflow_gate.py as advisory warning. New/modified scripts/ops JS files with
-  DB write risk but no guard receive an advisory warning — CI does NOT fail.
-- `p0_db_write_safety_gate_fix_phase4`: 6 more scripts integrated with the unified
-  guard. Phase4 stayed scoped to DB write safety and did not enable CI hard fail.
-- `p0_db_write_safety_gate_fix_phase5` (#1579): 7 more scripts integrated with the
-  unified guard. Phase5 stayed scoped to DB write safety and did not enable CI hard fail.
-- `p0_db_write_safety_gate_fix_phase6` (#1580): 5 more scripts integrated with the
-  unified guard, including 2 previously Phase1-skipped high-risk write-path scripts.
-  Phase6 stayed scoped to DB write safety and did not enable CI hard fail.
-- `p0_db_write_safety_gate_fix_phase7` (#XXXX): 1 script integrated (the last
-  Phase1-skipped script). Unguarded P0 JS pool near-exhaustion: remaining candidates
-  are pageProps/FotMob/SELECT-only/shared modules. Phase7 stayed scoped.
-- **Phase1 + Phase2 + Phase3 + Phase4 + Phase5 + Phase7 = 43 of 66 P0 scripts now guarded.**
+- `db_write_guard_static_enforcement_fix_phase1` (#1575): advisory warning in
+  ai_workflow_gate.py for new/modified unguarded scripts/ops JS files.
+- `p0_db_write_safety_gate_fix_phase4` (#1576): 6 more scripts integrated.
+- `p0_db_write_safety_gate_fix_phase5` (#1579): 7 more scripts integrated.
+- `p0_db_write_safety_gate_fix_phase6` (#1580): 5 more scripts integrated.
+- `p0_db_write_safety_gate_fix_phase7` (#1582): 1 script integrated.
+- **Phase1 + Phase2 + Phase3 + Phase4 + Phase5 + Phase6 + Phase7 = 43 of 66 P0 scripts now guarded.**
+- **db_write_guard_static_enforcement_fix_phase2** (this PR): changed-files enforcement
+  upgraded from advisory to hard fail in ai_workflow_gate.py. New/modified unguarded
+  scripts/ops JS files now cause CI failure. Historical full-scan candidates are
+  explicitly categorized (NOT fixed) and exempt from hard fail.
+- Remaining 22 complex candidates categorized into:
+  - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
+  - `fotmob_pipeline` (2): FotMob ingestion scripts
+  - `shared_module` (3): shared helper modules consumed by entrypoints
+  - `dry_run_or_audit` (8): dry-run, audit, preflight scripts
+  - Plus 21 browser/Playwright scripts previously classified as `skipped_complex`
+- Each remaining candidate has: explicit category, reason, reviewed_at, future_action.
+  These are NOT counted as "guarded" and SC-002 is NOT "fully fixed".
 - DB write safety status: **blocked / partial phase1-7 guards added**.
-- Guard remains opt-in per script. New scripts can still bypass the guard
-  (but will receive advisory warning if they touch scripts/ops).
+- Guard remains opt-in per script for historical files. New scripts touching
+  `scripts/ops/` with DB write risk MUST integrate the guard or be explicitly
+  allowlisted — enforced via CI hard fail on changed-files.
 - Training and data expansion remain blocked.
 - No real DB write is authorized.
-- Remaining P0 scripts are mostly pageProps/FotMob/SELECT-only and require specialized approaches.
+- Changed-files hard fail scope: **scripts/ops/\*\*/\*.js only**. Python, SQL, and
+  migration enforcement is not yet designed.
 
 ## Current operating rules
 
@@ -164,14 +169,17 @@ Last updated: 2026-06-22
 
 ## Next recommended sequence
 
-1. Phase1 + Phase2 + Phase3 + Phase4 + Phase5 + Phase7 = 43 scripts/ops entrypoints now guarded (~65% of P0).
+1. Phase1-7 = 43 scripts/ops entrypoints now guarded (~65% of P0).
 2. Static enforcement dry-run scanner deployed for coverage auditing.
-3. `db_write_guard_static_enforcement_fix_phase1`: advisory warning now active in
-   ai_workflow_gate for new/modified unguarded scripts/ops JS files. No CI hard fail.
+3. `db_write_guard_static_enforcement_fix_phase2`: changed-files enforcement now
+   hard-fails on new/modified unguarded scripts/ops JS files. Remaining complex
+   candidates categorized (NOT fixed). SC-002 remains partial mitigation only.
 4. Decide next between:
-   - `p0_db_write_safety_gate_fix_phase7` (more script-level guard integrations)
-   - `db_write_guard_static_enforcement_fix_phase2` (upgrade advisory → fail)
-4. Keep formal training and data expansion blocked until DB write safety resolved.
-5. Do not start model training, data expansion, raw-write work, or CI hard-fail
+   - Specialized browser/FotMob/pageProps audit phase
+   - Shared module enforcement design
+   - Python/SQL/migration guard design
+   - SC-002 closure plan
+5. Keep formal training and data expansion blocked until DB write safety resolved.
+6. Do not start model training, data expansion, raw-write work, or CI hard-fail
    enforcement automatically.
-6. Do not start automatically. Recommended next task only after user confirmation.
+7. Do not start automatically. Recommended next task only after user confirmation.

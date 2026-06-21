@@ -325,8 +325,8 @@ const { scanAdvisory } = require('../../scripts/ops/db_write_guard_static_enforc
 
 test('Scenario 13a: advisory mode — guarded file detected as guarded', (t) => {
     const result = scanAdvisory(['scripts/ops/purge_orphans.js']);
-    assert.equal(result.mode, 'changed_files_advisory');
-    assert.equal(result.unguarded_changed_js_ops.length, 0);
+    assert.equal(result.mode, 'changed_files_enforcement');
+    assert.equal(result.violation_count, 0);
     assert.ok(result.guarded_changed_js_ops.includes('scripts/ops/purge_orphans.js'));
 });
 
@@ -368,7 +368,7 @@ test('Scenario 13e: advisory mode — unguarded content detected', (t) => {
         'scripts/ops/purge_orphans.js',  // known guarded
     ]);
     assert.equal(result.should_fail, false);
-    assert.equal(result.advisory_warning_count, 0);
+    assert.equal(result.violation_count, 0);
     try { fs.unlinkSync(tmpFile); } catch (_) {}
     try { fs.unlinkSync(tmpContentFile); } catch (_) {}
     try { fs.rmdirSync(tmpOpsDir); } catch (_) {}

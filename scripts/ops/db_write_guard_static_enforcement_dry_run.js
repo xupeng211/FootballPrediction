@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable max-lines */
 /**
  * DB Write Guard Static Enforcement — Dry-Run Scanner.
  *
@@ -163,6 +164,33 @@ const PHASE1_SKIPPED = Object.freeze([
     'l1_matches_seed_commit_execute.js',
     'fixture_harvester_l1.js',
 ]);
+
+/**
+ * Load structured allowlist from JSON file.
+ *
+ * Each entry MUST have: path, category, reason, reviewed_at, future_action.
+ * The full-scan `should_fail` is always false for these entries.
+ * Changed-files enforcement also respects these as skip entries.
+ *
+ * SC-002 remains partial mitigation only. These are NOT "fixed".
+ */
+function loadLegacyAllowlist() {
+    const allowlistPath = path.join(__dirname, 'helpers', 'db_write_guard_legacy_allowlist.json');
+    try {
+        return Object.freeze(JSON.parse(fs.readFileSync(allowlistPath, 'utf8')));
+    } catch (_) {
+        return Object.freeze([]);
+    }
+}
+
+const ALLOWLIST_LEGACY_COMPLEX = loadLegacyAllowlist();
+
+function lookupAllowlist(relPath) {
+    for (const entry of ALLOWLIST_LEGACY_COMPLEX) {
+        if (entry.path === relPath) return entry;
+    }
+    return null;
+}
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // Helpers
@@ -428,7 +456,23 @@ function classifyScript(filePath, content) {
         };
     }
 
-    // Check for complex patterns that make auto-guard difficult
+    // Check structured allowlist for legacy complex candidates
+    const allowlistEntry = lookupAllowlist(rel);
+    if (allowlistEntry) {
+        return {
+            classification: 'skipped_complex',
+            reason: allowlistEntry.reason,
+            category: allowlistEntry.category,
+            reviewed_at: allowlistEntry.reviewed_at,
+            future_action: allowlistEntry.future_action,
+            writeOps: ops,
+            tables,
+            riskLevel: highestRisk,
+            hasHighRiskOps: hasHighRisk,
+        };
+    }
+
+    // Check for browser/Playwright automation patterns
     if (/playwright|chromium|browser|page\.goto|\.launch\(/i.test(content)) {
         return {
             classification: 'skipped_complex',
@@ -619,13 +663,39 @@ function buildSummary(results) {
     summary.phase1_through_7_guarded_expected = allExpectedThroughPhase7.length;
     summary.phase1_through_7_guarded_detected_count = detectedGuardedNamesThroughPhase7.length;
 
+    // Build skipped_complex category breakdown
+    const skippedByCategory = {};
+    for (const r of results) {
+        if (r.classification === 'skipped_complex' && r.category) {
+            skippedByCategory[r.category] = (skippedByCategory[r.category] || 0) + 1;
+        }
+    }
+    summary.skipped_complex_by_category = skippedByCategory;
+
+    // Count legacy allowlist entries (remaining complex candidates)
+    summary.legacy_allowlist_count = results.filter(
+        r => r.classification === 'skipped_complex' && r.category
+    ).length;
+
     if (summary.unguarded_p0_candidate_count > 0) {
-        summary.recommended_next_task = 'p0_db_write_safety_gate_fix_phase5';
+        summary.recommended_next_task = 'p0_db_write_safety_gate_fix_phase8 (remaining unguarded)';
     } else if (summary.guarded_but_needs_review_count > 0) {
         summary.recommended_next_task = 'db_write_guard_review_fix_phase1';
     } else {
-        summary.recommended_next_task = 'db_write_guard_static_enforcement_fix_phase1 (CI integration)';
+        summary.recommended_next_task =
+            'db_write_guard_static_enforcement_fix_phase3 (specialized browser/FotMob/pageProps audit)';
     }
+
+    // SC-002 status
+    summary.sc002_status = 'partial_mitigation_only';
+    summary.sc002_guarded_total = summary.guarded_count + summary.guarded_but_needs_review_count;
+    summary.sc002_remaining_complex = summary.legacy_allowlist_count;
+    summary.sc002_note =
+        'SC-002 is NOT fully fixed. Guarded scripts are per-script opt-in. '
+        + 'Remaining complex candidates are categorized (NOT fixed). '
+        + 'Changed-files enforcement is active for new/modified scripts/ops JS. '
+        + 'Historical full-scan candidates do not trigger hard fail. '
+        + 'Python/SQL/migration enforcement not yet designed.';
 
     return summary;
 }
@@ -707,9 +777,19 @@ function printReport(results, summary) {
     const skipped = results.filter(r => r.classification === 'skipped_complex');
     if (skipped.length > 0) {
         console.log('');
-        console.log('── Skipped (Complex) ──');
+        console.log('── Skipped (Complex / Categorized) ──');
         for (const r of skipped) {
-            console.log(`  ~ ${r.path} — ${r.reason}`);
+            const catTag = r.category ? ` [${r.category}]` : '';
+            console.log(`  ~ ${r.path}${catTag} — ${r.reason}`);
+        }
+    }
+
+    // Print skipped category breakdown
+    if (summary.skipped_complex_by_category && Object.keys(summary.skipped_complex_by_category).length > 0) {
+        console.log('');
+        console.log('── Skipped Category Breakdown ──');
+        for (const [cat, count] of Object.entries(summary.skipped_complex_by_category)) {
+            console.log(`  ${cat}: ${count}`);
         }
     }
 
@@ -738,9 +818,13 @@ function printReport(results, summary) {
     console.log(`  Enforcement rule:  ${summary.recommended_enforcement_rule}`);
     console.log(`  CI mode:           ${summary.recommended_ci_mode}`);
     console.log(`  Next task:         ${summary.recommended_next_task}`);
+    console.log(`  SC-002 guarded:    ${summary.sc002_guarded_total} / 66 (Phase1-7)`);
+    console.log(`  SC-002 complex:    ${summary.sc002_remaining_complex} remaining (categorized, NOT fixed)`);
     console.log('');
     console.log('SC-002 status: partial mitigation only — NOT fully fixed.');
-    console.log('This is a dry-run scan. No CI hard fail has been added.');
+    console.log('Changed-files enforcement: hard fail on new unguarded JS scripts/ops.');
+    console.log('Historical full-scan candidates: exempt from hard fail.');
+    console.log('This is a dry-run scan. The ai_workflow_gate reads should_fail for enforcement.');
 
     return { results, summary };
 }
@@ -749,10 +833,11 @@ function printReport(results, summary) {
 // CLI
 // ═══════════════════════════════════════════════════════════════════════════════
 
+// eslint-disable-next-line complexity
 function scanAdvisory(changedFiles = []) {
     const results = [];
     const skipped = [];
-    const unguarded = [];
+    const violations = [];
     const guarded = [];
     const falsePositives = [];
 
@@ -782,35 +867,96 @@ function scanAdvisory(changedFiles = []) {
         result.path = rel;
         results.push(result);
 
-        if (result.classification === 'unguarded_p0_candidate') {
-            unguarded.push(result);
-        } else if (result.classification === 'guarded' || result.classification === 'guarded_but_needs_review') {
-            guarded.push(result);
-        } else {
-            falsePositives.push(result);
+        // Determine enforcement outcome for this file
+        const hasGuard = (
+            result.classification === 'guarded' ||
+            result.classification === 'guarded_but_needs_review'
+        );
+        const isSkipped = (
+            result.classification === 'skipped_complex' ||
+            result.classification === 'read_only_or_false_positive' ||
+            result.classification === 'test_file' ||
+            result.classification === 'self_referential' ||
+            result.classification === 'non_js_advisory'
+        );
+
+        if (hasGuard) {
+            guarded.push({
+                path: rel,
+                classification: result.classification,
+                writeOps: result.writeOps || [],
+                tables: result.tables || [],
+                riskLevel: result.riskLevel || 'N/A',
+            });
+        } else if (result.classification === 'unguarded_p0_candidate') {
+            // This is a violation — unguarded DB write risk in changed scripts/ops JS
+            const violation = {
+                path: rel,
+                reason: result.reason || 'DB write risk detected, no guard found',
+                writeOps: result.writeOps || [],
+                tables: result.tables || [],
+                riskLevel: result.riskLevel || 'P0',
+                hasHighRiskOps: result.hasHighRiskOps || false,
+                suggestedFix: buildViolationSuggestedFix(result),
+                whyNotSkipped: 'not in legacy allowlist, not browser/complex, not read-only — needs guard',
+            };
+            violations.push(violation);
+        } else if (isSkipped) {
+            falsePositives.push({
+                path: rel,
+                classification: result.classification,
+                reason: result.reason || '',
+                category: result.category || null,
+                skipRationale: result.category
+                    ? `categorized as ${result.category}: ${result.reason}`
+                    : (result.reason || 'skip rationale applies'),
+            });
         }
     }
 
+    const shouldFail = violations.length > 0;
+
     return {
-        mode: 'changed_files_advisory',
+        mode: 'changed_files_enforcement',
+        enforcement_level: 'hard_fail_on_new_unguarded_js_ops',
         changed_files_checked: changedFiles.length,
         changed_js_ops_checked: results.length,
-        advisory_warning_count: unguarded.length,
-        unguarded_changed_js_ops: unguarded.map(r => ({
-            path: r.path,
-            writeOps: r.writeOps,
-            tables: r.tables,
-            riskLevel: r.riskLevel,
-            suggestedGates: r.suggestedGates,
-        })),
+        violation_count: violations.length,
+        violations,
         guarded_changed_js_ops: guarded.map(r => r.path),
+        guarded_detail: guarded,
         skipped_changed_files: skipped,
-        false_positive_changed: falsePositives.map(r => r.path),
-        should_fail: false,
-        recommended_action: unguarded.length > 0
-            ? 'ADVISORY: new/modified scripts/ops JS files have DB write risk without guard. Consider adding assertDbWriteAllowed.'
-            : 'OK: all changed scripts/ops JS files are guarded or read-only.',
+        false_positive_changed: falsePositives,
+        should_fail: shouldFail,
+        recommended_action: shouldFail
+            ? 'FAIL: new/modified scripts/ops JS files have unguarded DB write risk. Add assertDbWriteAllowed or request explicit allowlist classification.'
+            : violations.length === 0 && guarded.length > 0
+                ? 'OK: all changed scripts/ops JS files are guarded.'
+                : 'OK: changed scripts/ops JS files are read-only, complex/skipped, or non-write.',
+        // Historical debt disclaimer — always present
+        historical_debt_note:
+            'SC-002 remains partial mitigation only. The full-scan historical '
+            + 'remaining candidates are NOT subject to changed-files hard fail. '
+            + 'This enforcement only applies to changed files in this diff.',
     };
+}
+
+/**
+ * Build a human-readable suggested fix for a violation.
+ */
+function buildViolationSuggestedFix(result) {
+    const parts = [];
+    parts.push('Add db_write_guard integration to this file:');
+    parts.push('  1. const { assertDbWriteAllowed } = require(\'./helpers/db_write_guard\');');
+    parts.push('  2. assertDbWriteAllowed({ script: \'<name>\', tables: [\'<table>\'], operations: [\'<op>\'] });');
+    if (result.suggestedGates) {
+        const g = result.suggestedGates;
+        parts.push('  3. Required env gates: ' + g.universal.join(', '));
+        if (g.tableLevel.length) parts.push('     Table-level: ' + g.tableLevel.join(', '));
+        if (g.schemaLevel.length) parts.push('     Schema-level: ' + g.schemaLevel.join(', '));
+    }
+    parts.push('  Or, if this is a false positive, add it to ALLOWLIST_LEGACY_COMPLEX with proper category/reason.');
+    return parts.join('\n');
 }
 
 function parseArgs(argv) {
@@ -851,23 +997,34 @@ function main(argv = process.argv.slice(2)) {
         process.exit(0);
     }
 
-    // Changed-files advisory mode
+    // Changed-files enforcement mode
     if (args.changedFiles !== null) {
         const output = scanAdvisory(args.changedFiles);
         if (args.json) {
             console.log(JSON.stringify(output, null, 2));
         } else {
-            // Human-readable advisory output
-            if (output.advisory_warning_count > 0) {
-                console.log('[DB-WRITE-GUARD ADVISORY] WARNING: ' + output.advisory_warning_count +
-                    ' changed scripts/ops JS file(s) have DB write risk without guard:');
-                for (const u of output.unguarded_changed_js_ops) {
-                    console.log('  - ' + u.path + ' ops=' + (u.writeOps || []).join(',') +
-                        ' tables=' + (u.tables || []).join(',') + ' risk=' + u.riskLevel);
+            // Human-readable enforcement output
+            if (output.should_fail) {
+                console.log('[DB-WRITE-GUARD ENFORCEMENT] FAIL: ' + output.violation_count +
+                    ' changed scripts/ops JS file(s) have unguarded DB write risk:');
+                for (const v of output.violations) {
+                    console.log('  - ' + v.path);
+                    console.log('    ops: ' + (v.writeOps || []).join(', ') +
+                        '  tables: ' + (v.tables || []).join(', ') +
+                        '  risk: ' + v.riskLevel +
+                        (v.hasHighRiskOps ? '  HIGH_RISK' : ''));
+                    console.log('    reason: ' + v.reason);
+                    console.log('    suggestedFix:');
+                    for (const line of v.suggestedFix.split('\n')) {
+                        console.log('      ' + line);
+                    }
                 }
-                console.log('[DB-WRITE-GUARD ADVISORY] This is an advisory warning. CI will NOT fail.');
+                console.log('[DB-WRITE-GUARD ENFORCEMENT] Hard fail: unguarded DB write risk in changed files.');
+                console.log('[DB-WRITE-GUARD ENFORCEMENT] SC-002 is NOT fully fixed. Historical candidates exempt.');
+            } else if (output.violation_count === 0 && output.guarded_changed_js_ops.length > 0) {
+                console.log('[DB-WRITE-GUARD ENFORCEMENT] OK: all changed scripts/ops JS files are guarded.');
             } else {
-                console.log('[DB-WRITE-GUARD ADVISORY] OK: all changed scripts/ops JS files are guarded or read-only.');
+                console.log('[DB-WRITE-GUARD ENFORCEMENT] OK: changed scripts/ops JS files are read-only, complex/skipped, or non-write.');
             }
         }
         return;
@@ -887,6 +1044,9 @@ function main(argv = process.argv.slice(2)) {
                 path: r.path,
                 classification: r.classification,
                 reason: r.reason,
+                category: r.category,
+                reviewed_at: r.reviewed_at,
+                future_action: r.future_action,
                 writeOps: r.writeOps,
                 tables: r.tables,
                 riskLevel: r.riskLevel,
@@ -919,6 +1079,7 @@ module.exports = {
     PHASE6_GUARDED,
     PHASE7_GUARDED,
     PHASE1_SKIPPED,
+    ALLOWLIST_LEGACY_COMPLEX,
     // Functions
     hasDbWriteRisk,
     hasGuard,
@@ -934,6 +1095,8 @@ module.exports = {
     isSqlFile,
     isHelperFile,
     isGuardItself,
+    lookupAllowlist,
+    buildViolationSuggestedFix,
     scanAdvisory,
     // Entry
     main,
