@@ -3,24 +3,10 @@
 
 lifecycle: permanent
 
-Checks enforced:
-  1. PR body must contain all required sections (Scope, Documentation Impact,
-     Safety Impact, Validation, CI Gate Scope, No-deletion/move/rename
-     confirmation, Rollback Plan, Next Recommended Task).
-  2. "Next Recommended Task" section must include both
-     "Do not start automatically" and "Recommended next task only after user
-     confirmation".
-  3. PRs that modify both governance docs AND src/ business code in the same
-     diff are blocked (mixed-governance detection).
-  4. New docs/_reports, docs/_manifests, next-plan, review, or decision files
-     beyond the allowed budget are blocked.
-  5. Dangerous network / browser / DB-write / hook bypass / proxy-bypass
-     keywords in new or modified files under docs/ or tests/ are flagged.
-  6. Safety declarations of "no DB / no scraper / no browser" that contradict
-     actually-changed file paths are blocked.
-  7. Three critical sections (Documentation Impact, Validation, Rollback Plan)
-     must contain substantive content — hollow placeholders such as "N/A",
-     "none", "passed", or "revert PR" are rejected.
+Checks enforce required PR sections, no automatic next-task execution,
+governance/business separation, document sprawl limits, blind-spot dangerous
+keywords, safety declaration consistency, critical-section substance, and
+source-of-truth backflow for docs/_reports artifacts.
 
 Usage:
   python scripts/ops/ai_workflow_gate.py --pr-body-file /tmp/pr_body.txt
@@ -38,10 +24,6 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 
-# ---------------------------------------------------------------------------
-# Required PR body sections (checked by heading text)
-# ---------------------------------------------------------------------------
-
 REQUIRED_SECTIONS: tuple[str, ...] = (
     "## Summary",
     "## Scope",
@@ -54,18 +36,10 @@ REQUIRED_SECTIONS: tuple[str, ...] = (
     "## Next Recommended Task",
 )
 
-# ---------------------------------------------------------------------------
-# Next Recommended Task mandatory phrases
-# ---------------------------------------------------------------------------
-
 NEXT_TASK_MANDATORY_PHRASES: tuple[str, ...] = (
     "Do not start automatically",
     "Recommended next task only after user confirmation",
 )
-
-# ---------------------------------------------------------------------------
-# Dangerous keywords scanned inside docs/ and tests/ directories
-# ---------------------------------------------------------------------------
 
 DANGEROUS_NETWORK_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE)
@@ -135,7 +109,6 @@ DANGEROUS_BYPASS_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     )
 )
 
-# Proxy-bypass: raw network imports without ProxyProvider in JS/TS files
 PROXY_BYPASS_RAW_IMPORTS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p)
     for p in (
@@ -149,11 +122,6 @@ PROXY_BYPASS_RAW_IMPORTS: tuple[re.Pattern[str], ...] = tuple(
     )
 )
 
-# ---------------------------------------------------------------------------
-# Path classification
-# ---------------------------------------------------------------------------
-
-# Paths considered "business code" (runtime behaviour)
 BUSINESS_CODE_PATH_PREFIXES: tuple[str, ...] = (
     "src/",
     "database/migrations/",
@@ -162,8 +130,6 @@ BUSINESS_CODE_PATH_PREFIXES: tuple[str, ...] = (
     "training/",
 )
 
-# Paths considered "governance docs" — modifying these together with business
-# code in the same PR is prohibited
 GOVERNANCE_DOC_PATHS: frozenset[str] = frozenset(
     {
         "docs/CODEX_WORKFLOW.md",
@@ -179,7 +145,18 @@ GOVERNANCE_DOC_PATHS: frozenset[str] = frozenset(
     }
 )
 
-# High-risk paths used for safety-declaration cross-check
+AUTHORITATIVE_DOC_PATHS: frozenset[str] = frozenset(
+    {
+        "docs/PROJECT_STATUS.md",
+        "docs/DOCUMENTATION_GOVERNANCE.md",
+        "docs/CODEX_WORKFLOW.md",
+        "docs/AGENT_WORKFLOW.md",
+        "docs/DATA_SOURCE_STRATEGY.md",
+        "docs/data/FOTMOB_CURRENT_STATE.md",
+        "README.md",
+    }
+)
+
 DB_TOUCH_PATHS: tuple[str, ...] = (
     "src/db/",
     "database/",
@@ -201,7 +178,6 @@ BROWSER_TOUCH_PATHS: tuple[str, ...] = (
     "stealth",
 )
 
-# Doc-sprawl detection
 DOC_SPRAWL_PREFIXES: tuple[str, ...] = (
     "docs/_reports/",
     "docs/_manifests/",
@@ -217,11 +193,31 @@ DOC_SPRAWL_NAME_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
 
 MAX_DOC_SPRAWL_NEW_FILES = 5
 
-# Docs/tests directories subject to blind-spot keyword scanning
+REPORT_ARTIFACT_PREFIX = "docs/_reports/"
+REPORT_ARTIFACT_SUFFIX = ".md"
+SOURCE_OF_TRUTH_REASON_LABELS: tuple[str, ...] = (
+    "Source-of-truth no-update reason",
+    "If not updated, explicit reason",
+)
+HOLLOW_NO_UPDATE_REASONS: frozenset[str] = frozenset(
+    {
+        "",
+        "n/a",
+        "na",
+        "none",
+        "null",
+        "no",
+        "not needed",
+        "not applicable",
+        "无",
+        "无需",
+        "暂不需要",
+    }
+)
+MIN_SOURCE_OF_TRUTH_REASON_CHARS = 12
+
 BLIND_SPOT_DIR_PREFIXES: tuple[str, ...] = ("docs/", "tests/")
 
-# Only scan code file extensions for dangerous keywords.
-# Markdown files in docs/ legitimately mention tool names as policy.
 BLIND_SPOT_CODE_EXTENSIONS: frozenset[str] = frozenset(
     {
         ".py",
@@ -235,22 +231,9 @@ BLIND_SPOT_CODE_EXTENSIONS: frozenset[str] = frozenset(
 )
 
 
-# ---------------------------------------------------------------------------
-# Check 7: critical section content quality (anti-hollow-compliance)
-# Implemented in scripts/ops/helpers/section_content_quality.py to stay
-# under the 800-line architecture limit enforced by gatekeeper.sh.
-# ---------------------------------------------------------------------------
-
-# Check 7 implementation lives in a helper module to stay under the 800-line
-# architecture limit enforced by gatekeeper.sh.  Ensure the project root is
-# on sys.path so the absolute import works in subprocess / CLI invocations.
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from scripts.ops.helpers.section_content_quality import check_section_content_quality  # noqa: E402
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True)
@@ -378,11 +361,6 @@ def changed_paths(changes: list[Change]) -> set[str]:
     return paths
 
 
-# ---------------------------------------------------------------------------
-# PR body helpers
-# ---------------------------------------------------------------------------
-
-
 def _normalise(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
 
@@ -432,20 +410,10 @@ def section_text_between(pr_body: str, start_heading: str, next_heading: str | N
     return suffix
 
 
-# ---------------------------------------------------------------------------
-# Check 1: required PR body sections
-# ---------------------------------------------------------------------------
-
-
 def check_required_sections(pr_body: str) -> list[str]:
     """Return missing required section headings."""
 
     return [heading for heading in REQUIRED_SECTIONS if not section_present(pr_body, heading)]
-
-
-# ---------------------------------------------------------------------------
-# Check 2: "Do not start automatically" enforcement
-# ---------------------------------------------------------------------------
 
 
 def check_next_task_stop_phrase(pr_body: str) -> list[str]:
@@ -463,11 +431,6 @@ def check_next_task_stop_phrase(pr_body: str) -> list[str]:
         for phrase in NEXT_TASK_MANDATORY_PHRASES
         if phrase not in section
     ]
-
-
-# ---------------------------------------------------------------------------
-# Check 3: mixed governance + business code detection
-# ---------------------------------------------------------------------------
 
 
 def _touches_any(changed: set[str], prefixes: tuple[str, ...]) -> bool:
@@ -500,11 +463,6 @@ def check_mixed_governance_business(changed: set[str]) -> list[str]:
     return []
 
 
-# ---------------------------------------------------------------------------
-# Check 4: document sprawl detection
-# ---------------------------------------------------------------------------
-
-
 def _count_doc_sprawl_new_files(added: set[str]) -> int:
     count = 0
     for path in added:
@@ -527,9 +485,47 @@ def check_doc_sprawl(added: set[str]) -> list[str]:
     return []
 
 
-# ---------------------------------------------------------------------------
-# Check 5: dangerous keywords in docs/ and tests/ directories
-# ---------------------------------------------------------------------------
+def _touches_report_artifact(changes: list[Change]) -> bool:
+    return any(
+        c.status != "D"
+        and c.path.startswith(REPORT_ARTIFACT_PREFIX)
+        and c.path.endswith(REPORT_ARTIFACT_SUFFIX)
+        for c in changes
+    )
+
+
+def _extract_table_value(pr_body: str, labels: tuple[str, ...]) -> str:
+    label_pattern = "|".join(re.escape(label) for label in labels)
+    pattern = re.compile(
+        rf"^\|\s*(?:{label_pattern})\s*\|\s*(.*?)\s*\|", re.IGNORECASE | re.MULTILINE
+    )
+    match = pattern.search(pr_body)
+    return match.group(1).strip().strip("`").strip() if match else ""
+
+
+def _has_substantive_no_update_reason(pr_body: str) -> bool:
+    reason = _extract_table_value(pr_body, SOURCE_OF_TRUTH_REASON_LABELS)
+    normalized = re.sub(r"\s+", " ", reason).strip().strip(".:-").lower()
+    return (
+        len(normalized) >= MIN_SOURCE_OF_TRUTH_REASON_CHARS
+        and normalized not in HOLLOW_NO_UPDATE_REASONS
+    )
+
+
+def check_authoritative_report_backflow(pr_body: str, changes: list[Change]) -> list[str]:
+    """Require source-of-truth update or explicit reason when reports change."""
+
+    if not _touches_report_artifact(changes):
+        return []
+    changed = changed_paths(changes)
+    if changed & AUTHORITATIVE_DOC_PATHS:
+        return []
+    if _has_substantive_no_update_reason(pr_body):
+        return []
+    return [
+        "docs/_reports/*.md changed without updating source-of-truth docs or "
+        "a substantive Source-of-truth no-update reason in the PR body."
+    ]
 
 
 def _is_blind_spot_path(path: str) -> bool:
@@ -582,11 +578,6 @@ def check_dangerous_keywords_in_blind_spots(
             errors.extend(f"[{label}] dangerous keyword in blind-spot path: {hit}" for hit in hits)
 
     return errors
-
-
-# ---------------------------------------------------------------------------
-# Check 6: safety declaration vs actual file changes consistency
-# ---------------------------------------------------------------------------
 
 
 def _safety_declared_no(pr_body: str, label: str) -> bool:
@@ -648,11 +639,6 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
     return errors
 
 
-# ---------------------------------------------------------------------------
-# Orchestration
-# ---------------------------------------------------------------------------
-
-
 def validate(
     pr_body: str,
     changes: list[Change] | None = None,
@@ -684,6 +670,10 @@ def validate(
     # 4. Document sprawl
     errors.extend(check_doc_sprawl(added))
 
+    # 4b. Report artifacts require source-of-truth backflow or explicit reason
+    if not skip_body_checks:
+        errors.extend(check_authoritative_report_backflow(pr_body, changes))
+
     # 5. Dangerous keywords in docs/tests blind spots
     errors.extend(check_dangerous_keywords_in_blind_spots(changed))
 
@@ -702,11 +692,6 @@ def validate(
         )
 
     return errors
-
-
-# ---------------------------------------------------------------------------
-# CLI
-# ---------------------------------------------------------------------------
 
 
 def build_parser() -> argparse.ArgumentParser:

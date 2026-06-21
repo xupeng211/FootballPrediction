@@ -25,11 +25,16 @@
 |---|---|
 | New docs added |  |
 | Reports added |  |
+| Adds docs/_reports artifact | yes / no |
 | Manifests added |  |
 | Review reports added |  |
 | Decision reports added |  |
 | Next plans added |  |
 | Exact allowed report paths, if any |  |
+| Source-of-truth docs updated | yes / no |
+| Updated authoritative docs | list paths |
+| If not updated, explicit reason | required when no; do not use n/a, none, not needed, no, 无, 无需 |
+| Active conclusions reflected in PROJECT_STATUS.md | yes / no / n/a with reason |
 
 ## Safety Impact
 

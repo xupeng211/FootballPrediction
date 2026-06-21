@@ -28,8 +28,8 @@ read first. They summarize current state and link to supporting evidence.
 
 | Path | Status | Notes |
 |---|---|---|
-| docs/PROJECT_STATUS.md | planned | Overall project status and blockers. |
-| docs/DATA_SOURCE_STRATEGY.md | planned | Current data-source strategy and gates. |
+| docs/PROJECT_STATUS.md | active | Overall project status and blockers. |
+| docs/DATA_SOURCE_STRATEGY.md | active | Current data-source strategy and gates. |
 | docs/FOTMOB_CURRENT_STATE.md | planned | Preferred root-level FotMob state doc. |
 | docs/data/FOTMOB_CURRENT_STATE.md | exists/needs_update | Existing FotMob state doc to reconcile. |
 | docs/CANONICAL_MATCH_SCHEMA.md | planned | Canonical match payload and feature schema. |
@@ -62,6 +62,7 @@ Phase reports usually live in:
 Rules:
 
 - They may be kept as audit evidence.
+- They are an evidence library, not the current-state entrypoint.
 - They are not long-term source of truth.
 - After merge they can become archive candidates.
 - They must be summarized or linked from a source-of-truth doc if the conclusion
@@ -140,21 +141,45 @@ Every PR body must include:
 | New docs added | `<n>` |
 | Docs modified | `<n>` |
 | Reports added | `<n>` |
+| Adds docs/_reports artifact | yes/no |
 | Manifests added | `<n>` |
 | Source-of-truth docs updated | yes/no |
+| Updated authoritative docs | `<paths>` |
+| If not updated, explicit reason | `<required when no>` |
+| Active conclusions reflected in PROJECT_STATUS.md | yes/no/n/a |
 | Superseded docs identified | yes/no |
 | Archive candidates identified | yes/no |
 | Reason for new docs | `<short reason>` |
 
 ## Source of Truth Rule
 
-Any long-term conclusion must eventually be recorded in source-of-truth docs.
-Phase reports can support the conclusion, but they cannot permanently be the only
-place where active truth lives.
+Any long-term conclusion must be recorded in source-of-truth docs. Phase reports
+can support the conclusion, but they cannot permanently be the only place where
+active truth lives.
+
+`docs/PROJECT_STATUS.md`, `docs/DOCUMENTATION_GOVERNANCE.md`,
+`docs/CODEX_WORKFLOW.md`, `docs/AGENT_WORKFLOW.md`,
+`docs/DATA_SOURCE_STRATEGY.md`, `docs/data/FOTMOB_CURRENT_STATE.md`, and
+`README.md` are the current authoritative update targets for general workflow
+and current-state backflow.
+
+Any PR that adds or modifies `docs/_reports/*.md` must either:
+
+- update at least one relevant authoritative doc in the same PR, or
+- state a concrete source-of-truth no-update reason in the PR body.
+
+The no-update reason must not be a hollow placeholder such as `n/a`, `none`,
+`not needed`, `no`, `无`, or `无需`. "Update later" must not become the
+default reason for repeated report-only work. Key dry-run conclusions that
+change active project status must be reflected in `docs/PROJECT_STATUS.md`.
 
 When a phase report changes project direction, the next governance or cleanup
 task should update the relevant source-of-truth document with a short summary and
 links to evidence.
+
+Do not create replacement authority files such as `PROJECT_STATUS_V2.md`,
+`NEW_RULES.md`, `NEW_WORKFLOW.md`, or similar parallel entrypoints to bypass the
+existing authoritative docs.
 
 ## Report Lifecycle
 
@@ -201,10 +226,10 @@ Active source-of-truth status after Phase1:
 
 | Area | Source of Truth | Status |
 |---|---|---|
-| Project status | docs/PROJECT_STATUS.md | planned/missing |
+| Project status | docs/PROJECT_STATUS.md | active |
 | Documentation governance | docs/DOCUMENTATION_GOVERNANCE.md | active |
 | Codex workflow | docs/CODEX_WORKFLOW.md | active |
-| Data source strategy | docs/DATA_SOURCE_STRATEGY.md | planned/missing |
+| Data source strategy | docs/DATA_SOURCE_STRATEGY.md | active |
 | FotMob current state | docs/data/FOTMOB_CURRENT_STATE.md | active |
 | Canonical match schema | docs/CANONICAL_MATCH_SCHEMA.md | planned/missing |
 | Testing strategy | docs/TESTING_GUIDE.md | active |
