@@ -10,6 +10,7 @@ const EXPECTED = Object.freeze({
     currentConstraint: 'raw_match_data_match_id_key',
     targetConstraint: 'raw_match_data_match_id_data_version_key',
 });
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const REQUIRED_YES_FLAGS = Object.freeze([
     'final-schema-migration-confirmation',
     'allow-db-write',
@@ -549,6 +550,12 @@ async function runCli(argv = process.argv.slice(2), dependencies = {}) {
         output(payload);
         return { status: 1, payload };
     }
+
+    assertDbWriteAllowed({
+        script: 'raw_match_data_versioned_schema_migration_execute.js',
+        tables: ['raw_match_data'],
+        operations: ['ALTER', 'DROP'],
+    });
 
     try {
         const payload = await runMigrationExecution(validation.value, dependencies);

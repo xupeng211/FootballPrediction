@@ -4,6 +4,7 @@
 require('dotenv').config();
 
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const { extractGoldenFeatures } = require('../../src/feature_engine/extractors/GoldenFeatureExtractor');
 const { extractTacticalFeatures } = require('../../src/feature_engine/extractors/TacticalMomentumExtractor');
 const {
@@ -20,6 +21,12 @@ const { season: TARGET_SEASON } = resolveSeasonContext({
     seasonTagEnvVar: 'L3_STITCH_SEASON_TAG'
 });
 const FULL_RECALCULATE = String(process.env.L3_STITCH_FULL_RECALCULATE || '').toLowerCase() === 'true';
+
+assertDbWriteAllowed({
+    script: 'l3_stitch_worker.js',
+    tables: ['l3_features'],
+    operations: ['INSERT', 'UPDATE'],
+});
 
 const pool = new Pool({
     host: process.env.DB_HOST || '127.0.0.1',
