@@ -9,6 +9,7 @@
 'use strict';
 
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const FORBIDDEN_SQL =
     /\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|COPY|UPSERT|MERGE|GRANT|REVOKE|CREATE\s+INDEX)\b/i;
@@ -367,6 +368,11 @@ async function main() {
         return;
     }
     if (args.commit) {
+        assertDbWriteAllowed({
+            script: 'synthetic_l3_preflight.js',
+            tables: ['l3_features'],
+            operations: ['INSERT'],
+        });
         console.error('BLOCKED: synthetic L3 commit is not wired in Phase 4.44.');
         console.error(JSON.stringify(buildBlockedCommitPayload(), null, 2));
         process.exitCode = 1;

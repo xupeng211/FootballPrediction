@@ -9,6 +9,7 @@
 'use strict';
 
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const FORBIDDEN_SQL =
     /\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|COPY|UPSERT|MERGE|GRANT|REVOKE|CREATE\s+INDEX)\b/i;
@@ -387,6 +388,11 @@ async function main() {
         return;
     }
     if (args.commit) {
+        assertDbWriteAllowed({
+            script: 'synthetic_training_feature_preflight.js',
+            tables: ['match_features_training'],
+            operations: ['INSERT'],
+        });
         console.error('BLOCKED: synthetic training feature commit is not wired in Phase 4.46.');
         console.error(JSON.stringify(buildBlockedCommitPayload(), null, 2));
         process.exitCode = 1;

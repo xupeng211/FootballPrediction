@@ -13,6 +13,7 @@ const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const FORBIDDEN_SQL =
     /\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|COPY|UPSERT|MERGE|GRANT|REVOKE|CREATE\s+INDEX)\b/i;
@@ -450,6 +451,11 @@ async function main() {
         return;
     }
     if (args.commit) {
+        assertDbWriteAllowed({
+            script: 'finished_csv_local_dry_run.js',
+            tables: ['matches'],
+            operations: ['INSERT'],
+        });
         console.error(JSON.stringify(buildBlockedCommitPayload(args.csvPath), null, 2));
         process.exitCode = 1;
         return;

@@ -13,6 +13,7 @@ const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 const FORBIDDEN_SQL =
     /\b(INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|COPY|UPSERT|MERGE|GRANT|REVOKE|CREATE\s+INDEX)\b/i;
@@ -568,6 +569,11 @@ async function main() {
         return;
     }
     if (args.commit) {
+        assertDbWriteAllowed({
+            script: 'raw_fixture_adapter_dry_run.js',
+            tables: ['raw_match_data', 'matches'],
+            operations: ['INSERT'],
+        });
         console.error('BLOCKED: raw fixture adapter commit is not wired in Phase 4.41.');
         process.exitCode = 1;
         return;
