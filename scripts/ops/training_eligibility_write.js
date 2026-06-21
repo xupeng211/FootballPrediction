@@ -4,6 +4,8 @@
 // scope: authorized training eligibility write executor for Ligue 1 2025/2026
 // requires explicit --allow-write --json; single transaction, strict WHERE, rollback on failure
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 // All requires from the dry-run module are lazy (inside functions) to avoid
 // circular dependency when main() in the dry-run script requires this module.
 
@@ -164,6 +166,13 @@ async function openWriteClient(dependencies = {}) {
 }
 
 async function executeWriteTransaction(client, updates) {
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+        script: 'training_eligibility_write.js',
+        tables: ['matches'],
+        operations: ['UPDATE'],
+    });
+
     const sql = buildWriteUpdateSql(updates);
     const params = flattenWriteParams(updates);
 

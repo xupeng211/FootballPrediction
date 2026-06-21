@@ -49,6 +49,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 // ═══════════════════════════════════════════════════════════════
 // Constants
@@ -236,6 +237,21 @@ function runSafetyGuards(args, candidateCount) {
     if (!guardConfirmRetainRawData(args.retain)) process.exit(1);
     if (!guardMaxMatches(candidateCount)) process.exit(1);
     if (!guardCandidateCount(candidateCount)) process.exit(1);
+
+    // DB Write Safety Gate — unified guard (complements existing G1-G11)
+    if (args.commit) {
+        try {
+            assertDbWriteAllowed({
+                script: 'n3_live_fotmob_raw_retain.js',
+                tables: ['raw_match_data'],
+                operations: ['INSERT', 'DELETE'],
+            });
+            console.log('  [Unified Guard PASS] All DB write safety gates satisfied.');
+        } catch (err) {
+            console.error('[Unified Guard BLOCKED]', err.message);
+            process.exit(1);
+        }
+    }
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -11,6 +11,7 @@
 'use strict';
 
 const { Pool } = require('pg');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 // 德甲 2025/26 赛季 18 支标准球队
 const TEAMS = [
@@ -219,6 +220,13 @@ async function main() {
   console.log('  Bundesliga Fixture Generator V11.0');
   console.log('  基于 Round-Robin 算法生成 306 场标准赛程');
   console.log('='.repeat(70) + '\n');
+
+  // DB Write Safety Gate — unified guard
+  assertDbWriteAllowed({
+    script: 'generate_bundesliga_fixtures.js',
+    tables: ['matches'],
+    operations: ['INSERT'],
+  });
 
   const pool = new Pool(DB_CONFIG);
 

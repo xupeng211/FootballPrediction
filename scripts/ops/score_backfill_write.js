@@ -4,6 +4,8 @@
 // scope: authorized score/result backfill write executor for Ligue 1 2025/2026
 // requires explicit --allow-write --json; single transaction, strict WHERE, rollback on failure
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 const {
     PHASE,
     CONTRACT_CARRIER,
@@ -176,6 +178,13 @@ async function openWriteClient(dependencies = {}) {
 }
 
 async function executeWriteTransaction(client, updates) {
+    // DB Write Safety Gate — unified guard
+    assertDbWriteAllowed({
+        script: 'score_backfill_write.js',
+        tables: ['matches'],
+        operations: ['UPDATE'],
+    });
+
     const sql = buildWriteUpdateSql(updates);
     const params = flattenUpdateParams(updates);
 
