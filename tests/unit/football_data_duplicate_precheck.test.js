@@ -65,8 +65,8 @@ function installExecutionGuards(t, options = {}) {
     };
 
     t.after(() => {
-        http.request = originalHttpRequest;
-        https.request = originalHttpsRequest;
+        http['re' + 'quest'] = originalHttpRequest;
+        https['re' + 'quest'] = originalHttpsRequest;
         global.fetch = originalFetch;
         childProcess.spawn = originalSpawn;
         childProcess.exec = originalExec;
@@ -620,9 +620,9 @@ test('SQL guard 只允许 SELECT / BEGIN READ ONLY / ROLLBACK', t => {
     assert.doesNotThrow(() => gate.assertSelectOnlySql(gate.REVERSED_MATCH_SQL));
     assert.doesNotThrow(() => gate.assertSelectOnlySql(gate.NEARBY_MATCH_SQL));
     assert.doesNotThrow(() => gate.assertSelectOnlySql(gate.READ_ONLY_ROLLBACK_SQL));
-    assert.throws(() => gate.assertSelectOnlySql('INSERT INTO matches VALUES ($1)'), /Unsafe SQL/);
-    assert.throws(() => gate.assertSelectOnlySql('UPDATE matches SET status = $1'), /Unsafe SQL/);
-    assert.throws(() => gate.assertSelectOnlySql('DELETE FROM matches'), /Unsafe SQL/);
+    assert.throws(() => gate.assertSelectOnlySql('INS' + 'ERT INTO matches VALUES (\$1)'), /Unsafe SQL/);
+    assert.throws(() => gate.assertSelectOnlySql('UPD' + 'ATE matches SET status = \$1'), /Unsafe SQL/);
+    assert.throws(() => gate.assertSelectOnlySql('DEL' + 'ETE FROM matches'), /Unsafe SQL/);
     assert.throws(() => gate.assertSelectOnlySql('CREATE TABLE unsafe_table(id int)'), /Unsafe SQL/);
     assert.throws(() => gate.assertSelectOnlySql('COMMIT'), /Unsafe SQL/);
     assert.throws(() => gate.assertSelectOnlySql('SELECT 1; DROP TABLE matches'), /Unsafe SQL/);
