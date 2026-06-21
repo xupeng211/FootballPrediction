@@ -443,7 +443,7 @@ test('Scenario 10b: APP_ENV=production blocks write', (t) => {
     guardBlocked(t, result);
 });
 
-test('Scenario 10c: production DB host generates warnings', (t) => {
+test('Scenario 10c: production DB host (RDS) BLOCKED even with all gates satisfied', (t) => {
     clearEnv();
     setEnv('DB_HOST', 'mydb.rds.amazonaws.com');
     setEnv('ALLOW_DB_WRITE', 'yes');
@@ -458,8 +458,159 @@ test('Scenario 10c: production DB host generates warnings', (t) => {
         operations: ['INSERT'],
     });
 
-    guardAllowed(t, result); // not blocked, but warns
-    assert.ok(result.warnings.length > 0, 'Should have production DB host warnings');
+    guardBlocked(t, result);
+    assert.ok(result.error.includes('production-like'), 'Error must mention production-like');
+    assert.ok(result.warnings.length > 0, 'Warnings should still be present');
+});
+
+test('Scenario 10d: DATABASE_URL supabase blocked with all gates', (t) => {
+    clearEnv();
+    setEnv('DATABASE_URL', 'postgres://user:pass@db.supabase.co:5432/db');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_MATCHES_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['matches'],
+        operations: ['INSERT'],
+    });
+
+    guardBlocked(t, result);
+    assert.ok(result.error.includes('production-like'), 'Error must mention production-like');
+});
+
+test('Scenario 10e: DB_HOST railway.app blocked with all gates', (t) => {
+    clearEnv();
+    setEnv('DB_HOST', 'db.railway.app');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_RAW_MATCH_DATA_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
+    guardBlocked(t, result);
+});
+
+test('Scenario 10f: DB_HOST render.com blocked with all gates', (t) => {
+    clearEnv();
+    setEnv('DB_HOST', 'mydb.render.com');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_RAW_MATCH_DATA_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
+    guardBlocked(t, result);
+});
+
+test('Scenario 10g: DB_HOST heroku blocked with all gates', (t) => {
+    clearEnv();
+    setEnv('DB_HOST', 'ec2-1-2-3-4.heroku.com');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_RAW_MATCH_DATA_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
+    guardBlocked(t, result);
+});
+
+test('Scenario 10h: DB_HOST prod-db blocked with all gates', (t) => {
+    clearEnv();
+    setEnv('DB_HOST', 'my-prod-db.internal');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_RAW_MATCH_DATA_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
+    guardBlocked(t, result);
+});
+
+test('Scenario 10i: localhost still allowed with all gates', (t) => {
+    clearEnv();
+    setEnv('DB_HOST', '127.0.0.1');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_RAW_MATCH_DATA_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
+    guardAllowed(t, result);
+});
+
+test('Scenario 10j: localhost "db" still allowed with all gates', (t) => {
+    clearEnv();
+    setEnv('DB_HOST', 'db');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_RAW_MATCH_DATA_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
+    guardAllowed(t, result);
+});
+
+test('Scenario 10k: suspicious host error contains host info and no-override message', (t) => {
+    clearEnv();
+    setEnv('DB_HOST', 'mydb.rds.amazonaws.com');
+    setEnv('ALLOW_DB_WRITE', 'yes');
+    setEnv('FINAL_DB_WRITE_CONFIRMATION', 'yes');
+    setEnv('ALLOW_RAW_MATCH_DATA_WRITE', 'yes');
+    setEnv('DRY_RUN', 'false');
+    const { requireDbWriteGuards } = loadGuard();
+
+    const result = requireDbWriteGuards({
+        script: 'test.js',
+        tables: ['raw_match_data'],
+        operations: ['INSERT'],
+    });
+
+    assert.ok(result.error.includes('mydb.rds.amazonaws.com'), 'Error must include the host');
+    assert.ok(result.error.includes('production-like'), 'Error must mention production-like');
+    assert.ok(
+        result.error.includes('No production override'),
+        'Error must state no production override is implemented'
+    );
 });
 
 // ═══════════════════════════════════════════════════════════════════════════════

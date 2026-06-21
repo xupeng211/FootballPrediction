@@ -10,6 +10,9 @@ Last updated: 2026-06-21
 - `main` includes PR #1463 (P0 AI Workflow Gate CI enforcement).
 - `main` includes PR #1464 (local CI gatekeeper entrypoint).
 - `main` includes PR #1567 (authoritative workflow enforcement dry-run).
+- `main` includes PR #1569 (p0_db_write_safety_gate_fix_phase1 — unified guard + 8 scripts).
+- `p0_db_write_guard_hardening_production_host_block` hardens the guard: production-like
+  DB hosts are now blocked by default (previously warning-only). No production override exists.
 - Remote GitHub Actions `production-gate.yml` is the final CI authority.
 - Local `make ci-local-pr` is a pre-push helper, not a full replacement for remote CI.
 - AI workflow governance rules are enforced by:
@@ -23,7 +26,9 @@ Last updated: 2026-06-21
 ## Current SC-002 status (DB write safety gate)
 
 - SC-002 is **not fully fixed**. This is a partial mitigation.
-- `p0_db_write_safety_gate_fix_phase1` has started.
+- `p0_db_write_safety_gate_fix_phase1` merged: unified guard helper + 8 script integrations.
+- `p0_db_write_guard_hardening_production_host_block`: production-like DB host is now blocked
+  by default (was warning-only). No production override exists. DB write remains blocked.
 - A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
 - 8 of 12 target P0 scripts now integrate the guard before DB write operations.
 - 4 scripts were skipped (see PR body): already have extensive controlled write

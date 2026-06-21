@@ -241,6 +241,10 @@ table-level gates (`ALLOW_RAW_MATCH_DATA_WRITE`, `ALLOW_MATCHES_WRITE`,
 `ALLOW_ODDS_WRITE`, `ALLOW_TRAINING_WRITE`), and schema-level gates
 (`ALLOW_SCHEMA_WRITE`). DRY_RUN defaults to `true`. Production environment
 (`NODE_ENV=production` / `APP_ENV=production`) blocks write by default.
+Production-like DB hosts (RDS, Cloud SQL, Supabase, Railway, Render, Heroku, etc.)
+are blocked by default with no override. New env vars that bypass the production
+host block must not be introduced without explicit user authorization and separate
+audit.
 
 Test-debt work must be handled in a separate audit or repair task. Do not fix
 tests as part of workflow hardening unless the task explicitly scopes governance
