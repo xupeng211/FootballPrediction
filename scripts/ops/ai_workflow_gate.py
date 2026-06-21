@@ -749,6 +749,9 @@ def main(argv: list[str] | None = None) -> int:
     # Collect git changes (optional base ref override)
     changes = collect_changes(args.base_ref)
 
+    # Derive changed file paths from git changes for downstream checks
+    changed = changed_paths(changes)
+
     errors = validate(
         pr_body,
         changes,
@@ -757,15 +760,13 @@ def main(argv: list[str] | None = None) -> int:
 
     # 8. DB write guard static enforcement — advisory only, no CI fail
     try:
-        # 'changed' is defined above via changed_paths(changes)
-        db_warnings = check_db_write_guard_advisory(changed)  # noqa: F821
+        db_warnings = check_db_write_guard_advisory(changed)
         if db_warnings:
             sys.stdout.write(f"[DB-WRITE-GUARD ADVISORY] {len(db_warnings)} advisory warning(s)\n")
             for w in db_warnings:
                 sys.stdout.write(f"- {w}\n")
-    except Exception:
-        # Advisory check must never cause CI failure or obscure real errors
-        pass
+    except Exception as exc:
+        sys.stdout.write(f"[DB-WRITE-GUARD ADVISORY] scanner skipped due to error: {exc}\n")
 
     if errors:
         sys.stdout.write(f"FAIL: {len(errors)} AI workflow gate error(s)\n")
