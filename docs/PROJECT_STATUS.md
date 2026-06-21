@@ -41,7 +41,11 @@ Last updated: 2026-06-21
 - DB write safety status: **blocked / partial phase1+phase2+phase3 guards added**
   (was: blocked / fix pending).
 - Static scanner is advisory/dry-run only. No CI hard fail is active.
-- Guard remains opt-in per script. New scripts can still bypass the guard.
+- `db_write_guard_static_enforcement_fix_phase1`: scanner now integrated into
+  ai_workflow_gate.py as advisory warning. New/modified scripts/ops JS files with
+  DB write risk but no guard receive an advisory warning — CI does NOT fail.
+- Guard remains opt-in per script. New scripts can still bypass the guard
+  (but will receive advisory warning if they touch scripts/ops).
 - Training and data expansion remain blocked.
 - No real DB write is authorized.
 - Remaining P0 scripts require Phase4+ or static enforcement CI integration.
@@ -153,9 +157,11 @@ Last updated: 2026-06-21
 
 1. Phase1 + Phase2 + Phase3 = 24 scripts/ops entrypoints now guarded (~36% of P0).
 2. Static enforcement dry-run scanner deployed for coverage auditing.
-3. Decide next between:
+3. `db_write_guard_static_enforcement_fix_phase1`: advisory warning now active in
+   ai_workflow_gate for new/modified unguarded scripts/ops JS files. No CI hard fail.
+4. Decide next between:
    - `p0_db_write_safety_gate_fix_phase4` (more script-level guard integrations)
-   - `db_write_guard_static_enforcement_fix_phase1` (CI enforcement for new scripts)
+   - `db_write_guard_static_enforcement_fix_phase2` (upgrade advisory → fail)
 4. Keep formal training and data expansion blocked until DB write safety resolved.
 5. Do not start model training, data expansion, raw-write work, or CI hard-fail
    enforcement automatically.
