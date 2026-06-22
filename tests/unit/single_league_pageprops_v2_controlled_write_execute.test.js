@@ -11,13 +11,6 @@ const Module = require('node:module');
 const path = require('node:path');
 const test = require('node:test');
 
-// Scoped env setup for assertDbWriteAllowed guard (added in #1587).
-// All tests in this file use fake clients — no real DB connection.
-for (const k of ['ALLOW_DB_WRITE', 'FINAL_DB_WRITE_CONFIRMATION', 'ALLOW_RAW_MATCH_DATA_WRITE']) {
-    process.env[k] = 'yes';
-}
-process.env.DRY_RUN = 'false';
-
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const MODULE_PATH = path.join(PROJECT_ROOT, 'scripts/ops/single_league_pageprops_v2_controlled_write_execute.js');
 const PREVIEW_PATH = path.join(PROJECT_ROOT, 'scripts/ops/pageprops_v2_no_write_preview.js');
@@ -667,19 +660,6 @@ test('single-league controlled write blocks reverse fixture before transaction',
 });
 
 test('all hashes match begins transaction and inserts exactly 50 rows', async () => {
-    // Scoped env for assertDbWriteAllowed guard (added in #1587)
-    const saved = {
-        ALLOW_DB_WRITE: process.env.ALLOW_DB_WRITE,
-        FINAL_DB_WRITE_CONFIRMATION: process.env.FINAL_DB_WRITE_CONFIRMATION,
-        ALLOW_RAW_MATCH_DATA_WRITE: process.env.ALLOW_RAW_MATCH_DATA_WRITE,
-        DRY_RUN: process.env.DRY_RUN,
-    };
-    process.env.ALLOW_DB_WRITE = 'yes';
-    process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
-    process.env.ALLOW_RAW_MATCH_DATA_WRITE = 'yes';
-    process.env.DRY_RUN = 'false';
-    try {
-
     const targets = candidates();
     const client = fakeClient();
     const result = await mod.runCli(validInput(), {
@@ -712,13 +692,6 @@ test('all hashes match begins transaction and inserts exactly 50 rows', async ()
         client.queries.some(query => /^COMMIT$/i.test(query.sql)),
         true
     );
-
-    } finally {
-        for (const [key, value] of Object.entries(saved)) {
-            if (value === undefined) delete process.env[key];
-            else process.env[key] = value;
-        }
-    }
 });
 
 test('inserted_count mismatch rolls back', async () => {
