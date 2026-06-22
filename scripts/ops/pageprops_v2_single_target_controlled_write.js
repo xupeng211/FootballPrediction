@@ -2,6 +2,8 @@
 /* eslint-disable complexity, max-lines, max-statements */
 'use strict';
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 const {
     TARGET: PREVIEW_TARGET,
     CANDIDATE_VERSION,
@@ -1054,6 +1056,12 @@ async function executeControlledWrite(input = {}, dependencies = {}) {
                 }
             );
         }
+
+        assertDbWriteAllowed({
+            script: 'pageprops_v2_single_target_controlled_write.js',
+            tables: ['raw_match_data'],
+            operations: ['INSERT']
+        });
 
         await connection.client.query('BEGIN');
         transaction.began = true;

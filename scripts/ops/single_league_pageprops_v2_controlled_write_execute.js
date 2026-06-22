@@ -4,6 +4,9 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
+
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 const {
     CANDIDATE_VERSION,
     HASH_STRATEGY,
@@ -1512,6 +1515,12 @@ async function executeTransaction({ client, candidates, recaptureGate, rowCounts
     const collectedAt = dependencies.collectedAt || generatedAt;
     const insertSql = buildInsertRawMatchDataSql(recaptureGate.targets, collectedAt);
     try {
+        assertDbWriteAllowed({
+            script: 'single_league_pageprops_v2_controlled_write_execute.js',
+            tables: ['raw_match_data'],
+            operations: ['INSERT']
+        });
+
         await queryControlledWrite(client, 'BEGIN');
         transaction.began = true;
         const insertResult = await queryControlledWrite(client, insertSql.text, insertSql.values);

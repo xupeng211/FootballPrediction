@@ -280,12 +280,12 @@ because they combine browser automation AND DB write in a single script.
 | 33 | scripts/ops/pageprops_v2_no_write_payload_recapture_plan.js | No | No | No | No | read_only | Planning document — references controlled write helper, no direct DB |
 | 34 | scripts/ops/pageprops_v2_no_write_preview.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL, executes queries — "no_write_preview" name is misleading |
 | 35 | scripts/ops/pageprops_v2_raw_write_input_source_investigation.js | No | No | Yes | No | read_only | Investigation document — SQL keywords in analysis context, no DB client |
-| 36 | scripts/ops/pageprops_v2_single_target_controlled_write.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has controlled write guard structure + write SQL — needs standard guard |
+| 36 | scripts/ops/pageprops_v2_single_target_controlled_write.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase2_batch1** ✅ | Imports Pool from pg, INSERT INTO raw_match_data — GUARDED: guard added before BEGIN transaction |
 | 37 | scripts/ops/pageprops_v2_single_target_write_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL, executes queries — preflight with DB |
 | 38 | scripts/ops/post_seed_matches_identity_raw_write_readiness_audit.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE, TRUNCATE, GRANT, REVOKE, COPY), executes queries |
 | 39 | scripts/ops/remaining_seeded_pageprops_v2_acquisition_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (TRUNCATE, GRANT, REVOKE, COPY), executes queries |
-| 40 | scripts/ops/remaining_seeded_pageprops_v2_controlled_write.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has controlled write guard + write SQL |
-| 41 | scripts/ops/single_league_pageprops_v2_controlled_write_execute.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has own guard (ALLOW_* flags), has write SQL — needs standard guard |
+| 40 | scripts/ops/remaining_seeded_pageprops_v2_controlled_write.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase2_batch1** ✅ | Imports Pool from pg, INSERT INTO raw_match_data — GUARDED: guard added before BEGIN transaction |
+| 41 | scripts/ops/single_league_pageprops_v2_controlled_write_execute.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase2_batch1** ✅ | Imports Pool from pg, INSERT INTO raw_match_data — GUARDED: guard added before BEGIN transaction |
 | 42 | scripts/ops/single_league_pageprops_v2_controlled_write_plan.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has controlled write guard mentions + write SQL |
 | 43 | scripts/ops/single_league_small_batch_pageprops_v2_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL, executes queries — preflight with DB |
 
@@ -305,11 +305,11 @@ These 20 scripts have **confirmed real DB write capability** based on static ana
 - `odds_sniper.js` ✅ GUARDED — Playwright + Pool + UPSERT via shared module
 
 **Controlled-write subgroup (own guard, needs standardization):**
-- `controlled_matches_identity_seed_prerequisite_plan.js`
-- `pageprops_v2_single_target_controlled_write.js`
-- `remaining_seeded_pageprops_v2_controlled_write.js`
-- `single_league_pageprops_v2_controlled_write_execute.js`
-- `single_league_pageprops_v2_controlled_write_plan.js`
+- `pageprops_v2_single_target_controlled_write.js` ✅ **GUARDED (Phase2 batch1)**
+- `remaining_seeded_pageprops_v2_controlled_write.js` ✅ **GUARDED (Phase2 batch1)**
+- `single_league_pageprops_v2_controlled_write_execute.js` ✅ **GUARDED (Phase2 batch1)**
+- `controlled_matches_identity_seed_prerequisite_plan.js` — planning-only, no direct INSERT INTO
+- `single_league_pageprops_v2_controlled_write_plan.js` — planning, no executable write SQL found
 
 **Misleading-name subgroup (labeled "dry_run", "audit", "preview" but has real DB):**
 - `dataset_status_audit.js`

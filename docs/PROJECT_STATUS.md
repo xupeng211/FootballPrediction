@@ -58,12 +58,18 @@ Last updated: 2026-06-22
   3 shared modules, 1 scraper/browser only, 1 possible indirect write.
   The gap is now precisely characterized: 28 scripts need guard/exclusion action.
   SC-002 remains partial mitigation only.
-- **confirmed_write_path_guard_phase1_high_risk_browser_db** (this PR): Guard integration
+- **confirmed_write_path_guard_phase1_high_risk_browser_db** (#1586): Guard integration
   complete for the 2 highest-risk browser+DB skipped_complex scripts:
   `odds_sniper.js` and `fixture_harvester_l1.js`. Both now call `assertDbWriteAllowed()`
   before DB write operations. These are NOT part of the original 66 P0 — they are
-  skipped_complex write paths now guarded. Remaining confirmed_write_path_needs_guard:
-  18 of 20. SC-002 remains partial mitigation only.
+  skipped_complex write paths now guarded.
+- **confirmed_write_path_guard_phase2_batch1** (this PR): Guard integration for 3
+  controlled-write scripts with INSERT INTO raw_match_data:
+  `pageprops_v2_single_target_controlled_write.js`,
+  `remaining_seeded_pageprops_v2_controlled_write.js`,
+  `single_league_pageprops_v2_controlled_write_execute.js`.
+  Remaining confirmed_write_path_needs_guard: 15 of 20.
+  SC-002 remains partial mitigation only.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
   - `fotmob_pipeline` (2): FotMob ingestion scripts
@@ -198,9 +204,9 @@ Last updated: 2026-06-22
    Remaining 43 complex candidates categorized (22 in allowlist + 21 browser, NOT fixed).
    SC-002 remains partial mitigation only.
 5. Next recommended tasks (in priority order):
-   - `confirmed_write_path_guard_phase` — 2 of 20 highest-risk scripts guarded
-     (`odds_sniper.js`, `fixture_harvester_l1.js`). 18 remaining confirmed write paths
-     still need guard integration.
+   - `confirmed_write_path_guard_phase` — 5 of 20 confirmed write paths now guarded
+     (Phase1: 2 browser+DB, Phase2 batch1: 3 controlled-write). 15 remaining.
+     Controlled-write scripts standardized. Continue with remaining batches.
    - `shared_module_db_write_boundary_design_phase1` — design boundary enforcement for
      3 shared modules and map all consumer entrypoints
    - `sc002_allowlist_cleanup_phase1` — update allowlist to reflect audit findings;
