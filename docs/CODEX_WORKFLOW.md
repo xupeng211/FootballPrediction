@@ -152,6 +152,7 @@ Recommended source-of-truth docs:
 | docs/CANONICAL_MATCH_SCHEMA.md | planned | Create after schema direction is approved. |
 | docs/DOCUMENTATION_GOVERNANCE.md | exists | Read before documentation-heavy tasks. |
 | docs/CODEX_WORKFLOW.md | exists | Read before every Codex task. |
+| docs/SC002_CLOSURE_PLAN.md | exists | Authoritative SC-002 closure plan and release gates. Read before any DB-write, training, or data expansion task. |
 | docs/DEVELOPMENT_WORKFLOW.md | planned | Create only when explicitly scoped. |
 
 If a source-of-truth doc is missing, mark it planned. Do not create it as a side
