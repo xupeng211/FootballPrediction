@@ -43,10 +43,15 @@ Last updated: 2026-06-22
 - `p0_db_write_safety_gate_fix_phase6` (#1580): 5 more scripts integrated.
 - `p0_db_write_safety_gate_fix_phase7` (#1582): 1 script integrated.
 - **Phase1 + Phase2 + Phase3 + Phase4 + Phase5 + Phase6 + Phase7 = 43 of 66 P0 scripts now guarded.**
-- **db_write_guard_static_enforcement_fix_phase2** (this PR): changed-files enforcement
+- **db_write_guard_static_enforcement_fix_phase2** (#1583): changed-files enforcement
   upgraded from advisory to hard fail in ai_workflow_gate.py. New/modified unguarded
   scripts/ops JS files now cause CI failure. Historical full-scan candidates are
   explicitly categorized (NOT fixed) and exempt from hard fail.
+- **sc002_closure_plan_phase0** (this PR): SC-002 closure plan documented in
+  `docs/SC002_CLOSURE_PLAN.md`. This is the authoritative SC-002 status reference.
+  SC-002 remains partial mitigation only. 43/66 guarded. 22 categorized, not fixed.
+  21 additional browser/Playwright scripts identified as skipped_complex (total 43).
+  Training, data expansion, and real DB write remain blocked.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
   - `fotmob_pipeline` (2): FotMob ingestion scripts
@@ -83,6 +88,7 @@ Last updated: 2026-06-22
 - Small docs-only source-of-truth updates (like this file).
 - Read-only audits.
 - Small, scoped CI/governance fixes that do not touch runtime code.
+- SC-002 closure planning, governance, and documentation tasks.
 - Future FotMob/data work only after explicit user confirmation and under
   read-only/no-write constraints.
 
@@ -109,6 +115,7 @@ Last updated: 2026-06-22
 | `docs/DOCUMENTATION_GOVERNANCE.md` | active |
 | `docs/data/FOTMOB_CURRENT_STATE.md` | active — read for FotMob state |
 | `docs/AGENT_WORKFLOW.md` | active |
+| `docs/SC002_CLOSURE_PLAN.md` | active — authoritative SC-002 status reference |
 | `docs/TESTING_GUIDE.md` | active — needs provenance review |
 | `docs/GITHUB_ACTIONS_AUDIT_REPORT.md` | evidence/needs_update — stale CI references |
 
@@ -169,17 +176,27 @@ Last updated: 2026-06-22
 
 ## Next recommended sequence
 
-1. Phase1-7 = 43 scripts/ops entrypoints now guarded (~65% of P0).
-2. Static enforcement dry-run scanner deployed for coverage auditing.
-3. `db_write_guard_static_enforcement_fix_phase2`: changed-files enforcement now
-   hard-fails on new/modified unguarded scripts/ops JS files. Remaining complex
-   candidates categorized (NOT fixed). SC-002 remains partial mitigation only.
-4. Decide next between:
-   - Specialized browser/FotMob/pageProps audit phase
-   - Shared module enforcement design
-   - Python/SQL/migration guard design
-   - SC-002 closure plan
-5. Keep formal training and data expansion blocked until DB write safety resolved.
-6. Do not start model training, data expansion, raw-write work, or CI hard-fail
-   enforcement automatically.
-7. Do not start automatically. Recommended next task only after user confirmation.
+1. SC-002 closure plan phase0 completed. See `docs/SC002_CLOSURE_PLAN.md` for the
+   authoritative SC-002 status, closure criteria, release gates, and recommended
+   next tasks.
+2. Phase1-7 = 43 scripts/ops entrypoints now guarded (~65% of P0).
+3. Static enforcement dry-run scanner deployed for coverage auditing.
+4. Changed-files hard fail enabled for new/modified unguarded scripts/ops JS files.
+   Remaining 43 complex candidates categorized (22 in allowlist + 21 browser, NOT fixed).
+   SC-002 remains partial mitigation only.
+5. Recommended next tasks (in priority order):
+   - `specialized_browser_fotmob_pageprops_audit_phase1` — audit all 43 skipped_complex
+     scripts to verify write capability vs. read-only.
+   - `shared_module_db_write_boundary_design_phase1` — design boundary enforcement for
+     shared modules consumed by entrypoints.
+   - `python_sql_migration_enforcement_design_phase1` — design enforcement for Python
+     and SQL migration paths.
+   - `runtime_db_role_permission_review_phase1` — review and document DB-level
+     role/permission model.
+   - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
+     checklists.
+6. Keep formal training and data expansion blocked until DB write safety resolved
+   and release gate criteria met.
+7. Do not start model training, data expansion, raw-write work, scraper/browser
+   automation, or Phase8+ guard integration automatically.
+8. Do not start automatically. Recommended next task only after user confirmation.
