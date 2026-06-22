@@ -562,6 +562,9 @@ function runNodeTests(files, options = {}) {
       );
     }
   }
+  // Preload guard env for test files that exercise guarded DB write paths (#1587).
+  // No-op when the test batch doesn't include a guarded file.
+  args.push('--require', './scripts/ops/helpers/guard_test_env_preload.js');
   args.push(...files.map(file => path.relative(PROJECT_ROOT, file)));
 
   const startTime = Date.now();
