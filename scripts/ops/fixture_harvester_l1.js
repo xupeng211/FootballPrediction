@@ -14,6 +14,8 @@
 const { chromium } = require('playwright');
 const { Pool } = require('pg');
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 // 德甲 18 支标准球队
 const BUNDESLIGA_TEAMS = [
   'Bayern München', 'Borussia Dortmund', 'Bayer Leverkusen', 'RB Leipzig',
@@ -148,6 +150,12 @@ async function extractFixtures(page) {
  */
 async function persistFixtures(pool, fixtures) {
   console.log(`[入库] 开始写入 ${fixtures.length} 场比赛到 L1...`);
+
+  assertDbWriteAllowed({
+    script: 'fixture_harvester_l1.js',
+    tables: ['matches'],
+    operations: ['INSERT', 'UPDATE']
+  });
 
   let inserted = 0;
   let updated = 0;
