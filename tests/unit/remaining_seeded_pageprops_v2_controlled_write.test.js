@@ -11,6 +11,13 @@ const Module = require('node:module');
 const path = require('node:path');
 const test = require('node:test');
 
+// Scoped env setup for assertDbWriteAllowed guard (added in #1587).
+// All tests in this file use fake clients — no real DB connection.
+for (const k of ['ALLOW_DB_WRITE', 'FINAL_DB_WRITE_CONFIRMATION', 'ALLOW_RAW_MATCH_DATA_WRITE']) {
+    process.env[k] = 'yes';
+}
+process.env.DRY_RUN = 'false';
+
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const MODULE_PATH = path.join(PROJECT_ROOT, 'scripts/ops/remaining_seeded_pageprops_v2_controlled_write.js');
 const BASELINE_HASHES_JSON =
@@ -361,24 +368,44 @@ function fakeClient(options = {}) {
 }
 
 async function successRun(overrides = {}) {
-    const client = fakeClient(overrides.clientOptions);
-    const fetchCalls = [];
-    const result = await mod.runCli(validArgv(overrides.argv || {}), {
-        client,
-        fetchFn: async requestUrl => {
-            fetchCalls.push(requestUrl);
-            const externalId = requestUrl.split('/').pop();
-            return fakeResponseFor(
-                externalId,
-                overrides.responseByExternalId?.[externalId] || overrides.response || {}
-            );
-        },
-        recapturedHashesByExternalId: overrides.recapturedHashesByExternalId || mod.BASELINE_HASHES,
-        generatedAt: '2026-05-16T09:00:00.000Z',
-        now: '2026-05-16T09:00:00.000Z',
-        output: overrides.output || (() => {}),
-    });
-    return { result, client, fetchCalls };
+    // Snapshot env vars required by assertDbWriteAllowed (added in #1587)
+    const savedEnv = {
+        ALLOW_DB_WRITE: process.env.ALLOW_DB_WRITE,
+        FINAL_DB_WRITE_CONFIRMATION: process.env.FINAL_DB_WRITE_CONFIRMATION,
+        ALLOW_RAW_MATCH_DATA_WRITE: process.env.ALLOW_RAW_MATCH_DATA_WRITE,
+        DRY_RUN: process.env.DRY_RUN,
+    };
+    try {
+        process.env.ALLOW_DB_WRITE = 'yes';
+        process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+        process.env.ALLOW_RAW_MATCH_DATA_WRITE = 'yes';
+        process.env.DRY_RUN = 'false';
+
+        const client = fakeClient(overrides.clientOptions);
+        const fetchCalls = [];
+        const result = await mod.runCli(validArgv(overrides.argv || {}), {
+            client,
+            fetchFn: async requestUrl => {
+                fetchCalls.push(requestUrl);
+                const externalId = requestUrl.split('/').pop();
+                return fakeResponseFor(
+                    externalId,
+                    overrides.responseByExternalId?.[externalId] || overrides.response || {}
+                );
+            },
+            recapturedHashesByExternalId: overrides.recapturedHashesByExternalId || mod.BASELINE_HASHES,
+            generatedAt: '2026-05-16T09:00:00.000Z',
+            now: '2026-05-16T09:00:00.000Z',
+            output: overrides.output || (() => {}),
+        });
+        return { result, client, fetchCalls };
+    } finally {
+        // Restore env vars to avoid polluting other tests
+        for (const [key, value] of Object.entries(savedEnv)) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+    }
 }
 
 function assertInvalid(overrides, pattern) {

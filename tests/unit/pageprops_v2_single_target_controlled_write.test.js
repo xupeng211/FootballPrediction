@@ -11,6 +11,16 @@ const Module = require('node:module');
 const path = require('node:path');
 const test = require('node:test');
 
+// Scoped env setup for assertDbWriteAllowed guard (added in #1587).
+// All tests in this file use fake clients — no real DB connection.
+// Snapshot and restore env at test-file level to avoid polluting other suites.
+const _GUARD_ENV_KEYS = ['ALLOW_DB_WRITE', 'FINAL_DB_WRITE_CONFIRMATION', 'ALLOW_RAW_MATCH_DATA_WRITE', 'DRY_RUN'];
+const _SAVED_GUARD_ENV = Object.fromEntries(_GUARD_ENV_KEYS.map(k => [k, process.env[k]]));
+for (const k of _GUARD_ENV_KEYS) {
+    if (k === 'DRY_RUN') process.env[k] = 'false';
+    else process.env[k] = 'yes';
+}
+
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const MODULE_PATH = path.join(PROJECT_ROOT, 'scripts/ops/pageprops_v2_single_target_controlled_write.js');
 const BASELINE_HASH = 'f892b403fe6e420a745888ab31e825843c4fd5387a7518ce61c4b456bb980acc';
@@ -287,18 +297,38 @@ function fakeClient(options = {}) {
 }
 
 async function successRun(overrides = {}) {
-    const client = fakeClient(overrides.clientOptions);
-    const result = await mod.runCli(validArgv(overrides.argv || {}), {
-        client,
-        fetchFn: async () => fakeResponse(overrides.response || {}),
-        recapturedHashOverride: Object.prototype.hasOwnProperty.call(overrides, 'recapturedHashOverride')
-            ? overrides.recapturedHashOverride
-            : BASELINE_HASH,
-        generatedAt: '2026-05-16T09:00:00.000Z',
-        now: '2026-05-16T09:00:00.000Z',
-        output: () => {},
-    });
-    return { result, client };
+    // Snapshot env vars required by assertDbWriteAllowed (added in #1587)
+    const savedEnv = {
+        ALLOW_DB_WRITE: process.env.ALLOW_DB_WRITE,
+        FINAL_DB_WRITE_CONFIRMATION: process.env.FINAL_DB_WRITE_CONFIRMATION,
+        ALLOW_RAW_MATCH_DATA_WRITE: process.env.ALLOW_RAW_MATCH_DATA_WRITE,
+        DRY_RUN: process.env.DRY_RUN,
+    };
+    try {
+        process.env.ALLOW_DB_WRITE = 'yes';
+        process.env.FINAL_DB_WRITE_CONFIRMATION = 'yes';
+        process.env.ALLOW_RAW_MATCH_DATA_WRITE = 'yes';
+        process.env.DRY_RUN = 'false';
+
+        const client = fakeClient(overrides.clientOptions);
+        const result = await mod.runCli(validArgv(overrides.argv || {}), {
+            client,
+            fetchFn: async () => fakeResponse(overrides.response || {}),
+            recapturedHashOverride: Object.prototype.hasOwnProperty.call(overrides, 'recapturedHashOverride')
+                ? overrides.recapturedHashOverride
+                : BASELINE_HASH,
+            generatedAt: '2026-05-16T09:00:00.000Z',
+            now: '2026-05-16T09:00:00.000Z',
+            output: () => {},
+        });
+        return { result, client };
+    } finally {
+        // Restore env vars to avoid polluting other tests
+        for (const [key, value] of Object.entries(savedEnv)) {
+            if (value === undefined) delete process.env[key];
+            else process.env[key] = value;
+        }
+    }
 }
 
 test('valid input succeeds', () => {
