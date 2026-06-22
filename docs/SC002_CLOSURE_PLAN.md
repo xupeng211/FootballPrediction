@@ -344,23 +344,36 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 
 ## Recommended Next Tasks
 
-### 1. specialized_browser_fotmob_pageprops_audit_phase1
+### 1. specialized_browser_fotmob_pageprops_audit_phase1 ✅ COMPLETED
 
-- **Objective:** Audit all 43 skipped_complex scripts (22 allowlisted + 21 browser) to
-  verify whether each script can actually execute DB writes, and produce a verified
-  classification with per-script findings.
-- **Allowed changes:** Read scripts, trace code paths, verify keyword context, update
-  allowlist with verified classification, add audit findings to docs.
-- **Forbidden actions:** Execute scripts, connect to DB, run browser automation, fetch
-  network data, modify business logic, add guards to scripts (reserve for later phase).
-- **Expected output:** A verified audit report (`docs/_reports/sc002_complex_candidate_audit.md`)
-  with per-script findings: confirmed write-capable, confirmed read-only, or uncertain
-  with specific risks. Update allowlist if findings change classification.
-- **Acceptance criteria:** Every skipped_complex script has a verified classification
-  based on code-path analysis. No script is classified solely by filename pattern.
-  Ambiguous scripts are flagged for deeper review.
+- **Status:** Completed (this PR). Audit document: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md`.
+- **Results:** All 43 skipped_complex scripts statically audited.
+  - 20 confirmed_write_path_needs_guard
+  - 14 read_only / no_db_connection
+  - 4 needs_manual_review
+  - 3 shared_module_no_execution
+  - 1 scraper_or_browser_only
+  - 1 possible_indirect_write
+- **Key finding:** 20 scripts have confirmed real DB write capability and need guard
+  integration. The "dry_run", "audit", and "browser/Playwright" labels from the scanner
+  were unreliable — many such scripts actually import DB clients and contain write SQL.
 
-### 2. shared_module_db_write_boundary_design_phase1
+### 2. confirmed_write_path_guard_phase (NEW — highest priority)
+
+- **Objective:** Integrate `assertDbWriteAllowed()` into the 20 confirmed-write-path scripts.
+- **Priority order:** High-risk browser+DB scripts first (`odds_sniper.js`,
+  `fixture_harvester_l1.js`), then controlled-write scripts, then misleading-name scripts.
+- **Allowed changes:** Add guard calls before write operations; update scripts to call
+  `assertDbWriteAllowed()` with appropriate table-level gates.
+- **Forbidden actions:** Execute scripts, connect to production DB, change business logic
+  beyond guard integration, enable DRY_RUN=false.
+- **Expected output:** 20 scripts with integrated guard; updated scanner to detect the
+  new guard integrations.
+- **Acceptance criteria:** Each of the 20 scripts calls `assertDbWriteAllowed()` before
+  every write operation. Scanner confirms guard detection for all 20. changed-files
+  enforcement passes for the modified scripts.
+
+### 4. shared_module_db_write_boundary_design_phase1
 
 - **Objective:** Design a boundary enforcement mechanism for shared modules
   (`dbBlueprint.js`, `restoreMappingsWorkflow.js`, `odds_harvest_pipeline.shared.js`)
@@ -379,7 +392,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   to enforce it for future changes. The design is reviewable and implementable in a
   follow-up phase.
 
-### 3. python_sql_migration_enforcement_design_phase1
+### 5. python_sql_migration_enforcement_design_phase1
 
 - **Objective:** Design enforcement mechanisms for Python-based DB write scripts, SQL
   migration files, and migration runner scripts that are outside the current JS-only
@@ -395,7 +408,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   are inventoried. Each has a proposed enforcement mechanism (guard equivalent) or a
   documented exclusion rationale. CI integration plan is specified.
 
-### 4. runtime_db_role_permission_review_phase1
+### 6. runtime_db_role_permission_review_phase1
 
 - **Objective:** Review and document the current runtime DB role/permission model.
   Identify whether DB-level restrictions (read-only roles, write-restricted connection
@@ -411,7 +424,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   application-layer guard and DB-layer restrictions are identified. Recommendations are
   specific and actionable.
 
-### 5. sc002_release_gate_checklist_phase1
+### 7. sc002_release_gate_checklist_phase1
 
 - **Objective:** Create a detailed release gate checklist that can be used to verify
   Gate A/B/C readiness before any controlled DB write or training is authorized.
