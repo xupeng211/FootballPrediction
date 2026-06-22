@@ -1,0 +1,156 @@
+[
+  {
+    "path": "scripts/ops/all_seeded_pageprops_v2_canonical_read_verification.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps post-write canonical verification — keywords are in audit/verification context, not direct DB write path",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design, not simple JS guard"
+  },
+  {
+    "path": "scripts/ops/pageprops_v2_bounded_expanded_blocked_target_review_execute.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps review/execute pipeline — keywords are in audit/review context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/pageprops_v2_controlled_write_plan.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps write plan — planning-only, not a real write entrypoint; has its own controlled plan guard",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/pageprops_v2_identity_contract_regression_execute.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps identity contract regression — specialized pipeline with its own guard structure",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/pageprops_v2_post_write_canonical_read_verification.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps post-write canonical verification — keywords are in audit/verification context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/pageprops_v2_raw_completeness_audit.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps raw completeness audit — keywords are in audit/verification context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/pageprops_v2_recapture_runner_identity_input_contract_fix_plan.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps recapture plan — planning-only, keywords in planning/design context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/pageprops_v2_suspended_target_review_execute.js",
+    "category": "pageprops_pipeline",
+    "reason": "pageProps suspended target review — specialized pipeline with review/execute structure",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/single_league_small_batch_target_manifest_plan.js",
+    "category": "pageprops_pipeline",
+    "reason": "single league manifest plan — planning-only, keywords in planning context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized pageProps pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/fotmob_adg60_raw_json_db_storage_no_feature_parse.js",
+    "category": "fotmob_pipeline",
+    "reason": "FotMob ADG60 raw JSON storage — FotMob ingestion pipeline, needs specialized FotMob guard not simple JS guard",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized FotMob pipeline guard design, not simple JS guard"
+  },
+  {
+    "path": "scripts/ops/fotmob_ligue1_adg57_no_write_mutation_dry_run_preview.js",
+    "category": "fotmob_pipeline",
+    "reason": "FotMob Ligue1 dry-run preview — preview-only, \"no write mutation\" in filename, keywords are in preview/audit context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "verify keywords are truly non-executing; classify as dry_run if confirmed"
+  },
+  {
+    "path": "scripts/ops/helpers/dbBlueprint.js",
+    "category": "shared_module",
+    "reason": "shared DB blueprint helper module — defines schemas/snippets used by other scripts; not a standalone write entrypoint",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs shared module enforcement design — guard should be in calling entrypoints, not in shared schema definitions"
+  },
+  {
+    "path": "scripts/ops/helpers/restoreMappingsWorkflow.js",
+    "category": "shared_module",
+    "reason": "shared restore mappings workflow helper — consumed by entrypoint scripts; not a standalone write entrypoint",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs shared module enforcement design"
+  },
+  {
+    "path": "scripts/ops/odds_harvest_pipeline.shared.js",
+    "category": "shared_module",
+    "reason": "shared odds harvest pipeline module — consumed by entrypoint scripts; not a standalone write entrypoint",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs shared module enforcement design"
+  },
+  {
+    "path": "scripts/ops/authoritative_workflow_enforcement_dry_run.js",
+    "category": "dry_run_or_audit",
+    "reason": "authoritative workflow enforcement dry-run — audit tool, DB write keywords are in analysis/audit context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "verify keywords are in non-executing context; may be false positive"
+  },
+  {
+    "path": "scripts/ops/dataset_status_audit.js",
+    "category": "dry_run_or_audit",
+    "reason": "dataset status audit — read-only audit script, keywords likely in audit description/comments",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "verify keywords are non-executing; classify as read_only if confirmed"
+  },
+  {
+    "path": "scripts/ops/formal_training_dataset_design_dry_run.js",
+    "category": "dry_run_or_audit",
+    "reason": "formal training dataset design dry-run — design/planning script, keywords in design context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized training pipeline guard design"
+  },
+  {
+    "path": "scripts/ops/l3_local_dry_run.js",
+    "category": "dry_run_or_audit",
+    "reason": "L3 local dry-run — dry-run prefix, keywords likely in non-executing dry-run context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "verify dry-run nature; may be guardable with simple integration"
+  },
+  {
+    "path": "scripts/ops/raw_match_data_versioned_schema_migration_preflight.js",
+    "category": "dry_run_or_audit",
+    "reason": "raw match data schema migration preflight — preflight/planning, not the actual migration execute script",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "the execute counterpart is already guarded (Phase4); preflight is planning-only"
+  },
+  {
+    "path": "scripts/ops/technical_debt_workflow_audit_dry_run.js",
+    "category": "dry_run_or_audit",
+    "reason": "technical debt workflow audit dry-run — audit tool, keywords in audit/analysis context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "verify keywords are non-executing; classify as read_only if confirmed"
+  },
+  {
+    "path": "scripts/ops/training_dataset_leakage_dry_run.js",
+    "category": "dry_run_or_audit",
+    "reason": "training dataset leakage dry-run — audit/analysis script, keywords in analysis context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "verify keywords are non-executing; classify as read_only if confirmed"
+  },
+  {
+    "path": "scripts/ops/training_pipeline_smoke_dry_run.js",
+    "category": "dry_run_or_audit",
+    "reason": "training pipeline smoke dry-run — smoke test, keywords in test/smoke context",
+    "reviewed_at": "phase2_enforcement",
+    "future_action": "needs specialized training pipeline guard design"
+  }
+]

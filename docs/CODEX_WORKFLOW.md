@@ -246,6 +246,16 @@ are blocked by default with no override. New env vars that bypass the production
 host block must not be introduced without explicit user authorization and separate
 audit.
 
+**Changed-files enforcement (phase2):** The `ai_workflow_gate.py` now hard-fails
+when a PR adds or modifies a `scripts/ops/**/*.js` file that has DB write risk
+keywords (INSERT/UPDATE/DELETE/TRUNCATE/DROP/CREATE/ALTER) but does not integrate
+`assertDbWriteAllowed`. Historical complex candidates (pageProps pipeline, FotMob
+ingestion, shared modules, dry-run/audit scripts, browser automation scripts) are
+explicitly categorized in the allowlist and are exempt from changed-files hard fail.
+If a new script is a false positive, it must be added to the allowlist with an
+explicit category, reason, and future_action — silent bypass is not allowed.
+SC-002 remains partial mitigation only.
+
 Test-debt work must be handled in a separate audit or repair task. Do not fix
 tests as part of workflow hardening unless the task explicitly scopes governance
 checker tests.
