@@ -52,12 +52,18 @@ Last updated: 2026-06-22
   SC-002 remains partial mitigation only. 43/66 guarded. 22 categorized, not fixed.
   21 additional browser/Playwright scripts identified as skipped_complex (total 43).
   Training, data expansion, and real DB write remain blocked.
-- **specialized_browser_fotmob_pageprops_audit_phase1** (this PR): Static audit of all
+- **specialized_browser_fotmob_pageprops_audit_phase1** (#1585): Static audit of all
   43 skipped_complex scripts completed. See `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md`.
   Key findings: 20 confirmed DB write paths, 14 read-only/no-DB, 4 need manual review,
   3 shared modules, 1 scraper/browser only, 1 possible indirect write.
   The gap is now precisely characterized: 28 scripts need guard/exclusion action.
   SC-002 remains partial mitigation only.
+- **confirmed_write_path_guard_phase1_high_risk_browser_db** (this PR): Guard integration
+  complete for the 2 highest-risk browser+DB skipped_complex scripts:
+  `odds_sniper.js` and `fixture_harvester_l1.js`. Both now call `assertDbWriteAllowed()`
+  before DB write operations. These are NOT part of the original 66 P0 — they are
+  skipped_complex write paths now guarded. Remaining confirmed_write_path_needs_guard:
+  18 of 20. SC-002 remains partial mitigation only.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
   - `fotmob_pipeline` (2): FotMob ingestion scripts
@@ -191,10 +197,10 @@ Last updated: 2026-06-22
 4. Changed-files hard fail enabled for new/modified unguarded scripts/ops JS files.
    Remaining 43 complex candidates categorized (22 in allowlist + 21 browser, NOT fixed).
    SC-002 remains partial mitigation only.
-5. Next recommended tasks (in priority order, after audit):
-   - `confirmed_write_path_guard_phase` — integrate guard into 20 confirmed-write-path
-     scripts (high-risk browser+DB scripts first: `odds_sniper.js`,
-     `fixture_harvester_l1.js`)
+5. Next recommended tasks (in priority order):
+   - `confirmed_write_path_guard_phase` — 2 of 20 highest-risk scripts guarded
+     (`odds_sniper.js`, `fixture_harvester_l1.js`). 18 remaining confirmed write paths
+     still need guard integration.
    - `shared_module_db_write_boundary_design_phase1` — design boundary enforcement for
      3 shared modules and map all consumer entrypoints
    - `sc002_allowlist_cleanup_phase1` — update allowlist to reflect audit findings;

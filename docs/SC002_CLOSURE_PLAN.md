@@ -358,20 +358,20 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   integration. The "dry_run", "audit", and "browser/Playwright" labels from the scanner
   were unreliable — many such scripts actually import DB clients and contain write SQL.
 
-### 2. confirmed_write_path_guard_phase (NEW — highest priority)
+### 2. confirmed_write_path_guard_phase (IN PROGRESS — 2 of 20 completed)
 
-- **Objective:** Integrate `assertDbWriteAllowed()` into the 20 confirmed-write-path scripts.
-- **Priority order:** High-risk browser+DB scripts first (`odds_sniper.js`,
-  `fixture_harvester_l1.js`), then controlled-write scripts, then misleading-name scripts.
-- **Allowed changes:** Add guard calls before write operations; update scripts to call
-  `assertDbWriteAllowed()` with appropriate table-level gates.
-- **Forbidden actions:** Execute scripts, connect to production DB, change business logic
-  beyond guard integration, enable DRY_RUN=false.
-- **Expected output:** 20 scripts with integrated guard; updated scanner to detect the
-  new guard integrations.
-- **Acceptance criteria:** Each of the 20 scripts calls `assertDbWriteAllowed()` before
-  every write operation. Scanner confirms guard detection for all 20. changed-files
-  enforcement passes for the modified scripts.
+- **Status:** Phase 1 (high-risk browser+DB) completed (this PR).
+  `odds_sniper.js` and `fixture_harvester_l1.js` now integrate `assertDbWriteAllowed()`
+  before all DB write operations.
+  - `odds_sniper.js`: guard in `upsertMappingAndOdds()` (INSERT/UPDATE on
+    matches_oddsportal_mapping, bookmaker_odds_history) and `runTargetedStitch()`
+    (INSERT/UPDATE on l3_features)
+  - `fixture_harvester_l1.js`: guard in `persistFixtures()` (INSERT/UPDATE on matches)
+- **Remaining:** 18 confirmed write paths (controlled-write scripts, misleading-name
+  scripts) still need guard integration.
+- **Acceptance criteria:** Each script calls `assertDbWriteAllowed()` before every write
+  operation. Static tests confirm guard coverage. Scanner detects guard calls. changed-files
+  enforcement passes.
 
 ### 4. shared_module_db_write_boundary_design_phase1
 

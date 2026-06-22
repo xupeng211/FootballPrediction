@@ -10,6 +10,8 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 const { Pool } = require('pg');
 
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
 const { ReconPureDecryptor } = require('../../src/infrastructure/recon/services/ReconPureDecryptor');
 const { extractGoldenFeatures } = require('../../src/feature_engine/extractors/GoldenFeatureExtractor');
 const { extractTacticalFeatures } = require('../../src/feature_engine/extractors/TacticalMomentumExtractor');
@@ -662,6 +664,12 @@ async function upsertMappingAndOdds(row, target, extraction, options = {}) {
     return;
   }
 
+  assertDbWriteAllowed({
+    script: 'odds_sniper.js',
+    tables: ['matches_oddsportal_mapping', 'bookmaker_odds_history'],
+    operations: ['INSERT', 'UPDATE']
+  });
+
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -827,6 +835,12 @@ function buildConflictSummary(rawData, tacticalFeatures, goldenFeatures, oddsFea
 }
 
 async function runTargetedStitch(matchIds) {
+  assertDbWriteAllowed({
+    script: 'odds_sniper.js',
+    tables: ['l3_features'],
+    operations: ['INSERT', 'UPDATE']
+  });
+
   const client = await pool.connect();
   try {
     const rows = (await client.query(FETCH_MATCH_ROWS_SQL, [matchIds])).rows;

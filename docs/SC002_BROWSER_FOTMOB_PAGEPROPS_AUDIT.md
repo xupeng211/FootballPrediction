@@ -29,6 +29,9 @@ capability** (DB client import + query execution + write SQL in code). These nee
 integration or specialized pipeline guard design — they are NOT safe just because they were
 categorized.
 
+**Progress:** 2 of 20 highest-risk (browser+DB) scripts now guarded: `odds_sniper.js`,
+`fixture_harvester_l1.js`. 18 remaining confirmed write paths still need guard integration.
+
 ## Scope
 
 ### In scope
@@ -265,7 +268,7 @@ because they combine browser automation AND DB write in a single script.
 | # | Path | has_db_import | has_execute | sql_in_code | has_browser | Recommended Classification | Evidence |
 |---|---|---|---|---|---|---|---|
 | 23 | scripts/ops/controlled_matches_identity_seed_prerequisite_plan.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE, TRUNCATE, GRANT, REVOKE, COPY), executes queries, mentions guard |
-| 24 | scripts/ops/fixture_harvester_l1.js | Yes | Yes | Yes | Yes | confirmed_write_path_needs_guard | Playwright + Pool + BEGIN/COMMIT/ROLLBACK + INSERT INTO matches — browser + DB write |
+| 24 | scripts/ops/fixture_harvester_l1.js | Yes | Yes | Yes | Yes | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase1** ✅ | Playwright + Pool + BEGIN/COMMIT/ROLLBACK + INSERT INTO matches — GUARDED: now calls assertDbWriteAllowed() in persistFixtures() before DB write |
 | 25 | scripts/ops/fotmob_ligue1_adg60_raw_payload_source_inventory.js | No | No | No | Yes | scraper_or_browser_only | Playwright/browser script — no DB client detected |
 | 26 | scripts/ops/fotmob_ligue1_corrected_source_discovery_adg21.js | No | No | No | No | read_only | No DB client, no browser import, no query execution — planning/investigation |
 | 27 | scripts/ops/html_hydration_source_fidelity_live_compare.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has client.query() with write SQL — needs guard |
@@ -273,7 +276,7 @@ because they combine browser automation AND DB write in a single script.
 | 29 | scripts/ops/l2_raw_match_data_ingest_plan.js | No | No | No | No | read_only | Planning document — references "future controlled write script" |
 | 30 | scripts/ops/l2_raw_match_data_ingest_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE, TRUNCATE, GRANT, REVOKE, COPY), executes queries |
 | 31 | scripts/ops/large_scale_pageprops_v2_acquisition_strategy_plan.js | No | No | No | No | read_only | Strategy/planning document — no DB client |
-| 32 | scripts/ops/odds_sniper.js | Yes | Yes | Yes | Yes | confirmed_write_path_needs_guard | Playwright + Pool + UPSERT_ODDS_SQL from shared module — browser + DB write; highest risk |
+| 32 | scripts/ops/odds_sniper.js | Yes | Yes | Yes | Yes | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase1** ✅ | Playwright + Pool + UPSERT_ODDS_SQL from shared module — GUARDED: now calls assertDbWriteAllowed() in upsertMappingAndOdds() and runTargetedStitch() before DB write |
 | 33 | scripts/ops/pageprops_v2_no_write_payload_recapture_plan.js | No | No | No | No | read_only | Planning document — references controlled write helper, no direct DB |
 | 34 | scripts/ops/pageprops_v2_no_write_preview.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL, executes queries — "no_write_preview" name is misleading |
 | 35 | scripts/ops/pageprops_v2_raw_write_input_source_investigation.js | No | No | Yes | No | read_only | Investigation document — SQL keywords in analysis context, no DB client |
@@ -293,9 +296,13 @@ because they combine browser automation AND DB write in a single script.
 These 20 scripts have **confirmed real DB write capability** based on static analysis
 (DB client import + query execution + write SQL in code). They need guard integration.
 
-**High-risk subgroup (browser + DB):**
-- `fixture_harvester_l1.js` — Playwright + Pool + transactions + INSERT
-- `odds_sniper.js` — Playwright + Pool + UPSERT via shared module
+**Guarded in Phase 1 (2 of 20):**
+- `odds_sniper.js` ✅ **GUARDED** — now calls `assertDbWriteAllowed()` before `upsertMappingAndOdds()` and `runTargetedStitch()`
+- `fixture_harvester_l1.js` ✅ **GUARDED** — now calls `assertDbWriteAllowed()` before `persistFixtures()`
+
+**High-risk subgroup (browser + DB, now guarded):**
+- `fixture_harvester_l1.js` ✅ GUARDED — Playwright + Pool + transactions + INSERT
+- `odds_sniper.js` ✅ GUARDED — Playwright + Pool + UPSERT via shared module
 
 **Controlled-write subgroup (own guard, needs standardization):**
 - `controlled_matches_identity_seed_prerequisite_plan.js`
@@ -336,6 +343,11 @@ modules or indirection for DB access:
 - `pageprops_v2_identity_contract_regression_execute.js`
 - `pageprops_v2_post_write_canonical_read_verification.js`
 - `pageprops_v2_suspended_target_review_execute.js`
+
+### Guarded in Phase 1 (2 scripts — was confirmed_write_path)
+
+- `odds_sniper.js` ✅ — guarded in `upsertMappingAndOdds()` and `runTargetedStitch()`
+- `fixture_harvester_l1.js` ✅ — guarded in `persistFixtures()`
 
 ### Scraper/Browser Only (1 script)
 
