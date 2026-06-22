@@ -25,6 +25,19 @@ const CRITICAL_SMOKE_TESTS = Object.freeze([
   'tests/unit/DatabaseConfig.test.js',
   'tests/unit/ReconBrowserContext.test.js',
 ]);
+// Scoped guard env for test files that exercise DB write paths guarded by
+// assertDbWriteAllowed (PR #1587).  All tests use fake clients — no real DB.
+const TEST_GUARD_ENV = Object.freeze({
+  ALLOW_DB_WRITE: 'yes',
+  FINAL_DB_WRITE_CONFIRMATION: 'yes',
+  ALLOW_RAW_MATCH_DATA_WRITE: 'yes',
+  ALLOW_MATCHES_WRITE: 'yes',
+  ALLOW_ODDS_WRITE: 'yes',
+  ALLOW_TRAINING_WRITE: 'yes',
+  ALLOW_SCHEMA_WRITE: 'yes',
+  DRY_RUN: 'false',
+});
+
 const RECON_CORE_TESTS = Object.freeze([
   'tests/unit/ReconDecryptor.test.js',
   'tests/unit/ReconDecryptorSourceExtractor.test.js',
@@ -569,6 +582,7 @@ function runNodeTests(files, options = {}) {
     cwd: PROJECT_ROOT,
     encoding: 'utf8',
     maxBuffer: DEFAULT_MAX_BUFFER,
+    env: { ...process.env, ...TEST_GUARD_ENV },
   });
   const durationMs = Date.now() - startTime;
   const stdout = result.stdout || '';
