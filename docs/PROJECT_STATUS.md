@@ -47,11 +47,17 @@ Last updated: 2026-06-22
   upgraded from advisory to hard fail in ai_workflow_gate.py. New/modified unguarded
   scripts/ops JS files now cause CI failure. Historical full-scan candidates are
   explicitly categorized (NOT fixed) and exempt from hard fail.
-- **sc002_closure_plan_phase0** (this PR): SC-002 closure plan documented in
+- **sc002_closure_plan_phase0** (#1584): SC-002 closure plan documented in
   `docs/SC002_CLOSURE_PLAN.md`. This is the authoritative SC-002 status reference.
   SC-002 remains partial mitigation only. 43/66 guarded. 22 categorized, not fixed.
   21 additional browser/Playwright scripts identified as skipped_complex (total 43).
   Training, data expansion, and real DB write remain blocked.
+- **specialized_browser_fotmob_pageprops_audit_phase1** (this PR): Static audit of all
+  43 skipped_complex scripts completed. See `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md`.
+  Key findings: 20 confirmed DB write paths, 14 read-only/no-DB, 4 need manual review,
+  3 shared modules, 1 scraper/browser only, 1 possible indirect write.
+  The gap is now precisely characterized: 28 scripts need guard/exclusion action.
+  SC-002 remains partial mitigation only.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
   - `fotmob_pipeline` (2): FotMob ingestion scripts
@@ -116,6 +122,7 @@ Last updated: 2026-06-22
 | `docs/data/FOTMOB_CURRENT_STATE.md` | active — read for FotMob state |
 | `docs/AGENT_WORKFLOW.md` | active |
 | `docs/SC002_CLOSURE_PLAN.md` | active — authoritative SC-002 status reference |
+| `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md` | active — static audit of all 43 skipped_complex scripts |
 | `docs/TESTING_GUIDE.md` | active — needs provenance review |
 | `docs/GITHUB_ACTIONS_AUDIT_REPORT.md` | evidence/needs_update — stale CI references |
 
@@ -184,17 +191,23 @@ Last updated: 2026-06-22
 4. Changed-files hard fail enabled for new/modified unguarded scripts/ops JS files.
    Remaining 43 complex candidates categorized (22 in allowlist + 21 browser, NOT fixed).
    SC-002 remains partial mitigation only.
-5. Recommended next tasks (in priority order):
-   - `specialized_browser_fotmob_pageprops_audit_phase1` — audit all 43 skipped_complex
-     scripts to verify write capability vs. read-only.
+5. Next recommended tasks (in priority order, after audit):
+   - `confirmed_write_path_guard_phase` — integrate guard into 20 confirmed-write-path
+     scripts (high-risk browser+DB scripts first: `odds_sniper.js`,
+     `fixture_harvester_l1.js`)
    - `shared_module_db_write_boundary_design_phase1` — design boundary enforcement for
-     shared modules consumed by entrypoints.
+     3 shared modules and map all consumer entrypoints
+   - `sc002_allowlist_cleanup_phase1` — update allowlist to reflect audit findings;
+     move 14 verified-read-only scripts out of skipped_complex
+   - `manual_review_phase1` — manually review 4 `needs_manual_review` scripts by
+     tracing execution paths through helper modules
+   - `scraper_browser_execution_policy_phase1` — define browser automation execution
+     policy for the 2 high-risk browser+DB scripts
    - `python_sql_migration_enforcement_design_phase1` — design enforcement for Python
-     and SQL migration paths.
-   - `runtime_db_role_permission_review_phase1` — review and document DB-level
-     role/permission model.
+     and SQL migration paths
+   - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
-     checklists.
+     checklists
 6. Keep formal training and data expansion blocked until DB write safety resolved
    and release gate criteria met.
 7. Do not start model training, data expansion, raw-write work, scraper/browser
