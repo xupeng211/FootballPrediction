@@ -53,7 +53,7 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | design completed (python_sql_migration_enforcement_design_phase1); 14 confirmed Python write paths, 8 indirect, 5 manual review; 18 SQL files classified; implementation NOT started |
+| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); 11 confirmed + 8 indirect + 5 manual review remaining |
 | Runtime DB role / permission model | not fully validated |
 
 ## What Is Actually Protected
@@ -300,7 +300,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 | 2 | Changed-files enforcement is active and tested with both positive and negative cases | Partial (active but needs negative-case testing) |
 | 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Not met |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Not met |
-| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Not met (not yet designed) |
+| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard started — 3 of 14 Python confirmed write paths guarded; 11 remaining) |
 | 6 | Runtime DB permissions / role restrictions are documented or tested | Not met |
 | 7 | No production override exists (no `ALLOW_PRODUCTION_DB_WRITE`, no bypass env var, no host-block escape hatch) | Met |
 | 8 | Training and data expansion remain blocked until explicit release criteria are met | Met (blocks are in place) |
@@ -527,6 +527,31 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **No SQL executed. No migration run. No DB connection. No real DB write.**
   - **SC-002 remains partial mitigation only.**
 - **Next step:** `python_runtime_guard_implementation_phase2C`. Do not start automatically.
+
+### 5c. python_runtime_guard_implementation_phase2C_batch1 ✅ COMPLETED
+
+- **Status:** Completed (this PR).
+- **Results:**
+  - Guard helper: `scripts/ops/helpers/python_db_write_guard.py` — Python equivalent of
+    JS `db_write_guard.js` with same env-var gate model (ALLOW_DB_WRITE,
+    FINAL_DB_WRITE_CONFIRMATION, DRY_RUN, table-level gates, production host hard block).
+    Does NOT connect to DB, does NOT read secrets, does NOT execute SQL.
+  - Batch1 guarded paths (3 of 14 confirmed):
+    1. `src/database/match_repository.py` — guard in `upsert_match_hash()` before
+       INSERT INTO matches_mapping
+    2. `scripts/maintenance/database_detox.py` — guard in `main()` before
+       ALTER TABLE/UPDATE prematch_features
+    3. `scripts/maintenance/reset_l2_collection.py` — guard in `main()` before
+       TRUNCATE raw_match_data/collection_audit_logs
+  - Allowlist updated: 3 entries → `runtime_guarded`, 12 remain `pending_runtime_guard`
+  - **11 remaining confirmed Python write paths still pending runtime guard.**
+  - **8 indirect write paths NOT processed.**
+  - **5 manual review candidates NOT processed.**
+  - **No Python target scripts executed. No DB connection. No real DB write.**
+  - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
+  - **SC-002 remains partial mitigation only.**
+- **Next step:** `python_runtime_guard_implementation_phase2C_batch2`. Do not start
+  automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
 

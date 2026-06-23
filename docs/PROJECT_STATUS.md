@@ -341,10 +341,33 @@ Last updated: 2026-06-23
   - **No SQL executed. No migration run. No DB connection. No real DB write.**
   - **No Python runtime guard implemented.**
   - SC-002 remains partial mitigation only. Training/data expansion/real DB write blocked.
+- **python_runtime_guard_implementation_phase2C_batch1** (this PR): Python runtime
+  DB write guard helper + batch1 guard integration for 3 highest-risk Python confirmed
+  write paths.
+  - Guard helper: `scripts/ops/helpers/python_db_write_guard.py` — Python equivalent of
+    JS `db_write_guard.js` with same env-var gate model (ALLOW_DB_WRITE,
+    FINAL_DB_WRITE_CONFIRMATION, DRY_RUN, table-level gates, production host hard block)
+  - Batch1 guarded paths (3 of 14):
+    1. `src/database/match_repository.py` — `assert_db_write_allowed()` in
+       `upsert_match_hash()` before INSERT INTO matches_mapping
+    2. `scripts/maintenance/database_detox.py` — `assert_db_write_allowed()` in
+       `main()` before ALTER TABLE/UPDATE prematch_features
+    3. `scripts/maintenance/reset_l2_collection.py` — `assert_db_write_allowed()` in
+       `main()` before TRUNCATE raw_match_data/collection_audit_logs, integrated with
+       existing --dry-run/--force flags
+  - Allowlist updated: 3 entries → `runtime_guarded`, 12 remain `pending_runtime_guard`
+  - **11 remaining confirmed Python write paths still pending runtime guard.**
+  - **8 indirect write paths NOT processed.**
+  - **5 manual review candidates NOT processed.**
+  - **No Python target scripts executed. No DB connection. No real DB write.**
+  - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
+  - SC-002 remains partial mitigation only. Training/data expansion/real DB write remain blocked.
 6. Next recommended tasks (in priority order):
-   - `python_runtime_guard_implementation_phase2C` — Python runtime guard helper
-     for the 14 confirmed + 8 indirect write paths
-   - `sql_migration_policy_implementation_phase2B` — SQL migration policy scanner
+   - `python_runtime_guard_implementation_phase2C_batch2` — guard remaining 11
+     confirmed Python write paths
+   - `python_indirect_write_path_design_phase1` — design approach for 8 indirect
+     write paths
+   - `python_manual_review_phase2D` — review 5 manual review candidates
    - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
      checklists

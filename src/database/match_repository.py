@@ -21,12 +21,20 @@ from __future__ import annotations
 from dataclasses import dataclass
 import logging
 import re
+import sys
 from typing import ClassVar
 
 import psycopg2
 import psycopg2.extras
 
 from src.utils.team_alias import normalize_team_name
+
+# Phase2C batch1: Python runtime DB write guard
+_guard_path = str(__import__("pathlib").Path(__file__).resolve().parents[2] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +100,7 @@ class MatchRepository:
     REQUIRED_DB_NAME: ClassVar[str] = "football_db"
     REQUIRED_TABLE: ClassVar[str] = "matches"
 
-    def __init__(self, db_conn) -> None:
+    def __init__(self, db_conn) -> None:  # type: ignore[no-untyped-def]
         """
         初始化仓储
 
@@ -115,7 +123,7 @@ class MatchRepository:
         Raises:
             DatabaseConfigurationError: 如果连接到错误的数据库实例
         """
-        from src.config_unified import DatabaseConfigurationError
+        from src.config import DatabaseConfigurationError
 
         try:
             with self.conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cursor:
@@ -338,6 +346,14 @@ class MatchRepository:
                         "⚠️  Hash %s 已被 match_id=%s 使用", hash_value, existing_fotmob_id
                     )
                     return False
+
+                # Phase2C batch1: runtime DB write guard before INSERT
+                assert_db_write_allowed(
+                    script_name="match_repository.py",
+                    operation="INSERT",
+                    target="matches_mapping",
+                    tables=["matches_mapping"],
+                )
 
                 # 执行 UPSERT（使用实际的 match_id）
                 cur.execute(

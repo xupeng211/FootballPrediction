@@ -17,6 +17,13 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Phase2C batch1: Python runtime DB write guard
+_guard_path = str(PROJECT_ROOT / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
+
 from src.config_unified import get_settings
 import psycopg2
 from psycopg2.extras import RealDictCursor
@@ -40,6 +47,14 @@ def main():
     )
 
     try:
+        # Phase2C batch1: runtime DB write guard before ALTER/UPDATE
+        assert_db_write_allowed(
+            script_name="database_detox.py",
+            operation="ALTER",
+            target="prematch_features",
+            tables=["prematch_features"],
+        )
+
         with conn.cursor(cursor_factory=RealDictCursor) as cur:
             # Step 1: 检查是否已存在 is_polluted 字段
             logger.info("Step 1: 检查表结构...")

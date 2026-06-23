@@ -34,6 +34,13 @@ from psycopg2.extras import RealDictCursor
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Phase2C batch1: Python runtime DB write guard
+_guard_path = str(PROJECT_ROOT / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
+
 from src.config_unified import get_settings
 
 
@@ -280,6 +287,15 @@ def main():
         if args.force:
             print(f"\n{Colors.RED}{Colors.BOLD}🚨 强制执行模式{Colors.RESET}\n")
 
+            # Phase2C batch1: runtime DB write guard before TRUNCATE
+            assert_db_write_allowed(
+                script_name="reset_l2_collection.py",
+                operation="TRUNCATE",
+                target="raw_match_data, collection_audit_logs",
+                tables=["raw_match_data", "collection_audit_logs"],
+                dry_run=False,
+            )
+
             if args.all:
                 truncate_all(conn)
             elif args.raw_data:
@@ -300,6 +316,15 @@ def main():
 
         # 执行操作
         print(f"\n{Colors.BOLD}正在执行操作...{Colors.RESET}\n")
+
+        # Phase2C batch1: runtime DB write guard before TRUNCATE
+        assert_db_write_allowed(
+            script_name="reset_l2_collection.py",
+            operation="TRUNCATE",
+            target="raw_match_data, collection_audit_logs",
+            tables=["raw_match_data", "collection_audit_logs"],
+            dry_run=False,
+        )
 
         if args.all:
             truncate_all(conn)

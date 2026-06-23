@@ -3,10 +3,11 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-23
-- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation)
-- implementation_status: Phase2A COMPLETED (2026-06-23)
+- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch1 (runtime guard batch1)
+- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1 COMPLETED (2026-06-23)
 - scanner: scripts/ops/python_db_write_static_enforcement.py
-- allowlist: config/python_db_write_allowlist.json (27 entries)
+- allowlist: config/python_db_write_allowlist.json (28 entries, 3 runtime_guarded + 12 pending + 8 indirect + 5 manual review)
+- guard_helper: scripts/ops/helpers/python_db_write_guard.py
 - gate_integration: check_python_db_write_enforcement() in scripts/ops/ai_workflow_gate.py
 
 ## Summary
@@ -466,13 +467,18 @@ Python files and SQL migration files, similar to what currently exists for JS fi
 - Destructive SQL policy: any new file with DROP DATABASE, DROP TABLE, TRUNCATE, etc. always fails gate (even if allowlisted)
 - Changed-files enforcement: new/modified SQL/migration files with DML/destructive/privilege signals fail CI unless in allowlist with complete metadata
 
-### Phase 2C: Python guard helper (Option 1)
+### Phase 2C: Python guard helper (Option 1) — BATCH1 COMPLETED
 
-- Create `scripts/ops/helpers/db_write_guard.py` — Python equivalent of the JS guard
-- Support multiple DB connection patterns (psycopg2, asyncpg, SQLAlchemy, pandas)
-- Integrate into highest-risk Python write paths first (schema_manager, sql_store,
-  match_repository, fotmob_registry_seed)
-- Lower-risk and indirect paths can follow incrementally
+- Create `scripts/ops/helpers/python_db_write_guard.py` — Python equivalent of the JS guard ✅ COMPLETED
+- Support env-var gate model matching JS guard (ALLOW_DB_WRITE, FINAL_DB_WRITE_CONFIRMATION, DRY_RUN, table-level gates, production host hard block) ✅ COMPLETED
+- Batch1 guarded 3 of 14 highest-risk Python confirmed write paths:
+  1. `src/database/match_repository.py` — INSERT/UPDATE on matches_mapping
+  2. `scripts/maintenance/database_detox.py` — ALTER/UPDATE on prematch_features
+  3. `scripts/maintenance/reset_l2_collection.py` — TRUNCATE on raw_match_data, collection_audit_logs
+- **11 remaining confirmed write paths still pending (Phase2C batch2+)**
+- **8 indirect write paths NOT yet processed**
+- **5 manual review candidates NOT yet processed**
+- Lower-risk and indirect paths to follow incrementally in batch2+
 
 ### Phase 2D: Manual review of needs_manual_review files (5 files)
 
@@ -635,31 +641,30 @@ This design phase explicitly does NOT:
 ## SC-002 status impact
 
 - **SC-002 remains partial mitigation only.**
-- **Python and SQL/migration enforcement design is now complete.**
+- **Python and SQL/migration enforcement design is complete.**
+- **Python Phase2A static scanner completed. Phase2B SQL/migration scanner completed.**
+- **Python Phase2C batch1 runtime guard completed: 3 of 14 confirmed write paths guarded.**
 - **24 Python files identified as confirmed or indirect write paths needing guard.**
+- **11 confirmed Python write paths still pending runtime guard.**
+- **8 indirect write paths still pending design + guard.**
 - **5 Python files need manual review.**
 - **14 SQL migration files classified; 1 seed SQL needs gate; 0 destructive migrations found.**
 - **1 Alembic env.py confirmed write path needing guard.**
-- **No runtime behavior changed.**
-- **No target script executed.**
-- **No DB connection.**
-- **No real DB write.**
-- **No scraper/browser/Playwright.**
-- **No training/data expansion/schema migration.**
+- **No runtime behavior changed. No target script executed. No DB connection. No real DB write.**
+- **No scraper/browser/Playwright. No training/data expansion/schema migration.**
 - Training, data expansion, real DB write remain BLOCKED.
 
 ## Next recommended task
 
-Based on the classification results, the recommended next task is:
+Based on the current implementation status, the recommended next task is:
 
-**`python_sql_migration_enforcement_implementation_phase2A`** — Python static scanner and
-changed-files enforcement. This should:
+**`python_runtime_guard_implementation_phase2C_batch2`** — Continue Python runtime guard
+integration for the remaining 11 confirmed write paths. This should:
 
-1. Create a Python DB write keyword scanner
-2. Create a `python_db_write_allowlist.json` for historical files
-3. Add Python changed-files enforcement to `ai_workflow_gate.py`
-4. NOT implement runtime guards (reserved for Phase 2C)
-5. NOT execute any Python target script
-6. NOT connect to DB
+1. Guard the remaining highest-risk confirmed Python write paths incrementally
+2. Update allowlist classifications as each path is guarded
+3. NOT process indirect write paths or manual review candidates
+4. NOT execute any Python target script
+5. NOT connect to DB
 
 Do not start automatically. Recommended next task only after user confirmation.
