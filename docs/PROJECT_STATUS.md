@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-06-22
+Last updated: 2026-06-23
 
 ## Current baseline
 
@@ -79,6 +79,17 @@ Last updated: 2026-06-22
   "confirmed_write_path_needs_guard" scripts are false positives (SELECT-only with
   active SQL enforcement wrappers, or no DB connection at all).
   SC-002 remains partial mitigation only.
+- **sc002_allowlist_cleanup_phase1** (this PR): Formal reclassification of 15 scripts
+  from `confirmed_write_path_needs_guard` to verified false positive categories:
+  - 11 false_positive_select_only_with_active_wrapper (SELECT-only + queryReadOnly/safeSelect)
+  - 2 false_positive_read_only_transaction (BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql)
+  - 1 false_positive_no_db_connection_static_scan (no pg import, fs/child_process only)
+  - 1 false_positive_policy_or_regex_keyword_only (INSERT only in conflict_policy string)
+  All 20 original confirmed_write_path classifications are now resolved (6 guarded, 14
+  reclassified). **0 still_needs_guard remain.**
+  4 needs_manual_review remain unchanged. 3 shared_module unchanged. 1
+  possible_indirect_write unchanged. SC-002 remains partial mitigation only.
+  Training, data expansion, and real DB write remain blocked.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
   - `fotmob_pipeline` (2): FotMob ingestion scripts

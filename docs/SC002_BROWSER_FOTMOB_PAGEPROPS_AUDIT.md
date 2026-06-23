@@ -29,11 +29,13 @@ capability** (DB client import + query execution + write SQL in code). These nee
 integration or specialized pipeline guard design — they are NOT safe just because they were
 categorized.
 
-**Progress:** 6 of 20 confirmed write paths now guarded:
+**Progress:** 6 of 6 real confirmed write paths now guarded:
 - Phase 1: `odds_sniper.js`, `fixture_harvester_l1.js` (browser+DB)
 - Phase 2 batch 1: `pageprops_v2_single_target_controlled_write.js`, `remaining_seeded_pageprops_v2_controlled_write.js`, `single_league_pageprops_v2_controlled_write_execute.js` (controlled-write)
 - Phase 2 batch 2: `fotmob_adg60_raw_json_db_storage_no_feature_parse.js` (FotMob raw JSON DB storage)
-14 remaining confirmed write paths still need guard integration.
+**sc002_allowlist_cleanup_phase1** (this PR): 15 scripts reclassified as false positives.
+All original 20 "confirmed_write_path" classifications are now resolved (6 guarded, 14 reclassified).
+0 still_needs_guard remain. SC-002 remains partial mitigation only.
 
 ## Scope
 
@@ -99,14 +101,18 @@ Breakdown by scanner category:
 | fotmob_pipeline | 2 | allowlist |
 | N/A (browser/Playwright) | 21 | scanner only (not allowlisted) |
 
-Breakdown by **actual DB write capability** (this audit):
+Breakdown by **actual DB write capability** (this audit, updated by allowlist_cleanup_phase1):
 | Classification | Count |
 |---|---|
-| confirmed_write_path_needs_guard | 20 |
+| confirmed_write_path_needs_guard | 0 (all 20 resolved: 6 guarded, 14 reclassified false positive) |
+| guarded (Phase1 + Phase2 batch1 + Phase2 batch2) | 6 |
+| false_positive_select_only_with_active_wrapper | 11 |
+| false_positive_read_only_transaction | 2 |
+| false_positive_no_db_connection_static_scan | 1 |
+| false_positive_policy_or_regex_keyword_only | 1 |
 | read_only | 12 |
 | needs_manual_review | 4 |
 | shared_module_no_execution | 3 |
-| no_db_connection | 2 |
 | scraper_or_browser_only | 1 |
 | possible_indirect_write | 1 |
 
@@ -115,12 +121,12 @@ Breakdown by **actual DB write capability** (this audit):
 ### pageProps Pipeline (9 scripts)
 
 Of 9 pageProps pipeline scripts:
-- **3 are confirmed_write_path_needs_guard**: `pageprops_v2_no_write_preview.js`,
-  `pageprops_v2_raw_completeness_audit.js`, `single_league_small_batch_pageprops_v2_preflight.js`
-  — despite names suggesting "preview", "audit", or "preflight", these scripts import a DB
-  client (`require('pg')`, `Pool`) and contain write SQL in executable code. They are NOT
-  read-only.
-- **2 are read_only**: `pageprops_v2_controlled_write_plan.js`,
+- **0 are confirmed_write_path_needs_guard** after allowlist_cleanup_phase1 reclassification.
+  The 3 originally classified as confirmed_write_path (`pageprops_v2_no_write_preview.js`,
+  `pageprops_v2_raw_completeness_audit.js`, `single_league_small_batch_pageprops_v2_preflight.js`)
+  have been reclassified as false_positive_select_only_with_active_wrapper: all use
+  queryReadOnly() or safeSelect() wrappers that enforce SELECT-only at runtime.
+- **4 are read_only**: `pageprops_v2_controlled_write_plan.js`,
   `pageprops_v2_recapture_runner_identity_input_contract_fix_plan.js`,
   `pageprops_v2_bounded_expanded_blocked_target_review_execute.js`,
   `single_league_small_batch_target_manifest_plan.js` — planning/manifest files with no DB
@@ -131,12 +137,10 @@ Of 9 pageProps pipeline scripts:
   `pageprops_v2_suspended_target_review_execute.js` — have SQL keywords or `.query()` calls
   but no direct DB client import (may use helper modules or indirect execution).
 
-**Key insight:** The name-based heuristic that labeled these as "pageProps pipeline" is
-misleading. Several "preview", "preflight", and "audit" scripts actually DO have real DB
-write capability and are NOT safe. The pageProps pipeline has its own controlled-write
-guard structure on some scripts (e.g., `REQUIRED_YES_FLAGS`, `ALLOW_CONTROLLED_WRITE`),
-but this is not the standard `assertDbWriteAllowed()` guard and has not been audited for
-completeness.
+**Key insight:** The initial audit misclassified 3 pageProps scripts as having real DB
+write capability because their write SQL keywords appeared inside protection regexes and
+policy description strings, not in executable SQL. Deep static analysis for
+allowlist_cleanup_phase1 confirmed all 3 are SELECT-only with active wrappers.
 
 ### FotMob Pipeline (2 scripts)
 
@@ -151,21 +155,24 @@ completeness.
 ### Dry-Run / Audit (8 scripts)
 
 Of 8 dry-run/audit scripts:
-- **5 are confirmed_write_path_needs_guard**: `dataset_status_audit.js`,
-  `formal_training_dataset_design_dry_run.js`, `l3_local_dry_run.js`,
-  `technical_debt_workflow_audit_dry_run.js`, `training_dataset_leakage_dry_run.js`
-  — these have DB client imports and write SQL execution despite names containing
-  "audit", "dry_run", or "leakage". The names do NOT match the actual capability.
-- **1 is read_only**: `authoritative_workflow_enforcement_dry_run.js`,
+- **0 are confirmed_write_path_needs_guard** after allowlist_cleanup_phase1 reclassification.
+  The 5 originally classified as confirmed_write_path have been reclassified:
+  - `dataset_status_audit.js` → false_positive_select_only_with_active_wrapper (assertSafeSelect + safeSelect)
+  - `formal_training_dataset_design_dry_run.js` → false_positive_read_only_transaction (BEGIN READ ONLY + assertSelectOnlySql)
+  - `l3_local_dry_run.js` → false_positive_select_only_with_active_wrapper (assertSafeSelect + safeSelect)
+  - `technical_debt_workflow_audit_dry_run.js` → false_positive_no_db_connection_static_scan (no pg import, fs/child_process only)
+  - `training_dataset_leakage_dry_run.js` → false_positive_read_only_transaction (BEGIN READ ONLY + assertSelectOnlySql)
+- **2 are read_only**: `authoritative_workflow_enforcement_dry_run.js`,
   `raw_match_data_versioned_schema_migration_preflight.js`
   — planning files with no DB client detected.
 - **1 is possible_indirect_write**: `training_pipeline_smoke_dry_run.js` — has COPY
   keyword in code but execution path is unclear.
 
-**Key insight:** The "dry_run" or "audit" label in filenames is NOT a reliable safety
-indicator. Several of these scripts import real DB clients and contain write SQL. Whether
-they actually execute writes depends on runtime env vars and DRY_RUN flags — the static
-analysis cannot confirm the runtime behavior, but the capability is present.
+**Key insight:** The "dry_run" or "audit" label in filenames turned out to be a reliable
+safety indicator for these scripts. The initial audit's classification of 5 dry-run/audit
+scripts as confirmed_write_path was incorrect — the write SQL keywords were in protection
+regexes (FORBIDDEN_SQL, FORBIDDEN_SQL_VERBS) and policy description strings, not in
+executable SQL. The names DO match the actual capability.
 
 ### Shared Modules (3 scripts)
 
@@ -187,20 +194,23 @@ entrypoint that consumes a shared module with DB write risk must itself be guard
 These 21 scripts were NOT in the allowlist and were classified by the scanner as
 "browser/Playwright automation — needs manual review". Our static analysis reveals:
 
-- **11 are confirmed_write_path_needs_guard**: These scripts have BOTH DB client imports
-  AND write SQL execution. The scanner's "browser/Playwright" label is partially correct
-  (some use Playwright) but misses the DB write capability. Key examples:
-  - `fixture_harvester_l1.js` — Playwright + Pool + BEGIN/COMMIT/ROLLBACK + INSERT INTO matches
-  - `odds_sniper.js` — Playwright + Pool + UPSERT_ODDS_SQL
-  - `controlled_matches_identity_seed_prerequisite_plan.js` — has guard mentions + DB client
-  - `pageprops_v2_single_target_controlled_write.js` — own controlled write guard + DB client
-  - `single_league_pageprops_v2_controlled_write_execute.js` — own guard with ALLOW_* flags
-  - `remaining_seeded_pageprops_v2_controlled_write.js` — controlled write with DB client
-  - `html_hydration_source_fidelity_live_compare.js` — Pool + client.query()
-  - `l2_raw_match_data_ingest_preflight.js` — DB client + write SQL
-  - `post_seed_matches_identity_raw_write_readiness_audit.js` — DB client + write SQL
-  - `remaining_seeded_pageprops_v2_acquisition_preflight.js` — DB client + write SQL
-  - `pageprops_v2_single_target_write_preflight.js` — DB client + write SQL
+- **5 are guarded** (previously confirmed_write_path, now resolved):
+  - `fixture_harvester_l1.js` — Playwright + Pool + INSERT INTO matches → guarded_in_phase1 ✅
+  - `odds_sniper.js` — Playwright + Pool + UPSERT_ODDS_SQL → guarded_in_phase1 ✅
+  - `pageprops_v2_single_target_controlled_write.js` → guarded_in_phase2_batch1 ✅
+  - `single_league_pageprops_v2_controlled_write_execute.js` → guarded_in_phase2_batch1 ✅
+  - `remaining_seeded_pageprops_v2_controlled_write.js` → guarded_in_phase2_batch1 ✅
+
+- **6 are false_positive_select_only_with_active_wrapper** (reclassified in allowlist_cleanup_phase1):
+  - `controlled_matches_identity_seed_prerequisite_plan.js` — queryReadOnly() wrapper
+  - `html_hydration_source_fidelity_live_compare.js` — queryReadOnly() wrapper
+  - `l2_raw_match_data_ingest_preflight.js` — assertSafeSelect() + safeSelect()
+  - `pageprops_v2_no_write_preview.js` — queryReadOnly() wrapper
+  - `pageprops_v2_single_target_write_preflight.js` — queryReadOnly() wrapper
+  - `post_seed_matches_identity_raw_write_readiness_audit.js` — queryReadOnly() wrapper
+  - `remaining_seeded_pageprops_v2_acquisition_preflight.js` — queryReadOnly() wrapper
+  - `single_league_pageprops_v2_controlled_write_plan.js` — false_positive_policy_or_regex_keyword_only
+  - `single_league_small_batch_pageprops_v2_preflight.js` — queryReadOnly() wrapper
 
 - **6 are read_only**: Planning files (`l2_raw_match_data_ingest_plan.js`,
   `l1_matches_seed_commit_plan.js`, `large_scale_pageprops_v2_acquisition_strategy_plan.js`,
@@ -211,16 +221,10 @@ These 21 scripts were NOT in the allowlist and were classified by the scanner as
 - **1 is scraper_or_browser_only**: `fotmob_ligue1_adg60_raw_payload_source_inventory.js`
   — browser/FotMob script with no DB client.
 
-- **3 are read-only or planning**: The remaining scripts are `pageprops_v2_no_write_preview.js`
-  (already counted in pageProps), `single_league_small_batch_pageprops_v2_preflight.js`
-  (already counted in pageProps), and `single_league_small_batch_target_manifest_plan.js`
-  (already counted in pageProps), all counted above under their actual categories.
-
-**Key insight:** The scanner's "browser/Playwright automation — needs manual review"
-label was an oversimplification. Many of these 21 scripts are NOT just browser/scraper
-scripts — they have real DB write capability and need guard integration. The
-`odds_sniper.js` and `fixture_harvester_l1.js` scripts are particularly high-risk
-because they combine browser automation AND DB write in a single script.
+**Key insight:** Of the 21 browser/Playwright scripts, only 5 had real DB write
+capability — all 5 are now guarded. The remaining 9 that the initial audit classified
+as confirmed_write_path have been reclassified as false positives (SELECT-only with
+active wrappers, or policy/regex keyword only).
 
 ## Per-Script Findings
 
@@ -233,7 +237,7 @@ because they combine browser automation AND DB write in a single script.
 | 3 | scripts/ops/pageprops_v2_controlled_write_plan.js | No | No | No | No | read_only | Planning document — no DB client or execution |
 | 4 | scripts/ops/pageprops_v2_identity_contract_regression_execute.js | No | Yes | Yes | No | needs_manual_review | Has .query() execution and SQL keywords (UPDATE) but no direct DB client — may use pageProps pipeline helpers |
 | 5 | scripts/ops/pageprops_v2_post_write_canonical_read_verification.js | No | Yes | Yes | No | needs_manual_review | Has .query() execution and SQL keywords (TRUNCATE, COPY) but no direct DB client — post-write verification |
-| 6 | scripts/ops/pageprops_v2_raw_completeness_audit.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (TRUNCATE, GRANT, REVOKE, COPY), and executes queries — needs guard |
+| 6 | scripts/ops/pageprops_v2_raw_completeness_audit.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but assertSelectOnly() blocks INSERT/UPDATE/DELETE/TRUNCATE/ALTER/DROP/CREATE/GRANT/REVOKE/COPY/FOR UPDATE/BEGIN/COMMIT/ROLLBACK. All queries use safeSelect(). Write keywords in audit detected from protection regex, not executable SQL. Reclassified in allowlist_cleanup_phase1 |
 | 7 | scripts/ops/pageprops_v2_recapture_runner_identity_input_contract_fix_plan.js | No | No | No | No | read_only | Planning document — no DB client or execution |
 | 8 | scripts/ops/pageprops_v2_suspended_target_review_execute.js | No | Yes | Yes | No | needs_manual_review | Has .query() execution and SQL keywords (UPDATE) but no direct DB client — may use helpers |
 | 9 | scripts/ops/single_league_small_batch_target_manifest_plan.js | No | No | No | No | read_only | Manifest/planning — no DB client or execution |
@@ -258,73 +262,51 @@ because they combine browser automation AND DB write in a single script.
 | # | Path | has_db_import | has_execute | sql_in_code | has_browser | Recommended Classification | Evidence |
 |---|---|---|---|---|---|---|---|
 | 15 | scripts/ops/authoritative_workflow_enforcement_dry_run.js | No | No | No | No | read_only | No DB client, no execution — audit tool |
-| 16 | scripts/ops/dataset_status_audit.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (TRUNCATE, GRANT, REVOKE, COPY), executes queries despite "audit" name |
-| 17 | scripts/ops/formal_training_dataset_design_dry_run.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE), executes queries despite "dry_run" name |
-| 18 | scripts/ops/l3_local_dry_run.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (TRUNCATE, GRANT, REVOKE), executes queries despite "dry_run" name |
+| 16 | scripts/ops/dataset_status_audit.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but assertSafeSelect() + FORBIDDEN_SQL regex blocks all write verbs. All 5 query functions use safeSelect(). Write keywords in audit from FORBIDDEN_SQL protection regex, not executable SQL. Reclassified in allowlist_cleanup_phase1 |
+| 17 | scripts/ops/formal_training_dataset_design_dry_run.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_read_only_transaction** | Imports Pool from pg but uses BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql() allowing only SELECT/WITH. All queries go through querySelectOnly(). Reclassified in allowlist_cleanup_phase1 |
+| 18 | scripts/ops/l3_local_dry_run.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but assertSafeSelect() + FORBIDDEN_SQL regex blocks all write verbs. Both queries use safeSelect(). Reclassified in allowlist_cleanup_phase1 |
 | 19 | scripts/ops/raw_match_data_versioned_schema_migration_preflight.js | No | No | No | No | read_only | Preflight/planning — no DB client detected; execute counterpart is already guarded (Phase4) |
-| 20 | scripts/ops/technical_debt_workflow_audit_dry_run.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (INSERT, UPDATE, DELETE, COPY), executes queries |
-| 21 | scripts/ops/training_dataset_leakage_dry_run.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE), executes queries despite "leakage" name |
+| 20 | scripts/ops/technical_debt_workflow_audit_dry_run.js | No | No | No | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_no_db_connection_static_scan** | No pg import, no Pool, no DB connection. Uses fs.readFileSync/readdirSync + child_process.execSync for static file scanning. The INSERT/UPDATE/DELETE keywords detected by the audit are from scanDbWriteScripts() regex PATTERNS used to scan OTHER files — these are not executable SQL. Reclassified in allowlist_cleanup_phase1 |
+| 21 | scripts/ops/training_dataset_leakage_dry_run.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_read_only_transaction** | Imports Pool from pg but uses BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql() allowing only SELECT/WITH/BEGIN READ ONLY/ROLLBACK. All queries go through querySelectOnly(). Reclassified in allowlist_cleanup_phase1 |
 | 22 | scripts/ops/training_pipeline_smoke_dry_run.js | No | Yes | No | No | possible_indirect_write | Has COPY keyword and .query() execution but no direct DB client — may use indirection |
 
 ### Category: N/A (browser/Playwright scanner flagged, 21)
 
 | # | Path | has_db_import | has_execute | sql_in_code | has_browser | Recommended Classification | Evidence |
 |---|---|---|---|---|---|---|---|
-| 23 | scripts/ops/controlled_matches_identity_seed_prerequisite_plan.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE, TRUNCATE, GRANT, REVOKE, COPY), executes queries, mentions guard |
+| 23 | scripts/ops/controlled_matches_identity_seed_prerequisite_plan.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but queryReadOnly() blocks INSERT/UPDATE/DELETE/TRUNCATE/ALTER/DROP/CREATE/LOCK/COPY/GRANT/REVOKE/MERGE + FOR UPDATE/SHARE/NO KEY UPDATE/KEY SHARE. All 5 DB-accessing functions use queryReadOnly(). The INSERT/UPDATE keywords appear only in planning metadata (FUTURE_INSERT_COLUMNS, insert_missing_matches_identity_row_in_l2v1) describing what a future phase would do — not executable SQL. Reclassified in allowlist_cleanup_phase1 |
 | 24 | scripts/ops/fixture_harvester_l1.js | Yes | Yes | Yes | Yes | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase1** ✅ | Playwright + Pool + BEGIN/COMMIT/ROLLBACK + INSERT INTO matches — GUARDED: now calls assertDbWriteAllowed() in persistFixtures() before DB write |
 | 25 | scripts/ops/fotmob_ligue1_adg60_raw_payload_source_inventory.js | No | No | No | Yes | scraper_or_browser_only | Playwright/browser script — no DB client detected |
 | 26 | scripts/ops/fotmob_ligue1_corrected_source_discovery_adg21.js | No | No | No | No | read_only | No DB client, no browser import, no query execution — planning/investigation |
-| 27 | scripts/ops/html_hydration_source_fidelity_live_compare.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has client.query() with write SQL — needs guard |
+| 27 | scripts/ops/html_hydration_source_fidelity_live_compare.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but queryReadOnly() enforces SELECT-only: blocks non-SELECT SQL + INSERT/UPDATE/DELETE/TRUNCATE/ALTER/DROP/CREATE/GRANT/REVOKE/COPY/FOR UPDATE. Only query is a SELECT from raw_match_data. Also makes live HTTP fetch to FotMob for comparison (read-only). Reclassified in allowlist_cleanup_phase1 |
 | 28 | scripts/ops/l1_matches_seed_commit_plan.js | No | No | No | No | read_only | Planning document — no DB client or execution |
 | 29 | scripts/ops/l2_raw_match_data_ingest_plan.js | No | No | No | No | read_only | Planning document — references "future controlled write script" |
-| 30 | scripts/ops/l2_raw_match_data_ingest_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE, TRUNCATE, GRANT, REVOKE, COPY), executes queries |
+| 30 | scripts/ops/l2_raw_match_data_ingest_preflight.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but assertSafeSelect() + FORBIDDEN_SQL_VERBS (18 verbs: INSERT/UPDATE/DELETE/CREATE/ALTER/DROP/TRUNCATE/UPSERT/MERGE/GRANT/REVOKE/BEGIN/COMMIT/ROLLBACK/LOCK/COPY). All 3 DB queries use safeSelect(). Also makes live HTTP fetch to FotMob. Reclassified in allowlist_cleanup_phase1 |
 | 31 | scripts/ops/large_scale_pageprops_v2_acquisition_strategy_plan.js | No | No | No | No | read_only | Strategy/planning document — no DB client |
 | 32 | scripts/ops/odds_sniper.js | Yes | Yes | Yes | Yes | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase1** ✅ | Playwright + Pool + UPSERT_ODDS_SQL from shared module — GUARDED: now calls assertDbWriteAllowed() in upsertMappingAndOdds() and runTargetedStitch() before DB write |
 | 33 | scripts/ops/pageprops_v2_no_write_payload_recapture_plan.js | No | No | No | No | read_only | Planning document — references controlled write helper, no direct DB |
-| 34 | scripts/ops/pageprops_v2_no_write_preview.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL, executes queries — "no_write_preview" name is misleading |
+| 34 | scripts/ops/pageprops_v2_no_write_preview.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but queryReadOnly() enforces SELECT-only with write/lock keyword blocking. Only query is a SELECT from raw_match_data for comparison against live fetch. "no_write_preview" in filename is accurate — preview only, db_write_executed: false. Reclassified in allowlist_cleanup_phase1 |
 | 35 | scripts/ops/pageprops_v2_raw_write_input_source_investigation.js | No | No | Yes | No | read_only | Investigation document — SQL keywords in analysis context, no DB client |
 | 36 | scripts/ops/pageprops_v2_single_target_controlled_write.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase2_batch1** ✅ | Imports Pool from pg, INSERT INTO raw_match_data — GUARDED: guard added before BEGIN transaction |
-| 37 | scripts/ops/pageprops_v2_single_target_write_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL, executes queries — preflight with DB |
-| 38 | scripts/ops/post_seed_matches_identity_raw_write_readiness_audit.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (UPDATE, TRUNCATE, GRANT, REVOKE, COPY), executes queries |
-| 39 | scripts/ops/remaining_seeded_pageprops_v2_acquisition_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (TRUNCATE, GRANT, REVOKE, COPY), executes queries |
+| 37 | scripts/ops/pageprops_v2_single_target_write_preflight.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports from pageprops_v2_no_write_preview, defines own queryReadOnly() wrapper. All 3 DB queries (loadTargetMatchMetadata, loadExistingRawVersions, loadProtectedTableBaseline) are SELECT-only through queryReadOnly(). Preflight only, db_write_executed: false. Reclassified in allowlist_cleanup_phase1 |
+| 38 | scripts/ops/post_seed_matches_identity_raw_write_readiness_audit.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but queryReadOnly() blocks INSERT/UPDATE/DELETE/TRUNCATE/ALTER/DROP/CREATE/LOCK/COPY/GRANT/REVOKE/MERGE + FOR UPDATE/SHARE locks. All 4 DB queries are SELECT-only through queryReadOnly(). Embedded report explicitly states "It does not write DB." Reclassified in allowlist_cleanup_phase1 |
+| 39 | scripts/ops/remaining_seeded_pageprops_v2_acquisition_preflight.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports from pageprops_v2_no_write_preview, defines own queryReadOnly() wrapper. All 4 DB queries (loadTargetMatchMetadata, loadExistingRawVersions, loadProtectedTableBaselineRows, loadSchemaConstraints) are SELECT-only. Preflight only, db_write_executed: false. Reclassified in allowlist_cleanup_phase1 |
 | 40 | scripts/ops/remaining_seeded_pageprops_v2_controlled_write.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase2_batch1** ✅ | Imports Pool from pg, INSERT INTO raw_match_data — GUARDED: guard added before BEGIN transaction |
 | 41 | scripts/ops/single_league_pageprops_v2_controlled_write_execute.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase2_batch1** ✅ | Imports Pool from pg, INSERT INTO raw_match_data — GUARDED: guard added before BEGIN transaction |
-| 42 | scripts/ops/single_league_pageprops_v2_controlled_write_plan.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has controlled write guard mentions + write SQL |
-| 43 | scripts/ops/single_league_small_batch_pageprops_v2_preflight.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL, executes queries — preflight with DB |
+| 42 | scripts/ops/single_league_pageprops_v2_controlled_write_plan.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_policy_or_regex_keyword_only** | Imports Pool from pg but queryReadOnly() blocks write SQL. The only INSERT mention is in a conflict_policy description string ("INSERT ... ON CONFLICT (match_id, data_version) DO NOTHING with post-write verification") — not executable SQL. Planning only, db_write_executed: false. Reclassified in allowlist_cleanup_phase1 |
+| 43 | scripts/ops/single_league_small_batch_pageprops_v2_preflight.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but queryReadOnly() enforces SELECT-only. All DB queries (loadProtectedTableBaselineRows, loadExistingRawVersions) are SELECT-only through queryReadOnly(). Preflight only, db_write_executed: false. Reclassified in allowlist_cleanup_phase1 |
 
 ## Risk Summary
 
-### Confirmed DB Write Paths (20 scripts)
+### Confirmed DB Write Paths (0 remaining unguarded)
 
-These 20 scripts have **confirmed real DB write capability** based on static analysis
-(DB client import + query execution + write SQL in code). They need guard integration.
+All 20 originally identified confirmed write paths are now resolved:
+- **6 guarded** (Phase1, Phase2 batch1, Phase2 batch2)
+- **14 reclassified as false positives** (allowlist_cleanup_phase1)
 
-**Guarded in Phase 1 (2 of 20):**
-- `odds_sniper.js` ✅ **GUARDED** — now calls `assertDbWriteAllowed()` before `upsertMappingAndOdds()` and `runTargetedStitch()`
-- `fixture_harvester_l1.js` ✅ **GUARDED** — now calls `assertDbWriteAllowed()` before `persistFixtures()`
-
-**High-risk subgroup (browser + DB, now guarded):**
-- `fixture_harvester_l1.js` ✅ GUARDED — Playwright + Pool + transactions + INSERT
-- `odds_sniper.js` ✅ GUARDED — Playwright + Pool + UPSERT via shared module
-
-**Controlled-write subgroup (own guard, needs standardization):**
-- `pageprops_v2_single_target_controlled_write.js` ✅ **GUARDED (Phase2 batch1)**
-- `remaining_seeded_pageprops_v2_controlled_write.js` ✅ **GUARDED (Phase2 batch1)**
-- `single_league_pageprops_v2_controlled_write_execute.js` ✅ **GUARDED (Phase2 batch1)**
-- `controlled_matches_identity_seed_prerequisite_plan.js` — planning-only, no direct INSERT INTO
-- `single_league_pageprops_v2_controlled_write_plan.js` — planning, no executable write SQL found
-
-**FotMob pipeline subgroup (raw JSON DB storage):**
-- `fotmob_adg60_raw_json_db_storage_no_feature_parse.js` ✅ **GUARDED (Phase2 batch2)**
-
-**Misleading-name subgroup (labeled "dry_run", "audit", "preview" but has real DB):**
-- `dataset_status_audit.js`
-- `formal_training_dataset_design_dry_run.js`
-- `l3_local_dry_run.js`
-- `technical_debt_workflow_audit_dry_run.js`
-- `training_dataset_leakage_dry_run.js`
-- `pageprops_v2_no_write_preview.js`
-- `pageprops_v2_raw_completeness_audit.js`
+This means there are **0 remaining confirmed_write_path_needs_guard** scripts.
+SC-002 remains partial mitigation only (4 needs_manual_review, 3 shared_module,
+1 possible_indirect_write, and Python/SQL/migration enforcement still not designed).
 
 ### Read-Only / No DB (14 scripts)
 
@@ -403,9 +385,16 @@ modules or indirection for DB access:
 - **This audit does NOT unlock training.**
 - **This audit does NOT unlock data expansion.**
 - **This audit does NOT unlock real DB write.**
-- **43/66 scripts are guarded. 20 of the remaining 43 skipped_complex are confirmed DB write paths.**
-- **The gap is now more precisely characterized: 20 confirmed + 4 manual_review + 1 indirect + 3 shared_module = 28 scripts needing further action (guard or exclusion).**
-- **14 scripts can potentially be reclassified as verified-read-only (pending formal exclusion).**
+- **43/66 scripts are guarded. All 20 originally identified confirmed write paths are now resolved:**
+  - **6 guarded** (Phase1: 2, Phase2 batch1: 3, Phase2 batch2: 1)
+  - **14 reclassified as false positives** (allowlist_cleanup_phase1)
+  - **0 still_needs_guard remain**
+- **The gap is now more precisely characterized: 4 needs_manual_review + 1 possible_indirect_write + 3 shared_module = 8 scripts needing further action.**
+- **Reclassification categories:**
+  - **false_positive_select_only_with_active_wrapper: 11 scripts** — SELECT-only queries through active SQL enforcement wrappers (queryReadOnly, safeSelect, assertSafeSelect, assertSelectOnly)
+  - **false_positive_read_only_transaction: 2 scripts** — BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql
+  - **false_positive_no_db_connection_static_scan: 1 script** — no pg import, no DB connection
+  - **false_positive_policy_or_regex_keyword_only: 1 script** — write keywords only in policy description strings
 
 ## Non-Goals
 
@@ -421,3 +410,62 @@ documentation governance task only**. It explicitly is NOT:
 - Training, data expansion, or real DB write
 - Fixing or guarding any of the audited scripts (reserved for follow-up phases)
 - Claiming SC-002 is fully fixed or any blocked activity is now safe
+
+## Allowlist Cleanup Phase 1 (sc002_allowlist_cleanup_phase1)
+
+Completed 2026-06-23. This section documents the formal reclassification of 15 scripts
+from `confirmed_write_path_needs_guard` to verified false positive categories.
+
+### Reclassification Summary
+
+| Category | Count | Scripts |
+|---|---|---|
+| false_positive_select_only_with_active_wrapper | 11 | dataset_status_audit.js, l3_local_dry_run.js, controlled_matches_identity_seed_prerequisite_plan.js, html_hydration_source_fidelity_live_compare.js, l2_raw_match_data_ingest_preflight.js, pageprops_v2_no_write_preview.js, pageprops_v2_raw_completeness_audit.js, pageprops_v2_single_target_write_preflight.js, post_seed_matches_identity_raw_write_readiness_audit.js, remaining_seeded_pageprops_v2_acquisition_preflight.js, single_league_small_batch_pageprops_v2_preflight.js |
+| false_positive_read_only_transaction | 2 | training_dataset_leakage_dry_run.js, formal_training_dataset_design_dry_run.js |
+| false_positive_no_db_connection_static_scan | 1 | technical_debt_workflow_audit_dry_run.js |
+| false_positive_policy_or_regex_keyword_only | 1 | single_league_pageprops_v2_controlled_write_plan.js |
+
+### Evidence per Script
+
+All 15 reclassifications are based on deep static analysis with evidence:
+
+1. **SELECT-only with active wrapper (11 scripts):** Each imports `pg.Pool` but every DB
+   query passes through an active wrapper function (`queryReadOnly`, `safeSelect`,
+   `assertSafeSelect`, `assertSelectOnly`) that throws on any non-SELECT SQL, write
+   keywords, or lock clauses. Write SQL keywords (INSERT, UPDATE, DELETE, TRUNCATE, etc.)
+   appear only in the protection regexes — never in executable SQL strings.
+
+2. **READ ONLY transaction (2 scripts):** Use `BEGIN READ ONLY` + `ROLLBACK` +
+   `assertSelectOnlySql()` guard that explicitly permits only SELECT, WITH, BEGIN READ
+   ONLY, and ROLLBACK statements.
+
+3. **No DB connection static scan (1 script):** No `require('pg')`, no `Pool`, no DB
+   connection. Uses `fs` and `child_process.execSync` for git/file-system operations.
+   Write keywords detected by the audit are from `scanDbWriteScripts()` regex PATTERNS
+   used to scan OTHER files.
+
+4. **Policy/regex keyword only (1 script):** Has `queryReadOnly()` wrapper. INSERT
+   keyword appears only in a `conflict_policy` description string ("INSERT ... ON
+   CONFLICT (match_id, data_version) DO NOTHING with post-write verification") — not
+   in executable SQL.
+
+### Still Needs Guard
+
+**0 scripts** remain as confirmed_write_path_needs_guard after this cleanup.
+
+### Still Needs Manual Review
+
+**4 scripts** remain needs_manual_review (unchanged by this cleanup):
+- `all_seeded_pageprops_v2_canonical_read_verification.js`
+- `pageprops_v2_identity_contract_regression_execute.js`
+- `pageprops_v2_post_write_canonical_read_verification.js`
+- `pageprops_v2_suspended_target_review_execute.js`
+
+### Non-Goals of This Cleanup
+
+- This cleanup does NOT guard any scripts (that was Phase1/Phase2).
+- This cleanup does NOT close SC-002.
+- This cleanup does NOT unlock training, data expansion, or real DB write.
+- This cleanup does NOT review the 4 needs_manual_review scripts.
+- This cleanup does NOT address shared_module boundary enforcement.
+- This cleanup does NOT address Python/SQL/migration enforcement.
