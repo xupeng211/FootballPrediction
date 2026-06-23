@@ -90,7 +90,15 @@ Last updated: 2026-06-23
   4 needs_manual_review remain unchanged. 3 shared_module unchanged. 1
   possible_indirect_write unchanged. SC-002 remains partial mitigation only.
   Training, data expansion, and real DB write remain blocked.
-- **shared_module_db_write_boundary_design_phase1** (this PR): Static design of shared
+- **shared_module_db_write_boundary_implementation_phase1** (this PR): HIGH priority
+  guard implemented for `odds_harvest_pipeline.js` — the unguarded consumer discovered
+  by the design phase. `assertDbWriteAllowed()` added in `upsertMappingAndOdds()` before
+  BEGIN transaction, guarding INSERT/UPSERT on `matches_oddsportal_mapping` and `odds`
+  tables. Same pattern as `odds_sniper.js` (Phase 1). Gatekeeper.js / gatekeeper.sh
+  still pending. 8 needs_manual_review consumers still pending. No target script
+  executed. No DB connection. No Playwright/browser run. SC-002 remains partial
+  mitigation only. Training, data expansion, real DB write remain blocked.
+- **shared_module_db_write_boundary_design_phase1** (#1591): Static design of shared
   module DB write boundary completed. 3 shared modules mapped with full consumer
   entrypoint inventory:
   - `dbBlueprint.js` (24 consumers, 3 write-capable, 18 read-only, 3 needs_manual_review)

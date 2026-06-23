@@ -399,6 +399,19 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   operation. Static tests confirm guard coverage. Scanner detects guard calls. changed-files
   enforcement passes.
 
+### 4a. shared_module_db_write_boundary_implementation_phase1 ✅ COMPLETED
+
+- **Status:** Completed (this PR). Guarded `odds_harvest_pipeline.js` — the HIGH priority
+  unguarded consumer discovered by the design phase.
+- **Guard location:** `upsertMappingAndOdds()` function, after dryRun check, before
+  BEGIN transaction.
+- **Target tables:** `matches_oddsportal_mapping`, `odds`
+- **Operations:** INSERT, UPDATE (via UPSERT with ON CONFLICT DO UPDATE)
+- **Results:** `assertDbWriteAllowed()` now gates all write SQL in the script.
+  Gatekeeper.js / gatekeeper.sh remain pending. 8 needs_manual_review consumers
+  remain pending. No target script executed.
+- **SC-002 remains partial mitigation only.**
+
 ### 4. shared_module_db_write_boundary_design_phase1 ✅ COMPLETED
 
 - **Status:** Completed (this PR). Design document: `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md`.
