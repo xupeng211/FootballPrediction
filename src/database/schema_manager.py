@@ -6,12 +6,20 @@ Database Schema Manager - 生产级数据库架构管理
 
 from datetime import datetime
 import logging
+import sys
 from typing import Any
 
 import psycopg2
 from psycopg2.extras import execute_values
 
-from src.config_unified import get_settings
+from src.config import get_settings
+
+# Phase2C batch2: Python runtime DB write guard
+_guard_path = str(__import__("pathlib").Path(__file__).resolve().parents[2] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +57,14 @@ class SchemaManager:
         try:
             conn = self.get_connection()
             cursor = conn.cursor()
+
+            # Phase2C batch2: unified runtime guard before DDL operations
+            assert_db_write_allowed(
+                script_name="schema_manager.py",
+                operation="CREATE/ALTER",
+                target="schema_tables",
+                tables=["match_features_training", "matches", "raw_match_data"],
+            )
 
             logger.info("🏗️ V149.0 Schema初始化/升级开始...")
 
@@ -714,7 +730,7 @@ class SchemaManager:
             import numpy as np
             import psycopg2
 
-            from src.config_unified import get_settings
+            from src.config import get_settings
 
             settings = get_settings()
             conn = psycopg2.connect(
@@ -859,7 +875,7 @@ class SchemaManager:
         try:
             import psycopg2
 
-            from src.config_unified import get_settings
+            from src.config import get_settings
 
             settings = get_settings()
             conn = psycopg2.connect(
@@ -1031,7 +1047,7 @@ class SchemaManager:
         try:
             import psycopg2
 
-            from src.config_unified import get_settings
+            from src.config import get_settings
 
             settings = get_settings()
             conn = psycopg2.connect(
@@ -1147,7 +1163,7 @@ class SchemaManager:
 
             import psycopg2
 
-            from src.config_unified import get_settings
+            from src.config import get_settings
 
             settings = get_settings()
             conn = psycopg2.connect(

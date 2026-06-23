@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-06-23
+Last updated: 2026-06-24
 
 ## Current baseline
 
@@ -300,13 +300,14 @@ Last updated: 2026-06-23
    design completed. See `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`.
 7. **Python Phase2A static scanner + Phase2B SQL scanner completed.**
 8. **Python Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths).**
-9. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
+9. **Python Phase2C batch2 runtime guard completed (3 more of 14 confirmed Python write paths; 6 total guarded).**
+10. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
    discipline codified: resident rules (CLAUDE.md), PR template checklist, CI gate
    enforcement. Future tasks can reference these standing rules instead of long prompts.
 10. SC-002 remains partial mitigation only.
 11. Next recommended tasks (in priority order):
-    - `python_runtime_guard_implementation_phase2C_batch2` — guard remaining 11
-      confirmed Python write paths
+    - `python_runtime_guard_implementation_phase2C_batch3` — guard remaining 8
+      confirmed Python write paths (8 of 14 remaining after batch1+batch2)
     - `python_indirect_write_path_design_phase1` — design approach for 8 indirect
       write paths
     - `python_manual_review_phase2D` — review 5 manual review candidates

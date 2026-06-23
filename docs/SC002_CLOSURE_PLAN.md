@@ -53,7 +53,7 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); 11 confirmed + 8 indirect + 5 manual review remaining |
+| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); Phase2C batch2 runtime guard completed (3 more, 6 of 14 total); 8 confirmed + 8 indirect + 5 manual review remaining |
 | Runtime DB role / permission model | not fully validated |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 
@@ -552,6 +552,37 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
   - **SC-002 remains partial mitigation only.**
 - **Next step:** `python_runtime_guard_implementation_phase2C_batch2`. Do not start
+  automatically.
+
+### 5d. python_runtime_guard_implementation_phase2C_batch2 ✅ COMPLETED
+
+- **Status:** Completed (this PR).
+- **Results:**
+  - Batch2 guarded paths (3 more of 14 confirmed, 6 of 14 total):
+    1. `src/database/schema_manager.py` — guard in `initialize_schema()` before
+       CREATE TABLE/ALTER TABLE on match_features_training, matches, raw_match_data.
+       Operations: CREATE, ALTER. Requires ALLOW_SCHEMA_WRITE.
+    2. `src/database/oddsportal_db_manager.py` — guard in `sync_match_data()` before
+       INSERT/UPDATE (UPSERT with ON CONFLICT DO UPDATE) on matches_mapping.
+       Operations: INSERT, UPDATE.
+    3. `scripts/ops/fotmob_registry_seed_dev_execution.py` — guard in `main()` before
+       `execute_seed()` INSERT ON CONFLICT DO NOTHING on 7 football_* registry tables.
+       Existing custom production guard preserved as additional defense-in-depth layer.
+       Operations: INSERT.
+  - Allowlist updated: 3 more entries → `runtime_guarded`, 6 total guarded
+  - **8 confirmed Python write paths still pending runtime guard.**
+  - **8 indirect write paths NOT processed.**
+  - **5 manual review candidates NOT processed.**
+  - **Batch2 selection rationale:** schema_manager.py selected for DDL guard (highest
+    schema-level risk); oddsportal_db_manager.py selected for data sync guard (clear
+    UPSERT boundary on matches_mapping); fotmob_registry_seed_dev_execution.py selected
+    for seed INSERT guard (existing custom guard retained). sql_store.py (SQL string
+    constants only, no executable code) and integrity_guard.py (SELECT-only, read-only)
+    were reviewed and excluded from batch2 — they require different handling.
+  - **No Python target scripts executed. No DB connection. No real DB write.**
+  - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
+  - **SC-002 remains partial mitigation only.**
+- **Next step:** `python_runtime_guard_implementation_phase2C_batch3`. Do not start
   automatically.
 
 ### 6. runtime_db_role_permission_review_phase1

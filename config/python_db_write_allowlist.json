@@ -4,16 +4,16 @@
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
   "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1: 3 of 14 confirmed write paths have runtime guard; 11 remaining pending",
+  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2: 6 of 14 confirmed write paths have runtime guard; 8 remaining pending",
   "entries": [
     {
       "path": "src/database/schema_manager.py",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "Schema DDL + data DML: CREATE TABLE, ALTER TABLE, DROP TRIGGER, INSERT, UPDATE, execute_values bulk insert. No Python guard equivalent. RISK: HIGH.",
-      "evidence": "psycopg2 import + execute_values + CREATE TABLE/INSERT/UPDATE in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #163.",
+      "classification": "historical_python_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2C batch2 guarded: assert_db_write_allowed() in initialize_schema() before CREATE TABLE/ALTER TABLE on match_features_training, matches, raw_match_data. Tables: match_features_training, matches, raw_match_data. Operations: CREATE, ALTER.",
+      "evidence": "psycopg2 import + execute + CREATE TABLE/ALTER TABLE/execute_values bulk insert in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='schema_manager.py', operation='CREATE/ALTER', target='schema_tables', tables=['match_features_training', 'matches', 'raw_match_data']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #163.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+      "owner_task": "python_runtime_guard_implementation_phase2C_batch2",
+      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before CREATE TABLE/ALTER TABLE in initialize_schema(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, ALLOW_RAW_MATCH_DATA_WRITE=yes, ALLOW_TRAINING_WRITE=yes, ALLOW_SCHEMA_WRITE=yes, DRY_RUN=false."
     },
     {
       "path": "src/database/sql_store.py",
@@ -35,12 +35,12 @@
     },
     {
       "path": "src/database/oddsportal_db_manager.py",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "Oddsportal mapping data write: INSERT/UPDATE for oddsportal data. No Python guard equivalent. RISK: HIGH.",
-      "evidence": "psycopg2 via pool + INSERT/UPDATE in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #166.",
+      "classification": "historical_python_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2C batch2 guarded: assert_db_write_allowed() in sync_match_data() before INSERT INTO/UPSERT on matches_mapping. Tables: matches_mapping. Operations: INSERT, UPDATE (UPSERT with ON CONFLICT DO UPDATE).",
+      "evidence": "psycopg2 import + execute + INSERT/UPDATE with ON CONFLICT in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='oddsportal_db_manager.py', operation='UPSERT', target='matches_mapping', tables=['matches_mapping']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #166.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+      "owner_task": "python_runtime_guard_implementation_phase2C_batch2",
+      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before UPSERT in sync_match_data(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false."
     },
     {
       "path": "src/database/collector_repository.py",
@@ -125,12 +125,12 @@
     },
     {
       "path": "scripts/ops/fotmob_registry_seed_dev_execution.py",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "FotMob registry seed INSERT. Has --require-dev-db flag but no env gate. RISK: HIGH.",
-      "evidence": "psycopg2 + execute + INSERT in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #176.",
+      "classification": "historical_python_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2C batch2 guarded: assert_db_write_allowed() in main() before execute_seed() INSERT ON CONFLICT DO NOTHING on 7 football_* registry tables. Tables: football_teams, football_competitions, football_competition_editions, football_team_competition_participation, football_match_targets, football_match_target_teams, football_source_identities. Operations: INSERT.",
+      "evidence": "psycopg2 + execute + INSERT ON CONFLICT DO NOTHING in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='fotmob_registry_seed_dev_execution.py', operation='INSERT', target='football_registry_tables', tables=['football_teams', 'football_competitions', 'football_competition_editions', 'football_team_competition_participation', 'football_match_targets', 'football_match_target_teams', 'football_source_identities']). Existing custom production guard preserved as additional layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #176.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+      "owner_task": "python_runtime_guard_implementation_phase2C_batch2",
+      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before INSERT in main() (after existing custom production guard check). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_GENERIC_DB_WRITE=yes, DRY_RUN=false."
     },
     {
       "path": "src/database/migrations/env.py",

@@ -31,6 +31,13 @@ import psycopg2
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# Phase2C batch2: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[2] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
+
 # Production-like env keywords that trigger rejection
 PRODUCTION_ENV_KEYWORDS = ["production", "prod", "live", "prd"]
 SAFE_ENV_KEYWORDS = ["dev", "development", "local", "test", "ci", "docker"]
@@ -703,6 +710,22 @@ def main() -> int:
         return 1
 
     try:
+        # Phase2C batch2: unified runtime guard before DB write
+        assert_db_write_allowed(
+            script_name="fotmob_registry_seed_dev_execution.py",
+            operation="INSERT",
+            target="football_registry_tables",
+            tables=[
+                "football_teams",
+                "football_competitions",
+                "football_competition_editions",
+                "football_team_competition_participation",
+                "football_match_targets",
+                "football_match_target_teams",
+                "football_source_identities",
+            ],
+        )
+
         # First run
         idem_first = execute_seed(conn, plan)
         first_total = sum(idem_first.values())
