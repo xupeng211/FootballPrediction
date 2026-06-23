@@ -4,9 +4,9 @@
 - owner: project governance
 - created: 2026-06-23
 - task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch1 (runtime guard batch1)
-- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1 COMPLETED (2026-06-23)
+- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1 COMPLETED (2026-06-23), Phase2C batch2 COMPLETED (2026-06-24)
 - scanner: scripts/ops/python_db_write_static_enforcement.py
-- allowlist: config/python_db_write_allowlist.json (28 entries, 3 runtime_guarded + 12 pending + 8 indirect + 5 manual review)
+- allowlist: config/python_db_write_allowlist.json (28 entries, 6 runtime_guarded + 9 pending + 8 indirect + 5 manual review)
 - guard_helper: scripts/ops/helpers/python_db_write_guard.py
 - gate_integration: check_python_db_write_enforcement() in scripts/ops/ai_workflow_gate.py
 
@@ -644,8 +644,9 @@ This design phase explicitly does NOT:
 - **Python and SQL/migration enforcement design is complete.**
 - **Python Phase2A static scanner completed. Phase2B SQL/migration scanner completed.**
 - **Python Phase2C batch1 runtime guard completed: 3 of 14 confirmed write paths guarded.**
+- **Python Phase2C batch2 runtime guard completed: 3 more confirmed write paths guarded (6 of 14 total).**
 - **24 Python files identified as confirmed or indirect write paths needing guard.**
-- **11 confirmed Python write paths still pending runtime guard.**
+- **8 confirmed Python write paths still pending runtime guard.**
 - **8 indirect write paths still pending design + guard.**
 - **5 Python files need manual review.**
 - **14 SQL migration files classified; 1 seed SQL needs gate; 0 destructive migrations found.**
@@ -658,8 +659,8 @@ This design phase explicitly does NOT:
 
 Based on the current implementation status, the recommended next task is:
 
-**`python_runtime_guard_implementation_phase2C_batch2`** — Continue Python runtime guard
-integration for the remaining 11 confirmed write paths. This should:
+**`python_runtime_guard_implementation_phase2C_batch3`** — Continue Python runtime guard
+integration for the remaining 8 confirmed write paths. This should:
 
 1. Guard the remaining highest-risk confirmed Python write paths incrementally
 2. Update allowlist classifications as each path is guarded

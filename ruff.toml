@@ -77,6 +77,10 @@ unfixable = []
 "tests/unit/fotmob_registry_seed_dry_run_review_check.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004"]
 "scripts/ops/fotmob_registry_seed_dev_execution.py" = ["T20", "C901", "PLR0912", "PLR0915", "PERF401", "D103", "PLR2004", "B905", "C401"]
 "tests/unit/fotmob_registry_seed_dev_execution.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004"]
+# Phase2C batch2: guard-phase additions to files with pre-existing lint issues
+"src/database/oddsportal_db_manager.py" = ["G004", "TRY401", "ERA001"]
+"src/database/schema_manager.py" = ["ERA001", "G004", "TRY401", "PLW0603", "TRY300", "DTZ005", "PLR2004", "PERF401", "PLC0415", "C901", "PLR0912", "PLR0915", "RUF059"]
+"tests/unit/test_python_runtime_guard_phase2c_batch2_static.py" = ["PLR2004", "PLC0415"]
 "scripts/ops/fotmob_registry_seed_dev_execution_review_check.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "E701"]
 "tests/unit/fotmob_registry_seed_dev_execution_review_check.test.py" = ["N999", "S101", "D101", "D102", "D103", "PLR2004"]
 "scripts/ops/fotmob_target_selection_db_dry_run.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "PERF401"]
@@ -167,7 +171,7 @@ unfixable = []
 # Phase2C batch1 — Python DB write guard helper and tests
 "scripts/ops/helpers/python_db_write_guard.py" = ["C901", "PLR0912", "PERF401", "ARG001", "D103"]
 "tests/unit/test_python_db_write_guard_phase2c.py" = ["S101", "D101", "D102", "D103", "ARG002", "ERA001"]
-"tests/unit/test_python_runtime_guard_phase2c_batch1_static.py" = ["S101", "D101", "D102", "D103", "PLR2004", "PLC0415"]
+"tests/unit/test_python_runtime_guard_phase2c_batch1_static.py" = ["S101", "D101", "D102", "D103", "PLR2004", "PLC0415", "W505"]
 # Phase2C batch1 — pre-existing issues in modified file (not introduced by this PR)
 "src/database/match_repository.py" = ["C901", "PLR0911", "PLR0912", "PLR0915", "PLR2004", "TRY301", "TRY401", "G004", "B904", "PLC0415", "D103"]
 
