@@ -26,9 +26,18 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 import logging
+from pathlib import Path
+import sys
 from typing import Any
 
 import asyncpg
+
+# Phase2C batch3: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[2] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -172,6 +181,14 @@ class CollectorRepository:
         Raises:
             asyncpg.PostgresError: 数据库错误
         """
+        # Phase2C batch3: runtime DB write guard before INSERT/UPSERT on matches
+        assert_db_write_allowed(
+            script_name="collector_repository.py",
+            operation="UPSERT",
+            target="matches",
+            tables=["matches"],
+        )
+
         # 处理数据格式
         if isinstance(data, dict):
             fotmob_id = data.get("fotmob_id") or data.get("match_id")
@@ -246,6 +263,14 @@ class CollectorRepository:
         Raises:
             asyncpg.PostgresError: 数据库错误
         """
+        # Phase2C batch3: runtime DB write guard before batch INSERT/UPSERT on matches
+        assert_db_write_allowed(
+            script_name="collector_repository.py",
+            operation="UPSERT",
+            target="matches (batch)",
+            tables=["matches"],
+        )
+
         import time
 
         start_time = time.time()
@@ -260,9 +285,7 @@ class CollectorRepository:
 
                 # 提取 match_id
                 fotmob_id = (
-                    data.get("fotmob_id")
-                    or data.get("match_id")
-                    or getattr(task, "match_id", None)
+                    data.get("fotmob_id") or data.get("match_id") or getattr(task, "match_id", None)
                 )
 
                 if not fotmob_id:

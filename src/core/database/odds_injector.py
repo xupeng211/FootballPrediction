@@ -29,17 +29,26 @@ from datetime import datetime
 import json
 import logging
 from pathlib import Path
+import sys
 from typing import Any
 
 import psycopg2
 from psycopg2.extras import execute_values
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from src.config_unified import get_settings
+from src.config import get_settings
+
+# Phase2C batch3: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[3] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 # ============================================================================
 # Data Models
 # ============================================================================
+
 
 @dataclass
 class InjectionStats:
@@ -176,6 +185,7 @@ class InjectionPayload(BaseModel):
 # Logger Configuration
 # ============================================================================
 
+
 def get_injection_logger(name: str = "OddsInjector") -> logging.Logger:
     """Get configured logger for injection operations.
 
@@ -196,9 +206,7 @@ def get_injection_logger(name: str = "OddsInjector") -> logging.Logger:
             mode="a",
             encoding="utf-8",
         )
-        formatter = logging.Formatter(
-            "[%(asctime)s] [%(levelname)s] %(message)s"
-        )
+        formatter = logging.Formatter("[%(asctime)s] [%(levelname)s] %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
         logger.setLevel(logging.INFO)
@@ -209,6 +217,7 @@ def get_injection_logger(name: str = "OddsInjector") -> logging.Logger:
 # ============================================================================
 # Main Injector Class
 # ============================================================================
+
 
 class OddsInjector:
     """Production-grade odds data injector.
@@ -285,7 +294,7 @@ class OddsInjector:
 
         # Inject records
         if not dry_run:
-            self._inject_records(records, stats, batch_size)
+            self._inject_records(records, stats, batch_size, dry_run=False)
         else:
             self.logger.info(f"[INJECT] Dry run: {len(records)} records validated")
 
@@ -331,14 +340,10 @@ class OddsInjector:
                     if self._validate_quality(record):
                         valid_records.append(record)
                     else:
-                        self.logger.debug(
-                            f"[INJECT] Quality check failed (line {line_num})"
-                        )
+                        self.logger.debug(f"[INJECT] Quality check failed (line {line_num})")
 
                 except (json.JSONDecodeError, ValueError) as e:
-                    self.logger.warning(
-                        f"[INJECT] Validation failed (line {line_num}): {e}"
-                    )
+                    self.logger.warning(f"[INJECT] Validation failed (line {line_num}): {e}")
                     stats.failed += 1
 
         stats.total = len(valid_records)
@@ -361,6 +366,7 @@ class OddsInjector:
         records: list[OddsRecord],
         stats: InjectionStats,
         batch_size: int,
+        dry_run: bool = False,
     ) -> None:
         """Inject records into database.
 
@@ -368,7 +374,17 @@ class OddsInjector:
             records: Validated records to inject.
             stats: Statistics object to update.
             batch_size: Batch size for database operations.
+            dry_run: If True, skip the actual DB write (guard returns early).
         """
+        # Phase2C batch3: runtime DB write guard before UPDATE on matches
+        assert_db_write_allowed(
+            script_name="odds_injector.py",
+            operation="UPDATE",
+            target="matches (l3_odds_data quality-based UPSERT)",
+            tables=["matches"],
+            dry_run=dry_run,
+        )
+
         conn = psycopg2.connect(
             host=self.settings.database.host,
             port=self.settings.database.port,
@@ -389,11 +405,13 @@ class OddsInjector:
                 should_update = self._should_update_record(cursor, payload)
 
                 if should_update:
-                    update_data.append((
-                        json.dumps(payload.model_dump()),
-                        payload.match_id,
-                        payload.quality_score,
-                    ))
+                    update_data.append(
+                        (
+                            json.dumps(payload.model_dump()),
+                            payload.match_id,
+                            payload.quality_score,
+                        )
+                    )
 
             # Batch update
             if update_data:
@@ -440,10 +458,7 @@ class OddsInjector:
         Returns:
             True if record should be updated.
         """
-        cursor.execute(
-            "SELECT l3_odds_data FROM matches WHERE match_id = %s",
-            (payload.match_id,)
-        )
+        cursor.execute("SELECT l3_odds_data FROM matches WHERE match_id = %s", (payload.match_id,))
         row = cursor.fetchone()
 
         if not row or not row[0]:
@@ -461,6 +476,7 @@ class OddsInjector:
 # ============================================================================
 # Convenience Functions
 # ============================================================================
+
 
 def inject_odds_data(
     file_path: str | Path,
