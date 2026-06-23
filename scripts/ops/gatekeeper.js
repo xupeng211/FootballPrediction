@@ -20,6 +20,7 @@ const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { TitanLogger } = require('../../src/infrastructure/utils/TitanLogger');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const { runColdStartBlueprintCheck } = require('./helpers/dbBlueprint');
 const { runRepoHygieneCheck } = require('./helpers/repoHygiene');
 
@@ -206,6 +207,12 @@ class Gatekeeper {
 
   async checkColdStart() {
     this.log('info', '【门禁 4/5】执行 [GATE-COLD-START] 冷启动蓝图校验...');
+
+    assertDbWriteAllowed({
+      script: 'gatekeeper.js',
+      tables: ['matches', 'raw_match_data', 'matches_oddsportal_mapping'],
+      operations: ['CREATE', 'DROP', 'INSERT']
+    });
 
     try {
       const result = await runColdStartBlueprintCheck();

@@ -268,7 +268,7 @@ active wrappers, or policy/regex keyword only).
 
 | # | Path | has_db_import | has_execute | sql_in_code | has_browser | Recommended Classification | Evidence |
 |---|---|---|---|---|---|---|---|
-| 12 | scripts/ops/helpers/dbBlueprint.js | Yes | Yes | Yes | No | ~~shared_module_no_execution~~ → **design_mapped** | DB schema/migration helper with write-capable functions (runColdStartBlueprintCheck, ensureBlueprintOnCurrentDatabase, runBlueprintWriteProbe). 24 consumers mapped: 2 unguarded (gatekeeper.js/sh), 1 guarded (db_vault.js), 18 read-only only, 3 needs_manual_review. Design phase complete — guard at consumer entrypoint. |
+| 12 | scripts/ops/helpers/dbBlueprint.js | Yes | Yes | Yes | No | ~~shared_module_no_execution~~ → **design_mapped** → **consumers_guarded** | DB schema/migration helper with write-capable functions (runColdStartBlueprintCheck, ensureBlueprintOnCurrentDatabase, runBlueprintWriteProbe). 24 consumers mapped: 2 now guarded (gatekeeper.js/sh by `gatekeeper_boundary_implementation` ✅), 1 guarded (db_vault.js ✅), 18 read-only only, 3 needs_manual_review. Design phase complete — 2 of 3 active write-capable consumers now guarded (gatekeeper.js, gatekeeper.sh). Remaining: 3 needs_manual_review consumers. |
 | 13 | scripts/ops/helpers/restoreMappingsWorkflow.js | No | Yes | No | No | ~~shared_module_no_execution~~ → **design_mapped** | Restore mappings helper with dependency-injected write path. 0 active consumers. Built-in dryRun support. Design phase complete — guard at consumer entrypoint when first consumer written. |
 | 14 | scripts/ops/odds_harvest_pipeline.shared.js | No | Yes | Yes | No | ~~shared_module_no_execution~~ → **design_mapped** → **consumer_guarded** | Shared odds harvest pipeline with write SQL templates. 2 consumers: odds_sniper.js (guarded ✅) and odds_harvest_pipeline.js (✅ now guarded by implementation_phase1 — `assertDbWriteAllowed()` in `upsertMappingAndOdds()`). Design + implementation complete for this module. |
 
@@ -333,11 +333,15 @@ These 14 scripts have **no detected DB client** and are likely safe from DB writ
 these scripts import helper modules (`pageprops_v2_no_write_preview.js` is imported by
 controlled write scripts) that may provide DB access indirectly.
 
-### Shared Modules (3 scripts — 1 consumer guarded in implementation phase1)
+### Shared Modules (3 scripts — 3 consumers guarded across 2 implementation phases)
 
-Boundary design complete. `odds_harvest_pipeline.js` (HIGH priority unguarded consumer
-of `odds_harvest_pipeline.shared.js`) now guarded by `shared_module_db_write_boundary_implementation_phase1`.
-Gatekeeper scripts and 8 needs_manual_review consumers remain pending.
+Boundary design complete. All 3 active write-capable consumers of shared modules now guarded:
+- `odds_harvest_pipeline.js` (HIGH priority) guarded by `shared_module_db_write_boundary_implementation_phase1`
+  — `assertDbWriteAllowed()` in `upsertMappingAndOdds()` before BEGIN transaction.
+- `gatekeeper.js` and `gatekeeper.sh` (MEDIUM priority) guarded by `gatekeeper_boundary_implementation`
+  — `assertDbWriteAllowed()` before `runColdStartBlueprintCheck` (CREATE DATABASE, DROP DATABASE, INSERT write probe).
+- 8 needs_manual_review consumers remain pending.
+- `db_vault.js` was already guarded in Phase1.
 See `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` for full consumer map.
 
 ### Needs Manual Review (4 scripts)

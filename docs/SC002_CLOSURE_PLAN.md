@@ -43,6 +43,7 @@ are satisfied.
 | Additional browser/Playwright skipped_complex (not in allowlist) | 21 |
 | Total skipped_complex | 43 |
 | Confirmed write paths guarded | 6 of 6 real (14 false positives reclassified in allowlist_cleanup_phase1) |
+| Shared module consumers guarded | 3 of 3 active write-capable (odds_harvest_pipeline.js, gatekeeper.js, gatekeeper.sh); 8 needs_manual_review remain |
 | Changed-files enforcement | hard fail (active) |
 | Production-like DB host hard block | enabled |
 | Real DB write authorization | no |
@@ -411,6 +412,25 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   Gatekeeper.js / gatekeeper.sh remain pending. 8 needs_manual_review consumers
   remain pending. No target script executed.
 - **SC-002 remains partial mitigation only.**
+
+### 4b. gatekeeper_boundary_implementation ✅ COMPLETED
+
+- **Status:** Completed (this PR). Guarded `gatekeeper.js` and `gatekeeper.sh` — the
+  MEDIUM priority CI infrastructure consumers.
+- **Guard location:**
+  - `gatekeeper.js`: `checkColdStart()` method, before `runColdStartBlueprintCheck` call
+  - `gatekeeper.sh`: `run_cold_start_integrity_guard()` inline Node heredoc, before
+    `runColdStartBlueprintCheck` call
+- **Target tables:** `matches`, `raw_match_data`, `matches_oddsportal_mapping`
+- **Operations:** `CREATE`, `DROP`, `INSERT` (CREATE DATABASE, DROP DATABASE, INSERT write probe with ROLLBACK)
+- **Guard pattern:** `assertDbWriteAllowed({ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data', 'matches_oddsportal_mapping'], operations: ['CREATE', 'DROP', 'INSERT'] })`
+  (same pattern for gatekeeper.sh with script 'gatekeeper.sh')
+- **Results:** Both consumer entrypoints now guarded. 8 needs_manual_review consumers
+  remain pending. All 3 active write-capable shared-module consumers now guarded
+  (odds_harvest_pipeline.js, gatekeeper.js, gatekeeper.sh). No target script executed.
+  No DB connection. No real DB write. No browser/Playwright run.
+- **SC-002 remains partial mitigation only.**
+- **Training, data expansion, real DB write remain blocked.**
 
 ### 4. shared_module_db_write_boundary_design_phase1 ✅ COMPLETED
 

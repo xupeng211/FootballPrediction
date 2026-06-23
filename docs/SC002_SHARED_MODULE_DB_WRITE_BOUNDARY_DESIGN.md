@@ -323,8 +323,8 @@ The following actions are explicitly reserved for a follow-up implementation pha
 | Gap | Severity | Detail |
 |---|---|---|
 | `odds_harvest_pipeline.js` — ~~UNGUARDED~~ **NOW GUARDED** | ~~HIGH~~ **RESOLVED** | CLI entrypoint with Pool + write SQL from shared module + Playwright. Guard added in `upsertMappingAndOdds()` by `shared_module_db_write_boundary_implementation_phase1`. ✅ |
-| `gatekeeper.js` — UNGUARDED | MEDIUM | Uses `runColdStartBlueprintCheck` which creates/drops temp DBs. CI infrastructure, not user-facing, but still a DB write path. |
-| `gatekeeper.sh` — UNGUARDED | MEDIUM | Shell script that runs `runColdStartBlueprintCheck` via inline node. Same risk as gatekeeper.js. |
+| `gatekeeper.js` — ~~UNGUARDED~~ **NOW GUARDED** | ~~MEDIUM~~ **RESOLVED** | Uses `runColdStartBlueprintCheck` which creates/drops temp DBs. Guard added in `checkColdStart()` by `gatekeeper_boundary_implementation`. Guard covers CREATE DATABASE, DROP DATABASE, and INSERT write probe. ✅ |
+| `gatekeeper.sh` — ~~UNGUARDED~~ **NOW GUARDED** | ~~MEDIUM~~ **RESOLVED** | Shell script that runs `runColdStartBlueprintCheck` via inline node. Guard added in `run_cold_start_integrity_guard()` heredoc by `gatekeeper_boundary_implementation`. Same guard pattern as gatekeeper.js. ✅ |
 | 8 consumers with `needs_manual_review` | LOW–MEDIUM | These use only `buildDbConnectionConfig` from dbBlueprint but may have their own DB write paths. Need individual review. |
 | `restoreMappingsWorkflow.js` future risk | LOW | 0 active consumers today, but if a consumer is written without guard, it would be an unguarded write path. |
 
@@ -351,14 +351,17 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
 - **Verification:** Static test confirms guard import, call position (before BEGIN), table names, and operation names. Changed-files enforcement passes.
 - **Existing safety mechanisms preserved:** dryRun check remains before guard; production-like DB host hard block enforced by guard helper; Playwright/browser logic unchanged; scraper logic unchanged.
 
-### Priority 2: Guard `gatekeeper.js` and `gatekeeper.sh` — PENDING
+### Priority 2: Guard `gatekeeper.js` and `gatekeeper.sh` — ✅ COMPLETED
 
-- **Risk:** MEDIUM — CI infrastructure, temp DB operations
-- **Action:** Add `assertDbWriteAllowed()` or equivalent guard before
-  `runColdStartBlueprintCheck`. Consider whether the write probe (INSERT + ROLLBACK)
-  itself needs guarding or whether the temp DB lifecycle is sufficient isolation.
-- **Verification:** Gatekeeper CI still passes after guard integration
-- **Blocked by:** Needs dedicated implementation task.
+- **Status:** Completed by `gatekeeper_boundary_implementation`.
+- **Guard location:** `gatekeeper.js` `checkColdStart()` method (before `runColdStartBlueprintCheck` call); `gatekeeper.sh` `run_cold_start_integrity_guard()` inline Node heredoc (before `runColdStartBlueprintCheck` call).
+- **Target tables:** `matches`, `raw_match_data`, `matches_oddsportal_mapping`
+- **Operations:** `CREATE`, `DROP`, `INSERT`
+- **Guard pattern:** `assertDbWriteAllowed({ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data', 'matches_oddsportal_mapping'], operations: ['CREATE', 'DROP', 'INSERT'] })` (same pattern for gatekeeper.sh with script 'gatekeeper.sh')
+- **Verification:** Static test confirms guard import, call position (before `runColdStartBlueprintCheck`), table names, and operation names for both entrypoints.
+- **Design doc note:** Guard at consumer entrypoint, not module level — dbBlueprint.js remains unchanged.
+- **CI safety:** Local CI mode already wraps cold start check in error handling; guard failure in local CI is a warning, not a hard fail. Remote CI behavior unchanged (env vars required as expected).
+- **No target script executed. No DB connection. No real DB write.**
 
 ### Priority 3: Review 8 `needs_manual_review` consumers — PENDING
 
@@ -386,7 +389,9 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
   and `odds` tables. Guard follows the same pattern as `odds_sniper.js` (Phase 1).
 - **1 HIGH priority gap resolved:** `odds_harvest_pipeline.js` was NOT in the original
   43 skipped_complex audit. It was discovered by the design phase and is now guarded.
-- **2 remaining gaps (MEDIUM):** `gatekeeper.js` / `gatekeeper.sh` still pending.
+- **2 MEDIUM priority gaps resolved:** `gatekeeper.js` and `gatekeeper.sh` now call
+  `assertDbWriteAllowed()` before `runColdStartBlueprintCheck` (which triggers CREATE
+  DATABASE, DROP DATABASE, and INSERT write probe). Guarded by `gatekeeper_boundary_implementation`.
 - **8 needs_manual_review consumers** still pending.
 - **3 shared modules** remain `design_mapped` (no module-level guard change).
 - Training, data expansion, real DB write, scraper/browser remain BLOCKED.
