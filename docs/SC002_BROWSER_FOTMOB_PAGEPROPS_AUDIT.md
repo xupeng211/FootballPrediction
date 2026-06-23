@@ -101,20 +101,21 @@ Breakdown by scanner category:
 | fotmob_pipeline | 2 | allowlist |
 | N/A (browser/Playwright) | 21 | scanner only (not allowlisted) |
 
-Breakdown by **actual DB write capability** (this audit, updated by allowlist_cleanup_phase1):
+Breakdown by **actual DB write capability** (this audit, updated by manual_review_phase1):
 | Classification | Count |
 |---|---|
 | confirmed_write_path_needs_guard | 0 (all 20 resolved: 6 guarded, 14 reclassified false positive) |
-| guarded (Phase1 + Phase2 batch1 + Phase2 batch2) | 6 |
-| false_positive_select_only_with_active_wrapper | 11 |
-| false_positive_read_only_transaction | 2 |
+| guarded (Phase1 + Phase2 batch1 + Phase2 batch2 + Phase1-7 + PRs) | 13 (6 original confirmed + 7 reclassified from needs_manual_review) |
+| false_positive_select_only_with_active_wrapper | 13 (11 from allowlist_cleanup + 2 from manual_review) |
+| false_positive_read_only_transaction | 3 (2 from allowlist_cleanup + 1 from manual_review) |
 | false_positive_no_db_connection_static_scan | 1 |
 | false_positive_policy_or_regex_keyword_only | 1 |
+| false_positive_no_db_write_evidence | 3 (reclassified from needs_manual_review) |
 | read_only | 12 |
-| needs_manual_review | 4 |
 | design_mapped (was shared_module_no_execution) | 3 |
 | scraper_or_browser_only | 1 |
-| possible_indirect_write | 1 |
+| needs_manual_review | **0** (all 4 + 1 possible_indirect_write reclassified by manual_review_phase1) |
+| possible_indirect_write | **0** (reclassified to false_positive_read_only_transaction) |
 
 ## Findings by Category
 
@@ -247,14 +248,14 @@ active wrappers, or policy/regex keyword only).
 
 | # | Path | has_db_import | has_execute | sql_in_code | has_browser | Recommended Classification | Evidence |
 |---|---|---|---|---|---|---|---|
-| 1 | scripts/ops/all_seeded_pageprops_v2_canonical_read_verification.js | No | Yes | Yes | No | needs_manual_review | Has .query() execution and SQL patterns (TRUNCATE, COPY) but no direct DB client import — may use helpers |
+| 1 | scripts/ops/all_seeded_pageprops_v2_canonical_read_verification.js | No | Yes | Yes | No | ~~needs_manual_review~~ → **false_positive_select_only_with_active_wrapper** | Uses `config/database.js`.getPool() for DB access. Has `assertSelectOnly()` function (line 435) that blocks INSERT/UPDATE/DELETE/TRUNCATE/ALTER/DROP/CREATE/MERGE/COPY/BEGIN/COMMIT/ROLLBACK. All queries are SELECT-only through this wrapper. Reclassified in manual_review_phase1. |
 | 2 | scripts/ops/pageprops_v2_bounded_expanded_blocked_target_review_execute.js | No | No | No | No | read_only | No DB client, no query execution — review/audit context |
 | 3 | scripts/ops/pageprops_v2_controlled_write_plan.js | No | No | No | No | read_only | Planning document — no DB client or execution |
-| 4 | scripts/ops/pageprops_v2_identity_contract_regression_execute.js | No | Yes | Yes | No | needs_manual_review | Has .query() execution and SQL keywords (UPDATE) but no direct DB client — may use pageProps pipeline helpers |
-| 5 | scripts/ops/pageprops_v2_post_write_canonical_read_verification.js | No | Yes | Yes | No | needs_manual_review | Has .query() execution and SQL keywords (TRUNCATE, COPY) but no direct DB client — post-write verification |
+| 4 | scripts/ops/pageprops_v2_identity_contract_regression_execute.js | No | No | No | No | ~~needs_manual_review~~ → **false_positive_no_db_write_evidence** | Zero database code confirmed — no pg, no Pool, no dbBlueprint, no query execution. Pure file I/O (manifest JSON + markdown reports). Imports `pageprops_v2_no_write_payload_recapture_execute.js` (also no DB). Uses `FotMobRouteIdentityReconciler` for route identity only. Reclassified in manual_review_phase1. |
+| 5 | scripts/ops/pageprops_v2_post_write_canonical_read_verification.js | No | Yes | Yes | No | ~~needs_manual_review~~ → **false_positive_select_only_with_active_wrapper** | Uses `config/database.js`.getPool() for DB access. Has `assertSelectOnly()` function (line 258) that blocks INSERT/UPDATE/DELETE/TRUNCATE/ALTER/DROP/CREATE/MERGE/COPY/BEGIN/COMMIT/ROLLBACK. All queries are SELECT-only through this wrapper. Reclassified in manual_review_phase1. |
 | 6 | scripts/ops/pageprops_v2_raw_completeness_audit.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_select_only_with_active_wrapper** | Imports Pool from pg but assertSelectOnly() blocks INSERT/UPDATE/DELETE/TRUNCATE/ALTER/DROP/CREATE/GRANT/REVOKE/COPY/FOR UPDATE/BEGIN/COMMIT/ROLLBACK. All queries use safeSelect(). Write keywords in audit detected from protection regex, not executable SQL. Reclassified in allowlist_cleanup_phase1 |
 | 7 | scripts/ops/pageprops_v2_recapture_runner_identity_input_contract_fix_plan.js | No | No | No | No | read_only | Planning document — no DB client or execution |
-| 8 | scripts/ops/pageprops_v2_suspended_target_review_execute.js | No | Yes | Yes | No | needs_manual_review | Has .query() execution and SQL keywords (UPDATE) but no direct DB client — may use helpers |
+| 8 | scripts/ops/pageprops_v2_suspended_target_review_execute.js | No | No | No | No | ~~needs_manual_review~~ → **false_positive_no_db_write_evidence** | Zero database code confirmed — no pg, no Pool, no dbBlueprint, no query execution. Pure file I/O (manifest + reports). Completely DB-independent. Reclassified in manual_review_phase1. |
 | 9 | scripts/ops/single_league_small_batch_target_manifest_plan.js | No | No | No | No | read_only | Manifest/planning — no DB client or execution |
 
 ### Category: fotmob_pipeline (2)
@@ -283,7 +284,7 @@ active wrappers, or policy/regex keyword only).
 | 19 | scripts/ops/raw_match_data_versioned_schema_migration_preflight.js | No | No | No | No | read_only | Preflight/planning — no DB client detected; execute counterpart is already guarded (Phase4) |
 | 20 | scripts/ops/technical_debt_workflow_audit_dry_run.js | No | No | No | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_no_db_connection_static_scan** | No pg import, no Pool, no DB connection. Uses fs.readFileSync/readdirSync + child_process.execSync for static file scanning. The INSERT/UPDATE/DELETE keywords detected by the audit are from scanDbWriteScripts() regex PATTERNS used to scan OTHER files — these are not executable SQL. Reclassified in allowlist_cleanup_phase1 |
 | 21 | scripts/ops/training_dataset_leakage_dry_run.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **false_positive_read_only_transaction** | Imports Pool from pg but uses BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql() allowing only SELECT/WITH/BEGIN READ ONLY/ROLLBACK. All queries go through querySelectOnly(). Reclassified in allowlist_cleanup_phase1 |
-| 22 | scripts/ops/training_pipeline_smoke_dry_run.js | No | Yes | No | No | possible_indirect_write | Has COPY keyword and .query() execution but no direct DB client — may use indirection |
+| 22 | scripts/ops/training_pipeline_smoke_dry_run.js | No | Yes | No | No | ~~possible_indirect_write~~ → **false_positive_read_only_transaction** | Uses BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql() (allowing only SELECT/WITH/BEGIN READ ONLY/ROLLBACK). Explicit `actual_update_executed: false` markers at lines 465, 583. Local `buildDbConfig()` instead of dbBlueprint. No actual DB writes. Reclassified in manual_review_phase1. |
 
 ### Category: N/A (browser/Playwright scanner flagged, 21)
 
@@ -340,19 +341,19 @@ Boundary design complete. All 3 active write-capable consumers of shared modules
   — `assertDbWriteAllowed()` in `upsertMappingAndOdds()` before BEGIN transaction.
 - `gatekeeper.js` and `gatekeeper.sh` (MEDIUM priority) guarded by `gatekeeper_boundary_implementation`
   — `assertDbWriteAllowed()` before `runColdStartBlueprintCheck` (CREATE DATABASE, DROP DATABASE, INSERT write probe).
-- 8 needs_manual_review consumers remain pending.
+- **0 needs_manual_review consumers remain.** All 9 dbBlueprint consumers reviewed and reclassified by `manual_review_phase1` (7 already_guarded + 2 no_write_evidence).
 - `db_vault.js` was already guarded in Phase1.
-See `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` for full consumer map.
+See `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` and `docs/SC002_MANUAL_REVIEW_PHASE1.md` for full consumer map and per-script evidence.
 
-### Needs Manual Review (4 scripts)
+### Needs Manual Review (0 scripts — RESOLVED)
 
-These 4 scripts have `needs_manual_review` classification because they show conflicting
-signals: `.query()` execution detected but no direct DB client import. They may use helper
-modules or indirection for DB access:
-- `all_seeded_pageprops_v2_canonical_read_verification.js`
-- `pageprops_v2_identity_contract_regression_execute.js`
-- `pageprops_v2_post_write_canonical_read_verification.js`
-- `pageprops_v2_suspended_target_review_execute.js`
+All 4 `needs_manual_review` scripts and 1 `possible_indirect_write` script have been
+reviewed and reclassified by `manual_review_phase1`:
+- 2 reclassified to **false_positive_select_only_with_active_wrapper**: `all_seeded_pageprops_v2_canonical_read_verification.js`, `pageprops_v2_post_write_canonical_read_verification.js` — SELECT-only with `assertSelectOnly()` wrapper
+- 2 reclassified to **false_positive_no_db_write_evidence**: `pageprops_v2_identity_contract_regression_execute.js`, `pageprops_v2_suspended_target_review_execute.js` — zero DB connection code, pure file I/O
+- 1 reclassified to **false_positive_read_only_transaction**: `training_pipeline_smoke_dry_run.js` — BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql()
+
+All 9 needs_manual_review shared-module consumers also reviewed and reclassified (7 already_guarded + 2 no_write_evidence). See `docs/SC002_MANUAL_REVIEW_PHASE1.md` for full evidence.
 
 ### Guarded in Phase 1 (2 scripts — was confirmed_write_path)
 

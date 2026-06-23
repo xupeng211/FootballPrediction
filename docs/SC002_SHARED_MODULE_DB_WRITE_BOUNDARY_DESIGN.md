@@ -325,7 +325,7 @@ The following actions are explicitly reserved for a follow-up implementation pha
 | `odds_harvest_pipeline.js` — ~~UNGUARDED~~ **NOW GUARDED** | ~~HIGH~~ **RESOLVED** | CLI entrypoint with Pool + write SQL from shared module + Playwright. Guard added in `upsertMappingAndOdds()` by `shared_module_db_write_boundary_implementation_phase1`. ✅ |
 | `gatekeeper.js` — ~~UNGUARDED~~ **NOW GUARDED** | ~~MEDIUM~~ **RESOLVED** | Uses `runColdStartBlueprintCheck` which creates/drops temp DBs. Guard added in `checkColdStart()` by `gatekeeper_boundary_implementation`. Guard covers CREATE DATABASE, DROP DATABASE, and INSERT write probe. ✅ |
 | `gatekeeper.sh` — ~~UNGUARDED~~ **NOW GUARDED** | ~~MEDIUM~~ **RESOLVED** | Shell script that runs `runColdStartBlueprintCheck` via inline node. Guard added in `run_cold_start_integrity_guard()` heredoc by `gatekeeper_boundary_implementation`. Same guard pattern as gatekeeper.js. ✅ |
-| 8 consumers with `needs_manual_review` | LOW–MEDIUM | These use only `buildDbConnectionConfig` from dbBlueprint but may have their own DB write paths. Need individual review. |
+| 9 consumers with `needs_manual_review` — **NOW RESOLVED** | ~~LOW–MEDIUM~~ **RESOLVED** | Reviewed by `manual_review_phase1`. All 9 reclassified: 7 already_guarded (guard was in place from Phase1-7, design doc classification was stale), 2 false_positive_no_db_write_evidence (SELECT-only). 0 remain. See `docs/SC002_MANUAL_REVIEW_PHASE1.md`. ✅ |
 | `restoreMappingsWorkflow.js` future risk | LOW | 0 active consumers today, but if a consumer is written without guard, it would be an unguarded write path. |
 
 ### Static Analysis Limitations
@@ -363,14 +363,21 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
 - **CI safety:** Local CI mode already wraps cold start check in error handling; guard failure in local CI is a warning, not a hard fail. Remote CI behavior unchanged (env vars required as expected).
 - **No target script executed. No DB connection. No real DB write.**
 
-### Priority 3: Review 8 `needs_manual_review` consumers — PENDING
+### Priority 3: Review 9 `needs_manual_review` consumers — ✅ COMPLETED
 
-- **Risk:** LOW–MEDIUM — uncertain write capability
-- **Action:** Individually review each of the 8 consumers flagged as `needs_manual_review`
-  in the consumer map. For each, determine: does it have its own Pool? Does it execute
-  its own write SQL? Is it already guarded? Should it be guarded?
-- **Verification:** Updated consumer map with resolved classifications
-- **Blocked by:** Needs dedicated manual review task.
+- **Status:** Completed by `manual_review_phase1`.
+- **Results:** All 9 dbBlueprint consumers reviewed. 7 already_guarded (guard was in place
+  from Phase1-7 — the design doc classification was stale), 2 false_positive_no_db_write_evidence
+  (fetch_and_adapt_euro_leagues.js: SELECT-only; master_inventory.js: SELECT-only).
+  Plus 5 additional scripts from the broader audit (4 pageProps + 1 possible_indirect_write)
+  also reviewed and reclassified (2 select_only, 2 no_db_write, 1 read_only_transaction).
+  **0 confirmed_write_path_needs_guard. 0 remaining needs_manual_review.**
+- **Verification:** Complete per-script evidence in `docs/SC002_MANUAL_REVIEW_PHASE1.md`.
+  Static tests in `tests/unit/manual_review_phase1_static.test.js`.
+- **Count correction:** Previous documentation said "8" — actual count is 9. See
+  manual_review_phase1 for count mismatch explanation.
+- **No guard implemented** — all write-capable scripts already guarded. No target script
+  executed. No DB connection. No real DB write.
 
 ### Priority 4: Future consumer checklist for `restoreMappingsWorkflow.js` — PENDING
 
@@ -392,6 +399,8 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
 - **2 MEDIUM priority gaps resolved:** `gatekeeper.js` and `gatekeeper.sh` now call
   `assertDbWriteAllowed()` before `runColdStartBlueprintCheck` (which triggers CREATE
   DATABASE, DROP DATABASE, and INSERT write probe). Guarded by `gatekeeper_boundary_implementation`.
-- **8 needs_manual_review consumers** still pending.
+- **9 needs_manual_review consumers reviewed and reclassified** by `manual_review_phase1`:
+  7 already_guarded (guard was in place from Phase1-7), 2 false_positive_no_db_write_evidence.
+  **0 remaining needs_manual_review.** See `docs/SC002_MANUAL_REVIEW_PHASE1.md`.
 - **3 shared modules** remain `design_mapped` (no module-level guard change).
 - Training, data expansion, real DB write, scraper/browser remain BLOCKED.

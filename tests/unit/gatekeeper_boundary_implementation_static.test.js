@@ -333,11 +333,16 @@ test('DESIGN DOC: gatekeeper.js / gatekeeper.sh implementation status updated', 
     );
 });
 
-test('DESIGN DOC: 8 needs_manual_review consumers still pending', () => {
+test('DESIGN DOC: needs_manual_review consumers now resolved by manual_review_phase1', () => {
     const content = readDoc(DESIGN_DOC);
     assert.ok(
         content.includes('needs_manual_review'),
-        'Design doc must still reference needs_manual_review consumers'
+        'Design doc must still reference needs_manual_review (now as resolved)'
+    );
+    // Design doc should now say "9" not "8" (count corrected by manual_review_phase1)
+    assert.ok(
+        content.includes('manual_review_phase1') || content.includes('RESOLVED'),
+        'Design doc must reference manual_review_phase1 resolution'
     );
 });
 
@@ -351,14 +356,14 @@ test('DESIGN DOC: SC-002 remains partial mitigation only', () => {
 
 // ── Audit Document Tests ──────────────────────────────────────────────────────
 
-test('AUDIT DOC: does NOT mark needs_manual_review consumers as guarded/safe', () => {
+test('AUDIT DOC: needs_manual_review consumers are now reclassified by manual_review_phase1', () => {
     const content = readDoc(AUDIT_DOC);
+    // After manual_review_phase1, the audit doc reflects the reclassification
     assert.ok(
         content.includes('needs_manual_review'),
-        'AUDIT_DOC must still reference needs_manual_review scripts'
+        'AUDIT_DOC must reference needs_manual_review (now as resolved)'
     );
-    // Verify no script is marked as "guarded" when it's actually needs_manual_review
-    // (check that the 4 original needs_manual_review pageProps scripts are not re-marked)
+    // Verify the 4 original needs_manual_review pageProps scripts are properly reclassified
     const manualReviewScripts = [
         'all_seeded_pageprops_v2_canonical_read_verification.js',
         'pageprops_v2_identity_contract_regression_execute.js',
@@ -367,16 +372,18 @@ test('AUDIT DOC: does NOT mark needs_manual_review consumers as guarded/safe', (
     ];
     for (const script of manualReviewScripts) {
         const lines = content.split('\n');
+        let found = false;
         for (const line of lines) {
             if (line.includes(script) && line.includes('guarded_in_')) {
-                assert.fail(`AUDIT_DOC must NOT mark ${script} as guarded_in_*`);
+                assert.fail(`AUDIT_DOC must NOT mark ${script} as guarded_in_* (it is not guarded, it is false_positive)`);
             }
-            if (line.includes(script) && (line.includes('read_only') || line.includes('false_positive'))) {
-                assert.fail(`AUDIT_DOC must NOT reclassify ${script} without manual review`);
+            if (line.includes(script) && (line.includes('false_positive') || line.includes('reclassified'))) {
+                found = true;
             }
         }
+        assert.ok(found, `AUDIT_DOC must reclassify ${script} (by manual_review_phase1)`);
     }
-    assert.ok(true, 'All 4 needs_manual_review scripts remain properly classified');
+    assert.ok(true, 'All 4 original needs_manual_review scripts properly reclassified by manual_review_phase1');
 });
 
 // ── Cross-Document Consistency Tests ──────────────────────────────────────────
