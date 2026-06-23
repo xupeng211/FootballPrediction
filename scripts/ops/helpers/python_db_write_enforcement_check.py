@@ -179,3 +179,6 @@ def check_python_db_write_enforcement(
                 )
 
     return errors, warnings
+
+
+run_gate_check = run_python_db_write_gate_check

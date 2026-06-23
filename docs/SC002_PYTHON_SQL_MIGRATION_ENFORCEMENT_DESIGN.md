@@ -456,14 +456,15 @@ Python files and SQL migration files, similar to what currently exists for JS fi
 - Gate integration: `check_python_db_write_enforcement()` in `scripts/ops/ai_workflow_gate.py` — new/modified Python files with DB write signals fail CI unless in allowlist
 - Historical Python files in allowlist pass with baseline status; new/modified files not in allowlist get hard fail
 
-### Phase 2B: SQL migration policy scanner (Option 4)
+### Phase 2B: SQL migration policy scanner (Option 4) ✅ COMPLETED
 
-- Create a SQL migration policy scanner that checks:
-  - Destructive operations (DROP, TRUNCATE, DELETE without WHERE) require explicit policy gate
-  - Seed data INSERT requires documented justification
-  - Schema changes require migration metadata (up/down, rollback plan)
-- Add migration changed-files enforcement to `ai_workflow_gate.py`
-- Migration files that are legitimate schema changes are allowlisted
+- **Status:** Implemented by `sql_migration_policy_implementation_phase2B` (PR #1599).
+- Scanner: `scripts/ops/sql_migration_policy_static_enforcement.py` — detects DDL, DML, destructive, privilege, and Alembic API signals in SQL/migration files
+- Allowlist: `config/sql_migration_policy_allowlist.json` — 22 historical baseline entries with allowed/disallowed operations
+- Gate helper: `scripts/ops/helpers/sql_migration_policy_enforcement_check.py`
+- Gate integration: check #10 in `scripts/ops/ai_workflow_gate.py` main()
+- Destructive SQL policy: any new file with DROP DATABASE, DROP TABLE, TRUNCATE, etc. always fails gate (even if allowlisted)
+- Changed-files enforcement: new/modified SQL/migration files with DML/destructive/privilege signals fail CI unless in allowlist with complete metadata
 
 ### Phase 2C: Python guard helper (Option 1)
 
