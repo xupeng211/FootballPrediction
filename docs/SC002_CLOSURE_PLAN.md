@@ -399,24 +399,27 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   operation. Static tests confirm guard coverage. Scanner detects guard calls. changed-files
   enforcement passes.
 
-### 4. shared_module_db_write_boundary_design_phase1
+### 4. shared_module_db_write_boundary_design_phase1 ✅ COMPLETED
 
-- **Objective:** Design a boundary enforcement mechanism for shared modules
-  (`dbBlueprint.js`, `restoreMappingsWorkflow.js`, `odds_harvest_pipeline.shared.js`)
-  that ensures every consumer is guarded, without requiring each shared module to
-  independently guard itself.
-- **Allowed changes:** Read shared modules and their consumers, design boundary
-  enforcement (caller tracing, annotation convention, or checklist approach), write
-  design doc, update scanner if applicable.
-- **Forbidden actions:** Modify shared module business logic, add guard calls to shared
-  modules, connect to DB, execute any script.
-- **Expected output:** A design document
-  (`docs/SC002_SHARED_MODULE_BOUNDARY_DESIGN.md`) specifying the enforcement mechanism,
-  consumer inventory, and integration plan.
-- **Acceptance criteria:** Every consumer of each shared module with DB write risk is
-  identified. The design explicitly states how to verify consumer guard status and how
-  to enforce it for future changes. The design is reviewable and implementable in a
-  follow-up phase.
+- **Status:** Completed (this PR). Design document: `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md`.
+- **Results:** All 3 shared modules analyzed with full consumer entrypoint map:
+  - `dbBlueprint.js` — 24 consumers mapped: 3 write-capable (2 unguarded gatekeeper
+    scripts, 1 guarded db_vault.js), 18 read-only only, 3 needs_manual_review
+  - `restoreMappingsWorkflow.js` — 0 active consumers, dependency-injected write path,
+    built-in dryRun support
+  - `odds_harvest_pipeline.shared.js` — 2 consumers: 1 guarded (odds_sniper.js),
+    1 **UNGUARDED gap found** (odds_harvest_pipeline.js — CLI entrypoint with Pool +
+    UPSERT write SQL + Playwright, no guard, not in any prior audit)
+- **Key findings:**
+  - Guard boundary recommendation: **consumer entrypoint** for all 3 modules (module-level
+    guard would break read-only consumers).
+  - **2 new unguarded entrypoints discovered:** `odds_harvest_pipeline.js` (HIGH — browser+DB,
+    not in skipped_complex audit) and `gatekeeper.js`/`gatekeeper.sh` (MEDIUM — CI infra).
+  - 8 consumers flagged as `needs_manual_review` — they import only `buildDbConnectionConfig`
+    from dbBlueprint but may have their own DB write paths.
+- **Next step:** `shared_module_db_write_boundary_implementation_phase1` — guard
+  `odds_harvest_pipeline.js` (HIGH priority), then gatekeeper.js/gatekeeper.sh, then
+  review the 8 `needs_manual_review` consumers.
 
 ### 5. python_sql_migration_enforcement_design_phase1
 
