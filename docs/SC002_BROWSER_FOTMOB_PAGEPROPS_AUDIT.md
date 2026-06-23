@@ -408,6 +408,13 @@ All 9 needs_manual_review shared-module consumers also reviewed and reclassified
 - **This audit does NOT unlock training.**
 - **This audit does NOT unlock data expansion.**
 - **This audit does NOT unlock real DB write.**
+- **JS-side Browser/FotMob/PageProps audit is now substantially complete.** All 43 skipped_complex
+  scripts are classified, all write paths guarded, all needs_manual_review resolved.
+- **Python / SQL / migration enforcement is a separate governance layer.** The JS-side audit
+  covers `scripts/ops/**/*.js` files only. Python scripts, SQL migration files, and migration
+  runner scripts are inventoried and classified in
+  `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` (python_sql_migration_enforcement_design_phase1).
+  The JS-side complete status does NOT imply Python/SQL/migration enforcement is complete.
 - **43/66 scripts are guarded. All 20 originally identified confirmed write paths are now resolved:**
   - **6 guarded** (Phase1: 2, Phase2 batch1: 3, Phase2 batch2: 1)
   - **14 reclassified as false positives** (allowlist_cleanup_phase1)

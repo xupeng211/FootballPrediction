@@ -211,6 +211,9 @@ Last updated: 2026-06-23
 | `docs/AGENT_WORKFLOW.md` | active |
 | `docs/SC002_CLOSURE_PLAN.md` | active — authoritative SC-002 status reference |
 | `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md` | active — static audit of all 43 skipped_complex scripts |
+| `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` | active — shared module DB write boundary design |
+| `docs/SC002_MANUAL_REVIEW_PHASE1.md` | active — manual review and reclassification of all needs_manual_review scripts |
+| `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` | active — Python/SQL/migration enforcement design |
 | `docs/TESTING_GUIDE.md` | active — needs provenance review |
 | `docs/GITHUB_ACTIONS_AUDIT_REPORT.md` | evidence/needs_update — stale CI references |
 
@@ -288,9 +291,35 @@ Last updated: 2026-06-23
      (manual_review_phase1): 7 already_guarded + 5 false_positive + 0 remaining
    - **Total: 53 JS scripts guarded. 0 unguarded write paths. 0 needs_manual_review.**
    - SC-002 remains partial mitigation only.
+- **python_sql_migration_enforcement_design_phase1** (this PR): Static design and
+  classification of Python / SQL / migration enforcement for SC-002 completed.
+  Design document: `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`.
+  Results:
+  - **374 Python files** inventoried; **69 classified** with DB relevance
+  - **14 python_confirmed_write_path_needs_guard** — core DB write paths (schema_manager,
+    sql_store, match_repository, oddsportal_db_manager, collector_repository,
+    streaming_db_writer, database_detox, reset_l2_collection, fotmob_registry_seed, etc.)
+  - **8 python_indirect_write_path_needs_guard** — service-layer indirect write paths
+  - **5 python_needs_manual_review** — ambiguous signals requiring deeper analysis
+  - **7 python_read_only_no_write_evidence** — SELECT-only; no write SQL detected
+  - **2 python_read_only_with_wrapper** — explicit read-only wrappers
+  - **10 python_no_db_connection** — no DB client at all
+  - **2 python_static_scan_only** — scan other files, not execute SQL
+  - **21 python_test_fixture_only** — test files, not production write paths
+  - **18 SQL files** inventoried; all classified
+  - **13 Flyway-style migrations**: 10 schema_definition, 3 allowed_migration_candidate
+  - **2 Docker init SQL**: 1 seed_needs_gate, 1 schema_definition (reader user)
+  - **2 maintenance migrations**: allowed_migration_candidate
+  - **1 report SQL**: docs_or_example_only
+  - **0 destructive migrations** found; **0 sql_needs_manual_review**
+  - **3 Alembic migration versions** + 1 env.py classified
+  - Recommended enforcement: Hybrid (Python guard equivalent + static scanner + CI policy)
+  - **No runtime behavior changed.** No target script executed. No DB connection.
+    No real DB write. No scraper/browser. SC-002 remains partial mitigation only.
+  - Training, data expansion, real DB write remain BLOCKED.
 6. Next recommended tasks (in priority order):
-   - `python_sql_migration_enforcement_design_phase1` — design enforcement for Python
-     and SQL migration paths
+   - `python_sql_migration_enforcement_implementation_phase2A` — Python static scanner
+     and changed-files enforcement (based on design phase1 classification)
    - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
      checklists

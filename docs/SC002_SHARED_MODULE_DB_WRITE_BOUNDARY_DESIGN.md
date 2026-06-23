@@ -403,4 +403,9 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
   7 already_guarded (guard was in place from Phase1-7), 2 false_positive_no_db_write_evidence.
   **0 remaining needs_manual_review.** See `docs/SC002_MANUAL_REVIEW_PHASE1.md`.
 - **3 shared modules** remain `design_mapped` (no module-level guard change).
+- **Python / SQL / migration enforcement is NOT in scope of this document.** Shared module
+  guard design covers JS shared modules (`scripts/ops/helpers/*.js`) only. Python scripts,
+  SQL migration files, and migration runner scripts are a separate governance layer,
+  now designed in `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`
+  (python_sql_migration_enforcement_design_phase1). SC-002 remains partial mitigation only.
 - Training, data expansion, real DB write, scraper/browser remain BLOCKED.

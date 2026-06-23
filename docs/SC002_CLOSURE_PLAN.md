@@ -53,7 +53,7 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | not yet designed |
+| Python / SQL / migration enforcement | design completed (python_sql_migration_enforcement_design_phase1); 14 confirmed Python write paths, 8 indirect, 5 manual review; 18 SQL files classified; implementation NOT started |
 | Runtime DB role / permission model | not fully validated |
 
 ## What Is Actually Protected
@@ -484,21 +484,22 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   `odds_harvest_pipeline.js` (HIGH priority), then gatekeeper.js/gatekeeper.sh, then
   review the 8 `needs_manual_review` consumers.
 
-### 5. python_sql_migration_enforcement_design_phase1
+### 5. python_sql_migration_enforcement_design_phase1 ✅ COMPLETED
 
-- **Objective:** Design enforcement mechanisms for Python-based DB write scripts, SQL
-  migration files, and migration runner scripts that are outside the current JS-only
-  scanner scope.
-- **Allowed changes:** Inventory Python scripts and SQL migration files, analyze risks,
-  design guard equivalent or documented exclusion, write design doc.
-- **Forbidden actions:** Execute Python scripts, run migrations, connect to DB, modify
-  migration files, modify Python business logic.
-- **Expected output:** A design document
-  (`docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`) with inventory, risk
-  assessment, proposed enforcement, and exclusion criteria.
-- **Acceptance criteria:** All Python scripts and SQL migration files with DB write risk
-  are inventoried. Each has a proposed enforcement mechanism (guard equivalent) or a
-  documented exclusion rationale. CI integration plan is specified.
+- **Status:** Completed (this PR). Design document: `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`.
+- **Results:**
+  - **374 Python files** inventoried; **69 classified** with DB relevance
+  - **14 python_confirmed_write_path_needs_guard** identified (schema_manager, sql_store, match_repository, etc.)
+  - **8 python_indirect_write_path_needs_guard** identified (service-layer indirect paths)
+  - **5 python_needs_manual_review** identified (ambiguous signals)
+  - **18 SQL files** classified; all migration files categorized
+  - **0 destructive SQL migrations** found
+  - **1 seed SQL needs gate** (deploy/docker/init_db.sql)
+  - Recommended enforcement: Hybrid model (Python guard equivalent + static scanner + CI policy)
+  - Phased implementation plan: Phase 2A (static scanner) → 2B (SQL migration policy) → 2C (Python guard helper) → 2D (manual review)
+- **No runtime behavior changed. No target script executed. No DB connection. No real DB write.**
+- **SC-002 remains partial mitigation only. Training, data expansion, real DB write remain blocked.**
+- **Next step:** `python_sql_migration_enforcement_implementation_phase2A` — Python static scanner and changed-files enforcement. Do not start automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
 
