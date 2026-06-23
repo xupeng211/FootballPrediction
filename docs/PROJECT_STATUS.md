@@ -108,9 +108,31 @@ Last updated: 2026-06-23
   'matches_oddsportal_mapping'], operations: ['CREATE', 'DROP', 'INSERT'] })` (same
   pattern for gatekeeper.sh with script 'gatekeeper.sh'). dbBlueprint.js unchanged.
   No target script executed. No DB connection. No real DB write. No scraper/browser run.
-  No training. No data expansion. No schema migration. 8 needs_manual_review consumers
-  still pending. SC-002 remains partial mitigation only. Training, data expansion,
+  No training. No data expansion. No schema migration. 9 needs_manual_review consumers
+  still pending (corrected count — PR body typo said 8). SC-002 remains partial mitigation
+  only. Training, data expansion,
   real DB write remain blocked.
+- **manual_review_phase1** (this PR): Static review and reclassification of all 14
+  remaining `needs_manual_review` / `possible_indirect_write` scripts from both the
+  shared-module design doc (9 dbBlueprint consumers) and the broader skipped_complex
+  audit (4 pageProps + 1 possible_indirect_write). Full per-script evidence in
+  `docs/SC002_MANUAL_REVIEW_PHASE1.md`. Results:
+  - **7 already_guarded** (had guard from Phase1-7; design doc classification was stale):
+    cleanup_csv_bulk_loader_import.js, purge_ghost_data.js, purge_orphans.js,
+    raw_match_data_completeness_fidelity_audit.js, renewed_pageprops_v2_raw_write_execute.js
+    (transitive via base), reset_database.js, seed_fotmob_sample.js
+  - **3 false_positive_no_db_write_evidence** (SELECT-only or zero DB connection):
+    fetch_and_adapt_euro_leagues.js, master_inventory.js, pageprops_v2_identity_contract_
+    regression_execute.js, pageprops_v2_suspended_target_review_execute.js
+  - **2 false_positive_select_only_with_active_wrapper**: all_seeded_pageprops_v2_
+    canonical_read_verification.js, pageprops_v2_post_write_canonical_read_verification.js
+  - **1 false_positive_read_only_transaction**: training_pipeline_smoke_dry_run.js
+  - **0 confirmed_write_path_needs_guard**, **0 remaining needs_manual_review**
+  - Count mismatch resolved: previous PR said "8" (typo), actual design-doc count is 9;
+    combined with audit-doc 5 = 14 total reviewed
+  - No guard implemented (all already guarded). No target script executed. No DB
+    connection. No real DB write. No scraper/browser. SC-002 remains partial mitigation
+    only. Training, data expansion, real DB write remain blocked.
 - **shared_module_db_write_boundary_design_phase1** (#1591): Static design of shared
   module DB write boundary completed. 3 shared modules mapped with full consumer
   entrypoint inventory:
@@ -255,30 +277,25 @@ Last updated: 2026-06-23
 2. Phase1-7 = 43 scripts/ops entrypoints now guarded (~65% of P0).
 3. Static enforcement dry-run scanner deployed for coverage auditing.
 4. Changed-files hard fail enabled for new/modified unguarded scripts/ops JS files.
-   Remaining 43 complex candidates categorized (22 in allowlist + 21 browser, NOT fixed).
-   SC-002 remains partial mitigation only.
-5. Next recommended tasks (in priority order):
-   - `confirmed_write_path_guard_phase` — 6 of 20 confirmed write paths now guarded
-     (Phase1: 2 browser+DB, Phase2 batch1: 3 controlled-write, Phase2 batch2: 1 FotMob
-     raw JSON DB storage). 14 remaining. Deep static analysis of remaining scripts
-     revealed many are false positives (SELECT-only with active SQL enforcement
-     wrappers, or no DB connection). Continue with remaining batches after
-     re-auditing classifications.
-   - `shared_module_db_write_boundary_design_phase1` — design boundary enforcement for
-     3 shared modules and map all consumer entrypoints
-   - `sc002_allowlist_cleanup_phase1` — update allowlist to reflect audit findings;
-     move 14 verified-read-only scripts out of skipped_complex
-   - `manual_review_phase1` — manually review 4 `needs_manual_review` scripts by
-     tracing execution paths through helper modules
-   - `scraper_browser_execution_policy_phase1` — define browser automation execution
-     policy for the 2 high-risk browser+DB scripts
+5. **All JS-level guard work is now complete:**
+   - 43 Phase1-7 scripts guarded
+   - 6 confirmed write paths guarded (Phase1, Phase2 batch1, Phase2 batch2)
+   - 15 false positives reclassified (allowlist_cleanup_phase1)
+   - 3 shared modules design-mapped (shared_module_db_write_boundary_design_phase1)
+   - 2 shared-module consumer gaps guarded: odds_harvest_pipeline.js (implementation_phase1),
+     gatekeeper.js + gatekeeper.sh (gatekeeper_boundary_implementation)
+   - 14 needs_manual_review/possible_indirect_write reviewed and reclassified
+     (manual_review_phase1): 7 already_guarded + 5 false_positive + 0 remaining
+   - **Total: 53 JS scripts guarded. 0 unguarded write paths. 0 needs_manual_review.**
+   - SC-002 remains partial mitigation only.
+6. Next recommended tasks (in priority order):
    - `python_sql_migration_enforcement_design_phase1` — design enforcement for Python
      and SQL migration paths
    - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
      checklists
-6. Keep formal training and data expansion blocked until DB write safety resolved
+7. Keep formal training and data expansion blocked until DB write safety resolved
    and release gate criteria met.
-7. Do not start model training, data expansion, raw-write work, scraper/browser
+8. Do not start model training, data expansion, raw-write work, scraper/browser
    automation, or Phase8+ guard integration automatically.
-8. Do not start automatically. Recommended next task only after user confirmation.
+9. Do not start automatically. Recommended next task only after user confirmation.

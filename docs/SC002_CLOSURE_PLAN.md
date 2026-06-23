@@ -43,7 +43,10 @@ are satisfied.
 | Additional browser/Playwright skipped_complex (not in allowlist) | 21 |
 | Total skipped_complex | 43 |
 | Confirmed write paths guarded | 6 of 6 real (14 false positives reclassified in allowlist_cleanup_phase1) |
-| Shared module consumers guarded | 3 of 3 active write-capable (odds_harvest_pipeline.js, gatekeeper.js, gatekeeper.sh); 8 needs_manual_review remain |
+| Shared module consumers guarded | 3 of 3 active write-capable (odds_harvest_pipeline.js, gatekeeper.js, gatekeeper.sh); all 9 needs_manual_review consumers reviewed, 7 already guarded, 2 no write |
+| Shared module consumers reviewed | 9 of 9 (all reclassified by manual_review_phase1) |
+| Remaining needs_manual_review | 0 (all 14 reviewed and reclassified) |
+| Remaining possible_indirect_write | 0 (reclassified to false_positive_read_only_transaction) |
 | Changed-files enforcement | hard fail (active) |
 | Production-like DB host hard block | enabled |
 | Real DB write authorization | no |
@@ -349,16 +352,21 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 ### 1. specialized_browser_fotmob_pageprops_audit_phase1 ✅ COMPLETED
 
 - **Status:** Completed (this PR). Audit document: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md`.
-- **Results:** All 43 skipped_complex scripts statically audited.
-  - 20 confirmed_write_path_needs_guard
-  - 14 read_only / no_db_connection
-  - 4 needs_manual_review
-  - 3 shared_module_no_execution
+- **Results:** All 43 skipped_complex scripts statically audited (original classification).
+  After allowlist_cleanup_phase1, gatekeeper_boundary_implementation, and manual_review_phase1:
+  - 13 guarded (6 confirmed + 7 reclassified from needs_manual_review)
+  - 13 false_positive_select_only_with_active_wrapper
+  - 3 false_positive_read_only_transaction
+  - 3 false_positive_no_db_write_evidence
+  - 1 false_positive_no_db_connection_static_scan
+  - 1 false_positive_policy_or_regex_keyword_only
+  - 12 read_only
+  - 3 design_mapped
   - 1 scraper_or_browser_only
-  - 1 possible_indirect_write
-- **Key finding:** 20 scripts have confirmed real DB write capability and need guard
-  integration. The "dry_run", "audit", and "browser/Playwright" labels from the scanner
-  were unreliable — many such scripts actually import DB clients and contain write SQL.
+  - **0 needs_manual_review** (all resolved)
+  - **0 possible_indirect_write** (resolved)
+- **Key finding:** 13 scripts have confirmed DB write capability and are all now guarded.
+  Classification is now complete across all 43 scripts.
 
 ### 3. sc002_allowlist_cleanup_phase1 ✅ COMPLETED
 
@@ -372,8 +380,9 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 - **Key finding:** 14 of the 15 remaining "confirmed_write_path_needs_guard" scripts
   were false positives — they have active SELECT-only wrappers, READ ONLY transactions,
   or no DB connection. 0 scripts remain unguarded with confirmed DB write capability.
-  SC-002 remains partial mitigation only (4 needs_manual_review, 3 shared_module, 1
-  possible_indirect_write, plus Python/SQL/migration enforcement not yet designed).
+  All remaining needs_manual_review (4) and possible_indirect_write (1) were resolved by
+  manual_review_phase1. SC-002 remains partial mitigation only (Python/SQL/migration
+  enforcement not yet designed).
 - **This cleanup does NOT:**
   - Guard any scripts (that was Phase1/Phase2)
   - Close SC-002
@@ -417,18 +426,39 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 
 - **Status:** Completed (this PR). Guarded `gatekeeper.js` and `gatekeeper.sh` — the
   MEDIUM priority CI infrastructure consumers.
-- **Guard location:**
-  - `gatekeeper.js`: `checkColdStart()` method, before `runColdStartBlueprintCheck` call
-  - `gatekeeper.sh`: `run_cold_start_integrity_guard()` inline Node heredoc, before
-    `runColdStartBlueprintCheck` call
+- **Guard location:** `gatekeeper.js` `checkColdStart()` method; `gatekeeper.sh` inline Node heredoc
 - **Target tables:** `matches`, `raw_match_data`, `matches_oddsportal_mapping`
-- **Operations:** `CREATE`, `DROP`, `INSERT` (CREATE DATABASE, DROP DATABASE, INSERT write probe with ROLLBACK)
-- **Guard pattern:** `assertDbWriteAllowed({ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data', 'matches_oddsportal_mapping'], operations: ['CREATE', 'DROP', 'INSERT'] })`
-  (same pattern for gatekeeper.sh with script 'gatekeeper.sh')
-- **Results:** Both consumer entrypoints now guarded. 8 needs_manual_review consumers
-  remain pending. All 3 active write-capable shared-module consumers now guarded
-  (odds_harvest_pipeline.js, gatekeeper.js, gatekeeper.sh). No target script executed.
-  No DB connection. No real DB write. No browser/Playwright run.
+- **Operations:** `CREATE`, `DROP`, `INSERT`
+- **Results:** Both consumer entrypoints now guarded. All 3 active write-capable
+  shared-module consumers now guarded (odds_harvest_pipeline.js, gatekeeper.js, gatekeeper.sh).
+  No target script executed. No DB connection. No real DB write.
+- **SC-002 remains partial mitigation only.**
+
+### 4c. manual_review_phase1 ✅ COMPLETED
+
+- **Status:** Completed (this PR). Statically reviewed all 14 remaining `needs_manual_review`
+  / `possible_indirect_write` scripts from both the shared-module design doc (9) and the
+  broader skipped_complex audit (5).
+- **Results:**
+  - **7 already_guarded** — cleanup_csv_bulk_loader_import.js, purge_ghost_data.js,
+    purge_orphans.js, raw_match_data_completeness_fidelity_audit.js,
+    renewed_pageprops_v2_raw_write_execute.js (transitive via base), reset_database.js,
+    seed_fotmob_sample.js — all have `assertDbWriteAllowed()` before BEGIN transaction
+  - **3 false_positive_no_db_write_evidence** — fetch_and_adapt_euro_leagues.js,
+    master_inventory.js (SELECT-only), pageprops_v2_identity_contract_regression_execute.js,
+    pageprops_v2_suspended_target_review_execute.js (zero DB connection)
+  - **2 false_positive_select_only_with_active_wrapper** — 
+    all_seeded_pageprops_v2_canonical_read_verification.js,
+    pageprops_v2_post_write_canonical_read_verification.js — `assertSelectOnly()` wrapper
+  - **1 false_positive_read_only_transaction** — training_pipeline_smoke_dry_run.js —
+    BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql()
+  - **0 confirmed_write_path_needs_guard** — no new unguarded write paths found
+  - **0 remaining needs_manual_review** — all 14 reviewed and reclassified
+- **Count mismatch resolved:** Previous PR #1593 reported "8" needs_manual_review
+  consumers (a typo). Actual design-doc count is 9. Combined with audit-doc's 5, total
+  reviewed = 14. See `docs/SC002_MANUAL_REVIEW_PHASE1.md` for full per-script evidence.
+- **No guard implemented** — all 7 write-capable scripts were already guarded in Phase1-7.
+- **No target script executed.** No DB connection. No real DB write. No scraper/browser.
 - **SC-002 remains partial mitigation only.**
 - **Training, data expansion, real DB write remain blocked.**
 
