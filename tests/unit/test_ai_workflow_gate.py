@@ -661,7 +661,9 @@ def test_gate_cli_with_minimal_valid_body_passes():
     body = _valid_pr_body()
     # Guard phase changes may touch FotMob files without scraper execution.
     # Adjust safety declarations to match the actual branch diff.
-    body = body.replace("| Scraper run | no |", "| Scraper run | n/a (guard only, no scraper exec) |")
+    body = body.replace(
+        "| Scraper run | no |", "| Scraper run | n/a (guard only, no scraper exec) |"
+    )
     result = subprocess.run(
         [sys.executable, str(GATE), "--pr-body-stdin"],
         input=body,

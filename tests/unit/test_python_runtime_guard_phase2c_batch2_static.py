@@ -165,8 +165,7 @@ class TestBatch2GuardCallLocations:
         assert ddl_pos >= 0, f"No '{_kw}' found after guard in schema_manager.py"
 
         assert guard_pos < ddl_pos, (
-            f"Guard call (pos={guard_pos}) must be before DDL operations "
-            f"('{_kw}' at pos={ddl_pos})"
+            f"Guard call (pos={guard_pos}) must be before DDL operations ('{_kw}' at pos={ddl_pos})"
         )
 
 
@@ -260,7 +259,9 @@ class TestAllowlistRemainingFiles:
             for e in allowlist_entries
             if e["classification"] == "historical_python_confirmed_write_path_pending_runtime_guard"
         ]
-        assert len(pending) >= 8, f"Expected at least 8 remaining confirmed pending, got {len(pending)}"
+        assert len(pending) >= 8, (
+            f"Expected at least 8 remaining confirmed pending, got {len(pending)}"
+        )
         paths = [e["path"] for e in pending]
         # Batch1 and batch2 files must NOT be in pending
         for bp in BATCH1_PATHS + BATCH2_PATHS:

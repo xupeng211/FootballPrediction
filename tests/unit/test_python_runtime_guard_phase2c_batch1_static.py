@@ -274,7 +274,9 @@ class TestAllowlistRemainingFiles:
             if e["classification"] == "historical_python_confirmed_write_path_pending_runtime_guard"
         ]
         # After batch2: 9 remaining confirmed pending (14 total - 3 batch1 - 3 batch2 + 1 env.py)
-        assert len(pending) >= 8, f"Expected at least 8 remaining confirmed pending, got {len(pending)}"
+        assert len(pending) >= 8, (
+            f"Expected at least 8 remaining confirmed pending, got {len(pending)}"
+        )
         paths = [e["path"] for e in pending]
         # Batch1 files must NOT be in pending
         for bp in BATCH1_PATHS:
