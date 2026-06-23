@@ -1,16 +1,7 @@
 #!/usr/bin/env python3
-"""AI workflow gate — minimal CI-enforceable checks for P0 AI/Codex risks.
+"""AI workflow gate — CI-enforceable P0 AI/Codex risk checks.
 
 lifecycle: permanent
-
-Checks enforce required PR sections, no automatic next-task execution,
-governance/business separation, document sprawl limits, blind-spot dangerous
-keywords, safety declaration consistency, critical-section substance, and
-source-of-truth backflow for docs/_reports artifacts.
-
-Usage:
-  python scripts/ops/ai_workflow_gate.py --pr-body-file /tmp/pr_body.txt
-  python scripts/ops/ai_workflow_gate.py --pr-body-stdin
 """
 
 from __future__ import annotations
@@ -34,6 +25,8 @@ REQUIRED_SECTIONS: tuple[str, ...] = (
     "## No deletion / no move / no rename confirmation",
     "## Rollback Plan",
     "## Next Recommended Task",
+    "## SC-002 status",
+    "## Remaining risks",
 )
 
 NEXT_TASK_MANDATORY_PHRASES: tuple[str, ...] = (
@@ -222,7 +215,7 @@ NAME_STATUS_RENAME_PARTS = 3
 
 
 def git_output(args: list[str], *, check: bool = True) -> str:
-    """Run a local Git command and return stdout."""
+    """Run a local Git command, return stdout."""
     result = subprocess.run(
         ["git", *args],
         cwd=ROOT,
@@ -341,25 +334,16 @@ def read_pr_body(file_path: str | None = None, *, from_stdin: bool = False) -> s
         return _normalise(Path(file_path).read_text(encoding="utf-8"))
     if from_stdin:
         return _normalise(sys.stdin.read())
-    # Local fallback: read body of HEAD commit (best-effort)
     return _normalise(git_output(["log", "--format=%B", "-1", "HEAD"], check=False))
 
 
 def section_present(pr_body: str, heading: str) -> bool:
-    """Check whether *heading* appears as a section title in the PR body.
-
-    Matches both ATX-style (`## Heading`) and the equivalent HTML comment
-    marker that GitHub sometimes inserts.
-    """
+    """Check if *heading* appears as a section title (ATX or HTML comment marker)."""
     return heading in pr_body
 
 
 def section_text_between(pr_body: str, start_heading: str, next_heading: str | None = None) -> str:
-    """Return the body text between *start_heading* and the next `##` heading.
-
-    When *next_heading* is None the text from *start_heading* to end-of-body
-    is returned.
-    """
+    """Return text between *start_heading* and the next `##` heading (or end-of-body)."""
     idx = pr_body.find(start_heading)
     if idx == -1:
         return ""
@@ -608,6 +592,15 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
     return errors
 
 
+# Agent workflow hardening checks (Phase1) — delegated to dedicated helper
+# to keep this file under the 800-line gatekeeper limit.
+from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
+    check_forbidden_rewrite_patterns,
+    check_forbidden_safety_claims,
+    check_large_risky_change,
+)
+
+
 def validate(
     pr_body: str,
     changes: list[Change] | None = None,
@@ -649,6 +642,17 @@ def validate(
     # 6. Safety declaration consistency (only when body is available)
     if not skip_body_checks:
         errors.extend(check_safety_consistency(pr_body, changed))
+
+    # 6b. Forbidden rewrite file patterns (new files only)
+    if not skip_body_checks:
+        errors.extend(check_forbidden_rewrite_patterns(added, pr_body))
+
+    # 6c. Large risky change detection
+    errors.extend(check_large_risky_change(changes, pr_body))
+
+    # 6d. Forbidden safety claims
+    if not skip_body_checks:
+        errors.extend(check_forbidden_safety_claims(pr_body))
 
     # 7. Critical section content quality (only when body is available)
     if not skip_body_checks:

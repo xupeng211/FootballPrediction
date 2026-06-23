@@ -8,6 +8,21 @@ Last updated: 2026-06-23
 ## Current baseline
 
 - `main` includes PR #1463 (P0 AI Workflow Gate CI enforcement).
+- `main` includes PR #16XX (`agent_workflow_rules_hardening_phase1`) — three-layer agent
+  workflow discipline codified into the repo:
+  1. **Resident rules**: `CLAUDE.md` now contains comprehensive non-negotiable agent
+     workflow hardening rules (branch, scope, safety, SC-002, PR, task-type, post-merge
+     discipline). Agents no longer need repeated long-form prompts for basic discipline.
+  2. **PR template**: `.github/pull_request_template.md` now includes `## SC-002 status`,
+     `## Remaining risks`, and a 16-item Agent Workflow Hardening Checklist.
+  3. **CI / AI Workflow Gate**: `scripts/ops/ai_workflow_gate.py` enforces:
+     - New required sections: `## SC-002 status`, `## Remaining risks`
+     - Forbidden rewrite file patterns (`*_v2.py`, `*_final.js`, etc.) for new files
+     - Forbidden safety claims (`safe to train`, `production ready`, etc.)
+     - Large risky change detection (deletion/rename/scanner-count thresholds)
+     - Existing gates preserved (Phase2A Python, Phase2B SQL, Phase2 JS DB write)
+  - SC-002 remains partial mitigation only.
+  - training / data expansion / real DB write remain blocked.
 - `main` includes PR #1464 (local CI gatekeeper entrypoint).
 - `main` includes PR #1567 (authoritative workflow enforcement dry-run).
 - `main` includes PR #1569 (p0_db_write_safety_gate_fix_phase1 — unified guard + 8 scripts).
@@ -280,99 +295,24 @@ Last updated: 2026-06-23
 2. Phase1-7 = 43 scripts/ops entrypoints now guarded (~65% of P0).
 3. Static enforcement dry-run scanner deployed for coverage auditing.
 4. Changed-files hard fail enabled for new/modified unguarded scripts/ops JS files.
-5. **All JS-level guard work is now complete:**
-   - 43 Phase1-7 scripts guarded
-   - 6 confirmed write paths guarded (Phase1, Phase2 batch1, Phase2 batch2)
-   - 15 false positives reclassified (allowlist_cleanup_phase1)
-   - 3 shared modules design-mapped (shared_module_db_write_boundary_design_phase1)
-   - 2 shared-module consumer gaps guarded: odds_harvest_pipeline.js (implementation_phase1),
-     gatekeeper.js + gatekeeper.sh (gatekeeper_boundary_implementation)
-   - 14 needs_manual_review/possible_indirect_write reviewed and reclassified
-     (manual_review_phase1): 7 already_guarded + 5 false_positive + 0 remaining
-   - **Total: 53 JS scripts guarded. 0 unguarded write paths. 0 needs_manual_review.**
-   - SC-002 remains partial mitigation only.
-- **python_sql_migration_enforcement_design_phase1** (this PR): Static design and
-  classification of Python / SQL / migration enforcement for SC-002 completed.
-  Design document: `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`.
-  Results:
-  - **374 Python files** inventoried; **69 classified** with DB relevance
-  - **14 python_confirmed_write_path_needs_guard** — core DB write paths (schema_manager,
-    sql_store, match_repository, oddsportal_db_manager, collector_repository,
-    streaming_db_writer, database_detox, reset_l2_collection, fotmob_registry_seed, etc.)
-  - **8 python_indirect_write_path_needs_guard** — service-layer indirect write paths
-  - **5 python_needs_manual_review** — ambiguous signals requiring deeper analysis
-  - **7 python_read_only_no_write_evidence** — SELECT-only; no write SQL detected
-  - **2 python_read_only_with_wrapper** — explicit read-only wrappers
-  - **10 python_no_db_connection** — no DB client at all
-  - **2 python_static_scan_only** — scan other files, not execute SQL
-  - **21 python_test_fixture_only** — test files, not production write paths
-  - **18 SQL files** inventoried; all classified
-  - **13 Flyway-style migrations**: 10 schema_definition, 3 allowed_migration_candidate
-  - **2 Docker init SQL**: 1 seed_needs_gate, 1 schema_definition (reader user)
-  - **2 maintenance migrations**: allowed_migration_candidate
-  - **1 report SQL**: docs_or_example_only
-  - **0 destructive migrations** found; **0 sql_needs_manual_review**
-  - **3 Alembic migration versions** + 1 env.py classified
-  - Recommended enforcement: Hybrid (Python guard equivalent + static scanner + CI policy)
-  - **No runtime behavior changed.** No target script executed. No DB connection.
-    No real DB write. No scraper/browser. SC-002 remains partial mitigation only.
-  - Training, data expansion, real DB write remain BLOCKED.
-- **python_sql_migration_enforcement_implementation_phase2A** (this PR): Python static
-  scanner + allowlist + AI Workflow Gate changed-files enforcement implemented.
-  - New scanner: `scripts/ops/python_db_write_static_enforcement.py`
-  - New allowlist: `config/python_db_write_allowlist.json` (27 historical baseline entries)
-  - AI Workflow Gate integration: `check_python_db_write_enforcement()` in
-    `scripts/ops/ai_workflow_gate.py`
-  - Changed-files enforcement: new/modified Python files with DB write signals fail CI
-    unless in allowlist with complete metadata
-  - Scanner supports: JSON output, allowlist, changed-files mode, full-scan mode,
-    comment/docstring awareness
-  - **No runtime guard implemented.** No target script executed. No DB connection.
-    No real DB write. SC-002 remains partial mitigation only.
-  - Training, data expansion, real DB write remain blocked.
-- **sql_migration_policy_implementation_phase2B** (this PR): SQL/migration policy
-  static scanner + allowlist + AI Workflow Gate changed-files enforcement implemented.
-  - Scanner: `scripts/ops/sql_migration_policy_static_enforcement.py`
-  - Allowlist: `config/sql_migration_policy_allowlist.json` (22 historical baseline entries)
-  - Gate helper: `scripts/ops/helpers/sql_migration_policy_enforcement_check.py`
-  - AI Workflow Gate integration: check #10 in `scripts/ops/ai_workflow_gate.py` main()
-  - 0 destructive migrations confirmed (policy: destructive SQL always fails gate)
-  - 1 seed SQL needs gate (deploy/docker/init_db.sql)
-  - **No SQL executed. No migration run. No DB connection. No real DB write.**
-  - **No Python runtime guard implemented.**
-  - SC-002 remains partial mitigation only. Training/data expansion/real DB write blocked.
-- **python_runtime_guard_implementation_phase2C_batch1** (this PR): Python runtime
-  DB write guard helper + batch1 guard integration for 3 highest-risk Python confirmed
-  write paths.
-  - Guard helper: `scripts/ops/helpers/python_db_write_guard.py` — Python equivalent of
-    JS `db_write_guard.js` with same env-var gate model (ALLOW_DB_WRITE,
-    FINAL_DB_WRITE_CONFIRMATION, DRY_RUN, table-level gates, production host hard block)
-  - Batch1 guarded paths (3 of 14):
-    1. `src/database/match_repository.py` — `assert_db_write_allowed()` in
-       `upsert_match_hash()` before INSERT INTO matches_mapping
-    2. `scripts/maintenance/database_detox.py` — `assert_db_write_allowed()` in
-       `main()` before ALTER TABLE/UPDATE prematch_features
-    3. `scripts/maintenance/reset_l2_collection.py` — `assert_db_write_allowed()` in
-       `main()` before TRUNCATE raw_match_data/collection_audit_logs, integrated with
-       existing --dry-run/--force flags
-  - Allowlist updated: 3 entries → `runtime_guarded`, 12 remain `pending_runtime_guard`
-  - **11 remaining confirmed Python write paths still pending runtime guard.**
-  - **8 indirect write paths NOT processed.**
-  - **5 manual review candidates NOT processed.**
-  - **No Python target scripts executed. No DB connection. No real DB write.**
-  - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
-  - SC-002 remains partial mitigation only. Training/data expansion/real DB write remain blocked.
-6. Next recommended tasks (in priority order):
-   - `python_runtime_guard_implementation_phase2C_batch2` — guard remaining 11
-     confirmed Python write paths
-   - `python_indirect_write_path_design_phase1` — design approach for 8 indirect
-     write paths
-   - `python_manual_review_phase2D` — review 5 manual review candidates
-   - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
-   - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
-     checklists
-7. Keep formal training and data expansion blocked until DB write safety resolved
-   and release gate criteria met.
-8. Do not start model training, data expansion, raw-write work, scraper/browser
-   automation, or Phase8+ guard integration automatically.
-9. Do not start automatically. Recommended next task only after user confirmation.
+5. **All JS-level guard work is now complete.**
+6. **Python Phase2A static scanner + Phase2B SQL scanner completed.**
+7. **Python Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths).**
+8. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
+   discipline codified: resident rules (CLAUDE.md), PR template checklist, CI gate
+   enforcement. Future tasks can reference these standing rules instead of long prompts.
+9. SC-002 remains partial mitigation only.
+10. Next recommended tasks (in priority order):
+    - `python_runtime_guard_implementation_phase2C_batch2` — guard remaining 11
+      confirmed Python write paths
+    - `python_indirect_write_path_design_phase1` — design approach for 8 indirect
+      write paths
+    - `python_manual_review_phase2D` — review 5 manual review candidates
+    - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
+    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
+      checklists
+11. Keep formal training and data expansion blocked until DB write safety resolved
+    and release gate criteria met.
+12. Do not start model training, data expansion, raw-write work, scraper/browser
+    automation automatically.
+13. Do not start automatically. Recommended next task only after user confirmation.
