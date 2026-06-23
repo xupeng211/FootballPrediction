@@ -425,10 +425,16 @@ guarded, and all remaining classified-as-review scripts are verified non-write.
 
 ## Next recommended task
 
-`python_sql_migration_enforcement_design_phase1` — design enforcement mechanisms for
-Python-based DB write scripts, SQL migration files, and migration runner scripts that
-are outside the current JS-only scanner scope. Do not start automatically.
-Recommended next task only after user confirmation.
+`python_sql_migration_enforcement_design_phase1` ✅ **COMPLETED.** Design document:
+`docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`. Python and SQL/migration
+files are now inventoried and classified. 14 confirmed Python write paths, 8 indirect,
+5 manual review. 18 SQL files classified. Recommended enforcement: Hybrid model.
+Next step: `python_sql_migration_enforcement_implementation_phase2A`.
+
+**Note:** This manual_review_phase1 covers JS scripts only (`scripts/ops/**/*.js`).
+Python / SQL / migration review remains a separate concern. See
+`docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` for the Python/SQL layer.
+Do not start automatically. Recommended next task only after user confirmation.
 
 ## SC-002 status impact
 
