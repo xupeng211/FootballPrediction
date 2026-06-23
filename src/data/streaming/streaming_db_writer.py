@@ -18,12 +18,21 @@ from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from decimal import Decimal
 import logging
+from pathlib import Path
+import sys
 import time
 from typing import Any
 
 import pandas as pd
 
 from src.database.db_pool import DatabasePool
+
+# Phase2C batch3: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[3] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 logger = logging.getLogger(__name__)
 
@@ -251,6 +260,15 @@ class StreamingDBWriter:
         table_name = write_task["table_name"]
         conflict_columns = write_task.get("conflict_columns")
         on_conflict = write_task.get("on_conflict", "UPDATE")
+
+        # Phase2C batch3: runtime DB write guard before INSERT/UPSERT on dynamic table
+        operation = "UPSERT" if conflict_columns else "INSERT"
+        assert_db_write_allowed(
+            script_name="streaming_db_writer.py",
+            operation=operation,
+            target=table_name,
+            tables=[table_name],
+        )
 
         # 重试逻辑
         for attempt in range(self.config.max_retries + 1):

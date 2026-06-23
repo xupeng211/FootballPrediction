@@ -53,7 +53,7 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); Phase2C batch2 runtime guard completed (3 more, 6 of 14 total); 8 confirmed + 8 indirect + 5 manual review remaining |
+| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); Phase2C batch2 runtime guard completed (3 more, 6 of 14 total); Phase2C batch3 runtime guard completed (3 more, 9 of 14 total); 5 confirmed + 8 indirect + 5 manual review remaining (5 later_needs_design identified) |
 | Runtime DB role / permission model | not fully validated |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
@@ -302,7 +302,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 | 2 | Changed-files enforcement is active and tested with both positive and negative cases | Partial (active but needs negative-case testing) |
 | 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Not met |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Not met |
-| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard started — 3 of 14 Python confirmed write paths guarded; 11 remaining) |
+| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 runtime guard completed — 9 of 14 Python confirmed write paths guarded; 5 later_needs_design identified; 5 remaining pending) |
 | 6 | Runtime DB permissions / role restrictions are documented or tested | Not met |
 | 7 | No production override exists (no `ALLOW_PRODUCTION_DB_WRITE`, no bypass env var, no host-block escape hatch) | Met |
 | 8 | Training and data expansion remain blocked until explicit release criteria are met | Met (blocks are in place) |
@@ -585,6 +585,47 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **SC-002 remains partial mitigation only.**
 - **Next step:** `python_runtime_guard_implementation_phase2C_batch3`. Do not start
   automatically.
+
+### 5e. python_runtime_guard_implementation_phase2C_batch3 ✅ COMPLETED
+
+- **Status:** Completed (this PR).
+- **Results:**
+  - Batch3 guarded paths (3 more of 14 confirmed, 9 of 14 total):
+    1. `src/core/database/odds_injector.py` — guard in `_inject_records()` before
+       `psycopg2.connect()`, `execute_values()` UPDATE matches SET l3_odds_data, and
+       `conn.commit()`. Integrated with existing `dry_run` parameter.
+       Operations: UPDATE. Tables: matches.
+    2. `src/database/collector_repository.py` — guard in `save_match_data()` and
+       `batch_save_match_data()` before `connection.execute(SQL_UPSERT_MATCH)`
+       INSERT INTO matches ON CONFLICT DO UPDATE.
+       Operations: UPSERT. Tables: matches.
+    3. `src/data/streaming/streaming_db_writer.py` — guard in `_execute_batch_write()`
+       before `conn.executemany()` INSERT/UPSERT on dynamic table name.
+       Operations: INSERT, UPSERT. Tables: dynamic (matches, odds, etc.).
+  - Allowlist updated: 3 more entries → `runtime_guarded`, 9 total guarded
+  - **5 confirmed Python write paths still pending runtime guard.**
+  - **5 later_needs_design identified:** odds_integrity_guard.py (reads-only, generates
+    cleanup SQL but never executes it), integrity_guard.py (SELECT-only queries, no
+    writes), sql_store.py (SQL string constants only, no execution),
+    sync_db_pool.py (infrastructure — generic execute() serves both read+write),
+    db_pool.py (infrastructure — generic execute/executemany for both read+write).
+  - **8 indirect write paths NOT processed.**
+  - **5 manual review candidates NOT processed.**
+  - **Batch3 selection rationale:** odds_injector.py selected for UPDATE guard with
+    dry_run integration (clear write boundary on matches with quality-based UPSERT);
+    collector_repository.py selected for asyncpg INSERT/UPSERT guard (clear execute
+    entry points in save_match_data and batch_save_match_data);
+    streaming_db_writer.py selected for dynamic-table INSERT/UPSERT guard (guard in
+    _execute_batch_write covers all streaming write paths). 5 remaining files were
+    analyzed and determined to be later_needs_design — their write boundaries are
+    unclear (read-only in practice, SQL-string-only, or infrastructure-level).
+  - **No Python target scripts executed. No DB connection. No real DB write.**
+  - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
+  - **SC-002 remains partial mitigation only.**
+- **Next step:** `python_runtime_guard_implementation_phase2C_batch4`. Do not start
+  automatically. Only 5 confirmed write paths remain; all 5 require design work
+  (later_needs_design) before guard integration. Next batch should focus on indirect
+  write paths or manual review candidates, not confirmed paths.
 
 ### 6. runtime_db_role_permission_review_phase1
 

@@ -4,7 +4,7 @@
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
   "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2: 6 of 14 confirmed write paths have runtime guard; 8 remaining pending",
+  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining pending",
   "entries": [
     {
       "path": "src/database/schema_manager.py",
@@ -44,12 +44,12 @@
     },
     {
       "path": "src/database/collector_repository.py",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "Data collector write path: INSERT operations via asyncpg/DatabasePool. No Python guard equivalent. RISK: HIGH.",
-      "evidence": "asyncpg via DatabasePool + INSERT in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #167.",
+      "classification": "historical_python_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2C batch3 guarded: assert_db_write_allowed() in save_match_data() and batch_save_match_data() before asyncpg connection.execute() INSERT INTO matches ON CONFLICT DO UPDATE. Tables: matches. Operations: UPSERT.",
+      "evidence": "asyncpg via DatabasePool + INSERT ON CONFLICT DO UPDATE in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='collector_repository.py', operation='UPSERT', target='matches', tables=['matches']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #167.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+      "owner_task": "python_runtime_guard_implementation_phase2C_batch3",
+      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before INSERT/UPSERT in save_match_data() and batch_save_match_data(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false."
     },
     {
       "path": "src/database/sync_db_pool.py",
@@ -71,21 +71,21 @@
     },
     {
       "path": "src/data/streaming/streaming_db_writer.py",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "Streaming DB writer: DataFrame.to_sql() for streaming data writes. No Python guard equivalent. RISK: HIGH.",
-      "evidence": "pandas + DatabasePool + to_sql in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #170.",
+      "classification": "historical_python_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2C batch3 guarded: assert_db_write_allowed() in _execute_batch_write() before asyncpg executemany INSERT/UPSERT on dynamic table. Tables: dynamic (matches, odds, etc.). Operations: INSERT, UPSERT.",
+      "evidence": "asyncpg via DatabasePool + executemany + INSERT/UPSERT in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='streaming_db_writer.py', operation='UPSERT'|'INSERT', target=table_name, tables=[table_name]). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #170.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+      "owner_task": "python_runtime_guard_implementation_phase2C_batch3",
+      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before INSERT/UPSERT in _execute_batch_write(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, table-specific gate as applicable, DRY_RUN=false."
     },
     {
       "path": "src/core/database/odds_injector.py",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "Odds data injection. Has dry_run references but uncertain default and no gate. RISK: MEDIUM.",
-      "evidence": "Via repository + dry_run params but no env gate. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #171.",
+      "classification": "historical_python_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2C batch3 guarded: assert_db_write_allowed() in _inject_records() before psycopg2 execute_values() UPDATE matches and conn.commit(). Integrated with existing dry_run parameter. Tables: matches. Operations: UPDATE.",
+      "evidence": "psycopg2 + execute_values + conn.commit() + UPDATE matches SET l3_odds_data in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='odds_injector.py', operation='UPDATE', target='matches (l3_odds_data quality-based UPSERT)', tables=['matches'], dry_run=dry_run). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #171.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Verify dry_run default and add env gate in Phase 2C."
+      "owner_task": "python_runtime_guard_implementation_phase2C_batch3",
+      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before UPDATE/commit in _inject_records(). Existing dry_run parameter integrated. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false."
     },
     {
       "path": "scripts/maintenance/database_detox.py",

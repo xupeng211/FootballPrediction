@@ -3,10 +3,10 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-23
-- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch1 (runtime guard batch1)
-- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1 COMPLETED (2026-06-23), Phase2C batch2 COMPLETED (2026-06-24)
+- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch{1,2,3} (runtime guard)
+- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1 COMPLETED (2026-06-23), Phase2C batch2 COMPLETED (2026-06-24), Phase2C batch3 COMPLETED (2026-06-24)
 - scanner: scripts/ops/python_db_write_static_enforcement.py
-- allowlist: config/python_db_write_allowlist.json (28 entries, 6 runtime_guarded + 9 pending + 8 indirect + 5 manual review)
+- allowlist: config/python_db_write_allowlist.json (28 entries, 9 runtime_guarded + 6 pending + 8 indirect + 5 manual review)
 - guard_helper: scripts/ops/helpers/python_db_write_guard.py
 - gate_integration: check_python_db_write_enforcement() in scripts/ops/ai_workflow_gate.py
 
@@ -467,7 +467,7 @@ Python files and SQL migration files, similar to what currently exists for JS fi
 - Destructive SQL policy: any new file with DROP DATABASE, DROP TABLE, TRUNCATE, etc. always fails gate (even if allowlisted)
 - Changed-files enforcement: new/modified SQL/migration files with DML/destructive/privilege signals fail CI unless in allowlist with complete metadata
 
-### Phase 2C: Python guard helper (Option 1) — BATCH1 COMPLETED
+### Phase 2C: Python guard helper (Option 1) — BATCH1+BATCH2+BATCH3 COMPLETED
 
 - Create `scripts/ops/helpers/python_db_write_guard.py` — Python equivalent of the JS guard ✅ COMPLETED
 - Support env-var gate model matching JS guard (ALLOW_DB_WRITE, FINAL_DB_WRITE_CONFIRMATION, DRY_RUN, table-level gates, production host hard block) ✅ COMPLETED
@@ -475,10 +475,19 @@ Python files and SQL migration files, similar to what currently exists for JS fi
   1. `src/database/match_repository.py` — INSERT/UPDATE on matches_mapping
   2. `scripts/maintenance/database_detox.py` — ALTER/UPDATE on prematch_features
   3. `scripts/maintenance/reset_l2_collection.py` — TRUNCATE on raw_match_data, collection_audit_logs
-- **11 remaining confirmed write paths still pending (Phase2C batch2+)**
+- Batch2 guarded 3 more confirmed write paths (6 of 14 total):
+  4. `src/database/schema_manager.py` — CREATE/ALTER on match_features_training, matches, raw_match_data
+  5. `src/database/oddsportal_db_manager.py` — UPSERT on matches_mapping
+  6. `scripts/ops/fotmob_registry_seed_dev_execution.py` — INSERT on 7 football_* registry tables
+- Batch3 guarded 3 more confirmed write paths (9 of 14 total):
+  7. `src/core/database/odds_injector.py` — UPDATE on matches (l3_odds_data quality-based UPSERT)
+  8. `src/database/collector_repository.py` — UPSERT on matches
+  9. `src/data/streaming/streaming_db_writer.py` — INSERT/UPSERT on dynamic tables (matches, odds, etc.)
+- **5 remaining confirmed write paths still pending (Phase2C batch4) — all later_needs_design**
 - **8 indirect write paths NOT yet processed**
 - **5 manual review candidates NOT yet processed**
-- Lower-risk and indirect paths to follow incrementally in batch2+
+- **5 later_needs_design identified:** odds_integrity_guard.py (reads-only), integrity_guard.py (SELECT-only), sql_store.py (SQL string constants only), sync_db_pool.py (infrastructure), db_pool.py (infrastructure)
+- Lower-risk and indirect paths to follow incrementally in batch4+
 
 ### Phase 2D: Manual review of needs_manual_review files (5 files)
 
@@ -645,8 +654,9 @@ This design phase explicitly does NOT:
 - **Python Phase2A static scanner completed. Phase2B SQL/migration scanner completed.**
 - **Python Phase2C batch1 runtime guard completed: 3 of 14 confirmed write paths guarded.**
 - **Python Phase2C batch2 runtime guard completed: 3 more confirmed write paths guarded (6 of 14 total).**
+- **Python Phase2C batch3 runtime guard completed: 3 more confirmed write paths guarded (9 of 14 total).**
 - **24 Python files identified as confirmed or indirect write paths needing guard.**
-- **8 confirmed Python write paths still pending runtime guard.**
+- **5 confirmed Python write paths still pending runtime guard (all later_needs_design).**
 - **8 indirect write paths still pending design + guard.**
 - **5 Python files need manual review.**
 - **14 SQL migration files classified; 1 seed SQL needs gate; 0 destructive migrations found.**
@@ -659,13 +669,14 @@ This design phase explicitly does NOT:
 
 Based on the current implementation status, the recommended next task is:
 
-**`python_runtime_guard_implementation_phase2C_batch3`** — Continue Python runtime guard
-integration for the remaining 8 confirmed write paths. This should:
+**`python_runtime_guard_implementation_phase2C_batch4`** — Continue Python runtime guard
+for the remaining 5 confirmed write paths (all later_needs_design). This should:
 
-1. Guard the remaining highest-risk confirmed Python write paths incrementally
-2. Update allowlist classifications as each path is guarded
-3. NOT process indirect write paths or manual review candidates
-4. NOT execute any Python target script
-5. NOT connect to DB
+1. Design guard approaches for the 5 later_needs_design files before implementation
+2. Consider indirect write paths or manual review candidates as alternatives
+3. Update allowlist classifications as each path is guarded
+4. NOT process indirect write paths or manual review candidates unless explicitly scoped
+5. NOT execute any Python target script
+6. NOT connect to DB
 
 Do not start automatically. Recommended next task only after user confirmation.
