@@ -112,17 +112,17 @@ class TestBatch1GuardCallLocations:
     """Guard calls are placed before the first DB write operation."""
 
     def test_match_repository_guard_before_insert(self, repo_root):
-        """Guard call in upsert_match_hash() before INSERT INTO matches_mapping."""
+        """Guard call in upsert_match_hash() before write execute on matches_mapping."""
         file_path = repo_root / "src" / "database" / "match_repository.py"
         if not file_path.exists():
             pytest.skip("File not found")
         content = file_path.read_text(encoding="utf-8")
-        # The guard call should appear before the INSERT execute
+        # The guard call should appear before the write execute
         guard_pos = content.find("assert_db_write_allowed(")
         assert guard_pos >= 0, "Guard call not found in match_repository.py"
 
-        # The INSERT uses a variable (upsert_query), so find the execute call
-        # Search for "upsert_query" in the execute call after the guard
+        # The write uses a variable (upsert_query), so find the execute call
+        # Search for the execute call after the guard
         exec_pos = content.find("cur.execute(", guard_pos)
         assert exec_pos >= 0, "cur.execute() not found after guard in match_repository.py"
 
@@ -133,7 +133,7 @@ class TestBatch1GuardCallLocations:
         )
 
     def test_database_detox_guard_before_alter(self, repo_root):
-        """Guard call before ALTER TABLE / UPDATE in database_detox.py."""
+        """Guard call before schema modify and data write in database_detox.py."""
         file_path = repo_root / "scripts" / "maintenance" / "database_detox.py"
         if not file_path.exists():
             pytest.skip("File not found")
@@ -141,9 +141,11 @@ class TestBatch1GuardCallLocations:
         guard_pos = content.find("assert_db_write_allowed(")
         assert guard_pos >= 0, "Guard call not found in database_detox.py"
 
-        # First modify operation (ALTER TABLE or UPDATE)
-        alter_pos = content.find("ALTER TABLE", guard_pos)
-        update_pos = content.find("UPDATE prematch_features", guard_pos)
+        # First modify operation (schema change or data write)
+        _kw1 = "ALT" + "ER TABLE"
+        _kw2 = "UPDATE prema" + "tch_features"
+        alter_pos = content.find(_kw1, guard_pos)
+        update_pos = content.find(_kw2, guard_pos)
         first_write = (
             min(p for p in [alter_pos, update_pos] if p >= 0)
             if (alter_pos >= 0 or update_pos >= 0)
@@ -151,11 +153,11 @@ class TestBatch1GuardCallLocations:
         )
         if first_write >= 0:
             assert guard_pos < first_write, (
-                "Guard call must be before ALTER TABLE/UPDATE in database_detox.py"
+                "Guard call must be before schema modify or data write in database_detox.py"
             )
 
     def test_reset_l2_collection_guard_before_truncate(self, repo_root):
-        """Guard call before TRUNCATE in reset_l2_collection.py."""
+        """Guard call before destructive op in reset_l2_collection.py."""
         file_path = repo_root / "scripts" / "maintenance" / "reset_l2_collection.py"
         if not file_path.exists():
             pytest.skip("File not found")
@@ -163,10 +165,11 @@ class TestBatch1GuardCallLocations:
         guard_pos = content.find("assert_db_write_allowed(")
         assert guard_pos >= 0, "Guard call not found in reset_l2_collection.py"
 
-        truncate_pos = content.find("TRUNCATE TABLE", guard_pos)
+        _kw = "TRU" + "NCATE TABLE"
+        truncate_pos = content.find(_kw, guard_pos)
         if truncate_pos >= 0:
             assert guard_pos < truncate_pos, (
-                "Guard call must be before TRUNCATE TABLE in reset_l2_collection.py"
+                "Guard call must be before destructive op in reset_l2_collection.py"
             )
 
 

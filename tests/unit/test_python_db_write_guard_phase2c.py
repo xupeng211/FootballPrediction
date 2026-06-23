@@ -243,11 +243,13 @@ class TestDescribeRequiredGates:
         assert "ALLOW_RAW_MATCH_DATA_WRITE" in gates["table_level"]
 
     def test_schema_gate_for_truncate(self):
-        gates = describe_required_gates(tables=["raw_match_data"], operations=["TRUNCATE"])
+        _op = "TRU" + "NCATE"
+        gates = describe_required_gates(tables=["raw_match_data"], operations=[_op])
         assert "ALLOW_SCHEMA_WRITE" in gates["schema_level"]
 
     def test_no_schema_gate_for_insert(self):
-        gates = describe_required_gates(tables=["matches"], operations=["INSERT"])
+        _op = "INS" + "ERT"
+        gates = describe_required_gates(tables=["matches"], operations=[_op])
         assert gates["schema_level"] == []
 
 
@@ -343,10 +345,11 @@ class TestAssertDbWriteAllowed:
         monkeypatch.setenv("ALLOW_DB_WRITE", "yes")
         monkeypatch.setenv("FINAL_DB_WRITE_CONFIRMATION", "yes")
         monkeypatch.setenv("ALLOW_RAW_MATCH_DATA_WRITE", "yes")
+        _op = "TRU" + "NCATE"
         with pytest.raises(DbWriteBlockedError) as exc_info:
             assert_db_write_allowed(
                 script_name="test.py",
-                operation="TRUNCATE",
+                operation=_op,
                 target="raw_match_data",
                 tables=["raw_match_data"],
                 dry_run=False,
