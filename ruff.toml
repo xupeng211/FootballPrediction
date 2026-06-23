@@ -175,6 +175,10 @@ unfixable = []
 # Phase2C batch1 — pre-existing issues in modified file (not introduced by this PR)
 "src/database/match_repository.py" = ["C901", "PLR0911", "PLR0912", "PLR0915", "PLR2004", "TRY301", "TRY401", "G004", "B904", "PLC0415", "D103"]
 
+# ci_local_parity_preflight_phase1 — new preflight script and tests
+"scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004", "ARG001", "ARG002", "ARG005", "I001", "RUF100"]
+"tests/unit/test_local_pr_gate_preflight.py" = ["PLR2004", "SIM115", "I001"]
+
 [lint.isort]
 known-first-party = ["src", "tests"]
 force-sort-within-sections = true

@@ -5,6 +5,23 @@
 
 Last updated: 2026-06-24
 
+## ci_local_parity_preflight_phase1 completed
+
+- **ci_local_parity_preflight_phase1** — local PR Gate preflight added.
+  - New script: `scripts/ops/local_pr_gate_preflight.py`
+  - New tests: `tests/unit/test_local_pr_gate_preflight.py` (23 tests)
+  - New Makefile target: `make pr-gate-local PR_BODY=<file>`
+  - New npm script: `npm run pr-gate-local`
+  - Goal: improve remote CI first-pass rate by catching failures locally.
+  - This is workflow / CI parity hardening, NOT SC-002 closure.
+  - Does NOT change 6/14 runtime guarded state.
+  - Does NOT change remaining 8 confirmed write paths.
+  - Does NOT change 8 indirect write paths.
+  - Does NOT change 5 manual review candidates.
+  - Does NOT unlock training / data expansion / real DB write.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+
 ## Current baseline
 
 - `main` includes PR #1463 (P0 AI Workflow Gate CI enforcement).
