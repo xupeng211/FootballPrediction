@@ -758,23 +758,28 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         sys.stdout.write(f"[DB-WRITE-GUARD ENFORCEMENT] scanner error: {exc}\n")
         if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
             errors.append(f"[DB-WRITE-GUARD ENFORCEMENT] fail-closed in CI: {exc}")
-    # 9. Python DB write enforcement — Phase2A
-    try:
-        import importlib.util  # noqa: PLC0415
+    # 9-10. Python + SQL/migration DB write enforcement — Phase2A+2B
+    _helpers = [
+        ("python_db_write_enforcement_check.py", "PYTHON-DB-WRITE"),
+        ("sql_migration_policy_enforcement_check.py", "SQL-MIGRATION"),
+    ]
+    for _hname, _label in _helpers:
+        try:
+            import importlib.util  # noqa: PLC0415
 
-        h = Path(__file__).resolve().parent / "helpers" / "python_db_write_enforcement_check.py"
-        if not h.exists():
-            h = Path.cwd() / "scripts" / "ops" / "helpers" / "python_db_write_enforcement_check.py"
-        if h.exists():
-            s = importlib.util.spec_from_file_location("_pydbw", str(h))
-            if s and s.loader:
-                m = importlib.util.module_from_spec(s)
-                s.loader.exec_module(m)
-                m.run_python_db_write_gate_check(changed, errors)
-    except Exception as exc:
-        sys.stdout.write(f"[PYTHON-DB-WRITE ENFORCEMENT] scanner error: {exc}\n")
-        if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
-            errors.append(f"[PYTHON-DB-WRITE ENFORCEMENT] fail-closed in CI: {exc}")
+            _h = Path(__file__).resolve().parent / "helpers" / _hname
+            if not _h.exists():
+                _h = Path.cwd() / "scripts" / "ops" / "helpers" / _hname
+            if _h.exists():
+                _s = importlib.util.spec_from_file_location("_enf", str(_h))
+                if _s and _s.loader:
+                    _m = importlib.util.module_from_spec(_s)
+                    _s.loader.exec_module(_m)
+                    _m.run_gate_check(changed, errors)
+        except Exception as exc:
+            sys.stdout.write(f"[{_label} ENFORCEMENT] scanner error: {exc}\n")
+            if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
+                errors.append(f"[{_label} ENFORCEMENT] fail-closed in CI: {exc}")
 
     if errors:
         sys.stdout.write(f"FAIL: {len(errors)} AI workflow gate error(s)\n")

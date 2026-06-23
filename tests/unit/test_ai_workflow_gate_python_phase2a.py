@@ -118,6 +118,4 @@ def test_forbidden_phrases_check_function_exists():
 def test_main_function_calls_python_enforcement():
     """main() function references Python enforcement wrapper."""
     source = inspect.getsource(gate.main)
-    assert "run_python_db_write_gate_check" in source, (
-        "main() should call run_python_db_write_gate_check wrapper"
-    )
+    assert "run_gate_check" in source, "main() should call run_gate_check wrapper"

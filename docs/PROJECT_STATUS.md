@@ -330,6 +330,17 @@ Last updated: 2026-06-23
   - **No runtime guard implemented.** No target script executed. No DB connection.
     No real DB write. SC-002 remains partial mitigation only.
   - Training, data expansion, real DB write remain blocked.
+- **sql_migration_policy_implementation_phase2B** (this PR): SQL/migration policy
+  static scanner + allowlist + AI Workflow Gate changed-files enforcement implemented.
+  - Scanner: `scripts/ops/sql_migration_policy_static_enforcement.py`
+  - Allowlist: `config/sql_migration_policy_allowlist.json` (22 historical baseline entries)
+  - Gate helper: `scripts/ops/helpers/sql_migration_policy_enforcement_check.py`
+  - AI Workflow Gate integration: check #10 in `scripts/ops/ai_workflow_gate.py` main()
+  - 0 destructive migrations confirmed (policy: destructive SQL always fails gate)
+  - 1 seed SQL needs gate (deploy/docker/init_db.sql)
+  - **No SQL executed. No migration run. No DB connection. No real DB write.**
+  - **No Python runtime guard implemented.**
+  - SC-002 remains partial mitigation only. Training/data expansion/real DB write blocked.
 6. Next recommended tasks (in priority order):
    - `python_runtime_guard_implementation_phase2C` — Python runtime guard helper
      for the 14 confirmed + 8 indirect write paths

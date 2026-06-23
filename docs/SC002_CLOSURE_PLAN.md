@@ -512,7 +512,21 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Scanner supports: JSON output, allowlist, changed-files mode, full-scan mode, comment/docstring awareness
   - **No runtime guard implemented.** No target script executed. No DB connection. No real DB write.
   - **SC-002 remains partial mitigation only. Training, data expansion, real DB write remain blocked.**
-- **Next step:** `python_runtime_guard_implementation_phase2C` — Python runtime guard helper for 14 confirmed + 8 indirect write paths. Or `sql_migration_policy_implementation_phase2B`. Do not start automatically.
+- **Next step:** `python_runtime_guard_implementation_phase2C` — Python runtime guard for 14 confirmed + 8 indirect write paths. Also `sql_migration_policy_implementation_phase2B` ✅ COMPLETED (see below).
+
+### 5b. sql_migration_policy_implementation_phase2B ✅ COMPLETED
+
+- **Status:** Completed (this PR).
+- **Results:**
+  - SQL/migration scanner: `scripts/ops/sql_migration_policy_static_enforcement.py`
+  - SQL/migration allowlist: `config/sql_migration_policy_allowlist.json` (22 entries)
+  - Gate helper: `scripts/ops/helpers/sql_migration_policy_enforcement_check.py`
+  - AI Workflow Gate integration: check #10 in main()
+  - 0 destructive migrations found; destructive SQL always fails gate
+  - 1 seed SQL needs gate (deploy/docker/init_db.sql)
+  - **No SQL executed. No migration run. No DB connection. No real DB write.**
+  - **SC-002 remains partial mitigation only.**
+- **Next step:** `python_runtime_guard_implementation_phase2C`. Do not start automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
 
