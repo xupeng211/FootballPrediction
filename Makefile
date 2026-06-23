@@ -62,7 +62,7 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
-        ci-local ci-local-pr pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
+        ci-local ci-local-pr pr-gate-local pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -197,6 +197,19 @@ ci-local: ## 运行本地 CI 部分验证（静态检查为主，远程 CI 为�
 
 ci-local-pr: ## PR 前本地验证（同 ci-local）
 	$(MAKE) ci-local
+
+pr-gate-local: ## 运行本地 PR Gate 预检（无网络/无DB/无 secrets）。Usage: make pr-gate-local PR_BODY=<path/to/pr_body.md> [FULL=1] [JSON=1] [VERBOSE=1]
+	@if [ -z "$(PR_BODY)" ]; then \
+		echo "ERROR: PR_BODY required. Usage: make pr-gate-local PR_BODY=path/to/pr_body.md"; \
+		echo "  Optional: FULL=1 JSON=1 VERBOSE=1"; \
+		echo "  Example: make pr-gate-local PR_BODY=/tmp/pr_body.md FULL=1"; \
+		exit 1; \
+	fi
+	@python3 scripts/ops/local_pr_gate_preflight.py \
+		--pr-body-file $(PR_BODY) \
+		$(if $(FULL),--full,--fast) \
+		$(if $(JSON),--json) \
+		$(if $(VERBOSE),--verbose)
 
 pr-merge-preflight: ## PR merge preflight evidence check (read-only, no merge)
 	@if [ -z "$(PR)" ]; then \

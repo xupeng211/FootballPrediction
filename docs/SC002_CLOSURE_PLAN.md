@@ -56,6 +56,7 @@ are satisfied.
 | Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); Phase2C batch2 runtime guard completed (3 more, 6 of 14 total); 8 confirmed + 8 indirect + 5 manual review remaining |
 | Runtime DB role / permission model | not fully validated |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
+| CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
 
 ## What Is Actually Protected
 

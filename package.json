@@ -41,6 +41,7 @@
         "gatekeeper": "bash scripts/devops/gatekeeper.sh",
         "gatekeeper:commit": "bash scripts/devops/gatekeeper.sh --mode=commit",
         "gatekeeper:push": "bash scripts/devops/gatekeeper.sh --mode=push",
+        "pr-gate-local": "python3 scripts/ops/local_pr_gate_preflight.py --pr-body-file .pr-body.md --fast",
         "install-browsers": "playwright install chromium",
         "test": "node scripts/test/run_test_suite.js default",
         "test:proxy-provider": "node --test tests/unit/ProxyProvider.test.js",

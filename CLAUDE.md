@@ -40,6 +40,17 @@ Current high-level status:
 - Existing source-controlled artifacts cannot generate corrected Ligue 1 source inventory records.
 - The next data step is bounded corrected-source discovery, only after workflow hygiene is merged and explicitly authorized.
 
+## Local PR Gate Preflight
+
+- **Push 前必须运行 local PR Gate preflight.** Use `make pr-gate-local PR_BODY=<file>` to simulate Production Gate checks locally.
+- **开 PR 前必须准备 PR body 并用 preflight 检查.** The preflight validates all required sections, forbidden claims, changed-files hardening, and enforcement phases.
+- **远程 CI 失败前应先本地复现.** Do not use GitHub Actions as trial-and-error. Run the preflight first.
+- **如果 local preflight 和 remote CI 不一致，要修 parity，不要绕过.** Report discrepancies; do not work around them.
+- **Fast mode** (default): `make pr-gate-local PR_BODY=/tmp/pr_body.md` — static analysis, PR body validation, enforcement checks.
+- **Full mode**: `make pr-gate-local PR_BODY=/tmp/pr_body.md FULL=1` — adds ruff, mypy, pytest, npm test:coverage.
+- **JSON output**: `make pr-gate-local PR_BODY=/tmp/pr_body.md JSON=1` — machine-readable results.
+- See `scripts/ops/local_pr_gate_preflight.py` for the full implementation.
+
 ## MCP permissions
 
 | Server | Permission | Allowed |
