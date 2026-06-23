@@ -126,19 +126,27 @@ test('DESIGN DOC: odds_harvest_pipeline.js implementation status updated', () =>
     );
 });
 
-test('DESIGN DOC: gatekeeper.js / gatekeeper.sh still pending', () => {
+test('DESIGN DOC: gatekeeper.js / gatekeeper.sh now resolved (post gatekeeper_boundary_implementation)', () => {
     const content = readDoc(DESIGN_DOC);
+    // After gatekeeper_boundary_implementation + manual_review_phase1, the design doc should
+    // still contain "pending" or "PENDING" (e.g., Priority 4: restoreMappingsWorkflow)
+    const hasPendingRef = /pending/i.test(content);
     assert.ok(
-        content.includes('pending'),
-        'Design doc must still reference pending items'
+        hasPendingRef,
+        'Design doc must still reference pending items (case-insensitive)'
     );
 });
 
-test('DESIGN DOC: 8 needs_manual_review consumers still pending', () => {
+test('DESIGN DOC: needs_manual_review consumers now resolved by manual_review_phase1', () => {
     const content = readDoc(DESIGN_DOC);
     assert.ok(
         content.includes('needs_manual_review'),
-        'Design doc must still reference needs_manual_review consumers'
+        'Design doc must still reference needs_manual_review (now as resolved)'
+    );
+    // Count corrected from 8 to 9 by manual_review_phase1
+    assert.ok(
+        !content.includes('8 consumers with'),
+        'Design doc must NOT still say "8" consumers (corrected to 9)'
     );
 });
 
