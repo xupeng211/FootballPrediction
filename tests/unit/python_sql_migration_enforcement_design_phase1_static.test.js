@@ -158,7 +158,8 @@ test('Design document declares design-only / no runtime behavior changed', () =>
     'Design document must declare what it does NOT do'
   );
   assert.ok(
-    doc.includes('Implement any guard') || doc.includes('implement any guard'),
+    doc.includes('Implement any guard') || doc.includes('implement any guard')
+      || doc.includes('Implement any Python guard'),
     'Design document must state no guard implementation'
   );
 });
@@ -346,7 +347,9 @@ test('No runtime guard implementation present in changed files', () => {
   // Verify the design doc does not contain implementation code
   const doc = readFile('docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md');
   assert.ok(
-    doc.includes('does NOT') && doc.includes('Implement any guard'),
+    doc.includes('does NOT') && (
+      doc.includes('Implement any guard') || doc.includes('Implement any Python guard')
+    ),
     'Design document must explicitly state no guard implementation'
   );
   // Confirm no Python guard helper was created
