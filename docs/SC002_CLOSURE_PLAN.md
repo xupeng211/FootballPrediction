@@ -358,16 +358,23 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   integration. The "dry_run", "audit", and "browser/Playwright" labels from the scanner
   were unreliable — many such scripts actually import DB clients and contain write SQL.
 
-### 2. confirmed_write_path_guard_phase (IN PROGRESS — 5 of 20 completed)
+### 2. confirmed_write_path_guard_phase (IN PROGRESS — 6 of 20 completed)
 
 - **Status:** Phase 1 (high-risk browser+DB) completed (#1586). Phase 2 batch 1
-  (controlled-write scripts) completed (this PR).
+  (controlled-write scripts) completed (#1587). Phase 2 batch 2 (FotMob raw JSON DB
+  storage) completed (this PR).
   - Phase 1 (2 scripts): `odds_sniper.js`, `fixture_harvester_l1.js`
   - Phase 2 batch 1 (3 scripts): `pageprops_v2_single_target_controlled_write.js`,
     `remaining_seeded_pageprops_v2_controlled_write.js`,
     `single_league_pageprops_v2_controlled_write_execute.js` — all INSERT INTO
     raw_match_data, guard added before BEGIN transaction
-- **Remaining:** 15 confirmed write paths still need guard integration.
+  - Phase 2 batch 2 (1 script): `fotmob_adg60_raw_json_db_storage_no_feature_parse.js` —
+    INSERT INTO fotmob_raw_match_payloads with ON CONFLICT DO UPDATE, guard added
+    before INSERT query
+- **Remaining:** 14 confirmed write paths still need guard integration. Deep static
+  analysis of remaining scripts during batch2 revealed that many are false positives
+  (SELECT-only with active SQL enforcement wrappers, or no DB connection). Audit
+  reclassification recommended before further batches.
 - **Acceptance criteria:** Each script calls `assertDbWriteAllowed()` before every write
   operation. Static tests confirm guard coverage. Scanner detects guard calls. changed-files
   enforcement passes.

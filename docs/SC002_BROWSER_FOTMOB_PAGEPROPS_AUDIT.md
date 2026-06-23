@@ -29,8 +29,11 @@ capability** (DB client import + query execution + write SQL in code). These nee
 integration or specialized pipeline guard design — they are NOT safe just because they were
 categorized.
 
-**Progress:** 2 of 20 highest-risk (browser+DB) scripts now guarded: `odds_sniper.js`,
-`fixture_harvester_l1.js`. 18 remaining confirmed write paths still need guard integration.
+**Progress:** 6 of 20 confirmed write paths now guarded:
+- Phase 1: `odds_sniper.js`, `fixture_harvester_l1.js` (browser+DB)
+- Phase 2 batch 1: `pageprops_v2_single_target_controlled_write.js`, `remaining_seeded_pageprops_v2_controlled_write.js`, `single_league_pageprops_v2_controlled_write_execute.js` (controlled-write)
+- Phase 2 batch 2: `fotmob_adg60_raw_json_db_storage_no_feature_parse.js` (FotMob raw JSON DB storage)
+14 remaining confirmed write paths still need guard integration.
 
 ## Scope
 
@@ -239,7 +242,7 @@ because they combine browser automation AND DB write in a single script.
 
 | # | Path | has_db_import | has_execute | sql_in_code | has_browser | Recommended Classification | Evidence |
 |---|---|---|---|---|---|---|---|
-| 10 | scripts/ops/fotmob_adg60_raw_json_db_storage_no_feature_parse.js | Yes | Yes | Yes | No | confirmed_write_path_needs_guard | Imports Pool from pg, has write SQL (INSERT, UPDATE, UPSERT), executes queries — FotMob raw JSON DB write |
+| 10 | scripts/ops/fotmob_adg60_raw_json_db_storage_no_feature_parse.js | Yes | Yes | Yes | No | ~~confirmed_write_path_needs_guard~~ → **guarded_in_phase2_batch2** ✅ | Imports Pool from pg, INSERT INTO fotmob_raw_match_payloads with ON CONFLICT DO UPDATE — GUARDED: now calls assertDbWriteAllowed() before INSERT query |
 | 11 | scripts/ops/fotmob_ligue1_adg57_no_write_mutation_dry_run_preview.js | No | No | No | No | read_only | No DB client, no execution — "no write mutation" in filename is accurate per static analysis |
 
 ### Category: shared_module (3)
@@ -310,6 +313,9 @@ These 20 scripts have **confirmed real DB write capability** based on static ana
 - `single_league_pageprops_v2_controlled_write_execute.js` ✅ **GUARDED (Phase2 batch1)**
 - `controlled_matches_identity_seed_prerequisite_plan.js` — planning-only, no direct INSERT INTO
 - `single_league_pageprops_v2_controlled_write_plan.js` — planning, no executable write SQL found
+
+**FotMob pipeline subgroup (raw JSON DB storage):**
+- `fotmob_adg60_raw_json_db_storage_no_feature_parse.js` ✅ **GUARDED (Phase2 batch2)**
 
 **Misleading-name subgroup (labeled "dry_run", "audit", "preview" but has real DB):**
 - `dataset_status_audit.js`

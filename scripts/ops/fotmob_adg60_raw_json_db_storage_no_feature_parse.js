@@ -13,6 +13,7 @@
 import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import pg from 'pg';
+import { assertDbWriteAllowed } from './helpers/db_write_guard.js';
 
 const { Pool } = pg;
 
@@ -106,6 +107,12 @@ async function processEntry(entry, executeDB, dbPool, runId) {
   row.page_props_sha256 = pp.sha256;
 
   if (!executeDB) { row.inserted_or_existing = 'dry_run_planned'; return row; }
+
+  assertDbWriteAllowed({
+    script: 'fotmob_adg60_raw_json_db_storage_no_feature_parse.js',
+    tables: ['fotmob_raw_match_payloads'],
+    operations: ['INSERT'],
+  });
 
   try {
     const res = await dbPool.query(
