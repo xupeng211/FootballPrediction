@@ -90,6 +90,19 @@ Last updated: 2026-06-23
   4 needs_manual_review remain unchanged. 3 shared_module unchanged. 1
   possible_indirect_write unchanged. SC-002 remains partial mitigation only.
   Training, data expansion, and real DB write remain blocked.
+- **shared_module_db_write_boundary_design_phase1** (this PR): Static design of shared
+  module DB write boundary completed. 3 shared modules mapped with full consumer
+  entrypoint inventory:
+  - `dbBlueprint.js` (24 consumers, 3 write-capable, 18 read-only, 3 needs_manual_review)
+  - `restoreMappingsWorkflow.js` (0 active consumers, dependency-injected write path)
+  - `odds_harvest_pipeline.shared.js` (2 consumers: 1 guarded, 1 UNGUARDED gap found —
+    `odds_harvest_pipeline.js`)
+  Key findings: `odds_harvest_pipeline.js` is an unguarded CLI entrypoint consuming
+  write SQL from the shared module (not in any prior audit or guard phase).
+  `gatekeeper.js`/`gatekeeper.sh` use `runColdStartBlueprintCheck` (DB write path) with
+  no guard. Consumer entrypoint map recommends guard at consumer level, not module level.
+  No runtime behavior changed. SC-002 remains partial mitigation only.
+  Training, data expansion, and real DB write remain blocked.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
   - `fotmob_pipeline` (2): FotMob ingestion scripts
