@@ -254,7 +254,7 @@ guard itself because it has no DB connection. The enforcement must be:
 | # | Consumer Path | Type | Imports | DB Write Possible? | Has Guard? | Recommended Guard Location | Recommended Task |
 |---|---|---|---|---|---|---|---|
 | 1 | `scripts/ops/odds_sniper.js` | CLI script (browser+DB) | `UPSERT_ODDS_SQL`, `CURRENT_BOOKMAKER`, `OPENING_BOOKMAKER`, `extractMedianOddsSnapshots`, `DEFAULT_USER_AGENT`, `DEFAULT_RETRIES`, `DEFAULT_RETRY_DELAY_MS` | Yes — INSERT INTO odds via UPSERT_ODDS_SQL | Yes (Phase 1) ✅ | already_guarded_consumer | no_action |
-| 2 | `scripts/ops/odds_harvest_pipeline.js` | CLI script (browser+DB) | `UPSERT_MAPPING_SQL`, `UPSERT_ODDS_SQL`, `COVERAGE_SQL`, `TARGETS_SQL`, plus 18+ utility/config exports | Yes — INSERT/UPSERT via both write SQL templates | ⚠️ **NO GUARD** | consumer_entrypoint | implement_consumer_guard (HIGH PRIORITY) |
+| 2 | `scripts/ops/odds_harvest_pipeline.js` | CLI script (browser+DB) | `UPSERT_MAPPING_SQL`, `UPSERT_ODDS_SQL`, `COVERAGE_SQL`, `TARGETS_SQL`, plus 18+ utility/config exports | Yes — INSERT/UPSERT via both write SQL templates | ✅ **Guarded (implementation phase1)** — `assertDbWriteAllowed()` in `upsertMappingAndOdds()` before BEGIN transaction | already_guarded_consumer | no_action |
 
 ## Recommended Guard Boundary
 
@@ -322,7 +322,7 @@ The following actions are explicitly reserved for a follow-up implementation pha
 
 | Gap | Severity | Detail |
 |---|---|---|
-| `odds_harvest_pipeline.js` — UNGUARDED | HIGH | CLI entrypoint with Pool + write SQL from shared module + Playwright. No `assertDbWriteAllowed()`. Not in any audit or allowlist. Not covered by Phase1–7. |
+| `odds_harvest_pipeline.js` — ~~UNGUARDED~~ **NOW GUARDED** | ~~HIGH~~ **RESOLVED** | CLI entrypoint with Pool + write SQL from shared module + Playwright. Guard added in `upsertMappingAndOdds()` by `shared_module_db_write_boundary_implementation_phase1`. ✅ |
 | `gatekeeper.js` — UNGUARDED | MEDIUM | Uses `runColdStartBlueprintCheck` which creates/drops temp DBs. CI infrastructure, not user-facing, but still a DB write path. |
 | `gatekeeper.sh` — UNGUARDED | MEDIUM | Shell script that runs `runColdStartBlueprintCheck` via inline node. Same risk as gatekeeper.js. |
 | 8 consumers with `needs_manual_review` | LOW–MEDIUM | These use only `buildDbConnectionConfig` from dbBlueprint but may have their own DB write paths. Need individual review. |
@@ -341,33 +341,35 @@ The following actions are explicitly reserved for a follow-up implementation pha
 
 In priority order for a follow-up `shared_module_db_write_boundary_implementation_phase1`:
 
-### Priority 1: Guard `odds_harvest_pipeline.js`
+### Priority 1: Guard `odds_harvest_pipeline.js` ✅ COMPLETED
 
-- **Risk:** HIGH — real DB write path, browser automation, NO guard
-- **Action:** Add `assertDbWriteAllowed()` before UPSERT_MAPPING_SQL and UPSERT_ODDS_SQL
-  execution, following the same pattern as `odds_sniper.js` (Phase 1)
-- **Verification:** Static test confirming guard call; changed-files enforcement pass
-- **Blocked by:** This design phase (current PR)
+- **Status:** Completed by `shared_module_db_write_boundary_implementation_phase1`.
+- **Guard location:** `upsertMappingAndOdds()` function, after `if (options.dryRun) return` check, before `client.query('BEGIN')` transaction.
+- **Target tables:** `matches_oddsportal_mapping`, `odds`
+- **Operations:** INSERT, UPDATE (via UPSERT with ON CONFLICT DO UPDATE)
+- **Guard pattern:** `assertDbWriteAllowed({ script: 'odds_harvest_pipeline.js', tables: ['matches_oddsportal_mapping', 'odds'], operations: ['INSERT', 'UPDATE'] })`
+- **Verification:** Static test confirms guard import, call position (before BEGIN), table names, and operation names. Changed-files enforcement passes.
+- **Existing safety mechanisms preserved:** dryRun check remains before guard; production-like DB host hard block enforced by guard helper; Playwright/browser logic unchanged; scraper logic unchanged.
 
-### Priority 2: Guard `gatekeeper.js` and `gatekeeper.sh`
+### Priority 2: Guard `gatekeeper.js` and `gatekeeper.sh` — PENDING
 
 - **Risk:** MEDIUM — CI infrastructure, temp DB operations
 - **Action:** Add `assertDbWriteAllowed()` or equivalent guard before
   `runColdStartBlueprintCheck`. Consider whether the write probe (INSERT + ROLLBACK)
   itself needs guarding or whether the temp DB lifecycle is sufficient isolation.
 - **Verification:** Gatekeeper CI still passes after guard integration
-- **Blocked by:** This design phase (current PR)
+- **Blocked by:** Needs dedicated implementation task.
 
-### Priority 3: Review 8 `needs_manual_review` consumers
+### Priority 3: Review 8 `needs_manual_review` consumers — PENDING
 
 - **Risk:** LOW–MEDIUM — uncertain write capability
 - **Action:** Individually review each of the 8 consumers flagged as `needs_manual_review`
   in the consumer map. For each, determine: does it have its own Pool? Does it execute
   its own write SQL? Is it already guarded? Should it be guarded?
 - **Verification:** Updated consumer map with resolved classifications
-- **Blocked by:** This design phase (current PR)
+- **Blocked by:** Needs dedicated manual review task.
 
-### Priority 4: Future consumer checklist for `restoreMappingsWorkflow.js`
+### Priority 4: Future consumer checklist for `restoreMappingsWorkflow.js` — PENDING
 
 - **Risk:** LOW — 0 active consumers today
 - **Action:** When a consumer of `restoreMappingsWorkflow.js` is first written, ensure it
@@ -379,11 +381,12 @@ In priority order for a follow-up `shared_module_db_write_boundary_implementatio
 ## SC-002 Status Impact
 
 - **SC-002 remains partial mitigation only.**
-- This design phase maps the boundary but does NOT implement any guard.
-- 2 new unguarded entrypoints discovered: `odds_harvest_pipeline.js` (HIGH) and
-  `gatekeeper.js`/`gatekeeper.sh` (MEDIUM).
-- `odds_harvest_pipeline.js` was NOT in the original 43 skipped_complex audit. It
-  represents a real coverage gap.
-- 3 shared modules now have `design_mapped` status (previously `shared_module_no_execution`).
-- Consumer entrypoint landscape is fully mapped for the first time.
+- **1 HIGH priority guard implemented:** `odds_harvest_pipeline.js` now calls
+  `assertDbWriteAllowed()` before INSERT/UPSERT write SQL on `matches_oddsportal_mapping`
+  and `odds` tables. Guard follows the same pattern as `odds_sniper.js` (Phase 1).
+- **1 HIGH priority gap resolved:** `odds_harvest_pipeline.js` was NOT in the original
+  43 skipped_complex audit. It was discovered by the design phase and is now guarded.
+- **2 remaining gaps (MEDIUM):** `gatekeeper.js` / `gatekeeper.sh` still pending.
+- **8 needs_manual_review consumers** still pending.
+- **3 shared modules** remain `design_mapped` (no module-level guard change).
 - Training, data expansion, real DB write, scraper/browser remain BLOCKED.

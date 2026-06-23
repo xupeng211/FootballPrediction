@@ -9,6 +9,7 @@ const { Pool } = require('pg');
 
 const { ReconPureDecryptor } = require('../../src/infrastructure/recon/services/ReconPureDecryptor');
 const { EntityMapper } = require('../../src/infrastructure/etl/EntityMapper');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 const {
   COVERAGE_SQL,
   CURRENT_BOOKMAKER,
@@ -510,6 +511,12 @@ async function upsertMappingAndOdds(match, event, oddsSnapshots, season, options
   if (options.dryRun) {
     return;
   }
+
+  assertDbWriteAllowed({
+    script: 'odds_harvest_pipeline.js',
+    tables: ['matches_oddsportal_mapping', 'odds'],
+    operations: ['INSERT', 'UPDATE']
+  });
 
   const client = await pool.connect();
   try {

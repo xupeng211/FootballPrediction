@@ -191,8 +191,9 @@ Previously classified as `shared_module_no_execution`.
   (`repository.saveOddsPortalMapping`). Built-in `dryRun` support. No direct DB client.
 - `odds_harvest_pipeline.shared.js` — shared odds harvest pipeline with SQL templates
   (UPSERT_MAPPING_SQL, UPSERT_ODDS_SQL). **2 consumers mapped:** `odds_sniper.js`
-  (guarded, Phase 1 ✅) and `odds_harvest_pipeline.js` (⚠️ UNGUARDED — CLI entrypoint
-  with Pool + write SQL + Playwright, no `assertDbWriteAllowed()`, NOT in prior audit).
+  (guarded, Phase 1 ✅) and `odds_harvest_pipeline.js` (✅ **now guarded by
+  `shared_module_db_write_boundary_implementation_phase1`** — `assertDbWriteAllowed()`
+  in `upsertMappingAndOdds()` before BEGIN).
 
 **Key insight updated:** Shared modules should not independently guard themselves because
 most consumers only use read-only functions and a module-level guard would break them.
@@ -269,7 +270,7 @@ active wrappers, or policy/regex keyword only).
 |---|---|---|---|---|---|---|---|
 | 12 | scripts/ops/helpers/dbBlueprint.js | Yes | Yes | Yes | No | ~~shared_module_no_execution~~ → **design_mapped** | DB schema/migration helper with write-capable functions (runColdStartBlueprintCheck, ensureBlueprintOnCurrentDatabase, runBlueprintWriteProbe). 24 consumers mapped: 2 unguarded (gatekeeper.js/sh), 1 guarded (db_vault.js), 18 read-only only, 3 needs_manual_review. Design phase complete — guard at consumer entrypoint. |
 | 13 | scripts/ops/helpers/restoreMappingsWorkflow.js | No | Yes | No | No | ~~shared_module_no_execution~~ → **design_mapped** | Restore mappings helper with dependency-injected write path. 0 active consumers. Built-in dryRun support. Design phase complete — guard at consumer entrypoint when first consumer written. |
-| 14 | scripts/ops/odds_harvest_pipeline.shared.js | No | Yes | Yes | No | ~~shared_module_no_execution~~ → **design_mapped** | Shared odds harvest pipeline with write SQL templates (UPSERT_MAPPING_SQL, UPSERT_ODDS_SQL). 2 consumers: odds_sniper.js (guarded ✅) and odds_harvest_pipeline.js (⚠️ UNGUARDED — CLI entrypoint, not in prior audit). Design phase complete — guard at consumer entrypoint. |
+| 14 | scripts/ops/odds_harvest_pipeline.shared.js | No | Yes | Yes | No | ~~shared_module_no_execution~~ → **design_mapped** → **consumer_guarded** | Shared odds harvest pipeline with write SQL templates. 2 consumers: odds_sniper.js (guarded ✅) and odds_harvest_pipeline.js (✅ now guarded by implementation_phase1 — `assertDbWriteAllowed()` in `upsertMappingAndOdds()`). Design + implementation complete for this module. |
 
 ### Category: dry_run_or_audit (8)
 
@@ -332,12 +333,12 @@ These 14 scripts have **no detected DB client** and are likely safe from DB writ
 these scripts import helper modules (`pageprops_v2_no_write_preview.js` is imported by
 controlled write scripts) that may provide DB access indirectly.
 
-### Shared Modules (3 scripts — now design_mapped)
+### Shared Modules (3 scripts — 1 consumer guarded in implementation phase1)
 
-Boundary design complete. See `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` for full
-consumer map. Key outcome: 1 high-risk unguarded consumer discovered
-(`odds_harvest_pipeline.js`) that was missed by all prior guard phases and the
-skipped_complex audit.
+Boundary design complete. `odds_harvest_pipeline.js` (HIGH priority unguarded consumer
+of `odds_harvest_pipeline.shared.js`) now guarded by `shared_module_db_write_boundary_implementation_phase1`.
+Gatekeeper scripts and 8 needs_manual_review consumers remain pending.
+See `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` for full consumer map.
 
 ### Needs Manual Review (4 scripts)
 
