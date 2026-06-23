@@ -317,9 +317,23 @@ Last updated: 2026-06-23
   - **No runtime behavior changed.** No target script executed. No DB connection.
     No real DB write. No scraper/browser. SC-002 remains partial mitigation only.
   - Training, data expansion, real DB write remain BLOCKED.
+- **python_sql_migration_enforcement_implementation_phase2A** (this PR): Python static
+  scanner + allowlist + AI Workflow Gate changed-files enforcement implemented.
+  - New scanner: `scripts/ops/python_db_write_static_enforcement.py`
+  - New allowlist: `config/python_db_write_allowlist.json` (27 historical baseline entries)
+  - AI Workflow Gate integration: `check_python_db_write_enforcement()` in
+    `scripts/ops/ai_workflow_gate.py`
+  - Changed-files enforcement: new/modified Python files with DB write signals fail CI
+    unless in allowlist with complete metadata
+  - Scanner supports: JSON output, allowlist, changed-files mode, full-scan mode,
+    comment/docstring awareness
+  - **No runtime guard implemented.** No target script executed. No DB connection.
+    No real DB write. SC-002 remains partial mitigation only.
+  - Training, data expansion, real DB write remain blocked.
 6. Next recommended tasks (in priority order):
-   - `python_sql_migration_enforcement_implementation_phase2A` — Python static scanner
-     and changed-files enforcement (based on design phase1 classification)
+   - `python_runtime_guard_implementation_phase2C` — Python runtime guard helper
+     for the 14 confirmed + 8 indirect write paths
+   - `sql_migration_policy_implementation_phase2B` — SQL migration policy scanner
    - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
      checklists

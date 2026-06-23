@@ -414,6 +414,9 @@ All 9 needs_manual_review shared-module consumers also reviewed and reclassified
   covers `scripts/ops/**/*.js` files only. Python scripts, SQL migration files, and migration
   runner scripts are inventoried and classified in
   `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` (python_sql_migration_enforcement_design_phase1).
+  Phase2A (python_sql_migration_enforcement_implementation_phase2A) has now implemented a Python
+  static scanner (`scripts/ops/python_db_write_static_enforcement.py`), allowlist
+  (`config/python_db_write_allowlist.json`), and AI Workflow Gate changed-files enforcement.
   The JS-side complete status does NOT imply Python/SQL/migration enforcement is complete.
 - **43/66 scripts are guarded. All 20 originally identified confirmed write paths are now resolved:**
   - **6 guarded** (Phase1: 2, Phase2 batch1: 3, Phase2 batch2: 1)

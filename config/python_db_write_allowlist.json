@@ -1,0 +1,262 @@
+{
+  "_description": "Python DB Write Allowlist — historical baseline. ALLOWLIST DOES NOT AUTHORIZE RUNTIME DB WRITES. Each entry is a pre-existing file with DB write risk that was classified in python_sql_migration_enforcement_design_phase1. New or modified Python files with DB write signals that are NOT in this allowlist will fail CI changed-files enforcement.",
+  "_created": "2026-06-23",
+  "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
+  "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+  "_sc002_status": "partial mitigation only",
+  "_runtime_guard_status": "NOT IMPLEMENTED — historical baseline only",
+  "entries": [
+    {
+      "path": "src/database/schema_manager.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Schema DDL + data DML: CREATE TABLE, ALTER TABLE, DROP TRIGGER, INSERT, UPDATE, execute_values bulk insert. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "psycopg2 import + execute_values + CREATE TABLE/INSERT/UPDATE in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #163.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/database/sql_store.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Core data write store: INSERT INTO matches, INSERT INTO raw_match_data, INSERT INTO matches_mapping, UPDATE matches with ON CONFLICT DO UPDATE. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "psycopg2 via pool + execute + INSERT/UPDATE with ON CONFLICT in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #164.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/database/match_repository.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Match data write repository: INSERT INTO matches_mapping, ON CONFLICT DO UPDATE, commit/rollback. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "psycopg2 import + execute + INSERT/ON CONFLICT + commit/rollback in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #165.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/database/oddsportal_db_manager.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Oddsportal mapping data write: INSERT/UPDATE for oddsportal data. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "psycopg2 via pool + INSERT/UPDATE in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #166.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/database/collector_repository.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Data collector write path: INSERT operations via asyncpg/DatabasePool. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "asyncpg via DatabasePool + INSERT in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #167.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/database/sync_db_pool.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Sync connection pool infrastructure with write capability. Provides connections to all writer paths. No Python guard equivalent. RISK: MEDIUM.",
+      "evidence": "psycopg2 pool + connection creation. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #168.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Infrastructure file. Guard at connection-provider level or ensure all consumers are guarded."
+    },
+    {
+      "path": "src/database/db_pool.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Async connection pool infrastructure with write capability. Provides connections to all writer paths. No Python guard equivalent. RISK: MEDIUM.",
+      "evidence": "asyncpg pool + connection creation. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #169.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Infrastructure file. Guard at connection-provider level or ensure all consumers are guarded."
+    },
+    {
+      "path": "src/data/streaming/streaming_db_writer.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Streaming DB writer: DataFrame.to_sql() for streaming data writes. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "pandas + DatabasePool + to_sql in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #170.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/core/database/odds_injector.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Odds data injection. Has dry_run references but uncertain default and no gate. RISK: MEDIUM.",
+      "evidence": "Via repository + dry_run params but no env gate. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #171.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Verify dry_run default and add env gate in Phase 2C."
+    },
+    {
+      "path": "scripts/maintenance/database_detox.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Destructive maintenance script: DELETE/UPDATE operations on database. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "psycopg2 + execute + DELETE/UPDATE in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #172.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "scripts/maintenance/reset_l2_collection.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Destructive reset script: L2 data reset operations. Has dry_run refs but default uncertain. RISK: HIGH.",
+      "evidence": "psycopg2 + execute + TRUNCATE in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #173.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "scripts/maintenance/odds_integrity_guard.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Odds integrity guard with possible corrective writes. No Python guard equivalent. RISK: MEDIUM.",
+      "evidence": "Via config + possible corrective writes. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #174.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized."
+    },
+    {
+      "path": "scripts/maintenance/integrity_guard.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "General integrity guard with possible corrective writes. No Python guard equivalent. RISK: MEDIUM.",
+      "evidence": "psycopg2 + execute + possible corrective writes. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #175.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized."
+    },
+    {
+      "path": "scripts/ops/fotmob_registry_seed_dev_execution.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "FotMob registry seed INSERT. Has --require-dev-db flag but no env gate. RISK: HIGH.",
+      "evidence": "psycopg2 + execute + INSERT in executable code. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #176.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Must be guarded in Phase 2C before any real DB write is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/database/migrations/env.py",
+      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
+      "reason": "Alembic migration orchestrator. Can execute arbitrary DDL/DML via alembic upgrade. No Python guard equivalent. RISK: HIGH.",
+      "evidence": "sqlalchemy + alembic + migration execution. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #369.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "sql_migration_policy_implementation_phase2B",
+      "expires_or_review_note": "Must be guarded in Phase 2B before any migration is authorized. Do NOT mark safe."
+    },
+    {
+      "path": "src/services/match_aligner.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "May trigger match alignment writes via MatchRepository. Indirect write path. RISK: MEDIUM.",
+      "evidence": "Imports from match_repository. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #185.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C."
+    },
+    {
+      "path": "src/services/match_linker.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "May trigger match linking writes via MatchRepository. Indirect write path. RISK: MEDIUM.",
+      "evidence": "Imports from match_repository. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #186.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C."
+    },
+    {
+      "path": "src/services/match_data_service.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "Match data service; may write via repository. Indirect write path. RISK: MEDIUM.",
+      "evidence": "Via config + repository layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #187.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C."
+    },
+    {
+      "path": "src/services/league_router.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "League routing; may write via repository. Indirect write path. RISK: LOW.",
+      "evidence": "Via config + repository layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #188.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority."
+    },
+    {
+      "path": "src/api/collectors/odds_api_client_v38.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "API client for odds collection; may write via collector. Indirect write path. RISK: LOW.",
+      "evidence": "Via config + collector layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #189.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority."
+    },
+    {
+      "path": "scripts/maintenance/reprocess_failed_matches.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "Reprocess failed matches; has dry_run refs but uncertain default. Indirect write path. RISK: MEDIUM.",
+      "evidence": "Via config + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #190.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C."
+    },
+    {
+      "path": "scripts/maintenance/clean_corrupt_l2.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "Clean corrupt L2 data; has dry_run refs but uncertain default. RISK: MEDIUM.",
+      "evidence": "psycopg2 + execute + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #191.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C."
+    },
+    {
+      "path": "scripts/maintenance/fix_zombie_matches.py",
+      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
+      "reason": "Fix zombie matches; has dry_run refs but uncertain default. RISK: MEDIUM.",
+      "evidence": "psycopg2 + execute + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #192.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_runtime_guard_implementation_phase2C",
+      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C."
+    },
+    {
+      "path": "scripts/maintenance/reprocess_from_local.py",
+      "classification": "historical_python_needs_manual_review",
+      "reason": "Has DB config import; write path unclear from static scan. Needs deeper analysis. Do NOT mark safe.",
+      "evidence": "DB config import detected. Write path unclear. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #279.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_manual_review_phase2D",
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+    },
+    {
+      "path": "scripts/maintenance/fotmob_historical_backfill.py",
+      "classification": "historical_python_needs_manual_review",
+      "reason": "Historical backfill; may have INSERT capability. Needs deeper analysis. Do NOT mark safe.",
+      "evidence": "May have write capability for backfill operations. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #280.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_manual_review_phase2D",
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+    },
+    {
+      "path": "src/api/monitoring/prometheus_metrics.py",
+      "classification": "historical_python_needs_manual_review",
+      "reason": "Monitoring with DB queries; may write for metrics storage. Ambiguous signals. Do NOT mark safe.",
+      "evidence": "DB queries + possible write for metrics. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #281.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_manual_review_phase2D",
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+    },
+    {
+      "path": "src/api/monitoring.py",
+      "classification": "historical_python_needs_manual_review",
+      "reason": "API monitoring; DB access pattern unclear. May be read-only health checks or may write. Do NOT mark safe.",
+      "evidence": "DB access pattern ambiguous. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #282.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_manual_review_phase2D",
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+    },
+    {
+      "path": "scripts/tools/diagnose_diagnostic.py",
+      "classification": "historical_python_needs_manual_review",
+      "reason": "Diagnostic tool; may have DB write for auto-fix operations. Ambiguous signals. Do NOT mark safe.",
+      "evidence": "May have write operations for auto-fix. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #283.",
+      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
+      "owner_task": "python_manual_review_phase2D",
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+    }
+  ]
+}
