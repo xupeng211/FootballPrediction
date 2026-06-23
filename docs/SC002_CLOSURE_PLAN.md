@@ -42,6 +42,7 @@ are satisfied.
 | Categorized breakdown | pageprops_pipeline: 9, fotmob_pipeline: 2, shared_module: 3, dry_run_or_audit: 8 |
 | Additional browser/Playwright skipped_complex (not in allowlist) | 21 |
 | Total skipped_complex | 43 |
+| Confirmed write paths guarded | 6 of 6 real (14 false positives reclassified in allowlist_cleanup_phase1) |
 | Changed-files enforcement | hard fail (active) |
 | Production-like DB host hard block | enabled |
 | Real DB write authorization | no |
@@ -358,11 +359,31 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   integration. The "dry_run", "audit", and "browser/Playwright" labels from the scanner
   were unreliable — many such scripts actually import DB clients and contain write SQL.
 
-### 2. confirmed_write_path_guard_phase (IN PROGRESS — 6 of 20 completed)
+### 3. sc002_allowlist_cleanup_phase1 ✅ COMPLETED
+
+- **Status:** Completed (this PR). Static test file: `tests/unit/sc002_allowlist_cleanup_phase1_static.test.js`.
+- **Results:** 15 scripts formally reclassified from confirmed_write_path_needs_guard
+  to verified false positive categories:
+  - 11 false_positive_select_only_with_active_wrapper (queryReadOnly/safeSelect wrappers)
+  - 2 false_positive_read_only_transaction (BEGIN READ ONLY + assertSelectOnlySql)
+  - 1 false_positive_no_db_connection_static_scan (no pg import)
+  - 1 false_positive_policy_or_regex_keyword_only (INSERT in policy string only)
+- **Key finding:** 14 of the 15 remaining "confirmed_write_path_needs_guard" scripts
+  were false positives — they have active SELECT-only wrappers, READ ONLY transactions,
+  or no DB connection. 0 scripts remain unguarded with confirmed DB write capability.
+  SC-002 remains partial mitigation only (4 needs_manual_review, 3 shared_module, 1
+  possible_indirect_write, plus Python/SQL/migration enforcement not yet designed).
+- **This cleanup does NOT:**
+  - Guard any scripts (that was Phase1/Phase2)
+  - Close SC-002
+  - Unlock training, data expansion, or real DB write
+  - Review the 4 needs_manual_review scripts
+
+### 2. confirmed_write_path_guard_phase (COMPLETED — 6 of 6 real write paths guarded)
 
 - **Status:** Phase 1 (high-risk browser+DB) completed (#1586). Phase 2 batch 1
   (controlled-write scripts) completed (#1587). Phase 2 batch 2 (FotMob raw JSON DB
-  storage) completed (this PR).
+  storage) completed (#1589).
   - Phase 1 (2 scripts): `odds_sniper.js`, `fixture_harvester_l1.js`
   - Phase 2 batch 1 (3 scripts): `pageprops_v2_single_target_controlled_write.js`,
     `remaining_seeded_pageprops_v2_controlled_write.js`,
@@ -371,10 +392,9 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Phase 2 batch 2 (1 script): `fotmob_adg60_raw_json_db_storage_no_feature_parse.js` —
     INSERT INTO fotmob_raw_match_payloads with ON CONFLICT DO UPDATE, guard added
     before INSERT query
-- **Remaining:** 14 confirmed write paths still need guard integration. Deep static
-  analysis of remaining scripts during batch2 revealed that many are false positives
-  (SELECT-only with active SQL enforcement wrappers, or no DB connection). Audit
-  reclassification recommended before further batches.
+- **All 6 real confirmed write paths now guarded.** The remaining 14 scripts from the
+  original 20 "confirmed_write_path" classification were reclassified as false positives
+  by sc002_allowlist_cleanup_phase1. 0 still_needs_guard remain.
 - **Acceptance criteria:** Each script calls `assertDbWriteAllowed()` before every write
   operation. Static tests confirm guard coverage. Scanner detects guard calls. changed-files
   enforcement passes.
