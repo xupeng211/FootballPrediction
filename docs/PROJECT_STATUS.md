@@ -70,6 +70,15 @@ Last updated: 2026-06-22
   `single_league_pageprops_v2_controlled_write_execute.js`.
   Remaining confirmed_write_path_needs_guard: 15 of 20.
   SC-002 remains partial mitigation only.
+- **confirmed_write_path_guard_phase2_batch2** (this PR): Guard integration for 1
+  FotMob raw JSON DB storage script with INSERT INTO fotmob_raw_match_payloads:
+  `fotmob_adg60_raw_json_db_storage_no_feature_parse.js`.
+  Now calls `assertDbWriteAllowed()` before INSERT query.
+  6 confirmed write paths guarded. Remaining: 14 of 20.
+  Deep static analysis revealed that 10+ of the remaining
+  "confirmed_write_path_needs_guard" scripts are false positives (SELECT-only with
+  active SQL enforcement wrappers, or no DB connection at all).
+  SC-002 remains partial mitigation only.
 - Remaining 22 complex candidates categorized into:
   - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
   - `fotmob_pipeline` (2): FotMob ingestion scripts
@@ -204,9 +213,12 @@ Last updated: 2026-06-22
    Remaining 43 complex candidates categorized (22 in allowlist + 21 browser, NOT fixed).
    SC-002 remains partial mitigation only.
 5. Next recommended tasks (in priority order):
-   - `confirmed_write_path_guard_phase` — 5 of 20 confirmed write paths now guarded
-     (Phase1: 2 browser+DB, Phase2 batch1: 3 controlled-write). 15 remaining.
-     Controlled-write scripts standardized. Continue with remaining batches.
+   - `confirmed_write_path_guard_phase` — 6 of 20 confirmed write paths now guarded
+     (Phase1: 2 browser+DB, Phase2 batch1: 3 controlled-write, Phase2 batch2: 1 FotMob
+     raw JSON DB storage). 14 remaining. Deep static analysis of remaining scripts
+     revealed many are false positives (SELECT-only with active SQL enforcement
+     wrappers, or no DB connection). Continue with remaining batches after
+     re-auditing classifications.
    - `shared_module_db_write_boundary_design_phase1` — design boundary enforcement for
      3 shared modules and map all consumer entrypoints
    - `sc002_allowlist_cleanup_phase1` — update allowlist to reflect audit findings;
