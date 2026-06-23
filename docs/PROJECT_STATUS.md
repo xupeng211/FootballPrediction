@@ -18,7 +18,7 @@ Last updated: 2026-06-23
   3. **CI / AI Workflow Gate**: `scripts/ops/ai_workflow_gate.py` enforces:
      - New required sections: `## SC-002 status`, `## Remaining risks`
      - Forbidden rewrite file patterns (`*_v2.py`, `*_final.js`, etc.) for new files
-     - Forbidden safety claims (`safe to train`, `production ready`, etc.)
+     - Forbidden safety claims (prematurely declaring SC-002 resolved or training/DB write unblocked)
      - Large risky change detection (deletion/rename/scanner-count thresholds)
      - Existing gates preserved (Phase2A Python, Phase2B SQL, Phase2 JS DB write)
   - SC-002 remains partial mitigation only.
@@ -296,13 +296,15 @@ Last updated: 2026-06-23
 3. Static enforcement dry-run scanner deployed for coverage auditing.
 4. Changed-files hard fail enabled for new/modified unguarded scripts/ops JS files.
 5. **All JS-level guard work is now complete.**
-6. **Python Phase2A static scanner + Phase2B SQL scanner completed.**
-7. **Python Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths).**
-8. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
+6. **python_sql_migration_enforcement_design_phase1** — Python/SQL/migration enforcement
+   design completed. See `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`.
+7. **Python Phase2A static scanner + Phase2B SQL scanner completed.**
+8. **Python Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths).**
+9. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
    discipline codified: resident rules (CLAUDE.md), PR template checklist, CI gate
    enforcement. Future tasks can reference these standing rules instead of long prompts.
-9. SC-002 remains partial mitigation only.
-10. Next recommended tasks (in priority order):
+10. SC-002 remains partial mitigation only.
+11. Next recommended tasks (in priority order):
     - `python_runtime_guard_implementation_phase2C_batch2` — guard remaining 11
       confirmed Python write paths
     - `python_indirect_write_path_design_phase1` — design approach for 8 indirect
