@@ -355,7 +355,6 @@ class TestGuardHelperIntegrity:
         if _guard_path not in sys.path:
             sys.path.insert(0, _guard_path)
         from helpers.python_db_write_guard import (
-            DbWriteBlockedError,
             assert_db_write_allowed,
             describe_required_gates,
             is_dry_run,
