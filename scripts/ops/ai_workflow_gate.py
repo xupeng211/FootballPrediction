@@ -44,21 +44,11 @@ NEXT_TASK_MANDATORY_PHRASES: tuple[str, ...] = (
 DANGEROUS_NETWORK_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE)
     for p in (
-        r"\baxios\b",
-        r"\bnode-fetch\b",
-        r"""require\s*\(\s*['"]got['"]\s*\)""",
-        r"""from\s+['"]got['"]""",
-        r"""import\s+got\b""",
-        r"\bhttp\.request\b",
-        r"\bhttps\.request\b",
-        r"\brequests\.get\b",
-        r"\brequests\.post\b",
-        r"\brequests\.put\b",
-        r"\brequests\.delete\b",
-        r"\bhttpx\.get\b",
-        r"\bhttpx\.post\b",
-        r"\baiohttp\b",
-        r"\bcurl_cffi\b",
+        r"\b(?:axios|node-fetch|aiohttp|curl_cffi)\b",
+        r"""require\s*\(\s*['"]got['"]\s*\)|from\s+['"]got['"]|import\s+got\b""",
+        r"\bhttps?\.request\b",
+        r"\brequests\.(?:get|post|put|delete)\b",
+        r"\bhttpx\.(?:get|post)\b",
         r"\bfetch\s*\(",
     )
 )
@@ -66,18 +56,11 @@ DANGEROUS_NETWORK_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
 DANGEROUS_BROWSER_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p, re.IGNORECASE)
     for p in (
-        r"""require\s*\(\s*['"]playwright['"]\s*\)""",
-        r"""from\s+['"]playwright['"]""",
-        r"""import\s+playwright\b""",
-        r"""require\s*\(\s*['"]puppeteer['"]\s*\)""",
-        r"""from\s+['"]puppeteer['"]""",
-        r"""import\s+puppeteer\b""",
-        r"""require\s*\(\s*['"]selenium-webdriver['"]\s*\)""",
-        r"""from\s+['"]selenium['"]""",
-        r"""import\s+selenium\b""",
+        r"""require\s*\(\s*['"](?:playwright|puppeteer|selenium-webdriver)['"]\s*\)""",
+        r"""from\s+['"](?:playwright|puppeteer|selenium)['"]""",
+        r"""import\s+(?:playwright|puppeteer|selenium)\b""",
         r"\bchromium\.launch\b",
-        r"\bbrowser\.new_page\b",
-        r"\bpage\.goto\b",
+        r"\b(?:browser\.new_page|page\.goto)\b",
     )
 )
 
@@ -87,17 +70,10 @@ DANGEROUS_DB_WRITE_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
         r"\bINSERT\s+INTO\b",
         r"\bUPDATE\s+\w+\s+SET\b",
         r"\bDELETE\s+FROM\b",
-        r"\bexecute\s*\(.*INSERT",
-        r"\bexecute\s*\(.*UPDATE",
-        r"\bexecute\s*\(.*DELETE",
+        r"\bexecute\s*\(.*(?:INSERT|UPDATE|DELETE)",
         r"\bexecutemany\s*\(",
-        r"\bdb\.write\b",
-        r"\bdb\.execute\b",
-        r"\bconnection\.execute\b",
-        r"\bcursor\.execute\b",
-        r"\.query\s*\(\s*['\"]\s*INSERT",
-        r"\.query\s*\(\s*['\"]\s*UPDATE",
-        r"\.query\s*\(\s*['\"]\s*DELETE",
+        r"\b(?:db|connection|cursor)\.execute\b",
+        r"\.query\s*\(\s*['\"]\s*(?:INSERT|UPDATE|DELETE)",
     )
 )
 
@@ -112,11 +88,8 @@ DANGEROUS_BYPASS_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
 PROXY_BYPASS_RAW_IMPORTS: tuple[re.Pattern[str], ...] = tuple(
     re.compile(p)
     for p in (
-        r"""require\s*\(\s*['"]axios['"]\s*\)""",
-        r"""require\s*\(\s*['"]node-fetch['"]\s*\)""",
-        r"""require\s*\(\s*['"]got['"]\s*\)""",
-        r"""from\s+['"]axios['"]""",
-        r"""from\s+['"]node-fetch['"]""",
+        r"""require\s*\(\s*['"](?:axios|node-fetch|got)['"]\s*\)""",
+        r"""from\s+['"](?:axios|node-fetch)['"]""",
         r"""import\s+axios\b""",
         r"""import\s+fetch\s+from""",
     )
@@ -740,7 +713,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str] | None = None) -> int:
+def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
     """Run AI workflow gate checks and exit 0 (pass) or 1 (fail)."""
     parser = build_parser()
     args = parser.parse_args(argv)
@@ -785,6 +758,23 @@ def main(argv: list[str] | None = None) -> int:
         sys.stdout.write(f"[DB-WRITE-GUARD ENFORCEMENT] scanner error: {exc}\n")
         if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
             errors.append(f"[DB-WRITE-GUARD ENFORCEMENT] fail-closed in CI: {exc}")
+    # 9. Python DB write enforcement — Phase2A
+    try:
+        import importlib.util  # noqa: PLC0415
+
+        h = Path(__file__).resolve().parent / "helpers" / "python_db_write_enforcement_check.py"
+        if not h.exists():
+            h = Path.cwd() / "scripts" / "ops" / "helpers" / "python_db_write_enforcement_check.py"
+        if h.exists():
+            s = importlib.util.spec_from_file_location("_pydbw", str(h))
+            if s and s.loader:
+                m = importlib.util.module_from_spec(s)
+                s.loader.exec_module(m)
+                m.run_python_db_write_gate_check(changed, errors)
+    except Exception as exc:
+        sys.stdout.write(f"[PYTHON-DB-WRITE ENFORCEMENT] scanner error: {exc}\n")
+        if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
+            errors.append(f"[PYTHON-DB-WRITE ENFORCEMENT] fail-closed in CI: {exc}")
 
     if errors:
         sys.stdout.write(f"FAIL: {len(errors)} AI workflow gate error(s)\n")

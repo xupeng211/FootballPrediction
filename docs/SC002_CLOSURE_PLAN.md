@@ -499,7 +499,20 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Phased implementation plan: Phase 2A (static scanner) → 2B (SQL migration policy) → 2C (Python guard helper) → 2D (manual review)
 - **No runtime behavior changed. No target script executed. No DB connection. No real DB write.**
 - **SC-002 remains partial mitigation only. Training, data expansion, real DB write remain blocked.**
-- **Next step:** `python_sql_migration_enforcement_implementation_phase2A` — Python static scanner and changed-files enforcement. Do not start automatically.
+- **Next step:** `python_sql_migration_enforcement_implementation_phase2A` ✅ **COMPLETED** (see below).
+
+### 5a. python_sql_migration_enforcement_implementation_phase2A ✅ COMPLETED
+
+- **Status:** Completed (this PR).
+- **Results:**
+  - Python static scanner: `scripts/ops/python_db_write_static_enforcement.py`
+  - Python DB write allowlist: `config/python_db_write_allowlist.json` (27 historical baseline entries)
+  - AI Workflow Gate integration: `check_python_db_write_enforcement()` in `scripts/ops/ai_workflow_gate.py`
+  - Changed-files enforcement: new/modified Python files with DB write signals fail CI unless in allowlist
+  - Scanner supports: JSON output, allowlist, changed-files mode, full-scan mode, comment/docstring awareness
+  - **No runtime guard implemented.** No target script executed. No DB connection. No real DB write.
+  - **SC-002 remains partial mitigation only. Training, data expansion, real DB write remain blocked.**
+- **Next step:** `python_runtime_guard_implementation_phase2C` — Python runtime guard helper for 14 confirmed + 8 indirect write paths. Or `sql_migration_policy_implementation_phase2B`. Do not start automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
 

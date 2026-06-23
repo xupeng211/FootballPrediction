@@ -3,16 +3,21 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-23
-- task: python_sql_migration_enforcement_design_phase1
+- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation)
+- implementation_status: Phase2A COMPLETED (2026-06-23)
+- scanner: scripts/ops/python_db_write_static_enforcement.py
+- allowlist: config/python_db_write_allowlist.json (27 entries)
+- gate_integration: check_python_db_write_enforcement() in scripts/ops/ai_workflow_gate.py
 
 ## Summary
 
-This is a **static design and classification document only**. It inventories all Python scripts
-and SQL migration files with DB write risk, classifies each based on static code evidence, and
-recommends an enforcement model for the Python / SQL / migration layer of SC-002.
+This document covers the **design and Phase2A implementation** of Python/SQL/migration
+SC-002 enforcement. Phase1 designed the enforcement model and classified all Python/SQL files.
+Phase2A implemented the Python static scanner, allowlist, and AI Workflow Gate changed-files
+enforcement. Runtime guard implementation is reserved for Phase2C.
 
-**This document does NOT:**
-- Implement any guard
+**This document and Phase2A implementation do NOT:**
+- Implement Python runtime guard (reserved for Phase2C)
 - Run any Python target script
 - Execute any SQL / migration
 - Connect to any database
@@ -443,13 +448,13 @@ Python files and SQL migration files, similar to what currently exists for JS fi
 
 **Recommended: Hybrid approach combining Options 1 + 2 + 4, phased over multiple implementation phases.**
 
-### Phase 2A: Python static scanner (Option 2 + 4)
+### Phase 2A: Python static scanner (Option 2 + 4) ✅ COMPLETED
 
-- Extend `db_write_guard_advisory_check.py` (or create a new Python scanner) to scan
-  `.py` files for DB write risk keywords
-- Create a Python DB write risk allowlist (similar to `db_write_guard_legacy_allowlist.json`)
-- Add Python changed-files enforcement to `ai_workflow_gate.py`
-- Historical Python files get advisory warnings; new/modified files get hard fail
+- **Status:** Implemented by `python_sql_migration_enforcement_implementation_phase2A` (PR #1597).
+- Scanner: `scripts/ops/python_db_write_static_enforcement.py` — scans `.py` files for DB write risk keywords, supports JSON output, allowlist, changed-files mode, full-scan mode, comment/docstring awareness
+- Allowlist: `config/python_db_write_allowlist.json` — 27 historical baseline entries (14 confirmed + 8 indirect + 5 manual review) with complete metadata
+- Gate integration: `check_python_db_write_enforcement()` in `scripts/ops/ai_workflow_gate.py` — new/modified Python files with DB write signals fail CI unless in allowlist
+- Historical Python files in allowlist pass with baseline status; new/modified files not in allowlist get hard fail
 
 ### Phase 2B: SQL migration policy scanner (Option 4)
 
