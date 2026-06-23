@@ -90,7 +90,7 @@ Last updated: 2026-06-23
   4 needs_manual_review remain unchanged. 3 shared_module unchanged. 1
   possible_indirect_write unchanged. SC-002 remains partial mitigation only.
   Training, data expansion, and real DB write remain blocked.
-- **shared_module_db_write_boundary_implementation_phase1** (this PR): HIGH priority
+- **shared_module_db_write_boundary_implementation_phase1** (#1592): HIGH priority
   guard implemented for `odds_harvest_pipeline.js` — the unguarded consumer discovered
   by the design phase. `assertDbWriteAllowed()` added in `upsertMappingAndOdds()` before
   BEGIN transaction, guarding INSERT/UPSERT on `matches_oddsportal_mapping` and `odds`
@@ -98,6 +98,19 @@ Last updated: 2026-06-23
   still pending. 8 needs_manual_review consumers still pending. No target script
   executed. No DB connection. No Playwright/browser run. SC-002 remains partial
   mitigation only. Training, data expansion, real DB write remain blocked.
+- **gatekeeper_boundary_implementation** (this PR): MEDIUM priority guard implemented
+  for `gatekeeper.js` and `gatekeeper.sh` — the CI infrastructure consumers of
+  `dbBlueprint.js`. Both entrypoints now call `assertDbWriteAllowed()` before
+  `runColdStartBlueprintCheck` (which triggers CREATE DATABASE, DROP DATABASE, and
+  INSERT write probe on `matches`, `raw_match_data`, `matches_oddsportal_mapping`).
+  Guard at consumer entrypoint, not module level. Guard pattern: `assertDbWriteAllowed({
+  script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
+  'matches_oddsportal_mapping'], operations: ['CREATE', 'DROP', 'INSERT'] })` (same
+  pattern for gatekeeper.sh with script 'gatekeeper.sh'). dbBlueprint.js unchanged.
+  No target script executed. No DB connection. No real DB write. No scraper/browser run.
+  No training. No data expansion. No schema migration. 8 needs_manual_review consumers
+  still pending. SC-002 remains partial mitigation only. Training, data expansion,
+  real DB write remain blocked.
 - **shared_module_db_write_boundary_design_phase1** (#1591): Static design of shared
   module DB write boundary completed. 3 shared modules mapped with full consumer
   entrypoint inventory:
