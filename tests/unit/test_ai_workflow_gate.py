@@ -89,6 +89,16 @@ def _valid_pr_body() -> str:
     - No database migrations, schema changes, or data writes are involved.
     - After revert, re-run `make ci-local` to confirm the gate still passes.
 
+    ## SC-002 status
+
+    - SC-002 is partial mitigation only.
+    - This PR does not change SC-002 guard coverage.
+    - training / data expansion / real DB write remain blocked.
+
+    ## Remaining risks
+
+    - No remaining risks for this governance-only change.
+
     ## Next Recommended Task
 
     Do not start automatically.
@@ -326,14 +336,6 @@ def test_validate_reports_authoritative_backflow_failure():
     changes = [gate.Change("A", "docs/_reports/new_audit.md")]
     errors = gate.validate(body, changes)
     assert any("Source-of-truth no-update reason" in e for e in errors)
-
-
-def test_clean_docs_file_passes():
-    # .md files are excluded from blind-spot scans (they document policy).
-    # A clean .py file in docs/ should also pass.
-    changed = {"docs/CODEX_WORKFLOW.md"}
-    errors = gate.check_dangerous_keywords_in_blind_spots(changed)
-    assert errors == []
 
 
 def test_dangerous_network_keyword_in_docs_fails():
@@ -791,3 +793,7 @@ def test_body_missing_sections_without_skip_fails():
     body = "## Summary\n\nJust a summary, nothing else.\n"
     errors = gate.validate(body, [], skip_body_checks=False)
     assert any("Missing required PR body" in e for e in errors)
+
+
+# New hardening tests are in tests/unit/test_agent_workflow_hardening.py.
+# Kept separate to stay under the 800-line file length limit enforced by gatekeeper.

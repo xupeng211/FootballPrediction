@@ -214,6 +214,37 @@ Commands and results:
 - [ ] No orphan helper/script without lifecycle
 - [ ] Tests protect runtime behavior where applicable
 
+## SC-002 status
+
+- SC-002 is partial mitigation only.
+- This PR does / does not change SC-002 guard coverage.
+- This PR does / does not claim SC-002 is complete.
+- training / data expansion / real DB write remain blocked.
+
+## Remaining risks
+
+- TBD
+
+## Agent Workflow Hardening Checklist
+
+Confirm every item. If any item is unchecked, explain why in the PR body.
+
+- [ ] I did not work directly on main
+- [ ] I started from clean latest origin/main
+- [ ] This PR has a narrow, declared scope
+- [ ] I did not rewrite unrelated modules
+- [ ] I did not create V2 / FINAL / rewritten / replacement / backup duplicates
+- [ ] I did not delete or move historical code without explicit cleanup scope
+- [ ] I did not run DB write scripts
+- [ ] I did not connect to DB for write operations
+- [ ] I did not run SQL / migration
+- [ ] I did not run scraper / browser / Playwright
+- [ ] I did not train or expand data
+- [ ] I did not mark partial mitigation as complete
+- [ ] I listed remaining risks
+- [ ] I waited for PR Gate to pass
+- [ ] I will verify post-merge main Gate before task completion
+
 ## Review Notes
 
 - Reviewer focus:

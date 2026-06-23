@@ -55,6 +55,7 @@ are satisfied.
 | Scraper / browser automation status | blocked |
 | Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); 11 confirmed + 8 indirect + 5 manual review remaining |
 | Runtime DB role / permission model | not fully validated |
+| Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 
 ## What Is Actually Protected
 
