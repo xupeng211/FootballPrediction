@@ -51,6 +51,15 @@ Current high-level status:
 - **JSON output**: `make pr-gate-local PR_BODY=/tmp/pr_body.md JSON=1` — machine-readable results.
 - See `scripts/ops/local_pr_gate_preflight.py` for the full implementation.
 
+## CI Watch Command
+
+- **禁止自定义 while true / sleep loop / Monitor 包装器监控 GitHub Actions CI。**
+- **统一使用** `make watch-pr PR=<number>` 等待 PR checks 完成。
+- 备选单次查询：`gh pr checks <number>`（不循环）。
+- 如果 `gh pr checks --watch` 在当前 gh 版本不可用，`make watch-pr` 会给出清晰提示并退出。
+- **不要因为 CI 监控命令失败而修改业务代码。**
+- **不要在 PR body / docs / scripts 中嵌入自定义 while true + gh pr checks + sleep loop 来监控 CI。**
+
 ## MCP permissions
 
 | Server | Permission | Allowed |
