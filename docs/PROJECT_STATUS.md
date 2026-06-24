@@ -5,6 +5,28 @@
 
 Last updated: 2026-06-25
 
+## runtime_db_role_permission_review_phase1 completed
+
+- **runtime_db_role_permission_review_phase1** — static review of DB role/permission model.
+  - Branch: `chore/runtime-db-role-permission-review-phase1`
+  - New review doc: `docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md`
+  - **This is a static audit/documentation task. No DB connection, no permission changes.**
+  - Key findings:
+    - **Single universal user:** `football_user` used for ALL roles (app, migration, ingestion,
+      training, maintenance, CI) — full DDL + DML on all tables.
+    - **One read-only user exists:** `claude_reader` for MCP only (good practice, limited scope).
+    - **No privilege separation:** Migration (DDL) and runtime (DML) use the same user.
+    - **No least privilege:** Ingestion, training, and maintenance each have full DB access.
+    - **Hardcoded dev credentials** in `docker-compose.dev.yml` and `init_claude_reader.sql`
+      (acceptable for dev, not for production).
+    - **Application-layer only protection:** All write safety relies on env-var gates;
+      no DB-layer role restrictions as defense-in-depth.
+  - Recommended target model: 6 specialized roles (owner, app, ingestion, training, reader,
+    gatekeeper) with least-privilege grants.
+  - Next step: Apply role model in Docker dev environment as proof-of-concept.
+  - SC-002 remains partial mitigation only. Criterion #6 now reviewed (remains unmet for implementation).
+  - Training / data expansion / real DB write remain blocked.
+
 ## sc002_overall_closure_assessment completed
 
 - **sc002_overall_closure_assessment** — per-criterion gap analysis of SC-002 closure.
