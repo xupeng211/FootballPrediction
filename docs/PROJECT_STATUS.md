@@ -323,21 +323,29 @@ Last updated: 2026-06-24
     - 5 later_needs_design identified (odds_integrity_guard.py, integrity_guard.py,
       sql_store.py, sync_db_pool.py, db_pool.py — unclear write boundaries)
     - 5 confirmed write paths remain pending. 8 indirect still pending. 5 manual review still pending.
-11. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
+11. **Python Confirmed Write Paths Design Phase2C Batch4 completed (this PR)** — static
+    design analysis of all 5 remaining confirmed Python write paths. No runtime guard
+    added (design/classification task only). Key outcomes:
+    - **2 read_only_candidate:** odds_integrity_guard.py (SELECT-only, DELETE is print diagnostic),
+      integrity_guard.py (SELECT COUNT/LEFT JOIN only, fix commands are shell)
+    - **3 infrastructure_only_needs_caller_guard:** sql_store.py (SQL string constants, no execution),
+      sync_db_pool.py (generic execute+commit, guard at callers), db_pool.py (generic async execute,
+      guard at callers; 2 write callers already guarded in batch3)
+    - See `docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md` for full analysis.
+    - **0 new runtime guards added. 0 files marked safe.**
+    - **SC-002 remains partial mitigation only. training / data expansion / real DB write remain blocked.**
+12. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
    discipline codified: resident rules (CLAUDE.md), PR template checklist, CI gate
    enforcement. Future tasks can reference these standing rules instead of long prompts.
-12. SC-002 remains partial mitigation only.
-13. Next recommended tasks (in priority order):
-    - `python_runtime_guard_implementation_phase2C_batch4` — 5 remaining confirmed
-      write paths (all later_needs_design — require design work before guard integration)
-    - `python_indirect_write_path_design_phase1` — design approach for 8 indirect
-      write paths
+13. SC-002 remains partial mitigation only.
+14. Next recommended tasks (in priority order):
+    - Consumer-level guard for sync_db_pool/db_pool callers — inventory and guard write callers
+    - `python_indirect_write_path_design_phase1` — design approach for 8 indirect write paths
     - `python_manual_review_phase2D` — review 5 manual review candidates
     - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
-    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification
-      checklists
-14. Keep formal training and data expansion blocked until DB write safety resolved
+    - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification checklists
+15. Keep formal training and data expansion blocked until DB write safety resolved
     and release gate criteria met.
-15. Do not start model training, data expansion, raw-write work, scraper/browser
+16. Do not start model training, data expansion, raw-write work, scraper/browser
     automation automatically.
-16. Do not start automatically. Recommended next task only after user confirmation.
+17. Do not start automatically. Recommended next task only after user confirmation.

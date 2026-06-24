@@ -53,7 +53,7 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1 runtime guard completed (3 of 14 confirmed Python write paths guarded); Phase2C batch2 runtime guard completed (3 more, 6 of 14 total); Phase2C batch3 runtime guard completed (3 more, 9 of 14 total); 5 confirmed + 8 indirect + 5 manual review remaining (5 later_needs_design identified) |
+| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed (9 of 14 confirmed Python write paths runtime guarded); Phase2C batch4 design completed (5 remaining classified: 2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); 8 indirect + 5 manual review remaining |
 | Runtime DB role / permission model | not fully validated |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
@@ -302,7 +302,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 | 2 | Changed-files enforcement is active and tested with both positive and negative cases | Partial (active but needs negative-case testing) |
 | 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Not met |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Not met |
-| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 runtime guard completed — 9 of 14 Python confirmed write paths guarded; 5 later_needs_design identified; 5 remaining pending) |
+| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed — 9 of 14 Python confirmed write paths guarded; Phase2C batch4 completed — 5 remaining classified with documented rationale: 2 read-only, 3 infrastructure; 8 indirect + 5 manual review remain) |
 | 6 | Runtime DB permissions / role restrictions are documented or tested | Not met |
 | 7 | No production override exists (no `ALLOW_PRODUCTION_DB_WRITE`, no bypass env var, no host-block escape hatch) | Met |
 | 8 | Training and data expansion remain blocked until explicit release criteria are met | Met (blocks are in place) |
@@ -622,10 +622,39 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **No Python target scripts executed. No DB connection. No real DB write.**
   - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
   - **SC-002 remains partial mitigation only.**
-- **Next step:** `python_runtime_guard_implementation_phase2C_batch4`. Do not start
-  automatically. Only 5 confirmed write paths remain; all 5 require design work
-  (later_needs_design) before guard integration. Next batch should focus on indirect
-  write paths or manual review candidates, not confirmed paths.
+- **Next step:** `python_confirmed_write_paths_design_phase2C_batch4`. Do not start
+  automatically.
+
+### 5f. python_confirmed_write_paths_design_phase2C_batch4 ✅ COMPLETED
+
+- **Status:** Completed (this PR — design/classification task, NOT guard implementation).
+- **Results:**
+  - Static analysis of all 5 remaining confirmed Python write paths completed.
+  - **0 runtime guards added.** This is a design/classification task only.
+  - **2 files classified as `read_only_candidate`:**
+    1. `scripts/maintenance/odds_integrity_guard.py` — all cursor.execute() are SELECT.
+       The DELETE SQL in _generate_cleanup_sql() is print-to-console diagnostic, never executed.
+    2. `scripts/maintenance/integrity_guard.py` — all cursor.execute() are SELECT COUNT/
+       LEFT JOIN. generate_fix_commands() prints shell commands, not SQL.
+    No guard needed for either file.
+  - **3 files classified as `infrastructure_only_needs_caller_guard`:**
+    1. `src/database/sql_store.py` — SQL string constants only (INSERT/UPDATE/UPSERT);
+       no execution code, no DB driver imports. Guard at consumers.
+    2. `src/database/sync_db_pool.py` — psycopg2 ThreadedConnectionPool with generic
+       execute()/executemany() + auto-commit. Methods serve both read+write.
+       Guard at caller level, not here.
+    3. `src/database/db_pool.py` — asyncpg Pool with generic execute()/executemany()
+       (auto-commit). Methods serve both read+write. Two write callers already guarded
+       in batch3 (collector_repository.py, streaming_db_writer.py).
+  - Design document: `docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md`
+  - Allowlist updated: 5 entries reclassified with analysis_task, evidence,
+    observed_operations, direct_write_boundary, recommended_next_action.
+  - **No Python target scripts executed. No DB connection. No real DB write.**
+  - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
+  - **SC-002 remains partial mitigation only.**
+- **Next step:** Consumer-level guard audit for sync_db_pool/db_pool callers,
+  `python_indirect_write_path_design_phase1`, or `python_manual_review_phase2D`.
+  Do not start automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
 
