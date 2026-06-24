@@ -5,6 +5,29 @@
 
 Last updated: 2026-06-25
 
+## runtime_db_role_permission_dev_poc completed
+
+- **runtime_db_role_permission_dev_poc** — dev-only POC of 6-role DB permission model.
+  - Branch: `chore/runtime-db-role-permission-dev-poc`
+  - **Dev-only. Not applied to staging or production.**
+  - Files modified:
+    - `deploy/docker/init_db.sql` — 6 PostgreSQL roles with least-privilege GRANTs
+    - `docker-compose.dev.yml` — role-specific env vars for dev container
+    - `.env.example` — role-specific connection config templates
+    - `tests/unit/test_runtime_db_role_permission_dev_poc.py` — static validation tests
+  - Roles created (dev-only passwords, all `*_dev_poc`):
+    - `football_owner` — DDL/migration owner (full DDL + DML)
+    - `football_app` — runtime DML (SELECT, INSERT, UPDATE; no DDL)
+    - `football_ingestion` — write-limited (INSERT, UPDATE on matches/raw_match_data/odds)
+    - `football_training` — training tables (INSERT, UPDATE on match_features_training/predictions)
+    - `football_reader` — SELECT only on all tables
+    - `football_gatekeeper` — SELECT only (CI/test temporary probes)
+  - **No DB connection. No SQL execution. No real permission changes.**
+  - **No real secrets. No production config modifications.**
+  - SC-002 remains partial mitigation only.
+  - Criterion #6: Reviewed + Dev POC. Remains unmet for staging/production.
+  - Training / data expansion / real DB write remain blocked.
+
 ## runtime_db_role_permission_review_phase1 completed
 
 - **runtime_db_role_permission_review_phase1** — static review of DB role/permission model.
@@ -566,8 +589,9 @@ Last updated: 2026-06-25
    (use OWN psycopg2, NOT via repository). 6 need guard, 2 are false positive or read-only.
    No runtime guards added. See `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`.
    SC-002 remains partial mitigation only.
-13. SC-002 remains partial mitigation only.
-14. Next recommended tasks (in priority order):
+13. **runtime_db_role_permission_dev_poc completed** — 6-role dev-only POC in Docker environment.
+14. SC-002 remains partial mitigation only.
+15. Next recommended tasks (in priority order):
     - `python_indirect_write_path_guard_phase2` — implement runtime guard for 6 newly confirmed direct write paths
     - `python_manual_review_phase2D` — review 5 manual review candidates
     - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model

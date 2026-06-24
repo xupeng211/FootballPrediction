@@ -80,6 +80,24 @@ services:
       - DB_NAME=football_db
       - DB_USER=${DB_USER:-football_user}
       - DB_PASSWORD=${DB_PASSWORD:-football_pass}
+      # ============================================================
+      # Dev POC: SC-002 DB role model role-specific connection config
+      # These allow the dev container to connect as different roles.
+      # All passwords are dev-only. Not for production.
+      # See deploy/docker/init_db.sql and SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md
+      # ============================================================
+      - DB_OWNER_USER=${DB_OWNER_USER:-football_owner}
+      - DB_OWNER_PASSWORD=${DB_OWNER_PASSWORD:-football_owner_dev_poc}
+      - DB_APP_USER=${DB_APP_USER:-football_app}
+      - DB_APP_PASSWORD=${DB_APP_PASSWORD:-football_app_dev_poc}
+      - DB_INGESTION_USER=${DB_INGESTION_USER:-football_ingestion}
+      - DB_INGESTION_PASSWORD=${DB_INGESTION_PASSWORD:-football_ingestion_dev_poc}
+      - DB_TRAINING_USER=${DB_TRAINING_USER:-football_training}
+      - DB_TRAINING_PASSWORD=${DB_TRAINING_PASSWORD:-football_training_dev_poc}
+      - DB_READER_USER=${DB_READER_USER:-football_reader}
+      - DB_READER_PASSWORD=${DB_READER_PASSWORD:-football_reader_dev_poc}
+      - DB_GATEKEEPER_USER=${DB_GATEKEEPER_USER:-football_gatekeeper}
+      - DB_GATEKEEPER_PASSWORD=${DB_GATEKEEPER_PASSWORD:-football_gatekeeper_dev_poc}
       # Redis 连接
       - REDIS_HOST=${DEV_REDIS_HOST:-${HOST_LOOPBACK_GATEWAY:-192.168.65.254}}
       - REDIS_PORT=6379

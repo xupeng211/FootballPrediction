@@ -3,7 +3,7 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-25
-- task: runtime_db_role_permission_review_phase1
+- task: runtime_db_role_permission_dev_poc
 - review_type: static audit / documentation — no DB connection, no permission changes
 - sc002_status: partial mitigation only
 
@@ -193,29 +193,26 @@ blocks writes to RDS, Cloud SQL, Supabase, etc.
 
 ### Implementation Phases
 
-**Phase 1 (this task — COMPLETED):** Static audit and target model design.
-**Phase 2 (future):** Implement role separation in Docker dev environment as proof-of-concept.
+**Phase 1 (COMPLETED — static audit):** Static audit and target model design.
+**Phase 2 (COMPLETED — dev POC):** Role separation implemented in Docker dev environment
+  as proof-of-concept. See `deploy/docker/init_db.sql` for role definitions.
+  **Dev-only.** Not applied to staging or production.
 **Phase 3 (future):** Deploy to staging. Update connection configs per component.
 **Phase 4 (future):** Deploy to production. Validate with read-only health checks first.
 
 ## Minimal Next Task
 
-**Apply the proposed role model in `deploy/docker/init_db.sql` and `docker-compose.dev.yml`
-as a dev-only proof-of-concept.**
+**Dev POC role model has been implemented in `deploy/docker/init_db.sql` and
+  `docker-compose.dev.yml`.** This is a dev-only proof-of-concept.
 
-This is a safe first step because:
-- It only affects the Docker dev environment.
-- It validates the role model works before touching staging/production.
-- It can be tested with `make dev-up` and existing test suites.
-- Rollback is simple: revert the SQL and compose changes.
+**Next step (future):** Deploy role separation to staging environment. Update connection
+  configurations per component to use role-specific credentials. Validate with
+  read-only health checks first.
 
-**Scope:** Only `deploy/docker/init_db.sql` and `docker-compose.dev.yml`. No runtime
-code changes. No production changes.
-
-**Forbidden:** Connect to production DB, modify live permissions, execute GRANT/REVOKE
-against any non-dev database. Training, data expansion, and real DB write remain blocked.
-
-**Do not start automatically.** Recommended next task only after user confirmation.
+This is a safe next step because:
+- The dev POC validates the role model structure works (static validation).
+- Staging deployment would be the first real-path test of role connectivity.
+- Rollback: revert staging config to universal user.
 
 ## Uncertainties
 
@@ -252,6 +249,36 @@ This review does NOT:
 - Read or output real secrets or credentials
 - Claim SC-002 is complete
 - Claim "safe to train," "safe to write," or "production ready"
+
+## Dev POC Implementation (Phase 2 — Completed)
+
+The dev-only proof-of-concept has been implemented in the following files:
+
+| File | Change | Status |
+|---|---|---|
+| `deploy/docker/init_db.sql` | 6 roles created with GRANTs: `football_owner`, `football_app`, `football_ingestion`, `football_training`, `football_reader`, `football_gatekeeper` | Dev-only |
+| `docker-compose.dev.yml` | Role-specific env vars: `DB_OWNER_USER`, `DB_APP_USER`, `DB_INGESTION_USER`, `DB_TRAINING_USER`, `DB_READER_USER`, `DB_GATEKEEPER_USER` (with dev passwords) | Dev-only |
+| `.env.example` | Role-specific connection config templates | Template |
+| `tests/unit/test_runtime_db_role_permission_dev_poc.py` | Static tests validating dev POC | Test |
+
+**Key implementation details:**
+- All passwords are dev-only placeholders (`*_dev_poc`).
+- `football_reader` is SELECT-only on all tables — no DML, no DDL.
+- `football_owner` is separate from `football_app` — migration vs. runtime DML.
+- `football_ingestion` is write-limited to `matches`, `raw_match_data`, `odds`.
+- `football_training` is write-limited to `match_features_training`, `predictions`.
+- `football_gatekeeper` is SELECT-only; CREATEDB is server-level and not grantable per-DB.
+- Default privileges are set for future tables created by `football_owner`.
+- Legacy `football_user` (POSTGRES_USER) persists for backward compatibility in dev.
+
+**Explicit non-goals of the dev POC:**
+- Does NOT connect to any DB
+- Does NOT execute SQL or migration
+- Does NOT modify production permissions
+- Does NOT read or output secrets
+- Does NOT run scraper, browser, training, or data expansion
+- Does NOT claim SC-002 is complete
+- Does NOT claim "safe to train," "safe to write," or "production ready"
 
 ## References
 
