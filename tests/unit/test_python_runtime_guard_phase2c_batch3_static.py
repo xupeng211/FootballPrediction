@@ -283,9 +283,10 @@ class TestAllowlistRemainingFiles:
             for e in allowlist_entries
             if e["classification"] == "historical_python_confirmed_write_path_pending_runtime_guard"
         ]
-        # After batch3: 5 Phase2C pending + 1 Phase2B (migrations/env.py) = 6 total
-        assert len(pending) >= 5, (
-            f"Expected at least 5 remaining confirmed pending, got {len(pending)}: "
+        # After batch3: 5 Phase2C pending + 1 Phase2B = 6 total
+        # After batch4 design: 5 reclassified, only env.py (Phase2B) remains
+        assert len(pending) >= 1, (
+            f"Expected at least 1 remaining confirmed pending (env.py), got {len(pending)}: "
             f"{[e['path'] for e in pending]}"
         )
         paths = [e["path"] for e in pending]
@@ -512,7 +513,7 @@ class TestSC002DocConsistency:
 
 
 class TestLaterNeedsDesignFiles:
-    """Files identified as later_needs_design in batch3 analysis remain correctly classified."""
+    """Files identified as later_needs_design in batch3 were classified by batch4 design phase."""
 
     LATER_NEEDS_DESIGN: ClassVar[list[str]] = [
         "scripts/maintenance/odds_integrity_guard.py",
@@ -522,15 +523,18 @@ class TestLaterNeedsDesignFiles:
         "src/database/db_pool.py",
     ]
 
-    def test_later_needs_design_files_still_pending(self, allowlist_entries):
-        """Files with unclear write boundaries are still pending (not force-guarded)."""
-        pending_paths = [
-            e["path"]
-            for e in allowlist_entries
-            if e["classification"] == "historical_python_confirmed_write_path_pending_runtime_guard"
-        ]
+    def test_later_needs_design_files_not_guarded_or_safe(self, allowlist_entries):
+        """Files with unclear write boundaries are not force-guarded or marked safe."""
         for path in self.LATER_NEEDS_DESIGN:
-            assert path in pending_paths, (
-                f"later_needs_design file {path} must remain pending_runtime_guard, "
-                f"not force-guarded or marked safe"
+            entry = next((e for e in allowlist_entries if e["path"] == path), None)
+            assert entry is not None, f"later_needs_design file {path} must exist in allowlist"
+            assert (
+                entry["classification"] != "historical_python_confirmed_write_path_runtime_guarded"
+            ), f"later_needs_design file {path} must not be runtime_guarded"
+            assert "safe" not in entry["classification"].lower(), (
+                f"later_needs_design file {path} must not be marked safe"
+            )
+            # After batch4 design, files are read_only_candidate or infrastructure
+            assert "pending_runtime_guard" not in entry["classification"], (
+                f"later_needs_design file {path} should have been reclassified by batch4 design"
             )
