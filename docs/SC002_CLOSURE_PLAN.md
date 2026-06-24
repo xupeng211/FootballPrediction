@@ -55,7 +55,7 @@ are satisfied.
 | Scraper / browser automation status | blocked |
 | Python / SQL / migration enforcement | ALL PHASES COMPLETED. Phase2A+2B done; Phase2C batch1-4 done (9/14 guarded, 5 classified); indirect_write_path phases done (6/6 guarded); manual_review phases done (2/2 guarded); Alembic phases done (1 guarded — env.py guard in run_migrations_online()). Total: 18/20 guarded, 2 safe reclassified, 0 pending, 0 unreviewed. |
 | SC-002 Alembic migration guard | `sc002_alembic_migration_runtime_guard_implementation` completed. env.py guard: `_check_alembic_migration_guard()` at top of `run_migrations_online()` before any DB engine/connection. Reuses `python_db_write_guard.py`. ALEMBIC_CTX for CI/dev auto-allow. Production-like host hard block. Offline mode NOT guarded. All 20 Python write paths resolved. |
-| Runtime DB role / permission model | not fully validated |
+| Runtime DB role / permission model | Reviewed by `runtime_db_role_permission_review_phase1`. Static audit complete: 1 universal user (`football_user`), 1 read-only user (`claude_reader`). No privilege separation. 8 risks identified. Target model designed. Implementation not yet started. |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
 | Consumer-level guard audit (infrastructure) | consumer_level_guard_audit_db_pool_sync_sql_store completed: static audit of all consumers of db_pool.py, sync_db_pool.py, sql_store.py. 11 consumers classified. 2 write consumers already guarded (batch3). 6 read-only verified. 0 unguarded write consumers found. 0 dynamic/unknown. SQLStore has zero active consumers. SyncDatabasePool utils aliases have zero downstream consumers. No new guards needed from this audit. Does not change 9/14 guarded count. Does not process 8 indirect or 5 manual review candidates.
@@ -310,7 +310,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 | 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Partial (all 43 skipped_complex classified in specialized_browser_fotmob_pageprops_audit_phase1; 13 guarded; 13 false_positive+12 read_only need deep per-script verification; 3 design_mapped need follow-up; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #3) |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Substantially met (all 3 shared modules mapped; all active write-capable consumers guarded; proactive boundary enforcement designed but not implemented; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #4) |
 | 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Met (Python track: all 20 paths resolved — 18 guarded, 2 safe. Alembic env.py guard in run_migrations_online(). SQL migration files have CI enforcement. deploy/docker/init_db.sql guard still pending — separate concern under Gate B) |
-| 6 | Runtime DB permissions / role restrictions are documented or tested | Not met |
+| 6 | Runtime DB permissions / role restrictions are documented or tested | Reviewed (static audit complete: 8 risks identified, target model designed, proof-of-concept pending. See `docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md`) |
 | 7 | No production override exists (no `ALLOW_PRODUCTION_DB_WRITE`, no bypass env var, no host-block escape hatch) | Met |
 | 8 | Training and data expansion remain blocked until explicit release criteria are met | Met (blocks are in place) |
 | 9 | PROJECT_STATUS.md matches closure state | Will be verified at closure |
@@ -761,21 +761,26 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 - **Next step:** `runtime_db_role_permission_review_phase1`.
   Do not start automatically.
 
-### 6. runtime_db_role_permission_review_phase1
+### 6. runtime_db_role_permission_review_phase1 ✅ COMPLETED
 
-- **Objective:** Review and document the current runtime DB role/permission model.
-  Identify whether DB-level restrictions (read-only roles, write-restricted connection
-  pools, row-level security) complement or conflict with the application-layer guard.
-- **Allowed changes:** Read DB connection configuration, role definitions, migration
-  files; document findings; write review doc.
-- **Forbidden actions:** Connect to production DB, modify roles or permissions, execute
-  GRANT/REVOKE, modify connection pools.
-- **Expected output:** A review document
-  (`docs/SC002_DB_ROLE_PERMISSION_REVIEW.md`) documenting the current model, gaps, and
-  recommendations.
-- **Acceptance criteria:** Current DB roles and permissions are documented. Gaps between
-  application-layer guard and DB-layer restrictions are identified. Recommendations are
-  specific and actionable.
+- **Status:** Completed (this PR — static audit, NO DB connection, NO permission changes).
+- **Results:**
+  - Static audit of all DB user/role/connection configuration files completed.
+  - Review document: `docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md`.
+  - Key findings:
+    - **1 universal user:** `football_user` used for ALL roles (app, migration, ingestion,
+      training, maintenance, CI). Full DDL + DML on all tables.
+    - **1 read-only user:** `claude_reader` for MCP only (properly restricted).
+    - **No privilege separation:** Migration (DDL) and runtime (DML) use the same user.
+    - **8 risks identified** (HIGH: single super-user, mixed migration/runtime; MEDIUM: no
+      read-only app user, broad ingestion access, hardcoded credentials, app-layer only).
+    - **Target model designed:** 6 specialized roles with least-privilege grants.
+  - Next step: Implement role model as dev proof-of-concept in Docker environment.
+  - **No DB connection. No SQL. No permission changes. No secrets output.**
+  - SC-002 remains partial mitigation only.
+- **Next step:** `runtime_db_role_permission_dev_poc` — apply target role model to
+  `deploy/docker/init_db.sql` and `docker-compose.dev.yml`.
+  Do not start automatically.
 
 ### 7. sc002_release_gate_checklist_phase1
 

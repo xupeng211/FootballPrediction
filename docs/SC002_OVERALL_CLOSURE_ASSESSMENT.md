@@ -187,9 +187,12 @@ does not block this criterion.
 - The task `runtime_db_role_permission_review_phase1` is defined in the closure plan
   but has not been executed.
 
-**Assessment for Criterion 6: Not met.**
-The task is defined with clear scope and acceptance criteria but has not been started.
-This is a documentation/review task — it does not require DB changes.
+**Assessment for Criterion 6: Reviewed, not yet met for implementation.**
+`runtime_db_role_permission_review_phase1` has been completed. The static audit
+documented 8 specific risks and designed a target 6-role model. See
+`docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md` for full analysis.
+Implementation (role creation, privilege grants) has not been started.
+Criterion #6 remains unmet for implementation.
 
 ### Criterion 7: No production override exists
 
@@ -264,7 +267,7 @@ This is assigned to Gate B (controlled staging DB write), not the Python/SQL tra
 | 3 | Browser/FotMob/pageProps specialized audit | **Partial** | 13 false_positive scripts need deep verification; 3 design_mapped need follow-up |
 | 4 | Shared module consumer boundary | **Substantially met** | Proactive enforcement (caller tracing) designed but not implemented |
 | 5 | Python/SQL/migration enforcement | **Met** | `init_db.sql` caveat tracked under Gate B |
-| 6 | Runtime DB role/permission model | **Not met** | Task defined but not executed |
+| 6 | Runtime DB role/permission model | **Reviewed** | Static audit done (8 risks, target model). Implementation not started. |
 | 7 | No production override exists | **Met** | No gaps |
 | 8 | Training/data expansion blocked | **Met** | No gaps |
 | 9 | PROJECT_STATUS.md matches closure state | **Good standing** | Will verify at closure |
