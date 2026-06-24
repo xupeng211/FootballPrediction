@@ -5,6 +5,33 @@
 
 Last updated: 2026-06-25
 
+## python_manual_review_phase2d completed
+
+- **python_manual_review_phase2d** — static manual review completed for all 5
+  remaining `historical_python_needs_manual_review` entries.
+  - New design doc: `docs/SC002_MANUAL_REVIEW_PHASE2D.md`
+  - Allowlist updated: 5 entries reclassified with full evidence
+  - **This is a static review/classification task, NOT runtime guard implementation.**
+  - **0 runtime guards added. 0 files marked safe or runtime_guarded.**
+  - This task did NOT run DB / migration / scraper / training.
+  - Classification results:
+    - **2 manual_confirmed_write_needs_guard** — reprocess_from_local.py (UPDATE matches,
+      same pattern as reprocess_failed_matches.py), prometheus_metrics.py (INSERT
+      failed_market_data via DeadLetterQueue._persist_to_database)
+    - **1 manual_read_only_candidate** — monitoring.py (all SELECT/fetchrow via asyncpg,
+      health checks/metrics only)
+    - **2 manual_false_positive_candidate** — fotmob_historical_backfill.py (DEPRECATED,
+      core deps = None, cannot execute), diagnose_diagnostic.py (syntactically broken,
+      cannot parse/execute)
+    - **0 manual_confirmed_write_already_guarded**, **0 manual_needs_design**,
+      **0 manual_unknown_needs_followup**
+  - **0 manual review candidates remain** — all 5 have been classified.
+  - Guard implementation for 2 write_needs_guard paths deferred to `python_manual_review_guard_phase2e`.
+  - Python write paths guarded count: **still 15/20** (unchanged).
+  - **2 next guard candidates** identified (reprocess_from_local.py, prometheus_metrics.py).
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+
 ## python_indirect_write_path_guard_phase2 completed
 
 - **python_indirect_write_path_guard_phase2** — runtime DB write guard implementation

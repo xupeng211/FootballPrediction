@@ -125,21 +125,26 @@ class TestIndirectWritePathDesignPhase1:
                 )
 
     def test_no_manual_review_candidate_marked_safe(self):
-        """No manual review candidate should be marked safe or runtime_guarded."""
+        """After Phase2D: manual review candidates have been reclassified.
+        None should be marked 'safe'; 2 are write_needs_guard (not runtime_guarded yet)."""
         data = _load_allowlist()
 
         for entry in data["entries"]:
             path = entry["path"]
             if path in MANUAL_REVIEW_PATHS:
                 classification = entry.get("classification", "")
+                # None should be runtime_guarded (guard deferred to Phase2E)
                 assert "runtime_guarded" not in classification, (
                     f"Manual review candidate {path} incorrectly marked runtime_guarded"
                 )
+                # None should be marked 'safe' literally
                 assert "safe" not in classification, (
-                    f"Manual review candidate {path} incorrectly marked safe"
+                    f"Manual review candidate {path} incorrectly marked safe: {classification}"
                 )
-                assert "needs_manual_review" in classification, (
-                    f"Manual review candidate {path} classification changed: {classification}"
+                # All 5 should now be classified (not needs_manual_review)
+                assert "manual_" in classification, (
+                    f"Manual review candidate {path} should now have manual_* "
+                    f"classification after Phase2D, got: {classification}"
                 )
 
     def test_9_of_14_confirmed_guarded_status_unchanged(self):

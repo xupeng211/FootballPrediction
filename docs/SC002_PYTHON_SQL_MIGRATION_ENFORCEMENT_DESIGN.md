@@ -3,10 +3,10 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-23
-- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch{1,2,3} (runtime guard) + python_confirmed_write_paths_design_phase2C_batch4 (design/classification) + consumer_level_guard_audit_db_pool_sync_sql_store (consumer audit) + python_indirect_write_path_design_phase1 (indirect design/classification)
-- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1/batch2/batch3 COMPLETED (9/14 runtime guarded), Phase2C batch4 COMPLETED (5 remaining classified: 2 read_only, 3 infrastructure), consumer audit COMPLETED (3 infrastructure files: no new guards needed), indirect design COMPLETED (8 indirect paths classified: 6 needs_guard, 1 read_only, 1 false_positive)
+- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch{1,2,3} (runtime guard) + python_confirmed_write_paths_design_phase2C_batch4 (design/classification) + consumer_level_guard_audit_db_pool_sync_sql_store (consumer audit) + python_indirect_write_path_design_phase1 (indirect design) + python_indirect_write_path_guard_phase2 (indirect guard implementation) + python_manual_review_phase2d (manual review classification)
+- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1/batch2/batch3 COMPLETED (9/14 runtime guarded), Phase2C batch4 COMPLETED (5 remaining classified), consumer audit COMPLETED, indirect design COMPLETED (8 indirect paths classified), indirect guard COMPLETED (6/6 indirect guarded), manual review COMPLETED (5/5 classified: 2 write_needs_guard, 1 read_only, 2 false_positive). Total: 15/20 runtime guarded, 2 next guard candidates, 3 safe reclassified, 0 unreviewed.
 - scanner: scripts/ops/python_db_write_static_enforcement.py
-- allowlist: config/python_db_write_allowlist.json (28 entries, 9 runtime_guarded + 6 pending + 8 indirect + 5 manual review)
+- allowlist: config/python_db_write_allowlist.json (28 entries, 15 runtime_guarded, 2 next guard candidates, 3 infrastructure, 2 read_only, 2 false_positive, 1 pending, 3 safe reclassified from manual review)
 - guard_helper: scripts/ops/helpers/python_db_write_guard.py
 - gate_integration: check_python_db_write_enforcement() in scripts/ops/ai_workflow_gate.py
 
@@ -276,7 +276,13 @@ These are test files that may connect to a test database. They are not productio
 | 63 | `tests/unit/test_pr_post_merge_check_protected.py` |
 | 64 | `tests/unit/test_single_live_fotmob_retain_guards.py` |
 
-#### Category 8: python_needs_manual_review (5 files)
+#### Category 8: python_needs_manual_review (5 files → ALL CLASSIFIED by Phase2D)
+
+All 5 manual review candidates have been classified by `python_manual_review_phase2d`:
+- 2 → `manual_confirmed_write_needs_guard` (reprocess_from_local.py, prometheus_metrics.py)
+- 1 → `manual_read_only_candidate` (monitoring.py)
+- 2 → `manual_false_positive_candidate` (fotmob_historical_backfill.py, diagnose_diagnostic.py)
+- 0 remain unreviewed. See `docs/SC002_MANUAL_REVIEW_PHASE2D.md` for details.
 
 These files have ambiguous signals that require deeper human analysis.
 
@@ -299,8 +305,12 @@ These files have ambiguous signals that require deeper human analysis.
 | python_no_db_connection | **10** |
 | python_static_scan_only | **2** |
 | python_test_fixture_only | **21** |
-| python_needs_manual_review | **5** |
+| python_needs_manual_review | **5** (ALL CLASSIFIED by Phase2D — 2 write_needs_guard, 1 read_only, 2 false_positive) |
 | **Total classified** | **69** |
+
+> **Phase2D update (2026-06-25):** All 5 manual review candidates have been classified.
+> See `docs/SC002_MANUAL_REVIEW_PHASE2D.md` for per-file analysis.
+> 2 next guard candidates identified for `python_manual_review_guard_phase2e`.
 
 ## SQL and migration classification results
 
@@ -453,7 +463,7 @@ Python files and SQL migration files, similar to what currently exists for JS fi
 
 - **Status:** Implemented by `python_sql_migration_enforcement_implementation_phase2A` (PR #1597).
 - Scanner: `scripts/ops/python_db_write_static_enforcement.py` — scans `.py` files for DB write risk keywords, supports JSON output, allowlist, changed-files mode, full-scan mode, comment/docstring awareness
-- Allowlist: `config/python_db_write_allowlist.json` — 27 historical baseline entries (14 confirmed + 8 indirect + 5 manual review) with complete metadata
+- Allowlist: `config/python_db_write_allowlist.json` — 28 entries with complete metadata (15 runtime_guarded, 2 next guard candidates, 3 infrastructure, 2 read_only, 2 false_positive, 1 pending, 3 safe reclassified from manual review — 0 unreviewed)
 - Gate integration: `check_python_db_write_enforcement()` in `scripts/ops/ai_workflow_gate.py` — new/modified Python files with DB write signals fail CI unless in allowlist
 - Historical Python files in allowlist pass with baseline status; new/modified files not in allowlist get hard fail
 
