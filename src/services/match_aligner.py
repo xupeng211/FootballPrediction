@@ -24,12 +24,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+from pathlib import Path
+import sys
 from typing import TYPE_CHECKING, Any
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from src.config_unified import get_config, get_database_url
+from src.config import get_config, get_database_url
+
+# Phase2 indirect_write_path_guard_phase2: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[3] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 if TYPE_CHECKING:
     from datetime import datetime
@@ -326,6 +335,14 @@ class MatchAligner:
         """
 
         try:
+            # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before INSERT
+            assert_db_write_allowed(
+                script_name="match_aligner.py",
+                operation="INSERT",
+                target="matches_mapping",
+                tables=["matches_mapping"],
+            )
+
             cursor.execute(
                 query,
                 (match_id, oddsportal_hash, oddsportal_url, match_id, mapping_method, confidence),

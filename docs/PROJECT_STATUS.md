@@ -3,7 +3,32 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-06-24
+Last updated: 2026-06-25
+
+## python_indirect_write_path_guard_phase2 completed
+
+- **python_indirect_write_path_guard_phase2** — runtime DB write guard implementation
+  completed for all 6 `indirect_write_needs_guard` paths classified in design phase1.
+  - Branch: `chore/python-indirect-write-path-guard-phase2`
+  - **6 of 6 files now have runtime guard (`assert_db_write_allowed`) before real DB write.**
+  - Guard details:
+    | # | File | Guard Location | Operation | Table |
+    |---|---|---|---|---|
+    | 1 | `src/services/match_aligner.py` | `save_alignment()` before INSERT | INSERT | `matches_mapping` |
+    | 2 | `src/services/match_linker.py` | `store_odds_intelligence()` + `batch_store_odds_intelligence()` before CREATE TABLE + INSERT | CREATE, INSERT | `match_odds_intelligence` |
+    | 3 | `src/api/collectors/odds_api_client_v38.py` | `save_odds_to_db()` before INSERT | INSERT | `match_odds` |
+    | 4 | `scripts/maintenance/reprocess_failed_matches.py` | `reprocess_match()` before UPDATE | UPDATE | `matches` |
+    | 5 | `scripts/maintenance/clean_corrupt_l2.py` | `clean_corrupt_records()` before UPDATE (integrated with `dry_run` param) | UPDATE | `matches` |
+    | 6 | `scripts/maintenance/fix_zombie_matches.py` | `fix_zombie_matches()` before `_batch_update_matches()` (integrated with `self.dry_run`) | UPDATE | `matches` |
+  - Uses existing `helpers/python_db_write_guard.py` pattern — no new mechanism invented.
+  - All guards placed before real DB write operations, not after.
+  - 3 scripts with existing `--dry-run` flags have `dry_run` parameter integrated into guard call.
+  - Allowlist updated: 6 entries reclassified from `indirect_write_needs_guard` to `indirect_write_path_runtime_guarded`.
+  - Updated `_runtime_guard_status` in allowlist: **15 of 20 Python write paths now runtime guarded** (9 confirmed + 6 indirect).
+  - Docs updated: `SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
+  - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
+  - **5 manual review candidates NOT processed.** SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
 
 ## python_indirect_write_path_design_phase1 completed
 

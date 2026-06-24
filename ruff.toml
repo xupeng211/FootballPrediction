@@ -181,6 +181,13 @@ unfixable = []
 # Phase2C batch1 — pre-existing issues in modified file (not introduced by this PR)
 "src/database/match_repository.py" = ["C901", "PLR0911", "PLR0912", "PLR0915", "PLR2004", "TRY301", "TRY401", "G004", "B904", "PLC0415", "D103"]
 
+# indirect_write_path_guard_phase2 — pre-existing style issues in files touched for guard integration
+"src/services/match_aligner.py" = ["D102", "PLR2004", "PERF401", "RET505", "G004", "TRY300", "TRY401"]
+"src/services/match_linker.py" = ["D102", "PLR2004", "PERF401", "RET505", "C901", "G004", "TRY300", "TRY401", "RUF012", "PLC0415", "W505"]
+"src/api/collectors/odds_api_client_v38.py" = ["D102", "PLR2004"]
+"tests/unit/test_indirect_write_path_guard_phase2.py" = ["PLR2004", "SIM102"]
+"tests/unit/test_indirect_write_path_design_phase1.py" = ["N806"]
+
 # ci_local_parity_preflight_phase1 — new preflight script and tests
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004", "ARG001", "ARG002", "ARG005", "I001", "RUF100"]
 "tests/unit/test_local_pr_gate_preflight.py" = ["PLR2004", "SIM115", "I001"]
