@@ -4,7 +4,7 @@
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
   "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining classified by design phase batch4 (2 read_only_candidate, 3 infrastructure_only_needs_caller_guard)",
+  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining classified by design phase batch4 (2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); 8 indirect write paths classified by indirect_write_path_design_phase1 (6 indirect_write_needs_guard, 1 indirect_read_only_candidate, 1 indirect_false_positive_candidate)",
   "entries": [
     {
       "path": "src/database/schema_manager.py",
@@ -236,91 +236,157 @@
     },
     {
       "path": "src/services/match_aligner.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "May trigger match alignment writes via MatchRepository. Indirect write path. RISK: MEDIUM.",
-      "evidence": "Imports from match_repository. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #185.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_needs_guard",
+      "reason": "Indirect write path design phase1: DIRECT write confirmed — uses OWN psycopg2 connection (NOT via MatchRepository). save_alignment() executes INSERT INTO matches_mapping ON CONFLICT DO UPDATE with explicit conn.commit(). No guard. No dry_run flag. RISK: HIGH.",
+      "evidence": "psycopg2 direct import + _get_connection() + cursor.execute(INSERT INTO matches_mapping ... ON CONFLICT DO UPDATE) + conn.commit() + conn.rollback() in save_alignment(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #1.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. Guard implementation deferred.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "INSERT",
+        "UPDATE (ON CONFLICT DO UPDATE)",
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "matches_mapping"
+      ],
+      "direct_write_boundary": "YES — save_alignment() has cursor.execute(INSERT) + conn.commit()",
+      "recommended_next_action": "Guard in save_alignment() before cursor.execute(). Guard tables: [\"matches_mapping\"]. Guard operations: [\"INSERT\", \"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
     },
     {
       "path": "src/services/match_linker.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "May trigger match linking writes via MatchRepository. Indirect write path. RISK: MEDIUM.",
-      "evidence": "Imports from match_repository. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #186.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_needs_guard",
+      "reason": "Indirect write path design phase1: DIRECT write confirmed — uses OWN psycopg2 connection (NOT via MatchRepository). store_odds_intelligence() executes CREATE TABLE + INSERT INTO match_odds_intelligence ON CONFLICT DO UPDATE with commit. batch_store_odds_intelligence() executes execute_values() INSERT with commit. No guard. No dry_run flag. RISK: HIGH.",
+      "evidence": "psycopg2 direct import + _get_connection() + CREATE TABLE match_odds_intelligence + INSERT INTO (ON CONFLICT DO UPDATE) + execute_values() INSERT + conn.commit() / conn.rollback(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #2.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. Guard implementation deferred.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "CREATE TABLE",
+        "INSERT",
+        "UPSERT (ON CONFLICT DO UPDATE)",
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "match_odds_intelligence"
+      ],
+      "direct_write_boundary": "YES — store_odds_intelligence() and batch_store_odds_intelligence() both have cursor.execute(INSERT/CREATE) + conn.commit()",
+      "recommended_next_action": "Guard in store_odds_intelligence() and batch_store_odds_intelligence() before write SQL. Guard tables: [\"match_odds_intelligence\"]. Guard operations: [\"CREATE\", \"INSERT\", \"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
     },
     {
       "path": "src/services/match_data_service.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "Match data service; may write via repository. Indirect write path. RISK: MEDIUM.",
-      "evidence": "Via config + repository layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #187.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_false_positive_candidate",
+      "reason": "Indirect write path design phase1: FALSE POSITIVE — skeleton class with only connection management (_get_connection, close). Zero write methods. Zero INSERT/UPDATE/DELETE. MatchAligner and MatchLinker aliases point to MatchDataService which has NO data operations. Original design assumed \"may write via repository\" but no such path exists.",
+      "evidence": "psycopg2 imported but only _get_connection() and close() exist. No cursor.execute(), no commit(), no write SQL anywhere. MatchAligner=MatchDataService and MatchLinker=MatchDataService aliases are misleading — no write capability. See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #3.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_false_positive_candidate by indirect_write_path_design_phase1 (2026-06-24). No write capability. No guard needed.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "NONE — no DB operations in this file"
+      ],
+      "observed_tables_or_targets": [
+        "NONE"
+      ],
+      "direct_write_boundary": "NONE — no write methods exist",
+      "recommended_next_action": "No guard needed. Reclassify as false_positive. Consider removing misleading MatchAligner/MatchLinker aliases in a cleanup PR."
     },
     {
       "path": "src/services/league_router.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "League routing; may write via repository. Indirect write path. RISK: LOW.",
-      "evidence": "Via config + repository layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #188.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_read_only_candidate",
+      "reason": "Indirect write path design phase1: READ-ONLY — discover_all_leagues() executes only SELECT DISTINCT league_name FROM matches. All other methods are pure URL string manipulation (no DB). No INSERT/UPDATE/DELETE/CREATE anywhere. Original design assumed \"may write via repository\" but no write path exists.",
+      "evidence": "psycopg2 imported only in discover_all_leagues() for SELECT DISTINCT + conn.close(). resolve_url(), resolve_with_fallback() are pure string ops. No write SQL. See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #4.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_read_only_candidate by indirect_write_path_design_phase1 (2026-06-24). SELECT-only. No guard needed.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "SELECT DISTINCT (discover_all_leagues only)"
+      ],
+      "observed_tables_or_targets": [
+        "matches (SELECT only)"
+      ],
+      "direct_write_boundary": "NONE — SELECT-only",
+      "recommended_next_action": "No guard needed. Reclassify as read-only. URL routing utility with one optional SELECT."
     },
     {
       "path": "src/api/collectors/odds_api_client_v38.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "API client for odds collection; may write via collector. Indirect write path. RISK: LOW.",
-      "evidence": "Via config + collector layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #189.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_needs_guard",
+      "reason": "Indirect write path design phase1: DIRECT write confirmed — save_odds_to_db() uses OWN psycopg2 connection (NOT via collector layer as original design assumed). Executes INSERT INTO match_odds ON CONFLICT (match_id, provider) DO UPDATE with explicit conn.commit(). No guard. No dry_run flag. RISK: HIGH.",
+      "evidence": "psycopg2 direct import in save_odds_to_db() + cursor.execute(INSERT INTO match_odds ... ON CONFLICT DO UPDATE) + conn.commit(). All other methods are HTTP network-only (StealthClient), no DB. See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #5.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. Guard implementation deferred.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "INSERT",
+        "UPSERT (ON CONFLICT DO UPDATE)",
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "match_odds"
+      ],
+      "direct_write_boundary": "YES — save_odds_to_db() has cursor.execute(INSERT) + conn.commit()",
+      "recommended_next_action": "Guard in save_odds_to_db() before cursor.execute(). Guard tables: [\"match_odds\"]. Guard operations: [\"INSERT\", \"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/reprocess_failed_matches.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "Reprocess failed matches; has dry_run refs but uncertain default. Indirect write path. RISK: MEDIUM.",
-      "evidence": "Via config + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #190.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_needs_guard",
+      "reason": "Indirect write path design phase1: DIRECT write confirmed — reprocess_match() executes UPDATE matches SET l2_extracted_features... with conn.commit() when not dry_run. --dry-run flag exists but default is FALSE (action=store_true means default is write-enabled). No guard. RISK: MEDIUM.",
+      "evidence": "psycopg2 + UPDATE matches + conn.commit() in reprocess_match(). --dry-run flag exists (action=store_true) but default is write-enabled (dry_run=False). Also SELECT-only: get_matches_needing_deep_features(), get_failed_matches(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #6.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. dry_run default is write-enabled (unsafe). Guard implementation deferred.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "UPDATE",
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "matches"
+      ],
+      "direct_write_boundary": "YES — reprocess_match() has cursor.execute(UPDATE) + conn.commit() when dry_run=False",
+      "recommended_next_action": "Guard in reprocess_match() before cursor.execute() and conn.commit() when not dry_run. Consider inverting dry_run default for safety. Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/clean_corrupt_l2.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "Clean corrupt L2 data; has dry_run refs but uncertain default. RISK: MEDIUM.",
-      "evidence": "psycopg2 + execute + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #191.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_needs_guard",
+      "reason": "Indirect write path design phase1: DIRECT write confirmed — clean_corrupt_records() executes UPDATE matches SET l2_raw_json = NULL... with conn.commit() when not dry_run. --dry-run flag exists but default is FALSE (write-enabled). No guard. Only protection is interactive input() prompt (bypassable). RISK: MEDIUM.",
+      "evidence": "psycopg2 + UPDATE matches (nullification) + conn.commit() in clean_corrupt_records(). --dry-run flag exists (action=store_true) but default is write-enabled. Also SELECT-only: detect_corrupt_records(), get_statistics(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #7.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. dry_run default is write-enabled (unsafe). Guard implementation deferred.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "UPDATE (nullification — data deletion)",
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "matches"
+      ],
+      "direct_write_boundary": "YES — clean_corrupt_records() has cursor.execute(UPDATE) + conn.commit() when dry_run=False",
+      "recommended_next_action": "Guard in clean_corrupt_records() before UPDATE loop and conn.commit() when not dry_run. Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/fix_zombie_matches.py",
-      "classification": "historical_python_indirect_write_path_pending_runtime_guard",
-      "reason": "Fix zombie matches; has dry_run refs but uncertain default. RISK: MEDIUM.",
-      "evidence": "psycopg2 + execute + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #192.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_indirect_write_path_needs_guard",
+      "reason": "Indirect write path design phase1: DIRECT write confirmed — _batch_update_matches() executes UPDATE matches SET status, home_score, away_score, is_finished with conn.commit() (via fix_zombie_matches()). --dry-run flag exists but default is FALSE (write-enabled). No guard. clean_predictions() deletes CSV files (filesystem write, not DB). RISK: MEDIUM.",
+      "evidence": "psycopg2 + UPDATE matches + conn.commit() in fix_zombie_matches() + _batch_update_matches(). --dry-run flag exists (action=store_true) but default is write-enabled. clean_predictions() is filesystem write (CSV deletion), not DB. See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #8.",
+      "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
+      "owner_task": "python_indirect_write_path_design_phase1",
+      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. dry_run default is write-enabled (unsafe). Guard implementation deferred.",
+      "analysis_task": "python_indirect_write_path_design_phase1",
+      "observed_operations": [
+        "UPDATE",
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "matches"
+      ],
+      "direct_write_boundary": "YES — _batch_update_matches() has cursor.execute(UPDATE) + conn.commit() when dry_run=False",
+      "recommended_next_action": "Guard in fix_zombie_matches() before _batch_update_matches() and conn.commit() when not dry_run. Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/reprocess_from_local.py",

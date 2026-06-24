@@ -53,7 +53,7 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed (9 of 14 confirmed Python write paths runtime guarded); Phase2C batch4 design completed (5 remaining classified: 2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); consumer-level audit for 3 infrastructure files completed (2 write consumers already guarded in batch3, 6 read-only, 0 unguarded write consumers found); 8 indirect + 5 manual review remaining |
+| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed (9 of 14 confirmed Python write paths runtime guarded); Phase2C batch4 design completed (5 remaining classified: 2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); consumer-level audit for 3 infrastructure files completed; indirect_write_path_design_phase1 completed (8 indirect paths classified: 6 needs_guard, 1 read_only, 1 false_positive); 5 manual review remaining |
 | Runtime DB role / permission model | not fully validated |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
@@ -303,7 +303,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 | 2 | Changed-files enforcement is active and tested with both positive and negative cases | Partial (active but needs negative-case testing) |
 | 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Not met |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Not met |
-| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed — 9 of 14 Python confirmed write paths guarded; Phase2C batch4 completed — 5 remaining classified with documented rationale: 2 read-only, 3 infrastructure; 8 indirect + 5 manual review remain) |
+| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed — 9 of 14 Python confirmed write paths guarded; Phase2C batch4 completed — 5 remaining classified with documented rationale: 2 read-only, 3 infrastructure; indirect_write_path_design_phase1 completed — 8 indirect paths classified: 6 needs_guard, 1 read_only, 1 false_positive; 5 manual review remain) |
 | 6 | Runtime DB permissions / role restrictions are documented or tested | Not met |
 | 7 | No production override exists (no `ALLOW_PRODUCTION_DB_WRITE`, no bypass env var, no host-block escape hatch) | Met |
 | 8 | Training and data expansion remain blocked until explicit release criteria are met | Met (blocks are in place) |
@@ -656,6 +656,33 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 - **Next step:** Consumer-level guard audit for sync_db_pool/db_pool callers,
   `python_indirect_write_path_design_phase1`, or `python_manual_review_phase2D`.
   Do not start automatically.
+
+### 5g. python_indirect_write_path_design_phase1 ✅ COMPLETED
+
+- **Status:** Completed (this PR — design/classification task, NOT guard implementation).
+- **Results:**
+  - Static analysis of all 8 indirect Python write paths completed.
+  - **0 runtime guards added.** This is a design/classification task only.
+  - **6 paths classified as `indirect_write_needs_guard`:**
+    1. `src/services/match_aligner.py` — ACTUALLY DIRECT write (own psycopg2, INSERT INTO matches_mapping ON CONFLICT DO UPDATE with commit). Not via MatchRepository as original design assumed. No guard. No dry_run. HIGH risk.
+    2. `src/services/match_linker.py` — ACTUALLY DIRECT write (own psycopg2, INSERT INTO match_odds_intelligence ON CONFLICT DO UPDATE + CREATE TABLE with commit). No guard. No dry_run. HIGH risk.
+    3. `src/api/collectors/odds_api_client_v38.py` — ACTUALLY DIRECT write (own psycopg2, INSERT INTO match_odds ON CONFLICT DO UPDATE with commit). No guard. No dry_run. HIGH risk.
+    4. `scripts/maintenance/reprocess_failed_matches.py` — DIRECT write (UPDATE matches with commit). Has --dry-run but default is write-enabled (unsafe). MEDIUM risk.
+    5. `scripts/maintenance/clean_corrupt_l2.py` — DIRECT write (UPDATE matches nullification with commit). Has --dry-run but default is write-enabled. MEDIUM risk.
+    6. `scripts/maintenance/fix_zombie_matches.py` — DIRECT write (UPDATE matches with commit). Has --dry-run but default is write-enabled. MEDIUM risk.
+  - **1 path classified as `indirect_read_only_candidate`:**
+    - `src/services/league_router.py` — SELECT DISTINCT only (discover_all_leagues). URL routing utility. No write capability.
+  - **1 path classified as `indirect_false_positive_candidate`:**
+    - `src/services/match_data_service.py` — Skeleton class with only connection management. Zero write methods. Misleading type aliases (MatchAligner/MatchLinker point to empty class).
+  - **Key finding:** 6 of 8 "indirect" paths are actually DIRECT — original design doc's assumption that these go through repository layers was incorrect. All 6 have their own independent psycopg2 connections with explicit INSERT/UPDATE and commit.
+  - **3 of 6 have --dry-run flags but default is write-enabled** (action="store_true" means default=False=write). This is the INVERSE of the safe default.
+  - Design document: `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`
+  - Allowlist updated: 8 entries reclassified with analysis_task, evidence, observed_operations, direct_write_boundary, recommended_next_action.
+  - **No Python target scripts executed. No DB connection. No real DB write.**
+  - **No SQL/migration executed. No scraper/browser run. No training. No data expansion.**
+  - **SC-002 remains partial mitigation only.**
+- **Next step:** `python_indirect_write_path_guard_phase2` — implement runtime guard for
+  the 6 newly confirmed direct write paths. Do not start automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
 

@@ -5,6 +5,38 @@
 
 Last updated: 2026-06-24
 
+## python_indirect_write_path_design_phase1 completed
+
+- **python_indirect_write_path_design_phase1** — static design classification completed
+  for all 8 `historical_python_indirect_write_path_pending_runtime_guard` entries.
+  - New design doc: `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`
+  - New tests: `tests/unit/test_indirect_write_path_design_phase1.py` (17 tests)
+  - Allowlist updated: 8 entries reclassified with full evidence
+  - **This is a design/classification task, NOT runtime guard implementation.**
+  - **0 runtime guards added. 0 files marked safe or runtime_guarded.**
+  - This task did NOT run DB / migration / scraper / training.
+  - Classification results:
+    - **6 indirect_write_needs_guard** — all actually DIRECT write paths (use OWN psycopg2
+      connection with explicit INSERT/UPDATE + commit, NOT via repository layer as
+      original design assumed): match_aligner.py (INSERT matches_mapping), match_linker.py
+      (INSERT+CREATE match_odds_intelligence), odds_api_client_v38.py (INSERT match_odds),
+      reprocess_failed_matches.py (UPDATE matches, default=dry_run=false), clean_corrupt_l2.py
+      (UPDATE matches nullification, default=dry_run=false), fix_zombie_matches.py (UPDATE
+      matches, default=dry_run=false)
+    - **1 indirect_read_only_candidate** — league_router.py (SELECT DISTINCT only, URL routing)
+    - **1 indirect_false_positive_candidate** — match_data_service.py (skeleton class, zero
+      write methods, misleading aliases)
+    - **0 indirect_write_already_guarded**, **0 indirect_write_needs_design**,
+      **0 indirect_unknown_needs_manual_review**
+  - Key finding: 6 of 8 "indirect" paths are actually DIRECT — original design doc was
+    imprecise. All 6 lack any guard. 3 of 6 have --dry-run flags but default is write-enabled
+    (unsafe default).
+  - Guard implementation for 6 needs_guard paths deferred to `python_indirect_write_path_guard_phase2`.
+  - Confirmed Python write paths guarded count: **still 9/14** (unchanged).
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - 5 manual review candidates NOT processed.
+
 ## consumer_level_guard_audit_db_pool_sync_sql_store completed
 
 - **consumer_level_guard_audit_db_pool_sync_sql_store** — consumer-level static audit completed
@@ -358,13 +390,14 @@ Last updated: 2026-06-24
     - See `docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md` for full analysis.
     - **0 new runtime guards added. 0 files marked safe.**
     - **SC-002 remains partial mitigation only. training / data expansion / real DB write remain blocked.**
-12. **agent_workflow_rules_hardening_phase1 completed** — three-layer agent workflow
-   discipline codified: resident rules (CLAUDE.md), PR template checklist, CI gate
-   enforcement. Future tasks can reference these standing rules instead of long prompts.
+12. **python_indirect_write_path_design_phase1 completed** — static design classification
+   of all 8 indirect Python write paths. Key finding: 6 of 8 are actually DIRECT write paths
+   (use OWN psycopg2, NOT via repository). 6 need guard, 2 are false positive or read-only.
+   No runtime guards added. See `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`.
+   SC-002 remains partial mitigation only.
 13. SC-002 remains partial mitigation only.
 14. Next recommended tasks (in priority order):
-    - Consumer-level guard for sync_db_pool/db_pool callers — inventory and guard write callers
-    - `python_indirect_write_path_design_phase1` — design approach for 8 indirect write paths
+    - `python_indirect_write_path_guard_phase2` — implement runtime guard for 6 newly confirmed direct write paths
     - `python_manual_review_phase2D` — review 5 manual review candidates
     - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
     - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification checklists
