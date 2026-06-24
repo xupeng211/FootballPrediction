@@ -226,6 +226,20 @@ pr-ready-check: ## PR ready-to-merge check: pr-body-check + pr-merge-preflight. 
 	@$(MAKE) pr-body-check PR=$(PR)
 	@$(MAKE) pr-merge-preflight PR=$(PR)
 
+watch-pr: ## 标准 CI 监控命令（禁止自定义 while/sleep loop 监控 CI）。Usage: make watch-pr PR=<number>
+	@if [ -z "$(PR)" ]; then \
+		echo "ERROR: PR number required. Usage: make watch-pr PR=<number>"; \
+		echo "  Example: make watch-pr PR=1607"; \
+		exit 1; \
+	fi
+	@if ! gh pr checks $(PR) --watch --interval 15 2>/dev/null; then \
+		echo ""; \
+		echo "gh pr checks --watch not supported on this gh version."; \
+		echo "Run manually:"; \
+		echo "  gh pr checks $(PR)"; \
+		exit 1; \
+	fi
+
 pr-body-check: ## PR body + current Production Gate evidence check (read-only). Usage: make pr-body-check PR=<number>
 	@if [ -z "$(PR)" ]; then \
 		echo "ERROR: PR number required. Usage: make pr-body-check PR=<number>"; \
