@@ -257,17 +257,141 @@ CREATE TRIGGER update_league_config_updated_at BEFORE UPDATE ON league_config
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================
--- 权限设置 (Docker 环境)
+-- DB Role Model — Dev-only POC (SC-002 Criterion #6)
 -- ============================================
--- 确保应用用户有权限
--- GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO football_user;
--- GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO football_user;
+-- WARNING: DEV-ONLY. Not for production. Do not deploy to staging/prod.
+-- Purpose: Proof-of-concept for least-privilege role separation.
+-- All passwords are dev-only placeholders. Production must use env vars
+-- or a secrets manager.
+--
+-- Roles designed per docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md:
+--
+--   football_owner    — Full DDL + DML, table owner, migrations/admin
+--   football_app      — SELECT, INSERT, UPDATE on all tables, no DDL
+--   football_ingestion — INSERT, UPDATE on matches/raw_match_data/odds
+--   football_training — SELECT all, INSERT/UPDATE on training/predictions
+--   football_reader   — SELECT only on all tables
+--   football_gatekeeper — CREATEDB (temp), SELECT on all tables (CI/test)
+-- ============================================
+
+-- ---- Create roles (conditional: skip if already exists) ----
+-- Roles are server-level. Use DO blocks to avoid "role already exists" errors
+-- during cold-start blueprint replay on the same PostgreSQL instance.
+
+-- football_owner: DDL + migration owner (replaces universal football_user)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'football_owner') THEN
+        CREATE ROLE football_owner WITH LOGIN PASSWORD 'football_owner_dev_poc';
+    END IF;
+END
+$$;
+GRANT ALL PRIVILEGES ON DATABASE football_db TO football_owner;
+
+-- football_app: runtime DML, no DDL
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'football_app') THEN
+        CREATE ROLE football_app WITH LOGIN PASSWORD 'football_app_dev_poc';
+    END IF;
+END
+$$;
+GRANT CONNECT ON DATABASE football_db TO football_app;
+GRANT USAGE ON SCHEMA public TO football_app;
+GRANT SELECT, INSERT, UPDATE ON ALL TABLES IN SCHEMA public TO football_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO football_app;
+
+-- football_ingestion: write-limited to ingestion tables
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'football_ingestion') THEN
+        CREATE ROLE football_ingestion WITH LOGIN PASSWORD 'football_ingestion_dev_poc';
+    END IF;
+END
+$$;
+GRANT CONNECT ON DATABASE football_db TO football_ingestion;
+GRANT USAGE ON SCHEMA public TO football_ingestion;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_ingestion;
+GRANT INSERT, UPDATE ON matches, raw_match_data, odds TO football_ingestion;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO football_ingestion;
+
+-- football_training: SELECT all, write on training/predictions tables
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'football_training') THEN
+        CREATE ROLE football_training WITH LOGIN PASSWORD 'football_training_dev_poc';
+    END IF;
+END
+$$;
+GRANT CONNECT ON DATABASE football_db TO football_training;
+GRANT USAGE ON SCHEMA public TO football_training;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_training;
+GRANT INSERT, UPDATE ON match_features_training, predictions TO football_training;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO football_training;
+
+-- football_reader: SELECT only (MCP, health checks, dashboards, audits)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'football_reader') THEN
+        CREATE ROLE football_reader WITH LOGIN PASSWORD 'football_reader_dev_poc';
+    END IF;
+END
+$$;
+GRANT CONNECT ON DATABASE football_db TO football_reader;
+GRANT USAGE ON SCHEMA public TO football_reader;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_reader;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO football_reader;
+
+-- football_gatekeeper: CREATEDB (temp) for CI/test cold-start probes
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'football_gatekeeper') THEN
+        CREATE ROLE football_gatekeeper WITH LOGIN PASSWORD 'football_gatekeeper_dev_poc';
+    END IF;
+END
+$$;
+GRANT CONNECT ON DATABASE football_db TO football_gatekeeper;
+GRANT USAGE ON SCHEMA public TO football_gatekeeper;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO football_gatekeeper;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO football_gatekeeper;
+-- Note: CREATEDB is a server-level attribute, not grantable per-DB.
+-- In dev, gatekeeper uses postgres admin for cold-start CREATE DATABASE probes.
+
+-- ---- Default privileges for future tables ----
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT SELECT, INSERT, UPDATE ON TABLES TO football_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT SELECT ON TABLES TO football_ingestion;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT INSERT, UPDATE ON TABLES TO football_ingestion;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT SELECT ON TABLES TO football_training;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT INSERT, UPDATE ON TABLES TO football_training;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT SELECT ON TABLES TO football_reader;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+    GRANT SELECT ON TABLES TO football_gatekeeper;
+
+-- ---- Post-init: ensure football_owner owns all existing objects ----
+-- Tables created by the universal football_user (POSTGRES_USER) during init
+-- are already owned by that user. In dev POC, football_owner co-exists.
+-- Full ownership transfer requires ALTER TABLE … OWNER TO football_owner;
+-- which is a production migration concern, not a dev POC concern.
+
+-- ============================================
+-- Legacy user: football_user (kept for backward compatibility in dev)
+-- ============================================
+-- The Docker compose POSTGRES_USER=football_user still creates this user
+-- as the database owner. In dev POC, football_owner is an additional role.
+-- In production, football_user should be replaced by football_owner.
 
 -- ============================================
 -- 完成
 -- ============================================
 -- 数据库初始化完成
--- 版本: V25.1
+-- 版本: V25.1 (dev-poc role model added 2026-06-25)
 -- 表数量: 9
 -- 索引数量: 30+
+-- DB roles: 7 (football_user + 6 new roles per SC-002 Criterion #6)
 -- ============================================

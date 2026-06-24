@@ -180,19 +180,19 @@ does not block this criterion.
 - `deploy/docker/init_claude_reader.sql` creates a read-only PostgreSQL user for MCP.
 
 **What is missing:**
-- No systematic review of current DB roles, permissions, and connection pool configurations.
-- No verification that application-layer guard and DB-layer permissions are aligned.
-- No review of whether PostgreSQL row-level security or role-based access could complement
-  the application-layer guard.
-- The task `runtime_db_role_permission_review_phase1` is defined in the closure plan
-  but has not been executed.
+- Staging/production deployment of the role model.
+- Verification that application-layer guard and DB-layer permissions are aligned in staging.
+- Review of whether PostgreSQL row-level security could complement the application-layer guard.
+- Connection pool impact assessment for role-per-component connectivity.
+- The dev POC is static — not yet exercised against a running DB.
 
-**Assessment for Criterion 6: Reviewed, not yet met for implementation.**
-`runtime_db_role_permission_review_phase1` has been completed. The static audit
-documented 8 specific risks and designed a target 6-role model. See
-`docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md` for full analysis.
-Implementation (role creation, privilege grants) has not been started.
-Criterion #6 remains unmet for implementation.
+**Assessment for Criterion 6: Reviewed + Dev POC implemented, not yet met for staging/production.**
+`runtime_db_role_permission_review_phase1` has been completed (static audit of 8 risks,
+target 6-role model). `runtime_db_role_permission_dev_poc` has implemented the role model
+in dev-only files (`deploy/docker/init_db.sql`, `docker-compose.dev.yml`, `.env.example`).
+See `docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md` for full analysis.
+Dev POC has not been deployed to staging or production.
+Criterion #6 remains unmet for staging/production deployment.
 
 ### Criterion 7: No production override exists
 
@@ -267,7 +267,7 @@ This is assigned to Gate B (controlled staging DB write), not the Python/SQL tra
 | 3 | Browser/FotMob/pageProps specialized audit | **Partial** | 13 false_positive scripts need deep verification; 3 design_mapped need follow-up |
 | 4 | Shared module consumer boundary | **Substantially met** | Proactive enforcement (caller tracing) designed but not implemented |
 | 5 | Python/SQL/migration enforcement | **Met** | `init_db.sql` caveat tracked under Gate B |
-| 6 | Runtime DB role/permission model | **Reviewed** | Static audit done (8 risks, target model). Implementation not started. |
+| 6 | Runtime DB role/permission model | **Reviewed + Dev POC** | Static audit done (8 risks, target model). Dev POC implemented. Not in staging/prod. |
 | 7 | No production override exists | **Met** | No gaps |
 | 8 | Training/data expansion blocked | **Met** | No gaps |
 | 9 | PROJECT_STATUS.md matches closure state | **Good standing** | Will verify at closure |
@@ -290,16 +290,15 @@ This is assigned to Gate B (controlled staging DB write), not the Python/SQL tra
 
 ## Next Recommended Task
 
-**`runtime_db_role_permission_review_phase1`**
+**`sc002_release_gate_checklist_phase1`** (or staging role deployment — TBD)
 
-This is the highest-priority, lowest-effort remaining task:
-- **Objective:** Review and document the current runtime DB role/permission model.
-- **Scope:** Read-only audit of DB connection configuration, role definitions, migration
-  files. Document findings, gaps, and recommendations.
-- **Why this task:** It unblocks criterion #6, has the lowest implementation risk
-  (documentation only, no code changes), and is a prerequisite for Gate B readiness.
-- **Forbidden:** Connect to production DB, modify roles or permissions, execute
-  GRANT/REVOKE, modify connection pools.
+- `runtime_db_role_permission_review_phase1` ✅ **COMPLETED**
+- `runtime_db_role_permission_dev_poc` ✅ **COMPLETED** (dev-only POC)
+- **Next priority:** Either create a detailed release gate checklist
+  (`sc002_release_gate_checklist_phase1`) OR plan staging deployment of the role model.
+- Both tasks require explicit authorization and user confirmation.
+- All tasks remain forbidden from: DB write, training, data expansion, scraper/browser,
+  production permission changes.
 
 **Do not start automatically.** Recommended next task only after user confirmation.
 

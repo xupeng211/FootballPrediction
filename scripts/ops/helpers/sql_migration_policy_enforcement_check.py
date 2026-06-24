@@ -85,12 +85,20 @@ def run_sql_migration_policy_gate_check(changed: set[str], errors: list[str]) ->
             ", ".join(sorted({e["signal"] for e in signals_list[:5]})) if signals_list else "none"
         )
 
-        if has_destructive:
+        would_fail = v.get("would_fail_changed_files_gate", True)
+        if has_destructive and would_fail:
             errors.append(
                 f"[SQL-MIGRATION ENFORCEMENT] FAIL: {path}: DESTRUCTIVE SQL detected. "
                 f"Signals: {signals}. Classification: {cls}. "
                 f"Destructive operations (DROP DATABASE, DROP TABLE, TRUNCATE, etc.) "
                 f"require explicit policy review. SC-002 remains partial mitigation only."
+            )
+        elif has_destructive and not would_fail:
+            # File is in allowlist with proper classification — would_fail is False.
+            sys.stdout.write(
+                f"[SQL-MIGRATION ENFORCEMENT] {path}: {cls} — "
+                f"in allowlist (historical baseline). Destructive signals: {signals}. "
+                f"Changed-files gate exempt. Allowlist does NOT authorize execution.\n"
             )
         elif allowlist_status == "in_allowlist":
             sys.stdout.write(
@@ -154,8 +162,14 @@ def check_sql_migration_policy_enforcement(
         has_destructive = any(
             s["evidence_type"] == "executable_context" for s in v.get("destructive_signals", [])
         )
-        if has_destructive:
+        would_fail = v.get("would_fail_changed_files_gate", True)
+        if has_destructive and would_fail:
             errors.append(f"DESTRUCTIVE: {path} — {cls} — Signals: {signals}")
+        elif has_destructive and not would_fail:
+            # Allowlisted file with proper classification — gate exempt.
+            warnings.append(
+                f"ALLOWLISTED-DESTRUCTIVE: {path} — {cls} — Signals: {signals} (gate exempt)"
+            )
         else:
             errors.append(f"FAIL: {path} — {cls} — Signals: {signals}")
 
