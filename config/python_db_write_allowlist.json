@@ -13,7 +13,9 @@
       "evidence": "psycopg2 import + execute + CREATE TABLE/ALTER TABLE/execute_values bulk insert in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='schema_manager.py', operation='CREATE/ALTER', target='schema_tables', tables=['match_features_training', 'matches', 'raw_match_data']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #163.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch2",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before CREATE TABLE/ALTER TABLE in initialize_schema(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, ALLOW_RAW_MATCH_DATA_WRITE=yes, ALLOW_TRAINING_WRITE=yes, ALLOW_SCHEMA_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before CREATE TABLE/ALTER TABLE in initialize_schema(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, ALLOW_RAW_MATCH_DATA_WRITE=yes, ALLOW_TRAINING_WRITE=yes, ALLOW_SCHEMA_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/database/sql_store.py",
@@ -23,12 +25,21 @@
       "source_doc": "docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md",
       "owner_task": "python_confirmed_write_paths_design_phase2C_batch4",
       "analysis_task": "python_confirmed_write_paths_design_phase2C_batch4",
-      "observed_operations": ["NONE — SQL string constants only, no execution code"],
-      "observed_tables_or_targets": ["matches", "matches_mapping", "raw_match_data (via SQL strings only)"],
+      "observed_operations": [
+        "NONE — SQL string constants only, no execution code"
+      ],
+      "observed_tables_or_targets": [
+        "matches",
+        "matches_mapping",
+        "raw_match_data (via SQL strings only)"
+      ],
       "direct_write_boundary": "NONE — file only defines SQL strings; execution happens in consumer files",
-      "recommended_next_action": "Guard at consumers that execute these SQL strings, not here. Determine if SQLStore has active consumers. If no consumers exist, consider deprecation/removal in cleanup PR.",
-      "why_not_guarded_in_this_pr": "Infrastructure only — SQL strings without execution. Guard belongs at caller/consumer level where strings are executed with DB connections.",
-      "expires_or_review_note": "Reclassified from confirmed_write_path to infrastructure_only_needs_caller_guard by design phase batch4 (2026-06-24). Guard at consumers, not here."
+      "recommended_next_action": "Consider deprecation/removal in cleanup PR. No guard needed — no consumers to guard.",
+      "why_not_guarded_in_this_pr": "Audit confirmed zero active consumers. No runtime guard needed at infrastructure level or consumer level.",
+      "expires_or_review_note": "Reclassified from confirmed_write_path to infrastructure_only_needs_caller_guard by design phase batch4 (2026-06-24). Guard at consumers, not here.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md",
+      "consumer_summary": "Zero active consumers. SQLStore class has no external imports or usages. SQL string constants exist but no code executes them."
     },
     {
       "path": "src/database/match_repository.py",
@@ -37,7 +48,9 @@
       "evidence": "psycopg2 import + execute + INSERT/ON CONFLICT + commit/rollback in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='match_repository.py', operation='INSERT', target='matches_mapping', tables=['matches_mapping']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #165.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch1",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch1. Guard call before INSERT in upsert_match_hash(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch1. Guard call before INSERT in upsert_match_hash(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/database/oddsportal_db_manager.py",
@@ -46,7 +59,9 @@
       "evidence": "psycopg2 import + execute + INSERT/UPDATE with ON CONFLICT in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='oddsportal_db_manager.py', operation='UPSERT', target='matches_mapping', tables=['matches_mapping']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #166.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch2",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before UPSERT in sync_match_data(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before UPSERT in sync_match_data(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/database/collector_repository.py",
@@ -55,7 +70,9 @@
       "evidence": "asyncpg via DatabasePool + INSERT ON CONFLICT DO UPDATE in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='collector_repository.py', operation='UPSERT', target='matches', tables=['matches']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #167.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch3",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before INSERT/UPSERT in save_match_data() and batch_save_match_data(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before INSERT/UPSERT in save_match_data() and batch_save_match_data(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/database/sync_db_pool.py",
@@ -65,12 +82,22 @@
       "source_doc": "docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md",
       "owner_task": "python_confirmed_write_paths_design_phase2C_batch4",
       "analysis_task": "python_confirmed_write_paths_design_phase2C_batch4",
-      "observed_operations": ["execute (generic, auto-commit)", "executemany (generic, auto-commit)", "fetch_all (read-only)", "fetch_one (read-only)"],
-      "observed_tables_or_targets": ["N/A — infrastructure, tables depend on caller's SQL"],
+      "observed_operations": [
+        "execute (generic, auto-commit)",
+        "executemany (generic, auto-commit)",
+        "fetch_all (read-only)",
+        "fetch_one (read-only)"
+      ],
+      "observed_tables_or_targets": [
+        "N/A — infrastructure, tables depend on caller's SQL"
+      ],
       "direct_write_boundary": "YES — execute()/executemany() with auto-commit. But guard at infrastructure level is inappropriate: methods serve both read+write; guard would break health checks and read-only callers.",
-      "recommended_next_action": "Guard at caller level. Inventory all code paths calling sync_db_pool.execute()/executemany() with DML/DDL and add assert_db_write_allowed() at each write call site. Separate design task recommended.",
-      "why_not_guarded_in_this_pr": "Infrastructure — generic SQL execution for both read+write. Guard must be at caller/consumer level where intent is known.",
-      "expires_or_review_note": "Reclassified from confirmed_write_path to infrastructure_only_needs_caller_guard by design phase batch4 (2026-06-24). Guard at consumers, not here."
+      "recommended_next_action": "Consider removing unused utils aliases. No guard needed — no active write consumers.",
+      "why_not_guarded_in_this_pr": "Audit confirmed zero active write consumers of SyncDatabasePool. All write consumers use async DatabasePool and are already guarded.",
+      "expires_or_review_note": "Reclassified from confirmed_write_path to infrastructure_only_needs_caller_guard by design phase batch4 (2026-06-24). Guard at consumers, not here.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md",
+      "consumer_summary": "One consumer (src/utils/__init__.py) re-exports SyncDatabasePool as DatabaseManager with zero downstream consumers. Remaining consumers use async DatabasePool instead."
     },
     {
       "path": "src/database/db_pool.py",
@@ -80,12 +107,21 @@
       "source_doc": "docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md",
       "owner_task": "python_confirmed_write_paths_design_phase2C_batch4",
       "analysis_task": "python_confirmed_write_paths_design_phase2C_batch4",
-      "observed_operations": ["execute (generic, asyncpg auto-commit)", "executemany (generic, asyncpg auto-commit)", "fetch/fetchrow/fetchval (read-only)"],
-      "observed_tables_or_targets": ["N/A — infrastructure, tables depend on caller's SQL"],
+      "observed_operations": [
+        "execute (generic, asyncpg auto-commit)",
+        "executemany (generic, asyncpg auto-commit)",
+        "fetch/fetchrow/fetchval (read-only)"
+      ],
+      "observed_tables_or_targets": [
+        "N/A — infrastructure, tables depend on caller's SQL"
+      ],
       "direct_write_boundary": "YES — execute()/executemany() with asyncpg auto-commit. But guard at infrastructure level is inappropriate: methods serve both read+write; guard would break health checks and read-only consumers.",
-      "recommended_next_action": "Guard at caller level. Complete inventory of all code paths calling db_pool.execute()/executemany() with DML/DDL. Two known write callers already guarded (batch3). Audit remaining consumers and guard any unguarded write callers.",
-      "why_not_guarded_in_this_pr": "Infrastructure — generic SQL execution for both read+write. Guard must be at caller/consumer level where intent is known. Two write callers already guarded.",
-      "expires_or_review_note": "Reclassified from confirmed_write_path to infrastructure_only_needs_caller_guard by design phase batch4 (2026-06-24). Guard at consumers, not here. Two known write callers already guarded in batch3."
+      "recommended_next_action": "No new guard needed. All write consumers already guarded (collector_repository.py, streaming_db_writer.py in batch3). Read-only consumers verified safe.",
+      "why_not_guarded_in_this_pr": "Audit confirmed all write consumers already guarded. Read-only consumers verified via static analysis. Infrastructure-level guard inappropriate (would break health checks).",
+      "expires_or_review_note": "Reclassified from confirmed_write_path to infrastructure_only_needs_caller_guard by design phase batch4 (2026-06-24). Guard at consumers, not here. Two known write callers already guarded in batch3.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md",
+      "consumer_summary": "9 consumers: 2 write (both already guarded in batch3), 6 read-only, 1 test mock. No unguarded write consumers found."
     },
     {
       "path": "src/data/streaming/streaming_db_writer.py",
@@ -94,7 +130,9 @@
       "evidence": "asyncpg via DatabasePool + executemany + INSERT/UPSERT in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='streaming_db_writer.py', operation='UPSERT'|'INSERT', target=table_name, tables=[table_name]). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #170.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch3",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before INSERT/UPSERT in _execute_batch_write(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, table-specific gate as applicable, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before INSERT/UPSERT in _execute_batch_write(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, table-specific gate as applicable, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/core/database/odds_injector.py",
@@ -103,7 +141,9 @@
       "evidence": "psycopg2 + execute_values + conn.commit() + UPDATE matches SET l3_odds_data in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='odds_injector.py', operation='UPDATE', target='matches (l3_odds_data quality-based UPSERT)', tables=['matches'], dry_run=dry_run). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #171.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch3",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before UPDATE/commit in _inject_records(). Existing dry_run parameter integrated. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch3. Guard call before UPDATE/commit in _inject_records(). Existing dry_run parameter integrated. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/database_detox.py",
@@ -112,7 +152,9 @@
       "evidence": "psycopg2 + execute + ALTER TABLE/UPDATE in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='database_detox.py', operation='ALTER', target='prematch_features', tables=['prematch_features']). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #172.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch1",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch1. Guard call before ALTER/UPDATE in main(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_ODDS_WRITE=yes, ALLOW_SCHEMA_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch1. Guard call before ALTER/UPDATE in main(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_ODDS_WRITE=yes, ALLOW_SCHEMA_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/reset_l2_collection.py",
@@ -121,7 +163,9 @@
       "evidence": "psycopg2 + execute + TRUNCATE in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='reset_l2_collection.py', operation='TRUNCATE', target='raw_match_data, collection_audit_logs', tables=['raw_match_data', 'collection_audit_logs'], dry_run=False). See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #173.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch1",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch1. Guard call before TRUNCATE in main() (both force and normal paths). Existing --dry-run, --confirm, --force flags preserved. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_RAW_MATCH_DATA_WRITE=yes, ALLOW_SCHEMA_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch1. Guard call before TRUNCATE in main() (both force and normal paths). Existing --dry-run, --confirm, --force flags preserved. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_RAW_MATCH_DATA_WRITE=yes, ALLOW_SCHEMA_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/odds_integrity_guard.py",
@@ -131,12 +175,19 @@
       "source_doc": "docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md",
       "owner_task": "python_confirmed_write_paths_design_phase2C_batch4",
       "analysis_task": "python_confirmed_write_paths_design_phase2C_batch4",
-      "observed_operations": ["SELECT"],
-      "observed_tables_or_targets": ["matches", "match_odds"],
+      "observed_operations": [
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "matches",
+        "match_odds"
+      ],
       "direct_write_boundary": "NONE — all cursor.execute() calls are SELECT; DELETE is print-only diagnostic, never executed",
       "recommended_next_action": "No guard needed. Reclassify as read-only. If future version adds automated DELETE/UPDATE execution, re-evaluate with a new design task.",
       "why_not_guarded_in_this_pr": "Read-only at runtime — no write path to guard. DELETE SQL is only generated and printed, never executed.",
-      "expires_or_review_note": "Reclassified from confirmed_write_path to read_only_candidate by design phase batch4 (2026-06-24). Review if file is modified to add actual write execution."
+      "expires_or_review_note": "Reclassified from confirmed_write_path to read_only_candidate by design phase batch4 (2026-06-24). Review if file is modified to add actual write execution.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/integrity_guard.py",
@@ -146,12 +197,20 @@
       "source_doc": "docs/SC002_PHASE2C_REMAINING_CONFIRMED_WRITE_PATHS_DESIGN.md",
       "owner_task": "python_confirmed_write_paths_design_phase2C_batch4",
       "analysis_task": "python_confirmed_write_paths_design_phase2C_batch4",
-      "observed_operations": ["SELECT"],
-      "observed_tables_or_targets": ["matches", "raw_match_data", "l3_features"],
+      "observed_operations": [
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "matches",
+        "raw_match_data",
+        "l3_features"
+      ],
       "direct_write_boundary": "NONE — every cursor.execute() is SELECT; fix commands are shell commands, not SQL",
       "recommended_next_action": "No guard needed. Reclassify as read-only. Consider removing hardcoded DB_CONFIG credentials in a separate cleanup PR.",
       "why_not_guarded_in_this_pr": "Read-only at runtime — no write path to guard. All DB operations are SELECT diagnostics.",
-      "expires_or_review_note": "Reclassified from confirmed_write_path to read_only_candidate by design phase batch4 (2026-06-24). Review if file is modified to add actual write execution."
+      "expires_or_review_note": "Reclassified from confirmed_write_path to read_only_candidate by design phase batch4 (2026-06-24). Review if file is modified to add actual write execution.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/ops/fotmob_registry_seed_dev_execution.py",
@@ -160,7 +219,9 @@
       "evidence": "psycopg2 + execute + INSERT ON CONFLICT DO NOTHING in executable code. Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='fotmob_registry_seed_dev_execution.py', operation='INSERT', target='football_registry_tables', tables=['football_teams', 'football_competitions', 'football_competition_editions', 'football_team_competition_participation', 'football_match_targets', 'football_match_target_teams', 'football_source_identities']). Existing custom production guard preserved as additional layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #176.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C_batch2",
-      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before INSERT in main() (after existing custom production guard check). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_GENERIC_DB_WRITE=yes, DRY_RUN=false."
+      "expires_or_review_note": "Runtime guard added in Phase2C batch2. Guard call before INSERT in main() (after existing custom production guard check). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_GENERIC_DB_WRITE=yes, DRY_RUN=false.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/database/migrations/env.py",
@@ -169,7 +230,9 @@
       "evidence": "sqlalchemy + alembic + migration execution. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #369.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "sql_migration_policy_implementation_phase2B",
-      "expires_or_review_note": "Must be guarded in Phase 2B before any migration is authorized. Do NOT mark safe."
+      "expires_or_review_note": "Must be guarded in Phase 2B before any migration is authorized. Do NOT mark safe.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/services/match_aligner.py",
@@ -178,7 +241,9 @@
       "evidence": "Imports from match_repository. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #185.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C."
+      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/services/match_linker.py",
@@ -187,7 +252,9 @@
       "evidence": "Imports from match_repository. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #186.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C."
+      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/services/match_data_service.py",
@@ -196,7 +263,9 @@
       "evidence": "Via config + repository layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #187.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C."
+      "expires_or_review_note": "Trace full execution path and guard at call site in Phase 2C.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/services/league_router.py",
@@ -205,7 +274,9 @@
       "evidence": "Via config + repository layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #188.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority."
+      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/api/collectors/odds_api_client_v38.py",
@@ -214,7 +285,9 @@
       "evidence": "Via config + collector layer. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #189.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority."
+      "expires_or_review_note": "Trace full execution path in Phase 2C. Lower priority.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/reprocess_failed_matches.py",
@@ -223,7 +296,9 @@
       "evidence": "Via config + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #190.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C."
+      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/clean_corrupt_l2.py",
@@ -232,7 +307,9 @@
       "evidence": "psycopg2 + execute + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #191.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C."
+      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/fix_zombie_matches.py",
@@ -241,7 +318,9 @@
       "evidence": "psycopg2 + execute + dry_run refs. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #192.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_runtime_guard_implementation_phase2C",
-      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C."
+      "expires_or_review_note": "Verify dry_run default and guard in Phase 2C.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/reprocess_from_local.py",
@@ -250,7 +329,9 @@
       "evidence": "DB config import detected. Write path unclear. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #279.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/maintenance/fotmob_historical_backfill.py",
@@ -259,7 +340,9 @@
       "evidence": "May have write capability for backfill operations. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #280.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/api/monitoring/prometheus_metrics.py",
@@ -268,7 +351,9 @@
       "evidence": "DB queries + possible write for metrics. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #281.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "src/api/monitoring.py",
@@ -277,7 +362,9 @@
       "evidence": "DB access pattern ambiguous. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #282.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
     {
       "path": "scripts/tools/diagnose_diagnostic.py",
@@ -286,7 +373,9 @@
       "evidence": "May have write operations for auto-fix. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #283.",
       "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
       "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D."
+      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     }
   ]
 }
