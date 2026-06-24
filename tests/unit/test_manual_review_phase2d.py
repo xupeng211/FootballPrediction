@@ -145,12 +145,12 @@ class TestManualReviewPhase2D:
         """Allowlist header must reference manual_review_phase2d."""
         data = _load_allowlist()
         status = data.get("_runtime_guard_status", "")
-        assert "Phase2D manual review" in status, (
-            f"Allowlist header missing Phase2D reference: {status}"
+        assert "Phase2D manual review" in status or "manual_review_guard_phase2e" in status, (
+            f"Allowlist header missing Phase2D/Phase2E reference: {status}"
         )
-        assert "2/2" in status or "2 of 2" in status or "17/20" in status, (
-            f"Allowlist header must show Phase2E guard completion: {status}"
-        )
+        assert any(
+            s in status for s in ("2/2", "2 of 2", "17/20", "18/20", "18 runtime guarded")
+        ), f"Allowlist header must show guard completion: {status}"
         assert "0 unreviewed" in status or "No remaining" in status, (
             f"Allowlist header must state 0 unreviewed: {status}"
         )

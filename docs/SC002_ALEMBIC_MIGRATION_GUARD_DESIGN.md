@@ -4,8 +4,9 @@
 - owner: project governance
 - created: 2026-06-25
 - task: sc002_alembic_migration_guard_design
-- classification_status: pending_implementation
-- classification: alembic_migration_needs_runtime_guard
+- classification_status: implemented (2026-06-25, sc002_alembic_migration_runtime_guard_implementation)
+- classification: alembic_migration_runtime_guarded
+- implementation_status: COMPLETE — guard added to run_migrations_online() in env.py
 
 ## Summary
 

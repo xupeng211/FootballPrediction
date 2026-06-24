@@ -5,6 +5,29 @@
 
 Last updated: 2026-06-25
 
+## sc002_alembic_migration_runtime_guard completed
+
+- **sc002_alembic_migration_runtime_guard_implementation** — runtime guard added to
+  `src/database/migrations/env.py` for the last remaining unguarded Python write path.
+  - Branch: `chore/sc002-alembic-migration-runtime-guard`
+  - **Guard implemented in `run_migrations_online()` before any DB engine/connection/migration.**
+  - Guard details:
+    - Function: `_check_alembic_migration_guard()`
+    - Reuses existing `scripts/ops/helpers/python_db_write_guard.py` (`assert_db_write_allowed`)
+    - Operation: `CREATE` (triggers schema-level `ALLOW_SCHEMA_WRITE` gate)
+    - `ALEMBIC_CTX` env var: `ci`/`dev`/`docker_init` auto-allow with `ALLOW_SCHEMA_WRITE=yes`
+    - Production-like host **hard block** (no override)
+    - `run_migrations_offline()` (`--sql` mode) NOT guarded
+  - Allows list updated: env.py → `alembic_migration_runtime_guarded`
+  - **Python write paths guarded: 18/20 (was 17/20).**
+  - **All 20 Python write paths now classified and resolved. 0 unreviewed. 0 pending.**
+  - This task did NOT run Alembic, migration, SQL, DB connection, or real DB write.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: None from Python track — all 20 Python write paths resolved.
+    SC-002 overall closure criteria assessment when remaining non-Python criteria are met.
+    Do not start automatically.
+
 ## sc002_alembic_migration_guard_design completed
 
 - **sc002_alembic_migration_guard_design** — design, classification, and implementation
