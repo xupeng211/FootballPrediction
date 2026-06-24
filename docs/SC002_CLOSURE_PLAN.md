@@ -53,7 +53,8 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | Python Phase2A+2B completed; Phase2C batch1-4 completed (9/14 guarded, 5 classified); indirect_write_path design+guard phase2 completed (6/6 guarded); manual_review phase2d+phase2e completed (all 5 reviewed, 2 guarded = 17/20 total). Remaining: 3 safe reclassified (1 read_only, 2 false_positive) + 1 Alembic env.py pending. 0 unreviewed. |
+| Python / SQL / migration enforcement | Python Phase2A+2B completed; Phase2C batch1-4 completed (9/14 guarded, 5 classified); indirect_write_path design+guard phase2 completed (6/6 guarded); manual_review phase2d+phase2e completed (all 5 reviewed, 2 guarded = 17/20 total). Remaining: 3 safe reclassified (1 read_only, 2 false_positive) + 1 Alembic env.py classified as alembic_migration_needs_specialized_runtime_guard (design complete, awaiting implementation). 0 unreviewed. |
+| SC-002 Alembic migration guard | `sc002_alembic_migration_guard_design` completed. env.py statically analyzed: confirmed migration orchestrator, can execute arbitrary DDL/DML. Classified as `alembic_migration_needs_specialized_runtime_guard`. Specialized guard design documented in `docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md`. Implementation deferred to `sc002_alembic_migration_runtime_guard_implementation`. |
 | Runtime DB role / permission model | not fully validated |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
@@ -305,7 +306,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 | 2 | Changed-files enforcement is active and tested with both positive and negative cases | Partial (active but needs negative-case testing) |
 | 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Not met |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Not met |
-| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Phase2A+2B completed; Phase2C batch1-4 completed — 9/14 confirmed guarded, 5 classified; indirect_write_path guard_phase2 completed — 6/6 guarded; manual_review_guard_phase2e completed — 2/2 manual write paths guarded; total 17/20 guarded, 1 pending (Alembic env.py), 3 safe reclassified, 0 unreviewed) |
+| 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Partial (Phase2A+2B completed; Phase2C batch1-4 completed — 9/14 confirmed guarded, 5 classified; indirect_write_path guard_phase2 completed — 6/6 guarded; manual_review_guard_phase2e completed — 2/2 manual write paths guarded; total 17/20 guarded, 1 classified/designed pending implementation (Alembic env.py — design doc with pseudocode and guard location complete), 3 safe reclassified, 0 unreviewed) |
 | 6 | Runtime DB permissions / role restrictions are documented or tested | Not met |
 | 7 | No production override exists (no `ALLOW_PRODUCTION_DB_WRITE`, no bypass env var, no host-block escape hatch) | Met |
 | 8 | Training and data expansion remain blocked until explicit release criteria are met | Met (blocks are in place) |
@@ -685,6 +686,32 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **SC-002 remains partial mitigation only.**
 - **Next step:** `python_indirect_write_path_guard_phase2` — implement runtime guard for
   the 6 newly confirmed direct write paths. Do not start automatically.
+
+### 5h. sc002_alembic_migration_guard_design ✅ COMPLETED
+
+- **Status:** Completed (this PR — design/classification task, NOT runtime guard implementation).
+- **Results:**
+  - Static analysis of `src/database/migrations/env.py` completed.
+  - **0 runtime guards added.** This is a design/classification task only.
+  - **env.py classification:** `alembic_migration_needs_specialized_runtime_guard`
+    - Confirmed: env.py CAN execute arbitrary DDL/DML via alembic upgrade.
+    - Confirmed: env.py connects to live DB in online mode.
+    - Confirmed: env.py has NO existing SC-002 guard or env-var restrictions.
+    - env.py is the standard Alembic entry point — used by CI, local dev, Docker init.
+    - Standard guard pattern does NOT directly fit (framework orchestrator, not standalone script).
+  - Guard strategy designed:
+    - Guard location: top of `run_migrations_online()` before any DB connection.
+    - Env vars: `ALLOW_DB_WRITE`, `FINAL_DB_WRITE_CONFIRMATION`, `ALLOW_SCHEMA_WRITE`, `DRY_RUN`.
+    - Production-like host hard block (matching JS/Python guard pattern).
+    - `ALEMBIC_CTX` env var for CI/dev auto-allow.
+    - Offline mode (`--sql`) NOT guarded.
+  - Full implementation plan with pseudocode in `docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md`.
+  - Allowlist updated: env.py reclassified with full evidence and design doc reference.
+  - **No Alembic run. No migration. No SQL. No DB connection. No real DB write.**
+  - **No scraper/browser run. No training. No data expansion.**
+  - **SC-002 remains partial mitigation only.**
+- **Next step:** `sc002_alembic_migration_runtime_guard_implementation` — implement
+  specialized guard in env.py per design doc. Do not start automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
 

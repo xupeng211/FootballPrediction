@@ -5,6 +5,39 @@
 
 Last updated: 2026-06-25
 
+## sc002_alembic_migration_guard_design completed
+
+- **sc002_alembic_migration_guard_design** — design, classification, and implementation
+  plan for the last remaining SC-002 Python write path: `src/database/migrations/env.py`
+  (Alembic migration environment).
+  - Branch: `chore/sc002-alembic-migration-guard-design`
+  - New design doc: `docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md`
+  - **This is a design/classification task, NOT runtime guard implementation.**
+  - **0 runtime guards added. No code changed in env.py.**
+  - This task did NOT run Alembic, migration, SQL, DB connection, scraper, or training.
+  - Classification result: `alembic_migration_needs_specialized_runtime_guard`
+    - env.py IS a real schema write path (orchestrates arbitrary DDL/DML via migration scripts)
+    - env.py is NOT a false positive or read-only candidate
+    - env.py requires specialized guard approach (framework orchestrator, not standalone script)
+    - Standard `assert_db_write_allowed()` pattern doesn't directly fit (would break CI/dev)
+  - Guard strategy designed:
+    - Guard location: top of `run_migrations_online()` before any DB connection
+    - Env vars: `ALLOW_DB_WRITE`, `FINAL_DB_WRITE_CONFIRMATION`, `ALLOW_SCHEMA_WRITE`, `DRY_RUN`
+    - Production-like host hard block (matching JS/Python guard pattern)
+    - `ALEMBIC_CTX` env var for CI/dev context auto-allow
+    - Offline mode (`--sql`) NOT guarded
+  - Implementation plan documented with pseudocode, integration points, and CI/dev workflow
+    compatibility analysis.
+  - Allowlist updated: env.py reclassified from `pending_runtime_guard` to
+    `alembic_migration_needs_specialized_runtime_guard` with full evidence and design doc reference.
+  - **Python write paths guarded count: still 17/20** (unchanged — no guard added).
+  - **1 path now has precise classification with implementation plan** (was generic
+    `pending_runtime_guard`).
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `sc002_alembic_migration_runtime_guard_implementation`.
+    Do not start automatically.
+
 ## python_manual_review_guard_phase2e completed
 
 - **python_manual_review_guard_phase2e** — runtime DB write guard implementation
