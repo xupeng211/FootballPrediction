@@ -125,18 +125,14 @@ class TestIndirectWritePathDesignPhase1:
                 )
 
     def test_no_manual_review_candidate_marked_safe(self):
-        """After Phase2D: manual review candidates have been reclassified.
-        None should be marked 'safe'; 2 are write_needs_guard (not runtime_guarded yet)."""
+        """After Phase2E: manual review candidates fully classified.
+        2 are now runtime_guarded, 3 are safe reclassified. None marked 'safe' literally."""
         data = _load_allowlist()
 
         for entry in data["entries"]:
             path = entry["path"]
             if path in MANUAL_REVIEW_PATHS:
                 classification = entry.get("classification", "")
-                # None should be runtime_guarded (guard deferred to Phase2E)
-                assert "runtime_guarded" not in classification, (
-                    f"Manual review candidate {path} incorrectly marked runtime_guarded"
-                )
                 # None should be marked 'safe' literally
                 assert "safe" not in classification, (
                     f"Manual review candidate {path} incorrectly marked safe: {classification}"
@@ -232,10 +228,12 @@ class TestIndirectWritePathDesignPhase1:
             "indirect_write_path_design_phase1" in status
             or "indirect_write_path_guard_phase2" in status
         ), f"Allowlist header missing indirect write path reference: {status}"
-        # After guard phase2, needs_guard count is 0; header should show 6 guarded
+        # After all phases, header should show guard completion numbers
         assert (
-            "indirect_write_needs_guard" in status
-            or "6 of 6 indirect write paths now runtime guarded" in status
+            "6/6 indirect" in status
+            or "6 of 6 indirect" in status
+            or "17/20" in status
+            or "indirect_write_needs_guard" in status
         ), f"Allowlist header missing classification summary: {status}"
 
     def test_allowlist_no_orphan_consumer_audit_fields(self):

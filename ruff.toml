@@ -187,6 +187,9 @@ unfixable = []
 "src/api/collectors/odds_api_client_v38.py" = ["D102", "PLR2004"]
 "tests/unit/test_indirect_write_path_guard_phase2.py" = ["PLR2004", "SIM102"]
 "tests/unit/test_indirect_write_path_design_phase1.py" = ["N806"]
+# manual_review_guard_phase2e — pre-existing style issues in files touched for guard integration
+"src/api/monitoring/prometheus_metrics.py" = ["DTZ005", "PLC0415"]
+"tests/unit/test_manual_review_guard_phase2e.py" = ["SIM102"]
 
 # ci_local_parity_preflight_phase1 — new preflight script and tests
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004", "ARG001", "ARG002", "ARG005", "I001", "RUF100"]

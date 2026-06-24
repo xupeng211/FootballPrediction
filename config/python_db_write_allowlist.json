@@ -4,7 +4,7 @@
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
   "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining classified by design phase batch4 (2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); Phase2 indirect_write_path_guard_phase2: 6 of 6 indirect write paths now runtime guarded; Phase2D manual review: 5 of 5 manual review candidates classified (2 write_needs_guard, 1 read_only, 2 false_positive). Total: 15/20 runtime guarded, 2 next guard candidates (reprocess_from_local.py, prometheus_metrics.py), 3 safe reclassified. No remaining manual review candidates.",
+  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9/14 confirmed write paths guarded; Phase2C batch4: 5 remaining classified; Phase2 indirect_write_path_guard_phase2: 6/6 indirect paths guarded; Phase2D manual review: 5/5 classified; Phase2E manual_review_guard_phase2e: 2/2 manual review write paths now guarded. Total: 17/20 Python write paths runtime guarded. Remaining: 3 safe reclassified from manual review (1 read_only, 2 false_positive) + 1 Alembic migrations/env.py pending. 0 unreviewed.",
   "entries": [
     {
       "path": "src/database/schema_manager.py",
@@ -390,12 +390,12 @@
     },
     {
       "path": "scripts/maintenance/reprocess_from_local.py",
-      "classification": "historical_python_manual_confirmed_write_needs_guard",
-      "reason": "Phase2D manual review: DIRECT write confirmed — backfill_features() executes UPDATE matches SET l2_extracted_features with explicit conn.commit(). Uses own psycopg2 connection. No guard. No dry_run flag. Similar to reprocess_failed_matches.py which was guarded in indirect_write_path_guard_phase2. RISK: HIGH.",
-      "evidence": "psycopg2 direct import + get_db_connection() + cursor.execute(UPDATE matches SET l2_extracted_features) + conn.commit() + conn.rollback() in backfill_features(). See docs/SC002_MANUAL_REVIEW_PHASE2D.md #1.",
+      "classification": "historical_python_manual_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2E manual_review_guard_phase2e guarded: assert_db_write_allowed() in backfill_features() before UPDATE matches SET l2_extracted_features with conn.commit(). Tables: matches. Operations: UPDATE.",
+      "evidence": "psycopg2 direct import + get_db_connection() + cursor.execute(UPDATE matches SET l2_extracted_features) + conn.commit() + conn.rollback() in backfill_features(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='reprocess_from_local.py', operation='UPDATE', target='matches', tables=['matches']). See docs/SC002_MANUAL_REVIEW_PHASE2D.md #1.",
       "source_doc": "docs/SC002_MANUAL_REVIEW_PHASE2D.md",
-      "owner_task": "python_manual_review_phase2d",
-      "expires_or_review_note": "Reclassified from needs_manual_review to manual_confirmed_write_needs_guard by manual_review_phase2d (2026-06-25). Guard implementation deferred to python_manual_review_guard_phase2e.",
+      "owner_task": "python_manual_review_guard_phase2e",
+      "expires_or_review_note": "Runtime guard added in Phase2E manual_review_guard_phase2e (2026-06-25). Guard call before UPDATE in backfill_features(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
       "analysis_task": "python_manual_review_phase2d",
       "observed_operations": [
         "UPDATE",
@@ -405,7 +405,7 @@
         "matches"
       ],
       "direct_write_boundary": "YES — backfill_features() has cursor.execute(UPDATE) + conn.commit()",
-      "recommended_next_action": "Guard in backfill_features() before cur.execute(UPDATE) and conn.commit(). Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_manual_review_guard_phase2e."
+      "recommended_next_action": "Done. Guard implemented in python_manual_review_guard_phase2e."
     },
     {
       "path": "scripts/maintenance/fotmob_historical_backfill.py",
@@ -427,12 +427,12 @@
     },
     {
       "path": "src/api/monitoring/prometheus_metrics.py",
-      "classification": "historical_python_manual_confirmed_write_needs_guard",
-      "reason": "Phase2D manual review: DIRECT write confirmed — DeadLetterQueue._persist_to_database() executes INSERT INTO failed_market_data with explicit conn.commit(). Uses own psycopg2 connection. Write enabled by default (persist_to_db=True). Failures silently caught. No guard. No dry_run flag. RISK: MEDIUM.",
-      "evidence": "psycopg2 import (conditional, DB_AVAILABLE) + cursor.execute(INSERT INTO failed_market_data) + conn.commit() in _persist_to_database(). Write gated by persist_to_db flag (default True). See docs/SC002_MANUAL_REVIEW_PHASE2D.md #3.",
+      "classification": "historical_python_manual_confirmed_write_path_runtime_guarded",
+      "reason": "Phase2E manual_review_guard_phase2e guarded: assert_db_write_allowed() in DeadLetterQueue._persist_to_database() before INSERT INTO failed_market_data with conn.commit(). Tables: failed_market_data. Operations: INSERT.",
+      "evidence": "psycopg2 import (conditional, DB_AVAILABLE) + cursor.execute(INSERT INTO failed_market_data) + conn.commit() in _persist_to_database(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='prometheus_metrics.py', operation='INSERT', target='failed_market_data', tables=['failed_market_data']). See docs/SC002_MANUAL_REVIEW_PHASE2D.md #3.",
       "source_doc": "docs/SC002_MANUAL_REVIEW_PHASE2D.md",
-      "owner_task": "python_manual_review_phase2d",
-      "expires_or_review_note": "Reclassified from needs_manual_review to manual_confirmed_write_needs_guard by manual_review_phase2d (2026-06-25). Guard implementation deferred to python_manual_review_guard_phase2e.",
+      "owner_task": "python_manual_review_guard_phase2e",
+      "expires_or_review_note": "Runtime guard added in Phase2E manual_review_guard_phase2e (2026-06-25). Guard call before INSERT in _persist_to_database(). Write gated by persist_to_db flag (default True) AND guard env vars. Failures silently caught. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_GENERIC_DB_WRITE=yes (failed_market_data not in standard table gate map), DRY_RUN=false.",
       "analysis_task": "python_manual_review_phase2d",
       "observed_operations": [
         "INSERT",
@@ -442,7 +442,7 @@
         "failed_market_data"
       ],
       "direct_write_boundary": "YES — _persist_to_database() has cursor.execute(INSERT) + conn.commit()",
-      "recommended_next_action": "Guard in _persist_to_database() before cursor.execute(INSERT) and conn.commit(). Guard tables: [\"failed_market_data\"]. Guard operations: [\"INSERT\"]. Consider adding dry_run-like parameter to DeadLetterQueue. Defer to python_manual_review_guard_phase2e."
+      "recommended_next_action": "Done. Guard implemented in python_manual_review_guard_phase2e."
     },
     {
       "path": "src/api/monitoring.py",

@@ -5,6 +5,26 @@
 
 Last updated: 2026-06-25
 
+## python_manual_review_guard_phase2e completed
+
+- **python_manual_review_guard_phase2e** — runtime DB write guard implementation
+  completed for the 2 manual review write paths confirmed in Phase2D.
+  - Branch: `chore/python-manual-review-guard-phase2e`
+  - **2 of 2 files now have runtime guard (`assert_db_write_allowed`) before real DB write.**
+  - Guard details:
+    | # | File | Guard Location | Operation | Table |
+    |---|---|---|---|---|
+    | 1 | `scripts/maintenance/reprocess_from_local.py` | `backfill_features()` before UPDATE | UPDATE | `matches` |
+    | 2 | `src/api/monitoring/prometheus_metrics.py` | `_persist_to_database()` before INSERT | INSERT | `failed_market_data` |
+  - Uses existing `helpers/python_db_write_guard.py` pattern — no new mechanism.
+  - All guards placed before real DB write operations.
+  - Allowlist updated: 2 entries reclassified from `manual_confirmed_write_needs_guard` to `manual_confirmed_write_path_runtime_guarded`.
+  - Updated `_runtime_guard_status`: **17/20** Python write paths now runtime guarded.
+  - Docs updated: `SC002_MANUAL_REVIEW_PHASE2D.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
+  - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+
 ## python_manual_review_phase2d completed
 
 - **python_manual_review_phase2d** — static manual review completed for all 5

@@ -91,22 +91,36 @@ implementation task. The remaining 3 are safe to reclassify (2 false positives, 
 - **Commit:** NONE — no commit anywhere
 - **Guard recommendation:** No guard needed. Reclassify as false positive (broken/unparseable file). Consider removing or rewriting in a cleanup PR.
 
-## Next Guard Candidates
+## Phase2E Implementation (python_manual_review_guard_phase2e)
 
-Two files need runtime guard implementation (deferred to `python_manual_review_guard_phase2e`):
+- **Completed:** 2026-06-25
+- **Task:** python_manual_review_guard_phase2e
+- **Status:** COMPLETE — both manual review write paths now have runtime guard
+
+| # | File | Guard Location | Operation | Table |
+|---|---|---|---|---|
+| 1 | `scripts/maintenance/reprocess_from_local.py` | `backfill_features()` before UPDATE | UPDATE | `matches` |
+| 2 | `src/api/monitoring/prometheus_metrics.py` | `_persist_to_database()` before INSERT | INSERT | `failed_market_data` |
+
+Guard details:
+- Uses existing `helpers/python_db_write_guard.py` pattern
+- All guards placed before real DB write operations
+- Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, table-specific gates, DRY_RUN=false
+
+## Next Guard Candidates (Phase2D original — ALL COMPLETED in Phase2E)
 
 | # | File | Operation | Table | Guard Location |
 |---|---|---|---|---|
 | 1 | `scripts/maintenance/reprocess_from_local.py` | UPDATE | matches | `backfill_features()` before `cur.execute(UPDATE...)` |
 | 2 | `src/api/monitoring/prometheus_metrics.py` | INSERT | failed_market_data | `_persist_to_database()` before `cursor.execute(INSERT...)` |
 
-## SC-002 Status After Phase2D
+## SC-002 Status After Phase2E
 
 - SC-002 remains **partial mitigation only**.
-- **15/20** Python write paths runtime guarded.
+- **17/20** Python write paths runtime guarded.
 - **3 of 5** manual review candidates reclassified as safe (no guard needed).
-- **2 of 5** manual review candidates identified as next guard candidates.
-- **0** manual review candidates remain — all 5 have been classified.
+- **2 of 5** manual review candidates now guarded in Phase2E.
+- **0** manual review candidates remain — all 5 classified, 2 guarded.
 - Training / data expansion / real DB write remain **blocked**.
 
 ## Non-Goals
@@ -125,6 +139,6 @@ This task is a **static review/classification** task only. It is explicitly NOT:
 
 ## Next Recommended Task
 
-`python_manual_review_guard_phase2e` — implement runtime guard for the 2 newly confirmed write paths identified in this manual review phase.
+`sc002_alembic_migration_guard` — design and implement guard for the remaining Alembic migration entry (`src/database/migrations/env.py`), the last ungarded Python write path.
 
 Do not start automatically. Recommended next task only after user confirmation.
