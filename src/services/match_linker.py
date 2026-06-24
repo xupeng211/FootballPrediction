@@ -37,12 +37,21 @@ from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 import json
 import logging
+from pathlib import Path
+import sys
 from typing import Any
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
 
-from src.config_unified import get_config
+from src.config import get_config
+
+# Phase2 indirect_write_path_guard_phase2: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[3] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 logger = logging.getLogger("MatchLinker")
 
@@ -417,6 +426,14 @@ class MatchLinker:
             """)
 
             if not cursor.fetchone()["exists"]:
+                # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before CREATE TABLE
+                assert_db_write_allowed(
+                    script_name="match_linker.py",
+                    operation="CREATE",
+                    target="match_odds_intelligence",
+                    tables=["match_odds_intelligence"],
+                )
+
                 # 创建表
                 cursor.execute("""
                     CREATE TABLE match_odds_intelligence (
@@ -433,6 +450,14 @@ class MatchLinker:
                 """)
                 conn.commit()
                 logger.info("Created table: match_odds_intelligence")
+
+            # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before INSERT
+            assert_db_write_allowed(
+                script_name="match_linker.py",
+                operation="INSERT",
+                target="match_odds_intelligence",
+                tables=["match_odds_intelligence"],
+            )
 
             # V41.234: 转换为 JSON 字符串 (Python list → JSONB)
             # V41.234: 添加相似度和链接方法字段
@@ -526,6 +551,14 @@ class MatchLinker:
         """)
 
         if not cursor.fetchone()["exists"]:
+            # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before CREATE TABLE
+            assert_db_write_allowed(
+                script_name="match_linker.py",
+                operation="CREATE",
+                target="match_odds_intelligence",
+                tables=["match_odds_intelligence"],
+            )
+
             # 创建表（V41.243: 添加 similarity_score 和 link_method 字段）
             cursor.execute("""
                 CREATE TABLE match_odds_intelligence (
@@ -578,6 +611,14 @@ class MatchLinker:
                             record.get("link_method"),
                         )
                     )
+
+                # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before INSERT
+                assert_db_write_allowed(
+                    script_name="match_linker.py",
+                    operation="INSERT",
+                    target="match_odds_intelligence",
+                    tables=["match_odds_intelligence"],
+                )
 
                 # V41.248: 批量 UPSERT - 使用 execute_values 正确格式
                 # 移除 created_at/updated_at，让数据库使用默认值
@@ -715,13 +756,16 @@ class MatchLinker:
                 return {"status": "error", "message": "Source table does not exist"}
 
             # Read multi-source data for this match
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT source_name, init_h, init_d, init_a,
                        final_h, final_d, final_a, is_valid, integrity_score
                 FROM metrics_multi_source_data
                 WHERE match_id = %s AND is_valid = TRUE
                 ORDER BY source_name
-            """, (match_id,))
+            """,
+                (match_id,),
+            )
 
             multi_source_rows = cursor.fetchall()
 
@@ -747,12 +791,17 @@ class MatchLinker:
 
             # Use Primary Source (Entity_P) for initial price if available
             primary_row = next(
-                (row for row in multi_source_rows if row["source_name"] == "Entity_P"),
-                None
+                (row for row in multi_source_rows if row["source_name"] == "Entity_P"), None
             )
 
-            if primary_row and all([primary_row["init_h"], primary_row["init_d"], primary_row["init_a"]]):
-                initial_price = [primary_row["init_h"], primary_row["init_d"], primary_row["init_a"]]
+            if primary_row and all(
+                [primary_row["init_h"], primary_row["init_d"], primary_row["init_a"]]
+            ):
+                initial_price = [
+                    primary_row["init_h"],
+                    primary_row["init_d"],
+                    primary_row["init_a"],
+                ]
             else:
                 # Fall back to average of available opening odds
                 valid_init_odds = [
@@ -790,10 +839,10 @@ class MatchLinker:
                     "Quality_Rating": "High" if len(valid_final_odds) >= 3 else "Medium",
                     "Deviation_Percentage": None,
                     "Source_Count": len(valid_final_odds),
-                    "Sources": [row["source_name"] for row in multi_source_rows]
+                    "Sources": [row["source_name"] for row in multi_source_rows],
                 },
                 similarity_score=1.0,  # Direct match from database
-                link_method="direct"
+                link_method="direct",
             )
 
             return {
@@ -801,7 +850,7 @@ class MatchLinker:
                 "match_id": match_id,
                 "sources_captured": len(valid_final_odds),
                 "sources": [row["source_name"] for row in multi_source_rows],
-                "stored": stored
+                "stored": stored,
             }
 
         except Exception as e:
@@ -820,12 +869,7 @@ class MatchLinker:
         Returns:
             Dictionary with batch statistics
         """
-        stats = {
-            "total": 0,
-            "success": 0,
-            "no_data": 0,
-            "errors": 0
-        }
+        stats = {"total": 0, "success": 0, "no_data": 0, "errors": 0}
 
         conn = self._get_connection()
         cursor = conn.cursor()
@@ -846,14 +890,17 @@ class MatchLinker:
             # Get match IDs to process
             if match_ids is None:
                 # Get recent matches with multi-source data
-                cursor.execute("""
+                cursor.execute(
+                    """
                     SELECT match_id
                     FROM metrics_multi_source_data
                     WHERE is_valid = TRUE
                     GROUP BY match_id
                     ORDER BY MAX(data_timestamp) DESC
                     LIMIT %s
-                """, (limit,))
+                """,
+                    (limit,),
+                )
                 match_ids = [row["match_id"] for row in cursor.fetchall()]
 
             stats["total"] = len(match_ids)

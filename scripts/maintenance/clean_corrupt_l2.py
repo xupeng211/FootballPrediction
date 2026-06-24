@@ -25,6 +25,13 @@ from psycopg2.extras import RealDictCursor
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# Phase2 indirect_write_path_guard_phase2: Python runtime DB write guard
+_guard_path = str(project_root / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
+
 from src.config_unified import get_settings
 
 # 配置日志
@@ -158,6 +165,15 @@ class L2DataCleaner:
         if confirm != "yes":
             logger.info("❌ 取消清理操作")
             return
+
+        # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before UPDATE
+        assert_db_write_allowed(
+            script_name="clean_corrupt_l2.py",
+            operation="UPDATE",
+            target="matches",
+            tables=["matches"],
+            dry_run=dry_run,
+        )
 
         cursor = self.conn.cursor()
 

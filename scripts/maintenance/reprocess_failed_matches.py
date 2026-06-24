@@ -32,12 +32,21 @@ Date: 2026-01-06
 import argparse
 import json
 import sys
+from pathlib import Path
 from typing import Any
 
-sys.path.insert(0, "/home/user/projects/FootballPrediction")
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
 
 import psycopg2
 from psycopg2.extras import RealDictCursor
+
+# Phase2 indirect_write_path_guard_phase2: Python runtime DB write guard
+_guard_path = str(PROJECT_ROOT / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 from src.config_unified import get_settings
 # V4.13: 更新为 legacy 路径
@@ -225,6 +234,15 @@ def reprocess_match(
 
             with get_db_connection() as conn:
                 with conn.cursor() as cursor:
+                    # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before UPDATE
+                    assert_db_write_allowed(
+                        script_name="reprocess_failed_matches.py",
+                        operation="UPDATE",
+                        target="matches",
+                        tables=["matches"],
+                        dry_run=dry_run,
+                    )
+
                     cursor.execute(update_query, params)
                     conn.commit()
 

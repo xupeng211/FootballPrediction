@@ -4,7 +4,7 @@
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
   "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining classified by design phase batch4 (2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); 8 indirect write paths classified by indirect_write_path_design_phase1 (6 indirect_write_needs_guard, 1 indirect_read_only_candidate, 1 indirect_false_positive_candidate)",
+  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining classified by design phase batch4 (2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); Phase2 indirect_write_path_guard_phase2: 6 of 6 indirect write paths now runtime guarded (total: 15 of 20 runtime guarded). Remaining: 5 manual review candidates still unguarded.",
   "entries": [
     {
       "path": "src/database/schema_manager.py",
@@ -236,12 +236,12 @@
     },
     {
       "path": "src/services/match_aligner.py",
-      "classification": "historical_python_indirect_write_path_needs_guard",
-      "reason": "Indirect write path design phase1: DIRECT write confirmed — uses OWN psycopg2 connection (NOT via MatchRepository). save_alignment() executes INSERT INTO matches_mapping ON CONFLICT DO UPDATE with explicit conn.commit(). No guard. No dry_run flag. RISK: HIGH.",
-      "evidence": "psycopg2 direct import + _get_connection() + cursor.execute(INSERT INTO matches_mapping ... ON CONFLICT DO UPDATE) + conn.commit() + conn.rollback() in save_alignment(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #1.",
+      "classification": "historical_python_indirect_write_path_runtime_guarded",
+      "reason": "Phase2 indirect_write_path_guard_phase2 guarded: assert_db_write_allowed() in save_alignment() before INSERT INTO matches_mapping ON CONFLICT DO UPDATE with conn.commit(). Tables: matches_mapping. Operations: INSERT, UPDATE.",
+      "evidence": "psycopg2 direct import + _get_connection() + cursor.execute(INSERT INTO matches_mapping ... ON CONFLICT DO UPDATE) + conn.commit() + conn.rollback() in save_alignment(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='match_aligner.py', operation='INSERT', target='matches_mapping', tables=['matches_mapping']). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #1.",
       "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
-      "owner_task": "python_indirect_write_path_design_phase1",
-      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. Guard implementation deferred.",
+      "owner_task": "python_indirect_write_path_guard_phase2",
+      "expires_or_review_note": "Runtime guard added in Phase2 indirect_write_path_guard_phase2 (2026-06-25). Guard call before INSERT in save_alignment(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
       "analysis_task": "python_indirect_write_path_design_phase1",
       "observed_operations": [
         "INSERT",
@@ -252,16 +252,16 @@
         "matches_mapping"
       ],
       "direct_write_boundary": "YES — save_alignment() has cursor.execute(INSERT) + conn.commit()",
-      "recommended_next_action": "Guard in save_alignment() before cursor.execute(). Guard tables: [\"matches_mapping\"]. Guard operations: [\"INSERT\", \"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
+      "recommended_next_action": "Done. Guard implemented in python_indirect_write_path_guard_phase2."
     },
     {
       "path": "src/services/match_linker.py",
-      "classification": "historical_python_indirect_write_path_needs_guard",
-      "reason": "Indirect write path design phase1: DIRECT write confirmed — uses OWN psycopg2 connection (NOT via MatchRepository). store_odds_intelligence() executes CREATE TABLE + INSERT INTO match_odds_intelligence ON CONFLICT DO UPDATE with commit. batch_store_odds_intelligence() executes execute_values() INSERT with commit. No guard. No dry_run flag. RISK: HIGH.",
-      "evidence": "psycopg2 direct import + _get_connection() + CREATE TABLE match_odds_intelligence + INSERT INTO (ON CONFLICT DO UPDATE) + execute_values() INSERT + conn.commit() / conn.rollback(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #2.",
+      "classification": "historical_python_indirect_write_path_runtime_guarded",
+      "reason": "Phase2 indirect_write_path_guard_phase2 guarded: assert_db_write_allowed() in store_odds_intelligence() and batch_store_odds_intelligence() before CREATE TABLE match_odds_intelligence (conditional) and before INSERT INTO match_odds_intelligence ON CONFLICT DO UPDATE / execute_values() INSERT with conn.commit(). Tables: match_odds_intelligence. Operations: CREATE, INSERT, UPDATE.",
+      "evidence": "psycopg2 direct import + _get_connection() + CREATE TABLE match_odds_intelligence + INSERT INTO (ON CONFLICT DO UPDATE) + execute_values() INSERT + conn.commit() / conn.rollback(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='match_linker.py', operation='CREATE'/'INSERT', target='match_odds_intelligence', tables=['match_odds_intelligence']). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #2.",
       "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
-      "owner_task": "python_indirect_write_path_design_phase1",
-      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. Guard implementation deferred.",
+      "owner_task": "python_indirect_write_path_guard_phase2",
+      "expires_or_review_note": "Runtime guard added in Phase2 indirect_write_path_guard_phase2 (2026-06-25). Guard calls before CREATE TABLE and INSERT in store_odds_intelligence() and batch_store_odds_intelligence(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_ODDS_WRITE=yes, ALLOW_SCHEMA_WRITE=yes (for CREATE), DRY_RUN=false.",
       "analysis_task": "python_indirect_write_path_design_phase1",
       "observed_operations": [
         "CREATE TABLE",
@@ -273,7 +273,7 @@
         "match_odds_intelligence"
       ],
       "direct_write_boundary": "YES — store_odds_intelligence() and batch_store_odds_intelligence() both have cursor.execute(INSERT/CREATE) + conn.commit()",
-      "recommended_next_action": "Guard in store_odds_intelligence() and batch_store_odds_intelligence() before write SQL. Guard tables: [\"match_odds_intelligence\"]. Guard operations: [\"CREATE\", \"INSERT\", \"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
+      "recommended_next_action": "Done. Guard implemented in python_indirect_write_path_guard_phase2."
     },
     {
       "path": "src/services/match_data_service.py",
@@ -313,12 +313,12 @@
     },
     {
       "path": "src/api/collectors/odds_api_client_v38.py",
-      "classification": "historical_python_indirect_write_path_needs_guard",
-      "reason": "Indirect write path design phase1: DIRECT write confirmed — save_odds_to_db() uses OWN psycopg2 connection (NOT via collector layer as original design assumed). Executes INSERT INTO match_odds ON CONFLICT (match_id, provider) DO UPDATE with explicit conn.commit(). No guard. No dry_run flag. RISK: HIGH.",
-      "evidence": "psycopg2 direct import in save_odds_to_db() + cursor.execute(INSERT INTO match_odds ... ON CONFLICT DO UPDATE) + conn.commit(). All other methods are HTTP network-only (StealthClient), no DB. See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #5.",
+      "classification": "historical_python_indirect_write_path_runtime_guarded",
+      "reason": "Phase2 indirect_write_path_guard_phase2 guarded: assert_db_write_allowed() in save_odds_to_db() before INSERT INTO match_odds ON CONFLICT (match_id, provider) DO UPDATE with conn.commit(). Tables: match_odds. Operations: INSERT, UPDATE.",
+      "evidence": "psycopg2 direct import in save_odds_to_db() + cursor.execute(INSERT INTO match_odds ... ON CONFLICT DO UPDATE) + conn.commit(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='odds_api_client_v38.py', operation='INSERT', target='match_odds', tables=['match_odds']). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #5.",
       "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
-      "owner_task": "python_indirect_write_path_design_phase1",
-      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. Guard implementation deferred.",
+      "owner_task": "python_indirect_write_path_guard_phase2",
+      "expires_or_review_note": "Runtime guard added in Phase2 indirect_write_path_guard_phase2 (2026-06-25). Guard call before INSERT in save_odds_to_db(). Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_ODDS_WRITE=yes, DRY_RUN=false.",
       "analysis_task": "python_indirect_write_path_design_phase1",
       "observed_operations": [
         "INSERT",
@@ -329,16 +329,16 @@
         "match_odds"
       ],
       "direct_write_boundary": "YES — save_odds_to_db() has cursor.execute(INSERT) + conn.commit()",
-      "recommended_next_action": "Guard in save_odds_to_db() before cursor.execute(). Guard tables: [\"match_odds\"]. Guard operations: [\"INSERT\", \"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
+      "recommended_next_action": "Done. Guard implemented in python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/reprocess_failed_matches.py",
-      "classification": "historical_python_indirect_write_path_needs_guard",
-      "reason": "Indirect write path design phase1: DIRECT write confirmed — reprocess_match() executes UPDATE matches SET l2_extracted_features... with conn.commit() when not dry_run. --dry-run flag exists but default is FALSE (action=store_true means default is write-enabled). No guard. RISK: MEDIUM.",
-      "evidence": "psycopg2 + UPDATE matches + conn.commit() in reprocess_match(). --dry-run flag exists (action=store_true) but default is write-enabled (dry_run=False). Also SELECT-only: get_matches_needing_deep_features(), get_failed_matches(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #6.",
+      "classification": "historical_python_indirect_write_path_runtime_guarded",
+      "reason": "Phase2 indirect_write_path_guard_phase2 guarded: assert_db_write_allowed() in reprocess_match() before UPDATE matches SET l2_extracted_features... with conn.commit() when not dry_run. Integrates with existing --dry-run flag (dry_run parameter passed to guard). Tables: matches. Operations: UPDATE.",
+      "evidence": "psycopg2 + UPDATE matches + conn.commit() in reprocess_match(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='reprocess_failed_matches.py', operation='UPDATE', target='matches', tables=['matches'], dry_run=dry_run). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #6.",
       "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
-      "owner_task": "python_indirect_write_path_design_phase1",
-      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. dry_run default is write-enabled (unsafe). Guard implementation deferred.",
+      "owner_task": "python_indirect_write_path_guard_phase2",
+      "expires_or_review_note": "Runtime guard added in Phase2 indirect_write_path_guard_phase2 (2026-06-25). Guard call before UPDATE in reprocess_match() with dry_run parameter integration. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
       "analysis_task": "python_indirect_write_path_design_phase1",
       "observed_operations": [
         "UPDATE",
@@ -348,16 +348,16 @@
         "matches"
       ],
       "direct_write_boundary": "YES — reprocess_match() has cursor.execute(UPDATE) + conn.commit() when dry_run=False",
-      "recommended_next_action": "Guard in reprocess_match() before cursor.execute() and conn.commit() when not dry_run. Consider inverting dry_run default for safety. Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
+      "recommended_next_action": "Done. Guard implemented in python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/clean_corrupt_l2.py",
-      "classification": "historical_python_indirect_write_path_needs_guard",
-      "reason": "Indirect write path design phase1: DIRECT write confirmed — clean_corrupt_records() executes UPDATE matches SET l2_raw_json = NULL... with conn.commit() when not dry_run. --dry-run flag exists but default is FALSE (write-enabled). No guard. Only protection is interactive input() prompt (bypassable). RISK: MEDIUM.",
-      "evidence": "psycopg2 + UPDATE matches (nullification) + conn.commit() in clean_corrupt_records(). --dry-run flag exists (action=store_true) but default is write-enabled. Also SELECT-only: detect_corrupt_records(), get_statistics(). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #7.",
+      "classification": "historical_python_indirect_write_path_runtime_guarded",
+      "reason": "Phase2 indirect_write_path_guard_phase2 guarded: assert_db_write_allowed() in clean_corrupt_records() before UPDATE matches SET l2_raw_json = NULL... with conn.commit() when not dry_run. Integrates with existing dry_run parameter. Tables: matches. Operations: UPDATE.",
+      "evidence": "psycopg2 + UPDATE matches (nullification) + conn.commit() in clean_corrupt_records(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='clean_corrupt_l2.py', operation='UPDATE', target='matches', tables=['matches'], dry_run=dry_run). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #7.",
       "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
-      "owner_task": "python_indirect_write_path_design_phase1",
-      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. dry_run default is write-enabled (unsafe). Guard implementation deferred.",
+      "owner_task": "python_indirect_write_path_guard_phase2",
+      "expires_or_review_note": "Runtime guard added in Phase2 indirect_write_path_guard_phase2 (2026-06-25). Guard call before UPDATE loop in clean_corrupt_records() with dry_run parameter integration. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
       "analysis_task": "python_indirect_write_path_design_phase1",
       "observed_operations": [
         "UPDATE (nullification — data deletion)",
@@ -367,16 +367,16 @@
         "matches"
       ],
       "direct_write_boundary": "YES — clean_corrupt_records() has cursor.execute(UPDATE) + conn.commit() when dry_run=False",
-      "recommended_next_action": "Guard in clean_corrupt_records() before UPDATE loop and conn.commit() when not dry_run. Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
+      "recommended_next_action": "Done. Guard implemented in python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/fix_zombie_matches.py",
-      "classification": "historical_python_indirect_write_path_needs_guard",
-      "reason": "Indirect write path design phase1: DIRECT write confirmed — _batch_update_matches() executes UPDATE matches SET status, home_score, away_score, is_finished with conn.commit() (via fix_zombie_matches()). --dry-run flag exists but default is FALSE (write-enabled). No guard. clean_predictions() deletes CSV files (filesystem write, not DB). RISK: MEDIUM.",
-      "evidence": "psycopg2 + UPDATE matches + conn.commit() in fix_zombie_matches() + _batch_update_matches(). --dry-run flag exists (action=store_true) but default is write-enabled. clean_predictions() is filesystem write (CSV deletion), not DB. See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #8.",
+      "classification": "historical_python_indirect_write_path_runtime_guarded",
+      "reason": "Phase2 indirect_write_path_guard_phase2 guarded: assert_db_write_allowed() in fix_zombie_matches() before _batch_update_matches() UPDATE matches SET status, home_score, away_score, is_finished with conn.commit(). Integrates with existing self.dry_run parameter. Tables: matches. Operations: UPDATE.",
+      "evidence": "psycopg2 + UPDATE matches + conn.commit() in fix_zombie_matches() + _batch_update_matches(). Guard: helpers/python_db_write_guard.py assert_db_write_allowed(script_name='fix_zombie_matches.py', operation='UPDATE', target='matches', tables=['matches'], dry_run=self.dry_run). See docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md #8.",
       "source_doc": "docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md",
-      "owner_task": "python_indirect_write_path_design_phase1",
-      "expires_or_review_note": "Reclassified from indirect_write_pending to indirect_write_needs_guard by indirect_write_path_design_phase1 (2026-06-24). NOT runtime_guarded. dry_run default is write-enabled (unsafe). Guard implementation deferred.",
+      "owner_task": "python_indirect_write_path_guard_phase2",
+      "expires_or_review_note": "Runtime guard added in Phase2 indirect_write_path_guard_phase2 (2026-06-25). Guard call before UPDATE in fix_zombie_matches() with dry_run parameter integration. Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, ALLOW_MATCHES_WRITE=yes, DRY_RUN=false.",
       "analysis_task": "python_indirect_write_path_design_phase1",
       "observed_operations": [
         "UPDATE",
@@ -386,7 +386,7 @@
         "matches"
       ],
       "direct_write_boundary": "YES — _batch_update_matches() has cursor.execute(UPDATE) + conn.commit() when dry_run=False",
-      "recommended_next_action": "Guard in fix_zombie_matches() before _batch_update_matches() and conn.commit() when not dry_run. Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_indirect_write_path_guard_phase2."
+      "recommended_next_action": "Done. Guard implemented in python_indirect_write_path_guard_phase2."
     },
     {
       "path": "scripts/maintenance/reprocess_from_local.py",

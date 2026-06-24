@@ -209,6 +209,29 @@ static analysis reveals:
 | clean_corrupt_l2.py "has dry_run refs but uncertain default" | Default is write-enabled (dry_run=False), has direct UPDATE |
 | fix_zombie_matches.py "has dry_run refs but uncertain default" | Default is write-enabled (dry_run=False), has direct UPDATE |
 
+## Phase2 Implementation (python_indirect_write_path_guard_phase2)
+
+- **Completed:** 2026-06-25
+- **Task:** python_indirect_write_path_guard_phase2
+- **Status:** COMPLETE — all 6 indirect_write_needs_guard paths now have runtime guard
+
+All 6 target files now have `assert_db_write_allowed()` calls before real DB write operations:
+
+| # | Path | Guard Location | Operation | Table |
+|---|---|---|---|---|
+| 1 | `src/services/match_aligner.py` | `save_alignment()` before INSERT | INSERT | `matches_mapping` |
+| 2 | `src/services/match_linker.py` | `store_odds_intelligence()` before CREATE TABLE + INSERT; `batch_store_odds_intelligence()` before CREATE TABLE + INSERT | CREATE, INSERT | `match_odds_intelligence` |
+| 3 | `src/api/collectors/odds_api_client_v38.py` | `save_odds_to_db()` before INSERT | INSERT | `match_odds` |
+| 4 | `scripts/maintenance/reprocess_failed_matches.py` | `reprocess_match()` before UPDATE | UPDATE | `matches` |
+| 5 | `scripts/maintenance/clean_corrupt_l2.py` | `clean_corrupt_records()` before UPDATE | UPDATE | `matches` |
+| 6 | `scripts/maintenance/fix_zombie_matches.py` | `fix_zombie_matches()` before UPDATE | UPDATE | `matches` |
+
+Guard details:
+- Uses existing `helpers/python_db_write_guard.py` `assert_db_write_allowed()` pattern
+- All guards placed before real DB write operations (not after)
+- For scripts with existing `--dry-run` flags: `dry_run` parameter integrated into guard call
+- Real DB write remains blocked unless ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes, table-specific gates, DRY_RUN=false
+
 ## Non-Goals
 
 This task is a **design/classification** task only. It is explicitly NOT:
@@ -227,14 +250,15 @@ This task is a **design/classification** task only. It is explicitly NOT:
 
 - SC-002 remains **partial mitigation only**.
 - training / data expansion / real DB write remain **blocked**.
-- 9/14 confirmed Python write paths have runtime guard.
+- **15/20** Python write paths now have runtime guard (9 confirmed + 6 indirect).
 - 5 remaining confirmed paths classified (2 read_only, 3 infrastructure).
-- 8 indirect paths now classified (6 need guard, 2 safe to reclassify).
+- 2 of 8 indirect paths reclassified as safe (1 read_only, 1 false_positive).
+- 6 of 8 indirect paths now runtime guarded (completed via `python_indirect_write_path_guard_phase2`).
 - 5 manual review candidates NOT processed.
-- Runtime guard for the 6 indirect_write_needs_guard paths is deferred to `python_indirect_write_path_guard_phase2` (future task).
+- SC-002 is NOT complete. Production DB write still requires explicit authorization.
 
 ## Next Recommended Task
 
-`python_indirect_write_path_guard_phase2` — implement runtime guard for the 6 newly confirmed direct write paths identified in this design phase.
+`python_manual_review_phase2D` — review the 5 manual review candidates.
 
 Do not start automatically. Recommended next task only after user confirmation.

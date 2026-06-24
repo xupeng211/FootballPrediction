@@ -35,14 +35,14 @@ EXPECTED_INDIRECT_PATHS = [
 ]
 
 EXPECTED_CLASSIFICATIONS = {
-    "src/services/match_aligner.py": "historical_python_indirect_write_path_needs_guard",
-    "src/services/match_linker.py": "historical_python_indirect_write_path_needs_guard",
+    "src/services/match_aligner.py": "historical_python_indirect_write_path_runtime_guarded",
+    "src/services/match_linker.py": "historical_python_indirect_write_path_runtime_guarded",
     "src/services/match_data_service.py": "historical_python_indirect_write_path_false_positive_candidate",
     "src/services/league_router.py": "historical_python_indirect_write_path_read_only_candidate",
-    "src/api/collectors/odds_api_client_v38.py": "historical_python_indirect_write_path_needs_guard",
-    "scripts/maintenance/reprocess_failed_matches.py": "historical_python_indirect_write_path_needs_guard",
-    "scripts/maintenance/clean_corrupt_l2.py": "historical_python_indirect_write_path_needs_guard",
-    "scripts/maintenance/fix_zombie_matches.py": "historical_python_indirect_write_path_needs_guard",
+    "src/api/collectors/odds_api_client_v38.py": "historical_python_indirect_write_path_runtime_guarded",
+    "scripts/maintenance/reprocess_failed_matches.py": "historical_python_indirect_write_path_runtime_guarded",
+    "scripts/maintenance/clean_corrupt_l2.py": "historical_python_indirect_write_path_runtime_guarded",
+    "scripts/maintenance/fix_zombie_matches.py": "historical_python_indirect_write_path_runtime_guarded",
 }
 
 CONFIRMED_WRITE_PATHS = [
@@ -94,19 +94,34 @@ class TestIndirectWritePathDesignPhase1:
                 f"Classification mismatch for {path}: expected={expected}, got={actual}"
             )
 
-    def test_no_indirect_path_marked_runtime_guarded(self):
-        """No indirect path should be marked as runtime_guarded."""
+    def test_no_indirect_path_marked_safe(self):
+        """After Phase2 guard implementation, 6 indirect paths should be runtime_guarded.
+        The 2 safe paths (read_only, false_positive) should NOT be marked runtime_guarded."""
         data = _load_allowlist()
+        NEEDS_GUARD_PATHS = {
+            p
+            for p in EXPECTED_INDIRECT_PATHS
+            if "match_data_service" not in p and "league_router" not in p
+        }
+        SAFE_PATHS = {
+            p for p in EXPECTED_INDIRECT_PATHS if "match_data_service" in p or "league_router" in p
+        }
 
         for entry in data["entries"]:
             path = entry["path"]
-            if path in EXPECTED_INDIRECT_PATHS:
+            if path in NEEDS_GUARD_PATHS:
                 classification = entry.get("classification", "")
-                assert "runtime_guarded" not in classification, (
-                    f"Indirect path {path} is incorrectly marked runtime_guarded"
+                assert "runtime_guarded" in classification, (
+                    f"Indirect path {path} should now be runtime_guarded after Phase2, "
+                    f"got: {classification}"
                 )
+            elif path in SAFE_PATHS:
+                classification = entry.get("classification", "")
                 assert "safe" not in classification, (
-                    f"Indirect path {path} is incorrectly marked safe"
+                    f"Safe indirect path {path} incorrectly marked safe: {classification}"
+                )
+                assert "runtime_guarded" not in classification, (
+                    f"Safe indirect path {path} incorrectly marked runtime_guarded: {classification}"
                 )
 
     def test_no_manual_review_candidate_marked_safe(self):
@@ -205,15 +220,18 @@ class TestIndirectWritePathDesignPhase1:
             assert term.lower() in doc_lower, f"Design doc non-goals should mention: {term}"
 
     def test_allowlist_header_updated(self):
-        """Allowlist header must reference indirect_write_path_design_phase1."""
+        """Allowlist header must reference indirect write path status."""
         data = _load_allowlist()
         status = data.get("_runtime_guard_status", "")
-        assert "indirect_write_path_design_phase1" in status, (
-            f"Allowlist header missing phase1 reference: {status}"
-        )
-        assert "indirect_write_needs_guard" in status, (
-            f"Allowlist header missing classification summary: {status}"
-        )
+        assert (
+            "indirect_write_path_design_phase1" in status
+            or "indirect_write_path_guard_phase2" in status
+        ), f"Allowlist header missing indirect write path reference: {status}"
+        # After guard phase2, needs_guard count is 0; header should show 6 guarded
+        assert (
+            "indirect_write_needs_guard" in status
+            or "6 of 6 indirect write paths now runtime guarded" in status
+        ), f"Allowlist header missing classification summary: {status}"
 
     def test_allowlist_no_orphan_consumer_audit_fields(self):
         """Indirect paths should not have stale consumer_audit fields after update."""

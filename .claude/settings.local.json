@@ -19,7 +19,8 @@
       "mcp__postgres__query",
       "mcp__filesystem__edit_file",
       "mcp__filesystem__create_directory",
-      "mcp__filesystem__write_file"
+      "mcp__filesystem__write_file",
+      "Bash(gh run *)"
     ]
   }
 }

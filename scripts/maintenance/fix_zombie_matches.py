@@ -28,6 +28,13 @@ from typing import Dict, List, Any, Optional
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Phase2 indirect_write_path_guard_phase2: Python runtime DB write guard
+_guard_path = str(PROJECT_ROOT / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
+
 import pandas as pd
 from psycopg2.extras import RealDictCursor
 
@@ -315,6 +322,15 @@ class ZombieMatchFixer:
         logger.info("=" * 60)
 
         conn = self.get_connection()
+
+        # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before UPDATE
+        assert_db_write_allowed(
+            script_name="fix_zombie_matches.py",
+            operation="UPDATE",
+            target="matches",
+            tables=["matches"],
+            dry_run=self.dry_run,
+        )
 
         archived_count = 0
         finished_updated = 0

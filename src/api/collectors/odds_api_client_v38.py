@@ -15,13 +15,22 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 import logging
+from pathlib import Path
+import sys
 from typing import TYPE_CHECKING, Any, cast
 
 import psycopg2
 
-from src.config_unified import get_settings
+from src.config import get_settings
 from src.core.matching.team_alias_resolver import TeamAliasResolver, get_resolver
 from src.infrastructure.network.stealth_client import StealthClient, get_stealth_client
+
+# Phase2 indirect_write_path_guard_phase2: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[3] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 if TYPE_CHECKING:
     from types import TracebackType
@@ -319,6 +328,14 @@ class OddsAPIClientV38:
                 data_quality = EXCLUDED.data_quality,
                 collected_at = NOW()
             """
+
+            # Phase2 indirect_write_path_guard_phase2: runtime DB write guard before INSERT
+            assert_db_write_allowed(
+                script_name="odds_api_client_v38.py",
+                operation="INSERT",
+                target="match_odds",
+                tables=["match_odds"],
+            )
 
             cursor.execute(
                 sql,
