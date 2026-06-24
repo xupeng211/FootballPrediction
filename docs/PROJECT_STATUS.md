@@ -5,6 +5,30 @@
 
 Last updated: 2026-06-24
 
+## consumer_level_guard_audit_db_pool_sync_sql_store completed
+
+- **consumer_level_guard_audit_db_pool_sync_sql_store** — consumer-level static audit completed
+  for 3 infrastructure-only confirmed Python write paths.
+  - New audit doc: `docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md`
+  - New tests: `tests/unit/test_consumer_level_guard_audit_db_pool_sync_sql_store.py` (41 tests)
+  - Allowlist updated: 3 infrastructure entries now have consumer audit references
+  - **This is a consumer-level audit / design task, NOT runtime guard implementation.**
+  - Confirmed Python write paths guarded count: **still 9/14**.
+  - This task did NOT add any runtime guard.
+  - This task did NOT run DB / migration / scraper / training.
+  - Consumer audit findings:
+    - **2 write consumers already guarded** (collector_repository.py, streaming_db_writer.py in batch3)
+    - **6 read-only consumers** (main.py, health.py, monitoring.py, dataset_generator.py, async_dependencies.py, performance_monitor.py)
+    - **3 no_active_consumers** (SQLStore, SyncDatabasePool utils aliases, test mocks)
+    - **0 unguarded write consumers** (category A) — all write consumers already guarded
+    - **0 dynamic/unknown consumers** (categories D, E)
+  - Next guard implementation candidates: none from this audit — all write consumers already guarded.
+    Remaining 5 confirmed Python write paths in Phase2C batch4 still need guard implementation.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Indirect write paths (8) NOT processed.
+  - Manual review candidates (5) NOT processed.
+
 ## ci_local_parity_preflight_phase1 completed
 
 - **ci_local_parity_preflight_phase1** — local PR Gate preflight added.

@@ -3,8 +3,8 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-23
-- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch{1,2,3} (runtime guard) + python_confirmed_write_paths_design_phase2C_batch4 (design/classification)
-- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1/batch2/batch3 COMPLETED (9/14 runtime guarded), Phase2C batch4 COMPLETED (5 remaining classified: 2 read_only, 3 infrastructure)
+- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch{1,2,3} (runtime guard) + python_confirmed_write_paths_design_phase2C_batch4 (design/classification) + consumer_level_guard_audit_db_pool_sync_sql_store (consumer audit)
+- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1/batch2/batch3 COMPLETED (9/14 runtime guarded), Phase2C batch4 COMPLETED (5 remaining classified: 2 read_only, 3 infrastructure), consumer audit COMPLETED (3 infrastructure files: 2 write consumers already guarded, 0 unguarded, 6 read-only, 0 dynamic/unknown, 0 new guards needed)
 - scanner: scripts/ops/python_db_write_static_enforcement.py
 - allowlist: config/python_db_write_allowlist.json (28 entries, 9 runtime_guarded + 6 pending + 8 indirect + 5 manual review)
 - guard_helper: scripts/ops/helpers/python_db_write_guard.py

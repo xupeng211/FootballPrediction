@@ -53,10 +53,11 @@ are satisfied.
 | Training status | blocked |
 | Data expansion status | blocked |
 | Scraper / browser automation status | blocked |
-| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed (9 of 14 confirmed Python write paths runtime guarded); Phase2C batch4 design completed (5 remaining classified: 2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); 8 indirect + 5 manual review remaining |
+| Python / SQL / migration enforcement | Python Phase2A static scanner + Phase2B SQL scanner completed; Phase2C batch1+batch2+batch3 completed (9 of 14 confirmed Python write paths runtime guarded); Phase2C batch4 design completed (5 remaining classified: 2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); consumer-level audit for 3 infrastructure files completed (2 write consumers already guarded in batch3, 6 read-only, 0 unguarded write consumers found); 8 indirect + 5 manual review remaining |
 | Runtime DB role / permission model | not fully validated |
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
+| Consumer-level guard audit (infrastructure) | consumer_level_guard_audit_db_pool_sync_sql_store completed: static audit of all consumers of db_pool.py, sync_db_pool.py, sql_store.py. 11 consumers classified. 2 write consumers already guarded (batch3). 6 read-only verified. 0 unguarded write consumers found. 0 dynamic/unknown. SQLStore has zero active consumers. SyncDatabasePool utils aliases have zero downstream consumers. No new guards needed from this audit. Does not change 9/14 guarded count. Does not process 8 indirect or 5 manual review candidates.
 
 ## What Is Actually Protected
 

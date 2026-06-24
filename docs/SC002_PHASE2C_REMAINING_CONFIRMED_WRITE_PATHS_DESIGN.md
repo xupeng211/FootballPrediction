@@ -5,6 +5,8 @@
 - created: 2026-06-24
 - task: python_confirmed_write_paths_design_phase2C_batch4
 - type: design / classification — NOT runtime guard implementation
+- consumer_audit: consumer_level_guard_audit_db_pool_sync_sql_store completed 2026-06-24 (see docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md)
+- consumer_audit_summary: 3 infrastructure files audited. 2 write consumers already guarded (batch3). 6 read-only. 0 unguarded write consumers. 0 dynamic/unknown. No new guards needed.
 
 ## Summary
 
