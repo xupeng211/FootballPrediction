@@ -5,6 +5,27 @@
 
 Last updated: 2026-06-25
 
+## sc002_overall_closure_assessment completed
+
+- **sc002_overall_closure_assessment** — per-criterion gap analysis of SC-002 closure.
+  - Branch: `chore/sc002-overall-closure-assessment`
+  - New assessment doc: `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md`
+  - **This is a documentation/assessment task, NOT runtime implementation.**
+  - This task did NOT run DB, SQL, migration, scraper, browser, training, or data expansion.
+  - Assessment results (10 criteria):
+    - Met or in good standing: 6 (criteria #5 Python/SQL/migration, #7 no production override,
+      #8 training blocked, #9 PROJECT_STATUS aligned, #10 CI green, #4 shared module boundary)
+    - Partial: 2 (criterion #1 entrypoints guarded, criterion #3 browser/FotMob audit)
+    - Not met: 2 (criterion #2 negative-case testing, criterion #6 DB role/permission review)
+  - Key gaps identified:
+    - 43 skipped_complex JS scripts classified but not individually verified non-write
+    - No deliberate negative-case CI testing
+    - DB role/permission model not reviewed
+    - `deploy/docker/init_db.sql` needs guard (Gate B)
+  - Next recommended task: `runtime_db_role_permission_review_phase1` (low effort, documentation only)
+  - SC-002 remains partial mitigation only. Cannot be closed.
+  - Training / data expansion / real DB write remain blocked.
+
 ## sc002_alembic_migration_runtime_guard completed
 
 - **sc002_alembic_migration_runtime_guard_implementation** — runtime guard added to

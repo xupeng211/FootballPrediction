@@ -59,6 +59,7 @@ are satisfied.
 | Agent workflow rules hardening | agent_workflow_rules_hardening_phase1 completed: resident rules (CLAUDE.md), PR template checklist, CI gate enforcement codified. This is workflow hardening, NOT SC-002 closure. Does not change remaining 11 confirmed + 8 indirect + 5 manual review Python write path counts.
 | CI local parity preflight | ci_local_parity_preflight_phase1 completed: local PR Gate preflight (`scripts/ops/local_pr_gate_preflight.py`, `make pr-gate-local`). Fast mode runs static analysis, PR body validation, and enforcement checks locally (no network, no DB, no secrets). Full mode adds ruff, mypy, pytest, npm test:coverage. Goal: improve remote CI first-pass rate. This is workflow/CI parity hardening, NOT SC-002 closure. Does not change guarded/pending counts.
 | Consumer-level guard audit (infrastructure) | consumer_level_guard_audit_db_pool_sync_sql_store completed: static audit of all consumers of db_pool.py, sync_db_pool.py, sql_store.py. 11 consumers classified. 2 write consumers already guarded (batch3). 6 read-only verified. 0 unguarded write consumers found. 0 dynamic/unknown. SQLStore has zero active consumers. SyncDatabasePool utils aliases have zero downstream consumers. No new guards needed from this audit. Does not change 9/14 guarded count. Does not process 8 indirect or 5 manual review candidates.
+| SC-002 overall closure assessment | `sc002_overall_closure_assessment` completed. Per-criterion gap analysis documented in `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md`. 4 criteria met/good-standing, 4 partial, 2 not met. SC-002 remains partial mitigation only. Next: `runtime_db_role_permission_review_phase1`. |
 
 ## What Is Actually Protected
 
@@ -304,10 +305,10 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | All real DB write entrypoints are guarded or formally classified as non-write | Not met (43/66 guarded, 22+21 remaining) |
-| 2 | Changed-files enforcement is active and tested with both positive and negative cases | Partial (active but needs negative-case testing) |
-| 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Not met |
-| 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Not met |
+| 1 | All real DB write entrypoints are guarded or formally classified as non-write | Partial (52 JS + 18 Python entrypoints guarded; 22 categorized + 21 browser/Playwright skipped_complex classified but not individually verified non-write; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #1) |
+| 2 | Changed-files enforcement is active and tested with both positive and negative cases | Not met (active but no deliberate negative-case CI testing has been performed; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #2) |
+| 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Partial (all 43 skipped_complex classified in specialized_browser_fotmob_pageprops_audit_phase1; 13 guarded; 13 false_positive+12 read_only need deep per-script verification; 3 design_mapped need follow-up; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #3) |
+| 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Substantially met (all 3 shared modules mapped; all active write-capable consumers guarded; proactive boundary enforcement designed but not implemented; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #4) |
 | 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Met (Python track: all 20 paths resolved — 18 guarded, 2 safe. Alembic env.py guard in run_migrations_online(). SQL migration files have CI enforcement. deploy/docker/init_db.sql guard still pending — separate concern under Gate B) |
 | 6 | Runtime DB permissions / role restrictions are documented or tested | Not met |
 | 7 | No production override exists (no `ALLOW_PRODUCTION_DB_WRITE`, no bypass env var, no host-block escape hatch) | Met |
@@ -734,7 +735,30 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **All 20 Python write paths now classified and resolved (18 guarded, 2 safe).**
   - **0 pending. 0 unreviewed.**
   - **SC-002 remains partial mitigation only.**
-- **Next step:** SC-002 overall closure assessment. Python track complete.
+- **Next step:** ✅ COMPLETED — see section 5j below.
+
+### 5j. sc002_overall_closure_assessment ✅ COMPLETED
+
+- **Status:** Completed (this PR — assessment/gap analysis, NOT runtime implementation).
+- **Results:**
+  - Per-criterion assessment of all 10 SC-002 closure criteria.
+  - Assessment document: `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md`.
+  - Closure criteria status:
+    - **Met / good standing (6):** #5 Python/SQL/migration, #7 no production override,
+      #8 training blocked, #4 shared module boundary (substantially met), #9 PROJECT_STATUS
+      aligned, #10 CI green.
+    - **Partial (2):** #1 entrypoints guarded (43 skipped_complex classified but not
+      individually verified non-write), #3 browser/FotMob audit (13 false_positive scripts
+      need deep verification, 3 design_mapped need follow-up).
+    - **Not met (2):** #2 negative-case testing (no deliberate CI test with known-unguarded
+      file), #6 DB role/permission review (task defined but not executed).
+  - Additional risk: `deploy/docker/init_db.sql` needs guard (Gate B concern, not Python/SQL track).
+  - **SC-002 overall verdict: partial mitigation only. Cannot be closed.**
+  - Next recommended task: `runtime_db_role_permission_review_phase1` — lowest effort,
+    documentation only, unblocks criterion #6.
+  - **No Alembic run. No migration. No SQL. No DB connection. No real DB write.**
+  - **No scraper/browser run. No training. No data expansion.**
+- **Next step:** `runtime_db_role_permission_review_phase1`.
   Do not start automatically.
 
 ### 6. runtime_db_role_permission_review_phase1
