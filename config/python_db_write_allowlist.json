@@ -4,7 +4,7 @@
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
   "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining classified by design phase batch4 (2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); Phase2 indirect_write_path_guard_phase2: 6 of 6 indirect write paths now runtime guarded (total: 15 of 20 runtime guarded). Remaining: 5 manual review candidates still unguarded.",
+  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9 of 14 confirmed write paths have runtime guard; 5 remaining classified by design phase batch4 (2 read_only_candidate, 3 infrastructure_only_needs_caller_guard); Phase2 indirect_write_path_guard_phase2: 6 of 6 indirect write paths now runtime guarded; Phase2D manual review: 5 of 5 manual review candidates classified (2 write_needs_guard, 1 read_only, 2 false_positive). Total: 15/20 runtime guarded, 2 next guard candidates (reprocess_from_local.py, prometheus_metrics.py), 3 safe reclassified. No remaining manual review candidates.",
   "entries": [
     {
       "path": "src/database/schema_manager.py",
@@ -390,58 +390,98 @@
     },
     {
       "path": "scripts/maintenance/reprocess_from_local.py",
-      "classification": "historical_python_needs_manual_review",
-      "reason": "Has DB config import; write path unclear from static scan. Needs deeper analysis. Do NOT mark safe.",
-      "evidence": "DB config import detected. Write path unclear. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #279.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_manual_confirmed_write_needs_guard",
+      "reason": "Phase2D manual review: DIRECT write confirmed — backfill_features() executes UPDATE matches SET l2_extracted_features with explicit conn.commit(). Uses own psycopg2 connection. No guard. No dry_run flag. Similar to reprocess_failed_matches.py which was guarded in indirect_write_path_guard_phase2. RISK: HIGH.",
+      "evidence": "psycopg2 direct import + get_db_connection() + cursor.execute(UPDATE matches SET l2_extracted_features) + conn.commit() + conn.rollback() in backfill_features(). See docs/SC002_MANUAL_REVIEW_PHASE2D.md #1.",
+      "source_doc": "docs/SC002_MANUAL_REVIEW_PHASE2D.md",
+      "owner_task": "python_manual_review_phase2d",
+      "expires_or_review_note": "Reclassified from needs_manual_review to manual_confirmed_write_needs_guard by manual_review_phase2d (2026-06-25). Guard implementation deferred to python_manual_review_guard_phase2e.",
+      "analysis_task": "python_manual_review_phase2d",
+      "observed_operations": [
+        "UPDATE",
+        "SELECT"
+      ],
+      "observed_tables_or_targets": [
+        "matches"
+      ],
+      "direct_write_boundary": "YES — backfill_features() has cursor.execute(UPDATE) + conn.commit()",
+      "recommended_next_action": "Guard in backfill_features() before cur.execute(UPDATE) and conn.commit(). Guard tables: [\"matches\"]. Guard operations: [\"UPDATE\"]. Defer to python_manual_review_guard_phase2e."
     },
     {
       "path": "scripts/maintenance/fotmob_historical_backfill.py",
-      "classification": "historical_python_needs_manual_review",
-      "reason": "Historical backfill; may have INSERT capability. Needs deeper analysis. Do NOT mark safe.",
-      "evidence": "May have write capability for backfill operations. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #280.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_manual_false_positive_candidate",
+      "reason": "Phase2D manual review: FALSE POSITIVE — DEPRECATED (V4.13). Core dependencies are placeholders: FotMobCoreCollector=None, CollectionSentry=None. get_config_manager() raises NotImplementedError. No psycopg2/asyncpg import. No INSERT/UPDATE/DELETE anywhere in this file. Script cannot execute — write capability was in now-deleted FotMobCoreCollector class, not this file.",
+      "evidence": "Zero DB driver imports in file. FotMobCoreCollector=None, CollectionSentry=None. get_config_manager() raises NotImplementedError. No cursor.execute(), no commit(). See docs/SC002_MANUAL_REVIEW_PHASE2D.md #2.",
+      "source_doc": "docs/SC002_MANUAL_REVIEW_PHASE2D.md",
+      "owner_task": "python_manual_review_phase2d",
+      "expires_or_review_note": "Reclassified from needs_manual_review to manual_false_positive_candidate by manual_review_phase2d (2026-06-25). File is deprecated and cannot execute. Consider removal in a cleanup PR.",
+      "analysis_task": "python_manual_review_phase2d",
+      "observed_operations": [
+        "NONE — deprecated, core deps are None/NotImplementedError"
+      ],
+      "observed_tables_or_targets": [
+        "NONE — write capability was in deleted FotMobCoreCollector"
+      ],
+      "direct_write_boundary": "NONE — deprecated, core deps are None",
+      "recommended_next_action": "No guard needed. Consider removing this deprecated file in a cleanup PR."
     },
     {
       "path": "src/api/monitoring/prometheus_metrics.py",
-      "classification": "historical_python_needs_manual_review",
-      "reason": "Monitoring with DB queries; may write for metrics storage. Ambiguous signals. Do NOT mark safe.",
-      "evidence": "DB queries + possible write for metrics. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #281.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_manual_confirmed_write_needs_guard",
+      "reason": "Phase2D manual review: DIRECT write confirmed — DeadLetterQueue._persist_to_database() executes INSERT INTO failed_market_data with explicit conn.commit(). Uses own psycopg2 connection. Write enabled by default (persist_to_db=True). Failures silently caught. No guard. No dry_run flag. RISK: MEDIUM.",
+      "evidence": "psycopg2 import (conditional, DB_AVAILABLE) + cursor.execute(INSERT INTO failed_market_data) + conn.commit() in _persist_to_database(). Write gated by persist_to_db flag (default True). See docs/SC002_MANUAL_REVIEW_PHASE2D.md #3.",
+      "source_doc": "docs/SC002_MANUAL_REVIEW_PHASE2D.md",
+      "owner_task": "python_manual_review_phase2d",
+      "expires_or_review_note": "Reclassified from needs_manual_review to manual_confirmed_write_needs_guard by manual_review_phase2d (2026-06-25). Guard implementation deferred to python_manual_review_guard_phase2e.",
+      "analysis_task": "python_manual_review_phase2d",
+      "observed_operations": [
+        "INSERT",
+        "Prometheus metrics (Counter/Gauge/Histogram — no DB)"
+      ],
+      "observed_tables_or_targets": [
+        "failed_market_data"
+      ],
+      "direct_write_boundary": "YES — _persist_to_database() has cursor.execute(INSERT) + conn.commit()",
+      "recommended_next_action": "Guard in _persist_to_database() before cursor.execute(INSERT) and conn.commit(). Guard tables: [\"failed_market_data\"]. Guard operations: [\"INSERT\"]. Consider adding dry_run-like parameter to DeadLetterQueue. Defer to python_manual_review_guard_phase2e."
     },
     {
       "path": "src/api/monitoring.py",
-      "classification": "historical_python_needs_manual_review",
-      "reason": "API monitoring; DB access pattern unclear. May be read-only health checks or may write. Do NOT mark safe.",
-      "evidence": "DB access pattern ambiguous. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #282.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_manual_read_only_candidate",
+      "reason": "Phase2D manual review: READ-ONLY — all DB operations are SELECT/fetchrow/fetchval via asyncpg DatabasePool. get_metrics(), _get_database_metrics_async(), _get_business_metrics_async(), get_service_status() all use SELECT 1, SELECT COUNT(*), SELECT AVG(). No INSERT/UPDATE/DELETE/CREATE/ALTER/TRUNCATE. No commit/execute with DML/DDL.",
+      "evidence": "asyncpg via DatabasePool + fetchrow/fetchval — SELECT queries only. Health checks and monitoring diagnostics. See docs/SC002_MANUAL_REVIEW_PHASE2D.md #4.",
+      "source_doc": "docs/SC002_MANUAL_REVIEW_PHASE2D.md",
+      "owner_task": "python_manual_review_phase2d",
+      "expires_or_review_note": "Reclassified from needs_manual_review to manual_read_only_candidate by manual_review_phase2d (2026-06-25). All DB operations are read-only diagnostics.",
+      "analysis_task": "python_manual_review_phase2d",
+      "observed_operations": [
+        "SELECT (fetchrow/fetchval)"
+      ],
+      "observed_tables_or_targets": [
+        "teams (SELECT COUNT)",
+        "matches (SELECT COUNT)",
+        "predictions (SELECT COUNT/AVG)",
+        "pg_stat_activity (SELECT COUNT)"
+      ],
+      "direct_write_boundary": "NONE — all cursor/db operations are SELECT only",
+      "recommended_next_action": "No guard needed. Reclassified as read-only. DatabasePool infrastructure already classified as infrastructure_only_needs_caller_guard."
     },
     {
       "path": "scripts/tools/diagnose_diagnostic.py",
-      "classification": "historical_python_needs_manual_review",
-      "reason": "Diagnostic tool; may have DB write for auto-fix operations. Ambiguous signals. Do NOT mark safe.",
-      "evidence": "May have write operations for auto-fix. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #283.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_manual_review_phase2D",
-      "expires_or_review_note": "Unsafe until manually reviewed. Do NOT mark safe. Must be reviewed in Phase 2D.",
-      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
-      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+      "classification": "historical_python_manual_false_positive_candidate",
+      "reason": "Phase2D manual review: FALSE POSITIVE — file is syntactically broken and cannot execute. Contains invalid Python syntax (colons instead of equals, missing parens), mixed JavaScript/Node.js syntax (const, =>, template literals, module.exports). Would fail immediately with SyntaxError. No executable INSERT/UPDATE/DELETE capability in any coherent form.",
+      "evidence": "File is corrupted — mixed Python/JS syntax, malformed dict (colons instead of =), broken SQL query. Would not parse. See docs/SC002_MANUAL_REVIEW_PHASE2D.md #5.",
+      "source_doc": "docs/SC002_MANUAL_REVIEW_PHASE2D.md",
+      "owner_task": "python_manual_review_phase2d",
+      "expires_or_review_note": "Reclassified from needs_manual_review to manual_false_positive_candidate by manual_review_phase2d (2026-06-25). File is syntactically broken and cannot execute. Consider removal or rewrite in a cleanup PR.",
+      "analysis_task": "python_manual_review_phase2d",
+      "observed_operations": [
+        "NONE — file is syntactically broken, cannot parse or execute"
+      ],
+      "observed_tables_or_targets": [
+        "NONE — broken SQL query is not executable"
+      ],
+      "direct_write_boundary": "NONE — file cannot execute",
+      "recommended_next_action": "No guard needed. Consider removing or rewriting this corrupted file in a cleanup PR."
     }
   ]
 }
