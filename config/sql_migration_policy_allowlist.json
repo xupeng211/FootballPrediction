@@ -263,14 +263,14 @@
     {
       "path": "src/database/migrations/env.py",
       "file_type": "alembic_migration",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "Alembic environment orchestrator. Can execute arbitrary DDL/DML via alembic upgrade. Already classified as Python confirmed write path in Phase1/Phase2A. Listed here for cross-reference.",
-      "evidence": "Alembic env.py + sqlalchemy. See design doc #A1 and python_db_write_allowlist.json.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "python_runtime_guard_implementation_phase2C",
-      "allowed_operations": ["None — requires runtime guard (Phase2C)"],
+      "classification": "historical_python_alembic_migration_needs_specialized_runtime_guard",
+      "reason": "sc002_alembic_migration_guard_design completed. Alembic environment orchestrator. Can execute arbitrary DDL/DML via alembic upgrade. Specialized guard design documented in docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md. Implementation deferred to sc002_alembic_migration_runtime_guard_implementation.",
+      "evidence": "Alembic env.py + sqlalchemy + context.run_migrations(). See design doc #A1, SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md §Static Analysis",
+      "source_doc": "docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md",
+      "owner_task": "sc002_alembic_migration_guard_design",
+      "allowed_operations": ["None — requires specialized runtime guard (see design doc)"],
       "disallowed_operations": ["Any migration execution without guard"],
-      "review_note": "Covered by Python Phase2A allowlist (confirmed write path). Runtime guard pending Phase2C."
+      "review_note": "Design complete. Guard implementation deferred. Covered by python_db_write_allowlist.json and SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md."
     }
   ]
 }

@@ -4,7 +4,7 @@
   "_owner_task": "python_sql_migration_enforcement_implementation_phase2A",
   "_source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
   "_sc002_status": "partial mitigation only",
-  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9/14 confirmed write paths guarded; Phase2C batch4: 5 remaining classified; Phase2 indirect_write_path_guard_phase2: 6/6 indirect paths guarded; Phase2D manual review: 5/5 classified; Phase2E manual_review_guard_phase2e: 2/2 manual review write paths now guarded. Total: 17/20 Python write paths runtime guarded. Remaining: 3 safe reclassified from manual review (1 read_only, 2 false_positive) + 1 Alembic migrations/env.py pending. 0 unreviewed.",
+  "_runtime_guard_status": "PARTIALLY IMPLEMENTED — Phase2C batch1+batch2+batch3: 9/14 confirmed write paths guarded; Phase2C batch4: 5 remaining classified; Phase2 indirect_write_path_guard_phase2: 6/6 indirect paths guarded; Phase2D manual review: 5/5 classified; Phase2E manual_review_guard_phase2e: 2/2 manual review write paths now guarded. Total: 17/20 Python write paths runtime guarded. Remaining: 3 safe reclassified from manual review (1 read_only, 2 false_positive) + 1 Alembic migrations/env.py classified as alembic_migration_needs_specialized_runtime_guard (has design doc, awaiting implementation). 0 unreviewed.",
   "entries": [
     {
       "path": "src/database/schema_manager.py",
@@ -225,12 +225,26 @@
     },
     {
       "path": "src/database/migrations/env.py",
-      "classification": "historical_python_confirmed_write_path_pending_runtime_guard",
-      "reason": "Alembic migration orchestrator. Can execute arbitrary DDL/DML via alembic upgrade. No Python guard equivalent. RISK: HIGH.",
-      "evidence": "sqlalchemy + alembic + migration execution. See SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md #369.",
-      "source_doc": "docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md",
-      "owner_task": "sql_migration_policy_implementation_phase2B",
-      "expires_or_review_note": "Must be guarded in Phase 2B before any migration is authorized. Do NOT mark safe.",
+      "classification": "historical_python_alembic_migration_needs_specialized_runtime_guard",
+      "reason": "sc002_alembic_migration_guard_design: Alembic migration orchestrator. Can execute arbitrary DDL/DML via alembic upgrade. Is the STANDARD entry point for all migration execution — used by CI, local dev, and Docker init. Standard assert_db_write_allowed() pattern does not directly fit because env.py is a framework orchestrator (not a standalone write script) and must not break CI/dev workflows. Specialized guard design needed: guard in run_migrations_online() before DB connection, production-host hard block, ALEMBIC_CTX env var for CI/dev auto-allow, offline mode (--sql) NOT guarded. Full design: docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md.",
+      "evidence": "sqlalchemy + alembic + context.run_migrations(). Imports engine_from_config, create_async_engine, pool.NullPool. Connects to live DB via get_database_url(). Executes arbitrary DDL/DML from migration version scripts. No existing SC-002 guard. Allowed by alembic.ini: localhost placeholder URL, overridden at runtime. 3 historical migration versions exist (all DDL-only, no destructive ops). See SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md §Static Analysis.",
+      "source_doc": "docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md",
+      "owner_task": "sc002_alembic_migration_guard_design",
+      "analysis_task": "sc002_alembic_migration_guard_design",
+      "observed_operations": [
+        "MIGRATION ORCHESTRATION — executes arbitrary DDL/DML from migration version scripts",
+        "CREATE TABLE (via 001_initial_migration)",
+        "ALTER TABLE (via 002, 003)",
+        "INSERT/UPDATE alembic_version table (version tracking)"
+      ],
+      "observed_tables_or_targets": [
+        "__all__ (schema-wide — any table can be targeted by migration scripts)",
+        "alembic_version (migration tracking table)"
+      ],
+      "direct_write_boundary": "YES — run_migrations_online() creates engine, connects to DB, executes context.run_migrations()",
+      "recommended_next_action": "sc002_alembic_migration_runtime_guard_implementation — implement specialized guard in run_migrations_online() per docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md. See §Guard Strategy Design and §Implementation Plan.",
+      "why_not_guarded_in_this_pr": "Design/classification task — not guard implementation. env.py requires specialized approach (migration orchestrator, not data write script). Standard guard pattern could break CI/dev workflows. Design doc provides exact guard location, env vars, and pseudocode.",
+      "expires_or_review_note": "Reclassified from pending_runtime_guard to alembic_migration_needs_specialized_runtime_guard by sc002_alembic_migration_guard_design (2026-06-25). Specialized guard implementation deferred to sc002_alembic_migration_runtime_guard_implementation. Do NOT mark safe or runtime_guarded until guard is implemented.",
       "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
       "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     },
