@@ -3,10 +3,10 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-23
-- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch{1,2,3} (runtime guard) + python_confirmed_write_paths_design_phase2C_batch4 (design/classification) + consumer_level_guard_audit_db_pool_sync_sql_store (consumer audit) + python_indirect_write_path_design_phase1 (indirect design) + python_indirect_write_path_guard_phase2 (indirect guard implementation) + python_manual_review_phase2d (manual review classification)
-- implementation_status: Phase2A COMPLETED, Phase2B COMPLETED, Phase2C batch1/batch2/batch3 COMPLETED (9/14 runtime guarded), Phase2C batch4 COMPLETED (5 remaining classified), consumer audit COMPLETED, indirect design COMPLETED (8 indirect paths classified), indirect guard COMPLETED (6/6 indirect guarded), manual review COMPLETED (5/5 classified: 2 write_needs_guard, 1 read_only, 2 false_positive). Total: 15/20 runtime guarded, 2 next guard candidates, 3 safe reclassified, 0 unreviewed.
+- task: python_sql_migration_enforcement_design_phase1 (design) + python_sql_migration_enforcement_implementation_phase2A (implementation) + python_runtime_guard_implementation_phase2C_batch{1,2,3} (runtime guard) + python_confirmed_write_paths_design_phase2C_batch4 (design) + consumer_level_guard_audit_db_pool_sync_sql_store (audit) + python_indirect_write_path_design_phase1 (design) + python_indirect_write_path_guard_phase2 (guard) + python_manual_review_phase2d (review) + python_manual_review_guard_phase2e (guard)
+- implementation_status: ALL PHASES COMPLETED except Alembic env.py. Phase2A+2B done; Phase2C batch1-4 done (9/14 guarded, 5 classified); indirect phases done (6/6 guarded); manual review phases done (2/2 guarded). Total: 17/20 Python write paths runtime guarded. Remaining: 1 Alembic env.py pending + 3 safe reclassified.
 - scanner: scripts/ops/python_db_write_static_enforcement.py
-- allowlist: config/python_db_write_allowlist.json (28 entries, 15 runtime_guarded, 2 next guard candidates, 3 infrastructure, 2 read_only, 2 false_positive, 1 pending, 3 safe reclassified from manual review)
+- allowlist: config/python_db_write_allowlist.json (28 entries, 17 runtime_guarded, 1 pending, 3 infrastructure, 2 read_only, 2 false_positive, 3 safe reclassified from manual review)
 - guard_helper: scripts/ops/helpers/python_db_write_guard.py
 - gate_integration: check_python_db_write_enforcement() in scripts/ops/ai_workflow_gate.py
 

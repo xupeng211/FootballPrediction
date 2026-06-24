@@ -17,16 +17,25 @@ Usage:
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
+import sys
 from threading import Lock
 from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram
 
+# Phase2E manual_review_guard_phase2e: Python runtime DB write guard
+_guard_path = str(Path(__file__).resolve().parents[3] / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
+
 # V113.0: Optional database support
 try:
     import psycopg2
 
-    from src.config_unified import get_settings
+    from src.config import get_settings
 
     DB_AVAILABLE = True
 except ImportError:
@@ -286,6 +295,14 @@ class DeadLetterQueue:
 
             # 提取 URL 从 metadata
             url = metadata.get("url") if metadata else None
+
+            # Phase2E manual_review_guard_phase2e: runtime DB write guard before INSERT
+            assert_db_write_allowed(
+                script_name="prometheus_metrics.py",
+                operation="INSERT",
+                target="failed_market_data",
+                tables=["failed_market_data"],
+            )
 
             cursor.execute(
                 """

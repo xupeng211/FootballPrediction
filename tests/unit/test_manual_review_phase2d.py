@@ -19,22 +19,22 @@ ALLOWLIST_PATH = PROJECT_ROOT / "config" / "python_db_write_allowlist.json"
 PHASE2D_DOC_PATH = PROJECT_ROOT / "docs" / "SC002_MANUAL_REVIEW_PHASE2D.md"
 
 EXPECTED_ALLOWLIST_ENTRIES = 28
-EXPECTED_RUNTIME_GUARDED = 15
+EXPECTED_RUNTIME_GUARDED = 17
 
 # ---- Test data ----
 
 # 5 manual review candidates with expected new classifications
 EXPECTED_CLASSIFICATIONS = {
-    "scripts/maintenance/reprocess_from_local.py": "historical_python_manual_confirmed_write_needs_guard",
+    "scripts/maintenance/reprocess_from_local.py": "historical_python_manual_confirmed_write_path_runtime_guarded",
     "scripts/maintenance/fotmob_historical_backfill.py": "historical_python_manual_false_positive_candidate",
-    "src/api/monitoring/prometheus_metrics.py": "historical_python_manual_confirmed_write_needs_guard",
+    "src/api/monitoring/prometheus_metrics.py": "historical_python_manual_confirmed_write_path_runtime_guarded",
     "src/api/monitoring.py": "historical_python_manual_read_only_candidate",
     "scripts/tools/diagnose_diagnostic.py": "historical_python_manual_false_positive_candidate",
 }
 
 MANUAL_REVIEW_PATHS = list(EXPECTED_CLASSIFICATIONS.keys())
 
-# 15 paths that must remain runtime_guarded
+# 17 paths that must remain runtime_guarded
 RUNTIME_GUARDED_PATHS = [
     "src/database/schema_manager.py",
     "src/database/match_repository.py",
@@ -51,6 +51,8 @@ RUNTIME_GUARDED_PATHS = [
     "scripts/maintenance/reprocess_failed_matches.py",
     "scripts/maintenance/clean_corrupt_l2.py",
     "scripts/maintenance/fix_zombie_matches.py",
+    "scripts/maintenance/reprocess_from_local.py",
+    "src/api/monitoring/prometheus_metrics.py",
 ]
 
 # 2 next guard candidates
@@ -113,18 +115,15 @@ class TestManualReviewPhase2D:
                     f"{entry['path']} incorrectly marked as safe: {classification}"
                 )
 
-    def test_no_manual_review_candidate_marked_runtime_guarded(self):
-        """Manual review candidates must NOT be marked runtime_guarded (that is Phase2E)."""
+    def test_no_manual_review_candidate_unclassified(self):
+        """After Phase2E: all manual review candidates now classified.
+        2 write paths are now runtime_guarded, 3 safe reclassified."""
         data = _load_allowlist()
         for entry in data["entries"]:
-            if entry["path"] in MANUAL_REVIEW_PATHS and "write_needs_guard" in entry.get(
-                "classification", ""
-            ):
-                # These 2 should be write_needs_guard, NOT runtime_guarded
-                classification = entry["classification"]
-                assert "runtime_guarded" not in classification, (
-                    f"{entry['path']} is write_needs_guard — "
-                    f"should NOT be runtime_guarded yet (deferred to Phase2E)"
+            if entry["path"] in MANUAL_REVIEW_PATHS:
+                classification = entry.get("classification", "")
+                assert "manual_" in classification, (
+                    f"{entry['path']} should have manual_* classification, got: {classification}"
                 )
 
     def test_allowlist_has_28_entries(self):
@@ -149,11 +148,11 @@ class TestManualReviewPhase2D:
         assert "Phase2D manual review" in status, (
             f"Allowlist header missing Phase2D reference: {status}"
         )
-        assert "2 next guard candidates" in status, (
-            "Allowlist header must identify 2 next guard candidates"
+        assert "2/2" in status or "2 of 2" in status or "17/20" in status, (
+            f"Allowlist header must show Phase2E guard completion: {status}"
         )
-        assert "No remaining manual review candidates" in status, (
-            "Allowlist header must state 0 remaining manual review candidates"
+        assert "0 unreviewed" in status or "No remaining" in status, (
+            f"Allowlist header must state 0 unreviewed: {status}"
         )
 
     def test_all_5_entries_have_analysis_task(self):
@@ -218,39 +217,40 @@ class TestManualReviewPhase2D:
                     f"{entry['path']} has stale consumer_audit_doc"
                 )
 
-    def test_owner_task_set_to_phase2d(self):
-        """All 5 entries must have owner_task set to manual_review_phase2d."""
+    def test_owner_task_set_to_phase2d_or_phase2e(self):
+        """Entries must have owner_task reflecting the phase that last touched them."""
         data = _load_allowlist()
         entries_by_path = {e["path"]: e for e in data["entries"]}
 
         for path in MANUAL_REVIEW_PATHS:
             owner = entries_by_path[path].get("owner_task", "")
-            assert owner == "python_manual_review_phase2d", (
-                f"{path}: expected owner_task=python_manual_review_phase2d, got {owner}"
-            )
+            assert owner in (
+                "python_manual_review_phase2d",
+                "python_manual_review_guard_phase2e",
+            ), f"{path}: unexpected owner_task: {owner}"
 
     # ---- Next guard candidate tests ----
 
-    def test_2_next_guard_candidates_identified(self):
-        """2 paths must be classified as write_needs_guard (next guard candidates)."""
+    def test_2_next_guard_candidates_now_guarded(self):
+        """After Phase2E: 2 paths that were next guard candidates are now runtime_guarded."""
         data = _load_allowlist()
         entries_by_path = {e["path"]: e for e in data["entries"]}
 
         for path in NEXT_GUARD_CANDIDATES:
             classification = entries_by_path[path]["classification"]
-            assert "write_needs_guard" in classification, (
-                f"{path} should be write_needs_guard, got: {classification}"
+            assert "runtime_guarded" in classification, (
+                f"{path} should now be runtime_guarded after Phase2E, got: {classification}"
             )
 
-    def test_next_guard_candidates_deferred_to_phase2e(self):
-        """Next guard candidates must reference Phase2E in recommended_next_action."""
+    def test_next_guard_candidates_marked_done(self):
+        """After Phase2E: the 2 paths should have 'Done' in recommended_next_action."""
         data = _load_allowlist()
         entries_by_path = {e["path"]: e for e in data["entries"]}
 
         for path in NEXT_GUARD_CANDIDATES:
             action = entries_by_path[path].get("recommended_next_action", "")
-            assert "python_manual_review_guard_phase2e" in action, (
-                f"{path}: must reference python_manual_review_guard_phase2e in action"
+            assert "Done" in action, (
+                f"{path}: recommended_next_action should say Done, got: {action}"
             )
 
     # ---- Document tests ----

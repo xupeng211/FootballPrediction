@@ -30,7 +30,15 @@ from psycopg2.extras import RealDictCursor
 import structlog
 
 # 添加项目路径
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+# Phase2E manual_review_guard_phase2e: Python runtime DB write guard
+_guard_path = str(PROJECT_ROOT / "scripts" / "ops")
+if _guard_path not in sys.path:
+    sys.path.insert(0, _guard_path)
+
+from helpers.python_db_write_guard import assert_db_write_allowed  # noqa: E402
 
 from src.config_unified import get_settings
 # V4.13: 更新为 legacy 路径
@@ -151,6 +159,14 @@ class OfflineFeatureReprocessor:
         conn = self.get_db_connection()
         try:
             with conn.cursor() as cur:
+                # Phase2E manual_review_guard_phase2e: runtime DB write guard before UPDATE
+                assert_db_write_allowed(
+                    script_name="reprocess_from_local.py",
+                    operation="UPDATE",
+                    target="matches",
+                    tables=["matches"],
+                )
+
                 # 将特征序列化为 JSON
                 features_json = json.dumps(features, ensure_ascii=False)
 
