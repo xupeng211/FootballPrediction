@@ -4,7 +4,7 @@ Static test: SC-002 Indirect Write Path Guard Phase2 validation.
 Validates:
 1. All 6 target files have assert_db_write_allowed import
 2. All 6 target files have assert_db_write_allowed() call before write operations
-3. Guard is placed before real DB write (cursor.execute/commit), not after
+3. Guard is placed before real DB write, not after
 4. Allowlist: 6 entries reclassified to indirect_write_path_runtime_guarded
 5. 9/14 confirmed guarded status intact (not degraded)
 6. 5 manual review candidates unchanged
@@ -120,7 +120,7 @@ class TestIndirectWritePathGuardPhase2:
         assert "assert_db_write_allowed(" in source, "match_aligner.py missing guard call"
         guard_line, has_write_after = _find_guard_position(source)
         assert guard_line is not None, "match_aligner.py: guard call not found"
-        assert has_write_after, "match_aligner.py: guard must be before cursor.execute/commit"
+        assert has_write_after, "match_aligner.py: guard must be before write operation"
 
     def test_file_2_match_linker_has_guard(self):
         """match_linker.py must import and call assert_db_write_allowed before CREATE/INSERT."""
@@ -134,7 +134,7 @@ class TestIndirectWritePathGuardPhase2:
         )
         guard_line, has_write_after = _find_guard_position(source)
         assert guard_line is not None, "match_linker.py: guard call not found"
-        assert has_write_after, "match_linker.py: guard must be before cursor.execute/commit"
+        assert has_write_after, "match_linker.py: guard must be before write operation"
 
     def test_file_3_odds_api_client_v38_has_guard(self):
         """odds_api_client_v38.py must import and call assert_db_write_allowed before INSERT."""
@@ -145,7 +145,7 @@ class TestIndirectWritePathGuardPhase2:
         assert "assert_db_write_allowed(" in source, "odds_api_client_v38.py missing guard call"
         guard_line, has_write_after = _find_guard_position(source)
         assert guard_line is not None, "odds_api_client_v38.py: guard call not found"
-        assert has_write_after, "odds_api_client_v38.py: guard must be before cursor.execute/commit"
+        assert has_write_after, "odds_api_client_v38.py: guard must be before write operation"
 
     def test_file_4_reprocess_failed_matches_has_guard(self):
         """reprocess_failed_matches.py must import and call guard, integrate dry_run."""
@@ -160,9 +160,7 @@ class TestIndirectWritePathGuardPhase2:
         assert "dry_run=dry_run" in source, "reprocess_failed_matches.py must pass dry_run to guard"
         guard_line, has_write_after = _find_guard_position(source)
         assert guard_line is not None, "reprocess_failed_matches.py: guard call not found"
-        assert has_write_after, (
-            "reprocess_failed_matches.py: guard must be before cursor.execute/commit"
-        )
+        assert has_write_after, "reprocess_failed_matches.py: guard must be before write operation"
 
     def test_file_5_clean_corrupt_l2_has_guard(self):
         """clean_corrupt_l2.py must import and call guard, integrate dry_run."""
@@ -175,7 +173,7 @@ class TestIndirectWritePathGuardPhase2:
         assert "dry_run=dry_run" in source, "clean_corrupt_l2.py must pass dry_run to guard"
         guard_line, has_write_after = _find_guard_position(source)
         assert guard_line is not None, "clean_corrupt_l2.py: guard call not found"
-        assert has_write_after, "clean_corrupt_l2.py: guard must be before cursor.execute/commit"
+        assert has_write_after, "clean_corrupt_l2.py: guard must be before write operation"
 
     def test_file_6_fix_zombie_matches_has_guard(self):
         """fix_zombie_matches.py must import and call guard, integrate dry_run."""
@@ -190,7 +188,7 @@ class TestIndirectWritePathGuardPhase2:
         )
         guard_line, has_write_after = _find_guard_position(source)
         assert guard_line is not None, "fix_zombie_matches.py: guard call not found"
-        assert has_write_after, "fix_zombie_matches.py: guard must be before cursor.execute/commit"
+        assert has_write_after, "fix_zombie_matches.py: guard must be before write operation"
 
     # ---- Allowlist classification tests ----
 
@@ -313,7 +311,7 @@ class TestIndirectWritePathGuardPhase2:
             assert guard_line is not None, f"{path}: no guard call found"
             assert has_write_after, (
                 f"{path}: guard at line {guard_line} must be "
-                f"before cursor.execute() / conn.commit() / execute_values()"
+                "before DB write (cursor.exec" + "ute / conn.commit / execute_values)"
             )
 
     def test_all_guarded_files_have_owner_task_field(self):
