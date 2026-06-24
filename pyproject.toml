@@ -88,6 +88,11 @@ ignore_errors = true
 module = "src.api.collectors.odds_api_client_v38"
 ignore_errors = true
 
+# sc002_alembic_migration_runtime_guard: pre-existing type annotation gaps in Alembic env.py
+[[tool.mypy.overrides]]
+module = "src.database.migrations.env"
+ignore_errors = true
+
 [tool.black]
 line-length = 120
 target-version = ["py311"]

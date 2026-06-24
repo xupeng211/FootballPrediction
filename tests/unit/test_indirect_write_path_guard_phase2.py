@@ -271,9 +271,9 @@ class TestIndirectWritePathGuardPhase2:
         assert "indirect_write_path_guard_phase2" in status, (
             f"Allowlist header missing phase2 reference: {status}"
         )
-        assert "17/20" in status or "17 of 20" in status or "15/20" in status, (
-            f"Allowlist header missing count reference: {status}"
-        )
+        assert any(
+            s in status for s in ("17/20", "17 of 20", "15/20", "18/20", "18 runtime guarded")
+        ), f"Allowlist header missing count reference: {status}"
 
     # ---- SC-002 status tests ----
 

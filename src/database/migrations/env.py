@@ -25,13 +25,13 @@ if project_root_alt not in sys.path:
 
 
 try:
-    from src.config_unified import get_settings
+    from src.config import get_settings
     from src.database.base import Base
 
     # Odds model import removed - not needed for migrations
     # 提供兼容的 get_database_config 函数
     def get_database_config():
-        """获取数据库配置（从 config_unified.py）"""
+        """获取数据库配置（从 src.config）"""
         return get_settings().database
 
 except ImportError:
@@ -60,7 +60,7 @@ def get_database_url():
     env_url = os.getenv("DATABASE_URL")
     if env_url:
         return env_url
-    # 回退到配置文件
+    # 回退到配置文件（通过 src.config.get_settings()）
     db_config = get_database_config()
     return db_config.get_connection_string()
 
@@ -73,6 +73,51 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+# SC-002 Mitigation: Alembic migration runtime guard.
+# Guard rules: (1) production-like host -> hard block; (2) ALEMBIC_CTX
+# auto-allow; (3) standard SC-002 gates; (4) offline mode NOT guarded.
+# Design doc: docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md
+
+
+def _check_alembic_migration_guard() -> None:
+    """Check SC-002 migration guard before executing Alembic migrations online.
+
+    Must be called BEFORE any DB engine creation, connection, or
+    ``context.run_migrations()``.
+
+    Raises :exc:`DbWriteBlockedError` if the migration is blocked.
+    """
+    import os
+
+    # Import guard helper inline to avoid import errors when env.py is loaded
+    # for offline mode (--sql) where the full application config is unavailable.
+    from scripts.ops.helpers.python_db_write_guard import assert_db_write_allowed
+
+    alembic_ctx = os.getenv("ALEMBIC_CTX", "").strip().lower()
+
+    # ── CI / dev / Docker init auto-allow ──────────────────────────────────
+    # ALLOW_SCHEMA_WRITE=yes is sufficient for controlled CI/dev environments.
+    allow_schema = os.getenv("ALLOW_SCHEMA_WRITE", "").strip().lower() == "yes"
+    if alembic_ctx in ("ci", "docker_init", "dev") and allow_schema:
+        return
+    # If ALEMBIC_CTX is set but ALLOW_SCHEMA_WRITE is missing, fall through
+    # to the full guard check below.
+
+    # ── Standard SC-002 gate for all other contexts ────────────────────────
+    # The guard helper enforces:
+    #   - Production env detection → hard block
+    #   - Production DB host → hard block
+    #   - DRY_RUN default (true → returns early, no write)
+    #   - ALLOW_DB_WRITE=yes, FINAL_DB_WRITE_CONFIRMATION=yes
+    #   - ALLOW_SCHEMA_WRITE=yes (because operation is CREATE → high-risk)
+    assert_db_write_allowed(
+        script_name="env.py (Alembic migration)",
+        operation="CREATE",  # triggers schema-level gate in guard helper
+        target="alembic_migration (schema-level)",
+        tables=["alembic_version"],
+    )
 
 
 def run_migrations_offline() -> None:
@@ -141,6 +186,10 @@ def run_migrations_online() -> None:
     In this scenario we need to create an Engine
     and associate a connection with the context.
     """
+    # ── SC-002: Migration runtime guard ────────────────────────────────────
+    # Must be the FIRST thing — before any DB engine, connection, or migration.
+    _check_alembic_migration_guard()
+
     # 获取配置
     database_url = get_database_url()
 

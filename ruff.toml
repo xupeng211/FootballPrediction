@@ -191,6 +191,12 @@ unfixable = []
 "src/api/monitoring/prometheus_metrics.py" = ["DTZ005", "PLC0415"]
 "tests/unit/test_manual_review_guard_phase2e.py" = ["SIM102"]
 
+# sc002_alembic_migration_runtime_guard — pre-existing issues in Alembic env.py
+"src/database/migrations/env.py" = ["PTH109", "PTH120", "PTH100", "PTH118", "PLC0415", "ERA001", "RUF006", "TRY300"]
+# sc002_alembic_migration_runtime_guard — new test files
+"tests/unit/test_sc002_alembic_migration_runtime_guard.py" = ["PLR2004"]
+"tests/unit/test_sc002_alembic_migration_guard_design.py" = ["PLR2004", "PT018"]
+
 # ci_local_parity_preflight_phase1 — new preflight script and tests
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004", "ARG001", "ARG002", "ARG005", "I001", "RUF100"]
 "tests/unit/test_local_pr_gate_preflight.py" = ["PLR2004", "SIM115", "I001"]

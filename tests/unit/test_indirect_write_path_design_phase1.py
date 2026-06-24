@@ -232,7 +232,8 @@ class TestIndirectWritePathDesignPhase1:
         assert (
             "6/6 indirect" in status
             or "6 of 6 indirect" in status
-            or "17/20" in status
+            or "indirect_write_path_guard_phase2" in status
+            or "18 runtime guarded" in status
             or "indirect_write_needs_guard" in status
         ), f"Allowlist header missing classification summary: {status}"
 

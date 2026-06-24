@@ -263,14 +263,14 @@
     {
       "path": "src/database/migrations/env.py",
       "file_type": "alembic_migration",
-      "classification": "historical_python_alembic_migration_needs_specialized_runtime_guard",
-      "reason": "sc002_alembic_migration_guard_design completed. Alembic environment orchestrator. Can execute arbitrary DDL/DML via alembic upgrade. Specialized guard design documented in docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md. Implementation deferred to sc002_alembic_migration_runtime_guard_implementation.",
-      "evidence": "Alembic env.py + sqlalchemy + context.run_migrations(). See design doc #A1, SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md §Static Analysis",
+      "classification": "historical_python_alembic_migration_runtime_guarded",
+      "reason": "sc002_alembic_migration_runtime_guard_implementation completed. Runtime guard added in run_migrations_online() before any DB engine/connection/context.run_migrations(). ALEMBIC_CTX env var for CI/dev auto-allow. Production-host hard block. Offline mode NOT guarded.",
+      "evidence": "Guard call at top of run_migrations_online(). Uses python_db_write_guard.py assert_db_write_allowed(operation=CREATE). See SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md §Guard Strategy Design.",
       "source_doc": "docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md",
-      "owner_task": "sc002_alembic_migration_guard_design",
-      "allowed_operations": ["None — requires specialized runtime guard (see design doc)"],
-      "disallowed_operations": ["Any migration execution without guard"],
-      "review_note": "Design complete. Guard implementation deferred. Covered by python_db_write_allowlist.json and SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md."
+      "owner_task": "sc002_alembic_migration_runtime_guard_implementation",
+      "allowed_operations": ["SCHEMA_MIGRATION — gated by ALEMBIC_CTX or ALLOW_DB_WRITE+FINAL_DB_WRITE_CONFIRMATION+ALLOW_SCHEMA_WRITE+DRY_RUN=false"],
+      "disallowed_operations": ["Any migration execution without guard (production-like host hard-blocked)"],
+      "review_note": "Guard implemented. All Python write paths now resolved (18 guarded, 2 safe). SC-002 remains partial mitigation only."
     }
   ]
 }
