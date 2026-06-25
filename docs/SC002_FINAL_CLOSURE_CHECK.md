@@ -312,16 +312,18 @@ The remaining staging/production role deployment (Criterion #6) is a deployment/
 task that requires production environment access. It should be tracked as a separate task,
 not as a blocker for SC-002 enforcement closure.
 
-## Next Recommended Task
+## Next Steps After Closure
 
-**`sc002_staging_db_role_deployment`** — Deploy the 6-role least-privilege DB permission
-model to staging. Requires:
-- Staging PostgreSQL access
-- Role creation and privilege grants
-- Verification that the application-layer guard and DB-layer permissions are aligned
-- Connection pool configuration for role-per-component connectivity
+1. **`sc002_staging_db_role_deployment_plan`** ✅ **COMPLETED** — Staging deployment plan
+   documented in `docs/SC002_STAGING_DB_ROLE_DEPLOYMENT_PLAN.md`. Includes target 6-role
+   model, prerequisites, deployment step drafts, rollback plan, validation matrix, and
+   go/no-go checklist. No deployment executed.
 
-Do not start automatically. Recommended next task only after user confirmation.
+2. **`sc002_staging_db_role_deployment`** — Execute staging deployment per the plan.
+   Requires staging PostgreSQL access, role passwords via secure channel, and explicit
+   authorization. Do not start automatically.
+
+Do not start automatically. Each step requires explicit authorization and confirmation.
 
 ## Non-Goals
 

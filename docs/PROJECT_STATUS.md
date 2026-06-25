@@ -5,6 +5,18 @@
 
 Last updated: 2026-06-25
 
+## sc002_staging_db_role_deployment_plan completed
+
+- **sc002_staging_db_role_deployment_plan** — staging DB role separation deployment plan.
+  - Branch: `chore/sc002-staging-db-role-deployment-plan`
+  - **Planning/documentation only. No DB, no SQL, no deployment, no real changes.**
+  - New plan doc: `docs/SC002_STAGING_DB_ROLE_DEPLOYMENT_PLAN.md`
+  - Contains: target 6-role model, prerequisites, deployment step drafts, rollback plan,
+    validation matrix (6 roles × 14 ops), go/no-go checklist.
+  - SC-002 enforcement infrastructure complete.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `sc002_staging_db_role_deployment`. Do not start automatically.
+
 ## sc002_final_closure_check completed
 
 - **sc002_final_closure_check** — final per-criterion SC-002 closure verification.

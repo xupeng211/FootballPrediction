@@ -907,6 +907,17 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - **No DB connection. No SQL. No migration. No real write.**
 - **Next step:** `sc002_staging_db_role_deployment`. Do not start automatically.
 
+### 6f. sc002_staging_db_role_deployment_plan ✅ COMPLETED (this PR)
+
+- **Status:** Completed (this PR — deployment planning/documentation, NO deployment).
+- **Results:**
+  - Plan document: `docs/SC002_STAGING_DB_ROLE_DEPLOYMENT_PLAN.md`
+  - Target 6-role model, prerequisites, deployment steps, rollback plan,
+    validation matrix (6 roles × 14 ops), go/no-go checklist.
+  - **No DB. No SQL. No psql. No real changes. No real secrets.**
+  - **Training / data expansion / real DB write remain blocked.**
+- **Next step:** `sc002_staging_db_role_deployment`. Do not start automatically.
+
 ### 7. sc002_release_gate_checklist_phase1
 
 - **Objective:** Create a detailed release gate checklist that can be used to verify
