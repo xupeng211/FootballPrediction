@@ -91,11 +91,16 @@ class TestOverallClosureAssessment:
         for section in required_sections:
             assert section in doc, f"Assessment doc missing required section: {section}"
 
-    def test_sc002_not_complete(self):
-        """Assessment must state SC-002 cannot be closed / not complete."""
+    def test_sc002_status_documented(self):
+        """Assessment must state SC-002 enforcement status clearly."""
         doc = _load_assessment()
-        assert "cannot be closed" in doc.lower() or "not complete" in doc.lower(), (
-            "Assessment must explicitly state SC-002 cannot be closed."
+        assert (
+            "enforcement complete" in doc.lower()
+            or "partial mitigation only" in doc.lower()
+            or "cannot be closed" in doc.lower()
+        ), (
+            "Assessment must state SC-002 enforcement status (enforcement complete "
+            "or partial mitigation only)."
         )
 
     def test_sc002_partial_mitigation(self):

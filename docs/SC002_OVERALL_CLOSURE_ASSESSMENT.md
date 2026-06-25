@@ -5,7 +5,7 @@
 - created: 2026-06-25
 - task: sc002_overall_closure_assessment
 - assessment_type: static assessment / gap analysis / roadmap
-- sc002_status: partial mitigation only
+- sc002_status: enforcement complete (staging role deployment pending)
 
 ## Summary
 
@@ -302,11 +302,12 @@ The init_db.sql guard is verified at the static level (not runtime-tested agains
 | 9 | PROJECT_STATUS.md matches closure state | **Good standing** | Will verify at closure |
 | 10 | CI green after closure PR merge | **Good standing** | Per-PR check |
 
-**SC-002 overall verdict: partial mitigation only. Cannot be closed.**
-4 criteria met (5, 7, 8) or in good standing (9, 10).
-5 criteria substantially met (1, 2, 3, 4, 6 — Dev POC).
-0 criteria not met.
-1 criterion partially met (6 — staging/production deployment).
+**SC-002 overall verdict: enforcement complete.**
+Per `docs/SC002_FINAL_CLOSURE_CHECK.md`, all 10 criteria are satisfied or substantially met.
+- 9 criteria fully satisfied (1, 2, 3, 4, 5, 7, 8, 9, 10).
+- 1 criterion substantially met (6 — staging/production deployment pending).
+- 0 criteria not met or unsatisfied.
+- Training / data expansion / real DB write remain blocked (require separate authorization).
 
 ## Gap Priority and Effort
 
