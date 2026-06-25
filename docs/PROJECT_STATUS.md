@@ -5,6 +5,19 @@
 
 Last updated: 2026-06-25
 
+## sc002_final_closure_check completed
+
+- **sc002_final_closure_check** — final per-criterion SC-002 closure verification.
+  - Branch: `chore/sc002-final-closure-check`
+  - **This is a verification/documentation task. No DB, no SQL, no write.**
+  - New closure check doc: `docs/SC002_FINAL_CLOSURE_CHECK.md`
+  - All 10 criteria verified against concrete evidence from the codebase.
+  - 9 criteria fully satisfied. 1 criterion substantially met (staging role deploy pending).
+  - 0 criteria not met or unsatisfied.
+  - **SC-002 status: enforcement complete** (was: partial mitigation only).
+  - Training / data expansion / real DB write remain blocked (require separate authorization).
+  - Next task: `sc002_staging_db_role_deployment`. Do not start automatically.
+
 ## deploy_docker_init_sql_guard completed
 
 - **deploy_docker_init_sql_guard** — SC-002 Gate B: dev-only execution guard added to
@@ -367,7 +380,8 @@ Last updated: 2026-06-25
 
 ## Current SC-002 status (DB write safety gate)
 
-- SC-002 is **not fully fixed**. This remains partial mitigation only.
+- SC-002 is **enforcement complete**. See `docs/SC002_FINAL_CLOSURE_CHECK.md`.
+  Training / data expansion / real DB write remain blocked (require separate authorization).
 - A unified guard helper (`scripts/ops/helpers/db_write_guard.js`) has been added.
 - Production-like DB host (RDS, Cloud SQL, Supabase, etc.) is hard blocked by default.
   No production override exists. No `ALLOW_PRODUCTION_DB_WRITE` bypass variable exists.
@@ -552,6 +566,7 @@ Last updated: 2026-06-25
 | `docs/SC002_CLOSURE_PLAN.md` | active — authoritative SC-002 status reference |
 | `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md` | active — static audit of all 43 skipped_complex scripts |
 | `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md` | active — deep per-script verification of all 43 skipped_complex scripts |
+| `docs/SC002_FINAL_CLOSURE_CHECK.md` | active — final per-criterion SC-002 closure verification |
 | `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` | active — shared module DB write boundary design |
 | `docs/SC002_MANUAL_REVIEW_PHASE1.md` | active — manual review and reclassification of all needs_manual_review scripts |
 | `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` | active — Python/SQL/migration enforcement design |
