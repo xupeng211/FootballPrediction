@@ -5,21 +5,32 @@
 
 Last updated: 2026-06-25
 
-## agent_workflow_hardening_phase1 in progress
+## github_actions_workflow_inventory_phase1 in progress
 
-- **agent_workflow_hardening_phase1** — standardize AI agent PR lifecycle CI evidence and governance.
-  - Branch: `chore/agent-workflow-hardening-phase1`
-  - New hardening doc: `docs/AI_AGENT_WORKFLOW_HARDENING.md`
-  - CLAUDE.md updated: Final Report Rule, Main Gate Evidence Rule, Branch Safety Rule,
-    Scope Drift Rule, Completion Definition Rule added. SC-002 status corrected.
-  - Makefile enhanced: CI monitoring section with hardening doc reference.
-  - Tests forthcoming.
-  - **This is a workflow/governance/documentation hardening task.**
-  - **No DB. No SQL. No staging/prod config. No scraper/browser. No training. No data expansion.**
+- **github_actions_workflow_inventory_phase1** — static inventory/audit of all
+  `.github/workflows/` workflow files.
+  - Branch: `chore/github-actions-workflow-inventory-phase1`
+  - **This is a documentation/static-test/inventory task.**
+  - **No workflow behavior changed. No workflows deleted or renamed.**
+  - **No DB. No SQL. No scraper/browser. No training. No data expansion.**
   - **Did not continue staging DB deployment.**
+  - New inventory doc: `docs/GITHUB_ACTIONS_WORKFLOW_INVENTORY_PHASE1.md` (1 workflow inventoried)
+  - New static tests: `tests/unit/test_github_actions_workflow_inventory_phase1.py` (33 tests)
   - SC-002 enforcement infrastructure complete.
   - Training / data expansion / real DB write remain blocked.
   - Next task: PR + CI validation. Do not start automatically.
+
+## agent_workflow_hardening_phase1 completed
+
+- **agent_workflow_hardening_phase1** — standardize AI agent PR lifecycle CI evidence and governance.
+  - Branch: `chore/agent-workflow-hardening-phase1` (merged)
+  - Hardening doc: `docs/AI_AGENT_WORKFLOW_HARDENING.md`
+  - CLAUDE.md updated: Final Report Rule, Main Gate Evidence Rule, Branch Safety Rule,
+    Scope Drift Rule, Completion Definition Rule added. SC-002 status corrected.
+  - Makefile enhanced: CI monitoring section with hardening doc reference.
+  - Tests: `test_agent_workflow_hardening.py`, `test_agent_workflow_hardening_phase1_ci_rules.py`.
+  - SC-002 enforcement infrastructure complete.
+  - Training / data expansion / real DB write remain blocked.
 
 ## sc002_staging_db_role_deployment_plan completed
 
