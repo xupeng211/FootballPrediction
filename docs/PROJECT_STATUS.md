@@ -5,6 +5,28 @@
 
 Last updated: 2026-06-25
 
+## browser_fotmob_pageprops_playwright_deep_audit completed
+
+- **browser_fotmob_pageprops_playwright_deep_audit** — deep per-script static verification
+  of all 43 skipped_complex JS scripts (Browser/FotMob/pageProps/Playwright paths).
+  - Branch: `chore/browser-fotmob-pageprops-playwright-deep-audit`
+  - **This is a static audit/verification task. No browser, no Playwright, no DB, no SQL.**
+  - New audit doc: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md`
+  - Key findings:
+    - All 43 skipped_complex scripts individually verified per-script.
+    - **13 false_positive_select_only:** All confirmed non-write with active SQL guard wrappers.
+    - **3 design_mapped shared modules:** All active write-capable consumers verified guarded.
+    - **12 read_only:** All confirmed no DB client, no SQL execution.
+    - **3 false_positive_read_only_transaction:** Confirmed with DB-level READ ONLY tx.
+    - **0 hidden write paths discovered. 0 unknown_needs_followup.**
+    - **1 classification correction:** `fotmob_ligue1_adg60_raw_payload_source_inventory.js`
+      (scraper_or_browser_only → read_only — static file classifier, no browser/network/DB).
+  - Criterion #1: Substantially met — deep per-script verification complete.
+  - Criterion #3: Substantially met — deep verification complete.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `changed_files_negative_case_enforcement_test`. Do not start automatically.
+
 ## runtime_db_role_permission_dev_poc completed
 
 - **runtime_db_role_permission_dev_poc** — dev-only POC of 6-role DB permission model.
@@ -493,6 +515,7 @@ Last updated: 2026-06-25
 | `docs/AGENT_WORKFLOW.md` | active |
 | `docs/SC002_CLOSURE_PLAN.md` | active — authoritative SC-002 status reference |
 | `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md` | active — static audit of all 43 skipped_complex scripts |
+| `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md` | active — deep per-script verification of all 43 skipped_complex scripts |
 | `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` | active — shared module DB write boundary design |
 | `docs/SC002_MANUAL_REVIEW_PHASE1.md` | active — manual review and reclassification of all needs_manual_review scripts |
 | `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` | active — Python/SQL/migration enforcement design |
