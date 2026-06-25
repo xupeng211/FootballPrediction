@@ -59,6 +59,82 @@ Current high-level status:
 - 如果 `gh pr checks --watch` 在当前 gh 版本不可用，`make watch-pr` 会给出清晰提示并退出。
 - **不要因为 CI 监控命令失败而修改业务代码。**
 - **不要在 PR body / docs / scripts 中嵌入自定义 while true + gh pr checks + sleep loop 来监控 CI。**
+- 详细 CI 监控规则和完整治理文档见 `docs/AI_AGENT_WORKFLOW_HARDENING.md`。
+
+## Final Report Rule
+
+每个任务的 Final Report 必须包含以下全部字段，缺字段 = 任务未完成：
+
+- **PR number / URL**
+- **head SHA**（完整 40 位优先）
+- **merge commit SHA**（完整 40 位优先）
+- **PR Gate run id**
+- **PR Gate result**（success / failure / cancelled）
+- **post-merge main Gate run id**（或明确说明"could not be independently verified"）
+- **post-merge main Gate result**（success / failure / cancelled / not verified）
+- **remote branch deleted**（yes / no）
+- **main green**（yes / no / not verified）
+- **independently verified**（yes = 有 run id + `gh run view` 确认 / no = 仅 reported）
+- **是否有未核验项**
+- **SC-002 status**
+- **training / data expansion / real DB write remain blocked**
+- **next recommended task**
+- **Do not start automatically**
+
+## Main Gate Evidence Rule
+
+- **没有 post-merge main Gate run id，不得写 "main green yes"。**
+- 如果 merge commit 查询不到 workflow run，必须写：
+  `"main Gate could not be independently verified by merge commit; needs explicit run id"`。
+- **不得把 Claude 自己的口头 success 当成独立核验。**
+- Final report 中必须区分：
+  - **reported success** — CI dashboard 显示绿色，但 agent 未独立确认。
+  - **independently verified success** — agent 执行了 `gh run view <run-id>` 或 `gh run watch` 并得到 `"conclusion":"success"`。
+- 如果查到的 run 来自附近 commit 而非 exact merge commit，必须在报告中注明替代关系。
+
+## Branch Safety Rule
+
+- **每个任务开始前必须执行：**
+  ```
+  git branch --show-current
+  git status --short
+  ```
+- 如果当前分支不是预期分支：先说明原因，获得确认后再切换。
+- 如果存在未提交修改：**立即停止**，列出修改文件，等待用户确认 stash/discard/commit。
+- 禁止在 main 上直接作业。唯一的 main 操作：checkout / pull / 创建分支。
+- 如果上一个任务留有分支且未合并：
+  - **干净分支（无本地 commit）：** 切回 main，删除本地分支。
+  - **有本地 commit 或未提交修改：** 停止并报告，请用户确认如何处理。
+- 禁止在不相关分支上混用任务 scope。
+
+## Scope Drift Rule
+
+- 当前任务是 X 时，**不得继续上一个会话未完成的 Y 任务。**
+- 如果当前任务是 workflow hardening，不得继续 staging deployment。
+- 如果当前任务是 docs/tests，不得修改 runtime business logic。
+- 如果当前任务无 DB scope，不得连接 DB。
+- **任何 scope drift 必须停止并报告。**
+- 检测到跨越 scope 边界时：立即停止越界动作，报告边界冲突，返回授权 scope。
+
+## Completion Definition Rule
+
+"任务完成"必须同时满足以下 **全部** 条件：
+
+- PR merged
+- PR Gate success（有 run id）
+- post-merge main Gate success（有 run id）
+- post-merge main Gate run id 已记录在 final report 中
+- remote branch deleted
+- working tree clean
+- final report complete（全部必填字段）
+
+如果缺一项，只能说 "PR merged but completion not fully verified"。
+
+不构成完成的常见错误：
+- "PR merged" ≠ 完成（还需要 main Gate 验证）
+- "CI passed on PR" ≠ main Gate 通过
+- "main 之前是绿的" ≠ post-merge main 是绿的
+- "web dashboard 看起来绿的" = reported success，不是 independent verification
 
 ## MCP permissions
 
@@ -105,12 +181,12 @@ These rules are non-negotiable. They exist so AI agents working in this repo do 
 
 ### 4. SC-002 discipline
 
-- **SC-002 is partial mitigation only.** It is not complete until all closure criteria in `docs/SC002_CLOSURE_PLAN.md` are satisfied.
-- **Do not claim SC-002 is complete** or fully fixed.
-- **Do not claim training / data expansion / real DB write are unblocked.** They remain blocked.
+- **SC-002 is enforcement complete** (see `docs/SC002_FINAL_CLOSURE_CHECK.md`). Training / data expansion / real DB write remain blocked (require separate authorization).
+- **Do not claim SC-002 is partial mitigation only** without acknowledging enforcement infrastructure is complete.
+- **Do not claim training / data expansion / real DB write are unblocked.** They remain blocked even with SC-002 enforcement complete.
 - **Allowlist is historical baseline, not safety approval.** Being in an allowlist does not authorize execution.
 - **Guarded means gated, not authorized to execute.** A guard script blocks by default; it does not grant permission.
-- Remaining: 11 confirmed Python write paths, 8 indirect write paths, 5 manual review candidates are **NOT addressed** by this hardening task.
+- All Python write paths (20/20) are classified and resolved per `docs/SC002_CLOSURE_PLAN.md`.
 
 ### 5. PR discipline
 

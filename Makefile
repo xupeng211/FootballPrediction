@@ -226,7 +226,12 @@ pr-ready-check: ## PR ready-to-merge check: pr-body-check + pr-merge-preflight. 
 	@$(MAKE) pr-body-check PR=$(PR)
 	@$(MAKE) pr-merge-preflight PR=$(PR)
 
-watch-pr: ## 标准 CI 监控命令（禁止自定义 while/sleep loop 监控 CI）。Usage: make watch-pr PR=<number>
+# ============================================
+# CI 监控与 PR 生命周期（参见 docs/AI_AGENT_WORKFLOW_HARDENING.md）
+# 禁止 while/until/sleep/Monitor/CronCreate 自定义 CI 循环
+# 标准 PR Gate 监控唯一命令: make watch-pr
+# ============================================
+watch-pr: ## CI 监控（唯一允许命令，禁止自定义循环）。Usage: make watch-pr PR=<number>
 	@if [ -z "$(PR)" ]; then \
 		echo "ERROR: PR number required. Usage: make watch-pr PR=<number>"; \
 		echo "  Example: make watch-pr PR=1607"; \
