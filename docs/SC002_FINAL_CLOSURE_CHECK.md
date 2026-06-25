@@ -325,6 +325,20 @@ not as a blocker for SC-002 enforcement closure.
 
 Do not start automatically. Each step requires explicit authorization and confirmation.
 
+## Next Recommended Task
+
+Do not start automatically.
+
+Recommended next task only after user confirmation:
+
+- **`sc002_staging_db_role_deployment`** — Execute staging DB 6-role deployment per
+  `docs/SC002_STAGING_DB_ROLE_DEPLOYMENT_PLAN.md`. Requires: staging PostgreSQL access,
+  role passwords via secure channel, staging env vars (`STAGING_DB_HOST`, etc.),
+  staging backup confirmation, and explicit authorization.
+  **Staging env vars are currently not available — do not proceed without them.**
+  Training / data expansion / real DB write remain blocked regardless of staging
+  deployment outcome.
+
 ## Non-Goals
 
 This final closure check is a **verification and documentation task only**. It is explicitly NOT:
