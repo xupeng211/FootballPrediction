@@ -3,11 +3,39 @@
 - lifecycle: permanent
 - owner: project governance
 - created: 2026-06-25
+- updated: 2026-06-25 (permissions hardening applied)
 - task: github_actions_workflow_inventory_phase1
 - audit_type: static inventory / documentation / low-risk audit
 - sc002_status: enforcement infrastructure complete
 
-## Summary
+## Permissions Hardening Status
+
+**✅ Applied (2026-06-25):** `production-gate.yml` now has an explicit least-privilege
+`permissions:` block at the workflow level.
+
+```yaml
+permissions:
+  contents: read        # for actions/checkout@v4
+  actions: write        # for actions/cache@v4 (cache save)
+  pull-requests: read   # for gh pr view on PR events
+```
+
+**No write scopes granted beyond what is operationally required.** Specifically:
+- No `contents: write`
+- No `pull-requests: write`
+- No `issues: write`
+- No `deployments: write`
+- No `packages: write`
+- No `id-token: write`
+
+This change reduces the default `GITHUB_TOKEN` scope from permissive to minimal,
+following the principle of least privilege. Workflow behavior, triggers, job steps,
+and logic are unchanged.
+
+See PR [#1626](https://github.com/xupeng211/FootballPrediction/pull/1626)
+(`github_actions_workflow_permissions_hardening`) for implementation details.
+
+---
 
 This document is a **low-risk static inventory** of all GitHub Actions workflow files
 in `.github/workflows/`. It catalogs each workflow's triggers, jobs, security surface,

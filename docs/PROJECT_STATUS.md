@@ -5,20 +5,31 @@
 
 Last updated: 2026-06-25
 
-## github_actions_workflow_inventory_phase1 in progress
+## github_actions_workflow_permissions_hardening in progress
 
-- **github_actions_workflow_inventory_phase1** — static inventory/audit of all
-  `.github/workflows/` workflow files.
-  - Branch: `chore/github-actions-workflow-inventory-phase1`
-  - **This is a documentation/static-test/inventory task.**
-  - **No workflow behavior changed. No workflows deleted or renamed.**
+- **github_actions_workflow_permissions_hardening** — add least-privilege
+  `permissions:` block to `production-gate.yml`.
+  - Branch: `chore/github-actions-workflow-permissions-hardening`
+  - **This is a CI token permissions hardening task.**
+  - **No workflow behavior changed. No triggers, jobs, or steps modified.**
+  - **No new write permissions added.**
   - **No DB. No SQL. No scraper/browser. No training. No data expansion.**
   - **Did not continue staging DB deployment.**
-  - New inventory doc: `docs/GITHUB_ACTIONS_WORKFLOW_INVENTORY_PHASE1.md` (1 workflow inventoried)
-  - New static tests: `tests/unit/test_github_actions_workflow_inventory_phase1.py` (33 tests)
+  - Added `permissions: {contents: read, actions: write, pull-requests: read}`.
+  - New static tests: `tests/unit/test_github_actions_workflow_permissions_hardening.py`
   - SC-002 enforcement infrastructure complete.
   - Training / data expansion / real DB write remain blocked.
   - Next task: PR + CI validation. Do not start automatically.
+
+## github_actions_workflow_inventory_phase1 completed
+
+- **github_actions_workflow_inventory_phase1** — static inventory/audit of all
+  `.github/workflows/` workflow files.
+  - Branch: `chore/github-actions-workflow-inventory-phase1` (merged)
+  - Inventory doc: `docs/GITHUB_ACTIONS_WORKFLOW_INVENTORY_PHASE1.md` (1 workflow inventoried)
+  - Static tests: `tests/unit/test_github_actions_workflow_inventory_phase1.py` (33 tests)
+  - SC-002 enforcement infrastructure complete.
+  - Training / data expansion / real DB write remain blocked.
 
 ## agent_workflow_hardening_phase1 completed
 
