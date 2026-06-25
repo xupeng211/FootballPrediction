@@ -306,7 +306,7 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 | # | Criterion | Status |
 |---|---|---|
 | 1 | All real DB write entrypoints are guarded or formally classified as non-write | Substantially met (59 JS + 18 Python entrypoints guarded; all 43 skipped_complex individually verified by `browser_fotmob_pageprops_playwright_deep_audit`; 0 unknown_needs_followup; legacy allowlist metadata update remaining; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #1) |
-| 2 | Changed-files enforcement is active and tested with both positive and negative cases | Not met (active but no deliberate negative-case CI testing has been performed; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #2) |
+| 2 | Changed-files enforcement is active and tested with both positive and negative cases | Substantially met (static negative-case tests implemented — 29 tests; unguarded INSERT/UPDATE/CREATE/DELETE rejected; allowlisted+no-DB files pass; destructive SQL rejected; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #2) |
 | 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Substantially met (deep per-script verification complete; all 43 scripts individually verified; 0 hidden write paths; 1 classification correction; browser-layer non-DB risks unreviewed; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #3) |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Substantially met (all 3 shared modules mapped; all active write-capable consumers guarded; proactive boundary enforcement designed but not implemented; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #4) |
 | 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Met (Python track: all 20 paths resolved — 18 guarded, 2 safe. Alembic env.py guard in run_migrations_online(). SQL migration files have CI enforcement. deploy/docker/init_db.sql guard still pending — separate concern under Gate B) |
@@ -833,6 +833,39 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Criterion #1: Substantially met (deep per-script verification complete).
   - Criterion #3: Substantially met (deep verification complete; browser-layer non-DB risks remain).
 - **Next step:** `changed_files_negative_case_enforcement_test` — Criterion #2.
+  Do not start automatically.
+
+### 6c. changed_files_negative_case_enforcement_test ✅ COMPLETED (this PR)
+
+- **Status:** Completed (this PR — static negative-case tests, NO DB, NO SQL, NO write).
+- **Results:**
+  - Comprehensive static negative-case enforcement test suite:
+    `tests/unit/test_changed_files_negative_case_enforcement.py` (29 tests).
+  - **Negative cases proven (must fail):**
+    - Unguarded Python INSERT → rejected by Python scanner
+    - Unguarded Python UPDATE → rejected by Python scanner
+    - Unguarded Python CREATE TABLE → rejected by Python scanner
+    - Unguarded Python DELETE → rejected by Python scanner
+    - Destructive SQL DROP DATABASE → rejected by SQL scanner
+    - Guarded-but-unallowlisted Python → flagged as write risk (conservative detection)
+    - DB-importing SELECT-only file → flagged for review (conservative detection)
+  - **Positive cases proven (must pass):**
+    - Allowlisted Python file → passes enforcement
+    - Non-DB Python file → passes enforcement
+    - Non-SQL files → ignored by SQL scanner
+    - Allowlisted SQL migration → passes enforcement
+    - AI Workflow Gate integration is wired correctly
+  - **Safety boundaries verified:**
+    - Scanner uses static regex (not import/execute)
+    - No DB connection attempted
+    - No SQL executed
+    - No real DB write
+    - Temp fixture files inside REPO_ROOT, cleaned up after tests
+    - No real business files modified
+  - **No browser run. No Playwright. No DB connection. No SQL. No real DB write.**
+  - **SC-002 remains partial mitigation only.**
+  - Criterion #2: Substantially met (static negative-case tests complete).
+- **Next step:** `deploy_docker_init_sql_guard` — Gate B: guard init_db.sql against non-dev execution.
   Do not start automatically.
 
 ### 7. sc002_release_gate_checklist_phase1

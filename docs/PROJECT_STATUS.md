@@ -5,6 +5,23 @@
 
 Last updated: 2026-06-25
 
+## changed_files_negative_case_enforcement_test completed
+
+- **changed_files_negative_case_enforcement_test** — static negative-case enforcement tests
+  proving that unguarded DB write paths are rejected by CI changed-files enforcement (Criterion #2).
+  - Branch: `chore/changed-files-negative-case-enforcement-test`
+  - **This is a static test task. No DB, no SQL, no write, no scraper/browser.**
+  - New test file: `tests/unit/test_changed_files_negative_case_enforcement.py` (29 tests)
+  - Negative cases proven: unguarded INSERT, UPDATE, CREATE, DELETE → rejected by Python scanner.
+    Destructive SQL DROP → rejected by SQL scanner.
+  - Positive cases proven: allowlisted files pass, no-DB files pass, non-SQL ignored.
+  - Conservative detection: guarded-but-unallowlisted files flagged; DB-importing files flagged.
+  - All tests use temp fixture files inside REPO_ROOT — never modify real code.
+  - Criterion #2: Substantially met.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `deploy_docker_init_sql_guard`. Do not start automatically.
+
 ## browser_fotmob_pageprops_playwright_deep_audit completed
 
 - **browser_fotmob_pageprops_playwright_deep_audit** — deep per-script static verification
