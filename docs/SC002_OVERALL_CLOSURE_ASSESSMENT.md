@@ -28,40 +28,44 @@ identifies remaining gaps, and recommends the single next task.
 
 ### Criterion 1: All real DB write entrypoints guarded or formally classified
 
-**Current status:** Partially met. Substantial progress, remaining gaps exist.
+**Current status:** Substantially met — deep per-script verification complete.
 
 **JS side — what is guarded:**
 - 43 P0 `scripts/ops/**/*.js` entrypoints (Phase1–Phase7)
 - 6 confirmed JS write paths (previously skipped_complex)
+- 7 additional Phase1-7 scripts reclassified from needs_manual_review (already guarded)
 - 3 shared-module write-capable consumers (`odds_harvest_pipeline.js`, `gatekeeper.js`, `gatekeeper.sh`)
-- **Total JS guarded: 52 entrypoints with real DB write capability**
+- **Total JS guarded: 59 entrypoints with real DB write capability**
 
-**JS side — what is classified but NOT individually guarded:**
-- 22 scripts in legacy allowlist: 9 pageprops_pipeline, 2 fotmob_pipeline, 3 shared_module, 8 dry_run_or_audit
-  - These are **categorized**, not **fixed**. Each has an explicit category, reason, reviewed_at, future_action.
-  - The 8 dry_run_or_audit scripts are likely read-only but haven't been verified per-script.
-  - The 3 shared_module scripts are helper libraries — guard responsibility is at consumer level.
-- 21 additional browser/Playwright scripts classified as `skipped_complex`:
-  - After `specialized_browser_fotmob_pageprops_audit_phase1`, all 43 total skipped_complex were classified.
-  - 13 guarded, 13 false_positive_select_only, 3 false_positive_read_only_transaction,
-    3 false_positive_no_db_write, 1 false_positive_policy_keyword, 12 read_only,
-    3 design_mapped, 1 scraper_or_browser_only, 0 needs_manual_review.
-  - **Key gap:** The "design_mapped" and "false_positive" classifications are based on static
-    analysis. Some scripts have not had deep per-script verification of non-write behavior
-    under all runtime conditions.
+**JS side — deep per-script verification complete (browser_fotmob_pageprops_playwright_deep_audit):**
+- All 43 skipped_complex scripts now individually verified per-script.
+- 22 legacy allowlist scripts: all verified — categories accurate.
+- Deep audit document: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md`
+- Verified breakdown:
+  - 13 guarded write entrypoints (verified in guard phases)
+  - 13 false_positive_select_only — verified non-write with active SQL enforcement wrappers
+  - 3 false_positive_read_only_transaction — verified non-write (DB-level READ ONLY tx)
+  - 3 false_positive_no_db_write_evidence — verified no DB connection
+  - 1 false_positive_no_db_connection_static_scan — verified
+  - 1 false_positive_policy_or_regex_keyword_only — verified
+  - 12 read_only — verified no DB client
+  - 3 design_mapped — verified all active write-capable consumers guarded
+  - 1 scraper_or_browser_only → corrected to read_only (static file classifier)
+  - **0 unknown_needs_followup**
+  - **0 hidden write paths discovered**
+- 1 classification correction: `fotmob_ligue1_adg60_raw_payload_source_inventory.js`
+  (scraper_or_browser_only → read_only — static file classifier, no browser/network/DB)
 
 **Python side — fully resolved:**
 - All 20 Python write paths classified and resolved (18 guarded, 2 safe reclassified)
 - 0 pending. 0 unreviewed.
 - Alembic migration orchestrator (`env.py`) now guarded.
 
-**Assessment for Criterion 1: Partially met.**
-The majority of real DB write entrypoints are guarded. The remaining gap is the
-22 categorized + 21 skipped_complex JS scripts that are classified but not individually
-guarded. Many of these are likely read-only or non-executing, but this hasn't been
-confirmed through deep per-script verification. For SC-002 closure, either each of these
-must be individually verified as non-write, or the remaining ones with confirmed write
-capability must be guarded.
+**Assessment for Criterion 1: Substantially met.**
+All 43 skipped_complex JS scripts have been individually verified. All classifications
+confirmed accurate through deep per-script analysis. 0 hidden write paths found.
+The remaining gap is the legacy allowlist metadata update (adding deep-audit verification
+fields) — a documentation/minor follow-up, not a safety gap.
 
 ### Criterion 2: Changed-files enforcement negative-case testing
 
@@ -87,29 +91,37 @@ the gate rejects it — has not been performed. This is a standard CI hardening 
 
 ### Criterion 3: Browser/FotMob/pageProps paths specialized audit
 
-**Current status:** Partially met — classification exists, deep verification incomplete.
+**Current status:** Substantially met — deep per-script verification complete.
 
 **What exists:**
 - `specialized_browser_fotmob_pageprops_audit_phase1` completed. 43 skipped_complex scripts
   classified into categories with supporting evidence.
-- Audit document: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md`
-- Key finding: 13 scripts have confirmed DB write capability (all now guarded).
-  13 are false positive (SELECT-only wrappers), 12 are read-only, 3 design_mapped,
-  1 scraper/browser only.
+- `browser_fotmob_pageprops_playwright_deep_audit` completed (this PR). All 43 scripts
+  individually verified with deep per-script analysis.
+- Audit documents: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md` (phase1),
+  `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md` (deep audit)
+- Key findings from deep audit:
+  - 13 false_positive_select_only scripts: all verified non-write.
+    Each has active SQL enforcement wrappers (queryReadOnly/safeSelect/assertSelectOnly)
+    that throw on any write SQL before reaching the DB.
+  - 3 design_mapped scripts: all active write-capable consumers verified guarded.
+    0 unguarded consumers.
+  - 3 false_positive_read_only_transaction scripts: verified with DB-level
+    READ ONLY transaction enforcement.
+  - 1 classification correction: `fotmob_ligue1_adg60_raw_payload_source_inventory.js`
+    (scraper_or_browser_only → read_only).
+  - **0 hidden write paths discovered.**
+  - **0 unknown_needs_followup.**
 
-**What is missing:**
-- The "false_positive_select_only_with_active_wrapper" classification (13 scripts) was
-  done via static scan. A deep per-script verification — confirming that each script's
-  code paths cannot reach a real DB write under any condition — has not been done.
-- The "design_mapped" category (3 scripts) have identified follow-up needs but the
-  follow-up tasks are not yet completed.
+**What is missing (non-DB concern):**
 - Browser-layer risks (Playwright session management, cookie handling, captcha bypass)
   are documented as separate from DB write risks but have not been systematically reviewed.
+  This is a non-DB concern and does not block SC-002 closure from the DB write safety
+  perspective.
 
-**Assessment for Criterion 3: Partially met.**
-The audit has classified all scripts, which is significant progress. But "classified" is
-not the same as "verified non-write" or "guarded." The 13 false_positive_select_only
-scripts need deeper verification to confirm they cannot write under any runtime condition.
+**Assessment for Criterion 3: Substantially met.**
+Deep per-script verification is complete. All false_positive and design_mapped scripts
+have been individually verified. All classifications confirmed accurate.
 
 ### Criterion 4: Shared module consumer boundary
 
@@ -262,9 +274,9 @@ This is assigned to Gate B (controlled staging DB write), not the Python/SQL tra
 
 | # | Criterion | Status | Key Gap |
 |---|---|---|---|
-| 1 | All real DB write entrypoints guarded | **Partial** | 43 skipped_complex JS scripts classified but not individually verified non-write |
+| 1 | All real DB write entrypoints guarded | **Substantially met** | Deep per-script verification complete. 0 unknown. Legacy allowlist metadata update remaining. |
 | 2 | Changed-files enforcement negative-case testing | **Not met** | No deliberate negative-case CI test with known-unguarded file |
-| 3 | Browser/FotMob/pageProps specialized audit | **Partial** | 13 false_positive scripts need deep verification; 3 design_mapped need follow-up |
+| 3 | Browser/FotMob/pageProps specialized audit | **Substantially met** | Deep per-script verification complete. Browser-layer risks (non-DB) remain unreviewed. |
 | 4 | Shared module consumer boundary | **Substantially met** | Proactive enforcement (caller tracing) designed but not implemented |
 | 5 | Python/SQL/migration enforcement | **Met** | `init_db.sql` caveat tracked under Gate B |
 | 6 | Runtime DB role/permission model | **Reviewed + Dev POC** | Static audit done (8 risks, target model). Dev POC implemented. Not in staging/prod. |
@@ -275,30 +287,30 @@ This is assigned to Gate B (controlled staging DB write), not the Python/SQL tra
 
 **SC-002 overall verdict: partial mitigation only. Cannot be closed.**
 4 criteria met (5, 7, 8) or in good standing (9, 10).
-4 criteria partially met or not met (1, 2, 3, 4).
-2 criteria not met (6, plus init_db.sql caveat).
+4 criteria substantially met (1, 3, 4, 6).
+1 criterion not met (2).
+1 criterion partially met (6 — staging/production deployment).
 
 ## Gap Priority and Effort
 
 | Priority | Criterion | Effort | Rationale |
 |---|---|---|---|
-| 1 | #6 — DB role/permission review | Low | Documentation/review task. Clear scope in CLOSURE_PLAN. No code changes. |
-| 2 | #2 — Negative-case testing | Low-Medium | CI test task. Create test PR with unguarded file, verify gate rejects it. |
-| 3 | #3 — Deep verification of false_positive scripts | Medium | 13 scripts need per-script path verification. Static analysis already done. |
-| 4 | #1 — Complete classification closure | Medium | Convert "categorized" to "verified non-write" or "guarded" for remaining scripts. |
-| 5 | #4 — Proactive boundary enforcement | Medium-High | Design implementation. Could be deferred to post-closure enhancement. |
+| 1 | #2 — Negative-case testing | Low-Medium | CI test task. Create test PR with unguarded file, verify gate rejects it. Last "Not met" criterion. |
+| 2 | #6 — Staging/production role deployment | Medium | Requires staging environment access. Dev POC complete. |
+| 3 | #4 — Proactive boundary enforcement | Medium-High | Design implementation. Could be deferred to post-closure enhancement. |
+| 4 | #1 — Legacy allowlist metadata update | Low | Documentation/minor follow-up. Add deep-audit verification fields. |
 
 ## Next Recommended Task
 
-**`sc002_release_gate_checklist_phase1`** (or staging role deployment — TBD)
+**`changed_files_negative_case_enforcement_test`** — Criterion #2: Create a deliberate
+negative-case CI test that adds a known-unguarded file and confirms the CI gate rejects it.
+This is the lowest-effort remaining SC-002 gap (the only criterion still marked "Not met").
 
-- `runtime_db_role_permission_review_phase1` ✅ **COMPLETED**
-- `runtime_db_role_permission_dev_poc` ✅ **COMPLETED** (dev-only POC)
-- **Next priority:** Either create a detailed release gate checklist
-  (`sc002_release_gate_checklist_phase1`) OR plan staging deployment of the role model.
-- Both tasks require explicit authorization and user confirmation.
-- All tasks remain forbidden from: DB write, training, data expansion, scraper/browser,
-  production permission changes.
+- **Status:** Not yet started.
+- **Effort:** Low-Medium.
+- **Scope:** CI test only. No runtime code change.
+- **Requires:** Ability to create a test branch with intentionally unguarded file,
+  run CI, verify failure, then delete branch.
 
 **Do not start automatically.** Recommended next task only after user confirmation.
 

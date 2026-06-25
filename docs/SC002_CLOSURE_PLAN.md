@@ -305,9 +305,9 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 
 | # | Criterion | Status |
 |---|---|---|
-| 1 | All real DB write entrypoints are guarded or formally classified as non-write | Partial (52 JS + 18 Python entrypoints guarded; 22 categorized + 21 browser/Playwright skipped_complex classified but not individually verified non-write; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #1) |
+| 1 | All real DB write entrypoints are guarded or formally classified as non-write | Substantially met (59 JS + 18 Python entrypoints guarded; all 43 skipped_complex individually verified by `browser_fotmob_pageprops_playwright_deep_audit`; 0 unknown_needs_followup; legacy allowlist metadata update remaining; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #1) |
 | 2 | Changed-files enforcement is active and tested with both positive and negative cases | Not met (active but no deliberate negative-case CI testing has been performed; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #2) |
-| 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Partial (all 43 skipped_complex classified in specialized_browser_fotmob_pageprops_audit_phase1; 13 guarded; 13 false_positive+12 read_only need deep per-script verification; 3 design_mapped need follow-up; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #3) |
+| 3 | Remaining browser/FotMob/pageProps paths have specialized audit results and have been either guarded or formally excluded | Substantially met (deep per-script verification complete; all 43 scripts individually verified; 0 hidden write paths; 1 classification correction; browser-layer non-DB risks unreviewed; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #3) |
 | 4 | Shared modules have clear responsibility boundary: every consumer of a shared DB write-risk module is identified and verified as guarded or read-only | Substantially met (all 3 shared modules mapped; all active write-capable consumers guarded; proactive boundary enforcement designed but not implemented; see SC002_OVERALL_CLOSURE_ASSESSMENT.md #4) |
 | 5 | Python / SQL / migration enforcement has either a guard mechanism or a documented exclusion with rationale | Met (Python track: all 20 paths resolved — 18 guarded, 2 safe. Alembic env.py guard in run_migrations_online(). SQL migration files have CI enforcement. deploy/docker/init_db.sql guard still pending — separate concern under Gate B) |
 | 6 | Runtime DB permissions / role restrictions are documented or tested | Reviewed + Dev POC (static audit complete: 8 risks identified, target model designed. Dev POC implemented in `deploy/docker/init_db.sql` with 6 roles, least-privilege grants. Dev-only. Not applied to staging/production. See `docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md`) |
@@ -799,6 +799,40 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
   - Training / data expansion / real DB write remain blocked.
 - **Next step:** Not yet defined. Staging deployment of role separation is the logical
   next step but requires explicit authorization and production environment knowledge.
+  Do not start automatically.
+
+### 6b. browser_fotmob_pageprops_playwright_deep_audit ✅ COMPLETED (this PR)
+
+- **Status:** Completed (this PR — static deep audit, NO browser, NO Playwright, NO DB, NO SQL).
+- **Results:**
+  - Deep per-script verification of all 43 skipped_complex JS scripts completed.
+  - Three target categories individually verified:
+    - **13 false_positive_select_only_with_active_wrapper:** All confirmed non-write.
+      Each has active SQL enforcement wrappers (queryReadOnly/safeSelect/assertSelectOnly)
+      that throw on any write SQL before reaching the DB.
+    - **3 design_mapped shared modules:** All active write-capable consumers verified guarded.
+      0 unguarded consumers. Module-level guard would break read-only consumers.
+    - **12 read_only scripts:** All confirmed no DB client, no query execution.
+  - Additional verifications:
+    - 3 false_positive_read_only_transaction: confirmed with DB-level READ ONLY tx
+    - 1 false_positive_no_db_connection_static_scan: confirmed
+    - 1 false_positive_policy_or_regex_keyword_only: confirmed
+    - 3 false_positive_no_db_write_evidence: confirmed
+    - 1 scraper_or_browser_only: 1 corrected (→ read_only, static file classifier)
+  - **0 hidden write paths discovered.**
+  - **0 unknown_needs_followup.**
+  - **1 classification correction** (fotmob_ligue1_adg60_raw_payload_source_inventory.js:
+    scraper_or_browser_only → read_only).
+  - Audit document: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md`
+  - Docs updated: `SC002_OVERALL_CLOSURE_ASSESSMENT.md`, `SC002_CLOSURE_PLAN.md`,
+    `PROJECT_STATUS.md`
+  - Tests: static tests for deep audit doc existence, all-paths-classified, safety boundaries.
+  - **No browser run. No Playwright. No DB connection. No SQL. No real DB write.**
+  - **No scraper/browser. No training. No data expansion.**
+  - **SC-002 remains partial mitigation only.**
+  - Criterion #1: Substantially met (deep per-script verification complete).
+  - Criterion #3: Substantially met (deep verification complete; browser-layer non-DB risks remain).
+- **Next step:** `changed_files_negative_case_enforcement_test` — Criterion #2.
   Do not start automatically.
 
 ### 7. sc002_release_gate_checklist_phase1
