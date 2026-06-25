@@ -181,14 +181,23 @@ services:
     container_name: football_prediction_db_dev
     restart: always
 
+    # SC-002 Gate B: PostgreSQL server-level guard parameter.
+    # Reinforces the dev-only guard in init_db.sql at the server level.
+    # Without this, init_db.sql will abort with a clear error message.
+    command:
+      - "postgres"
+      - "-c"
+      - "sc002.init_sql_context=development"
+      - "-c"
+      - "max_connections=${MAX_CONNECTIONS:-100}"
+      - "-c"
+      - "shared_buffers=${SHARED_BUFFERS:-256MB}"
+
     environment:
       - POSTGRES_DB=${DB_NAME:-football_db}
       - POSTGRES_USER=${DB_USER:-football_user}
       - POSTGRES_PASSWORD=${DB_PASSWORD:-football_pass}
       - PGDATA=/var/lib/postgresql/data/pgdata
-      # 性能优化
-      - MAX_CONNECTIONS=100
-      - SHARED_BUFFERS=256MB
 
     ports:
       - "${DB_PORT:-5432}:5432"

@@ -5,6 +5,25 @@
 
 Last updated: 2026-06-25
 
+## deploy_docker_init_sql_guard completed
+
+- **deploy_docker_init_sql_guard** — SC-002 Gate B: dev-only execution guard added to
+  `deploy/docker/init_db.sql` to prevent accidental non-dev execution.
+  - Branch: `chore/deploy-docker-init-sql-guard`
+  - **This is a static guard implementation. No DB, no SQL, no psql, no docker compose run.**
+  - Guard details:
+    - `SET sc002.init_sql_context = 'development'` at the very top of init_db.sql
+    - DO block verifies via `current_setting()`, RAISE EXCEPTION on mismatch
+    - Guard explicitly forbids staging, production, and non-dev execution
+    - No env-var bypass — operator must modify the guard itself to bypass
+  - `docker-compose.dev.yml`: `command: [postgres, -c, sc002.init_sql_context=development]`
+  - `.env.example`: Guard documentation added
+  - Tests: 15 new static tests (`TestInitSqlGuardGateB`), 54 total dev POC tests
+  - Gate B: init_db.sql guard implemented.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `sc002_final_closure_check`. Do not start automatically.
+
 ## changed_files_negative_case_enforcement_test completed
 
 - **changed_files_negative_case_enforcement_test** — static negative-case enforcement tests

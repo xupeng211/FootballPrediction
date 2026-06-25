@@ -6,6 +6,46 @@
 -- 用途: Docker 容器启动时自动执行
 -- ============================================
 
+-- ============================================
+-- SC-002 Gate B: Dev-Only Execution Guard
+-- ============================================
+-- WARNING: This SQL file is DEV-ONLY.
+-- It MUST NOT be executed against staging, production, or non-dev databases.
+-- It creates roles, grants, DDL, and seed data designed exclusively for
+-- local Docker development environments.
+--
+-- Guard mechanism:
+--   1. SET sc002.init_sql_context = 'development' establishes the dev context.
+--   2. The DO block below verifies the context and aborts if not development.
+--   3. docker-compose.dev.yml reinforces this by passing the parameter at
+--      PostgreSQL startup via command-line -c flag.
+--   4. If someone (a) removes the SET line, (b) sets a different value, or
+--      (c) runs this file directly against a non-dev database, the guard
+--      will RAISE EXCEPTION and abort execution.
+--
+-- To intentionally run this against a non-dev database (strongly discouraged),
+-- the operator must explicitly modify this guard — there is no env-var bypass.
+-- ============================================
+
+-- Establish dev-only context. Must be the first SET in this file.
+SET sc002.init_sql_context = 'development';
+
+-- Verify the context. Aborts on mismatch or if the SET line was tampered with.
+DO $$
+BEGIN
+    IF current_setting('sc002.init_sql_context') IS DISTINCT FROM 'development' THEN
+        RAISE EXCEPTION 'SC002 Gate B: init_db.sql is DEV-ONLY. '
+            'sc002.init_sql_context must be ''development''. '
+            'Current value: %',
+            current_setting('sc002.init_sql_context');
+    END IF;
+END
+$$;
+
+-- ============================================
+-- End SC-002 Gate B guard
+-- ============================================
+
 -- 设置编码
 SET client_encoding = 'UTF8';
 

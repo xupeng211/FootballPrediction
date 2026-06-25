@@ -37,7 +37,8 @@ model creates risks for production write safety (SC-002) and recommends a target
 - `src/config/db_settings.py` — DatabaseConfig and DatabaseSettingsMixin
 - `src/config/settings.py` — UnifiedSettings with get_settings()
 - `src/config/common.py` — environment detection
-- `deploy/docker/init_db.sql` — Docker dev schema initialization
+- `deploy/docker/init_db.sql` — Docker dev schema initialization (**now guarded: SC-002 Gate B
+  dev-only execution guard with `sc002.init_sql_context` parameter, before all DDL/DCL**)
 - `deploy/docker/init_claude_reader.sql` — read-only MCP user creation
 - `src/database/migrations/env.py` — Alembic migration environment
 - `scripts/devops/gatekeeper.sh` — CI gatekeeper cold-start probe
