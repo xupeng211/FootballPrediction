@@ -266,25 +266,26 @@ Criterion #6 remains unmet for staging/production deployment.
 
 **Assessment for Criterion 10: In good standing.** Standard CI discipline applies.
 
-## deploy/docker/init_db.sql: Additional Risk
+## deploy/docker/init_db.sql: Additional Risk — NOW GUARDED
 
-Although not part of the 10 formal closure criteria, `deploy/docker/init_db.sql` is
-tracked in the closure plan (Current State table row 14, Category D) and the SQL
-migration policy allowlist. It contains:
+`deploy/docker/init_db.sql` is tracked in the closure plan (Current State table row 14,
+Category D) and the SQL migration policy allowlist. It contains:
 
 - Full DDL: CREATE TABLE, CREATE EXTENSION, CREATE INDEX
+- Role creation: 6 PostgreSQL roles with least-privilege GRANTs
 - Seed data: INSERT statements for development initialization
 
-**Risk:** If accidentally executed against a non-dev database (e.g., production), it
-would create tables and insert seed data. There is no runtime guard on this file —
-it depends entirely on the operator knowing it is Docker-only.
+**Guard implemented (`deploy_docker_init_sql_guard`):**
+- `SET sc002.init_sql_context = 'development'` at the top of init_db.sql before any DDL/DCL
+- DO block verifies `current_setting('sc002.init_sql_context') IS DISTINCT FROM 'development'`
+- On mismatch: `RAISE EXCEPTION` with clear DEV-ONLY error message
+- `docker-compose.dev.yml` passes `sc002.init_sql_context=development` as PostgreSQL server parameter
+- No env-var bypass — the operator must modify the guard itself to run against non-dev
+- Guard is located before all CREATE EXTENSION, CREATE TABLE, CREATE ROLE, GRANT statements
+- 15 static tests validate guard placement, content, and safety boundaries
 
-**Status:** Classified as `sql_seed_or_data_write_needs_gate`. Needs a guard that:
-- Validates the execution context (must be Docker dev environment)
-- Blocks execution against production-like hosts
-- Requires explicit authorization for any non-Docker execution
-
-This is assigned to Gate B (controlled staging DB write), not the Python/SQL track.
+**Status:** Gate B guard implemented. `sql_seed_or_data_write_needs_gate` → guarded.
+The init_db.sql guard is verified at the static level (not runtime-tested against a live DB).
 
 ## Summary Table
 
@@ -318,14 +319,14 @@ This is assigned to Gate B (controlled staging DB write), not the Python/SQL tra
 
 ## Next Recommended Task
 
-**`deploy_docker_init_sql_guard`** — Gate B: Add a runtime guard to `deploy/docker/init_db.sql`
-to prevent accidental execution against non-dev databases. This addresses the remaining
-documented risk from the SQL migration policy allowlist.
+**`sc002_final_closure_check`** — Perform final SC-002 closure verification once all
+remaining criteria are met. This is the last governance task before SC-002 can be
+considered for closure.
 
 - **Status:** Not yet started.
-- **Effort:** Medium.
-- **Scope:** Guard script + policy. No runtime code change to business logic.
-- **Requires:** Design review of Docker init context detection.
+- **Effort:** Low-Medium.
+- **Scope:** Final per-criterion sign-off review. Documentation only.
+- **Requires:** All 10 criteria substantially met or better.
 
 **Do not start automatically.** Recommended next task only after user confirmation.
 

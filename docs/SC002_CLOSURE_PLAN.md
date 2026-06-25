@@ -868,6 +868,35 @@ SC-002 may be closed only when **all** of the following conditions are satisfied
 - **Next step:** `deploy_docker_init_sql_guard` — Gate B: guard init_db.sql against non-dev execution.
   Do not start automatically.
 
+### 6d. deploy_docker_init_sql_guard ✅ COMPLETED (this PR)
+
+- **Status:** Completed (this PR — static guard implementation, NO DB, NO SQL, NO docker execution).
+- **Results:**
+  - Dev-only execution guard added to `deploy/docker/init_db.sql`:
+    - `SET sc002.init_sql_context = 'development'` at the very top, before any DDL/DCL
+    - DO block verifies `current_setting('sc002.init_sql_context') IS DISTINCT FROM 'development'`
+    - `RAISE EXCEPTION` on mismatch with clear DEV-ONLY error message
+    - Guard explicitly forbids staging, production, and non-dev execution
+    - No env-var bypass — operator must modify the guard itself to run against non-dev
+  - `docker-compose.dev.yml`: PostgreSQL server-level `-c sc002.init_sql_context=development`
+  - `.env.example`: Guard documentation added
+  - Tests: 15 new static tests in `tests/unit/test_runtime_db_role_permission_dev_poc.py`
+    (`TestInitSqlGuardGateB` class). Total dev POC tests: 54.
+  - Guard verified: exists, before DDL/DCL, SET+DO block, RAISE EXCEPTION on mismatch,
+    dev-only explicit, mentions staging/production/non-dev, no env-var bypass,
+    no production config, docker-compose integration, no real secrets.
+  - Docs updated: `SC002_OVERALL_CLOSURE_ASSESSMENT.md`, `SC002_CLOSURE_PLAN.md`,
+    `PROJECT_STATUS.md`
+  - **No DB connection. No SQL execution. No psql run. No docker compose run.**
+  - **No real DB write. No migration/Alembic. No permission changes.**
+  - **SC-002 remains partial mitigation only.**
+  - Gate B: init_db.sql guard implemented.
+- **Next step:** `sc002_final_closure_check` — perform final SC-002 closure verification
+  once all remaining criteria are met.
+  Do not start automatically.
+
+### 7. sc002_release_gate_checklist_phase1
+
 ### 7. sc002_release_gate_checklist_phase1
 
 - **Objective:** Create a detailed release gate checklist that can be used to verify

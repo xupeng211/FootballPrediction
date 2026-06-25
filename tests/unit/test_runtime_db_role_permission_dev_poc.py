@@ -524,3 +524,166 @@ class TestRoleModelCompleteness:
         assert "secrets manager" in disclaimer.lower() or "env var" in disclaimer.lower(), (
             "Disclaimer must mention secrets manager or env vars for production."
         )
+
+
+class TestInitSqlGuardGateB:
+    """Verify the SC-002 Gate B dev-only execution guard in init_db.sql."""
+
+    def test_guard_exists_in_init_sql(self):
+        """init_db.sql must contain the Gate B guard."""
+        content = _load_text(INIT_SQL_PATH)
+        assert "SC-002 Gate B" in content, "init_db.sql must contain SC-002 Gate B guard header"
+        assert "Dev-Only Execution Guard" in content, (
+            "init_db.sql must have Dev-Only Execution Guard section"
+        )
+
+    def test_guard_sets_context_parameter(self):
+        """Guard must SET sc002.init_sql_context = 'development'."""
+        content = _load_text(INIT_SQL_PATH)
+        assert "sc002.init_sql_context" in content, (
+            "Guard must use sc002.init_sql_context parameter"
+        )
+        assert "SET sc002.init_sql_context" in content, "Guard must SET the context parameter"
+
+    def test_guard_verifies_context_with_do_block(self):
+        """Guard must use a DO block to verify the context parameter."""
+        content = _load_text(INIT_SQL_PATH)
+        assert "current_setting('sc002.init_sql_context')" in content, (
+            "Guard must verify via current_setting()"
+        )
+        assert "IS DISTINCT FROM 'development'" in content, (
+            "Guard must check for 'development' value"
+        )
+
+    def test_guard_raises_exception_on_mismatch(self):
+        """Guard must RAISE EXCEPTION on non-development context."""
+        content = _load_text(INIT_SQL_PATH)
+        assert "RAISE EXCEPTION" in content, "Guard must RAISE EXCEPTION on context mismatch"
+        assert "DEV-ONLY" in content, "Exception message must state DEV-ONLY"
+
+    def test_guard_before_all_ddl_dcl(self):
+        """Guard must appear before any CREATE ROLE, GRANT, or schema DDL."""
+        content = _load_text(INIT_SQL_PATH)
+        guard_end = content.find("-- End SC-002 Gate B guard")
+        assert guard_end > 0, "Guard section must have explicit end marker"
+        # Check that CREATE ROLE / GRANT appears only after the guard
+        after_guard = content[guard_end:]
+        first_create_role = after_guard.find("CREATE ROLE")
+        if first_create_role >= 0:
+            assert first_create_role > 0, "CREATE ROLE must appear after the guard section"
+        # All GRANT must be after the guard
+        grant_positions = []
+        idx = 0
+        while True:
+            idx = after_guard.find("GRANT ", idx)
+            if idx < 0:
+                break
+            grant_positions.append(idx)
+            idx += 1
+        if grant_positions:
+            assert all(p > 0 for p in grant_positions), (
+                "All GRANT statements must be after the guard section"
+            )
+
+    def test_guard_before_create_extension(self):
+        """Guard must appear before CREATE EXTENSION statements."""
+        content = _load_text(INIT_SQL_PATH)
+        guard_end = content.find("-- End SC-002 Gate B guard")
+        after_guard = content[guard_end:]
+        # The first CREATE EXTENSION should be after the guard
+        create_ext_pos = after_guard.find("CREATE EXTENSION")
+        assert create_ext_pos >= 0, "CREATE EXTENSION must exist in init_db.sql"
+        assert create_ext_pos > 0, "CREATE EXTENSION must appear after the guard section"
+
+    def test_guard_dev_only_explicit(self):
+        """Guard must explicitly state dev-only and forbid non-dev use."""
+        content = _load_text(INIT_SQL_PATH)
+        guard_section = content[
+            content.find("SC-002 Gate B") : content.find("-- End SC-002 Gate B guard")
+        ]
+        assert "DEV-ONLY" in guard_section, "Guard must state DEV-ONLY"
+        assert "staging" in guard_section.lower(), "Guard must mention staging"
+        assert "production" in guard_section.lower(), "Guard must mention production"
+        assert "non-dev" in guard_section.lower(), "Guard must mention non-dev"
+        assert "MUST NOT" in guard_section, "Guard must state MUST NOT"
+
+    def test_guard_no_env_var_bypass(self):
+        """Guard must NOT have an env-var bypass mechanism."""
+        content = _load_text(INIT_SQL_PATH)
+        guard_section = content[
+            content.find("SC-002 Gate B") : content.find("-- End SC-002 Gate B guard")
+        ]
+        assert "env-var bypass" in guard_section or "no env-var" in guard_section.lower(), (
+            "Guard must state there is no env-var bypass"
+        )
+
+    def test_guard_parameter_not_production_value(self):
+        """Guard parameter value must be 'development', not 'production'."""
+        content = _load_text(INIT_SQL_PATH)
+        assert "sc002.init_sql_context = 'development'" in content, (
+            "Guard must SET context to 'development'"
+        )
+        assert "sc002.init_sql_context = 'production'" not in content, (
+            "Guard must NOT use 'production' as context value"
+        )
+
+    # ---- docker-compose integration ----
+
+    def test_docker_compose_has_guard_command(self):
+        """docker-compose.dev.yml must pass the guard parameter to PostgreSQL."""
+        compose = _load_text(COMPOSE_PATH)
+        assert "sc002.init_sql_context" in compose, (
+            "docker-compose.dev.yml must pass sc002.init_sql_context"
+        )
+        assert "development" in compose, "docker-compose.dev.yml must set context to 'development'"
+
+    def test_docker_compose_guard_in_command(self):
+        """Guard parameter must be in the DB service command section."""
+        compose = _load_text(COMPOSE_PATH)
+        assert "command:" in compose, "docker-compose must have a command section"
+        assert "-c" in compose, "command must use -c for postgres config"
+        assert "sc002.init_sql_context=development" in compose, (
+            "command must include sc002.init_sql_context=development"
+        )
+
+    # ---- No real secrets ----
+
+    def test_no_real_secrets_in_guard(self):
+        """Guard must not contain real secrets or passwords."""
+        content = _load_text(INIT_SQL_PATH)
+        guard_section = content[
+            content.find("SC-002 Gate B") : content.find("-- End SC-002 Gate B guard")
+        ]
+        assert "PASSWORD" not in guard_section, "Guard section must not contain PASSWORD"
+        assert "secret" not in guard_section.lower() or ("secrets" not in guard_section.lower()), (
+            "Guard section must not contain real secrets"
+        )
+
+    def test_env_example_documents_guard(self):
+        """.env.example must document the init_db.sql guard."""
+        env = _load_text(ENV_EXAMPLE_PATH)
+        assert "Gate B" in env or "init_db.sql" in env, ".env.example must reference init_db.sql"
+
+    # ---- SC-002 safety boundaries ----
+
+    def test_init_sql_still_dev_only(self):
+        """init_db.sql must still state it is dev-only."""
+        content = _load_text(INIT_SQL_PATH)
+        # Count occurrences of DEV-ONLY or "dev-only" or "dev_only"
+        min_dev_markers = 3
+        dev_only_refs = content.count("DEV-ONLY") + content.lower().count("dev-only")
+        assert dev_only_refs >= min_dev_markers, (
+            f"init_db.sql must have multiple dev-only markers, found {dev_only_refs}"
+        )
+
+    def test_init_sql_no_production_config(self):
+        """init_db.sql guard must not reference production configuration."""
+        content = _load_text(INIT_SQL_PATH)
+        guard_section = content[
+            content.find("SC-002 Gate B") : content.find("-- End SC-002 Gate B guard")
+        ]
+        assert "production_password" not in guard_section.lower(), (
+            "Guard must not contain production passwords"
+        )
+        assert "RDS" not in guard_section, "Guard must not reference RDS"
+        assert "Cloud SQL" not in guard_section, "Guard must not reference Cloud SQL"
