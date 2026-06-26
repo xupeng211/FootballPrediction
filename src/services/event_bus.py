@@ -1,35 +1,8 @@
 #!/usr/bin/env python3
 """
-V38.0 EventBus - PostgreSQL NOTIFY/LISTEN 监听服务 (Event-Driven Architecture)
+V38.0 EventBus - PostgreSQL NOTIFY/LISTEN event-driven architecture.
 
-功能:
-    - 监听 'matches_insert' 频道 → 触发 Layer B 哈希狩猎
-    - 监听 'odds_updated' 频道 → 触发 Layer D 特征提取
-    - V37.2: 启动自检 - 补偿遗漏的 NOTIFY 事件
-    - V37.2: Layer C 自动触发 - URL 找到后自动采集赔率
-    - V37.3: 进程安全阀 - 限制并发进程数防止进程风暴
-    - V37.4: Layer D 事件驱动 - 废除轮询，使用 NOTIFY 驱动
-    - V38.0: 哨兵自愈 - 后台周期任务扫描孤儿数据并重新推送 NOTIFY
-
-架构:
-    [启动自检] → NOTIFY: matches_insert → hunt_hashes → harvest_odds
-                                     ↓
-                             NOTIFY: odds_updated → extract_features
-                                     ↓
-                             [哨兵自愈] → 周期扫描孤儿数据 → 补偿 NOTIFY
-
-使用方法:
-    # 方式 1: 独立运行
-    python -m src.services.event_bus
-
-    # 方式 2: 作为服务导入
-    from src.services.event_bus import EventBus
-    bus = EventBus()
-    bus.listen()
-
-Author: 首席系统架构师 & 性能专家
-Version: V38.0 Sentry Self-Healing
-Date: 2026-01-12
+Entrypoint: python -m src.services.event_bus  |  Import: from src.services.event_bus import EventBus
 """
 
 from collections import deque
@@ -49,7 +22,9 @@ import psycopg2
 # 添加项目根目录到路径
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from src.config_unified import get_settings
+from src.config import get_settings
+from src.config.common import validate_db_name_for_environment
+from src.core.exceptions import DatabaseConfigurationError
 
 logger = logging.getLogger(__name__)
 
@@ -60,18 +35,7 @@ logger = logging.getLogger(__name__)
 
 
 class EventBus:
-    """
-    V38.0 EventBus - PostgreSQL NOTIFY/LISTEN 监听服务 (Event-Driven Architecture)
-
-    职责:
-        1. 监听 'matches_insert' 频道 → 触发 Layer B 哈希狩猎
-        2. 监听 'odds_updated' 频道 → 触发 Layer D 特征提取
-        3. V37.2: 启动自检 - 补偿遗漏的 NOTIFY 事件
-        4. V37.2: Layer C 自动触发 - URL 找到后自动采集赔率
-        5. V37.3: 进程安全阀 - 限制并发进程数防止进程风暴
-        6. V37.4: Layer D 事件驱动 - 废除轮询，使用 NOTIFY 驱动
-        7. V38.0: 哨兵自愈 - 后台周期任务扫描孤儿数据并重新推送 NOTIFY
-    """
+    """V38.0 EventBus — PostgreSQL NOTIFY/LISTEN with self-check, Layer triggers, sentry."""
 
     def __init__(
         self,
@@ -84,19 +48,7 @@ class EventBus:
         enable_sentry: bool = True,
         sentry_interval_minutes: int = 30,
     ):
-        """
-        初始化 EventBus
-
-        Args:
-            poll_interval: 轮询间隔（秒）
-            enable_self_check: 是否启用启动自检
-            enable_layer_c_trigger: 是否启用 Layer C 自动触发
-            enable_layer_d_trigger: 是否启用 Layer D 自动触发
-            self_check_days: 启动自检扫描最近几天的数据
-            max_concurrent_processes: 最大并发进程数（安全阀）
-            enable_sentry: 是否启用哨兵自愈（V38.0）
-            sentry_interval_minutes: 哨兵扫描间隔（分钟，默认 30）
-        """
+        """Initialize EventBus with self-check, layer triggers, sentry, and process limits."""
         self.poll_interval = poll_interval
         self.enable_self_check = enable_self_check
         self.enable_layer_c_trigger = enable_layer_c_trigger
@@ -299,8 +251,7 @@ class EventBus:
 
             if not harvest_script.exists():
                 logger.warning(
-                    f"⚠️  采集脚本不存在: {harvest_script}。"
-                    f"请使用 Node.js 收割系统 (npm start)"
+                    f"⚠️  采集脚本不存在: {harvest_script}。请使用 Node.js 收割系统 (npm start)"
                 )
                 return
 
@@ -381,6 +332,7 @@ class EventBus:
 
             try:
                 from core.scrapers.oddsportal import OddsPortalScraper
+
                 scraper = OddsPortalScraper(config_path="config/scraper_config.yaml")
             except ImportError as e:
                 logger.warning(
@@ -771,31 +723,7 @@ class EventBus:
 
 
 def main():
-    """
-    V37.4 独立运行 EventBus (Event-Driven Architecture)
-
-    使用方法:
-        # 基本运行（默认启用所有功能）
-        python -m src.services.event_bus
-
-        # 禁用启动自检
-        python -m src.services.event_bus --no-self-check
-
-        # 禁用 Layer C 自动触发
-        python -m src.services.event_bus --no-layer-c
-
-        # 禁用 Layer D 自动触发
-        python -m src.services.event_bus --no-layer-d
-
-        # 自定义并发进程数（安全阀）
-        python -m src.services.event_bus --max-processes 4
-
-        # 单次运行模式（用于测试）
-        python -m src.services.event_bus --once
-
-    环境变量:
-        DB_NAME=football_db  # 必需
-    """
+    """EventBus standalone entrypoint. Run with: python -m src.services.event_bus"""
     import argparse
     import os
 
@@ -820,9 +748,13 @@ def main():
 
     args = parser.parse_args()
 
-    # 环境校验
+    # 环境校验 — 委托给统一的 shared DB policy (refs #1632, #1633, #1648)
     db_name = os.getenv("DB_NAME", "")
-    if db_name != "football_db":
+    environment = os.getenv("ENVIRONMENT") or os.getenv("APP_ENV") or os.getenv("NODE_ENV")
+    try:
+        validate_db_name_for_environment(db_name, environment)
+    except DatabaseConfigurationError as exc:
+        logger.exception("DB 配置错误: %s", exc)
         sys.exit(1)
 
     # 配置日志

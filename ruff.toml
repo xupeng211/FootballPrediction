@@ -85,6 +85,8 @@ unfixable = []
 "src/core/database/odds_injector.py" = ["DTZ003", "G004", "PLR2004", "C901", "PLR0912", "PLR0915", "ARG002", "PLW2901", "PTH123", "TRY300", "TRY401"]
 "src/database/collector_repository.py" = ["DTZ003", "G004", "PLC0415", "TC002", "TRY300", "TRY400"]
 "src/data/streaming/streaming_db_writer.py" = ["ERA001", "G004", "PERF401", "TRY300", "TRY401", "UP031"]
+# phase5r4_event_bus: pre-existing lint debt in event_bus.py (>800 lines before enforcement)
+"src/services/event_bus.py" = ["G004", "PLR2004", "PTH110", "DTZ005", "TRY401", "PLC0415"]
 "tests/unit/test_python_runtime_guard_phase2c_batch3_static.py" = ["PLR2004", "PLC0415"]
 "tests/unit/test_python_confirmed_write_paths_design_phase2c_batch4.py" = ["PLR2004", "PLC0415", "PT018"]
 "scripts/ops/fotmob_registry_seed_dev_execution_review_check.py" = ["T20", "C901", "PLR0912", "PLR0915", "PLR2004", "D103", "E701"]

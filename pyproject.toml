@@ -40,6 +40,16 @@ ignore = [
 # ci_local_parity_preflight_phase1: pre-existing style issues in new preflight files
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004"]
 "tests/unit/test_local_pr_gate_preflight.py" = ["PLR2004", "SIM115"]
+# phase5r4_event_bus: pre-existing style issues in event_bus.py — file was >800 lines
+# before gatekeeper enforcement; temporary until dedicated event_bus.py cleanup.
+"src/services/event_bus.py" = [
+    "G004",     # pre-existing f-string logging
+    "PLR2004",  # pre-existing magic numbers
+    "PTH110",   # pre-existing os.path usage
+    "DTZ005",   # pre-existing naive datetime
+    "TRY401",   # pre-existing redundant exception in logger.exception
+    "PLC0415",  # pre-existing imports inside function
+]
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]
@@ -91,6 +101,12 @@ ignore_errors = true
 # sc002_alembic_migration_runtime_guard: pre-existing type annotation gaps in Alembic env.py
 [[tool.mypy.overrides]]
 module = "src.database.migrations.env"
+ignore_errors = true
+
+# phase5r4_event_bus: pre-existing type annotation gaps in event_bus.py
+# Temporary override — remove after dedicated event_bus.py type cleanup.
+[[tool.mypy.overrides]]
+module = "src.services.event_bus"
 ignore_errors = true
 
 [tool.black]
