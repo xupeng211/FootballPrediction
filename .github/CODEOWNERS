@@ -1,0 +1,48 @@
+# CODEOWNERS — FootballPrediction Project Governance
+#
+# Last resort review assignment.  Branch protection rules may override.
+# All owners @xupeng211 unless otherwise noted.
+
+# AI / Workflow Governance — the rulebooks that govern AI agent behavior
+AGENTS.md                                   @xupeng211
+CLAUDE.md                                   @xupeng211
+docs/AGENT_WORKFLOW.md                      @xupeng211
+docs/CODEX_WORKFLOW.md                      @xupeng211
+docs/AI_AGENT_WORKFLOW_HARDENING.md         @xupeng211
+docs/DOCUMENTATION_GOVERNANCE.md            @xupeng211
+docs/INGESTION_CONVERGENCE_GATE.md          @xupeng211
+.github/pull_request_template.md            @xupeng211
+scripts/ops/ai_workflow_gate.py             @xupeng211
+scripts/ops/helpers/                        @xupeng211
+
+# CI / GitHub Actions
+.github/workflows/                          @xupeng211
+
+# Docker / Compose / Deploy
+Dockerfile                                  @xupeng211
+**/Dockerfile                               @xupeng211
+docker-compose*.yml                         @xupeng211
+docker-compose*.yaml                        @xupeng211
+.devcontainer/                             @xupeng211
+deploy/                                     @xupeng211
+
+# DB / Migrations / SQL / SC-002
+database/migrations/                        @xupeng211
+src/database/migrations/                    @xupeng211
+alembic/                                    @xupeng211
+*.sql                                       @xupeng211
+scripts/maintenance/migrations/             @xupeng211
+
+# SC-002 / DB Write Guard
+scripts/ops/helpers/db_write_guard*         @xupeng211
+scripts/ops/db_write_guard*                 @xupeng211
+scripts/ops/p0_db_write_safety_gate*        @xupeng211
+scripts/**/*sc002*                          @xupeng211
+scripts/**/*SC-002*                         @xupeng211
+
+# Models / Data Artifacts
+models/                                     @xupeng211
+data/                                       @xupeng211
+
+# Config (especially env-sensitive)
+config/                                     @xupeng211

@@ -267,14 +267,123 @@ checker tests.
 Codex final replies should include:
 
 - Branch
-- PR URL
-- Commit SHA
+- PR URL / PR number
+- Head SHA (full 40-char preferred)
+- Merge commit SHA (full 40-char preferred)
+- PR Gate run id and result (success / failure / cancelled)
+- Post-merge main Gate run id and result (or note "could not be independently verified")
+- Remote branch deleted (yes / no)
+- Main green (yes / no / not verified)
+- Independently verified (yes = run id + `gh run view` confirmed / no = reported only)
+- SC-002 status
+- Training / data expansion / real DB write remain blocked
 - Files changed count
-- Docs added count
-- Docs modified count
+- Docs added / modified count
 - Source-of-truth docs touched
 - Validation result
-- Next task
+- Next task (must include "Do not start automatically")
+- Remaining gaps or unverified items
 
 For safety-sensitive tasks, also include whether network, DB, browser automation,
-scraper, raw write, or scheduler paths were used.
+scraper, raw write, migration, Docker/Compose, or scheduler paths were used.
+
+If a post-merge main Gate run id cannot be independently verified by merge commit,
+state: "main Gate could not be independently verified by merge commit; needs explicit
+run id." Do not claim "main green yes" without a verified run id.
+
+## Completion Definition
+
+A task is NOT complete just because a PR was merged. "Task complete" requires:
+
+- PR merged
+- PR Gate success (with run id)
+- Post-merge main Gate success (with run id recorded in final report)
+- Remote branch deleted
+- Working tree clean
+- Final report complete (all required fields)
+
+If any item is missing, the task is "PR merged but completion not fully verified."
+
+Common errors to avoid:
+- "PR merged" ≠ complete (main Gate still unverified)
+- "CI passed on PR" ≠ main Gate passed
+- "main was green before" ≠ post-merge main is green
+- "CI dashboard looks green" = reported success, NOT independent verification
+
+## Container-First Rule
+
+All Node.js / Python commands run inside the dev container:
+
+```
+docker compose -f docker-compose.dev.yml exec dev <command>
+```
+
+Never run business logic directly on the host. Use `make dev-up` / `make dev-shell`
+for environment setup. See AGENTS.md §4 for details.
+
+## Local PR Gate Preflight
+
+Before pushing a PR, Codex must run the local PR Gate preflight:
+
+```
+make pr-gate-local PR_BODY=/tmp/pr_body.md
+```
+
+This simulates Production Gate checks locally. Do not use GitHub Actions as
+trial-and-error. Run the preflight first. If local preflight and remote CI
+disagree, fix the parity — do not work around it.
+
+## CI Watch Rules
+
+**Only allowed command for watching PR checks:**
+```
+make watch-pr PR=<number>
+```
+
+Single-shot fallback: `gh pr checks <number>`
+
+**Absolutely forbidden:**
+- Custom `while true` / `until` / `sleep` loops polling CI
+- `Monitor` tool wrapping `gh pr checks` / `gh run watch`
+- Cron-based CI polling via `CronCreate`
+- `grep`-based CI wait loops
+- Wrapping `make watch-pr` in any loop
+
+For post-merge main Gate verification:
+```
+gh run list --branch main --limit 3
+gh run view <run-id> --json status,conclusion
+```
+
+Do not use `make watch-pr` for main branch runs (it is for PR checks only).
+
+## Dangerous File Authorization
+
+When a PR changes files in any of these high-risk areas, the PR body MUST include
+a "## Dangerous File Authorization" section explaining:
+- Which dangerous files are changed and why
+- That the user has explicitly authorized the change
+- Whether DB / SQL / migration / staging / SC-002 is involved
+- Rollback plan
+- Validation plan
+
+High-risk areas: Dockerfile, docker-compose, .env, *.sql, database/migrations/,
+alembic/, .github/workflows/, deploy/, SC-002 scripts, model artifacts, data files.
+
+The CI gate (`ai_workflow_gate.py`) will hard-fail if dangerous files are changed
+without this section, or if safety declarations contradict the actual file changes
+(e.g., claiming "no DB" while modifying migration files).
+
+## Changed-Files Must Match Declared Scope
+
+Codex must ensure that the files actually changed in the PR match the declared
+task type and scope. Example violations that will be caught by CI:
+- PR declares "docs-only" but modifies `src/` or `scripts/ops/`
+- PR declares "no DB / no migration" but modifies SQL or migration files
+- PR declares "no Docker" but modifies Docker/Compose files
+
+## Do Not Start Automatically
+
+Every final report and every "## Next Recommended Task" section must include:
+"Do not start automatically" and "Recommended next task only after user confirmation:".
+The next task must not begin until the user explicitly confirms.
