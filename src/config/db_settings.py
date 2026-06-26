@@ -1,3 +1,5 @@
+# ruff: noqa: D102
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -7,6 +9,7 @@ from pydantic import BaseModel, Field, SecretStr, ValidationInfo, field_validato
 
 from src.config.common import (
     ALLOWED_DB_NAME,
+    DEFAULT_DB_SSL_MODE,
     MAX_PORT,
     MIN_PORT,
     MIN_SECRET_KEY_LENGTH,
@@ -19,8 +22,9 @@ from src.config.common import (
     get_optimal_db_host,
     load_dotenv_if_available,
     logger,
+    normalize_db_ssl_mode,
+    validate_db_name_for_environment,
 )
-from src.core.exceptions import DatabaseConfigurationError
 
 
 @dataclass
@@ -32,7 +36,7 @@ class DatabaseConfig:
     name: str
     user: str
     password: SecretStr
-    ssl_mode: bool = False
+    ssl_mode: str | bool = DEFAULT_DB_SSL_MODE
     pool_size: int = 15
     max_overflow: int = 20
     pool_timeout: int = 10
@@ -43,12 +47,15 @@ class DatabaseConfig:
     echo: bool = False
     echo_pool: bool = False
 
+    def __post_init__(self) -> None:
+        self.ssl_mode = normalize_db_ssl_mode(self.ssl_mode)
+
     def get_connection_string(self) -> str:
         password = self.password.get_secret_value()
-        if self.ssl_mode:
+        if self.ssl_mode != "disable":
             return (
                 f"postgresql://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
-                "?sslmode=require"
+                f"?sslmode={self.ssl_mode}"
             )
         return f"postgresql://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
 
@@ -57,10 +64,10 @@ class DatabaseConfig:
             return self.async_url
 
         password = self.password.get_secret_value()
-        if self.ssl_mode:
+        if self.ssl_mode != "disable":
             return (
                 "postgresql+asyncpg://"
-                f"{self.user}:{password}@{self.host}:{self.port}/{self.name}?ssl=require"
+                f"{self.user}:{password}@{self.host}:{self.port}/{self.name}?ssl={self.ssl_mode}"
             )
         return f"postgresql+asyncpg://{self.user}:{password}@{self.host}:{self.port}/{self.name}"
 
@@ -112,7 +119,10 @@ class DatabaseSettingsMixin(BaseModel):
     db_name: str = Field(default=ALLOWED_DB_NAME, description="数据库名称")
     db_user: str = Field(default="football_user", description="数据库用户名")
     db_password: SecretStr = Field(description="数据库密码")
-    db_ssl_mode: bool = Field(default=False, description="数据库 SSL 模式")
+    db_ssl_mode: str | bool = Field(
+        default=DEFAULT_DB_SSL_MODE,
+        description="数据库 SSL 模式",
+    )
     db_pool_size: int = Field(default=10, description="数据库连接池大小")
     redis_host: str = Field(default="localhost", description="Redis 主机")
     redis_port: int = Field(default=6379, description="Redis 端口")
@@ -145,9 +155,11 @@ class DatabaseSettingsMixin(BaseModel):
                         "db_name": os.getenv("DB_NAME", ALLOWED_DB_NAME),
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": os.getenv("DB_PASSWORD", "change-me-in-production"),
+                        "db_ssl_mode": os.getenv("DB_SSL_MODE", DEFAULT_DB_SSL_MODE),
                         "redis_host": os.getenv("REDIS_HOST", "redis"),
                         "redis_port": env_int("REDIS_PORT", 6379),
-                        "environment": "monitoring" if monitoring_mode else "production",
+                        "environment": os.getenv("ENVIRONMENT")
+                        or ("monitoring" if monitoring_mode else "production"),
                     }
                 )
             elif current_env == EnvironmentType.WSL2:
@@ -160,9 +172,10 @@ class DatabaseSettingsMixin(BaseModel):
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": os.getenv("DB_PASSWORD")
                         or os.getenv("PGPASSWORD", "change-me-in-production"),
+                        "db_ssl_mode": os.getenv("DB_SSL_MODE", DEFAULT_DB_SSL_MODE),
                         "redis_host": os.getenv("REDIS_HOST", "localhost"),
                         "redis_port": env_int("REDIS_PORT", 6379),
-                        "environment": "development",
+                        "environment": os.getenv("ENVIRONMENT", "development"),
                     }
                 )
             else:
@@ -175,9 +188,10 @@ class DatabaseSettingsMixin(BaseModel):
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": os.getenv("DB_PASSWORD")
                         or os.getenv("PGPASSWORD", "change-me-in-production"),
+                        "db_ssl_mode": os.getenv("DB_SSL_MODE", DEFAULT_DB_SSL_MODE),
                         "redis_host": os.getenv("REDIS_HOST", "localhost"),
                         "redis_port": env_int("REDIS_PORT", 6379),
-                        "environment": "development",
+                        "environment": os.getenv("ENVIRONMENT", "development"),
                     }
                 )
         else:
@@ -197,9 +211,11 @@ class DatabaseSettingsMixin(BaseModel):
                         "db_name": os.getenv("DB_NAME", ALLOWED_DB_NAME),
                         "db_user": os.getenv("DB_USER", "football_user"),
                         "db_password": db_password or "change-me-in-production",
+                        "db_ssl_mode": os.getenv("DB_SSL_MODE", DEFAULT_DB_SSL_MODE),
                         "redis_host": os.getenv("REDIS_HOST", "redis"),
                         "redis_port": env_int("REDIS_PORT", 6379),
-                        "environment": "monitoring" if monitoring_mode else "production",
+                        "environment": os.getenv("ENVIRONMENT")
+                        or ("monitoring" if monitoring_mode else "production"),
                     }
                 )
 
@@ -263,23 +279,25 @@ class DatabaseSettingsMixin(BaseModel):
 
     @field_validator("db_name")
     @classmethod
-    def validate_db_name(cls, value: str) -> str:
-        if value != ALLOWED_DB_NAME:
-            raise DatabaseConfigurationError(
-                "🚨 V41.51 数据库大一统：非法数据库名称\n"
-                f"   检测到: '{value}'\n"
-                f"   系统只允许: '{ALLOWED_DB_NAME}'\n"
-                f"   请检查配置文件，确保 db_name={ALLOWED_DB_NAME}"
-            )
-        return value
+    def validate_db_name(cls, value: str, info: ValidationInfo[object]) -> str:
+        environment = (info.data or {}).get("environment", Environment.DEVELOPMENT)
+        return validate_db_name_for_environment(value, environment)
+
+    @field_validator("db_ssl_mode", mode="before")
+    @classmethod
+    def validate_db_ssl_mode(cls, value: object, info: ValidationInfo[object]) -> str:
+        environment = (info.data or {}).get("environment", Environment.DEVELOPMENT)
+        return normalize_db_ssl_mode(value, environment)
 
     @property
     def database(self) -> DatabaseConfig:
         password = self.db_password.get_secret_value()
-        if self.db_ssl_mode:
+        ssl_mode = normalize_db_ssl_mode(self.db_ssl_mode, self.environment)
+        if ssl_mode != "disable":
             async_url = (
                 "postgresql+asyncpg://"
-                f"{self.db_user}:{password}@{self.db_host}:{self.db_port}/{self.db_name}?ssl=require"
+                f"{self.db_user}:{password}@{self.db_host}:{self.db_port}/{self.db_name}"
+                f"?ssl={ssl_mode}"
             )
         else:
             async_url = (
@@ -293,7 +311,7 @@ class DatabaseSettingsMixin(BaseModel):
             name=self.db_name,
             user=self.db_user,
             password=self.db_password,
-            ssl_mode=self.db_ssl_mode,
+            ssl_mode=ssl_mode,
             pool_size=self.db_pool_size,
             max_overflow=self.db_pool_size,
             pool_timeout=30,
