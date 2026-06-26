@@ -496,6 +496,26 @@
       ],
       "direct_write_boundary": "NONE — file cannot execute",
       "recommended_next_action": "No guard needed. Consider removing or rewriting this corrupted file in a cleanup PR."
+    },
+    {
+      "path": "src/services/event_bus.py",
+      "classification": "historical_python_manual_read_only_candidate",
+      "reason": "Phase5R4: EventBus service uses psycopg2 cursor.execute() for PostgreSQL LISTEN/NOTIFY (read-only notification subscriptions) and SELECT queries for startup self-check. No INSERT/UPDATE/DELETE/DROP/CREATE/ALTER operations. LISTEN is a session-level notification subscription, not a data write. File was not in allowlist because it was never touched since allowlist creation.",
+      "evidence": "psycopg2 import + cursor.execute('LISTEN matches_insert'), cursor.execute('LISTEN odds_updated'), SELECT queries in _startup_self_check() and _sentry_scan_orphans(). No write SQL operations.",
+      "source_doc": "docs/PHASE5R3_EVENT_BUS_LEGACY_GUARD_DESIGN.md",
+      "owner_task": "local_staging_phase5r4b_per_file_ignores_and_fix_pr",
+      "expires_or_review_note": "File was previously >800 lines with pre-existing lint debt. Only LISTEN and SELECT operations observed. Re-classify if write operations are discovered.",
+      "observed_operations": [
+        "LISTEN matches_insert (PostgreSQL notification subscription)",
+        "LISTEN odds_updated (PostgreSQL notification subscription)",
+        "SELECT queries for startup self-check and sentry orphan scan"
+      ],
+      "observed_tables_or_targets": [
+        "matches (SELECT only)",
+        "matches_mapping (SELECT only)"
+      ],
+      "direct_write_boundary": "READ-ONLY — EventBus listens for notifications and scans for orphan data. No write operations.",
+      "recommended_next_action": "No guard needed. Classified as read-only EventBus service."
     }
   ]
 }
