@@ -556,7 +556,6 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
 
     errors: list[str] = []
 
-    # DB check
     db_declared_no = _safety_declared_no(pr_body, r"DB\s+used") or _safety_status_no(
         pr_body, r"DB\s+writes"
     )
@@ -567,7 +566,6 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
             + ", ".join(touching)
         )
 
-    # Scraper check
     scraper_declared_no = _safety_declared_no(pr_body, r"Scraper\s+run") or _safety_status_no(
         pr_body, r"scraper"
     )
@@ -578,7 +576,6 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
             + ", ".join(touching)
         )
 
-    # Browser check
     browser_declared_no = _safety_declared_no(
         pr_body, r"Browser\s+automation\s+used"
     ) or _safety_status_no(pr_body, r"browser")
@@ -598,6 +595,9 @@ from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
     check_forbidden_rewrite_patterns,
     check_forbidden_safety_claims,
     check_large_risky_change,
+)
+from scripts.ops.helpers.dangerous_file_change_check import (  # noqa: E402
+    check_dangerous_file_changes,
 )
 
 
@@ -643,14 +643,18 @@ def validate(
     if not skip_body_checks:
         errors.extend(check_safety_consistency(pr_body, changed))
 
-    # 6b. Forbidden rewrite file patterns (new files only)
+    # 6b. Dangerous file path guard
+    if not skip_body_checks:
+        errors.extend(check_dangerous_file_changes(changed, pr_body))
+
+    # 6c. Forbidden rewrite file patterns (new files only)
     if not skip_body_checks:
         errors.extend(check_forbidden_rewrite_patterns(added, pr_body))
 
-    # 6c. Large risky change detection
+    # 6d. Large risky change detection
     errors.extend(check_large_risky_change(changes, pr_body))
 
-    # 6d. Forbidden safety claims
+    # 6e. Forbidden safety claims
     if not skip_body_checks:
         errors.extend(check_forbidden_safety_claims(pr_body))
 
@@ -722,7 +726,6 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    # Read PR body
     pr_body = read_pr_body(
         args.pr_body_file,
         from_stdin=args.pr_body_stdin,
@@ -738,10 +741,8 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
             sys.stdout.write("FAIL: empty PR body — cannot validate AI workflow gate\n")
             return 1
 
-    # Collect git changes (optional base ref override)
     changes = collect_changes(args.base_ref)
 
-    # Derive changed file paths from git changes for downstream checks
     changed = changed_paths(changes)
 
     errors = validate(
