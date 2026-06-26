@@ -20,6 +20,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
+import os
 import re
 import sys
 from typing import ClassVar
@@ -27,6 +28,12 @@ from typing import ClassVar
 import psycopg2
 import psycopg2.extras
 
+from src.config.common import (
+    ALLOWED_DB_NAME,
+    allowed_db_names_for_environment,
+    normalize_environment_name,
+    validate_db_name_for_environment,
+)
 from src.utils.team_alias import normalize_team_name
 
 # Phase2C batch1: Python runtime DB write guard
@@ -97,7 +104,7 @@ class MatchRepository:
     """
 
     # V41.71: 数据库身份验证配置
-    REQUIRED_DB_NAME: ClassVar[str] = "football_db"
+    REQUIRED_DB_NAME: ClassVar[str] = ALLOWED_DB_NAME
     REQUIRED_TABLE: ClassVar[str] = "matches"
 
     def __init__(self, db_conn) -> None:  # type: ignore[no-untyped-def]
@@ -138,12 +145,27 @@ class MatchRepository:
                 matches_table = result["to_regclass"] if result else None
 
                 # 3. 验证数据库身份
-                if current_db != self.REQUIRED_DB_NAME:
+                policy_environment = normalize_environment_name()
+                expected_db = os.getenv("DB_NAME")
+                if expected_db:
+                    expected_db = validate_db_name_for_environment(expected_db, policy_environment)
+                    db_identity_valid = current_db == expected_db
+                    expected_message = expected_db
+                else:
+                    db_identity_valid = current_db in allowed_db_names_for_environment(
+                        policy_environment
+                    )
+                    expected_message = ", ".join(
+                        sorted(allowed_db_names_for_environment(policy_environment))
+                    )
+
+                if not db_identity_valid:
                     raise DatabaseConfigurationError(
                         f"🚨 V41.71 数据库身份验证失败：错误的数据库实例\n"
-                        f"   期望: {self.REQUIRED_DB_NAME}\n"
+                        f"   当前环境: {policy_environment}\n"
+                        f"   期望: {expected_message}\n"
                         f"   实际: {current_db}\n"
-                        f"   请检查 .env 文件，确保 DB_NAME={self.REQUIRED_DB_NAME}"
+                        f"   请检查 DB_NAME 与运行环境是否匹配"
                     )
 
                 # 4. 验证核心表存在

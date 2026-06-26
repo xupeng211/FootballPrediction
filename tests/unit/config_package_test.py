@@ -10,6 +10,7 @@ import sys
 import types
 
 from pydantic import SecretStr
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC_ROOT = REPO_ROOT / "src"
@@ -43,6 +44,7 @@ def _load_package_module(name: str, init_path: Path, package_path: Path):
 
 _seed_namespace_package("src", SRC_ROOT)
 _seed_namespace_package("src.core", SRC_ROOT / "core")
+_seed_namespace_package("src.database", SRC_ROOT / "database")
 config_package = _load_package_module(
     "src.config", SRC_ROOT / "config" / "__init__.py", SRC_ROOT / "config"
 )
@@ -50,6 +52,7 @@ config_package = _load_package_module(
 common = importlib.import_module("src.config.common")
 config_loader = importlib.import_module("src.config.config_loader")
 db_settings = importlib.import_module("src.config.db_settings")
+db_pool_config = importlib.import_module("src.database.db_pool_config")
 proxy_settings = importlib.import_module("src.config.proxy_settings")
 settings_module = importlib.import_module("src.config.settings")
 
@@ -73,6 +76,11 @@ MIN_PAYOUT = 1.03
 DEFAULT_MIN_PAYOUT = 1.02
 
 
+def _clear_settings_cache() -> None:
+    settings_module._build_settings.cache_clear()
+    settings_module._build_config_accessor.cache_clear()
+
+
 def test_common_env_helpers(monkeypatch):
     """环境变量工具函数应稳定处理真假值与非法整数。"""
     monkeypatch.setenv("FLAG_TRUE", "YeS")
@@ -85,6 +93,42 @@ def test_common_env_helpers(monkeypatch):
     assert common.env_int("VALID_INT", 3) == VALID_INT_VALUE
     assert common.env_int("MISSING_INT", MISSING_INT_DEFAULT) == MISSING_INT_DEFAULT
     assert common.env_int("INVALID_INT", INVALID_INT_DEFAULT) == INVALID_INT_DEFAULT
+
+
+def test_db_name_policy_is_environment_scoped():
+    """DB_NAME policy should allow staging names only outside production."""
+    assert common.validate_db_name_for_environment("football_db", "production") == "football_db"
+    assert (
+        common.validate_db_name_for_environment("football_prediction_staging", "staging")
+        == "football_prediction_staging"
+    )
+    assert common.validate_db_name_for_environment("football_test", "testing") == "football_test"
+    assert common.validate_db_name_for_environment("test_db", "development") == "test_db"
+
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        common.validate_db_name_for_environment("football_prediction_staging", "production")
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        common.validate_db_name_for_environment("rogue_database", "development")
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        common.validate_db_name_for_environment("football-db", "staging")
+
+
+def test_db_ssl_mode_policy_uses_single_string_semantics():
+    """DB_SSL_MODE should normalize to one string enum and reject unsafe production values."""
+    assert common.normalize_db_ssl_mode("disable", "staging") == "disable"
+    assert common.normalize_db_ssl_mode("require", "production") == "require"
+    assert common.normalize_db_ssl_mode("prefer", "development") == "prefer"
+    assert common.normalize_db_ssl_mode(True, "staging") == "require"
+    assert common.normalize_db_ssl_mode(False, "staging") == "disable"
+    assert common.normalize_db_ssl_mode("false", "staging") == "disable"
+    assert common.normalize_db_ssl_mode("verify_full", "production") == "verify-full"
+
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        common.normalize_db_ssl_mode("disable", "production")
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        common.normalize_db_ssl_mode("prefer", "production")
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        common.normalize_db_ssl_mode("bogus", "staging")
 
 
 def test_proxy_pool_resolution_prefers_environment(monkeypatch, tmp_path):
@@ -220,10 +264,21 @@ def test_database_and_redis_config_urls():
         name="football_db",
         user="football_user",
         password=SecretStr("secret-pass"),
-        ssl_mode=True,
+        ssl_mode="require",
     )
     assert database.get_connection_string().endswith("?sslmode=require")
-    assert database.get_async_url().startswith("postgresql+asyncpg://")
+    assert database.get_async_url().endswith("?ssl=require")
+
+    disabled_database = db_settings.DatabaseConfig(
+        host="db",
+        port=5432,
+        name="football_db",
+        user="football_user",
+        password=SecretStr("secret-pass"),
+        ssl_mode="disable",
+    )
+    assert "?ssl" not in disabled_database.get_connection_string()
+    assert "?ssl" not in disabled_database.get_async_url()
 
     redis_config = db_settings.RedisConfig(
         host="redis",
@@ -307,6 +362,84 @@ def test_unified_settings_urls_and_accessors(monkeypatch, tmp_path):
     assert ConfigAccessor().proxy.get_proxy_url(7891) == "http://172.25.16.1:7891"
     accessor.reload()
     assert accessor.database.name == "football_db"
+
+
+def test_unified_settings_accepts_local_staging_db_name_and_ssl_disable(monkeypatch, tmp_path):
+    """Local staging should accept its DB name and explicit non-SSL mode without DB access."""
+    _clear_settings_cache()
+    pool_file = tmp_path / "proxy_pool.json"
+    pool_file.write_text(
+        json.dumps(
+            {
+                "host": "172.25.16.1",
+                "protocol": "http",
+                "ports": [7890],
+                "defaultPort": 7890,
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(proxy_settings, "PROXY_POOL_CONFIG_PATH", pool_file)
+    monkeypatch.setattr(settings_module, "_validate_database_environment", lambda _: None)
+    monkeypatch.setenv("SKIP_ENV_VALIDATION", "1")
+    monkeypatch.setenv("ENVIRONMENT", "staging")
+    monkeypatch.setenv("SECRET_KEY", "x" * 32)
+    monkeypatch.setenv("DB_PASSWORD", "db-password")
+    monkeypatch.setenv("DB_NAME", "football_prediction_staging")
+    monkeypatch.setenv("DB_SSL_MODE", "disable")
+    monkeypatch.setenv("DB_HOST", "db")
+    monkeypatch.setenv("REDIS_HOST", "redis")
+
+    settings = reload_settings()
+
+    assert settings.environment == common.Environment.STAGING
+    assert settings.database.name == "football_prediction_staging"
+    assert settings.database.ssl_mode == "disable"
+    assert "?ssl" not in settings.database.get_connection_string()
+    _clear_settings_cache()
+
+
+def test_unified_settings_rejects_production_unsafe_db_name_and_ssl(monkeypatch):
+    """Production must reject staging DB names and disabled SSL."""
+    monkeypatch.setattr(settings_module, "_validate_database_environment", lambda _: None)
+    monkeypatch.setenv("SKIP_ENV_VALIDATION", "1")
+    monkeypatch.setenv("ENVIRONMENT", "production")
+    monkeypatch.setenv("SECRET_KEY", "x" * 32)
+    monkeypatch.setenv("DB_PASSWORD", "db-password")
+    monkeypatch.setenv("DB_HOST", "db")
+    monkeypatch.setenv("REDIS_HOST", "redis")
+
+    monkeypatch.setenv("DB_NAME", "football_prediction_staging")
+    monkeypatch.setenv("DB_SSL_MODE", "require")
+    _clear_settings_cache()
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        reload_settings()
+
+    monkeypatch.setenv("DB_NAME", "football_db")
+    monkeypatch.setenv("DB_SSL_MODE", "disable")
+    _clear_settings_cache()
+    with pytest.raises(config_package.DatabaseConfigurationError):
+        reload_settings()
+    _clear_settings_cache()
+
+
+def test_database_pool_config_uses_shared_db_policy(monkeypatch):
+    """Pool config should consume the same DB name and SSL string policy without connecting."""
+    monkeypatch.setenv("ENVIRONMENT", "staging")
+    monkeypatch.setenv("DB_NAME", "football_prediction_staging")
+    monkeypatch.setenv("DB_SSL_MODE", "disable")
+    monkeypatch.setenv("DB_PASSWORD", "db-password")
+
+    config = db_pool_config.DatabasePoolConfig.from_url()
+
+    assert config.database == "football_prediction_staging"
+    assert config.ssl_mode == "disable"
+
+    url_config = db_pool_config.DatabasePoolConfig.from_url(
+        "postgresql+asyncpg://user:pass@localhost:5432/football_db?ssl=verify-ca"
+    )
+    assert url_config.database == "football_db"
+    assert url_config.ssl_mode == "verify-ca"
 
 
 def test_proxy_pool_default_host_prefers_loopback_gateway(monkeypatch, tmp_path):

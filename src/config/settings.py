@@ -1,3 +1,5 @@
+# ruff: noqa: C901, D102, D103
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -9,12 +11,16 @@ from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.config.common import (
-    ALLOWED_DB_NAME,
+    DEFAULT_DB_NAME,
+    DEFAULT_DB_SSL_MODE,
     MIN_SECRET_KEY_LENGTH,
     Environment,
     env_flag,
     logger,
+    normalize_db_ssl_mode,
+    normalize_environment_name,
     validate_database_environment_impl,
+    validate_db_name_for_environment,
     validate_no_local_postgres_conflict,
 )
 from src.config.db_settings import DatabaseConfig, DatabaseSettingsMixin, RedisConfig
@@ -34,26 +40,17 @@ class UnifiedSettings(ProxySettingsMixin, MLSettingsMixin, DatabaseSettingsMixin
     )
 
     def __init__(self, **kwargs: Any) -> None:
+        policy_environment = kwargs.get("environment") or normalize_environment_name()
         raw_env_db_name = os.environ.get("DB_NAME")
-        if raw_env_db_name and raw_env_db_name != ALLOWED_DB_NAME:
-            raise DatabaseConfigurationError(
-                "🚨 V41.51 数据库大一统：非法数据库名称\n"
-                f"   检测到: DB_NAME='{raw_env_db_name}'\n"
-                f"   系统只允许: '{ALLOWED_DB_NAME}'\n"
-                f"   请检查 .env 文件，确保 DB_NAME={ALLOWED_DB_NAME}"
-            )
+        if raw_env_db_name:
+            validate_db_name_for_environment(raw_env_db_name, policy_environment)
 
         auto_env = self.auto_inject_env_vars()
         auto_env.update(kwargs)
 
-        raw_db_name = auto_env.get("db_name", kwargs.get("db_name", ALLOWED_DB_NAME))
-        if raw_db_name != ALLOWED_DB_NAME:
-            raise DatabaseConfigurationError(
-                "🚨 V41.51 数据库大一统：非法数据库名称\n"
-                f"   检测到: '{raw_db_name}'\n"
-                f"   系统只允许: '{ALLOWED_DB_NAME}'\n"
-                f"   请检查配置文件，确保 db_name={ALLOWED_DB_NAME}"
-            )
+        policy_environment = auto_env.get("environment", policy_environment)
+        raw_db_name = auto_env.get("db_name", kwargs.get("db_name", DEFAULT_DB_NAME))
+        validate_db_name_for_environment(str(raw_db_name), policy_environment)
 
         super().__init__(**auto_env)
 
@@ -195,13 +192,10 @@ def _build_settings() -> UnifiedSettings:
         raise
     except Exception as exc:
         logger.warning("配置初始化警告: %s", exc)
-        raw_db_name = os.getenv("DB_NAME", ALLOWED_DB_NAME)
-        if raw_db_name != ALLOWED_DB_NAME:
-            raise DatabaseConfigurationError(
-                "🚨 非法数据库配置！\n"
-                f"   系统只允许连接 '{ALLOWED_DB_NAME}'，检测到: '{raw_db_name}'\n"
-                f"   请检查 .env 文件和环境变量，确保 DB_NAME={ALLOWED_DB_NAME}"
-            ) from exc
+        policy_environment = normalize_environment_name()
+        raw_db_name = os.getenv("DB_NAME", DEFAULT_DB_NAME)
+        validate_db_name_for_environment(raw_db_name, policy_environment)
+        normalize_db_ssl_mode(os.getenv("DB_SSL_MODE", DEFAULT_DB_SSL_MODE), policy_environment)
         return UnifiedSettings(
             environment=Environment.DEVELOPMENT,
             debug=True,
