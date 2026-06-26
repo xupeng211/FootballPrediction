@@ -304,6 +304,7 @@ def test_database_settings_auto_inject_env_branches(monkeypatch):
     )
     monkeypatch.setenv("DB_PASSWORD", "docker-secret")
     monkeypatch.delenv("DB_HOST", raising=False)
+    monkeypatch.delenv("ENVIRONMENT", raising=False)
     monkeypatch.delenv("REDIS_HOST", raising=False)
 
     monkeypatch.setattr(db_settings, "detect_environment", lambda: fake_env_type.DOCKER)
