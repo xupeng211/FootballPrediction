@@ -127,7 +127,6 @@ RUN chmod -R 755 ./scripts && \
     find ./scripts -name "*.sh" -exec chmod +x {} \;
 
 # 4. 入口脚本
-COPY main_production.py ./
 
 # ============================================
 # 创建运行时目录并设置权限
