@@ -9,9 +9,21 @@ FootballPrediction 核心功能模块 (V4.20 重构版)
 
 """
 
+import json
 import logging
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
+
+from src.core.circuit_breaker import (
+    CircuitBreaker,
+    CircuitBreakerError,
+    CircuitBreakerOpenError,
+    CircuitState,
+    api_breaker,
+    database_breaker,
+    network_breaker,
+)
+from src.core.graceful_shutdown import GracefulShutdownManager, graceful_shutdown
 
 
 class Config:
@@ -27,11 +39,11 @@ class Config:
         """加载配置文件 - 自动处理文件不存在或格式错误的情况"""
         if self.config_file.exists():
             try:
-                with open(self.config_file, encoding="utf-8") as f:
+                with self.config_file.open(encoding="utf-8") as f:
                     self._config = json.load(f)
             except Exception as e:
                 # 配置文件损坏时记录警告，但不中断程序执行
-                logging.warning(f"配置文件加载失败: {e}")
+                logging.warning("配置文件加载失败: %s", e)
 
     def get(self, key: str, default: Any = None) -> Any:
         """获取配置项 - 支持默认值，确保程序健壮性"""
@@ -45,8 +57,8 @@ class Config:
         """保存配置到文件 - 自动创建目录，确保配置持久化"""
         if not self.config_dir.exists():
             self.config_dir.mkdir(parents=True, exist_ok=True)
-        with open(self.config_file, "w", encoding="utf-8") as f:
-            # ensure_ascii=False保证中文字符正确显示
+        with self.config_file.open("w", encoding="utf-8") as f:
+            # ensure_ascii=False ensures Chinese characters display correctly
             json.dump(self._config, f, ensure_ascii=False, indent=2)
 
 
@@ -67,12 +79,10 @@ class Logger:
 
         return logger
 
-
     @staticmethod
     def get_logger(name: str, level: str = "INFO") -> logging.Logger:
         """获取日志器 - 兼容 get_logger 的简单封装"""
-        logger = Logger.setup_logger(name, level)
-        return logger
+        return Logger.setup_logger(name, level)
 
 
 class FootballPredictionError(Exception):
@@ -108,48 +118,15 @@ __all__ = [
 # V105.0 新增模块
 # ============================================================================
 
-from src.core.circuit_breaker import (
-    CircuitBreaker,
-    CircuitBreakerError,
-    CircuitBreakerOpenError,
-    CircuitState,
-    api_breaker,
-    database_breaker,
-    network_breaker,
-)
-from src.core.graceful_shutdown import GracefulShutdownManager, graceful_shutdown
-from src.core.structured_logging import (
-    ComponentLogger,
-    EventCode,
-    HarvestStats,
-    LogContext,
-    LogLevel,
-    get_logger,
-    log_context,
-    performance_timer,
-    setup_structured_logging,
-)
 
 __all__ += [
-    # Circuit Breaker
     "CircuitBreaker",
     "CircuitBreakerError",
     "CircuitBreakerOpenError",
     "CircuitState",
-    # Structured Logging
-    "ComponentLogger",
-    "EventCode",
-    # Graceful Shutdown
     "GracefulShutdownManager",
-    "HarvestStats",
-    "LogContext",
-    "LogLevel",
     "api_breaker",
     "database_breaker",
-    "network_breaker",
-    "get_logger",
     "graceful_shutdown",
-    "log_context",
-    "performance_timer",
-    "setup_structured_logging",
+    "network_breaker",
 ]
