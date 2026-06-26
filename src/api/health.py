@@ -7,16 +7,19 @@
 V76.100: 移除 SQLAlchemy 双轨制，统一使用 asyncpg 连接池。
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 import logging
+from pathlib import Path
 import time
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, status
+import redis
 
 from src.api.schemas import HealthCheckResponse, ServiceCheck
-from src.config_unified import get_settings
+from src.config import get_settings
 from src.database.db_pool import DatabasePool
+from src.utils.data_quality_checker import DataQualityChecker
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +79,7 @@ async def health_check() -> HealthCheckResponse:
 
     return HealthCheckResponse(
         status=overall_status,
-        timestamp=datetime.utcnow().isoformat(),
+        timestamp=datetime.now(tz=UTC).isoformat(),
         service="football-prediction-api",
         version="1.0.0",
         response_time_ms=total_response_time,
@@ -93,7 +96,7 @@ async def liveness_check() -> dict[str, Any]:
     """存活性检查 - 用于K8s liveness probe"""
     return {
         "status": "alive",
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(tz=UTC).isoformat(),
     }
 
 
@@ -139,7 +142,7 @@ async def readiness_check() -> dict[str, Any]:
 
     result = {
         "ready": all_healthy,
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": datetime.now(tz=UTC).isoformat(),
         "checks": {
             name: {
                 "status": check.status,
@@ -165,17 +168,14 @@ async def _get_database_service_check() -> ServiceCheck:
     start_time = time.time()
     try:
         # V76.100: 使用 DatabasePool 进行健康检查
-        from src.database.db_pool import DatabasePool
 
         pool = await DatabasePool.get_instance()
-        async with pool.get_connection() as conn:
+        async with pool.acquire() as conn:
             await conn.fetchrow("SELECT 1")
 
         response_time = (time.time() - start_time) * 1000
 
-        logger.debug(
-            f"✅ 数据库健康检查通过 (asyncpg): ({response_time:.2f}ms)"
-        )
+        logger.debug("✅ 数据库健康检查通过 (asyncpg): (%.2fms)", response_time)
 
         return ServiceCheck(
             status="healthy",
@@ -187,7 +187,7 @@ async def _get_database_service_check() -> ServiceCheck:
         )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.exception(f"❌ 数据库健康检查失败: {e}")
+        logger.exception("❌ 数据库健康检查失败")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
@@ -210,7 +210,6 @@ async def _get_redis_service_check() -> ServiceCheck:
         redis_config = settings.redis
 
         # 尝试连接 Redis
-        import redis
 
         r = redis.Redis(
             host=redis_config.host,
@@ -228,7 +227,10 @@ async def _get_redis_service_check() -> ServiceCheck:
         response_time = (time.time() - start_time) * 1000
 
         logger.debug(
-            f"✅ Redis健康检查通过: {redis_config.host}:{redis_config.port} ({response_time:.2f}ms)"
+            "✅ Redis健康检查通过: %s:%s (%.2fms)",
+            redis_config.host,
+            redis_config.port,
+            response_time,
         )
 
         return ServiceCheck(
@@ -242,7 +244,7 @@ async def _get_redis_service_check() -> ServiceCheck:
         )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.warning(f"⚠️ Redis健康检查失败: {e}")
+        logger.warning("⚠️ Redis健康检查失败: %s", e)
         # Redis 不健康不影响整体状态（降级运行）
         return ServiceCheck(
             status="healthy",  # 降级：Redis 失败不影响服务运行
@@ -270,7 +272,7 @@ async def _get_model_service_check() -> ServiceCheck:
             file_size = model_path.stat().st_size
             response_time = (time.time() - start_time) * 1000
 
-            logger.debug(f"✅ 模型文件检查通过: {model_path} ({file_size} bytes)")
+            logger.debug("✅ 模型文件检查通过: %s (%s bytes)", model_path, file_size)
 
             return ServiceCheck(
                 status="healthy",
@@ -283,7 +285,7 @@ async def _get_model_service_check() -> ServiceCheck:
                 },
             )
         response_time = (time.time() - start_time) * 1000
-        logger.warning(f"⚠️ 模型文件不存在: {model_path}")
+        logger.warning("⚠️ 模型文件不存在: %s", model_path)
 
         return ServiceCheck(
             status="unhealthy",
@@ -296,7 +298,7 @@ async def _get_model_service_check() -> ServiceCheck:
         )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.exception(f"❌ 模型检查失败: {e}")
+        logger.exception("❌ 模型检查失败")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
@@ -311,8 +313,6 @@ async def _get_filesystem_service_check() -> ServiceCheck:
     """获取文件系统服务检查结果"""
     start_time = time.time()
     try:
-        import os
-
         # 检查关键目录
         directories = {
             "logs": "logs",
@@ -320,9 +320,8 @@ async def _get_filesystem_service_check() -> ServiceCheck:
             "models": "data/models",
         }
 
-        for path in directories.values():
-            if not os.path.exists(path):
-                os.makedirs(path, exist_ok=True)
+        for dir_path in directories.values():
+            Path(dir_path).mkdir(parents=True, exist_ok=True)
 
         response_time = (time.time() - start_time) * 1000
 
@@ -336,7 +335,7 @@ async def _get_filesystem_service_check() -> ServiceCheck:
         )
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.exception(f"❌ 文件系统健康检查失败: {e}")
+        logger.exception("❌ 文件系统健康检查失败")
         return ServiceCheck(
             status="unhealthy",
             response_time_ms=round(response_time, 2),
@@ -355,13 +354,13 @@ async def _check_database_async() -> dict[str, Any]:
     """
     start_time = time.time()
     try:
-        pool = DatabasePool.get_instance()
-        async with pool.get_connection() as conn:
+        pool = await DatabasePool.get_instance()
+        async with pool.acquire() as conn:
             await conn.fetchrow("SELECT 1")
 
         response_time = (time.time() - start_time) * 1000
 
-        logger.debug(f"✅ 数据库健康检查通过 (asyncpg): ({response_time:.2f}ms)")
+        logger.debug("✅ 数据库健康检查通过 (asyncpg): (%.2fms)", response_time)
 
         return {
             "healthy": True,
@@ -370,7 +369,7 @@ async def _check_database_async() -> dict[str, Any]:
         }
     except Exception as e:
         response_time = (time.time() - start_time) * 1000
-        logger.exception(f"❌ 数据库健康检查失败: {e}")
+        logger.exception("❌ 数据库健康检查失败")
         return {
             "healthy": False,
             "message": f"数据库连接失败: {e!s}",
@@ -382,8 +381,6 @@ async def _check_database_async() -> dict[str, Any]:
 async def _check_redis() -> dict[str, Any]:
     """检查Redis连接健康状态"""
     try:
-        import redis
-
         settings = get_settings()
         redis_config = settings.redis
 
@@ -398,39 +395,36 @@ async def _check_redis() -> dict[str, Any]:
         r.ping()
         r.close()
         response_time = (time.time() - start_time) * 1000
-
-        return {
-            "healthy": True,
-            "message": "Redis连接正常",
-            "response_time_ms": response_time,
-        }
     except Exception as e:
-        logger.exception(f"Redis健康检查失败: {e}")
+        logger.exception("Redis健康检查失败")
         return {
             "healthy": False,
             "message": f"Redis连接失败: {e!s}",
             "error": str(e),
             "response_time_ms": 0,
         }
+    else:
+        return {
+            "healthy": True,
+            "message": "Redis连接正常",
+            "response_time_ms": response_time,
+        }
 
 
 async def _check_filesystem() -> dict[str, Any]:
     """检查文件系统状态"""
     try:
-        import os
-
-        log_dir = "logs"
-        if not os.path.exists(log_dir):
-            os.makedirs(log_dir)
-
-        return {"healthy": True, "message": "文件系统正常", "log_directory": log_dir}
+        log_dir = Path("logs")
+        log_dir.mkdir(parents=True, exist_ok=True)
     except Exception as e:
-        logger.exception(f"文件系统健康检查失败: {e}")
+        logger.exception("文件系统健康检查失败")
         return {
             "healthy": False,
             "message": f"文件系统检查失败: {e!s}",
             "error": str(e),
         }
+    else:
+        return {"healthy": True, "message": "文件系统正常", "log_directory": str(log_dir)}
 
 
 @router.get(
@@ -449,14 +443,13 @@ async def quick_health_check() -> dict[str, Any]:
     """
     # 仅检查关键服务的连通性，不执行复杂查询
     status = "healthy"
-    timestamp = datetime.utcnow().isoformat()
+    timestamp = datetime.now(tz=UTC).isoformat()
 
     try:
         # V76.100: 快速数据库检查 (使用 DatabasePool)
-        from src.database.db_pool import DatabasePool
 
         pool = await DatabasePool.get_instance()
-        async with pool.get_connection() as conn:
+        async with pool.acquire() as conn:
             await conn.fetchrow("SELECT 1")
     except Exception:
         status = "unhealthy"
@@ -484,12 +477,10 @@ async def data_quality_check(full_check: bool = False) -> dict[str, Any]:
     Returns:
         Dict: 数据质量检查结果
     """
-    from src.utils.data_quality_checker import DataQualityChecker
-
-    checker = DataQualityChecker()
+    checker = DataQualityChecker()  # type: ignore[no-untyped-call]
 
     try:
-        await checker.connect()
+        await checker.connect()  # type: ignore[no-untyped-call]
 
         if full_check:
             # 执行完整检查
@@ -532,7 +523,7 @@ async def data_quality_check(full_check: bool = False) -> dict[str, Any]:
         }
 
     except Exception as e:
-        logger.exception(f"数据质量检查失败: {e}")
-        return {"status": "error", "timestamp": datetime.utcnow().isoformat(), "error": str(e)}
+        logger.exception("数据质量检查失败")
+        return {"status": "error", "timestamp": datetime.now(tz=UTC).isoformat(), "error": str(e)}
     finally:
-        await checker.close()
+        await checker.close()  # type: ignore[no-untyped-call]
