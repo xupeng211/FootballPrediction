@@ -33,8 +33,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_TRUSTED_HOST=pypi.tuna.tsinghua.edu.cn
 
 # 配置镜像源
-RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list || \
-    sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+RUN if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list || \
+        sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list; \
+    elif [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources || \
+        sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources; \
+    else \
+        echo "ERROR: No supported Debian apt sources file found" >&2; \
+        exit 1; \
+    fi
 
 # 安装构建依赖 (带重试机制)
 RUN for i in 1 2 3; do \
@@ -88,8 +96,16 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     L2_REQUESTS_PER_SECOND=2
 
 # 配置镜像源
-RUN sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list || \
-    sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list
+RUN if [ -f /etc/apt/sources.list ]; then \
+        sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list || \
+        sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list; \
+    elif [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+        sed -i 's/deb.debian.org/mirrors.tuna.tsinghua.edu.cn/g' /etc/apt/sources.list.d/debian.sources || \
+        sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources; \
+    else \
+        echo "ERROR: No supported Debian apt sources file found" >&2; \
+        exit 1; \
+    fi
 
 # 安装运行时依赖 (最小化)
 RUN for i in 1 2 3; do \
