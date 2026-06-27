@@ -382,6 +382,37 @@ task type and scope. Example violations that will be caught by CI:
 - PR declares "no DB / no migration" but modifies SQL or migration files
 - PR declares "no Docker" but modifies Docker/Compose files
 
+## Filling the PR Authorization Matrix
+
+When Codex opens a PR, it must fill the `## PR Authorization Matrix` section in
+`.github/pull_request_template.md` truthfully. This section is machine-readable
+and will be consumed by future CI enforcement (currently template-only).
+
+### Minimum requirements
+
+- Select exactly one `Task type` from the defined list.
+- List all changed path categories that actually appear in the diff.
+- List exact authorized paths or globs (separate multiple with `,`).
+- Use `mixed` only when the user explicitly authorized a mixed-scope PR — never
+  as a convenience fallback.
+- Add `## Dangerous File Authorization` whenever high-risk categories are present
+  (at least 2 substantive lines; hollow placeholders like `N/A` are rejected).
+- Do not claim `no DB`, `no Docker`, `no workflow`, or `docs-only` when the diff
+  contradicts that claim.
+- Do not modify files outside the authorized task scope to satisfy CI.
+- If CI requires out-of-scope changes to pass, stop and ask for a new
+  authorization — do not silently expand scope.
+
+### Current status (for #1651)
+
+- The helper `scripts/ops/helpers/pr_authorization_matrix.py` exists (added in #1657)
+  but is **not yet wired** into `scripts/ops/ai_workflow_gate.py`.
+- The PR template contract is defined in `.github/pull_request_template.md`.
+- Future PRs may enable report-only mode and later blocking enforcement.
+- Codex must not mix template/docs contract PRs with gate wiring PRs.
+- Codex must not modify `scripts/ops/ai_workflow_gate.py` or `.github/workflows/`
+  as a side effect of a template/docs contract PR.
+
 ## Do Not Start Automatically
 
 Every final report and every "## Next Recommended Task" section must include:
