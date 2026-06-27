@@ -557,3 +557,77 @@ def validate_authorization(  # noqa: C901
         has_dangerous_auth=has_auth,
         authorized_paths=frozenset(authorized),
     )
+
+
+# ============================================================================
+# Report-only gate integration (#1651 Phase 5R8-D)
+# ============================================================================
+
+
+def run_pr_authorization_matrix_report_only(
+    changed: set[str],
+    pr_body: str,
+) -> None:
+    """Run #1651 PR authorization matrix in report-only mode.
+
+    Prints matrix findings to stdout.  Matrix errors are NEVER added to the gate
+    error list in this phase.  Exceptions are caught and reported as internal-errors
+    without failing the gate.
+
+    Intended to be called from ``scripts/ops/ai_workflow_gate.py``.
+    """
+
+    if not changed or not pr_body:
+        return
+
+    print("[PR Authorization Matrix][report-only] running #1651 matrix validation")
+
+    try:
+        task_type = parse_task_type(pr_body)
+        result = validate_authorization(task_type, changed, pr_body=pr_body)
+        _print_matrix_result(result)
+    except Exception as exc:
+        print(f"[PR Authorization Matrix][report-only][internal-error] {exc}")
+        print(
+            "[PR Authorization Matrix][report-only] internal errors are non-blocking in this phase."
+        )
+
+
+def _print_matrix_result(result: AuthorizationResult) -> None:
+    """Print an AuthorizationResult to stdout in report-only format."""
+
+    print(
+        f"[PR Authorization Matrix][report-only] "
+        f"task_type={result.task_type} "
+        f"categories={sorted(result.categories.keys())}"
+    )
+
+    if result.task_type == TASK_TYPE_UNKNOWN:
+        print(
+            "[PR Authorization Matrix][report-only][warning] "
+            "task type is unknown — matrix validation skipped"
+        )
+    elif result.has_dangerous_auth:
+        print("[PR Authorization Matrix][report-only] Dangerous File Authorization detected")
+
+    if result.warnings:
+        for w in result.warnings:
+            print(f"[PR Authorization Matrix][report-only][warning] {w}")
+
+    if result.errors:
+        for e in result.errors:
+            print(f"[PR Authorization Matrix][report-only][error] {e}")
+
+    if result.valid:
+        label = "pass" if result.task_type != TASK_TYPE_UNKNOWN else "unknown-task-type"
+        print(f"[PR Authorization Matrix][report-only] matrix validation result: {label}")
+    else:
+        print(
+            "[PR Authorization Matrix][report-only] "
+            f"matrix validation result: {len(result.errors)} error(s) found"
+        )
+
+    print(
+        "[PR Authorization Matrix][report-only] "
+        "matrix errors are currently non-blocking (#1651 Phase 5R8-D report-only)"
+    )
