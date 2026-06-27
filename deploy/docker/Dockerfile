@@ -176,9 +176,9 @@ USER appuser
 EXPOSE 8000
 
 # ============================================
-# 默认命令 - V37.0 L1/L2 全量采集
+# 默认命令 - FastAPI API server
 # ============================================
-CMD ["python", "scripts/collectors/full_l1_l2_harvest.py", "--verbose"]
+CMD ["python", "-m", "uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # ============================================
 # 镜像规格
