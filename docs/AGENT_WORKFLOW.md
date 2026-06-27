@@ -631,3 +631,57 @@ python scripts/devops/pr_post_merge_check.py \
   [--confirm-cleanup] \
   [--json]
 ```
+
+## 24. Task-Level PR Authorization Matrix
+
+AI agents must declare one task type per PR and keep changed files within the
+authorized path categories. The PR template (`.github/pull_request_template.md`)
+contains a `## PR Authorization Matrix` section that must be filled truthfully.
+
+The helper `scripts/ops/helpers/pr_authorization_matrix.py` (added in #1657)
+provides path classification, task-type parsing, and deterministic validation.
+It is **not yet wired** into `scripts/ops/ai_workflow_gate.py`. Future PRs may
+enable report-only mode and later blocking enforcement.
+
+### Task types
+
+| Type | Allowed categories | Requires Dangerous File Auth | Notes |
+|---|---|---|---|
+| `docs-only` | docs | no | Must not touch `src/`, `tests/`, Docker, DB, SC-002, workflows, models, data. Also permits selected `workflow-governance` docs. |
+| `test-only` | tests | no | Must not touch `src/`, `config/`, Docker, DB, SC-002, workflows, models, data. |
+| `source-code` | source, tests, docs | no | Must not touch Docker, DB, SC-002, workflows, models, data unless mixed. |
+| `config-runtime` | runtime-config, tests, docs | no | Covers `pyproject.toml`, `ruff.toml`, `mypy.ini`, `config/**`. |
+| `docker-deploy` | docker-deploy, tests, docs | yes | Dockerfile, compose, devcontainer, deploy. |
+| `workflow-governance` | workflow-governance, tests, docs | yes | Workflows, PR template, CODEOWNERS, gate, helpers, governance docs. |
+| `db-migration-sql` | db-migration-sql, tests, docs | yes | SQL, migrations, Alembic, schema changes. |
+| `sc-002-db-governance` | sc-002-db-governance, tests, docs | yes | SC-002 scripts, DB write guards, role governance. |
+| `model-artifact` | model-artifact | yes | `.joblib`, `.pkl`, `models/**`, `model_zoo/**`. Blocks cross-contamination with `source`, Docker, DB, SC-002, workflows. |
+| `data-artifact` | data-artifact | yes | `data/**`, `artifacts/**`. Blocks cross-contamination with `source`, Docker, DB, SC-002, workflows. |
+| `mixed` | any | yes | Only when explicitly authorized. Not a default escape hatch. |
+
+### Rules
+
+1. One task / one branch / one PR. Do not mix Docker/deploy, DB/migration/SC-002,
+   workflow/governance, source-code, docs, and test changes unless explicitly
+   authorized as `mixed`.
+2. High-risk path categories (docker-deploy, workflow-governance, db-migration-sql,
+   sc-002-db-governance, model-artifact, data-artifact, env-secret) require a
+   substantive `## Dangerous File Authorization` section (at least 2 lines).
+3. `mixed` is not a default escape hatch. Use it only when the user explicitly
+   authorized a cross-category PR.
+4. `unknown` task type is a hard error. Every PR must declare a task type.
+5. `env-secret` category (`.env`, `.env.*`) is always a hard error — these files
+   must never be committed to the repository.
+6. Report-only or blocking enforcement must be introduced in a separate PR.
+7. This document does not authorize DB, Docker, staging, scraper, training,
+   migration, or SC-002 execution.
+
+### Status
+
+- **Helper**: implemented in #1657 (`scripts/ops/helpers/pr_authorization_matrix.py`).
+- **PR template contract**: defined in #1658 (this PR documentation update).
+- **Gate wiring**: NOT YET done. The helper is not connected to
+  `scripts/ops/ai_workflow_gate.py`.
+- **Report-only mode**: NOT YET enabled.
+- **Blocking enforcement**: NOT YET enabled.
+- **#1651**: remains open until enforcement is complete.

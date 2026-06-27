@@ -13,6 +13,62 @@
 | Business code changed | yes / no |
 | FotMob code changed | yes / no |
 
+## PR Authorization Matrix
+
+Fill every row. This section is machine-readable and will be consumed by future
+CI enforcement. See `docs/AGENT_WORKFLOW.md` §Task-Level PR Authorization Matrix.
+
+| Item | Value |
+|---|---|
+| Task type | choose one: docs-only / test-only / source-code / config-runtime / docker-deploy / workflow-governance / db-migration-sql / sc-002-db-governance / model-artifact / data-artifact / mixed |
+| Authorized path categories | docs / tests / source / runtime-config / docker-deploy / workflow-governance / db-migration-sql / sc-002-db-governance / model-artifact / data-artifact / env-secret / unknown |
+| Authorized paths | list exact paths or globs; separate with `,` |
+| Mixed task authorization | no / yes with explicit reason |
+| High-risk categories present | no / yes: list categories |
+| Requires Dangerous File Authorization | no / yes |
+| Matrix enforcement expectation | template-only / report-only / blocking |
+
+### Task type rules
+
+Choose exactly one primary task type. If changed files cross categories, use
+`mixed` only when explicitly authorized — not as a convenience fallback.
+
+- **`docs-only`**: documentation-only changes (`docs/**`, `*.md`, `README*`,
+  `AGENTS.md`, `CLAUDE.md`). Must not touch `src/`, `tests/`, `config/`,
+  Docker, DB, SC-002, workflows, models, or data.
+- **`test-only`**: tests-only changes (`tests/**`). Must not touch `src/`,
+  `config/`, Docker, DB, SC-002, workflows, models, or data.
+- **`source-code`**: runtime/source implementation changes (`src/**`, plus
+  `tests/` and `docs/`). Must not touch Docker, DB, SC-002, workflows, models,
+  or data unless mixed.
+- **`config-runtime`**: runtime configuration (`pyproject.toml`, `ruff.toml`,
+  `mypy.ini`, `config/**`). Must not touch Docker, DB, SC-002, workflows,
+  models, or data.
+- **`docker-deploy`**: Docker, Compose, devcontainer, deploy (`Dockerfile*`,
+  `docker-compose*`, `compose*`, `.devcontainer/**`, `deploy/docker/**`).
+  Requires `## Dangerous File Authorization`.
+- **`workflow-governance`**: GitHub workflows, PR template, CODEOWNERS, AI
+  workflow gate, governance helpers, agent workflow docs. Requires
+  `## Dangerous File Authorization`.
+- **`db-migration-sql`**: SQL files, migrations, Alembic, schema changes.
+  Requires `## Dangerous File Authorization`.
+- **`sc-002-db-governance`**: SC-002 scripts, DB write guards, DB role
+  governance files. Requires `## Dangerous File Authorization`.
+- **`model-artifact`**: model files, `.joblib`, `.pkl` (`models/**`,
+  `model_zoo/**`). Requires `## Dangerous File Authorization`.
+- **`data-artifact`**: data files, generated artifacts (`data/**`,
+  `artifacts/**`). Requires `## Dangerous File Authorization`.
+- **`mixed`**: only when the user explicitly authorized a cross-category PR.
+  Requires `## Dangerous File Authorization` and explicit reason.
+
+### High-risk path rule
+
+If this PR touches Docker/deploy, GitHub workflow/governance, DB/migration/SQL,
+SC-002, env/secret, model artifact, or data artifact paths, the
+`## Dangerous File Authorization` section must be substantive (at least 2 lines
+of non-hollow content). Do not claim `docs-only`, `test-only`, or `no DB / no
+Docker / no workflow` if changed files contradict that claim.
+
 ## Files Changed
 
 | Path | Purpose |
