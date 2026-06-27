@@ -7,6 +7,7 @@ lifecycle: permanent
 from __future__ import annotations
 
 import argparse
+import contextlib
 from dataclasses import dataclass
 from pathlib import Path
 import re
@@ -199,6 +200,9 @@ BLIND_SPOT_CODE_EXTENSIONS: frozenset[str] = frozenset(
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from scripts.ops.helpers.section_content_quality import check_section_content_quality  # noqa: E402, I001
+from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
+    run_pr_authorization_matrix_report_only,
+)
 
 
 # fmt: off
@@ -601,7 +605,7 @@ from scripts.ops.helpers.dangerous_file_change_check import (  # noqa: E402
 )
 
 
-def validate(
+def validate(  # noqa: C901
     pr_body: str,
     changes: list[Change] | None = None,
     *,
@@ -667,6 +671,11 @@ def validate(
                 lambda heading, body: section_text_between(body, heading),
             )
         )
+
+    # 8. PR authorization matrix — report-only (#1651 Phase 5R8-D)
+    if not skip_body_checks:
+        with contextlib.suppress(Exception):
+            run_pr_authorization_matrix_report_only(changed, pr_body)
 
     return errors
 
@@ -740,17 +749,9 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         else:
             sys.stdout.write("FAIL: empty PR body — cannot validate AI workflow gate\n")
             return 1
-
     changes = collect_changes(args.base_ref)
-
     changed = changed_paths(changes)
-
-    errors = validate(
-        pr_body,
-        changes,
-        skip_body_checks=args.skip_body_checks,
-    )
-
+    errors = validate(pr_body, changes, skip_body_checks=args.skip_body_checks)
     # 8. DB write guard enforcement — phase2 hard fail on changed-files violations
     try:
         db_errors, db_warnings = check_db_write_guard_enforcement(changed)
@@ -785,13 +786,11 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
             sys.stdout.write(f"[{_label} ENFORCEMENT] scanner error: {exc}\n")
             if __import__("os").environ.get("CI") or __import__("os").environ.get("GITHUB_ACTIONS"):
                 errors.append(f"[{_label} ENFORCEMENT] fail-closed in CI: {exc}")
-
     if errors:
         sys.stdout.write(f"FAIL: {len(errors)} AI workflow gate error(s)\n")
         for error in errors:
             sys.stdout.write(f"- {error}\n")
         return 1
-
     sys.stdout.write("PASS: AI workflow gate checks passed\n")
     return 0
 
