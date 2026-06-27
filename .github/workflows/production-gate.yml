@@ -147,7 +147,7 @@ jobs:
             gh pr view "${{ github.event.pull_request.number }}" --json body --jq '.body' > "${PR_BODY_FILE}"
             if [ -s "${PR_BODY_FILE}" ]; then
               echo "[AI Workflow Gate] PR body fetched ($(wc -l < "${PR_BODY_FILE}") lines, $(wc -c < "${PR_BODY_FILE}") bytes)."
-              python3 scripts/ops/ai_workflow_gate.py --pr-body-file "${PR_BODY_FILE}"
+              python3 scripts/ops/ai_workflow_gate.py --pr-body-file "${PR_BODY_FILE}" --block-matrix
             else
               echo "[AI Workflow Gate] PR body empty after fetch — running git-diff checks only."
               python3 scripts/ops/ai_workflow_gate.py --pr-body-file "${PR_BODY_FILE}" --skip-body-checks
