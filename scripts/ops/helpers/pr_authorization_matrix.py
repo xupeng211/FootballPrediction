@@ -560,6 +560,56 @@ def validate_authorization(  # noqa: C901
 
 
 # ============================================================================
+# Narrow blocking selector (#1651 Phase 5R8-G)
+# ============================================================================
+
+
+def narrow_blocking_errors(result: AuthorizationResult) -> tuple[str, ...]:
+    """Return a narrow, low-false-positive subset of matrix errors suitable for
+    gated blocking enforcement.
+
+    Only the following rules are selected (by Phase 5R8-F design):
+
+    * A. unknown task type
+    * B. docs-only task touching source files
+    * C. test-only task touching source files
+    * D. env-secret files present
+
+    All other matrix findings remain report-only.  The ``unknown`` path category
+    is intentionally excluded — it would produce false positives from CI
+    workspace transient files.
+    """
+    errors: list[str] = []
+    categories = set(result.categories.keys())
+
+    if result.task_type == TASK_TYPE_UNKNOWN:
+        errors.append(
+            "PR authorization matrix: unknown task type — "
+            "must declare task type in PR body (see PR template)."
+        )
+
+    if CATEGORY_ENV_SECRET in categories:
+        paths = sorted(result.categories.get(CATEGORY_ENV_SECRET, frozenset()))
+        errors.append(
+            f"PR authorization matrix: env-secret files must not be committed: {', '.join(paths)}"
+        )
+
+    if result.task_type == TASK_TYPE_DOCS_ONLY and CATEGORY_SOURCE in categories:
+        paths = sorted(result.categories.get(CATEGORY_SOURCE, frozenset()))
+        errors.append(
+            f"PR authorization matrix: docs-only PR touches source files: {', '.join(paths)}"
+        )
+
+    if result.task_type == TASK_TYPE_TEST_ONLY and CATEGORY_SOURCE in categories:
+        paths = sorted(result.categories.get(CATEGORY_SOURCE, frozenset()))
+        errors.append(
+            f"PR authorization matrix: test-only PR touches source files: {', '.join(paths)}"
+        )
+
+    return tuple(errors)
+
+
+# ============================================================================
 # Report-only gate integration (#1651 Phase 5R8-D)
 # ============================================================================
 

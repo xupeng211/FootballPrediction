@@ -159,7 +159,6 @@ DOC_SPRAWL_NAME_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
 )
 
 MAX_DOC_SPRAWL_NEW_FILES = 5
-
 REPORT_ARTIFACT_PREFIX = "docs/_reports/"
 REPORT_ARTIFACT_SUFFIX = ".md"
 SOURCE_OF_TRUTH_REASON_LABELS: tuple[str, ...] = (
@@ -201,7 +200,10 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 from scripts.ops.helpers.section_content_quality import check_section_content_quality  # noqa: E402, I001
 from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
+    narrow_blocking_errors,
+    parse_task_type,
     run_pr_authorization_matrix_report_only,
+    validate_authorization,
 )
 
 
@@ -610,8 +612,13 @@ def validate(  # noqa: C901
     changes: list[Change] | None = None,
     *,
     skip_body_checks: bool = False,
+    block_matrix: bool = False,
 ) -> list[str]:
-    """Run all AI workflow gate checks.  Returns a list of error strings."""
+    """Run all AI workflow gate checks.  Returns a list of error strings.
+
+    When *block_matrix* is True, the narrow A-D PR authorization matrix subset
+    is added to errors.  Default False (report-only, #1651 Phase 5R8-D/G).
+    """
 
     if changes is None:
         changes = collect_changes()
@@ -654,28 +661,31 @@ def validate(  # noqa: C901
     # 6c. Forbidden rewrite file patterns (new files only)
     if not skip_body_checks:
         errors.extend(check_forbidden_rewrite_patterns(added, pr_body))
-
     # 6d. Large risky change detection
     errors.extend(check_large_risky_change(changes, pr_body))
 
     # 6e. Forbidden safety claims
     if not skip_body_checks:
         errors.extend(check_forbidden_safety_claims(pr_body))
-
     # 7. Critical section content quality (only when body is available)
     if not skip_body_checks:
-        # Pass section_text_between to avoid circular import from helper.
         errors.extend(
             check_section_content_quality(
                 pr_body,
                 lambda heading, body: section_text_between(body, heading),
             )
         )
-
-    # 8. PR authorization matrix — report-only (#1651 Phase 5R8-D)
-    if not skip_body_checks:
+        # 8. PR authorization matrix — report-only (#1651 Phase 5R8-D)
         with contextlib.suppress(Exception):
             run_pr_authorization_matrix_report_only(changed, pr_body)
+        # 8b. optional narrow blocking (Phase 5R8-G, only when --block-matrix)
+        if block_matrix:
+            try:
+                task_type = parse_task_type(pr_body)
+                result = validate_authorization(task_type, changed, pr_body=pr_body)
+                errors.extend(narrow_blocking_errors(result))
+            except Exception as exc:
+                errors.append(f"PR authorization matrix blocking check failed: {exc}")
 
     return errors
 
@@ -701,31 +711,24 @@ def check_db_write_guard_enforcement(changed: set[str]) -> tuple[list[str], list
 
 def build_parser() -> argparse.ArgumentParser:
     """Build the CLI argument parser for the AI workflow gate."""
-    parser = argparse.ArgumentParser(
-        description="AI workflow gate — P0 risk checks for PRs",
-    )
+    parser = argparse.ArgumentParser(description="AI workflow gate — P0 risk checks for PRs")
     body_group = parser.add_mutually_exclusive_group()
+    body_group.add_argument("--pr-body-file", default=None, help="Read PR body from file")
     body_group.add_argument(
-        "--pr-body-file",
-        default=None,
-        help="Read PR body from this file path",
+        "--pr-body-stdin", action="store_true", default=False, help="Read PR body from stdin"
     )
-    body_group.add_argument(
-        "--pr-body-stdin",
-        action="store_true",
-        default=False,
-        help="Read PR body from stdin",
-    )
-    parser.add_argument(
-        "--base-ref",
-        default=None,
-        help="Git base ref for diff (default: auto-detect origin/main or main)",
-    )
+    parser.add_argument("--base-ref", default=None, help="Git base ref for diff")
     parser.add_argument(
         "--skip-body-checks",
         action="store_true",
         default=False,
-        help="Skip PR-body-specific checks (useful for push events)",
+        help="Skip PR-body checks (push events)",
+    )
+    parser.add_argument(
+        "--block-matrix",
+        action="store_true",
+        default=False,
+        help="Enable narrow PR matrix blocking (default: report-only)",
     )
     return parser
 
@@ -735,11 +738,7 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    pr_body = read_pr_body(
-        args.pr_body_file,
-        from_stdin=args.pr_body_stdin,
-    )
-
+    pr_body = read_pr_body(args.pr_body_file, from_stdin=args.pr_body_stdin)
     if not pr_body.strip():
         if args.skip_body_checks:
             sys.stdout.write(
@@ -751,7 +750,9 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
             return 1
     changes = collect_changes(args.base_ref)
     changed = changed_paths(changes)
-    errors = validate(pr_body, changes, skip_body_checks=args.skip_body_checks)
+    errors = validate(
+        pr_body, changes, skip_body_checks=args.skip_body_checks, block_matrix=args.block_matrix
+    )
     # 8. DB write guard enforcement — phase2 hard fail on changed-files violations
     try:
         db_errors, db_warnings = check_db_write_guard_enforcement(changed)
