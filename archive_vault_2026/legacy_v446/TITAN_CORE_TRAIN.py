@@ -25,27 +25,26 @@
 # @version V4.46.6-REAL-COMBAT
 # @sealed 2026-03-11
 # ═══════════════════════════════════════════════════════════════════════════════
-"""
+""" """
 
+from datetime import datetime
 import json
 import logging
 import math
 import os
-import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+import sys
 
 import joblib
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, log_loss
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score, log_loss
 from sklearn.preprocessing import StandardScaler
 import xgboost as xgb
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-logging.basicConfig(level=logging.INFO, format='[%(asctime)s] %(message)s', datefmt='%H:%M:%S')
+logging.basicConfig(level=logging.INFO, format="[%(asctime)s] %(message)s", datefmt="%H:%M:%S")
 logger = logging.getLogger(__name__)
 
 MODEL_DIR = Path(__file__).parent.parent.parent / "models"
@@ -56,19 +55,32 @@ RESULT_NAMES = ["AWAY", "DRAW", "HOME"]
 
 # 11维战斗特征集
 TITAN_COMBAT_FEATURES = [
-    "home_elo_pre", "away_elo_pre", "elo_diff", "expected_home_win", "expected_away_win",
-    "log_home_squad_value", "log_away_squad_value", "home_mv_share",
-    "h2h_home_win_ratio", "h2h_draw_ratio", "h2h_avg_goal_diff",
+    "home_elo_pre",
+    "away_elo_pre",
+    "elo_diff",
+    "expected_home_win",
+    "expected_away_win",
+    "log_home_squad_value",
+    "log_away_squad_value",
+    "home_mv_share",
+    "h2h_home_win_ratio",
+    "h2h_draw_ratio",
+    "h2h_avg_goal_diff",
 ]
 
 DEFAULT_VALUES = {
-    "home_elo_pre": 1500.0, "away_elo_pre": 1500.0, "elo_diff": 0.0,
-    "expected_home_win": 0.45, "expected_away_win": 0.30,
-    "log_home_squad_value": 18.0, "log_away_squad_value": 18.0, "home_mv_share": 0.50,
-    "h2h_home_win_ratio": 0.40, "h2h_draw_ratio": 0.25, "h2h_avg_goal_diff": 0.0,
+    "home_elo_pre": 1500.0,
+    "away_elo_pre": 1500.0,
+    "elo_diff": 0.0,
+    "expected_home_win": 0.45,
+    "expected_away_win": 0.30,
+    "log_home_squad_value": 18.0,
+    "log_away_squad_value": 18.0,
+    "home_mv_share": 0.50,
+    "h2h_home_win_ratio": 0.40,
+    "h2h_draw_ratio": 0.25,
+    "h2h_avg_goal_diff": 0.0,
 }
-
-"""
 
 
 def safe_float(v, d=0.0):

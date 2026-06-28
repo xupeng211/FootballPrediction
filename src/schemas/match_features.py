@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Match Features Pydantic Schema - 106
-                                 ?"""
+"""
 
 from datetime import datetime
 from enum import Enum
@@ -32,19 +32,20 @@ class FeatureVersion(str, Enum):
 
 
 class DataSource(str, Enum):
-    """?""
+    """?"""
 
-        FOTMOB_API = "fotmob_api"
-        BET365_API = "bet365_api"
-        MANUAL = "manual"
-        IMPORTED = "imported"
+    FOTMOB_API = "fotmob_api"
+    BET365_API = "bet365_api"
+    MANUAL = "manual"
+    IMPORTED = "imported"
 
 
+class MatchFeatures(BaseModel):
+    """
     class MatchFeatures(BaseModel):
     """
 
     """
-                       - 106
 
 
 

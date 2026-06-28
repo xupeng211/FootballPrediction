@@ -288,7 +288,7 @@ class MatchSchema(BaseModel):
         final_a = row.get("final_a")
         integrity_score = row.get("integrity_score")
 
-        #                   ???        status_value = row.get("status")
+        status_value = row.get("status")
         if status_value:
             status_map = {
                 "Fixture": "Fixture",
