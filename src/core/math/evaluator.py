@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """
 V4.45 核心算力中心 - 安全表达式求值模块
 =========================================
@@ -38,25 +38,25 @@ ALLOWED_FUNCTIONS = {
 def safe_eval(expression: str, variables: dict[str, Any] | None = None) -> Any:
     """
     安全地求值数学表达式
-    
+
     Args:
         expression: 数学表达式字符串 (如 "2 + 3 * 4")
         variables: 变量字典 (如 {"x": 10, "y": 20})
-    
+
     Returns:
         表达式计算结果
-    
+
     Raises:
         ValueError: 表达式不安全或语法错误
     """
     if variables is None:
         variables = {}
-    
+
     try:
         tree = ast.parse(expression, mode="eval")
     except SyntaxError as e:
         raise ValueError(f"语法错误: {e}") from e
-    
+
     return _eval_node(tree.body, variables)
 
 

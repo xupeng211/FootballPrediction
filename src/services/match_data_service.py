@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """V4.42 MatchDataService - 比赛数据服务统一组件"""
 
 from __future__ import annotations

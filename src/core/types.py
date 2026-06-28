@@ -119,7 +119,7 @@ class MatchID:
             return cls(league_id="XX", season=season, external_id=external_id)
 
         raise ValueError(
-            f"无效�?match_id 格式: {match_id_str}�?
+            f"无效�?match_id 格式: {match_id_str}，"
             f"期望新格�? <league>_<season>_<external_id> (�?EN_2324_4507094) "
             f"或旧格式: <external_id>_<season> (�?4507094_2324)"
         )
@@ -193,7 +193,7 @@ class Season:
             year = int(season)
             return f"20{year}" if year < 50 else f"19{year}"
 
-        logger.warning(f"无法识别的赛季格�? {season}，使用默认�?)
+        logger.warning(f"无法识别的赛季格�? {season}，使用默认值")
         return "0000"
 
 
@@ -212,7 +212,7 @@ def create_match_id(external_id: str, season: str, league_id: str = "XX") -> Mat
 
 
 def parse_match_id(match_id_str: str) -> MatchID:
-    """解析 MatchID 的便捷函�?""
+    """解析 MatchID 的便捷函数"""
     return MatchID.parse(match_id_str)
 
 

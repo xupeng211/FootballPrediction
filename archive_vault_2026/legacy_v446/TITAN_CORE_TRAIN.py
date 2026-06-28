@@ -68,6 +68,7 @@ DEFAULT_VALUES = {
     "h2h_home_win_ratio": 0.40, "h2h_draw_ratio": 0.25, "h2h_avg_goal_diff": 0.0,
 }
 
+"""
 
 def safe_float(v, d=0.0):
     try: return float(v) if v is not None else d

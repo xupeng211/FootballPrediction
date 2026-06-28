@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+__doc__ = """
 /**
  * V193.4 - 意甲精准熔炼
  * 鱻对指定比赛ID进行熔炼
@@ -61,3 +62,5 @@ const targetMatchIds = [
     console.log('');
     process.exit(0);
 })();
+
+"""
