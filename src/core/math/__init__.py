@@ -13,7 +13,7 @@ Date: 2026-03-08
 from .evaluator import safe_eval
 from .finance import expected_value, fractional_kelly, kelly_criterion, sharpe_ratio
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # 金融数学
     "kelly_criterion",
     "fractional_kelly",

@@ -35,7 +35,7 @@ class MatchStatus(str, Enum):
 
 
 class DataSourceType(str, Enum):
-    """?""" ""
+    """?""" ""  # noqa: ISC001
 
     FOTMOB = "Source_F"  #                   ???    ODDSPORTAL = "Source_O"  #
 
@@ -50,7 +50,7 @@ class MatchQuality(str, Enum):
 
 
 # ============================================================================
-# Source_F: FotMob                   ???# ============================================================================
+# Source_F: FotMob                   ???# ============================================================================  # noqa: W505
 
 
 class SourceFData(BaseModel):
@@ -101,7 +101,7 @@ class SourceFData(BaseModel):
 
 
 # ============================================================================
-# Source_O: OddsPortal
+# Source_O: OddsPortal  # noqa: ERA001
 # ============================================================================
 
 
@@ -141,7 +141,7 @@ class SourceOData(BaseModel):
         if all([self.final_h, self.final_d, self.final_a]):
             self.integrity_score = 1.0 / self.final_h + 1.0 / self.final_d + 1.0 / self.final_a
             #             : 1.02 < integrity_score < 1.08
-            self.is_valid = 1.02 < self.integrity_score < 1.08
+            self.is_valid = 1.02 < self.integrity_score < 1.08  # noqa: PLR2004
         return self
 
 
@@ -153,9 +153,9 @@ class SourceOData(BaseModel):
 class MatchSchema(BaseModel):
     """V41.155
 
-           Source_F ???Source_O                                  ???                                                       ???
+           Source_F ???Source_O                                  ???                                                       ???  # noqa: W505
                 :
-    -              (40%): ID,       ,       ,       ,       ,    ???    -              (30%): oddsportal_hash, oddsportal_url
+    -              (40%): ID,       ,       ,       ,       ,    ???    -              (30%): oddsportal_hash, oddsportal_url  # noqa: W505
     -              (30%): init/final odds, integrity_score
     """
 
@@ -210,7 +210,7 @@ class MatchSchema(BaseModel):
         -             ???(50%): match_id, home_team, away_team, match_time, league_name, season
         -              (50%): oddsportal_hash
 
-              :                          metrics_multi_source_data                   ???                                      ???"""
+              :                          metrics_multi_source_data                   ???                                      ???"""  # noqa: W505
         score = 0.0
 
         #             ???(50%)
@@ -230,7 +230,7 @@ class MatchSchema(BaseModel):
 
         self.fusion_score = score
 
-        if score >= 90:
+        if score >= 90:  # noqa: PLR2004
             self.quality_rating = MatchQuality.EXCELLENT
         elif score >= 80:
             self.quality_rating = MatchQuality.GOOD
@@ -325,7 +325,7 @@ class MatchSchema(BaseModel):
             final_d=final_d,
             final_a=final_a,
             integrity_score=integrity_score,
-            is_valid=bool(integrity_score and 1.02 < integrity_score < 1.08),
+            is_valid=bool(integrity_score and 1.02 < integrity_score < 1.08),  # noqa: PLR2004
         )
 
 

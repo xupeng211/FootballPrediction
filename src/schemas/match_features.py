@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
-# V4.42:              -          ?         ?\nfrom src.constants.shared_constants import MatchStatus, DataSource\nfrom src.database.models import FotMobMatchData
+# V4.42:              -          ?         ?\nfrom src.constants.shared_constants import MatchStatus, DataSource\nfrom src.database.models import FotMobMatchData  # noqa: W505
 
 
 class WeatherCondition(str, Enum):
@@ -397,7 +397,7 @@ class FeatureExtractionResponse(BaseModel):
     errors: list[str] | None = None
     metadata: dict[str, Any] | None = None
 
-    #                      ?def create_match_features_from_dict(data: dict[str, Any]) -> MatchFeatures:
+    #                      ?def create_match_features_from_dict(data: dict[str, Any]) -> MatchFeatures:  # noqa: W505
     """               MatchFeatures      """
     return MatchFeatures(**data)
 

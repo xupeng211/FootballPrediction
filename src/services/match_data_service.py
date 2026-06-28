@@ -31,7 +31,7 @@ class MatchAlignment:
             self.match_id
             and self.oddsportal_hash
             and self.time_valid
-            and self.alignment_confidence >= 0.7
+            and self.alignment_confidence >= 0.7  # noqa: PLR2004
         )
 
 
