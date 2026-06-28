@@ -157,7 +157,9 @@ class MatchSchema(BaseModel):
            ???  # noqa: W505
 
                 :
-    -              (40%): ID,       ,       ,       ,       ,    ???    -              (30%): oddsportal_hash, oddsportal_url  # noqa: W505
+    -              (40%): ID,       ,       ,       ,       ,    ???    -              (30%):
+    oddsportal_hash, oddsportal_url  # noqa: W505
+
     -              (30%): init/final odds, integrity_score
     """
 
