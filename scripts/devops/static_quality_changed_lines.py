@@ -19,6 +19,7 @@ The script:
 
 TECHDEBT-E: Changed-line gate for static quality checks.
 """
+
 from __future__ import annotations
 
 import json
@@ -306,8 +307,7 @@ def _report_existing_diags(existing_diags: list[dict]) -> None:
 def _report_new_diags(new_diags: list[dict]) -> None:
     """Print NEW (changed-line) diagnostics as blocking errors to stderr."""
     print(
-        f"[static-quality] ruff: {len(new_diags)} NEW violation(s) "
-        f"(on changed lines — BLOCKING)",
+        f"[static-quality] ruff: {len(new_diags)} NEW violation(s) (on changed lines — BLOCKING)",
         file=sys.stderr,
     )
     for diag in new_diags[:MAX_NEW_DIAGS_SHOWN]:
@@ -347,10 +347,7 @@ def main() -> int:
         print("[static-quality] No files to check.", file=sys.stderr)
         return 0
 
-    print(
-        f"[static-quality] Checking {len(files)} Python file(s) "
-        f"with changed-line gate."
-    )
+    print(f"[static-quality] Checking {len(files)} Python file(s) with changed-line gate.")
 
     # 1. Run ruff.
     all_diags = run_ruff(files)
