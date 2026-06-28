@@ -427,4 +427,4 @@ if __name__ == "__main__":
         "draw_odds": 3.20,
     }
 
-    features = create_match_features_from_dict(test_data)  # noqa: F821 (known corrupted code path)
+    features = create_match_features_from_dict(test_data)  # noqa: F821

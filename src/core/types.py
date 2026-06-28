@@ -4,7 +4,7 @@ V178 核心类型定义 - 零缺陷架构基础
 ==========================================
 
 设计原则:
-    - 类型安全: 封装所??ID 和状态，杜绝手动拼接字符??    - 不可变?? 所有值对象不可变，防止意外修??    - 自验?? 构造时自动验证格式，fail-fast  # noqa: W505
+    - 类型安全: 封装所??ID 和状态，杜绝手动拼接字符??    - 不可变?? 所有值对象不可变，防止意外修??    - 自验?? 构造时自动验证格式，fail-fast
 
 V178 升级:
     - MatchID 支持新格?? {league_id}_{season}_{external_id}
@@ -16,14 +16,13 @@ Date: 2026-03-03
 """
 
 from dataclasses import dataclass
-import logging  # noqa: F401
+import logging
 import re
 
 logger = logging.getLogger(__name__)
 
 
-# V4.42: 政忍统一 - 从售??源导?? MatchStatus`nfrom src.constants.shared_constants import MatchStatus`n`n# 原本?? MatchStatus 定义已移?? shared_constants.py
-# noqa: W505
+# V4.42: 政忍统一 - 从售??源导?? MatchStatus`nfrom src.constants.shared_constants import MatchStatus`n`n# 原本?? MatchStatus 定义已移?? shared_constants.py  # noqa: F821
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,7 +71,7 @@ class MatchID:
             raise ValueError(f"external_id 必须是数?? {self.external_id}")
 
         if not self.season or len(self.season) != 4 or not self.season.isdigit():
-            raise ValueError(f"season 必须??4 位数?? {self.season}")  # noqa: PLR2004
+            raise ValueError(f"season 必须??4 位数?? {self.season}")
 
     @classmethod
     def create(cls, external_id: str, season: str, league_id: str = "XX") -> "MatchID":
@@ -108,15 +107,15 @@ class MatchID:
         if not match_id_str:
             raise ValueError("match_id_str 不能为空")
 
-        # V178: 优先尝试新格??        new_match = cls._NEW_PATTERN.match(match_id_str.strip())
-        if new_match:
+        # V178: 优先尝试新格??        new_match = cls._NEW_PATTERN.match(match_id_str.strip())  # noqa: F821
+        if new_match:  # noqa: F821
             league_id, season, external_id = new_match.groups()  # noqa: F821
-            return cls(league_id=league_id, season=season, external_id=external_id)  # noqa: F821
+            return cls(league_id=league_id, season=season, external_id=external_id)
 
-        # V178: 向后兼容旧格??        legacy_match = cls._LEGACY_PATTERN.match(match_id_str.strip())
-        if legacy_match:
+        # V178: 向后兼容旧格??        legacy_match = cls._LEGACY_PATTERN.match(match_id_str.strip())  # noqa: F821
+        if legacy_match:  # noqa: F821
             external_id, season = legacy_match.groups()  # noqa: F821
-            return cls(league_id="XX", season=season, external_id=external_id)  # noqa: F821
+            return cls(league_id="XX", season=season, external_id=external_id)
 
         raise ValueError(
             f"无效??match_id 格式: {match_id_str}，"
@@ -150,7 +149,7 @@ class Season:
 
     # 常见赛季别名映射
     _ALIASES = {
-        "22/23": "2022",  # noqa: RUF012
+        "22/23": "2022",
         "23/24": "2023",
         "24/25": "2024",
         "2022-2023": "2022",
@@ -190,11 +189,11 @@ class Season:
 
         # 2 位年??(23 -> 2023)
         if season.isdigit() and len(season) == 2:
-            year = int(season)  # noqa: PLR2004
+            year = int(season)
             return f"20{year}" if year < 50 else f"19{year}"
-        # noqa: PLR2004
+
         logger.warning(f"无法识别的赛季格?? {season}，使用默认值")
-        return "0000"  # noqa: G004
+        return "0000"
 
 
 # ============================================================================
@@ -230,11 +229,11 @@ if __name__ == "__main__":
     mid2 = MatchID.parse("4507094_2324")
 
     # 属性访??
-    # 测试 MatchStatus
+    # 测试 MatchStatus  # noqa: F821
 
     # 从字符串解析
-    status1 = MatchStatus.from_string("finished")
-    # noqa: F821
+    status1 = MatchStatus.from_string("finished")  # noqa: F821
+
     # 判断
 
     # 测试 Season
