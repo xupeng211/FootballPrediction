@@ -124,7 +124,7 @@ git_branch_is_protected() {
 git_branch_is_preferred_workspace() {
   local branch="$1"
   case "$branch" in
-    security/*|feat/*)
+    security/*|feat/*|techdebt/*|fix/*)
       return 0
       ;;
     *)
@@ -992,28 +992,88 @@ run_python_architecture_guard() {
   fi
 }
 
+# Check whether a grep pattern matches on lines ADDED by the current change.
+# Returns 0 if the pattern is found on at least one added line (non-zero otherwise).
+# This prevents pre-existing violations in unchanged lines from blocking the PR.
+grep_added_lines() {
+  local file="$1"
+  local pattern="$2"
+  local git_base=''
+
+  if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    # Not a git repo — can't determine added lines, fall back to whole-file.
+    return 0
+  fi
+
+  # Resolve the diff base using the same logic as collect_changed_files.
+  if [[ -n "${GITHUB_BASE_REF:-}" ]] && git rev-parse --verify "origin/${GITHUB_BASE_REF}" >/dev/null 2>&1; then
+    git_base="$(git merge-base HEAD "origin/${GITHUB_BASE_REF}")"
+  elif ! git diff --cached --quiet --exit-code 2>/dev/null; then
+    # Staged changes: diff against HEAD
+    git diff --cached -- "$file" | grep -E '^\+' | grep -vE '^\+\+\+' | sed 's/^+//' | grep -qE "$pattern"
+    return $?
+  elif ! git diff --quiet --exit-code HEAD -- 2>/dev/null; then
+    # Unstaged changes: diff against HEAD
+    git diff HEAD -- "$file" | grep -E '^\+' | grep -vE '^\+\+\+' | sed 's/^+//' | grep -qE "$pattern"
+    return $?
+  elif git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+    git_base='HEAD~1'
+  else
+    # No base to diff against — treat as if pattern is on added lines (fail-safe).
+    return 0
+  fi
+
+  if [[ -n "$git_base" ]]; then
+    git diff "${git_base}...HEAD" -- "$file" | grep -E '^\+' | grep -vE '^\+\+\+' | sed 's/^+//' | grep -qE "$pattern"
+    return $?
+  fi
+
+  return 0
+}
+
 run_config_compat_guard() {
   log '执行 src.config_unified 兼容壳收口检查。'
 
+  local config_unified_pattern='(^|[[:space:]])(from|import)[[:space:]]+src\.config_unified([[:space:]]|$|\.)'
+
   mapfile -t changed_files < <(collect_changed_files | sed '/^$/d' | sort -u)
-  local findings=()
+  local new_violations=()
+  local existing_violations=()
   local file
 
   for file in "${changed_files[@]}"; do
     [[ -f "$file" ]] || continue
     case "$file" in
       src/*.py|src/**/*.py)
-        if grep -nE '(^|[[:space:]])(from|import)[[:space:]]+src\.config_unified([[:space:]]|$|\.)' "$file" >/dev/null 2>&1; then
-          findings+=("$file")
+        # First check: does the pattern exist anywhere in the file?
+        if ! grep -nE "$config_unified_pattern" "$file" >/dev/null 2>&1; then
+          continue
+        fi
+
+        # Second check: is the violation on an ADDED line?
+        if grep_added_lines "$file" "$config_unified_pattern"; then
+          new_violations+=("$file")
+        else
+          existing_violations+=("$file")
         fi
         ;;
     esac
   done
 
-  if [[ "${#findings[@]}" -gt 0 ]]; then
-    printf '[Gatekeeper] 命中内部兼容壳引用:\n' >&2
-    printf '  %s\n' "${findings[@]}" >&2
+  # Block on NEW violations (added/changed by this PR).
+  if [[ "${#new_violations[@]}" -gt 0 ]]; then
+    printf '[Gatekeeper] 命中内部兼容壳引用（本次 PR 新增行）:\n' >&2
+    printf '  %s\n' "${new_violations[@]}" >&2
     fail 'src/ 内部 Python 模块禁止继续引用 src.config_unified，请直接改用 src.config。'
+  fi
+
+  # Warn on pre-existing violations (not introduced by this PR).
+  if [[ "${#existing_violations[@]}" -gt 0 ]]; then
+    warn "检测到 ${#existing_violations[@]} 个文件存在历史 config_unified 引用（非本次 PR 引入，不阻断）："
+    for file in "${existing_violations[@]}"; do
+      printf '[Gatekeeper] WARN:   %s\n' "$file" >&2
+    done
+    warn '以上 config_unified 引用为历史遗留问题，建议在后续清理任务中处理，当前 PR 不因此阻断。'
   fi
 }
 
