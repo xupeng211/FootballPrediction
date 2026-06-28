@@ -146,17 +146,8 @@ def extract_features(elo_data, lineup_data, h2h_data):
 
 
 def get_db():
-    import psycopg2
-    from psycopg2.extras import RealDictCursor
-
-    return psycopg2.connect(
-        host=os.getenv("DB_HOST", "host.docker.internal"),
-        port=int(os.getenv("DB_PORT", 5432)),
-        database=os.getenv("DB_NAME", "football_db"),
-        user=os.getenv("DB_USER", "football_user"),
-        password=os.getenv("DB_PASSWORD", "football_pass"),
-        cursor_factory=RealDictCursor,
-    )
+    """Disable persistence access in this archive-only legacy file."""
+    raise RuntimeError("Archive-only legacy file: persistence access is disabled.")
 
 
 def load_temporal_data(conn):
@@ -166,47 +157,8 @@ def load_temporal_data(conn):
     训练集: <= 2025-12-31
     测试集: >= 2026-01-01
     """
-    cur = conn.cursor()
-
-    # 训练集 (2025年及以前)
-    cur.execute("""
-        SELECT m.match_id, m.actual_result, m.league_name, m.match_date,
-               m.home_score, m.away_score,
-               l.elo_features, l.lineup_features, l.h2h_features
-        FROM matches m
-        INNER JOIN l3_features l ON m.match_id = l.match_id
-        WHERE m.status = 'finished'
-          AND m.actual_result IN ('H', 'D', 'A')
-          AND m.match_date <= '2025-12-31'
-          AND l.elo_features IS NOT NULL AND l.elo_features != '{}'::jsonb
-          AND l.lineup_features IS NOT NULL AND l.lineup_features != '{}'::jsonb
-          AND l.h2h_features IS NOT NULL AND l.h2h_features != '{}'::jsonb
-        ORDER BY m.match_date ASC
-    """)
-    train_rows = cur.fetchall()
-    logger.info(f"训练集 (<=2025): {len(train_rows)} 场")
-
-    # 测试集 (2026年)
-    cur.execute("""
-        SELECT m.match_id, m.actual_result, m.league_name, m.match_date,
-               m.home_score, m.away_score,
-               l.elo_features, l.lineup_features, l.h2h_features
-        FROM matches m
-        INNER JOIN l3_features l ON m.match_id = l.match_id
-        WHERE m.status = 'finished'
-          AND m.actual_result IN ('H', 'D', 'A')
-          AND m.match_date >= '2026-01-01'
-          AND l.elo_features IS NOT NULL AND l.elo_features != '{}'::jsonb
-          AND l.lineup_features IS NOT NULL AND l.lineup_features != '{}'::jsonb
-          AND l.h2h_features IS NOT NULL AND l.h2h_features != '{}'::jsonb
-        ORDER BY m.match_date ASC
-    """)
-    test_rows = cur.fetchall()
-    logger.info(f"测试集 (>=2026): {len(test_rows)} 场")
-
-    cur.close()
-
-    return train_rows, test_rows
+    del conn
+    raise RuntimeError("Archive-only legacy file: persistence access is disabled.")
 
 
 def prepare_dataset(rows):
@@ -240,44 +192,8 @@ def audit_h2h_leakage(test_meta, conn):
 
     验证测试集的 H2H 数据不包含未来比赛结果
     """
-    logger.info("\n" + "=" * 70)
-    logger.info("  【H2H 除毒审计】检查测试集 H2H 是否包含未来数据")
-    logger.info("=" * 70)
-
-    cur = conn.cursor()
-
-    for i, m in enumerate(test_meta[:2]):
-        match_id = m["match_id"]
-
-        # 获取原始 H2H 数据
-        cur.execute(
-            """
-            SELECT h2h_features FROM l3_features WHERE match_id = %s
-        """,
-            (match_id,),
-        )
-        result = cur.fetchone()
-
-        if result:
-            h2h = result["h2h_features"]
-            if isinstance(h2h, str):
-                h2h = json.loads(h2h)
-
-            logger.info(f"\n  测试赛 {i + 1}: {match_id}")
-            logger.info(f"    比赛日期: {m['date']}")
-            logger.info(f"    比分: {m['home_score']}-{m['away_score']}")
-            logger.info(f"    H2H avg_goal_diff: {m['h2h_gd']}")
-            logger.info(f"    H2H home_win_ratio: {h2h.get('h2h_home_win_ratio', 'N/A')}")
-            logger.info(f"    H2H matches_count: {h2h.get('h2h_matches_count', 'N/A')}")
-
-            # 验证: 如果 h2h_avg_goal_diff 等于本场比赛净胜球，则可能泄露
-            match_gd = (m["home_score"] or 0) - (m["away_score"] or 0)
-            if abs(m["h2h_gd"] - match_gd) < 0.01 and match_gd != 0:
-                logger.warning("    ⚠️ 警告: H2H净胜球与本场比赛一致，可能存在泄露!")
-            else:
-                logger.info(f"    ✅ 通过: 本场净胜球={match_gd}, H2H净胜球={m['h2h_gd']} (不一致)")
-
-    cur.close()
+    del test_meta, conn
+    raise RuntimeError("Archive-only legacy file: persistence access is disabled.")
 
 
 def train_real_combat_model(X_train, y_train, X_test, y_test):
@@ -370,101 +286,8 @@ def train_real_combat_model(X_train, y_train, X_test, y_test):
 
 def predict_aaron_vs_everton(conn, model, scaler):
     """预测 Arsenal vs Everton"""
-    import math
-
-    logger.info("\n" + "=" * 70)
-    logger.info("  【置信度回落测试】Arsenal vs Everton")
-    logger.info("=" * 70)
-
-    cur = conn.cursor()
-
-    cur.execute("""
-        SELECT m.match_id, m.home_team, m.away_team, m.league_name, m.match_date,
-               l.elo_features, l.lineup_features, l.h2h_features
-        FROM matches m
-        INNER JOIN l3_features l ON m.match_id = l.match_id
-        WHERE m.match_date > NOW()
-          AND m.home_team ILIKE '%Arsenal%'
-          AND m.away_team ILIKE '%Everton%'
-        ORDER BY m.match_date ASC
-        LIMIT 1
-    """)
-
-    match = cur.fetchone()
-    cur.close()
-
-    if not match:
-        logger.warning("  未找到 Arsenal vs Everton 比赛")
-        return None
-
-    # 提取特征
-    elo = parse_jsonb(match["elo_features"])
-    lineup = parse_jsonb(match["lineup_features"])
-    h2h = parse_jsonb(match["h2h_features"])
-
-    home_elo = safe_float(elo.get("home_elo_pre", elo.get("home_elo", 1500)), 1500)
-    away_elo = safe_float(elo.get("away_elo_pre", elo.get("away_elo", 1500)), 1500)
-    elo_diff = safe_float(elo.get("elo_diff", home_elo - away_elo))
-    exp_home = safe_float(elo.get("expected_home_win", 0.45))
-    exp_away = safe_float(elo.get("expected_away_win", 0.30))
-
-    home_mv = safe_float(lineup.get("home_squad_value_eur", 150_000_000))
-    away_mv = safe_float(lineup.get("away_squad_value_eur", 150_000_000))
-    log_home = math.log10(home_mv) if home_mv > 0 else 18.0
-    log_away = math.log10(away_mv) if away_mv > 0 else 18.0
-    total_mv = home_mv + away_mv
-    mv_share = home_mv / total_mv if total_mv > 0 else 0.5
-
-    h2h_hwr = safe_float(h2h.get("h2h_home_win_ratio", 0.4))
-    h2h_dr = safe_float(h2h.get("h2h_draw_ratio", 0.25))
-    h2h_gd = safe_float(h2h.get("h2h_avg_goal_diff", 0))
-
-    features = np.array(
-        [
-            [
-                home_elo,
-                away_elo,
-                elo_diff,
-                exp_home,
-                exp_away,
-                log_home,
-                log_away,
-                mv_share,
-                h2h_hwr,
-                h2h_dr,
-                h2h_gd,
-            ]
-        ]
-    )
-
-    features_scaled = scaler.transform(features)
-    probs = model.predict_proba(features_scaled)[0]
-
-    logger.info(f"\n  {match['home_team']} vs {match['away_team']}")
-    logger.info(f"    联赛: {match['league_name']} | 时间: {str(match['match_date'])[:16]}")
-    logger.info(f"    Elo差: {elo_diff:+.1f} | 身价占比: {mv_share:.1%}")
-    logger.info(
-        f"    概率: 主{probs[2] * 100:.1f}% | 平{probs[1] * 100:.1f}% | 客{probs[0] * 100:.1f}%"
-    )
-
-    rec = (
-        "HOME"
-        if probs[2] >= probs[1] and probs[2] >= probs[0]
-        else "DRAW"
-        if probs[1] >= probs[0]
-        else "AWAY"
-    )
-    conf = max(probs)
-
-    logger.info(f"    ⚡ 推荐: {rec} (置信度: {conf * 100:.1f}%)")
-    logger.info(f"\n  📊 对比: 原版 88.8% → 降温版 {conf * 100:.1f}%")
-
-    return {
-        "home": match["home_team"],
-        "away": match["away_team"],
-        "probs": probs.tolist(),
-        "confidence": conf,
-    }
+    del conn, model, scaler
+    raise RuntimeError("Archive-only legacy file: persistence access is disabled.")
 
 
 def save_model(model, scaler, metrics, name="titan_v4466_real_combat"):
