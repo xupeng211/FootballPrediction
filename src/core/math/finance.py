@@ -12,9 +12,6 @@ Author: V4.45 Grand Unification Team
 Date: 2026-03-08
 """
 
-from decimal import Decimal
-from typing import Any
-
 
 def kelly_criterion(probability: float, odds: float) -> float:
     """
@@ -100,7 +97,7 @@ def sharpe_ratio(returns: list[float], risk_free_rate: float = 0.0) -> float:
 
     mean_return = sum(returns) / len(returns)
     variance = sum((r - mean_return) ** 2 for r in returns) / len(returns)
-    std_dev = variance ** 0.5
+    std_dev = variance**0.5
 
     if std_dev == 0:
         return 0.0
@@ -110,8 +107,8 @@ def sharpe_ratio(returns: list[float], risk_free_rate: float = 0.0) -> float:
 
 # 向后兼容导出
 __all__ = [
-    "kelly_criterion",
-    "fractional_kelly",
     "expected_value",
+    "fractional_kelly",
+    "kelly_criterion",
     "sharpe_ratio",
 ]

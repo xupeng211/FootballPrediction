@@ -18,6 +18,7 @@ def database_connection(dict_cursor: bool = True):
     pool = get_db_manager()
     return pool.get_connection()
 
+
 # 新增：重试装饰器
 try:
     from .retry import (

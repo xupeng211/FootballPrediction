@@ -70,21 +70,29 @@ DEFAULT_VALUES = {
 
 """
 
+
 def safe_float(v, d=0.0):
-    try: return float(v) if v is not None else d
-    except: return d
+    try:
+        return float(v) if v is not None else d
+    except:
+        return d
 
 
 def safe_log10(v, d=0.0):
-    try: return math.log10(v) if v and v > 0 else d
-    except: return d
+    try:
+        return math.log10(v) if v and v > 0 else d
+    except:
+        return d
 
 
 def parse_jsonb(d):
-    if not d: return {}
+    if not d:
+        return {}
     if isinstance(d, str):
-        try: return json.loads(d)
-        except: return {}
+        try:
+            return json.loads(d)
+        except:
+            return {}
     return d if isinstance(d, dict) else {}
 
 
@@ -96,26 +104,30 @@ def extract_features(elo_data, lineup_data, h2h_data):
     h2h = parse_jsonb(h2h_data)
 
     # Elo (5)
-    home_elo = safe_float(elo.get('home_elo_pre', elo.get('home_elo', 1500)), 1500)
-    away_elo = safe_float(elo.get('away_elo_pre', elo.get('away_elo', 1500)), 1500)
-    f['home_elo_pre'] = home_elo
-    f['away_elo_pre'] = away_elo
-    f['elo_diff'] = safe_float(elo.get('elo_diff', home_elo - away_elo))
-    f['expected_home_win'] = safe_float(elo.get('expected_home_win', 0.45))
-    f['expected_away_win'] = safe_float(elo.get('expected_away_win', 0.30))
+    home_elo = safe_float(elo.get("home_elo_pre", elo.get("home_elo", 1500)), 1500)
+    away_elo = safe_float(elo.get("away_elo_pre", elo.get("away_elo", 1500)), 1500)
+    f["home_elo_pre"] = home_elo
+    f["away_elo_pre"] = away_elo
+    f["elo_diff"] = safe_float(elo.get("elo_diff", home_elo - away_elo))
+    f["expected_home_win"] = safe_float(elo.get("expected_home_win", 0.45))
+    f["expected_away_win"] = safe_float(elo.get("expected_away_win", 0.30))
 
     # 身价 (3)
-    home_mv = safe_float(lineup.get('home_squad_value_eur', 0), 0)
-    away_mv = safe_float(lineup.get('away_squad_value_eur', 0), 0)
-    f['log_home_squad_value'] = safe_log10(home_mv, 18.0) if home_mv > 0 else 18.0
-    f['log_away_squad_value'] = safe_log10(away_mv, 18.0) if away_mv > 0 else 18.0
+    home_mv = safe_float(lineup.get("home_squad_value_eur", 0), 0)
+    away_mv = safe_float(lineup.get("away_squad_value_eur", 0), 0)
+    f["log_home_squad_value"] = safe_log10(home_mv, 18.0) if home_mv > 0 else 18.0
+    f["log_away_squad_value"] = safe_log10(away_mv, 18.0) if away_mv > 0 else 18.0
     total_mv = home_mv + away_mv
-    f['home_mv_share'] = home_mv / total_mv if total_mv > 0 else 0.5
+    f["home_mv_share"] = home_mv / total_mv if total_mv > 0 else 0.5
 
     # H2H (3)
-    f['h2h_home_win_ratio'] = safe_float(h2h.get('h2h_home_win_ratio', h2h.get('home_win_ratio', 0.4)), 0.4)
-    f['h2h_draw_ratio'] = safe_float(h2h.get('h2h_draw_ratio', h2h.get('draw_ratio', 0.25)), 0.25)
-    f['h2h_avg_goal_diff'] = safe_float(h2h.get('h2h_avg_goal_diff', h2h.get('avg_goal_diff', 0)), 0)
+    f["h2h_home_win_ratio"] = safe_float(
+        h2h.get("h2h_home_win_ratio", h2h.get("home_win_ratio", 0.4)), 0.4
+    )
+    f["h2h_draw_ratio"] = safe_float(h2h.get("h2h_draw_ratio", h2h.get("draw_ratio", 0.25)), 0.25)
+    f["h2h_avg_goal_diff"] = safe_float(
+        h2h.get("h2h_avg_goal_diff", h2h.get("avg_goal_diff", 0)), 0
+    )
 
     return {k: f.get(k, DEFAULT_VALUES.get(k, 0.0)) for k in TITAN_COMBAT_FEATURES}
 
@@ -123,13 +135,14 @@ def extract_features(elo_data, lineup_data, h2h_data):
 def get_db():
     import psycopg2
     from psycopg2.extras import RealDictCursor
+
     return psycopg2.connect(
-        host=os.getenv('DB_HOST', 'host.docker.internal'),
-        port=int(os.getenv('DB_PORT', 5432)),
-        database=os.getenv('DB_NAME', 'football_db'),
-        user=os.getenv('DB_USER', 'football_user'),
-        password=os.getenv('DB_PASSWORD', 'football_pass'),
-        cursor_factory=RealDictCursor
+        host=os.getenv("DB_HOST", "host.docker.internal"),
+        port=int(os.getenv("DB_PORT", 5432)),
+        database=os.getenv("DB_NAME", "football_db"),
+        user=os.getenv("DB_USER", "football_user"),
+        password=os.getenv("DB_PASSWORD", "football_pass"),
+        cursor_factory=RealDictCursor,
     )
 
 
@@ -188,20 +201,22 @@ def prepare_dataset(rows):
     features_list, labels, meta = [], [], []
 
     for row in rows:
-        f = extract_features(row['elo_features'], row['lineup_features'], row['h2h_features'])
+        f = extract_features(row["elo_features"], row["lineup_features"], row["h2h_features"])
         features_list.append(f)
-        labels.append(RESULT_MAP[row['actual_result']])
-        meta.append({
-            'match_id': row['match_id'],
-            'league': row['league_name'],
-            'date': str(row['match_date'])[:10],
-            'home_score': row['home_score'],
-            'away_score': row['away_score'],
-            'h2h_gd': f['h2h_avg_goal_diff']
-        })
+        labels.append(RESULT_MAP[row["actual_result"]])
+        meta.append(
+            {
+                "match_id": row["match_id"],
+                "league": row["league_name"],
+                "date": str(row["match_date"])[:10],
+                "home_score": row["home_score"],
+                "away_score": row["away_score"],
+                "h2h_gd": f["h2h_avg_goal_diff"],
+            }
+        )
 
     X = pd.DataFrame(features_list)[TITAN_COMBAT_FEATURES]
-    y = pd.Series(labels, name='result')
+    y = pd.Series(labels, name="result")
 
     return X, y, meta
 
@@ -219,20 +234,23 @@ def audit_h2h_leakage(test_meta, conn):
     cur = conn.cursor()
 
     for i, m in enumerate(test_meta[:2]):
-        match_id = m['match_id']
+        match_id = m["match_id"]
 
         # 获取原始 H2H 数据
-        cur.execute("""
+        cur.execute(
+            """
             SELECT h2h_features FROM l3_features WHERE match_id = %s
-        """, (match_id,))
+        """,
+            (match_id,),
+        )
         result = cur.fetchone()
 
         if result:
-            h2h = result['h2h_features']
+            h2h = result["h2h_features"]
             if isinstance(h2h, str):
                 h2h = json.loads(h2h)
 
-            logger.info(f"\n  测试赛 {i+1}: {match_id}")
+            logger.info(f"\n  测试赛 {i + 1}: {match_id}")
             logger.info(f"    比赛日期: {m['date']}")
             logger.info(f"    比分: {m['home_score']}-{m['away_score']}")
             logger.info(f"    H2H avg_goal_diff: {m['h2h_gd']}")
@@ -240,9 +258,9 @@ def audit_h2h_leakage(test_meta, conn):
             logger.info(f"    H2H matches_count: {h2h.get('h2h_matches_count', 'N/A')}")
 
             # 验证: 如果 h2h_avg_goal_diff 等于本场比赛净胜球，则可能泄露
-            match_gd = (m['home_score'] or 0) - (m['away_score'] or 0)
-            if abs(m['h2h_gd'] - match_gd) < 0.01 and match_gd != 0:
-                logger.warning(f"    ⚠️ 警告: H2H净胜球与本场比赛一致，可能存在泄露!")
+            match_gd = (m["home_score"] or 0) - (m["away_score"] or 0)
+            if abs(m["h2h_gd"] - match_gd) < 0.01 and match_gd != 0:
+                logger.warning("    ⚠️ 警告: H2H净胜球与本场比赛一致，可能存在泄露!")
             else:
                 logger.info(f"    ✅ 通过: 本场净胜球={match_gd}, H2H净胜球={m['h2h_gd']} (不一致)")
 
@@ -269,21 +287,24 @@ def train_real_combat_model(X_train, y_train, X_test, y_test):
     # 类别权重
     weights = np.ones(len(y_train))
     for i, v in enumerate(y_train):
-        if v == 1: weights[i] = 1.2
-        elif v == 0: weights[i] = 1.1
+        if v == 1:
+            weights[i] = 1.2
+        elif v == 0:
+            weights[i] = 1.1
 
     # 降温参数
     model = xgb.XGBClassifier(
-        objective='multi:softprob', num_class=3,
-        max_depth=3,              # 5 -> 3
+        objective="multi:softprob",
+        num_class=3,
+        max_depth=3,  # 5 -> 3
         learning_rate=0.05,
-        n_estimators=80,          # 300 -> 80
+        n_estimators=80,  # 300 -> 80
         subsample=0.8,
         colsample_bytree=0.8,
-        reg_alpha=0.5,            # 增强正则化
-        reg_lambda=2.0,           # 增强正则化
+        reg_alpha=0.5,  # 增强正则化
+        reg_lambda=2.0,  # 增强正则化
         random_state=42,
-        n_jobs=-1
+        n_jobs=-1,
     )
 
     start = datetime.now()
@@ -296,7 +317,7 @@ def train_real_combat_model(X_train, y_train, X_test, y_test):
 
     # 计算指标
     accuracy = accuracy_score(y_test, y_pred)
-    f1 = f1_score(y_test, y_pred, average='weighted')
+    f1 = f1_score(y_test, y_pred, average="weighted")
     ll = log_loss(y_test, y_proba)
 
     logger.info(f"  训练耗时: {train_time:.2f}s")
@@ -306,8 +327,8 @@ def train_real_combat_model(X_train, y_train, X_test, y_test):
 
     # 混淆矩阵
     cm = confusion_matrix(y_test, y_pred)
-    logger.info(f"\n  混淆矩阵:")
-    logger.info(f"           预测: AWAY  DRAW  HOME")
+    logger.info("\n  混淆矩阵:")
+    logger.info("           预测: AWAY  DRAW  HOME")
     for i, row_name in enumerate(["实际:AWAY", "实际:DRAW", "实际:HOME"]):
         logger.info(f"    {row_name}  {cm[i][0]:5d}  {cm[i][1]:5d}  {cm[i][2]:5d}")
 
@@ -315,20 +336,20 @@ def train_real_combat_model(X_train, y_train, X_test, y_test):
     importance = dict(zip(TITAN_COMBAT_FEATURES, model.feature_importances_))
     importance = dict(sorted(importance.items(), key=lambda x: -x[1]))
 
-    logger.info(f"\n  特征重要性:")
+    logger.info("\n  特征重要性:")
     for i, (name, imp) in enumerate(list(importance.items())[:6], 1):
         bar = "█" * int(imp * 50)
         logger.info(f"    {i}. {name.ljust(25)} {imp:.4f} {bar}")
 
     metrics = {
-        'accuracy': accuracy,
-        'f1': f1,
-        'log_loss': ll,
-        'train_samples': len(X_train),
-        'test_samples': len(X_test),
-        'train_time': train_time,
-        'feature_importance': importance,
-        'confusion_matrix': cm.tolist()
+        "accuracy": accuracy,
+        "f1": f1,
+        "log_loss": ll,
+        "train_samples": len(X_train),
+        "test_samples": len(X_test),
+        "train_time": train_time,
+        "feature_importance": importance,
+        "confusion_matrix": cm.tolist(),
     }
 
     return model, scaler, metrics
@@ -364,30 +385,44 @@ def predict_aaron_vs_everton(conn, model, scaler):
         return None
 
     # 提取特征
-    elo = parse_jsonb(match['elo_features'])
-    lineup = parse_jsonb(match['lineup_features'])
-    h2h = parse_jsonb(match['h2h_features'])
+    elo = parse_jsonb(match["elo_features"])
+    lineup = parse_jsonb(match["lineup_features"])
+    h2h = parse_jsonb(match["h2h_features"])
 
-    home_elo = safe_float(elo.get('home_elo_pre', elo.get('home_elo', 1500)), 1500)
-    away_elo = safe_float(elo.get('away_elo_pre', elo.get('away_elo', 1500)), 1500)
-    elo_diff = safe_float(elo.get('elo_diff', home_elo - away_elo))
-    exp_home = safe_float(elo.get('expected_home_win', 0.45))
-    exp_away = safe_float(elo.get('expected_away_win', 0.30))
+    home_elo = safe_float(elo.get("home_elo_pre", elo.get("home_elo", 1500)), 1500)
+    away_elo = safe_float(elo.get("away_elo_pre", elo.get("away_elo", 1500)), 1500)
+    elo_diff = safe_float(elo.get("elo_diff", home_elo - away_elo))
+    exp_home = safe_float(elo.get("expected_home_win", 0.45))
+    exp_away = safe_float(elo.get("expected_away_win", 0.30))
 
-    home_mv = safe_float(lineup.get('home_squad_value_eur', 150_000_000))
-    away_mv = safe_float(lineup.get('away_squad_value_eur', 150_000_000))
+    home_mv = safe_float(lineup.get("home_squad_value_eur", 150_000_000))
+    away_mv = safe_float(lineup.get("away_squad_value_eur", 150_000_000))
     log_home = math.log10(home_mv) if home_mv > 0 else 18.0
     log_away = math.log10(away_mv) if away_mv > 0 else 18.0
     total_mv = home_mv + away_mv
     mv_share = home_mv / total_mv if total_mv > 0 else 0.5
 
-    h2h_hwr = safe_float(h2h.get('h2h_home_win_ratio', 0.4))
-    h2h_dr = safe_float(h2h.get('h2h_draw_ratio', 0.25))
-    h2h_gd = safe_float(h2h.get('h2h_avg_goal_diff', 0))
+    h2h_hwr = safe_float(h2h.get("h2h_home_win_ratio", 0.4))
+    h2h_dr = safe_float(h2h.get("h2h_draw_ratio", 0.25))
+    h2h_gd = safe_float(h2h.get("h2h_avg_goal_diff", 0))
 
-    features = np.array([[home_elo, away_elo, elo_diff, exp_home, exp_away,
-                          log_home, log_away, mv_share,
-                          h2h_hwr, h2h_dr, h2h_gd]])
+    features = np.array(
+        [
+            [
+                home_elo,
+                away_elo,
+                elo_diff,
+                exp_home,
+                exp_away,
+                log_home,
+                log_away,
+                mv_share,
+                h2h_hwr,
+                h2h_dr,
+                h2h_gd,
+            ]
+        ]
+    )
 
     features_scaled = scaler.transform(features)
     probs = model.predict_proba(features_scaled)[0]
@@ -395,20 +430,27 @@ def predict_aaron_vs_everton(conn, model, scaler):
     logger.info(f"\n  {match['home_team']} vs {match['away_team']}")
     logger.info(f"    联赛: {match['league_name']} | 时间: {str(match['match_date'])[:16]}")
     logger.info(f"    Elo差: {elo_diff:+.1f} | 身价占比: {mv_share:.1%}")
-    logger.info(f"    概率: 主{probs[2]*100:.1f}% | 平{probs[1]*100:.1f}% | 客{probs[0]*100:.1f}%")
+    logger.info(
+        f"    概率: 主{probs[2] * 100:.1f}% | 平{probs[1] * 100:.1f}% | 客{probs[0] * 100:.1f}%"
+    )
 
-    rec = "HOME" if probs[2] >= probs[1] and probs[2] >= probs[0] else \
-          "DRAW" if probs[1] >= probs[0] else "AWAY"
+    rec = (
+        "HOME"
+        if probs[2] >= probs[1] and probs[2] >= probs[0]
+        else "DRAW"
+        if probs[1] >= probs[0]
+        else "AWAY"
+    )
     conf = max(probs)
 
-    logger.info(f"    ⚡ 推荐: {rec} (置信度: {conf*100:.1f}%)")
-    logger.info(f"\n  📊 对比: 原版 88.8% → 降温版 {conf*100:.1f}%")
+    logger.info(f"    ⚡ 推荐: {rec} (置信度: {conf * 100:.1f}%)")
+    logger.info(f"\n  📊 对比: 原版 88.8% → 降温版 {conf * 100:.1f}%")
 
     return {
-        'home': match['home_team'],
-        'away': match['away_team'],
-        'probs': probs.tolist(),
-        'confidence': conf
+        "home": match["home_team"],
+        "away": match["away_team"],
+        "probs": probs.tolist(),
+        "confidence": conf,
     }
 
 
@@ -420,31 +462,28 @@ def save_model(model, scaler, metrics, name="titan_v4466_real_combat"):
     joblib.dump(scaler, str(scaler_path))
 
     meta = {
-        'version': 'V4.46.6-REAL-COMBAT',
-        'created_at': datetime.now().isoformat(),
-        'feature_names': TITAN_COMBAT_FEATURES,
-        'training_params': {
-            'n_estimators': 80,
-            'max_depth': 3,
-            'learning_rate': 0.05,
-            'reg_alpha': 0.5,
-            'reg_lambda': 2.0
+        "version": "V4.46.6-REAL-COMBAT",
+        "created_at": datetime.now().isoformat(),
+        "feature_names": TITAN_COMBAT_FEATURES,
+        "training_params": {
+            "n_estimators": 80,
+            "max_depth": 3,
+            "learning_rate": 0.05,
+            "reg_alpha": 0.5,
+            "reg_lambda": 2.0,
         },
-        'temporal_split': {
-            'train': '<= 2025-12-31',
-            'test': '>= 2026-01-01'
+        "temporal_split": {"train": "<= 2025-12-31", "test": ">= 2026-01-01"},
+        "metrics": {
+            "test_accuracy": metrics["accuracy"],
+            "test_f1": metrics["f1"],
+            "test_log_loss": metrics["log_loss"],
+            "train_samples": metrics["train_samples"],
+            "test_samples": metrics["test_samples"],
         },
-        'metrics': {
-            'test_accuracy': metrics['accuracy'],
-            'test_f1': metrics['f1'],
-            'test_log_loss': metrics['log_loss'],
-            'train_samples': metrics['train_samples'],
-            'test_samples': metrics['test_samples']
-        },
-        'feature_importance': {k: float(v) for k, v in metrics['feature_importance'].items()}
+        "feature_importance": {k: float(v) for k, v in metrics["feature_importance"].items()},
     }
 
-    with open(MODEL_DIR / f"{name}_metadata.json", 'w') as f:
+    with open(MODEL_DIR / f"{name}_metadata.json", "w") as f:
         json.dump(meta, f, indent=2)
 
     logger.info(f"\n  模型已保存: {model_path}")
@@ -472,8 +511,12 @@ def main():
         X_train, y_train, train_meta = prepare_dataset(train_rows)
         X_test, y_test, test_meta = prepare_dataset(test_rows)
 
-        logger.info(f"\n  训练集标签分布: H={sum(y_train==2)}, D={sum(y_train==1)}, A={sum(y_train==0)}")
-        logger.info(f"  测试集标签分布: H={sum(y_test==2)}, D={sum(y_test==1)}, A={sum(y_test==0)}")
+        logger.info(
+            f"\n  训练集标签分布: H={sum(y_train == 2)}, D={sum(y_train == 1)}, A={sum(y_train == 0)}"
+        )
+        logger.info(
+            f"  测试集标签分布: H={sum(y_test == 2)}, D={sum(y_test == 1)}, A={sum(y_test == 0)}"
+        )
 
         # 2. H2H 除毒审计
         audit_h2h_leakage(test_meta, conn)
@@ -502,5 +545,5 @@ def main():
         conn.close()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

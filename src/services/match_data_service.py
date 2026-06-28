@@ -2,17 +2,13 @@
 """V4.42 MatchDataService - 比赛数据服务统一组件"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-import json
 import logging
-from typing import Any
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
 
 from src.config_unified import get_config, get_database_url
-from src.constants.shared_constants import MatchStatus
 
 logger = logging.getLogger("V4.42.MatchDataService")
 
@@ -20,6 +16,7 @@ logger = logging.getLogger("V4.42.MatchDataService")
 @dataclass
 class MatchAlignment:
     """比赛对齐数据"""
+
     match_id: str
     fotmob_id: str | None = None
     oddsportal_hash: str | None = None

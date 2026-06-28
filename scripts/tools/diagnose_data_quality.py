@@ -1,14 +1,8 @@
 #!/usr/bin/env python3
 
-import json
-import psycopg2
-from datetime import datetime
 import sys
-import os
 
-sys.path.append('..')
-import traceback
-from datetime import datetime
+sys.path.append("..")
 
 logger = None
 """
@@ -37,12 +31,12 @@ V201.9 数据质量诊断工具
 # [FIXED-JS] this._log('warn', f'无法解析 raw_data: {err}')
 # [FIXED-JS] return createEmptyFeatures()
 # [FIXED-JS] 59, else {
-            # 如果有 lineup 数据，使用空数组作为默认值
+# 如果有 lineup 数据，使用空数组作为默认值
 # [FIXED-JS] if not lineup_data or lineup is空，返回 default值
 # [FIXED-JS] }
 # [FIXED-JS] return createEmptyFeatures();
 # [FIXED-JS] 59, else {
-            # 如果有阵容数据但提取特征
+# 如果有阵容数据但提取特征
 # [FIXED-JS] if (lineup.length > 0) {
 # [FIXED-JS] features[`${prefix}_starters_count`] = lineup_home.length || 0
 # [FIXED-JS] features[`${prefix}_injury_count`] = 0
@@ -56,7 +50,7 @@ V201.9 数据质量诊断工具
 
 
 # [FIXED-JS] return this._log('info', '✅ 诊断完成')
-            # 2. 打印数据质量报告
+# 2. 打印数据质量报告
 # [FIXED-JS] print(f"  {home_team, home_team} 瀜信息...")
 # [FIXED-JS] print(f"  总计: {total} 场 | 找到 {home_team} 瀜 {awayTeam} 鈅")
 # [FIXED-JS] print(f"  awayTeam ({homeTeam} awayTeam}): 皂 {team}) 的 lineup结构')

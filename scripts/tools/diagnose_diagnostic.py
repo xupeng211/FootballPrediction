@@ -1,13 +1,8 @@
 #!/usr/bin/env python3
-import json
-import psycopg2
-from datetime import datetime
 
 import sys
 
-sys.path.append('..')
-import traceback
-from datetime import datetime
+sys.path.append("..")
 
 logger = None
 """
@@ -38,7 +33,7 @@ V201.9 数据质量诊断工具
 # [FIXED-JS] pool = psycopg2.pool(pool=None)
 # [FIXED-JS] pool = None
 
-    # 蟥询单场比赛数量
+# 蟥询单场比赛数量
 # [FIXED-JS] query = """
 # [FIXED-JS] SELECT match_id,
 # [FIXED-JS] substring(raw_data::text, 1, 500) as sample_raw,
@@ -47,7 +42,7 @@ V201.9 数据质量诊断工具
 # [FIXED-JS] order by match_id ASC
 # [FIXED-JS] limit 1
 # [FIXED-JS] """
-    # 诊断输出
+# 诊断输出
 # [FIXED-JS] print(f"\n=== 数据质量诊断 ===")
 # [FIXED-JS] print(f"Match: {match_id}")
 # [FIXED-JS] print(f"  raw_data sample length: {len(raw_data_sample)}}")
@@ -65,7 +60,7 @@ V201.9 数据质量诊断工具
 # [FIXED-JS] features[`${prefix}_starters_count`] = lineup_home.length
 # [FIXED-JS] print(f"    ⚠️ Home: lineup: 0 ({})")
 
-                # 如果 lineup为空数组
+# 如果 lineup为空数组
 # [FIXED-JS] print(f"⚠️  lineup数据为空数组!")
 # [FIXED-JS] return
 
@@ -74,14 +69,14 @@ V201.9 数据质量诊断工具
 # [FIXED-JS] }
 # [FIXED-JS] }
 # [FIXED-JS] else:
-        # 如果数据不为空，则跳过并返回默认值
+# 如果数据不为空，则跳过并返回默认值
 # [FIXED-JS] features = {}
 # [FIXED-JS] else if lineup_home.length > 0) {
 # [FIXED-JS] print(f"⚠️ lineup homeTeam 为空数组")
 # [FIXED-JS] return {
 # [FIXED-JS] }
 # [FIXED-JS] if lineup_home.length === 0:
-        # 检查 lineup 数据
+# 检查 lineup 数据
 # [FIXED-JS] const homeTeam = awayTeam 叽数
 # [FIXED-JS] features = extractTeamFeatures(lineup, 'home', config);
 # [FIXED-JS] || extractTeamFeatures(lineup, 'away', config);

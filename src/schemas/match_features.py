@@ -13,7 +13,7 @@ from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validat
 
 
 class WeatherCondition(str, Enum):
-    """                  """
+    """ """
 
     SUNNY = "sunny"
     RAINY = "rainy"
@@ -24,7 +24,7 @@ class WeatherCondition(str, Enum):
 
 
 class FeatureVersion(str, Enum):
-    """                  """
+    """ """
 
     V1_0 = "1.0"
     V1_1 = "1.1"
@@ -32,16 +32,17 @@ class FeatureVersion(str, Enum):
 
 
 class DataSource(str, Enum):
-    """               ?""
+    """?""
 
-    FOTMOB_API = "fotmob_api"
-    BET365_API = "bet365_api"
-    MANUAL = "manual"
-    IMPORTED = "imported"
+        FOTMOB_API = "fotmob_api"
+        BET365_API = "bet365_api"
+        MANUAL = "manual"
+        IMPORTED = "imported"
 
 
-class MatchFeatures(BaseModel):
+    class MatchFeatures(BaseModel):
     """
+
     """
                        - 106
 
@@ -91,7 +92,6 @@ class MatchFeatures(BaseModel):
 
     ?    """
 
-
     # ====================              (10   ? ====================
     external_id: str = Field(..., description="            ID")
     match_time: datetime = Field(..., description="            ")
@@ -109,12 +109,24 @@ class MatchFeatures(BaseModel):
     away_xg: float | None = Field(None, ge=0.0, description="                     ?")
     xg_total: float | None = Field(None, ge=0.0, description="                  ")
     xg_diff: float | None = Field(None, description="                  ?")
-    home_xg_first_half: float | None = Field(None, ge=0.0, description="                              ")
-    away_xg_first_half: float | None = Field(None, ge=0.0, description="                              ")
-    xg_total_first_half: float | None = Field(None, ge=0.0, description="                           ")
-    home_xg_second_half: float | None = Field(None, ge=0.0, description="                              ")
-    away_xg_second_half: float | None = Field(None, ge=0.0, description="                              ")
-    xg_total_second_half: float | None = Field(None, ge=0.0, description="                           ")
+    home_xg_first_half: float | None = Field(
+        None, ge=0.0, description="                              "
+    )
+    away_xg_first_half: float | None = Field(
+        None, ge=0.0, description="                              "
+    )
+    xg_total_first_half: float | None = Field(
+        None, ge=0.0, description="                           "
+    )
+    home_xg_second_half: float | None = Field(
+        None, ge=0.0, description="                              "
+    )
+    away_xg_second_half: float | None = Field(
+        None, ge=0.0, description="                              "
+    )
+    xg_total_second_half: float | None = Field(
+        None, ge=0.0, description="                           "
+    )
     xg_dynamic_trend: str | None = Field(None, max_length=20, description="xG            ?")
 
     # ====================                ?(8   ? ====================
@@ -128,36 +140,8 @@ class MatchFeatures(BaseModel):
         None, ge=0.0, le=100.0, description="                        "
     )
     possession_first_half_diff: float | None = Field(
-        None, ge=-100.0, le=100.0, description="                        ?")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        None, ge=-100.0, le=100.0, description="                        ?"
+    )
 
     home_possession_second_half: float | None = Field(
         None, ge=0.0, le=100.0, description="                        "
@@ -182,8 +166,12 @@ class MatchFeatures(BaseModel):
     home_shots_blocked: int | None = Field(None, ge=0, description="                        ")
     away_shots_blocked: int | None = Field(None, ge=0, description="                        ")
     shots_blocked_diff: int | None = Field(None, description="                        ?")
-    home_shot_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="                     ?")
-    away_shot_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="                     ?")
+    home_shot_accuracy: float | None = Field(
+        None, ge=0.0, le=100.0, description="                     ?"
+    )
+    away_shot_accuracy: float | None = Field(
+        None, ge=0.0, le=100.0, description="                     ?"
+    )
     shot_accuracy_diff: float | None = Field(
         None, ge=-100.0, le=100.0, description="                     ?"
     )
@@ -219,8 +207,12 @@ class MatchFeatures(BaseModel):
     home_passes: int | None = Field(None, ge=0, description="               ?")
     away_passes: int | None = Field(None, ge=0, description="               ?")
     passes_diff: int | None = Field(None, description="               ?")
-    home_pass_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="                     ?")
-    away_pass_accuracy: float | None = Field(None, ge=0.0, le=100.0, description="                     ?")
+    home_pass_accuracy: float | None = Field(
+        None, ge=0.0, le=100.0, description="                     ?"
+    )
+    away_pass_accuracy: float | None = Field(
+        None, ge=0.0, le=100.0, description="                     ?"
+    )
     pass_accuracy_diff: float | None = Field(
         None, ge=-100.0, le=100.0, description="                     ?"
     )
@@ -252,8 +244,12 @@ class MatchFeatures(BaseModel):
     odds_movement_home: float | None = Field(None, description="                  ")
     odds_movement_away: float | None = Field(None, description="                  ")
     odds_movement_draw: float | None = Field(None, description="                  ")
-    implied_home_win_prob: float | None = Field(None, ge=0.0, le=1.0, description="                  ")
-    implied_away_win_prob: float | None = Field(None, ge=0.0, le=1.0, description="                  ")
+    implied_home_win_prob: float | None = Field(
+        None, ge=0.0, le=1.0, description="                  "
+    )
+    implied_away_win_prob: float | None = Field(
+        None, ge=0.0, le=1.0, description="                  "
+    )
     implied_draw_prob: float | None = Field(None, ge=0.0, le=1.0, description="                  ")
 
     # ====================              (3   ? ====================
@@ -279,7 +275,9 @@ class MatchFeatures(BaseModel):
     # ====================                      ?(3   ? ====================
     weather_condition: WeatherCondition | None = Field(None, description="            ")
     temperature: float | None = Field(None, description="      (         ?")
-    home_advantage_score: float | None = Field(None, ge=0.0, le=1.0, description="                  ")
+    home_advantage_score: float | None = Field(
+        None, ge=0.0, le=1.0, description="                  "
+    )
 
     # ====================                   ?(6   ? ====================
     expected_assists_home: float | None = Field(None, ge=0.0, description="                     ?")
@@ -296,8 +294,12 @@ class MatchFeatures(BaseModel):
     # ====================          ?(9   ? ====================
     raw_data_source: DataSource = Field(DataSource.FOTMOB_API, description="         ?")
     feature_version: FeatureVersion = Field(FeatureVersion.V1_0, description="            ")
-    feature_quality_score: float | None = Field(None, ge=0.0, le=1.0, description="                  ")
-    extraction_confidence: float | None = Field(None, ge=0.0, le=1.0, description="               ?")
+    feature_quality_score: float | None = Field(
+        None, ge=0.0, le=1.0, description="                  "
+    )
+    extraction_confidence: float | None = Field(
+        None, ge=0.0, le=1.0, description="               ?"
+    )
     data_completeness_score: float | None = Field(
         None, ge=0.0, le=1.0, description="                     ?"
     )
@@ -319,39 +321,13 @@ class MatchFeatures(BaseModel):
     @computed_field
     @property
     def total_features_count(self) -> int:
-        """               ?"""
+        """?"""
         return 106
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     @computed_field
     @property
     def has_complete_xg_data(self) -> bool:
-        """                  xG      """
-
-
+        """xG"""
 
         return all(
             [
@@ -365,7 +341,7 @@ class MatchFeatures(BaseModel):
     @computed_field
     @property
     def has_complete_odds_data(self) -> bool:
-        """                              """
+        """ """
         return all(
             [
                 self.home_opening_odds is not None,
@@ -376,7 +352,7 @@ class MatchFeatures(BaseModel):
 
 
 class MatchFeaturesTrainingBatch(BaseModel):
-    """                        """
+    """ """
 
     features: list[MatchFeatures]
     batch_id: str
@@ -387,7 +363,7 @@ class MatchFeaturesTrainingBatch(BaseModel):
     @field_validator("batch_size", mode="before")
     @classmethod
     def validate_batch_size(cls, v, info):
-        """                  """
+        """ """
         values = info.data if hasattr(info, "data") else {}
         if "features" in values:
             return len(values["features"])
@@ -397,7 +373,7 @@ class MatchFeaturesTrainingBatch(BaseModel):
 
 
 class FeatureExtractionRequest(BaseModel):
-    """                        """
+    """ """
 
     match_ids: list[str]
     extraction_mode: str = Field("full", pattern="^(full|incremental)$")
@@ -407,7 +383,7 @@ class FeatureExtractionRequest(BaseModel):
 
 
 class FeatureExtractionResponse(BaseModel):
-    """                        """
+    """ """
 
     request_id: str
     status: str = Field(..., pattern="^(success|partial|failed)$")
@@ -420,23 +396,13 @@ class FeatureExtractionResponse(BaseModel):
     errors: list[str] | None = None
     metadata: dict[str, Any] | None = None
 
-
-#                      ?def create_match_features_from_dict(data: dict[str, Any]) -> MatchFeatures:
+    #                      ?def create_match_features_from_dict(data: dict[str, Any]) -> MatchFeatures:
     """               MatchFeatures      """
     return MatchFeatures(**data)
 
 
 def validate_feature_completeness(features: MatchFeatures) -> float:
-    """                                             ?"""
-
-
-
-
-
-
-
-
-
+    """?"""
 
     total_fields = 106
     non_null_fields = sum(
@@ -446,7 +412,6 @@ def validate_feature_completeness(features: MatchFeatures) -> float:
 
 
 if __name__ == "__main__":
-    #
     test_data = {
         "external_id": "test_123",
         "match_time": "2024-01-15T20:00:00Z",
@@ -462,4 +427,3 @@ if __name__ == "__main__":
     }
 
     features = create_match_features_from_dict(test_data)
-

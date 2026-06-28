@@ -35,20 +35,13 @@ class MatchStatus(str, Enum):
 
 
 class DataSourceType(str, Enum):
-    """?"""""
-
-
-
-
-
-
-
+    """?""" ""
 
     FOTMOB = "Source_F"  #                   ???    ODDSPORTAL = "Source_O"  #
 
 
 class MatchQuality(str, Enum):
-    """                  """
+    """ """
 
     EXCELLENT = "Excellent"  # Fusion_Score >= 90
     GOOD = "Good"  # 80 <= Fusion_Score < 90
@@ -118,23 +111,22 @@ class SourceOData(BaseModel):
                       :
     -       URL (oddsportal_hash)
     -              (init/final odds)
-    -             ???    """
+    -             ???"""
 
     match_id: str = Field(..., min_length=1, description="                  ???")
-    oddsportal_hash: str | None = Field(None, max_length=8, description="OddsPortal        (8      )")
+    oddsportal_hash: str | None = Field(
+        None, max_length=8, description="OddsPortal        (8      )"
+    )
     oddsportal_url: str | None = Field(None, max_length=500, description="OddsPortal URL")
 
-    #
     init_h: float | None = Field(None, ge=1.01, le=50.00, description="                  ")
     init_d: float | None = Field(None, ge=1.01, le=50.00, description="                  ")
     init_a: float | None = Field(None, ge=1.01, le=50.00, description="                  ")
 
-    #
     final_h: float | None = Field(None, ge=1.01, le=50.00, description="                  ")
     final_d: float | None = Field(None, ge=1.01, le=50.00, description="                  ")
     final_a: float | None = Field(None, ge=1.01, le=50.00, description="                  ")
 
-    #
     integrity_score: float | None = Field(
         None, ge=0.90, le=1.20, description="            ???(1/P1+1/P2+1/P3)"
     )
@@ -176,13 +168,14 @@ class MatchSchema(BaseModel):
     season: str = Field(..., min_length=1, max_length=20, description="      ")
     status: MatchStatus = Field(default=MatchStatus.FIXTURE, description="         ?")
 
-    #
     home_score: int | None = Field(None, ge=0, description="            ")
     away_score: int | None = Field(None, ge=0, description="            ")
     venue_name: str | None = Field(None, max_length=200, description="            ")
 
     # ===              (       Source_O) ===
-    oddsportal_hash: str | None = Field(None, max_length=8, description="OddsPortal        (8      )")
+    oddsportal_hash: str | None = Field(
+        None, max_length=8, description="OddsPortal        (8      )"
+    )
     oddsportal_url: str | None = Field(None, max_length=500, description="OddsPortal URL")
 
     # ===              (       Source_O) ===
@@ -201,7 +194,9 @@ class MatchSchema(BaseModel):
     source_f_available: bool = Field(default=False, description="Source_F                   ")
     source_o_available: bool = Field(default=False, description="Source_O                   ")
     fusion_score: float = Field(default=0.0, ge=0.0, le=100.0, description="             (0-100)")
-    quality_rating: MatchQuality = Field(default=MatchQuality.POOR, description="                  ")
+    quality_rating: MatchQuality = Field(
+        default=MatchQuality.POOR, description="                  "
+    )
 
     #       ???    l1_collected_at: datetime | None = Field(None, description="L1             ")
     l3_collected_at: datetime | None = Field(None, description="L3             ")
@@ -209,13 +204,13 @@ class MatchSchema(BaseModel):
 
     @model_validator(mode="after")
     def calculate_fusion_score(self) -> "MatchSchema":
-        """                   (Fusion_Score)
+        """(Fusion_Score)
 
                      (                        ???:
         -             ???(50%): match_id, home_team, away_team, match_time, league_name, season
         -              (50%): oddsportal_hash
 
-              :                          metrics_multi_source_data                   ???                                      ???        """
+              :                          metrics_multi_source_data                   ???                                      ???"""
         score = 0.0
 
         #             ???(50%)
@@ -235,7 +230,6 @@ class MatchSchema(BaseModel):
 
         self.fusion_score = score
 
-        #
         if score >= 90:
             self.quality_rating = MatchQuality.EXCELLENT
         elif score >= 80:
@@ -271,7 +265,7 @@ class MatchSchema(BaseModel):
 
     @classmethod
     def from_database_row(cls, row: dict[str, Any]) -> "MatchSchema":
-        """                  ???MatchSchema
+        """???MatchSchema
 
         Args:
             row:                         ???
@@ -347,5 +341,3 @@ __all__ = [
     "SourceFData",
     "SourceOData",
 ]
-
-

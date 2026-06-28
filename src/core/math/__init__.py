@@ -10,13 +10,8 @@ Author: V4.45 Grand Unification Team
 Date: 2026-03-08
 """
 
-from .finance import (
-    expected_value,
-    fractional_kelly,
-    kelly_criterion,
-    sharpe_ratio,
-)
 from .evaluator import safe_eval
+from .finance import expected_value, fractional_kelly, kelly_criterion, sharpe_ratio
 
 __all__ = [
     # 金融数学
