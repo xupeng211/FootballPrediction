@@ -4,9 +4,7 @@ V178 核心类型定义 - 零缺陷架构基础
 ==========================================
 
 设计原则:
-    - 类型安全: 封装所??ID 和状态，杜绝手动拼接字符??    - 不可变?? 所有值对象不可变，防止意外修??    - 自验?? 构造时自动验证格式，fail-fast  #
-    noqa: W505  # noqa: W505  # noqa: W505
-
+    - 类型安全: 封装所??ID 和状态，杜绝手动拼接字符??    - 不可变?? 所有值对象不可变，防止意外修??    - 自验?? 构造时自动验证格式，fail-fast  # noqa: W505
 
 V178 升级:
     - MatchID 支持新格?? {league_id}_{season}_{external_id}
@@ -109,12 +107,12 @@ class MatchID:
         if not match_id_str:
             raise ValueError("match_id_str 不能为空")
 
-        # V178: 优先尝试新格??        new_match = cls._NEW_PATTERN.match(match_id_str.strip())  # noqa: W505
+        # V178: 优先尝试新格??        new_match = cls._NEW_PATTERN.match(match_id_str.strip())
         if new_match:  # noqa: F821
             league_id, season, external_id = new_match.groups()  # noqa: F821
             return cls(league_id=league_id, season=season, external_id=external_id)
 
-        # V178: 向后兼容旧格??        legacy_match = cls._LEGACY_PATTERN.match(match_id_str.strip())  # noqa: W505
+        # V178: 向后兼容旧格??        legacy_match = cls._LEGACY_PATTERN.match(match_id_str.strip())
         if legacy_match:  # noqa: F821
             external_id, season = legacy_match.groups()  # noqa: F821
             return cls(league_id="XX", season=season, external_id=external_id)
