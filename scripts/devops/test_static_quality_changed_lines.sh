@@ -187,6 +187,35 @@ test_helper_script_parseable() {
 }
 
 # ------------------------------------------------------------------
+# Test 7: _safe_decode handles invalid UTF-8
+# ------------------------------------------------------------------
+
+test_safe_decode_handles_invalid_utf8() {
+  echo "Test 7: _safe_decode handles invalid UTF-8 bytes"
+
+  cat > /tmp/safe_decode_test.py <<'PY'
+import sys
+sys.path.insert(0, "scripts/devops")
+from static_quality_changed_lines import _safe_decode
+
+assert _safe_decode(b"hello") == "hello"
+result = _safe_decode(b"hello\xffworld")
+assert "hello" in result
+assert "world" in result
+assert "�" in result
+assert _safe_decode(None) == ""
+assert _safe_decode("already str") == "already str"
+print("OK: _safe_decode handles invalid UTF-8 without crash")
+PY
+
+  if python3 /tmp/safe_decode_test.py; then
+    pass "_safe_decode correctly handles valid and invalid UTF-8 bytes"
+  else
+    fail_test "_safe_decode crashed or returned wrong result"
+  fi
+}
+
+# ------------------------------------------------------------------
 # Main
 # ------------------------------------------------------------------
 echo "TECHDEBT-E Static Quality Changed-Line Self-Test"
@@ -205,6 +234,8 @@ test_unknown_file_treated_as_new
 echo
 test_helper_script_parseable
 echo
+test_safe_decode_handles_invalid_utf8
+echo
 
 echo "================================================"
 echo "Results: $PASS passed, $FAIL failed"
@@ -217,3 +248,42 @@ fi
 
 echo "SELF_TEST_PASSED"
 exit 0
+
+# ------------------------------------------------------------------
+# Test 7: _safe_decode handles invalid UTF-8 without crash
+# ------------------------------------------------------------------
+
+  echo "Test 7: _safe_decode handles invalid UTF-8 bytes"
+
+  cat > /tmp/safe_decode_test.py <<'PY'
+import sys
+sys.path.insert(0, "scripts/devops")
+from static_quality_changed_lines import _safe_decode
+
+# Valid UTF-8
+assert _safe_decode(b"hello") == "hello"
+
+# Invalid UTF-8 (0xFF is never valid in UTF-8)
+result = _safe_decode(b"hello\xffworld")
+assert "hello" in result
+assert "world" in result
+assert "�" in result  # U+FFFD replacement character
+
+# None
+assert _safe_decode(None) == ""
+
+# Already a string
+assert _safe_decode("already str") == "already str"
+
+print("OK: _safe_decode handles invalid UTF-8 without crash")
+PY
+
+  if python3 /tmp/safe_decode_test.py; then
+    pass "_safe_decode correctly handles valid and invalid UTF-8 bytes"
+  else
+    fail_test "_safe_decode crashed or returned wrong result"
+  fi
+}
+
+test_safe_decode_handles_invalid_utf8
+echo
