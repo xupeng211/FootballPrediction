@@ -25,14 +25,25 @@ import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
 
-# Number of context lines to show around each diagnostic in the summary.
+# Maximum number of EXISTING diagnostics to show in summary before truncating.
+MAX_EXISTING_DIAGS_SHOWN = 15
+
+# Maximum number of NEW diagnostics to show in summary before truncating.
+MAX_NEW_DIAGS_SHOWN = 30
+
+# Number of context lines to show around each diagnostic (reserved for future use).
 DIAGNOSTIC_CONTEXT_LINES = 1
+
+# Fallback display limit when changed-line data is unavailable.
+FALLBACK_DIAG_DISPLAY_LIMIT = 20
+
+# Minimum number of parts expected in a unified diff hunk header.
+MIN_HUNK_HEADER_PARTS = 3
 
 # ---------------------------------------------------------------------------
 # Git helpers (aligned with grep_added_lines() in gatekeeper.sh)
@@ -53,16 +64,18 @@ def _resolve_git_diff_base() -> str | None:
                 check=True,
                 timeout=5,
             )
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        else:
             result = subprocess.run(
                 ["git", "merge-base", "HEAD", origin_ref],
                 capture_output=True,
                 text=True,
                 timeout=5,
+                check=False,
             )
             if result.returncode == 0 and result.stdout.strip():
                 return result.stdout.strip()
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            pass
 
     # Staged changes.
     try:
@@ -70,6 +83,7 @@ def _resolve_git_diff_base() -> str | None:
             ["git", "diff", "--cached", "--quiet", "--exit-code"],
             capture_output=True,
             timeout=5,
+            check=False,
         )
     except subprocess.CalledProcessError:
         return "HEAD"
@@ -80,6 +94,7 @@ def _resolve_git_diff_base() -> str | None:
             ["git", "diff", "--quiet", "--exit-code", "HEAD", "--"],
             capture_output=True,
             timeout=5,
+            check=False,
         )
     except subprocess.CalledProcessError:
         return "HEAD"
@@ -92,9 +107,61 @@ def _resolve_git_diff_base() -> str | None:
             check=True,
             timeout=5,
         )
-        return "HEAD~1"
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
+    else:
+        return "HEAD~1"
+
+
+def _parse_hunk_new_start(hunk_header: str) -> int | None:
+    """Parse the new-file start line from a unified diff hunk header.
+
+    Example: "@@ -old_start,old_count +new_start,new_count @@" -> new_start.
+    """
+    parts = hunk_header.split()
+    if len(parts) < MIN_HUNK_HEADER_PARTS:
+        return None
+    new_part = parts[2].lstrip("+")  # e.g., "+1,5" or "+1"
+    if "," in new_part:
+        return int(new_part.split(",")[0])
+    return int(new_part)
+
+
+def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
+    """Return the set of changed (added) line numbers for a single file."""
+    try:
+        result = subprocess.run(
+            ["git", "diff", f"{git_base}...HEAD", "--", file],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return set()
+
+    if result.returncode != 0:
+        return set()
+
+    lines: set[int] = set()
+    current_new_line: int | None = None
+
+    for diff_line in result.stdout.splitlines():
+        if diff_line.startswith("@@") and diff_line.endswith("@@"):
+            current_new_line = _parse_hunk_new_start(diff_line)
+            continue
+
+        if current_new_line is None:
+            continue
+
+        if diff_line.startswith("+") and not diff_line.startswith("+++"):
+            lines.add(current_new_line)
+            current_new_line += 1
+        elif not diff_line.startswith("-"):
+            # Context or unchanged line — advance the new-line counter.
+            current_new_line += 1
+
+    return lines
 
 
 def get_changed_line_ranges(files: list[str]) -> dict[str, set[int]]:
@@ -111,47 +178,9 @@ def get_changed_line_ranges(files: list[str]) -> dict[str, set[int]]:
 
     changed: dict[str, set[int]] = {}
     for file in files:
-        try:
-            result = subprocess.run(
-                ["git", "diff", f"{git_base}...HEAD", "--", file],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-            continue
-
-        if result.returncode != 0:
-            continue
-
-        lines: set[int] = set()
-        current_new_line: int | None = None
-
-        for diff_line in result.stdout.splitlines():
-            if diff_line.startswith("@@") and diff_line.endswith("@@"):
-                # Parse hunk header: @@ -old_start,old_count +new_start,new_count @@
-                parts = diff_line.split()
-                if len(parts) >= 3:
-                    new_part = parts[2]  # e.g., "+1,5"
-                    new_part = new_part.lstrip("+")
-                    if "," in new_part:
-                        current_new_line = int(new_part.split(",")[0])
-                    else:
-                        current_new_line = int(new_part)
-                continue
-
-            if current_new_line is None:
-                continue
-
-            if diff_line.startswith("+") and not diff_line.startswith("+++"):
-                lines.add(current_new_line)
-                current_new_line += 1
-            elif not diff_line.startswith("-"):
-                # Context line or unchanged line in hunk — advance new-line counter.
-                current_new_line += 1
-
-        if lines:
-            changed[file] = lines
+        file_lines = _collect_changed_lines_for_file(git_base, file)
+        if file_lines:
+            changed[file] = file_lines
 
     return changed
 
@@ -169,9 +198,13 @@ def run_ruff(files: list[str]) -> list[dict]:
             capture_output=True,
             text=True,
             timeout=30,
+            check=False,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
-        print(f"[static-quality] ERROR: ruff invocation failed: {exc}", file=sys.stderr)
+        print(
+            f"[static-quality] ERROR: ruff invocation failed: {exc}",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     if result.returncode == 0:
@@ -179,22 +212,22 @@ def run_ruff(files: list[str]) -> list[dict]:
 
     try:
         diagnostics: list[dict] = json.loads(result.stdout)
-        return diagnostics
     except json.JSONDecodeError:
-        # Ruff may write to stderr; try parsing stdout loosely.
-        # If we can't parse JSON, fall back to treating all as new.
+        # Ruff may write to stderr; can't parse JSON — fall back to
+        # treating all diagnostics as new.
         print(
             "[static-quality] WARN: could not parse ruff JSON output; "
             "falling back to whole-file (all diagnostics treated as new)",
             file=sys.stderr,
         )
-        # Re-run without JSON and let it fail normally.
         subprocess.run(
             ["python", "-m", "ruff", "check", *files],
             check=False,
             timeout=30,
         )
         sys.exit(1)
+    else:
+        return diagnostics
 
 
 # ---------------------------------------------------------------------------
@@ -249,17 +282,75 @@ def format_diagnostic(diag: dict) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Reporting
+# ---------------------------------------------------------------------------
+
+
+def _report_existing_diags(existing_diags: list[dict]) -> None:
+    """Print EXISTING (pre-existing) diagnostics as warnings to stderr."""
+    print(
+        f"[static-quality] ruff: {len(existing_diags)} EXISTING violation(s) "
+        f"(pre-existing, not on changed lines — WARN, not blocking)",
+        file=sys.stderr,
+    )
+    for diag in existing_diags[:MAX_EXISTING_DIAGS_SHOWN]:
+        print(format_diagnostic(diag), file=sys.stderr)
+    if len(existing_diags) > MAX_EXISTING_DIAGS_SHOWN:
+        remaining = len(existing_diags) - MAX_EXISTING_DIAGS_SHOWN
+        print(
+            f"  ... and {remaining} more existing violation(s)",
+            file=sys.stderr,
+        )
+
+
+def _report_new_diags(new_diags: list[dict]) -> None:
+    """Print NEW (changed-line) diagnostics as blocking errors to stderr."""
+    print(
+        f"[static-quality] ruff: {len(new_diags)} NEW violation(s) "
+        f"(on changed lines — BLOCKING)",
+        file=sys.stderr,
+    )
+    for diag in new_diags[:MAX_NEW_DIAGS_SHOWN]:
+        print(format_diagnostic(diag), file=sys.stderr)
+    if len(new_diags) > MAX_NEW_DIAGS_SHOWN:
+        remaining = len(new_diags) - MAX_NEW_DIAGS_SHOWN
+        print(
+            f"  ... and {remaining} more new violation(s)",
+            file=sys.stderr,
+        )
+
+
+def _report_fallback(all_diags: list[dict]) -> int:
+    """Fallback when changed-line data unavailable — treat all as new."""
+    print(
+        "[static-quality] WARN: could not determine changed line ranges; "
+        "all diagnostics treated as new (fail-safe)",
+        file=sys.stderr,
+    )
+    for diag in all_diags[:FALLBACK_DIAG_DISPLAY_LIMIT]:
+        print(format_diagnostic(diag), file=sys.stderr)
+    if len(all_diags) > FALLBACK_DIAG_DISPLAY_LIMIT:
+        remaining = len(all_diags) - FALLBACK_DIAG_DISPLAY_LIMIT
+        print(f"  ... and {remaining} more", file=sys.stderr)
+    return 1
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
 
 def main() -> int:
+    """Run changed-line ruff check and return 0 on pass, 1 on new violations."""
     files = sys.argv[1:]
     if not files:
         print("[static-quality] No files to check.", file=sys.stderr)
         return 0
 
-    print(f"[static-quality] Checking {len(files)} Python file(s) with changed-line gate.")
+    print(
+        f"[static-quality] Checking {len(files)} Python file(s) "
+        f"with changed-line gate."
+    )
 
     # 1. Run ruff.
     all_diags = run_ruff(files)
@@ -270,48 +361,22 @@ def main() -> int:
     # 2. Compute changed line ranges.
     changed_lines = get_changed_line_ranges(files)
     if not changed_lines:
-        print(
-            "[static-quality] WARN: could not determine changed line ranges; "
-            "all diagnostics treated as new (fail-safe)",
-            file=sys.stderr,
-        )
-        for diag in all_diags[:20]:
-            print(format_diagnostic(diag), file=sys.stderr)
-        if len(all_diags) > 20:
-            print(f"  ... and {len(all_diags) - 20} more", file=sys.stderr)
-        return 1
+        return _report_fallback(all_diags)
 
     total_changed = sum(len(lines) for lines in changed_lines.values())
-    print(f"[static-quality] Changed line ranges computed: {len(changed_lines)} file(s), {total_changed} changed line(s)")
+    print(
+        f"[static-quality] Changed line ranges computed: "
+        f"{len(changed_lines)} file(s), {total_changed} changed line(s)"
+    )
 
-    # 3. Classify.
+    # 3. Classify and report.
     new_diags, existing_diags = classify_diagnostics(all_diags, changed_lines)
 
-    # 4. Report.
     if existing_diags:
-        print(
-            f"[static-quality] ruff: {len(existing_diags)} EXISTING violation(s) "
-            f"(pre-existing, not on changed lines — WARN, not blocking)",
-            file=sys.stderr,
-        )
-        for diag in existing_diags[:15]:
-            print(format_diagnostic(diag), file=sys.stderr)
-        if len(existing_diags) > 15:
-            print(
-                f"  ... and {len(existing_diags) - 15} more existing violation(s)",
-                file=sys.stderr,
-            )
+        _report_existing_diags(existing_diags)
 
     if new_diags:
-        print(
-            f"[static-quality] ruff: {len(new_diags)} NEW violation(s) "
-            f"(on changed lines — BLOCKING)",
-            file=sys.stderr,
-        )
-        for diag in new_diags[:30]:
-            print(format_diagnostic(diag), file=sys.stderr)
-        if len(new_diags) > 30:
-            print(f"  ... and {len(new_diags) - 30} more new violation(s)", file=sys.stderr)
+        _report_new_diags(new_diags)
         return 1
 
     print(
