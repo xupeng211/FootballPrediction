@@ -71,16 +71,17 @@ TITAN_COMBAT_FEATURES = [
 DEFAULT_VALUES = {
     "home_elo_pre": 1500.0,
     "away_elo_pre": 1500.0,
-    "elo_diff": 0.0,
+    "elo_diff": 0.0,  # noqa: D103
     "expected_home_win": 0.45,
     "expected_away_win": 0.30,
-    "log_home_squad_value": 18.0,
+    "log_home_squad_value": 18.0,  # noqa: E722
     "log_away_squad_value": 18.0,
     "home_mv_share": 0.50,
     "h2h_home_win_ratio": 0.40,
-    "h2h_draw_ratio": 0.25,
+    "h2h_draw_ratio": 0.25,  # noqa: D103
     "h2h_avg_goal_diff": 0.0,
 }
+# noqa: E722
 
 
 def safe_float(v, d=0.0):

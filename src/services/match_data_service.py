@@ -51,6 +51,7 @@ class MatchDataService:
         return self._conn
 
     def close(self):
+        """Close the database connection."""
         if self._conn and not self._conn.closed:
             self._conn.close()
 
@@ -63,5 +64,5 @@ MatchLinker = MatchDataService
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     service = MatchDataService()
-    print("MatchDataService V4.42 initialized")
+    print("MatchDataService V4.42 initialized")  # noqa: T201
     service.close()

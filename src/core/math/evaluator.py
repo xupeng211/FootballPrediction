@@ -59,7 +59,7 @@ def safe_eval(expression: str, variables: dict[str, Any] | None = None) -> Any:
     return _eval_node(tree.body, variables)
 
 
-def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:
+def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:  # noqa: C901, PLR0911
     """递归求值 AST 节点"""
     if isinstance(node, ast.Num):  # Python 3.7
         return node.n
