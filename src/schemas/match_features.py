@@ -398,8 +398,8 @@ class FeatureExtractionResponse(BaseModel):
     metadata: dict[str, Any] | None = None
 
     #                      ?def create_match_features_from_dict(data: dict[str, Any]) -> MatchFeatures:  # noqa: W505
-    """               MatchFeatures      """
-    return MatchFeatures(**data)
+    # [dead code removed in parse-fix] orphaned docstring
+    # [dead code removed in parse-fix] return MatchFeatures(**data)
 
 
 def validate_feature_completeness(features: MatchFeatures) -> float:
