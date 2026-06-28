@@ -77,7 +77,7 @@ class SourceFData(BaseModel):
     l1_collected_at: datetime | None = Field(None, description="L1             ")
 
     @model_validator(mode="after")
-    def validate_teams_different(self):
+    def validate_teams_different(self) -> "SourceFData":
         """?"""
         if self.home_team and self.away_team and self.home_team == self.away_team:
             raise ValueError("                        ?")
@@ -85,7 +85,7 @@ class SourceFData(BaseModel):
 
     @field_validator("status", mode="before")
     @classmethod
-    def normalize_status(cls, v):
+    def normalize_status(cls, v: Any) -> Any:
         """?"""
         if isinstance(v, str):
             status_map = {
@@ -138,7 +138,7 @@ class SourceOData(BaseModel):
     @model_validator(mode="after")
     def calculate_integrity_score(self) -> "SourceOData":
         """?"""
-        if all([self.final_h, self.final_d, self.final_a]):
+        if self.final_h is not None and self.final_d is not None and self.final_a is not None:
             self.integrity_score = 1.0 / self.final_h + 1.0 / self.final_d + 1.0 / self.final_a
             #             : 1.02 < integrity_score < 1.08
             self.is_valid = 1.02 < self.integrity_score < 1.08  # noqa: PLR2004

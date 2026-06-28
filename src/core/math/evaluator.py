@@ -11,11 +11,12 @@ Date: 2026-03-08
 """
 
 import ast
+from collections.abc import Callable
 import operator
 from typing import Any
 
 # 允许的操作符
-ALLOWED_OPERATORS = {
+ALLOWED_OPERATORS: dict[type[ast.operator] | type[ast.unaryop], Callable[..., Any]] = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
     ast.Mult: operator.mul,
@@ -25,7 +26,7 @@ ALLOWED_OPERATORS = {
 }
 
 # 允许的函数
-ALLOWED_FUNCTIONS = {
+ALLOWED_FUNCTIONS: dict[str, Callable[..., Any]] = {
     "abs": abs,
     "max": max,
     "min": min,
@@ -74,16 +75,16 @@ def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:  # noqa: C901, 
     if isinstance(node, ast.BinOp):
         left = _eval_node(node.left, variables)
         right = _eval_node(node.right, variables)
-        op_type = type(node.op)
-        if op_type not in ALLOWED_OPERATORS:
-            raise ValueError(f"不允许的操作符: {op_type.__name__}")
-        return ALLOWED_OPERATORS[op_type](left, right)
+        bin_op_type = type(node.op)
+        if bin_op_type not in ALLOWED_OPERATORS:
+            raise ValueError(f"不允许的操作符: {bin_op_type.__name__}")
+        return ALLOWED_OPERATORS[bin_op_type](left, right)
     if isinstance(node, ast.UnaryOp):
         operand = _eval_node(node.operand, variables)
-        op_type = type(node.op)
-        if op_type not in ALLOWED_OPERATORS:
-            raise ValueError(f"不允许的一元操作符: {op_type.__name__}")
-        return ALLOWED_OPERATORS[op_type](operand)
+        unary_op_type = type(node.op)
+        if unary_op_type not in ALLOWED_OPERATORS:
+            raise ValueError(f"不允许的一元操作符: {unary_op_type.__name__}")
+        return ALLOWED_OPERATORS[unary_op_type](operand)
     if isinstance(node, ast.Call):
         func = _eval_node(node.func, variables)
         args = [_eval_node(arg, variables) for arg in node.args]

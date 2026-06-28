@@ -7,6 +7,7 @@ from dataclasses import dataclass
 import logging
 
 import psycopg2
+import psycopg2.extensions
 
 from src.config_unified import get_config, get_database_url
 
@@ -28,7 +29,7 @@ class MatchAlignment:
 
     def is_valid(self) -> bool:
         """Check if match alignment is valid."""
-        return (
+        return bool(
             self.match_id
             and self.oddsportal_hash
             and self.time_valid
@@ -42,16 +43,16 @@ class MatchDataService:
     TIME_DIFF_THRESHOLD = 2.0
     CONFIDENCE_THRESHOLD = 0.7
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = get_config()
-        self._conn = None
+        self._conn: psycopg2.extensions.connection | None = None
 
-    def _get_connection(self):
+    def _get_connection(self) -> psycopg2.extensions.connection:
         if self._conn is None or self._conn.closed:
             self._conn = psycopg2.connect(get_database_url())
         return self._conn
 
-    def close(self):
+    def close(self) -> None:
         """Close the database connection."""
         if self._conn and not self._conn.closed:
             self._conn.close()

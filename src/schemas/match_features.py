@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
 # V4.42:              -          ?         ?\nfrom src.constants.shared_constants import MatchStatus, DataSource\nfrom src.database.models import FotMobMatchData  # noqa: W505
 
@@ -319,13 +319,13 @@ class MatchFeatures(BaseModel):
         },
     )
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def total_features_count(self) -> int:
         """?"""
         return 106
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def has_complete_xg_data(self) -> bool:
         """xG"""
@@ -339,7 +339,7 @@ class MatchFeatures(BaseModel):
             ]
         )
 
-    @computed_field
+    @computed_field  # type: ignore[misc]
     @property
     def has_complete_odds_data(self) -> bool:
         """ """
@@ -363,7 +363,7 @@ class MatchFeaturesTrainingBatch(BaseModel):
 
     @field_validator("batch_size", mode="before")
     @classmethod
-    def validate_batch_size(cls, v, info):
+    def validate_batch_size(cls, v: Any, info: ValidationInfo[Any]) -> Any:
         """ """
         values = info.data if hasattr(info, "data") else {}
         if "features" in values:
@@ -427,4 +427,4 @@ if __name__ == "__main__":
         "draw_odds": 3.20,
     }
 
-    features = create_match_features_from_dict(test_data)  # noqa: F821
+    features = create_match_features_from_dict(test_data)  # type: ignore[name-defined]  # noqa: F821

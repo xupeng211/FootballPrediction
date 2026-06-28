@@ -67,7 +67,7 @@ class MatchID:
     # 旧格式正??- external_id_season (向后兼容)
     _LEGACY_PATTERN = re.compile(r"^(\d+)_(\d{4})$")
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """验证 ID 格式"""
         if not self.external_id or not self.external_id.isdigit():
             raise ValueError(f"external_id 必须是数?? {self.external_id}")
@@ -109,14 +109,14 @@ class MatchID:
         if not match_id_str:
             raise ValueError("match_id_str 不能为空")
 
-        # V178: 优先尝试新格??        new_match = cls._NEW_PATTERN.match(match_id_str.strip())
-        if new_match:  # noqa: F821
-            league_id, season, external_id = new_match.groups()  # noqa: F821
+        new_match = cls._NEW_PATTERN.match(match_id_str.strip())
+        if new_match:
+            league_id, season, external_id = new_match.groups()
             return cls(league_id=league_id, season=season, external_id=external_id)
 
-        # V178: 向后兼容旧格??        legacy_match = cls._LEGACY_PATTERN.match(match_id_str.strip())
-        if legacy_match:  # noqa: F821
-            external_id, season = legacy_match.groups()  # noqa: F821
+        legacy_match = cls._LEGACY_PATTERN.match(match_id_str.strip())
+        if legacy_match:
+            external_id, season = legacy_match.groups()
             return cls(league_id="XX", season=season, external_id=external_id)
 
         raise ValueError(
@@ -186,7 +186,8 @@ class Season:
         if season in cls._ALIASES:
             return cls._ALIASES[season]
 
-            # 4 位年??        if season.isdigit() and len(season) == 4:
+        # 4 位年份
+        if season.isdigit() and len(season) == 4:  # noqa: PLR2004
             return season
 
         # 2 位年??(23 -> 2023)
@@ -222,6 +223,8 @@ def parse_match_id(match_id_str: str) -> MatchID:
 # ============================================================================
 
 if __name__ == "__main__":
+    from src.constants.shared_constants import MatchStatus
+
     # 测试 MatchID
 
     # 创建
@@ -234,7 +237,7 @@ if __name__ == "__main__":
     # 测试 MatchStatus
 
     # 从字符串解析
-    status1 = MatchStatus.from_string("finished")  # noqa: F821
+    status1 = MatchStatus.FINISHED
 
     # 判断
 

@@ -102,7 +102,7 @@ def sharpe_ratio(returns: list[float], risk_free_rate: float = 0.0) -> float:
     if std_dev == 0:
         return 0.0
 
-    return (mean_return - risk_free_rate) / std_dev
+    return float((mean_return - risk_free_rate) / std_dev)
 
 
 # 向后兼容导出
