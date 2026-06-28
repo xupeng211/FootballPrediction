@@ -1082,6 +1082,7 @@ run_static_quality_checks() {
   local python_targets=()
   local mypy_targets=()
   local file
+  local ruff_rc=0
 
   npm run lint
 
@@ -1092,9 +1093,23 @@ run_static_quality_checks() {
   fi
 
   log "Python 质量检查目标数: ${#python_targets[@]}"
-  python -m ruff check "${python_targets[@]}"
+
+  # Changed-line gate for ruff: only block on violations on lines ADDED by this PR.
+  # Pre-existing violations in changed files are reported as warnings.
+  # TECHDEBT-E: Apply changed-line principle to static quality checks.
+  if [[ -f "scripts/devops/static_quality_changed_lines.py" ]]; then
+    python scripts/devops/static_quality_changed_lines.py "${python_targets[@]}" || ruff_rc=$?
+  else
+    # Fallback: whole-file ruff check (original behavior).
+    warn 'static_quality_changed_lines.py 未找到，回退到全文件 ruff 检查。'
+    python -m ruff check "${python_targets[@]}" || ruff_rc=$?
+  fi
+
+  # ruff format check remains whole-file (formatting consistency for the entire changed file).
   python -m ruff format --check "${python_targets[@]}"
 
+  # mypy type check: currently whole-file on changed src/ files.
+  # TODO(TECHDEBT-E follow-up): apply changed-line gating to mypy diagnostics as well.
   for file in "${python_targets[@]}"; do
     case "$file" in
       src/*.py|src/**/*.py)
@@ -1107,6 +1122,11 @@ run_static_quality_checks() {
     python -m mypy --config-file mypy.ini --follow-imports=silent "${mypy_targets[@]}"
   else
     log '本次变更未触达 src Python 模块，跳过 mypy。'
+  fi
+
+  # If ruff found NEW violations on changed lines, propagate the failure.
+  if (( ruff_rc != 0 )); then
+    return 1
   fi
 }
 
