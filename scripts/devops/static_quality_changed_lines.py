@@ -47,6 +47,25 @@ FALLBACK_DIAG_DISPLAY_LIMIT = 20
 MIN_HUNK_HEADER_PARTS = 3
 
 # ---------------------------------------------------------------------------
+# Safe decoding helper
+# ---------------------------------------------------------------------------
+
+
+def _safe_decode(data: bytes | str | None) -> str:
+    """Decode subprocess output without crashing on invalid UTF-8 bytes.
+
+    Uses ``errors="replace"`` so that corrupt bytes in git diff output
+    (e.g. from files with legacy encoding damage) produce U+FFFD instead
+    of raising ``UnicodeDecodeError``.
+    """
+    if data is None:
+        return ""
+    if isinstance(data, str):
+        return data
+    return data.decode("utf-8", errors="replace")
+
+
+# ---------------------------------------------------------------------------
 # Git helpers (aligned with grep_added_lines() in gatekeeper.sh)
 # ---------------------------------------------------------------------------
 
@@ -71,12 +90,12 @@ def _resolve_git_diff_base() -> str | None:
             result = subprocess.run(
                 ["git", "merge-base", "HEAD", origin_ref],
                 capture_output=True,
-                text=True,
                 timeout=5,
                 check=False,
             )
-            if result.returncode == 0 and result.stdout.strip():
-                return result.stdout.strip()
+            stdout = _safe_decode(result.stdout)
+            if result.returncode == 0 and stdout.strip():
+                return stdout.strip()
 
     # Staged changes.
     try:
@@ -134,7 +153,6 @@ def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
         result = subprocess.run(
             ["git", "diff", f"{git_base}...HEAD", "--", file],
             capture_output=True,
-            text=True,
             timeout=10,
             check=False,
         )
@@ -147,7 +165,7 @@ def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
     lines: set[int] = set()
     current_new_line: int | None = None
 
-    for diff_line in result.stdout.splitlines():
+    for diff_line in _safe_decode(result.stdout).splitlines():
         if diff_line.startswith("@@") and diff_line.endswith("@@"):
             current_new_line = _parse_hunk_new_start(diff_line)
             continue
@@ -197,7 +215,6 @@ def run_ruff(files: list[str]) -> list[dict]:
         result = subprocess.run(
             ["python", "-m", "ruff", "check", "--output-format", "json", *files],
             capture_output=True,
-            text=True,
             timeout=30,
             check=False,
         )
@@ -212,7 +229,7 @@ def run_ruff(files: list[str]) -> list[dict]:
         return []
 
     try:
-        diagnostics: list[dict] = json.loads(result.stdout)
+        diagnostics: list[dict] = json.loads(_safe_decode(result.stdout))
     except json.JSONDecodeError:
         # Ruff may write to stderr; can't parse JSON — fall back to
         # treating all diagnostics as new.
