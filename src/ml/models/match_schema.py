@@ -232,9 +232,9 @@ class MatchSchema(BaseModel):
 
         if score >= 90:  # noqa: PLR2004
             self.quality_rating = MatchQuality.EXCELLENT
-        elif score >= 80:
+        elif score >= 80:  # noqa: W505, PLR2004
             self.quality_rating = MatchQuality.GOOD
-        elif score >= 60:
+        elif score >= 60:  # noqa: W505, PLR2004
             self.quality_rating = MatchQuality.FAIR
         else:
             self.quality_rating = MatchQuality.POOR
