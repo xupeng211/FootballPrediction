@@ -27,6 +27,7 @@ class MatchAlignment:
     notes: str = ""
 
     def is_valid(self) -> bool:
+        """Check if match alignment is valid."""
         return (
             self.match_id
             and self.oddsportal_hash

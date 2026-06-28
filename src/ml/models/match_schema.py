@@ -153,7 +153,9 @@ class SourceOData(BaseModel):
 class MatchSchema(BaseModel):
     """V41.155
 
-           Source_F ???Source_O                                  ???                                                       ???  # noqa: W505
+           Source_F ???Source_O                                  ???
+           ???  # noqa: W505
+
                 :
     -              (40%): ID,       ,       ,       ,       ,    ???    -              (30%): oddsportal_hash, oddsportal_url  # noqa: W505
     -              (30%): init/final odds, integrity_score
