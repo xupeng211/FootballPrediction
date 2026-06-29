@@ -162,6 +162,9 @@ jobs:
           fi
           rm -f "${PR_BODY_FILE}"
 
+      - name: Validate Python UTF-8 and AST parse
+        run: python3 scripts/devops/check_python_ast_utf8.py
+
   docker-build:
     name: Docker Build Validation
     runs-on: ubuntu-latest
