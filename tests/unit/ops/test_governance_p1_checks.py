@@ -68,12 +68,9 @@ class TestNoArchiveRuntimeImport:
     def test_tests_file_with_archive_reference_report_only(self):
         """tests/ file referencing archive code is report-only, not blocking."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "tests/unit/test_thing.py",
-                    "from archive_vault_2026 import old_func")
+            _mkfile(tmpdir, "tests/unit/test_thing.py", "from archive_vault_2026 import old_func")
             with _temp_root(tmpdir):
-                errors = _p1_mod.check_no_archive_runtime_import(
-                    {"tests/unit/test_thing.py"}
-                )
+                errors = _p1_mod.check_no_archive_runtime_import({"tests/unit/test_thing.py"})
                 assert len(errors) == 0, f"tests should be report-only, got: {errors}"
 
     def test_archive_vault_path_exempt(self):
@@ -89,8 +86,7 @@ class TestNoArchiveRuntimeImport:
     def test_src_file_with_no_archive_reference_passes(self):
         """src/ file without any archive reference passes."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "src/clean.py",
-                    "import os\nimport sys\n\ndef foo():\n    pass\n")
+            _mkfile(tmpdir, "src/clean.py", "import os\nimport sys\n\ndef foo():\n    pass\n")
             with _temp_root(tmpdir):
                 errors = _p1_mod.check_no_archive_runtime_import({"src/clean.py"})
                 assert len(errors) == 0
@@ -113,8 +109,9 @@ class TestNoArchiveRuntimeImport:
     def test_real_src_file_with_archive_vault_string_fails(self):
         """A real src/ file containing 'archive_vault_2026' in any form fails."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "src/bad.py",
-                    "import sys\nfrom archive_vault_2026.utils import helper\n")
+            _mkfile(
+                tmpdir, "src/bad.py", "import sys\nfrom archive_vault_2026.utils import helper\n"
+            )
             with _temp_root(tmpdir):
                 errors = _p1_mod.check_no_archive_runtime_import({"src/bad.py"})
                 assert len(errors) >= 1, "Expected errors for archive import"
@@ -133,12 +130,9 @@ class TestNoArchiveRuntimeImport:
     def test_real_scripts_ops_file_with_archive_import_fails(self):
         """A real scripts/ops/ file with archive reference fails."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "scripts/ops/bad.py",
-                    "from archive_vault import old\n")
+            _mkfile(tmpdir, "scripts/ops/bad.py", "from archive_vault import old\n")
             with _temp_root(tmpdir):
-                errors = _p1_mod.check_no_archive_runtime_import(
-                    {"scripts/ops/bad.py"}
-                )
+                errors = _p1_mod.check_no_archive_runtime_import({"scripts/ops/bad.py"})
                 assert len(errors) >= 1
                 assert any("scripts/ops/bad.py" in e for e in errors)
 
@@ -148,9 +142,7 @@ class TestNoArchiveRuntimeImport:
             _mkfile(tmpdir, "src/clean.py", "import os\n")
             _mkfile(tmpdir, "src/bad.py", "from archive_vault import old\n")
             with _temp_root(tmpdir):
-                errors = _p1_mod.check_no_archive_runtime_import(
-                    {"src/clean.py", "src/bad.py"}
-                )
+                errors = _p1_mod.check_no_archive_runtime_import({"src/clean.py", "src/bad.py"})
                 assert len(errors) >= 1
                 assert any("src/bad.py" in e for e in errors)
                 assert not any("src/clean.py" in e for e in errors)
@@ -198,9 +190,7 @@ class TestDangerousAuthPathCrossValidation:
     def test_helper_file_covered_by_prefix_wildcard_passes(self):
         """Changing helpers/foo.py with scripts/ops/helpers/** auth passes."""
         changed = {"scripts/ops/helpers/governance_p1_checks.py"}
-        body = _DANGEROUS_AUTH_PR_BODY_HEADER + (
-            "| Authorized paths | scripts/ops/helpers/** |\n"
-        )
+        body = _DANGEROUS_AUTH_PR_BODY_HEADER + ("| Authorized paths | scripts/ops/helpers/** |\n")
         errors = check_dangerous_auth_path_cross_validation(changed, body)
         assert len(errors) == 0, f"Expected 0 errors, got: {errors}"
 
@@ -215,9 +205,7 @@ class TestDangerousAuthPathCrossValidation:
     def test_workflow_file_with_authorization_passes(self):
         """Changing .github/workflows/x.yml with .github/workflows/** auth passes."""
         changed = {".github/workflows/test.yml"}
-        body = _DANGEROUS_AUTH_PR_BODY_HEADER + (
-            "| Authorized paths | .github/workflows/** |\n"
-        )
+        body = _DANGEROUS_AUTH_PR_BODY_HEADER + ("| Authorized paths | .github/workflows/** |\n")
         errors = check_dangerous_auth_path_cross_validation(changed, body)
         assert len(errors) == 0, f"Expected 0 errors, got: {errors}"
 
@@ -247,9 +235,7 @@ class TestDangerousAuthPathCrossValidation:
     def test_check_devops_prefix_covered_by_wildcard_passes(self):
         """Changing check_*.py with scripts/devops/** auth passes."""
         changed = {"scripts/devops/check_python_ast_utf8.py"}
-        body = _DANGEROUS_AUTH_PR_BODY_HEADER + (
-            "| Authorized paths | scripts/devops/** |\n"
-        )
+        body = _DANGEROUS_AUTH_PR_BODY_HEADER + ("| Authorized paths | scripts/devops/** |\n")
         errors = check_dangerous_auth_path_cross_validation(changed, body)
         assert len(errors) == 0, f"Expected 0 errors, got: {errors}"
 
@@ -259,9 +245,7 @@ class TestDangerousAuthPathCrossValidation:
             "scripts/devops/gatekeeper.sh",
             "scripts/ops/helpers/governance_p1_checks.py",
         }
-        body = _DANGEROUS_AUTH_PR_BODY_HEADER + (
-            "| Authorized paths | scripts/ops/helpers/** |\n"
-        )
+        body = _DANGEROUS_AUTH_PR_BODY_HEADER + ("| Authorized paths | scripts/ops/helpers/** |\n")
         errors = check_dangerous_auth_path_cross_validation(changed, body)
         assert len(errors) >= 1
         assert any("gatekeeper.sh" in e for e in errors)
@@ -315,8 +299,9 @@ class TestScriptLifecycleRequirement:
     def test_new_script_without_lifecycle_fails(self):
         """New scripts/ops/x.py without lifecycle header or PR section fails."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "scripts/ops/manual_probe.py",
-                    "#!/usr/bin/env python3\n\nprint('hello')\n")
+            _mkfile(
+                tmpdir, "scripts/ops/manual_probe.py", "#!/usr/bin/env python3\n\nprint('hello')\n"
+            )
             with _temp_root(tmpdir):
                 errors = _p1_mod.check_script_lifecycle_requirement(
                     {"scripts/ops/manual_probe.py"},
@@ -328,9 +313,12 @@ class TestScriptLifecycleRequirement:
     def test_new_script_with_lifecycle_header_passes(self):
         """New script with Lifecycle: in file header passes."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "scripts/ops/valid_script.py",
-                    '#!/usr/bin/env python3\n"""Valid script.\n\n'
-                    'lifecycle: permanent\n"""\n\nprint("ok")\n')
+            _mkfile(
+                tmpdir,
+                "scripts/ops/valid_script.py",
+                '#!/usr/bin/env python3\n"""Valid script.\n\n'
+                'lifecycle: permanent\n"""\n\nprint("ok")\n',
+            )
             with _temp_root(tmpdir):
                 errors = _p1_mod.check_script_lifecycle_requirement(
                     {"scripts/ops/valid_script.py"}, ""
@@ -340,8 +328,11 @@ class TestScriptLifecycleRequirement:
     def test_new_script_with_owner_header_passes(self):
         """New script with Owner: in file header passes."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "scripts/devops/check_x.py",
-                    '"""Check X.\n\nOwner: CI team\n"""\n\nprint("ok")\n')
+            _mkfile(
+                tmpdir,
+                "scripts/devops/check_x.py",
+                '"""Check X.\n\nOwner: CI team\n"""\n\nprint("ok")\n',
+            )
             with _temp_root(tmpdir):
                 errors = _p1_mod.check_script_lifecycle_requirement(
                     {"scripts/devops/check_x.py"}, ""
@@ -351,8 +342,11 @@ class TestScriptLifecycleRequirement:
     def test_new_script_with_pr_body_script_lifecycle_passes(self):
         """New script without file header but PR has Script Lifecycle section passes."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "scripts/ops/new_helper.py",
-                    "#!/usr/bin/env python3\n\n# No lifecycle header\nprint('hello')\n")
+            _mkfile(
+                tmpdir,
+                "scripts/ops/new_helper.py",
+                "#!/usr/bin/env python3\n\n# No lifecycle header\nprint('hello')\n",
+            )
             with _temp_root(tmpdir):
                 errors = _p1_mod.check_script_lifecycle_requirement(
                     {"scripts/ops/new_helper.py"},
@@ -410,8 +404,11 @@ class TestScriptLifecycleRequirement:
     def test_new_script_with_maintainer_header_passes(self):
         """New script with Maintainer: in header passes."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "scripts/devops/with_maintainer.py",
-                    '"""Script.\n\nMaintainer: devops team\n"""\n\nprint("ok")\n')
+            _mkfile(
+                tmpdir,
+                "scripts/devops/with_maintainer.py",
+                '"""Script.\n\nMaintainer: devops team\n"""\n\nprint("ok")\n',
+            )
             with _temp_root(tmpdir):
                 errors = _p1_mod.check_script_lifecycle_requirement(
                     {"scripts/devops/with_maintainer.py"}, ""

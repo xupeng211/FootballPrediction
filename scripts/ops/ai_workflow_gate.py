@@ -213,7 +213,7 @@ from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     changed_paths,
     collect_changes,
     git_output,
-    parse_name_status,
+    parse_name_status,  # noqa: F401 — re-exported for local_pr_gate_preflight
 )
 
 

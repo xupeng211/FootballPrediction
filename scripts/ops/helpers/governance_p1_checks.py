@@ -137,8 +137,7 @@ def check_no_archive_runtime_import(
         for r in report_only:
             sys.stdout.write(f"{r}\n")
         sys.stdout.write(
-            "[P1-1 archive-import][report-only] "
-            "tests/ references are non-blocking in this phase.\n"
+            "[P1-1 archive-import][report-only] tests/ references are non-blocking in this phase.\n"
         )
 
     return errors
@@ -259,9 +258,7 @@ def _has_dangerous_auth_section(pr_body: str) -> bool:
     if end:
         suffix = suffix[: end.start()]
     lines = [
-        ln.strip()
-        for ln in suffix.splitlines()
-        if ln.strip() and not ln.strip().startswith("<!--")
+        ln.strip() for ln in suffix.splitlines() if ln.strip() and not ln.strip().startswith("<!--")
     ]
     if len(lines) < 1:
         return False
@@ -402,10 +399,7 @@ def _file_has_lifecycle_header(abs_path: Path) -> bool:
         header_text = "\n".join(header_lines)
     except (OSError, UnicodeDecodeError):
         return False
-    return bool(
-        _LIFECYCLE_HEADER_RE.search(header_text)
-        or _OWNER_HEADER_RE.search(header_text)
-    )
+    return bool(_LIFECYCLE_HEADER_RE.search(header_text) or _OWNER_HEADER_RE.search(header_text))
 
 
 def _pr_has_script_lifecycle_section(pr_body: str) -> bool:
