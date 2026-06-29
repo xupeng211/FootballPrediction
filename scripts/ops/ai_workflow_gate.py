@@ -158,7 +158,7 @@ DOC_SPRAWL_NAME_PATTERNS: tuple[re.Pattern[str], ...] = tuple(
     )
 )
 
-MAX_DOC_SPRAWL_NEW_FILES = 5
+MAX_DOC_SPRAWL_NEW_FILES = 2
 REPORT_ARTIFACT_PREFIX = "docs/_reports/"
 REPORT_ARTIFACT_SUFFIX = ".md"
 SOURCE_OF_TRUTH_REASON_LABELS: tuple[str, ...] = (
@@ -595,6 +595,8 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
     return errors
 
 
+# Garbage prevention checks (G1 P0) — delegated to dedicated helper
+# to keep this file under the 800-line gatekeeper limit.
 # Agent workflow hardening checks (Phase1) — delegated to dedicated helper
 # to keep this file under the 800-line gatekeeper limit.
 from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
@@ -605,9 +607,14 @@ from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
 from scripts.ops.helpers.dangerous_file_change_check import (  # noqa: E402
     check_dangerous_file_changes,
 )
+from scripts.ops.helpers.garbage_prevention_checks import (  # noqa: E402
+    check_no_generated_artifacts_wrapper,
+    check_report_lifecycle_required,
+    check_report_restricted_task_type,
+)
 
 
-def validate(  # noqa: C901
+def validate(  # noqa: C901, PLR0912
     pr_body: str,
     changes: list[Change] | None = None,
     *,
@@ -616,8 +623,9 @@ def validate(  # noqa: C901
 ) -> list[str]:
     """Run all AI workflow gate checks.  Returns a list of error strings.
 
-    When *block_matrix* is True, the narrow A-D PR authorization matrix subset
-    is added to errors.  Default False (report-only, #1651 Phase 5R8-D/G).
+    When *block_matrix* is True, the narrow A-L PR authorization matrix subset
+    is added to errors (G1 expanded from original A-D).  Default False
+    (report-only, #1651 Phase 5R8-D/G).
     """
 
     if changes is None:
@@ -646,6 +654,21 @@ def validate(  # noqa: C901
     # 4b. Report artifacts require source-of-truth backflow or explicit reason
     if not skip_body_checks:
         errors.extend(check_authoritative_report_backflow(pr_body, changes))
+
+    # 4c. Report-restricted task type: non-docs/governance PRs cannot add reports (P0-3)
+    if not skip_body_checks:
+        errors.extend(
+            check_report_restricted_task_type(added, pr_body, skip_body_checks=skip_body_checks)
+        )
+
+    # 4d. Report lifecycle required when docs/_reports files are added (P0-3)
+    if not skip_body_checks:
+        errors.extend(
+            check_report_lifecycle_required(added, pr_body, skip_body_checks=skip_body_checks)
+        )
+
+    # 4e. No-generated-artifacts: block temp/cache/log/build/coverage artifacts (P0-2)
+    errors.extend(check_no_generated_artifacts_wrapper(added))
 
     # 5. Dangerous keywords in docs/tests blind spots
     errors.extend(check_dangerous_keywords_in_blind_spots(changed))
