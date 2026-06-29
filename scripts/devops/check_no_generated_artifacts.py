@@ -40,56 +40,60 @@ if TYPE_CHECKING:
 # 2. FORBIDDEN_DIR_NAMES: any path component matches — blocked regardless of extension
 # 3. FORBIDDEN_PATH_PREFIXES: path starts with prefix — blocked
 # ---------------------------------------------------------------------------
-FORBIDDEN_EXTENSIONS: frozenset[str] = frozenset({
-    ".pyc",
-    ".pyo",
-    ".log",
-    ".tmp",
-    ".temp",
-    ".swp",
-    ".swo",
-    ".bak",
-    ".old",
-    ".orig",
-    ".rej",
-    ".parquet",
-    ".tar",
-    ".gz",
-    ".bz2",
-    ".xz",
-    ".zip",
-    ".7z",
-    ".rar",
-    ".bundle",
-    ".exe",
-    ".dll",
-    ".so",
-    ".dylib",
-    ".onnx",
-    ".ipynb",
-    ".tar.gz",
-    ".tar.bz2",
-    ".tar.xz",
-    ".joblib",
-    ".pkl",
-    ".h5",
-    ".pt",
-    ".pth",
-    ".ckpt",
-    ".keras",
-    ".pb",
-    ".tflite",
-})
+FORBIDDEN_EXTENSIONS: frozenset[str] = frozenset(
+    {
+        ".pyc",
+        ".pyo",
+        ".log",
+        ".tmp",
+        ".temp",
+        ".swp",
+        ".swo",
+        ".bak",
+        ".old",
+        ".orig",
+        ".rej",
+        ".parquet",
+        ".tar",
+        ".gz",
+        ".bz2",
+        ".xz",
+        ".zip",
+        ".7z",
+        ".rar",
+        ".bundle",
+        ".exe",
+        ".dll",
+        ".so",
+        ".dylib",
+        ".onnx",
+        ".ipynb",
+        ".tar.gz",
+        ".tar.bz2",
+        ".tar.xz",
+        ".joblib",
+        ".pkl",
+        ".h5",
+        ".pt",
+        ".pth",
+        ".ckpt",
+        ".keras",
+        ".pb",
+        ".tflite",
+    }
+)
 
-FORBIDDEN_DIR_NAMES: frozenset[str] = frozenset({
-    "__pycache__",
-    ".pytest_cache",
-    ".mypy_cache",
-    ".ruff_cache",
-    ".ipynb_checkpoints",
-    "node_modules",
-    ".benchmarks",
-})
+FORBIDDEN_DIR_NAMES: frozenset[str] = frozenset(
+    {
+        "__pycache__",
+        ".pytest_cache",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".ipynb_checkpoints",
+        "node_modules",
+        ".benchmarks",
+    }
+)
 
 FORBIDDEN_PATH_PREFIXES: tuple[str, ...] = (
     ".coverage",
@@ -176,40 +180,33 @@ def _matches_hard_block(path: str) -> bool:
     Checks: forbidden extensions, forbidden directory names, and forbidden path prefixes.
     """
     normalized = path.replace("\\", "/")
+    name = PurePath(normalized).name
 
-    # Check forbidden extensions
+    # Check forbidden extensions (single-dot)
     for ext in FORBIDDEN_EXTENSIONS:
-        if normalized.endswith(ext) or ("." + ext.lstrip(".")) in normalized:
-            # For compound extensions like .tar.gz, check exact suffix match
-            if normalized.endswith(ext):
-                return True
-
-    # Check for compound extensions like .tar.gz more carefully
-    for ext in (".tar.gz", ".tar.bz2", ".tar.xz"):
-        if normalized.endswith(ext):
+        if (
+            ext.startswith(".")
+            and ext not in (".tar.gz", ".tar.bz2", ".tar.xz")
+            and name.endswith(ext)
+        ):
             return True
 
-    # Check single-dot extensions
-    for ext in FORBIDDEN_EXTENSIONS:
-        if not ext.startswith("."):
-            continue
-        # Only check the file extension, not substrings in path
-        name = PurePath(normalized).name
-        if name.endswith(ext) and ext not in (".tar.gz", ".tar.bz2", ".tar.xz"):
+    # Check for compound extensions
+    for ext in (".tar.gz", ".tar.bz2", ".tar.xz"):
+        if normalized.endswith(ext) or name.endswith(ext):
             return True
 
     # Check forbidden directory names in path components
-    parts = PurePath(normalized).parts
-    for part in parts:
-        if part in FORBIDDEN_DIR_NAMES:
-            return True
+    if any(part in FORBIDDEN_DIR_NAMES for part in PurePath(normalized).parts):
+        return True
 
     # Check forbidden path prefixes
     for prefix in FORBIDDEN_PATH_PREFIXES:
-        if normalized.startswith(prefix) or normalized == prefix.rstrip("/"):
-            return True
-        # Also check if any parent directory path starts with the prefix
-        if "/" + prefix in "/" + normalized:
+        if (
+            normalized.startswith(prefix)
+            or normalized == prefix.rstrip("/")
+            or ("/" + prefix) in ("/" + normalized)
+        ):
             return True
 
     return False
@@ -219,10 +216,7 @@ def _matches_any_pattern(path: str, patterns: Iterable[str]) -> bool:
     """Check if *path* matches any report-only pattern by fnmatch glob."""
     normalized = path.replace("\\", "/")
     name = PurePath(normalized).name.lower()
-    for pattern in patterns:
-        if fnmatch.fnmatch(name, pattern):
-            return True
-    return False
+    return any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
 
 
 def _is_allowlisted(path: str) -> bool:
