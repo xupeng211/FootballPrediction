@@ -1,4 +1,4 @@
-﻿"""
+"""
 FootballPrediction V7.0 通用工具模块 - V4.45 大圆满版
 
 V4.45: 清除幽灵导入，确立极简架构
@@ -6,17 +6,24 @@ V4.45: 清除幽灵导入，确立极简架构
 - 100% 配置驱动、0 冗余导入
 """
 
+from contextlib import AbstractContextManager
+
+import psycopg2.extensions
+
 # V4.25: 从统一的连接池模块导入
 from src.database.db_pool import SyncDatabasePool as DatabaseManager
 from src.database.db_pool import get_sync_db_pool as get_db_manager
 
 
 # V4.25: 兼容性别名
-def database_connection(dict_cursor: bool = True):
+def database_connection(
+    dict_cursor: bool = True,
+) -> AbstractContextManager[psycopg2.extensions.connection]:
     """向后兼容的数据库连接上下文管理器"""
     _ = dict_cursor
     pool = get_db_manager()
     return pool.get_connection()
+
 
 # 新增：重试装饰器
 try:

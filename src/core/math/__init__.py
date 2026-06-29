@@ -1,4 +1,4 @@
-﻿"""
+"""
 V4.45 核心算力中心 - 数学计算模块
 ===================================
 
@@ -10,15 +10,10 @@ Author: V4.45 Grand Unification Team
 Date: 2026-03-08
 """
 
-from .finance import (
-    expected_value,
-    fractional_kelly,
-    kelly_criterion,
-    sharpe_ratio,
-)
 from .evaluator import safe_eval
+from .finance import expected_value, fractional_kelly, kelly_criterion, sharpe_ratio
 
-__all__ = [
+__all__ = [  # noqa: RUF022
     # 金融数学
     "kelly_criterion",
     "fractional_kelly",

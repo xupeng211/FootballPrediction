@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+__doc__ = """
 /**
  * V193.4 - 精准熔炼脚本
  * 针对指定比赛ID进行熔炼
@@ -56,3 +57,5 @@ main().catch(console.error);
     console.error('❌ 致命错误:', error);
     process.exit(1);
 });
+
+"""

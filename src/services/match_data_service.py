@@ -1,18 +1,15 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """V4.42 MatchDataService - 比赛数据服务统一组件"""
 
 from __future__ import annotations
+
 from dataclasses import dataclass
-from datetime import datetime, timedelta
-import json
 import logging
-from typing import Any
 
 import psycopg2
-from psycopg2.extras import RealDictCursor
+import psycopg2.extensions
 
 from src.config_unified import get_config, get_database_url
-from src.constants.shared_constants import MatchStatus
 
 logger = logging.getLogger("V4.42.MatchDataService")
 
@@ -20,6 +17,7 @@ logger = logging.getLogger("V4.42.MatchDataService")
 @dataclass
 class MatchAlignment:
     """比赛对齐数据"""
+
     match_id: str
     fotmob_id: str | None = None
     oddsportal_hash: str | None = None
@@ -30,11 +28,12 @@ class MatchAlignment:
     notes: str = ""
 
     def is_valid(self) -> bool:
-        return (
+        """Check if match alignment is valid."""
+        return bool(
             self.match_id
             and self.oddsportal_hash
             and self.time_valid
-            and self.alignment_confidence >= 0.7
+            and self.alignment_confidence >= 0.7  # noqa: PLR2004
         )
 
 
@@ -44,16 +43,17 @@ class MatchDataService:
     TIME_DIFF_THRESHOLD = 2.0
     CONFIDENCE_THRESHOLD = 0.7
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.config = get_config()
-        self._conn = None
+        self._conn: psycopg2.extensions.connection | None = None
 
-    def _get_connection(self):
+    def _get_connection(self) -> psycopg2.extensions.connection:
         if self._conn is None or self._conn.closed:
             self._conn = psycopg2.connect(get_database_url())
         return self._conn
 
-    def close(self):
+    def close(self) -> None:
+        """Close the database connection."""
         if self._conn and not self._conn.closed:
             self._conn.close()
 
@@ -66,5 +66,5 @@ MatchLinker = MatchDataService
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     service = MatchDataService()
-    print("MatchDataService V4.42 initialized")
+    print("MatchDataService V4.42 initialized")  # noqa: T201
     service.close()
