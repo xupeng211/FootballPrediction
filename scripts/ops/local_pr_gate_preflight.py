@@ -514,12 +514,15 @@ def check_python_ast_utf8(changed: set[str]) -> CheckResult:
     """Validate changed Python files decode as UTF-8 and parse as AST."""
     py_files = [p for p in changed if p.endswith(".py")]
     if not py_files:
-        return CheckResult("python-ast-utf8", "SKIP", "No Python files changed")
+        return CheckResult(
+            "python-ast-utf8", "SKIP", "No Python files changed"
+        )
 
     t0 = time.time()
+    script = str(ROOT / "scripts/devops/check_python_ast_utf8.py")
     try:
         result = subprocess.run(
-            [sys.executable, str(ROOT / "scripts/devops/check_python_ast_utf8.py"), "--paths", *py_files],
+            [sys.executable, script, "--paths", *py_files],
             cwd=str(ROOT),
             capture_output=True,
             text=True,
@@ -528,15 +531,24 @@ def check_python_ast_utf8(changed: set[str]) -> CheckResult:
         )
     except Exception as exc:
         return CheckResult(
-            "python-ast-utf8", "ERROR", f"Failed to run check_python_ast_utf8: {exc}"
+            "python-ast-utf8",
+            "ERROR",
+            f"Failed to run check_python_ast_utf8: {exc}",
         )
 
     duration_ms = (time.time() - t0) * 1000
     output = result.stdout + result.stderr
     if result.returncode == 0:
-        return CheckResult("python-ast-utf8", "PASS", output.strip().splitlines()[-1] or "OK", duration_ms=duration_ms)
+        last_line = output.strip().splitlines()[-1] or "OK"
+        return CheckResult(
+            "python-ast-utf8", "PASS", last_line, duration_ms=duration_ms
+        )
     return CheckResult(
-        "python-ast-utf8", "FAIL", "Python parse/encoding errors found", output.strip().splitlines(), duration_ms=duration_ms
+        "python-ast-utf8",
+        "FAIL",
+        "Python parse/encoding errors found",
+        output.strip().splitlines(),
+        duration_ms=duration_ms,
     )
 
 

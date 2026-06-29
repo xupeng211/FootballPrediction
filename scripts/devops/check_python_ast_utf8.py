@@ -20,9 +20,12 @@ import fnmatch
 import json
 import subprocess
 import sys
-from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
 
 
 DEFAULT_EXCLUDE_GLOBS = (
@@ -72,7 +75,7 @@ def _run_git_ls_files(paths: list[str]) -> list[str]:
     return [f for f in files if f.endswith(".py")]
 
 
-def _is_excluded(path: str, exclude_globs: Iterable[str]) -> bool:
+def _is_excluded(path: str, exclude_globs: "Iterable[str]") -> bool:
     """Return True if *path* matches any of the *exclude_globs* patterns."""
     normalized = path.replace("\\", "/")
     return any(fnmatch.fnmatch(normalized, pattern) for pattern in exclude_globs)
@@ -175,7 +178,9 @@ def main(argv: list[str]) -> int:
             ),
         )
     else:
-        print(f"Python UTF-8 / AST validation checked {len(checked_files)} files.")
+        print(
+            f"Python UTF-8 / AST validation checked {len(checked_files)} files."
+        )
         if issues:
             print(f"Found {len(issues)} Python parse/encoding issue(s):")
             for issue in issues:
