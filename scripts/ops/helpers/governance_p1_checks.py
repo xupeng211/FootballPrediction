@@ -56,11 +56,13 @@ _ARCHIVE_CHECK_PREFIXES: tuple[str, ...] = (
 _ARCHIVE_REPORT_ONLY_PREFIXES: tuple[str, ...] = ("tests/",)
 
 # Changed paths under these prefixes are NEVER scanned.
+# scripts/ops/helpers/ is exempt — it is governance infrastructure, not runtime.
 _AV_DIR = _AV26 + "/"
 _ARCHIVE_EXEMPT_PREFIXES: tuple[str, ...] = (
     "docs/",
     _AV_DIR,
     ".github/",
+    "scripts/ops/helpers/",
 )
 
 
