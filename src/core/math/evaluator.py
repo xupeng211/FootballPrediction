@@ -65,7 +65,7 @@ def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:  # noqa: C901, 
     if isinstance(node, ast.Constant):  # Python 3.8+
         return node.value
     # ast.Num removed in Python 3.12+; guard with hasattr for compat.
-    if hasattr(ast, "Num") and isinstance(node, ast.Num):  # type: ignore[attr-defined]
+    if hasattr(ast, "Num") and isinstance(node, ast.Num):
         return node.n
     if isinstance(node, ast.Name):
         if node.id in variables:
