@@ -514,9 +514,7 @@ def check_python_ast_utf8(changed: set[str]) -> CheckResult:
     """Validate changed Python files decode as UTF-8 and parse as AST."""
     py_files = [p for p in changed if p.endswith(".py")]
     if not py_files:
-        return CheckResult(
-            "python-ast-utf8", "SKIP", "No Python files changed"
-        )
+        return CheckResult("python-ast-utf8", "SKIP", "No Python files changed")
 
     t0 = time.time()
     script = str(ROOT / "scripts/devops/check_python_ast_utf8.py")
@@ -540,9 +538,7 @@ def check_python_ast_utf8(changed: set[str]) -> CheckResult:
     output = result.stdout + result.stderr
     if result.returncode == 0:
         last_line = output.strip().splitlines()[-1] or "OK"
-        return CheckResult(
-            "python-ast-utf8", "PASS", last_line, duration_ms=duration_ms
-        )
+        return CheckResult("python-ast-utf8", "PASS", last_line, duration_ms=duration_ms)
     return CheckResult(
         "python-ast-utf8",
         "FAIL",

@@ -16,12 +16,12 @@ from __future__ import annotations
 
 import argparse
 import ast
+from dataclasses import asdict, dataclass
 import fnmatch
 import json
+from pathlib import Path
 import subprocess
 import sys
-from dataclasses import asdict, dataclass
-from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -75,7 +75,7 @@ def _run_git_ls_files(paths: list[str]) -> list[str]:
     return [f for f in files if f.endswith(".py")]
 
 
-def _is_excluded(path: str, exclude_globs: "Iterable[str]") -> bool:
+def _is_excluded(path: str, exclude_globs: Iterable[str]) -> bool:
     """Return True if *path* matches any of the *exclude_globs* patterns."""
     normalized = path.replace("\\", "/")
     return any(fnmatch.fnmatch(normalized, pattern) for pattern in exclude_globs)
@@ -178,17 +178,14 @@ def main(argv: list[str]) -> int:
             ),
         )
     else:
-        print(
-            f"Python UTF-8 / AST validation checked {len(checked_files)} files."
-        )
+        print(f"Python UTF-8 / AST validation checked {len(checked_files)} files.")
         if issues:
             print(f"Found {len(issues)} Python parse/encoding issue(s):")
             for issue in issues:
                 line = "?" if issue.line is None else issue.line
                 column = "?" if issue.column is None else issue.column
                 print(
-                    f"{issue.path}:{line}:{column}: "
-                    f"{issue.kind}: {issue.message}",
+                    f"{issue.path}:{line}:{column}: {issue.kind}: {issue.message}",
                 )
         else:
             print("All checked Python files decode as UTF-8 and parse as AST.")
