@@ -22,7 +22,11 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts" / "ops"))
 
 from helpers.pr_authorization_matrix import (  # noqa: E402
+    TASK_TYPE_AUDIT_ONLY,
+    TASK_TYPE_CONFIG_RUNTIME,
+    TASK_TYPE_DB_MIGRATION_SQL,
     TASK_TYPE_DOCS_ONLY,
+    TASK_TYPE_MERGE_ONLY,
     TASK_TYPE_SOURCE_CODE,
     TASK_TYPE_TEST_ONLY,
     TASK_TYPE_UNKNOWN,
@@ -130,6 +134,183 @@ def test_narrow_blocking_valid_input_returns_empty():
         pr_body="| Task type | source-code |",
     )
     assert narrow_blocking_errors(result) == ()
+
+
+# ---------------------------------------------------------------------------
+# narrow_blocking_errors — G1 expanded rules E-L
+# ---------------------------------------------------------------------------
+
+
+def test_narrow_blocking_e_docs_only_touching_tests():
+    """Rule E: docs-only touching tests/ is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_DOCS_ONLY,
+        ["docs/readme.md", "tests/unit/x.py"],
+        pr_body="| Task type | docs-only |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("docs-only" in e.lower() for e in errors)
+
+
+def test_narrow_blocking_f_test_only_touching_workflow():
+    """Rule F: test-only touching workflow/governance paths is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_TEST_ONLY,
+        ["tests/unit/x.py", "scripts/devops/gatekeeper.sh"],
+        pr_body="| Task type | test-only |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("test-only" in e.lower() for e in errors)
+
+
+def test_narrow_blocking_g_source_code_touching_workflow():
+    """Rule G: source-code touching workflow/gate paths is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_SOURCE_CODE,
+        ["src/foo.py", ".github/workflows/production-gate.yml"],
+        pr_body="| Task type | source-code |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("source-code" in e.lower() for e in errors)
+
+
+def test_narrow_blocking_g_source_code_touching_docker():
+    """Rule G: source-code touching Docker paths is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_SOURCE_CODE,
+        ["src/foo.py", "Dockerfile"],
+        pr_body="| Task type | source-code |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+
+
+def test_narrow_blocking_g_source_code_touching_db_migration():
+    """Rule G: source-code touching db-migration paths is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_SOURCE_CODE,
+        ["src/foo.py", "database/migrations/001.sql"],
+        pr_body="| Task type | source-code |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+
+
+def test_narrow_blocking_h_workflow_gov_touching_source():
+    """Rule H: workflow-governance touching src/ is blocked."""
+    body = textwrap.dedent("""\
+        | Task type | workflow-governance |
+
+        ## Dangerous File Authorization
+
+        Approved governance change.
+    """)
+    result = validate_authorization(
+        TASK_TYPE_WORKFLOW_GOVERNANCE,
+        ["scripts/ops/ai_workflow_gate.py", "src/business.py"],
+        pr_body=body,
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("workflow-governance" in e.lower() for e in errors)
+
+
+def test_narrow_blocking_h_workflow_gov_only_gate_passes():
+    """Rule H: workflow-governance only touching gate/test/docs passes."""
+    body = textwrap.dedent("""\
+        | Task type | workflow-governance |
+
+        ## Dangerous File Authorization
+
+        Approved governance change.
+    """)
+    result = validate_authorization(
+        TASK_TYPE_WORKFLOW_GOVERNANCE,
+        ["scripts/ops/ai_workflow_gate.py", "tests/unit/ops/test_gate.py"],
+        pr_body=body,
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) == 0
+
+
+def test_narrow_blocking_i_audit_only_with_file_changes():
+    """Rule I: audit-only with any repo file changes is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_AUDIT_ONLY,
+        ["docs/_reports/audit.md"],
+        pr_body="| Task type | audit-only |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("audit-only" in e.lower() for e in errors)
+
+
+def test_narrow_blocking_i_audit_only_no_changes_passes():
+    """Rule I: audit-only with no file changes passes."""
+    result = validate_authorization(
+        TASK_TYPE_AUDIT_ONLY,
+        [],
+        pr_body="| Task type | audit-only |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) == 0
+
+
+def test_narrow_blocking_j_merge_only_touching_source():
+    """Rule J: merge-only touching non-docs files is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_MERGE_ONLY,
+        ["docs/merge_notes.md", "src/foo.py"],
+        pr_body="| Task type | merge-only |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("merge-only" in e.lower() for e in errors)
+
+
+def test_narrow_blocking_j_merge_only_docs_passes():
+    """Rule J: merge-only with only docs passes."""
+    result = validate_authorization(
+        TASK_TYPE_MERGE_ONLY,
+        ["docs/merge_notes.md"],
+        pr_body="| Task type | merge-only |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) == 0
+
+
+def test_narrow_blocking_k_config_runtime_touching_source():
+    """Rule K: config-runtime touching src/ is blocked."""
+    result = validate_authorization(
+        TASK_TYPE_CONFIG_RUNTIME,
+        ["pyproject.toml", "src/foo.py"],
+        pr_body="| Task type | config-runtime |",
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("config-runtime" in e.lower() for e in errors)
+
+
+def test_narrow_blocking_l_db_migration_touching_source():
+    """Rule L: db-migration-sql touching src/ is blocked."""
+    body = textwrap.dedent("""\
+        | Task type | db-migration-sql |
+
+        ## Dangerous File Authorization
+
+        Approved.
+    """)
+    result = validate_authorization(
+        TASK_TYPE_DB_MIGRATION_SQL,
+        ["database/migrations/001.sql", "src/foo.py"],
+        pr_body=body,
+    )
+    errors = narrow_blocking_errors(result)
+    assert len(errors) >= 1
+    assert any("db-migration-sql" in e.lower() for e in errors)
 
 
 # ---------------------------------------------------------------------------
