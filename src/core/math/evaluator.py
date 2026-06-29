@@ -62,10 +62,11 @@ def safe_eval(expression: str, variables: dict[str, Any] | None = None) -> Any:
 
 def _eval_node(node: ast.AST, variables: dict[str, Any]) -> Any:  # noqa: C901, PLR0911
     """递归求值 AST 节点"""
-    if isinstance(node, ast.Num):  # Python 3.7
-        return node.n
     if isinstance(node, ast.Constant):  # Python 3.8+
         return node.value
+    # ast.Num removed in Python 3.12+; guard with hasattr for compat.
+    if hasattr(ast, "Num") and isinstance(node, ast.Num):  # type: ignore[attr-defined]
+        return node.n
     if isinstance(node, ast.Name):
         if node.id in variables:
             return variables[node.id]

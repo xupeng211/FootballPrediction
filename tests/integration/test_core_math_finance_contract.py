@@ -11,16 +11,10 @@ mathematical foundation layer. All tests use real function calls with zero mocks
 No DB, Docker, network, or secrets are required.
 """
 
-import ast as _ast_mod
 import importlib.util
 from pathlib import Path
 
 import pytest
-
-# evaluator.py uses ast.Num which was removed in Python 3.12+.
-# This is a known pre-existing source compatibility issue (not a test bug).
-# Tests that exercise safe_eval are skipped when ast.Num is unavailable.
-_SAFE_EVAL_WORKS = hasattr(_ast_mod, "Num")
 
 _SRC = Path(__file__).parent.parent.parent / "src"
 
@@ -93,9 +87,6 @@ class TestKellyCriterion:
         assert sharpe_ratio([5, 5, 5]) == pytest.approx(0.0)
 
 
-@pytest.mark.skipif(
-    not _SAFE_EVAL_WORKS, reason="ast.Num removed in Python 3.12+; pre-existing source compat issue"
-)
 class TestSafeEvalIntegration:
     """safe_eval exercises the AST-based expression evaluator."""
 
@@ -120,7 +111,7 @@ class TestSafeEvalIntegration:
 
     def test_nested_function_calls(self):
         """Functions can be composed."""
-        assert core_safe_eval("abs(max(-3, -7))") == 7
+        assert core_safe_eval("max(abs(-3), abs(-7))") == 7
 
     def test_rejects_undefined_variable(self):
         """A variable not in the variables dict raises ValueError."""
@@ -138,9 +129,6 @@ class TestSafeEvalIntegration:
             core_safe_eval("2 + +")
 
 
-@pytest.mark.skipif(
-    not _SAFE_EVAL_WORKS, reason="ast.Num removed in Python 3.12+; pre-existing source compat issue"
-)
 class TestFinanceWithSafeEval:
     """Integration: finance formulas expressed via safe_eval with real results."""
 
