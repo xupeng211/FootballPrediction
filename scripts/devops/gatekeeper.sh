@@ -348,6 +348,7 @@ readonly PYTHON_LONG_FILE_ALLOWLIST=(
   "src/services/match_linker.py"
   "tests/unit/test_ai_workflow_gate.py"
   "scripts/ops/ai_workflow_gate.py"
+  "scripts/ops/helpers/pr_authorization_matrix.py"
 )
 readonly COVERAGE_THRESHOLD=80
 readonly COVERAGE_DIR='reports/coverage'
