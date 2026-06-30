@@ -26,6 +26,8 @@ _spec.loader.exec_module(_static_ql)
 
 _parse_hunk_new_start = _static_ql._parse_hunk_new_start
 _collect_changed_lines_for_file = _static_ql._collect_changed_lines_for_file
+_normalize_path = _static_ql._normalize_path
+_classify_diagnostics = _static_ql.classify_diagnostics
 
 
 class TestParseHunkNewStart:
@@ -128,3 +130,88 @@ class TestChangedLineDetection:
 
             lines = _collect_changed_lines_for_file("HEAD~1", "fake.py")
             assert lines == set()
+
+
+# ---------------------------------------------------------------------------
+# Path normalization tests
+# ---------------------------------------------------------------------------
+
+
+class TestNormalizePath:
+    """Unit tests for _normalize_path — Docker path → repo-relative path."""
+
+    def test_docker_app_prefix_stripped(self):
+        assert _normalize_path("/app/src/main.py") == "src/main.py"
+
+    def test_docker_app_nested_test_file(self):
+        result = _normalize_path("/app/tests/unit/devops/test_static_quality_changed_lines.py")
+        assert result == "tests/unit/devops/test_static_quality_changed_lines.py"
+
+    def test_relative_path_unchanged(self):
+        assert _normalize_path("src/main.py") == "src/main.py"
+
+    def test_dot_slash_unchanged(self):
+        """Preserve ./ prefix — it is not a known container mount."""
+        assert _normalize_path("./src/main.py") == "./src/main.py"
+
+    def test_unknown_absolute_path_unchanged(self):
+        path = "/home/runner/work/FootballPrediction/FootballPrediction/src/main.py"
+        assert _normalize_path(path) == path
+
+    def test_already_relative_test_path_unchanged(self):
+        assert _normalize_path("tests/unit/foo.py") == "tests/unit/foo.py"
+
+
+# ---------------------------------------------------------------------------
+# Integration tests — diagnostic classification with Docker paths
+# ---------------------------------------------------------------------------
+
+
+class TestClassifyDiagnosticsPathNormalization:
+    """Verify that classify_diagnostics matches Docker-path diagnostics
+    against repo-relative changed_lines keys."""
+
+    def test_docker_path_matches_relative_changed_lines(self):
+        """Diagnostic /app/src/main.py:12 should match changed_lines['src/main.py']={12}."""
+        diags = [
+            {
+                "filename": "/app/src/main.py",
+                "location": {"row": 12, "column": 1},
+                "code": "I001",
+                "message": "Import block is un-sorted",
+            }
+        ]
+        changed = {"src/main.py": {12}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 1, "Should be new (on changed line)"
+        assert len(existing) == 0
+
+    def test_docker_path_on_unchanged_line_is_existing(self):
+        """Diagnostic on line NOT in changed_lines → existing."""
+        diags = [
+            {
+                "filename": "/app/src/main.py",
+                "location": {"row": 27, "column": 16},
+                "code": "F401",
+                "message": "unused import",
+            }
+        ]
+        changed = {"src/main.py": {12, 247}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 0
+        assert len(existing) == 1
+
+    def test_unknown_path_fallback_new(self):
+        """Diagnostic with unmatched path → still treated as new (fail-safe)."""
+        diags = [
+            {
+                "filename": "/unknown/prefix/main.py",
+                "location": {"row": 1, "column": 1},
+                "code": "F999",
+                "message": "test",
+            }
+        ]
+        changed = {"src/main.py": {1}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 1
+        assert len(existing) == 0
