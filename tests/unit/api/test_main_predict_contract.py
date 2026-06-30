@@ -83,12 +83,10 @@ def client() -> TestClient:
     Avoiding the context-manager form means the lifespan (which initialises
     the asyncpg pool and starts Prometheus) never runs.
 
-    The rate limiter is disabled because the /predict endpoint uses
-    ``request: dict`` as its parameter name, which shadows the Starlette
-    Request object that slowapi requires.  Disabling the rate limiter is
-    safe for contract tests — we are testing API shape, not rate limiting.
+    The rate limiter is left at its default (enabled).  The /predict route
+    was fixed in #L2B to expose a Starlette Request for slowapi alongside
+    the JSON body dict, so the limiter no longer crashes on ``request: dict``.
     """
-    main_module.app.state.limiter.enabled = False
     return TestClient(main_module.app)
 
 
@@ -273,3 +271,42 @@ def test_predict_error_path_does_not_create_real_predictor(client, monkeypatch):
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     # The fake was called, but it did NOT call the real Predictor factory
     assert real_get_predictor_called is True
+
+
+# ===================================================================
+# 7. Rate limiter compatibility (L2B fix)
+# ===================================================================
+
+
+def test_limiter_enabled_predict_does_not_crash(client, stub_predictor):
+    """With the rate limiter enabled, /predict happy path must not crash.
+
+    Before the L2B fix, ``request: dict`` shadowed the Starlette Request
+    object required by slowapi, causing an ``Exception: parameter 'request'
+    must be an instance of starlette.requests.Request``.
+    """
+    # Confirm the limiter is actually enabled for this test
+    assert main_module.app.state.limiter.enabled is True
+
+    payload: dict = {"home_team": "X", "away_team": "Y"}
+    response = client.post("/predict", json=payload)
+    assert response.status_code == status.HTTP_200_OK
+    assert len(stub_predictor.predict_calls) == 1
+    assert stub_predictor.predict_calls[0] == payload
+
+
+def test_limiter_enabled_predict_batch_does_not_crash(client, stub_predictor):
+    """With the rate limiter enabled, /predict/batch must still work.
+
+    /predict/batch already had ``request: Request`` before the L2B fix,
+    so this is a regression guard.
+    """
+    assert main_module.app.state.limiter.enabled is True
+
+    payload: list[dict] = [{"home_team": "A", "away_team": "B"}]
+    response = client.post("/predict/batch", json=payload)
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) == 1
+    assert len(stub_predictor.predict_batch_calls) == 1

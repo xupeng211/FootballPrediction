@@ -9,7 +9,7 @@ import logging
 import os
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST
@@ -115,6 +115,11 @@ app = FastAPI(
 
 # 初始化 API 限流器
 init_rate_limiter(app)
+# Disable slowapi response-header injection so that endpoints that return
+# plain dict / list[dict] (rather than starlette.responses.Response) are
+# compatible with the rate-limiter decorator.  Rate limiting itself remains
+# active; only the X-RateLimit-* response headers are omitted.
+app.state.limiter._headers_enabled = False
 logger.info("✅ API 限流器已初始化")
 
 # 添加CORS中间件
@@ -238,7 +243,7 @@ def get_predictor() -> "Predictor":
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])
 @rate_limit_predict()
-async def predict_match(request: dict) -> dict:
+async def predict_match(request: Request, payload: dict = Body(...)) -> dict:
     """
     V26.4 统一预测接口
 
@@ -282,7 +287,7 @@ async def predict_match(request: dict) -> dict:
     """
     try:
         predictor = get_predictor()
-        result = predictor.predict(request)
+        result = predictor.predict(payload)
         logger.info(f"预测成功: {result['prediction']} (置信度: {result['confidence']:.2f})")
         return result
     except ValueError as e:
