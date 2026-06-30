@@ -253,6 +253,21 @@ def run_ruff(files: list[str]) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+def _normalize_path(file_path: str) -> str:
+    """Normalise a file path from ruff / git diff to a consistent relative form.
+
+    Ruff may return absolute Docker paths (``/app/src/main.py``) while git diff
+    returns repository-relative paths (``src/main.py``).  This function strips
+    well-known container mount-point prefixes so both sources produce the same
+    key for the ``changed_lines`` dict.
+    """
+    known_prefixes: tuple[str, ...] = ("/app/",)
+    for prefix in known_prefixes:
+        if file_path.startswith(prefix):
+            return file_path[len(prefix) :]
+    return file_path
+
+
 def classify_diagnostics(
     diagnostics: list[dict],
     changed_lines: dict[str, set[int]],
@@ -273,7 +288,8 @@ def classify_diagnostics(
             new.append(diag)
             continue
 
-        changed = changed_lines.get(file_path, set())
+        normalised = _normalize_path(file_path)
+        changed = changed_lines.get(normalised, set())
         if not changed:
             # No changed-line data for this file — treat as new (fail-safe).
             new.append(diag)
