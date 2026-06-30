@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
+from typing import Annotated
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -244,7 +245,10 @@ def get_predictor() -> "Predictor":
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])
 @rate_limit_predict()
-async def predict_match(request: Request, payload: dict = Body(...)) -> dict:
+async def predict_match(
+    request: Request,
+    payload: Annotated[dict, Body(...)],
+) -> dict:
     """
     V26.4 统一预测接口
 
@@ -286,6 +290,7 @@ async def predict_match(request: Request, payload: dict = Body(...)) -> dict:
     }
     ```
     """
+    _ = request  # consumed indirectly by slowapi rate-limit decorator
     try:
         predictor = get_predictor()
         result = predictor.predict(payload)
