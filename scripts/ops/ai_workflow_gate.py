@@ -213,6 +213,7 @@ from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     changed_paths,
     collect_changes,
     git_output,
+    parse_name_status,  # noqa: F401 — re-exported for local_pr_gate_preflight
 )
 
 
@@ -499,6 +500,11 @@ from scripts.ops.helpers.garbage_prevention_checks import (  # noqa: E402
     check_report_lifecycle_required,
     check_report_restricted_task_type,
 )
+from scripts.ops.helpers.governance_p1_checks import (  # noqa: E402
+    check_dangerous_auth_path_cross_validation,
+    check_no_archive_runtime_import,
+    check_script_lifecycle_requirement,
+)
 
 
 def validate(  # noqa: C901, PLR0912
@@ -596,6 +602,17 @@ def validate(  # noqa: C901, PLR0912
                 errors.extend(narrow_blocking_errors(result))
             except Exception as exc:
                 errors.append(f"PR authorization matrix blocking check failed: {exc}")
+
+    # 9. P1-1: no-archive-runtime-import (runs regardless of body checks)
+    errors.extend(check_no_archive_runtime_import(changed))
+
+    # 10. P1-2: dangerous-auth path cross-validation (requires body)
+    if not skip_body_checks:
+        errors.extend(check_dangerous_auth_path_cross_validation(changed, pr_body))
+
+    # 11. P1-3: script lifecycle requirement for newly added scripts (requires body)
+    if not skip_body_checks:
+        errors.extend(check_script_lifecycle_requirement(added, pr_body))
 
     return errors
 
