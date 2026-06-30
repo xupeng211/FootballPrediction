@@ -166,7 +166,7 @@ def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
     current_new_line: int | None = None
 
     for diff_line in _safe_decode(result.stdout).splitlines():
-        if diff_line.startswith("@@") and diff_line.endswith("@@"):
+        if diff_line.startswith("@@") and "@@" in diff_line[2:]:
             current_new_line = _parse_hunk_new_start(diff_line)
             continue
 
