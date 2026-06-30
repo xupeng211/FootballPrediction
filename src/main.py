@@ -43,6 +43,7 @@ def setup_metrics_exporter(port: int = 9090) -> None:
     start_http_server(port)
     logger.info(f"📈 Prometheus exporter started on port {port}")
 
+
 # Prometheus指标通过独立模块管理，避免重复注册
 
 
