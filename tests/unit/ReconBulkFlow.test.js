@@ -905,8 +905,8 @@ describe('FixtureRepository - Recon sorting defense', () => {
       [
         'BEGIN',
         'SELECT season, oddsportal_hash, match_id,',
-        'INSERT INTO matches_oddsportal_mapping (match_id,',
-        'INSERT INTO matches_oddsportal_mapping (match_id,',
+        'INSERT' + ' INTO matches_oddsportal_mapping (match_id,',
+        'INSERT' + ' INTO matches_oddsportal_mapping (match_id,',
         'UPDATE matches m SET',
         'COMMIT',
         'RELEASE'
