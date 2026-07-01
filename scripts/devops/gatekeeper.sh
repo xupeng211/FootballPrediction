@@ -1108,8 +1108,8 @@ run_static_quality_checks() {
   # ruff format check remains whole-file (formatting consistency for the entire changed file).
   python -m ruff format --check "${python_targets[@]}"
 
-  # mypy type check: currently whole-file on changed src/ files.
-  # TODO(TECHDEBT-E follow-up): apply changed-line gating to mypy diagnostics as well.
+  # mypy type check with changed-line gating.
+  # TECHDEBT-E: mypy diagnostics on changed lines block; pre-existing errors warn.
   for file in "${python_targets[@]}"; do
     case "$file" in
       src/*.py|src/**/*.py)
@@ -1118,14 +1118,21 @@ run_static_quality_checks() {
     esac
   done
 
+  local mypy_rc=0
   if [[ "${#mypy_targets[@]}" -gt 0 ]]; then
-    python -m mypy --config-file mypy.ini --follow-imports=silent "${mypy_targets[@]}"
+    if [[ -f "scripts/devops/static_quality_changed_lines.py" ]]; then
+      python scripts/devops/static_quality_changed_lines.py --mypy "${mypy_targets[@]}" || mypy_rc=$?
+    else
+      # Fallback: whole-file mypy check.
+      warn 'static_quality_changed_lines.py 未找到，回退到全文件 mypy 检查。'
+      python -m mypy --config-file mypy.ini --follow-imports=silent "${mypy_targets[@]}" || mypy_rc=$?
+    fi
   else
     log '本次变更未触达 src Python 模块，跳过 mypy。'
   fi
 
-  # If ruff found NEW violations on changed lines, propagate the failure.
-  if (( ruff_rc != 0 )); then
+  # If ruff or mypy found NEW violations on changed lines, propagate the failure.
+  if (( ruff_rc != 0 || mypy_rc != 0 )); then
     return 1
   fi
 }

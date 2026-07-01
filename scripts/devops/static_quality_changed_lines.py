@@ -1,13 +1,17 @@
 #!/usr/bin/env python3
-"""Static quality changed-line gate — apply changed-line principle to ruff diagnostics.
+"""Static quality changed-line gate — apply changed-line principle to diagnostics.
 
 lifecycle: permanent
 
-Filters ruff diagnostics so that only violations on lines ADDED/MODIFIED by
-the current PR are treated as blocking. Pre-existing violations in changed
+Filters ruff / mypy diagnostics so that only violations on lines ADDED/MODIFIED
+by the current PR are treated as blocking.  Pre-existing violations in changed
 files are reported as warnings but do not cause a non-zero exit.
 
-Usage:
+Usage (ruff — default):
+    python static_quality_changed_lines.py <file>...
+
+Usage (mypy):
+    python static_quality_changed_lines.py --mypy <file>...
   python scripts/devops/static_quality_changed_lines.py <file1> <file2> ...
 
 The script:
@@ -24,6 +28,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -369,6 +374,115 @@ def _report_fallback(all_diags: list[dict]) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Mypy helpers
+# ---------------------------------------------------------------------------
+
+# Mypy output line patterns:
+#   src/main.py:247: error: Argument 1 has incompatible type ...  [arg-type]
+#   /app/src/main.py:247: error: ...  [error-code]
+#   src/main.py:250: note: ...
+_MYPY_LINE_RE = re.compile(r"^(.+?):(\d+):\s+(error|note):\s+(.*?)(?:\s+\[(.+?)\])?\s*$")
+
+
+def parse_mypy_output(text: str) -> list[dict]:
+    """Parse mypy text output into diagnostic dicts (same shape as ruff JSON).
+
+    Only *error* severity lines are included.  ``note`` lines are ignored.
+    """
+    diagnostics: list[dict] = []
+    for line in text.splitlines():
+        if not line.strip():
+            continue
+        m = _MYPY_LINE_RE.match(line)
+        if m is None:
+            continue
+        file_path, line_no_str, severity, message, error_code = m.groups()
+        if severity != "error":
+            continue
+        try:
+            line_no = int(line_no_str)
+        except ValueError:
+            continue
+        diagnostics.append(
+            {
+                "filename": file_path,
+                "location": {"row": line_no, "column": 0},
+                "code": error_code or "mypy",
+                "message": message.strip(),
+            }
+        )
+    return diagnostics
+
+
+def run_mypy_changed_line(files: list[str]) -> int:
+    """Run mypy with changed-line gating.  Return 0 on pass, 1 on new violations."""
+    print(f"[static-quality-mypy] Checking {len(files)} Python file(s) with changed-line gate.")
+
+    # 1. Run mypy and capture output.
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "mypy",
+                "--config-file",
+                "mypy.ini",
+                "--follow-imports=silent",
+                *files,
+            ],
+            capture_output=True,
+            timeout=60,
+            check=False,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        print(f"[static-quality] ERROR: mypy invocation failed: {exc}", file=sys.stderr)
+        return 1
+
+    combined = _safe_decode(result.stdout) + "\n" + _safe_decode(result.stderr)
+
+    if result.returncode == 0:
+        print("[static-quality-mypy] mypy: no diagnostics — PASS")
+        return 0
+
+    all_diags = parse_mypy_output(combined)
+    if not all_diags:
+        # Mypy reported failure but output is unparseable — fail-safe.
+        print(
+            "[static-quality] WARN: could not parse mypy output; treating as failure (fail-safe)",
+            file=sys.stderr,
+        )
+        print(combined, file=sys.stderr)
+        return 1
+
+    # 2. Compute changed line ranges.
+    changed_lines = get_changed_line_ranges(files)
+    if not changed_lines:
+        return _report_fallback(all_diags)
+
+    total_changed = sum(len(lines) for lines in changed_lines.values())
+    print(
+        f"[static-quality-mypy] Changed line ranges computed: "
+        f"{len(changed_lines)} file(s), {total_changed} changed line(s)"
+    )
+
+    # 3. Classify and report.
+    new_diags, existing_diags = classify_diagnostics(all_diags, changed_lines)
+
+    if existing_diags:
+        _report_existing_diags(existing_diags)
+
+    if new_diags:
+        _report_new_diags(new_diags)
+        return 1
+
+    print(
+        f"[static-quality-mypy] mypy: PASS — 0 new violations, "
+        f"{len(existing_diags)} pre-existing (warned above)"
+    )
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -379,6 +493,10 @@ def main() -> int:
     if not files:
         print("[static-quality] No files to check.", file=sys.stderr)
         return 0
+
+    # --mypy mode
+    if files and files[0] == "--mypy":
+        return run_mypy_changed_line(files[1:])
 
     print(f"[static-quality] Checking {len(files)} Python file(s) with changed-line gate.")
 
