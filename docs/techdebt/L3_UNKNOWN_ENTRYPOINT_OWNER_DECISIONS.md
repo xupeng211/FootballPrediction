@@ -290,3 +290,12 @@ Recommended next task only after user confirmation:
 - This completes the TECHDEBT-L3 taxonomy (all 5 phases: L3A inventory, L3B whitelist, L3C labels, L3D ownership, L3E unknown decisions).
 - Future task may propose docs-only enforcement design for the now-fully-classified L3 taxonomy.
 - Do not implement enforcement, CODEOWNERS, or L4 without separate authorization.
+
+## L3F follow-up
+
+L3F proposes future enforcement design in:
+
+- `docs/techdebt/L3_ENFORCEMENT_DESIGN_PROPOSAL.md`
+- `docs/_reports/L3F_ENFORCEMENT_DESIGN_PROPOSAL_REPORT.md`
+
+This update is documentation-only and does not implement enforcement, CODEOWNERS, GitHub Actions changes, Gatekeeper changes, AI Workflow Gate changes, migration, deletion, move, or rename.
