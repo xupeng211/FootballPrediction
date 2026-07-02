@@ -28,6 +28,8 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
+import posixpath
 import re
 import subprocess
 import sys
@@ -50,6 +52,10 @@ FALLBACK_DIAG_DISPLAY_LIMIT = 20
 
 # Minimum number of parts expected in a unified diff hunk header.
 MIN_HUNK_HEADER_PARTS = 3
+
+# Internal marker for a file whose diff could not be read.  Diagnostics in
+# these files remain blocking because changed-line classification is unsafe.
+UNRESOLVED_CHANGED_LINE_PREFIX = "__unresolved_changed_line__:"
 
 # ---------------------------------------------------------------------------
 # Safe decoding helper
@@ -152,8 +158,8 @@ def _parse_hunk_new_start(hunk_header: str) -> int | None:
     return int(new_part)
 
 
-def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
-    """Return the set of changed (added) line numbers for a single file."""
+def _collect_changed_lines_for_file_with_status(git_base: str, file: str) -> tuple[set[int], bool]:
+    """Return changed lines and whether the diff was parsed safely."""
     try:
         result = subprocess.run(
             ["git", "diff", f"{git_base}...HEAD", "--", file],
@@ -162,17 +168,22 @@ def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
             check=False,
         )
     except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
-        return set()
+        return set(), False
 
     if result.returncode != 0:
-        return set()
+        return set(), False
 
     lines: set[int] = set()
     current_new_line: int | None = None
 
     for diff_line in _safe_decode(result.stdout).splitlines():
         if diff_line.startswith("@@") and "@@" in diff_line[2:]:
-            current_new_line = _parse_hunk_new_start(diff_line)
+            try:
+                current_new_line = _parse_hunk_new_start(diff_line)
+            except ValueError:
+                return set(), False
+            if current_new_line is None:
+                return set(), False
             continue
 
         if current_new_line is None:
@@ -185,6 +196,12 @@ def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
             # Context or unchanged line — advance the new-line counter.
             current_new_line += 1
 
+    return lines, True
+
+
+def _collect_changed_lines_for_file(git_base: str, file: str) -> set[int]:
+    """Return the set of changed (added) line numbers for a single file."""
+    lines, _parsed = _collect_changed_lines_for_file_with_status(git_base, file)
     return lines
 
 
@@ -202,9 +219,12 @@ def get_changed_line_ranges(files: list[str]) -> dict[str, set[int]]:
 
     changed: dict[str, set[int]] = {}
     for file in files:
-        file_lines = _collect_changed_lines_for_file(git_base, file)
-        if file_lines:
-            changed[file] = file_lines
+        normalised = _normalize_path(file)
+        file_lines, parsed = _collect_changed_lines_for_file_with_status(git_base, file)
+        if parsed:
+            changed[normalised] = file_lines
+        else:
+            changed[f"{UNRESOLVED_CHANGED_LINE_PREFIX}{normalised}"] = set()
 
     return changed
 
@@ -266,11 +286,37 @@ def _normalize_path(file_path: str) -> str:
     well-known container mount-point prefixes so both sources produce the same
     key for the ``changed_lines`` dict.
     """
-    known_prefixes: tuple[str, ...] = ("/app/",)
+    normalised = file_path.strip().replace("\\", "/")
+    cwd = Path.cwd().as_posix()
+    known_prefixes: tuple[str, ...] = (
+        f"{cwd}/",
+        "/app/",
+        "/home/runner/work/FootballPrediction/FootballPrediction/",
+    )
     for prefix in known_prefixes:
-        if file_path.startswith(prefix):
-            return file_path[len(prefix) :]
-    return file_path
+        if normalised.startswith(prefix):
+            normalised = normalised[len(prefix) :]
+            break
+    return posixpath.normpath(normalised)
+
+
+def _is_unmapped_absolute_path(file_path: str) -> bool:
+    """Return True when a diagnostic path could not be made repo-relative."""
+    return file_path.startswith("/") or bool(re.match(r"^[A-Za-z]:/", file_path))
+
+
+def _split_changed_line_data(
+    changed_lines: dict[str, set[int]],
+) -> tuple[dict[str, set[int]], set[str]]:
+    """Separate resolved changed-line data from fail-safe unresolved markers."""
+    resolved: dict[str, set[int]] = {}
+    unresolved: set[str] = set()
+    for file_path, lines in changed_lines.items():
+        if file_path.startswith(UNRESOLVED_CHANGED_LINE_PREFIX):
+            unresolved.add(file_path[len(UNRESOLVED_CHANGED_LINE_PREFIX) :])
+        else:
+            resolved[file_path] = lines
+    return resolved, unresolved
 
 
 def classify_diagnostics(
@@ -283,23 +329,38 @@ def classify_diagnostics(
     """
     new: list[dict] = []
     existing: list[dict] = []
+    if not changed_lines:
+        return diagnostics.copy(), existing
+
+    resolved_changed_lines, unresolved_files = _split_changed_line_data(changed_lines)
 
     for diag in diagnostics:
         file_path = diag.get("filename", "")
         line = diag.get("location", {}).get("row", 0)
 
-        if not file_path or line == 0:
+        if not file_path or not isinstance(line, int) or line <= 0:
             # Can't map — treat as new (fail-safe).
             new.append(diag)
             continue
 
         normalised = _normalize_path(file_path)
-        changed = changed_lines.get(normalised, set())
-        if not changed:
-            # No changed-line data for this file — treat as new (fail-safe).
+        if _is_unmapped_absolute_path(normalised):
+            # Unknown absolute path — can't safely compare against git diff.
             new.append(diag)
             continue
 
+        if normalised in unresolved_files:
+            # The file was a target, but its diff could not be parsed safely.
+            new.append(diag)
+            continue
+
+        if normalised not in resolved_changed_lines:
+            # Mypy can emit diagnostics in imported files.  If the file is not
+            # part of the resolved changed-file set, it is historical context.
+            existing.append(diag)
+            continue
+
+        changed = resolved_changed_lines[normalised]
         if line in changed:
             new.append(diag)
         else:
