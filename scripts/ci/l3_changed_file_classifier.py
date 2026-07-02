@@ -18,13 +18,11 @@ Lifecycle: L3G active CI governance script (warning-only).
 """
 
 import argparse
+from collections import Counter
 import fnmatch
-import os
+from pathlib import Path
 import subprocess
 import sys
-from collections import Counter, OrderedDict
-from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
 
 # ---------------------------------------------------------------------------
 # Label constants
@@ -53,12 +51,12 @@ LABEL_UNCLASSIFIED = "unclassified-path"
 # ---------------------------------------------------------------------------
 
 # Active runtime — sole production API entrypoint
-ACTIVE_RUNTIME_PATHS: List[str] = [
+ACTIVE_RUNTIME_PATHS: list[str] = [
     "src/main.py",
 ]
 
 # Active API routers — mounted by src/main.py
-ACTIVE_API_ROUTER_PATHS: List[str] = [
+ACTIVE_API_ROUTER_PATHS: list[str] = [
     "src/api/health.py",
     "src/api/monitoring.py",
     "src/api/model_management.py",
@@ -66,7 +64,7 @@ ACTIVE_API_ROUTER_PATHS: List[str] = [
 ]
 
 # Active governance / CI entrypoints (L3B whitelist)
-ACTIVE_GOVERNANCE_PATHS: List[str] = [
+ACTIVE_GOVERNANCE_PATHS: list[str] = [
     "scripts/devops/gatekeeper.sh",
     "scripts/ops/ai_workflow_gate.py",
     "scripts/devops/check_python_ast_utf8.py",
@@ -81,7 +79,7 @@ ACTIVE_GOVERNANCE_PATHS: List[str] = [
 ]
 
 # Restricted legacy entrypoints (L3B whitelist §Restricted Legacy + L3E decisions)
-RESTRICTED_LEGACY_PATH_PATTERNS: List[str] = [
+RESTRICTED_LEGACY_PATH_PATTERNS: list[str] = [
     # L3B restricted legacy (18 entries)
     "scripts/ops/run_production.js",
     "scripts/ops/titan_discovery.js",
@@ -110,31 +108,31 @@ RESTRICTED_LEGACY_PATH_PATTERNS: List[str] = [
 ]
 
 # High-risk paths (require special attention)
-HIGH_RISK_PATHS: List[str] = [
+HIGH_RISK_PATHS: list[str] = [
     "scripts/ops/sentinel_watch.js",
 ]
 
 # Test-only paths
-TEST_ONLY_PATTERNS: List[str] = [
+TEST_ONLY_PATTERNS: list[str] = [
     "tests/**",
     "scripts/test/run_test_suite.js",
 ]
 
 # Archive read-only paths
-ARCHIVE_READ_ONLY_PATTERNS: List[str] = [
+ARCHIVE_READ_ONLY_PATTERNS: list[str] = [
     "archive_vault_2026/**",
     "tests/Z_LEGACY_ARCHIVE_PRE_V4.46.8/**",
 ]
 
 # L3 governance docs
-L3_DOCS_PATTERNS: List[str] = [
+L3_DOCS_PATTERNS: list[str] = [
     "docs/techdebt/L3_*",
     "docs/techdebt/L3*.md",
     "docs/_reports/L3*",
 ]
 
 # General documentation
-DOCUMENTATION_PATTERNS: List[str] = [
+DOCUMENTATION_PATTERNS: list[str] = [
     "docs/**",
     "*.md",
     "README.md",
@@ -145,26 +143,26 @@ DOCUMENTATION_PATTERNS: List[str] = [
 ]
 
 # GitHub workflow sensitive
-GITHUB_WORKFLOW_PATTERNS: List[str] = [
+GITHUB_WORKFLOW_PATTERNS: list[str] = [
     ".github/**",
 ]
 
 # Gate-sensitive paths (gate infrastructure)
-GATE_SENSITIVE_PATHS: List[str] = [
+GATE_SENSITIVE_PATHS: list[str] = [
     "scripts/devops/gatekeeper.sh",
     "scripts/ops/ai_workflow_gate.py",
     "scripts/ops/helpers/",
 ]
 
 # CODEOWNERS sensitive
-CODEOWNERS_PATHS: List[str] = [
+CODEOWNERS_PATHS: list[str] = [
     "CODEOWNERS",
     ".github/CODEOWNERS",
     "docs/CODEOWNERS",
 ]
 
 # Docker sensitive
-DOCKER_SENSITIVE_PATTERNS: List[str] = [
+DOCKER_SENSITIVE_PATTERNS: list[str] = [
     "Dockerfile",
     "docker-compose.yml",
     "docker-compose*.yml",
@@ -174,7 +172,7 @@ DOCKER_SENSITIVE_PATTERNS: List[str] = [
 ]
 
 # DB / migration sensitive
-DB_MIGRATION_SENSITIVE_PATTERNS: List[str] = [
+DB_MIGRATION_SENSITIVE_PATTERNS: list[str] = [
     "alembic/**",
     "alembic.ini",
     "migrations/**",
@@ -182,7 +180,7 @@ DB_MIGRATION_SENSITIVE_PATTERNS: List[str] = [
 ]
 
 # Scraper / training / pipeline sensitive
-SCRAPER_TRAINING_SENSITIVE_PATTERNS: List[str] = [
+SCRAPER_TRAINING_SENSITIVE_PATTERNS: list[str] = [
     "scripts/scraper/**",
     "scripts/training/**",
     "scripts/pipeline/**",
@@ -201,12 +199,12 @@ SCRAPER_TRAINING_SENSITIVE_PATTERNS: List[str] = [
 ]
 
 # Source runtime paths
-SOURCE_RUNTIME_PATTERNS: List[str] = [
+SOURCE_RUNTIME_PATTERNS: list[str] = [
     "src/**",
 ]
 
 # Source modules with __main__ blocks (L3E Decision 7)
-SOURCE_MAIN_NOTE_PATTERNS: List[str] = [
+SOURCE_MAIN_NOTE_PATTERNS: list[str] = [
     "src/core/environment_detector.py",
     "src/core/environment_validator.py",
     "src/core/path_manager.py",
@@ -254,7 +252,7 @@ def _match_glob(path: str, pattern: str) -> bool:
     return False
 
 
-def _match_any(path: str, patterns: List[str]) -> bool:
+def _match_any(path: str, patterns: list[str]) -> bool:
     """Return True if path matches any pattern in the list."""
     return any(_match_glob(path, p) for p in patterns)
 
@@ -263,13 +261,13 @@ def _match_any(path: str, patterns: List[str]) -> bool:
 # Classification engine
 # ---------------------------------------------------------------------------
 
-def classify_path(path: str) -> List[str]:
+def classify_path(path: str) -> list[str]:  # noqa: C901, PLR0911, PLR0912
     """Classify a single changed file path and return its L3 labels.
 
     Returns a list of labels. Most paths get one primary label plus
     optionally secondary labels (e.g., restricted-legacy + high-risk).
     """
-    labels: List[str] = []
+    labels: list[str] = []
 
     # --- Primary classification (ordered by specificity) ---
 
@@ -383,13 +381,13 @@ def _is_rename(status: str) -> bool:
     return status.startswith("R")
 
 
-def attention_notes(
+def attention_notes(  # noqa: C901, PLR0912
     path: str,
     status: str,
-    labels: List[str],
-) -> List[str]:
+    labels: list[str],
+) -> list[str]:
     """Generate attention notes for a classified path."""
-    notes: List[str] = []
+    notes: list[str] = []
 
     if _is_deletion(status):
         notes.append("DELETION DETECTED — requires dedicated PR authorization")
@@ -450,7 +448,7 @@ def attention_notes(
 # File list parsing
 # ---------------------------------------------------------------------------
 
-def parse_changed_files_file(filepath: str) -> List[Tuple[str, str]]:
+def parse_changed_files_file(filepath: str) -> list[tuple[str, str]]:
     """Parse a changed-files file.
 
     Supports two formats:
@@ -464,16 +462,16 @@ def parse_changed_files_file(filepath: str) -> List[Tuple[str, str]]:
     Returns list of (status, path) tuples. Status defaults to 'M' for
     path-only format.
     """
-    entries: List[Tuple[str, str]] = []
-    with open(filepath, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
+    entries: list[tuple[str, str]] = []
+    with Path(filepath).open(encoding="utf-8") as f:
+        for raw in f:
+            line = raw.strip()
             if not line or line.startswith("#"):
                 continue
 
             # git diff --name-status format: <status> <path> [old_path]
             parts = line.split(None, 1)
-            if len(parts) >= 2 and parts[0] in (
+            if len(parts) >= 2 and parts[0] in (  # noqa: PLR2004
                 "M", "A", "D", "R", "C", "T", "U", "X", "R100",
                 "R050", "R075", "R090", "R095", "R099", "R100",
             ):
@@ -482,10 +480,7 @@ def parse_changed_files_file(filepath: str) -> List[Tuple[str, str]]:
                 # For renames: "R100 old.py new.py" — take new path
                 if status.startswith("R"):
                     rename_parts = rest.split()
-                    if len(rename_parts) >= 2:
-                        path = rename_parts[-1]
-                    else:
-                        path = rest
+                    path = rename_parts[-1] if len(rename_parts) >= 2 else rest  # noqa: PLR2004
                 else:
                     path = rest.strip()
                 entries.append((status, path))
@@ -503,7 +498,7 @@ def get_changed_files_from_git(
     repo_root: str,
     base_ref: str,
     head_ref: str,
-) -> List[Tuple[str, str]]:
+) -> list[tuple[str, str]]:
     """Get changed files from git diff between two refs.
 
     Uses git diff --name-status to get file list with status.
@@ -518,7 +513,7 @@ def get_changed_files_from_git(
         head_ref,
     ]
     try:
-        result = subprocess.run(
+        result = subprocess.run(  # noqa: PLW1510
             cmd,
             capture_output=True,
             text=True,
@@ -533,18 +528,19 @@ def get_changed_files_from_git(
               f"{result.stderr.strip()}", file=sys.stderr)
         return []
 
-    entries: List[Tuple[str, str]] = []
-    for line in result.stdout.strip().split("\n"):
-        line = line.strip()
+    entries: list[tuple[str, str]] = []
+    raw_lines = result.stdout.strip().split("\n")
+    for raw in raw_lines:
+        line = raw.strip()
         if not line:
             continue
         parts = line.split("\t", 1)
-        if len(parts) >= 2:
+        if len(parts) >= 2:  # noqa: PLR2004
             status = parts[0]
             # For renames, format is: R100\told.py\tnew.py
             if status.startswith("R") and "\t" in parts[1]:
                 rename_parts = parts[1].split("\t")
-                path = rename_parts[-1] if len(rename_parts) >= 2 else parts[1]
+                path = rename_parts[-1] if len(rename_parts) >= 2 else parts[1]  # noqa: PLR2004
             else:
                 path = parts[1]
             entries.append((status, path))
@@ -558,12 +554,12 @@ def get_changed_files_from_git(
 # Output rendering
 # ---------------------------------------------------------------------------
 
-def render_output(
-    entries: List[Tuple[str, str]],
-    repo_root: str,
+def render_output(  # noqa: C901, PLR0912, PLR0915
+    entries: list[tuple[str, str]],
+    _repo_root: str,
 ) -> str:
     """Render the full classifier output."""
-    lines: List[str] = []
+    lines: list[str] = []
 
     lines.append("=" * 72)
     lines.append("TECHDEBT-L3G warning-only changed-file classifier")
@@ -581,7 +577,7 @@ def render_output(
         return "\n".join(lines)
 
     # Classify each entry
-    classified: List[Dict] = []
+    classified: list[dict] = []
     label_counts: Counter = Counter()
     deletion_count = 0
     rename_count = 0
@@ -641,7 +637,7 @@ def render_output(
     lines.append(f"- Labels touched: {', '.join(sorted(label_counts.keys())) if label_counts else 'none'}")
     lines.append("")
 
-    attention_items: List[str] = []
+    attention_items: list[str] = []
     if deletion_count:
         attention_items.append(f"{deletion_count} deletion(s) detected")
     if rename_count:
@@ -669,8 +665,7 @@ def render_output(
 
     if attention_items:
         lines.append(f"- Attention needed: {len(attention_items)} item(s)")
-        for item in attention_items:
-            lines.append(f"  - {item}")
+        lines.extend(f"  - {item}" for item in attention_items)
     else:
         lines.append("- Attention needed: 0 items")
 
@@ -712,6 +707,7 @@ def render_output(
 # ---------------------------------------------------------------------------
 
 def build_parser() -> argparse.ArgumentParser:
+    """Build and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
         description="TECHDEBT-L3G warning-only changed-file classifier",
     )
@@ -739,10 +735,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Run the L3G warning-only changed-file classifier from CLI."""
     parser = build_parser()
     args = parser.parse_args()
 
-    repo_root = os.path.abspath(args.repo_root)
+    repo_root = str(Path(args.repo_root).resolve())
 
     if args.changed_files_file:
         entries = parse_changed_files_file(args.changed_files_file)
