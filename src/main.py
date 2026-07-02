@@ -4,6 +4,8 @@
 基于机器学习的足球比赛结果预测API服务
 """
 
+from __future__ import annotations
+
 from contextlib import asynccontextmanager
 import logging
 import os
@@ -232,7 +234,7 @@ async def root():  # type: ignore[no-untyped-def]
 _predictor: "Predictor | None" = None
 
 
-def get_predictor() -> "Predictor":  # type: ignore[name-defined]  # noqa: F821
+def get_predictor() -> Predictor:
     """获取预测器实例（单例模式）"""
     global _predictor
     if _predictor is None:
