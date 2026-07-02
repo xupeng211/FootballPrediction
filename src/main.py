@@ -232,19 +232,19 @@ async def root():  # type: ignore[no-untyped-def]
 _predictor: "Predictor | None" = None
 
 
-def get_predictor() -> "Predictor":  # type: ignore[name-defined]
+def get_predictor() -> "Predictor":  # type: ignore[name-defined]  # noqa: F821
     """获取预测器实例（单例模式）"""
     global _predictor
     if _predictor is None:
         from src.ml.inference import Predictor
 
         logger.info("初始化 V26.7 对齐预测器...")
-        _predictor = Predictor.create_v26_7_aligned()  # type: ignore[attr-defined, name-defined]
+        _predictor = Predictor.create_v26_7_aligned()  # type: ignore[attr-defined]
     return _predictor
 
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])
-@rate_limit_predict()  # type: ignore[no-untyped-call, no-untyped-decorator]
+@rate_limit_predict()  # type: ignore
 async def predict_match(
     request: Request,
     payload: Annotated[dict[str, Any], Body(...)],
@@ -304,7 +304,7 @@ async def predict_match(
 
 
 @app.post("/predict/batch", summary="批量预测", tags=["预测"])
-@rate_limit_predict()  # type: ignore[no-untyped-call, no-untyped-decorator]
+@rate_limit_predict()  # type: ignore
 async def predict_batch(request: Request, batch_data: list[dict[str, Any]]) -> list[dict[str, Any]]:  # noqa: ARG001
     """
     批量预测接口
