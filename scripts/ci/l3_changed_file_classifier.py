@@ -428,7 +428,9 @@ def attention_notes(  # noqa: C901, PLR0912
         )
 
     if LABEL_GITHUB_WORKFLOW_SENSITIVE in labels:
-        notes.append(".github/workflow touched — CI behavior may change; review workflow impact carefully")
+        notes.append(
+            ".github/workflow touched — CI behavior may change; review workflow impact carefully"
+        )
 
     if LABEL_DOCKER_SENSITIVE in labels:
         notes.append(
@@ -671,7 +673,9 @@ def render_output(  # noqa: C901, PLR0912, PLR0915
     lines.append("## Summary")
     lines.append("")
     lines.append(f"- Changed file count: {len(entries)}")
-    lines.append(f"- Labels touched: {', '.join(sorted(label_counts.keys())) if label_counts else 'none'}")
+    lines.append(
+        f"- Labels touched: {', '.join(sorted(label_counts.keys())) if label_counts else 'none'}"
+    )
     lines.append("")
 
     attention_items: list[str] = []
@@ -684,7 +688,9 @@ def render_output(  # noqa: C901, PLR0912, PLR0915
     if high_risk_count:
         attention_items.append(f"{high_risk_count} high-risk path(s) touched — sentinel_watch.js")
     if unclassified_count:
-        attention_items.append(f"{unclassified_count} unclassified path(s) — manual review required")
+        attention_items.append(
+            f"{unclassified_count} unclassified path(s) — manual review required"
+        )
     if codeowners_touched:
         attention_items.append("CODEOWNERS touched")
     if github_touched:

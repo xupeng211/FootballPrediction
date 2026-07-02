@@ -282,7 +282,9 @@ class TestParseChangedFilesFile:
 
     def test_name_status_format(self):
         """git diff --name-status format parses correctly."""
-        content = "M\tdocs/foo.md\nA\tscripts/new_script.py\nD\told_legacy.py\nR100\told.py\tnew.py\n"
+        content = (
+            "M\tdocs/foo.md\nA\tscripts/new_script.py\nD\told_legacy.py\nR100\told.py\tnew.py\n"
+        )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(content)
             f.flush()
