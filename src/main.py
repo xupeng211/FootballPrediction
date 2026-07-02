@@ -8,10 +8,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
-from typing import TYPE_CHECKING, Annotated, Any
-
-if TYPE_CHECKING:
-    from src.ml.inference import Predictor
+from typing import Annotated, Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -235,7 +232,7 @@ async def root():  # type: ignore[no-untyped-def]
 _predictor: "Predictor | None" = None
 
 
-def get_predictor() -> Predictor:
+def get_predictor():  # type: ignore[no-untyped-def]
     """获取预测器实例（单例模式）"""
     global _predictor
     if _predictor is None:
