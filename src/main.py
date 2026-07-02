@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> None:
     """应用生命周期管理"""
     # 启动时初始化
     logger.info("🚀 足球预测API启动中...")
@@ -158,7 +158,7 @@ if os.getenv("ENABLE_METRICS", "true").lower() == "true":
 
 
 @app.get("/health", summary="Health Check", tags=["健康检查"])
-async def health():
+async def health():  # type: ignore[no-untyped-def]
     """
     系统健康检查端点
 
@@ -191,7 +191,7 @@ async def health():
 
 
 @app.get("/metrics", summary="Prometheus Metrics", tags=["监控"])
-async def metrics():
+async def metrics():  # type: ignore[no-untyped-def]
     """
     Prometheus 指标端点
 
@@ -208,7 +208,7 @@ async def metrics():
 
 
 @app.get("/", summary="根路径", tags=["基础"], response_model=RootResponse)
-async def root():
+async def root():  # type: ignore[no-untyped-def]
     """
     API服务根路径
 
@@ -239,12 +239,12 @@ def get_predictor() -> "Predictor":
         from src.ml.inference import Predictor
 
         logger.info("初始化 V26.7 对齐预测器...")
-        _predictor = Predictor.create_v26_7_aligned()
+        _predictor = Predictor.create_v26_7_aligned()  # type: ignore[attr-defined]
     return _predictor
 
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])
-@rate_limit_predict()
+@rate_limit_predict()  # type: ignore[no-untyped-call]
 async def predict_match(
     request: Request,
     payload: Annotated[dict[str, Any], Body(...)],
@@ -295,7 +295,7 @@ async def predict_match(
         predictor = get_predictor()
         result = predictor.predict(payload)
         logger.info(f"预测成功: {result['prediction']} (置信度: {result['confidence']:.2f})")
-        return result
+        return result  # type: ignore[no-any-return]
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -304,8 +304,8 @@ async def predict_match(
 
 
 @app.post("/predict/batch", summary="批量预测", tags=["预测"])
-@rate_limit_predict()
-async def predict_batch(request: Request, batch_data: list[dict]) -> list[dict]:
+@rate_limit_predict()  # type: ignore[no-untyped-call]
+async def predict_batch(request: Request, batch_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     批量预测接口
 
@@ -315,14 +315,14 @@ async def predict_batch(request: Request, batch_data: list[dict]) -> list[dict]:
         predictor = get_predictor()
         results = predictor.predict_batch(batch_data)
         logger.info(f"批量预测完成: {len(results)} 场比赛")
-        return results
+        return results  # type: ignore[no-any-return]
     except Exception as e:
         logger.exception(f"批量预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"批量预测失败: {e!s}")
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request, exc: HTTPException):
+async def http_exception_handler(request, exc: HTTPException):  # type: ignore[no-untyped-def]
     """
     HTTP异常处理器
 
@@ -341,7 +341,7 @@ async def http_exception_handler(request, exc: HTTPException):
 
 
 @app.exception_handler(Exception)
-async def general_exception_handler(request, exc: Exception):
+async def general_exception_handler(request, exc: Exception):  # type: ignore[no-untyped-def]
     """
     通用异常处理器
 
