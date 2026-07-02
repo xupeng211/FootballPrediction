@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -247,8 +247,8 @@ def get_predictor() -> "Predictor":
 @rate_limit_predict()
 async def predict_match(
     request: Request,
-    payload: Annotated[dict, Body(...)],
-) -> dict:
+    payload: Annotated[dict[str, Any], Body(...)],
+) -> dict[str, Any]:
     """
     V26.4 统一预测接口
 
