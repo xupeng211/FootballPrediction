@@ -90,3 +90,23 @@ that confusion without starting with deletion or runtime migration.
 - No legacy migration.
 - No CI gate change in L3A.
 - No scraper, training, prediction, or pipeline execution.
+
+## L3B follow-up
+
+L3B confirms the active entrypoint whitelist in:
+
+- `docs/techdebt/L3_ACTIVE_ENTRYPOINT_WHITELIST.md`
+- `docs/_reports/L3B_ACTIVE_ENTRYPOINT_WHITELIST_CONFIRMATION_REPORT.md`
+
+The L3B whitelist turns the L3A candidate inventory into a concrete classification:
+
+- 1 active runtime entrypoint (`src/main.py`)
+- 4 active API routers (3 unconditional + 1 conditional)
+- 11 active governance/CI entrypoints
+- 11 operational guarded target groups
+- 18 restricted legacy entrypoints
+- 2 test-only path patterns
+- 1 archive path pattern
+- 7 unknown categories deferred to owner decision
+
+This update is documentation-only and does not enforce policy.
