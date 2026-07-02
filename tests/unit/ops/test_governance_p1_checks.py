@@ -147,6 +147,64 @@ class TestNoArchiveRuntimeImport:
                 assert any("src/bad.py" in e for e in errors)
                 assert not any("src/clean.py" in e for e in errors)
 
+    # -- changed-line filtering tests --
+
+    def test_scan_with_changed_lines_filters_unchanged_hits(self):
+        """Archive reference on line NOT in changed_lines → no hit."""
+        text = "line1\nline2\narchive_vault_2026\nline4\n"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _mkfile(tmpdir, "scripts/devops/test.sh", text)
+            fp = Path(tmpdir) / "scripts/devops/test.sh"
+            hits = _p1_mod._scan_file_for_archive_imports(fp, changed_lines={1, 2, 4})
+            assert len(hits) == 0, f"Line 3 is unchanged, should not flag: {hits}"
+
+    def test_scan_with_changed_lines_flags_changed_hits(self):
+        """Archive reference on line IN changed_lines → flagged."""
+        text = "line1\nline2\narchive_vault_2026\nline4\n"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _mkfile(tmpdir, "scripts/devops/test.sh", text)
+            fp = Path(tmpdir) / "scripts/devops/test.sh"
+            hits = _p1_mod._scan_file_for_archive_imports(fp, changed_lines={1, 3})
+            assert len(hits) >= 1, "Line 3 is changed, should flag"
+            assert "line 3" in hits[0]
+
+    def test_scan_with_none_changed_lines_scans_all(self):
+        """changed_lines=None → fail-safe, scan all lines (existing behavior)."""
+        text = "archive_vault_2026 reference\nanother line\n"
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _mkfile(tmpdir, "scripts/devops/test.sh", text)
+            fp = Path(tmpdir) / "scripts/devops/test.sh"
+            hits = _p1_mod._scan_file_for_archive_imports(fp, changed_lines=None)
+            assert len(hits) >= 1
+
+    def test_gatekeeper_exclusion_pattern_on_unchanged_line_passes(self):
+        """Pre-existing `! -path '*/archive_vault_2026/*'` on unchanged line → no false positive."""
+        text = """#!/bin/bash
+# find command with archive exclusion
+find . -type f ! -path '*/archive_vault_2026/*' -name '*.py'
+# another unchanged line
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _mkfile(tmpdir, "scripts/devops/gatekeeper.sh", text)
+            fp = Path(tmpdir) / "scripts/devops/gatekeeper.sh"
+            # Only line 4 is "changed" — the archive exclusion is on line 3
+            hits = _p1_mod._scan_file_for_archive_imports(fp, changed_lines={4})
+            assert len(hits) == 0, (
+                f"Pre-existing exclusion pattern on unchanged line should not flag: {hits}"
+            )
+
+    def test_new_import_archive_on_changed_line_still_fails(self):
+        """New `from archive_vault_2026 import ...` on changed line → still flagged."""
+        text = """import os
+import sys
+from archive_vault_2026.utils import helper  # NEW dangerous import
+"""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            _mkfile(tmpdir, "scripts/devops/tool.py", text)
+            fp = Path(tmpdir) / "scripts/devops/tool.py"
+            hits = _p1_mod._scan_file_for_archive_imports(fp, changed_lines={3})
+            assert len(hits) >= 1, "New archive import on changed line must be flagged"
+
 
 # ============================================================================
 # P1-2: check_dangerous_auth_path_cross_validation

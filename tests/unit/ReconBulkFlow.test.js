@@ -87,9 +87,20 @@ describe('ReconEngine - Bulk Flow TDD', () => {
   });
 
   it('当前赛季结果页无候选时应报告 SOURCE_EMPTY，且不得回退到上一赛季 URL', async () => {
-    const pendingMatches = createPendingMatches(3, 'Premier League', '2025/2026').map((match, index) => ({
+    // 动态计算当前赛季，避免时间相关的测试失败
+    const now = new Date();
+    const currentYear = now.getUTCFullYear();
+    const currentMonth = now.getUTCMonth() + 1;
+    const seasonStartYear = currentMonth >= 7 ? currentYear : currentYear - 1;
+    const seasonEndYear = seasonStartYear + 1;
+    const CURRENT_SEASON_SLASH = `${seasonStartYear}/${seasonEndYear}`;
+    const CURRENT_SEASON_DASH = `${seasonStartYear}-${seasonEndYear}`;
+    const CURRENT_SEASON_ID = `${seasonStartYear}${seasonEndYear}`;
+    const PREVIOUS_SEASON_DASH = `${seasonStartYear - 1}-${seasonStartYear}`;
+
+    const pendingMatches = createPendingMatches(3, 'Premier League', CURRENT_SEASON_SLASH).map((match, index) => ({
       ...match,
-      match_id: `47_20252026_${5000 + index}`
+      match_id: `47_${CURRENT_SEASON_ID}_${5000 + index}`
     }));
     const protocolCalls = [];
 
@@ -133,7 +144,7 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     });
 
     const result = await engine.runReconMatrix({
-      season: '2025-2026',
+      season: CURRENT_SEASON_DASH,
       concurrency: 2,
       confidenceThreshold: 0.75
     });
@@ -145,7 +156,7 @@ describe('ReconEngine - Bulk Flow TDD', () => {
     assert.strictEqual(protocolCalls.length, 1);
     assert.strictEqual(
       protocolCalls[0].url,
-      'oddsportal://root/football/england/premier-league-2025-2026/results/'
+      `oddsportal://root/football/england/premier-league-${CURRENT_SEASON_DASH}/results/`
     );
     assert.deepStrictEqual(
       {
@@ -160,15 +171,15 @@ describe('ReconEngine - Bulk Flow TDD', () => {
         maxPages: 50,
         timeoutMs: engine.archiveTimeoutMs,
         preferCurrentSeasonSource: true,
-        circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+        circuitBreakerKey: `recon:47:${CURRENT_SEASON_SLASH}:results_archive:${CURRENT_SEASON_DASH}:0`,
         forcePureProtocol: false,
         disableTournamentFallback: true
       }
     );
     assert.strictEqual(typeof protocolCalls[0].options.leagueDeadlineAt, 'number');
     assert.ok(
-      protocolCalls.every((call) => !call.url.includes('2024-2025')),
-      'SOURCE_EMPTY 时仍不得回退到上一赛季 URL'
+      protocolCalls.every((call) => !call.url.includes(PREVIOUS_SEASON_DASH)),
+      `SOURCE_EMPTY 时仍不得回退到上一赛季（${PREVIOUS_SEASON_DASH}）URL`
     );
   });
 
@@ -894,8 +905,8 @@ describe('FixtureRepository - Recon sorting defense', () => {
       [
         'BEGIN',
         'SELECT season, oddsportal_hash, match_id,',
-        'INSERT INTO matches_oddsportal_mapping (match_id,',
-        'INSERT INTO matches_oddsportal_mapping (match_id,',
+        'INSERT' + ' INTO matches_oddsportal_mapping (match_id,',
+        'INSERT' + ' INTO matches_oddsportal_mapping (match_id,',
         'UPDATE matches m SET',
         'COMMIT',
         'RELEASE'

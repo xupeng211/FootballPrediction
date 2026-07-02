@@ -5,15 +5,31 @@ const assert = require('node:assert/strict');
 
 const { ReconEngine } = require('../../src/infrastructure/recon/ReconEngine');
 
+function getCurrentSeasonParts(now = new Date()) {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth() + 1;
+  const startYear = month >= 7 ? year : year - 1;
+  return { startYear, endYear: startYear + 1 };
+}
+function getCurrentSeasonSlash(now) { const p = getCurrentSeasonParts(now); return `${p.startYear}/${p.endYear}`; }
+function getCurrentSeasonHyphen(now) { const p = getCurrentSeasonParts(now); return `${p.startYear}-${p.endYear}`; }
+function getCurrentSeasonId(now) { const p = getCurrentSeasonParts(now); return `${p.startYear}${p.endYear}`; }
+function getPreviousSeasonHyphen(now) { const p = getCurrentSeasonParts(now); return `${p.startYear - 1}-${p.startYear}`; }
+
 test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner，避免 protocolArchiveExtract 空指针', async () => {
   const protocolCalls = [];
   const batchCalls = [];
+  const CURRENT_SLASH = getCurrentSeasonSlash();
+  const CURRENT_HYPHEN = getCurrentSeasonHyphen();
+  const CURRENT_ID = getCurrentSeasonId();
+  const PREVIOUS_HYPHEN = getPreviousSeasonHyphen();
+
   const pendingMatches = [{
-    match_id: '47_20252026_5000',
+    match_id: `47_${CURRENT_ID}_5000`,
     home_team: 'Arsenal',
     away_team: 'Chelsea',
     league_name: 'Premier League',
-    season: '2025/2026',
+    season: CURRENT_SLASH,
     match_date: '2025-08-01T19:00:00.000Z'
   }];
 
@@ -49,7 +65,7 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
       return {
         matches: [{
           hash: 'AbCd1234',
-          url: 'oddsportal://root/football/england/premier-league-2025-2026/arsenal-chelsea-AbCd1234/',
+          url: `oddsportal://root/football/england/premier-league-${CURRENT_HYPHEN}/arsenal-chelsea-AbCd1234/`,
           homeTeam: 'Arsenal',
           awayTeam: 'Chelsea',
           matchDate: '2025-08-01T19:00:00.000Z'
@@ -61,7 +77,7 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
     }
   };
 
-  const result = await engine.smartScan('2025-2026', {
+  const result = await engine.smartScan(CURRENT_HYPHEN, {
     id: 47,
     name: 'Premier League',
     country: 'england',
@@ -76,7 +92,7 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
   assert.equal(protocolCalls.length, 1);
   assert.equal(
     protocolCalls[0].url,
-    'oddsportal://root/football/england/premier-league-2025-2026/results/'
+    `oddsportal://root/football/england/premier-league-${CURRENT_HYPHEN}/results/`
   );
   assert.deepEqual(
     {
@@ -91,7 +107,7 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
       maxPages: 50,
       timeoutMs: engine.archiveTimeoutMs,
       preferCurrentSeasonSource: true,
-      circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+      circuitBreakerKey: `recon:47:${CURRENT_SLASH}:results_archive:${CURRENT_HYPHEN}:0`,
       forcePureProtocol: false,
       disableTournamentFallback: true
     }
@@ -102,8 +118,8 @@ test('ReconEngine 在 navigator 后置注入时必须同步闭合到 taskPlanner
     'Results 命中并完成即时入库后，不应再继续探测 fixtures fallback'
   );
   assert.ok(
-    protocolCalls.every((call) => !call.url.includes('2024-2025')),
-    'navigator 后置注入后仍不得回退到上一赛季 URL'
+    protocolCalls.every((call) => !call.url.includes(PREVIOUS_HYPHEN)),
+    `navigator 后置注入后仍不得回退到上一赛季（${PREVIOUS_HYPHEN}）URL`
   );
 });
 

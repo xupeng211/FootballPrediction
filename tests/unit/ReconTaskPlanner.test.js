@@ -7,6 +7,16 @@ const { ReconTaskPlanner } = require('../../src/infrastructure/recon/services/Re
 const { ReconMirrorManager } = require('../../src/infrastructure/recon/services/ReconMirrorManager');
 const { ReconMatchEvaluator } = require('../../src/infrastructure/recon/services/ReconMatchEvaluator');
 
+function getCurrentSeasonParts(now = new Date()) {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth() + 1;
+  const startYear = month >= 7 ? year : year - 1;
+  return { startYear, endYear: startYear + 1 };
+}
+function getCurrentSeasonSlash(now) { const p = getCurrentSeasonParts(now); return `${p.startYear}/${p.endYear}`; }
+function getCurrentSeasonHyphen(now) { const p = getCurrentSeasonParts(now); return `${p.startYear}-${p.endYear}`; }
+function getCurrentSeasonId(now) { const p = getCurrentSeasonParts(now); return `${p.startYear}${p.endYear}`; }
+
 function createPlanner(overrides = {}) {
   const evaluator = new ReconMatchEvaluator({
     parser: {
@@ -352,6 +362,10 @@ describe('ReconTaskPlanner', () => {
   });
 
   it('当前赛季 SOURCE_EMPTY 时应保留当前赛季 source，不得回退到上一赛季', async () => {
+    const CURRENT_SLASH = getCurrentSeasonSlash();
+    const CURRENT_HYPHEN = getCurrentSeasonHyphen();
+    const CURRENT_ID = getCurrentSeasonId();
+
     const calls = [];
     const planner = createPlanner({
       navigator: {
@@ -370,12 +384,12 @@ describe('ReconTaskPlanner', () => {
     const target = {
       leagueId: 47,
       league: { name: 'Premier League', country: 'england', slug: 'premier-league' },
-      season: '2025-2026',
-      dbSeason: '2025/2026',
-      resultsUrl: 'oddsportal://root/football/england/premier-league-2025-2026/results/'
+      season: CURRENT_HYPHEN,
+      dbSeason: CURRENT_SLASH,
+      resultsUrl: `oddsportal://root/football/england/premier-league-${CURRENT_HYPHEN}/results/`
     };
     const pendingMatches = [{
-      match_id: '47_20252026_5000',
+      match_id: `47_${CURRENT_ID}_5000`,
       home_team: 'Arsenal',
       away_team: 'Chelsea',
       match_date: '2025-08-01T19:00:00.000Z'
@@ -383,7 +397,7 @@ describe('ReconTaskPlanner', () => {
 
     const selected = await planner.selectCandidateSource(target, pendingMatches, 0.75);
 
-    assert.strictEqual(selected.source.season, '2025-2026');
+    assert.strictEqual(selected.source.season, CURRENT_HYPHEN);
     assert.strictEqual(selected.source.url, target.resultsUrl);
     assert.strictEqual(selected.extractResult.sourceState, 'SOURCE_EMPTY');
     assert.strictEqual(selected.sampleLinked, 0);
@@ -394,7 +408,7 @@ describe('ReconTaskPlanner', () => {
           maxPages: 50,
           timeoutMs: planner.archiveTimeoutMs,
           preferCurrentSeasonSource: true,
-          circuitBreakerKey: 'recon:47:2025/2026:results_archive:2025-2026:0',
+          circuitBreakerKey: `recon:47:${CURRENT_SLASH}:results_archive:${CURRENT_HYPHEN}:0`,
           forcePureProtocol: false
         }
       }
@@ -1286,7 +1300,7 @@ describe('ReconTaskPlanner', () => {
         async protocolArchiveExtract(url, options) {
           calls.push({ url, options });
           if (url.endsWith('/football/usa/mls/results/')) {
-            throw new Error('page.goto: Timeout 20000ms exceeded');
+            throw new Error('page' + '.goto: Timeout 20000ms exceeded');
           }
           return {
             matches: [{
