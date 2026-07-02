@@ -8,8 +8,9 @@ from contextlib import asynccontextmanager
 import logging
 import os
 from pathlib import Path
+from typing import Annotated, Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import Body, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, Response
 from prometheus_client import CONTENT_TYPE_LATEST
@@ -42,6 +43,7 @@ def setup_metrics_exporter(port: int = 9090) -> None:
 
     start_http_server(port)
     logger.info(f"📈 Prometheus exporter started on port {port}")
+
 
 # Prometheus指标通过独立模块管理，避免重复注册
 
@@ -115,6 +117,9 @@ app = FastAPI(
 
 # 初始化 API 限流器
 init_rate_limiter(app)
+# Disable slowapi response-header injection so plain dict/list return values
+# remain compatible with the rate-limiter decorator. Enforcement stays active.
+app.state.limiter._headers_enabled = False
 logger.info("✅ API 限流器已初始化")
 
 # 添加CORS中间件
@@ -238,7 +243,10 @@ def get_predictor() -> "Predictor":
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])
 @rate_limit_predict()
-async def predict_match(request: dict) -> dict:
+async def predict_match(
+    request: Request,
+    payload: Annotated[dict[str, Any], Body(...)],
+) -> dict[str, Any]:
     """
     V26.4 统一预测接口
 
@@ -280,9 +288,10 @@ async def predict_match(request: dict) -> dict:
     }
     ```
     """
+    _ = request  # consumed indirectly by slowapi rate-limit decorator
     try:
         predictor = get_predictor()
-        result = predictor.predict(request)
+        result = predictor.predict(payload)
         logger.info(f"预测成功: {result['prediction']} (置信度: {result['confidence']:.2f})")
         return result
     except ValueError as e:
