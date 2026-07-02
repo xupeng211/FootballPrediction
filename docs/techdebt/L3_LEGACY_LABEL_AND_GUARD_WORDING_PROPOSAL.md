@@ -336,3 +336,12 @@ L3E records docs-only owner decisions for the 7 previously unknown categories in
 - `docs/_reports/L3E_UNKNOWN_ENTRYPOINT_OWNER_DECISIONS_REPORT.md`
 
 The L3E decisions complete the L3 taxonomy. All 7 unknown categories are now classified. The `unknown-owner-decision` label is retained for any future undiscovered entries.
+
+## L3F follow-up
+
+L3F proposes future enforcement design in:
+
+- `docs/techdebt/L3_ENFORCEMENT_DESIGN_PROPOSAL.md`
+- `docs/_reports/L3F_ENFORCEMENT_DESIGN_PROPOSAL_REPORT.md`
+
+This update is documentation-only and does not implement enforcement, CODEOWNERS, GitHub Actions changes, Gatekeeper changes, AI Workflow Gate changes, migration, deletion, move, or rename.

@@ -357,3 +357,12 @@ L3E records docs-only owner decisions for the 7 previously unknown categories in
 - `docs/_reports/L3E_UNKNOWN_ENTRYPOINT_OWNER_DECISIONS_REPORT.md`
 
 The L3E decisions complete the L3 taxonomy. The 7 unknown categories are classified: 6 as restricted-legacy, 1 as test-only. The `src/**` `__main__` blocks are resolved as active-runtime modules with test-only self-test blocks. The `unknown-owner-decision` label is now empty but retained for future discoveries.
+
+## L3F follow-up
+
+L3F proposes future enforcement design in:
+
+- `docs/techdebt/L3_ENFORCEMENT_DESIGN_PROPOSAL.md`
+- `docs/_reports/L3F_ENFORCEMENT_DESIGN_PROPOSAL_REPORT.md`
+
+This update is documentation-only and does not implement enforcement, CODEOWNERS, GitHub Actions changes, Gatekeeper changes, AI Workflow Gate changes, migration, deletion, move, or rename.
