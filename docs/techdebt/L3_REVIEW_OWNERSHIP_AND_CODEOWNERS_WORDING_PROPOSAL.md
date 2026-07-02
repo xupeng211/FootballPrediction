@@ -348,3 +348,12 @@ Recommended next task only after user confirmation:
 - Future **L3E** may classify the 7 unknown categories as docs-only owner decisions, resolving the last open taxonomy gap in the L3 track.
 - Do not implement CODEOWNERS or enforcement until separately authorized.
 - Do not start L4 API boundary reconciliation.
+
+## L3E follow-up
+
+L3E records docs-only owner decisions for the 7 previously unknown categories in:
+
+- `docs/techdebt/L3_UNKNOWN_ENTRYPOINT_OWNER_DECISIONS.md`
+- `docs/_reports/L3E_UNKNOWN_ENTRYPOINT_OWNER_DECISIONS_REPORT.md`
+
+The L3E decisions complete the L3 taxonomy. The 7 unknown categories are classified: 6 as restricted-legacy, 1 as test-only. The `src/**` `__main__` blocks are resolved as active-runtime modules with test-only self-test blocks. The `unknown-owner-decision` label is now empty but retained for future discoveries.

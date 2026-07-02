@@ -327,3 +327,12 @@ L3D proposes review ownership and future CODEOWNERS wording in:
 - `docs/_reports/L3D_REVIEW_OWNERSHIP_CODEOWNERS_WORDING_PROPOSAL_REPORT.md`
 
 The L3D proposal maps each L3 label to a review ownership area (runtime, API, governance, operational, legacy, archive, test, unknown), provides a 12-item reviewer checklist, and drafts future CODEOWNERS placeholder structure. It does not implement CODEOWNERS or enforcement.
+
+## L3E follow-up
+
+L3E records docs-only owner decisions for the 7 previously unknown categories in:
+
+- `docs/techdebt/L3_UNKNOWN_ENTRYPOINT_OWNER_DECISIONS.md`
+- `docs/_reports/L3E_UNKNOWN_ENTRYPOINT_OWNER_DECISIONS_REPORT.md`
+
+The L3E decisions complete the L3 taxonomy. All 7 unknown categories are now classified. The `unknown-owner-decision` label is retained for any future undiscovered entries.
