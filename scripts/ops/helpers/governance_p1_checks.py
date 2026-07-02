@@ -18,11 +18,15 @@ Usage:
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import re
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[3]
+
+_MIN_HUNK_HEADER_PARTS = 3  # @@ -old_start,old_count +new_start,new_count @@
 
 # ============================================================================
 # P1-1: no-archive-runtime-import
@@ -81,8 +85,101 @@ def _is_archive_exempt(path: str) -> bool:
     return any(path.startswith(px) for px in _ARCHIVE_EXEMPT_PREFIXES)
 
 
-def _scan_file_for_archive_imports(file_path: Path) -> list[str]:
+def _resolve_diff_base() -> str | None:
+    """Resolve a git diff base for changed-line scanning.
+
+    Uses the same fallback chain as static_quality_changed_lines.py.
+    Returns ``None`` when no base can be determined (fail-safe: scan whole file).
+    """
+    git_base_ref = os.environ.get("GITHUB_BASE_REF", "")
+    if git_base_ref:
+        origin_ref = f"origin/{git_base_ref}"
+        try:
+            subprocess.run(
+                ["git", "rev-parse", "--verify", origin_ref],
+                capture_output=True,
+                check=True,
+                timeout=5,
+            )
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        else:
+            r = subprocess.run(
+                ["git", "merge-base", "HEAD", origin_ref],
+                capture_output=True,
+                timeout=5,
+                check=False,
+            )
+            if r.returncode == 0 and r.stdout.strip():
+                return r.stdout.decode("utf-8", errors="replace").strip()
+
+    # Local fallback: HEAD~1
+    try:
+        subprocess.run(
+            ["git", "rev-parse", "--verify", "HEAD~1"],
+            capture_output=True,
+            check=True,
+            timeout=5,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
+    else:
+        return "HEAD~1"
+
+
+def _collect_changed_lines(git_base: str, rel_path: str) -> set[int] | None:
+    """Return the set of changed (added) line numbers for *rel_path*.
+
+    Returns ``None`` when the diff cannot be computed or when the file produces
+    no diff at all (fail-safe: scan all lines).  An empty set is only returned
+    when the diff is valid but contains zero *added* lines (rare in practice).
+    """
+    try:
+        r = subprocess.run(
+            ["git", "diff", f"{git_base}...HEAD", "--", rel_path],
+            capture_output=True,
+            timeout=10,
+            check=False,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired):
+        return None
+    if r.returncode != 0:
+        return None
+
+    stdout = r.stdout.decode("utf-8", errors="replace")
+    if not stdout.strip():
+        # No diff output at all — file may not be tracked or is identical.
+        # Treat as fail-safe: scan all lines.
+        return None
+
+    lines: set[int] = set()
+    current: int | None = None
+    for dl in stdout.splitlines():
+        if dl.startswith("@@") and "@@" in dl[2:]:
+            parts = dl.split()
+            if len(parts) >= _MIN_HUNK_HEADER_PARTS:
+                np = parts[2].lstrip("+")
+                current = int(np.split(",")[0]) if "," in np else int(np)
+            continue
+        if current is None:
+            continue
+        if dl.startswith("+") and not dl.startswith("+++"):
+            lines.add(current)
+            current += 1
+        elif not dl.startswith("-"):
+            current += 1
+    return lines
+
+
+def _scan_file_for_archive_imports(
+    file_path: Path,
+    *,
+    changed_lines: set[int] | None = None,
+) -> list[str]:
     """Scan *file_path* for patterns that reference archive code.
+
+    If *changed_lines* is not None, only flag hits on lines in that set.
+    If *changed_lines* is None (could not be determined), scan all lines (fail-safe).
 
     Returns a list of matched pattern snippets.
     """
@@ -94,8 +191,12 @@ def _scan_file_for_archive_imports(file_path: Path) -> list[str]:
     hits: list[str] = []
     for pat in _ARCHIVE_IMPORT_PATTERNS:
         for m in pat.finditer(text):
+            # Determine which line(s) the match spans
+            line_no = text[: m.start()].count("\n") + 1
+            if changed_lines is not None and line_no not in changed_lines:
+                continue  # pre-existing, not on a changed line → don't flag
             snippet = m.group()[:80]
-            hits.append(f"  pattern '{pat.pattern}' matched '{snippet}'")
+            hits.append(f"  pattern '{pat.pattern}' matched '{snippet}' (line {line_no})")
     return hits
 
 
@@ -105,6 +206,8 @@ def check_no_archive_runtime_import(
     """P1-1: Prevent active runtime code from importing or depending on archive code.
 
     Only scans *changed* files to avoid flagging pre-existing debt.
+    Within each changed file, only flags hits on *changed lines* (via git diff),
+    with fail-safe to whole-file scanning when the diff base cannot be resolved.
     - ``src/**`` and ``scripts/**`` paths: hard-fail.
     - ``tests/**`` paths: report-only (printed to stdout, not blocking).
     - ``docs/**`` and the archive directory itself: never scanned.
@@ -114,6 +217,9 @@ def check_no_archive_runtime_import(
     errors: list[str] = []
     report_only: list[str] = []
 
+    git_base = _resolve_diff_base()
+    changed_lines_cache: dict[str, set[int] | None] = {}
+
     for rel_path in sorted(changed):
         if _is_archive_exempt(rel_path):
             continue
@@ -122,7 +228,12 @@ def check_no_archive_runtime_import(
         if not abs_path.is_file():
             continue
 
-        hits = _scan_file_for_archive_imports(abs_path)
+        # Compute changed lines for this file (outside the exempt/early-exits).
+        if git_base is not None and rel_path not in changed_lines_cache:
+            changed_lines_cache[rel_path] = _collect_changed_lines(git_base, rel_path)
+
+        ch_lines = changed_lines_cache.get(rel_path) if git_base else None
+        hits = _scan_file_for_archive_imports(abs_path, changed_lines=ch_lines)
         if not hits:
             continue
 
