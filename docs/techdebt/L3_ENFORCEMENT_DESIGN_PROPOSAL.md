@@ -307,3 +307,15 @@ Recommended next task only after user confirmation:
 - Review and merge L3F if CI is green.
 - Future task may implement a warning-only changed-file classifier (Layer 2), but only with separate explicit authorization.
 - Do not implement enforcement, CODEOWNERS, or L4 without separate authorization.
+
+---
+
+## L3G follow-up
+
+L3G implements the Layer 2 warning-only changed-file classifier described in this proposal:
+
+- `scripts/ci/l3_changed_file_classifier.py`
+- `docs/techdebt/L3_WARNING_ONLY_CHANGED_FILE_CLASSIFIER.md`
+- `docs/_reports/L3G_WARNING_ONLY_CHANGED_FILE_CLASSIFIER_REPORT.md`
+
+This update is warning-only and does not implement hard enforcement, CODEOWNERS, Gatekeeper changes, AI Workflow Gate changes, migration, deletion, move, or rename.

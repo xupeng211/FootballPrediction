@@ -165,6 +165,22 @@ jobs:
       - name: Validate Python UTF-8 and AST parse
         run: python3 scripts/devops/check_python_ast_utf8.py
 
+      - name: L3 warning-only changed-file classifier
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -u
+          echo "TECHDEBT-L3G warning-only changed-file classifier"
+          echo "This step is warning-only and does not block CI."
+
+          git fetch --no-tags --prune --depth=200 origin "${{ github.base_ref }}" || true
+
+          python3 scripts/ci/l3_changed_file_classifier.py \
+            --repo-root . \
+            --base-ref "origin/${{ github.base_ref }}" \
+            --head-ref "HEAD"
+
   docker-build:
     name: Docker Build Validation
     runs-on: ubuntu-latest
