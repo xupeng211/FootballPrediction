@@ -237,3 +237,12 @@ L3C proposes label semantics and guard wording for legacy entrypoint boundaries 
 - `docs/_reports/L3C_LEGACY_LABEL_GUARD_WORDING_PROPOSAL_REPORT.md`
 
 The L3C proposal builds on this whitelist by defining 8 advisory labels and providing copyable PR body templates and Claude Code prompt guard wording. It does not add CI enforcement.
+
+## L3D follow-up
+
+L3D proposes review ownership and future CODEOWNERS wording in:
+
+- `docs/techdebt/L3_REVIEW_OWNERSHIP_AND_CODEOWNERS_WORDING_PROPOSAL.md`
+- `docs/_reports/L3D_REVIEW_OWNERSHIP_CODEOWNERS_WORDING_PROPOSAL_REPORT.md`
+
+The L3D proposal maps each L3 label to a review ownership area, provides a reviewer checklist, and drafts future CODEOWNERS placeholder structure. It does not implement CODEOWNERS or enforcement.

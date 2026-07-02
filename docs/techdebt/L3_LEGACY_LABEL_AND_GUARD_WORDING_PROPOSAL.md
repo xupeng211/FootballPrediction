@@ -318,3 +318,12 @@ Recommended next task only after user confirmation:
 - Future **L3E** (or separate authorization) may propose CI enforcement of selected label boundaries.
 - Do not implement gate enforcement until separately authorized.
 - Do not start L4 API boundary reconciliation.
+
+## L3D follow-up
+
+L3D proposes review ownership and future CODEOWNERS wording in:
+
+- `docs/techdebt/L3_REVIEW_OWNERSHIP_AND_CODEOWNERS_WORDING_PROPOSAL.md`
+- `docs/_reports/L3D_REVIEW_OWNERSHIP_CODEOWNERS_WORDING_PROPOSAL_REPORT.md`
+
+The L3D proposal maps each L3 label to a review ownership area (runtime, API, governance, operational, legacy, archive, test, unknown), provides a 12-item reviewer checklist, and drafts future CODEOWNERS placeholder structure. It does not implement CODEOWNERS or enforcement.
