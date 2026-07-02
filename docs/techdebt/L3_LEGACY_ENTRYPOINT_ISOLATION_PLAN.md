@@ -110,3 +110,14 @@ The L3B whitelist turns the L3A candidate inventory into a concrete classificati
 - 7 unknown categories deferred to owner decision
 
 This update is documentation-only and does not enforce policy.
+
+## L3C follow-up
+
+L3C proposes label semantics and guard wording for legacy entrypoint boundaries in:
+
+- `docs/techdebt/L3_LEGACY_LABEL_AND_GUARD_WORDING_PROPOSAL.md`
+- `docs/_reports/L3C_LEGACY_LABEL_GUARD_WORDING_PROPOSAL_REPORT.md`
+
+The L3C proposal defines 8 advisory labels (`active-runtime`, `active-api-router`, `active-governance`, `operational-guarded`, `restricted-legacy`, `archive-read-only`, `test-only`, `unknown-owner-decision`) and provides copyable PR body templates and Claude Code prompt guard wording.
+
+This update is documentation-only and does not enforce policy.

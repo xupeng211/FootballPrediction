@@ -228,3 +228,12 @@ Recommended next task only after user confirmation:
 - **L3C**: docs-only legacy label / guard wording proposal, building on this whitelist.
 - Do not implement enforcement until separately authorized.
 - Do not start L4 API boundary reconciliation.
+
+## L3C follow-up
+
+L3C proposes label semantics and guard wording for legacy entrypoint boundaries in:
+
+- `docs/techdebt/L3_LEGACY_LABEL_AND_GUARD_WORDING_PROPOSAL.md`
+- `docs/_reports/L3C_LEGACY_LABEL_GUARD_WORDING_PROPOSAL_REPORT.md`
+
+The L3C proposal builds on this whitelist by defining 8 advisory labels and providing copyable PR body templates and Claude Code prompt guard wording. It does not add CI enforcement.
