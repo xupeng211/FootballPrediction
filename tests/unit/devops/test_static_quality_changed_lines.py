@@ -28,6 +28,7 @@ _parse_hunk_new_start = _static_ql._parse_hunk_new_start
 _collect_changed_lines_for_file = _static_ql._collect_changed_lines_for_file
 _normalize_path = _static_ql._normalize_path
 _classify_diagnostics = _static_ql.classify_diagnostics
+_parse_mypy_output = _static_ql.parse_mypy_output
 
 
 class TestParseHunkNewStart:
@@ -215,3 +216,130 @@ class TestClassifyDiagnosticsPathNormalization:
         new, existing = _classify_diagnostics(diags, changed)
         assert len(new) == 1
         assert len(existing) == 0
+
+
+# ---------------------------------------------------------------------------
+# Mypy output parsing tests
+# ---------------------------------------------------------------------------
+
+MYPY_OUTPUT = """\
+src/main.py:160: error: Function is missing a return type annotation  [no-untyped-def]
+src/main.py:247: error: Missing type parameters for generic type "dict"  [type-arg]
+src/main.py:293: error: Returning Any from function declared to return "dict"  [no-any-return]
+"""
+
+MYPY_OUTPUT_WITH_NOTE = """\
+src/main.py:247: error: Argument 1 has incompatible type "int"; expected "str"  [arg-type]
+src/main.py:250: note: This is a note about the error above
+src/main.py:320: error: Function is missing a return type annotation  [no-untyped-def]
+"""
+
+MYPY_OUTPUT_DOCKER_PATHS = """\
+/app/src/main.py:247: error: Missing type parameters for generic type "dict"  [type-arg]
+/app/src/main.py:160: error: Function is missing a return type annotation  [no-untyped-def]
+"""
+
+
+class TestParseMypyOutput:
+    """Unit tests for parse_mypy_output — mypy text → diagnostic dicts."""
+
+    def test_parses_error_lines(self):
+        diags = _parse_mypy_output(MYPY_OUTPUT)
+        assert len(diags) == 3
+        codes = {d["code"] for d in diags}
+        assert codes == {"no-untyped-def", "type-arg", "no-any-return"}
+
+    def test_error_lines_have_correct_fields(self):
+        diags = _parse_mypy_output(MYPY_OUTPUT)
+        line_247 = next(d for d in diags if d["location"]["row"] == 247)
+        assert line_247["filename"] == "src/main.py"
+        assert line_247["code"] == "type-arg"
+        assert "dict" in line_247["message"]
+
+    def test_note_lines_are_skipped(self):
+        diags = _parse_mypy_output(MYPY_OUTPUT_WITH_NOTE)
+        assert len(diags) == 2  # note on line 250 is excluded
+        rows = {d["location"]["row"] for d in diags}
+        assert 250 not in rows
+
+    def test_empty_input_returns_empty(self):
+        assert _parse_mypy_output("") == []
+
+    def test_unparseable_lines_are_skipped(self):
+        diags = _parse_mypy_output("some garbage\nsrc/main.py:1: error: real one  [misc]")
+        assert len(diags) == 1
+
+    def test_docker_paths_are_preserved_for_normalization(self):
+        """Docker paths are kept raw; _normalize_path handles them later."""
+        diags = _parse_mypy_output(MYPY_OUTPUT_DOCKER_PATHS)
+        paths = {d["filename"] for d in diags}
+        assert "/app/src/main.py" in paths
+
+
+class TestMypyChangedLineClassification:
+    """Integration: mypy diagnostics → classify_diagnostics with Docker paths."""
+
+    def test_error_on_changed_line_is_new(self):
+        diags = _parse_mypy_output("src/main.py:247: error: type-arg  [type-arg]")
+        changed = {"src/main.py": {247}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 1
+        assert len(existing) == 0
+
+    def test_error_on_unchanged_line_is_existing(self):
+        diags = _parse_mypy_output("src/main.py:160: error: no-untyped-def  [no-untyped-def]")
+        changed = {"src/main.py": {247}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 0
+        assert len(existing) == 1
+
+    def test_mixed_new_and_existing(self):
+        diags = _parse_mypy_output(MYPY_OUTPUT)
+        changed = {"src/main.py": {247}}  # only line 247 changed
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 1  # only line 247
+        assert len(existing) == 2  # lines 160, 293
+
+    def test_docker_path_matches_normalized_changed(self):
+        diags = _parse_mypy_output(MYPY_OUTPUT_DOCKER_PATHS)
+        # changed_lines uses repo-relative paths
+        changed = {"src/main.py": {247}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 1  # line 247 matches after normalization
+        assert len(existing) == 1  # line 160 is existing
+
+    def test_simulates_1676_scenario(self):
+        """20 mypy errors, only changed lines {247,248,249,291,292,293} — 0 NEW."""
+        many_errors = "\n".join(
+            f"src/main.py:{line}: error: pre-existing issue {i}  [misc]"
+            for i, line in enumerate(
+                [
+                    7,
+                    27,
+                    28,
+                    29,
+                    30,
+                    31,
+                    41,
+                    44,
+                    55,
+                    71,
+                    87,
+                    89,
+                    94,
+                    148,
+                    150,
+                    155,
+                    231,
+                    234,
+                    241,
+                    246,
+                ]
+            )
+        )
+        diags = _parse_mypy_output(many_errors)
+        assert len(diags) == 20
+        changed = {"src/main.py": {247, 248, 249, 291, 292, 293}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 0, "No mypy errors should be on changed lines"
+        assert len(existing) == 20, "All 20 pre-existing errors should be WARN"
