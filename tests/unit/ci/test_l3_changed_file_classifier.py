@@ -282,12 +282,7 @@ class TestParseChangedFilesFile:
 
     def test_name_status_format(self):
         """git diff --name-status format parses correctly."""
-        content = (
-            "M\tdocs/foo.md\n"
-            "A\tscripts/new_script.py\n"
-            "D\told_legacy.py\n"
-            "R100\told.py\tnew.py\n"
-        )
+        content = "M\tdocs/foo.md\nA\tscripts/new_script.py\nD\told_legacy.py\nR100\told.py\tnew.py\n"
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write(content)
             f.flush()
@@ -449,7 +444,8 @@ class TestCLI:
             old_argv = sys.argv
             sys.argv = [
                 "l3_changed_file_classifier.py",
-                "--changed-files-file", tmp_path,
+                "--changed-files-file",
+                tmp_path,
             ]
             try:
                 classifier.main()
@@ -473,7 +469,8 @@ class TestCLI:
             old_stdout = sys.stdout
             sys.argv = [
                 "l3_changed_file_classifier.py",
-                "--changed-files-file", tmp_path,
+                "--changed-files-file",
+                tmp_path,
             ]
             captured = io.StringIO()
             sys.stdout = captured
@@ -491,5 +488,3 @@ class TestCLI:
             assert "warning-only" in output.lower()
         finally:
             Path(tmp_path).unlink()
-
-

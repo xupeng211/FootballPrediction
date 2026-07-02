@@ -221,6 +221,7 @@ SOURCE_MAIN_NOTE_PATTERNS: list[str] = [
 # Path matching
 # ---------------------------------------------------------------------------
 
+
 def _match_glob(path: str, pattern: str) -> bool:
     """Match a path against a glob pattern.
 
@@ -260,6 +261,7 @@ def _match_any(path: str, patterns: list[str]) -> bool:
 # ---------------------------------------------------------------------------
 # Classification engine
 # ---------------------------------------------------------------------------
+
 
 def classify_path(path: str) -> list[str]:  # noqa: C901, PLR0911, PLR0912
     """Classify a single changed file path and return its L3 labels.
@@ -373,6 +375,7 @@ def classify_path(path: str) -> list[str]:  # noqa: C901, PLR0911, PLR0912
 # Attention notes
 # ---------------------------------------------------------------------------
 
+
 def _is_deletion(status: str) -> bool:
     return status == "D"
 
@@ -396,50 +399,64 @@ def attention_notes(  # noqa: C901, PLR0912
         notes.append("RENAME/MOVE DETECTED — requires dedicated PR authorization")
 
     if LABEL_HIGH_RISK in labels:
-        notes.append("HIGH-RISK: sentinel_watch.js — automated shutdown capability; "
-                     "requires explicit operational authorization + shutdown "
-                     "risk acknowledgement")
+        notes.append(
+            "HIGH-RISK: sentinel_watch.js — automated shutdown capability; "
+            "requires explicit operational authorization + shutdown "
+            "risk acknowledgement"
+        )
 
     if LABEL_RESTRICTED_LEGACY in labels:
-        notes.append("restricted-legacy: read-only by default; modification, "
-                     "execution, or deletion requires explicit user authorization")
+        notes.append(
+            "restricted-legacy: read-only by default; modification, "
+            "execution, or deletion requires explicit user authorization"
+        )
 
     if LABEL_ARCHIVE_READ_ONLY in labels:
-        notes.append("archive-read-only: historical reference; modification "
-                     "requires dedicated archive authorization")
+        notes.append(
+            "archive-read-only: historical reference; modification requires dedicated archive authorization"
+        )
 
     if LABEL_CODEOWNERS_SENSITIVE in labels:
-        notes.append("CODEOWNERS touched — requires separate authorization; "
-                     "do not create or modify without explicit approval")
+        notes.append(
+            "CODEOWNERS touched — requires separate authorization; do not create or modify without explicit approval"
+        )
 
     if LABEL_GATE_SENSITIVE in labels:
-        notes.append("Gate infrastructure touched — Gatekeeper or AI Workflow "
-                     "Gate; changes require explicit governance authorization")
+        notes.append(
+            "Gate infrastructure touched — Gatekeeper or AI Workflow "
+            "Gate; changes require explicit governance authorization"
+        )
 
     if LABEL_GITHUB_WORKFLOW_SENSITIVE in labels:
-        notes.append(".github/workflow touched — CI behavior may change; "
-                     "review workflow impact carefully")
+        notes.append(".github/workflow touched — CI behavior may change; review workflow impact carefully")
 
     if LABEL_DOCKER_SENSITIVE in labels:
-        notes.append("Docker/build touched — may affect container builds; "
-                     "validate Docker Build Validation still passes")
+        notes.append(
+            "Docker/build touched — may affect container builds; validate Docker Build Validation still passes"
+        )
 
     if LABEL_DB_MIGRATION_SENSITIVE in labels:
-        notes.append("DB/migration touched — schema changes may be involved; "
-                     "do not run migrations without explicit authorization")
+        notes.append(
+            "DB/migration touched — schema changes may be involved; "
+            "do not run migrations without explicit authorization"
+        )
 
     if LABEL_SCRAPER_TRAINING_SENSITIVE in labels:
-        notes.append("scraper/training/pipeline touched — data ingestion or "
-                     "model training surface; requires explicit authorization")
+        notes.append(
+            "scraper/training/pipeline touched — data ingestion or "
+            "model training surface; requires explicit authorization"
+        )
 
     if LABEL_UNCLASSIFIED in labels:
-        notes.append("UNCLASSIFIED: path not in L3 taxonomy; manual review "
-                     "required to determine entrypoint classification")
+        notes.append(
+            "UNCLASSIFIED: path not in L3 taxonomy; manual review required to determine entrypoint classification"
+        )
 
     # __main__ note for source modules
     if _match_any(path, SOURCE_MAIN_NOTE_PATTERNS):
-        notes.append("source module with __main__ self-test block; "
-                     "standalone execution is test-only, not production")
+        notes.append(
+            "source module with __main__ self-test block; standalone execution is test-only, not production"
+        )
 
     return notes
 
@@ -447,6 +464,7 @@ def attention_notes(  # noqa: C901, PLR0912
 # ---------------------------------------------------------------------------
 # File list parsing
 # ---------------------------------------------------------------------------
+
 
 def parse_changed_files_file(filepath: str) -> list[tuple[str, str]]:
     """Parse a changed-files file.
@@ -472,8 +490,21 @@ def parse_changed_files_file(filepath: str) -> list[tuple[str, str]]:
             # git diff --name-status format: <status> <path> [old_path]
             parts = line.split(None, 1)
             if len(parts) >= 2 and parts[0] in (  # noqa: PLR2004
-                "M", "A", "D", "R", "C", "T", "U", "X", "R100",
-                "R050", "R075", "R090", "R095", "R099", "R100",
+                "M",
+                "A",
+                "D",
+                "R",
+                "C",
+                "T",
+                "U",
+                "X",
+                "R100",
+                "R050",
+                "R075",
+                "R090",
+                "R095",
+                "R099",
+                "R100",
             ):
                 status = parts[0]
                 rest = parts[1]
@@ -505,7 +536,8 @@ def get_changed_files_from_git(
     """
     cmd = [
         "git",
-        "-C", repo_root,
+        "-C",
+        repo_root,
         "diff",
         "--name-status",
         "--diff-filter=AMDRCT",
@@ -524,8 +556,10 @@ def get_changed_files_from_git(
         return []
 
     if result.returncode != 0:
-        print(f"[L3-ENFORCEMENT] WARNING: git diff returned {result.returncode}: "
-              f"{result.stderr.strip()}", file=sys.stderr)
+        print(
+            f"[L3-ENFORCEMENT] WARNING: git diff returned {result.returncode}: {result.stderr.strip()}",
+            file=sys.stderr,
+        )
         return []
 
     entries: list[tuple[str, str]] = []
@@ -553,6 +587,7 @@ def get_changed_files_from_git(
 # ---------------------------------------------------------------------------
 # Output rendering
 # ---------------------------------------------------------------------------
+
 
 def render_output(  # noqa: C901, PLR0912, PLR0915
     entries: list[tuple[str, str]],
@@ -595,12 +630,14 @@ def render_output(  # noqa: C901, PLR0912, PLR0915
     for status, path in entries:
         labels = classify_path(path)
         notes = attention_notes(path, status, labels)
-        classified.append({
-            "status": status,
-            "path": path,
-            "labels": labels,
-            "notes": notes,
-        })
+        classified.append(
+            {
+                "status": status,
+                "path": path,
+                "labels": labels,
+                "notes": notes,
+            }
+        )
 
         for lbl in labels:
             label_counts[lbl] += 1
@@ -706,6 +743,7 @@ def render_output(  # noqa: C901, PLR0912, PLR0915
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def build_parser() -> argparse.ArgumentParser:
     """Build and return the CLI argument parser."""
     parser = argparse.ArgumentParser(
@@ -745,7 +783,9 @@ def main() -> None:
         entries = parse_changed_files_file(args.changed_files_file)
     elif args.base_ref:
         entries = get_changed_files_from_git(
-            repo_root, args.base_ref, args.head_ref,
+            repo_root,
+            args.base_ref,
+            args.head_ref,
         )
     else:
         # Default: diff against origin/main if available
