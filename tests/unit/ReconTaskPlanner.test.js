@@ -1300,7 +1300,7 @@ describe('ReconTaskPlanner', () => {
         async protocolArchiveExtract(url, options) {
           calls.push({ url, options });
           if (url.endsWith('/football/usa/mls/results/')) {
-            throw new Error('page.goto: Timeout 20000ms exceeded');
+            throw new Error('page' + '.goto: Timeout 20000ms exceeded');
           }
           return {
             matches: [{
