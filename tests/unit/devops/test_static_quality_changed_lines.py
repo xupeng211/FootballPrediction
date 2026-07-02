@@ -29,6 +29,7 @@ _collect_changed_lines_for_file = _static_ql._collect_changed_lines_for_file
 _normalize_path = _static_ql._normalize_path
 _classify_diagnostics = _static_ql.classify_diagnostics
 _parse_mypy_output = _static_ql.parse_mypy_output
+_UNRESOLVED_CHANGED_LINE_PREFIX = _static_ql.UNRESOLVED_CHANGED_LINE_PREFIX
 
 
 class TestParseHunkNewStart:
@@ -95,6 +96,16 @@ index 1111111..2222222 100644
  logger.info("limiter ok")
 """
 
+DIFF_DELETED_ONLY = """\
+diff --git a/fake.py b/fake.py
+index 1111111..2222222 100644
+--- a/fake.py
++++ b/fake.py
+@@ -10,2 +10,0 @@ def old():
+-    old_call()
+-    old_return()
+"""
+
 
 class TestChangedLineDetection:
     """Verify that changed lines are correctly extracted from unified diffs,
@@ -132,6 +143,14 @@ class TestChangedLineDetection:
             lines = _collect_changed_lines_for_file("HEAD~1", "fake.py")
             assert lines == set()
 
+    def test_deleted_only_hunk_produces_no_new_changed_lines(self):
+        with patch.object(subprocess, "run") as mock_run:
+            mock_run.return_value.returncode = 0
+            mock_run.return_value.stdout = DIFF_DELETED_ONLY.encode("utf-8")
+
+            lines = _collect_changed_lines_for_file("HEAD~1", "fake.py")
+            assert lines == set()
+
 
 # ---------------------------------------------------------------------------
 # Path normalization tests
@@ -152,12 +171,15 @@ class TestNormalizePath:
         assert _normalize_path("src/main.py") == "src/main.py"
 
     def test_dot_slash_unchanged(self):
-        """Preserve ./ prefix — it is not a known container mount."""
-        assert _normalize_path("./src/main.py") == "./src/main.py"
+        assert _normalize_path("./src/main.py") == "src/main.py"
 
     def test_unknown_absolute_path_unchanged(self):
         path = "/home/runner/work/FootballPrediction/FootballPrediction/src/main.py"
-        assert _normalize_path(path) == path
+        assert _normalize_path(path) == "src/main.py"
+
+    def test_current_repo_absolute_path_stripped(self):
+        path = Path.cwd() / "src" / "main.py"
+        assert _normalize_path(str(path)) == "src/main.py"
 
     def test_already_relative_test_path_unchanged(self):
         assert _normalize_path("tests/unit/foo.py") == "tests/unit/foo.py"
@@ -216,6 +238,20 @@ class TestClassifyDiagnosticsPathNormalization:
         new, existing = _classify_diagnostics(diags, changed)
         assert len(new) == 1
         assert len(existing) == 0
+
+    def test_unresolved_target_path_fallback_new(self):
+        diags = [
+            {
+                "filename": "src/main.py",
+                "location": {"row": 72, "column": 1},
+                "code": "no-untyped-def",
+                "message": "Function is missing a return type annotation",
+            }
+        ]
+        changed = {f"{_UNRESOLVED_CHANGED_LINE_PREFIX}src/main.py": set()}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 1
+        assert existing == []
 
 
 # ---------------------------------------------------------------------------
@@ -299,6 +335,46 @@ class TestMypyChangedLineClassification:
         new, existing = _classify_diagnostics(diags, changed)
         assert len(new) == 1  # only line 247
         assert len(existing) == 2  # lines 160, 293
+
+    def test_1676_core_case_only_actual_changed_mypy_line_blocks(self):
+        diags = _parse_mypy_output(
+            """\
+src/main.py:72: error: Function is missing a return type annotation  [no-untyped-def]
+src/main.py:250: error: Missing type parameters for generic type "dict"  [type-arg]
+"""
+        )
+        changed = {"src/main.py": {250, 251}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert [(d["location"]["row"], d["code"]) for d in new] == [(250, "type-arg")]
+        assert [(d["location"]["row"], d["code"]) for d in existing] == [(72, "no-untyped-def")]
+
+    def test_1676_unchanged_mypy_line_only_does_not_block(self):
+        diags = _parse_mypy_output(
+            "src/main.py:72: error: Function is missing a return type annotation  [no-untyped-def]"
+        )
+        changed = {"src/main.py": {250, 251}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert new == []
+        assert len(existing) == 1
+
+    def test_repo_root_absolute_mypy_path_matches_changed_lines(self):
+        absolute_path = Path.cwd() / "src" / "main.py"
+        diags = _parse_mypy_output(
+            f'{absolute_path}:250: error: Missing type parameters for generic type "dict"  [type-arg]'
+        )
+        changed = {"src/main.py": {250, 251}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert len(new) == 1
+        assert existing == []
+
+    def test_only_test_file_changed_does_not_make_src_main_new(self):
+        diags = _parse_mypy_output(
+            "src/main.py:72: error: Function is missing a return type annotation  [no-untyped-def]"
+        )
+        changed = {"tests/unit/api/test_main_predict_contract.py": {91, 92}}
+        new, existing = _classify_diagnostics(diags, changed)
+        assert new == []
+        assert len(existing) == 1
 
     def test_docker_path_matches_normalized_changed(self):
         diags = _parse_mypy_output(MYPY_OUTPUT_DOCKER_PATHS)
