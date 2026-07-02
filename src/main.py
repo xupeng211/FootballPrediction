@@ -69,7 +69,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> None:
+async def lifespan(app: FastAPI):  # type: ignore[no-untyped-def]  # noqa: ARG001
     """应用生命周期管理"""
     # 启动时初始化
     logger.info("🚀 足球预测API启动中...")
@@ -232,19 +232,19 @@ async def root():  # type: ignore[no-untyped-def]
 _predictor: "Predictor | None" = None
 
 
-def get_predictor() -> "Predictor":
+def get_predictor() -> "Predictor":  # type: ignore[name-defined]
     """获取预测器实例（单例模式）"""
     global _predictor
     if _predictor is None:
         from src.ml.inference import Predictor
 
         logger.info("初始化 V26.7 对齐预测器...")
-        _predictor = Predictor.create_v26_7_aligned()  # type: ignore[attr-defined]
+        _predictor = Predictor.create_v26_7_aligned()  # type: ignore[attr-defined, name-defined]
     return _predictor
 
 
 @app.post("/predict", summary="预测比赛结果", tags=["预测"])
-@rate_limit_predict()  # type: ignore[no-untyped-call]
+@rate_limit_predict()  # type: ignore[no-untyped-call, no-untyped-decorator]
 async def predict_match(
     request: Request,
     payload: Annotated[dict[str, Any], Body(...)],
@@ -295,7 +295,7 @@ async def predict_match(
         predictor = get_predictor()
         result = predictor.predict(payload)
         logger.info(f"预测成功: {result['prediction']} (置信度: {result['confidence']:.2f})")
-        return result  # type: ignore[no-any-return]
+        return result  # type: ignore[no-any-return]  # noqa: TRY300
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -304,8 +304,8 @@ async def predict_match(
 
 
 @app.post("/predict/batch", summary="批量预测", tags=["预测"])
-@rate_limit_predict()  # type: ignore[no-untyped-call]
-async def predict_batch(request: Request, batch_data: list[dict[str, Any]]) -> list[dict[str, Any]]:
+@rate_limit_predict()  # type: ignore[no-untyped-call, no-untyped-decorator]
+async def predict_batch(request: Request, batch_data: list[dict[str, Any]]) -> list[dict[str, Any]]:  # noqa: ARG001
     """
     批量预测接口
 
@@ -315,7 +315,7 @@ async def predict_batch(request: Request, batch_data: list[dict[str, Any]]) -> l
         predictor = get_predictor()
         results = predictor.predict_batch(batch_data)
         logger.info(f"批量预测完成: {len(results)} 场比赛")
-        return results  # type: ignore[no-any-return]
+        return results  # type: ignore[no-any-return]  # noqa: TRY300
     except Exception as e:
         logger.exception(f"批量预测失败: {e}")
         raise HTTPException(status_code=500, detail=f"批量预测失败: {e!s}")
