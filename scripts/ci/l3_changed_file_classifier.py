@@ -782,20 +782,24 @@ def _build_summary_markdown(  # noqa: C901, PLR0912, PLR0915
     lines.append("")
 
     # --- Summary table ---
-    attention_needed = "yes" if (
-        deletion_count
-        or rename_count
-        or restricted_legacy_count
-        or high_risk_count
-        or unclassified_count
-        or codeowners_touched
-        or github_touched
-        or gate_touched
-        or docker_touched
-        or db_migration_touched
-        or scraper_training_touched
-        or archive_touched
-    ) else "no"
+    attention_needed = (
+        "yes"
+        if (
+            deletion_count
+            or rename_count
+            or restricted_legacy_count
+            or high_risk_count
+            or unclassified_count
+            or codeowners_touched
+            or github_touched
+            or gate_touched
+            or docker_touched
+            or db_migration_touched
+            or scraper_training_touched
+            or archive_touched
+        )
+        else "no"
+    )
 
     lines.append("## Summary")
     lines.append("")
@@ -814,27 +818,47 @@ def _build_summary_markdown(  # noqa: C901, PLR0912, PLR0915
     # --- Attention section ---
     attention_items: list[str] = []
     if deletion_count:
-        attention_items.append(f"- :warning: {deletion_count} deletion(s) detected — requires dedicated PR authorization")
+        attention_items.append(
+            f"- :warning: {deletion_count} deletion(s) detected — requires dedicated PR authorization"
+        )
     if rename_count:
-        attention_items.append(f"- :warning: {rename_count} rename/move(s) detected — requires dedicated PR authorization")
+        attention_items.append(
+            f"- :warning: {rename_count} rename/move(s) detected — requires dedicated PR authorization"
+        )
     if restricted_legacy_count:
-        attention_items.append(f"- :lock: {restricted_legacy_count} restricted-legacy path(s) touched — read-only by default")
+        attention_items.append(
+            f"- :lock: {restricted_legacy_count} restricted-legacy path(s) touched — read-only by default"
+        )
     if high_risk_count:
-        attention_items.append(f"- :rotating_light: {high_risk_count} high-risk path(s) touched — sentinel_watch.js (automated shutdown)")
+        attention_items.append(
+            f"- :rotating_light: {high_risk_count} high-risk path(s) touched — sentinel_watch.js (automated shutdown)"
+        )
     if unclassified_count:
-        attention_items.append(f"- :grey_question: {unclassified_count} unclassified path(s) — manual review required")
+        attention_items.append(
+            f"- :grey_question: {unclassified_count} unclassified path(s) — manual review required"
+        )
     if codeowners_touched:
-        attention_items.append("- :busts_in_silhouette: CODEOWNERS touched — requires separate authorization")
+        attention_items.append(
+            "- :busts_in_silhouette: CODEOWNERS touched — requires separate authorization"
+        )
     if github_touched:
         attention_items.append("- :octocat: .github/workflow touched — CI behavior may change")
     if gate_touched:
-        attention_items.append("- :shield: Gate infrastructure (Gatekeeper / AI Workflow Gate) touched")
+        attention_items.append(
+            "- :shield: Gate infrastructure (Gatekeeper / AI Workflow Gate) touched"
+        )
     if docker_touched:
-        attention_items.append("- :whale: Docker/build path touched — validate Docker Build Validation")
+        attention_items.append(
+            "- :whale: Docker/build path touched — validate Docker Build Validation"
+        )
     if db_migration_touched:
-        attention_items.append("- :floppy_disk: DB/migration path touched — do not run migrations without authorization")
+        attention_items.append(
+            "- :floppy_disk: DB/migration path touched — do not run migrations without authorization"
+        )
     if scraper_training_touched:
-        attention_items.append("- :satellite: scraper/training/pipeline path touched — requires authorization")
+        attention_items.append(
+            "- :satellite: scraper/training/pipeline path touched — requires authorization"
+        )
     if archive_touched:
         attention_items.append("- :package: archive-read-only path touched — historical reference")
 

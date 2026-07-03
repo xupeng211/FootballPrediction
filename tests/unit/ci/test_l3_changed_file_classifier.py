@@ -526,9 +526,17 @@ class TestSummaryMarkdown:
                 hrc += 1
             if classifier.LABEL_UNCLASSIFIED in labels:
                 uc += 1
-        falses = (False,) * 7  # codeowners, github, gate, docker, db_migration, scraper_training, archive
-        return classifier._build_summary_markdown(
-            entries, classified, cnt, dc, rc, rlc, hrc, uc, *falses), entries, classified, cnt
+        falses = (
+            False,
+        ) * 7  # codeowners, github, gate, docker, db_migration, scraper_training, archive
+        return (
+            classifier._build_summary_markdown(
+                entries, classified, cnt, dc, rc, rlc, hrc, uc, *falses
+            ),
+            entries,
+            classified,
+            cnt,
+        )
 
     def test_summary_warning_only_and_no_blocking(self):
         """Summary contains warning-only and No blocking decision."""
@@ -605,8 +613,13 @@ class TestSummaryMarkdown:
             summary_path = sf.name
         try:
             old_argv, old_stdout = sys.argv, sys.stdout
-            sys.argv = ["l3_changed_file_classifier.py", "--changed-files-file", tmp_path,
-                        "--summary-file", summary_path]
+            sys.argv = [
+                "l3_changed_file_classifier.py",
+                "--changed-files-file",
+                tmp_path,
+                "--summary-file",
+                summary_path,
+            ]
             captured = io.StringIO()
             sys.stdout = captured
             try:
