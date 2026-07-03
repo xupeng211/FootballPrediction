@@ -516,11 +516,16 @@ class TestSummaryMarkdown:
             classified.append({"status": status, "path": path, "labels": labels, "notes": notes})
             for lbl in labels:
                 cnt[lbl] += 1
-            if classifier._is_deletion(status): dc += 1
-            if classifier._is_rename(status): rc += 1
-            if classifier.LABEL_RESTRICTED_LEGACY in labels: rlc += 1
-            if classifier.LABEL_HIGH_RISK in labels: hrc += 1
-            if classifier.LABEL_UNCLASSIFIED in labels: uc += 1
+            if classifier._is_deletion(status):
+                dc += 1
+            if classifier._is_rename(status):
+                rc += 1
+            if classifier.LABEL_RESTRICTED_LEGACY in labels:
+                rlc += 1
+            if classifier.LABEL_HIGH_RISK in labels:
+                hrc += 1
+            if classifier.LABEL_UNCLASSIFIED in labels:
+                uc += 1
         falses = (False,) * 7  # codeowners, github, gate, docker, db_migration, scraper_training, archive
         return classifier._build_summary_markdown(
             entries, classified, cnt, dc, rc, rlc, hrc, uc, *falses), entries, classified, cnt
@@ -532,7 +537,7 @@ class TestSummaryMarkdown:
         assert "No blocking decision is made" in md
 
     def test_summary_key_fields(self):
-        """Summary contains changed file count, high-risk, restricted-legacy, unclassified, deletion."""
+        """Summary: changed file count, high-risk, restricted-legacy, unclassified, deletion."""
         md, _, _, _ = self._sample_md()
         assert "Changed files | 5" in md
         assert "high-risk" in md.lower()
@@ -574,7 +579,8 @@ class TestSummaryMarkdown:
     def _run_cli_exit_zero(self, content):
         """Helper: run CLI with content, assert exit 0."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-            f.write(content); f.flush()
+            f.write(content)
+            f.flush()
             tmp_path = f.name
         try:
             old_argv = sys.argv
@@ -592,7 +598,8 @@ class TestSummaryMarkdown:
         """Original stdout is preserved when --summary-file is used."""
         content = "docs/techdebt/L3_FOO.md\nsrc/main.py\n"
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
-            f.write(content); f.flush()
+            f.write(content)
+            f.flush()
             tmp_path = f.name
         with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as sf:
             summary_path = sf.name
@@ -612,7 +619,8 @@ class TestSummaryMarkdown:
             assert "TECHDEBT-L3G warning-only changed-file classifier" in out
             assert "| Status | Path | Labels | Attention |" in out
         finally:
-            Path(tmp_path).unlink(); Path(summary_path).unlink()
+            Path(tmp_path).unlink()
+            Path(summary_path).unlink()
 
     def test_restricted_legacy_exits_zero(self):
         """restricted-legacy files still exit 0."""
