@@ -21,10 +21,13 @@ Lifecycle: L3G test artifact.
 
 from __future__ import annotations
 
+from collections import Counter
 import io
+import os
 from pathlib import Path
 import sys
 import tempfile
+from unittest import mock
 
 # Ensure we can import the classifier script from scripts/ci/
 _SCRIPT_DIR = Path(__file__).resolve().parents[3] / "scripts" / "ci"
@@ -490,3 +493,160 @@ class TestCLI:
             assert "warning-only" in output.lower()
         finally:
             Path(tmp_path).unlink()
+
+
+class TestSummaryMarkdown:
+    """Test _build_summary_markdown() and write_summary() for L3H visibility."""
+
+    @staticmethod
+    def _sample_md():
+        """Build summary markdown from sample entries."""
+        entries = [
+            ("M", "docs/techdebt/L3_WARNING_ONLY_CHANGED_FILE_CLASSIFIER.md"),
+            ("M", "scripts/ops/sentinel_watch.js"),
+            ("M", "scripts/ops/fotmob_probe.py"),
+            ("M", "completely/unknown/path.xyz"),
+            ("D", "old_legacy.py"),
+        ]
+        classified, cnt = [], Counter()
+        dc = rc = rlc = hrc = uc = 0
+        for status, path in entries:
+            labels = classifier.classify_path(path)
+            notes = classifier.attention_notes(path, status, labels)
+            classified.append({"status": status, "path": path, "labels": labels, "notes": notes})
+            for lbl in labels:
+                cnt[lbl] += 1
+            if classifier._is_deletion(status):
+                dc += 1
+            if classifier._is_rename(status):
+                rc += 1
+            if classifier.LABEL_RESTRICTED_LEGACY in labels:
+                rlc += 1
+            if classifier.LABEL_HIGH_RISK in labels:
+                hrc += 1
+            if classifier.LABEL_UNCLASSIFIED in labels:
+                uc += 1
+        falses = (
+            False,
+        ) * 7  # codeowners, github, gate, docker, db_migration, scraper_training, archive
+        return (
+            classifier._build_summary_markdown(
+                entries, classified, cnt, dc, rc, rlc, hrc, uc, *falses
+            ),
+            entries,
+            classified,
+            cnt,
+        )
+
+    def test_summary_warning_only_and_no_blocking(self):
+        """Summary contains warning-only and No blocking decision."""
+        md, _, _, _ = self._sample_md()
+        assert "warning-only" in md.lower()
+        assert "No blocking decision is made" in md
+
+    def test_summary_key_fields(self):
+        """Summary: changed file count, high-risk, restricted-legacy, unclassified, deletion."""
+        md, _, _, _ = self._sample_md()
+        assert "Changed files | 5" in md
+        assert "high-risk" in md.lower()
+        assert "restricted-legacy" in md
+        assert "unclassified" in md.lower()
+        assert "deletion" in md.lower()
+
+    def test_summary_file_writes_markdown(self):
+        """--summary-file writes markdown to the specified file."""
+        md, _, _, _ = self._sample_md()
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            tmp_path = f.name
+        try:
+            assert classifier.write_summary(md, summary_file=tmp_path) is True
+            written = Path(tmp_path).read_text(encoding="utf-8")
+            assert "TECHDEBT-L3G Warning-Only" in written
+            assert "No blocking decision is made" in written
+        finally:
+            Path(tmp_path).unlink()
+
+    def test_github_step_summary_env_writes(self):
+        """GITHUB_STEP_SUMMARY env var triggers summary write."""
+        md, _, _, _ = self._sample_md()
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as f:
+            tmp_path = f.name
+        try:
+            with mock.patch.dict(os.environ, {"GITHUB_STEP_SUMMARY": tmp_path}):
+                assert classifier.write_summary(md, summary_file=None) is True
+            written = Path(tmp_path).read_text(encoding="utf-8")
+            assert "TECHDEBT-L3G Warning-Only" in written
+            assert "No blocking decision is made" in written
+        finally:
+            Path(tmp_path).unlink()
+
+    def test_summary_write_failure_does_not_raise(self):
+        """write_summary returns False on unwritable path, never raises."""
+        assert classifier.write_summary("# Test\n", summary_file="/nonexistent/dir/s.md") is False
+
+    def _run_cli_exit_zero(self, content):
+        """Helper: run CLI with content, assert exit 0."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write(content)
+            f.flush()
+            tmp_path = f.name
+        try:
+            old_argv = sys.argv
+            sys.argv = ["l3_changed_file_classifier.py", "--changed-files-file", tmp_path]
+            try:
+                classifier.main()
+            except SystemExit as e:
+                assert e.code == 0  # noqa: PT017
+            finally:
+                sys.argv = old_argv
+        finally:
+            Path(tmp_path).unlink()
+
+    def test_stdout_preserved_with_summary(self):
+        """Original stdout is preserved when --summary-file is used."""
+        content = "docs/techdebt/L3_FOO.md\nsrc/main.py\n"
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write(content)
+            f.flush()
+            tmp_path = f.name
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".md", delete=False) as sf:
+            summary_path = sf.name
+        try:
+            old_argv, old_stdout = sys.argv, sys.stdout
+            sys.argv = [
+                "l3_changed_file_classifier.py",
+                "--changed-files-file",
+                tmp_path,
+                "--summary-file",
+                summary_path,
+            ]
+            captured = io.StringIO()
+            sys.stdout = captured
+            try:
+                classifier.main()
+            except SystemExit as e:
+                assert e.code == 0  # noqa: PT017
+            finally:
+                sys.argv, sys.stdout = old_argv, old_stdout
+            out = captured.getvalue()
+            assert "TECHDEBT-L3G warning-only changed-file classifier" in out
+            assert "| Status | Path | Labels | Attention |" in out
+        finally:
+            Path(tmp_path).unlink()
+            Path(summary_path).unlink()
+
+    def test_restricted_legacy_exits_zero(self):
+        """restricted-legacy files still exit 0."""
+        self._run_cli_exit_zero("scripts/ops/sentinel_watch.js\n")
+
+    def test_unclassified_exits_zero(self):
+        """unclassified paths still exit 0."""
+        self._run_cli_exit_zero("completely/unknown/file.xyz\n")
+
+    def test_deletion_exits_zero(self):
+        """deletion signals still exit 0."""
+        self._run_cli_exit_zero("D    old_legacy.py\n")
+
+    def test_rename_exits_zero(self):
+        """rename signals still exit 0."""
+        self._run_cli_exit_zero("R100    old.py    new.py\n")

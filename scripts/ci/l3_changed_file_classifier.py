@@ -20,6 +20,7 @@ Lifecycle: L3G active CI governance script (warning-only).
 import argparse
 from collections import Counter
 import fnmatch
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -746,6 +747,208 @@ def render_output(  # noqa: C901, PLR0912, PLR0915
 
 
 # ---------------------------------------------------------------------------
+# Summary writing (GitHub Step Summary / --summary-file)
+# ---------------------------------------------------------------------------
+
+
+def _build_summary_markdown(  # noqa: C901, PLR0912, PLR0915
+    entries: list[tuple[str, str]],
+    classified: list[dict],
+    label_counts: Counter,
+    deletion_count: int,
+    rename_count: int,
+    restricted_legacy_count: int,
+    high_risk_count: int,
+    unclassified_count: int,
+    codeowners_touched: bool,
+    github_touched: bool,
+    gate_touched: bool,
+    docker_touched: bool,
+    db_migration_touched: bool,
+    scraper_training_touched: bool,
+    archive_touched: bool,
+) -> str:
+    """Build a GitHub Step Summary markdown string.
+
+    This is separate from stdout rendering so the step summary can be
+    concise and GitHub-optimized while stdout remains verbose.
+    """
+    lines: list[str] = []
+
+    lines.append("# TECHDEBT-L3G Warning-Only Changed-File Classifier")
+    lines.append("")
+    lines.append("> This step is warning-only and does not block CI.")
+    lines.append("> No blocking decision is made.")
+    lines.append("")
+
+    # --- Summary table ---
+    attention_needed = (
+        "yes"
+        if (
+            deletion_count
+            or rename_count
+            or restricted_legacy_count
+            or high_risk_count
+            or unclassified_count
+            or codeowners_touched
+            or github_touched
+            or gate_touched
+            or docker_touched
+            or db_migration_touched
+            or scraper_training_touched
+            or archive_touched
+        )
+        else "no"
+    )
+
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| Item | Value |")
+    lines.append("|---|---|")
+    lines.append(f"| Changed files | {len(entries)} |")
+    labels_str = ", ".join(sorted(label_counts.keys())) if label_counts else "none"
+    lines.append(f"| Labels touched | {labels_str} |")
+    lines.append(f"| Attention needed | {attention_needed} |")
+    lines.append(f"| High-risk paths | {high_risk_count} |")
+    lines.append(f"| Restricted legacy touched | {'yes' if restricted_legacy_count else 'no'} |")
+    lines.append(f"| Unclassified paths | {unclassified_count} |")
+    lines.append(f"| Deletion/move/rename signals | {deletion_count + rename_count} |")
+    lines.append("")
+
+    # --- Attention section ---
+    attention_items: list[str] = []
+    if deletion_count:
+        attention_items.append(
+            f"- :warning: {deletion_count} deletion(s) detected — requires dedicated PR authorization"
+        )
+    if rename_count:
+        attention_items.append(
+            f"- :warning: {rename_count} rename/move(s) detected — requires dedicated PR authorization"
+        )
+    if restricted_legacy_count:
+        attention_items.append(
+            f"- :lock: {restricted_legacy_count} restricted-legacy path(s) touched — read-only by default"
+        )
+    if high_risk_count:
+        attention_items.append(
+            f"- :rotating_light: {high_risk_count} high-risk path(s) touched — sentinel_watch.js (automated shutdown)"
+        )
+    if unclassified_count:
+        attention_items.append(
+            f"- :grey_question: {unclassified_count} unclassified path(s) — manual review required"
+        )
+    if codeowners_touched:
+        attention_items.append(
+            "- :busts_in_silhouette: CODEOWNERS touched — requires separate authorization"
+        )
+    if github_touched:
+        attention_items.append("- :octocat: .github/workflow touched — CI behavior may change")
+    if gate_touched:
+        attention_items.append(
+            "- :shield: Gate infrastructure (Gatekeeper / AI Workflow Gate) touched"
+        )
+    if docker_touched:
+        attention_items.append(
+            "- :whale: Docker/build path touched — validate Docker Build Validation"
+        )
+    if db_migration_touched:
+        attention_items.append(
+            "- :floppy_disk: DB/migration path touched — do not run migrations without authorization"
+        )
+    if scraper_training_touched:
+        attention_items.append(
+            "- :satellite: scraper/training/pipeline path touched — requires authorization"
+        )
+    if archive_touched:
+        attention_items.append("- :package: archive-read-only path touched — historical reference")
+
+    if attention_items:
+        lines.append("## Attention")
+        lines.append("")
+        lines.extend(attention_items)
+        lines.append("")
+    else:
+        lines.append("## Attention")
+        lines.append("")
+        lines.append("No attention items detected.")
+        lines.append("")
+
+    # --- Changed files table ---
+    lines.append("## Changed files")
+    lines.append("")
+    lines.append("| Status | Path | Labels | Attention |")
+    lines.append("|---|---|---|---|")
+
+    for entry in classified:
+        status = entry["status"]
+        path = entry["path"]
+        labels_str = ", ".join(entry["labels"])
+        notes_str = "; ".join(entry["notes"]) if entry["notes"] else "—"
+        lines.append(f"| {status} | `{path}` | {labels_str} | {notes_str} |")
+
+    lines.append("")
+
+    # --- Footer ---
+    lines.append("---")
+    lines.append("")
+    lines.append(
+        "*[L3-ENFORCEMENT][Layer-2][WARNING-ONLY] "
+        "This classifier does not block CI. "
+        "No blocking decision is made.*"
+    )
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+def write_summary(
+    summary_md: str,
+    summary_file: str | None = None,
+) -> bool:
+    """Write summary markdown to GitHub Step Summary and/or a local file.
+
+    Returns True if at least one write succeeded, False if all failed.
+    Never raises — failures are silently logged to stderr.
+    """
+    wrote_any = False
+
+    # 1. GitHub Step Summary (GITHUB_STEP_SUMMARY env var)
+    github_summary_path = os.environ.get("GITHUB_STEP_SUMMARY", "")
+    if github_summary_path:
+        try:
+            with Path(github_summary_path).open("a", encoding="utf-8") as f:
+                f.write(summary_md)
+                f.write("\n")
+            print(
+                f"[L3-ENFORCEMENT] Summary appended to GITHUB_STEP_SUMMARY: {github_summary_path}",
+                file=sys.stderr,
+            )
+            wrote_any = True
+        except OSError as exc:
+            print(
+                f"[L3-ENFORCEMENT] WARNING: Failed to write GITHUB_STEP_SUMMARY: {exc}",
+                file=sys.stderr,
+            )
+
+    # 2. Local summary file (--summary-file)
+    if summary_file:
+        try:
+            Path(summary_file).write_text(summary_md, encoding="utf-8")
+            print(
+                f"[L3-ENFORCEMENT] Summary written to --summary-file: {summary_file}",
+                file=sys.stderr,
+            )
+            wrote_any = True
+        except OSError as exc:
+            print(
+                f"[L3-ENFORCEMENT] WARNING: Failed to write --summary-file: {exc}",
+                file=sys.stderr,
+            )
+
+    return wrote_any
+
+
+# ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
@@ -775,10 +978,16 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="File containing changed file paths (path-only or git diff --name-status format)",
     )
+    parser.add_argument(
+        "--summary-file",
+        default=None,
+        help="Write a GitHub Step Summary markdown to this local file (for testing; "
+        "GITHUB_STEP_SUMMARY env var is always checked in CI)",
+    )
     return parser
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901, PLR0912, PLR0915
     """Run the L3G warning-only changed-file classifier from CLI."""
     parser = build_parser()
     args = parser.parse_args()
@@ -800,6 +1009,84 @@ def main() -> None:
 
     output = render_output(entries, repo_root)
     print(output)
+
+    # --- Build and write summary (never blocks) ---
+    if entries:
+        # Re-classify for summary (classify_path is idempotent and cheap)
+        classified: list[dict] = []
+        label_counts: Counter = Counter()
+        deletion_count = 0
+        rename_count = 0
+        restricted_legacy_count = 0
+        high_risk_count = 0
+        unclassified_count = 0
+        codeowners_touched = False
+        github_touched = False
+        gate_touched = False
+        docker_touched = False
+        db_migration_touched = False
+        scraper_training_touched = False
+        archive_touched = False
+
+        for status, path in entries:
+            labels = classify_path(path)
+            notes = attention_notes(path, status, labels)
+            classified.append(
+                {
+                    "status": status,
+                    "path": path,
+                    "labels": labels,
+                    "notes": notes,
+                }
+            )
+
+            for lbl in labels:
+                label_counts[lbl] += 1
+
+            if _is_deletion(status):
+                deletion_count += 1
+            if _is_rename(status):
+                rename_count += 1
+            if LABEL_RESTRICTED_LEGACY in labels:
+                restricted_legacy_count += 1
+            if LABEL_HIGH_RISK in labels:
+                high_risk_count += 1
+            if LABEL_UNCLASSIFIED in labels:
+                unclassified_count += 1
+            if LABEL_CODEOWNERS_SENSITIVE in labels:
+                codeowners_touched = True
+            if LABEL_GITHUB_WORKFLOW_SENSITIVE in labels:
+                github_touched = True
+            if LABEL_GATE_SENSITIVE in labels:
+                gate_touched = True
+            if LABEL_DOCKER_SENSITIVE in labels:
+                docker_touched = True
+            if LABEL_DB_MIGRATION_SENSITIVE in labels:
+                db_migration_touched = True
+            if LABEL_SCRAPER_TRAINING_SENSITIVE in labels:
+                scraper_training_touched = True
+            if LABEL_ARCHIVE_READ_ONLY in labels:
+                archive_touched = True
+
+        summary_md = _build_summary_markdown(
+            entries=entries,
+            classified=classified,
+            label_counts=label_counts,
+            deletion_count=deletion_count,
+            rename_count=rename_count,
+            restricted_legacy_count=restricted_legacy_count,
+            high_risk_count=high_risk_count,
+            unclassified_count=unclassified_count,
+            codeowners_touched=codeowners_touched,
+            github_touched=github_touched,
+            gate_touched=gate_touched,
+            docker_touched=docker_touched,
+            db_migration_touched=db_migration_touched,
+            scraper_training_touched=scraper_training_touched,
+            archive_touched=archive_touched,
+        )
+
+        write_summary(summary_md, summary_file=args.summary_file)
 
     # Always exit 0 — warning-only
     sys.exit(0)
