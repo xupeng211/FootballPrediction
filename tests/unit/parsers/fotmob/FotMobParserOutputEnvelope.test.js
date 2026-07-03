@@ -24,7 +24,7 @@ const {
     isForbidden,
     isCandidateIfCutoffValid,
     isAllowed,
-} = require('../../src/parsers/fotmob/FotMobParserOutputEnvelope');
+} = require('../../../../src/parsers/fotmob/FotMobParserOutputEnvelope');
 
 // ===========================================================================
 // 常量存在性
