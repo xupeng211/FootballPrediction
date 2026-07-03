@@ -137,3 +137,36 @@ Recommended next task only after user confirmation:
 - Review and merge L3G if CI is green.
 - Observe warning-only output across future PRs.
 - Do not implement hard gate, CODEOWNERS, Gatekeeper changes, AI Workflow Gate changes, or L4 without separate authorization.
+
+## L3H visibility and calibration update
+
+L3H improves classifier visibility during the warning-only observation period.
+
+The classifier may write a GitHub Step Summary when `GITHUB_STEP_SUMMARY` is available, and may write a local summary via `--summary-file` for testing.
+
+This remains warning-only:
+
+- It does not block CI.
+- It does not modify Gatekeeper.
+- It does not modify AI Workflow Gate.
+- It does not modify CODEOWNERS.
+- It does not authorize restricted legacy changes.
+- It does not authorize deletion, move, or rename.
+- It does not decide ownership.
+- It does not start L4.
+- It does not run any entrypoint.
+
+### Observation-period checklist
+
+For future PRs, reviewers should check:
+
+- Did the classifier run on pull_request?
+- Are high-risk paths visible?
+- Are restricted legacy paths visible?
+- Are unclassified paths visible?
+- Are deletion / rename / move signals visible?
+- Is the output noisy?
+- Is the output missing any obviously sensitive path?
+- Should a future PR tune classifier labels?
+
+Warnings should be observed across multiple future PRs before any soft gate or hard gate is considered.
