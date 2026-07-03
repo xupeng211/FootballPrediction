@@ -751,7 +751,7 @@ def render_output(  # noqa: C901, PLR0912, PLR0915
 # ---------------------------------------------------------------------------
 
 
-def _build_summary_markdown(
+def _build_summary_markdown(  # noqa: C901, PLR0912, PLR0915
     entries: list[tuple[str, str]],
     classified: list[dict],
     label_counts: Counter,
@@ -963,7 +963,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main() -> None:
+def main() -> None:  # noqa: C901, PLR0912, PLR0915
     """Run the L3G warning-only changed-file classifier from CLI."""
     parser = build_parser()
     args = parser.parse_args()
