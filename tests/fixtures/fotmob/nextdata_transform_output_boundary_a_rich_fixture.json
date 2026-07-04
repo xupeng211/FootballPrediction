@@ -1,0 +1,96 @@
+{
+  "matchId": "fixture-rich-001",
+  "content": {
+    "stats": {
+      "expectedGoals": {
+        "home": 1.42,
+        "away": 0.78
+      },
+      "shots": {
+        "home": 14,
+        "away": 7
+      },
+      "possession": {
+        "home": 58,
+        "away": 42
+      }
+    },
+    "lineup": {
+      "home": {
+        "starters": [
+          { "id": 1001, "name": "Home Player 1", "position": "GK" },
+          { "id": 1002, "name": "Home Player 2", "position": "DF" }
+        ],
+        "bench": [
+          { "id": 1003, "name": "Home Player 3", "position": "MF" }
+        ]
+      },
+      "away": {
+        "starters": [
+          { "id": 2001, "name": "Away Player 1", "position": "GK" },
+          { "id": 2002, "name": "Away Player 2", "position": "DF" }
+        ],
+        "bench": [
+          { "id": 2003, "name": "Away Player 3", "position": "FW" }
+        ]
+      }
+    },
+    "shotmap": [
+      { "id": "shot-1", "xG": 0.21, "minute": 12, "playerId": 1001 },
+      { "id": "shot-2", "xG": 0.08, "minute": 67, "playerId": 2002 }
+    ],
+    "events": [
+      { "id": "event-1", "type": "Goal", "minute": 23, "playerId": 1001 },
+      { "id": "event-2", "type": "YellowCard", "minute": 74, "playerId": 2001 }
+    ],
+    "playerStats": {
+      "home": [
+        { "id": 1001, "rating": 7.4, "shots": 2, "passes": 45 }
+      ],
+      "away": [
+        { "id": 2001, "rating": 6.8, "shots": 1, "passes": 32 }
+      ]
+    },
+    "momentum": [
+      { "minute": 10, "value": 0.2 },
+      { "minute": 20, "value": 0.4 }
+    ],
+    "form": {
+      "home": ["W", "D", "L", "W", "W"],
+      "away": ["L", "W", "D", "L", "L"]
+    },
+    "table": {
+      "homePosition": 4,
+      "awayPosition": 11
+    }
+  },
+  "general": {
+    "homeTeam": {
+      "id": 1,
+      "name": "Home FC"
+    },
+    "awayTeam": {
+      "id": 2,
+      "name": "Away FC"
+    },
+    "matchTimeUTC": "2026-07-04T12:00:00Z"
+  },
+  "header": {
+    "status": {
+      "utcTime": "2026-07-04T12:00:00Z",
+      "scoreStr": "2-1",
+      "winner": "home"
+    },
+    "teams": [
+      { "name": "Home FC", "score": 2 },
+      { "name": "Away FC", "score": 1 }
+    ]
+  },
+  "_meta": {
+    "source": "web_infiltration",
+    "extractedAt": "2026-07-04T00:00:00.000Z",
+    "hasStats": true,
+    "hasLineup": true,
+    "hasShotmap": true
+  }
+}
