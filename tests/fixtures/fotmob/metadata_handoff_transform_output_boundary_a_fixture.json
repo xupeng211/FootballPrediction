@@ -1,0 +1,83 @@
+{
+  "matchId": "fixture-metadata-001",
+  "content": {
+    "stats": {
+      "expectedGoals": {
+        "home": 1.25,
+        "away": 0.93
+      },
+      "shots": {
+        "home": 11,
+        "away": 9
+      }
+    },
+    "lineup": {
+      "home": {
+        "starters": [
+          {
+            "id": 101,
+            "name": "Home Metadata Player"
+          }
+        ],
+        "bench": []
+      },
+      "away": {
+        "starters": [
+          {
+            "id": 201,
+            "name": "Away Metadata Player"
+          }
+        ],
+        "bench": []
+      }
+    },
+    "shotmap": [
+      {
+        "id": "metadata-shot-1",
+        "xG": 0.19,
+        "minute": 16
+      }
+    ],
+    "events": [
+      {
+        "id": "metadata-event-1",
+        "type": "Goal",
+        "minute": 31
+      }
+    ]
+  },
+  "general": {
+    "homeTeam": {
+      "id": 1,
+      "name": "Home Metadata FC"
+    },
+    "awayTeam": {
+      "id": 2,
+      "name": "Away Metadata FC"
+    },
+    "matchTimeUTC": "2026-07-04T12:00:00Z"
+  },
+  "header": {
+    "status": {
+      "utcTime": "2026-07-04T12:00:00Z",
+      "scoreStr": "1-1"
+    },
+    "teams": [
+      {
+        "name": "Home Metadata FC",
+        "score": 1
+      },
+      {
+        "name": "Away Metadata FC",
+        "score": 1
+      }
+    ]
+  },
+  "_meta": {
+    "source": "web_infiltration",
+    "extractedAt": "2026-07-04T02:30:00.000Z",
+    "hasStats": true,
+    "hasLineup": true,
+    "hasShotmap": true
+  }
+}

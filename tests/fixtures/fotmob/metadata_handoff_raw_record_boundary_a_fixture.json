@@ -1,0 +1,26 @@
+{
+  "match_id": "fixture-metadata-001",
+  "external_id": "fixture-metadata-001",
+  "data_version": "fotmob_html_hyd_v1",
+  "data_hash": "sha256:fixture-data-hash-001",
+  "raw_data_hash": "sha256:fixture-raw-data-hash-001",
+  "stable_raw_payload_hash": "sha256:fixture-stable-raw-payload-hash-001",
+  "payload_hash": null,
+  "storage_path": null,
+  "fetched_at": "2026-07-04T01:00:00.000Z",
+  "captured_at": "2026-07-04T01:00:05.000Z",
+  "collected_at": "2026-07-04T01:00:10.000Z",
+  "source_url": "https://example.invalid/fotmob/match/fixture-metadata-001",
+  "final_url": "https://example.invalid/fotmob/match/fixture-metadata-001#final",
+  "raw_data": {
+    "_meta": {
+      "data_version": "fotmob_html_hyd_v1",
+      "data_hash": "sha256:fixture-meta-data-hash-001",
+      "fetched_at": "2026-07-04T01:00:00.000Z",
+      "request_url": "https://example.invalid/fotmob/match/fixture-metadata-001",
+      "final_url": "https://example.invalid/fotmob/match/fixture-metadata-001#final",
+      "parser": "NextDataParser"
+    },
+    "sanitized_payload_note": "static representative raw record fixture; not fetched from FotMob"
+  }
+}
