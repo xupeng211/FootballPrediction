@@ -1,0 +1,28 @@
+{
+  "match_id": "fixture-local-replay-b-001",
+  "external_id": "fixture-local-replay-b-001",
+  "source": "fotmob",
+  "data_version": "fotmob_html_hyd_v1",
+  "payload_hash": null,
+  "data_hash": "sha256:fixture-local-replay-b-data-hash-001",
+  "raw_data_hash": "sha256:fixture-local-replay-b-raw-data-hash-001",
+  "stable_raw_payload_hash": "sha256:fixture-local-replay-b-stable-hash-001",
+  "storage_path": null,
+  "source_url": "https://example.invalid/fotmob/match/fixture-local-replay-b-001",
+  "final_url": "https://example.invalid/fotmob/match/fixture-local-replay-b-001#final",
+  "fetched_at": "2026-07-04T01:00:00.000Z",
+  "captured_at": "2026-07-04T01:00:05.000Z",
+  "raw_data": {
+    "_meta": {
+      "request_url": "https://example.invalid/fotmob/match/fixture-local-replay-b-001",
+      "final_url": "https://example.invalid/fotmob/match/fixture-local-replay-b-001#final",
+      "fetched_at": "2026-07-04T01:00:00.000Z",
+      "data_version": "fotmob_html_hyd_v1",
+      "data_hash": "sha256:fixture-local-replay-b-data-hash-001"
+    },
+    "sanitized_payload_note": "static representative local raw record replay Lane B fixture",
+    "contains_html": false,
+    "contains_next_data": false,
+    "contains_live_fotmob_payload": false
+  }
+}
