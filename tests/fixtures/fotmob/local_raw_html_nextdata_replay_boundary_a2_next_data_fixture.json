@@ -1,0 +1,99 @@
+{
+  "lifecycle": "test-fixture",
+  "props": {
+    "pageProps": {
+      "content": {
+        "stats": {
+          "expectedGoals": {
+            "home": 1.23,
+            "away": 0.98
+          },
+          "shots": {
+            "home": 12,
+            "away": 8
+          }
+        },
+        "shotmap": [
+          {
+            "id": "shot-a2-001",
+            "xG": 0.12,
+            "eventType": "AttemptSaved"
+          }
+        ],
+        "events": [
+          {
+            "id": "event-a2-001",
+            "type": "Goal",
+            "minute": 31
+          }
+        ],
+        "playerStats": {
+          "home": [
+            {
+              "id": "home-player-a2-001",
+              "name": "Home Fixture Player A2",
+              "rating": 7.4
+            }
+          ],
+          "away": [
+            {
+              "id": "away-player-a2-001",
+              "name": "Away Fixture Player A2",
+              "rating": 6.8
+            }
+          ]
+        },
+        "lineup": {
+          "home": {
+            "players": [
+              {
+                "id": "home-lineup-a2-001",
+                "name": "Home Lineup Fixture A2"
+              }
+            ]
+          },
+          "away": {
+            "players": [
+              {
+                "id": "away-lineup-a2-001",
+                "name": "Away Lineup Fixture A2"
+              }
+            ]
+          }
+        }
+      },
+      "general": {
+        "matchTimeUTC": "2026-07-04T12:00:00.000Z",
+        "league": "Fixture League A2",
+        "roundName": "Fixture Round A2",
+        "homeTeam": {
+          "id": "home-fixture-a2",
+          "name": "Home Fixture A2"
+        },
+        "awayTeam": {
+          "id": "away-fixture-a2",
+          "name": "Away Fixture A2"
+        }
+      },
+      "header": {
+        "status": {
+          "utcTime": "2026-07-04T12:00:00.000Z",
+          "scoreStr": "2 - 1",
+          "result": "home"
+        },
+        "teams": [
+          {
+            "id": "home-fixture-a2",
+            "name": "Home Fixture A2",
+            "score": 2
+          },
+          {
+            "id": "away-fixture-a2",
+            "name": "Away Fixture A2",
+            "score": 1
+          }
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "lifecycle": "test-fixture",
+  "match_id": "fixture-local-replay-a2-001",
+  "external_id": "fixture-local-replay-a2-001",
+  "source": "fotmob",
+  "data_version": "fotmob_nextdata_local_fixture_v1",
+  "payload_hash": null,
+  "data_hash": "sha256:fixture-local-replay-a2-data-hash-001",
+  "raw_data_hash": "sha256:fixture-local-replay-a2-raw-data-hash-001",
+  "stable_raw_payload_hash": "sha256:fixture-local-replay-a2-stable-hash-001",
+  "storage_path": null,
+  "source_url": "https://example.invalid/fotmob/match/fixture-local-replay-a2-001",
+  "final_url": "https://example.invalid/fotmob/match/fixture-local-replay-a2-001#final",
+  "fetched_at": "2026-07-04T01:00:00.000Z",
+  "captured_at": "2026-07-04T01:00:05.000Z",
+  "raw_data": {
+    "_meta": {
+      "request_url": "https://example.invalid/fotmob/match/fixture-local-replay-a2-001",
+      "final_url": "https://example.invalid/fotmob/match/fixture-local-replay-a2-001#final",
+      "fetched_at": "2026-07-04T01:00:00.000Z",
+      "data_version": "fotmob_nextdata_local_fixture_v1",
+      "data_hash": "sha256:fixture-local-replay-a2-data-hash-001"
+    },
+    "replay_lane": "A2",
+    "sanitized_payload_note": "static representative local __NEXT_DATA__ replay Lane A2 fixture",
+    "contains_sanitized_next_data": true,
+    "contains_sanitized_html": false,
+    "contains_live_fotmob_payload": false
+  }
+}
