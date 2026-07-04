@@ -1,0 +1,69 @@
+{
+  "matchId": "fixture-local-replay-b-001",
+  "content": {
+    "stats": {
+      "expectedGoals": {
+        "home": 1.23,
+        "away": 0.98
+      },
+      "shots": {
+        "home": 12,
+        "away": 8
+      }
+    },
+    "shotmap": [
+      {
+        "id": "shot-001",
+        "xG": 0.12,
+        "eventType": "AttemptSaved"
+      }
+    ],
+    "events": [
+      {
+        "id": "event-001",
+        "type": "Goal"
+      }
+    ],
+    "playerStats": {
+      "home": [],
+      "away": []
+    },
+    "lineup": {
+      "home": {
+        "players": []
+      },
+      "away": {
+        "players": []
+      }
+    }
+  },
+  "general": {
+    "matchTimeUTC": "2026-07-04T12:00:00.000Z",
+    "league": "Fixture League"
+  },
+  "header": {
+    "status": {
+      "utcTime": "2026-07-04T12:00:00.000Z",
+      "scoreStr": "2 - 1"
+    },
+    "teams": [
+      {
+        "id": "home-fixture",
+        "name": "Home Fixture",
+        "score": 2
+      },
+      {
+        "id": "away-fixture",
+        "name": "Away Fixture",
+        "score": 1
+      }
+    ]
+  },
+  "_meta": {
+    "source": "web_infiltration",
+    "extractedAt": "2026-07-04T02:30:00.000Z",
+    "hasStats": true,
+    "hasLineup": true,
+    "hasShotmap": true
+  }
+}
