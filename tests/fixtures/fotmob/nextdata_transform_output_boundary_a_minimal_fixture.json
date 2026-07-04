@@ -1,0 +1,20 @@
+{
+  "matchId": "fixture-minimal-001",
+  "content": {},
+  "general": {
+    "homeTeam": {
+      "name": "A"
+    },
+    "awayTeam": {
+      "name": "B"
+    }
+  },
+  "header": {
+    "status": {
+      "utcTime": "2026-07-04T12:00:00Z"
+    }
+  },
+  "_meta": {
+    "source": "web_infiltration"
+  }
+}
