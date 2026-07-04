@@ -271,8 +271,9 @@ function _buildPayloadMeta(safeOpts) {
             ? (safeOpts.dataVersion === null ? null : String(safeOpts.dataVersion))
             : 'unknown',
         storage_path: safeOpts.storagePath !== undefined ? safeOpts.storagePath : null,
-        source_url: null,
-        final_url: null,
+        source_url: safeOpts.sourceUrl !== undefined ? safeOpts.sourceUrl : null,
+        final_url: safeOpts.finalUrl !== undefined ? safeOpts.finalUrl : null,
+        fetched_at: safeOpts.fetchedAt !== undefined ? safeOpts.fetchedAt : null,
     };
 }
 

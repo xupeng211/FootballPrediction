@@ -54,6 +54,16 @@ function buildAdapterOptionsFromRawRecord(rawRecord) {
             rawRecord.storage_path
             ?? rawRecord.storagePath
             ?? null,
+        sourceUrl:
+            rawRecord.source_url
+            ?? rawRecord.sourceUrl
+            ?? rawRecord.raw_data?._meta?.request_url
+            ?? null,
+        finalUrl:
+            rawRecord.final_url
+            ?? rawRecord.finalUrl
+            ?? rawRecord.raw_data?._meta?.final_url
+            ?? null,
         capturedAt:
             rawRecord.captured_at
             ?? rawRecord.capturedAt
@@ -103,6 +113,8 @@ describe('DATA-L1E-5 metadata handoff fixture', () => {
         assert.equal(options.dataVersion, 'fotmob_html_hyd_v1');
         assert.equal(options.payloadHash, 'sha256:fixture-data-hash-001');
         assert.equal(options.storagePath, null);
+        assert.equal(options.sourceUrl, 'https://example.invalid/fotmob/match/fixture-metadata-001');
+        assert.equal(options.finalUrl, 'https://example.invalid/fotmob/match/fixture-metadata-001#final');
         assert.equal(options.capturedAt, '2026-07-04T01:00:05.000Z');
         assert.equal(options.fetchedAt, '2026-07-04T01:00:00.000Z');
         assert.equal(options.parsedAt, null);
@@ -126,16 +138,20 @@ describe('DATA-L1E-5 metadata handoff fixture', () => {
         assert.equal(envelope.payload.data_version, 'fotmob_html_hyd_v1');
         assert.equal(envelope.payload.payload_hash, 'sha256:fixture-data-hash-001');
         assert.equal(envelope.payload.storage_path, null);
+        assert.equal(envelope.payload.source_url, 'https://example.invalid/fotmob/match/fixture-metadata-001');
+        assert.equal(envelope.payload.final_url, 'https://example.invalid/fotmob/match/fixture-metadata-001#final');
         assert.equal(envelope.payload.captured_at, '2026-07-04T01:00:05.000Z');
+        assert.equal(envelope.payload.fetched_at, '2026-07-04T01:00:00.000Z');
         assert.equal(envelope.parser.parser_name, 'NextDataParser.transformToApiFormat');
         assert.equal(envelope.parser.parser_version, 'legacy-static');
         assert.equal(envelope.parser.parsed_at, null);
     });
 
-    test('fetchedAt 不冒充 capturedAt', () => {
+    test('fetchedAt 不冒充 capturedAt（两个独立字段）', () => {
         assert.equal(envelope.payload.captured_at, rawRecord.captured_at);
-        assert.notEqual(envelope.payload.captured_at, rawRecord.fetched_at);
-        assert.equal(Object.prototype.hasOwnProperty.call(envelope.payload, 'fetched_at'), false);
+        assert.equal(envelope.payload.fetched_at, rawRecord.fetched_at);
+        assert.notEqual(envelope.payload.captured_at, envelope.payload.fetched_at);
+        assert.notEqual(envelope.payload.fetched_at, envelope.payload.captured_at);
     });
 
     test('_meta.extractedAt 保留为 audit-only 且不覆盖 captured_at', () => {
@@ -155,14 +171,28 @@ describe('DATA-L1E-5 metadata handoff fixture', () => {
         assert.notEqual(envelope.payload.captured_at, transformOutput.header.status.utcTime);
     });
 
-    test('source_url / final_url 当前保持 null', () => {
+    test('source_url / final_url 通过 adapter options 进入 envelope payload', () => {
         assert.ok(rawRecord.source_url);
         assert.ok(rawRecord.final_url);
         assert.ok(rawRecord.raw_data._meta.request_url);
         assert.ok(rawRecord.raw_data._meta.final_url);
-        // Current adapter has no sourceUrl/finalUrl options. Future adapter extension required.
-        assert.equal(envelope.payload.source_url, null);
-        assert.equal(envelope.payload.final_url, null);
+        // DATA-L1E-5B: adapter now supports sourceUrl/finalUrl options.
+        assert.equal(envelope.payload.source_url, rawRecord.source_url);
+        assert.equal(envelope.payload.final_url, rawRecord.final_url);
+    });
+
+    test('fetched_at 不等于 _meta.extractedAt（语义不混淆）', () => {
+        const extractedEntry = fieldByPath(envelope.fields, '_meta.extractedAt');
+        assert.ok(extractedEntry, '_meta.extractedAt should exist');
+        assert.notEqual(envelope.payload.fetched_at, extractedEntry.value,
+            'fetched_at must not equal _meta.extractedAt');
+    });
+
+    test('fetched_at 不等于 matchTimeUTC / utcTime（比赛时间不混入 metadata 时间）', () => {
+        assert.notEqual(envelope.payload.fetched_at, transformOutput.general.matchTimeUTC,
+            'fetched_at must not equal matchTimeUTC');
+        assert.notEqual(envelope.payload.fetched_at, transformOutput.header.status.utcTime,
+            'fetched_at must not equal utcTime');
     });
 
     test('不产生任何 safe field', () => {
@@ -234,6 +264,8 @@ describe('DATA-L1E-5 missing metadata fixture behavior', () => {
         assert.equal(options.dataVersion, 'unknown');
         assert.equal(options.payloadHash, null);
         assert.equal(options.storagePath, null);
+        assert.equal(options.sourceUrl, null);
+        assert.equal(options.finalUrl, null);
         assert.equal(options.capturedAt, null);
         assert.equal(options.fetchedAt, null);
     });
@@ -244,13 +276,19 @@ describe('DATA-L1E-5 missing metadata fixture behavior', () => {
         assert.equal(envelope.payload.data_version, 'unknown');
         assert.equal(envelope.payload.payload_hash, null);
         assert.equal(envelope.payload.storage_path, null);
+        assert.equal(envelope.payload.source_url, null);
+        assert.equal(envelope.payload.final_url, null);
         assert.equal(envelope.payload.captured_at, null);
+        assert.equal(envelope.payload.fetched_at, null);
     });
 
-    test('minimal matchTimeUTC / utcTime 不会被当作 captured_at', () => {
+    test('minimal matchTimeUTC / utcTime 不会被当作 captured_at 或 fetched_at', () => {
         assert.notEqual(envelope.payload.captured_at, minimalTransformOutput.general.matchTimeUTC);
         assert.notEqual(envelope.payload.captured_at, minimalTransformOutput.header.status.utcTime);
         assert.equal(envelope.payload.captured_at, null);
+        assert.notEqual(envelope.payload.fetched_at, minimalTransformOutput.general.matchTimeUTC);
+        assert.notEqual(envelope.payload.fetched_at, minimalTransformOutput.header.status.utcTime);
+        assert.equal(envelope.payload.fetched_at, null);
     });
 
     test('minimal fixture 不产生任何 safe field', () => {
