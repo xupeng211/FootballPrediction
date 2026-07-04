@@ -331,6 +331,7 @@ describe('adaptTransformToApiFormatOutputToEnvelope', () => {
         assert.equal(envelope.payload.captured_at, null);
         assert.equal(envelope.payload.source_url, null);
         assert.equal(envelope.payload.final_url, null);
+        assert.equal(envelope.payload.fetched_at, null);
     });
 
     test('happy path: parser metadata 默认值', () => {
@@ -391,23 +392,22 @@ describe('adaptTransformToApiFormatOutputToEnvelope', () => {
 
     // --- metadata preservation ---
 
-    test('metadata: options 传入的 dataVersion / payloadHash / fetchedAt 应被正确保留', () => {
+    test('metadata: options 传入的 dataVersion / payloadHash / capturedAt / fetchedAt 应被正确保留', () => {
         const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
             dataVersion: 'fotmob_html_hyd_v1',
             payloadHash: 'abc123',
             storagePath: null,
+            capturedAt: '2026-07-04T01:00:05.000Z',
             fetchedAt: '2026-07-04T01:00:00.000Z',
         });
 
         assert.equal(envelope.payload.data_version, 'fotmob_html_hyd_v1');
         assert.equal(envelope.payload.payload_hash, 'abc123');
         assert.equal(envelope.payload.storage_path, null);
-        assert.equal(envelope.payload.captured_at, null);
-        // fetchedAt 不是 envelope schema 标准字段——它不在 payload 块中。
-        // adapter 通过 captured_at 承载采集时间，fetchedAt 应映射到 captured_at。
-        // 但按照当前设计，fetchedAt 和 capturedAt 是独立字段。
-        // 如果 options 传了 fetchedAt 但没传 capturedAt，captured_at 仍为 null。
-        // 这是设计决定：不自动映射 fetchedAt → captured_at，避免语义混淆。
+        assert.equal(envelope.payload.captured_at, '2026-07-04T01:00:05.000Z');
+        assert.equal(envelope.payload.fetched_at, '2026-07-04T01:00:00.000Z');
+        // fetchedAt 和 capturedAt 是独立字段，fetchedAt 不覆盖 capturedAt
+        assert.notEqual(envelope.payload.fetched_at, envelope.payload.captured_at);
     });
 
     test('metadata: transformOutput._meta.extractedAt 不覆盖 captured_at', () => {
@@ -579,5 +579,110 @@ describe('adaptTransformToApiFormatOutputToEnvelope', () => {
             dataVersion: null,
         });
         assert.equal(envelope.payload.data_version, null);
+    });
+
+    // --- metadata extension: sourceUrl / finalUrl / fetchedAt ---
+
+    test('metadata extension: sourceUrl 写入 envelope.payload.source_url', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            sourceUrl: 'https://example.invalid/fotmob/match/4193673',
+        });
+        assert.equal(envelope.payload.source_url, 'https://example.invalid/fotmob/match/4193673');
+    });
+
+    test('metadata extension: finalUrl 写入 envelope.payload.final_url', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            finalUrl: 'https://example.invalid/fotmob/match/4193673#final',
+        });
+        assert.equal(envelope.payload.final_url, 'https://example.invalid/fotmob/match/4193673#final');
+    });
+
+    test('metadata extension: fetchedAt 写入 envelope.payload.fetched_at', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            fetchedAt: '2026-07-04T01:00:00.000Z',
+        });
+        assert.equal(envelope.payload.fetched_at, '2026-07-04T01:00:00.000Z');
+    });
+
+    test('metadata extension: sourceUrl 缺失时 payload.source_url 为 null', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {});
+        assert.equal(envelope.payload.source_url, null);
+    });
+
+    test('metadata extension: finalUrl 缺失时 payload.final_url 为 null', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {});
+        assert.equal(envelope.payload.final_url, null);
+    });
+
+    test('metadata extension: fetchedAt 缺失时 payload.fetched_at 为 null', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {});
+        assert.equal(envelope.payload.fetched_at, null);
+    });
+
+    test('metadata extension: fetchedAt 不覆盖 captured_at（两个独立字段）', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            capturedAt: '2026-07-04T01:00:05.000Z',
+            fetchedAt: '2026-07-04T01:00:00.000Z',
+        });
+        assert.equal(envelope.payload.captured_at, '2026-07-04T01:00:05.000Z');
+        assert.equal(envelope.payload.fetched_at, '2026-07-04T01:00:00.000Z');
+        assert.notEqual(envelope.payload.fetched_at, envelope.payload.captured_at);
+    });
+
+    test('metadata extension: _meta.extractedAt 不覆盖 fetched_at', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            fetchedAt: '2026-07-04T01:00:00.000Z',
+        });
+        assert.equal(envelope.payload.fetched_at, '2026-07-04T01:00:00.000Z');
+        const extractedEntry = envelope.fields.find(f => f.field_path === '_meta.extractedAt');
+        assert.ok(extractedEntry, '_meta.extractedAt audit field should exist');
+        assert.notEqual(envelope.payload.fetched_at, extractedEntry.value,
+            'fetched_at must not equal _meta.extractedAt');
+    });
+
+    test('metadata extension: matchTimeUTC / utcTime 不覆盖 fetched_at', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            fetchedAt: '2026-07-04T01:00:00.000Z',
+        });
+        assert.notEqual(envelope.payload.fetched_at, HAPPY_PATH_TRANSFORM_OUTPUT.general.matchTimeUTC,
+            'fetched_at must not equal matchTimeUTC');
+        assert.notEqual(envelope.payload.fetched_at, HAPPY_PATH_TRANSFORM_OUTPUT.header.status.utcTime,
+            'fetched_at must not equal utcTime');
+    });
+
+    test('metadata extension: 所有 metadata 字段不产生 ALLOWED_CANDIDATE', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            sourceUrl: 'https://example.invalid/fotmob/match/4193673',
+            finalUrl: 'https://example.invalid/fotmob/match/4193673#final',
+            fetchedAt: '2026-07-04T01:00:00.000Z',
+            capturedAt: '2026-07-04T01:00:05.000Z',
+        });
+        for (const f of envelope.fields) {
+            assert.notEqual(
+                f.model_eligibility,
+                MODEL_ELIGIBILITY.ALLOWED_CANDIDATE,
+                `field "${f.field_path}" must not be ALLOWED_CANDIDATE`
+            );
+            assert.notEqual(
+                f.model_eligibility,
+                MODEL_ELIGIBILITY.CANDIDATE_IF_CUTOFF_VALID,
+                `field "${f.field_path}" must not be CANDIDATE_IF_CUTOFF_VALID`
+            );
+        }
+    });
+
+    test('metadata extension: fetched_at/source_url/final_url 不存在于 envelope.fields 中', () => {
+        const envelope = adaptTransformToApiFormatOutputToEnvelope(HAPPY_PATH_TRANSFORM_OUTPUT, {
+            sourceUrl: 'https://example.invalid/fotmob/match/4193673',
+            finalUrl: 'https://example.invalid/fotmob/match/4193673#final',
+            fetchedAt: '2026-07-04T01:00:00.000Z',
+        });
+        // payload metadata 应该只在 envelope.payload 中，不出现在 envelope.fields
+        const payloadMetaPaths = ['payload.fetched_at', 'payload.source_url', 'payload.final_url'];
+        for (const metaPath of payloadMetaPaths) {
+            const entry = envelope.fields.find(f => f.field_path === metaPath);
+            assert.equal(entry, undefined,
+                `"${metaPath}" should not appear in envelope.fields — payload metadata only`);
+        }
     });
 });

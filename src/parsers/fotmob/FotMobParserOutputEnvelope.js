@@ -195,6 +195,7 @@ function createEmptyEnvelope(overrides = {}) {
             storage_path: null,
             source_url: null,
             final_url: null,
+            fetched_at: null,
         },
 
         /** parser 层面的元数据。 */
