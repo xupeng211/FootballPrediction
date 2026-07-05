@@ -2,6 +2,28 @@
 """
 M4模块: 分类数据集生成器
 
+LIFECYCLE: LEGACY / NON-PRODUCTION.
+
+This module is not the production training dataset builder.
+
+ClassificationDatasetGenerator currently uses mock/random historical data in
+_get_historical_data(), and must not be used for real model training, training
+dry-run, or production backtest.
+
+The current prematch-safe production path is:
+
+    l3_features
+    -> config/features/l3_prematch_safe_contract.v0.json
+    -> src/ml/features/l3_prematch_contract.py
+    -> training/prediction entrypoints
+
+See:
+- docs/data/l3_prematch_safe_feature_contract.md
+- config/features/l3_prematch_safe_contract.v0.json
+- src/ml/features/l3_prematch_contract.py
+- docs/data/dataset_generation_legacy_status.md
+
+--- 原文档 (保留) ---
 严格遵循TDD设计，生成用于1X2分类任务的训练数据集。
 整合M1/M2/M3模块，输出高质量的X特征和Y标签数据。
 
@@ -326,7 +348,14 @@ class ClassificationDatasetGenerator:
         return features_data
 
     async def _get_historical_data(self) -> pd.DataFrame:
-        """获取历史数据用于特征提取"""
+        """Return mock/random historical data for legacy testing only.
+
+        WARNING:
+        This method returns mock/random historical data and does not query real
+        historical matches from DB. It is not cutoff-validated for production
+        training. Do not use this method for real model training, training
+        dry-run, or production dataset generation.
+        """
         # 创建简单的模拟历史数据，避免DataFrame布尔值歧义
         mock_data = []
         base_date = datetime.now() - timedelta(days=60)
