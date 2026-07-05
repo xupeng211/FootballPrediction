@@ -63,6 +63,7 @@ function printPreview(result) {
     for (const entry of result.previewEntries) {
         console.log(`\n┌─ match_id: ${entry.match_id}`);
         console.log(`├─ external_id: ${entry.external_id || '(null)'}`);
+        console.log(`├─ data_version: ${entry.data_version || '(unknown)'}`);
         console.log(`├─ teams: ${entry.home_team || '?'} vs ${entry.away_team || '?'}`);
         console.log(`├─ has_raw_data: ${entry.has_raw_data}`);
         console.log(`├─ would_write: ${entry.would_write_l3_features}`);

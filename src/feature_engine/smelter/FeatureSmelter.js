@@ -237,8 +237,21 @@ class FeatureSmelter {
 
     /**
      * 获取待处理的比赛列表（带重试）
+     *
+     * V5.2.1: Target selection now returns distinct match_id rows with
+     * data_version priority.  LIMIT applies to distinct matches, not
+     * raw_match_data rows.
+     *
+     * Data version priority (highest first):
+     *   1. fotmob_live_v1
+     *   2. fotmob_pageprops_v2
+     *   3. fotmob_html_hyd_v1
+     *   4. other (non-legacy)
+     *
+     * Excluded versions: PHASE4.23, PHASE4.43_SYNTHETIC
+     *
      * @param {boolean} fullRecalculate - 是否全量重算
-     * @param {number} limit - 批量大小
+     * @param {number} limit - 批量大小（distinct match_id 数量）
      * @returns {Promise<Array>}
      */
     async getPendingMatches(fullRecalculate = false, limit = 1000) {
@@ -246,38 +259,96 @@ class FeatureSmelter {
             let query;
             if (fullRecalculate) {
                 query = `
+                    WITH ranked AS (
+                        SELECT
+                            m.match_id,
+                            m.external_id,
+                            m.home_team,
+                            m.away_team,
+                            m.match_date,
+                            m.home_score,
+                            m.away_score,
+                            r.raw_data,
+                            r.data_version,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY m.match_id
+                                ORDER BY
+                                    CASE r.data_version
+                                        WHEN 'fotmob_live_v1' THEN 1
+                                        WHEN 'fotmob_pageprops_v2' THEN 2
+                                        WHEN 'fotmob_html_hyd_v1' THEN 3
+                                        ELSE 99
+                                    END,
+                                    m.match_date DESC NULLS LAST,
+                                    m.match_id,
+                                    r.data_version
+                            ) AS rn
+                        FROM matches m
+                        INNER JOIN raw_match_data r ON m.match_id = r.match_id
+                        WHERE m.external_id IS NOT NULL
+                          AND COALESCE(r.data_version, '') NOT IN ('PHASE4.23', 'PHASE4.43_SYNTHETIC')
+                    )
                     SELECT
-                        m.match_id,
-                        m.external_id,
-                        m.home_team,
-                        m.away_team,
-                        m.match_date,
-                        m.home_score,
-                        m.away_score,
-                        r.raw_data
-                    FROM matches m
-                    INNER JOIN raw_match_data r ON m.match_id = r.match_id
-                    WHERE m.external_id IS NOT NULL
-                    ORDER BY m.match_date DESC
+                        match_id,
+                        external_id,
+                        home_team,
+                        away_team,
+                        match_date,
+                        home_score,
+                        away_score,
+                        raw_data,
+                        data_version
+                    FROM ranked
+                    WHERE rn = 1
+                    ORDER BY match_date DESC NULLS LAST, match_id
                     LIMIT $1
                 `;
             } else {
                 query = `
+                    WITH ranked AS (
+                        SELECT
+                            m.match_id,
+                            m.external_id,
+                            m.home_team,
+                            m.away_team,
+                            m.match_date,
+                            m.home_score,
+                            m.away_score,
+                            r.raw_data,
+                            r.data_version,
+                            ROW_NUMBER() OVER (
+                                PARTITION BY m.match_id
+                                ORDER BY
+                                    CASE r.data_version
+                                        WHEN 'fotmob_live_v1' THEN 1
+                                        WHEN 'fotmob_pageprops_v2' THEN 2
+                                        WHEN 'fotmob_html_hyd_v1' THEN 3
+                                        ELSE 99
+                                    END,
+                                    m.match_date DESC NULLS LAST,
+                                    m.match_id,
+                                    r.data_version
+                            ) AS rn
+                        FROM matches m
+                        INNER JOIN raw_match_data r ON m.match_id = r.match_id
+                        LEFT JOIN l3_features l3 ON m.match_id = l3.match_id
+                        WHERE m.external_id IS NOT NULL
+                          AND l3.match_id IS NULL
+                          AND COALESCE(r.data_version, '') NOT IN ('PHASE4.23', 'PHASE4.43_SYNTHETIC')
+                    )
                     SELECT
-                        m.match_id,
-                        m.external_id,
-                        m.home_team,
-                        m.away_team,
-                        m.match_date,
-                        m.home_score,
-                        m.away_score,
-                        r.raw_data
-                    FROM matches m
-                    INNER JOIN raw_match_data r ON m.match_id = r.match_id
-                    LEFT JOIN l3_features l3 ON m.match_id = l3.match_id
-                    WHERE m.external_id IS NOT NULL
-                      AND l3.match_id IS NULL
-                    ORDER BY m.match_date DESC
+                        match_id,
+                        external_id,
+                        home_team,
+                        away_team,
+                        match_date,
+                        home_score,
+                        away_score,
+                        raw_data,
+                        data_version
+                    FROM ranked
+                    WHERE rn = 1
+                    ORDER BY match_date DESC NULLS LAST, match_id
                     LIMIT $1
                 `;
             }
@@ -597,6 +668,7 @@ class FeatureSmelter {
             external_id: match.external_id || null,
             home_team: match.home_team || null,
             away_team: match.away_team || null,
+            data_version: match.data_version || null,
             has_raw_data: Boolean(match.raw_data),
             extractors: {},
             error: null,
