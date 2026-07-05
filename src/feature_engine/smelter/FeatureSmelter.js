@@ -451,10 +451,52 @@ class FeatureSmelter {
      * @param {number} [options.limit] - 批量大小
      * @returns {Promise<object>} 执行统计
      */
-    async run(options = {}) {
-        const { fullRecalculate = false, limit = this.config.batchSize } = options;
+    /**
+     * Process a batch of matches — either collect preview entries (noWrite) or
+     * accumulate features for saving (write mode).
+     * @private
+     */
+    async _processBatch(matches, { isNoWrite, batchSize, allFeatures, previewEntries }) {
+        for (let i = 0; i < matches.length; i += batchSize) {
+            const batch = matches.slice(i, i + batchSize);
+            for (const match of batch) {
+                const features = this.processMatch(match);
+                if (isNoWrite) {
+                    previewEntries.push(this._buildPreviewEntry(match, features));
+                } else if (features) {
+                    allFeatures.push(features);
+                }
+            }
+            if (!isNoWrite && allFeatures.length >= batchSize) {
+                const saved = await this.saveFeatures(allFeatures.splice(0, batchSize));
+                this.logger.debug('批量保存完成', { saved });
+            }
+            if (!isNoWrite && this.config.delayMs > 0) {
+                await new Promise(resolve => { setTimeout(resolve, this.config.delayMs); });
+            }
+        }
+    }
 
-        this.logger.info('开始特征熔炼', { fullRecalculate, limit, config: this.config });
+    async run(options = {}) {
+        const {
+            fullRecalculate = false,
+            limit = this.config.batchSize,
+            dryRun = false,
+            noWrite = false,
+            preview = false,
+        } = options;
+
+        const isNoWrite = dryRun || noWrite || preview;
+
+        this.logger.info('开始特征熔炼', {
+            fullRecalculate, limit, isNoWrite,
+            mode: isNoWrite ? 'NO-WRITE PREVIEW' : 'WRITE ENABLED',
+            config: this.config
+        });
+
+        if (isNoWrite) {
+            this.logger.info('NO-WRITE PREVIEW MODE — DB writes disabled, INSERT/UPDATE suppressed');
+        }
 
         // 重置统计
         this.stats = {
@@ -467,6 +509,10 @@ class FeatureSmelter {
             dataGaps: 0,
             marketValueHits: 0,
             marketValueMisses: 0,
+            oddsMisses: 0,
+            oddsHits: 0,
+            eloDefaults: 0,
+            eloHits: 0,
             retries: 0
         };
 
@@ -485,37 +531,36 @@ class FeatureSmelter {
             }
 
             // 批量处理
-            const batchSize = 50;
+            const batchSize = isNoWrite ? limit : 50;
             const allFeatures = [];
+            const previewEntries = [];
 
-            for (let i = 0; i < matches.length; i += batchSize) {
-                const batch = matches.slice(i, i + batchSize);
+            await this._processBatch(matches, { isNoWrite, batchSize, allFeatures, previewEntries });
 
-                for (const match of batch) {
-                    const features = this.processMatch(match);
-                    if (features) {
-                        allFeatures.push(features);
-                    }
-                }
-
-                // 批量保存
-                if (allFeatures.length >= batchSize) {
-                    const saved = await this.saveFeatures(allFeatures.splice(0, batchSize));
-                    this.logger.debug('批量保存完成', { saved, progress: `${Math.min(i + batchSize, matches.length)}/${matches.length}` });
-                }
-
-                // 延时控制
-                if (this.config.delayMs > 0) {
-                    await new Promise(resolve => { setTimeout(resolve, this.config.delayMs); });
-                }
-            }
-
-            // 保存剩余特征
-            if (allFeatures.length > 0) {
+            // 保存剩余特征 — only in write mode
+            if (!isNoWrite && allFeatures.length > 0) {
                 await this.saveFeatures(allFeatures);
             }
 
             const duration = Date.now() - startTime;
+
+            if (isNoWrite) {
+                this.logger.info('NO-WRITE PREVIEW 完成', {
+                    ...this.stats,
+                    duration_ms: duration,
+                    preview_count: previewEntries.length,
+                    note: 'No INSERT/UPDATE was executed. l3_features unchanged.'
+                });
+                return {
+                    ...this.stats,
+                    duration_ms: duration,
+                    isNoWrite: true,
+                    isDryRun: true,
+                    preview: previewEntries.length,
+                    previewEntries,
+                    _note: 'NO-WRITE PREVIEW — l3_features NOT modified'
+                };
+            }
 
             this.logger.info('特征熔炼完成', {
                 ...this.stats,
@@ -533,6 +578,75 @@ class FeatureSmelter {
             });
             throw error;
         }
+    }
+
+    /**
+     * Build a no-write preview entry for a single match.
+     *
+     * Summarises each extractor output without touching the database.
+     * Called only in dryRun / noWrite / preview mode.
+     *
+     * @param {object} match — raw match row from DB
+     * @param {object|null} features — output of processMatch(), or null on failure
+     * @returns {object} preview entry with extractor summaries
+     * @private
+     */
+    _buildPreviewEntry(match, features) {
+        const base = {
+            match_id: match.match_id,
+            external_id: match.external_id || null,
+            home_team: match.home_team || null,
+            away_team: match.away_team || null,
+            has_raw_data: Boolean(match.raw_data),
+            extractors: {},
+            error: null,
+            would_write_l3_features: false,
+            actual_db_write: false,
+        };
+
+        if (!features) {
+            base.error = 'processMatch returned null (raw_data missing or extractor threw)';
+            return base;
+        }
+
+        base.would_write_l3_features = true;
+
+        const extractorFields = [
+            { key: 'golden_features', label: 'golden_features' },
+            { key: 'tactical_features', label: 'tactical_features' },
+            { key: 'odds_movement_features', label: 'odds_movement_features' },
+            { key: 'elo_features', label: 'elo_features' },
+        ];
+
+        for (const { key, label } of extractorFields) {
+            const val = features[key];
+            if (val === undefined || val === null) {
+                base.extractors[label] = {
+                    present: false,
+                    keys: 0,
+                    empty: true,
+                    reason: 'extractor output missing',
+                };
+            } else if (typeof val === 'object' && !Array.isArray(val)) {
+                const keys = Object.keys(val).filter(k => !k.startsWith('_'));
+                const dataKeys = Object.keys(val).filter(k => !k.startsWith('_') && val[k] !== null && val[k] !== undefined && val[k] !== '' && !(typeof val[k] === 'object' && Object.keys(val[k]).length === 0));
+                base.extractors[label] = {
+                    present: true,
+                    keys: keys.length,
+                    data_keys: dataKeys.length,
+                    empty: dataKeys.length === 0,
+                    reason: dataKeys.length === 0 ? 'all values null/empty' : null,
+                };
+            } else {
+                base.extractors[label] = {
+                    present: true,
+                    keys: Array.isArray(val) ? val.length : 1,
+                    empty: Array.isArray(val) ? val.length === 0 : (val === null || val === undefined),
+                };
+            }
+        }
+
+        return base;
     }
 
     /**
