@@ -1,0 +1,245 @@
+{
+  "_meta": {
+    "version": "v0",
+    "status": "source-of-truth-derived",
+    "source_document": "docs/data/l3_prematch_safe_feature_contract.md",
+    "last_audit": "GOLD-AUDIT-2D",
+    "verification_target": "match_id 53_20252026_4830746, data_version fotmob_live_v1",
+    "created": "2026-07-05",
+    "lifecycle": "permanent",
+    "scope": "l3_features training input safety enforcement"
+  },
+
+  "default_policy": {
+    "unknown_group": "deny",
+    "unknown_key": "deny",
+    "conditional_safe_without_evidence": "deny",
+    "postmatch_leakage": "deny",
+    "empty_or_null_group": "pass_through_empty",
+    "denylist_priority_over_allowlist": true
+  },
+
+  "feature_groups": {
+
+    "golden_features": {
+      "_description": "团队阵容数据（球员身价、年龄、伤停）。注意：rating 相关字段来自赛后评分，必须被 deny。",
+      "_status": "mixed — 34 prematch-safe, 23 postmatch-leakage (rating)",
+      "_allow_mode": "allowlist — only explicitly listed keys pass",
+
+      "prematch_safe_allowlist": [
+        "_source",
+        "_version",
+
+        "home_age_avg",
+        "away_age_avg",
+        "age_gap",
+        "home_starters_count",
+        "away_starters_count",
+        "home_u23_count",
+        "away_u23_count",
+        "home_veteran_count",
+        "away_veteran_count",
+
+        "home_market_value_total",
+        "away_market_value_total",
+        "home_market_value_avg",
+        "away_market_value_avg",
+        "home_market_value_max",
+        "away_market_value_max",
+        "home_market_value_min",
+        "away_market_value_min",
+        "home_market_value_std",
+        "away_market_value_std",
+        "home_market_value_raw",
+        "away_market_value_raw",
+        "home_market_value_source",
+        "away_market_value_source",
+        "home_value_source",
+        "away_value_source",
+        "market_value_gap",
+        "market_value_ratio",
+
+        "home_injury_count",
+        "away_injury_count",
+        "injury_count_gap",
+        "home_injury_doubtful_count",
+        "away_injury_doubtful_count",
+        "home_injury_injury_count",
+        "away_injury_injury_count",
+        "home_injury_suspension_count",
+        "away_injury_suspension_count"
+      ],
+
+      "deny_exact": [
+        "home_rating_avg",
+        "away_rating_avg",
+        "home_rating_std",
+        "away_rating_std",
+        "home_rating_max",
+        "away_rating_max",
+        "home_rating_min",
+        "away_rating_min",
+        "home_rating_available_count",
+        "away_rating_available_count",
+        "home_rating_average_count",
+        "away_rating_average_count",
+        "home_rating_excellent_count",
+        "away_rating_excellent_count",
+        "home_rating_good_count",
+        "away_rating_good_count",
+        "home_rating_poor_count",
+        "away_rating_poor_count",
+        "rating_gap"
+      ],
+
+      "deny_patterns": [
+        ".*rating.*",
+        "^rating_gap$"
+      ],
+
+      "deny_metadata_keys": [
+        "_extractedAt"
+      ]
+    },
+
+    "tactical_features": {
+      "_description": "当前比赛赛后统计（射门、xG、控球、角球、动量等）。全部禁用。",
+      "_status": "deny_all — 86 keys, all postmatch leakage",
+      "_allow_mode": "deny_all",
+
+      "deny_all": true,
+      "reason": "all current tactical_features derive from content.stats.Periods.All.stats or content.momentum — postmatch/match-time data that cannot be known before kickoff",
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": [],
+
+      "diagnostic_only": true,
+      "diagnostic_note": "tactical_features may only be used in explicit postmatch diagnostic mode for model quality analysis, never for prematch prediction training"
+    },
+
+    "odds_movement_features": {
+      "_description": "赔率变动特征。理论上可赛前使用，但当前均为 fallback 占位值。",
+      "_status": "conditional_safe — 18 keys, all fallback / missing odds",
+      "_allow_mode": "conditional_only",
+
+      "conditional_safe": true,
+      "default_action": "deny",
+      "allow_only_when": [
+        "has_odds_data == true",
+        "odds_source is not null and not 'none'",
+        "_error does not contain 'No odds data available'",
+        "_data_quality is not 'INCOMPLETE_ODDS'",
+        "source timestamp exists",
+        "source timestamp < kickoff_time",
+        "not fallback values (current_*_odds != 0 or initial_*_odds != 0)"
+      ],
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    },
+
+    "odds_features": {
+      "_description": "赔率快照特征。当前空（0 keys）。",
+      "_status": "conditional_safe — empty",
+      "_allow_mode": "conditional_only",
+
+      "conditional_safe": true,
+      "default_action": "deny",
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    },
+
+    "elo_features": {
+      "_description": "Elo 实力评分。当前全部为默认值 1500。",
+      "_status": "conditional_safe — 5 keys, all default 1500",
+      "_allow_mode": "conditional_only",
+
+      "conditional_safe": true,
+      "default_action": "deny_when_default",
+      "allow_only_when": [
+        "_is_default != true",
+        "computed from matches before current kickoff"
+      ],
+      "fallback_keys": {
+        "is_default_key": "_is_default",
+        "default_elo_value": 1500
+      },
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    },
+
+    "rolling_features": {
+      "_description": "历史滚动特征。当前空（0 keys），需要 SmelterOrchestrator。",
+      "_status": "conditional_safe — empty",
+      "_allow_mode": "conditional_only",
+
+      "conditional_safe": true,
+      "default_action": "deny_until_verified",
+      "allow_only_when": [
+        "window uses match_date < current_match_date",
+        "does not include current match itself"
+      ],
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    },
+
+    "efficiency_features": {
+      "_description": "效率特征。当前空（0 keys）。",
+      "_status": "conditional_safe — empty",
+      "_allow_mode": "conditional_only",
+
+      "conditional_safe": true,
+      "default_action": "deny_until_verified",
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    },
+
+    "draw_features": {
+      "_description": "平局倾向特征。当前空（0 keys）。",
+      "_status": "conditional_safe — empty",
+      "_allow_mode": "conditional_only",
+
+      "conditional_safe": true,
+      "default_action": "deny_until_verified",
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    },
+
+    "market_sentiment": {
+      "_description": "市场情绪特征。当前空（0 keys），需要真实赔率。",
+      "_status": "conditional_safe — empty",
+      "_allow_mode": "conditional_only",
+
+      "conditional_safe": true,
+      "default_action": "deny_until_verified",
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    },
+
+    "stitch_summary": {
+      "_description": "特征拼接摘要元数据。当前空（0 keys）。",
+      "_status": "deny",
+      "_allow_mode": "deny",
+
+      "default_action": "deny",
+
+      "prematch_safe_allowlist": [],
+      "deny_exact": [],
+      "deny_patterns": []
+    }
+  }
+}

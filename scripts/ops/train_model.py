@@ -27,7 +27,13 @@ from typing import Any, Dict, List, Tuple
 import numpy as np
 import pandas as pd
 import xgboost as xgb
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, log_loss
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    f1_score,
+    log_loss,
+)
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
@@ -63,6 +69,7 @@ from src.database.repositories.prediction_repo import (
 # 日志配置 - 双重输出
 # ============================================================================
 
+
 def setup_logging(verbose: bool = False) -> logging.Logger:
     """配置双重日志输出"""
     logger = logging.getLogger("train_model")
@@ -70,8 +77,7 @@ def setup_logging(verbose: bool = False) -> logging.Logger:
     logger.handlers.clear()
 
     formatter = logging.Formatter(
-        fmt="[%(asctime)s] [%(levelname)s] [train_model] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        fmt="[%(asctime)s] [%(levelname)s] [train_model] %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
     )
 
     # 控制台
@@ -97,9 +103,11 @@ logger = setup_logging()
 # 数据模型
 # ============================================================================
 
+
 @dataclass
 class TrainingResult:
     """训练结果"""
+
     model_path: str
     scaler_path: str
     accuracy: float
@@ -114,6 +122,46 @@ class TrainingResult:
 # ============================================================================
 # V5.0 特征提取 (适配新表结构)
 # ============================================================================
+
+
+def _load_contract_module():
+    """Load the L3 prematch contract module via importlib.
+
+    Uses importlib to bypass the broken src.ml.features.__init__ chain
+    (which fails on SCORING.DEFAULT_AVG_TOTAL_GOALS).
+    """
+    import importlib.util as _util
+
+    _spec = _util.spec_from_file_location(
+        "l3_prematch_contract",
+        PROJECT_ROOT / "src" / "ml" / "features" / "l3_prematch_contract.py",
+    )
+    _mod = _util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    return _mod
+
+
+def _filter_l3_json_for_prematch(group_name, raw_json):
+    """Filter one L3 JSONB group through the prematch-safe contract.
+
+    Returns the filtered dict. On any error, returns raw JSON as a safety
+    fallback — the existing key-level guards still provide protection.
+    """
+    if raw_json is None:
+        return {}
+    try:
+        mod = _load_contract_module()
+        contract = mod.load_l3_prematch_contract()
+        return mod.filter_l3_feature_group(
+            group_name,
+            raw_json,
+            include_conditional=False,
+            allow_diagnostic_postmatch=False,
+            contract=contract,
+        )
+    except Exception:
+        return raw_json if isinstance(raw_json, dict) else {}
+
 
 def extract_v5_features(elo_data, golden_features, tactical_features):
     """
@@ -131,46 +179,60 @@ def extract_v5_features(elo_data, golden_features, tactical_features):
     import math
 
     # 解析 JSONB
-    elo = elo_data if isinstance(elo_data, dict) else json.loads(elo_data or '{}')
-    golden = golden_features if isinstance(golden_features, dict) else json.loads(golden_features or '{}')
-    tactical = tactical_features if isinstance(tactical_features, dict) else json.loads(tactical_features or '{}')
+    elo_raw = elo_data if isinstance(elo_data, dict) else json.loads(elo_data or "{}")
+    golden_raw = (
+        golden_features
+        if isinstance(golden_features, dict)
+        else json.loads(golden_features or "{}")
+    )
+    tactical_raw = (
+        tactical_features
+        if isinstance(tactical_features, dict)
+        else json.loads(tactical_features or "{}")
+    )
+
+    # ── GOLD-AUDIT-2F: enforce prematch-safe L3 contract ────────────────
+    golden = _filter_l3_json_for_prematch("golden_features", golden_raw)
+    tactical = _filter_l3_json_for_prematch("tactical_features", tactical_raw)
+    elo = _filter_l3_json_for_prematch("elo_features", elo_raw)
+    # ────────────────────────────────────────────────────────────────────
 
     f = {}
 
     # === Elo 特征 (5 维) ===
-    home_elo = float(elo.get('home_elo', elo.get('home_elo_pre', 1500)))
-    away_elo = float(elo.get('away_elo', elo.get('away_elo_pre', 1500)))
-    f['home_elo_pre'] = home_elo
-    f['away_elo_pre'] = away_elo
-    f['elo_diff'] = float(elo.get('elo_diff', home_elo - away_elo))
-    f['expected_home_win'] = float(elo.get('expected_home_win', elo.get('elo_expected_home', 0.45)))
-    f['expected_away_win'] = float(elo.get('expected_away_win', elo.get('elo_expected_away', 0.30)))
+    home_elo = float(elo.get("home_elo", elo.get("home_elo_pre", 1500)))
+    away_elo = float(elo.get("away_elo", elo.get("away_elo_pre", 1500)))
+    f["home_elo_pre"] = home_elo
+    f["away_elo_pre"] = away_elo
+    f["elo_diff"] = float(elo.get("elo_diff", home_elo - away_elo))
+    f["expected_home_win"] = float(elo.get("expected_home_win", elo.get("elo_expected_home", 0.45)))
+    f["expected_away_win"] = float(elo.get("expected_away_win", elo.get("elo_expected_away", 0.30)))
 
     # === 身价特征 (3 维) - 从 golden_features ===
-    home_mv = float(golden.get('home_market_value_total', golden.get('home_squad_value_eur', 1e8)))
-    away_mv = float(golden.get('away_market_value_total', golden.get('away_squad_value_eur', 1e8)))
+    home_mv = float(golden.get("home_market_value_total", golden.get("home_squad_value_eur", 1e8)))
+    away_mv = float(golden.get("away_market_value_total", golden.get("away_squad_value_eur", 1e8)))
 
-    f['log_home_squad_value'] = math.log10(home_mv) if home_mv > 0 else 18.0
-    f['log_away_squad_value'] = math.log10(away_mv) if away_mv > 0 else 18.0
+    f["log_home_squad_value"] = math.log10(home_mv) if home_mv > 0 else 18.0
+    f["log_away_squad_value"] = math.log10(away_mv) if away_mv > 0 else 18.0
     total_mv = home_mv + away_mv
-    f['home_mv_share'] = home_mv / total_mv if total_mv > 0 else 0.5
+    f["home_mv_share"] = home_mv / total_mv if total_mv > 0 else 0.5
 
     # === H2H 特征 (3 维) - 从 tactical_features 估算 ===
     # V5.0: 如果 tactical 中有 H2H 数据则使用，否则基于 Elo 差估算
-    h2h_home_win = float(tactical.get('h2h_home_win_ratio', 0.5))
-    h2h_draw = float(tactical.get('h2h_draw_ratio', 0.3))
+    h2h_home_win = float(tactical.get("h2h_home_win_ratio", 0.5))
+    h2h_draw = float(tactical.get("h2h_draw_ratio", 0.3))
 
     # 如果没有 H2H 数据，基于 Elo 差进行智能估算
-    if h2h_home_win == 0.5 and 'elo_diff' in f:
-        elo_diff = f['elo_diff']
+    if h2h_home_win == 0.5 and "elo_diff" in f:
+        elo_diff = f["elo_diff"]
         # Elo 差转换为 H2H 胜率 (简化模型)
         expected_win = 1 / (1 + 10 ** (-elo_diff / 400))
         h2h_home_win = 0.3 + 0.4 * expected_win  # 基础 30% + Elo 贡献
         h2h_draw = 0.25  # 默认平局率
 
-    f['h2h_home_win_ratio'] = h2h_home_win
-    f['h2h_draw_ratio'] = h2h_draw
-    f['h2h_avg_goal_diff'] = float(tactical.get('h2h_avg_goal_diff', 0.0))
+    f["h2h_home_win_ratio"] = h2h_home_win
+    f["h2h_draw_ratio"] = h2h_draw
+    f["h2h_avg_goal_diff"] = float(tactical.get("h2h_avg_goal_diff", 0.0))
 
     return f
 
@@ -179,7 +241,10 @@ def extract_v5_features(elo_data, golden_features, tactical_features):
 # 数据加载
 # ============================================================================
 
-def load_training_data(conn, min_samples: int = 100, logger: logging.Logger = None) -> Tuple[pd.DataFrame, pd.Series]:
+
+def load_training_data(
+    conn, min_samples: int = 100, logger: logging.Logger = None
+) -> Tuple[pd.DataFrame, pd.Series]:
     """
     加载训练数据 (TITAN 11 维纯净版 - 无数据泄露)
     """
@@ -230,11 +295,11 @@ def load_training_data(conn, min_samples: int = 100, logger: logging.Logger = No
             home_score = row.get("home_score", 0)
             away_score = row.get("away_score", 0)
             if home_score > away_score:
-                result = 'H'
+                result = "H"
             elif home_score < away_score:
-                result = 'A'
+                result = "A"
             else:
-                result = 'D'
+                result = "D"
             labels.append(RESULT_MAP[result])
         except Exception as e:
             skipped += 1
@@ -249,7 +314,7 @@ def load_training_data(conn, min_samples: int = 100, logger: logging.Logger = No
 
     if logger:
         logger.info(f"构建数据集: {X.shape[0]} 样本, {X.shape[1]} 特征")
-        logger.info(f"标签分布: H={sum(y==2)}, D={sum(y==1)}, A={sum(y==0)}")
+        logger.info(f"标签分布: H={sum(y == 2)}, D={sum(y == 1)}, A={sum(y == 0)}")
 
     return X, y
 
@@ -258,10 +323,9 @@ def load_training_data(conn, min_samples: int = 100, logger: logging.Logger = No
 # 模型训练
 # ============================================================================
 
+
 def train_model(
-    X: pd.DataFrame,
-    y: pd.Series,
-    logger: logging.Logger = None
+    X: pd.DataFrame, y: pd.Series, logger: logging.Logger = None
 ) -> Tuple[xgb.XGBClassifier, StandardScaler, Dict]:
     """训练 XGBoost 模型（带标准化）"""
     if logger:
@@ -304,7 +368,8 @@ def train_model(
     )
 
     model.fit(
-        X_train_scaled, y_train,
+        X_train_scaled,
+        y_train,
         sample_weight=sample_weights,
         eval_set=[(X_test_scaled, y_test)],
         verbose=False,
@@ -334,12 +399,13 @@ def train_model(
 # 模型保存
 # ============================================================================
 
+
 def save_model(
     model: xgb.XGBClassifier,
     scaler: StandardScaler,
     metrics: Dict,
     output_name: str,
-    logger: logging.Logger = None
+    logger: logging.Logger = None,
 ) -> Tuple[str, str]:
     """保存模型、Scaler 和元数据"""
     import joblib
@@ -379,6 +445,7 @@ def save_model(
 # CLI 入口
 # ============================================================================
 
+
 def parse_args():
     """解析命令行参数"""
     parser = argparse.ArgumentParser(
@@ -395,9 +462,11 @@ def parse_args():
   0 - 训练成功
   1 - 训练失败
   2 - 配置错误
-        """
+        """,
     )
-    parser.add_argument("--name", default="titan_v4468_combat", help="模型输出名称 (默认: titan_v4468_combat)")
+    parser.add_argument(
+        "--name", default="titan_v4468_combat", help="模型输出名称 (默认: titan_v4468_combat)"
+    )
     parser.add_argument("--min-samples", type=int, default=100, help="最小训练样本数 (默认: 100)")
     parser.add_argument("--json", action="store_true", help="JSON 格式输出")
     parser.add_argument("-v", "--verbose", action="store_true", help="详细日志模式")
@@ -435,7 +504,7 @@ def main():
                 training_samples=metrics["training_samples"],
                 feature_count=len(TITAN_COMBAT_FEATURES),
                 training_time_seconds=metrics["training_time_seconds"],
-                exit_code=0
+                exit_code=0,
             )
 
         finally:

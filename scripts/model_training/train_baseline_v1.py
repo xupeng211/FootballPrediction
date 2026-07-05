@@ -266,6 +266,47 @@ def encode_result(home_score: int, away_score: int) -> int:
     return 0
 
 
+def _load_contract_module():
+    """Load the L3 prematch contract module via importlib.
+
+    Uses importlib to bypass the broken src.ml.features.__init__ chain
+    (which fails on SCORING.DEFAULT_AVG_TOTAL_GOALS).
+    """
+    import importlib.util as _util
+    _spec = _util.spec_from_file_location(
+        "l3_prematch_contract",
+        PROJECT_ROOT / "src" / "ml" / "features" / "l3_prematch_contract.py",
+    )
+    _mod = _util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    return _mod
+
+
+def _filter_l3_json_for_prematch(group_name: str, raw_json: dict[str, Any] | None) -> dict[str, Any]:
+    """Filter one L3 JSONB group through the prematch-safe contract.
+
+    Returns the filtered dict (may be empty if group is denied entirely).
+    On any import/load error, returns the raw JSON unchanged as a safety
+    fallback — the existing allowlist in PREMATCH_JSON_FEATURES still
+    provides a second layer of protection.
+    """
+    try:
+        mod = _load_contract_module()
+        contract = mod.load_l3_prematch_contract()
+        return mod.filter_l3_feature_group(
+            group_name,
+            raw_json,
+            include_conditional=False,
+            allow_diagnostic_postmatch=False,
+            contract=contract,
+        )
+    except Exception:
+        # If the contract module cannot be loaded (e.g. file missing),
+        # fall back to the raw dict.  The existing PREMATCH_JSON_FEATURES
+        # allowlist in add_json_features still gates which keys are used.
+        return raw_json if raw_json is not None else {}
+
+
 def add_json_features(features: dict[str, float], payload: dict[str, Any], keys: list[str], prefix: str) -> None:
     for key in keys:
         features[f"{prefix}_{key}"] = safe_float(payload.get(key))
@@ -279,9 +320,15 @@ def build_feature_frame(
     labels: list[int] = []
 
     for row in rows:
-        elo = parse_jsonb(row.get("elo_features"))
-        odds = parse_jsonb(row.get("odds_features"))
-        tactical = parse_jsonb(row.get("tactical_features"))
+        elo_raw = parse_jsonb(row.get("elo_features"))
+        odds_raw = parse_jsonb(row.get("odds_features"))
+        tactical_raw = parse_jsonb(row.get("tactical_features"))
+
+        # ── GOLD-AUDIT-2F: enforce prematch-safe L3 contract ────────────────
+        elo = _filter_l3_json_for_prematch("elo_features", elo_raw)
+        odds = _filter_l3_json_for_prematch("odds_movement_features", odds_raw)
+        tactical = _filter_l3_json_for_prematch("tactical_features", tactical_raw)
+        # ────────────────────────────────────────────────────────────────────
         match_date = row.get("match_date")
         features: dict[str, float | str] = {
             "league_name": str(row.get("league_name") or "unknown"),
