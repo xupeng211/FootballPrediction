@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: PLR2004, C901, RUF013, UP006, G004, N803
 # ═══════════════════════════════════════════════════════════════════════════════
 # ║   TITAN-V4.46.8 模型训练管道 - 工业加固版                              ║
 # ║   INDUSTRIAL FORTIFICATION - FAIL-FAST + ROBUST LOGGING + JSON OUTPUT    ║
@@ -130,7 +131,7 @@ def _load_contract_module():
     Uses importlib to bypass the broken src.ml.features.__init__ chain
     (which fails on SCORING.DEFAULT_AVG_TOTAL_GOALS).
     """
-    import importlib.util as _util
+    import importlib.util as _util  # noqa: PLC0415
 
     _spec = _util.spec_from_file_location(
         "l3_prematch_contract",

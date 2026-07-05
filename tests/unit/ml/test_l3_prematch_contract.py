@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: PLR2004
 """Unit tests for L3 prematch-safe feature contract filter.
 
 lifecycle: permanent
@@ -410,7 +411,7 @@ class TestFilterPayloadIntegration:
         # _dropped summary
         assert "_dropped" in filtered
         assert filtered["_dropped"]["golden_features"] >= 1
-        assert filtered["_dropped"]["tactical_features"] == 3  # noqa: PLR2004
+        assert filtered["_dropped"]["tactical_features"] == 3
 
     def test_all_empty_payload(self, contract):
         filtered = filter_l3_feature_payload({}, contract=contract)
@@ -449,13 +450,13 @@ class TestContractFileIntegrity:
         allowlist = contract["feature_groups"]["golden_features"]["prematch_safe_allowlist"]
         assert len(allowlist) >= 30, (
             f"expected at least 30 prematch-safe keys, got {len(allowlist)}"
-        )  # noqa: PLR2004
+        )
 
     def test_golden_denylist_is_non_empty(self, contract):
         deny_exact = contract["feature_groups"]["golden_features"]["deny_exact"]
         assert len(deny_exact) >= 15, (
             f"expected at least 15 denied rating keys, got {len(deny_exact)}"
-        )  # noqa: PLR2004
+        )
 
     def test_tactical_deny_all(self, contract):
         assert contract["feature_groups"]["tactical_features"]["deny_all"] is True
