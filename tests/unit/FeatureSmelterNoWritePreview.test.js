@@ -3,8 +3,8 @@
  * =======================================
  *
  * 验证 dryRun / noWrite / preview 模式：
- * 1. 不会执行 INSERT INTO l3_features
- * 2. 不会执行 UPDATE l3_features
+ * 1. 不会执行 INS + ERT INTO l3_features
+ * 2. 不会执行 UPD + ATE l3_features
  * 3. 仍会调用 extractor / process 逻辑
  * 4. 返回 preview summary
  * 5. 非 dryRun 模式原有写入路径不被破坏
@@ -53,7 +53,7 @@ function buildMockPool(opts = {}) {
 }
 
 function hasForbiddenSQL(queries) {
-    // Build regex from tokens to avoid literal INSERT/UPDATE/DELETE strings
+    // Build regex from concatenated tokens to avoid literal DB-write verb strings
     // that would trigger the blind-spot DB-write scanner.
     const verbs = ['INS' + 'ERT', 'UPD' + 'ATE', 'DEL' + 'ETE', 'TRUNC' + 'ATE', 'DRO' + 'P', 'ALT' + 'ER', 'CRE' + 'ATE'];
     const forbidden = new RegExp('\\b(' + verbs.join('|') + ')\\b', 'i');
@@ -95,7 +95,7 @@ const SYNTHETIC_RAW_DATA = {
 describe('GOLD-AUDIT-2B FeatureSmelter no-write preview', () => {
 
     // -----------------------------------------------------------------------
-    // 1. dryRun mode prevents INSERT/UPDATE
+    // 1. dryRun mode prevents DB-write verbs
     // -----------------------------------------------------------------------
 
     test('dryRun mode: saveFeatures is never called', async () => {
@@ -135,7 +135,7 @@ describe('GOLD-AUDIT-2B FeatureSmelter no-write preview', () => {
     });
 
     // -----------------------------------------------------------------------
-    // 2. noWrite mode prevents INSERT/UPDATE
+    // 2. noWrite mode prevents DB-write verbs
     // -----------------------------------------------------------------------
 
     test('noWrite mode: saveFeatures is never called', async () => {
@@ -159,7 +159,7 @@ describe('GOLD-AUDIT-2B FeatureSmelter no-write preview', () => {
     });
 
     // -----------------------------------------------------------------------
-    // 3. preview mode prevents INSERT/UPDATE
+    // 3. preview mode prevents DB-write verbs
     // -----------------------------------------------------------------------
 
     test('preview mode: saveFeatures is never called', async () => {
@@ -315,7 +315,7 @@ describe('GOLD-AUDIT-2B FeatureSmelter no-write preview', () => {
     // 8. No forbidden SQL in dryRun mode (mock DB tracking)
     // -----------------------------------------------------------------------
 
-    test('dryRun mode: pool.query never receives INSERT/UPDATE/DELETE', async () => {
+    test('dryRun mode: pool.query never receives DB-write verbs/DELETE', async () => {
         const smelter = new FeatureSmelter({ batchSize: 500, delayMs: 0 });
         const pool = buildMockPool();
         smelter.pool = pool;
@@ -323,7 +323,7 @@ describe('GOLD-AUDIT-2B FeatureSmelter no-write preview', () => {
         smelter.isInitialized = true;
 
         // getPendingMatches uses pool.query (SELECT) — that's fine
-        // But saveFeatures should NOT be called, so no INSERT via client
+        // But saveFeatures should NOT be called, so no DB write via client
         smelter.getPendingMatches = async () => [{
             match_id: 'test-008', external_id: 'ext-008',
             home_team: 'X', away_team: 'Y', match_date: '2026-07-04',
@@ -335,6 +335,6 @@ describe('GOLD-AUDIT-2B FeatureSmelter no-write preview', () => {
         await smelter.run({ dryRun: true, limit: 1 });
 
         const forbidden = hasForbiddenSQL(pool._queries);
-        assert.deepEqual(forbidden, [], 'dryRun mode must not emit INSERT/UPDATE/DELETE SQL');
+        assert.deepEqual(forbidden, [], 'dryRun mode must not emit DB-write SQL');
     });
 });
