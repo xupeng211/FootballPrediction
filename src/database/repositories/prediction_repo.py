@@ -15,19 +15,17 @@ V4.46.8 重构：从 predict_pipeline.py 剥离的数据访问逻辑。
 @updated 2026-03-11
 """
 
+import importlib.util as _importlib_util
 import json
 import logging
 import math
 import os
-from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any
 
 import psycopg2
 
-from src.constants.model_config import (
-    DEFAULT_VALUES,
-    TITAN_COMBAT_FEATURES,
-    get_league_default_mv,
-)
+from src.constants.model_config import DEFAULT_VALUES, TITAN_COMBAT_FEATURES, get_league_default_mv
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +37,6 @@ logger = logging.getLogger(__name__)
 
 class ConfigError(Exception):
     """配置错误异常"""
-    pass
 
 
 def get_required_env(key: str) -> str:
@@ -95,7 +92,7 @@ def safe_log10(v: Any, d: float = 18.0) -> float:
         return d
 
 
-def parse_jsonb(d: Any) -> Dict:
+def parse_jsonb(d: Any) -> dict:
     """
     安全解析 JSONB 数据
 
@@ -117,7 +114,7 @@ def parse_jsonb(d: Any) -> Dict:
     if isinstance(d, bytes):
         try:
             # 使用 errors='ignore' 安全解码
-            d = d.decode('utf-8', errors='ignore')
+            d = d.decode("utf-8", errors="ignore")
         except Exception:
             return {}
 
@@ -133,6 +130,89 @@ def parse_jsonb(d: Any) -> Dict:
 
 
 # ============================================================================
+# L3 Prematch Contract Enforcement (GOLD-AUDIT-2H)
+# ============================================================================
+
+
+def _load_l3_contract_module():
+    """Load the L3 prematch contract module via importlib.
+
+    Uses importlib to bypass the broken src.ml.features.__init__ chain
+    (which fails on SCORING.DEFAULT_AVG_TOTAL_GOALS).  This is the same
+    pattern used by ``train_baseline_v1.py`` and ``train_model.py``.
+    """
+    _contract_path = (
+        Path(__file__).resolve().parents[3] / "src" / "ml" / "features" / "l3_prematch_contract.py"
+    )
+    _spec = _importlib_util.spec_from_file_location(
+        "l3_prematch_contract",
+        str(_contract_path),
+    )
+    _mod = _importlib_util.module_from_spec(_spec)
+    _spec.loader.exec_module(_mod)
+    return _mod
+
+
+def _filter_prediction_l3(
+    elo_features: Any = None,
+    golden_features: Any = None,
+    tactical_features: Any = None,
+) -> dict[str, Any]:
+    """Filter prediction-path L3 feature groups through the prematch-safe contract.
+
+    Returns a dict with filtered ``elo_features``, ``golden_features``, and
+    ``tactical_features``.  Unknown groups / denied keys are dropped per the
+    contract defaults (fail-closed: deny unknown, deny conditional without
+    evidence, deny postmatch leakage).
+
+    Args:
+        elo_features: Raw elo_features JSONB (dict or None).
+        golden_features: Raw golden_features JSONB (dict or None).
+        tactical_features: Raw tactical_features JSONB (dict or None).
+
+    Returns:
+        ``{"elo_features": {...}, "golden_features": {...}, "tactical_features": {...}}``
+        where each value is the contract-filtered dict (may be empty).
+
+    On any import/load error the raw inputs are returned unchanged as a
+    safety fallback — consumers must still guard missing keys defensively.
+    """
+    try:
+        mod = _load_l3_contract_module()
+        contract = mod.load_l3_prematch_contract()
+        return {
+            "elo_features": mod.filter_l3_feature_group(
+                "elo_features",
+                elo_features,
+                contract=contract,
+            ),
+            "golden_features": mod.filter_l3_feature_group(
+                "golden_features",
+                golden_features,
+                contract=contract,
+            ),
+            "tactical_features": mod.filter_l3_feature_group(
+                "tactical_features",
+                tactical_features,
+                contract=contract,
+            ),
+        }
+    except Exception:
+        # If contract module cannot be loaded, fall back to raw dicts.
+        # Downstream feature extraction still reads individual keys
+        # defensively (safe defaults), so this is a soft degradation.
+        logger.warning(
+            "L3 prematch contract unavailable — prediction features NOT filtered",
+            exc_info=True,
+        )
+        return {
+            "elo_features": elo_features if isinstance(elo_features, dict) else {},
+            "golden_features": golden_features if isinstance(golden_features, dict) else {},
+            "tactical_features": tactical_features if isinstance(tactical_features, dict) else {},
+        }
+
+
+# ============================================================================
 # 数据加载
 # ============================================================================
 
@@ -140,8 +220,8 @@ def parse_jsonb(d: Any) -> Dict:
 def load_pending_matches(
     conn,
     limit: int = 50,
-    league: Optional[str] = None,
-) -> List[Dict]:
+    league: str | None = None,
+) -> list[dict]:
     """
     加载待预测比赛
 
@@ -184,19 +264,26 @@ def load_pending_matches(
     rows = cur.fetchall()
     cur.close()
 
-    # 转换为字典列表
+    # 转换为字典列表（GOLD-AUDIT-2H: 对每行 L3 JSONB 应用 prematch-safe contract）
     result = []
     for row in rows:
-        result.append({
-            'match_id': row[0],
-            'home_team': row[1],
-            'away_team': row[2],
-            'league_name': row[3],
-            'match_date': row[4],
-            'elo_features': row[5],
-            'golden_features': row[6],
-            'tactical_features': row[7],
-        })
+        _filtered = _filter_prediction_l3(
+            elo_features=row[5],
+            golden_features=row[6],
+            tactical_features=row[7],
+        )
+        result.append(
+            {
+                "match_id": row[0],
+                "home_team": row[1],
+                "away_team": row[2],
+                "league_name": row[3],
+                "match_date": row[4],
+                "elo_features": _filtered["elo_features"],
+                "golden_features": _filtered["golden_features"],
+                "tactical_features": _filtered["tactical_features"],
+            }
+        )
     return result
 
 
@@ -209,7 +296,7 @@ def get_team_avg_market_value(
     conn,
     team_name: str,
     limit: int = 5,
-) -> Optional[float]:
+) -> float | None:
     """
     获取球队历史平均身价 (回溯 5 场)
 
@@ -295,11 +382,11 @@ def extract_features(
     elo_data: Any,
     lineup_data: Any,
     h2h_data: Any,
-    home_team: Optional[str] = None,
-    away_team: Optional[str] = None,
-    league_name: Optional[str] = None,
+    home_team: str | None = None,
+    away_team: str | None = None,
+    league_name: str | None = None,
     conn=None,
-) -> Tuple[Dict[str, float], bool]:
+) -> tuple[dict[str, float], bool]:
     """
     提取 11 维战斗特征
 
@@ -336,12 +423,10 @@ def extract_features(
     # === 身价特征 (3 维) ===
     # V5.0: 兼容 golden_features 字段名 (home_market_value_total)
     home_mv = safe_float(
-        lineup.get("home_squad_value_eur") or lineup.get("home_market_value_total", 0),
-        0
+        lineup.get("home_squad_value_eur") or lineup.get("home_market_value_total", 0), 0
     )
     away_mv = safe_float(
-        lineup.get("away_squad_value_eur") or lineup.get("away_market_value_total", 0),
-        0
+        lineup.get("away_squad_value_eur") or lineup.get("away_market_value_total", 0), 0
     )
 
     # MV-Scout: 身价回溯
@@ -392,11 +477,11 @@ def extract_features(
 
 
 __all__ = [
+    "extract_features",
     "get_db_connection",
+    "get_team_avg_market_value",
+    "load_pending_matches",
+    "parse_jsonb",
     "safe_float",
     "safe_log10",
-    "parse_jsonb",
-    "load_pending_matches",
-    "get_team_avg_market_value",
-    "extract_features",
 ]

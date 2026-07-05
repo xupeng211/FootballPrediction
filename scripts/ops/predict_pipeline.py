@@ -15,14 +15,13 @@
 # @updated 2026-03-11
 
 import argparse
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 import json
 import logging
-import os
-import sys
-from dataclasses import asdict, dataclass
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+import sys
+from typing import Any
 
 # ============================================================================
 # 路径配置
@@ -38,7 +37,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # 模块导入
 # ============================================================================
 
-from src.constants.model_config import RESULT_MAP_REVERSE
 from src.database.repositories.prediction_repo import (
     extract_features,
     get_db_connection,
@@ -46,10 +44,10 @@ from src.database.repositories.prediction_repo import (
 )
 from src.ml.inference.titan_loader import get_titan_model
 
-
 # ============================================================================
 # 日志配置 - 双重输出
 # ============================================================================
+
 
 def setup_logging(verbose: bool = False) -> logging.Logger:
     """配置双重日志输出"""
@@ -59,7 +57,7 @@ def setup_logging(verbose: bool = False) -> logging.Logger:
 
     formatter = logging.Formatter(
         fmt="[%(asctime)s] [%(levelname)s] [predict_pipeline] %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S"
+        datefmt="%Y-%m-%d %H:%M:%S",
     )
 
     # 控制台
@@ -85,9 +83,11 @@ logger = setup_logging()
 # 数据模型
 # ============================================================================
 
+
 @dataclass
 class MatchPrediction:
     """比赛预测结果"""
+
     match_id: str
     home_team: str
     away_team: str
@@ -100,10 +100,10 @@ class MatchPrediction:
     confidence: float
     kelly_fraction: float = 0.0
     kelly_stake: float = 0.0
-    home_odds: Optional[float] = None
-    draw_odds: Optional[float] = None
-    away_odds: Optional[float] = None
-    value_edge: Optional[float] = None
+    home_odds: float | None = None
+    draw_odds: float | None = None
+    away_odds: float | None = None
+    value_edge: float | None = None
     elo_diff: float = 0.0
     mv_share: float = 0.5
     h2h_estimated: bool = False
@@ -112,10 +112,11 @@ class MatchPrediction:
 @dataclass
 class PredictionReport:
     """预测报告"""
+
     generated_at: str
     total_matches: int
-    predictions: List[Dict[str, Any]]
-    summary: Dict[str, Any]
+    predictions: list[dict[str, Any]]
+    summary: dict[str, Any]
     exit_code: int = 0
 
 
@@ -123,9 +124,10 @@ class PredictionReport:
 # 预测管道主逻辑
 # ============================================================================
 
+
 def run_prediction_pipeline(
     limit: int = 50,
-    league: Optional[str] = None,
+    league: str | None = None,
     dry_run: bool = False,
 ) -> PredictionReport:
     """
@@ -149,11 +151,11 @@ def run_prediction_pipeline(
     if not titan.is_loaded:
         logger.error("模型加载失败 - 终止执行")
         return PredictionReport(
-            datetime.now().isoformat(),
+            datetime.now(tz=UTC).isoformat(),
             0,
             [],
             {"error": "Model not loaded"},
-            exit_code=1
+            exit_code=1,
         )
 
     # 加载数据
@@ -175,7 +177,10 @@ def run_prediction_pipeline(
 
     for m in matches:
         try:
-            # V5.0: 使用 golden_features 和 tactical_features
+            # GOLD-AUDIT-2H: L3 features are already filtered by
+            # prediction_repo.load_pending_matches() through the prematch-safe
+            # contract.  extract_features() uses safe defaults for missing keys
+            # (H2H estimation, default Elo, neutral market values).
             f, h2h_est = extract_features(
                 m["elo_features"],
                 m["golden_features"],
@@ -206,21 +211,25 @@ def run_prediction_pipeline(
                 ac += 1
             tc += conf
 
-            preds.append(asdict(MatchPrediction(
-                match_id=m["match_id"],
-                home_team=m["home_team"],
-                away_team=m["away_team"],
-                league=m["league_name"],
-                match_time=str(m["match_date"])[:16],
-                home_prob=round(hp, 4),
-                draw_prob=round(dp, 4),
-                away_prob=round(ap, 4),
-                recommendation=rec,
-                confidence=round(conf, 4),
-                elo_diff=f["elo_diff"],
-                mv_share=f["home_mv_share"],
-                h2h_estimated=h2h_est,
-            )))
+            preds.append(
+                asdict(
+                    MatchPrediction(
+                        match_id=m["match_id"],
+                        home_team=m["home_team"],
+                        away_team=m["away_team"],
+                        league=m["league_name"],
+                        match_time=str(m["match_date"])[:16],
+                        home_prob=round(hp, 4),
+                        draw_prob=round(dp, 4),
+                        away_prob=round(ap, 4),
+                        recommendation=rec,
+                        confidence=round(conf, 4),
+                        elo_diff=f["elo_diff"],
+                        mv_share=f["home_mv_share"],
+                        h2h_estimated=h2h_est,
+                    )
+                )
+            )
 
         except Exception as e:
             error_msg = f"预测失败 [{m['match_id']}]: {e}"
@@ -264,12 +273,14 @@ def format_report(r: PredictionReport) -> str:
     ]
 
     s = r.summary
-    lines.extend([
-        f"  预测分布: 主{s.get('home_count', 0)} | 平{s.get('draw_count', 0)} | 客{s.get('away_count', 0)}",
-        f"  平均置信度: {s.get('avg_confidence', 0):.1%}",
-        f"  H2H 数据: 真实 {s.get('h2h_real_count', 0)} 场 | 补位 {s.get('h2h_estimated_count', 0)} 场",
-        f"  错误数: {s.get('error_count', 0)}",
-    ])
+    lines.extend(
+        [
+            f"  预测分布: 主{s.get('home_count', 0)} | 平{s.get('draw_count', 0)} | 客{s.get('away_count', 0)}",
+            f"  平均置信度: {s.get('avg_confidence', 0):.1%}",
+            f"  H2H 数据: 真实 {s.get('h2h_real_count', 0)} 场 | 补位 {s.get('h2h_estimated_count', 0)} 场",
+            f"  错误数: {s.get('error_count', 0)}",
+        ]
+    )
 
     if not r.predictions:
         lines.append("  无预测结果")
@@ -282,39 +293,48 @@ def format_report(r: PredictionReport) -> str:
         e = {"HOME": "🏠", "DRAW": "🤝", "AWAY": "✈️"}.get(p["recommendation"], "❓")
         h2h_tag = " [补位]" if p.get("h2h_estimated") else ""
 
-        lines.extend([
-            "",
-            f'  {i:2d}. {p["home_team"]:<20} vs {p["away_team"]:<20}{h2h_tag}',
-            f'      联赛: {p["league"]:<20} | 时间: {p["match_time"]}',
-            f'      概率: 主{p["home_prob"]:.1%} 平{p["draw_prob"]:.1%} 客{p["away_prob"]:.1%}',
-            f'      Elo差: {p["elo_diff"]:+.1f} | 身价占比: {p["mv_share"]:.1%}',
-            f'      推荐: {e} {p["recommendation"]} (置信度: {p["confidence"]:.1%})',
-        ])
+        lines.extend(
+            [
+                "",
+                f"  {i:2d}. {p['home_team']:<20} vs {p['away_team']:<20}{h2h_tag}",
+                f"      联赛: {p['league']:<20} | 时间: {p['match_time']}",
+                f"      概率: 主{p['home_prob']:.1%} 平{p['draw_prob']:.1%} 客{p['away_prob']:.1%}",
+                f"      Elo差: {p['elo_diff']:+.1f} | 身价占比: {p['mv_share']:.1%}",
+                f"      推荐: {e} {p['recommendation']} (置信度: {p['confidence']:.1%})",
+            ]
+        )
 
-    lines.extend([
-        "",
-        "═" * 70,
-        "  TITAN-V4.46.8 INDUSTRIAL - Fail-Fast + Robust Logging",
-        "═" * 70,
-    ])
+    lines.extend(
+        [
+            "",
+            "═" * 70,
+            "  TITAN-V4.46.8 INDUSTRIAL - Fail-Fast + Robust Logging",
+            "═" * 70,
+        ]
+    )
 
     return "\n".join(lines)
 
 
 def output_json(r: PredictionReport) -> str:
     """输出 JSON 格式报告"""
-    return json.dumps({
-        "generated_at": r.generated_at,
-        "total_matches": r.total_matches,
-        "predictions": r.predictions,
-        "summary": r.summary,
-        "exit_code": r.exit_code,
-    }, indent=2, ensure_ascii=False)
+    return json.dumps(
+        {
+            "generated_at": r.generated_at,
+            "total_matches": r.total_matches,
+            "predictions": r.predictions,
+            "summary": r.summary,
+            "exit_code": r.exit_code,
+        },
+        indent=2,
+        ensure_ascii=False,
+    )
 
 
 # ============================================================================
 # CLI 入口
 # ============================================================================
+
 
 def parse_args():
     """解析命令行参数"""
@@ -332,7 +352,7 @@ def parse_args():
 退出码:
   0 - 成功
   1 - 预测失败或有错误
-        """
+        """,
     )
     parser.add_argument("--limit", type=int, default=100, help="最大预测数量 (默认: 100)")
     parser.add_argument("--league", type=str, default=None, help="联赛过滤 (如: 'Premier League')")
@@ -352,11 +372,7 @@ def main():
 
     try:
         logger.info("启动预测管道")
-        report = run_prediction_pipeline(
-            limit=args.limit,
-            league=args.league,
-            dry_run=args.dry_run
-        )
+        report = run_prediction_pipeline(limit=args.limit, league=args.league, dry_run=args.dry_run)
 
         # 输出结果
         if args.json:
