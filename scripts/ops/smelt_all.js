@@ -21,6 +21,7 @@
 'use strict';
 
 const { FeatureSmelter } = require('../../src/feature_engine/smelter/FeatureSmelter');
+const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
 
 function parseArgs(argv) {
     const fullRecalculate = argv.includes('--full-recalculate');
@@ -97,6 +98,11 @@ async function main() {
         console.log(`   Limit: ${limit}`);
         console.log('');
     } else {
+        assertDbWriteAllowed({
+            script: 'smelt_all',
+            tables: ['l3_features'],
+            operations: ['INSERT', 'UPDATE'],
+        });
         console.log('⚠️  WRITE MODE — will INSERT/UPDATE l3_features');
         console.log(`   Use --dry-run, --no-write, or --preview for safe preview.`);
         console.log('');
