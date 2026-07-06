@@ -41,6 +41,9 @@ const { extractGoldenFeatures } = require('../extractors/GoldenFeatureExtractor'
 const { extractTacticalFeatures } = require('../extractors/TacticalMomentumExtractor');
 const { extractOddsMovementFeatures } = require('../extractors/OddsMovementExtractor');
 
+// 2AH: in-memory prematch Elo fallback when team_elo_ratings cache is empty
+const { PrematchEloComputer } = require('../elo/PrematchEloComputer');
+
 // ============================================================================
 // 配置
 // ============================================================================
@@ -74,6 +77,8 @@ class FeatureSmelter {
         this.config = { ...DEFAULT_CONFIG, ...config };
         this.pool = null;
         this.eloCache = new Map();
+        this.prematchEloComputer = null;  // 2AH: in-memory Elo fallback
+        this.matchEloMap = null;          // 2AH: matchId → prematch eloFeatures
         this.logger = new StructuredLogger({
             component: 'FeatureSmelter',
             logDir: this.config.logDir,
@@ -116,6 +121,12 @@ class FeatureSmelter {
 
             // 加载 Elo 缓存
             await this._loadEloCache();
+
+            // 2AH: 当 team_elo_ratings cache 为空时，使用 in-memory prematch Elo
+            if (this.eloCache.size === 0) {
+                this.logger.info('team_elo_ratings 为空，启用 in-memory PrematchEloComputer');
+                await this._loadPrematchEloHistory();
+            }
 
             // 创建数据库索引
             await this._ensureIndexes();
@@ -165,6 +176,72 @@ class FeatureSmelter {
                 error: error.message,
                 defaultElo: DEFAULT_ELO_RATING
             });
+        }
+    }
+
+    /**
+     * 2AH: 从 match history 计算 in-memory prematch Elo（SELECT-only）。
+     *
+     * 当 team_elo_ratings cache 为空时，加载所有已完赛比赛，
+     * 使用 PrematchEloComputer 为每场计算赛前 Elo。
+     *
+     * 本方法不写任何表，不修改 team_elo_ratings，不修改 l3_features。
+     *
+     * @returns {Promise<Map>} matchId → prematchEloFeatures
+     * @private
+     */
+    async _loadPrematchEloHistory() {
+        try {
+            const operation = async (pool) => {
+                const result = await pool.query(`
+                    SELECT match_id, home_team, away_team,
+                           home_score, away_score, match_date
+                    FROM matches
+                    WHERE home_score IS NOT NULL
+                      AND away_score IS NOT NULL
+                    ORDER BY match_date ASC, match_id ASC
+                `);
+                return result.rows;
+            };
+
+            const rows = await withRetry(operation, 'loadPrematchEloHistory', {
+                maxRetries: DB_MAX_RETRIES,
+                initialDelayMs: DB_RETRY_DELAY_MS
+            });
+
+            if (!rows || rows.length === 0) {
+                this.logger.info('PrematchElo: 无历史比赛数据，跳过 in-memory Elo');
+                return;
+            }
+
+            const matches = rows.map(r => ({
+                matchId: r.match_id,
+                homeTeam: r.home_team,
+                awayTeam: r.away_team,
+                homeScore: r.home_score,
+                awayScore: r.away_score,
+                matchDate: r.match_date,
+            }));
+
+            this.prematchEloComputer = new PrematchEloComputer();
+            this.matchEloMap = this.prematchEloComputer.computeAll(matches);
+
+            const eloHits = [...this.matchEloMap.values()]
+                .filter(e => e._is_default === false).length;
+            const eloDefaults = [...this.matchEloMap.values()]
+                .filter(e => e._is_default === true).length;
+
+            this.logger.info('PrematchElo 历史计算完成', {
+                totalMatches: matches.length,
+                computedMatches: this.matchEloMap.size,
+                eloHits,
+                eloDefaults,
+            });
+        } catch (error) {
+            this.logger.warn('PrematchElo 历史计算失败，回退到默认值', {
+                error: error.message,
+            });
+            this.matchEloMap = null;
         }
     }
 
@@ -368,6 +445,7 @@ class FeatureSmelter {
      * @param {object} match - 比赛数据
      * @returns {object | null} 提取的特征，失败返回 null
      */
+    // eslint-disable-next-line complexity
     processMatch(match) {
         const { match_id, home_team, away_team, raw_data } = match;
 
@@ -400,18 +478,36 @@ class FeatureSmelter {
             }
 
             // 获取 Elo 特征
-            const homeElo = this.getTeamElo(home_team);
-            const awayElo = this.getTeamElo(away_team);
+            // 2AH: 优先使用 in-memory prematch Elo（按 match 粒度），否则 fallback 到 cache/默认值
+            let homeElo, awayElo, isDefaultElo, prematchEloMeta;
 
-            // V3.6-DATA-RESTORE: Elo 默认值检测
-            const isDefaultElo = (homeElo === DEFAULT_ELO_RATING && awayElo === DEFAULT_ELO_RATING);
+            const cachedPrematch = this.matchEloMap
+                ? this.matchEloMap.get(match_id)
+                : undefined;
+
+            if (cachedPrematch) {
+                homeElo = cachedPrematch.home_elo_pre;
+                awayElo = cachedPrematch.away_elo_pre;
+                isDefaultElo = cachedPrematch._is_default || false;
+                prematchEloMeta = {
+                    _source: 'PrematchEloComputer',
+                    _version: cachedPrematch._version || '2AH',
+                    _home_default: cachedPrematch._home_default,
+                    _away_default: cachedPrematch._away_default,
+                };
+            } else {
+                homeElo = this.getTeamElo(home_team);
+                awayElo = this.getTeamElo(away_team);
+                isDefaultElo = (homeElo === DEFAULT_ELO_RATING && awayElo === DEFAULT_ELO_RATING);
+            }
 
             const eloFeatures = {
                 home_elo: homeElo,
                 away_elo: awayElo,
                 elo_diff: homeElo - awayElo,
                 elo_expected_home: 1 / (1 + Math.pow(10, (awayElo - homeElo - 50) / 400)),
-                _is_default: isDefaultElo
+                _is_default: isDefaultElo,
+                ...(prematchEloMeta || {}),
             };
 
             if (isDefaultElo) {
@@ -662,6 +758,7 @@ class FeatureSmelter {
      * @returns {object} preview entry with extractor summaries
      * @private
      */
+    // eslint-disable-next-line complexity
     _buildPreviewEntry(match, features) {
         const base = {
             match_id: match.match_id,
@@ -702,13 +799,24 @@ class FeatureSmelter {
             } else if (typeof val === 'object' && !Array.isArray(val)) {
                 const keys = Object.keys(val).filter(k => !k.startsWith('_'));
                 const dataKeys = Object.keys(val).filter(k => !k.startsWith('_') && val[k] !== null && val[k] !== undefined && val[k] !== '' && !(typeof val[k] === 'object' && Object.keys(val[k]).length === 0));
-                base.extractors[label] = {
+                const summary = {
                     present: true,
                     keys: keys.length,
                     data_keys: dataKeys.length,
                     empty: dataKeys.length === 0,
                     reason: dataKeys.length === 0 ? 'all values null/empty' : null,
                 };
+                // 2AH: 为 elo_features 展示实际 Elo 值
+                if (label === 'elo_features') {
+                    summary.home_elo = val.home_elo;
+                    summary.away_elo = val.away_elo;
+                    summary.elo_diff = val.elo_diff;
+                    summary.elo_expected_home = val.elo_expected_home;
+                    summary._is_default = val._is_default;
+                    if (val._source) summary._source = val._source;
+                    if (val._version) summary._version = val._version;
+                }
+                base.extractors[label] = summary;
             } else {
                 base.extractors[label] = {
                     present: true,
