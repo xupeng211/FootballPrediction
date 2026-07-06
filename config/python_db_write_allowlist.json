@@ -516,6 +516,32 @@
       ],
       "direct_write_boundary": "READ-ONLY — EventBus listens for notifications and scans for orphan data. No write operations.",
       "recommended_next_action": "No guard needed. Classified as read-only EventBus service."
+    },
+    {
+      "path": "scripts/model_training/train_baseline_v1.py",
+      "classification": "historical_python_confirmed_write_path_read_only_candidate",
+      "reason": "GOLD-AUDIT-2AE-FIX2 allowlist entry: All DB operations are SELECT-only on matches, l3_features, bookmaker_odds_history, raw_match_data. psycopg2 is used only for read queries (RealDictCursor). No INSERT/UPDATE/DELETE/DDL anywhere in this file. Filesystem write path (persist_outputs) is NOT a DB write — it saves model artifacts (joblib/JSON) to local disk. That path is NOW guarded by require_training_write_confirmation() which requires ALLOW_TRAINING_WRITE=yes AND FINAL_TRAINING_WRITE_CONFIRMATION=yes. --report-only mode auto-sets --no-write. --no-write blocks ALL file writes. All DB operations remain SELECT-only regardless of mode.",
+      "evidence": "psycopg2.connect() with RealDictCursor in get_db_connection(). cursor.execute(SELECT ... FROM matches JOIN l3_features LEFT JOIN bookmaker_odds_history) in load_training_rows(). cursor.execute(SELECT COUNT(*) FROM raw_match_data/matches/l3_features) via build_report_from_connection() in filtered_matrix_report.py. No INSERT/UPDATE/DELETE/CREATE/ALTER/DROP/TRUNCATE SQL anywhere. File write (model artifacts) guarded by require_training_write_confirmation().",
+      "source_doc": "docs/ml/training_no_write_report_only_guard.md",
+      "owner_task": "gold-audit-2ae-fix2",
+      "analysis_task": "gold-audit-2ae-fix2",
+      "observed_operations": [
+        "SELECT (load_training_rows: matches, l3_features, bookmaker_odds_history)",
+        "SELECT (build_report_from_connection: raw_match_data, matches, l3_features)",
+        "FILE WRITE (persist_outputs: model artifacts to filesystem — NOT DB; guarded by require_training_write_confirmation)"
+      ],
+      "observed_tables_or_targets": [
+        "matches (SELECT only)",
+        "l3_features (SELECT only)",
+        "bookmaker_odds_history (SELECT only)",
+        "raw_match_data (SELECT only)"
+      ],
+      "direct_write_boundary": "NONE — all cursor.execute() calls are SELECT. File write is filesystem-only, not DB, and is guarded by require_training_write_confirmation() requiring ALLOW_TRAINING_WRITE=yes AND FINAL_TRAINING_WRITE_CONFIRMATION=yes.",
+      "recommended_next_action": "No DB runtime guard needed — all DB operations are SELECT-only. Filesystem artifact write guard already in place via training_write_guard.py. Reclassify as read-only.",
+      "why_not_guarded_in_this_pr": "DB operations are SELECT-only — no DB write path to guard. Filesystem write path already guarded by require_training_write_confirmation() and --no-write flag.",
+      "expires_or_review_note": "Added to allowlist by gold-audit-2ae-fix2 (2026-07-07). All DB queries are SELECT-only. Filesystem artifact writes guarded by training_write_guard.py. --report-only mode enforces no-write. Review if file is modified to add INSERT/UPDATE/DELETE/DDL.",
+      "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
+      "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
     }
   ]
 }

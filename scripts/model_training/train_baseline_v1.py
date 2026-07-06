@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
+import importlib.util
 import json
 import logging
 import os
@@ -33,6 +34,35 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL_DIR = PROJECT_ROOT / "models" / "baseline_v1"
 RESULT_NAMES = ["AWAY", "DRAW", "HOME"]
 CALIBRATED_MODEL_FILENAME = "baseline_v1_result_1x2.calibrated.joblib"
+
+
+def _load_training_write_guard_module():
+    """Load training write guard without importing the broad src.ml package."""
+    module_path = PROJECT_ROOT / "src" / "ml" / "training_write_guard.py"
+    spec = importlib.util.spec_from_file_location("training_write_guard", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+require_training_write_confirmation = (
+    _load_training_write_guard_module().require_training_write_confirmation
+)
+
+
+def _load_filtered_matrix_report_module():
+    """Load report-only helper without importing the broken features package."""
+    module_path = PROJECT_ROOT / "src" / "ml" / "features" / "filtered_matrix_report.py"
+    spec = importlib.util.spec_from_file_location("filtered_matrix_report", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def build_report_from_connection(conn) -> dict[str, Any]:
+    """Build the filtered matrix report from a SELECT-only DB connection."""
+    return _load_filtered_matrix_report_module().build_report_from_connection(conn)
+
 
 PREMATCH_JSON_FEATURES = {
     "elo_features": [
@@ -145,9 +175,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--depth", type=int, default=4)
     parser.add_argument("--lr", type=float, default=0.05)
     parser.add_argument("--output-dir", default=str(DEFAULT_MODEL_DIR))
-    parser.add_argument("--calibration-method", default="sigmoid", choices=["sigmoid", "isotonic", "none"])
+    parser.add_argument(
+        "--calibration-method", default="sigmoid", choices=["sigmoid", "isotonic", "none"]
+    )
     parser.add_argument("--calibration-cv", type=int, default=5)
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="只输出 filtered feature matrix 统计；不训练、不保存 artifact",
+    )
+    parser.add_argument(
+        "--no-write",
+        action="store_true",
+        help="禁止训练 artifact / dataset / report 文件写入",
+    )
     parser.add_argument("--include-postmatch-diagnostics", action="store_true")
     parser.add_argument("--verbose", action="store_true")
     return parser.parse_args()
@@ -273,6 +315,7 @@ def _load_contract_module():
     (which fails on SCORING.DEFAULT_AVG_TOTAL_GOALS).
     """
     import importlib.util as _util
+
     _spec = _util.spec_from_file_location(
         "l3_prematch_contract",
         PROJECT_ROOT / "src" / "ml" / "features" / "l3_prematch_contract.py",
@@ -282,7 +325,9 @@ def _load_contract_module():
     return _mod
 
 
-def _filter_l3_json_for_prematch(group_name: str, raw_json: dict[str, Any] | None) -> dict[str, Any]:
+def _filter_l3_json_for_prematch(
+    group_name: str, raw_json: dict[str, Any] | None
+) -> dict[str, Any]:
     """Filter one L3 JSONB group through the prematch-safe contract.
 
     Returns the filtered dict (may be empty if group is denied entirely).
@@ -307,7 +352,9 @@ def _filter_l3_json_for_prematch(group_name: str, raw_json: dict[str, Any] | Non
         return raw_json if raw_json is not None else {}
 
 
-def add_json_features(features: dict[str, float], payload: dict[str, Any], keys: list[str], prefix: str) -> None:
+def add_json_features(
+    features: dict[str, float], payload: dict[str, Any], keys: list[str], prefix: str
+) -> None:
     for key in keys:
         features[f"{prefix}_{key}"] = safe_float(payload.get(key))
 
@@ -343,8 +390,12 @@ def build_feature_frame(
         for key in BET365_ODDS_FEATURES:
             features[key] = safe_float(row.get(key))
 
-        features["bet365_ah_line_move"] = features["bet365_ah_close_line"] - features["bet365_ah_open_line"]
-        features["bet365_ou_line_move"] = features["bet365_ou_close_line"] - features["bet365_ou_open_line"]
+        features["bet365_ah_line_move"] = (
+            features["bet365_ah_close_line"] - features["bet365_ah_open_line"]
+        )
+        features["bet365_ou_line_move"] = (
+            features["bet365_ou_close_line"] - features["bet365_ou_open_line"]
+        )
 
         if include_postmatch_diagnostics:
             add_json_features(features, tactical, POSTMATCH_DIAGNOSTIC_FEATURES, "postmatch")
@@ -412,7 +463,9 @@ def calibrate_model(
     return calibrator
 
 
-def evaluate_model(model: Any, x_valid: pd.DataFrame, y_valid: pd.Series, logger: logging.Logger, label: str) -> tuple[float, float]:
+def evaluate_model(
+    model: Any, x_valid: pd.DataFrame, y_valid: pd.Series, logger: logging.Logger, label: str
+) -> tuple[float, float]:
     probabilities = model.predict_proba(x_valid)
     predictions = probabilities.argmax(axis=1)
     accuracy = accuracy_score(y_valid, predictions)
@@ -433,6 +486,7 @@ def persist_outputs(
     result: BaselineTrainingResult,
     output_dir: Path,
 ) -> BaselineTrainingResult:
+    require_training_write_confirmation()
     output_dir.mkdir(parents=True, exist_ok=True)
     model_path = output_dir / "baseline_v1_result_1x2.json"
     calibrated_model_path = output_dir / CALIBRATED_MODEL_FILENAME
@@ -454,12 +508,33 @@ def persist_outputs(
     return result
 
 
+def run_report_only_mode(conn) -> dict[str, Any]:
+    """Build report-only filtered feature matrix stats without fitting a model."""
+    return build_report_from_connection(conn)
+
+
 def main() -> int:
     args = parse_args()
     logger = setup_logging(args.verbose)
     generated_at = datetime.now(UTC).isoformat()
 
+    if args.report_only:
+        args.no_write = True
+
+    if args.no_write and not (args.report_only or args.dry_run):
+        raise RuntimeError(
+            "--no-write blocks training artifact writes. "
+            "Use --report-only --no-write for filtered matrix reporting."
+        )
+
+    if not (args.report_only or args.dry_run):
+        require_training_write_confirmation()
+
     with get_db_connection() as conn:
+        if args.report_only:
+            report = run_report_only_mode(conn)
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+            return 0
         rows = load_training_rows(conn)
 
     if len(rows) < args.min_samples:
@@ -467,7 +542,12 @@ def main() -> int:
 
     x_frame, y = build_feature_frame(rows, args.include_postmatch_diagnostics)
     class_distribution = {RESULT_NAMES[index]: int((y == index).sum()) for index in range(3)}
-    logger.info("Loaded dataset samples=%s features=%s classes=%s", len(x_frame), x_frame.shape[1], class_distribution)
+    logger.info(
+        "Loaded dataset samples=%s features=%s classes=%s",
+        len(x_frame),
+        x_frame.shape[1],
+        class_distribution,
+    )
 
     x_train, x_valid, y_train, y_valid = train_test_split(
         x_frame,
@@ -507,7 +587,9 @@ def main() -> int:
     result.raw_log_loss = raw_loss
     result.accuracy = accuracy
     result.log_loss = loss
-    result = persist_outputs(raw_model, calibrated_model, list(x_frame.columns), result, Path(args.output_dir))
+    result = persist_outputs(
+        raw_model, calibrated_model, list(x_frame.columns), result, Path(args.output_dir)
+    )
     print(json.dumps(asdict(result), ensure_ascii=False, indent=2))
     return 0
 

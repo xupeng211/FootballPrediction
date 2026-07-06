@@ -16,6 +16,7 @@
 # @updated 2026-03-11
 
 import argparse
+import importlib.util
 import json
 import logging
 import os
@@ -44,7 +45,6 @@ from sklearn.preprocessing import StandardScaler
 
 PROJECT_ROOT = Path(__file__).parent.parent.parent
 LOG_DIR = PROJECT_ROOT / "logs"
-LOG_DIR.mkdir(exist_ok=True)
 
 sys.path.insert(0, str(PROJECT_ROOT))
 
@@ -65,13 +65,12 @@ from src.database.repositories.prediction_repo import (
     safe_float,
 )
 
-
 # ============================================================================
 # 日志配置 - 双重输出
 # ============================================================================
 
 
-def setup_logging(verbose: bool = False) -> logging.Logger:
+def setup_logging(verbose: bool = False, *, write_file: bool = False) -> logging.Logger:
     """配置双重日志输出"""
     logger = logging.getLogger("train_model")
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
@@ -87,17 +86,46 @@ def setup_logging(verbose: bool = False) -> logging.Logger:
     console.setFormatter(formatter)
     logger.addHandler(console)
 
-    # 文件
-    log_file = LOG_DIR / "train_model.log"
-    file_handler = logging.FileHandler(log_file, encoding="utf-8")
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+    if write_file:
+        LOG_DIR.mkdir(exist_ok=True)
+        log_file = LOG_DIR / "train_model.log"
+        file_handler = logging.FileHandler(log_file, encoding="utf-8")
+        file_handler.setLevel(logging.DEBUG)
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     return logger
 
 
-logger = setup_logging()
+logger = logging.getLogger("train_model")
+
+
+def _load_training_write_guard_module():
+    """Load training write guard without importing the broad src.ml package."""
+    module_path = PROJECT_ROOT / "src" / "ml" / "training_write_guard.py"
+    spec = importlib.util.spec_from_file_location("training_write_guard", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+require_training_write_confirmation = (
+    _load_training_write_guard_module().require_training_write_confirmation
+)
+
+
+def _load_filtered_matrix_report_module():
+    """Load report-only helper without importing the broken features package."""
+    module_path = PROJECT_ROOT / "src" / "ml" / "features" / "filtered_matrix_report.py"
+    spec = importlib.util.spec_from_file_location("filtered_matrix_report", module_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def build_report_from_connection(conn) -> dict:
+    """Build the filtered matrix report from a SELECT-only DB connection."""
+    return _load_filtered_matrix_report_module().build_report_from_connection(conn)
 
 
 # ============================================================================
@@ -409,6 +437,7 @@ def save_model(
     logger: logging.Logger = None,
 ) -> Tuple[str, str]:
     """保存模型、Scaler 和元数据"""
+    require_training_write_confirmation()
     import joblib
 
     model_path = MODEL_DIR / f"{output_name}.joblib"
@@ -470,8 +499,23 @@ def parse_args():
     )
     parser.add_argument("--min-samples", type=int, default=100, help="最小训练样本数 (默认: 100)")
     parser.add_argument("--json", action="store_true", help="JSON 格式输出")
+    parser.add_argument(
+        "--report-only",
+        action="store_true",
+        help="只输出 filtered feature matrix 统计；不训练、不保存 artifact",
+    )
+    parser.add_argument(
+        "--no-write",
+        action="store_true",
+        help="禁止训练 artifact / dataset / report 文件写入",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="详细日志模式")
     return parser.parse_args()
+
+
+def run_report_only_mode(conn) -> dict:
+    """Build report-only filtered feature matrix stats without fitting a model."""
+    return build_report_from_connection(conn)
 
 
 def main():
@@ -479,12 +523,35 @@ def main():
     global logger
     args = parse_args()
 
-    # 重新配置日志级别
-    logger = setup_logging(args.verbose)
+    if args.report_only:
+        args.no_write = True
+
+    if args.no_write and not args.report_only:
+        print(
+            "--no-write blocks training artifact writes. "
+            "Use --report-only --no-write for filtered matrix reporting.",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    if not args.report_only:
+        require_training_write_confirmation()
+
+    # 重新配置日志级别；report-only 不写日志文件
+    logger = setup_logging(args.verbose, write_file=not args.report_only)
 
     result = None
 
     try:
+        if args.report_only:
+            conn = get_db_connection()
+            try:
+                report = run_report_only_mode(conn)
+            finally:
+                conn.close()
+            print(json.dumps(report, indent=2, ensure_ascii=False))
+            sys.exit(0)
+
         logger.info("=" * 60)
         logger.info("TITAN-V4.46.8 模型训练管道 - 工业加固版")
         logger.info("=" * 60)
