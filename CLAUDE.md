@@ -8,8 +8,9 @@ Before working on this repository, treat the following files as the authoritativ
 
 1. AGENTS.md
 2. docs/AGENT_WORKFLOW.md
-3. .github/pull_request_template.md
-4. docs/data/FOTMOB_CURRENT_STATE.md
+3. docs/engineering/AI_AGENT_WORKFLOW.md
+4. .github/pull_request_template.md
+5. docs/data/FOTMOB_CURRENT_STATE.md
 
 Do not rely on historical ADG reports as the primary current truth. Use docs/data/FOTMOB_CURRENT_STATE.md for the latest FotMob ingestion state.
 

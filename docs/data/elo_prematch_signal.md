@@ -1,24 +1,25 @@
 # Prematch Elo Signal Integration
 
 lifecycle: permanent
-scope: GOLD-AUDIT-2AH Elo signal capability
+scope: Elo signal computation, FeatureSmelter wiring, no-write preview
 
 ## Status
 
-**Implemented: `PrematchEloComputer` module.**
+**Implemented and verified on main.**
 
-The `src/feature_engine/elo/PrematchEloComputer.js` module provides
-in-memory, no-DB-write prematch Elo computation using match history.
-It wraps the existing `EloRatingExtractor` with explicit prematch-safety
-guarantees.
+- `PrematchEloComputer` module (PR #1727) — in-memory, no-DB-write prematch Elo computation.
+- FeatureSmelter wiring (PR #1728, merge commit `6be2cdf`) — in-memory fallback when `team_elo_ratings` cache/table is empty or unavailable.
+- No-write preview path exposes actual prematch Elo in `_buildPreviewEntry` (home_elo, away_elo, elo_diff, _is_default, _source).
+- `team_elo_ratings` table is NOT required for the current no-write preview path.
+- Existing `l3_features` rows remain unchanged (still contain old default 1500 Elo from prior smelt runs).
 
 ## Problem
 
 Before 2AH, all `elo_features` in `l3_features` contained default 1500
 for every team. The `FeatureSmelter._loadEloCache()` reads from
-`team_elo_ratings` table, which is empty. Since no Elo computation was
-ever run against the data, `getTeamElo()` always falls back to
-`DEFAULT_ELO_RATING = 1500`.
+`team_elo_ratings` table, which does not exist in this environment.
+Since no Elo computation was ever run against the data, `getTeamElo()`
+always fell back to `DEFAULT_ELO_RATING = 1500`.
 
 ## Solution
 
@@ -32,6 +33,12 @@ entirely in memory:
 
 This guarantees that match N's prematch Elo uses only matches 1..N-1.
 
+When `team_elo_ratings` cache is empty or the table does not exist,
+FeatureSmelter's `init()` calls `_loadPrematchEloHistory()` which
+computes prematch Elo via `PrematchEloComputer.computeAll()` and
+stores results in `this.matchEloMap`. During `processMatch()`, the
+per-match prematch Elo is looked up from `matchEloMap`.
+
 ## Prematch Safety Guarantees
 
 | Guarantee | How |
@@ -39,75 +46,106 @@ This guarantees that match N's prematch Elo uses only matches 1..N-1.
 | No future leakage | Matches sorted by date; only matches before target are processed |
 | No target-match leakage | Elo recorded BEFORE the match result is applied |
 | Same-time stability | Same-date matches sorted by match_id |
-| Fallback metadata | `_is_default: true` for teams with no prior history |
-| No DB write | Pure in-memory computation |
+| Fallback metadata | `_is_default: true` for teams with no prior history; `_source: "PrematchEloComputer"` |
+| No DB write | Pure in-memory computation; SELECT-only history loading |
+
+## Verified No-write Preview Milestones
+
+### 2AP — First no-write preview with in-memory Elo
+
+Command: `node scripts/ops/smelt_all.js --dry-run --limit 1`
+
+| Metric | Value |
+|---|---|
+| pending matches | 0 (all 60 matches already have l3_features) |
+| preview entries | 0 |
+| computedMatches | 59 |
+| eloHits | 49 (non-default Elo) |
+| eloDefaults | 10 |
+| DB counts unchanged | yes (raw=76, matches=60, l3=60) |
+| actual_db_write | false |
+
+Confirmed: in-memory PrematchEloComputer fallback initialized successfully
+on real DB data and produced non-default Elo for 49 of 59 matches.
+
+### 2AS — No-write full-recalculate preview with --limit 1
+
+Command: `node scripts/ops/smelt_all.js --dry-run --full-recalculate --limit 1`
+
+| Metric | Value |
+|---|---|
+| preview entries | 1 |
+| match_id | `53_20252026_4830746` |
+| teams | Angers vs Strasbourg |
+| data_version | fotmob_live_v1 |
+| elo_features | data_keys=4/4 |
+| actual_db_write | false |
+| would_write | true (would write if not no-write) |
+| eloHits | 1 |
+| eloDefaults | 0 |
+| DB counts unchanged | yes (raw=76, matches=60, l3=60) |
+
+Confirmed: end-to-end pipeline produces a preview entry with real prematch
+Elo, zero DB writes, and no artifact creation.
+
+## Current Display Gap
+
+- `_buildPreviewEntry` populates numeric Elo fields in the preview entry
+  object: `home_elo`, `away_elo`, `elo_diff`, `_is_default`, `_source`.
+- The `printPreview` formatter in `smelt_all.js` currently renders only
+  the `data_keys` summary and does not directly print the numeric Elo
+  values.
+- This is NOT a pipeline blocker — Elo computation, wiring, and preview
+  entry production are all confirmed.
+- This display gap should be fixed before any DB write-readiness step,
+  so that no-write preview output is self-documenting.
 
 ## Integration Path
 
-### Current state (before integration)
-
-FeatureSmelter loads `team_elo_ratings` → `eloCache` is empty → all Elo = 1500.
-
-### Integration (after this module is wired in)
-
-FeatureSmelter can use `PrematchEloComputer` as an in-memory fallback when
+FeatureSmelter uses `PrematchEloComputer` as an in-memory fallback when
 `eloCache` is empty:
 
 ```js
-// In FeatureSmelter._loadEloCache() catch block or after:
+// In FeatureSmelter.init(), after _loadEloCache():
 if (this.eloCache.size === 0) {
-    const history = await this._loadMatchHistory();  // SELECT-only
-    const computer = new PrematchEloComputer();
-    this.matchEloMap = computer.computeAll(history);
+    await this._loadPrematchEloHistory();
+}
+
+// In processMatch(), per-match Elo lookup:
+const cachedPrematch = this.matchEloMap?.get(match_id);
+if (cachedPrematch) {
+    homeElo = cachedPrematch.home_elo_pre;
+    awayElo = cachedPrematch.away_elo_pre;
+    // ... with _is_default, _source metadata
 }
 ```
-
-Then in `getTeamElo()` or `extractMatchFeatures()`:
-```js
-const prematchElo = this.matchEloMap?.get(matchId);
-if (prematchElo) {
-    eloFeatures = {
-        home_elo: prematchElo.home_elo_pre,
-        away_elo: prematchElo.away_elo_pre,
-        elo_diff: prematchElo.elo_diff,
-        elo_expected_home: prematchElo.expected_home_win,
-        _is_default: prematchElo._is_default,
-    };
-}
-```
-
-Full integration requires a controlled smelt run (DB write to `l3_features`),
-which is NOT part of 2AH. The capability module is ready; the write step
-is deferred to a future authorized task.
 
 ## Test Coverage
 
-`tests/unit/feature_engine/PrematchEloComputer.test.js` — 11 tests:
+- `tests/unit/feature_engine/PrematchEloComputer.test.js` — 11 tests
+- `tests/unit/feature_engine/FeatureSmelterEloWiring.test.js` — 6 tests
 
-1. No-history teams → default 1500 + `_is_default: true`
-2. History teams → real (non-default) Elo
-3. Target match result does NOT affect own prematch Elo
-4. Future matches do not leak
-5. Same-date matches: stable ordering, no cross-contamination
-6. Win/loss/draw Elo direction validated
-7. Empty input → graceful fallback
-8. Invalid match records → skipped, not crashed
-9. `computeOne` correctly filters prior matches
-10. Multi-team cross-validation
-11. `importRatings` / `exportRatings` / `reset`
+## Current Safety Boundaries
 
-## Remaining Risks
+| Gate | Status |
+|---|---|
+| SAFE_FOR_DB_WRITE | **no** |
+| SAFE_FOR_SMELT_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+| SAFE_FOR_REAL_TRAINING | **no** |
+| SAFE_FOR_REAL_PREDICTION | **no** |
+| SAFE_FOR_BACKTEST | **no** |
 
-- `team_elo_ratings` table remains empty; DB-level Elo cache not populated.
-- Existing `l3_features` rows still contain old default 1500 Elo.
-- FeatureSmelter integration requires a controlled smelt run (DB write).
-- 58 rows remain insufficient for training regardless of Elo quality.
+- No controlled L3 rewrite is authorized.
+- No `team_elo_ratings` migration is authorized.
+- Existing `l3_features` rows remain unchanged.
+- 58 rows remain insufficient for training.
 - Odds signal remains unavailable.
 
 ## Next
 
-GOLD-AUDIT-2AI: Verify Elo PR diff and CI.
-A future authorized task with DB-write permission can:
-1. Integrate `PrematchEloComputer` into FeatureSmelter
-2. Run a controlled smelt to update `l3_features.elo_features`
-3. Run report-only to verify real Elo signal in the filtered matrix
+**GOLD-AUDIT-2AU**: Implement preview output enhancement to print numeric
+Elo values (home_elo, away_elo, elo_diff, _is_default, _source) in
+no-write preview formatted output.
+
+Do not start automatically.
