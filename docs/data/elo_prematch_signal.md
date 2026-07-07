@@ -92,13 +92,18 @@ Elo, zero DB writes, and no artifact creation.
 
 - `_buildPreviewEntry` populates numeric Elo fields in the preview entry
   object: `home_elo`, `away_elo`, `elo_diff`, `_is_default`, `_source`.
-- The `printPreview` formatter in `smelt_all.js` currently renders only
-  the `data_keys` summary and does not directly print the numeric Elo
-  values.
-- This is NOT a pipeline blocker — Elo computation, wiring, and preview
-  entry production are all confirmed.
-- This display gap should be fixed before any DB write-readiness step,
-  so that no-write preview output is self-documenting.
+- **GOLD-AUDIT-2AU (completed):** The `printPreview` formatter in `smelt_all.js`
+  now renders numeric Elo values directly in the formatted output:
+  ```
+  │  ✅  elo_features: data_keys=4/4
+  │     home_elo=1517.38
+  │     away_elo=1476.06
+  │     elo_diff=41.32
+  │     _is_default=false
+  │     _source=PrematchEloComputer
+  ```
+- This display gap is now resolved. No-write preview output is
+  self-documenting for Elo values.
 
 ## Integration Path
 
@@ -144,8 +149,9 @@ if (cachedPrematch) {
 
 ## Next
 
-**GOLD-AUDIT-2AU**: Implement preview output enhancement to print numeric
-Elo values (home_elo, away_elo, elo_diff, _is_default, _source) in
-no-write preview formatted output.
+**GOLD-AUDIT-2AU completed**: no-write preview output now directly prints
+numeric Elo values.
 
+Recommended next step (after user confirmation): review whether a
+controlled write-readiness audit is appropriate before any DB writes.
 Do not start automatically.
