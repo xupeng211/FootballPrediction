@@ -152,6 +152,22 @@ if (cachedPrematch) {
 **GOLD-AUDIT-2AU completed**: no-write preview output now directly prints
 numeric Elo values.
 
-Recommended next step (after user confirmation): review whether a
-controlled write-readiness audit is appropriate before any DB writes.
+**GOLD-AUDIT-2AV completed**: controlled write-readiness audit.
+
+- Verified target match `53_20252026_4830746` (Angers vs Strasbourg):
+  current `l3_features.elo_features` = `{home_elo: 1500, away_elo: 1500, _is_default: true}`;
+  no-write preview produces `{home_elo: 1517.38, away_elo: 1476.06, _is_default: false, _source: PrematchEloComputer}`.
+- Write path confirmed: `saveFeatures()` uses `INSERT ... ON CONFLICT (match_id) DO UPDATE`;
+  guarded by `assertDbWriteAllowed()` in write mode; `isNoWrite=true` blocks all writes.
+- `team_elo_ratings` table does not exist; not needed for in-memory Elo.
+- All DB counts unchanged through repeated dry-run previews.
+
+**READY_FOR_CONTROLLED_WRITE_PLAN = yes** (can design the write command).
+**READY_FOR_ACTUAL_DB_WRITE = no** (still requires explicit authorization).
+
+Recommended next step (after user confirmation):
+GOLD-AUDIT-2AW-CONTROLLED-WRITE-PLAN: design the exact controlled write
+command, backup/rollback steps, and acceptance criteria for a single-row
+L3 Elo update. Do not execute the write.
+
 Do not start automatically.
