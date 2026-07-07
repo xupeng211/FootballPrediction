@@ -42,6 +42,7 @@ function parseArgs(argv) {
     return { fullRecalculate, dryRun, noWrite, preview, isNoWrite, limit };
 }
 
+// eslint-disable-next-line complexity
 function printPreview(result) {
     if (!result.previewEntries || result.previewEntries.length === 0) {
         console.log('\n📋 No preview entries produced.');
@@ -82,6 +83,14 @@ function printPreview(result) {
                 ? `data_keys=${info.data_keys}/${info.keys}`
                 : `keys=${info.keys}`;
             console.log(`│  ${icon} ${name}: ${keyInfo}${reason}`);
+            // 2AU: show numeric Elo values when available
+            if (name === 'elo_features' && typeof info.home_elo === 'number') {
+                console.log(`│     home_elo=${info.home_elo}`);
+                console.log(`│     away_elo=${info.away_elo}`);
+                console.log(`│     elo_diff=${info.elo_diff}`);
+                console.log(`│     _is_default=${info._is_default}`);
+                if (info._source) console.log(`│     _source=${info._source}`);
+            }
         }
         console.log(`└─`);
     }
