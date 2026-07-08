@@ -300,6 +300,94 @@ If post-write validation fails:
 | Target Elo values | Match preview values within ±0.02 tolerance |
 | Other rows unchanged | All 59 other `l3_features` rows unchanged |
 
+## GOLD-AUDIT-2AY — Post-write Audit
+
+### Status
+
+| Gate | Value |
+|---|---|
+| GOLD-AUDIT-2AX completed | **yes** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+| SAFE_FOR_REAL_TRAINING | **no** |
+| SAFE_FOR_PREDICTION_BACKTEST | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+
+GOLD-AUDIT-2AX completed a single-row controlled write. This section is the post-write audit record.
+
+### Write Scope Confirmed
+
+| Field | Value |
+|---|---|
+| match_id | `53_20252026_4830746` |
+| table | `l3_features` |
+| operation | UPDATE existing row only (via `ON CONFLICT DO UPDATE`) |
+| rows affected | exactly 1 |
+| new rows created | 0 |
+
+### Post-write DB Counts
+
+| Table | Count | Changed |
+|---|---|---|
+| raw_match_data | 76 | no |
+| matches | 60 | no |
+| l3_features | 60 | no |
+
+All counts unchanged from before 2AX.
+
+### Target Row After 2AX
+
+| Field | Value |
+|---|---|
+| home_elo | 1517.38 |
+| away_elo | 1476.06 |
+| elo_diff | 41.32 |
+| _is_default | false |
+| _source | PrematchEloComputer |
+| _version | PrematchEloComputer-V1.0.0 |
+| computed_at | 2026-07-07 23:46:03.614+00 |
+
+### Real Elo Row Count After 2AX
+
+- `_is_default=false` rows: **1**
+- Only `match_id=53_20252026_4830746` has real Prematch Elo.
+- Other 59 L3 rows remain old/default Elo (1500, `_is_default=true`).
+
+### 2AX Backup / Hash Reference
+
+| Item | Value |
+|---|---|
+| before backup path | `/tmp/gold_audit_2ax/before_l3_53_20252026_4830746.json` |
+| after backup path | `/tmp/gold_audit_2ax/after_l3_53_20252026_4830746.json` |
+| before hash (SHA256) | `5d576c20e2e97b5b2cedc50cc233e63edbb9d81c3409a2f2548580fa322bf4f2` |
+| after hash (SHA256) | `9f261ddb0f453a8aa9769bc0e72933ae9ea1dc84bb4fcbc5802989db1bd6f664` |
+
+Hashes independently verified during 2AY from local backup files.
+
+### Env Flag Audit
+
+2AX used these env flags to authorize the write:
+
+| Env Flag | Value | Notes |
+|---|---|---|
+| `ALLOW_DB_WRITE` | yes | Universal gate; correct |
+| `FINAL_DB_WRITE_CONFIRMATION` | yes | Universal gate; correct |
+| `ALLOW_TRAINING_WRITE` | yes | Required because `db_write_guard.js` maps `l3_features` to this gate |
+| `DRY_RUN` | false | Required to disable default dry-run mode |
+
+**Risk noted:** `ALLOW_TRAINING_WRITE` is potentially misleading in an L3 smelt write context — it suggests training authorization was granted, but 2AX report confirms no training was executed. This is a gate-naming issue: `l3_features` is classified under the training gate in `scripts/ops/helpers/db_write_guard.js:90`. Recommend a future task to clarify env flag names before scaling write operations beyond one row.
+
+### Safety Confirmation
+
+| Check | Result |
+|---|---|
+| Batch L3 rewrite | no |
+| Schema change | no |
+| `team_elo_ratings` creation | no |
+| Training | no |
+| Prediction/backtest | no |
+| FotMob/OddsPortal access | no |
+| Code change (2AX) | no |
+
 ### Next
 
 **GOLD-AUDIT-2AU completed**: no-write preview output now directly prints
@@ -307,12 +395,15 @@ numeric Elo values.
 
 **GOLD-AUDIT-2AV completed**: controlled write-readiness audit.
 
-**GOLD-AUDIT-2AW completed**: controlled write plan documented (this section).
+**GOLD-AUDIT-2AW completed**: controlled write plan documented.
 
-Recommended next step (after explicit user authorization only):
-**GOLD-AUDIT-2AX-SINGLE-ROW-CONTROLLED-WRITE** — execute exactly one
-controlled `l3_features` row update for match `53_20252026_4830746`,
-following all pre-checks, backup, post-write validation, and acceptance
-criteria defined above. Do not expand beyond one row.
+**GOLD-AUDIT-2AX completed**: single-row controlled L3 write executed.
+
+**GOLD-AUDIT-2AY completed**: post-write audit recorded (this section).
+
+Recommended next step (after user confirmation only):
+No-write expansion readiness audit for all 60 L3 rows. Do not batch
+rewrite L3 automatically. Do not start training. Do not start
+prediction/backtest.
 
 Do not start automatically.
