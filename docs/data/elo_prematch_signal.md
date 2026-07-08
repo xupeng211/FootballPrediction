@@ -2038,3 +2038,125 @@ Next:
 * Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BI — 2BH Post-write Audit
+
+Status:
+- Read-only post-write audit after 2BH.
+- No DB write performed.
+- No smelt run performed.
+- No dry-run smelt performed.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Confirm the 2BH exact 10 controlled write remains stable after merge.
+- Confirm DB counts and real/default distribution.
+- Confirm approved 16 real rows exactly.
+- Confirm 2BH exact 10 values still match documented values.
+- Confirm existing 6 real rows remain real.
+- Confirm no unexpected real rows exist.
+- Check 2BH backup artifact visibility if available.
+
+Main state:
+- expected main commit before branch = `3bed923fdfae1f241f75fea6dc038f74b297a786`
+- 2BH docs present = yes
+
+Read-only DB audit:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 16
+- default Elo rows = 44
+- unexpected real rows = 0
+
+Approved 16 real rows:
+```text
+53_20252026_4830467
+53_20252026_4830468
+53_20252026_4830469
+53_20252026_4830470
+53_20252026_4830471
+53_20252026_4830472
+53_20252026_4830473
+53_20252026_4830474
+53_20252026_4830475
+53_20252026_4830476
+53_20252026_4830746
+53_20252026_4830747
+53_20252026_4830748
+53_20252026_4830750
+53_20252026_4830751
+53_20252026_4830752
+```
+
+2BH exact 10 audit:
+
+| #  | match_id              | home_elo | away_elo | elo_diff | _is_default | _source             | matches_2BH_doc |
+| -- | --------------------- | -------: | -------: | -------: | ----------: | ------------------- | --------------: |
+| 1  | `53_20252026_4830467` | 1502.14  | 1482.86  | 19.28    | false       | PrematchEloComputer | yes             |
+| 2  | `53_20252026_4830468` | 1502.14  | 1497.86  | 4.28     | false       | PrematchEloComputer | yes             |
+| 3  | `53_20252026_4830469` | 1502.14  | 1512.86  | -10.72   | false       | PrematchEloComputer | yes             |
+| 4  | `53_20252026_4830470` | 1517.14  | 1512.86  | 4.28     | false       | PrematchEloComputer | yes             |
+| 5  | `53_20252026_4830471` | 1487.14  | 1502.14  | -15.00   | false       | PrematchEloComputer | yes             |
+| 6  | `53_20252026_4830472` | 1512.86  | 1497.86  | 15.00    | false       | PrematchEloComputer | yes             |
+| 7  | `53_20252026_4830473` | 1487.14  | 1497.86  | -10.72   | false       | PrematchEloComputer | yes             |
+| 8  | `53_20252026_4830474` | 1487.14  | 1512.86  | -25.72   | false       | PrematchEloComputer | yes             |
+| 9  | `53_20252026_4830475` | 1487.14  | 1497.86  | -10.72   | false       | PrematchEloComputer | yes             |
+| 10 | `53_20252026_4830476` | 1514.55  | 1529.55  | -15.00   | false       | PrematchEloComputer | yes             |
+
+Existing 6 real rows:
+
+* rows found = 6
+* all `_is_default=false` = yes
+* all `_source=PrematchEloComputer` = yes
+
+Remaining default rows:
+
+* remaining default rows = 44
+* no dry-run performed on remaining default rows
+* no next write planned or executed in this task
+
+2BH backup artifact visibility:
+
+* `/tmp/gold_audit_2bh` exists = yes
+* backup files readable = yes (all 8 core files)
+* checksum verification = pass (all 4 checksums OK)
+* no backup regeneration performed
+* no rollback performed
+
+Runtime safety:
+
+* DB write = no
+* smelt run = no
+* dry-run smelt = no
+* batch write = no
+* rollback = no
+* training = no
+* prediction/backtest = no
+* scraper/network = no
+* schema/migration = no
+* code changed = no
+* `.github/**` changed = no
+
+Readiness:
+
+* GOLD_AUDIT_2BI_PASS = yes
+* POST_WRITE_AUDIT_STABLE_16_44 = yes
+* APPROVED_16_REAL_ROWS_CONFIRMED = yes
+* NEXT_10_VALUES_MATCH_2BH_DOC = yes
+* UNEXPECTED_REAL_ROWS_ZERO = yes
+* READY_FOR_NEXT_PLAN = yes
+* READY_FOR_BATCH_WRITE = no
+* SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+
+* After user confirmation only: plan another controlled exact allowlist write batch, or continue audit/monitoring.
+* Do not execute another write automatically.
+* Do not start training.
+* Do not start prediction/backtest.
+
+Do not start automatically.
