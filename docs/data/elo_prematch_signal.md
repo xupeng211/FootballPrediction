@@ -1619,3 +1619,124 @@ Next:
 - Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BF — Remaining Default Elo No-write Batch Preview
+
+Status:
+- No-write batch preview only.
+- No DB write performed.
+- No smelt write performed.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Evaluate the remaining default Elo rows after the 2BE-B exact 5-row write.
+- Determine how many of the remaining 54 default rows would become real Elo under `PrematchEloComputer`.
+- Determine how many would remain default or be filtered/unprocessed.
+- Keep DB unchanged.
+
+Starting DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 6
+- default Elo rows = 54
+- unexpected real rows = 0
+
+Preview command:
+- Used `--dry-run --full-recalculate --match-ids <54 default match_ids>`.
+- Did not use `--limit`.
+- Did not set write flags.
+- `actual_db_write=true` count = 0.
+
+2 non-Ligue 1 IDs filtered:
+- `140_20252026_4837496` — not in smelter DB matches table (non-Ligue 1)
+- `47_20242025_900002` — not in smelter DB matches table (non-Ligue 1)
+
+Preview summary:
+- requested default ids = 54
+- valid (53_ prefix) ids = 52
+- unprocessable (non-53_ ids) = 2
+- processed total = 52
+- success = 52
+- failed = 0
+- eloHits = 43
+- eloDefaults = 9
+- would_be_real_elo = 43
+- would_remain_default = 9
+- unprocessed_or_filtered = 2
+- failed rows = 0
+
+Would become real Elo (43):
+```
+53_20252026_4830467  53_20252026_4830483  53_20252026_4830497  53_20252026_4830510
+53_20252026_4830468  53_20252026_4830484  53_20252026_4830498  53_20252026_4830511
+53_20252026_4830469  53_20252026_4830485  53_20252026_4830499  53_20252026_4830753
+53_20252026_4830470  53_20252026_4830486  53_20252026_4830500  53_20252026_4830754
+53_20252026_4830471  53_20252026_4830487  53_20252026_4830501
+53_20252026_4830472  53_20252026_4830488  53_20252026_4830502
+53_20252026_4830473  53_20252026_4830489  53_20252026_4830505
+53_20252026_4830474  53_20252026_4830490  53_20252026_4830507
+53_20252026_4830475  53_20252026_4830491  53_20252026_4830508
+53_20252026_4830476  53_20252026_4830492
+53_20252026_4830477  53_20252026_4830493
+53_20252026_4830478  53_20252026_4830494
+53_20252026_4830479  53_20252026_4830495
+53_20252026_4830480  53_20252026_4830496
+53_20252026_4830481
+53_20252026_4830482
+```
+Note: These are rounds 2-9+ matches with prior match history for Elo computation.
+
+Would remain default (9):
+```
+53_20252026_4830458  53_20252026_4830461  53_20252026_4830464
+53_20252026_4830459  53_20252026_4830462  53_20252026_4830465
+53_20252026_4830460  53_20252026_4830463  53_20252026_4830466
+```
+Note: Round 1 matches with no prior match history. PrematchEloComputer cannot compute real Elo without history.
+
+Unprocessed or filtered (2):
+```
+140_20252026_4837496  — non-Ligue 1, not in matches table
+47_20242025_900002    — non-Ligue 1, not in matches table
+```
+
+Failed (0): none
+
+Post-preview DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 6
+- default Elo rows = 54
+- unexpected real rows = 0
+- DB unchanged = yes
+
+Safety validation:
+- DB write executed = no
+- smelt write executed = no
+- dry-run only = yes
+- batch write executed = no
+- rollback executed = no
+- training/prediction/backtest executed = no
+- data collection executed = no
+- schema/migration changed = no
+
+Readiness:
+- GOLD_AUDIT_2BF_PASS = yes
+- REMAINING_DEFAULT_NO_WRITE_PREVIEW_RECORDED = yes
+- DB_UNCHANGED_AFTER_PREVIEW = yes
+- READY_FOR_BATCH_WRITE = no
+- SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+- After user confirmation only: either plan a next exact allowlist write batch based on this preview (43 would-be-real + 9 would-remain-default), or continue no-write monitoring.
+- The 9 round-1 matches will likely never get real Elo from PrematchEloComputer alone.
+- Do not execute batch write automatically.
+- Do not start training.
+- Do not start prediction/backtest.
+
+Do not start automatically.
