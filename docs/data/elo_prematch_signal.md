@@ -1543,3 +1543,79 @@ Next:
 - Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BE-C — Exact 5-row Post-write Audit
+
+Status:
+- Post-write audit only.
+- No DB write performed.
+- No smelt run performed.
+- No dry-run smelt performed.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Verify the 2BE-B exact 5-row write remains stable after merge to main.
+- Confirm DB counts and real/default distribution.
+- Confirm only the approved six real Elo rows exist.
+- Confirm the five 2BE-B rows have expected PrematchEloComputer values.
+- Confirm the match-id write gate and unit tests remain present on main.
+
+Main state:
+- 2BE-B merge commit: `7df193227bf8ebd1fe50beb56296e0536ad211b4`
+
+Post-write DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 6
+- default Elo rows = 54
+
+Expected real Prematch Elo rows:
+| match_id | role |
+|---|---|
+| `53_20252026_4830746` | existing real row from 2AX |
+| `53_20252026_4830747` | written in 2BE-B |
+| `53_20252026_4830748` | written in 2BE-B |
+| `53_20252026_4830750` | written in 2BE-B |
+| `53_20252026_4830751` | written in 2BE-B |
+| `53_20252026_4830752` | written in 2BE-B |
+
+2BE-B exact 5 post-write values:
+| # | match_id | home_elo | away_elo | elo_diff | _is_default | _source |
+|---|---:|---:|---:|---:|---:|---|
+| 1 | `53_20252026_4830747` | 1502.02 | 1523.65 | -21.63 | false | PrematchEloComputer |
+| 2 | `53_20252026_4830748` | 1479.12 | 1498.91 | -19.79 | false | PrematchEloComputer |
+| 3 | `53_20252026_4830750` | 1574.09 | 1472.12 | 101.97 | false | PrematchEloComputer |
+| 4 | `53_20252026_4830751` | 1527.17 | 1457.57 | 69.60 | false | PrematchEloComputer |
+| 5 | `53_20252026_4830752` | 1415.35 | 1523.68 | -108.33 | false | PrematchEloComputer |
+
+Audit validation:
+- unit test `tests/unit/ops/smeltAllMatchIds.test.js` passed = yes
+- 2BE-B write gate present = yes
+- post-write DB counts match expected = yes
+- real/default distribution matches expected = yes
+- exact 5 values match expected = yes
+- unexpected real rows = 0 = yes
+- default rows remaining = 54 = yes
+- 2BE-B backup artifacts available under `/tmp/gold_audit_2be_b` = yes
+- rollback executed = no
+- training/prediction/backtest executed = no
+- data collection executed = no
+
+Readiness:
+- GOLD_AUDIT_2BE_C_PASS = yes
+- EXACT_5_POST_WRITE_AUDIT_RECORDED = yes
+- EXACT_5_WRITE_STABLE = yes
+- READY_FOR_BATCH_WRITE = no
+- SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+- After user confirmation only: decide whether to plan a larger no-write batch preview or continue post-write monitoring.
+- Do not execute batch write automatically.
+- Do not start training.
+- Do not start prediction/backtest.
+
+Do not start automatically.
