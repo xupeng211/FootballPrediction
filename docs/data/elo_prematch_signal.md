@@ -1458,3 +1458,88 @@ Next:
 - Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BE-B — Exact 5-row Controlled Write Execution
+
+Status:
+- Exact 5-row controlled write executed.
+- DB write performed only for the approved 5 match_ids.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Exact 5 written match_ids:
+| # | match_id | before_is_default | after_home_elo | after_away_elo | after_elo_diff | after_is_default | after_source |
+|---|---:|---:|---:|---:|---:|---:|---|
+| 1 | `53_20252026_4830747` | true | 1502.02 | 1523.65 | -21.63 | false | PrematchEloComputer |
+| 2 | `53_20252026_4830748` | true | 1479.12 | 1498.91 | -19.79 | false | PrematchEloComputer |
+| 3 | `53_20252026_4830750` | true | 1574.09 | 1472.12 | 101.97 | false | PrematchEloComputer |
+| 4 | `53_20252026_4830751` | true | 1527.17 | 1457.57 | 69.60 | false | PrematchEloComputer |
+| 5 | `53_20252026_4830752` | true | 1415.35 | 1523.68 | -108.33 | false | PrematchEloComputer |
+
+Pre-write DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 1
+- default Elo rows = 59
+- existing real row = `53_20252026_4830746`
+
+Post-write DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 6
+- default Elo rows = 54
+- existing real row `53_20252026_4830746` unchanged
+
+Write command:
+- Used `--match-ids` exact allowlist.
+- Did not use `--limit`.
+- Processed total = 5.
+- Success = 5.
+- Failed = 0.
+- No extra match_id processed.
+- Flags used: `DRY_RUN=false ALLOW_DB_WRITE=yes FINAL_DB_WRITE_CONFIRMATION=yes ALLOW_TRAINING_WRITE=yes ALLOW_MATCH_IDS_WRITE=yes FINAL_MATCH_IDS_WRITE_CONFIRMATION=GOLD_AUDIT_2BE_B_EXACT_5`
+- `ALLOW_TRAINING_WRITE` is a legacy/misleading flag name required for `l3_features` writes; no training was executed.
+
+Code changes:
+- `scripts/ops/smelt_all.js`: replaced 2BB write-mode block with 2BE-B guarded gate requiring `ALLOW_MATCH_IDS_WRITE=yes` + `FINAL_MATCH_IDS_WRITE_CONFIRMATION=GOLD_AUDIT_2BE_B_EXACT_5`
+- `tests/unit/ops/smeltAllMatchIds.test.js`: added 6 new gate tests (23-28), total 30 tests, all passing
+
+Backup artifacts:
+- `/tmp/gold_audit_2be_b/exact_5_before_l3_rows.json`
+- `/tmp/gold_audit_2be_b/non_candidate_l3_rows_before.json`
+- `/tmp/gold_audit_2be_b/counts_snapshot_before.json`
+- `/tmp/gold_audit_2be_b/default_distribution_before.json`
+- `/tmp/gold_audit_2be_b/exact_5_dry_run_before_write.txt`
+- `/tmp/gold_audit_2be_b/exact_5_write_output.txt`
+- `/tmp/gold_audit_2be_b/exact_5_after_l3_rows.json`
+- `/tmp/gold_audit_2be_b/non_candidate_l3_rows_after.json`
+- `/tmp/gold_audit_2be_b/backup_sha256sums_before.txt`
+- `/tmp/gold_audit_2be_b/after_sha256sums.txt`
+
+Safety validation:
+- exact 5 rows changed = yes
+- non-candidate rows unchanged = yes (SHA256 verified)
+- counts unchanged = yes
+- real/default distribution changed as expected = yes
+- existing real row unchanged = yes
+- training/prediction/backtest executed = no
+- rollback executed = no
+
+Readiness:
+- GOLD_AUDIT_2BE_B_PASS = yes
+- EXACT_5_CONTROLLED_WRITE_SUCCESS = yes
+- READY_FOR_POST_WRITE_AUDIT = yes
+- READY_FOR_BATCH_WRITE = no
+- SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+- After user confirmation only: perform post-write audit for 2BE-B.
+- Do not execute batch write automatically.
+- Do not start training.
+- Do not start prediction/backtest.
+
+Do not start automatically.

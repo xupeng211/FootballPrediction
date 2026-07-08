@@ -1,16 +1,16 @@
 /**
- * GOLD-AUDIT-2BB — --match-ids allowlist unit tests
- * ==================================================
+ * GOLD-AUDIT-2BB/2BE-B — --match-ids allowlist unit tests
+ * ========================================================
  *
  * Tests the pure helper functions extracted from scripts/ops/smelt_all.js:
  * parseMatchIdsArg / validateMatchIds, and the enforcement logic around
- * --match-ids + --limit mutual exclusion and write-mode rejection.
+ * --match-ids + --limit mutual exclusion and write-mode gate.
  *
  * These tests exercise the argument parsing and validation layer only;
  * DB-backed integration is validated separately via dry-run.
  *
  * @module tests/unit/ops/smeltAllMatchIds
- * @version V1.0.0-2BB
+ * @version V1.1.0-2BE-B
  */
 
 'use strict';
@@ -60,13 +60,20 @@ function validateMatchIds(matchIds) {
 /**
  * Simulates the enforcement logic that smelt_all.js main() performs.
  * Returns { allowed: boolean, error: string | null }.
+ *
+ * 2BE-B: --match-ids write mode now gated behind
+ * ALLOW_MATCH_IDS_WRITE=yes + FINAL_MATCH_IDS_WRITE_CONFIRMATION=GOLD_AUDIT_2BE_B_EXACT_5
  */
-function checkMatchIdsConstraints({ matchIds, hasLimit, isNoWrite }) {
+function checkMatchIdsConstraints({ matchIds, hasLimit, isNoWrite,
+    allowMatchIdsWrite, finalMatchIdsWriteConfirmation }) {
     if (matchIds !== null && hasLimit) {
         return { allowed: false, error: '--match-ids and --limit are mutually exclusive' };
     }
     if (matchIds !== null && !isNoWrite) {
-        return { allowed: false, error: '--match-ids is currently allowed only in dry-run/no-write mode' };
+        if (allowMatchIdsWrite !== 'yes' ||
+            finalMatchIdsWriteConfirmation !== 'GOLD_AUDIT_2BE_B_EXACT_5') {
+            return { allowed: false, error: '--match-ids write mode requires explicit authorization' };
+        }
     }
     return { allowed: true, error: null };
 }
@@ -167,14 +174,16 @@ describe('GOLD-AUDIT-2BB — constraint enforcement', () => {
         assert.ok(result.error.includes('mutually exclusive'));
     });
 
-    it('15. --match-ids without dry-run/no-write 报错', () => {
+    it('15. --match-ids without dry-run/no-write AND without required env flags 报错', () => {
         const result = checkMatchIdsConstraints({
             matchIds: ['53_a', '53_b'],
             hasLimit: false,
-            isNoWrite: false
+            isNoWrite: false,
+            allowMatchIdsWrite: undefined,
+            finalMatchIdsWriteConfirmation: undefined
         });
         assert.equal(result.allowed, false);
-        assert.ok(result.error.includes('dry-run/no-write'));
+        assert.ok(result.error.includes('explicit authorization'));
     });
 
     it('16. --match-ids with dry-run 允许', () => {
@@ -225,14 +234,85 @@ describe('GOLD-AUDIT-2BB — constraint enforcement', () => {
     });
 });
 
+describe('GOLD-AUDIT-2BE-B — --match-ids write gate', () => {
+    it('23. --match-ids write mode with ALLOW_MATCH_IDS_WRITE=yes but wrong FINAL confirmation 报错', () => {
+        const result = checkMatchIdsConstraints({
+            matchIds: ['53_a', '53_b'],
+            hasLimit: false,
+            isNoWrite: false,
+            allowMatchIdsWrite: 'yes',
+            finalMatchIdsWriteConfirmation: 'wrong_value'
+        });
+        assert.equal(result.allowed, false);
+        assert.ok(result.error.includes('explicit authorization'));
+    });
+
+    it('24. --match-ids write mode with wrong ALLOW_MATCH_IDS_WRITE but correct FINAL confirmation 报错', () => {
+        const result = checkMatchIdsConstraints({
+            matchIds: ['53_a'],
+            hasLimit: false,
+            isNoWrite: false,
+            allowMatchIdsWrite: 'no',
+            finalMatchIdsWriteConfirmation: 'GOLD_AUDIT_2BE_B_EXACT_5'
+        });
+        assert.equal(result.allowed, false);
+        assert.ok(result.error.includes('explicit authorization'));
+    });
+
+    it('25. --match-ids write mode with ALLOW_MATCH_IDS_WRITE=yes + FINAL_MATCH_IDS_WRITE_CONFIRMATION=GOLD_AUDIT_2BE_B_EXACT_5 允许', () => {
+        const result = checkMatchIdsConstraints({
+            matchIds: ['53_a', '53_b', '53_c', '53_d', '53_e'],
+            hasLimit: false,
+            isNoWrite: false,
+            allowMatchIdsWrite: 'yes',
+            finalMatchIdsWriteConfirmation: 'GOLD_AUDIT_2BE_B_EXACT_5'
+        });
+        assert.equal(result.allowed, true);
+    });
+
+    it('26. --match-ids + --limit 即使有正确 env flags 仍然互斥报错', () => {
+        const result = checkMatchIdsConstraints({
+            matchIds: ['53_a'],
+            hasLimit: true,
+            isNoWrite: false,
+            allowMatchIdsWrite: 'yes',
+            finalMatchIdsWriteConfirmation: 'GOLD_AUDIT_2BE_B_EXACT_5'
+        });
+        assert.equal(result.allowed, false);
+        assert.ok(result.error.includes('mutually exclusive'));
+    });
+
+    it('27. --match-ids dry-run 不被 env flags 影响（继续允许）', () => {
+        const result = checkMatchIdsConstraints({
+            matchIds: ['53_a'],
+            hasLimit: false,
+            isNoWrite: true,
+            allowMatchIdsWrite: undefined,
+            finalMatchIdsWriteConfirmation: undefined
+        });
+        assert.equal(result.allowed, true);
+    });
+
+    it('28. 无 --match-ids write mode 不触发 --match-ids gate', () => {
+        const result = checkMatchIdsConstraints({
+            matchIds: null,
+            hasLimit: false,
+            isNoWrite: false,
+            allowMatchIdsWrite: undefined,
+            finalMatchIdsWriteConfirmation: undefined
+        });
+        assert.equal(result.allowed, true);
+    });
+});
+
 describe('GOLD-AUDIT-2BB — input order preservation', () => {
-    it('21. parseMatchIdsArg 保持输入顺序', () => {
+    it('29. parseMatchIdsArg 保持输入顺序', () => {
         const result = parseMatchIdsArg('z, a, m, b, q');
         assert.equal(result.error, null);
         assert.deepStrictEqual(result.matchIds, ['z', 'a', 'm', 'b', 'q']);
     });
 
-    it('22. validateMatchIds 不改变输入数组顺序', () => {
+    it('30. validateMatchIds 不改变输入数组顺序', () => {
         const input = ['third', 'first', 'second'];
         const err = validateMatchIds(input);
         assert.equal(err, null);

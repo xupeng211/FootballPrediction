@@ -188,14 +188,22 @@ async function main() {
         process.exit(1);
     }
 
-    // ── 2BB: --match-ids only allowed in dry-run/no-write mode ───────────────
+    // ── 2BE-B: --match-ids write mode gate ────────────────────────────────
     if (matchIds !== null && !isNoWrite) {
-        console.error(
-            '❌ --match-ids is currently allowed only in dry-run/no-write mode.\n' +
-            '   Use --dry-run, --no-write, or --preview with --match-ids.\n' +
-            '   Write mode with --match-ids is blocked until a future task explicitly authorizes it.'
-        );
-        process.exit(1);
+        const allowMatchIdsWrite = process.env.ALLOW_MATCH_IDS_WRITE === 'yes';
+        const finalConfirmation = process.env.FINAL_MATCH_IDS_WRITE_CONFIRMATION;
+        if (!allowMatchIdsWrite || finalConfirmation !== 'GOLD_AUDIT_2BE_B_EXACT_5') {
+            console.error(
+                '❌ --match-ids write mode requires explicit authorization.\n' +
+                '   Set ALLOW_MATCH_IDS_WRITE=yes and ' +
+                'FINAL_MATCH_IDS_WRITE_CONFIRMATION=GOLD_AUDIT_2BE_B_EXACT_5.\n' +
+                '   Use --dry-run, --no-write, or --preview with --match-ids for safe preview.'
+            );
+            process.exit(1);
+        }
+        console.log('⚠️  --match-ids WRITE MODE authorized for exact 5-row controlled write.');
+        console.log(`   Match IDs: ${matchIds.join(', ')} (${matchIds.length} rows)`);
+        console.log('');
     }
 
     if (isNoWrite) {
