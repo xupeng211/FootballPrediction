@@ -844,3 +844,141 @@ execute batch write automatically. Do not start training. Do not start
 prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BB — `--match-ids` No-write Allowlist Tooling
+
+### Status
+
+| Gate | Value |
+|---|---|
+| GOLD_AUDIT_2BB_PASS | **yes** |
+| MATCH_IDS_DRY_RUN_TOOLING_READY | **yes** |
+| READY_FOR_MATCH_IDS_WRITE | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+
+### Summary
+
+Implemented `--match-ids` allowlist support for `scripts/ops/smelt_all.js`.
+No DB write, smelt write, batch write, training, prediction, or backtest
+was performed in 2BB.
+
+### Purpose
+
+Replace unsafe `--limit N` candidate selection with exact match_id
+allowlist selection. Enable future small-batch planning to target exact
+rows.
+
+### Behavior
+
+- `--match-ids` accepts a comma-separated match_id list.
+- Input order is preserved.
+- Duplicate IDs are rejected.
+- Empty IDs are rejected.
+- Missing IDs are rejected (DB query validates all exist).
+- `--match-ids` and `--limit` are mutually exclusive.
+- In 2BB, `--match-ids` is allowed only in dry-run/no-write mode.
+- Write mode with `--match-ids` is rejected until a future task
+  explicitly authorizes it.
+- Existing behavior without `--match-ids` is preserved.
+
+### Usage
+
+```bash
+# Dry-run with exact match_ids (safe, no-write)
+node scripts/ops/smelt_all.js --dry-run --full-recalculate \
+  --match-ids 53_20252026_4830458,53_20252026_4830459
+
+# Also works with --no-write and --preview
+node scripts/ops/smelt_all.js --preview --full-recalculate \
+  --match-ids 53_20252026_4830746
+```
+
+### Implementation
+
+| File | Change |
+|---|---|
+| `scripts/ops/smelt_all.js` | Added `parseMatchIdsArg()`, `validateMatchIds()`, CLI parsing, enforcement logic |
+| `src/feature_engine/smelter/FeatureSmelter.js` | Added `getMatchesByIds()` method, `matchIds` support in `run()` |
+| `tests/unit/ops/smeltAllMatchIds.test.js` | 22 unit tests for parsing, validation, constraint enforcement |
+| `docs/data/elo_prematch_signal.md` | This section |
+
+### Test Coverage
+
+- `tests/unit/ops/smeltAllMatchIds.test.js` — 22 tests covering:
+  - Parse comma-separated list
+  - Trim whitespace
+  - Single match_id
+  - Empty string / undefined / null rejection
+  - Empty entry (double comma) rejection
+  - Trailing comma rejection
+  - Duplicate match_id rejection
+  - Non-array rejection
+  - `--match-ids + --limit` mutual exclusion
+  - `--match-ids` without dry-run rejection
+  - `--match-ids` with `--dry-run` / `--no-write` / `--preview` allowed
+  - `--match-ids` not passed preserves existing `--limit` behavior
+  - Input order preservation
+
+### Dry-run Validation
+
+Command:
+```
+node scripts/ops/smelt_all.js --dry-run --full-recalculate \
+  --match-ids 53_20252026_4830458,53_20252026_4830459,53_20252026_4830746
+```
+
+| Metric | Value |
+|---|---|
+| total | 3 |
+| success | 3 |
+| failed | 0 |
+| eloHits | 1 |
+| eloDefaults | 2 |
+| actual_db_write | false (all 3 entries) |
+| would_write | true (all 3 entries) |
+| input order preserved | yes |
+| only specified match_ids processed | yes |
+| extra match_ids processed | 0 |
+
+Per-entry would_change signal:
+- `53_20252026_4830458`: would_change=yes (default → real)
+- `53_20252026_4830459`: would_change=yes (default → real)
+- `53_20252026_4830746`: would_change=no (already real)
+
+Rejection tests:
+- `--match-ids + --limit`: correctly rejected with "mutually exclusive"
+- `--match-ids` without `--dry-run`/`--no-write`/`--preview`: correctly
+  rejected with "allowed only in dry-run/no-write mode"
+
+### DB Safety Confirmation
+
+| Check | Before | After | Changed |
+|---|---|---|---|
+| raw_match_data count | 76 | 76 | no |
+| matches count | 60 | 60 | no |
+| l3_features count | 60 | 60 | no |
+| real Elo rows (`_is_default=false`) | 1 | 1 | no |
+| default Elo rows (`_is_default=true`) | 59 | 59 | no |
+
+All DB counts and Elo distribution unchanged after dry-run validation.
+
+### Readiness Gates
+
+| Gate | Value |
+|---|---|
+| READY_FOR_MATCH_IDS_DRY_RUN | **yes** |
+| READY_FOR_MATCH_IDS_WRITE | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+| SAFE_FOR_REAL_TRAINING | **no** |
+| SAFE_FOR_PREDICTION_BACKTEST | **no** |
+
+### Next
+
+After user confirmation only: use `--match-ids` dry-run to produce an
+exact 5-row candidate list and per-row preview report. Do not execute
+batch write automatically. Do not start training. Do not start
+prediction/backtest.
+
+Do not start automatically.

@@ -13,15 +13,63 @@
  *   node smelt_all.js --no-write          # 同上，显式 no-write
  *   node smelt_all.js --preview           # 同上，显式 preview
  *   node smelt_all.js --preview --limit 5 # 预览前 5 条
+ *   node smelt_all.js --dry-run --full-recalculate --match-ids 53_aaa,53_bbb  # 精确 match_id no-write 预览
  *
  * @module scripts/ops/smelt_all
- * @version V176.1.0
+ * @version V176.2.0
  */
 
 'use strict';
 
 const { FeatureSmelter } = require('../../src/feature_engine/smelter/FeatureSmelter');
 const { assertDbWriteAllowed } = require('./helpers/db_write_guard');
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// --match-ids helpers (GOLD-AUDIT-2BB)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Parse a comma-separated match_id string into a trimmed array.
+ * Returns { matchIds: string[] | null, error: string | null }.
+ */
+function parseMatchIdsArg(raw) {
+    if (raw === undefined || raw === null || raw === '') {
+        return { matchIds: null, error: '--match-ids requires a comma-separated list of match IDs' };
+    }
+
+    const ids = raw.split(',').map(s => s.trim()).filter(s => s.length > 0);
+
+    // Check for empty entries (e.g. "a,,b" or "a, ,b")
+    const rawParts = raw.split(',');
+    if (rawParts.some(p => p.trim() === '')) {
+        return { matchIds: null, error: '--match-ids contains empty entry after trimming' };
+    }
+
+    if (ids.length === 0) {
+        return { matchIds: null, error: '--match-ids list is empty' };
+    }
+
+    return { matchIds: ids, error: null };
+}
+
+/**
+ * Validate a parsed matchIds array for duplicates. Returns error string or null.
+ */
+function validateMatchIds(matchIds) {
+    if (!Array.isArray(matchIds) || matchIds.length === 0) {
+        return 'matchIds must be a non-empty array';
+    }
+
+    const seen = new Set();
+    for (const id of matchIds) {
+        if (seen.has(id)) {
+            return `Duplicate match_id "${id}" in --match-ids list`;
+        }
+        seen.add(id);
+    }
+
+    return null;
+}
 
 function parseArgs(argv) {
     const fullRecalculate = argv.includes('--full-recalculate');
@@ -39,7 +87,28 @@ function parseArgs(argv) {
         }
     }
 
-    return { fullRecalculate, dryRun, noWrite, preview, isNoWrite, limit };
+    // --match-ids parsing (GOLD-AUDIT-2BB)
+    let matchIds = null;
+    let matchIdsError = null;
+    const matchIdsIdx = argv.indexOf('--match-ids');
+    if (matchIdsIdx !== -1 && matchIdsIdx + 1 < argv.length) {
+        const raw = argv[matchIdsIdx + 1];
+        const parsed = parseMatchIdsArg(raw);
+        if (parsed.error) {
+            matchIdsError = parsed.error;
+        } else {
+            const dupErr = validateMatchIds(parsed.matchIds);
+            if (dupErr) {
+                matchIdsError = dupErr;
+            } else {
+                matchIds = parsed.matchIds;
+            }
+        }
+    } else if (matchIdsIdx !== -1) {
+        matchIdsError = '--match-ids requires a comma-separated list of match IDs';
+    }
+
+    return { fullRecalculate, dryRun, noWrite, preview, isNoWrite, limit, matchIds, matchIdsError };
 }
 
 // eslint-disable-next-line complexity
@@ -59,6 +128,9 @@ function printPreview(result) {
     console.log(`   Failed:         ${result.failed}`);
     console.log(`   Skipped:        ${result.skipped}`);
     console.log(`   DB writes:      NONE (INSERT/UPDATE suppressed)`);
+    if (result.matchIds) {
+        console.log(`   --match-ids:    ${result.matchIds.join(', ')} (${result.matchIds.length} rows)`);
+    }
     console.log('═'.repeat(72));
 
     for (const entry of result.previewEntries) {
@@ -90,6 +162,9 @@ function printPreview(result) {
                 console.log(`│     elo_diff=${info.elo_diff}`);
                 console.log(`│     _is_default=${info._is_default}`);
                 if (info._source) console.log(`│     _source=${info._source}`);
+                // 2BB: show would_change signal
+                const wouldChange = info._is_default === false ? 'no (already real)' : 'yes (default → real)';
+                console.log(`│     would_change=${wouldChange}`);
             }
         }
         console.log(`└─`);
@@ -99,13 +174,39 @@ function printPreview(result) {
 
 async function main() {
     const args = parseArgs(process.argv);
-    const { fullRecalculate, isNoWrite, limit } = args;
+    const { fullRecalculate, isNoWrite, limit, matchIds, matchIdsError } = args;
+
+    // ── Validate --match-ids parsing errors ──────────────────────────────────
+    if (matchIdsError) {
+        console.error(`❌ Invalid --match-ids argument: ${matchIdsError}`);
+        process.exit(1);
+    }
+
+    // ── --match-ids + --limit mutual exclusion ───────────────────────────────
+    if (matchIds !== null && process.argv.includes('--limit')) {
+        console.error('❌ --match-ids and --limit are mutually exclusive. Use --match-ids for exact selection.');
+        process.exit(1);
+    }
+
+    // ── 2BB: --match-ids only allowed in dry-run/no-write mode ───────────────
+    if (matchIds !== null && !isNoWrite) {
+        console.error(
+            '❌ --match-ids is currently allowed only in dry-run/no-write mode.\n' +
+            '   Use --dry-run, --no-write, or --preview with --match-ids.\n' +
+            '   Write mode with --match-ids is blocked until a future task explicitly authorizes it.'
+        );
+        process.exit(1);
+    }
 
     if (isNoWrite) {
         console.log('🔒 NO-WRITE PREVIEW MODE');
         console.log('   DB writes: DISABLED');
         console.log('   INSERT/UPDATE: suppressed');
-        console.log(`   Limit: ${limit}`);
+        if (matchIds) {
+            console.log(`   Match IDs: ${matchIds.join(', ')} (${matchIds.length} rows)`);
+        } else {
+            console.log(`   Limit: ${limit}`);
+        }
         console.log('');
     } else {
         assertDbWriteAllowed({
@@ -122,13 +223,17 @@ async function main() {
 
     try {
         await smelter.init();
-        const result = await smelter.run({
+        const runOpts = {
             fullRecalculate,
             limit,
             dryRun: isNoWrite,
             noWrite: isNoWrite,
             preview: isNoWrite,
-        });
+        };
+        if (matchIds !== null) {
+            runOpts.matchIds = matchIds;
+        }
+        const result = await smelter.run(runOpts);
 
         if (isNoWrite && result.previewEntries) {
             printPreview(result);
