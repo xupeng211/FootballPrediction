@@ -441,6 +441,92 @@ class FeatureSmelter {
     }
 
     /**
+     * Fetch specific matches by exact match_id list (GOLD-AUDIT-2BB).
+     * Preserves input order. Throws if any match_id is not found or has no raw_data.
+     *
+     * @param {string[]} matchIds - exact match_id list
+     * @returns {Promise<Array>} matches in input order
+     */
+    async getMatchesByIds(matchIds) {
+        if (!Array.isArray(matchIds) || matchIds.length === 0) {
+            throw new Error('getMatchesByIds: matchIds must be a non-empty array');
+        }
+
+        const operation = async (pool) => {
+            // Parameterized IN clause: $1, $2, $3, ...
+            const placeholders = matchIds.map((_, i) => `$${i + 1}`).join(', ');
+            const query = `
+                WITH ranked AS (
+                    SELECT
+                        m.match_id,
+                        m.external_id,
+                        m.home_team,
+                        m.away_team,
+                        m.match_date,
+                        m.home_score,
+                        m.away_score,
+                        r.raw_data,
+                        r.data_version,
+                        ROW_NUMBER() OVER (
+                            PARTITION BY m.match_id
+                            ORDER BY
+                                CASE r.data_version
+                                    WHEN 'fotmob_live_v1' THEN 1
+                                    WHEN 'fotmob_pageprops_v2' THEN 2
+                                    WHEN 'fotmob_html_hyd_v1' THEN 3
+                                    ELSE 99
+                                END,
+                                m.match_date DESC NULLS LAST,
+                                m.match_id,
+                                r.data_version
+                        ) AS rn
+                    FROM matches m
+                    INNER JOIN raw_match_data r ON m.match_id = r.match_id
+                    WHERE m.match_id IN (${placeholders})
+                      AND m.external_id IS NOT NULL
+                      AND COALESCE(r.data_version, '') NOT IN ('PHASE4.23', 'PHASE4.43_SYNTHETIC')
+                )
+                SELECT
+                    match_id,
+                    external_id,
+                    home_team,
+                    away_team,
+                    match_date,
+                    home_score,
+                    away_score,
+                    raw_data,
+                    data_version
+                FROM ranked
+                WHERE rn = 1
+            `;
+
+            const result = await pool.query(query, matchIds);
+
+            // Build a lookup map
+            const rowsByMatchId = new Map();
+            for (const row of result.rows) {
+                rowsByMatchId.set(row.match_id, row);
+            }
+
+            // Validate: all requested match_ids must be present
+            const missing = matchIds.filter(id => !rowsByMatchId.has(id));
+            if (missing.length > 0) {
+                throw new Error(
+                    `The following match_ids were not found in the database: ${missing.join(', ')}`
+                );
+            }
+
+            // Return in input order
+            return matchIds.map(id => rowsByMatchId.get(id));
+        };
+
+        return withRetry(operation, 'getMatchesByIds', {
+            maxRetries: DB_MAX_RETRIES,
+            initialDelayMs: DB_RETRY_DELAY_MS
+        });
+    }
+
+    /**
      * 处理单场比赛的特征提取
      * @param {object} match - 比赛数据
      * @returns {object | null} 提取的特征，失败返回 null
@@ -644,6 +730,7 @@ class FeatureSmelter {
         }
     }
 
+    // eslint-disable-next-line complexity
     async run(options = {}) {
         const {
             fullRecalculate = false,
@@ -651,12 +738,14 @@ class FeatureSmelter {
             dryRun = false,
             noWrite = false,
             preview = false,
+            matchIds = null,
         } = options;
 
         const isNoWrite = dryRun || noWrite || preview;
 
         this.logger.info('开始特征熔炼', {
             fullRecalculate, limit, isNoWrite,
+            matchIds: matchIds ? matchIds.length : 0,
             mode: isNoWrite ? 'NO-WRITE PREVIEW' : 'WRITE ENABLED',
             config: this.config
         });
@@ -686,11 +775,16 @@ class FeatureSmelter {
         const startTime = Date.now();
 
         try {
-            // 获取待处理比赛
-            const matches = await this.getPendingMatches(fullRecalculate, limit);
+            // 获取待处理比赛 — route by matchIds vs. standard selection
+            let matches;
+            if (matchIds && matchIds.length > 0) {
+                matches = await this.getMatchesByIds(matchIds);
+                this.logger.info('matchIds精确查询完成', { requested: matchIds.length, found: matches.length });
+            } else {
+                matches = await this.getPendingMatches(fullRecalculate, limit);
+                this.logger.info('待处理比赛数量', { count: matches.length });
+            }
             this.stats.total = matches.length;
-
-            this.logger.info('待处理比赛数量', { count: matches.length });
 
             if (matches.length === 0) {
                 this.logger.info('无待处理比赛，任务完成');
@@ -725,6 +819,7 @@ class FeatureSmelter {
                     isDryRun: true,
                     preview: previewEntries.length,
                     previewEntries,
+                    matchIds: matchIds || undefined,
                     _note: 'NO-WRITE PREVIEW — l3_features NOT modified'
                 };
             }
