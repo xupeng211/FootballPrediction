@@ -1135,3 +1135,230 @@ write automatically. Do not start training. Do not start
 prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BD — Exact 5-row Controlled Write Authorization Plan
+
+### Status
+
+| Gate | Value |
+|---|---|
+| GOLD_AUDIT_2BD_PASS | **yes** |
+| EXACT_5_WRITE_AUTHORIZATION_PLAN_RECORDED | **yes** |
+| READY_FOR_EXACT_5_WRITE_AUTHORIZATION | **yes** |
+| READY_FOR_EXACT_5_WRITE_EXECUTION | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+
+Authorization plan only. No DB write, smelt write, batch write, training,
+prediction, or backtest was performed in 2BD.
+
+### Purpose
+
+Convert the 2BC exact 5-row dry-run preview into a controlled write
+authorization plan. Define exact scope, pre-checks, backups, future write
+constraints, post-checks, rollback rules, and stop conditions.
+
+`--match-ids` write mode remains unauthorized and intentionally blocked.
+
+### Current DB State Before 2BD Dry-run
+
+| Table | Count |
+|---|---|
+| raw_match_data | 76 |
+| matches | 60 |
+| l3_features | 60 |
+| real Prematch Elo rows (`_is_default=false`) | 1 |
+| default Elo rows (`_is_default=true`) | 59 |
+| existing real row | `53_20252026_4830746` |
+
+### Exact 5-row Scope
+
+Only these 5 match_ids:
+
+| # | match_id | current_is_default | preview_home_elo | preview_away_elo | preview_elo_diff | preview_is_default | preview_source |
+|---|---|---|---|---|---|---|---|
+| 1 | `53_20252026_4830747` | true | 1502.02 | 1523.65 | -21.63 | false | PrematchEloComputer |
+| 2 | `53_20252026_4830748` | true | 1479.12 | 1498.91 | -19.79 | false | PrematchEloComputer |
+| 3 | `53_20252026_4830750` | true | 1574.09 | 1472.12 | 101.97 | false | PrematchEloComputer |
+| 4 | `53_20252026_4830751` | true | 1527.17 | 1457.57 | 69.60 | false | PrematchEloComputer |
+| 5 | `53_20252026_4830752` | true | 1415.35 | 1523.68 | -108.33 | false | PrematchEloComputer |
+
+Teams:
+- #1: Auxerre vs Nice
+- #2: Le Havre vs Marseille
+- #3: Metz vs Lorient
+- #4: Monaco vs Lille
+- #5: Paris Saint-Germain vs Brest
+
+Exclusions:
+- Existing real row `53_20252026_4830746` excluded.
+- All structurally-default rows excluded (9 rows, teams with no prior history).
+- `PHASE4.23` and `PHASE4.43_SYNTHETIC` excluded (2 rows).
+- No `--limit` to be used.
+
+### 2BD Dry-run Validation
+
+Command:
+```
+node scripts/ops/smelt_all.js --dry-run --full-recalculate \
+  --match-ids 53_20252026_4830747,53_20252026_4830748,53_20252026_4830750,53_20252026_4830751,53_20252026_4830752
+```
+
+| Metric | Value |
+|---|---|
+| total | 5 |
+| success | 5 |
+| failed | 0 |
+| eloHits | 5 |
+| eloDefaults | 0 |
+| actual_db_write | false (all 5 entries) |
+| `--limit` used | no |
+| only specified match_ids processed | yes |
+| extra match_ids processed | 0 |
+| preview matches 2BC | **yes** — all 5 Elo values identical |
+
+### DB Safety Confirmation (After Dry-run)
+
+| Check | Before | After | Changed |
+|---|---|---|---|
+| raw_match_data count | 76 | 76 | no |
+| matches count | 60 | 60 | no |
+| l3_features count | 60 | 60 | no |
+| real Elo rows (`_is_default=false`) | 1 | 1 | no |
+| default Elo rows (`_is_default=true`) | 59 | 59 | no |
+| unique real DB row | `53_20252026_4830746` | `53_20252026_4830746` | no |
+
+All DB counts and Elo distribution unchanged after 2BD dry-run.
+
+### Current Tooling Constraint
+
+| Capability | Status |
+|---|---|
+| `--match-ids` dry-run | **available** |
+| `--match-ids` write mode | **intentionally blocked** (line 192-198 of `smelt_all.js`) |
+| `--match-ids` + `--limit` | **rejected** (mutually exclusive) |
+| Current batch write executable | **no** |
+
+A future separate task is required before exact 5-row write can be executed.
+Either:
+1. Explicitly authorize a one-time exact 5-row write path, or
+2. Implement a guarded write-mode unlock for `--match-ids` with explicit
+   flags and tests.
+
+### Future Pre-write Checks
+
+Before any future real write, ALL of the following must pass:
+
+1. Working tree clean.
+2. Main synced.
+3. Candidate list exactly matches the 5 IDs above.
+4. DB counts: raw=76, matches=60, l3=60.
+5. Real/default distribution: false=1, true=59.
+6. Each exact 5 row exists and has `current_is_default=true`.
+7. Existing real row remains `53_20252026_4830746`.
+8. Exact 5 dry-run: success=5, failed=0, eloHits=5, eloDefaults=0.
+9. All dry-run preview `actual_db_write=false`.
+10. No training/prediction/backtest running.
+
+### Future Backup Requirements
+
+Before any future real write, export:
+
+1. Exact 5 before rows as JSON files (one per match_id).
+2. Full DB count snapshot.
+3. Real/default distribution snapshot.
+4. Existing real row snapshot.
+5. Exact 5 dry-run output saved.
+6. SHA256 hashes for all backup files.
+7. Backup path under `/tmp/gold_audit_2be` or future task-specific folder.
+
+### Future Write Command Placeholder
+
+```bash
+# FUTURE ONLY — DO NOT RUN IN 2BD
+# Requires explicit authorization from a future task.
+node scripts/ops/smelt_all.js --full-recalculate \
+  --match-ids 53_20252026_4830747,53_20252026_4830748,53_20252026_4830750,53_20252026_4830751,53_20252026_4830752
+```
+
+Required future safeguards:
+- Exact user authorization from a separate task.
+- Explicit DB write flags (`ALLOW_DB_WRITE=true` etc.).
+- Explicit final confirmation.
+- `--match-ids` write mode explicitly enabled by that future task.
+- No `--limit`.
+- No extra match_id.
+- No training, prediction, or backtest.
+
+### Future Post-write Validation
+
+After any future real write:
+
+1. `raw_match_data` remains 76.
+2. `matches` remains 60.
+3. `l3_features` remains 60.
+4. Real Elo rows increase from 1 to 6.
+5. Default Elo rows decrease from 59 to 54.
+6. Exactly the 5 candidate rows changed.
+7. No non-candidate row changed.
+8. Each written row has `_is_default=false`.
+9. Each written row has `_source=PrematchEloComputer`.
+10. Each written row values match dry-run preview within acceptable rounding.
+11. Existing row `53_20252026_4830746` unchanged.
+12. No schema/migration/model/training artifacts created.
+
+### Future Rollback Plan
+
+- Rollback is not automatic.
+- Rollback requires explicit user authorization.
+- Restore only exact 5 candidate rows from before JSON backups.
+- Verify counts return to false=1, true=59 after rollback.
+- Verify no non-candidate rows changed.
+- Document rollback result.
+
+### Stop Conditions
+
+Future real write must stop immediately if:
+
+1. Candidate list differs from exact 5 IDs above.
+2. Any candidate is already real before write.
+3. Dry-run has failed > 0.
+4. `eloDefaults` > 0 for selected 5.
+5. `actual_db_write` is not false in dry-run.
+6. DB counts differ from expected (raw=76, matches=60, l3=60).
+7. Existing real row changed unexpectedly.
+8. Working tree dirty.
+9. Any schema/training/backtest/scraper changes appear.
+10. User authorization is absent or ambiguous.
+
+### 2BD Tooling References
+
+Key code locations confirmed during 2BD audit:
+
+| Mechanism | File | Lines | Status |
+|---|---|---|---|
+| `--match-ids` parsing | `scripts/ops/smelt_all.js` | 35-60 | active |
+| `--match-ids` + `--limit` mutual exclusion | `scripts/ops/smelt_all.js` | 186-188 | enforced |
+| `--match-ids` write mode block | `scripts/ops/smelt_all.js` | 192-198 | enforced |
+| `assertDbWriteAllowed` | `scripts/ops/smelt_all.js` | 25, 212-216 | enforced |
+| `getMatchesByIds` | `src/feature_engine/smelter/FeatureSmelter.js` | 450-523 | active |
+| `actual_db_write: false` in preview | `src/feature_engine/smelter/FeatureSmelter.js` | 868 | enforced |
+
+### Readiness Gates
+
+| Gate | Value |
+|---|---|
+| READY_FOR_EXACT_5_WRITE_AUTHORIZATION | **yes** |
+| READY_FOR_EXACT_5_WRITE_EXECUTION | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+| SAFE_FOR_REAL_TRAINING | **no** |
+| SAFE_FOR_PREDICTION_BACKTEST | **no** |
+
+### Next
+
+After user confirmation only: create a separate exact 5-row write
+enablement/execution task. Do not execute batch write automatically. Do
+not start training. Do not start prediction/backtest.
+
+Do not start automatically.
