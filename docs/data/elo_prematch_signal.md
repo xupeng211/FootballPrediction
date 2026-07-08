@@ -407,3 +407,183 @@ rewrite L3 automatically. Do not start training. Do not start
 prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2AZ — No-write Expansion Readiness Audit
+
+### Status
+
+| Gate | Value |
+|---|---|
+| GOLD_AUDIT_2AZ_PASS | **yes** |
+| NO_WRITE_EXPANSION_AUDIT_RECORDED | **yes** |
+| DB_UNCHANGED_AFTER_DRY_RUN | **yes** |
+| READY_TO_DESIGN_BATCH_WRITE_PLAN | **yes** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+| SAFE_FOR_REAL_TRAINING | **no** |
+| SAFE_FOR_PREDICTION_BACKTEST | **no** |
+
+No DB write, smelt write, L3 batch rewrite, training, prediction, or
+backtest was performed in 2AZ. This section records the no-write
+expansion readiness audit.
+
+### Current DB State Before No-write Expansion Audit
+
+| Table | Count |
+|---|---|
+| raw_match_data | 76 |
+| matches | 60 |
+| l3_features | 60 |
+| real Prematch Elo rows (`_is_default=false`) | 1 |
+| old/default Elo rows (`_is_default=true`) | 59 |
+
+Existing real Elo row:
+
+| Field | Value |
+|---|---|
+| match_id | `53_20252026_4830746` |
+| home_elo | 1517.38 |
+| away_elo | 1476.06 |
+| elo_diff | 41.32 |
+| _is_default | false |
+| _source | PrematchEloComputer |
+
+### No-write Expansion Dry-run
+
+Command:
+```
+node scripts/ops/smelt_all.js --dry-run --full-recalculate --limit 60
+```
+
+| Metric | Value |
+|---|---|
+| preview_count | 58 |
+| total | 58 |
+| success | 58 |
+| failed | 0 |
+| eloHits | 49 |
+| eloDefaults | 9 |
+| actual_db_write | false (every entry) |
+| would_write | true (every entry) |
+| mode | NO-WRITE PREVIEW |
+| DB counts after dry-run | unchanged |
+| real Elo row count after dry-run | unchanged (1) |
+
+Dry-run completed cleanly. Every preview entry had `actual_db_write=false`
+and `would_write=true`. The end-of-run confirmation line:
+`✅ NO-WRITE PREVIEW complete. l3_features was NOT modified.`
+
+PrematchEloComputer produced non-default Elo for 49 of the 58 previewed
+rows. 9 rows received default Elo (1500/1500) because those teams had no
+prior match history. These 9 defaults are structurally unavoidable with
+the current in-memory PrematchEloComputer — they represent teams
+appearing for the first time in the dataset.
+
+### Post-Dry-run DB State (Unchanged)
+
+| Table | Count |
+|---|---|
+| raw_match_data | 76 |
+| matches | 60 |
+| l3_features | 60 |
+| real Prematch Elo rows (`_is_default=false`) | 1 |
+| old/default Elo rows (`_is_default=true`) | 59 |
+
+### Real / Default Distribution After Dry-run
+
+```text
+ is_default | rows
+------------+------
+ false      |    1
+ true       |   59
+```
+
+Unchanged from before dry-run. Only `match_id=53_20252026_4830746` has
+real Prematch Elo.
+
+### Readiness Assessment
+
+#### Item 1: limit 60 dry-run 是否可稳定完成
+
+**Yes.** Dry-run completed with 58/58 success, zero failures, zero errors.
+Two of the 60 l3_features rows were not included in the preview (likely
+because they had already been processed and `--full-recalculate` did not
+pick them up; this is consistent with `pending matches count=58`).
+
+#### Item 2: dry-run 是否明确 no-write
+
+**Yes.** Every preview entry has `actual_db_write=false`. The summary
+line confirms `"No INSERT/UPDATE was executed. l3_features unchanged."`
+The final output line reads `"✅ NO-WRITE PREVIEW complete. l3_features
+was NOT modified."`
+
+#### Item 3: 当前 DB 是否仍只有 1 条 real row
+
+**Yes.** Post-dry-run counts confirm `real_elo_rows=1`, only
+`53_20252026_4830746`.
+
+#### Item 4: 是否能观察到 PrematchEloComputer 输出
+
+**Yes.** All 58 preview entries show `_source=PrematchEloComputer`.
+Numeric Elo values (home_elo, away_elo, elo_diff) are printed in the
+formatted preview output for each entry. 49 entries have
+`_is_default=false` with non-default Elo values; 9 have
+`_is_default=true` with 1500/1500 defaults.
+
+#### Item 5: 是否存在 ALLOW_TRAINING_WRITE 命名风险
+
+**Yes, confirmed.** `scripts/ops/helpers/db_write_guard.js:90` maps the
+`l3_features` table to the `ALLOW_TRAINING_WRITE` gate:
+```js
+{ pattern: /^l3_features$/i, gate: 'ALLOW_TRAINING_WRITE', label: 'l3_features (training)' },
+```
+This means writing to `l3_features` requires `ALLOW_TRAINING_WRITE=yes`,
+which is semantically misleading — it suggests training authorization
+was granted when in fact only an L3 smelt write was performed (as
+observed in GOLD-AUDIT-2AX). This is a gate-naming issue, not a safety
+bypass.
+
+#### Item 6: 是否已经具备"设计批量 controlled write 计划"的条件
+
+**Yes.** The infrastructure is in place: dry-run is stable, no-write
+preview produces accurate Elo values, the single-row controlled write
+(GOLD-AUDIT-2AX) was successfully validated, and the same pattern
+applies to batch writes. The structure for a batch controlled write plan
+is clear:
+- per-row backup before write
+- per-row diff validation (before/after Elo values)
+- limited batch size (e.g. 5-10 rows at a time)
+- dry-run confirmation before each batch
+- explicit env flag authorization per batch
+
+#### Item 7: 是否仍不具备直接 batch write 或 training 条件
+
+**Yes.** Batch write remains unauthorized. Only 1 of 60 L3 rows has real
+Prematch Elo. 9 rows would receive default Elo even after full
+re-smelting (teams with no prior history). Odds signal remains
+unavailable. Training is still unsafe. `ALLOW_TRAINING_WRITE` naming
+remains confusing.
+
+### Risks / Follow-ups
+
+| Risk | Detail |
+|---|---|
+| Partial Elo coverage | Only 49 of 58 previewed rows get real Elo; 9 get defaults. Full batch write would leave 9 rows with `_is_default=true, elo=1500`. These 9 defaults are structurally unavoidable until more match history is available for those teams. |
+| ALLOW_TRAINING_WRITE naming | `l3_features` write requires `ALLOW_TRAINING_WRITE=yes` per `db_write_guard.js:90`. This is misleading in an L3 smelt write context. Recommend a future gate-naming task before scaling writes. |
+| Default Elo noise | 9 rows with `_is_default=true` would add noise to any training dataset. Training remains unsafe. |
+| Odds signal gap | Odds data remains unavailable (`OddsPortalProvider 未实现`). |
+| Single-row validation only | Only one row has been validated end-to-end (2AX). Batch write needs per-row diff validation. |
+
+### Conclusion
+
+- **Ready to design batch controlled write plan:** yes.
+- **Ready to execute batch write now:** no.
+- **Ready for training dry-run:** no.
+- **Ready for prediction/backtest:** no.
+
+Next recommended task (after user confirmation only): Design a batch
+controlled write plan for the remaining default Elo rows, with backup,
+row-diff, per-row validation, rollback criteria, and explicit user
+authorization. Use a small batch (e.g. 5 rows) as the first increment.
+
+Do not start automatically.
