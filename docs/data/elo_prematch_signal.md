@@ -587,3 +587,260 @@ row-diff, per-row validation, rollback criteria, and explicit user
 authorization. Use a small batch (e.g. 5 rows) as the first increment.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BA — Batch Controlled Write Plan
+
+### Status
+
+| Gate | Value |
+|---|---|
+| GOLD_AUDIT_2BA_PASS | **yes** |
+| BATCH_CONTROLLED_WRITE_PLAN_RECORDED | **yes** |
+| READY_TO_DESIGN_SMALL_BATCH_WRITE | **yes** |
+| READY_TO_EXECUTE_SMALL_BATCH_WRITE | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+
+Plan only. No DB write, smelt write, L3 batch rewrite, training,
+prediction, or backtest was performed in 2BA.
+
+### Current DB State
+
+| Table | Count |
+|---|---|
+| raw_match_data | 76 |
+| matches | 60 |
+| l3_features | 60 |
+| real Prematch Elo rows (`_is_default=false`) | 1 |
+| old/default Elo rows (`_is_default=true`) | 59 |
+
+Existing real Elo row: `53_20252026_4830746` (Angers vs Strasbourg).
+
+### 2BA Dry-run
+
+Command:
+```
+node scripts/ops/smelt_all.js --dry-run --full-recalculate --limit 60
+```
+
+| Metric | Value |
+|---|---|
+| total | 58 |
+| success | 58 |
+| failed | 0 |
+| eloHits | 49 |
+| eloDefaults | 9 |
+| actual_db_write | false (every entry) |
+| DB counts after dry-run | unchanged (76, 60, 60) |
+| real/default distribution after dry-run | unchanged (false=1, true=59) |
+
+### Tooling Capability Assessment
+
+#### Current Script: `scripts/ops/smelt_all.js`
+
+| Capability | Supported | Detail |
+|---|---|---|
+| `--dry-run` / `--no-write` / `--preview` | **yes** | No-write preview mode |
+| `--full-recalculate` | **yes** | Re-smelt all matches |
+| `--limit N` | **yes** | Numeric limit only |
+| `--match-id` or `--match-ids` allowlist | **no** | Not implemented |
+| Exact candidate match_id selection | **no** | Only `--limit N` via ORDER BY |
+
+#### How `--full-recalculate` Selects Matches
+
+`FeatureSmelter.getPendingMatches(fullRecalculate=true)` uses this query
+ordering (see `src/feature_engine/smelter/FeatureSmelter.js:338-381`):
+
+```sql
+ORDER BY match_date DESC NULLS LAST, match_id
+LIMIT $1
+```
+
+The ordering is deterministic but based on date, not on Elo status. The
+caller cannot specify which match_ids to include or exclude.
+
+#### `--limit 5` Risk Assessment
+
+| Risk | Finding |
+|---|---|
+| Can select exact candidate match_ids | **no** |
+| Can exclude already-real rows | **no** |
+| Can exclude default-producing rows | **no** |
+| Can target only currently-default rows | **no** |
+| First 5 rows include already-real row | **yes** — `53_20252026_4830746` is position 1 |
+| Safe for real write | **no** |
+
+**Conclusion: Do not use `--limit 5` for a real write because it cannot
+guarantee exact candidate selection.** With the current ordering, the
+first 5 rows would include:
+
+1. `53_20252026_4830746` — **already real** (would be a no-op overwrite)
+2. `53_20252026_4830747` — default, would get real Elo
+3. `53_20252026_4830748` — default, would get real Elo
+4. `53_20252026_4830750` — default, would get real Elo
+5. `53_20252026_4830751` — default, would get real Elo
+
+Row 1 already has real Elo. Rows 2-5 would get real Elo. But the caller
+cannot confirm or control this selection without parsing dry-run output
+manually.
+
+### Recommended Prerequisite: Match ID Allowlist Tooling
+
+Before any batch write can be executed safely, the following tooling
+prerequisite must be implemented:
+
+**Option A (preferred): Add `--match-ids` to `smelt_all.js`**
+
+- Accept a comma-separated list of match_ids: `--match-ids id1,id2,id3`
+- Pass the list to `FeatureSmelter.getPendingMatches()` as a filter
+- The query would add `AND m.match_id = ANY($2)` with the array parameter
+- Dry-run first with the exact candidate list to verify
+- Only then allow real write with the same candidate list
+- This keeps the changes minimal and scoped to the CLI layer
+
+**Option B: Build a separate batch write script**
+
+- A new script that reads candidate match_ids from a file or CLI arg
+- Calls `FeatureSmelter.processMatch()` individually for each candidate
+- Generates per-row diff reports before/after
+- This is heavier but provides more granular control
+
+**Recommendation: Option A as the first step.** It reuses the existing
+infrastructure and requires fewer new files. The `--match-ids` parameter
+works from dry-run through to real write with the same selection
+guarantee.
+
+### Future Small-Batch Controlled Write Plan
+
+This plan is for design reference only. It does not authorize execution.
+
+#### 1. Scope
+
+| Field | Value |
+|---|---|
+| First batch size | 5 rows maximum |
+| Candidate source | Remaining default Elo rows that dry-run predicts will get real Elo |
+| Exclude | Existing real row `53_20252026_4830746` |
+| Exclude | Default-producing rows (teams with no prior history) unless user explicitly accepts |
+| Targeted Elo | PrematchEloComputer (`_source=PrematchEloComputer`, `_is_default=false`) |
+
+#### 2. Tooling Prerequisite
+
+- Implement `--match-ids` allowlist in `smelt_all.js` (or equivalent).
+- Dry-run candidate list first.
+- Confirm all candidates would receive `_is_default=false`.
+- Confirm no unexpected defaults in the batch.
+
+#### 3. Pre-check
+
+1. Confirm current branch and clean working tree.
+2. Confirm DB counts: raw=76, matches=60, l3=60.
+3. Confirm real/default distribution before write.
+4. List candidate match_ids with current Elo state.
+5. Export candidate rows to JSON files (before backup).
+6. Record SHA256 of each candidate backup.
+7. Run dry-run preview for exact candidate list.
+8. Confirm `actual_db_write=false` and Elo values match expectations.
+9. Confirm no defaults among candidates unless explicitly accepted.
+10. Do not proceed if any check fails.
+
+#### 4. Backup
+
+```bash
+# Export each candidate l3_features row before write
+for match_id in <candidate_list>; do
+  docker compose -f docker-compose.dev.yml exec -T db psql \
+    -U football_user -h localhost -d football_db \
+    -c "SELECT row_to_json(t) FROM (SELECT * FROM l3_features WHERE match_id = '$match_id') t;" \
+    > /tmp/batch_backup_${match_id}_before.json
+done
+```
+
+- Verify all backup files are non-empty and parseable.
+- Record counts before write.
+- Save candidate match_id list.
+
+#### 5. Future Write Command (Do NOT Execute in 2BA)
+
+Only after `--match-ids` tooling is implemented and explicitly
+authorized:
+
+```bash
+# NOT for execution in 2BA. Requires explicit authorization.
+docker compose -f docker-compose.dev.yml exec -T dev sh -lc \
+  'ALLOW_DB_WRITE=true node scripts/ops/smelt_all.js --full-recalculate --match-ids <id1,id2,id3,id4,id5>'
+```
+
+**Constraints:**
+- Must set `ALLOW_DB_WRITE=true`.
+- Must use `--full-recalculate`.
+- Must use `--match-ids` with exact candidate list (not `--limit`).
+- Must NOT pass `--dry-run`, `--no-write`, or `--preview`.
+- Must NOT set `FINAL_DB_WRITE_CONFIRMATION=yes` (reserved for broader auth).
+- Must NOT write more than the authorized batch size.
+- Must NOT train, predict, or backtest.
+
+#### 6. Post-check
+
+1. Confirm DB counts unchanged: raw=76, matches=60, l3=60.
+2. Confirm `real_elo_rows` increased by exactly the expected count.
+3. Confirm only candidate rows changed — no other rows affected.
+4. For each candidate, verify:
+   - `home_elo` matches preview value (±0.02)
+   - `away_elo` matches preview value (±0.02)
+   - `elo_diff` matches preview value (±0.02)
+   - `_is_default` = false
+   - `_source` = PrematchEloComputer
+5. Confirm no training, prediction, or backtest was triggered.
+6. Confirm no new tables were created.
+
+#### 7. Rollback
+
+- No automatic rollback.
+- Rollback requires explicit user authorization.
+- Restore only candidate rows from before-write JSON backups.
+- Re-verify counts and real/default distribution after rollback.
+- Document rollback result.
+
+#### 8. Acceptance Criteria
+
+| Criterion | Requirement |
+|---|---|
+| Rows updated | Exactly N candidate rows (e.g. 5) |
+| New rows created | 0 |
+| Schema changes | 0 |
+| `team_elo_ratings` table | Must NOT be created |
+| Other rows changed | 0 |
+| Training triggered | No |
+| Prediction/backtest triggered | No |
+| Scraper/network access | No |
+| Target Elo values | Match preview values within ±0.02 tolerance |
+
+### Remaining Risks
+
+| Risk | Detail |
+|---|---|
+| `ALLOW_TRAINING_WRITE` naming | `l3_features` write requires `ALLOW_TRAINING_WRITE=yes` per `db_write_guard.js:90`. Misleading for L3 smelt writes. |
+| Partial Elo coverage | 9 of 58 previewed rows would still receive default Elo (1500/1500) — structurally unavoidable for teams with no prior match history. |
+| Single-row validation only | Only one row has been end-to-end validated (2AX). First batch write should be small (5 rows) and conservative. |
+| Odds signal gap | Odds data remains unavailable (`OddsPortalProvider 未实现`). |
+| No `--match-ids` support | Current tooling cannot target specific match_ids. This must be resolved before any real batch write. |
+| `--limit 5` unsafe | First position is the already-real row `53_20252026_4830746`. Using `--limit` for real write would waste one slot on a no-op overwrite. |
+
+### Readiness Conclusion
+
+- **Ready to design small batch write:** yes.
+- **Ready to execute small batch write now:** **no** — `--match-ids`
+  allowlist tooling must be implemented first.
+- **Ready for training dry-run:** no.
+- **Ready for prediction/backtest:** no.
+- **`--limit 5` safe for real write:** **no** — cannot guarantee exact
+  candidate selection; would include already-real row.
+
+Next recommended task (after user confirmation only): Implement
+`--match-ids` allowlist tooling in `smelt_all.js` (no-write-first:
+dry-run only with match_id list, per-row diff reporting). Do not
+execute batch write automatically. Do not start training. Do not start
+prediction/backtest.
+
+Do not start automatically.
