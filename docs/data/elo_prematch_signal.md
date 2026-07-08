@@ -2160,3 +2160,184 @@ Next:
 * Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BJ — Remaining 44 Default Elo No-write Refresh Preview
+
+Status:
+- No-write refresh preview after 2BI.
+- No DB write performed.
+- No smelt write performed.
+- Dry-run smelt preview only.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Re-preview the remaining 44 default Elo rows after the 2BH next-10 controlled write and 2BI post-write audit.
+- Confirm how many remaining default rows would now become real Prematch Elo.
+- Confirm how many would remain default.
+- Confirm how many are unprocessed/filtered.
+- Keep DB unchanged.
+
+Starting DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 16
+- default Elo rows = 44
+- unexpected real rows = 0
+
+Current approved real rows:
+```text
+53_20252026_4830746
+53_20252026_4830747
+53_20252026_4830748
+53_20252026_4830750
+53_20252026_4830751
+53_20252026_4830752
+53_20252026_4830467
+53_20252026_4830468
+53_20252026_4830469
+53_20252026_4830470
+53_20252026_4830471
+53_20252026_4830472
+53_20252026_4830473
+53_20252026_4830474
+53_20252026_4830475
+53_20252026_4830476
+```
+
+Refresh preview command:
+
+* `node scripts/ops/smelt_all.js --dry-run --full-recalculate --match-ids <44 default ids>`
+* no `--limit`
+* no write flags
+* first attempt included all 44 IDs; 2 non-53 IDs (`140_20252026_4837496`, `47_20242025_900002`) caused "not found in database" error
+* second attempt with 42 valid 53_ IDs succeeded
+* `actual_db_write=true` count = 0
+
+Refresh preview result:
+
+* requested default ids = 44
+* valid 53_ ids = 42
+* non-53 ids (filtered) = 2
+* processed total = 42
+* success = 42
+* failed = 0
+* eloHits = 33
+* eloDefaults = 9
+* would_be_real_elo = 33
+* would_remain_default = 9
+* unprocessed_or_filtered = 2
+* failed rows = 0
+
+Would-be-real remaining candidates (33):
+```text
+53_20252026_4830477
+53_20252026_4830478
+53_20252026_4830479
+53_20252026_4830480
+53_20252026_4830481
+53_20252026_4830482
+53_20252026_4830483
+53_20252026_4830484
+53_20252026_4830485
+53_20252026_4830486
+53_20252026_4830487
+53_20252026_4830488
+53_20252026_4830489
+53_20252026_4830490
+53_20252026_4830491
+53_20252026_4830492
+53_20252026_4830493
+53_20252026_4830494
+53_20252026_4830495
+53_20252026_4830496
+53_20252026_4830497
+53_20252026_4830498
+53_20252026_4830499
+53_20252026_4830500
+53_20252026_4830501
+53_20252026_4830502
+53_20252026_4830505
+53_20252026_4830507
+53_20252026_4830508
+53_20252026_4830510
+53_20252026_4830511
+53_20252026_4830753
+53_20252026_4830754
+```
+
+Would-remain-default rows (9):
+```text
+53_20252026_4830458
+53_20252026_4830459
+53_20252026_4830460
+53_20252026_4830461
+53_20252026_4830462
+53_20252026_4830463
+53_20252026_4830464
+53_20252026_4830465
+53_20252026_4830466
+```
+
+Unprocessed / filtered rows (2):
+```text
+140_20252026_4837496
+47_20242025_900002
+```
+
+Failed rows: none
+
+Classification validation:
+
+* default_count = 44
+* classified_total = 44
+* classified_unique = 44
+* missing_from_classification = none
+* extra_not_in_default = none
+* overlaps = none
+
+Post-preview DB state:
+
+* raw_match_data = 76
+* matches = 60
+* l3_features = 60
+* real Prematch Elo rows = 16
+* default Elo rows = 44
+* unexpected real rows = 0
+* DB unchanged = yes
+
+Safety validation:
+
+* DB write = no
+* smelt write = no
+* dry-run smelt = yes, no-write only
+* batch write = no
+* rollback = no
+* training = no
+* prediction/backtest = no
+* scraper/network = no
+* schema/migration = no
+* code changed = no
+* `.github/**` changed = no
+
+Readiness:
+
+* GOLD_AUDIT_2BJ_PASS = yes
+* REMAINING_44_REFRESH_PREVIEW_RECORDED = yes
+* REMAINING_WOULD_BE_REAL_COUNT_CONFIRMED = yes (33 would-be-real)
+* DB_UNCHANGED_AFTER_PREVIEW = yes
+* READY_FOR_NEXT_EXACT_ALLOWLIST_PLAN = yes
+* READY_FOR_BATCH_WRITE = no
+* SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+
+* After user confirmation only: plan another controlled exact allowlist write batch based on the refreshed would-be-real list (33 candidates).
+* Do not execute another write automatically.
+* Do not start training.
+* Do not start prediction/backtest.
+
+Do not start automatically.
