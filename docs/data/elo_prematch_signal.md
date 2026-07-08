@@ -982,3 +982,156 @@ batch write automatically. Do not start training. Do not start
 prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BC — Exact 5-row `--match-ids` Dry-run Candidate Preview
+
+### Status
+
+| Gate | Value |
+|---|---|
+| GOLD_AUDIT_2BC_PASS | **yes** |
+| EXACT_5_DRY_RUN_PREVIEW_RECORDED | **yes** |
+| READY_FOR_EXACT_5_WRITE_PLAN | **yes** |
+| READY_FOR_EXACT_5_WRITE | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+
+Dry-run candidate preview only. No DB write, smelt write, batch write,
+training, prediction, or backtest was performed in 2BC.
+
+### Purpose
+
+Use the 2BB `--match-ids` allowlist tooling to select an exact 5-row
+candidate list from the current default Elo rows. Confirm each selected
+row previews as real Prematch Elo. Confirm DB remains unchanged.
+
+### Current DB State Before 2BC
+
+| Table | Count |
+|---|---|
+| raw_match_data | 76 |
+| matches | 60 |
+| l3_features | 60 |
+| real Prematch Elo rows (`_is_default=false`) | 1 |
+| default Elo rows (`_is_default=true`) | 59 |
+| existing real row | `53_20252026_4830746` |
+
+### Default Pool Analysis
+
+Total default Elo rows in DB: 59. Of these:
+
+| Category | Count | Detail |
+|---|---|---|
+| Smeltable default rows | **57** | Have valid `raw_match_data` with non-excluded `data_version` |
+| Excluded by data_version | **2** | `140_20252026_4837496` (PHASE4.23), `47_20242025_900002` (PHASE4.43_SYNTHETIC) |
+| Would get real Prematch Elo | **48** | Preview `_is_default=false`, `_source=PrematchEloComputer` |
+| Would remain default Elo | **9** | Teams with no prior match history; structurally unavoidable |
+
+Default pool dry-run command:
+```
+node scripts/ops/smelt_all.js --dry-run --full-recalculate \
+  --match-ids <57 comma-separated default match_ids>
+```
+
+| Metric | Value |
+|---|---|
+| total | 57 |
+| success | 57 |
+| failed | 0 |
+| eloHits | 48 |
+| eloDefaults | 9 |
+| actual_db_write | false (all entries) |
+
+### Candidate Selection Rule
+
+- Include only current default Elo rows (`_is_default=true` in DB).
+- Exclude existing real row `53_20252026_4830746`.
+- Exclude rows that preview as `_is_default=true` (9 structurally default rows).
+- Exclude rows with excluded `data_version` (2 rows: PHASE4.23, PHASE4.43_SYNTHETIC).
+- Use exact `--match-ids`, not `--limit`.
+- Select from the beginning of the default pool ordered by `match_date DESC, match_id ASC`.
+
+### Exact 5-row Candidate List
+
+| # | match_id | current_is_default | preview_home_elo | preview_away_elo | preview_elo_diff | preview_is_default | preview_source | actual_db_write |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `53_20252026_4830747` | true | 1502.02 | 1523.65 | -21.63 | false | PrematchEloComputer | false |
+| 2 | `53_20252026_4830748` | true | 1479.12 | 1498.91 | -19.79 | false | PrematchEloComputer | false |
+| 3 | `53_20252026_4830750` | true | 1574.09 | 1472.12 | 101.97 | false | PrematchEloComputer | false |
+| 4 | `53_20252026_4830751` | true | 1527.17 | 1457.57 | 69.60 | false | PrematchEloComputer | false |
+| 5 | `53_20252026_4830752` | true | 1415.35 | 1523.68 | -108.33 | false | PrematchEloComputer | false |
+
+Teams:
+- #1: Auxerre vs Nice
+- #2: Le Havre vs Marseille
+- #3: Metz vs Lorient
+- #4: Monaco vs Lille
+- #5: Paris Saint-Germain vs Brest
+
+### Exact 5-row Dry-run
+
+Command:
+```
+node scripts/ops/smelt_all.js --dry-run --full-recalculate \
+  --match-ids 53_20252026_4830747,53_20252026_4830748,53_20252026_4830750,53_20252026_4830751,53_20252026_4830752
+```
+
+| Metric | Value |
+|---|---|
+| total | 5 |
+| success | 5 |
+| failed | 0 |
+| eloHits | 5 |
+| eloDefaults | 0 |
+| actual_db_write | false (all 5 entries) |
+| `--limit` used | no |
+| only specified match_ids processed | yes |
+| extra match_ids processed | 0 |
+| existing real row included | no |
+
+### DB Safety Confirmation (After All Dry-runs)
+
+| Check | Before | After | Changed |
+|---|---|---|---|
+| raw_match_data count | 76 | 76 | no |
+| matches count | 60 | 60 | no |
+| l3_features count | 60 | 60 | no |
+| real Elo rows (`_is_default=false`) | 1 | 1 | no |
+| default Elo rows (`_is_default=true`) | 59 | 59 | no |
+| unique real DB row | `53_20252026_4830746` | `53_20252026_4830746` | no |
+
+All DB counts and Elo distribution unchanged after all dry-run
+operations.
+
+### Readiness Gates
+
+| Gate | Value |
+|---|---|
+| READY_FOR_EXACT_5_WRITE_PLAN | **yes** |
+| READY_FOR_EXACT_5_WRITE | **no** |
+| SAFE_FOR_BATCH_WRITE | **no** |
+| SAFE_FOR_TRAINING_DRY_RUN | **no** |
+| SAFE_FOR_REAL_TRAINING | **no** |
+| SAFE_FOR_PREDICTION_BACKTEST | **no** |
+
+### Notes
+
+- 9 structurally-default rows (teams with no prior match history) remain
+  unavoidable with current in-memory PrematchEloComputer. These 9 rows
+  are excluded from the candidate list.
+- 2 rows excluded by `data_version` (PHASE4.23, PHASE4.43_SYNTHETIC).
+  These are historical/synthetic data versions that the smelter
+  explicitly filters out. They remain in `l3_features` with default Elo.
+- All 5 candidates have been verified as currently default in DB and
+  would produce real Prematch Elo on smelt write.
+- The `--match-ids` tooling is confirmed to work for exact candidate
+  selection with the full 57-row default pool.
+
+### Next
+
+After user confirmation only: design exact 5-row controlled write
+authorization plan for these 5 candidate match_ids. Do not execute batch
+write automatically. Do not start training. Do not start
+prediction/backtest.
+
+Do not start automatically.
