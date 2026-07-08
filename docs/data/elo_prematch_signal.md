@@ -1362,3 +1362,99 @@ enablement/execution task. Do not execute batch write automatically. Do
 not start training. Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BE-A — Exact 5-row Write Preflight and Backup Rehearsal
+
+Status:
+- Preflight and backup rehearsal only.
+- No DB write performed.
+- No smelt write performed.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No code changed.
+- `--match-ids` write mode remains unauthorized.
+
+Purpose:
+- Confirm the exact 5 candidates are still safe for a future controlled write.
+- Produce before-state backup artifacts outside the repository.
+- Confirm dry-run still matches 2BC/2BD.
+- Confirm DB remains unchanged.
+- Confirm the next task must be a separate explicit write enablement/execution task.
+
+Exact 5 candidates:
+| # | match_id | current_is_default | current_home_elo | current_away_elo | current_elo_diff | preview_home_elo | preview_away_elo | preview_elo_diff | preview_is_default | preview_source | actual_db_write |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---|---:|
+| 1 | `53_20252026_4830747` | true | 1500 | 1500 | 0 | 1502.02 | 1523.65 | -21.63 | false | PrematchEloComputer | false |
+| 2 | `53_20252026_4830748` | true | 1500 | 1500 | 0 | 1479.12 | 1498.91 | -19.79 | false | PrematchEloComputer | false |
+| 3 | `53_20252026_4830750` | true | 1500 | 1500 | 0 | 1574.09 | 1472.12 | 101.97 | false | PrematchEloComputer | false |
+| 4 | `53_20252026_4830751` | true | 1500 | 1500 | 0 | 1527.17 | 1457.57 | 69.60 | false | PrematchEloComputer | false |
+| 5 | `53_20252026_4830752` | true | 1500 | 1500 | 0 | 1415.35 | 1523.68 | -108.33 | false | PrematchEloComputer | false |
+
+Preflight DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 1
+- default Elo rows = 59
+- existing real row = `53_20252026_4830746`
+
+Backup artifacts:
+- `/tmp/gold_audit_2be_a/exact_5_before_l3_rows.json`
+- `/tmp/gold_audit_2be_a/counts_snapshot_before.json`
+- `/tmp/gold_audit_2be_a/default_distribution_before.json`
+- `/tmp/gold_audit_2be_a/real_rows_before.json`
+- `/tmp/gold_audit_2be_a/exact_5_dry_run.txt`
+- `/tmp/gold_audit_2be_a/backup_sha256sums.txt`
+- `/tmp/gold_audit_2be_a/exact_5_dry_run_sha256.txt`
+- `/tmp/gold_audit_2be_a/rollback_rehearsal_note.txt`
+
+Backup validation:
+- backup files created = yes
+- backup files non-empty = yes
+- exact 5 before backup rows = 5
+- sha256 checksums generated = yes
+
+2BE-A dry-run validation:
+- command used `--dry-run --full-recalculate --match-ids <exact 5 ids>`
+- no `--limit`
+- processed total = 5
+- success = 5
+- failed = 0
+- eloHits = 5
+- eloDefaults = 0
+- all entries `actual_db_write=false`
+- preview matches 2BC/2BD expected values = yes
+
+Post dry-run DB validation:
+- raw_match_data unchanged = 76
+- matches unchanged = 60
+- l3_features unchanged = 60
+- real/default distribution unchanged = false=1, true=59
+- existing real row remains `53_20252026_4830746`
+
+Tooling state:
+- `--match-ids` dry-run supported = yes
+- `--match-ids` write mode remains unauthorized = yes
+- exact 5 write execution currently authorized = no
+
+Rollback rehearsal:
+- rollback was not executed
+- rollback note generated under `/tmp/gold_audit_2be_a/rollback_rehearsal_note.txt`
+- future rollback still requires explicit user authorization
+
+Readiness:
+- GOLD_AUDIT_2BE_A_PASS = yes
+- EXACT_5_PREFLIGHT_BACKUP_REHEARSAL_RECORDED = yes
+- READY_FOR_EXACT_5_WRITE_ENABLEMENT_TASK = yes
+- READY_FOR_EXACT_5_WRITE_EXECUTION = no
+- SAFE_FOR_BATCH_WRITE = no
+- SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+- After user confirmation only: create a separate exact 5-row write enablement/execution task.
+- Do not execute batch write automatically.
+- Do not start training.
+- Do not start prediction/backtest.
+
+Do not start automatically.
