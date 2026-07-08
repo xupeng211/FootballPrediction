@@ -1740,3 +1740,134 @@ Next:
 - Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BG — Next 10 Exact Allowlist Write Plan
+
+Status:
+- Write plan only.
+- No DB write performed.
+- No smelt write performed.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Select the next exact 10 candidates from the 43 rows that 2BF classified as `would_be_real_elo`.
+- Confirm these 10 rows are still current default rows.
+- Confirm dry-run converts all 10 into real Prematch Elo.
+- Prepare backup and future write command, without executing it.
+
+Starting DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 6
+- default Elo rows = 54
+- unexpected real rows = 0
+
+2BF candidate pool:
+- Source: GOLD-AUDIT-2BF remaining default Elo no-write batch preview.
+- default rows = 54
+- valid Ligue 1 rows processed = 52
+- would_be_real_elo = 43
+- would_remain_default = 9
+- unprocessed_or_filtered = 2
+
+Re-verification dry-run:
+- Re-ran `--dry-run --full-recalculate --match-ids <52 valid 53_ IDs>`.
+- Result confirmed: total=52, success=52, failed=0, eloHits=43, eloDefaults=9.
+- 2BF classification confirmed stable.
+
+Selection rule:
+- Source pool: 2BF `would_be_real_elo` only.
+- Sort by match_id ascending.
+- Select first 10.
+- Exclude already-real rows, would-remain-default rows, and unprocessed/filtered rows.
+- Do not use `--limit`.
+
+Next 10 exact candidates:
+```
+53_20252026_4830467
+53_20252026_4830468
+53_20252026_4830469
+53_20252026_4830470
+53_20252026_4830471
+53_20252026_4830472
+53_20252026_4830473
+53_20252026_4830474
+53_20252026_4830475
+53_20252026_4830476
+```
+
+Next 10 current DB state:
+- all 10 rows found = yes
+- all current `_is_default=true` = yes
+- all current `home_elo=1500`, `away_elo=1500`, `elo_diff=0` = yes
+
+Next 10 dry-run:
+- command used `--dry-run --full-recalculate --match-ids <next 10 ids>`
+- no `--limit`
+- no write flags
+- processed total = 10
+- success = 10
+- failed = 0
+- eloHits = 10
+- eloDefaults = 0
+- all entries `actual_db_write=false`
+- all preview `_is_default=false`
+- all preview `_source=PrematchEloComputer`
+
+Next 10 preview values:
+
+| #  | match_id | teams | preview_home_elo | preview_away_elo | preview_elo_diff | preview_is_default | preview_source | actual_db_write |
+| -- | -------- | ----- | ---------------: | ---------------: | ---------------: | -----------------: | -------------- | --------------: |
+| 1  | 53_20252026_4830467 | Le Havre vs Lens | 1502.14 | 1482.86 | 19.28 | false | PrematchEloComputer | false |
+| 2  | 53_20252026_4830468 | Lille vs Monaco | 1502.14 | 1497.86 | 4.28 | false | PrematchEloComputer | false |
+| 3  | 53_20252026_4830469 | Lorient vs Rennes | 1502.14 | 1512.86 | -10.72 | false | PrematchEloComputer | false |
+| 4  | 53_20252026_4830470 | Lyon vs Metz | 1517.14 | 1512.86 | 4.28 | false | PrematchEloComputer | false |
+| 5  | 53_20252026_4830471 | Marseille vs Paris FC | 1487.14 | 1502.14 | -15.00 | false | PrematchEloComputer | false |
+| 6  | 53_20252026_4830472 | Nice vs Auxerre | 1512.86 | 1497.86 | 15.00 | false | PrematchEloComputer | false |
+| 7  | 53_20252026_4830473 | Paris Saint-Germain vs Angers | 1487.14 | 1497.86 | -10.72 | false | PrematchEloComputer | false |
+| 8  | 53_20252026_4830474 | Strasbourg vs Nantes | 1487.14 | 1512.86 | -25.72 | false | PrematchEloComputer | false |
+| 9  | 53_20252026_4830475 | Toulouse vs Brest | 1487.14 | 1497.86 | -10.72 | false | PrematchEloComputer | false |
+| 10 | 53_20252026_4830476 | Angers vs Rennes | 1514.55 | 1529.55 | -15.00 | false | PrematchEloComputer | false |
+
+Backup artifacts:
+- `/tmp/gold_audit_2bg/next_10_before_l3_rows.json`
+- `/tmp/gold_audit_2bg/next_10_before_sha256.txt`
+- checksum (SHA256): `b761274af84332890f5b5cbbaa9c30cf25458a4491a9174e60cc562a5aa8e0e7`
+- backup rows = 10
+- checksum generated = yes
+
+Future write placeholder:
+- Use exact `--match-ids` allowlist only.
+- Do not use `--limit`.
+- Requires explicit user authorization in a separate task.
+- Future write must not start training, prediction, or backtest.
+- Future write must record that `ALLOW_TRAINING_WRITE` is legacy/misleading if still required.
+
+Post-preview DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 6
+- default Elo rows = 54
+- unexpected real rows = 0
+- DB unchanged = yes
+
+Readiness:
+- GOLD_AUDIT_2BG_PASS = yes
+- NEXT_10_EXACT_WRITE_PLAN_RECORDED = yes
+- NEXT_10_DRY_RUN_READY = yes
+- READY_FOR_NEXT_10_WRITE_EXECUTION = no
+- READY_FOR_BATCH_WRITE = no
+- SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+- After user confirmation only: execute a separate next-10 controlled write task.
+- Do not execute batch write automatically.
+- Do not start training.
+- Do not start prediction/backtest.
+
+Do not start automatically.
