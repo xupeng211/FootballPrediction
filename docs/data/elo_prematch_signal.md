@@ -2474,3 +2474,148 @@ Next:
 * Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BL — Next 10 Exact Allowlist Controlled Write Execution
+
+Status:
+- Controlled write executed for the 2BK selected exact 10 match_ids.
+- DB write performed only for the approved exact 10 rows.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Convert the next 10 validated default Elo rows into real Prematch Elo rows.
+- Preserve all non-candidate rows unchanged.
+- Advance DB from 16 real / 44 default to 26 real / 34 default.
+
+Authorized exact 10 match_ids:
+```text
+53_20252026_4830477
+53_20252026_4830478
+53_20252026_4830479
+53_20252026_4830480
+53_20252026_4830481
+53_20252026_4830482
+53_20252026_4830483
+53_20252026_4830484
+53_20252026_4830485
+53_20252026_4830486
+```
+
+Pre-write DB state:
+
+* raw_match_data = 76
+* matches = 60
+* l3_features = 60
+* real Prematch Elo rows = 16
+* default Elo rows = 44
+
+Pre-write backups:
+
+* exact 10 before backup = `/tmp/gold_audit_2bl/next_10_before_l3_rows.json`
+* exact 10 before sha256 = `995d44c77ed948c69188ef5e28819cdbcc7ef121f36c3b1d29977eb6d5aa3767`
+* non-candidate before backup = `/tmp/gold_audit_2bl/non_candidate_before_l3_rows.json`
+* non-candidate before sha256 = `39cc3d45701b3de90d9038502857f79f7be4375824ee1436fb21b4d5f3ca598c`
+
+Pre-write dry-run:
+
+* command used `--dry-run --full-recalculate --match-ids <exact 10 ids>`
+* no `--limit`
+* no write flags
+* processed total = 10
+* success = 10
+* failed = 0
+* eloHits = 10
+* eloDefaults = 0
+* `actual_db_write=true` count = 0
+* values matched 2BK = yes
+
+Controlled write:
+
+* command used `--full-recalculate --match-ids <exact 10 ids>`
+* no `--limit`
+* write flags used = yes
+* `ALLOW_TRAINING_WRITE` used only as legacy l3 write gate; no training executed
+* processed total = 10
+* success = 10
+* failed = 0
+* eloHits = 10
+* eloDefaults = 0
+* `actual_db_write=true` count = 10
+* exact 10 only = yes
+
+Written values:
+
+| #  | match_id              | home_elo | away_elo | elo_diff | _is_default | _source             |
+| -- | --------------------- | -------: | -------: | -------: | ----------: | ------------------- |
+| 1  | `53_20252026_4830477` |  1514.19 |  1525.08 |   -10.89 |       false | PrematchEloComputer |
+| 2  | `53_20252026_4830478` |  1470.81 |  1514.55 |   -43.74 |       false | PrematchEloComputer |
+| 3  | `53_20252026_4830479` |  1485.45 |  1484.82 |     0.63 |       false | PrematchEloComputer |
+| 4  | `53_20252026_4830480` |  1499.82 |  1485.64 |    14.18 |       false | PrematchEloComputer |
+| 5  | `53_20252026_4830481` |  1515.18 |  1471.10 |    44.08 |       false | PrematchEloComputer |
+| 6  | `53_20252026_4830482` |  1528.90 |  1485.63 |    43.27 |       false | PrematchEloComputer |
+| 7  | `53_20252026_4830483` |  1503.65 |  1530.18 |   -26.53 |       false | PrematchEloComputer |
+| 8  | `53_20252026_4830484` |  1470.45 |  1470.45 |     0.00 |       false | PrematchEloComputer |
+| 9  | `53_20252026_4830485` |  1489.56 |  1526.22 |   -36.66 |       false | PrematchEloComputer |
+| 10 | `53_20252026_4830486` |  1514.82 |  1487.64 |    27.18 |       false | PrematchEloComputer |
+
+Post-write DB state:
+
+* raw_match_data = 76
+* matches = 60
+* l3_features = 60
+* real Prematch Elo rows = 26
+* default Elo rows = 34
+* unexpected real rows = 0
+* existing 16 real rows unchanged = yes
+* non-candidate rows unchanged by SHA256 = yes
+
+Post-write backups:
+
+* exact 10 after backup = `/tmp/gold_audit_2bl/next_10_after_l3_rows.json`
+* exact 10 after sha256 = `50de292589f1f63da61e3be5904b2853c01af11da8dafdc7d53e7917bacb1a20`
+* non-candidate after backup = `/tmp/gold_audit_2bl/non_candidate_after_l3_rows.json`
+* non-candidate after sha256 = `39cc3d45701b3de90d9038502857f79f7be4375824ee1436fb21b4d5f3ca598c`
+
+Rollback:
+
+* rollback executed = no
+* if rollback is needed later, it requires explicit user authorization
+* rollback source of truth would be `/tmp/gold_audit_2bl/next_10_before_l3_rows.json`
+* rollback must restore only the exact 10 match_ids
+
+Safety validation:
+
+* DB write = yes, exact 10 only
+* smelt write = yes, exact 10 only
+* batch write = no
+* rollback = no
+* training = no
+* prediction/backtest = no
+* scraper/network = no
+* schema/migration = no
+* code changed = no
+* `.github/**` changed = no
+
+Readiness:
+
+* GOLD_AUDIT_2BL_PASS = yes
+* NEXT_10_CONTROLLED_WRITE_SUCCESS = yes
+* NEXT_10_VALUES_MATCH_DRY_RUN = yes
+* DB_DISTRIBUTION_CONFIRMED_26_34 = yes
+* NON_CANDIDATE_ROWS_UNCHANGED = yes
+* UNEXPECTED_REAL_ROWS_ZERO = yes
+* READY_FOR_POST_WRITE_AUDIT = yes
+* READY_FOR_BATCH_WRITE = no
+* SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+
+* After user confirmation only: perform post-write audit for 2BL.
+* Do not execute another write automatically.
+* Do not start training.
+* Do not start prediction/backtest.
+
+Do not start automatically.
