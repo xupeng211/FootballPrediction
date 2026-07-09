@@ -3178,3 +3178,38 @@ Safety: DB write exact 10 only. No batch/rollback/training/prediction/scraper/sc
 Readiness: GOLD_AUDIT_2BR_PASS=yes, MAIN_CI_AFTER_1753_MERGE_SUCCESS=yes, NEXT_10_CONTROLLED_WRITE_SUCCESS=yes, DB_DISTRIBUTION_CONFIRMED_46_14=yes, APPROVED_46_REAL_ROWS_CONFIRMED=yes, NON_CANDIDATE_ROWS_UNCHANGED=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, READY_FOR_POST_WRITE_AUDIT=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
 
 Next: After user confirmation only: perform post-write audit for 2BR. Do not start automatically.
+
+## GOLD-AUDIT-2BS — 2BR Post-write Audit
+
+Status: Post-write audit for 2BR. Read-only. No DB write/smelt/dry-run/batch/rollback/training.
+
+Prerequisite: PR #1754 merged, main CI success (run 29042029403).
+
+Main: `e451aab15bf8ead9ce128b00dfeaf9dcacaac3dc`. DB: `football_db`, verified existing.
+
+DB audit: 76/60/60, false=46, true=14, unexpected=0.
+
+2BR exact 10 audit: 10 found, all false/PrematchEloComputer. Values match 2BQ/2BR:
+
+| # | match_id | home_elo | away_elo | elo_diff |
+|---|----------|----------|----------|----------|
+| 1 | 4830497 | 1487.13 | 1469.69 | 17.44 |
+| 2 | 4830498 | 1499.39 | 1515.94 | -16.55 |
+| 3 | 4830499 | 1486.65 | 1441.00 | 45.65 |
+| 4 | 4830500 | 1526.79 | 1558.29 | -31.50 |
+| 5 | 4830501 | 1542.19 | 1528.74 | 13.45 |
+| 6 | 4830502 | 1475.92 | 1475.17 | 0.75 |
+| 7 | 4830505 | 1488.29 | 1510.99 | -22.70 |
+| 8 | 4830507 | 1512.40 | 1473.74 | 38.66 |
+| 9 | 4830508 | 1430.03 | 1487.34 | -57.31 |
+| 10 | 4830510 | 1477.34 | 1497.63 | -20.29 |
+
+Approved 46: 46 real, all false/PrematchEloComputer. Unexpected=0. Remaining default=14.
+
+2BR backup: `/tmp/gold_audit_2br` exists. DB audit is source of truth.
+
+Safety: all no (DB write, smelt, dry-run, batch, rollback, training, scraper, schema, code, .github).
+
+Readiness: GOLD_AUDIT_2BS_PASS=yes, MAIN_CI_AFTER_1754_MERGE_SUCCESS=yes, POST_WRITE_AUDIT_STABLE_46_14=yes, APPROVED_46_REAL_ROWS_CONFIRMED=yes, EXACT_10_VALUES_MATCH_2BQ_2BR=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, READY_FOR_NEXT_PLAN=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
+
+Next: After user confirmation only: plan next exact allowlist batch. Do not start automatically.
