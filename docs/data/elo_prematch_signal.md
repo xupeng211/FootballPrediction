@@ -2876,3 +2876,131 @@ Next:
 * Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BO — Next 10 Exact Allowlist Controlled Write Execution
+
+Status:
+- Controlled write executed for the 2BN selected exact 10 match_ids.
+- DB write performed only for the approved exact 10 rows.
+- No batch write, rollback, training, prediction, backtest, or data collection performed.
+
+Purpose:
+- Convert the next 10 validated default Elo rows into real Prematch Elo rows.
+- Preserve all non-candidate rows unchanged.
+- Advance DB from 26 real / 34 default to 36 real / 24 default.
+
+Prerequisite:
+- PR #1750 merged = yes
+- main merge commit CI success = yes (run 29031025995)
+
+Authorized exact 10 match_ids:
+```text
+53_20252026_4830487
+53_20252026_4830488
+53_20252026_4830489
+53_20252026_4830490
+53_20252026_4830491
+53_20252026_4830492
+53_20252026_4830493
+53_20252026_4830494
+53_20252026_4830495
+53_20252026_4830496
+```
+
+Pre-write DB state:
+
+* raw_match_data = 76
+* matches = 60
+* l3_features = 60
+* real Prematch Elo rows = 26
+* default Elo rows = 34
+* unexpected real rows = 0
+
+Pre-write backups:
+
+* exact 10 before backup = `/tmp/gold_audit_2bo/next_10_before_l3_rows.json`
+* exact 10 before sha256 = `c14f2e01fba04de2e05d72ae06ead6fcef2eec0d01a1a62fa2e624c4c31ac1ae`
+* non-candidate before backup = `/tmp/gold_audit_2bo/non_candidate_before_l3_rows.json`
+* non-candidate before sha256 = `0a27624f609d8ded6352f0e52368478a1b4d92afb538d114caa433db70ef4246`
+
+Pre-write dry-run:
+
+* command used `--dry-run --full-recalculate --match-ids <exact 10 ids>`
+* no `--limit`, no write flags
+* processed total = 10, success = 10, failed = 0
+* eloHits = 10, eloDefaults = 0
+* `actual_db_write=true` count = 0
+* values matched 2BN = yes
+
+Controlled write:
+
+* command used `--full-recalculate --match-ids <exact 10 ids>`
+* no `--limit`, write flags = yes
+* `ALLOW_TRAINING_WRITE` used only as legacy l3 write gate; no training executed
+* processed total = 10, success = 10, failed = 0
+* eloHits = 10, eloDefaults = 0
+* `actual_db_write=true` count = 10, exact 10 only = yes
+
+Written values:
+
+| #  | match_id              | home_elo | away_elo | elo_diff | _is_default | _source             |
+| -- | --------------------- | -------: | -------: | -------: | ----------: | ------------------- |
+| 1  | `53_20252026_4830487` |  1486.99 |  1483.31 |     3.68 |       false | PrematchEloComputer |
+| 2  | `53_20252026_4830488` |  1473.38 |  1483.28 |    -9.90 |       false | PrematchEloComputer |
+| 3  | `53_20252026_4830489` |  1546.19 |  1528.04 |    18.15 |       false | PrematchEloComputer |
+| 4  | `53_20252026_4830490` |  1526.76 |  1524.97 |     1.79 |       false | PrematchEloComputer |
+| 5  | `53_20252026_4830491` |  1457.60 |  1470.54 |   -12.94 |       false | PrematchEloComputer |
+| 6  | `53_20252026_4830492` |  1516.05 |  1512.08 |     3.97 |       false | PrematchEloComputer |
+| 7  | `53_20252026_4830493` |  1460.06 |  1512.51 |   -52.45 |       false | PrematchEloComputer |
+| 8  | `53_20252026_4830494` |  1488.99 |  1500.61 |   -11.62 |       false | PrematchEloComputer |
+| 9  | `53_20252026_4830495` |  1526.54 |  1509.54 |    17.00 |       false | PrematchEloComputer |
+| 10 | `53_20252026_4830496` |  1497.40 |  1470.01 |    27.39 |       false | PrematchEloComputer |
+
+Post-write DB state:
+
+* raw_match_data = 76, matches = 60, l3_features = 60
+* real Prematch Elo rows = 36, default Elo rows = 24
+* approved 36 real rows = 36
+* unexpected real rows = 0
+* non-candidate rows unchanged by SHA256 = yes
+
+Post-write backups:
+
+* exact 10 after sha256 = `6ec2cdd024ecffb44df2d36b317c7995847f84ce781bc163db20520eeec2b26b`
+* non-candidate after sha256 = `0a27624f609d8ded6352f0e52368478a1b4d92afb538d114caa433db70ef4246`
+
+Rollback:
+
+* rollback executed = no
+* rollback source: `/tmp/gold_audit_2bo/next_10_before_l3_rows.json`
+* rollback scope: exact 10 only, requires explicit user authorization
+
+Safety validation:
+
+* DB write = yes, exact 10 only
+* smelt write = yes, exact 10 only
+* batch write, rollback, training, prediction/backtest, scraper/network, schema/migration = no
+* code changed = no, `.github/**` changed = no
+
+Readiness:
+
+* GOLD_AUDIT_2BO_PASS = yes
+* MAIN_CI_AFTER_1750_MERGE_SUCCESS = yes
+* NEXT_10_CONTROLLED_WRITE_SUCCESS = yes
+* NEXT_10_VALUES_MATCH_DRY_RUN = yes
+* DB_DISTRIBUTION_CONFIRMED_36_24 = yes
+* APPROVED_36_REAL_ROWS_CONFIRMED = yes
+* NON_CANDIDATE_ROWS_UNCHANGED = yes
+* UNEXPECTED_REAL_ROWS_ZERO = yes
+* READY_FOR_POST_WRITE_AUDIT = yes
+* READY_FOR_BATCH_WRITE = no
+* SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+
+* After user confirmation only: perform post-write audit for 2BO.
+* Do not execute another write automatically.
+* Do not start training.
+* Do not start prediction/backtest.
+
+Do not start automatically.
