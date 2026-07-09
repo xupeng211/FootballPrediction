@@ -3139,3 +3139,42 @@ Safety: all no (DB write, smelt, batch, rollback, training, scraper, schema, cod
 Readiness: GOLD_AUDIT_2BQ_PASS=yes, MAIN_CI_AFTER_1752_MERGE_SUCCESS=yes, REMAINING_WOULD_BE_REAL_POOL_CONFIRMED_13=yes, NEXT_10_DRY_RUN_READY=yes, NEXT_10_VALUES_CAPTURED=yes, DB_UNCHANGED_AFTER_PREVIEW=yes. READY_FOR_NEXT_10_CONTROLLED_WRITE_EXECUTION=no.
 
 Next: After explicit user authorization only: execute next-10 controlled write. Do not start automatically.
+
+## GOLD-AUDIT-2BR — Next 10 Exact Allowlist Controlled Write Execution
+
+Status: Controlled write for 2BQ selected exact 10. DB write exact 10 only. No batch/rollback/training.
+
+Prerequisite: PR #1753 merged, main CI success (run 29039809700).
+
+Authorized: 4830497,4830498,4830499,4830500,4830501,4830502,4830505,4830507,4830508,4830510.
+
+Pre-write: 76/60/60, 36/24, unexpected=0. All 10 default. Backups: before sha256=`1b56ead2aaf...`, non-candidate sha256=`0db36c588...`.
+
+Dry-run: 10/10, eloHits=10, actual_db_write=false, values match 2BQ.
+
+Write: 10/10 success, eloHits=10, actual_db_write=10, exact 10 only. ALLOW_TRAINING_WRITE legacy flag only, no training.
+
+Written values:
+
+| # | match_id | home_elo | away_elo | elo_diff |
+|---|----------|----------|----------|----------|
+| 1 | 4830497 | 1487.13 | 1469.69 | 17.44 |
+| 2 | 4830498 | 1499.39 | 1515.94 | -16.55 |
+| 3 | 4830499 | 1486.65 | 1441.00 | 45.65 |
+| 4 | 4830500 | 1526.79 | 1558.29 | -31.50 |
+| 5 | 4830501 | 1542.19 | 1528.74 | 13.45 |
+| 6 | 4830502 | 1475.92 | 1475.17 | 0.75 |
+| 7 | 4830505 | 1488.29 | 1510.99 | -22.70 |
+| 8 | 4830507 | 1512.40 | 1473.74 | 38.66 |
+| 9 | 4830508 | 1430.03 | 1487.34 | -57.31 |
+| 10 | 4830510 | 1477.34 | 1497.63 | -20.29 |
+
+Post-write: 76/60/60, 46/14, approved 46=46, unexpected=0, remaining default=14. Non-candidate SHA unchanged. After sha256=`f872577ce...`, non-candidate after=`0db36c588...`.
+
+Rollback: not executed. Source: `/tmp/gold_audit_2br/next_10_before_l3_rows.json`. Requires authorization.
+
+Safety: DB write exact 10 only. No batch/rollback/training/prediction/scraper/schema/code/.github changes.
+
+Readiness: GOLD_AUDIT_2BR_PASS=yes, MAIN_CI_AFTER_1753_MERGE_SUCCESS=yes, NEXT_10_CONTROLLED_WRITE_SUCCESS=yes, DB_DISTRIBUTION_CONFIRMED_46_14=yes, APPROVED_46_REAL_ROWS_CONFIRMED=yes, NON_CANDIDATE_ROWS_UNCHANGED=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, READY_FOR_POST_WRITE_AUDIT=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
+
+Next: After user confirmation only: perform post-write audit for 2BR. Do not start automatically.
