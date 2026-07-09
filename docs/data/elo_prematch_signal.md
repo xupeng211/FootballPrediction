@@ -2729,3 +2729,150 @@ Next:
 - Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BN — Next Exact Allowlist Plan after 2BM
+
+Status:
+- Next exact allowlist write plan only.
+- No DB write performed.
+- No smelt write performed.
+- Dry-run smelt preview only.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Use the 2BJ would-be-real candidate pool.
+- Remove the 10 rows already written in 2BL.
+- Confirm the remaining would-be-real pool.
+- Select the next exact 10 candidates by deterministic rule.
+- Confirm selected 10 are still current default rows.
+- Confirm selected 10 dry-run successfully convert to real Prematch Elo.
+- Keep DB unchanged.
+- Prepare for a future controlled write task only after user authorization.
+
+Main state:
+- 2BM merged = yes
+- main commit = `4bc4cb12b3ab6853de25596f83d192979d969376`
+
+DB discovery:
+- selected DB_NAME = `football_db`
+- selected reason = 2BM reported DB_NAME, verified existing
+- current_database check = football_db
+- no DB created = yes
+- compose/env changed = no
+
+Starting DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 26
+- default Elo rows = 34
+- unexpected real rows = 0
+
+Candidate pool:
+- 2BJ would-be-real candidates = 33
+- 2BL already written from that pool = 10
+- remaining would-be-real candidates = 23
+- remaining would-be-real current default count = 23
+
+Selection rule:
+- Sort the remaining 23 would-be-real candidates by `match_id` ASC.
+- Select the first 10.
+- Do not use `--limit`.
+
+Selected next 10 exact match_ids:
+```text
+53_20252026_4830487
+53_20252026_4830488
+53_20252026_4830489
+53_20252026_4830490
+53_20252026_4830491
+53_20252026_4830492
+53_20252026_4830493
+53_20252026_4830494
+53_20252026_4830495
+53_20252026_4830496
+```
+
+Selected 10 current-row validation:
+
+* selected rows found = 10
+* selected rows still current default = yes
+* current snapshot path = `/tmp/gold_audit_2bn/next_10_plan_current_l3_rows.json`
+* current snapshot sha256 = `c14f2e01fba04de2e05d72ae06ead6fcef2eec0d01a1a62fa2e624c4c31ac1ae`
+
+Selected 10 dry-run preview:
+
+* command used `--dry-run --full-recalculate --match-ids <selected 10 ids>`
+* no `--limit`
+* no write flags
+* processed total = 10
+* success = 10
+* failed = 0
+* eloHits = 10
+* eloDefaults = 0
+* `actual_db_write=true` count = 0
+* all preview `_is_default=false` = yes
+* all preview `_source=PrematchEloComputer` = yes
+
+Selected 10 preview values:
+
+| #  | match_id              | home_elo | away_elo | elo_diff | _is_default | _source             | actual_db_write |
+| -- | --------------------- | -------: | -------: | -------: | ----------: | ------------------- | --------------: |
+| 1  | `53_20252026_4830487` | 1486.99  | 1483.31  | 3.68     | false       | PrematchEloComputer | false           |
+| 2  | `53_20252026_4830488` | 1473.38  | 1483.28  | -9.90    | false       | PrematchEloComputer | false           |
+| 3  | `53_20252026_4830489` | 1546.19  | 1528.04  | 18.15    | false       | PrematchEloComputer | false           |
+| 4  | `53_20252026_4830490` | 1526.76  | 1524.97  | 1.79     | false       | PrematchEloComputer | false           |
+| 5  | `53_20252026_4830491` | 1457.60  | 1470.54  | -12.94   | false       | PrematchEloComputer | false           |
+| 6  | `53_20252026_4830492` | 1516.05  | 1512.08  | 3.97     | false       | PrematchEloComputer | false           |
+| 7  | `53_20252026_4830493` | 1460.06  | 1512.51  | -52.45   | false       | PrematchEloComputer | false           |
+| 8  | `53_20252026_4830494` | 1488.99  | 1500.61  | -11.62   | false       | PrematchEloComputer | false           |
+| 9  | `53_20252026_4830495` | 1526.54  | 1509.54  | 17.00    | false       | PrematchEloComputer | false           |
+| 10 | `53_20252026_4830496` | 1497.40  | 1470.01  | 27.39    | false       | PrematchEloComputer | false           |
+
+Post-preview DB state:
+
+* raw_match_data = 76
+* matches = 60
+* l3_features = 60
+* real Prematch Elo rows = 26
+* default Elo rows = 34
+* unexpected real rows = 0
+* DB unchanged = yes
+
+Safety validation:
+
+* DB write = no
+* smelt write = no
+* dry-run smelt = yes, no-write only
+* batch write = no
+* rollback = no
+* training = no
+* prediction/backtest = no
+* scraper/network = no
+* schema/migration = no
+* code changed = no
+* `.github/**` changed = no
+
+Readiness:
+
+* GOLD_AUDIT_2BN_PASS = yes
+* NEXT_10_EXACT_ALLOWLIST_PLAN_RECORDED = yes
+* REMAINING_WOULD_BE_REAL_POOL_CONFIRMED_23 = yes
+* NEXT_10_DRY_RUN_READY = yes
+* NEXT_10_VALUES_CAPTURED = yes
+* DB_UNCHANGED_AFTER_PREVIEW = yes
+* READY_FOR_NEXT_10_CONTROLLED_WRITE_EXECUTION = no
+* READY_FOR_BATCH_WRITE = no
+* SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+
+* After explicit user authorization only: execute a separate next-10 controlled write task.
+* Do not execute the write automatically.
+* Do not start training.
+* Do not start prediction/backtest.
+
+Do not start automatically.
