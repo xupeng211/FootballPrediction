@@ -2341,3 +2341,136 @@ Next:
 * Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BK — Next Exact Allowlist Write Plan from 2BJ Candidates
+
+Status:
+- Next exact allowlist write plan only.
+- No DB write performed.
+- No smelt write performed.
+- Dry-run smelt preview only.
+- No batch write performed.
+- No rollback performed.
+- No training, prediction, or backtest performed.
+- No data collection performed.
+
+Purpose:
+- Use the 2BJ refreshed 33 would-be-real candidates.
+- Select the next exact 10 candidates by deterministic rule.
+- Confirm selected 10 are still current default rows.
+- Confirm selected 10 dry-run successfully convert to real Prematch Elo.
+- Keep DB unchanged.
+- Prepare for a future controlled write task only after user authorization.
+
+Starting DB state:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 16
+- default Elo rows = 44
+- unexpected real rows = 0
+
+2BJ candidate pool:
+- would_be_real candidates = 33
+- would_remain_default = 9
+- unprocessed_or_filtered = 2
+- failed = 0
+
+Selection rule:
+- Sort the 33 would-be-real candidates by `match_id` ASC.
+- Select the first 10.
+- Do not use `--limit`.
+
+Selected next 10 exact match_ids:
+```text
+53_20252026_4830477
+53_20252026_4830478
+53_20252026_4830479
+53_20252026_4830480
+53_20252026_4830481
+53_20252026_4830482
+53_20252026_4830483
+53_20252026_4830484
+53_20252026_4830485
+53_20252026_4830486
+```
+
+Selected 10 current-row validation:
+
+* selected rows found = 10
+* selected rows still current default = yes
+* current snapshot path = `/tmp/gold_audit_2bk/next_10_plan_current_l3_rows.json`
+* current snapshot sha256 = `995d44c77ed948c69188ef5e28819cdbcc7ef121f36c3b1d29977eb6d5aa3767`
+
+Selected 10 dry-run preview:
+
+* command used `--dry-run --full-recalculate --match-ids <selected 10 ids>`
+* no `--limit`
+* no write flags
+* processed total = 10
+* success = 10
+* failed = 0
+* eloHits = 10
+* eloDefaults = 0
+* `actual_db_write=true` count = 0
+* all preview `_is_default=false` = yes
+* all preview `_source=PrematchEloComputer` = yes
+
+Selected 10 preview values:
+
+| #  | match_id              | home_elo | away_elo | elo_diff | _is_default | _source             | actual_db_write |
+| -- | --------------------- | -------: | -------: | -------: | ----------: | ------------------- | --------------: |
+| 1  | `53_20252026_4830477` | 1514.19  | 1525.08  | -10.89   | false       | PrematchEloComputer | false           |
+| 2  | `53_20252026_4830478` | 1470.81  | 1514.55  | -43.74   | false       | PrematchEloComputer | false           |
+| 3  | `53_20252026_4830479` | 1485.45  | 1484.82  | 0.63     | false       | PrematchEloComputer | false           |
+| 4  | `53_20252026_4830480` | 1499.82  | 1485.64  | 14.18    | false       | PrematchEloComputer | false           |
+| 5  | `53_20252026_4830481` | 1515.18  | 1471.10  | 44.08    | false       | PrematchEloComputer | false           |
+| 6  | `53_20252026_4830482` | 1528.90  | 1485.63  | 43.27    | false       | PrematchEloComputer | false           |
+| 7  | `53_20252026_4830483` | 1503.65  | 1530.18  | -26.53   | false       | PrematchEloComputer | false           |
+| 8  | `53_20252026_4830484` | 1470.45  | 1470.45  | 0.00     | false       | PrematchEloComputer | false           |
+| 9  | `53_20252026_4830485` | 1489.56  | 1526.22  | -36.66   | false       | PrematchEloComputer | false           |
+| 10 | `53_20252026_4830486` | 1514.82  | 1487.64  | 27.18    | false       | PrematchEloComputer | false           |
+
+Post-preview DB state:
+
+* raw_match_data = 76
+* matches = 60
+* l3_features = 60
+* real Prematch Elo rows = 16
+* default Elo rows = 44
+* unexpected real rows = 0
+* DB unchanged = yes
+
+Safety validation:
+
+* DB write = no
+* smelt write = no
+* dry-run smelt = yes, no-write only
+* batch write = no
+* rollback = no
+* training = no
+* prediction/backtest = no
+* scraper/network = no
+* schema/migration = no
+* code changed = no
+* `.github/**` changed = no
+
+Readiness:
+
+* GOLD_AUDIT_2BK_PASS = yes
+* NEXT_10_EXACT_ALLOWLIST_PLAN_RECORDED = yes
+* NEXT_10_DRY_RUN_READY = yes
+* NEXT_10_VALUES_CAPTURED = yes
+* DB_UNCHANGED_AFTER_PREVIEW = yes
+* READY_FOR_NEXT_10_CONTROLLED_WRITE_EXECUTION = no
+* READY_FOR_BATCH_WRITE = no
+* SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+
+* After explicit user authorization only: execute a separate next-10 controlled write task.
+* Do not execute the write automatically.
+* Do not start training.
+* Do not start prediction/backtest.
+
+Do not start automatically.
