@@ -3243,3 +3243,35 @@ Safety: all no.
 Readiness: GOLD_AUDIT_2BT_PASS=yes, MAIN_CI_AFTER_1755_MERGE_SUCCESS=yes, FINAL_REMAINING_WOULD_BE_REAL_POOL_CONFIRMED_3=yes, FINAL_3_DRY_RUN_READY=yes, FINAL_3_VALUES_CAPTURED=yes, EXPECTED_STAY_DEFAULT_11_CONFIRMED=yes, DB_UNCHANGED_AFTER_PREVIEW=yes. READY_FOR_FINAL_3_CONTROLLED_WRITE_EXECUTION=no, BATCH_WRITE=no, TRAINING_DRY_RUN=no.
 
 Next: After user authorization only: execute final-3 controlled write. Do not start automatically.
+
+## GOLD-AUDIT-2BU — Final 3 Exact Allowlist Controlled Write Execution
+
+Status: Final 3 controlled write executed. DB write: final 3 only. No batch/rollback/training.
+
+Prerequisite: PR #1756 merged, main CI success (run 29046159540).
+
+Authorized: 4830511, 4830753, 4830754.
+
+Pre-write: 76/60/60, 46/14, unexpected=0. All 3 default. Backups: before=`3ec2f70c7...`, non-candidate=`167df289...`.
+
+Dry-run: 3/3, eloHits=3, values match 2BT.
+
+Write: 3/3 success, eloHits=3, actual_db_write=3, final 3 only. ALLOW_TRAINING_WRITE legacy flag only, no training.
+
+Written values:
+
+| # | match_id | home_elo | away_elo | elo_diff |
+|---|----------|----------|----------|----------|
+| 1 | 4830511 | 1502.26 | 1554.48 | -52.22 |
+| 2 | 4830753 | 1516.45 | 1462.49 | 53.96 |
+| 3 | 4830754 | 1502.36 | 1497.95 | 4.41 |
+
+Post-write: 76/60/60, **49/11**, approved 49=49, unexpected=0, remaining default=11. Non-candidate SHA unchanged. Expected-stay-default 11 untouched.
+
+Rollback: not executed. Source: `/tmp/gold_audit_2bu/final_3_before_l3_rows.json`.
+
+Safety: DB write final 3 only. No batch/rollback/training/prediction/scraper/schema/code/.github changes.
+
+Readiness: GOLD_AUDIT_2BU_PASS=yes, MAIN_CI_AFTER_1756_MERGE_SUCCESS=yes, FINAL_3_CONTROLLED_WRITE_SUCCESS=yes, DB_DISTRIBUTION_CONFIRMED_49_11=yes, APPROVED_49_REAL_ROWS_CONFIRMED=yes, NON_CANDIDATE_ROWS_UNCHANGED=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, EXPECTED_STAY_DEFAULT_11_UNTOUCHED=yes, READY_FOR_POST_WRITE_AUDIT=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
+
+Next: After user confirmation only: perform post-write audit for 2BU. Do not start automatically.
