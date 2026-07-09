@@ -3213,3 +3213,33 @@ Safety: all no (DB write, smelt, dry-run, batch, rollback, training, scraper, sc
 Readiness: GOLD_AUDIT_2BS_PASS=yes, MAIN_CI_AFTER_1754_MERGE_SUCCESS=yes, POST_WRITE_AUDIT_STABLE_46_14=yes, APPROVED_46_REAL_ROWS_CONFIRMED=yes, EXACT_10_VALUES_MATCH_2BQ_2BR=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, READY_FOR_NEXT_PLAN=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
 
 Next: After user confirmation only: plan next exact allowlist batch. Do not start automatically.
+
+## GOLD-AUDIT-2BT — Final Remaining Exact Allowlist Plan after 2BS
+
+Status: Final allowlist plan. No DB write. Dry-run only.
+
+Prerequisite: PR #1755 merged, main CI success (run 29044156745). Main=`fb2ce22cd09a2870deff4e6c7ff5a964c323c694`. DB=`football_db`.
+
+Starting DB: 76/60/60, 46/14, unexpected=0.
+
+Candidate pool: 2BJ 33 - 30 already written = **3 final remaining**, all current default. Remaining default total=14, stay-default=11.
+
+Final 3: 4830511, 4830753, 4830754. Snapshot sha256=`3ec2f70c7b57059de4321f9bff341d19eecc404f78bad43ed8f2106ae416b07e`.
+
+Dry-run: 3/3, eloHits=3, eloDefaults=0, all actual_db_write=false:
+
+| # | match_id | home_elo | away_elo | elo_diff |
+|---|----------|----------|----------|----------|
+| 1 | 4830511 | 1502.26 | 1554.48 | -52.22 |
+| 2 | 4830753 | 1516.45 | 1462.49 | 53.96 |
+| 3 | 4830754 | 1502.36 | 1497.95 | 4.41 |
+
+Expected stay-default 11: 140_20252026_4837496, 47_20242025_900002, 4830458-4830466.
+
+Post-preview DB unchanged: 76/60/60, 46/14, unexpected=0.
+
+Safety: all no.
+
+Readiness: GOLD_AUDIT_2BT_PASS=yes, MAIN_CI_AFTER_1755_MERGE_SUCCESS=yes, FINAL_REMAINING_WOULD_BE_REAL_POOL_CONFIRMED_3=yes, FINAL_3_DRY_RUN_READY=yes, FINAL_3_VALUES_CAPTURED=yes, EXPECTED_STAY_DEFAULT_11_CONFIRMED=yes, DB_UNCHANGED_AFTER_PREVIEW=yes. READY_FOR_FINAL_3_CONTROLLED_WRITE_EXECUTION=no, BATCH_WRITE=no, TRAINING_DRY_RUN=no.
+
+Next: After user authorization only: execute final-3 controlled write. Do not start automatically.
