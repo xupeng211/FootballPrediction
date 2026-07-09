@@ -3004,3 +3004,99 @@ Next:
 * Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BP — 2BO Post-write Audit
+
+Status:
+- Post-write audit for GOLD-AUDIT-2BO.
+- Read-only DB audit only.
+- No DB write, smelt run, dry-run smelt, batch write, rollback, training, prediction, backtest, or data collection performed.
+
+Purpose:
+- Confirm the 2BO exact 10 controlled write remains stable after merge.
+- Confirm DB distribution is 36 real / 24 default.
+- Confirm the approved 36 real rows are exactly the expected rows.
+- Confirm there are zero unexpected real rows.
+- Confirm the 2BO exact 10 values match 2BN/2BO documented values.
+
+Prerequisite:
+- PR #1751 merged = yes
+- main merge commit CI success = yes (run 29033521709)
+
+Main state:
+- main commit = `c31817115d422beb61ce964f2e6612363fe9510a`
+- 2BO merged = yes
+
+DB discovery:
+- selected DB_NAME = `football_db`
+- selected reason = 2BO reported DB_NAME, verified existing
+- current_database check = football_db
+- no DB created = yes
+- compose/env changed = no
+
+DB audit:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- real Prematch Elo rows = 36
+- default Elo rows = 24
+- unexpected real rows = 0
+
+2BO exact 10 audit:
+| # | match_id | home_elo | away_elo | elo_diff | _is_default | _source |
+|---|---:|---:|---:|---:|---:|---|
+| 1 | `53_20252026_4830487` | 1486.99 | 1483.31 | 3.68 | false | PrematchEloComputer |
+| 2 | `53_20252026_4830488` | 1473.38 | 1483.28 | -9.90 | false | PrematchEloComputer |
+| 3 | `53_20252026_4830489` | 1546.19 | 1528.04 | 18.15 | false | PrematchEloComputer |
+| 4 | `53_20252026_4830490` | 1526.76 | 1524.97 | 1.79 | false | PrematchEloComputer |
+| 5 | `53_20252026_4830491` | 1457.60 | 1470.54 | -12.94 | false | PrematchEloComputer |
+| 6 | `53_20252026_4830492` | 1516.05 | 1512.08 | 3.97 | false | PrematchEloComputer |
+| 7 | `53_20252026_4830493` | 1460.06 | 1512.51 | -52.45 | false | PrematchEloComputer |
+| 8 | `53_20252026_4830494` | 1488.99 | 1500.61 | -11.62 | false | PrematchEloComputer |
+| 9 | `53_20252026_4830495` | 1526.54 | 1509.54 | 17.00 | false | PrematchEloComputer |
+| 10 | `53_20252026_4830496` | 1497.40 | 1470.01 | 27.39 | false | PrematchEloComputer |
+
+2BO exact 10 validation:
+- exact 10 rows found = 10
+- exact 10 real count = 10
+- values match 2BN/2BO = yes
+- all `_is_default=false` = yes
+- all `_source=PrematchEloComputer` = yes
+
+Approved 36 validation:
+- approved 36 rows found = 36
+- approved 36 real count = 36
+- all approved 36 `_is_default=false` = yes
+- all approved 36 `_source=PrematchEloComputer` = yes
+- unexpected real rows = 0
+
+Remaining default rows:
+- remaining default count = 24
+- no preview of remaining defaults performed
+- no write of remaining defaults performed
+
+2BO backup visibility:
+- `/tmp/gold_audit_2bo` exists = yes
+- core backup files readable = yes
+- note: backup visibility is informational; DB audit is source of truth
+
+Safety validation: All no (DB write, smelt, dry-run, batch write, rollback, training, prediction/backtest, scraper, schema, code, .github)
+
+Readiness:
+- GOLD_AUDIT_2BP_PASS = yes
+- MAIN_CI_AFTER_1751_MERGE_SUCCESS = yes
+- POST_WRITE_AUDIT_STABLE_36_24 = yes
+- APPROVED_36_REAL_ROWS_CONFIRMED = yes
+- EXACT_10_VALUES_MATCH_2BN_2BO = yes
+- UNEXPECTED_REAL_ROWS_ZERO = yes
+- READY_FOR_NEXT_PLAN = yes
+- READY_FOR_BATCH_WRITE = no
+- SAFE_FOR_TRAINING_DRY_RUN = no
+
+Next:
+- After user confirmation only: plan the next exact allowlist batch from the remaining would-be-real pool.
+- Do not execute another write automatically.
+- Do not start training.
+- Do not start prediction/backtest.
+
+Do not start automatically.
