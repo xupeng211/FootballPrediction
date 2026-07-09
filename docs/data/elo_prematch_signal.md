@@ -3100,3 +3100,42 @@ Next:
 - Do not start prediction/backtest.
 
 Do not start automatically.
+
+## GOLD-AUDIT-2BQ — Next Exact Allowlist Plan after 2BP
+
+Status: Next exact allowlist write plan only. No DB write or smelt write. Dry-run only.
+
+Purpose: From 2BJ 33 would-be-real, remove 2BL(10)+2BO(10)=20 already written, confirm remaining 13, select next 10 by ASC sort, dry-run verify.
+
+Prerequisite: PR #1752 merged, main CI success (run 29036679334).
+
+Main state: main=`5299d03aeb61efdf8221c255057bb30cc85c9ef5`, DB=`football_db`.
+
+Starting DB: 76/60/60, false=36, true=24, unexpected=0.
+
+Candidate pool: 33-20=13 remaining, all current default.
+
+Selection: sort 13 ASC, take first 10. Selected: 4830497,4830498,4830499,4830500,4830501,4830502,4830505,4830507,4830508,4830510. Snapshot sha256=`1b56ead2aaf64e01a9e4f867f709a1b68a7f63707b42505725c925ea0cf061bd`.
+
+Dry-run: 10/10 success, eloHits=10, eloDefaults=0, all actual_db_write=false. Preview values:
+
+| # | match_id | home_elo | away_elo | elo_diff |
+|---|----------|----------|----------|----------|
+| 1 | 4830497 | 1487.13 | 1469.69 | 17.44 |
+| 2 | 4830498 | 1499.39 | 1515.94 | -16.55 |
+| 3 | 4830499 | 1486.65 | 1441.00 | 45.65 |
+| 4 | 4830500 | 1526.79 | 1558.29 | -31.50 |
+| 5 | 4830501 | 1542.19 | 1528.74 | 13.45 |
+| 6 | 4830502 | 1475.92 | 1475.17 | 0.75 |
+| 7 | 4830505 | 1488.29 | 1510.99 | -22.70 |
+| 8 | 4830507 | 1512.40 | 1473.74 | 38.66 |
+| 9 | 4830508 | 1430.03 | 1487.34 | -57.31 |
+| 10 | 4830510 | 1477.34 | 1497.63 | -20.29 |
+
+Post-preview DB unchanged: 76/60/60, 36/24, unexpected=0.
+
+Safety: all no (DB write, smelt, batch, rollback, training, scraper, schema, code, .github).
+
+Readiness: GOLD_AUDIT_2BQ_PASS=yes, MAIN_CI_AFTER_1752_MERGE_SUCCESS=yes, REMAINING_WOULD_BE_REAL_POOL_CONFIRMED_13=yes, NEXT_10_DRY_RUN_READY=yes, NEXT_10_VALUES_CAPTURED=yes, DB_UNCHANGED_AFTER_PREVIEW=yes. READY_FOR_NEXT_10_CONTROLLED_WRITE_EXECUTION=no.
+
+Next: After explicit user authorization only: execute next-10 controlled write. Do not start automatically.
