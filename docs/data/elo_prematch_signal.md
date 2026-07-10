@@ -3526,11 +3526,44 @@ Safety:
 - business DB write = no
 - artifact generation = no
 
+### 2BY Fail-closed Hardening
+
+Issues corrected:
+- read-only state is now queried from the active DB session (SHOW transaction_read_only)
+- complete eligible cohort is audited using LEFT JOIN (detects missing L3 rows)
+- missing L3 rows are explicitly reported and block execution
+- feature extraction errors are recorded and block execution
+- non-empty cohort with zero extracted features blocks execution
+- forbidden feature negative injection tests verify fail-closed behavior
+
+Read-only self-verification:
+- negative writable-session test exit code = 1
+- writable session blocked before cohort query = yes
+- positive read-only session setting = on
+
+Cohort validation:
+- eligible cohort count = 58
+- L3 coverage count = 58
+- missing L3 count = 0
+- missing L3 IDs = []
+
+Feature extraction validation:
+- extracted row count = 58
+- extraction error count = 0
+- extraction error IDs = []
+- feature count = 11
+
+Leakage validation:
+- forbidden feature negative injection test = pass
+- forbidden feature runtime hits = 0
+- fail-closed behavior = yes
+
 Readiness:
 - GOLD_AUDIT_2BY_PASS = yes
-- TRAINING_PREFLIGHT_DRY_RUN_IMPLEMENTED = yes
-- TRAINING_PREFLIGHT_DRY_RUN_TESTED = yes
-- TRAINING_PREFLIGHT_DRY_RUN_EXECUTED = yes
+- READ_ONLY_MODE_SELF_VERIFIED = yes
+- L3_COVERAGE_FAIL_CLOSED = yes
+- FEATURE_EXTRACTION_FAIL_CLOSED = yes
+- FORBIDDEN_FEATURE_NEGATIVE_TEST = yes
 - COHORT_SELECTION_SAFE = yes
 - DEFAULT_ELO_EXPLICIT = yes
 - LEAKAGE_CHECK_FAIL_CLOSED = yes

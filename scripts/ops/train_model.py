@@ -474,18 +474,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="TITAN-V4.46.8 模型训练管道 - 工业加固版",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-示例:
-  python scripts/ops/train_model.py
-  python scripts/ops/train_model.py --name titan_v4468_combat
-  python scripts/ops/train_model.py --min-samples 500 --verbose
-  python scripts/ops/train_model.py --json
-
-退出码:
-  0 - 训练成功
-  1 - 训练失败
-  2 - 配置错误
-        """,
+        epilog="示例: python scripts/ops/train_model.py [--dry-run] [--json] [--verbose]\n"
+        "退出码: 0=成功 1=失败 2=配置错误",
     )
     parser.add_argument(
         "--name", default="titan_v4468_combat", help="模型输出名称 (默认: titan_v4468_combat)"
@@ -498,15 +488,13 @@ def parse_args():
         help="只输出 filtered feature matrix 统计；不训练、不保存 artifact",
     )
     parser.add_argument(
-        "--no-write",
-        action="store_true",
-        help="禁止训练 artifact / dataset / report 文件写入",
+        "--no-write", action="store_true", help="禁止训练 artifact / dataset / report 文件写入"
     )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Training preflight dry-run: audit cohort / labels / features / Elo / leakage. "
-        "NO fit, NO predict, NO artifact write, NO DB write. JSON summary to stdout.",
+        help="Training preflight dry-run: no fit, no predict, no write. "
+        "Audit cohort/labels/features/Elo/leakage. JSON to stdout.",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="详细日志模式")
     return parser.parse_args()
@@ -517,152 +505,151 @@ def run_report_only_mode(conn) -> dict:
     return build_report_from_connection(conn)
 
 
+# fmt: off
+def _verify_connection_read_only(conn):
+    """Return (is_read_only, setting_value)."""
+    from psycopg2.extras import RealDictCursor  # noqa: PLC0415
+    try:
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur.execute("SHOW transaction_read_only")
+        row = cur.fetchone()
+        cur.close()
+        if row is None:
+            return False, "unknown"
+        if isinstance(row, dict):
+            v = str(row.get("transaction_read_only", "")).strip().lower()
+        elif isinstance(row, (list, tuple)):
+            v = str(row[0]).strip().lower() if row else ""
+        else:
+            v = str(row).strip().lower()
+        return v in ("on", "true", "1", "yes"), v
+    except Exception as e:
+        return False, f"error: {e}"
+# fmt: on
+
+
+# fmt: off
 def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
     """Training preflight dry-run: audit cohort, labels, features, Elo, leakage.
-
-    Reads DB (SELECT only), extracts features for audit, checks safety gates.
-    NEVER calls fit, predict, or writes artifacts.
-    """
+    Reads DB (SELECT only). NEVER calls fit, predict, or writes artifacts."""
     from psycopg2.extras import RealDictCursor  # noqa: PLC0415
+    _forbidden = ["actual_result","home_score","away_score","result","winner","outcome",
+        "is_finished","is_training_eligible","full_time_score","final_score","status",
+        "home_corners","away_corners","home_yellow_cards","away_yellow_cards",
+        "home_red_cards","away_red_cards"]
+    _ok, blocked = {"home_win", "away_win", "draw"}, []
+    h = {"mode": "training_preflight_dry_run", "status": "pass",
+         "db_read_only": False, "transaction_read_only_setting": "",
+         "eligible_cohort_count": 0, "cohort_count": 0,
+         "l3_coverage_count": 0, "missing_l3_count": 0, "missing_l3_match_ids": [],
+         "label_column": "actual_result", "label_null_count": 0,
+         "label_distribution": {}, "invalid_label_values": [],
+         "feature_count": 0, "feature_names": [],
+         "feature_extracted_row_count": 0, "feature_extraction_error_count": 0,
+         "feature_extraction_error_match_ids": [], "feature_extraction_errors": [],
+         "forbidden_feature_hits": [],
+         "elo_real_count": 0, "elo_default_count": 0,
+         "elo_default_match_ids": [], "default_elo_explicit": True,
+         "fit_executed": False, "predict_executed": False,
+         "db_write_attempted": False, "artifact_written": False,
+         "dataset_file_written": False, "model_file_written": False,
+         "blocked_reasons": blocked}
 
-    # fmt: off
-    forbidden_patterns = [
-        "actual_result", "home_score", "away_score", "result",
-        "winner", "outcome", "is_finished", "is_training_eligible",
-        "full_time_score", "final_score", "status",
-        "home_corners", "away_corners", "home_yellow_cards", "away_yellow_cards",
-        "home_red_cards", "away_red_cards",
-    ]
-    # fmt: on
-    valid_labels = {"home_win", "away_win", "draw"}
-
-    summary = {
-        "mode": "training_preflight_dry_run",
-        "status": "pass",
-        "db_read_only": True,
-        "cohort_count": 0,
-        "l3_coverage_count": 0,
-        "label_column": "actual_result",
-        "label_null_count": 0,
-        "label_distribution": {},
-        "invalid_label_values": [],
-        "feature_count": 0,
-        "feature_names": [],
-        "forbidden_feature_hits": [],
-        "elo_real_count": 0,
-        "elo_default_count": 0,
-        "elo_default_match_ids": [],
-        "default_elo_explicit": True,
-        "fit_executed": False,
-        "predict_executed": False,
-        "db_write_attempted": False,
-        "artifact_written": False,
-        "dataset_file_written": False,
-        "model_file_written": False,
-        "blocked_reasons": [],
-    }
-
-    # 1. Query training cohort
-    cursor = conn.cursor(cursor_factory=RealDictCursor)
-    cursor.execute("""
-        SELECT m.match_id, m.home_team, m.away_team, m.actual_result,
-               l.elo_features, l.golden_features, l.tactical_features
-        FROM matches m
-        INNER JOIN l3_features l ON m.match_id = l.match_id
-        WHERE m.is_finished = true
-          AND m.is_training_eligible = true
-          AND l.elo_features IS NOT NULL
-        ORDER BY m.match_date DESC
-    """)
-    rows = cursor.fetchall()
-    cursor.close()
-    summary["cohort_count"] = len(rows)
-    summary["l3_coverage_count"] = len(rows)
+    # 0. Read-only verification BEFORE any cohort query
+    is_ro, ro_val = _verify_connection_read_only(conn)
+    h["db_read_only"] = is_ro
+    h["transaction_read_only_setting"] = ro_val
+    if not is_ro:
+        blocked.append("transaction_read_only={}: NOT read-only; "
+                        "use PGOPTIONS=-c default_transaction_read_only=on".format(ro_val))
+        h["status"] = "blocked"
+        if logger:
+            logger.error(f"BLOCKED: transaction_read_only={ro_val}, not read-only")
+        return h
     if logger:
-        logger.info(f"Dry-run cohort: {len(rows)} rows (finished + training_eligible + L3)")
+        logger.info(f"Read-only verified: {ro_val}")
+
+    # 1. LEFT JOIN cohort query to detect missing L3
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    cur.execute("""SELECT m.match_id, m.home_team, m.away_team, m.actual_result,
+        l.match_id AS l3_match_id, l.elo_features, l.golden_features, l.tactical_features
+        FROM matches m LEFT JOIN l3_features l ON m.match_id = l.match_id
+        WHERE m.is_finished = true AND m.is_training_eligible = true
+        ORDER BY m.match_date DESC""")
+    all_rows = cur.fetchall()
+    cur.close()
+    l3_rows = [r for r in all_rows if r.get("l3_match_id") is not None]
+    missing = [r for r in all_rows if r.get("l3_match_id") is None]
+    mids = [r["match_id"] for r in missing]
+    h.update(eligible_cohort_count=len(all_rows), cohort_count=len(all_rows),
+             l3_coverage_count=len(l3_rows), missing_l3_count=len(missing),
+             missing_l3_match_ids=mids)
+    if logger:
+        logger.info(f"Eligible: {len(all_rows)}, L3: {len(l3_rows)}, missing: {len(missing)}")
+    if missing:
+        blocked.append(f"missing_l3={len(missing)}: IDs={mids}")
+        h["status"] = "blocked"
+        return h
 
     # 2. Label distribution
-    label_counts = {}
-    null_labels = 0
-    invalid_labels = set()
-    for row in rows:
-        label = row.get("actual_result")
-        if label is None:
-            null_labels += 1
-        elif label not in valid_labels:
-            invalid_labels.add(str(label))
-        label_counts[str(label)] = label_counts.get(str(label), 0) + 1
-    summary["label_null_count"] = null_labels
-    summary["label_distribution"] = label_counts
-    summary["invalid_label_values"] = sorted(invalid_labels)
-    if null_labels > 0:
-        summary["blocked_reasons"].append(
-            f"label_null_count={null_labels}: NULL actual_result in training cohort"
-        )
-    if invalid_labels:
-        summary["blocked_reasons"].append(
-            f"invalid_label_values={sorted(invalid_labels)}: unexpected actual_result values"
-        )
-    if logger:
-        logger.info(f"Label distribution: {label_counts}")
+    lc, nl, iv = {}, 0, set()
+    for r in l3_rows:
+        label = r.get("actual_result")
+        if label is None: nl += 1
+        elif label not in _ok: iv.add(str(label))
+        lc[str(label)] = lc.get(str(label), 0) + 1
+    h.update(label_null_count=nl, label_distribution=lc, invalid_label_values=sorted(iv))
+    if nl: blocked.append(f"label_null={nl}: NULL actual_result")
+    if iv: blocked.append(f"invalid_labels={sorted(iv)}: unexpected")
+    if logger: logger.info(f"Labels: {lc}")
 
-    # 3. Feature extraction + 4. Default Elo detection
-    feature_names_set = set()
-    elo_real, elo_default = 0, 0
-    elo_default_ids = []
-    for row in rows:
-        match_id = row["match_id"]
+    # 3. Feature extraction (NO silent pass) + 4. Default Elo
+    fs, er, ed, ed_ids, xt, xerrs = set(), 0, 0, [], 0, []
+    for r in l3_rows:
+        mid = r["match_id"]
         try:
-            features = extract_v5_features(
-                row["elo_features"], row["golden_features"], row["tactical_features"]
-            )
-            for k in features:
-                feature_names_set.add(k)
-        except Exception:
-            pass
-        elo_raw = row["elo_features"]
-        if isinstance(elo_raw, str):
-            elo_raw = json.loads(elo_raw) if elo_raw else {}
-        if not isinstance(elo_raw, dict):
-            elo_raw = {}
+            feats = extract_v5_features(
+                r["elo_features"], r["golden_features"], r["tactical_features"])
+            for k in feats: fs.add(k)
+            xt += 1
+        except Exception as exc:
+            xerrs.append({"match_id": mid, "error_type": type(exc).__name__,
+                          "message": str(exc)[:200]})
+        elo_raw = r["elo_features"]
+        if isinstance(elo_raw, str): elo_raw = json.loads(elo_raw) if elo_raw else {}
+        if not isinstance(elo_raw, dict): elo_raw = {}
         if str(elo_raw.get("_is_default", "true")).lower() != "false":
-            elo_default += 1
-            elo_default_ids.append(match_id)
-        else:
-            elo_real += 1
-
-    summary["feature_count"] = len(feature_names_set)
-    summary["feature_names"] = sorted(feature_names_set)
-    summary["elo_real_count"] = elo_real
-    summary["elo_default_count"] = elo_default
-    summary["elo_default_match_ids"] = elo_default_ids
+            ed += 1; ed_ids.append(mid)
+        else: er += 1
+    eids = [e["match_id"] for e in xerrs]
+    h.update(feature_count=len(fs), feature_names=sorted(fs),
+             feature_extracted_row_count=xt,
+             feature_extraction_error_count=len(xerrs),
+             feature_extraction_error_match_ids=eids,
+             feature_extraction_errors=xerrs,
+             elo_real_count=er, elo_default_count=ed,
+             elo_default_match_ids=ed_ids)
     if logger:
-        logger.info(f"Features: {len(feature_names_set)} → {sorted(feature_names_set)}")
-        logger.info(f"Elo: {elo_real} real, {elo_default} default")
-        if elo_default_ids:
-            logger.info(f"Default Elo match_ids: {elo_default_ids}")
+        logger.info(f"Features: {len(fs)} -> {sorted(fs)}, xt={xt}/{len(l3_rows)}")
+        logger.info(f"Elo: {er} real, {ed} default")
+    if xerrs: blocked.append(f"xtraction_errors={len(xerrs)}: IDs={eids}")
+    if len(l3_rows) > 0 and len(fs) == 0:
+        blocked.append("non-empty cohort, zero features extracted")
+    if xt != len(l3_rows):
+        blocked.append(f"extracted={xt} != l3_coverage={len(l3_rows)}")
 
     # 5. Leakage checks
-    forbidden_hits = [
-        f for f in sorted(feature_names_set) if any(p in f.lower() for p in forbidden_patterns)
-    ]
-    summary["forbidden_feature_hits"] = forbidden_hits
-    if forbidden_hits:
-        summary["blocked_reasons"].append(
-            f"forbidden_feature_hits={forbidden_hits}: potential prematch leakage"
-        )
-    if logger and forbidden_hits:
-        logger.warning(f"Forbidden feature hits: {forbidden_hits}")
+    fh = [f for f in sorted(fs) if any(p in f.lower() for p in _forbidden)]
+    h["forbidden_feature_hits"] = fh
+    if fh: blocked.append(f"forbidden_hits={fh}: prematch leakage")
+    if logger and fh: logger.warning(f"Forbidden: {fh}")
 
     # 6. Final status
-    if summary["blocked_reasons"]:
-        summary["status"] = "blocked"
-    elif summary["cohort_count"] == 0:
-        summary["status"] = "blocked"
-        summary["blocked_reasons"].append("cohort_count=0: no training-eligible rows")
-    else:
-        summary["status"] = "pass"
-    return summary
+    if not blocked and len(all_rows) == 0:
+        blocked.append("cohort=0: no training-eligible rows")
+    if blocked: h["status"] = "blocked"
+    return h
+# fmt: on
 
 
 def main():  # noqa: PLR0912, PLR0915
