@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ruff: noqa: PLR2004, C901, RUF013, UP006, G004, N803, E701, E702, TRY300, UP032
+# ruff: noqa: PLR2004, C901, RUF013, UP006, G004, N803, E701, E702, TRY300
 # ═══════════════════════════════════════════════════════════════════════════════
 # ║   TITAN-V4.46.8 模型训练管道 - 工业加固版                              ║
 # ║   INDUSTRIAL FORTIFICATION - FAIL-FAST + ROBUST LOGGING + JSON OUTPUT    ║
