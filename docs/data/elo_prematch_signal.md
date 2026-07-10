@@ -3275,3 +3275,33 @@ Safety: DB write final 3 only. No batch/rollback/training/prediction/scraper/sch
 Readiness: GOLD_AUDIT_2BU_PASS=yes, MAIN_CI_AFTER_1756_MERGE_SUCCESS=yes, FINAL_3_CONTROLLED_WRITE_SUCCESS=yes, DB_DISTRIBUTION_CONFIRMED_49_11=yes, APPROVED_49_REAL_ROWS_CONFIRMED=yes, NON_CANDIDATE_ROWS_UNCHANGED=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, EXPECTED_STAY_DEFAULT_11_UNTOUCHED=yes, READY_FOR_POST_WRITE_AUDIT=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
 
 Next: After user confirmation only: perform post-write audit for 2BU. Do not start automatically.
+
+## GOLD-AUDIT-2BV — 2BU Post-write Audit
+
+Status: Post-write audit for 2BU. Read-only. No DB write/smelt/dry-run/batch/rollback/training.
+
+Prerequisite: PR #1757 merged, main CI success (run 29050056919). Main=`1980bb3dd12ee157ca7e322763e1129f50b7720c`. DB=`football_db`.
+
+DB audit: 76/60/60, **false=49, true=11**, unexpected=0.
+
+2BU final 3 audit: 3 found, all false/PrematchEloComputer:
+
+| # | match_id | home_elo | away_elo | elo_diff |
+|---|----------|----------|----------|----------|
+| 1 | 4830511 | 1502.26 | 1554.48 | -52.22 |
+| 2 | 4830753 | 1516.45 | 1462.49 | 53.96 |
+| 3 | 4830754 | 1502.36 | 1497.95 | 4.41 |
+
+Final 3: values match 2BT/2BU, real count=3, no longer default.
+
+Approved 49: 49 real, all false/PrematchEloComputer. Unexpected=0.
+
+Remaining default=11 (expected-stay-default, untouched).
+
+2BU backup: `/tmp/gold_audit_2bu` exists.
+
+Safety: all no (DB write, smelt, dry-run, batch, rollback, training, scraper, schema, code, .github).
+
+Readiness: GOLD_AUDIT_2BV_PASS=yes, MAIN_CI_AFTER_1757_MERGE_SUCCESS=yes, POST_WRITE_AUDIT_STABLE_49_11=yes, APPROVED_49_REAL_ROWS_CONFIRMED=yes, FINAL_3_VALUES_MATCH_2BT_2BU=yes, EXPECTED_STAY_DEFAULT_11_UNTOUCHED=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, ELO_SAFE_WRITE_STAGE_COMPLETE=yes, READY_FOR_TRAINING_READINESS_AUDIT=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
+
+Next: After user confirmation only: perform separate training-readiness audit. Do not start automatically.
