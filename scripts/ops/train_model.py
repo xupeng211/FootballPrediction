@@ -16,19 +16,17 @@
 # @updated 2026-03-11
 
 import argparse
+from dataclasses import asdict, dataclass
+from datetime import datetime
 import importlib.util
 import json
 import logging
-import os
-import sys
-from dataclasses import dataclass, asdict
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+import sys
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -38,6 +36,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+import xgboost as xgb
 
 # ============================================================================
 # 路径配置
@@ -52,18 +51,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # 模块导入
 # ============================================================================
 
-from src.constants.model_config import (
-    DEFAULT_VALUES,
-    MODEL_DIR,
-    RESULT_MAP,
-    RESULT_NAMES,
-    TITAN_COMBAT_FEATURES,
-)
-from src.database.repositories.prediction_repo import (
-    get_db_connection,
-    parse_jsonb,
-    safe_float,
-)
+from src.constants.model_config import MODEL_DIR, RESULT_MAP, RESULT_NAMES, TITAN_COMBAT_FEATURES
+from src.database.repositories.prediction_repo import get_db_connection
 
 # ============================================================================
 # 日志配置 - 双重输出
@@ -304,7 +293,6 @@ def load_training_data(
         raise ValueError(f"训练数据不足: 需要至少 {min_samples} 条，当前 {len(rows)} 条")
 
     # 延迟导入避免循环依赖
-    from src.database.repositories.prediction_repo import extract_features
 
     features_list = []
     labels = []
@@ -509,6 +497,12 @@ def parse_args():
         action="store_true",
         help="禁止训练 artifact / dataset / report 文件写入",
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Training preflight dry-run: audit cohort / labels / features / Elo / leakage. "
+        "NO fit, NO predict, NO artifact write, NO DB write. JSON summary to stdout.",
+    )
     parser.add_argument("-v", "--verbose", action="store_true", help="详细日志模式")
     return parser.parse_args()
 
@@ -516,6 +510,156 @@ def parse_args():
 def run_report_only_mode(conn) -> dict:
     """Build report-only filtered feature matrix stats without fitting a model."""
     return build_report_from_connection(conn)
+
+
+def run_dry_run_mode(conn, logger=None) -> dict:
+    """Training preflight dry-run: audit cohort, labels, features, Elo, leakage.
+
+    Reads DB (SELECT only), extracts features for audit, checks safety gates.
+    NEVER calls fit, predict, or writes artifacts.
+    """
+    import json as _json
+
+    from psycopg2.extras import RealDictCursor
+
+    # fmt: off
+    FORBIDDEN = [
+        "actual_result", "home_score", "away_score", "result",
+        "winner", "outcome", "is_finished", "is_training_eligible",
+        "full_time_score", "final_score", "status",
+        "home_corners", "away_corners", "home_yellow_cards", "away_yellow_cards",
+        "home_red_cards", "away_red_cards",
+    ]
+    # fmt: on
+    ALLOWED_LABELS = {"home_win", "away_win", "draw"}
+
+    summary = {
+        "mode": "training_preflight_dry_run",
+        "status": "pass",
+        "db_read_only": True,
+        "cohort_count": 0,
+        "l3_coverage_count": 0,
+        "label_column": "actual_result",
+        "label_null_count": 0,
+        "label_distribution": {},
+        "invalid_label_values": [],
+        "feature_count": 0,
+        "feature_names": [],
+        "forbidden_feature_hits": [],
+        "elo_real_count": 0,
+        "elo_default_count": 0,
+        "elo_default_match_ids": [],
+        "default_elo_explicit": True,
+        "fit_executed": False,
+        "predict_executed": False,
+        "db_write_attempted": False,
+        "artifact_written": False,
+        "dataset_file_written": False,
+        "model_file_written": False,
+        "blocked_reasons": [],
+    }
+
+    # 1. Query training cohort
+    cursor = conn.cursor(cursor_factory=RealDictCursor)
+    cursor.execute("""
+        SELECT m.match_id, m.home_team, m.away_team, m.actual_result,
+               l.elo_features, l.golden_features, l.tactical_features
+        FROM matches m
+        INNER JOIN l3_features l ON m.match_id = l.match_id
+        WHERE m.is_finished = true
+          AND m.is_training_eligible = true
+          AND l.elo_features IS NOT NULL
+        ORDER BY m.match_date DESC
+    """)
+    rows = cursor.fetchall()
+    cursor.close()
+    summary["cohort_count"] = len(rows)
+    summary["l3_coverage_count"] = len(rows)
+    if logger:
+        logger.info(f"Dry-run cohort: {len(rows)} rows (finished + training_eligible + L3)")
+
+    # 2. Label distribution
+    label_counts = {}
+    null_labels = 0
+    invalid_labels = set()
+    for row in rows:
+        label = row.get("actual_result")
+        if label is None:
+            null_labels += 1
+        elif label not in ALLOWED_LABELS:
+            invalid_labels.add(str(label))
+        label_counts[str(label)] = label_counts.get(str(label), 0) + 1
+    summary["label_null_count"] = null_labels
+    summary["label_distribution"] = label_counts
+    summary["invalid_label_values"] = sorted(invalid_labels)
+    if null_labels > 0:
+        summary["blocked_reasons"].append(
+            f"label_null_count={null_labels}: NULL actual_result in training cohort"
+        )
+    if invalid_labels:
+        summary["blocked_reasons"].append(
+            f"invalid_label_values={sorted(invalid_labels)}: unexpected actual_result values"
+        )
+    if logger:
+        logger.info(f"Label distribution: {label_counts}")
+
+    # 3. Feature extraction + 4. Default Elo detection
+    feature_names_set = set()
+    elo_real, elo_default = 0, 0
+    elo_default_ids = []
+    for row in rows:
+        match_id = row["match_id"]
+        try:
+            features = extract_v5_features(
+                row["elo_features"], row["golden_features"], row["tactical_features"]
+            )
+            for k in features:
+                feature_names_set.add(k)
+        except Exception:
+            pass
+        elo_raw = row["elo_features"]
+        if isinstance(elo_raw, str):
+            elo_raw = _json.loads(elo_raw) if elo_raw else {}
+        if not isinstance(elo_raw, dict):
+            elo_raw = {}
+        if str(elo_raw.get("_is_default", "true")).lower() != "false":
+            elo_default += 1
+            elo_default_ids.append(match_id)
+        else:
+            elo_real += 1
+
+    summary["feature_count"] = len(feature_names_set)
+    summary["feature_names"] = sorted(feature_names_set)
+    summary["elo_real_count"] = elo_real
+    summary["elo_default_count"] = elo_default
+    summary["elo_default_match_ids"] = elo_default_ids
+    if logger:
+        logger.info(f"Features: {len(feature_names_set)} → {sorted(feature_names_set)}")
+        logger.info(f"Elo: {elo_real} real, {elo_default} default")
+        if elo_default_ids:
+            logger.info(f"Default Elo match_ids: {elo_default_ids}")
+
+    # 5. Leakage checks
+    forbidden_hits = [
+        f for f in sorted(feature_names_set) if any(p in f.lower() for p in FORBIDDEN)
+    ]
+    summary["forbidden_feature_hits"] = forbidden_hits
+    if forbidden_hits:
+        summary["blocked_reasons"].append(
+            f"forbidden_feature_hits={forbidden_hits}: potential prematch leakage"
+        )
+    if logger and forbidden_hits:
+        logger.warning(f"Forbidden feature hits: {forbidden_hits}")
+
+    # 6. Final status
+    if summary["blocked_reasons"]:
+        summary["status"] = "blocked"
+    elif summary["cohort_count"] == 0:
+        summary["status"] = "blocked"
+        summary["blocked_reasons"].append("cohort_count=0: no training-eligible rows")
+    else:
+        summary["status"] = "pass"
+    return summary
 
 
 def main():
@@ -526,13 +670,54 @@ def main():
     if args.report_only:
         args.no_write = True
 
-    if args.no_write and not args.report_only:
+    if args.no_write and not args.report_only and not args.dry_run:
         print(
             "--no-write blocks training artifact writes. "
             "Use --report-only --no-write for filtered matrix reporting.",
             file=sys.stderr,
         )
         sys.exit(2)
+
+    # ── Dry-run path: no fit, no predict, no artifact, no write gate ─────
+    if args.dry_run:
+        # Reject dangerous combinations
+        blocked_combo = []
+        if args.no_write:
+            blocked_combo.append("--no-write")
+        if args.report_only:
+            blocked_combo.append("--report-only")
+        if blocked_combo:
+            print(
+                f"--dry-run is a standalone preflight mode. "
+                f"Do not combine with: {', '.join(blocked_combo)}",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+
+        # Dry-run does NOT require training write confirmation
+        logger = setup_logging(args.verbose, write_file=False)
+
+        try:
+            conn = get_db_connection()
+            try:
+                summary = run_dry_run_mode(conn, logger)
+            finally:
+                conn.close()
+
+            print(json.dumps(summary, indent=2, ensure_ascii=False, default=str))
+
+            if summary["status"] == "blocked":
+                logger.error(f"Dry-run BLOCKED: {len(summary['blocked_reasons'])} issue(s)")
+                for reason in summary["blocked_reasons"]:
+                    logger.error(f"  - {reason}")
+                sys.exit(1)
+
+            logger.info("Dry-run PASS: all safety gates clear")
+            sys.exit(0)
+
+        except Exception as e:
+            logger.exception(f"Dry-run failed with exception: {e}")
+            sys.exit(1)
 
     if not args.report_only:
         require_training_write_confirmation()
