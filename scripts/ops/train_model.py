@@ -23,7 +23,7 @@ import json
 import logging
 from pathlib import Path
 import sys
-from typing import Dict, Tuple
+from typing import Dict, Tuple  # noqa: UP035
 
 import numpy as np
 import pandas as pd
@@ -51,8 +51,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # 模块导入
 # ============================================================================
 
-from src.constants.model_config import MODEL_DIR, RESULT_MAP, RESULT_NAMES, TITAN_COMBAT_FEATURES
-from src.database.repositories.prediction_repo import get_db_connection
+from src.constants.model_config import (  # noqa: E402
+    MODEL_DIR,
+    RESULT_MAP,
+    RESULT_NAMES,
+    TITAN_COMBAT_FEATURES,
+)
+from src.database.repositories.prediction_repo import get_db_connection  # noqa: E402
 
 # ============================================================================
 # 日志配置 - 双重输出
@@ -512,18 +517,16 @@ def run_report_only_mode(conn) -> dict:
     return build_report_from_connection(conn)
 
 
-def run_dry_run_mode(conn, logger=None) -> dict:
+def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
     """Training preflight dry-run: audit cohort, labels, features, Elo, leakage.
 
     Reads DB (SELECT only), extracts features for audit, checks safety gates.
     NEVER calls fit, predict, or writes artifacts.
     """
-    import json as _json
-
-    from psycopg2.extras import RealDictCursor
+    from psycopg2.extras import RealDictCursor  # noqa: PLC0415
 
     # fmt: off
-    FORBIDDEN = [
+    forbidden_patterns = [
         "actual_result", "home_score", "away_score", "result",
         "winner", "outcome", "is_finished", "is_training_eligible",
         "full_time_score", "final_score", "status",
@@ -531,7 +534,7 @@ def run_dry_run_mode(conn, logger=None) -> dict:
         "home_red_cards", "away_red_cards",
     ]
     # fmt: on
-    ALLOWED_LABELS = {"home_win", "away_win", "draw"}
+    valid_labels = {"home_win", "away_win", "draw"}
 
     summary = {
         "mode": "training_preflight_dry_run",
@@ -586,7 +589,7 @@ def run_dry_run_mode(conn, logger=None) -> dict:
         label = row.get("actual_result")
         if label is None:
             null_labels += 1
-        elif label not in ALLOWED_LABELS:
+        elif label not in valid_labels:
             invalid_labels.add(str(label))
         label_counts[str(label)] = label_counts.get(str(label), 0) + 1
     summary["label_null_count"] = null_labels
@@ -619,7 +622,7 @@ def run_dry_run_mode(conn, logger=None) -> dict:
             pass
         elo_raw = row["elo_features"]
         if isinstance(elo_raw, str):
-            elo_raw = _json.loads(elo_raw) if elo_raw else {}
+            elo_raw = json.loads(elo_raw) if elo_raw else {}
         if not isinstance(elo_raw, dict):
             elo_raw = {}
         if str(elo_raw.get("_is_default", "true")).lower() != "false":
@@ -641,7 +644,7 @@ def run_dry_run_mode(conn, logger=None) -> dict:
 
     # 5. Leakage checks
     forbidden_hits = [
-        f for f in sorted(feature_names_set) if any(p in f.lower() for p in FORBIDDEN)
+        f for f in sorted(feature_names_set) if any(p in f.lower() for p in forbidden_patterns)
     ]
     summary["forbidden_feature_hits"] = forbidden_hits
     if forbidden_hits:
@@ -662,7 +665,7 @@ def run_dry_run_mode(conn, logger=None) -> dict:
     return summary
 
 
-def main():
+def main():  # noqa: PLR0912, PLR0915
     """主入口 - 带全局异常捕获"""
     global logger
     args = parse_args()
@@ -715,8 +718,8 @@ def main():
             logger.info("Dry-run PASS: all safety gates clear")
             sys.exit(0)
 
-        except Exception as e:
-            logger.exception(f"Dry-run failed with exception: {e}")
+        except Exception:
+            logger.exception("Dry-run failed with exception")
             sys.exit(1)
 
     if not args.report_only:

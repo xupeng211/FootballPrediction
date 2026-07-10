@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: PLR2004, PLC0415, RUF012
 """Unit tests for training preflight dry-run safety harness.
 
 lifecycle: permanent
@@ -36,7 +37,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # ── Fixtures ────────────────────────────────────────────────────────────────
 
 
-def _make_row(match_id, actual_result, elo_is_default=False, home_score=None, away_score=None):
+def _make_row(match_id, actual_result, elo_is_default=False):
     """Build a mock DB row dict matching the cohort query shape."""
     elo = {
         "home_elo_pre": 1500.0 if elo_is_default else 1650.0,
