@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ruff: noqa: PLR2004, C901, RUF013, UP006, G004, N803
+# ruff: noqa: PLR2004, C901, RUF013, UP006, G004, N803, E701, E702, TRY300, UP032
 # ═══════════════════════════════════════════════════════════════════════════════
 # ║   TITAN-V4.46.8 模型训练管道 - 工业加固版                              ║
 # ║   INDUSTRIAL FORTIFICATION - FAIL-FAST + ROBUST LOGGING + JSON OUTPUT    ║
@@ -506,7 +506,7 @@ def run_report_only_mode(conn) -> dict:
 
 
 # fmt: off
-def _verify_connection_read_only(conn):  # noqa: TRY300
+def _verify_connection_read_only(conn):
     """Return (is_read_only, setting_value)."""
     from psycopg2.extras import RealDictCursor  # noqa: PLC0415
     try:
@@ -529,7 +529,7 @@ def _verify_connection_read_only(conn):  # noqa: TRY300
 
 
 # fmt: off
-def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915, E701, E702
+def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
     """Training preflight dry-run: audit cohort, labels, features, Elo, leakage.
     Reads DB (SELECT only). NEVER calls fit, predict, or writes artifacts."""
     from psycopg2.extras import RealDictCursor  # noqa: PLC0415
