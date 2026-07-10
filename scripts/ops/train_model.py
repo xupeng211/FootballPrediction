@@ -506,7 +506,7 @@ def run_report_only_mode(conn) -> dict:
 
 
 # fmt: off
-def _verify_connection_read_only(conn):
+def _verify_connection_read_only(conn):  # noqa: TRY300
     """Return (is_read_only, setting_value)."""
     from psycopg2.extras import RealDictCursor  # noqa: PLC0415
     try:
@@ -529,7 +529,7 @@ def _verify_connection_read_only(conn):
 
 
 # fmt: off
-def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
+def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915, E701, E702
     """Training preflight dry-run: audit cohort, labels, features, Elo, leakage.
     Reads DB (SELECT only). NEVER calls fit, predict, or writes artifacts."""
     from psycopg2.extras import RealDictCursor  # noqa: PLC0415
@@ -560,8 +560,8 @@ def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
     h["db_read_only"] = is_ro
     h["transaction_read_only_setting"] = ro_val
     if not is_ro:
-        blocked.append("transaction_read_only={}: NOT read-only; "
-                        "use PGOPTIONS=-c default_transaction_read_only=on".format(ro_val))
+        blocked.append(f"transaction_read_only={ro_val}: NOT read-only; "
+                        "use PGOPTIONS=-c default_transaction_read_only=on")
         h["status"] = "blocked"
         if logger:
             logger.error(f"BLOCKED: transaction_read_only={ro_val}, not read-only")
