@@ -3305,3 +3305,55 @@ Safety: all no (DB write, smelt, dry-run, batch, rollback, training, scraper, sc
 Readiness: GOLD_AUDIT_2BV_PASS=yes, MAIN_CI_AFTER_1757_MERGE_SUCCESS=yes, POST_WRITE_AUDIT_STABLE_49_11=yes, APPROVED_49_REAL_ROWS_CONFIRMED=yes, FINAL_3_VALUES_MATCH_2BT_2BU=yes, EXPECTED_STAY_DEFAULT_11_UNTOUCHED=yes, UNEXPECTED_REAL_ROWS_ZERO=yes, ELO_SAFE_WRITE_STAGE_COMPLETE=yes, READY_FOR_TRAINING_READINESS_AUDIT=yes. BATCH_WRITE=no, TRAINING_DRY_RUN=no.
 
 Next: After user confirmation only: perform separate training-readiness audit. Do not start automatically.
+
+## GOLD-AUDIT-2BW — Training Readiness Audit after Elo Safe Write Stage
+
+Status: Training-readiness audit only. No training/prediction/backtest/DB write/model generation performed.
+
+Prerequisite: PR #1758 merged, main CI success (run 29072099302). Main=`4ef4658ed07f86327442a0a6e337809a0ae84b60`. DB=`football_db`.
+
+Terminal Elo: 76/60/60, **49 real / 11 default**, unexpected=0.
+
+Remaining 11 default: 140_20252026_4837496, 47_20242025_900002, 4830458-4830466. Expected-stay-default by design: yes (Round 1 / non-Ligue1 / non-53).
+
+### Label readiness: PASS
+- Label columns found: `home_score`(int), `away_score`(int), `actual_result`(varchar), `is_finished`(bool), `is_training_eligible`(bool).
+- 58 matches have `is_finished=true` AND `is_training_eligible=true`.
+- actual_result distribution: home_win=24, away_win=18, draw=17, NULL=1. Label-ready=58. Rule clear: yes.
+
+### Feature readiness: PASS with notes
+- l3_features: 15 columns (golden, tactical, odds_movement, odds, elo, rolling, efficiency, draw, market_sentiment, stitch_summary + meta).
+- Elo: 60 rows, 58 have home_elo/away_elo keys, 49 real (non-default). Default Elo rows need handling strategy (use default values or exclude from training).
+- Other features: completeness unclear without deeper audit but schema exists.
+
+### Training entrypoint: YES
+- `scripts/ops/train_model.py` — XGBoost V4.46.8, CLI with --json, uses training_write_guard.
+- `scripts/ops/training_eligibility_dry_run.js` — 6-rule eligibility scan.
+- `scripts/ops/training_pipeline_smoke_dry_run.js`, `training_dataset_leakage_dry_run.js`, `training_eligibility_after_score_dry_run.js`, `formal_training_cohort_inventory_dry_run.test.js`.
+- Write guard: `ALLOW_TRAINING_WRITE=yes` + `FINAL_TRAINING_WRITE_CONFIRMATION=yes` required.
+- Training reads l3_features = yes. DB write risk = yes (gated). Artifact write risk = yes (gated). Safe dry-run exists = yes.
+
+### Leakage risk: LOW-MEDIUM
+- Match features schema includes xG fields (post-match stats) but these are classified as AUDIT_ONLY in FotMobParserOutputEnvelope.
+- `scripts/ops/training_dataset_leakage_dry_run.js` exists for leakage verification before training.
+- Blocking leakage issue: no (gated by leakage dry-run).
+
+### Side-effect risk: UNDERSTOOD
+- `src/ml/training_write_guard.py` enforces double env-var gate.
+- Train command not executed in this audit.
+
+### Sample size: WEAK
+- 76 raw, 60 matches, 60 L3, 49 real Elo, 58 label-ready. Serious ML training impractical at this scale. Suitable for tiny smoke train / validation dry-run.
+
+### Safety: all no (training, prediction, backtest, DB write, smelt, scraper, model artifact, dataset artifact, code change).
+
+### Readiness:
+- GOLD_AUDIT_2BW_PASS=yes, ELO_SAFE_WRITE_STAGE_COMPLETE_CONFIRMED=yes, DB_TERMINAL_STATE_CONFIRMED_49_11=yes.
+- LABEL_READINESS_CONFIRMED=yes (58 label-ready). FEATURE_READINESS_CONFIRMED=yes (with default-Elo handling needed).
+- LEAKAGE_RISK_ACCEPTABLE_FOR_DRY_RUN=yes (gated by leakage dry-run).
+- TRAINING_ENTRYPOINT_IDENTIFIED=yes. TRAINING_SIDE_EFFECTS_UNDERSTOOD=yes.
+- SAFE_FOR_TRAINING_DRY_RUN=**conditional** (dry-run pipeline exists, write-gated, sample tiny).
+- SAFE_FOR_FULL_TRAINING=**no**. SAFE_FOR_PREDICTION_BACKTEST=**no**.
+- READY_FOR_TRAINING_DRY_RUN_PLAN=**conditional**.
+
+Next: After user confirmation only: create separate training dry-run plan. Do not start training automatically.
