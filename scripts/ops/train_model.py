@@ -507,21 +507,15 @@ def run_report_only_mode(conn) -> dict:
 
 # fmt: off
 def _verify_connection_read_only(conn):
-    """Return (is_read_only, setting_value)."""
-    from psycopg2.extras import RealDictCursor  # noqa: PLC0415
+    """Return (is_read_only, setting_value). Uses default cursor (no psycopg2 import)."""
     try:
-        cur = conn.cursor(cursor_factory=RealDictCursor)
+        cur = conn.cursor()
         cur.execute("SHOW transaction_read_only")
         row = cur.fetchone()
         cur.close()
         if row is None:
             return False, "unknown"
-        if isinstance(row, dict):
-            v = str(row.get("transaction_read_only", "")).strip().lower()
-        elif isinstance(row, (list, tuple)):
-            v = str(row[0]).strip().lower() if row else ""
-        else:
-            v = str(row).strip().lower()
+        v = str(row[0] if isinstance(row, (list, tuple)) else row).strip().lower()
         return v in ("on", "true", "1", "yes"), v
     except Exception as e:
         return False, f"error: {e}"
@@ -532,7 +526,6 @@ def _verify_connection_read_only(conn):
 def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
     """Training preflight dry-run: audit cohort, labels, features, Elo, leakage.
     Reads DB (SELECT only). NEVER calls fit, predict, or writes artifacts."""
-    from psycopg2.extras import RealDictCursor  # noqa: PLC0415
     _forbidden = ["actual_result","home_score","away_score","result","winner","outcome",
         "is_finished","is_training_eligible","full_time_score","final_score","status",
         "home_corners","away_corners","home_yellow_cards","away_yellow_cards",
@@ -570,14 +563,25 @@ def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
         logger.info(f"Read-only verified: {ro_val}")
 
     # 1. LEFT JOIN cohort query to detect missing L3
-    cur = conn.cursor(cursor_factory=RealDictCursor)
+    # Use default cursor (tuples), no psycopg2 import — column order:
+    # 0:match_id, 1:home_team, 2:away_team, 3:actual_result,
+    # 4:l3_match_id, 5:elo_features, 6:golden_features, 7:tactical_features
+    cur = conn.cursor()
     cur.execute("""SELECT m.match_id, m.home_team, m.away_team, m.actual_result,
-        l.match_id AS l3_match_id, l.elo_features, l.golden_features, l.tactical_features
+        l.match_id, l.elo_features, l.golden_features, l.tactical_features
         FROM matches m LEFT JOIN l3_features l ON m.match_id = l.match_id
         WHERE m.is_finished = true AND m.is_training_eligible = true
         ORDER BY m.match_date DESC""")
-    all_rows = cur.fetchall()
+    raw_rows = cur.fetchall()
     cur.close()
+    # Convert tuples to dicts for consistent access (handle both tuple and dict)
+    COLS = ["match_id","home_team","away_team","actual_result",
+            "l3_match_id","elo_features","golden_features","tactical_features"]
+    if raw_rows and isinstance(raw_rows[0], (list, tuple)):
+        all_rows = [dict(zip(COLS, r)) for r in raw_rows]
+    else:
+        all_rows = list(raw_rows)
+
     l3_rows = [r for r in all_rows if r.get("l3_match_id") is not None]
     missing = [r for r in all_rows if r.get("l3_match_id") is None]
     mids = [r["match_id"] for r in missing]

@@ -120,10 +120,20 @@ def _make_cursor(rows, *, read_only_row=None):
     return cursor
 
 
+def _ro_val(value):
+    """Create a SHOW cursor fetchone result as a tuple: ('on',) or ('off',)."""
+    return (value,)
+
+
 def _ro_cur(read_only_row, _cohort_rows=None):
-    """Create the SHOW cursor (fetchone) with read_only_row."""
+    """Create the SHOW cursor (fetchone) with read_only_row (tuple)."""
     cur = MagicMock()
-    cur.fetchone.return_value = read_only_row
+    # _verify_connection_read_only uses default cursor → fetches tuple
+    if isinstance(read_only_row, dict):
+        val = read_only_row.get("transaction_read_only", "off")
+        cur.fetchone.return_value = (val,)
+    else:
+        cur.fetchone.return_value = read_only_row
     return cur
 
 
@@ -210,7 +220,7 @@ class TestReadOnlyVerification:
         from scripts.ops.train_model import run_dry_run_mode
 
         ro_cur = MagicMock()
-        ro_cur.fetchone.return_value = {"transaction_read_only": "on"}
+        ro_cur.fetchone.return_value = ("on",)
         ch_cur = MagicMock()
         ch_cur.fetchall.return_value = sample_rows
         conn = MagicMock()
