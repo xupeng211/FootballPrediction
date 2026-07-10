@@ -542,6 +542,15 @@
       "expires_or_review_note": "Added to allowlist by gold-audit-2ae-fix2 (2026-07-07). All DB queries are SELECT-only. Filesystem artifact writes guarded by training_write_guard.py. --report-only mode enforces no-write. Review if file is modified to add INSERT/UPDATE/DELETE/DDL.",
       "consumer_audit_task": "consumer_level_guard_audit_for_db_pool_sync_db_pool_sql_store",
       "consumer_audit_doc": "docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md"
+    },
+    {
+      "path": "scripts/ops/train_model.py",
+      "classification": "historical_python_read_only_dry_run_only",
+      "reason": "GOLD-AUDIT-2BY training preflight dry-run. SELECT-only cohort/label/feature/Elo/leakage audit via psycopg2 RealDictCursor. Uses SHOW transaction_read_only to self-verify read-only session. No INSERT/UPDATE/DELETE/CREATE/DROP/ALTER. No fit, no predict, no artifact write. Guarded by --dry-run flag, require_training_write_confirmation() on non-dry-run path, and PGOPTIONS=-c default_transaction_read_only=on.",
+      "evidence": "psycopg2.extras.RealDictCursor import + cursor.execute() for SELECT-only queries (SHOW transaction_read_only, LEFT JOIN cohort query). No write SQL. Dry-run path exits before require_training_write_confirmation(). Non-dry-run path preserved with existing write gate.",
+      "source_doc": "docs/data/elo_prematch_signal.md",
+      "owner_task": "GOLD-AUDIT-2BY",
+      "expires_or_review_note": "Dry-run mode is SELECT-only. If non-dry-run training path uses cursor.execute() for write operations, it must pass require_training_write_confirmation(). This allowlist entry is for the dry-run SELECT-only path only."
     }
   ]
 }
