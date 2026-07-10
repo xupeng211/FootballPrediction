@@ -575,10 +575,10 @@ def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
     raw_rows = cur.fetchall()
     cur.close()
     # Convert tuples to dicts for consistent access (handle both tuple and dict)
-    COLS = ["match_id","home_team","away_team","actual_result",
+    _cols = ["match_id","home_team","away_team","actual_result",
             "l3_match_id","elo_features","golden_features","tactical_features"]
     if raw_rows and isinstance(raw_rows[0], (list, tuple)):
-        all_rows = [dict(zip(COLS, r)) for r in raw_rows]
+        all_rows = [dict(zip(_cols, r, strict=True)) for r in raw_rows]
     else:
         all_rows = list(raw_rows)
 
