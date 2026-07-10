@@ -22,7 +22,7 @@ Uses mock/fixture; no real DB connection.
 import json
 from pathlib import Path
 import sys
-from unittest.mock import ANY, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -120,7 +120,7 @@ def _make_cursor(rows, *, read_only_row=None):
     return cursor
 
 
-def _ro_cur(read_only_row, cohort_rows):
+def _ro_cur(read_only_row, _cohort_rows=None):
     """Create the SHOW cursor (fetchone) with read_only_row."""
     cur = MagicMock()
     cur.fetchone.return_value = read_only_row
@@ -195,7 +195,7 @@ class TestReadOnlyVerification:
         assert s["cohort_count"] == 0
         assert "NOT read-only" in s["blocked_reasons"][0]
 
-    def test_show_query_exception_blocked(self, sample_rows):
+    def test_show_query_exception_blocked(self):
         """SHOW throws → blocked."""
         cur = MagicMock()
         cur.fetchone.side_effect = RuntimeError("connection lost")
@@ -304,7 +304,7 @@ class TestFeatureExtractionErrors:
 
         original = tm.extract_v5_features
 
-        def _failing(*args, **kwargs):
+        def _failing(*args, **kwargs):  # noqa: ARG001
             raise ValueError("extraction error")
 
         tm.extract_v5_features = _failing
@@ -327,7 +327,7 @@ class TestFeatureExtractionErrors:
 
         original = tm.extract_v5_features
 
-        def _empty(*args, **kwargs):
+        def _empty(*args, **kwargs):  # noqa: ARG001
             return {}  # zero features
 
         tm.extract_v5_features = _empty
@@ -376,7 +376,7 @@ class TestForbiddenFeatureInjection:
 
         original = tm.extract_v5_features
 
-        def _injected(*args, **kwargs):
+        def _injected(*args, **kwargs):  # noqa: ARG001
             return {"home_elo_pre": 1500.0, "home_score": 2}
 
         tm.extract_v5_features = _injected
@@ -397,7 +397,7 @@ class TestForbiddenFeatureInjection:
 
         original = tm.extract_v5_features
 
-        def _injected(*args, **kwargs):
+        def _injected(*args, **kwargs):  # noqa: ARG001
             return {"away_score": 1, "safe": 0.5}
 
         tm.extract_v5_features = _injected
