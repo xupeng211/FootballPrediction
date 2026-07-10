@@ -3357,3 +3357,99 @@ Remaining 11 default: 140_20252026_4837496, 47_20242025_900002, 4830458-4830466.
 - READY_FOR_TRAINING_DRY_RUN_PLAN=**conditional**.
 
 Next: After user confirmation only: create separate training dry-run plan. Do not start training automatically.
+
+## GOLD-AUDIT-2BX — Training Dry-run Plan after 2BW
+
+Status:
+- Training dry-run planning only. No training or training dry-run executed; no prediction or backtest performed.
+- No DB write, smelt, scraper/source-data network, schema/migration, model artifact, or dataset artifact.
+- No runtime code, tests, CI, or environment changed. This plan does not authorize training.
+
+Purpose:
+- Convert 2BW into explicit gates, command/output policy, leakage/default-Elo handling, sample limits, and stop conditions for a future bounded dry-run.
+- Record a No-Go when current entrypoints cannot meet every gate; do not hide blockers behind a nominal dry-run flag.
+
+Prerequisite:
+- PR #1759 merged=yes; merge commit=`fc7075fa986a4042cf58107b0a706f02925908a7`.
+- Main Production Gate run `29121582348` completed/success for that exact commit; post-merge check=PASS; working tree was clean.
+- GOLD-AUDIT-2BW completed=yes; SAFE_FOR_TRAINING_DRY_RUN=conditional; SAFE_FOR_FULL_TRAINING=no; SAFE_FOR_PREDICTION_BACKTEST=no.
+
+Main state:
+- main commit at branch creation=`fc7075fa986a4042cf58107b0a706f02925908a7`; 2BW merged=yes.
+
+DB terminal state (SELECT-only):
+- selected DB_NAME=`football_db`; raw_match_data/matches/l3_features=`76/60/60`.
+- Prematch Elo=`49 real / 11 default`; remaining IDs recorded only in `/tmp/gold_audit_2bx/remaining_default_11_ids.txt`.
+- label-ready=`58`; all 58 have L3 rows; label-ready Elo=`49 real / 9 default`.
+- label-ready distribution=`home_win 23 / away_win 18 / draw 17`.
+- 2BW's `24/18/17` is the 59-finished-row distribution; the excluded row is `47_20242025_900002`, home_win, training-ineligible.
+- DB used=yes, SELECT-only; DB write performed=no.
+
+Default Elo handling plan:
+- Remaining default rows=11: nine explicitly `_is_default=true` and label-ready; two have no marker and must conservatively count as default.
+- Future dry-run must expose a default flag or explicitly exclude/default-stratify those rows; none may be silently treated as real Elo.
+- No rewrite, new Elo smelt, or DB repair is authorized. Current `train_model.py` cannot distinguish 49/11 and silently falls back to 1500 after filtering Elo, so its training path is blocked.
+- DEFAULT_ELO_HANDLING_REQUIRED=yes; CURRENT_ENTRYPOINT_DEFAULT_ELO_HANDLING_SAFE=no.
+
+Training entrypoint / dry-run inspection:
+- training entrypoint found=yes; path=`scripts/ops/train_model.py`.
+- candidates=`scripts/model_training/train_baseline_v1.py`, `training_dataset_leakage_dry_run.js`, `training_eligibility_dry_run.js`, `training_eligibility_after_score_dry_run.js`, `smoke_training_dataset_dry_run.js`, `training_pipeline_smoke_dry_run.js`.
+- leakage gate=`scripts/ops/training_dataset_leakage_dry_run.js` (identified, but matches-only/partial and does not prove the real L3 assembler).
+- eligibility gate=`scripts/ops/training_eligibility_dry_run.js` (identified, auxiliary/partial); smoke path=`scripts/ops/smoke_training_dataset_dry_run.js` (dataset only).
+- `train_model.py` has no `--dry-run` or isolated output option; real fit requires training-write confirmations and writes repo logs/models.
+- baseline `--dry-run --no-write` skips fit but lacks eligible-cohort/default-Elo/cutoff safety; pipeline smoke performs in-memory fit and test predictions.
+- training command proposed=no; training command executed=no.
+
+Proposed 2BY dry-run command plan:
+- command status=blocked; candidate command=`BLOCKED — no current command satisfies all required gates`.
+- required flags=none approved; required env=`DB_NAME=football_db` for SELECT-only inspection, with all DB/training write confirmations absent.
+- no-write guarantee=no for any actual training path; isolated-output guarantee=no for `train_model.py`.
+- allowed outputs while blocked=stdout-only gate diagnostics; after separate authorization, at most one `/tmp/gold_audit_2by` smoke report.
+- forbidden outputs=DB writes, repo logs/reports, model/scaler/metadata files, datasets, predictions, backtests, and source-data network output.
+- exact rationale and stop conditions are in `/tmp/gold_audit_2bx/proposed_2by_training_dry_run_plan.txt`; no command from that plan was executed.
+
+Required gates before any 2BY execution:
+1. main CI green and working tree clean.
+2. DB read-only terminal state confirmed: 76/60/60 and 49/11.
+3. label-ready rows confirmed: 58 with distribution 23/18/17.
+4. all eligible rows have a verified prematch feature row.
+5. default Elo is explicitly flagged, filtered, or stratified without rewrite.
+6. leakage gate proves the actual feature assembler is prematch-only and fails nonzero on violation.
+7. eligibility gate proves the exact cohort and label contract.
+8. command has supported dry-run, SELECT-only, zero-write, and isolated-output behavior.
+9. DB/training write confirmations are absent.
+10. no model or dataset artifact path is used; any allowed report is outside the repo.
+11. fit-time prediction, business prediction, and backtest are disabled.
+12. final output is limited to one smoke report; any gate failure stops 2BY.
+
+Leakage / label / feature policy:
+- label source=`actual_result` only. Scores may audit labels but are forbidden features and may not replace the label contract.
+- `is_finished` and `is_training_eligible` are filters only; result/winner/status/post-match stats are forbidden features.
+- closing odds, future information, and features lacking `prediction_cutoff_time` proof are forbidden.
+- Real/default Elo must remain distinguishable. If the assembler cannot prove prematch-only and explicit default handling, 2BY is blocked.
+- Current `train_model.py` derives labels from scores, does not filter the eligible cohort, and cannot safely expose Elo, so it fails these gates.
+
+Artifact / output policy:
+- 2BX generated no model/dataset artifact. Future 2BY defaults to zero artifact and stdout only.
+- If a report is later authorized, it may exist only under `/tmp/gold_audit_2by`; gitignored does not equal authorized.
+- Never add `.joblib`, `.pkl`, `.parquet`, `.csv`, model folders, dataset folders, or generated reports.
+
+Sample-size policy:
+- 58 label-ready rows are weak and permit only smoke/wiring/leakage/eligibility validation after all gates pass.
+- They cannot support model-quality, betting-edge, predictive-power, profitability, prediction, or backtest claims.
+
+Safety validation:
+- DB write=no; smelt/dry-run smelt=no; training/training dry-run=no; prediction/backtest=no.
+- scraper/source-data network=no; schema/migration=no; runtime/tests/CI/.github changes=no.
+- model artifact=no; dataset artifact=no; repository artifact added=no.
+
+Readiness:
+- GOLD_AUDIT_2BX_PASS=yes; TRAINING_DRY_RUN_PLAN_RECORDED=yes.
+- PROPOSED_COMMAND_IDENTIFIED=blocked; DEFAULT_ELO_HANDLING_PLAN_RECORDED=yes.
+- LEAKAGE_GATES_RECORDED=yes; ARTIFACT_POLICY_RECORDED=yes; SAMPLE_SIZE_LIMIT_RECORDED=yes.
+- SAFE_FOR_2BY_TRAINING_DRY_RUN_EXECUTION=blocked.
+- SAFE_FOR_FULL_TRAINING=no; SAFE_FOR_PREDICTION_BACKTEST=no.
+
+Next:
+- Do not execute 2BY until the recorded command blockers are resolved and the user gives separate explicit authorization.
+- Do not start training, prediction, backtest, smelt, artifact generation, or DB writes automatically.
