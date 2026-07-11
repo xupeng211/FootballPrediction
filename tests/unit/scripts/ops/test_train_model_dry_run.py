@@ -460,9 +460,9 @@ class TestFormalTrainingEligibilityGate:
         with pytest.raises(ValueError, match="训练数据不足"):
             load_training_data(conn, min_samples=1)
 
-        _execute = getattr(cursor, 'exe' + 'cute')
-        assert _execute.call_count == 1
-        return " ".join(_execute.call_args.args[0].split())
+        exe = getattr(cursor, 'execute')
+        assert exe.call_count == 1
+        return " ".join(exe.call_args.args[0].split())
 
     def test_formal_sql_requires_training_eligibility(self):
         query = self._execute_loader_with_empty_rows()
