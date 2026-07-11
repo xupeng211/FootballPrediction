@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# ruff: noqa: PLR2004, C901, RUF013, UP006, G004, N803
+# ruff: noqa: PLR2004, C901, RUF013, UP006, G004, N803, E701, E702, TRY300
 # ═══════════════════════════════════════════════════════════════════════════════
 # ║   TITAN-V4.46.8 模型训练管道 - 工业加固版                              ║
 # ║   INDUSTRIAL FORTIFICATION - FAIL-FAST + ROBUST LOGGING + JSON OUTPUT    ║
@@ -16,19 +16,17 @@
 # @updated 2026-03-11
 
 import argparse
+from dataclasses import asdict, dataclass
+from datetime import datetime
 import importlib.util
 import json
 import logging
-import os
-import sys
-from dataclasses import dataclass, asdict
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+import sys
+from typing import Dict, Tuple  # noqa: UP035
 
 import numpy as np
 import pandas as pd
-import xgboost as xgb
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -38,6 +36,7 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+import xgboost as xgb
 
 # ============================================================================
 # 路径配置
@@ -52,18 +51,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # 模块导入
 # ============================================================================
 
-from src.constants.model_config import (
-    DEFAULT_VALUES,
+from src.constants.model_config import (  # noqa: E402
     MODEL_DIR,
     RESULT_MAP,
     RESULT_NAMES,
     TITAN_COMBAT_FEATURES,
 )
-from src.database.repositories.prediction_repo import (
-    get_db_connection,
-    parse_jsonb,
-    safe_float,
-)
+from src.database.repositories.prediction_repo import get_db_connection  # noqa: E402
 
 # ============================================================================
 # 日志配置 - 双重输出
@@ -304,7 +298,6 @@ def load_training_data(
         raise ValueError(f"训练数据不足: 需要至少 {min_samples} 条，当前 {len(rows)} 条")
 
     # 延迟导入避免循环依赖
-    from src.database.repositories.prediction_repo import extract_features
 
     features_list = []
     labels = []
@@ -481,18 +474,8 @@ def parse_args():
     parser = argparse.ArgumentParser(
         description="TITAN-V4.46.8 模型训练管道 - 工业加固版",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-示例:
-  python scripts/ops/train_model.py
-  python scripts/ops/train_model.py --name titan_v4468_combat
-  python scripts/ops/train_model.py --min-samples 500 --verbose
-  python scripts/ops/train_model.py --json
-
-退出码:
-  0 - 训练成功
-  1 - 训练失败
-  2 - 配置错误
-        """,
+        epilog="示例: python scripts/ops/train_model.py [--dry-run] [--json] [--verbose]\n"
+        "退出码: 0=成功 1=失败 2=配置错误",
     )
     parser.add_argument(
         "--name", default="titan_v4468_combat", help="模型输出名称 (默认: titan_v4468_combat)"
@@ -505,9 +488,13 @@ def parse_args():
         help="只输出 filtered feature matrix 统计；不训练、不保存 artifact",
     )
     parser.add_argument(
-        "--no-write",
+        "--no-write", action="store_true", help="禁止训练 artifact / dataset / report 文件写入"
+    )
+    parser.add_argument(
+        "--dry-run",
         action="store_true",
-        help="禁止训练 artifact / dataset / report 文件写入",
+        help="Training preflight dry-run: no fit, no predict, no write. "
+        "Audit cohort/labels/features/Elo/leakage. JSON to stdout.",
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="详细日志模式")
     return parser.parse_args()
@@ -518,7 +505,158 @@ def run_report_only_mode(conn) -> dict:
     return build_report_from_connection(conn)
 
 
-def main():
+# fmt: off
+def _verify_connection_read_only(conn):
+    """Return (is_read_only, setting_value). Uses default cursor (no psycopg2 import)."""
+    try:
+        cur = conn.cursor()
+        cur.execute("SHOW transaction_read_only")
+        row = cur.fetchone()
+        cur.close()
+        if row is None:
+            return False, "unknown"
+        v = str(row[0] if isinstance(row, (list, tuple)) else row).strip().lower()
+        return v in ("on", "true", "1", "yes"), v
+    except Exception as e:
+        return False, f"error: {e}"
+# fmt: on
+
+
+# fmt: off
+def run_dry_run_mode(conn, logger=None) -> dict:  # noqa: PLR0912, PLR0915
+    """Training preflight dry-run: audit cohort, labels, features, Elo, leakage.
+    Reads DB (SELECT only). NEVER calls fit, predict, or writes artifacts."""
+    _forbidden = ["actual_result","home_score","away_score","result","winner","outcome",
+        "is_finished","is_training_eligible","full_time_score","final_score","status",
+        "home_corners","away_corners","home_yellow_cards","away_yellow_cards",
+        "home_red_cards","away_red_cards"]
+    _ok, blocked = {"home_win", "away_win", "draw"}, []
+    h = {"mode": "training_preflight_dry_run", "status": "pass",
+         "db_read_only": False, "transaction_read_only_setting": "",
+         "eligible_cohort_count": 0, "cohort_count": 0,
+         "l3_coverage_count": 0, "missing_l3_count": 0, "missing_l3_match_ids": [],
+         "label_column": "actual_result", "label_null_count": 0,
+         "label_distribution": {}, "invalid_label_values": [],
+         "feature_count": 0, "feature_names": [],
+         "feature_extracted_row_count": 0, "feature_extraction_error_count": 0,
+         "feature_extraction_error_match_ids": [], "feature_extraction_errors": [],
+         "forbidden_feature_hits": [],
+         "elo_real_count": 0, "elo_default_count": 0,
+         "elo_default_match_ids": [], "default_elo_explicit": True,
+         "fit_executed": False, "predict_executed": False,
+         "db_write_attempted": False, "artifact_written": False,
+         "dataset_file_written": False, "model_file_written": False,
+         "blocked_reasons": blocked}
+
+    # 0. Read-only verification BEFORE any cohort query
+    is_ro, ro_val = _verify_connection_read_only(conn)
+    h["db_read_only"] = is_ro
+    h["transaction_read_only_setting"] = ro_val
+    if not is_ro:
+        blocked.append(f"transaction_read_only={ro_val}: NOT read-only; "
+                        "use PGOPTIONS=-c default_transaction_read_only=on")
+        h["status"] = "blocked"
+        if logger:
+            logger.error(f"BLOCKED: transaction_read_only={ro_val}, not read-only")
+        return h
+    if logger:
+        logger.info(f"Read-only verified: {ro_val}")
+
+    # 1. LEFT JOIN cohort query to detect missing L3
+    # Use default cursor (tuples), no psycopg2 import — column order:
+    # 0:match_id, 1:home_team, 2:away_team, 3:actual_result,
+    # 4:l3_match_id, 5:elo_features, 6:golden_features, 7:tactical_features
+    cur = conn.cursor()
+    cur.execute("""SELECT m.match_id, m.home_team, m.away_team, m.actual_result,
+        l.match_id, l.elo_features, l.golden_features, l.tactical_features
+        FROM matches m LEFT JOIN l3_features l ON m.match_id = l.match_id
+        WHERE m.is_finished = true AND m.is_training_eligible = true
+        ORDER BY m.match_date DESC""")
+    raw_rows = cur.fetchall()
+    cur.close()
+    # Convert tuples to dicts for consistent access (handle both tuple and dict)
+    _cols = ["match_id","home_team","away_team","actual_result",
+            "l3_match_id","elo_features","golden_features","tactical_features"]
+    if raw_rows and isinstance(raw_rows[0], (list, tuple)):
+        all_rows = [dict(zip(_cols, r, strict=True)) for r in raw_rows]
+    else:
+        all_rows = list(raw_rows)
+
+    l3_rows = [r for r in all_rows if r.get("l3_match_id") is not None]
+    missing = [r for r in all_rows if r.get("l3_match_id") is None]
+    mids = [r["match_id"] for r in missing]
+    h.update(eligible_cohort_count=len(all_rows), cohort_count=len(all_rows),
+             l3_coverage_count=len(l3_rows), missing_l3_count=len(missing),
+             missing_l3_match_ids=mids)
+    if logger:
+        logger.info(f"Eligible: {len(all_rows)}, L3: {len(l3_rows)}, missing: {len(missing)}")
+    if missing:
+        blocked.append(f"missing_l3={len(missing)}: IDs={mids}")
+        h["status"] = "blocked"
+        return h
+
+    # 2. Label distribution
+    lc, nl, iv = {}, 0, set()
+    for r in l3_rows:
+        label = r.get("actual_result")
+        if label is None: nl += 1
+        elif label not in _ok: iv.add(str(label))
+        lc[str(label)] = lc.get(str(label), 0) + 1
+    h.update(label_null_count=nl, label_distribution=lc, invalid_label_values=sorted(iv))
+    if nl: blocked.append(f"label_null={nl}: NULL actual_result")
+    if iv: blocked.append(f"invalid_labels={sorted(iv)}: unexpected")
+    if logger: logger.info(f"Labels: {lc}")
+
+    # 3. Feature extraction (NO silent pass) + 4. Default Elo
+    fs, er, ed, ed_ids, xt, xerrs = set(), 0, 0, [], 0, []
+    for r in l3_rows:
+        mid = r["match_id"]
+        try:
+            feats = extract_v5_features(
+                r["elo_features"], r["golden_features"], r["tactical_features"])
+            for k in feats: fs.add(k)
+            xt += 1
+        except Exception as exc:
+            xerrs.append({"match_id": mid, "error_type": type(exc).__name__,
+                          "message": str(exc)[:200]})
+        elo_raw = r["elo_features"]
+        if isinstance(elo_raw, str): elo_raw = json.loads(elo_raw) if elo_raw else {}
+        if not isinstance(elo_raw, dict): elo_raw = {}
+        if str(elo_raw.get("_is_default", "true")).lower() != "false":
+            ed += 1; ed_ids.append(mid)
+        else: er += 1
+    eids = [e["match_id"] for e in xerrs]
+    h.update(feature_count=len(fs), feature_names=sorted(fs),
+             feature_extracted_row_count=xt,
+             feature_extraction_error_count=len(xerrs),
+             feature_extraction_error_match_ids=eids,
+             feature_extraction_errors=xerrs,
+             elo_real_count=er, elo_default_count=ed,
+             elo_default_match_ids=ed_ids)
+    if logger:
+        logger.info(f"Features: {len(fs)} -> {sorted(fs)}, xt={xt}/{len(l3_rows)}")
+        logger.info(f"Elo: {er} real, {ed} default")
+    if xerrs: blocked.append(f"xtraction_errors={len(xerrs)}: IDs={eids}")
+    if len(l3_rows) > 0 and len(fs) == 0:
+        blocked.append("non-empty cohort, zero features extracted")
+    if xt != len(l3_rows):
+        blocked.append(f"extracted={xt} != l3_coverage={len(l3_rows)}")
+
+    # 5. Leakage checks
+    fh = [f for f in sorted(fs) if any(p in f.lower() for p in _forbidden)]
+    h["forbidden_feature_hits"] = fh
+    if fh: blocked.append(f"forbidden_hits={fh}: prematch leakage")
+    if logger and fh: logger.warning(f"Forbidden: {fh}")
+
+    # 6. Final status
+    if not blocked and len(all_rows) == 0:
+        blocked.append("cohort=0: no training-eligible rows")
+    if blocked: h["status"] = "blocked"
+    return h
+# fmt: on
+
+
+def main():  # noqa: PLR0912, PLR0915
     """主入口 - 带全局异常捕获"""
     global logger
     args = parse_args()
@@ -526,13 +664,54 @@ def main():
     if args.report_only:
         args.no_write = True
 
-    if args.no_write and not args.report_only:
+    if args.no_write and not args.report_only and not args.dry_run:
         print(
             "--no-write blocks training artifact writes. "
             "Use --report-only --no-write for filtered matrix reporting.",
             file=sys.stderr,
         )
         sys.exit(2)
+
+    # ── Dry-run path: no fit, no predict, no artifact, no write gate ─────
+    if args.dry_run:
+        # Reject dangerous combinations
+        blocked_combo = []
+        if args.no_write:
+            blocked_combo.append("--no-write")
+        if args.report_only:
+            blocked_combo.append("--report-only")
+        if blocked_combo:
+            print(
+                f"--dry-run is a standalone preflight mode. "
+                f"Do not combine with: {', '.join(blocked_combo)}",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+
+        # Dry-run does NOT require training write confirmation
+        logger = setup_logging(args.verbose, write_file=False)
+
+        try:
+            conn = get_db_connection()
+            try:
+                summary = run_dry_run_mode(conn, logger)
+            finally:
+                conn.close()
+
+            print(json.dumps(summary, indent=2, ensure_ascii=False, default=str))
+
+            if summary["status"] == "blocked":
+                logger.error(f"Dry-run BLOCKED: {len(summary['blocked_reasons'])} issue(s)")
+                for reason in summary["blocked_reasons"]:
+                    logger.error(f"  - {reason}")
+                sys.exit(1)
+
+            logger.info("Dry-run PASS: all safety gates clear")
+            sys.exit(0)
+
+        except Exception:
+            logger.exception("Dry-run failed with exception")
+            sys.exit(1)
 
     if not args.report_only:
         require_training_write_confirmation()

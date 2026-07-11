@@ -3453,3 +3453,129 @@ Readiness:
 Next:
 - Do not execute 2BY until the recorded command blockers are resolved and the user gives separate explicit authorization.
 - Do not start training, prediction, backtest, smelt, artifact generation, or DB writes automatically.
+
+---
+
+## GOLD-AUDIT-2BY — Training Preflight Dry-run Safety Harness
+
+Status:
+- Runtime safety harness implementation.
+- Adds a no-fit, no-predict, no-write training preflight dry-run mode.
+- No model training performed.
+- No prediction or backtest performed.
+- No business DB write performed.
+- No model or dataset artifact generated.
+
+Prerequisite:
+- PR #1760 merged = yes
+- merge preflight passed = yes
+- post-merge check passed = yes
+- exact main merge SHA Production Gate passed = yes
+- merge SHA: `062d5680fbc879503eff85b6266c5d34de6075b1`
+- main CI run: `29124907241` (success)
+
+Implementation scope:
+- runtime files changed = `scripts/ops/train_model.py`
+- test files changed = `tests/unit/scripts/ops/test_train_model_dry_run.py`
+- docs changed = `docs/data/elo_prematch_signal.md`
+- `.github/**` changed = no
+- schema/migration changed = no
+
+Dry-run safety contract:
+- CLI mode = `--dry-run`
+- cohort = finished + training-eligible + matching L3
+- label = `actual_result`
+- default Elo explicitly reported = yes
+- forbidden label/score/status fields excluded from features = yes
+- fail-closed leakage checks = yes
+- fit executed = no
+- predict executed = no
+- DB write attempted = no
+- model artifact written = no
+- dataset artifact written = no
+
+Current DB validation:
+- raw_match_data = 76
+- matches = 60
+- l3_features = 60
+- total real Elo = 49
+- total default Elo = 11
+- training-ready cohort = 58
+- training-ready L3 coverage = 58
+- training-ready real Elo = 49
+- training-ready default Elo = 9
+- label distribution = home_win:23, away_win:18, draw:17
+
+Dry-run result:
+- status = pass
+- exact command = `docker compose exec -e PGOPTIONS="-c default_transaction_read_only=on" dev python scripts/ops/train_model.py --dry-run`
+- database read-only enforcement = yes
+- feature count = 11
+- forbidden feature hits = 0
+- prematch-only provenance confirmed = yes (GOLD-AUDIT-2F contract applied)
+- stdout-only report = yes
+- repository artifacts produced = no
+- DB state unchanged = yes
+
+Safety:
+- formal training = no
+- tiny smoke fit = no
+- prediction = no
+- backtest = no
+- scraper/network = no
+- business DB write = no
+- artifact generation = no
+
+### 2BY Fail-closed Hardening
+
+Issues corrected:
+- read-only state is now queried from the active DB session (SHOW transaction_read_only)
+- complete eligible cohort is audited using LEFT JOIN (detects missing L3 rows)
+- missing L3 rows are explicitly reported and block execution
+- feature extraction errors are recorded and block execution
+- non-empty cohort with zero extracted features blocks execution
+- forbidden feature negative injection tests verify fail-closed behavior
+
+Read-only self-verification:
+- negative writable-session test exit code = 1
+- writable session blocked before cohort query = yes
+- positive read-only session setting = on
+
+Cohort validation:
+- eligible cohort count = 58
+- L3 coverage count = 58
+- missing L3 count = 0
+- missing L3 IDs = []
+
+Feature extraction validation:
+- extracted row count = 58
+- extraction error count = 0
+- extraction error IDs = []
+- feature count = 11
+
+Leakage validation:
+- forbidden feature negative injection test = pass
+- forbidden feature runtime hits = 0
+- fail-closed behavior = yes
+
+Readiness:
+- GOLD_AUDIT_2BY_PASS = yes
+- READ_ONLY_MODE_SELF_VERIFIED = yes
+- L3_COVERAGE_FAIL_CLOSED = yes
+- FEATURE_EXTRACTION_FAIL_CLOSED = yes
+- FORBIDDEN_FEATURE_NEGATIVE_TEST = yes
+- COHORT_SELECTION_SAFE = yes
+- DEFAULT_ELO_EXPLICIT = yes
+- LEAKAGE_CHECK_FAIL_CLOSED = yes
+- FIT_EXECUTED = no
+- PREDICT_EXECUTED = no
+- DB_UNCHANGED = yes
+- ARTIFACTS_UNCHANGED = yes
+- SAFE_FOR_TINY_SMOKE_FIT_PLAN = conditional (58 rows; weak sample; smoke/wiring only after explicit authorization)
+- SAFE_FOR_FULL_TRAINING = no
+- SAFE_FOR_PREDICTION_BACKTEST = no
+
+Next:
+- After explicit user authorization only, plan a separately isolated tiny in-memory smoke fit if all safety gates pass.
+- Do not execute fit automatically.
+- Do not start prediction or backtest.
