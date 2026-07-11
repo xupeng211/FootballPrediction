@@ -1188,6 +1188,30 @@ run_proxyprovider_smoke_test() {
   node --test tests/unit/ProxyProvider.test.js
 }
 
+run_canonical_python_unit_gate() {
+  log '执行 canonical Python 单元测试收集与核心测试。'
+  local python_tests=(
+    tests/unit/scripts/ops/test_train_model_dry_run.py
+    tests/unit/database/repositories/test_prediction_repo_l3_contract.py
+    tests/unit/ml/test_training_no_write_guard.py
+  )
+
+  export PYTHONPATH="${WORKSPACE_ROOT}${PYTHONPATH:+:${PYTHONPATH}}"
+  run_with_failure_reason \
+    'canonical Python pytest collection failed' \
+    python -m pytest --collect-only -q "${python_tests[@]}"
+  run_with_failure_reason \
+    'canonical Python core tests failed' \
+    python -m pytest -q "${python_tests[@]}"
+}
+
+run_canonical_javascript_unit_gate() {
+  log '执行递归发现后的 canonical JavaScript 核心单元测试。'
+  run_with_failure_reason \
+    'canonical JavaScript core tests failed' \
+    node scripts/test/run_test_suite.js unit-core
+}
+
 run_js_incremental_gate() {
   log '执行增量 JS 测试门禁。'
   local changed_files=()
@@ -1472,6 +1496,8 @@ main() {
   fi
 
   if [[ "$MODE" == "pr" ]]; then
+    run_canonical_python_unit_gate
+    run_canonical_javascript_unit_gate
     run_js_incremental_gate
     run_recon_core_coverage_guard
   fi

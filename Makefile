@@ -6,7 +6,7 @@
 # 状态: V51.0 Industrial Grade Ready
 # ============================================
 
-.PHONY: help up down restart logs test clean build db-reset db-shell lint format security \
+.PHONY: help up down restart logs test test-unit clean build db-reset db-shell lint format security \
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
         data-help data-check data-local-dry-run data-l3-dry-run data-l3-commit \
         data-l3-write-dry-run data-l3-write-commit \
@@ -93,6 +93,7 @@ help: ## 显示帮助信息
 # Docker 命令
 # ============================================
 COMPOSE_DEV=docker compose -f docker-compose.dev.yml
+CANONICAL_PYTHON_TESTS=tests/unit/scripts/ops/test_train_model_dry_run.py tests/unit/database/repositories/test_prediction_repo_l3_contract.py tests/unit/ml/test_training_no_write_guard.py
 PRE_NETWORK_RUNBOOK_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_AUTH_FORM_NODE?=$(COMPOSE_DEV) exec -T dev node
 NETWORK_READINESS_CHECKLIST_NODE?=$(COMPOSE_DEV) exec -T dev node
@@ -158,12 +159,35 @@ build-no-cache: ## 无缓存构建
 # ============================================
 # 测试与检查
 # ============================================
-test: ## 运行全量测试
+test: ## 运行标准测试集合（Python 收集/核心测试 + 全量 JS 单元测试）
 	@echo "$(BLUE)运行测试门禁...$(NC)"
-	./scripts/run_checks.sh
+	@set -eu; \
+	before="$$(git status --porcelain=v1 -uall)"; \
+	status=0; \
+	if $(COMPOSE_DEV) exec -T dev bash -lc 'set -eu; export PYTHONPATH=/app; python -m pytest --collect-only -q tests/unit; python -m pytest -q $(CANONICAL_PYTHON_TESTS); node scripts/test/run_test_suite.js unit'; then :; else status=$$?; fi; \
+	after="$$(git status --porcelain=v1 -uall)"; \
+	if [ "$$before" != "$$after" ]; then \
+		echo "[TEST-GATE] 测试修改了工作树，拒绝放行。" >&2; \
+		echo "[TEST-GATE] 测试前:" >&2; printf "%s\\n" "$${before:-（clean）}" >&2; \
+		echo "[TEST-GATE] 测试后:" >&2; printf "%s\\n" "$${after:-（clean）}" >&2; \
+		status=1; \
+	fi; \
+	exit $$status
 
 test-unit: ## 运行单元测试
-	pytest tests/ml/test_backtest_engine.py tests/ops/test_signal_generator.py -v
+	@echo "$(BLUE)运行 canonical 核心测试...$(NC)"
+	@set -eu; \
+	before="$$(git status --porcelain=v1 -uall)"; \
+	status=0; \
+	if $(COMPOSE_DEV) exec -T dev bash -lc 'set -eu; export PYTHONPATH=/app; python -m pytest --collect-only -q $(CANONICAL_PYTHON_TESTS); python -m pytest -q $(CANONICAL_PYTHON_TESTS); node scripts/test/run_test_suite.js unit-core'; then :; else status=$$?; fi; \
+	after="$$(git status --porcelain=v1 -uall)"; \
+	if [ "$$before" != "$$after" ]; then \
+		echo "[TEST-GATE] 测试修改了工作树，拒绝放行。" >&2; \
+		echo "[TEST-GATE] 测试前:" >&2; printf "%s\\n" "$${before:-（clean）}" >&2; \
+		echo "[TEST-GATE] 测试后:" >&2; printf "%s\\n" "$${after:-（clean）}" >&2; \
+		status=1; \
+	fi; \
+	exit $$status
 
 lint: ## 运行 Lint 检查
 	@echo "$(BLUE)运行 Lint 检查...$(NC)"

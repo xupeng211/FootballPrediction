@@ -1,6 +1,7 @@
 'use strict';
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
@@ -34,6 +35,27 @@ const RECON_CORE_TESTS = Object.freeze([
   'tests/unit/ReconMatrixFlow.test.js',
   'tests/unit/ReconMatrixTargetRunner.test.js',
 ]);
+const CORE_UNIT_TESTS = Object.freeze([
+  ...CRITICAL_SMOKE_TESTS,
+  'tests/unit/L1ConfigManager.test.js',
+  'tests/unit/DiscoveryService.test.js',
+  'tests/unit/FixtureSeeder.test.js',
+  'tests/unit/FixtureSeederV5.test.js',
+  'tests/unit/scripts/run_test_suite.test.js',
+]);
+const EXCLUDED_TEST_DIRECTORY_NAMES = new Set([
+  '.git',
+  '.pytest_cache',
+  '__pycache__',
+  'artifacts',
+  'coverage',
+  'fixtures',
+  'generated',
+  'logs',
+  'node_modules',
+  'temp',
+  'tmp',
+]);
 const PROJECT_JS_ROOTS = Object.freeze([
   path.join(PROJECT_ROOT, 'src'),
   path.join(PROJECT_ROOT, 'config'),
@@ -47,10 +69,16 @@ let dependencyGraphCache = null;
 
 function safeReadDir(dir) {
   try {
-    return fs.readdirSync(dir, { withFileTypes: true });
+    return fs.readdirSync(dir, { withFileTypes: true }).sort((left, right) =>
+      left.name.localeCompare(right.name)
+    );
   } catch {
     return [];
   }
+}
+
+function shouldSkipDirectory(entry) {
+  return EXCLUDED_TEST_DIRECTORY_NAMES.has(entry.name.toLowerCase());
 }
 
 /**
@@ -63,10 +91,26 @@ function collectTestFiles(dir) {
     return [];
   }
 
-  return safeReadDir(dir)
-    .filter(entry => entry.isFile() && entry.name.endsWith('.test.js'))
-    .map(entry => path.join(dir, entry.name))
-    .sort();
+  const files = [];
+
+  function visit(currentDir) {
+    for (const entry of safeReadDir(currentDir)) {
+      const fullPath = path.join(currentDir, entry.name);
+      if (entry.isDirectory()) {
+        if (!shouldSkipDirectory(entry)) {
+          visit(fullPath);
+        }
+        continue;
+      }
+
+      if (entry.isFile() && entry.name.endsWith('.test.js')) {
+        files.push(path.resolve(fullPath));
+      }
+    }
+  }
+
+  visit(path.resolve(dir));
+  return [...new Set(files)].sort();
 }
 
 function walkJsFiles(dir, files = []) {
@@ -77,7 +121,9 @@ function walkJsFiles(dir, files = []) {
   for (const entry of safeReadDir(dir)) {
     const fullPath = path.join(dir, entry.name);
     if (entry.isDirectory()) {
-      walkJsFiles(fullPath, files);
+      if (!shouldSkipDirectory(entry)) {
+        walkJsFiles(fullPath, files);
+      }
       continue;
     }
 
@@ -462,6 +508,52 @@ function resolveCriticalSmokeFiles(files) {
     .filter(Boolean);
 }
 
+function resolveCoreUnitFiles(files) {
+  return resolveOrderedFiles(CORE_UNIT_TESTS, files);
+}
+
+function snapshotWorkspaceStatus() {
+  const result = spawnSync('git', ['status', '--porcelain=v1', '-uall'], {
+    cwd: PROJECT_ROOT,
+    encoding: 'utf8',
+  });
+
+  if (result.error || result.status !== 0) {
+    return {
+      ok: false,
+      status: '',
+      error: result.error?.message || (result.stderr || '').trim() || 'git status failed',
+    };
+  }
+
+  return {
+    ok: true,
+    status: result.stdout || '',
+    error: null,
+  };
+}
+
+function verifyWorkspaceUnchanged(before, label) {
+  const after = snapshotWorkspaceStatus();
+  if (!before.ok || !after.ok) {
+    console.error(
+      `[TEST-GATE] ${label}无法完成工作树不变性检查: ${before.error || after.error}`
+    );
+    return 1;
+  }
+
+  if (before.status === after.status) {
+    return 0;
+  }
+
+  console.error(`[TEST-GATE] ${label}修改了 Git 工作树，拒绝放行。`);
+  console.error('[TEST-GATE] 测试前 git status --porcelain=v1:');
+  process.stderr.write(before.status || '(clean)\n');
+  console.error('[TEST-GATE] 测试后 git status --porcelain=v1:');
+  process.stderr.write(after.status || '(clean)\n');
+  return 1;
+}
+
 /**
  * 校验覆盖率阈值。
  * @param {{ lines: number, branches: number, functions: number } | null} summary
@@ -567,12 +659,27 @@ function runNodeTests(files, options = {}) {
   args.push('--require', './scripts/ops/helpers/guard_test_env_preload.js');
   args.push(...files.map(file => path.relative(PROJECT_ROOT, file)));
 
+  const workspaceBefore = snapshotWorkspaceStatus();
+  const testTempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'footballprediction-node-tests-'));
   const startTime = Date.now();
-  const result = spawnSync('node', args, {
-    cwd: PROJECT_ROOT,
-    encoding: 'utf8',
-    maxBuffer: DEFAULT_MAX_BUFFER,
-  });
+  let result;
+  try {
+    const childEnv = {
+      ...process.env,
+      LOG_DIR: path.join(testTempDir, 'logs'),
+      FP_TEST_TMP_DIR: testTempDir,
+    };
+    delete childEnv.NODE_TEST_CONTEXT;
+
+    result = spawnSync('node', args, {
+      cwd: PROJECT_ROOT,
+      encoding: 'utf8',
+      maxBuffer: DEFAULT_MAX_BUFFER,
+      env: childEnv,
+    });
+  } finally {
+    fs.rmSync(testTempDir, { recursive: true, force: true });
+  }
   const durationMs = Date.now() - startTime;
   const stdout = result.stdout || '';
   const stderr = result.stderr || '';
@@ -582,24 +689,34 @@ function runNodeTests(files, options = {}) {
   process.stderr.write(stderr);
 
   if (result.error) {
+    verifyWorkspaceUnchanged(workspaceBefore, label);
     console.error(`[TEST-GATE] ${label}启动失败: ${result.error.message}`);
     return 1;
   }
 
   const exitCode = result.status ?? 1;
   if (exitCode !== 0) {
+    const workspaceExitCode = verifyWorkspaceUnchanged(workspaceBefore, label);
     printFailureSummary(files, combinedOutput, label, durationMs);
-    return exitCode;
+    return workspaceExitCode !== 0 ? workspaceExitCode : exitCode;
   }
 
+  let coverageExitCode = 0;
   if (coverage && !supportsNativeCoverageThresholds()) {
     const summary = parseCoverageSummary(combinedOutput);
     writeCoverageSummary(summary);
-    const coverageExitCode = enforceCoverageThresholds(summary);
+    coverageExitCode = enforceCoverageThresholds(summary);
     if (coverageExitCode !== 0) {
       console.error(`[TEST-GATE] ${label}已完成，但覆盖率门禁失败。`);
-      return coverageExitCode;
     }
+  }
+
+  const workspaceExitCode = verifyWorkspaceUnchanged(workspaceBefore, label);
+  if (workspaceExitCode !== 0) {
+    return workspaceExitCode;
+  }
+  if (coverageExitCode !== 0) {
+    return coverageExitCode;
   }
 
   console.log(`[TEST-GATE] ${label}通过，用时 ${formatDuration(durationMs)}。`);
@@ -615,49 +732,76 @@ const allTestFiles = dedupeFiles([
   ...stressFiles,
 ]);
 
-if (mode === 'default' || mode === 'unit') {
-  console.log('[TEST-GATE] 默认门禁执行: 关键烟雾测试 + 全量单元测试。');
-  const smokeFiles = resolveCriticalSmokeFiles(unitFiles);
-  if (smokeFiles.length > 0) {
-    const smokeExitCode = runNodeTests(smokeFiles, { label: '关键烟雾测试' });
-    if (smokeExitCode !== 0) {
-      process.exit(smokeExitCode);
+function main() {
+  if (mode === 'unit-core') {
+    const coreFiles = resolveCoreUnitFiles(unitFiles);
+    console.log(
+      `[TEST-GATE] 核心 JS 单元测试: ${coreFiles.length}/${CORE_UNIT_TESTS.length} 个文件。`
+    );
+    if (coreFiles.length !== CORE_UNIT_TESTS.length) {
+      console.error('[TEST-GATE] 核心 JS 测试文件不完整，拒绝静默缩小测试范围。');
+      process.exit(1);
     }
+    process.exit(runNodeTests(coreFiles, { label: '核心 JS 单元测试' }));
   }
 
-  const smokeSet = new Set(smokeFiles);
-  const remainingUnitFiles = unitFiles.filter(file => !smokeSet.has(file));
-  process.exit(runNodeTests(remainingUnitFiles, { label: '全量单元测试' }));
+  if (mode === 'default' || mode === 'unit') {
+    console.log(`[TEST-GATE] 默认门禁执行: 关键烟雾测试 + 全量单元测试 (${unitFiles.length} 个文件)。`);
+    const smokeFiles = resolveCriticalSmokeFiles(unitFiles);
+    if (smokeFiles.length > 0) {
+      const smokeExitCode = runNodeTests(smokeFiles, { label: '关键烟雾测试' });
+      if (smokeExitCode !== 0) {
+        process.exit(smokeExitCode);
+      }
+    }
+
+    const smokeSet = new Set(smokeFiles);
+    const remainingUnitFiles = unitFiles.filter(file => !smokeSet.has(file));
+    process.exit(runNodeTests(remainingUnitFiles, { label: '全量单元测试' }));
+  }
+
+  if (mode === 'affected') {
+    const affectedFiles = resolveAffectedTestFiles(modeArgs, unitFiles);
+    const selectedFiles = affectedFiles.length > 0
+      ? affectedFiles
+      : resolveCriticalSmokeFiles(allTestFiles);
+
+    console.log(
+      `[TEST-GATE] 增量门禁执行: 变更文件 ${modeArgs.length} 个，命中测试 ${selectedFiles.length} 个。`
+    );
+    process.exit(runNodeTests(selectedFiles, { label: '增量 JS 测试' }));
+  }
+
+  if (mode === 'integration') {
+    process.exit(runNodeTests(integrationFiles, { label: '集成测试' }));
+  }
+
+  if (mode === 'coverage') {
+    console.log(
+      `[TEST-GATE] 覆盖率门禁已启用: lines>=${COVERAGE_THRESHOLDS.lines}, `
+      + `functions>=${COVERAGE_THRESHOLDS.functions}, branches>=${COVERAGE_THRESHOLDS.branches}`,
+    );
+    process.exit(runNodeTests(unitFiles, { coverage: true, label: '覆盖率测试' }));
+  }
+
+  if (mode === 'recon-core') {
+    const reconCoreFiles = resolveOrderedFiles(RECON_CORE_TESTS, allTestFiles);
+    process.exit(runNodeTests(reconCoreFiles, { label: 'Recon 核心测试' }));
+  }
+
+  console.error(`[TEST-GATE] 未知模式: ${mode}`);
+  process.exit(1);
 }
 
-if (mode === 'affected') {
-  const affectedFiles = resolveAffectedTestFiles(modeArgs, unitFiles);
-  const selectedFiles = affectedFiles.length > 0
-    ? affectedFiles
-    : resolveCriticalSmokeFiles(allTestFiles);
-
-  console.log(
-    `[TEST-GATE] 增量门禁执行: 变更文件 ${modeArgs.length} 个，命中测试 ${selectedFiles.length} 个。`
-  );
-  process.exit(runNodeTests(selectedFiles, { label: '增量 JS 测试' }));
+if (require.main === module) {
+  main();
 }
 
-if (mode === 'integration') {
-  process.exit(runNodeTests(integrationFiles, { label: '集成测试' }));
-}
-
-if (mode === 'coverage') {
-  console.log(
-    `[TEST-GATE] 覆盖率门禁已启用: lines>=${COVERAGE_THRESHOLDS.lines}, `
-    + `functions>=${COVERAGE_THRESHOLDS.functions}, branches>=${COVERAGE_THRESHOLDS.branches}`,
-  );
-  process.exit(runNodeTests(unitFiles, { coverage: true, label: '覆盖率测试' }));
-}
-
-if (mode === 'recon-core') {
-  const reconCoreFiles = resolveOrderedFiles(RECON_CORE_TESTS, allTestFiles);
-  process.exit(runNodeTests(reconCoreFiles, { label: 'Recon 核心测试' }));
-}
-
-console.error(`[TEST-GATE] 未知模式: ${mode}`);
-process.exit(1);
+module.exports = {
+  CORE_UNIT_TESTS,
+  collectTestFiles,
+  resolveCoreUnitFiles,
+  runNodeTests,
+  snapshotWorkspaceStatus,
+  verifyWorkspaceUnchanged,
+};

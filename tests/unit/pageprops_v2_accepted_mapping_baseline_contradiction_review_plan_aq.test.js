@@ -324,18 +324,25 @@ test('L2V3AQ internal file writers can be exercised without persisting to disk',
 
 test('L2V3AQ runCli prints safe planning summary', async () => {
     let output = '';
+    const writes = [];
+    const originalWriteFileSync = fs.writeFileSync;
     const originalWrite = process.stdout.write;
     process.stdout.write = text => {
         output += text;
         return true;
+    };
+    fs.writeFileSync = (...args) => {
+        writes.push(args);
     };
 
     try {
         await mod.runCli();
     } finally {
         process.stdout.write = originalWrite;
+        fs.writeFileSync = originalWriteFileSync;
     }
 
+    assert.equal(writes.length, 3);
     const parsed = JSON.parse(output);
     assert.equal(parsed.ok, true);
     assert.equal(parsed.phase, 'Phase 5.21L2V3AQ');

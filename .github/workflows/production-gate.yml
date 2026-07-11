@@ -135,7 +135,25 @@ jobs:
           DB_BLUEPRINT_DEBUG: "1"
           DB_BLUEPRINT_CONNECT_TIMEOUT_MS: "5000"
           DB_BLUEPRINT_STATEMENT_TIMEOUT_MS: "30000"
-        run: bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"
+        run: |
+          set -u
+          before="$(git status --porcelain=v1 -uall)"
+          status=0
+          if bash scripts/devops/gatekeeper.sh --mode="${GATEKEEPER_CI_MODE}"; then
+            :
+          else
+            status=$?
+          fi
+          after="$(git status --porcelain=v1 -uall)"
+          if [ "$before" != "$after" ]; then
+            echo "[Production Gate] 测试或门禁修改了 Git 工作树，拒绝放行。" >&2
+            echo "[Production Gate] 测试前:" >&2
+            printf '%s\n' "${before:-（clean）}" >&2
+            echo "[Production Gate] 测试后:" >&2
+            printf '%s\n' "${after:-（clean）}" >&2
+            status=1
+          fi
+          exit "$status"
 
       - name: AI Workflow Gate (P0)
         env:
