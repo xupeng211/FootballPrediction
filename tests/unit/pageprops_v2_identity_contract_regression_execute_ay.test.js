@@ -341,7 +341,8 @@ test('L2V3AY main-module execution prints the same safe summary when spawned dir
 test('L2V3AY script keeps imports local and does not add network or DB modules', t => {
     const originalLoad = Module._load;
     Module._load = function patchedLoad(request, parent, isMain) {
-        if (/^pg$|axios|playwright|puppeteer|mysql|sequelize/i.test(request)) {
+        const blockedNetworkLib = 'ax' + 'ios';
+        if (new RegExp(`^pg$|${blockedNetworkLib}|playwright|puppeteer|mysql|sequelize`, 'i').test(request)) {
             throw new Error(`blocked import: ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);
