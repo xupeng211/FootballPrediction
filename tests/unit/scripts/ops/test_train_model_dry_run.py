@@ -452,16 +452,16 @@ class TestFormalTrainingEligibilityGate:
     def _execute_loader_with_empty_rows():
         from scripts.ops.train_model import load_training_data
 
-        cursor = MagicMock()
-        cursor.fetchall.return_value = []
+        cur = MagicMock()
+        cur.fetchall.return_value = []
         conn = MagicMock()
-        conn.cursor.return_value = cursor
+        conn.cursor.return_value = cur
 
         with pytest.raises(ValueError, match="训练数据不足"):
             load_training_data(conn, min_samples=1)
 
-        assert cursor.execute.call_count == 1
-        return " ".join(cursor.execute.call_args.args[0].split())
+        assert cur.execute.call_count == 1
+        return " ".join(cur.execute.call_args.args[0].split())
 
     def test_formal_sql_requires_training_eligibility(self):
         query = self._execute_loader_with_empty_rows()
