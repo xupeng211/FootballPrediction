@@ -87,6 +87,14 @@ PROXY_BYPASS_RAW_IMPORTS: tuple[re.Pattern[str], ...] = tuple(
     )
 )
 
+DANGEROUS_PATTERN_GROUPS: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...] = (
+    ("network", DANGEROUS_NETWORK_PATTERNS),
+    ("browser", DANGEROUS_BROWSER_PATTERNS),
+    ("DB write", DANGEROUS_DB_WRITE_PATTERNS),
+    ("hook bypass", DANGEROUS_BYPASS_PATTERNS),
+    ("proxy bypass", PROXY_BYPASS_RAW_IMPORTS),
+)
+
 BUSINESS_CODE_PATH_PREFIXES: tuple[str, ...] = (
     "src/",
     "database/migrations/",
@@ -209,11 +217,14 @@ from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
 # to keep this file under the 800-line gatekeeper limit.
 from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     Change,
+    IncrementalScanResult,
     added_paths,
     changed_paths,
     collect_changes,
     git_output,
     parse_name_status,  # noqa: F401 — re-exported for local_pr_gate_preflight
+    resolve_comparison_refs,
+    scan_incremental_findings,
 )
 
 
@@ -383,48 +394,54 @@ def _is_blind_spot_path(path: str) -> bool:
     return suffix in BLIND_SPOT_CODE_EXTENSIONS
 
 
-def _scan_file_for_patterns(file_path: Path, patterns: tuple[re.Pattern[str], ...]) -> list[str]:
-    """Return matched patterns found in *file_path*."""
-
-    try:
-        text = file_path.read_text(encoding="utf-8", errors="replace")
-    except (OSError, UnicodeDecodeError):
-        return []
-    hits: list[str] = []
-    for pat in patterns:
-        for m in pat.finditer(text):
-            # Truncate match for readable error message
-            snippet = m.group()[:80]
-            hits.append(
-                f"{file_path.relative_to(ROOT)}: pattern '{pat.pattern}' matched '{snippet}'"
-            )
-    return hits
+def scan_dangerous_keywords_incremental(
+    changes: list[Change],
+    *,
+    base_ref: str | None = None,
+    head_ref: str | None = None,
+) -> IncrementalScanResult:
+    """Compare normalized dangerous findings between base and head revisions."""
+    return scan_incremental_findings(
+        changes,
+        path_predicate=_is_blind_spot_path,
+        pattern_groups=DANGEROUS_PATTERN_GROUPS,
+        base_ref=base_ref,
+        head_ref=head_ref,
+        error_prefix="new dangerous keyword in blind-spot path",
+    )
 
 
 def check_dangerous_keywords_in_blind_spots(
     changed: set[str],
+    *,
+    changes: list[Change] | None = None,
+    base_ref: str | None = None,
+    head_ref: str | None = None,
+    emit_summary: bool = False,
 ) -> list[str]:
-    """Flag dangerous keywords in new/modified files under docs/ or tests/."""
-
-    errors: list[str] = []
-    blind_spot_files = sorted(p for p in changed if _is_blind_spot_path(p))
-
-    for rel_path in blind_spot_files:
-        abs_path = ROOT / rel_path
-        if not abs_path.is_file():
-            continue
-
-        for label, patterns in (
-            ("network", DANGEROUS_NETWORK_PATTERNS),
-            ("browser", DANGEROUS_BROWSER_PATTERNS),
-            ("DB write", DANGEROUS_DB_WRITE_PATTERNS),
-            ("hook bypass", DANGEROUS_BYPASS_PATTERNS),
-            ("proxy bypass", PROXY_BYPASS_RAW_IMPORTS),
-        ):
-            hits = _scan_file_for_patterns(abs_path, patterns)
-            errors.extend(f"[{label}] dangerous keyword in blind-spot path: {hit}" for hit in hits)
-
-    return errors
+    """Block only dangerous findings newly introduced by the current diff."""
+    effective_changes = (
+        changes if changes is not None else [Change("M", path) for path in sorted(changed)]
+    )
+    result = scan_dangerous_keywords_incremental(
+        effective_changes,
+        base_ref=base_ref,
+        head_ref=head_ref,
+    )
+    if emit_summary:
+        summary = result.summary
+        print(
+            "[AI Workflow Gate] incremental scan "
+            f"base={summary.base_ref} head={summary.head_ref} "
+            f"scanned_files={summary.scanned_files} "
+            f"base_violations={summary.base_violations} "
+            f"head_violations={summary.head_violations} "
+            f"new_violations={summary.new_violations} "
+            f"removed_violations={summary.removed_violations} "
+            "unchanged_historical_violations="
+            f"{summary.unchanged_historical_violations}"
+        )
+    return list(result.errors)
 
 
 def _safety_declared_no(pr_body: str, label: str) -> bool:
@@ -513,6 +530,8 @@ def validate(  # noqa: C901, PLR0912
     *,
     skip_body_checks: bool = False,
     block_matrix: bool = False,
+    base_ref: str | None = None,
+    head_ref: str | None = None,
 ) -> list[str]:
     """Run all AI workflow gate checks.  Returns a list of error strings.
 
@@ -564,7 +583,15 @@ def validate(  # noqa: C901, PLR0912
     errors.extend(check_no_generated_artifacts_wrapper(added))
 
     # 5. Dangerous keywords in docs/tests blind spots
-    errors.extend(check_dangerous_keywords_in_blind_spots(changed))
+    errors.extend(
+        check_dangerous_keywords_in_blind_spots(
+            changed,
+            changes=changes,
+            base_ref=base_ref,
+            head_ref=head_ref,
+            emit_summary=True,
+        )
+    )
 
     # 6. Safety declaration consistency (only when body is available)
     if not skip_body_checks:
@@ -645,6 +672,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--pr-body-stdin", action="store_true", default=False, help="Read PR body from stdin"
     )
     parser.add_argument("--base-ref", default=None, help="Git base ref for diff")
+    parser.add_argument("--head-ref", default=None, help="Git head ref for diff")
     parser.add_argument(
         "--skip-body-checks",
         action="store_true",
@@ -675,10 +703,20 @@ def main(argv: list[str] | None = None) -> int:  # noqa: C901, PLR0912
         else:
             sys.stdout.write("FAIL: empty PR body — cannot validate AI workflow gate\n")
             return 1
-    changes = collect_changes(args.base_ref)
+    try:
+        resolved_base, resolved_head = resolve_comparison_refs(args.base_ref, args.head_ref)
+        changes = collect_changes(args.base_ref, args.head_ref)
+    except RuntimeError as exc:
+        sys.stderr.write(f"[AI Workflow Gate] {exc}\n")
+        return 1
     changed = changed_paths(changes)
     errors = validate(
-        pr_body, changes, skip_body_checks=args.skip_body_checks, block_matrix=args.block_matrix
+        pr_body,
+        changes,
+        skip_body_checks=args.skip_body_checks,
+        block_matrix=args.block_matrix,
+        base_ref=resolved_base,
+        head_ref=resolved_head,
     )
     # 8. DB write guard enforcement — phase2 hard fail on changed-files violations
     try:
