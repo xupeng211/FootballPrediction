@@ -843,8 +843,9 @@ async function runIdentityContractRegressionExecution(options = {}, overrides = 
     };
 }
 
-async function runCli() {
-    const result = await runIdentityContractRegressionExecution();
+async function runCli(options = {}) {
+    const writeFiles = process.env.PAGEPROPS_NO_WRITE === '1' ? false : (options.writeFiles !== false);
+    const result = await runIdentityContractRegressionExecution({ writeFiles }, options);
     process.stdout.write(
         `${JSON.stringify(
             {

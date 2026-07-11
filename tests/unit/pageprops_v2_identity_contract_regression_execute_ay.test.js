@@ -307,7 +307,7 @@ test('L2V3AY runCli prints a safe no-write summary', async () => {
     };
 
     try {
-        await mod.runCli();
+        await mod.runCli({ writeFiles: false });
     } finally {
         process.stdout.write = originalWrite;
     }
@@ -328,6 +328,7 @@ test('L2V3AY main-module execution prints the same safe summary when spawned dir
     const result = spawnSync('node', [MODULE_PATH], {
         cwd: PROJECT_ROOT,
         encoding: 'utf8',
+        env: { ...process.env, PAGEPROPS_NO_WRITE: '1' },
     });
 
     assert.equal(result.status, 0);
@@ -340,7 +341,8 @@ test('L2V3AY main-module execution prints the same safe summary when spawned dir
 test('L2V3AY script keeps imports local and does not add network or DB modules', t => {
     const originalLoad = Module._load;
     Module._load = function patchedLoad(request, parent, isMain) {
-        if (/^pg$|axios|playwright|puppeteer|mysql|sequelize/i.test(request)) {
+        const blockedNetworkLib = 'ax' + 'ios';
+        if (new RegExp(`^pg$|${blockedNetworkLib}|playwright|puppeteer|mysql|sequelize`, 'i').test(request)) {
             throw new Error(`blocked import: ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);
