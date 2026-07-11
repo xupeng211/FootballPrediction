@@ -341,16 +341,71 @@ function auditReports() {
 
 // ─── area 6: data governance ────────────────────────────────────────────────────
 
+function extractPythonTopLevelFunction(source, functionName) {
+    // Return the body text of a top-level `def <name>(...)` function in *source*,
+    // from its def line to the next top-level def/class or end of file.
+    // Returns null if not found.
+    if (!source || !functionName) return null;
+    const defRe = new RegExp(`^def\\s+${functionName}\\s*\\(`, 'm');
+    const match = defRe.exec(source);
+    if (!match) return null;
+    const startIdx = match.index;
+    // Find the next top-level def or class (zero-indent, no leading whitespace)
+    const nextRe = /^def\s+\w+\s*\(|^class\s+\w+/gm;
+    nextRe.lastIndex = startIdx + match[0].length;
+    let endIdx = source.length;
+    const next = nextRe.exec(source);
+    if (next) endIdx = next.index;
+    return source.slice(startIdx, endIdx);
+}
+
+function inspectFormalTrainingGovernance(trainPy) {
+    // Inspect formal load_training_data() — NOT dry-run paths, comments, or unrelated code.
+    const result = {
+        formal_training_function_found: false,
+        eligibility_filter_detected: false,
+        legacy_status_filter_detected: false,
+        score_derived_label_detected: false,
+        bypass_detected: false,
+    };
+    if (!trainPy) {
+        result.bypass_detected = true;
+        return result;
+    }
+    const fnBody = extractPythonTopLevelFunction(trainPy, 'load_training_data');
+    result.formal_training_function_found = fnBody !== null && fnBody.length > 0;
+    if (!result.formal_training_function_found) {
+        result.bypass_detected = true;
+        return result;
+    }
+    // Strip Python comments (# ...) to avoid false positives from comment-only mentions
+    const stripped = fnBody.split('\n').map(line => {
+        const commentIdx = line.indexOf('#');
+        return commentIdx >= 0 ? line.slice(0, commentIdx) : line;
+    }).join('\n');
+    // Case-insensitive structural eligibility patterns (real SQL/expression, not just field names)
+    result.eligibility_filter_detected =
+        /is_training_eligible\s*=\s*(?:true|TRUE)\b/.test(stripped);
+    result.legacy_status_filter_detected =
+        /\bstatus\s*=\s*['"]Harvested['"]/.test(stripped);
+    result.score_derived_label_detected =
+        /\bhome_score\b/.test(stripped) && /\baway_score\b/.test(stripped);
+    result.bypass_detected =
+        result.legacy_status_filter_detected && !result.eligibility_filter_detected;
+    return result;
+}
+
 function auditDataGovernance() {
     const findings = [];
     const trainPy = readFile(path.join(REPO_ROOT, 'scripts', 'ops', 'train_model.py')) || '';
 
-    if (trainPy && !trainPy.includes('is_training_eligible'))
+    const gov = inspectFormalTrainingGovernance(trainPy);
+    if (gov.bypass_detected)
         {findings.push(finding('DG-001', AREAS.DATA_GOVERNANCE, SEVERITY.P0, RISK_CLASS.WRITE_RISK,
             'Training pipeline bypasses all governance labels',
-            'train_model.py queries status=Harvested (wrong case) and ignores is_training_eligible/source_type/evidence_level.',
-            'Governance layer (V26.7) has zero effect on model training.',
-            'Fix case mismatch. Add is_training_eligible=true, evidence_level checks.'));}
+            'Formal load_training_data() still filters on legacy status/scores and does not apply is_training_eligible=true. The separate --dry-run path is governance-aware but does not change the formal fit path.',
+            'Governance layer (V26.7) has zero effect on formal model training.',
+            'Add is_training_eligible=true to load_training_data() query.'));}
 
     const initDb = readFile(path.join(REPO_ROOT, 'deploy', 'docker', 'init_db.sql')) || '';
     const missing = ['pipeline_status', 'source_type', 'evidence_level', 'is_production_scope',
@@ -389,7 +444,7 @@ function auditDataGovernance() {
         'Training cannot safely begin. Post-match features could leak into training.',
         'Define prediction_cutoff_time policy. Implement time-gated feature extraction.'));
 
-    return { area: AREAS.DATA_GOVERNANCE, findings };
+    return { area: AREAS.DATA_GOVERNANCE, findings, ...gov };
 }
 
 // ─── area 7: dual-stack debt ────────────────────────────────────────────────────
@@ -579,5 +634,5 @@ function main() {
     return results;
 }
 
-module.exports = { PHASE, AREAS, SEVERITY, RISK_CLASS, finding, auditWorkflows, auditBranchMerge, auditTests, auditScripts, auditReports, auditDataGovernance, auditDualStack, auditRepoNoise, runAudit, parseArgs, scanDbWriteScripts };
+module.exports = { PHASE, AREAS, SEVERITY, RISK_CLASS, finding, extractPythonTopLevelFunction, inspectFormalTrainingGovernance, auditWorkflows, auditBranchMerge, auditTests, auditScripts, auditReports, auditDataGovernance, auditDualStack, auditRepoNoise, runAudit, parseArgs, scanDbWriteScripts };
 if (require.main === module) main();

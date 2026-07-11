@@ -14,6 +14,8 @@ const {
     SEVERITY,
     RISK_CLASS,
     finding,
+    extractPythonTopLevelFunction,
+    inspectFormalTrainingGovernance,
     auditWorkflows,
     auditBranchMerge,
     auditTests,
@@ -432,13 +434,108 @@ test('auditReports includes report file counts', () => {
     assert.equal(typeof result.report_lines, 'number');
 });
 
-test('auditDataGovernance identifies training bypass', () => {
+test('auditDataGovernance reports DG-001 while formal load_training_data bypasses eligibility', () => {
     const result = auditDataGovernance();
 
-    // DG-001 should always exist (train_model.py bypasses governance)
+    // DG-001 currently valid: formal path still bypasses eligibility
+    assert.equal(result.formal_training_function_found, true);
+    assert.equal(result.eligibility_filter_detected, false);
+    assert.equal(result.bypass_detected, true);
     assert.ok(result.findings.some(f => f.id === 'DG-001'));
     // DG-002 should exist if init_db.sql is behind
     assert.ok(result.findings.some(f => f.id === 'DG-002'));
+});
+
+// ─── formal training governance helpers ─────────────────────────────────────────
+
+test('extractPythonTopLevelFunction returns null for missing function', () => {
+    const src = 'def other_func():\n    pass\n';
+    assert.equal(extractPythonTopLevelFunction(src, 'load_training_data'), null);
+});
+
+test('extractPythonTopLevelFunction extracts function body', () => {
+    const src = 'def load_training_data(conn):\n    query = "SELECT * FROM matches"\n\ndef other():\n    pass\n';
+    const body = extractPythonTopLevelFunction(src, 'load_training_data');
+    assert.ok(body);
+    assert.ok(body.includes('def load_training_data'));
+    assert.ok(body.includes('SELECT * FROM matches'));
+    assert.ok(!body.includes('def other'));
+});
+
+test('extractPythonTopLevelFunction handles multiline signature', () => {
+    const src = 'def load_training_data(\n    conn,\n    min_samples=100,\n):\n    query = "x"\n';
+    const body = extractPythonTopLevelFunction(src, 'load_training_data');
+    assert.ok(body);
+    assert.ok(body.includes('min_samples'));
+});
+
+test('inspectFormalTrainingGovernance detects bypass on legacy status query', () => {
+    const src = `def load_training_data(conn):
+    query = """
+        SELECT * FROM matches
+        WHERE status = 'Harvested'
+    """
+`;
+    const r = inspectFormalTrainingGovernance(src);
+    assert.equal(r.formal_training_function_found, true);
+    assert.equal(r.eligibility_filter_detected, false);
+    assert.equal(r.legacy_status_filter_detected, true);
+    assert.equal(r.bypass_detected, true);
+});
+
+test('inspectFormalTrainingGovernance bypass when missing function', () => {
+    const r = inspectFormalTrainingGovernance('def other():\n    pass\n');
+    assert.equal(r.formal_training_function_found, false);
+    assert.equal(r.bypass_detected, true);
+});
+
+test('inspectFormalTrainingGovernance not fooled by dry-run only eligibility', () => {
+    // eligibility only in run_dry_run_mode, not in load_training_data
+    const src = `def load_training_data(conn):
+    query = """
+        SELECT * FROM matches
+        WHERE status = 'Harvested'
+    """
+
+def run_dry_run_mode(conn):
+    query = """
+        SELECT * FROM matches
+        WHERE is_training_eligible = true
+    """
+`;
+    const r = inspectFormalTrainingGovernance(src);
+    assert.equal(r.formal_training_function_found, true);
+    assert.equal(r.eligibility_filter_detected, false);
+    assert.equal(r.bypass_detected, true);
+});
+
+test('inspectFormalTrainingGovernance not fooled by comment-only eligibility', () => {
+    const src = `def load_training_data(conn):
+    # TODO: add is_training_eligible = true
+    query = "SELECT * FROM matches WHERE status = 'Harvested'"
+`;
+    const r = inspectFormalTrainingGovernance(src);
+    // "is_training_eligible = true" in a comment line does not count as filtering
+    assert.equal(r.bypass_detected, true);
+});
+
+test('inspectFormalTrainingGovernance detects properly governed formal query', () => {
+    const src = `def load_training_data(conn):
+    query = """
+        SELECT * FROM matches m
+        WHERE m.is_training_eligible = true
+    """
+`;
+    const r = inspectFormalTrainingGovernance(src);
+    assert.equal(r.formal_training_function_found, true);
+    assert.equal(r.eligibility_filter_detected, true);
+    assert.equal(r.bypass_detected, false);
+});
+
+test('inspectFormalTrainingGovernance handles null input', () => {
+    const r = inspectFormalTrainingGovernance(null);
+    assert.equal(r.formal_training_function_found, false);
+    assert.equal(r.bypass_detected, true);
 });
 
 test('auditDualStack identifies ELO duplication', () => {
