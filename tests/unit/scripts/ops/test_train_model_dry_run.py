@@ -452,16 +452,16 @@ class TestFormalTrainingEligibilityGate:
     def _execute_loader_with_empty_rows():
         from scripts.ops.train_model import load_training_data
 
-        cursor = MagicMock()
-        cursor.fetchall.return_value = []
+        cur = MagicMock()
+        cur.fetchall.return_value = []
         conn = MagicMock()
-        conn.cursor.return_value = cursor
+        conn.cursor.return_value = cur
 
         with pytest.raises(ValueError, match="训练数据不足"):
             load_training_data(conn, min_samples=1)
 
-        assert len(cursor.method_calls) == 1
-        return " ".join(cursor.method_calls[0][1][0].split())
+        assert cur.execute.call_count == 1
+        return " ".join(cur.execute.call_args.args[0].split())
 
     def test_formal_sql_requires_training_eligibility(self):
         query = self._execute_loader_with_empty_rows()
@@ -472,7 +472,8 @@ class TestFormalTrainingEligibilityGate:
         query = self._execute_loader_with_empty_rows()
 
         assert "INNER JOIN l3_features" in query
-        assert "m.status = 'Harvested'" in query
+        assert "m.is_finished = TRUE" in query
+        assert "status = 'Harvested'" not in query
         assert "m.home_score IS NOT NULL" in query
         assert "m.away_score IS NOT NULL" in query
         assert "l.elo_features IS NOT NULL" in query
