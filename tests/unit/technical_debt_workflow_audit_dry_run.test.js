@@ -434,16 +434,26 @@ test('auditReports includes report file counts', () => {
     assert.equal(typeof result.report_lines, 'number');
 });
 
-test('auditDataGovernance reports DG-001 while formal load_training_data bypasses eligibility', () => {
+test('auditDataGovernance clears DG-001 when formal load_training_data uses eligibility', () => {
     const result = auditDataGovernance();
 
-    // DG-001 currently valid: formal path still bypasses eligibility
     assert.equal(result.formal_training_function_found, true);
-    assert.equal(result.eligibility_filter_detected, false);
-    assert.equal(result.bypass_detected, true);
-    assert.ok(result.findings.some(f => f.id === 'DG-001'));
-    // DG-002 should exist if init_db.sql is behind
+    assert.equal(result.eligibility_filter_detected, true);
+    assert.equal(result.bypass_detected, false);
+    assert.ok(!result.findings.some(f => f.id === 'DG-001'));
+
+    // Other unrelated debt remains visible.
     assert.ok(result.findings.some(f => f.id === 'DG-002'));
+});
+
+test('runAudit clears DG-001 while other training blockers remain', () => {
+    const result = runAudit();
+    const ids = result.all_findings.map(f => f.id);
+
+    assert.ok(!ids.includes('DG-001'));
+    assert.ok(ids.includes('DG-002'));
+    assert.ok(ids.includes('DG-006'));
+    assert.equal(result.summary.training_blocked, true);
 });
 
 // ─── formal training governance helpers ─────────────────────────────────────────
