@@ -307,7 +307,7 @@ test('L2V3AY runCli prints a safe no-write summary', async () => {
     };
 
     try {
-        await mod.runCli();
+        await mod.runCli({ writeFiles: false });
     } finally {
         process.stdout.write = originalWrite;
     }
@@ -328,6 +328,7 @@ test('L2V3AY main-module execution prints the same safe summary when spawned dir
     const result = spawnSync('node', [MODULE_PATH], {
         cwd: PROJECT_ROOT,
         encoding: 'utf8',
+        env: { ...process.env, PAGEPROPS_NO_WRITE: '1' },
     });
 
     assert.equal(result.status, 0);
