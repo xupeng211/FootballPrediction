@@ -279,7 +279,8 @@ def load_training_data(
                l.elo_features, l.golden_features, l.tactical_features
         FROM matches m
         INNER JOIN l3_features l ON m.match_id = l.match_id
-        WHERE m.status = 'Harvested'
+        WHERE m.is_training_eligible = TRUE
+          AND m.status = 'Harvested'
           AND m.home_score IS NOT NULL
           AND m.away_score IS NOT NULL
           AND l.elo_features IS NOT NULL

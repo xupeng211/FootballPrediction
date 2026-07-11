@@ -19,6 +19,7 @@ Tests verify:
 Uses mock/fixture; no real DB connection.
 """
 
+import ast
 import json
 from pathlib import Path
 import sys
@@ -442,6 +443,71 @@ class TestExistingGatesUnchanged:
         assert callable(load_training_data)
         assert callable(train_model)
         assert callable(save_model)
+
+
+class TestFormalTrainingEligibilityGate:
+    """Formal training cohort is narrowed by the governance eligibility label."""
+
+    @staticmethod
+    def _execute_loader_with_empty_rows():
+        from scripts.ops.train_model import load_training_data
+
+        cursor = MagicMock()
+        cursor.fetchall.return_value = []
+        conn = MagicMock()
+        conn.cursor.return_value = cursor
+
+        with pytest.raises(ValueError, match="训练数据不足"):
+            load_training_data(conn, min_samples=1)
+
+        assert cursor.execute.call_count == 1
+        return " ".join(cursor.execute.call_args.args[0].split())
+
+    def test_formal_sql_requires_training_eligibility(self):
+        query = self._execute_loader_with_empty_rows()
+
+        assert "m.is_training_eligible = TRUE" in query
+
+    def test_formal_sql_preserves_existing_cohort_filters(self):
+        query = self._execute_loader_with_empty_rows()
+
+        assert "INNER JOIN l3_features" in query
+        assert "m.status = 'Harvested'" in query
+        assert "m.home_score IS NOT NULL" in query
+        assert "m.away_score IS NOT NULL" in query
+        assert "l.elo_features IS NOT NULL" in query
+
+    def test_eligibility_condition_is_inside_formal_loader(self):
+        path = PROJECT_ROOT / "scripts" / "ops" / "train_model.py"
+        source = path.read_text(encoding="utf-8")
+        tree = ast.parse(source)
+        functions = {
+            node.name: ast.get_source_segment(source, node)
+            for node in tree.body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+
+        formal_body = functions["load_training_data"]
+        assert functions["run_dry_run_mode"]
+        assert "m.is_training_eligible = TRUE" in formal_body
+
+    def test_loader_does_not_invoke_training_or_save_paths(self):
+        from scripts.ops import train_model as training_module
+
+        cursor = MagicMock()
+        cursor.fetchall.return_value = []
+        conn = MagicMock()
+        conn.cursor.return_value = cursor
+
+        with (
+            patch.object(training_module, "train_model") as train_mock,
+            patch.object(training_module, "save_model") as save_mock,
+            pytest.raises(ValueError, match="训练数据不足"),
+        ):
+            training_module.load_training_data(conn, min_samples=1)
+
+        train_mock.assert_not_called()
+        save_mock.assert_not_called()
 
 
 class TestSummaryJSON:
