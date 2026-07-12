@@ -146,7 +146,14 @@ test('batch_historical_backfill 编排辅助函数应支持安全短路与失败
 
 test('batch_historical_backfill 主流程 dry-run 应在全跳过模式下生成收口报告', async () => {
     const originalLog = console.log;
+    const originalMkdirSync = fs.mkdirSync;
+    const originalWriteFileSync = fs.writeFileSync;
+    const writes = [];
     console.log = () => {};
+    fs.mkdirSync = () => {};
+    fs.writeFileSync = (...args) => {
+        writes.push(args);
+    };
     try {
         const report = await main([
             '--dry-run',
@@ -170,8 +177,11 @@ test('batch_historical_backfill 主流程 dry-run 应在全跳过模式下生成
         assert.deepEqual(report.csvFiles, []);
         assert.match(report.startedAt, /^\d{4}-\d{2}-\d{2}T/);
         assert.match(report.finishedAt, /^\d{4}-\d{2}-\d{2}T/);
+        assert.equal(writes.length, 1);
     } finally {
         console.log = originalLog;
+        fs.mkdirSync = originalMkdirSync;
+        fs.writeFileSync = originalWriteFileSync;
     }
 });
 
