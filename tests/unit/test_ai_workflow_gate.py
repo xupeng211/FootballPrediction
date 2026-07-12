@@ -5,11 +5,14 @@ lifecycle: test-fixture
 
 from __future__ import annotations
 
+from contextlib import contextmanager
 from pathlib import Path
 import subprocess
 import sys
 import tempfile
 import textwrap
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 GATE = ROOT / "scripts/ops/ai_workflow_gate.py"
@@ -17,6 +20,10 @@ GATE = ROOT / "scripts/ops/ai_workflow_gate.py"
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/ops"))
 import ai_workflow_gate as gate  # noqa: E402
+
+from scripts.ops.helpers import git_change_helpers  # noqa: E402
+
+NETWORK_TOKEN = "ax" + "ios"
 
 
 # Convenience: partially-applied check_section_content_quality for test use.
@@ -28,6 +35,78 @@ def _check_content(body: str) -> list[str]:
         body,
         lambda heading, pr_body: gate.section_text_between(pr_body, heading),
     )
+
+
+def _run_git(repo: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return result.stdout.strip()
+
+
+@contextmanager
+def _temporary_git_repo(initial_files: dict[str, str]):
+    with tempfile.TemporaryDirectory(prefix="ai-workflow-gate-") as temp_dir:
+        repo = Path(temp_dir)
+        _run_git(repo, "init", "--initial-branch=main")
+        _run_git(repo, "config", "user.email", "ai-workflow-gate@example.invalid")
+        _run_git(repo, "config", "user.name", "AI Workflow Gate Tests")
+        for relative_path, content in initial_files.items():
+            file_path = repo / relative_path
+            file_path.parent.mkdir(parents=True, exist_ok=True)
+            file_path.write_text(content, encoding="utf-8")
+        _run_git(repo, "add", "-A")
+        _run_git(repo, "commit", "-m", "base")
+        base_sha = _run_git(repo, "rev-parse", "HEAD")
+        yield repo, base_sha
+
+
+def _commit(repo: Path, message: str) -> str:
+    _run_git(repo, "add", "-A")
+    _run_git(repo, "commit", "-m", message)
+    return _run_git(repo, "rev-parse", "HEAD")
+
+
+def _collect_temp_changes(repo: Path, base_sha: str, head_sha: str):
+    original_gate_root = gate.ROOT
+    original_helper_root = git_change_helpers.ROOT_HELPER
+    gate.ROOT = repo
+    git_change_helpers.ROOT_HELPER = repo
+    try:
+        return gate.collect_changes(base_sha, head_sha)
+    finally:
+        gate.ROOT = original_gate_root
+        git_change_helpers.ROOT_HELPER = original_helper_root
+
+
+def _scan_temp_repo(repo: Path, base_sha: str, head_sha: str, *, emit_summary: bool = False):
+    original_gate_root = gate.ROOT
+    original_helper_root = git_change_helpers.ROOT_HELPER
+    gate.ROOT = repo
+    git_change_helpers.ROOT_HELPER = repo
+    try:
+        changes = gate.collect_changes(base_sha, head_sha)
+        result = gate.scan_dangerous_keywords_incremental(
+            changes,
+            base_ref=base_sha,
+            head_ref=head_sha,
+        )
+        if emit_summary:
+            gate.check_dangerous_keywords_in_blind_spots(
+                {change.path for change in changes},
+                changes=changes,
+                base_ref=base_sha,
+                head_ref=head_sha,
+                emit_summary=True,
+            )
+        return result
+    finally:
+        gate.ROOT = original_gate_root
+        git_change_helpers.ROOT_HELPER = original_helper_root
 
 
 def _valid_pr_body() -> str:
@@ -46,6 +125,16 @@ def _valid_pr_body() -> str:
     | Task type | governance-only |
     | One task / one branch / one PR | yes |
     | Business code changed | no |
+
+    ## Dangerous File Authorization
+
+    User authorized the governance gate test fixture to cover changed workflow and gate files.
+    Validation is limited to the AI workflow gate checks and the rollback is a focused commit revert.
+
+    ## PR Authorization Matrix
+
+    | Authorized paths | scripts/ops/ai_workflow_gate.py, tests/unit/test_ai_workflow_gate.py, .github/workflows/production-gate.yml |
+    |---|---|
 
     ## Documentation Impact
 
@@ -366,6 +455,129 @@ def test_blind_spot_path_classification():
     assert gate._is_blind_spot_path("scripts/ops/check.py") is False
 
 
+def _unsafe_source(count: int = 1) -> str:
+    return (
+        "\n".join(f"const client_{index} = {NETWORK_TOKEN}.create();" for index in range(count))
+        + "\n"
+    )
+
+
+def test_incremental_scan_unchanged_historical_violation_is_non_blocking(capsys):
+    with _temporary_git_repo({"tests/sample.js": _unsafe_source()}) as (repo, base_sha):
+        (repo / "tests/sample.js").write_text(
+            _unsafe_source() + "const unrelated = true;\n",
+            encoding="utf-8",
+        )
+        head_sha = _commit(repo, "change unrelated test content")
+        result = _scan_temp_repo(repo, base_sha, head_sha, emit_summary=True)
+
+        assert result.errors == ()
+        assert result.summary.new_violations == 0
+        assert result.summary.unchanged_historical_violations == 1
+
+        output = capsys.readouterr().out
+        assert f"base={base_sha}" in output
+        assert f"head={head_sha}" in output
+        assert "new_violations=0" in output
+
+
+def test_incremental_scan_new_violation_is_blocking():
+    with _temporary_git_repo({"tests/sample.js": "const safe = true;\n"}) as (repo, base_sha):
+        (repo / "tests/sample.js").write_text(_unsafe_source(), encoding="utf-8")
+        head_sha = _commit(repo, "add unsafe test call")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+        assert len(result.errors) == 1
+        assert result.summary.new_violations == 1
+
+
+def test_incremental_scan_increased_violation_count_blocks_only_the_new_finding():
+    with _temporary_git_repo({"tests/sample.js": _unsafe_source()}) as (repo, base_sha):
+        (repo / "tests/sample.js").write_text(_unsafe_source(2), encoding="utf-8")
+        head_sha = _commit(repo, "add second unsafe test call")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+        assert len(result.errors) == 1
+        assert result.summary.base_violations == 1
+        assert result.summary.head_violations == result.summary.base_violations + 1
+        assert result.summary.new_violations == 1
+
+
+def test_incremental_scan_removed_historical_violation_passes():
+    with _temporary_git_repo({"tests/sample.js": _unsafe_source()}) as (repo, base_sha):
+        (repo / "tests/sample.js").write_text("const safe = true;\n", encoding="utf-8")
+        head_sha = _commit(repo, "remove historical unsafe call")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+        assert result.errors == ()
+        assert result.summary.new_violations == 0
+        assert result.summary.removed_violations == 1
+
+
+def test_incremental_scan_line_movement_does_not_create_new_finding():
+    with _temporary_git_repo({"tests/sample.js": _unsafe_source()}) as (repo, base_sha):
+        (repo / "tests/sample.js").write_text(
+            "// inserted header\n\n" + _unsafe_source(),
+            encoding="utf-8",
+        )
+        head_sha = _commit(repo, "move historical finding down")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+        assert result.errors == ()
+        assert result.summary.new_violations == 0
+        assert result.summary.unchanged_historical_violations == 1
+
+
+def test_incremental_scan_pure_rename_is_non_blocking():
+    with _temporary_git_repo({"tests/original.js": _unsafe_source()}) as (repo, base_sha):
+        _run_git(repo, "mv", "tests/original.js", "tests/renamed.js")
+        head_sha = _commit(repo, "rename test file")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+        changes = _collect_temp_changes(repo, base_sha, head_sha)
+
+        assert any(change.status == "R" for change in changes)
+        assert result.errors == ()
+        assert result.summary.new_violations == 0
+        assert result.summary.unchanged_historical_violations == 1
+
+
+def test_incremental_scan_rename_with_new_finding_blocks():
+    with _temporary_git_repo({"tests/original.js": _unsafe_source()}) as (repo, base_sha):
+        _run_git(repo, "mv", "tests/original.js", "tests/renamed.js")
+        (repo / "tests/renamed.js").write_text(_unsafe_source(2), encoding="utf-8")
+        head_sha = _commit(repo, "rename and add unsafe test call")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+        assert len(result.errors) == 1
+        assert result.summary.new_violations == 1
+
+
+def test_incremental_scan_new_file_with_finding_blocks():
+    with _temporary_git_repo({"tests/existing.js": "const safe = true;\n"}) as (repo, base_sha):
+        (repo / "tests/new.js").write_text(_unsafe_source(), encoding="utf-8")
+        head_sha = _commit(repo, "add unsafe test file")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+        assert len(result.errors) == 1
+        assert result.summary.new_violations == 1
+
+
+def test_incremental_scan_safe_new_content_passes():
+    with _temporary_git_repo({"tests/existing.js": "const safe = true;\n"}) as (repo, base_sha):
+        (repo / "tests/new.js").write_text("const alsoSafe = true;\n", encoding="utf-8")
+        head_sha = _commit(repo, "add safe test file")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+        assert result.errors == ()
+        assert result.summary.new_violations == 0
+
+
+def test_incremental_scan_missing_base_fails_explicitly():
+    missing_base = "0" * 40
+    with pytest.raises(RuntimeError, match="incremental baseline unavailable"):
+        git_change_helpers.resolve_comparison_refs(missing_base, "HEAD")
+
+
 def test_safety_consistent_passes():
     body = _valid_pr_body()
     changed = {"docs/CODEX_WORKFLOW.md"}
@@ -665,7 +877,15 @@ def test_gate_cli_with_minimal_valid_body_passes():
         "| Scraper run | no |", "| Scraper run | n/a (guard only, no scraper exec) |"
     )
     result = subprocess.run(
-        [sys.executable, str(GATE), "--pr-body-stdin"],
+        [
+            sys.executable,
+            str(GATE),
+            "--pr-body-stdin",
+            "--base-ref",
+            "HEAD",
+            "--head-ref",
+            "HEAD",
+        ],
         input=body,
         cwd=ROOT,
         text=True,
@@ -677,7 +897,15 @@ def test_gate_cli_with_minimal_valid_body_passes():
 
 def test_gate_cli_with_empty_body_fails():
     result = subprocess.run(
-        [sys.executable, str(GATE), "--pr-body-stdin"],
+        [
+            sys.executable,
+            str(GATE),
+            "--pr-body-stdin",
+            "--base-ref",
+            "HEAD",
+            "--head-ref",
+            "HEAD",
+        ],
         input="",
         cwd=ROOT,
         text=True,
@@ -691,7 +919,15 @@ def test_gate_cli_with_empty_body_fails():
 def test_gate_cli_missing_do_not_start_fails():
     body = _valid_pr_body().replace("Do not start automatically", "Removed")
     result = subprocess.run(
-        [sys.executable, str(GATE), "--pr-body-stdin"],
+        [
+            sys.executable,
+            str(GATE),
+            "--pr-body-stdin",
+            "--base-ref",
+            "HEAD",
+            "--head-ref",
+            "HEAD",
+        ],
         input=body,
         cwd=ROOT,
         text=True,
@@ -710,6 +946,10 @@ def test_gate_cli_skip_body_checks_passes():
             str(GATE),
             "--pr-body-file",
             "/dev/null",
+            "--base-ref",
+            "HEAD",
+            "--head-ref",
+            "HEAD",
             "--skip-body-checks",
         ],
         cwd=ROOT,

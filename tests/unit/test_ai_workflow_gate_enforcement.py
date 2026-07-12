@@ -35,6 +35,15 @@ def _valid_pr_body() -> str:
     | One task / one branch / one PR | yes |
     | Business code changed | no |
 
+    ## Dangerous File Authorization
+
+    This fixture only exercises the gate CLI and does not authorize a production change.
+
+    ## PR Authorization Matrix
+
+    | Authorized paths | scripts/ops/ai_workflow_gate.py, tests/unit/test_ai_workflow_gate_enforcement.py |
+    |---|---|
+
     ## Documentation Impact
 
     | Item | Value |
@@ -76,6 +85,14 @@ def _valid_pr_body() -> str:
     - Revert this commit via `git revert <merge-commit-sha>`.
     - No database migrations, schema changes, or data writes are involved.
     - After revert, re-run `make ci-local` to confirm the gate still passes.
+
+    ## SC-002 status
+
+    - SC-002 remains unchanged; this test covers only gate enforcement behavior.
+
+    ## Remaining risks
+
+    - No additional risk is introduced by this test fixture.
 
     ## Next Recommended Task
 
@@ -134,7 +151,17 @@ def test_enforcement_validate_integration_clean():
 def test_gate_cli_with_skip_body_checks_and_clean_files_passes():
     """Gate CLI with --skip-body-checks and clean changed files should exit 0."""
     result = subprocess.run(
-        [sys.executable, str(GATE), "--pr-body-file", "/dev/null", "--skip-body-checks"],
+        [
+            sys.executable,
+            str(GATE),
+            "--pr-body-file",
+            "/dev/null",
+            "--base-ref",
+            "HEAD",
+            "--head-ref",
+            "HEAD",
+            "--skip-body-checks",
+        ],
         cwd=ROOT,
         text=True,
         capture_output=True,
@@ -147,7 +174,15 @@ def test_gate_cli_with_valid_body_and_clean_files_passes():
     """Gate CLI with valid PR body and clean changed files should exit 0."""
     body = _valid_pr_body()
     result = subprocess.run(
-        [sys.executable, str(GATE), "--pr-body-stdin"],
+        [
+            sys.executable,
+            str(GATE),
+            "--pr-body-stdin",
+            "--base-ref",
+            "HEAD",
+            "--head-ref",
+            "HEAD",
+        ],
         input=body,
         cwd=ROOT,
         text=True,
