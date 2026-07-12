@@ -550,6 +550,8 @@ test('repository L2V3AJ artifacts preserve planning-only semantics when generate
             'expanded_accepted_mapping_baseline_contradiction_review_planning',
             'recapture_runner_identity_input_contract_fix_planning',
             'continued_no_write_recapture_blocker_investigation',
+            // L2V3AX is committed as the current planning state (see proposal.json, commit 4cd151a)
+            'controlled_no_write_identity_contract_regression_planning',
         ].includes(manifestJson.next_required_step),
         true
     );
