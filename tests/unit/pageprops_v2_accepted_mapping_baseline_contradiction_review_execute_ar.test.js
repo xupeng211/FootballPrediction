@@ -274,17 +274,31 @@ test('L2V3AR internal file writers can be exercised without persisting to disk',
 
 test('L2V3AR runCli prints safe execution summary', async () => {
     let output = '';
+    const writes = [];
     const originalWrite = process.stdout.write;
+    const originalWriteFileSync = fs.writeFileSync;
     process.stdout.write = text => {
         output += text;
         return true;
+    };
+    // Prevent runCli's internal call to runAcceptedMappingBaselineContradictionReviewExecute()
+    // from writing to the real repository during this test.
+    fs.writeFileSync = function patchedWriteFileSync(filePath, value, encoding) {
+        writes.push([String(filePath), String(value), encoding]);
     };
 
     try {
         await mod.runCli();
     } finally {
+        fs.writeFileSync = originalWriteFileSync;
         process.stdout.write = originalWrite;
     }
+
+    // Verify the CLI exercised the default write paths without touching disk.
+    assert.equal(writes.length, 3);
+    assert.equal(writes[0][0].endsWith(mod.ARTIFACT_OUTPUT_PATH), true);
+    assert.equal(writes[1][0].endsWith(mod.REPORT_OUTPUT_PATH), true);
+    assert.equal(writes[2][0].endsWith(mod.PROPOSAL_MANIFEST_PATH), true);
 
     const parsed = JSON.parse(output);
     assert.equal(parsed.ok, true);
