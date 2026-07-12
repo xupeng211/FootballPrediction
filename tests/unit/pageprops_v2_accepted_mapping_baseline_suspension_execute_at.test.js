@@ -12,14 +12,7 @@ const MODULE_PATH = path.join(PROJECT_ROOT, 'scripts/ops/pageprops_v2_accepted_m
 
 function loadFreshModule() {
     delete require.cache[require.resolve(MODULE_PATH)];
-    // Prevent top-level runCli() from writing to the real repository.
-    const originalWrite = fs.writeFileSync;
-    fs.writeFileSync = () => {};
-    try {
-        return require(MODULE_PATH);
-    } finally {
-        fs.writeFileSync = originalWrite;
-    }
+    return require(MODULE_PATH);
 }
 
 const mod = loadFreshModule();
@@ -242,13 +235,12 @@ test('L2V3AT internal file writers can be exercised without persisting to disk',
     };
 
     try {
-        const result = mod.runAcceptedMappingBaselineSuspensionExecute({ writeFiles: false });
+        const result = mod.runAcceptedMappingBaselineSuspensionExecute();
         assert.equal(result.ok, true);
-        // With writeFiles: false, the helper returns structured output without calling fs.writeFileSync.
-        assert.equal(writes.length, 0);
-        assert.equal(typeof result.artifact, 'object');
-        assert.equal(typeof result.report, 'string');
-        assert.equal(typeof result.updated_manifest, 'object');
+        assert.equal(writes.length, 3);
+        assert.equal(writes[0][0].endsWith(mod.ARTIFACT_OUTPUT_PATH), true);
+        assert.equal(writes[1][0].endsWith(mod.REPORT_OUTPUT_PATH), true);
+        assert.equal(writes[2][0].endsWith(mod.PROPOSAL_MANIFEST_PATH), true);
     } finally {
         fs.writeFileSync = originalWriteFileSync;
     }
@@ -256,6 +248,7 @@ test('L2V3AT internal file writers can be exercised without persisting to disk',
 
 test('L2V3AT runCli prints safe execution summary', async () => {
     let output = '';
+    const writes = [];
     const originalWrite = process.stdout.write;
     const originalWriteFileSync = fs.writeFileSync;
     process.stdout.write = text => {
@@ -264,7 +257,9 @@ test('L2V3AT runCli prints safe execution summary', async () => {
     };
     // Prevent runCli's internal call to runAcceptedMappingBaselineSuspensionExecute()
     // from writing to the real repository during this test.
-    fs.writeFileSync = () => {};
+    fs.writeFileSync = function patchedWriteFileSync(filePath, value, encoding) {
+        writes.push([String(filePath), String(value), encoding]);
+    };
 
     try {
         await mod.runCli();
@@ -272,6 +267,12 @@ test('L2V3AT runCli prints safe execution summary', async () => {
         fs.writeFileSync = originalWriteFileSync;
         process.stdout.write = originalWrite;
     }
+
+    // Verify the CLI exercised the default write paths without touching disk.
+    assert.equal(writes.length, 3);
+    assert.equal(writes[0][0].endsWith(mod.ARTIFACT_OUTPUT_PATH), true);
+    assert.equal(writes[1][0].endsWith(mod.REPORT_OUTPUT_PATH), true);
+    assert.equal(writes[2][0].endsWith(mod.PROPOSAL_MANIFEST_PATH), true);
 
     const parsed = JSON.parse(output);
     assert.equal(parsed.ok, true);
@@ -293,13 +294,7 @@ test('module load avoids DB, network, browser, proxy, and child process imports'
     };
     try {
         delete require.cache[require.resolve(MODULE_PATH)];
-        const originalWriteFileSync = fs.writeFileSync;
-        fs.writeFileSync = () => {};
-        try {
-            require(MODULE_PATH);
-        } finally {
-            fs.writeFileSync = originalWriteFileSync;
-        }
+        require(MODULE_PATH);
     } finally {
         Module._load = originalLoad;
         delete require.cache[require.resolve(MODULE_PATH)];
