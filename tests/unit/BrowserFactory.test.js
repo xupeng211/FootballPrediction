@@ -55,13 +55,26 @@ const MockBrowser = class {
     }
 };
 
-// 模拟 Playwright：加载 playwright 模块后替换 chromium.launch 和 connect 为 mock 实现
-const playwright = require('playwright');
-playwright.chromium.launch = MockBrowser.launch;
-playwright.chromium.connect = MockBrowser.launch;
+// 劫持 BrowserFactory 的 playwright 依赖，避免修改真实 Playwright 单例。
+// 真实 Playwright 对象可能被 Node test worker 共享；在大批量宿主机
+// runner 中修改它会偶发破坏 test runner 的 IPC 序列化。
+const Module = require('module');
+const originalLoad = Module._load;
+Module._load = function patchedLoad(request, parent, isMain) {
+    if (request === 'playwright') {
+        return { chromium: MockBrowser };
+    }
+    return originalLoad.apply(this, arguments);
+};
 
 
-const { BrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory');
+let BrowserFactory;
+let resetBrowserFactory;
+try {
+    ({ BrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory'));
+} finally {
+    Module._load = originalLoad;
+}
 
 // ============================================================================
 // Mock Identity
