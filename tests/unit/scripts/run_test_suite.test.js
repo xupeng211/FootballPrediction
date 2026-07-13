@@ -99,6 +99,7 @@ test('CLI runner 会在退出前刷新完整的子测试输出', () => {
             cwd: PROJECT_ROOT,
             encoding: 'utf8',
             env: { ...process.env },
+            maxBuffer: 100 * 1024 * 1024,
         },
     );
 
