@@ -3,7 +3,35 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-06-25
+Last updated: 2026-07-14
+
+## M1 Test Foundation accepted
+
+- **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
+  - Status: **Accepted**
+  - Audit date: 2026-07-14
+  - Audit main SHA: `997dc85fac87f82dbecd4bb7b3e94ee78f9c7540`
+  - Canonical entries:
+    - `make test` (container: Python collection + canonical + JS full unit)
+    - `make test-unit` (container: Python canonical + JS unit-core)
+    - `node scripts/test/run_test_suite.js unit` (419 files discovered)
+    - `node scripts/test/run_test_suite.js unit-core` (9 core files)
+    - `node scripts/test/run_test_suite.js coverage` (lines≥80, functions≥80, branches≥80)
+    - `npm run test:coverage`
+  - Host / container results: Python 60 passed, 1 skipped; JS unit-core 186 passed, 0 failed.
+  - Workspace immutability: enforced at Makefile and runner level; git status clean during tests.
+  - Artifact SHA before/after: no changes.
+  - Root-owned files before/after: none.
+  - Failure propagation: verified (intentional failure → non-zero exit, no false green).
+  - Output flush: complete before exit (PR #1778).
+  - Coverage: 80/80/80 threshold enforced.
+  - All 14 M1 PRs (#1768–#1781) merged, test/CI scope only, zero unexpected production/DB changes.
+  - Production Gate green for audit SHA (run 29242221278).
+  - M1 tag: `m1-test-foundation-accepted`
+  - M1 boundaries: historical Python non-canonical debt, integration/e2e, real DB/network,
+    model training, odds import are NOT in M1 scope and remain unchanged.
+  - Next milestone: **M2: Governance growth freeze** (not yet implemented).
+  - Next task: M2 startup contract Issue + read-only audit. Do not start automatically.
 
 ## github_actions_workflow_permissions_hardening in progress
 
