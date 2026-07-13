@@ -747,9 +747,11 @@ function main() {
     );
     if (coreFiles.length !== CORE_UNIT_TESTS.length) {
       console.error('[TEST-GATE] 核心 JS 测试文件不完整，拒绝静默缩小测试范围。');
-      process.exit(1);
+      process.exitCode = 1;
+      return;
     }
-    process.exit(runNodeTests(coreFiles, { label: '核心 JS 单元测试' }));
+    process.exitCode = runNodeTests(coreFiles, { label: '核心 JS 单元测试' });
+    return;
   }
 
   if (mode === 'default' || mode === 'unit') {
@@ -758,13 +760,15 @@ function main() {
     if (smokeFiles.length > 0) {
       const smokeExitCode = runNodeTests(smokeFiles, { label: '关键烟雾测试' });
       if (smokeExitCode !== 0) {
-        process.exit(smokeExitCode);
+        process.exitCode = smokeExitCode;
+        return;
       }
     }
 
     const smokeSet = new Set(smokeFiles);
     const remainingUnitFiles = unitFiles.filter(file => !smokeSet.has(file));
-    process.exit(runNodeTests(remainingUnitFiles, { label: '全量单元测试' }));
+    process.exitCode = runNodeTests(remainingUnitFiles, { label: '全量单元测试' });
+    return;
   }
 
   if (mode === 'affected') {
@@ -776,11 +780,13 @@ function main() {
     console.log(
       `[TEST-GATE] 增量门禁执行: 变更文件 ${modeArgs.length} 个，命中测试 ${selectedFiles.length} 个。`
     );
-    process.exit(runNodeTests(selectedFiles, { label: '增量 JS 测试' }));
+    process.exitCode = runNodeTests(selectedFiles, { label: '增量 JS 测试' });
+    return;
   }
 
   if (mode === 'integration') {
-    process.exit(runNodeTests(integrationFiles, { label: '集成测试' }));
+    process.exitCode = runNodeTests(integrationFiles, { label: '集成测试' });
+    return;
   }
 
   if (mode === 'coverage') {
@@ -788,16 +794,18 @@ function main() {
       `[TEST-GATE] 覆盖率门禁已启用: lines>=${COVERAGE_THRESHOLDS.lines}, `
       + `functions>=${COVERAGE_THRESHOLDS.functions}, branches>=${COVERAGE_THRESHOLDS.branches}`,
     );
-    process.exit(runNodeTests(unitFiles, { coverage: true, label: '覆盖率测试' }));
+    process.exitCode = runNodeTests(unitFiles, { coverage: true, label: '覆盖率测试' });
+    return;
   }
 
   if (mode === 'recon-core') {
     const reconCoreFiles = resolveOrderedFiles(RECON_CORE_TESTS, allTestFiles);
-    process.exit(runNodeTests(reconCoreFiles, { label: 'Recon 核心测试' }));
+    process.exitCode = runNodeTests(reconCoreFiles, { label: 'Recon 核心测试' });
+    return;
   }
 
   console.error(`[TEST-GATE] 未知模式: ${mode}`);
-  process.exit(1);
+  process.exitCode = 1;
 }
 
 if (require.main === module) {
