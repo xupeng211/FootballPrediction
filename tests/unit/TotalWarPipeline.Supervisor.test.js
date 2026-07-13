@@ -362,6 +362,8 @@ test('TotalWarPipeline.runManagedTask 在 Recon LEAGUE_TIMEOUT 时应标记 defe
       error() {}
     }
   });
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'total-war-deferred-'));
+  pipeline.options.reconSessionBufferPath = path.join(tempDir, 'recon_session_buffer_pool.json');
 
   pipeline.stateStore = {
     save() {}
@@ -374,15 +376,19 @@ test('TotalWarPipeline.runManagedTask 在 Recon LEAGUE_TIMEOUT 时应标记 defe
     return 1;
   };
 
-  await pipeline.runManagedTask('recon', {
-    pendingCount: 0,
-    harvestedCount: 20,
-    mismatchCount: 5,
-    failedCount: 0,
-    linkedCount: 0,
-    rawCount: 100,
-    rawDeltaSinceRecon: 10
-  });
+  try {
+    await pipeline.runManagedTask('recon', {
+      pendingCount: 0,
+      harvestedCount: 20,
+      mismatchCount: 5,
+      failedCount: 0,
+      linkedCount: 0,
+      rawCount: 100,
+      rawDeltaSinceRecon: 10
+    });
+  } finally {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
 
   assert.equal(pipeline.state.tasks.recon.consecutiveFailures, 0);
   assert.equal(pipeline.state.tasks.recon.lastDeferredReason, 'LEAGUE_TIMEOUT');
