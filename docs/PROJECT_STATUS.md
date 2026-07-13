@@ -5,26 +5,32 @@
 
 Last updated: 2026-07-14
 
-## M1 Test Foundation — Acceptance pending runner full-suite stability closure
+## M1 Test Foundation — Accepted (strict re-audit passed)
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
-  - Status: **Acceptance pending runner full-suite stability closure**
-  - Primary engineering work completed: 14 PRs (#1768–#1781) merged, all test/CI scope.
-  - The final audit discovered a runner self-test flaky in full-suite execution:
-    `CLI runner 会在退出前刷新完整的子测试输出` (`tests/unit/scripts/run_test_suite.test.js`)
-    passes individually but fails intermittently in the full 419-file suite, resulting in
-    adversarial-path and container runs at 7485/7486 passed with exit 1.
-  - Formal M1 acceptance is paused until the flaky is root-caused, fixed, and a clean
-    strict re-audit (host neutral, host adversarial, container) produces exit 0 / failed=0
-    on all canonical commands.
-  - The previously created tag `m1-test-foundation-accepted` (points to
-    `faaaff6b659f86e0a835fb9040eb3fdbe8589df0`) was created prematurely before the
-    strict exit-code / failed=0 criteria were met. It is retained for history but is
-    **not** the official M1 acceptance baseline.
-  - Once re-audit passes, the official tag will be `m1-test-foundation-accepted-v2`.
-  - M2 (Governance growth freeze) is paused pending M1 re-acceptance.
-  - Next task: root-cause and fix runner self-test flaky, then strict re-audit.
-    Do not start automatically.
+  - Status: **Accepted — strict re-audit passed**
+  - Audit date: 2026-07-14
+  - FINAL_AUDIT_SHA: `14461ff0ad7559cf5541fbf4dd11d26e0348734c`
+  - Runner flaky root cause (R2): `process.stdout.write` internal buffering under pipe
+    backpressure; fix (#1785) replaces with `fs.writeSync` for deterministic fd-level output.
+  - Strict re-audit results (all exit 0 / failed=0):
+    - Neutral host: 7486 passed, 0 failed, exit 0
+    - Adversarial host (`/tmp/footballprediction-prediction-production-*/`): 7486 passed, 0 failed, exit 0
+    - Container test-unit: Python 60 passed, JS unit-core 186 passed, exit 0
+    - Container full (`make test`): 7486 passed, 0 failed, exit 0
+    - Coverage: lines=90.37, branches=80.45, functions=87.17, exit 0
+    - Workspace: clean on both clones; artifact SHA unchanged; no untracked files
+  - Runner self-test stress: full suites consistently exit 0; `fs.writeSync` fix verified.
+  - Failure propagation: verified (intentional failure → non-zero exit, no false green).
+  - All 14 M1 PRs (#1768–#1781) + runner fix (#1785) merged, test/CI scope only.
+  - Production Gate green for FINAL_AUDIT_SHA and post-merge main.
+  - Old tag `m1-test-foundation-accepted` (→ `faaaff6b`) was created prematurely;
+    retained for history but **superseded** by the official v2 baseline.
+  - Official M1 acceptance tag: `m1-test-foundation-accepted-v2`
+  - M1 boundaries: historical Python non-canonical debt, integration/e2e, real DB/network,
+    model training, odds import are NOT in M1 scope and remain unchanged.
+  - M2 (Governance growth freeze) is unblocked.
+  - Next task: M2 read-only audit per Issue #1783. Do not start automatically.
 
 ## github_actions_workflow_permissions_hardening in progress
 
