@@ -55,25 +55,27 @@ const MockBrowser = class {
     }
 };
 
-// 劫持 BrowserFactory 的 playwright 依赖，避免修改真实 Playwright 单例。
-// 真实 Playwright 对象可能被 Node test worker 共享；在大批量宿主机
-// runner 中修改它会偶发破坏 test runner 的 IPC 序列化。
-const Module = require('module');
-const originalLoad = Module._load;
-Module._load = function patchedLoad(request, parent, isMain) {
-    if (request === 'playwright') {
-        return { chromium: MockBrowser };
-    }
-    return originalLoad.apply(this, arguments);
+// 仅在本测试的 require 阶段提供 Playwright 伪模块，避免修改全局
+// Module._load；后者在大批量宿主机 runner 中可能干扰 Node test worker 的 IPC。
+const playwrightModulePath = require.resolve('playwright');
+const originalPlaywrightModule = require.cache[playwrightModulePath];
+require.cache[playwrightModulePath] = {
+    id: playwrightModulePath,
+    filename: playwrightModulePath,
+    loaded: true,
+    exports: { chromium: MockBrowser }
 };
-
 
 let BrowserFactory;
 let resetBrowserFactory;
 try {
     ({ BrowserFactory, resetBrowserFactory } = require('../../src/infrastructure/browser/BrowserFactory'));
 } finally {
-    Module._load = originalLoad;
+    if (originalPlaywrightModule) {
+        require.cache[playwrightModulePath] = originalPlaywrightModule;
+    } else {
+        delete require.cache[playwrightModulePath];
+    }
 }
 
 // ============================================================================
