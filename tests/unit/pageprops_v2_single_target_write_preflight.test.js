@@ -8,6 +8,7 @@ const https = require('node:https');
 const Module = require('node:module');
 const path = require('node:path');
 const test = require('node:test');
+const { matchesForbiddenImport } = require('../helpers/module_load_guard');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const MODULE_PATH = path.join(PROJECT_ROOT, 'scripts/ops/pageprops_v2_single_target_write_preflight.js');
@@ -523,7 +524,13 @@ test('no network unless injected fetch is called', async () => {
 test('no ProductionHarvester/raw ingest import', () => {
     const originalLoad = Module._load;
     Module._load = function guardedLoad(request, parent, isMain) {
-        if (/ProductionHarvester|raw_match_data_local_ingest|l2_raw_match_data_write/i.test(request)) {
+        if (
+            matchesForbiddenImport(
+                request,
+                PROJECT_ROOT,
+                /ProductionHarvester|raw_match_data_local_ingest|l2_raw_match_data_write/i
+            )
+        ) {
             throw new Error(`forbidden import ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);
@@ -539,7 +546,7 @@ test('no ProductionHarvester/raw ingest import', () => {
 test('no parser/features/training import', () => {
     const originalLoad = Module._load;
     Module._load = function guardedLoad(request, parent, isMain) {
-        if (/NextDataParser|feature|train|predict/i.test(request)) {
+        if (matchesForbiddenImport(request, PROJECT_ROOT, /NextDataParser|feature|train|predict/i)) {
             throw new Error(`forbidden import ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);
@@ -555,7 +562,7 @@ test('no parser/features/training import', () => {
 test('no browser/playwright import', () => {
     const originalLoad = Module._load;
     Module._load = function guardedLoad(request, parent, isMain) {
-        if (/playwright|puppeteer|BrowserProvider|Chromium/i.test(request)) {
+        if (matchesForbiddenImport(request, PROJECT_ROOT, /playwright|puppeteer|BrowserProvider|Chromium/i)) {
             throw new Error(`forbidden import ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);

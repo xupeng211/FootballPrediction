@@ -4,6 +4,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const test = require('node:test');
 const Module = require('node:module');
+const { matchesForbiddenImport } = require('../helpers/module_load_guard');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const MODULE_PATH = path.join(PROJECT_ROOT, 'scripts/ops/html_hydration_source_fidelity_live_compare.js');
@@ -456,7 +457,13 @@ test('no DB write', async () => {
 test('no ProductionHarvester/raw ingest import', () => {
     const originalLoad = Module._load;
     Module._load = function guardedLoad(request, parent, isMain) {
-        if (/ProductionHarvester|raw_match_data_local_ingest|l2_raw_match_data_write/.test(request)) {
+        if (
+            matchesForbiddenImport(
+                request,
+                PROJECT_ROOT,
+                /ProductionHarvester|raw_match_data_local_ingest|l2_raw_match_data_write/
+            )
+        ) {
             throw new Error(`forbidden import ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);
@@ -472,7 +479,7 @@ test('no ProductionHarvester/raw ingest import', () => {
 test('no parser/features/training import', () => {
     const originalLoad = Module._load;
     Module._load = function guardedLoad(request, parent, isMain) {
-        if (/NextDataParser|feature|train|predict/.test(request)) {
+        if (matchesForbiddenImport(request, PROJECT_ROOT, /NextDataParser|feature|train|predict/)) {
             throw new Error(`forbidden import ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);
@@ -488,7 +495,7 @@ test('no parser/features/training import', () => {
 test('no browser/playwright import', () => {
     const originalLoad = Module._load;
     Module._load = function guardedLoad(request, parent, isMain) {
-        if (/playwright|puppeteer|BrowserProvider|Chromium/i.test(request)) {
+        if (matchesForbiddenImport(request, PROJECT_ROOT, /playwright|puppeteer|BrowserProvider|Chromium/i)) {
             throw new Error(`forbidden import ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);

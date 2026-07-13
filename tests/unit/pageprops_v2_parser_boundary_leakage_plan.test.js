@@ -8,6 +8,7 @@ const https = require('node:https');
 const Module = require('node:module');
 const path = require('node:path');
 const test = require('node:test');
+const { matchesForbiddenImport } = require('../helpers/module_load_guard');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const MODULE_PATH = path.join(PROJECT_ROOT, 'scripts/ops/pageprops_v2_parser_boundary_leakage_plan.js');
@@ -126,8 +127,10 @@ function installExecutionGuards(t) {
             throw new Error(`blocked import: ${request}`);
         }
         if (
-            /ProductionHarvester|raw_match_data_local_ingest|backfill_historical_raw_match_data|odds_harvest_pipeline|train|predict/i.test(
-                request
+            matchesForbiddenImport(
+                request,
+                PROJECT_ROOT,
+                /ProductionHarvester|raw_match_data_local_ingest|backfill_historical_raw_match_data|odds_harvest_pipeline|train|predict/i
             )
         ) {
             throw new Error(`blocked import: ${request}`);
@@ -154,7 +157,7 @@ function installExecutionGuards(t) {
 function loadWithBlockedImportPattern(t, pattern) {
     const originalLoad = Module._load;
     Module._load = function patchedLoad(request, parent, isMain) {
-        if (pattern.test(request)) {
+        if (matchesForbiddenImport(request, PROJECT_ROOT, pattern)) {
             throw new Error(`blocked import: ${request}`);
         }
         return originalLoad.call(this, request, parent, isMain);
