@@ -13,6 +13,9 @@
 
 const { describe, it, before, after } = require('node:test');
 const assert = require('node:assert');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
 const { Pool } = require('pg');
 
 const { Normalizer } = require('../../src/utils/Normalizer');
@@ -115,8 +118,13 @@ describe('V6.6 L2 硬化架构测试套件', () => {
     describe('Persistence 组件 - 代码层预检', () => {
         let pool;
         let persistence;
+        let tempDataPath;
 
-        before(() => {
+        before(async () => {
+            tempDataPath = await fs.mkdtemp(
+                path.join(os.tmpdir(), 'footballprediction-persistence-')
+            );
+
             // 单元测试默认使用 Mock，避免依赖运行时数据库 schema 漂移。
             const useMock = process.env.PERSISTENCE_TEST_USE_REAL_DB !== '1';
 
@@ -147,12 +155,18 @@ describe('V6.6 L2 硬化架构测试套件', () => {
                     max: 2
                 });
             }
-            persistence = new Persistence({ dataPath: 'data/matches' });
+            persistence = new Persistence({ dataPath: tempDataPath });
         });
 
         after(async () => {
-            if (pool) {
-                await pool.end();
+            try {
+                if (pool) {
+                    await pool.end();
+                }
+            } finally {
+                if (tempDataPath) {
+                    await fs.rm(tempDataPath, { recursive: true, force: true });
+                }
             }
         });
 
@@ -250,9 +264,6 @@ describe('V6.6 L2 硬化架构测试套件', () => {
         });
 
         describe('saveToFile - 双保险文件存储', () => {
-            const fs = require('fs').promises;
-            const path = require('path');
-
             it('应生成包含 data_version 的文件', async () => {
                 const testMatchId = '47_20242025_test_001';
                 const testData = { id: 'test_001', content: 'test' };
@@ -260,19 +271,20 @@ describe('V6.6 L2 硬化架构测试套件', () => {
 
                 await persistence.saveToFile(testMatchId, testData, metadata);
 
-                const filePath = path.join(process.cwd(), 'data/matches', `${testMatchId}.json`);
-                const content = await fs.readFile(filePath, 'utf8');
-                const parsed = JSON.parse(content);
+                const filePath = path.join(tempDataPath, `${testMatchId}.json`);
+                try {
+                    const content = await fs.readFile(filePath, 'utf8');
+                    const parsed = JSON.parse(content);
 
-                // V6.6 验证点
-                assert.strictEqual(parsed.data_version, 'V26.1', '必须包含 data_version: V26.1');
-                assert.strictEqual(parsed.match_id, testMatchId, 'match_id 必须正确');
-                assert.deepStrictEqual(parsed.raw_data, testData, 'raw_data 必须完整');
-                assert.ok(parsed.saved_at, '必须包含 saved_at 时间戳');
-                assert.strictEqual(parsed.source, metadata.source, 'source 元数据必须保留');
-
-                // 清理
-                await fs.unlink(filePath);
+                    // V6.6 验证点
+                    assert.strictEqual(parsed.data_version, 'V26.1', '必须包含 data_version: V26.1');
+                    assert.strictEqual(parsed.match_id, testMatchId, 'match_id 必须正确');
+                    assert.deepStrictEqual(parsed.raw_data, testData, 'raw_data 必须完整');
+                    assert.ok(parsed.saved_at, '必须包含 saved_at 时间戳');
+                    assert.strictEqual(parsed.source, metadata.source, 'source 元数据必须保留');
+                } finally {
+                    await fs.rm(filePath, { force: true });
+                }
             });
         });
     });
