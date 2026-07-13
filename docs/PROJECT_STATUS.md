@@ -5,33 +5,26 @@
 
 Last updated: 2026-07-14
 
-## M1 Test Foundation accepted
+## M1 Test Foundation — Acceptance pending runner full-suite stability closure
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
-  - Status: **Accepted**
-  - Audit date: 2026-07-14
-  - Audit main SHA: `997dc85fac87f82dbecd4bb7b3e94ee78f9c7540`
-  - Canonical entries:
-    - `make test` (container: Python collection + canonical + JS full unit)
-    - `make test-unit` (container: Python canonical + JS unit-core)
-    - `node scripts/test/run_test_suite.js unit` (419 files discovered)
-    - `node scripts/test/run_test_suite.js unit-core` (9 core files)
-    - `node scripts/test/run_test_suite.js coverage` (lines≥80, functions≥80, branches≥80)
-    - `npm run test:coverage`
-  - Host / container results: Python 60 passed, 1 skipped; JS unit-core 186 passed, 0 failed.
-  - Workspace immutability: enforced at Makefile and runner level; git status clean during tests.
-  - Artifact SHA before/after: no changes.
-  - Root-owned files before/after: none.
-  - Failure propagation: verified (intentional failure → non-zero exit, no false green).
-  - Output flush: complete before exit (PR #1778).
-  - Coverage: 80/80/80 threshold enforced.
-  - All 14 M1 PRs (#1768–#1781) merged, test/CI scope only, zero unexpected production/DB changes.
-  - Production Gate green for audit SHA (run 29242221278).
-  - M1 tag: `m1-test-foundation-accepted`
-  - M1 boundaries: historical Python non-canonical debt, integration/e2e, real DB/network,
-    model training, odds import are NOT in M1 scope and remain unchanged.
-  - Next milestone: **M2: Governance growth freeze** (not yet implemented).
-  - Next task: M2 startup contract Issue + read-only audit. Do not start automatically.
+  - Status: **Acceptance pending runner full-suite stability closure**
+  - Primary engineering work completed: 14 PRs (#1768–#1781) merged, all test/CI scope.
+  - The final audit discovered a runner self-test flaky in full-suite execution:
+    `CLI runner 会在退出前刷新完整的子测试输出` (`tests/unit/scripts/run_test_suite.test.js`)
+    passes individually but fails intermittently in the full 419-file suite, resulting in
+    adversarial-path and container runs at 7485/7486 passed with exit 1.
+  - Formal M1 acceptance is paused until the flaky is root-caused, fixed, and a clean
+    strict re-audit (host neutral, host adversarial, container) produces exit 0 / failed=0
+    on all canonical commands.
+  - The previously created tag `m1-test-foundation-accepted` (points to
+    `faaaff6b659f86e0a835fb9040eb3fdbe8589df0`) was created prematurely before the
+    strict exit-code / failed=0 criteria were met. It is retained for history but is
+    **not** the official M1 acceptance baseline.
+  - Once re-audit passes, the official tag will be `m1-test-foundation-accepted-v2`.
+  - M2 (Governance growth freeze) is paused pending M1 re-acceptance.
+  - Next task: root-cause and fix runner self-test flaky, then strict re-audit.
+    Do not start automatically.
 
 ## github_actions_workflow_permissions_hardening in progress
 
