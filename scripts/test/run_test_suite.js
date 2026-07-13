@@ -692,8 +692,11 @@ function runNodeTests(files, options = {}) {
   const stderr = result.stderr || '';
   const combinedOutput = `${stdout}\n${stderr}`;
 
-  process.stdout.write(stdout);
-  process.stderr.write(stderr);
+  // Use fs.writeSync to guarantee output is fully flushed before returning.
+  // process.stdout.write can internally buffer under pipe backpressure;
+  // process.exitCode alone cannot guarantee the parent spawnSync receives complete output.
+  fs.writeSync(1, stdout);
+  fs.writeSync(2, stderr);
 
   if (result.error) {
     verifyWorkspaceUnchanged(workspaceBefore, label);
