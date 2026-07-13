@@ -513,7 +513,14 @@ function resolveCoreUnitFiles(files) {
 }
 
 function snapshotWorkspaceStatus() {
-  const result = spawnSync('git', ['status', '--porcelain=v1', '-uall'], {
+  // 开发容器可能以 root 运行，而 bind mount 的 clone 属于宿主机 UID。
+  // 仅为这次只读状态查询声明项目根目录，避免写入容器用户的全局 Git 配置。
+  const result = spawnSync('git', [
+    '-c', `safe.directory=${PROJECT_ROOT}`,
+    'status',
+    '--porcelain=v1',
+    '-uall',
+  ], {
     cwd: PROJECT_ROOT,
     encoding: 'utf8',
   });
