@@ -2,6 +2,7 @@
 // lifecycle: permanent — canonical JS test discovery and exit-code contract coverage.
 
 const assert = require('node:assert/strict');
+const { spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -88,4 +89,23 @@ test('临时测试输出不会修改仓库工作树', () => {
     assert.equal(before.ok, true);
     assert.equal(after.ok, true);
     assert.equal(after.status, before.status);
+});
+
+test('CLI runner 会在退出前刷新完整的子测试输出', () => {
+    const result = spawnSync(
+        process.execPath,
+        [path.join(PROJECT_ROOT, 'scripts/test/run_test_suite.js'), 'affected', 'src/infrastructure/browser/BrowserFactory.js'],
+        {
+            cwd: PROJECT_ROOT,
+            encoding: 'utf8',
+            env: { ...process.env },
+        },
+    );
+
+    assert.equal(result.error, undefined);
+    assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+    assert.match(
+        `${result.stdout}\n${result.stderr}`,
+        /\[TEST-GATE\] 增量 JS 测试通过/,
+    );
 });
