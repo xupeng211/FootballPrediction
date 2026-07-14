@@ -96,14 +96,18 @@ def repo_with_base(tmp_path: Path) -> tuple[Path, str]:
         "docs/_reports/OLD_REPORT.md": "# Old historical report\nlifecycle: permanent\n",
         "docs/_manifests/old_manifest.json": '{"key": "old"}',
         "scripts/ops/fotmob_adg60_existing.js": "// Existing ADG script\n",
-        "src/services/event_bus.py": textwrap.dedent("""\
+        "src/services/event_bus.py": textwrap.dedent(
+            """\
             from scripts.ops.hunt_league_hashes import find_hash
-            """),
+            """
+        ),
         "src/main.py": "def main(): pass\n",
         "scripts/ci/normal_ci_check.py": "# Normal CI script\n",
-        "src/services/old_dep.py": textwrap.dedent("""\
+        "src/services/old_dep.py": textwrap.dedent(
+            """\
             from scripts.ops.old_helper import run
-            """),
+            """
+        ),
     }
     base_sha = _make_base_commit(repo, base_files)
     return repo, base_sha
@@ -179,10 +183,12 @@ class TestPositivePassThrough:
         _write_file(
             repo,
             "src/services/event_bus.py",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         import os
                         from scripts.ops.hunt_league_hashes import find_hash
-                        """),
+                        """
+            ),
         )
         errors = _run_gate(repo, base, _commit_all(repo, "move dep line"))
         assert errors == [], f"Should pass: {errors}"
@@ -294,10 +300,12 @@ class TestNegativeBlockReverseDeps:
         _write_file(
             repo,
             "src/services/runner.py",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         import subprocess
                         subprocess.run(["python3", "scripts/ops/some_script.py"])
-                        """),
+                        """
+            ),
         )
         errors = _run_gate(repo, base, _commit_all(repo, "add subprocess dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
@@ -319,10 +327,12 @@ class TestNegativeBlockReverseDeps:
         _write_file(
             repo,
             "src/services/execService.js",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         const { spawn } = require("child_process");
                         spawn("node", ["scripts/ops/run_production.js"]);
-                        """),
+                        """
+            ),
         )
         errors = _run_gate(repo, base, _commit_all(repo, "add JS spawn"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
@@ -348,19 +358,23 @@ class TestNegativeBlockReverseDeps:
         _write_file(
             repo,
             "src/services/old_dep.py",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         from scripts.ops.helper_a import func_a
                         from scripts.ops.helper_b import func_b
-                        """),
+                        """
+            ),
         )
         base2 = _commit_all(repo, "base with two deps")
         _write_file(
             repo,
             "src/services/old_dep.py",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         from scripts.ops.helper_c import func_c
                         from scripts.ops.helper_d import func_d
-                        """),
+                        """
+            ),
         )
         errors = _run_gate(repo, base2, _commit_all(repo, "replace two deps"))
         _min_expected_reverse_deps = 2
@@ -454,11 +468,13 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/logger_example.py",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         import logging
                         logger = logging.getLogger(__name__)
                         logger.info("Use scripts/ops/run_production.js")
-                        """),
+                        """
+            ),
         )
         assert _run_gate(repo, base, _commit_all(repo, "logger")) == []
 
@@ -467,10 +483,12 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/docstring_example.py",
-            textwrap.dedent('''\
+            textwrap.dedent(
+                '''\
                         """Module docs. Used scripts.ops.helper before. Now internal."""
                         def process(): pass
-                        '''),
+                        '''
+            ),
         )
         assert _run_gate(repo, base, _commit_all(repo, "docstring")) == []
 
@@ -479,13 +497,15 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/cross_func.py",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         import subprocess
                         def first():
                             subprocess.run(["echo", "ok"])
                         def second():
                             help_text = "scripts/ops/old_tool.py is deprecated"
-                        """),
+                        """
+            ),
         )
         assert _run_gate(repo, base, _commit_all(repo, "cross-func")) == []
 
@@ -494,14 +514,16 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/multiline_doc.py",
-            textwrap.dedent('''\
+            textwrap.dedent(
+                '''\
                         """
                         Example:
                             from scripts.ops.helper import old_helper
                         This module replaces that.
                         """
                         def new_approach(): pass
-                        '''),
+                        '''
+            ),
         )
         assert _run_gate(repo, base, _commit_all(repo, "multiline doc")) == []
 
@@ -519,7 +541,8 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/crossFunc.js",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         const { spawn } = require("child_process");
                         function first() {
                           spawn("echo", ["ok"]);
@@ -527,7 +550,8 @@ class TestAntiFalsePositive:
                         function second() {
                           const example = 'spawn("node", ["scripts/ops/demo.js"])';
                         }
-                        """),
+                        """
+            ),
         )
         assert _run_gate(repo, base, _commit_all(repo, "JS cross-func")) == []
 
@@ -536,10 +560,12 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/helpText.js",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         const helpText = "See scripts/ops/run_production.js";
                         console.log(helpText);
-                        """),
+                        """
+            ),
         )
         assert _run_gate(repo, base, _commit_all(repo, "JS help")) == []
 
@@ -558,10 +584,12 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/echoService.js",
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                         const { spawn } = require("child_process");
                         spawn("echo", ["ok"]);
-                        """),
+                        """
+            ),
         )
         assert _run_gate(repo, base, _commit_all(repo, "JS echo")) == []
 
