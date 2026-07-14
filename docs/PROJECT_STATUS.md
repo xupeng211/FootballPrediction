@@ -5,32 +5,33 @@
 
 Last updated: 2026-07-14
 
-## M1 Test Foundation — Accepted (strict re-audit passed)
+## M1 Test Foundation — Acceptance pending browser_profile root-owned residue closure
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
-  - Status: **Accepted — strict re-audit passed**
+  - Status: **Acceptance pending browser_profile root-owned residue closure**
   - Audit date: 2026-07-14
   - FINAL_AUDIT_SHA: `14461ff0ad7559cf5541fbf4dd11d26e0348734c`
   - Runner flaky root cause (R2): `process.stdout.write` internal buffering under pipe
     backpressure; fix (#1785) replaces with `fs.writeSync` for deterministic fd-level output.
-  - Strict re-audit results (all exit 0 / failed=0):
-    - Neutral host: 7486 passed, 0 failed, exit 0
-    - Adversarial host (`/tmp/footballprediction-prediction-production-*/`): 7486 passed, 0 failed, exit 0
-    - Container test-unit: Python 60 passed, JS unit-core 186 passed, exit 0
-    - Container full (`make test`): 7486 passed, 0 failed, exit 0
-    - Coverage: lines=90.37, branches=80.45, functions=87.17, exit 0
-    - Workspace: clean on both clones; artifact SHA unchanged; no untracked files
-  - Runner self-test stress: full suites consistently exit 0; `fs.writeSync` fix verified.
+    Runner flaky is **closed**.
+  - Runner self-test stress: 88 consecutive full-suite runs all exit 0, failed=0.
   - Failure propagation: verified (intentional failure → non-zero exit, no false green).
   - All 14 M1 PRs (#1768–#1781) + runner fix (#1785) merged, test/CI scope only.
-  - Production Gate green for FINAL_AUDIT_SHA and post-merge main.
+  - **Blocking residue discovered:** container `make test-unit` creates
+    `data/browser_profile/` as `root:root` mode `755`. Host user cannot write or
+    delete. Directory is empty and gitignored, but constitutes a net-new root-owned
+    repository artifact after container tests.
   - Old tag `m1-test-foundation-accepted` (→ `faaaff6b`) was created prematurely;
-    retained for history but **superseded** by the official v2 baseline.
-  - Official M1 acceptance tag: `m1-test-foundation-accepted-v2`
+    retained for history but **superseded**.
+  - `m1-test-foundation-accepted-v2` tag is preserved but is no longer an
+    unconditional final baseline — it carries the known browser_profile root-owned
+    residue boundary.
+  - Official M1 acceptance tag `m1-test-foundation-accepted-v3` will be created
+    after the browser_profile residue is fixed and verified.
   - M1 boundaries: historical Python non-canonical debt, integration/e2e, real DB/network,
     model training, odds import are NOT in M1 scope and remain unchanged.
-  - M2 (Governance growth freeze) is unblocked.
-  - Next task: M2 read-only audit per Issue #1783. Do not start automatically.
+  - M2 (Governance growth freeze) is **re-paused** pending v3 closure.
+  - Next task: fix browser_profile root-owned residue. Do not start automatically.
 
 ## github_actions_workflow_permissions_hardening in progress
 
