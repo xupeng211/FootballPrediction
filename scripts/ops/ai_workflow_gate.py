@@ -642,7 +642,9 @@ def validate(  # noqa: C901, PLR0912, PLR0915
     if not skip_body_checks:
         errors.extend(check_script_lifecycle_requirement(added, pr_body))
 
-    # 12. M2 Governance growth freeze gate — blocks new governance artifact growth
+    # 12. M2 Governance growth freeze gate — blocks new governance artifact growth.
+    # Delegates to governance_growth_gate.py (orchestration) which uses
+    # governance_reverse_dependency.py for Python AST + JS bounded scanning.
     if base_ref and head_ref:
         try:
             gov_errors = run_governance_growth_gate(ROOT, base_ref, head_ref)
