@@ -504,6 +504,7 @@ def check_safety_consistency(pr_body: str, changed: set[str]) -> list[str]:
 # to keep this file under the 800-line gatekeeper limit.
 # Agent workflow hardening checks (Phase1) — delegated to dedicated helper
 # to keep this file under the 800-line gatekeeper limit.
+from scripts.ci.governance_growth_gate import run_governance_growth_gate  # noqa: E402
 from scripts.ops.helpers.agent_workflow_hardening_checks import (  # noqa: E402
     check_forbidden_rewrite_patterns,
     check_forbidden_safety_claims,
@@ -524,7 +525,7 @@ from scripts.ops.helpers.governance_p1_checks import (  # noqa: E402
 )
 
 
-def validate(  # noqa: C901, PLR0912
+def validate(  # noqa: C901, PLR0912, PLR0915
     pr_body: str,
     changes: list[Change] | None = None,
     *,
@@ -640,6 +641,14 @@ def validate(  # noqa: C901, PLR0912
     # 11. P1-3: script lifecycle requirement for newly added scripts (requires body)
     if not skip_body_checks:
         errors.extend(check_script_lifecycle_requirement(added, pr_body))
+
+    # 12. M2 Governance growth freeze gate — blocks new governance artifact growth
+    if base_ref and head_ref:
+        try:
+            gov_errors = run_governance_growth_gate(ROOT, base_ref, head_ref)
+            errors.extend(gov_errors)
+        except Exception as exc:
+            errors.append(f"GOV-GROWTH-GATE: Governance growth freeze check failed: {exc}")
 
     return errors
 
