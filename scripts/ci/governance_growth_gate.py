@@ -107,7 +107,7 @@ _SUBPROCESS_FUNCTIONS: frozenset[str] = frozenset(
         "Popen",
         "check_call",
         "check_output",
-    }
+    },
 )
 
 
@@ -162,7 +162,7 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
                             "python",
                             "static-import",
                             alias.name,
-                        )
+                        ),
                     )
 
         elif isinstance(node, ast.ImportFrom):
@@ -173,7 +173,7 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
                         "python",
                         "static-import-from",
                         node.module,
-                    )
+                    ),
                 )
 
         # --- dynamic imports ---
@@ -195,7 +195,7 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
                                     "python",
                                     "dynamic-import",
                                     s,
-                                )
+                                ),
                             )
 
             # subprocess.run / call / Popen / check_call / check_output
@@ -215,7 +215,7 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
                                     "python",
                                     "subprocess",
                                     s[:200],
-                                )
+                                ),
                             )
                 # Also check keyword args like cwd, executable
                 for kw in node.keywords:
@@ -228,7 +228,7 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
                                     "python",
                                     "subprocess",
                                     s[:200],
-                                )
+                                ),
                             )
 
     return fingerprints
@@ -257,7 +257,8 @@ _JS_EXEC_FUNCTIONS: tuple[str, ...] = (
 
 def _balanced_paren_range(text: str, start: int) -> int | None:
     """Return the index of the matching close-paren for the '(' at `start`,
-    or None if unbalanced.  String- and comment-aware."""
+    or None if unbalanced.  String- and comment-aware.
+    """
     depth = 0
     i = start
     in_single = False
@@ -343,7 +344,8 @@ def _balanced_paren_range(text: str, start: int) -> int | None:
 
 def _extract_call_arg_text(text: str, func_match_end: int) -> str | None:
     """Given the position just after a function name, find the opening paren
-    and return the text between the outer parentheses (balanced)."""
+    and return the text between the outer parentheses (balanced).
+    """
     # Find the opening '(' (skip whitespace)
     pos = func_match_end
     while pos < len(text) and text[pos] in (" ", "\t", "\n"):
@@ -359,7 +361,8 @@ def _extract_call_arg_text(text: str, func_match_end: int) -> str | None:
 
 def _js_arg_contains_scripts_ops(arg_text: str) -> bool:
     """Check whether the argument text of a JS call contains scripts/ops
-    references in actual string literals (not in comments or bare words)."""
+    references in actual string literals (not in comments or bare words).
+    """
     # Quick pre-check
     if "scripts/ops" not in arg_text and "scripts.ops" not in arg_text:
         return False
@@ -573,7 +576,7 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
                         "javascript",
                         "require",
                         m.group(2)[:200],
-                    )
+                    ),
                 )
 
         # import ... from "...scripts/ops..."
@@ -589,7 +592,7 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
                         "javascript",
                         "es-import",
                         m.group(2)[:200],
-                    )
+                    ),
                 )
 
         # import("...scripts/ops...")
@@ -605,7 +608,7 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
                         "javascript",
                         "dynamic-es-import",
                         m.group(2)[:200],
-                    )
+                    ),
                 )
 
     # --- Bounded call-expression scanning for spawn/exec/fork ---
@@ -626,7 +629,7 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
                         "javascript",
                         func_name,
                         arg_text.strip()[:200],
-                    )
+                    ),
                 )
 
     return fingerprints
@@ -724,7 +727,7 @@ def check_new_reports_and_manifests(
         errors.append(
             f"{ERR_REPORT}: Unauthorized new report under docs/_reports: "
             f"{p}. Growth freeze is active — no new reports allowed "
-            f"without explicit gate authorization."
+            f"without explicit gate authorization.",
         )
 
     base_manifest_files = _list_files_at_revision(repo_root, base_ref, MANIFEST_PREFIX)
@@ -737,7 +740,7 @@ def check_new_reports_and_manifests(
         errors.append(
             f"{ERR_MANIFEST}: Unauthorized new manifest under docs/_manifests: "
             f"{p}. Growth freeze is active — no new manifests allowed "
-            f"without explicit gate authorization."
+            f"without explicit gate authorization.",
         )
 
     return errors
@@ -775,7 +778,7 @@ def check_new_numbered_governance_scripts(
                 f"{ERR_PHASE}: Unauthorized new numbered governance script: "
                 f"{path}. Governance script number growth is frozen — "
                 f"no new Phase/ADG-numbered scripts without explicit "
-                f"gate authorization."
+                f"gate authorization.",
             )
 
     return errors
@@ -856,7 +859,7 @@ def check_new_reverse_dependencies(
                 errors.append(
                     f"{ERR_REVERSE_DEP}: {path}: "
                     f"AST parse failure — cannot scan for reverse deps "
-                    f"(fail-closed). {fp.target}"
+                    f"(fail-closed). {fp.target}",
                 )
                 # Don't report individual deps on top of parse failure
                 break
@@ -868,7 +871,7 @@ def check_new_reverse_dependencies(
                     f"{ERR_REVERSE_DEP}: {path}: "
                     f"New {fp.language} {fp.kind} → {fp.target}. "
                     f"Growth freeze is active — no new src → scripts/ops "
-                    f"reverse dependencies allowed."
+                    f"reverse dependencies allowed.",
                 )
 
     return errors

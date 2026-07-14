@@ -190,7 +190,9 @@ class TestPositivePassThrough:
     def test_same_dep_reformat_passes(self, repo_with_base):
         repo, base = repo_with_base
         _write_file(
-            repo, "src/services/event_bus.py", "from scripts.ops.hunt_league_hashes import (\n" "    find_hash,\n)\n"
+            repo,
+            "src/services/event_bus.py",
+            "from scripts.ops.hunt_league_hashes import (\n    find_hash,\n)\n",
         )
         errors = _run_gate(repo, base, _commit_all(repo, "reformat"))
         assert errors == [], f"Reformat should pass: {errors}"
