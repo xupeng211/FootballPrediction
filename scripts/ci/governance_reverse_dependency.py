@@ -6,6 +6,11 @@ lifecycle: permanent
 Detects src → scripts/ops reverse dependencies in Python and JavaScript
 source files using AST parsing and bounded call-expression extraction.
 
+AST walkers and JS state-machine scanners have inherent structural
+complexity that cannot be meaningfully reduced without sacrificing
+correctness.  PERF401 (list.extend vs append) is a stylistic preference
+that does not affect correctness for conditionally-built lists.
+
 Public API:
     check_new_reverse_dependencies(repo_root, base_ref, head_ref) -> list[str]
 """
