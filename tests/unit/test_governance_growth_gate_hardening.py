@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "ci"))
 sys.path.insert(0, str(ROOT / "scripts" / "ops"))
 
 import governance_growth_gate as ggg  # noqa: E402
+import governance_reverse_dependency as grd  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Git helpers (duplicated from test_governance_growth_gate.py for independence)
@@ -158,7 +159,7 @@ class TestRealProcessExitCode:
         head = _commit_all(repo, "multi violation")
         exit_code, stderr = _run_gate_via_cli(repo, base, head)
         assert exit_code != 0, f"Expected non-zero exit: {exit_code}"
-        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE, ggg.ERR_REVERSE_DEP]:
+        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE, grd.ERR_REVERSE_DEP]:
             assert code in stderr, f"Missing {code} in output"
 
     def test_real_exit_nonzero_on_bad_ref(self, repo_with_base):

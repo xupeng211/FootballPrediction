@@ -36,9 +36,6 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["F401"]
-"scripts/ci/governance_growth_gate.py" = ["C901", "PLR0912", "PLR0915", "PERF401", "ERA001", "PLR2004", "PLW2901"]
-"tests/unit/test_governance_growth_gate.py" = ["PLR2004", "PT006"]
-"tests/unit/test_governance_growth_gate_hardening.py" = ["PLR2004"]
 "tests/*" = ["ARG"]
 # ci_local_parity_preflight_phase1: pre-existing style issues in new preflight files
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004"]
@@ -53,8 +50,6 @@ ignore = [
     "TRY401",   # pre-existing redundant exception in logger.exception
     "PLC0415",  # pre-existing imports inside function
 ]
-
-
 
 [tool.ruff.lint.isort]
 known-first-party = ["src"]

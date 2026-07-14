@@ -203,6 +203,12 @@ unfixable = []
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004", "ARG001", "ARG002", "ARG005", "I001", "RUF100"]
 "tests/unit/test_local_pr_gate_preflight.py" = ["PLR2004", "SIM115", "I001"]
 
+# m2_governance_growth_gate — AST scanner and JS state machines have inherent complexity
+"scripts/ci/governance_growth_gate.py" = ["PERF401", "PLC0415"]
+"scripts/ci/governance_reverse_dependency.py" = ["C901", "PLR0912", "PLR0915", "PERF401", "TC003", "PIE810"]
+"tests/unit/test_governance_growth_gate.py" = ["PLR2004"]
+"tests/unit/test_governance_growth_gate_hardening.py" = ["PLR2004"]
+
 [lint.isort]
 known-first-party = ["src", "tests"]
 force-sort-within-sections = true

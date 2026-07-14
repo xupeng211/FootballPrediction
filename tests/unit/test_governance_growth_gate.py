@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT / "scripts" / "ci"))
 sys.path.insert(0, str(ROOT / "scripts" / "ops"))
 
 import governance_growth_gate as ggg  # noqa: E402
+import governance_reverse_dependency as grd  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Git helpers
@@ -281,9 +282,13 @@ class TestNegativeBlockReverseDeps:
 
     def test_new_python_import_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/new_service.py", "from scripts.ops.helpers.something import helper\n")
+        _write_file(
+            repo,
+            "src/services/new_service.py",
+            "from scripts.ops.helpers.something import helper\n",
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "add reverse dep"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_python_dynamic_import_blocked(self, repo_with_base):
         repo, base = repo_with_base
@@ -293,7 +298,7 @@ class TestNegativeBlockReverseDeps:
             "import importlib\n" + 'mod = importlib.import_module("scripts.ops.helper")\n',
         )
         errors = _run_gate(repo, base, _commit_all(repo, "add dynamic dep"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_python_subprocess_blocked(self, repo_with_base):
         repo, base = repo_with_base
@@ -308,19 +313,25 @@ class TestNegativeBlockReverseDeps:
             ),
         )
         errors = _run_gate(repo, base, _commit_all(repo, "add subprocess dep"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_js_require_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/newService.js", 'const helper = require("../../scripts/ops/helper.js");\n')
+        _write_file(
+            repo,
+            "src/services/newService.js",
+            'const helper = require("../../scripts/ops/helper.js");\n',
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "add JS require"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_js_import_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/newModule.mjs", 'import helper from "../scripts/ops/helper.js";\n')
+        _write_file(
+            repo, "src/services/newModule.mjs", 'import helper from "../scripts/ops/helper.js";\n'
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "add JS import"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_js_spawn_blocked(self, repo_with_base):
         repo, base = repo_with_base
@@ -335,22 +346,30 @@ class TestNegativeBlockReverseDeps:
             ),
         )
         errors = _run_gate(repo, base, _commit_all(repo, "add JS spawn"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
 
     def test_same_count_python_dep_replacement_blocked(self, repo_with_base):
         repo, base = repo_with_base
         _write_file(repo, "src/services/old_dep.py", "from scripts.ops.new_helper import run\n")
         errors = _run_gate(repo, base, _commit_all(repo, "replace dep"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
         assert any("new_helper" in e for e in errors)
 
     def test_same_count_js_dep_replacement_blocked(self, repo_with_base):
         repo, _base = repo_with_base
-        _write_file(repo, "src/services/baseJsDep.js", 'const x = require("../../scripts/ops/old_tool.js");\n')
+        _write_file(
+            repo,
+            "src/services/baseJsDep.js",
+            'const x = require("../../scripts/ops/old_tool.js");\n',
+        )
         base2 = _commit_all(repo, "add base JS dep")
-        _write_file(repo, "src/services/baseJsDep.js", 'const x = require("../../scripts/ops/new_tool.js");\n')
+        _write_file(
+            repo,
+            "src/services/baseJsDep.js",
+            'const x = require("../../scripts/ops/new_tool.js");\n',
+        )
         errors = _run_gate(repo, base2, _commit_all(repo, "replace JS dep"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
         assert any("new_tool" in e for e in errors)
 
     def test_delete_two_add_two_blocked(self, repo_with_base):
@@ -378,13 +397,15 @@ class TestNegativeBlockReverseDeps:
         )
         errors = _run_gate(repo, base2, _commit_all(repo, "replace two deps"))
         _min_expected_reverse_deps = 2
-        assert sum(1 for e in errors if ggg.ERR_REVERSE_DEP in e) >= _min_expected_reverse_deps
+        assert sum(1 for e in errors if grd.ERR_REVERSE_DEP in e) >= _min_expected_reverse_deps
 
     def test_new_file_with_dep_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/brand_new.py", "from scripts.ops.brand_new_helper import do_stuff\n")
+        _write_file(
+            repo, "src/services/brand_new.py", "from scripts.ops.brand_new_helper import do_stuff\n"
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "new file with dep"))
-        assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors)
 
 
 class TestNegativeMultiViolation:
@@ -399,7 +420,7 @@ class TestNegativeMultiViolation:
         errors = _run_gate(repo, base, _commit_all(repo, "all violations"))
         _min_expected_violations = 4
         assert len(errors) >= _min_expected_violations
-        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE, ggg.ERR_REVERSE_DEP]:
+        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE, grd.ERR_REVERSE_DEP]:
             assert any(code in e for e in errors), f"Missing {code}"
 
     def test_non_zero_exit_on_violation(self, repo_with_base):
@@ -460,7 +481,11 @@ class TestAntiFalsePositive:
 
     def test_comment_scripts_ops_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/commented.py", "# old: from scripts.ops.helper import x\ndef foo(): pass\n")
+        _write_file(
+            repo,
+            "src/services/commented.py",
+            "# old: from scripts.ops.helper import x\ndef foo(): pass\n",
+        )
         assert _run_gate(repo, base, _commit_all(repo, "comment")) == []
 
     def test_logger_message_not_blocked(self, repo_with_base):
@@ -532,7 +557,8 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/string_example.py",
-            'example = \'subprocess.run(["python", "scripts/ops/demo.py"])\'\n' + "def real_func():\n    return 42\n",
+            'example = \'subprocess.run(["python", "scripts/ops/demo.py"])\'\n'
+            "def real_func():\n    return 42\n",
         )
         assert _run_gate(repo, base, _commit_all(repo, "string literal")) == []
 
@@ -571,12 +597,20 @@ class TestAntiFalsePositive:
 
     def test_js_require_in_comment_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/commented.js", '// require("../../scripts/ops/helper.js")\nconst x = 1;\n')
+        _write_file(
+            repo,
+            "src/services/commented.js",
+            '// require("../../scripts/ops/helper.js")\nconst x = 1;\n',
+        )
         assert _run_gate(repo, base, _commit_all(repo, "JS comment")) == []
 
     def test_js_require_in_plain_string_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/docString.js", "const example = 'require(\"../../scripts/ops/helper.js\")';\n")
+        _write_file(
+            repo,
+            "src/services/docString.js",
+            "const example = 'require(\"../../scripts/ops/helper.js\")';\n",
+        )
         assert _run_gate(repo, base, _commit_all(repo, "JS string req")) == []
 
     def test_js_spawn_echo_passes(self, repo_with_base):
@@ -614,9 +648,11 @@ class TestAntiFalsePositive:
 
     def test_outside_src_reverse_dep_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "tests/unit/test_helper.py", "from scripts.ops.helpers.something import helper\n")
+        _write_file(
+            repo, "tests/unit/test_helper.py", "from scripts.ops.helpers.something import helper\n"
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "test import"))
-        assert [e for e in errors if ggg.ERR_REVERSE_DEP in e] == []
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == []
 
     def test_existing_historical_debt_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
@@ -633,7 +669,7 @@ class TestAntiFalsePositive:
         repo, base = repo_with_base
         _write_file(repo, "tests/fixtures/sample.py", "# fixture: import scripts.ops.helper\n")
         errors = _run_gate(repo, base, _commit_all(repo, "test fixture"))
-        assert [e for e in errors if ggg.ERR_REVERSE_DEP in e] == []
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == []
 
 
 # ---------------------------------------------------------------------------
@@ -676,7 +712,9 @@ class TestBasenameMatcher:
         ],
     )
     def test_basename_match(self, basename, expected):
-        assert ggg._is_numbered_governance_basename(basename) == expected, f"basename={basename!r} expected={expected}"
+        assert ggg._is_numbered_governance_basename(basename) == expected, (
+            f"basename={basename!r} expected={expected}"
+        )
 
 
 # ---------------------------------------------------------------------------
