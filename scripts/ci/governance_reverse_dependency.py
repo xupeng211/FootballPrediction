@@ -5,31 +5,24 @@ lifecycle: permanent
 
 Detects src → scripts/ops reverse dependencies in Python and JavaScript
 source files using AST parsing and bounded call-expression extraction.
-
-AST walkers and JS state-machine scanners have inherent structural
-complexity that cannot be meaningfully reduced without sacrificing
-correctness.  PERF401 (list.extend vs append) is a stylistic preference
-that does not affect correctness for conditionally-built lists.
-
-Public API:
-    check_new_reverse_dependencies(repo_root, base_ref, head_ref) -> list[str]
 """
 
 from __future__ import annotations
 
 import ast
-from pathlib import Path
 import re
 import subprocess
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
-# ---------------------------------------------------------------------------
-# Re-export error code for caller convenience
+if TYPE_CHECKING:
+    from pathlib import Path
+
 # ---------------------------------------------------------------------------
 ERR_REVERSE_DEP = "GOV-GROWTH-REVERSE-DEPENDENCY"
+_SCRIPTS_OPS_MODULE_RE = re.compile(r"scripts[/.]ops")
 
 # ---------------------------------------------------------------------------
-# Reverse-dependency fingerprint
+# Fingerprint
 # ---------------------------------------------------------------------------
 
 
@@ -43,76 +36,46 @@ class DepFingerprint(NamedTuple):
 
 
 # ---------------------------------------------------------------------------
-# Python AST-based scanner
+# Python AST scanner — decomposed into single-responsibility collectors
 # ---------------------------------------------------------------------------
 
 _SUBPROCESS_FUNCTIONS: frozenset[str] = frozenset(
     {"run", "call", "Popen", "check_call", "check_output"}
 )
 
-_SCRIPTS_OPS_MODULE_RE = re.compile(r"scripts[/.]ops")
-
 
 def _target_has_scripts_ops(value: str) -> bool:
-    """Check whether a string value references scripts/ops or scripts.ops."""
     return bool(_SCRIPTS_OPS_MODULE_RE.search(value))
 
 
 def _extract_strings_from_ast_node(node: ast.expr) -> list[str]:
-    """Extract string constants from an AST expression node (recursively)."""
     strings: list[str] = []
     if isinstance(node, ast.Constant) and isinstance(node.value, str):
         strings.append(node.value)
     elif isinstance(node, (ast.List, ast.Tuple)):
-        for elt in node.elts:
-            strings.extend(_extract_strings_from_ast_node(elt))
+        strings.extend(s for elt in node.elts for s in _extract_strings_from_ast_node(elt))
     return strings
 
 
-def _scan_python_file_ast(
-    content: str,
-    path: str,
-) -> list[DepFingerprint]:
-    """Scan a Python source file with the `ast` module."""
-    fingerprints: list[DepFingerprint] = []
+def _make_py_fingerprint(path: str, kind: str, target: str) -> DepFingerprint:
+    return DepFingerprint(path, "python", kind, target)
 
-    try:
-        tree = ast.parse(content, filename=path)
-    except SyntaxError:
-        return [DepFingerprint(path, "python", "parse-error", f"SyntaxError: cannot parse {path}")]
 
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                if _target_has_scripts_ops(alias.name):
-                    fingerprints.append(DepFingerprint(path, "python", "static-import", alias.name))
-
-        elif isinstance(node, ast.ImportFrom):
-            if node.module and _target_has_scripts_ops(node.module):
-                fingerprints.append(DepFingerprint(path, "python", "static-import", node.module))
-
-        elif isinstance(node, ast.Call):
-            if _is_dynamic_import_call(node):
-                if node.args:
-                    for s in _extract_strings_from_ast_node(node.args[0]):
-                        if _target_has_scripts_ops(s):
-                            fingerprints.append(DepFingerprint(path, "python", "dynamic-import", s))
-
-            elif _is_subprocess_call(node):
-                for arg in node.args:
-                    for s in _extract_strings_from_ast_node(arg):
-                        if _target_has_scripts_ops(s):
-                            fingerprints.append(DepFingerprint(path, "python", "subprocess", s))
-                for kw in node.keywords:
-                    for s in _extract_strings_from_ast_node(kw.value):
-                        if _target_has_scripts_ops(s):
-                            fingerprints.append(DepFingerprint(path, "python", "subprocess", s))
-
-    return fingerprints
+def _collect_static_imports(node: ast.AST, path: str) -> list[DepFingerprint]:
+    """Collect fingerprints from import / from-import statements."""
+    results: list[DepFingerprint] = []
+    if isinstance(node, ast.Import):
+        results.extend(
+            _make_py_fingerprint(path, "static-import", alias.name)
+            for alias in node.names
+            if _target_has_scripts_ops(alias.name)
+        )
+    elif isinstance(node, ast.ImportFrom) and node.module and _target_has_scripts_ops(node.module):
+        results.append(_make_py_fingerprint(path, "static-import", node.module))
+    return results
 
 
 def _is_dynamic_import_call(node: ast.Call) -> bool:
-    """Check if an AST Call node is importlib.import_module() or __import__()."""
     if isinstance(node.func, ast.Attribute):
         return (
             isinstance(node.func.value, ast.Name)
@@ -125,7 +88,6 @@ def _is_dynamic_import_call(node: ast.Call) -> bool:
 
 
 def _is_subprocess_call(node: ast.Call) -> bool:
-    """Check if an AST Call node is a subprocess.run/call/Popen/... call."""
     return (
         isinstance(node.func, ast.Attribute)
         and isinstance(node.func.value, ast.Name)
@@ -134,9 +96,63 @@ def _is_subprocess_call(node: ast.Call) -> bool:
     )
 
 
+def _collect_dynamic_imports(node: ast.Call, path: str) -> list[DepFingerprint]:
+    """Collect fingerprints from importlib.import_module / __import__ calls."""
+    if not _is_dynamic_import_call(node) or not node.args:
+        return []
+    return [
+        _make_py_fingerprint(path, "dynamic-import", s)
+        for s in _extract_strings_from_ast_node(node.args[0])
+        if _target_has_scripts_ops(s)
+    ]
+
+
+def _collect_subprocess_targets(node: ast.Call, path: str) -> list[DepFingerprint]:
+    """Collect fingerprints from subprocess.run / call / Popen etc."""
+    if not _is_subprocess_call(node):
+        return []
+    results: list[DepFingerprint] = []
+    for arg in node.args:
+        results.extend(
+            _make_py_fingerprint(path, "subprocess", s)
+            for s in _extract_strings_from_ast_node(arg)
+            if _target_has_scripts_ops(s)
+        )
+    for kw in node.keywords:
+        results.extend(
+            _make_py_fingerprint(path, "subprocess", s)
+            for s in _extract_strings_from_ast_node(kw.value)
+            if _target_has_scripts_ops(s)
+        )
+    return results
+
+
+def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
+    """Scan a Python source file with the `ast` module."""
+    try:
+        tree = ast.parse(content, filename=path)
+    except SyntaxError:
+        return [_make_py_fingerprint(path, "parse-error", f"SyntaxError: cannot parse {path}")]
+
+    fingerprints: list[DepFingerprint] = []
+    for node in ast.walk(tree):
+        fingerprints.extend(_collect_static_imports(node, path))
+        if isinstance(node, ast.Call):
+            fingerprints.extend(_collect_dynamic_imports(node, path))
+            fingerprints.extend(_collect_subprocess_targets(node, path))
+    return fingerprints
+
+
 # ---------------------------------------------------------------------------
-# JavaScript bounded call-expression scanner
+# JavaScript string/comment state machine — shared helpers
 # ---------------------------------------------------------------------------
+
+_JS_STATE_CODE = 0
+_JS_STATE_SINGLE = 1
+_JS_STATE_DOUBLE = 2
+_JS_STATE_BACKTICK = 3
+_JS_STATE_LINE_COMMENT = 4
+_JS_STATE_BLOCK_COMMENT = 5
 
 _JS_EXEC_FUNCTIONS: tuple[str, ...] = (
     "spawn",
@@ -148,174 +164,91 @@ _JS_EXEC_FUNCTIONS: tuple[str, ...] = (
 )
 
 
-def _balanced_paren_range(
-    text: str,
-    start: int,
-) -> int | None:
-    """Return index of matching close-paren for '(' at *start*, or None.
+def _js_transition_string_state(ch: str, state: int, next_ch: str | None) -> tuple[int, bool]:
+    """Handle state transitions when inside a string, template, or comment."""
+    if state == _JS_STATE_LINE_COMMENT:
+        return (_JS_STATE_CODE if ch == "\n" else state, False)
 
-    String- and comment-aware.
+    if state == _JS_STATE_BLOCK_COMMENT:
+        return (_JS_STATE_CODE, True) if (ch == "*" and next_ch == "/") else (state, False)
+
+    # String/template literal states — escape skips next char, delimiter exits
+    _string_delimiters = {_JS_STATE_SINGLE: "'", _JS_STATE_DOUBLE: '"', _JS_STATE_BACKTICK: "`"}
+    delim = _string_delimiters.get(state)
+    if delim is not None:
+        if ch == "\\":
+            return (state, True)
+        return (_JS_STATE_CODE if ch == delim else state, False)
+
+    return (state, False)
+
+
+def _js_transition_code_state(ch: str, next_ch: str | None) -> tuple[int, bool]:
+    """Handle state transitions when in normal code (not inside a string)."""
+    if ch == "'":
+        return (_JS_STATE_SINGLE, False)
+    if ch == '"':
+        return (_JS_STATE_DOUBLE, False)
+    if ch == "`":
+        return (_JS_STATE_BACKTICK, False)
+    if ch == "/" and next_ch == "/":
+        return (_JS_STATE_LINE_COMMENT, True)
+    if ch == "/" and next_ch == "*":
+        return (_JS_STATE_BLOCK_COMMENT, True)
+    return (_JS_STATE_CODE, False)
+
+
+def _js_char_transition(ch: str, state: int, next_ch: str | None) -> tuple[int, bool]:
+    """Single-character state transition for JS string/comment tracking.
+
+    Returns (new_state, skip_next).  Callers advance i by 2 when
+    skip_next is True (for escaped chars or two-char comment starts).
     """
-    depth = 0
-    i = start
-    in_single = False
-    in_double = False
-    in_backtick = False
-    in_line_comment = False
-    in_block_comment = False
+    if state != _JS_STATE_CODE:
+        return _js_transition_string_state(ch, state, next_ch)
+    return _js_transition_code_state(ch, next_ch)
 
+
+def _is_pos_inside_js_string_or_comment(text: str, end_pos: int) -> bool:
+    """Check if *end_pos* is inside a JS string or comment."""
+    state = _JS_STATE_CODE
+    i = 0
+    while i < end_pos:
+        ch = text[i]
+        next_ch = text[i + 1] if i + 1 < len(text) else None
+        state, skip_next = _js_char_transition(ch, state, next_ch)
+        if skip_next:
+            i += 2
+        else:
+            i += 1
+    return state != _JS_STATE_CODE
+
+
+def _balanced_paren_range(text: str, start: int) -> int | None:
+    """Return index of matching close-paren for '(' at *start*, or None."""
+    depth = 0
+    state = _JS_STATE_CODE
+    i = start
     while i < len(text):
         ch = text[i]
-
-        if in_line_comment:
-            if ch == "\n":
-                in_line_comment = False
-            i += 1
+        next_ch = text[i + 1] if i + 1 < len(text) else None
+        state, skip_next = _js_char_transition(ch, state, next_ch)
+        if skip_next:
+            i += 2
             continue
-
-        if in_block_comment:
-            if ch == "*" and i + 1 < len(text) and text[i + 1] == "/":
-                in_block_comment = False
-                i += 2
-                continue
-            i += 1
-            continue
-
-        if not in_single and not in_double and not in_backtick:
-            if ch == "/" and i + 1 < len(text) and text[i + 1] == "/":
-                in_line_comment = True
-                i += 2
-                continue
-            if ch == "/" and i + 1 < len(text) and text[i + 1] == "*":
-                in_block_comment = True
-                i += 2
-                continue
-
-        if in_single:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == "'":
-                in_single = False
-            i += 1
-            continue
-
-        if in_double:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == '"':
-                in_double = False
-            i += 1
-            continue
-
-        if in_backtick:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == "`":
-                in_backtick = False
-            i += 1
-            continue
-
-        if ch == "'":
-            in_single = True
-        elif ch == '"':
-            in_double = True
-        elif ch == "`":
-            in_backtick = True
-        elif ch == "(":
-            depth += 1
-        elif ch == ")":
-            depth -= 1
-            if depth == 0:
-                return i
-
+        if state == _JS_STATE_CODE:
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0:
+                    return i
         i += 1
-
     return None
 
 
-def _scan_state_until_pos(
-    text: str,
-    end_pos: int,
-) -> bool:
-    """Check if position *end_pos* is inside a JS string or comment."""
-    in_single = False
-    in_double = False
-    in_backtick = False
-    in_line_comment = False
-    in_block_comment = False
-    i = 0
-
-    while i < end_pos:
-        ch = text[i]
-
-        if in_line_comment:
-            if ch == "\n":
-                in_line_comment = False
-            i += 1
-            continue
-
-        if in_block_comment:
-            if ch == "*" and i + 1 < len(text) and text[i + 1] == "/":
-                in_block_comment = False
-                i += 2
-                continue
-            i += 1
-            continue
-
-        if not in_single and not in_double and not in_backtick:
-            if ch == "/" and i + 1 < len(text) and text[i + 1] == "/":
-                in_line_comment = True
-                i += 2
-                continue
-            if ch == "/" and i + 1 < len(text) and text[i + 1] == "*":
-                in_block_comment = True
-                i += 2
-                continue
-
-        if in_single:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == "'":
-                in_single = False
-            i += 1
-            continue
-
-        if in_double:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == '"':
-                in_double = False
-            i += 1
-            continue
-
-        if in_backtick:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == "`":
-                in_backtick = False
-            i += 1
-            continue
-
-        if ch == "'":
-            in_single = True
-        elif ch == '"':
-            in_double = True
-        elif ch == "`":
-            in_backtick = True
-
-        i += 1
-
-    return in_single or in_double or in_backtick or in_line_comment or in_block_comment
-
-
-def _extract_balanced_call_args(text: str, func_match_end: int) -> str | None:
-    """Extract text between the balanced parentheses of a function call."""
+def _extract_call_args(text: str, func_match_end: int) -> str | None:
+    """Extract text between balanced parentheses of a function call."""
     pos = func_match_end
     while pos < len(text) and text[pos] in (" ", "\t", "\n"):
         pos += 1
@@ -327,86 +260,25 @@ def _extract_balanced_call_args(text: str, func_match_end: int) -> str | None:
     return text[pos + 1 : close]
 
 
-def _extract_string_literals_from_js(
-    text: str,
-) -> list[str]:
-    """Extract all string literal values from a JS expression text."""
+def _extract_js_string_literals(text: str) -> list[str]:
+    """Extract all string literal values from JS expression text."""
     literals: list[str] = []
-    in_single = False
-    in_double = False
-    in_backtick = False
-    in_line_comment = False
-    in_block_comment = False
+    state = _JS_STATE_CODE
     literal_start = 0
     i = 0
-
     while i < len(text):
         ch = text[i]
-
-        if in_line_comment:
-            if ch == "\n":
-                in_line_comment = False
-            i += 1
+        next_ch = text[i + 1] if i + 1 < len(text) else None
+        prev_state = state
+        state, skip_next = _js_char_transition(ch, state, next_ch)
+        if skip_next:
+            i += 2
             continue
-
-        if in_block_comment:
-            if ch == "*" and i + 1 < len(text) and text[i + 1] == "/":
-                in_block_comment = False
-                i += 2
-                continue
-            i += 1
-            continue
-
-        if not in_single and not in_double and not in_backtick:
-            if ch == "/" and i + 1 < len(text) and text[i + 1] == "/":
-                in_line_comment = True
-                i += 2
-                continue
-            if ch == "/" and i + 1 < len(text) and text[i + 1] == "*":
-                in_block_comment = True
-                i += 2
-                continue
-
-        if in_single:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == "'":
-                literals.append(text[literal_start:i])
-                in_single = False
-            i += 1
-            continue
-
-        if in_double:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == '"':
-                literals.append(text[literal_start:i])
-                in_double = False
-            i += 1
-            continue
-
-        if in_backtick:
-            if ch == "\\":
-                i += 2
-                continue
-            if ch == "`":
-                in_backtick = False
-            i += 1
-            continue
-
-        if ch == "'":
-            in_single = True
+        if prev_state in (_JS_STATE_SINGLE, _JS_STATE_DOUBLE) and state == _JS_STATE_CODE:
+            literals.append(text[literal_start:i])
+        if state in (_JS_STATE_SINGLE, _JS_STATE_DOUBLE) and prev_state == _JS_STATE_CODE:
             literal_start = i + 1
-        elif ch == '"':
-            in_double = True
-            literal_start = i + 1
-        elif ch == "`":
-            in_backtick = True
-
         i += 1
-
     return literals
 
 
@@ -418,12 +290,128 @@ def _normalize_js_target(raw: str) -> str:
     return normalized
 
 
-def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
-    """Scan a JS/TS source file with a bounded scanner.
+# ---------------------------------------------------------------------------
+# JavaScript dependency collection — decomposed collectors
+# ---------------------------------------------------------------------------
 
-    Handles single-line and multi-line require(), import...from,
-    import(), and spawn/exec/fork calls.
-    """
+_REQUIRE_RE = re.compile(r"""require\s*\(\s*(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1\s*\)""")
+_ES_IMPORT_RE = re.compile(r"""import\s+.*?\s+from\s+(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1""")
+_DYNAMIC_IMPORT_RE = re.compile(r"""import\s*\(\s*(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1\s*\)""")
+_MULTILINE_FROM_RE = re.compile(r"""\bfrom\s+(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1""")
+
+
+def _make_js_fingerprint(path: str, kind: str, target: str) -> DepFingerprint:
+    return DepFingerprint(path, "javascript", kind, _normalize_js_target(target))
+
+
+def _collect_single_line_requires(
+    content: str,
+    path: str,
+    line: str,
+    line_start: int,
+) -> list[DepFingerprint]:
+    """Collect require('...scripts/ops...') from a single line."""
+    return [
+        _make_js_fingerprint(path, "require", m.group(2))
+        for m in _REQUIRE_RE.finditer(line)
+        if not _is_pos_inside_js_string_or_comment(content, line_start + m.start())
+    ]
+
+
+def _collect_single_line_es_imports(
+    content: str,
+    path: str,
+    line: str,
+    line_start: int,
+) -> list[DepFingerprint]:
+    """Collect import ... from '...scripts/ops...' from a single line."""
+    return [
+        _make_js_fingerprint(path, "es-import", m.group(2))
+        for m in _ES_IMPORT_RE.finditer(line)
+        if not _is_pos_inside_js_string_or_comment(content, line_start + m.start())
+    ]
+
+
+def _collect_single_line_dynamic_imports(
+    content: str,
+    path: str,
+    line: str,
+    line_start: int,
+) -> list[DepFingerprint]:
+    """Collect import('...scripts/ops...') from a single line."""
+    return [
+        _make_js_fingerprint(path, "dynamic-es-import", m.group(2))
+        for m in _DYNAMIC_IMPORT_RE.finditer(line)
+        if not _is_pos_inside_js_string_or_comment(content, line_start + m.start())
+    ]
+
+
+def _collect_multiline_call_targets(
+    content: str,
+    path: str,
+    line: str,
+    line_start: int,
+    func_name: str,
+) -> list[DepFingerprint]:
+    """Detect multi-line require(\\n\"...\") or import(\\n\"...\")."""
+    pattern = re.compile(r"\b" + re.escape(func_name) + r"\s*\(")
+    m = pattern.search(line)
+    if not m:
+        return []
+    abs_pos = line_start + m.start()
+    if _is_pos_inside_js_string_or_comment(content, abs_pos):
+        return []
+    arg_text = _extract_call_args(content, m.end() - 1)
+    if arg_text is None or "\n" not in arg_text:
+        return []
+    return [
+        _make_js_fingerprint(path, func_name, lit)
+        for lit in _extract_js_string_literals(arg_text)
+        if _target_has_scripts_ops(lit)
+    ]
+
+
+def _collect_multiline_import_from(
+    content: str,
+    path: str,
+    line: str,
+    line_start: int,
+) -> list[DepFingerprint]:
+    """Detect multi-line `import { ... } from '...scripts/ops...'`."""
+    m = _MULTILINE_FROM_RE.search(line)
+    if not m:
+        return []
+    abs_pos = line_start + m.start()
+    if _is_pos_inside_js_string_or_comment(content, abs_pos):
+        return []
+    line_num = content[:line_start].count("\n")
+    lookback_text = "\n".join(content.splitlines()[max(0, line_num - 5) : line_num])
+    if not re.search(r"\bimport\b", lookback_text):
+        return []
+    return [_make_js_fingerprint(path, "es-import", m.group(2))]
+
+
+def _collect_process_call_targets(content: str, path: str) -> list[DepFingerprint]:
+    """Collect spawn/exec/fork calls referencing scripts/ops."""
+    results: list[DepFingerprint] = []
+    for func_name in _JS_EXEC_FUNCTIONS:
+        pattern = re.compile(r"\b" + re.escape(func_name) + r"\s*\(")
+        for m in pattern.finditer(content):
+            if _is_pos_inside_js_string_or_comment(content, m.start()):
+                continue
+            arg_text = _extract_call_args(content, m.end() - 1)
+            if arg_text is None:
+                continue
+            results.extend(
+                _make_js_fingerprint(path, func_name, lit)
+                for lit in _extract_js_string_literals(arg_text)
+                if _target_has_scripts_ops(lit)
+            )
+    return results
+
+
+def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
+    """Scan a JS/TS source file with a bounded scanner."""
     fingerprints: list[DepFingerprint] = []
     lines = content.splitlines()
 
@@ -435,182 +423,18 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
 
     for line_num, line in enumerate(lines, start=1):
         stripped = line.strip()
-        if stripped.startswith("//") or stripped.startswith("/*"):
+        if stripped.startswith(("//", "/*")):
             continue
+        ls = line_starts[line_num - 1]
+        fingerprints.extend(_collect_single_line_requires(content, path, line, ls))
+        fingerprints.extend(_collect_single_line_es_imports(content, path, line, ls))
+        fingerprints.extend(_collect_single_line_dynamic_imports(content, path, line, ls))
+        fingerprints.extend(_collect_multiline_call_targets(content, path, line, ls, "require"))
+        fingerprints.extend(_collect_multiline_call_targets(content, path, line, ls, "import"))
+        fingerprints.extend(_collect_multiline_import_from(content, path, line, ls))
 
-        line_start = line_starts[line_num - 1]
-        _scan_require_patterns(content, path, line, line_start, fingerprints)
-        _scan_es_import_patterns(content, path, line, line_start, fingerprints)
-        _scan_dynamic_import_patterns(content, path, line, line_start, fingerprints)
-
-    for func_name in _JS_EXEC_FUNCTIONS:
-        pattern = re.compile(r"\b" + re.escape(func_name) + r"\s*\(")
-        for m in pattern.finditer(content):
-            if _scan_state_until_pos(content, m.start()):
-                continue
-            arg_text = _extract_balanced_call_args(content, m.end() - 1)
-            if arg_text is None:
-                continue
-            for lit in _extract_string_literals_from_js(arg_text):
-                if _target_has_scripts_ops(lit):
-                    fingerprints.append(
-                        DepFingerprint(
-                            path,
-                            "javascript",
-                            func_name,
-                            _normalize_js_target(lit),
-                        )
-                    )
-
+    fingerprints.extend(_collect_process_call_targets(content, path))
     return fingerprints
-
-
-def _scan_require_patterns(
-    content: str,
-    path: str,
-    line: str,
-    line_start: int,
-    fingerprints: list[DepFingerprint],
-) -> None:
-    """Scan for require("...scripts/ops...") — single and multi-line."""
-    for m in re.finditer(
-        r"""require\s*\(\s*(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1\s*\)""",
-        line,
-    ):
-        abs_pos = line_start + m.start()
-        if not _scan_state_until_pos(content, abs_pos):
-            fingerprints.append(
-                DepFingerprint(
-                    path,
-                    "javascript",
-                    "require",
-                    _normalize_js_target(m.group(2)),
-                )
-            )
-
-    _scan_multiline_call(content, path, line, line_start, "require", fingerprints)
-
-
-def _scan_es_import_patterns(
-    content: str,
-    path: str,
-    line: str,
-    line_start: int,
-    fingerprints: list[DepFingerprint],
-) -> None:
-    """Scan for import ... from "...scripts/ops..." — single and multi-line."""
-    for m in re.finditer(
-        r"""import\s+.*?\s+from\s+(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1""",
-        line,
-    ):
-        abs_pos = line_start + m.start()
-        if not _scan_state_until_pos(content, abs_pos):
-            fingerprints.append(
-                DepFingerprint(
-                    path,
-                    "javascript",
-                    "es-import",
-                    _normalize_js_target(m.group(2)),
-                )
-            )
-
-    _scan_multiline_import_from(content, path, line, line_start, fingerprints)
-
-
-def _scan_dynamic_import_patterns(
-    content: str,
-    path: str,
-    line: str,
-    line_start: int,
-    fingerprints: list[DepFingerprint],
-) -> None:
-    """Scan for import("...scripts/ops...") — single and multi-line."""
-    for m in re.finditer(
-        r"""import\s*\(\s*(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1\s*\)""",
-        line,
-    ):
-        abs_pos = line_start + m.start()
-        if not _scan_state_until_pos(content, abs_pos):
-            fingerprints.append(
-                DepFingerprint(
-                    path,
-                    "javascript",
-                    "dynamic-es-import",
-                    _normalize_js_target(m.group(2)),
-                )
-            )
-
-    _scan_multiline_call(content, path, line, line_start, "import", fingerprints)
-
-
-def _scan_multiline_call(
-    content: str,
-    path: str,
-    line: str,
-    line_start: int,
-    func_name: str,
-    fingerprints: list[DepFingerprint],
-) -> None:
-    """Detect multi-line calls like require(\\n"...") or import(\\n"...")."""
-    pattern = re.compile(r"\b" + re.escape(func_name) + r"\s*\(")
-    m = pattern.search(line)
-    if not m:
-        return
-
-    abs_pos = line_start + m.start()
-    if _scan_state_until_pos(content, abs_pos):
-        return
-
-    arg_text = _extract_balanced_call_args(content, m.end() - 1)
-    if arg_text is None:
-        return
-
-    if "\n" not in arg_text:
-        return
-
-    for lit in _extract_string_literals_from_js(arg_text):
-        if _target_has_scripts_ops(lit):
-            fingerprints.append(
-                DepFingerprint(
-                    path,
-                    "javascript",
-                    func_name,
-                    _normalize_js_target(lit),
-                )
-            )
-
-
-def _scan_multiline_import_from(
-    content: str,
-    path: str,
-    line: str,
-    line_start: int,
-    fingerprints: list[DepFingerprint],
-) -> None:
-    """Detect multi-line `import { ... } from "...scripts/ops..."`."""
-    m = re.search(r"""\bfrom\s+(['"])([^'"]*?scripts[/.]+ops[^'"]*?)\1""", line)
-    if not m:
-        return
-
-    abs_pos = line_start + m.start()
-    if _scan_state_until_pos(content, abs_pos):
-        return
-
-    line_num = content[:line_start].count("\n")
-    lookback_start = max(0, line_num - 5)
-    lookback_lines = content.splitlines()[lookback_start:line_num]
-    lookback_text = "\n".join(lookback_lines)
-    if not re.search(r"\bimport\b", lookback_text):
-        return
-
-    fingerprints.append(
-        DepFingerprint(
-            path,
-            "javascript",
-            "es-import",
-            _normalize_js_target(m.group(2)),
-        )
-    )
 
 
 # ---------------------------------------------------------------------------
@@ -619,7 +443,6 @@ def _scan_multiline_import_from(
 
 
 def _git_output(repo_root: Path, args: list[str]) -> str:
-    """Run a git command in *repo_root*, return stdout."""
     result = subprocess.run(
         ["git", *args],
         cwd=repo_root,
@@ -633,7 +456,6 @@ def _git_output(repo_root: Path, args: list[str]) -> str:
 
 
 def _read_file_at_revision(repo_root: Path, revision: str, path: str) -> str | None:
-    """Read a file's content from a specific git revision."""
     result = subprocess.run(
         ["git", "show", f"{revision}:{path}"],
         cwd=repo_root,
@@ -647,7 +469,7 @@ def _read_file_at_revision(repo_root: Path, revision: str, path: str) -> str | N
 
 
 # ---------------------------------------------------------------------------
-# Fingerprint-based dependency collection and comparison
+# Fingerprint collection and comparison
 # ---------------------------------------------------------------------------
 
 
@@ -657,7 +479,6 @@ def _find_src_reverse_dep_fingerprints(
 ) -> dict[str, set[DepFingerprint]]:
     """Find all src → scripts/ops dependency fingerprints in a revision."""
     deps: dict[str, set[DepFingerprint]] = {}
-
     src_files = _git_output(
         repo_root,
         ["ls-tree", "-r", "--name-only", revision, "src/"],
@@ -689,35 +510,30 @@ def check_new_reverse_dependencies(
     base_ref: str,
     head_ref: str,
 ) -> list[str]:
-    """Block NEW src → scripts/ops reverse dependencies.
-
-    Uses fingerprint set difference: head_fingerprints - base_fingerprints.
-    """
+    """Block NEW src → scripts/ops reverse dependencies."""
     errors: list[str] = []
-
     base_deps = _find_src_reverse_dep_fingerprints(repo_root, base_ref)
     head_deps = _find_src_reverse_dep_fingerprints(repo_root, head_ref)
 
-    all_head_paths = set(head_deps.keys())
-
-    for file_path in sorted(all_head_paths):
+    for file_path in sorted(head_deps):
         head_fps = head_deps.get(file_path, set())
         base_fps = base_deps.get(file_path, set())
 
-        for fp in head_fps:
-            if fp.kind == "parse-error":
-                errors.append(
-                    f"{ERR_REVERSE_DEP}: {file_path}: "
-                    f"AST parse failure — cannot scan (fail-closed). {fp.target}"
-                )
-                break
-        else:
-            new_fps = head_fps - base_fps
-            for fp in sorted(new_fps, key=lambda f: (f.kind, f.target)):
-                errors.append(
-                    f"{ERR_REVERSE_DEP}: {file_path}: "
-                    f"New {fp.language} {fp.kind} → {fp.target}. "
-                    f"Growth freeze is active."
-                )
+        parse_errors = [fp for fp in head_fps if fp.kind == "parse-error"]
+        if parse_errors:
+            errors.extend(
+                f"{ERR_REVERSE_DEP}: {file_path}: AST parse failure — "
+                f"cannot scan (fail-closed). {fp.target}"
+                for fp in parse_errors
+            )
+            continue
+
+        new_fps = head_fps - base_fps
+        errors.extend(
+            f"{ERR_REVERSE_DEP}: {file_path}: "
+            f"New {fp.language} {fp.kind} → {fp.target}. "
+            f"Growth freeze is active."
+            for fp in sorted(new_fps, key=lambda f: (f.kind, f.target))
+        )
 
     return errors

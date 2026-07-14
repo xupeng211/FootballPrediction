@@ -9,10 +9,6 @@ Three categories:
   2. New numbered governance scripts (Phase/ADG patterns) under scripts/
   3. New src → scripts/ops reverse dependencies (delegated to
      governance_reverse_dependency.py)
-
-Usage:
-  from scripts.ci.governance_growth_gate import run_governance_growth_gate
-  errors = run_governance_growth_gate(repo_root, base_ref, head_ref)
 """
 
 from __future__ import annotations
@@ -21,40 +17,20 @@ from pathlib import Path
 import re
 import subprocess
 
-# ---------------------------------------------------------------------------
-# Authorized exceptions — must remain empty in M2 PR1.
-# ---------------------------------------------------------------------------
-AUTHORIZED_GOVERNANCE_ADDITIONS: frozenset[str] = frozenset()
+from scripts.ci.governance_reverse_dependency import check_new_reverse_dependencies
 
 # ---------------------------------------------------------------------------
-# Error codes
-# ---------------------------------------------------------------------------
+AUTHORIZED_GOVERNANCE_ADDITIONS: frozenset[str] = frozenset()
 ERR_REPORT = "GOV-GROWTH-REPORT"
 ERR_MANIFEST = "GOV-GROWTH-MANIFEST"
 ERR_PHASE = "GOV-GROWTH-PHASE"
-
-# ---------------------------------------------------------------------------
-# Path prefixes
-# ---------------------------------------------------------------------------
 REPORT_PREFIX = "docs/_reports/"
 MANIFEST_PREFIX = "docs/_manifests/"
 
-# ---------------------------------------------------------------------------
-# Numbered governance script matcher
-#
-# Matches basenames containing "phase" or "adg" followed by optional
-# separator and at least one digit, ONLY when preceded by start-of-string
-# or a clear separator (_, -, .).  This avoids false matches on:
-#   biophase9_data.csv, metadg10_result.py, prephase2_transform.js
-# ---------------------------------------------------------------------------
-_GOVERNANCE_SCRIPT_RE = re.compile(
-    r"(?:^|[_.-])(phase|adg)[-_]?\d",
-    re.IGNORECASE,
-)
+_GOVERNANCE_SCRIPT_RE = re.compile(r"(?:^|[_.-])(phase|adg)[-_]?\d", re.IGNORECASE)
 
 
 def _is_numbered_governance_basename(basename: str) -> bool:
-    """Return True if *basename* matches the numbered governance pattern."""
     return bool(_GOVERNANCE_SCRIPT_RE.search(basename))
 
 
@@ -64,7 +40,6 @@ def _is_numbered_governance_basename(basename: str) -> bool:
 
 
 def _git_output(repo_root: Path, args: list[str]) -> str:
-    """Run a git command in *repo_root*, return stdout."""
     result = subprocess.run(
         ["git", *args],
         cwd=repo_root,
@@ -82,10 +57,7 @@ def _git_diff_name_status(
     base_ref: str,
     head_ref: str,
 ) -> list[tuple[str, str, str | None]]:
-    """Return (status, path, old_path|None) from git diff --name-status -M.
-
-    Renames are reported as R100, R095, etc. — we use startswith("R").
-    """
+    """Return (status, path, old_path|None) from git diff --name-status -M."""
     output = _git_output(
         repo_root,
         ["diff", "--name-status", "-M", f"{base_ref}...{head_ref}"],
@@ -98,7 +70,6 @@ def _git_diff_name_status(
             continue
         parts = line.split("\t")
         status = parts[0]
-        # R100 / R095 etc.
         if status.startswith("R") and len(parts) >= min_rename_parts:
             entries.append((status, parts[2], parts[1]))
         elif len(parts) >= min_normal_parts:
@@ -107,7 +78,6 @@ def _git_diff_name_status(
 
 
 def _list_files_at_revision(repo_root: Path, revision: str, prefix: str) -> set[str]:
-    """List all files under *prefix* in a given revision."""
     output = _git_output(
         repo_root,
         ["ls-tree", "-r", "--name-only", revision, prefix],
@@ -120,6 +90,14 @@ def _list_files_at_revision(repo_root: Path, revision: str, prefix: str) -> set[
 # ---------------------------------------------------------------------------
 
 
+def _format_report_error(path: str) -> str:
+    return f"{ERR_REPORT}: Unauthorized new report under docs/_reports: {path}. Growth freeze is active."
+
+
+def _format_manifest_error(path: str) -> str:
+    return f"{ERR_MANIFEST}: Unauthorized new manifest under docs/_manifests: {path}. Growth freeze is active."
+
+
 def check_new_reports_and_manifests(
     repo_root: Path,
     base_ref: str,
@@ -127,25 +105,20 @@ def check_new_reports_and_manifests(
 ) -> list[str]:
     """Block new or renamed files under docs/_reports/ and docs/_manifests/."""
     errors: list[str] = []
-
     base_files = _list_files_at_revision(repo_root, base_ref, REPORT_PREFIX)
     head_files = _list_files_at_revision(repo_root, head_ref, REPORT_PREFIX)
-    for p in sorted(head_files - base_files):
-        if p not in AUTHORIZED_GOVERNANCE_ADDITIONS:
-            errors.append(
-                f"{ERR_REPORT}: Unauthorized new report under docs/_reports: "
-                f"{p}. Growth freeze is active."
-            )
-
+    errors.extend(
+        _format_report_error(p)
+        for p in sorted(head_files - base_files)
+        if p not in AUTHORIZED_GOVERNANCE_ADDITIONS
+    )
     base_m = _list_files_at_revision(repo_root, base_ref, MANIFEST_PREFIX)
     head_m = _list_files_at_revision(repo_root, head_ref, MANIFEST_PREFIX)
-    for p in sorted(head_m - base_m):
-        if p not in AUTHORIZED_GOVERNANCE_ADDITIONS:
-            errors.append(
-                f"{ERR_MANIFEST}: Unauthorized new manifest under docs/_manifests: "
-                f"{p}. Growth freeze is active."
-            )
-
+    errors.extend(
+        _format_manifest_error(p)
+        for p in sorted(head_m - base_m)
+        if p not in AUTHORIZED_GOVERNANCE_ADDITIONS
+    )
     return errors
 
 
@@ -159,14 +132,9 @@ def check_new_numbered_governance_scripts(
     base_ref: str,
     head_ref: str,
 ) -> list[str]:
-    """Block new scripts with Phase/ADG numbered governance naming patterns.
-
-    Only checks files under scripts/.  Handles additions (A) and rename
-    destinations (R100, R095, etc.).
-    """
+    """Block new scripts with Phase/ADG numbered governance naming patterns."""
     errors: list[str] = []
     entries = _git_diff_name_status(repo_root, base_ref, head_ref)
-
     for status, path, _old_path in entries:
         if status != "A" and not status.startswith("R"):
             continue
@@ -181,7 +149,6 @@ def check_new_numbered_governance_scripts(
                 f"{ERR_PHASE}: Unauthorized new numbered governance script: "
                 f"{path}. Governance script number growth is frozen."
             )
-
     return errors
 
 
@@ -195,15 +162,9 @@ def run_governance_growth_gate(
     base_ref: str,
     head_ref: str,
 ) -> list[str]:
-    """Run all governance growth freeze checks.
-
-    Returns sorted list of error strings (empty = all checks passed).
-    """
-    from scripts.ci.governance_reverse_dependency import check_new_reverse_dependencies
-
+    """Run all governance growth freeze checks."""
     root = Path(repo_root)
     errors: list[str] = []
-
     for label, fn in [
         ("reports/manifests", check_new_reports_and_manifests),
         ("governance scripts", check_new_numbered_governance_scripts),
@@ -215,6 +176,5 @@ def run_governance_growth_gate(
             errors.append(
                 f"GOV-GROWTH-GATE: Governance growth freeze check failed ({label}): {exc}"
             )
-
     errors.sort()
     return errors

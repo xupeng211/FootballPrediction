@@ -39,9 +39,6 @@ ignore = [
 "tests/*" = ["ARG"]
 # ci_local_parity_preflight_phase1: pre-existing style issues in new preflight files
 "scripts/ops/local_pr_gate_preflight.py" = ["D101", "D102", "D103", "N806", "PERF401", "PLR2004"]
-# m2_governance_growth_gate — AST/JS state machines have inherent complexity
-"scripts/ci/governance_growth_gate.py" = ["PERF401", "PLC0415"]
-"scripts/ci/governance_reverse_dependency.py" = ["C901", "PLR0912", "PLR0915", "PERF401", "TC003", "PIE810"]
 "tests/unit/test_local_pr_gate_preflight.py" = ["PLR2004", "SIM115"]
 # phase5r4_event_bus: pre-existing style issues in event_bus.py — file was >800 lines
 # before gatekeeper enforcement; temporary until dedicated event_bus.py cleanup.
