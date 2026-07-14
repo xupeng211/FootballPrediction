@@ -18,9 +18,11 @@ Usage:
 
 from __future__ import annotations
 
+import ast
 import re
 import subprocess
 from pathlib import Path
+from typing import NamedTuple
 
 # ---------------------------------------------------------------------------
 # Authorized exceptions — must remain empty in M2 PR1.
@@ -46,15 +48,21 @@ MANIFEST_PREFIX = "docs/_manifests/"
 # ---------------------------------------------------------------------------
 # Numbered governance script matcher
 #
-# Matches basenames containing "phase" or "adg" followed by optional
-# separator (underscore or dash) and at least one digit.
-# Case-insensitive. Designed to NOT match:
-#   - plain "phase" or "adg" without digits
-#   - words containing "phase" without adjacent digits (e.g. "phase_transition")
-#   - business data files with version numbers
+# Matches basenames that contain "phase" or "adg" followed by optional
+# separator (underscore or dash) and at least one digit, but ONLY when:
+#   - the governance keyword is at the start of the basename, OR
+#   - the governance keyword is preceded by a clear separator (_, -, .)
+#
+# This boundary requirement avoids false matches on:
+#   - biophase9_data.csv   (phase9 preceded by "o", not a separator)
+#   - metadg10_result.py   (adg10 preceded by "t")
+#   - prephase2_transform.js (phase2 preceded by "e")
+#   - photographer.py      (no digit adjacent)
+#
+# Case-insensitive. Uses search() for substring matching with boundary.
 # ---------------------------------------------------------------------------
 _GOVERNANCE_SCRIPT_RE = re.compile(
-    r"(?:phase|adg)[-_]?\d",
+    r"(?:^|[_.-])(phase|adg)[-_]?\d",
     re.IGNORECASE,
 )
 
@@ -65,72 +73,526 @@ def _is_numbered_governance_basename(basename: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# src → scripts/ops reverse dependency patterns
+# Reverse-dependency fingerprint
 #
-# These patterns detect runtime imports/requires/calls from src/ files
-# that reference scripts/ops paths. They are designed to match real
-# code dependencies, NOT comments, docstrings, logger messages, or
-# test fixtures.
-#
-# Each pattern uses a negative lookbehind for common comment/doc/log
-# markers to reduce false positives. The caller additionally filters
-# out lines that are clearly in comments or string literals.
+# Each fingerprint captures a specific dependency from a src/ file to a
+# scripts/ops target.  Line numbers are excluded so that moving a dependency
+# within the same file does not count as "new".
 # ---------------------------------------------------------------------------
 
-# Python import patterns
-_PYTHON_IMPORT_RE = re.compile(
-    r"""^[^#]*\b(?:from\s+['"]?(scripts\.ops|scripts/ops)|import\s+['"]?(scripts\.ops|scripts/ops))""",
-    re.MULTILINE,
+class DepFingerprint(NamedTuple):
+    """A normalized reverse-dependency fingerprint."""
+    path: str
+    language: str       # "python" | "javascript"
+    kind: str           # "static-import" | "static-import-from" | "dynamic-import"
+                        # | "subprocess" | "require" | "es-import"
+                        # | "dynamic-es-import" | "spawn"
+    target: str         # normalized target (module path or script path)
+
+
+# ---------------------------------------------------------------------------
+# Python AST-based scanner
+#
+# Uses the standard-library `ast` module instead of regex.  This eliminates
+# false positives from comments, docstrings, and plain strings that happen
+# to mention scripts/ops.
+# ---------------------------------------------------------------------------
+
+_SUBPROCESS_FUNCTIONS: frozenset[str] = frozenset({
+    "run", "call", "Popen", "check_call", "check_output",
+})
+
+
+def _extract_strings_from_ast_node(node: ast.expr) -> list[str]:
+    """Extract string constants from an AST expression node (recursively)."""
+    strings: list[str] = []
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        strings.append(node.value)
+    elif isinstance(node, (ast.List, ast.Tuple)):
+        for elt in node.elts:
+            strings.extend(_extract_strings_from_ast_node(elt))
+    return strings
+
+
+def _target_has_scripts_ops(value: str) -> bool:
+    """Check whether a string value references scripts/ops or scripts.ops."""
+    return "scripts/ops" in value or "scripts.ops" in value
+
+
+def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
+    """Scan a Python source file with the `ast` module.
+
+    Detects:
+      - Static imports:  ``import scripts.ops.foo``
+                          ``from scripts.ops.foo import bar``
+      - Dynamic imports: ``importlib.import_module("scripts.ops.foo")``
+                          ``__import__("scripts.ops.foo")``
+      - Subprocess calls: ``subprocess.run(["python", "scripts/ops/x.py"])``
+                           (only when the argument is a string constant that
+                            references scripts/ops or scripts.ops)
+
+    Returns a list of DepFingerprint records (or a single sentinel on parse
+    failure for src/ files to fail-closed).
+    """
+    fingerprints: list[DepFingerprint] = []
+
+    try:
+        tree = ast.parse(content, filename=path)
+    except SyntaxError:
+        # Fail closed for src/ files — return a sentinel so callers can
+        # produce a clear error rather than silently skipping the file.
+        return [
+            DepFingerprint(path, "python", "parse-error",
+                           f"SyntaxError: cannot parse {path}")
+        ]
+
+    for node in ast.walk(tree):
+        # --- static imports ---
+        if isinstance(node, ast.Import):
+            for alias in node.names:
+                if _target_has_scripts_ops(alias.name):
+                    fingerprints.append(DepFingerprint(
+                        path, "python", "static-import", alias.name,
+                    ))
+
+        elif isinstance(node, ast.ImportFrom):
+            if node.module and _target_has_scripts_ops(node.module):
+                fingerprints.append(DepFingerprint(
+                    path, "python", "static-import-from", node.module,
+                ))
+
+        # --- dynamic imports ---
+        elif isinstance(node, ast.Call):
+            # importlib.import_module("scripts.ops.foo")
+            if (isinstance(node.func, ast.Attribute)
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "importlib"
+                    and node.func.attr == "import_module"):
+                if node.args:
+                    strings = _extract_strings_from_ast_node(node.args[0])
+                    for s in strings:
+                        if _target_has_scripts_ops(s):
+                            fingerprints.append(DepFingerprint(
+                                path, "python", "dynamic-import", s,
+                            ))
+
+            # __import__("scripts.ops.foo")
+            elif (isinstance(node.func, ast.Name)
+                  and node.func.id == "__import__"):
+                if node.args:
+                    strings = _extract_strings_from_ast_node(node.args[0])
+                    for s in strings:
+                        if _target_has_scripts_ops(s):
+                            fingerprints.append(DepFingerprint(
+                                path, "python", "dynamic-import", s,
+                            ))
+
+            # subprocess.run / call / Popen / check_call / check_output
+            elif (isinstance(node.func, ast.Attribute)
+                  and isinstance(node.func.value, ast.Name)
+                  and node.func.value.id == "subprocess"
+                  and node.func.attr in _SUBPROCESS_FUNCTIONS):
+                for arg in node.args:
+                    strings = _extract_strings_from_ast_node(arg)
+                    for s in strings:
+                        if _target_has_scripts_ops(s):
+                            fingerprints.append(DepFingerprint(
+                                path, "python", "subprocess",
+                                s[:200],
+                            ))
+                # Also check keyword args like cwd, executable
+                for kw in node.keywords:
+                    strings = _extract_strings_from_ast_node(kw.value)
+                    for s in strings:
+                        if _target_has_scripts_ops(s):
+                            fingerprints.append(DepFingerprint(
+                                path, "python", "subprocess",
+                                s[:200],
+                            ))
+
+    return fingerprints
+
+
+# ---------------------------------------------------------------------------
+# JavaScript bounded call-expression scanner
+#
+# Replaces the previous re.DOTALL approach that could cross function
+# boundaries.  For each occurrence of a tracked function name the scanner
+# extracts *only* the immediate call's argument list using balanced-
+# parenthesis matching (string- and comment-aware), then checks whether
+# those arguments contain scripts/ops references.
+# ---------------------------------------------------------------------------
+
+# Function names that indicate a runtime dependency on an external script.
+_JS_EXEC_FUNCTIONS: tuple[str, ...] = (
+    "spawn", "spawnSync", "exec", "execSync", "execFile", "fork",
 )
 
-# Python dynamic import patterns (importlib, __import__)
-_PYTHON_DYNAMIC_IMPORT_RE = re.compile(
-    r"""(?:importlib\.import_module\s*\(\s*['"](scripts\.ops[^'"]*)['"]|"""
-    r"""__import__\s*\(\s*['"](scripts\.ops[^'"]*)['"])""",
-)
 
-# Python subprocess calling scripts/ops
-_PYTHON_SUBPROCESS_SCRIPTS_OPS_RE = re.compile(
-    r"""subprocess\.(?:run|call|Popen|check_call|check_output)\s*\(.*['"](?:.*scripts/ops[^'"]*|.*scripts\.ops[^'"]*)['"]""",
-    re.DOTALL,
-)
+def _balanced_paren_range(text: str, start: int) -> int | None:
+    """Return the index of the matching close-paren for the '(' at `start`,
+    or None if unbalanced.  String- and comment-aware."""
+    depth = 0
+    i = start
+    in_single = False
+    in_double = False
+    in_backtick = False
+    in_line_comment = False
+    in_block_comment = False
 
-# JavaScript require/import patterns
-_JS_REQUIRE_RE = re.compile(
-    r"""(?:require\s*\(\s*['"](?:.*scripts/ops[^'"]*|.*scripts\.ops[^'"]*)['"]\s*\)|"""
-    r"""import\s+.*\s+from\s+['"](?:.*scripts/ops[^'"]*|.*scripts\.ops[^'"]*)['"]|"""
-    r"""import\s*\(\s*['"](?:.*scripts/ops[^'"]*|.*scripts\.ops[^'"]*)['"]\s*\))""",
-)
+    while i < len(text):
+        ch = text[i]
 
-# JavaScript spawn/exec/fork calling scripts/ops paths
-_JS_SPAWN_SCRIPTS_OPS_RE = re.compile(
-    r"""(?:spawn|exec|fork|execFile|execSync|spawnSync)\s*\(.*['"](?:.*scripts/ops[^'"]*|.*scripts\.ops[^'"]*)['"]""",
-    re.DOTALL,
-)
+        if in_line_comment:
+            if ch == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+
+        if in_block_comment:
+            if ch == "*" and i + 1 < len(text) and text[i + 1] == "/":
+                in_block_comment = False
+                i += 2
+                continue
+            i += 1
+            continue
+
+        # Detect comment starts (before string handling)
+        if not in_single and not in_double and not in_backtick:
+            if ch == "/" and i + 1 < len(text):
+                nxt = text[i + 1]
+                if nxt == "/":
+                    in_line_comment = True
+                    i += 2
+                    continue
+                if nxt == "*":
+                    in_block_comment = True
+                    i += 2
+                    continue
+
+        if in_single:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "'":
+                in_single = False
+            i += 1
+            continue
+
+        if in_double:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == '"':
+                in_double = False
+            i += 1
+            continue
+
+        if in_backtick:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "`":
+                in_backtick = False
+            i += 1
+            continue
+
+        # Not in any string or comment
+        if ch == "'":
+            in_single = True
+        elif ch == '"':
+            in_double = True
+        elif ch == "`":
+            in_backtick = True
+        elif ch == "(":
+            depth += 1
+        elif ch == ")":
+            depth -= 1
+            if depth == 0:
+                return i
+
+        i += 1
+
+    return None
 
 
-def _is_comment_or_string_line(line: str) -> bool:
-    """Heuristic: return True if *line* is likely a comment or string-only line."""
-    stripped = line.strip()
-    if not stripped:
-        return True
-    # Python/JS single-line comment
-    if stripped.startswith("#") or stripped.startswith("//"):
-        return True
-    # Docstring / multiline string markers
-    if stripped.startswith('"""') or stripped.startswith("'''"):
-        return True
-    if stripped.startswith("/*") or stripped.startswith("*"):
-        return True
-    # Common logger patterns that mention scripts/ops as instructional text
-    if re.search(
-        r"""\.(?:info|debug|warn|error|log|warning)\s*\(\s*(?:f['"]|['"])""",
-        stripped,
-    ):
-        # Contains a logger call — likely not a runtime dependency
-        if "scripts/ops" in stripped or "scripts.ops" in stripped:
-            return True
+def _extract_call_arg_text(text: str, func_match_end: int) -> str | None:
+    """Given the position just after a function name, find the opening paren
+    and return the text between the outer parentheses (balanced)."""
+    # Find the opening '(' (skip whitespace)
+    pos = func_match_end
+    while pos < len(text) and text[pos] in (" ", "\t", "\n"):
+        pos += 1
+    if pos >= len(text) or text[pos] != "(":
+        return None
+
+    close = _balanced_paren_range(text, pos)
+    if close is None:
+        return None
+    return text[pos + 1:close]
+
+
+def _js_arg_contains_scripts_ops(arg_text: str) -> bool:
+    """Check whether the argument text of a JS call contains scripts/ops
+    references in actual string literals (not in comments or bare words)."""
+    # Quick pre-check
+    if "scripts/ops" not in arg_text and "scripts.ops" not in arg_text:
+        return False
+
+    # Simple string-literal-aware check: find string literals and see if
+    # they contain scripts/ops.
+    in_single = False
+    in_double = False
+    in_backtick = False
+    in_line_comment = False
+    in_block_comment = False
+    i = 0
+
+    while i < len(arg_text):
+        ch = arg_text[i]
+
+        if in_line_comment:
+            if ch == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+
+        if in_block_comment:
+            if ch == "*" and i + 1 < len(arg_text) and arg_text[i + 1] == "/":
+                in_block_comment = False
+                i += 2
+                continue
+            i += 1
+            continue
+
+        if not in_single and not in_double and not in_backtick:
+            if ch == "/" and i + 1 < len(arg_text):
+                nxt = arg_text[i + 1]
+                if nxt == "/":
+                    in_line_comment = True
+                    i += 2
+                    continue
+                if nxt == "*":
+                    in_block_comment = True
+                    i += 2
+                    continue
+
+        if in_single:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "'":
+                in_single = False
+            i += 1
+            continue
+
+        if in_double:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == '"':
+                in_double = False
+            i += 1
+            continue
+
+        if in_backtick:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "`":
+                in_backtick = False
+            i += 1
+            continue
+
+        # Start of a string literal — scan forward for scripts/ops
+        if ch in ("'", '"', "`"):
+            quote = ch
+            literal_start = i + 1
+            j = i + 1
+            while j < len(arg_text):
+                if arg_text[j] == "\\":
+                    j += 2
+                    continue
+                if arg_text[j] == quote:
+                    break
+                j += 1
+            literal = arg_text[literal_start:j]
+            if "scripts/ops" in literal or "scripts.ops" in literal:
+                return True
+            i = j + 1 if j < len(arg_text) else j
+            continue
+
+        i += 1
+
     return False
+
+
+def _is_pos_inside_js_string_or_comment(content: str, pos: int) -> bool:
+    """Check whether *pos* is inside a JS string literal or comment."""
+    in_single = False
+    in_double = False
+    in_backtick = False
+    in_line_comment = False
+    in_block_comment = False
+    i = 0
+
+    while i < pos:
+        ch = content[i]
+
+        if in_line_comment:
+            if ch == "\n":
+                in_line_comment = False
+            i += 1
+            continue
+
+        if in_block_comment:
+            if ch == "*" and i + 1 < pos + 2 and i + 1 < len(content) and content[i + 1] == "/":
+                in_block_comment = False
+                i += 2
+                continue
+            i += 1
+            continue
+
+        if not in_single and not in_double and not in_backtick:
+            if ch == "/" and i + 1 < len(content):
+                nxt = content[i + 1]
+                if nxt == "/":
+                    in_line_comment = True
+                    i += 2
+                    continue
+                if nxt == "*":
+                    in_block_comment = True
+                    i += 2
+                    continue
+
+        if in_single:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "'":
+                in_single = False
+            i += 1
+            continue
+
+        if in_double:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == '"':
+                in_double = False
+            i += 1
+            continue
+
+        if in_backtick:
+            if ch == "\\":
+                i += 2
+                continue
+            if ch == "`":
+                in_backtick = False
+            i += 1
+            continue
+
+        # Not in any string or comment — check for string/comment start
+        if ch == "'":
+            in_single = True
+        elif ch == '"':
+            in_double = True
+        elif ch == "`":
+            in_backtick = True
+
+        i += 1
+
+    return in_single or in_double or in_backtick or in_line_comment or in_block_comment
+
+
+def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
+    """Scan a JavaScript/TypeScript source file with a bounded scanner.
+
+    For require/import: checks each line individually.
+    For spawn/exec/fork: extracts only the immediate call arguments
+    using balanced-paren matching (no cross-function DOTALL).
+
+    All patterns are string- and comment-aware: matches inside string
+    literals or comments are ignored.
+
+    Returns a list of DepFingerprint records.
+    """
+    fingerprints: list[DepFingerprint] = []
+    lines = content.splitlines()
+
+    # --- Line-based patterns: require, import, import() ---
+    # Compute line start positions for position-based string check
+    line_starts: list[int] = []
+    pos = 0
+    for line in lines:
+        line_starts.append(pos)
+        pos += len(line) + 1  # +1 for newline
+
+    for line_num, line in enumerate(lines, start=1):
+        stripped = line.strip()
+
+        # Skip comment-only lines
+        if stripped.startswith("//") or stripped.startswith("/*"):
+            continue
+
+        line_start = line_starts[line_num - 1]
+
+        # require("...scripts/ops...")
+        for m in re.finditer(
+            r"""require\s*\(\s*(['"])(.*?scripts[/.]+ops.*?)\1\s*\)""",
+            line,
+        ):
+            abs_pos = line_start + m.start()
+            if not _is_pos_inside_js_string_or_comment(content, abs_pos):
+                fingerprints.append(DepFingerprint(
+                    path, "javascript", "require", m.group(2)[:200],
+                ))
+
+        # import ... from "...scripts/ops..."
+        for m in re.finditer(
+            r"""import\s+.*?\s+from\s+(['"])(.*?scripts[/.]+ops.*?)\1""",
+            line,
+        ):
+            abs_pos = line_start + m.start()
+            if not _is_pos_inside_js_string_or_comment(content, abs_pos):
+                fingerprints.append(DepFingerprint(
+                    path, "javascript", "es-import", m.group(2)[:200],
+                ))
+
+        # import("...scripts/ops...")
+        for m in re.finditer(
+            r"""import\s*\(\s*(['"])(.*?scripts[/.]+ops.*?)\1\s*\)""",
+            line,
+        ):
+            abs_pos = line_start + m.start()
+            if not _is_pos_inside_js_string_or_comment(content, abs_pos):
+                fingerprints.append(DepFingerprint(
+                    path, "javascript", "dynamic-es-import", m.group(2)[:200],
+                ))
+
+    # --- Bounded call-expression scanning for spawn/exec/fork ---
+    for func_name in _JS_EXEC_FUNCTIONS:
+        pattern = re.compile(r"\b" + re.escape(func_name) + r"\s*\(")
+        for m in pattern.finditer(content):
+            # Skip if the function name is inside a string/comment
+            if _is_pos_inside_js_string_or_comment(content, m.start()):
+                continue
+            func_end = m.end() - 1  # position of '('
+            arg_text = _extract_call_arg_text(content, func_end)
+            if arg_text is None:
+                continue
+            if _js_arg_contains_scripts_ops(arg_text):
+                fingerprints.append(DepFingerprint(
+                    path, "javascript", func_name,
+                    arg_text.strip()[:200],
+                ))
+
+    return fingerprints
+
+
+# ---------------------------------------------------------------------------
+# Git helpers
+# ---------------------------------------------------------------------------
 
 
 def _git_output(repo_root: Path, args: list[str]) -> str:
@@ -152,7 +614,11 @@ def _git_output(repo_root: Path, args: list[str]) -> str:
 def _git_diff_name_status(
     repo_root: Path, base_ref: str, head_ref: str
 ) -> list[tuple[str, str, str | None]]:
-    """Return list of (status, path, old_path|None) from git diff --name-status."""
+    """Return list of (status, path, old_path|None) from git diff --name-status.
+
+    Uses -M to detect renames.  Git reports rename similarity as R100, R095,
+    etc. — not a bare "R".  We use startswith("R") to handle all variants.
+    """
     output = _git_output(
         repo_root, ["diff", "--name-status", "-M", f"{base_ref}...{head_ref}"]
     )
@@ -162,6 +628,7 @@ def _git_diff_name_status(
             continue
         parts = line.split("\t")
         status = parts[0]
+        # R100 / R095 / R087 etc. — use startswith for robustness
         if status.startswith("R") and len(parts) >= 3:
             entries.append((status, parts[2], parts[1]))
         elif len(parts) >= 2:
@@ -210,7 +677,7 @@ def check_new_reports_and_manifests(
 ) -> list[str]:
     """Block new or renamed files under docs/_reports/ and docs/_manifests/.
 
-    Compares base vs head. Only blocks additions (A) and rename destinations (R).
+    Compares base vs head. Only blocks additions (A) and rename destinations.
     Modifications (M) and deletions (D) are allowed.
     """
     errors: list[str] = []
@@ -218,14 +685,13 @@ def check_new_reports_and_manifests(
     base_files = _list_files_at_revision(repo_root, base_ref, REPORT_PREFIX)
     head_files = _list_files_at_revision(repo_root, head_ref, REPORT_PREFIX)
 
-    # New report files = in head but not in base
     new_reports = sorted(head_files - base_files)
-    for path in new_reports:
-        if path in AUTHORIZED_GOVERNANCE_ADDITIONS:
+    for p in new_reports:
+        if p in AUTHORIZED_GOVERNANCE_ADDITIONS:
             continue
         errors.append(
             f"{ERR_REPORT}: Unauthorized new report under docs/_reports: "
-            f"{path}. Growth freeze is active — no new reports allowed "
+            f"{p}. Growth freeze is active — no new reports allowed "
             f"without explicit gate authorization."
         )
 
@@ -237,12 +703,12 @@ def check_new_reports_and_manifests(
     )
 
     new_manifests = sorted(head_manifest_files - base_manifest_files)
-    for path in new_manifests:
-        if path in AUTHORIZED_GOVERNANCE_ADDITIONS:
+    for p in new_manifests:
+        if p in AUTHORIZED_GOVERNANCE_ADDITIONS:
             continue
         errors.append(
             f"{ERR_MANIFEST}: Unauthorized new manifest under docs/_manifests: "
-            f"{path}. Growth freeze is active — no new manifests allowed "
+            f"{p}. Growth freeze is active — no new manifests allowed "
             f"without explicit gate authorization."
         )
 
@@ -262,19 +728,17 @@ def check_new_numbered_governance_scripts(
     """Block new scripts with Phase/ADG numbered governance naming patterns.
 
     Only checks files under scripts/. Uses git diff --name-status to find
-    new files (status A) and rename destinations (status R).
+    new files (status A) and rename destinations (status R*, i.e. R100, R095).
     """
     errors: list[str] = []
     entries = _git_diff_name_status(repo_root, base_ref, head_ref)
 
     for status, path, _old_path in entries:
-        # Only block additions and rename destinations
-        if status not in ("A", "R"):
+        # Only block additions and rename destinations (R100, R095, etc.)
+        if status != "A" and not status.startswith("R"):
             continue
-        # Only check scripts/ directory
         if not path.startswith("scripts/"):
             continue
-        # Check basename for numbered governance pattern
         basename = Path(path).name
         if _is_numbered_governance_basename(basename):
             if path in AUTHORIZED_GOVERNANCE_ADDITIONS:
@@ -290,99 +754,33 @@ def check_new_numbered_governance_scripts(
 
 
 # ---------------------------------------------------------------------------
-# Check 3: New src → scripts/ops reverse dependencies
+# Check 3: New src → scripts/ops reverse dependencies (fingerprint-based)
+#
+# Each dependency is represented as a DepFingerprint(path, language, kind,
+# target).  Fingerprints exclude line numbers so that moving a dependency
+# within a file is not treated as a new dependency.
+#
+# Comparison: head_fingerprints - base_fingerprints → new dependencies.
 # ---------------------------------------------------------------------------
 
 
-def _scan_python_file_for_scripts_ops_deps(content: str, path: str) -> list[str]:
-    """Scan Python source for scripts.ops runtime imports."""
-    found: list[str] = []
-
-    for line_num, line in enumerate(content.splitlines(), start=1):
-        if _is_comment_or_string_line(line):
-            continue
-
-        # Static imports: from scripts.ops... import ... / import scripts.ops...
-        if _PYTHON_IMPORT_RE.search(line):
-            found.append(
-                f"{ERR_REVERSE_DEP}: {path}:{line_num}: "
-                f"Python import of scripts.ops: {line.strip()[:100]}"
-            )
-            continue
-
-        # Dynamic imports: importlib.import_module("scripts.ops...") / __import__("scripts.ops...")
-        m = _PYTHON_DYNAMIC_IMPORT_RE.search(line)
-        if m:
-            found.append(
-                f"{ERR_REVERSE_DEP}: {path}:{line_num}: "
-                f"Python dynamic import of scripts.ops: {line.strip()[:100]}"
-            )
-            continue
-
-    # Subprocess calls (multiline-aware)
-    for m in _PYTHON_SUBPROCESS_SCRIPTS_OPS_RE.finditer(content):
-        # Estimate line number
-        line_num = content[: m.start()].count("\n") + 1
-        matched = m.group()[:120]
-        found.append(
-            f"{ERR_REVERSE_DEP}: {path}:{line_num}: "
-            f"Python subprocess calling scripts/ops: {matched}"
-        )
-
-    return found
-
-
-def _scan_js_file_for_scripts_ops_deps(content: str, path: str) -> list[str]:
-    """Scan JavaScript/TypeScript source for scripts.ops runtime requires/imports."""
-    found: list[str] = []
-
-    for line_num, line in enumerate(content.splitlines(), start=1):
-        if _is_comment_or_string_line(line):
-            continue
-
-        # require("...scripts/ops...") / import ... from "...scripts/ops..."
-        m = _JS_REQUIRE_RE.search(line)
-        if m:
-            found.append(
-                f"{ERR_REVERSE_DEP}: {path}:{line_num}: "
-                f"JS require/import of scripts/ops: {line.strip()[:100]}"
-            )
-            continue
-
-    # spawn/exec/fork calls (multiline-aware)
-    for m in _JS_SPAWN_SCRIPTS_OPS_RE.finditer(content):
-        line_num = content[: m.start()].count("\n") + 1
-        matched = m.group()[:120]
-        # Filter: spawn/exec calls that appear inside logger calls
-        before = content[max(0, m.start() - 200) : m.start()]
-        if re.search(r"""\.(?:info|debug|warn|error|log)\s*\(.*$""", before, re.DOTALL):
-            continue
-        found.append(
-            f"{ERR_REVERSE_DEP}: {path}:{line_num}: "
-            f"JS spawn/exec calling scripts/ops: {matched}"
-        )
-
-    return found
-
-
-def _find_src_reverse_deps_at_revision(
+def _find_src_reverse_dep_fingerprints(
     repo_root: Path,
     revision: str,
-) -> dict[str, list[str]]:
-    """Find all src → scripts/ops dependencies in a given revision.
+) -> dict[str, set[DepFingerprint]]:
+    """Find all src → scripts/ops dependency fingerprints in a revision.
 
-    Returns a dict mapping {path: [error_messages]} for each src file
-    that has a dependency.
+    Returns {path: set of DepFingerprint}.
     """
-    deps: dict[str, list[str]] = {}
+    deps: dict[str, set[DepFingerprint]] = {}
 
-    # List all source files
     src_files = _git_output(
         repo_root,
         ["ls-tree", "-r", "--name-only", revision, "src/"],
     ).splitlines()
 
     for path in src_files:
+        path = path.strip()
         if not path:
             continue
         content = _read_file_at_revision(repo_root, revision, path)
@@ -390,14 +788,14 @@ def _find_src_reverse_deps_at_revision(
             continue
 
         if path.endswith(".py"):
-            findings = _scan_python_file_for_scripts_ops_deps(content, path)
+            fps = _scan_python_file_ast(content, path)
         elif path.endswith((".js", ".ts", ".jsx", ".tsx", ".mjs", ".cjs")):
-            findings = _scan_js_file_for_scripts_ops_deps(content, path)
+            fps = _scan_js_file_bounded(content, path)
         else:
             continue
 
-        if findings:
-            deps[path] = findings
+        if fps:
+            deps[path] = set(fps)
 
     return deps
 
@@ -409,38 +807,41 @@ def check_new_reverse_dependencies(
 ) -> list[str]:
     """Block NEW src → scripts/ops reverse dependencies.
 
-    Scans src/ files in both base and head revisions. Only blocks
-    dependencies that exist in head but not in base.
+    Uses fingerprint set difference: head_fingerprints - base_fingerprints.
+    A dependency moved within the same file (different line, same target)
+    is NOT reported as new.
     """
     errors: list[str] = []
 
-    base_deps = _find_src_reverse_deps_at_revision(repo_root, base_ref)
-    head_deps = _find_src_reverse_deps_at_revision(repo_root, head_ref)
+    base_deps = _find_src_reverse_dep_fingerprints(repo_root, base_ref)
+    head_deps = _find_src_reverse_dep_fingerprints(repo_root, head_ref)
 
-    for path, head_findings in sorted(head_deps.items()):
-        base_findings = base_deps.get(path, [])
-        # Check if there are new dependencies (more findings in head)
-        if len(head_findings) > len(base_findings):
-            # New file with dependencies, or existing file with new deps
-            if not base_findings:
-                # Entirely new reverse dependency file
-                for finding in head_findings:
-                    errors.append(finding)
-            else:
-                # Existing file with additional dependencies — report the new ones
-                # We use a simple count comparison; in practice, if a file grew
-                # new deps, flag all head findings for that file
-                new_count = len(head_findings) - len(base_findings)
+    all_head_paths = set(head_deps.keys())
+
+    for path in sorted(all_head_paths):
+        head_fps = head_deps.get(path, set())
+        base_fps = base_deps.get(path, set())
+
+        # Check for parse-error sentinels first
+        for fp in head_fps:
+            if fp.kind == "parse-error":
                 errors.append(
                     f"{ERR_REVERSE_DEP}: {path}: "
-                    f"New src → scripts/ops reverse dependency detected "
-                    f"({new_count} new import(s)). Growth freeze is active."
+                    f"AST parse failure — cannot scan for reverse deps "
+                    f"(fail-closed). {fp.target}"
                 )
-        elif not base_findings and head_findings:
-            # File is new and has dependencies (caught by len diff above, but
-            # belt-and-suspenders)
-            for finding in head_findings:
-                errors.append(finding)
+                # Don't report individual deps on top of parse failure
+                break
+        else:
+            # No parse error — compute fingerprint set difference
+            new_fps = head_fps - base_fps
+            for fp in sorted(new_fps, key=lambda f: (f.kind, f.target)):
+                errors.append(
+                    f"{ERR_REVERSE_DEP}: {path}: "
+                    f"New {fp.language} {fp.kind} → {fp.target}. "
+                    f"Growth freeze is active — no new src → scripts/ops "
+                    f"reverse dependencies allowed."
+                )
 
     return errors
 
@@ -486,7 +887,7 @@ def run_governance_growth_gate(
             f"{ERR_PHASE}: Governance growth gate failed to check governance scripts: {exc}"
         )
 
-    # 3. New src → scripts/ops reverse dependencies
+    # 3. New src → scripts/ops reverse dependencies (fingerprint-based)
     try:
         errors.extend(check_new_reverse_dependencies(root, base_ref, head_ref))
     except RuntimeError as exc:
