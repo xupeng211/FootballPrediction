@@ -343,7 +343,8 @@ class TestNegativeBlockReverseDeps:
                         from scripts.ops.helper_d import func_d
                         """))
         errors = _run_gate(repo, base2, _commit_all(repo, "replace two deps"))
-        assert sum(1 for e in errors if ggg.ERR_REVERSE_DEP in e) >= 2
+        _min_expected_reverse_deps = 2
+        assert sum(1 for e in errors if ggg.ERR_REVERSE_DEP in e) >= _min_expected_reverse_deps
 
     def test_new_file_with_dep_blocked(self, repo_with_base):
         repo, base = repo_with_base
@@ -364,7 +365,8 @@ class TestNegativeMultiViolation:
         _write_file(repo, "src/services/violation.py",
                     "from scripts.ops.violation import bad\n")
         errors = _run_gate(repo, base, _commit_all(repo, "all violations"))
-        assert len(errors) >= 4
+        _min_expected_violations = 4
+        assert len(errors) >= _min_expected_violations
         for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE,
                      ggg.ERR_REVERSE_DEP]:
             assert any(code in e for e in errors), f"Missing {code}"
