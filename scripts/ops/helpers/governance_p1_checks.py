@@ -28,6 +28,13 @@ import sys
 
 from scripts.ci.governance_growth_gate import run_governance_growth_gate
 
+__all__ = [
+    "check_dangerous_auth_path_cross_validation",
+    "check_no_archive_runtime_import",
+    "check_script_lifecycle_requirement",
+    "run_governance_growth_gate",
+]
+
 ROOT = Path(__file__).resolve().parents[3]
 
 _MIN_HUNK_HEADER_PARTS = 3  # @@ -old_start,old_count +new_start,new_count @@
