@@ -33,14 +33,22 @@ import governance_growth_gate as ggg  # noqa: E402
 
 def _git(repo: Path, *args: str) -> str:
     result = subprocess.run(
-        ["git", *args], cwd=repo, text=True, capture_output=True, check=True,
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=True,
     )
     return result.stdout.strip()
 
 
 def _git_ok(repo: Path, *args: str) -> bool:
     result = subprocess.run(
-        ["git", *args], cwd=repo, text=True, capture_output=True, check=False,
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
     )
     return result.returncode == 0
 
@@ -135,8 +143,7 @@ class TestPositivePassThrough:
 
     def test_normal_business_import_passes(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/new_service.py",
-                    "from src.models import User\nimport os\n")
+        _write_file(repo, "src/services/new_service.py", "from src.models import User\nimport os\n")
         assert _run_gate(repo, base, _commit_all(repo, "add normal import")) == []
 
     def test_new_normal_doc_passes(self, repo_with_base):
@@ -169,19 +176,22 @@ class TestPositivePassThrough:
 
     def test_same_dep_different_line_passes(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/event_bus.py",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/event_bus.py",
+            textwrap.dedent("""\
                         import os
                         from scripts.ops.hunt_league_hashes import find_hash
-                        """))
+                        """),
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "move dep line"))
         assert errors == [], f"Should pass: {errors}"
 
     def test_same_dep_reformat_passes(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/event_bus.py",
-                    "from scripts.ops.hunt_league_hashes import (\n"
-                    "    find_hash,\n)\n")
+        _write_file(
+            repo, "src/services/event_bus.py", "from scripts.ops.hunt_league_hashes import (\n" "    find_hash,\n)\n"
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "reformat"))
         assert errors == [], f"Reformat should pass: {errors}"
 
@@ -263,93 +273,100 @@ class TestNegativeBlockReverseDeps:
 
     def test_new_python_import_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/new_service.py",
-                    "from scripts.ops.helpers.something import helper\n")
+        _write_file(repo, "src/services/new_service.py", "from scripts.ops.helpers.something import helper\n")
         errors = _run_gate(repo, base, _commit_all(repo, "add reverse dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_python_dynamic_import_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/dynamic_import.py",
-                    'import importlib\n'
-                    'mod = importlib.import_module("scripts.ops.helper")\n')
+        _write_file(
+            repo,
+            "src/services/dynamic_import.py",
+            "import importlib\n" 'mod = importlib.import_module("scripts.ops.helper")\n',
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "add dynamic dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_python_subprocess_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/runner.py",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/runner.py",
+            textwrap.dedent("""\
                         import subprocess
                         subprocess.run(["python3", "scripts/ops/some_script.py"])
-                        """))
+                        """),
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "add subprocess dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_js_require_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/newService.js",
-                    'const helper = require("../../scripts/ops/helper.js");\n')
+        _write_file(repo, "src/services/newService.js", 'const helper = require("../../scripts/ops/helper.js");\n')
         errors = _run_gate(repo, base, _commit_all(repo, "add JS require"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_js_import_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/newModule.mjs",
-                    'import helper from "../scripts/ops/helper.js";\n')
+        _write_file(repo, "src/services/newModule.mjs", 'import helper from "../scripts/ops/helper.js";\n')
         errors = _run_gate(repo, base, _commit_all(repo, "add JS import"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
 
     def test_new_js_spawn_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/execService.js",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/execService.js",
+            textwrap.dedent("""\
                         const { spawn } = require("child_process");
                         spawn("node", ["scripts/ops/run_production.js"]);
-                        """))
+                        """),
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "add JS spawn"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
 
     def test_same_count_python_dep_replacement_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/old_dep.py",
-                    "from scripts.ops.new_helper import run\n")
+        _write_file(repo, "src/services/old_dep.py", "from scripts.ops.new_helper import run\n")
         errors = _run_gate(repo, base, _commit_all(repo, "replace dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
         assert any("new_helper" in e for e in errors)
 
     def test_same_count_js_dep_replacement_blocked(self, repo_with_base):
         repo, _base = repo_with_base
-        _write_file(repo, "src/services/baseJsDep.js",
-                    'const x = require("../../scripts/ops/old_tool.js");\n')
+        _write_file(repo, "src/services/baseJsDep.js", 'const x = require("../../scripts/ops/old_tool.js");\n')
         base2 = _commit_all(repo, "add base JS dep")
-        _write_file(repo, "src/services/baseJsDep.js",
-                    'const x = require("../../scripts/ops/new_tool.js");\n')
+        _write_file(repo, "src/services/baseJsDep.js", 'const x = require("../../scripts/ops/new_tool.js");\n')
         errors = _run_gate(repo, base2, _commit_all(repo, "replace JS dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
         assert any("new_tool" in e for e in errors)
 
     def test_delete_two_add_two_blocked(self, repo_with_base):
         repo, _base = repo_with_base
-        _write_file(repo, "src/services/old_dep.py",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/old_dep.py",
+            textwrap.dedent("""\
                         from scripts.ops.helper_a import func_a
                         from scripts.ops.helper_b import func_b
-                        """))
+                        """),
+        )
         base2 = _commit_all(repo, "base with two deps")
-        _write_file(repo, "src/services/old_dep.py",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/old_dep.py",
+            textwrap.dedent("""\
                         from scripts.ops.helper_c import func_c
                         from scripts.ops.helper_d import func_d
-                        """))
+                        """),
+        )
         errors = _run_gate(repo, base2, _commit_all(repo, "replace two deps"))
         _min_expected_reverse_deps = 2
         assert sum(1 for e in errors if ggg.ERR_REVERSE_DEP in e) >= _min_expected_reverse_deps
 
     def test_new_file_with_dep_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/brand_new.py",
-                    "from scripts.ops.brand_new_helper import do_stuff\n")
+        _write_file(repo, "src/services/brand_new.py", "from scripts.ops.brand_new_helper import do_stuff\n")
         errors = _run_gate(repo, base, _commit_all(repo, "new file with dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
 
@@ -362,13 +379,11 @@ class TestNegativeMultiViolation:
         _write_file(repo, "docs/_reports/NEW_VIOLATION.md", "# V\n")
         _write_file(repo, "docs/_manifests/new_violation.json", "{}")
         _write_file(repo, "scripts/ops/phase_99_violation.py", "# Phase 99\n")
-        _write_file(repo, "src/services/violation.py",
-                    "from scripts.ops.violation import bad\n")
+        _write_file(repo, "src/services/violation.py", "from scripts.ops.violation import bad\n")
         errors = _run_gate(repo, base, _commit_all(repo, "all violations"))
         _min_expected_violations = 4
         assert len(errors) >= _min_expected_violations
-        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE,
-                     ggg.ERR_REVERSE_DEP]:
+        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE, ggg.ERR_REVERSE_DEP]:
             assert any(code in e for e in errors), f"Missing {code}"
 
     def test_non_zero_exit_on_violation(self, repo_with_base):
@@ -400,8 +415,7 @@ class TestRenameStatus:
 
     def test_rename_into_phase_r100_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _git(repo, "mv", "scripts/ci/normal_ci_check.py",
-             "scripts/ops/phase_99_new_gate.py")
+        _git(repo, "mv", "scripts/ci/normal_ci_check.py", "scripts/ops/phase_99_new_gate.py")
         errors = _run_gate(repo, base, _commit_all(repo, "rename R100"))
         assert any(ggg.ERR_PHASE in e for e in errors)
 
@@ -409,15 +423,13 @@ class TestRenameStatus:
         repo, base = repo_with_base
         _write_file(repo, "scripts/ci/normal_check.js", "// normal\n")
         _commit_all(repo, "add normal JS file")
-        _git(repo, "mv", "scripts/ci/normal_check.js",
-             "scripts/ops/ADG-100A-plan.js")
+        _git(repo, "mv", "scripts/ci/normal_check.js", "scripts/ops/ADG-100A-plan.js")
         errors = _run_gate(repo, base, _commit_all(repo, "rename JS R100"))
         assert any(ggg.ERR_PHASE in e for e in errors)
 
     def test_rename_normal_to_normal_passes(self, repo_with_base):
         repo, base = repo_with_base
-        _git(repo, "mv", "scripts/ci/normal_ci_check.py",
-             "scripts/ci/renamed_ci_check.py")
+        _git(repo, "mv", "scripts/ci/normal_ci_check.py", "scripts/ci/renamed_ci_check.py")
         errors = _run_gate(repo, base, _commit_all(repo, "rename normal"))
         assert [e for e in errors if ggg.ERR_PHASE in e] == []
 
@@ -432,65 +444,80 @@ class TestAntiFalsePositive:
 
     def test_comment_scripts_ops_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/commented.py",
-                    "# old: from scripts.ops.helper import x\ndef foo(): pass\n")
+        _write_file(repo, "src/services/commented.py", "# old: from scripts.ops.helper import x\ndef foo(): pass\n")
         assert _run_gate(repo, base, _commit_all(repo, "comment")) == []
 
     def test_logger_message_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/logger_example.py",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/logger_example.py",
+            textwrap.dedent("""\
                         import logging
                         logger = logging.getLogger(__name__)
                         logger.info("Use scripts/ops/run_production.js")
-                        """))
+                        """),
+        )
         assert _run_gate(repo, base, _commit_all(repo, "logger")) == []
 
     def test_docstring_scripts_ops_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/docstring_example.py",
-                    textwrap.dedent('''\
+        _write_file(
+            repo,
+            "src/services/docstring_example.py",
+            textwrap.dedent('''\
                         """Module docs. Used scripts.ops.helper before. Now internal."""
                         def process(): pass
-                        '''))
+                        '''),
+        )
         assert _run_gate(repo, base, _commit_all(repo, "docstring")) == []
 
     def test_python_subprocess_cross_function_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/cross_func.py",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/cross_func.py",
+            textwrap.dedent("""\
                         import subprocess
                         def first():
                             subprocess.run(["echo", "ok"])
                         def second():
                             help_text = "scripts/ops/old_tool.py is deprecated"
-                        """))
+                        """),
+        )
         assert _run_gate(repo, base, _commit_all(repo, "cross-func")) == []
 
     def test_python_multiline_docstring_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/multiline_doc.py",
-                    textwrap.dedent('''\
+        _write_file(
+            repo,
+            "src/services/multiline_doc.py",
+            textwrap.dedent('''\
                         """
                         Example:
                             from scripts.ops.helper import old_helper
                         This module replaces that.
                         """
                         def new_approach(): pass
-                        '''))
+                        '''),
+        )
         assert _run_gate(repo, base, _commit_all(repo, "multiline doc")) == []
 
     def test_python_string_literal_subprocess_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/string_example.py",
-                    'example = \'subprocess.run(["python", "scripts/ops/demo.py"])\'\n'
-                    'def real_func():\n    return 42\n')
+        _write_file(
+            repo,
+            "src/services/string_example.py",
+            'example = \'subprocess.run(["python", "scripts/ops/demo.py"])\'\n' "def real_func():\n    return 42\n",
+        )
         assert _run_gate(repo, base, _commit_all(repo, "string literal")) == []
 
     def test_js_spawn_cross_function_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/crossFunc.js",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/crossFunc.js",
+            textwrap.dedent("""\
                         const { spawn } = require("child_process");
                         function first() {
                           spawn("echo", ["ok"]);
@@ -498,46 +525,54 @@ class TestAntiFalsePositive:
                         function second() {
                           const example = 'spawn("node", ["scripts/ops/demo.js"])';
                         }
-                        """))
+                        """),
+        )
         assert _run_gate(repo, base, _commit_all(repo, "JS cross-func")) == []
 
     def test_js_plain_string_variable_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/helpText.js",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/helpText.js",
+            textwrap.dedent("""\
                         const helpText = "See scripts/ops/run_production.js";
                         console.log(helpText);
-                        """))
+                        """),
+        )
         assert _run_gate(repo, base, _commit_all(repo, "JS help")) == []
 
     def test_js_require_in_comment_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/commented.js",
-                    '// require("../../scripts/ops/helper.js")\nconst x = 1;\n')
+        _write_file(repo, "src/services/commented.js", '// require("../../scripts/ops/helper.js")\nconst x = 1;\n')
         assert _run_gate(repo, base, _commit_all(repo, "JS comment")) == []
 
     def test_js_require_in_plain_string_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/docString.js",
-                    'const example = \'require("../../scripts/ops/helper.js")\';\n')
+        _write_file(repo, "src/services/docString.js", "const example = 'require(\"../../scripts/ops/helper.js\")';\n")
         assert _run_gate(repo, base, _commit_all(repo, "JS string req")) == []
 
     def test_js_spawn_echo_passes(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/echoService.js",
-                    textwrap.dedent("""\
+        _write_file(
+            repo,
+            "src/services/echoService.js",
+            textwrap.dedent("""\
                         const { spawn } = require("child_process");
                         spawn("echo", ["ok"]);
-                        """))
+                        """),
+        )
         assert _run_gate(repo, base, _commit_all(repo, "JS echo")) == []
 
     def test_plain_phase_variable_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/training.py",
-                    "class Trainer:\n"
-                    "    def __init__(self):\n"
-                    '        self.phase = "warmup"\n'
-                    "        self.current_phase_number = 1\n")
+        _write_file(
+            repo,
+            "src/services/training.py",
+            "class Trainer:\n"
+            "    def __init__(self):\n"
+            '        self.phase = "warmup"\n'
+            "        self.current_phase_number = 1\n",
+        )
         errors = _run_gate(repo, base, _commit_all(repo, "phase variable"))
         assert [e for e in errors if ggg.ERR_PHASE in e] == []
 
@@ -549,8 +584,7 @@ class TestAntiFalsePositive:
 
     def test_outside_src_reverse_dep_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "tests/unit/test_helper.py",
-                    "from scripts.ops.helpers.something import helper\n")
+        _write_file(repo, "tests/unit/test_helper.py", "from scripts.ops.helpers.something import helper\n")
         errors = _run_gate(repo, base, _commit_all(repo, "test import"))
         assert [e for e in errors if ggg.ERR_REVERSE_DEP in e] == []
 
@@ -561,15 +595,13 @@ class TestAntiFalsePositive:
 
     def test_phase_without_digits_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "scripts/ci/phase_transition_check.py",
-                    "# Phase transition\n")
+        _write_file(repo, "scripts/ci/phase_transition_check.py", "# Phase transition\n")
         errors = _run_gate(repo, base, _commit_all(repo, "phase_transition"))
         assert [e for e in errors if ggg.ERR_PHASE in e] == []
 
     def test_scripts_ops_reference_in_test_fixture_not_blocked(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "tests/fixtures/sample.py",
-                    "# fixture: import scripts.ops.helper\n")
+        _write_file(repo, "tests/fixtures/sample.py", "# fixture: import scripts.ops.helper\n")
         errors = _run_gate(repo, base, _commit_all(repo, "test fixture"))
         assert [e for e in errors if ggg.ERR_REVERSE_DEP in e] == []
 
@@ -582,37 +614,39 @@ class TestAntiFalsePositive:
 class TestBasenameMatcher:
     """Unit tests for _is_numbered_governance_basename with boundary rules."""
 
-    @pytest.mark.parametrize(("basename", "expected"), [
-        # Must match (starts at position 0)
-        ("phase_99_example.py", True),
-        ("Phase-12-review.js", True),
-        ("Phase99A_review.py", True),
-        ("adg999_new_step.py", True),
-        ("ADG-100A_plan.js", True),
-        ("adg_60_final.js", True),
-        ("phase1_test.js", True),
-        ("ADG1_initial.md", True),
-        # Must match (after separator)
-        ("something-phase2-plan.py", True),
-        ("fotmob_adg60_existing.js", True),
-        # Must NOT match (no separator before governance word)
-        ("biophase9_data.csv", False),
-        ("metadg10_result.py", False),
-        ("prephase2_transform.js", False),
-        # Must NOT match (no digit)
-        ("normal_script.py", False),
-        ("phase_transition_check.py", False),
-        ("deploy.sh", False),
-        ("adg_review.md", False),
-        ("phase.py", False),
-        ("my_phase.py", False),
-        ("adg_notes.txt", False),
-        ("photographer.py", False),
-        ("readme.md", False),
-    ])
+    @pytest.mark.parametrize(
+        ("basename", "expected"),
+        [
+            # Must match (starts at position 0)
+            ("phase_99_example.py", True),
+            ("Phase-12-review.js", True),
+            ("Phase99A_review.py", True),
+            ("adg999_new_step.py", True),
+            ("ADG-100A_plan.js", True),
+            ("adg_60_final.js", True),
+            ("phase1_test.js", True),
+            ("ADG1_initial.md", True),
+            # Must match (after separator)
+            ("something-phase2-plan.py", True),
+            ("fotmob_adg60_existing.js", True),
+            # Must NOT match (no separator before governance word)
+            ("biophase9_data.csv", False),
+            ("metadg10_result.py", False),
+            ("prephase2_transform.js", False),
+            # Must NOT match (no digit)
+            ("normal_script.py", False),
+            ("phase_transition_check.py", False),
+            ("deploy.sh", False),
+            ("adg_review.md", False),
+            ("phase.py", False),
+            ("my_phase.py", False),
+            ("adg_notes.txt", False),
+            ("photographer.py", False),
+            ("readme.md", False),
+        ],
+    )
     def test_basename_match(self, basename, expected):
-        assert ggg._is_numbered_governance_basename(basename) == expected, (
-            f"basename={basename!r} expected={expected}")
+        assert ggg._is_numbered_governance_basename(basename) == expected, f"basename={basename!r} expected={expected}"
 
 
 # ---------------------------------------------------------------------------

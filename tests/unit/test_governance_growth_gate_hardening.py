@@ -33,7 +33,11 @@ import governance_growth_gate as ggg  # noqa: E402
 
 def _git(repo: Path, *args: str) -> str:
     result = subprocess.run(
-        ["git", *args], cwd=repo, text=True, capture_output=True, check=True,
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=True,
     )
     return result.stdout.strip()
 
@@ -84,7 +88,10 @@ def _run_gate_via_cli(repo: Path, base_sha: str, head_sha: str) -> tuple[int, st
     )
     result = subprocess.run(
         [sys.executable, "-c", helper, base_sha, head_sha],
-        cwd=repo, text=True, capture_output=True, check=False,
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
     )
     return result.returncode, result.stderr
 
@@ -147,25 +154,21 @@ class TestRealProcessExitCode:
         _write_file(repo, "docs/_reports/MULTI_1.md", "# v1\n")
         _write_file(repo, "docs/_manifests/multi_1.json", "{}")
         _write_file(repo, "scripts/ops/phase_99_multi.py", "# Phase 99\n")
-        _write_file(repo, "src/services/multi_dep.py",
-                    "from scripts.ops.multi_helper import bad\n")
+        _write_file(repo, "src/services/multi_dep.py", "from scripts.ops.multi_helper import bad\n")
         head = _commit_all(repo, "multi violation")
         exit_code, stderr = _run_gate_via_cli(repo, base, head)
         assert exit_code != 0, f"Expected non-zero exit: {exit_code}"
-        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE,
-                     ggg.ERR_REVERSE_DEP]:
+        for code in [ggg.ERR_REPORT, ggg.ERR_MANIFEST, ggg.ERR_PHASE, ggg.ERR_REVERSE_DEP]:
             assert code in stderr, f"Missing {code} in output"
 
     def test_real_exit_nonzero_on_bad_ref(self, repo_with_base):
         repo, base = repo_with_base
-        exit_code, _stderr = _run_gate_via_cli(
-            repo, "nonexistent-ref-99999", base)
+        exit_code, _stderr = _run_gate_via_cli(repo, "nonexistent-ref-99999", base)
         assert exit_code != 0, f"Expected non-zero exit on bad ref: {exit_code}"
 
     def test_real_exit_nonzero_rename_r100(self, repo_with_base):
         repo, base = repo_with_base
-        _git(repo, "mv", "scripts/ci/normal_ci_check.py",
-             "scripts/ops/phase_99_new_gate.py")
+        _git(repo, "mv", "scripts/ci/normal_ci_check.py", "scripts/ops/phase_99_new_gate.py")
         head = _commit_all(repo, "rename R100 into phase")
         exit_code, stderr = _run_gate_via_cli(repo, base, head)
         assert exit_code != 0, f"R100 rename must fail: {exit_code}"
@@ -173,8 +176,7 @@ class TestRealProcessExitCode:
 
     def test_real_exit_nonzero_same_count_replacement(self, repo_with_base):
         repo, base = repo_with_base
-        _write_file(repo, "src/services/old_dep.py",
-                    "from scripts.ops.new_helper import run\n")
+        _write_file(repo, "src/services/old_dep.py", "from scripts.ops.new_helper import run\n")
         head = _commit_all(repo, "replace dep")
         exit_code, _stderr = _run_gate_via_cli(repo, base, head)
         assert exit_code != 0, f"Same-count replacement must fail: {exit_code}"

@@ -80,14 +80,16 @@ def _is_numbered_governance_basename(basename: str) -> bool:
 # within the same file does not count as "new".
 # ---------------------------------------------------------------------------
 
+
 class DepFingerprint(NamedTuple):
     """A normalized reverse-dependency fingerprint."""
+
     path: str
-    language: str       # "python" | "javascript"
-    kind: str           # "static-import" | "static-import-from" | "dynamic-import"
-                        # | "subprocess" | "require" | "es-import"
-                        # | "dynamic-es-import" | "spawn"
-    target: str         # normalized target (module path or script path)
+    language: str  # "python" | "javascript"
+    kind: str  # "static-import" | "static-import-from" | "dynamic-import"
+    # | "subprocess" | "require" | "es-import"
+    # | "dynamic-es-import" | "spawn"
+    target: str  # normalized target (module path or script path)
 
 
 # ---------------------------------------------------------------------------
@@ -98,9 +100,15 @@ class DepFingerprint(NamedTuple):
 # to mention scripts/ops.
 # ---------------------------------------------------------------------------
 
-_SUBPROCESS_FUNCTIONS: frozenset[str] = frozenset({
-    "run", "call", "Popen", "check_call", "check_output",
-})
+_SUBPROCESS_FUNCTIONS: frozenset[str] = frozenset(
+    {
+        "run",
+        "call",
+        "Popen",
+        "check_call",
+        "check_output",
+    }
+)
 
 
 def _extract_strings_from_ast_node(node: ast.expr) -> list[str]:
@@ -141,64 +149,87 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
     except SyntaxError:
         # Fail closed for src/ files — return a sentinel so callers can
         # produce a clear error rather than silently skipping the file.
-        return [
-            DepFingerprint(path, "python", "parse-error",
-                           f"SyntaxError: cannot parse {path}")
-        ]
+        return [DepFingerprint(path, "python", "parse-error", f"SyntaxError: cannot parse {path}")]
 
     for node in ast.walk(tree):
         # --- static imports ---
         if isinstance(node, ast.Import):
             for alias in node.names:
                 if _target_has_scripts_ops(alias.name):
-                    fingerprints.append(DepFingerprint(
-                        path, "python", "static-import", alias.name,
-                    ))
+                    fingerprints.append(
+                        DepFingerprint(
+                            path,
+                            "python",
+                            "static-import",
+                            alias.name,
+                        )
+                    )
 
         elif isinstance(node, ast.ImportFrom):
             if node.module and _target_has_scripts_ops(node.module):
-                fingerprints.append(DepFingerprint(
-                    path, "python", "static-import-from", node.module,
-                ))
+                fingerprints.append(
+                    DepFingerprint(
+                        path,
+                        "python",
+                        "static-import-from",
+                        node.module,
+                    )
+                )
 
         # --- dynamic imports ---
         elif isinstance(node, ast.Call):
             # importlib.import_module("scripts.ops.foo")
-            if (isinstance(node.func, ast.Attribute)
-                    and isinstance(node.func.value, ast.Name)
-                    and node.func.value.id == "importlib"
-                    and node.func.attr == "import_module") or (isinstance(node.func, ast.Name)
-                  and node.func.id == "__import__"):
+            if (
+                isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "importlib"
+                and node.func.attr == "import_module"
+            ) or (isinstance(node.func, ast.Name) and node.func.id == "__import__"):
                 if node.args:
                     strings = _extract_strings_from_ast_node(node.args[0])
                     for s in strings:
                         if _target_has_scripts_ops(s):
-                            fingerprints.append(DepFingerprint(
-                                path, "python", "dynamic-import", s,
-                            ))
+                            fingerprints.append(
+                                DepFingerprint(
+                                    path,
+                                    "python",
+                                    "dynamic-import",
+                                    s,
+                                )
+                            )
 
             # subprocess.run / call / Popen / check_call / check_output
-            elif (isinstance(node.func, ast.Attribute)
-                  and isinstance(node.func.value, ast.Name)
-                  and node.func.value.id == "subprocess"
-                  and node.func.attr in _SUBPROCESS_FUNCTIONS):
+            elif (
+                isinstance(node.func, ast.Attribute)
+                and isinstance(node.func.value, ast.Name)
+                and node.func.value.id == "subprocess"
+                and node.func.attr in _SUBPROCESS_FUNCTIONS
+            ):
                 for arg in node.args:
                     strings = _extract_strings_from_ast_node(arg)
                     for s in strings:
                         if _target_has_scripts_ops(s):
-                            fingerprints.append(DepFingerprint(
-                                path, "python", "subprocess",
-                                s[:200],
-                            ))
+                            fingerprints.append(
+                                DepFingerprint(
+                                    path,
+                                    "python",
+                                    "subprocess",
+                                    s[:200],
+                                )
+                            )
                 # Also check keyword args like cwd, executable
                 for kw in node.keywords:
                     strings = _extract_strings_from_ast_node(kw.value)
                     for s in strings:
                         if _target_has_scripts_ops(s):
-                            fingerprints.append(DepFingerprint(
-                                path, "python", "subprocess",
-                                s[:200],
-                            ))
+                            fingerprints.append(
+                                DepFingerprint(
+                                    path,
+                                    "python",
+                                    "subprocess",
+                                    s[:200],
+                                )
+                            )
 
     return fingerprints
 
@@ -215,7 +246,12 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
 
 # Function names that indicate a runtime dependency on an external script.
 _JS_EXEC_FUNCTIONS: tuple[str, ...] = (
-    "spawn", "spawnSync", "exec", "execSync", "execFile", "fork",
+    "spawn",
+    "spawnSync",
+    "exec",
+    "execSync",
+    "execFile",
+    "fork",
 )
 
 
@@ -248,8 +284,7 @@ def _balanced_paren_range(text: str, start: int) -> int | None:
             continue
 
         # Detect comment starts (before string handling)
-        if (not in_single and not in_double and not in_backtick
-                and ch == "/" and i + 1 < len(text)):
+        if not in_single and not in_double and not in_backtick and ch == "/" and i + 1 < len(text):
             nxt = text[i + 1]
             if nxt == "/":
                 in_line_comment = True
@@ -319,7 +354,7 @@ def _extract_call_arg_text(text: str, func_match_end: int) -> str | None:
     close = _balanced_paren_range(text, pos)
     if close is None:
         return None
-    return text[pos + 1:close]
+    return text[pos + 1 : close]
 
 
 def _js_arg_contains_scripts_ops(arg_text: str) -> bool:
@@ -355,8 +390,7 @@ def _js_arg_contains_scripts_ops(arg_text: str) -> bool:
             i += 1
             continue
 
-        if (not in_single and not in_double and not in_backtick
-                and ch == "/" and i + 1 < len(arg_text)):
+        if not in_single and not in_double and not in_backtick and ch == "/" and i + 1 < len(arg_text):
             nxt = arg_text[i + 1]
             if nxt == "/":
                 in_line_comment = True
@@ -443,8 +477,7 @@ def _is_pos_inside_js_string_or_comment(content: str, pos: int) -> bool:
             i += 1
             continue
 
-        if (not in_single and not in_double and not in_backtick
-                and ch == "/" and i + 1 < len(content)):
+        if not in_single and not in_double and not in_backtick and ch == "/" and i + 1 < len(content):
             nxt = content[i + 1]
             if nxt == "/":
                 in_line_comment = True
@@ -534,9 +567,14 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
         ):
             abs_pos = line_start + m.start()
             if not _is_pos_inside_js_string_or_comment(content, abs_pos):
-                fingerprints.append(DepFingerprint(
-                    path, "javascript", "require", m.group(2)[:200],
-                ))
+                fingerprints.append(
+                    DepFingerprint(
+                        path,
+                        "javascript",
+                        "require",
+                        m.group(2)[:200],
+                    )
+                )
 
         # import ... from "...scripts/ops..."
         for m in re.finditer(
@@ -545,9 +583,14 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
         ):
             abs_pos = line_start + m.start()
             if not _is_pos_inside_js_string_or_comment(content, abs_pos):
-                fingerprints.append(DepFingerprint(
-                    path, "javascript", "es-import", m.group(2)[:200],
-                ))
+                fingerprints.append(
+                    DepFingerprint(
+                        path,
+                        "javascript",
+                        "es-import",
+                        m.group(2)[:200],
+                    )
+                )
 
         # import("...scripts/ops...")
         for m in re.finditer(
@@ -556,9 +599,14 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
         ):
             abs_pos = line_start + m.start()
             if not _is_pos_inside_js_string_or_comment(content, abs_pos):
-                fingerprints.append(DepFingerprint(
-                    path, "javascript", "dynamic-es-import", m.group(2)[:200],
-                ))
+                fingerprints.append(
+                    DepFingerprint(
+                        path,
+                        "javascript",
+                        "dynamic-es-import",
+                        m.group(2)[:200],
+                    )
+                )
 
     # --- Bounded call-expression scanning for spawn/exec/fork ---
     for func_name in _JS_EXEC_FUNCTIONS:
@@ -572,10 +620,14 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
             if arg_text is None:
                 continue
             if _js_arg_contains_scripts_ops(arg_text):
-                fingerprints.append(DepFingerprint(
-                    path, "javascript", func_name,
-                    arg_text.strip()[:200],
-                ))
+                fingerprints.append(
+                    DepFingerprint(
+                        path,
+                        "javascript",
+                        func_name,
+                        arg_text.strip()[:200],
+                    )
+                )
 
     return fingerprints
 
@@ -595,23 +647,17 @@ def _git_output(repo_root: Path, args: list[str]) -> str:
         check=False,
     )
     if result.returncode != 0:
-        raise RuntimeError(
-            f"git {' '.join(args)} failed: {result.stderr.strip()}"
-        )
+        raise RuntimeError(f"git {' '.join(args)} failed: {result.stderr.strip()}")
     return result.stdout
 
 
-def _git_diff_name_status(
-    repo_root: Path, base_ref: str, head_ref: str
-) -> list[tuple[str, str, str | None]]:
+def _git_diff_name_status(repo_root: Path, base_ref: str, head_ref: str) -> list[tuple[str, str, str | None]]:
     """Return list of (status, path, old_path|None) from git diff --name-status.
 
     Uses -M to detect renames.  Git reports rename similarity as R100, R095,
     etc. — not a bare "R".  We use startswith("R") to handle all variants.
     """
-    output = _git_output(
-        repo_root, ["diff", "--name-status", "-M", f"{base_ref}...{head_ref}"]
-    )
+    output = _git_output(repo_root, ["diff", "--name-status", "-M", f"{base_ref}...{head_ref}"])
     entries: list[tuple[str, str, str | None]] = []
     for line in output.splitlines():
         if not line.strip():
@@ -626,9 +672,7 @@ def _git_diff_name_status(
     return entries
 
 
-def _read_file_at_revision(
-    repo_root: Path, revision: str, path: str
-) -> str | None:
+def _read_file_at_revision(repo_root: Path, revision: str, path: str) -> str | None:
     """Read a file's content from a specific git revision."""
     result = subprocess.run(
         ["git", "show", f"{revision}:{path}"],
@@ -644,9 +688,7 @@ def _read_file_at_revision(
     return result.stdout
 
 
-def _list_files_at_revision(
-    repo_root: Path, revision: str, prefix: str
-) -> set[str]:
+def _list_files_at_revision(repo_root: Path, revision: str, prefix: str) -> set[str]:
     """List all files under *prefix* in a given revision."""
     output = _git_output(
         repo_root,
@@ -685,12 +727,8 @@ def check_new_reports_and_manifests(
             f"without explicit gate authorization."
         )
 
-    base_manifest_files = _list_files_at_revision(
-        repo_root, base_ref, MANIFEST_PREFIX
-    )
-    head_manifest_files = _list_files_at_revision(
-        repo_root, head_ref, MANIFEST_PREFIX
-    )
+    base_manifest_files = _list_files_at_revision(repo_root, base_ref, MANIFEST_PREFIX)
+    head_manifest_files = _list_files_at_revision(repo_root, head_ref, MANIFEST_PREFIX)
 
     new_manifests = sorted(head_manifest_files - base_manifest_files)
     for p in new_manifests:
@@ -863,27 +901,19 @@ def run_governance_growth_gate(
     try:
         errors.extend(check_new_reports_and_manifests(root, base_ref, head_ref))
     except RuntimeError as exc:
-        errors.append(
-            f"{ERR_REPORT}: Governance growth gate failed to check reports/manifests: {exc}"
-        )
+        errors.append(f"{ERR_REPORT}: Governance growth gate failed to check reports/manifests: {exc}")
 
     # 2. New numbered governance scripts
     try:
-        errors.extend(
-            check_new_numbered_governance_scripts(root, base_ref, head_ref)
-        )
+        errors.extend(check_new_numbered_governance_scripts(root, base_ref, head_ref))
     except RuntimeError as exc:
-        errors.append(
-            f"{ERR_PHASE}: Governance growth gate failed to check governance scripts: {exc}"
-        )
+        errors.append(f"{ERR_PHASE}: Governance growth gate failed to check governance scripts: {exc}")
 
     # 3. New src → scripts/ops reverse dependencies (fingerprint-based)
     try:
         errors.extend(check_new_reverse_dependencies(root, base_ref, head_ref))
     except RuntimeError as exc:
-        errors.append(
-            f"{ERR_REVERSE_DEP}: Governance growth gate failed to check reverse deps: {exc}"
-        )
+        errors.append(f"{ERR_REVERSE_DEP}: Governance growth gate failed to check reverse deps: {exc}")
 
     # Stable sort
     errors.sort()
