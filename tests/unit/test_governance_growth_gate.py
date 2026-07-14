@@ -284,7 +284,7 @@ class TestNegativeBlockReverseDeps:
         _write_file(
             repo,
             "src/services/dynamic_import.py",
-            "import importlib\n" 'mod = importlib.import_module("scripts.ops.helper")\n',
+            "import importlib\n" + 'mod = importlib.import_module("scripts.ops.helper")\n',
         )
         errors = _run_gate(repo, base, _commit_all(repo, "add dynamic dep"))
         assert any(ggg.ERR_REVERSE_DEP in e for e in errors)
@@ -510,7 +510,7 @@ class TestAntiFalsePositive:
         _write_file(
             repo,
             "src/services/string_example.py",
-            'example = \'subprocess.run(["python", "scripts/ops/demo.py"])\'\n' "def real_func():\n    return 42\n",
+            'example = \'subprocess.run(["python", "scripts/ops/demo.py"])\'\n' + "def real_func():\n    return 42\n",
         )
         assert _run_gate(repo, base, _commit_all(repo, "string literal")) == []
 
