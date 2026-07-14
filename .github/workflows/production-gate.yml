@@ -45,7 +45,8 @@ jobs:
             .cache/dev_root_cache/pip \
             .cache/gitconfig \
             .cache/buildx \
-            .cache/buildx-new
+            .cache/buildx-new \
+            data/browser_profile
 
       - name: Restore dependency cache
         uses: actions/cache@v4
