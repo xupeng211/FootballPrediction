@@ -5,11 +5,12 @@
 
 Last updated: 2026-07-14
 
-## M1 Test Foundation — Acceptance pending browser_profile root-owned residue closure
+## M1 Test Foundation — Accepted (browser profile residue closed)
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
-  - Status: **Acceptance pending browser_profile root-owned residue closure**
+  - Status: **Accepted — browser profile residue closed**
   - Audit date: 2026-07-14
+  - Final acceptance SHA: `e9114ce34d1885c70fdebd4b7be3c167458a5456`
   - FINAL_AUDIT_SHA: `14461ff0ad7559cf5541fbf4dd11d26e0348734c`
   - Runner flaky root cause (R2): `process.stdout.write` internal buffering under pipe
     backpressure; fix (#1785) replaces with `fs.writeSync` for deterministic fd-level output.
@@ -17,21 +18,26 @@ Last updated: 2026-07-14
   - Runner self-test stress: 88 consecutive full-suite runs all exit 0, failed=0.
   - Failure propagation: verified (intentional failure → non-zero exit, no false green).
   - All 14 M1 PRs (#1768–#1781) + runner fix (#1785) merged, test/CI scope only.
-  - **Blocking residue discovered:** container `make test-unit` creates
-    `data/browser_profile/` as `root:root` mode `755`. Host user cannot write or
-    delete. Directory is empty and gitignored, but constitutes a net-new root-owned
-    repository artifact after container tests.
+  - **Browser profile residue closed** (#1788): root cause was Docker bind mount
+    `docker-compose.dev.yml:58 ./data/browser_profile:/app/data/browser_profile`.
+    Docker daemon created the host directory with `root:root` when it did not exist
+    at container start. Fix: pre-create `data/browser_profile/` before Docker start
+    in CI workflow and Makefile `dev-up` target. No production Dockerfile changes.
+  - Final re-audit evidence:
+    - Neutral host clone: `data/browser_profile` does not exist; root-owned 0
+    - BrowserFactory target tests 20/20 pass, failed=0, no residue
+    - Combined tests 5/5 pass, failed=0, no residue
+    - CI (PR Gate + post-merge main Gate): success
+    - Workspace: clean; artifact count unchanged; no untracked files
   - Old tag `m1-test-foundation-accepted` (→ `faaaff6b`) was created prematurely;
     retained for history but **superseded**.
-  - `m1-test-foundation-accepted-v2` tag is preserved but is no longer an
-    unconditional final baseline — it carries the known browser_profile root-owned
-    residue boundary.
-  - Official M1 acceptance tag `m1-test-foundation-accepted-v3` will be created
-    after the browser_profile residue is fixed and verified.
+  - `m1-test-foundation-accepted-v2` tag (→ `3d0aee6b`) is superseded by v3 —
+    v2 carried the known browser_profile root-owned residue boundary now closed.
+  - Official M1 acceptance tag: **`m1-test-foundation-accepted-v3`**
   - M1 boundaries: historical Python non-canonical debt, integration/e2e, real DB/network,
     model training, odds import are NOT in M1 scope and remain unchanged.
-  - M2 (Governance growth freeze) is **re-paused** pending v3 closure.
-  - Next task: fix browser_profile root-owned residue. Do not start automatically.
+  - M2 (Governance growth freeze) is **unblocked** — v3 acceptance complete.
+  - Next task: M2 read-only audit per Issue #1783. Do not start automatically.
 
 ## github_actions_workflow_permissions_hardening in progress
 
