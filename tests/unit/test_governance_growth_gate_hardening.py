@@ -12,7 +12,6 @@ the 800-line gatekeeper limit.
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 import subprocess
 import sys
@@ -189,50 +188,100 @@ class TestRealProcessExitCode:
 
 
 # ---------------------------------------------------------------------------
-# Real AI Workflow Gate CLI propagation tests (Stage 4)
+# Real AI Workflow Gate CLI propagation tests — fully isolated
+# ---------------------------------------------------------------------------
+# These tests create a complete temporary git repository (via git bundle)
+# inside ``tmp_path`` and run the real ``ai_workflow_gate.py`` CLI against
+# that isolated repo.  The source project working tree is never modified.
 # ---------------------------------------------------------------------------
 
+
+def _create_isolated_repo(tmp_path: Path, source_repo: Path) -> tuple[Path, str]:
+    """Create a full isolated git clone from *source_repo*'s HEAD via bundle.
+
+    Returns ``(temp_repo_path, source_head_sha)``.  The clone lives under
+    *tmp_path* and is automatically cleaned up by pytest.
+    """
+    source_head = _git(source_repo, "rev-parse", "HEAD")
+
+    bundle_path = tmp_path / "source.bundle"
+    temp_repo = tmp_path / "isolated-repo"
+
+    _git(source_repo, "bundle", "create", str(bundle_path), "HEAD")
+    subprocess.run(
+        ["git", "clone", "--no-checkout", str(bundle_path), str(temp_repo)],
+        check=True,
+        text=True,
+        capture_output=True,
+    )
+    _git(temp_repo, "checkout", "--detach", source_head)
+    _git(temp_repo, "config", "user.email", "gate-test@example.invalid")
+    _git(temp_repo, "config", "user.name", "Governance Gate Isolation Test")
+
+    return temp_repo, source_head
+
+
+def _write_in_temp(path: Path, content: str) -> None:
+    """Write *content* to *path*, creating parent directories."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(content, encoding="utf-8")
+
+
+def _snapshot_source(repo: Path) -> dict[str, str]:
+    """Capture source repo state that must not change during the test."""
+    return {
+        "head": _git(repo, "rev-parse", "HEAD"),
+        "branch": _git(repo, "rev-parse", "--abbrev-ref", "HEAD"),
+        "status": _git(repo, "status", "--porcelain=v1", "-uall"),
+    }
+
+
+def _assert_source_unchanged(repo: Path, before: dict[str, str]) -> None:
+    """Assert that *repo* state matches *before*."""
+    after = _snapshot_source(repo)
+    assert after["head"] == before["head"], (
+        f"Source HEAD changed: {before['head']} → {after['head']}"
+    )
+    assert after["branch"] == before["branch"], (
+        f"Source branch changed: {before['branch']} → {after['branch']}"
+    )
+    assert after["status"] == before["status"], (
+        f"Source working tree dirty:\nbefore={before['status']!r}\nafter={after['status']!r}"
+    )
+
+
+# PR body used by the CLI tests.  Describes a workflow-governance change
+# that touches a single governance helper without adding reports, manifests,
+# Phase scripts, or reverse dependencies.
 _MINIMAL_PR_BODY = """\
 ## Summary
-Test PR for AI workflow gate CLI verification — governance growth freeze gate
-final cleanup boundary tests.
+Test PR for AI workflow gate CLI isolation — fully isolated temporary repo.
 ## Scope
-Test-only change within scripts/ops/helpers/governance_p1_checks.py:
-re-export run_governance_growth_gate for ai_workflow_gate.py consumption.
+Test-only change: adds a comment to an existing governance gate module.
 No runtime behaviour change.  No business logic, no DB, no scraper, no browser.
 | Task type | workflow-governance |
 ## Documentation Impact
-This PR touches a single helper module docstring and does not introduce
-new reports, manifests, or governance Phase/ADG scripts.  All documentation
-references remain current; no user-facing docs require updates.
+No new docs, reports, or manifests.  No user-facing documentation change.
 ## Safety Impact
-No safety impact — the change is a pure re-export.  No new imports,
-no new network or filesystem access, no auth surface changes.
+No safety impact — comment-only change.  No new imports, no network or
+filesystem access, no auth surface changes.
 ## Validation
-- All 92+ governance growth gate tests pass.
-- Ruff check returns 0 errors.
-- Ruff format passes.
-- Real AI Workflow Gate CLI produces expected exit codes.
+Automated CLI isolation test verifies real entry-point chain.
 ## CI Gate Scope
 Standard PR Gate: Python quality (ruff/mypy), tests (pytest), canonical
 Python and JS unit-core, Docker Build Validation.
 ## No deletion / no move / no rename confirmation
-Confirmed — no files are deleted, moved, or renamed by this PR.
+Confirmed — no files are deleted, moved, or renamed.
 ## Dangerous File Authorization
-scripts/ops/helpers/governance_p1_checks.py — adding a forward re-export
-of run_governance_growth_gate from scripts.ci.governance_growth_gate.
-This is a governance helper that already existed; the re-export is narrow
-and does not introduce new dependency paths.
+scripts/ci/governance_growth_gate.py — comment-only change in an existing
+governance gate module.  No new dependency paths or auth surface.
 ## PR Authorization Matrix
 | Path | Category | Authorization |
 |------|----------|---------------|
-| scripts/ops/ai_workflow_gate.py | workflow-governance | Existing gate integration — adding governance growth check call. |
-| scripts/ops/helpers/governance_p1_checks.py | workflow-governance | Re-export for lint hygiene. |
-| Authorized paths | scripts/ops/ai_workflow_gate.py, scripts/ops/helpers/governance_p1_checks.py |
+| scripts/ci/governance_growth_gate.py | workflow-governance | Comment-only test change in existing gate module. |
+| Authorized paths | scripts/ci/governance_growth_gate.py |
 ## Rollback Plan
-Revert the single commit — the re-export line and docstring update in
-governance_p1_checks.py are the only changes.  No schema or data
-migration needed.
+Revert the single test commit — a comment-only change with no side effects.
 ## Next Recommended Task
 Do not start automatically.
 Recommended next task only after user confirmation: final review of
@@ -241,45 +290,34 @@ Draft PR #1790 before deciding whether to mark Ready and merge.
 No change — enforcement infrastructure remains complete.  Training,
 data expansion, and real DB write remain blocked.
 ## Remaining risks
-None — this is a narrow cleanup with no runtime behaviour change.
+None — fully isolated test with no runtime behaviour change.
 """
 
 
-def _write_pr_body_file(path: Path) -> None:
-    path.write_text(_MINIMAL_PR_BODY, encoding="utf-8")
-
-
-def _cleanup_empty_dir(path: Path) -> None:
-    """Remove *path* (file or directory) if it exists and is empty."""
-    try:
-        if path.is_file():
-            path.unlink()
-        elif path.is_dir() and not any(path.iterdir()):
-            path.rmdir()
-    except OSError:
-        pass
-
-
 class TestRealAIWorkflowGateCLI:
-    """Verify violations propagate through the real CLI → validate() → non-zero exit.
+    """Real CLI propagation tests using fully isolated temporary git repos.
 
-    These tests invoke ``scripts/ops/ai_workflow_gate.py`` as a subprocess,
-    exercising the full entry-point chain (CLI arg parsing → main() → validate()
-    → run_governance_growth_gate → exit code).  They do NOT use the hand-rolled
-    ``_run_gate_via_cli`` wrapper that short-circuits through direct module import.
+    Both the clean-fixture and violation tests create a complete git
+    clone via bundle inside ``tmp_path`` and run ``ai_workflow_gate.py``
+    from that clone.  The source project working tree is **never**
+    modified — no checkout, no branch creation, no commits, and no
+    ``--force`` recovery.
     """
 
-    def test_real_cli_exit_zero_on_clean_fixture(self, tmp_path):
-        """Real CLI against the current branch: no new gov artifacts → exit 0."""
-        project_root = Path(ggg.__file__).resolve().parents[2]
-        base_ref = "00ed4bcac8818028392a8af478732074768cc29d"
-        head_ref = "14870bf69c835fae1c889aaa0eda490295f166fe"
+    # ------------------------------------------------------------------
+    # helpers
+    # ------------------------------------------------------------------
 
-        pr_body_file = tmp_path / "pr_body.md"
-        _write_pr_body_file(pr_body_file)
-
-        gate_script = project_root / "scripts" / "ops" / "ai_workflow_gate.py"
-        result = subprocess.run(
+    @staticmethod
+    def _run_cli(
+        repo: Path,
+        pr_body_file: Path,
+        base_ref: str,
+        head_ref: str,
+    ) -> subprocess.CompletedProcess[str]:
+        """Run the real ``ai_workflow_gate.py`` CLI inside *repo*."""
+        gate_script = repo / "scripts" / "ops" / "ai_workflow_gate.py"
+        return subprocess.run(
             [
                 sys.executable,
                 str(gate_script),
@@ -290,129 +328,86 @@ class TestRealAIWorkflowGateCLI:
                 "--head-ref",
                 head_ref,
             ],
-            cwd=project_root,
+            cwd=repo,
             text=True,
             capture_output=True,
             check=False,
         )
+
+    # ------------------------------------------------------------------
+    # clean fixture
+    # ------------------------------------------------------------------
+
+    def test_real_cli_exit_zero_on_clean_fixture(self, tmp_path):
+        """Real CLI in isolated repo: no governance violations → exit 0."""
+        project_root = Path(ggg.__file__).resolve().parents[2]
+        before = _snapshot_source(project_root)
+
+        # Create isolated clone and add a trivial non-governance change.
+        temp_repo, base_sha = _create_isolated_repo(tmp_path, project_root)
+        _write_in_temp(
+            temp_repo / "scripts" / "ci" / "governance_growth_gate.py",
+            (temp_repo / "scripts" / "ci" / "governance_growth_gate.py").read_text(encoding="utf-8")
+            + "\n# isolated CLI test marker\n",
+        )
+        _git(temp_repo, "add", "scripts/ci/governance_growth_gate.py")
+        _git(temp_repo, "commit", "-m", "test: add comment for CLI clean fixture")
+        head_sha = _git(temp_repo, "rev-parse", "HEAD")
+
+        pr_body_file = tmp_path / "pr_body.md"
+        pr_body_file.write_text(_MINIMAL_PR_BODY, encoding="utf-8")
+
+        result = self._run_cli(temp_repo, pr_body_file, base_sha, head_sha)
         combined = result.stdout + result.stderr
         assert result.returncode == 0, (
             f"Expected exit 0, got {result.returncode}. output={combined}"
         )
 
-    @pytest.mark.skipif(
-        os.environ.get("CI") == "true" or os.environ.get("GITHUB_ACTIONS") == "true",
-        reason="Modifies git working tree — exit-code propagation verified locally",
-    )
-    def test_real_cli_exit_nonzero_on_report_violation(self, tmp_path):
-        """Real CLI: new report → non-zero exit with GOV-GROWTH-REPORT.
+        # Source repo must be untouched.
+        _assert_source_unchanged(project_root, before)
 
-        Skipped in CI — temp branch + file creation dirties the working tree.
-        The positive CLI test (clean fixture) still runs in CI and validates
-        the full entry-point chain.
+    # ------------------------------------------------------------------
+    # violation fixture
+    # ------------------------------------------------------------------
+
+    def test_real_cli_exit_nonzero_on_report_violation(self, tmp_path):
+        """Real CLI in isolated repo: new report → non-zero, GOV-GROWTH-REPORT.
+
+        The violation commit is made inside the temporary clone — the
+        source project working tree is never touched.  This test runs in
+        CI without any skip / xfail / environment-variable gate.
         """
         project_root = Path(ggg.__file__).resolve().parents[2]
+        before = _snapshot_source(project_root)
 
-        original_branch = subprocess.run(
-            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            cwd=project_root,
-            text=True,
-            capture_output=True,
-            check=True,
-        ).stdout.strip()
+        # Isolated clone.
+        temp_repo, base_sha = _create_isolated_repo(tmp_path, project_root)
 
-        test_branch = "test-cli-violation-temp-" + str(hash(str(tmp_path)))[-8:]
-        subprocess.run(
-            ["git", "checkout", "-b", test_branch],
-            cwd=project_root,
-            text=True,
-            capture_output=True,
-            check=True,
+        # Commit a new report inside the temp repo.
+        _write_in_temp(
+            temp_repo / "docs" / "_reports" / "CLI_REAL_VIOLATION.md",
+            "# Real CLI violation\n",
+        )
+        _git(temp_repo, "add", "docs/_reports/CLI_REAL_VIOLATION.md")
+        _git(temp_repo, "commit", "-m", "test: add isolated CLI report violation")
+        head_sha = _git(temp_repo, "rev-parse", "HEAD")
+
+        pr_body_file = tmp_path / "pr_body.md"
+        pr_body_file.write_text(_MINIMAL_PR_BODY, encoding="utf-8")
+
+        result = self._run_cli(temp_repo, pr_body_file, base_sha, head_sha)
+        combined = result.stdout + result.stderr
+        assert result.returncode != 0, (
+            f"Real CLI must return non-zero on violation, "
+            f"got {result.returncode}. output={combined}"
+        )
+        assert "GOV-GROWTH-REPORT" in combined, f"Expected GOV-GROWTH-REPORT in output: {combined}"
+        assert "CLI_REAL_VIOLATION.md" in combined, (
+            f"Expected CLI_REAL_VIOLATION.md in output: {combined}"
         )
 
-        try:
-            report_dir = project_root / "docs" / "_reports"
-            report_dir.mkdir(parents=True, exist_ok=True)
-            (report_dir / "CLI_REAL_VIOLATION.md").write_text(
-                "# Real CLI violation\n", encoding="utf-8"
-            )
-            subprocess.run(
-                ["git", "add", "docs/_reports/CLI_REAL_VIOLATION.md"],
-                cwd=project_root,
-                text=True,
-                capture_output=True,
-                check=True,
-            )
-            subprocess.run(
-                ["git", "commit", "-m", "test: add report violation for CLI test"],
-                cwd=project_root,
-                text=True,
-                capture_output=True,
-                check=True,
-            )
-
-            head = subprocess.run(
-                ["git", "rev-parse", "HEAD"],
-                cwd=project_root,
-                text=True,
-                capture_output=True,
-                check=True,
-            ).stdout.strip()
-            base = subprocess.run(
-                ["git", "rev-parse", "HEAD~1"],
-                cwd=project_root,
-                text=True,
-                capture_output=True,
-                check=True,
-            ).stdout.strip()
-
-            pr_body_file = tmp_path / "pr_body.md"
-            _write_pr_body_file(pr_body_file)
-
-            gate_script = project_root / "scripts" / "ops" / "ai_workflow_gate.py"
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(gate_script),
-                    "--pr-body-file",
-                    str(pr_body_file),
-                    "--base-ref",
-                    base,
-                    "--head-ref",
-                    head,
-                ],
-                cwd=project_root,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            combined = result.stdout + result.stderr
-            assert result.returncode != 0, (
-                f"Real CLI must return non-zero on violation, "
-                f"got {result.returncode}. output={combined}"
-            )
-            assert "GOV-GROWTH-REPORT" in combined, (
-                f"Expected GOV-GROWTH-REPORT in output: {combined}"
-            )
-        finally:
-            subprocess.run(
-                ["git", "checkout", "--force", original_branch],
-                cwd=project_root,
-                text=True,
-                capture_output=True,
-                check=True,
-            )
-            subprocess.run(
-                ["git", "branch", "-D", test_branch],
-                cwd=project_root,
-                text=True,
-                capture_output=True,
-                check=False,
-            )
-            # Remove empty directories left behind by checkout
-            _cleanup_empty_dir(project_root / "docs" / "_reports" / "CLI_REAL_VIOLATION.md")
-            _cleanup_empty_dir(report_dir)
-            _cleanup_empty_dir(project_root / "docs")
+        # Source repo must be untouched.
+        _assert_source_unchanged(project_root, before)
 
 
 # ---------------------------------------------------------------------------
