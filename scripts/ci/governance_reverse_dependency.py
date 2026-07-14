@@ -261,7 +261,13 @@ def _extract_call_args(text: str, func_match_end: int) -> str | None:
 
 
 def _extract_js_string_literals(text: str) -> list[str]:
-    """Extract all string literal values from JS expression text."""
+    """Extract all string literal values from JS expression text.
+
+    Handles single-quoted, double-quoted, and constant backtick
+    template literals (backtick strings without ``${...}``
+    interpolation).  Interpolated template literals are skipped
+    because the resolved path cannot be determined statically.
+    """
     literals: list[str] = []
     state = _JS_STATE_CODE
     literal_start = 0
@@ -274,19 +280,40 @@ def _extract_js_string_literals(text: str) -> list[str]:
         if skip_next:
             i += 2
             continue
-        if prev_state in (_JS_STATE_SINGLE, _JS_STATE_DOUBLE) and state == _JS_STATE_CODE:
-            literals.append(text[literal_start:i])
-        if state in (_JS_STATE_SINGLE, _JS_STATE_DOUBLE) and prev_state == _JS_STATE_CODE:
+        if (
+            prev_state in (_JS_STATE_SINGLE, _JS_STATE_DOUBLE, _JS_STATE_BACKTICK)
+            and state == _JS_STATE_CODE
+        ):
+            literal = text[literal_start:i]
+            # Backtick templates with interpolation cannot be resolved
+            # statically — skip them rather than guessing a path.
+            if prev_state == _JS_STATE_BACKTICK and "${" in literal:
+                pass
+            else:
+                literals.append(literal)
+        if (
+            state in (_JS_STATE_SINGLE, _JS_STATE_DOUBLE, _JS_STATE_BACKTICK)
+            and prev_state == _JS_STATE_CODE
+        ):
             literal_start = i + 1
         i += 1
     return literals
 
 
 def _normalize_js_target(raw: str) -> str:
-    """Normalize a JS dependency target for fingerprint comparison."""
+    """Normalize a JS dependency target for fingerprint comparison.
+
+    - Backslashes → forward slashes
+    - Collapses repeated slashes
+    - Strips leading ``./`` (but preserves ``../``)
+    """
     normalized = raw.strip().replace("\\", "/")
     while "//" in normalized:
         normalized = normalized.replace("//", "/")
+    # Strip one or more leading ./ prefixes — ``./scripts/foo`` and
+    # ``scripts/foo`` refer to the same file.
+    while normalized.startswith("./"):
+        normalized = normalized[2:]
     return normalized
 
 
@@ -338,12 +365,27 @@ def _collect_single_line_dynamic_imports(
     line: str,
     line_start: int,
 ) -> list[DepFingerprint]:
-    """Collect import('...scripts/ops...') from a single line."""
-    return [
+    """Collect import('...scripts/ops...') from a single line.
+
+    Handles single-quoted, double-quoted, and constant backtick
+    template strings.  Interpolated backtick templates (``${...}``)
+    are skipped because the resolved path cannot be determined
+    statically.
+    """
+    results: list[DepFingerprint] = []
+    results.extend(
         _make_js_fingerprint(path, "dynamic-es-import", m.group(2))
         for m in _DYNAMIC_IMPORT_RE.finditer(line)
         if not _is_pos_inside_js_string_or_comment(content, line_start + m.start())
-    ]
+    )
+    # Backtick template: import(`...scripts/ops...`)
+    for m in re.finditer(r"""import\s*\(\s*`([^`]*)`\s*\)""", line):
+        if _is_pos_inside_js_string_or_comment(content, line_start + m.start()):
+            continue
+        target = m.group(1)
+        if _target_has_scripts_ops(target) and "${" not in target:
+            results.append(_make_js_fingerprint(path, "dynamic-es-import", target))
+    return results
 
 
 def _collect_multiline_call_targets(
@@ -377,7 +419,14 @@ def _collect_multiline_import_from(
     line: str,
     line_start: int,
 ) -> list[DepFingerprint]:
-    """Detect multi-line `import { ... } from '...scripts/ops...'`."""
+    """Detect multi-line `import { ... } from '...scripts/ops...'`.
+
+    Scans backwards from the *from* keyword to locate the matching
+    *import* keyword.  The scan is bounded by real statement
+    boundaries (semicolons in code, function/class declarations) rather
+    than an arbitrary line count, so imports spanning more than a
+    handful of lines are still detected.
+    """
     m = _MULTILINE_FROM_RE.search(line)
     if not m:
         return []
@@ -385,10 +434,34 @@ def _collect_multiline_import_from(
     if _is_pos_inside_js_string_or_comment(content, abs_pos):
         return []
     line_num = content[:line_start].count("\n")
-    lookback_text = "\n".join(content.splitlines()[max(0, line_num - 5) : line_num])
-    if not re.search(r"\bimport\b", lookback_text):
-        return []
-    return [_make_js_fingerprint(path, "es-import", m.group(2))]
+    lines = content.splitlines()
+
+    # Reverse-scan from the line just before 'from' to find 'import'.
+    for i in range(line_num - 1, -1, -1):
+        prev = lines[i]
+        import_m = re.search(r"\bimport\b", prev)
+        if import_m:
+            prev_line_start = sum(len(ll) + 1 for ll in lines[:i])
+            if not _is_pos_inside_js_string_or_comment(
+                content, prev_line_start + import_m.start() + 1
+            ):
+                return [_make_js_fingerprint(path, "es-import", m.group(2))]
+            break
+        # Semicolons in code-level context terminate the statement.
+        for semi_m in re.finditer(r";", prev):
+            prev_line_start = sum(len(ll) + 1 for ll in lines[:i])
+            if not _is_pos_inside_js_string_or_comment(
+                content, prev_line_start + semi_m.start() + 1
+            ):
+                return []
+        # Don't cross function / class / const / let / var declarations.
+        if re.match(
+            r"^\s*(?:export\s+)?(?:async\s+)?(?:function|class|const|let|var)\s",
+            prev,
+        ):
+            break
+
+    return []
 
 
 def _collect_process_call_targets(content: str, path: str) -> list[DepFingerprint]:

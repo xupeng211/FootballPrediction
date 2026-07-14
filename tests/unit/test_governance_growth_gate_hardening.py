@@ -65,8 +65,12 @@ def _write_file(repo: Path, path: str, content: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Real process exit code helper
+# Gate runner helpers
 # ---------------------------------------------------------------------------
+
+
+def _run_gate(repo: Path, base_sha: str, head_sha: str) -> list[str]:
+    return ggg.run_governance_growth_gate(repo, base_sha, head_sha)
 
 
 def _run_gate_via_cli(repo: Path, base_sha: str, head_sha: str) -> tuple[int, str]:
@@ -181,6 +185,448 @@ class TestRealProcessExitCode:
         head = _commit_all(repo, "replace dep")
         exit_code, _stderr = _run_gate_via_cli(repo, base, head)
         assert exit_code != 0, f"Same-count replacement must fail: {exit_code}"
+
+
+# ---------------------------------------------------------------------------
+# Real AI Workflow Gate CLI propagation tests (Stage 4)
+# ---------------------------------------------------------------------------
+
+_MINIMAL_PR_BODY = """\
+## Summary
+Test PR for AI workflow gate CLI verification — governance growth freeze gate
+final cleanup boundary tests.
+## Scope
+Test-only change within scripts/ops/helpers/governance_p1_checks.py:
+re-export run_governance_growth_gate for ai_workflow_gate.py consumption.
+No runtime behaviour change.  No business logic, no DB, no scraper, no browser.
+| Task type | workflow-governance |
+## Documentation Impact
+This PR touches a single helper module docstring and does not introduce
+new reports, manifests, or governance Phase/ADG scripts.  All documentation
+references remain current; no user-facing docs require updates.
+## Safety Impact
+No safety impact — the change is a pure re-export.  No new imports,
+no new network or filesystem access, no auth surface changes.
+## Validation
+- All 92+ governance growth gate tests pass.
+- Ruff check returns 0 errors.
+- Ruff format passes.
+- Real AI Workflow Gate CLI produces expected exit codes.
+## CI Gate Scope
+Standard PR Gate: Python quality (ruff/mypy), tests (pytest), canonical
+Python and JS unit-core, Docker Build Validation.
+## No deletion / no move / no rename confirmation
+Confirmed — no files are deleted, moved, or renamed by this PR.
+## Dangerous File Authorization
+scripts/ops/helpers/governance_p1_checks.py — adding a forward re-export
+of run_governance_growth_gate from scripts.ci.governance_growth_gate.
+This is a governance helper that already existed; the re-export is narrow
+and does not introduce new dependency paths.
+## PR Authorization Matrix
+| Path | Category | Authorization |
+|------|----------|---------------|
+| scripts/ops/ai_workflow_gate.py | workflow-governance | Existing gate integration — adding governance growth check call. |
+| scripts/ops/helpers/governance_p1_checks.py | workflow-governance | Re-export for lint hygiene. |
+| Authorized paths | scripts/ops/ai_workflow_gate.py, scripts/ops/helpers/governance_p1_checks.py |
+## Rollback Plan
+Revert the single commit — the re-export line and docstring update in
+governance_p1_checks.py are the only changes.  No schema or data
+migration needed.
+## Next Recommended Task
+Do not start automatically.
+Recommended next task only after user confirmation: final review of
+Draft PR #1790 before deciding whether to mark Ready and merge.
+## SC-002 status
+No change — enforcement infrastructure remains complete.  Training,
+data expansion, and real DB write remain blocked.
+## Remaining risks
+None — this is a narrow cleanup with no runtime behaviour change.
+"""
+
+
+def _write_pr_body_file(path: Path) -> None:
+    path.write_text(_MINIMAL_PR_BODY, encoding="utf-8")
+
+
+class TestRealAIWorkflowGateCLI:
+    """Verify violations propagate through the real CLI → validate() → non-zero exit.
+
+    These tests invoke ``scripts/ops/ai_workflow_gate.py`` as a subprocess,
+    exercising the full entry-point chain (CLI arg parsing → main() → validate()
+    → run_governance_growth_gate → exit code).  They do NOT use the hand-rolled
+    ``_run_gate_via_cli`` wrapper that short-circuits through direct module import.
+    """
+
+    def test_real_cli_exit_zero_on_clean_fixture(self, tmp_path):
+        """Real CLI against the current branch: no new gov artifacts → exit 0."""
+        project_root = Path(ggg.__file__).resolve().parents[2]
+        base_ref = "00ed4bcac8818028392a8af478732074768cc29d"
+        head_ref = "14870bf69c835fae1c889aaa0eda490295f166fe"
+
+        pr_body_file = tmp_path / "pr_body.md"
+        _write_pr_body_file(pr_body_file)
+
+        gate_script = project_root / "scripts" / "ops" / "ai_workflow_gate.py"
+        result = subprocess.run(
+            [
+                sys.executable,
+                str(gate_script),
+                "--pr-body-file",
+                str(pr_body_file),
+                "--base-ref",
+                base_ref,
+                "--head-ref",
+                head_ref,
+            ],
+            cwd=project_root,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        combined = result.stdout + result.stderr
+        assert result.returncode == 0, (
+            f"Expected exit 0, got {result.returncode}. output={combined}"
+        )
+
+    def test_real_cli_exit_nonzero_on_report_violation(self, tmp_path):
+        """Real CLI: new report → non-zero exit with GOV-GROWTH-REPORT."""
+        project_root = Path(ggg.__file__).resolve().parents[2]
+
+        original_branch = subprocess.run(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=project_root,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip()
+
+        test_branch = "test-cli-violation-temp-" + str(hash(str(tmp_path)))[-8:]
+        subprocess.run(
+            ["git", "checkout", "-b", test_branch],
+            cwd=project_root,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+
+        try:
+            report_dir = project_root / "docs" / "_reports"
+            report_dir.mkdir(parents=True, exist_ok=True)
+            (report_dir / "CLI_REAL_VIOLATION.md").write_text(
+                "# Real CLI violation\n", encoding="utf-8"
+            )
+            subprocess.run(
+                ["git", "add", "docs/_reports/CLI_REAL_VIOLATION.md"],
+                cwd=project_root,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "commit", "-m", "test: add report violation for CLI test"],
+                cwd=project_root,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+            head = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                cwd=project_root,
+                text=True,
+                capture_output=True,
+                check=True,
+            ).stdout.strip()
+            base = subprocess.run(
+                ["git", "rev-parse", "HEAD~1"],
+                cwd=project_root,
+                text=True,
+                capture_output=True,
+                check=True,
+            ).stdout.strip()
+
+            pr_body_file = tmp_path / "pr_body.md"
+            _write_pr_body_file(pr_body_file)
+
+            gate_script = project_root / "scripts" / "ops" / "ai_workflow_gate.py"
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    str(gate_script),
+                    "--pr-body-file",
+                    str(pr_body_file),
+                    "--base-ref",
+                    base,
+                    "--head-ref",
+                    head,
+                ],
+                cwd=project_root,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            combined = result.stdout + result.stderr
+            assert result.returncode != 0, (
+                f"Real CLI must return non-zero on violation, "
+                f"got {result.returncode}. output={combined}"
+            )
+            assert "GOV-GROWTH-REPORT" in combined, (
+                f"Expected GOV-GROWTH-REPORT in output: {combined}"
+            )
+        finally:
+            subprocess.run(
+                ["git", "checkout", original_branch],
+                cwd=project_root,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+            subprocess.run(
+                ["git", "branch", "-D", test_branch],
+                cwd=project_root,
+                text=True,
+                capture_output=True,
+                check=True,
+            )
+
+
+# ---------------------------------------------------------------------------
+# JS multiline static import boundary tests (Stage 5)
+# ---------------------------------------------------------------------------
+
+
+class TestJSMultilineImportBoundary:
+    """Long ``import { ... } from '...'`` statements must be detected
+    regardless of line count (no fixed 5-line lookback limit)."""
+
+    def test_long_multiline_import_blocked_8plus_lines(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/longImport.js",
+            "import {\n" + "first,\n" * 8 + "} from '../../scripts/ops/helper.js';\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add long import"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"8+ line import must be blocked: {errors}"
+        )
+
+    def test_long_import_in_comment_passes(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/commentExample.js",
+            "// Example of a long import:\n"
+            "// import {\n"
+            "//   first,\n"
+            "//   second,\n"
+            "//   third,\n"
+            "//   fourth,\n"
+            "//   fifth,\n"
+            "//   sixth,\n"
+            "//   seventh,\n"
+            "//   eighth\n"
+            "// } from '../../scripts/ops/helper.js';\n"
+            "const x = 1;\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add comment example"))
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == [], (
+            f"Comment should not be flagged: {errors}"
+        )
+
+    def test_long_import_in_template_string_passes(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/templateExample.js",
+            "const example = `import {\n"
+            "  first,\n"
+            "  second,\n"
+            "  third,\n"
+            "  fourth,\n"
+            "  fifth,\n"
+            "  sixth,\n"
+            "  seventh,\n"
+            "  eighth\n"
+            '} from "../../scripts/ops/helper.js"`;\n',
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add template example"))
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == [], (
+            f"Template string should not be flagged: {errors}"
+        )
+
+    def test_normal_multiline_code_not_import_passes(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/normalCode.js",
+            "function processItems(\n"
+            "  first,\n"
+            "  second,\n"
+            "  third,\n"
+            "  fourth,\n"
+            "  fifth,\n"
+            "  sixth,\n"
+            "  seventh,\n"
+            "  eighth\n"
+            ") {\n"
+            "  return [first, second, third, fourth, fifth, sixth, seventh, eighth];\n"
+            "}\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add normal code"))
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == [], (
+            f"Normal code should not be flagged: {errors}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# JS constant backtick template path tests (Stage 6)
+# ---------------------------------------------------------------------------
+
+
+class TestJSBacktickConstantPath:
+    """Constant backtick template literals in execution calls must be detected."""
+
+    def test_spawn_backtick_constant_blocked(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/backtickSpawn.js",
+            "const { spawn } = require('child_process');\n"
+            "spawn('node', [`scripts/ops/task.js`]);\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add backtick spawn"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"Backtick spawn must be blocked: {errors}"
+        )
+
+    def test_dynamic_import_backtick_constant_blocked(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/backtickImport.js",
+            "async function load() {\n"
+            "  const mod = await import(`../../scripts/ops/helper.js`);\n"
+            "  return mod;\n"
+            "}\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add backtick import"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"Backtick import must be blocked: {errors}"
+        )
+
+    def test_backtick_documentation_string_passes(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/docBacktick.js",
+            'const example = `spawn("node", ["scripts/ops/demo.js"])`;\n'
+            "// This is just documentation, not a real call\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add doc backtick"))
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == [], (
+            f"Doc backtick should not be flagged: {errors}"
+        )
+
+    def test_interpolated_backtick_not_fingerprinted(self, repo_with_base):
+        """Interpolated templates (``${...}``) cannot resolve to a static path."""
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/interpolatedSpawn.js",
+            "const { spawn } = require('child_process');\n"
+            "const name = 'task';\n"
+            "spawn('node', [`scripts/ops/${name}.js`]);\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add interpolated spawn"))
+        # Interpolated templates are NOT fingerprinted — they do not form
+        # a definite static path.  This test confirms they are not silently
+        # resolved to an incorrect fixed path.
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == [], (
+            f"Interpolated backtick must not produce false fingerprint: {errors}"
+        )
+
+
+# ---------------------------------------------------------------------------
+# JS target ./ normalisation tests (Stage 7)
+# ---------------------------------------------------------------------------
+
+
+class TestJSTargetDotSlashNormalization:
+    """``./scripts/ops/x.js`` and ``scripts/ops/x.js`` must share a fingerprint."""
+
+    def test_dot_slash_and_plain_are_same_fingerprint(self, repo_with_base):
+        """Base uses ./ prefix, head uses bare path — no new dependency."""
+        repo, _base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/dotSlash.js",
+            'const x = require("./scripts/ops/helper.js");\n',
+        )
+        base2 = _commit_all(repo, "add ./ dependency")
+        _write_file(
+            repo,
+            "src/services/dotSlash.js",
+            'const x = require("scripts/ops/helper.js");\n',
+        )
+        errors = _run_gate(repo, base2, _commit_all(repo, "remove ./ prefix"))
+        assert errors == [], f"./ removal should not be a new dependency: {errors}"
+
+    def test_plain_to_dot_slash_passes(self, repo_with_base):
+        """Base uses bare path, head uses ./ prefix — no new dependency."""
+        repo, _base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/plainFirst.js",
+            'const x = require("scripts/ops/helper.js");\n',
+        )
+        base2 = _commit_all(repo, "add plain dependency")
+        _write_file(
+            repo,
+            "src/services/plainFirst.js",
+            'const x = require("./scripts/ops/helper.js");\n',
+        )
+        errors = _run_gate(repo, base2, _commit_all(repo, "add ./ prefix"))
+        assert errors == [], f"./ addition should not be a new dependency: {errors}"
+
+    def test_different_target_with_dot_slash_still_blocked(self, repo_with_base):
+        """Base has old.js, head has ./new.js — still a new dependency."""
+        repo, _base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/changedTarget.js",
+            'const x = require("scripts/ops/old.js");\n',
+        )
+        base2 = _commit_all(repo, "add old dependency")
+        _write_file(
+            repo,
+            "src/services/changedTarget.js",
+            'const x = require("./scripts/ops/new.js");\n',
+        )
+        errors = _run_gate(repo, base2, _commit_all(repo, "change to ./new.js"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"New target must be blocked even with ./ prefix: {errors}"
+        )
+
+    def test_dot_dot_slash_kept_distinct(self, repo_with_base):
+        """``../scripts/ops/x.js`` must remain different from ``scripts/ops/x.js``."""
+        repo, _base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/relative.js",
+            'const x = require("../scripts/ops/helper.js");\n',
+        )
+        base2 = _commit_all(repo, "add ../ dependency")
+        _write_file(
+            repo,
+            "src/services/relative.js",
+            'const x = require("scripts/ops/helper.js");\n',
+        )
+        errors = _run_gate(repo, base2, _commit_all(repo, "change ../ to bare"))
+        # ../ and bare are different targets — this IS a new fingerprint
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"../ → bare should be a new dependency: {errors}"
+        )
 
 
 if __name__ == "__main__":

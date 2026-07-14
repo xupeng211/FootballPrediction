@@ -7,12 +7,14 @@ Contains:
 - P1-1: no-archive-runtime-import — prevents active code from importing archive code
 - P1-2: dangerous-auth path cross-validation — ensures authorized paths cover actual changes
 - P1-3: script lifecycle requirement — new scripts must declare purpose/owner/lifecycle
+- M2 governance growth freeze gate — re-exported for ai_workflow_gate.py consumption
 
 Usage:
   from scripts.ops.helpers.governance_p1_checks import (
       check_no_archive_runtime_import,
       check_dangerous_auth_path_cross_validation,
       check_script_lifecycle_requirement,
+      run_governance_growth_gate,
   )
 """
 
@@ -23,6 +25,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+
+from scripts.ci.governance_growth_gate import run_governance_growth_gate
 
 ROOT = Path(__file__).resolve().parents[3]
 
