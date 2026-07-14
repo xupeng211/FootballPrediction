@@ -26,7 +26,6 @@ sys.path.insert(0, str(ROOT / "scripts" / "ops"))
 
 import governance_growth_gate as ggg  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Git helpers (duplicated from test_governance_growth_gate.py for independence)
 # ---------------------------------------------------------------------------
@@ -140,7 +139,7 @@ class TestRealProcessExitCode:
         repo, base = repo_with_base
         _write_file(repo, "docs/_reports/FAIL_ME.md", "# Will fail\n")
         head = _commit_all(repo, "add violation")
-        exit_code, stderr = _run_gate_via_cli(repo, base, head)
+        exit_code, _stderr = _run_gate_via_cli(repo, base, head)
         assert exit_code != 0, f"Expected non-zero exit, got {exit_code}"
 
     def test_real_exit_nonzero_multi_violation(self, repo_with_base):
@@ -159,7 +158,7 @@ class TestRealProcessExitCode:
 
     def test_real_exit_nonzero_on_bad_ref(self, repo_with_base):
         repo, base = repo_with_base
-        exit_code, stderr = _run_gate_via_cli(
+        exit_code, _stderr = _run_gate_via_cli(
             repo, "nonexistent-ref-99999", base)
         assert exit_code != 0, f"Expected non-zero exit on bad ref: {exit_code}"
 
@@ -177,7 +176,7 @@ class TestRealProcessExitCode:
         _write_file(repo, "src/services/old_dep.py",
                     "from scripts.ops.new_helper import run\n")
         head = _commit_all(repo, "replace dep")
-        exit_code, stderr = _run_gate_via_cli(repo, base, head)
+        exit_code, _stderr = _run_gate_via_cli(repo, base, head)
         assert exit_code != 0, f"Same-count replacement must fail: {exit_code}"
 
 

@@ -26,7 +26,6 @@ sys.path.insert(0, str(ROOT / "scripts" / "ops"))
 
 import governance_growth_gate as ggg  # noqa: E402
 
-
 # ---------------------------------------------------------------------------
 # Git helpers
 # ---------------------------------------------------------------------------
@@ -199,13 +198,15 @@ class TestNegativeBlockNewReports:
         repo, base = repo_with_base
         _write_file(repo, "docs/_reports/NEW_REPORT.md", "# New\n")
         errors = _run_gate(repo, base, _commit_all(repo, "add report"))
-        assert len(errors) >= 1 and any(ggg.ERR_REPORT in e for e in errors)
+        assert len(errors) >= 1
+        assert any(ggg.ERR_REPORT in e for e in errors)
 
     def test_new_manifest_blocked(self, repo_with_base):
         repo, base = repo_with_base
         _write_file(repo, "docs/_manifests/new_manifest.json", "{}")
         errors = _run_gate(repo, base, _commit_all(repo, "add manifest"))
-        assert len(errors) >= 1 and any(ggg.ERR_MANIFEST in e for e in errors)
+        assert len(errors) >= 1
+        assert any(ggg.ERR_MANIFEST in e for e in errors)
 
     def test_rename_into_reports_blocked(self, repo_with_base):
         repo, base = repo_with_base
@@ -213,7 +214,8 @@ class TestNegativeBlockNewReports:
         _commit_all(repo, "add normal doc")
         _git(repo, "mv", "docs/normal.md", "docs/_reports/renamed_in.md")
         errors = _run_gate(repo, base, _commit_all(repo, "rename into reports"))
-        assert len(errors) >= 1 and any(ggg.ERR_REPORT in e for e in errors)
+        assert len(errors) >= 1
+        assert any(ggg.ERR_REPORT in e for e in errors)
 
 
 class TestNegativeBlockNumberedScripts:
@@ -317,7 +319,7 @@ class TestNegativeBlockReverseDeps:
         assert any("new_helper" in e for e in errors)
 
     def test_same_count_js_dep_replacement_blocked(self, repo_with_base):
-        repo, base = repo_with_base
+        repo, _base = repo_with_base
         _write_file(repo, "src/services/baseJsDep.js",
                     'const x = require("../../scripts/ops/old_tool.js");\n')
         base2 = _commit_all(repo, "add base JS dep")
@@ -328,7 +330,7 @@ class TestNegativeBlockReverseDeps:
         assert any("new_tool" in e for e in errors)
 
     def test_delete_two_add_two_blocked(self, repo_with_base):
-        repo, base = repo_with_base
+        repo, _base = repo_with_base
         _write_file(repo, "src/services/old_dep.py",
                     textwrap.dedent("""\
                         from scripts.ops.helper_a import func_a
@@ -578,7 +580,7 @@ class TestAntiFalsePositive:
 class TestBasenameMatcher:
     """Unit tests for _is_numbered_governance_basename with boundary rules."""
 
-    @pytest.mark.parametrize("basename,expected", [
+    @pytest.mark.parametrize(("basename", "expected"), [
         # Must match (starts at position 0)
         ("phase_99_example.py", True),
         ("Phase-12-review.js", True),
@@ -659,7 +661,7 @@ class TestAuthorization:
     """AUTHORIZED_GOVERNANCE_ADDITIONS must remain empty and exact-match."""
 
     def test_auth_set_is_empty(self):
-        assert ggg.AUTHORIZED_GOVERNANCE_ADDITIONS == frozenset()
+        assert frozenset() == ggg.AUTHORIZED_GOVERNANCE_ADDITIONS
 
     def test_similar_path_not_authorized(self, repo_with_base):
         repo, base = repo_with_base

@@ -19,9 +19,9 @@ Usage:
 from __future__ import annotations
 
 import ast
+from pathlib import Path
 import re
 import subprocess
-from pathlib import Path
 from typing import NamedTuple
 
 # ---------------------------------------------------------------------------
@@ -167,17 +167,7 @@ def _scan_python_file_ast(content: str, path: str) -> list[DepFingerprint]:
             if (isinstance(node.func, ast.Attribute)
                     and isinstance(node.func.value, ast.Name)
                     and node.func.value.id == "importlib"
-                    and node.func.attr == "import_module"):
-                if node.args:
-                    strings = _extract_strings_from_ast_node(node.args[0])
-                    for s in strings:
-                        if _target_has_scripts_ops(s):
-                            fingerprints.append(DepFingerprint(
-                                path, "python", "dynamic-import", s,
-                            ))
-
-            # __import__("scripts.ops.foo")
-            elif (isinstance(node.func, ast.Name)
+                    and node.func.attr == "import_module") or (isinstance(node.func, ast.Name)
                   and node.func.id == "__import__"):
                 if node.args:
                     strings = _extract_strings_from_ast_node(node.args[0])
@@ -258,17 +248,17 @@ def _balanced_paren_range(text: str, start: int) -> int | None:
             continue
 
         # Detect comment starts (before string handling)
-        if not in_single and not in_double and not in_backtick:
-            if ch == "/" and i + 1 < len(text):
-                nxt = text[i + 1]
-                if nxt == "/":
-                    in_line_comment = True
-                    i += 2
-                    continue
-                if nxt == "*":
-                    in_block_comment = True
-                    i += 2
-                    continue
+        if (not in_single and not in_double and not in_backtick
+                and ch == "/" and i + 1 < len(text)):
+            nxt = text[i + 1]
+            if nxt == "/":
+                in_line_comment = True
+                i += 2
+                continue
+            if nxt == "*":
+                in_block_comment = True
+                i += 2
+                continue
 
         if in_single:
             if ch == "\\":
@@ -365,17 +355,17 @@ def _js_arg_contains_scripts_ops(arg_text: str) -> bool:
             i += 1
             continue
 
-        if not in_single and not in_double and not in_backtick:
-            if ch == "/" and i + 1 < len(arg_text):
-                nxt = arg_text[i + 1]
-                if nxt == "/":
-                    in_line_comment = True
-                    i += 2
-                    continue
-                if nxt == "*":
-                    in_block_comment = True
-                    i += 2
-                    continue
+        if (not in_single and not in_double and not in_backtick
+                and ch == "/" and i + 1 < len(arg_text)):
+            nxt = arg_text[i + 1]
+            if nxt == "/":
+                in_line_comment = True
+                i += 2
+                continue
+            if nxt == "*":
+                in_block_comment = True
+                i += 2
+                continue
 
         if in_single:
             if ch == "\\":
@@ -453,17 +443,17 @@ def _is_pos_inside_js_string_or_comment(content: str, pos: int) -> bool:
             i += 1
             continue
 
-        if not in_single and not in_double and not in_backtick:
-            if ch == "/" and i + 1 < len(content):
-                nxt = content[i + 1]
-                if nxt == "/":
-                    in_line_comment = True
-                    i += 2
-                    continue
-                if nxt == "*":
-                    in_block_comment = True
-                    i += 2
-                    continue
+        if (not in_single and not in_double and not in_backtick
+                and ch == "/" and i + 1 < len(content)):
+            nxt = content[i + 1]
+            if nxt == "/":
+                in_line_comment = True
+                i += 2
+                continue
+            if nxt == "*":
+                in_block_comment = True
+                i += 2
+                continue
 
         if in_single:
             if ch == "\\":
@@ -532,7 +522,7 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
         stripped = line.strip()
 
         # Skip comment-only lines
-        if stripped.startswith("//") or stripped.startswith("/*"):
+        if stripped.startswith(("//", "/*")):
             continue
 
         line_start = line_starts[line_num - 1]
