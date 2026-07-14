@@ -406,6 +406,7 @@ dev-build: ## 构建开发镜像
 	$(COMPOSE_DEV) build
 
 dev-up: ## 启动容器化开发环境
+	@mkdir -p data/browser_profile
 	$(COMPOSE_DEV) up -d --build --remove-orphans
 
 dev-ps: ## 查看开发容器状态
