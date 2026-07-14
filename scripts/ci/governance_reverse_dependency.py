@@ -510,7 +510,13 @@ def check_new_reverse_dependencies(
     base_ref: str,
     head_ref: str,
 ) -> list[str]:
-    """Block NEW src → scripts/ops reverse dependencies."""
+    """Block NEW src → scripts/ops reverse dependencies.
+
+    Uses fingerprint set difference (head_fps - base_fps) so that
+    same-target dependencies moved to a different line, reformatted,
+    or extracted from differently-indented call expressions are not
+    reported as new. Only genuinely new or changed targets are blocked.
+    """
     errors: list[str] = []
     base_deps = _find_src_reverse_dep_fingerprints(repo_root, base_ref)
     head_deps = _find_src_reverse_dep_fingerprints(repo_root, head_ref)
