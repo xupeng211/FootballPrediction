@@ -521,7 +521,25 @@ from scripts.ops.helpers.governance_p1_checks import (  # noqa: E402
     check_dangerous_auth_path_cross_validation,
     check_no_archive_runtime_import,
     check_script_lifecycle_requirement,
+    run_governance_growth_gate,
 )
+
+
+def _check_governance_growth(
+    base_ref: str | None,
+    head_ref: str | None,
+) -> list[str]:
+    """Run M2 governance growth freeze gate via delegated helper.
+
+    Returns governance growth violation errors, or empty list on pass.
+    Fail-closed: exceptions produce a single error string.
+    """
+    if not base_ref or not head_ref:
+        return []
+    try:
+        return run_governance_growth_gate(ROOT, base_ref, head_ref)
+    except Exception as exc:
+        return [f"GOV-GROWTH-GATE: Governance growth freeze check failed: {exc}"]
 
 
 def validate(  # noqa: C901, PLR0912
@@ -640,6 +658,11 @@ def validate(  # noqa: C901, PLR0912
     # 11. P1-3: script lifecycle requirement for newly added scripts (requires body)
     if not skip_body_checks:
         errors.extend(check_script_lifecycle_requirement(added, pr_body))
+
+    # 12. M2 Governance growth freeze gate — blocks new governance artifact growth.
+    # Delegates to _check_governance_growth → run_governance_growth_gate (orchestration)
+    # → governance_reverse_dependency.py for Python AST + JS bounded scanning.
+    errors.extend(_check_governance_growth(base_ref, head_ref))
 
     return errors
 
