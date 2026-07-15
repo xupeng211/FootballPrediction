@@ -395,22 +395,22 @@ def _collect_multiline_call_targets(
     line_start: int,
     func_name: str,
 ) -> list[DepFingerprint]:
-    """Detect multi-line require(\\n\"...\") or import(\\n\"...\")."""
+    """Detect multi-line require(\n"...") or import(\n"...")."""
+    results: list[DepFingerprint] = []
     pattern = re.compile(r"\b" + re.escape(func_name) + r"\s*\(")
-    m = pattern.search(line)
-    if not m:
-        return []
-    abs_pos = line_start + m.start()
-    if _is_pos_inside_js_string_or_comment(content, abs_pos):
-        return []
-    arg_text = _extract_call_args(content, m.end() - 1)
-    if arg_text is None or "\n" not in arg_text:
-        return []
-    return [
-        _make_js_fingerprint(path, func_name, lit)
-        for lit in _extract_js_string_literals(arg_text)
-        if _target_has_scripts_ops(lit)
-    ]
+    for m in pattern.finditer(line):
+        abs_pos = line_start + m.start()
+        if _is_pos_inside_js_string_or_comment(content, abs_pos):
+            continue
+        arg_text = _extract_call_args(content, line_start + m.end() - 1)
+        if arg_text is None or "\n" not in arg_text:
+            continue
+        results.extend(
+            _make_js_fingerprint(path, func_name, lit)
+            for lit in _extract_js_string_literals(arg_text)
+            if _target_has_scripts_ops(lit)
+        )
+    return results
 
 
 def _collect_multiline_import_from(
@@ -495,8 +495,7 @@ def _scan_js_file_bounded(content: str, path: str) -> list[DepFingerprint]:
         pos += len(line) + 1
 
     for line_num, line in enumerate(lines, start=1):
-        stripped = line.strip()
-        if stripped.startswith(("//", "/*")):
+        if line.lstrip().startswith("//"):
             continue
         ls = line_starts[line_num - 1]
         fingerprints.extend(_collect_single_line_requires(content, path, line, ls))
