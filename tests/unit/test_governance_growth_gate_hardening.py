@@ -649,5 +649,155 @@ class TestJSTargetDotSlashNormalization:
         )
 
 
+# ---------------------------------------------------------------------------
+# JS scanner bypass regression tests (M2 Hotfix)
+# Fix 1: multiline require/import absolute file offset
+# Fix 2: block-comment line skip removed for /*-prefixed lines
+# ---------------------------------------------------------------------------
+
+
+class TestMultilineCallNonZeroOffset:
+    """Multiline require()/import() detected when not on file line 1."""
+
+    def test_multiline_require_after_prelude_blocked(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/multilineAfterPrelude.js",
+            'const prelude = 1;\nconst helper = require(\n  "../../scripts/ops/helper.js"\n);\n',
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add multiline require"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"Multiline require after prelude must be blocked: {errors}"
+        )
+
+    def test_multiline_import_after_prelude_blocked(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/multilineImportAfterPrelude.js",
+            'const prelude = 1;\nconst helper = import(\n  "../../scripts/ops/helper.js"\n);\n',
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add multiline import"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"Multiline import after prelude must be blocked: {errors}"
+        )
+
+
+class TestBlockCommentBoundary:
+    """Code after a leading block comment must still be scanned."""
+
+    def test_block_comment_then_require_blocked(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/commentThenRequire.js",
+            '/* note */ const helper = require("../../scripts/ops/helper.js");\n',
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add comment then require"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"Block-comment then require must be blocked: {errors}"
+        )
+
+    def test_fake_in_comment_real_after_blocked(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/fakeThenReal.js",
+            '/* require("../../scripts/ops/ignored.js"); */ const helper = require(\n'
+            '  "../../scripts/ops/real.js"\n'
+            ");\n",
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add fake then real require"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"Real require after block comment must be blocked: {errors}"
+        )
+        for e in errors:
+            assert "ignored.js" not in e, f"Fake require in comment should not be flagged: {e}"
+
+    def test_block_comment_then_import_blocked(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/commentThenImport.js",
+            '/* note */ const helper = import("../../scripts/ops/helper.js");\n',
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add comment then import"))
+        assert any(grd.ERR_REVERSE_DEP in e for e in errors), (
+            f"Block-comment then import must be blocked: {errors}"
+        )
+
+    def test_pure_block_comment_passes(self, repo_with_base):
+        repo, base = repo_with_base
+        _write_file(
+            repo,
+            "src/services/pureComment.js",
+            '/* const helper = require("../../scripts/ops/ignored.js"); */\n',
+        )
+        errors = _run_gate(repo, base, _commit_all(repo, "add pure block comment"))
+        assert [e for e in errors if grd.ERR_REVERSE_DEP in e] == [], (
+            f"Pure block comment must pass: {errors}"
+        )
+
+
+class TestRealAIWorkflowGateCLIReverseDep:
+    """Real CLI must detect JS reverse-dependency scanner bypasses.
+
+    Creates a new ``src/**/*.js`` file with previously-bypassable patterns
+    inside an isolated temporary repo via git bundle.
+    """
+
+    def test_real_cli_exit_zero_on_js_clean(self, tmp_path):
+        """Clean fixture: no new JS reverse dependency → exit 0."""
+        project_root = Path(ggg.__file__).resolve().parents[2]
+        before = _snapshot_source(project_root)
+        temp_repo, base_sha = _create_isolated_repo(tmp_path, project_root)
+        _write_in_temp(
+            temp_repo / "src" / "services" / "cleanMarker.js",
+            "// Clean file — no reverse dependency\nconst x = 1;\n",
+        )
+        _git(temp_repo, "add", "src/services/cleanMarker.js")
+        _git(temp_repo, "commit", "-m", "test: clean JS file")
+        head_sha = _git(temp_repo, "rev-parse", "HEAD")
+        pr_body_file = tmp_path / "pr_body.md"
+        pr_body_file.write_text(_MINIMAL_PR_BODY, encoding="utf-8")
+        result = TestRealAIWorkflowGateCLI._run_cli(temp_repo, pr_body_file, base_sha, head_sha)
+        combined = result.stdout + result.stderr
+        assert result.returncode == 0, (
+            f"Clean JS must exit 0, got {result.returncode}. output={combined}"
+        )
+        _assert_source_unchanged(project_root, before)
+
+    def test_real_cli_exit_nonzero_on_js_bypass(self, tmp_path):
+        """Bypass fixture: multiline offset + block-comment patterns."""
+        project_root = Path(ggg.__file__).resolve().parents[2]
+        before = _snapshot_source(project_root)
+        temp_repo, base_sha = _create_isolated_repo(tmp_path, project_root)
+        _write_in_temp(
+            temp_repo / "src" / "services" / "bypassTest.js",
+            "const prelude = 1;\n\n"
+            "const first = require(\n"
+            '  "../../scripts/ops/multiline_helper.js"\n'
+            ");\n\n"
+            "/* note */ const second =\n"
+            '  require("../../scripts/ops/comment_helper.js");\n',
+        )
+        _git(temp_repo, "add", "src/services/bypassTest.js")
+        _git(temp_repo, "commit", "-m", "test: JS scanner bypass patterns")
+        head_sha = _git(temp_repo, "rev-parse", "HEAD")
+        pr_body_file = tmp_path / "pr_body.md"
+        pr_body_file.write_text(_MINIMAL_PR_BODY, encoding="utf-8")
+        result = TestRealAIWorkflowGateCLI._run_cli(temp_repo, pr_body_file, base_sha, head_sha)
+        combined = result.stdout + result.stderr
+        assert result.returncode != 0, (
+            f"JS bypass must exit non-zero, got {result.returncode}. output={combined}"
+        )
+        assert grd.ERR_REVERSE_DEP in combined, (
+            f"Must contain {grd.ERR_REVERSE_DEP}. output={combined}"
+        )
+        assert "bypassTest.js" in combined, f"Must reference bypassTest.js. output={combined}"
+        _assert_source_unchanged(project_root, before)
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
