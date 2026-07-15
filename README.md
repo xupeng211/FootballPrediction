@@ -186,6 +186,42 @@ FotMob API → matches (L1) → raw_match_data (L2) → l3_features (L3) → pre
 
 ---
 
+## Canonical Business Entrypoints
+
+The table below is the **single source of truth** for business commands in this repository.
+New human work and agent work must use these entries. `AGENTS.md` and `CLAUDE.md` reference
+this section rather than maintaining duplicate command lists.
+
+| Domain | Canonical status | Primary entrypoint / surface | Safety & authorization |
+|---|---|---|---|
+| **Data collection** | Controlled canonical surface | `data-l1-*` and `data-l2-*` Makefile targets (use `make data-help` to list) | Preview/read-only stages first; commit/execute/write stages require explicit authorization per target |
+| **Odds** | Primary canonical | `npm run odds:harvest` | May access network and write DB. Confirm authorization, environment, and credentials before execution |
+| **FotMob** | Not yet established for production acquisition | Controlled preview/gated `data-*` workflows only | New code must not depend on legacy acquisition scripts. A unified FotMob entrypoint belongs to a future business milestone |
+| **Feature build** | Primary canonical | `npm run l3:stitch` | Confirm input data and write scope before execution; `npm run smelt` is a specialized internal alternative |
+| **Training** | Primary canonical | `npm run train` | **Only with explicit training authorization.** Writes model artifacts. `train:fast` and `train:deep` are variants |
+| **Prediction** | Primary canonical | `npm run predict` | May read DB. Confirm environment, model, and authorization. `predict:dry` and `predict:json` are variants |
+| **Backtest** | Not yet established | None — must be implemented and accepted in a future business milestone | Historical scripts (`recon_scanner.js`, `gold_pilot_50.js`, `titan_marathon.js`) are not canonical backtest entrypoints |
+
+### Entry classification
+
+- **Canonical** — default entrypoint for new human work and agent work.
+- **Specialized / Internal** — valid for specific use-cases but not the domain default (e.g., `npm run seed`,
+  `npm run odds:sniper`, `npm run smelt`, `predict:dry`, `train:fast`).
+- **Legacy / Admin-only** — retained but **must not** become a new code dependency:
+  `scripts/ops/run_production.js`, `scripts/ops/titan_discovery.js`,
+  `scripts/ops/total_war_pipeline.js`, and Phase/ADG-numbered scripts as a category.
+
+### Principles
+
+1. New work must use the canonical entrypoint or surface listed above.
+2. Specialized/internal scripts are not default entrypoints.
+3. Legacy/admin-only scripts must not become new dependencies.
+4. "Not yet established" means the corresponding business milestone must create and test a future entrypoint.
+5. **Canonical does not mean automatically authorized.** Side-effectful commands (DB writes, network, browser,
+   training, odds ingestion) still require explicit authorization per AGENTS.md.
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites

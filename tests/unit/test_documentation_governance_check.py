@@ -129,3 +129,26 @@ def test_checker_passes():
         check=False,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_agents_and_claude_md_in_source_of_truth_allowlist():
+    """AGENTS.md and CLAUDE.md are permanent source-of-truth instruction files."""
+    assert "AGENTS.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "CLAUDE.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
+def test_no_wildcard_paths_in_source_of_truth_allowlist():
+    """The source-of-truth allowlist uses exact paths, not wildcards."""
+    assert "*.md" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "Makefile" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "package.json" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
+def test_unexpected_paths_still_rejected():
+    """Unknown governance file paths are still rejected."""
+    errors: list[str] = []
+    checker.validate_change_budget(
+        [checker.Change("M", "UNEXPECTED_GOVERNANCE_FILE.md", None)],
+        errors,
+    )
+    assert any("unexpected changed paths" in error for error in errors)

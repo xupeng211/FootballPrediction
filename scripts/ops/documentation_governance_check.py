@@ -68,6 +68,9 @@ TEST_DEBT_AUDIT_ALLOWED_ADDED = frozenset(
 
 SOURCE_OF_TRUTH_ALLOWED_CHANGED = frozenset(
     {
+        # Permanent workflow / source-of-truth instruction files.
+        "AGENTS.md",
+        "CLAUDE.md",
         ".github/pull_request_template.md",
         "README.md",
         "docs/PROJECT_STATUS.md",
