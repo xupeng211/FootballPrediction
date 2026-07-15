@@ -51,8 +51,7 @@
     以及 no-live-fetch / no-DB-write / no-raw-write 状态。
 14. 连续 governance-only PR 超过 1 个，或 implementation PR 没有 runtime behavior change，
     必须先人工确认后再继续。
-15. report / manifest 必须最小化；
-    大型治理 artifact、完整历史状态复制和无限 phase snapshot 不得默认提交到 `main`。
+15. 新 report、manifest、Phase/ADG 脚本默认禁止创建。只有当前 Issue 明确授权、PR 正文准确声明，并通过 M2 增长冻结门禁后，才允许最小必要治理资产。历史治理资产不得作为新任务默认产物。
 16. 测试必须优先验证系统行为；
     文档字段断言只能作为辅助，不得替代 runtime behavior coverage。
 17. Data ingestion phase 必须声明 blocker transition 目标和 `target_state_delta`；
@@ -103,16 +102,16 @@
 
 - 代码解决问题，测试证明问题，文档解释问题。
 - live fetch、detail fetch、network request、DB write、`raw_match_data` write、re-acceptance、rollback、schema migration 仍必须逐项单独授权。
-- `docs/_reports` 与 `docs/_manifests` 只记录必要 delta 和当前有效状态；不得替代 runtime 实现。
+- `docs/_reports` 与 `docs/_manifests` 属于历史治理资产分类。新任务默认不得创建；只有 Issue 明确授权且通过 M2 增长冻结门禁时，才允许最小必要记录。现存历史资产不得替代 runtime 实现。
 - PR reviewer 必须能从模板中直接判断：PR type、runtime code paths、artifact 体积、business progress、blocker 变化和安全边界。
 - Data ingestion PR 必须满足 `docs/INGESTION_CONVERGENCE_GATE.md` 的 outcome gate：
   声明 blocker transition、`target_state_delta`、bounded review 范围和 no-progress stop 条件。
 
 ### 2.5 Repository Hygiene / Technical Debt Guardrails
 
-每个新增文件必须声明 lifecycle：`permanent` / `current-state` / `phase-artifact` / `temporary` / `one-shot-helper` / `test-fixture` / `archive-candidate` / `delete-after-use`。无 lifecycle 声明的新文件不得合并。
+每个新增文件必须声明 lifecycle：`permanent` / `current-state` / `temporary` / `one-shot-helper` / `test-fixture` / `delete-after-use`。无 lifecycle 声明的新文件不得合并。
 
-Phase artifact limits：report <= 120 行（除非明确说明原因）；manifest 只保留机器需要的最小字段；不得复制完整历史；不得保存 full HTML / pageProps / raw_data / source body。
+`phase-artifact` 和 `archive-candidate` 仅用于识别现存历史债务的分类标记，不是新文件的推荐生命周期。新任务不得通过新增 Phase artifact、report、清单或阶段快照代替 runtime 实现或真实业务进展。
 
 每个新增 helper/script 必须说明是否长期保留、是否被 Makefile/npm script/CI 引用、cleanup 条件。若 helper 只服务一次，默认成为 cleanup candidate。
 
@@ -120,7 +119,7 @@ Phase artifact limits：report <= 120 行（除非明确说明原因）；manife
 
 应维护 current-state 入口；历史 ADG report 不能替代 current truth。
 
-每 3-5 个 data/ingestion PR 后必须考虑是否需要 hygiene PR。
+Data/ingestion PR 的仓库卫生状态应在 PR 自身的 Debt Impact 中说明。不得在没有 explicit Issue 授权的情况下创建独立的 hygiene / cleanup PR。
 
 PR 最终回复必须包含 Debt Impact：new files added、permanent files、phase-only files、temporary helpers、files superseded、files deleted/archived、cleanup needed later、repository noise increased? yes/no、next cleanup trigger。
 
