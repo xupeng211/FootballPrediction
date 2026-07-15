@@ -649,11 +649,7 @@ class TestJSTargetDotSlashNormalization:
         )
 
 
-# ---------------------------------------------------------------------------
-# JS scanner bypass regression tests (M2 Hotfix)
-# Fix 1: multiline require/import absolute file offset
-# Fix 2: block-comment line skip removed for /*-prefixed lines
-# ---------------------------------------------------------------------------
+# JS scanner bypass regression tests (M2 Hotfix) — Fix 1: abs offset, Fix 2: block-comment
 
 
 class TestMultilineCallNonZeroOffset:
@@ -685,7 +681,7 @@ class TestMultilineCallNonZeroOffset:
 
 
 class TestBlockCommentBoundary:
-    """Code after a leading block comment must still be scanned."""
+    """Code after leading block comment must be scanned."""
 
     def test_block_comment_then_require_blocked(self, repo_with_base):
         repo, base = repo_with_base
