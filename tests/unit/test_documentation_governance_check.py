@@ -128,15 +128,27 @@ def test_checker_passes():
         capture_output=True,
         check=False,
     )
-    # M2 PR2 authorizes AGENTS.md and CLAUDE.md as governance simplification targets.
-    # When only these two files are the unexpected changes, accept the result.
-    output = result.stdout + result.stderr
-    m2_pr2_allowed = {"AGENTS.md", "CLAUDE.md"}
-    if result.returncode != 0:
-        unexpected_line = [ln for ln in output.splitlines() if "unexpected changed paths" in ln]
-        if unexpected_line:
-            paths_str = unexpected_line[0].split(":", 1)[-1].strip()
-            reported = {p.strip() for p in paths_str.split(",")}
-            if reported <= m2_pr2_allowed:
-                return  # M2 PR2 scope — these files are expected
-    assert result.returncode == 0, output
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_agents_and_claude_md_in_source_of_truth_allowlist():
+    """AGENTS.md and CLAUDE.md are permanent source-of-truth instruction files."""
+    assert "AGENTS.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "CLAUDE.md" in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
+def test_no_wildcard_paths_in_source_of_truth_allowlist():
+    """The source-of-truth allowlist uses exact paths, not wildcards."""
+    assert "*.md" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "Makefile" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+    assert "package.json" not in checker.SOURCE_OF_TRUTH_ALLOWED_CHANGED
+
+
+def test_unexpected_paths_still_rejected():
+    """Unknown governance file paths are still rejected."""
+    errors: list[str] = []
+    checker.validate_change_budget(
+        [checker.Change("M", "UNEXPECTED_GOVERNANCE_FILE.md", None)],
+        errors,
+    )
+    assert any("unexpected changed paths" in error for error in errors)

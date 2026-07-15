@@ -1,5 +1,4 @@
 ## Summary
-
 - TBD
 
 ## Scope
@@ -31,15 +30,14 @@ Fill every row. Machine-readable — consumed by CI enforcement.
 
 ### Task type rules (summary)
 
-Choose one primary task type. If files cross categories, use `mixed` only when explicitly authorized.
+Choose one primary task type. Use `mixed` only when explicitly authorized.
 - **`docs-only`**: `docs/**`, `*.md`, `README*`, `AGENTS.md`, `CLAUDE.md`. Must not touch `src/`, `tests/`, `config/`, Docker, DB, SC-002, workflows, models, or data.
 - **`test-only`**: `tests/**`. Must not touch `src/`, `config/`, Docker, DB, SC-002, workflows, models, or data.
-- **`source-code`**: `src/**` (+ `tests/` and `docs/`). Must not touch Docker, DB, SC-002, workflows, models, or data unless mixed.
+- **`source-code`**: `src/**` (+ `tests/`, `docs/`). Must not touch Docker, DB, SC-002, workflows, models, or data unless mixed.
 - **`config-runtime`**: `pyproject.toml`, `ruff.toml`, `mypy.ini`, `config/**`. Must not touch Docker, DB, SC-002, workflows, models, or data.
-- **`docker-deploy`** / **`workflow-governance`** / **`db-migration-sql`** / **`sc-002-db-governance`** / **`model-artifact`** / **`data-artifact`** / **`mixed`**: Requires `## Dangerous File Authorization`.
+- **`docker-deploy`**, **`workflow-governance`**, **`db-migration-sql`**, **`sc-002-db-governance`**, **`model-artifact`**, **`data-artifact`**, **`mixed`**: Requires `## Dangerous File Authorization`.
 
-If this PR touches Docker, workflow/governance, DB/migration/SQL, SC-002, env/secret, model, or data paths,
-the `## Dangerous File Authorization` section must be substantive (≥2 lines of non-hollow content).
+If this PR touches high-risk paths, the `## Dangerous File Authorization` section must be substantive (≥2 lines of non-hollow content).
 
 ## Files Changed
 
@@ -63,9 +61,7 @@ the `## Dangerous File Authorization` section must be substantive (≥2 lines of
 
 | Item | Value |
 |---|---|
-| Existing files deleted | 0 |
-| Existing files moved | 0 |
-| Existing files renamed | 0 |
+| Existing files deleted / moved / renamed | 0 / 0 / 0 |
 | Business code changed | no |
 | DB used | no |
 | Browser automation used | no |
@@ -97,7 +93,6 @@ the `## Dangerous File Authorization` section must be substantive (≥2 lines of
 - TBD
 
 ## Next Recommended Task
-
 Do not start automatically.
 
 Recommended next task only after user confirmation:
@@ -113,10 +108,19 @@ Recommended next task only after user confirmation:
 - no matches writes: yes / no / n/a
 - no parser/features/training/prediction: yes / no / n/a
 - no full body/raw_data/pageProps saved or printed: yes / no / n/a
+- If any answer is `no`, list the explicit authorization below.
 
-If any answer is `no`, list the explicit authorization:
+## Dangerous File Authorization
 
-- Authorization details:
+N/A — no dangerous paths changed. For high-risk paths, replace with ≥2 substantive lines.
+
+## Script Lifecycle
+
+N/A — no scripts added or changed.
+
+## Report Lifecycle
+
+N/A — no reports added or changed.
 
 ## SC-002 status
 
@@ -131,17 +135,13 @@ If any answer is `no`, list the explicit authorization:
 
 ## Agent Workflow Hardening Checklist
 
-Confirm every item. If any item is unchecked, explain why in the PR body.
-
 - [ ] I did not work directly on main
 - [ ] I started from clean latest origin/main
 - [ ] This PR has a narrow, declared scope
 - [ ] I did not rewrite unrelated modules
 - [ ] I did not create V2 / FINAL / rewritten / replacement / backup duplicates
 - [ ] I did not delete or move historical code without explicit cleanup scope
-- [ ] I did not run DB write scripts
-- [ ] I did not connect to DB for write operations
-- [ ] I did not run SQL / migration
+- [ ] I did not run DB write scripts / SQL / migration
 - [ ] I did not run scraper / browser / Playwright
 - [ ] I did not train or expand data
 - [ ] I did not mark partial mitigation as complete
