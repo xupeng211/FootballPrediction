@@ -133,9 +133,7 @@ def test_checker_passes():
     output = result.stdout + result.stderr
     m2_pr2_allowed = {"AGENTS.md", "CLAUDE.md"}
     if result.returncode != 0:
-        unexpected_line = [
-            ln for ln in output.splitlines() if "unexpected changed paths" in ln
-        ]
+        unexpected_line = [ln for ln in output.splitlines() if "unexpected changed paths" in ln]
         if unexpected_line:
             paths_str = unexpected_line[0].split(":", 1)[-1].strip()
             reported = {p.strip() for p in paths_str.split(",")}
