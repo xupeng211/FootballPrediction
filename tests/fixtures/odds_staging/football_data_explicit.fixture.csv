@@ -1,0 +1,2 @@
+FixtureLifecycle,SourceMatchId,Competition,Season,Date,Time,HomeTeam,AwayTeam,B365H,B365D,B365A,PSH,PSD,PSA,B365_OPEN_HOME,B365_OPEN_DRAW,B365_OPEN_AWAY
+test-fixture,fixture-fd-001,Fixture League,2025/2026,01/08/2025,18:00,Alpha FC,Beta FC,2.10,3.40,3.60,2.08,3.35,3.65,2.20,3.30,3.40
