@@ -1,50 +1,52 @@
 <!doctype html>
 <!-- lifecycle: test-fixture；synthetic explicit evidence envelope, not an OddsPortal capture. -->
 <html lang="en">
-  <head><title>Fixture explicit odds evidence</title></head>
-  <body>
-    <script type="application/json" data-odds-staging="explicit">
-      {
-        "schema_version": "oddsportal-explicit-html/v1",
-        "match": {
-          "source_match_id": "fixture-html-001",
-          "source_url": "fixture://oddsportal-explicit/fixture-html-001",
-          "competition": "Fixture League",
-          "season": "2025/2026",
-          "kickoff_at": "2025-08-02T18:00:00Z",
-          "home_team": "Gamma FC",
-          "away_team": "Delta FC"
-        },
-        "observations": [
-          {
-            "bookmaker": "Fixture Book",
-            "bookmaker_source_id": "fixture-book-01",
-            "market": "1X2",
-            "selection": "home",
-            "decimal_odds": 2.15,
-            "snapshot_type": "opening",
-            "source_observed_at": "2025-08-01T09:00:00Z"
-          },
-          {
-            "bookmaker": "Fixture Book",
-            "bookmaker_source_id": "fixture-book-01",
-            "market": "1X2",
-            "selection": "draw",
-            "decimal_odds": 3.25,
-            "snapshot_type": "opening",
-            "source_observed_at": "2025-08-01T09:00:00Z"
-          },
-          {
-            "bookmaker": "Fixture Book",
-            "bookmaker_source_id": "fixture-book-01",
-            "market": "1X2",
-            "selection": "away",
-            "decimal_odds": 3.45,
-            "snapshot_type": "opening",
-            "source_observed_at": "2025-08-01T09:00:00Z"
-          }
-        ]
-      }
-    </script>
-  </body>
+    <head>
+        <title>Fixture explicit odds evidence</title>
+    </head>
+    <body>
+        <script type="application/json" data-odds-staging="explicit">
+            {
+                "schema_version": "oddsportal-explicit-envelope-html/v1",
+                "match": {
+                    "source_match_id": "fixture-html-001",
+                    "source_url": "fixture://oddsportal-explicit-envelope/fixture-html-001",
+                    "competition": "Fixture League",
+                    "season": "2025/2026",
+                    "kickoff_at": "2025-08-02T18:00:00Z",
+                    "home_team": "Gamma FC",
+                    "away_team": "Delta FC"
+                },
+                "observations": [
+                    {
+                        "bookmaker": "Fixture Book",
+                        "bookmaker_source_id": "fixture-book-01",
+                        "market": "1X2",
+                        "selection": "home",
+                        "decimal_odds": 2.15,
+                        "snapshot_type": "opening",
+                        "source_observed_at": "2025-08-01T09:00:00Z"
+                    },
+                    {
+                        "bookmaker": "Fixture Book",
+                        "bookmaker_source_id": "fixture-book-01",
+                        "market": "1X2",
+                        "selection": "draw",
+                        "decimal_odds": 3.25,
+                        "snapshot_type": "opening",
+                        "source_observed_at": "2025-08-01T09:00:00Z"
+                    },
+                    {
+                        "bookmaker": "Fixture Book",
+                        "bookmaker_source_id": "fixture-book-01",
+                        "market": "1X2",
+                        "selection": "away",
+                        "decimal_odds": 3.45,
+                        "snapshot_type": "opening",
+                        "source_observed_at": "2025-08-01T09:00:00Z"
+                    }
+                ]
+            }
+        </script>
+    </body>
 </html>

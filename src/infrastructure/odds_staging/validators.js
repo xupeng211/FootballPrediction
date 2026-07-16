@@ -2,7 +2,12 @@
 
 // lifecycle: permanent；canonical observation 的严格字段、语义与隔离规则。
 
-const { ALLOWED_SNAPSHOT_TYPES, appendObservationSignals, nullableText } = require('./contracts');
+const {
+    ALLOWED_SNAPSHOT_TYPES,
+    appendObservationSignals,
+    isStrictAbsoluteTimestamp,
+    nullableText,
+} = require('./contracts');
 
 const MARKET_SELECTIONS = Object.freeze({
     '1X2': ['home', 'draw', 'away'],
@@ -11,11 +16,6 @@ const MARKET_SELECTIONS = Object.freeze({
     draw_no_bet: ['home', 'away'],
     both_teams_to_score: ['yes', 'no'],
 });
-
-function isIsoTimestamp(value) {
-    const text = nullableText(value);
-    return Boolean(text) && /^\d{4}-\d{2}-\d{2}T/.test(text) && Number.isFinite(Date.parse(text));
-}
 
 function requiresLine(market) {
     return market === 'asian_handicap' || market === 'over_under';
@@ -47,7 +47,7 @@ function validateSourceIdentity(observation) {
     if (nullableText(observation.home_team) && observation.home_team === observation.away_team) {
         reasons.push('home_and_away_identical');
     }
-    if (observation.kickoff_at && !isIsoTimestamp(observation.kickoff_at)) {
+    if (observation.kickoff_at && !isStrictAbsoluteTimestamp(observation.kickoff_at)) {
         reasons.push('kickoff_at_invalid');
     }
     return reasons;
@@ -86,10 +86,10 @@ function validateTimeAndProvenance(observation) {
     if (!ALLOWED_SNAPSHOT_TYPES.has(observation.snapshot_type)) {
         reasons.push('snapshot_type_invalid');
     }
-    if (observation.source_observed_at && !isIsoTimestamp(observation.source_observed_at)) {
+    if (observation.source_observed_at && !isStrictAbsoluteTimestamp(observation.source_observed_at)) {
         reasons.push('source_observed_at_invalid');
     }
-    if (!isIsoTimestamp(observation.captured_at)) {
+    if (!isStrictAbsoluteTimestamp(observation.captured_at)) {
         reasons.push('captured_at_invalid');
     }
     if (!nullableText(observation.source_timezone)) {

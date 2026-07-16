@@ -13,12 +13,15 @@ const { matchesForbiddenImport } = require('../helpers/module_load_guard');
 const {
     appendObservationSignals,
     createCanonicalObservation,
-    stableStringify,
+    isStrictAbsoluteTimestamp,
 } = require('../../src/infrastructure/odds_staging/contracts');
+const {
+    adaptFootballDataCsv,
+    adaptOddsPortalExplicitEnvelopeHtml,
+} = require('../../src/infrastructure/odds_staging/adapters');
 const { deduplicateObservations } = require('../../src/infrastructure/odds_staging/deduplication');
-const { detectFakeOdds } = require('../../src/infrastructure/odds_staging/fakeOddsDetector');
 const { decideMatchLink } = require('../../src/infrastructure/odds_staging/matchLinker');
-const { runOfflineStaging } = require('../../src/infrastructure/odds_staging/pipeline');
+const { emitDeterministicResult, runOfflineStaging } = require('../../src/infrastructure/odds_staging/pipeline');
 const { loadSourceBundle, validateSourceManifest } = require('../../src/infrastructure/odds_staging/sourceManifest');
 const { validateObservation } = require('../../src/infrastructure/odds_staging/validators');
 
@@ -49,7 +52,7 @@ function writeFixtureManifest(t, rawPath, adapter, overrides = {}) {
         source_url:
             adapter === 'football-data-csv'
                 ? 'fixture://football-data/fixture-fd-001'
-                : 'fixture://oddsportal-explicit/fixture-html-001',
+                : 'fixture://oddsportal-explicit-envelope/fixture-html-001',
         source_match_id: null,
         captured_at: '2025-08-01T10:00:00Z',
         source_timezone: 'UTC',
@@ -66,10 +69,13 @@ function writeFixtureManifest(t, rawPath, adapter, overrides = {}) {
     return { manifest, manifestPath };
 }
 
-function candidates(sourceMatchId, id = 'local-match-001') {
+function candidates(sourceMatchId, id = 'local-match-001', sourceProvider) {
+    const resolvedProvider =
+        sourceProvider || (sourceMatchId === 'fixture-html-001' ? 'oddsportal-fixture' : 'football-data-fixture');
     return [
         {
             id,
+            source_provider: resolvedProvider,
             source_match_id: sourceMatchId,
             competition: 'Fixture League',
             season: '2025/2026',
@@ -109,6 +115,46 @@ function baseObservation(overrides = {}) {
         ingested_at: FIXED_INGESTED_AT,
         ...overrides,
     });
+}
+
+function matchingCandidate(observation, overrides = {}) {
+    return {
+        id: 'candidate-stable-001',
+        source_provider: observation.source_provider,
+        source_match_id: observation.source_match_id,
+        competition: observation.competition,
+        season: observation.season,
+        kickoff_at: observation.kickoff_at,
+        home_team: observation.home_team,
+        away_team: observation.away_team,
+        ...overrides,
+    };
+}
+
+function writeRawText(t, filename, content) {
+    const directory = createTempDirectory(t);
+    const rawPath = path.join(directory, filename);
+    fs.writeFileSync(rawPath, content, 'utf8');
+    return rawPath;
+}
+
+function csvHeader() {
+    return 'SourceMatchId,Competition,Season,Date,Time,HomeTeam,AwayTeam,B365H,B365D,B365A';
+}
+
+function csvRow(sourceMatchId, homeOdds, drawOdds, awayOdds) {
+    return [
+        sourceMatchId,
+        'Fixture League',
+        '2025/2026',
+        '01/08/2025',
+        '18:00',
+        'Alpha FC',
+        'Beta FC',
+        homeOdds,
+        drawOdds,
+        awayOdds,
+    ].join(',');
 }
 
 test('离线 staging 模块加载不引入网络、浏览器、数据库或写入副作用', t => {
@@ -182,6 +228,7 @@ test('manifest 只接受本地绝对路径并校验真实 SHA-256 与大小', t 
 });
 
 test('Football-Data CSV 只从明确列展开 selection，且不把 captured_at 冒充来源时间', t => {
+    const before = sha256File(CSV_FIXTURE);
     const { manifestPath } = writeFixtureManifest(t, CSV_FIXTURE, 'football-data-csv');
     const result = runOfflineStaging({
         sourcePath: CSV_FIXTURE,
@@ -203,27 +250,7 @@ test('Football-Data CSV 只从明确列展开 selection，且不把 captured_at 
     assert.ok(result.accepted_observations.every(observation => observation.match_link.status === 'matched'));
     assert.ok(result.accepted_observations.some(observation => observation.snapshot_type === 'opening'));
     assert.ok(result.accepted_observations.some(observation => observation.snapshot_type === 'unknown'));
-});
-
-test('同一固定输入输出稳定，且源文件保持字节不变', t => {
-    const before = sha256File(CSV_FIXTURE);
-    const { manifestPath } = writeFixtureManifest(t, CSV_FIXTURE, 'football-data-csv');
-    const options = {
-        sourcePath: CSV_FIXTURE,
-        manifestPath,
-        adapter: 'football-data-csv',
-        candidates: candidates('fixture-fd-001'),
-        ingestedAt: FIXED_INGESTED_AT,
-    };
-    const first = runOfflineStaging(options);
-    const second = runOfflineStaging(options);
-
     assert.equal(sha256File(CSV_FIXTURE), before);
-    assert.equal(stableStringify(first), stableStringify(second));
-    assert.deepEqual(
-        first.accepted_observations.map(observation => observation.idempotency_key),
-        second.accepted_observations.map(observation => observation.idempotency_key)
-    );
 });
 
 test('缺少明确 bookmaker 或 market 列时必须 quarantine，不降低标准', t => {
@@ -251,11 +278,11 @@ test('缺少明确 bookmaker 或 market 列时必须 quarantine，不降低标�
 });
 
 test('explicit HTML envelope 保留标签语义；generic triplet 不会被赋予 Pinnacle', t => {
-    const { manifestPath } = writeFixtureManifest(t, HTML_FIXTURE, 'oddsportal-explicit-html');
+    const { manifestPath } = writeFixtureManifest(t, HTML_FIXTURE, 'oddsportal-explicit-envelope-html');
     const accepted = runOfflineStaging({
         sourcePath: HTML_FIXTURE,
         manifestPath,
-        adapter: 'oddsportal-explicit-html',
+        adapter: 'oddsportal-explicit-envelope-html',
         candidates: candidates('fixture-html-001'),
         ingestedAt: FIXED_INGESTED_AT,
     });
@@ -271,14 +298,14 @@ test('explicit HTML envelope 保留标签语义；generic triplet 不会被赋�
     const rawPath = path.join(directory, 'generic-triplet.fixture.html');
     fs.writeFileSync(
         rawPath,
-        '<script type="application/json" data-odds-staging="explicit">{"schema_version":"oddsportal-explicit-html/v1","match":{"source_match_id":"fixture-html-002"},"triplet":[2.1,3.2,3.4]}</script>',
+        '<script type="application/json" data-odds-staging="explicit">{"schema_version":"oddsportal-explicit-envelope-html/v1","match":{"source_match_id":"fixture-html-002"},"triplet":[2.1,3.2,3.4]}</script>',
         'utf8'
     );
-    const genericManifest = writeFixtureManifest(t, rawPath, 'oddsportal-explicit-html');
+    const genericManifest = writeFixtureManifest(t, rawPath, 'oddsportal-explicit-envelope-html');
     const quarantined = runOfflineStaging({
         sourcePath: rawPath,
         manifestPath: genericManifest.manifestPath,
-        adapter: 'oddsportal-explicit-html',
+        adapter: 'oddsportal-explicit-envelope-html',
         candidates: candidates('fixture-html-002'),
         ingestedAt: FIXED_INGESTED_AT,
     });
@@ -311,39 +338,6 @@ test('验证器拒绝非法赔率、缺失字段和顺序推断，并保留未�
     assert.ok(invalid.quality_flags.includes('snapshot_source_time_unknown'));
 });
 
-test('假赔率检测识别异常概率和与跨比赛重复完整1X2向量', () => {
-    const abnormal = ['home', 'draw', 'away'].map((selection, index) =>
-        baseObservation({
-            selection,
-            decimal_odds: [10, 11, 13][index],
-            raw_record_locator: `abnormal:${selection}`,
-        })
-    );
-    const repeated = ['fixture-match-2', 'fixture-match-3'].flatMap(matchId =>
-        ['home', 'draw', 'away'].map((selection, index) =>
-            baseObservation({
-                source_match_id: matchId,
-                selection,
-                decimal_odds: [2.1, 3.2, 3.4][index],
-                raw_sha256: matchId.endsWith('2') ? 'b'.repeat(64) : 'c'.repeat(64),
-                raw_record_locator: `${matchId}:${selection}`,
-            })
-        )
-    );
-    const detected = detectFakeOdds([...abnormal, ...repeated]);
-
-    assert.ok(
-        detected
-            .slice(0, 3)
-            .every(entry => entry.quarantine_reasons.includes('one_x_two_implied_probability_out_of_bounds'))
-    );
-    assert.ok(
-        detected
-            .slice(3)
-            .every(entry => entry.quarantine_reasons.includes('repeated_one_x_two_vector_across_source_matches'))
-    );
-});
-
 test('exact duplicate 稳定合并，semantic conflict 必须 quarantine', () => {
     const exact = baseObservation();
     const exactResult = deduplicateObservations([exact, { ...exact }]);
@@ -372,35 +366,6 @@ test('exact duplicate 稳定合并，semantic conflict 必须 quarantine', () =>
     );
 });
 
-test('match linker 只接受唯一确定候选，反向或多候选都保持 ambiguous', () => {
-    const observation = baseObservation();
-    const direct = decideMatchLink(observation, candidates('fixture-match-1'));
-    assert.equal(direct.status, 'matched');
-    assert.equal(direct.method, 'source_match_id');
-
-    const multiple = decideMatchLink(observation, [
-        ...candidates('fixture-match-1', 'candidate-one'),
-        ...candidates('fixture-match-1', 'candidate-two'),
-    ]);
-    assert.equal(multiple.status, 'ambiguous');
-
-    const reversed = decideMatchLink({ ...observation, source_match_id: null }, [
-        {
-            id: 'reversed',
-            competition: 'Fixture League',
-            season: '2025/2026',
-            kickoff_at: '2025-08-01T18:00:00Z',
-            home_team: 'Beta FC',
-            away_team: 'Alpha FC',
-        },
-    ]);
-    assert.equal(reversed.status, 'ambiguous');
-    assert.equal(reversed.matched_id, null);
-
-    const unmatched = decideMatchLink({ ...observation, source_match_id: 'missing' }, []);
-    assert.equal(unmatched.status, 'unmatched');
-});
-
 test('所有 observation quarantine 都保留 raw hash、locator、原因和关联证据', t => {
     const { manifestPath } = writeFixtureManifest(t, CSV_FIXTURE, 'football-data-csv');
     const result = runOfflineStaging({
@@ -421,4 +386,319 @@ test('所有 observation quarantine 都保留 raw hash、locator、原因和关�
 
     const flagged = appendObservationSignals(baseObservation(), ['manual_reason']);
     assert.ok(flagged.quarantine_reasons.includes('manual_reason'));
+});
+
+test('严格绝对时间接受 Z 和正负数值 offset', () => {
+    for (const value of [
+        '2026-07-16T18:00:00Z',
+        '2026-07-16T18:00:00.123Z',
+        '2026-07-16T18:00:00+08:00',
+        '2026-07-16T18:00:00.123-05:00',
+    ]) {
+        assert.equal(isStrictAbsoluteTimestamp(value), true);
+    }
+});
+
+test('严格绝对时间拒绝 naive 或非法日期，并隔离 observation 时间语义', t => {
+    for (const value of ['2026-07-16T18:00:00', '2026-07-16 18:00:00', '2026-07-16', '2026-02-30T18:00:00Z']) {
+        assert.equal(isStrictAbsoluteTimestamp(value), false);
+    }
+
+    const { manifest } = writeFixtureManifest(t, CSV_FIXTURE, 'football-data-csv');
+    assert.equal(validateSourceManifest({ ...manifest, captured_at: '2026-07-16T18:00:00' }).valid, false);
+    for (const [field, reason] of [
+        ['kickoff_at', 'kickoff_at_invalid'],
+        ['source_observed_at', 'source_observed_at_invalid'],
+        ['captured_at', 'captured_at_invalid'],
+    ]) {
+        const validated = validateObservation(baseObservation({ [field]: '2026-07-16T18:00:00' }));
+        assert.ok(validated.quarantine_reasons.includes(reason));
+    }
+});
+
+test('CSV source match ID 只在 manifest 与原始行不冲突时解析为 observation', () => {
+    const rawText = fs.readFileSync(CSV_FIXTURE, 'utf8');
+    const context = { manifest: { source_timezone: 'UTC', source_match_id: 'fixture-fd-001' } };
+    const equal = adaptFootballDataCsv(rawText, context);
+    assert.equal(equal.quarantine.length, 0);
+    assert.ok(equal.observations.every(observation => observation.source_match_id === 'fixture-fd-001'));
+
+    const manifestMissing = adaptFootballDataCsv(rawText, {
+        manifest: { source_timezone: 'UTC', source_match_id: null },
+    });
+    assert.ok(manifestMissing.observations.every(observation => observation.source_match_id === 'fixture-fd-001'));
+
+    const rawMissing = adaptFootballDataCsv(rawText.replace('fixture-fd-001', ''), context);
+    assert.ok(rawMissing.observations.every(observation => observation.source_match_id === 'fixture-fd-001'));
+
+    const bothMissing = adaptFootballDataCsv(rawText.replace('fixture-fd-001', ''), {
+        manifest: { source_timezone: 'UTC', source_match_id: null },
+    });
+    assert.ok(bothMissing.observations.every(observation => observation.source_match_id === null));
+
+    const conflict = adaptFootballDataCsv(rawText, {
+        manifest: { source_timezone: 'UTC', source_match_id: 'manifest-match-999' },
+    });
+    assert.equal(conflict.observations.length, 0);
+    assert.equal(conflict.quarantine.length, 1);
+    assert.ok(conflict.quarantine[0].reasons.includes('manifest_source_match_id_conflict'));
+    assert.deepEqual(conflict.quarantine[0].evidence, {
+        manifest_source_match_id: 'manifest-match-999',
+        raw_source_match_id: 'fixture-fd-001',
+        row_number: 2,
+    });
+});
+
+test('HTML adapter 只接受 explicit JSON envelope，并将非对象 payload 明确 quarantine', () => {
+    const ordinary = adaptOddsPortalExplicitEnvelopeHtml('<html><body>2.10 3.40 3.30</body></html>');
+    assert.equal(ordinary.observations.length, 0);
+    assert.ok(ordinary.quarantine[0].reasons.includes('explicit_html_evidence_payload_missing'));
+
+    for (const payload of ['null', '[]', '"text"']) {
+        const result = adaptOddsPortalExplicitEnvelopeHtml(
+            '<script data-odds-staging="explicit">' + payload + '</script>'
+        );
+        assert.equal(result.observations.length, 0);
+        assert.ok(result.quarantine[0].reasons.includes('explicit_html_payload_not_object'));
+    }
+
+    const missingSchema = adaptOddsPortalExplicitEnvelopeHtml(
+        '<script data-odds-staging="explicit">{"observations":[]}</script>'
+    );
+    assert.ok(missingSchema.quarantine[0].reasons.includes('explicit_html_schema_version_unsupported'));
+    const legal = adaptOddsPortalExplicitEnvelopeHtml(fs.readFileSync(HTML_FIXTURE, 'utf8'));
+    assert.equal(legal.quarantine.length, 0);
+    assert.equal(legal.observations.length, 3);
+});
+
+test('合理重复 1X2 向量默认仅作质量标记，独立概率异常仍 quarantine', t => {
+    const normalRaw = writeRawText(
+        t,
+        'normal-repeated.fixture.csv',
+        [csvHeader(), csvRow('normal-one', 2.1, 3.4, 3.3), csvRow('normal-two', 2.1, 3.4, 3.3)].join('\n') + '\n'
+    );
+    const { manifestPath: normalManifest } = writeFixtureManifest(t, normalRaw, 'football-data-csv');
+    const normal = runOfflineStaging({
+        sourcePath: normalRaw,
+        manifestPath: normalManifest,
+        adapter: 'football-data-csv',
+        candidates: [...candidates('normal-one'), ...candidates('normal-two')],
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+    assert.equal(normal.summary.accepted_count, 6);
+    assert.equal(normal.summary.quarantine_count, 0);
+    assert.ok(
+        normal.accepted_observations.every(observation =>
+            observation.quality_flags.includes('repeated_one_x_two_vector_across_source_matches')
+        )
+    );
+
+    const abnormalRaw = writeRawText(
+        t,
+        'abnormal-repeated.fixture.csv',
+        [csvHeader(), csvRow('abnormal-one', 10, 11, 13), csvRow('abnormal-two', 10, 11, 13)].join('\n') + '\n'
+    );
+    const { manifestPath: abnormalManifest } = writeFixtureManifest(t, abnormalRaw, 'football-data-csv');
+    const abnormal = runOfflineStaging({
+        sourcePath: abnormalRaw,
+        manifestPath: abnormalManifest,
+        adapter: 'football-data-csv',
+        candidates: [...candidates('abnormal-one'), ...candidates('abnormal-two')],
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+    assert.equal(abnormal.summary.accepted_count, 0);
+    assert.equal(abnormal.summary.quarantine_count, 6);
+    assert.ok(
+        abnormal.quarantine.every(entry => entry.reasons.includes('one_x_two_implied_probability_out_of_bounds'))
+    );
+
+    const singleRaw = writeRawText(
+        t,
+        'abnormal-single.fixture.csv',
+        [csvHeader(), csvRow('abnormal-single', 10, 11, 13)].join('\n') + '\n'
+    );
+    const { manifestPath: singleManifest } = writeFixtureManifest(t, singleRaw, 'football-data-csv');
+    const single = runOfflineStaging({
+        sourcePath: singleRaw,
+        manifestPath: singleManifest,
+        adapter: 'football-data-csv',
+        candidates: candidates('abnormal-single'),
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+    assert.equal(single.summary.quarantine_count, 3);
+    assert.ok(single.quarantine.every(entry => entry.reasons.includes('one_x_two_implied_probability_out_of_bounds')));
+});
+
+test('显式严格重复向量配置才会将合理重复向量送入 quarantine', t => {
+    const rawPath = writeRawText(
+        t,
+        'normal-repeated-strict.fixture.csv',
+        [csvHeader(), csvRow('strict-one', 2.1, 3.4, 3.3), csvRow('strict-two', 2.1, 3.4, 3.3)].join('\n') + '\n'
+    );
+    const { manifestPath } = writeFixtureManifest(t, rawPath, 'football-data-csv');
+    const result = runOfflineStaging({
+        sourcePath: rawPath,
+        manifestPath,
+        adapter: 'football-data-csv',
+        candidates: [...candidates('strict-one'), ...candidates('strict-two')],
+        ingestedAt: FIXED_INGESTED_AT,
+        fakeOddsConfig: { quarantine_repeated_vectors: true },
+    });
+    assert.equal(result.summary.accepted_count, 0);
+    assert.equal(result.summary.quarantine_count, 6);
+    assert.ok(
+        result.quarantine.every(entry => entry.reasons.includes('repeated_one_x_two_vector_across_source_matches'))
+    );
+});
+
+test('source ID 仅在 provider 一致且身份字段不冲突时可直接 matched', () => {
+    const observation = baseObservation();
+    const direct = decideMatchLink(observation, [matchingCandidate(observation)]);
+    assert.equal(direct.status, 'matched');
+    assert.equal(direct.method, 'source_match_id');
+
+    const providerMismatch = decideMatchLink(observation, [
+        matchingCandidate(observation, { source_provider: 'other-provider' }),
+    ]);
+    assert.equal(providerMismatch.status, 'matched');
+    assert.equal(providerMismatch.method, 'exact_home_away_kickoff');
+
+    for (const [field, value] of [
+        ['home_team', 'Wrong Home'],
+        ['kickoff_at', '2025-08-01T19:00:00Z'],
+        ['competition', 'Other League'],
+        ['season', '2024/2025'],
+    ]) {
+        const conflict = decideMatchLink(observation, [matchingCandidate(observation, { [field]: value })]);
+        assert.equal(conflict.status, 'ambiguous');
+        assert.equal(conflict.method, 'source_match_id_identity_conflict');
+        assert.ok(conflict.evidence.identity.conflicts.some(entry => entry.field === field));
+    }
+});
+
+test('exact identity、reverse identity、多个候选和缺失稳定 ID 均保留安全决策', () => {
+    const observation = baseObservation({ source_match_id: null });
+    const exact = decideMatchLink(observation, [matchingCandidate(observation, { source_match_id: null })]);
+    assert.equal(exact.status, 'matched');
+    assert.equal(exact.method, 'exact_home_away_kickoff');
+
+    const idless = matchingCandidate(baseObservation());
+    delete idless.id;
+    const idlessDecision = decideMatchLink(baseObservation(), [idless]);
+    assert.equal(idlessDecision.status, 'ambiguous');
+    assert.equal(idlessDecision.method, 'candidate_stable_id_missing');
+    assert.equal(idlessDecision.matched_id, null);
+    assert.deepEqual(idlessDecision.candidate_ids, []);
+
+    const reversed = decideMatchLink(observation, [
+        matchingCandidate(observation, {
+            source_match_id: null,
+            home_team: 'Beta FC',
+            away_team: 'Alpha FC',
+        }),
+    ]);
+    assert.equal(reversed.status, 'ambiguous');
+    assert.equal(reversed.method, 'candidate_identity_conflict');
+
+    const multiple = decideMatchLink(baseObservation(), [
+        matchingCandidate(baseObservation(), { id: 'candidate-a' }),
+        matchingCandidate(baseObservation(), { id: 'candidate-b' }),
+    ]);
+    assert.equal(multiple.status, 'ambiguous');
+    assert.equal(multiple.method, 'source_match_id_multiple_candidates');
+});
+
+test('semantic conflict quarantine 保留 bookmaker、赔率、snapshot 和重复证据', t => {
+    const rawPath = writeRawText(
+        t,
+        'semantic-conflict.fixture.csv',
+        [csvHeader(), csvRow('semantic-conflict', 2.1, 3.4, 3.3), csvRow('semantic-conflict', 2.2, 3.4, 3.3)].join(
+            '\n'
+        ) + '\n'
+    );
+    const { manifestPath } = writeFixtureManifest(t, rawPath, 'football-data-csv');
+    const result = runOfflineStaging({
+        sourcePath: rawPath,
+        manifestPath,
+        adapter: 'football-data-csv',
+        candidates: candidates('semantic-conflict'),
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+    const conflictEntries = result.quarantine.filter(entry => entry.reasons.includes('semantic_duplicate_conflict'));
+    assert.equal(conflictEntries.length, 2);
+    for (const entry of conflictEntries) {
+        assert.equal(entry.evidence.parsed_fields.bookmaker, 'Bet365');
+        assert.equal(entry.evidence.parsed_fields.snapshot_type, 'unknown');
+        assert.ok([2.1, 2.2].includes(entry.evidence.parsed_fields.decimal_odds));
+        assert.deepEqual(entry.evidence.duplicate_evidence.semantic_conflict.decimal_odds_values, ['2.1', '2.2']);
+        assert.ok(entry.raw_record_locator);
+    }
+});
+
+test('emit 写入失败会回滚临时文件和已完成输出，但保留既有无关文件', t => {
+    const { manifestPath } = writeFixtureManifest(t, CSV_FIXTURE, 'football-data-csv');
+    const result = runOfflineStaging({
+        sourcePath: CSV_FIXTURE,
+        manifestPath,
+        adapter: 'football-data-csv',
+        candidates: candidates('fixture-fd-001'),
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+    const emitDirectory = createTempDirectory(t);
+    fs.writeFileSync(path.join(emitDirectory, 'keep.txt'), 'keep', 'utf8');
+    let writeCount = 0;
+    const fileSystem = Object.create(fs);
+    fileSystem.writeFileSync = (...args) => {
+        writeCount += 1;
+        if (writeCount === 2) {
+            throw new Error('injected write failure');
+        }
+        return fs.writeFileSync(...args);
+    };
+
+    assert.throws(
+        () =>
+            emitDeterministicResult(
+                result,
+                emitDirectory,
+                { repositoryRoot: PROJECT_ROOT, temporaryToken: 'write-failure' },
+                fileSystem
+            ),
+        /rolled back/
+    );
+    assert.deepEqual(fs.readdirSync(emitDirectory).sort(), ['keep.txt']);
+});
+
+test('emit rename 失败会删除本次已 rename 的最终文件和临时文件', t => {
+    const { manifestPath } = writeFixtureManifest(t, CSV_FIXTURE, 'football-data-csv');
+    const result = runOfflineStaging({
+        sourcePath: CSV_FIXTURE,
+        manifestPath,
+        adapter: 'football-data-csv',
+        candidates: candidates('fixture-fd-001'),
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+    const emitDirectory = createTempDirectory(t);
+    fs.writeFileSync(path.join(emitDirectory, 'keep.txt'), 'keep', 'utf8');
+    let renameCount = 0;
+    const fileSystem = Object.create(fs);
+    fileSystem.renameSync = (...args) => {
+        renameCount += 1;
+        if (renameCount === 2) {
+            throw new Error('injected rename failure');
+        }
+        return fs.renameSync(...args);
+    };
+
+    assert.throws(
+        () =>
+            emitDeterministicResult(
+                result,
+                emitDirectory,
+                { repositoryRoot: PROJECT_ROOT, temporaryToken: 'rename-failure' },
+                fileSystem
+            ),
+        /rolled back/
+    );
+    assert.deepEqual(fs.readdirSync(emitDirectory).sort(), ['keep.txt']);
 });

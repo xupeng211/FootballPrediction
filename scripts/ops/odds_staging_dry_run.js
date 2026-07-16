@@ -4,6 +4,7 @@
 // lifecycle: permanent；package.json 引用的唯一离线赔率 staging CLI，默认不写文件。
 
 const { OfflineStagingError } = require('../../src/infrastructure/odds_staging/sourceManifest');
+const { isStrictAbsoluteTimestamp } = require('../../src/infrastructure/odds_staging/contracts');
 const {
     emitDeterministicResult,
     loadCandidatesForRun,
@@ -21,20 +22,25 @@ const EXIT_CODES = Object.freeze({
 function usage() {
     return [
         'Usage:',
-        '  npm run odds:staging:dry-run -- --source <absolute-local-file> --manifest <absolute-local-manifest.json> --adapter <football-data-csv|oddsportal-explicit-html>',
+        '  npm run odds:staging:dry-run -- --source <absolute-local-file> --manifest <absolute-local-manifest.json> --adapter <football-data-csv|oddsportal-explicit-envelope-html> --candidates <absolute-local-candidates.json>',
+        '',
+        'Required:',
+        '  --candidates <absolute-local-candidates.json>',
         '',
         'Optional:',
-        '  --candidates <absolute-local-candidates.json>',
         '  --emit-dir <existing-absolute-directory-outside-repository>',
-        '  --ingested-at <ISO-8601>',
+        '  --ingested-at <ISO-8601 with Z or numeric offset>',
         '  --strict',
         '',
         'Safety:',
         '  Default mode writes nothing and prints a summary only.',
+        '  --emit-dir requires --ingested-at so emitted observation files are deterministic.',
+        '  The HTML adapter accepts only a data-odds-staging="explicit" JSON envelope; it does not parse ordinary OddsPortal DOM.',
         '  Network URLs, browser execution, database access, and repository-local emit directories are rejected.',
         '',
         'Exit codes:',
-        '  0 completed; 2 manifest/input error; 3 safety boundary error; 4 strict mode found quarantine; 5 unexpected error.',
+        '  0 completed; inspect accepted_count and quarantine_count because completion does not mean every record was accepted.',
+        '  2 manifest/input error; 3 safety boundary error; 4 strict mode found quarantine; 5 unexpected error.',
     ].join('\n');
 }
 
@@ -90,10 +96,22 @@ function parseArgs(argv = []) {
     }
 
     if (!args.help) {
-        for (const field of ['source', 'manifest', 'adapter']) {
+        for (const field of ['source', 'manifest', 'adapter', 'candidates']) {
             if (!args[field]) {
                 throw new OfflineStagingError('INPUT_ERROR', `--${field} is required`);
             }
+        }
+        if (args.emitDir && !args.ingestedAt) {
+            throw new OfflineStagingError(
+                'INPUT_ERROR',
+                '--ingested-at is required with --emit-dir for deterministic output'
+            );
+        }
+        if (args.ingestedAt && !isStrictAbsoluteTimestamp(args.ingestedAt)) {
+            throw new OfflineStagingError(
+                'INPUT_ERROR',
+                'ingested_at must be an ISO-8601 timestamp with Z or an explicit numeric offset'
+            );
         }
     }
     return args;

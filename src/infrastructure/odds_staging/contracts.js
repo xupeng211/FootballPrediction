@@ -9,6 +9,8 @@ const OBSERVATION_SCHEMA_VERSION = 'odds-observation/v1';
 const QUARANTINE_SCHEMA_VERSION = 'odds-quarantine/v1';
 const ALLOWED_PROVENANCE_STATUSES = new Set(['verified', 'declared', 'unknown', 'fixture']);
 const ALLOWED_SNAPSHOT_TYPES = new Set(['opening', 'current', 'closing', 'unknown']);
+const STRICT_ABSOLUTE_TIMESTAMP_PATTERN =
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/;
 
 const IDEMPOTENCY_FIELDS = Object.freeze([
     'schema_version',
@@ -61,6 +63,42 @@ function nullableFiniteNumber(value) {
 
     const parsed = Number(value);
     return Number.isFinite(parsed) ? parsed : value;
+}
+
+function isStrictAbsoluteTimestamp(value) {
+    const text = nullableText(value);
+    const matched = text && STRICT_ABSOLUTE_TIMESTAMP_PATTERN.exec(text);
+    if (!matched) {
+        return false;
+    }
+
+    const [, yearText, monthText, dayText, hourText, minuteText, secondText, timezone] = matched;
+    const year = Number(yearText);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const hour = Number(hourText);
+    const minute = Number(minuteText);
+    const second = Number(secondText);
+    if (
+        month < 1 ||
+        month > 12 ||
+        hour > 23 ||
+        minute > 59 ||
+        second > 59 ||
+        day < 1 ||
+        day > new Date(Date.UTC(year, month, 0)).getUTCDate()
+    ) {
+        return false;
+    }
+
+    if (timezone !== 'Z') {
+        const [, offsetHourText, offsetMinuteText] = /^([+-]\d{2}):(\d{2})$/.exec(timezone) || [];
+        if (!offsetHourText || Number(offsetHourText.slice(1)) > 23 || Number(offsetMinuteText) > 59) {
+            return false;
+        }
+    }
+
+    return Number.isFinite(Date.parse(text));
 }
 
 function stableCanonicalize(value) {
@@ -191,6 +229,7 @@ module.exports = {
     buildIdempotencyPayload,
     buildSemanticDuplicateKey,
     createCanonicalObservation,
+    isStrictAbsoluteTimestamp,
     nullableText,
     sha256Text,
     sortedUniqueStrings,

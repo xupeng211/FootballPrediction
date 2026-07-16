@@ -6,10 +6,10 @@ const { parseFootballDataDate } = require('../../../scripts/lib/football_data_lo
 
 const ADAPTER_VERSIONS = Object.freeze({
     'football-data-csv': '1.0.0',
-    'oddsportal-explicit-html': '1.0.0',
+    'oddsportal-explicit-envelope-html': '1.0.0',
 });
 
-const EXPLICIT_HTML_SCHEMA_VERSION = 'oddsportal-explicit-html/v1';
+const EXPLICIT_HTML_SCHEMA_VERSION = 'oddsportal-explicit-envelope-html/v1';
 
 const FOOTBALL_DATA_COLUMN_GROUPS = Object.freeze([
     {
@@ -170,14 +170,21 @@ function csvKickoffAt(row, manifest) {
 
 function buildCsvIdentity(row, manifest) {
     const kickoff = csvKickoffAt(row, manifest);
+    const rawSourceMatchId = pickFirst(row, ['SourceMatchId', 'source_match_id', 'SourceMatchID']);
+    const manifestSourceMatchId = normalizeText(manifest.source_match_id) || null;
+    const sourceMatchIdConflict =
+        rawSourceMatchId && manifestSourceMatchId && rawSourceMatchId !== manifestSourceMatchId;
     return {
-        source_match_id: pickFirst(row, ['SourceMatchId', 'source_match_id', 'SourceMatchID']),
+        source_match_id: rawSourceMatchId || manifestSourceMatchId,
         competition: pickFirst(row, ['Competition', 'League', 'Div']),
         season: pickFirst(row, ['Season', 'season']),
         kickoff_at: kickoff.kickoff_at,
         home_team: pickFirst(row, ['HomeTeam', 'home_team']),
         away_team: pickFirst(row, ['AwayTeam', 'away_team']),
         identity_reason: kickoff.reason,
+        manifest_source_match_id: manifestSourceMatchId,
+        raw_source_match_id: rawSourceMatchId,
+        source_match_id_conflict: sourceMatchIdConflict,
     };
 }
 
@@ -219,6 +226,16 @@ function adaptFootballDataCsv(rawText, context = {}) {
     const quarantine = [];
     for (const entry of parsed.rows) {
         const identity = buildCsvIdentity(entry.row, context.manifest || {});
+        if (identity.source_match_id_conflict) {
+            quarantine.push(
+                buildAdapterQuarantine('csv:row=' + String(entry.row_number), ['manifest_source_match_id_conflict'], {
+                    manifest_source_match_id: identity.manifest_source_match_id,
+                    raw_source_match_id: identity.raw_source_match_id,
+                    row_number: entry.row_number,
+                })
+            );
+            continue;
+        }
         let hasExplicitBookmakerGroup = false;
         for (const group of FOOTBALL_DATA_COLUMN_GROUPS) {
             const presentSelections = Object.entries(group.columns)
@@ -297,6 +314,9 @@ function parseExplicitHtmlPayload(payloadText) {
 }
 
 function validateExplicitHtmlPayload(payload) {
+    if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
+        return buildAdapterQuarantine('html:explicit-envelope', ['explicit_html_payload_not_object']);
+    }
     if (payload.schema_version !== EXPLICIT_HTML_SCHEMA_VERSION) {
         return buildAdapterQuarantine('html:explicit-envelope', ['explicit_html_schema_version_unsupported'], {
             declared_schema_version: normalizeText(payload.schema_version) || null,
@@ -350,7 +370,7 @@ function mapExplicitHtmlObservations(payload, manifest) {
     }));
 }
 
-function adaptOddsPortalExplicitHtml(rawText, context = {}) {
+function adaptOddsPortalExplicitEnvelopeHtml(rawText, context = {}) {
     const payloadText = extractExplicitHtmlEnvelope(rawText);
     if (!payloadText) {
         return {
@@ -379,8 +399,8 @@ function getAdapter(adapterName) {
     if (adapterName === 'football-data-csv') {
         return adaptFootballDataCsv;
     }
-    if (adapterName === 'oddsportal-explicit-html') {
-        return adaptOddsPortalExplicitHtml;
+    if (adapterName === 'oddsportal-explicit-envelope-html') {
+        return adaptOddsPortalExplicitEnvelopeHtml;
     }
     return null;
 }
@@ -390,6 +410,6 @@ module.exports = {
     EXPLICIT_HTML_SCHEMA_VERSION,
     FOOTBALL_DATA_COLUMN_GROUPS,
     adaptFootballDataCsv,
-    adaptOddsPortalExplicitHtml,
+    adaptOddsPortalExplicitEnvelopeHtml,
     getAdapter,
 };

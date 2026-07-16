@@ -8,6 +8,7 @@ const path = require('node:path');
 const {
     ALLOWED_PROVENANCE_STATUSES,
     SOURCE_MANIFEST_SCHEMA_VERSION,
+    isStrictAbsoluteTimestamp,
     nullableText,
     stableCanonicalize,
 } = require('./contracts');
@@ -36,11 +37,6 @@ function assertAbsoluteLocalPath(value, fieldName) {
         throw new OfflineStagingError('SAFETY_ERROR', `${fieldName} must be an absolute local path`);
     }
     return path.resolve(rawPath);
-}
-
-function isIsoTimestamp(value) {
-    const text = String(value || '').trim();
-    return /^\d{4}-\d{2}-\d{2}T/.test(text) && Number.isFinite(Date.parse(text));
 }
 
 function isSha256(value) {
@@ -77,8 +73,8 @@ function appendManifestValueErrors(manifest, errors) {
     if (manifest.schema_version !== SOURCE_MANIFEST_SCHEMA_VERSION) {
         errors.push(`unsupported manifest schema_version: ${manifest.schema_version || ''}`);
     }
-    if (!isIsoTimestamp(manifest.captured_at)) {
-        errors.push('captured_at must be an ISO-8601 timestamp');
+    if (!isStrictAbsoluteTimestamp(manifest.captured_at)) {
+        errors.push('captured_at must be an ISO-8601 timestamp with Z or an explicit numeric offset');
     }
     if (!Number.isSafeInteger(manifest.raw_size_bytes) || manifest.raw_size_bytes < 0) {
         errors.push('raw_size_bytes must be a non-negative safe integer');

@@ -8,6 +8,7 @@ const DEFAULT_FAKE_ODDS_CONFIG = Object.freeze({
     implied_probability_min: 0.8,
     implied_probability_max: 1.35,
     repeated_vector_min_distinct_matches: 2,
+    quarantine_repeated_vectors: false,
 });
 
 function groupKey(observation) {
@@ -61,16 +62,17 @@ function collectOneXTwoGroups(observations) {
     return groups;
 }
 
-function addReason(reasonMap, index, reason) {
-    if (!reasonMap.has(index)) {
-        reasonMap.set(index, new Set());
+function addSignal(signalMap, index, signal) {
+    if (!signalMap.has(index)) {
+        signalMap.set(index, new Set());
     }
-    reasonMap.get(index).add(reason);
+    signalMap.get(index).add(signal);
 }
 
 function detectFakeOdds(observations = [], options = {}) {
     const config = { ...DEFAULT_FAKE_ODDS_CONFIG, ...options };
     const reasonMap = new Map();
+    const flagMap = new Map();
     const completeVectors = [];
     const groups = collectOneXTwoGroups(observations);
 
@@ -85,7 +87,7 @@ function detectFakeOdds(observations = [], options = {}) {
             impliedProbability > config.implied_probability_max
         ) {
             for (const entry of entries) {
-                addReason(reasonMap, entry.index, 'one_x_two_implied_probability_out_of_bounds');
+                addSignal(reasonMap, entry.index, 'one_x_two_implied_probability_out_of_bounds');
             }
         }
         completeVectors.push({ entries, vector });
@@ -117,14 +119,20 @@ function detectFakeOdds(observations = [], options = {}) {
         }
         for (const vector of vectors) {
             for (const entry of vector.entries) {
-                addReason(reasonMap, entry.index, 'repeated_one_x_two_vector_across_source_matches');
+                addSignal(flagMap, entry.index, 'repeated_one_x_two_vector_across_source_matches');
+                if (config.quarantine_repeated_vectors === true) {
+                    addSignal(reasonMap, entry.index, 'repeated_one_x_two_vector_across_source_matches');
+                }
             }
         }
     }
 
     return observations.map((observation, index) => {
         const reasons = [...(reasonMap.get(index) || [])];
-        return reasons.length === 0 ? observation : appendObservationSignals(observation, reasons, reasons);
+        const flags = [...(flagMap.get(index) || [])];
+        return reasons.length === 0 && flags.length === 0
+            ? observation
+            : appendObservationSignals(observation, reasons, flags);
     });
 }
 

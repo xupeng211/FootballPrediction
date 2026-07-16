@@ -8,6 +8,7 @@ const {
     QUARANTINE_SCHEMA_VERSION,
     appendObservationSignals,
     createCanonicalObservation,
+    isStrictAbsoluteTimestamp,
     stableCanonicalize,
     stableStringify,
 } = require('./contracts');
@@ -20,13 +21,16 @@ const { validateObservation } = require('./validators');
 
 const ADAPTER_MEDIA_TYPES = Object.freeze({
     'football-data-csv': 'text/csv',
-    'oddsportal-explicit-html': 'text/html',
+    'oddsportal-explicit-envelope-html': 'text/html',
 });
 
 function resolveIngestedAt(value, clock) {
     const candidate = value || clock();
-    if (!/^\d{4}-\d{2}-\d{2}T/.test(String(candidate || '')) || !Number.isFinite(Date.parse(candidate))) {
-        throw new OfflineStagingError('INPUT_ERROR', 'ingested_at must be an ISO-8601 timestamp');
+    if (!isStrictAbsoluteTimestamp(candidate)) {
+        throw new OfflineStagingError(
+            'INPUT_ERROR',
+            'ingested_at must be an ISO-8601 timestamp with Z or an explicit numeric offset'
+        );
     }
     return String(candidate);
 }
@@ -110,13 +114,27 @@ function createObservationQuarantine(observation) {
             extraction_method: observation.extraction_method,
             match_link: observation.match_link,
             quality_flags: observation.quality_flags,
+            duplicate_evidence: observation.duplicate_evidence,
+            parsed_fields: {
+                bookmaker: observation.bookmaker,
+                bookmaker_source_id: observation.bookmaker_source_id,
+                market: observation.market,
+                selection: observation.selection,
+                line: observation.line,
+                decimal_odds: observation.decimal_odds,
+                snapshot_type: observation.snapshot_type,
+                source_observed_at: observation.source_observed_at,
+                captured_at: observation.captured_at,
+                source_timezone: observation.source_timezone,
+                idempotency_key: observation.idempotency_key,
+                provenance_status: observation.provenance_status,
+            },
             source_fields: {
                 away_team: observation.away_team,
                 competition: observation.competition,
                 home_team: observation.home_team,
                 kickoff_at: observation.kickoff_at,
-                market: observation.market,
-                selection: observation.selection,
+                season: observation.season,
             },
         },
     });
@@ -222,8 +240,43 @@ function emitDeterministicResult(result, emitDirectory, options = {}, fileSystem
             throw new OfflineStagingError('SAFETY_ERROR', `emit output already exists: ${filename}`);
         }
     }
-    for (const [filename, content] of Object.entries(files)) {
-        fileSystem.writeFileSync(path.join(outputDirectory, filename), content, 'utf8');
+    const temporaryPaths = [];
+    const renamedFinalPaths = [];
+    const temporaryToken = options.temporaryToken || String(process.pid) + '-' + String(Date.now());
+    try {
+        for (const [index, [filename, content]] of Object.entries(files).entries()) {
+            const temporaryPath = path.join(
+                outputDirectory,
+                '.' + filename + '.' + temporaryToken + '.' + String(index) + '.tmp'
+            );
+            if (fileSystem.existsSync(temporaryPath)) {
+                throw new OfflineStagingError('SAFETY_ERROR', 'temporary emit output already exists: ' + filename);
+            }
+            temporaryPaths.push(temporaryPath);
+            fileSystem.writeFileSync(temporaryPath, content, { encoding: 'utf8', flag: 'wx' });
+        }
+        for (const [index, filename] of Object.keys(files).entries()) {
+            const finalPath = path.join(outputDirectory, filename);
+            fileSystem.renameSync(temporaryPaths[index], finalPath);
+            renamedFinalPaths.push(finalPath);
+        }
+    } catch (error) {
+        for (const outputPath of [...temporaryPaths, ...renamedFinalPaths]) {
+            try {
+                if (fileSystem.existsSync(outputPath)) {
+                    fileSystem.unlinkSync(outputPath);
+                }
+            } catch {
+                // 只保留原始失败；清理失败不得隐藏主错误或触碰任务前既有文件。
+            }
+        }
+        if (error instanceof OfflineStagingError) {
+            throw error;
+        }
+        throw new OfflineStagingError(
+            'SAFETY_ERROR',
+            'emit failed and staged output was rolled back: ' + error.message
+        );
     }
     return Object.keys(files).sort();
 }
