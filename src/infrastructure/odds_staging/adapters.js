@@ -115,6 +115,54 @@ function splitCsvLine(line) {
     return values;
 }
 
+function canonicalizeCsvHeader(value) {
+    return String(value ?? '')
+        .normalize('NFKC')
+        .trim()
+        .toLowerCase();
+}
+
+function inspectCsvHeaders(declaredHeaders) {
+    const emptyHeaderPositions = [];
+    const byCanonicalName = new Map();
+    declaredHeaders.forEach((declaredName, index) => {
+        const position = index + 1;
+        const declaredText = String(declaredName ?? '');
+        const canonicalName = canonicalizeCsvHeader(declaredText);
+        if (!canonicalName) {
+            emptyHeaderPositions.push(position);
+            return;
+        }
+        if (!byCanonicalName.has(canonicalName)) {
+            byCanonicalName.set(canonicalName, []);
+        }
+        byCanonicalName.get(canonicalName).push({ declared_name: declaredText, position });
+    });
+    const duplicateHeaders = [...byCanonicalName.entries()]
+        .filter(([, entries]) => entries.length > 1)
+        .map(([canonicalName, entries]) => ({
+            canonical_name: canonicalName,
+            positions: entries.map(entry => entry.position),
+            declared_names: entries.map(entry => entry.declared_name),
+        }));
+    const reasons = [];
+    if (emptyHeaderPositions.length > 0) {
+        reasons.push('csv_empty_header');
+    }
+    if (duplicateHeaders.length > 0) {
+        reasons.push('csv_duplicate_header');
+    }
+    return {
+        valid: reasons.length === 0,
+        reasons,
+        evidence: {
+            header_count: declaredHeaders.length,
+            empty_header_positions: emptyHeaderPositions,
+            duplicate_headers: duplicateHeaders,
+        },
+    };
+}
+
 function parseCsvRows(rawText) {
     const lines = String(rawText || '')
         .replace(/^\uFEFF/, '')
@@ -126,9 +174,15 @@ function parseCsvRows(rawText) {
         return { headers: [], rows: [] };
     }
 
-    const headers = splitCsvLine(lines[0]).map(normalizeText);
+    const declaredHeaders = splitCsvLine(lines[0]);
+    const headerValidation = inspectCsvHeaders(declaredHeaders);
+    const headers = declaredHeaders.map(normalizeText);
+    if (!headerValidation.valid) {
+        return { headers, rows: [], header_validation: headerValidation };
+    }
     return {
         headers,
+        header_validation: headerValidation,
         rows: lines.slice(1).map((line, index) => {
             const values = splitCsvLine(line);
             const row = headers.reduce((result, header, columnIndex) => {
@@ -219,6 +273,18 @@ function adaptFootballDataCsv(rawText, context = {}) {
         return {
             observations: [],
             quarantine: [buildAdapterQuarantine('csv:document', ['csv_header_or_rows_missing'])],
+        };
+    }
+    if (parsed.header_validation && !parsed.header_validation.valid) {
+        return {
+            observations: [],
+            quarantine: [
+                buildAdapterQuarantine(
+                    'csv:document',
+                    parsed.header_validation.reasons,
+                    parsed.header_validation.evidence
+                ),
+            ],
         };
     }
 

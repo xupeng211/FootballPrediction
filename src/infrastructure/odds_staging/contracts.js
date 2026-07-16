@@ -40,9 +40,7 @@ const IDEMPOTENCY_FIELDS = Object.freeze([
     'provenance_status',
 ]);
 
-const SEMANTIC_DUPLICATE_FIELDS = Object.freeze([
-    'source_provider',
-    'source_match_id',
+const SEMANTIC_MARKET_FIELDS = Object.freeze([
     'bookmaker',
     'market',
     'selection',
@@ -155,11 +153,50 @@ function buildIdempotencyKey(observation = {}) {
     return sha256Text(stableStringify(buildIdempotencyPayload(observation)));
 }
 
+function buildSemanticMatchIdentity(observation = {}) {
+    const sourceProvider = nullableText(observation.source_provider);
+    const sourceMatchId = nullableText(observation.source_match_id);
+    if (sourceProvider && sourceMatchId) {
+        return {
+            identity_mode: 'provider_source_match_id',
+            source_provider: sourceProvider,
+            source_match_id: sourceMatchId,
+        };
+    }
+
+    const competition = nullableText(observation.competition);
+    const kickoffAt = nullableText(observation.kickoff_at);
+    const homeTeam = nullableText(observation.home_team);
+    const awayTeam = nullableText(observation.away_team);
+    if (sourceProvider && competition && kickoffAt && homeTeam && awayTeam) {
+        return {
+            identity_mode: 'canonical_match_identity',
+            source_provider: sourceProvider,
+            competition,
+            season: nullableText(observation.season),
+            kickoff_at: kickoffAt,
+            home_team: homeTeam,
+            away_team: awayTeam,
+        };
+    }
+
+    return {
+        identity_mode: 'unresolved_raw_identity',
+        source_provider: sourceProvider,
+        raw_sha256: nullableText(observation.raw_sha256),
+        raw_record_locator: nullableText(observation.raw_record_locator),
+        idempotency_key: nullableText(observation.idempotency_key) || buildIdempotencyKey(observation),
+    };
+}
+
 function buildSemanticDuplicateKey(observation = {}) {
-    const payload = SEMANTIC_DUPLICATE_FIELDS.reduce((result, field) => {
-        result[field] = stableCanonicalize(observation[field] ?? null);
-        return result;
-    }, {});
+    const payload = SEMANTIC_MARKET_FIELDS.reduce(
+        (result, field) => {
+            result[field] = stableCanonicalize(observation[field] ?? null);
+            return result;
+        },
+        { match_identity: buildSemanticMatchIdentity(observation) }
+    );
     return stableStringify(payload);
 }
 
@@ -227,6 +264,7 @@ module.exports = {
     buildExactDuplicateKey,
     buildIdempotencyKey,
     buildIdempotencyPayload,
+    buildSemanticMatchIdentity,
     buildSemanticDuplicateKey,
     createCanonicalObservation,
     isStrictAbsoluteTimestamp,
