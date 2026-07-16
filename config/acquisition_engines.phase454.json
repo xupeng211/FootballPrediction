@@ -37,6 +37,37 @@
             "test_coverage": "gate_covered"
         },
         {
+            "id": "offline_odds_staging_dry_run",
+            "category": "local_preflight",
+            "entrypoint": "scripts/ops/odds_staging_dry_run.js",
+            "commands": [
+                "npm run odds:staging:dry-run -- --source <absolute-local-file> --manifest <absolute-local-manifest.json> --adapter <football-data-csv|oddsportal-explicit-envelope-html> --candidates <absolute-local-candidates.json>"
+            ],
+            "accesses_network": false,
+            "writes_db": false,
+            "writes_files": true,
+            "supports_dry_run": true,
+            "dry_run_trust_level": "high",
+            "supports_commit": false,
+            "bulk_risk": "low",
+            "tos_license_risk": "low",
+            "provenance_required": true,
+            "source_manifest_required": true,
+            "target_scope_required": true,
+            "safe_for_ai_default": true,
+            "requires_user_authorization": true,
+            "phase454_policy": "allowed_read_only",
+            "notes": "Default stdout-only dry-run requires an explicit local candidates file and writes nothing. Explicit --emit-dir also requires --ingested-at and writes only four deterministic summaries outside the repository. The HTML adapter accepts only an explicit JSON envelope, not ordinary OddsPortal DOM; no network, browser, or DB access.",
+            "owner": "data-governance",
+            "status": "canonical",
+            "intended_layer": "layer_5_local_staging_dry_run",
+            "replacement_plan": "Use as the manifest-bound offline odds raw/staging boundary before any separately authorized live probe or DB import.",
+            "deprecation_status": "not_deprecated",
+            "canonical_entrypoint": true,
+            "allowed_next_phase": "requires_user_authorization",
+            "test_coverage": "unit_covered"
+        },
+        {
             "id": "raw_match_data_local_ingest",
             "category": "local_preflight",
             "entrypoint": "scripts/ops/raw_match_data_local_ingest.js",

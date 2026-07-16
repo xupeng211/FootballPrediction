@@ -15,6 +15,7 @@
         "l3:stitch": "node scripts/ops/l3_stitch_pipeline.js",
         "odds:harvest": "node scripts/ops/odds_harvest_pipeline.js",
         "odds:sniper": "node scripts/ops/odds_sniper.js",
+        "odds:staging:dry-run": "node scripts/ops/odds_staging_dry_run.js",
         "harvest:production": "node scripts/ops/run_production.js",
         "titan:total-war": "node scripts/ops/total_war_pipeline.js",
         "titan:check": "node scripts/ops/check_health.js",
