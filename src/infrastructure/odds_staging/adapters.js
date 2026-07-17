@@ -5,27 +5,62 @@
 const { parseFootballDataDate } = require('../../../scripts/lib/football_data_local_csv_parser');
 
 const ADAPTER_VERSIONS = Object.freeze({
-    'football-data-csv': '1.0.0',
+    'football-data-csv': '1.1.0',
     'oddsportal-explicit-envelope-html': '1.0.0',
 });
 
 const EXPLICIT_HTML_SCHEMA_VERSION = 'oddsportal-explicit-envelope-html/v1';
 
+// Football-Data 历史 CSV 的真实逐公司 1X2 列：普通列与 C 变体列是同一公司的两个
+// source-native quote series，来源没有声明各自的观察时间，因此都保持 snapshot_type=unknown；
+// 禁止把普通列解释为 opening、把 C 列解释为 closing。聚合列（Max*/Avg*/BbAv*/BbMx*）与
+// 交易所列（BFE*）没有单一博彩公司报价身份，不进入 mapping。
+const HISTORICAL_BOOKMAKER_COLUMN_FAMILIES = Object.freeze([
+    { key: 'bet365', bookmaker: 'Bet365', source_id: 'B365', prefix: 'B365', snake: 'b365' },
+    { key: 'bwin', bookmaker: 'Bwin', source_id: 'BW', prefix: 'BW', snake: 'bw' },
+    { key: 'interwetten', bookmaker: 'Interwetten', source_id: 'IW', prefix: 'IW', snake: 'iw' },
+    { key: 'pinnacle', bookmaker: 'Pinnacle', source_id: 'PS', prefix: 'PS', snake: 'ps' },
+    { key: 'william-hill', bookmaker: 'William Hill', source_id: 'WH', prefix: 'WH', snake: 'wh' },
+    { key: 'vc-bet', bookmaker: 'VC Bet', source_id: 'VC', prefix: 'VC', snake: 'vc' },
+]);
+
+function buildHistoricalColumnGroups() {
+    const groups = [];
+    for (const family of HISTORICAL_BOOKMAKER_COLUMN_FAMILIES) {
+        groups.push({
+            id: `${family.key}-unknown`,
+            bookmaker: family.bookmaker,
+            bookmaker_source_id: family.source_id,
+            source_quote_series: family.prefix,
+            snapshot_type: 'unknown',
+            columns: { home: `${family.prefix}H`, draw: `${family.prefix}D`, away: `${family.prefix}A` },
+        });
+        groups.push({
+            id: `${family.key}-c-series-unknown`,
+            bookmaker: family.bookmaker,
+            bookmaker_source_id: family.source_id,
+            source_quote_series: `${family.prefix}C`,
+            snapshot_type: 'unknown',
+            columns: { home: `${family.prefix}CH`, draw: `${family.prefix}CD`, away: `${family.prefix}CA` },
+        });
+        groups.push({
+            id: `${family.key}-snake-unknown`,
+            bookmaker: family.bookmaker,
+            bookmaker_source_id: family.source_id,
+            source_quote_series: family.prefix,
+            snapshot_type: 'unknown',
+            columns: {
+                home: `${family.snake}_home_odds`,
+                draw: `${family.snake}_draw_odds`,
+                away: `${family.snake}_away_odds`,
+            },
+        });
+    }
+    return groups;
+}
+
 const FOOTBALL_DATA_COLUMN_GROUPS = Object.freeze([
-    {
-        id: 'bet365-unknown',
-        bookmaker: 'Bet365',
-        bookmaker_source_id: 'B365',
-        snapshot_type: 'unknown',
-        columns: { home: 'B365H', draw: 'B365D', away: 'B365A' },
-    },
-    {
-        id: 'pinnacle-unknown',
-        bookmaker: 'Pinnacle',
-        bookmaker_source_id: 'PS',
-        snapshot_type: 'unknown',
-        columns: { home: 'PSH', draw: 'PSD', away: 'PSA' },
-    },
+    ...buildHistoricalColumnGroups(),
     {
         id: 'bet365-opening-explicit',
         bookmaker: 'Bet365',
@@ -209,7 +244,7 @@ function csvKickoffAt(row, manifest) {
         return { kickoff_at: explicitKickoff, reason: null };
     }
 
-    const date = pickFirst(row, ['Date', 'date']);
+    const date = pickFirst(row, ['Date', 'date', 'match_date']);
     const time = pickFirst(row, ['Time', 'time']);
     if (!date) {
         return { kickoff_at: null, reason: 'kickoff_missing' };
@@ -255,6 +290,7 @@ function buildCsvObservation(identity, group, selection, decimalOdds, rowNumber)
         ...identity,
         bookmaker: group.bookmaker,
         bookmaker_source_id: group.bookmaker_source_id,
+        source_quote_series: group.source_quote_series,
         market: '1X2',
         selection,
         line: null,
@@ -319,6 +355,27 @@ function adaptFootballDataCsv(rawText, context = {}) {
                         ['incomplete_explicit_1x2_columns'],
                         {
                             present_selections: presentSelections,
+                            required_columns: group.columns,
+                        }
+                    )
+                );
+                continue;
+            }
+
+            const presentValueSelections = ['home', 'draw', 'away'].filter(
+                selection => normalizeText(entry.row[group.columns[selection]]) !== ''
+            );
+            if (presentValueSelections.length === 0) {
+                // 该行来源没有发布这个 series 的任何报价；空单元格不是 observation，不得补造。
+                continue;
+            }
+            if (presentValueSelections.length !== 3) {
+                quarantine.push(
+                    buildAdapterQuarantine(
+                        `csv:row=${entry.row_number}:${group.id}`,
+                        ['incomplete_explicit_1x2_values'],
+                        {
+                            present_value_selections: presentValueSelections,
                             required_columns: group.columns,
                         }
                     )

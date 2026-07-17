@@ -89,9 +89,6 @@ function validateTimeAndProvenance(observation) {
     if (observation.source_observed_at && !isStrictAbsoluteTimestamp(observation.source_observed_at)) {
         reasons.push('source_observed_at_invalid');
     }
-    if (!isStrictAbsoluteTimestamp(observation.captured_at)) {
-        reasons.push('captured_at_invalid');
-    }
     if (!nullableText(observation.source_timezone)) {
         reasons.push('source_timezone_missing');
     }
@@ -111,6 +108,27 @@ function validateTimeAndProvenance(observation) {
         reasons.push('provenance_status_missing');
     }
     return reasons;
+}
+
+function validateCaptureTime(observation) {
+    // 只有明确声明 capture_time_status=unknown（historical_git_recovery manifest 边界放行）
+    // 才允许 captured_at 为 null；其余情况保持严格 captured_at 要求，不允许伪造采集时间。
+    const reasons = [];
+    const flags = [];
+    const captureTimeStatus = nullableText(observation.capture_time_status);
+    if (captureTimeStatus && captureTimeStatus !== 'unknown') {
+        reasons.push('capture_time_status_invalid');
+    }
+    if (captureTimeStatus === 'unknown') {
+        if (nullableText(observation.captured_at)) {
+            reasons.push('captured_at_present_with_unknown_capture_time_status');
+        } else {
+            flags.push('source_capture_time_unknown');
+        }
+    } else if (!isStrictAbsoluteTimestamp(observation.captured_at)) {
+        reasons.push('captured_at_invalid');
+    }
+    return { reasons, flags };
 }
 
 function validateSnapshotSemantics(observation) {
@@ -133,13 +151,15 @@ function validateSnapshotSemantics(observation) {
 
 function validateObservation(observation) {
     const snapshotSignals = validateSnapshotSemantics(observation);
+    const captureTimeSignals = validateCaptureTime(observation);
     const reasons = [
         ...validateSourceIdentity(observation),
         ...validateMarketOdds(observation),
         ...validateTimeAndProvenance(observation),
+        ...captureTimeSignals.reasons,
         ...snapshotSignals.reasons,
     ];
-    return appendObservationSignals(observation, reasons, snapshotSignals.flags);
+    return appendObservationSignals(observation, reasons, [...snapshotSignals.flags, ...captureTimeSignals.flags]);
 }
 
 module.exports = {

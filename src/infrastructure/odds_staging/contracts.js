@@ -12,6 +12,10 @@ const ALLOWED_SNAPSHOT_TYPES = new Set(['opening', 'current', 'closing', 'unknow
 const STRICT_ABSOLUTE_TIMESTAMP_PATTERN =
     /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/;
 
+// 可选合同字段：仅在来源真实提供该事实时写入 observation 与 idempotency payload，
+// 缺失时完全省略，避免旧观察因新增 null 字段而改变 canonical 输出或 key 结构。
+const OPTIONAL_IDEMPOTENCY_FIELDS = Object.freeze(['capture_time_status', 'source_quote_series']);
+
 const IDEMPOTENCY_FIELDS = Object.freeze([
     'schema_version',
     'source_provider',
@@ -143,10 +147,17 @@ function normalizeMatchLink(matchLink = {}) {
 }
 
 function buildIdempotencyPayload(observation = {}) {
-    return IDEMPOTENCY_FIELDS.reduce((payload, field) => {
-        payload[field] = stableCanonicalize(observation[field] ?? null);
-        return payload;
+    const payload = IDEMPOTENCY_FIELDS.reduce((result, field) => {
+        result[field] = stableCanonicalize(observation[field] ?? null);
+        return result;
     }, {});
+    for (const field of OPTIONAL_IDEMPOTENCY_FIELDS) {
+        const value = stableCanonicalize(observation[field] ?? null);
+        if (value !== null) {
+            payload[field] = value;
+        }
+    }
+    return payload;
 }
 
 function buildIdempotencyKey(observation = {}) {
@@ -197,6 +208,12 @@ function buildSemanticDuplicateKey(observation = {}) {
         },
         { match_identity: buildSemanticMatchIdentity(observation) }
     );
+    // source-native quote series 只在真实存在时参与语义身份：同一公司普通列与 C 列互不碰撞，
+    // 同一 series 内的真正重复仍可 deduplicate；不改名、不叫 opening/closing、不伪造时间。
+    const sourceQuoteSeries = stableCanonicalize(observation.source_quote_series ?? null);
+    if (sourceQuoteSeries !== null) {
+        payload.source_quote_series = sourceQuoteSeries;
+    }
     return stableStringify(payload);
 }
 
@@ -242,6 +259,15 @@ function createCanonicalObservation(fields = {}) {
         ingested_at: nullableText(fields.ingested_at),
     };
 
+    const sourceQuoteSeries = nullableText(fields.source_quote_series);
+    if (sourceQuoteSeries !== null) {
+        observation.source_quote_series = sourceQuoteSeries;
+    }
+    const captureTimeStatus = nullableText(fields.capture_time_status);
+    if (captureTimeStatus !== null) {
+        observation.capture_time_status = captureTimeStatus;
+    }
+
     observation.idempotency_key = buildIdempotencyKey(observation);
     return observation;
 }
@@ -258,6 +284,7 @@ module.exports = {
     ALLOWED_PROVENANCE_STATUSES,
     ALLOWED_SNAPSHOT_TYPES,
     OBSERVATION_SCHEMA_VERSION,
+    OPTIONAL_IDEMPOTENCY_FIELDS,
     QUARANTINE_SCHEMA_VERSION,
     SOURCE_MANIFEST_SCHEMA_VERSION,
     appendObservationSignals,

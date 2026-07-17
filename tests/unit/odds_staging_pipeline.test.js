@@ -16,6 +16,7 @@ const {
     isStrictAbsoluteTimestamp,
 } = require('../../src/infrastructure/odds_staging/contracts');
 const {
+    ADAPTER_VERSIONS,
     adaptFootballDataCsv,
     adaptOddsPortalExplicitEnvelopeHtml,
 } = require('../../src/infrastructure/odds_staging/adapters');
@@ -61,7 +62,7 @@ function writeFixtureManifest(t, rawPath, adapter, overrides = {}) {
         raw_size_bytes: rawBuffer.length,
         raw_sha256: sha256File(rawPath),
         adapter,
-        adapter_version: '1.0.0',
+        adapter_version: ADAPTER_VERSIONS[adapter],
         provenance_status: 'fixture',
         ...overrides,
     };
