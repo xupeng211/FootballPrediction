@@ -58,8 +58,22 @@ const REQUIRED_MANIFEST_TEXT_FIELDS = Object.freeze([
     'provenance_status',
 ]);
 
+// 唯一允许 captured_at 未知的采集模式：从 Git 历史恢复的 raw 没有可信原始下载时间，
+// 必须显式声明 unknown 语义与恢复证据，而不是用 commit 时间/恢复时间/开球时间冒充。
+const HISTORICAL_GIT_RECOVERY_ACQUISITION_MODE = 'historical_git_recovery';
+const GIT_OBJECT_SHA_PATTERN = /^[a-f0-9]{40}$/i;
+const REQUIRED_REPOSITORY_PROVENANCE_TEXT_FIELDS = Object.freeze(['repository', 'path']);
+const REQUIRED_REPOSITORY_PROVENANCE_SHA_FIELDS = Object.freeze(['commit_sha', 'blob_sha']);
+
+function isHistoricalGitRecoveryManifest(manifest) {
+    return Boolean(manifest) && manifest.acquisition_mode === HISTORICAL_GIT_RECOVERY_ACQUISITION_MODE;
+}
+
 function appendRequiredFieldErrors(manifest, errors) {
     for (const field of REQUIRED_MANIFEST_TEXT_FIELDS) {
+        if (field === 'captured_at' && isHistoricalGitRecoveryManifest(manifest)) {
+            continue;
+        }
         if (!nullableText(manifest[field])) {
             errors.push(`manifest missing required field: ${field}`);
         }
@@ -69,13 +83,69 @@ function appendRequiredFieldErrors(manifest, errors) {
     }
 }
 
-function appendManifestValueErrors(manifest, errors) {
-    if (manifest.schema_version !== SOURCE_MANIFEST_SCHEMA_VERSION) {
-        errors.push(`unsupported manifest schema_version: ${manifest.schema_version || ''}`);
+function appendRepositoryProvenanceErrors(manifest, errors) {
+    const provenance = manifest.repository_provenance;
+    if (!provenance || typeof provenance !== 'object' || Array.isArray(provenance)) {
+        errors.push('historical_git_recovery requires a repository_provenance object');
+        return;
+    }
+    for (const field of REQUIRED_REPOSITORY_PROVENANCE_TEXT_FIELDS) {
+        if (!nullableText(provenance[field])) {
+            errors.push(`repository_provenance missing required field: ${field}`);
+        }
+    }
+    for (const field of REQUIRED_REPOSITORY_PROVENANCE_SHA_FIELDS) {
+        if (!GIT_OBJECT_SHA_PATTERN.test(String(provenance[field] || '').trim())) {
+            errors.push(`repository_provenance.${field} must be a full 40-character Git object SHA`);
+        }
+    }
+    if (!isStrictAbsoluteTimestamp(provenance.commit_timestamp)) {
+        errors.push('repository_provenance.commit_timestamp must be a strict ISO-8601 timestamp');
+    }
+}
+
+function appendHistoricalRecoveryErrors(manifest, errors) {
+    if (manifest.captured_at !== null) {
+        errors.push(
+            'historical_git_recovery requires captured_at to be explicitly null; commit time, recovery time, and kickoff time must not impersonate the original capture time'
+        );
+    }
+    if (manifest.capture_time_status !== 'unknown') {
+        errors.push('historical_git_recovery requires capture_time_status: unknown');
+    }
+    if (!isStrictAbsoluteTimestamp(manifest.recovered_at)) {
+        errors.push('historical_git_recovery requires recovered_at as a strict ISO-8601 timestamp');
+    }
+    if (manifest.provenance_status !== 'declared') {
+        errors.push('historical_git_recovery requires provenance_status: declared');
+    }
+    if (manifest.upstream_provenance_status !== 'unverified') {
+        errors.push('historical_git_recovery requires upstream_provenance_status: unverified');
+    }
+    appendRepositoryProvenanceErrors(manifest, errors);
+}
+
+function appendCaptureTimeErrors(manifest, errors) {
+    if (isHistoricalGitRecoveryManifest(manifest)) {
+        appendHistoricalRecoveryErrors(manifest, errors);
+        return;
     }
     if (!isStrictAbsoluteTimestamp(manifest.captured_at)) {
         errors.push('captured_at must be an ISO-8601 timestamp with Z or an explicit numeric offset');
     }
+    if (Object.prototype.hasOwnProperty.call(manifest, 'capture_time_status')) {
+        errors.push('capture_time_status is only allowed when acquisition_mode is historical_git_recovery');
+    }
+    if (Object.prototype.hasOwnProperty.call(manifest, 'recovered_at')) {
+        errors.push('recovered_at is only allowed when acquisition_mode is historical_git_recovery');
+    }
+}
+
+function appendManifestValueErrors(manifest, errors) {
+    if (manifest.schema_version !== SOURCE_MANIFEST_SCHEMA_VERSION) {
+        errors.push(`unsupported manifest schema_version: ${manifest.schema_version || ''}`);
+    }
+    appendCaptureTimeErrors(manifest, errors);
     if (!Number.isSafeInteger(manifest.raw_size_bytes) || manifest.raw_size_bytes < 0) {
         errors.push('raw_size_bytes must be a non-negative safe integer');
     }
@@ -200,8 +270,10 @@ function loadCandidates(candidatePath, dependencies = {}) {
 }
 
 module.exports = {
+    HISTORICAL_GIT_RECOVERY_ACQUISITION_MODE,
     OfflineStagingError,
     assertAbsoluteLocalPath,
+    isHistoricalGitRecoveryManifest,
     isNetworkReference,
     loadCandidates,
     loadSourceBundle,

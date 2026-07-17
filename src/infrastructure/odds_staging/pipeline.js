@@ -44,7 +44,10 @@ function ensureAdapterCompatibility(manifest, adapterName) {
         throw new OfflineStagingError('INPUT_ERROR', 'manifest.adapter does not match the requested adapter');
     }
     if (manifest.adapter_version !== ADAPTER_VERSIONS[adapterName]) {
-        throw new OfflineStagingError('INPUT_ERROR', 'manifest.adapter_version is not supported by this adapter');
+        throw new OfflineStagingError(
+            'INPUT_ERROR',
+            `manifest.adapter_version ${manifest.adapter_version || ''} is not supported; this build only accepts ${adapterName}@${ADAPTER_VERSIONS[adapterName]}`
+        );
     }
     if (manifest.raw_media_type !== ADAPTER_MEDIA_TYPES[adapterName]) {
         throw new OfflineStagingError('INPUT_ERROR', 'manifest.raw_media_type does not match the requested adapter');
@@ -59,6 +62,7 @@ function buildObservation(manifest, draft, ingestedAt) {
         source_provider: manifest.source_provider,
         source_url: manifest.source_url,
         captured_at: manifest.captured_at,
+        capture_time_status: manifest.capture_time_status,
         source_timezone: manifest.source_timezone,
         raw_sha256: manifest.raw_sha256,
         adapter: manifest.adapter,
@@ -128,6 +132,9 @@ function createObservationQuarantine(observation) {
                 source_timezone: observation.source_timezone,
                 idempotency_key: observation.idempotency_key,
                 provenance_status: observation.provenance_status,
+                // 可选合同字段只在真实存在时进入证据，保持旧 quarantine 输出不变。
+                ...(observation.source_quote_series ? { source_quote_series: observation.source_quote_series } : {}),
+                ...(observation.capture_time_status ? { capture_time_status: observation.capture_time_status } : {}),
             },
             source_fields: {
                 away_team: observation.away_team,

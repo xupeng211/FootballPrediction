@@ -9,9 +9,14 @@ const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { EXIT_CODES, main } = require('../../scripts/ops/odds_staging_dry_run');
+const { ADAPTER_VERSIONS } = require('../../src/infrastructure/odds_staging/adapters');
 
 const PROJECT_ROOT = path.resolve(__dirname, '../..');
 const CSV_FIXTURE = path.join(PROJECT_ROOT, 'tests/fixtures/odds_staging/football_data_explicit.fixture.csv');
+const HISTORICAL_CSV_FIXTURE = path.join(
+    PROJECT_ROOT,
+    'tests/fixtures/odds_staging/football_data_historical_columns.fixture.csv'
+);
 const HTML_FIXTURE = path.join(PROJECT_ROOT, 'tests/fixtures/odds_staging/oddsportal_explicit.fixture.html');
 
 function sha256File(filePath) {
@@ -47,7 +52,7 @@ function writeInputs(t, rawPath, adapter) {
             raw_size_bytes: fs.statSync(rawPath).size,
             raw_sha256: sha256File(rawPath),
             adapter,
-            adapter_version: '1.0.0',
+            adapter_version: ADAPTER_VERSIONS[adapter],
             provenance_status: 'fixture',
         })}\n`,
         'utf8'
@@ -309,4 +314,83 @@ test('CLI 将 null explicit envelope 作为 adapter quarantine，而非裸 TypeE
     assert.equal(result.status, EXIT_CODES.success);
     assert.equal(result.stderr, '');
     assert.equal(JSON.parse(result.stdout).quarantine_count, 1);
+});
+
+test('CLI 明确拒绝旧 adapter_version manifest，不静默使用错误版本', t => {
+    const inputs = writeInputs(t, CSV_FIXTURE, 'football-data-csv');
+    const manifest = JSON.parse(fs.readFileSync(inputs.manifestPath, 'utf8'));
+    fs.writeFileSync(inputs.manifestPath, `${JSON.stringify({ ...manifest, adapter_version: '1.0.0' })}\n`, 'utf8');
+    const result = invoke([
+        '--source',
+        CSV_FIXTURE,
+        '--manifest',
+        inputs.manifestPath,
+        '--adapter',
+        'football-data-csv',
+        '--candidates',
+        inputs.candidatesPath,
+    ]);
+
+    assert.equal(result.status, EXIT_CODES.input_error);
+    assert.match(result.stderr, /adapter_version 1\.0\.0 is not supported/);
+    assert.equal(result.stdout, '');
+});
+
+test('CLI historical_git_recovery manifest 空候选 dry-run 正常完成且全部隔离', t => {
+    const directory = createTempDirectory(t);
+    const manifestPath = path.join(directory, 'source-manifest.historical.json');
+    const candidatesPath = path.join(directory, 'candidates.empty.json');
+    fs.writeFileSync(
+        manifestPath,
+        `${JSON.stringify({
+            schema_version: 'odds-source-manifest/v1',
+            source_provider: 'football-data-historical',
+            acquisition_mode: 'historical_git_recovery',
+            source_url: `git+repository://example/repository@${'a'.repeat(40)}/data/history.csv`,
+            declared_upstream_url: null,
+            source_match_id: null,
+            captured_at: null,
+            capture_time_status: 'unknown',
+            recovered_at: '2026-07-17T00:00:00Z',
+            source_timezone: 'unknown',
+            raw_path: HISTORICAL_CSV_FIXTURE,
+            raw_media_type: 'text/csv',
+            raw_size_bytes: fs.statSync(HISTORICAL_CSV_FIXTURE).size,
+            raw_sha256: sha256File(HISTORICAL_CSV_FIXTURE),
+            adapter: 'football-data-csv',
+            adapter_version: ADAPTER_VERSIONS['football-data-csv'],
+            provenance_status: 'declared',
+            upstream_provenance_status: 'unverified',
+            license_status: 'unverified',
+            repository_provenance: {
+                repository: 'example/repository',
+                commit_sha: 'a'.repeat(40),
+                blob_sha: 'b'.repeat(40),
+                path: 'data/history.csv',
+                commit_timestamp: '2026-01-29T19:22:29+08:00',
+            },
+        })}\n`,
+        'utf8'
+    );
+    fs.writeFileSync(candidatesPath, '[]\n', 'utf8');
+    const result = invoke([
+        '--source',
+        HISTORICAL_CSV_FIXTURE,
+        '--manifest',
+        manifestPath,
+        '--adapter',
+        'football-data-csv',
+        '--candidates',
+        candidatesPath,
+        '--ingested-at',
+        '2026-07-16T00:00:00.000Z',
+    ]);
+
+    assert.equal(result.status, EXIT_CODES.success);
+    assert.equal(result.stderr, '');
+    const summary = JSON.parse(result.stdout);
+    assert.equal(summary.default_mode, 'dry_run_no_write');
+    assert.equal(summary.accepted_count, 0);
+    assert.ok(summary.total_observations > 0);
+    assert.ok(summary.quarantine_count > 0);
 });
