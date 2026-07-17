@@ -14,6 +14,7 @@ const {
     createCanonicalObservation,
 } = require('../../src/infrastructure/odds_staging/contracts');
 const { ADAPTER_VERSIONS, adaptFootballDataCsv } = require('../../src/infrastructure/odds_staging/adapters');
+const { detectFakeOdds } = require('../../src/infrastructure/odds_staging/fakeOddsDetector');
 const { runOfflineStaging } = require('../../src/infrastructure/odds_staging/pipeline');
 const { loadSourceBundle, validateSourceManifest } = require('../../src/infrastructure/odds_staging/sourceManifest');
 const { validateObservation } = require('../../src/infrastructure/odds_staging/validators');
@@ -492,4 +493,134 @@ test('adapter 版本纪律：旧 1.0.0 manifest 被明确拒绝，不静默降�
             }),
         /adapter_version 1\.0\.0 is not supported.*football-data-csv@1\.1\.0/
     );
+});
+
+const IMPLIED_PROBABILITY_REASON = 'one_x_two_implied_probability_out_of_bounds';
+const REPEATED_VECTOR_FLAG = 'repeated_one_x_two_vector_across_source_matches';
+
+function runFakeOddsRow(t, header, row) {
+    const rawPath = writeRawText(t, 'fake-odds.fixture.csv', `${header}\n${row}\n`);
+    const { manifestPath } = writeFixtureManifest(t, rawPath);
+    return runOfflineStaging({
+        sourcePath: rawPath,
+        manifestPath,
+        adapter: 'football-data-csv',
+        candidates: [historicalCandidates()[0]],
+        ingestedAt: FIXED_INGESTED_AT,
+    });
+}
+
+test('fake-odds 检测按 source_quote_series 分组：plain 与 C 并存不再静默跳过', async t => {
+    const header = 'Div,Date,Time,HomeTeam,AwayTeam,B365H,B365D,B365A,B365CH,B365CD,B365CA';
+
+    await t.test('plain 荒谬 + C 正常：只有 plain 三条获得隐含概率 reason', t2 => {
+        const result = runFakeOddsRow(t2, header, 'E0,05/08/2025,19:00,Alpha FC,Beta FC,50,50,50,2.10,3.40,3.30');
+        assert.equal(result.summary.accepted_count, 3);
+        assert.equal(result.summary.quarantine_count, 3);
+        assert.ok(result.accepted_observations.every(observation => observation.source_quote_series === 'B365C'));
+        const flagged = result.quarantine.filter(entry => entry.reasons.includes(IMPLIED_PROBABILITY_REASON));
+        assert.equal(flagged.length, 3);
+        assert.ok(flagged.every(entry => entry.evidence.parsed_fields.source_quote_series === 'B365'));
+    });
+
+    await t.test('plain 正常 + C 荒谬：只有 C 三条获得隐含概率 reason', t2 => {
+        const result = runFakeOddsRow(t2, header, 'E0,05/08/2025,19:00,Alpha FC,Beta FC,2.10,3.40,3.30,50,50,50');
+        assert.equal(result.summary.accepted_count, 3);
+        assert.ok(result.accepted_observations.every(observation => observation.source_quote_series === 'B365'));
+        const flagged = result.quarantine.filter(entry => entry.reasons.includes(IMPLIED_PROBABILITY_REASON));
+        assert.equal(flagged.length, 3);
+        assert.ok(flagged.every(entry => entry.evidence.parsed_fields.source_quote_series === 'B365C'));
+    });
+
+    await t.test('两个 series 都荒谬：6 条全部获得隐含概率 reason', t2 => {
+        const result = runFakeOddsRow(t2, header, 'E0,05/08/2025,19:00,Alpha FC,Beta FC,50,50,50,60,60,60');
+        assert.equal(result.summary.accepted_count, 0);
+        const flagged = result.quarantine.filter(entry => entry.reasons.includes(IMPLIED_PROBABILITY_REASON));
+        assert.equal(flagged.length, 6);
+    });
+});
+
+test('uppercase 与 snake_case 同 series 重复不再禁用检测，冲突保持 fail-closed', async t => {
+    const header = 'Div,Date,Time,HomeTeam,AwayTeam,B365H,B365D,B365A,b365_home_odds,b365_draw_odds,b365_away_odds';
+
+    await t.test('相同荒谬值重复：reason 保留到合并后的 primary，series 保持 B365', t2 => {
+        const result = runFakeOddsRow(t2, header, 'E0,05/08/2025,19:00,Alpha FC,Beta FC,50,50,50,50,50,50');
+        assert.equal(result.summary.accepted_count, 0);
+        assert.equal(result.summary.semantic_duplicate_count, 3);
+        const flagged = result.quarantine.filter(entry => entry.reasons.includes(IMPLIED_PROBABILITY_REASON));
+        assert.equal(flagged.length, 3);
+        assert.ok(flagged.every(entry => entry.evidence.parsed_fields.source_quote_series === 'B365'));
+    });
+
+    await t.test('相同正常值重复：不误伤，semantic duplicate 照旧合并', t2 => {
+        const result = runFakeOddsRow(t2, header, 'E0,05/08/2025,19:00,Alpha FC,Beta FC,2.10,3.40,3.60,2.10,3.40,3.60');
+        assert.equal(result.summary.accepted_count, 3);
+        assert.equal(result.summary.semantic_duplicate_count, 3);
+        assert.equal(result.summary.quarantine_count, 0);
+    });
+
+    await t.test('冲突值：不任选其一，semantic_duplicate_conflict 双方隔离', t2 => {
+        const result = runFakeOddsRow(t2, header, 'E0,05/08/2025,19:00,Alpha FC,Beta FC,50,50,50,2.10,3.40,3.60');
+        assert.equal(result.summary.accepted_count, 0);
+        assert.equal(result.summary.semantic_conflict_count, 3);
+        assert.equal(
+            result.quarantine.filter(entry => entry.reasons.includes('semantic_duplicate_conflict')).length,
+            6
+        );
+        assert.equal(result.quarantine.filter(entry => entry.reasons.includes(IMPLIED_PROBABILITY_REASON)).length, 0);
+    });
+});
+
+test('跨比赛重复向量按 series 隔离；旧无 series observation 行为保持', async t => {
+    const vectorObservation = (matchId, selection, odds, series) =>
+        baseObservation({
+            source_match_id: matchId,
+            selection,
+            decimal_odds: odds,
+            raw_record_locator: `fixture:${matchId}:${series || 'legacy'}:${selection}`,
+            ...(series ? { source_quote_series: series } : {}),
+        });
+    const triplet = (matchId, odds, series) =>
+        ['home', 'draw', 'away'].map((selection, index) => vectorObservation(matchId, selection, odds[index], series));
+
+    await t.test('同一 series 两场相同向量仍获得 repeated 标记', () => {
+        const checked = detectFakeOdds([
+            ...triplet('m1', [2.8, 3.3, 2.7], 'B365'),
+            ...triplet('m2', [2.8, 3.3, 2.7], 'B365'),
+        ]);
+        assert.equal(checked.length, 6);
+        assert.ok(checked.every(observation => observation.quality_flags.includes(REPEATED_VECTOR_FLAG)));
+    });
+
+    await t.test('不同 series 相同向量不得互相制造 repeated 标记', () => {
+        const checked = detectFakeOdds([
+            ...triplet('m1', [2.8, 3.3, 2.7], 'B365'),
+            ...triplet('m2', [2.8, 3.3, 2.7], 'B365C'),
+        ]);
+        assert.ok(checked.every(observation => !observation.quality_flags.includes(REPEATED_VECTOR_FLAG)));
+    });
+
+    await t.test('相同重复项异常时 reason 传播到包括重复项在内的全部 observation', () => {
+        const checked = detectFakeOdds([
+            ...triplet('m1', [50, 50, 50], 'B365'),
+            ...triplet('m1', [50, 50, 50], 'B365'),
+        ]);
+        assert.equal(checked.length, 6);
+        assert.ok(checked.every(observation => observation.quarantine_reasons.includes(IMPLIED_PROBABILITY_REASON)));
+    });
+
+    await t.test('旧无 series observation：隐含概率与 repeated 检测均保持，不注入新字段', () => {
+        const absurd = detectFakeOdds(triplet('m1', [50, 50, 50], null));
+        assert.ok(absurd.every(observation => observation.quarantine_reasons.includes(IMPLIED_PROBABILITY_REASON)));
+        const repeated = detectFakeOdds([
+            ...triplet('m1', [2.8, 3.3, 2.7], null),
+            ...triplet('m2', [2.8, 3.3, 2.7], null),
+        ]);
+        assert.ok(repeated.every(observation => observation.quality_flags.includes(REPEATED_VECTOR_FLAG)));
+        assert.ok(
+            [...absurd, ...repeated].every(
+                observation => !Object.prototype.hasOwnProperty.call(observation, 'source_quote_series')
+            )
+        );
+    });
 });

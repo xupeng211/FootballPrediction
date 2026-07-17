@@ -11,6 +11,9 @@ const DEFAULT_FAKE_ODDS_CONFIG = Object.freeze({
     quarantine_repeated_vectors: false,
 });
 
+// 已知旧限制（本轮如实保留、不修复）：source_match_id=null 时同一 bookmaker 的多行仍会
+// 落入同一 group，使单场 1X2 隐含概率检测退化为跳过；当前历史数据全部 quarantine，该
+// 限制不影响接受结果，留待显式授权的身份重构轮次处理。
 function groupKey(observation) {
     return stableStringify({
         source_provider: observation.source_provider,
@@ -19,6 +22,9 @@ function groupKey(observation) {
         market: observation.market,
         snapshot_type: observation.snapshot_type,
         source_observed_at: observation.source_observed_at,
+        // source-native quote series 是独立报价序列：B365 与 B365C 必须分别检测；
+        // 缺失该字段的旧 observation 统一归入 null，分组行为与既有版本一致。
+        source_quote_series: observation.source_quote_series ?? null,
     });
 }
 
@@ -28,11 +34,16 @@ function completeOneXTwoVector(group) {
         if (!['home', 'draw', 'away'].includes(entry.selection)) {
             return null;
         }
-        if (bySelection.has(entry.selection)) {
-            return null;
-        }
         const decimalOdds = Number(entry.decimal_odds);
         if (!Number.isFinite(decimalOdds) || decimalOdds <= 1) {
+            return null;
+        }
+        if (bySelection.has(entry.selection)) {
+            // 同一 selection 的完全相同重复（如 uppercase 与 snake_case 同值列）折叠为同一表示，
+            // 不得使守卫失效；数值冲突则不可判定：不任选其一，交由下游 semantic conflict fail-closed。
+            if (bySelection.get(entry.selection) === decimalOdds) {
+                continue;
+            }
             return null;
         }
         bySelection.set(entry.selection, decimalOdds);
@@ -104,6 +115,8 @@ function detectFakeOdds(observations = [], options = {}) {
             bookmaker: first.bookmaker,
             market: first.market,
             snapshot_type: first.snapshot_type,
+            // 跨比赛重复向量同样按 series 隔离：不同 series 偶合相同向量不得互相制造标记。
+            source_quote_series: first.source_quote_series ?? null,
             vector: complete.vector,
         });
         if (!repeatedVectors.has(key)) {
