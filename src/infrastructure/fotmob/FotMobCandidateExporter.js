@@ -77,7 +77,9 @@ async function fetchPage(url, options = {}) {
  * Sleep for `ms` milliseconds.
  */
 function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(resolve => {
+        setTimeout(resolve, ms);
+    });
 }
 
 // ----------------------------------------------------------------
@@ -152,6 +154,58 @@ function extractPageIdentity(nd) {
 }
 
 /**
+ * Maximum number of excluded fixture samples retained in the audit.
+ */
+const MAX_EXCLUDED_SAMPLES = 10;
+
+/**
+ * Create an empty fixture extraction audit.
+ */
+function createEmptyFixtureAudit() {
+    return {
+        raw_fixture_count: 0,
+        excluded_fixture_count: 0,
+        excluded_by_reason: {},
+        excluded_fixture_samples: [],
+        accepted_fixture_count: 0,
+    };
+}
+
+/**
+ * Record one excluded fixture in the audit.
+ * Samples are bounded and store only the source match id, never the
+ * full fixture payload.
+ */
+function recordExcludedFixture(audit, fixture) {
+    audit.excluded_fixture_count += 1;
+    audit.excluded_by_reason['Ab'] = (audit.excluded_by_reason['Ab'] || 0) + 1;
+    if (audit.excluded_fixture_samples.length >= MAX_EXCLUDED_SAMPLES) {
+        return;
+    }
+    const id = fixture?.id ? String(fixture.id).trim() : null;
+    if (id && isNumericExternalId(id)) {
+        audit.excluded_fixture_samples.push({ source_match_id: id, reason_code: 'Ab' });
+    }
+}
+
+/**
+ * Build an accepted fixture record, or null when the fixture does not
+ * satisfy the candidate contract (numeric id, both teams, kickoff).
+ */
+function extractAcceptedFixture(fixture) {
+    const id = fixture?.id ? String(fixture.id).trim() : '';
+    const home = fixture?.home?.name || null;
+    const away = fixture?.away?.name || null;
+    const kickoff = fixture?.status?.utcTime || null;
+
+    if (!isNumericExternalId(id) || !home || !away || !kickoff) {
+        return null;
+    }
+
+    return { id, home, away, kickoff };
+}
+
+/**
  * Extract all fixtures from pageProps.
  * Returns { fixtures, audit } where audit records exclusion counts.
  * Excludes abandoned matches (status.reason.short === 'Ab').
@@ -159,67 +213,25 @@ function extractPageIdentity(nd) {
  */
 function extractFixtures(nd) {
     const pp = nd?.props?.pageProps;
-    if (!pp)
-        return {
-            fixtures: [],
-            audit: {
-                raw_fixture_count: 0,
-                excluded_fixture_count: 0,
-                excluded_by_reason: {},
-                excluded_fixture_samples: [],
-                accepted_fixture_count: 0,
-            },
-        };
+    const raw = pp ? pp.fixtures?.allMatches : null;
+    if (!Array.isArray(raw)) {
+        return { fixtures: [], audit: createEmptyFixtureAudit() };
+    }
 
-    const raw = pp.fixtures?.allMatches;
-    if (!Array.isArray(raw))
-        return {
-            fixtures: [],
-            audit: {
-                raw_fixture_count: 0,
-                excluded_fixture_count: 0,
-                excluded_by_reason: {},
-                excluded_fixture_samples: [],
-                accepted_fixture_count: 0,
-            },
-        };
-
-    const MAX_EXCLUDED_SAMPLES = 10;
-    const audit = {
-        raw_fixture_count: raw.length,
-        excluded_fixture_count: 0,
-        excluded_by_reason: {},
-        excluded_fixture_samples: [],
-        accepted_fixture_count: 0,
-    };
+    const audit = createEmptyFixtureAudit();
+    audit.raw_fixture_count = raw.length;
 
     const fixtures = [];
     for (const f of raw) {
-        const reasonShort = f?.status?.reason?.short;
-
         // Only explicit 'Ab' is excluded
-        if (reasonShort === 'Ab') {
-            audit.excluded_fixture_count += 1;
-            audit.excluded_by_reason['Ab'] = (audit.excluded_by_reason['Ab'] || 0) + 1;
-            if (audit.excluded_fixture_samples.length < MAX_EXCLUDED_SAMPLES) {
-                const id = f?.id ? String(f.id).trim() : null;
-                if (id && isNumericExternalId(id)) {
-                    audit.excluded_fixture_samples.push({ source_match_id: id, reason_code: 'Ab' });
-                }
-            }
+        if (f?.status?.reason?.short === 'Ab') {
+            recordExcludedFixture(audit, f);
             continue;
         }
-
-        const id = f?.id ? String(f.id).trim() : '';
-        if (!isNumericExternalId(id)) continue;
-
-        const home = f?.home?.name || null;
-        const away = f?.away?.name || null;
-        const kickoff = f?.status?.utcTime || null;
-
-        if (!home || !away || !kickoff) continue;
-
-        fixtures.push({ id, home, away, kickoff });
+        const accepted = extractAcceptedFixture(f);
+        if (accepted) {
+            fixtures.push(accepted);
+        }
     }
 
     audit.accepted_fixture_count = fixtures.length;
@@ -261,8 +273,9 @@ function validateSeasonCandidates(candidates, { competition, season, expectedFix
         if (!c.home_team) errors.push(`missing_home:${c.id}`);
         if (!c.away_team) errors.push(`missing_away:${c.id}`);
         if (c.home_team === c.away_team) errors.push(`same_teams:${c.id}`);
-        if (!c.kickoff_at || !isStrictAbsoluteTimestamp(c.kickoff_at))
+        if (!c.kickoff_at || !isStrictAbsoluteTimestamp(c.kickoff_at)) {
             errors.push(`bad_kickoff:${c.id}:${c.kickoff_at}`);
+        }
         if (c.competition !== competition) errors.push(`wrong_competition:${c.id}:${c.competition}`);
         if (c.season !== season) errors.push(`wrong_season:${c.id}:${c.season}`);
 
@@ -321,6 +334,167 @@ function computeBusinessContentHash(candidates) {
 // ----------------------------------------------------------------
 
 /**
+ * Build the FotMob fixtures page URL for one season.
+ */
+function buildSeasonFixturesUrl(leagueId, leagueSlug, season) {
+    const seasonParam = encodeURIComponent(season);
+    const pathPart = FIXTURES_URL_PATTERN.replace('{leagueId}', leagueId).replace('{slug}', leagueSlug);
+    return `${FOTMOB_BASE_URL}${pathPart}?season=${seasonParam}`;
+}
+
+/**
+ * Classify the observed page identity against the requested league/season.
+ * Returns { ok, reason } where reason is null when ok.
+ */
+function classifySeasonIdentity(identity, leagueId, requestedSeasonCanonical) {
+    if (!identity) {
+        return { ok: false, reason: 'identity_extraction_failed' };
+    }
+    const nameOk = Boolean(identity.league_name) && /premier\s*league/i.test(String(identity.league_name).trim());
+    if (!nameOk) {
+        return { ok: false, reason: 'competition_identity_mismatch' };
+    }
+    if (String(identity.league_id) !== leagueId) {
+        return { ok: false, reason: 'league_id_mismatch' };
+    }
+    if (identity.season_canonical === null) {
+        return { ok: false, reason: 'season_identity_missing' };
+    }
+    if (identity.season_canonical !== requestedSeasonCanonical) {
+        return { ok: false, reason: 'season_identity_mismatch' };
+    }
+    return { ok: true, reason: null };
+}
+
+/**
+ * Safe identity summary for audit output (never full page data).
+ */
+function buildSafeIdentitySummary(identity) {
+    if (!identity) {
+        return null;
+    }
+    return {
+        league_name: identity.league_name,
+        league_id: identity.league_id,
+        season_raw: identity.season_raw,
+        season_canonical: identity.season_canonical,
+    };
+}
+
+/**
+ * Process a single season: budget check, one fixtures request, identity
+ * verification, fixture extraction, candidate building, and per-season
+ * validation.
+ * Returns { seasonResult, candidates, requestsUsed, stop, succeeded }.
+ * `stop` is set only for blocking statuses (403/429); `succeeded` marks a
+ * fully processed season and drives inter-season delay placement.
+ */
+async function processSeason(season, context) {
+    const { leagueId, competition, leagueSlug, deps, userAgent, requestCount, maxRequests } = context;
+
+    if (requestCount >= maxRequests) {
+        return {
+            seasonResult: { season, result: 'request_budget_exhausted', candidates: 0, identity: null },
+            candidates: [],
+            requestsUsed: 0,
+            stop: false,
+            succeeded: false,
+        };
+    }
+
+    const url = buildSeasonFixturesUrl(leagueId, leagueSlug, season);
+    const _fetchPage = deps.fetchPage || fetchPage;
+
+    let resp;
+    try {
+        resp = await _fetchPage(url, { userAgent });
+    } catch (err) {
+        return {
+            seasonResult: { season, result: `fetch_error:${err.message}`, candidates: 0, identity: null },
+            candidates: [],
+            requestsUsed: 1,
+            stop: false,
+            succeeded: false,
+        };
+    }
+
+    if (resp.status === 403 || resp.status === 429) {
+        return {
+            seasonResult: { season, result: `blocked_http_${resp.status}`, candidates: 0, identity: null },
+            candidates: [],
+            requestsUsed: 1,
+            stop: true,
+            succeeded: false,
+        };
+    }
+
+    if (resp.status !== 200) {
+        return {
+            seasonResult: { season, result: `http_${resp.status}`, candidates: 0, identity: null },
+            candidates: [],
+            requestsUsed: 1,
+            stop: false,
+            succeeded: false,
+        };
+    }
+
+    const nd = extractNextData(resp.body);
+    if (!nd) {
+        return {
+            seasonResult: { season, result: 'no_next_data', candidates: 0, identity: null },
+            candidates: [],
+            requestsUsed: 1,
+            stop: false,
+            succeeded: false,
+        };
+    }
+
+    const identity = extractPageIdentity(nd);
+    const verdict = classifySeasonIdentity(identity, leagueId, normaliseSeason(season));
+    if (!verdict.ok) {
+        return {
+            seasonResult: {
+                season,
+                result: verdict.reason,
+                candidates: 0,
+                identity: buildSafeIdentitySummary(identity),
+            },
+            candidates: [],
+            requestsUsed: 1,
+            stop: false,
+            succeeded: false,
+        };
+    }
+
+    const extraction = extractFixtures(nd);
+    const seasonCandidates = extraction.fixtures.map(f => buildCandidate(f, leagueId, competition, season));
+    const validation = validateSeasonCandidates(seasonCandidates, {
+        competition,
+        season,
+        expectedFixtures: EPL_FIXTURES_PER_SEASON,
+    });
+
+    return {
+        seasonResult: {
+            season,
+            result: validation.valid ? 'complete' : 'validation_failed',
+            candidates: seasonCandidates.length,
+            identity: {
+                league_name: identity.league_name,
+                league_id: identity.league_id,
+                season: identity.season_canonical,
+            },
+            audit: extraction.audit,
+            validation,
+        },
+        candidates: seasonCandidates,
+        requestsUsed: 1,
+        stop: false,
+        succeeded: true,
+    };
+}
+
+/**
  * Export FotMob league schedule candidates for one or more seasons.
  *
  * @param {Object} options
@@ -337,7 +511,6 @@ async function exportCandidates(options = {}) {
     const seasons = Array.isArray(options.seasons) ? options.seasons : [];
     const leagueSlug = options.leagueSlug || competition.toLowerCase().replace(/\s+/g, '-');
     const deps = options.deps || {};
-    const _fetchPage = deps.fetchPage || fetchPage;
     const _delay = deps.delay || delay;
     const _clock = deps.clock || (() => new Date().toISOString());
 
@@ -351,108 +524,26 @@ async function exportCandidates(options = {}) {
     let requestCount = 0;
 
     for (let i = 0; i < seasons.length; i += 1) {
-        const season = seasons[i];
-        const seasonParam = encodeURIComponent(season);
-        const url = `${FOTMOB_BASE_URL}${FIXTURES_URL_PATTERN.replace('{leagueId}', leagueId).replace('{slug}', leagueSlug)}?season=${seasonParam}`;
-        const seasonCandidates = [];
-        let pageOk = false;
+        const outcome = await processSeason(seasons[i], {
+            leagueId,
+            competition,
+            leagueSlug,
+            deps,
+            userAgent: options.userAgent,
+            requestCount,
+            maxRequests,
+        });
 
-        // Try primary URL
-        if (requestCount >= maxRequests) {
-            seasonResults.push({ season, result: 'request_budget_exhausted', candidates: 0, identity: null });
-            continue;
-        }
+        requestCount += outcome.requestsUsed;
+        seasonResults.push(outcome.seasonResult);
+        allCandidates.push(...outcome.candidates);
 
-        requestCount += 1;
-        let resp;
-        try {
-            resp = await _fetchPage(url, { userAgent: options.userAgent });
-        } catch (err) {
-            seasonResults.push({ season, result: `fetch_error:${err.message}`, candidates: 0, identity: null });
-            continue;
-        }
-
-        if (resp.status === 403 || resp.status === 429) {
-            seasonResults.push({ season, result: `blocked_http_${resp.status}`, candidates: 0, identity: null });
+        if (outcome.stop) {
             break;
         }
 
-        if (resp.status !== 200) {
-            seasonResults.push({ season, result: `http_${resp.status}`, candidates: 0, identity: null });
-            continue;
-        }
-
-        const nd = extractNextData(resp.body);
-        if (!nd) {
-            seasonResults.push({ season, result: 'no_next_data', candidates: 0, identity: null });
-            continue;
-        }
-
-        const identity = extractPageIdentity(nd);
-        const requestedSeasonCanonical = normaliseSeason(season);
-        const identityOk =
-            identity &&
-            identity.league_name &&
-            /premier\s*league/i.test(String(identity.league_name).trim()) &&
-            String(identity.league_id) === leagueId &&
-            identity.season_canonical !== null &&
-            identity.season_canonical === requestedSeasonCanonical;
-
-        if (!identityOk) {
-            const reason = !identity
-                ? 'identity_extraction_failed'
-                : !identity.league_name || !/premier\s*league/i.test(String(identity.league_name).trim())
-                  ? 'competition_identity_mismatch'
-                  : String(identity.league_id) !== leagueId
-                    ? 'league_id_mismatch'
-                    : identity.season_canonical === null
-                      ? 'season_identity_missing'
-                      : 'season_identity_mismatch';
-            seasonResults.push({
-                season,
-                result: reason,
-                candidates: 0,
-                identity: identity
-                    ? {
-                          league_name: identity.league_name,
-                          league_id: identity.league_id,
-                          season_raw: identity.season_raw,
-                          season_canonical: identity.season_canonical,
-                      }
-                    : null,
-            });
-            continue;
-        }
-
-        pageOk = true;
-        const extraction = extractFixtures(nd);
-        const fixtures = extraction.fixtures;
-        for (const f of fixtures) {
-            seasonCandidates.push(buildCandidate(f, leagueId, competition, season));
-        }
-        allCandidates.push(...seasonCandidates);
-
-        const validation = validateSeasonCandidates(seasonCandidates, {
-            competition,
-            season,
-            expectedFixtures: EPL_FIXTURES_PER_SEASON,
-        });
-
-        seasonResults.push({
-            season,
-            result: validation.valid ? 'complete' : 'validation_failed',
-            candidates: seasonCandidates.length,
-            identity: {
-                league_name: identity.league_name,
-                league_id: identity.league_id,
-                season: identity.season_canonical,
-            },
-            audit: extraction.audit,
-            validation,
-        });
-
-        // Delay between seasons
-        if (i < seasons.length - 1) {
+        // Delay only after a fully processed season, and never after the last one
+        if (outcome.succeeded && i < seasons.length - 1) {
             await _delay(options.requestDelayMs || DEFAULT_DELAY_MS);
         }
     }
@@ -610,6 +701,20 @@ function buildSummaryDocument(candidates, snapshot, meta) {
 }
 
 /**
+ * Best-effort unlink used during atomic-write cleanup.
+ * Cleanup failures are intentionally swallowed so the original write
+ * or rename error is never masked.
+ */
+function bestEffortUnlink(fileSystem, filePath) {
+    try {
+        fileSystem.unlinkSync(filePath);
+    } catch (cleanupError) {
+        // Cleanup is best-effort; preserve the original write failure.
+        void cleanupError;
+    }
+}
+
+/**
  * Write the full candidate JSON and summary JSON to the output directory.
  */
 function writeOutputFiles(outputDir, candidates, snapshot, meta, options = {}) {
@@ -638,12 +743,8 @@ function writeOutputFiles(outputDir, candidates, snapshot, meta, options = {}) {
         fileSystem.renameSync(tempCandidate, candidatePath);
         fileSystem.renameSync(tempSummary, summaryPath);
     } catch (err) {
-        try {
-            fileSystem.unlinkSync(tempCandidate);
-        } catch {}
-        try {
-            fileSystem.unlinkSync(tempSummary);
-        } catch {}
+        bestEffortUnlink(fileSystem, tempCandidate);
+        bestEffortUnlink(fileSystem, tempSummary);
         throw err;
     }
 

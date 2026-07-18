@@ -23,7 +23,9 @@ const {
     verifyOutputPathSafety,
     buildOutputDocument,
     buildSummaryDocument,
+    writeOutputFiles,
     exportCandidates,
+    delay,
     MAX_TOTAL_REQUESTS,
 } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
 
@@ -105,6 +107,53 @@ function generateSeasonFixtures(startId, count = EPL_FIXTURES_PER_SEASON) {
         fixtures.push(buildFixture(startId + i, h, a, kickoff));
     }
     return fixtures;
+}
+
+// Build the canonical 2022/2023 candidate for a synthetic fixture.
+function candidateFromFixture(f) {
+    return buildCandidate(
+        { id: f.id.toString(), home: f.home.name, away: f.away.name, kickoff: f.status.utcTime },
+        47,
+        'Premier League',
+        '2022/2023'
+    );
+}
+
+// Run a cleanup step without letting its failure mask the test result.
+function bestEffort(fn) {
+    try {
+        fn();
+    } catch (cleanupError) {
+        // Test cleanup is best-effort.
+        void cleanupError;
+    }
+}
+
+const EPL_BASE_IDS = { '2022/2023': 3900000, '2023/2024': 4190000, '2024/2025': 4500000 };
+const FIXED_CLOCK = () => '2026-07-18T00:00:00Z';
+// Business hash of the 3-season mock pipeline, pinned before the M3-D2BG refactor.
+const EXPECTED_PIPELINE_HASH = '046dac4c0a9ff711befc55f5aa885494367303ce9d0ee3aa30c9a5afe1a86c15';
+
+// Fetch mock: canonical Premier League page with 380 synthetic fixtures per season.
+function makeSeasonPageFetch(onSeason) {
+    return async url => {
+        const season = decodeURIComponent(url.match(/season=([^&]+)/)[1]);
+        if (onSeason) {
+            onSeason(season);
+        }
+        const fixtures = generateSeasonFixtures(EPL_BASE_IDS[season] || 1000, EPL_FIXTURES_PER_SEASON);
+        const { html } = buildNextDataPage({ fixtures, season });
+        return { status: 200, contentType: 'text/html', body: html };
+    };
+}
+
+// Rebuild page HTML after mutating the generated __NEXT_DATA__ object.
+function rebuildPageHtml(nd, html) {
+    const json = JSON.stringify(nd);
+    return html.replace(
+        /<script id="__NEXT_DATA__"[^>]*>.*?<\/script>/s,
+        `<script id="__NEXT_DATA__" type="application/json">${json}</script>`
+    );
 }
 
 // -----------------------------------------------------------------
@@ -323,14 +372,7 @@ test('buildCandidate produces correct structure', () => {
 });
 
 test('validateSeasonCandidates passes for 380 valid candidates', () => {
-    const candidates = generateSeasonFixtures(1000, 380).map(f =>
-        buildCandidate(
-            { id: f.id.toString(), home: f.home.name, away: f.away.name, kickoff: f.status.utcTime },
-            47,
-            'Premier League',
-            '2022/2023'
-        )
-    );
+    const candidates = generateSeasonFixtures(1000, 380).map(candidateFromFixture);
     const result = validateSeasonCandidates(candidates, {
         competition: 'Premier League',
         season: '2022/2023',
@@ -342,14 +384,7 @@ test('validateSeasonCandidates passes for 380 valid candidates', () => {
 });
 
 test('validateSeasonCandidates rejects 379 fixtures', () => {
-    const candidates = generateSeasonFixtures(1000, 379).map(f =>
-        buildCandidate(
-            { id: f.id.toString(), home: f.home.name, away: f.away.name, kickoff: f.status.utcTime },
-            47,
-            'Premier League',
-            '2022/2023'
-        )
-    );
+    const candidates = generateSeasonFixtures(1000, 379).map(candidateFromFixture);
     const result = validateSeasonCandidates(candidates, {
         competition: 'Premier League',
         season: '2022/2023',
@@ -427,14 +462,7 @@ test('validateSeasonCandidates rejects wrong competition', () => {
 // -----------------------------------------------------------------
 
 test('computeBusinessContentHash is stable regardless of input order', () => {
-    const candidates1 = generateSeasonFixtures(1000, 10).map(f =>
-        buildCandidate(
-            { id: f.id.toString(), home: f.home.name, away: f.away.name, kickoff: f.status.utcTime },
-            47,
-            'Premier League',
-            '2022/2023'
-        )
-    );
+    const candidates1 = generateSeasonFixtures(1000, 10).map(candidateFromFixture);
     const candidates2 = [...candidates1].reverse();
     const hash1 = computeBusinessContentHash(candidates1);
     const hash2 = computeBusinessContentHash(candidates2);
@@ -442,14 +470,7 @@ test('computeBusinessContentHash is stable regardless of input order', () => {
 });
 
 test('extracted_at does not affect business content hash', () => {
-    const candidates = generateSeasonFixtures(1000, 10).map(f =>
-        buildCandidate(
-            { id: f.id.toString(), home: f.home.name, away: f.away.name, kickoff: f.status.utcTime },
-            47,
-            'Premier League',
-            '2022/2023'
-        )
-    );
+    const candidates = generateSeasonFixtures(1000, 10).map(candidateFromFixture);
     const hash1 = computeBusinessContentHash(candidates);
     const doc1 = buildOutputDocument(
         candidates,
@@ -521,15 +542,9 @@ test('verifyOutputPathSafety rejects symlink as output path', t => {
             code: 'SAFETY_ERROR',
         });
     } finally {
-        try {
-            fs.unlinkSync(linkPath);
-        } catch {}
-        try {
-            fs.rmdirSync(tmpDir);
-        } catch {}
-        try {
-            fs.rmdirSync(realDir);
-        } catch {}
+        bestEffort(() => fs.unlinkSync(linkPath));
+        bestEffort(() => fs.rmdirSync(tmpDir));
+        bestEffort(() => fs.rmdirSync(realDir));
     }
 });
 
@@ -541,15 +556,9 @@ test('verifyOutputPathSafety rejects symlink into repository', t => {
         fs.symlinkSync(repoRoot, linkPath, 'dir');
         assert.throws(() => verifyOutputPathSafety(linkPath, { repositoryRoot: repoRoot }), { code: 'SAFETY_ERROR' });
     } finally {
-        try {
-            fs.unlinkSync(linkPath);
-        } catch {}
-        try {
-            fs.rmdirSync(outsideDir);
-        } catch {}
-        try {
-            fs.rmdirSync(repoRoot);
-        } catch {}
+        bestEffort(() => fs.unlinkSync(linkPath));
+        bestEffort(() => fs.rmdirSync(outsideDir));
+        bestEffort(() => fs.rmdirSync(repoRoot));
     }
 });
 
@@ -559,9 +568,7 @@ test('verifyOutputPathSafety succeeds for normal directory outside repo', t => {
         const result = verifyOutputPathSafety(tmpDir, { repositoryRoot: '/home/user/repo' });
         assert.ok(result.startsWith('/tmp/m3d2bf_ok_'));
     } finally {
-        try {
-            fs.rmdirSync(tmpDir);
-        } catch {}
+        bestEffort(() => fs.rmdirSync(tmpDir));
     }
 });
 
@@ -570,18 +577,7 @@ test('verifyOutputPathSafety succeeds for normal directory outside repo', t => {
 // -----------------------------------------------------------------
 
 test('exportCandidates succeeds for 3 complete seasons', async () => {
-    const mockFetch = async url => {
-        const seasonMatch = url.match(/season=([^&]+)/);
-        const seasonEncoded = seasonMatch ? seasonMatch[1] : '2022%2F2023';
-        const season = decodeURIComponent(seasonEncoded);
-        const fixtureCount = EPL_FIXTURES_PER_SEASON;
-        const fixtures = generateSeasonFixtures(
-            { '2022/2023': 3900000, '2023/2024': 4190000, '2024/2025': 4500000 }[season] || 1000,
-            fixtureCount
-        );
-        const { html } = buildNextDataPage({ fixtures, season });
-        return { status: 200, contentType: 'text/html; charset=utf-8', body: html };
-    };
+    const mockFetch = makeSeasonPageFetch();
 
     const result = await exportCandidates({
         leagueId: 47,
@@ -618,11 +614,7 @@ test('exportCandidates rejects wrong season (page returns different season)', as
 test('exportCandidates rejects missing season in page', async () => {
     const { nd, html } = buildNextDataPage();
     delete nd.query.season;
-    const json = JSON.stringify(nd);
-    const fixedHtml = html.replace(
-        /<script id="__NEXT_DATA__"[^>]*>.*?<\/script>/s,
-        `<script id="__NEXT_DATA__" type="application/json">${json}</script>`
-    );
+    const fixedHtml = rebuildPageHtml(nd, html);
 
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: fixedHtml });
     const result = await exportCandidates({
@@ -639,11 +631,7 @@ test('exportCandidates rejects missing season in page', async () => {
 test('exportCandidates rejects bad season format in page', async () => {
     const { nd, html } = buildNextDataPage();
     nd.query.season = 'not-a-season';
-    const json = JSON.stringify(nd);
-    const fixedHtml = html.replace(
-        /<script id="__NEXT_DATA__"[^>]*>.*?<\/script>/s,
-        `<script id="__NEXT_DATA__" type="application/json">${json}</script>`
-    );
+    const fixedHtml = rebuildPageHtml(nd, html);
 
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: fixedHtml });
     const result = await exportCandidates({
@@ -660,11 +648,7 @@ test('exportCandidates rejects bad season format in page', async () => {
 test('exportCandidates accepts dash-format season from page', async () => {
     const { nd, html } = buildNextDataPage();
     nd.query.season = '2022-2023';
-    const json = JSON.stringify(nd);
-    const fixedHtml = html.replace(
-        /<script id="__NEXT_DATA__"[^>]*>.*?<\/script>/s,
-        `<script id="__NEXT_DATA__" type="application/json">${json}</script>`
-    );
+    const fixedHtml = rebuildPageHtml(nd, html);
 
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: fixedHtml });
     const result = await exportCandidates({
@@ -828,14 +812,7 @@ test('buildOutputDocument produces correct schema', () => {
 });
 
 test('buildSummaryDocument contains no full candidate data', () => {
-    const candidates = generateSeasonFixtures(1000, 380).map(f =>
-        buildCandidate(
-            { id: f.id.toString(), home: f.home.name, away: f.away.name, kickoff: f.status.utcTime },
-            47,
-            'Premier League',
-            '2022/2023'
-        )
-    );
+    const candidates = generateSeasonFixtures(1000, 380).map(candidateFromFixture);
     const snapshot = {
         source_provider: 'FotMob',
         league_id: '47',
@@ -858,15 +835,7 @@ test('buildSummaryDocument contains no full candidate data', () => {
 // -----------------------------------------------------------------
 
 test('full pipeline: 3 seasons produce exactly 1140 candidates', async () => {
-    const baseIds = { '2022/2023': 3900000, '2023/2024': 4190000, '2024/2025': 4500000 };
-    const mockFetch = async url => {
-        const seasonEncoded = url.match(/season=([^&]+)/)[1];
-        const season = decodeURIComponent(seasonEncoded);
-        const startId = baseIds[season] || 1000;
-        const fixtures = generateSeasonFixtures(startId, EPL_FIXTURES_PER_SEASON);
-        const { html } = buildNextDataPage({ fixtures, season });
-        return { status: 200, contentType: 'text/html', body: html };
-    };
+    const mockFetch = makeSeasonPageFetch();
 
     const result = await exportCandidates({
         leagueId: 47,
@@ -880,4 +849,103 @@ test('full pipeline: 3 seasons produce exactly 1140 candidates', async () => {
     assert.equal(result.meta.total_requests, 3);
     assert.equal(result.snapshot.candidate_count, 1140);
     assert.ok(result.snapshot.business_content_sha256);
+    // Hash contract pinned pre-refactor (M3-D2BG): identical mock data must keep this value.
+    assert.equal(result.snapshot.business_content_sha256, EXPECTED_PIPELINE_HASH);
+});
+
+// -----------------------------------------------------------------
+// Refactor parity: delay, bounded samples, control flow, cleanup
+// -----------------------------------------------------------------
+
+test('delay resolves via mocked timer without network', async t => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    const pending = delay(1000);
+    t.mock.timers.tick(1000);
+    assert.equal(await pending, undefined);
+});
+
+test('extractFixtures bounds excluded samples and stores ids only', () => {
+    const abandoned = generateSeasonFixtures(2000, 15).map(({ id, status }) =>
+        buildFixture(String(id), 'A', 'B', status.utcTime, 'Ab')
+    );
+    const { nd } = buildNextDataPage({ fixtures: abandoned });
+    const result = extractFixtures(nd);
+    assert.equal(result.audit.excluded_fixture_count, 15);
+    assert.equal(result.audit.excluded_fixture_samples.length, 10);
+    assert.deepEqual(Object.keys(result.audit.excluded_fixture_samples[0]).sort(), ['reason_code', 'source_match_id']);
+});
+
+test('exportCandidates fetches seasons serially in order and delays only between successes', async () => {
+    const calls = [];
+    let delays = 0;
+    const mockFetch = makeSeasonPageFetch(season => calls.push(season));
+    await exportCandidates({
+        leagueId: 47,
+        competition: 'Premier League',
+        seasons: ['2022/2023', '2023/2024', '2024/2025'],
+        deps: { fetchPage: mockFetch, delay: async () => (delays += 1), clock: FIXED_CLOCK },
+    });
+    assert.deepEqual(calls, ['2022/2023', '2023/2024', '2024/2025']);
+    assert.equal(delays, 2);
+});
+
+test('exportCandidates continues after fetch error and non-200 without delaying', async () => {
+    const { html } = buildNextDataPage({ fixtures: generateSeasonFixtures(3900000), season: '2024/2025' });
+    const steps = [
+        () => Promise.reject(new Error('boom')),
+        async () => ({ status: 500, contentType: 'text/html', body: '' }),
+        async () => ({ status: 200, contentType: 'text/html', body: html }),
+    ];
+    let delays = 0;
+    const result = await exportCandidates({
+        leagueId: 47,
+        competition: 'Premier League',
+        seasons: ['2022/2023', '2023/2024', '2024/2025'],
+        deps: { fetchPage: () => steps.shift()(), delay: async () => (delays += 1), clock: FIXED_CLOCK },
+    });
+    const results = result.validation.season_results.map(r => r.result);
+    assert.ok(results[0].startsWith('fetch_error:'));
+    assert.equal(results[1], 'http_500');
+    assert.equal(results[2], 'complete');
+    assert.equal(delays, 0);
+    assert.equal(result.candidates.length, 380);
+});
+
+test('writeOutputFiles cleanup never masks the original write or rename error', () => {
+    const baseFs = {
+        lstatSync: () => ({ isDirectory: () => true, isSymbolicLink: () => false }),
+        realpathSync: p => p,
+        writeFileSync: () => {},
+        renameSync: () => {},
+    };
+    const unlinks = [];
+    const throwingUnlink = p => {
+        unlinks.push(p);
+        throw new Error('cleanup failed');
+    };
+    const raise = err => () => {
+        throw err;
+    };
+    const snapshot = {
+        source_provider: 'FotMob',
+        league_id: '47',
+        competition: 'Premier League',
+        seasons: [],
+        candidate_count: 0,
+        business_content_sha256: 'h',
+    };
+    const meta = { schema_version: 'candidate-match-identity/v1', extracted_at: '2026-07-18T00:00:00Z' };
+    const runWith = fileSystem => () =>
+        writeOutputFiles('/tmp', [], snapshot, meta, { repositoryRoot: '/repo', fileSystem });
+    const renameError = new Error('rename failed');
+    const renameFailFs = { ...baseFs, renameSync: raise(renameError), unlinkSync: throwingUnlink };
+    assert.throws(runWith(renameFailFs), err => err === renameError);
+    assert.equal(unlinks.length, 2);
+    assert.ok(unlinks[0].includes('candidate-match-identity.v1.json.tmp.'));
+    assert.ok(unlinks[1].includes('candidate-match-identity.v1.summary.json.tmp.'));
+    unlinks.length = 0;
+    const writeError = new Error('write failed');
+    const writeFailFs = { ...baseFs, writeFileSync: raise(writeError), unlinkSync: throwingUnlink };
+    assert.throws(runWith(writeFailFs), err => err === writeError);
+    assert.equal(unlinks.length, 2);
 });
