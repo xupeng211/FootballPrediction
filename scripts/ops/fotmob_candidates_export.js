@@ -14,6 +14,7 @@ const {
     buildOutputDocument,
     buildSummaryDocument,
     verifyOutputPathSafety,
+    canonicalizeRequestedSeasons,
 } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
 
 const USAGE = [
@@ -97,7 +98,15 @@ function validateArgs(args) {
     const errors = [];
     if (!args.leagueId) errors.push('--league-id is required');
     if (!args.competition) errors.push('--competition is required');
-    if (args.seasons.length === 0) errors.push('at least one --season is required');
+
+    // Validate seasons via the core canonicaliser (no network access)
+    try {
+        const rawSeasons = args.seasons.length === 0 ? [] : args.seasons;
+        canonicalizeRequestedSeasons(rawSeasons);
+    } catch (err) {
+        errors.push(err.message);
+    }
+
     if (args.output) {
         if (!path.isAbsolute(args.output)) {
             errors.push('--output must be an absolute path');

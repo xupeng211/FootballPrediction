@@ -46,6 +46,72 @@ function isNumericExternalId(value) {
 }
 
 // ----------------------------------------------------------------
+// Request season canonicalisation
+// ----------------------------------------------------------------
+
+/**
+ * Canonicalise a list of requested season strings before any network access.
+ * Returns the deduplicated canonical `YYYY/YYYY` array, preserving order.
+ * Throws INPUT_ERROR for invalid, non-consecutive, or duplicate inputs.
+ */
+function canonicalizeRequestedSeasons(values) {
+    if (!Array.isArray(values) || values.length === 0) {
+        throw Object.assign(new Error('At least one season is required'), { code: 'INPUT_ERROR' });
+    }
+
+    // Normalise every value
+    const canonical = [];
+    for (const raw of values) {
+        if (raw === undefined || raw === null) {
+            throw Object.assign(new Error('Season value must be a non-empty string'), { code: 'INPUT_ERROR' });
+        }
+        const c = normaliseSeason(String(raw).trim());
+        if (c === null) {
+            throw Object.assign(
+                new Error(
+                    `Invalid season format: "${String(raw).trim()}" (expected YYYY/YYYY, YYYY-YYYY, YY/YY, or YY-YY)`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+        canonical.push(c);
+    }
+
+    // Duplicate detection (post-normalisation, before consecutive check so
+    // the user sees "Duplicate" rather than "Non-consecutive" for repeats.)
+    const seen = new Set();
+    const dupes = [];
+    for (const c of canonical) {
+        if (seen.has(c)) {
+            dupes.push(c);
+        } else {
+            seen.add(c);
+        }
+    }
+    if (dupes.length > 0) {
+        throw Object.assign(new Error(`Duplicate canonical seasons not allowed: ${dupes.join(', ')}`), {
+            code: 'INPUT_ERROR',
+        });
+    }
+
+    // Consecutive check for multi-season requests (only after dedup)
+    for (let i = 1; i < canonical.length; i += 1) {
+        const prevStart = Number(canonical[i - 1].split('/')[0]);
+        const currStart = Number(canonical[i].split('/')[0]);
+        if (currStart !== prevStart + 1) {
+            throw Object.assign(
+                new Error(
+                    `Non-consecutive seasons: ${canonical[i - 1]} then ${canonical[i]} (expected consecutive starting years)`
+                ),
+                { code: 'INPUT_ERROR' }
+            );
+        }
+    }
+
+    return canonical;
+}
+
+// ----------------------------------------------------------------
 // HTTP helpers
 // ----------------------------------------------------------------
 
@@ -154,7 +220,7 @@ function extractPageIdentity(nd) {
 }
 
 /**
- * Maximum number of excluded fixture samples retained in the audit.
+ * Maximum number of excluded or rejected fixture samples retained in the audit.
  */
 const MAX_EXCLUDED_SAMPLES = 10;
 
@@ -167,6 +233,9 @@ function createEmptyFixtureAudit() {
         excluded_fixture_count: 0,
         excluded_by_reason: {},
         excluded_fixture_samples: [],
+        rejected_fixture_count: 0,
+        rejected_by_reason: {},
+        rejected_fixture_samples: [],
         accepted_fixture_count: 0,
     };
 }
@@ -189,19 +258,53 @@ function recordExcludedFixture(audit, fixture) {
 }
 
 /**
+ * Classify why a fixture fails the candidate contract.
+ * Returns null for valid fixtures, or a deterministic reason code.
+ * Priority order: bad source id, then missing home, missing away, missing kickoff.
+ */
+function classifyFixtureRejection(fixture) {
+    const id = fixture?.id ? String(fixture.id).trim() : '';
+    if (!isNumericExternalId(id)) return 'bad_source_match_id';
+    if (!fixture?.home?.name) return 'missing_home_team';
+    if (!fixture?.away?.name) return 'missing_away_team';
+    if (!fixture?.status?.utcTime) return 'missing_kickoff';
+    return null;
+}
+
+/**
+ * Record one rejected (contract-invalid) fixture in the audit.
+ * Samples are bounded and store at most source_match_id + reason_code.
+ * When no valid source_match_id is available, only reason_code is recorded.
+ */
+function recordRejectedFixture(audit, fixture) {
+    const reason = classifyFixtureRejection(fixture);
+    if (!reason) return;
+
+    audit.rejected_fixture_count += 1;
+    audit.rejected_by_reason[reason] = (audit.rejected_by_reason[reason] || 0) + 1;
+    if (audit.rejected_fixture_samples.length >= MAX_EXCLUDED_SAMPLES) {
+        return;
+    }
+    const id = fixture?.id ? String(fixture.id).trim() : null;
+    const sample = { reason_code: reason };
+    if (id && isNumericExternalId(id)) {
+        sample.source_match_id = id;
+    }
+    audit.rejected_fixture_samples.push(sample);
+}
+
+/**
  * Build an accepted fixture record, or null when the fixture does not
  * satisfy the candidate contract (numeric id, both teams, kickoff).
  */
 function extractAcceptedFixture(fixture) {
-    const id = fixture?.id ? String(fixture.id).trim() : '';
-    const home = fixture?.home?.name || null;
-    const away = fixture?.away?.name || null;
-    const kickoff = fixture?.status?.utcTime || null;
-
-    if (!isNumericExternalId(id) || !home || !away || !kickoff) {
+    if (classifyFixtureRejection(fixture) !== null) {
         return null;
     }
-
+    const id = String(fixture.id).trim();
+    const home = fixture.home.name;
+    const away = fixture.away.name;
+    const kickoff = fixture.status.utcTime;
     return { id, home, away, kickoff };
 }
 
@@ -231,6 +334,8 @@ function extractFixtures(nd) {
         const accepted = extractAcceptedFixture(f);
         if (accepted) {
             fixtures.push(accepted);
+        } else {
+            recordRejectedFixture(audit, f);
         }
     }
 
@@ -299,6 +404,61 @@ function validateSeasonCandidates(candidates, { competition, season, expectedFix
         unique_ids: ids.size,
         unique_source_ids: sourceIds.size,
         unique_teams: new Set([...candidates.flatMap(c => [c.home_team, c.away_team])]).size,
+    };
+}
+
+// ----------------------------------------------------------------
+// Aggregate candidate validation
+// ----------------------------------------------------------------
+
+/**
+ * Validate aggregate integrity across all candidates for all seasons.
+ * Checks global ID uniqueness, source-match-id uniqueness, season
+ * membership, per-season counts, and total count.
+ */
+function validateAggregateCandidates(candidates, canonicalSeasons, expectedPerSeason) {
+    const errors = [];
+    const idSet = new Set();
+    const sourceIdSet = new Set();
+    const perSeason = {};
+    const expectedSeasonSet = new Set(canonicalSeasons);
+
+    for (const c of candidates) {
+        if (idSet.has(c.id)) {
+            errors.push(`aggregate_duplicate_id:${c.id}`);
+        }
+        idSet.add(c.id);
+
+        if (sourceIdSet.has(c.source_match_id)) {
+            errors.push(`aggregate_duplicate_source_match_id:${c.source_match_id}`);
+        }
+        sourceIdSet.add(c.source_match_id);
+
+        if (!expectedSeasonSet.has(c.season)) {
+            errors.push(`unexpected_season:${c.season}:${c.id}`);
+        }
+
+        perSeason[c.season] = (perSeason[c.season] || 0) + 1;
+    }
+
+    for (const s of canonicalSeasons) {
+        const count = perSeason[s] || 0;
+        if (count !== expectedPerSeason) {
+            errors.push(`season_count_mismatch:${s}:${count}`);
+        }
+    }
+
+    const expectedTotal = canonicalSeasons.length * expectedPerSeason;
+    if (candidates.length !== expectedTotal) {
+        errors.push(`aggregate_total_mismatch:${candidates.length} vs expected ${expectedTotal}`);
+    }
+
+    return {
+        valid: errors.length === 0,
+        errors,
+        unique_ids: idSet.size,
+        unique_source_ids: sourceIdSet.size,
+        per_season_counts: perSeason,
     };
 }
 
@@ -474,6 +634,27 @@ async function processSeason(season, context) {
         expectedFixtures: EPL_FIXTURES_PER_SEASON,
     });
 
+    // Audit closure invariant: every fixture must be classified exactly once.
+    // Rejected (contract-invalid) fixtures block season completion.
+    const auditCloses =
+        extraction.audit.raw_fixture_count ===
+        extraction.audit.accepted_fixture_count +
+            extraction.audit.excluded_fixture_count +
+            extraction.audit.rejected_fixture_count;
+
+    if (!auditCloses || extraction.audit.rejected_fixture_count > 0) {
+        const errs = [...validation.errors];
+        if (extraction.audit.rejected_fixture_count > 0) {
+            errs.push(`unexpected_rejected_fixtures:${extraction.audit.rejected_fixture_count}`);
+        }
+        if (!auditCloses) {
+            errs.push(
+                `audit_not_closed:raw=${extraction.audit.raw_fixture_count},sum=${extraction.audit.accepted_fixture_count + extraction.audit.excluded_fixture_count + extraction.audit.rejected_fixture_count}`
+            );
+        }
+        Object.assign(validation, { valid: false, errors: errs });
+    }
+
     return {
         seasonResult: {
             season,
@@ -508,23 +689,22 @@ async function processSeason(season, context) {
 async function exportCandidates(options = {}) {
     const leagueId = String(options.leagueId);
     const competition = String(options.competition);
-    const seasons = Array.isArray(options.seasons) ? options.seasons : [];
+    const rawSeasons = Array.isArray(options.seasons) ? options.seasons : [];
     const leagueSlug = options.leagueSlug || competition.toLowerCase().replace(/\s+/g, '-');
     const deps = options.deps || {};
     const _delay = deps.delay || delay;
     const _clock = deps.clock || (() => new Date().toISOString());
 
-    if (seasons.length === 0) {
-        throw Object.assign(new Error('At least one season is required'), { code: 'INPUT_ERROR' });
-    }
-    const maxRequests = Math.min(seasons.length * 2, MAX_TOTAL_REQUESTS);
+    // Canonicalise before any network access
+    const canonicalSeasons = canonicalizeRequestedSeasons(rawSeasons);
+    const maxRequests = Math.min(canonicalSeasons.length * 2, MAX_TOTAL_REQUESTS);
 
     const allCandidates = [];
     const seasonResults = [];
     let requestCount = 0;
 
-    for (let i = 0; i < seasons.length; i += 1) {
-        const outcome = await processSeason(seasons[i], {
+    for (let i = 0; i < canonicalSeasons.length; i += 1) {
+        const outcome = await processSeason(canonicalSeasons[i], {
             leagueId,
             competition,
             leagueSlug,
@@ -543,7 +723,7 @@ async function exportCandidates(options = {}) {
         }
 
         // Delay only after a fully processed season, and never after the last one
-        if (outcome.succeeded && i < seasons.length - 1) {
+        if (outcome.succeeded && i < canonicalSeasons.length - 1) {
             await _delay(options.requestDelayMs || DEFAULT_DELAY_MS);
         }
     }
@@ -551,8 +731,9 @@ async function exportCandidates(options = {}) {
     const businessHash = computeBusinessContentHash(allCandidates);
     const extractedAt = _clock();
 
-    const allValidated = seasonResults.every(r => r.result === 'complete');
-    const totalExpected = seasons.length * EPL_FIXTURES_PER_SEASON;
+    const aggregateV = validateAggregateCandidates(allCandidates, canonicalSeasons, EPL_FIXTURES_PER_SEASON);
+
+    const allSeasonsComplete = seasonResults.every(r => r.result === 'complete') && aggregateV.valid;
 
     return {
         candidates: allCandidates,
@@ -560,15 +741,16 @@ async function exportCandidates(options = {}) {
             source_provider: 'FotMob',
             league_id: leagueId,
             competition,
-            seasons,
+            seasons: canonicalSeasons,
             candidate_count: allCandidates.length,
             business_content_sha256: businessHash,
         },
         validation: {
-            all_seasons_complete: allValidated && allCandidates.length === totalExpected,
+            all_seasons_complete: allSeasonsComplete,
             season_results: seasonResults,
             total_candidates: allCandidates.length,
-            total_expected: totalExpected,
+            total_expected: canonicalSeasons.length * EPL_FIXTURES_PER_SEASON,
+            aggregate_validation: aggregateV,
         },
         meta: {
             extracted_at: extractedAt,
@@ -759,6 +941,7 @@ module.exports = {
 
     // Season identity
     normaliseSeason,
+    canonicalizeRequestedSeasons,
 
     // Identity helpers
     generateCandidateId,
@@ -769,10 +952,12 @@ module.exports = {
     extractNextData,
     extractPageIdentity,
     extractFixtures,
+    classifyFixtureRejection,
 
     // Building and validation
     buildCandidate,
     validateSeasonCandidates,
+    validateAggregateCandidates,
     computeBusinessContentHash,
 
     // Pipeline

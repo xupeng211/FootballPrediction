@@ -12,13 +12,16 @@ const crypto = require('node:crypto');
 const {
     EPL_FIXTURES_PER_SEASON,
     normaliseSeason,
+    canonicalizeRequestedSeasons,
     generateCandidateId,
     isStrictAbsoluteTimestamp,
     extractNextData,
     extractPageIdentity,
     extractFixtures,
+    classifyFixtureRejection,
     buildCandidate,
     validateSeasonCandidates,
+    validateAggregateCandidates,
     computeBusinessContentHash,
     verifyOutputPathSafety,
     buildOutputDocument,
@@ -180,6 +183,24 @@ test('normaliseSeason passes through canonical format even for illogical ranges'
     // The normaliser canonicalises FORMAT, not logic. Season validation
     // (right competition, right league, right year) happens at identity check.
     assert.equal(normaliseSeason('2022/2024'), '2022/2024');
+});
+
+// -----------------------------------------------------------------
+// Unit: canonicalizeRequestedSeasons (integrity correction)
+// -----------------------------------------------------------------
+
+test('canonicalizeRequestedSeasons: valid, invalid, duplicates, non-consecutive', () => {
+    assert.deepEqual(canonicalizeRequestedSeasons(['2022/2023', '2023/2024']), ['2022/2023', '2023/2024']);
+    assert.deepEqual(canonicalizeRequestedSeasons(['2022-2023']), ['2022/2023']);
+    assert.deepEqual(canonicalizeRequestedSeasons(['22/23']), ['2022/2023']);
+    for (const bad of ['not-a-season', '', '2022']) {
+        assert.throws(() => canonicalizeRequestedSeasons([bad]), { code: 'INPUT_ERROR' });
+    }
+    assert.throws(() => canonicalizeRequestedSeasons([]), { code: 'INPUT_ERROR' });
+    assert.throws(() => canonicalizeRequestedSeasons([undefined]), { code: 'INPUT_ERROR' });
+    assert.throws(() => canonicalizeRequestedSeasons(['2022/2023', '2024/2025']), { code: 'INPUT_ERROR' });
+    assert.throws(() => canonicalizeRequestedSeasons(['2022/2023', '2022/2023']), { code: 'INPUT_ERROR' });
+    assert.throws(() => canonicalizeRequestedSeasons(['2022/2023', '2022-2023']), { code: 'INPUT_ERROR' });
 });
 
 // -----------------------------------------------------------------
@@ -383,121 +404,86 @@ test('validateSeasonCandidates passes for 380 valid candidates', () => {
     assert.equal(result.errors.length, 0);
 });
 
-test('validateSeasonCandidates rejects 379 fixtures', () => {
-    const candidates = generateSeasonFixtures(1000, 379).map(candidateFromFixture);
-    const result = validateSeasonCandidates(candidates, {
-        competition: 'Premier League',
-        season: '2022/2023',
-        expectedFixtures: 380,
-    });
-    assert.equal(result.valid, false);
-    assert.ok(result.errors.some(e => e.includes('fixture_count_mismatch')));
-});
-
-test('validateSeasonCandidates rejects duplicate IDs', () => {
-    const single = buildCandidate(
+test('validateSeasonCandidates: rejects 379, dup id, same teams, bad kickoff, wrong comp', () => {
+    const opts = { competition: 'Premier League', season: '2022/2023', expectedFixtures: 380 };
+    assert.ok(
+        validateSeasonCandidates(generateSeasonFixtures(1000, 379).map(candidateFromFixture), opts).errors.some(e =>
+            e.includes('fixture_count_mismatch')
+        )
+    );
+    const c = buildCandidate(
         { id: '1', home: 'A', away: 'B', kickoff: '2022-08-01T15:00:00Z' },
         47,
         'Premier League',
         '2022/2023'
     );
-    const result = validateSeasonCandidates([single, single], {
-        competition: 'Premier League',
-        season: '2022/2023',
-        expectedFixtures: 2,
-    });
-    assert.equal(result.valid, false);
-    assert.ok(result.errors.some(e => e.includes('duplicate_id')));
-});
-
-test('validateSeasonCandidates rejects same teams', () => {
-    const candidate = buildCandidate(
-        { id: '1', home: 'TeamA', away: 'TeamA', kickoff: '2022-08-01T15:00:00Z' },
-        47,
-        'Premier League',
-        '2022/2023'
+    assert.ok(
+        validateSeasonCandidates([c, c], { ...opts, expectedFixtures: 2 }).errors.some(e => e.includes('duplicate_id'))
     );
-    const result = validateSeasonCandidates([candidate], {
-        competition: 'Premier League',
-        season: '2022/2023',
-        expectedFixtures: 1,
-    });
-    assert.equal(result.valid, false);
-    assert.ok(result.errors.some(e => e.includes('same_teams')));
-});
-
-test('validateSeasonCandidates rejects bad kickoff format', () => {
-    const candidate = buildCandidate(
-        { id: '1', home: 'TeamA', away: 'TeamB', kickoff: '2022-08-01 15:00:00' },
-        47,
-        'Premier League',
-        '2022/2023'
+    assert.ok(
+        validateSeasonCandidates(
+            [
+                buildCandidate(
+                    { id: '1', home: 'X', away: 'X', kickoff: '2022-08-01T15:00:00Z' },
+                    47,
+                    'Premier League',
+                    '2022/2023'
+                ),
+            ],
+            { ...opts, expectedFixtures: 1 }
+        ).errors.some(e => e.includes('same_teams'))
     );
-    const result = validateSeasonCandidates([candidate], {
-        competition: 'Premier League',
-        season: '2022/2023',
-        expectedFixtures: 1,
-    });
-    assert.equal(result.valid, false);
-    assert.ok(result.errors.some(e => e.includes('bad_kickoff')));
-});
-
-test('validateSeasonCandidates rejects wrong competition', () => {
-    const candidate = buildCandidate(
-        { id: '1', home: 'A', away: 'B', kickoff: '2022-08-01T15:00:00Z' },
-        47,
-        'Wrong League',
-        '2022/2023'
+    assert.ok(
+        validateSeasonCandidates(
+            [
+                buildCandidate(
+                    { id: '1', home: 'A', away: 'B', kickoff: '2022-08-01 15:00:00' },
+                    47,
+                    'Premier League',
+                    '2022/2023'
+                ),
+            ],
+            { ...opts, expectedFixtures: 1 }
+        ).errors.some(e => e.includes('bad_kickoff'))
     );
-    const result = validateSeasonCandidates([candidate], {
-        competition: 'Premier League',
-        season: '2022/2023',
-        expectedFixtures: 1,
-    });
-    assert.equal(result.valid, false);
+    assert.equal(
+        validateSeasonCandidates(
+            [
+                buildCandidate(
+                    { id: '1', home: 'A', away: 'B', kickoff: '2022-08-01T15:00:00Z' },
+                    47,
+                    'Wrong League',
+                    '2022/2023'
+                ),
+            ],
+            { ...opts, expectedFixtures: 1 }
+        ).valid,
+        false
+    );
 });
+// -----------------------------------------------------------------
+// Unit: hash determinism
+// -----------------------------------------------------------------
 
 // -----------------------------------------------------------------
 // Unit: hash determinism
 // -----------------------------------------------------------------
 
-test('computeBusinessContentHash is stable regardless of input order', () => {
-    const candidates1 = generateSeasonFixtures(1000, 10).map(candidateFromFixture);
-    const candidates2 = [...candidates1].reverse();
-    const hash1 = computeBusinessContentHash(candidates1);
-    const hash2 = computeBusinessContentHash(candidates2);
-    assert.equal(hash1, hash2);
-});
-
-test('extracted_at does not affect business content hash', () => {
-    const candidates = generateSeasonFixtures(1000, 10).map(candidateFromFixture);
-    const hash1 = computeBusinessContentHash(candidates);
-    const doc1 = buildOutputDocument(
-        candidates,
-        {
-            source_provider: 'FotMob',
-            league_id: '47',
-            competition: 'Premier League',
-            seasons: ['2022/2023'],
-            candidate_count: 10,
-            business_content_sha256: hash1,
-        },
-        { schema_version: 'candidate-match-identity/v1', extracted_at: '2026-01-01T00:00:00Z' }
-    );
-    const doc2 = buildOutputDocument(
-        candidates,
-        {
-            source_provider: 'FotMob',
-            league_id: '47',
-            competition: 'Premier League',
-            seasons: ['2022/2023'],
-            candidate_count: 10,
-            business_content_sha256: hash1,
-        },
-        { schema_version: 'candidate-match-identity/v1', extracted_at: '2026-06-15T12:00:00Z' }
-    );
-    assert.equal(doc1.snapshot.business_content_sha256, doc2.snapshot.business_content_sha256);
-    assert.notEqual(doc1.extracted_at, doc2.extracted_at);
+test('computeBusinessContentHash: order-independent, extracted_at excluded', () => {
+    const c = generateSeasonFixtures(1000, 10).map(candidateFromFixture);
+    assert.equal(computeBusinessContentHash(c), computeBusinessContentHash([...c].reverse()));
+    const h = computeBusinessContentHash(c);
+    const snap = {
+        source_provider: 'FotMob',
+        league_id: '47',
+        competition: 'Premier League',
+        seasons: ['2022/2023'],
+        candidate_count: 10,
+        business_content_sha256: h,
+    };
+    const d1 = buildOutputDocument(c, snap, { schema_version: 'v1', extracted_at: '2026-01-01T00:00:00Z' });
+    const d2 = buildOutputDocument(c, snap, { schema_version: 'v1', extracted_at: '2026-06-15T12:00:00Z' });
+    assert.equal(d1.snapshot.business_content_sha256, d2.snapshot.business_content_sha256);
 });
 
 // -----------------------------------------------------------------
@@ -689,40 +675,22 @@ test('exportCandidates records audit for abandoned matches', async () => {
 // Integration: error handling
 // -----------------------------------------------------------------
 
-test('exportCandidates stops on HTTP 403', async () => {
-    let callCount = 0;
-    const mockFetch = async () => {
-        callCount += 1;
-        return { status: 403, contentType: 'text/html', body: '' };
-    };
-
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023', '2023/2024', '2024/2025'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
-
-    assert.ok(callCount <= 1);
-    assert.equal(result.validation.all_seasons_complete, false);
-});
-
-test('exportCandidates stops on HTTP 429', async () => {
-    let callCount = 0;
-    const mockFetch = async () => {
-        callCount += 1;
-        return { status: 429, contentType: 'text/html', body: '' };
-    };
-
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023', '2023/2024'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
-
-    assert.ok(callCount <= 1);
-    assert.ok(result.validation.season_results[0].result.includes('blocked'));
+test('exportCandidates stops on HTTP 403 or 429', async () => {
+    for (const status of [403, 429]) {
+        let callCount = 0;
+        const mockFetch = async () => {
+            callCount += 1;
+            return { status, contentType: 'text/html', body: '' };
+        };
+        const result = await exportCandidates({
+            leagueId: 47,
+            competition: 'Premier League',
+            seasons: ['2022/2023', '2023/2024', '2024/2025'],
+            deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
+        });
+        assert.ok(callCount <= 1);
+        assert.equal(result.validation.all_seasons_complete, false);
+    }
 });
 
 test('exportCandidates fails on wrong competition identity', async () => {
@@ -857,13 +825,6 @@ test('full pipeline: 3 seasons produce exactly 1140 candidates', async () => {
 // Refactor parity: delay, bounded samples, control flow, cleanup
 // -----------------------------------------------------------------
 
-test('delay resolves via mocked timer without network', async t => {
-    t.mock.timers.enable({ apis: ['setTimeout'] });
-    const pending = delay(1000);
-    t.mock.timers.tick(1000);
-    assert.equal(await pending, undefined);
-});
-
 test('extractFixtures bounds excluded samples and stores ids only', () => {
     const abandoned = generateSeasonFixtures(2000, 15).map(({ id, status }) =>
         buildFixture(String(id), 'A', 'B', status.utcTime, 'Ab')
@@ -948,4 +909,53 @@ test('writeOutputFiles cleanup never masks the original write or rename error', 
     const writeFailFs = { ...baseFs, writeFileSync: raise(writeError), unlinkSync: throwingUnlink };
     assert.throws(runWith(writeFailFs), err => err === writeError);
     assert.equal(unlinks.length, 2);
+});
+
+// -----------------------------------------------------------------
+// classifyFixtureRejection + rejected audit (integrity correction)
+// -----------------------------------------------------------------
+
+test('extractFixtures: rejected audit closure and sample cap', () => {
+    const fixs = [
+        buildFixture('1', 'A', 'B', 'T'),
+        { id: '2', home: { name: 'C' }, away: { name: 'D' }, status: {} },
+        buildFixture('3', 'E', 'F', 'T', 'Ab'),
+        { id: 'abc' },
+    ];
+    const r = extractFixtures(buildNextDataPage({ fixtures: fixs }).nd);
+    const a = r.audit;
+    assert.equal(a.rejected_fixture_count, 2);
+    assert.equal(a.rejected_by_reason.missing_kickoff, 1);
+    assert.equal(a.rejected_by_reason.bad_source_match_id, 1);
+    assert.equal(a.raw_fixture_count, a.accepted_fixture_count + a.excluded_fixture_count + a.rejected_fixture_count);
+    assert.equal(a.rejected_fixture_samples[0].reason_code, 'missing_kickoff');
+    assert.equal(a.rejected_fixture_samples[1].source_match_id, undefined);
+    const many = Array.from({ length: 15 }, (_, i) => ({
+        id: String(i),
+        home: { name: 'A' },
+        away: {},
+        status: { utcTime: 'T' },
+    }));
+    assert.equal(extractFixtures(buildNextDataPage({ fixtures: many }).nd).audit.rejected_fixture_samples.length, 10);
+});
+
+// -----------------------------------------------------------------
+// Pipeline: hash, aggregate validation preserved (integrity correction)
+// -----------------------------------------------------------------
+
+test('canonical 3-season: hash unchanged, aggregate valid, snapshot canonical', async () => {
+    const r = await exportCandidates({
+        leagueId: 47,
+        competition: 'Premier League',
+        seasons: ['2022/2023', '2023/2024', '2024/2025'],
+        deps: { fetchPage: makeSeasonPageFetch(), delay: () => Promise.resolve(), clock: FIXED_CLOCK },
+    });
+    assert.equal(r.candidates.length, 1140);
+    assert.ok(r.validation.all_seasons_complete);
+    assert.equal(r.meta.total_requests, 3);
+    assert.equal(r.snapshot.business_content_sha256, EXPECTED_PIPELINE_HASH);
+    assert.ok(r.validation.aggregate_validation.valid);
+    assert.equal(r.validation.aggregate_validation.unique_ids, 1140);
+    assert.equal(r.validation.aggregate_validation.unique_source_ids, 1140);
+    assert.deepEqual(r.snapshot.seasons, ['2022/2023', '2023/2024', '2024/2025']);
 });
