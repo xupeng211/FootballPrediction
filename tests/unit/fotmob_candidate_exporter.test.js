@@ -735,6 +735,9 @@ test('Make target blocks missing or false network authorization before Node exec
     }
 });
 
+/* prettier-ignore */
+test('Make target uses the stable container repository root', () => { const repositoryRoot = path.resolve(__dirname, '../..'); const makefile = fs.readFileSync(path.join(repositoryRoot, 'Makefile'), 'utf8'); const result = spawnSync('make', ['-n', 'data-fotmob-candidates-network-export', 'LEAGUE_ID=47', 'COMPETITION=Premier League', 'SEASONS=2022/2023', 'NETWORK_AUTHORIZATION=yes'], { cwd: repositoryRoot, encoding: 'utf8' }); const output = `${result.stdout}${result.stderr}`; assert.match(makefile, /^data-fotmob-candidates-network-export:/m); assert.equal(result.status, 0); assert.match(output, /cd \/app;/); assert.doesNotMatch(output, /\.claude\/worktrees|m3-fotmob-epl-candidates|\/tmp\/fp-/); assert.match(output, /npm run fotmob:candidates:export/); assert.match(output, /--network-preview=true/); assert.match(output, /--network-authorization=yes/); });
+
 // -----------------------------------------------------------------
 // Integration: output document structure
 // -----------------------------------------------------------------

@@ -668,7 +668,7 @@ data-fotmob-candidates-network-export: ## Explicitly authorized live FotMob cand
 		-e FOTMOB_CANDIDATE_SEASONS="$(SEASONS)" \
 		-e FOTMOB_CANDIDATE_SLUG="$(SLUG)" \
 		-e FOTMOB_CANDIDATE_OUTPUT="$(OUTPUT)" \
-		dev bash -lc 'set -eu; set -f; cd /app/.claude/worktrees/m3-fotmob-epl-candidates; set -- --league-id "$$FOTMOB_CANDIDATE_LEAGUE_ID" --competition "$$FOTMOB_CANDIDATE_COMPETITION"; for season in $$FOTMOB_CANDIDATE_SEASONS; do set -- "$$@" --season "$$season"; done; if [ -n "$$FOTMOB_CANDIDATE_SLUG" ]; then set -- "$$@" --slug "$$FOTMOB_CANDIDATE_SLUG"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT" ]; then set -- "$$@" --output "$$FOTMOB_CANDIDATE_OUTPUT"; fi; npm run fotmob:candidates:export -- "$$@" --network-preview=true --network-authorization=yes'
+		dev bash -lc 'set -eu; set -f; cd /app; set -- --league-id "$$FOTMOB_CANDIDATE_LEAGUE_ID" --competition "$$FOTMOB_CANDIDATE_COMPETITION"; for season in $$FOTMOB_CANDIDATE_SEASONS; do set -- "$$@" --season "$$season"; done; if [ -n "$$FOTMOB_CANDIDATE_SLUG" ]; then set -- "$$@" --slug "$$FOTMOB_CANDIDATE_SLUG"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT" ]; then set -- "$$@" --output "$$FOTMOB_CANDIDATE_OUTPUT"; fi; npm run fotmob:candidates:export -- "$$@" --network-preview=true --network-authorization=yes'
 
 data-l1-discovery-preview: ## L1 safe preview wrapper. Phase 5.05L1. Preview-only, no network, no DB, no browser/proxy.
 	@if [ -z "$(SOURCE)" ] || [ -z "$(SCOPE)" ]; then \
