@@ -69,7 +69,7 @@ function canonicalizeRequestedSeasons(values) {
         if (c === null) {
             throw Object.assign(
                 new Error(
-                    `Invalid season format: "${String(raw).trim()}" (expected YYYY/YYYY, YYYY-YYYY, YY/YY, or YY-YY)`
+                    `Invalid season format: "${String(raw).trim()}" (expected YYYY/YYYY, YYYY-YYYY, YYYY/YY, YY/YY, or YY-YY)`
                 ),
                 { code: 'INPUT_ERROR' }
             );
@@ -153,29 +153,57 @@ function delay(ms) {
 // ----------------------------------------------------------------
 
 /**
+ * Build a canonical YYYY/YYYY string from two years.
+ * Returns null when the range is not a single consecutive season.
+ */
+function canonicalSeasonFromYears(start, end) {
+    if (end !== start + 1) return null;
+    return `${start}/${end}`;
+}
+
+/**
  * Normalise an observed season string into canonical YYYY/YYYY.
- * Accepts: 2022/2023, 2022-2023, 22/23, 2022/23, 22-23
- * Returns null for unrecognised formats.
+ * All accepted formats MUST represent a single consecutive season
+ * (endYear === startYear + 1).
+ *
+ * Accepted: 2022/2023, 2022-2023, 22/23, 2022/23, 22-23
+ * Rejected: 2022/2024, 2022-2024, 22/24, 22-24, 2022/2022, reverse, etc.
+ * Returns null for unrecognised or non-consecutive formats.
  */
 function normaliseSeason(value) {
     const raw = String(value ?? '').trim();
     if (!raw) return null;
 
-    // Already canonical: YYYY/YYYY
+    // Full canonical: YYYY/YYYY
     let match = raw.match(/^(\d{4})\/(\d{4})$/);
-    if (match) return `${match[1]}/${match[2]}`;
+    if (match) return canonicalSeasonFromYears(Number(match[1]), Number(match[2]));
 
-    // Dash-separated: YYYY-YYYY
+    // Full dash: YYYY-YYYY
     match = raw.match(/^(\d{4})-(\d{4})$/);
-    if (match) return `${match[1]}/${match[2]}`;
+    if (match) return canonicalSeasonFromYears(Number(match[1]), Number(match[2]));
+
+    // Mixed abbreviated: YYYY/YY
+    match = raw.match(/^(\d{4})\/(\d{2})$/);
+    if (match) {
+        const start = Number(match[1]);
+        const end = 2000 + Number(match[2]);
+        return canonicalSeasonFromYears(start, end);
+    }
 
     // Abbreviated slash: YY/YY
     match = raw.match(/^(\d{2})\/(\d{2})$/);
     if (match) {
         const start = 2000 + Number(match[1]);
         const end = 2000 + Number(match[2]);
-        if (end === start + 1) return `${start}/${end}`;
-        return null;
+        return canonicalSeasonFromYears(start, end);
+    }
+
+    // Abbreviated dash: YY-YY
+    match = raw.match(/^(\d{2})-(\d{2})$/);
+    if (match) {
+        const start = 2000 + Number(match[1]);
+        const end = 2000 + Number(match[2]);
+        return canonicalSeasonFromYears(start, end);
     }
 
     return null;

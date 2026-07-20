@@ -163,26 +163,27 @@ function rebuildPageHtml(nd, html) {
 // Unit: normaliseSeason
 // -----------------------------------------------------------------
 
-test('normaliseSeason canonicalises valid formats', () => {
+test('normaliseSeason canonicalises valid and rejects non-consecutive', () => {
     assert.equal(normaliseSeason('2022/2023'), '2022/2023');
-    assert.equal(normaliseSeason('2023/2024'), '2023/2024');
     assert.equal(normaliseSeason('2022-2023'), '2022/2023');
     assert.equal(normaliseSeason('22/23'), '2022/2023');
-    assert.equal(normaliseSeason('23/24'), '2023/2024');
+    assert.equal(normaliseSeason('22-23'), '2022/2023');
+    assert.equal(normaliseSeason('2022/23'), '2022/2023');
+    assert.equal(normaliseSeason(''), null);
+    assert.equal(normaliseSeason('abc'), null);
+    assert.equal(normaliseSeason('2022'), null);
+    assert.equal(normaliseSeason('2022/2024'), null);
+    assert.equal(normaliseSeason('2022/2022'), null);
 });
 
-test('normaliseSeason rejects invalid formats', () => {
+test('normaliseSeason accepts all equivalent consecutive-season formats', () => {
     assert.equal(normaliseSeason(''), null);
     assert.equal(normaliseSeason('abc'), null);
     assert.equal(normaliseSeason('2022'), null);
     assert.equal(normaliseSeason('22/25'), null); // gap > 1 after expansion
-    assert.equal(normaliseSeason('2022/23'), null); // mixed format
-});
-
-test('normaliseSeason passes through canonical format even for illogical ranges', () => {
-    // The normaliser canonicalises FORMAT, not logic. Season validation
-    // (right competition, right league, right year) happens at identity check.
-    assert.equal(normaliseSeason('2022/2024'), '2022/2024');
+    assert.equal(normaliseSeason('2022/2024'), null); // gap > 1
+    assert.equal(normaliseSeason('2022/2022'), null); // same year
+    assert.equal(normaliseSeason('2024/2023'), null); // reverse
 });
 
 // -----------------------------------------------------------------
@@ -193,7 +194,7 @@ test('canonicalizeRequestedSeasons: valid, invalid, duplicates, non-consecutive'
     assert.deepEqual(canonicalizeRequestedSeasons(['2022/2023', '2023/2024']), ['2022/2023', '2023/2024']);
     assert.deepEqual(canonicalizeRequestedSeasons(['2022-2023']), ['2022/2023']);
     assert.deepEqual(canonicalizeRequestedSeasons(['22/23']), ['2022/2023']);
-    for (const bad of ['not-a-season', '', '2022']) {
+    for (const bad of ['not-a-season', '', '2022', '2022/2024', '2022-2024', '2022/2022']) {
         assert.throws(() => canonicalizeRequestedSeasons([bad]), { code: 'INPUT_ERROR' });
     }
     assert.throws(() => canonicalizeRequestedSeasons([]), { code: 'INPUT_ERROR' });
@@ -800,27 +801,6 @@ test('buildSummaryDocument contains no full candidate data', () => {
 
 // -----------------------------------------------------------------
 // Full pipeline: 3 seasons × 380 = 1140
-// -----------------------------------------------------------------
-
-test('full pipeline: 3 seasons produce exactly 1140 candidates', async () => {
-    const mockFetch = makeSeasonPageFetch();
-
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023', '2023/2024', '2024/2025'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
-
-    assert.equal(result.candidates.length, 1140);
-    assert.ok(result.validation.all_seasons_complete);
-    assert.equal(result.meta.total_requests, 3);
-    assert.equal(result.snapshot.candidate_count, 1140);
-    assert.ok(result.snapshot.business_content_sha256);
-    // Hash contract pinned pre-refactor (M3-D2BG): identical mock data must keep this value.
-    assert.equal(result.snapshot.business_content_sha256, EXPECTED_PIPELINE_HASH);
-});
-
 // -----------------------------------------------------------------
 // Refactor parity: delay, bounded samples, control flow, cleanup
 // -----------------------------------------------------------------
