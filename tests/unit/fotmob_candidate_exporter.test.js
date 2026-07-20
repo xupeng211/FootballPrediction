@@ -31,6 +31,7 @@ const {
     delay,
     MAX_TOTAL_REQUESTS,
 } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+const { main: runCandidateExportCli, validateArgs } = require('../../scripts/ops/fotmob_candidates_export');
 
 // -----------------------------------------------------------------
 // Synthetic fixture builders
@@ -80,28 +81,10 @@ function buildNextDataPage(overrides = {}) {
 }
 
 function generateSeasonFixtures(startId, count = EPL_FIXTURES_PER_SEASON) {
-    const teams = [
-        'Arsenal',
-        'Aston Villa',
-        'Bournemouth',
-        'Brentford',
-        'Brighton',
-        'Chelsea',
-        'Crystal Palace',
-        'Everton',
-        'Fulham',
-        'Leeds',
-        'Leicester',
-        'Liverpool',
-        'Man City',
-        'Man United',
-        'Newcastle',
-        'Southampton',
-        'Tottenham',
-        'West Ham',
-        'Wolves',
-        'Nottingham Forest',
-    ];
+    const teams =
+        'Arsenal|Aston Villa|Bournemouth|Brentford|Brighton|Chelsea|Crystal Palace|Everton|Fulham|Leeds|Leicester|Liverpool|Man City|Man United|Newcastle|Southampton|Tottenham|West Ham|Wolves|Nottingham Forest'.split(
+            '|'
+        );
     const fixtures = [];
     for (let i = 0; i < count; i += 1) {
         const h = teams[i % 20];
@@ -150,13 +133,35 @@ function makeSeasonPageFetch(onSeason) {
     };
 }
 
+function makeExportOptions(seasons, fetchPage, deps = {}) {
+    return {
+        leagueId: 47,
+        competition: 'Premier League',
+        seasons,
+        deps: { fetchPage, delay: () => Promise.resolve(), clock: FIXED_CLOCK, ...deps },
+    };
+}
+
 // Rebuild page HTML after mutating the generated __NEXT_DATA__ object.
 function rebuildPageHtml(nd, html) {
-    const json = JSON.stringify(nd);
     return html.replace(
         /<script id="__NEXT_DATA__"[^>]*>.*?<\/script>/s,
-        `<script id="__NEXT_DATA__" type="application/json">${json}</script>`
+        `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(nd)}</script>`
     );
+}
+
+async function assertInvalidSeasonMakesNoRequests(season) {
+    const calls = { fetch: 0, delay: 0 };
+    const options = makeExportOptions(
+        [season],
+        async () => {
+            calls.fetch += 1;
+            return { status: 500, contentType: 'text/html', body: '' };
+        },
+        { delay: async () => (calls.delay += 1) }
+    );
+    await assert.rejects(exportCandidates(options), { code: 'INPUT_ERROR' });
+    assert.deepEqual(calls, { fetch: 0, delay: 0 });
 }
 
 // -----------------------------------------------------------------
@@ -186,6 +191,24 @@ test('normaliseSeason accepts all equivalent consecutive-season formats', () => 
     assert.equal(normaliseSeason('2024/2023'), null); // reverse
 });
 
+test('normaliseSeason rejects every non-primitive-string value', () => {
+    const coercibleObject = { toString: () => '2022/2023' };
+    for (const value of [
+        null,
+        undefined,
+        20222023,
+        true,
+        false,
+        {},
+        coercibleObject,
+        ['2022/2023'],
+        [['2022/2023']],
+        new String('2022/2023'),
+    ]) {
+        assert.equal(normaliseSeason(value), null);
+    }
+});
+
 // -----------------------------------------------------------------
 // Unit: canonicalizeRequestedSeasons (integrity correction)
 // -----------------------------------------------------------------
@@ -202,6 +225,29 @@ test('canonicalizeRequestedSeasons: valid, invalid, duplicates, non-consecutive'
     assert.throws(() => canonicalizeRequestedSeasons(['2022/2023', '2024/2025']), { code: 'INPUT_ERROR' });
     assert.throws(() => canonicalizeRequestedSeasons(['2022/2023', '2022/2023']), { code: 'INPUT_ERROR' });
     assert.throws(() => canonicalizeRequestedSeasons(['2022/2023', '2022-2023']), { code: 'INPUT_ERROR' });
+});
+
+test('canonicalizeRequestedSeasons rejects non-string members before coercion', () => {
+    let toStringCalls = 0;
+    const coercibleObject = {
+        toString: () => {
+            toStringCalls += 1;
+            return '2022/2023';
+        },
+    };
+    const values = [20222023, true, {}, coercibleObject, ['2022/2023'], [['2022/2023']], new String('2022/2023')];
+
+    for (const value of values) {
+        assert.throws(
+            () => canonicalizeRequestedSeasons([value]),
+            error => {
+                assert.equal(error.code, 'INPUT_ERROR');
+                assert.equal(error.message, 'Season at index 0 must be a string');
+                return true;
+            }
+        );
+    }
+    assert.equal(toStringCalls, 0);
 });
 
 // -----------------------------------------------------------------
@@ -257,6 +303,18 @@ test('extractPageIdentity returns null season_canonical for bad format', () => {
     const { nd } = buildNextDataPage({ season: 'not-a-season' });
     const identity = extractPageIdentity(nd);
     assert.equal(identity.season_canonical, null);
+});
+
+test('extractPageIdentity rejects non-string season values without coercion', () => {
+    const seasons = [['2022/2023'], { value: '2022/2023' }, 20222023, true, false];
+
+    for (const season of seasons) {
+        const { nd } = buildNextDataPage({ pagePropsExtra: { selectedSeason: '2022/2023' } });
+        nd.query.season = season;
+        const identity = extractPageIdentity(nd);
+        assert.strictEqual(identity.season_raw, season);
+        assert.equal(identity.season_canonical, null);
+    }
 });
 
 // -----------------------------------------------------------------
@@ -400,63 +458,34 @@ test('validateSeasonCandidates passes for 380 valid candidates', () => {
         season: '2022/2023',
         expectedFixtures: 380,
     });
-    assert.ok(result.valid);
-    assert.equal(result.fixture_count, 380);
-    assert.equal(result.errors.length, 0);
+    assert.deepEqual([result.valid, result.fixture_count, result.errors.length], [true, 380, 0]);
 });
 
 test('validateSeasonCandidates: rejects 379, dup id, same teams, bad kickoff, wrong comp', () => {
     const opts = { competition: 'Premier League', season: '2022/2023', expectedFixtures: 380 };
-    assert.ok(
-        validateSeasonCandidates(generateSeasonFixtures(1000, 379).map(candidateFromFixture), opts).errors.some(e =>
-            e.includes('fixture_count_mismatch')
-        )
-    );
-    const c = buildCandidate(
-        { id: '1', home: 'A', away: 'B', kickoff: '2022-08-01T15:00:00Z' },
-        47,
-        'Premier League',
-        '2022/2023'
-    );
-    assert.ok(
-        validateSeasonCandidates([c, c], { ...opts, expectedFixtures: 2 }).errors.some(e => e.includes('duplicate_id'))
-    );
-    assert.ok(
-        validateSeasonCandidates(
-            [
-                buildCandidate(
-                    { id: '1', home: 'X', away: 'X', kickoff: '2022-08-01T15:00:00Z' },
-                    47,
-                    'Premier League',
-                    '2022/2023'
-                ),
-            ],
-            { ...opts, expectedFixtures: 1 }
-        ).errors.some(e => e.includes('same_teams'))
-    );
-    assert.ok(
-        validateSeasonCandidates(
-            [
-                buildCandidate(
-                    { id: '1', home: 'A', away: 'B', kickoff: '2022-08-01 15:00:00' },
-                    47,
-                    'Premier League',
-                    '2022/2023'
-                ),
-            ],
-            { ...opts, expectedFixtures: 1 }
-        ).errors.some(e => e.includes('bad_kickoff'))
-    );
+    const build = (fixture, competition = opts.competition) => buildCandidate(fixture, 47, competition, opts.season);
+    const candidate = build({ id: '1', home: 'A', away: 'B', kickoff: '2022-08-01T15:00:00Z' });
+    const checks = [
+        [generateSeasonFixtures(1000, 379).map(candidateFromFixture), opts, 'fixture_count_mismatch'],
+        [[candidate, candidate], { ...opts, expectedFixtures: 2 }, 'duplicate_id'],
+        [
+            [build({ id: '1', home: 'X', away: 'X', kickoff: '2022-08-01T15:00:00Z' })],
+            { ...opts, expectedFixtures: 1 },
+            'same_teams',
+        ],
+        [
+            [build({ id: '1', home: 'A', away: 'B', kickoff: '2022-08-01 15:00:00' })],
+            { ...opts, expectedFixtures: 1 },
+            'bad_kickoff',
+        ],
+    ];
+
+    for (const [candidates, options, errorName] of checks) {
+        assert.ok(validateSeasonCandidates(candidates, options).errors.some(error => error.includes(errorName)));
+    }
     assert.equal(
         validateSeasonCandidates(
-            [
-                buildCandidate(
-                    { id: '1', home: 'A', away: 'B', kickoff: '2022-08-01T15:00:00Z' },
-                    47,
-                    'Wrong League',
-                    '2022/2023'
-                ),
-            ],
+            [build({ id: '1', home: 'A', away: 'B', kickoff: '2022-08-01T15:00:00Z' }, 'Wrong League')],
             { ...opts, expectedFixtures: 1 }
         ).valid,
         false
@@ -566,12 +595,7 @@ test('verifyOutputPathSafety succeeds for normal directory outside repo', t => {
 test('exportCandidates succeeds for 3 complete seasons', async () => {
     const mockFetch = makeSeasonPageFetch();
 
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023', '2023/2024', '2024/2025'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023', '2023/2024', '2024/2025'], mockFetch));
 
     assert.ok(result.validation.all_seasons_complete);
     assert.equal(result.candidates.length, 1140);
@@ -587,12 +611,7 @@ test('exportCandidates rejects wrong season (page returns different season)', as
     const { html } = buildNextDataPage({ season: '2023/2024' }); // page says 2023/2024
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: html });
 
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023'], // request says 2022/2023
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023'], mockFetch)); // request says 2022/2023
 
     assert.equal(result.candidates.length, 0, 'no candidates when season mismatches');
     assert.ok(result.validation.season_results[0].result.includes('season_identity_mismatch'));
@@ -604,12 +623,7 @@ test('exportCandidates rejects missing season in page', async () => {
     const fixedHtml = rebuildPageHtml(nd, html);
 
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: fixedHtml });
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023'], mockFetch));
 
     assert.equal(result.candidates.length, 0);
     assert.ok(result.validation.season_results[0].result.includes('season_identity_missing'));
@@ -621,12 +635,7 @@ test('exportCandidates rejects bad season format in page', async () => {
     const fixedHtml = rebuildPageHtml(nd, html);
 
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: fixedHtml });
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023'], mockFetch));
 
     assert.equal(result.candidates.length, 0);
     assert.ok(result.validation.season_results[0].result.includes('season_identity_missing'));
@@ -638,12 +647,7 @@ test('exportCandidates accepts dash-format season from page', async () => {
     const fixedHtml = rebuildPageHtml(nd, html);
 
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: fixedHtml });
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023'], mockFetch));
 
     assert.equal(result.candidates.length, 380, 'dash-format season should be accepted');
     assert.ok(result.validation.all_seasons_complete);
@@ -655,12 +659,7 @@ test('exportCandidates records audit for abandoned matches', async () => {
     const { html } = buildNextDataPage({ fixtures, season: '2022/2023' });
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: html });
 
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023'], mockFetch));
 
     assert.equal(result.candidates.length, 380);
     const sr = result.validation.season_results[0];
@@ -683,12 +682,7 @@ test('exportCandidates stops on HTTP 403 or 429', async () => {
             callCount += 1;
             return { status, contentType: 'text/html', body: '' };
         };
-        const result = await exportCandidates({
-            leagueId: 47,
-            competition: 'Premier League',
-            seasons: ['2022/2023', '2023/2024', '2024/2025'],
-            deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-        });
+        const result = await exportCandidates(makeExportOptions(['2022/2023', '2023/2024', '2024/2025'], mockFetch));
         assert.ok(callCount <= 1);
         assert.equal(result.validation.all_seasons_complete, false);
     }
@@ -698,12 +692,7 @@ test('exportCandidates fails on wrong competition identity', async () => {
     const { html } = buildNextDataPage({ leagueName: 'Championship', leagueId: 47 });
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: html });
 
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023'], mockFetch));
 
     assert.equal(result.candidates.length, 0);
     assert.ok(result.validation.season_results[0].result.includes('competition_identity_mismatch'));
@@ -713,12 +702,7 @@ test('exportCandidates fails on wrong league ID in page', async () => {
     const { html } = buildNextDataPage({ leagueId: 53 });
     const mockFetch = async () => ({ status: 200, contentType: 'text/html', body: html });
 
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023'],
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(['2022/2023'], mockFetch));
 
     assert.equal(result.candidates.length, 0);
     assert.ok(result.validation.season_results[0].result.includes('league_id_mismatch'));
@@ -732,21 +716,72 @@ test('exportCandidates respects request budget', async () => {
     };
 
     const seasons = Array.from({ length: 10 }, (_, i) => `20${22 + i}/20${23 + i}`);
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons,
-        deps: { fetchPage: mockFetch, delay: () => Promise.resolve(), clock: () => '2026-07-18T00:00:00Z' },
-    });
+    const result = await exportCandidates(makeExportOptions(seasons, mockFetch));
 
     assert.ok(callCount <= MAX_TOTAL_REQUESTS);
     assert.ok(result.meta.total_requests <= MAX_TOTAL_REQUESTS);
 });
 
 test('exportCandidates returns empty for no seasons', async () => {
-    await assert.rejects(exportCandidates({ leagueId: 47, competition: 'Premier League', seasons: [] }), {
+    await assert.rejects(exportCandidates(makeExportOptions([], async () => ({ status: 500, body: '' }))), {
         code: 'INPUT_ERROR',
     });
+});
+
+test('exportCandidates rejects each non-string requested season before fetch or delay', async () => {
+    for (const season of [20222023, ['2022/2023'], { toString: () => '2022/2023' }]) {
+        await assertInvalidSeasonMakesNoRequests(season);
+    }
+});
+
+test('exportCandidates rejects non-string page season identity', async () => {
+    for (const season of [['2022/2023'], { value: '2022/2023' }]) {
+        const { nd, html } = buildNextDataPage({ season });
+        const fixedHtml = rebuildPageHtml(nd, html);
+        const result = await exportCandidates(
+            makeExportOptions(['2022/2023'], async () => ({ status: 200, contentType: 'text/html', body: fixedHtml }))
+        );
+
+        assert.equal(result.candidates.length, 0);
+        assert.equal(result.validation.season_results[0].result, 'season_identity_missing');
+        assert.equal(result.validation.all_seasons_complete, false);
+    }
+});
+
+test('CLI programmatic APIs reject non-string seasons before global fetch', async () => {
+    const errors = validateArgs({
+        leagueId: '47',
+        competition: 'Premier League',
+        seasons: [['2022/2023']],
+        output: '',
+    });
+
+    assert.deepEqual(errors, ['Season at index 0 must be a string']);
+    let stdout = '';
+    let stderr = '';
+    let fetchCalls = 0;
+    const originalFetch = global.fetch;
+    global.fetch = async () => {
+        fetchCalls += 1;
+        throw new Error('global fetch must not be called');
+    };
+
+    try {
+        const exitCode = await runCandidateExportCli(
+            ['--league-id', '47', '--competition', 'Premier League', '--season', ['2022/2023']],
+            {
+                stdout: { write: value => (stdout += String(value)) },
+                stderr: { write: value => (stderr += String(value)) },
+            }
+        );
+
+        assert.equal(exitCode, 2);
+        assert.equal(stdout, '');
+        assert.match(stderr, /Season at index 0 must be a string/);
+        assert.equal(fetchCalls, 0);
+    } finally {
+        global.fetch = originalFetch;
+    }
 });
 
 // -----------------------------------------------------------------
@@ -820,12 +855,9 @@ test('exportCandidates fetches seasons serially in order and delays only between
     const calls = [];
     let delays = 0;
     const mockFetch = makeSeasonPageFetch(season => calls.push(season));
-    await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023', '2023/2024', '2024/2025'],
-        deps: { fetchPage: mockFetch, delay: async () => (delays += 1), clock: FIXED_CLOCK },
-    });
+    await exportCandidates(
+        makeExportOptions(['2022/2023', '2023/2024', '2024/2025'], mockFetch, { delay: async () => (delays += 1) })
+    );
     assert.deepEqual(calls, ['2022/2023', '2023/2024', '2024/2025']);
     assert.equal(delays, 2);
 });
@@ -838,12 +870,11 @@ test('exportCandidates continues after fetch error and non-200 without delaying'
         async () => ({ status: 200, contentType: 'text/html', body: html }),
     ];
     let delays = 0;
-    const result = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023', '2023/2024', '2024/2025'],
-        deps: { fetchPage: () => steps.shift()(), delay: async () => (delays += 1), clock: FIXED_CLOCK },
-    });
+    const result = await exportCandidates(
+        makeExportOptions(['2022/2023', '2023/2024', '2024/2025'], () => steps.shift()(), {
+            delay: async () => (delays += 1),
+        })
+    );
     const results = result.validation.season_results.map(r => r.result);
     assert.ok(results[0].startsWith('fetch_error:'));
     assert.equal(results[1], 'http_500');
@@ -924,12 +955,7 @@ test('extractFixtures: rejected audit closure and sample cap', () => {
 // -----------------------------------------------------------------
 
 test('canonical 3-season: hash unchanged, aggregate valid, snapshot canonical', async () => {
-    const r = await exportCandidates({
-        leagueId: 47,
-        competition: 'Premier League',
-        seasons: ['2022/2023', '2023/2024', '2024/2025'],
-        deps: { fetchPage: makeSeasonPageFetch(), delay: () => Promise.resolve(), clock: FIXED_CLOCK },
-    });
+    const r = await exportCandidates(makeExportOptions(['2022/2023', '2023/2024', '2024/2025'], makeSeasonPageFetch()));
     assert.equal(r.candidates.length, 1140);
     assert.ok(r.validation.all_seasons_complete);
     assert.equal(r.meta.total_requests, 3);

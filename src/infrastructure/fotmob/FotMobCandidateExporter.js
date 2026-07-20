@@ -61,15 +61,16 @@ function canonicalizeRequestedSeasons(values) {
 
     // Normalise every value
     const canonical = [];
-    for (const raw of values) {
-        if (raw === undefined || raw === null) {
-            throw Object.assign(new Error('Season value must be a non-empty string'), { code: 'INPUT_ERROR' });
+    for (let index = 0; index < values.length; index += 1) {
+        const raw = values[index];
+        if (typeof raw !== 'string') {
+            throw Object.assign(new Error(`Season at index ${index} must be a string`), { code: 'INPUT_ERROR' });
         }
-        const c = normaliseSeason(String(raw).trim());
+        const c = normaliseSeason(raw);
         if (c === null) {
             throw Object.assign(
                 new Error(
-                    `Invalid season format: "${String(raw).trim()}" (expected YYYY/YYYY, YYYY-YYYY, YYYY/YY, YY/YY, or YY-YY)`
+                    `Invalid season format: "${raw.trim()}" (expected YYYY/YYYY, YYYY-YYYY, YYYY/YY, YY/YY, or YY-YY)`
                 ),
                 { code: 'INPUT_ERROR' }
             );
@@ -171,7 +172,9 @@ function canonicalSeasonFromYears(start, end) {
  * Returns null for unrecognised or non-consecutive formats.
  */
 function normaliseSeason(value) {
-    const raw = String(value ?? '').trim();
+    if (typeof value !== 'string') return null;
+
+    const raw = value.trim();
     if (!raw) return null;
 
     // Full canonical: YYYY/YYYY
@@ -236,7 +239,7 @@ function extractPageIdentity(nd) {
     const details = pp.details || {};
     const query = nd.query || {};
 
-    const rawSeason = query.season || pp.selectedSeason || pp.currentSeason || null;
+    const rawSeason = query.season ?? pp.selectedSeason ?? pp.currentSeason ?? null;
 
     return {
         league_name: details.name || details.longName || details.primaryName || null,
