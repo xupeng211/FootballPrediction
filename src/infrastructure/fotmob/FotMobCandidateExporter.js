@@ -16,6 +16,7 @@ const DEFAULT_DELAY_MS = 5_000;
 const MAX_TOTAL_REQUESTS = 6;
 const FIXTURES_URL_PATTERN = '/leagues/{leagueId}/fixtures/{slug}';
 const EPL_FIXTURES_PER_SEASON = 380;
+const CANONICAL_COMPETITION = 'Premier League';
 
 // ----------------------------------------------------------------
 // Candidate identity
@@ -210,6 +211,23 @@ function normaliseSeason(value) {
     }
 
     return null;
+}
+
+/**
+ * Canonicalise the only competition supported by this EPL-specific exporter.
+ * Rejects aliases and non-primitive values before they can reach network code.
+ */
+function canonicalizeCompetition(value) {
+    if (typeof value !== 'string') {
+        throw Object.assign(new Error('Competition must be a string'), { code: 'INPUT_ERROR' });
+    }
+
+    const normalized = value.trim().replace(/\s+/g, ' ');
+    if (normalized.toLowerCase() !== CANONICAL_COMPETITION.toLowerCase()) {
+        throw Object.assign(new Error('Competition must be Premier League'), { code: 'INPUT_ERROR' });
+    }
+
+    return CANONICAL_COMPETITION;
 }
 
 // ----------------------------------------------------------------
@@ -537,12 +555,17 @@ function buildSeasonFixturesUrl(leagueId, leagueSlug, season) {
  * Classify the observed page identity against the requested league/season.
  * Returns { ok, reason } where reason is null when ok.
  */
-function classifySeasonIdentity(identity, leagueId, requestedSeasonCanonical) {
+function classifySeasonIdentity(identity, leagueId, requestedSeasonCanonical, requestedCompetition) {
     if (!identity) {
         return { ok: false, reason: 'identity_extraction_failed' };
     }
-    const nameOk = Boolean(identity.league_name) && /premier\s*league/i.test(String(identity.league_name).trim());
-    if (!nameOk) {
+    let observedCompetition;
+    try {
+        observedCompetition = canonicalizeCompetition(identity.league_name);
+    } catch {
+        return { ok: false, reason: 'competition_identity_mismatch' };
+    }
+    if (observedCompetition !== requestedCompetition) {
         return { ok: false, reason: 'competition_identity_mismatch' };
     }
     if (String(identity.league_id) !== leagueId) {
@@ -641,7 +664,7 @@ async function processSeason(season, context) {
     }
 
     const identity = extractPageIdentity(nd);
-    const verdict = classifySeasonIdentity(identity, leagueId, normaliseSeason(season));
+    const verdict = classifySeasonIdentity(identity, leagueId, normaliseSeason(season), competition);
     if (!verdict.ok) {
         return {
             seasonResult: {
@@ -711,23 +734,27 @@ async function processSeason(season, context) {
  *
  * @param {Object} options
  * @param {number|string} options.leagueId        — FotMob league id (e.g. 47)
- * @param {string}        options.competition     — canonical competition name
+ * @param {string}        options.competition     — Premier League formatting variant
  * @param {string[]}      options.seasons         — season strings (e.g. ["2022/2023"])
  * @param {string}        [options.leagueSlug]    — URL slug (default: derived from competition)
+ * @param {boolean}       options.networkAuthorization — explicit live-network authorization
  * @param {Object}        [options.deps]          — dependency injection
  * @returns {Promise<Object>} { candidates, snapshot, validation }
  */
 async function exportCandidates(options = {}) {
     const leagueId = String(options.leagueId);
-    const competition = String(options.competition);
     const rawSeasons = Array.isArray(options.seasons) ? options.seasons : [];
-    const leagueSlug = options.leagueSlug || competition.toLowerCase().replace(/\s+/g, '-');
     const deps = options.deps || {};
     const _delay = deps.delay || delay;
     const _clock = deps.clock || (() => new Date().toISOString());
 
-    // Canonicalise before any network access
+    // Validate every user-controlled identity before any network access.
     const canonicalSeasons = canonicalizeRequestedSeasons(rawSeasons);
+    const competition = canonicalizeCompetition(options.competition);
+    if (options.networkAuthorization !== true) {
+        throw Object.assign(new Error('Explicit network authorization is required'), { code: 'SAFETY_ERROR' });
+    }
+    const leagueSlug = options.leagueSlug || competition.toLowerCase().replace(/\s+/g, '-');
     const maxRequests = Math.min(canonicalSeasons.length * 2, MAX_TOTAL_REQUESTS);
 
     const allCandidates = [];
@@ -973,6 +1000,7 @@ module.exports = {
     // Season identity
     normaliseSeason,
     canonicalizeRequestedSeasons,
+    canonicalizeCompetition,
 
     // Identity helpers
     generateCandidateId,
@@ -982,6 +1010,7 @@ module.exports = {
     // Extraction
     extractNextData,
     extractPageIdentity,
+    classifySeasonIdentity,
     extractFixtures,
     classifyFixtureRejection,
 

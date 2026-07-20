@@ -15,7 +15,12 @@ const {
     buildSummaryDocument,
     verifyOutputPathSafety,
     canonicalizeRequestedSeasons,
+    canonicalizeCompetition,
 } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
+
+const CANONICAL_MAKE_TARGET = 'make data-fotmob-candidates-network-export';
+const TRUE_LIKE_NETWORK_VALUES = new Set(['yes', 'true', '1', 'on']);
+const FALSE_LIKE_NETWORK_VALUES = new Set(['no', 'false', '0', 'off']);
 
 const USAGE = [
     'Usage:',
@@ -25,6 +30,8 @@ const USAGE = [
     '    --season 2022/2023 \\',
     '    --season 2023/2024 \\',
     '    --season 2024/2025 \\',
+    '    --network-preview=true \\',
+    '    --network-authorization=yes \\',
     '    [--slug premier-league] \\',
     '    [--output /absolute/path/outside/repository/]',
     '',
@@ -35,13 +42,19 @@ const USAGE = [
     '                  Accepted: YYYY/YYYY, YYYY-YYYY, YYYY/YY, YY/YY, YY-YY.',
     '                  Must represent a consecutive season (e.g. 2022/2023).',
     '                  Seasons must be consecutive and non-duplicate across repeats.',
+    '  --network-preview=true',
+    '                  Explicitly acknowledges that this command can make live network requests.',
+    '  --network-authorization=yes',
+    '                  Fresh explicit authorization for the live network request.',
     '',
     'Optional:',
     '  --slug          URL slug override (default: derived from competition name)',
     '  --output        Absolute output directory OUTSIDE the Git repository',
     '',
     'Safety:',
-    '  Default mode writes nothing to disk and prints a summary only.',
+    `  Ordinary invocations are blocked. Use ${CANONICAL_MAKE_TARGET}.`,
+    '  Both explicit network flags are required before any FotMob request.',
+    '  This command does not write to the database.',
     '  --output requires an existing absolute directory outside the repository.',
     '  Network access is limited to FotMob league fixtures pages only.',
     '  Maximum 6 requests per invocation.',
@@ -58,11 +71,13 @@ function parseArgs(argv) {
         seasons: [],
         slug: '',
         output: '',
+        networkPreview: '',
+        networkAuthorization: '',
         help: false,
     };
 
     for (let i = 0; i < argv.length; i += 1) {
-        const token = String(argv[i]);
+        const token = argv[i];
         if (token === '--help' || token === '-h') {
             args.help = true;
             return args;
@@ -92,6 +107,23 @@ function parseArgs(argv) {
             i += 1;
             continue;
         }
+        if (token === '--network-preview') {
+            args.networkPreview = argv[i + 1];
+            i += 1;
+            continue;
+        }
+        if (typeof token === 'string' && token.startsWith('--network-preview=')) {
+            args.networkPreview = token.slice('--network-preview='.length);
+            continue;
+        }
+        if (token === '--network-authorization') {
+            args.networkAuthorization = argv[i + 1];
+            i += 1;
+            continue;
+        }
+        if (typeof token === 'string' && token.startsWith('--network-authorization=')) {
+            args.networkAuthorization = token.slice('--network-authorization='.length);
+        }
     }
 
     return args;
@@ -101,6 +133,13 @@ function validateArgs(args) {
     const errors = [];
     if (!args.leagueId) errors.push('--league-id is required');
     if (!args.competition) errors.push('--competition is required');
+    if (args.competition) {
+        try {
+            canonicalizeCompetition(args.competition);
+        } catch (err) {
+            errors.push(err.message);
+        }
+    }
 
     // Validate seasons via the core canonicaliser (no network access)
     try {
@@ -127,6 +166,83 @@ function validateArgs(args) {
     return errors;
 }
 
+function normaliseNetworkAuthorizationValue(value) {
+    if (typeof value !== 'string') return null;
+    const normalized = value.trim().toLowerCase();
+    if (TRUE_LIKE_NETWORK_VALUES.has(normalized)) return true;
+    if (FALSE_LIKE_NETWORK_VALUES.has(normalized)) return false;
+    return null;
+}
+
+function validateNetworkAuthorization(args) {
+    const preview = normaliseNetworkAuthorizationValue(args.networkPreview);
+    const authorization = normaliseNetworkAuthorizationValue(args.networkAuthorization);
+    const errors = [];
+
+    if (preview !== true) {
+        errors.push('--network-preview=true is required for live FotMob requests');
+    }
+    if (authorization !== true) {
+        errors.push('--network-authorization=yes is required for live FotMob requests');
+    }
+    if (errors.length > 0) {
+        errors.push(`Use ${CANONICAL_MAKE_TARGET} for the canonical authorized entrypoint`);
+    }
+
+    return errors;
+}
+
+function writeInputErrors(stderr, errors) {
+    for (const error of errors) stderr.write(`Error: ${error}\n`);
+    stderr.write('\nUse --help for usage.\n');
+}
+
+function createExportOptions(args, deps) {
+    const competition = canonicalizeCompetition(args.competition);
+    return {
+        leagueId: args.leagueId,
+        competition,
+        seasons: args.seasons,
+        leagueSlug: args.slug || competition.toLowerCase().replace(/\s+/g, '-'),
+        networkAuthorization: true,
+        deps: deps.exporterDeps,
+    };
+}
+
+function hasIncompleteSeasons(result, stderr) {
+    if (result.validation.all_seasons_complete) return false;
+
+    stderr.write('\nWARNING: Not all seasons produced the expected fixture count.\n');
+    for (const seasonResult of result.validation.season_results) {
+        if (seasonResult.result !== 'complete') {
+            stderr.write(`  ${seasonResult.season}: ${seasonResult.result} (${seasonResult.candidates} fixtures)\n`);
+        }
+    }
+    return true;
+}
+
+function writeRequestedOutput(args, result, deps, stderr) {
+    if (!args.output) return null;
+
+    try {
+        const paths = writeOutputFiles(args.output, result.candidates, result.snapshot, result.meta, {
+            repositoryRoot: deps.repositoryRoot,
+        });
+        stderr.write(`Wrote ${paths.candidatePath}\n`);
+        stderr.write(`Wrote ${paths.summaryPath}\n`);
+        return null;
+    } catch (err) {
+        stderr.write(`Output error: ${err.message}\n`);
+        return 3;
+    }
+}
+
+function exitCodeForError(err) {
+    if (err.code === 'SAFETY_ERROR') return 3;
+    if (err.code === 'INPUT_ERROR') return 2;
+    return 5;
+}
+
 async function main(argv = process.argv.slice(2), deps = {}) {
     const stdout = deps.stdout || process.stdout;
     const stderr = deps.stderr || process.stderr;
@@ -138,50 +254,25 @@ async function main(argv = process.argv.slice(2), deps = {}) {
             return 0;
         }
 
-        const argErrors = validateArgs(args);
-        if (argErrors.length > 0) {
-            for (const e of argErrors) stderr.write(`Error: ${e}\n`);
-            stderr.write('\nUse --help for usage.\n');
+        const inputErrors = [...validateArgs(args), ...validateNetworkAuthorization(args)];
+        if (inputErrors.length > 0) {
+            writeInputErrors(stderr, inputErrors);
             return 2;
         }
 
-        const opts = {
-            leagueId: args.leagueId,
-            competition: args.competition,
-            seasons: args.seasons,
-            leagueSlug: args.slug || args.competition.toLowerCase().replace(/\s+/g, '-'),
-        };
-
-        const result = await exportCandidates(opts);
+        const runExporter = deps.exportCandidates || exportCandidates;
+        const result = await runExporter(createExportOptions(args, deps));
 
         // Print summary
         const summaryDoc = buildSummaryDocument(result.candidates, result.snapshot, result.meta);
         stdout.write(JSON.stringify(summaryDoc, null, 2) + '\n');
 
         // Validate
-        if (!result.validation.all_seasons_complete) {
-            stderr.write('\nWARNING: Not all seasons produced the expected fixture count.\n');
-            for (const sr of result.validation.season_results) {
-                if (sr.result !== 'complete') {
-                    stderr.write(`  ${sr.season}: ${sr.result} (${sr.candidates} fixtures)\n`);
-                }
-            }
-            return 3;
-        }
+        if (hasIncompleteSeasons(result, stderr)) return 3;
 
         // Output if requested
-        if (args.output) {
-            try {
-                const paths = writeOutputFiles(args.output, result.candidates, result.snapshot, result.meta, {
-                    repositoryRoot: deps.repositoryRoot,
-                });
-                stderr.write(`Wrote ${paths.candidatePath}\n`);
-                stderr.write(`Wrote ${paths.summaryPath}\n`);
-            } catch (err) {
-                stderr.write(`Output error: ${err.message}\n`);
-                return 3;
-            }
-        }
+        const outputExitCode = writeRequestedOutput(args, result, deps, stderr);
+        if (outputExitCode) return outputExitCode;
 
         stderr.write(
             `Total: ${result.validation.total_candidates} candidates, ` +
@@ -193,9 +284,7 @@ async function main(argv = process.argv.slice(2), deps = {}) {
         return 0;
     } catch (err) {
         stderr.write(`fotmob:candidates:export failed: ${err.message}\n`);
-        if (err.code === 'SAFETY_ERROR') return 3;
-        if (err.code === 'INPUT_ERROR') return 2;
-        return 5;
+        return exitCodeForError(err);
     }
 }
 
@@ -209,4 +298,12 @@ if (require.main === module) {
         });
 }
 
-module.exports = { main, parseArgs, validateArgs, USAGE };
+module.exports = {
+    main,
+    parseArgs,
+    validateArgs,
+    validateNetworkAuthorization,
+    normaliseNetworkAuthorizationValue,
+    createExportOptions,
+    USAGE,
+};

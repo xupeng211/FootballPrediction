@@ -8,7 +8,7 @@
 
 .PHONY: help up down restart logs test test-unit clean build db-reset db-shell lint format security \
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
-        data-help data-check data-local-dry-run data-l3-dry-run data-l3-commit \
+        data-help data-check data-fotmob-candidates-network-export data-local-dry-run data-l3-dry-run data-l3-commit \
         data-l3-write-dry-run data-l3-write-commit \
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
@@ -436,6 +436,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "Allowed by default:"
 	@echo "  make data-help"
 	@echo "  make data-check"
+	@echo "  make data-fotmob-candidates-network-export LEAGUE_ID=<id> COMPETITION=\"Premier League\" SEASONS=\"2022/2023 2023/2024 2024/2025\" NETWORK_AUTHORIZATION=yes  # explicit live FotMob fixture access only; no DB write"
 	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
@@ -651,6 +652,23 @@ data-check: ## Read-only data environment check
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/local_dom_ingestor.js --help >/tmp/fp_data_local_dom_help.txt
 	$(COMPOSE_DEV) exec -T dev node scripts/ops/csv_bulk_loader.js --help >/tmp/fp_data_csv_loader_help.txt
 	@echo "OK: read-only data environment check completed."
+
+data-fotmob-candidates-network-export: ## Explicitly authorized live FotMob candidate export; no DB, browser, proxy, or implicit retry.
+	@if [ -z "$(LEAGUE_ID)" ] || [ -z "$(COMPETITION)" ] || [ -z "$(SEASONS)" ]; then \
+		echo "ERROR: provide LEAGUE_ID=<id>, COMPETITION=\"Premier League\", and SEASONS=\"YYYY/YYYY ...\""; \
+		exit 1; \
+	fi
+	@if [ "$(NETWORK_AUTHORIZATION)" != "yes" ]; then \
+		echo "BLOCKED: data-fotmob-candidates-network-export requires NETWORK_AUTHORIZATION=yes before Node execution."; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T \
+		-e FOTMOB_CANDIDATE_LEAGUE_ID="$(LEAGUE_ID)" \
+		-e FOTMOB_CANDIDATE_COMPETITION="$(COMPETITION)" \
+		-e FOTMOB_CANDIDATE_SEASONS="$(SEASONS)" \
+		-e FOTMOB_CANDIDATE_SLUG="$(SLUG)" \
+		-e FOTMOB_CANDIDATE_OUTPUT="$(OUTPUT)" \
+		dev bash -lc 'set -eu; set -f; cd /app/.claude/worktrees/m3-fotmob-epl-candidates; set -- --league-id "$$FOTMOB_CANDIDATE_LEAGUE_ID" --competition "$$FOTMOB_CANDIDATE_COMPETITION"; for season in $$FOTMOB_CANDIDATE_SEASONS; do set -- "$$@" --season "$$season"; done; if [ -n "$$FOTMOB_CANDIDATE_SLUG" ]; then set -- "$$@" --slug "$$FOTMOB_CANDIDATE_SLUG"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT" ]; then set -- "$$@" --output "$$FOTMOB_CANDIDATE_OUTPUT"; fi; npm run fotmob:candidates:export -- "$$@" --network-preview=true --network-authorization=yes'
 
 data-l1-discovery-preview: ## L1 safe preview wrapper. Phase 5.05L1. Preview-only, no network, no DB, no browser/proxy.
 	@if [ -z "$(SOURCE)" ] || [ -z "$(SCOPE)" ]; then \
