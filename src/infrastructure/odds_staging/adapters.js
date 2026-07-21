@@ -7,7 +7,6 @@ const {
     buildKickoffInterpretationEvidence,
     deriveKickoffAt,
     deriveSeason,
-    isAllowedSeason,
     isInterpretationApplicable,
     resolveCompetition,
     resolveFootballDataTeamName,
@@ -307,81 +306,88 @@ function csvKickoffAt(row, manifest) {
     return { kickoff_at: null, reason: 'kickoff_timezone_unresolved', time_interpretation: null };
 }
 
-function buildCsvIdentity(row, manifest) {
-    const kickoff = csvKickoffAt(row, manifest);
+function resolveCsvIdentityScope(row, manifest) {
+    const interpretation = manifest.kickoff_time_interpretation;
+    const active = isInterpretationApplicable(manifest);
+    const rawCompetition = pickFirst(row, ['Competition', 'League', 'Div']);
+    const competition = active && rawCompetition ? resolveCompetition(rawCompetition) : rawCompetition || null;
+    const date = pickFirst(row, ['Date', 'date', 'match_date']);
+    const parsedDate = active && date ? parseAndValidateDate(date) : null;
+    const derivedSeason = parsedDate ? deriveSeason(parsedDate.year, parsedDate.month) : null;
+    const explicitSeason = pickFirst(row, ['Season', 'season']);
+    const competitionAuthorized = !active || (competition && interpretation.allowed_competitions.includes(competition));
+    const seasonAuthorized = !active || !derivedSeason || interpretation.allowed_seasons.includes(derivedSeason);
+    const seasonConflict = Boolean(
+        derivedSeason && explicitSeason && normalizeSeasonFormat(explicitSeason) !== derivedSeason
+    );
+    return {
+        active,
+        competition,
+        derivedSeason,
+        explicitSeason,
+        competitionAuthorized,
+        seasonAuthorized,
+        seasonConflict,
+    };
+}
+
+function csvIdentityReason(kickoff, scope) {
+    if (!scope.competitionAuthorized) return 'competition_not_authorized';
+    if (!scope.seasonAuthorized) return 'season_not_authorized';
+    return kickoff.reason || (scope.seasonConflict ? 'season_conflict' : null);
+}
+
+function resolveCsvSourceMatchMetadata(row, manifest) {
     const rawSourceMatchId = pickFirst(row, ['SourceMatchId', 'source_match_id', 'SourceMatchID']);
     const manifestSourceMatchId = normalizeText(manifest.source_match_id) || null;
-    const sourceMatchIdConflict =
-        rawSourceMatchId && manifestSourceMatchId && rawSourceMatchId !== manifestSourceMatchId;
+    return {
+        rawSourceMatchId,
+        manifestSourceMatchId,
+        sourceMatchIdConflict: Boolean(
+            rawSourceMatchId && manifestSourceMatchId && rawSourceMatchId !== manifestSourceMatchId
+        ),
+    };
+}
 
-    const interpretationActive = isInterpretationApplicable(manifest);
-
-    // Resolve competition: E0→Premier League mapping applied only when interpretation active
-    const rawCompetition = pickFirst(row, ['Competition', 'League', 'Div']);
-    const competition = interpretationActive && rawCompetition
-        ? resolveCompetition(rawCompetition)
-        : rawCompetition || null;
-
-    // Derive season from source Date field (only when interpretation is active)
-    const date = pickFirst(row, ['Date', 'date', 'match_date']);
-    let season = pickFirst(row, ['Season', 'season']);
-    let seasonConflict = false;
-    if (interpretationActive && date) {
-        const parsed = parseAndValidateDate(date);
-        if (parsed) {
-            const derived = deriveSeason(parsed.year, parsed.month);
-            // Season authorization gate
-            if (!isAllowedSeason(derived)) {
-                return {
-                    source_match_id: rawSourceMatchId || manifestSourceMatchId,
-                    competition,
-                    season: season || derived,
-                    kickoff_at: kickoff.kickoff_at,
-                    home_team: null,
-                    away_team: null,
-                    identity_reason: 'season_not_authorized',
-                    kickoff_time_interpretation: kickoff.time_interpretation,
-                    manifest_source_match_id: manifestSourceMatchId,
-                    raw_source_match_id: rawSourceMatchId,
-                    source_match_id_conflict: sourceMatchIdConflict,
-                    season_conflict: false,
-                };
-            }
-            // Normalize season format for comparison: "22/23" ≈ "2022/2023"
-            if (season && normalizeSeasonFormat(season) !== derived) {
-                seasonConflict = true;
-            }
-            season = derived;
-        }
-    }
-
-    // Resolve team names via source-scoped aliases (only for football-data-csv)
+function resolveAuthorizedCsvTeams(row, scope) {
     const rawHome = pickFirst(row, ['HomeTeam', 'home_team']);
     const rawAway = pickFirst(row, ['AwayTeam', 'away_team']);
-    // Team aliases are only applied when interpretation is active (scoped to football-data-csv historical)
-    const homeTeam = interpretationActive && rawHome ? resolveFootballDataTeamName(rawHome) : rawHome || null;
-    const awayTeam = interpretationActive && rawAway ? resolveFootballDataTeamName(rawAway) : rawAway || null;
-
-    // Build identity reason
-    let identityReason = kickoff.reason || null;
-    if (seasonConflict) {
-        identityReason = identityReason || 'season_conflict';
-    }
-
+    const authorized = scope.competitionAuthorized && scope.seasonAuthorized;
+    const resolve = rawName =>
+        authorized && scope.active ? resolveFootballDataTeamName(rawName) : normalizeText(rawName) || null;
     return {
-        source_match_id: rawSourceMatchId || manifestSourceMatchId,
-        competition,
-        season,
-        kickoff_at: kickoff.kickoff_at,
-        home_team: homeTeam,
-        away_team: awayTeam,
-        identity_reason: identityReason,
-        kickoff_time_interpretation: kickoff.time_interpretation,
-        manifest_source_match_id: manifestSourceMatchId,
-        raw_source_match_id: rawSourceMatchId,
-        source_match_id_conflict: sourceMatchIdConflict,
-        season_conflict: seasonConflict,
+        authorized,
+        homeTeam: authorized ? resolve(rawHome) : null,
+        awayTeam: authorized ? resolve(rawAway) : null,
     };
+}
+
+function buildCsvIdentityResult(scope, kickoff, source, teams) {
+    return {
+        source_match_id: source.rawSourceMatchId || source.manifestSourceMatchId,
+        competition: scope.competition,
+        season: scope.derivedSeason || scope.explicitSeason,
+        kickoff_at: kickoff.kickoff_at,
+        home_team: teams.homeTeam,
+        away_team: teams.awayTeam,
+        identity_reason: csvIdentityReason(kickoff, scope),
+        kickoff_time_interpretation: kickoff.time_interpretation,
+        manifest_source_match_id: source.manifestSourceMatchId,
+        raw_source_match_id: source.rawSourceMatchId,
+        source_match_id_conflict: source.sourceMatchIdConflict,
+        season_conflict: scope.seasonConflict,
+    };
+}
+
+function buildCsvIdentity(row, manifest) {
+    const scope = resolveCsvIdentityScope(row, manifest);
+    const kickoff = csvKickoffAt(row, manifest);
+    return buildCsvIdentityResult(
+        scope,
+        kickoff,
+        resolveCsvSourceMatchMetadata(row, manifest),
+        resolveAuthorizedCsvTeams(row, scope)
+    );
 }
 
 function buildAdapterQuarantine(locator, reasons, evidence = {}) {

@@ -70,11 +70,8 @@ function buildObservation(manifest, draft, ingestedAt) {
         provenance_status: manifest.provenance_status,
         quarantine_reasons: adapterReasons,
         ingested_at: ingestedAt,
+        ...(kickoff_time_interpretation_evidence ? { kickoff_time_interpretation_evidence } : {}),
     });
-    // Attach kickoff_time_interpretation_evidence if present (audit trail)
-    if (kickoff_time_interpretation_evidence) {
-        observation.kickoff_time_interpretation_evidence = kickoff_time_interpretation_evidence;
-    }
     return observation;
 }
 
@@ -85,8 +82,13 @@ function applyMatchLink(observation, candidates) {
         return linked;
     }
     // Specific conflict reasons from derived kickoff diagnostics
-    if (/^derived_kickoff_conflict/.test(matchLink.method)) {
-        return appendObservationSignals(linked, [matchLink.method], [matchLink.method]);
+    const conflictReasons = {
+        derived_kickoff_conflict_15m: 'kickoff_conflict_15m',
+        derived_kickoff_conflict_30m: 'kickoff_conflict_30m',
+        derived_kickoff_conflict_other: 'kickoff_conflict_other',
+    };
+    if (conflictReasons[matchLink.method]) {
+        return appendObservationSignals(linked, [conflictReasons[matchLink.method]], [matchLink.method]);
     }
     const reason = matchLink.status === 'ambiguous' ? 'match_link_ambiguous' : 'match_link_unmatched';
     return appendObservationSignals(linked, [reason], [reason]);
@@ -144,6 +146,9 @@ function createObservationQuarantine(observation) {
                 // 可选合同字段只在真实存在时进入证据，保持旧 quarantine 输出不变。
                 ...(observation.source_quote_series ? { source_quote_series: observation.source_quote_series } : {}),
                 ...(observation.capture_time_status ? { capture_time_status: observation.capture_time_status } : {}),
+                ...(observation.kickoff_time_interpretation_evidence
+                    ? { kickoff_time_interpretation_evidence: observation.kickoff_time_interpretation_evidence }
+                    : {}),
             },
             source_fields: {
                 away_team: observation.away_team,

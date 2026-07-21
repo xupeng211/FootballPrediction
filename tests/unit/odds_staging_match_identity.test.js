@@ -23,6 +23,7 @@ const {
     ALLOWED_SEASONS,
     ALLOWED_COMPETITIONS,
 } = require('../../src/infrastructure/odds_staging/footballDataIdentity');
+const { adaptFootballDataCsv } = require('../../src/infrastructure/odds_staging/adapters');
 
 // ── Alias Tests ───────────────────────────────────────────────────
 
@@ -65,9 +66,9 @@ test('未知球队不转换', () => {
 });
 
 test('不做模糊或语音匹配', () => {
-    assert.equal(resolveFootballDataTeamName('Man U'), 'Man U');  // not in alias table
+    assert.equal(resolveFootballDataTeamName('Man U'), 'Man U'); // not in alias table
     assert.equal(resolveFootballDataTeamName('Mancity'), 'Mancity');
-    assert.equal(resolveFootballDataTeamName('Tottneham'), 'Tottneham');  // typo
+    assert.equal(resolveFootballDataTeamName('Tottneham'), 'Tottneham'); // typo
 });
 
 // ── Competition/Season Tests ─────────────────────────────────────
@@ -96,17 +97,17 @@ test('parseAndValidateDate YYYY-MM-DD', () => {
 });
 
 test('parseAndValidateDate 拒绝非法日期', () => {
-    assert.equal(parseAndValidateDate('29/02/2023'), null);  // not a leap year
-    assert.equal(parseAndValidateDate('31/04/2023'), null);  // April has 30 days
+    assert.equal(parseAndValidateDate('29/02/2023'), null); // not a leap year
+    assert.equal(parseAndValidateDate('31/04/2023'), null); // April has 30 days
     assert.equal(parseAndValidateDate(''), null);
     assert.equal(parseAndValidateDate('not-a-date'), null);
 });
 
 test('deriveSeason 正确推导赛季', () => {
-    assert.equal(deriveSeason(2022, 8), '2022/2023');   // Aug → new season
-    assert.equal(deriveSeason(2023, 1), '2022/2023');   // Jan → previous season
-    assert.equal(deriveSeason(2023, 5), '2022/2023');   // May → previous season
-    assert.equal(deriveSeason(2023, 7), '2023/2024');   // July → new season
+    assert.equal(deriveSeason(2022, 8), '2022/2023'); // Aug → new season
+    assert.equal(deriveSeason(2023, 1), '2022/2023'); // Jan → previous season
+    assert.equal(deriveSeason(2023, 5), '2022/2023'); // May → previous season
+    assert.equal(deriveSeason(2023, 7), '2023/2024'); // July → new season
     assert.equal(deriveSeason(2024, 3), '2023/2024');
     assert.equal(deriveSeason(2024, 8), '2024/2025');
 });
@@ -137,6 +138,17 @@ test('deriveKickoffAt BST 日期正确转换', () => {
     assert.equal(result.kickoff_at, '2022-08-05T19:00:00Z');
 });
 
+test('deriveKickoffAt 对 London DST 不存在和歧义本地时间 fail closed', () => {
+    const interp = validInterpretation();
+    assert.equal(deriveKickoffAt('26/03/2023', '00:30', interp).kickoff_at, '2023-03-26T00:30:00Z');
+    assert.equal(deriveKickoffAt('26/03/2023', '01:30', interp).error, 'kickoff_local_time_nonexistent');
+    assert.equal(deriveKickoffAt('26/03/2023', '02:30', interp).kickoff_at, '2023-03-26T01:30:00Z');
+    assert.equal(deriveKickoffAt('29/10/2023', '00:30', interp).kickoff_at, '2023-10-28T23:30:00Z');
+    assert.equal(deriveKickoffAt('29/10/2023', '01:30', interp).error, 'kickoff_local_time_ambiguous');
+    assert.equal(deriveKickoffAt('29/10/2023', '02:30', interp).kickoff_at, '2023-10-29T02:30:00Z');
+    assert.equal(deriveKickoffAt('31/03/2024', '01:30', interp).error, 'kickoff_local_time_nonexistent');
+});
+
 test('deriveKickoffAt 拒绝无效时间', () => {
     const interp = validInterpretation();
     assert.equal(deriveKickoffAt('05/08/2022', '', interp).error, 'kickoff_missing');
@@ -152,8 +164,14 @@ test('deriveKickoffAt 无 interpretation 返回 unresolved', () => {
 });
 
 test('deriveKickoffAt 非法 interpretation 返回 invalid', () => {
-    assert.equal(deriveKickoffAt('05/08/2022', '20:00', { status: 'derived', timezone: 'Asia/Tokyo' }).error, 'kickoff_interpretation_invalid');
-    assert.equal(deriveKickoffAt('05/08/2022', '20:00', { status: 'official', timezone: 'Europe/London' }).error, 'kickoff_interpretation_invalid');
+    assert.equal(
+        deriveKickoffAt('05/08/2022', '20:00', { status: 'derived', timezone: 'Asia/Tokyo' }).error,
+        'kickoff_interpretation_invalid'
+    );
+    assert.equal(
+        deriveKickoffAt('05/08/2022', '20:00', { status: 'official', timezone: 'Europe/London' }).error,
+        'kickoff_interpretation_invalid'
+    );
 });
 
 // ── Manifest Interpretation Validation ───────────────────────────
@@ -214,12 +232,16 @@ test('evidence_reference 缺失拒绝', () => {
 });
 
 test('competition 扩大拒绝', () => {
-    const result = validateKickoffTimeInterpretation(validInterpretation({ allowed_competitions: ['Premier League', 'Championship'] }));
+    const result = validateKickoffTimeInterpretation(
+        validInterpretation({ allowed_competitions: ['Premier League', 'Championship'] })
+    );
     assert.ok(result.errors.some(e => /unauthorized competition/.test(e)));
 });
 
 test('season 扩大拒绝', () => {
-    const result = validateKickoffTimeInterpretation(validInterpretation({ allowed_seasons: ['2022/2023', '2025/2026'] }));
+    const result = validateKickoffTimeInterpretation(
+        validInterpretation({ allowed_seasons: ['2022/2023', '2025/2026'] })
+    );
     assert.ok(result.errors.some(e => /unauthorized season/.test(e)));
 });
 
@@ -228,23 +250,67 @@ test('未知字段拒绝', () => {
     assert.ok(result.errors.some(e => /unknown field/.test(e)));
 });
 
+test('interpretation 数组、重复 scope 和空 scope 均被拒绝', () => {
+    assert.equal(validateKickoffTimeInterpretation([]).valid, false);
+    assert.equal(
+        validateKickoffTimeInterpretation(
+            validInterpretation({ allowed_competitions: ['Premier League', 'Premier League'] })
+        ).valid,
+        false
+    );
+    assert.equal(validateKickoffTimeInterpretation(validInterpretation({ allowed_seasons: [] })).valid, false);
+});
+
 test('isInterpretationApplicable 仅对正确上下文返回 true', () => {
-    assert.ok(isInterpretationApplicable({
-        kickoff_time_interpretation: { status: 'derived' },
-        acquisition_mode: 'historical_git_recovery',
-        adapter: 'football-data-csv',
-        adapter_version: '1.2.0',
-        source_timezone: 'unknown',
-    }));
+    assert.ok(
+        isInterpretationApplicable({
+            kickoff_time_interpretation: { status: 'derived' },
+            acquisition_mode: 'historical_git_recovery',
+            adapter: 'football-data-csv',
+            adapter_version: '1.2.0',
+            source_timezone: 'unknown',
+        })
+    );
 
     // 缺少 interpretation
-    assert.ok(!isInterpretationApplicable({ acquisition_mode: 'historical_git_recovery', adapter: 'football-data-csv', adapter_version: '1.2.0', source_timezone: 'unknown' }));
+    assert.ok(
+        !isInterpretationApplicable({
+            acquisition_mode: 'historical_git_recovery',
+            adapter: 'football-data-csv',
+            adapter_version: '1.2.0',
+            source_timezone: 'unknown',
+        })
+    );
     // 错误的 source_timezone
-    assert.ok(!isInterpretationApplicable({ kickoff_time_interpretation: {}, acquisition_mode: 'historical_git_recovery', adapter: 'football-data-csv', adapter_version: '1.2.0', source_timezone: 'UTC' }));
+    assert.ok(
+        !isInterpretationApplicable({
+            kickoff_time_interpretation: {},
+            acquisition_mode: 'historical_git_recovery',
+            adapter: 'football-data-csv',
+            adapter_version: '1.2.0',
+            source_timezone: 'UTC',
+        })
+    );
     // 非历史恢复
-    assert.ok(!isInterpretationApplicable({ kickoff_time_interpretation: {}, acquisition_mode: 'live', adapter: 'football-data-csv', adapter_version: '1.2.0', source_timezone: 'unknown' }));
+    assert.ok(
+        !isInterpretationApplicable({
+            kickoff_time_interpretation: {},
+            acquisition_mode: 'live',
+            adapter: 'football-data-csv',
+            adapter_version: '1.2.0',
+            source_timezone: 'unknown',
+        })
+    );
     // 错误 adapter
-    assert.ok(!isInterpretationApplicable({ kickoff_time_interpretation: {}, acquisition_mode: 'historical_git_recovery', adapter: 'oddsportal-explicit-envelope-html', adapter_version: '1.2.0', source_timezone: 'unknown' }));
+    assert.ok(
+        !isInterpretationApplicable({
+            kickoff_time_interpretation: {},
+            acquisition_mode: 'historical_git_recovery',
+            adapter: 'oddsportal-explicit-envelope-html',
+            adapter_version: '1.2.0',
+            source_timezone: 'unknown',
+        })
+    );
 });
 
 test('buildKickoffInterpretationEvidence 生成正确证据', () => {
@@ -255,4 +321,26 @@ test('buildKickoffInterpretationEvidence 生成正确证据', () => {
     assert.equal(evidence.official_source_declaration, false);
     assert.equal(evidence.source_local_date, '05/08/2022');
     assert.equal(evidence.source_local_time, '20:00');
+});
+
+test('manifest 实际 scope 在 alias 前逐行生效', () => {
+    const manifest = {
+        acquisition_mode: 'historical_git_recovery',
+        adapter: 'football-data-csv',
+        adapter_version: '1.2.0',
+        source_timezone: 'unknown',
+        kickoff_time_interpretation: validInterpretation({ allowed_seasons: ['2022/2023'] }),
+    };
+    const unauthorizedSeason = adaptFootballDataCsv(
+        'Div,Date,Time,HomeTeam,AwayTeam,B365H,B365D,B365A\nE0,05/08/2023,15:00,Man City,Wolves,2,3,4',
+        { manifest }
+    );
+    assert.equal(unauthorizedSeason.observations[0].identity_reason, 'season_not_authorized');
+    assert.equal(unauthorizedSeason.observations[0].home_team, null);
+    const unauthorizedCompetition = adaptFootballDataCsv(
+        'Div,Date,Time,HomeTeam,AwayTeam,B365H,B365D,B365A\nE1,05/08/2022,15:00,Man City,Wolves,2,3,4',
+        { manifest }
+    );
+    assert.equal(unauthorizedCompetition.observations[0].identity_reason, 'competition_not_authorized');
+    assert.equal(unauthorizedCompetition.observations[0].home_team, null);
 });

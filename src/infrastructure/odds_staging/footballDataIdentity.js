@@ -153,55 +153,47 @@ function isAllowedSeason(season) {
  *
  * Returns offset in minutes, or null on error.
  */
-function londonUtcOffsetMinutes(year, month, day) {
-    try {
-        // Create a date at noon local time on the given date
-        // Use Intl.DateTimeFormat to get the actual IANA timezone offset
-        const formatter = new Intl.DateTimeFormat('en-US', {
-            timeZone: 'Europe/London',
-            timeZoneName: 'longOffset',
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-        });
+const LONDON_PARTS_FORMATTER = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+});
 
-        // Build a UTC timestamp for noon on the target date
-        // We use noon UTC as the reference point and let formatter tell us the offset
-        const targetDate = new Date(Date.UTC(year, month - 1, day, 12, 0, 0));
-        const parts = formatter.formatToParts(targetDate);
+function parseStrictLocalTime(dateStr, timeStr) {
+    const date = parseAndValidateDate(dateStr);
+    const match = /^(\d{1,2}):(\d{2})$/.exec(String(timeStr ?? '').trim());
+    if (!date || !match || Number(match[1]) > 23 || Number(match[2]) > 59) return null;
+    return { ...date, hour: Number(match[1]), minute: Number(match[2]) };
+}
 
-        // Find the timeZoneName part which contains the offset like "GMT+1" or "GMT"
-        let offsetStr = null;
-        for (const part of parts) {
-            if (part.type === 'timeZoneName') {
-                offsetStr = part.value;
-                break;
-            }
-        }
+function localPartsAt(instant) {
+    return LONDON_PARTS_FORMATTER.formatToParts(new Date(instant)).reduce((result, part) => {
+        if (['year', 'month', 'day', 'hour', 'minute'].includes(part.type)) result[part.type] = Number(part.value);
+        return result;
+    }, {});
+}
 
-        if (!offsetStr) return null;
+function localPartsEqual(left, right) {
+    return ['year', 'month', 'day', 'hour', 'minute'].every(field => left[field] === right[field]);
+}
 
-        // Parse offset from strings like "GMT+1", "GMT+01:00", "GMT"
-        const offsetMatch = /^GMT([+-]\d{1,2})(?::(\d{2}))?$/.exec(offsetStr);
-        if (offsetMatch) {
-            const hours = Number(offsetMatch[1]);
-            const minutes = offsetMatch[2] ? Number(offsetMatch[2]) : 0;
-            if (hours < 0) return hours * 60 - minutes;
-            return hours * 60 + minutes;
-        }
-
-        // Just "GMT" without offset = UTC+0
-        if (offsetStr === 'GMT') {
-            return 0;
-        }
-
-        return null;
-    } catch {
-        return null;
+function resolveLondonLocalInstant(local) {
+    const naiveUtcMs = Date.UTC(local.year, local.month - 1, local.day, local.hour, local.minute);
+    const offsets = new Set();
+    for (let hours = -48; hours <= 48; hours += 1) {
+        const instant = naiveUtcMs + hours * 60 * 60 * 1000;
+        const actual = localPartsAt(instant);
+        offsets.add(Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute) - instant);
     }
+    return [...offsets]
+        .map(offset => naiveUtcMs - offset)
+        .filter(instant => localPartsEqual(localPartsAt(instant), local))
+        .filter((instant, index, values) => values.indexOf(instant) === index)
+        .sort((left, right) => left - right);
 }
 
 /**
@@ -214,89 +206,17 @@ function londonUtcOffsetMinutes(year, month, day) {
  * @returns {{ kickoff_at: string|null, error: string|null }}
  */
 function deriveKickoffAt(dateStr, timeStr, interpretation) {
-    if (!interpretation) {
-        return { kickoff_at: null, error: 'kickoff_timezone_unresolved' };
-    }
-
-    if (interpretation.status !== 'derived') {
+    if (!interpretation) return { kickoff_at: null, error: 'kickoff_timezone_unresolved' };
+    if (interpretation.status !== 'derived' || interpretation.timezone !== 'Europe/London') {
         return { kickoff_at: null, error: 'kickoff_interpretation_invalid' };
     }
-
-    if (interpretation.timezone !== 'Europe/London') {
-        return { kickoff_at: null, error: 'kickoff_interpretation_invalid' };
-    }
-
-    const parsed = parseAndValidateDate(dateStr);
-    if (!parsed) {
-        return { kickoff_at: null, error: 'kickoff_invalid' };
-    }
-
-    const { year, month, day } = parsed;
-
-    const timeText = String(timeStr ?? '').trim();
-    if (!timeText) {
-        return { kickoff_at: null, error: 'kickoff_missing' };
-    }
-
-    const timeMatch = /^(\d{1,2}):(\d{2})$/.exec(timeText);
-    if (!timeMatch) {
-        return { kickoff_at: null, error: 'kickoff_invalid' };
-    }
-
-    const hour = Number(timeMatch[1]);
-    const minute = Number(timeMatch[2]);
-
-    if (hour > 23 || minute > 59) {
-        return { kickoff_at: null, error: 'kickoff_invalid' };
-    }
-
-    // Get Europe/London UTC offset using IANA timezone
-    const offsetMinutes = londonUtcOffsetMinutes(year, month, day);
-    if (offsetMinutes === null) {
-        return { kickoff_at: null, error: 'kickoff_timezone_unresolved' };
-    }
-
-    // Source time is in Europe/London local → subtract offset to get UTC
-    // Create as UTC then subtract the offset
-    const localMinutes = hour * 60 + minute;
-    const utcMinutes = localMinutes - offsetMinutes;
-
-    // Handle day rollover
-    let utcYear = year;
-    let utcMonth = month;
-    let utcDay = day;
-    let utcHour = Math.floor(utcMinutes / 60);
-    let utcMinute = utcMinutes % 60;
-
-    if (utcMinutes < 0) {
-        // Go back to previous day
-        utcHour += 24;
-        utcDay -= 1;
-        if (utcDay < 1) {
-            utcMonth -= 1;
-            if (utcMonth < 1) {
-                utcMonth = 12;
-                utcYear -= 1;
-            }
-            utcDay = new Date(Date.UTC(utcYear, utcMonth, 0)).getUTCDate();
-        }
-    } else if (utcHour >= 24) {
-        utcHour -= 24;
-        utcDay += 1;
-        const dim = new Date(Date.UTC(utcYear, utcMonth, 0)).getUTCDate();
-        if (utcDay > dim) {
-            utcDay = 1;
-            utcMonth += 1;
-            if (utcMonth > 12) {
-                utcMonth = 1;
-                utcYear += 1;
-            }
-        }
-    }
-
-    const kickoffAt = `${String(utcYear).padStart(4, '0')}-${String(utcMonth).padStart(2, '0')}-${String(utcDay).padStart(2, '0')}T${String(utcHour).padStart(2, '0')}:${String(utcMinute).padStart(2, '0')}:00Z`;
-
-    return { kickoff_at: kickoffAt, error: null };
+    if (!String(timeStr ?? '').trim()) return { kickoff_at: null, error: 'kickoff_missing' };
+    const local = parseStrictLocalTime(dateStr, timeStr);
+    if (!local) return { kickoff_at: null, error: 'kickoff_invalid' };
+    const candidates = resolveLondonLocalInstant(local);
+    if (candidates.length === 0) return { kickoff_at: null, error: 'kickoff_local_time_nonexistent' };
+    if (candidates.length > 1) return { kickoff_at: null, error: 'kickoff_local_time_ambiguous' };
+    return { kickoff_at: new Date(candidates[0]).toISOString().replace('.000', ''), error: null };
 }
 
 /**
@@ -304,66 +224,54 @@ function deriveKickoffAt(dateStr, timeStr, interpretation) {
  * Returns { valid: boolean, errors: string[] }
  */
 function validateKickoffTimeInterpretation(interpretation) {
-    if (!interpretation || typeof interpretation !== 'object') {
-        return { valid: true, errors: [] }; // Optional field
+    if (interpretation === undefined || interpretation === null) return { valid: true, errors: [] };
+    if (!interpretation || typeof interpretation !== 'object' || Array.isArray(interpretation)) {
+        return { valid: false, errors: ['kickoff_time_interpretation must be a plain object'] };
     }
-
-    const errors = [];
-
-    if (interpretation.status !== 'derived') {
-        errors.push('kickoff_time_interpretation.status must be "derived"');
-    }
-    if (interpretation.timezone !== 'Europe/London') {
-        errors.push('kickoff_time_interpretation.timezone must be "Europe/London"');
-    }
-    if (interpretation.method !== 'source_local_calendar_time') {
-        errors.push('kickoff_time_interpretation.method must be "source_local_calendar_time"');
-    }
-    if (interpretation.evidence_level !== 'empirical_cross_source') {
-        errors.push('kickoff_time_interpretation.evidence_level must be "empirical_cross_source"');
-    }
-    if (interpretation.official_source_declaration !== false) {
-        errors.push('kickoff_time_interpretation.official_source_declaration must be false');
-    }
-    if (!interpretation.evidence_reference || typeof interpretation.evidence_reference !== 'string' || !interpretation.evidence_reference.trim()) {
+    const required = {
+        status: 'derived',
+        timezone: 'Europe/London',
+        method: 'source_local_calendar_time',
+        evidence_level: 'empirical_cross_source',
+        official_source_declaration: false,
+    };
+    const errors = Object.entries(required)
+        .filter(([field, value]) => interpretation[field] !== value)
+        .map(([field, value]) => `kickoff_time_interpretation.${field} must be ${JSON.stringify(value)}`);
+    if (typeof interpretation.evidence_reference !== 'string' || !interpretation.evidence_reference.trim()) {
         errors.push('kickoff_time_interpretation.evidence_reference must be a non-empty string');
     }
-
-    // Validate allowed_competitions
-    if (!Array.isArray(interpretation.allowed_competitions) || interpretation.allowed_competitions.length === 0) {
-        errors.push('kickoff_time_interpretation.allowed_competitions must be a non-empty array');
-    } else {
-        for (const comp of interpretation.allowed_competitions) {
-            if (!ALLOWED_COMPETITIONS.includes(comp)) {
-                errors.push(`kickoff_time_interpretation.allowed_competitions contains unauthorized competition: ${comp}`);
-            }
-        }
-    }
-
-    // Validate allowed_seasons
-    if (!Array.isArray(interpretation.allowed_seasons) || interpretation.allowed_seasons.length === 0) {
-        errors.push('kickoff_time_interpretation.allowed_seasons must be a non-empty array');
-    } else {
-        for (const season of interpretation.allowed_seasons) {
-            if (!ALLOWED_SEASONS.includes(season)) {
-                errors.push(`kickoff_time_interpretation.allowed_seasons contains unauthorized season: ${season}`);
-            }
-        }
-    }
-
-    // No unknown fields allowed — fail closed
-    const knownFields = new Set([
-        'status', 'timezone', 'method', 'evidence_level',
-        'official_source_declaration', 'evidence_reference',
-        'allowed_competitions', 'allowed_seasons',
-    ]);
-    for (const key of Object.keys(interpretation)) {
-        if (!knownFields.has(key)) {
-            errors.push(`kickoff_time_interpretation contains unknown field: ${key}`);
-        }
-    }
-
+    appendAllowedValuesErrors(
+        errors,
+        interpretation.allowed_competitions,
+        'allowed_competitions',
+        ALLOWED_COMPETITIONS,
+        true
+    );
+    appendAllowedValuesErrors(errors, interpretation.allowed_seasons, 'allowed_seasons', ALLOWED_SEASONS, false);
+    const known = new Set([...Object.keys(required), 'evidence_reference', 'allowed_competitions', 'allowed_seasons']);
+    Object.keys(interpretation)
+        .filter(field => !known.has(field))
+        .forEach(field => errors.push(`kickoff_time_interpretation contains unknown field: ${field}`));
     return { valid: errors.length === 0, errors };
+}
+
+function appendAllowedValuesErrors(errors, values, field, allowed, requirePremierLeagueOnly) {
+    if (!Array.isArray(values) || values.length === 0) {
+        errors.push(`kickoff_time_interpretation.${field} must be a non-empty array`);
+        return;
+    }
+    if (new Set(values).size !== values.length) {
+        errors.push(`kickoff_time_interpretation.${field} must not contain duplicates`);
+    }
+    if (values.some(value => !allowed.includes(value))) {
+        errors.push(
+            `kickoff_time_interpretation.${field} contains unauthorized ${field === 'allowed_competitions' ? 'competition' : 'season'}`
+        );
+    }
+    if (requirePremierLeagueOnly && (values.length !== 1 || values[0] !== 'Premier League')) {
+        errors.push('kickoff_time_interpretation.allowed_competitions must contain only Premier League');
+    }
 }
 
 /**
