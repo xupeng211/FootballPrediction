@@ -799,3 +799,22 @@ test('emit rename 失败会删除本次已 rename 的最终文件和临时文件
     );
     assert.deepEqual(fs.readdirSync(emitDirectory).sort(), ['keep.txt']);
 });
+
+test('interpretation evidence 在 canonical key 生成前参与，缺失时不注入 null', () => {
+    const evidence = {
+        status: 'derived',
+        evidence_reference: 'reference-a',
+        source_local_date: '05/08/2022',
+        source_local_time: '15:00',
+    };
+    const first = baseObservation({ kickoff_time_interpretation_evidence: evidence });
+    const same = baseObservation({ kickoff_time_interpretation_evidence: { ...evidence } });
+    const changed = baseObservation({
+        kickoff_time_interpretation_evidence: { ...evidence, evidence_reference: 'reference-b' },
+    });
+    const noEvidence = baseObservation();
+    assert.equal(first.idempotency_key, same.idempotency_key);
+    assert.notEqual(first.idempotency_key, changed.idempotency_key);
+    assert.ok(Object.hasOwn(first, 'kickoff_time_interpretation_evidence'));
+    assert.ok(!Object.hasOwn(noEvidence, 'kickoff_time_interpretation_evidence'));
+});

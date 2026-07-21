@@ -56,8 +56,8 @@ function ensureAdapterCompatibility(manifest, adapterName) {
 }
 
 function buildObservation(manifest, draft, ingestedAt) {
-    const { adapter_quarantine_reasons: adapterReasons = [], ...fields } = draft;
-    return createCanonicalObservation({
+    const { adapter_quarantine_reasons: adapterReasons = [], kickoff_time_interpretation_evidence, ...fields } = draft;
+    const observation = createCanonicalObservation({
         ...fields,
         source_provider: manifest.source_provider,
         source_url: manifest.source_url,
@@ -70,7 +70,9 @@ function buildObservation(manifest, draft, ingestedAt) {
         provenance_status: manifest.provenance_status,
         quarantine_reasons: adapterReasons,
         ingested_at: ingestedAt,
+        ...(kickoff_time_interpretation_evidence ? { kickoff_time_interpretation_evidence } : {}),
     });
+    return observation;
 }
 
 function applyMatchLink(observation, candidates) {
@@ -78,6 +80,15 @@ function applyMatchLink(observation, candidates) {
     const linked = { ...observation, match_link: matchLink };
     if (matchLink.status === 'matched') {
         return linked;
+    }
+    // Specific conflict reasons from derived kickoff diagnostics
+    const conflictReasons = {
+        derived_kickoff_conflict_15m: 'kickoff_conflict_15m',
+        derived_kickoff_conflict_30m: 'kickoff_conflict_30m',
+        derived_kickoff_conflict_other: 'kickoff_conflict_other',
+    };
+    if (conflictReasons[matchLink.method]) {
+        return appendObservationSignals(linked, [conflictReasons[matchLink.method]], [matchLink.method]);
     }
     const reason = matchLink.status === 'ambiguous' ? 'match_link_ambiguous' : 'match_link_unmatched';
     return appendObservationSignals(linked, [reason], [reason]);
@@ -135,6 +146,9 @@ function createObservationQuarantine(observation) {
                 // 可选合同字段只在真实存在时进入证据，保持旧 quarantine 输出不变。
                 ...(observation.source_quote_series ? { source_quote_series: observation.source_quote_series } : {}),
                 ...(observation.capture_time_status ? { capture_time_status: observation.capture_time_status } : {}),
+                ...(observation.kickoff_time_interpretation_evidence
+                    ? { kickoff_time_interpretation_evidence: observation.kickoff_time_interpretation_evidence }
+                    : {}),
             },
             source_fields: {
                 away_team: observation.away_team,

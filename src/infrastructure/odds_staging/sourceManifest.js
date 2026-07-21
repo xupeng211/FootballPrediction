@@ -12,6 +12,7 @@ const {
     nullableText,
     stableCanonicalize,
 } = require('./contracts');
+const { validateKickoffTimeInterpretation } = require('./footballDataIdentity');
 
 class OfflineStagingError extends Error {
     constructor(code, message) {
@@ -155,6 +156,28 @@ function appendManifestValueErrors(manifest, errors) {
     if (!ALLOWED_PROVENANCE_STATUSES.has(manifest.provenance_status)) {
         errors.push(`unsupported provenance_status: ${manifest.provenance_status || ''}`);
     }
+
+    appendKickoffInterpretationErrors(manifest, errors);
+}
+
+function appendKickoffInterpretationErrors(manifest, errors) {
+    if (!Object.prototype.hasOwnProperty.call(manifest, 'kickoff_time_interpretation')) return;
+    const interpretation = manifest.kickoff_time_interpretation;
+    const context = {
+        acquisition_mode: HISTORICAL_GIT_RECOVERY_ACQUISITION_MODE,
+        adapter: 'football-data-csv',
+        adapter_version: '1.2.0',
+        source_timezone: 'unknown',
+    };
+    for (const [field, expected] of Object.entries(context)) {
+        if (manifest[field] !== expected) errors.push(`kickoff_time_interpretation requires ${field}: ${expected}`);
+    }
+    if (!interpretation || typeof interpretation !== 'object' || Array.isArray(interpretation)) {
+        errors.push('kickoff_time_interpretation must be a plain object');
+        return;
+    }
+    const validation = validateKickoffTimeInterpretation(interpretation);
+    errors.push(...validation.errors);
 }
 
 function appendManifestPathErrors(manifest, errors) {
