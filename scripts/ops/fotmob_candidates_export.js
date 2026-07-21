@@ -16,6 +16,8 @@ const {
     verifyOutputPathSafety,
     canonicalizeRequestedSeasons,
     canonicalizeCompetition,
+    canonicalizeLeagueId,
+    canonicalizeLeagueSlug,
 } = require('../../src/infrastructure/fotmob/FotMobCandidateExporter');
 
 const CANONICAL_MAKE_TARGET = 'make data-fotmob-candidates-network-export';
@@ -36,7 +38,7 @@ const USAGE = [
     '    [--output /absolute/path/outside/repository/]',
     '',
     'Required:',
-    '  --league-id     FotMob league id (e.g. 47 for Premier League)',
+    '  --league-id     FotMob league id; must be a positive integer (e.g. 47 for Premier League)',
     '  --competition   Canonical competition name (e.g. "Premier League")',
     '  --season        Season string; repeat for each season.',
     '                  Accepted: YYYY/YYYY, YYYY-YYYY, YYYY/YY, YY/YY, YY-YY.',
@@ -48,7 +50,7 @@ const USAGE = [
     '                  Fresh explicit authorization for the live network request.',
     '',
     'Optional:',
-    '  --slug          URL slug override (default: derived from competition name)',
+    '  --slug          URL slug override; must be safe ASCII kebab-case (default: derived from competition name)',
     '  --output        Absolute output directory OUTSIDE the Git repository',
     '',
     'Safety:',
@@ -132,10 +134,27 @@ function parseArgs(argv) {
 function validateArgs(args) {
     const errors = [];
     if (!args.leagueId) errors.push('--league-id is required');
+    if (args.leagueId) {
+        try {
+            canonicalizeLeagueId(args.leagueId);
+        } catch (err) {
+            errors.push(err.message);
+        }
+    }
     if (!args.competition) errors.push('--competition is required');
     if (args.competition) {
         try {
             canonicalizeCompetition(args.competition);
+        } catch (err) {
+            errors.push(err.message);
+        }
+    }
+
+    // Validate a custom slug when one is provided (absent slug uses the
+    // canonical competition-derived default and is not an error).
+    if (args.slug) {
+        try {
+            canonicalizeLeagueSlug(args.slug);
         } catch (err) {
             errors.push(err.message);
         }
@@ -200,10 +219,10 @@ function writeInputErrors(stderr, errors) {
 function createExportOptions(args, deps) {
     const competition = canonicalizeCompetition(args.competition);
     return {
-        leagueId: args.leagueId,
+        leagueId: canonicalizeLeagueId(args.leagueId),
         competition,
         seasons: args.seasons,
-        leagueSlug: args.slug || competition.toLowerCase().replace(/\s+/g, '-'),
+        leagueSlug: canonicalizeLeagueSlug(args.slug || competition.toLowerCase().replace(/\s+/g, '-')),
         networkAuthorization: true,
         deps: deps.exporterDeps,
     };

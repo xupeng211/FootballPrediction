@@ -14,6 +14,8 @@ const {
     normaliseSeason,
     canonicalizeRequestedSeasons,
     canonicalizeCompetition,
+    canonicalizeLeagueId,
+    canonicalizeLeagueSlug,
     generateCandidateId,
     isStrictAbsoluteTimestamp,
     extractNextData,
@@ -187,13 +189,26 @@ test('canonicalizeCompetition rejects aliases typos and non-string values withou
 });
 
 // -----------------------------------------------------------------
+// Unit: canonicalizeLeagueId / canonicalizeLeagueSlug (URL path safety)
+// -----------------------------------------------------------------
+
+/* prettier-ignore */
+test('canonicalizeLeagueId accepts canonical numeric identities', () => { assert.equal(canonicalizeLeagueId(47), '47'); assert.equal(canonicalizeLeagueId('47'), '47'); assert.equal(canonicalizeLeagueId(47), canonicalizeLeagueId('47')); assert.equal(typeof canonicalizeLeagueId(47), 'string'); assert.equal(typeof canonicalizeLeagueId('47'), 'string'); assert.equal(canonicalizeLeagueId('  47  '), '47'); assert.equal(canonicalizeLeagueId('\t47\n'), '47'); assert.equal(canonicalizeLeagueId(1), '1'); assert.equal(canonicalizeLeagueId(Number.MAX_SAFE_INTEGER), String(Number.MAX_SAFE_INTEGER)); assert.equal(canonicalizeLeagueId('9007199254740991'), '9007199254740991'); });
+/* prettier-ignore */
+test('canonicalizeLeagueId rejects unsafe and coercible values without network', async () => { let toStringCalls = 0; const coercible = { toString: () => { toStringCalls += 1; return '47'; } }; const invalid = ['', '   ', '0', 0, '-47', -47, '+47', '47.0', '47.5', 47.5, '4e1', '047', '4 7', '47/fixtures', '47/fixtures/evil', '../47', '47?x=1', '47?tab=table', '47#x', '47#fragment', '47%2Ffixtures', NaN, Infinity, -Infinity, Number.MAX_SAFE_INTEGER + 1, true, false, 47n, [47], ['47'], {}, { leagueId: 47 }, new Number(47), new String('47'), coercible, null, undefined]; for (const value of invalid) assert.throws(() => canonicalizeLeagueId(value), { code: 'INPUT_ERROR' }); assert.equal(toStringCalls, 0); for (const leagueId of ['47/fixtures/evil', '../47', '47%2Ffixtures']) { const calls = { fetch: 0, delay: 0 }; await assert.rejects(exportCandidates({ leagueId, competition: 'Premier League', seasons: ['2022/2023'], networkAuthorization: true, deps: { fetchPage: async () => { calls.fetch += 1; return { status: 500, contentType: 'text/html', body: '' }; }, delay: async () => (calls.delay += 1) } }), { code: 'INPUT_ERROR' }); assert.deepEqual(calls, { fetch: 0, delay: 0 }); } });
+/* prettier-ignore */
+test('canonicalizeLeagueSlug accepts safe canonical slugs', () => { assert.equal(canonicalizeLeagueSlug('premier-league'), 'premier-league'); assert.equal(canonicalizeLeagueSlug('  Premier-League  '), 'premier-league'); assert.equal(canonicalizeLeagueSlug('PREMIER-LEAGUE'), 'premier-league'); assert.equal(canonicalizeLeagueSlug('epl'), 'epl'); assert.equal(canonicalizeLeagueSlug('a'), 'a'); assert.equal(canonicalizeLeagueSlug('league2'), 'league2'); assert.equal(canonicalizeLeagueSlug('2-bundesliga'), '2-bundesliga'); assert.equal(canonicalizeLeagueSlug('Premier League'.toLowerCase().replace(/\s+/g, '-')), 'premier-league'); });
+/* prettier-ignore */
+test('canonicalizeLeagueSlug rejects path and query injection without coercion', async () => { let toStringCalls = 0; const coercible = { toString: () => { toStringCalls += 1; return 'premier-league'; } }; const invalid = ['', '   ', '../premier-league', 'premier-league/fixtures', 'premier-league\\fixtures', 'premier-league?tab=table', 'premier-league#fragment', 'premier%2Fleague', 'premier&league', 'premier=league', 'premier_league', 'premier league', '-premier-league', 'premier-league-', 'premier--league', '.', '..', 'premier.league', 'premier\u2215league', 'premier\uFF0Fleague', ['premier-league'], {}, new String('premier-league'), coercible, null, undefined, 47, true]; for (const value of invalid) assert.throws(() => canonicalizeLeagueSlug(value), { code: 'INPUT_ERROR' }); assert.equal(toStringCalls, 0); for (const leagueSlug of ['../premier-league', 'premier-league/fixtures', 'premier-league?tab=table']) { const calls = { fetch: 0, delay: 0 }; await assert.rejects(exportCandidates({ leagueId: 47, competition: 'Premier League', seasons: ['2022/2023'], leagueSlug, networkAuthorization: true, deps: { fetchPage: async () => { calls.fetch += 1; return { status: 500, contentType: 'text/html', body: '' }; }, delay: async () => (calls.delay += 1) } }), { code: 'INPUT_ERROR' }); assert.deepEqual(calls, { fetch: 0, delay: 0 }); } });
+
+// -----------------------------------------------------------------
 // Unit: helpers
 // -----------------------------------------------------------------
 
 /* prettier-ignore */
 test('generateCandidateId follows L1 contract', () => { assert.equal(generateCandidateId(47, '2022/2023', '3900932'), '47_20222023_3900932'); assert.equal(generateCandidateId(53, '2025/2026', '4830473'), '53_20252026_4830473'); assert.equal(generateCandidateId('47', '2024/2025', '4506263'), '47_20242025_4506263'); });
 /* prettier-ignore */
-test('isStrictAbsoluteTimestamp accepts valid timestamps', () => { assert.ok(isStrictAbsoluteTimestamp('2022-08-05T19:00:00Z')); assert.ok(isStrictAbsoluteTimestamp('2022-08-05T19:00:00+00:00')); assert.ok(isStrictAbsoluteTimestamp('2022-08-06T11:30:00+01:00')); assert.equal(isStrictAbsoluteTimestamp('2022-08-05 19:00:00'), false); assert.equal(isStrictAbsoluteTimestamp('2022-08-05T19:00:00'), false); assert.equal(isStrictAbsoluteTimestamp(''), false); assert.equal(isStrictAbsoluteTimestamp(null), false); });
+test('isStrictAbsoluteTimestamp accepts valid timestamps', () => { for (const ok of ['2022-08-05T19:00:00Z', '2022-08-05T19:00:00+00:00', '2022-08-06T11:30:00+01:00', '2026-03-15T19:00:00.0Z', '2026-03-15T19:00:00.000Z', '2026-03-15T19:00:00.123456Z', '2026-03-15T19:00:00.123456789Z', '2026-03-15T19:00:00.000+00:00', '2026-03-15T19:00:00.250+01:00']) assert.ok(isStrictAbsoluteTimestamp(ok), ok); for (const bad of ['2022-08-05 19:00:00', '2022-08-05T19:00:00', '2026-03-15T19:00:00.000', '2026-03-15T19:00:00.Z', '2026-03-15T19:00:00.1234567890Z', '2026-03-15T19:00:00,000Z', '2026-03-15T19:00:00.000+0100', '2026-03-15T19:00:00.000Z ', '2026-03-15T19:00:00.000Zjunk', '', null]) assert.equal(isStrictAbsoluteTimestamp(bad), false, String(bad)); });
 /* prettier-ignore */
 test('extractNextData parses valid __NEXT_DATA__', () => { const { html } = buildNextDataPage(); const nd = extractNextData(html); assert.ok(nd); assert.equal(nd.props.pageProps.details.name, 'Premier League'); assert.equal(nd.query.season, '2022/2023'); });
 test('extractNextData returns null for missing __NEXT_DATA__', () => {
@@ -458,41 +473,8 @@ test('exportCandidates returns empty for no seasons', async () => {
     });
 });
 
-test('exportCandidates rejects invalid competition before fetch or delay', async () => {
-    let toStringCalls = 0;
-    const coercibleObject = {
-        toString: () => {
-            toStringCalls += 1;
-            return 'Premier League';
-        },
-    };
-    for (const competition of [
-        'Premiere League',
-        'EPL',
-        'English Premier League',
-        ['Premier League'],
-        {},
-        coercibleObject,
-    ]) {
-        const calls = { fetch: 0, delay: 0 };
-        await assert.rejects(
-            exportCandidates(
-                makeExportOptions(
-                    ['2022/2023'],
-                    async () => {
-                        calls.fetch += 1;
-                        return { status: 500, contentType: 'text/html', body: '' };
-                    },
-                    { delay: async () => (calls.delay += 1) },
-                    { competition }
-                )
-            ),
-            { code: 'INPUT_ERROR' }
-        );
-        assert.deepEqual(calls, { fetch: 0, delay: 0 });
-    }
-    assert.equal(toStringCalls, 0);
-});
+/* prettier-ignore */
+test('exportCandidates rejects invalid competition before fetch or delay', async () => { let tc5 = 0; const co5 = { toString: () => { tc5 += 1; return 'Premier League'; } }; const cd5 = c => ({ fetchPage: async () => { c.f += 1; return { status: 500, ct: 'text/html', body: '' }; }, delay: async () => (c.d += 1), clock: FIXED_CLOCK }); for (const comp of ['Premiere League', 'EPL', 'English Premier League', ['Premier League'], {}, co5]) { const c = { f: 0, d: 0 }; await assert.rejects(exportCandidates({ leagueId: 47, competition: comp, seasons: ['2022/2023'], networkAuthorization: true, deps: cd5(c) }), { code: 'INPUT_ERROR' }); assert.deepEqual(c, { f: 0, d: 0 }); } assert.equal(tc5, 0); });
 
 test('candidates always store the canonical competition name', async () => {
     const result = await exportCandidates(
@@ -509,34 +491,17 @@ test('candidates always store the canonical competition name', async () => {
     assert.equal(result.snapshot.business_content_sha256, EXPECTED_PIPELINE_HASH);
 });
 
-test('exportCandidates rejects missing network authorization before fetch or delay', async () => {
-    for (const networkAuthorization of [undefined, false, 'yes']) {
-        const calls = { fetch: 0, delay: 0 };
-        await assert.rejects(
-            exportCandidates({
-                leagueId: 47,
-                competition: 'Premier League',
-                seasons: ['2022/2023'],
-                networkAuthorization,
-                deps: {
-                    fetchPage: async () => {
-                        calls.fetch += 1;
-                        return { status: 500, contentType: 'text/html', body: '' };
-                    },
-                    delay: async () => (calls.delay += 1),
-                },
-            }),
-            { code: 'SAFETY_ERROR' }
-        );
-        assert.deepEqual(calls, { fetch: 0, delay: 0 });
-    }
-});
+/* prettier-ignore */
+test('exportCandidates rejects missing network authorization before fetch or delay', async () => { for (const na of [undefined, false, 'yes']) { const c = { f: 0, d: 0 }; await assert.rejects(exportCandidates({ leagueId: 47, competition: 'Premier League', seasons: ['2022/2023'], networkAuthorization: na, deps: { fetchPage: async () => { c.f += 1; return { status: 500, contentType: 'text/html', body: '' }; }, delay: async () => (c.d += 1) } }), { code: 'SAFETY_ERROR' }); assert.deepEqual(c, { f: 0, d: 0 }); } });
 
 test('exportCandidates rejects each non-string requested season before fetch or delay', async () => {
     for (const season of [20222023, ['2022/2023'], { toString: () => '2022/2023' }]) {
         await assertInvalidSeasonMakesNoRequests(season);
     }
 });
+
+/* prettier-ignore */
+test('CLI and core reject unsafe FotMob URL parameters before fetch or delay', async () => { const EXPECTED = 'https://www.fotmob.com/leagues/47/fixtures/premier-league?season=2022%2F2023'; const cdeps = c => ({ fetchPage: async () => ((c.f += 1), { status: 500, contentType: 'text/html', body: '' }), delay: async () => (c.d += 1) }); let ltc = 0; const coerciveL = { toString: () => { ltc += 1; return '47'; } }; for (const lid of ['47/fixtures/evil', '../47', '47?tab=table', '47#fragment', '47%2Ffixtures', coerciveL]) { const c = { f: 0, d: 0 }; await assert.rejects(exportCandidates({ leagueId: lid, competition: 'Premier League', seasons: ['2022/2023'], networkAuthorization: true, deps: cdeps(c) }), { code: 'INPUT_ERROR' }); assert.deepEqual(c, { f: 0, d: 0 }); } assert.equal(ltc, 0); let stc = 0; const coerciveS = { toString: () => { stc += 1; return 'premier-league'; } }; for (const slug of ['../premier-league', 'premier-league/fixtures', 'premier-league?tab=table', 'premier-league#fragment', 'premier%2Fleague', coerciveS]) { const c = { f: 0, d: 0 }; await assert.rejects(exportCandidates({ leagueId: 47, competition: 'Premier League', seasons: ['2022/2023'], leagueSlug: slug, networkAuthorization: true, deps: cdeps(c) }), { code: 'INPUT_ERROR' }); assert.deepEqual(c, { f: 0, d: 0 }); } assert.equal(stc, 0); const baseArgs = { leagueId: '47', competition: 'Premier League', seasons: ['2022/2023'], slug: '', output: '' }; assert.deepEqual(validateArgs(baseArgs), []); assert.ok(validateArgs({ ...baseArgs, leagueId: '47/fixtures/evil' }).some(e => /League id/.test(e))); assert.ok(validateArgs({ ...baseArgs, leagueId: '../47' }).some(e => /League id/.test(e))); assert.ok(validateArgs({ ...baseArgs, slug: '../premier-league' }).some(e => /League slug/.test(e))); assert.ok(validateArgs({ ...baseArgs, slug: 'premier-league?tab=table' }).some(e => /League slug/.test(e))); const vArgv = ['--competition', 'Premier League', '--season', '2022/2023', '--network-preview=true', '--network-authorization=yes']; for (const argv of [['--league-id', '47/fixtures/evil', ...vArgv], ['--league-id', '../47', ...vArgv], ['--league-id', '47', '--slug', '../premier-league', ...vArgv], ['--league-id', '47', '--slug', 'premier-league?tab=table', ...vArgv]]) { let ec = 0; let se = ''; const ec2 = await runCandidateExportCli(argv, { stdout: { write: () => {} }, stderr: { write: v => (se += String(v)) }, exportCandidates: async () => { ec += 1; throw new Error('must not run'); } }); assert.equal(ec2, 2); assert.equal(ec, 0); assert.match(se, /Error:/); } const html = buildNextDataPage({ season: '2022/2023' }).html; for (const lid of [47, '47']) { const urls = []; const r = await exportCandidates(makeExportOptions(['2022/2023'], async u => { urls.push(u); return { status: 200, contentType: 'text/html', body: html }; }, {}, { leagueId: lid })); assert.deepEqual(urls, [EXPECTED]); assert.equal(r.snapshot.league_id, '47'); assert.equal(r.validation.all_seasons_complete, true); assert.ok(r.candidates.every(c => c.id.startsWith('47_'))); } const sUrls = []; await exportCandidates(makeExportOptions(['2022/2023'], async u => { sUrls.push(u); return { status: 200, contentType: 'text/html', body: html }; }, {}, { leagueSlug: '  Premier-League  ' })); assert.deepEqual(sUrls, [EXPECTED]); const cliUrls = []; const cliRc = await runCandidateExportCli(['--league-id', '47', ...vArgv], { stdout: { write: () => {} }, stderr: { write: () => {} }, exporterDeps: { fetchPage: async u => { cliUrls.push(u); return { status: 200, contentType: 'text/html', body: html }; }, delay: async () => {}, clock: FIXED_CLOCK } }); assert.equal(cliRc, 0); assert.deepEqual(cliUrls, [EXPECTED]); });
 
 test('exportCandidates rejects non-string page season identity', async () => {
     for (const season of [['2022/2023'], { value: '2022/2023' }]) {
@@ -580,104 +545,14 @@ test('CLI programmatic APIs reject non-string seasons before global fetch', asyn
     }
 });
 
-test('CLI rejects ordinary invocation without network authorization', async () => {
-    let stdout = '';
-    let stderr = '';
-    let fetchCalls = 0;
-    const originalFetch = global.fetch;
-    global.fetch = async () => {
-        fetchCalls += 1;
-        throw new Error('global fetch must not be called');
-    };
-    try {
-        const exitCode = await runCandidateExportCli(
-            ['--league-id', '47', '--competition', 'Premier League', '--season', '2022/2023'],
-            {
-                stdout: { write: value => (stdout += String(value)) },
-                stderr: { write: value => (stderr += String(value)) },
-            }
-        );
-        assert.deepEqual([exitCode, stdout, fetchCalls], [2, '', 0]);
-        assert.match(stderr, /make data-fotmob-candidates-network-export/);
-    } finally {
-        global.fetch = originalFetch;
-    }
-});
+/* prettier-ignore */
+test('CLI rejects ordinary invocation without network authorization', async () => { let out = '', err = '', fc = 0; const of5 = global.fetch; global.fetch = async () => { fc += 1; throw new Error('no'); }; try { const ec5 = await runCandidateExportCli(['--league-id', '47', '--competition', 'Premier League', '--season', '2022/2023'], { stdout: { write: v => (out += String(v)) }, stderr: { write: v => (err += String(v)) } }); assert.deepEqual([ec5, out, fc], [2, '', 0]); assert.match(err, /make data-fotmob-candidates-network-export/); } finally { global.fetch = of5; } });
 
-test('CLI requires both network preview and network authorization flags', async () => {
-    const validArgs = ['--league-id', '47', '--competition', 'Premier League', '--season', '2022/2023'];
-    const cases = [
-        [...validArgs, '--network-preview=true'],
-        [...validArgs, '--network-authorization=yes'],
-        [...validArgs, '--network-preview=false', '--network-authorization=yes'],
-        [...validArgs, '--network-preview=true', '--network-authorization=no'],
-        [...validArgs, '--network-preview=maybe', '--network-authorization=yes'],
-        [...validArgs, '--network-preview=true', '--network-authorization=maybe'],
-    ];
-    const originalFetch = global.fetch;
-    try {
-        for (const argv of cases) {
-            let stderr = '';
-            let fetchCalls = 0;
-            global.fetch = async () => {
-                fetchCalls += 1;
-                throw new Error('global fetch must not be called');
-            };
-            const exitCode = await runCandidateExportCli(argv, {
-                stdout: { write: () => {} },
-                stderr: { write: value => (stderr += String(value)) },
-            });
-            assert.deepEqual([exitCode, fetchCalls], [2, 0]);
-            assert.match(stderr, /make data-fotmob-candidates-network-export/);
-        }
-    } finally {
-        global.fetch = originalFetch;
-    }
-});
+/* prettier-ignore */
+test('CLI requires both network preview and network authorization flags', async () => { const va = ['--league-id', '47', '--competition', 'Premier League', '--season', '2022/2023']; const cases = [[...va, '--network-preview=true'], [...va, '--network-authorization=yes'], [...va, '--network-preview=false', '--network-authorization=yes'], [...va, '--network-preview=true', '--network-authorization=no'], [...va, '--network-preview=maybe', '--network-authorization=yes'], [...va, '--network-preview=true', '--network-authorization=maybe']]; const of4 = global.fetch; try { for (const argv of cases) { let se = ''; let fc = 0; global.fetch = async () => { fc += 1; throw new Error('real'); }; const ec4 = await runCandidateExportCli(argv, { stdout: { write: () => {} }, stderr: { write: v => (se += String(v)) } }); assert.deepEqual([ec4, fc], [2, 0]); assert.match(se, /make data-fotmob-candidates-network-export/); } } finally { global.fetch = of4; } });
 
-test('CLI accepts explicit authorization with mocked network only', async () => {
-    const { html } = buildNextDataPage({ season: '2022/2023' });
-    let stdout = '';
-    let stderr = '';
-    let mockFetchCalls = 0;
-    let globalFetchCalls = 0;
-    const originalFetch = global.fetch;
-    global.fetch = async () => {
-        globalFetchCalls += 1;
-        throw new Error('global fetch must not be called');
-    };
-    try {
-        const exitCode = await runCandidateExportCli(
-            [
-                '--league-id',
-                '47',
-                '--competition',
-                ' premier   league ',
-                '--season',
-                '2022/2023',
-                '--network-preview=true',
-                '--network-authorization=yes',
-            ],
-            {
-                stdout: { write: value => (stdout += String(value)) },
-                stderr: { write: value => (stderr += String(value)) },
-                exporterDeps: {
-                    fetchPage: async () => {
-                        mockFetchCalls += 1;
-                        return { status: 200, contentType: 'text/html', body: html };
-                    },
-                    delay: async () => {},
-                    clock: FIXED_CLOCK,
-                },
-            }
-        );
-        assert.deepEqual([exitCode, mockFetchCalls, globalFetchCalls], [0, 1, 0]);
-        assert.match(stdout, /"competition": "Premier League"/);
-        assert.match(stderr, /Total: 380 candidates/);
-    } finally {
-        global.fetch = originalFetch;
-    }
-});
+/* prettier-ignore */
+test('CLI accepts explicit authorization with mocked network only', async () => { const { html } = buildNextDataPage({ season: '2022/2023' }); let out = '', err = '', mfc = 0, gfc = 0; const of3 = global.fetch; global.fetch = async () => { gfc += 1; throw new Error('no'); }; try { const ec3 = await runCandidateExportCli(['--league-id', '47', '--competition', ' premier   league ', '--season', '2022/2023', '--network-preview=true', '--network-authorization=yes'], { stdout: { write: v => (out += String(v)) }, stderr: { write: v => (err += String(v)) }, exporterDeps: { fetchPage: async () => { mfc += 1; return { status: 200, contentType: 'text/html', body: html }; }, delay: async () => {}, clock: FIXED_CLOCK } }); assert.deepEqual([ec3, mfc, gfc], [0, 1, 0]); assert.match(out, /"competition": "Premier League"/); assert.match(err, /Total: 380 candidates/); } finally { global.fetch = of3; } });
 
 test('CLI help identifies the canonical data Make target', async () => {
     let stdout = '';
@@ -691,49 +566,8 @@ test('CLI help identifies the canonical data Make target', async () => {
     assert.match(stdout, /live network requests/);
 });
 
-test('Make target blocks missing or false network authorization before Node execution', () => {
-    const fakeBin = fs.mkdtempSync('/tmp/m3d2bt_make_bin_');
-    const fakeDocker = path.join(fakeBin, 'docker');
-    const callLog = path.join(fakeBin, 'docker-calls.log');
-    const target = 'data-fotmob-candidates-network-export';
-    fs.writeFileSync(fakeDocker, '#!/bin/sh\nprintf called >> "$FOTMOB_MAKE_DOCKER_LOG"\n');
-    fs.chmodSync(fakeDocker, 0o755);
-
-    const runGate = variables => {
-        const env = {
-            ...process.env,
-            ...variables,
-            PATH: `${fakeBin}:${process.env.PATH}`,
-            FOTMOB_MAKE_DOCKER_LOG: callLog,
-        };
-        for (const key of ['LEAGUE_ID', 'COMPETITION', 'SEASONS', 'NETWORK_AUTHORIZATION']) {
-            if (!(key in variables)) delete env[key];
-        }
-        return spawnSync('make', [target], { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8', env });
-    };
-
-    try {
-        const missing = runGate({});
-        assert.notEqual(missing.status, 0);
-        assert.match(missing.stdout + missing.stderr, /provide LEAGUE_ID/);
-        assert.equal(fs.existsSync(callLog), false);
-
-        const falseAuthorization = runGate({
-            LEAGUE_ID: '47',
-            COMPETITION: 'Premier League',
-            SEASONS: '2022/2023',
-            NETWORK_AUTHORIZATION: 'no',
-        });
-        assert.notEqual(falseAuthorization.status, 0);
-        assert.match(
-            falseAuthorization.stdout + falseAuthorization.stderr,
-            /requires NETWORK_AUTHORIZATION=yes before Node execution/
-        );
-        assert.equal(fs.existsSync(callLog), false);
-    } finally {
-        bestEffort(() => fs.rmSync(fakeBin, { recursive: true, force: true }));
-    }
-});
+/* prettier-ignore */
+test('Make target blocks missing or false network authorization before Node execution', () => { const fb = fs.mkdtempSync('/tmp/m3d2bt_make_bin_'); const fd = path.join(fb, 'docker'); const cl = path.join(fb, 'docker-calls.log'); const tg = 'data-fotmob-candidates-network-export'; fs.writeFileSync(fd, '#!/bin/sh\nprintf called >> "$FOTMOB_MAKE_DOCKER_LOG"\n'); fs.chmodSync(fd, 0o755); const runG = v => { const env = { ...process.env, ...v, PATH: `${fb}:${process.env.PATH}`, FOTMOB_MAKE_DOCKER_LOG: cl }; for (const k of ['LEAGUE_ID', 'COMPETITION', 'SEASONS', 'NETWORK_AUTHORIZATION']) { if (!(k in v)) delete env[k]; } return spawnSync('make', [tg], { cwd: path.resolve(__dirname, '../..'), encoding: 'utf8', env }); }; try { const miss = runG({}); assert.notEqual(miss.status, 0); assert.match(miss.stdout + miss.stderr, /provide LEAGUE_ID/); assert.equal(fs.existsSync(cl), false); const fa = runG({ LEAGUE_ID: '47', COMPETITION: 'Premier League', SEASONS: '2022/2023', NETWORK_AUTHORIZATION: 'no' }); assert.notEqual(fa.status, 0); assert.match(fa.stdout + fa.stderr, /requires NETWORK_AUTHORIZATION=yes before Node execution/); assert.equal(fs.existsSync(cl), false); } finally { bestEffort(() => fs.rmSync(fb, { recursive: true, force: true })); } });
 
 /* prettier-ignore */
 test('Make target uses the stable container repository root', () => { const repositoryRoot = path.resolve(__dirname, '../..'); const makefile = fs.readFileSync(path.join(repositoryRoot, 'Makefile'), 'utf8'); const result = spawnSync('make', ['-n', 'data-fotmob-candidates-network-export', 'LEAGUE_ID=47', 'COMPETITION=Premier League', 'SEASONS=2022/2023', 'NETWORK_AUTHORIZATION=yes'], { cwd: repositoryRoot, encoding: 'utf8' }); const output = `${result.stdout}${result.stderr}`; assert.match(makefile, /^data-fotmob-candidates-network-export:/m); assert.equal(result.status, 0); assert.match(output, /cd \/app;/); assert.doesNotMatch(output, /\.claude\/worktrees|m3-fotmob-epl-candidates|\/tmp\/fp-/); assert.match(output, /npm run fotmob:candidates:export/); assert.match(output, /--network-preview=true/); assert.match(output, /--network-authorization=yes/); });
@@ -875,30 +709,8 @@ test('extractFixtures: rejected audit closure and sample cap', () => {
 // Pipeline: hash, aggregate validation preserved (integrity correction)
 // -----------------------------------------------------------------
 
-test('canonical 3-season: hash unchanged, aggregate valid, snapshot canonical', async () => {
-    const r = await exportCandidates(makeExportOptions(['2022/2023', '2023/2024', '2024/2025'], makeSeasonPageFetch()));
-    assert.equal(r.candidates.length, 1140);
-    assert.ok(r.validation.all_seasons_complete);
-    assert.equal(r.meta.total_requests, 3);
-    assert.equal(r.snapshot.candidate_count, 1140);
-    assert.equal(r.validation.total_candidates, 1140);
-    assert.equal(r.validation.total_expected, 1140);
-    assert.equal(r.validation.season_results.length, 3);
-    assert.deepEqual(
-        r.validation.season_results.map(item => item.result),
-        ['complete', 'complete', 'complete']
-    );
-    assert.equal(r.snapshot.business_content_sha256, EXPECTED_PIPELINE_HASH);
-    assert.ok(r.validation.aggregate_validation.valid);
-    assert.equal(r.validation.aggregate_validation.unique_ids, 1140);
-    assert.equal(r.validation.aggregate_validation.unique_source_ids, 1140);
-    assert.deepEqual(r.snapshot.seasons, ['2022/2023', '2023/2024', '2024/2025']);
-    assert.deepEqual(r.validation.aggregate_validation.per_season_counts, {
-        '2022/2023': 380,
-        '2023/2024': 380,
-        '2024/2025': 380,
-    });
-});
+/* prettier-ignore */
+test('canonical 3-season: hash unchanged, aggregate valid, snapshot canonical', async () => { const r = await exportCandidates(makeExportOptions(['2022/2023', '2023/2024', '2024/2025'], makeSeasonPageFetch())); assert.equal(r.candidates.length, 1140); assert.ok(r.validation.all_seasons_complete); assert.equal(r.meta.total_requests, 3); assert.equal(r.snapshot.candidate_count, 1140); assert.equal(r.validation.total_candidates, 1140); assert.equal(r.validation.total_expected, 1140); assert.equal(r.validation.season_results.length, 3); assert.deepEqual(r.validation.season_results.map(it => it.result), ['complete', 'complete', 'complete']); assert.equal(r.snapshot.business_content_sha256, EXPECTED_PIPELINE_HASH); assert.ok(r.validation.aggregate_validation.valid); assert.equal(r.validation.aggregate_validation.unique_ids, 1140); assert.equal(r.validation.aggregate_validation.unique_source_ids, 1140); assert.deepEqual(r.snapshot.seasons, ['2022/2023', '2023/2024', '2024/2025']); assert.deepEqual(r.validation.aggregate_validation.per_season_counts, { '2022/2023': 380, '2023/2024': 380, '2024/2025': 380 }); });
 
 test('validateAggregateCandidates rejects duplicate candidate and source ids', () => {
     const candidates = seasonCandidates('2022/2023', 1000, 2);
@@ -945,33 +757,12 @@ test('exportCandidates fails aggregate completion on cross-season duplicate sour
     );
 });
 
-test('exportCandidates marks rejected missing-kickoff fixture as validation_failed', async () => {
-    const fixtures = generateSeasonFixtures(8000000);
-    const missingKickoff = buildFixture('8999999', 'TeamX', 'TeamY', '2022-12-25T15:00:00Z');
-    delete missingKickoff.status.utcTime;
-    fixtures.push(missingKickoff);
-    const result = await exportFromHtml(buildNextDataPage({ fixtures, season: '2022/2023' }).html);
-    const [seasonResult] = result.validation.season_results;
-    const { audit, validation } = seasonResult;
-    assert.equal(result.candidates.length, 380);
-    assert.equal(result.validation.season_results.length, 1);
-    assert.equal(seasonResult.result, 'validation_failed');
-    assert.equal(validation.valid, false);
-    assert.equal(result.validation.all_seasons_complete, false);
-    assert.equal(result.validation.aggregate_validation.valid, true);
-    assert.deepEqual(
-        [
-            audit.raw_fixture_count,
-            audit.accepted_fixture_count,
-            audit.excluded_fixture_count,
-            audit.rejected_fixture_count,
-            audit.rejected_by_reason.missing_kickoff,
-        ],
-        [381, 380, 0, 1, 1]
-    );
-    assert.equal(
-        audit.raw_fixture_count,
-        audit.accepted_fixture_count + audit.excluded_fixture_count + audit.rejected_fixture_count
-    );
-    assert.ok(validation.errors.includes('unexpected_rejected_fixtures:1'));
-});
+/* prettier-ignore */
+test('exportCandidates marks rejected missing-kickoff fixture as validation_failed', async () => { const fixs = generateSeasonFixtures(8000000); const mk = buildFixture('8999999', 'TeamX', 'TeamY', '2022-12-25T15:00:00Z'); delete mk.status.utcTime; fixs.push(mk); const r = await exportFromHtml(buildNextDataPage({ fixtures: fixs, season: '2022/2023' }).html); const [sr] = r.validation.season_results; const { audit, validation } = sr; assert.equal(r.candidates.length, 380); assert.equal(r.validation.season_results.length, 1); assert.equal(sr.result, 'validation_failed'); assert.equal(validation.valid, false); assert.equal(r.validation.all_seasons_complete, false); assert.equal(r.validation.aggregate_validation.valid, true); assert.deepEqual([audit.raw_fixture_count, audit.accepted_fixture_count, audit.excluded_fixture_count, audit.rejected_fixture_count, audit.rejected_by_reason.missing_kickoff], [381, 380, 0, 1, 1]); assert.equal(audit.raw_fixture_count, audit.accepted_fixture_count + audit.excluded_fixture_count + audit.rejected_fixture_count); assert.ok(validation.errors.includes('unexpected_rejected_fixtures:1')); });
+
+// -----------------------------------------------------------------
+// Fractional-second kickoffs: end-to-end season export (M3-D2BW)
+// -----------------------------------------------------------------
+
+/* prettier-ignore */
+test('fractional-second absolute kickoffs remain valid through season export', async () => { const fixs = generateSeasonFixtures(3900000, EPL_FIXTURES_PER_SEASON); fixs[0].status.utcTime = '2026-03-15T19:00:00.000Z'; fixs[1].status.utcTime = '2026-03-15T19:00:00.250+01:00'; const { html } = buildNextDataPage({ fixtures: fixs, season: '2022/2023' }); let fc = 0; let gfc = 0; const of2 = global.fetch; global.fetch = async () => { gfc += 1; throw new Error('real network'); }; let result; try { result = await exportCandidates(makeExportOptions(['2022/2023'], async () => { fc += 1; return { status: 200, contentType: 'text/html', body: html }; })); } finally { global.fetch = of2; } const [sr] = result.validation.season_results; assert.equal(result.candidates.length, 380); assert.equal(sr.result, 'complete'); assert.equal(result.validation.all_seasons_complete, true); assert.equal(sr.validation.errors.filter(e => e.startsWith('bad_kickoff')).length, 0); assert.equal(sr.validation.errors.length, 0); const kos = result.candidates.map(c => c.kickoff_at); assert.ok(kos.includes('2026-03-15T19:00:00.000Z')); assert.ok(kos.includes('2026-03-15T19:00:00.250+01:00')); const h = result.snapshot.business_content_sha256; assert.equal(h.length, 64); assert.equal(computeBusinessContentHash(result.candidates), h); assert.equal(computeBusinessContentHash([...result.candidates].reverse()), h); assert.equal(fc, 1); assert.equal(gfc, 0); });

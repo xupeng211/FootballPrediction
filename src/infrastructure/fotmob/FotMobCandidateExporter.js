@@ -34,9 +34,13 @@ function generateCandidateId(leagueId, season, sourceMatchId) {
 
 /**
  * Verify a value is a strict ISO-8601 timestamp with Z or numeric offset.
+ * Accepts optional fractional seconds of 1 to 9 digits (e.g. `.000Z`).
  */
 function isStrictAbsoluteTimestamp(value) {
-    return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(Z|[+-]\d{2}:\d{2})$/.test(value);
+    return (
+        typeof value === 'string' &&
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,9})?(Z|[+-]\d{2}:\d{2})$/.test(value)
+    );
 }
 
 /**
@@ -228,6 +232,53 @@ function canonicalizeCompetition(value) {
     }
 
     return CANONICAL_COMPETITION;
+}
+
+/**
+ * Canonicalise a FotMob league id into its decimal string identity.
+ * Accepts a positive safe-integer number or a decimal positive-integer
+ * string (surrounding whitespace tolerated). Rejects every other value —
+ * including path separators, query/fragment markers, encoded separators,
+ * signed/decimal/exponential forms, zero, and all coercible non-primitive
+ * values — before any network access and without invoking custom
+ * toString/valueOf coercion.
+ */
+function canonicalizeLeagueId(value) {
+    if (typeof value === 'number') {
+        if (!Number.isSafeInteger(value) || value <= 0) {
+            throw Object.assign(new Error('League id must be a positive safe integer'), { code: 'INPUT_ERROR' });
+        }
+        return String(value);
+    }
+    if (typeof value === 'string') {
+        const normalized = value.trim();
+        if (!/^[1-9]\d*$/.test(normalized)) {
+            throw Object.assign(new Error('League id must be a decimal positive integer string'), {
+                code: 'INPUT_ERROR',
+            });
+        }
+        return normalized;
+    }
+    throw Object.assign(new Error('League id must be a number or string primitive'), { code: 'INPUT_ERROR' });
+}
+
+/**
+ * Canonicalise a FotMob league slug into safe lowercase ASCII kebab-case.
+ * Only primitive strings matching `^[a-z0-9]+(?:-[a-z0-9]+)*$` (after
+ * trimming and lowercasing) are accepted, so no path separator, query,
+ * fragment, encoded separator, whitespace, underscore, or Unicode path
+ * variant can reach the request URL. Non-primitive values are rejected
+ * without coercion.
+ */
+function canonicalizeLeagueSlug(value) {
+    if (typeof value !== 'string') {
+        throw Object.assign(new Error('League slug must be a string primitive'), { code: 'INPUT_ERROR' });
+    }
+    const normalized = value.trim().toLowerCase();
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(normalized)) {
+        throw Object.assign(new Error('League slug must be safe ASCII kebab-case'), { code: 'INPUT_ERROR' });
+    }
+    return normalized;
 }
 
 // ----------------------------------------------------------------
@@ -544,6 +595,9 @@ function computeBusinessContentHash(candidates) {
 
 /**
  * Build the FotMob fixtures page URL for one season.
+ * Only canonical league ids (decimal positive integer strings) and
+ * canonical league slugs (safe ASCII kebab-case) may reach this builder;
+ * `exportCandidates` canonicalises both before any call.
  */
 function buildSeasonFixturesUrl(leagueId, leagueSlug, season) {
     const seasonParam = encodeURIComponent(season);
@@ -733,28 +787,34 @@ async function processSeason(season, context) {
  * Export FotMob league schedule candidates for one or more seasons.
  *
  * @param {Object} options
- * @param {number|string} options.leagueId        — FotMob league id (e.g. 47)
+ * @param {number|string} options.leagueId        — FotMob league id (positive integer, e.g. 47)
  * @param {string}        options.competition     — Premier League formatting variant
  * @param {string[]}      options.seasons         — season strings (e.g. ["2022/2023"])
- * @param {string}        [options.leagueSlug]    — URL slug (default: derived from competition)
+ * @param {string}        [options.leagueSlug]    — safe ASCII kebab-case URL slug (default: derived from competition)
  * @param {boolean}       options.networkAuthorization — explicit live-network authorization
  * @param {Object}        [options.deps]          — dependency injection
  * @returns {Promise<Object>} { candidates, snapshot, validation }
  */
 async function exportCandidates(options = {}) {
-    const leagueId = String(options.leagueId);
     const rawSeasons = Array.isArray(options.seasons) ? options.seasons : [];
     const deps = options.deps || {};
     const _delay = deps.delay || delay;
     const _clock = deps.clock || (() => new Date().toISOString());
 
     // Validate every user-controlled identity before any network access.
+    // The core layer is the final line of defense: seasons, competition,
+    // league id, and league slug are all canonicalised here — the CLI must
+    // not be relied upon as the only gate.
     const canonicalSeasons = canonicalizeRequestedSeasons(rawSeasons);
     const competition = canonicalizeCompetition(options.competition);
+    const leagueId = canonicalizeLeagueId(options.leagueId);
+    const leagueSlug =
+        options.leagueSlug === undefined || options.leagueSlug === null || options.leagueSlug === ''
+            ? canonicalizeLeagueSlug(competition.toLowerCase().replace(/\s+/g, '-'))
+            : canonicalizeLeagueSlug(options.leagueSlug);
     if (options.networkAuthorization !== true) {
         throw Object.assign(new Error('Explicit network authorization is required'), { code: 'SAFETY_ERROR' });
     }
-    const leagueSlug = options.leagueSlug || competition.toLowerCase().replace(/\s+/g, '-');
     const maxRequests = Math.min(canonicalSeasons.length * 2, MAX_TOTAL_REQUESTS);
 
     const allCandidates = [];
@@ -1001,6 +1061,8 @@ module.exports = {
     normaliseSeason,
     canonicalizeRequestedSeasons,
     canonicalizeCompetition,
+    canonicalizeLeagueId,
+    canonicalizeLeagueSlug,
 
     // Identity helpers
     generateCandidateId,
