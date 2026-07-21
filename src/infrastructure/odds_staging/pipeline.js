@@ -56,8 +56,8 @@ function ensureAdapterCompatibility(manifest, adapterName) {
 }
 
 function buildObservation(manifest, draft, ingestedAt) {
-    const { adapter_quarantine_reasons: adapterReasons = [], ...fields } = draft;
-    return createCanonicalObservation({
+    const { adapter_quarantine_reasons: adapterReasons = [], kickoff_time_interpretation_evidence, ...fields } = draft;
+    const observation = createCanonicalObservation({
         ...fields,
         source_provider: manifest.source_provider,
         source_url: manifest.source_url,
@@ -71,6 +71,11 @@ function buildObservation(manifest, draft, ingestedAt) {
         quarantine_reasons: adapterReasons,
         ingested_at: ingestedAt,
     });
+    // Attach kickoff_time_interpretation_evidence if present (audit trail)
+    if (kickoff_time_interpretation_evidence) {
+        observation.kickoff_time_interpretation_evidence = kickoff_time_interpretation_evidence;
+    }
+    return observation;
 }
 
 function applyMatchLink(observation, candidates) {
@@ -78,6 +83,10 @@ function applyMatchLink(observation, candidates) {
     const linked = { ...observation, match_link: matchLink };
     if (matchLink.status === 'matched') {
         return linked;
+    }
+    // Specific conflict reasons from derived kickoff diagnostics
+    if (/^derived_kickoff_conflict/.test(matchLink.method)) {
+        return appendObservationSignals(linked, [matchLink.method], [matchLink.method]);
     }
     const reason = matchLink.status === 'ambiguous' ? 'match_link_ambiguous' : 'match_link_unmatched';
     return appendObservationSignals(linked, [reason], [reason]);

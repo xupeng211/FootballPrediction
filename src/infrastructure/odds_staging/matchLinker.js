@@ -150,6 +150,35 @@ function matchesOrientation(observation, candidate, reversed) {
     return homeMatches && awayMatches && consistency.conflicts.length === 0;
 }
 
+/**
+ * Match ordered home/away + competition + season, IGNORING kickoff.
+ * Used only for diagnostic classification of derived kickoff conflicts
+ * when kickoff_time_interpretation is enabled.
+ */
+function matchesIdentityIgnoreKickoff(observation, candidate, reversed) {
+    const home = candidateValue(candidate, reversed ? 'away_team' : 'home_team', reversed ? 'awayTeam' : 'homeTeam');
+    const away = candidateValue(candidate, reversed ? 'home_team' : 'away_team', reversed ? 'homeTeam' : 'awayTeam');
+    if (!text(observation.home_team) || !text(observation.away_team) || !text(home) || !text(away)) {
+        return false;
+    }
+    const homeMatches = normalizeIdentityText(observation.home_team) === normalizeIdentityText(home);
+    const awayMatches = normalizeIdentityText(observation.away_team) === normalizeIdentityText(away);
+
+    // Compare competition
+    const compObservation = text(observation.competition);
+    const compCandidate = text(candidate.competition);
+    const compMatches = compObservation && compCandidate &&
+        normalizeIdentityText(compObservation) === normalizeIdentityText(compCandidate);
+
+    // Compare season
+    const seasonObservation = text(observation.season);
+    const seasonCandidate = text(candidate.season);
+    const seasonMatches = seasonObservation && seasonCandidate &&
+        normalizeIdentityText(seasonObservation) === normalizeIdentityText(seasonCandidate);
+
+    return homeMatches && awayMatches && compMatches && seasonMatches;
+}
+
 function buildDecision(status, method, candidates, evidence = {}) {
     const stableIds = candidateIds(candidates);
     return {
@@ -226,6 +255,52 @@ function decideMatchLink(observation, candidates = []) {
             source_match_id: sourceMatchId,
         });
     }
+
+    // Derived kickoff conflict classification:
+    // When kickoff_time_interpretation_evidence exists and exact match fails,
+    // attempt identity match without kickoff (ordered home/away + competition + season).
+    // Only for football-data-csv with derived time interpretation.
+    if (observation.kickoff_time_interpretation_evidence &&
+        observation.source_provider === 'football-data-csv') {
+        const identityOnlyMatches = localCandidates.filter(
+            candidate => matchesIdentityIgnoreKickoff(observation, candidate, false)
+        );
+        if (identityOnlyMatches.length === 1 && reversedMatches.length === 0) {
+            const candidate = identityOnlyMatches[0];
+            if (!candidateStableId(candidate)) {
+                return stableIdMissingDecision('derived_kickoff_conflict', identityOnlyMatches, {
+                    source_match_id: sourceMatchId,
+                });
+            }
+            const candidateKickoff = text(candidateValue(candidate, 'kickoff_at', 'kickoffAt'));
+            const observationKickoff = text(observation.kickoff_at);
+            let deltaMinutes = null;
+            if (observationKickoff && candidateKickoff &&
+                isStrictAbsoluteTimestamp(observationKickoff) && isStrictAbsoluteTimestamp(candidateKickoff)) {
+                const diffMs = Date.parse(observationKickoff) - Date.parse(candidateKickoff);
+                deltaMinutes = Math.round(diffMs / 60000);
+            }
+            const absDelta = deltaMinutes !== null ? Math.abs(deltaMinutes) : null;
+            let conflictMethod;
+            if (absDelta === 15) {
+                conflictMethod = 'derived_kickoff_conflict_15m';
+            } else if (absDelta === 30) {
+                conflictMethod = 'derived_kickoff_conflict_30m';
+            } else if (absDelta !== null && absDelta > 0) {
+                conflictMethod = 'derived_kickoff_conflict_other';
+            } else {
+                conflictMethod = 'derived_kickoff_conflict';
+            }
+            return buildDecision('unmatched', conflictMethod, identityOnlyMatches, {
+                source_match_id: sourceMatchId,
+                candidate_kickoff: candidateKickoff,
+                derived_kickoff: observationKickoff,
+                delta_minutes: deltaMinutes,
+                identity_consistent_except_kickoff: true,
+            });
+        }
+    }
+
     if (exactMatches.length > 0 || reversedMatches.length > 0) {
         return buildDecision('ambiguous', 'candidate_identity_conflict', [...exactMatches, ...reversedMatches], {
             exact_candidate_count: exactMatches.length,

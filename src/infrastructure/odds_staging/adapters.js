@@ -3,9 +3,20 @@
 // lifecycle: permanent；只接受本地原始文本中明确字段的严格离线 adapter。
 
 const { parseFootballDataDate } = require('../../../scripts/lib/football_data_local_csv_parser');
+const {
+    buildKickoffInterpretationEvidence,
+    deriveKickoffAt,
+    deriveSeason,
+    isAllowedSeason,
+    isInterpretationApplicable,
+    resolveCompetition,
+    resolveFootballDataTeamName,
+    parseAndValidateDate,
+    validateKickoffTimeInterpretation,
+} = require('./footballDataIdentity');
 
 const ADAPTER_VERSIONS = Object.freeze({
-    'football-data-csv': '1.1.0',
+    'football-data-csv': '1.2.0',
     'oddsportal-explicit-envelope-html': '1.0.0',
 });
 
@@ -107,6 +118,20 @@ const FOOTBALL_DATA_COLUMN_GROUPS = Object.freeze([
 
 function normalizeText(value) {
     return String(value ?? '').trim();
+}
+
+function normalizeSeasonFormat(value) {
+    const text = normalizeText(value);
+    if (!text) return text;
+    // "22/23" → "2022/2023", "2022/2023" → "2022/2023"
+    const shortMatch = /^(\d{2})\/(\d{2})$/.exec(text);
+    if (shortMatch) {
+        const start = Number(shortMatch[1]);
+        const end = Number(shortMatch[2]);
+        const century = start < 50 ? 2000 : 1900;
+        return `${century + start}/${century + end}`;
+    }
+    return text;
 }
 
 function parseDecimal(value) {
@@ -241,20 +266,45 @@ function pickFirst(row, fields) {
 function csvKickoffAt(row, manifest) {
     const explicitKickoff = pickFirst(row, ['KickoffAt', 'kickoff_at']);
     if (explicitKickoff) {
-        return { kickoff_at: explicitKickoff, reason: null };
+        return { kickoff_at: explicitKickoff, reason: null, time_interpretation: null };
     }
 
     const date = pickFirst(row, ['Date', 'date', 'match_date']);
     const time = pickFirst(row, ['Time', 'time']);
     if (!date) {
-        return { kickoff_at: null, reason: 'kickoff_missing' };
-    }
-    if (String(manifest.source_timezone || '').toUpperCase() !== 'UTC') {
-        return { kickoff_at: null, reason: 'kickoff_timezone_unresolved' };
+        return { kickoff_at: null, reason: 'kickoff_missing', time_interpretation: null };
     }
 
-    const kickoffAt = parseFootballDataDate(date, time || '', { timezone: 'UTC' });
-    return kickoffAt ? { kickoff_at: kickoffAt, reason: null } : { kickoff_at: null, reason: 'kickoff_invalid' };
+    // Legacy UTC path (unchanged behavior)
+    if (String(manifest.source_timezone || '').toUpperCase() === 'UTC') {
+        const kickoffAt = parseFootballDataDate(date, time || '', { timezone: 'UTC' });
+        return kickoffAt
+            ? { kickoff_at: kickoffAt, reason: null, time_interpretation: null }
+            : { kickoff_at: null, reason: 'kickoff_invalid', time_interpretation: null };
+    }
+
+    // Derived Europe/London interpretation (explicit opt-in)
+    if (isInterpretationApplicable(manifest)) {
+        const interpretation = manifest.kickoff_time_interpretation;
+        const validation = validateKickoffTimeInterpretation(interpretation);
+        if (!validation.valid) {
+            return {
+                kickoff_at: null,
+                reason: 'kickoff_interpretation_invalid',
+                time_interpretation: null,
+            };
+        }
+
+        const result = deriveKickoffAt(date, time || '', interpretation);
+        if (result.error) {
+            return { kickoff_at: null, reason: result.error, time_interpretation: null };
+        }
+
+        const timeEvidence = buildKickoffInterpretationEvidence(interpretation, date, time || '');
+        return { kickoff_at: result.kickoff_at, reason: null, time_interpretation: timeEvidence };
+    }
+
+    return { kickoff_at: null, reason: 'kickoff_timezone_unresolved', time_interpretation: null };
 }
 
 function buildCsvIdentity(row, manifest) {
@@ -263,17 +313,74 @@ function buildCsvIdentity(row, manifest) {
     const manifestSourceMatchId = normalizeText(manifest.source_match_id) || null;
     const sourceMatchIdConflict =
         rawSourceMatchId && manifestSourceMatchId && rawSourceMatchId !== manifestSourceMatchId;
+
+    const interpretationActive = isInterpretationApplicable(manifest);
+
+    // Resolve competition: E0→Premier League mapping applied only when interpretation active
+    const rawCompetition = pickFirst(row, ['Competition', 'League', 'Div']);
+    const competition = interpretationActive && rawCompetition
+        ? resolveCompetition(rawCompetition)
+        : rawCompetition || null;
+
+    // Derive season from source Date field (only when interpretation is active)
+    const date = pickFirst(row, ['Date', 'date', 'match_date']);
+    let season = pickFirst(row, ['Season', 'season']);
+    let seasonConflict = false;
+    if (interpretationActive && date) {
+        const parsed = parseAndValidateDate(date);
+        if (parsed) {
+            const derived = deriveSeason(parsed.year, parsed.month);
+            // Season authorization gate
+            if (!isAllowedSeason(derived)) {
+                return {
+                    source_match_id: rawSourceMatchId || manifestSourceMatchId,
+                    competition,
+                    season: season || derived,
+                    kickoff_at: kickoff.kickoff_at,
+                    home_team: null,
+                    away_team: null,
+                    identity_reason: 'season_not_authorized',
+                    kickoff_time_interpretation: kickoff.time_interpretation,
+                    manifest_source_match_id: manifestSourceMatchId,
+                    raw_source_match_id: rawSourceMatchId,
+                    source_match_id_conflict: sourceMatchIdConflict,
+                    season_conflict: false,
+                };
+            }
+            // Normalize season format for comparison: "22/23" ≈ "2022/2023"
+            if (season && normalizeSeasonFormat(season) !== derived) {
+                seasonConflict = true;
+            }
+            season = derived;
+        }
+    }
+
+    // Resolve team names via source-scoped aliases (only for football-data-csv)
+    const rawHome = pickFirst(row, ['HomeTeam', 'home_team']);
+    const rawAway = pickFirst(row, ['AwayTeam', 'away_team']);
+    // Team aliases are only applied when interpretation is active (scoped to football-data-csv historical)
+    const homeTeam = interpretationActive && rawHome ? resolveFootballDataTeamName(rawHome) : rawHome || null;
+    const awayTeam = interpretationActive && rawAway ? resolveFootballDataTeamName(rawAway) : rawAway || null;
+
+    // Build identity reason
+    let identityReason = kickoff.reason || null;
+    if (seasonConflict) {
+        identityReason = identityReason || 'season_conflict';
+    }
+
     return {
         source_match_id: rawSourceMatchId || manifestSourceMatchId,
-        competition: pickFirst(row, ['Competition', 'League', 'Div']),
-        season: pickFirst(row, ['Season', 'season']),
+        competition,
+        season,
         kickoff_at: kickoff.kickoff_at,
-        home_team: pickFirst(row, ['HomeTeam', 'home_team']),
-        away_team: pickFirst(row, ['AwayTeam', 'away_team']),
-        identity_reason: kickoff.reason,
+        home_team: homeTeam,
+        away_team: awayTeam,
+        identity_reason: identityReason,
+        kickoff_time_interpretation: kickoff.time_interpretation,
         manifest_source_match_id: manifestSourceMatchId,
         raw_source_match_id: rawSourceMatchId,
         source_match_id_conflict: sourceMatchIdConflict,
+        season_conflict: seasonConflict,
     };
 }
 
@@ -286,7 +393,7 @@ function buildAdapterQuarantine(locator, reasons, evidence = {}) {
 }
 
 function buildCsvObservation(identity, group, selection, decimalOdds, rowNumber) {
-    return {
+    const obs = {
         ...identity,
         bookmaker: group.bookmaker,
         bookmaker_source_id: group.bookmaker_source_id,
@@ -301,6 +408,11 @@ function buildCsvObservation(identity, group, selection, decimalOdds, rowNumber)
         extraction_method: `explicit_csv_columns:${group.id}`,
         adapter_quarantine_reasons: identity.identity_reason ? [identity.identity_reason] : [],
     };
+    // Carry kickoff_time_interpretation if present (for audit trail in observations)
+    if (identity.kickoff_time_interpretation) {
+        obs.kickoff_time_interpretation_evidence = identity.kickoff_time_interpretation;
+    }
+    return obs;
 }
 
 function adaptFootballDataCsv(rawText, context = {}) {

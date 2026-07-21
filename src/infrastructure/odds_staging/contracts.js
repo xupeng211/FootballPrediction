@@ -14,7 +14,7 @@ const STRICT_ABSOLUTE_TIMESTAMP_PATTERN =
 
 // 可选合同字段：仅在来源真实提供该事实时写入 observation 与 idempotency payload，
 // 缺失时完全省略，避免旧观察因新增 null 字段而改变 canonical 输出或 key 结构。
-const OPTIONAL_IDEMPOTENCY_FIELDS = Object.freeze(['capture_time_status', 'source_quote_series']);
+const OPTIONAL_IDEMPOTENCY_FIELDS = Object.freeze(['capture_time_status', 'source_quote_series', 'kickoff_time_interpretation_evidence']);
 
 const IDEMPOTENCY_FIELDS = Object.freeze([
     'schema_version',

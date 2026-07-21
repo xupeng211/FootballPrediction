@@ -12,6 +12,7 @@ const {
     nullableText,
     stableCanonicalize,
 } = require('./contracts');
+const { validateKickoffTimeInterpretation } = require('./footballDataIdentity');
 
 class OfflineStagingError extends Error {
     constructor(code, message) {
@@ -154,6 +155,14 @@ function appendManifestValueErrors(manifest, errors) {
     }
     if (!ALLOWED_PROVENANCE_STATUSES.has(manifest.provenance_status)) {
         errors.push(`unsupported provenance_status: ${manifest.provenance_status || ''}`);
+    }
+
+    // Validate kickoff_time_interpretation if present
+    if (manifest.kickoff_time_interpretation) {
+        const ktiValidation = validateKickoffTimeInterpretation(manifest.kickoff_time_interpretation);
+        for (const error of ktiValidation.errors) {
+            errors.push(error);
+        }
     }
 }
 
