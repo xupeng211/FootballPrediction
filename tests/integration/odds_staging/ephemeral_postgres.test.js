@@ -63,9 +63,10 @@ test.before(async () => {
     client = new Client({ host: config.host, port: config.port, database: config.database, user: config.user, password: config.password });
     await client.connect();
     await authorizeEphemeralDatabase({ config, client });
-    for (const file of ['V26.8__create_odds_historical_staging_contract.sql', 'V26.9__add_odds_historical_observation_fingerprint.sql']) {
-        await client.query(fs.readFileSync(path.join(ROOT, 'database/migrations', file), 'utf8'));
-    }
+    const v268 = fs.readFileSync(path.join(ROOT, 'database/migrations/V26.8__create_odds_historical_staging_contract.sql'), 'utf8');
+    await client.query(v268);
+    await client.query(v268); // Direct DDL harness check: V26.8's IF NOT EXISTS path is harmless on retry.
+    await client.query(fs.readFileSync(path.join(ROOT, 'database/migrations/V26.9__add_odds_historical_observation_fingerprint.sql'), 'utf8'));
 });
 test.after(async () => { await client?.end(); });
 
