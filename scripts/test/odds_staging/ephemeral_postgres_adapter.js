@@ -19,7 +19,14 @@ class EphemeralPostgresAdapter {
         this.completedReplay = false;
     }
 
+    resetExecutionState() {
+        this.runId = null;
+        this.sourceFileId = null;
+        this.completedReplay = false;
+    }
+
     async runInTransaction(callback) {
+        this.resetExecutionState();
         await this.client.query('BEGIN');
         try {
             const value = await callback(this);
@@ -89,12 +96,17 @@ class EphemeralPostgresAdapter {
     }
 
     async insertAcceptedObservations(rows) {
+        let insertedCount = 0;
+        let duplicateCount = 0;
         for (const row of rows) {
             const observation = row.observation;
             if (!row.business_fingerprint) throw new PersistenceConflictError('business fingerprint is required');
             const result = await this.client.query('SELECT business_fingerprint FROM odds_historical_staging_observations WHERE idempotency_key = $1 FOR UPDATE', [row.idempotency_key]);
             if (result.rowCount) {
-                if (result.rows[0].business_fingerprint?.trim() === row.business_fingerprint) continue;
+                if (result.rows[0].business_fingerprint?.trim() === row.business_fingerprint) {
+                    duplicateCount += 1;
+                    continue;
+                }
                 throw new PersistenceConflictError(`divergent idempotency conflict: ${row.idempotency_key}`);
             }
             await this.client.query(
@@ -103,14 +115,21 @@ class EphemeralPostgresAdapter {
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,$27,$28,$29,$30,$31,$32,$33,$34,$35,$36,$37,$38)`,
                 [this.runId, this.sourceFileId, row.source_row_number, row.idempotency_key, row.canonical_match_id, row.candidate_match_id, row.canonical_match_fk_status, json(row.historical_match_identity), observation.source_provider, observation.source_match_id, observation.competition, observation.season, observation.kickoff_at, observation.home_team, observation.away_team, observation.bookmaker, observation.bookmaker_source_id, observation.market, observation.selection, observation.line, observation.decimal_odds, observation.snapshot_type, observation.source_observed_at, observation.captured_at, observation.ingested_at, observation.source_timezone, observation.raw_sha256, observation.raw_record_locator, observation.adapter, observation.adapter_version, observation.extraction_method, observation.provenance_status, observation.source_quote_series, observation.capture_time_status, json(observation.kickoff_time_interpretation_evidence), json(observation.match_link?.evidence), json(observation), row.business_fingerprint]
             );
+            insertedCount += 1;
         }
+        return { inserted_count: insertedCount, duplicate_count: duplicateCount };
     }
 
     async insertQuarantineRecords(rows) {
+        let insertedCount = 0;
+        let duplicateCount = 0;
         for (const row of rows) {
             const existing = await this.client.query('SELECT source_payload FROM odds_historical_quarantine WHERE quarantine_key = $1 FOR UPDATE', [row.quarantine_key]);
             if (existing.rowCount) {
-                if (sameJson(existing.rows[0].source_payload, row.source_payload)) continue;
+                if (sameJson(existing.rows[0].source_payload, row.source_payload)) {
+                    duplicateCount += 1;
+                    continue;
+                }
                 throw new PersistenceConflictError(`divergent quarantine conflict: ${row.quarantine_key}`);
             }
             await this.client.query(
@@ -119,7 +138,9 @@ class EphemeralPostgresAdapter {
                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
                 [this.runId, this.sourceFileId, row.source_row_number, row.quarantine_key, row.idempotency_key, json(row.reason_codes), json(row.reason_detail), json(row.historical_match_identity), json(row.source_payload), row.resolution_status]
             );
+            insertedCount += 1;
         }
+        return { inserted_count: insertedCount, duplicate_count: duplicateCount };
     }
 
     async markRunCompleted(runKey, result) {

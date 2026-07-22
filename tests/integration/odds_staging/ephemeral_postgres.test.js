@@ -26,31 +26,31 @@ const config = {
 let client;
 
 function hash(char) { return char.repeat(64); }
-function observation(selection) {
+function observation(selection, tag = '') {
     return createCanonicalObservation({
-        source_provider: 'm3-d4c-synthetic', source_url: 'synthetic://d4c', source_match_id: `fixture-${selection}`,
+        source_provider: `m3-d4c-synthetic${tag}`, source_url: `synthetic://d4c${tag}`, source_match_id: `fixture-${selection}${tag}`,
         competition: 'Synthetic League', season: '2099/2100', kickoff_at: '2099-08-16T19:00:00Z',
         home_team: 'Synthetic Home', away_team: 'Synthetic Away', bookmaker: 'FixtureBook', bookmaker_source_id: 'fixture-book',
         market: '1X2', selection, decimal_odds: selection === 'home' ? 2.1 : selection === 'draw' ? 3.4 : 4.2,
         snapshot_type: 'unknown', source_observed_at: null, captured_at: null, capture_time_status: 'unknown', source_timezone: 'UTC',
-        raw_sha256: hash(selection === 'home' ? 'a' : selection === 'draw' ? 'b' : 'c'), raw_record_locator: `synthetic:row=${selection === 'home' ? 2 : selection === 'draw' ? 3 : 4}`,
+        raw_sha256: hash(tag ? '6' : selection === 'home' ? 'a' : selection === 'draw' ? 'b' : 'c'), raw_record_locator: `synthetic${tag}:row=${selection === 'home' ? 2 : selection === 'draw' ? 3 : 4}`,
         adapter: 'm3-d4c-fixture', adapter_version: '1.0.0', extraction_method: 'synthetic_fixture', provenance_status: 'declared', ingested_at: '2099-08-01T00:00:00Z',
         match_link: { status: 'matched', method: 'historical_identity', candidate_ids: ['synthetic-candidate-1'], matched_id: 'synthetic-candidate-1', evidence: { fixture: true } },
         kickoff_time_interpretation_evidence: { timezone: 'UTC', method: 'synthetic' },
     });
 }
 
-function resultFixture() {
-    const accepted = ['home', 'draw', 'away'].map(observation);
+function resultFixture(tag = '') {
+    const accepted = ['home', 'draw', 'away'].map(selection => observation(selection, tag));
     return {
-        normalized_manifest: { schema_version: 'odds-source-manifest/v1', source_provider: 'm3-d4c-synthetic', raw_sha256: hash('d'), competition: 'Synthetic League', season: '2099/2100', raw_path: 'synthetic/d4c.csv' },
+        normalized_manifest: { schema_version: 'odds-source-manifest/v1', source_provider: `m3-d4c-synthetic${tag}`, raw_sha256: hash(tag ? '7' : 'd'), competition: 'Synthetic League', season: '2099/2100', raw_path: `synthetic/d4c${tag}.csv` },
         accepted_observations: accepted,
         quarantine: [{ schema_version: 'odds-quarantine/v1', source_provider: 'm3-d4c-synthetic', raw_sha256: hash('d'), raw_record_locator: 'synthetic:row=5', adapter: 'm3-d4c-fixture', adapter_version: '1.0.0', reasons: ['kickoff_conflict_15m'], evidence: { parsed_fields: { idempotency_key: hash('e') }, synthetic: true } }],
         summary: { accepted_count: 3, quarantine_count: 1 },
     };
 }
 
-function plan() { return buildPersistencePlan(resultFixture(), { runMode: 'controlled_write', candidate_business_hash: hash('f'), pipeline_code_sha: '1'.repeat(40) }); }
+function plan(tag = '') { return buildPersistencePlan(resultFixture(tag), { runMode: 'controlled_write', candidate_business_hash: hash('f'), pipeline_code_sha: '1'.repeat(40) }); }
 async function count(table) { return Number((await client.query(`SELECT COUNT(*)::int AS count FROM ${table}`)).rows[0].count); }
 async function runAudit(runKey) {
     return (await client.query('SELECT status, actual_accepted_count, actual_quarantine_count, duplicate_count, completed_at, updated_at, metadata, pipeline_code_sha, manifest_hash, candidate_business_hash FROM odds_historical_import_runs WHERE run_key = $1', [runKey])).rows[0];
@@ -108,12 +108,23 @@ test('首次受控写入、相同重跑 no-op 与 quarantine 隔离', async () =
     assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], [1, 1, 3, 1]);
     const beforeAudit = await runAudit(plan().run.run_key);
     const repeat = await execute(plan());
-    assert.equal(repeat.accepted_count, 0);
-    assert.equal(repeat.duplicate_count, 3);
+    assert.deepEqual(repeat, { status: 'persisted', accepted_count: 0, quarantine_count: 0, duplicate_count: 4 });
     assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], [1, 1, 3, 1]);
     assert.deepEqual(await runAudit(plan().run.run_key), beforeAudit);
     const accepted = await client.query("SELECT COUNT(*)::int AS count FROM odds_historical_staging_observations WHERE idempotency_key = $1", [plan().quarantine[0].idempotency_key]);
     assert.equal(accepted.rows[0].count, 0);
+});
+
+test('shared adapter 在 completed replay 后可完成独立新 run', async () => {
+    const sharedAdapter = new EphemeralPostgresAdapter(client);
+    await execute(plan(), { adapter: sharedAdapter });
+    const newPlan = plan('-second');
+    assert.deepEqual(await execute(newPlan, { adapter: sharedAdapter }), { status: 'persisted', accepted_count: 3, quarantine_count: 1, duplicate_count: 0 });
+    const audit = await runAudit(newPlan.run.run_key);
+    assert.equal(audit.status, 'completed');
+    assert.equal(audit.actual_accepted_count, 3);
+    assert.equal(audit.actual_quarantine_count, 1);
+    assert.ok(audit.completed_at);
 });
 
 test('divergent duplicate 与注入 transaction failure 均 rollback 且不覆盖', async () => {

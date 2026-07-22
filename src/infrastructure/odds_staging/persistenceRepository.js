@@ -27,6 +27,15 @@ class PersistenceConflictError extends Error {
     }
 }
 
+function validateInsertResult(result, expectedCount, label) {
+    const inserted = result?.inserted_count;
+    const duplicate = result?.duplicate_count;
+    if (!Number.isInteger(inserted) || inserted < 0 || !Number.isInteger(duplicate) || duplicate < 0 || inserted + duplicate !== expectedCount) {
+        throw new PersistenceContractError(`${label} adapter result must reconcile with requested rows`);
+    }
+    return { inserted, duplicate };
+}
+
 function createAuthorizedWriteAdapter(adapter, authorizeWrite) {
     if (!adapter || typeof adapter.runInTransaction !== 'function') {
         throw new PersistenceContractError('write adapter must implement runInTransaction');
@@ -80,13 +89,18 @@ class HistoricalOddsStagingPersistenceRepository {
             }
             await operations.createImportRun(plan.run);
             await operations.registerSourceFile(plan.source_file);
-            if (newAccepted.length) await operations.insertAcceptedObservations(newAccepted);
-            if (plan.quarantine.length) await operations.insertQuarantineRecords(plan.quarantine);
+            const acceptedWrite = newAccepted.length
+                ? validateInsertResult(await operations.insertAcceptedObservations(newAccepted), newAccepted.length, 'accepted')
+                : { inserted: 0, duplicate: 0 };
+            const quarantineWrite = plan.quarantine.length
+                ? validateInsertResult(await operations.insertQuarantineRecords(plan.quarantine), plan.quarantine.length, 'quarantine')
+                : { inserted: 0, duplicate: 0 };
             const result = {
                 status: 'persisted',
-                accepted_count: newAccepted.length,
-                quarantine_count: plan.quarantine.length,
-                duplicate_count: duplicateCount,
+                // Per-call effects; import-run audit remains the first completed write's immutable record.
+                accepted_count: acceptedWrite.inserted,
+                quarantine_count: quarantineWrite.inserted,
+                duplicate_count: duplicateCount + acceptedWrite.duplicate + quarantineWrite.duplicate,
             };
             await operations.markRunCompleted(plan.run.run_key, result);
             return result;
@@ -100,4 +114,5 @@ module.exports = {
     PersistenceWriteDisabledError,
     TARGET_TABLES,
     createAuthorizedWriteAdapter,
+    validateInsertResult,
 };
