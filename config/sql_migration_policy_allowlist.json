@@ -9,6 +9,18 @@
   "_destructive_policy": "Any new destructive SQL/migration (DROP DATABASE, DROP TABLE, TRUNCATE, DELETE without WHERE, GRANT ALL, REVOKE) MUST fail changed-files gate even if allowlisted. Manual review required.",
   "entries": [
     {
+      "path": "database/migrations/V26.9__add_odds_historical_observation_fingerprint.sql",
+      "file_type": "sql_migration",
+      "classification": "sql_schema_definition_requires_explicit_execution_authorization",
+      "reason": "M3-D4C additive repair for the persisted canonical observation business fingerprint. No DML, backfill, privilege changes, or destructive operation.",
+      "evidence": "ALTER TABLE ADD COLUMN/CONSTRAINT and COMMENT ON only; V26.8 remains unchanged.",
+      "source_doc": "docs/PROJECT_STATUS.md",
+      "owner_task": "m3_d4c_ephemeral_odds_staging_integration_verification",
+      "allowed_operations": ["ALTER TABLE", "COMMENT ON"],
+      "disallowed_operations": ["DROP TABLE", "DROP DATABASE", "TRUNCATE", "INSERT", "UPDATE", "DELETE", "GRANT", "REVOKE"],
+      "review_note": "Creation does not authorize execution outside the explicitly authorized D4C ephemeral database."
+    },
+    {
       "path": "database/migrations/V6.5__hardened_matches_schema.sql",
       "file_type": "sql_migration",
       "classification": "historical_sql_allowed_migration_candidate",

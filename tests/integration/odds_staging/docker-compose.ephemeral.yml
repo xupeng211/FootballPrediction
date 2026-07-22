@@ -1,0 +1,45 @@
+# lifecycle: permanent; D4C-only isolated PostgreSQL harness, invoked by run_ephemeral_postgres.sh.
+services:
+  ephemeral-postgres:
+    image: postgres:15-alpine
+    labels:
+      com.footballprediction.scope: m3-d4c-ephemeral
+    environment:
+      POSTGRES_DB: ${M3_D4C_DB_NAME:?missing ephemeral database name}
+      POSTGRES_USER: ${M3_D4C_DB_USER:?missing ephemeral database user}
+      POSTGRES_PASSWORD: ${M3_D4C_DB_PASSWORD:?missing ephemeral database password}
+    tmpfs:
+      - /var/lib/postgresql/data:rw,noexec,nosuid,size=256m
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    networks: [ephemeral]
+
+  runner:
+    image: footballprediction:v175-stable
+    labels:
+      com.footballprediction.scope: m3-d4c-ephemeral
+    entrypoint: ["node"]
+    working_dir: /workspace
+    command: ["--test", "tests/integration/odds_staging/ephemeral_postgres.test.js"]
+    depends_on:
+      ephemeral-postgres:
+        condition: service_healthy
+    environment:
+      M3_D4C_DB_HOST: ephemeral-postgres
+      M3_D4C_DB_PORT: "5432"
+      M3_D4C_DB_NAME: ${M3_D4C_DB_NAME:?missing ephemeral database name}
+      M3_D4C_DB_USER: ${M3_D4C_DB_USER:?missing ephemeral database user}
+      M3_D4C_DB_PASSWORD: ${M3_D4C_DB_PASSWORD:?missing ephemeral database password}
+      ALLOW_EPHEMERAL_DB_TEST: "1"
+      M3_D4C_EPHEMERAL_CONFIRMATION: I_UNDERSTAND_THIS_DATABASE_WILL_BE_DESTROYED
+    volumes:
+      - ../../../:/workspace:ro
+    networks: [ephemeral]
+
+networks:
+  ephemeral:
+    labels:
+      com.footballprediction.scope: m3-d4c-ephemeral
