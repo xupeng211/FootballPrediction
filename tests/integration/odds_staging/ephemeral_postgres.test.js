@@ -10,8 +10,8 @@ const { Client } = require('pg');
 const { createCanonicalObservation } = require('../../../src/infrastructure/odds_staging/contracts');
 const { buildPersistencePlan } = require('../../../src/infrastructure/odds_staging/persistenceContracts');
 const { HistoricalOddsStagingPersistenceRepository, PersistenceConflictError } = require('../../../src/infrastructure/odds_staging/persistenceRepository');
-const { EphemeralPostgresAdapter } = require('./ephemeral_postgres_adapter');
-const { CONFIRMATION, EphemeralDatabaseAuthorizationError, assertEphemeralConfig, authorizeEphemeralDatabase } = require('./ephemeral_authorizer');
+const { EphemeralPostgresAdapter, assertDatabaseFinalDefenses } = require('../../../scripts/test/odds_staging/ephemeral_postgres_adapter');
+const { EphemeralDatabaseAuthorizationError, assertEphemeralConfig, authorizeEphemeralDatabase } = require('../../../scripts/test/odds_staging/ephemeral_authorizer');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const config = {
@@ -52,6 +52,9 @@ function resultFixture() {
 
 function plan() { return buildPersistencePlan(resultFixture(), { runMode: 'controlled_write', candidate_business_hash: hash('f'), pipeline_code_sha: '1'.repeat(40) }); }
 async function count(table) { return Number((await client.query(`SELECT COUNT(*)::int AS count FROM ${table}`)).rows[0].count); }
+async function runAudit(runKey) {
+    return (await client.query('SELECT status, actual_accepted_count, actual_quarantine_count, duplicate_count, completed_at, updated_at, metadata, pipeline_code_sha, manifest_hash, candidate_business_hash FROM odds_historical_import_runs WHERE run_key = $1', [runKey])).rows[0];
+}
 async function execute(inputPlan, options = {}) {
     const adapter = options.adapter || new EphemeralPostgresAdapter(client);
     const repository = new HistoricalOddsStagingPersistenceRepository({ adapter, authorizeWrite: async () => authorizeEphemeralDatabase({ config, client }) });
@@ -84,19 +87,31 @@ test('隔离预检、migration 与 schema introspection 通过', async () => {
     assert.equal(matchesFk.rowCount, 0);
 });
 
-test('authorizer 拒绝时零连接/零 SQL 的 fail-closed 前置检查', () => {
-    assert.throws(() => assertEphemeralConfig({ ...config, confirmation: 'wrong' }), EphemeralDatabaseAuthorizationError);
-    assert.throws(() => assertEphemeralConfig({ ...config, database: 'football_prediction_db_dev' }), EphemeralDatabaseAuthorizationError);
+test('authorizer 拒绝通过完整 repository 调用链保持零 transaction/SQL', async () => {
+    for (const rejected of [
+        { ...config, confirmation: 'wrong' }, { ...config, database: 'football_prediction_db_dev' },
+        { ...config, host: 'host.docker.internal' }, { ...config, allow: undefined },
+    ]) {
+        const calls = { transaction: 0, query: 0, failure: 0 };
+        const repository = new HistoricalOddsStagingPersistenceRepository({
+            adapter: { runInTransaction: async () => { calls.transaction += 1; }, recordRunFailure: async () => { calls.failure += 1; } },
+            authorizeWrite: async () => { calls.query += 0; assertEphemeralConfig(rejected); },
+        });
+        await assert.rejects(repository.execute(plan(), { authorization: 'write_authorized' }), EphemeralDatabaseAuthorizationError);
+        assert.deepEqual(calls, { transaction: 0, query: 0, failure: 0 });
+    }
 });
 
 test('首次受控写入、相同重跑 no-op 与 quarantine 隔离', async () => {
     const first = await execute(plan());
     assert.deepEqual(first, { status: 'persisted', accepted_count: 3, quarantine_count: 1, duplicate_count: 0 });
     assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], [1, 1, 3, 1]);
+    const beforeAudit = await runAudit(plan().run.run_key);
     const repeat = await execute(plan());
     assert.equal(repeat.accepted_count, 0);
     assert.equal(repeat.duplicate_count, 3);
     assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], [1, 1, 3, 1]);
+    assert.deepEqual(await runAudit(plan().run.run_key), beforeAudit);
     const accepted = await client.query("SELECT COUNT(*)::int AS count FROM odds_historical_staging_observations WHERE idempotency_key = $1", [plan().quarantine[0].idempotency_key]);
     assert.equal(accepted.rows[0].count, 0);
 });
@@ -108,6 +123,10 @@ test('divergent duplicate 与注入 transaction failure 均 rollback 且不覆�
     conflict.accepted[0].business_fingerprint = hash('9');
     await assert.rejects(execute(conflict), PersistenceConflictError);
     assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], before);
+    const divergentRun = plan();
+    divergentRun.run.manifest_hash = hash('0');
+    await assert.rejects(execute(divergentRun), PersistenceConflictError);
+    assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], before);
     const altered = plan();
     altered.run.run_key = hash('7'); altered.source_file.import_run_key = hash('7');
     await assert.rejects(execute(altered, { adapter: new EphemeralPostgresAdapter(client, { failAfterSource: true }) }), /injected transaction failure/);
@@ -115,8 +134,5 @@ test('divergent duplicate 与注入 transaction failure 均 rollback 且不覆�
 });
 
 test('数据库唯一与 check 约束是 repository 之外的最终防线', async () => {
-    const row = plan().accepted[0];
-    await assert.rejects(client.query('INSERT INTO odds_historical_staging_observations (import_run_id, source_file_id, idempotency_key, canonical_match_fk_status, historical_match_identity, source_provider, bookmaker, market, selection, decimal_odds, snapshot_type, raw_sha256, raw_record_locator, adapter, adapter_version, provenance_status, audit_payload, business_fingerprint) SELECT import_run_id, source_file_id, idempotency_key, canonical_match_fk_status, historical_match_identity, source_provider, bookmaker, market, selection, decimal_odds, snapshot_type, raw_sha256, raw_record_locator, adapter, adapter_version, provenance_status, audit_payload, business_fingerprint FROM odds_historical_staging_observations WHERE idempotency_key = $1', [row.idempotency_key]), /duplicate key/);
-    await assert.rejects(client.query("INSERT INTO odds_historical_import_runs (id, run_key, source_type, mode, status, pipeline_version, expected_accepted_count, expected_quarantine_count) VALUES ('00000000-0000-0000-0000-000000000099', $1, 'historical_odds', 'invalid', 'planned', 'x', 0, 0)", [hash('8')]), /check constraint/);
-    await assert.rejects(client.query("UPDATE odds_historical_staging_observations SET decimal_odds = 1 WHERE idempotency_key = $1", [row.idempotency_key]), /check constraint/);
+    await assertDatabaseFinalDefenses(client, plan().accepted[0], hash('8'));
 });

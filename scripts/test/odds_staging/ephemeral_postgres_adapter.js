@@ -3,6 +3,7 @@
 // lifecycle: permanent; test-only PostgreSQL implementation of the D4B persistence port.
 
 const crypto = require('node:crypto');
+const assert = require('node:assert/strict');
 const { PersistenceConflictError } = require('../../../src/infrastructure/odds_staging/persistenceRepository');
 const { stableStringify } = require('../../../src/infrastructure/odds_staging/contracts');
 
@@ -15,6 +16,7 @@ class EphemeralPostgresAdapter {
         this.failAfterSource = failAfterSource;
         this.runId = null;
         this.sourceFileId = null;
+        this.completedReplay = false;
     }
 
     async runInTransaction(callback) {
@@ -38,13 +40,19 @@ class EphemeralPostgresAdapter {
     }
 
     async createImportRun(run) {
-        const existing = await this.client.query('SELECT id, mode, expected_accepted_count, expected_quarantine_count FROM odds_historical_import_runs WHERE run_key = $1 FOR UPDATE', [run.run_key]);
+        const existing = await this.client.query('SELECT * FROM odds_historical_import_runs WHERE run_key = $1 FOR UPDATE', [run.run_key]);
         if (existing.rowCount) {
             const prior = existing.rows[0];
-            if (prior.mode !== run.mode || Number(prior.expected_accepted_count) !== run.expected_accepted_count || Number(prior.expected_quarantine_count) !== run.expected_quarantine_count) {
+            const differs = prior.mode !== run.mode || prior.source_type !== run.source_type || prior.pipeline_version !== run.pipeline_version
+                || (prior.pipeline_code_sha?.trim() || null) !== run.pipeline_code_sha || (prior.manifest_hash?.trim() || null) !== run.manifest_hash
+                || (prior.candidate_business_hash?.trim() || null) !== run.candidate_business_hash
+                || Number(prior.expected_accepted_count) !== run.expected_accepted_count || Number(prior.expected_quarantine_count) !== run.expected_quarantine_count
+                || !sameJson(prior.metadata, run.metadata);
+            if (differs) {
                 throw new PersistenceConflictError(`divergent import run conflict: ${run.run_key}`);
             }
             this.runId = prior.id;
+            this.completedReplay = prior.status === 'completed';
             return { id: prior.id, already_present: true };
         }
         const id = crypto.randomUUID();
@@ -115,6 +123,7 @@ class EphemeralPostgresAdapter {
     }
 
     async markRunCompleted(runKey, result) {
+        if (this.completedReplay) return { already_present: true };
         await this.client.query(
             `UPDATE odds_historical_import_runs SET status = 'completed', actual_accepted_count = $1, actual_quarantine_count = $2, duplicate_count = $3, completed_at = COALESCE(completed_at, NOW()), updated_at = NOW()
              WHERE run_key = $4 AND status IN ('running', 'completed')`,
@@ -123,4 +132,17 @@ class EphemeralPostgresAdapter {
     }
 }
 
-module.exports = { EphemeralPostgresAdapter };
+async function assertDatabaseFinalDefenses(client, accepted, runKey) {
+    await Promise.all([
+        client.query(
+            'INSERT INTO odds_historical_staging_observations (import_run_id, source_file_id, idempotency_key, canonical_match_fk_status, historical_match_identity, source_provider, bookmaker, market, selection, decimal_odds, snapshot_type, raw_sha256, raw_record_locator, adapter, adapter_version, provenance_status, audit_payload, business_fingerprint) SELECT import_run_id, source_file_id, idempotency_key, canonical_match_fk_status, historical_match_identity, source_provider, bookmaker, market, selection, decimal_odds, snapshot_type, raw_sha256, raw_record_locator, adapter, adapter_version, provenance_status, audit_payload, business_fingerprint FROM odds_historical_staging_observations WHERE idempotency_key = $1',
+            [accepted.idempotency_key]
+        ).then(() => assert.fail('duplicate unique key was accepted'), error => assert.match(error.message, /duplicate key/)),
+        client.query("INSERT INTO odds_historical_import_runs (id, run_key, source_type, mode, status, pipeline_version, expected_accepted_count, expected_quarantine_count) VALUES ('00000000-0000-0000-0000-000000000099', $1, 'historical_odds', 'invalid', 'planned', 'x', 0, 0)", [runKey])
+            .then(() => assert.fail('invalid mode was accepted'), error => assert.match(error.message, /check constraint/)),
+    ]);
+    await client.query('UPDATE odds_historical_staging_observations SET decimal_odds = 1 WHERE idempotency_key = $1', [accepted.idempotency_key])
+        .then(() => assert.fail('invalid odds were accepted'), error => assert.match(error.message, /check constraint/));
+}
+
+module.exports = { EphemeralPostgresAdapter, assertDatabaseFinalDefenses };
