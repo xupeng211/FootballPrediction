@@ -9,6 +9,7 @@ const {
 } = require('./contracts');
 
 const RUN_STATUSES = Object.freeze(['planned', 'running', 'completed', 'failed', 'rolled_back', 'cancelled']);
+const RUN_MODES = Object.freeze(['dry_run', 'controlled_write']);
 const RUN_TRANSITIONS = Object.freeze({
     planned: new Set(['running', 'cancelled']),
     running: new Set(['completed', 'failed', 'rolled_back']),
@@ -75,10 +76,14 @@ function createImportRunPlan(result, context = {}) {
     if (!Number.isInteger(acceptedCount) || acceptedCount < 0 || !Number.isInteger(quarantineCount) || quarantineCount < 0) {
         throw new PersistenceContractError('summary counts must be non-negative integers');
     }
+    const runMode = context.runMode || 'dry_run';
+    if (!RUN_MODES.includes(runMode)) {
+        throw new PersistenceContractError(`unsupported import run mode: ${runMode}`);
+    }
     return stableCanonicalize({
         run_key: createRunKey(result, context),
         source_type: 'historical_odds',
-        mode: 'dry_run',
+        mode: runMode,
         status: 'planned',
         pipeline_version: context.pipeline_version || 'odds-staging-persistence/v1',
         pipeline_code_sha: context.pipeline_code_sha || null,
@@ -180,6 +185,7 @@ function assertRunTransition(from, to) {
 module.exports = {
     PersistenceContractError,
     RUN_STATUSES,
+    RUN_MODES,
     RUN_TRANSITIONS,
     assertRunTransition,
     buildPersistencePlan,

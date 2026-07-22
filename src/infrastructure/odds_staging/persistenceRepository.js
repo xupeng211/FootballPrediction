@@ -2,7 +2,6 @@
 
 // lifecycle: permanent；Historical odds staging 的显式 DI persistence port，默认拒绝任何写入。
 
-const { assertDbWriteAllowed } = require('../../../scripts/ops/helpers/db_write_guard');
 const { buildPersistencePlan, PersistenceContractError } = require('./persistenceContracts');
 
 const TARGET_TABLES = Object.freeze([
@@ -28,40 +27,44 @@ class PersistenceConflictError extends Error {
     }
 }
 
-function createGuardedWriteAdapter(adapter, guard = assertDbWriteAllowed) {
+function createAuthorizedWriteAdapter(adapter, authorizeWrite) {
     if (!adapter || typeof adapter.runInTransaction !== 'function') {
         throw new PersistenceContractError('write adapter must implement runInTransaction');
+    }
+    if (typeof authorizeWrite !== 'function') {
+        throw new PersistenceWriteDisabledError('write adapter requires an explicit authorizeWrite dependency');
     }
     return {
         ...adapter,
         async runInTransaction(callback) {
-            guard({
-                script: 'odds_historical_staging_persistence',
-                tables: TARGET_TABLES,
-                operations: ['INSERT', 'UPDATE'],
-            });
+            await authorizeWrite({ tables: TARGET_TABLES, operations: ['INSERT', 'UPDATE'] });
             return adapter.runInTransaction(callback);
         },
     };
 }
 
 class HistoricalOddsStagingPersistenceRepository {
-    constructor({ adapter = null, guard = assertDbWriteAllowed } = {}) {
-        this.adapter = adapter ? createGuardedWriteAdapter(adapter, guard) : null;
+    constructor({ adapter = null, authorizeWrite = null } = {}) {
+        this.adapter = adapter && authorizeWrite ? createAuthorizedWriteAdapter(adapter, authorizeWrite) : null;
+        this.hasAdapter = Boolean(adapter);
+        this.hasAuthorizer = typeof authorizeWrite === 'function';
     }
 
     plan(result, context = {}) {
         return buildPersistencePlan(result, context);
     }
 
-    async execute(plan, { mode = 'dry_run' } = {}) {
-        if (mode === 'dry_run') {
+    async execute(plan, { authorization = 'not_authorized' } = {}) {
+        if (plan?.run?.mode === 'dry_run' && authorization === 'not_authorized') {
             return { status: 'not_persisted', reason: 'dry_run', run_key: plan.run.run_key };
         }
-        if (mode !== 'write_authorized' || !this.adapter) {
+        if (plan?.run?.mode !== 'controlled_write' || authorization !== 'write_authorized') {
             throw new PersistenceWriteDisabledError(
-                'historical odds persistence is disabled without an explicit guarded adapter and write_authorized mode'
+                'persistence requires a controlled_write plan and explicit write_authorized execution'
             );
+        }
+        if (!this.hasAdapter || !this.hasAuthorizer || !this.adapter) {
+            throw new PersistenceWriteDisabledError('controlled_write requires an explicit adapter and authorizeWrite dependency');
         }
         try {
             return await this.adapter.runInTransaction(async operations => {
@@ -89,14 +92,7 @@ class HistoricalOddsStagingPersistenceRepository {
                 return result;
             });
         } catch (error) {
-            // Adapter may record failure in an independent, explicitly guarded audit transaction; never hide the original error.
-            if (typeof this.adapter.recordRunFailure === 'function') {
-                try {
-                    await this.adapter.recordRunFailure(plan.run.run_key, error.message);
-                } catch {
-                    // The original transaction error remains authoritative.
-                }
-            }
+            // No out-of-band failure write: D4C must prove atomic failure-state handling inside the authorized transaction.
             throw error;
         }
     }
@@ -107,5 +103,5 @@ module.exports = {
     PersistenceConflictError,
     PersistenceWriteDisabledError,
     TARGET_TABLES,
-    createGuardedWriteAdapter,
+    createAuthorizedWriteAdapter,
 };

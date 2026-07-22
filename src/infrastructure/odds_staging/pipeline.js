@@ -319,7 +319,7 @@ async function persistStagingResult(result, repository, options = {}) {
         throw new OfflineStagingError('SAFETY_ERROR', 'an explicit persistence repository with plan() and execute() is required');
     }
     const plan = repository.plan(result, options.context || {});
-    return repository.execute(plan, { mode: options.mode || 'dry_run' });
+    return repository.execute(plan, { authorization: options.authorization || 'not_authorized' });
 }
 
 module.exports = {

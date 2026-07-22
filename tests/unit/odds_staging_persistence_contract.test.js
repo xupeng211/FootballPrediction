@@ -67,39 +67,93 @@ test('当前 canonical observation 与 quarantine 都可无损映射，#1797 ide
     assert.ok(plan.quarantine[0].quarantine_key);
 });
 
-test('dry-run 明确不持久化；没有 adapter 的 authorized 请求 fail closed', async () => {
-    const repository = new HistoricalOddsStagingPersistenceRepository();
+test('src odds staging 不反向依赖 scripts/ops', () => {
+    const sourceDirectory = path.join(ROOT, 'src/infrastructure/odds_staging');
+    for (const filename of fs.readdirSync(sourceDirectory).filter(filename => filename.endsWith('.js'))) {
+        assert.doesNotMatch(fs.readFileSync(path.join(sourceDirectory, filename), 'utf8'), /scripts\/ops\//);
+    }
+});
+
+test('dry-run 明确不持久化，且不会调用 authorizer 或 adapter', async () => {
+    let authorizerCalls = 0;
+    let adapterCalls = 0;
+    const repository = new HistoricalOddsStagingPersistenceRepository({
+        adapter: { runInTransaction: async () => { adapterCalls += 1; } },
+        authorizeWrite: async () => { authorizerCalls += 1; },
+    });
     const plan = repository.plan(resultFixture());
+    assert.equal(plan.run.mode, 'dry_run');
     assert.deepEqual(await repository.execute(plan), { status: 'not_persisted', reason: 'dry_run', run_key: plan.run.run_key });
-    await assert.rejects(repository.execute(plan, { mode: 'write_authorized' }), PersistenceWriteDisabledError);
+    assert.equal(authorizerCalls, 0);
+    assert.equal(adapterCalls, 0);
     assert.deepEqual(await persistStagingResult(resultFixture(), repository), { status: 'not_persisted', reason: 'dry_run', run_key: plan.run.run_key });
     assert.equal(planStagingPersistence(resultFixture(), repository).run.run_key, plan.run.run_key);
 });
 
-test('identical duplicate no-op；divergent key fail closed；adapter errors propagate', async () => {
+test('controlled write 缺少 adapter 或 authorizer，以及 dry-run plan 的 write authorization，均 fail closed', async () => {
+    const repository = new HistoricalOddsStagingPersistenceRepository();
+    const controlledPlan = repository.plan(resultFixture(), { runMode: 'controlled_write' });
+    await assert.rejects(repository.execute(controlledPlan, { authorization: 'write_authorized' }), PersistenceWriteDisabledError);
+    const adapterOnly = new HistoricalOddsStagingPersistenceRepository({ adapter: { runInTransaction: async () => {} } });
+    await assert.rejects(adapterOnly.execute(controlledPlan, { authorization: 'write_authorized' }), PersistenceWriteDisabledError);
+    await assert.rejects(repository.execute(repository.plan(resultFixture()), { authorization: 'write_authorized' }), PersistenceWriteDisabledError);
+});
+
+test('authorizer 拒绝时没有 adapter、failure 或 transaction 调用', async () => {
+    const calls = { transaction: 0, failure: 0, writes: 0 };
+    const repository = new HistoricalOddsStagingPersistenceRepository({
+        adapter: {
+            runInTransaction: async () => { calls.transaction += 1; },
+            recordRunFailure: async () => { calls.failure += 1; },
+        },
+        authorizeWrite: async () => { throw new Error('authorization denied'); },
+    });
+    const plan = repository.plan(resultFixture(), { runMode: 'controlled_write' });
+    await assert.rejects(repository.execute(plan, { authorization: 'write_authorized' }), /authorization denied/);
+    assert.deepEqual(calls, { transaction: 0, failure: 0, writes: 0 });
+});
+
+test('controlled write 保持 mode、identical duplicate no-op；divergent conflict fail closed', async () => {
     const writes = [];
+    let createdRun = null;
     const adapter = {
         async runInTransaction(callback) {
             return callback({
                 findAcceptedByIdempotencyKey: async () => [{ idempotency_key: 'same', business_fingerprint: 'same' }],
-                createImportRun: async () => writes.push('run'), registerSourceFile: async () => writes.push('source'),
+                createImportRun: async run => { createdRun = run; writes.push('run'); }, registerSourceFile: async () => writes.push('source'),
                 insertAcceptedObservations: async rows => writes.push(['accepted', rows.length]),
                 insertQuarantineRecords: async rows => writes.push(['quarantine', rows.length]),
                 markRunCompleted: async () => writes.push('completed'),
             });
         },
     };
-    const repository = new HistoricalOddsStagingPersistenceRepository({ adapter, guard: () => {} });
-    const plan = buildPersistencePlan(resultFixture());
+    const repository = new HistoricalOddsStagingPersistenceRepository({ adapter, authorizeWrite: async () => {} });
+    const plan = buildPersistencePlan(resultFixture(), { runMode: 'controlled_write' });
     plan.accepted[0].idempotency_key = 'same'; plan.accepted[0].business_fingerprint = 'same';
-    const result = await repository.execute(plan, { mode: 'write_authorized' });
+    const result = await repository.execute(plan, { authorization: 'write_authorized' });
     assert.equal(result.duplicate_count, 1);
     assert.ok(!writes.some(item => Array.isArray(item) && item[0] === 'accepted'));
 
+    assert.ok(writes.includes('run'));
+    assert.equal(createdRun.mode, 'controlled_write');
     const conflictRepository = new HistoricalOddsStagingPersistenceRepository({ adapter: { ...adapter, runInTransaction: callback => callback({
         findAcceptedByIdempotencyKey: async () => [{ idempotency_key: 'same', business_fingerprint: 'different' }],
-    }) }, guard: () => {} });
-    await assert.rejects(conflictRepository.execute(plan, { mode: 'write_authorized' }), PersistenceConflictError);
+    }) }, authorizeWrite: async () => {} });
+    await assert.rejects(conflictRepository.execute(plan, { authorization: 'write_authorized' }), PersistenceConflictError);
+});
+
+test('transaction error 原样传播，不触发事务外 failure write 或 completed 伪装', async () => {
+    let failureCalls = 0;
+    const repository = new HistoricalOddsStagingPersistenceRepository({
+        adapter: {
+            runInTransaction: async () => { throw new Error('transaction failed'); },
+            recordRunFailure: async () => { failureCalls += 1; },
+        },
+        authorizeWrite: async () => {},
+    });
+    const plan = repository.plan(resultFixture(), { runMode: 'controlled_write' });
+    await assert.rejects(repository.execute(plan, { authorization: 'write_authorized' }), /transaction failed/);
+    assert.equal(failureCalls, 0);
 });
 
 test('quarantine reason 缺失被拒绝，避免空隔离记录伪装成功', () => {
