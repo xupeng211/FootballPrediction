@@ -52,6 +52,7 @@
         "test:affected": "node scripts/test/run_test_suite.js affected",
         "test:l1": "node --test tests/unit/L1ConfigManager.test.js tests/unit/DiscoveryService.test.js tests/unit/FixtureSeeder.test.js tests/unit/FixtureSeederV5.test.js",
         "test:integration": "node scripts/test/run_test_suite.js integration",
+        "test:odds-staging:ephemeral-postgres": "bash tests/integration/odds_staging/run_ephemeral_postgres.sh",
         "test:coverage": "node scripts/test/run_test_suite.js coverage",
         "test:coverage:recon-core": "rm -rf reports/coverage/recon-core && c8 --all --include=src/infrastructure/recon/services/ReconDecryptorSourceExtractor.js --include=src/infrastructure/recon/services/ReconSourceProber.js --include=src/infrastructure/recon/services/ReconMatrixTargetRunner.js --include=src/infrastructure/recon/ReconDistributedLock.js --include=src/infrastructure/recon/services/ReconPureDecryptorRuntime.js --reporter=text-summary --reporter=json-summary --reports-dir reports/coverage/recon-core node scripts/test/run_test_suite.js recon-core && node scripts/test/check_recon_core_coverage.js",
         "test:coverage:python": "python -m pytest tests/unit/config_package_test.py --cov=src/config --cov-report=term-missing:skip-covered --cov-report=json:reports/coverage/python/coverage.json",

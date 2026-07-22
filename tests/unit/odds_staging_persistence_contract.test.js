@@ -121,8 +121,8 @@ test('controlled write 保持 mode、identical duplicate no-op；divergent confl
             return callback({
                 findAcceptedByIdempotencyKey: async () => [{ idempotency_key: 'same', business_fingerprint: 'same' }],
                 createImportRun: async run => { createdRun = run; writes.push('run'); }, registerSourceFile: async () => writes.push('source'),
-                insertAcceptedObservations: async rows => writes.push(['accepted', rows.length]),
-                insertQuarantineRecords: async rows => writes.push(['quarantine', rows.length]),
+                insertAcceptedObservations: async rows => { writes.push(['accepted', rows.length]); return { inserted_count: rows.length, duplicate_count: 0 }; },
+                insertQuarantineRecords: async rows => { writes.push(['quarantine', rows.length]); return { inserted_count: rows.length, duplicate_count: 0 }; },
                 markRunCompleted: async () => writes.push('completed'),
             });
         },
@@ -140,6 +140,21 @@ test('controlled write 保持 mode、identical duplicate no-op；divergent confl
         findAcceptedByIdempotencyKey: async () => [{ idempotency_key: 'same', business_fingerprint: 'different' }],
     }) }, authorizeWrite: async () => {} });
     await assert.rejects(conflictRepository.execute(plan, { authorization: 'write_authorized' }), PersistenceConflictError);
+});
+
+test('adapter 写入统计必须完整且一致，避免 mixed replay accounting', async () => {
+    const repository = new HistoricalOddsStagingPersistenceRepository({
+        adapter: {
+            async runInTransaction(callback) {
+                return callback({
+                    findAcceptedByIdempotencyKey: async () => [], createImportRun: async () => {}, registerSourceFile: async () => {},
+                    insertAcceptedObservations: async () => ({ inserted_count: 0, duplicate_count: 0 }),
+                    insertQuarantineRecords: async () => ({ inserted_count: 1, duplicate_count: 0 }), markRunCompleted: async () => {},
+                });
+            },
+        }, authorizeWrite: async () => {},
+    });
+    await assert.rejects(repository.execute(repository.plan(resultFixture(), { runMode: 'controlled_write' }), { authorization: 'write_authorized' }), /must reconcile/);
 });
 
 test('transaction error 原样传播，不触发事务外 failure write 或 completed 伪装', async () => {
