@@ -127,6 +127,10 @@ test('divergent duplicate 与注入 transaction failure 均 rollback 且不覆�
     divergentRun.run.manifest_hash = hash('0');
     await assert.rejects(execute(divergentRun), PersistenceConflictError);
     assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], before);
+    const divergentQuarantine = plan();
+    divergentQuarantine.quarantine[0].source_payload.synthetic = 'changed';
+    await assert.rejects(execute(divergentQuarantine), PersistenceConflictError);
+    assert.deepEqual([await count('odds_historical_import_runs'), await count('odds_historical_source_files'), await count('odds_historical_staging_observations'), await count('odds_historical_quarantine')], before);
     const altered = plan();
     altered.run.run_key = hash('7'); altered.source_file.import_run_key = hash('7');
     await assert.rejects(execute(altered, { adapter: new EphemeralPostgresAdapter(client, { failAfterSource: true }) }), /injected transaction failure/);
