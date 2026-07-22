@@ -165,6 +165,18 @@
       "review_note": "Pure DDL migration. No action needed."
     },
     {
+      "path": "database/migrations/V26.8__create_odds_historical_staging_contract.sql",
+      "file_type": "sql_migration",
+      "classification": "sql_schema_definition_requires_explicit_execution_authorization",
+      "reason": "M3-D4B historical odds staging persistence contract. Additive CREATE TABLE/INDEX/COMMENT only; no DML, no backfill, no privilege changes.",
+      "evidence": "Four odds_historical_* tables; UNIQUE idempotency_key and source hash constraints; no INSERT/UPDATE/DELETE.",
+      "source_doc": "docs/PROJECT_STATUS.md",
+      "owner_task": "m3_d4b_historical_odds_staging_persistence_contract",
+      "allowed_operations": ["CREATE TABLE", "CREATE INDEX", "COMMENT ON"],
+      "disallowed_operations": ["DROP TABLE", "DROP DATABASE", "TRUNCATE", "INSERT", "UPDATE", "DELETE", "GRANT", "REVOKE"],
+      "review_note": "File creation is not execution authorization. D4C must validate only in an explicitly authorized ephemeral database."
+    },
+    {
       "path": "deploy/docker/init_db.sql",
       "file_type": "sql_docker_init",
       "classification": "historical_sql_seed_or_data_write_needs_gate",

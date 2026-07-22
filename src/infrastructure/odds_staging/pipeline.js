@@ -306,10 +306,28 @@ function loadCandidatesForRun(candidatePath, dependencies = {}) {
     return candidatePath ? (dependencies.loadCandidates || loadCandidates)(candidatePath, dependencies) : [];
 }
 
+// Persistence remains an explicit outer boundary: the offline pipeline itself never imports a DB client.
+function planStagingPersistence(result, repository, context = {}) {
+    if (!repository || typeof repository.plan !== 'function') {
+        throw new OfflineStagingError('SAFETY_ERROR', 'an explicit persistence repository with plan() is required');
+    }
+    return repository.plan(result, context);
+}
+
+async function persistStagingResult(result, repository, options = {}) {
+    if (!repository || typeof repository.plan !== 'function' || typeof repository.execute !== 'function') {
+        throw new OfflineStagingError('SAFETY_ERROR', 'an explicit persistence repository with plan() and execute() is required');
+    }
+    const plan = repository.plan(result, options.context || {});
+    return repository.execute(plan, { authorization: options.authorization || 'not_authorized' });
+}
+
 module.exports = {
     ADAPTER_MEDIA_TYPES,
     emitDeterministicResult,
     loadCandidatesForRun,
+    persistStagingResult,
+    planStagingPersistence,
     resolveExternalEmitDirectory,
     runOfflineStaging,
 };

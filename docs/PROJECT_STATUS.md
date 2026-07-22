@@ -5,6 +5,18 @@
 
 Last updated: 2026-07-14
 
+## M3 Historical Odds Staging — Persistence Contract implemented (no-write)
+
+- **M3-D4B** — historical odds staging persistence contract on the M3 identity baseline.
+  - M3 deterministic Football-Data match identity is complete (#1797); the frozen business contract remains
+    **38,616 accepted / 216 quarantined** observations.
+  - Added the additive `V26.8__create_odds_historical_staging_contract.sql` schema contract and explicit
+    dependency-injected persistence port for import run, source-file lineage, accepted observations, and quarantine.
+  - Migration was created only: **not executed**. No database connection and no historical odds write occurred.
+  - Default behavior is fail-closed/no-write; a future adapter must pass the existing DB write guard and explicit
+    authorization. Candidate IDs are retained as unverified references: no `matches` FK is claimed until DB inventory.
+  - Next stage: **M3-D4C — Ephemeral Staging Integration Verification**, requiring separate explicit DB-test authorization.
+
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
