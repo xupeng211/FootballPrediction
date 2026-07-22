@@ -5,7 +5,7 @@
 
 Last updated: 2026-07-23
 
-## M3 Historical Odds Staging — D4C ephemeral integration verified
+## M3 Historical Odds Staging — D4D persistent-write readiness reviewed
 
 - **M3-D4B** — historical odds staging persistence contract on the M3 identity baseline.
   - M3 deterministic Football-Data match identity is complete (#1797); the frozen business contract remains
@@ -20,8 +20,14 @@ Last updated: 2026-07-23
   - D4C used 3 synthetic accepted observations and 1 synthetic quarantine record to verify schema mapping, atomic
     rollback, database uniqueness/check constraints, idempotent rerun, and quarantine separation. No real historical
     odds were read or written. Candidate ID compatibility with `matches.match_id` remains **not proven**, so no FK was added.
-  - Next stage: **M3-D4D — Controlled Persistent Write Readiness Review**, requiring separate explicit authorization;
-    D4C does not authorize migration or data writes in any persistent environment.
+  - `#1799` is merged. **M3-D4C** is complete only for the disposable PostgreSQL 15 tmpfs verification;
+    no long-lived database was connected or migrated.
+  - **M3-D4D** readiness decision: **`BLOCKED`**. A named non-production persistent target,
+    canonical V26.8→V26.9 migration-runner evidence, least-privilege grants, target backup/restore,
+    and V26.9 NULL-fingerprint inventory are not proven from repository evidence.
+  - **M3-D4E has not started and is not authorized.** No persistent migration or data write occurred;
+    Issue `#1793` remains Open. Next possible task is the separately authorized
+    `M3-D4D-B1 — Persistent Sandbox Environment, Migration-Runner, and Recovery Evidence Closure`.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
