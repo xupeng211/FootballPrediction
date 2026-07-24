@@ -79,12 +79,22 @@ Technical runner probes are closed. D4D is merged; D4E/D4F remain separately aut
 
 ## D4E controlled-write evidence (completed; PR remains Draft)
 
-`make m3-odds-sandbox-d4e-preflight`, `make m3-odds-sandbox-d4e-write`, and
-`make m3-odds-sandbox-d4e-conflict-probe` are fixed-target operator surfaces. They require both
+The fixed-target operator surfaces are `make m3-odds-sandbox-d4e-preflight`,
+`make m3-odds-sandbox-d4e-write`, `make m3-odds-sandbox-d4e-replay`,
+`make m3-odds-sandbox-d4e-conflict-probe`, and
+`make m3-odds-sandbox-d4e-quarantine-conflict-probe`. They require both
 `ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE=1` and the exact D4E authorization phrase. The code accepts
 only the deterministic nine-row `m3_d4e_synthetic_v1.jsonl` fixture, the exact sandbox project,
 database, service, writer role and internal Docker network; it rejects localhost, production,
 staging, arbitrary tables, arbitrary SQL and non-synthetic samples before a transaction begins.
+
+`preflight` is read-only identity/fixture verification. `write` is first-write-only and fails
+closed unless all four business tables are empty; it must not be rerun against the retained
+1 / 1 / 6 / 3 sandbox state. `replay` resolves the persisted original import
+`pipeline_code_sha`, returns 0 accepted / 0 quarantine / 9 duplicates and has zero table delta.
+The accepted conflict probe permits only an accepted divergence and requires actual adapter scope
+`accepted`; the quarantine conflict probe permits only a quarantine `source_payload` divergence
+and requires actual adapter scope `quarantine`. Both must fully roll back.
 
 The adapter uses `pg_try_advisory_xact_lock(731642942)`, five-second lock timeout and a
 30-second statement timeout. It uses the existing persistence plan/repository contract and writer

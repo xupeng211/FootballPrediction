@@ -3,9 +3,9 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-07-23
+Last updated: 2026-07-25
 
-## M3 Historical Odds Staging — D4D persistent-write readiness reviewed
+## M3 Historical Odds Staging — D4E controlled persistent write complete
 
 - **M3-D4B** — historical odds staging persistence contract on the M3 identity baseline.
   - M3 deterministic Football-Data match identity is complete (#1797); the frozen business contract remains
@@ -27,12 +27,23 @@ Last updated: 2026-07-23
     backup/restore, zero-row inventory, rollback-only writer persistence, reader/writer role
     boundaries, PUBLIC/default ACL audit, failed-migration rollback/resume, checksum-drift
     fail-closed, and same-session PostgreSQL advisory-lock concurrency are closed.
-    PR #1801 remains Draft and unmerged. Policy implementation head
+    PR #1801 is merged. Policy implementation head
     `e7171da6ac049b0368ed1f5c2171e76a9e447819` passed Production Gate run `30066372663`.
     The reviewed sandbox-only SQL classification is static only and does not authorize execution.
-  - **M3-D4E has not started and is not authorized.** No persistent migration or historical-odds
-    business write occurred; Issue `#1793` remains Open. D4E requires a separate explicit user
-    authorization phrase.
+  - M3 milestones #1794–#1801 are merged: offline staging pipeline, CSV recovery, deterministic
+    candidate export and identity, D4B persistence contract, D4C ephemeral verification, D4D
+    readiness review and D4D-B1 persistent sandbox.
+  - **M3-D4E COMPLETE — deterministic synthetic controlled persistent write verified.** PR #1802
+    remains Open, Draft and unmerged. Its D4E technical/evidence head
+    `b2ba7e44b7dd643ac89bd0cb2704005dbbbfbf41` passed Production Gate `30102747400`.
+    First write: 6 accepted / 3 quarantine / 0 duplicates. Stable replay under a newer executor:
+    0 accepted / 0 quarantine / 9 duplicates with zero table delta. Accepted and quarantine
+    conflicts had actual adapter scopes `accepted` and `quarantine`, respectively, and both fully
+    rolled back with zero delta. Final state: 1 import run / 1 source file / 6 accepted / 3 quarantine.
+  - `canonical_match_id` remains NULL for all six accepted rows; candidate identity is unverified,
+    no matches FK exists, and canonical integration/training remain blocked. Real historical odds
+    were not used, and no development, staging or production database was targeted. Issue #1793
+    remains Open; D4F is not authorized, has not started, and M3 overall is not complete.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
@@ -791,8 +802,8 @@ Last updated: 2026-07-23
 # M3-D4D-B1 current state
 
 Local-only persistent sandbox `fp_m3_persistent_sandbox` has sandbox-only V26.8/V26.9
-migration-ledger and empty-table evidence. It is not dev/staging/production; no historical
-odds business rows were written, and D4E/D4F have not started. See
+migration-ledger and retained D4E synthetic evidence (1 run / 1 source / 6 accepted / 3 quarantine).
+It is not dev/staging/production. D4E is complete; D4F has not started. See
 `docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md`.
 
 REV2B closed the fresh disposable PostgreSQL 15 restore and complete role/grant permission
