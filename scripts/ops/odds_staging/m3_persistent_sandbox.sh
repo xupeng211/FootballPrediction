@@ -52,7 +52,10 @@ backup() { safe_identity; verify; mkdir -p "$BACKUP_DIR"; chmod 700 "$BACKUP_DIR
 stop() { [[ -f "$ENV_FILE" ]] || die "sandbox is not initialized"; compose down --remove-orphans; }
 restore_verify() {
   safe_identity; require_tool docker; require_tool openssl
-  local backup="$BACKUP_DIR/m3-persistent-sandbox-20260723T011611Z.dump" checksum="$BACKUP_DIR/m3-persistent-sandbox-20260723T011611Z.dump.sha256" nonce project db name net dir inv positive role_attributes memberships
+  local backup="${M3_SANDBOX_RESTORE_BACKUP:-}" checksum nonce project db name net dir inv positive role_attributes memberships
+  [[ -n "$backup" ]] || die "M3_SANDBOX_RESTORE_BACKUP must name the exact repo-external backup to restore"
+  [[ "$backup" == "$BACKUP_DIR"/* && "$backup" == *.dump ]] || die "restore backup must be an exact .dump inside the sandbox backup directory"
+  checksum="${backup}.sha256"
   [[ -f "$backup" && -f "$checksum" && "$(sha256sum "$backup" | awk '{print $1}')" == "$(awk '{print $1}' "$checksum")" ]] || die "backup checksum mismatch"
   nonce="$(date -u +%s)_$RANDOM"; project="fp_m3_restore_verify_$nonce"; db="fp_m3_restore_verify_$nonce"; name="${project}-m3-restore-postgres-1"; net="${project}_default"; dir="$(mktemp -d /tmp/m3-restore.XXXXXX)"; chmod 700 "$dir"
   cleanup_restore() { docker rm -f "$name" >/dev/null 2>&1 || true; docker network rm "$net" >/dev/null 2>&1 || true; rm -rf "$dir"; }

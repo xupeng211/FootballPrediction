@@ -3329,6 +3329,7 @@ m3-odds-sandbox-backup: ## Create a custom-format backup outside the repository.
 	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh backup
 
 m3-odds-sandbox-restore-verify: ## Restore the verified backup to a disposable PostgreSQL 15 clone and probe roles.
+	@test -n "$(M3_SANDBOX_RESTORE_BACKUP)" || (echo "M3_SANDBOX_RESTORE_BACKUP=<exact repo-external .dump> is required" >&2; exit 2)
 	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh restore_verify
 
 m3-odds-sandbox-runner-probes: ## Run REV3 disposable rollback, checksum, and advisory-lock probes.
