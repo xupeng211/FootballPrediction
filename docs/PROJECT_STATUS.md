@@ -33,8 +33,9 @@ Last updated: 2026-07-25
   - M3 milestones #1794–#1801 are merged: offline staging pipeline, CSV recovery, deterministic
     candidate export and identity, D4B persistence contract, D4C ephemeral verification, D4D
     readiness review and D4D-B1 persistent sandbox.
-  - **M3-D4E COMPLETE — deterministic synthetic controlled persistent write verified.** PR #1802
-    remains Open, Draft and unmerged. Its D4E technical/evidence head
+  - **M3-D4E COMPLETE — deterministic synthetic controlled persistent write verified.** M3-D4E is
+    implemented and audited through PR #1802; the authoritative PR merge state is recorded in
+    GitHub and Issue #1793. Its D4E technical/evidence head
     `b2ba7e44b7dd643ac89bd0cb2704005dbbbfbf41` passed Production Gate `30102747400`.
     First write: 6 accepted / 3 quarantine / 0 duplicates. Stable replay under a newer executor:
     0 accepted / 0 quarantine / 9 duplicates with zero table delta. Accepted and quarantine
@@ -820,5 +821,6 @@ writer created exactly one completed run/source with 6 accepted and 3 quarantine
 replay returned 0/0/9 with zero delta. Adapter-origin accepted and quarantine conflict scopes were
 both verified as `PERSISTENCE_CONFLICT` with full rollback and zero delta. `canonical_match_id`
 remains NULL for all six accepted records; no matches, canonical odds or training write occurred.
-PR #1802 remains Draft and unmerged. D4F, real historical odds, canonical integration and training
-remain unstarted and blocked.
+M3-D4E is implemented and audited through PR #1802; the authoritative PR merge state is recorded
+in GitHub and Issue #1793. D4F, real historical odds, canonical integration and training remain
+unstarted and blocked.

@@ -77,7 +77,7 @@ fully removed containers, networks, volumes, and temporary directories.
 
 Technical runner probes are closed. D4D is merged; D4E/D4F remain separately authorized work.
 
-## D4E controlled-write evidence (completed; PR remains Draft)
+## D4E controlled-write evidence (completed)
 
 The fixed-target operator surfaces are `make m3-odds-sandbox-d4e-preflight`,
 `make m3-odds-sandbox-d4e-write`, `make m3-odds-sandbox-d4e-replay`,
