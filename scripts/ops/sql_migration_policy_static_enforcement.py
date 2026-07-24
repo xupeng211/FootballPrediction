@@ -18,6 +18,19 @@ SQL_DIRS = (
     "src/database/migrations/versions/",
     "deploy/docker/",
 )
+REVIEWED_SANDBOX_CLASSIFICATION = "reviewed_sandbox_sql"
+REVIEWED_SANDBOX_PREFIX = "database/sandbox/m3_odds_staging/"
+REVIEWED_SANDBOX_REQUIRED = (
+    "environment_scope",
+    "execution_authorized",
+    "target_identity",
+    "review_status",
+    "review_note",
+)
+UNCONDITIONALLY_FORBIDDEN_OPERATIONS = {
+    "DROP_DATABASE", "DROP_SCHEMA", "DROP_TABLE", "DROP_ROLE", "TRUNCATE",
+    "INSERT", "UPDATE", "DELETE", "COPY", "GRANT_ALL", "CREATE_EXTENSION", "ALTER_ROLE",
+}
 
 DDL = [
     (n, re.compile(p, re.I))
@@ -28,6 +41,7 @@ DDL = [
         ("CREATE_INDEX", r"\bCREATE\s+(?:UNIQUE\s+)?INDEX\b"),
         ("DROP_INDEX", r"\bDROP\s+INDEX\b"),
         ("TRUNCATE", r"\bTRUNCATE\b"),
+        ("CREATE_EXTENSION", r"\bCREATE\s+EXTENSION\b"),
     ]
 ]
 DML = [
@@ -245,7 +259,43 @@ def _validate_entry(e):
         "allowed_operations",
         "disallowed_operations",
     ]
-    return [f for f in req if f not in e or not e[f]]
+    missing = [f for f in req if f not in e or not e[f]]
+    if e.get("classification") == REVIEWED_SANDBOX_CLASSIFICATION:
+        missing.extend(f for f in REVIEWED_SANDBOX_REQUIRED if f not in e or e[f] in (None, ""))
+    return missing
+
+
+def _detected_operation_names(result):
+    """Return executable scanner signals; comments never authorize sandbox SQL."""
+    groups = ("ddl_signals", "dml_signals", "privilege_signals", "destructive_signals", "migration_api_signals")
+    return {
+        signal["signal"]
+        for group in groups
+        for signal in result.get(group, [])
+        if signal["evidence_type"] == "executable_context"
+    }
+
+
+def _is_reviewed_sandbox_entry(entry, path):
+    return (
+        entry.get("classification") == REVIEWED_SANDBOX_CLASSIFICATION
+        and path.startswith(REVIEWED_SANDBOX_PREFIX)
+        and entry.get("path") == path
+        and entry.get("environment_scope") == "local_nonproduction_sandbox_only"
+        and entry.get("execution_authorized") is False
+        and entry.get("target_identity") == "fp_m3_persistent_sandbox"
+        and entry.get("review_status") == "explicitly_reviewed"
+    )
+
+
+def _reviewed_sandbox_policy_passes(result, entry):
+    operations = _detected_operation_names(result)
+    return (
+        result.get("file_type") == "sql_other"
+        and _is_reviewed_sandbox_entry(entry, result["path"])
+        and not (operations & UNCONDITIONALLY_FORBIDDEN_OPERATIONS)
+        and operations <= set(entry.get("allowed_operations", []))
+    )
 
 
 def _apply_al(results, al):
@@ -259,6 +309,15 @@ def _apply_al(results, al):
             if e.get("classification", "").startswith("historical_sql_"):
                 r["would_fail_changed_files_gate"] = False
                 r["recommended_next_action"] = "historical_baseline"
+            elif _reviewed_sandbox_policy_passes(r, e) and r["allowlist_entry_complete"]:
+                r["would_fail_changed_files_gate"] = False
+                r["recommended_next_action"] = "reviewed_sandbox_policy"
+        elif p.startswith(REVIEWED_SANDBOX_PREFIX):
+            # A sandbox directory name is not an authorization boundary. Every
+            # newly changed SQL file under this narrow path needs its own exact,
+            # complete reviewed entry before it can pass the changed-files gate.
+            r["would_fail_changed_files_gate"] = True
+            r["recommended_next_action"] = "reviewed_sandbox_policy_required"
     return results
 
 
@@ -308,10 +367,7 @@ def changed_files_check(cf, ap=None):  # noqa: D103
     results = scan_files(sql, ap)
     violations, passed = [], []
     for r in results:
-        has_dest = any(
-            s["evidence_type"] == "executable_context" for s in r.get("destructive_signals", [])
-        )
-        if has_dest or r.get("would_fail_changed_files_gate"):
+        if r.get("would_fail_changed_files_gate"):
             violations.append(r)
         else:
             passed.append(r)

@@ -295,6 +295,38 @@
       "allowed_operations": ["SCHEMA_MIGRATION — gated by ALEMBIC_CTX or ALLOW_DB_WRITE+FINAL_DB_WRITE_CONFIRMATION+ALLOW_SCHEMA_WRITE+DRY_RUN=false"],
       "disallowed_operations": ["Any migration execution without guard (production-like host hard-blocked)"],
       "review_note": "Guard implemented. All Python write paths now resolved (18 guarded, 2 safe). SC-002 remains partial mitigation only."
+    },
+    {
+      "path": "database/sandbox/m3_odds_staging/bootstrap_roles.sql",
+      "file_type": "sql_other",
+      "classification": "reviewed_sandbox_sql",
+      "reason": "New M3-D4D-B1 local sandbox bootstrap: creates only sandbox roles and migration ledger, then applies least-privilege database/schema/default-privilege hardening.",
+      "evidence": "Reviewed executable signals are CREATE_ROLE, CREATE_TABLE, ALTER_TABLE, GRANT, REVOKE, and ALTER_DEFAULT_PRIVILEGES; no business-table DML or object deletion.",
+      "source_doc": "docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md",
+      "owner_task": "m3_d4d_b1_rev5_reviewed_sandbox_sql_policy",
+      "allowed_operations": ["CREATE_ROLE", "CREATE_TABLE", "ALTER_TABLE", "GRANT", "REVOKE", "ALTER_DEFAULT_PRIVILEGES"],
+      "disallowed_operations": ["DROP_DATABASE", "DROP_SCHEMA", "DROP_TABLE", "DROP_ROLE", "TRUNCATE", "INSERT", "UPDATE", "DELETE", "COPY", "GRANT_ALL", "CREATE_EXTENSION", "ALTER_ROLE", "production execution", "staging execution", "existing development database execution"],
+      "environment_scope": "local_nonproduction_sandbox_only",
+      "execution_authorized": false,
+      "target_identity": "fp_m3_persistent_sandbox",
+      "review_status": "explicitly_reviewed",
+      "review_note": "Static policy review only; allowlisting does not authorize SQL execution outside the separately authorized local sandbox operator workflow."
+    },
+    {
+      "path": "database/sandbox/m3_odds_staging/finalize_staging_grants.sql",
+      "file_type": "sql_other",
+      "classification": "reviewed_sandbox_sql",
+      "reason": "New M3-D4D-B1 sandbox-only least-privilege finalization for writer/reader, PUBLIC removal, sequence restriction and default-privilege hardening.",
+      "evidence": "Reviewed executable signals are GRANT, REVOKE, and ALTER_DEFAULT_PRIVILEGES; no business-table DML or object deletion.",
+      "source_doc": "docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md",
+      "owner_task": "m3_d4d_b1_rev5_reviewed_sandbox_sql_policy",
+      "allowed_operations": ["GRANT", "REVOKE", "ALTER_DEFAULT_PRIVILEGES"],
+      "disallowed_operations": ["DROP_DATABASE", "DROP_SCHEMA", "DROP_TABLE", "DROP_ROLE", "TRUNCATE", "INSERT", "UPDATE", "DELETE", "COPY", "GRANT_ALL", "CREATE_EXTENSION", "ALTER_ROLE", "production execution", "staging execution", "existing development database execution"],
+      "environment_scope": "local_nonproduction_sandbox_only",
+      "execution_authorized": false,
+      "target_identity": "fp_m3_persistent_sandbox",
+      "review_status": "explicitly_reviewed",
+      "review_note": "Static policy review only; allowlisting does not authorize SQL execution outside the separately authorized local sandbox operator workflow."
     }
   ]
 }

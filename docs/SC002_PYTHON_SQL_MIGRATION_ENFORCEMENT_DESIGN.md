@@ -115,6 +115,22 @@ grep -rl --include="*.py" -E "(INSERT INTO|UPDATE.*SET|DELETE FROM|UPSERT|ON CON
 
 ## SQL and migration candidate inventory
 
+### Reviewed local sandbox SQL policy (REV5)
+
+Historical `historical_sql_*` entries remain baseline classifications and must not be used for
+new files. REV5 adds the single `reviewed_sandbox_sql` classification for two exact new paths:
+`database/sandbox/m3_odds_staging/bootstrap_roles.sql` and
+`database/sandbox/m3_odds_staging/finalize_staging_grants.sql`.
+
+This is a static, operation-by-operation review only; it does **not** authorize SQL execution.
+It passes changed-files enforcement only when the allowlist entry is complete, the path remains
+under the exact M3 sandbox prefix, `file_type` is `sql_other`, scope is
+`local_nonproduction_sandbox_only`, target is `fp_m3_persistent_sandbox`, execution authorization
+is false, review status is explicit, and every detected operation is listed. DROP operations,
+TRUNCATE, DML, COPY, GRANT ALL, CREATE EXTENSION, and ALTER ROLE remain fail-closed even if named
+in an entry. Formal migrations, Docker init SQL, production, staging, existing dev databases, and
+third unreviewed sandbox files cannot use this classification. SC-002 remains partial mitigation.
+
 ### Scan methodology
 
 ```
