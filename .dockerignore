@@ -61,6 +61,11 @@ logs/
 .pytest_cache/
 htmlcov/
 tests/
+!tests/
+!tests/fixtures/
+!tests/fixtures/odds_staging/
+!tests/fixtures/odds_staging/m3_d4e_synthetic_v1.jsonl
+!tests/fixtures/odds_staging/m3_d4e_synthetic_v1.jsonl.meta.json
 reports/
 .eslintcache
 

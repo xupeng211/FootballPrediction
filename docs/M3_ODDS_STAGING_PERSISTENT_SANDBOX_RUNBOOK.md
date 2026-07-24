@@ -103,6 +103,20 @@ the deterministic 1,183-byte fixture (SHA-256
 `1c68d7290a8aa11b14a4f693dc4d36e0606fd8b8c5784f465a11635ae1c3661a`): first write was
 6 accepted / 3 quarantine / 0 duplicate and the final counts are 1 / 1 / 6 / 3.
 
+The operator runs in the deterministic `footballprediction-m3-d4e-operator:<git-short-sha>`
+image, built with `make m3-odds-sandbox-d4e-image`; it contains the lockfile-resolved production
+npm dependencies and does not mount or depend on host `node_modules`. The image uses a pinned
+Node base image, runs as the non-root `node` user, and contains no project `.env`, secrets,
+database data, backups, or dumps.
+
+The D4E authorizer validates the effective connection inputs before any `pg` client is created:
+`PGHOST` must exactly equal `m3-persistent-postgres`, `PGDATABASE` must exactly equal
+`fp_m3_persistent_sandbox`, `PGUSER` must exactly equal `fp_m3_sandbox_writer`, and `PGPORT`
+must be unset or `5432`. Connection-string and libpq override variables are rejected. The
+non-commentable JSONL fixture has a hash-bound `*.meta.json` lifecycle sidecar (`test-fixture`);
+the fixture loader and the AI workflow lifecycle gate validate its target and SHA-256 without
+changing the fixture bytes.
+
 Stable replay resolves the completed persisted import identity, retaining import pipeline SHA
 `3b6edd8f87e94b60fd6e349082cab98a72c44a72` and run key
 `31aaca7cc6d3df461346801853234f29041be9f739dcabedc4d3da5fb1ae3b04`; the newer executor only

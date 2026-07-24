@@ -45,6 +45,11 @@ Last updated: 2026-07-25
     no matches FK exists, and canonical integration/training remain blocked. Real historical odds
     were not used, and no development, staging or production database was targeted. Issue #1793
     remains Open; D4F is not authorized, has not started, and M3 overall is not complete.
+  - Post-merge review of #1802 identified three operator/governance P1 hardening requirements:
+    dependency-complete operator runtime, exact effective PostgreSQL connection identity, and a
+    hash-bound lifecycle declaration for the immutable JSONL fixture. The D4E business proof and
+    retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
+    or modify that sandbox. D4F remains unauthorized.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 

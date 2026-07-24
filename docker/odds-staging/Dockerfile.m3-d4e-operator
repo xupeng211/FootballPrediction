@@ -1,0 +1,19 @@
+# lifecycle: permanent
+# purpose: dependency-complete, fixed D4E operator runtime; invoked by the sandbox wrapper and disposable proof only.
+FROM node:20-bookworm-slim@sha256:2cf067cfed83d5ea958367df9f966191a942351a2df77d6f0193e162b5febfc0
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
+
+COPY --chown=node:node src ./src
+COPY --chown=node:node scripts/ops/helpers ./scripts/ops/helpers
+COPY --chown=node:node scripts/ops/odds_staging ./scripts/ops/odds_staging
+COPY --chown=node:node tests/fixtures/odds_staging/m3_d4e_synthetic_v1.jsonl ./tests/fixtures/odds_staging/m3_d4e_synthetic_v1.jsonl
+COPY --chown=node:node tests/fixtures/odds_staging/m3_d4e_synthetic_v1.jsonl.meta.json ./tests/fixtures/odds_staging/m3_d4e_synthetic_v1.jsonl.meta.json
+
+RUN mkdir -p /app/tests/unit && chown -R node:node /app/tests
+USER node
+ENTRYPOINT ["node"]
