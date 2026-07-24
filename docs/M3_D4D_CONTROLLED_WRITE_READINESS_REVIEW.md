@@ -7,7 +7,18 @@
 
 ## 1. Executive Decision
 
-**Decision: `BLOCKED`.**
+**Decision: `CONDITIONAL_READY`.**
+
+## Current REV3 delta
+
+The current uncommitted D4D-B1 implementation now has a named local persistent sandbox,
+V26.8/V26.9 ledger runner, backup/restore, role/grant evidence, and disposable technical runner
+probes. REV3 proved transaction rollback/resume, checksum drift fail-closed before migration SQL,
+and advisory-lock serialization in the same PostgreSQL session. This closes the technical runner
+evidence only; it does not authorize D4E/D4F. The decision remains `BLOCKED` because the local
+work is uncommitted, complete governance has not run, no Draft PR exists, and Production Gate is
+not complete. Before the first PR-head Production Gate succeeds, the sole readiness condition is:
+the latest Draft PR head must pass the complete remote Production Gate.
 
 M3-D4C proved the persistence contract only in a disposable PostgreSQL 15 tmpfs
 environment. It did not identify a long-lived non-production target, apply either

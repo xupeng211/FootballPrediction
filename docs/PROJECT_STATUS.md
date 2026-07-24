@@ -22,9 +22,18 @@ Last updated: 2026-07-23
     odds were read or written. Candidate ID compatibility with `matches.match_id` remains **not proven**, so no FK was added.
   - `#1799` is merged. **M3-D4C** is complete only for the disposable PostgreSQL 15 tmpfs verification;
     no long-lived database was connected or migrated.
-  - **M3-D4D** readiness decision: **`BLOCKED`**. A named non-production persistent target,
-    canonical V26.8→V26.9 migration-runner evidence, least-privilege grants, target backup/restore,
-    and V26.9 NULL-fingerprint inventory are not proven from repository evidence.
+  - **M3-D4D** readiness decision: **`BLOCKED`**. The named non-production persistent target,
+    canonical V26.8→V26.9 migration-runner, verified backup/restore, zero-row inventory, and
+    disposable rollback-only writer/reader role-grant evidence are complete. REV2B additionally
+    proves accepted/quarantine INSERT then ROLLBACK, writer CREATE ROLE/CREATE DATABASE/GRANT
+    denial, and machine audits for role membership, PUBLIC ACLs, and default privileges.
+    Failed migration rollback/resume, checksum drift, advisory-lock concurrency, complete local
+    governance, and the remote Production Gate remain outstanding.
+  - **M3-D4D-B1 REV3** — disposable runner evidence is closed: failed migration DDL/ledger
+    rollback plus same-version resume, checksum-drift fail-closed before SQL, and same-session
+    PostgreSQL advisory-lock concurrency were all verified. The decision remains **`BLOCKED`**
+    until local governance, commit/Draft PR, and remote Production Gate are complete. Pre-PR
+    readiness is **`CONDITIONAL_READY`** pending the latest Draft PR head's complete remote gate.
   - **M3-D4E has not started and is not authorized.** No persistent migration or data write occurred;
     Issue `#1793` remains Open. Next possible task is the separately authorized
     `M3-D4D-B1 — Persistent Sandbox Environment, Migration-Runner, and Recovery Evidence Closure`.
@@ -783,3 +792,12 @@ Last updated: 2026-07-23
 16. Do not start model training, data expansion, raw-write work, scraper/browser
     automation automatically.
 17. Do not start automatically. Recommended next task only after user confirmation.
+# M3-D4D-B1 current state
+
+Local-only persistent sandbox `fp_m3_persistent_sandbox` has sandbox-only V26.8/V26.9
+migration-ledger and empty-table evidence. It is not dev/staging/production; no historical
+odds business rows were written, and D4E/D4F have not started. See
+`docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md`.
+
+REV2B closed the fresh disposable PostgreSQL 15 restore and complete role/grant permission
+evidence. It did not authorize persistent business writes, D4E, or D4F. **D4D remains BLOCKED.**
