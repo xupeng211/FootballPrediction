@@ -55,9 +55,8 @@ default PUBLIC EXECUTE behavior; default table/sequence behavior grants no PUBLI
 has sequence USAGE only, while reader has no sequence write privilege. The final clone inventory
 requires two ledger rows and zero business/probe objects.
 
-This is restore and role/grant evidence only. The D4D decision remains **BLOCKED** pending failed
-migration rollback/resume, checksum drift, advisory-lock concurrency, complete local governance,
-and the remote Production Gate. D4E/D4F remain unstarted and unauthorized.
+This is restore and role/grant evidence only. The completed D4D decision is
+**READY_FOR_D4E_AUTHORIZATION**; D4E still requires a separate explicit authorization.
 
 ## REV3 migration-runner evidence
 
@@ -76,5 +75,19 @@ critical section, and release, while runner B returned lock-busy without migrati
 probes ended with empty business tables, no matches FK, one-or-zero expected probe objects, and
 fully removed containers, networks, volumes, and temporary directories.
 
-Technical runner probes are closed. D4D remains **BLOCKED** pending complete local governance,
-commit/Draft PR, and remote Production Gate; D4E/D4F remain unstarted and unauthorized.
+Technical runner probes are closed. D4D is merged; D4E/D4F remain separately authorized work.
+
+## D4E controlled-write implementation (pending implementation PR Gate)
+
+`make m3-odds-sandbox-d4e-preflight`, `make m3-odds-sandbox-d4e-write`, and
+`make m3-odds-sandbox-d4e-conflict-probe` are fixed-target operator surfaces. They require both
+`ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE=1` and the exact D4E authorization phrase. The code accepts
+only the deterministic nine-row `m3_d4e_synthetic_v1.jsonl` fixture, the exact sandbox project,
+database, service, writer role and internal Docker network; it rejects localhost, production,
+staging, arbitrary tables, arbitrary SQL and non-synthetic samples before a transaction begins.
+
+The adapter uses `pg_try_advisory_xact_lock(731642942)`, five-second lock timeout and a
+30-second statement timeout. It uses the existing persistence plan/repository contract and writer
+permissions only; it never writes `matches` or canonical odds. The disposable probe proves 6/3
+first write, 0/0/9 identical replay and divergent accepted rollback. Persistent use remains
+forbidden until this implementation's Draft PR has passed its complete Production Gate.

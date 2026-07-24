@@ -1,0 +1,9 @@
+{"kind":"accepted","selection":"home","snapshot_type":"opening","decimal_odds":2.10,"source_observed_at":"2099-01-01T10:00:00Z"}
+{"kind":"accepted","selection":"draw","snapshot_type":"opening","decimal_odds":3.40,"source_observed_at":"2099-01-01T10:00:00Z"}
+{"kind":"accepted","selection":"away","snapshot_type":"opening","decimal_odds":4.20,"source_observed_at":"2099-01-01T10:00:00Z"}
+{"kind":"accepted","selection":"home","snapshot_type":"closing","decimal_odds":1.95,"source_observed_at":"2099-01-02T10:00:00Z"}
+{"kind":"accepted","selection":"draw","snapshot_type":"closing","decimal_odds":3.55,"source_observed_at":"2099-01-02T10:00:00Z"}
+{"kind":"accepted","selection":"away","snapshot_type":"closing","decimal_odds":4.60,"source_observed_at":"2099-01-02T10:00:00Z"}
+{"kind":"invalid_odds","selection":"home","snapshot_type":"opening","decimal_odds":1.00,"source_observed_at":"2099-01-01T10:00:00Z"}
+{"kind":"invalid_observed_time","selection":"draw","snapshot_type":"opening","decimal_odds":3.20,"source_observed_at":"not-a-timestamp"}
+{"kind":"ambiguous_identity","selection":"away","snapshot_type":"closing","decimal_odds":4.10,"source_observed_at":"2099-01-02T10:00:00Z"}

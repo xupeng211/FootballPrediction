@@ -3337,6 +3337,18 @@ m3-odds-sandbox-runner-probes: ## Run REV3 disposable rollback, checksum, and ad
 m3-odds-sandbox-stop: ## Stop/remove only sandbox containers and network; retain its named volume.
 	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh stop
 
+m3-odds-sandbox-d4e-preflight: ## Read-only, double-authorized D4E fixed-sandbox identity and fixture preflight.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh preflight
+
+m3-odds-sandbox-d4e-write: ## Double-authorized deterministic synthetic D4E write/replay only.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh write
+
+m3-odds-sandbox-d4e-conflict-probe: ## Double-authorized rollback-only divergent D4E conflict probe.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh conflict
+
+m3-odds-sandbox-d4e-disposable-probe: ## Disposable PostgreSQL 15 D4E first/replay/conflict verification.
+	bash scripts/ops/odds_staging/m3_d4e_disposable_probe.sh
+
 # ============================================
 # 监控命令
 # ============================================
