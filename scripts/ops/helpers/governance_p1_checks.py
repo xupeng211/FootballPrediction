@@ -271,7 +271,6 @@ def check_no_archive_runtime_import(
 
     return errors
 
-
 # ============================================================================
 # P1-2: dangerous-auth path cross-validation
 # ============================================================================
@@ -581,4 +580,3 @@ def check_script_lifecycle_requirement(
         )
 
     return errors
-
