@@ -22,21 +22,17 @@ Last updated: 2026-07-23
     odds were read or written. Candidate ID compatibility with `matches.match_id` remains **not proven**, so no FK was added.
   - `#1799` is merged. **M3-D4C** is complete only for the disposable PostgreSQL 15 tmpfs verification;
     no long-lived database was connected or migrated.
-  - **M3-D4D** readiness decision: **`BLOCKED`**. The named non-production persistent target,
-    canonical V26.8→V26.9 migration-runner, verified backup/restore, zero-row inventory, and
-    disposable rollback-only writer/reader role-grant evidence are complete. REV2B additionally
-    proves accepted/quarantine INSERT then ROLLBACK, writer CREATE ROLE/CREATE DATABASE/GRANT
-    denial, and machine audits for role membership, PUBLIC ACLs, and default privileges.
-    Failed migration rollback/resume, checksum drift, advisory-lock concurrency, complete local
-    governance, and the remote Production Gate remain outstanding.
-  - **M3-D4D-B1 REV3** — disposable runner evidence is closed: failed migration DDL/ledger
-    rollback plus same-version resume, checksum-drift fail-closed before SQL, and same-session
-    PostgreSQL advisory-lock concurrency were all verified. The decision remains **`BLOCKED`**
-    until local governance, commit/Draft PR, and remote Production Gate are complete. Pre-PR
-    readiness is **`CONDITIONAL_READY`** pending the latest Draft PR head's complete remote gate.
-  - **M3-D4E has not started and is not authorized.** No persistent migration or data write occurred;
-    Issue `#1793` remains Open. Next possible task is the separately authorized
-    `M3-D4D-B1 — Persistent Sandbox Environment, Migration-Runner, and Recovery Evidence Closure`.
+  - **M3-D4D-B1** readiness decision: **`READY_FOR_D4E_AUTHORIZATION`**. The named
+    non-production persistent target, canonical V26.8→V26.9 migration runner, verified
+    backup/restore, zero-row inventory, rollback-only writer persistence, reader/writer role
+    boundaries, PUBLIC/default ACL audit, failed-migration rollback/resume, checksum-drift
+    fail-closed, and same-session PostgreSQL advisory-lock concurrency are closed.
+    PR #1801 remains Draft and unmerged. Policy implementation head
+    `e7171da6ac049b0368ed1f5c2171e76a9e447819` passed Production Gate run `30066372663`.
+    The reviewed sandbox-only SQL classification is static only and does not authorize execution.
+  - **M3-D4E has not started and is not authorized.** No persistent migration or historical-odds
+    business write occurred; Issue `#1793` remains Open. D4E requires a separate explicit user
+    authorization phrase.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
@@ -800,4 +796,8 @@ odds business rows were written, and D4E/D4F have not started. See
 `docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md`.
 
 REV2B closed the fresh disposable PostgreSQL 15 restore and complete role/grant permission
-evidence. It did not authorize persistent business writes, D4E, or D4F. **D4D remains BLOCKED.**
+evidence. REV3 closed rollback/resume, checksum drift and advisory-lock concurrency. REV5 added
+the exact reviewed sandbox-only SQL policy entries and negative escape-hatch tests; implementation
+head `e7171da6ac049b0368ed1f5c2171e76a9e447819` passed Production Gate run `30066372663`.
+**D4D is READY_FOR_D4E_AUTHORIZATION only:** it did not authorize persistent business writes,
+D4E, or D4F.
