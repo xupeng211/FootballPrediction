@@ -13,7 +13,7 @@ const { M3D4EPersistentAdapter } = require('./m3_d4e_persistent_adapter');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const action = process.argv[2] || 'preflight';
-if (!['preflight', 'write', 'conflict'].includes(action)) throw new Error('usage: m3_d4e_controlled_write.js {preflight|write|conflict}');
+if (!['preflight', 'write', 'conflict', 'quarantine-conflict'].includes(action)) throw new Error('usage: m3_d4e_controlled_write.js {preflight|write|conflict|quarantine-conflict}');
 
 function counts(client) { return client.query("SELECT (SELECT count(*)::int FROM odds_historical_import_runs) AS runs,(SELECT count(*)::int FROM odds_historical_source_files) AS sources,(SELECT count(*)::int FROM odds_historical_staging_observations) AS accepted,(SELECT count(*)::int FROM odds_historical_quarantine) AS quarantine").then(result => result.rows[0]); }
 function sameCounts(left, right) { return ['runs', 'sources', 'accepted', 'quarantine'].every(key => Number(left[key]) === Number(right[key])); }
@@ -47,6 +47,8 @@ async function main() {
         const repository = new HistoricalOddsStagingPersistenceRepository({ adapter: new M3D4EPersistentAdapter(client), authorizeWrite: request => authorizeD4EWrite(request, process.env) });
         if (action === 'conflict') {
             plan.accepted[0].observation.decimal_odds = 9.99; plan.accepted[0].business_fingerprint = sha256Text('m3-d4e-divergent-accepted');
+        }
+        if (action === 'quarantine-conflict') {
             plan.quarantine[0].source_payload.divergent_probe = true;
         }
         try {
@@ -55,7 +57,7 @@ async function main() {
             console.log(JSON.stringify({ status: 'ok', action, write_result: writeResult, before, after, fixture_hash: result.fixture.content_hash, run_key: plan.run.run_key }));
         } catch (error) {
             const after = await counts(client);
-            if (action === 'conflict' && error.code === 'PERSISTENCE_CONFLICT' && sameCounts(before, after)) {
+            if (['conflict', 'quarantine-conflict'].includes(action) && error.code === 'PERSISTENCE_CONFLICT' && sameCounts(before, after)) {
                 console.log(JSON.stringify({ status: 'conflict_rolled_back', code: error.code, before, after, run_key: plan.run.run_key })); return;
             }
             throw error;

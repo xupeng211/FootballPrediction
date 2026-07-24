@@ -3347,6 +3347,9 @@ m3-odds-sandbox-d4e-write: ## Double-authorized deterministic synthetic D4E writ
 m3-odds-sandbox-d4e-conflict-probe: ## Double-authorized rollback-only divergent D4E conflict probe.
 	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh conflict
 
+m3-odds-sandbox-d4e-quarantine-conflict-probe: ## Double-authorized rollback-only quarantine divergence probe.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh quarantine-conflict
+
 m3-odds-sandbox-d4e-disposable-probe: ## Disposable PostgreSQL 15 D4E first/replay/conflict verification.
 	bash scripts/ops/odds_staging/m3_d4e_disposable_probe.sh
 

@@ -11,7 +11,7 @@ die(){ echo "BLOCKED: $*" >&2; exit 1; }
 [[ -f "$RUNTIME_ENV_FILE" && "$(stat -c '%a' "$RUNTIME_ENV_FILE")" == 600 ]] || die "sandbox runtime secret file unavailable or unsafe"
 [[ "$PROJECT" == fp_m3_persistent_sandbox && "$SERVICE" == m3-persistent-postgres && "$DATABASE" == fp_m3_persistent_sandbox ]] || die "fixed identity mismatch"
 docker network inspect "${PROJECT}_default" >/dev/null || die "sandbox network unavailable"
-action="${1:-preflight}"; [[ "$action" =~ ^(preflight|write|conflict)$ ]] || die "usage: $0 {preflight|write|conflict}"
+action="${1:-preflight}"; [[ "$action" =~ ^(preflight|write|conflict|quarantine-conflict)$ ]] || die "usage: $0 {preflight|write|conflict|quarantine-conflict}"
 code_sha="$(git -C "$ROOT" rev-parse HEAD)"
 docker run --rm --network "${PROJECT}_default" --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
   --env-file "$RUNTIME_ENV_FILE" -e PGHOST="$SERVICE" -e M3_D4E_DATABASE="$DATABASE" -e M3_D4E_PROJECT="$PROJECT" -e M3_D4E_SERVICE="$SERVICE" -e M3_D4E_WRITER=fp_m3_sandbox_writer -e M3_D4E_SAMPLE_KIND=synthetic -e M3_D4E_PRODUCTION=false -e M3_D4E_STAGING=false -e ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE -e M3_D4E_AUTHORIZATION_PHRASE -e M3_D4E_PIPELINE_CODE_SHA="$code_sha" -e ALLOW_DB_WRITE=yes -e FINAL_DB_WRITE_CONFIRMATION=yes -e ALLOW_ODDS_WRITE=yes -e DRY_RUN=false \
