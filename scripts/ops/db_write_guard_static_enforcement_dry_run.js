@@ -71,6 +71,8 @@ const QUERY_PATTERNS = Object.freeze([
 
 const GUARD_REQUIRE_PATTERNS = Object.freeze([
     /require\s*\(\s*['"]\.\/helpers\/db_write_guard['"]\s*\)/,
+    // Nested `scripts/ops/<area>/` operators must import the same guard one level up.
+    /require\s*\(\s*['"]\.\.\/helpers\/db_write_guard['"]\s*\)/,
     /require\s*\(\s*['"]\.\.\/ops\/helpers\/db_write_guard['"]\s*\)/,
     /import\s+[\s\S]*?\s+from\s+['"]\.\/helpers\/db_write_guard(?:\.js)?['"]/,
 ]);

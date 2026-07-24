@@ -55,9 +55,8 @@ default PUBLIC EXECUTE behavior; default table/sequence behavior grants no PUBLI
 has sequence USAGE only, while reader has no sequence write privilege. The final clone inventory
 requires two ledger rows and zero business/probe objects.
 
-This is restore and role/grant evidence only. The D4D decision remains **BLOCKED** pending failed
-migration rollback/resume, checksum drift, advisory-lock concurrency, complete local governance,
-and the remote Production Gate. D4E/D4F remain unstarted and unauthorized.
+This is restore and role/grant evidence only. The completed D4D decision is
+**READY_FOR_D4E_AUTHORIZATION**; D4E still requires a separate explicit authorization.
 
 ## REV3 migration-runner evidence
 
@@ -76,5 +75,38 @@ critical section, and release, while runner B returned lock-busy without migrati
 probes ended with empty business tables, no matches FK, one-or-zero expected probe objects, and
 fully removed containers, networks, volumes, and temporary directories.
 
-Technical runner probes are closed. D4D remains **BLOCKED** pending complete local governance,
-commit/Draft PR, and remote Production Gate; D4E/D4F remain unstarted and unauthorized.
+Technical runner probes are closed. D4D is merged; D4E/D4F remain separately authorized work.
+
+## D4E controlled-write evidence (completed)
+
+The fixed-target operator surfaces are `make m3-odds-sandbox-d4e-preflight`,
+`make m3-odds-sandbox-d4e-write`, `make m3-odds-sandbox-d4e-replay`,
+`make m3-odds-sandbox-d4e-conflict-probe`, and
+`make m3-odds-sandbox-d4e-quarantine-conflict-probe`. They require both
+`ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE=1` and the exact D4E authorization phrase. The code accepts
+only the deterministic nine-row `m3_d4e_synthetic_v1.jsonl` fixture, the exact sandbox project,
+database, service, writer role and internal Docker network; it rejects localhost, production,
+staging, arbitrary tables, arbitrary SQL and non-synthetic samples before a transaction begins.
+
+`preflight` is read-only identity/fixture verification. `write` is first-write-only and fails
+closed unless all four business tables are empty; it must not be rerun against the retained
+1 / 1 / 6 / 3 sandbox state. `replay` resolves the persisted original import
+`pipeline_code_sha`, returns 0 accepted / 0 quarantine / 9 duplicates and has zero table delta.
+The accepted conflict probe permits only an accepted divergence and requires actual adapter scope
+`accepted`; the quarantine conflict probe permits only a quarantine `source_payload` divergence
+and requires actual adapter scope `quarantine`. Both must fully roll back.
+
+The adapter uses `pg_try_advisory_xact_lock(731642942)`, five-second lock timeout and a
+30-second statement timeout. It uses the existing persistence plan/repository contract and writer
+permissions only; it never writes `matches` or canonical odds. The persistent D4E execution used
+the deterministic 1,183-byte fixture (SHA-256
+`1c68d7290a8aa11b14a4f693dc4d36e0606fd8b8c5784f465a11635ae1c3661a`): first write was
+6 accepted / 3 quarantine / 0 duplicate and the final counts are 1 / 1 / 6 / 3.
+
+Stable replay resolves the completed persisted import identity, retaining import pipeline SHA
+`3b6edd8f87e94b60fd6e349082cab98a72c44a72` and run key
+`31aaca7cc6d3df461346801853234f29041be9f739dcabedc4d3da5fb1ae3b04`; the newer executor only
+records its own SHA. Replay returned 0 / 0 / 9 with zero delta. Both accepted and quarantine
+payload divergences returned `PERSISTENCE_CONFLICT` from the adapter with their actual scope,
+rolled back fully, and left all four counts unchanged. The earlier `caec8f38` quarantine attempt
+was not accepted as quarantine-only evidence because its runtime-derived run key differed.
