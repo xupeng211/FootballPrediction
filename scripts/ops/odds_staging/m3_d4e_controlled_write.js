@@ -25,6 +25,7 @@ function assertExactKeys(expected, actual, key, label) {
     if (expectedKeys.size !== expected.length || actualKeys.size !== actual.length || expectedKeys.size !== actualKeys.size || [...expectedKeys].some(value => !actualKeys.has(value))) fail(`${label} key set`);
 }
 
+// eslint-disable-next-line complexity -- each branch is a separate fail-closed persisted-identity field check.
 async function resolvePersistedD4EPlan(client, result) {
     const current = planFor(result); const run = current.run;
     const candidates = await client.query("SELECT * FROM odds_historical_import_runs WHERE status='completed' AND source_type=$1 AND mode=$2 AND pipeline_version=$3 AND manifest_hash=$4 AND candidate_business_hash=$5 AND expected_accepted_count=$6 AND expected_quarantine_count=$7 AND metadata=$8::jsonb", [run.source_type,run.mode,run.pipeline_version,run.manifest_hash,run.candidate_business_hash,run.expected_accepted_count,run.expected_quarantine_count,JSON.stringify(run.metadata)]);
@@ -58,6 +59,7 @@ async function assertIdentity(client) {
     return row;
 }
 
+// eslint-disable-next-line complexity -- action routing keeps each fixed D4E operation explicit and non-generic.
 async function main() {
     const action = process.argv[2] || 'preflight'; if (!ACTIONS.has(action)) throw new Error('usage: m3_d4e_controlled_write.js {preflight|write|replay|accepted-conflict|quarantine-conflict}');
     assertD4EConfig(process.env);
