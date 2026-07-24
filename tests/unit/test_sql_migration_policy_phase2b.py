@@ -6,6 +6,7 @@ from __future__ import annotations
 from pathlib import Path
 import subprocess
 import sys
+from typing import ClassVar
 
 import pytest
 
@@ -32,8 +33,7 @@ class TestScanner:
     def test_seed(self):
         r = _scan(_R / "deploy/docker/init_db.sql")
         assert any(
-            marker in r["classification"]
-            for marker in ("seed", "dml", "needs_policy_review")
+            marker in r["classification"] for marker in ("seed", "dml", "needs_policy_review")
         )
 
     def test_alembic(self):
@@ -99,7 +99,7 @@ class TestChangedFiles:
 
 
 class TestReviewedSandboxPolicy:
-    PATHS = [
+    PATHS: ClassVar[list[str]] = [
         "database/sandbox/m3_odds_staging/bootstrap_roles.sql",
         "database/sandbox/m3_odds_staging/finalize_staging_grants.sql",
     ]
@@ -136,8 +136,12 @@ class TestReviewedSandboxPolicy:
 
     def test_unlisted_operation_fails_closed(self):
         result = {
-            "path": self.PATHS[1], "file_type": "sql_other", "ddl_signals": [],
-            "dml_signals": [], "destructive_signals": [], "migration_api_signals": [],
+            "path": self.PATHS[1],
+            "file_type": "sql_other",
+            "ddl_signals": [],
+            "dml_signals": [],
+            "destructive_signals": [],
+            "migration_api_signals": [],
             "privilege_signals": [{"signal": "CREATE_ROLE", "evidence_type": "executable_context"}],
         }
         assert not _reviewed_sandbox_policy_passes(result, _load_al()[self.PATHS[1]])

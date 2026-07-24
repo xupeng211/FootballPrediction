@@ -28,8 +28,18 @@ REVIEWED_SANDBOX_REQUIRED = (
     "review_note",
 )
 UNCONDITIONALLY_FORBIDDEN_OPERATIONS = {
-    "DROP_DATABASE", "DROP_SCHEMA", "DROP_TABLE", "DROP_ROLE", "TRUNCATE",
-    "INSERT", "UPDATE", "DELETE", "COPY", "GRANT_ALL", "CREATE_EXTENSION", "ALTER_ROLE",
+    "DROP_DATABASE",
+    "DROP_SCHEMA",
+    "DROP_TABLE",
+    "DROP_ROLE",
+    "TRUNCATE",
+    "INSERT",
+    "UPDATE",
+    "DELETE",
+    "COPY",
+    "GRANT_ALL",
+    "CREATE_EXTENSION",
+    "ALTER_ROLE",
 }
 
 DDL = [
@@ -267,7 +277,13 @@ def _validate_entry(e):
 
 def _detected_operation_names(result):
     """Return executable scanner signals; comments never authorize sandbox SQL."""
-    groups = ("ddl_signals", "dml_signals", "privilege_signals", "destructive_signals", "migration_api_signals")
+    groups = (
+        "ddl_signals",
+        "dml_signals",
+        "privilege_signals",
+        "destructive_signals",
+        "migration_api_signals",
+    )
     return {
         signal["signal"]
         for group in groups
