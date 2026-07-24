@@ -3,6 +3,7 @@
 // lifecycle: permanent；D4E fixed-sandbox PostgreSQL persistence port；无任意 SQL 或表名入口。
 
 const crypto = require('node:crypto');
+const { assertDbWriteAllowed } = require('../helpers/db_write_guard');
 const { PersistenceConflictError } = require('../../../src/infrastructure/odds_staging/persistenceRepository');
 const { stableStringify } = require('../../../src/infrastructure/odds_staging/contracts');
 const D4E_LOCK_KEY = 731642942;
@@ -12,6 +13,9 @@ const sameJson = (left, right) => stableStringify(left) === stableStringify(righ
 class M3D4EPersistentAdapter {
     constructor(client, { failAfterSource = false } = {}) { this.client = client; this.failAfterSource = failAfterSource; }
     async runInTransaction(callback) {
+        // SC-002's universal runtime guard is additive; D4E's stricter identity authorizer
+        // runs before this adapter and the wrapper supplies no arbitrary DB target.
+        assertDbWriteAllowed({ script: 'm3_d4e_persistent_adapter.js', tables: ['odds_historical_import_runs', 'odds_historical_source_files', 'odds_historical_staging_observations', 'odds_historical_quarantine'], operations: ['INSERT', 'UPDATE'] });
         await this.client.query('BEGIN');
         try {
             await this.client.query("SET LOCAL lock_timeout = '5s'; SET LOCAL statement_timeout = '30s'");

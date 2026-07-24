@@ -14,5 +14,5 @@ docker network inspect "${PROJECT}_default" >/dev/null || die "sandbox network u
 action="${1:-preflight}"; [[ "$action" =~ ^(preflight|write|conflict)$ ]] || die "usage: $0 {preflight|write|conflict}"
 code_sha="$(git -C "$ROOT" rev-parse HEAD)"
 docker run --rm --network "${PROJECT}_default" --read-only --tmpfs /tmp:rw,noexec,nosuid,size=32m \
-  --env-file "$RUNTIME_ENV_FILE" -e PGHOST="$SERVICE" -e M3_D4E_DATABASE="$DATABASE" -e M3_D4E_PROJECT="$PROJECT" -e M3_D4E_SERVICE="$SERVICE" -e M3_D4E_WRITER=fp_m3_sandbox_writer -e M3_D4E_SAMPLE_KIND=synthetic -e M3_D4E_PRODUCTION=false -e M3_D4E_STAGING=false -e ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE -e M3_D4E_AUTHORIZATION_PHRASE -e M3_D4E_PIPELINE_CODE_SHA="$code_sha" \
+  --env-file "$RUNTIME_ENV_FILE" -e PGHOST="$SERVICE" -e M3_D4E_DATABASE="$DATABASE" -e M3_D4E_PROJECT="$PROJECT" -e M3_D4E_SERVICE="$SERVICE" -e M3_D4E_WRITER=fp_m3_sandbox_writer -e M3_D4E_SAMPLE_KIND=synthetic -e M3_D4E_PRODUCTION=false -e M3_D4E_STAGING=false -e ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE -e M3_D4E_AUTHORIZATION_PHRASE -e M3_D4E_PIPELINE_CODE_SHA="$code_sha" -e ALLOW_DB_WRITE=yes -e FINAL_DB_WRITE_CONFIRMATION=yes -e ALLOW_ODDS_WRITE=yes -e DRY_RUN=false \
   -v "$ROOT:/app:ro" -w /app node:20-alpine node scripts/ops/odds_staging/m3_d4e_controlled_write.js "$action"
