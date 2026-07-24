@@ -804,8 +804,10 @@ D4E, or D4F.
 
 ## M3-D4E current implementation status
 
-The authorized D4E implementation branch provides a fixed local-only writer path for exactly one
-deterministic synthetic nine-row fixture. It is not an authorization to write yet: persistent use
-remains blocked until the implementation Draft PR's latest head has passed Production Gate, a fresh
-pre-write backup/restore is verified, and the sandbox's four business tables are confirmed empty.
-D4F, real historical odds, canonical integration and training remain unstarted and blocked.
+**M3-D4E COMPLETE — deterministic synthetic controlled write verified.** The fixed local-only
+writer created exactly one completed run/source with 6 accepted and 3 quarantine records; stable
+replay returned 0/0/9 with zero delta. Adapter-origin accepted and quarantine conflict scopes were
+both verified as `PERSISTENCE_CONFLICT` with full rollback and zero delta. `canonical_match_id`
+remains NULL for all six accepted records; no matches, canonical odds or training write occurred.
+PR #1802 remains Draft and unmerged. D4F, real historical odds, canonical integration and training
+remain unstarted and blocked.

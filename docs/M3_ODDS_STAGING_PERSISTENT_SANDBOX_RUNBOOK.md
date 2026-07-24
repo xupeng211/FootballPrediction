@@ -77,7 +77,7 @@ fully removed containers, networks, volumes, and temporary directories.
 
 Technical runner probes are closed. D4D is merged; D4E/D4F remain separately authorized work.
 
-## D4E controlled-write implementation (pending implementation PR Gate)
+## D4E controlled-write evidence (completed; PR remains Draft)
 
 `make m3-odds-sandbox-d4e-preflight`, `make m3-odds-sandbox-d4e-write`, and
 `make m3-odds-sandbox-d4e-conflict-probe` are fixed-target operator surfaces. They require both
@@ -88,6 +88,15 @@ staging, arbitrary tables, arbitrary SQL and non-synthetic samples before a tran
 
 The adapter uses `pg_try_advisory_xact_lock(731642942)`, five-second lock timeout and a
 30-second statement timeout. It uses the existing persistence plan/repository contract and writer
-permissions only; it never writes `matches` or canonical odds. The disposable probe proves 6/3
-first write, 0/0/9 identical replay and divergent accepted rollback. Persistent use remains
-forbidden until this implementation's Draft PR has passed its complete Production Gate.
+permissions only; it never writes `matches` or canonical odds. The persistent D4E execution used
+the deterministic 1,183-byte fixture (SHA-256
+`1c68d7290a8aa11b14a4f693dc4d36e0606fd8b8c5784f465a11635ae1c3661a`): first write was
+6 accepted / 3 quarantine / 0 duplicate and the final counts are 1 / 1 / 6 / 3.
+
+Stable replay resolves the completed persisted import identity, retaining import pipeline SHA
+`3b6edd8f87e94b60fd6e349082cab98a72c44a72` and run key
+`31aaca7cc6d3df461346801853234f29041be9f739dcabedc4d3da5fb1ae3b04`; the newer executor only
+records its own SHA. Replay returned 0 / 0 / 9 with zero delta. Both accepted and quarantine
+payload divergences returned `PERSISTENCE_CONFLICT` from the adapter with their actual scope,
+rolled back fully, and left all four counts unchanged. The earlier `caec8f38` quarantine attempt
+was not accepted as quarantine-only evidence because its runtime-derived run key differed.
