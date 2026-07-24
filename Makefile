@@ -3344,8 +3344,11 @@ m3-odds-sandbox-d4e-preflight: ## Read-only, double-authorized D4E fixed-sandbox
 m3-odds-sandbox-d4e-write: ## Double-authorized deterministic synthetic D4E write/replay only.
 	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh write
 
+m3-odds-sandbox-d4e-replay: ## Double-authorized stable replay of the persisted D4E import identity.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh replay
+
 m3-odds-sandbox-d4e-conflict-probe: ## Double-authorized rollback-only divergent D4E conflict probe.
-	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh conflict
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh accepted-conflict
 
 m3-odds-sandbox-d4e-quarantine-conflict-probe: ## Double-authorized rollback-only quarantine divergence probe.
 	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh quarantine-conflict
