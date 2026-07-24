@@ -7,6 +7,7 @@ const test = require('node:test');
 const { buildPersistencePlan } = require('../../src/infrastructure/odds_staging/persistenceContracts');
 const { buildD4ESyntheticResult } = require('../../src/infrastructure/odds_staging/d4eSyntheticFixture');
 const { AUTHORIZATION_PHRASE, D4EAuthorizationError, assertD4EConfig, authorizeD4EWrite } = require('../../scripts/ops/odds_staging/m3_d4e_authorizer');
+const { createScopedPersistenceConflict } = require('../../scripts/ops/odds_staging/m3_d4e_persistent_adapter');
 
 const ROOT = path.resolve(__dirname, '../..');
 const config = Object.freeze({
@@ -37,4 +38,15 @@ test('D4E authorizer rejects every identity and operation escape hatch before tr
         { M3_D4E_DATABASE: 'football_db' }, { M3_D4E_WRITER: 'fp_m3_sandbox_owner' }, { M3_D4E_PRODUCTION: 'true' }, { PGHOST: 'localhost' },
     ]) assert.throws(() => assertD4EConfig({ ...config, ...changed }), D4EAuthorizationError);
     await assert.rejects(authorizeD4EWrite({ tables: ['matches'], operations: ['INSERT'] }, config), D4EAuthorizationError);
+});
+
+test('D4E scoped persistence conflicts carry adapter-origin scope without exposing a raw key', () => {
+    for (const scope of ['import_run', 'source_file', 'accepted', 'quarantine']) {
+        const error = createScopedPersistenceConflict(scope, `${scope}-private-key`, `divergent ${scope} conflict`);
+        assert.equal(error.code, 'PERSISTENCE_CONFLICT');
+        assert.equal(error.conflict_scope, scope);
+        assert.match(error.conflict_key_hash, /^[a-f0-9]{64}$/);
+        assert.notEqual(error.conflict_key_hash, `${scope}-private-key`);
+        assert.equal(error.conflict_reason, `divergent ${scope} conflict`);
+    }
 });

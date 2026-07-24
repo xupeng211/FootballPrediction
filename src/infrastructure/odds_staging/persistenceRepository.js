@@ -85,7 +85,9 @@ class HistoricalOddsStagingPersistenceRepository {
                 const prior = known.get(row.idempotency_key);
                 if (!prior) newAccepted.push(row);
                 else if (prior.business_fingerprint === row.business_fingerprint) duplicateCount += 1;
-                else throw new PersistenceConflictError(`divergent idempotency conflict: ${row.idempotency_key}`);
+                else if (typeof operations.createPersistenceConflict === 'function') {
+                    throw operations.createPersistenceConflict('accepted', row.idempotency_key, 'divergent accepted/idempotency conflict');
+                } else throw new PersistenceConflictError(`divergent idempotency conflict: ${row.idempotency_key}`);
             }
             await operations.createImportRun(plan.run);
             await operations.registerSourceFile(plan.source_file);
