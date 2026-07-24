@@ -3329,6 +3329,7 @@ m3-odds-sandbox-backup: ## Create a custom-format backup outside the repository.
 	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh backup
 
 m3-odds-sandbox-restore-verify: ## Restore the verified backup to a disposable PostgreSQL 15 clone and probe roles.
+	@test -n "$(M3_SANDBOX_RESTORE_BACKUP)" || (echo "M3_SANDBOX_RESTORE_BACKUP=<exact repo-external .dump> is required" >&2; exit 2)
 	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh restore_verify
 
 m3-odds-sandbox-runner-probes: ## Run REV3 disposable rollback, checksum, and advisory-lock probes.
@@ -3336,6 +3337,21 @@ m3-odds-sandbox-runner-probes: ## Run REV3 disposable rollback, checksum, and ad
 
 m3-odds-sandbox-stop: ## Stop/remove only sandbox containers and network; retain its named volume.
 	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh stop
+
+m3-odds-sandbox-d4e-preflight: ## Read-only, double-authorized D4E fixed-sandbox identity and fixture preflight.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh preflight
+
+m3-odds-sandbox-d4e-write: ## Double-authorized deterministic synthetic D4E write/replay only.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh write
+
+m3-odds-sandbox-d4e-conflict-probe: ## Double-authorized rollback-only divergent D4E conflict probe.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh conflict
+
+m3-odds-sandbox-d4e-quarantine-conflict-probe: ## Double-authorized rollback-only quarantine divergence probe.
+	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh quarantine-conflict
+
+m3-odds-sandbox-d4e-disposable-probe: ## Disposable PostgreSQL 15 D4E first/replay/conflict verification.
+	bash scripts/ops/odds_staging/m3_d4e_disposable_probe.sh
 
 # ============================================
 # 监控命令

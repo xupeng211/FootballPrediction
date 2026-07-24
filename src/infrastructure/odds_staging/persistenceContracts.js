@@ -95,18 +95,18 @@ function createImportRunPlan(result, context = {}) {
     });
 }
 
-function mapSourceFile(manifest, runKey) {
+function mapSourceFile(manifest, runKey, rowCount = null, manifestHash = null) {
     return stableCanonicalize({
         import_run_key: requireText(runKey, 'run_key'),
         source_provider: requireText(manifest.source_provider, 'manifest.source_provider'),
         logical_path: manifest.repository_provenance?.path || manifest.raw_path || null,
         content_hash: requireText(manifest.raw_sha256, 'manifest.raw_sha256'),
         hash_algorithm: 'sha256',
-        manifest_hash: null,
+        manifest_hash: manifestHash,
         provider: manifest.source_provider,
         competition: manifest.competition || null,
         season: manifest.season || null,
-        row_count: null,
+        row_count: Number.isInteger(rowCount) ? rowCount : null,
         provenance: stableCanonicalize({
             acquisition_mode: manifest.acquisition_mode || null,
             source_url: manifest.source_url || null,
@@ -157,7 +157,12 @@ function mapQuarantineRecord(record, sourceFileHash) {
 
 function buildPersistencePlan(result, context = {}) {
     const run = createImportRunPlan(result, context);
-    const sourceFile = mapSourceFile(result.normalized_manifest, run.run_key);
+    const sourceFile = mapSourceFile(
+        result.normalized_manifest,
+        run.run_key,
+        Number(result.summary.total_observations ?? result.summary.accepted_count + result.summary.quarantine_count),
+        context.manifest_hash || null
+    );
     const accepted = (result.accepted_observations || []).map(observation =>
         mapAcceptedObservation(observation, sourceFile.content_hash)
     );
