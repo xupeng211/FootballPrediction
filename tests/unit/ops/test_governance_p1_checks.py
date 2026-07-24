@@ -11,8 +11,6 @@ Covers:
 from __future__ import annotations
 
 from contextlib import contextmanager
-import hashlib
-import json
 from pathlib import Path
 import sys
 import tempfile
@@ -24,7 +22,6 @@ sys.path.insert(0, str(ROOT))
 import scripts.ops.helpers.governance_p1_checks as _p1_mod  # noqa: E402
 from scripts.ops.helpers.governance_p1_checks import (  # noqa: E402
     check_dangerous_auth_path_cross_validation,
-    check_fixture_lifecycle_sidecars,
     check_no_archive_runtime_import,
     check_script_lifecycle_requirement,
 )
@@ -477,43 +474,3 @@ class TestScriptLifecycleRequirement:
                 )
                 assert len(errors) == 0, f"Expected 0 errors, got: {errors}"
 
-
-# ============================================================================
-# P1-4: hash-bound lifecycle sidecars for non-commentable JSONL fixtures
-# ============================================================================
-
-
-class TestFixtureLifecycleSidecars:
-    """JSONL fixtures require a lifecycle declaration without mutating fixture bytes."""
-
-    @staticmethod
-    def _sidecar(target: str, digest: str, lifecycle: str = "test-fixture") -> str:
-        return json.dumps({"lifecycle": lifecycle, "target": target, "sha256": digest})
-
-    def test_valid_jsonl_sidecar_passes(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            payload = b'{"synthetic":true}\n'
-            digest = hashlib.sha256(payload).hexdigest()
-            _mkfile(tmpdir, "tests/fixtures/example.jsonl", payload.decode())
-            _mkfile(tmpdir, "tests/fixtures/example.jsonl.meta.json", self._sidecar("example.jsonl", digest))
-            with _temp_root(tmpdir):
-                assert check_fixture_lifecycle_sidecars({"tests/fixtures/example.jsonl"}) == []
-
-    def test_missing_or_invalid_jsonl_sidecar_fails(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            payload = b'{"synthetic":true}\n'
-            _mkfile(tmpdir, "tests/fixtures/example.jsonl", payload.decode())
-            with _temp_root(tmpdir):
-                assert check_fixture_lifecycle_sidecars({"tests/fixtures/example.jsonl"})
-            _mkfile(tmpdir, "tests/fixtures/example.jsonl.meta.json", self._sidecar("wrong.jsonl", "0" * 64, "invalid"))
-            with _temp_root(tmpdir):
-                errors = check_fixture_lifecycle_sidecars({"tests/fixtures/example.jsonl"})
-                assert any("invalid lifecycle" in error for error in errors)
-                assert any("target mismatch" in error for error in errors)
-                assert any("SHA-256 mismatch" in error for error in errors)
-
-    def test_commentable_files_do_not_require_jsonl_sidecars(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            _mkfile(tmpdir, "tests/fixtures/example.js", "// lifecycle: test-fixture\n")
-            with _temp_root(tmpdir):
-                assert check_fixture_lifecycle_sidecars({"tests/fixtures/example.js"}) == []

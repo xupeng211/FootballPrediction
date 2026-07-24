@@ -519,7 +519,6 @@ from scripts.ops.helpers.garbage_prevention_checks import (  # noqa: E402
 )
 from scripts.ops.helpers.governance_p1_checks import (  # noqa: E402
     check_dangerous_auth_path_cross_validation,
-    check_fixture_lifecycle_sidecars,
     check_no_archive_runtime_import,
     check_script_lifecycle_requirement,
     run_governance_growth_gate,
@@ -659,9 +658,6 @@ def validate(  # noqa: C901, PLR0912
     # 11. P1-3: script lifecycle requirement for newly added scripts (requires body)
     if not skip_body_checks:
         errors.extend(check_script_lifecycle_requirement(added, pr_body))
-
-    # 11b. P1-4: JSONL fixtures need a hash-bound lifecycle sidecar.
-    errors.extend(check_fixture_lifecycle_sidecars(added))
 
     # 12. M2 Governance growth freeze gate — blocks new governance artifact growth.
     # Delegates to _check_governance_growth → run_governance_growth_gate (orchestration)

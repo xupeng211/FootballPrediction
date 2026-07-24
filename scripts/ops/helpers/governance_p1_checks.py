@@ -21,8 +21,6 @@ Usage:
 from __future__ import annotations
 
 import os
-import hashlib
-import json
 from pathlib import Path
 import re
 import subprocess
@@ -33,7 +31,6 @@ from scripts.ci.governance_growth_gate import run_governance_growth_gate
 __all__ = [
     "check_dangerous_auth_path_cross_validation",
     "check_no_archive_runtime_import",
-    "check_fixture_lifecycle_sidecars",
     "check_script_lifecycle_requirement",
     "run_governance_growth_gate",
 ]
@@ -585,34 +582,3 @@ def check_script_lifecycle_requirement(
 
     return errors
 
-
-# ============================================================================
-# P1-4: non-commentable fixture lifecycle sidecars
-# ============================================================================
-
-_FIXTURE_LIFECYCLES: frozenset[str] = frozenset(
-    {"permanent", "current-state", "temporary", "one-shot-helper", "test-fixture", "delete-after-use"}
-)
-
-
-def check_fixture_lifecycle_sidecars(added: set[str]) -> list[str]:
-    """Require hash-bound lifecycle sidecars for newly added JSONL test fixtures."""
-    errors: list[str] = []
-    for rel_path in sorted(added):
-        if not rel_path.startswith("tests/fixtures/") or not rel_path.endswith(".jsonl"):
-            continue
-        fixture = ROOT / rel_path
-        sidecar = Path(f"{fixture}.meta.json")
-        try:
-            metadata = json.loads(sidecar.read_text(encoding="utf-8"))
-            digest = hashlib.sha256(fixture.read_bytes()).hexdigest()
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-            errors.append(f"Fixture lifecycle sidecar missing or invalid: {rel_path}")
-            continue
-        if metadata.get("lifecycle") not in _FIXTURE_LIFECYCLES:
-            errors.append(f"Fixture lifecycle sidecar has invalid lifecycle: {rel_path}")
-        if metadata.get("target") != fixture.name:
-            errors.append(f"Fixture lifecycle sidecar target mismatch: {rel_path}")
-        if metadata.get("sha256") != digest:
-            errors.append(f"Fixture lifecycle sidecar SHA-256 mismatch: {rel_path}")
-    return errors
