@@ -23,8 +23,9 @@ async function assertIdentity(client) {
     const identity = await client.query('SELECT current_database() AS database,current_user, current_schema() AS schema, current_setting(\'server_version_num\') AS version');
     const row = identity.rows[0];
     if (row.database !== DATABASE || row.current_user !== WRITER || row.schema !== 'public' || !String(row.version).startsWith('15')) throw new Error('D4E database identity preflight failed');
-    const ledger = await client.query("SELECT count(*)::int AS count FROM odds_staging_schema_migrations WHERE version IN ('V26.8','V26.9')");
-    if (ledger.rows[0].count !== 2) throw new Error('D4E migration ledger preflight failed');
+    // The migration ledger is intentionally owner/migrator-only. Its two-row/checksum
+    // verification is performed by the fixed sandbox status/plan commands before this
+    // writer process starts; granting writer ledger SELECT would widen its contract.
     const matchesFk = await client.query("SELECT count(*)::int AS count FROM pg_constraint WHERE conrelid='odds_historical_staging_observations'::regclass AND contype='f' AND confrelid=to_regclass('public.matches')");
     if (matchesFk.rows[0].count !== 0) throw new Error('D4E matches FK preflight failed');
     return row;
