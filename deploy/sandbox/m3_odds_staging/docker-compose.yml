@@ -1,0 +1,54 @@
+# lifecycle: permanent
+# Dedicated local M3-D4D-B1 sandbox. It has no host port and never reads project .env.
+services:
+  m3-persistent-postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ${M3_SANDBOX_DATABASE:?external sandbox env required}
+      POSTGRES_USER: ${M3_SANDBOX_OWNER_USER:?external sandbox env required}
+      POSTGRES_PASSWORD: ${M3_SANDBOX_OWNER_PASSWORD:?external sandbox env required}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+    volumes:
+      - m3_persistent_pgdata:/var/lib/postgresql/data
+    labels:
+      com.footballprediction.scope: m3-d4d-b1
+      com.footballprediction.environment: persistent-sandbox
+      com.footballprediction.production: "false"
+
+  m3-persistent-operator:
+    image: postgres:15-alpine
+    profiles: ["operator"]
+    environment:
+      PGHOST: m3-persistent-postgres
+      PGPORT: "5432"
+      PGDATABASE: ${M3_SANDBOX_DATABASE:?external sandbox env required}
+      PGPASSFILE: /run/m3-sandbox-secrets/pgpass
+    env_file:
+      - ${M3_SANDBOX_RUNTIME_ENV_FILE:?external sandbox env required}
+    volumes:
+      - ${M3_SANDBOX_SECRET_DIR:?external sandbox env required}:/run/m3-sandbox-secrets:ro
+      - ${M3_SANDBOX_BACKUP_DIR:?external sandbox env required}:/backups
+      - ../../../database/migrations:/migrations:ro
+      - ../../../database/sandbox/m3_odds_staging:/sandbox-bootstrap:ro
+    depends_on:
+      m3-persistent-postgres:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-lc"]
+    command: ["sleep infinity"]
+    labels:
+      com.footballprediction.scope: m3-d4d-b1
+      com.footballprediction.environment: persistent-sandbox
+      com.footballprediction.production: "false"
+
+volumes:
+  m3_persistent_pgdata:
+    name: fp_m3_persistent_sandbox_m3_persistent_pgdata
+    labels:
+      com.footballprediction.scope: m3-d4d-b1
+      com.footballprediction.environment: persistent-sandbox
+      com.footballprediction.production: "false"

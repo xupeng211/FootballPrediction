@@ -7,18 +7,32 @@
 
 ## 1. Executive Decision
 
-**Decision: `BLOCKED`.**
+**Decision: `READY_FOR_D4E_AUTHORIZATION`.**
 
-M3-D4C proved the persistence contract only in a disposable PostgreSQL 15 tmpfs
-environment. It did not identify a long-lived non-production target, apply either
-migration through the repository's long-lived deployment surface, prove target
-roles/grants, or prove target backup/restore. Therefore D4E must not be authorized
-until the blocking evidence below is closed.
+## Current REV3 delta
+
+The committed D4D-B1 implementation has a named local persistent sandbox, V26.8/V26.9 ledger
+runner, backup/restore, role/grant evidence, reviewed sandbox-only SQL policy, and disposable
+technical runner probes. PR #1801 is Draft and unmerged. Its policy implementation head
+`e7171da6ac049b0368ed1f5c2171e76a9e447819` passed Production Gate run `30066372663`, including
+Gatekeeper, AI Workflow Gate, Python UTF-8/AST, L3 classification, and Docker Build Validation.
+The successful head includes failed-migration rollback/resume, checksum drift fail-closed before
+migration SQL, and same-session PostgreSQL advisory-lock serialization evidence. The two new
+sandbox SQL files use exact `reviewed_sandbox_sql` entries; this is static policy only and does
+not authorize execution.
+
+This is readiness for a future authorization only. D4E has not been authorized or started, D4F
+has not started, no persistent historical-odds business row has been written, and PR #1801 remains
+Draft and unmerged.
+
+M3-D4C alone proved the persistence contract only in a disposable PostgreSQL 15 tmpfs
+environment. D4D-B1 subsequently closed the named persistent sandbox, migration, role/grant,
+backup/restore, and runner evidence listed below; D4E still requires its own explicit write
+authorization.
 
 This is not a finding against the default-no-write contract. The contract remains
-fail-closed in `src/infrastructure/odds_staging/persistenceRepository.js`; the
-blockers concern the separately authorized persistent environment that does not yet
-have repository evidence.
+fail-closed in `src/infrastructure/odds_staging/persistenceRepository.js`; a future D4E write
+remains separately authorized and bounded.
 
 ## 2. Scope and Non-Goals
 
@@ -229,45 +243,29 @@ D4E may begin only when all of the following are explicitly satisfied:
 
 | Domain | Status | Evidence | Blocks D4E |
 | --- | --- | --- | --- |
-| Target environment | not proven | Compose files only; no named sandbox/owner proof | yes |
-| Migration ordering | not verified | `Makefile:3284-3310` blocks execution; V26.8/V26.9 absent from static plan | yes |
-| Role/grant | design only | dev POC and pending staging documentation | yes |
-| Backup | missing | static backup references, no target restore evidence | yes |
-| Rollback | partial | D4C transaction rollback only; no persistent operator runbook | yes |
-| Fingerprint policy | unresolved | V26.9 nullable; target row inventory not found | yes |
+| Target environment | verified | named isolated local persistent sandbox and disposable PostgreSQL 15 probes | no |
+| Migration ordering | verified | V26.8 -> V26.9 ledger, checksum, rollback/resume and advisory-lock probes | no |
+| Role/grant | verified | writer/reader denial, membership, PUBLIC/default ACL and rollback-only persistence probes | no |
+| Backup | verified | SHA-256 preflight and real disposable PostgreSQL 15 restore | no |
+| Rollback | verified | migration DDL/ledger rollback plus same-version resume and no-op rerun | no |
+| Fingerprint policy | verified | empty-table inventory, NULL fingerprint = 0, no `matches` FK | no |
 | Candidate identity | bounded | NULL canonical ID/no FK in D4B contract | no for staging-only, yes for canonical integration |
-| Audit/observability | partial | immutable run contract exists; target monitoring/owner not proven | yes |
+| Audit/observability | verified | ledger, inventory, role/ACL and runner probe evidence captured in the runbook | no |
 | Sample cap | designed | Section 11 | no, once target gates pass |
 | Explicit authorization | absent | this review is not D4E authorization | yes |
 
 ## 14. Blocking Conditions
 
-1. **Persistent sandbox evidence closure (P0):** identify a named non-production,
-   non-staging target, its owner, isolation boundary, database/schema allowlist, and
-   backup/restore owner. Acceptance: an independently reviewed target record and
-   backup/restore proof under new authorization.
-2. **Migration deployment evidence closure (P0):** identify the canonical runner and
-   prove V26.8 -> V26.9 ordering, version ledger/checksum/lock behavior, and
-   forward-fix policy for that target. Acceptance: an authorized preflight plan;
-   no migration execution is authorized by this document.
-3. **Least-privilege grant closure (P0):** define and validate a migration role and
-   table-scoped writer/reader grants matching Section 8. Acceptance: authorized
-   role/grant inventory with no broad runtime privileges.
-4. **Fingerprint inventory closure (P1):** determine whether the named target has
-   V26.8 tables or legacy NULL fingerprints. Acceptance: authorized read-only
-   inventory and an approved strategy before a D4E write.
-5. **Run-key recovery drill design (P1):** approve scoped abort, rollback, resume,
-   and post-write reconciliation for the one-run envelope. Acceptance: operator
-   checklist with a named recovery owner.
+The D4D-B1 sandbox, restore, role/grant, and runner evidence blockers are closed. The remaining
+condition is an explicit, future D4E authorization for its separately bounded write envelope;
+this review does not grant that authorization.
 
 ## 15. Exact Next Action
 
-**M3-D4D-B1 — Persistent Sandbox Environment, Migration-Runner, and Recovery Evidence Closure.**
+**M3-D4E — Small Controlled Persistent Sandbox Write Authorization.**
 
-This is the smallest blocker-closure task: it must remain planning/preflight until a
-new user authorization names the target and permits only the necessary read-only
-inventory and recovery evidence collection. It must not perform a migration or write
-data automatically.
+It requires a new explicit user authorization phrase. It must not start automatically,
+and no D4E migration or business write is authorized by this review.
 
 Do not start automatically.
 Recommended next task only after user confirmation.

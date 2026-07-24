@@ -62,7 +62,8 @@
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
         data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
-        ci-local ci-local-pr pr-gate-local pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check
+        ci-local ci-local-pr pr-gate-local pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
+        m3-odds-sandbox-bootstrap m3-odds-sandbox-plan m3-odds-sandbox-migrate m3-odds-sandbox-status m3-odds-sandbox-verify m3-odds-sandbox-backup m3-odds-sandbox-restore-verify m3-odds-sandbox-runner-probes m3-odds-sandbox-stop
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -3307,6 +3308,34 @@ data-schema-migrate: ## Blocked DB schema migration gate. Execution is not wired
 	@echo "Phase 4.9 safety gate reached. Migration execution is not wired in this phase."
 	@echo "No CREATE/ALTER/INSERT/UPDATE/DELETE was executed."
 	@exit 1
+
+# M3-D4D-B1: exact local sandbox only. These never target the development Compose DB.
+m3-odds-sandbox-bootstrap: ## Bootstrap the isolated M3 persistent sandbox; does not apply V26.8/V26.9.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh bootstrap
+
+m3-odds-sandbox-plan: ## Print the fixed V26.8/V26.9 sandbox migration plan.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh plan
+
+m3-odds-sandbox-migrate: ## Apply only V26.8/V26.9 to the exact authorized sandbox.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh migrate
+
+m3-odds-sandbox-status: ## Inspect sandbox ledger and business-table row counts.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh status
+
+m3-odds-sandbox-verify: ## Verify sandbox grants, schema inventory, and zero business rows.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh verify
+
+m3-odds-sandbox-backup: ## Create a custom-format backup outside the repository.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh backup
+
+m3-odds-sandbox-restore-verify: ## Restore the verified backup to a disposable PostgreSQL 15 clone and probe roles.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh restore_verify
+
+m3-odds-sandbox-runner-probes: ## Run REV3 disposable rollback, checksum, and advisory-lock probes.
+	bash scripts/ops/odds_staging/m3_runner_probes.sh
+
+m3-odds-sandbox-stop: ## Stop/remove only sandbox containers and network; retain its named volume.
+	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh stop
 
 # ============================================
 # 监控命令
