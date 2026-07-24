@@ -382,6 +382,7 @@ class TestScriptLifecycleRequirement:
                     {"scripts/ops/valid_script.py"}, ""
                 )
                 assert len(errors) == 0, f"Expected 0 errors, got: {errors}"
+
     def test_new_script_with_owner_header_passes(self):
         """New script with Owner: in file header passes."""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -395,6 +396,7 @@ class TestScriptLifecycleRequirement:
                     {"scripts/devops/check_x.py"}, ""
                 )
                 assert len(errors) == 0, f"Expected 0 errors, got: {errors}"
+
     def test_new_script_with_pr_body_script_lifecycle_passes(self):
         """New script without file header but PR has Script Lifecycle section passes."""
         with tempfile.TemporaryDirectory() as tmpdir:
