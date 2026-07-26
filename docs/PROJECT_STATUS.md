@@ -62,6 +62,35 @@ It does not authorize inventory execution, implementation, migration,
 canonical linkage, matches/canonical-odds write, staging write, real historical
 import, training, backtest or prediction.
 
+D4F readiness outcome-gate status:
+
+- blocker resolved:
+  `D4F_AUTHORIZATION_BOUNDARY_UNDEFINED`
+  → `D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE`;
+- runtime behavior changed: no;
+- database or ingestion target evaluated: no;
+- D4F-A authorization changed: no;
+- D4F-A execution changed: no;
+- target-state delta:
+  governance boundary only;
+- `clean_candidate`: 0;
+- `rejected_mapping`: 0;
+- `superseded_mapping`: 0;
+- `eligible_for_re_acceptance_review`: 0;
+- `needs_new_evidence`: 0.
+
+The following remain blocked or unproven:
+
+- canonical schema freshness and match-ID compatibility;
+- mappings and read-only grants;
+- real source location, hashes and provenance;
+- real import;
+- training quality and leakage controls.
+
+No additional readiness/planning PR may start automatically after the
+post-merge outcome-gate correction. If an exact bounded D4F-A authorization
+package cannot be named, the process stops at the Ingestion Architecture Decision Gate.
+
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.

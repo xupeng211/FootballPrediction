@@ -14,6 +14,120 @@
 
 This narrowly permits the user to consider a separately authorized, bounded SELECT-only inventory of one explicitly named non-production canonical target. It does not authorize executing that inventory, implementation, migration, linkage write, `canonical_match_id` write, matches/canonical-odds write, real import, training, backtest, or prediction.
 
+## Outcome-gate declaration
+
+### Blocker transition
+
+This readiness review resolves exactly one governance blocker:
+
+```text
+D4F_AUTHORIZATION_BOUNDARY_UNDEFINED
+->
+D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
+```
+
+Before this review, D4F was not decomposed into independently authorized read,
+offline-contract, controlled-persistence, real-data dry-run and bounded
+real-import phases. There was no bounded authorization package that a user
+could safely approve for a SELECT-only canonical identity inventory.
+
+After this review, D4F-A through D4F-E are explicitly separated. The minimum
+D4F-A authorization inputs, prohibited operations and stop conditions are
+documented and reviewable.
+
+This transition does not authorize or execute D4F-A.
+
+### Target-state delta
+
+| Target | Before | After | Delta |
+| --- | --- | --- | --- |
+| D4F authorization boundary | Undefined and monolithic | Phase-separated and reviewable | Governance-only positive transition |
+| D4F-A authorization | Not granted | Not granted | None |
+| D4F-A execution | Not started | Not started | None |
+| Canonical database target | Not inspected | Not inspected | None |
+| Candidate-to-canonical overlap | Not measured | Not measured | None |
+| Runtime ingestion targets | Not evaluated | Not evaluated | None |
+
+No live ingestion target was read or evaluated. Therefore the target-state
+classification counts for this review are:
+
+```text
+clean_candidate = 0
+rejected_mapping = 0
+superseded_mapping = 0
+eligible_for_re_acceptance_review = 0
+needs_new_evidence = 0
+```
+
+The readiness matrix's `not_proven` domains describe missing evidence and
+governance blockers. They are not assertions that evaluated ingestion targets
+were assigned the `needs_new_evidence` target state.
+
+### Blockers not resolved
+
+The following remain unresolved:
+
+* canonical schema freshness;
+* `matches.match_id` compatibility and value overlap;
+* team, competition, season and kickoff/timezone mappings;
+* exact non-production target and read-only grants;
+* real source location, immutable hashes and provenance;
+* real import envelope;
+* training quality and leakage controls.
+
+### Why this governance-only change is worth merging
+
+No runtime behavior or business-data target changed.
+
+The change is still material because it replaces an unsafe monolithic D4F
+concept with independently authorized, fail-closed phases and defines the only
+next action that may be considered: a separately approved SELECT-only
+inventory.
+
+It prevents documentation review from being misread as database authorization,
+canonical-write authorization, real-import readiness or training readiness.
+
+### No-progress stop condition
+
+This hotfix closes the outcome-gate declaration gap in PR #1804. It is not a
+new D4F readiness phase.
+
+No additional D4F readiness, planning or governance-only PR may be opened
+automatically after this correction.
+
+The process must stop without executing D4F-A when any of the following cannot
+be named and approved:
+
+* exact non-production target;
+* exact host and database;
+* exact read-only role;
+* allowed objects, columns and aggregate queries;
+* transaction-read-only enforcement;
+* statement timeout;
+* maximum result/output boundary;
+* explicit prohibition of raw payload, COPY, temporary objects and writes;
+* explicit prohibition of Docker or service startup.
+
+In that case the result is:
+
+```text
+D4F_READINESS_NO_PROGRESS_STOP
+```
+
+and the next action is an Ingestion Architecture Decision Gate, not another
+planning/review PR.
+
+If a separately authorized D4F-A is later executed but cannot establish fresh
+live schema, identity coverage or meaningful evidence beyond the existing
+static review, it must report:
+
+```text
+NO_MEANINGFUL_TARGET_STATE_DELTA
+```
+
+and stop at the Ingestion Architecture Decision Gate before D4F-B, D4F-C,
+real-data import or training.
+
 ## 2. Scope and non-goals
 
 Only Git-tracked source, SQL, tests, ordinary docs, Git metadata and Issue #1793 metadata were read. No .env, credential, runtime secret, external source payload, DB, Redis, Docker/Compose, migration, service test, or local Gatekeeper was used. No external historical-data acquisition, scraper execution, browser/proxy access, or source-payload network fetch occurred. GitHub Issue/PR metadata reads are excluded from that source-acquisition statement. Historical report counts are historical evidence, not current live truth.
