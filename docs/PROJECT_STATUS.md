@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-07-25
+Last updated: 2026-07-26
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 
@@ -51,14 +51,16 @@ Last updated: 2026-07-25
     retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
     or modify that sandbox. D4F remains unauthorized.
 
-M3-D4F readiness review is in progress through a documentation-only PR.
+M3-D4F readiness decision:
+**`READY_FOR_D4F_READ_ONLY_INVENTORY_AUTHORIZATION`**.
 
-D4E business proof and P1 hardening remain complete.
-No database, real historical source payload, canonical linkage, matches seed,
-canonical odds write or training action is authorized by the D4F readiness review.
+Readiness documentation PR: #1804.
+The accepted documentation boundary permits only future user consideration of a
+separately authorized SELECT-only canonical identity inventory.
 
-The readiness review will decide whether the next permissible action is a
-separately authorized SELECT-only canonical inventory.
+It does not authorize inventory execution, implementation, migration,
+canonical linkage, matches/canonical-odds write, staging write, real historical
+import, training, backtest or prediction.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 

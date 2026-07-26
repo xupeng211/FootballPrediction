@@ -16,7 +16,7 @@ This narrowly permits the user to consider a separately authorized, bounded SELE
 
 ## 2. Scope and non-goals
 
-Only Git-tracked source, SQL, tests, ordinary docs, Git metadata and Issue #1793 metadata were read. No .env, credential, runtime secret, external source payload, DB, Redis, Docker/Compose, browser, proxy, network fetch, migration, service test, or local Gatekeeper was used. Historical report counts are historical evidence, not current live truth.
+Only Git-tracked source, SQL, tests, ordinary docs, Git metadata and Issue #1793 metadata were read. No .env, credential, runtime secret, external source payload, DB, Redis, Docker/Compose, migration, service test, or local Gatekeeper was used. No external historical-data acquisition, scraper execution, browser/proxy access, or source-payload network fetch occurred. GitHub Issue/PR metadata reads are excluded from that source-acquisition statement. Historical report counts are historical evidence, not current live truth.
 
 ## 3. Evidence reviewed
 
