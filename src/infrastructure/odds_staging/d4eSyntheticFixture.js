@@ -10,18 +10,31 @@ const { validateObservation } = require('./validators');
 
 const FIXTURE_RELATIVE_PATH = 'tests/fixtures/odds_staging/m3_d4e_synthetic_v1.jsonl';
 const FIXTURE_VERSION = 'm3-d4e-synthetic-v1';
+const FIXTURE_SHA256 = '1c68d7290a8aa11b14a4f693dc4d36e0606fd8b8c5784f465a11635ae1c3661a';
 const SOURCE_PROVIDER = 'm3-d4e-synthetic';
 const CANDIDATE_MATCH_ID = 'm3-d4e-local-candidate-001';
 
 function sha256(buffer) { return crypto.createHash('sha256').update(buffer).digest('hex'); }
 
+function validateFixtureLifecycle(absolutePath, raw) {
+    const metadataPath = `${absolutePath}.meta.json`;
+    let metadata;
+    try { metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8')); } catch { throw new Error('D4E fixture lifecycle sidecar is required'); }
+    const contentHash = sha256(raw);
+    if (metadata.lifecycle !== 'test-fixture' || metadata.target !== path.basename(absolutePath) || metadata.sha256 !== contentHash || contentHash !== FIXTURE_SHA256) {
+        throw new Error('D4E fixture lifecycle sidecar mismatch');
+    }
+    return metadata;
+}
+
 function readFixture(repositoryRoot) {
     const absolutePath = path.join(repositoryRoot, FIXTURE_RELATIVE_PATH);
     const raw = fs.readFileSync(absolutePath);
+    const lifecycle = validateFixtureLifecycle(absolutePath, raw);
     const lines = raw.toString('utf8').trim().split('\n');
     const rows = lines.map((line, index) => ({ ...JSON.parse(line), row_number: index + 1 }));
     if (rows.length !== 9) throw new Error('D4E fixture must contain exactly nine rows');
-    return { absolutePath, rows, content_hash: sha256(raw), size: raw.length };
+    return { absolutePath, rows, content_hash: sha256(raw), size: raw.length, lifecycle };
 }
 
 function toObservation(row, sourceHash) {
@@ -77,4 +90,4 @@ function buildD4ESyntheticResult(repositoryRoot) {
     };
 }
 
-module.exports = { CANDIDATE_MATCH_ID, FIXTURE_RELATIVE_PATH, FIXTURE_VERSION, SOURCE_PROVIDER, buildD4ESyntheticResult, readFixture };
+module.exports = { CANDIDATE_MATCH_ID, FIXTURE_RELATIVE_PATH, FIXTURE_SHA256, FIXTURE_VERSION, SOURCE_PROVIDER, buildD4ESyntheticResult, readFixture, validateFixtureLifecycle };

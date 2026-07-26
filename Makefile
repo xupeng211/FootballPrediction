@@ -3338,6 +3338,10 @@ m3-odds-sandbox-runner-probes: ## Run REV3 disposable rollback, checksum, and ad
 m3-odds-sandbox-stop: ## Stop/remove only sandbox containers and network; retain its named volume.
 	bash scripts/ops/odds_staging/m3_persistent_sandbox.sh stop
 
+.PHONY: m3-odds-sandbox-d4e-image
+m3-odds-sandbox-d4e-image: ## Build the deterministic D4E operator image with production npm dependencies.
+	docker build -f docker/odds-staging/Dockerfile.m3-d4e-operator -t footballprediction-m3-d4e-operator:$$(git rev-parse --short HEAD) .
+
 m3-odds-sandbox-d4e-preflight: ## Read-only, double-authorized D4E fixed-sandbox identity and fixture preflight.
 	bash scripts/ops/odds_staging/m3_d4e_sandbox.sh preflight
 

@@ -2,10 +2,12 @@
 
 // lifecycle: permanent；D4E 固定合成样本与双重授权的纯行为测试。
 const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const test = require('node:test');
 const { buildPersistencePlan } = require('../../src/infrastructure/odds_staging/persistenceContracts');
-const { buildD4ESyntheticResult } = require('../../src/infrastructure/odds_staging/d4eSyntheticFixture');
+const { buildD4ESyntheticResult, FIXTURE_SHA256, validateFixtureLifecycle } = require('../../src/infrastructure/odds_staging/d4eSyntheticFixture');
 const { AUTHORIZATION_PHRASE, D4EAuthorizationError, assertD4EConfig, authorizeD4EWrite } = require('../../scripts/ops/odds_staging/m3_d4e_authorizer');
 const { createScopedPersistenceConflict } = require('../../scripts/ops/odds_staging/m3_d4e_persistent_adapter');
 
@@ -13,12 +15,13 @@ const ROOT = path.resolve(__dirname, '../..');
 const config = Object.freeze({
     ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE: '1', M3_D4E_AUTHORIZATION_PHRASE: AUTHORIZATION_PHRASE,
     M3_D4E_SAMPLE_KIND: 'synthetic', M3_D4E_DATABASE: 'fp_m3_persistent_sandbox', M3_D4E_PROJECT: 'fp_m3_persistent_sandbox',
-    M3_D4E_SERVICE: 'm3-persistent-postgres', M3_D4E_WRITER: 'fp_m3_sandbox_writer', M3_D4E_PRODUCTION: 'false', M3_D4E_STAGING: 'false', PGHOST: 'm3-persistent-postgres',
+    M3_D4E_SERVICE: 'm3-persistent-postgres', M3_D4E_WRITER: 'fp_m3_sandbox_writer', M3_D4E_PRODUCTION: 'false', M3_D4E_STAGING: 'false', PGHOST: 'm3-persistent-postgres', PGDATABASE: 'fp_m3_persistent_sandbox', PGUSER: 'fp_m3_sandbox_writer', PGPORT: '5432', DB_HOST: 'm3-persistent-postgres',
 });
 
 test('D4E fixture is deterministic and covers 6 accepted plus 3 natural quarantines', () => {
     const one = buildD4ESyntheticResult(ROOT); const two = buildD4ESyntheticResult(ROOT);
     assert.equal(one.fixture.rows.length, 9); assert.equal(one.fixture.content_hash, two.fixture.content_hash);
+    assert.equal(one.fixture.content_hash, FIXTURE_SHA256); assert.equal(one.fixture.size, 1183); assert.equal(one.fixture.lifecycle.lifecycle, 'test-fixture');
     assert.equal(one.accepted_observations.length, 6); assert.equal(one.quarantine.length, 3);
     assert.deepEqual(one.accepted_observations.map(row => `${row.snapshot_type}:${row.selection}`).sort(), ['closing:away','closing:draw','closing:home','opening:away','opening:draw','opening:home']);
     assert.ok(one.accepted_observations.every(row => row.decimal_odds > 1 && row.match_link.matched_id === 'm3-d4e-local-candidate-001'));
@@ -35,9 +38,26 @@ test('D4E authorizer rejects every identity and operation escape hatch before tr
     await assert.doesNotReject(authorizeD4EWrite({ tables: ['odds_historical_import_runs','odds_historical_source_files','odds_historical_staging_observations','odds_historical_quarantine'], operations: ['INSERT','UPDATE'] }, config));
     for (const changed of [
         { ALLOW_M3_D4E_PERSISTENT_SANDBOX_WRITE: undefined }, { M3_D4E_AUTHORIZATION_PHRASE: 'wrong' }, { M3_D4E_SAMPLE_KIND: 'real' },
-        { M3_D4E_DATABASE: 'football_db' }, { M3_D4E_WRITER: 'fp_m3_sandbox_owner' }, { M3_D4E_PRODUCTION: 'true' }, { PGHOST: 'localhost' },
+        { M3_D4E_DATABASE: 'football_db' }, { M3_D4E_WRITER: 'fp_m3_sandbox_owner' }, { M3_D4E_PRODUCTION: 'true' },
+        { PGHOST: 'localhost' }, { PGHOST: 'host.docker.internal' }, { PGHOST: 'arbitrary.internal' }, { PGHOST: '10.0.0.20' }, { PGHOST: undefined },
+        { PGDATABASE: 'football_db' }, { PGUSER: 'fp_m3_sandbox_owner' }, { PGPORT: '5433' }, { DATABASE_URL: 'postgres://escape' }, { PGHOSTADDR: '10.0.0.20' }, { PGSERVICE: 'escape' }, { PGSERVICEFILE: '/tmp/escape' }, { DB_HOST: 'other-postgres' },
     ]) assert.throws(() => assertD4EConfig({ ...config, ...changed }), D4EAuthorizationError);
     await assert.rejects(authorizeD4EWrite({ tables: ['matches'], operations: ['INSERT'] }, config), D4EAuthorizationError);
+});
+
+test('D4E JSONL lifecycle sidecar rejects missing, wrong target, hash, and lifecycle values', () => {
+    const temporary = fs.mkdtempSync(path.join(os.tmpdir(), 'd4e-fixture-lifecycle-'));
+    const fixture = path.join(temporary, 'fixture.jsonl'); const raw = Buffer.from('{"fixture":true}\n');
+    fs.writeFileSync(fixture, raw);
+    assert.throws(() => validateFixtureLifecycle(fixture, raw), /sidecar is required/);
+    const writeMetadata = metadata => fs.writeFileSync(`${fixture}.meta.json`, JSON.stringify(metadata));
+    writeMetadata({ lifecycle: 'test-fixture', target: 'wrong.jsonl', sha256: FIXTURE_SHA256 });
+    assert.throws(() => validateFixtureLifecycle(fixture, raw), /sidecar mismatch/);
+    writeMetadata({ lifecycle: 'test-fixture', target: 'fixture.jsonl', sha256: '0'.repeat(64) });
+    assert.throws(() => validateFixtureLifecycle(fixture, raw), /sidecar mismatch/);
+    writeMetadata({ lifecycle: 'temporary', target: 'fixture.jsonl', sha256: FIXTURE_SHA256 });
+    assert.throws(() => validateFixtureLifecycle(fixture, raw), /sidecar mismatch/);
+    fs.rmSync(temporary, { recursive: true, force: true });
 });
 
 test('D4E scoped persistence conflicts carry adapter-origin scope without exposing a raw key', () => {
@@ -49,4 +69,10 @@ test('D4E scoped persistence conflicts carry adapter-origin scope without exposi
         assert.notEqual(error.conflict_key_hash, `${scope}-private-key`);
         assert.equal(error.conflict_reason, `divergent ${scope} conflict`);
     }
+});
+
+test('D4E wrapper refuses a dirty worktree before deriving its commit-tagged image identity', () => {
+    const wrapper = fs.readFileSync(path.join(ROOT, 'scripts/ops/odds_staging/m3_d4e_sandbox.sh'), 'utf8');
+    assert.match(wrapper, /git -C "\$ROOT" status --porcelain/);
+    assert.match(wrapper, /requires a clean committed repository worktree/);
 });
