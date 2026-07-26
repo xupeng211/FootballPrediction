@@ -12,6 +12,7 @@ die(){ echo "BLOCKED: $*" >&2; exit 1; }
 [[ "$PROJECT" == fp_m3_persistent_sandbox && "$SERVICE" == m3-persistent-postgres && "$DATABASE" == fp_m3_persistent_sandbox ]] || die "fixed identity mismatch"
 docker network inspect "${PROJECT}_default" >/dev/null || die "sandbox network unavailable"
 action="${1:-preflight}"; [[ "$action" =~ ^(preflight|write|replay|accepted-conflict|quarantine-conflict)$ ]] || die "usage: $0 {preflight|write|replay|accepted-conflict|quarantine-conflict}"
+[[ -z "$(git -C "$ROOT" status --porcelain)" ]] || die "D4E operator image requires a clean committed repository worktree"
 code_sha="$(git -C "$ROOT" rev-parse HEAD)"
 image="footballprediction-m3-d4e-operator:$(git -C "$ROOT" rev-parse --short HEAD)"
 if ! docker image inspect "$image" >/dev/null 2>&1; then

@@ -70,3 +70,9 @@ test('D4E scoped persistence conflicts carry adapter-origin scope without exposi
         assert.equal(error.conflict_reason, `divergent ${scope} conflict`);
     }
 });
+
+test('D4E wrapper refuses a dirty worktree before deriving its commit-tagged image identity', () => {
+    const wrapper = fs.readFileSync(path.join(ROOT, 'scripts/ops/odds_staging/m3_d4e_sandbox.sh'), 'utf8');
+    assert.match(wrapper, /git -C "\$ROOT" status --porcelain/);
+    assert.match(wrapper, /requires a clean committed repository worktree/);
+});
