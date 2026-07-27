@@ -90,6 +90,15 @@ The local evidence is substantive but narrow:
   The named D4E persistent-sandbox volume remains untouched and has no running
   database container.
 
+The current `fotmob_live_v1=58` count is a retained-row inventory, not a
+58/58 parser or full-audit claim. The historical controlled audit established
+4/4 parseable, SHA-valid and inner-`matchId`-valid rows only; exact writer/run
+provenance for all 58 retained rows is not uniquely attributable. The legacy
+`n3_live_fotmob_raw_retain.js` N=3 network/UPSERT path is historical evidence
+only, not a canonical writer, recovery contract or future dependency. A future
+FotMob writer remains `NOT_YET_ESTABLISHED` and must be created through a
+controlled `data-*` milestone with separate network/write authorization.
+
 No network acquisition, browser/proxy runtime, database write, migration, real
 historical-odds import, training, backtest or prediction occurred.
 
@@ -125,6 +134,11 @@ FotMob payload hashes establish integrity only for retained FotMob match-detail
 assets. They do not prove the historical-odds input-package location, immutable
 hashes, manifest or provenance; those remain
 `REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN`.
+
+The only recommended next task is a bounded, read-only M3
+candidate-to-existing-FotMob-identity compatibility audit. It requires separate
+authorization and permits no network, database write, migration, new identity
+generation, canonical-linkage persistence or legacy writer execution.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
@@ -821,17 +835,21 @@ hashes, manifest or provenance; those remain
 
 ## Current FotMob status
 
-- FotMob data ingestion is blocked. See `docs/data/FOTMOB_CURRENT_STATE.md` for details.
-- `raw_write_ready_count` is 0.
-  **(Superseded 2026-06-11: retained raw storage has moved forward. 4 real FotMob raw
-  payloads exist in `raw_match_data` with `data_version=fotmob_live_v1`, audited
-  4/4 parseable, sha valid, inner matchId ok, 0 errors, 0 warnings. See
-  `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`.)**
-- No DB write, raw write, browser automation, or network data collection is authorized.
-  **(Partial exception: the 4 retained raw rows above were written under explicit
-  authorization in #1485 and #1486.)**
-- Parser, schema, fixture, and validation assets from #1454 are safe to reuse as
-  offline references only.
+- Production FotMob acquisition is `Not yet established`; see
+  `docs/data/FOTMOB_CURRENT_STATE.md` for the authoritative state.
+- The current read-only inventory records 58 retained `fotmob_live_v1` rows and
+  76 total `raw_match_data` rows, all FK-linked to `matches`; it is not a 58/58
+  full-audit assertion.
+- The historical #1487 milestone audited four rows only: 4/4 parseable,
+  SHA-valid and inner-`matchId` valid, with zero errors and warnings.
+- Exact writer/run provenance for all 58 rows is not proven. Legacy acquisition
+  scripts are historical evidence only and must not become canonical writers or
+  new dependencies.
+- No network acquisition, database write, browser automation, parser
+  implementation, migration, training or prediction is authorized.
+- The only recommended next task is the separately authorized bounded,
+  read-only M3 candidate-to-existing-FotMob-identity compatibility audit; no
+  legacy writer restart or raw-write expansion is recommended.
 
 ## Next recommended sequence
 

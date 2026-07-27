@@ -61,7 +61,7 @@ Evidence-backed inventory outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
 `docs-only` is the machine-readable file/authorization type because this PR
-changes only the two named documents. The inventory classification records the
+changes only the four named current-state documents. The inventory classification records the
 separately authorized local evidence read; it does not bypass any write or
 network boundary.
 
@@ -259,6 +259,11 @@ UTC and intentionally omit raw payload values.
 | `matches_oddsportal_mapping` | 0 | — | — | no retained Recon mapping evidence |
 | M3 V26.8 staging tables | absent | — | — | no M3 import-run/source-file/accepted/quarantine target in this development DB |
 
+The historical #1487 controlled audit explicitly covers four retained rows
+(4/4 parseable, SHA-valid and inner-`matchId` valid). The current
+`fotmob_live_v1=58` inventory does not extend that full audit result or a
+unique writer/run attribution to all 58 rows.
+
 `football_match_targets` has 14 FotMob targets, but only one is marked
 `raw_json_stored`; this is supporting discovery state, not an additional
 provider target. `football_source_identities` has ten FotMob competition/team
@@ -270,7 +275,10 @@ OddsPortal import.
 | Component or retained asset | Database/static evidence | Proof level | Recovery treatment |
 | --- | --- | --- | --- |
 | FotMob `matches` identity baseline | 58 strong, harvested FotMob match rows; all 60 matches have external IDs; raw FK coverage is 60/60 | `PROVEN_BY_RETAINED_REAL_DATA` for the retained identity asset; historic writer invocation is not uniquely attributable | Reuse `matches.match_id`/`external_id` baseline; do not recreate identities |
-| FotMob raw retention writer family | 58 `fotmob_live_v1` rows with hashes and links; `n3_live_fotmob_raw_retain.js` writes the same table/version behind its DB guard | `PROVEN_BY_RETAINED_REAL_DATA` for retained behavior; exact historic script run is `LEGACY_DATA_PRESENT_WRITER_UNCERTAIN` | Reuse the guarded writer contract, never run it without new network/write authorization |
+| FotMob retained raw asset | 58 retained `fotmob_live_v1` rows with hashes and FK linkage; the historical four-row audit is separate evidence | `PROVEN_BY_RETAINED_REAL_DATA` for the retained data/identity outcome | Preserve and reuse the data/identity evidence; it is not a writer surface |
+| Historical writer provenance | Retained rows have no unique run-level attribution to one named writer | `LEGACY_DATA_PRESENT_WRITER_UNCERTAIN` | Do not attribute all retained rows to a named script |
+| `n3_live_fotmob_raw_retain.js` | Historical bounded N=3 network/UPSERT path; it is a legacy acquisition script, not a README canonical surface | `HISTORICAL_EVIDENCE_ONLY` / legacy | Never make it a canonical dependency, recovery contract or automatic execution path |
+| Future FotMob writer | README declares production acquisition `Not yet established` | `NOT_YET_ESTABLISHED` | Establish and test a canonical `data-*`-gated surface only in a future milestone with separate network/write authorization |
 | `DiscoveryService` / `FixtureRepository` | Current code persists `matches`, but retained rows carry no run-level writer provenance | `IMPLEMENTED_NOT_EXECUTION_PROVEN` for the exact component execution | Preserve and assess as the controlled L1 route; do not rewrite it |
 | FotMob raw parser/detail components | 32 retained, hashed raw-payload metadata rows prove collection/persistence outcome, not a named parser invocation | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | Reuse after a future bounded no-write parser verification; no network run now |
 | football-data CSV adapter / `ExistingFotMobMatchResolver` | `csv_bulk_loader.js` has a resolver and bookmaker writer, but the only two retained rows are synthetic HTML samples | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | Do not rewrite parser/resolver; first obtain a bounded real-file, no-write verification authorization |
