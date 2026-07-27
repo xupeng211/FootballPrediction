@@ -24,9 +24,14 @@ Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 - `raw_match_data=76`: `fotmob_live_v1=58`, hydration=8, page-props=8 and
   synthetic=2. All 76 rows are FK-linked to `matches`; there are 60 distinct
   `match_id` values and zero raw orphans.
-- `fotmob_raw_match_payloads=32` are hashed/captured metadata rows. Their
-  `match_id` values overlap retained match/raw assets at match level only;
-  record-level payload-to-raw lineage is not proven.
+- `fotmob_raw_match_payloads=32` are retained full raw-payload records, not
+  metadata-only rows. V26.5 requires complete, unparsed `__NEXT_DATA__` JSON
+  in non-null `next_data_json`, together with raw-file locators, SHA-256
+  values, byte sizes, capture timestamps and ingestion metadata. Complete
+  `page_props_json` can be retained when present, but the column is nullable.
+  Their `match_id` values overlap retained match/raw assets at match level
+  only; record-level payload-to-raw lineage, 32/32 pageProps presence and
+  32/32 parser validation are not proven.
 - The retained data and `matches.match_id`/`external_id` identity baseline are
   evidence assets; they do not establish a future writer entrypoint.
 
@@ -76,8 +81,9 @@ all 58 rows is not uniquely attributable.
   availability are not proven.
 - Full parser/audit coverage for all 58 retained `fotmob_live_v1` rows is not
   proven; only the historical four-row audit is complete.
-- `fotmob_raw_match_payloads` establishes match-level overlap only, not
-  record-level payload-to-raw lineage.
+- `fotmob_raw_match_payloads` stores retained offline full raw-payload assets,
+  but establishes match-level overlap only, not record-level payload-to-raw
+  lineage; 32/32 parser validation is not proven.
 - M3 candidate-to-existing-FotMob-identity compatibility is not proven.
 - No network, database write, migration, new identity generation or legacy
   writer execution is authorized.

@@ -78,9 +78,14 @@ The local evidence is substantive but narrow:
 - `raw_match_data=76`, all FK-linked to `matches`, with 60 distinct match IDs,
   zero raw orphans and zero duplicate `(match_id, data_version)` groups;
   `fotmob_live_v1=58`;
-- `fotmob_raw_match_payloads=32`, all hashed/captured; their `match_id` values
-  overlap the retained `matches` and `raw_match_data` sets at match level, but
-  do not prove a one-to-one or record-level payload-to-raw association;
+- `fotmob_raw_match_payloads=32` retained full raw-payload records. V26.5
+  requires complete, unparsed `__NEXT_DATA__` JSON in non-null
+  `next_data_json`, with raw-file locators, SHA-256 values, byte sizes, capture
+  and ingestion metadata; complete `page_props_json` is retained when present
+  but is nullable. Their `match_id` values overlap retained `matches` and
+  `raw_match_data` at match level, but do not prove a one-to-one or
+  record-level payload-to-raw association, 32/32 parser validation or 32/32
+  pageProps presence;
 - `bookmaker_odds_history=2`, but both rows link to a synthetic match and a
   `test_sample.html` basename, so football-data.co.uk has no retained real-data
   proof here;

@@ -253,7 +253,7 @@ UTC and intentionally omit raw payload values.
 | --- | ---: | --- | --- | --- |
 | `matches` | 60 | 58 strong `fotmob_live_fetch`/`V25.1`; 2 synthetic rows | real FotMob match dates 2025-08-15–2026-05-10 | 60/60 have `external_id`; 58 are `harvested`; external-ID duplicate groups: 0 |
 | `raw_match_data` | 76 | `fotmob_live_v1` 58; HTML hydration 8; page-props 8; synthetic 2 | real FotMob collection 2026-05-14–2026-06-12 | 76/76 have a hash and an enforced FK to `matches`; 60 distinct `match_id`; raw orphans: 0 |
-| `fotmob_raw_match_payloads` | 32 | `source=fotmob`, `adg60_raw_json_v1` | captured/ingested 2026-06-02 | 32/32 have raw/next/page-props SHA-256 fields; their `match_id` values overlap the retained `matches` and `raw_match_data` sets at match level, not as record-level payload-to-raw lineage |
+| `fotmob_raw_match_payloads` | 32 | `source=fotmob`, `adg60_raw_json_v1` | captured/ingested 2026-06-02 | retained full raw-payload assets: V26.5 requires complete unparsed `__NEXT_DATA__` JSON in non-null `next_data_json`, with raw-file locators, SHA-256 values, byte sizes, capture and ingestion metadata; complete `page_props_json` is retained when present but is nullable. Their `match_id` values overlap the retained `matches` and `raw_match_data` sets at match level, not as record-level payload-to-raw lineage |
 | `bookmaker_odds_history` | 2 | Bet365 1x2; Pinnacle Asian Handicap; basename `test_sample.html` | collected 2026-05-01 | synthetic-only: both FK-link to the `manual_html_seed` synthetic match; one distinct `match_id` |
 | `odds` | 0 | — | — | no retained OddsPortal market evidence |
 | `matches_oddsportal_mapping` | 0 | — | — | no retained Recon mapping evidence |
@@ -280,7 +280,7 @@ OddsPortal import.
 | `n3_live_fotmob_raw_retain.js` | Historical bounded N=3 network/UPSERT path; it is a legacy acquisition script, not a README canonical surface | `HISTORICAL_EVIDENCE_ONLY` / legacy | Never make it a canonical dependency, recovery contract or automatic execution path |
 | Future FotMob writer | README declares production acquisition `Not yet established` | `NOT_YET_ESTABLISHED` | Establish and test a canonical `data-*`-gated surface only in a future milestone with separate network/write authorization |
 | `DiscoveryService` / `FixtureRepository` | Current code persists `matches`, but retained rows carry no run-level writer provenance | `IMPLEMENTED_NOT_EXECUTION_PROVEN` for the exact component execution | Preserve and assess as the controlled L1 route; do not rewrite it |
-| FotMob raw parser/detail components | 32 retained, hashed raw-payload metadata rows prove collection/persistence outcome, not a named parser invocation | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | Reuse after a future bounded no-write parser verification; no network run now |
+| FotMob raw parser/detail components | 32 retained full raw-payload records establish a collection/persistence asset outcome, not a named parser invocation or parser validation | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | May support a future bounded no-write offline parser/schema verification; no parser or network run now |
 | football-data CSV adapter / `ExistingFotMobMatchResolver` | `csv_bulk_loader.js` has a resolver and bookmaker writer, but the only two retained rows are synthetic HTML samples | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | Do not rewrite parser/resolver; first obtain a bounded real-file, no-write verification authorization |
 | OddsPortal Recon / harvest pipeline | Mapping and market tables exist; both counts are zero; legacy SQL writers exist in the codebase | `NO_EVIDENCE` of retained execution | Keep legacy browser/harvest routes blocked; only safely adapt after separate evidence/authorization |
 | M3 historical persistence repository | Historical D4E sandbox record is a 1/1/6/3 controlled synthetic write; the tables are absent here | `PROVEN_BY_SYNTHETIC_CONTROLLED_WRITE` | Reuse contract only; it does not prove real-provider ingestion or canonical linkage |
@@ -310,13 +310,22 @@ identity baseline: all 60 rows have an `external_id`; 58 are
 `fotmob_live_fetch` with `strong` evidence and `harvested` status. All 76
 `raw_match_data` rows link to `matches` through the enforced FK, with 60
 distinct match IDs and no raw orphan; `fotmob_live_v1` accounts for 58 rows.
-The 32 `fotmob_raw_match_payloads` rows are hashed/captured FotMob payload
-metadata. Their `match_id` values overlap the retained `matches` and
-`raw_match_data` sets at match level. The payload table has neither a foreign
-key nor a unique record identifier that points to a specific `raw_match_data`
-row; because multiple raw versions may exist for one match, this inventory does
-not prove one-to-one or record-level payload-to-raw lineage. This precision does
-not change the retained FotMob identity baseline, the enforced
+The 32 `fotmob_raw_match_payloads` rows are retained full FotMob raw-payload
+assets, not metadata-only rows. V26.5 declares non-null `next_data_json` as
+complete, unparsed `__NEXT_DATA__` JSON and also retains raw-payload file
+locators, SHA-256 values, byte sizes, capture timestamps and ingestion
+metadata. It can retain complete `page_props_json` when present, but that
+column is nullable; this inventory makes no 32/32 pageProps or parser-validation
+claim. These offline assets may support a future separately authorized
+no-write parser/schema verification without a new fetch; no parser execution,
+raw JSON print or raw JSON export occurred here.
+
+Their `match_id` values overlap the retained `matches` and `raw_match_data`
+sets at match level. The payload table has neither a foreign key nor a unique
+record identifier that points to a specific `raw_match_data` row; because
+multiple raw versions may exist for one match, this inventory does not prove
+one-to-one or record-level payload-to-raw lineage. This precision does not
+change the retained FotMob identity baseline, the enforced
 `raw_match_data`-to-`matches` FK linkage, or the FotMob asset package's
 `clean_candidate` classification. It does not authorize a fetch or write.
 MatchRepository, FotMob seed/discovery, raw-data preflight, Recon and legacy

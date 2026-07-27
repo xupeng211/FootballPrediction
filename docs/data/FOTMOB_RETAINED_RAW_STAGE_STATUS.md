@@ -13,8 +13,12 @@
 - **Current total `raw_match_data` rows**: 76
 - **Composition**: `fotmob_live_v1=58`, hydration=8, page-props=8, synthetic=2
 - **Current linkage**: 76/76 rows FK-linked to `matches`; 60 distinct `match_id`; 0 raw orphans
-- **Payload metadata**: `fotmob_raw_match_payloads=32`, hashed/captured with match-level
-  `match_id` overlap only; record-level payload-to-raw lineage is not proven
+- **Full raw-payload assets**: `fotmob_raw_match_payloads=32`. V26.5 requires
+  complete, unparsed `__NEXT_DATA__` JSON in non-null `next_data_json`, with
+  raw-file locators, SHA-256 values, byte sizes, capture timestamps and
+  ingestion metadata; complete `page_props_json` is retained when present but
+  is nullable. The assets have match-level `match_id` overlap only;
+  record-level payload-to-raw lineage is not proven.
 
 ## Historical controlled audit milestone
 
@@ -36,11 +40,15 @@ that all 58 current `fotmob_live_v1` rows received identical validation.
 - Current retained storage contains 58 `fotmob_live_v1` rows.
 - Retained FotMob match identity/raw-storage outcome exists; all current
   `raw_match_data` rows have the enforced `matches` FK.
+- The 32 retained payload rows are offline full raw-payload assets, which may
+  support a future separately authorized no-write parser/schema verification.
 - The historical four-row audit proves full validation only for those four rows.
 
 ## What this stage does NOT prove
 
 - Full parser/audit validation for all 58 rows.
+- 32/32 parser validation, schema validation, inner-`matchId` validation or
+  pageProps presence for the retained full raw-payload assets.
 - Unique writer/run provenance for all 58 rows.
 - That the legacy N=3 script is canonical, reusable or a recovery dependency.
 - Record-level payload-to-raw lineage.
