@@ -61,7 +61,7 @@ Evidence-backed inventory outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
 `docs-only` is the machine-readable file/authorization type because this PR
-changes only the four named current-state documents. The inventory classification records the
+changes only the five named current-state documents. The inventory classification records the
 separately authorized local evidence read; it does not bypass any write or
 network boundary.
 
