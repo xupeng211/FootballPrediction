@@ -54,9 +54,16 @@ Last updated: 2026-07-27
 M3-D4F local evidence-backed inventory conclusion:
 **`FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED`**.
 
-The user selected **`RECOVER_EXISTING_ACQUISITION_ARCHITECTURE`** and explicitly
-authorized one local Docker, non-production, read-only inventory. The only
-runtime target was the already-running repository-owned
+The repository-approved official Architecture Decision Gate direction is
+**`redo source inventory strategy`**. The user-selected implementation approach
+for that direction is **`RECOVER_EXISTING_ACQUISITION_ARCHITECTURE`**; the
+current evidence-backed technical outcome is
+**`FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED`**. This means confirming and
+recovering existing providers, retained assets and reusable components—not
+redesigning every source from zero.
+
+The user explicitly authorized one local Docker, non-production, read-only
+inventory. The only runtime target was the already-running repository-owned
 `football_prediction_db_dev` PostgreSQL 15 container and `football_db`.
 Connection used the container Unix socket as `claude_reader`, without a
 password or TCP; the role has no inherited roles, no superuser/create role/create
@@ -102,9 +109,13 @@ target_state_delta:
 Targets are source/database asset packages, not rows: the retained FotMob
 identity/raw package is the one clean reusable candidate; football-data.co.uk
 and OddsPortal each need new retained real-data evidence; M3 staging remains
-blocked pending an approved target with the required schema. This replaces the
-prior `ABANDON_CURRENT_D4F_READINESS_BATCH` recommendation, but does not permit
-an unbounded legacy pipeline restart or any write/network exception.
+blocked pending an approved target with the required schema. The four evaluated
+asset packages provide substantive state progress, so `no_progress_count = 0`;
+this does not claim M3 candidate compatibility, real football-data/OddsPortal
+execution or deployed M3 staging. The formal strategy does not select abandon
+current batch, rebuild canonical identity pipeline, switch/compare a provider,
+or redesign FotMob identity mapping. It does not permit an unbounded legacy
+pipeline restart or any write/network exception.
 
 The remaining blockers are M3 candidate-to-canonical equivalence, approved real
 historical-odds provenance/hash/location, real football-data and OddsPortal

@@ -22,17 +22,19 @@ authorized executing that inventory, implementation, migration, linkage write,
 `canonical_match_id` write, matches/canonical-odds write, real import,
 training, backtest or prediction.
 
-Current active ingestion convergence state:
+Current active ingestion convergence state is recorded at three distinct
+levels:
 
 ```text
-FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
+Official Architecture Decision Gate direction = redo source inventory strategy
+User-selected implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+Evidence-backed inventory outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
-The user selected:
-
-```text
-RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
-```
+`redo source inventory strategy` is the repository-approved formal direction.
+Here it means inventorying and confirming already-known providers, retained
+assets, execution evidence and reusable components; it does not mean discarding
+the existing architecture and discovering providers from zero.
 
 This does not authorize an unbounded legacy restart, network acquisition, a
 database write, a migration, a real import, or D4F-B through D4F-E. It only
@@ -53,7 +55,9 @@ Transaction enforcement = BEGIN READ ONLY, transaction_read_only=on
 Network acquisition = no
 Database writes = no
 Consecutive no-progress ingestion PR count = 0
-User architecture decision = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+Official Architecture Decision Gate direction = redo source inventory strategy
+User-selected implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+Evidence-backed inventory outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
 `docs-only` is the machine-readable file/authorization type because this PR
@@ -116,9 +120,13 @@ sandbox has no running container. The `1 + 2 + 1` target states reconcile to
 `total_targets = 4`.
 
 The prior no-progress count was two governance-only PRs. This inventory used a
-user-authorized, locally retained database target and materially changed target
-states, so it resets to zero. `abandon_current_batch_candidate` is zero because
-the user selected recovery and the retained FotMob baseline supports reuse.
+user-authorized, locally retained database target, confirmed retained real
+FotMob assets, and classified all four asset packages. One target therefore
+moved from unknown/not-evaluated to `clean_candidate`, so this is substantive
+ingestion-target evidence progress and `no_progress_count` resets to zero.
+`abandon_current_batch_candidate` is zero because the formal direction is
+`redo source inventory strategy` and its first bounded inventory produced a
+clean reusable FotMob candidate.
 
 ### Blockers not resolved
 
@@ -130,7 +138,7 @@ The following remain unresolved:
 * real import envelope;
 * training quality and leakage controls.
 
-### Why this governance-only correction is material
+### Why this evidence-backed correction is material
 
 No runtime behavior or business-data was changed. The local inventory did
 evaluate retained database assets and confirmed the development schema, the
@@ -150,8 +158,13 @@ triggered = yes
 reason = two consecutive no-progress ingestion governance/review PRs
 automatic next planning/review = prohibited without separate authorization
 automatic further D4F-A = prohibited
-user decision = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
-current conclusion = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
+formal decision = redo source inventory strategy
+decision pending = no
+implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+inventory execution completed = local read-only asset inventory only
+evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
+automatic network acquisition = prohibited
+automatic database write = prohibited
 ```
 
 The user-authorized inventory removed the exact local target/read-only-role and
@@ -169,29 +182,34 @@ historical-data acquisition occurred.
 ```text
 affected local asset package count = 4
 clean reusable asset package count = 1
-RECOMMENDED_ARCHITECTURE_DIRECTION:
-REUSE_PROVEN_EXISTING_COMPONENTS
+FORMAL_ARCHITECTURE_DECISION_GATE_DIRECTION:
+redo source inventory strategy
+IMPLEMENTATION_APPROACH:
+RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+EVIDENCE_BACKED_OUTCOME:
+FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
-The recommendation reuses the FotMob identity baseline rather than replacing
-it. It preserves D4E sandbox evidence, deletes or closes nothing, and does not
-authorize a legacy bulk pipeline restart.
+The selected source-inventory strategy is executed by recovering existing
+acquisition architecture rather than rebuilding it. It preserves D4E sandbox
+evidence, deletes or closes nothing, and does not authorize a legacy bulk
+pipeline restart.
 
-The alternatives are not permanently rejected:
+The other formal directions were evaluated and not selected:
 
-* `REBUILD_CANONICAL_IDENTITY_PIPELINE` is not recommended without live
-  inventory evidence that the current pipeline is wrong.
-* `REDO_SOURCE_INVENTORY_STRATEGY` is not recommended as a direct solution;
-  unproven real sources do not resolve the canonical-target/grant blocker.
-* `SWITCH_DATA_SOURCE_OR_COMPARE_ALTERNATIVE_SOURCE` is not recommended
-  without controlled comparison evidence or real-source authorization.
-* `REDESIGN_FOTMOB_IDENTITY_MAPPING_STRATEGY` is not recommended because no
-  evidence identifies FotMob mapping as the first D4F blocker.
+* `abandon current batch`: not selected because retained real FotMob assets
+  produced a clean candidate.
+* `rebuild canonical identity pipeline`: not selected because the retained
+  `matches`/`external_id` baseline has real-data proof.
+* `switch data source / compare alternative source`: not selected; this work
+  did not choose to replace or compare providers.
+* `redesign FotMob identity mapping strategy`: not selected because no evidence
+  identifies the retained FotMob identity design as needing redesign.
 
-The decision is no longer pending. The user selected
-`RECOVER_EXISTING_ACQUISITION_ARCHITECTURE`; the bounded inventory used the
-already-running local `football_prediction_db_dev` container only. It did not
-select an unbounded legacy restart or any network/write exception.
+The formal decision is no longer pending. The bounded inventory used the
+already-running local `football_prediction_db_dev` container only; it did not
+select a provider switch, identity rebuild, FotMob redesign, unbounded legacy
+restart, network exception or write exception.
 
 ## 2. Scope and non-goals
 
@@ -386,9 +404,10 @@ retained evidence is synthetic only; retained OddsPortal mapping/odds evidence i
 absent; the M3 staging tables are not present in this development DB; and no
 training quality/leakage acceptance exists.
 
-The user-selected recovery path permits reuse planning only from the retained
-FotMob baseline. Any next network fetch, database write, M3 staging migration,
-linkage decision or real import still needs a separate authorization.
+The formal `redo source inventory strategy` permits recovery planning only from
+the retained FotMob baseline. Any next network fetch, database write, M3
+staging migration, linkage decision or real import still needs a separate
+authorization.
 
 ## 13. Explicit non-execution declaration
 
@@ -397,3 +416,12 @@ started, stopped or restarted; no volume changed; no remote or production
 database was connected; no source network request, migration, canonical/staging
 write, odds import, training, Issue #1793 change, PR-ready action or merge
 occurred. D4F-B through D4F-E did not start.
+
+## 14. Next recommended task
+
+Recommendation only: reuse the retained FotMob `matches.match_id` /
+`external_id` baseline for one bounded, read-only M3 candidate-to-canonical
+compatibility audit on `football_prediction_db_dev/football_db`. It requires
+separate user authorization and permits no network, database write, new
+identity generation, migration or canonical-linkage persistence. Do not start
+automatically.
