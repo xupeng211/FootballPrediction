@@ -4,16 +4,28 @@
 
 - lifecycle: current-state
 - owner: data / ingestion workflow
-- based on: PR #1490 structure validation (merge commit 52cbac5)
 - data_version: `fotmob_live_v1`
-- sample size: N=4 (external IDs 4830507, 4830466, 4830461, 4830464)
-- last updated: 2026-06-11
+- contract evidence based on: PR #1490 structure validation (merge commit 52cbac5)
+- contract evidence date: 2026-06-11
+- historical contract-validation cohort: N=4 fully audited rows (external IDs
+  4830507, 4830466, 4830461, 4830464)
+- current retained inventory: 58 `fotmob_live_v1` rows
+- retained full raw-payload assets: 32
+- current-state synchronized: 2026-07-27
 
 ## 1. Purpose
 
 This document defines the canonical parser contract for `raw_match_data` rows with
-`data_version=fotmob_live_v1`. It is derived from the #1490 structure validation of 4
-retained raw payloads. Every parser implementation MUST conform to this contract.
+`data_version=fotmob_live_v1`. It is derived from the historical #1490
+structure-validation cohort of four fully audited `fotmob_live_v1` rows. Every
+parser implementation MUST conform to this contract.
+
+The current retained inventory contains 58 `fotmob_live_v1` rows, including 32
+separately retained full raw-payload records. The historical N=4 contract
+evidence does not establish 58/58 parser, schema or inner-`matchId`
+compatibility. Compatibility of retained rows outside that historical cohort
+remains unproven until a separately authorized bounded offline
+parser-validation task occurs.
 
 This contract does NOT define feature extraction, training labels, or prediction
 pipelines. Those remain deferred per Phase 5.21L2P.
@@ -21,6 +33,9 @@ pipelines. Those remain deferred per Phase 5.21L2P.
 ## 2. Source Payload Shape
 
 ### 2.1 Top-Level Keys (all required, 4/4 consistent)
+
+All 4/4 consistency statements in this contract describe the historical N=4
+contract-validation cohort only; they are not a 58-row inventory assertion.
 
 | Key | Type | Description |
 |-----|------|-------------|
@@ -208,7 +223,7 @@ content.matchFacts.events.events[]
 ```
 
 This is the CORRECTED path from the original canonical schema expectation of
-`content.events`. The actual 4 retained raw payloads have events at
+`content.events`. The historical N=4 audited contract cohort has events at
 `content.matchFacts.events.events[]`.
 
 ### 5.2 Container Structure
@@ -332,8 +347,9 @@ Before a parser implementation PR can be merged, it MUST satisfy all of the foll
 1. **Pure function**: No network, no DB access, no file I/O (except reading fixtures in tests).
 2. **Deterministic output**: Same input → same output. No `Date.now()`, `Math.random()`, or
    time-dependent logic in parser logic.
-3. **All 4 retained raw rows parse successfully**: Parse all 4 `fotmob_live_v1` rows and
-   produce valid output per §6.
+3. **Historical N=4 cohort parses successfully**: Parse all four rows in the
+   historical audited contract-validation cohort and produce valid output per
+   §6.
 4. **Missing-field resilience**: Tests demonstrate behavior for each scenario in §7.
 5. **Events path confirmed**: Parser correctly reads events from
    `content.matchFacts.events.events[]`, NOT `content.events`.
@@ -347,16 +363,25 @@ Before a parser implementation PR can be merged, it MUST satisfy all of the foll
    features, aggregations, or computed metrics.
 10. **PR body states**: no DB write, no raw write, no live fetch, no model training.
 
+Passing the historical N=4 cohort does not prove compatibility with all 58
+currently retained `fotmob_live_v1` rows.
+
 ## 9. Relationship to Existing Assets
 
 | Asset | Relationship |
 |-------|-------------|
+| Historical N=4 audited cohort | Evidence basis for this canonical parser contract |
+| Current 58 `fotmob_live_v1` rows | Retained inventory; full all-row parser validation is not proven |
+| 32 `fotmob_raw_match_payloads` records | Retained full raw-payload assets that may support a future separately authorized offline validation cohort when the applicable input shape is established |
 | `docs/_manifests/fotmob_safe_parser_schema_reuse_plan_no_write_manifest.json` | Canonical shape plan — this contract refines it with actual `fotmob_live_v1` path evidence |
 | `src/parsers/fotmob/MatchParser.js` | Legacy parser (pre-v1); reusable for `firstValue` cascade pattern, but paths must be updated |
 | `src/parsers/fotmob/MatchStatsParser.js` | Legacy stats parser; `normalizeStat` is reusable; traversal must add Periods-awareness |
 | `src/parsers/fotmob/NextDataParser.js` | HTML→apiFormat transform; NOT applicable to already-transformed `fotmob_live_v1` payloads |
 | `src/infrastructure/services/FotMobRawDetailFetcher.js` | `validateCanonicalRawDataShape` — pre-parser shape gate; parser should validate against this before parsing |
 | `docs/_reports/fotmob_raw_structure_validation_20260611.md` | Source evidence for this contract |
+
+The retained payload table provides match-level asset evidence only; it does
+not establish one-to-one lineage to a specific `raw_match_data` record.
 
 ## 10. Safety Boundaries
 
@@ -367,11 +392,23 @@ Before a parser implementation PR can be merged, it MUST satisfy all of the foll
 
 ## 11. Next Steps
 
-1. Authorize parser implementation PR (separate from this contract PR).
-2. Implement parser per this contract, targeting `data_version=fotmob_live_v1`.
-3. Write unit tests against the 4 retained raw rows (read-only, via fixtures).
-4. After parser passes all acceptance criteria (§8), consider N=5 / N=10 controlled
-   expansion.
-
 Do not start automatically.
-Recommended next task only after user confirmation.
+
+Parser implementation or parser-validation work requires separate user
+authorization and a separate reviewable PR. A future bounded parser-validation
+task may select an offline cohort from already retained assets:
+
+- the historical N=4 audited contract cohort;
+- additional existing retained `fotmob_live_v1` rows when an approved
+  read-only fixture or bounded extraction path is explicitly authorized; or
+- existing retained full raw-payload assets where their applicable input shape
+  is established.
+
+Such validation must remain offline and read-only. It must not perform live
+FotMob fetches, database writes, raw-row expansion, legacy N=3 writer
+execution, migration, canonical-linkage persistence, feature extraction,
+training, backtesting or prediction.
+
+The current repository-level recommended next task remains the separately
+authorized bounded M3 Football-Data candidate-to-canonical compatibility audit.
+This parser contract does not automatically supersede that task.

@@ -61,9 +61,14 @@ Evidence-backed inventory outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
 `docs-only` is the machine-readable file/authorization type because this PR
-changes only the five named current-state documents. The inventory classification records the
+changes only the six named current-state documents. The inventory classification records the
 separately authorized local evidence read; it does not bypass any write or
 network boundary.
+
+The six current-state documents are `docs/DATA_SOURCE_STRATEGY.md`, this
+review, `docs/PROJECT_STATUS.md`, `docs/data/FOTMOB_CURRENT_STATE.md`,
+`docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md` and
+`docs/data/FOTMOB_RAW_PARSER_CONTRACT.md`.
 
 The user explicitly confirmed one corrective update inside the already-open PR
 #1805 to close the Ready-triggered Codex P1 findings and enter the required
