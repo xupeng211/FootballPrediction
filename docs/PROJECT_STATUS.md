@@ -51,33 +51,67 @@ Last updated: 2026-07-26
     retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
     or modify that sandbox. D4F remains unauthorized.
 
-M3-D4F readiness decision:
+M3-D4F historical static readiness assessment:
 **`READY_FOR_D4F_READ_ONLY_INVENTORY_AUTHORIZATION`**.
 
 Readiness documentation PR: #1804.
-The accepted documentation boundary permits only future user consideration of a
-separately authorized SELECT-only canonical identity inventory.
+This historical boundary only permits future user consideration of a separately
+authorized SELECT-only canonical identity inventory.
 
 It does not authorize inventory execution, implementation, migration,
 canonical linkage, matches/canonical-odds write, staging write, real historical
 import, training, backtest or prediction.
 
-D4F readiness outcome-gate status:
+Current active M3-D4F convergence state:
 
-- blocker resolved:
+```text
+INGESTION_ARCHITECTURE_DECISION_REQUIRED
+```
+
+- Authorization task type: `docs-only`;
+- Ingestion convergence classification: `governance-only`;
+- Consecutive no-progress ingestion PR count: 2;
+- User confirmation for corrective governance continuation: yes;
+- User confirmation for D4F-A no-progress exception: no;
+- current recommended architecture direction:
+  `ABANDON_CURRENT_D4F_READINESS_BATCH`;
+- user architecture decision: pending;
+- D4F-A authorized: no;
+- D4F-A executed: no.
+
+`docs-only` is the file/authorization type. `governance-only` is the ingestion
+convergence classification; the former does not bypass the convergence stop.
+
+D4F readiness outcome-gate and target-state status:
+
+- historical governance-boundary transition:
   `D4F_AUTHORIZATION_BOUNDARY_UNDEFINED`
   → `D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE`;
+- current convergence transition:
+  `D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE`
+  → `INGESTION_ARCHITECTURE_DECISION_REQUIRED`;
 - runtime behavior changed: no;
 - database or ingestion target evaluated: no;
-- D4F-A authorization changed: no;
-- D4F-A execution changed: no;
-- target-state delta:
-  governance boundary only;
-- `clean_candidate`: 0;
-- `rejected_mapping`: 0;
-- `superseded_mapping`: 0;
-- `eligible_for_re_acceptance_review`: 0;
-- `needs_new_evidence`: 0.
+
+```text
+target_state_delta:
+- total_targets: 0
+- moved_to_clean_candidate: 0
+- moved_to_rejected_mapping: 0
+- moved_to_superseded_mapping: 0
+- moved_to_eligible_for_re_acceptance_review: 0
+- moved_to_needs_new_evidence: 0
+- remain_suspended: 0
+- still_blocked_pending_review: 0
+- abandon_current_batch_candidate: 1
+- no_progress_count: 2
+```
+
+No live ingestion target was evaluated, so all live-target transition,
+suspension and blocked counts are zero. `abandon_current_batch_candidate = 1`
+is the batch-level convergence conclusion for the one D4F governance batch; it
+does not contribute to `total_targets` and does not represent an evaluated data
+or database target.
 
 The following remain blocked or unproven:
 
@@ -87,9 +121,13 @@ The following remain blocked or unproven:
 - real import;
 - training quality and leakage controls.
 
-No additional readiness/planning PR may start automatically after the
-post-merge outcome-gate correction. If an exact bounded D4F-A authorization
-package cannot be named, the process stops at the Ingestion Architecture Decision Gate.
+The Architecture Decision Gate is triggered now: automatic planning/review and
+automatic D4F-A are prohibited. The user must select A–F: abandon/pause the
+current readiness batch; rebuild canonical identity; redo source inventory;
+switch/compare source; redesign FotMob mapping; or explicitly authorize a
+no-progress D4F-A exception with exact target, host, database, read-only role,
+query allowlist, read-only enforcement, timeout and output limits. The
+recommended abandon/pause direction is not yet a user-accepted decision.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 

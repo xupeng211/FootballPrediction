@@ -10,15 +10,51 @@
 
 ## 1. Executive decision
 
-**Decision: `READY_FOR_D4F_READ_ONLY_INVENTORY_AUTHORIZATION`.**
+Historical static readiness assessment:
 
-This narrowly permits the user to consider a separately authorized, bounded SELECT-only inventory of one explicitly named non-production canonical target. It does not authorize executing that inventory, implementation, migration, linkage write, `canonical_match_id` write, matches/canonical-odds write, real import, training, backtest, or prediction.
+```text
+READY_FOR_D4F_READ_ONLY_INVENTORY_AUTHORIZATION
+```
+
+This historical static conclusion only said that a separately authorized,
+bounded SELECT-only inventory package could be designed and reviewed. It never
+authorized executing that inventory, implementation, migration, linkage write,
+`canonical_match_id` write, matches/canonical-odds write, real import,
+training, backtest or prediction.
+
+Current active ingestion convergence state:
+
+```text
+INGESTION_ARCHITECTURE_DECISION_REQUIRED
+```
+
+Automatic D4F-A path: **blocked**. User architecture selection: **pending**.
 
 ## Outcome-gate declaration
 
-### Blocker transition
+### Classification and user-confirmed corrective boundary
 
-This readiness review resolves exactly one governance blocker:
+```text
+Authorization task type = docs-only
+Ingestion convergence classification = governance-only
+Consecutive no-progress ingestion PR count = 2
+User confirmation for corrective governance continuation = yes
+User confirmation for D4F-A no-progress exception = no
+```
+
+`docs-only` is the machine-readable file/authorization type because this PR
+changes only the two named documents. `governance-only` is the ingestion
+convergence classification. They are not mutually exclusive, and `docs-only`
+does not bypass the governance stop gate.
+
+The user explicitly confirmed one corrective update inside the already-open PR
+#1805 to close the Ready-triggered Codex P1 findings and enter the required
+Architecture Decision Gate. The user did not authorize an exception to continue
+D4F-A after two no-progress ingestion governance PRs.
+
+### Historical and current convergence transitions
+
+Historical governance-boundary record from PR #1804:
 
 ```text
 D4F_AUTHORIZATION_BOUNDARY_UNDEFINED
@@ -26,42 +62,47 @@ D4F_AUTHORIZATION_BOUNDARY_UNDEFINED
 D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
 ```
 
-Before this review, D4F was not decomposed into independently authorized read,
-offline-contract, controlled-persistence, real-data dry-run and bounded
-real-import phases. There was no bounded authorization package that a user
-could safely approve for a SELECT-only canonical identity inventory.
+It did not resolve a database, identity, mapping, real-source or training
+blocker. The current active convergence transition is:
 
-After this review, D4F-A through D4F-E are explicitly separated. The minimum
-D4F-A authorization inputs, prohibited operations and stop conditions are
-documented and reviewable.
+```text
+D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
+->
+INGESTION_ARCHITECTURE_DECISION_REQUIRED
+```
 
-This transition does not authorize or execute D4F-A.
+This is a convergence-stop state change, not business or runtime progress.
 
 ### Target-state delta
 
-| Target | Before | After | Delta |
-| --- | --- | --- | --- |
-| D4F authorization boundary | Undefined and monolithic | Phase-separated and reviewable | Governance-only positive transition |
-| D4F-A authorization | Not granted | Not granted | None |
-| D4F-A execution | Not started | Not started | None |
-| Canonical database target | Not inspected | Not inspected | None |
-| Candidate-to-canonical overlap | Not measured | Not measured | None |
-| Runtime ingestion targets | Not evaluated | Not evaluated | None |
-
-No live ingestion target was read or evaluated. Therefore the target-state
-classification counts for this review are:
-
 ```text
-clean_candidate = 0
-rejected_mapping = 0
-superseded_mapping = 0
-eligible_for_re_acceptance_review = 0
-needs_new_evidence = 0
+target_state_delta:
+- total_targets: 0
+- moved_to_clean_candidate: 0
+- moved_to_rejected_mapping: 0
+- moved_to_superseded_mapping: 0
+- moved_to_eligible_for_re_acceptance_review: 0
+- moved_to_needs_new_evidence: 0
+- remain_suspended: 0
+- still_blocked_pending_review: 0
+- abandon_current_batch_candidate: 1
+- no_progress_count: 2
 ```
 
-The readiness matrix's `not_proven` domains describe missing evidence and
-governance blockers. They are not assertions that evaluated ingestion targets
-were assigned the `needs_new_evidence` target state.
+`total_targets = 0` because this work read or evaluated no live ingestion
+target. All live-target transitions, suspension counts and blocked counts are
+therefore zero. The readiness matrix's `not_proven` domains describe missing
+evidence; they do not assign an evaluated target to `needs_new_evidence`.
+
+`abandon_current_batch_candidate = 1` is a batch-level convergence conclusion,
+not a live-target quantity. It does not participate in the `total_targets`
+sum and does not assert that a database or data target was evaluated. It means
+the current D4F readiness/planning governance batch cannot safely converge by
+continuing local review and must enter the Architecture Decision Gate.
+
+`no_progress_count = 2` consists of PR #1804's readiness review and PR #1805's
+outcome-gate corrective governance work. Neither read a live target nor made a
+material ingestion-target state transition.
 
 ### Blockers not resolved
 
@@ -75,58 +116,81 @@ The following remain unresolved:
 * real import envelope;
 * training quality and leakage controls.
 
-### Why this governance-only change is worth merging
+### Why this governance-only correction is material
 
 No runtime behavior or business-data target changed.
 
-The change is still material because it replaces an unsafe monolithic D4F
-concept with independently authorized, fail-closed phases and defines the only
-next action that may be considered: a separately approved SELECT-only
-inventory.
+The correction is material because it stops the unsafe automatic D4F-A path
+after the second no-progress ingestion governance PR and records the required
+Architecture Decision Gate.
 
 It prevents documentation review from being misread as database authorization,
 canonical-write authorization, real-import readiness or training readiness.
 
-### No-progress stop condition
-
-This hotfix closes the outcome-gate declaration gap in PR #1804. It is not a
-new D4F readiness phase.
-
-No additional D4F readiness, planning or governance-only PR may be opened
-automatically after this correction.
-
-The process must stop without executing D4F-A when any of the following cannot
-be named and approved:
-
-* exact non-production target;
-* exact host and database;
-* exact read-only role;
-* allowed objects, columns and aggregate queries;
-* transaction-read-only enforcement;
-* statement timeout;
-* maximum result/output boundary;
-* explicit prohibition of raw payload, COPY, temporary objects and writes;
-* explicit prohibition of Docker or service startup.
-
-In that case the result is:
+### Architecture Decision Gate
 
 ```text
-D4F_READINESS_NO_PROGRESS_STOP
+triggered = yes
+reason = two consecutive no-progress ingestion governance/review PRs
+automatic next planning/review = prohibited
+automatic D4F-A = prohibited
+user decision = pending
+USER_DECISION_REQUIRED
 ```
 
-and the next action is an Ingestion Architecture Decision Gate, not another
-planning/review PR.
+Another static review cannot remove the current blockers: exact non-production
+canonical target; exact host/database; exact read-only role/grants; live
+canonical schema freshness; `matches.match_id` compatibility and overlap;
+team/competition/season/timezone mapping evidence; and real-source
+location/hash/provenance. Only live evidence under separate authorization could
+address those gaps.
 
-If a separately authorized D4F-A is later executed but cannot establish fresh
-live schema, identity coverage or meaningful evidence beyond the existing
-static review, it must report:
+Bounded evidence already attempted: tracked schema/migration review; current
+staging contracts; candidate identity/linkage code and tests; D4E synthetic
+persistent-sandbox historical evidence; and existing source-of-truth
+documentation. No live DB, real source payload or external historical-data
+acquisition occurred.
 
 ```text
-NO_MEANINGFUL_TARGET_STATE_DELTA
+affected live ingestion target count = 0
+affected governance batch count = 1
+RECOMMENDED_ARCHITECTURE_DIRECTION:
+ABANDON_CURRENT_D4F_READINESS_BATCH
 ```
 
-and stop at the Ingestion Architecture Decision Gate before D4F-B, D4F-C,
-real-data import or training.
+The recommendation pauses and ends the current accumulating readiness/planning
+batch, preserves D4E persistent-sandbox and audit evidence, and deletes or
+closes nothing. It does not permanently abandon historical odds or M3; it waits
+for a user architecture decision or a separately authorized D4F-A exception.
+
+The alternatives are not permanently rejected:
+
+* `REBUILD_CANONICAL_IDENTITY_PIPELINE` is not recommended without live
+  inventory evidence that the current pipeline is wrong.
+* `REDO_SOURCE_INVENTORY_STRATEGY` is not recommended as a direct solution;
+  unproven real sources do not resolve the canonical-target/grant blocker.
+* `SWITCH_DATA_SOURCE_OR_COMPARE_ALTERNATIVE_SOURCE` is not recommended
+  without controlled comparison evidence or real-source authorization.
+* `REDESIGN_FOTMOB_IDENTITY_MAPPING_STRATEGY` is not recommended because no
+  evidence identifies FotMob mapping as the first D4F blocker.
+
+The user must select one direction:
+
+```text
+A. accept/pause: abandon current D4F readiness batch
+B. rebuild canonical identity pipeline
+C. redo source inventory strategy
+D. switch data source / compare alternative source
+E. redesign FotMob identity mapping strategy
+F. explicitly authorize a no-progress exception to continue D4F-A
+```
+
+Option F requires explicit user selection and rationale plus approval of the
+exact non-production target, host, database, read-only role, allowed
+objects/views, columns and aggregate queries, `transaction_read_only`
+enforcement, statement timeout, maximum rows/output, no raw payload, no COPY,
+no temporary objects, no writes and no Docker/service startup. This review does
+not select F.
 
 ## 2. Scope and non-goals
 
@@ -253,17 +317,13 @@ D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely 
 | training isolation | bounded | Quarantine separation/legacy risk | Quality/leakage gate | Training |
 | explicit authorization | blocked | This review grants none | User phase approval | D4F-A–E |
 
-## 12. Blocking conditions and exact next authorization package
+## 12. Blocking conditions and current decision boundary
 
 Blocking conditions: no fresh canonical inventory; no approved team/competition/season/timezone mapping; no target grants; no link-audit migration; no real source location/hash/provenance; and no training quality/leakage acceptance.
 
-Only this next package is proposed:
-
-```text
-M3-D4F-A — SELECT-only canonical identity inventory authorization
-```
-
-Future approval must name exact target; host/database/role; allowed SELECT objects/columns; statement timeout; maximum output; no raw payload; no temporary objects; no writes; and no Docker/service startup. It must require a read-only transaction, production exclusion, no COPY, no credential output and a stop condition. It is not executed by this review.
+The historical D4F-A package is not the current next step. D4F-A is blocked
+pending the user Architecture Decision Gate selection above. No inventory may
+be designed, authorized or executed automatically.
 
 ## 13. Explicit non-execution declaration
 
