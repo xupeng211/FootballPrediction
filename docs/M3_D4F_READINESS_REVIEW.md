@@ -253,7 +253,7 @@ UTC and intentionally omit raw payload values.
 | --- | ---: | --- | --- | --- |
 | `matches` | 60 | 58 strong `fotmob_live_fetch`/`V25.1`; 2 synthetic rows | real FotMob match dates 2025-08-15–2026-05-10 | 60/60 have `external_id`; 58 are `harvested`; external-ID duplicate groups: 0 |
 | `raw_match_data` | 76 | `fotmob_live_v1` 58; HTML hydration 8; page-props 8; synthetic 2 | real FotMob collection 2026-05-14–2026-06-12 | 76/76 have a hash and an enforced FK to `matches`; 60 distinct `match_id`; raw orphans: 0 |
-| `fotmob_raw_match_payloads` | 32 | `source=fotmob`, `adg60_raw_json_v1` | captured/ingested 2026-06-02 | 32/32 have raw/next/page-props SHA-256 fields and link directly to both `matches` and `raw_match_data` |
+| `fotmob_raw_match_payloads` | 32 | `source=fotmob`, `adg60_raw_json_v1` | captured/ingested 2026-06-02 | 32/32 have raw/next/page-props SHA-256 fields; their `match_id` values overlap the retained `matches` and `raw_match_data` sets at match level, not as record-level payload-to-raw lineage |
 | `bookmaker_odds_history` | 2 | Bet365 1x2; Pinnacle Asian Handicap; basename `test_sample.html` | collected 2026-05-01 | synthetic-only: both FK-link to the `manual_html_seed` synthetic match; one distinct `match_id` |
 | `odds` | 0 | — | — | no retained OddsPortal market evidence |
 | `matches_oddsportal_mapping` | 0 | — | — | no retained Recon mapping evidence |
@@ -302,12 +302,18 @@ identity baseline: all 60 rows have an `external_id`; 58 are
 `fotmob_live_fetch` with `strong` evidence and `harvested` status. All 76
 `raw_match_data` rows link to `matches` through the enforced FK, with 60
 distinct match IDs and no raw orphan; `fotmob_live_v1` accounts for 58 rows.
-The 32 `fotmob_raw_match_payloads` rows are hashed/captured and link directly
-to both `matches` and `raw_match_data`. This proves retained FotMob data and
-identity linkage, not authority to fetch or write more data. MatchRepository,
-FotMob seed/discovery, raw-data preflight, Recon and legacy OddsPortal paths
-remain source-specific, DB/network/write-capable or historical paths, not D4F
-executors.
+The 32 `fotmob_raw_match_payloads` rows are hashed/captured FotMob payload
+metadata. Their `match_id` values overlap the retained `matches` and
+`raw_match_data` sets at match level. The payload table has neither a foreign
+key nor a unique record identifier that points to a specific `raw_match_data`
+row; because multiple raw versions may exist for one match, this inventory does
+not prove one-to-one or record-level payload-to-raw lineage. This precision does
+not change the retained FotMob identity baseline, the enforced
+`raw_match_data`-to-`matches` FK linkage, or the FotMob asset package's
+`clean_candidate` classification. It does not authorize a fetch or write.
+MatchRepository, FotMob seed/discovery, raw-data preflight, Recon and legacy
+OddsPortal paths remain source-specific, DB/network/write-capable or historical
+paths, not D4F executors.
 
 ## 6. Proposed linkage contract
 
@@ -389,8 +395,8 @@ D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely 
 | role/grant | bounded | `claude_reader` local socket access; SELECT-only listed grants; no membership/CREATE | Target grants outside this dev DB | D4F-C/E |
 | migration need | design_only | Recommended separation | Approved DDL design | D4F-C |
 | rollback | bounded | D4E transaction conflict | Target procedure | D4F-C/E |
-| real source location | bounded | Retained FotMob data/payload records in local DB | Approved real historical odds location | D4F-D/E |
-| source hashes | bounded | 76 raw data hashes and 32 payload hashes retained locally | Immutable approved historical-odds manifest | D4F-D/E |
+| real source location | not_proven | Retained FotMob data/payload records do not identify an approved historical-odds input package | Approved real historical odds location | D4F-D/E |
+| source hashes | not_proven | Retained FotMob raw/payload hashes establish integrity only for those FotMob match-detail assets, not a historical-odds input package | Immutable approved historical-odds manifest | D4F-D/E |
 | provenance | not_proven | Manifest contract | License/upstream evidence | D4F-D/E |
 | real sample envelope | blocked | No real inventory | Hash/scope/count evidence | D4F-D/E |
 | training isolation | bounded | Quarantine separation/legacy risk | Quality/leakage gate | Training |

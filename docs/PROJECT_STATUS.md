@@ -78,8 +78,9 @@ The local evidence is substantive but narrow:
 - `raw_match_data=76`, all FK-linked to `matches`, with 60 distinct match IDs,
   zero raw orphans and zero duplicate `(match_id, data_version)` groups;
   `fotmob_live_v1=58`;
-- `fotmob_raw_match_payloads=32`, all hashed/captured and directly linked to
-  both `matches` and `raw_match_data`;
+- `fotmob_raw_match_payloads=32`, all hashed/captured; their `match_id` values
+  overlap the retained `matches` and `raw_match_data` sets at match level, but
+  do not prove a one-to-one or record-level payload-to-raw association;
 - `bookmaker_odds_history=2`, but both rows link to a synthetic match and a
   `test_sample.html` basename, so football-data.co.uk has no retained real-data
   proof here;
@@ -120,6 +121,10 @@ pipeline restart or any write/network exception.
 The remaining blockers are M3 candidate-to-canonical equivalence, approved real
 historical-odds provenance/hash/location, real football-data and OddsPortal
 evidence, M3 staging target availability, and training quality/leakage controls.
+FotMob payload hashes establish integrity only for retained FotMob match-detail
+assets. They do not prove the historical-odds input-package location, immutable
+hashes, manifest or provenance; those remain
+`REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN`.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
