@@ -35,6 +35,26 @@ Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 - The retained data and `matches.match_id`/`external_id` identity baseline are
   evidence assets; they do not establish a future writer entrypoint.
 
+### Current mapping-target chronology (separate from retained rows)
+
+The retained database rows above are asset evidence, not a classification of
+historical mapping targets. A static exact-ID reconciliation covers 50 concrete
+Ligue 1 mapping targets:
+
+- 32 are `clean_candidate`: L2V3BC's earlier `needs_new_evidence` targets have
+  exact ADG59A promotion and ADG59B
+  `accepted_source_controlled_only`/`resolved_source_controlled_only` evidence,
+  with confirmed orientation/date/competition and no duplicate conflict.
+- 10 remain `needs_new_evidence`: they have an exact L2V3BC identity but no
+  exact ADG59A/ADG59B successor or later mapping-state mutation.
+- 8 remain `remain_suspended`: L2V3AT suspended their accepted
+  mapping/baseline after reverse-fixture contradictions, and no exact later
+  resolution exists.
+
+The terminal counts are `32 + 10 + 8 = 50`. No target was fuzzy-matched,
+re-accepted, unsuspended, written to the database or made raw-write ready by
+this reconciliation. `M3` candidate compatibility remains unproven.
+
 ### Historical controlled audit milestone
 
 Four retained rows were explicitly audited under #1487: 4/4 parseable, 4/4
@@ -84,6 +104,9 @@ all 58 rows is not uniquely attributable.
 - `fotmob_raw_match_payloads` stores retained offline full raw-payload assets,
   but establishes match-level overlap only, not record-level payload-to-raw
   lineage; 32/32 parser validation is not proven.
+- Ten concrete historical mapping targets still need new evidence and eight
+  remain suspended; retained row counts do not make the whole historical batch
+  clean.
 - M3 candidate-to-existing-FotMob-identity compatibility is not proven.
 - No network, database write, migration, new identity generation or legacy
   writer execution is authorized.
@@ -99,11 +122,14 @@ all 58 rows is not uniquely attributable.
 
 ## Recommended next step
 
-Recommendation only: perform one bounded, read-only M3
+Do not automatically start another governance review or an M3 compatibility
+audit. If separately authorized, a bounded read-only M3
 candidate-to-existing-FotMob-identity compatibility audit on
-`football_prediction_db_dev / football_db`. It requires separate user
-authorization and permits no network, database write, migration, new identity
-generation, canonical-linkage persistence or legacy writer execution.
+`football_prediction_db_dev / football_db` must scope only the 32 exact
+`clean_candidate` targets and exclude the ten `needs_new_evidence` and eight
+`remain_suspended` targets. It permits no network, database write, migration,
+new identity generation, canonical-linkage persistence or legacy writer
+execution.
 
 The future canonical FotMob writer is a separate `data-*`-gated business
 milestone, not an automatic follow-up or a legacy-script restart.

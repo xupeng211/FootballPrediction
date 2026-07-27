@@ -109,41 +109,52 @@ historical-odds import, training, backtest or prediction occurred.
 
 ```text
 target_state_delta:
-- total_targets: 4
-- moved_to_clean_candidate: 1
+- total_targets: 50
+- moved_to_clean_candidate: 32
 - moved_to_rejected_mapping: 0
 - moved_to_superseded_mapping: 0
 - moved_to_eligible_for_re_acceptance_review: 0
-- moved_to_needs_new_evidence: 2
-- remain_suspended: 0
-- still_blocked_pending_review: 1
+- moved_to_needs_new_evidence: 10
+- remain_suspended: 8
+- still_blocked_pending_review: 0
 - abandon_current_batch_candidate: 0
 - no_progress_count: 0
 ```
 
-Targets are source/database asset packages, not rows: the retained FotMob
-identity/raw package is the one clean reusable candidate; football-data.co.uk
-and OddsPortal each need new retained real-data evidence; M3 staging remains
-blocked pending an approved target with the required schema. The four evaluated
-asset packages provide substantive state progress, so `no_progress_count = 0`;
-this does not claim M3 candidate compatibility, real football-data/OddsPortal
-execution or deployed M3 staging. The formal strategy does not select abandon
-current batch, rebuild canonical identity pipeline, switch/compare a provider,
-or redesign FotMob identity mapping. It does not permit an unbounded legacy
-pipeline restart or any write/network exception.
+This delta counts 50 concrete historical FotMob mapping targets, not database
+asset packages or database rows. Exact-ID chronology reconciliation found 32
+later ADG59A/ADG59B accepted/resolved clean candidates, ten L2V3BC targets that
+still need evidence, and eight L2V3AT mappings/baselines that remain suspended.
+The terminal arithmetic is `32 + 10 + 8 = 50`; the retained database assets do
+not enter this calculation.
 
-The remaining blockers are M3 candidate-to-canonical equivalence, approved real
-historical-odds provenance/hash/location, real football-data and OddsPortal
-evidence, M3 staging target availability, and training quality/leakage controls.
+`no_progress_count = 0` is supported by 32 same-identity, source-controlled
+target state changes after L2V3BC—not by the local database row count, FK or
+hash inventory. The 32 clean candidates are not raw-write authorization and do
+not prove M3 compatibility. The remaining 18 targets are explicitly excluded
+from any future candidate scope until separately authorized evidence changes
+their state. The formal strategy does not select abandon current batch, rebuild
+canonical identity pipeline, switch/compare a provider or redesign FotMob
+identity mapping. It does not permit an unbounded legacy pipeline restart or
+any write/network exception.
+
+The remaining blockers are the ten exact FotMob targets needing new evidence,
+the eight still-suspended mappings/baselines, M3 candidate-to-canonical
+equivalence, approved real historical-odds provenance/hash/location, real
+football-data and OddsPortal evidence, M3 staging target availability, and
+training quality/leakage controls.
 FotMob payload hashes establish integrity only for retained FotMob match-detail
 assets. They do not prove the historical-odds input-package location, immutable
 hashes, manifest or provenance; those remain
 `REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN`.
 
-The only recommended next task is a bounded, read-only M3
-candidate-to-existing-FotMob-identity compatibility audit. It requires separate
-authorization and permits no network, database write, migration, new identity
-generation, canonical-linkage persistence or legacy writer execution.
+No next ingestion review or compatibility audit starts automatically. If the
+user separately authorizes a bounded read-only M3 candidate-to-existing-FotMob
+identity compatibility audit, its scope must be limited to the 32 exact
+`clean_candidate` targets and must exclude the ten `needs_new_evidence` and
+eight `remain_suspended` targets. It permits no network, database write,
+migration, new identity generation, canonical-linkage persistence or legacy
+writer execution.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 

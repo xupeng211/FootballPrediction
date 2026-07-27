@@ -19,6 +19,10 @@
   ingestion metadata; complete `page_props_json` is retained when present but
   is nullable. The assets have match-level `match_id` overlap only;
   record-level payload-to-raw lineage is not proven.
+- **Separate mapping-target state**: retained rows are not mapping-target
+  classifications. Exact historical reconciliation yields 32 `clean_candidate`,
+  10 `needs_new_evidence` and 8 `remain_suspended` targets; row existence does
+  not make all 50 historical targets clean.
 
 ## Historical controlled audit milestone
 
@@ -52,6 +56,8 @@ that all 58 current `fotmob_live_v1` rows received identical validation.
 - Unique writer/run provenance for all 58 rows.
 - That the legacy N=3 script is canonical, reusable or a recovery dependency.
 - Record-level payload-to-raw lineage.
+- A clean state for every historical FotMob mapping target; eight remain
+  suspended and ten need new evidence in the separate target chronology.
 - Current external endpoint availability, production acquisition readiness or
   scalability of a future canonical pipeline.
 - Network or database-write authorization, parser implementation, feature
@@ -69,8 +75,10 @@ that all 58 current `fotmob_live_v1` rows received identical validation.
 
 ## Recommended next step
 
-Recommendation only: one bounded, read-only M3 candidate-to-existing-FotMob-
-identity compatibility audit. It requires separate user authorization and
+Do not automatically start another governance review or compatibility audit. If
+the user separately authorizes a bounded, read-only M3
+candidate-to-existing-FotMob-identity compatibility audit, it must exclude the
+ten `needs_new_evidence` and eight `remain_suspended` mapping targets. It
 permits no network, database write, migration, new identity generation,
 canonical-linkage persistence or legacy writer execution.
 

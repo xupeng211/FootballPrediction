@@ -97,41 +97,40 @@ prediction result.
 
 ```text
 target_state_delta:
-- total_targets: 4
-- moved_to_clean_candidate: 1
+- total_targets: 50
+- moved_to_clean_candidate: 32
 - moved_to_rejected_mapping: 0
 - moved_to_superseded_mapping: 0
 - moved_to_eligible_for_re_acceptance_review: 0
-- moved_to_needs_new_evidence: 2
-- remain_suspended: 0
-- still_blocked_pending_review: 1
+- moved_to_needs_new_evidence: 10
+- remain_suspended: 8
+- still_blocked_pending_review: 0
 - abandon_current_batch_candidate: 0
 - no_progress_count: 0
 ```
 
-Targets are database asset packages, not individual rows: (1) the FotMob
-identity/raw package moved to `clean_candidate`; (2) the football-data.co.uk
-historical result/odds package needs new real-data evidence because its two
-retained bookmaker rows point to a synthetic match; (3) the OddsPortal
-Recon/odds package needs new evidence because both retained tables are empty;
-and (4) the M3 staging package remains blocked because the four staging tables
-are absent from this development DB and the separately preserved synthetic
-sandbox has no running container. The `1 + 2 + 1` target states reconcile to
-`total_targets = 4`.
+The counting unit is a concrete historical FotMob mapping target, keyed by
+exact `match_id`/`target_match_id` or exact FotMob external ID. Retained
+database asset packages are explicitly excluded. The terminal classifications
+reconcile as `32 + 10 + 8 = 50`: 32 exact L2V3BC targets later received
+ADG59A canonical promotion and ADG59B source-controlled accepted/resolved
+state; ten have only the L2V3BC `needs_new_evidence` result; and eight retain
+the L2V3AT suspension because no exact later resolution exists.
 
-The prior no-progress count was two governance-only PRs. This inventory used a
-user-authorized, locally retained database target, confirmed retained real
-FotMob assets, and classified all four asset packages. One target therefore
-moved from unknown/not-evaluated to `clean_candidate`, so this is substantive
-ingestion-target evidence progress and `no_progress_count` resets to zero.
-`abandon_current_batch_candidate` is zero because the formal direction is
-`redo source inventory strategy` and its first bounded inventory produced a
-clean reusable FotMob candidate.
+The prior L2V3BC result triggered the no-progress stop rule when all 42 of its
+targets were `needs_new_evidence`. The chronology now proves 32 concrete target
+state changes through later, same-identity ADG59A/ADG59B artifacts. That is
+target-level evidence progress—not an inference from retained database rows—so
+`no_progress_count` recomputes to zero. `abandon_current_batch_candidate` is
+zero because this bounded reconciliation found 32 clean candidates, while
+retaining the unresolved 18 targets as non-clean.
 
 ### Blockers not resolved
 
 The following remain unresolved:
 
+* ten concrete FotMob targets that still need new evidence and eight mappings/
+  baselines that remain suspended;
 * M3 candidate-to-`matches.match_id` compatibility and value overlap;
 * team, competition, season and kickoff/timezone mappings;
 * real source location, immutable hashes and provenance;
@@ -181,7 +180,8 @@ historical-data acquisition occurred.
 
 ```text
 affected local asset package count = 4
-clean reusable asset package count = 1
+reconciled concrete FotMob mapping target count = 50
+target-level clean candidate count = 32
 FORMAL_ARCHITECTURE_DECISION_GATE_DIRECTION:
 redo source inventory strategy
 IMPLEMENTATION_APPROACH:
@@ -197,8 +197,8 @@ pipeline restart.
 
 The other formal directions were evaluated and not selected:
 
-* `abandon current batch`: not selected because retained real FotMob assets
-  produced a clean candidate.
+* `abandon current batch`: not selected because 32 exact historical FotMob
+  mapping targets have later source-controlled accepted/resolved evidence.
 * `rebuild canonical identity pipeline`: not selected because the retained
   `matches`/`external_id` baseline has real-data proof.
 * `switch data source / compare alternative source`: not selected; this work
@@ -241,6 +241,10 @@ but has no running container and was not started, mounted or inspected.
 | football-data.co.uk retained odds | 2 rows, both linked to a synthetic match and `test_sample.html` | synthetic-only retained evidence |
 | OddsPortal retained mapping/odds | both tables exist but contain zero rows | no retained execution evidence |
 | M3 staging tables | four V26.8 tables absent from this development DB | blocked local target |
+
+This is an **asset inventory summary**, not a target-state delta. Its evidence
+levels describe retained data, code or staging availability; none of its four
+asset packages is counted as a FotMob mapping target below.
 
 ### Local database key-table inventory
 
@@ -285,6 +289,98 @@ OddsPortal import.
 | OddsPortal Recon / harvest pipeline | Mapping and market tables exist; both counts are zero; legacy SQL writers exist in the codebase | `NO_EVIDENCE` of retained execution | Keep legacy browser/harvest routes blocked; only safely adapt after separate evidence/authorization |
 | M3 historical persistence repository | Historical D4E sandbox record is a 1/1/6/3 controlled synthetic write; the tables are absent here | `PROVEN_BY_SYNTHETIC_CONTROLLED_WRITE` | Reuse contract only; it does not prove real-provider ingestion or canonical linkage |
 
+### FotMob mapping-target chronology reconciliation
+
+The retained database assets above and historical mapping targets are different
+objects. This static reconciliation used no database data as a mapping-state
+shortcut. It read and compared the following chronological evidence:
+
+| Phase | Date | Concrete target result |
+| --- | --- | --- |
+| L2V3AT | 2026-05-26 | 8 accepted mappings/baselines suspended; 42 distinct targets blocked pending review |
+| L2V3BC | 2026-05-27 | the same 42 exact external IDs moved from `blocked_pending_review` to `needs_new_evidence`; no clean/reject/supersede/re-acceptance result |
+| ADG59A | 2026-05-31 | 32 exact targets promoted with confirmed orientation/date/competition and no duplicate conflict |
+| ADG59B | 2026-06-01 | those 32 exact targets recorded `accepted_source_controlled_only` and `resolved_source_controlled_only`; no DB/raw write and no raw-write readiness |
+| later ADG60 artifacts | 2026-06-01–02 | reuse the same 32 `accepted_suspension_resolved` identities for preflight/no-write evidence; no later mapping reversal, rejection or contradiction found |
+
+Canonical keys were not inferred from order or fuzzy fixture similarity. Exact
+link counts are: 42 L2V3AT blocked `schedule_external_id` → L2V3BC
+`external_id`; 32 L2V3BC `external_id` → ADG59B `corrected_hash_id`; and 32
+ADG59A → ADG59B `target_match_id`. Exact fixture-tuple matching was not needed;
+`unreconciled_identity_count = 0`. The eight L2V3AT suspended schedule IDs have
+zero exact ADG59B matches and therefore remain suspended rather than being
+silently merged into the 32 later targets.
+
+Evidence labels used in the table are exact tracked paths:
+
+- **L2V3AT** — `docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.accepted_mapping_baseline_suspension_result.phase521l2v3at.json`
+- **L2V3BC** — `docs/_manifests/fotmob_pageprops_v2_ligue1_2025_2026_profile_001.bounded_expanded_blocked_target_review_result.phase521l2v3bc.json`
+- **ADG59B** — `docs/_manifests/fotmob_ligue1_adg59b_source_controlled_acceptance_suspension_state.json`
+
+<details>
+<summary>All 50 concrete FotMob mapping targets and latest authoritative state</summary>
+
+| Target key | Earlier state | Later same-identity evidence | Final taxonomy | Latest evidence |
+| --- | --- | --- | --- | --- |
+| `53_20252026_4830458` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830459` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830460` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830461` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| `53_20252026_4830462` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830463` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| `53_20252026_4830464` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830465` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| `53_20252026_4830466` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| `53_20252026_4830467` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830468` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830469` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830470` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830471` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
+| `53_20252026_4830472` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830473` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830474` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830475` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830476` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830477` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830478` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830479` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830480` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830481` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| `53_20252026_4830482` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830483` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830484` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830485` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830486` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830487` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830488` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830489` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830490` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830491` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830492` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830493` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830494` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830495` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830496` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| `53_20252026_4830497` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830498` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830499` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830500` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830501` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830502` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830505` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830507` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830508` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| `53_20252026_4830510` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
+| `53_20252026_4830511` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+
+</details>
+
+`clean_candidate` here means identity/source/baseline evidence is sufficient
+for a later candidate pool only. It is neither raw-write authorization nor M3
+candidate-to-existing-FotMob compatibility proof. The 32 clean classifications
+are not double-counted as `superseded_mapping`: their earlier state was blocked
+or needs-evidence, not an accepted mapping replaced by a newer mapping.
+
 ## 4. Current staging identity contract
 
 V26.8 declares nullable TEXT `canonical_match_id` and `candidate_match_id`; it has no matches FK. `canonical_match_fk_status` allows only `unverified_database_fk` and `verified_database_fk`. The mapper sets accepted rows to `canonical_match_id: null`, copies local `match_link.matched_id` to `candidate_match_id`, and sets `unverified_database_fk`.
@@ -326,8 +422,8 @@ record identifier that points to a specific `raw_match_data` row; because
 multiple raw versions may exist for one match, this inventory does not prove
 one-to-one or record-level payload-to-raw lineage. This precision does not
 change the retained FotMob identity baseline, the enforced
-`raw_match_data`-to-`matches` FK linkage, or the FotMob asset package's
-`clean_candidate` classification. It does not authorize a fetch or write.
+`raw_match_data`-to-`matches` FK linkage, or the separately reconciled
+target-level classifications above. It does not authorize a fetch or write.
 MatchRepository, FotMob seed/discovery, raw-data preflight, Recon and legacy
 OddsPortal paths remain source-specific, DB/network/write-capable or historical
 paths, not D4F executors.
