@@ -1,12 +1,12 @@
 # M3-D4F Candidate-to-Canonical Linkage and Real Import Readiness Review
 
 - lifecycle: current-state
-- scope: documentation-only static readiness review
+- scope: documentation-only evidence-backed local inventory review
 - issue: #1793
 - reviewed main baseline: 535e144cadc7019b8e86fc62e6e2bb1f4216a8c8
-- database access: none
-- Docker/Redis access: none
-- real source payload access: none
+- database access: one explicitly authorized local Docker PostgreSQL read-only inventory
+- Docker/Redis access: Docker metadata and the running local PostgreSQL container only; Redis not accessed
+- full real source payload export/access: none
 
 ## 1. Executive decision
 
@@ -25,10 +25,18 @@ training, backtest or prediction.
 Current active ingestion convergence state:
 
 ```text
-INGESTION_ARCHITECTURE_DECISION_REQUIRED
+FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
-Automatic D4F-A path: **blocked**. User architecture selection: **pending**.
+The user selected:
+
+```text
+RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+```
+
+This does not authorize an unbounded legacy restart, network acquisition, a
+database write, a migration, a real import, or D4F-B through D4F-E. It only
+authorized the bounded local inventory recorded below.
 
 ## Outcome-gate declaration
 
@@ -36,16 +44,22 @@ Automatic D4F-A path: **blocked**. User architecture selection: **pending**.
 
 ```text
 Authorization task type = docs-only
-Ingestion convergence classification = governance-only
-Consecutive no-progress ingestion PR count = 2
-User confirmation for corrective governance continuation = yes
-User confirmation for D4F-A no-progress exception = no
+Ingestion convergence classification = evidence-backed inventory
+Local Docker DB inventory = explicitly authorized
+Database target = football_prediction_db_dev / football_db
+Database role = claude_reader
+Role-level table posture = SELECT-only; no inherited role, no schema CREATE
+Transaction enforcement = BEGIN READ ONLY, transaction_read_only=on
+Network acquisition = no
+Database writes = no
+Consecutive no-progress ingestion PR count = 0
+User architecture decision = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
 ```
 
 `docs-only` is the machine-readable file/authorization type because this PR
-changes only the two named documents. `governance-only` is the ingestion
-convergence classification. They are not mutually exclusive, and `docs-only`
-does not bypass the governance stop gate.
+changes only the two named documents. The inventory classification records the
+separately authorized local evidence read; it does not bypass any write or
+network boundary.
 
 The user explicitly confirmed one corrective update inside the already-open PR
 #1805 to close the Ready-triggered Codex P1 findings and enter the required
@@ -68,57 +82,59 @@ blocker. The current active convergence transition is:
 ```text
 D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
 ->
-INGESTION_ARCHITECTURE_DECISION_REQUIRED
+EXISTING_ACQUISITION_ASSETS_INVENTORIED
 ```
 
-This is a convergence-stop state change, not business or runtime progress.
+This is evidence-backed progress for the bounded local asset targets. It is not
+a new acquisition, import, linkage write, migration, feature run, training or
+prediction result.
 
 ### Target-state delta
 
 ```text
 target_state_delta:
-- total_targets: 0
-- moved_to_clean_candidate: 0
+- total_targets: 4
+- moved_to_clean_candidate: 1
 - moved_to_rejected_mapping: 0
 - moved_to_superseded_mapping: 0
 - moved_to_eligible_for_re_acceptance_review: 0
-- moved_to_needs_new_evidence: 0
+- moved_to_needs_new_evidence: 2
 - remain_suspended: 0
-- still_blocked_pending_review: 0
-- abandon_current_batch_candidate: 1
-- no_progress_count: 2
+- still_blocked_pending_review: 1
+- abandon_current_batch_candidate: 0
+- no_progress_count: 0
 ```
 
-`total_targets = 0` because this work read or evaluated no live ingestion
-target. All live-target transitions, suspension counts and blocked counts are
-therefore zero. The readiness matrix's `not_proven` domains describe missing
-evidence; they do not assign an evaluated target to `needs_new_evidence`.
+Targets are database asset packages, not individual rows: (1) the FotMob
+identity/raw package moved to `clean_candidate`; (2) the football-data.co.uk
+historical result/odds package needs new real-data evidence because its two
+retained bookmaker rows point to a synthetic match; (3) the OddsPortal
+Recon/odds package needs new evidence because both retained tables are empty;
+and (4) the M3 staging package remains blocked because the four staging tables
+are absent from this development DB and the separately preserved synthetic
+sandbox has no running container. The `1 + 2 + 1` target states reconcile to
+`total_targets = 4`.
 
-`abandon_current_batch_candidate = 1` is a batch-level convergence conclusion,
-not a live-target quantity. It does not participate in the `total_targets`
-sum and does not assert that a database or data target was evaluated. It means
-the current D4F readiness/planning governance batch cannot safely converge by
-continuing local review and must enter the Architecture Decision Gate.
-
-`no_progress_count = 2` consists of PR #1804's readiness review and PR #1805's
-outcome-gate corrective governance work. Neither read a live target nor made a
-material ingestion-target state transition.
+The prior no-progress count was two governance-only PRs. This inventory used a
+user-authorized, locally retained database target and materially changed target
+states, so it resets to zero. `abandon_current_batch_candidate` is zero because
+the user selected recovery and the retained FotMob baseline supports reuse.
 
 ### Blockers not resolved
 
 The following remain unresolved:
 
-* canonical schema freshness;
-* `matches.match_id` compatibility and value overlap;
+* M3 candidate-to-`matches.match_id` compatibility and value overlap;
 * team, competition, season and kickoff/timezone mappings;
-* exact non-production target and read-only grants;
 * real source location, immutable hashes and provenance;
 * real import envelope;
 * training quality and leakage controls.
 
 ### Why this governance-only correction is material
 
-No runtime behavior or business-data target changed.
+No runtime behavior or business-data was changed. The local inventory did
+evaluate retained database assets and confirmed the development schema, the
+non-production target and the `claude_reader` SELECT-only posture.
 
 The correction is material because it stops the unsafe automatic D4F-A path
 after the second no-progress ingestion governance PR and records the required
@@ -132,36 +148,34 @@ canonical-write authorization, real-import readiness or training readiness.
 ```text
 triggered = yes
 reason = two consecutive no-progress ingestion governance/review PRs
-automatic next planning/review = prohibited
-automatic D4F-A = prohibited
-user decision = pending
-USER_DECISION_REQUIRED
+automatic next planning/review = prohibited without separate authorization
+automatic further D4F-A = prohibited
+user decision = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+current conclusion = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
-Another static review cannot remove the current blockers: exact non-production
-canonical target; exact host/database; exact read-only role/grants; live
-canonical schema freshness; `matches.match_id` compatibility and overlap;
-team/competition/season/timezone mapping evidence; and real-source
-location/hash/provenance. Only live evidence under separate authorization could
-address those gaps.
+The user-authorized inventory removed the exact local target/read-only-role and
+canonical-schema-freshness blockers for `football_prediction_db_dev/football_db`.
+It also established a reusable FotMob identity/raw baseline, but it did not
+prove M3 candidate compatibility, provider provenance, a real historical odds
+file, or any cross-source linkage.
 
-Bounded evidence already attempted: tracked schema/migration review; current
-staging contracts; candidate identity/linkage code and tests; D4E synthetic
-persistent-sandbox historical evidence; and existing source-of-truth
-documentation. No live DB, real source payload or external historical-data
-acquisition occurred.
+Bounded evidence includes tracked schema/migration review; current staging
+contracts; candidate identity/linkage code and tests; D4E synthetic
+persistent-sandbox historical evidence; existing source-of-truth documentation;
+and this local read-only inventory. No external source payload or external
+historical-data acquisition occurred.
 
 ```text
-affected live ingestion target count = 0
-affected governance batch count = 1
+affected local asset package count = 4
+clean reusable asset package count = 1
 RECOMMENDED_ARCHITECTURE_DIRECTION:
-ABANDON_CURRENT_D4F_READINESS_BATCH
+REUSE_PROVEN_EXISTING_COMPONENTS
 ```
 
-The recommendation pauses and ends the current accumulating readiness/planning
-batch, preserves D4E persistent-sandbox and audit evidence, and deletes or
-closes nothing. It does not permanently abandon historical odds or M3; it waits
-for a user architecture decision or a separately authorized D4F-A exception.
+The recommendation reuses the FotMob identity baseline rather than replacing
+it. It preserves D4E sandbox evidence, deletes or closes nothing, and does not
+authorize a legacy bulk pipeline restart.
 
 The alternatives are not permanently rejected:
 
@@ -174,27 +188,25 @@ The alternatives are not permanently rejected:
 * `REDESIGN_FOTMOB_IDENTITY_MAPPING_STRATEGY` is not recommended because no
   evidence identifies FotMob mapping as the first D4F blocker.
 
-The user must select one direction:
-
-```text
-A. accept/pause: abandon current D4F readiness batch
-B. rebuild canonical identity pipeline
-C. redo source inventory strategy
-D. switch data source / compare alternative source
-E. redesign FotMob identity mapping strategy
-F. explicitly authorize a no-progress exception to continue D4F-A
-```
-
-Option F requires explicit user selection and rationale plus approval of the
-exact non-production target, host, database, read-only role, allowed
-objects/views, columns and aggregate queries, `transaction_read_only`
-enforcement, statement timeout, maximum rows/output, no raw payload, no COPY,
-no temporary objects, no writes and no Docker/service startup. This review does
-not select F.
+The decision is no longer pending. The user selected
+`RECOVER_EXISTING_ACQUISITION_ARCHITECTURE`; the bounded inventory used the
+already-running local `football_prediction_db_dev` container only. It did not
+select an unbounded legacy restart or any network/write exception.
 
 ## 2. Scope and non-goals
 
-Only Git-tracked source, SQL, tests, ordinary docs, Git metadata and Issue #1793 metadata were read. No .env, credential, runtime secret, external source payload, DB, Redis, Docker/Compose, migration, service test, or local Gatekeeper was used. No external historical-data acquisition, scraper execution, browser/proxy access, or source-payload network fetch occurred. GitHub Issue/PR metadata reads are excluded from that source-acquisition statement. Historical report counts are historical evidence, not current live truth.
+Git-tracked source, SQL, tests, ordinary docs and Git metadata were read. The
+only runtime target was the already-running local Docker PostgreSQL 15 container
+`football_prediction_db_dev`, labelled as the repository's `footballprediction`
+development `db` service. Connection used the container Unix socket with the
+declared `claude_reader` role and no password. Every query ran in an independent
+`BEGIN READ ONLY` transaction with a 10-second statement timeout, a 2-second
+lock timeout and a 15-second idle-in-transaction timeout; `transaction_read_only`
+returned `on`. No `.env`, container environment, credential, remote endpoint,
+Redis, browser, proxy, migration, write or full raw/source payload was
+read/exported. Output was limited to schema, aggregate counts, safe identity
+fields and at most five metadata-only samples per table. The M3 persistent-sandbox volume was observed
+but has no running container and was not started, mounted or inspected.
 
 ## 3. Evidence reviewed
 
@@ -206,7 +218,46 @@ Only Git-tracked source, SQL, tests, ordinary docs, Git metadata and Issue #1793
 | Canonical matches | deploy/docker/init_db.sql, V6.5, V12.4, match_repository.py | current static |
 | Identity workflows | FotMob exporter, controlled seed/readiness, Recon | current static |
 | D4E state/counts | PROJECT_STATUS, D4D/runbook docs, Issue #1793 | historical only |
-| Real source | tracked fixtures and test manifests only | not proven |
+| Local Docker target | `football_prediction_db_dev` / `football_db`, `claude_reader` | current read-only inventory |
+| FotMob retained baseline | 58 strong `fotmob_live_fetch` matches; 76 linked raw rows; 32 hashed payload records | retained local data |
+| football-data.co.uk retained odds | 2 rows, both linked to a synthetic match and `test_sample.html` | synthetic-only retained evidence |
+| OddsPortal retained mapping/odds | both tables exist but contain zero rows | no retained execution evidence |
+| M3 staging tables | four V26.8 tables absent from this development DB | blocked local target |
+
+### Local database key-table inventory
+
+The inventory found one non-system schema, `public`, and 19 base tables. Row
+counts below are bounded exact `COUNT(*)` results; catalog `n_live_tup` was not
+used as a substitute because it was stale for populated tables. Time ranges are
+UTC and intentionally omit raw payload values.
+
+| Table / asset | Rows | Source or data version | Retained time range | Classification and identity result |
+| --- | ---: | --- | --- | --- |
+| `matches` | 60 | 58 strong `fotmob_live_fetch`/`V25.1`; 2 synthetic rows | real FotMob match dates 2025-08-15–2026-05-10 | 60/60 have `external_id`; 58 are `harvested`; external-ID duplicate groups: 0 |
+| `raw_match_data` | 76 | `fotmob_live_v1` 58; HTML hydration 8; page-props 8; synthetic 2 | real FotMob collection 2026-05-14–2026-06-12 | 76/76 have a hash and an enforced FK to `matches`; 60 distinct `match_id`; raw orphans: 0 |
+| `fotmob_raw_match_payloads` | 32 | `source=fotmob`, `adg60_raw_json_v1` | captured/ingested 2026-06-02 | 32/32 have raw/next/page-props SHA-256 fields and link directly to both `matches` and `raw_match_data` |
+| `bookmaker_odds_history` | 2 | Bet365 1x2; Pinnacle Asian Handicap; basename `test_sample.html` | collected 2026-05-01 | synthetic-only: both FK-link to the `manual_html_seed` synthetic match; one distinct `match_id` |
+| `odds` | 0 | — | — | no retained OddsPortal market evidence |
+| `matches_oddsportal_mapping` | 0 | — | — | no retained Recon mapping evidence |
+| M3 V26.8 staging tables | absent | — | — | no M3 import-run/source-file/accepted/quarantine target in this development DB |
+
+`football_match_targets` has 14 FotMob targets, but only one is marked
+`raw_json_stored`; this is supporting discovery state, not an additional
+provider target. `football_source_identities` has ten FotMob competition/team
+identity rows. Neither table proves a historical football-data.co.uk or
+OddsPortal import.
+
+### Reverse-proven component matrix
+
+| Component or retained asset | Database/static evidence | Proof level | Recovery treatment |
+| --- | --- | --- | --- |
+| FotMob `matches` identity baseline | 58 strong, harvested FotMob match rows; all 60 matches have external IDs; raw FK coverage is 60/60 | `PROVEN_BY_RETAINED_REAL_DATA` for the retained identity asset; historic writer invocation is not uniquely attributable | Reuse `matches.match_id`/`external_id` baseline; do not recreate identities |
+| FotMob raw retention writer family | 58 `fotmob_live_v1` rows with hashes and links; `n3_live_fotmob_raw_retain.js` writes the same table/version behind its DB guard | `PROVEN_BY_RETAINED_REAL_DATA` for retained behavior; exact historic script run is `LEGACY_DATA_PRESENT_WRITER_UNCERTAIN` | Reuse the guarded writer contract, never run it without new network/write authorization |
+| `DiscoveryService` / `FixtureRepository` | Current code persists `matches`, but retained rows carry no run-level writer provenance | `IMPLEMENTED_NOT_EXECUTION_PROVEN` for the exact component execution | Preserve and assess as the controlled L1 route; do not rewrite it |
+| FotMob raw parser/detail components | 32 retained, hashed raw-payload metadata rows prove collection/persistence outcome, not a named parser invocation | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | Reuse after a future bounded no-write parser verification; no network run now |
+| football-data CSV adapter / `ExistingFotMobMatchResolver` | `csv_bulk_loader.js` has a resolver and bookmaker writer, but the only two retained rows are synthetic HTML samples | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | Do not rewrite parser/resolver; first obtain a bounded real-file, no-write verification authorization |
+| OddsPortal Recon / harvest pipeline | Mapping and market tables exist; both counts are zero; legacy SQL writers exist in the codebase | `NO_EVIDENCE` of retained execution | Keep legacy browser/harvest routes blocked; only safely adapt after separate evidence/authorization |
+| M3 historical persistence repository | Historical D4E sandbox record is a 1/1/6/3 controlled synthetic write; the tables are absent here | `PROVEN_BY_SYNTHETIC_CONTROLLED_WRITE` | Reuse contract only; it does not prove real-provider ingestion or canonical linkage |
 
 ## 4. Current staging identity contract
 
@@ -228,7 +279,17 @@ Candidate ID is a **local deterministic candidate identity**, not proof that it 
 
 Tracked bootstrap DDL declares `matches.match_id VARCHAR(50) PRIMARY KEY`, nullable `external_id VARCHAR(100)`, `league_name`, `season`, ordered `home_team`/`away_team`, nullable `match_date TIMESTAMPTZ`, `status`, and `data_source`. Static indexes cover season/date/teams; V6.5 expresses lowercase status and `YYYY/YYYY` season constraints. Existing raw/L3/OddsPortal mappings show FK patterns to `matches(match_id)`.
 
-MatchRepository, FotMob seed/discovery, raw-data preflight, Recon and legacy OddsPortal paths are not D4F executors: they are source-specific, DB/network/write-capable, or historical Phase paths. Reusable concepts only are external-ID provenance, ordered teams, normalized evidence, unique-candidate requirement and fail-closed conflict handling. Any earlier live observation is a **historical database observation; requires fresh read-only inventory**.
+The local inventory now confirms `matches.match_id` as the retained FotMob
+identity baseline: all 60 rows have an `external_id`; 58 are
+`fotmob_live_fetch` with `strong` evidence and `harvested` status. All 76
+`raw_match_data` rows link to `matches` through the enforced FK, with 60
+distinct match IDs and no raw orphan; `fotmob_live_v1` accounts for 58 rows.
+The 32 `fotmob_raw_match_payloads` rows are hashed/captured and link directly
+to both `matches` and `raw_match_data`. This proves retained FotMob data and
+identity linkage, not authority to fetch or write more data. MatchRepository,
+FotMob seed/discovery, raw-data preflight, Recon and legacy OddsPortal paths
+remain source-specific, DB/network/write-capable or historical paths, not D4F
+executors.
 
 ## 6. Proposed linkage contract
 
@@ -297,21 +358,21 @@ D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely 
 | Domain | Current status | Evidence | Missing proof | Blocks which phase |
 | ------ | -------------- | -------- | ------------- | ------------------ |
 | candidate ID stability | bounded | Deterministic local linker | Canonical equivalence/collision scope | D4F-C/E |
-| matches.match_id compatibility | not_proven | Static VARCHAR(50) PK | Live schema/value overlap | D4F-C/E |
-| canonical schema freshness | historical_only | Init/migration SQL | Fresh inventory | D4F-C/E |
+| matches.match_id compatibility | bounded | Local `matches` PK/external-ID/raw-FK inventory | M3 candidate equivalence | D4F-C/E |
+| canonical schema freshness | bounded | Current local development schema inventory | Approved target-specific inventory elsewhere | D4F-C/E |
 | team normalization | design_only | Local normalization/Recon concepts | Cross-source mapping | D4F-B/C/E |
 | competition mapping | design_only | Fields exist | Canonical mapping | D4F-B/C/E |
 | season mapping | bounded | Static format intent | Target format/coverage | D4F-A/C/E |
 | kickoff/timezone semantics | bounded | Strict timestamp/evidence | Canonical-source mapping | D4F-B/C/E |
 | home/away identity | bounded | Ordered/reversal rejection | Normalized canonical IDs | D4F-B/C/E |
-| source external ID | bounded | Provider-scoped exact rule | Canonical mapping/uniqueness | D4F-A/C/E |
+| source external ID | bounded | 60 populated `matches.external_id`; zero duplicate groups in this DB | M3 provider mapping/uniqueness | D4F-C/E |
 | link decision audit model | design_only | Existing evidence/replay | Approved model/migration | D4F-C |
 | FK strategy | design_only | Existing FK/no-FK boundary | Inventory + migration design | D4F-C |
-| role/grant | design_only | Static D4E/dev material | Target grants | D4F-A/C/E |
+| role/grant | bounded | `claude_reader` local socket access; SELECT-only listed grants; no membership/CREATE | Target grants outside this dev DB | D4F-C/E |
 | migration need | design_only | Recommended separation | Approved DDL design | D4F-C |
 | rollback | bounded | D4E transaction conflict | Target procedure | D4F-C/E |
-| real source location | not_proven | Fixtures only | Approved location | D4F-D/E |
-| source hashes | not_proven | Fixture hashes only | Immutable real manifest | D4F-D/E |
+| real source location | bounded | Retained FotMob data/payload records in local DB | Approved real historical odds location | D4F-D/E |
+| source hashes | bounded | 76 raw data hashes and 32 payload hashes retained locally | Immutable approved historical-odds manifest | D4F-D/E |
 | provenance | not_proven | Manifest contract | License/upstream evidence | D4F-D/E |
 | real sample envelope | blocked | No real inventory | Hash/scope/count evidence | D4F-D/E |
 | training isolation | bounded | Quarantine separation/legacy risk | Quality/leakage gate | Training |
@@ -319,12 +380,20 @@ D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely 
 
 ## 12. Blocking conditions and current decision boundary
 
-Blocking conditions: no fresh canonical inventory; no approved team/competition/season/timezone mapping; no target grants; no link-audit migration; no real source location/hash/provenance; and no training quality/leakage acceptance.
+Blocking conditions: M3 candidate-to-canonical equivalence has not been proven;
+there is no approved real historical-odds location/hash/provenance; football-data
+retained evidence is synthetic only; retained OddsPortal mapping/odds evidence is
+absent; the M3 staging tables are not present in this development DB; and no
+training quality/leakage acceptance exists.
 
-The historical D4F-A package is not the current next step. D4F-A is blocked
-pending the user Architecture Decision Gate selection above. No inventory may
-be designed, authorized or executed automatically.
+The user-selected recovery path permits reuse planning only from the retained
+FotMob baseline. Any next network fetch, database write, M3 staging migration,
+linkage decision or real import still needs a separate authorization.
 
 ## 13. Explicit non-execution declaration
 
-No database connection, Docker/Redis start, real source payload read, inventory, migration, canonical/staging/matches write, odds import, training, Issue #1793 comment change, PR-ready action or merge occurred. D4F implementation did not start.
+One authorized local database inventory occurred. No Docker daemon/container was
+started, stopped or restarted; no volume changed; no remote or production
+database was connected; no source network request, migration, canonical/staging
+write, odds import, training, Issue #1793 change, PR-ready action or merge
+occurred. D4F-B through D4F-E did not start.

@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-07-26
+Last updated: 2026-07-27
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 
@@ -51,83 +51,64 @@ Last updated: 2026-07-26
     retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
     or modify that sandbox. D4F remains unauthorized.
 
-M3-D4F historical static readiness assessment:
-**`READY_FOR_D4F_READ_ONLY_INVENTORY_AUTHORIZATION`**.
+M3-D4F local evidence-backed inventory conclusion:
+**`FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED`**.
 
-Readiness documentation PR: #1804.
-This historical boundary only permits future user consideration of a separately
-authorized SELECT-only canonical identity inventory.
+The user selected **`RECOVER_EXISTING_ACQUISITION_ARCHITECTURE`** and explicitly
+authorized one local Docker, non-production, read-only inventory. The only
+runtime target was the already-running repository-owned
+`football_prediction_db_dev` PostgreSQL 15 container and `football_db`.
+Connection used the container Unix socket as `claude_reader`, without a
+password or TCP; the role has no inherited roles, no superuser/create role/create
+database capability, no `public` schema CREATE privilege, and listed project
+table grants are SELECT-only. Every query used `BEGIN READ ONLY` with
+`transaction_read_only=on`, 10-second statement timeout and bounded output.
 
-It does not authorize inventory execution, implementation, migration,
-canonical linkage, matches/canonical-odds write, staging write, real historical
-import, training, backtest or prediction.
+The local evidence is substantive but narrow:
 
-Current active M3-D4F convergence state:
+- `matches=60`, all with `external_id`; 58 are strong, harvested
+  `fotmob_live_fetch` records;
+- `raw_match_data=76`, all FK-linked to `matches`, with 60 distinct match IDs,
+  zero raw orphans and zero duplicate `(match_id, data_version)` groups;
+  `fotmob_live_v1=58`;
+- `fotmob_raw_match_payloads=32`, all hashed/captured and directly linked to
+  both `matches` and `raw_match_data`;
+- `bookmaker_odds_history=2`, but both rows link to a synthetic match and a
+  `test_sample.html` basename, so football-data.co.uk has no retained real-data
+  proof here;
+- `odds=0` and `matches_oddsportal_mapping=0`, so OddsPortal has no retained
+  execution proof here;
+- the four M3 historical staging tables are absent from this development DB.
+  The named D4E persistent-sandbox volume remains untouched and has no running
+  database container.
 
-```text
-INGESTION_ARCHITECTURE_DECISION_REQUIRED
-```
-
-- Authorization task type: `docs-only`;
-- Ingestion convergence classification: `governance-only`;
-- Consecutive no-progress ingestion PR count: 2;
-- User confirmation for corrective governance continuation: yes;
-- User confirmation for D4F-A no-progress exception: no;
-- current recommended architecture direction:
-  `ABANDON_CURRENT_D4F_READINESS_BATCH`;
-- user architecture decision: pending;
-- D4F-A authorized: no;
-- D4F-A executed: no.
-
-`docs-only` is the file/authorization type. `governance-only` is the ingestion
-convergence classification; the former does not bypass the convergence stop.
-
-D4F readiness outcome-gate and target-state status:
-
-- historical governance-boundary transition:
-  `D4F_AUTHORIZATION_BOUNDARY_UNDEFINED`
-  → `D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE`;
-- current convergence transition:
-  `D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE`
-  → `INGESTION_ARCHITECTURE_DECISION_REQUIRED`;
-- runtime behavior changed: no;
-- database or ingestion target evaluated: no;
+No network acquisition, browser/proxy runtime, database write, migration, real
+historical-odds import, training, backtest or prediction occurred.
 
 ```text
 target_state_delta:
-- total_targets: 0
-- moved_to_clean_candidate: 0
+- total_targets: 4
+- moved_to_clean_candidate: 1
 - moved_to_rejected_mapping: 0
 - moved_to_superseded_mapping: 0
 - moved_to_eligible_for_re_acceptance_review: 0
-- moved_to_needs_new_evidence: 0
+- moved_to_needs_new_evidence: 2
 - remain_suspended: 0
-- still_blocked_pending_review: 0
-- abandon_current_batch_candidate: 1
-- no_progress_count: 2
+- still_blocked_pending_review: 1
+- abandon_current_batch_candidate: 0
+- no_progress_count: 0
 ```
 
-No live ingestion target was evaluated, so all live-target transition,
-suspension and blocked counts are zero. `abandon_current_batch_candidate = 1`
-is the batch-level convergence conclusion for the one D4F governance batch; it
-does not contribute to `total_targets` and does not represent an evaluated data
-or database target.
+Targets are source/database asset packages, not rows: the retained FotMob
+identity/raw package is the one clean reusable candidate; football-data.co.uk
+and OddsPortal each need new retained real-data evidence; M3 staging remains
+blocked pending an approved target with the required schema. This replaces the
+prior `ABANDON_CURRENT_D4F_READINESS_BATCH` recommendation, but does not permit
+an unbounded legacy pipeline restart or any write/network exception.
 
-The following remain blocked or unproven:
-
-- canonical schema freshness and match-ID compatibility;
-- mappings and read-only grants;
-- real source location, hashes and provenance;
-- real import;
-- training quality and leakage controls.
-
-The Architecture Decision Gate is triggered now: automatic planning/review and
-automatic D4F-A are prohibited. The user must select A–F: abandon/pause the
-current readiness batch; rebuild canonical identity; redo source inventory;
-switch/compare source; redesign FotMob mapping; or explicitly authorize a
-no-progress D4F-A exception with exact target, host, database, read-only role,
-query allowlist, read-only enforcement, timeout and output limits. The
-recommended abandon/pause direction is not yet a user-accepted decision.
+The remaining blockers are M3 candidate-to-canonical equivalence, approved real
+historical-odds provenance/hash/location, real football-data and OddsPortal
+evidence, M3 staging target availability, and training quality/leakage controls.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
