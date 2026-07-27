@@ -53,7 +53,9 @@ Ligue 1 mapping targets:
 
 The terminal counts are `32 + 10 + 8 = 50`. No target was fuzzy-matched,
 re-accepted, unsuspended, written to the database or made raw-write ready by
-this reconciliation. `M3` candidate compatibility remains unproven.
+this reconciliation. These are not M3 Football-Data candidates and do not
+define the population for an M3 compatibility audit. `M3` candidate
+compatibility remains unproven.
 
 ### Historical controlled audit milestone
 
@@ -122,14 +124,16 @@ all 58 rows is not uniquely attributable.
 
 ## Recommended next step
 
-Do not automatically start another governance review or an M3 compatibility
-audit. If separately authorized, a bounded read-only M3
-candidate-to-existing-FotMob-identity compatibility audit on
-`football_prediction_db_dev / football_db` must scope only the 32 exact
-`clean_candidate` targets and exclude the ten `needs_new_evidence` and eight
-`remain_suspended` targets. It permits no network, database write, migration,
+Do not start automatically. Recommended next task only after user confirmation:
+construct a bounded offline M3 audit population from actual Football-Data
+candidates accepted by the existing identity contract—`Premier League` (`E0`)
+only and seasons `2022/2023`, `2023/2024` and `2024/2025`. Only under a
+separate read-only database authorization may those candidate identities be
+compared with relevant existing canonical/FotMob matches. The 32/10/8 Ligue 1
+FotMob mapping states remain independent ingestion-governance evidence and do
+not define the M3 candidate population. No network, database write, migration,
 new identity generation, canonical-linkage persistence or legacy writer
-execution.
+execution is authorized.
 
 The future canonical FotMob writer is a separate `data-*`-gated business
 milestone, not an automatic follow-up or a legacy-script restart.

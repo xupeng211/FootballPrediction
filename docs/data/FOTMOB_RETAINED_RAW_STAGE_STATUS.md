@@ -75,12 +75,11 @@ that all 58 current `fotmob_live_v1` rows received identical validation.
 
 ## Recommended next step
 
-Do not automatically start another governance review or compatibility audit. If
-the user separately authorizes a bounded, read-only M3
-candidate-to-existing-FotMob-identity compatibility audit, it must exclude the
-ten `needs_new_evidence` and eight `remain_suspended` mapping targets. It
-permits no network, database write, migration, new identity generation,
+Retained FotMob raw assets may support canonical-match comparison evidence, but
+they do not define the M3 Football-Data candidate population. Do not start
+automatically. Recommended next task only after user confirmation: construct a
+bounded offline M3 population from actual Football-Data candidates accepted by
+the Premier League `2022/2023`–`2024/2025` identity contract, then seek a
+separate read-only authorization for canonical comparison. It permits no
+network, database write, migration, new identity generation,
 canonical-linkage persistence or legacy writer execution.
-
-Do not start automatically.
-Recommended next task only after user confirmation.

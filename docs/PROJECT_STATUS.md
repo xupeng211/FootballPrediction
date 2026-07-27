@@ -131,9 +131,10 @@ not enter this calculation.
 `no_progress_count = 0` is supported by 32 same-identity, source-controlled
 target state changes after L2V3BC—not by the local database row count, FK or
 hash inventory. The 32 clean candidates are not raw-write authorization and do
-not prove M3 compatibility. The remaining 18 targets are explicitly excluded
-from any future candidate scope until separately authorized evidence changes
-their state. The formal strategy does not select abandon current batch, rebuild
+not prove M3 compatibility. All 50 are FotMob mapping-governance targets, not
+M3 Football-Data candidates; the 18 non-clean targets remain excluded from
+future FotMob mapping reuse until separately authorized evidence changes their
+state. The formal strategy does not select abandon current batch, rebuild
 canonical identity pipeline, switch/compare a provider or redesign FotMob
 identity mapping. It does not permit an unbounded legacy pipeline restart or
 any write/network exception.
@@ -148,13 +149,16 @@ assets. They do not prove the historical-odds input-package location, immutable
 hashes, manifest or provenance; those remain
 `REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN`.
 
-No next ingestion review or compatibility audit starts automatically. If the
-user separately authorizes a bounded read-only M3 candidate-to-existing-FotMob
-identity compatibility audit, its scope must be limited to the 32 exact
-`clean_candidate` targets and must exclude the ten `needs_new_evidence` and
-eight `remain_suspended` targets. It permits no network, database write,
-migration, new identity generation, canonical-linkage persistence or legacy
-writer execution.
+Do not start automatically. Recommended next task only after user confirmation:
+construct a bounded offline M3 audit population from actual Football-Data
+candidates accepted by the existing identity contract—`Premier League` (`E0`)
+only, seasons `2022/2023`, `2023/2024` and `2024/2025`, and identities produced
+by the existing candidate-generation code. Only under a separate read-only
+database authorization, compare those candidates with relevant existing
+canonical/FotMob matches. The 32/10/8 Ligue 1 FotMob mapping states are
+independent governance evidence and do not define the M3 population. No
+network, database write, migration, new identity generation,
+canonical-linkage persistence or legacy writer execution is authorized.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
@@ -863,9 +867,11 @@ writer execution.
   new dependencies.
 - No network acquisition, database write, browser automation, parser
   implementation, migration, training or prediction is authorized.
-- The only recommended next task is the separately authorized bounded,
-  read-only M3 candidate-to-existing-FotMob-identity compatibility audit; no
-  legacy writer restart or raw-write expansion is recommended.
+- A future M3 compatibility audit must derive its bounded population from
+  actual offline Football-Data candidates under the Premier League
+  2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
+  mapping-target chronology. No legacy writer restart or raw-write expansion is
+  recommended.
 
 ## Next recommended sequence
 

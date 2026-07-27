@@ -125,6 +125,11 @@ target-level evidence progress—not an inference from retained database rows—
 zero because this bounded reconciliation found 32 clean candidates, while
 retaining the unresolved 18 targets as non-clean.
 
+The 50-target reconciliation is **FotMob mapping governance only**. It neither
+defines nor filters the M3 Football-Data candidate population: that population
+must come from actual offline Football-Data candidates accepted by the existing
+M3 identity contract.
+
 ### Blockers not resolved
 
 The following remain unresolved:
@@ -237,7 +242,7 @@ but has no running container and was not started, mounted or inspected.
 | Identity workflows | FotMob exporter, controlled seed/readiness, Recon | current static |
 | D4E state/counts | PROJECT_STATUS, D4D/runbook docs, Issue #1793 | historical only |
 | Local Docker target | `football_prediction_db_dev` / `football_db`, `claude_reader` | current read-only inventory |
-| FotMob retained baseline | 58 strong `fotmob_live_fetch` matches; 76 linked raw rows; 32 hashed payload records | retained local data |
+| FotMob retained baseline | 58 strong harvested FotMob matches; 76 linked raw rows; 32 retained full raw-payload records | retained local data |
 | football-data.co.uk retained odds | 2 rows, both linked to a synthetic match and `test_sample.html` | synthetic-only retained evidence |
 | OddsPortal retained mapping/odds | both tables exist but contain zero rows | no retained execution evidence |
 | M3 staging tables | four V26.8 tables absent from this development DB | blocked local target |
@@ -376,10 +381,11 @@ Evidence labels used in the table are exact tracked paths:
 </details>
 
 `clean_candidate` here means identity/source/baseline evidence is sufficient
-for a later candidate pool only. It is neither raw-write authorization nor M3
-candidate-to-existing-FotMob compatibility proof. The 32 clean classifications
-are not double-counted as `superseded_mapping`: their earlier state was blocked
-or needs-evidence, not an accepted mapping replaced by a newer mapping.
+for a later **FotMob mapping-governance** candidate pool only. It is neither
+raw-write authorization nor M3 candidate-to-canonical compatibility proof. The
+32 clean classifications are not double-counted as `superseded_mapping`: their
+earlier state was blocked or needs-evidence, not an accepted mapping replaced
+by a newer mapping.
 
 ## 4. Current staging identity contract
 
@@ -523,10 +529,13 @@ retained evidence is synthetic only; retained OddsPortal mapping/odds evidence i
 absent; the M3 staging tables are not present in this development DB; and no
 training quality/leakage acceptance exists.
 
-The formal `redo source inventory strategy` permits recovery planning only from
-the retained FotMob baseline. Any next network fetch, database write, M3
-staging migration, linkage decision or real import still needs a separate
-authorization.
+The formal `redo source inventory strategy` permits recovery planning from the
+retained FotMob baseline as canonical-match comparison evidence. It does not
+make FotMob mapping targets the M3 candidate source: an M3 audit population
+must instead come from actual offline Football-Data candidates under the
+current Premier League `2022/2023`–`2024/2025` identity contract. Any next
+network fetch, database write, M3 staging migration, linkage decision or real
+import still needs a separate authorization.
 
 ## 13. Explicit non-execution declaration
 
@@ -538,9 +547,19 @@ occurred. D4F-B through D4F-E did not start.
 
 ## 14. Next recommended task
 
-Recommendation only: reuse the retained FotMob `matches.match_id` /
-`external_id` baseline for one bounded, read-only M3 candidate-to-canonical
-compatibility audit on `football_prediction_db_dev/football_db`. It requires
-separate user authorization and permits no network, database write, new
-identity generation, migration or canonical-linkage persistence. Do not start
-automatically.
+Do not start automatically. Recommended next task only after user confirmation:
+construct one bounded offline audit population from actual Football-Data
+candidates accepted by the existing M3 identity contract:
+
+- competition: `Premier League` only (`E0`);
+- seasons: `2022/2023`, `2023/2024`, `2024/2025`;
+- candidate source: existing offline Football-Data fixture/input only; and
+- candidate identity: produced by the existing M3 candidate-generation code.
+
+Only under a separate read-only database authorization, compare those candidate
+identities with relevant existing canonical/FotMob `matches.match_id` records.
+The 32 Ligue 1 ADG59 clean candidates, ten `needs_new_evidence` targets and
+eight `remain_suspended` targets are independent FotMob mapping-governance
+states; none defines or is included by implication in this M3 candidate set.
+No network, database write, migration, new identity generation,
+canonical-linkage persistence, training, backtest or prediction is authorized.
