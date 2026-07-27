@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-07-26
+Last updated: 2026-07-27
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 
@@ -51,16 +51,114 @@ Last updated: 2026-07-26
     retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
     or modify that sandbox. D4F remains unauthorized.
 
-M3-D4F readiness decision:
-**`READY_FOR_D4F_READ_ONLY_INVENTORY_AUTHORIZATION`**.
+M3-D4F local evidence-backed inventory conclusion:
+**`FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED`**.
 
-Readiness documentation PR: #1804.
-The accepted documentation boundary permits only future user consideration of a
-separately authorized SELECT-only canonical identity inventory.
+The repository-approved official Architecture Decision Gate direction is
+**`redo source inventory strategy`**. The user-selected implementation approach
+for that direction is **`RECOVER_EXISTING_ACQUISITION_ARCHITECTURE`**; the
+current evidence-backed technical outcome is
+**`FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED`**. This means confirming and
+recovering existing providers, retained assets and reusable components—not
+redesigning every source from zero.
 
-It does not authorize inventory execution, implementation, migration,
-canonical linkage, matches/canonical-odds write, staging write, real historical
-import, training, backtest or prediction.
+The user explicitly authorized one local Docker, non-production, read-only
+inventory. The only runtime target was the already-running repository-owned
+`football_prediction_db_dev` PostgreSQL 15 container and `football_db`.
+Connection used the container Unix socket as `claude_reader`, without a
+password or TCP; the role has no inherited roles, no superuser/create role/create
+database capability, no `public` schema CREATE privilege, and listed project
+table grants are SELECT-only. Every query used `BEGIN READ ONLY` with
+`transaction_read_only=on`, 10-second statement timeout and bounded output.
+
+The local evidence is substantive but narrow:
+
+- `matches=60`, all with `external_id`; 58 are strong, harvested
+  `fotmob_live_fetch` records;
+- `raw_match_data=76`, all FK-linked to `matches`, with 60 distinct match IDs,
+  zero raw orphans and zero duplicate `(match_id, data_version)` groups;
+  `fotmob_live_v1=58`;
+- `fotmob_raw_match_payloads=32` retained full raw-payload records. V26.5
+  requires complete, unparsed `__NEXT_DATA__` JSON in non-null
+  `next_data_json`, with raw-file locators, SHA-256 values, byte sizes, capture
+  and ingestion metadata; complete `page_props_json` is retained when present
+  but is nullable. Their `match_id` values overlap retained `matches` and
+  `raw_match_data` at match level, but do not prove a one-to-one or
+  record-level payload-to-raw association, 32/32 parser validation or 32/32
+  pageProps presence;
+- `bookmaker_odds_history=2`, but both rows link to a synthetic match and a
+  `test_sample.html` basename, so football-data.co.uk has no retained real-data
+  proof here;
+- `odds=0` and `matches_oddsportal_mapping=0`, so OddsPortal has no retained
+  execution proof here;
+- the four M3 historical staging tables are absent from this development DB.
+  The named D4E persistent-sandbox volume remains untouched and has no running
+  database container.
+
+The current `fotmob_live_v1=58` count is a retained-row inventory, not a
+58/58 parser or full-audit claim. The historical controlled audit established
+4/4 parseable, SHA-valid and inner-`matchId`-valid rows only; exact writer/run
+provenance for all 58 retained rows is not uniquely attributable. The legacy
+`n3_live_fotmob_raw_retain.js` N=3 network/UPSERT path is historical evidence
+only, not a canonical writer, recovery contract or future dependency. A future
+FotMob writer remains `NOT_YET_ESTABLISHED` and must be created through a
+controlled `data-*` milestone with separate network/write authorization.
+
+No network acquisition, browser/proxy runtime, database write, migration, real
+historical-odds import, training, backtest or prediction occurred.
+
+```text
+target_state_delta:
+- total_targets: 50
+- moved_to_clean_candidate: 32
+- moved_to_rejected_mapping: 0
+- moved_to_superseded_mapping: 0
+- moved_to_eligible_for_re_acceptance_review: 0
+- moved_to_needs_new_evidence: 10
+- remain_suspended: 8
+- still_blocked_pending_review: 0
+- abandon_current_batch_candidate: 0
+- no_progress_count: 0
+```
+
+This delta counts 50 concrete historical FotMob mapping targets, not database
+asset packages or database rows. Exact-ID chronology reconciliation found 32
+later ADG59A/ADG59B accepted/resolved clean candidates, ten L2V3BC targets that
+still need evidence, and eight L2V3AT mappings/baselines that remain suspended.
+The terminal arithmetic is `32 + 10 + 8 = 50`; the retained database assets do
+not enter this calculation.
+
+`no_progress_count = 0` is supported by 32 same-identity, source-controlled
+target state changes after L2V3BC—not by the local database row count, FK or
+hash inventory. The 32 clean candidates are not raw-write authorization and do
+not prove M3 compatibility. All 50 are FotMob mapping-governance targets, not
+M3 Football-Data candidates; the 18 non-clean targets remain excluded from
+future FotMob mapping reuse until separately authorized evidence changes their
+state. The formal strategy does not select abandon current batch, rebuild
+canonical identity pipeline, switch/compare a provider or redesign FotMob
+identity mapping. It does not permit an unbounded legacy pipeline restart or
+any write/network exception.
+
+The remaining blockers are the ten exact FotMob targets needing new evidence,
+the eight still-suspended mappings/baselines, M3 candidate-to-canonical
+equivalence, approved real historical-odds provenance/hash/location, real
+football-data and OddsPortal evidence, M3 staging target availability, and
+training quality/leakage controls.
+FotMob payload hashes establish integrity only for retained FotMob match-detail
+assets. They do not prove the historical-odds input-package location, immutable
+hashes, manifest or provenance; those remain
+`REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN`.
+
+Do not start automatically. Recommended next task only after user confirmation:
+construct a bounded offline M3 audit population from actual Football-Data
+candidates accepted by the existing identity contract—`Premier League` (`E0`)
+only, seasons `2022/2023`, `2023/2024` and `2024/2025`, and identities produced
+by the existing candidate-generation code. Only under a separate read-only
+database authorization, compare those candidates with relevant existing
+canonical/FotMob matches. The 32/10/8 Ligue 1 FotMob mapping states are
+independent governance evidence and do not define the M3 population. No
+network, database write, migration, new identity generation,
+canonical-linkage persistence or legacy writer execution is authorized.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
@@ -757,17 +855,23 @@ import, training, backtest or prediction.
 
 ## Current FotMob status
 
-- FotMob data ingestion is blocked. See `docs/data/FOTMOB_CURRENT_STATE.md` for details.
-- `raw_write_ready_count` is 0.
-  **(Superseded 2026-06-11: retained raw storage has moved forward. 4 real FotMob raw
-  payloads exist in `raw_match_data` with `data_version=fotmob_live_v1`, audited
-  4/4 parseable, sha valid, inner matchId ok, 0 errors, 0 warnings. See
-  `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`.)**
-- No DB write, raw write, browser automation, or network data collection is authorized.
-  **(Partial exception: the 4 retained raw rows above were written under explicit
-  authorization in #1485 and #1486.)**
-- Parser, schema, fixture, and validation assets from #1454 are safe to reuse as
-  offline references only.
+- Production FotMob acquisition is `Not yet established`; see
+  `docs/data/FOTMOB_CURRENT_STATE.md` for the authoritative state.
+- The current read-only inventory records 58 retained `fotmob_live_v1` rows and
+  76 total `raw_match_data` rows, all FK-linked to `matches`; it is not a 58/58
+  full-audit assertion.
+- The historical #1487 milestone audited four rows only: 4/4 parseable,
+  SHA-valid and inner-`matchId` valid, with zero errors and warnings.
+- Exact writer/run provenance for all 58 rows is not proven. Legacy acquisition
+  scripts are historical evidence only and must not become canonical writers or
+  new dependencies.
+- No network acquisition, database write, browser automation, parser
+  implementation, migration, training or prediction is authorized.
+- A future M3 compatibility audit must derive its bounded population from
+  actual offline Football-Data candidates under the Premier League
+  2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
+  mapping-target chronology. No legacy writer restart or raw-write expansion is
+  recommended.
 
 ## Next recommended sequence
 

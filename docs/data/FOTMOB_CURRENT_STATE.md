@@ -6,56 +6,78 @@
 - owner: data / ingestion workflow
 - update rule: update when ingestion state, blockers, active guards, or next step changes
 - do not use historical ADG reports as the primary current truth
-- retained raw storage state has diverged from legacy ADG state; see superseded notice in §Current status and docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md
+- retained raw storage state and historical audit scope are recorded below and
+  in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Superseded notice — 2026-06-11
+## Current authoritative status — 2026-07-27
 
-The `raw_write_ready_count=0` and "ADG60 write blocked" statements below are
-**superseded** for retained raw storage. As of June 2026, 4 real FotMob raw
-payloads have been written to `raw_match_data` with `data_version=fotmob_live_v1`
-and audited (4/4 parseable, sha valid, inner matchId ok, 0 errors, 0 warnings).
+```text
+Official Architecture Decision Gate direction = redo source inventory strategy
+Implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTURE
+Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
+```
 
-See `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md` for the current retained raw
-stage status.
+### Current read-only retained inventory
 
-The legacy ADG/32-target inventory and corrected-source identity pipeline below
-remains relevant for Ligue 1 corrected-source inventory — it was never about raw
-storage, and its blockers (missing canonical URLs, route_hash_pair verification)
-are a separate concern.
+- `matches=60`; 58 are strong/harvested FotMob matches and 60/60 have
+  `external_id`.
+- `raw_match_data=76`: `fotmob_live_v1=58`, hydration=8, page-props=8 and
+  synthetic=2. All 76 rows are FK-linked to `matches`; there are 60 distinct
+  `match_id` values and zero raw orphans.
+- `fotmob_raw_match_payloads=32` are retained full raw-payload records, not
+  metadata-only rows. V26.5 requires complete, unparsed `__NEXT_DATA__` JSON
+  in non-null `next_data_json`, together with raw-file locators, SHA-256
+  values, byte sizes, capture timestamps and ingestion metadata. Complete
+  `page_props_json` can be retained when present, but the column is nullable.
+  Their `match_id` values overlap retained match/raw assets at match level
+  only; record-level payload-to-raw lineage, 32/32 pageProps presence and
+  32/32 parser validation are not proven.
+- The retained data and `matches.match_id`/`external_id` identity baseline are
+  evidence assets; they do not establish a future writer entrypoint.
 
-## Current status (legacy ADG state — see superseded notice above)
+### Current mapping-target chronology (separate from retained rows)
 
-- latest completed phase: ADG59B source-controlled acceptance/suspension state completed
-- latest merged ADG PR: #1399
-- active workflow PR: ADG60-PREFLIGHT no-write
-- next data phase: stop; ADG60 write requires separate explicit authorization
-- raw_write_ready_count: 0 **(superseded for retained raw — see superseded notice above)**
-- latest ADG59B merge commit: eac95fc6839e215969d5c3315b5ea5950de93cd3
+The retained database rows above are asset evidence, not a classification of
+historical mapping targets. A static exact-ID reconciliation covers 50 concrete
+Ligue 1 mapping targets:
 
-## Current Safe State After #1454
+- 32 are `clean_candidate`: L2V3BC's earlier `needs_new_evidence` targets have
+  exact ADG59A promotion and ADG59B
+  `accepted_source_controlled_only`/`resolved_source_controlled_only` evidence,
+  with confirmed orientation/date/competition and no duplicate conflict.
+- 10 remain `needs_new_evidence`: they have an exact L2V3BC identity but no
+  exact ADG59A/ADG59B successor or later mapping-state mutation.
+- 8 remain `remain_suspended`: L2V3AT suspended their accepted
+  mapping/baseline after reverse-fixture contradictions, and no exact later
+  resolution exists.
 
-- #1454 merged the FotMob safe parser/schema reuse plan into `main`.
-- Historical FotMob raw detail success is acknowledged as evidence.
-- Parser, schema, fixture, and validation assets are safe to reuse as offline
-  references.
-- Raw write remains blocked.
-- DB write remains blocked.
-- High-risk browser/session/cookie/anti-bot assets remain read-only or
-  do-not-reactivate.
-- No browser automation, cookie harvesting, captcha bypass, proxy rotation, DB
-  write, or raw JSON write is authorized by #1454.
-- The next FotMob task is deferred until documentation governance Phase1
-  completes.
+The terminal counts are `32 + 10 + 8 = 50`. No target was fuzzy-matched,
+re-accepted, unsuspended, written to the database or made raw-write ready by
+this reconciliation. These are not M3 Football-Data candidates and do not
+define the population for an M3 compatibility audit. `M3` candidate
+compatibility remains unproven.
 
-## Documentation Lifecycle Status
+### Historical controlled audit milestone
 
-- This file is the active FotMob current-state source of truth.
-- #1454 safe parser/schema reuse is evidence for offline reuse only.
-- Old FotMob probe reports are evidence or archive_candidate material.
-- Do not restore browser, session, cookie, captcha, proxy, or anti-bot paths
-  directly from old high-risk collection reports.
+Four retained rows were explicitly audited under #1487: 4/4 parseable, 4/4
+SHA-valid, 4/4 inner-`matchId` valid, zero errors and zero warnings. This
+historical four-row audit does not extend a full parser/audit result to all 58
+current `fotmob_live_v1` retained rows. Exact named-writer/run provenance for
+all 58 rows is not uniquely attributable.
 
-## Confirmed facts
+### Current safety and documentation status
+
+- This file is the active FotMob current-state source of truth; historical ADG
+  reports are context, not current execution instructions.
+- Legacy acquisition scripts, including the N=3 `n3_live_fotmob_raw_retain.js`
+  network/UPSERT path, are historical evidence only and must not become new
+  dependencies, canonical writers or recovery contracts.
+- README declares FotMob production acquisition `Not yet established`. A future
+  canonical writer requires a separately authorized, tested `data-*` milestone.
+- Browser, session, cookie, captcha, proxy, network and database-write paths
+  remain blocked unless separately authorized.
+
+## Historical legacy ADG context (not current retained-raw status)
 
 - ADG48 correct-orientation probe: 2 targets probed (PSG-Angers, Nice-Auxerre), both HTTP 200. Both confirmed reverse fixtures. 2o4ahb#4830473 = Angers-PSG (reverse observed again). 2sy6tc#4830472 = Auxerre-Nice (newly confirmed reverse). No correct-orientation pairs discovered. No alternate hash candidates found in pageProps. 5 known pairs: 2 confirmed reverse, 3 unverified. 27 missing canonical URLs.
 - ADG46 SSR probe: FotMob match page IS accessible (HTTP 200). __NEXT_DATA__ marker FOUND. Safe summary extracted in-memory. Critical finding: route_hash_pair 2o4ahb#4830473 corresponds to REVERSE fixture (Angers home vs PSG away, Apr 2026). Expected orientation (PSG home vs Angers away, Aug 2025) needs different route_hash_pair.
@@ -77,12 +99,19 @@ are a separate concern.
 
 ## Current blockers
 
-- FotMob legacy API endpoints not accessible (404) but SSR match pages ARE accessible (200, __NEXT_DATA__ present).
-- 27 corrected candidates still lack canonical_detail_url and must not be guessed.
-- 5 corrected candidates have route_hash_pair from source-controlled canonical URL evidence — 1 confirmed as reverse fixture via SSR probe.
-- Correct-orientation route_hash_pairs need discovery; reverse fixture pairs should not be raw-written.
-- Current wrong-leg source records must not be raw-written.
-- Corrected artifacts are not raw-write-ready.
+- A production FotMob acquisition entrypoint and current external endpoint
+  availability are not proven.
+- Full parser/audit coverage for all 58 retained `fotmob_live_v1` rows is not
+  proven; only the historical four-row audit is complete.
+- `fotmob_raw_match_payloads` stores retained offline full raw-payload assets,
+  but establishes match-level overlap only, not record-level payload-to-raw
+  lineage; 32/32 parser validation is not proven.
+- Ten concrete historical mapping targets still need new evidence and eight
+  remain suspended; retained row counts do not make the whole historical batch
+  clean.
+- M3 candidate-to-existing-FotMob-identity compatibility is not proven.
+- No network, database write, migration, new identity generation or legacy
+  writer execution is authorized.
 
 ## Forbidden without explicit authorization
 
@@ -95,30 +124,16 @@ are a separate concern.
 
 ## Recommended next step
 
-For retained raw storage: see `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`.
+Do not start automatically. Recommended next task only after user confirmation:
+construct a bounded offline M3 audit population from actual Football-Data
+candidates accepted by the existing identity contract—`Premier League` (`E0`)
+only and seasons `2022/2023`, `2023/2024` and `2024/2025`. Only under a
+separate read-only database authorization may those candidate identities be
+compared with relevant existing canonical/FotMob matches. The 32/10/8 Ligue 1
+FotMob mapping states remain independent ingestion-governance evidence and do
+not define the M3 candidate population. No network, database write, migration,
+new identity generation, canonical-linkage persistence or legacy writer
+execution is authorized.
 
-STOP: ADG59B merged via PR #1399 at merge commit eac95fc6839e215969d5c3315b5ea5950de93cd3.
-ADG60 remains blocked without separate explicit authorization.
-(Legacy ADG state; retained raw has moved forward — see superseded notice above.)
-
-ADG59B source-controlled acceptance/suspension state completed for exactly 32 ADG59A Ligue 1 targets;
-accepted_count=32; suspension_resolved_count=32; raw_write_ready_count=0; no DB write, raw write,
-raw_match_data insert, schema migration, live fetch, or ADG60 occurred in ADG59B.
-
-User must explicitly authorize ADG59A: source-controlled artifact promotion for 32 targets, no DB write, no raw write; do NOT enter mutation without defined authorization phrase
-
-User must authorize ADG58 controlled mutation authorization gate; 32 dry-run records generated; 5 mutation classes proposed; 15 prerequisites defined; do NOT raw write
-
-User must authorize ADG57 no-write mutation dry-run preview; 32/32 dates completed; 32/32 eligible; 0 blocked; all 32 require explicit re-acceptance; do NOT raw write
-
-User must authorize ADG56 date guard completion/acceptance eligibility review; 32 targets ready; 10 date_pass/22 date_unknown; 0 blocked; do NOT raw write
-
-User must authorize ADG55; 32/32 promotion preview ready; 0 blocked; ALL guards pass (orientation 32/32, canonical parse 32/32, zero duplicates); do NOT raw write before explicit authorization
-
-User must authorize ADG54 no-write canonical identity promotion preview; 32 targets have canonical identities from league schedule SSR; do NOT raw write
-
-ADG53 review ADG52 breakthrough: 32/32 targets matched, 306 fixtures, ALL have canonical route_hash_pairs; league schedule home/away data confirms correct orientation; do NOT raw write
-
-User must select and authorize revised strategy; 5 options proposed; league_schedule_ssr_discovery recommended; do NOT raw write
-
-ADG49 review ADG48 findings; 2/2 known pairs confirmed reverse; SSR data shows no alternate hash_ids in pageProps; correct-orientation discovery strategy needs revision; do NOT raw write
+The future canonical FotMob writer is a separate `data-*`-gated business
+milestone, not an automatic follow-up or a legacy-script restart.

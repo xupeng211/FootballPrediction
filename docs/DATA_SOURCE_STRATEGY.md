@@ -3,13 +3,20 @@
 - lifecycle: current-state
 - owner: data / ingestion governance
 
-Last updated: 2026-06-07
+Last updated: 2026-07-27
 
 ## Current source priority
 
-1. FotMob is the primary near-term football data source.
-2. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
-3. Paid odds data remains a future option, not a current task.
+1. FotMob is the primary football fixture, canonical-match-identity and retained
+   match-detail/raw-asset source.
+2. Football-Data is the historical results/odds candidate source for M3. Its
+   current identity contract permits `E0` / `Premier League` only for seasons
+   `2022/2023`, `2023/2024` and `2024/2025`; it does not yet have retained
+   real-ingest proof in the development inventory.
+3. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
+   OddsPortal has no retained execution evidence and its legacy route remains
+   blocked.
+4. Paid odds data remains a future option, not a current task.
 
 ## Current FotMob posture
 
@@ -24,9 +31,20 @@ Last updated: 2026-06-07
 ## Current data safety status
 
 - `raw_write_ready_count`: 0.
-  **(Superseded 2026-06-11: 4 real FotMob retained raw rows exist in
-  `raw_match_data` (`fotmob_live_v1`), audited 4/4 clean. See
-  `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`.)**
+- **Current retained FotMob raw inventory**: 58 `fotmob_live_v1` rows and 32
+  retained full raw-payload records. The payload table stores complete unparsed
+  `__NEXT_DATA__` JSON in non-null `next_data_json`, with file locators,
+  SHA-256 values, byte sizes and capture/ingestion metadata. `page_props_json`
+  is nullable and retained when present.
+- **Historical fully audited milestone**: four retained rows only—4/4
+  parseable, 4/4 SHA-valid, 4/4 inner-`matchId`-valid, zero errors and zero
+  warnings. This 4/4 result does not extend to all 58 retained rows.
+- The 32 payload assets establish match-level `match_id` overlap only;
+  record-level lineage to a specific `raw_match_data` row, 32/32
+  parser/schema/pageProps validation and exact writer provenance for all 58
+  rows are not proven.
+- FotMob retained assets and its independent 50-target Ligue 1 mapping
+  chronology do not define the M3 Football-Data candidate population.
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
@@ -42,6 +60,10 @@ Last updated: 2026-06-07
 - Add tests using fixtures/mocks only.
 - Document exact evidence needed before enabling ingestion.
 - Small read-only source inventory audits.
+- Only after separate authorization, construct a bounded offline M3 audit
+  population from actual Football-Data candidates accepted by the current
+  Premier League `2022/2023`–`2024/2025` identity contract; any comparison with
+  canonical matches additionally requires read-only database authorization.
 
 ## Blocked data tasks
 
@@ -73,6 +95,13 @@ From PR #1454:
 - Parser/features/training must branch by `data_version` and source/provenance.
 - Odds data is a separate market-pricing source with independent ingestion lifecycle.
 - Do not cross-contaminate FotMob source decisions with odds source decisions.
+- The 32 `clean_candidate`, 10 `needs_new_evidence` and 8
+  `remain_suspended` Ligue 1 FotMob mapping states are ingestion-governance
+  evidence only. They must not be used as the candidate set for an M3
+  Football-Data compatibility audit.
+- `REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN` remain
+  active for the historical-odds input package; retained FotMob payload hashes
+  are not evidence for that package.
 
 ## Validation rules for data tasks
 
@@ -88,6 +117,12 @@ From PR #1454:
 
 - What is the latest verified FotMob endpoint status?
 - Which existing fixtures are safe to use for testing?
+- Which approved offline Football-Data source package or fixture will define a
+  bounded M3 candidate set, and what are its exact immutable SHA-256 hashes?
+- Which Premier League seasons and candidate count are included in that
+  separately authorized audit population?
+- Which relevant canonical matches exist for a separately authorized read-only
+  comparison?
 - Is `raw_write` authorization phrase mechanism still wired and effective?
 - Are current DB write guards (gatekeeper.sh, ai_workflow_gate.py) still active?
 - What exact no-write test should be run first?

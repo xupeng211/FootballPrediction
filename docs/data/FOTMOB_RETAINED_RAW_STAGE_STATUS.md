@@ -4,17 +4,33 @@
 - owner: data / ingestion workflow
 - update rule: update when retained raw count, audit results, data_version, or next step changes
 
-## Current retained raw state
+## Current retained raw inventory
 
 - **Table**: `raw_match_data`
-- **data_version**: `fotmob_live_v1`
-- **Retained raw rows**: 4
-- **Source PRs**: #1485 (single), #1486 (N=3), #1487 (audit), #1488 (AI Workflow Gate)
-- **Last audit date**: 2026-06-11
+- **Inventory date**: 2026-07-27
+- **Inventory method**: authorized local Docker PostgreSQL read-only inventory
+- **Current `fotmob_live_v1` retained rows**: 58
+- **Current total `raw_match_data` rows**: 76
+- **Composition**: `fotmob_live_v1=58`, hydration=8, page-props=8, synthetic=2
+- **Current linkage**: 76/76 rows FK-linked to `matches`; 60 distinct `match_id`; 0 raw orphans
+- **Full raw-payload assets**: `fotmob_raw_match_payloads=32`. V26.5 requires
+  complete, unparsed `__NEXT_DATA__` JSON in non-null `next_data_json`, with
+  raw-file locators, SHA-256 values, byte sizes, capture timestamps and
+  ingestion metadata; complete `page_props_json` is retained when present but
+  is nullable. The assets have match-level `match_id` overlap only;
+  record-level payload-to-raw lineage is not proven.
+- **Separate mapping-target state**: retained rows are not mapping-target
+  classifications. Exact historical reconciliation yields 32 `clean_candidate`,
+  10 `needs_new_evidence` and 8 `remain_suspended` targets; row existence does
+  not make all 50 historical targets clean.
 
-## Audit results (#1487)
+## Historical controlled audit milestone
 
-| Check | Result |
+The #1487 audit explicitly covered four retained rows from the #1485/#1486
+controlled milestone. It remains a historical full-audit result, not a claim
+that all 58 current `fotmob_live_v1` rows received identical validation.
+
+| Check | Historical #1487 result |
 |---|---|
 | Rows audited | 4 |
 | Parseable | 4/4 |
@@ -25,43 +41,45 @@
 
 ## What this stage proves
 
-- Retained raw storage pipeline (`raw_match_data` + `fotmob_live_v1`) is functional.
-- 4 real FotMob raw payloads have been fetched, stored, and verified.
-- Audit tooling exists and confirms: parseable JSON, sha integrity, correct inner matchId.
+- Current retained storage contains 58 `fotmob_live_v1` rows.
+- Retained FotMob match identity/raw-storage outcome exists; all current
+  `raw_match_data` rows have the enforced `matches` FK.
+- The 32 retained payload rows are offline full raw-payload assets, which may
+  support a future separately authorized no-write parser/schema verification.
+- The historical four-row audit proves full validation only for those four rows.
 
 ## What this stage does NOT prove
 
-- **Parser contract**: raw payload structure has not been validated against any parser schema.
-- **Feature extraction**: no features have been extracted from these rows.
-- **Model training**: no models have been trained on this data.
-- **Scalability**: N=4 does not demonstrate N=50 or N=100 throughput.
-- **Cross-league coverage**: only Ligue 1 seeded targets in scope.
+- Full parser/audit validation for all 58 rows.
+- 32/32 parser validation, schema validation, inner-`matchId` validation or
+  pageProps presence for the retained full raw-payload assets.
+- Unique writer/run provenance for all 58 rows.
+- That the legacy N=3 script is canonical, reusable or a recovery dependency.
+- Record-level payload-to-raw lineage.
+- A clean state for every historical FotMob mapping target; eight remain
+  suspended and ten need new evidence in the separate target chronology.
+- Current external endpoint availability, production acquisition readiness or
+  scalability of a future canonical pipeline.
+- Network or database-write authorization, parser implementation, feature
+  extraction, training or prediction.
 
-## Relation to legacy ADG60 / 32-sample state
+## Active safety rules
 
-- The old `raw_write_ready_count=0` and "ADG60 blocked" state is **superseded** for the
-  purpose of retained raw storage. Raw write has been authorized and executed for exactly
-  4 targets under controlled conditions.
-- The legacy 32-target ADG inventory and corrected-source discovery pipeline is a
-  **separate concern** — it was about identity correction and canonical URL discovery,
-  not about retained raw storage.
-- The 32-sample state remains relevant for Ligue 1 corrected-source inventory but does
-  **not** describe the current retained raw storage reality.
-
-## Active safety rules (unchanged)
-
-- No DB write beyond the already-authorized 4 retained raw rows.
-- No live fetch, network request, or browser automation without explicit authorization.
-- No parser implementation, feature extraction, training, or prediction.
-- No schema migration without explicit authorization.
-- No bulk raw acquisition (N=5, N=10, N=50) without separate preflight + authorization.
+- No additional network acquisition or database write is authorized by this
+  current-state update; existing retained rows are inventory evidence only.
+- Legacy acquisition scripts must not be reactivated or made new dependencies.
+- Any future canonical FotMob writer requires a new `data-*`-gated milestone,
+  tests and explicit network/write authorization.
+- No schema migration, M3 candidate audit, parser implementation, feature
+  extraction, training or prediction is authorized here.
 
 ## Recommended next step
 
-1. **Parser contract / raw payload structure validation** — confirm that the 4 retained
-   `fotmob_live_v1` payloads conform to expected parser schema before scaling up.
-2. After parser validation passes, consider **N=5 or N=10 controlled expansion** with
-   fresh authorization, preflight, and hash-gated write.
-
-Do not start automatically.
-Recommended next task only after user confirmation.
+Retained FotMob raw assets may support canonical-match comparison evidence, but
+they do not define the M3 Football-Data candidate population. Do not start
+automatically. Recommended next task only after user confirmation: construct a
+bounded offline M3 population from actual Football-Data candidates accepted by
+the Premier League `2022/2023`–`2024/2025` identity contract, then seek a
+separate read-only authorization for canonical comparison. It permits no
+network, database write, migration, new identity generation,
+canonical-linkage persistence or legacy writer execution.
