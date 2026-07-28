@@ -12,10 +12,12 @@ Last updated: 2026-07-28
 2. Football-Data is the historical results/odds candidate source for M3. Its
    current identity contract permits `E0` / `Premier League` only for seasons
    `2022/2023`, `2023/2024` and `2024/2025`; it does not yet have retained
-   real-ingest proof in the development inventory. D4F-A reverified three
-   historical Git inputs and the existing contract produced 892 reproducible
-   source semantic candidates; the local canonical target has zero matching
-   Premier League rows, so real import remains blocked by canonical coverage.
+   real-ingest proof in the development inventory. The D4F cross-source audit
+   reverified three historical Git inputs and produced 892 reproducible source
+   semantic candidates against a recovered 1,140-candidate FotMob Premier
+   League artifact. It isolated 888 unique exact matches and four kickoff
+   conflicts with no identity-policy expansion. This supports only a future
+   canonical-inventory write design review; real import remains blocked.
 3. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
    OddsPortal has no retained execution evidence and its legacy route remains
    blocked.
@@ -48,12 +50,18 @@ Last updated: 2026-07-28
   rows are not proven.
 - FotMob retained assets and its independent 50-target Ligue 1 mapping
   chronology do not define the M3 Football-Data candidate population.
-- **M3 D4F-A status**: `BLOCKED_CANONICAL_MATCH_COVERAGE`. Repository
-  provenance, hashes, byte sizes, headers and E0 scope for the three historical
-  CSV inputs are reverified; the current #1797 contract produced 892
-  reproducible source semantic candidates. The strictly read-only local
-  canonical inventory has zero Premier League/E0 rows for the target seasons,
-  therefore all 892 are unmatched. No business or schema write occurred.
+- **M3 D4F status**: `READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW`.
+  The historical Git inputs remain reverified (1,180 raw rows, 38,832 odds
+  observations, 892 semantic candidates; source hash `07e579…98b8b`). Two
+  recovered, validated FotMob `candidate-match-identity/v1` artifacts each
+  contain 1,140 Premier League candidates (380 per target season; business
+  hash `eff881…bc9d3f`). Existing exact-alias, Europe/London and ordered
+  home/away rules yielded 888 exact unique matches and four isolated kickoff
+  conflicts (3 × 15 minutes, 1 × 30 minutes); no unmatched, ambiguity, team,
+  competition/season, incomplete or invalid-source terminal occurred. The
+  development `matches` inventory itself remains zero for this scope, but it
+  was not used as the cross-source candidate side. No business/schema write,
+  network request or canonical linkage occurred.
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
@@ -69,9 +77,10 @@ Last updated: 2026-07-28
 - Add tests using fixtures/mocks only.
 - Document exact evidence needed before enabling ingestion.
 - Small read-only source inventory audits.
-- After separate authorization, establish a bounded canonical Premier League
-  `2022/2023`–`2024/2025` inventory for a future read-only comparison, or make
-  an explicit M3 stop decision. This does not authorize a business write.
+- After separate authorization, design (but do not execute) a bounded canonical
+  Premier League `2022/2023`–`2024/2025` inventory writer that admits only the
+  888 exact candidates and keeps the four kickoff conflicts isolated. This
+  does not authorize a business write.
 
 ## Blocked data tasks
 
@@ -108,9 +117,10 @@ From PR #1454:
   evidence only. They must not be used as the candidate set for an M3
   Football-Data compatibility audit.
 - Repository Git-history location and SHA-256 identity are verified for the
-  bounded D4F-A input package. Original upstream capture/provider/license
-  provenance remains unverified, and retained FotMob payload hashes are not
-  evidence for historical odds.
+  bounded D4F input package. Original upstream capture/provider/license
+  provenance remains unverified; recovered FotMob candidate business identity
+  proves candidate compatibility, not historical-odds provenance or an import
+  authorization.
 
 ## Validation rules for data tasks
 
@@ -126,10 +136,11 @@ From PR #1454:
 
 - What is the latest verified FotMob endpoint status?
 - Which existing fixtures are safe to use for testing?
-- Which separately authorized canonical source can supply Premier League
-  2022/2023–2024/2025 target coverage without crossing the DB-write boundary?
-- If that coverage becomes available, do exact canonical match fields use the
-  existing source contract without an alias or timezone change?
+- What separately authorized canonical-inventory writer design can materialize
+  only the 888 exact candidate identities while excluding the four kickoff
+  conflicts?
+- What evidence is sufficient to resolve each isolated kickoff conflict without
+  changing aliases, timezone interpretation or tolerance?
 - Is `raw_write` authorization phrase mechanism still wired and effective?
 - Are current DB write guards (gatekeeper.sh, ai_workflow_gate.py) still active?
 - What exact no-write test should be run first?

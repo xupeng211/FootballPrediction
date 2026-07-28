@@ -50,24 +50,35 @@ Last updated: 2026-07-28
     retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
     or modify that sandbox.
 
-**M3-D4F-A current decision — `BLOCKED_CANONICAL_MATCH_COVERAGE`.** The
-2026-07-28 user-authorized read-only audit reverified the three immutable
-Football-Data Git-history inputs (1,180 E0 CSV rows) and used the existing
-`football-data-csv@1.2.0` plus `buildSemanticMatchIdentity` contract twice.
-It produced 38,832 odds observations and 892 reproducible unique source match
-candidates (380 / 380 / 132; business hash
-`07e579ed21224c354c6dbcf9d44913521d94ce6e48ce24c17cbbd9bfd6b98b8b`).
+**M3-D4F current decision — `READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW`.**
+The 2026-07-28 offline cross-source audit retained the prior D4F-A database
+fact (`football_prediction_db_dev` / `football_db` has zero relevant Premier
+League/E0 `matches` rows) but recovered the existing PR #1796 repository-
+external FotMob candidate artifacts instead of using that empty database
+inventory as the comparison side. Current exporter validation reconfirmed two
+ordinary, non-symlink candidate artifacts at 1,140 candidates each (380 / 380
+/ 380), unique FotMob IDs and business hash
+`eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f`.
+No FotMob/provider request was needed.
 
-The actual local development canonical target is `football_prediction_db_dev`
-/ `football_db`, verified as PostgreSQL 15.17 with `claude_reader` inside
-`BEGIN READ ONLY` and `transaction_read_only=on`. `matches` has 60 total rows
-but zero Premier League/E0 rows in 2022/2023–2024/2025, so all 892 candidates
-are deterministically `unmatched`; exact/ambiguous/team/kickoff/incomplete
-categories are zero. No database business/schema row, canonical linkage, raw
-payload, network/provider/FotMob access or sandbox state changed. Repository
-input provenance is reverified while original upstream provenance/import
-semantics remain unverified. Issue #1793 remains Open; a user decision about
-canonical target coverage is required before any later M3 phase.
+The existing `football-data-csv@1.2.0`, `buildSemanticMatchIdentity` and
+`matchLinker` contracts recomputed 1,180 raw CSV rows, 38,832 odds
+observations and 892 unique source candidates (380 / 380 / 132; source
+business hash `07e579ed21224c354c6dbcf9d44913521d94ce6e48ce24c17cbbd9bfd6b98b8b`).
+Two independent runs produced the identical cross-source result hash
+`fee4d02ae93d2370ba9a282ef546cafa097c8f350a402f19afab39dc2f2040fb`:
+888 `exact_unique_match`, 4 isolated `kickoff_conflict` (3 × 15 minutes and
+1 × 30 minutes), and zero unmatched, ambiguous, team, competition/season,
+incomplete or invalid-source terminals. The 888 exact candidates map to 888
+distinct FotMob IDs; 252 FotMob candidates are outside this 892-source
+population and none is multiply used.
+
+This is a design-review readiness decision only. The four kickoff conflicts
+remain isolated and cannot be guessed, linked or written. No business database
+was read or written by the cross-source audit; no schema, canonical linkage,
+raw payload, provider/browser request, persistent sandbox, import, migration,
+training, backtest or prediction changed. Original upstream provenance/import
+semantics remain unverified and Issue #1793 remains Open.
 
 The normal documentation commit hook did perform the separately authorized
 Gatekeeper `gatekeeper_cold_start_*` temporary database create/probe/rollback/
@@ -163,22 +174,22 @@ identity mapping. It does not permit an unbounded legacy pipeline restart or
 any write/network exception.
 
 The remaining blockers are the ten exact FotMob targets needing new evidence,
-the eight still-suspended mappings/baselines, zero canonical Premier League
-coverage for M3's three-season target, approved real historical-odds
-provenance/hash/location, real football-data and OddsPortal evidence, M3
-staging target availability, and training quality/leakage controls.
+the eight still-suspended mappings/baselines, the four isolated M3 kickoff
+conflicts, approved real historical-odds provenance/hash/location, real
+football-data and OddsPortal evidence, M3 staging target availability, and
+training quality/leakage controls. The zero-row development database remains a
+fact but no longer prevents the verified offline candidate-to-candidate audit.
 FotMob payload hashes establish integrity only for retained FotMob match-detail
 assets. The D4F-A preflight separately reverified repository historical input
 objects and SHA-256 values, but neither set of hashes proves original upstream
 capture/provider/license semantics or authorizes an import.
 
-Do not start automatically. Recommended next task only after user confirmation:
-decide whether to make a separately authorized canonical Premier League
-2022/2023–2024/2025 inventory available for a future read-only comparison, or
-stop M3 at this coverage boundary. The 32/10/8 Ligue 1 FotMob mapping states
-remain independent governance evidence; no network, database write, migration,
-canonical-linkage persistence, training or legacy-writer execution is
-authorized.
+Do not start automatically. Recommended next task only after separate user
+confirmation: a bounded canonical-inventory write design review that preserves
+the 888 exact / 4 kickoff-conflict partition. The 32/10/8 Ligue 1 FotMob
+mapping states remain independent governance evidence; no network, database
+write, migration, canonical-linkage persistence, training or legacy-writer
+execution is authorized.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
@@ -887,11 +898,12 @@ authorized.
   new dependencies.
 - No network acquisition, database write, browser automation, parser
   implementation, migration, training or prediction is authorized.
-- A future M3 compatibility audit must derive its bounded population from
-  actual offline Football-Data candidates under the Premier League
+- The completed M3 offline cross-source audit derived its bounded population
+  from actual offline Football-Data candidates under the Premier League
   2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
-  mapping-target chronology. No legacy writer restart or raw-write expansion is
-  recommended.
+  mapping-target chronology. Its 888 exact matches and four isolated kickoff
+  conflicts support only a separately authorized canonical-inventory write
+  design review; no legacy writer restart or raw-write expansion is recommended.
 
 ## Next recommended sequence
 
@@ -944,7 +956,9 @@ authorized.
 
 Local-only persistent sandbox `fp_m3_persistent_sandbox` has sandbox-only V26.8/V26.9
 migration-ledger and retained D4E synthetic evidence (1 run / 1 source / 6 accepted / 3 quarantine).
-It is not dev/staging/production. D4E is complete; D4F has not started. See
+It is not dev/staging/production. D4E is complete; D4F-A read-only database
+inventory and the later D4F offline cross-source audit are complete, while all
+canonical/real-data writes remain blocked. See
 `docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md`.
 
 REV2B closed the fresh disposable PostgreSQL 15 restore and complete role/grant permission
@@ -962,5 +976,6 @@ replay returned 0/0/9 with zero delta. Adapter-origin accepted and quarantine co
 both verified as `PERSISTENCE_CONFLICT` with full rollback and zero delta. `canonical_match_id`
 remains NULL for all six accepted records; no matches, canonical odds or training write occurred.
 M3-D4E is implemented and audited through PR #1802; the authoritative PR merge state is recorded
-in GitHub and Issue #1793. D4F, real historical odds, canonical integration and training remain
-unstarted and blocked.
+in GitHub and Issue #1793. D4F-A database inventory and the offline
+Football-Data-to-FotMob candidate audit are complete; real historical odds,
+canonical integration and training remain unstarted and blocked.

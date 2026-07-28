@@ -9,7 +9,7 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-07-27
+## Current authoritative status — 2026-07-28
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
@@ -54,8 +54,11 @@ Ligue 1 mapping targets:
 The terminal counts are `32 + 10 + 8 = 50`. No target was fuzzy-matched,
 re-accepted, unsuspended, written to the database or made raw-write ready by
 this reconciliation. These are not M3 Football-Data candidates and do not
-define the population for an M3 compatibility audit. `M3` candidate
-compatibility remains unproven.
+define its population. The separate M3 2026-07-28 offline audit has now
+compared 892 Football-Data Premier League candidates with 1,140 recovered
+FotMob canonical candidates: 888 are exact unique and four are isolated
+kickoff conflicts. That result does not reclassify any 32/10/8 Ligue 1 mapping
+target or validate a raw writer/import.
 
 ### Historical controlled audit milestone
 
@@ -109,7 +112,11 @@ all 58 rows is not uniquely attributable.
 - Ten concrete historical mapping targets still need new evidence and eight
   remain suspended; retained row counts do not make the whole historical batch
   clean.
-- M3 candidate-to-existing-FotMob-identity compatibility is not proven.
+- M3 candidate-to-recovered-FotMob-candidate compatibility is proven only for
+  the bounded 2022/2023–2024/2025 Premier League audit: 888 exact unique and
+  four isolated kickoff conflicts out of 892 source candidates. The local
+  development `matches` inventory remains zero for that scope, and no canonical
+  inventory writer, link or import has been authorized.
 - No network, database write, migration, new identity generation or legacy
   writer execution is authorized.
 
@@ -125,15 +132,12 @@ all 58 rows is not uniquely attributable.
 ## Recommended next step
 
 Do not start automatically. Recommended next task only after user confirmation:
-construct a bounded offline M3 audit population from actual Football-Data
-candidates accepted by the existing identity contract—`Premier League` (`E0`)
-only and seasons `2022/2023`, `2023/2024` and `2024/2025`. Only under a
-separate read-only database authorization may those candidate identities be
-compared with relevant existing canonical/FotMob matches. The 32/10/8 Ligue 1
-FotMob mapping states remain independent ingestion-governance evidence and do
-not define the M3 candidate population. No network, database write, migration,
-new identity generation, canonical-linkage persistence or legacy writer
-execution is authorized.
+a bounded canonical-inventory write design review that admits only the 888
+exact M3 candidates and keeps all four kickoff conflicts isolated. The 32/10/8
+Ligue 1 FotMob mapping states remain independent ingestion-governance evidence
+and do not define the M3 candidate population. No network, database write,
+migration, new identity generation, canonical-linkage persistence or legacy
+writer execution is authorized.
 
 The future canonical FotMob writer is a separate `data-*`-gated business
 milestone, not an automatic follow-up or a legacy-script restart.
