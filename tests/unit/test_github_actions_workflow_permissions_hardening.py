@@ -155,6 +155,21 @@ def test_pull_request_trigger_exists():
     assert "pull_request" in triggers, "pull_request trigger must still be present"
 
 
+def test_ai_gate_skips_body_metadata_only_for_main_pushes():
+    """A PR with an empty body must fail instead of silently becoming diff-only."""
+    raw = _workflow_raw_text()
+    step_start = raw.index("      - name: AI Workflow Gate (P0)")
+    step_end = raw.index("\n      - name:", step_start + 1)
+    ai_gate_step = raw[step_start:step_end]
+    pull_request_block, push_block = ai_gate_step.split(
+        "          else\n            # Push event on main", maxsplit=1
+    )
+
+    assert "--block-matrix" in pull_request_block
+    assert "--skip-body-checks" not in pull_request_block
+    assert "--skip-body-checks" in push_block
+
+
 # ---------------------------------------------------------------------------
 # Test 10: Job names unchanged
 # ---------------------------------------------------------------------------
