@@ -1,12 +1,12 @@
 # M3-D4F Candidate-to-Canonical Linkage and Real Import Readiness Review
 
 - lifecycle: current-state
-- scope: documentation-only evidence-backed local inventory review
+- scope: current-state D4F-A read-only Football-Data-to-canonical compatibility audit
 - issue: #1793
-- reviewed main baseline: 535e144cadc7019b8e86fc62e6e2bb1f4216a8c8
-- database access: one explicitly authorized local Docker PostgreSQL read-only inventory
-- Docker/Redis access: Docker metadata and the running local PostgreSQL container only; Redis not accessed
-- full real source payload export/access: none
+- reviewed main baseline: 249d8174907af78992056cd3316ddf1b53c08db3
+- D4F-A database access on this baseline: local development `football_prediction_db_dev` service / effective database `football_db` only; `claude_reader` executed aggregate and schema `SELECT` queries inside `BEGIN READ ONLY` with `statement_timeout=10s`
+- D4F-A service lifecycle: existing `dev` and development `db` services observed only; no service started or stopped. The normal documentation commit hook separately used the authorized Gatekeeper temporary `gatekeeper_cold_start_*` create/probe/rollback/drop blueprint; it did not inspect or change a business schema, business row, canonical match or persistent M3 sandbox.
+- full provider/FotMob payload export/access: none; the three Git-history CSVs were read only from repository-external temporary directories and were not exported in full
 
 ## 1. Executive decision
 
@@ -21,6 +21,34 @@ bounded SELECT-only inventory package could be designed and reviewed. It never
 authorized executing that inventory, implementation, migration, linkage write,
 `canonical_match_id` write, matches/canonical-odds write, real import,
 training, backtest or prediction.
+
+Current D4F-A execution decision:
+
+```text
+BLOCKED_CANONICAL_MATCH_COVERAGE
+```
+
+The current formal path distinguishes the two comparison sides: the
+`football-data-csv` adapter produces source observations and the supplied
+`--candidates` file represents the canonical side. The three immutable
+Git-history CSVs produced 38,832 source observations from 1,180 raw rows; the
+existing `buildSemanticMatchIdentity` contract reduced them to 892 unique
+`canonical_match_identity` units (2022/2023: 380; 2023/2024: 380;
+2024/2025: 132). Run A and Run B had the same business hash
+`07e579ed21224c354c6dbcf9d44913521d94ce6e48ce24c17cbbd9bfd6b98b8b`.
+
+The strictly read-only canonical inventory found 60 total `matches` rows but
+zero Premier League/E0 rows in the three requested seasons. Its actual
+population is 58 Ligue 1 2025/2026 rows plus two unrelated Segunda rows. The
+canonical candidate input is therefore deterministically empty, and all 892
+source match candidates terminate as `unmatched`/`no_local_candidate`.
+No source alias, fuzzy rule, timezone tolerance, synthetic candidate ID or
+linkage write was introduced.
+
+Codex review P1 corrected an earlier wording mistake: absence of a source-side
+`candidate_match_id` export is not a D4F-A blocker, because the source semantic
+identity comes from the adapter and canonical candidates supply `id` or
+`match_id`. The blocker is the verified zero-row canonical target coverage.
 
 Current active ingestion convergence state is recorded at three distinct
 levels:
@@ -480,15 +508,53 @@ D4F-A requires a read-only role, `transaction_read_only=on`, statement timeout, 
 
 ## 9. Real-source readiness
 
-Tracked CSV/JSONL files are fixtures; test code creates temporary sample manifests. The tracked local sample manifest says it is not externally licensed production data. The manifest contract requires local path, SHA-256, size, provider/provenance and rejects recovery/Git commit time as capture time. It does not prove an authoritative real file, location, hash, license, upstream provenance, fields or timezone semantics.
+The D4F-A preflight restored the following Git-history blobs byte-for-byte to a
+repository-external temporary directory. No CSV was moved, normalized,
+committed or emitted from the repository. Header checks found no empty or
+duplicate names; all three files are ASCII CSV with LF endings. The table is a
+safe metadata summary, not a source-data export.
+
+| Git path | immutable source commit / blob | SHA-256 / bytes | raw CSV rows and scope |
+| --- | --- | --- | --- |
+| `data/external/odds/raw_odds_2223.csv` | `faa3f7ab031bb6428f0390b3f833ce16addb1f0a` / `d938f7b58fd92aafefa63effe3548afb27b17188` | `e51361323bcdcdcec2faf8f58e7bcfc4f5b193ed6017b284c71538ed70d98ea2` / 175,799 | 380; 106 columns; `Div=E0`; `Date`, `Time`, `HomeTeam`, `AwayTeam`; 2022/2023 by the current season rule. |
+| `data/external/odds/raw_odds_2324.csv` | `faa3f7ab031bb6428f0390b3f833ce16addb1f0a` / `5bc9399ba12ef3ca732477dc207b52ca09edd00e` | `0b669038e94bf305603d841f02006c7d35ebd41c8722c76e479f2393079b995f` / 171,815 | 380; 106 columns; `Div=E0`; `Date`, `Time`, `HomeTeam`, `AwayTeam`; 2023/2024 by the current season rule. |
+| `data/real_odds_raw.csv` | `c8e4be00bb13a1f3559f02696cb23720363ce2c0` / `97a199ffc44a030a632b06ca33f31c3b3904aa6a` | `045cb84f6a75dc947e5aa5c4170c844237c1dcd489ae3264a795f39a20114361` / 219,137 | 420; 133 columns; `Div=E0`; `match_date`, `Time`, `home_team`, `away_team`, `Season`; 132 / 156 / 132 rows for 22/23 / 23/24 / 24/25. |
+
+This proves repository provenance, Git object identity and file integrity for
+the bounded offline preflight inputs. It does not prove the original upstream
+capture time, upstream provider provenance, license, source authority or a
+real import envelope; those facts remain explicitly unverified under the
+`historical_git_recovery` manifest contract.
 
 ```text
-REAL_SOURCE_LOCATION_NOT_PROVEN
-REAL_SOURCE_HASHES_NOT_PROVEN
+REPOSITORY_HISTORICAL_INPUTS_REVERIFIED
+UPSTREAM_SOURCE_PROVENANCE_UNVERIFIED
 REAL_IMPORT_NOT_READY
 ```
 
-The `38,616 accepted / 216 quarantined` and retained D4E `6 / 3` counts are historical evidence, not source inventory. Adapter policy does not infer opening/closing from ordinary/C columns or row order. Future sample: fixed hash, competition/season/time range and evidence-backed limits, including success/unmatched/ambiguous/quarantine examples; exact figures await inventory.
+The `38,616 accepted / 216 quarantined` and retained D4E `6 / 3` counts are historical evidence, not the D4F-A audit population. Adapter policy does not infer opening/closing from ordinary/C columns or row order. For D4F-A, the current adapter plus `buildSemanticMatchIdentity` produced the exact semantic unit without a new identity rule: 1,180 raw rows, 38,832 odds observations and 892 unique source match candidates. The empty canonical candidate inventory causes the 38,832 observations to be quarantined as `match_link_unmatched`; that is a canonical-coverage result, not a source-candidate validation failure.
+
+## 9A. D4F-A read-only execution evidence
+
+| Item | Verified result |
+| --- | --- |
+| formal source entrypoint | `npm run odds:staging:dry-run` with `football-data-csv@1.2.0`, historical-Git-recovery manifest, fixed E0/Premier League + three-season + exact-alias + Europe/London contract |
+| input population | 1,180 raw CSV rows: 380 + 380 + 420; no extra competition or season |
+| observation unit | 38,832 Football-Data odds observations: 13,680 + 12,546 + 12,606 |
+| candidate deduplication unit | current `buildSemanticMatchIdentity` output where `identity_mode=canonical_match_identity`; no synthetic source ID |
+| unique source candidates | 892: 2022/2023 380, 2023/2024 380, 2024/2025 132 |
+| reproducibility | Run A = Run B: same source fingerprints, counts and SHA-256 business hash `07e579ed21224c354c6dbcf9d44913521d94ce6e48ce24c17cbbd9bfd6b98b8b` |
+| source validity | 0 invalid semantic identities; no non-link quarantine reason; all 38,832 only have `match_link_unmatched` because the canonical candidate set is empty |
+| database identity | service `football_prediction_db_dev`; database `football_db`; PostgreSQL 15.17; `current_user=session_user=claude_reader`; `transaction_read_only=on`; no superuser/create-role/create-db privilege; `CONNECT`, `public` `USAGE` and `matches` `SELECT` verified |
+| inspected canonical schema | `matches.match_id`, `external_id`, `league_name`, `season`, `home_team`, `away_team`, `match_date`, status/source fields; `information_schema` and PostgreSQL role catalog only; no raw payload table queried |
+| relevant canonical population | 0 Premier League/E0 rows for 2022/2023–2024/2025; consequently 0 with/without external identity, kickoff, team coverage, duplicate identity or status/time anomaly |
+| terminal arithmetic | exact unique 0 + unmatched 892 + ambiguous 0 + team conflict 0 + kickoff conflict 0 + competition/season conflict 0 + incomplete canonical 0 + invalid source 0 = 892 |
+| time-difference buckets | no candidate pair exists: exact timestamp 0; timezone-normalized exact 0; 15-minute 0; 30-minute 0; larger 0; missing-kickoff comparison 0 |
+
+The audit used no `SELECT FOR UPDATE`, storage function, temporary table,
+`raw_match_data`/payload read, migration or business-table write. Bounded
+exception samples are empty because there are no relevant canonical rows; no
+raw payload or large row dump was emitted.
 
 ## 10. Roles, migration, rollback and training isolation
 
@@ -505,12 +571,12 @@ D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely 
 
 | Domain | Current status | Evidence | Missing proof | Blocks which phase |
 | ------ | -------------- | -------- | ------------- | ------------------ |
-| candidate ID stability | bounded | Deterministic local linker | Canonical equivalence/collision scope | D4F-C/E |
-| matches.match_id compatibility | bounded | Local `matches` PK/external-ID/raw-FK inventory | M3 candidate equivalence | D4F-C/E |
+| source semantic identity | verified_for_read_only_audit | Current adapter + `buildSemanticMatchIdentity` produced 892 unique E0 match units reproducibly | None for this audit; real-import acceptance remains separate | D4F-D/E |
+| canonical match coverage | blocked | `matches` has zero Premier League/E0 rows in 2022/2023–2024/2025 | A separately authorized canonical target inventory or ingestion decision | D4F-C/E |
 | canonical schema freshness | bounded | Current local development schema inventory | Approved target-specific inventory elsewhere | D4F-C/E |
 | team normalization | design_only | Local normalization/Recon concepts | Cross-source mapping | D4F-B/C/E |
 | competition mapping | design_only | Fields exist | Canonical mapping | D4F-B/C/E |
-| season mapping | bounded | Static format intent | Target format/coverage | D4F-A/C/E |
+| season mapping | blocked_by_target_coverage | Source contract is exact `2022/2023`–`2024/2025`; target has no applicable rows | Canonical target coverage and any approved representation mapping | D4F-C/E |
 | kickoff/timezone semantics | bounded | Strict timestamp/evidence | Canonical-source mapping | D4F-B/C/E |
 | home/away identity | bounded | Ordered/reversal rejection | Normalized canonical IDs | D4F-B/C/E |
 | source external ID | bounded | 60 populated `matches.external_id`; zero duplicate groups in this DB | M3 provider mapping/uniqueness | D4F-C/E |
@@ -519,8 +585,8 @@ D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely 
 | role/grant | bounded | `claude_reader` local socket access; SELECT-only listed grants; no membership/CREATE | Target grants outside this dev DB | D4F-C/E |
 | migration need | design_only | Recommended separation | Approved DDL design | D4F-C |
 | rollback | bounded | D4E transaction conflict | Target procedure | D4F-C/E |
-| real source location | not_proven | Retained FotMob data/payload records do not identify an approved historical-odds input package | Approved real historical odds location | D4F-D/E |
-| source hashes | not_proven | Retained FotMob raw/payload hashes establish integrity only for those FotMob match-detail assets, not a historical-odds input package | Immutable approved historical-odds manifest | D4F-D/E |
+| repository historical inputs | verified_for_read_only_audit | Three immutable Git-history blobs restored outside the repository with SHA-256, size, header, scope, two deterministic runs and 892 semantic units | Upstream capture/provider/license proof for real import | D4F-D/E |
+| upstream provenance | not_proven | Git history cannot prove original capture/provider/license semantics | Approved upstream provenance and import envelope | D4F-D/E |
 | provenance | not_proven | Manifest contract | License/upstream evidence | D4F-D/E |
 | real sample envelope | blocked | No real inventory | Hash/scope/count evidence | D4F-D/E |
 | training isolation | bounded | Quarantine separation/legacy risk | Quality/leakage gate | Training |
@@ -528,11 +594,15 @@ D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely 
 
 ## 12. Blocking conditions and current decision boundary
 
-Blocking conditions: M3 candidate-to-canonical equivalence has not been proven;
-there is no approved real historical-odds location/hash/provenance; football-data
-retained evidence is synthetic only; retained OddsPortal mapping/odds evidence is
-absent; the M3 staging tables are not present in this development DB; and no
-training quality/leakage acceptance exists.
+Blocking condition: the verified local canonical development database contains
+zero Premier League/E0 `matches` rows for the three requested seasons. The
+source-side comparison unit is reproducible under the existing #1797 contract,
+but no canonical candidate exists to test exact, ambiguous, team, kickoff or
+incomplete-record outcomes. Repository historical input identity is verified
+for this audit, while original upstream provenance/import semantics remain
+unverified. Retained OddsPortal mapping/odds evidence is absent; the M3 staging
+tables are not present in this development DB; and no training
+quality/leakage acceptance exists.
 
 The formal `redo source inventory strategy` permits recovery planning from the
 retained FotMob baseline as canonical-match comparison evidence. It does not
@@ -544,27 +614,22 @@ import still needs a separate authorization.
 
 ## 13. Explicit non-execution declaration
 
-One authorized local database inventory occurred. No Docker daemon/container was
-started, stopped or restarted; no volume changed; no remote or production
-database was connected; no source network request, migration, canonical/staging
-write, odds import, training, Issue #1793 change, PR-ready action or merge
-occurred. D4F-B through D4F-E did not start.
+This D4F-A audit did open a strictly read-only local PostgreSQL session and run
+the formal offline staging CLI twice, emitting only repository-external
+temporary artifacts. It did not run a migration, write a business row or
+schema, write `canonical_match_id`, access `raw_match_data` or a raw payload,
+or start, stop or restart a service. The normal commit hook separately
+completed the user-authorized Gatekeeper temporary `gatekeeper_cold_start_*`
+create/probe/rollback/drop blueprint; it did not target a persistent business
+table or M3 sandbox. No remote or production database, provider/FotMob endpoint,
+browser, canonical/staging write, odds import, training, Issue #1793 change or
+merge occurred. D4F-B through D4F-E did not start.
 
 ## 14. Next recommended task
 
 Do not start automatically. Recommended next task only after user confirmation:
-construct one bounded offline audit population from actual Football-Data
-candidates accepted by the existing M3 identity contract:
-
-- competition: `Premier League` only (`E0`);
-- seasons: `2022/2023`, `2023/2024`, `2024/2025`;
-- candidate source: existing offline Football-Data fixture/input only; and
-- candidate identity: produced by the existing M3 candidate-generation code.
-
-Only under a separate read-only database authorization, compare those candidate
-identities with relevant existing canonical/FotMob `matches.match_id` records.
-The 32 Ligue 1 ADG59 clean candidates, ten `needs_new_evidence` targets and
-eight `remain_suspended` targets are independent FotMob mapping-governance
-states; none defines or is included by implication in this M3 candidate set.
-No network, database write, migration, new identity generation,
-canonical-linkage persistence, training, backtest or prediction is authorized.
+decide whether to make a separately authorized canonical Premier League
+2022/2023–2024/2025 inventory available for another read-only comparison, or to
+stop M3 at the verified `BLOCKED_CANONICAL_MATCH_COVERAGE` boundary. No
+canonical-linkage persistence, real import, migration, training, backtest or
+prediction may start from this audit.

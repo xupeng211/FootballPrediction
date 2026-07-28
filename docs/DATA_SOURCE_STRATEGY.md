@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: data / ingestion governance
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Current source priority
 
@@ -12,7 +12,10 @@ Last updated: 2026-07-27
 2. Football-Data is the historical results/odds candidate source for M3. Its
    current identity contract permits `E0` / `Premier League` only for seasons
    `2022/2023`, `2023/2024` and `2024/2025`; it does not yet have retained
-   real-ingest proof in the development inventory.
+   real-ingest proof in the development inventory. D4F-A reverified three
+   historical Git inputs and the existing contract produced 892 reproducible
+   source semantic candidates; the local canonical target has zero matching
+   Premier League rows, so real import remains blocked by canonical coverage.
 3. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
    OddsPortal has no retained execution evidence and its legacy route remains
    blocked.
@@ -45,6 +48,12 @@ Last updated: 2026-07-27
   rows are not proven.
 - FotMob retained assets and its independent 50-target Ligue 1 mapping
   chronology do not define the M3 Football-Data candidate population.
+- **M3 D4F-A status**: `BLOCKED_CANONICAL_MATCH_COVERAGE`. Repository
+  provenance, hashes, byte sizes, headers and E0 scope for the three historical
+  CSV inputs are reverified; the current #1797 contract produced 892
+  reproducible source semantic candidates. The strictly read-only local
+  canonical inventory has zero Premier League/E0 rows for the target seasons,
+  therefore all 892 are unmatched. No business or schema write occurred.
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
@@ -60,10 +69,9 @@ Last updated: 2026-07-27
 - Add tests using fixtures/mocks only.
 - Document exact evidence needed before enabling ingestion.
 - Small read-only source inventory audits.
-- Only after separate authorization, construct a bounded offline M3 audit
-  population from actual Football-Data candidates accepted by the current
-  Premier League `2022/2023`–`2024/2025` identity contract; any comparison with
-  canonical matches additionally requires read-only database authorization.
+- After separate authorization, establish a bounded canonical Premier League
+  `2022/2023`–`2024/2025` inventory for a future read-only comparison, or make
+  an explicit M3 stop decision. This does not authorize a business write.
 
 ## Blocked data tasks
 
@@ -99,9 +107,10 @@ From PR #1454:
   `remain_suspended` Ligue 1 FotMob mapping states are ingestion-governance
   evidence only. They must not be used as the candidate set for an M3
   Football-Data compatibility audit.
-- `REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN` remain
-  active for the historical-odds input package; retained FotMob payload hashes
-  are not evidence for that package.
+- Repository Git-history location and SHA-256 identity are verified for the
+  bounded D4F-A input package. Original upstream capture/provider/license
+  provenance remains unverified, and retained FotMob payload hashes are not
+  evidence for historical odds.
 
 ## Validation rules for data tasks
 
@@ -117,12 +126,10 @@ From PR #1454:
 
 - What is the latest verified FotMob endpoint status?
 - Which existing fixtures are safe to use for testing?
-- Which approved offline Football-Data source package or fixture will define a
-  bounded M3 candidate set, and what are its exact immutable SHA-256 hashes?
-- Which Premier League seasons and candidate count are included in that
-  separately authorized audit population?
-- Which relevant canonical matches exist for a separately authorized read-only
-  comparison?
+- Which separately authorized canonical source can supply Premier League
+  2022/2023–2024/2025 target coverage without crossing the DB-write boundary?
+- If that coverage becomes available, do exact canonical match fields use the
+  existing source contract without an alias or timezone change?
 - Is `raw_write` authorization phrase mechanism still wired and effective?
 - Are current DB write guards (gatekeeper.sh, ai_workflow_gate.py) still active?
 - What exact no-write test should be run first?
