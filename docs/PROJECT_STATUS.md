@@ -898,11 +898,12 @@ execution is authorized.
   new dependencies.
 - No network acquisition, database write, browser automation, parser
   implementation, migration, training or prediction is authorized.
-- A future M3 compatibility audit must derive its bounded population from
-  actual offline Football-Data candidates under the Premier League
+- The completed M3 offline cross-source audit derived its bounded population
+  from actual offline Football-Data candidates under the Premier League
   2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
-  mapping-target chronology. No legacy writer restart or raw-write expansion is
-  recommended.
+  mapping-target chronology. Its 888 exact matches and four isolated kickoff
+  conflicts support only a separately authorized canonical-inventory write
+  design review; no legacy writer restart or raw-write expansion is recommended.
 
 ## Next recommended sequence
 
@@ -955,7 +956,9 @@ execution is authorized.
 
 Local-only persistent sandbox `fp_m3_persistent_sandbox` has sandbox-only V26.8/V26.9
 migration-ledger and retained D4E synthetic evidence (1 run / 1 source / 6 accepted / 3 quarantine).
-It is not dev/staging/production. D4E is complete; D4F has not started. See
+It is not dev/staging/production. D4E is complete; D4F-A read-only database
+inventory and the later D4F offline cross-source audit are complete, while all
+canonical/real-data writes remain blocked. See
 `docs/M3_ODDS_STAGING_PERSISTENT_SANDBOX_RUNBOOK.md`.
 
 REV2B closed the fresh disposable PostgreSQL 15 restore and complete role/grant permission
@@ -973,5 +976,6 @@ replay returned 0/0/9 with zero delta. Adapter-origin accepted and quarantine co
 both verified as `PERSISTENCE_CONFLICT` with full rollback and zero delta. `canonical_match_id`
 remains NULL for all six accepted records; no matches, canonical odds or training write occurred.
 M3-D4E is implemented and audited through PR #1802; the authoritative PR merge state is recorded
-in GitHub and Issue #1793. D4F, real historical odds, canonical integration and training remain
-unstarted and blocked.
+in GitHub and Issue #1793. D4F-A database inventory and the offline
+Football-Data-to-FotMob candidate audit are complete; real historical odds,
+canonical integration and training remain unstarted and blocked.

@@ -6,7 +6,10 @@
 - reviewed main baseline: de2891af46ffe0df612a37acb39c06b544a50e31
 - historical D4F-A database access: local development `football_prediction_db_dev` service / effective database `football_db` only; `claude_reader` executed aggregate and schema `SELECT` queries inside `BEGIN READ ONLY` with `statement_timeout=10s`
 - D4F service lifecycle: existing `dev` and development `db` services observed only; no service started or stopped. The normal documentation commit hook separately used the authorized Gatekeeper temporary `gatekeeper_cold_start_*` create/probe/rollback/drop blueprint; it did not inspect or change a business schema, business row, canonical match or persistent M3 sandbox.
-- full provider/FotMob payload export/access: none; the three Git-history CSVs were read only from repository-external temporary directories and were not exported in full
+- D4F-A provider/FotMob payload export/access: none; D4F-A used only the local
+  database inventory. The later 9B offline phase re-read the three Git-history
+  CSVs and recovered candidate metadata from repository-external temporary
+  directories; neither phase exported a full payload or made a provider request.
 
 ## 1. Executive decision
 
@@ -206,17 +209,22 @@ automatic network acquisition = prohibited
 automatic database write = prohibited
 ```
 
-The user-authorized inventory removed the exact local target/read-only-role and
-canonical-schema-freshness blockers for `football_prediction_db_dev/football_db`.
-It also established a reusable FotMob identity/raw baseline, but it did not
-prove M3 candidate compatibility, provider provenance, a real historical odds
-file, or any cross-source linkage.
+The user-authorized D4F-A inventory removed the exact local target/read-only-role
+and canonical-schema-freshness blockers for
+`football_prediction_db_dev/football_db`. It also established a reusable FotMob
+identity/raw baseline, but D4F-A itself did not prove M3 candidate compatibility,
+provider provenance, a real historical odds file, or any cross-source linkage.
+The later 9B offline comparison resolved only the candidate-compatibility part:
+it verified the 888 exact / 4 isolated-kickoff-conflict partition without
+changing the provenance, import or write boundaries.
 
-Bounded evidence includes tracked schema/migration review; current staging
+Bounded D4F-A evidence includes tracked schema/migration review; current staging
 contracts; candidate identity/linkage code and tests; D4E synthetic
 persistent-sandbox historical evidence; existing source-of-truth documentation;
-and this local read-only inventory. No external source payload or external
-historical-data acquisition occurred.
+and the local read-only inventory. No external source payload or external
+historical-data acquisition occurred in D4F-A. Section 9B records the later
+repository-external, offline source-CSV and candidate-artifact comparison
+separately.
 
 ```text
 affected local asset package count = 4
@@ -253,18 +261,30 @@ restart, network exception or write exception.
 
 ## 2. Scope and non-goals
 
+### D4F-A historical local-database phase
+
 Git-tracked source, SQL, tests, ordinary docs and Git metadata were read. The
-only runtime target was the already-running local Docker PostgreSQL 15 container
-`football_prediction_db_dev`, labelled as the repository's `footballprediction`
-development `db` service. Connection used the container Unix socket with the
-declared `claude_reader` role and no password. Every query ran in an independent
-`BEGIN READ ONLY` transaction with a 10-second statement timeout, a 2-second
-lock timeout and a 15-second idle-in-transaction timeout; `transaction_read_only`
-returned `on`. No `.env`, container environment, credential, remote endpoint,
-Redis, browser, proxy, migration, write or full raw/source payload was
-read/exported. Output was limited to schema, aggregate counts, safe identity
-fields and at most five metadata-only samples per table. The M3 persistent-sandbox volume was observed
-but has no running container and was not started, mounted or inspected.
+only D4F-A runtime target was the already-running local Docker PostgreSQL 15
+container `football_prediction_db_dev`, labelled as the repository's
+`footballprediction` development `db` service. Connection used the container
+Unix socket with the declared `claude_reader` role and no password. Every query
+ran in an independent `BEGIN READ ONLY` transaction with a 10-second statement
+timeout, a 2-second lock timeout and a 15-second idle-in-transaction timeout;
+`transaction_read_only` returned `on`. Its output was limited to schema,
+aggregate counts, safe identity fields and at most five metadata-only samples
+per table. The M3 persistent-sandbox volume was observed but was not started,
+mounted or inspected.
+
+### 9B current offline cross-source phase
+
+The later 9B phase did not access a business database. It restored three
+immutable Football-Data CSV blobs and read the recovered FotMob candidate
+artifacts only from repository-external temporary directories. The existing
+formal dry-run and pure identity/linking contracts ran in temporary development
+containers with those read-only inputs. It did not read `.env`, a container
+environment, credentials, a remote endpoint, Redis, browser, proxy or a full
+raw/source payload; it did not start or stop a service. Both phases prohibited
+migration, business writes, canonical-linkage persistence and payload export.
 
 ## 3. Evidence reviewed
 
