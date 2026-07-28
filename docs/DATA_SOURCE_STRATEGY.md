@@ -12,9 +12,10 @@ Last updated: 2026-07-28
 2. Football-Data is the historical results/odds candidate source for M3. Its
    current identity contract permits `E0` / `Premier League` only for seasons
    `2022/2023`, `2023/2024` and `2024/2025`; it does not yet have retained
-   real-ingest proof in the development inventory. The D4F-A preflight
-   reverified three historical Git inputs, but the current contract has no
-   formal candidate-export entrypoint or stable candidate-ID output.
+   real-ingest proof in the development inventory. D4F-A reverified three
+   historical Git inputs and the existing contract produced 892 reproducible
+   source semantic candidates; the local canonical target has zero matching
+   Premier League rows, so real import remains blocked by canonical coverage.
 3. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
    OddsPortal has no retained execution evidence and its legacy route remains
    blocked.
@@ -47,10 +48,12 @@ Last updated: 2026-07-28
   rows are not proven.
 - FotMob retained assets and its independent 50-target Ligue 1 mapping
   chronology do not define the M3 Football-Data candidate population.
-- **M3 D4F-A status**: `BLOCKED_CANDIDATE_GENERATION_ENTRYPOINT`. Repository
+- **M3 D4F-A status**: `BLOCKED_CANONICAL_MATCH_COVERAGE`. Repository
   provenance, hashes, byte sizes, headers and E0 scope for the three historical
-  CSV inputs are reverified; no formal #1797-contract candidate population can
-  yet be emitted. No canonical database session was opened.
+  CSV inputs are reverified; the current #1797 contract produced 892
+  reproducible source semantic candidates. The strictly read-only local
+  canonical inventory has zero Premier League/E0 rows for the target seasons,
+  therefore all 892 are unmatched. No business or schema write occurred.
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
@@ -66,10 +69,9 @@ Last updated: 2026-07-28
 - Add tests using fixtures/mocks only.
 - Document exact evidence needed before enabling ingestion.
 - Small read-only source inventory audits.
-- After separate authorization, implement and test the missing deterministic,
-  no-network/no-DB-write candidate exporter for the current Premier League
-  `2022/2023`–`2024/2025` identity contract. Only after it emits stable
-  candidates can a separately authorized canonical read-only comparison occur.
+- After separate authorization, establish a bounded canonical Premier League
+  `2022/2023`–`2024/2025` inventory for a future read-only comparison, or make
+  an explicit M3 stop decision. This does not authorize a business write.
 
 ## Blocked data tasks
 
@@ -124,12 +126,10 @@ From PR #1454:
 
 - What is the latest verified FotMob endpoint status?
 - Which existing fixtures are safe to use for testing?
-- Which formally exported, stable candidate/source-identity unit will the
-  #1797 contract define for the verified three-file E0 input package?
-- After the exporter exists, what deduplicated candidate count and per-season
-  counts result from its exact contract?
-- Which relevant canonical matches exist for a separately authorized read-only
-  comparison?
+- Which separately authorized canonical source can supply Premier League
+  2022/2023–2024/2025 target coverage without crossing the DB-write boundary?
+- If that coverage becomes available, do exact canonical match fields use the
+  existing source contract without an alias or timezone change?
 - Is `raw_write` authorization phrase mechanism still wired and effective?
 - Are current DB write guards (gatekeeper.sh, ai_workflow_gate.py) still active?
 - What exact no-write test should be run first?
