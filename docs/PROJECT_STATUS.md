@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: project governance
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 
@@ -43,13 +43,31 @@ Last updated: 2026-07-27
     rolled back with zero delta. Final state: 1 import run / 1 source file / 6 accepted / 3 quarantine.
   - `canonical_match_id` remains NULL for all six accepted rows; candidate identity is unverified,
     no matches FK exists, and canonical integration/training remain blocked. Real historical odds
-    were not used, and no development, staging or production database was targeted. Issue #1793
-    remains Open; D4F is not authorized, has not started, and M3 overall is not complete.
+    were not used, and no development, staging or production database was targeted.
   - Post-merge review of #1802 identified three operator/governance P1 hardening requirements:
     dependency-complete operator runtime, exact effective PostgreSQL connection identity, and a
     hash-bound lifecycle declaration for the immutable JSONL fixture. The D4E business proof and
     retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
-    or modify that sandbox. D4F remains unauthorized.
+    or modify that sandbox.
+
+**M3-D4F-A current decision — `BLOCKED_CANDIDATE_GENERATION_ENTRYPOINT`.** The
+2026-07-28 user-authorized read-only preflight reverified three immutable
+Football-Data-shaped Git-history CSV inputs outside the repository: 380 E0 rows
+for 2022/2023, 380 E0 rows for 2023/2024, and a 420-row E0 file containing
+132 / 156 / 132 rows for 22/23 / 23/24 / 24/25. Their Git object IDs,
+SHA-256 values, sizes and header/scope checks are recorded in
+`docs/M3_D4F_READINESS_REVIEW.md`.
+
+The current `npm run odds:staging:dry-run` path requires a pre-existing
+`--candidates` file; #1797's adapter/identity code does not export a stable
+candidate ID or that file. The legacy CSV dry-run uses an earlier parser and is
+not a substitute for the strict E0/alias/Europe-London contract. No candidate
+population, canonical database query, linkage decision, business/schema write,
+network request, provider/FotMob access or sandbox change occurred. Repository
+input provenance is reverified for this offline preflight, while original
+upstream provenance/import semantics remain unverified. Issue #1793 remains
+Open; M3 requires a separately authorized runtime candidate-exporter change
+before D4F-A can resume.
 
 M3-D4F local evidence-backed inventory conclusion:
 **`FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED`**.
@@ -145,20 +163,18 @@ equivalence, approved real historical-odds provenance/hash/location, real
 football-data and OddsPortal evidence, M3 staging target availability, and
 training quality/leakage controls.
 FotMob payload hashes establish integrity only for retained FotMob match-detail
-assets. They do not prove the historical-odds input-package location, immutable
-hashes, manifest or provenance; those remain
-`REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN`.
+assets. The D4F-A preflight separately reverified repository historical input
+objects and SHA-256 values, but neither set of hashes proves original upstream
+capture/provider/license semantics or authorizes an import.
 
 Do not start automatically. Recommended next task only after user confirmation:
-construct a bounded offline M3 audit population from actual Football-Data
-candidates accepted by the existing identity contract—`Premier League` (`E0`)
-only, seasons `2022/2023`, `2023/2024` and `2024/2025`, and identities produced
-by the existing candidate-generation code. Only under a separate read-only
-database authorization, compare those candidates with relevant existing
-canonical/FotMob matches. The 32/10/8 Ligue 1 FotMob mapping states are
-independent governance evidence and do not define the M3 population. No
-network, database write, migration, new identity generation,
-canonical-linkage persistence or legacy writer execution is authorized.
+authorize a narrow runtime candidate exporter for the existing E0,
+2022/2023–2024/2025, alias and Europe-London identity contract. Only after it
+produces a deterministic stable candidate population may a separately authorized
+read-only D4F-A canonical comparison resume. The 32/10/8 Ligue 1 FotMob mapping
+states remain independent governance evidence; no network, database write,
+migration, canonical-linkage persistence, training or legacy-writer execution
+is authorized.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 

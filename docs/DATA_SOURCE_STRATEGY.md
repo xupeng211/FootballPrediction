@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: data / ingestion governance
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Current source priority
 
@@ -12,7 +12,9 @@ Last updated: 2026-07-27
 2. Football-Data is the historical results/odds candidate source for M3. Its
    current identity contract permits `E0` / `Premier League` only for seasons
    `2022/2023`, `2023/2024` and `2024/2025`; it does not yet have retained
-   real-ingest proof in the development inventory.
+   real-ingest proof in the development inventory. The D4F-A preflight
+   reverified three historical Git inputs, but the current contract has no
+   formal candidate-export entrypoint or stable candidate-ID output.
 3. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
    OddsPortal has no retained execution evidence and its legacy route remains
    blocked.
@@ -45,6 +47,10 @@ Last updated: 2026-07-27
   rows are not proven.
 - FotMob retained assets and its independent 50-target Ligue 1 mapping
   chronology do not define the M3 Football-Data candidate population.
+- **M3 D4F-A status**: `BLOCKED_CANDIDATE_GENERATION_ENTRYPOINT`. Repository
+  provenance, hashes, byte sizes, headers and E0 scope for the three historical
+  CSV inputs are reverified; no formal #1797-contract candidate population can
+  yet be emitted. No canonical database session was opened.
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
@@ -60,10 +66,10 @@ Last updated: 2026-07-27
 - Add tests using fixtures/mocks only.
 - Document exact evidence needed before enabling ingestion.
 - Small read-only source inventory audits.
-- Only after separate authorization, construct a bounded offline M3 audit
-  population from actual Football-Data candidates accepted by the current
-  Premier League `2022/2023`–`2024/2025` identity contract; any comparison with
-  canonical matches additionally requires read-only database authorization.
+- After separate authorization, implement and test the missing deterministic,
+  no-network/no-DB-write candidate exporter for the current Premier League
+  `2022/2023`–`2024/2025` identity contract. Only after it emits stable
+  candidates can a separately authorized canonical read-only comparison occur.
 
 ## Blocked data tasks
 
@@ -99,9 +105,10 @@ From PR #1454:
   `remain_suspended` Ligue 1 FotMob mapping states are ingestion-governance
   evidence only. They must not be used as the candidate set for an M3
   Football-Data compatibility audit.
-- `REAL_SOURCE_LOCATION_NOT_PROVEN` and `REAL_SOURCE_HASHES_NOT_PROVEN` remain
-  active for the historical-odds input package; retained FotMob payload hashes
-  are not evidence for that package.
+- Repository Git-history location and SHA-256 identity are verified for the
+  bounded D4F-A input package. Original upstream capture/provider/license
+  provenance remains unverified, and retained FotMob payload hashes are not
+  evidence for historical odds.
 
 ## Validation rules for data tasks
 
@@ -117,10 +124,10 @@ From PR #1454:
 
 - What is the latest verified FotMob endpoint status?
 - Which existing fixtures are safe to use for testing?
-- Which approved offline Football-Data source package or fixture will define a
-  bounded M3 candidate set, and what are its exact immutable SHA-256 hashes?
-- Which Premier League seasons and candidate count are included in that
-  separately authorized audit population?
+- Which formally exported, stable candidate/source-identity unit will the
+  #1797 contract define for the verified three-file E0 input package?
+- After the exporter exists, what deduplicated candidate count and per-season
+  counts result from its exact contract?
 - Which relevant canonical matches exist for a separately authorized read-only
   comparison?
 - Is `raw_write` authorization phrase mechanism still wired and effective?
