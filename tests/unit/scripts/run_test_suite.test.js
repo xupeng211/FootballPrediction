@@ -48,6 +48,154 @@ test('当前 unit 根目录会纳入嵌套测试且不会重复收集', () => {
     assert.equal(new Set(files).size, files.length);
 });
 
+test('静态仓库数据路径会进入 affected 测试依赖图', () => {
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        [
+            "const state = readText('docs/data/FOTMOB_CURRENT_STATE.md');",
+            "const leagues = 'config/leagues.json';",
+            "const outside = '../../outside.md';",
+        ].join('\n'),
+    );
+
+    assert.deepEqual(
+        dependencies.map(file => path.relative(PROJECT_ROOT, file)),
+        ['config/leagues.json', 'docs/data/FOTMOB_CURRENT_STATE.md'],
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        ['docs/data/FOTMOB_CURRENT_STATE.md'],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('fotmob_ligue1_adg55_acceptance_mutation_planning.test.js')),
+        'current-state 变更必须选中通过静态数据路径读取它的测试',
+    );
+});
+
+test('相对 docs 字面量会按读取文件位置进入 affected 测试依赖图', () => {
+    const reader = path.join(
+        PROJECT_ROOT,
+        'tests',
+        'unit',
+        'fotmob_ligue1_corrected_source_discovery_adg21.test.js',
+    );
+    const manifest = 'docs/_manifests/fotmob_ligue1_corrected_source_discovery.adg21.json';
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        fs.readFileSync(reader, 'utf8'),
+        reader,
+    );
+
+    assert.deepEqual(
+        dependencies.map(file => path.relative(PROJECT_ROOT, file)),
+        [manifest],
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        [manifest],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('fotmob_ligue1_corrected_source_discovery_adg21.test.js')),
+        'manifest 变更必须选中通过相对 docs 路径读取它的测试',
+    );
+});
+
+test('删除后的静态数据路径仍保留为 affected 反向依赖', () => {
+    const reader = path.join(PROJECT_ROOT, 'tests', 'unit', 'selector_reader.test.js');
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        [
+            "const direct = 'docs/_manifests/deleted_by_pr.json';",
+            "const relative = path.resolve(__dirname, '../../config/deleted_by_pr.json');",
+            "const escaped = 'docs/../src/not_a_data_dependency.js';",
+        ].join('\n'),
+        reader,
+    );
+
+    assert.deepEqual(
+        dependencies.map(file => path.relative(PROJECT_ROOT, file)),
+        ['config/deleted_by_pr.json', 'docs/_manifests/deleted_by_pr.json'],
+    );
+});
+
+test('拆分 path.join 构造的数据文件会进入 affected 测试依赖图', () => {
+    const reader = path.join(
+        PROJECT_ROOT,
+        'tests',
+        'unit',
+        'fotmob_ligue1_adg60_next_batch_no_write_authorization.test.js',
+    );
+    const manifest = 'docs/_manifests/fotmob_ligue1_adg60_next_batch_no_write_authorization.json';
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        fs.readFileSync(reader, 'utf8'),
+        reader,
+    );
+
+    assert.ok(
+        dependencies.some(file => path.relative(PROJECT_ROOT, file) === manifest),
+        'join(ROOT, dataDirectory, filename) 的字面量调用必须保留具体文件依赖',
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        [manifest],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('fotmob_ligue1_adg60_next_batch_no_write_authorization.test.js')),
+        'manifest 变更必须选中通过拆分 path.join 构造读取它的测试',
+    );
+});
+
+test('单行 path.resolve helper 构造的数据文件会进入 affected 测试依赖图', () => {
+    const reader = path.join(
+        PROJECT_ROOT,
+        'tests',
+        'unit',
+        'fotmob_ligue1_controlled_correction_application_adg27.test.js',
+    );
+    const manifest = 'docs/_manifests/fotmob_ligue1_corrected_source_inventory.adg27.json';
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        fs.readFileSync(reader, 'utf8'),
+        reader,
+    );
+
+    assert.ok(
+        dependencies.some(file => path.relative(PROJECT_ROOT, file) === manifest),
+        '单行 path.resolve helper 的字面量调用必须保留具体文件依赖',
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        [manifest],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('fotmob_ligue1_controlled_correction_application_adg27.test.js')),
+        'manifest 变更必须选中通过单行 path.resolve helper 读取它的测试',
+    );
+});
+
+test('全字面量分段 path.join 构造的数据文件会进入 affected 测试依赖图', () => {
+    const reader = path.join(PROJECT_ROOT, 'scripts', 'ops', 'total_war_pipeline.js');
+    const config = 'config/recon_config.json';
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        fs.readFileSync(reader, 'utf8'),
+        reader,
+    );
+
+    assert.ok(
+        dependencies.some(file => path.relative(PROJECT_ROOT, file) === config),
+        'path.join(ROOT, config, filename) 的全字面量构造必须保留具体文件依赖',
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        [config],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('TotalWarPipeline.Config.test.js')),
+        'config 变更必须选中通过全字面量 path.join 读取它的测试',
+    );
+});
+
 test('空测试集合返回非零，不静默成功', () => {
     assert.equal(runner.runNodeTests([], { label: '空测试集合行为测试' }), 1);
 });

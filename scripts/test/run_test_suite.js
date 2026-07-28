@@ -64,6 +64,9 @@ const PROJECT_JS_ROOTS = Object.freeze([
   INTEGRATION_DIR,
   STRESS_DIR,
 ]);
+const PROJECT_DATA_ROOTS = Object.freeze(
+  ['docs', 'config', 'data'].map(root => path.join(PROJECT_ROOT, root))
+);
 let nativeCoverageThresholdSupport = null;
 let dependencyGraphCache = null;
 
@@ -149,6 +152,132 @@ function normalizeProjectPath(filePath) {
   return path.resolve(PROJECT_ROOT, filePath);
 }
 
+function isProjectDataDependencyPath(filePath) {
+  return PROJECT_DATA_ROOTS.some(root => filePath.startsWith(root + path.sep));
+}
+
+function resolveStaticProjectDataPath(literalPath, fromFile) {
+  const dependency = /^(?:docs|config|data)\//.test(literalPath)
+    ? normalizeProjectPath(literalPath)
+    : path.resolve(path.dirname(fromFile), literalPath);
+  return isProjectDataDependencyPath(dependency) ? dependency : null;
+}
+
+function parseStaticPathLiteral(argument) {
+  const match = argument.trim().match(/^['"]([A-Za-z0-9_./-]+)['"]$/);
+  return match ? match[1] : null;
+}
+
+function isProjectDataRootLiteral(literalPath) {
+  return /^(?:(?:docs|config|data)(?:\/|$)|(?:\.\.?\/)+(?:docs|config|data)(?:\/|$))/.test(literalPath);
+}
+
+function collectStaticPathCallDependencies(sourceText, fromFile) {
+  const dependencies = new Set();
+  const staticPathCallPattern = /(?:\bpath\.)?(?:join|resolve)\(\s*([^)]*?)\s*\)/g;
+  let staticPathCallMatch = staticPathCallPattern.exec(sourceText);
+  while (staticPathCallMatch) {
+    const literalSegments = staticPathCallMatch[1].split(',').map(parseStaticPathLiteral);
+    const dataRootIndex = literalSegments.findIndex(segment =>
+      segment && isProjectDataRootLiteral(segment)
+    );
+    const dataSegments = dataRootIndex === -1 ? [] : literalSegments.slice(dataRootIndex);
+    if (dataSegments.length > 1 && dataSegments.every(Boolean)) {
+      const dependency = resolveStaticProjectDataPath(dataSegments.join('/'), fromFile);
+      if (dependency) {
+        dependencies.add(dependency);
+      }
+    }
+    staticPathCallMatch = staticPathCallPattern.exec(sourceText);
+  }
+  return dependencies;
+}
+
+/**
+ * 收集源码中以字面量声明的仓库数据依赖。
+ *
+ * affected 模式原先只追踪 JS import/require 关系，无法感知
+ * readFileSync('docs/...') 或 path.resolve(__dirname, '../../docs/...')
+ * 这类运行时文件读取，也支持 helper 将字面量文件名传给
+ * join/resolve(ROOT, 'docs/...', filename) 的拆分构造。只接受解析后仍
+ * 位于 docs/config/data 根目录的字面量；即使变更删除了目标文件，也要
+ * 保留反向依赖以选中相关测试。
+ *
+ * @param {string} sourceText
+ * @param {string} [fromFile] 源文件路径，用于解析 ./ 和 ../ 字面量
+ * @returns {string[]}
+ */
+function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROOT) {
+  const dependencies = new Set();
+  const pattern = /['"]((?:docs|config|data)\/[A-Za-z0-9_./-]+)['"]/g;
+  let match = pattern.exec(sourceText);
+
+  while (match) {
+    const dependency = normalizeProjectPath(match[1]);
+    if (isProjectDataDependencyPath(dependency)) {
+      dependencies.add(dependency);
+    }
+    match = pattern.exec(sourceText);
+  }
+
+  const relativePattern = /['"]((?:\.\.?\/)+(?:docs|config|data)\/[A-Za-z0-9_./-]+)['"]/g;
+  let relativeMatch = relativePattern.exec(sourceText);
+  while (relativeMatch) {
+    const dependency = path.resolve(path.dirname(fromFile), relativeMatch[1]);
+    if (isProjectDataDependencyPath(dependency)) {
+      dependencies.add(dependency);
+    }
+    relativeMatch = relativePattern.exec(sourceText);
+  }
+
+  for (const dependency of collectStaticPathCallDependencies(sourceText, fromFile)) {
+    dependencies.add(dependency);
+  }
+
+  const helperPattern = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)\s*\{([^}]*)\}/g;
+  let helperMatch = helperPattern.exec(sourceText);
+  while (helperMatch) {
+    const [, helperName, rawParameters, helperBody] = helperMatch;
+    const parameters = rawParameters
+      .split(',')
+      .map(parameter => parameter.trim())
+      .filter(parameter => /^[A-Za-z_$][\w$]*$/.test(parameter));
+    const helperPathPattern = /(?:\bpath\.)?(?:join|resolve)\(\s*[^)]*?['"]((?:(?:docs|config|data)\/|(?:\.\.?\/)+(?:docs|config|data)\/)[A-Za-z0-9_./-]+)['"]\s*,\s*([A-Za-z_$][\w$]*)\s*\)/g;
+    let helperPathMatch = helperPathPattern.exec(helperBody);
+
+    while (helperPathMatch) {
+      const [, dataDirectory, parameter] = helperPathMatch;
+      const parameterIndex = parameters.indexOf(parameter);
+      const dataDirectoryPath = resolveStaticProjectDataPath(dataDirectory, fromFile);
+      if (parameterIndex !== -1 && dataDirectoryPath) {
+        const callPattern = new RegExp(
+          `\\b${helperName}\\s*\\(\\s*((?:['"][A-Za-z0-9_./-]+['"]\\s*,\\s*)*['"][A-Za-z0-9_./-]+['"])\\s*\\)`,
+          'g'
+        );
+        let callMatch = callPattern.exec(sourceText);
+
+        while (callMatch) {
+          const literalArguments = [...callMatch[1].matchAll(/['"]([^'"]+)['"]/g)]
+            .map(match => match[1]);
+          const literalFilename = literalArguments[parameterIndex];
+          if (literalFilename) {
+            const dependency = path.join(dataDirectoryPath, literalFilename);
+            if (isProjectDataDependencyPath(dependency)) {
+              dependencies.add(dependency);
+            }
+          }
+          callMatch = callPattern.exec(sourceText);
+        }
+      }
+      helperPathMatch = helperPathPattern.exec(helperBody);
+    }
+
+    helperMatch = helperPattern.exec(sourceText);
+  }
+
+  return [...dependencies].sort();
+}
+
 function resolveLocalModulePath(fromFile, specifier) {
   if (!specifier) {
     return null;
@@ -222,6 +351,9 @@ function buildDependencyGraph() {
       if (resolved) {
         deps.add(resolved);
       }
+    }
+    for (const dependency of collectStaticProjectDataDependencies(sourceText, file)) {
+      deps.add(dependency);
     }
 
     graph.set(file, deps);
@@ -817,8 +949,10 @@ if (require.main === module) {
 
 module.exports = {
   CORE_UNIT_TESTS,
+  collectStaticProjectDataDependencies,
   collectTestFiles,
   resolveCoreUnitFiles,
+  resolveAffectedTestFiles,
   runNodeTests,
   snapshotWorkspaceStatus,
   verifyWorkspaceUnchanged,
