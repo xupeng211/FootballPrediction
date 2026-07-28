@@ -145,6 +145,34 @@ test('拆分 path.join 构造的数据文件会进入 affected 测试依赖图',
     );
 });
 
+test('单行 path.resolve helper 构造的数据文件会进入 affected 测试依赖图', () => {
+    const reader = path.join(
+        PROJECT_ROOT,
+        'tests',
+        'unit',
+        'fotmob_ligue1_controlled_correction_application_adg27.test.js',
+    );
+    const manifest = 'docs/_manifests/fotmob_ligue1_corrected_source_inventory.adg27.json';
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        fs.readFileSync(reader, 'utf8'),
+        reader,
+    );
+
+    assert.ok(
+        dependencies.some(file => path.relative(PROJECT_ROOT, file) === manifest),
+        '单行 path.resolve helper 的字面量调用必须保留具体文件依赖',
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        [manifest],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('fotmob_ligue1_controlled_correction_application_adg27.test.js')),
+        'manifest 变更必须选中通过单行 path.resolve helper 读取它的测试',
+    );
+});
+
 test('空测试集合返回非零，不静默成功', () => {
     assert.equal(runner.runNodeTests([], { label: '空测试集合行为测试' }), 1);
 });

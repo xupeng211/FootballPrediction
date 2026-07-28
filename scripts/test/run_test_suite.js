@@ -156,15 +156,22 @@ function isProjectDataDependencyPath(filePath) {
   return PROJECT_DATA_ROOTS.some(root => filePath.startsWith(root + path.sep));
 }
 
+function resolveStaticProjectDataPath(literalPath, fromFile) {
+  const dependency = /^(?:docs|config|data)\//.test(literalPath)
+    ? normalizeProjectPath(literalPath)
+    : path.resolve(path.dirname(fromFile), literalPath);
+  return isProjectDataDependencyPath(dependency) ? dependency : null;
+}
+
 /**
  * 收集源码中以字面量声明的仓库数据依赖。
  *
  * affected 模式原先只追踪 JS import/require 关系，无法感知
  * readFileSync('docs/...') 或 path.resolve(__dirname, '../../docs/...')
  * 这类运行时文件读取，也支持 helper 将字面量文件名传给
- * join(ROOT, 'docs/...', filename) 的拆分构造。只接受解析后仍位于
- * docs/config/data 根目录的字面量；即使变更删除了目标文件，也要保留
- * 反向依赖以选中相关测试。
+ * join/resolve(ROOT, 'docs/...', filename) 的拆分构造。只接受解析后仍
+ * 位于 docs/config/data 根目录的字面量；即使变更删除了目标文件，也要
+ * 保留反向依赖以选中相关测试。
  *
  * @param {string} sourceText
  * @param {string} [fromFile] 源文件路径，用于解析 ./ 和 ../ 字面量
@@ -193,7 +200,7 @@ function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROO
     relativeMatch = relativePattern.exec(sourceText);
   }
 
-  const helperPattern = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)\s*\{([\s\S]*?)^\s*\}/gm;
+  const helperPattern = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)\s*\{([^}]*)\}/g;
   let helperMatch = helperPattern.exec(sourceText);
   while (helperMatch) {
     const [, helperName, rawParameters, helperBody] = helperMatch;
@@ -201,13 +208,14 @@ function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROO
       .split(',')
       .map(parameter => parameter.trim())
       .filter(parameter => /^[A-Za-z_$][\w$]*$/.test(parameter));
-    const joinPattern = /(?:\bpath\.)?join\(\s*[^)]*?['"]((?:docs|config|data)\/[A-Za-z0-9_./-]+)['"]\s*,\s*([A-Za-z_$][\w$]*)\s*\)/g;
-    let joinMatch = joinPattern.exec(helperBody);
+    const helperPathPattern = /(?:\bpath\.)?(?:join|resolve)\(\s*[^)]*?['"]((?:(?:docs|config|data)\/|(?:\.\.?\/)+(?:docs|config|data)\/)[A-Za-z0-9_./-]+)['"]\s*,\s*([A-Za-z_$][\w$]*)\s*\)/g;
+    let helperPathMatch = helperPathPattern.exec(helperBody);
 
-    while (joinMatch) {
-      const [, dataDirectory, parameter] = joinMatch;
+    while (helperPathMatch) {
+      const [, dataDirectory, parameter] = helperPathMatch;
       const parameterIndex = parameters.indexOf(parameter);
-      if (parameterIndex !== -1) {
+      const dataDirectoryPath = resolveStaticProjectDataPath(dataDirectory, fromFile);
+      if (parameterIndex !== -1 && dataDirectoryPath) {
         const callPattern = new RegExp(
           `\\b${helperName}\\s*\\(\\s*((?:['"][A-Za-z0-9_./-]+['"]\\s*,\\s*)*['"][A-Za-z0-9_./-]+['"])\\s*\\)`,
           'g'
@@ -219,7 +227,7 @@ function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROO
             .map(match => match[1]);
           const literalFilename = literalArguments[parameterIndex];
           if (literalFilename) {
-            const dependency = normalizeProjectPath(path.join(dataDirectory, literalFilename));
+            const dependency = path.join(dataDirectoryPath, literalFilename);
             if (isProjectDataDependencyPath(dependency)) {
               dependencies.add(dependency);
             }
@@ -227,7 +235,7 @@ function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROO
           callMatch = callPattern.exec(sourceText);
         }
       }
-      joinMatch = joinPattern.exec(helperBody);
+      helperPathMatch = helperPathPattern.exec(helperBody);
     }
 
     helperMatch = helperPattern.exec(sourceText);
