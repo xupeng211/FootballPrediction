@@ -48,6 +48,30 @@ test('当前 unit 根目录会纳入嵌套测试且不会重复收集', () => {
     assert.equal(new Set(files).size, files.length);
 });
 
+test('静态仓库数据路径会进入 affected 测试依赖图', () => {
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        [
+            "const state = readText('docs/data/FOTMOB_CURRENT_STATE.md');",
+            "const leagues = 'config/leagues.json';",
+            "const outside = '../../outside.md';",
+        ].join('\n'),
+    );
+
+    assert.deepEqual(
+        dependencies.map(file => path.relative(PROJECT_ROOT, file)),
+        ['config/leagues.json', 'docs/data/FOTMOB_CURRENT_STATE.md'],
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        ['docs/data/FOTMOB_CURRENT_STATE.md'],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('fotmob_ligue1_adg55_acceptance_mutation_planning.test.js')),
+        'current-state 变更必须选中通过静态数据路径读取它的测试',
+    );
+});
+
 test('空测试集合返回非零，不静默成功', () => {
     assert.equal(runner.runNodeTests([], { label: '空测试集合行为测试' }), 1);
 });

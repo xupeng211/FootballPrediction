@@ -149,6 +149,36 @@ function normalizeProjectPath(filePath) {
   return path.resolve(PROJECT_ROOT, filePath);
 }
 
+/**
+ * 收集源码中以字面量声明的仓库数据依赖。
+ *
+ * affected 模式原先只追踪 JS import/require 关系，无法感知
+ * readFileSync('docs/...') 这类运行时文件读取。只接受仓库内已存在的
+ * docs/config/data 字面量，避免将任意字符串误判为依赖。
+ *
+ * @param {string} sourceText
+ * @returns {string[]}
+ */
+function collectStaticProjectDataDependencies(sourceText) {
+  const dependencies = new Set();
+  const pattern = /['"]((?:docs|config|data)\/[A-Za-z0-9_./-]+)['"]/g;
+  let match = pattern.exec(sourceText);
+
+  while (match) {
+    const dependency = normalizeProjectPath(match[1]);
+    if (
+      dependency.startsWith(`${PROJECT_ROOT}${path.sep}`) &&
+      fs.existsSync(dependency) &&
+      fs.statSync(dependency).isFile()
+    ) {
+      dependencies.add(dependency);
+    }
+    match = pattern.exec(sourceText);
+  }
+
+  return [...dependencies].sort();
+}
+
 function resolveLocalModulePath(fromFile, specifier) {
   if (!specifier) {
     return null;
@@ -222,6 +252,9 @@ function buildDependencyGraph() {
       if (resolved) {
         deps.add(resolved);
       }
+    }
+    for (const dependency of collectStaticProjectDataDependencies(sourceText)) {
+      deps.add(dependency);
     }
 
     graph.set(file, deps);
@@ -817,8 +850,10 @@ if (require.main === module) {
 
 module.exports = {
   CORE_UNIT_TESTS,
+  collectStaticProjectDataDependencies,
   collectTestFiles,
   resolveCoreUnitFiles,
+  resolveAffectedTestFiles,
   runNodeTests,
   snapshotWorkspaceStatus,
   verifyWorkspaceUnchanged,

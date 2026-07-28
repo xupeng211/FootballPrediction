@@ -6,7 +6,6 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '../../..');
-const MIGRATIONS_DIR = normalizeRepoPath(path.join(REPO_ROOT, 'database/migrations'));
 const SQL_ALLOWLIST = new Set([
   'deploy/docker/init_db.sql',
   'deploy/docker/init_claude_reader.sql'
@@ -54,10 +53,13 @@ const WALK_EXCLUDED_DIRS = new Set([
   '.ruff_cache',
   '.mypy_cache'
 ]);
+const WALK_EXCLUDED_PATHS = new Set([
+  '.claude/worktrees'
+]);
 const CORE_TABLE_DDL_RE = /\bCREATE\s+TABLE(?:\s+IF\s+NOT\s+EXISTS)?\s+"?(matches|raw_match_data|matches_oddsportal_mapping)"?\b/i;
 
-function normalizeRepoPath(targetPath) {
-  const relativePath = path.relative(REPO_ROOT, targetPath);
+function normalizeRepoPath(targetPath, repoRoot = REPO_ROOT) {
+  const relativePath = path.relative(repoRoot, targetPath);
   return relativePath.split(path.sep).join('/');
 }
 
@@ -119,7 +121,16 @@ function summarizeList(items = [], limit = 8) {
   return remainder > 0 ? `${preview} ... 还有 ${remainder} 个` : preview;
 }
 
-function walkFiles(rootDir, predicate, files = []) {
+function isExcludedWalkDirectory(entryName, relativePath) {
+  return (
+    WALK_EXCLUDED_DIRS.has(entryName)
+    || WALK_EXCLUDED_PATHS.has(relativePath)
+    || relativePath.startsWith('data/postgres/')
+    || relativePath.startsWith('data/redis/')
+  );
+}
+
+function walkFiles(rootDir, predicate, files = [], repoRoot = REPO_ROOT) {
   if (!fs.existsSync(rootDir)) {
     return files;
   }
@@ -127,18 +138,14 @@ function walkFiles(rootDir, predicate, files = []) {
   const entries = fs.readdirSync(rootDir, { withFileTypes: true });
   for (const entry of entries) {
     const absolutePath = path.join(rootDir, entry.name);
-    const relativePath = normalizeRepoPath(absolutePath);
+    const relativePath = normalizeRepoPath(absolutePath, repoRoot);
 
     if (entry.isDirectory()) {
-      if (
-        WALK_EXCLUDED_DIRS.has(entry.name)
-        || relativePath.startsWith('data/postgres/')
-        || relativePath.startsWith('data/redis/')
-      ) {
+      if (isExcludedWalkDirectory(entry.name, relativePath)) {
         continue;
       }
 
-      walkFiles(absolutePath, predicate, files);
+      walkFiles(absolutePath, predicate, files, repoRoot);
       continue;
     }
 
@@ -236,16 +243,22 @@ function scanOpsScriptReferences() {
   ];
 }
 
-function scanSqlTruthSource() {
-  const sqlFiles = walkFiles(REPO_ROOT, (_absolutePath, relativePath) => relativePath.endsWith('.sql'));
+function scanSqlTruthSource({ repoRoot = REPO_ROOT } = {}) {
+  const migrationsDir = normalizeRepoPath(path.join(repoRoot, 'database/migrations'), repoRoot);
+  const sqlFiles = walkFiles(
+    repoRoot,
+    (_absolutePath, relativePath) => relativePath.endsWith('.sql'),
+    [],
+    repoRoot
+  );
   const violations = [];
 
   for (const relativePath of sqlFiles) {
-    if (relativePath.startsWith(`${MIGRATIONS_DIR}/`) || SQL_ALLOWLIST.has(relativePath)) {
+    if (relativePath.startsWith(`${migrationsDir}/`) || SQL_ALLOWLIST.has(relativePath)) {
       continue;
     }
 
-    const absolutePath = path.join(REPO_ROOT, relativePath);
+    const absolutePath = path.join(repoRoot, relativePath);
     const content = fs.readFileSync(absolutePath, 'utf8');
     if (CORE_TABLE_DDL_RE.test(content)) {
       violations.push(relativePath);
@@ -340,5 +353,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-  runRepoHygieneCheck
+  runRepoHygieneCheck,
+  scanSqlTruthSource
 };
