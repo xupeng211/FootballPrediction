@@ -553,6 +553,10 @@ def validate(  # noqa: C901, PLR0912
 ) -> list[str]:
     """Run all AI workflow gate checks.  Returns a list of error strings.
 
+    When *skip_body_checks* is True, run only checks that can be decided from
+    the Git diff. PR metadata declarations remain blocking only when a body
+    is available.
+
     When *block_matrix* is True, the narrow A-L PR authorization matrix subset
     is added to errors (G1 expanded from original A-D).  Default False
     (report-only, #1651 Phase 5R8-D/G).
@@ -563,10 +567,14 @@ def validate(  # noqa: C901, PLR0912
 
     added = added_paths(changes)
     changed = changed_paths(changes)
+    # Main push events do not have a PR body. Keep all declarations that need
+    # that metadata in one explicit context, while continuing to run the
+    # independent diff/static checks below for both event types.
+    has_pr_metadata = not skip_body_checks
 
     errors: list[str] = []
 
-    if not skip_body_checks:
+    if has_pr_metadata:
         # 1. Required sections
         missing = check_required_sections(pr_body)
         if missing:
@@ -582,17 +590,17 @@ def validate(  # noqa: C901, PLR0912
     errors.extend(check_doc_sprawl(added))
 
     # 4b. Report artifacts require source-of-truth backflow or explicit reason
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(check_authoritative_report_backflow(pr_body, changes))
 
     # 4c. Report-restricted task type: non-docs/governance PRs cannot add reports (P0-3)
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(
             check_report_restricted_task_type(added, pr_body, skip_body_checks=skip_body_checks)
         )
 
     # 4d. Report lifecycle required when docs/_reports files are added (P0-3)
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(
             check_report_lifecycle_required(added, pr_body, skip_body_checks=skip_body_checks)
         )
@@ -612,24 +620,27 @@ def validate(  # noqa: C901, PLR0912
     )
 
     # 6. Safety declaration consistency (only when body is available)
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(check_safety_consistency(pr_body, changed))
 
     # 6b. Dangerous file path guard
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(check_dangerous_file_changes(changed, pr_body))
 
     # 6c. Forbidden rewrite file patterns (new files only)
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(check_forbidden_rewrite_patterns(added, pr_body))
-    # 6d. Large risky change detection
-    errors.extend(check_large_risky_change(changes, pr_body))
+    # 6d. Large-risk declarations are PR metadata checks. The deletion,
+    # rename, and scanner thresholds require cleanup/scanner declarations
+    # that do not exist on a main push.
+    if has_pr_metadata:
+        errors.extend(check_large_risky_change(changes, pr_body))
 
     # 6e. Forbidden safety claims
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(check_forbidden_safety_claims(pr_body))
     # 7. Critical section content quality (only when body is available)
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(
             check_section_content_quality(
                 pr_body,
@@ -652,11 +663,11 @@ def validate(  # noqa: C901, PLR0912
     errors.extend(check_no_archive_runtime_import(changed))
 
     # 10. P1-2: dangerous-auth path cross-validation (requires body)
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(check_dangerous_auth_path_cross_validation(changed, pr_body))
 
     # 11. P1-3: script lifecycle requirement for newly added scripts (requires body)
-    if not skip_body_checks:
+    if has_pr_metadata:
         errors.extend(check_script_lifecycle_requirement(added, pr_body))
 
     # 12. M2 Governance growth freeze gate — blocks new governance artifact growth.
@@ -700,7 +711,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--skip-body-checks",
         action="store_true",
         default=False,
-        help="Skip PR-body checks (push events)",
+        help="Skip PR-metadata checks that require a PR body (main push events)",
     )
     parser.add_argument(
         "--block-matrix",

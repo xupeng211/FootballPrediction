@@ -971,6 +971,83 @@ def test_skip_body_checks_skips_sections():
     assert not any("Do not start automatically" in e for e in errors)
 
 
+def _large_deletion_changes(count: int = 18) -> list[gate.Change]:
+    """Return a #1806-sized cleanup diff without touching the worktree."""
+
+    return [gate.Change("D", f"scripts/ops/retired_helper_{index}.js") for index in range(count)]
+
+
+def _multiple_scanner_changes() -> list[gate.Change]:
+    """Return enough new scanner files to require a PR scanner declaration."""
+
+    return [
+        gate.Change("A", "scripts/ops/first_scanner.py"),
+        gate.Change("A", "scripts/ops/second_enforcement.py"),
+    ]
+
+
+def test_pr_mode_large_deletion_requires_cleanup_declaration():
+    """PR metadata mode must keep the large-cleanup declaration requirement."""
+
+    errors = gate.validate(_valid_pr_body(), _large_deletion_changes())
+    assert any("Large deletion detected" in error for error in errors)
+
+
+def test_pr_mode_large_deletion_with_cleanup_declaration_passes():
+    """A declared cleanup PR must not fail only because of its deletion count."""
+
+    body = _valid_pr_body().replace(
+        "| Task type | governance-only |",
+        "| Task type | cleanup phase |",
+    )
+    errors = gate.validate(body, _large_deletion_changes())
+    assert not any("Large deletion detected" in error for error in errors)
+
+
+def test_push_mode_skips_large_cleanup_metadata_requirement():
+    """Main pushes have no PR body and must not require cleanup metadata."""
+
+    errors = gate.validate("", _large_deletion_changes(), skip_body_checks=True)
+    assert not any("Large deletion detected" in error for error in errors)
+
+
+def test_pr_mode_multiple_scanners_require_scanner_declaration():
+    """PR metadata mode must keep the scanner-phase declaration requirement."""
+
+    errors = gate.validate(_valid_pr_body(), _multiple_scanner_changes())
+    assert any("scanner phase declaration" in error for error in errors)
+
+
+def test_push_mode_skips_scanner_metadata_requirement():
+    """Main pushes have no PR body and must not require scanner metadata."""
+
+    errors = gate.validate("", _multiple_scanner_changes(), skip_body_checks=True)
+    assert not any("scanner phase declaration" in error for error in errors)
+
+
+def test_push_mode_still_blocks_new_dangerous_keyword(monkeypatch):
+    """Skipping PR metadata must not disable the independent diff scanner."""
+
+    with _temporary_git_repo({"tests/unsafe.py": "const safe = true;\n"}) as (repo, base_sha):
+        (repo / "tests/unsafe.py").write_text(_unsafe_source(), encoding="utf-8")
+        head_sha = _commit(repo, "introduce unsafe test dependency")
+        changes = _collect_temp_changes(repo, base_sha, head_sha)
+
+        monkeypatch.setattr(gate, "ROOT", repo)
+        monkeypatch.setattr(git_change_helpers, "ROOT_HELPER", repo)
+        monkeypatch.setattr(gate, "_check_governance_growth", lambda _base, _head: [])
+
+        errors = gate.validate(
+            "",
+            changes,
+            skip_body_checks=True,
+            base_ref=base_sha,
+            head_ref=head_sha,
+        )
+
+    assert any("new dangerous keyword" in error for error in errors)
+
+
 def test_multiline_body_with_code_blocks_passes():
     """All required sections must be detected even with Markdown code blocks."""
     body = _valid_pr_body() + textwrap.dedent(
