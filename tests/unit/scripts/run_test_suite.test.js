@@ -72,6 +72,34 @@ test('静态仓库数据路径会进入 affected 测试依赖图', () => {
     );
 });
 
+test('相对 docs 字面量会按读取文件位置进入 affected 测试依赖图', () => {
+    const reader = path.join(
+        PROJECT_ROOT,
+        'tests',
+        'unit',
+        'fotmob_ligue1_corrected_source_discovery_adg21.test.js',
+    );
+    const manifest = 'docs/_manifests/fotmob_ligue1_corrected_source_discovery.adg21.json';
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        fs.readFileSync(reader, 'utf8'),
+        reader,
+    );
+
+    assert.deepEqual(
+        dependencies.map(file => path.relative(PROJECT_ROOT, file)),
+        [manifest],
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        [manifest],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('fotmob_ligue1_corrected_source_discovery_adg21.test.js')),
+        'manifest 变更必须选中通过相对 docs 路径读取它的测试',
+    );
+});
+
 test('空测试集合返回非零，不静默成功', () => {
     assert.equal(runner.runNodeTests([], { label: '空测试集合行为测试' }), 1);
 });

@@ -153,13 +153,15 @@ function normalizeProjectPath(filePath) {
  * 收集源码中以字面量声明的仓库数据依赖。
  *
  * affected 模式原先只追踪 JS import/require 关系，无法感知
- * readFileSync('docs/...') 这类运行时文件读取。只接受仓库内已存在的
- * docs/config/data 字面量，避免将任意字符串误判为依赖。
+ * readFileSync('docs/...') 或 path.resolve(__dirname, '../../docs/...')
+ * 这类运行时文件读取。只接受仓库内已存在的 docs/config/data 字面量，
+ * 避免将任意字符串误判为依赖。
  *
  * @param {string} sourceText
+ * @param {string} [fromFile] 源文件路径，用于解析 ./ 和 ../ 字面量
  * @returns {string[]}
  */
-function collectStaticProjectDataDependencies(sourceText) {
+function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROOT) {
   const dependencies = new Set();
   const pattern = /['"]((?:docs|config|data)\/[A-Za-z0-9_./-]+)['"]/g;
   let match = pattern.exec(sourceText);
@@ -174,6 +176,20 @@ function collectStaticProjectDataDependencies(sourceText) {
       dependencies.add(dependency);
     }
     match = pattern.exec(sourceText);
+  }
+
+  const relativePattern = /['"]((?:\.\.?\/)+(?:docs|config|data)\/[A-Za-z0-9_./-]+)['"]/g;
+  let relativeMatch = relativePattern.exec(sourceText);
+  while (relativeMatch) {
+    const dependency = path.resolve(path.dirname(fromFile), relativeMatch[1]);
+    if (
+      dependency.startsWith(PROJECT_ROOT + path.sep) &&
+      fs.existsSync(dependency) &&
+      fs.statSync(dependency).isFile()
+    ) {
+      dependencies.add(dependency);
+    }
+    relativeMatch = relativePattern.exec(sourceText);
   }
 
   return [...dependencies].sort();
@@ -253,7 +269,7 @@ function buildDependencyGraph() {
         deps.add(resolved);
       }
     }
-    for (const dependency of collectStaticProjectDataDependencies(sourceText)) {
+    for (const dependency of collectStaticProjectDataDependencies(sourceText, file)) {
       deps.add(dependency);
     }
 
