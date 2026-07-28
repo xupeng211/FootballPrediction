@@ -64,6 +64,9 @@ const PROJECT_JS_ROOTS = Object.freeze([
   INTEGRATION_DIR,
   STRESS_DIR,
 ]);
+const PROJECT_DATA_ROOTS = Object.freeze(
+  ['docs', 'config', 'data'].map(root => path.join(PROJECT_ROOT, root))
+);
 let nativeCoverageThresholdSupport = null;
 let dependencyGraphCache = null;
 
@@ -149,13 +152,17 @@ function normalizeProjectPath(filePath) {
   return path.resolve(PROJECT_ROOT, filePath);
 }
 
+function isProjectDataDependencyPath(filePath) {
+  return PROJECT_DATA_ROOTS.some(root => filePath.startsWith(root + path.sep));
+}
+
 /**
  * 收集源码中以字面量声明的仓库数据依赖。
  *
  * affected 模式原先只追踪 JS import/require 关系，无法感知
  * readFileSync('docs/...') 或 path.resolve(__dirname, '../../docs/...')
- * 这类运行时文件读取。只接受仓库内已存在的 docs/config/data 字面量，
- * 避免将任意字符串误判为依赖。
+ * 这类运行时文件读取。只接受解析后仍位于 docs/config/data 根目录的
+ * 字面量；即使变更删除了目标文件，也要保留反向依赖以选中相关测试。
  *
  * @param {string} sourceText
  * @param {string} [fromFile] 源文件路径，用于解析 ./ 和 ../ 字面量
@@ -168,11 +175,7 @@ function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROO
 
   while (match) {
     const dependency = normalizeProjectPath(match[1]);
-    if (
-      dependency.startsWith(`${PROJECT_ROOT}${path.sep}`) &&
-      fs.existsSync(dependency) &&
-      fs.statSync(dependency).isFile()
-    ) {
+    if (isProjectDataDependencyPath(dependency)) {
       dependencies.add(dependency);
     }
     match = pattern.exec(sourceText);
@@ -182,11 +185,7 @@ function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROO
   let relativeMatch = relativePattern.exec(sourceText);
   while (relativeMatch) {
     const dependency = path.resolve(path.dirname(fromFile), relativeMatch[1]);
-    if (
-      dependency.startsWith(PROJECT_ROOT + path.sep) &&
-      fs.existsSync(dependency) &&
-      fs.statSync(dependency).isFile()
-    ) {
+    if (isProjectDataDependencyPath(dependency)) {
       dependencies.add(dependency);
     }
     relativeMatch = relativePattern.exec(sourceText);

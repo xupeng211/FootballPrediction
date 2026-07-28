@@ -100,6 +100,23 @@ test('相对 docs 字面量会按读取文件位置进入 affected 测试依赖�
     );
 });
 
+test('删除后的静态数据路径仍保留为 affected 反向依赖', () => {
+    const reader = path.join(PROJECT_ROOT, 'tests', 'unit', 'selector_reader.test.js');
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        [
+            "const direct = 'docs/_manifests/deleted_by_pr.json';",
+            "const relative = path.resolve(__dirname, '../../config/deleted_by_pr.json');",
+            "const escaped = 'docs/../src/not_a_data_dependency.js';",
+        ].join('\n'),
+        reader,
+    );
+
+    assert.deepEqual(
+        dependencies.map(file => path.relative(PROJECT_ROOT, file)),
+        ['config/deleted_by_pr.json', 'docs/_manifests/deleted_by_pr.json'],
+    );
+});
+
 test('空测试集合返回非零，不静默成功', () => {
     assert.equal(runner.runNodeTests([], { label: '空测试集合行为测试' }), 1);
 });
