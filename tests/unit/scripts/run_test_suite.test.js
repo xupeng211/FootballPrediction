@@ -173,6 +173,29 @@ test('单行 path.resolve helper 构造的数据文件会进入 affected 测试�
     );
 });
 
+test('全字面量分段 path.join 构造的数据文件会进入 affected 测试依赖图', () => {
+    const reader = path.join(PROJECT_ROOT, 'scripts', 'ops', 'total_war_pipeline.js');
+    const config = 'config/recon_config.json';
+    const dependencies = runner.collectStaticProjectDataDependencies(
+        fs.readFileSync(reader, 'utf8'),
+        reader,
+    );
+
+    assert.ok(
+        dependencies.some(file => path.relative(PROJECT_ROOT, file) === config),
+        'path.join(ROOT, config, filename) 的全字面量构造必须保留具体文件依赖',
+    );
+
+    const affected = runner.resolveAffectedTestFiles(
+        [config],
+        runner.collectTestFiles(path.join(PROJECT_ROOT, 'tests', 'unit')),
+    );
+    assert.ok(
+        affected.some(file => file.endsWith('TotalWarPipeline.Config.test.js')),
+        'config 变更必须选中通过全字面量 path.join 读取它的测试',
+    );
+});
+
 test('空测试集合返回非零，不静默成功', () => {
     assert.equal(runner.runNodeTests([], { label: '空测试集合行为测试' }), 1);
 });

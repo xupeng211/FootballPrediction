@@ -163,6 +163,36 @@ function resolveStaticProjectDataPath(literalPath, fromFile) {
   return isProjectDataDependencyPath(dependency) ? dependency : null;
 }
 
+function parseStaticPathLiteral(argument) {
+  const match = argument.trim().match(/^['"]([A-Za-z0-9_./-]+)['"]$/);
+  return match ? match[1] : null;
+}
+
+function isProjectDataRootLiteral(literalPath) {
+  return /^(?:(?:docs|config|data)(?:\/|$)|(?:\.\.?\/)+(?:docs|config|data)(?:\/|$))/.test(literalPath);
+}
+
+function collectStaticPathCallDependencies(sourceText, fromFile) {
+  const dependencies = new Set();
+  const staticPathCallPattern = /(?:\bpath\.)?(?:join|resolve)\(\s*([^)]*?)\s*\)/g;
+  let staticPathCallMatch = staticPathCallPattern.exec(sourceText);
+  while (staticPathCallMatch) {
+    const literalSegments = staticPathCallMatch[1].split(',').map(parseStaticPathLiteral);
+    const dataRootIndex = literalSegments.findIndex(segment =>
+      segment && isProjectDataRootLiteral(segment)
+    );
+    const dataSegments = dataRootIndex === -1 ? [] : literalSegments.slice(dataRootIndex);
+    if (dataSegments.length > 1 && dataSegments.every(Boolean)) {
+      const dependency = resolveStaticProjectDataPath(dataSegments.join('/'), fromFile);
+      if (dependency) {
+        dependencies.add(dependency);
+      }
+    }
+    staticPathCallMatch = staticPathCallPattern.exec(sourceText);
+  }
+  return dependencies;
+}
+
 /**
  * 收集源码中以字面量声明的仓库数据依赖。
  *
@@ -198,6 +228,10 @@ function collectStaticProjectDataDependencies(sourceText, fromFile = PROJECT_ROO
       dependencies.add(dependency);
     }
     relativeMatch = relativePattern.exec(sourceText);
+  }
+
+  for (const dependency of collectStaticPathCallDependencies(sourceText, fromFile)) {
+    dependencies.add(dependency);
   }
 
   const helperPattern = /\bfunction\s+([A-Za-z_$][\w$]*)\s*\(([^)]*)\)\s*\{([^}]*)\}/g;
