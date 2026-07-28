@@ -5,7 +5,7 @@
 - issue: #1793
 - reviewed main baseline: 249d8174907af78992056cd3316ddf1b53c08db3
 - D4F-A database access on this baseline: none; stopped before canonical inventory
-- D4F-A service lifecycle: existing `dev` and development `db` services observed only; no service started or stopped
+- D4F-A service lifecycle: existing `dev` and development `db` services observed only; no service started or stopped. The normal documentation commit hook separately used the authorized Gatekeeper temporary `gatekeeper_cold_start_*` create/probe/rollback/drop blueprint; it did not inspect or change a business schema, business row, canonical match or persistent M3 sandbox.
 - full real source payload export/access: none; Git-history CSVs were restored only to a repository-external temporary directory
 
 ## 1. Executive decision
@@ -581,13 +581,16 @@ import still needs a separate authorization.
 
 ## 13. Explicit non-execution declaration
 
-This D4F-A attempt did not open a PostgreSQL session, execute a database query,
-run a migration, write a business row or schema, construct candidates, emit
-candidate files, or compare against canonical matches. Existing local services
-were not started, stopped or restarted. No remote or production database,
-network source, provider/FotMob endpoint, browser, raw payload, canonical/staging
-write, odds import, training, Issue #1793 change or merge occurred. D4F-B
-through D4F-E did not start.
+This D4F-A attempt did not open a PostgreSQL session, execute a canonical or
+business-table query, run a migration, write a business row or schema,
+construct candidates, emit candidate files, or compare against canonical
+matches. Existing local services were not started, stopped or restarted. The
+normal commit hook separately completed the user-authorized Gatekeeper temporary
+`gatekeeper_cold_start_*` create/probe/rollback/drop blueprint; it did not
+target a persistent business table or M3 sandbox. No remote or production
+database, network source, provider/FotMob endpoint, browser, raw payload,
+canonical/staging write, odds import, training, Issue #1793 change or merge
+occurred. D4F-B through D4F-E did not start.
 
 ## 14. Next recommended task
 

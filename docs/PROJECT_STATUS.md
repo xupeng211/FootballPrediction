@@ -69,6 +69,11 @@ upstream provenance/import semantics remain unverified. Issue #1793 remains
 Open; M3 requires a separately authorized runtime candidate-exporter change
 before D4F-A can resume.
 
+The normal documentation commit hook did perform the separately authorized
+Gatekeeper `gatekeeper_cold_start_*` temporary database create/probe/rollback/
+drop blueprint. It did not inspect `matches`, modify a business schema or row,
+or access the persistent M3 sandbox.
+
 M3-D4F local evidence-backed inventory conclusion:
 **`FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED`**.
 
