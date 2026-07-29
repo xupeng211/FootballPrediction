@@ -716,27 +716,36 @@ and an explicit authorization exist.
 | migration_role | Approved DDL window | Import/linkage business writes. |
 | training_reader | Future approved accepted/canonical view | Quarantine, unresolved links, leaking closing odds. |
 
-D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely invariant: one active verified link per candidate/source identity with historical audit, not in-place update. Unexpected batch invariant failure rolls back its linkage transaction; valid row conflicts quarantine/audit. Existing staging docs prohibit training reads from quarantine. Legacy bookmaker readers demonstrate prematch leakage risk; training remains blocked until canonical linkage, provenance, snapshot-time semantics and quality acceptance are separately implemented/authorized.
+The completed canonical-inventory design review now defines the inventory
+table/index/lineage and status-complete-input requirements, but it deliberately
+does not implement them or define a linkage writer. A later separately
+authorized linkage design/implementation must establish one active verified
+link per candidate/source identity with historical audit and no in-place update.
+Unexpected batch invariant failure rolls back its linkage transaction; valid row
+conflicts quarantine/audit. Existing staging docs prohibit training reads from
+quarantine. Legacy bookmaker readers demonstrate prematch leakage risk;
+training remains blocked until canonical linkage, provenance, snapshot-time
+semantics and quality acceptance are separately implemented/authorized.
 
 ## 11. Readiness matrix
 
 | Domain | Current status | Evidence | Missing proof | Blocks which phase |
 | ------ | -------------- | -------- | ------------- | ------------------ |
 | source semantic identity | verified_for_read_only_audit | Current adapter + `buildSemanticMatchIdentity` produced 892 unique E0 match units reproducibly | None for this audit; real-import acceptance remains separate | D4F-D/E |
-| canonical candidate coverage | verified_for_read_only_audit | Recovered FotMob artifact: 1,140 complete candidates; 888 exact + 4 isolated kickoff conflicts | Future writer design and separately authorized execution | Future canonical inventory write |
-| local canonical database coverage | zero_for_scope | `matches` has zero Premier League/E0 rows in 2022/2023–2024/2025 | A separately authorized canonical database inventory/write decision | D4F-C/E |
-| canonical schema freshness | bounded | Current local development schema inventory | Approved target-specific inventory elsewhere | D4F-C/E |
+| canonical candidate coverage | design_complete_pending_implementation | Recovered FotMob artifact: 1,140 candidates; 888 exact + 4 isolated kickoff conflicts; design selects full inventory | Status-complete v2 input, writer implementation/proof and separately authorized execution | Future canonical inventory write |
+| local canonical database coverage | zero_for_scope | `matches` has zero Premier League/E0 rows in 2022/2023–2024/2025 | Dedicated target selection, status-complete input, writer proof and separate write authorization | Writer implementation / real inventory write |
+| canonical schema freshness | design_complete_pending_implementation | Current development schema inventory plus target provider/index/lineage design | Separately authorized migration implementation and disposable compatibility proof | Writer implementation / real inventory write |
 | team normalization | verified_for_offline_audit | Existing 12 source-scoped exact aliases; no unapproved difference | Future writer implementation must preserve this contract | Future canonical inventory write |
 | competition mapping | verified_for_offline_audit | E0 → Premier League on both compared populations | Future writer implementation | Future canonical inventory write |
 | season mapping | verified_for_offline_audit | Exact `2022/2023`–`2024/2025` scope on both populations | Future writer implementation | Future canonical inventory write |
 | kickoff/timezone semantics | bounded_conflicts | Europe/London source interpretation; 888 exact, 4 isolated 15/30-minute conflicts | Conflict evidence or explicit policy decision; no tolerance expansion | Future canonical inventory write |
 | home/away identity | verified_for_offline_audit | Ordered home/away; no same-kickoff reversal | Future writer implementation | Future canonical inventory write |
-| source external ID | bounded | 60 populated `matches.external_id`; zero duplicate groups in this DB | M3 provider mapping/uniqueness | D4F-C/E |
+| source external ID | design_complete_pending_implementation | 60 populated `matches.external_id`; zero duplicate groups; provider-scoped unique-index design documented | Migration implementation and provider-ID collision proof | Writer implementation / real inventory write |
 | link decision audit model | design_only | Existing evidence/replay | Approved model/migration | D4F-C |
-| FK strategy | design_only | Existing FK/no-FK boundary | Inventory + migration design | D4F-C |
-| role/grant | bounded | `claude_reader` local socket access; SELECT-only listed grants; no membership/CREATE | Target grants outside this dev DB | D4F-C/E |
-| migration need | design_only | Recommended separation | Approved DDL design | D4F-C |
-| rollback | bounded | D4E transaction conflict | Target procedure | D4F-C/E |
+| FK strategy | design_complete_for_inventory | Inventory lineage and linkage separation are defined | Separate linkage-model/migration implementation | Linkage design / implementation |
+| role/grant | design_complete_pending_provisioning | `claude_reader` local socket access; SELECT-only listed grants; least-privilege writer role design documented | Dedicated-target role provisioning and proof | Writer implementation / real inventory write |
+| migration need | design_complete_pending_implementation | Provider/index/lineage migration design documented | Migration implementation, disposable proof and explicit DDL authorization | Writer implementation / real inventory write |
+| rollback | design_complete_pending_rehearsal | Pre-write backup, clone restore and owner-operated recovery design documented | Dedicated-target backup/restore rehearsal | Writer implementation / real inventory write |
 | repository historical inputs | verified_for_read_only_audit | Three immutable Git-history blobs restored outside the repository with SHA-256, size, header, scope, two deterministic runs and 892 semantic units | Upstream capture/provider/license proof for real import | D4F-D/E |
 | upstream provenance | not_proven | Git history cannot prove original capture/provider/license semantics | Approved upstream provenance and import envelope | D4F-D/E |
 | provenance | not_proven | Manifest contract | License/upstream evidence | D4F-D/E |

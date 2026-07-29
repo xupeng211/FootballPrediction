@@ -186,12 +186,14 @@ assets. The D4F-A preflight separately reverified repository historical input
 objects and SHA-256 values, but neither set of hashes proves original upstream
 capture/provider/license semantics or authorizes an import.
 
-Do not start automatically. Recommended next task only after separate user
-confirmation: a bounded canonical-inventory write design review that preserves
-the 888 exact / 4 kickoff-conflict partition. The 32/10/8 Ligue 1 FotMob
-mapping states remain independent governance evidence; no network, database
-write, migration, canonical-linkage persistence, training or legacy-writer
-execution is authorized.
+Do not start automatically. The bounded canonical-inventory write design review
+is complete. Recommended next task only after separate user confirmation is a
+canonical inventory writer implementation review: a status-complete v2 input
+schema, fail-closed insert-only writer and disposable PostgreSQL proof, while
+preserving the 888 exact / 4 kickoff-conflict linkage partition. The 32/10/8
+Ligue 1 FotMob mapping states remain independent governance evidence; no
+network, database write, migration, canonical-linkage persistence, training or
+legacy-writer execution is authorized.
 
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
@@ -904,8 +906,9 @@ execution is authorized.
   from actual offline Football-Data candidates under the Premier League
   2022/2023–2024/2025 identity contract, not the independent Ligue 1 FotMob
   mapping-target chronology. Its 888 exact matches and four isolated kickoff
-  conflicts support only a separately authorized canonical-inventory write
-  design review; no legacy writer restart or raw-write expansion is recommended.
+  conflicts support the completed canonical-inventory write design review and
+  only a separately authorized writer implementation review next; no legacy
+  writer restart or raw-write expansion is recommended.
 
 ## Next recommended sequence
 
