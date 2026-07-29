@@ -3,6 +3,7 @@
 // lifecycle: test-fixture
 // Disposable-only migration ledger used to prove V26.10 checksum, rollback and
 // resume behavior. It is not a persistent migration operator.
+// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: compose-labelled synthetic target only.
 
 const crypto = require('node:crypto');
 

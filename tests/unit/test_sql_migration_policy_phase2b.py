@@ -224,7 +224,7 @@ class TestReviewedDisposableMigrationPolicy:
         assert not _reviewed_disposable_migration_policy_passes(base, entry)
         base["dml_signals"] = [{"signal": "INSERT", "evidence_type": "executable_context"}]
         base["evidence_lines"].append(
-            {"signal": "INSERT", "snippet": "INSERT INTO public.matches VALUES (1);"}
+            {"signal": "INSERT", "snippet": "synthetic mutation evidence"}
         )
         assert not _reviewed_disposable_migration_policy_passes(base, entry)
 

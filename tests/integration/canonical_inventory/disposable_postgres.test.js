@@ -2,6 +2,7 @@
 
 // lifecycle: permanent
 // M3 integration proof against only the compose-labelled disposable PostgreSQL.
+// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: compose-labelled synthetic target only.
 
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
