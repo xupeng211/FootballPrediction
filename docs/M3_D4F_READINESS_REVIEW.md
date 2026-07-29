@@ -1,7 +1,7 @@
 # M3-D4F Candidate-to-Canonical Linkage and Real Import Readiness Review
 
 - lifecycle: current-state
-- scope: current-state D4F read-only Football-Data-to-FotMob-candidate compatibility audit
+- scope: current-state D4F read-only audit history and canonical inventory write design review
 - issue: #1793
 - reviewed main baseline: 28714730b4356c5001565175990a5d0a34e24253
 - historical D4F-A database access: local development `football_prediction_db_dev` service / effective database `football_db` only; `claude_reader` executed aggregate and schema `SELECT` queries inside `BEGIN READ ONLY` with `statement_timeout=10s`
@@ -92,21 +92,25 @@ User-selected implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTUR
 Evidence-backed inventory outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
-`docs-only` is the machine-readable file/authorization type because this PR
-changes only the six named current-state documents. The inventory classification records the
-separately authorized local evidence read; it does not bypass any write or
-network boundary.
+`docs-only` is the machine-readable file/authorization type because this
+canonical inventory design-review PR changes only the four named existing
+current-state documents. The inventory classification records the separately
+authorized local evidence read; it does not bypass any write or network
+boundary.
 
-The six current-state documents are `docs/DATA_SOURCE_STRATEGY.md`, this
-review, `docs/PROJECT_STATUS.md`, `docs/data/FOTMOB_CURRENT_STATE.md`,
-`docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md` and
-`docs/data/FOTMOB_RAW_PARSER_CONTRACT.md`.
+The four current-state documents are `docs/DATA_SOURCE_STRATEGY.md`, this
+review, `docs/PROJECT_STATUS.md` and `docs/data/FOTMOB_CURRENT_STATE.md`.
+The retained-raw and parser documents are historical D4F evidence only and
+are not changed or reauthorized by this design review.
 
 The user explicitly confirmed one corrective update inside the already-open PR
 #1805 to close the Ready-triggered Codex P1 findings and enter the required
 Architecture Decision Gate. The later explicit D4F cross-source authorization
 permitted only recovery of an existing candidate artifact and this bounded
 offline audit; it did not authorize a database write or identity-policy change.
+The subsequent explicit canonical-inventory design-review authorization permits
+this four-document design closure only; it does not authorize a writer,
+migration, database write or identity-policy change.
 
 ### Historical and current convergence transitions
 
@@ -806,6 +810,37 @@ Recommended future canonical population = 1,140 FotMob Premier League candidates
 Canonical inventory / Football-Data linkage / historical-odds staging = distinct stages and authorizations
 Recovered candidate artifact v1 write eligibility = blocked (status absent)
 ~~~
+
+### Ingestion convergence declaration for this design review
+
+```text
+blocker_transition:
+  READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW
+  -> READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW
+
+target_state_delta:
+  fotmob_canonical_candidates: 1,140 unchanged as candidate evidence only
+  football_data_exact_link_candidates: 888 unchanged; no linkage written
+  kickoff_conflict_quarantine: 4 unchanged and isolated
+  remaining_canonical_only_candidates: 248 unchanged and unlinked
+  business_database_rows_or_schema: 0 changed
+  unrelated_ligue_1_mapping_states: 32 / 10 / 8 unchanged
+
+no_progress_stop:
+  A separately authorized writer-implementation review must stop for an
+  Ingestion Architecture Decision Gate if it cannot produce the status-complete
+  input contract and disposable PostgreSQL proof without identity-policy change;
+  no further docs-only planning/review phase may be opened to repeat this design.
+```
+
+This is a design-state transition, not a data-state claim. It closes the
+explicit design-review blocker by selecting population, source authority,
+fail-closed input/idempotency/conflict semantics, transaction/lock, permissions
+and backup/rollback gates. It does not move any of the 1,140 FotMob candidates,
+888 prospective links, four quarantines, 248 canonical-only candidates, 32/10/8
+Ligue 1 targets or database rows. The M3 no-progress count is therefore zero
+for this explicitly authorized, evidence-backed blocker closure; a subsequent
+implementation review without the stated proof must not reset it.
 
 Earlier current-state wording that described only the 888 exact links as a
 possible inventory is superseded. These are three different objects:
