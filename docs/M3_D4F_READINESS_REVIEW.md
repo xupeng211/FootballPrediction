@@ -1014,10 +1014,21 @@ preflight old rows without rewriting them. Its minimum design is:
 Every candidate must end exactly once as inserted, exact_duplicate,
 already_present_equivalent, conflict_external_id, conflict_business_identity,
 conflict_kickoff, conflict_home_away, conflict_competition, conflict_season,
-invalid_candidate or out_of_scope. Equal provider ID and immutable fingerprint
-is zero-delta. A provider-ID match with changed immutable fields, a
-provider-independent fixture match with a changed kickoff, a different provider
-ID for the same fixture, input duplicate, or scope/hash/status/runtime-
+invalid_candidate or out_of_scope. `exact_duplicate` means that the current
+source-artifact and candidate-lineage records already bind that provider ID and
+immutable fingerprint: it is a strictly zero-delta replay of the same input.
+`already_present_equivalent` is narrower and may commit only when a different,
+registered and explicitly allowlisted input artifact has the same immutable
+parent-master artifact SHA-256/business hash, and the existing canonical row
+has the same provider ID, immutable fingerprint and ordered fixture identity.
+For example, a verified canary may precede its bound full master. That result
+inserts only the missing immutable artifact/run/parent-master lineage for the
+current input, never changes `matches`; a replay after that is
+`exact_duplicate`. Both duplicate classes are successful terminal results and
+are included in every terminal arithmetic proof. A provider-ID match with
+changed immutable fields, a provider-independent fixture match with a changed
+kickoff, a different provider ID for the same fixture, input duplicate, missing
+or non-equivalent parent-master lineage, or scope/hash/status/runtime-
 authorization failure fails closed: no update, no first-row-wins, no partial
 commit and at most 20 evidence samples per class. This dual preflight is
 mandatory even though the target-scoped fixture constraint provides a second
@@ -1026,35 +1037,47 @@ database-level defense.
 For a full-inventory run, the recommended unit is one transaction over the
 entire 1,140-row master artifact: prove target/schema/role, fresh runtime
 authorization, its v1 identity-projection hash and baseline fingerprint; set
-timeouts and `SERIALIZABLE` isolation; obtain a fixed
-`pg_try_advisory_xact_lock`; then acquire `LOCK TABLE matches IN SHARE ROW
-EXCLUSIVE MODE` and the same conflict lock on every future inventory/lineage
-table it will write. Locks must be obtained before the baseline re-read and
-preflight, and any lock timeout or serialization failure rolls back with no
-automatic retry. Only then re-read and preflight provider and fixture identity;
-insert only proven-new canonical/lineage rows; verify the final 1,140 and
-380/380/380 inventory, provider/fixture uniqueness and fingerprints; then
-commit. An existing row may count as `exact_duplicate` only when its provider
-ID, immutable fingerprint and registered master-artifact SHA-256/business hash
-all agree; this permits zero-delta replay of either the same completed master
-run or an allowlisted projected canary. The full-run arithmetic is then
-`inserted + exact_duplicate = 1,140`. Any pre-existing row with missing or
-different registered master lineage is a conflict; fresh runtime authorization
+timeouts and `SERIALIZABLE` isolation; obtain the fixed, exact overload
+`pg_catalog.pg_try_advisory_xact_lock(1793, 1)` (`integer, integer`) for this
+M3 canonical-inventory v1 contract; then acquire `LOCK TABLE matches IN SHARE
+ROW EXCLUSIVE MODE` and the same conflict lock on every future
+inventory/lineage table it will write, in one immutable lexicographic order of
+fully qualified relation names. No preflight read or write may occur until all
+of those locks are held. Any lock timeout or serialization failure rolls back
+with no automatic retry. Only then re-read and preflight provider and fixture
+identity;
+insert only proven-new canonical/artifact/run/lineage rows; verify the final
+1,140 and 380/380/380 inventory, provider/fixture uniqueness and fingerprints;
+then commit. `exact_duplicate` requires the current input artifact's exact
+candidate lineage. `already_present_equivalent` requires the exact
+allowlisted-parent relationship defined above and is the only permitted case
+where the canonical row predates the current input; it may append its missing
+immutable current-input lineage but cannot change that row. The full-run
+terminal arithmetic is `inserted + exact_duplicate +
+already_present_equivalent = 1,140`; match-row, artifact/run and lineage-row
+inserts are separately counted. Any pre-existing row with missing, different or
+unallowlisted parent-master lineage is a conflict; fresh runtime authorization
 is still required for every execution.
 
 For a canary, the same serializable/advisory/table-lock sequence is one
-transaction over all declared canary rows, with
-`inserted + exact_duplicate = canary_count` and exact canary lineage
+transaction over all declared canary rows, with `inserted + exact_duplicate +
+already_present_equivalent = canary_count` and exact canary lineage
 verification plus fresh runtime authorization before commit. It is not a
 partial full-inventory transaction and does not advance automatically to the
 master run. Lock busy, serialization conflict, count mismatch or unexpected ON
 CONFLICT DO NOTHING rolls back. No temporary table, COPY, update-on-conflict or
 input-changing retry is permitted.
 
-The writer role needs only CONNECT, schema USAGE, explicit-table SELECT/INSERT
-and required sequence USAGE. It receives no UPDATE, DELETE, DDL, CREATE,
-TRUNCATE, broad schema privilege, role membership or implicit function
-privilege. Separate owner/migrator and read-only verifier roles are required.
+The writer role needs only CONNECT, schema USAGE, explicit-table SELECT/INSERT,
+required sequence USAGE and explicit EXECUTE on precisely the PostgreSQL
+`pg_catalog.pg_try_advisory_xact_lock(integer, integer)` overload. The future
+privilege deployment must first remove its PUBLIC/default EXECUTE path and then
+grant only `EXECUTE ON FUNCTION
+pg_catalog.pg_try_advisory_xact_lock(integer, integer)` to the dedicated
+writer role; its preflight must prove that exact function privilege. It receives
+no UPDATE, DELETE, DDL, CREATE, TRUNCATE, broad schema privilege, role
+membership or other implicit function privilege. Separate owner/migrator and
+read-only verifier roles are required.
 The dedicated canonical sandbox must also prove before every write that no
 legacy repository, collector, scheduler or other application role can connect
 with INSERT/UPDATE on `matches` or the new inventory/lineage tables; the
@@ -1074,7 +1097,7 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 | 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, advisory plus conflicting table-lock/serializable behavior, and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
 | 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
-| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate = 1,140`, where a registered canary is only one permitted exact-duplicate lineage, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
+| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
 
 Canonical inventory, source linkage and historical odds staging use separate
