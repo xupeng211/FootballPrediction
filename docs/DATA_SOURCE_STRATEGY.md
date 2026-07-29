@@ -56,8 +56,7 @@ Last updated: 2026-07-29
 - FotMob retained assets and its independent 50-target Ligue 1 mapping
   chronology do not define the M3 Football-Data candidate population.
 - **M3 D4F status**:
-  `READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW` with
-  `REAL_WRITE_BLOCKED_PROVENANCE_POLICY`.
+  `READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW`.
   The historical Git inputs remain reverified (1,180 raw rows, 38,832 odds
   observations, 892 semantic candidates; source hash `07e579…98b8b`). Two
   recovered, validated FotMob `candidate-match-identity/v1` artifacts each
@@ -67,12 +66,11 @@ Last updated: 2026-07-29
   conflicts (3 × 15 minutes, 1 × 30 minutes); no unmatched, ambiguity, team,
   competition/season, incomplete or invalid-source terminal occurred. The
   development `matches` inventory itself remains zero for this scope, but it
-  was not used as the cross-source candidate side. A separate insert-only
-  writer, v2 status-complete input contract and additive V26.10 schema/lineage
-  migration now passed only a synthetic PostgreSQL 15 disposable proof. No
-  real v2 artifact/provenance, business/persistent schema write, canonical
-  linkage or odds import occurred; real inventory remains
-  `BLOCKED_PROVENANCE_POLICY`.
+  was not used as the cross-source candidate side. The writer design confirmed
+  that current `matches` lacks provider-scoped identity uniqueness/import
+  lineage and the generic writer updates on conflict; a new fail-closed writer
+  plus isolated schema work is required. No business/schema write, network
+  request or canonical linkage occurred.
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
@@ -88,11 +86,11 @@ Last updated: 2026-07-29
 - Add tests using fixtures/mocks only.
 - Document exact evidence needed before enabling ingestion.
 - Small read-only source inventory audits.
-- After separate authorization, review real FotMob provenance for a
-  status-complete artifact. The implemented writer has only a disposable
-  synthetic proof; inventory is 1,140 candidates, canonical creation remains
-  separate from 888 exact linkage, four conflicts and historical odds. This
-  does not authorize a business write.
+- After separate authorization, implement and test (but do not execute) the
+  reviewed canonical writer, status-complete FotMob input contract and
+  isolated schema/lineage migration plan. Inventory is 1,140 candidates;
+  canonical creation remains separate from 888 exact linkage, four conflicts
+  and historical odds. This does not authorize a business write.
 
 ## Blocked data tasks
 
@@ -114,7 +112,6 @@ Last updated: 2026-07-29
 ## Safe assets (offline reference only)
 
 From PR #1454:
-
 - Parser, schema, fixture, and validation assets are safe to reuse as offline references.
 - Do not use them to justify live fetch, DB write, or browser automation.
 

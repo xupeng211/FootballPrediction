@@ -90,7 +90,7 @@ all 58 rows is not uniquely attributable.
 ## Historical legacy ADG context (not current retained-raw status)
 
 - ADG48 correct-orientation probe: 2 targets probed (PSG-Angers, Nice-Auxerre), both HTTP 200. Both confirmed reverse fixtures. 2o4ahb#4830473 = Angers-PSG (reverse observed again). 2sy6tc#4830472 = Auxerre-Nice (newly confirmed reverse). No correct-orientation pairs discovered. No alternate hash candidates found in pageProps. 5 known pairs: 2 confirmed reverse, 3 unverified. 27 missing canonical URLs.
-- ADG46 SSR probe: FotMob match page IS accessible (HTTP 200). **NEXT_DATA** marker FOUND. Safe summary extracted in-memory. Critical finding: route_hash_pair 2o4ahb#4830473 corresponds to REVERSE fixture (Angers home vs PSG away, Apr 2026). Expected orientation (PSG home vs Angers away, Aug 2025) needs different route_hash_pair.
+- ADG46 SSR probe: FotMob match page IS accessible (HTTP 200). __NEXT_DATA__ marker FOUND. Safe summary extracted in-memory. Critical finding: route_hash_pair 2o4ahb#4830473 corresponds to REVERSE fixture (Angers home vs PSG away, Apr 2026). Expected orientation (PSG home vs Angers away, Aug 2025) needs different route_hash_pair.
 - ADG44 probe result: all 5 targets attempted; FotMob API endpoints (league API id=47, id=53) return 404 via simple HTTPS GET. API architecture has changed. No canonical URLs discovered, no route_hash_pairs verified. No full payload saved. No raw write. 0/5 canonical URL found. Endpoint access requires revised strategy.
 - ADG43 result: planning completed for 32 corrected candidates. 27 missing canonical_url targets require L1 discovery. 5 unverified route_hash_pair targets require detail-page verification. ADG44 bounded diagnostic probe designed but NOT executed.
 - ADG42 result: total_corrected_candidates=32, canonical_url_atomic_identity_valid_count=5, canonical_url_missing_count=27, route_hash_pair_unverified_count=5, raw_write_ready_count=0.
@@ -124,10 +124,8 @@ all 58 rows is not uniquely attributable.
   four isolated kickoff conflicts out of 892 source candidates. The local
   development `matches` inventory remains zero for that scope. The recovered
   1,140-candidate `candidate-match-identity/v1` artifact has no status field,
-  so it cannot pass writer preflight. The v2 contract, V26.10 migration and
-  independent insert-only writer are implemented and passed a PostgreSQL 15
-  synthetic disposable 1,140/master-replay/canary/conflict/permission/restore
-  proof only. No real artifact, real provenance, link or import is authorized.
+  so it cannot pass future writer preflight; no inventory writer, link or
+  import has been authorized.
 - No network, database write, migration, new identity generation or legacy
   writer execution is authorized.
 
@@ -143,12 +141,13 @@ all 58 rows is not uniquely attributable.
 ## Recommended next step
 
 Do not start automatically. Recommended next task only after user confirmation:
-review real FotMob provenance for a future status-complete artifact. Future
-inventory remains 1,140 candidates; linkage remains separately authorized for
-888 exact identities and the four conflicts remain quarantine. The 32/10/8
-Ligue 1 states remain independent. `REAL_WRITE_BLOCKED_PROVENANCE_POLICY`
-continues to prohibit network, persistent database write, canonical-linkage
-persistence and legacy-writer execution here.
+an implementation review for a new fail-closed canonical writer, its
+status-complete hash-bound FotMob artifact contract, and isolated
+provider-scoped uniqueness/import-lineage migration plan. Future inventory is
+1,140 candidates; linkage remains separately authorized for 888 exact
+identities and the four conflicts remain quarantine. The 32/10/8 Ligue 1
+states remain independent. No network, database write, migration,
+canonical-linkage persistence or legacy-writer execution is authorized here.
 
 The future canonical FotMob writer is a separate `data-*`-gated business
 milestone, not an automatic follow-up or a legacy-script restart.

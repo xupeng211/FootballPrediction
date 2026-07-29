@@ -8,50 +8,50 @@ Last updated: 2026-07-28
 ## M3 Historical Odds Staging — D4E controlled persistent write complete
 
 - **M3-D4B** — historical odds staging persistence contract on the M3 identity baseline.
-    - M3 deterministic Football-Data match identity is complete (#1797); the frozen business contract remains
-      **38,616 accepted / 216 quarantined** observations.
-    - Added the additive `V26.8__create_odds_historical_staging_contract.sql` schema contract and explicit
-      dependency-injected persistence port for import run, source-file lineage, accepted observations, and quarantine.
-    - `V26.8` was executed only in a task-specific PostgreSQL 15 tmpfs container and was destroyed with that container;
-      no long-lived database was connected or migrated. D4C added additive `V26.9` so canonical business fingerprints are
-      retained for duplicate comparison; it too was executed only in that disposable database.
-    - Default behavior is fail-closed/no-write; a future adapter must pass the existing DB write guard and explicit
-      authorization. Candidate IDs are retained as unverified references: no `matches` FK is claimed until DB inventory.
-    - D4C used 3 synthetic accepted observations and 1 synthetic quarantine record to verify schema mapping, atomic
-      rollback, database uniqueness/check constraints, idempotent rerun, and quarantine separation. No real historical
-      odds were read or written. Candidate ID compatibility with `matches.match_id` remains **not proven**, so no FK was added.
-    - `#1799` is merged. **M3-D4C** is complete only for the disposable PostgreSQL 15 tmpfs verification;
-      no long-lived database was connected or migrated.
-    - **M3-D4D-B1** readiness decision: **`READY_FOR_D4E_AUTHORIZATION`**. The named
-      non-production persistent target, canonical V26.8→V26.9 migration runner, verified
-      backup/restore, zero-row inventory, rollback-only writer persistence, reader/writer role
-      boundaries, PUBLIC/default ACL audit, failed-migration rollback/resume, checksum-drift
-      fail-closed, and same-session PostgreSQL advisory-lock concurrency are closed.
-      PR #1801 is merged. Policy implementation head
-      `e7171da6ac049b0368ed1f5c2171e76a9e447819` passed Production Gate run `30066372663`.
-      The reviewed sandbox-only SQL classification is static only and does not authorize execution.
-    - M3 milestones #1794–#1801 are merged: offline staging pipeline, CSV recovery, deterministic
-      candidate export and identity, D4B persistence contract, D4C ephemeral verification, D4D
-      readiness review and D4D-B1 persistent sandbox.
-    - **M3-D4E COMPLETE — deterministic synthetic controlled persistent write verified.** M3-D4E is
-      implemented and audited through PR #1802; the authoritative PR merge state is recorded in
-      GitHub and Issue #1793. Its D4E technical/evidence head
-      `b2ba7e44b7dd643ac89bd0cb2704005dbbbfbf41` passed Production Gate `30102747400`.
-      First write: 6 accepted / 3 quarantine / 0 duplicates. Stable replay under a newer executor:
-      0 accepted / 0 quarantine / 9 duplicates with zero table delta. Accepted and quarantine
-      conflicts had actual adapter scopes `accepted` and `quarantine`, respectively, and both fully
-      rolled back with zero delta. Final state: 1 import run / 1 source file / 6 accepted / 3 quarantine.
-    - `canonical_match_id` remains NULL for all six accepted rows; candidate identity is unverified,
-      no matches FK exists, and canonical integration/training remain blocked. Real historical odds
-      were not used, and no development, staging or production database was targeted.
-    - Post-merge review of #1802 identified three operator/governance P1 hardening requirements:
-      dependency-complete operator runtime, exact effective PostgreSQL connection identity, and a
-      hash-bound lifecycle declaration for the immutable JSONL fixture. The D4E business proof and
-      retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
-      or modify that sandbox.
+  - M3 deterministic Football-Data match identity is complete (#1797); the frozen business contract remains
+    **38,616 accepted / 216 quarantined** observations.
+  - Added the additive `V26.8__create_odds_historical_staging_contract.sql` schema contract and explicit
+    dependency-injected persistence port for import run, source-file lineage, accepted observations, and quarantine.
+  - `V26.8` was executed only in a task-specific PostgreSQL 15 tmpfs container and was destroyed with that container;
+    no long-lived database was connected or migrated. D4C added additive `V26.9` so canonical business fingerprints are
+    retained for duplicate comparison; it too was executed only in that disposable database.
+  - Default behavior is fail-closed/no-write; a future adapter must pass the existing DB write guard and explicit
+    authorization. Candidate IDs are retained as unverified references: no `matches` FK is claimed until DB inventory.
+  - D4C used 3 synthetic accepted observations and 1 synthetic quarantine record to verify schema mapping, atomic
+    rollback, database uniqueness/check constraints, idempotent rerun, and quarantine separation. No real historical
+    odds were read or written. Candidate ID compatibility with `matches.match_id` remains **not proven**, so no FK was added.
+  - `#1799` is merged. **M3-D4C** is complete only for the disposable PostgreSQL 15 tmpfs verification;
+    no long-lived database was connected or migrated.
+  - **M3-D4D-B1** readiness decision: **`READY_FOR_D4E_AUTHORIZATION`**. The named
+    non-production persistent target, canonical V26.8→V26.9 migration runner, verified
+    backup/restore, zero-row inventory, rollback-only writer persistence, reader/writer role
+    boundaries, PUBLIC/default ACL audit, failed-migration rollback/resume, checksum-drift
+    fail-closed, and same-session PostgreSQL advisory-lock concurrency are closed.
+    PR #1801 is merged. Policy implementation head
+    `e7171da6ac049b0368ed1f5c2171e76a9e447819` passed Production Gate run `30066372663`.
+    The reviewed sandbox-only SQL classification is static only and does not authorize execution.
+  - M3 milestones #1794–#1801 are merged: offline staging pipeline, CSV recovery, deterministic
+    candidate export and identity, D4B persistence contract, D4C ephemeral verification, D4D
+    readiness review and D4D-B1 persistent sandbox.
+  - **M3-D4E COMPLETE — deterministic synthetic controlled persistent write verified.** M3-D4E is
+    implemented and audited through PR #1802; the authoritative PR merge state is recorded in
+    GitHub and Issue #1793. Its D4E technical/evidence head
+    `b2ba7e44b7dd643ac89bd0cb2704005dbbbfbf41` passed Production Gate `30102747400`.
+    First write: 6 accepted / 3 quarantine / 0 duplicates. Stable replay under a newer executor:
+    0 accepted / 0 quarantine / 9 duplicates with zero table delta. Accepted and quarantine
+    conflicts had actual adapter scopes `accepted` and `quarantine`, respectively, and both fully
+    rolled back with zero delta. Final state: 1 import run / 1 source file / 6 accepted / 3 quarantine.
+  - `canonical_match_id` remains NULL for all six accepted rows; candidate identity is unverified,
+    no matches FK exists, and canonical integration/training remain blocked. Real historical odds
+    were not used, and no development, staging or production database was targeted.
+  - Post-merge review of #1802 identified three operator/governance P1 hardening requirements:
+    dependency-complete operator runtime, exact effective PostgreSQL connection identity, and a
+    hash-bound lifecycle declaration for the immutable JSONL fixture. The D4E business proof and
+    retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
+    or modify that sandbox.
 
 **M3-D4F design-review baseline — superseded by
-`READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW` below.**
+`READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW` below.**
 The 2026-07-28 offline cross-source audit retained the prior D4F-A database
 fact (`football_prediction_db_dev` / `football_db` has zero relevant Premier
 League/E0 `matches` rows) but recovered the existing PR #1796 repository-
@@ -198,443 +198,443 @@ legacy-writer execution is authorized.
 ## M1 Test Foundation — Accepted (browser profile residue closed)
 
 - **M1 可信测试地基 (Test Foundation)** — canonical test infrastructure milestone.
-    - Status: **Accepted — browser profile residue closed**
-    - Audit date: 2026-07-14
-    - Final acceptance SHA: `e9114ce34d1885c70fdebd4b7be3c167458a5456`
-    - FINAL_AUDIT_SHA: `14461ff0ad7559cf5541fbf4dd11d26e0348734c`
-    - Runner flaky root cause (R2): `process.stdout.write` internal buffering under pipe
-      backpressure; fix (#1785) replaces with `fs.writeSync` for deterministic fd-level output.
-      Runner flaky is **closed**.
-    - Runner self-test stress: 88 consecutive full-suite runs all exit 0, failed=0.
-    - Failure propagation: verified (intentional failure → non-zero exit, no false green).
-    - All 14 M1 PRs (#1768–#1781) + runner fix (#1785) merged, test/CI scope only.
-    - **Browser profile residue closed** (#1788): root cause was Docker bind mount
-      `docker-compose.dev.yml:58 ./data/browser_profile:/app/data/browser_profile`.
-      Docker daemon created the host directory with `root:root` when it did not exist
-      at container start. Fix: pre-create `data/browser_profile/` before Docker start
-      in CI workflow and Makefile `dev-up` target. No production Dockerfile changes.
-    - Final re-audit evidence:
-        - Neutral host clone: `data/browser_profile` does not exist; root-owned 0
-        - BrowserFactory target tests 20/20 pass, failed=0, no residue
-        - Combined tests 5/5 pass, failed=0, no residue
-        - CI (PR Gate + post-merge main Gate): success
-        - Workspace: clean; artifact count unchanged; no untracked files
-    - Old tag `m1-test-foundation-accepted` (→ `faaaff6b`) was created prematurely;
-      retained for history but **superseded**.
-    - `m1-test-foundation-accepted-v2` tag (→ `3d0aee6b`) is superseded by v3 —
-      v2 carried the known browser_profile root-owned residue boundary now closed.
-    - Official M1 acceptance tag: **`m1-test-foundation-accepted-v3`**
-    - M1 boundaries: historical Python non-canonical debt, integration/e2e, real DB/network,
-      model training, odds import are NOT in M1 scope and remain unchanged.
-    - M2 (Governance growth freeze) is **unblocked** — v3 acceptance complete.
-    - Next task: M2 read-only audit per Issue #1783. Do not start automatically.
+  - Status: **Accepted — browser profile residue closed**
+  - Audit date: 2026-07-14
+  - Final acceptance SHA: `e9114ce34d1885c70fdebd4b7be3c167458a5456`
+  - FINAL_AUDIT_SHA: `14461ff0ad7559cf5541fbf4dd11d26e0348734c`
+  - Runner flaky root cause (R2): `process.stdout.write` internal buffering under pipe
+    backpressure; fix (#1785) replaces with `fs.writeSync` for deterministic fd-level output.
+    Runner flaky is **closed**.
+  - Runner self-test stress: 88 consecutive full-suite runs all exit 0, failed=0.
+  - Failure propagation: verified (intentional failure → non-zero exit, no false green).
+  - All 14 M1 PRs (#1768–#1781) + runner fix (#1785) merged, test/CI scope only.
+  - **Browser profile residue closed** (#1788): root cause was Docker bind mount
+    `docker-compose.dev.yml:58 ./data/browser_profile:/app/data/browser_profile`.
+    Docker daemon created the host directory with `root:root` when it did not exist
+    at container start. Fix: pre-create `data/browser_profile/` before Docker start
+    in CI workflow and Makefile `dev-up` target. No production Dockerfile changes.
+  - Final re-audit evidence:
+    - Neutral host clone: `data/browser_profile` does not exist; root-owned 0
+    - BrowserFactory target tests 20/20 pass, failed=0, no residue
+    - Combined tests 5/5 pass, failed=0, no residue
+    - CI (PR Gate + post-merge main Gate): success
+    - Workspace: clean; artifact count unchanged; no untracked files
+  - Old tag `m1-test-foundation-accepted` (→ `faaaff6b`) was created prematurely;
+    retained for history but **superseded**.
+  - `m1-test-foundation-accepted-v2` tag (→ `3d0aee6b`) is superseded by v3 —
+    v2 carried the known browser_profile root-owned residue boundary now closed.
+  - Official M1 acceptance tag: **`m1-test-foundation-accepted-v3`**
+  - M1 boundaries: historical Python non-canonical debt, integration/e2e, real DB/network,
+    model training, odds import are NOT in M1 scope and remain unchanged.
+  - M2 (Governance growth freeze) is **unblocked** — v3 acceptance complete.
+  - Next task: M2 read-only audit per Issue #1783. Do not start automatically.
 
 ## github_actions_workflow_permissions_hardening in progress
 
 - **github_actions_workflow_permissions_hardening** — add least-privilege
   `permissions:` block to `production-gate.yml`.
-    - Branch: `chore/github-actions-workflow-permissions-hardening`
-    - **This is a CI token permissions hardening task.**
-    - **No workflow behavior changed. No triggers, jobs, or steps modified.**
-    - **No new write permissions added.**
-    - **No DB. No SQL. No scraper/browser. No training. No data expansion.**
-    - **Did not continue staging DB deployment.**
-    - Added `permissions: {contents: read, actions: write, pull-requests: read}`.
-    - New static tests: `tests/unit/test_github_actions_workflow_permissions_hardening.py`
-    - SC-002 enforcement infrastructure complete.
-    - Training / data expansion / real DB write remain blocked.
-    - Next task: PR + CI validation. Do not start automatically.
+  - Branch: `chore/github-actions-workflow-permissions-hardening`
+  - **This is a CI token permissions hardening task.**
+  - **No workflow behavior changed. No triggers, jobs, or steps modified.**
+  - **No new write permissions added.**
+  - **No DB. No SQL. No scraper/browser. No training. No data expansion.**
+  - **Did not continue staging DB deployment.**
+  - Added `permissions: {contents: read, actions: write, pull-requests: read}`.
+  - New static tests: `tests/unit/test_github_actions_workflow_permissions_hardening.py`
+  - SC-002 enforcement infrastructure complete.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: PR + CI validation. Do not start automatically.
 
 ## github_actions_workflow_inventory_phase1 completed
 
 - **github_actions_workflow_inventory_phase1** — static inventory/audit of all
   `.github/workflows/` workflow files.
-    - Branch: `chore/github-actions-workflow-inventory-phase1` (merged)
-    - Inventory doc: `docs/GITHUB_ACTIONS_WORKFLOW_INVENTORY_PHASE1.md` (1 workflow inventoried)
-    - Static tests: `tests/unit/test_github_actions_workflow_inventory_phase1.py` (33 tests)
-    - SC-002 enforcement infrastructure complete.
-    - Training / data expansion / real DB write remain blocked.
+  - Branch: `chore/github-actions-workflow-inventory-phase1` (merged)
+  - Inventory doc: `docs/GITHUB_ACTIONS_WORKFLOW_INVENTORY_PHASE1.md` (1 workflow inventoried)
+  - Static tests: `tests/unit/test_github_actions_workflow_inventory_phase1.py` (33 tests)
+  - SC-002 enforcement infrastructure complete.
+  - Training / data expansion / real DB write remain blocked.
 
 ## agent_workflow_hardening_phase1 completed
 
 - **agent_workflow_hardening_phase1** — standardize AI agent PR lifecycle CI evidence and governance.
-    - Branch: `chore/agent-workflow-hardening-phase1` (merged)
-    - Hardening doc: `docs/AI_AGENT_WORKFLOW_HARDENING.md`
-    - CLAUDE.md updated: Final Report Rule, Main Gate Evidence Rule, Branch Safety Rule,
-      Scope Drift Rule, Completion Definition Rule added. SC-002 status corrected.
-    - Makefile enhanced: CI monitoring section with hardening doc reference.
-    - Tests: `test_agent_workflow_hardening.py`, `test_agent_workflow_hardening_phase1_ci_rules.py`.
-    - SC-002 enforcement infrastructure complete.
-    - Training / data expansion / real DB write remain blocked.
+  - Branch: `chore/agent-workflow-hardening-phase1` (merged)
+  - Hardening doc: `docs/AI_AGENT_WORKFLOW_HARDENING.md`
+  - CLAUDE.md updated: Final Report Rule, Main Gate Evidence Rule, Branch Safety Rule,
+    Scope Drift Rule, Completion Definition Rule added. SC-002 status corrected.
+  - Makefile enhanced: CI monitoring section with hardening doc reference.
+  - Tests: `test_agent_workflow_hardening.py`, `test_agent_workflow_hardening_phase1_ci_rules.py`.
+  - SC-002 enforcement infrastructure complete.
+  - Training / data expansion / real DB write remain blocked.
 
 ## sc002_staging_db_role_deployment_plan completed
 
 - **sc002_staging_db_role_deployment_plan** — staging DB role separation deployment plan.
-    - Branch: `chore/sc002-staging-db-role-deployment-plan`
-    - **Planning/documentation only. No DB, no SQL, no deployment, no real changes.**
-    - New plan doc: `docs/SC002_STAGING_DB_ROLE_DEPLOYMENT_PLAN.md`
-    - Contains: target 6-role model, prerequisites, deployment step drafts, rollback plan,
-      validation matrix (6 roles × 14 ops), go/no-go checklist.
-    - SC-002 enforcement infrastructure complete.
-    - Training / data expansion / real DB write remain blocked.
-    - Next task: `sc002_staging_db_role_deployment`. Do not start automatically.
+  - Branch: `chore/sc002-staging-db-role-deployment-plan`
+  - **Planning/documentation only. No DB, no SQL, no deployment, no real changes.**
+  - New plan doc: `docs/SC002_STAGING_DB_ROLE_DEPLOYMENT_PLAN.md`
+  - Contains: target 6-role model, prerequisites, deployment step drafts, rollback plan,
+    validation matrix (6 roles × 14 ops), go/no-go checklist.
+  - SC-002 enforcement infrastructure complete.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `sc002_staging_db_role_deployment`. Do not start automatically.
 
 ## sc002_final_closure_check completed
 
 - **sc002_final_closure_check** — final per-criterion SC-002 closure verification.
-    - Branch: `chore/sc002-final-closure-check`
-    - **This is a verification/documentation task. No DB, no SQL, no write.**
-    - New closure check doc: `docs/SC002_FINAL_CLOSURE_CHECK.md`
-    - All 10 criteria verified against concrete evidence from the codebase.
-    - 9 criteria fully satisfied. 1 criterion substantially met (staging role deploy pending).
-    - 0 criteria not met or unsatisfied.
-    - **SC-002 status: enforcement complete** (was: partial mitigation only).
-    - Training / data expansion / real DB write remain blocked (require separate authorization).
-    - Next task: `sc002_staging_db_role_deployment`. Do not start automatically.
+  - Branch: `chore/sc002-final-closure-check`
+  - **This is a verification/documentation task. No DB, no SQL, no write.**
+  - New closure check doc: `docs/SC002_FINAL_CLOSURE_CHECK.md`
+  - All 10 criteria verified against concrete evidence from the codebase.
+  - 9 criteria fully satisfied. 1 criterion substantially met (staging role deploy pending).
+  - 0 criteria not met or unsatisfied.
+  - **SC-002 status: enforcement complete** (was: partial mitigation only).
+  - Training / data expansion / real DB write remain blocked (require separate authorization).
+  - Next task: `sc002_staging_db_role_deployment`. Do not start automatically.
 
 ## deploy_docker_init_sql_guard completed
 
 - **deploy_docker_init_sql_guard** — SC-002 Gate B: dev-only execution guard added to
   `deploy/docker/init_db.sql` to prevent accidental non-dev execution.
-    - Branch: `chore/deploy-docker-init-sql-guard`
-    - **This is a static guard implementation. No DB, no SQL, no psql, no docker compose run.**
-    - Guard details:
-        - `SET sc002.init_sql_context = 'development'` at the very top of init_db.sql
-        - DO block verifies via `current_setting()`, RAISE EXCEPTION on mismatch
-        - Guard explicitly forbids staging, production, and non-dev execution
-        - No env-var bypass — operator must modify the guard itself to bypass
-    - `docker-compose.dev.yml`: `command: [postgres, -c, sc002.init_sql_context=development]`
-    - `.env.example`: Guard documentation added
-    - Tests: 15 new static tests (`TestInitSqlGuardGateB`), 54 total dev POC tests
-    - Gate B: init_db.sql guard implemented.
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
-    - Next task: `sc002_final_closure_check`. Do not start automatically.
+  - Branch: `chore/deploy-docker-init-sql-guard`
+  - **This is a static guard implementation. No DB, no SQL, no psql, no docker compose run.**
+  - Guard details:
+    - `SET sc002.init_sql_context = 'development'` at the very top of init_db.sql
+    - DO block verifies via `current_setting()`, RAISE EXCEPTION on mismatch
+    - Guard explicitly forbids staging, production, and non-dev execution
+    - No env-var bypass — operator must modify the guard itself to bypass
+  - `docker-compose.dev.yml`: `command: [postgres, -c, sc002.init_sql_context=development]`
+  - `.env.example`: Guard documentation added
+  - Tests: 15 new static tests (`TestInitSqlGuardGateB`), 54 total dev POC tests
+  - Gate B: init_db.sql guard implemented.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `sc002_final_closure_check`. Do not start automatically.
 
 ## changed_files_negative_case_enforcement_test completed
 
 - **changed_files_negative_case_enforcement_test** — static negative-case enforcement tests
   proving that unguarded DB write paths are rejected by CI changed-files enforcement (Criterion #2).
-    - Branch: `chore/changed-files-negative-case-enforcement-test`
-    - **This is a static test task. No DB, no SQL, no write, no scraper/browser.**
-    - New test file: `tests/unit/test_changed_files_negative_case_enforcement.py` (29 tests)
-    - Negative cases proven: unguarded INSERT, UPDATE, CREATE, DELETE → rejected by Python scanner.
-      Destructive SQL DROP → rejected by SQL scanner.
-    - Positive cases proven: allowlisted files pass, no-DB files pass, non-SQL ignored.
-    - Conservative detection: guarded-but-unallowlisted files flagged; DB-importing files flagged.
-    - All tests use temp fixture files inside REPO_ROOT — never modify real code.
-    - Criterion #2: Substantially met.
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
-    - Next task: `deploy_docker_init_sql_guard`. Do not start automatically.
+  - Branch: `chore/changed-files-negative-case-enforcement-test`
+  - **This is a static test task. No DB, no SQL, no write, no scraper/browser.**
+  - New test file: `tests/unit/test_changed_files_negative_case_enforcement.py` (29 tests)
+  - Negative cases proven: unguarded INSERT, UPDATE, CREATE, DELETE → rejected by Python scanner.
+    Destructive SQL DROP → rejected by SQL scanner.
+  - Positive cases proven: allowlisted files pass, no-DB files pass, non-SQL ignored.
+  - Conservative detection: guarded-but-unallowlisted files flagged; DB-importing files flagged.
+  - All tests use temp fixture files inside REPO_ROOT — never modify real code.
+  - Criterion #2: Substantially met.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `deploy_docker_init_sql_guard`. Do not start automatically.
 
 ## browser_fotmob_pageprops_playwright_deep_audit completed
 
 - **browser_fotmob_pageprops_playwright_deep_audit** — deep per-script static verification
   of all 43 skipped_complex JS scripts (Browser/FotMob/pageProps/Playwright paths).
-    - Branch: `chore/browser-fotmob-pageprops-playwright-deep-audit`
-    - **This is a static audit/verification task. No browser, no Playwright, no DB, no SQL.**
-    - New audit doc: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md`
-    - Key findings:
-        - All 43 skipped_complex scripts individually verified per-script.
-        - **13 false_positive_select_only:** All confirmed non-write with active SQL guard wrappers.
-        - **3 design_mapped shared modules:** All active write-capable consumers verified guarded.
-        - **12 read_only:** All confirmed no DB client, no SQL execution.
-        - **3 false_positive_read_only_transaction:** Confirmed with DB-level READ ONLY tx.
-        - **0 hidden write paths discovered. 0 unknown_needs_followup.**
-        - **1 classification correction:** `fotmob_ligue1_adg60_raw_payload_source_inventory.js`
-          (scraper_or_browser_only → read_only — static file classifier, no browser/network/DB).
-    - Criterion #1: Substantially met — deep per-script verification complete.
-    - Criterion #3: Substantially met — deep verification complete.
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
-    - Next task: `changed_files_negative_case_enforcement_test`. Do not start automatically.
+  - Branch: `chore/browser-fotmob-pageprops-playwright-deep-audit`
+  - **This is a static audit/verification task. No browser, no Playwright, no DB, no SQL.**
+  - New audit doc: `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md`
+  - Key findings:
+    - All 43 skipped_complex scripts individually verified per-script.
+    - **13 false_positive_select_only:** All confirmed non-write with active SQL guard wrappers.
+    - **3 design_mapped shared modules:** All active write-capable consumers verified guarded.
+    - **12 read_only:** All confirmed no DB client, no SQL execution.
+    - **3 false_positive_read_only_transaction:** Confirmed with DB-level READ ONLY tx.
+    - **0 hidden write paths discovered. 0 unknown_needs_followup.**
+    - **1 classification correction:** `fotmob_ligue1_adg60_raw_payload_source_inventory.js`
+      (scraper_or_browser_only → read_only — static file classifier, no browser/network/DB).
+  - Criterion #1: Substantially met — deep per-script verification complete.
+  - Criterion #3: Substantially met — deep verification complete.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `changed_files_negative_case_enforcement_test`. Do not start automatically.
 
 ## runtime_db_role_permission_dev_poc completed
 
 - **runtime_db_role_permission_dev_poc** — dev-only POC of 6-role DB permission model.
-    - Branch: `chore/runtime-db-role-permission-dev-poc`
-    - **Dev-only. Not applied to staging or production.**
-    - Files modified:
-        - `deploy/docker/init_db.sql` — 6 PostgreSQL roles with least-privilege GRANTs
-        - `docker-compose.dev.yml` — role-specific env vars for dev container
-        - `.env.example` — role-specific connection config templates
-        - `tests/unit/test_runtime_db_role_permission_dev_poc.py` — static validation tests
-    - Roles created (dev-only passwords, all `*_dev_poc`):
-        - `football_owner` — DDL/migration owner (full DDL + DML)
-        - `football_app` — runtime DML (SELECT, INSERT, UPDATE; no DDL)
-        - `football_ingestion` — write-limited (INSERT, UPDATE on matches/raw_match_data/odds)
-        - `football_training` — training tables (INSERT, UPDATE on match_features_training/predictions)
-        - `football_reader` — SELECT only on all tables
-        - `football_gatekeeper` — SELECT only (CI/test temporary probes)
-    - **No DB connection. No SQL execution. No real permission changes.**
-    - **No real secrets. No production config modifications.**
-    - SC-002 remains partial mitigation only.
-    - Criterion #6: Reviewed + Dev POC. Remains unmet for staging/production.
-    - Training / data expansion / real DB write remain blocked.
+  - Branch: `chore/runtime-db-role-permission-dev-poc`
+  - **Dev-only. Not applied to staging or production.**
+  - Files modified:
+    - `deploy/docker/init_db.sql` — 6 PostgreSQL roles with least-privilege GRANTs
+    - `docker-compose.dev.yml` — role-specific env vars for dev container
+    - `.env.example` — role-specific connection config templates
+    - `tests/unit/test_runtime_db_role_permission_dev_poc.py` — static validation tests
+  - Roles created (dev-only passwords, all `*_dev_poc`):
+    - `football_owner` — DDL/migration owner (full DDL + DML)
+    - `football_app` — runtime DML (SELECT, INSERT, UPDATE; no DDL)
+    - `football_ingestion` — write-limited (INSERT, UPDATE on matches/raw_match_data/odds)
+    - `football_training` — training tables (INSERT, UPDATE on match_features_training/predictions)
+    - `football_reader` — SELECT only on all tables
+    - `football_gatekeeper` — SELECT only (CI/test temporary probes)
+  - **No DB connection. No SQL execution. No real permission changes.**
+  - **No real secrets. No production config modifications.**
+  - SC-002 remains partial mitigation only.
+  - Criterion #6: Reviewed + Dev POC. Remains unmet for staging/production.
+  - Training / data expansion / real DB write remain blocked.
 
 ## runtime_db_role_permission_review_phase1 completed
 
 - **runtime_db_role_permission_review_phase1** — static review of DB role/permission model.
-    - Branch: `chore/runtime-db-role-permission-review-phase1`
-    - New review doc: `docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md`
-    - **This is a static audit/documentation task. No DB connection, no permission changes.**
-    - Key findings:
-        - **Single universal user:** `football_user` used for ALL roles (app, migration, ingestion,
-          training, maintenance, CI) — full DDL + DML on all tables.
-        - **One read-only user exists:** `claude_reader` for MCP only (good practice, limited scope).
-        - **No privilege separation:** Migration (DDL) and runtime (DML) use the same user.
-        - **No least privilege:** Ingestion, training, and maintenance each have full DB access.
-        - **Hardcoded dev credentials** in `docker-compose.dev.yml` and `init_claude_reader.sql`
-          (acceptable for dev, not for production).
-        - **Application-layer only protection:** All write safety relies on env-var gates;
-          no DB-layer role restrictions as defense-in-depth.
-    - Recommended target model: 6 specialized roles (owner, app, ingestion, training, reader,
-      gatekeeper) with least-privilege grants.
-    - Next step: Apply role model in Docker dev environment as proof-of-concept.
-    - SC-002 remains partial mitigation only. Criterion #6 now reviewed (remains unmet for implementation).
-    - Training / data expansion / real DB write remain blocked.
+  - Branch: `chore/runtime-db-role-permission-review-phase1`
+  - New review doc: `docs/SC002_RUNTIME_DB_ROLE_PERMISSION_REVIEW_PHASE1.md`
+  - **This is a static audit/documentation task. No DB connection, no permission changes.**
+  - Key findings:
+    - **Single universal user:** `football_user` used for ALL roles (app, migration, ingestion,
+      training, maintenance, CI) — full DDL + DML on all tables.
+    - **One read-only user exists:** `claude_reader` for MCP only (good practice, limited scope).
+    - **No privilege separation:** Migration (DDL) and runtime (DML) use the same user.
+    - **No least privilege:** Ingestion, training, and maintenance each have full DB access.
+    - **Hardcoded dev credentials** in `docker-compose.dev.yml` and `init_claude_reader.sql`
+      (acceptable for dev, not for production).
+    - **Application-layer only protection:** All write safety relies on env-var gates;
+      no DB-layer role restrictions as defense-in-depth.
+  - Recommended target model: 6 specialized roles (owner, app, ingestion, training, reader,
+    gatekeeper) with least-privilege grants.
+  - Next step: Apply role model in Docker dev environment as proof-of-concept.
+  - SC-002 remains partial mitigation only. Criterion #6 now reviewed (remains unmet for implementation).
+  - Training / data expansion / real DB write remain blocked.
 
 ## sc002_overall_closure_assessment completed
 
 - **sc002_overall_closure_assessment** — per-criterion gap analysis of SC-002 closure.
-    - Branch: `chore/sc002-overall-closure-assessment`
-    - New assessment doc: `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md`
-    - **This is a documentation/assessment task, NOT runtime implementation.**
-    - This task did NOT run DB, SQL, migration, scraper, browser, training, or data expansion.
-    - Assessment results (10 criteria):
-        - Met or in good standing: 6 (criteria #5 Python/SQL/migration, #7 no production override,
-          #8 training blocked, #9 PROJECT_STATUS aligned, #10 CI green, #4 shared module boundary)
-        - Partial: 2 (criterion #1 entrypoints guarded, criterion #3 browser/FotMob audit)
-        - Not met: 2 (criterion #2 negative-case testing, criterion #6 DB role/permission review)
-    - Key gaps identified:
-        - 43 skipped_complex JS scripts classified but not individually verified non-write
-        - No deliberate negative-case CI testing
-        - DB role/permission model not reviewed
-        - `deploy/docker/init_db.sql` needs guard (Gate B)
-    - Next recommended task: `runtime_db_role_permission_review_phase1` (low effort, documentation only)
-    - SC-002 remains partial mitigation only. Cannot be closed.
-    - Training / data expansion / real DB write remain blocked.
+  - Branch: `chore/sc002-overall-closure-assessment`
+  - New assessment doc: `docs/SC002_OVERALL_CLOSURE_ASSESSMENT.md`
+  - **This is a documentation/assessment task, NOT runtime implementation.**
+  - This task did NOT run DB, SQL, migration, scraper, browser, training, or data expansion.
+  - Assessment results (10 criteria):
+    - Met or in good standing: 6 (criteria #5 Python/SQL/migration, #7 no production override,
+      #8 training blocked, #9 PROJECT_STATUS aligned, #10 CI green, #4 shared module boundary)
+    - Partial: 2 (criterion #1 entrypoints guarded, criterion #3 browser/FotMob audit)
+    - Not met: 2 (criterion #2 negative-case testing, criterion #6 DB role/permission review)
+  - Key gaps identified:
+    - 43 skipped_complex JS scripts classified but not individually verified non-write
+    - No deliberate negative-case CI testing
+    - DB role/permission model not reviewed
+    - `deploy/docker/init_db.sql` needs guard (Gate B)
+  - Next recommended task: `runtime_db_role_permission_review_phase1` (low effort, documentation only)
+  - SC-002 remains partial mitigation only. Cannot be closed.
+  - Training / data expansion / real DB write remain blocked.
 
 ## sc002_alembic_migration_runtime_guard completed
 
 - **sc002_alembic_migration_runtime_guard_implementation** — runtime guard added to
   `src/database/migrations/env.py` for the last remaining unguarded Python write path.
-    - Branch: `chore/sc002-alembic-migration-runtime-guard`
-    - **Guard implemented in `run_migrations_online()` before any DB engine/connection/migration.**
-    - Guard details:
-        - Function: `_check_alembic_migration_guard()`
-        - Reuses existing `scripts/ops/helpers/python_db_write_guard.py` (`assert_db_write_allowed`)
-        - Operation: `CREATE` (triggers schema-level `ALLOW_SCHEMA_WRITE` gate)
-        - `ALEMBIC_CTX` env var: `ci`/`dev`/`docker_init` auto-allow with `ALLOW_SCHEMA_WRITE=yes`
-        - Production-like host **hard block** (no override)
-        - `run_migrations_offline()` (`--sql` mode) NOT guarded
-    - Allows list updated: env.py → `alembic_migration_runtime_guarded`
-    - **Python write paths guarded: 18/20 (was 17/20).**
-    - **All 20 Python write paths now classified and resolved. 0 unreviewed. 0 pending.**
-    - This task did NOT run Alembic, migration, SQL, DB connection, or real DB write.
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
-    - Next task: None from Python track — all 20 Python write paths resolved.
-      SC-002 overall closure criteria assessment when remaining non-Python criteria are met.
-      Do not start automatically.
+  - Branch: `chore/sc002-alembic-migration-runtime-guard`
+  - **Guard implemented in `run_migrations_online()` before any DB engine/connection/migration.**
+  - Guard details:
+    - Function: `_check_alembic_migration_guard()`
+    - Reuses existing `scripts/ops/helpers/python_db_write_guard.py` (`assert_db_write_allowed`)
+    - Operation: `CREATE` (triggers schema-level `ALLOW_SCHEMA_WRITE` gate)
+    - `ALEMBIC_CTX` env var: `ci`/`dev`/`docker_init` auto-allow with `ALLOW_SCHEMA_WRITE=yes`
+    - Production-like host **hard block** (no override)
+    - `run_migrations_offline()` (`--sql` mode) NOT guarded
+  - Allows list updated: env.py → `alembic_migration_runtime_guarded`
+  - **Python write paths guarded: 18/20 (was 17/20).**
+  - **All 20 Python write paths now classified and resolved. 0 unreviewed. 0 pending.**
+  - This task did NOT run Alembic, migration, SQL, DB connection, or real DB write.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: None from Python track — all 20 Python write paths resolved.
+    SC-002 overall closure criteria assessment when remaining non-Python criteria are met.
+    Do not start automatically.
 
 ## sc002_alembic_migration_guard_design completed
 
 - **sc002_alembic_migration_guard_design** — design, classification, and implementation
   plan for the last remaining SC-002 Python write path: `src/database/migrations/env.py`
   (Alembic migration environment).
-    - Branch: `chore/sc002-alembic-migration-guard-design`
-    - New design doc: `docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md`
-    - **This is a design/classification task, NOT runtime guard implementation.**
-    - **0 runtime guards added. No code changed in env.py.**
-    - This task did NOT run Alembic, migration, SQL, DB connection, scraper, or training.
-    - Classification result: `alembic_migration_needs_specialized_runtime_guard`
-        - env.py IS a real schema write path (orchestrates arbitrary DDL/DML via migration scripts)
-        - env.py is NOT a false positive or read-only candidate
-        - env.py requires specialized guard approach (framework orchestrator, not standalone script)
-        - Standard `assert_db_write_allowed()` pattern doesn't directly fit (would break CI/dev)
-    - Guard strategy designed:
-        - Guard location: top of `run_migrations_online()` before any DB connection
-        - Env vars: `ALLOW_DB_WRITE`, `FINAL_DB_WRITE_CONFIRMATION`, `ALLOW_SCHEMA_WRITE`, `DRY_RUN`
-        - Production-like host hard block (matching JS/Python guard pattern)
-        - `ALEMBIC_CTX` env var for CI/dev context auto-allow
-        - Offline mode (`--sql`) NOT guarded
-    - Implementation plan documented with pseudocode, integration points, and CI/dev workflow
-      compatibility analysis.
-    - Allowlist updated: env.py reclassified from `pending_runtime_guard` to
-      `alembic_migration_needs_specialized_runtime_guard` with full evidence and design doc reference.
-    - **Python write paths guarded count: still 17/20** (unchanged — no guard added).
-    - **1 path now has precise classification with implementation plan** (was generic
-      `pending_runtime_guard`).
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
-    - Next task: `sc002_alembic_migration_runtime_guard_implementation`.
-      Do not start automatically.
+  - Branch: `chore/sc002-alembic-migration-guard-design`
+  - New design doc: `docs/SC002_ALEMBIC_MIGRATION_GUARD_DESIGN.md`
+  - **This is a design/classification task, NOT runtime guard implementation.**
+  - **0 runtime guards added. No code changed in env.py.**
+  - This task did NOT run Alembic, migration, SQL, DB connection, scraper, or training.
+  - Classification result: `alembic_migration_needs_specialized_runtime_guard`
+    - env.py IS a real schema write path (orchestrates arbitrary DDL/DML via migration scripts)
+    - env.py is NOT a false positive or read-only candidate
+    - env.py requires specialized guard approach (framework orchestrator, not standalone script)
+    - Standard `assert_db_write_allowed()` pattern doesn't directly fit (would break CI/dev)
+  - Guard strategy designed:
+    - Guard location: top of `run_migrations_online()` before any DB connection
+    - Env vars: `ALLOW_DB_WRITE`, `FINAL_DB_WRITE_CONFIRMATION`, `ALLOW_SCHEMA_WRITE`, `DRY_RUN`
+    - Production-like host hard block (matching JS/Python guard pattern)
+    - `ALEMBIC_CTX` env var for CI/dev context auto-allow
+    - Offline mode (`--sql`) NOT guarded
+  - Implementation plan documented with pseudocode, integration points, and CI/dev workflow
+    compatibility analysis.
+  - Allowlist updated: env.py reclassified from `pending_runtime_guard` to
+    `alembic_migration_needs_specialized_runtime_guard` with full evidence and design doc reference.
+  - **Python write paths guarded count: still 17/20** (unchanged — no guard added).
+  - **1 path now has precise classification with implementation plan** (was generic
+    `pending_runtime_guard`).
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Next task: `sc002_alembic_migration_runtime_guard_implementation`.
+    Do not start automatically.
 
 ## python_manual_review_guard_phase2e completed
 
 - **python_manual_review_guard_phase2e** — runtime DB write guard implementation
   completed for the 2 manual review write paths confirmed in Phase2D.
-    - Branch: `chore/python-manual-review-guard-phase2e`
-    - **2 of 2 files now have runtime guard (`assert_db_write_allowed`) before real DB write.**
-    - Guard details:
-      | # | File | Guard Location | Operation | Table |
-      |---|---|---|---|---|
-      | 1 | `scripts/maintenance/reprocess_from_local.py` | `backfill_features()` before UPDATE | UPDATE | `matches` |
-      | 2 | `src/api/monitoring/prometheus_metrics.py` | `_persist_to_database()` before INSERT | INSERT | `failed_market_data` |
-    - Uses existing `helpers/python_db_write_guard.py` pattern — no new mechanism.
-    - All guards placed before real DB write operations.
-    - Allowlist updated: 2 entries reclassified from `manual_confirmed_write_needs_guard` to `manual_confirmed_write_path_runtime_guarded`.
-    - Updated `_runtime_guard_status`: **17/20** Python write paths now runtime guarded.
-    - Docs updated: `SC002_MANUAL_REVIEW_PHASE2D.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
-    - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
+  - Branch: `chore/python-manual-review-guard-phase2e`
+  - **2 of 2 files now have runtime guard (`assert_db_write_allowed`) before real DB write.**
+  - Guard details:
+    | # | File | Guard Location | Operation | Table |
+    |---|---|---|---|---|
+    | 1 | `scripts/maintenance/reprocess_from_local.py` | `backfill_features()` before UPDATE | UPDATE | `matches` |
+    | 2 | `src/api/monitoring/prometheus_metrics.py` | `_persist_to_database()` before INSERT | INSERT | `failed_market_data` |
+  - Uses existing `helpers/python_db_write_guard.py` pattern — no new mechanism.
+  - All guards placed before real DB write operations.
+  - Allowlist updated: 2 entries reclassified from `manual_confirmed_write_needs_guard` to `manual_confirmed_write_path_runtime_guarded`.
+  - Updated `_runtime_guard_status`: **17/20** Python write paths now runtime guarded.
+  - Docs updated: `SC002_MANUAL_REVIEW_PHASE2D.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
+  - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
 
 ## python_manual_review_phase2d completed
 
 - **python_manual_review_phase2d** — static manual review completed for all 5
   remaining `historical_python_needs_manual_review` entries.
-    - New design doc: `docs/SC002_MANUAL_REVIEW_PHASE2D.md`
-    - Allowlist updated: 5 entries reclassified with full evidence
-    - **This is a static review/classification task, NOT runtime guard implementation.**
-    - **0 runtime guards added. 0 files marked safe or runtime_guarded.**
-    - This task did NOT run DB / migration / scraper / training.
-    - Classification results:
-        - **2 manual_confirmed_write_needs_guard** — reprocess_from_local.py (UPDATE matches,
-          same pattern as reprocess_failed_matches.py), prometheus_metrics.py (INSERT
-          failed_market_data via DeadLetterQueue.\_persist_to_database)
-        - **1 manual_read_only_candidate** — monitoring.py (all SELECT/fetchrow via asyncpg,
-          health checks/metrics only)
-        - **2 manual_false_positive_candidate** — fotmob_historical_backfill.py (DEPRECATED,
-          core deps = None, cannot execute), diagnose_diagnostic.py (syntactically broken,
-          cannot parse/execute)
-        - **0 manual_confirmed_write_already_guarded**, **0 manual_needs_design**,
-          **0 manual_unknown_needs_followup**
-    - **0 manual review candidates remain** — all 5 have been classified.
-    - Guard implementation for 2 write_needs_guard paths deferred to `python_manual_review_guard_phase2e`.
-    - Python write paths guarded count: **still 15/20** (unchanged).
-    - **2 next guard candidates** identified (reprocess_from_local.py, prometheus_metrics.py).
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
+  - New design doc: `docs/SC002_MANUAL_REVIEW_PHASE2D.md`
+  - Allowlist updated: 5 entries reclassified with full evidence
+  - **This is a static review/classification task, NOT runtime guard implementation.**
+  - **0 runtime guards added. 0 files marked safe or runtime_guarded.**
+  - This task did NOT run DB / migration / scraper / training.
+  - Classification results:
+    - **2 manual_confirmed_write_needs_guard** — reprocess_from_local.py (UPDATE matches,
+      same pattern as reprocess_failed_matches.py), prometheus_metrics.py (INSERT
+      failed_market_data via DeadLetterQueue._persist_to_database)
+    - **1 manual_read_only_candidate** — monitoring.py (all SELECT/fetchrow via asyncpg,
+      health checks/metrics only)
+    - **2 manual_false_positive_candidate** — fotmob_historical_backfill.py (DEPRECATED,
+      core deps = None, cannot execute), diagnose_diagnostic.py (syntactically broken,
+      cannot parse/execute)
+    - **0 manual_confirmed_write_already_guarded**, **0 manual_needs_design**,
+      **0 manual_unknown_needs_followup**
+  - **0 manual review candidates remain** — all 5 have been classified.
+  - Guard implementation for 2 write_needs_guard paths deferred to `python_manual_review_guard_phase2e`.
+  - Python write paths guarded count: **still 15/20** (unchanged).
+  - **2 next guard candidates** identified (reprocess_from_local.py, prometheus_metrics.py).
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
 
 ## python_indirect_write_path_guard_phase2 completed
 
 - **python_indirect_write_path_guard_phase2** — runtime DB write guard implementation
   completed for all 6 `indirect_write_needs_guard` paths classified in design phase1.
-    - Branch: `chore/python-indirect-write-path-guard-phase2`
-    - **6 of 6 files now have runtime guard (`assert_db_write_allowed`) before real DB write.**
-    - Guard details:
-      | # | File | Guard Location | Operation | Table |
-      |---|---|---|---|---|
-      | 1 | `src/services/match_aligner.py` | `save_alignment()` before INSERT | INSERT | `matches_mapping` |
-      | 2 | `src/services/match_linker.py` | `store_odds_intelligence()` + `batch_store_odds_intelligence()` before CREATE TABLE + INSERT | CREATE, INSERT | `match_odds_intelligence` |
-      | 3 | `src/api/collectors/odds_api_client_v38.py` | `save_odds_to_db()` before INSERT | INSERT | `match_odds` |
-      | 4 | `scripts/maintenance/reprocess_failed_matches.py` | `reprocess_match()` before UPDATE | UPDATE | `matches` |
-      | 5 | `scripts/maintenance/clean_corrupt_l2.py` | `clean_corrupt_records()` before UPDATE (integrated with `dry_run` param) | UPDATE | `matches` |
-      | 6 | `scripts/maintenance/fix_zombie_matches.py` | `fix_zombie_matches()` before `_batch_update_matches()` (integrated with `self.dry_run`) | UPDATE | `matches` |
-    - Uses existing `helpers/python_db_write_guard.py` pattern — no new mechanism invented.
-    - All guards placed before real DB write operations, not after.
-    - 3 scripts with existing `--dry-run` flags have `dry_run` parameter integrated into guard call.
-    - Allowlist updated: 6 entries reclassified from `indirect_write_needs_guard` to `indirect_write_path_runtime_guarded`.
-    - Updated `_runtime_guard_status` in allowlist: **15 of 20 Python write paths now runtime guarded** (9 confirmed + 6 indirect).
-    - Docs updated: `SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
-    - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
-    - **5 manual review candidates NOT processed.** SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
+  - Branch: `chore/python-indirect-write-path-guard-phase2`
+  - **6 of 6 files now have runtime guard (`assert_db_write_allowed`) before real DB write.**
+  - Guard details:
+    | # | File | Guard Location | Operation | Table |
+    |---|---|---|---|---|
+    | 1 | `src/services/match_aligner.py` | `save_alignment()` before INSERT | INSERT | `matches_mapping` |
+    | 2 | `src/services/match_linker.py` | `store_odds_intelligence()` + `batch_store_odds_intelligence()` before CREATE TABLE + INSERT | CREATE, INSERT | `match_odds_intelligence` |
+    | 3 | `src/api/collectors/odds_api_client_v38.py` | `save_odds_to_db()` before INSERT | INSERT | `match_odds` |
+    | 4 | `scripts/maintenance/reprocess_failed_matches.py` | `reprocess_match()` before UPDATE | UPDATE | `matches` |
+    | 5 | `scripts/maintenance/clean_corrupt_l2.py` | `clean_corrupt_records()` before UPDATE (integrated with `dry_run` param) | UPDATE | `matches` |
+    | 6 | `scripts/maintenance/fix_zombie_matches.py` | `fix_zombie_matches()` before `_batch_update_matches()` (integrated with `self.dry_run`) | UPDATE | `matches` |
+  - Uses existing `helpers/python_db_write_guard.py` pattern — no new mechanism invented.
+  - All guards placed before real DB write operations, not after.
+  - 3 scripts with existing `--dry-run` flags have `dry_run` parameter integrated into guard call.
+  - Allowlist updated: 6 entries reclassified from `indirect_write_needs_guard` to `indirect_write_path_runtime_guarded`.
+  - Updated `_runtime_guard_status` in allowlist: **15 of 20 Python write paths now runtime guarded** (9 confirmed + 6 indirect).
+  - Docs updated: `SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`, `SC002_CLOSURE_PLAN.md`, `PROJECT_STATUS.md`.
+  - **This task did NOT run any target script, DB connection, SQL/migration, scraper, training, or real DB write.**
+  - **5 manual review candidates NOT processed.** SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
 
 ## python_indirect_write_path_design_phase1 completed
 
 - **python_indirect_write_path_design_phase1** — static design classification completed
   for all 8 `historical_python_indirect_write_path_pending_runtime_guard` entries.
-    - New design doc: `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`
-    - New tests: `tests/unit/test_indirect_write_path_design_phase1.py` (17 tests)
-    - Allowlist updated: 8 entries reclassified with full evidence
-    - **This is a design/classification task, NOT runtime guard implementation.**
-    - **0 runtime guards added. 0 files marked safe or runtime_guarded.**
-    - This task did NOT run DB / migration / scraper / training.
-    - Classification results:
-        - **6 indirect_write_needs_guard** — all actually DIRECT write paths (use OWN psycopg2
-          connection with explicit INSERT/UPDATE + commit, NOT via repository layer as
-          original design assumed): match_aligner.py (INSERT matches_mapping), match_linker.py
-          (INSERT+CREATE match_odds_intelligence), odds_api_client_v38.py (INSERT match_odds),
-          reprocess_failed_matches.py (UPDATE matches, default=dry_run=false), clean_corrupt_l2.py
-          (UPDATE matches nullification, default=dry_run=false), fix_zombie_matches.py (UPDATE
-          matches, default=dry_run=false)
-        - **1 indirect_read_only_candidate** — league_router.py (SELECT DISTINCT only, URL routing)
-        - **1 indirect_false_positive_candidate** — match_data_service.py (skeleton class, zero
-          write methods, misleading aliases)
-        - **0 indirect_write_already_guarded**, **0 indirect_write_needs_design**,
-          **0 indirect_unknown_needs_manual_review**
-    - Key finding: 6 of 8 "indirect" paths are actually DIRECT — original design doc was
-      imprecise. All 6 lack any guard. 3 of 6 have --dry-run flags but default is write-enabled
-      (unsafe default).
-    - Guard implementation for 6 needs_guard paths deferred to `python_indirect_write_path_guard_phase2`.
-    - Confirmed Python write paths guarded count: **still 9/14** (unchanged).
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
-    - 5 manual review candidates NOT processed.
+  - New design doc: `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`
+  - New tests: `tests/unit/test_indirect_write_path_design_phase1.py` (17 tests)
+  - Allowlist updated: 8 entries reclassified with full evidence
+  - **This is a design/classification task, NOT runtime guard implementation.**
+  - **0 runtime guards added. 0 files marked safe or runtime_guarded.**
+  - This task did NOT run DB / migration / scraper / training.
+  - Classification results:
+    - **6 indirect_write_needs_guard** — all actually DIRECT write paths (use OWN psycopg2
+      connection with explicit INSERT/UPDATE + commit, NOT via repository layer as
+      original design assumed): match_aligner.py (INSERT matches_mapping), match_linker.py
+      (INSERT+CREATE match_odds_intelligence), odds_api_client_v38.py (INSERT match_odds),
+      reprocess_failed_matches.py (UPDATE matches, default=dry_run=false), clean_corrupt_l2.py
+      (UPDATE matches nullification, default=dry_run=false), fix_zombie_matches.py (UPDATE
+      matches, default=dry_run=false)
+    - **1 indirect_read_only_candidate** — league_router.py (SELECT DISTINCT only, URL routing)
+    - **1 indirect_false_positive_candidate** — match_data_service.py (skeleton class, zero
+      write methods, misleading aliases)
+    - **0 indirect_write_already_guarded**, **0 indirect_write_needs_design**,
+      **0 indirect_unknown_needs_manual_review**
+  - Key finding: 6 of 8 "indirect" paths are actually DIRECT — original design doc was
+    imprecise. All 6 lack any guard. 3 of 6 have --dry-run flags but default is write-enabled
+    (unsafe default).
+  - Guard implementation for 6 needs_guard paths deferred to `python_indirect_write_path_guard_phase2`.
+  - Confirmed Python write paths guarded count: **still 9/14** (unchanged).
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - 5 manual review candidates NOT processed.
 
 ## consumer_level_guard_audit_db_pool_sync_sql_store completed
 
 - **consumer_level_guard_audit_db_pool_sync_sql_store** — consumer-level static audit completed
   for 3 infrastructure-only confirmed Python write paths.
-    - New audit doc: `docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md`
-    - New tests: `tests/unit/test_consumer_level_guard_audit_db_pool_sync_sql_store.py` (41 tests)
-    - Allowlist updated: 3 infrastructure entries now have consumer audit references
-    - **This is a consumer-level audit / design task, NOT runtime guard implementation.**
-    - Confirmed Python write paths guarded count: **still 9/14**.
-    - This task did NOT add any runtime guard.
-    - This task did NOT run DB / migration / scraper / training.
-    - Consumer audit findings:
-        - **2 write consumers already guarded** (collector_repository.py, streaming_db_writer.py in batch3)
-        - **6 read-only consumers** (main.py, health.py, monitoring.py, dataset_generator.py, async_dependencies.py, performance_monitor.py)
-        - **3 no_active_consumers** (SQLStore, SyncDatabasePool utils aliases, test mocks)
-        - **0 unguarded write consumers** (category A) — all write consumers already guarded
-        - **0 dynamic/unknown consumers** (categories D, E)
-    - Next guard implementation candidates: none from this audit — all write consumers already guarded.
-      Remaining 5 confirmed Python write paths in Phase2C batch4 still need guard implementation.
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
-    - Indirect write paths (8) NOT processed.
-    - Manual review candidates (5) NOT processed.
+  - New audit doc: `docs/SC002_CONSUMER_LEVEL_GUARD_AUDIT_DB_POOL_SYNC_SQL_STORE.md`
+  - New tests: `tests/unit/test_consumer_level_guard_audit_db_pool_sync_sql_store.py` (41 tests)
+  - Allowlist updated: 3 infrastructure entries now have consumer audit references
+  - **This is a consumer-level audit / design task, NOT runtime guard implementation.**
+  - Confirmed Python write paths guarded count: **still 9/14**.
+  - This task did NOT add any runtime guard.
+  - This task did NOT run DB / migration / scraper / training.
+  - Consumer audit findings:
+    - **2 write consumers already guarded** (collector_repository.py, streaming_db_writer.py in batch3)
+    - **6 read-only consumers** (main.py, health.py, monitoring.py, dataset_generator.py, async_dependencies.py, performance_monitor.py)
+    - **3 no_active_consumers** (SQLStore, SyncDatabasePool utils aliases, test mocks)
+    - **0 unguarded write consumers** (category A) — all write consumers already guarded
+    - **0 dynamic/unknown consumers** (categories D, E)
+  - Next guard implementation candidates: none from this audit — all write consumers already guarded.
+    Remaining 5 confirmed Python write paths in Phase2C batch4 still need guard implementation.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
+  - Indirect write paths (8) NOT processed.
+  - Manual review candidates (5) NOT processed.
 
 ## ci_local_parity_preflight_phase1 completed
 
 - **ci_local_parity_preflight_phase1** — local PR Gate preflight added.
-    - New script: `scripts/ops/local_pr_gate_preflight.py`
-    - New tests: `tests/unit/test_local_pr_gate_preflight.py` (23 tests)
-    - New Makefile target: `make pr-gate-local PR_BODY=<file>`
-    - New npm script: `npm run pr-gate-local`
-    - Goal: improve remote CI first-pass rate by catching failures locally.
-    - This is workflow / CI parity hardening, NOT SC-002 closure.
-    - Does NOT change 6/14 runtime guarded state.
-    - Does NOT change remaining 8 confirmed write paths.
-    - Does NOT change 8 indirect write paths.
-    - Does NOT change 5 manual review candidates.
-    - Does NOT unlock training / data expansion / real DB write.
-    - SC-002 remains partial mitigation only.
-    - Training / data expansion / real DB write remain blocked.
+  - New script: `scripts/ops/local_pr_gate_preflight.py`
+  - New tests: `tests/unit/test_local_pr_gate_preflight.py` (23 tests)
+  - New Makefile target: `make pr-gate-local PR_BODY=<file>`
+  - New npm script: `npm run pr-gate-local`
+  - Goal: improve remote CI first-pass rate by catching failures locally.
+  - This is workflow / CI parity hardening, NOT SC-002 closure.
+  - Does NOT change 6/14 runtime guarded state.
+  - Does NOT change remaining 8 confirmed write paths.
+  - Does NOT change 8 indirect write paths.
+  - Does NOT change 5 manual review candidates.
+  - Does NOT unlock training / data expansion / real DB write.
+  - SC-002 remains partial mitigation only.
+  - Training / data expansion / real DB write remain blocked.
 
 ## Current baseline
 
 - `main` includes PR #1463 (P0 AI Workflow Gate CI enforcement).
 - `main` includes PR #16XX (`agent_workflow_rules_hardening_phase1`) — three-layer agent
   workflow discipline codified into the repo:
-    1. **Resident rules**: `CLAUDE.md` now contains comprehensive non-negotiable agent
-       workflow hardening rules (branch, scope, safety, SC-002, PR, task-type, post-merge
-       discipline). Agents no longer need repeated long-form prompts for basic discipline.
-    2. **PR template**: `.github/pull_request_template.md` now includes `## SC-002 status`,
-       `## Remaining risks`, and a 16-item Agent Workflow Hardening Checklist.
-    3. **CI / AI Workflow Gate**: `scripts/ops/ai_workflow_gate.py` enforces:
-        - New required sections: `## SC-002 status`, `## Remaining risks`
-        - Forbidden rewrite file patterns (`*_v2.py`, `*_final.js`, etc.) for new files
-        - Forbidden safety claims (prematurely declaring SC-002 resolved or training/DB write unblocked)
-        - Large risky change detection (deletion/rename/scanner-count thresholds)
-        - Existing gates preserved (Phase2A Python, Phase2B SQL, Phase2 JS DB write)
-    - SC-002 remains partial mitigation only.
-    - training / data expansion / real DB write remain blocked.
+  1. **Resident rules**: `CLAUDE.md` now contains comprehensive non-negotiable agent
+     workflow hardening rules (branch, scope, safety, SC-002, PR, task-type, post-merge
+     discipline). Agents no longer need repeated long-form prompts for basic discipline.
+  2. **PR template**: `.github/pull_request_template.md` now includes `## SC-002 status`,
+     `## Remaining risks`, and a 16-item Agent Workflow Hardening Checklist.
+  3. **CI / AI Workflow Gate**: `scripts/ops/ai_workflow_gate.py` enforces:
+     - New required sections: `## SC-002 status`, `## Remaining risks`
+     - Forbidden rewrite file patterns (`*_v2.py`, `*_final.js`, etc.) for new files
+     - Forbidden safety claims (prematurely declaring SC-002 resolved or training/DB write unblocked)
+     - Large risky change detection (deletion/rename/scanner-count thresholds)
+     - Existing gates preserved (Phase2A Python, Phase2B SQL, Phase2 JS DB write)
+  - SC-002 remains partial mitigation only.
+  - training / data expansion / real DB write remain blocked.
 - `main` includes PR #1464 (local CI gatekeeper entrypoint).
 - `main` includes PR #1567 (authoritative workflow enforcement dry-run).
 - `main` includes PR #1569 (p0_db_write_safety_gate_fix_phase1 — unified guard + 8 scripts).
@@ -645,12 +645,12 @@ legacy-writer execution is authorized.
 - Remote GitHub Actions `production-gate.yml` is the final CI authority.
 - Local `make ci-local-pr` is a pre-push helper, not a full replacement for remote CI.
 - AI workflow governance rules are enforced by:
-    - `scripts/ops/ai_workflow_gate.py` (CI-enforced workflow and documentation checks)
-    - `scripts/devops/gatekeeper.sh` (CI-enforced, multi-phase)
-    - `scripts/ops/documentation_governance_check.py` (standalone checker)
-    - `.github/pull_request_template.md` (mandatory PR structure)
-    - `docs/CODEX_WORKFLOW.md` (Codex task rules)
-    - `docs/DOCUMENTATION_GOVERNANCE.md` (doc lifecycle rules)
+  - `scripts/ops/ai_workflow_gate.py` (CI-enforced workflow and documentation checks)
+  - `scripts/devops/gatekeeper.sh` (CI-enforced, multi-phase)
+  - `scripts/ops/documentation_governance_check.py` (standalone checker)
+  - `.github/pull_request_template.md` (mandatory PR structure)
+  - `docs/CODEX_WORKFLOW.md` (Codex task rules)
+  - `docs/DOCUMENTATION_GOVERNANCE.md` (doc lifecycle rules)
 
 ## Current SC-002 status (DB write safety gate)
 
@@ -709,15 +709,15 @@ legacy-writer execution is authorized.
   SC-002 remains partial mitigation only.
 - **sc002_allowlist_cleanup_phase1** (this PR): Formal reclassification of 15 scripts
   from `confirmed_write_path_needs_guard` to verified false positive categories:
-    - 11 false_positive_select_only_with_active_wrapper (SELECT-only + queryReadOnly/safeSelect)
-    - 2 false_positive_read_only_transaction (BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql)
-    - 1 false_positive_no_db_connection_static_scan (no pg import, fs/child_process only)
-    - 1 false_positive_policy_or_regex_keyword_only (INSERT only in conflict_policy string)
-      All 20 original confirmed_write_path classifications are now resolved (6 guarded, 14
-      reclassified). **0 still_needs_guard remain.**
-      4 needs_manual_review remain unchanged. 3 shared_module unchanged. 1
-      possible_indirect_write unchanged. SC-002 remains partial mitigation only.
-      Training, data expansion, and real DB write remain blocked.
+  - 11 false_positive_select_only_with_active_wrapper (SELECT-only + queryReadOnly/safeSelect)
+  - 2 false_positive_read_only_transaction (BEGIN READ ONLY + ROLLBACK + assertSelectOnlySql)
+  - 1 false_positive_no_db_connection_static_scan (no pg import, fs/child_process only)
+  - 1 false_positive_policy_or_regex_keyword_only (INSERT only in conflict_policy string)
+  All 20 original confirmed_write_path classifications are now resolved (6 guarded, 14
+  reclassified). **0 still_needs_guard remain.**
+  4 needs_manual_review remain unchanged. 3 shared_module unchanged. 1
+  possible_indirect_write unchanged. SC-002 remains partial mitigation only.
+  Training, data expansion, and real DB write remain blocked.
 - **shared_module_db_write_boundary_implementation_phase1** (#1592): HIGH priority
   guard implemented for `odds_harvest_pipeline.js` — the unguarded consumer discovered
   by the design phase. `assertDbWriteAllowed()` added in `upsertMappingAndOdds()` before
@@ -732,8 +732,8 @@ legacy-writer execution is authorized.
   `runColdStartBlueprintCheck` (which triggers CREATE DATABASE, DROP DATABASE, and
   INSERT write probe on `matches`, `raw_match_data`, `matches_oddsportal_mapping`).
   Guard at consumer entrypoint, not module level. Guard pattern: `assertDbWriteAllowed({
-script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
-'matches_oddsportal_mapping'], operations: ['CREATE', 'DROP', 'INSERT'] })` (same
+  script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
+  'matches_oddsportal_mapping'], operations: ['CREATE', 'DROP', 'INSERT'] })` (same
   pattern for gatekeeper.sh with script 'gatekeeper.sh'). dbBlueprint.js unchanged.
   No target script executed. No DB connection. No real DB write. No scraper/browser run.
   No training. No data expansion. No schema migration. 9 needs_manual_review consumers
@@ -745,41 +745,41 @@ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
   shared-module design doc (9 dbBlueprint consumers) and the broader skipped_complex
   audit (4 pageProps + 1 possible_indirect_write). Full per-script evidence in
   `docs/SC002_MANUAL_REVIEW_PHASE1.md`. Results:
-    - **7 already_guarded** (had guard from Phase1-7; design doc classification was stale):
-      cleanup_csv_bulk_loader_import.js, purge_ghost_data.js, purge_orphans.js,
-      raw_match_data_completeness_fidelity_audit.js, renewed_pageprops_v2_raw_write_execute.js
-      (transitive via base), reset_database.js, seed_fotmob_sample.js
-    - **3 false_positive_no_db_write_evidence** (SELECT-only or zero DB connection):
-      fetch*and_adapt_euro_leagues.js, master_inventory.js, pageprops_v2_identity_contract*
-      regression_execute.js, pageprops_v2_suspended_target_review_execute.js
-    - **2 false_positive_select_only_with_active_wrapper**: all*seeded_pageprops_v2*
-      canonical_read_verification.js, pageprops_v2_post_write_canonical_read_verification.js
-    - **1 false_positive_read_only_transaction**: training_pipeline_smoke_dry_run.js
-    - **0 confirmed_write_path_needs_guard**, **0 remaining needs_manual_review**
-    - Count mismatch resolved: previous PR said "8" (typo), actual design-doc count is 9;
-      combined with audit-doc 5 = 14 total reviewed
-    - No guard implemented (all already guarded). No target script executed. No DB
-      connection. No real DB write. No scraper/browser. SC-002 remains partial mitigation
-      only. Training, data expansion, real DB write remain blocked.
+  - **7 already_guarded** (had guard from Phase1-7; design doc classification was stale):
+    cleanup_csv_bulk_loader_import.js, purge_ghost_data.js, purge_orphans.js,
+    raw_match_data_completeness_fidelity_audit.js, renewed_pageprops_v2_raw_write_execute.js
+    (transitive via base), reset_database.js, seed_fotmob_sample.js
+  - **3 false_positive_no_db_write_evidence** (SELECT-only or zero DB connection):
+    fetch_and_adapt_euro_leagues.js, master_inventory.js, pageprops_v2_identity_contract_
+    regression_execute.js, pageprops_v2_suspended_target_review_execute.js
+  - **2 false_positive_select_only_with_active_wrapper**: all_seeded_pageprops_v2_
+    canonical_read_verification.js, pageprops_v2_post_write_canonical_read_verification.js
+  - **1 false_positive_read_only_transaction**: training_pipeline_smoke_dry_run.js
+  - **0 confirmed_write_path_needs_guard**, **0 remaining needs_manual_review**
+  - Count mismatch resolved: previous PR said "8" (typo), actual design-doc count is 9;
+    combined with audit-doc 5 = 14 total reviewed
+  - No guard implemented (all already guarded). No target script executed. No DB
+    connection. No real DB write. No scraper/browser. SC-002 remains partial mitigation
+    only. Training, data expansion, real DB write remain blocked.
 - **shared_module_db_write_boundary_design_phase1** (#1591): Static design of shared
   module DB write boundary completed. 3 shared modules mapped with full consumer
   entrypoint inventory:
-    - `dbBlueprint.js` (24 consumers, 3 write-capable, 18 read-only, 3 needs_manual_review)
-    - `restoreMappingsWorkflow.js` (0 active consumers, dependency-injected write path)
-    - `odds_harvest_pipeline.shared.js` (2 consumers: 1 guarded, 1 UNGUARDED gap found —
-      `odds_harvest_pipeline.js`)
-      Key findings: `odds_harvest_pipeline.js` is an unguarded CLI entrypoint consuming
-      write SQL from the shared module (not in any prior audit or guard phase).
-      `gatekeeper.js`/`gatekeeper.sh` use `runColdStartBlueprintCheck` (DB write path) with
-      no guard. Consumer entrypoint map recommends guard at consumer level, not module level.
-      No runtime behavior changed. SC-002 remains partial mitigation only.
-      Training, data expansion, and real DB write remain blocked.
+  - `dbBlueprint.js` (24 consumers, 3 write-capable, 18 read-only, 3 needs_manual_review)
+  - `restoreMappingsWorkflow.js` (0 active consumers, dependency-injected write path)
+  - `odds_harvest_pipeline.shared.js` (2 consumers: 1 guarded, 1 UNGUARDED gap found —
+    `odds_harvest_pipeline.js`)
+  Key findings: `odds_harvest_pipeline.js` is an unguarded CLI entrypoint consuming
+  write SQL from the shared module (not in any prior audit or guard phase).
+  `gatekeeper.js`/`gatekeeper.sh` use `runColdStartBlueprintCheck` (DB write path) with
+  no guard. Consumer entrypoint map recommends guard at consumer level, not module level.
+  No runtime behavior changed. SC-002 remains partial mitigation only.
+  Training, data expansion, and real DB write remain blocked.
 - Remaining 22 complex candidates categorized into:
-    - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
-    - `fotmob_pipeline` (2): FotMob ingestion scripts
-    - `shared_module` (3): shared helper modules consumed by entrypoints
-    - `dry_run_or_audit` (8): dry-run, audit, preflight scripts
-    - Plus 21 browser/Playwright scripts previously classified as `skipped_complex`
+  - `pageprops_pipeline` (9): pageProps/FotMob pipeline scripts
+  - `fotmob_pipeline` (2): FotMob ingestion scripts
+  - `shared_module` (3): shared helper modules consumed by entrypoints
+  - `dry_run_or_audit` (8): dry-run, audit, preflight scripts
+  - Plus 21 browser/Playwright scripts previously classified as `skipped_complex`
 - Each remaining candidate has: explicit category, reason, reviewed_at, future_action.
   These are NOT counted as "guarded" and SC-002 is NOT "fully fixed".
 - DB write safety status: **blocked / partial phase1-7 guards added**.
@@ -829,23 +829,23 @@ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
 
 ## Current source-of-truth docs
 
-| Doc                                                            | Status                                                                         |
-| -------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `docs/PROJECT_STATUS.md`                                       | active (this file)                                                             |
-| `docs/DATA_SOURCE_STRATEGY.md`                                 | active (created alongside this file)                                           |
-| `docs/CODEX_WORKFLOW.md`                                       | active                                                                         |
-| `docs/DOCUMENTATION_GOVERNANCE.md`                             | active                                                                         |
-| `docs/data/FOTMOB_CURRENT_STATE.md`                            | active — read for FotMob state                                                 |
-| `docs/AGENT_WORKFLOW.md`                                       | active                                                                         |
-| `docs/SC002_CLOSURE_PLAN.md`                                   | active — authoritative SC-002 status reference                                 |
-| `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md`                 | active — static audit of all 43 skipped_complex scripts                        |
-| `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md` | active — deep per-script verification of all 43 skipped_complex scripts        |
-| `docs/SC002_FINAL_CLOSURE_CHECK.md`                            | active — final per-criterion SC-002 closure verification                       |
-| `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md`         | active — shared module DB write boundary design                                |
-| `docs/SC002_MANUAL_REVIEW_PHASE1.md`                           | active — manual review and reclassification of all needs_manual_review scripts |
-| `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md`        | active — Python/SQL/migration enforcement design                               |
-| `docs/TESTING_GUIDE.md`                                        | active — needs provenance review                                               |
-| `docs/GITHUB_ACTIONS_AUDIT_REPORT.md`                          | evidence/needs_update — stale CI references                                    |
+| Doc | Status |
+|---|---|
+| `docs/PROJECT_STATUS.md` | active (this file) |
+| `docs/DATA_SOURCE_STRATEGY.md` | active (created alongside this file) |
+| `docs/CODEX_WORKFLOW.md` | active |
+| `docs/DOCUMENTATION_GOVERNANCE.md` | active |
+| `docs/data/FOTMOB_CURRENT_STATE.md` | active — read for FotMob state |
+| `docs/AGENT_WORKFLOW.md` | active |
+| `docs/SC002_CLOSURE_PLAN.md` | active — authoritative SC-002 status reference |
+| `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_AUDIT.md` | active — static audit of all 43 skipped_complex scripts |
+| `docs/SC002_BROWSER_FOTMOB_PAGEPROPS_PLAYWRIGHT_DEEP_AUDIT.md` | active — deep per-script verification of all 43 skipped_complex scripts |
+| `docs/SC002_FINAL_CLOSURE_CHECK.md` | active — final per-criterion SC-002 closure verification |
+| `docs/SC002_SHARED_MODULE_DB_WRITE_BOUNDARY_DESIGN.md` | active — shared module DB write boundary design |
+| `docs/SC002_MANUAL_REVIEW_PHASE1.md` | active — manual review and reclassification of all needs_manual_review scripts |
+| `docs/SC002_PYTHON_SQL_MIGRATION_ENFORCEMENT_DESIGN.md` | active — Python/SQL/migration enforcement design |
+| `docs/TESTING_GUIDE.md` | active — needs provenance review |
+| `docs/GITHUB_ACTIONS_AUDIT_REPORT.md` | evidence/needs_update — stale CI references |
 
 ## Current technical debt posture
 
@@ -881,12 +881,12 @@ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
 
 ## Recent dry-run conclusions now reflected here
 
-| Dry-run                                      | Current conclusion                                                                                                                                               |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `formal_training_cohort_inventory_dry_run`   | Formal training remains blocked; only 58 smoke-level candidates were found and formal candidates with odds = 0.                                                  |
-| `technical_debt_workflow_audit_dry_run`      | P0 technical debt blocks data expansion and formal training; priority debt is DB write safety, cutoff strategy, training eligibility, and schema/init alignment. |
-| `p0_db_write_safety_gate_dry_run`            | DB write safety remains blocked; 122 production DB-write risk files were found, P0 = 66, 110 lack gates, SC-002 remains unfixed.                                 |
-| `authoritative_workflow_enforcement_dry_run` | The project already has authoritative docs, but `_reports` has overgrown and AI agents were not forced to maintain current-state docs.                           |
+| Dry-run | Current conclusion |
+|---|---|
+| `formal_training_cohort_inventory_dry_run` | Formal training remains blocked; only 58 smoke-level candidates were found and formal candidates with odds = 0. |
+| `technical_debt_workflow_audit_dry_run` | P0 technical debt blocks data expansion and formal training; priority debt is DB write safety, cutoff strategy, training eligibility, and schema/init alignment. |
+| `p0_db_write_safety_gate_dry_run` | DB write safety remains blocked; 122 production DB-write risk files were found, P0 = 66, 110 lack gates, SC-002 remains unfixed. |
+| `authoritative_workflow_enforcement_dry_run` | The project already has authoritative docs, but `_reports` has overgrown and AI agents were not forced to maintain current-state docs. |
 
 ## Current FotMob status
 
@@ -941,10 +941,10 @@ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
     - **0 new runtime guards added. 0 files marked safe.**
     - **SC-002 remains partial mitigation only. training / data expansion / real DB write remain blocked.**
 12. **python_indirect_write_path_design_phase1 completed** — static design classification
-    of all 8 indirect Python write paths. Key finding: 6 of 8 are actually DIRECT write paths
-    (use OWN psycopg2, NOT via repository). 6 need guard, 2 are false positive or read-only.
-    No runtime guards added. See `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`.
-    SC-002 remains partial mitigation only.
+   of all 8 indirect Python write paths. Key finding: 6 of 8 are actually DIRECT write paths
+   (use OWN psycopg2, NOT via repository). 6 need guard, 2 are false positive or read-only.
+   No runtime guards added. See `docs/SC002_INDIRECT_WRITE_PATH_DESIGN_PHASE1.md`.
+   SC-002 remains partial mitigation only.
 13. **runtime_db_role_permission_dev_poc completed** — 6-role dev-only POC in Docker environment.
 14. SC-002 remains partial mitigation only.
 15. Next recommended tasks (in priority order):
@@ -952,12 +952,11 @@ script: 'gatekeeper.js', tables: ['matches', 'raw_match_data',
     - `python_manual_review_phase2D` — review 5 manual review candidates
     - `runtime_db_role_permission_review_phase1` — review DB-level role/permission model
     - `sc002_release_gate_checklist_phase1` — create detailed per-gate verification checklists
-16. Keep formal training and data expansion blocked until DB write safety resolved
+15. Keep formal training and data expansion blocked until DB write safety resolved
     and release gate criteria met.
-17. Do not start model training, data expansion, raw-write work, scraper/browser
+16. Do not start model training, data expansion, raw-write work, scraper/browser
     automation automatically.
-18. Do not start automatically. Recommended next task only after user confirmation.
-
+17. Do not start automatically. Recommended next task only after user confirmation.
 # M3-D4D-B1 current state
 
 Local-only persistent sandbox `fp_m3_persistent_sandbox` has sandbox-only V26.8/V26.9
@@ -1015,27 +1014,31 @@ This is design readiness only, not database-write authorization.
   not a canonical target. No canonical/linkage/staging write, migration,
   network/raw-payload action, training, backtest or prediction occurred.
 
-The next separately authorized task may implement/test the writer,
-status-complete artifact contract and isolated migration plan on disposable
-infrastructure. It must stop before canonical, linkage or business-database
-write unless separately authorized.
-
 ## M3 canonical inventory writer implementation — 2026-07-29
 
-**Current decision: `READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW`; real
-write remains `BLOCKED_PROVENANCE_POLICY`.** A v2 status-complete ordinary-file
-contract, hash-bound disposable authorization/provenance gates, additive V26.10
-schema/lineage migration, independent insert-only SERIALIZABLE writer and
-default-no-write operator are implemented. The generic `FixtureRepository`
-upsert path is excluded.
+**Implementation decision: READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW.**
+`REAL_WRITE_BLOCKED_PROVENANCE_POLICY` remains in force.
 
-The PostgreSQL 15 disposable proof used generated synthetic 1,140-row
-(380/380/380) data only: first master inserted 1,140 matches, one artifact/run
-and 1,140 lineages; fresh replay returned 1,140 exact duplicates with zero
-delta. Both one-row and ten-row canary-to-master cases ended with 1,140
-matches; the ten-row case had two artifacts, two runs and 1,150 lineages.
-Conflict, invalid input, authorization/provenance,
-concurrency, permission and custom pre-write backup/restore proof all passed.
-No real v2 FotMob artifact/provenance, business database, persistent sandbox,
-linkage or odds import was touched. The next authorization is provenance review
-only, not a persistent canary/master write.
+- A dedicated status-complete `candidate-match-identity/v2` contract, v1
+  identity-projection binding, fresh hash-bound runtime authorization and
+  provenance receipt validator are implemented. Real inputs fail closed when
+  provenance is absent; only explicitly labelled synthetic receipts are valid
+  for the disposable proof.
+- Additive V26.10 implements provider-scoped FotMob identity, fixture conflict
+  protection, immutable artifact/import-run/lineage tables and the restricted
+  canonical lock function. It was executed only on a task-specific PostgreSQL
+  15 tmpfs database, never on development, persistent M3 sandbox, staging or
+  production.
+- The independent insert-only writer and default-no-write operator proved a
+  synthetic 1,140-candidate master (380 / 380 / 380), exact replay zero delta,
+  1- and 10-candidate canary-to-master behavior, conflict rollback,
+  serializable lock contention, least-privilege denial and backup/restore.
+  The labelled proof containers, network and volume were cleaned up.
+- No real v2 artifact, FotMob request, canonical persistent write, linkage,
+  odds staging/import, raw payload activity, training, backtest or prediction
+  occurred. The 888 exact links, four kickoff quarantines and 248
+  canonical-only candidates remain separate future stages.
+
+The next separately authorized task is a provenance review for a real
+status-complete FotMob artifact. It does not authorize provider acquisition or
+any persistent canonical, linkage or odds write.
