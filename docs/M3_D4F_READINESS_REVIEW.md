@@ -889,21 +889,24 @@ schema version, provenance, expected total/seasons and provider/competition
 scope. It is candidate evidence, never authorization. Every candidate must
 include stable numeric FotMob ID, deterministic candidate ID, provider,
 competition, season, ordered teams, strict absolute kickoff, provider status
-and a versioned status mapping. `source_provider` must be exactly the lowercase
-literal `fotmob`; the writer derives `canonical_provider` from that controlled
-field and rejects a blank, differently cased or artifact-supplied alternative.
+and a versioned status mapping. To preserve the audited identity contract,
+`source_provider` must retain the exact v1 literal `FotMob`; the writer maps
+only that controlled source value to the separate lowercase database namespace
+`canonical_provider = 'fotmob'` and rejects a blank, differently cased or
+artifact-supplied canonical-provider alternative.
 
 Status completion may add only v2 fields; it may not silently revise the
-identity population that the cross-source audit used. Before a v2 master or
-canary is accepted, its deterministic projection of the v1 identity fields
-(`id`, `source_provider`, `source_match_id`, `competition`, `season`,
-`home_team`, `away_team`, `kickoff_at`) must reproduce the 1,140-candidate v1
-business hash `eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f`.
-If that projection differs, the writer fails closed: the existing 888 exact
-links and four quarantines cannot be reused until the formal cross-source audit
-is rerun on that identity population and a separately reviewed linkage decision
-replaces the current one. Status and its versioned mapping are deliberately
-outside that identity projection but remain required v2 fields.
+identity population that the cross-source audit used. A v2 full master must
+reproduce the 1,140-candidate v1 business hash
+`eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f` from a
+deterministic projection of `id`, `source_provider`, `source_match_id`,
+`competition`, `season`, `home_team`, `away_team` and `kickoff_at`, including
+the exact `FotMob` source-provider value. If that full-master projection
+differs, the writer fails closed: the existing 888 exact links and four
+quarantines cannot be reused until the formal cross-source audit is rerun on
+that identity population and a separately reviewed linkage decision replaces
+the current one. Status and its versioned mapping are deliberately outside that
+identity projection but remain required v2 fields.
 
 Each execution must separately pass a fresh runtime authorization gate; the
 authorization phrase is supplied outside the artifact and is not accepted from
@@ -929,14 +932,20 @@ different provider ID is `conflict_business_identity`. Neither case may insert
 or rely on a `match_date`-containing index to evade the conflict.
 
 A bounded real canary is not a malformed 1,140-row artifact. It is a separate
-v2 subset artifact with its own SHA-256, business hash,
-candidate count and per-season counts, `canary` run scope, parent full-artifact
-hash, and the exact candidate-ID/immutable-fingerprint allowlist it projects
-from that parent. It must pass every per-candidate field and scope check; only
-its declared cardinality differs. Its fresh runtime authorization must bind
-that subset and target. A canary may contain one or ten candidates, but its
-single transaction must cover all and only its declared subset. It cannot
-silently relax the full-inventory 1,140/380/380/380 contract.
+v2 subset artifact with its own SHA-256, business hash, candidate count and
+per-season counts, `canary` run scope, parent full-artifact hash, and the exact
+candidate-ID/immutable-fingerprint allowlist it projects from that parent. Its
+preflight also receives the immutable parent master artifact as a separately
+hash-bound external input: it first verifies that parent's full 1,140-row v1
+projection against `eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f`,
+then verifies the canary's v1 projection field-for-field and in deterministic
+parent order against exactly that allowlisted parent subset (with a declared
+subset-projection hash). It must pass every per-candidate field and scope check;
+only its declared cardinality differs. Its fresh runtime authorization must bind
+both parent and subset hashes, the allowlist, subset and target. A canary may
+contain one or ten candidates, but its single transaction must cover all and
+only its declared subset. It cannot silently relax the full-inventory
+1,140/380/380/380 contract.
 
 A separately authorized migration implementation/review is required and must
 preflight old rows without rewriting them. Its minimum design is:
@@ -981,7 +990,7 @@ database-level defense.
 
 For a full-inventory run, the recommended unit is one transaction over the
 entire 1,140-row master artifact: prove target/schema/role, fresh runtime
-authorization and baseline fingerprint; set timeouts; obtain a fixed
+authorization, its v1 identity-projection hash and baseline fingerprint; set timeouts; obtain a fixed
 pg_try_advisory_xact_lock; re-read and preflight provider and fixture identity;
 insert only proven-new canonical/lineage rows; verify the final 1,140 and
 380/380/380 inventory, provider/fixture uniqueness and fingerprints; then
@@ -1016,7 +1025,7 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 | --- | --- | --- | --- |
 | 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, lock and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
-| 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, parent-master hash, exact allowlist, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
+| 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
 | 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate = 1,140`, where a registered canary is only one permitted exact-duplicate lineage, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
 
