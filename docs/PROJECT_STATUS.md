@@ -50,7 +50,8 @@ Last updated: 2026-07-28
     retained 1 / 1 / 6 / 3 sandbox evidence remain valid; the dedicated hotfix does not connect to
     or modify that sandbox.
 
-**M3-D4F current decision — `READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW`.**
+**M3-D4F design-review baseline — superseded by
+`READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW` below.**
 The 2026-07-28 offline cross-source audit retained the prior D4F-A database
 fact (`football_prediction_db_dev` / `football_db` has zero relevant Premier
 League/E0 `matches` rows) but recovered the existing PR #1796 repository-
@@ -73,12 +74,12 @@ incomplete or invalid-source terminals. The 888 exact candidates map to 888
 distinct FotMob IDs; 252 FotMob candidates are outside this 892-source
 population and none is multiply used.
 
-This is a design-review readiness decision only. The four kickoff conflicts
-remain isolated and cannot be guessed, linked or written. No business database
-was read or written by the cross-source audit; no schema, canonical linkage,
-raw payload, provider/browser request, persistent sandbox, import, migration,
-training, backtest or prediction changed. Original upstream provenance/import
-semantics remain unverified and Issue #1793 remains Open.
+The cross-source audit was design-review readiness only. The four kickoff
+conflicts remain isolated and cannot be guessed, linked or written. No business
+database was read or written by that audit; no schema, canonical linkage, raw
+payload, provider/browser request, persistent sandbox, import, migration,
+training, backtest or prediction changed. Original upstream
+provenance/import semantics remain unverified and Issue #1793 remains Open.
 
 The normal documentation commit hook did perform the separately authorized
 Gatekeeper `gatekeeper_cold_start_*` temporary database create/probe/rollback/
@@ -979,3 +980,36 @@ M3-D4E is implemented and audited through PR #1802; the authoritative PR merge s
 in GitHub and Issue #1793. D4F-A database inventory and the offline
 Football-Data-to-FotMob candidate audit are complete; real historical odds,
 canonical integration and training remain unstarted and blocked.
+
+## M3 canonical inventory write design review — 2026-07-29
+
+**Design decision: READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW.**
+This is design readiness only, not database-write authorization.
+
+- Canonical inventory and Football-Data linkage are separate objects and must
+  remain separate transactions, roles, executors and future authorizations.
+- The recommended future canonical population is 1,140 FotMob Premier League
+  candidates (380 / 380 / 380), not 888 exact Football-Data links. The 252
+  unused FotMob candidates are canonical-only; four 15/30-minute conflicts are
+  canonical-eligible but linkage-quarantine.
+- Later linkage is exactly 888 unique matches. The four remain no-link; no
+  alias, fuzzy matching, home/away swap, timezone policy or tolerance change.
+- Read-only PostgreSQL 15.17 evidence on the running development service
+  confirmed football_db / claude_reader / BEGIN READ ONLY; role SELECT only,
+  zero business schema/row change and zero target EPL rows.
+- Current matches is not write-ready: only match_id is unique, external_id is
+  not provider-scoped, business identity/import lineage are absent, and the
+  generic writer updates on match_id conflict. New fail-closed writer and
+  isolated schema/lineage migration plan are required; neither was implemented.
+- Recovered FotMob v1 is reproducible identity evidence (business hash
+  eff881…bc9d3f) but has no status field in 1,140 candidates. It must fail
+  preflight rather than receive a guessed status; versioned status-complete
+  hash-bound input is a separate precondition.
+- The D4E sandbox remains 1 run / 1 source / 6 accepted / 3 quarantine and is
+  not a canonical target. No canonical/linkage/staging write, migration,
+  network/raw-payload action, training, backtest or prediction occurred.
+
+The next separately authorized task may implement/test the writer,
+status-complete artifact contract and isolated migration plan on disposable
+infrastructure. It must stop before canonical, linkage or business-database
+write unless separately authorized.
