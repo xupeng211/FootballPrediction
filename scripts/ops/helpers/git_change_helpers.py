@@ -293,14 +293,22 @@ def scan_incremental_findings(  # noqa: C901
     changes: list[Change],
     *,
     path_predicate: Callable[[str], bool],
+    base_path_predicate: Callable[[str], bool] | None = None,
+    head_path_predicate: Callable[[str], bool] | None = None,
     pattern_groups: tuple[tuple[str, tuple[re.Pattern[str], ...]], ...],
     base_ref: str | None = None,
     head_ref: str | None = None,
     error_prefix: str = "new finding",
 ) -> IncrementalScanResult:
-    """Compare normalized findings between base and head revisions."""
+    """Compare normalized findings between base and head revisions.
+
+    Revision-specific predicates keep a removal from inheriting a head-only
+    exemption when the base revision still needed a normal scan.
+    """
     resolved_base, resolved_head = resolve_comparison_refs(base_ref, head_ref)
     use_worktree_head = head_ref is None and not os.environ.get("GITHUB_SHA")
+    base_predicate = base_path_predicate or path_predicate
+    head_predicate = head_path_predicate or path_predicate
     base_findings: list[IncrementalViolation] = []
     head_findings: list[IncrementalViolation] = []
     scanned_logical_paths: set[str] = set()
@@ -310,7 +318,9 @@ def scan_incremental_findings(  # noqa: C901
         if change.status not in {"R", "A"}:
             old_path = change.path
         new_path = None if change.status == "D" else change.path
-        if not any(path_predicate(path) for path in (old_path, new_path) if path is not None):
+        scans_base = old_path is not None and base_predicate(old_path)
+        scans_head = new_path is not None and head_predicate(new_path)
+        if not scans_base and not scans_head:
             continue
 
         logical_path = old_path or new_path
@@ -318,7 +328,7 @@ def scan_incremental_findings(  # noqa: C901
             continue
         scanned_logical_paths.add(logical_path)
 
-        if old_path is not None and path_predicate(old_path):
+        if scans_base and old_path is not None:
             base_text = _read_revision_file(resolved_base, old_path)
             if base_text is not None:
                 base_findings.extend(
@@ -330,7 +340,7 @@ def scan_incremental_findings(  # noqa: C901
                     )
                 )
 
-        if new_path is not None and path_predicate(new_path):
+        if scans_head and new_path is not None:
             head_text = (
                 _read_worktree_file(new_path)
                 if use_worktree_head

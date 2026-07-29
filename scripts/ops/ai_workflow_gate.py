@@ -212,7 +212,6 @@ from scripts.ops.helpers.pr_authorization_matrix import (  # noqa: E402
     validate_authorization,
 )
 
-
 # Git change detection — delegated to dedicated helper
 # to keep this file under the 800-line gatekeeper limit.
 from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
@@ -224,7 +223,9 @@ from scripts.ops.helpers.git_change_helpers import (  # noqa: E402
     git_output,
     parse_name_status,  # noqa: F401 — re-exported for local_pr_gate_preflight
     resolve_comparison_refs,
-    scan_incremental_findings,
+)
+from scripts.ops.helpers.disposable_canonical_db_proof_scan import (  # noqa: E402
+    scan_with_disposable_db_proof_exemption,
 )
 
 
@@ -401,7 +402,7 @@ def scan_dangerous_keywords_incremental(
     head_ref: str | None = None,
 ) -> IncrementalScanResult:
     """Compare normalized dangerous findings between base and head revisions."""
-    return scan_incremental_findings(
+    return scan_with_disposable_db_proof_exemption(
         changes,
         path_predicate=_is_blind_spot_path,
         pattern_groups=DANGEROUS_PATTERN_GROUPS,
