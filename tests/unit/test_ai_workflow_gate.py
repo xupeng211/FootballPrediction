@@ -88,8 +88,10 @@ def _collect_temp_changes(repo: Path, base_sha: str, head_sha: str):
 def _scan_temp_repo(repo: Path, base_sha: str, head_sha: str, *, emit_summary: bool = False):
     original_gate_root = gate.ROOT
     original_helper_root = git_change_helpers.ROOT_HELPER
+    original_proof_root = proof_scan.ROOT
     gate.ROOT = repo
     git_change_helpers.ROOT_HELPER = repo
+    proof_scan.ROOT = repo
     try:
         changes = gate.collect_changes(base_sha, head_sha)
         result = gate.scan_dangerous_keywords_incremental(
@@ -109,6 +111,7 @@ def _scan_temp_repo(repo: Path, base_sha: str, head_sha: str, *, emit_summary: b
     finally:
         gate.ROOT = original_gate_root
         git_change_helpers.ROOT_HELPER = original_helper_root
+        proof_scan.ROOT = original_proof_root
 
 
 def _valid_pr_body() -> str:
@@ -504,6 +507,21 @@ def test_disposable_scan_counts_each_non_exempt_file_once():
         result = _scan_temp_repo(repo, base_sha, head_sha)
 
     assert result.summary.scanned_files == 1
+
+
+def test_marker_removal_makes_existing_db_keyword_a_new_finding():
+    path = "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    marker = "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: synthetic only.\n"
+    sql = f"const sql = '{DB_WRITE_TOKEN} public.matches VALUES (1)';\n"
+    with _temporary_git_repo({path: marker + sql}) as (repo, base_sha):
+        (repo / path).write_text(sql, encoding="utf-8")
+        head_sha = _commit(repo, "remove disposable proof marker")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+    assert len(result.errors) == 1
+    assert "[DB write]" in result.errors[0]
+    assert result.summary.new_violations == 1
+    assert result.summary.unchanged_historical_violations == 0
 
 
 def _unsafe_source(count: int = 1) -> str:

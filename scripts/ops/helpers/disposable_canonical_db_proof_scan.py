@@ -80,7 +80,7 @@ def scan_with_disposable_db_proof_exemption(
     error_prefix: str,
 ) -> IncrementalScanResult:
     """Scan all rules while exempting only marked proof files from DB keywords."""
-    _, resolved_head = resolve_comparison_refs(base_ref, head_ref)
+    resolved_base, resolved_head = resolve_comparison_refs(base_ref, head_ref)
     use_worktree_head = head_ref is None and not os.environ.get("GITHUB_SHA")
     non_db_groups = tuple(group for group in pattern_groups if group[0] != "DB write")
     non_db = scan_incremental_findings(
@@ -93,7 +93,14 @@ def scan_with_disposable_db_proof_exemption(
     )
     db_only = scan_incremental_findings(
         changes,
-        path_predicate=lambda path: path_predicate(path)
+        path_predicate=path_predicate,
+        base_path_predicate=lambda path: path_predicate(path)
+        and not is_explicit_disposable_db_write_proof(
+            path,
+            head_ref=resolved_base,
+            use_worktree_head=False,
+        ),
+        head_path_predicate=lambda path: path_predicate(path)
         and not is_explicit_disposable_db_write_proof(
             path,
             head_ref=resolved_head,
