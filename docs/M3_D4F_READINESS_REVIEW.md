@@ -877,12 +877,22 @@ schema version, provenance, authorization phrase, expected total/seasons and
 provider/competition scope. Every candidate must include stable numeric FotMob
 ID, deterministic candidate ID, provider, competition, season, ordered teams,
 strict absolute kickoff, provider status and a versioned status mapping.
-Population preflight requires exactly 1,140 and 380/380/380, target scope only,
-unique candidate/provider/ordered-business identities, no incomplete or
+Full-inventory preflight requires exactly 1,140 and 380/380/380, target scope
+only, unique candidate/provider/ordered-business identities, no incomplete or
 abandoned candidate and no unknown semantic fields. FotMob supplies status; the
 future implementation retains it and rejects unmapped values. A status-complete
 artifact needs separate acquisition or equally immutable recovered evidence;
 this design authorizes neither.
+
+A bounded real canary is not a malformed 1,140-row artifact. It is a separate,
+explicitly authorized v2 subset artifact with its own SHA-256, business hash,
+candidate count and per-season counts, `canary` run scope, parent full-artifact
+hash, and the exact candidate-ID/immutable-fingerprint allowlist it projects
+from that parent. It must pass every per-candidate field and scope check; only
+its declared cardinality differs. Its authorization phrase must name that
+subset and target. A canary may contain one or ten candidates, but its single
+transaction must cover all and only its declared subset. It cannot silently
+relax the full-inventory 1,140/380/380/380 contract.
 
 A separately authorized migration implementation/review is required and must
 preflight old rows without rewriting them. Its minimum design is:
@@ -907,13 +917,22 @@ ordered business identity, input duplicate, or scope/hash/status failure fails
 closed: no update, no first-row-wins, no partial commit and at most 20 evidence
 samples per class.
 
-The recommended unit is one all-1,140 transaction: prove target/schema/role and
-baseline fingerprint; set timeouts; obtain a fixed pg_try_advisory_xact_lock;
-re-read and preflight; insert only proven-new canonical/lineage rows; verify
-1,140 and 380/380/380, provider/business uniqueness and fingerprints; then
-commit. Lock busy, conflict, count mismatch or unexpected ON CONFLICT DO
-NOTHING rolls back. No temporary table, COPY, update-on-conflict or
-input-changing retry is permitted.
+For a full-inventory run, the recommended unit is one transaction over the
+entire 1,140-row master artifact: prove target/schema/role and baseline
+fingerprint; set timeouts; obtain a fixed pg_try_advisory_xact_lock; re-read and
+preflight; insert only proven-new canonical/lineage rows; verify the final
+1,140 and 380/380/380 inventory, provider/business uniqueness and fingerprints;
+then commit. A prior registered canary row may count only as
+`exact_duplicate` when its provider ID, immutable fingerprint and parent-master
+artifact hash all agree; the full-run arithmetic is then
+`inserted + exact_duplicate = 1,140`. Any other pre-existing row is a conflict.
+
+For a canary, the same sequence is one transaction over all declared canary
+rows, with `inserted + exact_duplicate = canary_count` and exact canary lineage
+verification before commit. It is not a partial full-inventory transaction and
+does not advance automatically to the master run. Lock busy, conflict, count
+mismatch or unexpected ON CONFLICT DO NOTHING rolls back. No temporary table,
+COPY, update-on-conflict or input-changing retry is permitted.
 
 The writer role needs only CONNECT, schema USAGE, explicit-table SELECT/INSERT
 and required sequence USAGE. It receives no UPDATE, DELETE, DDL, CREATE,
@@ -930,8 +949,8 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 | --- | --- | --- | --- |
 | 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, lock and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
-| 3 | Bounded real inventory | Hash-bound status-complete input, backup and post-write verification; begin with 1 or 10 then reassess. | Automatic 1,140 write, network expansion, linkage. |
-| 4 | Full inventory verification | 1,140/380/380/380 and identity/kickoff/status/lineage completeness. | Linkage and odds import. |
+| 3 | Bounded real inventory canary | Separately authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, parent-master hash, exact allowlist, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
+| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + registered-canary exact_duplicate = 1,140`, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
 
 Canonical inventory, source linkage and historical odds staging use separate
