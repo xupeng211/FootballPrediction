@@ -123,7 +123,8 @@ D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
 ```
 
 It did not resolve a database, identity, mapping, real-source or training
-blocker. The current active convergence transition is:
+blocker. The following asset-inventory transition is historical evidence, not
+the current active transition:
 
 ```text
 D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
@@ -131,9 +132,12 @@ D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
 EXISTING_ACQUISITION_ASSETS_INVENTORIED
 ```
 
-This is evidence-backed progress for the bounded local asset targets. It is not
-a new acquisition, import, linkage write, migration, feature run, training or
-prediction result.
+This was evidence-backed progress for the bounded local asset targets. It is
+not a new acquisition, import, linkage write, migration, feature run, training
+or prediction result. The current authoritative transition is the section 15
+design decision: `READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW ->
+READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW`; its no-progress
+stop and unchanged target-state delta are recorded there.
 
 ### Target-state delta
 
@@ -1130,16 +1134,19 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 | --- | --- | --- | --- |
 | 1 | Disposable PostgreSQL proof | Target NULL-provider CHECK rejection and out-of-scope legacy-NULL acceptance; inventory lineage FK/unique/RESTRICT enforcement, insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, both exact function grants, static lock-function owner/search-path review, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
-| 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
-| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
+| 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to that parent artifact. Absence is `BLOCKED_PROVENANCE_POLICY`. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
+| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to the full master (otherwise `BLOCKED_PROVENANCE_POLICY`); `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
 
 Canonical inventory, source linkage and historical odds staging use separate
 transactions, executors, import-run identities, roles and fresh runtime
 authorization gates.
 D4E canonical_match_id remains NULL. FotMob recovered-file identity supports
-this design but not current endpoint/capture/licence/write-status evidence;
-Football-Data Git provenance is separately required for linkage/odds import.
+this design but not endpoint/capture-process/licence evidence; therefore a
+future real canary or master inventory write remains
+`BLOCKED_PROVENANCE_POLICY` until that evidence is independently reviewed and
+hash-bound to the proposed artifact. Football-Data Git provenance is separately
+required for linkage/odds import.
 
 No provider request, browser action, migration, database/schema/row write,
 canonical/linkage/staging/import, persistent M3 sandbox action, raw-payload
