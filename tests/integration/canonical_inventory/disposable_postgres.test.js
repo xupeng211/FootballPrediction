@@ -24,6 +24,7 @@ const {
     syntheticProvenance,
     writeDocument,
 } = require('../../helpers/canonicalInventoryFixtures');
+const { applyDisposableMigration, checksum } = require('./canonicalMigrationHarness');
 
 const config = {
     host: process.env.M3_CANONICAL_DB_HOST,
@@ -49,6 +50,7 @@ function candidateInput(file, document, receipt = {}) {
         sha256: file.sha256,
         parentDocument: receipt.parentDocument,
         parentBinding: receipt.parentBinding,
+        allowSyntheticTestOnly: true,
     });
     return {
         ...artifact,
@@ -120,16 +122,52 @@ test('migration replay, identity constraints and least-privilege schema are acti
         path.join(__dirname, '../../../database/migrations/V26.10__create_m3_canonical_inventory_contract.sql'),
         'utf8'
     );
-    await admin.query(migration);
-    await admin.query('BEGIN');
-    await admin.query('CREATE TABLE public.m3_canonical_failed_migration_probe (id integer)');
-    await assert.rejects(admin.query('SELECT missing_column FROM public.m3_canonical_failed_migration_probe'));
-    await admin.query('ROLLBACK');
+    const replay = await applyDisposableMigration(admin, {
+        version: 'V26.10',
+        filename: 'V26.10__create_m3_canonical_inventory_contract.sql',
+        sql: migration,
+    });
+    assert.deepEqual(replay, { status: 'already_applied', checksum: checksum(migration) });
+    await assert.rejects(
+        applyDisposableMigration(admin, {
+            version: 'V26.10',
+            filename: 'V26.10__create_m3_canonical_inventory_contract.sql',
+            sql: 'CREATE TABLE public.m3_checksum_probe_should_never_execute (id integer)',
+        }),
+        error => error.code === 'MIGRATION_CHECKSUM_CONFLICT'
+    );
+    await assert.equal(
+        (await admin.query("SELECT to_regclass('public.m3_checksum_probe_should_never_execute') AS probe")).rows[0]
+            .probe,
+        null
+    );
+    await assert.rejects(
+        applyDisposableMigration(admin, {
+            version: 'V99.1',
+            filename: 'V99.1__failed_probe.sql',
+            sql: 'CREATE TABLE public.m3_canonical_failed_migration_probe (id integer); SELECT missing_column FROM public.m3_canonical_failed_migration_probe;',
+        })
+    );
     assert.equal(
         (await admin.query("SELECT to_regclass('public.m3_canonical_failed_migration_probe') AS probe")).rows[0].probe,
         null
     );
-    await admin.query(migration); // the known additive migration can resume after a rolled-back failure
+    assert.equal(
+        (
+            await admin.query(
+                "SELECT COUNT(*)::int AS count FROM public.m3_canonical_schema_migrations WHERE version = 'V99.1'"
+            )
+        ).rows[0].count,
+        0
+    );
+    const resumed = await applyDisposableMigration(admin, {
+        version: 'V99.1',
+        filename: 'V99.1__failed_probe.sql',
+        sql: 'CREATE TABLE public.m3_canonical_failed_migration_probe (id integer)',
+    });
+    assert.equal(resumed.status, 'applied');
+    await admin.query('DROP TABLE public.m3_canonical_failed_migration_probe');
+    await admin.query("DELETE FROM public.m3_canonical_schema_migrations WHERE version = 'V99.1'");
     const schema = await admin.query(
         `SELECT to_regprocedure('public.m3_canonical_inventory_acquire_locks_v1()')::text AS lock_fn, pg_get_userbyid(proowner) AS owner FROM pg_proc WHERE oid = 'public.m3_canonical_inventory_acquire_locks_v1()'::regprocedure`
     );
@@ -149,6 +187,13 @@ test('migration replay, identity constraints and least-privilege schema are acti
         )
     );
     await admin.query("DELETE FROM matches WHERE match_id = 'legacy-null'");
+    await admin.query('BEGIN');
+    await admin.query('DROP INDEX public.matches_m3_fotmob_external_id_uq');
+    await assert.rejects(
+        writer().inspectTarget(admin),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'SCHEMA_BASELINE_MISMATCH'
+    );
+    await admin.query('ROLLBACK');
 });
 
 test('Proof A/B: full 1,140 synthetic master inserts once then exact replays with zero delta', async () => {
@@ -175,6 +220,9 @@ test('Proof C: one-row and ten-row canaries become master lineages without dupli
         candidateInput(oneFile, one, { parentDocument: master, parentBinding: masterFile })
     );
     assert.deepEqual(oneResult.terminal_counts, { inserted: 1 });
+    const oneMasterResult = await writer().execute(candidateInput(masterFile, master));
+    assert.deepEqual(oneMasterResult.terminal_counts, { already_present_equivalent: 1, inserted: 1139 });
+    assert.deepEqual(await counts(), { matches: 1140, artifacts: 2, runs: 2, lineages: 1141 });
     await clearState();
     const ten = buildDocument(master.candidates.slice(0, 10), { kind: 'canary', parentMaster: parent });
     const tenFile = writeDocument(temp, 'canary-ten.json', ten);
@@ -245,6 +293,7 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
     assert.throws(() =>
         readOrdinaryArtifact(writeDocument(temp, 'duplicate.json', duplicate).path, {
             sha256: sha256File(temp, 'duplicate.json'),
+            allowSyntheticTestOnly: true,
         })
     );
     const missingStatus = structuredClone(master);
@@ -252,6 +301,7 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
     await expectZeroDelta(async () =>
         readOrdinaryArtifact(writeDocument(temp, 'missing-status.json', missingStatus).path, {
             sha256: sha256File(temp, 'missing-status.json'),
+            allowSyntheticTestOnly: true,
         })
     );
     const outOfScope = structuredClone(master);
@@ -259,6 +309,7 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
     await expectZeroDelta(async () =>
         readOrdinaryArtifact(writeDocument(temp, 'out-of-scope.json', outOfScope).path, {
             sha256: sha256File(temp, 'out-of-scope.json'),
+            allowSyntheticTestOnly: true,
         })
     );
     const projection = structuredClone(master);
@@ -266,8 +317,14 @@ test('Proof D: contract, authorization and divergent canonical conflicts rollbac
     await expectZeroDelta(async () =>
         readOrdinaryArtifact(writeDocument(temp, 'projection.json', projection).path, {
             sha256: sha256File(temp, 'projection.json'),
+            allowSyntheticTestOnly: true,
         })
     );
+    const mutable = buildDocument(syntheticCandidates());
+    const mutableFile = writeDocument(temp, 'mutated-between-preflight-and-write.json', mutable);
+    const preflighted = candidateInput(mutableFile, mutable);
+    fs.appendFileSync(mutableFile.path, '\n');
+    await expectZeroDelta(() => writer().execute(preflighted));
 });
 
 function sha256File(directory, name) {
@@ -277,24 +334,47 @@ function sha256File(directory, name) {
         .digest('hex');
 }
 
-test('Proof E/F: concurrent attempt fails closed and writer role cannot mutate or bypass locks', async () => {
+test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or bypass locks', async () => {
     await clearState();
     const master = buildDocument(syntheticCandidates());
     const file = writeDocument(temp, 'master-ef.json', master);
-    const holder = await pool.connect();
-    await holder.query('BEGIN');
-    await holder.query('SELECT pg_catalog.pg_try_advisory_xact_lock($1, $2)', [1793, 1]);
+    const different = structuredClone(master);
+    different.candidates[0].status = 'finished';
+    const differentDocument = buildDocument(different.candidates);
+    const differentFile = writeDocument(temp, 'master-ef-different-artifact.json', differentDocument);
+    let releaseFirst;
+    let signalLock;
+    const acquired = new Promise(resolve => {
+        signalLock = resolve;
+    });
+    const release = new Promise(resolve => {
+        releaseFirst = resolve;
+    });
+    const firstWriter = new CanonicalInventoryWriter({
+        pool,
+        target: { databaseIdentity: config.database, serviceIdentity },
+        codeRevision: 'disposable-proof',
+        afterAdvisoryLock: async () => {
+            signalLock();
+            await release;
+        },
+    });
+    const first = firstWriter.execute(candidateInput(file, master));
+    await acquired;
     await assert.rejects(
-        writer().execute(candidateInput(file, master)),
+        writer().execute(candidateInput(differentFile, differentDocument)),
         error => error instanceof CanonicalInventoryWriterError && error.code === 'LOCK_BUSY'
     );
-    await holder.query('ROLLBACK');
-    holder.release();
+    releaseFirst();
+    assert.deepEqual((await first).terminal_counts, { inserted: 1140 });
+    assert.deepEqual(await counts(), { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 });
     await assert.rejects(pool.query("UPDATE matches SET status = 'changed'"));
     await assert.rejects(pool.query('DELETE FROM matches'));
     await assert.rejects(pool.query('TRUNCATE matches'));
+    await assert.rejects(pool.query('CREATE TABLE public.forbidden_ddl_probe (id int)'));
     await assert.rejects(pool.query('CREATE TEMP TABLE forbidden_temp (id int)'));
     await assert.rejects(pool.query('LOCK TABLE matches IN SHARE ROW EXCLUSIVE MODE'));
+    await assert.rejects(pool.query('SELECT public.m3_canonical_unrelated_probe()'));
     await assert.doesNotReject(pool.query('SELECT public.m3_canonical_inventory_acquire_locks_v1()'));
 });
 

@@ -60,12 +60,19 @@ async function main(argv = process.argv.slice(2)) {
     }
     const expected = { sha256: args['artifact-sha256'] };
     if (!expected.sha256) throw new Error('--artifact-sha256 is required');
+    const allowSyntheticTestOnly = args['target-classification'] === 'disposable';
     if (args['parent-artifact']) {
-        const parent = readOrdinaryArtifact(args['parent-artifact'], { sha256: args['parent-artifact-sha256'] });
+        const parent = readOrdinaryArtifact(args['parent-artifact'], {
+            sha256: args['parent-artifact-sha256'],
+            allowSyntheticTestOnly,
+        });
         expected.parentDocument = parent.document;
         expected.parentBinding = { sha256: parent.sha256, byte_size: parent.byte_size };
     }
-    const artifact = readOrdinaryArtifact(args.artifact, expected);
+    const artifact = readOrdinaryArtifact(args.artifact, {
+        ...expected,
+        allowSyntheticTestOnly,
+    });
     const preflight = {
         status: args.execute ? 'preflight_complete' : 'no_write_preflight_complete',
         operation: args.operation || null,

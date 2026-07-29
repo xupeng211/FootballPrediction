@@ -8,6 +8,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Client } = require('pg');
+const { applyDisposableMigration, ensureMigrationLedger } = require('./canonicalMigrationHarness');
 
 const ROOT = path.resolve(__dirname, '../../..');
 const migration = fs.readFileSync(
@@ -48,7 +49,12 @@ async function main() {
                 is_training_eligible BOOLEAN
             )
         `);
-        await client.query(migration);
+        await ensureMigrationLedger(client);
+        const migrationResult = await applyDisposableMigration(client, {
+            version: 'V26.10',
+            filename: 'V26.10__create_m3_canonical_inventory_contract.sql',
+            sql: migration,
+        });
         await client.query(`
             DO $$ BEGIN
                 IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'm3_canonical_owner') THEN CREATE ROLE m3_canonical_owner NOLOGIN; END IF;
@@ -65,6 +71,8 @@ async function main() {
             REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
             REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC;
             REVOKE ALL ON FUNCTION pg_catalog.pg_try_advisory_xact_lock(integer, integer) FROM PUBLIC;
+            CREATE OR REPLACE FUNCTION public.m3_canonical_unrelated_probe() RETURNS integer LANGUAGE sql AS 'SELECT 1';
+            REVOKE ALL ON FUNCTION public.m3_canonical_unrelated_probe() FROM PUBLIC;
             REVOKE TEMPORARY ON DATABASE ${JSON.stringify(config.database)} FROM PUBLIC;
             GRANT USAGE ON SCHEMA public TO m3_canonical_owner;
             GRANT CONNECT ON DATABASE ${JSON.stringify(config.database)} TO m3_canonical_writer;
@@ -79,6 +87,7 @@ async function main() {
                 status: 'bootstrapped',
                 database: config.database,
                 migration: 'V26.10',
+                migration_status: migrationResult.status,
                 writer_role: 'm3_canonical_writer',
             }) + '\n'
         );

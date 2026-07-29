@@ -1032,8 +1032,9 @@ upsert path is excluded.
 The PostgreSQL 15 disposable proof used generated synthetic 1,140-row
 (380/380/380) data only: first master inserted 1,140 matches, one artifact/run
 and 1,140 lineages; fresh replay returned 1,140 exact duplicates with zero
-delta. A ten-row canary-to-master ended with 1,140 matches, two artifacts, two
-runs and 1,150 lineages. Conflict, invalid input, authorization/provenance,
+delta. Both one-row and ten-row canary-to-master cases ended with 1,140
+matches; the ten-row case had two artifacts, two runs and 1,150 lineages.
+Conflict, invalid input, authorization/provenance,
 concurrency, permission and custom pre-write backup/restore proof all passed.
 No real v2 FotMob artifact/provenance, business database, persistent sandbox,
 linkage or odds import was touched. The next authorization is provenance review

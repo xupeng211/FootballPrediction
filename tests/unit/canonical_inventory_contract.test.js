@@ -29,7 +29,13 @@ test('synthetic v2 master preserves its deterministic v1 identity projection and
     const master = buildDocument(syntheticCandidates());
     assert.equal(master.candidates.length, MASTER_COUNT);
     assert.equal(master.artifact.identity_projection_hash, computeV1IdentityProjectionHash(master.candidates));
-    assert.equal(validateArtifactDocument(master).candidates.length, MASTER_COUNT);
+    assert.equal(validateArtifactDocument(master, { allowSyntheticTestOnly: true }).candidates.length, MASTER_COUNT);
+    const nonSynthetic = structuredClone(master);
+    delete nonSynthetic.artifact.synthetic_test_only;
+    assert.throws(
+        () => validateArtifactDocument(nonSynthetic),
+        error => error.code === 'V1_IDENTITY_PROJECTION_MISMATCH'
+    );
     const missingStatus = structuredClone(master);
     delete missingStatus.candidates[0].status;
     assert.throws(() => validateArtifactDocument(missingStatus), CanonicalInventoryContractError);
@@ -53,12 +59,18 @@ test('population, duplicate, scope and identity mismatches fail closed', () => {
             document.candidates[0].season = '2025/2026';
         },
         document => {
+            document.candidates[0].competition = 'Other League';
+        },
+        document => {
             document.artifact.identity_projection_hash = '0'.repeat(64);
         },
     ]) {
         const broken = structuredClone(master);
         mutate(broken);
-        assert.throws(() => validateArtifactDocument(broken), CanonicalInventoryContractError);
+        assert.throws(
+            () => validateArtifactDocument(broken, { allowSyntheticTestOnly: true }),
+            CanonicalInventoryContractError
+        );
     }
 });
 
@@ -72,20 +84,34 @@ test('canary requires exact parent allowlist order and immutable projection', ()
             parentMaster: parentMetadata(master, binding),
         });
         assert.equal(
-            validateArtifactDocument(canary, { parentDocument: master, parentBinding: binding }).candidates.length,
+            validateArtifactDocument(canary, {
+                parentDocument: master,
+                parentBinding: binding,
+                allowSyntheticTestOnly: true,
+            }).candidates.length,
             10
         );
         const reordered = structuredClone(canary);
         reordered.candidates.reverse();
         reordered.artifact.allowlist.reverse();
         assert.throws(
-            () => validateArtifactDocument(reordered, { parentDocument: master, parentBinding: binding }),
+            () =>
+                validateArtifactDocument(reordered, {
+                    parentDocument: master,
+                    parentBinding: binding,
+                    allowSyntheticTestOnly: true,
+                }),
             CanonicalInventoryContractError
         );
         const mutated = structuredClone(canary);
         mutated.candidates[0].home_team = 'Synthetic mutation';
         assert.throws(
-            () => validateArtifactDocument(mutated, { parentDocument: master, parentBinding: binding }),
+            () =>
+                validateArtifactDocument(mutated, {
+                    parentDocument: master,
+                    parentBinding: binding,
+                    allowSyntheticTestOnly: true,
+                }),
             CanonicalInventoryContractError
         );
     } finally {
@@ -98,14 +124,20 @@ test('ordinary-file hash and symlink checks reject swapped inputs', { skip: proc
     try {
         const master = buildDocument(syntheticCandidates());
         const binding = writeDocument(directory, 'master.json', master);
-        assert.equal(readOrdinaryArtifact(binding.path, { sha256: binding.sha256 }).sha256, binding.sha256);
+        assert.equal(
+            readOrdinaryArtifact(binding.path, { sha256: binding.sha256, allowSyntheticTestOnly: true }).sha256,
+            binding.sha256
+        );
         assert.throws(
-            () => readOrdinaryArtifact(binding.path, { sha256: '0'.repeat(64) }),
+            () => readOrdinaryArtifact(binding.path, { sha256: '0'.repeat(64), allowSyntheticTestOnly: true }),
             CanonicalInventoryContractError
         );
         const symlink = path.join(directory, 'link.json');
         fs.symlinkSync(binding.path, symlink);
-        assert.throws(() => readOrdinaryArtifact(symlink, { sha256: binding.sha256 }), CanonicalInventoryContractError);
+        assert.throws(
+            () => readOrdinaryArtifact(symlink, { sha256: binding.sha256, allowSyntheticTestOnly: true }),
+            CanonicalInventoryContractError
+        );
         let lstatCalls = 0;
         const mutatedFileSystem = {
             readFileSync: fs.readFileSync.bind(fs),
@@ -116,7 +148,12 @@ test('ordinary-file hash and symlink checks reject swapped inputs', { skip: proc
             },
         };
         assert.throws(
-            () => readOrdinaryArtifact(binding.path, { sha256: binding.sha256 }, mutatedFileSystem),
+            () =>
+                readOrdinaryArtifact(
+                    binding.path,
+                    { sha256: binding.sha256, allowSyntheticTestOnly: true },
+                    mutatedFileSystem
+                ),
             error => error.code === 'ARTIFACT_MUTATED'
         );
     } finally {

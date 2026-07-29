@@ -57,6 +57,7 @@ function buildDocument(candidates, { kind = 'master', parentMaster = null } = {}
     const sorted = [...candidates].sort(canonicalOrder);
     const artifact = {
         kind,
+        synthetic_test_only: true,
         business_hash: computeBusinessHash(sorted),
         identity_projection_hash: computeV1IdentityProjectionHash(sorted),
         candidate_count: sorted.length,

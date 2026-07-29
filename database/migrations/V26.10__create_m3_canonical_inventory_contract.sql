@@ -94,9 +94,9 @@ SECURITY DEFINER
 SET search_path = pg_catalog
 AS $$
 BEGIN
+    LOCK TABLE public.m3_canonical_source_artifacts IN SHARE ROW EXCLUSIVE MODE;
     LOCK TABLE public.m3_canonical_import_runs IN SHARE ROW EXCLUSIVE MODE;
     LOCK TABLE public.m3_canonical_match_lineages IN SHARE ROW EXCLUSIVE MODE;
-    LOCK TABLE public.m3_canonical_source_artifacts IN SHARE ROW EXCLUSIVE MODE;
     LOCK TABLE public.matches IN SHARE ROW EXCLUSIVE MODE;
 END;
 $$;

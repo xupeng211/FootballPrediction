@@ -5,6 +5,7 @@
 // 不执行 UPSERT/UPDATE/DELETE，也拒绝非 disposable 的运行授权。
 
 const crypto = require('node:crypto');
+const fs = require('node:fs');
 const {
     CANONICAL_PROVIDER,
     CanonicalInventoryContractError,
@@ -42,6 +43,27 @@ function boundedEvidence(rows) {
         terminal: row.terminal,
         reason: row.reason,
     }));
+}
+
+function assertArtifactStillImmutable(input) {
+    if (!input.path || !Number.isInteger(input.byte_size) || input.byte_size <= 0) {
+        throw new CanonicalInventoryWriterError('artifact path and byte size are required', 'ARTIFACT_BINDING_MISSING');
+    }
+    const before = fs.lstatSync(input.path);
+    if (!before.isFile() || before.isSymbolicLink() || before.size !== input.byte_size) {
+        throw new CanonicalInventoryWriterError('artifact changed before execution', 'ARTIFACT_MUTATED');
+    }
+    const bytes = fs.readFileSync(input.path);
+    const after = fs.lstatSync(input.path);
+    if (
+        before.dev !== after.dev ||
+        before.ino !== after.ino ||
+        before.size !== after.size ||
+        before.mtimeMs !== after.mtimeMs ||
+        sha256Text(bytes) !== input.sha256
+    ) {
+        throw new CanonicalInventoryWriterError('artifact changed before execution', 'ARTIFACT_MUTATED');
+    }
 }
 
 function matchesCandidateExactly(row, candidate) {
@@ -85,7 +107,7 @@ function artifactShape(artifact, file) {
 }
 
 class CanonicalInventoryWriter {
-    constructor({ pool, target, codeRevision = 'unknown' } = {}) {
+    constructor({ pool, target, codeRevision = 'unknown', afterAdvisoryLock = null } = {}) {
         if (!pool || typeof pool.connect !== 'function') {
             throw new CanonicalInventoryWriterError('writer requires a pg Pool');
         }
@@ -95,6 +117,7 @@ class CanonicalInventoryWriter {
         this.pool = pool;
         this.target = target;
         this.codeRevision = codeRevision;
+        this.afterAdvisoryLock = afterAdvisoryLock;
     }
 
     async inspectTarget(client) {
@@ -420,6 +443,7 @@ class CanonicalInventoryWriter {
                 sha256: input.sha256,
                 target_classification: 'disposable',
             });
+            assertArtifactStillImmutable(input);
             await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
             try {
                 await client.query("SET LOCAL lock_timeout = '5s'; SET LOCAL statement_timeout = '30s'");
@@ -430,7 +454,9 @@ class CanonicalInventoryWriter {
                 if (!lock.rows[0].locked) {
                     throw new CanonicalInventoryWriterError('advisory transaction lock busy', 'LOCK_BUSY');
                 }
+                if (this.afterAdvisoryLock) await this.afterAdvisoryLock();
                 await client.query('SELECT public.m3_canonical_inventory_acquire_locks_v1()');
+                assertArtifactStillImmutable(input);
                 const { artifact } = await this.ensureArtifacts(client, input);
                 const classified = [];
                 for (const candidate of input.candidates) {
@@ -499,5 +525,6 @@ module.exports = {
     CanonicalInventoryWriterError,
     SCHEMA_BASELINE,
     classifyProviderDifference,
+    assertArtifactStillImmutable,
     matchesCandidateExactly,
 };

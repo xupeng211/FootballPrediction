@@ -20,8 +20,11 @@ const COMPETITION = 'Premier League';
 const SEASONS = Object.freeze(['2022/2023', '2023/2024', '2024/2025']);
 const FIXTURES_PER_SEASON = 380;
 const MASTER_COUNT = SEASONS.length * FIXTURES_PER_SEASON;
+const APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH =
+    'eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f';
 const ALLOWED_STATUSES = new Set(['scheduled', 'finished', 'postponed', 'cancelled', 'abandoned']);
 const SHA256 = /^[0-9a-f]{64}$/;
+const REPOSITORY_ROOT = path.resolve(__dirname, '../../..');
 
 class CanonicalInventoryContractError extends Error {
     constructor(message, code = 'CANONICAL_INPUT_INVALID') {
@@ -165,7 +168,8 @@ function assertSha(value, label) {
     }
 }
 
-function assertMetadata(document, candidates) {
+// eslint-disable-next-line complexity -- artifact metadata is one atomic fail-closed contract.
+function assertMetadata(document, candidates, options = {}) {
     const artifact = document?.artifact;
     if (!artifact || typeof artifact !== 'object' || Array.isArray(artifact)) {
         throw new CanonicalInventoryContractError('artifact metadata is required');
@@ -203,6 +207,19 @@ function assertMetadata(document, candidates) {
             'V1_IDENTITY_PROJECTION_MISMATCH'
         );
     }
+    if (artifact.synthetic_test_only === true) {
+        if (options.allowSyntheticTestOnly !== true) {
+            throw new CanonicalInventoryContractError('synthetic artifacts are disposable-test-only');
+        }
+    } else if (
+        artifact.kind === 'master' &&
+        artifact.identity_projection_hash !== APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH
+    ) {
+        throw new CanonicalInventoryContractError(
+            'real master does not match the approved v1 identity projection',
+            'V1_IDENTITY_PROJECTION_MISMATCH'
+        );
+    }
     return artifact;
 }
 
@@ -225,12 +242,12 @@ function assertMasterPopulation(artifact, candidates) {
 }
 
 // eslint-disable-next-line complexity -- all parent/allowlist assertions form one atomic contract.
-function assertCanaryPopulation(artifact, candidates, parentDocument, parentBinding = null) {
+function assertCanaryPopulation(artifact, candidates, parentDocument, parentBinding = null, options = {}) {
     if (artifact.kind !== 'canary') return;
     if (!parentDocument) {
         throw new CanonicalInventoryContractError('canary artifact requires its parent master document');
     }
-    const parent = validateArtifactDocument(parentDocument);
+    const parent = validateArtifactDocument(parentDocument, options);
     if (parent.artifact.kind !== 'master') {
         throw new CanonicalInventoryContractError('canary parent must be a master artifact');
     }
@@ -308,14 +325,22 @@ function validateArtifactDocument(document, options = {}) {
         ids.add(candidate.id);
         providerIds.add(candidate.source_match_id);
     }
-    const artifact = assertMetadata(document, candidates);
+    const artifact = assertMetadata(document, candidates, options);
     assertMasterPopulation(artifact, candidates);
-    assertCanaryPopulation(artifact, candidates, options.parentDocument, options.parentBinding);
+    assertCanaryPopulation(artifact, candidates, options.parentDocument, options.parentBinding, options);
     return { document: { ...document, candidates }, artifact, candidates };
 }
 
+// eslint-disable-next-line complexity -- file identity checks must remain adjacent to parsing.
 function readOrdinaryArtifact(filePath, expected = {}, fileSystem = fs) {
     if (!path.isAbsolute(filePath)) throw new CanonicalInventoryContractError('artifact path must be absolute');
+    const relativeToRepository = path.relative(REPOSITORY_ROOT, path.resolve(filePath));
+    if (
+        relativeToRepository === '' ||
+        (!relativeToRepository.startsWith(`..${path.sep}`) && relativeToRepository !== '..')
+    ) {
+        throw new CanonicalInventoryContractError('artifact must be repository-external');
+    }
     const before = fileSystem.lstatSync(filePath);
     if (!before.isFile() || before.isSymbolicLink()) {
         throw new CanonicalInventoryContractError('artifact must be an ordinary non-symlink file');
@@ -347,6 +372,7 @@ function readOrdinaryArtifact(filePath, expected = {}, fileSystem = fs) {
         ...validateArtifactDocument(document, {
             parentDocument: expected.parentDocument,
             parentBinding: expected.parentBinding,
+            allowSyntheticTestOnly: expected.allowSyntheticTestOnly === true,
         }),
         sha256,
         byte_size: before.size,
@@ -355,6 +381,7 @@ function readOrdinaryArtifact(filePath, expected = {}, fileSystem = fs) {
 }
 
 module.exports = {
+    APPROVED_REAL_MASTER_V1_IDENTITY_PROJECTION_HASH,
     ALLOWED_STATUSES,
     CANONICAL_PROVIDER,
     COMPETITION,
