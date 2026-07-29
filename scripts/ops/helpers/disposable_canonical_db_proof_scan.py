@@ -10,7 +10,9 @@ the source marker is present; all other dangerous scanners still apply.
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
+import subprocess
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -21,6 +23,7 @@ from scripts.ops.helpers.git_change_helpers import (
     Change,
     IncrementalScanResult,
     IncrementalScanSummary,
+    resolve_comparison_refs,
     scan_incremental_findings,
 )
 
@@ -35,14 +38,36 @@ DISPOSABLE_DB_WRITE_PROOF_PATHS: frozenset[str] = frozenset(
 DISPOSABLE_DB_WRITE_PROOF_MARKER = "M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1"
 
 
-def is_explicit_disposable_db_write_proof(path: str) -> bool:
-    """Return whether *path* is an exact, marker-bound synthetic proof file."""
+def is_explicit_disposable_db_write_proof(
+    path: str,
+    *,
+    head_ref: str | None = None,
+    use_worktree_head: bool = True,
+) -> bool:
+    """Return whether *path* is an exact, marker-bound proof in the scan head."""
     if path not in DISPOSABLE_DB_WRITE_PROOF_PATHS:
         return False
-    try:
-        return DISPOSABLE_DB_WRITE_PROOF_MARKER in (ROOT / path).read_text(encoding="utf-8")
-    except OSError:
+    if use_worktree_head:
+        try:
+            source = (ROOT / path).read_text(encoding="utf-8")
+        except OSError:
+            return False
+    elif head_ref:
+        result = subprocess.run(
+            ["git", "show", f"{head_ref}:{path}"],
+            cwd=ROOT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            capture_output=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            return False
+        source = result.stdout
+    else:
         return False
+    return DISPOSABLE_DB_WRITE_PROOF_MARKER in source
 
 
 def scan_with_disposable_db_proof_exemption(
@@ -55,6 +80,8 @@ def scan_with_disposable_db_proof_exemption(
     error_prefix: str,
 ) -> IncrementalScanResult:
     """Scan all rules while exempting only marked proof files from DB keywords."""
+    _, resolved_head = resolve_comparison_refs(base_ref, head_ref)
+    use_worktree_head = head_ref is None and not os.environ.get("GITHUB_SHA")
     non_db_groups = tuple(group for group in pattern_groups if group[0] != "DB write")
     non_db = scan_incremental_findings(
         changes,
@@ -67,7 +94,11 @@ def scan_with_disposable_db_proof_exemption(
     db_only = scan_incremental_findings(
         changes,
         path_predicate=lambda path: path_predicate(path)
-        and not is_explicit_disposable_db_write_proof(path),
+        and not is_explicit_disposable_db_write_proof(
+            path,
+            head_ref=resolved_head,
+            use_worktree_head=use_worktree_head,
+        ),
         pattern_groups=tuple(group for group in pattern_groups if group[0] == "DB write"),
         base_ref=base_ref,
         head_ref=head_ref,
@@ -78,7 +109,7 @@ def scan_with_disposable_db_proof_exemption(
         summary=IncrementalScanSummary(
             base_ref=non_db.summary.base_ref,
             head_ref=non_db.summary.head_ref,
-            scanned_files=non_db.summary.scanned_files + db_only.summary.scanned_files,
+            scanned_files=non_db.summary.scanned_files,
             base_violations=non_db.summary.base_violations + db_only.summary.base_violations,
             head_violations=non_db.summary.head_violations + db_only.summary.head_violations,
             new_violations=non_db.summary.new_violations + db_only.summary.new_violations,

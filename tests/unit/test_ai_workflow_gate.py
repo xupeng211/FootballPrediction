@@ -25,6 +25,7 @@ from scripts.ops.helpers import disposable_canonical_db_proof_scan as proof_scan
 from scripts.ops.helpers import git_change_helpers  # noqa: E402
 
 NETWORK_TOKEN = "ax" + "ios"
+DB_WRITE_TOKEN = "INSERT" + " INTO"
 
 
 # Convenience: partially-applied check_section_content_quality for test use.
@@ -471,6 +472,38 @@ def test_marker_bound_disposable_db_write_proof_is_exactly_scoped(monkeypatch, t
     assert not proof_scan.is_explicit_disposable_db_write_proof(
         "tests/integration/odds_staging/ephemeral_postgres.test.js"
     )
+
+
+def test_marker_bound_proof_uses_the_scanned_head_revision(monkeypatch):
+    path = "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    with _temporary_git_repo({path: "const safe = true;\n"}) as (repo, base_sha):
+        original_root = proof_scan.ROOT
+        monkeypatch.setattr(proof_scan, "ROOT", repo)
+        try:
+            (repo / path).write_text(
+                "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: worktree only.\n",
+                encoding="utf-8",
+            )
+            assert not proof_scan.is_explicit_disposable_db_write_proof(
+                path,
+                head_ref=base_sha,
+                use_worktree_head=False,
+            )
+            assert proof_scan.is_explicit_disposable_db_write_proof(path)
+        finally:
+            proof_scan.ROOT = original_root
+
+
+def test_disposable_scan_counts_each_non_exempt_file_once():
+    with _temporary_git_repo({"tests/sample.js": "const safe = true;\n"}) as (repo, base_sha):
+        (repo / "tests/sample.js").write_text(
+            f"const sql = '{DB_WRITE_TOKEN} public.matches VALUES (1)';\n",
+            encoding="utf-8",
+        )
+        head_sha = _commit(repo, "add DB keyword fixture")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+    assert result.summary.scanned_files == 1
 
 
 def _unsafe_source(count: int = 1) -> str:
