@@ -873,10 +873,20 @@ reject it rather than guess finished/scheduled.
 
 A future v2 artifact must be repository-external, an ordinary non-symlink,
 immutable through the run, SHA-256/byte-size/business-hash bound, and include
-schema version, provenance, authorization phrase, expected total/seasons and
-provider/competition scope. Every candidate must include stable numeric FotMob
-ID, deterministic candidate ID, provider, competition, season, ordered teams,
-strict absolute kickoff, provider status and a versioned status mapping.
+schema version, provenance, expected total/seasons and provider/competition
+scope. It is candidate evidence, never authorization. Every candidate must
+include stable numeric FotMob ID, deterministic candidate ID, provider,
+competition, season, ordered teams, strict absolute kickoff, provider status
+and a versioned status mapping.
+
+Each execution must separately pass a fresh runtime authorization gate; the
+authorization phrase is supplied outside the artifact and is not accepted from
+candidate content or stored as reusable candidate lineage. The gate must bind
+the approved target database/environment identity, schema/baseline fingerprint,
+artifact SHA-256/business hash, run scope/count, and authorization expiry or
+single-run identity before the writer opens its transaction. Replaying a copied
+artifact without that fresh, exact binding fails closed.
+
 Full-inventory preflight requires exactly 1,140 and 380/380/380, target scope
 only, unique candidate/provider/ordered-business identities, no incomplete or
 abandoned candidate and no unknown semantic fields. FotMob supplies status; the
@@ -884,23 +894,32 @@ future implementation retains it and rejects unmapped values. A status-complete
 artifact needs separate acquisition or equally immutable recovered evidence;
 this design authorizes neither.
 
-A bounded real canary is not a malformed 1,140-row artifact. It is a separate,
-explicitly authorized v2 subset artifact with its own SHA-256, business hash,
+For this bounded Premier League scope, canonical fixture identity is the
+provider-independent ordered tuple `(competition, season, home_team, away_team)`
+and deliberately excludes kickoff. Both the input and existing canonical rows
+must be preflighted by that key as well as provider ID. The same fixture with a
+different kickoff is `conflict_kickoff`; the same fixture and kickoff with a
+different provider ID is `conflict_business_identity`. Neither case may insert
+or rely on a `match_date`-containing index to evade the conflict.
+
+A bounded real canary is not a malformed 1,140-row artifact. It is a separate
+v2 subset artifact with its own SHA-256, business hash,
 candidate count and per-season counts, `canary` run scope, parent full-artifact
 hash, and the exact candidate-ID/immutable-fingerprint allowlist it projects
 from that parent. It must pass every per-candidate field and scope check; only
-its declared cardinality differs. Its authorization phrase must name that
-subset and target. A canary may contain one or ten candidates, but its single
-transaction must cover all and only its declared subset. It cannot silently
-relax the full-inventory 1,140/380/380/380 contract.
+its declared cardinality differs. Its fresh runtime authorization must bind
+that subset and target. A canary may contain one or ten candidates, but its
+single transaction must cover all and only its declared subset. It cannot
+silently relax the full-inventory 1,140/380/380/380 contract.
 
 A separately authorized migration implementation/review is required and must
 preflight old rows without rewriting them. Its minimum design is:
 1. retain matches.match_id as candidate ID and numeric FotMob ID in external_id;
 2. add nullable canonical_provider (initial value fotmob), not mixed data_source;
-3. add partial unique constraints on (canonical_provider, external_id) and
-   ordered (canonical_provider, league_name, season, home_team, away_team,
-   match_date);
+3. add a partial unique constraint on (canonical_provider, external_id), plus
+   a target-scoped, provider-independent ordered fixture key on
+   (league_name, season, home_team, away_team) without match_date; reject the
+   migration if existing target rows collide under either key;
 4. add import-run, source-artifact and match-lineage tables with artifact
    SHA-256/business hash, candidate/provider ID, immutable fingerprint, run and
    code revision; and
@@ -912,27 +931,32 @@ Every candidate must end exactly once as inserted, exact_duplicate,
 already_present_equivalent, conflict_external_id, conflict_business_identity,
 conflict_kickoff, conflict_home_away, conflict_competition, conflict_season,
 invalid_candidate or out_of_scope. Equal provider ID and immutable fingerprint
-is zero-delta. A changed same-provider field, different provider ID for one
-ordered business identity, input duplicate, or scope/hash/status failure fails
-closed: no update, no first-row-wins, no partial commit and at most 20 evidence
-samples per class.
+is zero-delta. A provider-ID match with changed immutable fields, a
+provider-independent fixture match with a changed kickoff, a different provider
+ID for the same fixture, input duplicate, or scope/hash/status/runtime-
+authorization failure fails closed: no update, no first-row-wins, no partial
+commit and at most 20 evidence samples per class. This dual preflight is
+mandatory even though the target-scoped fixture constraint provides a second
+database-level defense.
 
 For a full-inventory run, the recommended unit is one transaction over the
-entire 1,140-row master artifact: prove target/schema/role and baseline
-fingerprint; set timeouts; obtain a fixed pg_try_advisory_xact_lock; re-read and
-preflight; insert only proven-new canonical/lineage rows; verify the final
-1,140 and 380/380/380 inventory, provider/business uniqueness and fingerprints;
-then commit. A prior registered canary row may count only as
+entire 1,140-row master artifact: prove target/schema/role, fresh runtime
+authorization and baseline fingerprint; set timeouts; obtain a fixed
+pg_try_advisory_xact_lock; re-read and preflight provider and fixture identity;
+insert only proven-new canonical/lineage rows; verify the final 1,140 and
+380/380/380 inventory, provider/fixture uniqueness and fingerprints; then
+commit. A prior registered canary row may count only as
 `exact_duplicate` when its provider ID, immutable fingerprint and parent-master
 artifact hash all agree; the full-run arithmetic is then
 `inserted + exact_duplicate = 1,140`. Any other pre-existing row is a conflict.
 
 For a canary, the same sequence is one transaction over all declared canary
 rows, with `inserted + exact_duplicate = canary_count` and exact canary lineage
-verification before commit. It is not a partial full-inventory transaction and
-does not advance automatically to the master run. Lock busy, conflict, count
-mismatch or unexpected ON CONFLICT DO NOTHING rolls back. No temporary table,
-COPY, update-on-conflict or input-changing retry is permitted.
+verification plus fresh runtime authorization before commit. It is not a
+partial full-inventory transaction and does not advance automatically to the
+master run. Lock busy, conflict, count mismatch or unexpected ON CONFLICT DO
+NOTHING rolls back. No temporary table, COPY, update-on-conflict or
+input-changing retry is permitted.
 
 The writer role needs only CONNECT, schema USAGE, explicit-table SELECT/INSERT
 and required sequence USAGE. It receives no UPDATE, DELETE, DDL, CREATE,
@@ -949,12 +973,13 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 | --- | --- | --- | --- |
 | 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, lock and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
-| 3 | Bounded real inventory canary | Separately authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, parent-master hash, exact allowlist, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
+| 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, parent-master hash, exact allowlist, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
 | 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + registered-canary exact_duplicate = 1,140`, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
 
 Canonical inventory, source linkage and historical odds staging use separate
-transactions, executors, import-run identities, roles and authorization phrases.
+transactions, executors, import-run identities, roles and fresh runtime
+authorization gates.
 D4E canonical_match_id remains NULL. FotMob recovered-file identity supports
 this design but not current endpoint/capture/licence/write-status evidence;
 Football-Data Git provenance is separately required for linkage/odds import.
