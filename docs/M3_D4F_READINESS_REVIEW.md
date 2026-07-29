@@ -945,10 +945,13 @@ authorization and baseline fingerprint; set timeouts; obtain a fixed
 pg_try_advisory_xact_lock; re-read and preflight provider and fixture identity;
 insert only proven-new canonical/lineage rows; verify the final 1,140 and
 380/380/380 inventory, provider/fixture uniqueness and fingerprints; then
-commit. A prior registered canary row may count only as
-`exact_duplicate` when its provider ID, immutable fingerprint and parent-master
-artifact hash all agree; the full-run arithmetic is then
-`inserted + exact_duplicate = 1,140`. Any other pre-existing row is a conflict.
+commit. An existing row may count as `exact_duplicate` only when its provider
+ID, immutable fingerprint and registered master-artifact SHA-256/business hash
+all agree; this permits zero-delta replay of either the same completed master
+run or an allowlisted projected canary. The full-run arithmetic is then
+`inserted + exact_duplicate = 1,140`. Any pre-existing row with missing or
+different registered master lineage is a conflict; fresh runtime authorization
+is still required for every execution.
 
 For a canary, the same sequence is one transaction over all declared canary
 rows, with `inserted + exact_duplicate = canary_count` and exact canary lineage
