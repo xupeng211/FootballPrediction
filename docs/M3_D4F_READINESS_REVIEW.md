@@ -987,11 +987,15 @@ preflight old rows without rewriting them. Its minimum design is:
 1. retain matches.match_id as candidate ID and numeric FotMob ID in external_id;
 2. add nullable `canonical_provider` for legacy rows, not mixed `data_source`,
    but enforce `CHECK (canonical_provider IS NULL OR canonical_provider =
-   'fotmob')` and `CHECK (NOT (league_name = 'Premier League' AND season IN
-   ('2022/2023', '2023/2024', '2024/2025')) OR (canonical_provider = 'fotmob'
-   AND external_id IS NOT NULL))`; therefore every new target canonical row is
-   non-null and has the one lowercase provider value, while old out-of-scope
-   rows may remain NULL;
+   'fotmob')` and `CHECK ((league_name = 'Premier League' AND season IN
+   ('2022/2023', '2023/2024', '2024/2025')) IS NOT TRUE OR
+   (canonical_provider IS NOT NULL AND canonical_provider = 'fotmob' AND
+   external_id IS NOT NULL))`; the explicit `IS NOT NULL` means a target row
+   cannot pass PostgreSQL's three-valued CHECK evaluation with a NULL provider.
+   Therefore every new target canonical row is non-null and has the one
+   lowercase provider value, while old out-of-scope rows may remain NULL; the
+   disposable proof must assert both target-NULL rejection and out-of-scope
+   legacy-NULL acceptance;
 3. after an explicit collision preflight, add partial PostgreSQL unique
    indexes (not `ALTER TABLE ... ADD CONSTRAINT`): `CREATE UNIQUE INDEX
    matches_fotmob_external_id_uq ON matches (external_id) WHERE
@@ -1107,7 +1111,7 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 
 | Gate | Future activity | Required proof | Excludes |
 | --- | --- | --- | --- |
-| 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
+| 1 | Disposable PostgreSQL proof | Target NULL-provider CHECK rejection and out-of-scope legacy-NULL acceptance; insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, both exact function grants, static lock-function owner/search-path review, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
 | 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
 | 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
