@@ -3,18 +3,11 @@
 
 // lifecycle: permanent
 // Controlled M3 canonical inventory operator. Default is a local, no-write
-// contract preflight. The only executable operation in this implementation is
-// the separately labelled disposable PostgreSQL proof.
+// contract preflight. The separately labelled disposable PostgreSQL proof is
+// executable only through its Make data-* safety gate, never this direct CLI.
 
-const fs = require('node:fs');
-const path = require('node:path');
-const { Pool } = require('pg');
 const { readOrdinaryArtifact } = require('../../src/infrastructure/canonical/CanonicalInventoryContract');
-const {
-    CanonicalInventoryWriter,
-    SCHEMA_BASELINE,
-} = require('../../src/infrastructure/canonical/CanonicalInventoryWriter');
-const { DISPOSABLE_OPERATION } = require('../../src/infrastructure/canonical/CanonicalInventoryAuthorization');
+const { SCHEMA_BASELINE } = require('../../src/infrastructure/canonical/CanonicalInventoryWriter');
 
 function parseArgs(argv) {
     const args = { execute: false };
@@ -38,13 +31,6 @@ function parseArgs(argv) {
     return args;
 }
 
-function readJsonOrdinary(filePath, label) {
-    if (!filePath || !path.isAbsolute(filePath)) throw new Error(`${label} must be an absolute ordinary file path`);
-    const stat = fs.lstatSync(filePath);
-    if (!stat.isFile() || stat.isSymbolicLink()) throw new Error(`${label} must be an ordinary non-symlink file`);
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-}
-
 function print(value) {
     process.stdout.write(`${JSON.stringify(value)}\n`);
 }
@@ -53,10 +39,16 @@ async function main(argv = process.argv.slice(2)) {
     const args = parseArgs(argv);
     if (args.help) {
         print({
-            usage: 'canonical:inventory:writer --artifact /abs/file --artifact-sha256 <sha> [--execute-disposable --operation canonical_inventory_disposable_proof --runtime-authorization /abs/file --provenance /abs/file --database-url <url> --target-database <name> --target-service <identity>]',
-            default: 'no-write preflight',
+            usage: 'canonical:inventory:writer --artifact /abs/file --artifact-sha256 <sha> [--parent-artifact /abs/file --parent-artifact-sha256 <sha>]',
+            default:
+                'no-write preflight; disposable writes are available only through make data-m3-canonical-inventory-disposable-proof',
         });
         return 0;
+    }
+    if (args.execute) {
+        throw new Error(
+            'direct execution is disabled: use make data-m3-canonical-inventory-disposable-proof for the fixed synthetic disposable proof'
+        );
     }
     const expected = { sha256: args['artifact-sha256'] };
     if (!expected.sha256) throw new Error('--artifact-sha256 is required');
@@ -74,7 +66,7 @@ async function main(argv = process.argv.slice(2)) {
         allowSyntheticTestOnly,
     });
     const preflight = {
-        status: args.execute ? 'preflight_complete' : 'no_write_preflight_complete',
+        status: 'no_write_preflight_complete',
         operation: args.operation || null,
         artifact: {
             sha256: artifact.sha256,
@@ -87,31 +79,7 @@ async function main(argv = process.argv.slice(2)) {
         schema_baseline: SCHEMA_BASELINE,
         write_performed: false,
     };
-    if (!args.execute) {
-        print(preflight);
-        return 0;
-    }
-    if (args.operation !== DISPOSABLE_OPERATION) throw new Error(`--operation must be ${DISPOSABLE_OPERATION}`);
-    if (args['target-classification'] !== 'disposable') {
-        throw new Error('persistent target rejected: --target-classification disposable is required');
-    }
-    if (!args['database-url'] || !args['target-database'] || !args['target-service']) {
-        throw new Error('execute requires database URL and explicit target identities');
-    }
-    const runtimeAuthorization = readJsonOrdinary(args['runtime-authorization'], 'runtime authorization receipt');
-    const provenanceReceipt = readJsonOrdinary(args.provenance, 'provenance receipt');
-    const pool = new Pool({ connectionString: args['database-url'], max: 1 });
-    try {
-        const writer = new CanonicalInventoryWriter({
-            pool,
-            target: { databaseIdentity: args['target-database'], serviceIdentity: args['target-service'] },
-            codeRevision: args['code-revision'] || 'operator',
-        });
-        const result = await writer.execute({ ...artifact, runtimeAuthorization, provenanceReceipt });
-        print({ ...result, write_performed: true });
-    } finally {
-        await pool.end();
-    }
+    print(preflight);
     return 0;
 }
 
@@ -127,4 +95,4 @@ if (require.main === module) {
     });
 }
 
-module.exports = { main, parseArgs, readJsonOrdinary };
+module.exports = { main, parseArgs };

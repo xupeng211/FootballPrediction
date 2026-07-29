@@ -21,6 +21,7 @@ const {
     buildDocument,
     parentMetadata,
     runtimeReceipt,
+    testAuthorizationAuthority,
     syntheticCandidates,
     syntheticProvenance,
     writeDocument,
@@ -69,7 +70,8 @@ function candidateInput(file, document, receipt = {}) {
 function writer() {
     return new CanonicalInventoryWriter({
         pool,
-        target: { databaseIdentity: config.database, serviceIdentity },
+        target: { classification: 'disposable', databaseIdentity: config.database, serviceIdentity },
+        authorizationAuthority: testAuthorizationAuthority(),
         codeRevision: 'disposable-proof',
     });
 }
@@ -203,6 +205,7 @@ test('Proof A/B: full 1,140 synthetic master inserts once then exact replays wit
     const file = writeDocument(temp, 'master-a.json', master);
     const first = await writer().execute(candidateInput(file, master));
     assert.deepEqual(first.terminal_counts, { inserted: 1140 });
+    assert.deepEqual(first.database_delta, { matches: 1140, artifacts: 1, import_runs: 1, lineages: 1140 });
     assert.deepEqual(await counts(), { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 });
     const replay = await writer().execute(candidateInput(file, master));
     assert.deepEqual(replay.terminal_counts, { exact_duplicate: 1140 });
@@ -221,8 +224,10 @@ test('Proof C: one-row and ten-row canaries become master lineages without dupli
         candidateInput(oneFile, one, { parentDocument: master, parentBinding: masterFile })
     );
     assert.deepEqual(oneResult.terminal_counts, { inserted: 1 });
+    assert.deepEqual(oneResult.database_delta, { matches: 1, artifacts: 2, import_runs: 1, lineages: 1 });
     const oneMasterResult = await writer().execute(candidateInput(masterFile, master));
     assert.deepEqual(oneMasterResult.terminal_counts, { already_present_equivalent: 1, inserted: 1139 });
+    assert.deepEqual(oneMasterResult.database_delta, { matches: 1139, artifacts: 0, import_runs: 1, lineages: 1140 });
     assert.deepEqual(await counts(), { matches: 1140, artifacts: 2, runs: 2, lineages: 1141 });
     await clearState();
     const ten = buildDocument(master.candidates.slice(0, 10), { kind: 'canary', parentMaster: parent });
@@ -353,7 +358,8 @@ test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or
     });
     const firstWriter = new CanonicalInventoryWriter({
         pool,
-        target: { databaseIdentity: config.database, serviceIdentity },
+        target: { classification: 'disposable', databaseIdentity: config.database, serviceIdentity },
+        authorizationAuthority: testAuthorizationAuthority(),
         codeRevision: 'disposable-proof',
         afterAdvisoryLock: async () => {
             signalLock();

@@ -8,7 +8,7 @@
 
 .PHONY: help up down restart logs test test-unit clean build db-reset db-shell lint format security \
         dev-config dev-up dev-down dev-shell dev-logs dev-build dev-ps dev-harvest dev-test \
-        data-help data-check data-fotmob-candidates-network-export data-local-dry-run data-l3-dry-run data-l3-commit \
+        data-help data-check data-fotmob-candidates-network-export data-m3-canonical-inventory-preflight data-m3-canonical-inventory-disposable-proof data-local-dry-run data-l3-dry-run data-l3-commit \
         data-l3-write-dry-run data-l3-write-commit \
         data-training-dry-run data-training-commit data-prediction-dry-run data-prediction-commit \
         data-training-feature-dry-run data-training-feature-commit \
@@ -670,6 +670,22 @@ data-fotmob-candidates-network-export: ## Explicitly authorized live FotMob cand
 		-e FOTMOB_CANDIDATE_SLUG="$(SLUG)" \
 		-e FOTMOB_CANDIDATE_OUTPUT="$(OUTPUT)" \
 		dev bash -lc 'set -eu; set -f; cd /app; set -- --league-id "$$FOTMOB_CANDIDATE_LEAGUE_ID" --competition "$$FOTMOB_CANDIDATE_COMPETITION"; for season in $$FOTMOB_CANDIDATE_SEASONS; do set -- "$$@" --season "$$season"; done; if [ -n "$$FOTMOB_CANDIDATE_SLUG" ]; then set -- "$$@" --slug "$$FOTMOB_CANDIDATE_SLUG"; fi; if [ -n "$$FOTMOB_CANDIDATE_OUTPUT" ]; then set -- "$$@" --output "$$FOTMOB_CANDIDATE_OUTPUT"; fi; npm run fotmob:candidates:export -- "$$@" --network-preview=true --network-authorization=yes'
+
+data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check only; no DB/network/browser write.
+	@if [ -z "$(ARTIFACT)" ] || [ -z "$(ARTIFACT_SHA256)" ]; then \
+		echo "ERROR: provide ARTIFACT=<absolute path visible in dev container> and ARTIFACT_SHA256=<sha256>"; \
+		exit 1; \
+	fi
+	@$(COMPOSE_DEV) exec -T dev node scripts/ops/canonical_inventory_writer.js \
+		--artifact "$(ARTIFACT)" --artifact-sha256 "$(ARTIFACT_SHA256)"
+
+data-m3-canonical-inventory-disposable-proof: ## Fixed synthetic PostgreSQL 15 proof; task-specific temporary DB only.
+	@if [ "$(M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION)" != "authorized-synthetic-disposable-proof-v1" ]; then \
+		echo "BLOCKED: requires M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION=authorized-synthetic-disposable-proof-v1"; \
+		exit 1; \
+	fi
+	@M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION="$(M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION)" \
+		bash tests/integration/canonical_inventory/run_disposable_postgres.sh
 
 data-l1-discovery-preview: ## L1 safe preview wrapper. Phase 5.05L1. Preview-only, no network, no DB, no browser/proxy.
 	@if [ -z "$(SOURCE)" ] || [ -z "$(SCOPE)" ]; then \

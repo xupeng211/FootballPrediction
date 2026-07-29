@@ -15,11 +15,41 @@ const {
     computeV1IdentityProjectionHash,
     canonicalOrder,
 } = require('../../src/infrastructure/canonical/CanonicalInventoryContract');
-const { DISPOSABLE_OPERATION } = require('../../src/infrastructure/canonical/CanonicalInventoryAuthorization');
+const {
+    DISPOSABLE_AUTHORITY_ISSUER,
+    DISPOSABLE_AUTHORITY_KEY_ID,
+    DISPOSABLE_OPERATION,
+    authorizationPayload,
+} = require('../../src/infrastructure/canonical/CanonicalInventoryAuthorization');
 const { SCHEMA_BASELINE } = require('../../src/infrastructure/canonical/CanonicalInventoryWriter');
 
 function sha256(value) {
     return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+const authorizationKeyPair = crypto.generateKeyPairSync('ed25519');
+
+function testAuthorizationAuthority() {
+    return {
+        issuer: DISPOSABLE_AUTHORITY_ISSUER,
+        key_id: DISPOSABLE_AUTHORITY_KEY_ID,
+        public_key: authorizationKeyPair.publicKey.export({ format: 'pem', type: 'spki' }),
+    };
+}
+
+function signRuntimeAuthorization(unsignedReceipt) {
+    const authority = testAuthorizationAuthority();
+    return {
+        ...unsignedReceipt,
+        signature: {
+            algorithm: 'ed25519',
+            issuer: authority.issuer,
+            key_id: authority.key_id,
+            value: crypto
+                .sign(null, Buffer.from(authorizationPayload(unsignedReceipt)), authorizationKeyPair.privateKey)
+                .toString('base64'),
+        },
+    };
 }
 
 function syntheticCandidates() {
@@ -98,7 +128,7 @@ function runtimeReceipt({
     executionId = crypto.randomUUID(),
     expiresAt = new Date(Date.now() + 60_000).toISOString(),
 }) {
-    return {
+    return signRuntimeAuthorization({
         execution_id: executionId,
         operation_type: DISPOSABLE_OPERATION,
         issued_at: new Date(Date.now() - 1_000).toISOString(),
@@ -118,7 +148,7 @@ function runtimeReceipt({
             competition: artifact.competition,
             seasons: artifact.seasons,
         },
-    };
+    });
 }
 
 function syntheticProvenance(artifactSha) {
@@ -134,8 +164,10 @@ module.exports = {
     buildDocument,
     parentMetadata,
     runtimeReceipt,
+    signRuntimeAuthorization,
     sha256,
     syntheticCandidates,
     syntheticProvenance,
+    testAuthorizationAuthority,
     writeDocument,
 };

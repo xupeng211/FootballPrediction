@@ -1176,9 +1176,14 @@ legacy `FixtureRepository.persist` update-on-conflict path. It adds
 `candidate-match-identity/v2` validation for a status-complete, hash-bound
 master or canary input; a v1 identity projection gate; ordinary-file,
 non-symlink and mutation checks; hash/scope-bound fresh runtime authorization;
-and a provenance receipt contract. Synthetic disposable receipts are accepted
-only for the labelled proof; a real canary/master fails closed without the
-independently reviewable FotMob endpoint/capture/process/licence evidence.
+an Ed25519-verifiable, trusted-authority authorization receipt; and a
+provenance receipt contract. The receipt hash persisted with an import run
+covers the full canonical signed receipt. Synthetic disposable receipts are
+accepted only for the labelled proof; direct CLI execution is disabled and the
+fixed synthetic write proof is reachable only through the
+`data-m3-canonical-inventory-disposable-proof` Make gate. A real canary/master
+fails closed without the independently reviewable FotMob
+endpoint/capture/process/licence evidence.
 
 `V26.10__create_m3_canonical_inventory_contract.sql` is additive and was
 executed only against a task-specific PostgreSQL 15 tmpfs database. It adds the
@@ -1191,7 +1196,8 @@ The disposable proof used deterministic synthetic data only: three synthetic
 seasons of 380 candidates (1,140 total), never a recovered FotMob artifact.
 It proved fresh insert of 1,140 matches plus one artifact, one import run and
 1,140 lineages; exact replay with zero match/artifact/run/lineage delta; 1-row
-and 10-row canary-to-master lineage behavior; full rollback for malformed,
+and 10-row canary-to-master lineage behavior (including exact parent/current
+artifact deltas); full rollback for malformed,
 expired, out-of-scope and divergent candidate inputs; serializable/advisory
 lock contention; denied UPDATE/DELETE/TRUNCATE/DDL/direct table lock for the
 writer role; and pre-write custom backup restored into a fresh clone with

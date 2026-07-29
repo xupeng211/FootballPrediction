@@ -4,9 +4,12 @@
 // M3 的数据库外授权与来源证明合同；receipt 永不写入候选 artifact，且本版本
 // 只允许显式标记的 disposable synthetic proof。
 
-const { CanonicalInventoryContractError, SEASONS } = require('./CanonicalInventoryContract');
+const crypto = require('node:crypto');
+const { SEASONS, sha256Text, stableStringify } = require('./CanonicalInventoryContract');
 
 const DISPOSABLE_OPERATION = 'canonical_inventory_disposable_proof';
+const DISPOSABLE_AUTHORITY_ISSUER = 'm3-canonical-disposable-proof-authority';
+const DISPOSABLE_AUTHORITY_KEY_ID = 'm3-canonical-disposable-proof-v1';
 
 class CanonicalInventoryAuthorizationError extends Error {
     constructor(message, code = 'CANONICAL_AUTHORIZATION_FAILURE') {
@@ -38,19 +41,74 @@ function sameSeasons(value) {
     );
 }
 
+function authorizationPayload(receipt) {
+    const { signature, ...unsigned } = receipt || {};
+    return stableStringify(unsigned);
+}
+
+function authorizationReceiptSha256(receipt) {
+    return sha256Text(stableStringify(receipt));
+}
+
+function assertTrustedAuthority(authority) {
+    if (!authority || typeof authority !== 'object') {
+        throw new CanonicalInventoryAuthorizationError('trusted authorization authority is required');
+    }
+    if (
+        authority.issuer !== DISPOSABLE_AUTHORITY_ISSUER ||
+        authority.key_id !== DISPOSABLE_AUTHORITY_KEY_ID ||
+        typeof authority.public_key !== 'string' ||
+        authority.public_key.trim() === ''
+    ) {
+        throw new CanonicalInventoryAuthorizationError('trusted authorization authority is not accepted');
+    }
+    return authority;
+}
+
+function assertReceiptSignature(receipt, authority) {
+    const signature = receipt.signature;
+    if (
+        !signature ||
+        signature.algorithm !== 'ed25519' ||
+        signature.issuer !== authority.issuer ||
+        signature.key_id !== authority.key_id ||
+        typeof signature.value !== 'string' ||
+        signature.value.trim() === ''
+    ) {
+        throw new CanonicalInventoryAuthorizationError('runtime authorization signature is required');
+    }
+    let verified = false;
+    try {
+        verified = crypto.verify(
+            null,
+            Buffer.from(authorizationPayload(receipt)),
+            authority.public_key,
+            Buffer.from(signature.value, 'base64')
+        );
+    } catch {
+        throw new CanonicalInventoryAuthorizationError('runtime authorization signature is invalid');
+    }
+    if (!verified) throw new CanonicalInventoryAuthorizationError('runtime authorization signature is invalid');
+}
+
 // The receipt is intentionally a single fail-closed boundary; splitting its
 // field checks would obscure the authorization binding it protects.
 // eslint-disable-next-line complexity
-function validateRuntimeAuthorization(receipt, binding, now = Date.now()) {
+function validateRuntimeAuthorization(receipt, binding, authority, now = Date.now()) {
     if (!receipt || typeof receipt !== 'object' || Array.isArray(receipt)) {
         throw new CanonicalInventoryAuthorizationError('external runtime authorization receipt is required');
     }
+    const trustedAuthority = assertTrustedAuthority(authority);
+    assertReceiptSignature(receipt, trustedAuthority);
     assertReceiptText(receipt.execution_id, 'execution_id');
     if (receipt.operation_type !== DISPOSABLE_OPERATION) {
         throw new CanonicalInventoryAuthorizationError('operation type is not authorized');
     }
     if (receipt.target?.classification !== 'disposable') {
         throw new CanonicalInventoryAuthorizationError('persistent targets are not authorized');
+    }
+    if (binding.target_classification !== 'disposable') {
+        throw new CanonicalInventoryAuthorizationError('writer target is not independently classified as disposable');
     }
     for (const field of ['service_identity', 'database_identity', 'schema_baseline']) {
         assertReceiptText(receipt.target?.[field], `target.${field}`);
@@ -89,6 +147,7 @@ function validateRuntimeAuthorization(receipt, binding, now = Date.now()) {
         execution_id: receipt.execution_id,
         operation_type: receipt.operation_type,
         expires_at: receipt.expires_at,
+        receipt_sha256: authorizationReceiptSha256(receipt),
     };
 }
 
@@ -134,7 +193,11 @@ function validateProvenanceReceipt(receipt, binding) {
 
 module.exports = {
     CanonicalInventoryAuthorizationError,
+    DISPOSABLE_AUTHORITY_ISSUER,
+    DISPOSABLE_AUTHORITY_KEY_ID,
     DISPOSABLE_OPERATION,
+    authorizationPayload,
+    authorizationReceiptSha256,
     validateProvenanceReceipt,
     validateRuntimeAuthorization,
 };

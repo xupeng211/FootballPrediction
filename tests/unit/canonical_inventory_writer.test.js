@@ -4,7 +4,11 @@
 
 const assert = require('node:assert/strict');
 const test = require('node:test');
-const { classifyProviderDifference } = require('../../src/infrastructure/canonical/CanonicalInventoryWriter');
+const {
+    CanonicalInventoryWriter,
+    CanonicalInventoryWriterError,
+    classifyProviderDifference,
+} = require('../../src/infrastructure/canonical/CanonicalInventoryWriter');
 
 const candidate = {
     competition: 'Premier League',
@@ -37,4 +41,25 @@ test('provider identity divergence has deterministic fail-closed terminals', () 
         'conflict_kickoff'
     );
     assert.equal(classifyProviderDifference(candidate, existing()), 'conflict_external_id');
+});
+
+test('writer requires independently configured disposable target and trusted authorization authority', () => {
+    const pool = { connect: async () => ({}) };
+    assert.throws(
+        () =>
+            new CanonicalInventoryWriter({
+                pool,
+                target: { databaseIdentity: 'db', serviceIdentity: 'service', classification: 'persistent' },
+                authorizationAuthority: { public_key: 'not-used' },
+            }),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'TARGET_CLASSIFICATION_MISMATCH'
+    );
+    assert.throws(
+        () =>
+            new CanonicalInventoryWriter({
+                pool,
+                target: { databaseIdentity: 'db', serviceIdentity: 'service', classification: 'disposable' },
+            }),
+        error => error instanceof CanonicalInventoryWriterError && error.code === 'AUTHORIZATION_AUTHORITY_MISSING'
+    );
 });

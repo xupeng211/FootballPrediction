@@ -8,16 +8,11 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const {
     CANONICAL_PROVIDER,
-    CanonicalInventoryContractError,
     immutableFingerprint,
     sha256Text,
     stableStringify,
 } = require('./CanonicalInventoryContract');
-const {
-    CanonicalInventoryAuthorizationError,
-    validateProvenanceReceipt,
-    validateRuntimeAuthorization,
-} = require('./CanonicalInventoryAuthorization');
+const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./CanonicalInventoryAuthorization');
 
 const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
 const ADVISORY_LOCK_NAMESPACE = 1793;
@@ -107,15 +102,25 @@ function artifactShape(artifact, file) {
 }
 
 class CanonicalInventoryWriter {
-    constructor({ pool, target, codeRevision = 'unknown', afterAdvisoryLock = null } = {}) {
+    constructor({ pool, target, authorizationAuthority, codeRevision = 'unknown', afterAdvisoryLock = null } = {}) {
         if (!pool || typeof pool.connect !== 'function') {
             throw new CanonicalInventoryWriterError('writer requires a pg Pool');
         }
-        if (!target?.serviceIdentity || !target?.databaseIdentity) {
-            throw new CanonicalInventoryWriterError('writer requires explicit target identities');
+        if (!target?.serviceIdentity || !target?.databaseIdentity || target.classification !== 'disposable') {
+            throw new CanonicalInventoryWriterError(
+                'writer requires an independently configured disposable target identity',
+                'TARGET_CLASSIFICATION_MISMATCH'
+            );
+        }
+        if (!authorizationAuthority) {
+            throw new CanonicalInventoryWriterError(
+                'writer requires a trusted external authorization authority',
+                'AUTHORIZATION_AUTHORITY_MISSING'
+            );
         }
         this.pool = pool;
         this.target = target;
+        this.authorizationAuthority = authorizationAuthority;
         this.codeRevision = codeRevision;
         this.afterAdvisoryLock = afterAdvisoryLock;
     }
@@ -214,6 +219,7 @@ class CanonicalInventoryWriter {
     async ensureArtifacts(client, input) {
         const shape = artifactShape(input.artifact, input);
         let parent = null;
+        let parentInserted = false;
         if (input.artifact.kind === 'canary') {
             const declared = input.artifact.parent_master;
             const parentShape = {
@@ -229,18 +235,25 @@ class CanonicalInventoryWriter {
             };
             parent = await this.findArtifact(client, parentShape.artifact_sha256);
             if (parent) await this.assertExistingArtifactEquivalent(client, parent, parentShape);
-            else parent = await this.insertArtifact(client, parentShape);
+            else {
+                parent = await this.insertArtifact(client, parentShape);
+                parentInserted = true;
+            }
         }
         let artifact = await this.findArtifact(client, shape.artifact_sha256);
+        let artifactInserted = false;
         if (artifact) await this.assertExistingArtifactEquivalent(client, artifact, shape);
-        else artifact = await this.insertArtifact(client, shape, parent?.artifact_id || null);
+        else {
+            artifact = await this.insertArtifact(client, shape, parent?.artifact_id || null);
+            artifactInserted = true;
+        }
         if (input.artifact.kind === 'canary' && artifact.parent_artifact_id !== parent.artifact_id) {
             throw new CanonicalInventoryWriterError('canary parent artifact conflict', 'ARTIFACT_PARENT_CONFLICT');
         }
         return {
             artifact,
             parent,
-            artifactWasPresent: Boolean(await this.findArtifact(client, shape.artifact_sha256)),
+            artifacts_inserted: Number(parentInserted) + Number(artifactInserted),
         };
     }
 
@@ -364,7 +377,7 @@ class CanonicalInventoryWriter {
                 (run_id, artifact_id, execution_id, authorization_receipt_sha256, code_revision)
             VALUES ($1, $2, $3, $4, $5)
         `,
-            [runId, artifact.artifact_id, receipt.execution_id, sha256Text(stableStringify(receipt)), this.codeRevision]
+            [runId, artifact.artifact_id, receipt.execution_id, receipt.receipt_sha256, this.codeRevision]
         );
         return runId;
     }
@@ -428,6 +441,7 @@ class CanonicalInventoryWriter {
                 service_identity: this.target.serviceIdentity,
                 database_identity: targetIdentity.database_identity,
                 schema_baseline: SCHEMA_BASELINE,
+                target_classification: this.target.classification,
                 artifact: {
                     sha256: input.sha256,
                     business_hash: input.artifact.business_hash,
@@ -438,7 +452,11 @@ class CanonicalInventoryWriter {
                     seasons: input.artifact.seasons,
                 },
             };
-            const receipt = validateRuntimeAuthorization(input.runtimeAuthorization, binding);
+            const receipt = validateRuntimeAuthorization(
+                input.runtimeAuthorization,
+                binding,
+                this.authorizationAuthority
+            );
             const provenance = validateProvenanceReceipt(input.provenanceReceipt, {
                 sha256: input.sha256,
                 target_classification: 'disposable',
@@ -457,7 +475,8 @@ class CanonicalInventoryWriter {
                 if (this.afterAdvisoryLock) await this.afterAdvisoryLock();
                 await client.query('SELECT public.m3_canonical_inventory_acquire_locks_v1()');
                 assertArtifactStillImmutable(input);
-                const { artifact } = await this.ensureArtifacts(client, input);
+                const artifactState = await this.ensureArtifacts(client, input);
+                const { artifact } = artifactState;
                 const classified = [];
                 for (const candidate of input.candidates) {
                     classified.push(await this.classifyCandidate(client, candidate, artifact));
@@ -503,7 +522,7 @@ class CanonicalInventoryWriter {
                     terminal_counts: terminalCounts,
                     database_delta: {
                         matches: terminalCounts.inserted || 0,
-                        artifacts: changing.length > 0 ? 1 : 0,
+                        artifacts: changing.length > 0 ? artifactState.artifacts_inserted : 0,
                         import_runs: changing.length > 0 ? 1 : 0,
                         lineages: changing.length,
                     },

@@ -1020,10 +1020,12 @@ This is design readiness only, not database-write authorization.
 `REAL_WRITE_BLOCKED_PROVENANCE_POLICY` remains in force.
 
 - A dedicated status-complete `candidate-match-identity/v2` contract, v1
-  identity-projection binding, fresh hash-bound runtime authorization and
-  provenance receipt validator are implemented. Real inputs fail closed when
-  provenance is absent; only explicitly labelled synthetic receipts are valid
-  for the disposable proof.
+  identity-projection binding, fresh hash-bound Ed25519 runtime authorization
+  from a trusted authority and provenance receipt validator are implemented.
+  The persisted receipt hash covers the complete signed receipt. Direct CLI
+  execution is disabled; only the fixed synthetic disposable proof can write,
+  through `make data-m3-canonical-inventory-disposable-proof`. Real inputs
+  fail closed when provenance is absent.
 - Additive V26.10 implements provider-scoped FotMob identity, fixture conflict
   protection, immutable artifact/import-run/lineage tables and the restricted
   canonical lock function. It was executed only on a task-specific PostgreSQL
