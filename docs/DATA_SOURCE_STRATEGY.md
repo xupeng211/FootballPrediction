@@ -3,7 +3,7 @@
 - lifecycle: current-state
 - owner: data / ingestion governance
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 ## Current source priority
 
@@ -16,8 +16,13 @@ Last updated: 2026-07-28
    reverified three historical Git inputs and produced 892 reproducible source
    semantic candidates against a recovered 1,140-candidate FotMob Premier
    League artifact. It isolated 888 unique exact matches and four kickoff
-   conflicts with no identity-policy expansion. This supports only a future
-   canonical-inventory write design review; real import remains blocked.
+   conflicts with no identity-policy expansion. The completed 2026-07-29
+   design review selects all 1,140 FotMob candidates for future canonical
+   inventory; 888 is linkage-only, four remain linkage quarantine, and the
+   remaining 248 are canonical-only/unlinked. The four plus 248 are the 252
+   candidates without an exact Football-Data link. The recovered v1 artifact
+   lacks status for all 1,140, so it is identity evidence rather than a
+   write-ready input; real import is blocked.
 3. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
    OddsPortal has no retained execution evidence and its legacy route remains
    blocked.
@@ -50,7 +55,8 @@ Last updated: 2026-07-28
   rows are not proven.
 - FotMob retained assets and its independent 50-target Ligue 1 mapping
   chronology do not define the M3 Football-Data candidate population.
-- **M3 D4F status**: `READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW`.
+- **M3 D4F status**:
+  `READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW`.
   The historical Git inputs remain reverified (1,180 raw rows, 38,832 odds
   observations, 892 semantic candidates; source hash `07e579…98b8b`). Two
   recovered, validated FotMob `candidate-match-identity/v1` artifacts each
@@ -60,8 +66,11 @@ Last updated: 2026-07-28
   conflicts (3 × 15 minutes, 1 × 30 minutes); no unmatched, ambiguity, team,
   competition/season, incomplete or invalid-source terminal occurred. The
   development `matches` inventory itself remains zero for this scope, but it
-  was not used as the cross-source candidate side. No business/schema write,
-  network request or canonical linkage occurred.
+  was not used as the cross-source candidate side. The writer design confirmed
+  that current `matches` lacks provider-scoped identity uniqueness/import
+  lineage and the generic writer updates on conflict; a new fail-closed writer
+  plus isolated schema work is required. No business/schema write, network
+  request or canonical linkage occurred.
 - DB write: blocked.
 - Raw data write: blocked.
 - Schema migration: blocked.
@@ -77,10 +86,11 @@ Last updated: 2026-07-28
 - Add tests using fixtures/mocks only.
 - Document exact evidence needed before enabling ingestion.
 - Small read-only source inventory audits.
-- After separate authorization, design (but do not execute) a bounded canonical
-  Premier League `2022/2023`–`2024/2025` inventory writer that admits only the
-  888 exact candidates and keeps the four kickoff conflicts isolated. This
-  does not authorize a business write.
+- After separate authorization, implement and test (but do not execute) the
+  reviewed canonical writer, status-complete FotMob input contract and
+  isolated schema/lineage migration plan. Inventory is 1,140 candidates;
+  canonical creation remains separate from 888 exact linkage, four conflicts
+  and historical odds. This does not authorize a business write.
 
 ## Blocked data tasks
 
@@ -136,9 +146,10 @@ From PR #1454:
 
 - What is the latest verified FotMob endpoint status?
 - Which existing fixtures are safe to use for testing?
-- What separately authorized canonical-inventory writer design can materialize
-  only the 888 exact candidate identities while excluding the four kickoff
-  conflicts?
+- Can implementation establish a status-complete, hash-bound FotMob artifact
+  without expanding provider scope?
+- Can the isolated migration prove provider-scoped uniqueness and immutable
+  import lineage on a disposable target before a persistent write?
 - What evidence is sufficient to resolve each isolated kickoff conflict without
   changing aliases, timezone interpretation or tolerance?
 - Is `raw_write` authorization phrase mechanism still wired and effective?

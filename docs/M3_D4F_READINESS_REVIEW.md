@@ -1,9 +1,9 @@
 # M3-D4F Candidate-to-Canonical Linkage and Real Import Readiness Review
 
 - lifecycle: current-state
-- scope: current-state D4F read-only Football-Data-to-FotMob-candidate compatibility audit
+- scope: current-state D4F read-only audit history and canonical inventory write design review
 - issue: #1793
-- reviewed main baseline: de2891af46ffe0df612a37acb39c06b544a50e31
+- reviewed main baseline: 28714730b4356c5001565175990a5d0a34e24253
 - historical D4F-A database access: local development `football_prediction_db_dev` service / effective database `football_db` only; `claude_reader` executed aggregate and schema `SELECT` queries inside `BEGIN READ ONLY` with `statement_timeout=10s`
 - D4F service lifecycle: existing `dev` and development `db` services observed only; no service started or stopped. The normal documentation commit hook separately used the authorized Gatekeeper temporary `gatekeeper_cold_start_*` create/probe/rollback/drop blueprint; it did not inspect or change a business schema, business row, canonical match or persistent M3 sandbox.
 - D4F-A provider/FotMob payload export/access: none; D4F-A used only the local
@@ -92,21 +92,25 @@ User-selected implementation approach = RECOVER_EXISTING_ACQUISITION_ARCHITECTUR
 Evidence-backed inventory outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
 ```
 
-`docs-only` is the machine-readable file/authorization type because this PR
-changes only the six named current-state documents. The inventory classification records the
-separately authorized local evidence read; it does not bypass any write or
-network boundary.
+`docs-only` is the machine-readable file/authorization type because this
+canonical inventory design-review PR changes only the four named existing
+current-state documents. The inventory classification records the separately
+authorized local evidence read; it does not bypass any write or network
+boundary.
 
-The six current-state documents are `docs/DATA_SOURCE_STRATEGY.md`, this
-review, `docs/PROJECT_STATUS.md`, `docs/data/FOTMOB_CURRENT_STATE.md`,
-`docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md` and
-`docs/data/FOTMOB_RAW_PARSER_CONTRACT.md`.
+The four current-state documents are `docs/DATA_SOURCE_STRATEGY.md`, this
+review, `docs/PROJECT_STATUS.md` and `docs/data/FOTMOB_CURRENT_STATE.md`.
+The retained-raw and parser documents are historical D4F evidence only and
+are not changed or reauthorized by this design review.
 
 The user explicitly confirmed one corrective update inside the already-open PR
 #1805 to close the Ready-triggered Codex P1 findings and enter the required
 Architecture Decision Gate. The later explicit D4F cross-source authorization
 permitted only recovery of an existing candidate artifact and this bounded
 offline audit; it did not authorize a database write or identity-policy change.
+The subsequent explicit canonical-inventory design-review authorization permits
+this four-document design closure only; it does not authorize a writer,
+migration, database write or identity-policy change.
 
 ### Historical and current convergence transitions
 
@@ -119,7 +123,8 @@ D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
 ```
 
 It did not resolve a database, identity, mapping, real-source or training
-blocker. The current active convergence transition is:
+blocker. The following asset-inventory transition is historical evidence, not
+the current active transition:
 
 ```text
 D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
@@ -127,9 +132,12 @@ D4F_PHASE_BOUNDARY_DEFINED_AND_REVIEWABLE
 EXISTING_ACQUISITION_ASSETS_INVENTORIED
 ```
 
-This is evidence-backed progress for the bounded local asset targets. It is not
-a new acquisition, import, linkage write, migration, feature run, training or
-prediction result.
+This was evidence-backed progress for the bounded local asset targets. It is
+not a new acquisition, import, linkage write, migration, feature run, training
+or prediction result. The current authoritative transition is the section 15
+design decision: `READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW ->
+READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW`; its no-progress
+stop and unchanged target-state delta are recorded there.
 
 ### Target-state delta
 
@@ -671,9 +679,11 @@ approved non-zero kickoff tolerance is therefore none.
 
 Per season, the result is 377 exact + 3 kickoff conflicts for 2022/2023,
 379 exact + 1 kickoff conflict for 2023/2024, and 132 exact for 2024/2025.
-The 888 exact candidates use 888 distinct FotMob IDs; 252 of the 1,140 FotMob
-candidates are outside the 892-source audit population, and no FotMob
-candidate is used by more than one source candidate.
+The 888 exact candidates use 888 distinct FotMob IDs. Of the 252 FotMob
+candidates without an exact Football-Data link, four are the isolated kickoff
+conflicts within the 892-source audit population; the remaining 248 are outside
+that source-audit population. No FotMob candidate is used by more than one
+source candidate.
 
 Time buckets are 888 exact timestamps, zero timezone-normalized-only exact,
 zero within a non-zero tolerance, three 15-minute conflicts, one 30-minute
@@ -695,15 +705,15 @@ selected or written for them:
 ### Current decision
 
 ```text
-READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW
+SUPERSEDED_BY_2026_07_29_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW
 ```
 
-This is only permission to evaluate a separately authorized future design for
-canonical inventory writing. It is not authorization to write a canonical
-inventory, `matches`, `external_id`, `canonical_match_id`, historical odds
-staging, migrations, training, backtest or prediction. Any future bounded
-write proposal must keep the four `kickoff_conflict` candidates isolated until
-separate evidence and an explicit identity-policy decision exist.
+This historical result authorized the completed design review recorded in
+section 15. It did not authorize a canonical inventory, `matches`,
+`external_id`, `canonical_match_id`, historical odds staging, migrations,
+training, backtest or prediction. The current design still keeps the four
+`kickoff_conflict` identities isolated from linkage until separate evidence
+and an explicit authorization exist.
 
 ## 10. Roles, migration, rollback and training isolation
 
@@ -714,27 +724,36 @@ separate evidence and an explicit identity-policy decision exist.
 | migration_role | Approved DDL window | Import/linkage business writes. |
 | training_reader | Future approved accepted/canonical view | Quarantine, unresolved links, leaking closing odds. |
 
-D4F-C must separately decide table/status/FK/index/partial-unique needs. Likely invariant: one active verified link per candidate/source identity with historical audit, not in-place update. Unexpected batch invariant failure rolls back its linkage transaction; valid row conflicts quarantine/audit. Existing staging docs prohibit training reads from quarantine. Legacy bookmaker readers demonstrate prematch leakage risk; training remains blocked until canonical linkage, provenance, snapshot-time semantics and quality acceptance are separately implemented/authorized.
+The completed canonical-inventory design review now defines the inventory
+table/index/lineage and status-complete-input requirements, but it deliberately
+does not implement them or define a linkage writer. A later separately
+authorized linkage design/implementation must establish one active verified
+link per candidate/source identity with historical audit and no in-place update.
+Unexpected batch invariant failure rolls back its linkage transaction; valid row
+conflicts quarantine/audit. Existing staging docs prohibit training reads from
+quarantine. Legacy bookmaker readers demonstrate prematch leakage risk;
+training remains blocked until canonical linkage, provenance, snapshot-time
+semantics and quality acceptance are separately implemented/authorized.
 
 ## 11. Readiness matrix
 
 | Domain | Current status | Evidence | Missing proof | Blocks which phase |
 | ------ | -------------- | -------- | ------------- | ------------------ |
 | source semantic identity | verified_for_read_only_audit | Current adapter + `buildSemanticMatchIdentity` produced 892 unique E0 match units reproducibly | None for this audit; real-import acceptance remains separate | D4F-D/E |
-| canonical candidate coverage | verified_for_read_only_audit | Recovered FotMob artifact: 1,140 complete candidates; 888 exact + 4 isolated kickoff conflicts | Future writer design and separately authorized execution | Future canonical inventory write |
-| local canonical database coverage | zero_for_scope | `matches` has zero Premier League/E0 rows in 2022/2023–2024/2025 | A separately authorized canonical database inventory/write decision | D4F-C/E |
-| canonical schema freshness | bounded | Current local development schema inventory | Approved target-specific inventory elsewhere | D4F-C/E |
+| canonical candidate coverage | design_complete_pending_implementation | Recovered FotMob artifact: 1,140 candidates; 888 exact + 4 isolated kickoff conflicts; design selects full inventory | Status-complete v2 input, writer implementation/proof and separately authorized execution | Future canonical inventory write |
+| local canonical database coverage | zero_for_scope | `matches` has zero Premier League/E0 rows in 2022/2023–2024/2025 | Dedicated target selection, status-complete input, writer proof and separate write authorization | Writer implementation / real inventory write |
+| canonical schema freshness | design_complete_pending_implementation | Current development schema inventory plus target provider/index/lineage design | Separately authorized migration implementation and disposable compatibility proof | Writer implementation / real inventory write |
 | team normalization | verified_for_offline_audit | Existing 12 source-scoped exact aliases; no unapproved difference | Future writer implementation must preserve this contract | Future canonical inventory write |
 | competition mapping | verified_for_offline_audit | E0 → Premier League on both compared populations | Future writer implementation | Future canonical inventory write |
 | season mapping | verified_for_offline_audit | Exact `2022/2023`–`2024/2025` scope on both populations | Future writer implementation | Future canonical inventory write |
-| kickoff/timezone semantics | bounded_conflicts | Europe/London source interpretation; 888 exact, 4 isolated 15/30-minute conflicts | Conflict evidence or explicit policy decision; no tolerance expansion | Future canonical inventory write |
+| kickoff/timezone semantics | bounded_conflicts_for_linkage_only | Europe/London source interpretation; 888 exact, 4 isolated 15/30-minute conflicts; valid FotMob candidates still enter the 1,140-row inventory | Conflict evidence or explicit policy decision; no tolerance expansion | Future source-to-canonical linkage / historical odds import, not canonical inventory |
 | home/away identity | verified_for_offline_audit | Ordered home/away; no same-kickoff reversal | Future writer implementation | Future canonical inventory write |
-| source external ID | bounded | 60 populated `matches.external_id`; zero duplicate groups in this DB | M3 provider mapping/uniqueness | D4F-C/E |
+| source external ID | design_complete_pending_implementation | 60 populated `matches.external_id`; zero duplicate groups; provider-scoped unique-index design documented | Migration implementation and provider-ID collision proof | Writer implementation / real inventory write |
 | link decision audit model | design_only | Existing evidence/replay | Approved model/migration | D4F-C |
-| FK strategy | design_only | Existing FK/no-FK boundary | Inventory + migration design | D4F-C |
-| role/grant | bounded | `claude_reader` local socket access; SELECT-only listed grants; no membership/CREATE | Target grants outside this dev DB | D4F-C/E |
-| migration need | design_only | Recommended separation | Approved DDL design | D4F-C |
-| rollback | bounded | D4E transaction conflict | Target procedure | D4F-C/E |
+| FK strategy | design_complete_for_inventory | Inventory lineage FK, cardinality, uniqueness and RESTRICT deletion policy are defined below; linkage stays separate | Separate linkage-model/migration implementation | Linkage design / implementation |
+| role/grant | design_complete_pending_provisioning | `claude_reader` local socket access; SELECT-only listed grants; least-privilege writer role design documented | Dedicated-target role provisioning and proof | Writer implementation / real inventory write |
+| migration need | design_complete_pending_implementation | Provider/index/lineage migration design documented | Migration implementation, disposable proof and explicit DDL authorization | Writer implementation / real inventory write |
+| rollback | design_complete_pending_rehearsal | Pre-write backup, clone restore and owner-operated recovery design documented | Dedicated-target backup/restore rehearsal | Writer implementation / real inventory write |
 | repository historical inputs | verified_for_read_only_audit | Three immutable Git-history blobs restored outside the repository with SHA-256, size, header, scope, two deterministic runs and 892 semantic units | Upstream capture/provider/license proof for real import | D4F-D/E |
 | upstream provenance | not_proven | Git history cannot prove original capture/provider/license semantics | Approved upstream provenance and import envelope | D4F-D/E |
 | provenance | not_proven | Manifest contract | License/upstream evidence | D4F-D/E |
@@ -748,7 +767,7 @@ The local development database still contains zero Premier League/E0
 `matches` rows for the requested seasons; that database fact has not changed.
 It no longer blocks the read-only cross-source audit because the verified
 FotMob candidate artifact supplied its canonical comparison side. Remaining
-boundaries are the four isolated kickoff conflicts, unverified original
+boundaries are the four isolated kickoff conflicts for source linkage only, unverified original
 upstream provenance/import semantics, absent retained OddsPortal evidence,
 unavailable M3 staging tables in this development DB, and training
 quality/leakage acceptance.
@@ -778,8 +797,370 @@ started.
 
 ## 14. Next recommended task
 
-Do not start automatically. The only recommended next task, after separate
-user authorization, is a bounded canonical-inventory write **design review**
-that preserves the 888 exact/4 kickoff-conflict boundary. It must not execute
-a canonical write, linkage persistence, real import, migration, training,
-backtest or prediction.
+The planned design review is completed in section 15. Do not start
+automatically. The next separately authorized task may be an implementation
+review for the fail-closed writer, status-complete input contract and isolated
+schema/lineage migration plan. It must not execute a canonical write, linkage
+persistence, real import, migration, training, backtest or prediction.
+
+
+## 15. Canonical inventory write design review — 2026-07-29
+
+### Decision
+
+~~~text
+Design decision = READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW
+Recommended future canonical population = 1,140 FotMob Premier League candidates
+Canonical inventory / Football-Data linkage / historical-odds staging = distinct stages and authorizations
+Recovered candidate artifact v1 write eligibility = blocked (status absent)
+~~~
+
+### Ingestion convergence declaration for this design review
+
+```text
+blocker_transition:
+  READY_FOR_CANONICAL_INVENTORY_WRITE_DESIGN_REVIEW
+  -> READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW
+
+target_state_delta:
+  fotmob_canonical_candidates: 1,140 unchanged as candidate evidence only
+  football_data_exact_link_candidates: 888 unchanged; no linkage written
+  kickoff_conflict_quarantine: 4 unchanged and isolated
+  remaining_canonical_only_candidates: 248 unchanged and unlinked
+  business_database_rows_or_schema: 0 changed
+  unrelated_ligue_1_mapping_states: 32 / 10 / 8 unchanged
+
+no_progress_stop:
+  A separately authorized writer-implementation review must stop for an
+  Ingestion Architecture Decision Gate if it cannot produce the status-complete
+  input contract and disposable PostgreSQL proof without identity-policy change;
+  no further docs-only planning/review phase may be opened to repeat this design.
+```
+
+This is a design-state transition, not a data-state claim. It closes the
+explicit design-review blocker by selecting population, source authority,
+fail-closed input/idempotency/conflict semantics, transaction/lock, permissions
+and backup/rollback gates. It does not move any of the 1,140 FotMob candidates,
+888 prospective links, four quarantines, 248 canonical-only candidates, 32/10/8
+Ligue 1 targets or database rows. The M3 no-progress count is therefore zero
+for this explicitly authorized, evidence-backed blocker closure; a subsequent
+implementation review without the stated proof must not reset it.
+
+Earlier current-state wording that described only the 888 exact links as a
+possible inventory is superseded. These are three different objects:
+
+| Object | Count | Current/future treatment |
+| --- | ---: | --- |
+| FotMob canonical candidates | 1,140 (380 / 380 / 380) | The bounded inventory population after write-input preflight. |
+| Football-Data source identities | 892 (380 / 380 / 132) | Historical odds source identities; they do not create canonical rows. |
+| Source-to-canonical links | 888 exact + 4 conflicts | A later, separately authorized linkage population. |
+
+FotMob is the documented primary fixture and canonical-match-identity source.
+Its stable ID, absolute kickoff, ordered home/away, competition, season and
+provider status are canonical attributes. Football-Data is authoritative only
+for historical source identity/observations; its timestamp never overwrites a
+FotMob canonical kickoff.
+
+The selected population is all 1,140 FotMob candidates, not 888 or 892:
+
+| Option | Decision | Reason |
+| --- | --- | --- |
+| 888 exact only | Not selected | Couples canonical existence to one downstream source and excludes 252 FotMob fixtures without an exact link (four quarantine conflicts and 248 other canonical-only candidates). |
+| 1,140 FotMob candidates; then 888 links | Selected | Implements the primary-source policy and separates canonical creation from linkage. |
+| 888 then expansion | Not selected | Adds a second inventory campaign while preserving the same incorrect coupling. |
+
+The 252 candidates without an exact Football-Data link are not invalid. Four
+are linkage-quarantine/no-link conflicts that may enter inventory if their
+FotMob input is valid: Tottenham Hotspur—AFC Bournemouth
+(47_20222023_3901239, 15m), Fulham—Tottenham Hotspur
+(47_20222023_3901135, 15m), Crystal Palace—West Ham United
+(47_20222023_3901266, 15m), and Arsenal—Nottingham Forest
+(47_20232024_4193451, 30m). The remaining 248 are canonical-only/unlinked.
+No alias, fuzzy comparison, home/away reversal, timezone-policy or tolerance
+change is proposed. Resolving the four conflicts requires separately
+authorized, source-bound official scheduling evidence.
+
+### Read-only schema and existing writer evidence
+
+On 2026-07-29 the already-running development Compose db service was queried
+only through Unix-socket football_db as claude_reader. Every query used BEGIN
+READ ONLY, statement_timeout=10s, lock_timeout=2s and
+idle_in_transaction_session_timeout=15s. PostgreSQL reported 15.17,
+current_user=session_user=claude_reader and transaction_read_only=on. The role
+has CONNECT, public USAGE and matches SELECT only; CREATE, INSERT, UPDATE and
+DELETE are false. No FOR UPDATE, write-effect function, raw-payload read, DDL
+or business write occurred.
+
+matches has primary key match_id; nullable external_id/match_date/status and
+required league_name/season/home_team/away_team. It has season, lowercase
+status, pipeline/source/governance and score checks, but no provider-scoped
+external-ID unique constraint, ordered business-identity constraint, import
+lineage or foreign key. Its update triggers derive is_finished from status =
+finished and update updated_at. It contains 60 rows (58 Ligue 1 2025/2026, one
+Segunda 2024/2025, one Segunda División 2025/2026), no target EPL/E0 rows and
+no current duplicate external/business identity. Existing values follow
+match_id=<leagueId>_<seasonWithoutSlash>_<FotMobId> with numeric external_id,
+but data_source is historically mixed (fotmob, manual_html_seed,
+local_finished_csv); it cannot safely supply the provider namespace.
+
+FixtureRepository.persist and the Python collector are not usable for M3:
+they use INSERT ... ON CONFLICT DO UPDATE and can replace identity/business
+fields or touch updated_at; recon code also has intentional arbitration/rebind
+paths. The future path requires a new explicit, fail-closed writer that does
+not call either generic repository. The D4E persistent sandbox is also not a
+target: it is dedicated to V26.8/V26.9 and retains 1 / 1 / 6 / 3 synthetic
+evidence. Development remains read-only evidence; the future persistent target
+is a dedicated canonical sandbox after disposable PostgreSQL proof.
+
+### Required input, schema and lineage contract
+
+The recovered ordinary v1 artifact has SHA-256
+262949ac986eab1cea0ae8830c9f495b24809724f4aff2f67f6746a43877833b and
+business hash eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f.
+Its 1,140 candidates have only id, source_provider, source_match_id,
+competition, season, home_team, away_team and kickoff_at; status is absent
+from 1,140/1,140. It remains valid identity evidence, but the writer must
+reject it rather than guess finished/scheduled.
+
+A future v2 artifact must be repository-external, an ordinary non-symlink,
+immutable through the run, SHA-256/byte-size/business-hash bound, and include
+schema version, provenance, expected total/seasons and provider/competition
+scope. It is candidate evidence, never authorization. Every candidate must
+include stable numeric FotMob ID, deterministic candidate ID, provider,
+competition, season, ordered teams, strict absolute kickoff, provider status
+and a versioned status mapping. To preserve the audited identity contract,
+`source_provider` must retain the exact v1 literal `FotMob`; the writer maps
+only that controlled source value to the separate lowercase database namespace
+`canonical_provider = 'fotmob'` and rejects a blank, differently cased or
+artifact-supplied canonical-provider alternative.
+
+Status completion may add only v2 fields; it may not silently revise the
+identity population that the cross-source audit used. A v2 full master must
+reproduce the 1,140-candidate v1 business hash
+`eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f` from a
+deterministic projection of `id`, `source_provider`, `source_match_id`,
+`competition`, `season`, `home_team`, `away_team` and `kickoff_at`, including
+the exact `FotMob` source-provider value. If that full-master projection
+differs, the writer fails closed: the existing 888 exact links and four
+quarantines cannot be reused until the formal cross-source audit is rerun on
+that identity population and a separately reviewed linkage decision replaces
+the current one. Status and its versioned mapping are deliberately outside that
+identity projection but remain required v2 fields.
+
+Each execution must separately pass a fresh runtime authorization gate; the
+authorization phrase is supplied outside the artifact and is not accepted from
+candidate content or stored as reusable candidate lineage. The gate must bind
+the approved target database/environment identity, schema/baseline fingerprint,
+artifact SHA-256/business hash, run scope/count, and authorization expiry or
+single-run identity before the writer opens its transaction. Replaying a copied
+artifact without that fresh, exact binding fails closed.
+
+Full-inventory preflight requires exactly 1,140 and 380/380/380, target scope
+only, unique candidate/provider/ordered-business identities, no incomplete or
+abandoned candidate and no unknown semantic fields. FotMob supplies status; the
+future implementation retains it and rejects unmapped values. A status-complete
+artifact needs separate acquisition or equally immutable recovered evidence;
+this design authorizes neither.
+
+For this bounded Premier League scope, canonical fixture identity is the
+provider-independent ordered tuple `(competition, season, home_team, away_team)`
+and deliberately excludes kickoff. Both the input and existing canonical rows
+must be preflighted by that key as well as provider ID. The same fixture with a
+different kickoff is `conflict_kickoff`; the same fixture and kickoff with a
+different provider ID is `conflict_business_identity`. Neither case may insert
+or rely on a `match_date`-containing index to evade the conflict.
+
+A bounded real canary is not a malformed 1,140-row artifact. It is a separate
+v2 subset artifact with its own SHA-256, business hash, candidate count and
+per-season counts, `canary` run scope, parent full-artifact hash, and the exact
+candidate-ID/immutable-fingerprint allowlist it projects from that parent. Its
+preflight also receives the immutable parent master artifact as a separately
+hash-bound external input: it first verifies that parent's full 1,140-row v1
+projection against `eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f`,
+then verifies the canary's v1 projection field-for-field and in deterministic
+parent order against exactly that allowlisted parent subset (with a declared
+subset-projection hash). It must pass every per-candidate field and scope check;
+only its declared cardinality differs. Its fresh runtime authorization must bind
+both parent and subset hashes, the allowlist, subset and target. A canary may
+contain one or ten candidates, but its single transaction must cover all and
+only its declared subset. It cannot silently relax the full-inventory
+1,140/380/380/380 contract.
+
+A separately authorized migration implementation/review is required and must
+preflight old rows without rewriting them. Its minimum design is:
+1. retain matches.match_id as candidate ID and numeric FotMob ID in external_id;
+2. add nullable `canonical_provider` for legacy rows, not mixed `data_source`,
+   but enforce `CHECK (canonical_provider IS NULL OR canonical_provider =
+   'fotmob')` and `CHECK ((league_name = 'Premier League' AND season IN
+   ('2022/2023', '2023/2024', '2024/2025')) IS NOT TRUE OR
+   (canonical_provider IS NOT NULL AND canonical_provider = 'fotmob' AND
+   external_id IS NOT NULL))`; the explicit `IS NOT NULL` means a target row
+   cannot pass PostgreSQL's three-valued CHECK evaluation with a NULL provider.
+   Therefore every new target canonical row is non-null and has the one
+   lowercase provider value, while old out-of-scope rows may remain NULL; the
+   disposable proof must assert both target-NULL rejection and out-of-scope
+   legacy-NULL acceptance;
+3. after an explicit collision preflight, add partial PostgreSQL unique
+   indexes (not `ALTER TABLE ... ADD CONSTRAINT`): `CREATE UNIQUE INDEX
+   matches_fotmob_external_id_uq ON matches (external_id) WHERE
+   canonical_provider = 'fotmob'`, and `CREATE UNIQUE INDEX
+   matches_m3_epl_fixture_identity_uq ON matches (league_name, season,
+   home_team, away_team) WHERE league_name = 'Premier League' AND season IN
+   ('2022/2023', '2023/2024', '2024/2025') AND canonical_provider = 'fotmob'`;
+   the latter is a target-scoped, provider-independent fixture key that
+   deliberately omits match_date. The target-scope CHECK fixes the current
+   provider to `fotmob`; adding another canonical provider later requires a new
+   migration and collision review. This migration rejects any collision under
+   either key;
+4. add `public.m3_canonical_import_runs`,
+   `public.m3_canonical_source_artifacts` and
+   `public.m3_canonical_match_lineages` with the following immutable inventory
+   lineage contract: source artifacts have a surrogate primary key, unique
+   SHA-256, business hash/schema/scope/count, non-null `artifact_kind` checked
+   as `master` or `canary`, and nullable `parent_artifact_id REFERENCES
+   m3_canonical_source_artifacts ON DELETE RESTRICT` with
+   `CHECK ((artifact_kind = 'master') = (parent_artifact_id IS NULL))`; import runs have a surrogate primary key
+   and exactly one non-null `artifact_id REFERENCES
+   m3_canonical_source_artifacts ON DELETE RESTRICT`, plus unique run identity,
+   authorization, code revision and `UNIQUE (run_id, artifact_id)`; each match
+   lineage has a surrogate primary key, non-null `match_id REFERENCES
+   matches(match_id) ON DELETE RESTRICT`, non-null `artifact_id REFERENCES
+   m3_canonical_source_artifacts ON DELETE RESTRICT`, non-null
+   `created_import_run_id`, and `(created_import_run_id, artifact_id) REFERENCES
+   m3_canonical_import_runs(run_id, artifact_id) ON DELETE RESTRICT`, plus
+   candidate/provider ID and immutable fingerprint. It has both
+   `UNIQUE (artifact_id, candidate_id)` and `UNIQUE (match_id, artifact_id)`;
+   therefore exactly one artifact candidate maps to one canonical row and a
+   repeated artifact cannot create duplicate or orphan lineage. A source
+   artifact may have many lineages and many import-run records; a canonical row
+   may have lineages for several registered artifacts (for example an
+   allowlisted canary and its parent master). Each lineage is created in the
+   same state-changing transaction as its exact creating import run. All
+   lineage retention is
+   delete-restricted, including normal writer roles; and
+5. preserve provider status separately from application-status mapping.
+
+### Idempotency, transaction, permission and recovery design
+
+Every candidate must end exactly once as inserted, exact_duplicate,
+already_present_equivalent, conflict_external_id, conflict_business_identity,
+conflict_kickoff, conflict_home_away, conflict_competition, conflict_season,
+invalid_candidate or out_of_scope. `exact_duplicate` means that the current
+source-artifact and candidate-lineage records already bind that provider ID and
+immutable fingerprint: it is a strictly zero-delta replay of the same input
+for business rows, artifacts, import runs and lineage. Fresh authorization for
+a no-write replay is retained as a hash-bound, database-external authorization
+receipt (artifact SHA-256/business hash, target, code revision, authorization
+ID and expiry), emitted for operator retention before the zero-delta outcome;
+it is not a new DB import-run row.
+`already_present_equivalent` is narrower and may commit only when a different,
+registered and explicitly allowlisted input artifact has the same immutable
+parent-master artifact SHA-256/business hash, and the existing canonical row
+has the same provider ID, immutable fingerprint and ordered fixture identity.
+For example, a verified canary may precede its bound full master. That result
+inserts only the missing immutable artifact/run/parent-master lineage for the
+current input, never changes `matches`; a replay after that is
+`exact_duplicate`. Both duplicate classes are successful terminal results and
+are included in every terminal arithmetic proof. A provider-ID match with
+changed immutable fields, a provider-independent fixture match with a changed
+kickoff, a different provider ID for the same fixture, input duplicate, missing
+or non-equivalent parent-master lineage, or scope/hash/status/runtime-
+authorization failure fails closed: no update, no first-row-wins, no partial
+commit and at most 20 evidence samples per class. This dual preflight is
+mandatory even though the target-scoped fixture constraint provides a second
+database-level defense.
+
+For a full-inventory run, the recommended unit is one transaction over the
+entire 1,140-row master artifact: prove target/schema/role, fresh runtime
+authorization, its v1 identity-projection hash and baseline fingerprint; set
+timeouts and `SERIALIZABLE` isolation; obtain the fixed, exact overload
+`pg_catalog.pg_try_advisory_xact_lock(1793, 1)` (`integer, integer`) for this
+M3 canonical-inventory v1 contract; then call the no-argument,
+`SECURITY DEFINER` function
+`public.m3_canonical_inventory_acquire_locks_v1()`. Its non-login table-owner
+must issue four static `LOCK TABLE ... IN SHARE ROW EXCLUSIVE MODE` statements,
+in this immutable fully qualified relation-name order:
+`public.m3_canonical_import_runs`, `public.m3_canonical_match_lineages`,
+`public.m3_canonical_source_artifacts`, `public.matches`. Its body has no
+dynamic SQL, exposes no data-operation path and fixes `search_path` to
+`pg_catalog`; the writer has no direct privilege for these locks. The function
+must execute inside the writer's existing transaction, so these locks remain
+held through preflight and commit/rollback. No preflight read or write may occur
+until all locks are held. Any lock timeout or serialization failure rolls back
+with no automatic retry. Only then re-read and preflight provider and fixture
+identity;
+insert only proven-new canonical/artifact/run/lineage rows; verify the final
+1,140 and 380/380/380 inventory, provider/fixture uniqueness and fingerprints;
+then commit. `exact_duplicate` requires the current input artifact's exact
+candidate lineage. `already_present_equivalent` requires the exact
+allowlisted-parent relationship defined above and is the only permitted case
+where the canonical row predates the current input; it may append its missing
+immutable current-input lineage but cannot change that row. The full-run
+terminal arithmetic is `inserted + exact_duplicate +
+already_present_equivalent = 1,140`; match-row, artifact/run and lineage-row
+inserts are separately counted. Any pre-existing row with missing, different or
+unallowlisted parent-master lineage is a conflict; fresh runtime authorization
+is still required for every execution.
+
+For a canary, the same serializable/advisory/table-lock sequence is one
+transaction over all declared canary rows, with `inserted + exact_duplicate +
+already_present_equivalent = canary_count` and exact canary lineage
+verification plus fresh runtime authorization before commit. It is not a
+partial full-inventory transaction and does not advance automatically to the
+master run. Lock busy, serialization conflict, count mismatch or unexpected ON
+CONFLICT DO NOTHING rolls back. No temporary table, COPY, update-on-conflict or
+input-changing retry is permitted.
+
+The writer role needs only CONNECT, schema USAGE, explicit-table SELECT/INSERT,
+required sequence USAGE and explicit EXECUTE on precisely the PostgreSQL
+`pg_catalog.pg_try_advisory_xact_lock(integer, integer)` overload. The future
+privilege deployment must first remove its PUBLIC/default EXECUTE path and then
+grant only `EXECUTE ON FUNCTION
+pg_catalog.pg_try_advisory_xact_lock(integer, integer)` to the dedicated
+writer role. It must also remove PUBLIC EXECUTE from and grant that same writer
+only `EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1()`;
+preflight must prove both exact function privileges and prove the writer cannot
+directly take a `SHARE ROW EXCLUSIVE` table lock. The latter function is owned
+by a non-login table-owner, uses the static body and safe `search_path` above,
+and is the sole indirect lock capability; it grants no INSERT, UPDATE, DELETE,
+TRUNCATE or DDL power. The writer receives no UPDATE, DELETE, DDL, CREATE,
+TRUNCATE, broad schema privilege, role membership or other implicit function
+privilege. Separate owner/migrator and read-only verifier roles are required.
+The dedicated canonical sandbox must also prove before every write that no
+legacy repository, collector, scheduler or other application role can connect
+with INSERT/UPDATE on `matches` or the new inventory/lineage tables; the
+existing update-on-conflict `FixtureRepository.persist` path is explicitly
+excluded. The owner/migrator role must be inactive outside its separately
+authorized migration window. If that exclusive-writer ACL and deployment-path
+proof is unavailable, the run is `BLOCKED_PERMISSION_BOUNDARY`, not a write.
+Before a real write: prove target/schema/ACL/baseline; make a custom-format
+repository-external backup; restore it to a fresh disposable clone; verify it.
+Transaction rollback is failure recovery before commit; a post-commit reversal
+is an authorization-gated owner restore, not manual deletion by remembered IDs.
+
+### Gates and authorization separation
+
+| Gate | Future activity | Required proof | Excludes |
+| --- | --- | --- | --- |
+| 1 | Disposable PostgreSQL proof | Target NULL-provider CHECK rejection and out-of-scope legacy-NULL acceptance; inventory lineage FK/unique/RESTRICT enforcement, insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
+| 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, both exact function grants, static lock-function owner/search-path review, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
+| 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to that parent artifact. Absence is `BLOCKED_PROVENANCE_POLICY`. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
+| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to the full master (otherwise `BLOCKED_PROVENANCE_POLICY`); `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
+| 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
+
+Canonical inventory, source linkage and historical odds staging use separate
+transactions, executors, import-run identities, roles and fresh runtime
+authorization gates.
+D4E canonical_match_id remains NULL. FotMob recovered-file identity supports
+this design but not endpoint/capture-process/licence evidence; therefore a
+future real canary or master inventory write remains
+`BLOCKED_PROVENANCE_POLICY` until that evidence is independently reviewed and
+hash-bound to the proposed artifact. Football-Data Git provenance is separately
+required for linkage/odds import.
+
+No provider request, browser action, migration, database/schema/row write,
+canonical/linkage/staging/import, persistent M3 sandbox action, raw-payload
+storage, training, backtest or prediction occurred. A future separate task may
+implement/test the writer, v2 artifact contract and isolated migration plan; it
+may not execute a canonical or linkage write without another explicit
+authorization.

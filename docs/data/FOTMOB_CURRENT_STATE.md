@@ -9,7 +9,7 @@
 - retained raw storage state and historical audit scope are recorded below and
   in `docs/data/FOTMOB_RETAINED_RAW_STAGE_STATUS.md`
 
-## Current authoritative status — 2026-07-28
+## Current authoritative status — 2026-07-29
 
 ```text
 Official Architecture Decision Gate direction = redo source inventory strategy
@@ -34,6 +34,10 @@ Evidence-backed outcome = FOTMOB_IDENTITY_BASELINE_REUSE_RECOMMENDED
   32/32 parser validation are not proven.
 - The retained data and `matches.match_id`/`external_id` identity baseline are
   evidence assets; they do not establish a future writer entrypoint.
+- The 2026-07-29 read-only schema review found no provider-scoped external-ID
+  or business-identity uniqueness, no canonical import lineage and an
+  update-on-conflict generic writer. These are implementation requirements,
+  not permission to reuse a legacy writer.
 
 ### Current mapping-target chronology (separate from retained rows)
 
@@ -57,8 +61,11 @@ this reconciliation. These are not M3 Football-Data candidates and do not
 define its population. The separate M3 2026-07-28 offline audit has now
 compared 892 Football-Data Premier League candidates with 1,140 recovered
 FotMob canonical candidates: 888 are exact unique and four are isolated
-kickoff conflicts. That result does not reclassify any 32/10/8 Ligue 1 mapping
-target or validate a raw writer/import.
+kickoff conflicts. The design selects all 1,140 for future inventory, treats
+888 as linkage-only, keeps four linkage-quarantine, and treats the remaining
+248 as canonical-only/unlinked. The four plus 248 are the 252 candidates
+without an exact Football-Data link. That result does not reclassify any
+32/10/8 Ligue 1 mapping target or validate a raw writer/import.
 
 ### Historical controlled audit milestone
 
@@ -115,8 +122,10 @@ all 58 rows is not uniquely attributable.
 - M3 candidate-to-recovered-FotMob-candidate compatibility is proven only for
   the bounded 2022/2023–2024/2025 Premier League audit: 888 exact unique and
   four isolated kickoff conflicts out of 892 source candidates. The local
-  development `matches` inventory remains zero for that scope, and no canonical
-  inventory writer, link or import has been authorized.
+  development `matches` inventory remains zero for that scope. The recovered
+  1,140-candidate `candidate-match-identity/v1` artifact has no status field,
+  so it cannot pass future writer preflight; no inventory writer, link or
+  import has been authorized.
 - No network, database write, migration, new identity generation or legacy
   writer execution is authorized.
 
@@ -132,12 +141,13 @@ all 58 rows is not uniquely attributable.
 ## Recommended next step
 
 Do not start automatically. Recommended next task only after user confirmation:
-a bounded canonical-inventory write design review that admits only the 888
-exact M3 candidates and keeps all four kickoff conflicts isolated. The 32/10/8
-Ligue 1 FotMob mapping states remain independent ingestion-governance evidence
-and do not define the M3 candidate population. No network, database write,
-migration, new identity generation, canonical-linkage persistence or legacy
-writer execution is authorized.
+an implementation review for a new fail-closed canonical writer, its
+status-complete hash-bound FotMob artifact contract, and isolated
+provider-scoped uniqueness/import-lineage migration plan. Future inventory is
+1,140 candidates; linkage remains separately authorized for 888 exact
+identities and the four conflicts remain quarantine. The 32/10/8 Ligue 1
+states remain independent. No network, database write, migration,
+canonical-linkage persistence or legacy-writer execution is authorized here.
 
 The future canonical FotMob writer is a separate `data-*`-gated business
 milestone, not an automatic follow-up or a legacy-script restart.
