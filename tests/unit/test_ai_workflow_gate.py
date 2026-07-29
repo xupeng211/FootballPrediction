@@ -21,6 +21,7 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/ops"))
 import ai_workflow_gate as gate  # noqa: E402
 
+from scripts.ops.helpers import disposable_canonical_db_proof_scan as proof_scan  # noqa: E402
 from scripts.ops.helpers import git_change_helpers  # noqa: E402
 
 NETWORK_TOKEN = "ax" + "ios"
@@ -453,6 +454,23 @@ def test_blind_spot_path_classification():
     # src/ and scripts/ are not blind spots
     assert gate._is_blind_spot_path("src/main.py") is False
     assert gate._is_blind_spot_path("scripts/ops/check.py") is False
+
+
+def test_marker_bound_disposable_db_write_proof_is_exactly_scoped(monkeypatch, tmp_path):
+    proof_file = tmp_path / "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    proof_file.parent.mkdir(parents=True)
+    proof_file.write_text(
+        "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: synthetic only.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(proof_scan, "ROOT", tmp_path)
+
+    assert proof_scan.is_explicit_disposable_db_write_proof(
+        "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    )
+    assert not proof_scan.is_explicit_disposable_db_write_proof(
+        "tests/integration/odds_staging/ephemeral_postgres.test.js"
+    )
 
 
 def _unsafe_source(count: int = 1) -> str:
