@@ -1022,16 +1022,21 @@ preflight old rows without rewriting them. Its minimum design is:
    `CHECK ((artifact_kind = 'master') = (parent_artifact_id IS NULL))`; import runs have a surrogate primary key
    and exactly one non-null `artifact_id REFERENCES
    m3_canonical_source_artifacts ON DELETE RESTRICT`, plus unique run identity,
-   authorization and code revision; each match lineage has a surrogate primary
-   key, non-null `match_id REFERENCES matches(match_id) ON DELETE RESTRICT`,
-   non-null `artifact_id REFERENCES m3_canonical_source_artifacts ON DELETE
-   RESTRICT`, candidate/provider ID and immutable fingerprint. It has both
+   authorization, code revision and `UNIQUE (run_id, artifact_id)`; each match
+   lineage has a surrogate primary key, non-null `match_id REFERENCES
+   matches(match_id) ON DELETE RESTRICT`, non-null `artifact_id REFERENCES
+   m3_canonical_source_artifacts ON DELETE RESTRICT`, non-null
+   `created_import_run_id`, and `(created_import_run_id, artifact_id) REFERENCES
+   m3_canonical_import_runs(run_id, artifact_id) ON DELETE RESTRICT`, plus
+   candidate/provider ID and immutable fingerprint. It has both
    `UNIQUE (artifact_id, candidate_id)` and `UNIQUE (match_id, artifact_id)`;
    therefore exactly one artifact candidate maps to one canonical row and a
    repeated artifact cannot create duplicate or orphan lineage. A source
    artifact may have many lineages and many import-run records; a canonical row
    may have lineages for several registered artifacts (for example an
-   allowlisted canary and its parent master). All lineage retention is
+   allowlisted canary and its parent master). Each lineage is created in the
+   same state-changing transaction as its exact creating import run. All
+   lineage retention is
    delete-restricted, including normal writer roles; and
 5. preserve provider status separately from application-status mapping.
 
@@ -1042,7 +1047,12 @@ already_present_equivalent, conflict_external_id, conflict_business_identity,
 conflict_kickoff, conflict_home_away, conflict_competition, conflict_season,
 invalid_candidate or out_of_scope. `exact_duplicate` means that the current
 source-artifact and candidate-lineage records already bind that provider ID and
-immutable fingerprint: it is a strictly zero-delta replay of the same input.
+immutable fingerprint: it is a strictly zero-delta replay of the same input
+for business rows, artifacts, import runs and lineage. Fresh authorization for
+a no-write replay is retained as a hash-bound, database-external authorization
+receipt (artifact SHA-256/business hash, target, code revision, authorization
+ID and expiry), emitted for operator retention before the zero-delta outcome;
+it is not a new DB import-run row.
 `already_present_equivalent` is narrower and may commit only when a different,
 registered and explicitly allowlisted input artifact has the same immutable
 parent-master artifact SHA-256/business hash, and the existing canonical row
