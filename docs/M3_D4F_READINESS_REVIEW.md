@@ -889,7 +889,21 @@ schema version, provenance, expected total/seasons and provider/competition
 scope. It is candidate evidence, never authorization. Every candidate must
 include stable numeric FotMob ID, deterministic candidate ID, provider,
 competition, season, ordered teams, strict absolute kickoff, provider status
-and a versioned status mapping.
+and a versioned status mapping. `source_provider` must be exactly the lowercase
+literal `fotmob`; the writer derives `canonical_provider` from that controlled
+field and rejects a blank, differently cased or artifact-supplied alternative.
+
+Status completion may add only v2 fields; it may not silently revise the
+identity population that the cross-source audit used. Before a v2 master or
+canary is accepted, its deterministic projection of the v1 identity fields
+(`id`, `source_provider`, `source_match_id`, `competition`, `season`,
+`home_team`, `away_team`, `kickoff_at`) must reproduce the 1,140-candidate v1
+business hash `eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f`.
+If that projection differs, the writer fails closed: the existing 888 exact
+links and four quarantines cannot be reused until the formal cross-source audit
+is rerun on that identity population and a separately reviewed linkage decision
+replaces the current one. Status and its versioned mapping are deliberately
+outside that identity projection but remain required v2 fields.
 
 Each execution must separately pass a fresh runtime authorization gate; the
 authorization phrase is supplied outside the artifact and is not accepted from
@@ -927,17 +941,24 @@ silently relax the full-inventory 1,140/380/380/380 contract.
 A separately authorized migration implementation/review is required and must
 preflight old rows without rewriting them. Its minimum design is:
 1. retain matches.match_id as candidate ID and numeric FotMob ID in external_id;
-2. add nullable canonical_provider (initial value fotmob), not mixed data_source;
+2. add nullable `canonical_provider` for legacy rows, not mixed `data_source`,
+   but enforce `CHECK (canonical_provider IS NULL OR canonical_provider =
+   'fotmob')` and `CHECK (NOT (league_name = 'Premier League' AND season IN
+   ('2022/2023', '2023/2024', '2024/2025')) OR (canonical_provider = 'fotmob'
+   AND external_id IS NOT NULL))`; therefore every new target canonical row is
+   non-null and has the one lowercase provider value, while old out-of-scope
+   rows may remain NULL;
 3. after an explicit collision preflight, add partial PostgreSQL unique
-   indexes (not `ALTER TABLE ... ADD CONSTRAINT`):
-   `CREATE UNIQUE INDEX matches_canonical_provider_external_id_uq ON matches
-   (canonical_provider, external_id) WHERE canonical_provider IS NOT NULL AND
-   external_id IS NOT NULL`, and `CREATE UNIQUE INDEX
+   indexes (not `ALTER TABLE ... ADD CONSTRAINT`): `CREATE UNIQUE INDEX
+   matches_fotmob_external_id_uq ON matches (external_id) WHERE
+   canonical_provider = 'fotmob'`, and `CREATE UNIQUE INDEX
    matches_m3_epl_fixture_identity_uq ON matches (league_name, season,
    home_team, away_team) WHERE league_name = 'Premier League' AND season IN
-   ('2022/2023', '2023/2024', '2024/2025') AND home_team IS NOT NULL AND
-   away_team IS NOT NULL`; the latter is target-scoped and provider-independent,
-   deliberately omits match_date, and the migration rejects any collision under
+   ('2022/2023', '2023/2024', '2024/2025') AND canonical_provider = 'fotmob'`;
+   the latter is a target-scoped, provider-independent fixture key that
+   deliberately omits match_date. The target-scope CHECK fixes the current
+   provider to `fotmob`; adding another canonical provider later requires a new
+   migration and collision review. This migration rejects any collision under
    either key;
 4. add import-run, source-artifact and match-lineage tables with artifact
    SHA-256/business hash, candidate/provider ID, immutable fingerprint, run and
