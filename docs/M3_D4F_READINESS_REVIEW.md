@@ -1004,9 +1004,10 @@ preflight old rows without rewriting them. Its minimum design is:
    provider to `fotmob`; adding another canonical provider later requires a new
    migration and collision review. This migration rejects any collision under
    either key;
-4. add import-run, source-artifact and match-lineage tables with artifact
-   SHA-256/business hash, candidate/provider ID, immutable fingerprint, run and
-   code revision; and
+4. add `public.m3_canonical_import_runs`,
+   `public.m3_canonical_source_artifacts` and
+   `public.m3_canonical_match_lineages` with artifact SHA-256/business hash,
+   candidate/provider ID, immutable fingerprint, run and code revision; and
 5. preserve provider status separately from application-status mapping.
 
 ### Idempotency, transaction, permission and recovery design
@@ -1039,11 +1040,18 @@ entire 1,140-row master artifact: prove target/schema/role, fresh runtime
 authorization, its v1 identity-projection hash and baseline fingerprint; set
 timeouts and `SERIALIZABLE` isolation; obtain the fixed, exact overload
 `pg_catalog.pg_try_advisory_xact_lock(1793, 1)` (`integer, integer`) for this
-M3 canonical-inventory v1 contract; then acquire `LOCK TABLE matches IN SHARE
-ROW EXCLUSIVE MODE` and the same conflict lock on every future
-inventory/lineage table it will write, in one immutable lexicographic order of
-fully qualified relation names. No preflight read or write may occur until all
-of those locks are held. Any lock timeout or serialization failure rolls back
+M3 canonical-inventory v1 contract; then call the no-argument,
+`SECURITY DEFINER` function
+`public.m3_canonical_inventory_acquire_locks_v1()`. Its non-login table-owner
+must issue four static `LOCK TABLE ... IN SHARE ROW EXCLUSIVE MODE` statements,
+in this immutable fully qualified relation-name order:
+`public.m3_canonical_import_runs`, `public.m3_canonical_match_lineages`,
+`public.m3_canonical_source_artifacts`, `public.matches`. Its body has no
+dynamic SQL, exposes no data-operation path and fixes `search_path` to
+`pg_catalog`; the writer has no direct privilege for these locks. The function
+must execute inside the writer's existing transaction, so these locks remain
+held through preflight and commit/rollback. No preflight read or write may occur
+until all locks are held. Any lock timeout or serialization failure rolls back
 with no automatic retry. Only then re-read and preflight provider and fixture
 identity;
 insert only proven-new canonical/artifact/run/lineage rows; verify the final
@@ -1074,10 +1082,15 @@ required sequence USAGE and explicit EXECUTE on precisely the PostgreSQL
 privilege deployment must first remove its PUBLIC/default EXECUTE path and then
 grant only `EXECUTE ON FUNCTION
 pg_catalog.pg_try_advisory_xact_lock(integer, integer)` to the dedicated
-writer role; its preflight must prove that exact function privilege. It receives
-no UPDATE, DELETE, DDL, CREATE, TRUNCATE, broad schema privilege, role
-membership or other implicit function privilege. Separate owner/migrator and
-read-only verifier roles are required.
+writer role. It must also remove PUBLIC EXECUTE from and grant that same writer
+only `EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1()`;
+preflight must prove both exact function privileges and prove the writer cannot
+directly take a `SHARE ROW EXCLUSIVE` table lock. The latter function is owned
+by a non-login table-owner, uses the static body and safe `search_path` above,
+and is the sole indirect lock capability; it grants no INSERT, UPDATE, DELETE,
+TRUNCATE or DDL power. The writer receives no UPDATE, DELETE, DDL, CREATE,
+TRUNCATE, broad schema privilege, role membership or other implicit function
+privilege. Separate owner/migrator and read-only verifier roles are required.
 The dedicated canonical sandbox must also prove before every write that no
 legacy repository, collector, scheduler or other application role can connect
 with INSERT/UPDATE on `matches` or the new inventory/lineage tables; the
@@ -1094,8 +1107,8 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 
 | Gate | Future activity | Required proof | Excludes |
 | --- | --- | --- | --- |
-| 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, advisory plus conflicting table-lock/serializable behavior, and backup/restore. | Persistent DB, real write, provider request. |
-| 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
+| 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
+| 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, both exact function grants, static lock-function owner/search-path review, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
 | 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
 | 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
