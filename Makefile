@@ -438,6 +438,8 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-help"
 	@echo "  make data-check"
 	@echo "  make data-fotmob-candidates-network-export LEAGUE_ID=<id> COMPETITION=\"Premier League\" SEASONS=\"2022/2023 2023/2024 2024/2025\" NETWORK_AUTHORIZATION=yes  # explicit live FotMob fixture access only; no DB write"
+	@echo "  make data-m3-canonical-inventory-preflight ARTIFACT=<path> ARTIFACT_SHA256=<sha256>  # validates only; no DB/network/browser write"
+	@echo "  make data-m3-canonical-inventory-disposable-proof M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION=authorized-synthetic-disposable-proof-v1  # synthetic, task-specific temporary PostgreSQL proof only; no persistent write"
 	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
