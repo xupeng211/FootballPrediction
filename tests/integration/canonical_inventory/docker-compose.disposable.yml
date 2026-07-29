@@ -1,0 +1,92 @@
+# lifecycle: permanent; M3 writer integration harness. All services/volumes have
+# task-specific labels and are destroyed by run_disposable_postgres.sh.
+services:
+    ephemeral-postgres:
+        image: postgres:15-alpine
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        environment:
+            POSTGRES_DB: ${M3_CANONICAL_DB_NAME:?missing database name}
+            POSTGRES_USER: ${M3_CANONICAL_DB_ADMIN_USER:?missing admin user}
+            POSTGRES_PASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
+        tmpfs: ['/var/lib/postgresql/data:rw,noexec,nosuid,size=384m']
+        healthcheck:
+            test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+            interval: 2s
+            timeout: 2s
+            retries: 30
+        networks: [ephemeral]
+
+    bootstrap:
+        image: footballprediction:v175-stable
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        entrypoint: ['node']
+        working_dir: /workspace
+        command: ['tests/integration/canonical_inventory/bootstrap_disposable_postgres.js']
+        depends_on: { ephemeral-postgres: { condition: service_healthy } }
+        environment: &db_env
+            M3_CANONICAL_DB_HOST: ephemeral-postgres
+            M3_CANONICAL_DB_PORT: '5432'
+            M3_CANONICAL_DB_NAME: ${M3_CANONICAL_DB_NAME:?missing database name}
+            M3_CANONICAL_DB_ADMIN_USER: ${M3_CANONICAL_DB_ADMIN_USER:?missing admin user}
+            M3_CANONICAL_DB_ADMIN_PASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
+            M3_CANONICAL_DB_WRITER_USER: m3_canonical_writer
+            M3_CANONICAL_DB_WRITER_PASSWORD: m3_canonical_writer_proof
+        volumes: ['../../../:/workspace:ro']
+        networks: [ephemeral]
+
+    prewrite-backup:
+        image: postgres:15-alpine
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        depends_on: { bootstrap: { condition: service_completed_successfully } }
+        environment:
+            <<: *db_env
+            PGPASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
+        command:
+            - sh
+            - -ec
+            - >-
+                pg_dump -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$M3_CANONICAL_DB_NAME" -Fc -f /backup/prewrite.dump;
+                psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$M3_CANONICAL_DB_NAME" -Atqc "SELECT COUNT(*) FROM matches" > /backup/prewrite_matches.count;
+                test "$$(cat /backup/prewrite_matches.count)" = 0
+        volumes: ['backup:/backup']
+        networks: [ephemeral]
+
+    runner:
+        image: footballprediction:v175-stable
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        entrypoint: ['node']
+        working_dir: /workspace
+        command: ['--test', 'tests/integration/canonical_inventory/disposable_postgres.test.js']
+        depends_on: { prewrite-backup: { condition: service_completed_successfully } }
+        environment: *db_env
+        volumes: ['../../../:/workspace:ro']
+        networks: [ephemeral]
+
+    restore-verifier:
+        image: postgres:15-alpine
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+        depends_on: { runner: { condition: service_completed_successfully } }
+        environment:
+            <<: *db_env
+            PGPASSWORD: ${M3_CANONICAL_DB_ADMIN_PASSWORD:?missing admin password}
+        command:
+            - sh
+            - -ec
+            - >-
+                restore_db="$${M3_CANONICAL_DB_NAME}_restore";
+                createdb -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" "$$restore_db";
+                pg_restore -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" /backup/prewrite.dump;
+                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc 'SELECT COUNT(*) FROM matches')" = 0;
+                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT has_table_privilege('m3_canonical_writer', 'public.matches', 'INSERT')")" = t;
+                test "$$(psql -h ephemeral-postgres -U "$$M3_CANONICAL_DB_ADMIN_USER" -d "$$restore_db" -Atqc "SELECT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'matches_m3_epl_canonical_identity_required')")" = t;
+                echo '{"status":"prewrite_backup_restore_verified","restored_matches":0}'
+        volumes: ['backup:/backup:ro']
+        networks: [ephemeral]
+
+volumes:
+    backup:
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }
+
+networks:
+    ephemeral:
+        labels: { com.footballprediction.scope: m3-canonical-inventory-disposable }

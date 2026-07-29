@@ -180,13 +180,13 @@ M3 identity contract.
 
 The following remain unresolved:
 
-* ten concrete FotMob targets that still need new evidence and eight mappings/
+- ten concrete FotMob targets that still need new evidence and eight mappings/
   baselines that remain suspended;
-* M3 candidate-to-`matches.match_id` compatibility and value overlap;
-* team, competition, season and kickoff/timezone mappings;
-* real source location, immutable hashes and provenance;
-* real import envelope;
-* training quality and leakage controls.
+- M3 candidate-to-`matches.match_id` compatibility and value overlap;
+- team, competition, season and kickoff/timezone mappings;
+- real source location, immutable hashes and provenance;
+- real import envelope;
+- training quality and leakage controls.
 
 ### Why this evidence-backed correction is material
 
@@ -253,13 +253,13 @@ pipeline restart.
 
 The other formal directions were evaluated and not selected:
 
-* `abandon current batch`: not selected because 32 exact historical FotMob
+- `abandon current batch`: not selected because 32 exact historical FotMob
   mapping targets have later source-controlled accepted/resolved evidence.
-* `rebuild canonical identity pipeline`: not selected because the retained
+- `rebuild canonical identity pipeline`: not selected because the retained
   `matches`/`external_id` baseline has real-data proof.
-* `switch data source / compare alternative source`: not selected; this work
+- `switch data source / compare alternative source`: not selected; this work
   did not choose to replace or compare providers.
-* `redesign FotMob identity mapping strategy`: not selected because no evidence
+- `redesign FotMob identity mapping strategy`: not selected because no evidence
   identifies the retained FotMob identity design as needing redesign.
 
 The formal decision is no longer pending. The bounded inventory used the
@@ -296,19 +296,19 @@ migration, business writes, canonical-linkage persistence and payload export.
 
 ## 3. Evidence reviewed
 
-| Area | Files | Evidence class |
-| --- | --- | --- |
-| Staging DDL | V26.8/V26.9 migrations | current static |
-| Persistence boundary | odds_staging persistenceContracts/persistenceRepository | current static |
-| Candidate linker | odds_staging matchLinker/contracts/pipeline and unit tests | current static |
-| Canonical matches | deploy/docker/init_db.sql, V6.5, V12.4, match_repository.py | current static |
-| Identity workflows | FotMob exporter, controlled seed/readiness, Recon | current static |
-| D4E state/counts | PROJECT_STATUS, D4D/runbook docs, Issue #1793 | historical only |
-| Local Docker target | `football_prediction_db_dev` / `football_db`, `claude_reader` | current read-only inventory |
-| FotMob retained baseline | 58 strong harvested FotMob matches; 76 linked raw rows; 32 retained full raw-payload records | retained local data |
-| football-data.co.uk retained odds | 2 rows, both linked to a synthetic match and `test_sample.html` | synthetic-only retained evidence |
-| OddsPortal retained mapping/odds | both tables exist but contain zero rows | no retained execution evidence |
-| M3 staging tables | four V26.8 tables absent from this development DB | blocked local target |
+| Area                              | Files                                                                                        | Evidence class                   |
+| --------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------- |
+| Staging DDL                       | V26.8/V26.9 migrations                                                                       | current static                   |
+| Persistence boundary              | odds_staging persistenceContracts/persistenceRepository                                      | current static                   |
+| Candidate linker                  | odds_staging matchLinker/contracts/pipeline and unit tests                                   | current static                   |
+| Canonical matches                 | deploy/docker/init_db.sql, V6.5, V12.4, match_repository.py                                  | current static                   |
+| Identity workflows                | FotMob exporter, controlled seed/readiness, Recon                                            | current static                   |
+| D4E state/counts                  | PROJECT_STATUS, D4D/runbook docs, Issue #1793                                                | historical only                  |
+| Local Docker target               | `football_prediction_db_dev` / `football_db`, `claude_reader`                                | current read-only inventory      |
+| FotMob retained baseline          | 58 strong harvested FotMob matches; 76 linked raw rows; 32 retained full raw-payload records | retained local data              |
+| football-data.co.uk retained odds | 2 rows, both linked to a synthetic match and `test_sample.html`                              | synthetic-only retained evidence |
+| OddsPortal retained mapping/odds  | both tables exist but contain zero rows                                                      | no retained execution evidence   |
+| M3 staging tables                 | four V26.8 tables absent from this development DB                                            | blocked local target             |
 
 This is an **asset inventory summary**, not a target-state delta. Its evidence
 levels describe retained data, code or staging availability; none of its four
@@ -321,15 +321,15 @@ counts below are bounded exact `COUNT(*)` results; catalog `n_live_tup` was not
 used as a substitute because it was stale for populated tables. Time ranges are
 UTC and intentionally omit raw payload values.
 
-| Table / asset | Rows | Source or data version | Retained time range | Classification and identity result |
-| --- | ---: | --- | --- | --- |
-| `matches` | 60 | 58 strong `fotmob_live_fetch`/`V25.1`; 2 synthetic rows | real FotMob match dates 2025-08-15–2026-05-10 | 60/60 have `external_id`; 58 are `harvested`; external-ID duplicate groups: 0 |
-| `raw_match_data` | 76 | `fotmob_live_v1` 58; HTML hydration 8; page-props 8; synthetic 2 | real FotMob collection 2026-05-14–2026-06-12 | 76/76 have a hash and an enforced FK to `matches`; 60 distinct `match_id`; raw orphans: 0 |
-| `fotmob_raw_match_payloads` | 32 | `source=fotmob`, `adg60_raw_json_v1` | captured/ingested 2026-06-02 | retained full raw-payload assets: V26.5 requires complete unparsed `__NEXT_DATA__` JSON in non-null `next_data_json`, with raw-file locators, SHA-256 values, byte sizes, capture and ingestion metadata; complete `page_props_json` is retained when present but is nullable. Their `match_id` values overlap the retained `matches` and `raw_match_data` sets at match level, not as record-level payload-to-raw lineage |
-| `bookmaker_odds_history` | 2 | Bet365 1x2; Pinnacle Asian Handicap; basename `test_sample.html` | collected 2026-05-01 | synthetic-only: both FK-link to the `manual_html_seed` synthetic match; one distinct `match_id` |
-| `odds` | 0 | — | — | no retained OddsPortal market evidence |
-| `matches_oddsportal_mapping` | 0 | — | — | no retained Recon mapping evidence |
-| M3 V26.8 staging tables | absent | — | — | no M3 import-run/source-file/accepted/quarantine target in this development DB |
+| Table / asset                |   Rows | Source or data version                                           | Retained time range                           | Classification and identity result                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------------------------- | -----: | ---------------------------------------------------------------- | --------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `matches`                    |     60 | 58 strong `fotmob_live_fetch`/`V25.1`; 2 synthetic rows          | real FotMob match dates 2025-08-15–2026-05-10 | 60/60 have `external_id`; 58 are `harvested`; external-ID duplicate groups: 0                                                                                                                                                                                                                                                                                                                                              |
+| `raw_match_data`             |     76 | `fotmob_live_v1` 58; HTML hydration 8; page-props 8; synthetic 2 | real FotMob collection 2026-05-14–2026-06-12  | 76/76 have a hash and an enforced FK to `matches`; 60 distinct `match_id`; raw orphans: 0                                                                                                                                                                                                                                                                                                                                  |
+| `fotmob_raw_match_payloads`  |     32 | `source=fotmob`, `adg60_raw_json_v1`                             | captured/ingested 2026-06-02                  | retained full raw-payload assets: V26.5 requires complete unparsed `__NEXT_DATA__` JSON in non-null `next_data_json`, with raw-file locators, SHA-256 values, byte sizes, capture and ingestion metadata; complete `page_props_json` is retained when present but is nullable. Their `match_id` values overlap the retained `matches` and `raw_match_data` sets at match level, not as record-level payload-to-raw lineage |
+| `bookmaker_odds_history`     |      2 | Bet365 1x2; Pinnacle Asian Handicap; basename `test_sample.html` | collected 2026-05-01                          | synthetic-only: both FK-link to the `manual_html_seed` synthetic match; one distinct `match_id`                                                                                                                                                                                                                                                                                                                            |
+| `odds`                       |      0 | —                                                                | —                                             | no retained OddsPortal market evidence                                                                                                                                                                                                                                                                                                                                                                                     |
+| `matches_oddsportal_mapping` |      0 | —                                                                | —                                             | no retained Recon mapping evidence                                                                                                                                                                                                                                                                                                                                                                                         |
+| M3 V26.8 staging tables      | absent | —                                                                | —                                             | no M3 import-run/source-file/accepted/quarantine target in this development DB                                                                                                                                                                                                                                                                                                                                             |
 
 The historical #1487 controlled audit explicitly covers four retained rows
 (4/4 parseable, SHA-valid and inner-`matchId` valid). The current
@@ -344,18 +344,18 @@ OddsPortal import.
 
 ### Reverse-proven component matrix
 
-| Component or retained asset | Database/static evidence | Proof level | Recovery treatment |
-| --- | --- | --- | --- |
-| FotMob `matches` identity baseline | 58 strong, harvested FotMob match rows; all 60 matches have external IDs; raw FK coverage is 60/60 | `PROVEN_BY_RETAINED_REAL_DATA` for the retained identity asset; historic writer invocation is not uniquely attributable | Reuse `matches.match_id`/`external_id` baseline; do not recreate identities |
-| FotMob retained raw asset | 58 retained `fotmob_live_v1` rows with hashes and FK linkage; the historical four-row audit is separate evidence | `PROVEN_BY_RETAINED_REAL_DATA` for the retained data/identity outcome | Preserve and reuse the data/identity evidence; it is not a writer surface |
-| Historical writer provenance | Retained rows have no unique run-level attribution to one named writer | `LEGACY_DATA_PRESENT_WRITER_UNCERTAIN` | Do not attribute all retained rows to a named script |
-| `n3_live_fotmob_raw_retain.js` | Historical bounded N=3 network/UPSERT path; it is a legacy acquisition script, not a README canonical surface | `HISTORICAL_EVIDENCE_ONLY` / legacy | Never make it a canonical dependency, recovery contract or automatic execution path |
-| Future FotMob writer | README declares production acquisition `Not yet established` | `NOT_YET_ESTABLISHED` | Establish and test a canonical `data-*`-gated surface only in a future milestone with separate network/write authorization |
-| `DiscoveryService` / `FixtureRepository` | Current code persists `matches`, but retained rows carry no run-level writer provenance | `IMPLEMENTED_NOT_EXECUTION_PROVEN` for the exact component execution | Preserve and assess as the controlled L1 route; do not rewrite it |
-| FotMob raw parser/detail components | 32 retained full raw-payload records establish a collection/persistence asset outcome, not a named parser invocation or parser validation | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | May support a future bounded no-write offline parser/schema verification; no parser or network run now |
-| football-data CSV adapter / `ExistingFotMobMatchResolver` | `csv_bulk_loader.js` has a resolver and bookmaker writer, but the only two retained rows are synthetic HTML samples | `IMPLEMENTED_NOT_EXECUTION_PROVEN` | Do not rewrite parser/resolver; first obtain a bounded real-file, no-write verification authorization |
-| OddsPortal Recon / harvest pipeline | Mapping and market tables exist; both counts are zero; legacy SQL writers exist in the codebase | `NO_EVIDENCE` of retained execution | Keep legacy browser/harvest routes blocked; only safely adapt after separate evidence/authorization |
-| M3 historical persistence repository | Historical D4E sandbox record is a 1/1/6/3 controlled synthetic write; the tables are absent here | `PROVEN_BY_SYNTHETIC_CONTROLLED_WRITE` | Reuse contract only; it does not prove real-provider ingestion or canonical linkage |
+| Component or retained asset                               | Database/static evidence                                                                                                                  | Proof level                                                                                                             | Recovery treatment                                                                                                         |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| FotMob `matches` identity baseline                        | 58 strong, harvested FotMob match rows; all 60 matches have external IDs; raw FK coverage is 60/60                                        | `PROVEN_BY_RETAINED_REAL_DATA` for the retained identity asset; historic writer invocation is not uniquely attributable | Reuse `matches.match_id`/`external_id` baseline; do not recreate identities                                                |
+| FotMob retained raw asset                                 | 58 retained `fotmob_live_v1` rows with hashes and FK linkage; the historical four-row audit is separate evidence                          | `PROVEN_BY_RETAINED_REAL_DATA` for the retained data/identity outcome                                                   | Preserve and reuse the data/identity evidence; it is not a writer surface                                                  |
+| Historical writer provenance                              | Retained rows have no unique run-level attribution to one named writer                                                                    | `LEGACY_DATA_PRESENT_WRITER_UNCERTAIN`                                                                                  | Do not attribute all retained rows to a named script                                                                       |
+| `n3_live_fotmob_raw_retain.js`                            | Historical bounded N=3 network/UPSERT path; it is a legacy acquisition script, not a README canonical surface                             | `HISTORICAL_EVIDENCE_ONLY` / legacy                                                                                     | Never make it a canonical dependency, recovery contract or automatic execution path                                        |
+| Future FotMob writer                                      | README declares production acquisition `Not yet established`                                                                              | `NOT_YET_ESTABLISHED`                                                                                                   | Establish and test a canonical `data-*`-gated surface only in a future milestone with separate network/write authorization |
+| `DiscoveryService` / `FixtureRepository`                  | Current code persists `matches`, but retained rows carry no run-level writer provenance                                                   | `IMPLEMENTED_NOT_EXECUTION_PROVEN` for the exact component execution                                                    | Preserve and assess as the controlled L1 route; do not rewrite it                                                          |
+| FotMob raw parser/detail components                       | 32 retained full raw-payload records establish a collection/persistence asset outcome, not a named parser invocation or parser validation | `IMPLEMENTED_NOT_EXECUTION_PROVEN`                                                                                      | May support a future bounded no-write offline parser/schema verification; no parser or network run now                     |
+| football-data CSV adapter / `ExistingFotMobMatchResolver` | `csv_bulk_loader.js` has a resolver and bookmaker writer, but the only two retained rows are synthetic HTML samples                       | `IMPLEMENTED_NOT_EXECUTION_PROVEN`                                                                                      | Do not rewrite parser/resolver; first obtain a bounded real-file, no-write verification authorization                      |
+| OddsPortal Recon / harvest pipeline                       | Mapping and market tables exist; both counts are zero; legacy SQL writers exist in the codebase                                           | `NO_EVIDENCE` of retained execution                                                                                     | Keep legacy browser/harvest routes blocked; only safely adapt after separate evidence/authorization                        |
+| M3 historical persistence repository                      | Historical D4E sandbox record is a 1/1/6/3 controlled synthetic write; the tables are absent here                                         | `PROVEN_BY_SYNTHETIC_CONTROLLED_WRITE`                                                                                  | Reuse contract only; it does not prove real-provider ingestion or canonical linkage                                        |
 
 ### FotMob mapping-target chronology reconciliation
 
@@ -363,12 +363,12 @@ The retained database assets above and historical mapping targets are different
 objects. This static reconciliation used no database data as a mapping-state
 shortcut. It read and compared the following chronological evidence:
 
-| Phase | Date | Concrete target result |
-| --- | --- | --- |
-| L2V3AT | 2026-05-26 | 8 accepted mappings/baselines suspended; 42 distinct targets blocked pending review |
-| L2V3BC | 2026-05-27 | the same 42 exact external IDs moved from `blocked_pending_review` to `needs_new_evidence`; no clean/reject/supersede/re-acceptance result |
-| ADG59A | 2026-05-31 | 32 exact targets promoted with confirmed orientation/date/competition and no duplicate conflict |
-| ADG59B | 2026-06-01 | those 32 exact targets recorded `accepted_source_controlled_only` and `resolved_source_controlled_only`; no DB/raw write and no raw-write readiness |
+| Phase                 | Date          | Concrete target result                                                                                                                                   |
+| --------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| L2V3AT                | 2026-05-26    | 8 accepted mappings/baselines suspended; 42 distinct targets blocked pending review                                                                      |
+| L2V3BC                | 2026-05-27    | the same 42 exact external IDs moved from `blocked_pending_review` to `needs_new_evidence`; no clean/reject/supersede/re-acceptance result               |
+| ADG59A                | 2026-05-31    | 32 exact targets promoted with confirmed orientation/date/competition and no duplicate conflict                                                          |
+| ADG59B                | 2026-06-01    | those 32 exact targets recorded `accepted_source_controlled_only` and `resolved_source_controlled_only`; no DB/raw write and no raw-write readiness      |
 | later ADG60 artifacts | 2026-06-01–02 | reuse the same 32 `accepted_suspension_resolved` identities for preflight/no-write evidence; no later mapping reversal, rejection or contradiction found |
 
 Canonical keys were not inferred from order or fuzzy fixture similarity. Exact
@@ -388,58 +388,58 @@ Evidence labels used in the table are exact tracked paths:
 <details>
 <summary>All 50 concrete FotMob mapping targets and latest authoritative state</summary>
 
-| Target key | Earlier state | Later same-identity evidence | Final taxonomy | Latest evidence |
-| --- | --- | --- | --- | --- |
-| `53_20252026_4830458` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830459` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830460` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830461` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
-| `53_20252026_4830462` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830463` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
-| `53_20252026_4830464` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830465` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
-| `53_20252026_4830466` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
-| `53_20252026_4830467` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830468` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830469` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830470` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830471` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target | `needs_new_evidence` | L2V3BC |
-| `53_20252026_4830472` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830473` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830474` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830475` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830476` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830477` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830478` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830479` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830480` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830481` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
-| `53_20252026_4830482` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830483` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830484` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830485` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830486` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830487` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830488` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830489` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830490` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830491` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830492` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830493` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830494` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830495` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830496` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
-| `53_20252026_4830497` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830498` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830499` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830500` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830501` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830502` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830505` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830507` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830508` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
-| `53_20252026_4830510` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate` | ADG59B |
-| `53_20252026_4830511` | `accepted_active` → `suspended` | no exact ADG59 target | `remain_suspended` | L2V3AT |
+| Target key            | Earlier state                                   | Later same-identity evidence               | Final taxonomy       | Latest evidence |
+| --------------------- | ----------------------------------------------- | ------------------------------------------ | -------------------- | --------------- |
+| `53_20252026_4830458` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830459` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830460` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830461` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
+| `53_20252026_4830462` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830463` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
+| `53_20252026_4830464` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830465` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
+| `53_20252026_4830466` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
+| `53_20252026_4830467` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830468` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830469` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830470` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830471` | `blocked_pending_review` → `needs_new_evidence` | no exact ADG59 target                      | `needs_new_evidence` | L2V3BC          |
+| `53_20252026_4830472` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830473` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830474` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830475` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830476` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830477` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830478` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830479` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830480` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830481` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
+| `53_20252026_4830482` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830483` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830484` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830485` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830486` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830487` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830488` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830489` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830490` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830491` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830492` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830493` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830494` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830495` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830496` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
+| `53_20252026_4830497` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830498` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830499` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830500` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830501` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830502` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830505` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830507` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830508` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
+| `53_20252026_4830510` | `blocked_pending_review` → `needs_new_evidence` | ADG59A promotion; ADG59B accepted/resolved | `clean_candidate`    | ADG59B          |
+| `53_20252026_4830511` | `accepted_active` → `suspended`                 | no exact ADG59 target                      | `remain_suspended`   | L2V3AT          |
 
 </details>
 
@@ -499,14 +499,14 @@ paths, not D4F executors.
 
 ## 6. Proposed linkage contract
 
-| Input | Class | Rule |
-| --- | --- | --- |
-| source_provider, candidate_match_id | required | Provider-scoped lineage only; not canonical proof. |
-| competition, season, kickoff_at, source_timezone, home_team, away_team | required for non-external-ID automation | Approved mapping; kickoff must be absolute with interpretation. |
-| source_match_id | optional/preferred | Auto-link only through proven provider-specific canonical external-ID mapping. |
-| historical_match_identity, match_link_evidence | required evidence | Immutable evidence snapshot; not canonical assertion. |
-| odds/bookmaker/market/selection/row order | forbidden for automation | Cannot establish match identity. |
-| fuzzy name/date similarity | review evidence only | Never sets canonical_match_id. |
+| Input                                                                  | Class                                   | Rule                                                                           |
+| ---------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------ |
+| source_provider, candidate_match_id                                    | required                                | Provider-scoped lineage only; not canonical proof.                             |
+| competition, season, kickoff_at, source_timezone, home_team, away_team | required for non-external-ID automation | Approved mapping; kickoff must be absolute with interpretation.                |
+| source_match_id                                                        | optional/preferred                      | Auto-link only through proven provider-specific canonical external-ID mapping. |
+| historical_match_identity, match_link_evidence                         | required evidence                       | Immutable evidence snapshot; not canonical assertion.                          |
+| odds/bookmaker/market/selection/row order                              | forbidden for automation                | Cannot establish match identity.                                               |
+| fuzzy name/date similarity                                             | review evidence only                    | Never sets canonical_match_id.                                                 |
 
 Automatic linkage requires exactly one candidate after reliable external-ID mapping (where present), exact approved competition/season, exact ordered teams, exact kickoff instant/timezone, and no conflict. Missing canonical match, uncertain timezone, reversal, unknown competition, multiple candidates or contradiction cannot auto-link.
 
@@ -514,11 +514,11 @@ Automatic linkage requires exactly one candidate after reliable external-ID mapp
 
 ## 7. Link audit storage options and FK strategy
 
-| Option | Audit/replay/rollback | Assessment |
-| --- | --- | --- |
-| Mutable staging status only | Weak history; bookmaker rows may drift | Not recommended. |
-| Append-only decision/audit table | Strong run scope, conflict and replay history | Viable. |
-| Link table with FK plus audit history; staging snapshot retained | Strong integrity and separation | Recommended. |
+| Option                                                           | Audit/replay/rollback                         | Assessment       |
+| ---------------------------------------------------------------- | --------------------------------------------- | ---------------- |
+| Mutable staging status only                                      | Weak history; bookmaker rows may drift        | Not recommended. |
+| Append-only decision/audit table                                 | Strong run scope, conflict and replay history | Viable.          |
+| Link table with FK plus audit history; staging snapshot retained | Strong integrity and separation               | Recommended.     |
 
 Recommendation: **C — independent link table with FK to `matches(match_id)` plus append-only link-decision audit; staging retains candidate/evidence snapshots.** This is design only, not a migration request. It separates import from canonical decision and lets one decision serve many selections/bookmakers.
 
@@ -526,13 +526,13 @@ Do not add a staging FK until D4F-A proves target compatibility and D4F-B/C prov
 
 ## 8. Recommended D4F phase decomposition
 
-| Phase | Purpose | Reads | Writes | Separate authorization |
-| --- | --- | --- | --- | --- |
-| D4F-A — Read-only canonical identity inventory | Prove schema, constraints, coverage and overlap on one target | Metadata + minimal identity | None | Yes |
-| D4F-B — Offline linkage contract | Pure function + synthetic fixtures | Code/synthetic | None | Yes |
-| D4F-C — Controlled linkage persistence | Bounded decision/link persistence | Approved staging/link scope | Decision/link only | Yes |
-| D4F-D — Real historical-data dry run | Hash-pinned source mapping/link report | Approved real files | None | Yes |
-| D4F-E — Bounded real historical import | Small approved import after A–D | Approved source/evidence | Bounded staging/import only | Yes |
+| Phase                                          | Purpose                                                       | Reads                       | Writes                      | Separate authorization |
+| ---------------------------------------------- | ------------------------------------------------------------- | --------------------------- | --------------------------- | ---------------------- |
+| D4F-A — Read-only canonical identity inventory | Prove schema, constraints, coverage and overlap on one target | Metadata + minimal identity | None                        | Yes                    |
+| D4F-B — Offline linkage contract               | Pure function + synthetic fixtures                            | Code/synthetic              | None                        | Yes                    |
+| D4F-C — Controlled linkage persistence         | Bounded decision/link persistence                             | Approved staging/link scope | Decision/link only          | Yes                    |
+| D4F-D — Real historical-data dry run           | Hash-pinned source mapping/link report                        | Approved real files         | None                        | Yes                    |
+| D4F-E — Bounded real historical import         | Small approved import after A–D                               | Approved source/evidence    | Bounded staging/import only | Yes                    |
 
 D4F-A requires a read-only role, `transaction_read_only=on`, statement timeout, fixed host/database/role allowlist, no temporary tables, no COPY/raw payload export, no credential output and no Docker/service start. Output is aggregated schema/types/constraints/indexes, coverage, duplicate external-ID and unique/ambiguous/unmatched counts only. D4F-B must test unique exact, unmatched, ambiguous, alias conflict, timezone conflict, reversal, replay idempotency and divergent decision conflict. D4F-C cannot write matches/canonical odds/import real data/training. D4F-E needs separately named target/hash/max files/max rows/expected accepted-quarantine/max verified links/transaction/backup/rollback/replay; no numeric cap is invented here.
 
@@ -544,11 +544,11 @@ committed or emitted from the repository. Header checks found no empty or
 duplicate names; all three files are ASCII CSV with LF endings. The table is a
 safe metadata summary, not a source-data export.
 
-| Git path | immutable source commit / blob | SHA-256 / bytes | raw CSV rows and scope |
-| --- | --- | --- | --- |
-| `data/external/odds/raw_odds_2223.csv` | `faa3f7ab031bb6428f0390b3f833ce16addb1f0a` / `d938f7b58fd92aafefa63effe3548afb27b17188` | `e51361323bcdcdcec2faf8f58e7bcfc4f5b193ed6017b284c71538ed70d98ea2` / 175,799 | 380; 106 columns; `Div=E0`; `Date`, `Time`, `HomeTeam`, `AwayTeam`; 2022/2023 by the current season rule. |
-| `data/external/odds/raw_odds_2324.csv` | `faa3f7ab031bb6428f0390b3f833ce16addb1f0a` / `5bc9399ba12ef3ca732477dc207b52ca09edd00e` | `0b669038e94bf305603d841f02006c7d35ebd41c8722c76e479f2393079b995f` / 171,815 | 380; 106 columns; `Div=E0`; `Date`, `Time`, `HomeTeam`, `AwayTeam`; 2023/2024 by the current season rule. |
-| `data/real_odds_raw.csv` | `c8e4be00bb13a1f3559f02696cb23720363ce2c0` / `97a199ffc44a030a632b06ca33f31c3b3904aa6a` | `045cb84f6a75dc947e5aa5c4170c844237c1dcd489ae3264a795f39a20114361` / 219,137 | 420; 133 columns; `Div=E0`; `match_date`, `Time`, `home_team`, `away_team`, `Season`; 132 / 156 / 132 rows for 22/23 / 23/24 / 24/25. |
+| Git path                               | immutable source commit / blob                                                          | SHA-256 / bytes                                                              | raw CSV rows and scope                                                                                                                |
+| -------------------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `data/external/odds/raw_odds_2223.csv` | `faa3f7ab031bb6428f0390b3f833ce16addb1f0a` / `d938f7b58fd92aafefa63effe3548afb27b17188` | `e51361323bcdcdcec2faf8f58e7bcfc4f5b193ed6017b284c71538ed70d98ea2` / 175,799 | 380; 106 columns; `Div=E0`; `Date`, `Time`, `HomeTeam`, `AwayTeam`; 2022/2023 by the current season rule.                             |
+| `data/external/odds/raw_odds_2324.csv` | `faa3f7ab031bb6428f0390b3f833ce16addb1f0a` / `5bc9399ba12ef3ca732477dc207b52ca09edd00e` | `0b669038e94bf305603d841f02006c7d35ebd41c8722c76e479f2393079b995f` / 171,815 | 380; 106 columns; `Div=E0`; `Date`, `Time`, `HomeTeam`, `AwayTeam`; 2023/2024 by the current season rule.                             |
+| `data/real_odds_raw.csv`               | `c8e4be00bb13a1f3559f02696cb23720363ce2c0` / `97a199ffc44a030a632b06ca33f31c3b3904aa6a` | `045cb84f6a75dc947e5aa5c4170c844237c1dcd489ae3264a795f39a20114361` / 219,137 | 420; 133 columns; `Div=E0`; `match_date`, `Time`, `home_team`, `away_team`, `Season`; 132 / 156 / 132 rows for 22/23 / 23/24 / 24/25. |
 
 This proves repository provenance, Git object identity and file integrity for
 the bounded offline preflight inputs. It does not prove the original upstream
@@ -566,20 +566,20 @@ The `38,616 accepted / 216 quarantined` and retained D4E `6 / 3` counts are hist
 
 ## 9A. D4F-A read-only execution evidence
 
-| Item | Verified result |
-| --- | --- |
-| formal source entrypoint | `npm run odds:staging:dry-run` with `football-data-csv@1.2.0`, historical-Git-recovery manifest, fixed E0/Premier League + three-season + exact-alias + Europe/London contract |
-| input population | 1,180 raw CSV rows: 380 + 380 + 420; no extra competition or season |
-| observation unit | 38,832 Football-Data odds observations: 13,680 + 12,546 + 12,606 |
-| candidate deduplication unit | current `buildSemanticMatchIdentity` output where `identity_mode=canonical_match_identity`; no synthetic source ID |
-| unique source candidates | 892: 2022/2023 380, 2023/2024 380, 2024/2025 132 |
-| reproducibility | Run A = Run B: same source fingerprints, counts and SHA-256 business hash `07e579ed21224c354c6dbcf9d44913521d94ce6e48ce24c17cbbd9bfd6b98b8b` |
-| source validity | 0 invalid semantic identities; no non-link quarantine reason; all 38,832 only have `match_link_unmatched` because the canonical candidate set is empty |
-| database identity | service `football_prediction_db_dev`; database `football_db`; PostgreSQL 15.17; `current_user=session_user=claude_reader`; `transaction_read_only=on`; no superuser/create-role/create-db privilege; `CONNECT`, `public` `USAGE` and `matches` `SELECT` verified |
-| inspected canonical schema | `matches.match_id`, `external_id`, `league_name`, `season`, `home_team`, `away_team`, `match_date`, status/source fields; `information_schema` and PostgreSQL role catalog only; no raw payload table queried |
-| relevant canonical population | 0 Premier League/E0 rows for 2022/2023–2024/2025; consequently 0 with/without external identity, kickoff, team coverage, duplicate identity or status/time anomaly |
-| terminal arithmetic | exact unique 0 + unmatched 892 + ambiguous 0 + team conflict 0 + kickoff conflict 0 + competition/season conflict 0 + incomplete canonical 0 + invalid source 0 = 892 |
-| time-difference buckets | no candidate pair exists: exact timestamp 0; timezone-normalized exact 0; 15-minute 0; 30-minute 0; larger 0; missing-kickoff comparison 0 |
+| Item                          | Verified result                                                                                                                                                                                                                                                  |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| formal source entrypoint      | `npm run odds:staging:dry-run` with `football-data-csv@1.2.0`, historical-Git-recovery manifest, fixed E0/Premier League + three-season + exact-alias + Europe/London contract                                                                                   |
+| input population              | 1,180 raw CSV rows: 380 + 380 + 420; no extra competition or season                                                                                                                                                                                              |
+| observation unit              | 38,832 Football-Data odds observations: 13,680 + 12,546 + 12,606                                                                                                                                                                                                 |
+| candidate deduplication unit  | current `buildSemanticMatchIdentity` output where `identity_mode=canonical_match_identity`; no synthetic source ID                                                                                                                                               |
+| unique source candidates      | 892: 2022/2023 380, 2023/2024 380, 2024/2025 132                                                                                                                                                                                                                 |
+| reproducibility               | Run A = Run B: same source fingerprints, counts and SHA-256 business hash `07e579ed21224c354c6dbcf9d44913521d94ce6e48ce24c17cbbd9bfd6b98b8b`                                                                                                                     |
+| source validity               | 0 invalid semantic identities; no non-link quarantine reason; all 38,832 only have `match_link_unmatched` because the canonical candidate set is empty                                                                                                           |
+| database identity             | service `football_prediction_db_dev`; database `football_db`; PostgreSQL 15.17; `current_user=session_user=claude_reader`; `transaction_read_only=on`; no superuser/create-role/create-db privilege; `CONNECT`, `public` `USAGE` and `matches` `SELECT` verified |
+| inspected canonical schema    | `matches.match_id`, `external_id`, `league_name`, `season`, `home_team`, `away_team`, `match_date`, status/source fields; `information_schema` and PostgreSQL role catalog only; no raw payload table queried                                                    |
+| relevant canonical population | 0 Premier League/E0 rows for 2022/2023–2024/2025; consequently 0 with/without external identity, kickoff, team coverage, duplicate identity or status/time anomaly                                                                                               |
+| terminal arithmetic           | exact unique 0 + unmatched 892 + ambiguous 0 + team conflict 0 + kickoff conflict 0 + competition/season conflict 0 + incomplete canonical 0 + invalid source 0 = 892                                                                                            |
+| time-difference buckets       | no candidate pair exists: exact timestamp 0; timezone-normalized exact 0; 15-minute 0; 30-minute 0; larger 0; missing-kickoff comparison 0                                                                                                                       |
 
 The audit used no `SELECT FOR UPDATE`, storage function, temporary table,
 `raw_match_data`/payload read, migration or business-table write. Bounded
@@ -609,8 +609,8 @@ business hash in both runs:
 eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f
 ```
 
-| Artifact | Candidate JSON SHA-256 / bytes | Summary JSON SHA-256 / bytes |
-| --- | --- | --- |
+| Artifact       | Candidate JSON SHA-256 / bytes                                               | Summary JSON SHA-256 / bytes                                             |
+| -------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | recovered run1 | `262949ac986eab1cea0ae8830c9f495b24809724f4aff2f67f6746a43877833b` / 345,027 | `adafba212227010059f9f6ec7be283bc60de0d545c5056639e1ef09bbb9b51a2` / 416 |
 | recovered run2 | `6d06078cef331516ee1bf909eed927b17958517aa382c70fd0a057b9c20e118a` / 345,027 | `4a20b24513363bfdef8d2363cae3fe49e98dbc7a9bf4eadb2a047d2bae33ef8e` / 416 |
 
@@ -628,15 +628,15 @@ fingerprints, byte sizes, ASCII/LF encoding, headers and 380 + 380 + 420 raw
 row counts revalidated. No raw CSV was changed, committed or retained in the
 repository.
 
-| Source input unit | `raw_odds_2223` | `raw_odds_2324` | `real_odds_raw` (mixed seasons) | Total |
-| --- | ---: | ---: | ---: | ---: |
-| raw Football-Data CSV rows | 380 | 380 | 420 | 1,180 |
-| Football-Data odds observations | 13,680 | 12,546 | 12,606 | 38,832 |
+| Source input unit               | `raw_odds_2223` | `raw_odds_2324` | `real_odds_raw` (mixed seasons) |  Total |
+| ------------------------------- | --------------: | --------------: | ------------------------------: | -----: |
+| raw Football-Data CSV rows      |             380 |             380 |                             420 |  1,180 |
+| Football-Data odds observations |          13,680 |          12,546 |                          12,606 | 38,832 |
 
-| Match-candidate unit | 2022/2023 | 2023/2024 | 2024/2025 | Total |
-| --- | ---: | ---: | ---: | ---: |
-| unique semantic match candidates | 380 | 380 | 132 | 892 |
-| FotMob canonical candidates | 380 | 380 | 380 | 1,140 |
+| Match-candidate unit             | 2022/2023 | 2023/2024 | 2024/2025 | Total |
+| -------------------------------- | --------: | --------: | --------: | ----: |
+| unique semantic match candidates |       380 |       380 |       132 |   892 |
+| FotMob canonical candidates      |       380 |       380 |       380 | 1,140 |
 
 The semantic unit remains exactly the current
 `buildSemanticMatchIdentity` value with
@@ -665,17 +665,17 @@ least one such field); no alias was added. The linker then requires ordered
 home/away, competition, season and identical absolute kickoff instants. Its
 approved non-zero kickoff tolerance is therefore none.
 
-| Terminal category | Count |
-| --- | ---: |
-| `exact_unique_match` | 888 |
-| `kickoff_conflict` | 4 |
-| `unmatched` | 0 |
-| `ambiguous_multiple_matches` | 0 |
-| `team_identity_conflict` | 0 |
-| `competition_or_season_conflict` | 0 |
-| `canonical_candidate_incomplete` | 0 |
-| `source_candidate_invalid` | 0 |
-| **terminal total** | **892** |
+| Terminal category                |   Count |
+| -------------------------------- | ------: |
+| `exact_unique_match`             |     888 |
+| `kickoff_conflict`               |       4 |
+| `unmatched`                      |       0 |
+| `ambiguous_multiple_matches`     |       0 |
+| `team_identity_conflict`         |       0 |
+| `competition_or_season_conflict` |       0 |
+| `canonical_candidate_incomplete` |       0 |
+| `source_candidate_invalid`       |       0 |
+| **terminal total**               | **892** |
 
 Per season, the result is 377 exact + 3 kickoff conflicts for 2022/2023,
 379 exact + 1 kickoff conflict for 2023/2024, and 132 exact for 2024/2025.
@@ -695,12 +695,12 @@ The four bounded, isolated conflict samples are all source-derived kickoff
 times earlier than the corresponding canonical candidate; no candidate was
 selected or written for them:
 
-| Season | Ordered teams | Source semantic key | FotMob candidate ID | Delta |
-| --- | --- | --- | --- | ---: |
+| Season    | Ordered teams                       | Source semantic key                                                | FotMob candidate ID   |   Delta |
+| --------- | ----------------------------------- | ------------------------------------------------------------------ | --------------------- | ------: |
 | 2022/2023 | Tottenham Hotspur — AFC Bournemouth | `5960def80d753312601cc3f4835d9a7c1eca39bbff6a099a44a73484f0a0e430` | `47_20222023_3901239` | -15 min |
-| 2023/2024 | Arsenal — Nottingham Forest | `412738104d78683b6df16ee852f2ca1bfe92313d41b1c9526957ef2020d9ccde` | `47_20232024_4193451` | -30 min |
-| 2022/2023 | Fulham — Tottenham Hotspur | `1c415b70a945a704415e35c31106ce4c126450e3e7fdf32f3fd6444491f35d8a` | `47_20222023_3901135` | -15 min |
-| 2022/2023 | Crystal Palace — West Ham United | `591296723603698c7bac5ba0036df8c03cfd8deffe2995c3c976dd57aa6bfd3b` | `47_20222023_3901266` | -15 min |
+| 2023/2024 | Arsenal — Nottingham Forest         | `412738104d78683b6df16ee852f2ca1bfe92313d41b1c9526957ef2020d9ccde` | `47_20232024_4193451` | -30 min |
+| 2022/2023 | Fulham — Tottenham Hotspur          | `1c415b70a945a704415e35c31106ce4c126450e3e7fdf32f3fd6444491f35d8a` | `47_20222023_3901135` | -15 min |
+| 2022/2023 | Crystal Palace — West Ham United    | `591296723603698c7bac5ba0036df8c03cfd8deffe2995c3c976dd57aa6bfd3b` | `47_20222023_3901266` | -15 min |
 
 ### Current decision
 
@@ -717,12 +717,12 @@ and an explicit authorization exist.
 
 ## 10. Roles, migration, rollback and training isolation
 
-| Role | Allowed | Forbidden |
-| --- | --- | --- |
-| inventory_reader | Approved metadata/minimal identity SELECT | Writes, DDL, temp objects, COPY raw payload, quarantine. |
-| linkage_writer | Bounded approved link/decision insert | matches, canonical odds, DELETE, DDL, verified/manual overwrite. |
-| migration_role | Approved DDL window | Import/linkage business writes. |
-| training_reader | Future approved accepted/canonical view | Quarantine, unresolved links, leaking closing odds. |
+| Role             | Allowed                                   | Forbidden                                                        |
+| ---------------- | ----------------------------------------- | ---------------------------------------------------------------- |
+| inventory_reader | Approved metadata/minimal identity SELECT | Writes, DDL, temp objects, COPY raw payload, quarantine.         |
+| linkage_writer   | Bounded approved link/decision insert     | matches, canonical odds, DELETE, DDL, verified/manual overwrite. |
+| migration_role   | Approved DDL window                       | Import/linkage business writes.                                  |
+| training_reader  | Future approved accepted/canonical view   | Quarantine, unresolved links, leaking closing odds.              |
 
 The completed canonical-inventory design review now defines the inventory
 table/index/lineage and status-complete-input requirements, but it deliberately
@@ -737,29 +737,29 @@ semantics and quality acceptance are separately implemented/authorized.
 
 ## 11. Readiness matrix
 
-| Domain | Current status | Evidence | Missing proof | Blocks which phase |
-| ------ | -------------- | -------- | ------------- | ------------------ |
-| source semantic identity | verified_for_read_only_audit | Current adapter + `buildSemanticMatchIdentity` produced 892 unique E0 match units reproducibly | None for this audit; real-import acceptance remains separate | D4F-D/E |
-| canonical candidate coverage | design_complete_pending_implementation | Recovered FotMob artifact: 1,140 candidates; 888 exact + 4 isolated kickoff conflicts; design selects full inventory | Status-complete v2 input, writer implementation/proof and separately authorized execution | Future canonical inventory write |
-| local canonical database coverage | zero_for_scope | `matches` has zero Premier League/E0 rows in 2022/2023–2024/2025 | Dedicated target selection, status-complete input, writer proof and separate write authorization | Writer implementation / real inventory write |
-| canonical schema freshness | design_complete_pending_implementation | Current development schema inventory plus target provider/index/lineage design | Separately authorized migration implementation and disposable compatibility proof | Writer implementation / real inventory write |
-| team normalization | verified_for_offline_audit | Existing 12 source-scoped exact aliases; no unapproved difference | Future writer implementation must preserve this contract | Future canonical inventory write |
-| competition mapping | verified_for_offline_audit | E0 → Premier League on both compared populations | Future writer implementation | Future canonical inventory write |
-| season mapping | verified_for_offline_audit | Exact `2022/2023`–`2024/2025` scope on both populations | Future writer implementation | Future canonical inventory write |
-| kickoff/timezone semantics | bounded_conflicts_for_linkage_only | Europe/London source interpretation; 888 exact, 4 isolated 15/30-minute conflicts; valid FotMob candidates still enter the 1,140-row inventory | Conflict evidence or explicit policy decision; no tolerance expansion | Future source-to-canonical linkage / historical odds import, not canonical inventory |
-| home/away identity | verified_for_offline_audit | Ordered home/away; no same-kickoff reversal | Future writer implementation | Future canonical inventory write |
-| source external ID | design_complete_pending_implementation | 60 populated `matches.external_id`; zero duplicate groups; provider-scoped unique-index design documented | Migration implementation and provider-ID collision proof | Writer implementation / real inventory write |
-| link decision audit model | design_only | Existing evidence/replay | Approved model/migration | D4F-C |
-| FK strategy | design_complete_for_inventory | Inventory lineage FK, cardinality, uniqueness and RESTRICT deletion policy are defined below; linkage stays separate | Separate linkage-model/migration implementation | Linkage design / implementation |
-| role/grant | design_complete_pending_provisioning | `claude_reader` local socket access; SELECT-only listed grants; least-privilege writer role design documented | Dedicated-target role provisioning and proof | Writer implementation / real inventory write |
-| migration need | design_complete_pending_implementation | Provider/index/lineage migration design documented | Migration implementation, disposable proof and explicit DDL authorization | Writer implementation / real inventory write |
-| rollback | design_complete_pending_rehearsal | Pre-write backup, clone restore and owner-operated recovery design documented | Dedicated-target backup/restore rehearsal | Writer implementation / real inventory write |
-| repository historical inputs | verified_for_read_only_audit | Three immutable Git-history blobs restored outside the repository with SHA-256, size, header, scope, two deterministic runs and 892 semantic units | Upstream capture/provider/license proof for real import | D4F-D/E |
-| upstream provenance | not_proven | Git history cannot prove original capture/provider/license semantics | Approved upstream provenance and import envelope | D4F-D/E |
-| provenance | not_proven | Manifest contract | License/upstream evidence | D4F-D/E |
-| real sample envelope | blocked | No real inventory | Hash/scope/count evidence | D4F-D/E |
-| training isolation | bounded | Quarantine separation/legacy risk | Quality/leakage gate | Training |
-| explicit authorization | blocked | This review grants none | User phase approval | D4F-A–E |
+| Domain                            | Current status                         | Evidence                                                                                                                                           | Missing proof                                                                                    | Blocks which phase                                                                   |
+| --------------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| source semantic identity          | verified_for_read_only_audit           | Current adapter + `buildSemanticMatchIdentity` produced 892 unique E0 match units reproducibly                                                     | None for this audit; real-import acceptance remains separate                                     | D4F-D/E                                                                              |
+| canonical candidate coverage      | design_complete_pending_implementation | Recovered FotMob artifact: 1,140 candidates; 888 exact + 4 isolated kickoff conflicts; design selects full inventory                               | Status-complete v2 input, writer implementation/proof and separately authorized execution        | Future canonical inventory write                                                     |
+| local canonical database coverage | zero_for_scope                         | `matches` has zero Premier League/E0 rows in 2022/2023–2024/2025                                                                                   | Dedicated target selection, status-complete input, writer proof and separate write authorization | Writer implementation / real inventory write                                         |
+| canonical schema freshness        | design_complete_pending_implementation | Current development schema inventory plus target provider/index/lineage design                                                                     | Separately authorized migration implementation and disposable compatibility proof                | Writer implementation / real inventory write                                         |
+| team normalization                | verified_for_offline_audit             | Existing 12 source-scoped exact aliases; no unapproved difference                                                                                  | Future writer implementation must preserve this contract                                         | Future canonical inventory write                                                     |
+| competition mapping               | verified_for_offline_audit             | E0 → Premier League on both compared populations                                                                                                   | Future writer implementation                                                                     | Future canonical inventory write                                                     |
+| season mapping                    | verified_for_offline_audit             | Exact `2022/2023`–`2024/2025` scope on both populations                                                                                            | Future writer implementation                                                                     | Future canonical inventory write                                                     |
+| kickoff/timezone semantics        | bounded_conflicts_for_linkage_only     | Europe/London source interpretation; 888 exact, 4 isolated 15/30-minute conflicts; valid FotMob candidates still enter the 1,140-row inventory     | Conflict evidence or explicit policy decision; no tolerance expansion                            | Future source-to-canonical linkage / historical odds import, not canonical inventory |
+| home/away identity                | verified_for_offline_audit             | Ordered home/away; no same-kickoff reversal                                                                                                        | Future writer implementation                                                                     | Future canonical inventory write                                                     |
+| source external ID                | design_complete_pending_implementation | 60 populated `matches.external_id`; zero duplicate groups; provider-scoped unique-index design documented                                          | Migration implementation and provider-ID collision proof                                         | Writer implementation / real inventory write                                         |
+| link decision audit model         | design_only                            | Existing evidence/replay                                                                                                                           | Approved model/migration                                                                         | D4F-C                                                                                |
+| FK strategy                       | design_complete_for_inventory          | Inventory lineage FK, cardinality, uniqueness and RESTRICT deletion policy are defined below; linkage stays separate                               | Separate linkage-model/migration implementation                                                  | Linkage design / implementation                                                      |
+| role/grant                        | design_complete_pending_provisioning   | `claude_reader` local socket access; SELECT-only listed grants; least-privilege writer role design documented                                      | Dedicated-target role provisioning and proof                                                     | Writer implementation / real inventory write                                         |
+| migration need                    | design_complete_pending_implementation | Provider/index/lineage migration design documented                                                                                                 | Migration implementation, disposable proof and explicit DDL authorization                        | Writer implementation / real inventory write                                         |
+| rollback                          | design_complete_pending_rehearsal      | Pre-write backup, clone restore and owner-operated recovery design documented                                                                      | Dedicated-target backup/restore rehearsal                                                        | Writer implementation / real inventory write                                         |
+| repository historical inputs      | verified_for_read_only_audit           | Three immutable Git-history blobs restored outside the repository with SHA-256, size, header, scope, two deterministic runs and 892 semantic units | Upstream capture/provider/license proof for real import                                          | D4F-D/E                                                                              |
+| upstream provenance               | not_proven                             | Git history cannot prove original capture/provider/license semantics                                                                               | Approved upstream provenance and import envelope                                                 | D4F-D/E                                                                              |
+| provenance                        | not_proven                             | Manifest contract                                                                                                                                  | License/upstream evidence                                                                        | D4F-D/E                                                                              |
+| real sample envelope              | blocked                                | No real inventory                                                                                                                                  | Hash/scope/count evidence                                                                        | D4F-D/E                                                                              |
+| training isolation                | bounded                                | Quarantine separation/legacy risk                                                                                                                  | Quality/leakage gate                                                                             | Training                                                                             |
+| explicit authorization            | blocked                                | This review grants none                                                                                                                            | User phase approval                                                                              | D4F-A–E                                                                              |
 
 ## 12. Blocking conditions and current decision boundary
 
@@ -803,17 +803,16 @@ review for the fail-closed writer, status-complete input contract and isolated
 schema/lineage migration plan. It must not execute a canonical write, linkage
 persistence, real import, migration, training, backtest or prediction.
 
-
 ## 15. Canonical inventory write design review — 2026-07-29
 
 ### Decision
 
-~~~text
+```text
 Design decision = READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW
 Recommended future canonical population = 1,140 FotMob Premier League candidates
 Canonical inventory / Football-Data linkage / historical-odds staging = distinct stages and authorizations
 Recovered candidate artifact v1 write eligibility = blocked (status absent)
-~~~
+```
 
 ### Ingestion convergence declaration for this design review
 
@@ -849,11 +848,11 @@ implementation review without the stated proof must not reset it.
 Earlier current-state wording that described only the 888 exact links as a
 possible inventory is superseded. These are three different objects:
 
-| Object | Count | Current/future treatment |
-| --- | ---: | --- |
-| FotMob canonical candidates | 1,140 (380 / 380 / 380) | The bounded inventory population after write-input preflight. |
-| Football-Data source identities | 892 (380 / 380 / 132) | Historical odds source identities; they do not create canonical rows. |
-| Source-to-canonical links | 888 exact + 4 conflicts | A later, separately authorized linkage population. |
+| Object                          |                   Count | Current/future treatment                                              |
+| ------------------------------- | ----------------------: | --------------------------------------------------------------------- |
+| FotMob canonical candidates     | 1,140 (380 / 380 / 380) | The bounded inventory population after write-input preflight.         |
+| Football-Data source identities |   892 (380 / 380 / 132) | Historical odds source identities; they do not create canonical rows. |
+| Source-to-canonical links       | 888 exact + 4 conflicts | A later, separately authorized linkage population.                    |
 
 FotMob is the documented primary fixture and canonical-match-identity source.
 Its stable ID, absolute kickoff, ordered home/away, competition, season and
@@ -863,11 +862,11 @@ FotMob canonical kickoff.
 
 The selected population is all 1,140 FotMob candidates, not 888 or 892:
 
-| Option | Decision | Reason |
-| --- | --- | --- |
-| 888 exact only | Not selected | Couples canonical existence to one downstream source and excludes 252 FotMob fixtures without an exact link (four quarantine conflicts and 248 other canonical-only candidates). |
-| 1,140 FotMob candidates; then 888 links | Selected | Implements the primary-source policy and separates canonical creation from linkage. |
-| 888 then expansion | Not selected | Adds a second inventory campaign while preserving the same incorrect coupling. |
+| Option                                  | Decision     | Reason                                                                                                                                                                           |
+| --------------------------------------- | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 888 exact only                          | Not selected | Couples canonical existence to one downstream source and excludes 252 FotMob fixtures without an exact link (four quarantine conflicts and 248 other canonical-only candidates). |
+| 1,140 FotMob candidates; then 888 links | Selected     | Implements the primary-source policy and separates canonical creation from linkage.                                                                                              |
+| 888 then expansion                      | Not selected | Adds a second inventory campaign while preserving the same incorrect coupling.                                                                                                   |
 
 The 252 candidates without an exact Football-Data link are not invalid. Four
 are linkage-quarantine/no-link conflicts that may enter inventory if their
@@ -891,7 +890,7 @@ has CONNECT, public USAGE and matches SELECT only; CREATE, INSERT, UPDATE and
 DELETE are false. No FOR UPDATE, write-effect function, raw-payload read, DDL
 or business write occurred.
 
-matches has primary key match_id; nullable external_id/match_date/status and
+matches has primary key match*id; nullable external_id/match_date/status and
 required league_name/season/home_team/away_team. It has season, lowercase
 status, pipeline/source/governance and score checks, but no provider-scoped
 external-ID unique constraint, ordered business-identity constraint, import
@@ -899,7 +898,7 @@ lineage or foreign key. Its update triggers derive is_finished from status =
 finished and update updated_at. It contains 60 rows (58 Ligue 1 2025/2026, one
 Segunda 2024/2025, one Segunda División 2025/2026), no target EPL/E0 rows and
 no current duplicate external/business identity. Existing values follow
-match_id=<leagueId>_<seasonWithoutSlash>_<FotMobId> with numeric external_id,
+match_id=<leagueId>*<seasonWithoutSlash>\_<FotMobId> with numeric external_id,
 but data_source is historically mixed (fotmob, manual_html_seed,
 local_finished_csv); it cannot safely supply the provider namespace.
 
@@ -988,13 +987,14 @@ only its declared subset. It cannot silently relax the full-inventory
 
 A separately authorized migration implementation/review is required and must
 preflight old rows without rewriting them. Its minimum design is:
+
 1. retain matches.match_id as candidate ID and numeric FotMob ID in external_id;
 2. add nullable `canonical_provider` for legacy rows, not mixed `data_source`,
    but enforce `CHECK (canonical_provider IS NULL OR canonical_provider =
-   'fotmob')` and `CHECK ((league_name = 'Premier League' AND season IN
-   ('2022/2023', '2023/2024', '2024/2025')) IS NOT TRUE OR
-   (canonical_provider IS NOT NULL AND canonical_provider = 'fotmob' AND
-   external_id IS NOT NULL))`; the explicit `IS NOT NULL` means a target row
+'fotmob')` and `CHECK ((league_name = 'Premier League' AND season IN
+('2022/2023', '2023/2024', '2024/2025')) IS NOT TRUE OR
+(canonical_provider IS NOT NULL AND canonical_provider = 'fotmob' AND
+external_id IS NOT NULL))`; the explicit `IS NOT NULL` means a target row
    cannot pass PostgreSQL's three-valued CHECK evaluation with a NULL provider.
    Therefore every new target canonical row is non-null and has the one
    lowercase provider value, while old out-of-scope rows may remain NULL; the
@@ -1002,11 +1002,11 @@ preflight old rows without rewriting them. Its minimum design is:
    legacy-NULL acceptance;
 3. after an explicit collision preflight, add partial PostgreSQL unique
    indexes (not `ALTER TABLE ... ADD CONSTRAINT`): `CREATE UNIQUE INDEX
-   matches_fotmob_external_id_uq ON matches (external_id) WHERE
-   canonical_provider = 'fotmob'`, and `CREATE UNIQUE INDEX
-   matches_m3_epl_fixture_identity_uq ON matches (league_name, season,
-   home_team, away_team) WHERE league_name = 'Premier League' AND season IN
-   ('2022/2023', '2023/2024', '2024/2025') AND canonical_provider = 'fotmob'`;
+matches_fotmob_external_id_uq ON matches (external_id) WHERE
+canonical_provider = 'fotmob'`, and `CREATE UNIQUE INDEX
+matches_m3_epl_fixture_identity_uq ON matches (league_name, season,
+home_team, away_team) WHERE league_name = 'Premier League' AND season IN
+('2022/2023', '2023/2024', '2024/2025') AND canonical_provider = 'fotmob'`;
    the latter is a target-scoped, provider-independent fixture key that
    deliberately omits match_date. The target-scope CHECK fixes the current
    provider to `fotmob`; adding another canonical provider later requires a new
@@ -1018,16 +1018,16 @@ preflight old rows without rewriting them. Its minimum design is:
    lineage contract: source artifacts have a surrogate primary key, unique
    SHA-256, business hash/schema/scope/count, non-null `artifact_kind` checked
    as `master` or `canary`, and nullable `parent_artifact_id REFERENCES
-   m3_canonical_source_artifacts ON DELETE RESTRICT` with
+m3_canonical_source_artifacts ON DELETE RESTRICT` with
    `CHECK ((artifact_kind = 'master') = (parent_artifact_id IS NULL))`; import runs have a surrogate primary key
    and exactly one non-null `artifact_id REFERENCES
-   m3_canonical_source_artifacts ON DELETE RESTRICT`, plus unique run identity,
+m3_canonical_source_artifacts ON DELETE RESTRICT`, plus unique run identity,
    authorization, code revision and `UNIQUE (run_id, artifact_id)`; each match
    lineage has a surrogate primary key, non-null `match_id REFERENCES
-   matches(match_id) ON DELETE RESTRICT`, non-null `artifact_id REFERENCES
-   m3_canonical_source_artifacts ON DELETE RESTRICT`, non-null
+matches(match_id) ON DELETE RESTRICT`, non-null `artifact_id REFERENCES
+m3_canonical_source_artifacts ON DELETE RESTRICT`, non-null
    `created_import_run_id`, and `(created_import_run_id, artifact_id) REFERENCES
-   m3_canonical_import_runs(run_id, artifact_id) ON DELETE RESTRICT`, plus
+m3_canonical_import_runs(run_id, artifact_id) ON DELETE RESTRICT`, plus
    candidate/provider ID and immutable fingerprint. It has both
    `UNIQUE (artifact_id, candidate_id)` and `UNIQUE (match_id, artifact_id)`;
    therefore exactly one artifact candidate maps to one canonical row and a
@@ -1140,13 +1140,13 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 
 ### Gates and authorization separation
 
-| Gate | Future activity | Required proof | Excludes |
-| --- | --- | --- | --- |
-| 1 | Disposable PostgreSQL proof | Target NULL-provider CHECK rejection and out-of-scope legacy-NULL acceptance; inventory lineage FK/unique/RESTRICT enforcement, insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
-| 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, both exact function grants, static lock-function owner/search-path review, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
-| 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to that parent artifact. Absence is `BLOCKED_PROVENANCE_POLICY`. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
-| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to the full master (otherwise `BLOCKED_PROVENANCE_POLICY`); `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
-| 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
+| Gate | Future activity                        | Required proof                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | Excludes                                                |
+| ---- | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| 1    | Disposable PostgreSQL proof            | Target NULL-provider CHECK rejection and out-of-scope legacy-NULL acceptance; inventory lineage FK/unique/RESTRICT enforcement, insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore.                                                                                                                                                                                          | Persistent DB, real write, provider request.            |
+| 2    | Dedicated canonical sandbox            | Exclusive-writer ACL/deployment-path proof, both exact function grants, static lock-function owner/search-path review, least privilege, lineage and restore rehearsal; synthetic then approved small real sample.                                                                                                                                                                                                                                                                                                | Development DB, D4E sandbox, linkage, odds staging.     |
+| 3    | Bounded real inventory canary          | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to that parent artifact. Absence is `BLOCKED_PROVENANCE_POLICY`. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
+| 4    | Full master inventory and verification | Separately authorized full 1,140-row master transaction; independently reviewable FotMob provider endpoint/capture timestamp-process and licence/terms provenance bound to the full master (otherwise `BLOCKED_PROVENANCE_POLICY`); `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness.                                 | Linkage and odds import.                                |
+| 5    | Separate linkage review                | 888 exact only; four conflicts stay quarantine.                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Canonical creation and staging.                         |
 
 Canonical inventory, source linkage and historical odds staging use separate
 transactions, executors, import-run identities, roles and fresh runtime
@@ -1164,3 +1164,38 @@ storage, training, backtest or prediction occurred. A future separate task may
 implement/test the writer, v2 artifact contract and isolated migration plan; it
 may not execute a canonical or linkage write without another explicit
 authorization.
+
+## 16. Canonical inventory writer implementation and disposable proof — 2026-07-29
+
+**Current decision: `READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW`.** This
+implementation proof does not authorize a persistent write; the active blocker
+is `REAL_WRITE_BLOCKED_PROVENANCE_POLICY` because no real status-complete FotMob
+artifact or independently reviewable endpoint/capture/licence receipt exists.
+
+- `canonical-inventory-artifact/v2` requires status and binds a v2 business
+  hash while retaining the exporter’s exact v1 identity projection. A future
+  full artifact must reproduce audited v1 hash `eff881728429260012b4de9f93764a08096407e06b9dffd9c9f9e2b4e0bc9d3f`.
+  File SHA-256/size are ordinary-file external bindings; canaries also bind a
+  parent hash/size, exact allowlist and parent-order subset.
+- The external authorization receipt binds disposable service/database/schema,
+  artifact hashes/count/scope, operation and expiry. Only
+  `canonical_inventory_disposable_proof` is accepted; real/persistent modes
+  fail closed. Synthetic provenance is explicitly `synthetic-test-only`.
+- Additive `V26.10` supplies nullable legacy-compatible provider identity,
+  provider/fixture partial uniqueness, artifacts/runs/lineages and a static
+  `SECURITY DEFINER` lock function. The independent writer uses SERIALIZABLE,
+  exact advisory lock `(1793, 1)` and insert-only terminals; it does not call
+  `FixtureRepository.persist` or update existing rows.
+- Labelled PostgreSQL 15 tmpfs proof, with generated `Synthetic …` candidates
+  only: master inserted 1,140 matches / 1 artifact / 1 run / 1,140 lineages;
+  fresh replay was 1,140 exact duplicates with zero delta. A ten-row canary
+  then master produced 1,140 matches / 2 artifacts / 2 runs / 1,150 lineages.
+  Conflict, invalid-input, authorization/provenance, concurrency and
+  least-privilege cases all failed closed. A pre-write custom backup restored
+  to a fresh clone with zero rows, V26.10 constraint and writer INSERT ACL
+  verified. Containers, network, tmpfs data and volume were removed.
+
+No real canonical row, linkage, staging/import row, D4E sandbox change, raw
+payload, provider request, browser action, training, backtest or prediction
+occurred. The 888 future links and four conflict quarantines remain separate;
+the next separately authorized task is provenance review only.

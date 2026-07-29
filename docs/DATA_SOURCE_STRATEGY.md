@@ -56,7 +56,8 @@ Last updated: 2026-07-29
 - FotMob retained assets and its independent 50-target Ligue 1 mapping
   chronology do not define the M3 Football-Data candidate population.
 - **M3 D4F status**:
-  `READY_FOR_CANONICAL_INVENTORY_WRITER_IMPLEMENTATION_REVIEW`.
+  `READY_FOR_CANONICAL_INVENTORY_PROVENANCE_REVIEW` with
+  `REAL_WRITE_BLOCKED_PROVENANCE_POLICY`.
   The historical Git inputs remain reverified (1,180 raw rows, 38,832 odds
   observations, 892 semantic candidates; source hash `07e579…98b8b`). Two
   recovered, validated FotMob `candidate-match-identity/v1` artifacts each
@@ -112,6 +113,7 @@ Last updated: 2026-07-29
 ## Safe assets (offline reference only)
 
 From PR #1454:
+
 - Parser, schema, fixture, and validation assets are safe to reuse as offline references.
 - Do not use them to justify live fetch, DB write, or browser automation.
 
