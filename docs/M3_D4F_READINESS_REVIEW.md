@@ -1025,8 +1025,13 @@ database-level defense.
 
 For a full-inventory run, the recommended unit is one transaction over the
 entire 1,140-row master artifact: prove target/schema/role, fresh runtime
-authorization, its v1 identity-projection hash and baseline fingerprint; set timeouts; obtain a fixed
-pg_try_advisory_xact_lock; re-read and preflight provider and fixture identity;
+authorization, its v1 identity-projection hash and baseline fingerprint; set
+timeouts and `SERIALIZABLE` isolation; obtain a fixed
+`pg_try_advisory_xact_lock`; then acquire `LOCK TABLE matches IN SHARE ROW
+EXCLUSIVE MODE` and the same conflict lock on every future inventory/lineage
+table it will write. Locks must be obtained before the baseline re-read and
+preflight, and any lock timeout or serialization failure rolls back with no
+automatic retry. Only then re-read and preflight provider and fixture identity;
 insert only proven-new canonical/lineage rows; verify the final 1,140 and
 380/380/380 inventory, provider/fixture uniqueness and fingerprints; then
 commit. An existing row may count as `exact_duplicate` only when its provider
@@ -1037,18 +1042,26 @@ run or an allowlisted projected canary. The full-run arithmetic is then
 different registered master lineage is a conflict; fresh runtime authorization
 is still required for every execution.
 
-For a canary, the same sequence is one transaction over all declared canary
-rows, with `inserted + exact_duplicate = canary_count` and exact canary lineage
+For a canary, the same serializable/advisory/table-lock sequence is one
+transaction over all declared canary rows, with
+`inserted + exact_duplicate = canary_count` and exact canary lineage
 verification plus fresh runtime authorization before commit. It is not a
 partial full-inventory transaction and does not advance automatically to the
-master run. Lock busy, conflict, count mismatch or unexpected ON CONFLICT DO
-NOTHING rolls back. No temporary table, COPY, update-on-conflict or
+master run. Lock busy, serialization conflict, count mismatch or unexpected ON
+CONFLICT DO NOTHING rolls back. No temporary table, COPY, update-on-conflict or
 input-changing retry is permitted.
 
 The writer role needs only CONNECT, schema USAGE, explicit-table SELECT/INSERT
 and required sequence USAGE. It receives no UPDATE, DELETE, DDL, CREATE,
 TRUNCATE, broad schema privilege, role membership or implicit function
 privilege. Separate owner/migrator and read-only verifier roles are required.
+The dedicated canonical sandbox must also prove before every write that no
+legacy repository, collector, scheduler or other application role can connect
+with INSERT/UPDATE on `matches` or the new inventory/lineage tables; the
+existing update-on-conflict `FixtureRepository.persist` path is explicitly
+excluded. The owner/migrator role must be inactive outside its separately
+authorized migration window. If that exclusive-writer ACL and deployment-path
+proof is unavailable, the run is `BLOCKED_PERMISSION_BOUNDARY`, not a write.
 Before a real write: prove target/schema/ACL/baseline; make a custom-format
 repository-external backup; restore it to a fresh disposable clone; verify it.
 Transaction rollback is failure recovery before commit; a post-commit reversal
@@ -1058,8 +1071,8 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 
 | Gate | Future activity | Required proof | Excludes |
 | --- | --- | --- | --- |
-| 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, lock and backup/restore. | Persistent DB, real write, provider request. |
-| 2 | Dedicated canonical sandbox | Least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
+| 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, advisory plus conflicting table-lock/serializable behavior, and backup/restore. | Persistent DB, real write, provider request. |
+| 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
 | 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
 | 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate = 1,140`, where a registered canary is only one permitted exact-duplicate lineage, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
