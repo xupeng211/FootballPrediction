@@ -742,11 +742,11 @@ semantics and quality acceptance are separately implemented/authorized.
 | team normalization | verified_for_offline_audit | Existing 12 source-scoped exact aliases; no unapproved difference | Future writer implementation must preserve this contract | Future canonical inventory write |
 | competition mapping | verified_for_offline_audit | E0 → Premier League on both compared populations | Future writer implementation | Future canonical inventory write |
 | season mapping | verified_for_offline_audit | Exact `2022/2023`–`2024/2025` scope on both populations | Future writer implementation | Future canonical inventory write |
-| kickoff/timezone semantics | bounded_conflicts | Europe/London source interpretation; 888 exact, 4 isolated 15/30-minute conflicts | Conflict evidence or explicit policy decision; no tolerance expansion | Future canonical inventory write |
+| kickoff/timezone semantics | bounded_conflicts_for_linkage_only | Europe/London source interpretation; 888 exact, 4 isolated 15/30-minute conflicts; valid FotMob candidates still enter the 1,140-row inventory | Conflict evidence or explicit policy decision; no tolerance expansion | Future source-to-canonical linkage / historical odds import, not canonical inventory |
 | home/away identity | verified_for_offline_audit | Ordered home/away; no same-kickoff reversal | Future writer implementation | Future canonical inventory write |
 | source external ID | design_complete_pending_implementation | 60 populated `matches.external_id`; zero duplicate groups; provider-scoped unique-index design documented | Migration implementation and provider-ID collision proof | Writer implementation / real inventory write |
 | link decision audit model | design_only | Existing evidence/replay | Approved model/migration | D4F-C |
-| FK strategy | design_complete_for_inventory | Inventory lineage and linkage separation are defined | Separate linkage-model/migration implementation | Linkage design / implementation |
+| FK strategy | design_complete_for_inventory | Inventory lineage FK, cardinality, uniqueness and RESTRICT deletion policy are defined below; linkage stays separate | Separate linkage-model/migration implementation | Linkage design / implementation |
 | role/grant | design_complete_pending_provisioning | `claude_reader` local socket access; SELECT-only listed grants; least-privilege writer role design documented | Dedicated-target role provisioning and proof | Writer implementation / real inventory write |
 | migration need | design_complete_pending_implementation | Provider/index/lineage migration design documented | Migration implementation, disposable proof and explicit DDL authorization | Writer implementation / real inventory write |
 | rollback | design_complete_pending_rehearsal | Pre-write backup, clone restore and owner-operated recovery design documented | Dedicated-target backup/restore rehearsal | Writer implementation / real inventory write |
@@ -763,7 +763,7 @@ The local development database still contains zero Premier League/E0
 `matches` rows for the requested seasons; that database fact has not changed.
 It no longer blocks the read-only cross-source audit because the verified
 FotMob candidate artifact supplied its canonical comparison side. Remaining
-boundaries are the four isolated kickoff conflicts, unverified original
+boundaries are the four isolated kickoff conflicts for source linkage only, unverified original
 upstream provenance/import semantics, absent retained OddsPortal evidence,
 unavailable M3 staging tables in this development DB, and training
 quality/leakage acceptance.
@@ -1010,8 +1010,25 @@ preflight old rows without rewriting them. Its minimum design is:
    either key;
 4. add `public.m3_canonical_import_runs`,
    `public.m3_canonical_source_artifacts` and
-   `public.m3_canonical_match_lineages` with artifact SHA-256/business hash,
-   candidate/provider ID, immutable fingerprint, run and code revision; and
+   `public.m3_canonical_match_lineages` with the following immutable inventory
+   lineage contract: source artifacts have a surrogate primary key, unique
+   SHA-256, business hash/schema/scope/count, non-null `artifact_kind` checked
+   as `master` or `canary`, and nullable `parent_artifact_id REFERENCES
+   m3_canonical_source_artifacts ON DELETE RESTRICT` with
+   `CHECK ((artifact_kind = 'master') = (parent_artifact_id IS NULL))`; import runs have a surrogate primary key
+   and exactly one non-null `artifact_id REFERENCES
+   m3_canonical_source_artifacts ON DELETE RESTRICT`, plus unique run identity,
+   authorization and code revision; each match lineage has a surrogate primary
+   key, non-null `match_id REFERENCES matches(match_id) ON DELETE RESTRICT`,
+   non-null `artifact_id REFERENCES m3_canonical_source_artifacts ON DELETE
+   RESTRICT`, candidate/provider ID and immutable fingerprint. It has both
+   `UNIQUE (artifact_id, candidate_id)` and `UNIQUE (match_id, artifact_id)`;
+   therefore exactly one artifact candidate maps to one canonical row and a
+   repeated artifact cannot create duplicate or orphan lineage. A source
+   artifact may have many lineages and many import-run records; a canonical row
+   may have lineages for several registered artifacts (for example an
+   allowlisted canary and its parent master). All lineage retention is
+   delete-restricted, including normal writer roles; and
 5. preserve provider status separately from application-status mapping.
 
 ### Idempotency, transaction, permission and recovery design
@@ -1111,7 +1128,7 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 
 | Gate | Future activity | Required proof | Excludes |
 | --- | --- | --- | --- |
-| 1 | Disposable PostgreSQL proof | Target NULL-provider CHECK rejection and out-of-scope legacy-NULL acceptance; insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
+| 1 | Disposable PostgreSQL proof | Target NULL-provider CHECK rejection and out-of-scope legacy-NULL acceptance; inventory lineage FK/unique/RESTRICT enforcement, insert/replay zero delta, divergent rollback, advisory plus `SECURITY DEFINER` static table-lock/serializable behavior (including denied direct writer table lock), and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Exclusive-writer ACL/deployment-path proof, both exact function grants, static lock-function owner/search-path review, least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
 | 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, immutable parent-master artifact and full v1 hash, exact allowlist and parent-subset projection hash, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
 | 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate + already_present_equivalent = 1,140`, where the latter is limited to an allowlisted verified canary with the same immutable parent master, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
