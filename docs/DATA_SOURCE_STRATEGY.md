@@ -18,9 +18,11 @@ Last updated: 2026-07-29
    League artifact. It isolated 888 unique exact matches and four kickoff
    conflicts with no identity-policy expansion. The completed 2026-07-29
    design review selects all 1,140 FotMob candidates for future canonical
-   inventory; 888 is linkage-only, four remain linkage quarantine and 252 are
-   canonical-only. The recovered v1 artifact lacks status for all 1,140, so it
-   is identity evidence rather than a write-ready input; real import is blocked.
+   inventory; 888 is linkage-only, four remain linkage quarantine, and the
+   remaining 248 are canonical-only/unlinked. The four plus 248 are the 252
+   candidates without an exact Football-Data link. The recovered v1 artifact
+   lacks status for all 1,140, so it is identity evidence rather than a
+   write-ready input; real import is blocked.
 3. OddsPortal / NowGoal / BetExplorer are not current implementation targets.
    OddsPortal has no retained execution evidence and its legacy route remains
    blocked.

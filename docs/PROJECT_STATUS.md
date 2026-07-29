@@ -71,8 +71,9 @@ Two independent runs produced the identical cross-source result hash
 888 `exact_unique_match`, 4 isolated `kickoff_conflict` (3 × 15 minutes and
 1 × 30 minutes), and zero unmatched, ambiguous, team, competition/season,
 incomplete or invalid-source terminals. The 888 exact candidates map to 888
-distinct FotMob IDs; 252 FotMob candidates are outside this 892-source
-population and none is multiply used.
+distinct FotMob IDs. Of the 252 FotMob candidates without an exact link, four
+are the kickoff conflicts inside this 892-source population and the remaining
+248 are outside it; none is multiply used.
 
 The cross-source audit was design-review readiness only. The four kickoff
 conflicts remain isolated and cannot be guessed, linked or written. No business
@@ -989,9 +990,10 @@ This is design readiness only, not database-write authorization.
 - Canonical inventory and Football-Data linkage are separate objects and must
   remain separate transactions, roles, executors and future authorizations.
 - The recommended future canonical population is 1,140 FotMob Premier League
-  candidates (380 / 380 / 380), not 888 exact Football-Data links. The 252
-  unused FotMob candidates are canonical-only; four 15/30-minute conflicts are
-  canonical-eligible but linkage-quarantine.
+  candidates (380 / 380 / 380), not 888 exact Football-Data links. Of the 252
+  candidates without an exact link, four 15/30-minute conflicts are
+  canonical-eligible but linkage-quarantine; the other 248 are
+  canonical-only/unlinked.
 - Later linkage is exactly 888 unique matches. The four remain no-link; no
   alias, fuzzy matching, home/away swap, timezone policy or tolerance change.
 - Read-only PostgreSQL 15.17 evidence on the running development service

@@ -671,9 +671,11 @@ approved non-zero kickoff tolerance is therefore none.
 
 Per season, the result is 377 exact + 3 kickoff conflicts for 2022/2023,
 379 exact + 1 kickoff conflict for 2023/2024, and 132 exact for 2024/2025.
-The 888 exact candidates use 888 distinct FotMob IDs; 252 of the 1,140 FotMob
-candidates are outside the 892-source audit population, and no FotMob
-candidate is used by more than one source candidate.
+The 888 exact candidates use 888 distinct FotMob IDs. Of the 252 FotMob
+candidates without an exact Football-Data link, four are the isolated kickoff
+conflicts within the 892-source audit population; the remaining 248 are outside
+that source-audit population. No FotMob candidate is used by more than one
+source candidate.
 
 Time buckets are 888 exact timestamps, zero timezone-normalized-only exact,
 zero within a non-zero tolerance, three 15-minute conflicts, one 30-minute
@@ -815,19 +817,20 @@ The selected population is all 1,140 FotMob candidates, not 888 or 892:
 
 | Option | Decision | Reason |
 | --- | --- | --- |
-| 888 exact only | Not selected | Couples canonical existence to one downstream source and excludes 252 in-scope FotMob fixtures. |
+| 888 exact only | Not selected | Couples canonical existence to one downstream source and excludes 252 FotMob fixtures without an exact link (four quarantine conflicts and 248 other canonical-only candidates). |
 | 1,140 FotMob candidates; then 888 links | Selected | Implements the primary-source policy and separates canonical creation from linkage. |
 | 888 then expansion | Not selected | Adds a second inventory campaign while preserving the same incorrect coupling. |
 
-The 252 unused candidates are canonical-only/unlinked, not invalid. The four
-conflicting candidates may enter inventory if their FotMob input is valid but
-remain linkage-quarantine/no-link: Tottenham Hotspur—AFC Bournemouth
+The 252 candidates without an exact Football-Data link are not invalid. Four
+are linkage-quarantine/no-link conflicts that may enter inventory if their
+FotMob input is valid: Tottenham Hotspur—AFC Bournemouth
 (47_20222023_3901239, 15m), Fulham—Tottenham Hotspur
 (47_20222023_3901135, 15m), Crystal Palace—West Ham United
 (47_20222023_3901266, 15m), and Arsenal—Nottingham Forest
-(47_20232024_4193451, 30m). No alias, fuzzy comparison, home/away reversal,
-timezone-policy or tolerance change is proposed. Resolving them requires
-separately authorized, source-bound official scheduling evidence.
+(47_20232024_4193451, 30m). The remaining 248 are canonical-only/unlinked.
+No alias, fuzzy comparison, home/away reversal, timezone-policy or tolerance
+change is proposed. Resolving the four conflicts requires separately
+authorized, source-bound official scheduling evidence.
 
 ### Read-only schema and existing writer evidence
 
@@ -916,10 +919,17 @@ A separately authorized migration implementation/review is required and must
 preflight old rows without rewriting them. Its minimum design is:
 1. retain matches.match_id as candidate ID and numeric FotMob ID in external_id;
 2. add nullable canonical_provider (initial value fotmob), not mixed data_source;
-3. add a partial unique constraint on (canonical_provider, external_id), plus
-   a target-scoped, provider-independent ordered fixture key on
-   (league_name, season, home_team, away_team) without match_date; reject the
-   migration if existing target rows collide under either key;
+3. after an explicit collision preflight, add partial PostgreSQL unique
+   indexes (not `ALTER TABLE ... ADD CONSTRAINT`):
+   `CREATE UNIQUE INDEX matches_canonical_provider_external_id_uq ON matches
+   (canonical_provider, external_id) WHERE canonical_provider IS NOT NULL AND
+   external_id IS NOT NULL`, and `CREATE UNIQUE INDEX
+   matches_m3_epl_fixture_identity_uq ON matches (league_name, season,
+   home_team, away_team) WHERE league_name = 'Premier League' AND season IN
+   ('2022/2023', '2023/2024', '2024/2025') AND home_team IS NOT NULL AND
+   away_team IS NOT NULL`; the latter is target-scoped and provider-independent,
+   deliberately omits match_date, and the migration rejects any collision under
+   either key;
 4. add import-run, source-artifact and match-lineage tables with artifact
    SHA-256/business hash, candidate/provider ID, immutable fingerprint, run and
    code revision; and
@@ -977,7 +987,7 @@ is an authorization-gated owner restore, not manual deletion by remembered IDs.
 | 1 | Disposable PostgreSQL proof | Insert/replay zero delta, divergent rollback, lock and backup/restore. | Persistent DB, real write, provider request. |
 | 2 | Dedicated canonical sandbox | Least privilege, lineage and restore rehearsal; synthetic then approved small real sample. | Development DB, D4E sandbox, linkage, odds staging. |
 | 3 | Bounded real inventory canary | Independently fresh-authorized one- or ten-candidate v2 subset: its own hash/count/per-season proof, parent-master hash, exact allowlist, target/baseline/artifact binding, backup, one subset transaction and post-write verification. No automatic promotion. | Automatic/full 1,140 write, network expansion, linkage. |
-| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + registered-canary exact_duplicate = 1,140`, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
+| 4 | Full master inventory and verification | Separately authorized full 1,140-row master transaction; `inserted + exact_duplicate = 1,140`, where a registered canary is only one permitted exact-duplicate lineage, then 1,140/380/380/380 identity/kickoff/status/lineage completeness. | Linkage and odds import. |
 | 5 | Separate linkage review | 888 exact only; four conflicts stay quarantine. | Canonical creation and staging. |
 
 Canonical inventory, source linkage and historical odds staging use separate

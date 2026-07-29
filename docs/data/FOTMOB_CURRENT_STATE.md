@@ -62,9 +62,10 @@ define its population. The separate M3 2026-07-28 offline audit has now
 compared 892 Football-Data Premier League candidates with 1,140 recovered
 FotMob canonical candidates: 888 are exact unique and four are isolated
 kickoff conflicts. The design selects all 1,140 for future inventory, treats
-888 as linkage-only, keeps four linkage-quarantine and 252 canonical-only.
-That result does not reclassify any 32/10/8 Ligue 1 mapping target or validate
-a raw writer/import.
+888 as linkage-only, keeps four linkage-quarantine, and treats the remaining
+248 as canonical-only/unlinked. The four plus 248 are the 252 candidates
+without an exact Football-Data link. That result does not reclassify any
+32/10/8 Ligue 1 mapping target or validate a raw writer/import.
 
 ### Historical controlled audit milestone
 
