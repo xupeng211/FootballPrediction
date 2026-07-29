@@ -21,9 +21,11 @@ sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "scripts/ops"))
 import ai_workflow_gate as gate  # noqa: E402
 
+from scripts.ops.helpers import disposable_canonical_db_proof_scan as proof_scan  # noqa: E402
 from scripts.ops.helpers import git_change_helpers  # noqa: E402
 
 NETWORK_TOKEN = "ax" + "ios"
+DB_WRITE_TOKEN = "INSERT" + " INTO"
 
 
 # Convenience: partially-applied check_section_content_quality for test use.
@@ -86,8 +88,10 @@ def _collect_temp_changes(repo: Path, base_sha: str, head_sha: str):
 def _scan_temp_repo(repo: Path, base_sha: str, head_sha: str, *, emit_summary: bool = False):
     original_gate_root = gate.ROOT
     original_helper_root = git_change_helpers.ROOT_HELPER
+    original_proof_root = proof_scan.ROOT
     gate.ROOT = repo
     git_change_helpers.ROOT_HELPER = repo
+    proof_scan.ROOT = repo
     try:
         changes = gate.collect_changes(base_sha, head_sha)
         result = gate.scan_dangerous_keywords_incremental(
@@ -107,6 +111,7 @@ def _scan_temp_repo(repo: Path, base_sha: str, head_sha: str, *, emit_summary: b
     finally:
         gate.ROOT = original_gate_root
         git_change_helpers.ROOT_HELPER = original_helper_root
+        proof_scan.ROOT = original_proof_root
 
 
 def _valid_pr_body() -> str:
@@ -453,6 +458,70 @@ def test_blind_spot_path_classification():
     # src/ and scripts/ are not blind spots
     assert gate._is_blind_spot_path("src/main.py") is False
     assert gate._is_blind_spot_path("scripts/ops/check.py") is False
+
+
+def test_marker_bound_disposable_db_write_proof_is_exactly_scoped(monkeypatch, tmp_path):
+    proof_file = tmp_path / "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    proof_file.parent.mkdir(parents=True)
+    proof_file.write_text(
+        "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: synthetic only.\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(proof_scan, "ROOT", tmp_path)
+
+    assert proof_scan.is_explicit_disposable_db_write_proof(
+        "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    )
+    assert not proof_scan.is_explicit_disposable_db_write_proof(
+        "tests/integration/odds_staging/ephemeral_postgres.test.js"
+    )
+
+
+def test_marker_bound_proof_uses_the_scanned_head_revision(monkeypatch):
+    path = "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    with _temporary_git_repo({path: "const safe = true;\n"}) as (repo, base_sha):
+        original_root = proof_scan.ROOT
+        monkeypatch.setattr(proof_scan, "ROOT", repo)
+        try:
+            (repo / path).write_text(
+                "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: worktree only.\n",
+                encoding="utf-8",
+            )
+            assert not proof_scan.is_explicit_disposable_db_write_proof(
+                path,
+                head_ref=base_sha,
+                use_worktree_head=False,
+            )
+            assert proof_scan.is_explicit_disposable_db_write_proof(path)
+        finally:
+            proof_scan.ROOT = original_root
+
+
+def test_disposable_scan_counts_each_non_exempt_file_once():
+    with _temporary_git_repo({"tests/sample.js": "const safe = true;\n"}) as (repo, base_sha):
+        (repo / "tests/sample.js").write_text(
+            f"const sql = '{DB_WRITE_TOKEN} public.matches VALUES (1)';\n",
+            encoding="utf-8",
+        )
+        head_sha = _commit(repo, "add DB keyword fixture")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+    assert result.summary.scanned_files == 1
+
+
+def test_marker_removal_makes_existing_db_keyword_a_new_finding():
+    path = "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
+    marker = "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: synthetic only.\n"
+    sql = f"const sql = '{DB_WRITE_TOKEN} public.matches VALUES (1)';\n"
+    with _temporary_git_repo({path: marker + sql}) as (repo, base_sha):
+        (repo / path).write_text(sql, encoding="utf-8")
+        head_sha = _commit(repo, "remove disposable proof marker")
+        result = _scan_temp_repo(repo, base_sha, head_sha)
+
+    assert len(result.errors) == 1
+    assert "[DB write]" in result.errors[0]
+    assert result.summary.new_violations == 1
+    assert result.summary.unchanged_historical_violations == 0
 
 
 def _unsafe_source(count: int = 1) -> str:
