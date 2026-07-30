@@ -1,6 +1,7 @@
 'use strict';
 
 // lifecycle: test-fixture
+// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: task-labelled synthetic PostgreSQL only.
 // Bootstrap only the task-labelled disposable PostgreSQL database. It creates
 // a minimal current matches shape, applies V26.10 once, then provisions a
 // non-login lock-function owner and an insert-only proof writer role.

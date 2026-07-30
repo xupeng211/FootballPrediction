@@ -461,17 +461,21 @@ def test_blind_spot_path_classification():
 
 
 def test_marker_bound_disposable_db_write_proof_is_exactly_scoped(monkeypatch, tmp_path):
-    proof_file = tmp_path / "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
-    proof_file.parent.mkdir(parents=True)
-    proof_file.write_text(
-        "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: synthetic only.\n",
-        encoding="utf-8",
+    proof_paths = (
+        "tests/integration/canonical_inventory/canonicalMigrationHarness.js",
+        "tests/integration/canonical_inventory/bootstrap_disposable_postgres.js",
     )
+    for path in proof_paths:
+        proof_file = tmp_path / path
+        proof_file.parent.mkdir(parents=True, exist_ok=True)
+        proof_file.write_text(
+            "// M3_CANONICAL_DISPOSABLE_DB_WRITE_PROOF_V1: synthetic only.\n",
+            encoding="utf-8",
+        )
     monkeypatch.setattr(proof_scan, "ROOT", tmp_path)
 
-    assert proof_scan.is_explicit_disposable_db_write_proof(
-        "tests/integration/canonical_inventory/canonicalMigrationHarness.js"
-    )
+    for path in proof_paths:
+        assert proof_scan.is_explicit_disposable_db_write_proof(path)
     assert not proof_scan.is_explicit_disposable_db_write_proof(
         "tests/integration/odds_staging/ephemeral_postgres.test.js"
     )

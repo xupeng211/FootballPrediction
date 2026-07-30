@@ -32,6 +32,7 @@ ROOT = Path(__file__).resolve().parents[3]
 DISPOSABLE_DB_WRITE_PROOF_PATHS: frozenset[str] = frozenset(
     {
         "tests/integration/canonical_inventory/canonicalMigrationHarness.js",
+        "tests/integration/canonical_inventory/bootstrap_disposable_postgres.js",
         "tests/integration/canonical_inventory/disposable_postgres.test.js",
     }
 )
