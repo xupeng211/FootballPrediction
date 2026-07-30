@@ -151,6 +151,40 @@ function isWithinDirectory(directory, candidatePath) {
     );
 }
 
+// `isStrictAbsoluteTimestamp` intentionally owns the shared lexical contract.
+// The canonical writer additionally rejects impossible calendar, clock, and
+// offset values before a PostgreSQL cast can normalize or reject them later.
+// eslint-disable-next-line complexity -- the fixed ISO calendar bounds are intentionally adjacent.
+function isActualAbsoluteTimestamp(value) {
+    if (!isStrictAbsoluteTimestamp(value)) return false;
+    const match = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(Z|[+-](\d{2}):(\d{2}))$/.exec(value);
+    if (!match) return false;
+    const [, yearText, monthText, dayText, hourText, minuteText, secondText, offset, offsetHourText, offsetMinuteText] =
+        match;
+    const year = Number(yearText);
+    const month = Number(monthText);
+    const day = Number(dayText);
+    const hour = Number(hourText);
+    const minute = Number(minuteText);
+    const second = Number(secondText);
+    const offsetHour = offset === 'Z' ? 0 : Number(offsetHourText);
+    const offsetMinute = offset === 'Z' ? 0 : Number(offsetMinuteText);
+    const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+    const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return (
+        year >= 1 &&
+        month >= 1 &&
+        month <= 12 &&
+        day >= 1 &&
+        day <= daysInMonth[month - 1] &&
+        hour <= 23 &&
+        minute <= 59 &&
+        second <= 59 &&
+        offsetHour <= 23 &&
+        offsetMinute <= 59
+    );
+}
+
 function validateCandidate(candidate) {
     if (!candidate || typeof candidate !== 'object' || Array.isArray(candidate)) {
         throw new CanonicalInventoryContractError('candidate must be an object');
@@ -185,8 +219,10 @@ function validateCandidate(candidate) {
     if (candidate.home_team === candidate.away_team) {
         throw new CanonicalInventoryContractError(`candidate ${id} has identical home and away teams`);
     }
-    if (!isStrictAbsoluteTimestamp(candidate.kickoff_at)) {
-        throw new CanonicalInventoryContractError(`candidate ${id} kickoff_at must be absolute ISO-8601`);
+    if (!isActualAbsoluteTimestamp(candidate.kickoff_at)) {
+        throw new CanonicalInventoryContractError(
+            `candidate ${id} kickoff_at must be an actual absolute ISO-8601 instant`
+        );
     }
     if (mappingVersion !== STATUS_MAPPING_VERSION) {
         throw new CanonicalInventoryContractError(`candidate ${id} has unknown status mapping version`);

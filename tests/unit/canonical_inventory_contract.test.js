@@ -49,6 +49,12 @@ test('synthetic v2 master preserves its deterministic v1 identity projection and
     const unknownMapping = structuredClone(master);
     unknownMapping.candidates[0].status_mapping_version = 'unapproved/v1';
     assert.throws(() => validateArtifactDocument(unknownMapping), CanonicalInventoryContractError);
+    const impossibleKickoff = structuredClone(master);
+    impossibleKickoff.candidates[0].kickoff_at = '2022-13-40T25:00:00Z';
+    assert.throws(
+        () => validateArtifactDocument(impossibleKickoff, { allowSyntheticTestOnly: true }),
+        /must be an actual absolute ISO-8601 instant/
+    );
     const unknownSemanticField = structuredClone(master);
     unknownSemanticField.candidates[0].canonical_match_id = 'must-not-be-accepted';
     assert.throws(() => validateArtifactDocument(unknownSemanticField), CanonicalInventoryContractError);

@@ -70,6 +70,8 @@ async function main() {
         await client.query(`
             REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
             REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM PUBLIC;
+            REVOKE ALL ON FUNCTION public.uuid_generate_v4() FROM PUBLIC;
+            REVOKE ALL ON FUNCTION public.uuid_generate_v4() FROM m3_canonical_writer;
             REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC;
             REVOKE ALL ON FUNCTION pg_catalog.pg_try_advisory_xact_lock(integer, integer) FROM PUBLIC;
             CREATE OR REPLACE FUNCTION public.m3_canonical_unrelated_probe() RETURNS integer LANGUAGE sql AS 'SELECT 1';

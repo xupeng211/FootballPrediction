@@ -420,6 +420,15 @@ schemaTest('migration replay, identity constraints and least-privilege schema ar
         'GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO PUBLIC',
         'REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC'
     );
+    const directUuidClient = await pool.connect();
+    try {
+        await assert.rejects(
+            () => directUuidClient.query('SELECT public.uuid_generate_v4()'),
+            /permission denied for function uuid_generate_v4/
+        );
+    } finally {
+        directUuidClient.release();
+    }
     await admin.query('CREATE ROLE m3_canonical_disposable_prohibited_member NOLOGIN');
     try {
         await expectPermissionBoundary(

@@ -638,14 +638,16 @@ class CanonicalInventoryWriter {
     }
 
     async insertArtifact(client, shape, parentArtifactId = null) {
+        const artifactId = createUuid();
         const result = await client.query(
             `
             INSERT INTO public.m3_canonical_source_artifacts
-                (artifact_sha256, artifact_kind, parent_artifact_id, business_hash, identity_projection_hash, byte_size, candidate_count, competition, season_scope, per_season_counts, status_mapping_version)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb, $10::jsonb, $11)
+                (artifact_id, artifact_sha256, artifact_kind, parent_artifact_id, business_hash, identity_projection_hash, byte_size, candidate_count, competition, season_scope, per_season_counts, status_mapping_version)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10::jsonb, $11::jsonb, $12)
             RETURNING *
         `,
             [
+                artifactId,
                 shape.artifact_sha256,
                 shape.artifact_kind,
                 parentArtifactId,
@@ -857,13 +859,15 @@ class CanonicalInventoryWriter {
                 );
             }
             if (row.terminal === 'inserted' || row.terminal === 'already_present_equivalent') {
+                const lineageId = createUuid();
                 await client.query(
                     `
                     INSERT INTO public.m3_canonical_match_lineages
-                        (match_id, artifact_id, created_import_run_id, candidate_id, provider_match_id, provider_status, status_mapping_version, application_status, immutable_fingerprint)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+                        (lineage_id, match_id, artifact_id, created_import_run_id, candidate_id, provider_match_id, provider_status, status_mapping_version, application_status, immutable_fingerprint)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 `,
                     [
+                        lineageId,
                         matchId,
                         artifact.artifact_id,
                         runId,
