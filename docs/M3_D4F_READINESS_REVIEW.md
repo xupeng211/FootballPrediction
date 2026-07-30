@@ -1181,16 +1181,21 @@ provenance receipt contract. The receipt hash persisted with an import run
 covers the full canonical signed receipt. Synthetic disposable receipts are
 accepted only for the labelled proof; direct CLI execution is disabled and the
 fixed synthetic write proof is reachable only through the
-`data-m3-canonical-inventory-disposable-proof` Make gate. A real canary/master
-fails closed without the independently reviewable FotMob
+`data-m3-canonical-inventory-disposable-proof` wrapper and its separate,
+disposable-only `data-schema-m3-canonical-inventory-disposable-*` V26.10 gate.
+Both the wrapper and launcher require distinct exact schema and proof
+authorizations before Compose can start. A real canary/master fails closed
+without the independently reviewable FotMob
 endpoint/capture/process/licence evidence.
 
 `V26.10__create_m3_canonical_inventory_contract.sql` is additive and was
 executed only against a task-specific PostgreSQL 15 tmpfs database. It adds the
 provider-scoped canonical identity and fixture protections, immutable
 artifact/import-run/lineage relations, the restricted static lock function and
-the least-privilege writer contract. It was not applied to development,
-persistent M3 sandbox, staging or production.
+the least-privilege writer contract. Before it starts a transaction, the writer
+checks the V26.10 checksum ledger, exact lock-function ACLs, table grants,
+schema/TEMP denial and absence of inherited writer roles. It was not applied to
+development, persistent M3 sandbox, staging or production.
 
 The disposable proof used deterministic synthetic data only: three synthetic
 seasons of 380 candidates (1,140 total), never a recovered FotMob artifact.

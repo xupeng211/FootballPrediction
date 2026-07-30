@@ -14,6 +14,8 @@ const {
 const { validateProvenanceReceipt, validateRuntimeAuthorization } = require('./CanonicalInventoryAuthorization');
 
 const SCHEMA_BASELINE = 'm3-canonical-inventory-v26.10';
+const REQUIRED_MIGRATION_VERSION = 'V26.10';
+const REQUIRED_MIGRATION_CHECKSUM = '2a3fbdcff9dbf58b333d91d73cc935a10f1a32e8dba8e054a1da90b06daa061d';
 const ADVISORY_LOCK_NAMESPACE = 1793;
 const ADVISORY_LOCK_KEY = 1;
 const MAX_EXCEPTION_SAMPLES = 20;
@@ -159,6 +161,7 @@ class CanonicalInventoryWriter {
         this.afterAdvisoryLock = afterAdvisoryLock;
     }
 
+    // eslint-disable-next-line complexity -- fixed schema and least-privilege boundary checks must fail closed together.
     async inspectTarget(client) {
         const result = await client.query(`
             SELECT current_database() AS database_identity,
@@ -166,6 +169,7 @@ class CanonicalInventoryWriter {
                    session_user AS session_user,
                    current_setting('transaction_read_only') AS transaction_read_only,
                    current_setting('server_version_num') AS server_version_num,
+                   to_regclass('public.m3_canonical_schema_migrations') IS NOT NULL AS migration_ledger_table,
                    to_regclass('public.m3_canonical_source_artifacts') IS NOT NULL AS artifact_table,
                    to_regclass('public.m3_canonical_import_runs') IS NOT NULL AS run_table,
                    to_regclass('public.m3_canonical_match_lineages') IS NOT NULL AS lineage_table,
@@ -186,10 +190,121 @@ class CanonicalInventoryWriter {
             !identity.artifact_table ||
             !identity.run_table ||
             !identity.lineage_table ||
+            !identity.migration_ledger_table ||
             !identity.provider_index ||
             !identity.fixture_index
         ) {
             throw new CanonicalInventoryWriterError('schema baseline is incomplete', 'SCHEMA_BASELINE_MISMATCH');
+        }
+        const permissions = await client.query(
+            `
+            WITH RECURSIVE read_tables(table_name) AS (
+                VALUES
+                    ('public.matches'::text),
+                    ('public.m3_canonical_source_artifacts'::text),
+                    ('public.m3_canonical_import_runs'::text),
+                    ('public.m3_canonical_match_lineages'::text),
+                    ('public.m3_canonical_schema_migrations'::text)
+            ),
+            insert_tables(table_name) AS (
+                VALUES
+                    ('public.matches'::text),
+                    ('public.m3_canonical_source_artifacts'::text),
+                    ('public.m3_canonical_import_runs'::text),
+                    ('public.m3_canonical_match_lineages'::text)
+            ),
+            role_memberships(role_id) AS (
+                SELECT roleid
+                FROM pg_auth_members
+                WHERE member = (SELECT oid FROM pg_roles WHERE rolname = current_user)
+                UNION
+                SELECT membership.roleid
+                FROM pg_auth_members membership
+                JOIN role_memberships inherited ON membership.member = inherited.role_id
+            ),
+            required_functions(function_oid) AS (
+                VALUES
+                    ('pg_catalog.pg_try_advisory_xact_lock(integer,integer)'::regprocedure),
+                    ('public.m3_canonical_inventory_acquire_locks_v1()'::regprocedure)
+            )
+            SELECT
+                EXISTS (
+                    SELECT 1
+                    FROM public.m3_canonical_schema_migrations
+                    WHERE version = $1 AND sha256_checksum = $2
+                ) AS migration_baseline,
+                has_database_privilege(current_user, current_database(), 'CONNECT') AS database_connect,
+                NOT has_database_privilege(current_user, current_database(), 'TEMPORARY') AS database_temp_revoked,
+                has_schema_privilege(current_user, 'public', 'USAGE') AS schema_usage,
+                NOT has_schema_privilege(current_user, 'public', 'CREATE') AS schema_create_revoked,
+                NOT EXISTS (SELECT 1 FROM role_memberships) AS no_role_memberships,
+                NOT EXISTS (
+                    SELECT 1
+                    FROM pg_roles
+                    WHERE rolname = current_user
+                      AND (rolsuper OR rolcreaterole OR rolcreatedb OR rolreplication OR rolbypassrls)
+                ) AS role_attributes_restricted,
+                (SELECT bool_and(has_table_privilege(current_user, table_name, 'SELECT')) FROM read_tables) AS table_select,
+                (SELECT bool_and(has_table_privilege(current_user, table_name, 'INSERT')) FROM insert_tables) AS table_insert,
+                (
+                    SELECT bool_and(
+                        NOT has_table_privilege(
+                            current_user,
+                            table_name,
+                            'UPDATE, DELETE, TRUNCATE, REFERENCES, TRIGGER'
+                        )
+                    )
+                    FROM read_tables
+                ) AS table_mutation_revoked,
+                (
+                    SELECT bool_and(class.relowner <> (SELECT oid FROM pg_roles WHERE rolname = current_user))
+                    FROM read_tables
+                    JOIN pg_class class ON class.oid = to_regclass(read_tables.table_name)
+                ) AS table_ownership_restricted,
+                (
+                    SELECT bool_and(has_function_privilege(current_user, function_oid, 'EXECUTE'))
+                    FROM required_functions
+                ) AS required_functions_executable,
+                (
+                    SELECT bool_and(function.proowner <> (SELECT oid FROM pg_roles WHERE rolname = current_user))
+                    FROM required_functions
+                    JOIN pg_proc function ON function.oid = required_functions.function_oid
+                ) AS function_ownership_restricted,
+                (
+                    SELECT bool_and(
+                        NOT EXISTS (
+                            SELECT 1
+                            FROM aclexplode(COALESCE(function.proacl, acldefault('f', function.proowner))) AS acl
+                            WHERE acl.grantee = 0 AND acl.privilege_type = 'EXECUTE'
+                        )
+                    )
+                    FROM required_functions
+                    JOIN pg_proc function ON function.oid = required_functions.function_oid
+                ) AS required_functions_public_revoked
+            `,
+            [REQUIRED_MIGRATION_VERSION, REQUIRED_MIGRATION_CHECKSUM]
+        );
+        const boundary = permissions.rows[0];
+        if (
+            !boundary.migration_baseline ||
+            !boundary.database_connect ||
+            !boundary.database_temp_revoked ||
+            !boundary.schema_usage ||
+            !boundary.schema_create_revoked ||
+            !boundary.no_role_memberships ||
+            !boundary.role_attributes_restricted ||
+            !boundary.table_select ||
+            !boundary.table_insert ||
+            !boundary.table_mutation_revoked ||
+            !boundary.table_ownership_restricted ||
+            !boundary.required_functions_executable ||
+            !boundary.function_ownership_restricted ||
+            !boundary.required_functions_public_revoked
+        ) {
+            throw new CanonicalInventoryWriterError(
+                'target writer role violates the canonical least-privilege boundary',
+                'BLOCKED_PERMISSION_BOUNDARY'
+            );
         }
         return identity;
     }

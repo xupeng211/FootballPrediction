@@ -78,6 +78,7 @@ async function main() {
             GRANT CONNECT ON DATABASE ${JSON.stringify(config.database)} TO m3_canonical_writer;
             GRANT USAGE ON SCHEMA public TO m3_canonical_writer;
             GRANT SELECT, INSERT ON public.matches, public.m3_canonical_source_artifacts, public.m3_canonical_import_runs, public.m3_canonical_match_lineages TO m3_canonical_writer;
+            GRANT SELECT ON public.m3_canonical_schema_migrations TO m3_canonical_writer;
             GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO m3_canonical_writer;
             GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO m3_canonical_writer;
             GRANT EXECUTE ON FUNCTION pg_catalog.pg_try_advisory_xact_lock(integer, integer) TO m3_canonical_writer;

@@ -476,6 +476,28 @@ test('Proof E/F: concurrent writers fail closed and writer role cannot mutate or
     releaseFirst();
     assert.deepEqual((await first).terminal_counts, { inserted: 1140 });
     assert.deepEqual(await counts(), { matches: 1140, artifacts: 1, runs: 1, lineages: 1140 });
+    const expectPermissionBoundary = async () => {
+        const before = await counts();
+        await assert.rejects(
+            () => writer().execute(candidateInput(file, master)),
+            error => error instanceof CanonicalInventoryWriterError && error.code === 'BLOCKED_PERMISSION_BOUNDARY'
+        );
+        assert.deepEqual(await counts(), before);
+    };
+    await admin.query('GRANT UPDATE ON public.matches TO m3_canonical_writer');
+    await expectPermissionBoundary();
+    await admin.query('REVOKE UPDATE ON public.matches FROM m3_canonical_writer');
+    await admin.query('GRANT CREATE ON SCHEMA public TO m3_canonical_writer');
+    await expectPermissionBoundary();
+    await admin.query('REVOKE CREATE ON SCHEMA public FROM m3_canonical_writer');
+    await admin.query('GRANT EXECUTE ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() TO PUBLIC');
+    await expectPermissionBoundary();
+    await admin.query('REVOKE ALL ON FUNCTION public.m3_canonical_inventory_acquire_locks_v1() FROM PUBLIC');
+    await admin.query('CREATE ROLE m3_canonical_disposable_prohibited_member NOLOGIN');
+    await admin.query('GRANT m3_canonical_disposable_prohibited_member TO m3_canonical_writer');
+    await expectPermissionBoundary();
+    await admin.query('REVOKE m3_canonical_disposable_prohibited_member FROM m3_canonical_writer');
+    await admin.query('DROP ROLE m3_canonical_disposable_prohibited_member');
     await assert.rejects(pool.query("UPDATE matches SET status = 'changed'"));
     await assert.rejects(pool.query('DELETE FROM matches'));
     await assert.rejects(pool.query('TRUNCATE matches'));

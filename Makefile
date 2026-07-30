@@ -61,7 +61,7 @@
         data-synthetic-training-feature-dry-run data-synthetic-training-feature-commit \
         data-synthetic-prediction-dry-run data-synthetic-prediction-commit \
         data-raw-dry-run data-raw-commit data-raw-single-fixture-smoke data-raw-single-live-fotmob-smoke data-raw-single-live-fotmob-retain data-raw-n3-live-fotmob-retain data-raw-fotmob-retained-quality-audit data-network-dry-run data-db-write-small data-harvest \
-        data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate \
+        data-risk-report data-schema-help data-schema-status data-schema-plan data-schema-migrate data-schema-m3-canonical-inventory-disposable-preview data-schema-m3-canonical-inventory-disposable-authorize data-schema-m3-canonical-inventory-disposable-preflight data-schema-m3-canonical-inventory-disposable-execute \
         ci-local ci-local-pr pr-gate-local pr-body-check pr-merge-preflight pr-ready-check workflow-pr-check pr-post-merge-check \
         m3-odds-sandbox-bootstrap m3-odds-sandbox-plan m3-odds-sandbox-migrate m3-odds-sandbox-status m3-odds-sandbox-verify m3-odds-sandbox-backup m3-odds-sandbox-restore-verify m3-odds-sandbox-runner-probes m3-odds-sandbox-stop
 
@@ -439,7 +439,7 @@ data-help: ## Show safe data harvesting entrypoint policy
 	@echo "  make data-check"
 	@echo "  make data-fotmob-candidates-network-export LEAGUE_ID=<id> COMPETITION=\"Premier League\" SEASONS=\"2022/2023 2023/2024 2024/2025\" NETWORK_AUTHORIZATION=yes  # explicit live FotMob fixture access only; no DB write"
 	@echo "  make data-m3-canonical-inventory-preflight ARTIFACT=<path> ARTIFACT_SHA256=<sha256>  # validates only; no DB/network/browser write"
-	@echo "  make data-m3-canonical-inventory-disposable-proof M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION=authorized-synthetic-disposable-proof-v1  # synthetic, task-specific temporary PostgreSQL proof only; no persistent write"
+	@echo "  make data-m3-canonical-inventory-disposable-proof M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION=authorized-synthetic-disposable-schema-v1 M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION=authorized-synthetic-disposable-proof-v1  # synthetic, task-specific temporary PostgreSQL proof only; no persistent write"
 	@echo "  make data-local-dry-run SAMPLE_HTML=<path> or SAMPLE_CSV=<path>"
 	@echo "  make data-l3-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
 	@echo "  make data-l3-write-dry-run SAMPLE_RAW=<path> MATCH_ID=<id>"
@@ -682,12 +682,9 @@ data-m3-canonical-inventory-preflight: ## M3 canonical artifact contract check o
 		--artifact "$(ARTIFACT)" --artifact-sha256 "$(ARTIFACT_SHA256)"
 
 data-m3-canonical-inventory-disposable-proof: ## Fixed synthetic PostgreSQL 15 proof; task-specific temporary DB only.
-	@if [ "$(M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION)" != "authorized-synthetic-disposable-proof-v1" ]; then \
-		echo "BLOCKED: requires M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION=authorized-synthetic-disposable-proof-v1"; \
-		exit 1; \
-	fi
-	@M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION="$(M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION)" \
-		bash tests/integration/canonical_inventory/run_disposable_postgres.sh
+	@$(MAKE) --no-print-directory data-schema-m3-canonical-inventory-disposable-execute \
+		M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION="$(M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION)" \
+		M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION="$(M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION)"
 
 data-l1-discovery-preview: ## L1 safe preview wrapper. Phase 5.05L1. Preview-only, no network, no DB, no browser/proxy.
 	@if [ -z "$(SOURCE)" ] || [ -z "$(SCOPE)" ]; then \
@@ -3277,6 +3274,7 @@ data-schema-help: ## Show DB schema migration safety gate policy
 	@echo "  make data-schema-help"
 	@echo "  make data-schema-status"
 	@echo "  make data-schema-plan"
+	@echo "  make data-schema-m3-canonical-inventory-disposable-preview"
 	@echo ""
 	@echo "Blocked by default:"
 	@echo "  make data-schema-migrate"
@@ -3287,6 +3285,38 @@ data-schema-help: ## Show DB schema migration safety gate policy
 	@echo "  RUNBOOK=docs/_reports/DB_SCHEMA_MIGRATION_RUNBOOK_PHASE4_8.md"
 	@echo ""
 	@echo "Phase 4.9 does not wire migration execution. Read the runbook first."
+	@echo "The M3 disposable proof is a narrowly scoped exception: its labelled PostgreSQL 15 tmpfs migration requires the exact schema and proof authorizations below."
+
+data-schema-m3-canonical-inventory-disposable-preview: ## Print the fixed V26.10 disposable-only schema plan; no SQL executed.
+	@echo "target_classification=disposable"
+	@echo "target_scope=compose-labelled PostgreSQL 15 tmpfs only"
+	@echo "migration=database/migrations/V26.10__create_m3_canonical_inventory_contract.sql"
+	@echo "migration_sha256=2a3fbdcff9dbf58b333d91d73cc935a10f1a32e8dba8e054a1da90b06daa061d"
+	@echo "persistent_targets=blocked"
+	@echo "No SQL was executed."
+
+data-schema-m3-canonical-inventory-disposable-authorize: ## Validate the separate disposable-only schema authorization; no SQL executed.
+	@if [ "$(M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION)" != "authorized-synthetic-disposable-schema-v1" ]; then \
+		echo "BLOCKED: requires M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION=authorized-synthetic-disposable-schema-v1"; \
+		exit 1; \
+	fi
+	@echo "authorized_schema_scope=canonical_inventory_disposable_v26.10_only"
+	@echo "No SQL was executed."
+
+data-schema-m3-canonical-inventory-disposable-preflight: data-schema-m3-canonical-inventory-disposable-authorize ## Verify the fixed disposable migration identity; no SQL executed.
+	@test -f database/migrations/V26.10__create_m3_canonical_inventory_contract.sql
+	@test "$$(sha256sum database/migrations/V26.10__create_m3_canonical_inventory_contract.sql | awk '{print $$1}')" = "2a3fbdcff9dbf58b333d91d73cc935a10f1a32e8dba8e054a1da90b06daa061d"
+	@echo "schema_preflight=passed"
+	@echo "No SQL was executed."
+
+data-schema-m3-canonical-inventory-disposable-execute: data-schema-m3-canonical-inventory-disposable-preflight ## Run only the authorized schema-bound synthetic disposable proof.
+	@if [ "$(M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION)" != "authorized-synthetic-disposable-proof-v1" ]; then \
+		echo "BLOCKED: requires M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION=authorized-synthetic-disposable-proof-v1"; \
+		exit 1; \
+	fi
+	@M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION="$(M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION)" \
+		M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION="$(M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION)" \
+		bash tests/integration/canonical_inventory/run_disposable_postgres.sh
 
 data-schema-status: ## Read-only DB schema status check
 	@echo "Checking DB schema status with read-only SQL..."

@@ -3,6 +3,17 @@
 # It creates only a labelled tmpfs database/container set and verifies removal.
 set -euo pipefail
 
+expected_schema_authorization='authorized-synthetic-disposable-schema-v1'
+expected_proof_authorization='authorized-synthetic-disposable-proof-v1'
+if [[ "${M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION:-}" != "$expected_schema_authorization" ]]; then
+  echo "BLOCKED: requires M3_CANONICAL_DISPOSABLE_SCHEMA_AUTHORIZATION=$expected_schema_authorization" >&2
+  exit 1
+fi
+if [[ "${M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION:-}" != "$expected_proof_authorization" ]]; then
+  echo "BLOCKED: requires M3_CANONICAL_DISPOSABLE_PROOF_AUTHORIZATION=$expected_proof_authorization" >&2
+  exit 1
+fi
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 compose_file="$repo_root/tests/integration/canonical_inventory/docker-compose.disposable.yml"
 nonce="$(date +%s)_${RANDOM}"

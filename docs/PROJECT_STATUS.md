@@ -1024,8 +1024,11 @@ This is design readiness only, not database-write authorization.
   from a trusted authority and provenance receipt validator are implemented.
   The persisted receipt hash covers the complete signed receipt. Direct CLI
   execution is disabled; only the fixed synthetic disposable proof can write,
-  through `make data-m3-canonical-inventory-disposable-proof`. Real inputs
-  fail closed when provenance is absent.
+  through `make data-m3-canonical-inventory-disposable-proof`. The wrapper and
+  launcher independently require separate exact schema and proof
+  authorizations, and V26.10 runs only through the disposable-only
+  `data-schema-m3-canonical-inventory-disposable-*` gate. Real inputs fail
+  closed when provenance is absent.
 - Additive V26.10 implements provider-scoped FotMob identity, fixture conflict
   protection, immutable artifact/import-run/lineage tables and the restricted
   canonical lock function. It was executed only on a task-specific PostgreSQL
@@ -1035,7 +1038,10 @@ This is design readiness only, not database-write authorization.
   synthetic 1,140-candidate master (380 / 380 / 380), exact replay zero delta,
   1- and 10-candidate canary-to-master behavior, conflict rollback,
   serializable lock contention, least-privilege denial and backup/restore.
-  The labelled proof containers, network and volume were cleaned up.
+  Before any transaction, the writer verifies the V26.10 checksum baseline,
+  exact required lock-function ACLs, no writer role inheritance, no schema
+  CREATE/TEMP and no UPDATE/DELETE/TRUNCATE table privilege. The labelled proof
+  containers, network and volume were cleaned up.
 - No real v2 artifact, FotMob request, canonical persistent write, linkage,
   odds staging/import, raw payload activity, training, backtest or prediction
   occurred. The 888 exact links, four kickoff quarantines and 248
