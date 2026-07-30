@@ -542,7 +542,12 @@ schemaTest('migration replay, identity constraints and least-privilege schema ar
     await admin.query(
         `ALTER TABLE public.m3_canonical_source_artifacts ADD CONSTRAINT ${artifactKindParent} CHECK ((artifact_kind = 'master' AND parent_artifact_id IS NULL) OR (artifact_kind = 'canary' AND parent_artifact_id IS NOT NULL))`
     );
-    await schemaInspector.inspectTarget(admin);
+    const restoredSchemaClient = await pool.connect();
+    try {
+        await canonicalWriter().inspectTarget(restoredSchemaClient);
+    } finally {
+        restoredSchemaClient.release();
+    }
     const targetIdentityClient = await pool.connect();
     try {
         await admin.query(
