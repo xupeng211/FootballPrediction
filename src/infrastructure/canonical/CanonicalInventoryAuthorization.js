@@ -161,10 +161,15 @@ function validateProvenanceReceipt(receipt, binding) {
             'BLOCKED_PROVENANCE_POLICY'
         );
     }
-    if (receipt.synthetic_test_only === true && binding.target_classification === 'disposable') {
-        if (receipt.provenance_class !== 'synthetic-test-only' || receipt.non_production !== true) {
+    if (receipt.synthetic_test_only === true) {
+        if (
+            binding.target_classification !== 'disposable' ||
+            binding.artifact_synthetic_test_only !== true ||
+            receipt.provenance_class !== 'synthetic-test-only' ||
+            receipt.non_production !== true
+        ) {
             throw new CanonicalInventoryAuthorizationError(
-                'synthetic provenance receipt is incomplete',
+                'synthetic provenance receipt does not match a disposable synthetic artifact',
                 'BLOCKED_PROVENANCE_POLICY'
             );
         }

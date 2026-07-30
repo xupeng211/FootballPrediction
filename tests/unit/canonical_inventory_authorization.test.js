@@ -125,12 +125,38 @@ test('only explicitly marked disposable synthetic provenance is accepted in this
                 non_production: true,
                 provenance_class: 'synthetic-test-only',
             },
-            { sha256: artifact.sha256, target_classification: 'disposable' }
+            {
+                sha256: artifact.sha256,
+                target_classification: 'disposable',
+                artifact_synthetic_test_only: true,
+            }
         ).kind,
         'synthetic-test-only'
     );
     assert.throws(
-        () => validateProvenanceReceipt(null, { sha256: artifact.sha256, target_classification: 'disposable' }),
+        () =>
+            validateProvenanceReceipt(
+                {
+                    artifact_sha256: artifact.sha256,
+                    synthetic_test_only: true,
+                    non_production: true,
+                    provenance_class: 'synthetic-test-only',
+                },
+                {
+                    sha256: artifact.sha256,
+                    target_classification: 'disposable',
+                    artifact_synthetic_test_only: false,
+                }
+            ),
+        error => error.code === 'BLOCKED_PROVENANCE_POLICY'
+    );
+    assert.throws(
+        () =>
+            validateProvenanceReceipt(null, {
+                sha256: artifact.sha256,
+                target_classification: 'disposable',
+                artifact_synthetic_test_only: true,
+            }),
         error => error.code === 'BLOCKED_PROVENANCE_POLICY'
     );
     assert.throws(

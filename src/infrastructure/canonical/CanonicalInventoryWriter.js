@@ -482,11 +482,12 @@ class CanonicalInventoryWriter {
                 binding,
                 this.authorizationAuthority
             );
+            const preflightedInput = assertArtifactStillImmutable(inputBinding);
             const provenance = validateProvenanceReceipt(inputBinding.provenance_receipt, {
                 sha256: inputBinding.sha256,
                 target_classification: 'disposable',
+                artifact_synthetic_test_only: preflightedInput.artifact.synthetic_test_only === true,
             });
-            assertArtifactStillImmutable(inputBinding);
             await client.query('BEGIN ISOLATION LEVEL SERIALIZABLE');
             try {
                 await client.query("SET LOCAL lock_timeout = '5s'; SET LOCAL statement_timeout = '30s'");
